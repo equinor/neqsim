@@ -612,6 +612,9 @@ public final class ProcessModelOperatingActionEvaluator {
     /** Required hydraulic snapshots in binding order. */
     private final List<HydraulicConstraintSnapshot> hydraulicConstraints;
 
+    /** Qualified boundary evidence from the candidate operating point. */
+    private final List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence;
+
     /** Immutable diagnostics. */
     private final List<String> diagnostics;
 
@@ -620,7 +623,7 @@ public final class ProcessModelOperatingActionEvaluator {
         Outcome outcome, boolean candidateSimulationConverged, boolean candidateEvaluatorFeasible,
         boolean baselineRestored, boolean baselineSimulationConverged, double[] rawObjectives, double[] objectives,
         double[] constraintValues, double[] constraintMargins, List<HydraulicConstraintSnapshot> hydraulicConstraints,
-        List<String> diagnostics) {
+        List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence, List<String> diagnostics) {
       this.action = action;
       this.baselineValue = baselineValue;
       this.candidateValue = candidateValue;
@@ -635,6 +638,8 @@ public final class ProcessModelOperatingActionEvaluator {
       this.constraintMargins = Arrays.copyOf(constraintMargins, constraintMargins.length);
       this.hydraulicConstraints = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
+      this.processBoundaryConstraintEvidence = Collections.unmodifiableList(
+          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -643,7 +648,8 @@ public final class ProcessModelOperatingActionEvaluator {
         Outcome outcome, List<String> diagnostics) {
       return new CandidateEvaluationResult(action, Double.NaN, candidateValue, outcome, false, false, false, false,
           new double[0], new double[0], new double[0], new double[0],
-          Collections.<HydraulicConstraintSnapshot>emptyList(), diagnostics);
+          Collections.<HydraulicConstraintSnapshot>emptyList(),
+          Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
     }
 
     /** Creates a result from one optional candidate simulation. */
@@ -654,12 +660,13 @@ public final class ProcessModelOperatingActionEvaluator {
       if (evaluation == null) {
         return new CandidateEvaluationResult(action, baselineValue, candidateValue, outcome, false, false,
             baselineRestored, baselineSimulationConverged, new double[0], new double[0], new double[0], new double[0],
-            hydraulicConstraints, diagnostics);
+            hydraulicConstraints, Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
       }
       return new CandidateEvaluationResult(action, baselineValue, candidateValue, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
           copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), copy(evaluation.getConstraintValues()),
-          copy(evaluation.getConstraintMargins()), hydraulicConstraints, diagnostics);
+          copy(evaluation.getConstraintMargins()), hydraulicConstraints,
+          evaluation.getProcessBoundaryConstraintEvidence(), diagnostics);
     }
 
     /** Returns a defensive array or an empty array for null. */
@@ -735,6 +742,12 @@ public final class ProcessModelOperatingActionEvaluator {
     /** @return fresh immutable snapshot of hydraulic evidence in binding order */
     public List<HydraulicConstraintSnapshot> getHydraulicConstraints() {
       return Collections.unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
+    }
+
+    /** @return fresh immutable qualified boundary evidence in constraint registration order */
+    public List<ProcessBoundaryConstraintEvidence> getProcessBoundaryConstraintEvidence() {
+      return Collections.unmodifiableList(
+          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
     }
 
     /** @return fresh immutable snapshot of diagnostics */

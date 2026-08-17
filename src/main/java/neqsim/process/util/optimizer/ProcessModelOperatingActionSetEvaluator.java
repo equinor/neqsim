@@ -862,6 +862,9 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** Complete unit-safe installed-capacity evidence from the candidate operating point. */
     private final List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence;
 
+    /** Complete qualified boundary evidence from the candidate operating point. */
+    private final List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence;
+
     /** Immutable diagnostics. */
     private final List<String> diagnostics;
 
@@ -873,7 +876,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
         double[] rawObjectives, double[] objectives, List<CandidateObjectiveEvidence> objectiveEvidence,
         double[] constraintValues, double[] constraintMargins, List<CandidateConstraintEvidence> constraintEvidence,
         List<HydraulicConstraintSnapshot> hydraulicConstraints,
-        List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence, List<String> diagnostics) {
+        List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence,
+        List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -897,6 +901,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
       this.installedEquipmentCapacityEvidence = Collections
           .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
+      this.processBoundaryConstraintEvidence = Collections.unmodifiableList(
+          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -908,7 +914,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           Collections.<ActionCandidateEvidence>emptyList(), outcome, false, false, false, false, new double[0],
           new double[0], Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
           Collections.<CandidateConstraintEvidence>emptyList(), Collections.<HydraulicConstraintSnapshot>emptyList(),
-          Collections.<InstalledEquipmentCapacityEvidence>emptyList(), diagnostics);
+          Collections.<InstalledEquipmentCapacityEvidence>emptyList(),
+          Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
     }
 
     /** Creates a result from an optional candidate simulation. */
@@ -923,13 +930,15 @@ public final class ProcessModelOperatingActionSetEvaluator {
             false, false, baselineRestored, baselineSimulationConverged, new double[0], new double[0],
             Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
             Collections.<CandidateConstraintEvidence>emptyList(), hydraulicConstraints,
-            Collections.<InstalledEquipmentCapacityEvidence>emptyList(), diagnostics);
+            Collections.<InstalledEquipmentCapacityEvidence>emptyList(),
+            Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
       }
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
           copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), objectiveEvidence,
           copy(evaluation.getConstraintValues()), copy(evaluation.getConstraintMargins()), constraintEvidence,
-          hydraulicConstraints, evaluation.getInstalledEquipmentCapacityEvidence(), diagnostics);
+          hydraulicConstraints, evaluation.getInstalledEquipmentCapacityEvidence(),
+          evaluation.getProcessBoundaryConstraintEvidence(), diagnostics);
     }
 
     /** Snapshots objective definitions and sampled values without retaining evaluator callbacks. */
@@ -1086,6 +1095,12 @@ public final class ProcessModelOperatingActionSetEvaluator {
     public List<InstalledEquipmentCapacityEvidence> getInstalledEquipmentCapacityEvidence() {
       return Collections
           .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
+    }
+
+    /** @return fresh immutable qualified boundary evidence in constraint registration order */
+    public List<ProcessBoundaryConstraintEvidence> getProcessBoundaryConstraintEvidence() {
+      return Collections.unmodifiableList(
+          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
     }
 
     /** @return fresh immutable diagnostics */

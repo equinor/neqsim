@@ -18,6 +18,9 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
+import neqsim.process.equipment.network.NetworkDecisionVariable;
+import neqsim.process.equipment.network.NetworkNomination;
+import neqsim.process.equipment.network.NetworkQualityResult;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -47,6 +50,17 @@ public class ProcessModelSimulationEvaluator implements Serializable {
 
   /** Logger. */
   private static final Logger logger = LogManager.getLogger(ProcessModelSimulationEvaluator.class);
+
+  /** Serializable callback that returns one structured boundary sample after a model run. */
+  public interface BoundarySampleEvaluator extends Serializable {
+    /**
+     * Samples one boundary observable.
+     *
+     * @param model completed process-model operating point
+     * @return structured sample, or null to report missing evidence
+     */
+    ProcessBoundaryConstraintEvidence.Sample evaluate(ProcessModel model);
+  }
 
   /** Finite-difference stencil used for objective gradients and constraint Jacobians. */
   public enum FiniteDifferenceMethod {
@@ -1942,6 +1956,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Model-level constraint evaluator. */
     private transient ToDoubleFunction<ProcessModel> evaluator;
 
+    /** Structured boundary sampler, mutually exclusive with the scalar evaluator. */
+    private transient BoundarySampleEvaluator boundarySampleEvaluator;
+
+    /** Frozen boundary identity and provenance, or null for a general constraint. */
+    private ProcessBoundaryConstraintEvidence.Metadata boundaryMetadata;
+
+    /** Physical scale used only for the dimensionless boundary violation. */
+    private double boundaryResidualScale = 1.0;
+
     /** Whether this constraint represents equipment capacity utilization. */
     private boolean capacityConstraint = false;
 
@@ -2166,6 +2189,56 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       this.evaluator = evaluator;
     }
 
+    /** @return structured boundary sampler, or null for a scalar constraint */
+    public BoundarySampleEvaluator getBoundarySampleEvaluator() {
+      return boundarySampleEvaluator;
+    }
+
+    /**
+     * Sets structured boundary sampling metadata.
+     *
+     * @param metadata immutable boundary identity and provenance
+     * @param sampleEvaluator runtime sampler
+     * @param residualScale finite positive scale in {@link #getUnit()}
+     */
+    public void setBoundaryMetadata(ProcessBoundaryConstraintEvidence.Metadata metadata,
+        BoundarySampleEvaluator sampleEvaluator, double residualScale) {
+      if (metadata == null || sampleEvaluator == null) {
+        throw new IllegalArgumentException("Boundary metadata and sampler are required");
+      }
+      if (!Double.isFinite(residualScale) || residualScale <= 0.0) {
+        throw new IllegalArgumentException("Boundary residual scale must be finite and positive");
+      }
+      this.boundaryMetadata = metadata;
+      this.boundarySampleEvaluator = sampleEvaluator;
+      this.boundaryResidualScale = residualScale;
+    }
+
+    /** @return true when this definition represents a qualified process boundary */
+    public boolean isBoundaryConstraint() {
+      return boundaryMetadata != null;
+    }
+
+    /** @return immutable boundary metadata, or null for a general constraint */
+    public ProcessBoundaryConstraintEvidence.Metadata getBoundaryMetadata() {
+      return boundaryMetadata;
+    }
+
+    /** @return positive physical residual scale */
+    public double getBoundaryResidualScale() {
+      return boundaryResidualScale;
+    }
+
+    /** Samples a structured boundary observable exactly once. */
+    private ProcessBoundaryConstraintEvidence.Sample evaluateBoundarySample(ProcessModel model) {
+      if (boundarySampleEvaluator == null) {
+        return new ProcessBoundaryConstraintEvidence.Sample(null,
+            ProcessBoundaryConstraintEvidence.CalculationStatus.NOT_CALCULABLE, null, null,
+            "Boundary sampler is unavailable after serialization");
+      }
+      return boundarySampleEvaluator.evaluate(model);
+    }
+
     /**
      * Checks whether this is an equipment capacity constraint.
      *
@@ -2309,7 +2382,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @param value sampled constraint value
      * @return positive margin when satisfied and negative margin when violated
      */
-    private double marginFromValue(double value) {
+    double marginFromValue(double value) {
       switch (type) {
       case LOWER_BOUND:
         return value - lowerBound;
@@ -2784,6 +2857,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Immutable unit-safe installed-capacity evidence for this evaluated model state. */
     private List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence = Collections.emptyList();
 
+    /** Immutable qualified process-boundary evidence for this evaluated model state. */
+    private List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence = Collections.emptyList();
+
     /** Additional scalar outputs. */
     private Map<String, Double> additionalOutputs = new LinkedHashMap<String, Double>();
 
@@ -3023,6 +3099,29 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       }
       installedEquipmentCapacityEvidence = Collections
           .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(evidence));
+    }
+
+    /**
+     * Gets process-boundary evidence sampled at this completed operating point.
+     *
+     * @return fresh immutable evidence in constraint registration order
+     */
+    public List<ProcessBoundaryConstraintEvidence> getProcessBoundaryConstraintEvidence() {
+      if (processBoundaryConstraintEvidence == null || processBoundaryConstraintEvidence.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return Collections.unmodifiableList(
+          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+    }
+
+    /** Sets boundary evidence using a defensive immutable copy. */
+    public void setProcessBoundaryConstraintEvidence(List<ProcessBoundaryConstraintEvidence> evidence) {
+      if (evidence == null || evidence.isEmpty()) {
+        processBoundaryConstraintEvidence = Collections.emptyList();
+        return;
+      }
+      processBoundaryConstraintEvidence = Collections.unmodifiableList(
+          new ArrayList<ProcessBoundaryConstraintEvidence>(evidence));
     }
 
     /**
@@ -3331,6 +3430,156 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   }
 
   /**
+   * Adds a fully qualified process-boundary constraint.
+   *
+   * <p>
+   * Bounds and units are frozen at registration. The structured sampler is invoked once after each completed model
+   * run; missing, non-finite, not-calculable, or out-of-validity evidence fails a hard constraint closed.
+   * </p>
+   *
+   * @param name human-readable constraint name
+   * @param metadata immutable boundary identity and provenance
+   * @param sampleEvaluator structured runtime sampler
+   * @param type lower, upper, range, or equality constraint
+   * @param lowerBound lower bound or equality target
+   * @param upperBound upper bound
+   * @param equalityTolerance absolute equality tolerance
+   * @param unit physical engineering unit
+   * @param hard whether unavailable or violated evidence makes the point infeasible
+   * @param penaltyWeight penalty multiplier
+   * @param residualScale positive physical scale used for dimensionless violation only
+   * @return this evaluator for chaining
+   */
+  public ProcessModelSimulationEvaluator addBoundaryConstraint(String name,
+      ProcessBoundaryConstraintEvidence.Metadata metadata, BoundarySampleEvaluator sampleEvaluator,
+      ConstraintDefinition.Type type, double lowerBound, double upperBound, double equalityTolerance, String unit,
+      boolean hard, double penaltyWeight, double residualScale) {
+    if (name == null || name.trim().length() == 0 || type == null) {
+      throw new IllegalArgumentException("Boundary constraint name and type are required");
+    }
+    if (unit == null || unit.trim().length() == 0) {
+      throw new IllegalArgumentException("Boundary constraint unit is required");
+    }
+    if (!Double.isFinite(penaltyWeight) || penaltyWeight < 0.0) {
+      throw new IllegalArgumentException("Penalty weight must be finite and non-negative");
+    }
+    if (type == ConstraintDefinition.Type.LOWER_BOUND && !Double.isFinite(lowerBound)
+        || type == ConstraintDefinition.Type.UPPER_BOUND && !Double.isFinite(upperBound)
+        || type == ConstraintDefinition.Type.RANGE
+            && (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound) || lowerBound > upperBound)
+        || type == ConstraintDefinition.Type.EQUALITY
+            && (!Double.isFinite(lowerBound) || !Double.isFinite(equalityTolerance) || equalityTolerance < 0.0)) {
+      throw new IllegalArgumentException("Boundary bounds and tolerance must be finite and ordered for the type");
+    }
+    ConstraintDefinition definition = new ConstraintDefinition();
+    definition.setName(name);
+    definition.setType(type);
+    definition.setLowerBound(lowerBound);
+    definition.setUpperBound(upperBound);
+    definition.setEqualityTolerance(equalityTolerance);
+    definition.setUnit(unit);
+    definition.setHard(hard);
+    definition.setPenaltyWeight(penaltyWeight);
+    definition.setBoundaryMetadata(metadata, sampleEvaluator, residualScale);
+    constraints.add(definition);
+    return this;
+  }
+
+  /**
+   * Adds an equality constraint from one period of a {@link NetworkNomination}.
+   *
+   * @param name constraint name
+   * @param areaName process area containing the nominated point
+   * @param nomination immutable nomination series
+   * @param periodIndex zero-based nomination period
+   * @param flowDirection positive-flow direction
+   * @param evaluator actual boundary rate sampler
+   * @param hard whether unavailable or off-nomination evidence is infeasible
+   * @param penaltyWeight penalty multiplier
+   * @param residualScale positive scale in the nomination unit
+   * @param provenance source of the nomination
+   * @return this evaluator for chaining
+   */
+  public ProcessModelSimulationEvaluator addNominationConstraint(String name, String areaName,
+      NetworkNomination nomination, int periodIndex, ProcessBoundaryConstraintEvidence.FlowDirection flowDirection,
+      final ToDoubleFunction<ProcessModel> evaluator, boolean hard, double penaltyWeight, double residualScale,
+      String provenance) {
+    if (nomination == null || periodIndex < 0 || periodIndex >= nomination.size() || evaluator == null) {
+      throw new IllegalArgumentException("Nomination, valid period index, and evaluator are required");
+    }
+    double target = nomination.getValue(periodIndex);
+    double tolerance = Math.abs(target) * Math.abs(nomination.getToleranceFraction());
+    ProcessBoundaryConstraintEvidence.Metadata metadata = new ProcessBoundaryConstraintEvidence.Metadata(
+        areaName + "::" + nomination.getPointName() + "/nomination/" + periodIndex, areaName,
+        nomination.getPointName(), ProcessBoundaryConstraintEvidence.Kind.NOMINATION, flowDirection,
+        nomination.getBasis(), provenance, Double.NaN, Integer.toString(periodIndex), Integer.toString(periodIndex),
+        ProcessBoundaryConstraintEvidence.ApplicabilityStatus.APPLICABLE, "nominated rate", null, null, periodIndex);
+    BoundarySampleEvaluator sampler = new BoundarySampleEvaluator() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public ProcessBoundaryConstraintEvidence.Sample evaluate(ProcessModel model) {
+        return ProcessBoundaryConstraintEvidence.Sample.available(evaluator.applyAsDouble(model));
+      }
+    };
+    return addBoundaryConstraint(name, metadata, sampler, ConstraintDefinition.Type.EQUALITY, target,
+        Double.POSITIVE_INFINITY, tolerance, nomination.getUnit(), hard, penaltyWeight, residualScale);
+  }
+
+  /**
+   * Adds a product-quality boundary using fixed limits from a network-quality specification.
+   *
+   * @param name constraint name
+   * @param areaName process area containing the quality point
+   * @param pointName named quality point
+   * @param specification fixed metric, unit, limits, method, and reference basis
+   * @param sampleEvaluator runtime quality sampler
+   * @param hard whether unavailable or off-spec evidence is infeasible
+   * @param penaltyWeight penalty multiplier
+   * @param residualScale positive scale in the specification unit
+   * @return this evaluator for chaining
+   */
+  public ProcessModelSimulationEvaluator addNetworkQualityConstraint(String name, String areaName, String pointName,
+      NetworkQualityResult specification, BoundarySampleEvaluator sampleEvaluator, boolean hard,
+      double penaltyWeight, double residualScale) {
+    if (specification == null || sampleEvaluator == null) {
+      throw new IllegalArgumentException("Quality specification and sampler are required");
+    }
+    Double lower = specification.getLowerLimit();
+    Double upper = specification.getUpperLimit();
+    ConstraintDefinition.Type type;
+    double lowerValue = Double.NEGATIVE_INFINITY;
+    double upperValue = Double.POSITIVE_INFINITY;
+    if (lower != null && upper != null) {
+      type = ConstraintDefinition.Type.RANGE;
+      lowerValue = lower.doubleValue();
+      upperValue = upper.doubleValue();
+    } else if (lower != null) {
+      type = ConstraintDefinition.Type.LOWER_BOUND;
+      lowerValue = lower.doubleValue();
+    } else if (upper != null) {
+      type = ConstraintDefinition.Type.UPPER_BOUND;
+      upperValue = upper.doubleValue();
+    } else {
+      throw new IllegalArgumentException("Quality specification must declare at least one limit");
+    }
+    String observable = specification.getMetricKey();
+    if (specification.getAttributeName() != null && specification.getAttributeName().length() > 0) {
+      observable += ":" + specification.getAttributeName();
+    }
+    String referenceJson = specification.getReference() == null ? null : specification.getReference().toJson();
+    ProcessBoundaryConstraintEvidence.Metadata metadata = new ProcessBoundaryConstraintEvidence.Metadata(
+        areaName + "::" + pointName + "/quality/" + observable, areaName, pointName,
+        ProcessBoundaryConstraintEvidence.Kind.PRODUCT_QUALITY,
+        ProcessBoundaryConstraintEvidence.FlowDirection.NOT_APPLICABLE, NetworkDecisionVariable.RateBasis.NONE,
+        specification.getProvenance(), Double.NaN, null, null,
+        ProcessBoundaryConstraintEvidence.ApplicabilityStatus.NOT_ASSESSED, observable, specification.getMethod(),
+        referenceJson, -1);
+    return addBoundaryConstraint(name, metadata, sampleEvaluator, type, lowerValue, upperValue, 0.0,
+        specification.getUnit(), hard, penaltyWeight, residualScale);
+  }
+
+  /**
    * Gets all constraints.
    *
    * @return constraint definitions
@@ -3616,6 +3865,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
 
       double[] constraintValues = new double[constraints.size()];
       double[] margins = new double[constraints.size()];
+      List<ProcessBoundaryConstraintEvidence> boundaryEvidence = new ArrayList<ProcessBoundaryConstraintEvidence>();
       List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence = new ArrayList<InstalledEquipmentCapacityEvidence>(
           snapshotInstalledEquipmentCapacityEvidence(processModel));
       Map<String, InstalledEquipmentCapacityEvidence> installedCapacityByIdentity = new LinkedHashMap<String, InstalledEquipmentCapacityEvidence>();
@@ -3626,6 +3876,22 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       boolean feasible = processModel.isModelConverged();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
         ConstraintDefinition constraint = constraints.get(constraintIndex);
+        ProcessBoundaryConstraintEvidence evaluatedBoundary = null;
+        if (constraint.isBoundaryConstraint()) {
+          ProcessBoundaryConstraintEvidence.Sample sample = constraint.evaluateBoundarySample(processModel);
+          evaluatedBoundary = new ProcessBoundaryConstraintEvidence(constraint.getBoundaryMetadata(), constraint,
+              sample, constraint.getBoundaryResidualScale());
+          boundaryEvidence.add(evaluatedBoundary);
+          constraintValues[constraintIndex] = evaluatedBoundary.getSampledValue();
+          margins[constraintIndex] = evaluatedBoundary.getSignedMargin();
+          if (!evaluatedBoundary.isCalculable()) {
+            penaltySum += constraint.getPenaltyWeight();
+            if (constraint.isHard()) {
+              feasible = false;
+            }
+            continue;
+          }
+        }
         InstalledEquipmentCapacityEvidence capacityEvidence = null;
         if (constraint.isCapacityConstraint() && "1".equals(constraint.getUnit())) {
           capacityEvidence = installedCapacityByIdentity.get(constraint.getName());
@@ -3637,14 +3903,23 @@ public class ProcessModelSimulationEvaluator implements Serializable {
             }
           }
         }
-        if (capacityEvidence == null) {
+        if (evaluatedBoundary != null) {
+          // Value and margin were derived from the single structured sample above.
+        } else if (capacityEvidence == null) {
           constraintValues[constraintIndex] = constraint.evaluate(processModel);
         } else {
           constraintValues[constraintIndex] = capacityEvidence.getNormalizedUtilization();
         }
-        margins[constraintIndex] = constraint.marginFromValue(constraintValues[constraintIndex]);
+        if (evaluatedBoundary == null) {
+          margins[constraintIndex] = constraint.marginFromValue(constraintValues[constraintIndex]);
+        }
         if (margins[constraintIndex] < 0.0) {
-          penaltySum += constraint.penaltyFromMargin(margins[constraintIndex]);
+          if (evaluatedBoundary == null) {
+            penaltySum += constraint.penaltyFromMargin(margins[constraintIndex]);
+          } else {
+            double scaledViolation = evaluatedBoundary.getScaledViolation();
+            penaltySum += constraint.getPenaltyWeight() * scaledViolation * scaledViolation;
+          }
           if (constraint.isHard()) {
             feasible = false;
           }
@@ -3655,6 +3930,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       result.setConstraintMargins(margins);
       result.setPenaltySum(penaltySum);
       result.setInstalledEquipmentCapacityEvidence(installedCapacityEvidence);
+      result.setProcessBoundaryConstraintEvidence(boundaryEvidence);
       List<BottleneckStatus> rankedCapacityConstraints = toBottleneckStatuses(installedCapacityEvidence);
       result.setRankedCapacityConstraints(rankedCapacityConstraints);
       result.setActiveBottleneck(selectActiveBottleneck(rankedCapacityConstraints));
