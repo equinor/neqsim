@@ -11,6 +11,7 @@ Documentation for mass transfer columns in NeqSim.
 - [Overview](#overview)
 - [Absorber](#absorber)
 - [Stripper](#stripper)
+- [Rigorous Tray Absorber](#rigorous-tray-absorber)
 - [Simple Absorber](#simple-absorber)
 - [Simple TEG Absorber](#simple-teg-absorber)
 - [Simple Amine Absorber](#simple-amine-absorber)
@@ -27,6 +28,7 @@ Documentation for mass transfer columns in NeqSim.
 **Classes:**
 | Class                   | Description                                           |
 | ----------------------- | ----------------------------------------------------- |
+| `AbsorptionColumn`      | Rigorous counter-current equilibrium-tray absorber with Murphree efficiencies |
 | `SimpleAbsorber`        | Simplified absorber model (base class)                |
 | `SimpleTEGAbsorber`     | TEG dehydration with Fs-factor sizing                 |
 | `SimpleAmineAbsorber`   | Amine gas sweetening (MDEA, DEA, MEA)                 |
@@ -42,10 +44,10 @@ Absorbers transfer components from gas to liquid phase, while strippers transfer
 ## Absorber
 
 The absorber classes in NeqSim model gas-liquid contactors where components transfer
-from the gas phase into a liquid solvent. The `SimpleAbsorber` is the base class
-providing equilibrium-stage calculations. For TEG dehydration use `SimpleTEGAbsorber`;
-for amine gas sweetening use `SimpleAmineAbsorber`; for non-equilibrium packed-column
-mass transfer use `RateBasedPackedColumn`.
+from the gas phase into a liquid solvent. Use `AbsorptionColumn` for a rigorous
+counter-current equilibrium-tray calculation, `SimpleTEGAbsorber` for a fast TEG
+shortcut and sizing calculation, `SimpleAmineAbsorber` for a removal-efficiency amine
+model, or `RateBasedPackedColumn` when packing and local mass-transfer rates matter.
 
 ### Basic Usage (SimpleAbsorber)
 
@@ -85,6 +87,60 @@ stripper.run();
 Stream leanAmine = (Stream) stripper.getLiquidOutStream();
 Stream acidGas = (Stream) stripper.getGasOutStream();
 ```
+
+---
+
+## Rigorous Tray Absorber
+
+`AbsorptionColumn` reuses the rigorous distillation-column MESH solver without a
+condenser or reboiler. Gas enters tray 0 and solvent enters tray
+`numberOfTrays - 1`; tray numbering is bottom-up. The specified pressure values are
+in bara and stream temperatures follow the usual NeqSim unit-aware stream API.
+
+```java
+import neqsim.process.equipment.absorber.AbsorptionColumn;
+import neqsim.process.processmodel.ProcessSystem;
+
+AbsorptionColumn absorber = new AbsorptionColumn("TEG contactor", 6);
+absorber.addGasInStream(wetGas);
+absorber.addSolventInStream(leanTeg);
+absorber.setTopPressure(70.0);
+absorber.setBottomPressure(70.0);
+
+// Overall default, one-tray override, and component-specific overrides.
+absorber.setMurphreeEfficiency(0.70);
+absorber.setMurphreeEfficiency(0, 0.60);
+absorber.setComponentMurphreeEfficiency("water", 0.50);
+absorber.setComponentMurphreeEfficiency(2, "water", 0.40);
+
+ProcessSystem process = new ProcessSystem();
+process.add(wetGas);
+process.add(leanTeg);
+process.add(absorber);
+process.run();
+
+if (!absorber.solved()) {
+    throw new IllegalStateException(absorber.getConvergenceDiagnostics());
+}
+
+double massBalanceError = absorber.getMassBalance("kg/hr");
+```
+
+An efficiency of 1.0 gives an ideal equilibrium stage. A per-tray/per-component
+value has the highest priority, followed by the column-wide component value,
+the inherited per-tray value, and the inherited column-wide value. When different
+efficiencies are used for different components, the vapor composition is normalized
+and constrained by the component inventory available on the tray. The complementary
+liquid correction preserves every component on that tray.
+
+This model is intended for staged physical absorption when a thermodynamic model can
+represent both phases. For TEG-water-natural-gas systems, use a CPA model such as
+`SystemSrkCPAstatoil` with mixing rule 10. Always inspect
+`getConvergenceDiagnostics()`, total and component balances, temperature profiles,
+and sensitivity to tray count and efficiencies. The class does not currently model
+rate-based packing, tray hydraulics, reactions, entrainment, or flooding; use
+`RateBasedPackedColumn` when packed-column mass-transfer and hydraulic detail are
+required.
 
 ---
 

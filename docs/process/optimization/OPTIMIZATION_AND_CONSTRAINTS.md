@@ -16,6 +16,7 @@ This document provides an integrated view of NeqSim's optimization and constrain
 - [Overview](#overview)
 - [Constraint Framework Architecture](#constraint-framework-architecture)
   - [Core Constraint Classes](#core-constraint-classes)
+  - [Process-Boundary Constraint Evidence](#process-boundary-constraint-evidence)
   - [Equipment Capacity Strategies](#equipment-capacity-strategies)
   - [Constraint Types and Severity](#constraint-types-and-severity)
 - [Optimization Framework](#optimization-framework)
@@ -144,6 +145,38 @@ CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", Cons
 | `isNearLimit()` | `boolean` | True if above warning threshold (default 90%) |
 | `getMargin()` | `double` | Remaining headroom (1.0 - utilization) |
 | `isEnabled()` | `boolean` | True if constraint participates in capacity analysis |
+
+### Process-Boundary Constraint Evidence
+
+`ProcessModelSimulationEvaluator` can register injection, receiving-capacity, export-capacity,
+product-quality, and nomination limits as qualified process-boundary constraints. Each completed
+operating point returns immutable `ProcessBoundaryConstraintEvidence` containing:
+
+- stable area/point/constraint identity and boundary kind;
+- flow direction and an explicit mass, molar, standard-volume, actual-volume, or energy basis;
+- physical unit, fixed bounds or target/tolerance, sampled value, and signed physical margin;
+- non-negative physical violation plus a separately scaled dimensionless violation;
+- provenance, confidence, effective-period labels, applicability, calculation status, and diagnostics.
+
+Missing, non-finite, not-calculable, or explicitly out-of-validity evidence fails a hard boundary
+constraint closed. A boundary callback is sampled exactly once after the `ProcessModel` run, and
+the resulting evidence is propagated to single-action and coupled action-set evaluations. The
+`NetworkNomination` and `NetworkQualityResult` adapters retain their existing rate-basis, quality
+method, reference-condition, margin, and provenance metadata without changing the underlying
+network or thermodynamic calculation.
+
+```java
+evaluator.addNominationConstraint(
+    "sales nomination", "export", nomination, periodIndex,
+    ProcessBoundaryConstraintEvidence.FlowDirection.OUT_OF_PROCESS,
+    model -> model.getVariableValue("export::sales gas.flowRate", "kg/hr"),
+    true, 1000.0, 1000.0, "shipper nomination");
+```
+
+The residual scale is expressed in the same physical unit as the constraint. It is used only to
+form the dimensionless optimization penalty; it never changes the reported engineering value,
+limit, or margin. These APIs qualify optimization-facing evidence and do not implement nominations,
+market settlement, gas-quality physics, injection physics, or equipment solvers.
 
 ### Equipment Capacity Strategies
 

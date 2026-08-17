@@ -122,6 +122,9 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private boolean enableInterfacialPressure = false;
 
+  /** Whether the Bestion stabilizer is handled by the time integrator instead of the explicit RHS. */
+  private boolean implicitInterfacialPressure = false;
+
   /**
    * Interfacial pressure coefficient delta in the Bestion closure. The two-fluid system has real characteristics for
    * delta greater than or equal to one; a value slightly above one leaves margin. Reference: Bestion, D. (1990), "The
@@ -517,11 +520,13 @@ public class TwoFluidConservationEquations implements Serializable {
    *
    * <p>
    * Each phase velocity is clamped at zero because a transmissive boundary can only carry mass out: with a reversed
-   * velocity there is no upstream state to advect in. That clamp is correct as a boundary condition but it is also a
-   * one-way trap, because the phase momentum equations of the classical two-fluid system are ill-posed in liquid-rich
-   * flow and can develop sustained backflow. The outflow of that phase then pins at exactly zero while the inlet keeps
-   * feeding it, and the inventory grows without bound. The condition is recorded so it can be reported rather than
-   * silently producing a diverging answer.
+   * velocity there is no upstream state to advect in. Extrapolating the interior state instead lets the pressure
+   * boundary pull mass back into the domain, which was measured to inflate the liquid-rich inventory further rather
+   * than relieve it. The clamp is correct as a boundary condition but it is also a one-way trap, because the phase
+   * momentum equations of the classical two-fluid system are ill-posed in liquid-rich flow and can develop sustained
+   * backflow. The outflow of that phase then pins at exactly zero while the inlet keeps feeding it, and the inventory
+   * grows without bound. The condition is recorded so it can be reported rather than silently producing a diverging
+   * answer.
    * </p>
    *
    * @param sec the outlet pipe section
@@ -983,8 +988,8 @@ public class TwoFluidConservationEquations implements Serializable {
 
       double gasSpurious = (gasRight * pRight - gasLeft * pLeft) - sec.getGasHoldup() * dp;
       double liqSpurious = (liqRight * pRight - liqLeft * pLeft) - sec.getLiquidHoldup() * dp;
-      double gasStabiliser = deltaPi * (gasRight - gasLeft);
-      double liqStabiliser = deltaPi * (liqRight - liqLeft);
+      double gasStabiliser = implicitInterfacialPressure ? 0.0 : deltaPi * (gasRight - gasLeft);
+      double liqStabiliser = implicitInterfacialPressure ? 0.0 : deltaPi * (liqRight - liqLeft);
 
       double gasSource = (gasSpurious - gasStabiliser) * area / secDx;
       double liqSource = (liqSpurious - liqStabiliser) * area / secDx;
@@ -1031,6 +1036,31 @@ public class TwoFluidConservationEquations implements Serializable {
     double slip = sec.getGasVelocity() - sec.getLiquidVelocity();
     double deltaPi = interfacialPressureCoefficient * alphaG * alphaL * rhoG * rhoL * slip * slip / mixed;
     return Double.isFinite(deltaPi) ? Math.max(0.0, deltaPi) : 0.0;
+  }
+
+  /**
+   * Get the drift-flux slip coefficient of the interfacial pressure term.
+   *
+   * <p>
+   * Converting the two phase momentum sources {@code -delta_p_i * A * d(alpha_k)/dx} into an equation for the drift
+   * flux {@code q = alpha_g * alpha_l * (u_g - u_l)} gives {@code dq/dt = -K * d(alpha_g)/dx} with
+   * {@code K = delta_p_i * (alpha_l / rho_g + alpha_g / rho_l)}. That coefficient is what the implicit void-wave update
+   * needs, and it is not the same as the square of {@link #calcVoidWaveSpeed(TwoFluidSection)}.
+   * </p>
+   *
+   * @param sec pipe section to evaluate
+   * @return slip coefficient in m2/s2, never negative
+   */
+  public double calcVoidWaveSlipCoefficient(TwoFluidSection sec) {
+    double alphaG = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
+    double alphaL = Math.max(0.0, Math.min(1.0, sec.getLiquidHoldup()));
+    double rhoG = sec.getGasDensity();
+    double rhoL = sec.getLiquidDensity();
+    if (!enableInterfacialPressure || !(rhoG > 0.0) || !(rhoL > 0.0) || alphaG <= 0.0 || alphaL <= 0.0) {
+      return 0.0;
+    }
+    double coefficient = calcInterfacialPressureDifference(sec) * (alphaL / rhoG + alphaG / rhoL);
+    return Double.isFinite(coefficient) ? Math.max(0.0, coefficient) : 0.0;
   }
 
   /**
@@ -1594,6 +1624,15 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public void setEnableInterfacialPressure(boolean enableInterfacialPressure) {
     this.enableInterfacialPressure = enableInterfacialPressure;
+  }
+
+  /**
+   * Select whether the time integrator handles the stiff Bestion stabilizer implicitly.
+   *
+   * @param implicitInterfacialPressure true to omit the stabilizer from the explicit RHS
+   */
+  public void setImplicitInterfacialPressure(boolean implicitInterfacialPressure) {
+    this.implicitInterfacialPressure = implicitInterfacialPressure;
   }
 
   /**

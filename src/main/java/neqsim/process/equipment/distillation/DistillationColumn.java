@@ -12005,7 +12005,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param trayIndex index of the tray in the {@code trays} list
    */
-  private void applyMurphreeCorrection(int trayIndex) {
+  protected void applyMurphreeCorrection(int trayIndex) {
     double emv = getEffectiveMurphreeEfficiency(trayIndex);
     if (emv >= 1.0 - 1e-10) {
       return; // ideal tray, no correction needed
