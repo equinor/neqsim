@@ -313,10 +313,10 @@ class NativeEngineeringDiagramRendererTest {
 
   private static EngineeringNode connectionNode(String id, String sourceEndpointId, String targetEndpointId,
       String sourceEquipment, String targetEquipment, boolean recycle) {
-    return new EngineeringNode(id, EngineeringNode.Kind.PIPE_SEGMENT, id, id)
-        .putProperty("connectionType", "MATERIAL").putProperty("sourceEndpointId", sourceEndpointId)
-        .putProperty("targetEndpointId", targetEndpointId).putProperty("sourceEquipment", sourceEquipment)
-        .putProperty("targetEquipment", targetEquipment).putProperty("recycle", Boolean.valueOf(recycle));
+    return new EngineeringNode(id, EngineeringNode.Kind.PIPE_SEGMENT, id, id).putProperty("connectionType", "MATERIAL")
+        .putProperty("sourceEndpointId", sourceEndpointId).putProperty("targetEndpointId", targetEndpointId)
+        .putProperty("sourceEquipment", sourceEquipment).putProperty("targetEquipment", targetEquipment)
+        .putProperty("recycle", Boolean.valueOf(recycle));
   }
 
   private static String pointsForSemanticId(String svg, String semanticId) {
