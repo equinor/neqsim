@@ -518,9 +518,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
       ComponentInventory liquidInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 1);
       SystemInterface liqTemp = mixedStream.getThermoSystem().phaseToSystem(1);
-      liqTemp.setPhaseType(0, PhaseType.AQUEOUS);
       liquidInventory.requireUnchanged(liqTemp, "liquid phase extraction");
       runInventoryCheckedInitialization(liqTemp, () -> liqTemp.init(2), "liquid outlet init(2)");
+      liqTemp.setPhaseType(0, PhaseType.AQUEOUS);
       solventOutStream.setThermoSystem(liqTemp);
       // System.out.println("solvent total number of water " +
       // solventOutStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
