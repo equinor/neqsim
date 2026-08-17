@@ -12,7 +12,7 @@ This guide provides comprehensive documentation on mixing rules available in Neq
 4. [Huron-Vidal Mixing Rules](#4-huron-vidal-mixing-rules)
 5. [Wong-Sandler Mixing Rule](#5-wong-sandler-mixing-rule)
 6. [CPA Mixing Rules](#6-cpa-mixing-rules)
-7. [Søreide-Whitson Mixing Rule](#7-søreide-whitson-mixing-rule)
+7. [Søreide-Whitson Mixing Rule](#7-sreide-whitson-mixing-rule)
 8. [Binary Interaction Parameters (kij)](#8-binary-interaction-parameters-kij)
 9. [Complete Reference Table](#9-complete-reference-table)
 10. [Examples by Application](#10-examples-by-application)
