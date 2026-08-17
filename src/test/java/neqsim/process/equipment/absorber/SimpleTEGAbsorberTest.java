@@ -3,7 +3,9 @@ package neqsim.process.equipment.absorber;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
@@ -13,7 +15,9 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class SimpleTEGAbsorberTest extends NeqSimTest {
   private static final double BALANCE_TOLERANCE_KG_PER_HOUR = 1.0e-6;
@@ -52,6 +56,53 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
       }
     }
     return componentNames;
+  }
+
+  private static Map<String, Double> componentMoles(SystemInterface system) {
+    Map<String, Double> componentMoles = new LinkedHashMap<String, Double>();
+    for (int componentNumber = 0; componentNumber < system.getPhase(0).getNumberOfComponents(); componentNumber++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentNumber);
+      componentMoles.put(component.getName(), component.getNumberOfmoles());
+    }
+    return componentMoles;
+  }
+
+  private static void assertFlashInventory(Map<String, Double> expectedMoles, SystemInterface system, String step) {
+    double expectedTotal = 0.0;
+    for (Map.Entry<String, Double> entry : expectedMoles.entrySet()) {
+      double activePhaseMoles = 0.0;
+      for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+        activePhaseMoles += system.getPhase(phaseNumber).getComponent(entry.getKey()).getNumberOfMolesInPhase();
+      }
+      double tolerance = 1.0e-9 * Math.max(1.0, Math.abs(entry.getValue()));
+      assertEquals(entry.getValue(), system.getPhase(0).getComponent(entry.getKey()).getNumberOfmoles(), tolerance,
+          step + " must preserve the reported inventory for " + entry.getKey());
+      assertEquals(entry.getValue(), activePhaseMoles, tolerance,
+          step + " phases must recombine to the feed inventory for " + entry.getKey());
+      expectedTotal += entry.getValue();
+    }
+    assertEquals(expectedTotal, system.getTotalNumberOfMoles(), 1.0e-9 * Math.max(1.0, expectedTotal),
+        step + " must preserve total moles");
+  }
+
+  private static double maximumLogFugacityResidual(SystemInterface system) {
+    if (system.getNumberOfPhases() != 2) {
+      return 0.0;
+    }
+    double maximumResidual = 0.0;
+    for (int componentNumber = 0; componentNumber < system.getPhase(0).getNumberOfComponents(); componentNumber++) {
+      if (system.getPhase(0).getComponent(componentNumber).getz() <= 1.0e-50) {
+        continue;
+      }
+      double firstLogFugacity = Math
+          .log(Math.max(system.getPhase(0).getComponent(componentNumber).getx(), Double.MIN_NORMAL))
+          + Math.log(system.getPhase(0).getComponent(componentNumber).getFugacityCoefficient());
+      double secondLogFugacity = Math
+          .log(Math.max(system.getPhase(1).getComponent(componentNumber).getx(), Double.MIN_NORMAL))
+          + Math.log(system.getPhase(1).getComponent(componentNumber).getFugacityCoefficient());
+      maximumResidual = Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
+    }
+    return maximumResidual;
   }
 
   private static AbsorberCase runAbsorberCase(boolean setTargetWater) {
@@ -143,10 +194,41 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     return new AbsorberCase(wetGas, leanTeg, absorber);
   }
 
-  private static void assertConservativeOutlets(AbsorberCase absorberCase) {
-    StreamInterface dryGas = absorberCase.absorber.getGasOutStream();
-    StreamInterface richTeg = absorberCase.absorber.getLiquidOutStream();
+  private static void assertLowPressureFeedFlashConsistency(AbsorberCase absorberCase) {
+    SystemInterface wetGas = absorberCase.wetGas.getFluid();
+    SystemInterface leanTeg = absorberCase.leanTeg.getFluid();
+    SystemInterface mixedFeed = wetGas.clone();
+    mixedFeed.setNumberOfPhases(2);
+    mixedFeed.init(0);
+    mixedFeed.addFluid(leanTeg);
+    mixedFeed.init_x_y();
+    mixedFeed.initBeta();
+    mixedFeed.init(2);
+    Map<String, Double> expectedMoles = componentMoles(mixedFeed);
 
+    wetGas.init(3);
+    leanTeg.init(3);
+    double targetEnthalpy = wetGas.getEnthalpy() + leanTeg.getEnthalpy();
+    double guessTemperature = (wetGas.getTemperature() * wetGas.getTotalNumberOfMoles()
+        + leanTeg.getTemperature() * leanTeg.getTotalNumberOfMoles()) / mixedFeed.getTotalNumberOfMoles();
+    mixedFeed.setTemperature(guessTemperature);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(mixedFeed);
+    operations.TPflash();
+    assertFlashInventory(expectedMoles, mixedFeed, "TP flash");
+    operations.PHflash(targetEnthalpy, 0);
+    mixedFeed.init(2);
+    assertFlashInventory(expectedMoles, mixedFeed, "PH flash");
+
+    double relativeEnthalpyResidual = Math.abs(mixedFeed.getEnthalpy() - targetEnthalpy)
+        / Math.max(1.0, Math.abs(targetEnthalpy));
+    assertTrue(relativeEnthalpyResidual < 1.0e-8,
+        "PH flash relative enthalpy residual was " + relativeEnthalpyResidual);
+    double fugacityResidual = maximumLogFugacityResidual(mixedFeed);
+    assertTrue(fugacityResidual < 1.0e-8, "Maximum log-fugacity residual was " + fugacityResidual);
+  }
+
+  private static void assertPortBalances(AbsorberCase absorberCase, StreamInterface dryGas, StreamInterface richTeg) {
     double wetWaterFlow = componentFlow(absorberCase.wetGas, "water");
     double leanWaterFlow = componentFlow(absorberCase.leanTeg, "water");
     double dryWaterFlow = componentFlow(dryGas, "water");
@@ -169,16 +251,28 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
       assertEquals(inletComponentFlow, outletComponentFlow, BALANCE_TOLERANCE_KG_PER_HOUR,
           "The absorber component balance must close for " + componentName);
     }
+  }
+
+  private static void assertConservativeOutlets(AbsorberCase absorberCase) {
+    StreamInterface dryGas = absorberCase.absorber.getGasOutStream();
+    StreamInterface richTeg = absorberCase.absorber.getLiquidOutStream();
+
+    assertPortBalances(absorberCase, dryGas, richTeg);
     assertEquals(1, dryGas.getFluid().getNumberOfPhases(), "The gas outlet must contain one phase");
     assertEquals(PhaseType.GAS, dryGas.getFluid().getPhase(0).getType());
     assertEquals(1, richTeg.getFluid().getNumberOfPhases(), "The rich-TEG outlet must contain one phase");
     assertEquals(PhaseType.AQUEOUS, richTeg.getFluid().getPhase(0).getType(),
         "The rich-TEG outlet must retain its aqueous identity");
 
+    Stream dryGasPassThrough = new Stream("dry gas identity check", dryGas);
     Stream richTegPassThrough = new Stream("rich TEG identity check", richTeg);
+    dryGasPassThrough.run();
     richTegPassThrough.run();
+    assertEquals(PhaseType.GAS, dryGasPassThrough.getFluid().getPhase(0).getType(),
+        "A downstream TP-flashed stream must retain the dry-gas identity");
     assertEquals(PhaseType.AQUEOUS, richTegPassThrough.getFluid().getPhase(0).getType(),
         "A downstream TP-flashed stream must retain the rich-TEG aqueous identity");
+    assertPortBalances(absorberCase, dryGasPassThrough, richTegPassThrough);
   }
 
   @Test
@@ -205,8 +299,43 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     AbsorberCase absorberCase = runLowPressureHighWaterCase();
 
     assertConservativeOutlets(absorberCase);
+    assertLowPressureFeedFlashConsistency(absorberCase);
     double inletWaterMoleFraction = absorberCase.wetGas.getFluid().getComponent("water").getz();
     assertEquals(1088.0e-6, inletWaterMoleFraction, 5.0e-6);
+    StreamInterface dryGas = absorberCase.absorber.getGasOutStream();
+    StreamInterface richTeg = absorberCase.absorber.getLiquidOutStream();
+    double dryGasWaterPpm = dryGas.getFluid().getPhase(0).getComponent("water").getx() * 1.0e6;
+    double richTegWaterMassFraction = componentFlow(richTeg, "water") / richTeg.getFlowRate("kg/hr");
+    assertEquals(55.1, dryGasWaterPpm, 2.0, "Dry-gas water must remain in the qualified process-output band");
+    assertEquals(0.0376, richTegWaterMassFraction, 1.0e-3,
+        "Rich-TEG water mass fraction must remain in the qualified process-output band");
+    assertEquals(29.2, dryGas.getTemperature("C"), 0.5, "Adiabatic contact temperature must remain stable");
+  }
+
+  @Test
+  void logicalPhaseExtractionIgnoresBackingArrayOrder() {
+    AbsorberCase absorberCase = runLowPressureHighWaterCase();
+    SystemInterface remapped = absorberCase.absorber.getOutStream().getFluid().clone();
+    int firstBackingPhase = remapped.getPhaseIndex(0);
+    int secondBackingPhase = remapped.getPhaseIndex(1);
+    remapped.setPhaseIndex(0, secondBackingPhase);
+    remapped.setPhaseIndex(1, firstBackingPhase);
+
+    SystemInterface extracted = SimpleTEGAbsorber.extractLogicalPhase(remapped, 0);
+
+    assertEquals(remapped.getPhase(0).getType(), extracted.getPhase(0).getType());
+    assertEquals(1, extracted.getNumberOfPhases());
+    for (int componentNumber = 0; componentNumber < remapped.getPhase(0).getNumberOfComponents(); componentNumber++) {
+      ComponentInterface expectedComponent = remapped.getPhase(0).getComponent(componentNumber);
+      ComponentInterface actualComponent = extracted.getPhase(0).getComponent(expectedComponent.getName());
+      double tolerance = 1.0e-10 * Math.max(1.0, expectedComponent.getNumberOfMolesInPhase());
+      assertEquals(expectedComponent.getNumberOfMolesInPhase(), actualComponent.getNumberOfmoles(), tolerance,
+          "Logical phase extraction must retain " + expectedComponent.getName());
+    }
+
+    Stream extractedPassThrough = new Stream("remapped rich TEG identity check", extracted);
+    extractedPassThrough.run();
+    assertEquals(PhaseType.AQUEOUS, extractedPassThrough.getFluid().getPhase(0).getType());
   }
 
   @Test
