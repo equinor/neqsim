@@ -206,11 +206,12 @@ preserved. The source evaluation is local and retains no stage history.
 
 This mode is opt-in for migration compatibility. The legacy force scaling remains the default
 because the corrected closure, although numerically stable, is not yet quantitatively validated by
-the public Tengesdal severe-slugging benchmark. Without relaxing its acceptance bounds, the opt-in
-model passes 3 of 6 cases: its smallest pressure swing is 167.1 kPa against 98 +/- 5 kPa, its slug
-length ratio is 1.164, and the 16-section, 0.1 s case does not establish a repeated cycle. The
-compatibility default continues to pass all 6 cases. These results indicate a remaining closure or
-regime-transition limitation rather than a stiff-source instability.
+the public Tengesdal severe-slugging benchmark. That comparison was made when the benchmark still
+asserted a riser-head-scaled pressure swing, which has since been shown to come from a saturated
+minimum-slip bound rather than the momentum balance, so the recorded pass counts predate the
+rebased acceptance bounds and the comparison has to be repeated before it means anything. These
+results indicate a remaining closure or regime-transition limitation rather than a stiff-source
+instability.
 
 #### Optional virtual-mass coupling
 
@@ -530,32 +531,53 @@ a conservative screen but is not a high-specificity classifier and must not be d
 quantitative dynamic validation.
 
 The slow dynamic benchmark reproduces large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
-$v_{SG}=1.00$ m/s). Severe slugging in this configuration is a **deterministically chaotic** limit
-cycle: a relative inlet-pressure perturbation of $10^{-12}$, twelve orders of magnitude below the
-digitization uncertainty of the source figure, moves the peak-to-peak riser-base pressure by more
-than a factor of two and the apparent cycle period by more than a factor of 1.5. Instantaneous
-extremes taken from a single trajectory are therefore not reproducible across platforms, compilers
-or JIT states, and the benchmark deliberately does not assert numerical agreement on them.
+$v_{SG}=1.00$ m/s). **The model reproduces the liquid side of severe slugging and not the pressure
+side.** The outlet liquid rate blows out to about twice the liquid feed and falls back to zero on a
+repeating cycle of about 14 s, but the riser-base pressure swing is 0.06–0.08 riser hydrostatic
+heads against a measured 0.78, an under-prediction by a factor of 10–13, and the outlet slug
+tracker registers nothing.
 
-The benchmark instead evaluates a four-member ensemble — 12 sections at 0.1 s, the same case with
-the $10^{-12}$ inlet perturbation, 16 sections at 0.1 s, and 12 sections at 0.2 s — and separates
+This benchmark previously reported a riser-head-scaled swing of 0.40–0.54 heads and a tracked slug
+of about 2 m. Those results did not come from the momentum balance. The minimum-slip hold-up bound
+was written as $\alpha_L \ge \lambda_L \cdot S$, which is a slip statement only in the lean-gas
+limit: its exact slip ratio is $S\,v_{SG} / (v_{SG} + v_{SL}(1-S))$, which diverges at
+$v_{SL} = v_{SG}/(S-1)$, and as a hold-up it exceeds one for $\lambda_L > 1/S$. At this facility's
+no-slip fraction of 0.33 with $S=2$ it evaluated to 0.67, fed back through the reduced gas area,
+and saturated at its 0.9 clamp in **every** section of both the flowline and the riser. The line
+was held liquid-full by a constant and the reported cycle was that constraint oscillating. The
+bound is now inverted properly, $\alpha_L \ge X/(1+X)$ with $X = S\,v_{SL}/v_{SG}$, which is below
+one at every liquid loading; the flowline then solves to a hold-up of 0.334 with the liquid running
+downhill at 1.51 m/s against a gas velocity of 0.60 m/s.
+
+The riser is the part that is still wrong. The Taylor-bubble film in the slug closure is taken from
+an annular film balance that cannot close in a riser — the film weight exceeds the gas shear by more
+than two orders of magnitude — so the iteration stops at its 0.2 thickness clamp and returns a film
+hold-up of 0.64, which pins the riser slug unit at the 0.9 clamp. A riser that is always
+liquid-full cannot produce a riser-head pressure swing. Withdrawing the saturated film frees the
+riser and the swing rises to 1.59 heads at 16 sections, but 24 sections then gives 3.50 heads and
+reclassifies the riser as bubble flow, so that change is **not mesh converged and is not applied**.
+
+Severe slugging in this configuration is additionally a **deterministically chaotic** limit
+cycle, so instantaneous extremes taken from a single trajectory are not asserted numerically.
+
+The benchmark evaluates a four-member ensemble — 16 sections at 0.1 s, the same case with a
+$10^{-12}$ inlet perturbation, 24 sections at 0.1 s, and 16 sections at 0.2 s — and separates
 trajectory-robust from trajectory-sensitive quantities:
 
 | Quantity | Observed across the ensemble | How it is asserted |
 |----------|------------------------------|--------------------|
 | Phase-resolved and total mass closure | below $10^{-15}$ | below $10^{-10}$ |
-| Time-averaged riser-base pressure | 171–176 kPa, spread below 4% | mesh, outer-step and perturbation agreement within 8% |
+| Time-averaged riser-base pressure | 176.5–178.3 kPa, spread below 1% | mesh, outer-step and perturbation agreement within 8% |
 | Outlet-liquid blowout and fallback | present in every realization | above 1.25 and below 0.75 of the liquid feed rate |
-| Peak-to-peak riser-base pressure | 42–300 kPa | inside 0.2–4.0 riser hydrostatic heads, and the ensemble range must bracket the digitized 98 ± 5 kPa |
-| Apparent cycle period | 14–35 s | each realization above the riser filling time, and the ensemble mean asserted to stay below the experimental 38 ± 2 s |
-| Maximum tracked outlet slug | 1.5–4.9 m, or 0.10–0.33 riser heights | positive and below one riser height |
+| Peak-to-peak riser-base pressure | 7.5–10.4 kPa, or 0.060–0.083 riser heads | inside 0.02–0.20 riser heads, recorded as a known limitation |
+| Apparent cycle period | 13.2–14.4 s | each realization above the riser filling time, and the ensemble mean below the experimental 38 ± 2 s |
+| Maximum tracked outlet slug | 0 m in every realization | asserted to be zero, so a non-zero length forces re-measurement |
 
 The digitized experiment has about 98 ± 5 kPa inlet-pressure amplitude and a 38 ± 2 s cycle period.
-The modelled pressure swing is of the same order and brackets the measured value, but the cycle
-period is systematically too short and the tracked outlet slug stays well below the experimental
-severe-slug definition. Neither metric supports a claim of quantitative severe-slugging validation;
-only the regime signature, the mass closure and the time-averaged riser-base pressure are treated
-as reproducible evidence.
+Both the pressure amplitude and the cycle period are systematically under-predicted, and the
+outlet slug tracker registers nothing. None of these support a claim of quantitative
+severe-slugging validation; only the liquid blowout/fallback signature, the mass closure and the
+time-averaged riser-base pressure are treated as reproducible evidence.
 
 The dynamic reproduction uses the physical 19.81 m flowline plus riser, 0.0762 m diameter,
 atmospheric outlet, nitrogen as an air surrogate, and a single non-volatile TBP fraction fitted to
@@ -1094,8 +1116,8 @@ science, technology or product content of similar software, so no NeqSim closure
 tool and no measured deviation against one is recorded here.
 
 The public severe-slugging benchmark deliberately retains failed/limited metrics in its assertions
-and documentation. In particular, the present cycle period and slug-length result prevent a claim
-of fully quantitative severe-slugging validation.
+and documentation. In particular, the riser-base pressure amplitude, the cycle period and the
+slug-length result all prevent a claim of fully quantitative severe-slugging validation.
 
 ### Steady-state behaviour on a long gas-condensate export line
 
