@@ -130,7 +130,7 @@ public class EventScheduler implements Serializable {
      * @return immutable, non-empty identity list for a transaction-scoped event
      */
     public List<String> getTransientStateIdentities() {
-      return transientStateIdentities;
+      return Collections.unmodifiableList(new ArrayList<String>(transientStateIdentities));
     }
 
     /** {@inheritDoc} */
