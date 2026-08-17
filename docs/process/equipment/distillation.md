@@ -304,6 +304,14 @@ feed shares the first feed's component-array indices. This keeps total-condenser
 deterministic for, for example, a main C3-C5 feed plus a C3-C4 side feed on another tray. Repeated
 and nearby-point solves retain the same named component basis.
 
+The named basis also applies when a partial condenser, vapor-boilup control, external side draw, and
+pumparound are active together. The side draw remains an external product, while the pumparound
+draw and return remain one internal circulation with the configured utility duty. Pumparounds use
+the coordinated outer tear: `isLastColumnTearConverged()` and
+`getLastColumnTearResidual()` report that convergence, and exact sequential-state reuse stays
+disabled while the nonlocal return is active. A changed external feed therefore re-solves both the
+terminal products and pumparound state on the same component basis.
+
 ```java
 column.setGasSideDrawFraction(6, 0.05);
 column.setLiquidSideDrawFraction(4, 0.10);
