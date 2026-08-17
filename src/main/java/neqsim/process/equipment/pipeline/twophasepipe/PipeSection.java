@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -475,10 +476,13 @@ public class PipeSection implements Cloneable, Serializable {
    * section is wholly {@link #getFlowRegime()}.
    * </p>
    *
-   * @return weights summing to one, or null when a single regime applies
+   * @return unmodifiable snapshot of weights summing to one, or null when a single regime applies
    */
   public Map<FlowRegime, Double> getRegimeWeights() {
-    return regimeWeights;
+    if (regimeWeights == null) {
+      return null;
+    }
+    return Collections.unmodifiableMap(new EnumMap<FlowRegime, Double>(regimeWeights));
   }
 
   /**
