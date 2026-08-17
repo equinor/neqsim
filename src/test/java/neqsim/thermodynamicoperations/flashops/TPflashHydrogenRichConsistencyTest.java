@@ -15,12 +15,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 class TPflashHydrogenRichConsistencyTest {
   private static final String[] COMPONENTS = { "hydrogen", "methane", "ethane", "n-heptane", "nC10" };
-  private static final double[][] FEEDS = {
-      { 0.920, 0.060, 0.015, 0.004, 0.001 },
-      { 0.750, 0.150, 0.050, 0.040, 0.010 },
-      { 0.350, 0.450, 0.100, 0.080, 0.020 } };
-  private static final double[][] STATES = {
-      { 320.0, 20.0 }, { 300.0, 100.0 }, { 260.0, 100.0 }, { 220.0, 200.0 } };
+  private static final double[][] FEEDS = { { 0.920, 0.060, 0.015, 0.004, 0.001 },
+      { 0.750, 0.150, 0.050, 0.040, 0.010 }, { 0.350, 0.450, 0.100, 0.080, 0.020 } };
+  private static final double[][] STATES = { { 320.0, 20.0 }, { 300.0, 100.0 }, { 260.0, 100.0 }, { 220.0, 200.0 } };
 
   @Test
   void ordinaryAndMultiphaseAgreeAcrossFreshMatrix() {
@@ -65,9 +62,7 @@ class TPflashHydrogenRichConsistencyTest {
 
   @Test
   void nearbyChangedStateSweepMatchesFreshReferencesInBothDirections() {
-    double[][] path = {
-        { 230.0, 160.0 }, { 240.0, 140.0 }, { 250.0, 120.0 },
-        { 240.0, 140.0 }, { 230.0, 160.0 } };
+    double[][] path = { { 230.0, 160.0 }, { 240.0, 140.0 }, { 250.0, 120.0 }, { 240.0, 140.0 }, { 230.0, 160.0 } };
 
     for (boolean usePr : new boolean[] { false, true }) {
       double[] feed = FEEDS[1];
@@ -86,8 +81,8 @@ class TPflashHydrogenRichConsistencyTest {
     }
   }
 
-  private SystemInterface flash(boolean usePr, double[] feed, double temperature, double pressure,
-      boolean multiphase, boolean poorGuess) {
+  private SystemInterface flash(boolean usePr, double[] feed, double temperature, double pressure, boolean multiphase,
+      boolean poorGuess) {
     SystemInterface system = createSystem(usePr, feed, temperature, pressure, multiphase, poorGuess);
     new ThermodynamicOperations(system).TPflash();
     system.init(1);
@@ -136,8 +131,7 @@ class TPflashHydrogenRichConsistencyTest {
             actual.getPhase(actualPhase).getComponent(componentIndex).getx(), 1.0e-10, label);
       }
     }
-    assertRelativeEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), 1.0e-8, 1.0e-7,
-        label + " Gibbs energy");
+    assertRelativeEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), 1.0e-8, 1.0e-7, label + " Gibbs energy");
   }
 
   private Integer[] phaseOrder(SystemInterface system) {
@@ -160,8 +154,7 @@ class TPflashHydrogenRichConsistencyTest {
       for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
         double composition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
         assertTrue(Double.isFinite(composition), label + " composition must be finite");
-        assertTrue(composition >= -1.0e-14 && composition <= 1.0 + 1.0e-14,
-            label + " composition must be bounded");
+        assertTrue(composition >= -1.0e-14 && composition <= 1.0 + 1.0e-14, label + " composition must be bounded");
         compositionTotal += composition;
       }
       assertEquals(1.0, compositionTotal, 1.0e-12, label + " composition normalization");
@@ -173,8 +166,7 @@ class TPflashHydrogenRichConsistencyTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed +=
-            system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       assertEquals(feed[componentIndex], recoveredFeed, 1.0e-10, label + " component balance");
     }
@@ -182,26 +174,21 @@ class TPflashHydrogenRichConsistencyTest {
     if (system.getNumberOfPhases() == 2) {
       double maximumFugacityResidual = 0.0;
       for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
-        double firstComposition =
-            Math.max(system.getPhase(0).getComponent(componentIndex).getx(), Double.MIN_NORMAL);
-        double secondComposition =
-            Math.max(system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL);
-        double firstLogFugacity =
-            Math.log(firstComposition) + Math.log(system.getPhase(0).getComponent(componentIndex)
-                .getFugacityCoefficient());
-        double secondLogFugacity =
-            Math.log(secondComposition) + Math.log(system.getPhase(1).getComponent(componentIndex)
-                .getFugacityCoefficient());
-        maximumFugacityResidual =
-            Math.max(maximumFugacityResidual, Math.abs(firstLogFugacity - secondLogFugacity));
+        double firstComposition = Math.max(system.getPhase(0).getComponent(componentIndex).getx(), Double.MIN_NORMAL);
+        double secondComposition = Math.max(system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL);
+        double firstLogFugacity = Math.log(firstComposition)
+            + Math.log(system.getPhase(0).getComponent(componentIndex).getFugacityCoefficient());
+        double secondLogFugacity = Math.log(secondComposition)
+            + Math.log(system.getPhase(1).getComponent(componentIndex).getFugacityCoefficient());
+        maximumFugacityResidual = Math.max(maximumFugacityResidual, Math.abs(firstLogFugacity - secondLogFugacity));
       }
       assertTrue(maximumFugacityResidual < 1.0e-8,
           label + " maximum log-fugacity residual was " + maximumFugacityResidual);
     }
   }
 
-  private void assertRelativeEquals(double expected, double actual, double relativeTolerance,
-      double absoluteTolerance, String label) {
+  private void assertRelativeEquals(double expected, double actual, double relativeTolerance, double absoluteTolerance,
+      String label) {
     assertTrue(Double.isFinite(expected) && Double.isFinite(actual), label + " must be finite");
     double tolerance = Math.max(absoluteTolerance, relativeTolerance * Math.max(Math.abs(expected), Math.abs(actual)));
     assertEquals(expected, actual, tolerance, label);
