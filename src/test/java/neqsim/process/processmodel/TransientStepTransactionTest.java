@@ -81,7 +81,8 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     model.add("first-area", firstArea);
     model.add("second-area", secondArea);
     EventScheduler scheduler = new EventScheduler();
-    scheduler.scheduleEvent(1.0, "first-area-event", () -> firstUnit.addValue(10.0));
+    scheduler.scheduleTransactionalEvent(1.0, "first-area-event", () -> firstUnit.addValue(10.0),
+        firstUnit.getTransientStateIdentity());
     model.setEventScheduler(scheduler);
     UUID physicalStepId = TransientStepIdentifier.deterministicPhysicalStep("model-transaction", 0L);
 
@@ -172,6 +173,62 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     assertEquals(0.0, attachedController.getTime(), TOLERANCE);
   }
 
+  /** Scheduler actions fail closed unless every mutated participant is declared and completely covered. */
+  @Test
+  void eventActionsRequireCompleteDeclaredParticipantScope() {
+    StatefulTestUnit unit = new StatefulTestUnit("state", "event/state", 1.0);
+    ProcessSystem process = createProcess("event coverage", unit);
+    EventScheduler scheduler = new EventScheduler();
+    process.setEventScheduler(scheduler);
+
+    scheduler.scheduleEvent(1.0, "legacy callback", () -> unit.addValue(1.0));
+    TransientTransactionCoverage legacyCoverage = process.getTransientTransactionCoverage();
+    assertFalse(legacyCoverage.isComplete());
+    assertTrue(legacyCoverage.getBlockingIssues().get(0).contains("unscoped Runnable"));
+    assertThrows(IllegalStateException.class, process::beginTransientStepTransaction);
+    assertEquals(0.0, unit.getValue(), TOLERANCE);
+
+    scheduler.clear();
+    scheduler.scheduleTransactionalEvent(1.0, "unknown participant", () -> unit.addValue(1.0), "missing/state");
+    TransientTransactionCoverage unknownCoverage = process.getTransientTransactionCoverage();
+    assertFalse(unknownCoverage.isComplete());
+    assertTrue(unknownCoverage.getBlockingIssues().get(0).contains("missing/state"));
+    assertThrows(IllegalStateException.class, process::beginTransientStepTransaction);
+    assertEquals(0.0, unit.getValue(), TOLERANCE);
+
+    scheduler.clear();
+    scheduler.scheduleTransactionalEvent(1.0, "covered participant", () -> unit.addValue(1.0),
+        unit.getTransientStateIdentity());
+    assertTrue(process.getTransientTransactionCoverage().isComplete());
+    process.runTransientTransactional(1.0, TransientStepIdentifier.deterministicPhysicalStep("scoped-event", 0L));
+    assertEquals(2.0, unit.getValue(), TOLERANCE);
+  }
+
+  /** A transaction rejects scheduler replacement or a newly introduced unscoped event and rolls back in place. */
+  @Test
+  void commitRejectsSchedulerContractChanges() {
+    StatefulTestUnit unit = new StatefulTestUnit("state", "scheduler/state", 1.0);
+    ProcessSystem process = createProcess("scheduler identity", unit);
+    EventScheduler scheduler = new EventScheduler();
+    process.setEventScheduler(scheduler);
+
+    TransientStepTransaction replacement = process.beginTransientStepTransaction();
+    unit.addValue(3.0);
+    process.setEventScheduler(new EventScheduler());
+    IllegalStateException replacementFailure = assertThrows(IllegalStateException.class, replacement::commit);
+    assertTrue(replacementFailure.getMessage().contains("EventScheduler identity changed"));
+    assertSame(scheduler, process.getEventScheduler());
+    assertEquals(0.0, unit.getValue(), TOLERANCE);
+
+    TransientStepTransaction newEvent = process.beginTransientStepTransaction();
+    unit.addValue(4.0);
+    scheduler.scheduleEvent(2.0, "trial legacy callback", () -> unit.addValue(10.0));
+    IllegalStateException eventFailure = assertThrows(IllegalStateException.class, newEvent::commit);
+    assertTrue(eventFailure.getMessage().contains("EventScheduler transaction coverage became incomplete"));
+    assertTrue(scheduler.getPendingEvents().isEmpty());
+    assertEquals(0.0, unit.getValue(), TOLERANCE);
+  }
+
   /**
    * Commit retains state, close rolls open state back, and closed transactions are excluded from serialized restart
    * state.
@@ -209,7 +266,8 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
 
   private static EventScheduler scheduleIncrement(ProcessSystem process, StatefulTestUnit unit, double increment) {
     EventScheduler scheduler = new EventScheduler();
-    scheduler.scheduleEvent(1.0, "participant-increment", () -> unit.addValue(increment));
+    scheduler.scheduleTransactionalEvent(1.0, "participant-increment", () -> unit.addValue(increment),
+        unit.getTransientStateIdentity());
     process.setEventScheduler(scheduler);
     return scheduler;
   }
