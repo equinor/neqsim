@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
@@ -147,6 +145,9 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Whether a phase reversed at the transmissive outlet during the transient run. */
   private boolean transientOutletBackflowClamped = false;
+
+  /** Whether the interfacial-pressure stabilizer is advanced implicitly by the time integrator. */
+  private boolean implicitInterfacialPressureCoupling = true;
 
   /** Default closed-flow fluid-side heat-transfer coefficient in W/(m2 K). */
   private static final double DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT = 50.0;
@@ -4166,6 +4167,8 @@ public class TwoFluidPipe extends Pipeline {
     validateSectionStates();
 
     boolean isIMEX = (timeIntegrator.getMethod() == TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
+    boolean useImplicitVoidWave = equations.isEnableInterfacialPressure() && implicitInterfacialPressureCoupling;
+    equations.setImplicitInterfacialPressure(useImplicitVoidWave);
 
     // Calculate initial stable time step from the current-velocity CFL limit
     double dtCFL = isIMEX ? calcConvectiveTimeStep() : calcStableTimeStep();
@@ -4248,9 +4251,11 @@ public class TwoFluidPipe extends Pipeline {
         return derivative;
       };
 
-      // For IMEX: provide cell sound speeds and densities for implicit pressure solve
-      if (isIMEX) {
+      // Provide cell properties for the implicit acoustic and void-wave solves.
+      if (isIMEX || useImplicitVoidWave) {
         double[] soundSpeeds = new double[numberOfSections];
+        double[] voidWaveSpeeds = new double[numberOfSections];
+        double[] voidWaveSlipCoefficients = new double[numberOfSections];
         double[] densities = new double[numberOfSections];
         double[] areas = new double[numberOfSections];
         double[] gasDensities = new double[numberOfSections];
@@ -4276,11 +4281,17 @@ public class TwoFluidPipe extends Pipeline {
           double invC2 = alphaG / (rhoG * cG * cG) + alphaL / (rhoL * cL * cL);
           soundSpeeds[i] = (invC2 > 0) ? Math.sqrt(1.0 / (rhoMix * invC2)) : cG;
           soundSpeeds[i] = Math.max(soundSpeeds[i], 1.0);
+          voidWaveSpeeds[i] = equations.calcVoidWaveSpeed(sec);
+          voidWaveSlipCoefficients[i] = equations.calcVoidWaveSlipCoefficient(sec);
         }
-        boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
-            || outletBCType == BoundaryCondition.CHARACTERISTIC);
-        timeIntegrator.setIMEXProperties(soundSpeeds, densities, areas, gasDensities, oilDensities, waterDensities, dx,
-            outletPressure, outletFixed);
+        if (isIMEX) {
+          boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
+              || outletBCType == BoundaryCondition.CHARACTERISTIC);
+          timeIntegrator.setIMEXProperties(soundSpeeds, densities, areas, gasDensities, oilDensities, waterDensities,
+              dx, outletPressure, outletFixed);
+        }
+        timeIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, voidWaveSlipCoefficients, areas, gasDensities,
+            oilDensities, waterDensities, dx, useImplicitVoidWave);
       }
 
       double[][] splitState = applyStiffBubbleDragSourceStep(U_prev, 0.5 * dtFinal);
@@ -7426,6 +7437,31 @@ public class TwoFluidPipe extends Pipeline {
     if (equations != null) {
       equations.setEnableInterfacialPressure(enable);
     }
+  }
+
+  /**
+   * Select how the interfacial-pressure stabilizer is advanced in time.
+   *
+   * <p>
+   * The stabilizer carries the void wave, so treating it explicitly inside the spatial right-hand side requires a CFL
+   * number near 0.05 and makes the term impractical. The implicit treatment solves the linearized drift-flux subsystem
+   * after the transport step, which removes that restriction while leaving every phase mass and the cell total momentum
+   * unchanged. Disable only to reproduce the explicit behaviour for verification.
+   * </p>
+   *
+   * @param implicitCoupling true to advance the stabilizer implicitly
+   */
+  public void setImplicitInterfacialPressureCoupling(boolean implicitCoupling) {
+    this.implicitInterfacialPressureCoupling = implicitCoupling;
+  }
+
+  /**
+   * Whether the interfacial-pressure stabilizer is advanced implicitly.
+   *
+   * @return true when the implicit drift-flux treatment is selected
+   */
+  public boolean isImplicitInterfacialPressureCoupling() {
+    return implicitInterfacialPressureCoupling;
   }
 
   /** @return true when the interfacial pressure momentum term is applied */
