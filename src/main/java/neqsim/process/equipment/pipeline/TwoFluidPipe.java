@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
@@ -130,6 +132,18 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Bound on the Taylor bubble film holdup as a fraction of the slug body it separates. */
   private static final double SLUG_FILM_HOLDUP_FRACTION_OF_BODY = 0.9;
+
+  /**
+   * Brotz falling-film coefficient used for the liquid film draining around a Taylor bubble.
+   *
+   * <p>
+   * Value 9.916 as used by Taitel and Barnea (1990) in {@code v_film = -9.916 sqrt(g D (1 - sqrt(1 - H_film)))}.
+   * </p>
+   */
+  private static final double SLUG_FALLING_FILM_COEFFICIENT = 9.916;
+
+  /** Bisection iterations for the Taylor bubble film mass balance. */
+  private static final int SLUG_FILM_SOLVER_ITERATIONS = 60;
 
   /** Whether a phase reversed at the transmissive outlet during the transient run. */
   private boolean transientOutletBackflowClamped = false;
@@ -475,10 +489,11 @@ public class TwoFluidPipe extends Pipeline {
    * Slip factor applied to no-slip holdup to calculate adaptive minimum.
    *
    * <p>
-   * The adaptive minimum holdup is calculated as: lambdaL * minimumSlipFactor. For gas-dominant systems, typical slip
-   * ratios range from 1.5-3.0. Default value of 2.0 means minimum holdup is twice the no-slip value, which accounts for
-   * liquid accumulation due to slip. This prevents the minimum from being unrealistically high for lean gas systems
-   * with very low liquid loading.
+   * The bound states that the gas moves at least this many times faster than the liquid; see
+   * {@link #minimumSlipHoldup(double, double)} for the hold-up it implies. For gas-dominant systems typical slip ratios
+   * range from 1.5 to 3.0. The default of 2.0 reduces to twice the no-slip fraction at low liquid loading, which
+   * accounts for liquid accumulation due to slip while keeping the minimum from being unrealistically high for lean gas
+   * systems.
    * </p>
    */
   private double minimumSlipFactor = 2.0;
@@ -1108,6 +1123,7 @@ public class TwoFluidPipe extends Pipeline {
     totalDpEstimate = Math.max(totalDpEstimate, P_in * 0.01);
     totalDpEstimate = Math.min(totalDpEstimate, P_in * 0.50);
 
+    double previousInclination = 0.0;
     for (int i = 0; i < numberOfSections; i++) {
       double secDx = (sectionLengths != null) ? sectionLengths[i] : dx;
       // Cumulative position to section midpoint
@@ -1122,11 +1138,17 @@ public class TwoFluidPipe extends Pipeline {
       }
       double elevation = (elevationProfile != null && i < elevationProfile.length) ? elevationProfile[i] : 0.0;
 
-      // Calculate inclination from elevation profile
-      double inclination = 0;
-      if (elevationProfile != null && i < elevationProfile.length - 1) {
-        inclination = Math.atan2(elevationProfile[i + 1] - elevation, secDx);
+      // Inclination from the elevation profile. secDx is the cell length along the pipe axis - it is
+      // what the finite-volume fluxes use and what sums to the pipe length - so the elevation change
+      // across the cell is its vertical component and the angle is asin(dz/secDx), not atan2(dz,
+      // secDx). atan2 would treat secDx as a horizontal run and return 45 degrees for a vertical
+      // cell, leaving a riser with sin(45) = 71% of its hydrostatic head.
+      double inclination = previousInclination;
+      if (elevationProfile != null && i < elevationProfile.length - 1 && secDx > 0.0) {
+        double verticalRise = elevationProfile[i + 1] - elevation;
+        inclination = Math.asin(Math.max(-1.0, Math.min(1.0, verticalRise / secDx)));
       }
+      previousInclination = inclination;
 
       TwoFluidSection sec = new TwoFluidSection(position, secDx, diameter, inclination);
       sec.setElevation(elevation);
@@ -2566,13 +2588,14 @@ public class TwoFluidPipe extends Pipeline {
       // Apply terrain accumulation enhancement
       alphaL = applyTerrainAccumulation(sec, prev, alphaL);
 
-      // Apply minimum slip constraint. The bound is a multiple of the no-slip fraction, which is a
-      // statement that the slip ratio cannot fall below a given value and is therefore scale-free.
-      // It deliberately does NOT include a correlation-based term: see calculateAdaptiveMinimumHoldup.
+      // Apply minimum slip constraint. The bound is a statement that the slip ratio cannot fall
+      // below a given value, inverted for the hold-up it implies, so it stays a slip statement at
+      // every liquid loading. It deliberately does NOT include a correlation-based term: see
+      // calculateAdaptiveMinimumHoldup.
       if (enforceMinimumSlip && minimumSlipApplies(inclination)) {
         double effectiveMin;
         if (useAdaptiveMinimumOnly) {
-          effectiveMin = lambdaL * minimumSlipFactor;
+          effectiveMin = minimumSlipHoldup(vsG, vsL);
         } else {
           effectiveMin = minimumLiquidHoldup;
         }
@@ -2606,7 +2629,7 @@ public class TwoFluidPipe extends Pipeline {
       if (enforceMinimumSlip && minimumSlipApplies(inclination)) {
         double effectiveMin;
         if (useAdaptiveMinimumOnly) {
-          effectiveMin = lambdaL * minimumSlipFactor;
+          effectiveMin = minimumSlipHoldup(vsG, vsL);
         } else {
           effectiveMin = minimumLiquidHoldup;
         }
@@ -2671,6 +2694,41 @@ public class TwoFluidPipe extends Pipeline {
    */
   private static boolean minimumSlipApplies(double inclination) {
     return inclination >= 0.0;
+  }
+
+  /**
+   * Lowest liquid holdup consistent with the minimum slip ratio.
+   *
+   * <p>
+   * The bound states that the gas moves at least {@code minimumSlipFactor} times faster than the liquid. Writing that
+   * out, {@code S = v_SG * alphaL / (v_SL * (1 - alphaL))}, and solving for the holdup gives
+   * {@code alphaL >= X / (1 + X)} with {@code X = S * v_SL / v_SG}. The result is below one at every liquid loading,
+   * goes to zero with the liquid supply, and goes to one as the gas supply vanishes, which is what a liquid-full line
+   * at no gas flow should return.
+   * </p>
+   *
+   * <p>
+   * The form previously used, {@code alphaL >= lambdaL * S}, is the same statement only in the lean-gas limit. Its
+   * exact slip ratio is {@code S * v_SG / (v_SG + v_SL * (1 - S))}, which diverges as {@code v_SL} approaches
+   * {@code v_SG / (S - 1)} and exceeds unity as a holdup beyond {@code lambdaL > 1 / S}. Past that point the bound was
+   * no longer a slip statement but the clamp it was truncated to: on the Tengesdal (2002) severe-slugging facility, at
+   * a no-slip fraction of 0.33 and a slip factor of 2, it pinned every section of the flowline and riser at the 0.9
+   * clamp, so the whole line held a constant hold-up and the momentum balance was not used at all.
+   * </p>
+   *
+   * @param vsG superficial gas velocity, in m/s
+   * @param vsL superficial liquid velocity, in m/s
+   * @return the minimum liquid holdup, between zero and one
+   */
+  private double minimumSlipHoldup(double vsG, double vsL) {
+    if (vsL <= 0.0) {
+      return 0.0;
+    }
+    if (vsG <= 0.0) {
+      return 1.0;
+    }
+    double ratio = minimumSlipFactor * vsL / vsG;
+    return ratio / (1.0 + ratio);
   }
 
   /**
@@ -3231,6 +3289,16 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * <p>
+   * The balance is not always solvable at the position it is asked about. In a riser the film weight exceeds the gas
+   * shear by more than two orders of magnitude and the iteration stops at its thickness clamp, returning a film hold-up
+   * of 0.64 that is the clamp rather than a Taylor bubble. Taken alone that pinned the average hold-up of a riser slug
+   * unit at the 0.9 clamp of this method, so the riser of the Tengesdal (2002) benchmark held a constant 0.9 and could
+   * not drain. The film is therefore also bounded by
+   * {@link #taylorBubbleFilmHoldup(double, double, double, double, double)}, which states liquid conservation across
+   * the slug unit for a gravity-drained film and does have a root at any inclination; the smaller of the two is used.
+   * </p>
+   *
+   * <p>
    * The unit cell is kept rather than replaced by the drift-flux form {@code alpha_G = v_sG / (C0*v_m + v_d)}. Drift
    * flux also corrects the direction, but with {@code C0 > 1} and a finite drift velocity the gas fraction stays below
    * one even at zero liquid input, so it invents inventory and fails the trace-liquid degeneracy pinned by
@@ -3277,9 +3345,16 @@ public class TwoFluidPipe extends Pipeline {
     double vTB = C0 * vMix + vD;
 
     double lambdaL = vsL / vMix;
-    // Wall film under the Taylor bubble, from the annular film balance so it carries gravity.
+    // Wall film under the Taylor bubble. Two independent statements bound it: the annular wall-film
+    // momentum balance, and liquid conservation across the slug unit with a gravity-drained film.
+    // The momentum balance is written for a film carried upward by the gas core, so on a steep
+    // section, where the film weight exceeds the gas shear, it has no root and stops at its
+    // thickness clamp. Liquid conservation still has one, so the film is taken as the smaller of the
+    // two: a film cannot be thicker than the shear that supports it allows, nor thicker than the
+    // liquid the unit cell can supply against its own drainage.
     double annularFilm = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, D, theta)[1];
-    double filmHoldup = Math.max(0.1 * lambdaL, annularFilm);
+    double conservedFilm = taylorBubbleFilmHoldup(vMix, vTB, slugBodyHoldup, D, theta);
+    double filmHoldup = Math.max(0.1 * lambdaL, Math.min(annularFilm, conservedFilm));
     // The film cannot be as liquid-rich as the slug body it separates; the margin keeps the slug
     // length ratio below its own denominator.
     filmHoldup = Math.min(filmHoldup, SLUG_FILM_HOLDUP_FRACTION_OF_BODY * slugBodyHoldup);
@@ -3293,6 +3368,52 @@ public class TwoFluidPipe extends Pipeline {
     double avgHoldup = slugLengthRatio * slugBodyHoldup + (1.0 - slugLengthRatio) * filmHoldup;
 
     return Math.max(0.0, Math.min(0.9, avgHoldup));
+  }
+
+  /**
+   * Liquid hold-up of the film around a Taylor bubble, from liquid conservation across the slug unit.
+   *
+   * <p>
+   * In a frame moving with the bubble nose the liquid entering the film from the slug ahead must equal the liquid the
+   * film carries, {@code H_film (v_TB - v_film) = H_LS (v_TB - v_m)}, and the film drains under its own weight at the
+   * Brotz velocity {@code v_film = -9.916 sqrt(g D |sin(theta)| (1 - sqrt(1 - H_film)))}. This is the closure of Taitel
+   * and Barnea (1990); it is the statement the annular wall-film balance cannot make, because that balance assumes the
+   * film is dragged along with the gas and therefore has no solution once the film weight exceeds the gas shear.
+   * </p>
+   *
+   * <p>
+   * The left-hand side increases monotonically with the film hold-up while the right-hand side is fixed, so the root is
+   * unique and is found by bisection. On a level section the drainage term vanishes and the closure reduces to the
+   * classical no-drainage unit cell {@code H_film = H_LS (1 - v_m / v_TB)}. A Taylor bubble that does not overtake the
+   * mixture carries no film.
+   * </p>
+   *
+   * @param vMix mixture velocity in m/s
+   * @param vTB Taylor bubble translational velocity in m/s
+   * @param slugBodyHoldup liquid hold-up of the slug body, dimensionless and in (0, 1]
+   * @param diameterM pipe inside diameter in m
+   * @param theta pipe inclination in radians
+   * @return film liquid hold-up, dimensionless and in [0, slugBodyHoldup]
+   */
+  private double taylorBubbleFilmHoldup(double vMix, double vTB, double slugBodyHoldup, double diameterM,
+      double theta) {
+    double required = slugBodyHoldup * (vTB - vMix);
+    if (required <= 0.0) {
+      return 0.0;
+    }
+    double drainageScale = SLUG_FALLING_FILM_COEFFICIENT * Math.sqrt(9.81 * diameterM * Math.abs(Math.sin(theta)));
+    double low = 0.0;
+    double high = slugBodyHoldup;
+    for (int iteration = 0; iteration < SLUG_FILM_SOLVER_ITERATIONS; iteration++) {
+      double middle = 0.5 * (low + high);
+      double drainage = drainageScale * Math.sqrt(Math.max(0.0, 1.0 - Math.sqrt(Math.max(0.0, 1.0 - middle))));
+      if (middle * (vTB + drainage) < required) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    return 0.5 * (low + high);
   }
 
   /**
@@ -7538,8 +7659,9 @@ public class TwoFluidPipe extends Pipeline {
    * Set the slip factor used for adaptive minimum holdup calculation.
    *
    * <p>
-   * The adaptive minimum holdup is calculated as: lambdaL * minimumSlipFactor, where lambdaL is the no-slip (input)
-   * liquid fraction. This ensures physically reasonable minimum holdup for systems with varying liquid loading.
+   * The bound is the minimum ratio of gas to liquid velocity; the hold-up it implies is {@code X / (1 + X)} with
+   * {@code X = slipFactor * v_SL / v_SG}. At low liquid loading that reduces to {@code lambdaL * slipFactor}, the form
+   * this setting used to be documented as.
    * </p>
    *
    * <p>
@@ -7550,7 +7672,7 @@ public class TwoFluidPipe extends Pipeline {
    * <li>This is more reasonable than a fixed 5% minimum</li>
    * </ul>
    *
-   * @param slipFactor Multiplier for no-slip holdup (1.0-5.0), default 2.0
+   * @param slipFactor Minimum ratio of gas to liquid velocity (1.0-5.0), default 2.0
    */
   public void setMinimumSlipFactor(double slipFactor) {
     this.minimumSlipFactor = Math.max(1.0, Math.min(5.0, slipFactor));
