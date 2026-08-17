@@ -21,9 +21,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * The correlation minimum is now skipped where a mechanistic closure exists. The no-slip multiple
- * {@code lambdaL * minimumSlipFactor} still applies everywhere, since a bound on the slip ratio is dimensionally sound
- * at any scale.
+ * The correlation minimum is now skipped where a mechanistic closure exists. The slip bound itself still applies on
+ * level and uphill sections, since a bound on the slip ratio is dimensionally sound at any scale; on a lean gas line it
+ * reduces to the no-slip multiple {@code lambdaL * minimumSlipFactor}.
  * </p>
  *
  * @author NeqSim

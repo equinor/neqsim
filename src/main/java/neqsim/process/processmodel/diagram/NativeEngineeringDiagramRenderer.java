@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.EvidenceState;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolConvention;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolShape;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Drawing;
@@ -175,31 +179,65 @@ public final class NativeEngineeringDiagramRenderer {
 
   private final EngineeringDiagramDocumentSet documentSet;
   private final SheetFormat format;
+  private final EngineeringDiagramConventionRegister conventionRegister;
 
   /**
-   * Creates an A3-landscape native renderer.
+   * Creates an A3-landscape native renderer using byte-compatible legacy rectangle defaults.
    *
    * @param documentSet immutable controlled engineering-diagram document set
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet) {
-    this(documentSet, SheetFormat.A3_LANDSCAPE);
+    this(documentSet, SheetFormat.A3_LANDSCAPE, new EngineeringDiagramConventionRegister());
   }
 
   /**
-   * Creates a native renderer with explicit controlled sheet geometry.
+   * Creates a native renderer with explicit controlled sheet geometry and legacy rectangle defaults.
    *
    * @param documentSet immutable controlled engineering-diagram document set
    * @param format paper geometry
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format) {
+    this(documentSet, format, new EngineeringDiagramConventionRegister());
+  }
+
+  /**
+   * Creates an A3-landscape native renderer with explicit project symbol conventions.
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param conventionRegister evidence-bearing project symbol conventions
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet,
+      EngineeringDiagramConventionRegister conventionRegister) {
+    this(documentSet, SheetFormat.A3_LANDSCAPE, conventionRegister);
+  }
+
+  /**
+   * Creates a native renderer with explicit sheet geometry and project symbol conventions.
+   *
+   * <p>
+   * An empty convention register preserves the legacy rectangle bytes. A non-empty register applies only its exact
+   * canonical-node-kind mappings and reports every visible unmapped node through a structured fallback diagnostic.
+   * Generic renderer-native shapes do not claim standards conformance or drawing approval.
+   * </p>
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param format paper geometry
+   * @param conventionRegister evidence-bearing project symbol conventions
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
+      EngineeringDiagramConventionRegister conventionRegister) {
     if (documentSet == null) {
       throw new IllegalArgumentException("documentSet must not be null");
     }
     if (format == null) {
       throw new IllegalArgumentException("format must not be null");
     }
+    if (conventionRegister == null) {
+      throw new IllegalArgumentException("conventionRegister must not be null");
+    }
     this.documentSet = documentSet;
     this.format = format;
+    this.conventionRegister = conventionRegister;
   }
 
   /**
@@ -211,6 +249,7 @@ public final class NativeEngineeringDiagramRenderer {
     List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
     addDocumentDiagnostics(diagnostics);
     Map<String, SemanticObject> objects = objectsById();
+    addConventionDiagnostics(objects, diagnostics);
     List<Page> pages = new ArrayList<Page>();
     for (Drawing drawing : documentSet.getDrawings()) {
       for (Sheet sheet : drawing.getSheets()) {
@@ -334,6 +373,35 @@ public final class NativeEngineeringDiagramRenderer {
         severity = Severity.ERROR;
       }
       diagnostics.add(diagnostic(severity, source.getCode(), source.getMessage(), source.getSubjectId()));
+    }
+  }
+
+  private void addConventionDiagnostics(Map<String, SemanticObject> objects, List<Diagnostic> diagnostics) {
+    if (conventionRegister.isEmpty()) {
+      return;
+    }
+    Map<String, SemanticObject> visibleObjects = new TreeMap<String, SemanticObject>();
+    for (Drawing drawing : documentSet.getDrawings()) {
+      for (Sheet sheet : drawing.getSheets()) {
+        for (String objectId : sheet.getObjectNodeIds()) {
+          SemanticObject object = objects.get(objectId);
+          if (object != null && isDrawableNode(object.getKind())) {
+            visibleObjects.put(objectId, object);
+          }
+        }
+      }
+    }
+    for (SemanticObject object : visibleObjects.values()) {
+      SymbolConvention convention = conventionRegister.getSymbolConvention(object.getKind());
+      if (convention == null) {
+        diagnostics.add(
+            diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SYMBOL_FALLBACK", "No project symbol convention exists for "
+                + object.getKind().name() + "; the legacy rectangle fallback was retained", object.getId()));
+      } else if (convention.getEvidenceState() == EvidenceState.PROPOSED) {
+        diagnostics.add(diagnostic(Severity.INFO, "DIAGRAM_RENDER_SYMBOL_CONVENTION_PROPOSAL",
+            "Project symbol convention is proposed and does not imply standards qualification or drawing approval",
+            object.getId()));
+      }
     }
   }
 
@@ -503,14 +571,38 @@ public final class NativeEngineeringDiagramRenderer {
   }
 
   private void addObject(Page page, SemanticObject object, Point position) {
-    double x = position.x - OBJECT_WIDTH / 2.0;
-    double y = position.y - OBJECT_HEIGHT / 2.0;
-    String fill = object.getKind() == EngineeringNode.Kind.EQUIPMENT ? "#eef6ee" : "#eff6ff";
-    page.commands.add(Command.rect(x, y, OBJECT_WIDTH, OBJECT_HEIGHT, "#1f2937", fill, 0.7, object.getId(), ""));
+    SymbolConvention convention = conventionRegister.getSymbolConvention(object.getKind());
+    SymbolShape shape = convention == null ? SymbolShape.RECTANGLE : convention.getShape();
+    String stroke = convention == null ? "#1f2937" : convention.getStrokeColor();
+    String fill = convention == null ? (object.getKind() == EngineeringNode.Kind.EQUIPMENT ? "#eef6ee" : "#eff6ff")
+        : convention.getFillColor();
+    page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
     String primary = displayLabel(object);
     page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
     page.commands.add(
         Command.text(position.x, position.y + 4.0, 2.0, object.getKind().name(), "#4b5563", object.getId(), "middle"));
+  }
+
+  private static Command symbolCommand(SymbolShape shape, Point position, String stroke, String fill, String objectId) {
+    double left = position.x - OBJECT_WIDTH / 2.0;
+    double top = position.y - OBJECT_HEIGHT / 2.0;
+    if (shape == SymbolShape.DIAMOND) {
+      return Command
+          .polygon(
+              Arrays.asList(new Point(position.x, top), new Point(position.x + OBJECT_WIDTH / 2.0, position.y),
+                  new Point(position.x, top + OBJECT_HEIGHT), new Point(left, position.y)),
+              stroke, fill, 0.7, objectId);
+    }
+    if (shape == SymbolShape.HEXAGON) {
+      double shoulder = OBJECT_WIDTH / 4.0;
+      return Command.polygon(
+          Arrays.asList(new Point(left + shoulder, top), new Point(left + OBJECT_WIDTH - shoulder, top),
+              new Point(left + OBJECT_WIDTH, position.y),
+              new Point(left + OBJECT_WIDTH - shoulder, top + OBJECT_HEIGHT),
+              new Point(left + shoulder, top + OBJECT_HEIGHT), new Point(left, position.y)),
+          stroke, fill, 0.7, objectId);
+    }
+    return Command.rect(left, top, OBJECT_WIDTH, OBJECT_HEIGHT, stroke, fill, 0.7, objectId, "");
   }
 
   private void addTitleBlock(Page page, Drawing drawing, Sheet sheet) {
@@ -925,6 +1017,11 @@ public final class NativeEngineeringDiagramRenderer {
           strokeWidth, dash, id, "", protectedGeometry);
     }
 
+    private static Command polygon(List<Point> points, String stroke, String fill, double strokeWidth, String id) {
+      return new Command("polygon", new ArrayList<Point>(points), 0.0, 0.0, 0.0, 0.0, 0.0, "", stroke, fill,
+          strokeWidth, "", id, "", false);
+    }
+
     private static Command text(double x, double y, double size, String text, String fill, String id, String anchor) {
       return new Command("text", Collections.<Point>emptyList(), x, y, 0.0, 0.0, size, text, "none", fill, 0.0, "", id,
           anchor, false);
@@ -942,7 +1039,7 @@ public final class NativeEngineeringDiagramRenderer {
           result.append(" text-anchor=\"").append(anchor).append("\"");
         }
       } else {
-        result.append("polyline points=\"");
+        result.append("polygon".equals(type) ? "polygon points=\"" : "polyline points=\"");
         for (int index = 0; index < points.size(); index++) {
           if (index > 0) {
             result.append(' ');
@@ -1020,6 +1117,9 @@ public final class NativeEngineeringDiagramRenderer {
             .append(' ').append(number(height * MM_TO_POINT)).append(" re ");
         result.append("none".equals(fill) ? "S\n" : "B\n");
       } else if (!points.isEmpty()) {
+        if ("polygon".equals(type) && !"none".equals(fill)) {
+          result.append(rgb(fill, false)).append(' ');
+        }
         Point first = points.get(0);
         result.append(number(first.x * MM_TO_POINT)).append(' ').append(number((pageHeight - first.y) * MM_TO_POINT))
             .append(" m ");
@@ -1028,7 +1128,11 @@ public final class NativeEngineeringDiagramRenderer {
           result.append(number(point.x * MM_TO_POINT)).append(' ').append(number((pageHeight - point.y) * MM_TO_POINT))
               .append(" l ");
         }
-        result.append("S\n");
+        if ("polygon".equals(type)) {
+          result.append("h ").append("none".equals(fill) ? "S\n" : "B\n");
+        } else {
+          result.append("S\n");
+        }
       }
       return result.toString();
     }

@@ -241,9 +241,8 @@ Fixed-floor mode is opt-in and should be supported by fluid, wall-wetting, and f
 |--------|---------|-------------|
 | `setUseAdaptiveMinimumOnly(boolean)` | `true` | Use correlation-only minimum (no absolute floor) |
 | `setMinimumLiquidHoldup(double)` | 0.001 | Absolute minimum holdup floor (when adaptive-only is false) |
-| `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup in adaptive mode |
+| `setMinimumSlipFactor(double)` | 2.0 | Minimum ratio of gas to liquid velocity in adaptive mode |
 | `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum slip constraint entirely |
-| `setUseEquilibriumLevelAnnularTransition(boolean)` | `false` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
 | `setUseEquilibriumLevelAnnularTransition(boolean)` | `true` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
 | `setSeparatedFrictionModel(boolean)` | `true` | Charge each phase its own wall shear where the phases are separated |
 
@@ -251,6 +250,12 @@ The minimum slip constraint states that the gas outruns the liquid by at least t
 gas-driven transport, so it is applied only on level and uphill sections. On a downhill section gravity moves the
 liquid and the slip ratio legitimately falls; applying the bound there overwrote the momentum balance with a constant,
 and it was binding on 39 of 42 downhill sections of an undulating fixture while binding on none of the uphill ones.
+
+The bound is inverted from the slip ratio itself, `alphaL >= X / (1 + X)` with `X = slipFactor * vsL / vsG`, which is
+below one at every liquid loading. The earlier form `alphaL >= lambdaL * slipFactor` is the same statement only in the
+lean-gas limit; past `lambdaL > 1 / slipFactor` it exceeds one as a hold-up and degenerates into the clamp it was
+truncated to, which is how the Tengesdal severe-slugging facility came to be held liquid-full at a constant 0.9 in
+every section.
 
 The horizontal annular criterion follows the equilibrium liquid level of Taitel and Dukler (1976). Disabling it
 restores the vertical droplet-entrainment threshold, which classified effectively any horizontal gas pipeline as
@@ -474,11 +479,11 @@ a bubble-size distribution, deformation, coalescence, breakup, or turbulent-diss
 
 The stiff corrected mode is opt-in. Existing simulations retain the legacy `C_D × d_b/(4D)` scaling
 unless enabled, because the corrected mode is not yet quantitatively validated by the public
-Tengesdal severe-slugging benchmark. With the published bounds unchanged, the compatibility default
-passes 6 of 6 cases, while the stable corrected mode passes 3 of 6. Its smallest pressure swing is
-167.1 kPa against 98 +/- 5 kPa, its slug-length ratio is 1.164, and the 16-section, 0.1 s case does
-not establish a repeated cycle. This is a documented physical closure/regime-transition limitation,
-not evidence of numerical source instability.
+Tengesdal severe-slugging benchmark. That comparison was made when the benchmark still asserted a
+riser-head-scaled pressure swing, which has since been shown to come from a saturated minimum-slip
+bound rather than the momentum balance, so the recorded pass counts predate the rebased acceptance
+bounds and the comparison has to be repeated before it means anything. This is a documented
+physical closure/regime-transition limitation, not evidence of numerical source instability.
 
 #### Hart et al. (1989) Correlation
 
