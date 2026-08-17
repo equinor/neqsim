@@ -123,4 +123,45 @@ public class TwoFluidPipeTransientNullTest {
     Assertions.assertTrue(pipe.getLiquidInventory("m3") < 0.9 * PIPE_VOLUME,
         "liquid must not fill the line under steady inflow");
   }
+
+  /**
+   * The outlet trap that drives the two defects above must not be silent.
+   *
+   * <p>
+   * Until the closure is fixed the liquid-rich transient is not a solution, so the caller has to be able to find that
+   * out. Both disabled tests above are the same trap seen from two sides, and both start with a phase reversing at the
+   * transmissive outlet, so that reversal is what gets reported.
+   * </p>
+   */
+  @Test
+  void testLiquidRichOutletBackflowIsReportedAndClearedByANewSteadySolve() {
+    TwoFluidPipe pipe = buildPipe(true, 50.0);
+    Assertions.assertFalse(pipe.isTransientOutletBackflowClamped(),
+        "a freshly solved steady state must not report outlet backflow");
+
+    int firstTrip = -1;
+    for (int i = 0; i < 120 && firstTrip < 0; i++) {
+      pipe.runTransient(5.0, null);
+      if (pipe.isTransientOutletBackflowClamped()) {
+        firstTrip = i;
+      }
+    }
+    Assertions.assertTrue(firstTrip >= 0,
+        "the liquid-rich runaway must announce itself, but 120 steps passed without a backflow report");
+
+    pipe.run();
+    Assertions.assertFalse(pipe.isTransientOutletBackflowClamped(),
+        "a new steady solve must clear the transient diagnostic");
+  }
+
+  /** A healthy line must not raise the diagnostic, or it is worthless as a gate. */
+  @Test
+  void testGasDominatedTransientDoesNotReportOutletBackflow() {
+    TwoFluidPipe pipe = buildPipe(false, 40.0);
+    for (int i = 0; i < 120; i++) {
+      pipe.runTransient(5.0, null);
+    }
+    Assertions.assertFalse(pipe.isTransientOutletBackflowClamped(),
+        "a gas-dominated line holding its own steady state must not report outlet backflow");
+  }
 }

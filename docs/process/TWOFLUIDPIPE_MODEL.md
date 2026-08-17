@@ -1028,6 +1028,31 @@ rate. `isSteadyStatePressureFloorLimited()` makes that case visible, and `isStea
 is withheld. `PipeBeggsAndBrills` throws `Outlet pressure is negative` on the same condition, so
 both codes agree that such a case has no solution.
 
+### Always check the transient outcome too
+
+`runTransient(dt, id)` has the same property: it does not throw when the answer stops being a
+solution, so the outcome has to be read back.
+
+| Query | Meaning when true |
+|-------|-------------------|
+| `isTransientOutletBackflowClamped()` | A phase reversed at the outlet and its outflow is pinned at zero |
+
+```java
+pipe.runTransient(dt, null);
+if (pipe.isTransientOutletBackflowClamped()) {
+  throw new IllegalStateException("Transient liquid inventory is running away");
+}
+```
+
+**Why outlet backflow matters.** The outlet is transmissive: it can carry mass out but not in, so a
+reversed phase velocity is clamped to zero. That is correct as a boundary condition and is also a
+one-way trap. The phase momentum equations of the classical two-fluid system are ill-posed at high
+liquid fraction and can develop sustained backflow, after which the outflow of that phase pins at
+exactly 0 kg/s while the inlet keeps feeding the line and the inventory grows without bound. The
+finite-volume balance still closes to machine precision throughout, so nothing else reports a
+problem — this flag is the only warning. Gas-dominated lines do not show it.
+`setEnableInterfacialPressure(true)` removes it, at the cost of a much smaller stable time step.
+
 ### Direct electrical heating (DEH)
 
 A uniform electrical heat input can be added to the energy equation, in steady state and in

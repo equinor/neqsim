@@ -129,6 +129,15 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private double interfacialPressureCoefficient = 1.2;
 
+  /**
+   * Whether the transmissive outlet has had to suppress a reversed phase velocity.
+   *
+   * <p>
+   * Sticky once set, so a caller can ask after a sequence of steps. Cleared with {@link #clearOutletBackflowClamped()}.
+   * </p>
+   */
+  private boolean outletBackflowClamped = false;
+
   /** Interface gas holdup used by the pressure part of the momentum flux, one per interface. */
   private double[] interfaceGasHoldup = new double[0];
 
@@ -506,12 +515,25 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Calculate outlet flux using upwind scheme (transmissive boundary).
    *
+   * <p>
+   * Each phase velocity is clamped at zero because a transmissive boundary can only carry mass out: with a reversed
+   * velocity there is no upstream state to advect in. That clamp is correct as a boundary condition but it is also a
+   * one-way trap, because the phase momentum equations of the classical two-fluid system are ill-posed in liquid-rich
+   * flow and can develop sustained backflow. The outflow of that phase then pins at exactly zero while the inlet keeps
+   * feeding it, and the inventory grows without bound. The condition is recorded so it can be reported rather than
+   * silently producing a diverging answer.
+   * </p>
+   *
    * @param sec the outlet pipe section
    * @return array of flux values for each conserved variable
    */
   private double[] calcOutletFlux(TwoFluidSection sec) {
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
+
+    if (sec.getGasVelocity() < 0.0 || sec.getOilVelocity() < 0.0 || sec.getWaterVelocity() < 0.0) {
+      outletBackflowClamped = true;
+    }
 
     // Gas flux (positive velocity means outflow) - use default density if not set
     double rhoG = sec.getGasDensity();
@@ -1572,6 +1594,20 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public void setEnableInterfacialPressure(boolean enableInterfacialPressure) {
     this.enableInterfacialPressure = enableInterfacialPressure;
+  }
+
+  /**
+   * Whether the transmissive outlet has had to suppress a reversed phase velocity.
+   *
+   * @return true when at least one phase reversed at the outlet since the flag was last cleared
+   */
+  public boolean isOutletBackflowClamped() {
+    return outletBackflowClamped;
+  }
+
+  /** Clear the outlet backflow record. */
+  public void clearOutletBackflowClamped() {
+    this.outletBackflowClamped = false;
   }
 
   /** @return interfacial pressure coefficient delta */

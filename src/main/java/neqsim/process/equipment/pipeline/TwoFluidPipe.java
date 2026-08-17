@@ -131,6 +131,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Bound on the Taylor bubble film holdup as a fraction of the slug body it separates. */
   private static final double SLUG_FILM_HOLDUP_FRACTION_OF_BODY = 0.9;
 
+  /** Whether a phase reversed at the transmissive outlet during the transient run. */
+  private boolean transientOutletBackflowClamped = false;
+
   /** Default closed-flow fluid-side heat-transfer coefficient in W/(m2 K). */
   private static final double DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT = 50.0;
 
@@ -1258,6 +1261,8 @@ public class TwoFluidPipe extends Pipeline {
     ssConverged = false;
     ssPressureFloorLimited = false;
     ssIterationsUsed = 0;
+    transientOutletBackflowClamped = false;
+    equations.clearOutletBackflowClamped();
 
     // Get total mass flow rate (conserved)
     double massFlow = getInletStream().getFlowRate("kg/sec");
@@ -4352,6 +4357,14 @@ public class TwoFluidPipe extends Pipeline {
     updateOutletStream();
     updateResultArrays();
 
+    if (equations.isOutletBackflowClamped() && !transientOutletBackflowClamped) {
+      transientOutletBackflowClamped = true;
+      logger.warn("{}: a phase reversed at the outlet, where the transmissive boundary can only carry mass out, so its "
+          + "outflow is clamped at zero while the inlet keeps feeding it. Liquid inventory will grow without "
+          + "bound and the transient result must not be used. This is the ill-posedness of the classical "
+          + "two-fluid system in liquid-rich flow; see setEnableInterfacialPressure(boolean).", getName());
+    }
+
     setCalculationIdentifier(id);
   }
 
@@ -7417,6 +7430,25 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSteadyStatePressureFloorLimited() {
     return ssPressureFloorLimited;
+  }
+
+  /**
+   * Whether a phase reversed at the outlet during the transient run.
+   *
+   * <p>
+   * The transmissive outlet can only carry mass out, so a reversed phase velocity is clamped to zero. That clamp is
+   * correct as a boundary condition and is also a one-way trap: the phase momentum equations of the classical two-fluid
+   * system are ill-posed in liquid-rich flow and can develop sustained backflow, after which the outflow of that phase
+   * pins at exactly zero while the inlet keeps feeding it and the inventory grows without bound. When this is true the
+   * transient profile is not a solution and must be discarded, in the same way as
+   * {@link #isSteadyStatePressureFloorLimited()} for the steady solve. Gas-dominated lines do not show it;
+   * {@link #setEnableInterfacialPressure(boolean)} removes it at the cost of a much smaller CFL number.
+   * </p>
+   *
+   * @return true when at least one phase reversed at the outlet since the last steady-state solve
+   */
+  public boolean isTransientOutletBackflowClamped() {
+    return transientOutletBackflowClamped;
   }
 
   /**
