@@ -18,6 +18,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -190,6 +191,11 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       return;
     }
 
+    PhaseType[] activePhaseTypes = new PhaseType[system.getNumberOfPhases()];
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      activePhaseTypes[phaseNumber] = system.getPhase(phaseNumber).getType();
+    }
+
     for (PhaseInterface phase : system.getPhases()) {
       if (phase == null) {
         continue;
@@ -205,6 +211,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     runInventoryCheckedInitialization(system, () -> system.initBeta(), "post-flash inventory initBeta");
     runInventoryCheckedInitialization(system, () -> system.init_x_y(), "post-flash inventory init_x_y");
     runInventoryCheckedInitialization(system, () -> system.init(2), "post-flash inventory init(2)");
+    for (int phaseNumber = 0; phaseNumber < activePhaseTypes.length; phaseNumber++) {
+      system.setPhaseType(phaseNumber, activePhaseTypes[phaseNumber]);
+    }
     expected.requireUnchanged(system, "post-flash inventory reconciliation");
     expected.requireActivePhaseSum(system, "post-flash phase recombination");
     logger.warn("Corrected a non-conservative SimpleTEGAbsorber flash phase inventory for {}", system.getModelName());
