@@ -29,11 +29,42 @@ The initial model provides:
   affected drawing and sheet; and
 - opt-in manual sheet definitions, stable object-to-sheet assignments, pinned coordinates, and
   protected connection routes with explicit review evidence; and
+- distinct conservative BFD, PFD, and P&ID drawing views over the same complete canonical semantic
+  object snapshot, with structured diagnostics for every profile omission; and
 - byte-deterministic JSON for equivalent fresh process models.
 
 The automatic partition remains deliberately conservative. It does not choose sheet sizes, grids,
 symbols, legends, or title-block geometry. Manual layout intent is supplied separately through an
 `EngineeringDiagramLayoutRegister`; it is never hidden in the process execution graph.
+
+## Content profiles
+
+`ContentProfile` controls only drawing and sheet membership. `getSemanticObjects()` always retains
+the complete canonical model with the same stable identities, properties, units, provenance, and
+connections, regardless of the selected profile.
+
+| Profile | Drawing-view content | Deliberate omissions |
+| --- | --- | --- |
+| `BFD` | Areas, equipment blocks, boundaries, material ports/nozzles, and material connections | Controlled line detail, energy connections, instrumentation, and signal connections |
+| `PFD` | Areas, equipment, boundaries, controlled lines, material and energy ports/connections | Instrumentation and signal ports/connections |
+| `PID` | Every visual semantic object currently represented by the canonical model | None at the content-policy layer; source-adapter losses remain diagnostic |
+
+Parallel material connections remain distinct in all three profiles. Multi-area off-page connector
+pairs are created only for connections visible in the selected profile, so a BFD does not acquire
+energy or signal cross-sheet references and a PFD does not acquire signal references. Manual sheet,
+pinned-position, or protected-route evidence targeting an omitted object is retained in its source
+register but reported as `DIAGRAM_CONTENT_PROFILE_LAYOUT_OMITTED` rather than silently changing the
+profile.
+
+Every document set records `DIAGRAM_CONTENT_PROFILE_PROPOSAL_ONLY`, and each omitted visual object
+records `DIAGRAM_CONTENT_PROFILE_OBJECT_OMITTED`. These are loss/projection diagnostics, not errors;
+the omitted objects remain available in the canonical semantic snapshot and to other drawing or
+exchange projections.
+
+The BFD policy treats current unit operations as conservative functional blocks; it does not infer
+or aggregate licensed-standard process blocks. The PFD and P&ID policies likewise do not qualify
+symbols, content, layout, measurement/control conventions, or drawing practice. None of the three
+profiles claims ISO 10628, ISO 14617, ISA, or project-standard conformance or engineering approval.
 
 ## Java example
 
@@ -529,3 +560,4 @@ coordinates and protected routes, reciprocal off-page references, deterministic 
 route/object and route-label obstacle diagnostics, collision, clipping, label-overflow and
 broken-reference diagnostics, normalized visual fingerprints, multi-page drawing sets, fresh-model
 determinism, and unchanged Classic DOT and controlled-document JSON.
+
