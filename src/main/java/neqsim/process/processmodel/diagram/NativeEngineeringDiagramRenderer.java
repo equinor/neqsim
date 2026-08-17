@@ -49,6 +49,9 @@ public final class NativeEngineeringDiagramRenderer {
   private static final double TITLE_BLOCK_HEIGHT = 30.0;
   private static final double OBJECT_WIDTH = 34.0;
   private static final double OBJECT_HEIGHT = 16.0;
+  private static final double PORT_MARKER_SIZE = 1.8;
+  private static final double PORT_SLOT_MARGIN = 2.0;
+  private static final double PARALLEL_LANE_SPACING = 4.0;
 
   /** Controlled paper sizes supported by the native renderer. */
   public enum SheetFormat {
@@ -74,6 +77,21 @@ public final class NativeEngineeringDiagramRenderer {
     public double getHeightMillimetres() {
       return heightMillimetres;
     }
+  }
+
+  /** Connection-routing behavior. */
+  public enum RoutingMode {
+    /** Byte-compatible center-to-center routing used by the original native renderer. */
+    LEGACY_CENTER,
+    /**
+     * Orthogonal routing from stable canonical port/nozzle identities at their owner-symbol bounds.
+     *
+     * <p>
+     * Parallel owner pairs receive deterministic lanes and recycle/backward connections receive a deterministic return
+     * path. Protected project routes remain authoritative.
+     * </p>
+     */
+    FIXED_PORT_ORTHOGONAL
   }
 
   /** Renderer diagnostic severity. */
@@ -180,6 +198,7 @@ public final class NativeEngineeringDiagramRenderer {
   private final EngineeringDiagramDocumentSet documentSet;
   private final SheetFormat format;
   private final EngineeringDiagramConventionRegister conventionRegister;
+  private final RoutingMode routingMode;
 
   /**
    * Creates an A3-landscape native renderer using byte-compatible legacy rectangle defaults.
@@ -187,7 +206,7 @@ public final class NativeEngineeringDiagramRenderer {
    * @param documentSet immutable controlled engineering-diagram document set
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet) {
-    this(documentSet, SheetFormat.A3_LANDSCAPE, new EngineeringDiagramConventionRegister());
+    this(documentSet, SheetFormat.A3_LANDSCAPE, new EngineeringDiagramConventionRegister(), RoutingMode.LEGACY_CENTER);
   }
 
   /**
@@ -197,7 +216,29 @@ public final class NativeEngineeringDiagramRenderer {
    * @param format paper geometry
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format) {
-    this(documentSet, format, new EngineeringDiagramConventionRegister());
+    this(documentSet, format, new EngineeringDiagramConventionRegister(), RoutingMode.LEGACY_CENTER);
+  }
+
+  /**
+   * Creates an A3-landscape renderer with explicit routing behavior and legacy symbol defaults.
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param routingMode connection-routing behavior
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, RoutingMode routingMode) {
+    this(documentSet, SheetFormat.A3_LANDSCAPE, new EngineeringDiagramConventionRegister(), routingMode);
+  }
+
+  /**
+   * Creates a renderer with explicit sheet geometry and routing behavior.
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param format paper geometry
+   * @param routingMode connection-routing behavior
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
+      RoutingMode routingMode) {
+    this(documentSet, format, new EngineeringDiagramConventionRegister(), routingMode);
   }
 
   /**
@@ -208,7 +249,19 @@ public final class NativeEngineeringDiagramRenderer {
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet,
       EngineeringDiagramConventionRegister conventionRegister) {
-    this(documentSet, SheetFormat.A3_LANDSCAPE, conventionRegister);
+    this(documentSet, SheetFormat.A3_LANDSCAPE, conventionRegister, RoutingMode.LEGACY_CENTER);
+  }
+
+  /**
+   * Creates an A3-landscape renderer with project symbol conventions and explicit routing behavior.
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param conventionRegister evidence-bearing project symbol conventions
+   * @param routingMode connection-routing behavior
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet,
+      EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode) {
+    this(documentSet, SheetFormat.A3_LANDSCAPE, conventionRegister, routingMode);
   }
 
   /**
@@ -226,6 +279,19 @@ public final class NativeEngineeringDiagramRenderer {
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
       EngineeringDiagramConventionRegister conventionRegister) {
+    this(documentSet, format, conventionRegister, RoutingMode.LEGACY_CENTER);
+  }
+
+  /**
+   * Creates a renderer with explicit sheet geometry, project symbol conventions and routing behavior.
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param format paper geometry
+   * @param conventionRegister evidence-bearing project symbol conventions
+   * @param routingMode connection-routing behavior
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
+      EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode) {
     if (documentSet == null) {
       throw new IllegalArgumentException("documentSet must not be null");
     }
@@ -235,9 +301,13 @@ public final class NativeEngineeringDiagramRenderer {
     if (conventionRegister == null) {
       throw new IllegalArgumentException("conventionRegister must not be null");
     }
+    if (routingMode == null) {
+      throw new IllegalArgumentException("routingMode must not be null");
+    }
     this.documentSet = documentSet;
     this.format = format;
     this.conventionRegister = conventionRegister;
+    this.routingMode = routingMode;
   }
 
   /**
@@ -336,6 +406,12 @@ public final class NativeEngineeringDiagramRenderer {
             route.getSemanticConnectionId()));
       }
     }
+    Map<String, Point> endpointAnchors = routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
+        ? fixedPortAnchors(sheet, positions, objects, diagnostics)
+        : Collections.<String, Point>emptyMap();
+    Map<String, Double> routeLanes = routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
+        ? parallelRouteLanes(sheet, objects)
+        : Collections.<String, Double>emptyMap();
 
     List<String> ids = new ArrayList<String>(sheet.getObjectNodeIds());
     Collections.sort(ids);
@@ -345,8 +421,9 @@ public final class NativeEngineeringDiagramRenderer {
         diagnostics.add(diagnostic(Severity.ERROR, "DIAGRAM_RENDER_BROKEN_OBJECT_REFERENCE",
             "Controlled sheet references a semantic object that is absent from the document set", id));
       } else if (isConnection(object.getKind())) {
-        addConnection(page, object, positions, connectors.get(id), protectedRoutes.get(id), objects, contentRight,
-            contentBottom, diagnostics);
+        addConnection(page, object, positions, endpointAnchors, connectors.get(id), protectedRoutes.get(id), objects,
+            contentRight, contentBottom, routeLanes.containsKey(id) ? routeLanes.get(id).doubleValue() : 0.0,
+            diagnostics);
       }
     }
     addRouteQualityDiagnostics(page, positions, diagnostics);
@@ -360,6 +437,7 @@ public final class NativeEngineeringDiagramRenderer {
         addObject(page, object, position);
       }
     }
+    addPortMarkers(page, endpointAnchors);
     addTitleBlock(page, drawing, sheet);
     return page;
   }
@@ -473,9 +551,123 @@ public final class NativeEngineeringDiagramRenderer {
     return result;
   }
 
+  private Map<String, Point> fixedPortAnchors(Sheet sheet, Map<String, Point> positions,
+      Map<String, SemanticObject> objects, List<Diagnostic> diagnostics) {
+    Map<String, List<String>> anchorKeysByOwnerSide = new TreeMap<String, List<String>>();
+    List<String> connectionIds = new ArrayList<String>(sheet.getObjectNodeIds());
+    Collections.sort(connectionIds);
+    for (String connectionId : connectionIds) {
+      SemanticObject connection = objects.get(connectionId);
+      if (connection == null || !isConnection(connection.getKind())) {
+        continue;
+      }
+      collectPortAnchor(connection, "sourceEndpointId", true, positions, objects, anchorKeysByOwnerSide, diagnostics);
+      collectPortAnchor(connection, "targetEndpointId", false, positions, objects, anchorKeysByOwnerSide, diagnostics);
+    }
+    Map<String, Point> result = new TreeMap<String, Point>();
+    for (Map.Entry<String, List<String>> entry : anchorKeysByOwnerSide.entrySet()) {
+      List<String> keys = entry.getValue();
+      Collections.sort(keys);
+      String[] ownerAndSide = entry.getKey().split("\\|", 2);
+      Point owner = positions.get(ownerAndSide[0]);
+      boolean outlet = "OUTLET".equals(ownerAndSide[1]);
+      double spacing = keys.size() <= 1 ? 0.0
+          : Math.min(3.0, (OBJECT_HEIGHT - 2.0 * PORT_SLOT_MARGIN) / (keys.size() - 1));
+      for (int index = 0; index < keys.size(); index++) {
+        double offset = (index - (keys.size() - 1) / 2.0) * spacing;
+        result.put(keys.get(index),
+            new Point(owner.x + (outlet ? OBJECT_WIDTH / 2.0 : -OBJECT_WIDTH / 2.0), owner.y + offset));
+      }
+    }
+    return result;
+  }
+
+  private static void collectPortAnchor(SemanticObject connection, String property, boolean source,
+      Map<String, Point> positions, Map<String, SemanticObject> objects,
+      Map<String, List<String>> anchorKeysByOwnerSide, List<Diagnostic> diagnostics) {
+    String endpointId = stringProperty(connection, property, "");
+    SemanticObject endpoint = objects.get(endpointId);
+    String ownerId = endpoint == null ? "" : stringProperty(endpoint, "ownerNodeId", "");
+    if (endpointId.isEmpty() || ownerId.isEmpty()) {
+      diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED",
+          "Canonical endpoint cannot be resolved to an owner symbol; center routing fallback is retained",
+          endpointId.isEmpty() ? connection.getId() : endpointId));
+      return;
+    }
+    if (!positions.containsKey(ownerId)) {
+      // The peer owner of a valid off-page connection is intentionally absent from this sheet.
+      return;
+    }
+    String role = source ? "source" : "target";
+    String anchorKey = endpointId + "|" + role;
+    String side = source ? "OUTLET" : "INLET";
+    String groupKey = ownerId + "|" + side;
+    List<String> keys = anchorKeysByOwnerSide.get(groupKey);
+    if (keys == null) {
+      keys = new ArrayList<String>();
+      anchorKeysByOwnerSide.put(groupKey, keys);
+    }
+    if (!keys.contains(anchorKey)) {
+      keys.add(anchorKey);
+    }
+  }
+
+  private static Map<String, Double> parallelRouteLanes(Sheet sheet, Map<String, SemanticObject> objects) {
+    Map<String, List<String>> connectionIdsByOwnerPair = new TreeMap<String, List<String>>();
+    for (String objectId : sheet.getObjectNodeIds()) {
+      SemanticObject connection = objects.get(objectId);
+      if (connection == null || !isConnection(connection.getKind())) {
+        continue;
+      }
+      String sourceOwner = endpointOwnerId(connection, "sourceEndpointId", objects);
+      String targetOwner = endpointOwnerId(connection, "targetEndpointId", objects);
+      String key = sourceOwner + "|" + targetOwner + "|" + stringProperty(connection, "connectionType", "MATERIAL");
+      List<String> ids = connectionIdsByOwnerPair.get(key);
+      if (ids == null) {
+        ids = new ArrayList<String>();
+        connectionIdsByOwnerPair.put(key, ids);
+      }
+      ids.add(connection.getId());
+    }
+    Map<String, Double> result = new TreeMap<String, Double>();
+    for (List<String> ids : connectionIdsByOwnerPair.values()) {
+      Collections.sort(ids);
+      for (int index = 0; index < ids.size(); index++) {
+        result.put(ids.get(index), Double.valueOf((index - (ids.size() - 1) / 2.0) * PARALLEL_LANE_SPACING));
+      }
+    }
+    return result;
+  }
+
+  private static void addPortMarkers(Page page, Map<String, Point> endpointAnchors) {
+    for (Map.Entry<String, Point> entry : endpointAnchors.entrySet()) {
+      Point point = entry.getValue();
+      String endpointId = entry.getKey().substring(0, entry.getKey().lastIndexOf('|'));
+      page.commands.add(Command.rect(point.x - PORT_MARKER_SIZE / 2.0, point.y - PORT_MARKER_SIZE / 2.0,
+          PORT_MARKER_SIZE, PORT_MARKER_SIZE, "#1f2937", "#ffffff", 0.5, endpointId, ""));
+    }
+  }
+
+  private static Point routedEndpointPosition(SemanticObject connection, String property, boolean source,
+      Map<String, Point> positions, Map<String, Point> endpointAnchors, Map<String, SemanticObject> objects) {
+    String endpointId = stringProperty(connection, property, "");
+    Point fixed = endpointAnchors.get(endpointId + "|" + (source ? "source" : "target"));
+    return fixed == null ? endpointPosition(connection, property, positions, objects) : fixed;
+  }
+
+  private static double recycleReturnY(Point source, Point target, double contentBottom, double laneOffset) {
+    double offset = 14.0 + Math.abs(laneOffset);
+    double above = Math.min(source.y, target.y) - offset;
+    if (above >= CONTENT_TOP + PORT_SLOT_MARGIN) {
+      return above;
+    }
+    return Math.min(contentBottom - PORT_SLOT_MARGIN, Math.max(source.y, target.y) + offset);
+  }
+
   private void addConnection(Page page, SemanticObject connection, Map<String, Point> positions,
-      OffPageConnector connector, ProtectedRoute protectedRoute, Map<String, SemanticObject> objects,
-      double contentRight, double contentBottom, List<Diagnostic> diagnostics) {
+      Map<String, Point> endpointAnchors, OffPageConnector connector, ProtectedRoute protectedRoute,
+      Map<String, SemanticObject> objects, double contentRight, double contentBottom, double laneOffset,
+      List<Diagnostic> diagnostics) {
     List<Point> points = new ArrayList<Point>();
     boolean protectedGeometry = protectedRoute != null;
     if (protectedGeometry) {
@@ -483,8 +675,8 @@ public final class NativeEngineeringDiagramRenderer {
         points.add(new Point(waypoint.getX(), waypoint.getY()));
       }
     } else {
-      Point source = endpointPosition(connection, "sourceEndpointId", positions, objects);
-      Point target = endpointPosition(connection, "targetEndpointId", positions, objects);
+      Point source = routedEndpointPosition(connection, "sourceEndpointId", true, positions, endpointAnchors, objects);
+      Point target = routedEndpointPosition(connection, "targetEndpointId", false, positions, endpointAnchors, objects);
       Point offPage = connector == null ? null : connectorPoint(connector, contentRight, contentBottom);
       if (connector != null && connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE) {
         target = offPage;
@@ -493,8 +685,20 @@ public final class NativeEngineeringDiagramRenderer {
       }
       if (source != null && target != null) {
         points.add(source);
-        points.add(new Point((source.x + target.x) / 2.0, source.y));
-        points.add(new Point((source.x + target.x) / 2.0, target.y));
+        if (routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
+            && (Boolean.TRUE.equals(connection.getProperties().get("recycle")) || source.x >= target.x)) {
+          double returnY = recycleReturnY(source, target, contentBottom, laneOffset);
+          double sourceTurnX = source.x + 10.0 + Math.abs(laneOffset);
+          double targetTurnX = target.x - 10.0 - Math.abs(laneOffset);
+          points.add(new Point(sourceTurnX, source.y));
+          points.add(new Point(sourceTurnX, returnY));
+          points.add(new Point(targetTurnX, returnY));
+          points.add(new Point(targetTurnX, target.y));
+        } else {
+          double middleX = (source.x + target.x) / 2.0 + laneOffset;
+          points.add(new Point(middleX, source.y));
+          points.add(new Point(middleX, target.y));
+        }
         points.add(target);
       } else {
         diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_CONNECTION_ENDPOINT_OMITTED",

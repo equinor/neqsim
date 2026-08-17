@@ -3,6 +3,7 @@ package neqsim.process.processmodel.diagram;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -24,6 +25,7 @@ import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Evidenc
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
+import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.processmodel.ProcessSystem;
 import org.junit.jupiter.api.Test;
@@ -77,7 +79,8 @@ class NativeEngineeringDiagramRendererTest {
         "PFD-NATIVE-002", "Multi-area native drawing set", ContentProfile.PFD);
 
     NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
-        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE).render();
+        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
     String pdf = new String(result.getPdf(), StandardCharsets.ISO_8859_1);
 
     assertEquals(4, result.getSvgBySheetId().size());
@@ -92,6 +95,7 @@ class NativeEngineeringDiagramRendererTest {
         assertTrue(svg.contains(connector.getZoneReference()));
       }
     }
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED"));
     assertTrue(result.isComplete());
   }
 
@@ -220,6 +224,119 @@ class NativeEngineeringDiagramRendererTest {
         assertArrayEquals(expectedPdf, result.getPdf());
       }
     }
+  }
+
+  @Test
+  void supportsOptInFixedPortOrthogonalRoutingForBranchesWithoutChangingLegacyDefault() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures
+        .branchedSeparatorCompressionTrain();
+    ProcessSystem process = reference.getProcessSystem();
+    String classicDot = process.toDOT();
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-NATIVE-008", "Fixed port routing reference", ContentProfile.PFD);
+
+    NativeEngineeringDiagramRenderer.Result defaultResult = new NativeEngineeringDiagramRenderer(documents).render();
+    NativeEngineeringDiagramRenderer.Result explicitLegacy = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.LEGACY_CENTER).render();
+    NativeEngineeringDiagramRenderer.Result first = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    NativeEngineeringDiagramRenderer.Result second = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = first.getSvgBySheetId().values().iterator().next();
+
+    List<String> separatorOutletIds = new ArrayList<String>();
+    for (SemanticObject object : documents.getSemanticObjects()) {
+      if (object.getKind() == EngineeringNode.Kind.PIPE_SEGMENT
+          && "20-VA-001".equals(object.getProperties().get("sourceEquipment"))) {
+        separatorOutletIds.add(String.valueOf(object.getProperties().get("sourceEndpointId")));
+      }
+    }
+
+    assertEquals(2, separatorOutletIds.size());
+    assertNotEquals(separatorOutletIds.get(0), separatorOutletIds.get(1));
+    for (String endpointId : separatorOutletIds) {
+      assertTrue(svg.contains("data-semantic-id=\"" + endpointId + "\""));
+    }
+    assertEquals(defaultResult.getSvgBySheetId(), explicitLegacy.getSvgBySheetId());
+    assertArrayEquals(defaultResult.getPdf(), explicitLegacy.getPdf());
+    assertEquals(defaultResult.getVisualFingerprintsBySheetId(), explicitLegacy.getVisualFingerprintsBySheetId());
+    assertEquals(first.getSvgBySheetId(), second.getSvgBySheetId());
+    assertArrayEquals(first.getPdf(), second.getPdf());
+    assertEquals(first.getVisualFingerprintsBySheetId(), second.getVisualFingerprintsBySheetId());
+    assertNotEquals(defaultResult.getVisualFingerprintsBySheetId(), first.getVisualFingerprintsBySheetId());
+    assertTrue(first.isComplete());
+    assertEquals(classicDot, process.toDOT());
+  }
+
+  @Test
+  void separatesParallelOwnerPairsAndReturnsRecycleRoutesDeterministically() {
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(fixedPortRoutingGraph(),
+        "PFD-NATIVE-009", "Parallel and recycle routing reference", ContentProfile.PFD);
+    NativeEngineeringDiagramRenderer.Result first = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    NativeEngineeringDiagramRenderer.Result second = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = first.getSvgBySheetId().values().iterator().next();
+
+    String firstParallel = pointsForSemanticId(svg, "connection:parallel-1");
+    String secondParallel = pointsForSemanticId(svg, "connection:parallel-2");
+    String recycle = pointsForSemanticId(svg, "connection:recycle");
+
+    assertNotEquals(firstParallel, secondParallel);
+    assertNotEquals(pointX(firstParallel, 1), pointX(secondParallel, 1));
+    assertTrue(recycle.split(" ").length >= 6);
+    assertEquals(first.getSvgBySheetId(), second.getSvgBySheetId());
+    assertArrayEquals(first.getPdf(), second.getPdf());
+    assertEquals(first.getVisualFingerprintsBySheetId(), second.getVisualFingerprintsBySheetId());
+    assertTrue(first.isComplete());
+  }
+
+  private static EngineeringGraph fixedPortRoutingGraph() {
+    EngineeringGraph graph = new EngineeringGraph("FIXED-PORT-ROUTING", "A");
+    graph.addNode(new EngineeringNode("equipment:a", EngineeringNode.Kind.EQUIPMENT, "a", "Equipment A")
+        .putProperty("equipmentName", "A"));
+    graph.addNode(new EngineeringNode("equipment:b", EngineeringNode.Kind.EQUIPMENT, "b", "Equipment B")
+        .putProperty("equipmentName", "B"));
+    graph.addNode(endpointNode("nozzle:a-out-1", "equipment:a", "OUTLET"));
+    graph.addNode(endpointNode("nozzle:a-out-2", "equipment:a", "OUTLET"));
+    graph.addNode(endpointNode("nozzle:a-in", "equipment:a", "INLET"));
+    graph.addNode(endpointNode("nozzle:b-in-1", "equipment:b", "INLET"));
+    graph.addNode(endpointNode("nozzle:b-in-2", "equipment:b", "INLET"));
+    graph.addNode(endpointNode("nozzle:b-out", "equipment:b", "OUTLET"));
+    graph.addNode(connectionNode("connection:parallel-1", "nozzle:a-out-1", "nozzle:b-in-1", "A", "B", false));
+    graph.addNode(connectionNode("connection:parallel-2", "nozzle:a-out-2", "nozzle:b-in-2", "A", "B", false));
+    graph.addNode(connectionNode("connection:recycle", "nozzle:b-out", "nozzle:a-in", "B", "A", true));
+    return graph;
+  }
+
+  private static EngineeringNode endpointNode(String id, String ownerId, String direction) {
+    return new EngineeringNode(id, EngineeringNode.Kind.NOZZLE, id, id).putProperty("ownerNodeId", ownerId)
+        .putProperty("direction", direction).putProperty("connectionType", "MATERIAL");
+  }
+
+  private static EngineeringNode connectionNode(String id, String sourceEndpointId, String targetEndpointId,
+      String sourceEquipment, String targetEquipment, boolean recycle) {
+    return new EngineeringNode(id, EngineeringNode.Kind.PIPE_SEGMENT, id, id).putProperty("connectionType", "MATERIAL")
+        .putProperty("sourceEndpointId", sourceEndpointId).putProperty("targetEndpointId", targetEndpointId)
+        .putProperty("sourceEquipment", sourceEquipment).putProperty("targetEquipment", targetEquipment)
+        .putProperty("recycle", Boolean.valueOf(recycle));
+  }
+
+  private static String pointsForSemanticId(String svg, String semanticId) {
+    String identity = "data-semantic-id=\"" + semanticId + "\"";
+    int identityIndex = svg.indexOf(identity);
+    int elementStart = svg.lastIndexOf("<polyline", identityIndex);
+    int pointsStart = svg.indexOf("points=\"", elementStart) + "points=\"".length();
+    int pointsEnd = svg.indexOf('"', pointsStart);
+    assertTrue(identityIndex >= 0);
+    assertTrue(elementStart >= 0);
+    assertTrue(pointsStart >= "points=\"".length());
+    assertTrue(pointsEnd > pointsStart);
+    return svg.substring(pointsStart, pointsEnd);
+  }
+
+  private static String pointX(String points, int index) {
+    return points.split(" ")[index].split(",", 2)[0];
   }
 
   private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {

@@ -89,6 +89,34 @@ fixtures, accountable discipline review, and separate qualification evidence. Ex
 DOT/Graphviz, controlled-document JSON, DEXPI 2.0, and Proteus/P&ID outputs do not consume this
 register and remain unchanged.
 
+## Fixed-port orthogonal routing
+
+Native rendering retains `RoutingMode.LEGACY_CENTER` by default, so every existing constructor keeps
+the previous center-to-center SVG/PDF bytes and visual fingerprints. Select
+`RoutingMode.FIXED_PORT_ORTHOGONAL` through the additive renderer constructors when a controlled
+drawing view needs explicit canonical port geometry:
+
+```java
+NativeEngineeringDiagramRenderer renderer =
+    new NativeEngineeringDiagramRenderer(
+        documents, NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL);
+NativeEngineeringDiagramRenderer.Result result = renderer.render();
+```
+
+The opt-in mode resolves each connection's stable `sourceEndpointId` and `targetEndpointId`, anchors
+the corresponding port/nozzle at the left or right bound of its owner symbol, and exposes the endpoint
+identity on the SVG port marker. Port slots are sorted by stable identity. Branches therefore retain
+distinct anchors, connections between the same owner pair receive deterministic parallel lanes, and
+declared recycle or backward connections receive a deterministic orthogonal return path. Reciprocal
+off-page connectors remain the cross-sheet boundary, while a reviewed protected route remains
+authoritative and is never replaced by automatic routing.
+
+`DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED` reports a malformed endpoint that cannot resolve to an owner.
+A valid peer owner absent from an off-page connection's current sheet is expected and does not create a
+false warning. Fixed-port routing is deterministic proposal geometry; it is not obstacle-optimal,
+standards-qualified, or drawing-approved. Projects should retain protected routes where accountable
+layout refinement is required.
+
 ## Java example
 
 ```java
