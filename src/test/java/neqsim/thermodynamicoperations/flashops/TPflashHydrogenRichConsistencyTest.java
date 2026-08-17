@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.Comparator;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -13,6 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Cross-algorithm qualification for neutral hydrogen-rich cubic-EOS TP flashes.
  */
+@Tag("slow")
 class TPflashHydrogenRichConsistencyTest {
   private static final String[] COMPONENTS = { "hydrogen", "methane", "ethane", "n-heptane", "nC10" };
   private static final double[][] FEEDS = { { 0.920, 0.060, 0.015, 0.004, 0.001 },
