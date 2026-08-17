@@ -290,7 +290,9 @@ feed-product balance. The sequential tray solvers and `NAPHTALI_SANDHOLM` both r
 phase from inter-tray material and energy traffic; the Naphtali-Sandholm solver also fingerprints the
 configured split so a changed draw cannot reuse an incompatible warm state. The inside-out stage used
 by `MESH_RESIDUAL` similarly retains an accepted tray and product state for exact unchanged-input
-reuse; changed feed, configuration, tray, or product state invalidates that fingerprint. An exact liquid
+reuse when no outer column tear variables are active; changed feed, configuration, tray, or product
+state invalidates that fingerprint. Pumparounds, hydraulic pressure coupling, and adjustable side-draw
+flow specifications keep their coordinated outer initialization path. An exact liquid
 side-draw fraction of `1.0` leaves zero internal downflow across that stage, so NeqSim routes an
 explicit or reused `NAPHTALI_SANDHOLM` selection to `MESH_RESIDUAL`. Fractions below `1.0`
 retain positive internal traffic and remain eligible for the simultaneous solver.
