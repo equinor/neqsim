@@ -12,7 +12,7 @@ thermodynamic state or composition. The public classes are in
 | Class | Use |
 | --- | --- |
 | `Mixer` | Combine two or more streams and calculate an outlet state |
-| `StaticMixer` | Use the alternative static-mixing implementation |
+| `StaticMixer` | Backward-compatible class name for the standard `Mixer` implementation |
 | `Splitter` | Divide one stream by relative factors or specified outlet flow rates |
 
 The stream accessors return `StreamInterface`. Keep that interface type unless a downstream API
@@ -81,6 +81,12 @@ double mixedTemperatureC = mixedGas.getTemperature("C");
 
 The example produces $8000\ \mathrm{kg/h}$. A focused documentation test verifies the flow,
 enthalpy closure, component result, and pressure diagnostics.
+
+The mixed result is independent of the order in which inlets are added. NeqSim uses the active
+inlet with the largest mass flow as the thermodynamic template and resolves equal-flow ties from
+the streams' thermodynamic configuration rather than their insertion position. Multiphase
+checking is retained when any active inlet requests it, unless it is explicitly disabled on the
+mixer with `setMultiPhaseCheck(false)`.
 
 ### Pressure behavior and diagnostics
 
