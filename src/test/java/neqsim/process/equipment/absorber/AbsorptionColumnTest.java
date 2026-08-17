@@ -86,10 +86,11 @@ class AbsorptionColumnTest extends NeqSimTest {
 
     double propaneRecovery = componentRecovery(gasFeed, absorberCase.absorber.getGasOutStream(), "propane");
     double pentaneRecovery = componentRecovery(gasFeed, absorberCase.absorber.getGasOutStream(), "n-pentane");
-    assertTrue(componentFlow(absorberCase.absorber.getGasOutStream(), "n-butane")
-        < componentFlow(gasFeed, "n-butane"), "Lean oil must absorb n-butane from the gas");
-    assertTrue(componentFlow(absorberCase.absorber.getLiquidOutStream(), "n-butane")
-        > componentFlow(leanOil, "n-butane"), "The rich oil must gain n-butane");
+    assertTrue(componentFlow(absorberCase.absorber.getGasOutStream(), "n-butane") < componentFlow(gasFeed, "n-butane"),
+        "Lean oil must absorb n-butane from the gas");
+    assertTrue(
+        componentFlow(absorberCase.absorber.getLiquidOutStream(), "n-butane") > componentFlow(leanOil, "n-butane"),
+        "The rich oil must gain n-butane");
     assertTrue(pentaneRecovery > propaneRecovery,
         "A lean-oil absorber should recover the heavier hydrocarbon more strongly");
   }
@@ -120,14 +121,14 @@ class AbsorptionColumnTest extends NeqSimTest {
     washWater.setTemperature(20.0, "C");
     washWater.setPressure(5.0, "bara");
 
-    AbsorberCase absorberCase =
-        runIsothermalAbsorberCase("methanol water wash", gasFeed, washWater, 4, 5.0, 298.15);
+    AbsorberCase absorberCase = runIsothermalAbsorberCase("methanol water wash", gasFeed, washWater, 4, 5.0, 298.15);
     assertConvergedAndConservative(absorberCase);
 
-    assertTrue(componentFlow(absorberCase.absorber.getGasOutStream(), "methanol")
-        < componentFlow(gasFeed, "methanol"), "Water wash must reduce methanol in the gas");
-    assertTrue(componentFlow(absorberCase.absorber.getLiquidOutStream(), "methanol")
-        > componentFlow(washWater, "methanol"), "The rich wash water must gain methanol");
+    assertTrue(componentFlow(absorberCase.absorber.getGasOutStream(), "methanol") < componentFlow(gasFeed, "methanol"),
+        "Water wash must reduce methanol in the gas");
+    assertTrue(
+        componentFlow(absorberCase.absorber.getLiquidOutStream(), "methanol") > componentFlow(washWater, "methanol"),
+        "The rich wash water must gain methanol");
   }
 
   private static AbsorberCase runTegAbsorberCase(double waterEfficiency) {
@@ -163,8 +164,8 @@ class AbsorptionColumnTest extends NeqSimTest {
     leanTeg.setTemperature(35.0, "C");
     leanTeg.setPressure(70.0, "bara");
 
-    AbsorberCase absorberCase =
-        configureIsothermalAbsorberCase("rigorous TEG absorber", wetGas, leanTeg, 4, 70.0, 303.15);
+    AbsorberCase absorberCase = configureIsothermalAbsorberCase("rigorous TEG absorber", wetGas, leanTeg, 4, 70.0,
+        303.15);
     AbsorptionColumn absorber = absorberCase.absorber;
     for (int trayNumber = 0; trayNumber < absorber.getNumberOfTrays(); trayNumber++) {
       absorber.setComponentMurphreeEfficiency(trayNumber, "water", waterEfficiency);
@@ -176,8 +177,8 @@ class AbsorptionColumnTest extends NeqSimTest {
 
   private static AbsorberCase runIsothermalAbsorberCase(String name, StreamInterface gasFeed,
       StreamInterface solventFeed, int numberOfTrays, double pressure, double stageTemperature) {
-    AbsorberCase absorberCase = configureIsothermalAbsorberCase(name, gasFeed, solventFeed, numberOfTrays,
-        pressure, stageTemperature);
+    AbsorberCase absorberCase = configureIsothermalAbsorberCase(name, gasFeed, solventFeed, numberOfTrays, pressure,
+        stageTemperature);
     run(absorberCase);
     return absorberCase;
   }
@@ -220,16 +221,14 @@ class AbsorptionColumnTest extends NeqSimTest {
     for (String componentName : componentNames(absorberCase.gasFeed, absorberCase.solventFeed)) {
       double inletComponentFlow = componentFlow(absorberCase.gasFeed, componentName)
           + componentFlow(absorberCase.solventFeed, componentName);
-      double outletComponentFlow = componentFlow(treatedGas, componentName)
-          + componentFlow(richSolvent, componentName);
+      double outletComponentFlow = componentFlow(treatedGas, componentName) + componentFlow(richSolvent, componentName);
       double tolerance = Math.max(1.0e-6, inletComponentFlow * 5.0e-3);
       assertEquals(inletComponentFlow, outletComponentFlow, tolerance,
           "Component balance must close for " + componentName + ". " + absorber.getConvergenceDiagnostics());
     }
   }
 
-  private static double componentRecovery(StreamInterface gasFeed, StreamInterface treatedGas,
-      String componentName) {
+  private static double componentRecovery(StreamInterface gasFeed, StreamInterface treatedGas, String componentName) {
     double feedFlow = componentFlow(gasFeed, componentName);
     return feedFlow > 0.0 ? (feedFlow - componentFlow(treatedGas, componentName)) / feedFlow : 0.0;
   }
