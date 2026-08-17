@@ -27,11 +27,21 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
 
   /** Drawing content profiles. */
   public enum ContentProfile {
-    /** Block flow diagram. */
+    /**
+     * Conservative functional-block view containing equipment, boundaries, and material connections.
+     *
+     * <p>
+     * This profile does not aggregate unit operations into licensed-standard process blocks and does not assert BFD
+     * conformance.
+     * </p>
+     */
     BFD,
-    /** Process flow diagram. */
+    /**
+     * Process-flow view containing equipment plus material and energy connections while omitting instrumentation and
+     * signal connections.
+     */
     PFD,
-    /** Piping and instrumentation diagram proposal. */
+    /** Piping and instrumentation proposal retaining every visual semantic object. */
     PID
   }
 
@@ -773,7 +783,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     Map<String, MutableSheet> sheetsByAreaName = new LinkedHashMap<String, MutableSheet>();
     if (areas.isEmpty()) {
       MutableSheet sheet = new MutableSheet("plant", sheetId(normalizedNumber, "plant"), "1", title, null);
-      sheet.objectNodeIds.addAll(visualNodeIds(graph));
+      sheet.objectNodeIds.addAll(visualNodeIds(graph, profile));
       mutableSheets.add(sheet);
     } else {
       int index = 1;
@@ -783,7 +793,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
             String.valueOf(index), areaName, null);
         sheet.areaNodeIds.add(area.getId());
         for (EngineeringNode node : graph.getNodes().values()) {
-          if (belongsToArea(node, areaName) && isVisual(node.getKind())) {
+          if (belongsToArea(node, areaName) && isVisible(profile, node)) {
             sheet.objectNodeIds.add(node.getId());
           }
         }
@@ -794,9 +804,10 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     }
     Map<String, MutableSheet> sheetsByKey = sheetsByKey(mutableSheets);
     addManualSheets(normalizedNumber, layoutRegister, mutableSheets, sheetsByKey, diagnostics);
-    applyManualAssignments(graph, layoutRegister, mutableSheets, sheetsByKey, diagnostics);
-    addCrossSheetReferences(graph, mutableSheets, sheetsByAreaName, diagnostics);
-    applyLayoutOverrides(graph, layoutRegister, sheetsByKey, diagnostics);
+    applyManualAssignments(graph, profile, layoutRegister, mutableSheets, sheetsByKey, diagnostics);
+    addCrossSheetReferences(graph, profile, mutableSheets, sheetsByAreaName, diagnostics);
+    applyLayoutOverrides(graph, profile, layoutRegister, sheetsByKey, diagnostics);
+    addContentProfileDiagnostics(graph, profile, normalizedNumber, diagnostics);
     List<Sheet> sheets = new ArrayList<Sheet>();
     for (MutableSheet mutable : mutableSheets) {
       sheets.add(mutable.toSheet());
@@ -967,8 +978,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     }
   }
 
-  private static void applyManualAssignments(EngineeringGraph graph, EngineeringDiagramLayoutRegister layoutRegister,
-      List<MutableSheet> allSheets, Map<String, MutableSheet> sheetsByKey, List<Diagnostic> diagnostics) {
+  private static void applyManualAssignments(EngineeringGraph graph, ContentProfile profile,
+      EngineeringDiagramLayoutRegister layoutRegister, List<MutableSheet> allSheets,
+      Map<String, MutableSheet> sheetsByKey, List<Diagnostic> diagnostics) {
     Map<String, EngineeringDiagramLayoutRegister.SheetAssignment> assignmentsByObject = new LinkedHashMap<String, EngineeringDiagramLayoutRegister.SheetAssignment>();
     for (EngineeringDiagramLayoutRegister.SheetAssignment assignment : layoutRegister.getAssignments()) {
       EngineeringNode node = graph.getNode(assignment.getSemanticObjectId());
@@ -988,6 +1000,11 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
             "Manual sheet assignment targets an object that has no drawing view", node.getId()));
         continue;
       }
+      if (!isVisible(profile, node)) {
+        diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_CONTENT_PROFILE_LAYOUT_OMITTED",
+            "Manual sheet assignment targets an object omitted by the selected content profile", node.getId()));
+        continue;
+      }
       if (isConnection(node.getKind())) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_CONNECTION_ASSIGNMENT_DERIVED",
             "Connection sheet projection is derived from its endpoint assignments; use protected routes for each view",
@@ -1000,6 +1017,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     }
     for (EngineeringNode endpoint : graph.getNodes().values()) {
       if (endpoint.getKind() != EngineeringNode.Kind.PORT && endpoint.getKind() != EngineeringNode.Kind.NOZZLE) {
+        continue;
+      }
+      if (!isVisible(profile, endpoint)) {
         continue;
       }
       String ownerNodeId = stringProperty(endpoint, "ownerNodeId", "");
@@ -1019,10 +1039,10 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     }
   }
 
-  private static void addCrossSheetReferences(EngineeringGraph graph, List<MutableSheet> allSheets,
-      Map<String, MutableSheet> sheetsByAreaName, List<Diagnostic> diagnostics) {
+  private static void addCrossSheetReferences(EngineeringGraph graph, ContentProfile profile,
+      List<MutableSheet> allSheets, Map<String, MutableSheet> sheetsByAreaName, List<Diagnostic> diagnostics) {
     for (EngineeringNode node : graph.getNodes().values()) {
-      if (!isConnection(node.getKind())) {
+      if (!isConnection(node.getKind()) || !isVisible(profile, node)) {
         continue;
       }
       MutableSheet sourceSheet = sheetContaining(allSheets, stringProperty(node, "sourceEndpointId", ""));
@@ -1085,8 +1105,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     }
   }
 
-  private static void applyLayoutOverrides(EngineeringGraph graph, EngineeringDiagramLayoutRegister layoutRegister,
-      Map<String, MutableSheet> sheetsByKey, List<Diagnostic> diagnostics) {
+  private static void applyLayoutOverrides(EngineeringGraph graph, ContentProfile profile,
+      EngineeringDiagramLayoutRegister layoutRegister, Map<String, MutableSheet> sheetsByKey,
+      List<Diagnostic> diagnostics) {
     for (EngineeringDiagramLayoutRegister.PinnedPosition position : layoutRegister.getPinnedPositions()) {
       EngineeringNode node = graph.getNode(position.getSemanticObjectId());
       MutableSheet sheet = sheetsByKey.get(position.getSheetKey());
@@ -1096,6 +1117,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       } else if (sheet == null) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_SHEET",
             "Pinned position references an unknown sheet key", position.getSheetKey()));
+      } else if (!isVisible(profile, node)) {
+        diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_CONTENT_PROFILE_LAYOUT_OMITTED",
+            "Pinned position targets an object omitted by the selected content profile", node.getId()));
       } else if (!sheet.objectNodeIds.contains(node.getId())) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_OBJECT_NOT_ON_SHEET",
             "Pinned position must target a sheet containing the semantic object", node.getId()));
@@ -1112,6 +1136,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       } else if (sheet == null) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_SHEET",
             "Protected route references an unknown sheet key", route.getSheetKey()));
+      } else if (!isVisible(profile, node)) {
+        diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_CONTENT_PROFILE_LAYOUT_OMITTED",
+            "Protected route targets a connection omitted by the selected content profile", node.getId()));
       } else if (!sheet.objectNodeIds.contains(node.getId())) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_CONNECTION_NOT_ON_SHEET",
             "Protected route must target a sheet containing the semantic connection view", node.getId()));
@@ -1274,14 +1301,47 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     return result;
   }
 
-  private static List<String> visualNodeIds(EngineeringGraph graph) {
+  private static List<String> visualNodeIds(EngineeringGraph graph, ContentProfile profile) {
     List<String> result = new ArrayList<String>();
     for (EngineeringNode node : graph.getNodes().values()) {
-      if (isVisual(node.getKind())) {
+      if (isVisible(profile, node)) {
         result.add(node.getId());
       }
     }
     return result;
+  }
+
+  private static boolean isVisible(ContentProfile profile, EngineeringNode node) {
+    if (!isVisual(node.getKind())) {
+      return false;
+    }
+    if (profile == ContentProfile.PID) {
+      return true;
+    }
+    String connectionType = stringProperty(node, "connectionType", "MATERIAL");
+    if (profile == ContentProfile.PFD) {
+      return node.getKind() != EngineeringNode.Kind.INSTRUMENT
+          && node.getKind() != EngineeringNode.Kind.SIGNAL_CONNECTION && !"SIGNAL".equals(connectionType);
+    }
+    return node.getKind() == EngineeringNode.Kind.AREA || node.getKind() == EngineeringNode.Kind.EQUIPMENT
+        || node.getKind() == EngineeringNode.Kind.BOUNDARY || node.getKind() == EngineeringNode.Kind.PIPE_SEGMENT
+        || ((node.getKind() == EngineeringNode.Kind.PORT || node.getKind() == EngineeringNode.Kind.NOZZLE)
+            && "MATERIAL".equals(connectionType));
+  }
+
+  private static void addContentProfileDiagnostics(EngineeringGraph graph, ContentProfile profile, String drawingNumber,
+      List<Diagnostic> diagnostics) {
+    diagnostics.add(new Diagnostic(Severity.INFO, "DIAGRAM_CONTENT_PROFILE_PROPOSAL_ONLY", profile.name()
+        + " is a conservative NeqSim content projection and does not claim standards conformance or engineering approval",
+        drawingNumber));
+    for (EngineeringNode node : graph.getNodes().values()) {
+      if (isVisual(node.getKind()) && !isVisible(profile, node)) {
+        diagnostics.add(new Diagnostic(Severity.INFO, "DIAGRAM_CONTENT_PROFILE_OBJECT_OMITTED",
+            "Object is retained in the canonical semantic model but omitted from the " + profile.name()
+                + " drawing view",
+            node.getId()));
+      }
+    }
   }
 
   private static boolean isVisual(EngineeringNode.Kind kind) {
