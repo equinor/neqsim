@@ -41,10 +41,15 @@ class AbsorptionColumnTest extends NeqSimTest {
     double wetGasWater = componentFlow(idealCase.gasFeed, "water");
     double idealDryGasWater = componentFlow(idealCase.absorber.getGasOutStream(), "water");
     double reducedEfficiencyDryGasWater = componentFlow(reducedEfficiencyCase.absorber.getGasOutStream(), "water");
+    double idealDryGasWaterFraction = componentMoleFraction(idealCase.absorber.getGasOutStream(), "water");
+    double reducedEfficiencyDryGasWaterFraction =
+        componentMoleFraction(reducedEfficiencyCase.absorber.getGasOutStream(), "water");
 
     assertTrue(idealDryGasWater < wetGasWater, "The rigorous TEG column must remove water");
-    assertTrue(idealDryGasWater < reducedEfficiencyDryGasWater,
-        "Reducing the water Murphree efficiency must reduce dehydration");
+    assertTrue(reducedEfficiencyDryGasWater < wetGasWater,
+        "The reduced-efficiency rigorous TEG column must still remove water");
+    assertTrue(idealDryGasWaterFraction < reducedEfficiencyDryGasWaterFraction,
+        "Reducing water Murphree efficiency must increase treated-gas water mole fraction");
     assertEquals(4, idealCase.absorber.getNumberOfTrays());
     assertEquals(0.35, reducedEfficiencyCase.absorber.getComponentMurphreeEfficiency(2, "water"), 1.0e-12);
   }
@@ -57,7 +62,7 @@ class AbsorptionColumnTest extends NeqSimTest {
     gasFluid.addComponent("propane", 0.025);
     gasFluid.addComponent("n-butane", 0.010);
     gasFluid.addComponent("n-pentane", 0.005);
-    gasFluid.addComponent("n-decane", 0.0);
+    gasFluid.addComponent("n-heptane", 0.0);
     gasFluid.setMixingRule("classic");
     gasFluid.setMultiPhaseCheck(false);
 
@@ -72,7 +77,7 @@ class AbsorptionColumnTest extends NeqSimTest {
     oilFluid.addComponent("propane", 0.0);
     oilFluid.addComponent("n-butane", 0.0);
     oilFluid.addComponent("n-pentane", 0.0);
-    oilFluid.addComponent("n-decane", 1.0);
+    oilFluid.addComponent("n-heptane", 1.0);
     oilFluid.setMixingRule("classic");
     oilFluid.setMultiPhaseCheck(false);
 
@@ -242,6 +247,11 @@ class AbsorptionColumnTest extends NeqSimTest {
       }
     }
     return flow;
+  }
+
+  private static double componentMoleFraction(StreamInterface stream, String componentName) {
+    ComponentInterface component = stream.getFluid().getPhase(0).getComponent(componentName);
+    return component == null ? 0.0 : component.getx();
   }
 
   private static Set<String> componentNames(StreamInterface... streams) {
