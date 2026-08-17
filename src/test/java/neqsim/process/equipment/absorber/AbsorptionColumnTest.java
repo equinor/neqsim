@@ -21,8 +21,7 @@ class AbsorptionColumnTest extends NeqSimTest {
     private final StreamInterface leanTeg;
     private final AbsorptionColumn absorber;
 
-    private AbsorberCase(StreamInterface wetGas, StreamInterface leanTeg,
-        AbsorptionColumn absorber) {
+    private AbsorberCase(StreamInterface wetGas, StreamInterface leanTeg, AbsorptionColumn absorber) {
       this.wetGas = wetGas;
       this.leanTeg = leanTeg;
       this.absorber = absorber;
@@ -39,15 +38,13 @@ class AbsorptionColumnTest extends NeqSimTest {
 
     double wetGasWater = componentFlow(idealCase.wetGas, "water");
     double idealDryGasWater = componentFlow(idealCase.absorber.getGasOutStream(), "water");
-    double reducedEfficiencyDryGasWater =
-        componentFlow(reducedEfficiencyCase.absorber.getGasOutStream(), "water");
+    double reducedEfficiencyDryGasWater = componentFlow(reducedEfficiencyCase.absorber.getGasOutStream(), "water");
 
     assertTrue(idealDryGasWater < wetGasWater, "The rigorous TEG column must remove water");
     assertTrue(idealDryGasWater < reducedEfficiencyDryGasWater,
         "Reducing the water Murphree efficiency must reduce dehydration");
     assertEquals(4, idealCase.absorber.getNumberOfTrays());
-    assertEquals(0.35,
-        reducedEfficiencyCase.absorber.getComponentMurphreeEfficiency(2, "water"), 1.0e-12);
+    assertEquals(0.35, reducedEfficiencyCase.absorber.getComponentMurphreeEfficiency(2, "water"), 1.0e-12);
   }
 
   private static AbsorberCase runTegAbsorberCase(double waterEfficiency) {
@@ -110,29 +107,24 @@ class AbsorptionColumnTest extends NeqSimTest {
 
     StreamInterface dryGas = absorber.getGasOutStream();
     StreamInterface richTeg = absorber.getLiquidOutStream();
-    double inletMass = absorberCase.wetGas.getFlowRate("kg/hr")
-        + absorberCase.leanTeg.getFlowRate("kg/hr");
+    double inletMass = absorberCase.wetGas.getFlowRate("kg/hr") + absorberCase.leanTeg.getFlowRate("kg/hr");
     double outletMass = dryGas.getFlowRate("kg/hr") + richTeg.getFlowRate("kg/hr");
-    assertEquals(inletMass, outletMass, inletMass * 5.0e-3,
-        absorber.getConvergenceDiagnostics());
+    assertEquals(inletMass, outletMass, inletMass * 5.0e-3, absorber.getConvergenceDiagnostics());
 
     for (String componentName : componentNames(absorberCase.wetGas, absorberCase.leanTeg)) {
       double inletComponentFlow = componentFlow(absorberCase.wetGas, componentName)
           + componentFlow(absorberCase.leanTeg, componentName);
-      double outletComponentFlow = componentFlow(dryGas, componentName)
-          + componentFlow(richTeg, componentName);
+      double outletComponentFlow = componentFlow(dryGas, componentName) + componentFlow(richTeg, componentName);
       double tolerance = Math.max(1.0e-6, inletComponentFlow * 5.0e-3);
       assertEquals(inletComponentFlow, outletComponentFlow, tolerance,
-          "Component balance must close for " + componentName + ". "
-              + absorber.getConvergenceDiagnostics());
+          "Component balance must close for " + componentName + ". " + absorber.getConvergenceDiagnostics());
     }
   }
 
   private static double componentFlow(StreamInterface stream, String componentName) {
     double flow = 0.0;
     for (int phaseNumber = 0; phaseNumber < stream.getFluid().getNumberOfPhases(); phaseNumber++) {
-      ComponentInterface component =
-          stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
+      ComponentInterface component = stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
       if (component != null) {
         flow += component.getFlowRate("kg/hr");
       }
@@ -143,9 +135,8 @@ class AbsorptionColumnTest extends NeqSimTest {
   private static Set<String> componentNames(StreamInterface... streams) {
     Set<String> names = new LinkedHashSet<>();
     for (StreamInterface stream : streams) {
-      for (int componentNumber = 0;
-          componentNumber < stream.getFluid().getPhase(0).getNumberOfComponents();
-          componentNumber++) {
+      for (int componentNumber = 0; componentNumber < stream.getFluid().getPhase(0)
+          .getNumberOfComponents(); componentNumber++) {
         names.add(stream.getFluid().getPhase(0).getComponent(componentNumber).getName());
       }
     }
