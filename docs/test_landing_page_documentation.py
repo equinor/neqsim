@@ -7,6 +7,8 @@ from urllib.parse import unquote
 DOCS_DIR = Path(__file__).resolve().parent
 LANDING_PAGE = DOCS_DIR / "index.md"
 PACKAGE_INDEX = DOCS_DIR / "README.md"
+WIKI_INDEX = DOCS_DIR / "wiki" / "index.md"
+POM = DOCS_DIR.parent / "pom.xml"
 
 
 def extract_fence(content, language):
@@ -39,8 +41,10 @@ def resolve_internal_target(source_path, destination):
         candidates.append(raw_target.with_suffix(".md"))
     elif target.endswith("/"):
         candidates.extend((raw_target / "README.md", raw_target / "index.md"))
-    else:
+    elif raw_target.suffix:
         candidates.append(raw_target)
+    else:
+        candidates.extend((raw_target, raw_target.with_suffix(".md")))
 
     for candidate in candidates:
         if candidate.is_file():
@@ -54,6 +58,7 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
         cls.documents = {
             LANDING_PAGE: LANDING_PAGE.read_text(encoding="utf-8"),
             PACKAGE_INDEX: PACKAGE_INDEX.read_text(encoding="utf-8"),
+            WIKI_INDEX: WIKI_INDEX.read_text(encoding="utf-8"),
         }
 
     def test_front_matter_title_structure_and_fences(self):
@@ -87,6 +92,29 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
                             fragment,
                             heading_slugs(target_path.read_text(encoding="utf-8")),
                         )
+
+    def test_wiki_uses_current_release_and_api_destinations(self):
+        wiki = self.documents[WIKI_INDEX]
+        current_version = re.search(
+            r"<revision>([^<]+)</revision>",
+            POM.read_text(encoding="utf-8"),
+        )
+        self.assertIsNotNone(current_version)
+        self.assertIn(
+            f"<version>{current_version.group(1)}</version>",
+            wiki,
+        )
+        self.assertIn(
+            "https://github.com/equinor/neqsim/releases",
+            wiki,
+        )
+        self.assertIn(
+            "https://equinor.github.io/neqsim/javadoc/index.html",
+            wiki,
+        )
+        self.assertNotIn("equinor/neqsimsource", wiki)
+        self.assertNotIn("htmlpreview.github.io", wiki)
+        self.assertNotIn("equinor/neqsimhome/blob", wiki)
 
     def test_shared_java_example_is_complete_and_repository_safe(self):
         landing_example = extract_fence(self.documents[LANDING_PAGE], "java")

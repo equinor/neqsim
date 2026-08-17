@@ -50,6 +50,8 @@ public class EventScheduler implements Serializable {
     private final double time;
     private final String label;
     private final Runnable action;
+    private final List<String> transientStateIdentities;
+    private final boolean transientStateScopeDeclared;
 
     /**
      * Constructor.
@@ -59,6 +61,20 @@ public class EventScheduler implements Serializable {
      * @param action payload (must be non-null; must also be serializable when the scheduler itself is serialized)
      */
     public ScheduledEvent(double time, String label, Runnable action) {
+      this(time, label, action, Collections.<String>emptyList(), false);
+    }
+
+    /**
+     * Creates an event with an explicit transient-state mutation scope.
+     *
+     * @param time absolute simulation time in seconds
+     * @param label short diagnostic label
+     * @param action event payload
+     * @param transientStateIdentities stable identities of every participant the action may mutate
+     * @param transientStateScopeDeclared whether the action has declared a complete mutation scope
+     */
+    private ScheduledEvent(double time, String label, Runnable action, List<String> transientStateIdentities,
+        boolean transientStateScopeDeclared) {
       if (Double.isNaN(time) || Double.isInfinite(time) || time < 0.0) {
         throw new IllegalArgumentException("time must be finite and >= 0, got " + time);
       }
@@ -68,6 +84,8 @@ public class EventScheduler implements Serializable {
       this.time = time;
       this.label = (label == null) ? "" : label;
       this.action = action;
+      this.transientStateIdentities = Collections.unmodifiableList(new ArrayList<String>(transientStateIdentities));
+      this.transientStateScopeDeclared = transientStateScopeDeclared;
     }
 
     /**
@@ -95,6 +113,24 @@ public class EventScheduler implements Serializable {
      */
     public Runnable getAction() {
       return action;
+    }
+
+    /**
+     * Returns whether this event declares a complete in-memory mutation scope for transient rollback.
+     *
+     * @return {@code true} only for events created by {@link EventScheduler#scheduleTransactionalEvent}
+     */
+    public boolean hasDeclaredTransientStateScope() {
+      return transientStateScopeDeclared;
+    }
+
+    /**
+     * Returns the stable identities of every transient-state participant the action promises it may mutate.
+     *
+     * @return immutable, non-empty identity list for a transaction-scoped event
+     */
+    public List<String> getTransientStateIdentities() {
+      return Collections.unmodifiableList(new ArrayList<String>(transientStateIdentities));
     }
 
     /** {@inheritDoc} */
@@ -166,6 +202,52 @@ public class EventScheduler implements Serializable {
     queue.add(e);
     Collections.sort(queue);
     return e;
+  }
+
+  /**
+   * Schedules an event whose action declares every in-memory transient-state participant it may mutate.
+   *
+   * <p>
+   * A {@code ProcessSystem} transaction accepts pending events only through this API and only when every declared
+   * identity belongs to a registered, completely covered participant. The declaration is a fail-closed orchestration
+   * contract: the action must not mutate undeclared objects, perform external I/O, publish externally visible events,
+   * or schedule an unscoped event. Those effects cannot be undone by participant snapshots.
+   * </p>
+   *
+   * <p>
+   * This method does not require the {@link Runnable} to be serializable for an in-memory transaction. Java checkpoint
+   * serialization still requires a serializable payload, exactly as for
+   * {@link #scheduleEvent(double, String, Runnable)}.
+   * </p>
+   *
+   * @param time absolute simulation time in seconds
+   * @param label short diagnostic label
+   * @param action event payload
+   * @param transientStateIdentities stable identities of every participant the action may mutate
+   * @return the scheduled transaction-scoped event
+   * @throws IllegalArgumentException if the identity array is null, empty, contains null/empty identities, or contains
+   * duplicate identities
+   */
+  public ScheduledEvent scheduleTransactionalEvent(double time, String label, Runnable action,
+      String... transientStateIdentities) {
+    if (transientStateIdentities == null || transientStateIdentities.length == 0) {
+      throw new IllegalArgumentException("transaction-scoped event must declare at least one transient state identity");
+    }
+    List<String> normalizedIdentities = new ArrayList<String>(transientStateIdentities.length);
+    for (String identity : transientStateIdentities) {
+      if (identity == null || identity.trim().isEmpty()) {
+        throw new IllegalArgumentException("transient state identity must not be null or empty");
+      }
+      String normalized = identity.trim();
+      if (normalizedIdentities.contains(normalized)) {
+        throw new IllegalArgumentException("duplicate transient state identity '" + normalized + "'");
+      }
+      normalizedIdentities.add(normalized);
+    }
+    ScheduledEvent event = new ScheduledEvent(time, label, action, normalizedIdentities, true);
+    queue.add(event);
+    Collections.sort(queue);
+    return event;
   }
 
   /**

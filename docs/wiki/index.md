@@ -131,17 +131,17 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.0.0</version>
+    <version>3.17.0</version>
 </dependency>
 ```
 
-**Download:** [GitHub Releases](https://github.com/equinor/neqsimsource/releases)
+**Download:** [GitHub Releases](https://github.com/equinor/neqsim/releases)
 
 ---
 
 ## Resources
 
-- **JavaDoc**: [API Documentation](https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html)
+- **JavaDoc**: [API Documentation](https://equinor.github.io/neqsim/javadoc/index.html)
 - **Source Code**: [github.com/equinor/neqsim](https://github.com/equinor/neqsim)
 - **Issues**: [Report bugs or request features](https://github.com/equinor/neqsim/issues)
 - **Discussions**: [Ask questions](https://github.com/equinor/neqsim/discussions)
