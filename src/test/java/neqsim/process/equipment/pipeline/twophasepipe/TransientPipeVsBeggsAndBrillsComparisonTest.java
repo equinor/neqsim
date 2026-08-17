@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
@@ -88,6 +89,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @see TransientPipe
  * @see PipeBeggsAndBrills
  */
+@Tag("slow")
 public class TransientPipeVsBeggsAndBrillsComparisonTest {
   private static final Logger logger = LogManager.getLogger(TransientPipeVsBeggsAndBrillsComparisonTest.class);
 
