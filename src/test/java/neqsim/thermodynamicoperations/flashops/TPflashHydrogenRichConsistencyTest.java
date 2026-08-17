@@ -17,8 +17,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 @Tag("slow")
 class TPflashHydrogenRichConsistencyTest {
   private static final String[] COMPONENTS = { "hydrogen", "methane", "ethane", "n-heptane", "nC10" };
-  private static final double[][] FEEDS = { { 0.920, 0.060, 0.015, 0.004, 0.001 },
-      { 0.750, 0.150, 0.050, 0.040, 0.010 }, { 0.350, 0.450, 0.100, 0.080, 0.020 } };
+  private static final double[][] FEEDS = { { 0.920, 0.060, 0.020, 0.000, 0.000 },
+      { 0.920, 0.060, 0.015, 0.004, 0.001 }, { 0.750, 0.150, 0.050, 0.040, 0.010 },
+      { 0.350, 0.450, 0.100, 0.080, 0.020 } };
   private static final double[][] STATES = { { 320.0, 20.0 }, { 320.0, 200.0 }, { 300.0, 100.0 }, { 260.0, 100.0 },
       { 220.0, 200.0 } };
 
