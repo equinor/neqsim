@@ -99,6 +99,13 @@ public class TwoFluidPipeTransientNullTest {
    * The steady solver is not implicated: its mean liquid holdup for this case is stable and physically bounded, while
    * the transient runs away to nearly double it.
    * </p>
+   *
+   * <p>
+   * Enabling the interfacial pressure term removes the packing trap on this case: liquid keeps leaving the outlet and
+   * the inventory stops growing. It does not make the steady state a fixed point, because the transient then settles on
+   * a different state instead, so the case stays disabled until the well-posedness of the momentum system is addressed
+   * rather than only its stabilization.
+   * </p>
    */
   @Test
   @Disabled("Known defect: liquid-rich transient traps liquid and packs without bound. "

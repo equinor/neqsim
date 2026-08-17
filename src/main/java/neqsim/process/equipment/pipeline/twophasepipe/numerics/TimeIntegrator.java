@@ -112,20 +112,27 @@ public class TimeIntegrator implements Serializable {
    * @return Updated state at t + dt
    */
   public double[][] step(double[][] U, RHSFunction rhs, double dt) {
+    double[][] advancedState;
     switch (method) {
     case EULER:
-      return stepEuler(U, rhs, dt);
+      advancedState = stepEuler(U, rhs, dt);
+      break;
     case RK2:
-      return stepRK2(U, rhs, dt);
+      advancedState = stepRK2(U, rhs, dt);
+      break;
     case RK4:
-      return stepRK4(U, rhs, dt);
+      advancedState = stepRK4(U, rhs, dt);
+      break;
     case SSP_RK3:
-      return stepSSPRK3(U, rhs, dt);
+      advancedState = stepSSPRK3(U, rhs, dt);
+      break;
     case IMEX_PRESSURE_CORRECTION:
       return stepIMEXPressureCorrection(U, rhs, dt);
     default:
-      return stepRK4(U, rhs, dt);
+      advancedState = stepRK4(U, rhs, dt);
+      break;
     }
+    return applyImplicitVoidWaveCorrection(advancedState, dt);
   }
 
   /**
@@ -448,6 +455,21 @@ public class TimeIntegrator implements Serializable {
   private double[] cellOilDensities;
   private double[] cellWaterDensities;
 
+  /** Void-wave speeds for the implicit interfacial-pressure correction. */
+  private double[] cellVoidWaveSpeeds;
+
+  /** Drift-flux slip coefficients of the interfacial-pressure closure (m2/s2). */
+  private double[] cellVoidWaveSlipCoefficients;
+
+  /** Minimum gas-liquid holdup product that admits a drift-flux correction. */
+  private static final double MIN_VOID_WAVE_PHASE_PRODUCT = 1.0e-3;
+
+  /** Largest slip change the implicit correction may impose in one step (m/s). */
+  private static final double MAX_VOID_WAVE_SLIP_CHANGE = 5.0;
+
+  /** Whether to apply the implicit interfacial-pressure correction after the explicit transport step. */
+  private boolean implicitVoidWaveEnabled;
+
   /** Cell size for IMEX pressure solve (m). Set by caller before step. */
   private double imexDx = 1.0;
 
@@ -500,6 +522,30 @@ public class TimeIntegrator implements Serializable {
     this.cellGasDensities = gasDensities;
     this.cellOilDensities = oilDensities;
     this.cellWaterDensities = waterDensities;
+  }
+
+  /**
+   * Configure the implicit void-wave correction used by the interfacial-pressure closure.
+   *
+   * @param voidWaveSpeeds Bestion void-wave speed per cell in m/s
+   * @param slipCoefficients drift-flux slip coefficient per cell in m2/s2
+   * @param areas pipe cross-sectional area per cell in m2
+   * @param gasDensities gas density per cell in kg/m3
+   * @param oilDensities oil density per cell in kg/m3
+   * @param waterDensities water density per cell in kg/m3
+   * @param dx cell size in m
+   * @param enabled true to apply the implicit correction
+   */
+  public void setImplicitVoidWaveProperties(double[] voidWaveSpeeds, double[] slipCoefficients, double[] areas,
+      double[] gasDensities, double[] oilDensities, double[] waterDensities, double dx, boolean enabled) {
+    this.cellVoidWaveSpeeds = voidWaveSpeeds;
+    this.cellVoidWaveSlipCoefficients = slipCoefficients;
+    this.cellAreas = areas;
+    this.cellGasDensities = gasDensities;
+    this.cellOilDensities = oilDensities;
+    this.cellWaterDensities = waterDensities;
+    this.imexDx = dx;
+    this.implicitVoidWaveEnabled = enabled;
   }
 
   /**
@@ -675,7 +721,106 @@ public class TimeIntegrator implements Serializable {
       }
     }
 
-    return Unew;
+    return applyImplicitVoidWaveCorrection(Unew, dt);
+  }
+
+  /**
+   * Advance the linearized void-fraction/slip subsystem with backward Euler.
+   *
+   * <p>
+   * The transported variable is the drift flux {@code q = alphaG * alphaL * (vG - vL)}. Eliminating the implicit
+   * void-fraction update gives a Helmholtz equation for {@code q}. Mapping the corrected slip back to gas and liquid
+   * momenta leaves every phase mass and the cell total momentum unchanged.
+   * </p>
+   *
+   * @param state state after explicit transport and pressure correction
+   * @param dt time step in s
+   * @return state with the implicit void-wave momentum correction
+   */
+  private double[][] applyImplicitVoidWaveCorrection(double[][] state, double dt) {
+    int nCells = state.length;
+    if (!implicitVoidWaveEnabled || cellVoidWaveSpeeds == null || cellVoidWaveSpeeds.length != nCells || nCells < 2) {
+      return state;
+    }
+
+    double[] alphaGas = new double[nCells];
+    double[] driftFlux = new double[nCells];
+    double[] lower = new double[nCells];
+    double[] diagonal = new double[nCells];
+    double[] upper = new double[nCells];
+    double[] rightHandSide = new double[nCells];
+
+    for (int i = 0; i < nCells; i++) {
+      double area = getCellArea(i);
+      double gasArea = getPhaseArea(i, state[i][0], cellGasDensities, 0.0);
+      double oilArea = getPhaseArea(i, state[i][1], cellOilDensities, 0.0);
+      double waterArea = getPhaseArea(i, state[i][2], cellWaterDensities, 0.0);
+      double liquidArea = Math.max(0.0, Math.min(area, oilArea + waterArea));
+      alphaGas[i] = Math.max(0.0, Math.min(1.0, gasArea / area));
+      double alphaLiquid = Math.max(0.0, Math.min(1.0, liquidArea / area));
+      double gasVelocity = state[i][0] > 1.0e-12 ? state[i][3] / state[i][0] : 0.0;
+      double liquidMass = state[i][1] + state[i][2];
+      double liquidMomentum = state[i][4] + state[i][5];
+      double liquidVelocity = liquidMass > 1.0e-12 ? liquidMomentum / liquidMass : 0.0;
+      driftFlux[i] = alphaGas[i] * alphaLiquid * (gasVelocity - liquidVelocity);
+    }
+
+    for (int i = 0; i < nCells; i++) {
+      double waveSpeed = Math.max(0.0, cellVoidWaveSpeeds[i]);
+      double sigma = waveSpeed * waveSpeed * dt * dt / (imexDx * imexDx);
+      lower[i] = -sigma;
+      diagonal[i] = 1.0 + 2.0 * sigma;
+      upper[i] = -sigma;
+
+      double alphaGradient;
+      if (i == 0) {
+        alphaGradient = (alphaGas[1] - alphaGas[0]) / imexDx;
+      } else if (i == nCells - 1) {
+        alphaGradient = (alphaGas[i] - alphaGas[i - 1]) / imexDx;
+      } else {
+        alphaGradient = (alphaGas[i + 1] - alphaGas[i - 1]) / (2.0 * imexDx);
+      }
+      double slipCoefficient = (cellVoidWaveSlipCoefficients != null && i < cellVoidWaveSlipCoefficients.length)
+          ? Math.max(0.0, cellVoidWaveSlipCoefficients[i])
+          : 0.0;
+      rightHandSide[i] = driftFlux[i] - dt * slipCoefficient * alphaGradient;
+    }
+
+    diagonal[0] += lower[0];
+    lower[0] = 0.0;
+    diagonal[nCells - 1] += upper[nCells - 1];
+    upper[nCells - 1] = 0.0;
+    double[] correctedDriftFlux = solveTridiagonal(lower, diagonal, upper, rightHandSide);
+
+    for (int i = 0; i < nCells; i++) {
+      double gasMass = state[i][0];
+      double liquidMass = state[i][1] + state[i][2];
+      double totalMass = gasMass + liquidMass;
+      double area = getCellArea(i);
+      double gasArea = getPhaseArea(i, gasMass, cellGasDensities, 0.0);
+      double liquidArea = getPhaseArea(i, state[i][1], cellOilDensities, 0.0)
+          + getPhaseArea(i, state[i][2], cellWaterDensities, 0.0);
+      double alphaProduct = gasArea / area * Math.max(0.0, Math.min(1.0, liquidArea / area));
+      if (gasMass <= 1.0e-12 || liquidMass <= 1.0e-12 || totalMass <= 1.0e-12
+          || alphaProduct <= MIN_VOID_WAVE_PHASE_PRODUCT) {
+        continue;
+      }
+
+      double oldGasVelocity = state[i][3] / gasMass;
+      double oldLiquidVelocity = (state[i][4] + state[i][5]) / liquidMass;
+      double correctedSlip = correctedDriftFlux[i] / alphaProduct;
+      double slipChange = correctedSlip - (oldGasVelocity - oldLiquidVelocity);
+      if (!Double.isFinite(slipChange)) {
+        continue;
+      }
+      slipChange = Math.max(-MAX_VOID_WAVE_SLIP_CHANGE, Math.min(MAX_VOID_WAVE_SLIP_CHANGE, slipChange));
+      double gasVelocityChange = liquidMass / totalMass * slipChange;
+      double liquidVelocityChange = -gasMass / totalMass * slipChange;
+      state[i][3] += gasMass * gasVelocityChange;
+      state[i][4] += state[i][1] * liquidVelocityChange;
+      state[i][5] += state[i][2] * liquidVelocityChange;
+    }
+    return state;
   }
 
   /**
