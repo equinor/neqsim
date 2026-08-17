@@ -407,9 +407,11 @@ public final class NativeEngineeringDiagramRenderer {
       }
     }
     Map<String, Point> endpointAnchors = routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
-        ? fixedPortAnchors(sheet, positions, objects, diagnostics) : Collections.<String, Point>emptyMap();
+        ? fixedPortAnchors(sheet, positions, objects, diagnostics)
+        : Collections.<String, Point>emptyMap();
     Map<String, Double> routeLanes = routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
-        ? parallelRouteLanes(sheet, objects) : Collections.<String, Double>emptyMap();
+        ? parallelRouteLanes(sheet, objects)
+        : Collections.<String, Double>emptyMap();
 
     List<String> ids = new ArrayList<String>(sheet.getObjectNodeIds());
     Collections.sort(ids);
@@ -619,8 +621,7 @@ public final class NativeEngineeringDiagramRenderer {
       }
       String sourceOwner = endpointOwnerId(connection, "sourceEndpointId", objects);
       String targetOwner = endpointOwnerId(connection, "targetEndpointId", objects);
-      String key = sourceOwner + "|" + targetOwner + "|"
-          + stringProperty(connection, "connectionType", "MATERIAL");
+      String key = sourceOwner + "|" + targetOwner + "|" + stringProperty(connection, "connectionType", "MATERIAL");
       List<String> ids = connectionIdsByOwnerPair.get(key);
       if (ids == null) {
         ids = new ArrayList<String>();
@@ -632,8 +633,7 @@ public final class NativeEngineeringDiagramRenderer {
     for (List<String> ids : connectionIdsByOwnerPair.values()) {
       Collections.sort(ids);
       for (int index = 0; index < ids.size(); index++) {
-        result.put(ids.get(index),
-            Double.valueOf((index - (ids.size() - 1) / 2.0) * PARALLEL_LANE_SPACING));
+        result.put(ids.get(index), Double.valueOf((index - (ids.size() - 1) / 2.0) * PARALLEL_LANE_SPACING));
       }
     }
     return result;
