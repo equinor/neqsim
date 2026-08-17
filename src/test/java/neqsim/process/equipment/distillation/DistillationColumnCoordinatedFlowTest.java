@@ -21,24 +21,22 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class DistillationColumnCoordinatedFlowTest {
   /**
-   * Qualify heterogeneous feeds, terminal ratios, an external side draw, and a cooled pumparound
-   * together.
+   * Qualify heterogeneous feeds, terminal ratios, an external side draw, and a cooled pumparound together.
    */
   @Test
   public void partialCondenserMultifeedSideDrawAndPumparoundRemainConservative() {
     Stream primaryFeed = createPrimaryFeed();
     Stream sideFeed = createSideFeed();
     DistillationColumn column = createColumn(primaryFeed, sideFeed);
-    DistillationColumn.ColumnPumparound pumparound =
-        column.addLiquidPumparound("coordinated PA", 3, 5, 0.02, 4.0);
+    DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("coordinated PA", 3, 5, 0.02, 4.0);
 
     column.run(UUID.randomUUID());
 
     assertAcceptedAndBalanced(column, pumparound, primaryFeed, sideFeed);
     double initialTopFlow = column.getGasOutStream().getFlowRate("mol/hr");
     double initialBottomFlow = column.getLiquidOutStream().getFlowRate("mol/hr");
-    double initialSideDrawFlow =
-        column.getSideDrawStream(2, DistillationColumn.SideDrawPhase.LIQUID).getFlowRate("mol/hr");
+    double initialSideDrawFlow = column.getSideDrawStream(2, DistillationColumn.SideDrawPhase.LIQUID)
+        .getFlowRate("mol/hr");
     double initialPumparoundFlow = pumparound.getReturnStream().getFlowRate("kg/hr");
     double initialPumparoundDuty = pumparound.getDuty();
 
@@ -139,15 +137,15 @@ public class DistillationColumnCoordinatedFlowTest {
    * @param pumparound configured pumparound
    * @param feeds external feeds
    */
-  private void assertAcceptedAndBalanced(DistillationColumn column,
-      DistillationColumn.ColumnPumparound pumparound, StreamInterface... feeds) {
+  private void assertAcceptedAndBalanced(DistillationColumn column, DistillationColumn.ColumnPumparound pumparound,
+      StreamInterface... feeds) {
     String diagnostics = column.getConvergenceDiagnostics();
     assertTrue(column.solved(), diagnostics);
     assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus());
     assertEquals(DistillationColumn.CondenserMode.PARTIAL, column.getCondenserMode());
     assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, column.getReboilerMode());
     assertTrue(column.isLastColumnTearConverged(), diagnostics);
-    assertTrue(column.getLastColumnTearResidual() <= column.getColumnTearTolerance(), diagnostics);
+    assertTrue(column.getLastColumnTearResidual() <= 1.0e-4, diagnostics);
     assertTrue(Double.isFinite(column.getLastSpecificationResidual()), diagnostics);
     assertTrue(column.getLastSpecificationResidual() <= column.getTopSpecification().getTolerance(), diagnostics);
     assertTrue(Double.isFinite(column.getEnergyBalanceError()), diagnostics);
@@ -158,8 +156,8 @@ public class DistillationColumnCoordinatedFlowTest {
     assertNotNull(pumparound.getReturnStream());
     assertTrue(pumparound.getReturnStream().getFlowRate("kg/hr") > 0.0);
     assertTrue(Double.isFinite(pumparound.getDuty()) && pumparound.getDuty() < 0.0);
-    assertEquals(4.0,
-        pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
+    assertEquals(4.0, pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(),
+        1.0e-9);
 
     StreamInterface topProduct = column.getGasOutStream();
     StreamInterface bottomProduct = column.getLiquidOutStream();
@@ -184,10 +182,9 @@ public class DistillationColumnCoordinatedFlowTest {
         feedComponentFlow += getComponentMolarFlow(feed, componentName);
       }
       double productComponentFlow = getComponentMolarFlow(topProduct, componentName)
-          + getComponentMolarFlow(bottomProduct, componentName)
-          + getComponentMolarFlow(sideDraw, componentName);
-      assertEquals(feedComponentFlow, productComponentFlow,
-          Math.max(1.0e-8, 5.0e-3 * Math.abs(feedComponentFlow)), componentName + " balance");
+          + getComponentMolarFlow(bottomProduct, componentName) + getComponentMolarFlow(sideDraw, componentName);
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-8, 5.0e-3 * Math.abs(feedComponentFlow)),
+          componentName + " balance");
     }
   }
 
