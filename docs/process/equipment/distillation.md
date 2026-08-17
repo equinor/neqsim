@@ -288,7 +288,9 @@ Side draws withdraw a fraction of tray vapor or liquid traffic. They are true ex
 streams: `getOutletStreams()` includes them, and `getMassBalance(unit)` subtracts them from the
 feed-product balance. The sequential tray solvers and `NAPHTALI_SANDHOLM` both remove the withdrawn
 phase from inter-tray material and energy traffic; the Naphtali-Sandholm solver also fingerprints the
-configured split so a changed draw cannot reuse an incompatible warm state. An exact liquid
+configured split so a changed draw cannot reuse an incompatible warm state. The inside-out stage used
+by `MESH_RESIDUAL` similarly retains an accepted tray and product state for exact unchanged-input
+reuse; changed feed, configuration, tray, or product state invalidates that fingerprint. An exact liquid
 side-draw fraction of `1.0` leaves zero internal downflow across that stage, so NeqSim routes an
 explicit or reused `NAPHTALI_SANDHOLM` selection to `MESH_RESIDUAL`. Fractions below `1.0`
 retain positive internal traffic and remain eligible for the simultaneous solver.
