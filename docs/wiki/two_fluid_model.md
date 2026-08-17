@@ -243,6 +243,21 @@ Fixed-floor mode is opt-in and should be supported by fluid, wall-wetting, and f
 | `setMinimumLiquidHoldup(double)` | 0.001 | Absolute minimum holdup floor (when adaptive-only is false) |
 | `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup in adaptive mode |
 | `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum slip constraint entirely |
+| `setUseEquilibriumLevelAnnularTransition(boolean)` | `false` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
+
+The minimum slip constraint carries no inclination dependence, and on an undulating profile it
+is what binds: on a 5 km, 200 mm fixture with +/-30 m undulation, 85 of 100 sections sit exactly
+on `lambdaL * minimumSlipFactor`, so the terrain response of the momentum balance is replaced by
+a constant. It is inert on a near-horizontal transmission line, where lowering the factor from
+2.0 to 1.0 leaves the pressure drop and holdup profile unchanged.
+
+The horizontal annular criterion is a separate selection. The default uses the vertical
+droplet-entrainment threshold, which classifies effectively any horizontal gas pipeline as
+annular; the option selects the Taitel-Dukler equilibrium-level branch. The two differ only
+below the Kelvin-Helmholtz threshold, which on a 73.8 km export line means they agree at
+10 MSm3/d and differ at 4 MSm3/d, where the option moves the median holdup from 0.0198 to 0.0232
+against a reference value near 0.0235. It remains opt-in because the slug closure it selects on
+uphill sections returns less liquid than the stratified closure returns on downhill ones.
 
 ### Example: Lean Gas vs Rich Condensate
 
