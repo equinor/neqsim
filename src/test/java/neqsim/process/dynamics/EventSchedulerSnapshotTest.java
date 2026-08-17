@@ -1,6 +1,7 @@
 package neqsim.process.dynamics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -157,6 +158,7 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
     assertEquals(true, event.hasDeclaredTransientStateScope());
     assertEquals(1, event.getTransientStateIdentities().size());
     assertEquals("area/device", event.getTransientStateIdentities().get(0));
+    assertNotSame(event.getTransientStateIdentities(), event.getTransientStateIdentities());
     assertThrows(UnsupportedOperationException.class, () -> event.getTransientStateIdentities().add("other"));
   }
 
