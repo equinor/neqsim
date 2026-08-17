@@ -608,3 +608,26 @@ energy ports, failure state, design conditions and runtime capacity constraints 
 ownership is composed explicitly. This coverage establishes transaction and restart mechanics only; it does not qualify
 source-boundary physics, stream flash accuracy, property-package accuracy, adaptive full-step/two-half-step rejection,
 external I/O, safety action, virtual commissioning or OTS use.
+
+## Transaction-scoped scheduled events
+
+An `EventScheduler` action can affect more than scheduler bookkeeping, so ordinary `scheduleEvent(...)` callbacks now
+fail the `ProcessSystem` transaction preflight while they remain pending. Transactional execution requires
+`scheduleTransactionalEvent(time, label, action, stateIdentities...)`, with the stable identity of every registered
+`TransientStateParticipant` the callback may mutate. Coverage fails before trial execution when the declaration is
+missing, empty, duplicated or names an absent/incomplete participant. Scheduler replacement and trial-added unscoped
+events are also rejected during commit preparation; rollback restores the original scheduler identity plus pending/fired
+membership.
+
+For a shared multi-area scheduler, `ProcessModel` validates declarations against the union of completely covered
+participant identities in every child area and passes that same frozen identity scope into each area transaction. This
+allows one scheduled action to target a registered participant across an area boundary without weakening standalone
+`ProcessSystem` preflight checks. Area clocks and object identities remain coordinated by the existing two-phase model
+transaction.
+
+The declaration is a contract, not a sandbox. A scoped callback must not mutate undeclared objects, perform external I/O,
+publish externally visible events or schedule an unscoped callback. Such effects cannot be inferred from a Java
+`Runnable` or undone by participant snapshots. Java serialization of scheduler snapshots retains the declared identity
+list, while the callback itself must still implement `Serializable` for checkpoint/restart. This gate establishes
+fail-closed in-memory orchestration and deterministic replay only; it does not qualify event localization, external
+side-effect compensation, safety action, virtual commissioning, OTS behavior or adaptive timestep rejection.
