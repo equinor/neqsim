@@ -167,8 +167,8 @@ public class DistillationColumnHeterogeneousFeedTest {
       }
       double productComponentFlow = getComponentMolarFlow(topProduct, componentName)
           + getComponentMolarFlow(bottomProduct, componentName) + getComponentMolarFlow(sideDraw, componentName);
-      assertEquals(feedComponentFlow, productComponentFlow,
-          Math.max(1.0e-8, 5.0e-3 * Math.abs(feedComponentFlow)), componentName + " balance");
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-8, 5.0e-3 * Math.abs(feedComponentFlow)),
+          componentName + " balance");
     }
   }
 
@@ -188,8 +188,7 @@ public class DistillationColumnHeterogeneousFeedTest {
       }
       double componentAmount = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        componentAmount +=
-            system.getPhase(phaseIndex).getComponent(componentName).getNumberOfMolesInPhase();
+        componentAmount += system.getPhase(phaseIndex).getComponent(componentName).getNumberOfMolesInPhase();
       }
       if (componentAmount <= 0.0 && system.getNumberOfPhases() > 0) {
         componentAmount = system.getPhase(0).getComponent(componentName).getNumberOfmoles();
