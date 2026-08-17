@@ -202,7 +202,8 @@ class CalculatorDocumentationContractTest(unittest.TestCase):
         for contract in (
             "if (unit instanceof Calculator)",
             "((Calculator) unit).getOutputVariable()",
-            "collectCalculatorInputsAndCreateEdges",
+            "for (ProcessEquipmentInterface inputEquip : calc.getInputVariable())",
+            "addSignalEdgeIfAbsent(graph, signalSource, calc",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, self.graph_builder)
