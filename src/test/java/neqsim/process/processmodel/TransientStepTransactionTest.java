@@ -173,6 +173,25 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     assertEquals(0.0, attachedController.getTime(), TOLERANCE);
   }
 
+  /** A multi-area audit preserves deterministic area-qualified diagnostics when a participant audit throws. */
+  @Test
+  void processModelCoverageReportsParticipantInspectionFailure() {
+    StatefulTestUnit healthy = new StatefulTestUnit("healthy", "coverage/healthy", 1.0);
+    StatefulTestUnit failing = new StatefulTestUnit("failing", "coverage/failing", 1.0);
+    failing.setFailCoverageInspection(true);
+    ProcessModel model = new ProcessModel();
+    model.add("healthy-area", createProcess("healthy-area", healthy));
+    model.add("failing-area", createProcess("failing-area", failing));
+
+    TransientTransactionCoverage coverage = model.getTransientTransactionCoverage();
+
+    assertFalse(coverage.isComplete());
+    assertEquals(1, coverage.getBlockingIssues().size());
+    assertTrue(coverage.getBlockingIssues().get(0).contains("process area 'failing-area'"));
+    assertTrue(coverage.getBlockingIssues().get(0).contains("failed to report transient state coverage"));
+    assertThrows(IllegalStateException.class, model::beginTransientStepTransaction);
+  }
+
   /** Scheduler actions fail closed unless every mutated participant is declared and completely covered. */
   @Test
   void eventActionsRequireCompleteDeclaredParticipantScope() {
@@ -280,6 +299,7 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     private final double rate;
     private double value;
     private boolean failAfterMutation;
+    private boolean failCoverageInspection;
 
     private StatefulTestUnit(String name, String stateIdentity, double rate) {
       super(name);
@@ -308,8 +328,17 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     }
 
     @Override
+    public String getTransientStateCoverageIssue() {
+      if (failCoverageInspection) {
+        throw new IllegalStateException("intentional coverage inspection failure");
+      }
+      return null;
+    }
+
+    @Override
     public Snapshot captureTransientState() {
-      return new Snapshot(stateIdentity, value, getTime(), getCalculationIdentifier(), failAfterMutation);
+      return new Snapshot(stateIdentity, value, getTime(), getCalculationIdentifier(), failAfterMutation,
+          failCoverageInspection);
     }
 
     @Override
@@ -319,6 +348,7 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
       setTime(snapshot.time);
       setCalculationIdentifier(snapshot.calculationIdentifier);
       failAfterMutation = snapshot.failAfterMutation;
+      failCoverageInspection = snapshot.failCoverageInspection;
     }
 
     private double getValue() {
@@ -333,6 +363,10 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
       this.failAfterMutation = failAfterMutation;
     }
 
+    private void setFailCoverageInspection(boolean failCoverageInspection) {
+      this.failCoverageInspection = failCoverageInspection;
+    }
+
     private void setStateIdentity(String stateIdentity) {
       this.stateIdentity = stateIdentity;
     }
@@ -345,14 +379,16 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
       private final double time;
       private final UUID calculationIdentifier;
       private final boolean failAfterMutation;
+      private final boolean failCoverageInspection;
 
       private Snapshot(String stateIdentity, double value, double time, UUID calculationIdentifier,
-          boolean failAfterMutation) {
+          boolean failAfterMutation, boolean failCoverageInspection) {
         this.stateIdentity = stateIdentity;
         this.value = value;
         this.time = time;
         this.calculationIdentifier = calculationIdentifier;
         this.failAfterMutation = failAfterMutation;
+        this.failCoverageInspection = failCoverageInspection;
       }
     }
   }
