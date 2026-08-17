@@ -26,10 +26,9 @@ class EngineeringDiagramSymbolConventionTest {
   void rendersDeterministicConfiguredShapesAndReportsExplicitFallbacks() {
     EngineeringDiagramDocumentSet documents = conventionDocuments();
     SymbolConvention equipmentConvention = new SymbolConvention(EngineeringNode.Kind.EQUIPMENT, SymbolShape.DIAMOND,
-        "#123456", "#fef3c7", "project-symbols:reference", EvidenceState.PROPOSED, "", "", "2026-08-17T11:00:00Z",
-        "A");
-    EngineeringDiagramConventionRegister conventions =
-        new EngineeringDiagramConventionRegister().withConvention(equipmentConvention);
+        "#123456", "#fef3c7", "project-symbols:reference", EvidenceState.PROPOSED, "", "", "2026-08-17T11:00:00Z", "A");
+    EngineeringDiagramConventionRegister conventions = new EngineeringDiagramConventionRegister()
+        .withConvention(equipmentConvention);
 
     NativeEngineeringDiagramRenderer.Result baseline = new NativeEngineeringDiagramRenderer(documents).render();
     NativeEngineeringDiagramRenderer renderer = new NativeEngineeringDiagramRenderer(documents, conventions);
@@ -55,13 +54,11 @@ class EngineeringDiagramSymbolConventionTest {
 
     NativeEngineeringDiagramRenderer.Result implicitDefaults = new NativeEngineeringDiagramRenderer(documents).render();
     NativeEngineeringDiagramRenderer.Result explicitDefaults = new NativeEngineeringDiagramRenderer(documents,
-        NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE,
-        new EngineeringDiagramConventionRegister()).render();
+        NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE, new EngineeringDiagramConventionRegister()).render();
 
     assertEquals(implicitDefaults.getSvgBySheetId(), explicitDefaults.getSvgBySheetId());
     assertArrayEquals(implicitDefaults.getPdf(), explicitDefaults.getPdf());
-    assertEquals(implicitDefaults.getVisualFingerprintsBySheetId(),
-        explicitDefaults.getVisualFingerprintsBySheetId());
+    assertEquals(implicitDefaults.getVisualFingerprintsBySheetId(), explicitDefaults.getVisualFingerprintsBySheetId());
     assertFalse(hasDiagnostic(explicitDefaults, "DIAGRAM_RENDER_SYMBOL_FALLBACK", "boundary:feed"));
   }
 
@@ -76,8 +73,7 @@ class EngineeringDiagramSymbolConventionTest {
 
     assertEquals(2, register.getConventions().size());
     assertEquals(EngineeringNode.Kind.BOUNDARY, register.getConventions().get(0).getNodeKind());
-    assertEquals(SymbolShape.HEXAGON,
-        register.getSymbolConvention(EngineeringNode.Kind.EQUIPMENT).getShape());
+    assertEquals(SymbolShape.HEXAGON, register.getSymbolConvention(EngineeringNode.Kind.EQUIPMENT).getShape());
     assertThrows(UnsupportedOperationException.class, () -> register.getConventions().clear());
   }
 
@@ -98,21 +94,19 @@ class EngineeringDiagramSymbolConventionTest {
 
   private static EngineeringDiagramDocumentSet conventionDocuments() {
     EngineeringGraph graph = new EngineeringGraph("CONVENTION-PLANT", "A");
-    graph.addNode(new EngineeringNode("equipment:separator", EngineeringNode.Kind.EQUIPMENT, "separator",
-        "Separator block"));
     graph.addNode(
-        new EngineeringNode("boundary:feed", EngineeringNode.Kind.BOUNDARY, "feed", "Feed boundary"));
+        new EngineeringNode("equipment:separator", EngineeringNode.Kind.EQUIPMENT, "separator", "Separator block"));
+    graph.addNode(new EngineeringNode("boundary:feed", EngineeringNode.Kind.BOUNDARY, "feed", "Feed boundary"));
     return EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-CONVENTION-001", "Project convention reference",
         ContentProfile.PFD);
   }
 
   private static SymbolConvention reviewedConvention(EngineeringNode.Kind kind, SymbolShape shape) {
-    return new SymbolConvention(kind, shape, "#1f2937", "#eff6ff", "project-symbols:reviewed",
-        EvidenceState.REVIEWED, "Process discipline", "review:project-symbols", "2026-08-17T11:00:00Z", "B");
+    return new SymbolConvention(kind, shape, "#1f2937", "#eff6ff", "project-symbols:reviewed", EvidenceState.REVIEWED,
+        "Process discipline", "review:project-symbols", "2026-08-17T11:00:00Z", "B");
   }
 
-  private static boolean hasDiagnostic(NativeEngineeringDiagramRenderer.Result result, String code,
-      String subjectId) {
+  private static boolean hasDiagnostic(NativeEngineeringDiagramRenderer.Result result, String code, String subjectId) {
     for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : result.getDiagnostics()) {
       if (code.equals(diagnostic.getCode()) && subjectId.equals(diagnostic.getSubjectId())) {
         assertFalse(diagnostic.getMessage().isEmpty());

@@ -394,10 +394,9 @@ public final class NativeEngineeringDiagramRenderer {
     for (SemanticObject object : visibleObjects.values()) {
       SymbolConvention convention = conventionRegister.getSymbolConvention(object.getKind());
       if (convention == null) {
-        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SYMBOL_FALLBACK",
-            "No project symbol convention exists for " + object.getKind().name()
-                + "; the legacy rectangle fallback was retained",
-            object.getId()));
+        diagnostics.add(
+            diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SYMBOL_FALLBACK", "No project symbol convention exists for "
+                + object.getKind().name() + "; the legacy rectangle fallback was retained", object.getId()));
       } else if (convention.getEvidenceState() == EvidenceState.PROPOSED) {
         diagnostics.add(diagnostic(Severity.INFO, "DIAGRAM_RENDER_SYMBOL_CONVENTION_PROPOSAL",
             "Project symbol convention is proposed and does not imply standards qualification or drawing approval",
@@ -575,8 +574,7 @@ public final class NativeEngineeringDiagramRenderer {
     SymbolConvention convention = conventionRegister.getSymbolConvention(object.getKind());
     SymbolShape shape = convention == null ? SymbolShape.RECTANGLE : convention.getShape();
     String stroke = convention == null ? "#1f2937" : convention.getStrokeColor();
-    String fill = convention == null
-        ? (object.getKind() == EngineeringNode.Kind.EQUIPMENT ? "#eef6ee" : "#eff6ff")
+    String fill = convention == null ? (object.getKind() == EngineeringNode.Kind.EQUIPMENT ? "#eef6ee" : "#eff6ff")
         : convention.getFillColor();
     page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
     String primary = displayLabel(object);
@@ -589,16 +587,20 @@ public final class NativeEngineeringDiagramRenderer {
     double left = position.x - OBJECT_WIDTH / 2.0;
     double top = position.y - OBJECT_HEIGHT / 2.0;
     if (shape == SymbolShape.DIAMOND) {
-      return Command.polygon(Arrays.asList(new Point(position.x, top),
-          new Point(position.x + OBJECT_WIDTH / 2.0, position.y), new Point(position.x, top + OBJECT_HEIGHT),
-          new Point(left, position.y)), stroke, fill, 0.7, objectId);
+      return Command
+          .polygon(
+              Arrays.asList(new Point(position.x, top), new Point(position.x + OBJECT_WIDTH / 2.0, position.y),
+                  new Point(position.x, top + OBJECT_HEIGHT), new Point(left, position.y)),
+              stroke, fill, 0.7, objectId);
     }
     if (shape == SymbolShape.HEXAGON) {
       double shoulder = OBJECT_WIDTH / 4.0;
-      return Command.polygon(Arrays.asList(new Point(left + shoulder, top),
-          new Point(left + OBJECT_WIDTH - shoulder, top), new Point(left + OBJECT_WIDTH, position.y),
-          new Point(left + OBJECT_WIDTH - shoulder, top + OBJECT_HEIGHT), new Point(left + shoulder, top + OBJECT_HEIGHT),
-          new Point(left, position.y)), stroke, fill, 0.7, objectId);
+      return Command.polygon(
+          Arrays.asList(new Point(left + shoulder, top), new Point(left + OBJECT_WIDTH - shoulder, top),
+              new Point(left + OBJECT_WIDTH, position.y),
+              new Point(left + OBJECT_WIDTH - shoulder, top + OBJECT_HEIGHT),
+              new Point(left + shoulder, top + OBJECT_HEIGHT), new Point(left, position.y)),
+          stroke, fill, 0.7, objectId);
     }
     return Command.rect(left, top, OBJECT_WIDTH, OBJECT_HEIGHT, stroke, fill, 0.7, objectId, "");
   }

@@ -85,8 +85,7 @@ public final class EngineeringDiagramConventionRegister implements Serializable 
       this.evidenceState = evidenceState;
       this.reviewedBy = optionalText(reviewedBy);
       this.reviewReference = optionalText(reviewReference);
-      if (evidenceState == EvidenceState.REVIEWED
-          && (this.reviewedBy.isEmpty() || this.reviewReference.isEmpty())) {
+      if (evidenceState == EvidenceState.REVIEWED && (this.reviewedBy.isEmpty() || this.reviewReference.isEmpty())) {
         throw new IllegalArgumentException("reviewed convention requires reviewedBy and reviewReference");
       }
       this.recordedAt = requireText(recordedAt, "recordedAt");
