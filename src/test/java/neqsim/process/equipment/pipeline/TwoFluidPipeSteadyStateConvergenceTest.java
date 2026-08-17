@@ -124,24 +124,48 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
   }
 
   /**
-   * Terrain undulation with zero net elevation change must not create pressure drop.
+   * Terrain undulation with zero net elevation change must not invent pressure drop.
    *
    * <p>
    * The forward-marching initialization and the iterative refinement must integrate the same discrete momentum balance.
    * When they disagree the hydrostatic terms stop telescoping and an undulating seabed profile invents a large spurious
    * pressure drop that appears discontinuously once the local inclination passes a threshold.
    * </p>
+   *
+   * <p>
+   * Mild undulation must therefore leave the pressure drop essentially untouched. Once the slopes are steep enough to
+   * reclassify sections of the flow map, a real terrain response appears and the pressure drop must RISE: uphill
+   * sections hold more liquid and shear more wall. The single absolute bound that used to stand here was satisfied by a
+   * model that instead LOWERED the pressure drop by 4.5 per cent, which is the signature of a homogeneous friction
+   * form, where the gradient scales as {@code G^2 / rho_mix} and extra liquid therefore reduces it. Measured on this
+   * fixture the response is now monotone and of the right sign: -0.08, -0.20, +2.06, +2.96, +4.88 and +7.12 per cent at
+   * 1, 5, 10, 20, 35 and 50 m amplitude.
+   * </p>
    */
   @Test
   void testZeroNetElevationUndulationDoesNotCreatePressureDrop() {
     double flat = solveWithUndulation(0.0);
 
-    for (double amplitude : new double[] { 1.0, 5.0, 20.0, 50.0 }) {
+    for (double amplitude : new double[] { 1.0, 5.0 }) {
       double undulating = solveWithUndulation(amplitude);
       double deviationPercent = 100.0 * Math.abs(undulating - flat) / flat;
-      assertTrue(deviationPercent < 5.0,
+      assertTrue(deviationPercent < 1.0,
+          "Mild undulation of " + amplitude + " m with zero net elevation change moved the pressure drop from " + flat
+              + " bar to " + undulating + " bar (" + deviationPercent + "%)");
+    }
+
+    double previous = flat;
+    for (double amplitude : new double[] { 10.0, 20.0, 35.0, 50.0 }) {
+      double undulating = solveWithUndulation(amplitude);
+      double deviationPercent = 100.0 * (undulating - flat) / flat;
+      assertTrue(deviationPercent > -1.0, "Undulation of " + amplitude
+          + " m must not reduce the pressure drop, but moved it from " + flat + " bar to " + undulating + " bar");
+      assertTrue(deviationPercent < 15.0,
           "Undulation of " + amplitude + " m with zero net elevation change moved the pressure drop from " + flat
               + " bar to " + undulating + " bar (" + deviationPercent + "%)");
+      assertTrue(undulating >= previous - 1.0e-9, "The terrain response must grow with amplitude, but " + amplitude
+          + " m gave " + undulating + " bar against " + previous + " bar at the previous amplitude");
+      previous = undulating;
     }
   }
 

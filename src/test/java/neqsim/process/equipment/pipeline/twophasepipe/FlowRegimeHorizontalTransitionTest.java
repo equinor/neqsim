@@ -155,15 +155,15 @@ class FlowRegimeHorizontalTransitionTest {
   }
 
   /**
-   * The transition stays opt-in, while the blending it depends on is always available.
+   * The horizontal transition is the default, and the blending it depends on is always available.
    */
   @Test
-  @DisplayName("Equilibrium-level transition is off by default, blending is on")
-  void testEquilibriumLevelTransitionIsOffByDefault() {
+  @DisplayName("Equilibrium-level transition is on by default, blending is on")
+  void testEquilibriumLevelTransitionIsOnByDefault() {
     FlowRegimeDetector detector = new FlowRegimeDetector();
 
-    Assertions.assertFalse(detector.isUseEquilibriumLevelAnnularTransition(),
-        "the transition must stay opt-in until the hold-up closures it selects respond to inclination");
+    Assertions.assertTrue(detector.isUseEquilibriumLevelAnnularTransition(),
+        "the horizontal branch must decide annular flow on the equilibrium level, not on a vertical criterion");
     Assertions.assertTrue(detector.isBlendRegimeTransitions(),
         "closure blending must default on, otherwise the transition steps hold-up");
   }
@@ -183,15 +183,15 @@ class FlowRegimeHorizontalTransitionTest {
     neqsim.process.equipment.pipeline.TwoFluidPipe pipe = new neqsim.process.equipment.pipeline.TwoFluidPipe(
         "criterion-delegation");
 
-    Assertions.assertFalse(pipe.isUseEquilibriumLevelAnnularTransition(),
-        "a new pipe must start on the same criterion as a new detector");
-
-    pipe.setUseEquilibriumLevelAnnularTransition(true);
     Assertions.assertTrue(pipe.isUseEquilibriumLevelAnnularTransition(),
-        "the pipe must delegate the criterion to the detector it owns");
+        "a new pipe must start on the same criterion as a new detector");
 
     pipe.setUseEquilibriumLevelAnnularTransition(false);
     Assertions.assertFalse(pipe.isUseEquilibriumLevelAnnularTransition(),
+        "the pipe must delegate the criterion to the detector it owns");
+
+    pipe.setUseEquilibriumLevelAnnularTransition(true);
+    Assertions.assertTrue(pipe.isUseEquilibriumLevelAnnularTransition(),
         "the criterion must be selectable in both directions");
   }
 
