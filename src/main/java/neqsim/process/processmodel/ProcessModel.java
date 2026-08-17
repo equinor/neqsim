@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 65368)
-Total output lines: 6613
-
 package neqsim.process.processmodel;
 
 import java.io.IOException;
@@ -2638,7 +2635,1453 @@ public class ProcessModel implements Runnable, Serializable {
 
     // Check if any two processes share stream objects
     boolean hasSharedStreams = false;
-    for (int i = 0; i < allProcesses.size() && !hasShar…15368 tokens truncated…  closure, massClosureTolerance,
+    for (int i = 0; i < allProcesses.size() && !hasSharedStreams; i++) {
+      for (int j = i + 1; j < allProcesses.size() && !hasSharedStreams; j++) {
+        for (Object stream : processStreams.get(i)) {
+          if (processStreams.get(j).contains(stream)) {
+            hasSharedStreams = true;
+            break;
+          }
+        }
+      }
+    }
+
+    List<List<ProcessSystem>> result = new ArrayList<>();
+    if (!hasSharedStreams) {
+      // All independent - single group with all processes
+      result.add(allProcesses);
+    } else {
+      // Has dependencies - each process is its own group (sequential execution)
+      for (ProcessSystem process : allProcesses) {
+        List<ProcessSystem> single = new ArrayList<>();
+        single.add(process);
+        result.add(single);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Gets cached inter-area execution levels, rebuilding only after topology invalidation.
+   *
+   * @return ordered list of execution levels; each level contains areas that can run in parallel
+   */
+  private List<List<ProcessSystem>> getAreaExecutionLevels() {
+    return getAreaExecutionPlan().levels;
+  }
+
+  /**
+   * Gets the cached inter-area execution plan.
+   *
+   * @return cached execution plan for the current model topology
+   */
+  private AreaExecutionPlan getAreaExecutionPlan() {
+    if (cachedAreaExecutionPlan == null || areaExecutionPlanDirty
+        || isAreaExecutionPlanStale(cachedAreaExecutionPlan)) {
+      cachedAreaExecutionPlan = buildAreaExecutionPlan();
+      areaExecutionPlanDirty = false;
+    }
+    return cachedAreaExecutionPlan;
+  }
+
+  /**
+   * Checks whether a cached area execution plan is stale.
+   *
+   * @param plan cached plan to inspect
+   * @return true if registered areas or child topology versions differ from the cached plan
+   */
+  private boolean isAreaExecutionPlanStale(AreaExecutionPlan plan) {
+    if (plan == null || plan.structureVersions.size() != processes.size()) {
+      return true;
+    }
+    for (ProcessSystem process : processes.values()) {
+      Long cachedVersion = plan.structureVersions.get(process);
+      if (cachedVersion == null || cachedVersion.longValue() != process.getStructureVersion()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Captures structure versions for all process areas in insertion order.
+   *
+   * @param allProcesses process areas to capture
+   * @return identity map from process area to current structure version
+   */
+  private Map<ProcessSystem, Long> captureStructureVersions(List<ProcessSystem> allProcesses) {
+    Map<ProcessSystem, Long> structureVersions = new java.util.IdentityHashMap<>();
+    for (ProcessSystem process : allProcesses) {
+      structureVersions.put(process, Long.valueOf(process.getStructureVersion()));
+    }
+    return structureVersions;
+  }
+
+  /**
+   * Builds the inter-area execution plan from current ProcessSystem stream wiring.
+   *
+   * <p>
+   * Direction is inferred from stream ownership: if a stream is an outlet of some equipment in area A and also present
+   * as a consumed inlet or member stream in area B, then A is the producer and B is the consumer, so A → B in the
+   * meta-graph. Ambiguous links fall back to insertion order to preserve legacy behaviour.
+   * </p>
+   *
+   * @return execution plan containing levels, adjacency, and boundary-stream consumers
+   */
+  private AreaExecutionPlan buildAreaExecutionPlan() {
+    List<ProcessSystem> allProcesses = new ArrayList<>(processes.values());
+    int n = allProcesses.size();
+    Map<ProcessSystem, Long> structureVersions = captureStructureVersions(allProcesses);
+
+    Map<ProcessSystem, java.util.Set<ProcessSystem>> successorMap = new IdentityHashMap<>();
+    java.util.Set<Object> boundaryStreams = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers = new IdentityHashMap<>();
+    Map<Object, String> streamProducers = new IdentityHashMap<>();
+    for (ProcessSystem process : allProcesses) {
+      successorMap.put(process, java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
+    }
+
+    if (n == 0) {
+      return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams, boundaryConsumers, streamProducers,
+          structureVersions);
+    }
+
+    // Index processes by their position in the insertion order for
+    // tie-breaking on ambiguous shared-stream directions.
+    Map<ProcessSystem, Integer> index = new java.util.IdentityHashMap<>();
+    for (int i = 0; i < n; i++) {
+      index.put(allProcesses.get(i), i);
+    }
+
+    // For each process, collect the set of stream objects it OUTPUTS (appears
+    // as outlet of some equipment in that process) and the set of stream
+    // objects it CONSUMES (appears as unit-level membership or inlet of some
+    // equipment there).
+    List<java.util.Set<Object>> outputs = new ArrayList<>(n);
+    List<java.util.Set<Object>> members = new ArrayList<>(n);
+    for (ProcessSystem p : allProcesses) {
+      java.util.Set<Object> outs = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      java.util.Set<Object> mem = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      for (Object unit : p.getUnitOperations()) {
+        if (unit instanceof StreamInterface) {
+          mem.add(unit);
+        }
+        if (unit instanceof neqsim.process.equipment.ProcessEquipmentInterface) {
+          try {
+            java.util.List<StreamInterface> outletStreams = ((neqsim.process.equipment.ProcessEquipmentInterface) unit)
+                .getOutletStreams();
+            if (outletStreams != null) {
+              outs.addAll(outletStreams);
+              recordStreamProducers(streamProducers, outletStreams, p, unit);
+            }
+          } catch (Exception e) {
+            // Not all equipment implements getOutletStreams cleanly; ignore.
+          }
+          try {
+            java.util.List<StreamInterface> inletStreams = ((neqsim.process.equipment.ProcessEquipmentInterface) unit)
+                .getInletStreams();
+            if (inletStreams != null) {
+              mem.addAll(inletStreams);
+            }
+          } catch (Exception e) {
+            // ignore
+          }
+        }
+      }
+      outputs.add(outs);
+      members.add(mem);
+    }
+
+    java.util.Map<Object, Integer> occurrenceCounts = new java.util.IdentityHashMap<>();
+    for (int i = 0; i < n; i++) {
+      java.util.Set<Object> seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      seen.addAll(outputs.get(i));
+      seen.addAll(members.get(i));
+      for (Object stream : seen) {
+        occurrenceCounts.merge(stream, 1, Integer::sum);
+      }
+    }
+    for (Map.Entry<Object, Integer> entry : occurrenceCounts.entrySet()) {
+      if (entry.getValue() == null || entry.getValue() < 2) {
+        continue;
+      }
+      Object stream = entry.getKey();
+      boundaryStreams.add(stream);
+      java.util.Set<ProcessSystem> consumers = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      java.util.Set<ProcessSystem> participants = java.util.Collections
+          .newSetFromMap(new java.util.IdentityHashMap<>());
+      for (int j = 0; j < n; j++) {
+        boolean produced = outputs.get(j).contains(stream);
+        boolean member = members.get(j).contains(stream);
+        if (produced || member) {
+          participants.add(allProcesses.get(j));
+        }
+        if (member && !produced) {
+          consumers.add(allProcesses.get(j));
+        }
+      }
+      if (consumers.isEmpty()) {
+        consumers.addAll(participants);
+      }
+      boundaryConsumers.put(stream, consumers);
+    }
+
+    // Build directed adjacency: A → B iff some stream is outputs(A) and also
+    // appears in members(B) but not in outputs(B).
+    int[] inDegree = new int[n];
+    List<List<Integer>> successors = new ArrayList<>(n);
+    for (int i = 0; i < n; i++) {
+      successors.add(new ArrayList<>());
+    }
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        if (i == j) {
+          continue;
+        }
+        boolean linked = false;
+        for (Object s : outputs.get(i)) {
+          if (outputs.get(j).contains(s)) {
+            // Produced in both — ambiguous. Treat as link only in insertion order.
+            if (index.get(allProcesses.get(i)) < index.get(allProcesses.get(j))) {
+              linked = true;
+              break;
+            }
+          } else if (members.get(j).contains(s)) {
+            linked = true;
+            break;
+          }
+        }
+        if (linked) {
+          successors.get(i).add(j);
+          successorMap.get(allProcesses.get(i)).add(allProcesses.get(j));
+          inDegree[j]++;
+        }
+      }
+    }
+
+    // Kahn topological sort with level assignment.
+    int[] level = new int[n];
+    java.util.Deque<Integer> queue = new java.util.ArrayDeque<>();
+    for (int i = 0; i < n; i++) {
+      if (inDegree[i] == 0) {
+        queue.add(i);
+      }
+    }
+    int processed = 0;
+    while (!queue.isEmpty()) {
+      int u = queue.poll();
+      processed++;
+      for (int v : successors.get(u)) {
+        level[v] = Math.max(level[v], level[u] + 1);
+        if (--inDegree[v] == 0) {
+          queue.add(v);
+        }
+      }
+    }
+    if (processed < n) {
+      // Cycle detected (should be rare - indicates two areas produce streams
+      // consumed by each other). Fall back to insertion order one-per-level.
+      List<List<ProcessSystem>> fallback = new ArrayList<>();
+      for (ProcessSystem p : allProcesses) {
+        List<ProcessSystem> single = new ArrayList<>();
+        single.add(p);
+        fallback.add(single);
+      }
+      return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
+          structureVersions);
+    }
+
+    int maxLevel = 0;
+    for (int l : level) {
+      maxLevel = Math.max(maxLevel, l);
+    }
+    List<List<ProcessSystem>> levels = new ArrayList<>();
+    for (int l = 0; l <= maxLevel; l++) {
+      levels.add(new ArrayList<>());
+    }
+    for (int i = 0; i < n; i++) {
+      levels.get(level[i]).add(allProcesses.get(i));
+    }
+    return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
+        structureVersions);
+  }
+
+  /**
+   * Records the producing {@code "area::unit"} label for each outlet stream of a unit.
+   *
+   * <p>
+   * The first producer wins so the label is deterministic in insertion order. Streams that a unit merely forwards
+   * (already produced upstream) therefore keep their original producer.
+   * </p>
+   *
+   * @param streamProducers identity map to populate
+   * @param outletStreams outlet streams of the unit
+   * @param area process area owning the unit
+   * @param unit the producing unit
+   */
+  private void recordStreamProducers(Map<Object, String> streamProducers, java.util.List<StreamInterface> outletStreams,
+      ProcessSystem area, Object unit) {
+    String unitName = null;
+    if (unit instanceof neqsim.process.equipment.ProcessEquipmentInterface) {
+      unitName = ((neqsim.process.equipment.ProcessEquipmentInterface) unit).getName();
+    }
+    if (unitName == null || unitName.trim().isEmpty()) {
+      return;
+    }
+    String areaName = area == null ? null : area.getName();
+    String label = (areaName == null || areaName.trim().isEmpty()) ? unitName : areaName + "::" + unitName;
+    for (StreamInterface outlet : outletStreams) {
+      if (outlet != null && !streamProducers.containsKey(outlet)) {
+        streamProducers.put(outlet, label);
+      }
+    }
+  }
+
+  /**
+   * Waits for all futures to complete and logs any errors.
+   *
+   * @param futures list of futures to wait for
+   */
+  private void waitForFutures(List<Future<?>> futures) {
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("ProcessModel execution interrupted");
+        break;
+      } catch (ExecutionException e) {
+        logger.error("ProcessModel parallel execution error: " + e.getMessage(), e);
+      }
+    }
+  }
+
+  /**
+   * Collect the identity-set of streams that cross area boundaries in the current {@link ProcessModel}. A stream is a
+   * boundary stream if it appears in at least two {@link ProcessSystem}s.
+   *
+   * @return identity-based set of boundary streams (may be empty)
+   */
+  private java.util.Set<Object> collectBoundaryStreams() {
+    return getAreaExecutionPlan().boundaryStreams;
+  }
+
+  /**
+   * Capture current boundary stream states by stream object identity.
+   *
+   * @param boundaryStreams identity-set of streams to capture
+   * @return identity map from stream object to [flowRate, temperature, pressure]
+   */
+  private Map<Object, double[]> captureBoundaryStreamStates(java.util.Set<Object> boundaryStreams) {
+    Map<Object, double[]> states = new java.util.IdentityHashMap<>();
+    if (boundaryStreams == null || boundaryStreams.isEmpty()) {
+      return states;
+    }
+    for (Object boundaryObject : boundaryStreams) {
+      if (!(boundaryObject instanceof StreamInterface)) {
+        continue;
+      }
+      StreamInterface stream = (StreamInterface) boundaryObject;
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        double temp = stream.getTemperature("K");
+        double press = stream.getPressure("bara");
+        states.put(boundaryObject, new double[] { flow, temp, press });
+      } catch (Exception exception) {
+        // Skip streams that cannot be read.
+      }
+    }
+    return states;
+  }
+
+  /**
+   * Finds boundary streams that changed beyond any configured convergence tolerance.
+   *
+   * @param previous previous boundary stream states
+   * @param current current boundary stream states
+   * @return identity-set of changed boundary stream objects
+   */
+  private java.util.Set<Object> findChangedBoundaryStreams(Map<Object, double[]> previous,
+      Map<Object, double[]> current) {
+    java.util.Set<Object> changed = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    for (Map.Entry<Object, double[]> entry : current.entrySet()) {
+      double[] prev = previous.get(entry.getKey());
+      if (prev == null) {
+        changed.add(entry.getKey());
+        continue;
+      }
+      double[] curr = entry.getValue();
+      double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
+      double tempBase = Math.max(prev[1], 1.0);
+      double pressBase = Math.max(prev[2], 1e-10);
+      boolean flowChanged = Math.abs(curr[0] - prev[0]) / flowBase >= flowTolerance;
+      boolean tempChanged = Math.abs(curr[1] - prev[1]) / tempBase >= temperatureTolerance;
+      boolean pressureChanged = Math.abs(curr[2] - prev[2]) / pressBase >= pressureTolerance;
+      if (flowChanged || tempChanged || pressureChanged) {
+        changed.add(entry.getKey());
+      }
+    }
+    return changed;
+  }
+
+  /**
+   * Selects areas to rerun on the next outer iteration based on changed boundary streams.
+   *
+   * @param changedBoundaryStreams streams that changed beyond convergence tolerance
+   * @return areas to run on the next iteration, or {@code null} to run every area
+   */
+  private java.util.Set<ProcessSystem> getDirtyAreasForNextIteration(java.util.Set<Object> changedBoundaryStreams) {
+    return getDirtyAreasForNextIteration(getAreaExecutionPlan(), changedBoundaryStreams);
+  }
+
+  /**
+   * Selects areas to rerun using an already resolved area execution plan.
+   *
+   * @param plan cached area execution plan
+   * @param changedBoundaryStreams streams that changed beyond convergence tolerance
+   * @return areas to run on the next iteration, or {@code null} to run every area
+   */
+  private java.util.Set<ProcessSystem> getDirtyAreasForNextIteration(AreaExecutionPlan plan,
+      java.util.Set<Object> changedBoundaryStreams) {
+    if (!useIncrementalAreaExecution || progressListener != null || publishEvents || changedBoundaryStreams == null) {
+      return null;
+    }
+    java.util.Set<ProcessSystem> dirtyAreas = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    java.util.ArrayDeque<ProcessSystem> queue = new java.util.ArrayDeque<>();
+    for (Object stream : changedBoundaryStreams) {
+      java.util.Set<ProcessSystem> consumers = plan.boundaryConsumers.get(stream);
+      if (consumers == null) {
+        return null;
+      }
+      for (ProcessSystem consumer : consumers) {
+        if (dirtyAreas.add(consumer)) {
+          queue.add(consumer);
+        }
+      }
+    }
+    while (!queue.isEmpty()) {
+      ProcessSystem current = queue.poll();
+      java.util.Set<ProcessSystem> successors = plan.successors.get(current);
+      if (successors == null) {
+        continue;
+      }
+      for (ProcessSystem successor : successors) {
+        if (dirtyAreas.add(successor)) {
+          queue.add(successor);
+        }
+      }
+    }
+    if (dirtyAreas.size() >= processes.size()) {
+      return null;
+    }
+    return dirtyAreas;
+  }
+
+  /**
+   * Calculate maximum relative errors between previous and current stream states.
+   *
+   * <p>
+   * Also records the per-stream errors in {@link #getLastBoundaryStreamErrors()} so that a non-converged model can name
+   * the stream responsible for each reported maximum error.
+   * </p>
+   *
+   * <p>
+   * Package-private (rather than private) so the boundary-flow floor and absolute-flow-tolerance filters can be unit
+   * tested directly without constructing an oscillating multi-area plant.
+   * </p>
+   *
+   * @param previous previous stream states
+   * @param current current stream states
+   * @return array of [maxFlowError, maxTempError, maxPressError]
+   */
+  double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current) {
+    return calculateConvergenceErrors(previous, current, getAreaExecutionPlan());
+  }
+
+  /**
+   * Calculates convergence errors using an already resolved area execution plan.
+   *
+   * @param previous previous stream states
+   * @param current current stream states
+   * @param areaPlan area execution plan for the current model topology
+   * @return array of [maxFlowError, maxTempError, maxPressError]
+   */
+  private double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current,
+      AreaExecutionPlan areaPlan) {
+    double maxFlowErr = 0.0;
+    double maxTempErr = 0.0;
+    double maxPressErr = 0.0;
+    int expectedStreamErrors = lastBoundaryStreamErrors == null ? 0
+        : Math.min(current.size(), lastBoundaryStreamErrors.size());
+    List<BoundaryStreamError> streamErrors = new ArrayList<>(expectedStreamErrors);
+    Map<Object, BoundaryStreamError> priorStreamErrors = boundaryStreamErrorCache;
+    Map<Object, BoundaryStreamError> nextStreamErrors = current.isEmpty() ? Collections.emptyMap()
+        : new IdentityHashMap<>(current.size());
+
+    for (Object key : current.keySet()) {
+      if (previous.containsKey(key)) {
+        double[] prev = previous.get(key);
+        double[] curr = current.get(key);
+
+        // Skip near-zero (inactive / bypassed) boundary streams so that low-flow
+        // sections do not block global convergence. The floor is configurable via
+        // setBoundaryFlowFloor() because the default (1e-9 kg/hr) excludes nothing
+        // in practice - a stagnant dead leg carrying a fraction of a kg/hr still
+        // produces a large RELATIVE error and dominates the plant-wide maximum.
+        if (Math.max(Math.abs(prev[0]), Math.abs(curr[0])) < boundaryFlowFloor) {
+          continue;
+        }
+
+        // Flow rate relative error (with min threshold to avoid div by zero)
+        double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
+        double flowErr = Math.abs(curr[0] - prev[0]) / flowBase;
+        // A stream whose ABSOLUTE flow change is negligible is converged for
+        // engineering purposes even when the relative error is large (tiny
+        // denominator). The true relative error is still recorded below so the
+        // per-stream diagnostics remain honest.
+        if (Math.abs(curr[0] - prev[0]) >= absoluteFlowTolerance) {
+          maxFlowErr = Math.max(maxFlowErr, flowErr);
+        }
+
+        // Temperature relative error (use Kelvin to avoid issues near 0)
+        double tempBase = Math.max(prev[1], 1.0);
+        double tempErr = Math.abs(curr[1] - prev[1]) / tempBase;
+        maxTempErr = Math.max(maxTempErr, tempErr);
+
+        // Pressure relative error
+        double pressBase = Math.max(prev[2], 1e-10);
+        double pressErr = Math.abs(curr[2] - prev[2]) / pressBase;
+        maxPressErr = Math.max(maxPressErr, pressErr);
+
+        String streamName = getStreamName(key);
+        String producerLabel = getStreamProducerLabel(key, areaPlan);
+        BoundaryStreamError streamError = priorStreamErrors == null ? null : priorStreamErrors.get(key);
+        if (!matchesBoundaryStreamError(streamError, streamName, producerLabel, flowErr, tempErr, pressErr, prev[0],
+            curr[0])) {
+          streamError = new BoundaryStreamError(streamName, producerLabel, flowErr, tempErr, pressErr, prev[0],
+              curr[0]);
+        }
+        streamErrors.add(streamError);
+        nextStreamErrors.put(key, streamError);
+      }
+    }
+
+    lastBoundaryStreamErrors = streamErrors;
+    boundaryStreamErrorCache = nextStreamErrors;
+    return new double[] { maxFlowErr, maxTempErr, maxPressErr };
+  }
+
+  /** Returns whether an immutable cached diagnostic exactly represents the current boundary observation. */
+  private boolean matchesBoundaryStreamError(BoundaryStreamError cached, String streamName, String producerLabel,
+      double flowError, double temperatureError, double pressureError, double previousFlow, double currentFlow) {
+    return cached != null && java.util.Objects.equals(cached.getStreamName(), streamName)
+        && java.util.Objects.equals(cached.getProducerLabel(), producerLabel)
+        && Double.doubleToLongBits(cached.getFlowError()) == Double.doubleToLongBits(flowError)
+        && Double.doubleToLongBits(cached.getTemperatureError()) == Double.doubleToLongBits(temperatureError)
+        && Double.doubleToLongBits(cached.getPressureError()) == Double.doubleToLongBits(pressureError)
+        && Double.doubleToLongBits(cached.getPreviousFlow()) == Double.doubleToLongBits(previousFlow)
+        && Double.doubleToLongBits(cached.getCurrentFlow()) == Double.doubleToLongBits(currentFlow);
+  }
+
+  /**
+   * Resolve a readable name for a boundary stream object.
+   *
+   * @param streamObject boundary stream object
+   * @return the stream name, or a generic identity label when unavailable
+   */
+  private String getStreamName(Object streamObject) {
+    if (streamObject instanceof StreamInterface) {
+      String name = ((StreamInterface) streamObject).getName();
+      if (name != null && !name.trim().isEmpty()) {
+        return name;
+      }
+    }
+    return "unnamed stream@" + Integer.toHexString(System.identityHashCode(streamObject));
+  }
+
+  /**
+   * Resolve the producing {@code "area::unit"} label for a boundary stream object.
+   *
+   * @param streamObject boundary stream object
+   * @param areaPlan area execution plan containing producer labels
+   * @return the producer label, or an empty string when the producer cannot be resolved
+   */
+  private String getStreamProducerLabel(Object streamObject, AreaExecutionPlan areaPlan) {
+    if (streamObject == null || areaPlan == null || processes.isEmpty()) {
+      return "";
+    }
+    try {
+      String label = areaPlan.streamProducers.get(streamObject);
+      return label == null ? "" : label;
+    } catch (Exception e) {
+      return "";
+    }
+  }
+
+  /**
+   * Per-boundary-stream convergence errors recorded on the last completed outer iteration.
+   *
+   * <p>
+   * Use this to identify which boundary stream drives a reported maximum error. A stream with
+   * {@link BoundaryStreamError#isFlowCollapsedToZero()} set explains the characteristic relative flow error of exactly
+   * 1.0 that appears when an upstream area stops producing a stream between outer passes.
+   * </p>
+   *
+   * @return unmodifiable list of per-stream errors, sorted by descending maximum error
+   */
+  public List<BoundaryStreamError> getLastBoundaryStreamErrors() {
+    List<BoundaryStreamError> sorted = new ArrayList<>(
+        lastBoundaryStreamErrors == null ? new ArrayList<BoundaryStreamError>() : lastBoundaryStreamErrors);
+    java.util.Collections.sort(sorted, new java.util.Comparator<BoundaryStreamError>() {
+      @Override
+      public int compare(BoundaryStreamError first, BoundaryStreamError second) {
+        return Double.compare(second.getMaxError(), first.getMaxError());
+      }
+    });
+    return java.util.Collections.unmodifiableList(sorted);
+  }
+
+  /**
+   * Name of the boundary stream responsible for the reported maximum error of the given variable.
+   *
+   * @param variable one of {@code "flow"}, {@code "temperature"} or {@code "pressure"} (case-insensitive)
+   * @return the worst-offending stream name, or an empty string when no boundary stream data is available
+   * @throws IllegalArgumentException if {@code variable} is not a recognized variable name
+   */
+  public String getWorstBoundaryStreamName(String variable) {
+    BoundaryStreamError worst = getWorstBoundaryStreamError(variable);
+    return worst == null ? "" : worst.getStreamName();
+  }
+
+  /**
+   * Boundary stream record responsible for the reported maximum error of the given variable.
+   *
+   * @param variable one of {@code "flow"}, {@code "temperature"} or {@code "pressure"} (case-insensitive)
+   * @return the worst-offending stream record, or {@code null} when no boundary stream data is available
+   * @throws IllegalArgumentException if {@code variable} is not a recognized variable name
+   */
+  public BoundaryStreamError getWorstBoundaryStreamError(String variable) {
+    if (variable == null) {
+      throw new IllegalArgumentException("variable must be one of flow, temperature or pressure");
+    }
+    String key = variable.trim().toLowerCase(Locale.US);
+    if (!"flow".equals(key) && !"temperature".equals(key) && !"pressure".equals(key)) {
+      throw new IllegalArgumentException(
+          "variable must be one of flow, temperature or pressure, was '" + variable + "'");
+    }
+    BoundaryStreamError worst = null;
+    double worstError = -1.0;
+    if (lastBoundaryStreamErrors != null) {
+      for (BoundaryStreamError streamError : lastBoundaryStreamErrors) {
+        double error;
+        if ("flow".equals(key)) {
+          error = streamError.getFlowError();
+        } else if ("temperature".equals(key)) {
+          error = streamError.getTemperatureError();
+        } else {
+          error = streamError.getPressureError();
+        }
+        if (error > worstError) {
+          worstError = error;
+          worst = streamError;
+        }
+      }
+    }
+    return worst;
+  }
+
+  /**
+   * Boundary streams whose flow, temperature or pressure error exceeded the configured tolerance on the last outer
+   * iteration.
+   *
+   * @return unmodifiable list of offending streams, sorted by descending maximum error
+   */
+  public List<BoundaryStreamError> getNonConvergedBoundaryStreamErrors() {
+    List<BoundaryStreamError> offenders = new ArrayList<>();
+    for (BoundaryStreamError streamError : getLastBoundaryStreamErrors()) {
+      boolean flowConverged = streamError.getFlowError() < flowTolerance
+          || streamError.getAbsoluteFlowChange() < absoluteFlowTolerance;
+      if (!flowConverged || streamError.getTemperatureError() >= temperatureTolerance
+          || streamError.getPressureError() >= pressureTolerance) {
+        offenders.add(streamError);
+      }
+    }
+    return java.util.Collections.unmodifiableList(offenders);
+  }
+
+  /**
+   * Formats the worst-offending stream name for a convergence summary line.
+   *
+   * @param variable variable name (flow, temperature or pressure)
+   * @return a parenthesized stream reference, or an empty string when unavailable
+   */
+  private String formatWorstStreamSuffix(String variable) {
+    BoundaryStreamError worst = getWorstBoundaryStreamError(variable);
+    if (worst == null) {
+      return "";
+    }
+    return " [worst: " + worst.getQualifiedName() + formatFlowTransitionNote(worst) + "]";
+  }
+
+  /**
+   * Describes a zero-crossing flow transition that produces a relative flow error of exactly 1.0.
+   *
+   * @param streamError stream error record to describe
+   * @return a short note, or an empty string when the flow did not cross zero
+   */
+  private String formatFlowTransitionNote(BoundaryStreamError streamError) {
+    if (streamError.isFlowCollapsedToZero()) {
+      return " (flow collapsed to zero)";
+    }
+    if (streamError.isFlowStartedFromZero()) {
+      return " (flow started from zero)";
+    }
+    return "";
+  }
+
+  /**
+   * Get a summary of the convergence status after running the model.
+   *
+   * @return formatted convergence summary string
+   */
+  public String getConvergenceSummary() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== ProcessModel Convergence Summary ===\n");
+    sb.append("Converged: ").append(modelConverged ? "YES" : "NO").append("\n");
+    sb.append("Iterations: ").append(lastIterationCount).append(" / ").append(maxIterations).append("\n");
+    sb.append("Boundary streams tracked: ").append(lastBoundaryStreamCount).append("\n");
+    sb.append("Boundary values converged: ").append(lastBoundaryValuesConverged ? "YES" : "NO").append("\n");
+    sb.append("All process areas solved: ").append(lastAllProcessesSolved ? "YES" : "NO").append("\n");
+    sb.append("\nFinal Errors (relative):\n");
+    sb.append(String.format(Locale.US, "  Flow rate:    %.2e (tolerance: %.2e) %s%s\n", lastMaxFlowError, flowTolerance,
+        lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED", formatWorstStreamSuffix("flow")));
+
+    sb.append(String.format(Locale.US, "  Temperature:  %.2e (tolerance: %.2e) %s%s\n", lastMaxTemperatureError,
+        temperatureTolerance, lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED",
+        formatWorstStreamSuffix("temperature")));
+
+    sb.append(String.format(Locale.US, "  Pressure:     %.2e (tolerance: %.2e) %s%s\n", lastMaxPressureError,
+        pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED",
+        formatWorstStreamSuffix("pressure")));
+
+    if (absoluteFlowTolerance > 0.0 || boundaryFlowFloor > DEFAULT_BOUNDARY_FLOW_FLOOR) {
+      sb.append(String.format(Locale.US, "  Flow filters: absolute tolerance %.3g kg/hr, boundary floor %.3g kg/hr\n",
+          absoluteFlowTolerance, boundaryFlowFloor));
+    }
+    if (!autoTuningSummary.isEmpty()) {
+      sb.append("  Auto-tuning:  ").append(autoTuningSummary).append("\n");
+    }
+    if (!autoToleranceSummary.isEmpty()) {
+      sb.append("  Auto-accuracy: ").append(autoToleranceSummary).append("\n");
+    }
+    if (!massClosureSummary.isEmpty()) {
+      sb.append("  Mass closure:  ").append(massClosureSummary).append("\n");
+    }
+
+    List<BoundaryStreamError> offenders = getNonConvergedBoundaryStreamErrors();
+    if (!offenders.isEmpty()) {
+      sb.append("\nBoundary streams outside tolerance (worst first):\n");
+      int shown = Math.min(offenders.size(), 10);
+      for (int i = 0; i < shown; i++) {
+        BoundaryStreamError streamError = offenders.get(i);
+        sb.append(String.format(Locale.US, "  %-30s flow=%.2e (%.3g kg/hr) temp=%.2e press=%.2e%s\n",
+            streamError.getQualifiedName(), streamError.getFlowError(), streamError.getAbsoluteFlowChange(),
+            streamError.getTemperatureError(), streamError.getPressureError(), formatFlowTransitionNote(streamError)));
+      }
+      if (offenders.size() > shown) {
+        sb.append("  ... and ").append(offenders.size() - shown).append(" more\n");
+      }
+    }
+
+    sb.append("\nProcess Status:\n");
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      boolean processSolved = entry.getValue().solved();
+      List<String> bypassedUnits = getBypassedUnitNames(entry.getValue());
+      String bypassNote = bypassedUnits.isEmpty() ? ""
+          : String.format(Locale.US, " (%d unit(s) bypassed on low flow)", bypassedUnits.size());
+      sb.append(String.format(Locale.US, "  %-30s: %s%s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED",
+          bypassNote));
+      if (!processSolved) {
+        List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
+        if (!unsolvedUnits.isEmpty()) {
+          sb.append("    Unsolved units: ").append(formatUnitNameList(unsolvedUnits, 12)).append("\n");
+        }
+      }
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Runs the model until convergence with automatic convergence tuning, using the currently configured iteration limit
+   * and tolerances.
+   *
+   * @return true if the model converged within the iteration limit, false otherwise
+   */
+  public boolean runUntilConverged() {
+    return runUntilConverged(maxIterations);
+  }
+
+  /**
+   * Runs the model until convergence, letting NeqSim work out the flow noise filters by itself.
+   *
+   * <p>
+   * This is the recommended entry point for large multi-area plants. It behaves like
+   * {@link #runUntilConverged(int, double)} with the currently configured relative tolerance (default {@code 1e-4}, or
+   * whatever {@link #setTolerance(double)} was last given), but with {@linkplain #isAutoConvergenceTuning() automatic
+   * convergence tuning} the model no longer needs hand-picked, plant-specific numbers for the boundary flow floor, the
+   * absolute flow tolerance, per-section low-flow bypass threshold, or stalled-recycle acceleration.
+   * </p>
+   *
+   * <p>
+   * After the first outer sweep the total mass flow entering the plant across its feed boundary is measured and every
+   * flow-noise threshold is derived from it as a fraction ({@link #getAutoTuningFlowFraction()}, default
+   * {@value #DEFAULT_AUTO_TUNING_FLOW_FRACTION}) of that scale. The same model therefore self-configures across
+   * scenarios and production years without editing any convergence parameter, and a dead leg carrying a seed flow is
+   * recognised as noise rather than dominating the plant-wide relative error. Anything set explicitly by the caller
+   * (via {@link #setBoundaryFlowFloor(double)}, {@link #setAbsoluteFlowTolerance(double)} or a per-unit
+   * {@code setMinimumFlow}) always wins over the automatic value. A caller choice made with
+   * {@code Recycle.setAdaptiveAcceleration(...)} likewise takes precedence.
+   * </p>
+   *
+   * <p>
+   * Call {@link #getAutoTuningSummary()} afterwards to see the detected flow scale and the thresholds that were
+   * applied, or {@link #setAutoConvergenceTuning(boolean) setAutoConvergenceTuning(false)} to opt out entirely.
+   * </p>
+   *
+   * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
+   * @return true if the model converged within the iteration limit, false otherwise
+   * @throws IllegalArgumentException if maxIterations is less than 1
+   */
+  public boolean runUntilConverged(int maxIterations) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    setRunStep(false);
+    setMaxIterations(maxIterations);
+    run();
+    return modelConverged;
+  }
+
+  /**
+   * Runs the model in continuous (multi-area) mode until convergence or the iteration limit.
+   *
+   * <p>
+   * This is an explicit, agent-friendly convenience wrapper around {@link #run()}. It guarantees the model runs in
+   * iterating mode (not step mode) and applies the supplied iteration limit and tolerance before running. Use this
+   * instead of manually configuring {@link #setRunStep(boolean)}, {@link #setMaxIterations(int)} and
+   * {@link #setTolerance(double)} and hard-coding an outer loop.
+   * </p>
+   *
+   * <p>
+   * After this call returns, inspect {@link #isModelConverged()}, {@link #getLastIterationCount()}, {@link #getError()}
+   * or {@link #getConvergenceReportJson()} for the outcome.
+   * </p>
+   *
+   * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
+   * @param tolerance relative convergence tolerance applied to flow, temperature and pressure; must be a finite
+   * positive value
+   * @return true if the model converged within the iteration limit, false otherwise
+   * @throws IllegalArgumentException if maxIterations is less than 1 or tolerance is not a finite positive number
+   */
+  public boolean runUntilConverged(int maxIterations, double tolerance) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("tolerance must be a finite positive number, was " + tolerance);
+    }
+    setRunStep(false);
+    setMaxIterations(maxIterations);
+    setTolerance(tolerance);
+    run();
+    return modelConverged;
+  }
+
+  /**
+   * Runs the model until convergence using a combined relative AND absolute flow criterion.
+   *
+   * <p>
+   * A boundary stream counts as flow-converged when EITHER its relative flow error is below {@code tolerance} OR its
+   * absolute flow change is below {@code absoluteFlowTolerance} (kg/hr). This is the standard industrial form and is
+   * the recommended way to run plants that contain stagnant or nearly-stagnant legs: a stream carrying 0.1 kg/hr can
+   * swing 6 % between outer passes (0.007 kg/hr in absolute terms) and would otherwise dominate the relative maximum
+   * and mask a genuine multi-hundred kg/hr residual elsewhere in the plant.
+   * </p>
+   *
+   * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
+   * @param tolerance relative convergence tolerance applied to flow, temperature and pressure; must be a finite
+   * positive value
+   * @param absoluteFlowTolerance absolute flow tolerance in kg/hr; must be finite and non-negative. Use 0.0 for the
+   * historical relative-only behaviour
+   * @return true if the model converged within the iteration limit, false otherwise
+   * @throws IllegalArgumentException if maxIterations is less than 1, tolerance is not a finite positive number, or
+   * absoluteFlowTolerance is negative or not finite
+   */
+  public boolean runUntilConverged(int maxIterations, double tolerance, double absoluteFlowTolerance) {
+    setAbsoluteFlowTolerance(absoluteFlowTolerance);
+    return runUntilConverged(maxIterations, tolerance);
+  }
+
+  /**
+   * Absolute flow tolerance used by the boundary-stream convergence check.
+   *
+   * @return absolute flow tolerance in kg/hr (0.0 means relative-only checking)
+   */
+  public double getAbsoluteFlowTolerance() {
+    return absoluteFlowTolerance;
+  }
+
+  /**
+   * Sets the absolute flow tolerance used by the boundary-stream convergence check.
+   *
+   * <p>
+   * A boundary stream is flow-converged when EITHER its relative flow error is below the relative tolerance OR its
+   * absolute flow change is below this value. Setting 0.0 restores pure relative checking.
+   * </p>
+   *
+   * @param absoluteFlowTolerance absolute flow tolerance in kg/hr; must be finite and non-negative
+   * @throws IllegalArgumentException if the value is negative or not finite
+   */
+  public void setAbsoluteFlowTolerance(double absoluteFlowTolerance) {
+    if (Double.isNaN(absoluteFlowTolerance) || Double.isInfinite(absoluteFlowTolerance)
+        || absoluteFlowTolerance < 0.0) {
+      throw new IllegalArgumentException(
+          "absoluteFlowTolerance must be a finite non-negative number, was " + absoluteFlowTolerance);
+    }
+    this.absoluteFlowTolerance = absoluteFlowTolerance;
+    this.absoluteFlowToleranceExplicit = true;
+  }
+
+  /**
+   * Flow floor below which a boundary stream is excluded from the convergence metric entirely.
+   *
+   * @return boundary flow floor in kg/hr
+   */
+  public double getBoundaryFlowFloor() {
+    return boundaryFlowFloor;
+  }
+
+  /**
+   * Sets the flow floor below which a boundary stream is excluded from the convergence metric entirely.
+   *
+   * <p>
+   * Streams carrying less than this value are treated as inactive plumbing (a stagnant dead leg, a bypassed section, or
+   * a tell-tale seed stream) and neither contribute to the reported maximum errors nor appear in
+   * {@link #getNonConvergedBoundaryStreamErrors()}. The default {@link #DEFAULT_BOUNDARY_FLOW_FLOOR} excludes only
+   * numerically-zero streams; raise it to exclude physically negligible legs as well.
+   * </p>
+   *
+   * @param boundaryFlowFloor flow floor in kg/hr; must be finite and non-negative
+   * @throws IllegalArgumentException if the value is negative or not finite
+   */
+  public void setBoundaryFlowFloor(double boundaryFlowFloor) {
+    if (Double.isNaN(boundaryFlowFloor) || Double.isInfinite(boundaryFlowFloor) || boundaryFlowFloor < 0.0) {
+      throw new IllegalArgumentException(
+          "boundaryFlowFloor must be a finite non-negative number, was " + boundaryFlowFloor);
+    }
+    this.boundaryFlowFloor = boundaryFlowFloor;
+    this.boundaryFlowFloorExplicit = true;
+  }
+
+  /**
+   * Whether the model derives its flow-noise convergence filters automatically from the plant flow scale.
+   *
+   * @return true if automatic convergence tuning is enabled (default)
+   */
+  public boolean isAutoConvergenceTuning() {
+    return autoConvergenceTuning;
+  }
+
+  /**
+   * Enables or disables automatic convergence tuning.
+   *
+   * <p>
+   * When enabled (the default) the first outer sweep measures the plant's total feed throughput and derives the
+   * boundary flow floor, the absolute flow tolerance and - when {@link #isAutoLowFlowBypass()} is also on - the
+   * per-unit low-flow bypass threshold from it. Disabling restores the historical behaviour where every one of those
+   * numbers has to be supplied per plant. Values the caller set explicitly are never overridden either way.
+   * </p>
+   *
+   * @param autoConvergenceTuning true to let the model tune its own flow-noise filters
+   */
+  public void setAutoConvergenceTuning(boolean autoConvergenceTuning) {
+    this.autoConvergenceTuning = autoConvergenceTuning;
+  }
+
+  /**
+   * Whether the auto-tuner may bypass units whose inlet flow is below the detected noise floor.
+   *
+   * @return true if automatic low-flow bypass is enabled (default)
+   */
+  public boolean isAutoLowFlowBypass() {
+    return autoLowFlowBypass;
+  }
+
+  /**
+   * Enables or disables automatic low-flow bypass of stagnant sections.
+   *
+   * <p>
+   * A dead leg (a shut-in injection train, a recompression stage switched off by a split factor) drains towards zero
+   * one unit per outer pass and keeps perturbing the convergence gate for tens of iterations. When enabled, units whose
+   * inlet flow falls below the detected noise floor are marked inactive for the rest of the run and stop being solved;
+   * they reactivate automatically if flow returns. Units with a caller-supplied {@code setMinimumFlow} are never
+   * touched.
+   * </p>
+   *
+   * @param autoLowFlowBypass true to auto-bypass negligible-flow units
+   */
+  public void setAutoLowFlowBypass(boolean autoLowFlowBypass) {
+    this.autoLowFlowBypass = autoLowFlowBypass;
+  }
+
+  /**
+   * Noise-floor fraction of the detected plant flow scale used by the auto-tuner.
+   *
+   * @return the fraction (default {@value #DEFAULT_AUTO_TUNING_FLOW_FRACTION})
+   */
+  public double getAutoTuningFlowFraction() {
+    return autoTuningFlowFraction;
+  }
+
+  /**
+   * Sets the noise-floor fraction of the detected plant flow scale used by the auto-tuner.
+   *
+   * <p>
+   * Raise it to be more aggressive about ignoring small streams (faster, more forgiving convergence), lower it to keep
+   * smaller streams inside the convergence metric. A plant fed 1000 t/hr with the default {@code 1e-6} gets a 1 kg/hr
+   * noise floor.
+   * </p>
+   *
+   * @param autoTuningFlowFraction fraction of the total plant feed flow; must be finite and in [0, 1)
+   * @throws IllegalArgumentException if the value is not finite or outside [0, 1)
+   */
+  public void setAutoTuningFlowFraction(double autoTuningFlowFraction) {
+    if (Double.isNaN(autoTuningFlowFraction) || Double.isInfinite(autoTuningFlowFraction)
+        || autoTuningFlowFraction < 0.0 || autoTuningFlowFraction >= 1.0) {
+      throw new IllegalArgumentException(
+          "autoTuningFlowFraction must be a finite value in [0, 1), was " + autoTuningFlowFraction);
+    }
+    this.autoTuningFlowFraction = autoTuningFlowFraction;
+  }
+
+  /**
+   * Total feed mass flow (kg/hr) detected across the plant boundary on the last run.
+   *
+   * @return the detected plant flow scale in kg/hr, or 0.0 if the model has not run with auto-tuning enabled
+   */
+  public double getDetectedPlantFlowScale() {
+    return detectedPlantFlowScale;
+  }
+
+  /**
+   * Human-readable description of what the auto-tuner detected and applied on the last run.
+   *
+   * @return a one-line summary, or an empty string when auto-tuning did not run
+   */
+  public String getAutoTuningSummary() {
+    return autoTuningSummary;
+  }
+
+  /**
+   * Restores every threshold the auto-tuner applied, returning the model to its unconfigured state.
+   *
+   * <p>
+   * Units whose low-flow threshold was written by the auto-tuner get it reset and are reactivated. Explicitly
+   * configured values are left untouched.
+   * </p>
+   *
+   * @return the number of units whose auto-assigned low-flow threshold was cleared
+   */
+  public int resetAutoTuning() {
+    int cleared = 0;
+    for (ProcessSystem process : processes.values()) {
+      cleared += process.resetAutoLowFlowThreshold();
+    }
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = 0.0;
+    }
+    autoTuningAppliedScale = 0.0;
+    detectedPlantFlowScale = 0.0;
+    autoTuningSummary = "";
+    return cleared;
+  }
+
+  /** Clears the per-run auto-tuning bookkeeping so a re-run re-measures the plant flow scale. */
+  private void resetAutoTuningRunState() {
+    autoTuningAppliedScale = 0.0;
+    detectedPlantFlowScale = 0.0;
+    autoTuningSummary = "";
+    autoToleranceSummary = "";
+    massClosureSummary = "";
+    massClosureOffenders = "";
+    lastMassClosureError = Double.NaN;
+    unitMassClosureOffenders = "";
+    lastUnitMassClosureError = Double.NaN;
+    if (autoToleranceErrorHistory == null) {
+      autoToleranceErrorHistory = new java.util.ArrayList<>();
+    }
+    autoToleranceErrorHistory.clear();
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = 0.0;
+    }
+    for (ProcessSystem process : processes.values()) {
+      process.resetAutoLowFlowThreshold();
+      process.resetAutoRecycleFlowTolerance();
+      process.resetAutoRecycleAdaptiveAcceleration();
+    }
+  }
+
+  /**
+   * Applies the engineering-grade default accuracy when the caller did not ask for one.
+   *
+   * <p>
+   * The historical default (1e-4 relative on flow, temperature and pressure) is tighter than any process-engineering
+   * result needs, and it is what makes recycle-rich plants grind through many extra outer passes. When no tolerance was
+   * set explicitly, a plain {@code run()} therefore starts from {@value #DEFAULT_ENGINEERING_TOLERANCE}.
+   * </p>
+   */
+  private void applyAutoDefaultTolerance() {
+    if (!autoConvergenceTuning || !autoTolerance || toleranceExplicit) {
+      return;
+    }
+    flowTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    temperatureTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    pressureTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    autoToleranceSummary = String.format(Locale.US,
+        "no tolerance given - using the engineering default %.1e relative " + "on flow, temperature and pressure",
+        DEFAULT_ENGINEERING_TOLERANCE);
+  }
+
+  /**
+   * Accepts a residual that has stopped improving but is already accurate enough for process work.
+   *
+   * <p>
+   * A recycle-rich plant can approach its solution asymptotically: the last decade of the residual costs more outer
+   * passes than the whole approach did, and buys an accuracy far below the uncertainty of the fluid model itself. When
+   * the worst relative error has not improved materially over {@value #AUTO_TOLERANCE_STALL_WINDOW} outer passes and is
+   * still below {@link #getAutoToleranceCeiling()}, the tolerance is widened to just above that residual and the
+   * accepted accuracy is reported through {@link #getAutoToleranceSummary()}. An explicit tolerance, a residual above
+   * the ceiling, or a still-improving residual all suppress this.
+   * </p>
+   *
+   * @return true when the tolerance was widened and convergence must be re-evaluated
+   */
+  private boolean relaxToleranceIfStalled() {
+    if (!autoConvergenceTuning || !autoTolerance || toleranceExplicit) {
+      return false;
+    }
+    double worstError = Math.max(lastMaxFlowError, Math.max(lastMaxTemperatureError, lastMaxPressureError));
+    if (Double.isNaN(worstError) || Double.isInfinite(worstError) || !(worstError > 0.0)) {
+      return false;
+    }
+    if (autoToleranceErrorHistory == null) {
+      autoToleranceErrorHistory = new java.util.ArrayList<>();
+    }
+    autoToleranceErrorHistory.add(Double.valueOf(worstError));
+    if (autoToleranceErrorHistory.size() <= AUTO_TOLERANCE_STALL_WINDOW) {
+      return false;
+    }
+    double reference = autoToleranceErrorHistory.get(autoToleranceErrorHistory.size() - 1 - AUTO_TOLERANCE_STALL_WINDOW)
+        .doubleValue();
+    if (reference > 0.0 && (reference - worstError) / reference >= AUTO_TOLERANCE_STALL_IMPROVEMENT) {
+      return false; // still making real progress - keep iterating
+    }
+    if (worstError > autoToleranceCeiling) {
+      return false; // genuinely not converged, not merely a too-tight gate
+    }
+    double accepted = Math.min(autoToleranceCeiling, worstError * 1.05);
+    if (accepted <= flowTolerance) {
+      return false;
+    }
+    flowTolerance = accepted;
+    temperatureTolerance = accepted;
+    pressureTolerance = accepted;
+    autoToleranceSummary = String.format(Locale.US,
+        "residual stalled at %.2e after %d passes - accepted %.2e relative "
+            + "(engineering accuracy, ceiling %.1e); set a tolerance explicitly to override",
+        worstError, autoToleranceErrorHistory.size(), accepted, autoToleranceCeiling);
+    logger.debug("ProcessModel auto-tolerance: {}", autoToleranceSummary);
+    return true;
+  }
+
+  /**
+   * Whether the auto-tuner refuses a converged verdict while recycle tears still create or destroy mass.
+   *
+   * @return true when the mass-closure gate is active
+   */
+  public boolean isAutoMassClosureGate() {
+    return autoMassClosureGate;
+  }
+
+  /**
+   * Enables or disables the automatic mass-closure acceptance gate.
+   *
+   * @param autoMassClosureGate true to require plant mass closure before accepting convergence
+   */
+  public void setAutoMassClosureGate(boolean autoMassClosureGate) {
+    this.autoMassClosureGate = autoMassClosureGate;
+  }
+
+  /**
+   * Whether the unit-level mass-closure figure also blocks a converged verdict.
+   *
+   * @return true when non-recycle unit imbalances gate convergence as well as being reported
+   */
+  public boolean isUnitMassClosureGate() {
+    return unitMassClosureGate;
+  }
+
+  /**
+   * Enables or disables gating on the unit-level mass-closure figure.
+   *
+   * @param unitMassClosureGate true to also require non-recycle units to conserve mass before accepting convergence
+   */
+  public void setUnitMassClosureGate(boolean unitMassClosureGate) {
+    this.unitMassClosureGate = unitMassClosureGate;
+  }
+
+  /**
+   * Mass created or destroyed by non-recycle units at the last check, as a fraction of plant feed.
+   *
+   * @return relative unit-level closure error, or NaN when it was never evaluated
+   */
+  public double getLastUnitMassClosureError() {
+    return lastUnitMassClosureError;
+  }
+
+  /**
+   * Non-recycle units creating or destroying the most mass at the last check.
+   *
+   * @return worst offenders text, empty when the check never ran or found nothing
+   */
+  public String getUnitMassClosureOffenders() {
+    return unitMassClosureOffenders;
+  }
+
+  /**
+   * Accepted plant mass-closure error, as a fraction of plant feed.
+   *
+   * @return relative mass-closure tolerance
+   */
+  public double getMassClosureTolerance() {
+    return massClosureTolerance;
+  }
+
+  /**
+   * Sets the accepted plant mass-closure error.
+   *
+   * @param massClosureTolerance relative tolerance; must be a finite number greater than zero
+   * @throws IllegalArgumentException if the tolerance is not a finite positive number
+   */
+  public void setMassClosureTolerance(double massClosureTolerance) {
+    if (Double.isNaN(massClosureTolerance) || Double.isInfinite(massClosureTolerance) || massClosureTolerance <= 0.0) {
+      throw new IllegalArgumentException(
+          "massClosureTolerance must be a finite positive number, was " + massClosureTolerance);
+    }
+    this.massClosureTolerance = massClosureTolerance;
+  }
+
+  /**
+   * Plant mass-closure error at the last convergence check, as a fraction of plant feed.
+   *
+   * @return relative mass-closure error, or NaN when it was never evaluated
+   */
+  public double getLastMassClosureError() {
+    return lastMassClosureError;
+  }
+
+  /**
+   * Human-readable description of the last mass-closure check.
+   *
+   * @return summary text, empty when the gate never ran
+   */
+  public String getMassClosureSummary() {
+    return massClosureSummary;
+  }
+
+  /**
+   * Collect recycle units once for a process area, including units inside nested modules.
+   *
+   * @param process process area or nested module operations
+   * @return recycle paths and unit instances in the process hierarchy
+   */
+  private List<Map.Entry<String, Recycle>> getRecycleUnits(ProcessSystem process) {
+    List<Map.Entry<String, Recycle>> recycles = new ArrayList<>();
+    Set<ProcessSystem> visited = Collections.newSetFromMap(new IdentityHashMap<ProcessSystem, Boolean>());
+    collectRecycleUnits(process, "", recycles, visited);
+    return recycles;
+  }
+
+  /**
+   * Add recycle units from one process hierarchy without revisiting cyclic module references.
+   *
+   * @param process process area or nested module operations
+   * @param pathPrefix module path prefix
+   * @param recycles destination list
+   * @param visited process systems already traversed by identity
+   */
+  private void collectRecycleUnits(ProcessSystem process, String pathPrefix, List<Map.Entry<String, Recycle>> recycles,
+      Set<ProcessSystem> visited) {
+    if (process == null || !visited.add(process)) {
+      return;
+    }
+    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+      String equipmentPath = pathPrefix.isEmpty() ? equipment.getName() : pathPrefix + "::" + equipment.getName();
+      if (equipment instanceof Recycle) {
+        recycles.add(new AbstractMap.SimpleEntry<String, Recycle>(equipmentPath, (Recycle) equipment));
+      }
+      if (equipment instanceof ModuleInterface && equipment.isActive() && !equipment.isLockedInactive()) {
+        collectRecycleUnits(((ModuleInterface) equipment).getOperations(), equipmentPath, recycles, visited);
+      }
+    }
+  }
+
+  /**
+   * Total mass created or destroyed by open recycle tears, as a fraction of plant feed.
+   *
+   * <p>
+   * A recycle whose outlet no longer matches the sum of its inlets is a standing mass source or sink of exactly that
+   * difference, so summing the absolute tear imbalances is the mass the flowsheet is failing to conserve. Loops
+   * carrying less than the auto-derived boundary floor are skipped as noise.
+   * </p>
+   *
+   * @return relative mass-closure error, or NaN when no usable flow scale exists
+   */
+  private double computeMassClosureError() {
+    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+    if (!(scale > 0.0) || Double.isInfinite(scale)) {
+      massClosureOffenders = "";
+      return Double.NaN;
+    }
+    double created = 0.0;
+    List<Map.Entry<String, Double>> offenders = new ArrayList<>();
+    for (Map.Entry<String, ProcessSystem> area : processes.entrySet()) {
+      for (Map.Entry<String, Recycle> recycleEntry : getRecycleUnits(area.getValue())) {
+        Recycle recycle = recycleEntry.getValue();
+        if (recycle.isLockedInactive() || !recycle.isActive()) {
+          continue;
+        }
+        double error;
+        try {
+          error = recycle.getMassBalance("kg/hr");
+        } catch (RuntimeException exception) {
+          logger.warn("Failed to calculate recycle mass balance for area {} unit {}", area.getKey(),
+              recycleEntry.getKey(), exception);
+          continue;
+        }
+        if (!Double.isFinite(error) || Math.abs(error) < boundaryFlowFloor) {
+          continue;
+        }
+        created += Math.abs(error);
+        offenders.add(
+            new AbstractMap.SimpleEntry<String, Double>(area.getKey() + "::" + recycleEntry.getKey(), Math.abs(error)));
+      }
+    }
+    massClosureOffenders = formatClosureOffenders(offenders);
+    return created / scale;
+  }
+
+  /**
+   * Formats the worst mass-closure offenders, largest absolute imbalance first.
+   *
+   * @param offenders unit path and absolute imbalance in kg/hr; reordered in place
+   * @return comma-separated text for at most the three worst offenders, empty when there are none
+   */
+  private String formatClosureOffenders(List<Map.Entry<String, Double>> offenders) {
+    Collections.sort(offenders, new Comparator<Map.Entry<String, Double>>() {
+      @Override
+      public int compare(Map.Entry<String, Double> first, Map.Entry<String, Double> second) {
+        return Double.compare(second.getValue(), first.getValue());
+      }
+    });
+    StringBuilder worst = new StringBuilder();
+    for (int i = 0; i < offenders.size() && i < 3; i++) {
+      if (i > 0) {
+        worst.append(", ");
+      }
+      worst.append(String.format(Locale.US, "%s %.4g kg/hr", offenders.get(i).getKey(), offenders.get(i).getValue()));
+    }
+    return worst.toString();
+  }
+
+  /**
+   * Total mass created or destroyed by non-recycle unit operations, as a fraction of plant feed.
+   *
+   * <p>
+   * The recycle-tear figure only covers what the outer solver itself can close. A separator, pipe or mixer whose
+   * outlets no longer match its inlets is an equally real mass source or sink, and the boundary residual is blind to
+   * it. Bypassed and low-flow units are already excluded by {@link ProcessSystem#getFailedMassBalance(String, double)};
+   * recycles are skipped here so they are not counted twice.
+   * </p>
+   *
+   * @return relative unit-level closure error, or NaN when no usable flow scale exists
+   */
+  private double computeUnitMassClosureError() {
+    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+    if (!(scale > 0.0) || Double.isInfinite(scale)) {
+      unitMassClosureOffenders = "";
+      return Double.NaN;
+    }
+    double created = 0.0;
+    List<Map.Entry<String, Double>> offenders = new ArrayList<>();
+    for (Map.Entry<String, ProcessSystem> area : processes.entrySet()) {
+      Map<String, ProcessSystem.MassBalanceResult> failures;
+      try {
+        failures = area.getValue().getFailedMassBalance("kg/hr", 0.0);
+      } catch (RuntimeException exception) {
+        logger.warn("Failed to calculate unit mass balance for area {}", area.getKey(), exception);
+        continue;
+      }
+      for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : failures.entrySet()) {
+        if (area.getValue().getUnit(entry.getKey()) instanceof Recycle) {
+          continue;
+        }
+        double error = entry.getValue().getAbsoluteError();
+        if (!Double.isFinite(error) || Math.abs(error) < boundaryFlowFloor) {
+          continue;
+        }
+        created += Math.abs(error);
+        offenders
+            .add(new AbstractMap.SimpleEntry<String, Double>(area.getKey() + "::" + entry.getKey(), Math.abs(error)));
+      }
+    }
+    unitMassClosureOffenders = formatClosureOffenders(offenders);
+    return created / scale;
+  }
+
+  /**
+   * Whether the plant conserves mass well enough for the auto-tuner to accept convergence.
+   *
+   * @return true when the gate is inactive or the closure error is within tolerance
+   */
+  private boolean massClosureAccepted() {
+    if (!autoConvergenceTuning || !autoMassClosureGate) {
+      return true;
+    }
+    double closure = computeMassClosureError();
+    lastMassClosureError = closure;
+    double unitClosure = computeUnitMassClosureError();
+    lastUnitMassClosureError = unitClosure;
+
+    boolean recycleAccepted = Double.isNaN(closure) || closure <= massClosureTolerance;
+    String recyclePart;
+    if (Double.isNaN(closure)) {
+      recyclePart = "recycle tear mass closure not evaluable - no usable plant flow scale";
+    } else if (recycleAccepted) {
+      recyclePart = String.format(Locale.US,
+          "recycle tear mass closure %.3g of feed (tolerance %.3g) - every active recycle tear closes", closure,
+          massClosureTolerance);
+    } else {
+      recyclePart = String.format(Locale.US,
+          "recycle tear mass closure %.3g of feed exceeds %.3g - open recycle tears are still creating or destroying mass inside the "
+              + "flowsheet, so the boundary residual alone does not mean the model is solved. Worst: %s",
+          closure, massClosureTolerance,
           massClosureOffenders.isEmpty() ? "none above the flow floor" : massClosureOffenders);
     }
 
