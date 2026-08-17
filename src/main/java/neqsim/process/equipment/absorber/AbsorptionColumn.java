@@ -14,18 +14,17 @@ import neqsim.thermo.system.SystemInterface;
  * Rigorous counter-current tray absorber based on the {@link DistillationColumn} MESH solver.
  *
  * <p>
- * The column has no condenser or reboiler. Gas enters tray zero and solvent enters the highest
- * numbered tray. Each tray is an equilibrium stage by default. Overall, per-tray, per-component,
- * and per-tray/per-component Murphree vapor efficiencies can be configured. Component-specific
- * corrections preserve the flashed vapor flow and complement the corrected vapor inventory in
- * the liquid phase, so every component remains conserved on the tray.
+ * The column has no condenser or reboiler. Gas enters tray zero and solvent enters the highest numbered tray. Each tray
+ * is an equilibrium stage by default. Overall, per-tray, per-component, and per-tray/per-component Murphree vapor
+ * efficiencies can be configured. Component-specific corrections preserve the flashed vapor flow and complement the
+ * corrected vapor inventory in the liquid phase, so every component remains conserved on the tray.
  * </p>
  *
  * <p>
- * Tray numbers are zero based from bottom to top. Component-specific efficiencies override the
- * inherited overall or per-tray efficiency for that component. Because independently specified
- * component efficiencies do not generally produce mole fractions summing to one, the corrected
- * vapor composition is normalized and limited by the component inventory available on the tray.
+ * Tray numbers are zero based from bottom to top. Component-specific efficiencies override the inherited overall or
+ * per-tray efficiency for that component. Because independently specified component efficiencies do not generally
+ * produce mole fractions summing to one, the corrected vapor composition is normalized and limited by the component
+ * inventory available on the tray.
  * </p>
  *
  * @author esolbraa
@@ -38,8 +37,7 @@ public class AbsorptionColumn extends DistillationColumn {
   private StreamInterface gasInStream;
   private StreamInterface solventInStream;
   private final Map<String, Double> componentMurphreeEfficiencies = new HashMap<>();
-  private final Map<Integer, Map<String, Double>> trayComponentMurphreeEfficiencies =
-      new HashMap<>();
+  private final Map<Integer, Map<String, Double>> trayComponentMurphreeEfficiencies = new HashMap<>();
 
   /**
    * Create a counter-current tray absorber without a condenser or reboiler.
@@ -108,8 +106,7 @@ public class AbsorptionColumn extends DistillationColumn {
    * @param efficiency efficiency from 0.0 to 1.0
    */
   public void setComponentMurphreeEfficiency(String componentName, double efficiency) {
-    componentMurphreeEfficiencies.put(normalizeComponentName(componentName),
-        validateEfficiency(efficiency));
+    componentMurphreeEfficiencies.put(normalizeComponentName(componentName), validateEfficiency(efficiency));
     setDoInitializion(true);
   }
 
@@ -120,8 +117,7 @@ public class AbsorptionColumn extends DistillationColumn {
    * @param componentName component name
    * @param efficiency efficiency from 0.0 to 1.0
    */
-  public void setComponentMurphreeEfficiency(int trayNumber, String componentName,
-      double efficiency) {
+  public void setComponentMurphreeEfficiency(int trayNumber, String componentName, double efficiency) {
     validateTrayNumber(trayNumber);
     trayComponentMurphreeEfficiencies.computeIfAbsent(trayNumber, key -> new HashMap<>())
         .put(normalizeComponentName(componentName), validateEfficiency(efficiency));
@@ -190,19 +186,15 @@ public class AbsorptionColumn extends DistillationColumn {
       String componentName = equilibriumFluid.getPhase(0).getComponent(componentIndex).getName();
       double efficiency = getComponentMurphreeEfficiency(trayIndex, componentName);
       correctionRequired |= efficiency < 1.0 - 1.0e-10;
-      double equilibriumMoleFraction =
-          equilibriumFluid.getPhase(0).getComponent(componentIndex).getx();
-      ComponentInterface inletComponent =
-          inletVaporFluid.getPhase(0).getComponent(componentName);
+      double equilibriumMoleFraction = equilibriumFluid.getPhase(0).getComponent(componentIndex).getx();
+      ComponentInterface inletComponent = inletVaporFluid.getPhase(0).getComponent(componentName);
       double inletMoleFraction = inletComponent == null ? 0.0 : inletComponent.getx();
-      correctedMoleFraction[componentIndex] =
-          Math.max(0.0,
-              inletMoleFraction + efficiency * (equilibriumMoleFraction - inletMoleFraction));
+      correctedMoleFraction[componentIndex] = Math.max(0.0,
+          inletMoleFraction + efficiency * (equilibriumMoleFraction - inletMoleFraction));
       correctedMoleFractionSum += correctedMoleFraction[componentIndex];
       totalComponentMoles[componentIndex] = Math.max(0.0,
           equilibriumFluid.getPhase(0).getComponent(componentIndex).getNumberOfMolesInPhase()
-              + equilibriumFluid.getPhase(1).getComponent(componentName)
-                  .getNumberOfMolesInPhase());
+              + equilibriumFluid.getPhase(1).getComponent(componentName).getNumberOfMolesInPhase());
     }
     if (!correctionRequired || correctedMoleFractionSum <= MOLE_TOLERANCE) {
       return;
@@ -214,8 +206,7 @@ public class AbsorptionColumn extends DistillationColumn {
 
     double vaporMoles = equilibriumFluid.getPhase(0).getNumberOfMolesInPhase();
     double liquidMoles = equilibriumFluid.getPhase(1).getNumberOfMolesInPhase();
-    double[] vaporComponentMoles =
-        allocateVaporMoles(correctedMoleFraction, totalComponentMoles, vaporMoles);
+    double[] vaporComponentMoles = allocateVaporMoles(correctedMoleFraction, totalComponentMoles, vaporMoles);
 
     SystemInterface gasSystem = equilibriumFluid.phaseToSystem(0);
     SystemInterface liquidSystem = equilibriumFluid.phaseToSystem(1);
@@ -232,20 +223,16 @@ public class AbsorptionColumn extends DistillationColumn {
     liquidSystem.init(0);
     liquidSystem.init(1);
 
-    getTray(trayIndex)
-        .setCachedGasOutStream(new Stream(getName() + " tray " + trayIndex + " gas", gasSystem));
-    getTray(trayIndex).setCachedLiquidOutStream(
-        new Stream(getName() + " tray " + trayIndex + " liquid", liquidSystem));
+    getTray(trayIndex).setCachedGasOutStream(new Stream(getName() + " tray " + trayIndex + " gas", gasSystem));
+    getTray(trayIndex).setCachedLiquidOutStream(new Stream(getName() + " tray " + trayIndex + " liquid", liquidSystem));
   }
 
-  private static double[] allocateVaporMoles(double[] moleFraction, double[] availableMoles,
-      double vaporMoles) {
+  private static double[] allocateVaporMoles(double[] moleFraction, double[] availableMoles, double vaporMoles) {
     double[] allocatedMoles = new double[moleFraction.length];
     boolean[] fixed = new boolean[moleFraction.length];
     double remainingMoles = vaporMoles;
 
-    for (int iteration = 0; iteration < moleFraction.length && remainingMoles > MOLE_TOLERANCE;
-        iteration++) {
+    for (int iteration = 0; iteration < moleFraction.length && remainingMoles > MOLE_TOLERANCE; iteration++) {
       double remainingWeight = 0.0;
       for (int componentIndex = 0; componentIndex < moleFraction.length; componentIndex++) {
         if (!fixed[componentIndex]) {
@@ -260,8 +247,7 @@ public class AbsorptionColumn extends DistillationColumn {
         }
         double trialMoles = remainingWeight > MOLE_TOLERANCE
             ? remainingMoles * moleFraction[componentIndex] / remainingWeight
-            : remainingMoles * availableMoles[componentIndex]
-                / sumAvailableMoles(availableMoles, fixed);
+            : remainingMoles * availableMoles[componentIndex] / sumAvailableMoles(availableMoles, fixed);
         if (trialMoles > availableMoles[componentIndex] + MOLE_TOLERANCE) {
           allocatedMoles[componentIndex] = availableMoles[componentIndex];
           remainingMoles -= allocatedMoles[componentIndex];
@@ -275,8 +261,7 @@ public class AbsorptionColumn extends DistillationColumn {
           if (!fixed[componentIndex]) {
             allocatedMoles[componentIndex] = remainingWeight > MOLE_TOLERANCE
                 ? remainingMoles * moleFraction[componentIndex] / remainingWeight
-                : remainingMoles * availableMoles[componentIndex]
-                    / sumAvailableMoles(availableMoles, fixed);
+                : remainingMoles * availableMoles[componentIndex] / sumAvailableMoles(availableMoles, fixed);
           }
         }
         remainingMoles = 0.0;
@@ -295,8 +280,8 @@ public class AbsorptionColumn extends DistillationColumn {
     return Math.max(sum, MOLE_TOLERANCE);
   }
 
-  private static void setComponentInventory(SystemInterface system, int componentIndex,
-      double componentMoles, double phaseMoles) {
+  private static void setComponentInventory(SystemInterface system, int componentIndex, double componentMoles,
+      double phaseMoles) {
     system.getPhase(0).getComponent(componentIndex)
         .setx(phaseMoles > MOLE_TOLERANCE ? componentMoles / phaseMoles : 0.0);
     system.getPhase(0).getComponent(componentIndex).setNumberOfMolesInPhase(componentMoles);
@@ -305,8 +290,7 @@ public class AbsorptionColumn extends DistillationColumn {
 
   private void validateTrayNumber(int trayNumber) {
     if (trayNumber < 0 || trayNumber >= getNumberOfTrays()) {
-      throw new IndexOutOfBoundsException(
-          "tray index " + trayNumber + " out of range [0, " + getNumberOfTrays() + ")");
+      throw new IndexOutOfBoundsException("tray index " + trayNumber + " out of range [0, " + getNumberOfTrays() + ")");
     }
   }
 
