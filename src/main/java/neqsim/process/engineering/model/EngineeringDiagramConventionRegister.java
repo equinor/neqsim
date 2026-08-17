@@ -183,7 +183,7 @@ public final class EngineeringDiagramConventionRegister implements Serializable 
 
   /** @return immutable node-kind-sorted project symbol conventions */
   public List<SymbolConvention> getConventions() {
-    return conventions;
+    return Collections.unmodifiableList(new ArrayList<SymbolConvention>(conventions));
   }
 
   /** @return whether this register leaves the legacy renderer defaults unchanged */
