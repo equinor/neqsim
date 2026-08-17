@@ -139,6 +139,19 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   }
 
   /**
+   * Extracts a logical phase while retaining that phase's backing implementation in every system slot.
+   *
+   * <p>
+   * The {@code phaseToSystem(PhaseInterface)} overload mutates its receiver, so perform the extraction on a clone. This
+   * preserves the legacy single-phase system structure without selecting a raw backing-array index.
+   * </p>
+   */
+  private static SystemInterface extractLogicalPhase(SystemInterface system, int logicalPhaseNumber) {
+    SystemInterface phaseSystem = system.clone();
+    return phaseSystem.phaseToSystem(phaseSystem.getPhase(logicalPhaseNumber));
+  }
+
+  /**
    * Reconciles an imbalanced flash phase split to the unchanged overall feed inventory.
    *
    * <p>
@@ -509,7 +522,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // stream.getThermoSystem().display();
 
       ComponentInventory gasInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 0);
-      SystemInterface gasTemp = mixedStream.getThermoSystem().phaseToSystem(0);
+      SystemInterface gasTemp = extractLogicalPhase(mixedStream.getThermoSystem(), 0);
       gasInventory.requireUnchanged(gasTemp, "gas phase extraction");
       runInventoryCheckedInitialization(gasTemp, () -> gasTemp.init(2), "gas outlet init(2)");
       gasOutStream.setThermoSystem(gasTemp);
@@ -517,12 +530,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // gasOutStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
 
       ComponentInventory liquidInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 1);
-      SystemInterface liqTemp = mixedStream.getThermoSystem().phaseToSystem(1);
-      // phaseToSystem(int) retains the unused backing phases from the mixed system. A
-      // downstream TP-flashed wrapper can activate one of those slots, so seed every
-      // slot with the rich-solvent identity just as the legacy PhaseInterface overload
-      // did when it cloned the selected phase into the whole system.
-      liqTemp.setAllPhaseType(PhaseType.AQUEOUS);
+      SystemInterface liqTemp = extractLogicalPhase(mixedStream.getThermoSystem(), 1);
       liquidInventory.requireUnchanged(liqTemp, "liquid phase extraction");
       runInventoryCheckedInitialization(liqTemp, () -> liqTemp.init(2), "liquid outlet init(2)");
       solventOutStream.setThermoSystem(liqTemp);
