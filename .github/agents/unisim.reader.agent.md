@@ -70,8 +70,9 @@ main flowsheet) become separate `ProcessSystem` areas composed into a
 Tc, Pc, omega, MW, and BIPs from UniSim COM and writes E300 files. Use the
 skill guidance for robust COM extraction: critical temperature and boiling point
 are requested in Celsius and converted to Kelvin, critical pressure is requested
-in kPa and converted to bara, and missing `AcentricFactor` is handled with
-package vectors or Edmister fallback. The generated code loads the fluid via
+in kPa and converted to bara, and the acentric factor is read from the UniSim COM
+attribute `Acentricity` (NOT `AcentricFactor`), with package vectors and an
+Edmister estimate only as fallbacks. The generated code loads the fluid via
 `EclipseFluidReadWrite.read()` for lossless transfer of hypothetical/pseudo
 component properties.
 
@@ -257,7 +258,11 @@ If deviations exceed acceptable ranges, investigate:
 1. Check E300 export/use — were all expected fluid packages exported and loaded
   with `EclipseFluidReadWrite.read(...)`?
 2. Check component/property sanity — methane Tc/Pc and water Tc/Pc should be in
-  expected Kelvin/bara ranges; acentric factors should not be missing.
+  expected Kelvin/bara ranges; acentric factors should not be missing. Compare
+  the exported `ACF` block against `comp.AcentricityValue` from COM: any `0.0`
+  or Edmister-looking value means the acentric factor was estimated rather than
+  transferred, which biases every bubble point / TVP by ~10-15 %. The exporter
+  logs a warning when it has to default an acentric factor to 0.0.
 3. Check component mapping — missing components or wrong fluid package per area?
 4. Check EOS — PR vs SRK differences?
 5. Check equipment specs — efficiency, pressure, temperature set correctly?
