@@ -6996,10 +6996,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveInsideOut(UUID id) {
+    long invocationStartTime = System.nanoTime();
+    lastSequentialWarmStateReused = false;
     resetInsideOutTelemetry();
-    if (feedStreams.isEmpty()) {
+    captureDirectExternalTrayFeeds();
+    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
+    }
+
+    if (hasSequentialExactReuseState) {
+      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
+        reuseSequentialWarmState(id, invocationStartTime);
+        return;
+      }
+      hasSequentialExactReuseState = false;
     }
 
     int firstFeedTrayNumber = prepareColumnForSolve();
@@ -7366,6 +7378,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).finalizeTrayProperties();
     }
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+    hasBeenSolvedBefore = true;
+    lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
+    commitSequentialWarmState();
   }
 
   /**
