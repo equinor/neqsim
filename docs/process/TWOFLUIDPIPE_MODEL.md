@@ -325,6 +325,36 @@ The default **adaptive minimum** is a closure relation that scales with no-slip 
 | `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup |
 | `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum constraint |
 
+> **Known limitation — the minimum is binding on inclined sections.** The bound
+> `alphaL >= lambdaL * minimumSlipFactor` is applied after the regime closures and carries no
+> inclination dependence. On a 5 km, 200 mm fixture undulating by +/-30 m, 85 of 100 sections
+> sit exactly on it, including 41 of 41 uphill sections, so the terrain response of the
+> momentum balance is overwritten by a constant there. It is inert on a near-horizontal
+> transmission line: on a 73.8 km export line at 4 MSm3/d, lowering the factor from 2.0 to 1.0
+> leaves both the pressure drop and the holdup profile unchanged. Lower the factor if you need
+> the solved inclination response on an undulating profile.
+
+### Horizontal Annular Criterion
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setUseEquilibriumLevelAnnularTransition(boolean)` | `false` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
+
+The default horizontal path decides annular flow with the vertical droplet-entrainment
+criterion `U_SG > 3.1 * (sigma * g * drho / rhoG^2)^0.25`, checked ahead of the stratified/slug
+transition. That threshold is around 0.75 m/s for a 14-inch high-pressure export line, so a
+horizontal gas pipeline is classified annular on gas velocity alone and a shallow stratified
+layer is then solved with a thin-film closure. Enabling the option selects the horizontal
+criterion of Taitel and Dukler (1976) instead.
+
+The two paths differ only where the gas velocity clears the droplet threshold while the
+Kelvin-Helmholtz margin is still below one. On the export line above they are identical at
+10 MSm3/d; at 4 MSm3/d the option reclassifies 272 of 320 sections as stratified-wavy and moves
+the median holdup from 0.0198 to 0.0232 against a reference value near 0.0235. It stays opt-in
+because the slug closure it then selects on uphill sections returns less liquid than the
+stratified closure returns on downhill ones, so an undulating profile loses its terrain
+signature.
+
 #### Lean Gas Systems
 
 For lean wet gas (< 1% liquid loading), use adaptive-only mode:

@@ -122,6 +122,12 @@ public class TwoFluidPipe extends Pipeline {
   /** Upper no-slip fraction for the trace-liquid asymptote of the stratified closure. */
   private static final double STRATIFIED_TRACE_LIQUID_TRANSITION = 1.0e-6;
 
+  /** Bendiksen (1984) horizontal Taylor bubble drift coefficient. */
+  private static final double SLUG_DRIFT_HORIZONTAL_COEFFICIENT = 0.54;
+
+  /** Bendiksen (1984) vertical Taylor bubble drift coefficient. */
+  private static final double SLUG_DRIFT_VERTICAL_COEFFICIENT = 0.35;
+
   /** Default closed-flow fluid-side heat-transfer coefficient in W/(m2 K). */
   private static final double DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT = 50.0;
 
@@ -3193,13 +3199,29 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Slug flow is represented as a sequence of liquid slugs separated by Taylor bubbles. The average holdup is
-   * determined by:
+   * determined by the slug body holdup, the film holdup under the Taylor bubble, and the slug length ratio.
    * </p>
-   * <ul>
-   * <li>Slug body holdup (typically 0.7-1.0)</li>
-   * <li>Film holdup under Taylor bubble</li>
-   * <li>Slug frequency and length</li>
-   * </ul>
+   *
+   * <p>
+   * KNOWN DEFECT, not fixed here: the inclination response is inverted. The drift velocity grows with upward
+   * inclination and enters the DENOMINATOR of the slug length ratio, so the average holdup decreases uphill. Measured
+   * on a 5 km, 200 mm profile undulating by +/-30 m, uphill sections return 0.0328 against 0.0493 downhill, the
+   * opposite of the accumulation a pipeline shows. It is masked wherever the flow map returns annular rather than slug,
+   * which is the case on the near-horizontal reference lines.
+   * </p>
+   *
+   * <p>
+   * Replacing the unit cell by the drift-flux form {@code alpha_G = v_sG / (C0*v_m + v_d)} corrects the direction and
+   * restores the terrain signature - the undulating fixture goes from a maximum-to-minimum holdup ratio of 1.45 to
+   * 10.22 with valley above peak - but it breaks the trace-liquid degeneracy pinned by
+   * {@code TwoFluidPipePhaseDegeneracyTest}: with {@code C0 > 1} and a finite drift velocity the gas fraction stays
+   * below one even at zero liquid input, so the closure invents inventory. Weighting the drift by
+   * {@code (1 - alpha_G)^n} in the Zuber-Findlay manner restores the degeneracy but suppresses the drift by more than
+   * an order of magnitude at the liquid fractions of interest, removing the inclination response again. The fix is to
+   * keep the unit cell, whose slug length ratio vanishes with the liquid supply, and give the film holdup under the
+   * Taylor bubble the inclination dependence it lacks - it is a constant multiple of the no-slip fraction here -
+   * through a film balance of the same form as the annular closure.
+   * </p>
    *
    * @param vsG Gas superficial velocity [m/s]
    * @param vsL Liquid superficial velocity [m/s]
@@ -3222,22 +3244,15 @@ public class TwoFluidPipe extends Pipeline {
     double slugBodyHoldup = 1.0 / (1.0 + Math.pow(vMix / 8.66, 1.39));
     slugBodyHoldup = Math.max(0.5, Math.min(0.98, slugBodyHoldup));
 
-    // Taylor bubble rise velocity using Bendiksen (1984)
     double dRho = rhoL - rhoG;
     double C0 = 1.2; // Distribution coefficient
 
-    // Drift velocity for inclined pipes
-    double vD0 = 0.35 * Math.sqrt(g * D * dRho / rhoL);
-    double sinTheta = Math.sin(theta);
-    double cosTheta = Math.cos(theta);
-
-    // Inclination correction
-    double vD;
-    if (theta >= 0) {
-      vD = vD0 * (cosTheta + 1.2 * sinTheta);
-    } else {
-      vD = vD0 * (cosTheta + 0.3 * Math.abs(sinTheta));
-    }
+    // Bendiksen (1984) drift velocity: one expression over the whole inclination range, the
+    // horizontal and vertical coefficients projected onto the pipe axis, so a negative inclination
+    // reduces the drift through sin(theta) instead of through a separate down-flow branch.
+    double driftScale = Math.sqrt(g * D * Math.max(0.0, dRho) / Math.max(CLOSURE_DENOMINATOR_EPSILON, rhoL));
+    double vD = driftScale
+        * (SLUG_DRIFT_HORIZONTAL_COEFFICIENT * Math.cos(theta) + SLUG_DRIFT_VERTICAL_COEFFICIENT * Math.sin(theta));
 
     // Taylor bubble velocity
     double vTB = C0 * vMix + vD;
@@ -7584,6 +7599,30 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isEnableAnnularFilmModel() {
     return enableAnnularFilmModel;
+  }
+
+  /**
+   * Select how the horizontal branch of the flow map decides annular flow.
+   *
+   * <p>
+   * Delegates to the flow regime detector owned by this pipe. See
+   * {@link FlowRegimeDetector#setUseEquilibriumLevelAnnularTransition(boolean)} for the two criteria and why the
+   * equilibrium-level branch of Taitel and Dukler (1976) is the horizontal one.
+   * </p>
+   *
+   * @param enable true to branch on the equilibrium liquid level, false to use the droplet-entrainment criterion
+   */
+  public void setUseEquilibriumLevelAnnularTransition(boolean enable) {
+    flowRegimeDetector.setUseEquilibriumLevelAnnularTransition(enable);
+  }
+
+  /**
+   * Which horizontal annular criterion this pipe is using.
+   *
+   * @return true when the equilibrium-level transition is active
+   */
+  public boolean isUseEquilibriumLevelAnnularTransition() {
+    return flowRegimeDetector.isUseEquilibriumLevelAnnularTransition();
   }
 
   /**

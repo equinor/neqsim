@@ -65,6 +65,9 @@ public class FlowRegimeDetector implements Serializable {
   /** Half-width of the equilibrium-level blending band, as a fraction of the diameter. */
   private static final double LEVEL_TRANSITION_BAND = 0.08;
 
+  /** Gas viscosity as a fraction of the liquid viscosity, used only when the section carries none. */
+  private static final double DEGENERATE_GAS_VISCOSITY_FRACTION = 0.01;
+
   /**
    * Whether the horizontal annular transition uses the equilibrium liquid level.
    *
@@ -95,10 +98,23 @@ public class FlowRegimeDetector implements Serializable {
    * </p>
    *
    * <p>
-   * It is off by default because regime selection switches closures discontinuously: on a line that changes
-   * inclination, sections reclassify and the mean holdup steps by roughly 20 per cent as soon as mild terrain is
-   * introduced. Blending across the transition is required before this can become the default, so the option is
-   * provided for evaluation rather than for design work.
+   * This is off by default, and the reason is not the one originally recorded here. Closure blending, which used to be
+   * named as the prerequisite, has been available and on by default since the transition work landed, and with it the
+   * condensation fixture that used to fail now passes. The remaining blocker is that the hold-up closures this
+   * transition routes to do not respond to inclination. On a 5 km 200 mm undulating fixture the equilibrium level
+   * itself swings from {@code h_L/D = 0.058} on a 4 degree downhill section to {@code 0.793} on a 4 degree uphill one,
+   * a factor of 47 in liquid area, while the hold-up returned for those same sections is 0.04303 and 0.04305 -
+   * identical to five figures. Selecting this transition therefore replaces the only inclination-sensitive closure in
+   * the model, the annular film balance with its gravity term, by closures that carry no terrain response at all: the
+   * fixture's maximum-to-minimum hold-up ratio falls from 11.3 to 1.45 and the valley and peak ordering becomes
+   * arbitrary. The bulk gain and the terrain loss are both real, so this stays selectable rather than default until the
+   * stratified and slug hold-up closures respond to the section inclination that the level solver already sees.
+   * </p>
+   *
+   * <p>
+   * The two paths differ only in the shallow-layer, sub-critical Kelvin-Helmholtz corner. On the export line above they
+   * return identical profiles at 10 MSm3/d, where the margin exceeds one in every section and both branch to annular;
+   * they differ at 4 MSm3/d, where the margin is below one in 85 per cent of sections.
    * </p>
    *
    * @param enable true to use the equilibrium-level transition
@@ -229,13 +245,14 @@ public class FlowRegimeDetector implements Serializable {
     double rho_L = section.getLiquidDensity();
     double rho_G = section.getGasDensity();
     double mu_L = section.getLiquidViscosity();
+    double mu_G = section.getGasViscosity();
     double sigma = section.getSurfaceTension();
 
     // Use Barnea's unified model for inclined pipes
     if (Math.abs(theta) > Math.toRadians(10)) {
-      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, sigma);
+      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
     } else {
-      return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, sigma);
+      return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
     }
   }
 
@@ -298,8 +315,9 @@ public class FlowRegimeDetector implements Serializable {
     double rho_L = section.getLiquidDensity();
     double rho_G = section.getGasDensity();
     double mu_L = section.getLiquidViscosity();
+    double mu_G = section.getGasViscosity();
 
-    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
     double margin = kelvinHelmholtzMargin(U_SG, h_L, D, rho_L, rho_G);
     if (margin <= 0.0) {
       return null;
@@ -400,11 +418,12 @@ public class FlowRegimeDetector implements Serializable {
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
    * @param mu_L Liquid viscosity (Pa·s)
+   * @param mu_G Gas viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
   private FlowRegime detectHorizontalFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
-      double rho_G, double mu_L, double sigma) {
+      double rho_G, double mu_L, double mu_G, double sigma) {
     double U_M = U_SL + U_SG;
 
     // Dimensionless parameters
@@ -424,7 +443,7 @@ public class FlowRegimeDetector implements Serializable {
       return FlowRegime.DISPERSED_BUBBLE;
     }
 
-    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
 
     if (useEquilibriumLevelAnnularTransition) {
       // Taitel-Dukler transition B. Once the Kelvin-Helmholtz instability has lifted the stratified
@@ -467,11 +486,12 @@ public class FlowRegimeDetector implements Serializable {
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
    * @param mu_L Liquid viscosity (Pa·s)
+   * @param mu_G Gas viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
   private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
-      double rho_G, double mu_L, double sigma) {
+      double rho_G, double mu_L, double mu_G, double sigma) {
     boolean isUpward = theta > 0;
 
     // Check for dispersed bubble
@@ -503,7 +523,7 @@ public class FlowRegimeDetector implements Serializable {
 
     } else {
       // Downward flow: stratified, slug, annular
-      double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+      double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
 
       if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
         return FlowRegime.SLUG;
@@ -694,16 +714,17 @@ public class FlowRegimeDetector implements Serializable {
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
    * @param mu_L liquid viscosity [Pa.s]
+   * @param mu_G gas viscosity [Pa.s]
    * @param theta pipe inclination angle [rad]
    * @return estimated liquid level [m]
    */
   private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G,
-      double mu_L, double theta) {
+      double mu_L, double mu_G, double theta) {
     double low = 0.01 * D;
     double high = 0.99 * D;
 
-    double residLow = stratifiedMomentumResidual(low, U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
-    double residHigh = stratifiedMomentumResidual(high, U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+    double residLow = stratifiedMomentumResidual(low, U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
+    double residHigh = stratifiedMomentumResidual(high, U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
 
     if (!isUsableResidual(residLow) || !isUsableResidual(residHigh)) {
       return 0.5 * D;
@@ -716,7 +737,7 @@ public class FlowRegimeDetector implements Serializable {
 
     for (int iter = 0; iter < 60; iter++) {
       double mid = 0.5 * (low + high);
-      double residMid = stratifiedMomentumResidual(mid, U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+      double residMid = stratifiedMomentumResidual(mid, U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
       if (!isUsableResidual(residMid)) {
         return mid;
       }
@@ -761,11 +782,12 @@ public class FlowRegimeDetector implements Serializable {
    * @param rho_L liquid density, in kg/m3
    * @param rho_G gas density, in kg/m3
    * @param mu_L liquid viscosity, in Pa.s
+   * @param mu_G gas viscosity, in Pa.s
    * @param theta inclination, in radians
    * @return the momentum residual, or NaN when the geometry is degenerate
    */
   private double stratifiedMomentumResidual(double h_L, double U_SL, double U_SG, double D, double rho_L, double rho_G,
-      double mu_L, double theta) {
+      double mu_L, double mu_G, double theta) {
     double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
     double A_L = D * D / 8.0 * (beta - Math.sin(beta));
     double A_G = PI * D * D / 4.0 - A_L;
@@ -784,7 +806,9 @@ public class FlowRegimeDetector implements Serializable {
     double D_hG = 4.0 * A_G / (S_G + S_i);
 
     double Re_L = rho_L * Math.abs(U_L) * D_hL / mu_L;
-    double Re_G = rho_G * Math.abs(U_G) * D_hG / (mu_L * 0.01);
+    // Only reached when the section carries no gas-viscosity value, as in a hand-built fixture.
+    double gasViscosity = mu_G > 0.0 ? mu_G : mu_L * DEGENERATE_GAS_VISCOSITY_FRACTION;
+    double Re_G = rho_G * Math.abs(U_G) * D_hG / gasViscosity;
 
     double f_L = Re_L > 2000 ? 0.046 * Math.pow(Re_L, -0.2) : 16.0 / Math.max(Re_L, 1);
     double f_G = Re_G > 2000 ? 0.046 * Math.pow(Re_G, -0.2) : 16.0 / Math.max(Re_G, 1);

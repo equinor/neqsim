@@ -163,9 +163,36 @@ class FlowRegimeHorizontalTransitionTest {
     FlowRegimeDetector detector = new FlowRegimeDetector();
 
     Assertions.assertFalse(detector.isUseEquilibriumLevelAnnularTransition(),
-        "the transition must stay opt-in until the terrain response it implies is anchored");
+        "the transition must stay opt-in until the hold-up closures it selects respond to inclination");
     Assertions.assertTrue(detector.isBlendRegimeTransitions(),
         "closure blending must default on, otherwise the transition steps hold-up");
+  }
+
+  /**
+   * A pipe must be able to select the criterion its own detector uses.
+   *
+   * <p>
+   * {@link neqsim.process.equipment.pipeline.TwoFluidPipe} owns a private detector with no accessor, so before the
+   * delegating setter the choice of horizontal criterion was unreachable from the equipment class and could only be
+   * exercised by reflection.
+   * </p>
+   */
+  @Test
+  @DisplayName("TwoFluidPipe exposes the horizontal annular criterion")
+  void testPipeDelegatesTheTransitionSetting() {
+    neqsim.process.equipment.pipeline.TwoFluidPipe pipe = new neqsim.process.equipment.pipeline.TwoFluidPipe(
+        "criterion-delegation");
+
+    Assertions.assertFalse(pipe.isUseEquilibriumLevelAnnularTransition(),
+        "a new pipe must start on the same criterion as a new detector");
+
+    pipe.setUseEquilibriumLevelAnnularTransition(true);
+    Assertions.assertTrue(pipe.isUseEquilibriumLevelAnnularTransition(),
+        "the pipe must delegate the criterion to the detector it owns");
+
+    pipe.setUseEquilibriumLevelAnnularTransition(false);
+    Assertions.assertFalse(pipe.isUseEquilibriumLevelAnnularTransition(),
+        "the criterion must be selectable in both directions");
   }
 
   /**

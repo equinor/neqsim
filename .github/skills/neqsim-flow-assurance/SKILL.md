@@ -497,6 +497,31 @@ for (double qgMSm3d : gasRates) {
 > three-phase bookkeeping is sound — gas/oil/water fractions sum to one and stay in
 > range at every node.
 
+> **On an undulating profile the holdup is often the minimum-slip bound, not the
+> solved balance.** `alphaL >= lambdaL * minimumSlipFactor` (default 2.0) is applied
+> after the regime closures and has no inclination dependence. On a 5 km, 200 mm
+> fixture undulating by +/-30 m, 85 of 100 sections sit exactly on it, including 41
+> of 41 uphill sections, so the terrain response is replaced by a constant there.
+> It is inert on a near-horizontal transmission line: on the 73.8 km export line at
+> 4 MSm3/d, `setMinimumSlipFactor(1.0)` leaves ΔP and the holdup profile unchanged.
+> Check `holdup / (lambdaL * factor)` before attributing a terrain result to
+> physics, and lower the factor if you need the solved inclination response.
+
+> **The horizontal annular criterion is a selection, and the default over-calls
+> annular.** By default the regime map uses the vertical droplet-entrainment
+> threshold `U_SG > 3.1*(sigma*g*drho/rhoG^2)^0.25` ahead of the stratified/slug
+> transition; that is about 0.75 m/s on a 14-inch export line, so essentially any
+> horizontal gas pipeline is classified annular and a shallow stratified layer is
+> solved with a thin-film closure. `pipe.setUseEquilibriumLevelAnnularTransition(true)`
+> selects the Taitel-Dukler equilibrium-level branch instead. The two agree wherever
+> the Kelvin-Helmholtz margin exceeds one — identical at 10 MSm3/d on the export
+> line — and differ at 4 MSm3/d, where the option reclassifies 272 of 320 sections
+> as stratified-wavy and moves median holdup from 0.0198 to 0.0232 against a
+> reference near 0.0235. It is opt-in because the slug closure it then selects on
+> uphill sections returns less liquid than the stratified closure returns on
+> downhill ones, which flattens the terrain signature. Use it for a near-horizontal
+> line at low gas velocity; leave it off on an undulating profile.
+
 > **Direct electrical heating (DEH)** is available on both models with the same
 > convention — the power set is what reaches the fluid, so cable and coating
 > losses must already be deducted:
