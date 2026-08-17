@@ -59,14 +59,24 @@ public class FlowRegimeDetector implements Serializable {
   /** Half-width of the Kelvin-Helmholtz blending band, as a fraction of the critical gas velocity. */
   private static final double KH_TRANSITION_BAND = 0.15;
 
-  /** Equilibrium liquid level at which the bore bridges, as a fraction of the diameter. */
-  private static final double LEVEL_TRANSITION_CENTRE = 0.5;
-
-  /** Half-width of the equilibrium-level blending band, as a fraction of the diameter. */
+  /** Half-width of the blending band around the bridging limit, as a liquid-fraction difference. */
   private static final double LEVEL_TRANSITION_BAND = 0.08;
 
   /** Gas viscosity as a fraction of the liquid viscosity, used only when the section carries none. */
   private static final double DEGENERATE_GAS_VISCOSITY_FRACTION = 0.01;
+
+  /** Jeffreys sheltering coefficient used by Taitel-Dukler transition D. */
+  private static final double SHELTERING_COEFFICIENT = 0.01;
+
+  /**
+   * Liquid fraction above which the liquid can bridge the bore, so annular flow cannot be sustained.
+   *
+   * <p>
+   * Barnea (1987) blockage criterion. A stable liquid slug needs a liquid fraction of about 0.48 in its body; bridging
+   * becomes possible once the film holds half of that, so annular flow requires an in-situ liquid fraction below 0.24.
+   * </p>
+   */
+  private static final double ANNULAR_BRIDGING_HOLDUP = 0.24;
 
   /**
    * Whether the horizontal annular transition uses the equilibrium liquid level.
@@ -323,8 +333,8 @@ public class FlowRegimeDetector implements Serializable {
     }
 
     double unstableShare = rampWeight(margin, 1.0, KH_TRANSITION_BAND);
-    double slugShare = rampWeight(h_L / D, LEVEL_TRANSITION_CENTRE, LEVEL_TRANSITION_BAND);
-    FlowRegime stratified = isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L) ? FlowRegime.STRATIFIED_WAVY
+    double slugShare = rampWeight(liquidAreaFraction(h_L, D), ANNULAR_BRIDGING_HOLDUP, LEVEL_TRANSITION_BAND);
+    FlowRegime stratified = isWavyTransition(U_SL, U_SG, h_L, D, theta, rho_L, rho_G, mu_L) ? FlowRegime.STRATIFIED_WAVY
         : FlowRegime.STRATIFIED_SMOOTH;
 
     Map<FlowRegime, Double> weights = new EnumMap<FlowRegime, Double>(FlowRegime.class);
@@ -445,11 +455,13 @@ public class FlowRegimeDetector implements Serializable {
     double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
 
     if (useEquilibriumLevelAnnularTransition) {
-      // Taitel-Dukler transition B. Once the Kelvin-Helmholtz instability has lifted the stratified
-      // layer, the horizontal branch is decided by the equilibrium liquid level: below half a
-      // diameter the liquid cannot bridge the bore and the flow goes annular, above it a slug forms.
+      // Taitel-Dukler transition B, with the Barnea (1987) blockage criterion. Once the
+      // Kelvin-Helmholtz instability has lifted the stratified layer the branch is annular only if
+      // the liquid is too thin to bridge the bore; otherwise it forms a slug. The level criterion
+      // alone allows anything below half a diameter, which admits annular flow at liquid fractions
+      // no gas stream could hold as a film.
       if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
-        return (h_L / D < 0.5) ? FlowRegime.ANNULAR : FlowRegime.SLUG;
+        return bridgesTheBore(h_L, D) ? FlowRegime.SLUG : FlowRegime.ANNULAR;
       }
     } else {
       // Legacy path: the vertical droplet-entrainment criterion, checked ahead of the
@@ -464,7 +476,7 @@ public class FlowRegimeDetector implements Serializable {
     }
 
     // Stratified flow - check smooth vs wavy transition
-    if (isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L)) {
+    if (isWavyTransition(U_SL, U_SG, h_L, D, theta, rho_L, rho_G, mu_L)) {
       return FlowRegime.STRATIFIED_WAVY;
     }
 
@@ -528,7 +540,7 @@ public class FlowRegimeDetector implements Serializable {
         return FlowRegime.SLUG;
       }
 
-      if (isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L)) {
+      if (isWavyTransition(U_SL, U_SG, h_L, D, theta, rho_L, rho_G, mu_L)) {
         return FlowRegime.STRATIFIED_WAVY;
       }
 
@@ -883,33 +895,90 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Check transition from smooth to wavy stratified.
    *
-   * @param U_SG superficial gas velocity
-   * @param h_L liquid height
-   * @param D pipe diameter
-   * @param rho_L liquid density
-   * @param rho_G gas density
-   * @param mu_L liquid viscosity
+   * <p>
+   * Taitel and Dukler (1976) transition D, from Jeffreys' sheltering theory: waves grow when the gas can feed energy to
+   * the interface faster than viscous dissipation in the liquid removes it,
+   * {@code U_G > sqrt(4 nu_L (rho_L - rho_G) g cos(theta) / (s rho_G U_L))}. The group is a velocity squared only when
+   * the viscosity is kinematic and the divisor carries the liquid velocity; both were wrong here, which put the
+   * threshold near 52 m/s for air and water and left an ordinary wavy line reported as smooth.
+   * </p>
+   *
+   * @param U_SL superficial liquid velocity, in m/s
+   * @param U_SG superficial gas velocity, in m/s
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @param theta inclination, in radians
+   * @param rho_L liquid density, in kg/m3
+   * @param rho_G gas density, in kg/m3
+   * @param mu_L liquid dynamic viscosity, in Pa.s
    * @return true if transition from smooth to wavy stratified occurs
    */
-  private boolean isWavyTransition(double U_SG, double h_L, double D, double rho_L, double rho_G, double mu_L) {
+  private boolean isWavyTransition(double U_SL, double U_SG, double h_L, double D, double theta, double rho_L,
+      double rho_G, double mu_L) {
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
       return false;
     }
 
-    // Jeffreys' sheltering criterion for wave generation
-    double s = 0.01; // Sheltering coefficient
-
     double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
-    double A_G = PI * D * D / 4.0 - D * D / 8.0 * (beta - Math.sin(beta));
-    double U_G = U_SG * PI * D * D / 4.0 / A_G;
+    double A = PI * D * D / 4.0;
+    double A_L = D * D / 8.0 * (beta - Math.sin(beta));
+    double A_G = A - A_L;
+    if (A_L < 1e-12 || A_G < 1e-12) {
+      return false;
+    }
+
+    double U_G = U_SG * A / A_G;
+    double U_L = U_SL * A / A_L;
+    if (U_L <= 0.0) {
+      return false;
+    }
 
     double deltaRho = rho_L - rho_G;
-    double mu_G = mu_L * 0.01;
+    double cosTheta = Math.cos(theta);
+    if (deltaRho <= 0.0 || cosTheta <= 0.0) {
+      return false;
+    }
 
-    // Wave speed and critical velocity
-    double U_G_crit = Math.sqrt(4.0 * mu_L * deltaRho * GRAVITY / (s * rho_G * rho_G));
+    double nu_L = mu_L / rho_L;
+    double U_G_crit = Math.sqrt(4.0 * nu_L * deltaRho * GRAVITY * cosTheta / (SHELTERING_COEFFICIENT * rho_G * U_L));
 
     return U_G > U_G_crit;
+  }
+
+  /**
+   * Whether the liquid at this level can bridge the bore, so annular flow cannot be sustained.
+   *
+   * <p>
+   * Barnea (1987) blockage criterion, evaluated on the same stratified equilibrium level that transition B uses — the
+   * approximation already made there. Annular flow is impossible once the in-situ liquid fraction reaches
+   * {@value #ANNULAR_BRIDGING_HOLDUP}. This is strictly stronger than the {@code h_L/D < 0.5} level test, which
+   * corresponds to a liquid fraction of 0.5.
+   * </p>
+   *
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @return true when the liquid fraction is at or above the bridging limit
+   */
+  private boolean bridgesTheBore(double h_L, double D) {
+    return liquidAreaFraction(h_L, D) >= ANNULAR_BRIDGING_HOLDUP;
+  }
+
+  /**
+   * In-situ liquid area fraction of a circular segment filled to {@code h_L}.
+   *
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @return the liquid area fraction, between 0 and 1
+   */
+  private double liquidAreaFraction(double h_L, double D) {
+    if (h_L <= 0.0 || D <= 0.0) {
+      return 0.0;
+    }
+    if (h_L >= D) {
+      return 1.0;
+    }
+    double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
+    return (beta - Math.sin(beta)) / (2.0 * PI);
   }
 
   /**
