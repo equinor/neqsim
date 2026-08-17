@@ -3,6 +3,7 @@ package neqsim.process.processmodel.diagram;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -220,6 +221,48 @@ class NativeEngineeringDiagramRendererTest {
         assertArrayEquals(expectedPdf, result.getPdf());
       }
     }
+  }
+
+  @Test
+  void supportsOptInFixedPortOrthogonalRoutingForBranchesWithoutChangingLegacyDefault() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures
+        .branchedSeparatorCompressionTrain();
+    ProcessSystem process = reference.getProcessSystem();
+    String classicDot = process.toDOT();
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-NATIVE-008", "Fixed port routing reference", ContentProfile.PFD);
+
+    NativeEngineeringDiagramRenderer.Result defaultResult = new NativeEngineeringDiagramRenderer(documents).render();
+    NativeEngineeringDiagramRenderer.Result explicitLegacy = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.LEGACY_CENTER).render();
+    NativeEngineeringDiagramRenderer.Result first = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    NativeEngineeringDiagramRenderer.Result second = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = first.getSvgBySheetId().values().iterator().next();
+
+    List<String> separatorOutletIds = new ArrayList<String>();
+    for (SemanticObject object : documents.getSemanticObjects()) {
+      if (object.getKind() == EngineeringNode.Kind.PIPE_SEGMENT
+          && "20-VA-001".equals(object.getProperties().get("sourceEquipment"))) {
+        separatorOutletIds.add(String.valueOf(object.getProperties().get("sourceEndpointId")));
+      }
+    }
+
+    assertEquals(2, separatorOutletIds.size());
+    assertNotEquals(separatorOutletIds.get(0), separatorOutletIds.get(1));
+    for (String endpointId : separatorOutletIds) {
+      assertTrue(svg.contains("data-semantic-id=\"" + endpointId + "\""));
+    }
+    assertEquals(defaultResult.getSvgBySheetId(), explicitLegacy.getSvgBySheetId());
+    assertArrayEquals(defaultResult.getPdf(), explicitLegacy.getPdf());
+    assertEquals(defaultResult.getVisualFingerprintsBySheetId(), explicitLegacy.getVisualFingerprintsBySheetId());
+    assertEquals(first.getSvgBySheetId(), second.getSvgBySheetId());
+    assertArrayEquals(first.getPdf(), second.getPdf());
+    assertEquals(first.getVisualFingerprintsBySheetId(), second.getVisualFingerprintsBySheetId());
+    assertNotEquals(defaultResult.getVisualFingerprintsBySheetId(), first.getVisualFingerprintsBySheetId());
+    assertTrue(first.isComplete());
+    assertEquals(classicDot, process.toDOT());
   }
 
   private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {
