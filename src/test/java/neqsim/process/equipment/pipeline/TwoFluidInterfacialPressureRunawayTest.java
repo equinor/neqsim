@@ -43,20 +43,29 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * <pre>
  * term off                    inventory 100.9 t   inlet   57.8 bara
- * term on, coefficient 0.0    inventory  30.8 t   inlet 1253.8 bara
- * term on, coefficient 0.2    inventory  28.2 t   inlet 1351.1 bara
- * term on, coefficient 1.2    inventory  30.8 t   inlet 1261.5 bara
+ * coefficient 0.0             inventory  30.8 t   inlet 1253.8 bara
+ * coefficient 0.2             inventory  28.2 t   inlet 1351.1 bara
+ * coefficient 1.2 (default)   inventory  30.8 t   inlet 1261.5 bara
+ * coefficient 5               inventory   8.2 t   inlet 1128.9 bara
+ * coefficient 50              inventory   8.2 t   inlet  935.8 bara
+ * coefficient 1000            inventory 105.0 t   inlet 1225.1 bara
  * </pre>
  *
  * <p>
- * So the defect is in the treatment of the non-conservative {@code p * d(alpha)/dx} source, not in the stabilizer it
- * was added to carry. Both formulations are defensible in the continuum: keeping {@code alpha * p} in the momentum flux
- * requires that source to cancel it down to {@code alpha * dp/dx}, and omitting both leaves the momentum equation short
- * of a real force. The discrete forms are not equivalent. The flux weights the holdup with a plain average while
- * supplying numerical dissipation only to the convective part, so cancelling its pressure contribution and
- * reintroducing the force through cell-centred values leaves the void-fraction wave undamped. Restoring it needs a
- * well-balanced or path-conservative discretisation, or moving the pressure force wholly into the source through the
- * currently unused {@code applyPressureGradient}. Passing coefficients through the existing form does not fix it.
+ * Reformulating the pressure force does not help either. Removing {@code alpha * p} from the convective momentum flux
+ * at both the interfaces and the boundaries, and supplying the force instead from cell-centred pressures through
+ * {@code applyPressureGradient}, still gives 872 bara implicit and 1148 bara explicit. So the defect is neither the
+ * stabilizer nor the discretisation of the non-conservative term.
+ * </p>
+ *
+ * <p>
+ * What every diverging variant has in common is that the net momentum equation becomes {@code -alpha * A * dp/dx}, the
+ * physically correct force, while the stable term-off path carries {@code -alpha * A * dp/dx - p * A *
+ * d(alpha)/dx} and so retains a force that does not belong there. The model is only stable while that spurious force is
+ * present. That points at the steady-state initialisation and the transient operator being mutually consistent only in
+ * the term-off form: correcting the momentum equation leaves the transient starting away from balance, and it then
+ * grows at roughly 0.03 per second, a long-wavelength rate rather than a mesh-driven one. Aligning the steady solver's
+ * momentum balance with the transient is the next step, not another pressure-term variant.
  * </p>
  */
 public class TwoFluidInterfacialPressureRunawayTest {
