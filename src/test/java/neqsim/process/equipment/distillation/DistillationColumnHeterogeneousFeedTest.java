@@ -60,19 +60,23 @@ public class DistillationColumnHeterogeneousFeedTest {
 
     column.run(UUID.randomUUID());
     assertAcceptedAndBalanced(column, primaryFeed, sideFeed);
-    double initialTopFlow = column.getGasOutStream().getFlowRate("mol/hr");
+
+    // The first retained-state solve establishes the warm-start branch after the cold solve.
+    column.run(UUID.randomUUID());
+    assertAcceptedAndBalanced(column, primaryFeed, sideFeed);
+    double retainedTopFlow = column.getGasOutStream().getFlowRate("mol/hr");
 
     column.run(UUID.randomUUID());
     assertAcceptedAndBalanced(column, primaryFeed, sideFeed);
-    assertEquals(initialTopFlow, column.getGasOutStream().getFlowRate("mol/hr"),
-        Math.max(1.0e-8, 5.0e-5 * initialTopFlow));
+    assertEquals(retainedTopFlow, column.getGasOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-8, 5.0e-5 * retainedTopFlow));
 
     sideFeed.setFlowRate(55.0, "kg/hr");
     sideFeed.run();
     column.run(UUID.randomUUID());
 
     assertAcceptedAndBalanced(column, primaryFeed, sideFeed);
-    assertNotEquals(initialTopFlow, column.getGasOutStream().getFlowRate("mol/hr"), 1.0e-8);
+    assertNotEquals(retainedTopFlow, column.getGasOutStream().getFlowRate("mol/hr"), 1.0e-8);
   }
 
   /**
