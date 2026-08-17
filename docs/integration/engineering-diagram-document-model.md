@@ -66,6 +66,29 @@ or aggregate licensed-standard process blocks. The PFD and P&ID policies likewis
 symbols, content, layout, measurement/control conventions, or drawing practice. None of the three
 profiles claims ISO 10628, ISO 14617, ISA, or project-standard conformance or engineering approval.
 
+## Project symbol conventions
+
+`EngineeringDiagramConventionRegister` provides an opt-in, immutable project input for native
+SVG/PDF symbol selection. A convention maps one canonical `EngineeringNode.Kind` to one of the
+renderer-native generic vector shapes (`RECTANGLE`, `DIAMOND`, or `HEXAGON`), explicit
+`#RRGGBB` stroke/fill colours, source/revision metadata, and a `PROPOSED` or `REVIEWED`
+evidence state. Reviewed entries require reviewer and review-record references; they still do not
+approve a generated drawing for design or construction.
+
+Pass the register to `NativeEngineeringDiagramRenderer` through the additive constructor overloads.
+An empty register retains byte-compatible legacy rectangle rendering. Once a non-empty register is
+selected, every visible drawable node kind without an exact convention continues to render with the
+legacy rectangle and records `DIAGRAM_RENDER_SYMBOL_FALLBACK`. Proposed mappings record
+`DIAGRAM_RENDER_SYMBOL_CONVENTION_PROPOSAL`. Both diagnostics are deterministic and retain the
+canonical semantic object identity as their subject.
+
+The generic shapes are intentionally project-configurable primitives, not a qualified standards
+catalog. They do not claim ISO 10628, ISO 14617, ISA, company-standard, or project-standard
+conformance. Standards-aligned mappings require licensed clause/symbol traceability, versioned
+fixtures, accountable discipline review, and separate qualification evidence. Existing Classic
+DOT/Graphviz, controlled-document JSON, DEXPI 2.0, and Proteus/P&ID outputs do not consume this
+register and remain unchanged.
+
 ## Java example
 
 ```java
