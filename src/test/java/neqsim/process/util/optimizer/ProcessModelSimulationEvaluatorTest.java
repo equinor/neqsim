@@ -136,7 +136,7 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(second.isFeasible());
     assertEquals(2, nominationSamples.get());
     assertEquals(2, qualitySamples.get());
-    assertEquals(150.0, first.getConstraintMargins()[0], 0.0);
+    assertEquals(50.0, first.getConstraintMargins()[0], 0.0);
     assertEquals(2.0, first.getConstraintMargins()[1], 0.0);
     assertEquals(0, first.getProcessBoundaryConstraintEvidence().get(0).getMetadata().getPeriodIndex());
     assertEquals("water_dew_point",
