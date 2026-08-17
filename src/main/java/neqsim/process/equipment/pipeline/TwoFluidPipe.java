@@ -128,6 +128,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Bendiksen (1984) vertical Taylor bubble drift coefficient. */
   private static final double SLUG_DRIFT_VERTICAL_COEFFICIENT = 0.35;
 
+  /** Bound on the Taylor bubble film holdup as a fraction of the slug body it separates. */
+  private static final double SLUG_FILM_HOLDUP_FRACTION_OF_BODY = 0.9;
+
   /** Default closed-flow fluid-side heat-transfer coefficient in W/(m2 K). */
   private static final double DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT = 50.0;
 
@@ -653,7 +656,7 @@ public class TwoFluidPipe extends Pipeline {
    * corrected.
    * </p>
    */
-  private boolean useSeparatedFrictionModel = false;
+  private boolean useSeparatedFrictionModel = true;
 
   /**
    * Fraction of the inlet pressure the line must lose before the density coupling is taken to matter for steady-state
@@ -2561,7 +2564,7 @@ public class TwoFluidPipe extends Pipeline {
       // Apply minimum slip constraint. The bound is a multiple of the no-slip fraction, which is a
       // statement that the slip ratio cannot fall below a given value and is therefore scale-free.
       // It deliberately does NOT include a correlation-based term: see calculateAdaptiveMinimumHoldup.
-      if (enforceMinimumSlip) {
+      if (enforceMinimumSlip && minimumSlipApplies(inclination)) {
         double effectiveMin;
         if (useAdaptiveMinimumOnly) {
           effectiveMin = lambdaL * minimumSlipFactor;
@@ -2595,7 +2598,7 @@ public class TwoFluidPipe extends Pipeline {
 
       // Apply minimum slip constraint; see the parallel block above for why no correlation term
       // is included.
-      if (enforceMinimumSlip) {
+      if (enforceMinimumSlip && minimumSlipApplies(inclination)) {
         double effectiveMin;
         if (useAdaptiveMinimumOnly) {
           effectiveMin = lambdaL * minimumSlipFactor;
@@ -2645,6 +2648,24 @@ public class TwoFluidPipe extends Pipeline {
     alphaL = Math.max(0.0, Math.min(1.0, alphaL));
 
     return new double[] { alphaL, 1.0 - alphaL };
+  }
+
+  /**
+   * Whether the minimum-slip bound has a basis on a section of the given inclination.
+   *
+   * <p>
+   * The bound states that the gas outruns the liquid by at least a given factor, which is a property of gas-driven
+   * transport: the liquid lags because the gas is what moves it. On a downhill section gravity moves the liquid, the
+   * slip ratio legitimately falls, and the bound has no basis - it simply overwrites the momentum balance with a
+   * constant. Measured on a 5 km, 200 mm profile undulating by +/-30 m, it was binding on 39 of 42 downhill sections
+   * while binding on none of the uphill or level ones, so on that line it was acting only where it does not apply.
+   * </p>
+   *
+   * @param inclination section inclination, in radians
+   * @return true where the bound applies
+   */
+  private static boolean minimumSlipApplies(double inclination) {
+    return inclination >= 0.0;
   }
 
   /**
@@ -2723,7 +2744,7 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     if (regime == FlowRegime.SLUG || regime == FlowRegime.CHURN) {
-      return calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muL, sigma, diameter, inclination);
+      return calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
     }
 
     if (regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.BUBBLE) {
@@ -3080,16 +3101,8 @@ public class TwoFluidPipe extends Pipeline {
     // where We = ρ_G * v_SG² * D / σ (gas Weber number)
     // and Re_L = ρ_L * v_SL * D / μ_L (liquid Reynolds number)
 
-    double WeG = rhoG * vsG * vsG * D / sigma;
-    double ReL = rhoL * vsL * D / muL;
-
     // Entrainment fraction from the selected NeqSim closure set
-    double entrainment = 0.0;
-    if (WeG > 0 && ReL > 0) {
-      double entrainmentArg = 7.25e-7 * Math.pow(WeG, 1.25) * Math.pow(ReL, 0.25);
-      entrainment = Math.tanh(entrainmentArg);
-      entrainment = Math.min(0.95, entrainment); // Maximum 95% entrainment
-    }
+    double entrainment = entrainedLiquidFraction(vsG, vsL, rhoG, rhoL, muL, sigma, D);
 
     // Film superficial velocity (liquid not entrained)
     double vsLF = vsL * (1.0 - entrainment);
@@ -3203,38 +3216,39 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * <p>
-   * KNOWN DEFECT, not fixed here: the inclination response is inverted. The drift velocity grows with upward
-   * inclination and enters the DENOMINATOR of the slug length ratio, so the average holdup decreases uphill. Measured
-   * on a 5 km, 200 mm profile undulating by +/-30 m, uphill sections return 0.0328 against 0.0493 downhill, the
-   * opposite of the accumulation a pipeline shows. It is masked wherever the flow map returns annular rather than slug,
-   * which is the case on the near-horizontal reference lines.
+   * The film under the Taylor bubble is solved with the same wall-film balance the annular closure uses,
+   * {@code tau_i = tau_wL + rhoL*g*sin(theta)*delta}, rather than being taken as a constant multiple of the no-slip
+   * fraction. That balance is where terrain physically enters a slug unit: gravity thickens the film on an uphill
+   * section and thins it on a downhill one. Without it the closure had no usable inclination response at all, and what
+   * response remained pointed the wrong way, because the drift velocity grows with upward inclination and enters the
+   * DENOMINATOR of the slug length ratio. Measured on a 5 km, 200 mm profile undulating by +/-30 m, uphill sections
+   * returned 0.0328 against 0.0493 downhill, the opposite of the accumulation a pipeline shows.
    * </p>
    *
    * <p>
-   * Replacing the unit cell by the drift-flux form {@code alpha_G = v_sG / (C0*v_m + v_d)} corrects the direction and
-   * restores the terrain signature - the undulating fixture goes from a maximum-to-minimum holdup ratio of 1.45 to
-   * 10.22 with valley above peak - but it breaks the trace-liquid degeneracy pinned by
-   * {@code TwoFluidPipePhaseDegeneracyTest}: with {@code C0 > 1} and a finite drift velocity the gas fraction stays
-   * below one even at zero liquid input, so the closure invents inventory. Weighting the drift by
-   * {@code (1 - alpha_G)^n} in the Zuber-Findlay manner restores the degeneracy but suppresses the drift by more than
-   * an order of magnitude at the liquid fractions of interest, removing the inclination response again. The fix is to
-   * keep the unit cell, whose slug length ratio vanishes with the liquid supply, and give the film holdup under the
-   * Taylor bubble the inclination dependence it lacks - it is a constant multiple of the no-slip fraction here -
-   * through a film balance of the same form as the annular closure.
+   * The unit cell is kept rather than replaced by the drift-flux form {@code alpha_G = v_sG / (C0*v_m + v_d)}. Drift
+   * flux also corrects the direction, but with {@code C0 > 1} and a finite drift velocity the gas fraction stays below
+   * one even at zero liquid input, so it invents inventory and fails the trace-liquid degeneracy pinned by
+   * {@code TwoFluidPipePhaseDegeneracyTest}. Weighting the drift by {@code (1 - alpha_G)^n} in the Zuber-Findlay manner
+   * restores the degeneracy but suppresses the drift by more than an order of magnitude at the liquid fractions of
+   * interest, removing the response again. The slug length ratio of the unit cell vanishes with the liquid supply, and
+   * the annular film balance vanishes with it too, so the unit cell degenerates correctly while carrying the gravity
+   * term.
    * </p>
    *
    * @param vsG Gas superficial velocity [m/s]
    * @param vsL Liquid superficial velocity [m/s]
    * @param rhoG Gas density [kg/m³]
    * @param rhoL Liquid density [kg/m³]
+   * @param muG Gas dynamic viscosity [Pa·s]
    * @param muL Liquid dynamic viscosity [Pa·s]
    * @param sigma Surface tension [N/m]
    * @param D Pipe diameter [m]
    * @param theta Pipe inclination [radians]
    * @return Slug flow average liquid holdup [-]
    */
-  private double calculateSlugHoldupOLGA(double vsG, double vsL, double rhoG, double rhoL, double muL, double sigma,
-      double D, double theta) {
+  private double calculateSlugHoldupOLGA(double vsG, double vsL, double rhoG, double rhoL, double muG, double muL,
+      double sigma, double D, double theta) {
 
     double g = 9.81;
     double vMix = vsG + vsL;
@@ -3257,10 +3271,13 @@ public class TwoFluidPipe extends Pipeline {
     // Taylor bubble velocity
     double vTB = C0 * vMix + vD;
 
-    // Film holdup under Taylor bubble using Barnea-Brauner correlation
-    // Simplified: assume film holdup scales with liquid fraction
     double lambdaL = vsL / vMix;
-    double filmHoldup = 0.1 * lambdaL; // Thin film under bubble
+    // Wall film under the Taylor bubble, from the annular film balance so it carries gravity.
+    double annularFilm = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, D, theta)[1];
+    double filmHoldup = Math.max(0.1 * lambdaL, annularFilm);
+    // The film cannot be as liquid-rich as the slug body it separates; the margin keeps the slug
+    // length ratio below its own denominator.
+    filmHoldup = Math.min(filmHoldup, SLUG_FILM_HOLDUP_FRACTION_OF_BODY * slugBodyHoldup);
 
     // Slug unit composition using mass balance
     // Slug length ratio (Ls/Lu) from Dukler-Hubbard
@@ -3630,8 +3647,19 @@ public class TwoFluidPipe extends Pipeline {
    * Fraction of the friction gradient that should come from the separated model.
    *
    * <p>
-   * Stratified and annular flow have a distinct liquid layer, so the wall shear is per phase. Slug, churn and dispersed
-   * bubble flow are mixed on the scale of the pipe, where the mixture correlation is the appropriate description.
+   * Stratified flow has a liquid layer at the bottom of the bore, which is the geometry
+   * {@link #separatedFrictionGradient(TwoFluidSection)} builds its wetted perimeters from, so the wall shear is per
+   * phase there. Slug, churn and dispersed bubble flow are mixed on the scale of the pipe, where the mixture
+   * correlation is the appropriate description.
+   * </p>
+   *
+   * <p>
+   * Annular flow is deliberately excluded even though its phases are separated. Its film wets the whole perimeter, so
+   * the circular-segment split that assigns most of the wall to the gas does not describe it. Including annular flow
+   * was measured on a 73.8 km export line: the pressure drop error went from +1.4 per cent to +14.7 per cent at 10
+   * MSm3/d, and 12 MSm3/d, previously exact, ran into the pressure floor and failed to converge, while the
+   * stratified-dominated cases at 4 and 7 MSm3/d improved from +6.0 and +8.0 per cent to +1.4 and +1.7 per cent. A
+   * separated form for annular flow needs the film geometry, not this one.
    * </p>
    *
    * @param sec section being evaluated
@@ -3653,14 +3681,54 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Whether a regime keeps the phases separated across the bore.
+   * Whether a regime keeps the phases separated in a layer the segment geometry describes.
+   *
+   * <p>
+   * Annular flow is excluded even though its phases are separated. Its film wets the whole perimeter, so the
+   * circular-segment split that assigns most of the wall to the gas does not describe it. Measured on a 73.8 km export
+   * line, including annular flow moved the pressure drop error from +1.4 to +14.7 per cent at 10 MSm3/d and pushed 12
+   * MSm3/d, previously exact, into the pressure floor, while the stratified-dominated cases at 4 and 7 MSm3/d improved
+   * from +6.0 and +8.0 to +1.4 and +1.6 per cent. Charging only the non-entrained film to the wall was tried and does
+   * not recover it: it leaves +12.1 and +34.8 per cent at those two rates. A separated form for annular flow needs the
+   * film geometry rather than this one.
+   * </p>
    *
    * @param regime the flow regime
-   * @return true for stratified and annular flow
+   * @return true for stratified flow
    */
   private static boolean isSeparatedRegime(FlowRegime regime) {
-    return regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY
-        || regime == FlowRegime.ANNULAR;
+    return regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY;
+  }
+
+  /**
+   * Fraction of the liquid carried as droplets in the gas core.
+   *
+   * <p>
+   * Ishii-Mishima form {@code E = tanh(7.25e-7 * We^1.25 * Re_L^0.25)} on the gas Weber number and the liquid Reynolds
+   * number, capped at 0.95 so a film always remains.
+   * </p>
+   *
+   * @param vsG superficial gas velocity, in m/s
+   * @param vsL superficial liquid velocity, in m/s
+   * @param rhoG gas density, in kg/m3
+   * @param rhoL liquid density, in kg/m3
+   * @param muL liquid viscosity, in Pa.s
+   * @param sigma surface tension, in N/m
+   * @param D pipe inner diameter, in m
+   * @return entrained fraction of the liquid, between zero and 0.95
+   */
+  private static double entrainedLiquidFraction(double vsG, double vsL, double rhoG, double rhoL, double muL,
+      double sigma, double D) {
+    if (sigma <= 0.0 || muL <= 0.0 || vsG <= 0.0 || vsL <= 0.0) {
+      return 0.0;
+    }
+    double weberGas = rhoG * vsG * vsG * D / sigma;
+    double reynoldsLiquid = rhoL * vsL * D / muL;
+    if (weberGas <= 0.0 || reynoldsLiquid <= 0.0) {
+      return 0.0;
+    }
+    double argument = 7.25e-7 * Math.pow(weberGas, 1.25) * Math.pow(reynoldsLiquid, 0.25);
+    return Math.min(0.95, Math.tanh(argument));
   }
 
   /**
@@ -7318,6 +7386,16 @@ public class TwoFluidPipe extends Pipeline {
    * The mixture form charges the whole perimeter with a hold-up weighted density. That is right for a dispersed flow,
    * but in a separated flow it applies a liquid-dominated density to a bore that is mostly gas and over-predicts the
    * pressure drop badly at high liquid hold-up. Disable only to reproduce the mixture-only behaviour.
+   * </p>
+   *
+   * <p>
+   * The separated form is the default because the mixture form left the two halves of the model solving different
+   * equations: hold-up came from the per-phase momentum balance while the pressure march used a homogeneous correlation
+   * over the whole perimeter. That inconsistency produced the error pattern the model used to show - agreement within a
+   * few per cent on a lean gas line, where the mixture density degenerates to the gas density, and a pressure drop
+   * nearly three times the reference on a liquid-rich three-phase line. It also inverts the sign of the terrain
+   * response, because the mixture friction scales as {@code G^2 / rho_mix}, so a section that holds more liquid returns
+   * a LOWER frictional gradient.
    * </p>
    *
    * @param enable true to use per-phase wall shear in stratified and annular flow

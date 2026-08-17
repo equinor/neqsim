@@ -1,11 +1,11 @@
 package neqsim.process.equipment.pipeline;
 
-import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Pins the separated friction model against the mixture correlation it replaces.
@@ -14,6 +14,13 @@ import org.junit.jupiter.api.Test;
  * The pressure march charges friction with a hold-up weighted mixture density over the whole perimeter. That is a
  * dispersed-flow description; in a separated flow it applies a liquid-dominated density to a bore that is mostly gas.
  * At high liquid hold-up it over-predicts the pressure drop severely, which is why the separated form exists.
+ * </p>
+ *
+ * <p>
+ * The fixture is a 500 mm line rather than a 300 mm one because the separated model is scoped to the geometry it
+ * describes. Its wetted perimeters come from a circular-segment layer at the bottom of the bore, so it applies in
+ * stratified flow. At 300 mm this fluid and rate are classified annular, where the model is deliberately inactive and
+ * the two friction forms return the same number.
  * </p>
  *
  * @author NeqSim
@@ -43,7 +50,7 @@ class TwoFluidPipeSeparatedFrictionTest {
 
     TwoFluidPipe pipe = new TwoFluidPipe("pipe", feed);
     pipe.setLength(5000.0);
-    pipe.setDiameter(0.30);
+    pipe.setDiameter(0.50);
     pipe.setNumberOfSections(20);
     pipe.setElevationProfile(new double[20]);
     pipe.setSeparatedFrictionModel(separated);
@@ -51,13 +58,14 @@ class TwoFluidPipeSeparatedFrictionTest {
   }
 
   /**
-   * The mixture correlation must remain the default so existing results do not move.
+   * Per-phase wall shear is the default, and the selection must be honoured either way.
    */
   @Test
-  @DisplayName("Separated friction model is off by default")
-  void testSeparatedFrictionIsOffByDefault() {
-    Assertions.assertFalse(buildPipe(false).isSeparatedFrictionModel(),
-        "the separated friction model must stay opt-in until the hold-up deficit is closed");
+  @DisplayName("Separated friction model is on by default")
+  void testSeparatedFrictionIsOnByDefault() {
+    Assertions.assertTrue(new TwoFluidPipe("default-friction").isSeparatedFrictionModel(),
+        "the pressure march must charge each phase its own wall shear where the phases are separated");
+    Assertions.assertFalse(buildPipe(false).isSeparatedFrictionModel(), "the selection must be honoured");
     Assertions.assertTrue(buildPipe(true).isSeparatedFrictionModel(), "the selection must be honoured");
   }
 

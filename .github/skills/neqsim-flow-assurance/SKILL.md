@@ -497,30 +497,34 @@ for (double qgMSm3d : gasRates) {
 > three-phase bookkeeping is sound — gas/oil/water fractions sum to one and stay in
 > range at every node.
 
-> **On an undulating profile the holdup is often the minimum-slip bound, not the
-> solved balance.** `alphaL >= lambdaL * minimumSlipFactor` (default 2.0) is applied
-> after the regime closures and has no inclination dependence. On a 5 km, 200 mm
-> fixture undulating by +/-30 m, 85 of 100 sections sit exactly on it, including 41
-> of 41 uphill sections, so the terrain response is replaced by a constant there.
-> It is inert on a near-horizontal transmission line: on the 73.8 km export line at
-> 4 MSm3/d, `setMinimumSlipFactor(1.0)` leaves ΔP and the holdup profile unchanged.
-> Check `holdup / (lambdaL * factor)` before attributing a terrain result to
-> physics, and lower the factor if you need the solved inclination response.
+> **The minimum-slip bound applies only level and uphill.** `alphaL >= lambdaL *
+> minimumSlipFactor` (default 2.0) states that the gas outruns the liquid, which is a
+> property of gas-driven transport. On a downhill section gravity moves the liquid and
+> the slip ratio legitimately falls, so the bound is not applied there. It used to be
+> applied everywhere and was binding on 39 of 42 downhill sections of an undulating
+> fixture, replacing the momentum balance with a constant.
 
-> **The horizontal annular criterion is a selection, and the default over-calls
-> annular.** By default the regime map uses the vertical droplet-entrainment
-> threshold `U_SG > 3.1*(sigma*g*drho/rhoG^2)^0.25` ahead of the stratified/slug
-> transition; that is about 0.75 m/s on a 14-inch export line, so essentially any
-> horizontal gas pipeline is classified annular and a shallow stratified layer is
-> solved with a thin-film closure. `pipe.setUseEquilibriumLevelAnnularTransition(true)`
-> selects the Taitel-Dukler equilibrium-level branch instead. The two agree wherever
-> the Kelvin-Helmholtz margin exceeds one — identical at 10 MSm3/d on the export
-> line — and differ at 4 MSm3/d, where the option reclassifies 272 of 320 sections
-> as stratified-wavy and moves median holdup from 0.0198 to 0.0232 against a
-> reference near 0.0235. It is opt-in because the slug closure it then selects on
-> uphill sections returns less liquid than the stratified closure returns on
-> downhill ones, which flattens the terrain signature. Use it for a near-horizontal
-> line at low gas velocity; leave it off on an undulating profile.
+> **The horizontal annular criterion is the Taitel-Dukler equilibrium level.**
+> `pipe.setUseEquilibriumLevelAnnularTransition(false)` restores the earlier path, the
+> vertical droplet-entrainment threshold `U_SG > 3.1*(sigma*g*drho/rhoG^2)^0.25`, which is
+> about 0.75 m/s on a 14-inch export line and so classified essentially any horizontal gas
+> pipeline as annular, solving a shallow stratified layer with a thin-film closure. The two
+> agree wherever the Kelvin-Helmholtz margin exceeds one — identical at 10 MSm3/d on the
+> export line — and differ at 4 MSm3/d, where the equilibrium branch reclassifies 272 of 320
+> sections as stratified-wavy.
+
+> **Friction is per-phase wall shear in stratified flow.**
+> `setSeparatedFrictionModel(false)` restores the mixture correlation, which charges the whole
+> perimeter with a holdup-weighted density; on a stratified line at 41% holdup that
+> over-predicts ΔP by ~2.3x, and because it scales as `G^2/rho_mix` it makes extra liquid
+> REDUCE the gradient, inverting the terrain response. The separated form is scoped to
+> stratified flow because its perimeters come from a circular-segment layer; annular flow,
+> whose film wets the whole perimeter, is not that geometry.
+
+> **Measured accuracy on the 73.8 km reference line**, across a threefold rate range:
+> ΔP +1.4 / +1.6 / +0.1 / −2.7 % and maximum holdup −2.4 / −7.1 / −6.6 / +3.5 % at
+> 4 / 7 / 10 / 12 MSm3/d, all converged and grid-converged. The earlier defaults gave
+> ΔP +5.7 / +5.6 / +1.4 / −0.0 % and holdup −25.5 / −18.6 / −6.2 / +3.3 %.
 
 > **Direct electrical heating (DEH)** is available on both models with the same
 > convention — the power set is what reaches the fluid, so cable and coating
