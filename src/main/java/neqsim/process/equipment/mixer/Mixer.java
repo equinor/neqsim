@@ -180,6 +180,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
    * mixStream.
    */
   public void mixStream() {
+    mixStream(streams.get(0));
+  }
+
+  /**
+   * Mixes every inlet except the stream already represented by the mixed-stream template.
+   *
+   * @param templateStream inlet stream cloned as the mixed-stream template
+   */
+  private void mixStream(StreamInterface templateStream) {
     int index = 0;
     // Determine outlet pressure from the lowest pressure across ACTIVE inlet streams only.
     // Streams with negligible flow (bypassed / deactivated) must not influence the mixer
@@ -222,9 +231,11 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       }
     }
 
-    // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
-    // but ensure first stream's components are also explicitly added if needed
-    for (int k = 1; k < streams.size(); k++) {
+    // The template stream is already present in mixedStream; add every other inlet exactly once.
+    for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k) == templateStream) {
+        continue;
+      }
       // Skip streams with negligible flow to avoid mixing in zero/negative moles
       if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
         continue;
@@ -293,6 +304,33 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     if (hasAddedNewComponent) {
       mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
     }
+  }
+
+  /**
+   * Selects a stable thermodynamic template from the active inlet streams.
+   *
+   * <p>
+   * The largest active mass-flow stream is used so a small injection stream cannot control the outlet's thermodynamic
+   * configuration merely because it was registered first. Equal-flow ties are resolved by stream name, making the
+   * selection independent of registration order.
+   * </p>
+   *
+   * @return the selected thermodynamic template stream
+   */
+  private StreamInterface selectTemplateStream() {
+    StreamInterface templateStream = streams.get(0);
+    double maximumFlow = Double.NEGATIVE_INFINITY;
+    for (StreamInterface stream : streams) {
+      double flow = stream.getFlowRate("kg/hr");
+      if (flow <= getMinimumFlow()) {
+        continue;
+      }
+      if (flow > maximumFlow || (flow == maximumFlow && stream.getName().compareTo(templateStream.getName()) < 0)) {
+        templateStream = stream;
+        maximumFlow = flow;
+      }
+    }
+    return templateStream;
   }
 
   /**
@@ -504,18 +542,16 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       return;
     }
 
-    boolean inletMultiPhaseCheck = streams.get(0).getThermoSystem().doMultiPhaseCheck();
-    SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-    if (!doMultiPhaseCheck) {
-      thermoSystem2.setMultiPhaseCheck(false);
-    }
+    StreamInterface templateStream = selectTemplateStream();
+    SystemInterface thermoSystem2 = templateStream.getThermoSystem().clone();
+    thermoSystem2.setMultiPhaseCheck(doMultiPhaseCheck);
     isActive(true);
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
     mixedStream.setThermoSystem(thermoSystem2);
     // thermoSystem2.display();
     if (streams.size() >= 2) {
-      mixStream();
+      mixStream(templateStream);
       if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
         mixedStream.setPressure(lowestPressure);
         enthalpy = calcMixStreamEnthalpy();
@@ -562,10 +598,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
         mixedStream.getThermoSystem().initProperties();
         isActive(false);
       }
-    }
-
-    if (inletMultiPhaseCheck) {
-      mixedStream.getThermoSystem().setMultiPhaseCheck(true);
     }
 
     finishRun(id);

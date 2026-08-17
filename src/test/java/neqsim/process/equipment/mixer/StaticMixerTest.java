@@ -1,6 +1,7 @@
 package neqsim.process.equipment.mixer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,42 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 class StaticMixerTest {
+
+  private StaticMixer runGasMegMixer(boolean megFirst) {
+    neqsim.thermo.system.SystemInterface gasFluid = new SystemSrkCPAstatoil(302.15, 74.1);
+    gasFluid.addComponent("methane", 5.0);
+    gasFluid.addComponent("water", 0.11833608283886514);
+    gasFluid.addComponent("MEG", 0.0);
+    gasFluid.setMixingRule(10);
+    gasFluid.setMultiPhaseCheck(true);
+
+    neqsim.thermo.system.SystemInterface megFluid = gasFluid.clone();
+    megFluid.setMolarComposition(new double[] { 0.0, 0.1099744114900417, 0.8900255885099583 });
+    megFluid.setMultiPhaseCheck(false);
+
+    Stream gasStream = new Stream("bulk wet gas", gasFluid);
+    gasStream.setFlowRate(168958.0, "Sm3/hr");
+    gasStream.setTemperature(29.0, "C");
+    gasStream.setPressure(74.1, "barg");
+    gasStream.run();
+
+    Stream megStream = new Stream("lean MEG", megFluid);
+    megStream.setFlowRate(0.01, "kg/hr");
+    megStream.setTemperature(29.0, "C");
+    megStream.setPressure(74.1, "barg");
+    megStream.run();
+
+    StaticMixer mixer = new StaticMixer("gas/MEG mixer");
+    if (megFirst) {
+      mixer.addStream(megStream);
+      mixer.addStream(gasStream);
+    } else {
+      mixer.addStream(gasStream);
+      mixer.addStream(megStream);
+    }
+    mixer.run();
+    return mixer;
+  }
 
   @Test
   void testMixTwoStreamsEqualFlow() {
@@ -83,6 +120,23 @@ class StaticMixerTest {
     process.run();
 
     assertTrue(mixer.getOutletStream().getFluid().hasPhaseType("gas"));
+  }
+
+  @Test
+  void testInletOrderDoesNotChangeDominantTemplateOrMultiphaseConfiguration() {
+    StaticMixer megFirstMixer = runGasMegMixer(true);
+    StaticMixer gasFirstMixer = runGasMegMixer(false);
+
+    assertTrue(megFirstMixer.getThermoSystem().doMultiPhaseCheck());
+    assertTrue(gasFirstMixer.getThermoSystem().doMultiPhaseCheck());
+    assertEquals(gasFirstMixer.getOutletStream().getFlowRate("kg/hr"),
+        megFirstMixer.getOutletStream().getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(gasFirstMixer.getOutletStream().getTemperature("K"),
+        megFirstMixer.getOutletStream().getTemperature("K"), 1.0e-6);
+    assertEquals(gasFirstMixer.getOutletStream().getFluid().getNumberOfPhases(),
+        megFirstMixer.getOutletStream().getFluid().getNumberOfPhases());
+    assertTrue(megFirstMixer.getOutletStream().getFluid().hasPhaseType("gas"));
+    assertFalse(Double.isNaN(megFirstMixer.getOutletStream().getFlowRate("kg/hr")));
   }
 
   @Test
