@@ -55,6 +55,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   private double waterInDryGas = 30e-6;
   private static final double COMPONENT_INVENTORY_RELATIVE_TOLERANCE = 1.0e-10;
 
+  /** Raised when an absorber operation changes the conserved component inventory. */
+  private static final class ComponentInventoryException extends IllegalStateException {
+    private static final long serialVersionUID = 1000;
+
+    private ComponentInventoryException(String message) {
+      super(message);
+    }
+  }
+
   /** Immutable component-mole inventory used to guard absorber reinitialization steps. */
   private static final class ComponentInventory {
     private final Map<String, Double> componentMoles;
@@ -117,7 +126,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     private static void requireClose(double expected, double actual, String step, String componentName) {
       double tolerance = COMPONENT_INVENTORY_RELATIVE_TOLERANCE * Math.max(1.0, Math.abs(expected));
       if (!Double.isFinite(actual) || Math.abs(expected - actual) > tolerance) {
-        throw new IllegalStateException("SimpleTEGAbsorber changed " + componentName + " inventory during " + step
+        throw new ComponentInventoryException("SimpleTEGAbsorber changed " + componentName + " inventory during " + step
             + ": expected " + expected + " mol, found " + actual + " mol");
       }
     }
@@ -166,7 +175,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
         continue;
       }
       if (!Double.isFinite(actualTotal) || actualTotal < 0.0) {
-        throw new IllegalStateException(
+        throw new ComponentInventoryException(
             "SimpleTEGAbsorber flash returned invalid " + entry.getKey() + " phase inventory: " + actualTotal + " mol");
       }
 
@@ -509,6 +518,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
       ComponentInventory liquidInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 1);
       SystemInterface liqTemp = mixedStream.getThermoSystem().phaseToSystem(1);
+      liqTemp.setPhaseType(0, PhaseType.AQUEOUS);
       liquidInventory.requireUnchanged(liqTemp, "liquid phase extraction");
       runInventoryCheckedInitialization(liqTemp, () -> liqTemp.init(2), "liquid outlet init(2)");
       solventOutStream.setThermoSystem(liqTemp);
@@ -536,6 +546,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // .getDensity()/ 3.14 / vtemp);
       // System.out.println("diameter " + d);
       setCalculationIdentifier(id);
+    } catch (ComponentInventoryException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
