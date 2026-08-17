@@ -47,6 +47,49 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   ProcessSystem p;
   String _name = "TestProcess";
 
+  @Test
+  public void calculatorReevaluatesDuringRecycleConvergence() {
+    neqsim.thermo.system.SystemInterface methane = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    methane.addComponent("methane", 1.0);
+
+    Stream recycleFeed = new Stream("recycle feed", methane);
+    recycleFeed.setFlowRate(1.0e-6, "kg/hr");
+    Stream makeup = new Stream("makeup", methane.clone());
+    makeup.setFlowRate(0.0, "kg/hr");
+
+    final int[] calculationCount = new int[] { 0 };
+    Calculator calculator = new Calculator("makeup calculator");
+    calculator.addInputVariable(recycleFeed);
+    calculator.setOutputVariable(makeup);
+    calculator.setCalculationMethod((inputs, output) -> {
+      calculationCount[0]++;
+      double requiredMakeup = 100.0 - ((Stream) inputs.get(0)).getFlowRate("kg/hr");
+      ((Stream) output).setFlowRate(Math.max(0.0, requiredMakeup), "kg/hr");
+    });
+
+    StaticMixer mixer = new StaticMixer("makeup mixer");
+    mixer.addStream(recycleFeed);
+    mixer.addStream(makeup);
+
+    Recycle recycle = new Recycle("makeup recycle");
+    recycle.addStream(mixer.getOutletStream());
+    recycle.setOutletStream(recycleFeed);
+    recycle.setTolerance(1.0e-4);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(recycleFeed);
+    process.add(makeup);
+    process.add(calculator);
+    process.add(mixer);
+    process.add(recycle);
+    process.run();
+
+    assertTrue(recycle.solved());
+    assertTrue(calculationCount[0] > 1);
+    assertEquals(100.0, recycleFeed.getFlowRate("kg/hr"), 1.0e-3);
+    assertEquals(0.0, makeup.getFlowRate("kg/hr"), 1.0e-3);
+  }
+
   private static class FailingProcessUnit extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000L;
 

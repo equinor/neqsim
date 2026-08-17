@@ -1498,11 +1498,10 @@ public class ProcessSystem extends SimulationBaseClass {
       // performs the active-state reset when runOptimized() is called directly.
       // When run() delegates here, its outer run scope already performed the
       // active-state reset, so repeating preparation in this dispatcher is wasteful.
-      if (hasAdjusters()) {
-        // Adjusters create implicit feedback loops via signal connections and
-        // iterate on a target variable. The graph partitioner cannot represent
-        // that iterative coupling, so adjuster-containing systems must run
-        // sequentially to ensure correct evaluation order.
+      if (hasAdjusters() || (hasRecycles() && hasCalculators())) {
+        // Adjusters and calculators create implicit feedback loops via signal
+        // connections. A calculator coupled to a recycle must be evaluated on
+        // every recycle pass, which requires insertion-order sequential execution.
         runSequential(id);
       } else if (hasRecycles()) {
         // Process has Recycle units. runHybrid() parallelises feed-forward levels
