@@ -42,8 +42,8 @@ class AbsorptionColumnTest extends NeqSimTest {
     double idealDryGasWater = componentFlow(idealCase.absorber.getGasOutStream(), "water");
     double reducedEfficiencyDryGasWater = componentFlow(reducedEfficiencyCase.absorber.getGasOutStream(), "water");
     double idealDryGasWaterFraction = componentMoleFraction(idealCase.absorber.getGasOutStream(), "water");
-    double reducedEfficiencyDryGasWaterFraction =
-        componentMoleFraction(reducedEfficiencyCase.absorber.getGasOutStream(), "water");
+    double reducedEfficiencyDryGasWaterFraction = componentMoleFraction(
+        reducedEfficiencyCase.absorber.getGasOutStream(), "water");
 
     assertTrue(idealDryGasWater < wetGasWater, "The rigorous TEG column must remove water");
     assertTrue(reducedEfficiencyDryGasWater < wetGasWater,
