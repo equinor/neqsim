@@ -50,22 +50,22 @@ class ThermodynamicLimitAnalyserTransientStateTransactionTest extends neqsim.Neq
     model.add("water", waterArea);
     assertCompleteCoverage(model.getTransientTransactionCoverage(), 4);
 
-    cricondenbarArea.getEventScheduler().scheduleEvent(1.0, "change cricondenbar binding",
-        () -> cricondenbar.setStream(trialStream));
-    hydrateArea.getEventScheduler().scheduleEvent(1.0, "change hydrate conditions", () -> {
+    cricondenbarArea.getEventScheduler().scheduleTransactionalEvent(1.0, "change cricondenbar binding",
+        () -> cricondenbar.setStream(trialStream), cricondenbar.getTransientStateIdentity());
+    hydrateArea.getEventScheduler().scheduleTransactionalEvent(1.0, "change hydrate conditions", () -> {
       hydrate.setStream(trialStream);
       hydrate.setReferencePressure(80.0);
-    });
-    hydrocarbonArea.getEventScheduler().scheduleEvent(1.0, "change hydrocarbon conditions", () -> {
+    }, hydrate.getTransientStateIdentity());
+    hydrocarbonArea.getEventScheduler().scheduleTransactionalEvent(1.0, "change hydrocarbon conditions", () -> {
       hydrocarbon.setStream(trialStream);
       hydrocarbon.setReferencePressure(40.0);
       hydrocarbon.setMethod("trial method");
-    });
-    waterArea.getEventScheduler().scheduleEvent(1.0, "change water conditions", () -> {
+    }, hydrocarbon.getTransientStateIdentity());
+    waterArea.getEventScheduler().scheduleTransactionalEvent(1.0, "change water conditions", () -> {
       water.setStream(trialStream);
       water.setReferencePressure(60.0);
       water.setMethod("multiphase");
-    });
+    }, water.getTransientStateIdentity());
 
     String waterIdentity = water.getTransientStateIdentity();
     TransientStepTransaction transaction = model.beginTransientStepTransaction();
