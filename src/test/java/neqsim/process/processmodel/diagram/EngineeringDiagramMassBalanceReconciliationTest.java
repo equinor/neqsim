@@ -221,8 +221,11 @@ class EngineeringDiagramMassBalanceReconciliationTest {
 
   private static EngineeringDiagramReferenceFixtures.SystemCase executeWithProductBoundaries(
       EngineeringDiagramReferenceFixtures.SystemCase reference) {
+    int productIndex = 1;
     for (StreamInterface product : reference.getProducts()) {
+      product.setName(reference.getCaseId() + "-PRODUCT-" + productIndex);
       reference.getProcessSystem().add(product);
+      productIndex++;
     }
     reference.getProcessSystem().run();
     return reference;
