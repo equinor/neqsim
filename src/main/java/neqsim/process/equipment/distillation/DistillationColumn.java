@@ -6999,8 +6999,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     long invocationStartTime = System.nanoTime();
     lastSequentialWarmStateReused = false;
     resetInsideOutTelemetry();
-    captureDirectExternalTrayFeeds();
-    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
+    if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
     }
@@ -7378,9 +7377,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).finalizeTrayProperties();
     }
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
-    hasBeenSolvedBefore = true;
-    lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
-    commitSequentialWarmState();
+    if (!hasActiveColumnTearVariables()) {
+      hasBeenSolvedBefore = true;
+      lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
+      commitSequentialWarmState();
+    }
   }
 
   /**
