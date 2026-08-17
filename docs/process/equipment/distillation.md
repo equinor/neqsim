@@ -293,6 +293,13 @@ side-draw fraction of `1.0` leaves zero internal downflow across that stage, so 
 explicit or reused `NAPHTALI_SANDHOLM` selection to `MESH_RESIDUAL`. Fractions below `1.0`
 retain positive internal traffic and remain eligible for the simultaneous solver.
 
+Multiple external feeds may use different component subsets or component ordering, provided their
+thermodynamic models can be mixed by NeqSim. Column product reconciliation accumulates feed and
+side-draw inventories by component name on the combined column basis; it does not assume that every
+feed shares the first feed's component-array indices. This keeps total-condenser material closure
+deterministic for, for example, a main C3-C5 feed plus a C3-C4 side feed on another tray. Repeated
+and nearby-point solves retain the same named component basis.
+
 ```java
 column.setGasSideDrawFraction(6, 0.05);
 column.setLiquidSideDrawFraction(4, 0.10);
