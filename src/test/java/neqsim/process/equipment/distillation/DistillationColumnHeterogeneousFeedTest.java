@@ -38,10 +38,10 @@ public class DistillationColumnHeterogeneousFeedTest {
     assertEquals(componentNames.length, actualComponentMoles.length);
     assertTrue(componentNames.length > sideFeed.getThermoSystem().getNumberOfComponents());
     for (int componentIndex = 0; componentIndex < componentNames.length; componentIndex++) {
-      double expectedComponentFlow = getComponentMolarFlow(primaryFeed, componentNames[componentIndex])
-          + getComponentMolarFlow(sideFeed, componentNames[componentIndex]);
-      assertEquals(expectedComponentFlow, actualComponentMoles[componentIndex],
-          Math.max(1.0e-12, 1.0e-10 * expectedComponentFlow));
+      double expectedComponentAmount = getComponentAmount(primaryFeed, componentNames[componentIndex])
+          + getComponentAmount(sideFeed, componentNames[componentIndex]);
+      assertEquals(expectedComponentAmount, actualComponentMoles[componentIndex],
+          Math.max(1.0e-12, 1.0e-10 * expectedComponentAmount));
     }
   }
 
@@ -170,6 +170,33 @@ public class DistillationColumnHeterogeneousFeedTest {
       assertEquals(feedComponentFlow, productComponentFlow,
           Math.max(1.0e-8, 5.0e-3 * Math.abs(feedComponentFlow)), componentName + " balance");
     }
+  }
+
+  /**
+   * Get the component amount on the thermodynamic system's internal stream basis.
+   *
+   * @param stream stream to inspect
+   * @param componentName component name
+   * @return component amount summed over phases
+   */
+  private double getComponentAmount(StreamInterface stream, String componentName) {
+    SystemInterface system = stream.getThermoSystem();
+    String[] componentNames = system.getComponentNames();
+    for (String candidateName : componentNames) {
+      if (!componentName.equals(candidateName)) {
+        continue;
+      }
+      double componentAmount = 0.0;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        componentAmount +=
+            system.getPhase(phaseIndex).getComponent(componentName).getNumberOfMolesInPhase();
+      }
+      if (componentAmount <= 0.0 && system.getNumberOfPhases() > 0) {
+        componentAmount = system.getPhase(0).getComponent(componentName).getNumberOfmoles();
+      }
+      return componentAmount;
+    }
+    return 0.0;
   }
 
   /**
