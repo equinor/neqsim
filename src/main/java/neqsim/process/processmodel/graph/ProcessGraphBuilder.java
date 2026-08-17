@@ -644,8 +644,7 @@ public final class ProcessGraphBuilder {
           if (graph.getNode(signalSource) == null && inputEquip instanceof StreamInterface) {
             signalSource = streamToProducer.get(inputEquip);
           }
-          addSignalEdgeIfAbsent(graph, signalSource, calc,
-              "signal:" + safeName(inputEquip) + "->" + calc.getName());
+          addSignalEdgeIfAbsent(graph, signalSource, calc, "signal:" + safeName(inputEquip) + "->" + calc.getName());
         }
 
         // Signal edge: Calculator -> output variable equipment
