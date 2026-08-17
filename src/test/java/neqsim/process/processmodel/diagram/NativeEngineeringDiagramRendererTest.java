@@ -79,7 +79,8 @@ class NativeEngineeringDiagramRendererTest {
         "PFD-NATIVE-002", "Multi-area native drawing set", ContentProfile.PFD);
 
     NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
-        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE).render();
+        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
     String pdf = new String(result.getPdf(), StandardCharsets.ISO_8859_1);
 
     assertEquals(4, result.getSvgBySheetId().size());
@@ -94,6 +95,7 @@ class NativeEngineeringDiagramRendererTest {
         assertTrue(svg.contains(connector.getZoneReference()));
       }
     }
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED"));
     assertTrue(result.isComplete());
   }
 
@@ -281,6 +283,7 @@ class NativeEngineeringDiagramRendererTest {
     String recycle = pointsForSemanticId(svg, "connection:recycle");
 
     assertNotEquals(firstParallel, secondParallel);
+    assertNotEquals(pointX(firstParallel, 1), pointX(secondParallel, 1));
     assertTrue(recycle.split(" ").length >= 6);
     assertEquals(first.getSvgBySheetId(), second.getSvgBySheetId());
     assertArrayEquals(first.getPdf(), second.getPdf());
@@ -330,6 +333,10 @@ class NativeEngineeringDiagramRendererTest {
     assertTrue(pointsStart >= "points=\"".length());
     assertTrue(pointsEnd > pointsStart);
     return svg.substring(pointsStart, pointsEnd);
+  }
+
+  private static String pointX(String points, int index) {
+    return points.split(" ")[index].split(",", 2)[0];
   }
 
   private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {
