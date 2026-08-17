@@ -6996,10 +6996,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveInsideOut(UUID id) {
+    long invocationStartTime = System.nanoTime();
+    lastSequentialWarmStateReused = false;
     resetInsideOutTelemetry();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
+    }
+
+    if (hasSequentialExactReuseState) {
+      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
+        reuseSequentialWarmState(id, invocationStartTime);
+        return;
+      }
+      hasSequentialExactReuseState = false;
     }
 
     int firstFeedTrayNumber = prepareColumnForSolve();
@@ -7366,6 +7377,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).finalizeTrayProperties();
     }
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+    if (!hasActiveColumnTearVariables()) {
+      hasBeenSolvedBefore = true;
+      lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
+      commitSequentialWarmState();
+    }
   }
 
   /**
@@ -13228,23 +13244,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Calculates total component mole amounts entering the column through all external feeds.
    *
-   * @return component mole amounts on the stream-flow basis used by NeqSim streams, or an empty array if external feeds
-   * do not share a common component basis
+   * <p>
+   * Feed systems may expose different component subsets or component ordering. Accumulation therefore uses the combined
+   * column product basis and matches components by name instead of assuming that every feed shares the first feed's
+   * array indices.
+   * </p>
+   *
+   * @return component mole amounts aligned with the current column product component basis
    */
   private double[] getFeedComponentMoles() {
-    int componentCount = getNumberOfComponentsFromFeeds();
-    if (componentCount == 0) {
-      return new double[0];
-    }
-    double[] feedComponentMoles = new double[componentCount];
+    String[] componentNames = getColumnComponentNames();
+    double[] feedComponentMoles = new double[componentNames.length];
     for (StreamInterface feed : getAllExternalFeedStreams()) {
-      double[] componentMoles = getComponentMoles(feed.getThermoSystem());
-      if (componentMoles.length != componentCount) {
-        return new double[0];
-      }
-      for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-        feedComponentMoles[componentIndex] += componentMoles[componentIndex];
-      }
+      addComponentMolesOnBasis(feedComponentMoles, componentNames, feed.getThermoSystem());
     }
     return feedComponentMoles;
   }
@@ -13256,29 +13268,81 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return component mole amounts withdrawn through side draws
    */
   private double[] getSideDrawComponentMoles(int componentCount) {
+    String[] componentNames = getColumnComponentNames();
+    if (componentCount != componentNames.length) {
+      return new double[0];
+    }
     double[] sideDrawComponentMoles = new double[componentCount];
     for (StreamInterface sideDrawStream : getSideDrawStreams()) {
-      double[] componentMoles = getComponentMoles(sideDrawStream.getThermoSystem());
-      if (componentMoles.length != componentCount) {
-        continue;
-      }
-      for (int componentIndex = 0; componentIndex < sideDrawComponentMoles.length; componentIndex++) {
-        sideDrawComponentMoles[componentIndex] += componentMoles[componentIndex];
-      }
+      addComponentMolesOnBasis(sideDrawComponentMoles, componentNames, sideDrawStream.getThermoSystem());
     }
     return sideDrawComponentMoles;
   }
 
   /**
-   * Gets the number of components from the first available feed stream.
+   * Get the combined component basis used by the current column products.
    *
-   * @return number of components, or zero when no feeds are connected
+   * <p>
+   * {@link #addFeedStream(StreamInterface, int)} updates both public product templates from the feed mixer after every
+   * feed addition. Once a solve starts, the terminal tray systems retain that same combined basis. Falling back to an
+   * external feed keeps legacy direct-tray-feed configurations diagnosable before their first initialization.
+   * </p>
+   *
+   * @return ordered component names for reconciliation, or an empty array when no component basis is available
    */
-  private int getNumberOfComponentsFromFeeds() {
-    for (StreamInterface feed : getAllExternalFeedStreams()) {
-      return feed.getThermoSystem().getNumberOfComponents();
+  private String[] getColumnComponentNames() {
+    if (gasOutStream != null && gasOutStream.getThermoSystem() != null
+        && gasOutStream.getThermoSystem().getNumberOfComponents() > 0) {
+      return gasOutStream.getThermoSystem().getComponentNames();
     }
-    return 0;
+    if (liquidOutStream != null && liquidOutStream.getThermoSystem() != null
+        && liquidOutStream.getThermoSystem().getNumberOfComponents() > 0) {
+      return liquidOutStream.getThermoSystem().getComponentNames();
+    }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      if (feed != null && feed.getThermoSystem() != null) {
+        return feed.getThermoSystem().getComponentNames();
+      }
+    }
+    return new String[0];
+  }
+
+  /**
+   * Add component amounts from one thermodynamic system to a named destination basis.
+   *
+   * @param destination accumulated component amounts aligned with {@code componentNames}
+   * @param componentNames destination component-name basis
+   * @param system source thermodynamic system
+   */
+  private void addComponentMolesOnBasis(double[] destination, String[] componentNames, SystemInterface system) {
+    if (system == null || destination.length != componentNames.length) {
+      return;
+    }
+    String[] sourceComponentNames = system.getComponentNames();
+    double[] sourceComponentMoles = getComponentMoles(system);
+    int sourceCount = Math.min(sourceComponentNames.length, sourceComponentMoles.length);
+    for (int sourceIndex = 0; sourceIndex < sourceCount; sourceIndex++) {
+      int destinationIndex = findComponentIndex(componentNames, sourceComponentNames[sourceIndex]);
+      if (destinationIndex >= 0) {
+        destination[destinationIndex] += sourceComponentMoles[sourceIndex];
+      }
+    }
+  }
+
+  /**
+   * Find a component in an ordered reconciliation basis.
+   *
+   * @param componentNames ordered component names
+   * @param componentName component name to find
+   * @return component index, or {@code -1} when the component is absent
+   */
+  private int findComponentIndex(String[] componentNames, String componentName) {
+    for (int componentIndex = 0; componentIndex < componentNames.length; componentIndex++) {
+      if (componentNames[componentIndex].equals(componentName)) {
+        return componentIndex;
+      }
+    }
+    return -1;
   }
 
   /**

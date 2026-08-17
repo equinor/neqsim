@@ -288,10 +288,21 @@ Side draws withdraw a fraction of tray vapor or liquid traffic. They are true ex
 streams: `getOutletStreams()` includes them, and `getMassBalance(unit)` subtracts them from the
 feed-product balance. The sequential tray solvers and `NAPHTALI_SANDHOLM` both remove the withdrawn
 phase from inter-tray material and energy traffic; the Naphtali-Sandholm solver also fingerprints the
-configured split so a changed draw cannot reuse an incompatible warm state. An exact liquid
+configured split so a changed draw cannot reuse an incompatible warm state. The inside-out stage used
+by `MESH_RESIDUAL` similarly retains an accepted tray and product state for exact unchanged-input
+reuse when no outer column tear variables are active; changed feed, configuration, tray, or product
+state invalidates that fingerprint. Pumparounds, hydraulic pressure coupling, and adjustable side-draw
+flow specifications keep their coordinated outer initialization path. An exact liquid
 side-draw fraction of `1.0` leaves zero internal downflow across that stage, so NeqSim routes an
 explicit or reused `NAPHTALI_SANDHOLM` selection to `MESH_RESIDUAL`. Fractions below `1.0`
 retain positive internal traffic and remain eligible for the simultaneous solver.
+
+Multiple external feeds may use different component subsets or component ordering, provided their
+thermodynamic models can be mixed by NeqSim. Column product reconciliation accumulates feed and
+side-draw inventories by component name on the combined column basis; it does not assume that every
+feed shares the first feed's component-array indices. This keeps total-condenser material closure
+deterministic for, for example, a main C3-C5 feed plus a C3-C4 side feed on another tray. Repeated
+and nearby-point solves retain the same named component basis.
 
 ```java
 column.setGasSideDrawFraction(6, 0.05);
