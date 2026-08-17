@@ -1706,8 +1706,13 @@ public class ProcessModel implements Runnable, Serializable {
     int elementCount = 0;
     int participantCount = 0;
     List<String> blockingIssues = new ArrayList<String>();
+    Set<String> modelEventStateIdentities = new java.util.LinkedHashSet<String>();
+    for (ProcessSystem processSystem : processes.values()) {
+      modelEventStateIdentities.addAll(processSystem.getCompleteTransientStateIdentities());
+    }
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      TransientTransactionCoverage areaCoverage = entry.getValue().getTransientTransactionCoverage();
+      TransientTransactionCoverage areaCoverage = entry.getValue()
+          .getTransientTransactionCoverage(modelEventStateIdentities);
       elementCount += areaCoverage.getProcessElementCount();
       participantCount += areaCoverage.getParticipantCount();
       for (String issue : areaCoverage.getBlockingIssues()) {
@@ -1736,12 +1741,16 @@ public class ProcessModel implements Runnable, Serializable {
     }
     validateTransientAreaTimes();
     getTransientTransactionCoverage().assertComplete();
+    Set<String> modelEventStateIdentities = new java.util.LinkedHashSet<String>();
+    for (ProcessSystem processSystem : processes.values()) {
+      modelEventStateIdentities.addAll(processSystem.getCompleteTransientStateIdentities());
+    }
 
     List<AreaTransientCheckpoint> areaCheckpoints = new ArrayList<AreaTransientCheckpoint>();
     try {
       for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
         areaCheckpoints.add(new AreaTransientCheckpoint(entry.getKey(), entry.getValue(),
-            entry.getValue().beginTransientStepTransaction()));
+            entry.getValue().beginTransientStepTransaction(modelEventStateIdentities)));
       }
     } catch (RuntimeException ex) {
       rollbackOpenAreaTransactions(areaCheckpoints, ex);

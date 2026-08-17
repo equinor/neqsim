@@ -57,15 +57,15 @@ class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
     model.add("fire", fireArea);
     assertCompleteCoverage(model.getTransientTransactionCoverage(), 2);
 
-    gasArea.getEventScheduler().scheduleEvent(1.0, "gas release", () -> {
+    gasArea.getEventScheduler().scheduleTransactionalEvent(1.0, "gas release", () -> {
       gas.setGasConcentration(70.0);
       gas.setGasSpecies("propane");
       gas.setLocation("trial gas zone");
-    });
-    fireArea.getEventScheduler().scheduleEvent(1.0, "fire", () -> {
+    }, gas.getTransientStateIdentity());
+    fireArea.getEventScheduler().scheduleTransactionalEvent(1.0, "fire", () -> {
       fire.detectFire();
       fire.setLocation("trial fire zone");
-    });
+    }, fire.getTransientStateIdentity());
 
     String gasIdentity = gas.getTransientStateIdentity();
     String fireIdentity = fire.getTransientStateIdentity();

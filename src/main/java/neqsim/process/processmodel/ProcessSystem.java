@@ -5220,6 +5220,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return immutable quantitative coverage report
    */
   public TransientTransactionCoverage getTransientTransactionCoverage() {
+    return getTransientTransactionCoverage(Collections.<String>emptySet());
+  }
+
+  /**
+   * Audits local transaction coverage while accepting event targets owned by a coordinating multi-area model.
+   *
+   * @param additionalEventStateIdentities completely covered participant identities owned by sibling process areas
+   * @return immutable quantitative local coverage report
+   */
+  TransientTransactionCoverage getTransientTransactionCoverage(Collection<String> additionalEventStateIdentities) {
     List<ProcessElementInterface> elements = getUniqueTransientElements();
     List<String> blockingIssues = new ArrayList<String>();
     Map<String, ProcessElementInterface> identities = new HashMap<String, ProcessElementInterface>();
@@ -5278,7 +5288,39 @@ public class ProcessSystem extends SimulationBaseClass {
       blockingIssues.add("alarm action handlers may produce external side effects and have no rejected-step "
           + "commit/defer contract");
     }
+    if (eventScheduler != null) {
+      java.util.Set<String> eventStateIdentities = new java.util.HashSet<String>(identities.keySet());
+      eventStateIdentities.addAll(additionalEventStateIdentities);
+      addEventTransactionCoverageIssues(blockingIssues, eventScheduler.getPendingEvents(), eventStateIdentities,
+          "pending event");
+    }
     return new TransientTransactionCoverage(elements.size(), participantCount, blockingIssues);
+  }
+
+  /**
+   * Adds deterministic blockers for scheduler actions that cannot be covered by participant snapshots.
+   *
+   * @param blockingIssues destination for coverage diagnostics
+   * @param events events to validate
+   * @param participantStateIdentities covered participants keyed by stable state identity
+   * @param eventKind diagnostic description such as {@code pending event}
+   */
+  private static void addEventTransactionCoverageIssues(List<String> blockingIssues,
+      List<EventScheduler.ScheduledEvent> events, java.util.Set<String> participantStateIdentities, String eventKind) {
+    for (EventScheduler.ScheduledEvent event : events) {
+      String eventDescription = eventKind + " '" + event.getLabel() + "' at t=" + event.getTime() + " s";
+      if (!event.hasDeclaredTransientStateScope()) {
+        blockingIssues.add(eventDescription
+            + " uses an unscoped Runnable; use scheduleTransactionalEvent and declare every mutated participant");
+        continue;
+      }
+      for (String stateIdentity : event.getTransientStateIdentities()) {
+        if (!participantStateIdentities.contains(stateIdentity)) {
+          blockingIssues.add(eventDescription + " declares transient state identity '" + stateIdentity
+              + "' that is not a completely covered participant in this process system");
+        }
+      }
+    }
   }
 
   /**
@@ -5294,12 +5336,23 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws IllegalStateException if coverage is incomplete, a snapshot is invalid, or another transaction is open
    */
   public synchronized TransientStepTransaction beginTransientStepTransaction() {
+    return beginTransientStepTransaction(Collections.<String>emptySet());
+  }
+
+  /**
+   * Captures a rollback point with model-level event targets included in scheduler coverage.
+   *
+   * @param additionalEventStateIdentities completely covered participant identities owned by sibling process areas
+   * @return open single-use transaction
+   */
+  synchronized TransientStepTransaction beginTransientStepTransaction(
+      Collection<String> additionalEventStateIdentities) {
     if (activeTransientStepTransaction != null && activeTransientStepTransaction.isOpen()) {
       throw new IllegalStateException(
           "A transient step transaction is already open for process system '" + getName() + "'");
     }
 
-    TransientTransactionCoverage coverage = getTransientTransactionCoverage();
+    TransientTransactionCoverage coverage = getTransientTransactionCoverage(additionalEventStateIdentities);
     coverage.assertComplete();
     List<ProcessElementInterface> elements = getUniqueTransientElements();
     List<TransientParticipantCheckpoint> participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(
@@ -5320,7 +5373,8 @@ public class ProcessSystem extends SimulationBaseClass {
         : capturedRecycleController.captureTransientState();
     ProcessSystemStepTransaction transaction = new ProcessSystemStepTransaction(elements, participantCheckpoints,
         capturedRecycleController, recycleControllerSnapshot, eventScheduler,
-        eventScheduler == null ? null : eventScheduler.snapshot(), new ArrayList<>(alarmManager.getHistory()));
+        eventScheduler == null ? null : eventScheduler.snapshot(), new ArrayList<>(alarmManager.getHistory()),
+        additionalEventStateIdentities);
     activeTransientStepTransaction = transaction;
     return transaction;
   }
@@ -5380,6 +5434,30 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return unique;
+  }
+
+  /**
+   * Returns every locally complete participant identity for multi-area event-scope validation.
+   *
+   * @return deterministic set of complete local participant identities
+   */
+  java.util.Set<String> getCompleteTransientStateIdentities() {
+    java.util.Set<String> identities = new java.util.LinkedHashSet<String>();
+    for (ProcessElementInterface element : getUniqueTransientElements()) {
+      if (element instanceof TransientStateParticipant<?>) {
+        TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
+        try {
+          String coverageIssue = normalizeTransientStateIdentity(participant.getTransientStateCoverageIssue());
+          String identity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
+          if (coverageIssue == null && identity != null) {
+            identities.add(identity);
+          }
+        } catch (RuntimeException ex) {
+          // The area coverage audit below owns the deterministic diagnostic for this participant.
+        }
+      }
+    }
+    return identities;
   }
 
   /**
@@ -5467,13 +5545,14 @@ public class ProcessSystem extends SimulationBaseClass {
     private final EventScheduler capturedEventScheduler;
     private final EventScheduler.Snapshot capturedEventSchedulerSnapshot;
     private final List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory;
+    private final java.util.Set<String> allowedEventStateIdentities;
     private Status status = Status.OPEN;
 
     private ProcessSystemStepTransaction(List<ProcessElementInterface> elementIdentities,
         List<TransientParticipantCheckpoint> participantCheckpoints, RecycleController capturedRecycleController,
         RecycleController.Snapshot capturedRecycleControllerSnapshot, EventScheduler capturedEventScheduler,
         EventScheduler.Snapshot capturedEventSchedulerSnapshot,
-        List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory) {
+        List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory, Collection<String> additionalEventStateIdentities) {
       this.elementIdentities = new ArrayList<ProcessElementInterface>(elementIdentities);
       this.participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(participantCheckpoints);
       this.capturedRecycleController = capturedRecycleController;
@@ -5481,6 +5560,10 @@ public class ProcessSystem extends SimulationBaseClass {
       this.capturedEventScheduler = capturedEventScheduler;
       this.capturedEventSchedulerSnapshot = capturedEventSchedulerSnapshot;
       this.capturedAlarmHistory = new ArrayList<neqsim.process.alarm.AlarmEvent>(capturedAlarmHistory);
+      this.allowedEventStateIdentities = new java.util.HashSet<String>(additionalEventStateIdentities);
+      for (TransientParticipantCheckpoint checkpoint : participantCheckpoints) {
+        this.allowedEventStateIdentities.add(checkpoint.stateIdentity);
+      }
     }
 
     /** {@inheritDoc} */
@@ -5631,6 +5714,27 @@ public class ProcessSystem extends SimulationBaseClass {
       }
       if (recycleController != capturedRecycleController) {
         return new IllegalStateException("RecycleController identity changed during transient transaction");
+      }
+      if (eventScheduler != capturedEventScheduler) {
+        return new IllegalStateException("EventScheduler identity changed during transient transaction");
+      }
+      if (capturedEventScheduler != null) {
+        List<String> eventCoverageIssues = new ArrayList<String>();
+        addEventTransactionCoverageIssues(eventCoverageIssues, capturedEventScheduler.getPendingEvents(),
+            allowedEventStateIdentities, "pending event");
+        List<EventScheduler.ScheduledEvent> firedEvents = capturedEventScheduler.getFiredEvents();
+        int capturedFiredEventCount = capturedEventSchedulerSnapshot.getFiredEventCount();
+        if (firedEvents.size() < capturedFiredEventCount) {
+          eventCoverageIssues.add("event scheduler fired-event history shrank during transient transaction");
+        } else if (firedEvents.size() > capturedFiredEventCount) {
+          addEventTransactionCoverageIssues(eventCoverageIssues,
+              firedEvents.subList(capturedFiredEventCount, firedEvents.size()), allowedEventStateIdentities,
+              "event fired during transaction");
+        }
+        if (!eventCoverageIssues.isEmpty()) {
+          return new IllegalStateException(
+              "EventScheduler transaction coverage became incomplete: " + eventCoverageIssues);
+        }
       }
       return null;
     }
