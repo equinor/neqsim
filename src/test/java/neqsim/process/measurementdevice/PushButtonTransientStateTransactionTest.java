@@ -52,8 +52,10 @@ class PushButtonTransientStateTransactionTest extends neqsim.NeqSimTest {
     model.add("second", secondArea);
     assertCompleteCoverage(model.getTransientTransactionCoverage(), 2);
 
-    firstArea.getEventScheduler().scheduleEvent(1.0, "first manual push", first::push);
-    secondArea.getEventScheduler().scheduleEvent(1.0, "second manual push", second::push);
+    firstArea.getEventScheduler().scheduleTransactionalEvent(1.0, "first manual push", first::push,
+        first.getTransientStateIdentity());
+    secondArea.getEventScheduler().scheduleTransactionalEvent(1.0, "second manual push", second::push,
+        second.getTransientStateIdentity());
 
     String firstIdentity = first.getTransientStateIdentity();
     String secondIdentity = second.getTransientStateIdentity();
