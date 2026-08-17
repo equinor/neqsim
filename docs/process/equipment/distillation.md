@@ -307,7 +307,9 @@ and nearby-point solves retain the same named component basis.
 The named basis also applies when a partial condenser, vapor-boilup control, external side draw, and
 pumparound are active together. The side draw remains an external product, while the pumparound
 draw and return remain one internal circulation with the configured utility duty. Pumparounds use
-the coordinated outer tear: `isLastColumnTearConverged()` and
+the coordinated outer tear around the residual-monitored `MESH_RESIDUAL` inner solver; direct
+substitution is not a robust choice for this fully coupled configuration. The methods
+`isLastColumnTearConverged()` and
 `getLastColumnTearResidual()` report that convergence, and exact sequential-state reuse stays
 disabled while the nonlocal return is active. A changed external feed therefore re-solves both the
 terminal products and pumparound state on the same component basis.
