@@ -170,8 +170,8 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     assertEquals(1, dryGas.getFluid().getNumberOfPhases(), "The gas outlet must contain one phase");
     assertEquals(PhaseType.GAS, dryGas.getFluid().getPhase(0).getType());
     assertEquals(1, richTeg.getFluid().getNumberOfPhases(), "The rich-TEG outlet must contain one phase");
-    assertTrue(richTeg.getFluid().getPhase(0).getType() == PhaseType.AQUEOUS
-        || richTeg.getFluid().getPhase(0).getType() == PhaseType.LIQUID);
+    assertEquals(PhaseType.AQUEOUS, richTeg.getFluid().getPhase(0).getType(),
+        "The rich-TEG outlet must retain its aqueous identity");
   }
 
   @Test
