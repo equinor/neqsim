@@ -60,12 +60,27 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * <p>
  * What every diverging variant has in common is that the net momentum equation becomes {@code -alpha * A * dp/dx}, the
- * physically correct force, while the stable term-off path carries {@code -alpha * A * dp/dx - p * A *
- * d(alpha)/dx} and so retains a force that does not belong there. The model is only stable while that spurious force is
- * present. That points at the steady-state initialisation and the transient operator being mutually consistent only in
- * the term-off form: correcting the momentum equation leaves the transient starting away from balance, and it then
- * grows at roughly 0.03 per second, a long-wavelength rate rather than a mesh-driven one. Aligning the steady solver's
- * momentum balance with the transient is the next step, not another pressure-term variant.
+ * physically correct force, while the stable term-off path retains an additional {@code -p * A * d(alpha)/dx} that does
+ * not belong there. The model is only stable while that spurious force is present. The first step does not explain it:
+ * starting from the steady state, a step of 0.01 s changes the velocities by 0.071 m/s with the term on against 0.074
+ * m/s with it off, so the two are equally balanced initially and the difference is in the growth.
+ * </p>
+ *
+ * <p>
+ * The inlet pressure is a symptom rather than the defect. Pressure is not a state variable here: it is reconstructed
+ * after every step by marching from the fixed outlet with {@code estimatePressureGradient}, a mixture friction and
+ * gravity correlation proportional to the square of the mixture velocity. Measuring the velocities shows what the
+ * pressure is reporting. After 300 s the term-off line peaks at 8.6 m/s gas and 4.0 m/s liquid, while the stabilized
+ * line sits at exactly 100.0 and 50.0 m/s, the clamps applied in {@code TwoFluidSection.extractPrimitiveVariables}. The
+ * velocities have saturated, and the reconstruction turns that into 1300 bara.
+ * </p>
+ *
+ * <p>
+ * So this is a momentum runaway. With the physically correct force alone the phase momentum equations accelerate
+ * without bound, because the pressure driving them comes from a steady mixture correlation rather than from a
+ * conservation law, leaving no compressibility feedback to arrest the acceleration. The term-off path masks this by
+ * retaining the large spurious force. Making the pressure part of the solution, which is what the IMEX pressure
+ * correction machinery already exists to do, is the structural fix; correcting the momentum force alone is not enough.
  * </p>
  */
 public class TwoFluidInterfacialPressureRunawayTest {
