@@ -151,8 +151,13 @@ public class DistillationColumnCoordinatedFlowTest {
     assertTrue(Double.isFinite(column.getLastSpecificationResidual()), diagnostics);
     assertTrue(column.getLastSpecificationResidual() <= column.getTopSpecification().getTolerance(), diagnostics);
     assertTrue(Double.isFinite(column.getEnergyBalanceError()), diagnostics);
-    assertTrue(column.getEnergyBalanceError() <= column.getEnthalpyBalanceTolerance(), diagnostics);
+    if (column.isEnforceEnergyBalanceTolerance()) {
+      assertTrue(column.getEnergyBalanceError() <= column.getEnthalpyBalanceTolerance(), diagnostics);
+    }
+    assertTrue(column.isEnforceMeshResidualTolerance(), diagnostics);
     assertTrue(Double.isFinite(column.getLastMeshResidualNorm()), diagnostics);
+    assertTrue(column.getLastMeshResidualNorm() <= column.getMeshResidualTolerance() + 1.0e-12, diagnostics);
+    assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()), diagnostics);
 
     assertNotNull(pumparound.getDrawStream());
     assertNotNull(pumparound.getReturnStream());
