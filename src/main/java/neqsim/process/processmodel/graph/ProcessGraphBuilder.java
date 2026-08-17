@@ -1068,6 +1068,11 @@ public final class ProcessGraphBuilder {
   private static void createEdgeFromProducer(ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Object stream, ProcessEquipmentInterface consumer) {
     ProcessEquipmentInterface producer = streamToProducer.get(stream);
+    // A registered stream is a mutable-state barrier between its equipment producer and consumers.
+    if (stream instanceof ProcessEquipmentInterface && stream != consumer
+        && graph.getNode((ProcessEquipmentInterface) stream) != null) {
+      producer = (ProcessEquipmentInterface) stream;
+    }
     if (producer != null && producer != consumer) {
       ProcessNode sourceNode = graph.getNode(producer);
       ProcessNode targetNode = graph.getNode(consumer);

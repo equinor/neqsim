@@ -156,11 +156,25 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
   }
 
   /**
-   * Returns the unit of measurement for the underlying constraint.
+   * Returns the unit for the adapter value and margin.
    *
-   * @return unit string
+   * <p>
+   * Both quantities are normalized fractions, so this method returns the dimensionless unit {@code "1"}. Use
+   * {@link #getPhysicalUnit()} for the underlying current value and installed limit.
+   * </p>
+   *
+   * @return dimensionless unit {@code "1"}
    */
   public String getUnit() {
+    return "1";
+  }
+
+  /**
+   * Returns the physical engineering unit of the underlying current value and installed limit.
+   *
+   * @return physical engineering unit
+   */
+  public String getPhysicalUnit() {
     return delegate.getUnit();
   }
 }

@@ -279,10 +279,44 @@ EngineeringDiagramBalanceAssessment assessment =
         balanceTable, Collections.singletonList(criteria));
 ```
 
-This is a tolerance check, not statistical data reconciliation. It does not adjust measured or
-calculated values, supply component balances, close heat/work terms, infer project tolerances, or
-approve a balance. Component balances, heat/work closure, reconciliation methods, and approved
-project boundary registers remain later engineering layers.
+The assessment itself is a tolerance check, not statistical data reconciliation. It does not adjust
+measured or calculated values, supply component balances, close heat/work terms, infer project
+tolerances, or approve a balance.
+
+### Tolerance-gated mass-balance reconciliation
+
+`EngineeringDiagramMassBalanceReconciliation` is an additive evidence projection over the stream
+table, balance table, and assessment. It invokes NeqSim's existing linear weighted-least-squares
+engine only for a complete mass balance classified `OUTSIDE_TOLERANCE`. A balance already within its
+declared limits is retained unchanged and needs no uncertainty declarations.
+
+Every participating boundary stream requires a positive finite standard uncertainty in kg/s on a
+`MASS` basis, together with a source reference, provenance, and evidence state. Source fingerprints
+and document/graph/case identity must match. Unknown, duplicate, invalid, or missing uncertainty
+records; incomplete or underspecified boundaries; solver failures; negative candidates; and
+candidates outside the explicit criteria produce structured diagnostics.
+
+```java
+List<EngineeringDiagramMassBalanceReconciliation.Uncertainty> uncertainties =
+    Arrays.asList(
+        new EngineeringDiagramMassBalanceReconciliation.Uncertainty(
+            "BAL-AREA-01", inletSemanticId, 0.05, "kg/s", "MASS",
+            "instrument-register:FT-101", "calibration certificate CAL-101",
+            EngineeringDiagramBalanceTable.EvidenceState.REVIEWED),
+        new EngineeringDiagramMassBalanceReconciliation.Uncertainty(
+            "BAL-AREA-01", outletSemanticId, 0.08, "kg/s", "MASS",
+            "instrument-register:FT-102", "calibration certificate CAL-102",
+            EngineeringDiagramBalanceTable.EvidenceState.REVIEWED));
+EngineeringDiagramMassBalanceReconciliation reconciliation =
+    EngineeringDiagramMassBalanceReconciliation.fromSources(
+        streamTable, balanceTable, assessment, uncertainties);
+```
+
+The result contains immutable source-to-candidate adjustments, balance-level residual and
+statistical evidence, deterministic JSON/fingerprints, and fail-visible diagnostics. It never writes
+reconciled values back to a `ProcessSystem`, stream table, balance table, diagram, or exchange file.
+It does not eliminate gross errors, model covariance, reconcile component or energy balances, or
+turn reviewed evidence into engineering approval. Those are distinct engineering layers.
 
 Building either companion does not change Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process
 exchange, or the Proteus/DEXPI P&ID workflow. `REVIEWED` boundary or criterion evidence does not
@@ -478,7 +512,7 @@ Run the focused regression with:
 ./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
 ./mvnw -Dtest=EngineeringDiagramStreamTableTest,EngineeringDiagramBalanceTableTest,\
 EngineeringDiagramComponentBalanceTableTest,EngineeringDiagramEnergyBalanceTableTest,\
-EngineeringDiagramBalanceAssessmentTest test
+EngineeringDiagramBalanceAssessmentTest,EngineeringDiagramMassBalanceReconciliationTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,

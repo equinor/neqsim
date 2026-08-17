@@ -25,8 +25,9 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDe
  * action writes, or process-model mutation. It retains only candidates whose selected objective improves on the best
  * feasible sampled allocation by more than the search's declared objective tolerance and whose complete baseline
  * restoration was verified. A general constraint reports the non-negative magnitude of its sampled negative margin. An
- * installed-capacity constraint uses its exact current and design values to report relief in the hydraulic engineering
- * unit; that relief is unavailable when the required evidence is incomplete.
+ * installed-capacity constraint uses the immutable current and applicable-limit snapshot that also supplied normalized
+ * candidate feasibility. Relief therefore remains available for every discovered installed constraint, not only the
+ * subset selected as required hydraulic bindings; it is unavailable when that complete evidence is invalid.
  * </p>
  *
  * <p>
@@ -139,18 +140,21 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     }
 
     List<HydraulicConstraintSnapshot> hydraulicEvidence = evaluation.getHydraulicConstraints();
-    Map<String, HydraulicConstraintSnapshot> hydraulicByAddress = indexHydraulicEvidence(hydraulicEvidence);
+    List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence = evaluation
+        .getInstalledEquipmentCapacityEvidence();
+    Map<String, InstalledEquipmentCapacityEvidence> installedCapacityByAddress = indexInstalledCapacityEvidence(
+        installedCapacityEvidence);
     List<ConstraintReliefEvidence> violations = new ArrayList<ConstraintReliefEvidence>();
     for (CandidateConstraintEvidence constraint : evaluation.getConstraintEvidence()) {
       if (constraint.isHard() && isFinite(constraint.getMargin()) && constraint.getMargin() < 0.0) {
-        violations.add(createConstraintRelief(constraint, hydraulicByAddress));
+        violations.add(createConstraintRelief(constraint, installedCapacityByAddress));
       }
     }
     if (violations.isEmpty()) {
       return null;
     }
 
-    EvidenceClass evidenceClass = classifyEvidence(violations.size(), hydraulicEvidence);
+    EvidenceClass evidenceClass = classifyEvidence(violations, hydraulicEvidence);
     if (evidenceClass == EvidenceClass.EVIDENCE_LIMITED) {
       diagnostics.add("Candidate " + candidate.getSequenceIndex()
           + " has incomplete, non-finite, or out-of-validity required hydraulic evidence");
@@ -165,31 +169,30 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     CandidateObjectiveEvidence selectedEvidence = findObjectiveEvidence(evaluation, search.getObjective().getIndex());
     return new BottleneckReliefOpportunity(candidate.getSequenceIndex(), candidateValues, actionDeltas,
         candidate.isAcceptedAsIncumbent(), candidate.getRawObjective(), objectiveGain, search.getObjective(),
-        selectedEvidence, evidenceClass, violations, hydraulicEvidence);
+        selectedEvidence, evidenceClass, violations, hydraulicEvidence, installedCapacityEvidence);
   }
 
-  /** Converts a normalized installed-capacity margin back to its engineering unit when exact evidence is available. */
+  /** Uses the same immutable installed-capacity row that supplied normalized candidate feasibility. */
   private static ConstraintReliefEvidence createConstraintRelief(CandidateConstraintEvidence constraint,
-      Map<String, HydraulicConstraintSnapshot> hydraulicByAddress) {
+      Map<String, InstalledEquipmentCapacityEvidence> installedCapacityByAddress) {
     if (!constraint.isCapacityConstraint()) {
-      return new ConstraintReliefEvidence(constraint, -constraint.getMargin(), constraint.getUnit(), false);
+      return new ConstraintReliefEvidence(constraint, -constraint.getMargin(), constraint.getUnit(), false, null);
     }
-    HydraulicConstraintSnapshot matching = hydraulicByAddress.get(capacityAddress(constraint));
-    if (matching == null || !matching.hasFiniteValue() || !isFinite(matching.getDesignValue())) {
+    InstalledEquipmentCapacityEvidence matching = installedCapacityByAddress.get(capacityAddress(constraint));
+    if (matching == null || !matching.hasFiniteEvidence() || !isFinite(matching.getRequiredRelief())) {
       return new ConstraintReliefEvidence(constraint, Double.NaN,
-          matching == null ? constraint.getUnit() : matching.getUnit(), false);
+          matching == null ? constraint.getPhysicalUnit() : matching.getPhysicalUnit(), false, matching);
     }
-    double relief = matching.isMinimumConstraint() ? matching.getDesignValue() - matching.getCurrentValue()
-        : matching.getCurrentValue() - matching.getDesignValue();
-    return new ConstraintReliefEvidence(constraint, Math.max(0.0, relief), matching.getUnit(), true);
+    return new ConstraintReliefEvidence(constraint, matching.getRequiredRelief(), matching.getPhysicalUnit(), true,
+        matching);
   }
 
-  /** Indexes exact required hydraulic evidence once so candidate analysis remains linear in stored constraints. */
-  private static Map<String, HydraulicConstraintSnapshot> indexHydraulicEvidence(
-      List<HydraulicConstraintSnapshot> hydraulicEvidence) {
-    Map<String, HydraulicConstraintSnapshot> indexed = new HashMap<String, HydraulicConstraintSnapshot>();
-    for (HydraulicConstraintSnapshot snapshot : hydraulicEvidence) {
-      indexed.put(snapshot.getBinding().getQualifiedConstraintName(), snapshot);
+  /** Indexes complete candidate capacity evidence without joining to the selected hydraulic-binding subset. */
+  private static Map<String, InstalledEquipmentCapacityEvidence> indexInstalledCapacityEvidence(
+      List<InstalledEquipmentCapacityEvidence> evidence) {
+    Map<String, InstalledEquipmentCapacityEvidence> indexed = new HashMap<String, InstalledEquipmentCapacityEvidence>();
+    for (InstalledEquipmentCapacityEvidence snapshot : evidence) {
+      indexed.put(snapshot.getQualifiedConstraintName(), snapshot);
     }
     return indexed;
   }
@@ -214,9 +217,17 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     return null;
   }
 
-  /** Classifies coupled hard violations and the completeness of required hydraulic evidence. */
-  private static EvidenceClass classifyEvidence(int hardViolationCount,
+  /** Classifies coupled hard violations and the completeness of stored capacity evidence. */
+  private static EvidenceClass classifyEvidence(List<ConstraintReliefEvidence> violations,
       List<HydraulicConstraintSnapshot> hydraulicEvidence) {
+    for (ConstraintReliefEvidence violation : violations) {
+      InstalledEquipmentCapacityEvidence capacityEvidence = violation.getInstalledCapacityEvidence();
+      if (violation.getConstraint().isCapacityConstraint()
+          && (!violation.isDerivedFromInstalledCapacityEvidence() || capacityEvidence == null || capacityEvidence
+              .getEvidenceApplicability() == InstalledEquipmentCapacityEvidence.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE)) {
+        return EvidenceClass.EVIDENCE_LIMITED;
+      }
+    }
     if (hydraulicEvidence.isEmpty()) {
       return EvidenceClass.EVIDENCE_LIMITED;
     }
@@ -226,7 +237,7 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
         return EvidenceClass.EVIDENCE_LIMITED;
       }
     }
-    return hardViolationCount == 1 ? EvidenceClass.ISOLATED : EvidenceClass.COUPLED;
+    return violations.size() == 1 ? EvidenceClass.ISOLATED : EvidenceClass.COUPLED;
   }
 
   /** Sorts by direction-aware gain, evidence class, sequence, then exact constraint identity. */
@@ -311,16 +322,19 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     private final double requiredMarginRelief;
     /** Engineering unit for the relief. */
     private final String unit;
-    /** Whether exact installed current and design values supplied the relief. */
-    private final boolean derivedFromHydraulicEvidence;
+    /** Whether the evaluator's complete installed-capacity snapshot supplied the relief. */
+    private final boolean derivedFromInstalledCapacityEvidence;
+    /** Exact installed-capacity row, or null for a general or unavailable constraint. */
+    private final InstalledEquipmentCapacityEvidence installedCapacityEvidence;
 
     /** Creates exact in-unit margin-relief evidence. */
     private ConstraintReliefEvidence(CandidateConstraintEvidence constraint, double requiredMarginRelief, String unit,
-        boolean derivedFromHydraulicEvidence) {
+        boolean derivedFromInstalledCapacityEvidence, InstalledEquipmentCapacityEvidence installedCapacityEvidence) {
       this.constraint = constraint;
       this.requiredMarginRelief = requiredMarginRelief;
       this.unit = unit;
-      this.derivedFromHydraulicEvidence = derivedFromHydraulicEvidence;
+      this.derivedFromInstalledCapacityEvidence = derivedFromInstalledCapacityEvidence;
+      this.installedCapacityEvidence = installedCapacityEvidence;
     }
 
     /** @return immutable exact constraint identity, definition, value, and margin */
@@ -338,9 +352,25 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
       return unit;
     }
 
-    /** @return true when relief was converted from exact current and installed design values */
+    /** @return true when relief came from the evaluator's complete installed-capacity snapshot */
+    public boolean isDerivedFromInstalledCapacityEvidence() {
+      return derivedFromInstalledCapacityEvidence;
+    }
+
+    /**
+     * Compatibility alias for earlier hydraulic-subset evidence.
+     *
+     * @return true when exact installed-capacity evidence supplied the relief
+     * @deprecated use {@link #isDerivedFromInstalledCapacityEvidence()}
+     */
+    @Deprecated
     public boolean isDerivedFromHydraulicEvidence() {
-      return derivedFromHydraulicEvidence;
+      return derivedFromInstalledCapacityEvidence;
+    }
+
+    /** @return exact installed-capacity evidence, or null for a general or unavailable constraint */
+    public InstalledEquipmentCapacityEvidence getInstalledCapacityEvidence() {
+      return installedCapacityEvidence;
     }
   }
 
@@ -371,12 +401,15 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     private final List<ConstraintReliefEvidence> constraintRelief;
     /** Required hydraulic evidence retained from the candidate. */
     private final List<HydraulicConstraintSnapshot> hydraulicEvidence;
+    /** Complete installed-capacity evidence retained from the candidate. */
+    private final List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence;
 
     /** Creates one immutable opportunity. */
     private BottleneckReliefOpportunity(int candidateSequenceIndex, double[] candidateValues,
         double[] actionDeltasFromBestFeasible, boolean acceptedAsIncumbent, double rawObjective, double objectiveGain,
         ObjectiveSnapshot objective, CandidateObjectiveEvidence objectiveEvidence, EvidenceClass evidenceClass,
-        List<ConstraintReliefEvidence> constraintRelief, List<HydraulicConstraintSnapshot> hydraulicEvidence) {
+        List<ConstraintReliefEvidence> constraintRelief, List<HydraulicConstraintSnapshot> hydraulicEvidence,
+        List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence) {
       this.candidateSequenceIndex = candidateSequenceIndex;
       this.candidateValues = candidateValues.clone();
       this.actionDeltasFromBestFeasible = actionDeltasFromBestFeasible.clone();
@@ -389,6 +422,8 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
       this.constraintRelief = Collections.unmodifiableList(new ArrayList<ConstraintReliefEvidence>(constraintRelief));
       this.hydraulicEvidence = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicEvidence));
+      this.installedCapacityEvidence = Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedCapacityEvidence));
     }
 
     /** @return source trace sequence index */
@@ -444,6 +479,11 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     /** @return fresh immutable required hydraulic evidence retained from the candidate */
     public List<HydraulicConstraintSnapshot> getHydraulicEvidence() {
       return Collections.unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicEvidence));
+    }
+
+    /** @return fresh immutable complete installed-capacity evidence retained from the candidate */
+    public List<InstalledEquipmentCapacityEvidence> getInstalledCapacityEvidence() {
+      return Collections.unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedCapacityEvidence));
     }
   }
 

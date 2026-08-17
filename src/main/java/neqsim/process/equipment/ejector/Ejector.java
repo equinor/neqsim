@@ -919,7 +919,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     initializeEjectorCapacityConstraints();
 
     autoSized = true;
-    logger.info("Ejector '{}' auto-sized: design ER={:.2f}, CR={:.2f}", getName(), designEntrainmentRatio,
+    logger.info("Ejector '{}' auto-sized: design ER={}, CR={}", getName(), designEntrainmentRatio,
         designCompressionRatio);
   }
 

@@ -6,12 +6,15 @@
 
 package neqsim.process.equipment.stream;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.measurementdevice.HydrocarbonDewPointAnalyser;
 import neqsim.process.util.monitor.StreamResponse;
@@ -33,7 +36,8 @@ import neqsim.util.exception.InvalidInputException;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
+public class Stream extends ProcessEquipmentBaseClass
+    implements StreamInterface, Cloneable, TransientStateParticipant<Stream.TransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -45,6 +49,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   private static final double CRICONDEN_ECHO_TOLERANCE = 1.0e-6;
   /** Initial value for the deterministic criconden-envelope input fingerprint. */
   private static final long CRICONDEN_SIGNATURE_SEED = 1125899906842597L;
+
+  /** Stable transaction identity retained by Java serialization. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
 
   /** Fingerprint of the fluid state used for the cached criconden envelope. */
   private transient long cachedCricondenInputSignature = Long.MIN_VALUE;
@@ -272,11 +279,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public Stream clone() {
-    Stream clonedSystem = null;
+    Stream clonedSystem;
     try {
       clonedSystem = (Stream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error("Failed to clone stream {}", getName(), ex);
+      throw new IllegalStateException("Unable to clone stream '" + getName() + "'", ex);
     }
     if (stream != null) {
       clonedSystem.setStream(stream.clone());
@@ -284,8 +292,114 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (thermoSystem != null) {
       clonedSystem.thermoSystem = thermoSystem.clone();
     }
+    clonedSystem.transientStateIdentity = UUID.randomUUID().toString();
+    clonedSystem.lastComposition = lastComposition == null ? null : lastComposition.clone();
+    clonedSystem.invalidateDerivedTransientCaches();
 
     return clonedSystem;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:stream:" + transientStateIdentity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != Stream.class) {
+      return "stream subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
+    String baseIssue = getBaseTransientStateCoverageIssue();
+    if (baseIssue != null) {
+      return baseIssue;
+    }
+    if (stream != null) {
+      return "wrapper streams delegate mutations to another stream and require coordinated state ownership";
+    }
+    if (thermoSystem == null) {
+      return "stream has no thermodynamic system to capture";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture stream '" + getName() + "': " + coverageIssue);
+    }
+    return new TransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransientState snapshot) {
+    Objects.requireNonNull(snapshot, "stream transient snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Transient snapshot belongs to another stream");
+    }
+
+    restoreBaseTransientState(snapshot.baseState);
+    thermoSystem = snapshot.thermoSystem.clone();
+    stream = null;
+    streamNumber = snapshot.streamNumber;
+    gasQuality = snapshot.gasQuality;
+    lastTemperature = snapshot.lastTemperature;
+    lastPressure = snapshot.lastPressure;
+    lastFlowRate = snapshot.lastFlowRate;
+    lastComposition = snapshot.lastComposition == null ? null : snapshot.lastComposition.clone();
+    lastSpecification = snapshot.lastSpecification;
+    propertyInitLevel = snapshot.propertyInitLevel;
+    invalidateDerivedTransientCaches();
+  }
+
+  /** Clears derived property caches so rejected trials cannot leak cached results. */
+  private void invalidateDerivedTransientCaches() {
+    cachedCricondenInputSignature = Long.MIN_VALUE;
+    hasCachedCricondenEnvelope = false;
+    cachedCricondenTherm = null;
+    cachedCricondenBar = null;
+    cachedRvpStandard = null;
+    cachedRvpFluid = null;
+    cachedRvpComposition = null;
+    cachedRvpReferenceTemperature = Double.NaN;
+    cachedRvpReferenceTemperatureUnit = null;
+  }
+
+  /** Immutable serializable checkpoint for a concrete local stream. */
+  public static final class TransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ProcessEquipmentTransientState baseState;
+    private final SystemInterface thermoSystem;
+    private final int streamNumber;
+    private final double gasQuality;
+    private final double lastTemperature;
+    private final double lastPressure;
+    private final double lastFlowRate;
+    private final double[] lastComposition;
+    private final String lastSpecification;
+    private final PropertyInitLevel propertyInitLevel;
+
+    private TransientState(Stream source) {
+      stateIdentity = source.getTransientStateIdentity();
+      baseState = source.captureBaseTransientState();
+      thermoSystem = source.thermoSystem.clone();
+      streamNumber = source.streamNumber;
+      gasQuality = source.gasQuality;
+      lastTemperature = source.lastTemperature;
+      lastPressure = source.lastPressure;
+      lastFlowRate = source.lastFlowRate;
+      lastComposition = source.lastComposition == null ? null : source.lastComposition.clone();
+      lastSpecification = source.lastSpecification;
+      propertyInitLevel = source.propertyInitLevel;
+    }
   }
 
   /** {@inheritDoc} */

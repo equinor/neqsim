@@ -1,6 +1,9 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 
 /**
  * Represents the state of a single section/cell in the multiphase pipe.
@@ -48,6 +51,12 @@ public class PipeSection implements Cloneable, Serializable {
 
   // Derived quantities
   private FlowRegime flowRegime;
+
+  /** Fractional weight of each regime when the section sits on a transition; null when a single regime applies. */
+  private Map<FlowRegime, Double> regimeWeights;
+
+  /** Weights at or below this fraction are dropped rather than triggering a second closure evaluation. */
+  private static final double REGIME_WEIGHT_EPSILON = 1.0e-3;
   private double mixtureVelocity; // m/s
   private double mixtureDensity; // kg/m³
   private double superficialGasVelocity; // m/s
@@ -455,6 +464,91 @@ public class PipeSection implements Cloneable, Serializable {
 
   public void setFlowRegime(FlowRegime flowRegime) {
     this.flowRegime = flowRegime;
+    this.regimeWeights = null;
+  }
+
+  /**
+   * Gets the fractional weight of each flow regime for closure blending.
+   *
+   * <p>
+   * A section sitting on a regime transition is not wholly one regime or the other. Blending the closures across the
+   * transition removes the step change that a hard switch imposes on hold-up and friction. A null return means the
+   * section is wholly {@link #getFlowRegime()}.
+   * </p>
+   *
+   * @return unmodifiable snapshot of weights summing to one, or null when a single regime applies
+   */
+  public Map<FlowRegime, Double> getRegimeWeights() {
+    if (regimeWeights == null) {
+      return null;
+    }
+    return Collections.unmodifiableMap(new EnumMap<FlowRegime, Double>(regimeWeights));
+  }
+
+  /**
+   * Sets the fractional weight of each flow regime and the dominant regime that follows from it.
+   *
+   * <p>
+   * Weights are normalised, and entries at or below {@link #REGIME_WEIGHT_EPSILON} are dropped so a negligible
+   * contribution does not force a second closure evaluation. A single surviving entry clears the blend.
+   * </p>
+   *
+   * @param weights weight per regime, need not be normalised; null or empty clears the blend
+   */
+  public void setRegimeWeights(Map<FlowRegime, Double> weights) {
+    if (weights == null || weights.isEmpty()) {
+      this.regimeWeights = null;
+      return;
+    }
+
+    double total = 0.0;
+    for (Double weight : weights.values()) {
+      if (weight != null && weight > 0.0) {
+        total += weight;
+      }
+    }
+    if (total <= 0.0) {
+      this.regimeWeights = null;
+      return;
+    }
+
+    Map<FlowRegime, Double> normalised = new EnumMap<FlowRegime, Double>(FlowRegime.class);
+    FlowRegime dominant = null;
+    double dominantWeight = 0.0;
+    double kept = 0.0;
+    for (Map.Entry<FlowRegime, Double> entry : weights.entrySet()) {
+      Double weight = entry.getValue();
+      if (weight == null || weight <= 0.0) {
+        continue;
+      }
+      double fraction = weight / total;
+      if (fraction <= REGIME_WEIGHT_EPSILON) {
+        continue;
+      }
+      normalised.put(entry.getKey(), fraction);
+      kept += fraction;
+      if (fraction > dominantWeight) {
+        dominantWeight = fraction;
+        dominant = entry.getKey();
+      }
+    }
+
+    if (dominant == null) {
+      this.regimeWeights = null;
+      return;
+    }
+
+    this.flowRegime = dominant;
+    if (normalised.size() == 1) {
+      this.regimeWeights = null;
+      return;
+    }
+
+    // Renormalise after dropping negligible entries so the weights still sum to one.
+    for (Map.Entry<FlowRegime, Double> entry : normalised.entrySet()) {
+      entry.setValue(entry.getValue() / kept);
+    }
+    this.regimeWeights = normalised;
   }
 
   public double getMixtureVelocity() {

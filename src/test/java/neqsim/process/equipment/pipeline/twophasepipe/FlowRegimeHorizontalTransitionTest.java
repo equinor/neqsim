@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import java.util.EnumMap;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -153,12 +155,79 @@ class FlowRegimeHorizontalTransitionTest {
   }
 
   /**
-   * The selection must default to the legacy behaviour so existing results do not move.
+   * The transition stays opt-in, while the blending it depends on is always available.
    */
   @Test
-  @DisplayName("Equilibrium-level transition is off by default")
+  @DisplayName("Equilibrium-level transition is off by default, blending is on")
   void testEquilibriumLevelTransitionIsOffByDefault() {
-    Assertions.assertFalse(new FlowRegimeDetector().isUseEquilibriumLevelAnnularTransition(),
-        "the alternative transition must be opt-in until closure blending is available");
+    FlowRegimeDetector detector = new FlowRegimeDetector();
+
+    Assertions.assertFalse(detector.isUseEquilibriumLevelAnnularTransition(),
+        "the transition must stay opt-in until the terrain response it implies is anchored");
+    Assertions.assertTrue(detector.isBlendRegimeTransitions(),
+        "closure blending must default on, otherwise the transition steps hold-up");
+  }
+
+  /**
+   * Blending must give a continuous regime composition across the transition.
+   *
+   * <p>
+   * A hard switch shows up as a jump in the weight of a regime for an arbitrarily small change in gas velocity. Walking
+   * the gas velocity across the transition, no single step may move any regime weight by more than a modest fraction.
+   * </p>
+   */
+  @Test
+  @DisplayName("Regime weights vary continuously across the horizontal transition")
+  void testBlendedRegimeWeightsAreContinuous() {
+    FlowRegimeDetector detector = detector(true);
+    double rhoG = 40.0;
+    Map<FlowRegime, Double> previous = null;
+    double largestStep = 0.0;
+
+    for (int i = 0; i <= 200; i++) {
+      double superficialGas = 0.5 + i * 0.02;
+      PipeSection section = section(0.035, superficialGas, SMALL_LINE_DIAMETER, rhoG);
+      detector.classify(section);
+      Map<FlowRegime, Double> current = weightsOf(section);
+
+      if (previous != null) {
+        for (FlowRegime regime : FlowRegime.values()) {
+          double before = previous.containsKey(regime) ? previous.get(regime) : 0.0;
+          double after = current.containsKey(regime) ? current.get(regime) : 0.0;
+          largestStep = Math.max(largestStep, Math.abs(after - before));
+        }
+      }
+      previous = current;
+    }
+
+    Assertions.assertTrue(largestStep < 0.2,
+        "a blended transition must not step a regime weight by more than 0.2 per 0.02 m/s, but stepped " + largestStep);
+  }
+
+  /**
+   * Resolves the weight of each closure family, treating a single regime as weight one.
+   *
+   * <p>
+   * Smooth and wavy stratified flow share one closure, so a swap between them is not a closure discontinuity and must
+   * not be counted as one.
+   * </p>
+   *
+   * @param section a classified section
+   * @return weight per closure family
+   */
+  private Map<FlowRegime, Double> weightsOf(PipeSection section) {
+    Map<FlowRegime, Double> raw = section.getRegimeWeights();
+    if (raw == null) {
+      raw = new EnumMap<FlowRegime, Double>(FlowRegime.class);
+      raw.put(section.getFlowRegime(), 1.0);
+    }
+
+    Map<FlowRegime, Double> byClosure = new EnumMap<FlowRegime, Double>(FlowRegime.class);
+    for (Map.Entry<FlowRegime, Double> entry : raw.entrySet()) {
+      FlowRegime key = entry.getKey() == FlowRegime.STRATIFIED_WAVY ? FlowRegime.STRATIFIED_SMOOTH : entry.getKey();
+      Double existing = byClosure.get(key);
+      byClosure.put(key, entry.getValue() + (existing == null ? 0.0 : existing));
+    }
+    return byClosure;
   }
 }

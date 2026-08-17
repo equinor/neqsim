@@ -1954,8 +1954,20 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Original equipment constraint name for capacity constraints. */
     private String equipmentConstraintName;
 
-    /** Captured capacity constraint for bottleneck metadata. */
+    /** Captured capacity constraint for operating-point sampling. */
     private transient CapacityConstraint capturedCapacityConstraint;
+
+    /** Frozen physical unit for normalized installed-capacity definitions. */
+    private String capacityPhysicalUnit;
+
+    /** Frozen Java equipment class name. */
+    private String capacityEquipmentClassName;
+
+    /** Frozen IEC 81346 reference designation. */
+    private String capacityReferenceDesignation;
+
+    /** Frozen direct or strategy-generated origin. */
+    private InstalledEquipmentCapacityEvidence.ConstraintOrigin capacityConstraintOrigin = InstalledEquipmentCapacityEvidence.ConstraintOrigin.UNKNOWN;
 
     /** Default constructor for serialization frameworks. */
     public ConstraintDefinition() {
@@ -2200,6 +2212,35 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     }
 
     /**
+     * Gets the engineering unit of the underlying installed-capacity values.
+     *
+     * <p>
+     * {@link #getUnit()} is {@code "1"} for an installed-capacity definition because its registered value and margin
+     * are normalized. This accessor carries the separate physical unit used by the immutable capacity evidence.
+     * </p>
+     *
+     * @return physical engineering unit, or null for a general constraint
+     */
+    public String getCapacityPhysicalUnit() {
+      return capacityPhysicalUnit;
+    }
+
+    /** @return frozen Java equipment class name, or null for a general constraint */
+    public String getCapacityEquipmentClassName() {
+      return capacityEquipmentClassName;
+    }
+
+    /** @return frozen IEC 81346 reference designation, or null for a general constraint */
+    public String getCapacityReferenceDesignation() {
+      return capacityReferenceDesignation;
+    }
+
+    /** @return frozen direct or strategy-generated origin */
+    public InstalledEquipmentCapacityEvidence.ConstraintOrigin getCapacityConstraintOrigin() {
+      return capacityConstraintOrigin;
+    }
+
+    /**
      * Marks this definition as an equipment capacity constraint.
      *
      * @param areaName process area name
@@ -2209,10 +2250,33 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public void setCapacityMetadata(String areaName, String equipmentName, String equipmentConstraintName,
         CapacityConstraint capacityConstraint) {
+      setCapacityMetadata(areaName, equipmentName, equipmentConstraintName, null, null,
+          InstalledEquipmentCapacityEvidence.ConstraintOrigin.UNKNOWN, capacityConstraint);
+    }
+
+    /**
+     * Marks this definition as installed equipment capacity with frozen identity metadata.
+     *
+     * @param areaName process area name
+     * @param equipmentName equipment name
+     * @param equipmentConstraintName equipment constraint name
+     * @param equipmentClassName fully qualified Java equipment class name
+     * @param referenceDesignation IEC 81346 reference designation
+     * @param origin direct or strategy-generated origin
+     * @param capacityConstraint captured capacity constraint
+     */
+    public void setCapacityMetadata(String areaName, String equipmentName, String equipmentConstraintName,
+        String equipmentClassName, String referenceDesignation,
+        InstalledEquipmentCapacityEvidence.ConstraintOrigin origin, CapacityConstraint capacityConstraint) {
       this.capacityConstraint = true;
       this.areaName = areaName;
       this.equipmentName = equipmentName;
       this.equipmentConstraintName = equipmentConstraintName;
+      this.capacityPhysicalUnit = capacityConstraint == null ? null : capacityConstraint.getUnit();
+      this.capacityEquipmentClassName = equipmentClassName;
+      this.capacityReferenceDesignation = referenceDesignation;
+      this.capacityConstraintOrigin = origin == null ? InstalledEquipmentCapacityEvidence.ConstraintOrigin.UNKNOWN
+          : origin;
       this.capturedCapacityConstraint = capacityConstraint;
     }
 
@@ -2714,8 +2778,11 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Active bottleneck metadata. */
     private BottleneckStatus activeBottleneck = BottleneckStatus.none();
 
-    /** Immutable ranked capacity-constraint snapshots for this evaluated model state. */
+    /** Immutable ranked legacy bottleneck snapshots for this evaluated model state. */
     private List<BottleneckStatus> rankedCapacityConstraints = Collections.emptyList();
+
+    /** Immutable unit-safe installed-capacity evidence for this evaluated model state. */
+    private List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence = Collections.emptyList();
 
     /** Additional scalar outputs. */
     private Map<String, Double> additionalOutputs = new LinkedHashMap<String, Double>();
@@ -2906,7 +2973,10 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @return immutable ranked capacity snapshots
      */
     public List<BottleneckStatus> getRankedCapacityConstraints() {
-      return rankedCapacityConstraints == null ? Collections.<BottleneckStatus>emptyList() : rankedCapacityConstraints;
+      if (rankedCapacityConstraints == null || rankedCapacityConstraints.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return Collections.unmodifiableList(new ArrayList<BottleneckStatus>(rankedCapacityConstraints));
     }
 
     /**
@@ -2921,6 +2991,38 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       }
       this.rankedCapacityConstraints = Collections
           .unmodifiableList(new ArrayList<BottleneckStatus>(rankedCapacityConstraints));
+    }
+
+    /**
+     * Gets unit-safe installed-equipment capacity evidence sampled at this completed operating point.
+     *
+     * <p>
+     * The returned list is a fresh immutable copy ordered by descending normalized utilization. Every row separates
+     * dimensionless feasibility from physical current, limit, margin, and relief values.
+     * </p>
+     *
+     * @return fresh immutable installed-capacity evidence
+     */
+    public List<InstalledEquipmentCapacityEvidence> getInstalledEquipmentCapacityEvidence() {
+      if (installedEquipmentCapacityEvidence == null || installedEquipmentCapacityEvidence.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
+    }
+
+    /**
+     * Sets installed-capacity evidence using a defensive immutable copy.
+     *
+     * @param evidence utilization-ranked installed-capacity evidence
+     */
+    public void setInstalledEquipmentCapacityEvidence(List<InstalledEquipmentCapacityEvidence> evidence) {
+      if (evidence == null || evidence.isEmpty()) {
+        installedEquipmentCapacityEvidence = Collections.emptyList();
+        return;
+      }
+      installedEquipmentCapacityEvidence = Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(evidence));
     }
 
     /**
@@ -3267,16 +3369,17 @@ public class ProcessModelSimulationEvaluator implements Serializable {
         continue;
       }
       for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
-        Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
+        Map<String, CapacityConstraintRegistration> equipmentConstraints = getAllCapacityConstraints(registry,
+            equipment);
         if (equipmentConstraints.isEmpty()) {
           continue;
         }
-        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
-          CapacityConstraint capacityConstraint = entry.getValue();
-          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
+        for (Map.Entry<String, CapacityConstraintRegistration> entry : equipmentConstraints.entrySet()) {
+          CapacityConstraintRegistration registration = entry.getValue();
+          if (registration == null || registration.constraint == null || !registration.constraint.isEnabled()) {
             continue;
           }
-          addCapacityConstraint(areaName, equipment.getName(), entry.getKey(), capacityConstraint);
+          addCapacityConstraint(areaName, equipment, entry.getKey(), registration);
         }
       }
     }
@@ -3284,26 +3387,57 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   }
 
   /**
+   * Frozen registration of one discovered equipment capacity constraint.
+   */
+  private static final class CapacityConstraintRegistration {
+    /** Installed constraint object sampled after each completed process run. */
+    private final CapacityConstraint constraint;
+
+    /** Whether the constraint came directly from equipment or from a registered strategy. */
+    private final InstalledEquipmentCapacityEvidence.ConstraintOrigin origin;
+
+    /** Creates one discovered registration. */
+    private CapacityConstraintRegistration(CapacityConstraint constraint,
+        InstalledEquipmentCapacityEvidence.ConstraintOrigin origin) {
+      this.constraint = constraint;
+      this.origin = origin;
+    }
+  }
+
+  /**
    * Gets explicit and strategy-generated capacity constraints for equipment.
+   *
+   * <p>
+   * Direct equipment constraints retain precedence over a strategy row with the same name.
+   * </p>
    *
    * @param registry capacity strategy registry
    * @param equipment equipment to inspect
-   * @return merged constraint map with explicit equipment constraints taking precedence
+   * @return merged registration map in deterministic discovery order
    */
-  private Map<String, CapacityConstraint> getAllCapacityConstraints(EquipmentCapacityStrategyRegistry registry,
-      ProcessEquipmentInterface equipment) {
-    Map<String, CapacityConstraint> equipmentConstraints = new LinkedHashMap<String, CapacityConstraint>();
+  private Map<String, CapacityConstraintRegistration> getAllCapacityConstraints(
+      EquipmentCapacityStrategyRegistry registry, ProcessEquipmentInterface equipment) {
+    Map<String, CapacityConstraintRegistration> equipmentConstraints = new LinkedHashMap<String, CapacityConstraintRegistration>();
 
     if (includeStrategyCapacityConstraints) {
       EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
       if (strategy != null) {
-        equipmentConstraints.putAll(strategy.getConstraints(equipment));
+        Map<String, CapacityConstraint> strategyConstraints = strategy.getConstraints(equipment);
+        if (strategyConstraints != null) {
+          for (Map.Entry<String, CapacityConstraint> entry : strategyConstraints.entrySet()) {
+            equipmentConstraints.put(entry.getKey(), new CapacityConstraintRegistration(entry.getValue(),
+                InstalledEquipmentCapacityEvidence.ConstraintOrigin.STRATEGY));
+          }
+        }
       }
     }
 
     Map<String, CapacityConstraint> directConstraints = equipment.getCapacityConstraints();
     if (directConstraints != null) {
-      equipmentConstraints.putAll(directConstraints);
+      for (Map.Entry<String, CapacityConstraint> entry : directConstraints.entrySet()) {
+        equipmentConstraints.put(entry.getKey(), new CapacityConstraintRegistration(entry.getValue(),
+            InstalledEquipmentCapacityEvidence.ConstraintOrigin.DIRECT));
+      }
     }
 
     return equipmentConstraints;
@@ -3313,13 +3447,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Adds a single capacity constraint definition.
    *
    * @param areaName process area name
-   * @param equipmentName equipment name
+   * @param equipment equipment containing the installed constraint
    * @param equipmentConstraintName equipment constraint name
-   * @param capacityConstraint capacity constraint
+   * @param registration discovered capacity constraint and origin
    */
-  private void addCapacityConstraint(String areaName, String equipmentName, String equipmentConstraintName,
-      CapacityConstraint capacityConstraint) {
-    String constraintName = areaName + ProcessAutomation.AREA_SEPARATOR + equipmentName + "/" + equipmentConstraintName;
+  private void addCapacityConstraint(String areaName, ProcessEquipmentInterface equipment,
+      String equipmentConstraintName, CapacityConstraintRegistration registration) {
+    CapacityConstraint capacityConstraint = registration.constraint;
+    String constraintName = areaName + ProcessAutomation.AREA_SEPARATOR + equipment.getName() + "/"
+        + equipmentConstraintName;
     if (hasConstraint(constraintName)) {
       return;
     }
@@ -3327,7 +3463,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     final CapacityConstraint capturedCapacityConstraint = capacityConstraint;
     ConstraintDefinition definition = new ConstraintDefinition();
     definition.setName(constraintName);
-    definition.setUnit(capacityConstraint.getUnit());
+    definition.setUnit("1");
     definition.setType(ConstraintDefinition.Type.UPPER_BOUND);
     definition.setUpperBound(1.0);
     definition.setEvaluator(new ToDoubleFunction<ProcessModel>() {
@@ -3340,8 +3476,19 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     boolean hardConstraint = capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
         || capacityConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
     definition.setHard(hardConstraint);
-    definition.setCapacityMetadata(areaName, equipmentName, equipmentConstraintName, capacityConstraint);
+    definition.setCapacityMetadata(areaName, equipment.getName(), equipmentConstraintName,
+        equipment.getClass().getName(), safeReferenceDesignation(equipment), registration.origin, capacityConstraint);
     constraints.add(definition);
+  }
+
+  /** Returns the equipment reference designation without allowing metadata failure to block optimization. */
+  private static String safeReferenceDesignation(ProcessEquipmentInterface equipment) {
+    try {
+      String designation = equipment.getReferenceDesignationString();
+      return designation == null ? "" : designation;
+    } catch (RuntimeException exception) {
+      return "";
+    }
   }
 
   /**
@@ -3469,11 +3616,32 @@ public class ProcessModelSimulationEvaluator implements Serializable {
 
       double[] constraintValues = new double[constraints.size()];
       double[] margins = new double[constraints.size()];
+      List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence = new ArrayList<InstalledEquipmentCapacityEvidence>(
+          snapshotInstalledEquipmentCapacityEvidence(processModel));
+      Map<String, InstalledEquipmentCapacityEvidence> installedCapacityByIdentity = new LinkedHashMap<String, InstalledEquipmentCapacityEvidence>();
+      for (InstalledEquipmentCapacityEvidence evidence : installedCapacityEvidence) {
+        installedCapacityByIdentity.put(evidence.getQualifiedConstraintName(), evidence);
+      }
       double penaltySum = 0.0;
       boolean feasible = processModel.isModelConverged();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
         ConstraintDefinition constraint = constraints.get(constraintIndex);
-        constraintValues[constraintIndex] = constraint.evaluate(processModel);
+        InstalledEquipmentCapacityEvidence capacityEvidence = null;
+        if (constraint.isCapacityConstraint() && "1".equals(constraint.getUnit())) {
+          capacityEvidence = installedCapacityByIdentity.get(constraint.getName());
+          if (capacityEvidence == null) {
+            capacityEvidence = snapshotRegisteredCapacityConstraint(constraint);
+            if (capacityEvidence != null) {
+              installedCapacityEvidence.add(capacityEvidence);
+              installedCapacityByIdentity.put(capacityEvidence.getQualifiedConstraintName(), capacityEvidence);
+            }
+          }
+        }
+        if (capacityEvidence == null) {
+          constraintValues[constraintIndex] = constraint.evaluate(processModel);
+        } else {
+          constraintValues[constraintIndex] = capacityEvidence.getNormalizedUtilization();
+        }
         margins[constraintIndex] = constraint.marginFromValue(constraintValues[constraintIndex]);
         if (margins[constraintIndex] < 0.0) {
           penaltySum += constraint.penaltyFromMargin(margins[constraintIndex]);
@@ -3482,10 +3650,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
           }
         }
       }
+      sortInstalledCapacityEvidence(installedCapacityEvidence);
       result.setConstraintValues(constraintValues);
       result.setConstraintMargins(margins);
       result.setPenaltySum(penaltySum);
-      List<BottleneckStatus> rankedCapacityConstraints = rankCapacityConstraints(processModel);
+      result.setInstalledEquipmentCapacityEvidence(installedCapacityEvidence);
+      List<BottleneckStatus> rankedCapacityConstraints = toBottleneckStatuses(installedCapacityEvidence);
       result.setRankedCapacityConstraints(rankedCapacityConstraints);
       result.setActiveBottleneck(selectActiveBottleneck(rankedCapacityConstraints));
       result.setFeasible(feasible);
@@ -3563,43 +3733,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * @return active bottleneck status, or {@link BottleneckStatus#none()} when no constraint exists
    */
   public BottleneckStatus findActiveBottleneck(ProcessModel model) {
-    if (model == null) {
-      return BottleneckStatus.none();
-    }
-    EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
-    BottleneckStatus active = BottleneckStatus.none();
-    double highestUtilization = -1.0;
-
-    for (String areaName : model.getProcessSystemNames()) {
-      ProcessSystem area = model.get(areaName);
-      if (area == null) {
-        continue;
-      }
-      for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
-        Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
-        if (equipmentConstraints.isEmpty()) {
-          continue;
-        }
-        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
-          CapacityConstraint capacityConstraint = entry.getValue();
-          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
-            continue;
-          }
-          double currentValue = capacityConstraint.getCurrentValue();
-          double utilization = capacityConstraint.getUtilization(currentValue);
-          if (!Double.isNaN(utilization) && utilization > highestUtilization) {
-            highestUtilization = utilization;
-            boolean validityRangeSet = capacityConstraint.hasValidityRange();
-            active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization, currentValue,
-                capacityConstraint.getDisplayDesignValue(), capacityConstraint.isMinimumConstraint(),
-                capacityConstraint.getDataSource(), capacityConstraint.hasConfidence(),
-                capacityConstraint.getConfidence(), validityRangeSet, capacityConstraint.getValidityMinimum(),
-                capacityConstraint.getValidityMaximum(), capacityConstraint.getUnit(), utilization <= 1.0);
-          }
-        }
-      }
-    }
-    return active;
+    return selectActiveBottleneck(rankCapacityConstraints(model));
   }
 
   /**
@@ -3617,52 +3751,95 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * enabled capacity constraint
    */
   public List<BottleneckStatus> rankCapacityConstraints(ProcessModel model) {
+    return toBottleneckStatuses(snapshotInstalledEquipmentCapacityEvidence(model));
+  }
+
+  /**
+   * Samples, snapshots, and ranks every enabled installed-equipment capacity constraint in a live model.
+   *
+   * <p>
+   * Each dynamic supplier is invoked exactly once. The immutable returned rows separate normalized values from physical
+   * values and preserve deterministic area, equipment, and registration order for utilization ties.
+   * </p>
+   *
+   * @param model process model in its current state
+   * @return fresh immutable utilization-ranked installed-capacity evidence
+   */
+  public List<InstalledEquipmentCapacityEvidence> snapshotInstalledEquipmentCapacityEvidence(ProcessModel model) {
     if (model == null) {
       return Collections.emptyList();
     }
     EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
-    List<BottleneckStatus> rankedConstraints = new ArrayList<BottleneckStatus>();
-
+    List<InstalledEquipmentCapacityEvidence> evidence = new ArrayList<InstalledEquipmentCapacityEvidence>();
     for (String areaName : model.getProcessSystemNames()) {
       ProcessSystem area = model.get(areaName);
       if (area == null) {
         continue;
       }
       for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
-        Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
-        if (equipmentConstraints.isEmpty()) {
-          continue;
-        }
-        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
-          CapacityConstraint capacityConstraint = entry.getValue();
-          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
+        Map<String, CapacityConstraintRegistration> equipmentConstraints = getAllCapacityConstraints(registry,
+            equipment);
+        for (Map.Entry<String, CapacityConstraintRegistration> entry : equipmentConstraints.entrySet()) {
+          CapacityConstraintRegistration registration = entry.getValue();
+          if (registration == null || registration.constraint == null || !registration.constraint.isEnabled()) {
             continue;
           }
-          double currentValue = capacityConstraint.getCurrentValue();
-          double utilization = capacityConstraint.getUtilization(currentValue);
-          boolean validityRangeSet = capacityConstraint.hasValidityRange();
-          rankedConstraints.add(new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
-              currentValue, capacityConstraint.getDisplayDesignValue(), capacityConstraint.isMinimumConstraint(),
-              capacityConstraint.getDataSource(), capacityConstraint.hasConfidence(),
-              capacityConstraint.getConfidence(), validityRangeSet, capacityConstraint.getValidityMinimum(),
-              capacityConstraint.getValidityMaximum(), capacityConstraint.getUnit(), utilization <= 1.0));
+          CapacityConstraint constraint = registration.constraint;
+          double currentValue = constraint.getCurrentValue();
+          evidence
+              .add(new InstalledEquipmentCapacityEvidence(areaName, equipment.getName(), equipment.getClass().getName(),
+                  safeReferenceDesignation(equipment), entry.getKey(), registration.origin, constraint, currentValue));
         }
       }
     }
-    Collections.sort(rankedConstraints, new Comparator<BottleneckStatus>() {
+    sortInstalledCapacityEvidence(evidence);
+    return Collections.unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(evidence));
+  }
+
+  /** Samples one registered installed-capacity constraint exactly once. */
+  private InstalledEquipmentCapacityEvidence snapshotRegisteredCapacityConstraint(ConstraintDefinition definition) {
+    CapacityConstraint constraint = definition.getCapturedCapacityConstraint();
+    if (!definition.isCapacityConstraint() || constraint == null || !constraint.isEnabled()) {
+      return null;
+    }
+    double currentValue = constraint.getCurrentValue();
+    return new InstalledEquipmentCapacityEvidence(definition.getAreaName(), definition.getEquipmentName(),
+        definition.getCapacityEquipmentClassName(), definition.getCapacityReferenceDesignation(),
+        definition.getEquipmentConstraintName(), definition.getCapacityConstraintOrigin(), constraint, currentValue);
+  }
+
+  /** Stable descending-utilization ordering with undefined utilization retained last. */
+  private static void sortInstalledCapacityEvidence(List<InstalledEquipmentCapacityEvidence> evidence) {
+    Collections.sort(evidence, new Comparator<InstalledEquipmentCapacityEvidence>() {
       /** {@inheritDoc} */
       @Override
-      public int compare(BottleneckStatus first, BottleneckStatus second) {
-        if (Double.isNaN(first.getUtilization())) {
-          return Double.isNaN(second.getUtilization()) ? 0 : 1;
+      public int compare(InstalledEquipmentCapacityEvidence first, InstalledEquipmentCapacityEvidence second) {
+        if (Double.isNaN(first.getNormalizedUtilization())) {
+          return Double.isNaN(second.getNormalizedUtilization()) ? 0 : 1;
         }
-        if (Double.isNaN(second.getUtilization())) {
+        if (Double.isNaN(second.getNormalizedUtilization())) {
           return -1;
         }
-        return Double.compare(second.getUtilization(), first.getUtilization());
+        return Double.compare(second.getNormalizedUtilization(), first.getNormalizedUtilization());
       }
     });
-    return Collections.unmodifiableList(rankedConstraints);
+  }
+
+  /** Converts unit-safe evidence to the legacy bottleneck row without resampling. */
+  private static List<BottleneckStatus> toBottleneckStatuses(List<InstalledEquipmentCapacityEvidence> evidence) {
+    if (evidence == null || evidence.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<BottleneckStatus> statuses = new ArrayList<BottleneckStatus>();
+    for (InstalledEquipmentCapacityEvidence snapshot : evidence) {
+      statuses
+          .add(new BottleneckStatus(snapshot.getAreaName(), snapshot.getEquipmentName(), snapshot.getConstraintName(),
+              snapshot.getNormalizedUtilization(), snapshot.getCurrentValue(), snapshot.getApplicableLimit(),
+              snapshot.isMinimumConstraint(), snapshot.getDataSource(), snapshot.hasConfidence(),
+              snapshot.getConfidence(), snapshot.hasValidityRange(), snapshot.getValidityMinimum(),
+              snapshot.getValidityMaximum(), snapshot.getPhysicalUnit(), snapshot.isFeasible()));
+    }
+    return Collections.unmodifiableList(statuses);
   }
 
   /**

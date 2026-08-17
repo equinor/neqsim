@@ -588,3 +588,23 @@ base-equipment, convergence and local acceleration state; stable object identity
 copies; foreign/null snapshot rejection; recycle-registration restoration; and Java-serialization continuation. It does
 not qualify thermodynamic model accuracy, convergence of every recycle topology, strongly coupled DAE behaviour, timestep
 independence, external side effects, safety action, virtual commissioning or OTS use.
+
+## Local stream-source transaction coverage
+
+Concrete local `Stream` objects participate in the same identity-preserving transaction. A stream checkpoint captures
+its thermodynamic system defensively, run/cache inputs, property-initialization mode, gas-quality
+configuration and reusable base-equipment state. Rollback retains the registered stream object and restores an independent
+thermodynamic clone; property-derived criconden and vapour-pressure caches are invalidated so a rejected trial cannot leak
+a stale result. Stream clones receive a distinct transaction identity, while Java serialization retains the original
+identity and restart state.
+
+A fully connected registered `Stream` plus classic `Recycle` reports quantitative 2/2 participant coverage and rolls both
+objects back together.
+
+Wrapper `Stream` objects remain fail-closed because their run path delegates fluid mutation to a separately owned stream.
+`VirtualStream` also remains fail-closed: every run constructs a new output `Stream` and increments legacy process-global
+stream-numbering state, which cannot be safely rewound across concurrent models. Stream subclasses, attached controllers,
+energy ports, failure state, design conditions and runtime capacity constraints remain blocked until their additional
+ownership is composed explicitly. This coverage establishes transaction and restart mechanics only; it does not qualify
+source-boundary physics, stream flash accuracy, property-package accuracy, adaptive full-step/two-half-step rejection,
+external I/O, safety action, virtual commissioning or OTS use.

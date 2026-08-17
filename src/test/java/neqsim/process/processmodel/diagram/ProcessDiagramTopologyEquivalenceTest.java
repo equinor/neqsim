@@ -85,11 +85,10 @@ class ProcessDiagramTopologyEquivalenceTest {
 
     List<String> expected = sorted("branch feed->branch splitter|false", "branch splitter->branch mixer|false",
         "branch splitter->branch mixer|false", "branch mixer->loop mixer|false", "liquid recycle->tear seed|true",
-        "liquid recycle->loop mixer|true", "loop mixer->loop separator|false", "loop separator->liquid recycle|true");
+        "tear seed->loop mixer|false", "loop mixer->loop separator|false", "loop separator->liquid recycle|true");
 
-    // The legacy Graphviz view retains the tear stream as an explicit node, so its two-hop
-    // liquid recycle -> tear seed -> loop mixer projection is equivalent to the canonical
-    // physical connection liquid recycle -> loop mixer.
+    // The registered tear stream is an explicit mutable-state barrier in both execution and
+    // diagram projections: liquid recycle -> tear seed -> loop mixer.
     List<String> legacyExpected = sorted("branch feed->branch splitter|false", "branch splitter->branch mixer|false",
         "branch splitter->branch mixer|false", "branch mixer->loop mixer|false", "liquid recycle->tear seed|true",
         "tear seed->loop mixer|false", "loop mixer->loop separator|false", "loop separator->liquid recycle|true");

@@ -921,13 +921,28 @@ if best is not None:
             constraint.getDataSource(),
         )
 
+    for capacity in search.getInstalledCapacityEvidenceAtBestFeasible():
+        print(
+            capacity.getQualifiedConstraintName(),
+            capacity.getNormalizedUtilization(),
+            capacity.getNormalizedUnit(),
+            capacity.getCurrentValue(),
+            capacity.getApplicableLimit(),
+            capacity.getRequiredRelief(),
+            capacity.getPhysicalUnit(),
+            capacity.getConstraintOrigin(),
+            capacity.getEvidenceStatus(),
+        )
+
 sampled_gap = search.getSampledObjectiveOpportunityGap()
 ```
 
 The result is Java-serializable and exposes defensive arrays and fresh immutable lists through
 JPype. It freezes objective direction, unit and weight together with allocation identity,
-provenance, bounds, seed, budget, tolerances, terminal outcome, complete candidate results and
-ranked hydraulic evidence. `getBestSampledObjectiveCandidate()` may be infeasible; its gap to the
+provenance, bounds, seed, budget, tolerances, terminal outcome, complete candidate results, ranked
+hydraulic evidence, and every discovered installed-capacity row. Normalized utilization/margin use
+unit `"1"`; physical current, applicable limit, margin, and required relief use
+`getPhysicalUnit()`. `getBestSampledObjectiveCandidate()` may be infeasible; its gap to the
 best feasible point is only an opportunity among evaluated points.
 
 A converged transfer step is local numerical evidence, not a global optimum or shadow price. A
@@ -984,9 +999,9 @@ evaluator definitions.
 
 An opportunity requires a converged candidate, verified complete restoration and baseline
 reconvergence, a finite direction-aware improvement above the search tolerance, and at least one
-finite violated hard constraint. Installed-capacity relief is calculated from exact current and
-design values in the hydraulic unit; a general constraint uses `max(0, -margin)` in its declared
-unit. Soft violations are not reported, raw relief is never compared across unlike units, and
+finite violated hard constraint. Installed-capacity relief is read from the same immutable current/applicable-limit snapshot that
+supplied normalized candidate feasibility, including installed constraints not selected as required
+hydraulic bindings; a general constraint uses `max(0, -margin)` in its declared unit. Soft violations are not reported, raw relief is never compared across unlike units, and
 missing/non-finite/out-of-validity hydraulic evidence produces `EVIDENCE_LIMITED`.
 
 The ranking is over the common selected-objective unit and finite sampled points only. It is
@@ -1154,6 +1169,8 @@ jpype.shutdownJVM()
 | `ConstraintActivityAnalyzer.ConstraintScale.fromSnapshot(...)` | Positive identity-bound constraint reference with declared unit and provenance |
 | `ConstraintActivityAnalyzer.assess(result, scales, policy)` | Dimensionless margins, normalized local margin sensitivities and conservative activity diagnostics without process evaluations |
 | `getCandidateActiveConstraints(...)` / `getViolatedConstraints(...)` | Registration-ordered feasible-near-boundary and violated subsets; neither is optimizer KKT evidence |
+| `EvaluationResult.getInstalledEquipmentCapacityEvidence()` | Fresh immutable, utilization-ranked installed-capacity rows with stable identity/provenance, dimensionless feasibility, and separate physical residuals |
+| `snapshotInstalledEquipmentCapacityEvidence(model)` | Read a live model once per enabled capacity supplier outside an evaluator run; no process simulation is performed |
 
 The sensitivity-quality methods belong to `ProcessModelSimulationEvaluator`; they are not methods
 on `ProcessSimulationEvaluator`.
@@ -1169,6 +1186,8 @@ on `ProcessSimulationEvaluator`.
 | `getSampledObjectiveOpportunityGap()` | Non-negative sampled diagnostic gap; not global production loss or shadow value |
 | `getRankedHydraulicConstraintsAtBestFeasible()` | Stable descending-utilization evidence at the feasible incumbent |
 | `getRankedHydraulicConstraintsAtBestSampledObjective()` | Stable descending-utilization evidence at the best sampled objective |
+| `getInstalledCapacityEvidenceAtBestFeasible()` | Complete immutable installed-capacity evidence at the feasible incumbent |
+| `getInstalledCapacityEvidenceAtBestSampledObjective()` | Complete immutable installed-capacity evidence at the best sampled objective |
 
 ### EvaluationResult
 

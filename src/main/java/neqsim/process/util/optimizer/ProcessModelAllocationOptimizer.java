@@ -879,6 +879,24 @@ public final class ProcessModelAllocationOptimizer {
       return rankConstraints(bestSampledObjectiveCandidate);
     }
 
+    /** @return complete installed-capacity evidence at the best feasible candidate */
+    public List<InstalledEquipmentCapacityEvidence> getInstalledCapacityEvidenceAtBestFeasible() {
+      return installedCapacityEvidence(bestFeasibleCandidate);
+    }
+
+    /** @return complete installed-capacity evidence at the best sampled objective candidate */
+    public List<InstalledEquipmentCapacityEvidence> getInstalledCapacityEvidenceAtBestSampledObjective() {
+      return installedCapacityEvidence(bestSampledObjectiveCandidate);
+    }
+
+    /** Returns one candidate's fresh immutable installed-capacity evidence. */
+    private static List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence(CandidateRecord candidate) {
+      if (candidate == null) {
+        return Collections.emptyList();
+      }
+      return candidate.getEvaluation().getInstalledEquipmentCapacityEvidence();
+    }
+
     /** @return fresh immutable search diagnostics */
     public List<String> getDiagnostics() {
       return Collections.unmodifiableList(new ArrayList<String>(diagnostics));
