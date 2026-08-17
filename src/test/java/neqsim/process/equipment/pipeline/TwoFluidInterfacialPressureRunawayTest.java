@@ -33,9 +33,30 @@ import neqsim.thermo.system.SystemSrkEos;
  * path was written for, so it is a property of the stabilizer itself rather than of the implicit treatment or of the
  * time step. The interior algebra is not the cause: the flux carries {@code alphaHalf * pHalf} and the source
  * differences those same interface values, so the spurious holdup-gradient force cancels exactly, and
- * {@code applyPressureGradient} is never called, so the pressure gradient is not applied twice. What remains is the
- * stability of the discrete stabilized operator, where the closure is proportional to the square of the slip and can
- * feed back on the slip it is meant to damp.
+ * {@code applyPressureGradient} is never called, so the pressure gradient is not applied twice.
+ * </p>
+ *
+ * <p>
+ * Setting the interfacial pressure coefficient to zero isolates the cause. That removes the Bestion closure entirely
+ * and leaves only the cancellation of the spurious holdup-gradient force, and the line still runs away:
+ * </p>
+ *
+ * <pre>
+ * term off                    inventory 100.9 t   inlet   57.8 bara
+ * term on, coefficient 0.0    inventory  30.8 t   inlet 1253.8 bara
+ * term on, coefficient 0.2    inventory  28.2 t   inlet 1351.1 bara
+ * term on, coefficient 1.2    inventory  30.8 t   inlet 1261.5 bara
+ * </pre>
+ *
+ * <p>
+ * So the defect is in the treatment of the non-conservative {@code p * d(alpha)/dx} source, not in the stabilizer it
+ * was added to carry. Both formulations are defensible in the continuum: keeping {@code alpha * p} in the momentum flux
+ * requires that source to cancel it down to {@code alpha * dp/dx}, and omitting both leaves the momentum equation short
+ * of a real force. The discrete forms are not equivalent. The flux weights the holdup with a plain average while
+ * supplying numerical dissipation only to the convective part, so cancelling its pressure contribution and
+ * reintroducing the force through cell-centred values leaves the void-fraction wave undamped. Restoring it needs a
+ * well-balanced or path-conservative discretisation, or moving the pressure force wholly into the source through the
+ * currently unused {@code applyPressureGradient}. Passing coefficients through the existing form does not fix it.
  * </p>
  */
 public class TwoFluidInterfacialPressureRunawayTest {
@@ -80,8 +101,8 @@ public class TwoFluidInterfacialPressureRunawayTest {
 
   /** A line fed at 60 bara cannot reconstruct an inlet pressure of hundreds of bar. */
   @Test
-  @Disabled("Known defect: the interfacial-pressure stabilizer drives the reconstructed inlet pressure to about "
-      + "900-1370 bara on a 60 bara feed, in both the explicit and the implicit treatment.")
+  @Disabled("Known defect: the non-conservative p*d(alpha)/dx treatment drives the reconstructed inlet pressure to "
+      + "about 900-1370 bara on a 60 bara feed, with the stabilizer coefficient at zero as well as at its default.")
   void testStabilizedLineKeepsAPhysicalInletPressure() {
     double implicitLargeStep = inletPressureBara(true, 0.5);
     double explicitSmallStep = inletPressureBara(false, 0.05);
