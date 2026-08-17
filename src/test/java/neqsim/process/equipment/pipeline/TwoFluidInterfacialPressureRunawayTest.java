@@ -79,8 +79,19 @@ import neqsim.thermo.system.SystemSrkEos;
  * So this is a momentum runaway. With the physically correct force alone the phase momentum equations accelerate
  * without bound, because the pressure driving them comes from a steady mixture correlation rather than from a
  * conservation law, leaving no compressibility feedback to arrest the acceleration. The term-off path masks this by
- * retaining the large spurious force. Making the pressure part of the solution, which is what the IMEX pressure
- * correction machinery already exists to do, is the structural fix; correcting the momentum force alone is not enough.
+ * retaining the large spurious force. Making the pressure part of the solution is the structural fix; correcting the
+ * momentum force alone is not enough.
+ * </p>
+ *
+ * <p>
+ * A linearised volume constraint was tried for that and is not sufficient on its own. Deriving pressure from the change
+ * in conserved cell mass through the Wood sound speed, {@code dp = c^2 * d(rho)}, looks convincing for the first 300 s,
+ * where the velocities sit at 4.45 m/s and the inlet at 77.0 bara instead of saturating. Followed to 1200 s it
+ * oscillates rather than settling: the outlet flow swings between zero and 384 kg/s against a 50 kg/s feed, the inlet
+ * between 39 and 77 bara, and the gas velocity reaches the 100 m/s clamp after all. The saturation is delayed, not
+ * removed, so the attempt was reverted. Any candidate must therefore be judged over at least 1200 s, because a 300 s
+ * window is short enough to land mid-swing and read as a fix. The remaining lead is that the pressure and the momenta
+ * are updated in sequence rather than solved together.
  * </p>
  */
 public class TwoFluidInterfacialPressureRunawayTest {
