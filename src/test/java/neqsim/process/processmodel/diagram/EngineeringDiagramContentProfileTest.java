@@ -6,16 +6,26 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Diagnostic;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Drawing;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticObject;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.CoordinateUnit;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.EvidenceState;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetAssignment;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetDefinition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringNode;
 
@@ -86,6 +96,30 @@ class EngineeringDiagramContentProfileTest {
     assertThrows(UnsupportedOperationException.class,
         () -> first.getDrawings().get(0).getSheets().get(0).getObjectNodeIds().add("equipment:extra"));
     assertTrue(hasDiagnostic(first, "DIAGRAM_CONTENT_PROFILE_PROPOSAL_ONLY", "PFD-PROFILE-001"));
+  }
+
+  @Test
+  void reportsManualLayoutEvidenceThatTheProfileCannotDisplay() {
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withSheet(new SheetDefinition("instrument-detail", "2", "Instrument detail", "layout:profile",
+            EvidenceState.REVIEWED, "Process discipline", "2026-08-17T05:00:00Z", "A"))
+        .withAssignment(new SheetAssignment("instrument:temperature", "instrument-detail", "layout:profile",
+            EvidenceState.REVIEWED, "Process discipline", "2026-08-17T05:00:00Z", "A"))
+        .withPinnedPosition(
+            new PinnedPosition("instrument:temperature", "instrument-detail", 50.0, 60.0, CoordinateUnit.MILLIMETRE,
+                "layout:profile", EvidenceState.REVIEWED, "Process discipline", "2026-08-17T05:00:00Z", "A"))
+        .withProtectedRoute(new ProtectedRoute("energy-connection:heater-duty", "plant",
+            Arrays.asList(new Waypoint(10.0, 20.0), new Waypoint(30.0, 20.0)), CoordinateUnit.MILLIMETRE,
+            "layout:profile", EvidenceState.REVIEWED, "Process discipline", "2026-08-17T05:00:00Z", "A"));
+
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(profileGraph(), "PFD-PROFILE-001",
+        "Content profile reference", ContentProfile.BFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    assertTrue(documents.isValid());
+    assertEquals(3, diagnosticCount(documents, "DIAGRAM_CONTENT_PROFILE_LAYOUT_OMITTED"));
+    assertTrue(findSheet(documents, "instrument-detail").getManualAssignments().isEmpty());
+    assertTrue(findSheet(documents, "instrument-detail").getPinnedPositions().isEmpty());
+    assertTrue(findSheet(documents, "plant").getProtectedRoutes().isEmpty());
   }
 
   private static EngineeringDiagramDocumentSet documents(EngineeringGraph graph, ContentProfile profile) {
@@ -192,5 +226,24 @@ class EngineeringDiagramContentProfileTest {
       }
     }
     return false;
+  }
+
+  private static int diagnosticCount(EngineeringDiagramDocumentSet documents, String code) {
+    int result = 0;
+    for (Diagnostic diagnostic : documents.getDiagnostics()) {
+      if (code.equals(diagnostic.getCode())) {
+        result++;
+      }
+    }
+    return result;
+  }
+
+  private static Sheet findSheet(EngineeringDiagramDocumentSet documents, String key) {
+    for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
+      if (key.equals(sheet.getKey())) {
+        return sheet;
+      }
+    }
+    throw new AssertionError("Missing sheet " + key);
   }
 }
