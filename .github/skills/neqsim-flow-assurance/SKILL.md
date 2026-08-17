@@ -561,6 +561,22 @@ for (double qgMSm3d : gasRates) {
 > yet validated, so it is not a drop-in replacement. Finishing it means folding
 > the term into the IMEX implicit pressure solve.
 >
+> **Re-measured (PR #3086): the interfacial-pressure term does NOT rescue this
+> case.** Sweeping CFL 0.05/0.1/0.2/0.35/0.5/0.8 with and without the term, using
+> `isTransientOutletBackflowClamped()` as the objective detector, every one of the
+> twelve combinations is unstable — with the term ON, backflow trips at *every*
+> CFL including 0.05. So do not reach for `setEnableInterfacialPressure(true)`
+> expecting a stable liquid-rich transient, and note that folding the term into
+> the IMEX solve would only buy step-size relief for a term that does not deliver
+> stability here. `calcVoidWaveSpeed` already feeds the CFL limit, so the small
+> step it needs is a genuine stability limit, not a controller oversight.
+>
+> **What did help: fixing the regime.** The same case classified SLUG rather than
+> ANNULAR (PR #3086, Barnea bridging limit) cuts the 30-minute inventory runaway
+> from **+56.3% to +20.1%** at default settings. Still unusable, still gated by
+> the flag, but the regime branch is a bigger lever on the runaway than the
+> interfacial-pressure term is.
+>
 > **The transient now tells you when it has failed — always check it.** As of
 > PR #3080, `pipe.isTransientOutletBackflowClamped()` returns true once any phase
 > has reversed at the outlet, which is the first event in the runaway above. This
