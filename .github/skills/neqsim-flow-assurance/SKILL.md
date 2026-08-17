@@ -561,6 +561,15 @@ for (double qgMSm3d : gasRates) {
 > yet validated, so it is not a drop-in replacement. Finishing it means folding
 > the term into the IMEX implicit pressure solve.
 >
+> **The transient now tells you when it has failed — always check it.** As of
+> PR #3080, `pipe.isTransientOutletBackflowClamped()` returns true once any phase
+> has reversed at the outlet, which is the first event in the runaway above. This
+> is the transient counterpart of `isSteadyStatePressureFloorLimited()`: ALWAYS
+> read it after `runTransient` and discard the profile when it is true, exactly
+> as with the steady-state flags. The mass-balance report will NOT warn you — it
+> closes to 1e-16 throughout, because it is computed from the same clamped flux.
+> The flag is sticky for the run and is cleared by the next `run()`.
+>
 > **Three-phase (gas/oil/water) steady state is fixed.** The oil/water slip
 > ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls
 > off to no slip once the liquid disperses above a liquid Froude number of about
