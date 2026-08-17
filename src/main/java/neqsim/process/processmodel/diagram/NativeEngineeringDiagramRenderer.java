@@ -586,10 +586,14 @@ public final class NativeEngineeringDiagramRenderer {
     String endpointId = stringProperty(connection, property, "");
     SemanticObject endpoint = objects.get(endpointId);
     String ownerId = endpoint == null ? "" : stringProperty(endpoint, "ownerNodeId", "");
-    if (endpointId.isEmpty() || ownerId.isEmpty() || !positions.containsKey(ownerId)) {
+    if (endpointId.isEmpty() || ownerId.isEmpty()) {
       diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED",
-          "Canonical endpoint cannot be anchored to a visible owner symbol; center routing fallback is retained",
+          "Canonical endpoint cannot be resolved to an owner symbol; center routing fallback is retained",
           endpointId.isEmpty() ? connection.getId() : endpointId));
+      return;
+    }
+    if (!positions.containsKey(ownerId)) {
+      // The peer owner of a valid off-page connection is intentionally absent from this sheet.
       return;
     }
     String role = source ? "source" : "target";
