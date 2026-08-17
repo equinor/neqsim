@@ -120,7 +120,9 @@ public class DistillationColumnCoordinatedFlowTest {
     column.setCondenserRefluxRatio(1.8);
     column.setReboilerVaporBoilupRatio(1.20);
     column.setLiquidSideDrawFraction(2, 0.03);
-    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    // Active pumparound returns are assembled by the outer tear; use the residual-monitored
+    // MESH solver for the coupled inner column rather than direct substitution.
+    column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
     column.setMaxNumberOfIterations(80);
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(2.0e-1);
