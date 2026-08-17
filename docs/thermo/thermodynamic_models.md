@@ -4,8 +4,6 @@ description: "This document provides a comprehensive overview of the thermodynam
 keywords: "thermodynamic model, SRK, Peng-Robinson, CPA, UMR-CPA, SystemUMRCPAEoS, TEG dehydration, GERG-2008, EOS-CG, UMR-PRU, electrolyte, cubic EOS, activity coefficient, NRTL, UNIFAC"
 ---
 
-# Thermodynamic Models in NeqSim
-
 This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are classified into categories based on their mathematical formulation and application domain.
 
 ## Table of Contents
@@ -564,7 +562,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 ```
 
-> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel).
+> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel.md).
 >
 > **Reference:** Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240.
 
@@ -611,8 +609,8 @@ $$
 |------|------|-------------|
 | 1 | `NO` | All $k_{ij} = 0$ (no interactions) |
 | 2 | `CLASSIC` | Classic with database $k_{ij}$ |
-| 8 | `CLASSIC_T` | Temperature-dependent: $k_{ij}(T) = k_{ij,0} + k_{ij,T} \cdot T$ |
-| 12 | `CLASSIC_T2` | Inverse T-dependency: $k_{ij}(T) = k_{ij,0} + k_{ij,T}/T$ |
+| 8 | `CLASSIC_T` | Normalized T-dependency: $k_{ij}(T) = k_{ij,0} + k_{ij,T} \left(\frac{T}{273.15\ \mathrm{K}} - 1\right)$ |
+| 12 | `CLASSIC_T2` | Inverse T-dependency: $k_{ij}(T) = k_{ij,0} + \frac{k_{ij,T}}{T}$ |
 
 ### 8.3 Huron-Vidal Mixing Rules
 
@@ -707,10 +705,17 @@ mixRule.setBinaryInteractionParameter(0, 1, 0.12);
 mixRule.setBinaryInteractionParameterij(0, 1, 0.08);  // kij
 mixRule.setBinaryInteractionParameterji(0, 1, 0.12);  // kji
 
-// Set temperature-dependent kij
-mixRule.setBinaryInteractionParameter(0, 1, 0.10);      // kij0
-mixRule.setBinaryInteractionParameterT1(0, 1, 0.001);   // kijT
+// Obtain the rule again after selecting CLASSIC_T
+fluid.setMixingRule(EosMixingRuleType.CLASSIC_T);
+EosMixingRulesInterface temperatureDependentRule =
+    fluid.getPhase(0).getMixingRule();
+temperatureDependentRule.setBinaryInteractionParameter(0, 1, 0.10);
+temperatureDependentRule.setBinaryInteractionParameterT1(0, 1, 0.001);
 ```
+
+For `CLASSIC_T`, `kij0` is the interaction parameter at 273.15 K and `kijT` is a
+dimensionless coefficient for the normalized temperature shift. For `CLASSIC_T2`, `kijT`
+has units of kelvin because the implementation divides it by absolute temperature in kelvin.
 
 ---
 
@@ -929,14 +934,14 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide) - Complete guide to creating fluids
-- [Mixing Rules Guide](mixing_rules_guide) - Detailed mixing rule documentation
-- [GERG-2008 and EOS-CG](gerg2008_eoscg) - Reference equation details
-- [Electrolyte CPA Model](ElectrolyteCPAModel) - Electrolyte model documentation
-- [Søreide-Whitson Model](SoreideWhitsonModel) - Gas solubility in brine, produced water emissions
-- [Flash Calculations Guide](flash_calculations_guide) - Thermodynamic operations
-- [Mathematical Models](mathematical_models) - Equation derivations
-- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING) - Emission calculations using Søreide-Whitson
+- [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
+- [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
+- [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
+- [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
+- [Søreide-Whitson Model](SoreideWhitsonModel.md) - Gas solubility in brine, produced water emissions
+- [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations
+- [Mathematical Models](mathematical_models.md) - Equation derivations
+- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING.md) - Emission calculations using Søreide-Whitson
 
 ---
 
