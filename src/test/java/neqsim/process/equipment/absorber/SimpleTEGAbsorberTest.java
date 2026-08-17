@@ -62,6 +62,7 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     gasFluid.addComponent("CO2", 0.02);
     gasFluid.addComponent("nitrogen", 0.01);
     gasFluid.setMixingRule(10);
+    gasFluid.setMultiPhaseCheck(false);
 
     Stream gasFeed = new Stream("gas basis", gasFluid);
     gasFeed.setFlowRate(1.0, "MSm3/day");
@@ -73,6 +74,7 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     tegFluid.addComponent("TEG", 0.995);
     tegFluid.addComponent("water", 0.005);
     tegFluid.setMixingRule(10);
+    tegFluid.setMultiPhaseCheck(false);
 
     Stream leanTeg = new Stream("lean TEG", tegFluid);
     leanTeg.setFlowRate(100.0, "kg/hr");
