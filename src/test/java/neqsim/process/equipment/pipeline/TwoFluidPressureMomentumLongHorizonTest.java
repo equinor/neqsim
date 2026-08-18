@@ -41,6 +41,7 @@ class TwoFluidPressureMomentumLongHorizonTest {
     pipe.setEnableInterfacialPressure(true);
     pipe.setImplicitInterfacialPressureCoupling(true);
     pipe.setEnableCoupledPressureMomentum(true);
+    pipe.setAllowOutletPhaseBackflow(true);
     pipe.setCflNumber(0.5);
     pipe.run();
 
