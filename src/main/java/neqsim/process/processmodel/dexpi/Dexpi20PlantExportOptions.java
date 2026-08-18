@@ -4,8 +4,8 @@ package neqsim.process.processmodel.dexpi;
  * Immutable options for the opt-in native DEXPI 2.0 Plant export path.
  *
  * <p>
- * The default keeps the metadata-only output introduced for controlled provenance. Boundary connectors are emitted
- * only when explicitly requested, so the legacy metadata-free and metadata-only byte paths remain unchanged.
+ * The default keeps the metadata-only output introduced for controlled provenance. Boundary connectors are emitted only
+ * when explicitly requested, so the legacy metadata-free and metadata-only byte paths remain unchanged.
  * </p>
  */
 public final class Dexpi20PlantExportOptions {
