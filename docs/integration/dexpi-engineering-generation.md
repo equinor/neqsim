@@ -330,6 +330,36 @@ qualification. Commercial import and round-trip evidence must follow
 `docs/integration/dexpi-commercial-cae-evidence-template.json`; a missing vendor test remains
 `QUALIFICATION_REQUIRED` rather than being inferred from schema validity.
 
+### Controlled native Plant export metadata
+
+The compatibility `Dexpi20XmlWriter.write(process, file)` overload remains unchanged and does not invent
+provenance. When the exporting workflow has accountable source values, use
+`Dexpi20PlantExportMetadata` and the additive metadata overload:
+
+```java
+Dexpi20PlantExportMetadata metadata =
+    Dexpi20PlantExportMetadata.builder(
+            "2026-08-18T05:00:00Z", "NeqSim", "Equinor", "3.17.0")
+        .plantProperty(
+            Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_IDENTIFICATION_CODE,
+            "SYNTHETIC-PLANT")
+        .plantProperty(
+            Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_NAME,
+            "Synthetic regression plant")
+        .build();
+Dexpi20XmlWriter.write(process, outputFile, metadata);
+```
+
+The builder requires a caller-supplied ISO-8601 timestamp with an offset, all four required
+`Core/EngineeringModel` provenance values, and at least one non-blank official
+`Plant/Diagram.PlantMetaData` property. It rejects an empty metadata object so a validator cannot be silenced with
+placeholder content. The exporter places PlantMetaData under the PlantModel's inherited `MetaData` composition and
+serializes plant fields in stable declaration order. This is source provenance, not drawing approval, standards
+conformance, or evidence that graphical representations and boundary nodes are complete.
+
+The committed external baseline is intentionally not changed by this API alone. Regenerate a controlled fixture with
+the metadata overload and rerun the pinned verifier before changing its reviewed error and warning counts.
+
 The same helper can run the independent MIT-licensed DEXPIViewer validator without downloading or silently updating
 the tool. Supply a local checkout pinned to commit
 `18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad` after installing that checkout's locked Node.js dependencies:
