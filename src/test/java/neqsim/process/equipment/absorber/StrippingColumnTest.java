@@ -208,6 +208,8 @@ class StrippingColumnTest extends NeqSimTest {
 
     StreamInterface overheadGas = stripper.getOverheadGasStream();
     StreamInterface leanLiquid = stripper.getLeanLiquidStream();
+    assertSame(stripper.getGasOutStream(), overheadGas);
+    assertSame(stripper.getLiquidOutStream(), leanLiquid);
     assertTrue(overheadGas.getFlowRate("kg/hr") > 0.0, diagnostics);
     assertTrue(leanLiquid.getFlowRate("kg/hr") > 0.0, diagnostics);
     assertTrue(overheadGas.getTemperature("K") > 0.0, diagnostics);
