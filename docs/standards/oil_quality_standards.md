@@ -283,7 +283,7 @@ Standard_ASTM_D4294 d4294 = new Standard_ASTM_D4294(sourOil);
 d4294.calculate();
 
 double sulfurWtPct = d4294.getValue("sulfur");
-double sulfurPpmw = d4294.getValue("sulfurContent", "ppmw");
+double sulfurPpmw = d4294.getValue("sulfur", "ppmw");
 String sweetSour = d4294.getSulfurClassification();
 
 System.out.printf("Sulfur: %.3f wt%% (%.0f ppmw) - %s%n",
