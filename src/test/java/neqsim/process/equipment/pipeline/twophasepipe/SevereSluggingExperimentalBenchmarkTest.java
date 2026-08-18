@@ -364,12 +364,15 @@ class SevereSluggingExperimentalBenchmarkTest {
 
     LimitCycleMetrics pressureCycle = TwoFluidBenchmarkMetrics.analyzeLimitCycle(toArray(sampleTimes),
         toArray(pressureSamples), WARM_UP_SECONDS);
-    LimitCycleMetrics liquidCycle = TwoFluidBenchmarkMetrics.analyzeLimitCycle(toArray(sampleTimes),
-        toArray(liquidOutletSamples), WARM_UP_SECONDS);
+    double liquidCyclePeriodSeconds = estimateLowProductionCyclePeriod(sampleTimes, liquidOutletSamples);
+    int completedLiquidCycleCount = Double.isFinite(liquidCyclePeriodSeconds)
+        ? (int) Math.floor((sampleTimes.get(sampleTimes.size() - 1) - sampleTimes.get(0))
+            / liquidCyclePeriodSeconds)
+        : 0;
     double maximumSlugLength = pipe.getMaxSlugLengthAtOutlet();
     return new TransientMetrics(label, SOURCE_URL, maximum(pressureSamples) - minimum(pressureSamples),
-        pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCycle.getPeriodSeconds(),
-        liquidCycle.getCompletedCycleCount(), minimum(liquidOutletSamples), maximum(liquidOutletSamples),
+        pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCyclePeriodSeconds,
+        completedLiquidCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples),
         maximumSlugLength, pipe.isSteadyStateWallClockLimited(), maximumClosure, finalInventory);
   }
 
