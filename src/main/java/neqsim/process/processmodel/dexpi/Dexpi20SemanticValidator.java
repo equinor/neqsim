@@ -26,7 +26,7 @@ public final class Dexpi20SemanticValidator {
   private static final Set<String> SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<String>(
       Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue", "Core/PhysicalQuantities.PhysicalQuantity",
           "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup", "Core/Diagram.Text", "Core/Diagram.Point",
-          "Plant/PlantModel", "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
+          "Plant/PlantModel", "Plant/Diagram.PlantMetaData", "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
           "Plant/ProcessEquipment.CentrifugalPump", "Plant/ProcessEquipment.Separator",
           "Plant/ProcessEquipment.AirCoolingSystem", "Plant/ProcessEquipment.TubularHeatExchanger",
           "Plant/ProcessEquipment.FiredHeater", "Plant/ProcessEquipment.Tank", "Plant/ProcessEquipment.Nozzle",
