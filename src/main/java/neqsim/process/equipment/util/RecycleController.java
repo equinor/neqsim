@@ -2,7 +2,6 @@ package neqsim.process.equipment.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -49,8 +48,8 @@ public class RecycleController implements Serializable {
 
   /**
    * Recycles whose previously accepted state can seed the first observation of this solve. Held as a list scanned by
-   * identity rather than an {@link IdentityHashMap} because XStream has no converter for that type and cannot reflect
-   * into {@code java.util} on JDK 9+, which breaks saving a process from an embedded host.
+   * identity rather than an {@link java.util.IdentityHashMap} because XStream has no converter for that type and cannot
+   * reflect into {@code java.util} on JDK 9+, which breaks saving a process from an embedded host.
    */
   private List<Recycle> acceptedRecycleSeeds = new ArrayList<Recycle>();
 
