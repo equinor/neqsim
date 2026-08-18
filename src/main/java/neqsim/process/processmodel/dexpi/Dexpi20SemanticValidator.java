@@ -23,10 +23,11 @@ public final class Dexpi20SemanticValidator {
   private static final String CORE_MODEL = "https://data.dexpi.org/models/2.0.0/Core.xml";
   private static final String PLANT_MODEL = "https://data.dexpi.org/models/2.0.0/Plant.xml";
   private static final String PROCESS_MODEL = "https://data.dexpi.org/models/2.0.0/Process.xml";
-  private static final Set<String> SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<String>(
-      Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue", "Core/PhysicalQuantities.PhysicalQuantity",
-          "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup", "Core/Diagram.Text", "Core/Diagram.Point",
-          "Plant/PlantModel", "Plant/Diagram.PlantMetaData", "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
+  private static final Set<String> SUPPORTED_TYPES = Collections
+      .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue",
+          "Core/PhysicalQuantities.PhysicalQuantity", "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup",
+          "Core/Diagram.Text", "Core/Diagram.Point", "Plant/PlantModel", "Plant/Diagram.PlantMetaData",
+          "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
           "Plant/ProcessEquipment.CentrifugalPump", "Plant/ProcessEquipment.Separator",
           "Plant/ProcessEquipment.AirCoolingSystem", "Plant/ProcessEquipment.TubularHeatExchanger",
           "Plant/ProcessEquipment.FiredHeater", "Plant/ProcessEquipment.Tank", "Plant/ProcessEquipment.Nozzle",
