@@ -368,8 +368,8 @@ class SevereSluggingExperimentalBenchmarkTest {
     double maximumSlugLength = pipe.getMaxSlugLengthAtOutlet();
     return new TransientMetrics(label, SOURCE_URL, maximum(pressureSamples) - minimum(pressureSamples),
         pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCycle.periodSeconds,
-        liquidCycle.completedCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples),
-        maximumSlugLength, pipe.isSteadyStateWallClockLimited(), maximumClosure, finalInventory);
+        liquidCycle.completedCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples), maximumSlugLength,
+        pipe.isSteadyStateWallClockLimited(), maximumClosure, finalInventory);
   }
 
   private static TwoFluidPipe createLargeFacilityTestThree(int numberOfSections, double inletPressurePerturbation) {
@@ -437,8 +437,7 @@ class SevereSluggingExperimentalBenchmarkTest {
     return result;
   }
 
-  private static LowProductionCycleMetrics analyzeLowProductionCycles(List<Double> times,
-      List<Double> liquidRates) {
+  private static LowProductionCycleMetrics analyzeLowProductionCycles(List<Double> times, List<Double> liquidRates) {
     double minimum = minimum(liquidRates);
     double threshold = minimum + 0.15 * (maximum(liquidRates) - minimum);
     List<Integer> troughIndices = new ArrayList<>();
