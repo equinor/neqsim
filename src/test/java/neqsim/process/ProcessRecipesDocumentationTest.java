@@ -107,8 +107,8 @@ class ProcessRecipesDocumentationTest {
     valve.calcKv();
     assertTrue(valve.getKv() > 0.0);
 
-    for (String standard : new String[] {"IEC 60534", "IEC 60534 full", "prod choke", "Sachdeva", "Gilbert",
-        "Baxendell", "Ros", "Achong"}) {
+    for (String standard : new String[] { "IEC 60534", "IEC 60534 full", "prod choke", "Sachdeva", "Gilbert",
+        "Baxendell", "Ros", "Achong" }) {
       design.setValveSizingStandard(standard);
       assertEquals(standard, design.getValveSizingStandard());
     }
