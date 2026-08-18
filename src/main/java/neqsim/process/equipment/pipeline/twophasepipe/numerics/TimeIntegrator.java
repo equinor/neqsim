@@ -127,11 +127,19 @@ public class TimeIntegrator implements Serializable {
       advancedState = stepSSPRK3(U, rhs, dt);
       break;
     case IMEX_PRESSURE_CORRECTION:
-      return stepIMEXPressureCorrection(U, rhs, dt);
+      if (coupledPressureMomentumEnabled) {
+        // The coupled solver supplies the acoustic correction and must not be
+        // stacked on the legacy sequential IMEX pressure correction.
+        advancedState = stepEuler(U, rhs, dt);
+      } else {
+        return stepIMEXPressureCorrection(U, rhs, dt);
+      }
+      break;
     default:
       advancedState = stepRK4(U, rhs, dt);
       break;
     }
+    advancedState = applyCoupledPressureMomentumCorrection(advancedState, dt);
     return applyImplicitVoidWaveCorrection(advancedState, dt);
   }
 
@@ -470,6 +478,27 @@ public class TimeIntegrator implements Serializable {
   /** Whether to apply the implicit interfacial-pressure correction after the explicit transport step. */
   private boolean implicitVoidWaveEnabled;
 
+  /** Coupled compressible pressure-momentum correction. */
+  private final CoupledPressureMomentumSolver coupledPressureMomentumSolver =
+      new CoupledPressureMomentumSolver();
+
+  /** Whether pressure and phase momenta are corrected in the same accepted step. */
+  private boolean coupledPressureMomentumEnabled;
+
+  /** Cell pressure supplied to the coupled correction in Pa. */
+  private double[] coupledCellPressure;
+
+  /** Cell lengths supplied to the coupled correction in m. */
+  private double[] coupledCellLengths;
+
+  /** Phase sound speeds supplied to the coupled correction in m/s. */
+  private double[] coupledGasSoundSpeeds;
+  private double[] coupledOilSoundSpeeds;
+  private double[] coupledWaterSoundSpeeds;
+
+  /** Most recent coupled pressure-momentum result. */
+  private CoupledPressureMomentumSolver.Result lastCoupledPressureMomentumResult;
+
   /** Cell size for IMEX pressure solve (m). Set by caller before step. */
   private double imexDx = 1.0;
 
@@ -546,6 +575,126 @@ public class TimeIntegrator implements Serializable {
     this.cellWaterDensities = waterDensities;
     this.imexDx = dx;
     this.implicitVoidWaveEnabled = enabled;
+  }
+
+  /**
+   * Configure the coupled pressure-momentum correction.
+   *
+   * @param pressure cell pressure in Pa
+   * @param areas cell cross-sectional areas in m2
+   * @param lengths cell axial lengths in m
+   * @param gasDensities gas density in kg/m3
+   * @param oilDensities oil density in kg/m3
+   * @param waterDensities water density in kg/m3
+   * @param gasSoundSpeeds gas sound speed in m/s
+   * @param oilSoundSpeeds oil sound speed in m/s
+   * @param waterSoundSpeeds water sound speed in m/s
+   * @param outletPressure fixed outlet pressure in Pa
+   * @param outletFixed true when the outlet pressure is a Dirichlet boundary
+   * @param enabled true to apply the coupled correction
+   */
+  public void setCoupledPressureMomentumProperties(
+      double[] pressure,
+      double[] areas,
+      double[] lengths,
+      double[] gasDensities,
+      double[] oilDensities,
+      double[] waterDensities,
+      double[] gasSoundSpeeds,
+      double[] oilSoundSpeeds,
+      double[] waterSoundSpeeds,
+      double outletPressure,
+      boolean outletFixed,
+      boolean enabled) {
+    this.coupledCellPressure = pressure == null ? null : pressure.clone();
+    this.cellAreas = areas == null ? null : areas.clone();
+    this.coupledCellLengths = lengths == null ? null : lengths.clone();
+    this.cellGasDensities = gasDensities == null ? null : gasDensities.clone();
+    this.cellOilDensities = oilDensities == null ? null : oilDensities.clone();
+    this.cellWaterDensities = waterDensities == null ? null : waterDensities.clone();
+    this.coupledGasSoundSpeeds =
+        gasSoundSpeeds == null ? null : gasSoundSpeeds.clone();
+    this.coupledOilSoundSpeeds =
+        oilSoundSpeeds == null ? null : oilSoundSpeeds.clone();
+    this.coupledWaterSoundSpeeds =
+        waterSoundSpeeds == null ? null : waterSoundSpeeds.clone();
+    this.imexOutletPressure = outletPressure;
+    this.imexOutletPressureFixed = outletFixed;
+    this.coupledPressureMomentumEnabled = enabled;
+    if (!enabled) {
+      lastCoupledPressureMomentumResult = null;
+    }
+  }
+
+  private double[][] applyCoupledPressureMomentumCorrection(
+      double[][] state, double dt) {
+    if (!coupledPressureMomentumEnabled) {
+      return state;
+    }
+    lastCoupledPressureMomentumResult =
+        coupledPressureMomentumSolver.correct(
+            state,
+            dt,
+            coupledCellPressure,
+            cellAreas,
+            coupledCellLengths,
+            cellGasDensities,
+            cellOilDensities,
+            cellWaterDensities,
+            coupledGasSoundSpeeds,
+            coupledOilSoundSpeeds,
+            coupledWaterSoundSpeeds,
+            imexOutletPressure,
+            imexOutletPressureFixed);
+    return lastCoupledPressureMomentumResult.getState();
+  }
+
+  /** @return true when the most recent coupled correction converged */
+  public boolean isCoupledPressureMomentumConverged() {
+    return lastCoupledPressureMomentumResult != null
+        && lastCoupledPressureMomentumResult.isConverged();
+  }
+
+  /** @return maximum relative cell-volume residual from the latest correction */
+  public double getCoupledPressureMomentumVolumeResidual() {
+    return lastCoupledPressureMomentumResult == null
+        ? Double.NaN
+        : lastCoupledPressureMomentumResult.getMaximumRelativeVolumeResidual();
+  }
+
+  /** @return nonlinear iterations used by the latest coupled correction */
+  public int getCoupledPressureMomentumIterations() {
+    return lastCoupledPressureMomentumResult == null
+        ? 0
+        : lastCoupledPressureMomentumResult.getIterations();
+  }
+
+  /** @return corrected pressure from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumPressure() {
+    return lastCoupledPressureMomentumResult == null
+        ? null
+        : lastCoupledPressureMomentumResult.getPressure();
+  }
+
+  /** @return corrected gas density from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumGasDensity() {
+    return lastCoupledPressureMomentumResult == null
+        ? null
+        : lastCoupledPressureMomentumResult.getGasDensity();
+  }
+
+  /** @return corrected oil density from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumOilDensity() {
+    return lastCoupledPressureMomentumResult == null
+        ? null
+        : lastCoupledPressureMomentumResult.getOilDensity();
+  }
+
+  /** @return corrected water density from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumWaterDensity() {
+    return lastCoupledPressureMomentumResult == null
+        ? null
+        : lastCoupledPressureMomentumResult.getWaterDensity();
   }
 
   /**
