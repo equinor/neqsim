@@ -990,6 +990,38 @@ pipe.setTimeIntegrationMethod(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION); /
 TimeIntegrator.Method current = pipe.getTimeIntegrationMethod(); // query
 ```
 
+### Coupled pressure-momentum transient correction
+
+The historical transient path advances conservative phase mass and momentum and then reconstructs
+pressure from the steady friction-and-gravity gradient. That sequential reconstruction cannot
+provide compressibility feedback to a momentum instability. It is retained as the default for
+compatibility.
+
+The opt-in coupled correction solves a finite-volume pressure equation from the cell-volume
+constraint and phase compressibilities. The pressure correction changes phase mass fluxes
+conservatively and corrects gas, oil, and water momenta with the same face pressure gradients.
+It therefore advances pressure and momentum in one accepted substep and does not call the
+steady pressure reconstruction afterward.
+
+```java
+pipe.setEnableInterfacialPressure(true);
+pipe.setImplicitInterfacialPressureCoupling(true);
+pipe.setEnableCoupledPressureMomentum(true);
+```
+
+Use the three settings together for liquid-rich transients. The interfacial-pressure term makes
+the phase-momentum system hyperbolic, its implicit treatment removes the small void-wave CFL
+limit, and the coupled correction supplies compressibility feedback. The mode reports
+`isCoupledPressureMomentumConverged()`,
+`getCoupledPressureMomentumVolumeResidual()`, and
+`getCoupledPressureMomentumIterations()`. A non-converged non-adaptive step throws instead of
+returning a bounded-looking but invalid result.
+
+The option remains off by default while long-horizon severe-slugging, mesh, timestep, and
+independent OLGA/public benchmark qualification is completed. Do not use short startup peaks as
+limit-cycle evidence; report period, the P10-P90 band, and completed cycle count over a settled
+window.
+
 ### Adaptive Timestepping
 
 Adaptive timestepping provides robustness for challenging geometries. Enable via
