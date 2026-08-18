@@ -3,8 +3,6 @@ title: "Oil Quality Standards"
 description: "Comprehensive guide to oil quality standards in NeqSim including ASTM D86 distillation, D445 viscosity, D4052 density/API gravity, D4294 sulfur, D2500 cloud point, D97 pour point, TVP (true vapor pressure), D4737 cetane index, and BS&W."
 ---
 
-# Oil Quality Standards
-
 NeqSim provides thermodynamics-based implementations of key ASTM standards used for crude oil and petroleum product quality characterization.
 
 ## Available Standards
@@ -15,7 +13,7 @@ NeqSim provides thermodynamics-based implementations of key ASTM standards used 
 | ASTM D445 | `Standard_ASTM_D445` | Kinematic viscosity | KV40, KV100, Viscosity Index |
 | ASTM D4052 | `Standard_ASTM_D4052` | Density / API gravity | Density, SG, API, classification |
 | ASTM D4294 | `Standard_ASTM_D4294` | Total sulfur content | Sulfur wt%, sweet/sour class |
-| ASTM D6377 | `Standard_ASTM_D6377` | Reid vapor pressure (RVP) | RVP at 37.8 &deg;C |
+| ASTM D6377 | `Standard_ASTM_D6377` | Simulated vapour pressure | Selected RVP/VPCR4 route and TVP at 37.8 &deg;C |
 | TVP (API MPMS 19) | `Standard_TVP` | True vapor pressure | Bubble-point pressure at any reference temperature |
 | ASTM D4737 | `Standard_ASTM_D4737` | Calculated cetane index | CCI (4-variable) + D976 (2-variable) |
 | ASTM D611 | `Standard_ASTM_D611` | Aniline point (estimate) | Estimated aniline point from Watson K + MeABP |
@@ -41,16 +39,17 @@ SystemSrkEos oil = new SystemSrkEos(273.15 + 15.0, 1.01325);
 oil.addComponent("methane", 0.01);
 oil.addComponent("ethane", 0.02);
 oil.addComponent("propane", 0.03);
-oil.addTBPfraction("C7", 0.15, 95.0, 0.72);
-oil.addTBPfraction("C10", 0.20, 135.0, 0.78);
-oil.addTBPfraction("C20", 0.30, 280.0, 0.85);
-oil.addTBPfraction("C30", 0.29, 450.0, 0.91);
+// TBP molar mass is kg/mol; density is specific gravity (g/cm3 numerically).
+oil.addTBPfraction("C7", 0.15, 0.095, 0.72);
+oil.addTBPfraction("C10", 0.20, 0.135, 0.78);
+oil.addTBPfraction("C20", 0.30, 0.280, 0.85);
+oil.addTBPfraction("C30", 0.29, 0.450, 0.91);
 oil.setMixingRule(2);
 
 // API gravity
 Standard_ASTM_D4052 apiStd = new Standard_ASTM_D4052(oil);
 apiStd.calculate();
-double apiGravity = apiStd.getValue("API gravity");
+double apiGravity = apiStd.getValue("API");
 String classification = apiStd.getOilClassification();
 System.out.println("API gravity: " + apiGravity + " (" + classification + ")");
 
@@ -87,9 +86,7 @@ Available via `getValue(param)` (or `getValue(param, unit)` for temperatures):
 | `WatsonK` (or `UOPK`) | Watson (UOP) characterization factor |
 | `recovery`, `loss`, `residue` | Recovery/loss/residue volume fractions |
 
-> Average boiling points, the Watson factor, the slope, `residue` and `loss`
-> are dimensionless or fixed-basis values and are returned unconverted by
-> `getValue(param, unit)`.
+> `IBP`, `Txx`, `FBP`, `VABP`, `MABP`, `WABP`, `CABP`, and `MeABP` are temperatures and honor the requested temperature unit. `WatsonK`, `UOPK`, `slope`, `residue`, and `loss` are returned unchanged when a unit argument is supplied.
 
 ### Temperature Units
 
@@ -213,7 +210,7 @@ Determines density at 15.556 °C (60 °F), specific gravity, API gravity, and cl
 |-----------|-------------|------|
 | `density` | Density at 60 °F | kg/m3 |
 | `specificGravity` | SG relative to water at 60 °F | dimensionless |
-| `API gravity` | API gravity | °API |
+| `API` / `apiGravity` | API gravity | °API |
 
 ### Density Unit Conversion
 
@@ -236,12 +233,14 @@ String classification = d4052.getOilClassification();
 | 10.0 - 22.3 | Heavy |
 | < 10.0 | Extra-Heavy |
 
-### Spec Checking
+### Result validity and explicit limits
+
+`isOnSpec()` currently means only that API gravity was calculated to a finite value; the class does not store minimum or maximum product limits. Apply the governing limit explicitly and retain its source and edition:
 
 ```java
-d4052.setMinAPIGravity(20.0);
-d4052.setMaxAPIGravity(45.0);
-boolean onSpec = d4052.isOnSpec();
+double api = d4052.getValue("API");
+boolean calculationValid = d4052.isOnSpec();
+boolean withinProjectLimit = calculationValid && api >= 20.0 && api <= 45.0;
 ```
 
 ---
@@ -254,8 +253,8 @@ Calculates total sulfur from sulfur-bearing components in the fluid (H2S, mercap
 
 | Parameter | Description | Unit |
 |-----------|-------------|------|
-| `sulfurContent` | Total sulfur | wt% |
-| `sulfurContent` (unit `"ppmw"`) | Total sulfur | ppmw |
+| `sulfur` / `totalSulfur` | Total sulfur derived from represented components | wt% |
+| `sulfur` / `totalSulfur` (unit `"ppmw"`) | Total sulfur derived from represented components | ppmw |
 
 ### Sulfur Classification
 
@@ -276,14 +275,14 @@ String classification = d4294.getSulfurClassification();
 SystemSrkEos sourOil = new SystemSrkEos(273.15 + 15.0, 1.01325);
 sourOil.addComponent("methane", 0.10);
 sourOil.addComponent("H2S", 0.02);
-sourOil.addTBPfraction("C10", 0.50, 135.0, 0.78);
-sourOil.addTBPfraction("C20", 0.38, 280.0, 0.85);
+sourOil.addTBPfraction("C10", 0.50, 0.135, 0.78);
+sourOil.addTBPfraction("C20", 0.38, 0.280, 0.85);
 sourOil.setMixingRule(2);
 
 Standard_ASTM_D4294 d4294 = new Standard_ASTM_D4294(sourOil);
 d4294.calculate();
 
-double sulfurWtPct = d4294.getValue("sulfurContent");
+double sulfurWtPct = d4294.getValue("sulfur");
 double sulfurPpmw = d4294.getValue("sulfurContent", "ppmw");
 String sweetSour = d4294.getSulfurClassification();
 
@@ -354,11 +353,7 @@ The required inputs are obtained internally from `Standard_ASTM_D86` (distillati
 
 ### Formula (ASTM D4737)
 
-$$
-\mathrm{CCI} = 45.2 + 0.0892\,T_{10N} + (0.131 + 0.901\,B)\,T_{50N}
-            + (0.0523 - 0.420\,B)\,T_{90N}
-            + 0.00049\,(T_{10N}^2 - T_{90N}^2) + 107\,B + 60\,B^2
-$$
+$$\mathrm{CCI} = 45.2 + 0.0892\,T_{10N} + (0.131 + 0.901\,B)\,T_{50N} + (0.0523 - 0.420\,B)\,T_{90N} + 0.00049\,(T_{10N}^2 - T_{90N}^2) + 107\,B + 60\,B^2$$
 
 where $T_{10N} = T_{10} - 215$, $T_{50N} = T_{50} - 260$, $T_{90N} = T_{90} - 310$ (temperatures in &deg;C), $B = e^{-3.5\,(D - 0.85)} - 1$, and $D$ is the density at 15 &deg;C in g/mL.
 
@@ -395,9 +390,7 @@ The **aniline point** is the lowest temperature at which equal volumes of the oi
 
 ### Formula
 
-$$
-\mathrm{AP}[^{\circ}\mathrm{C}] = c_0 + c_1\,(K_w - 12.0) + c_2\,(\mathrm{MeABP}[^{\circ}\mathrm{C}] - 190.0)
-$$
+$$\mathrm{AP}[^{\circ}\mathrm{C}] = c_0 + c_1\,(K_w - 12.0) + c_2\,(\mathrm{MeABP}[^{\circ}\mathrm{C}] - 190.0)$$
 
 with defaults $c_0 = 60.0$, $c_1 = 35.0$, $c_2 = 0.083$.
 
@@ -430,9 +423,7 @@ The **smoke point** is the maximum flame height in millimetres at which a kerose
 
 ### Formula
 
-$$
-\mathrm{SmokePoint}[\mathrm{mm}] = sp_0 + sp_1\,\mathrm{AP}[^{\circ}\mathrm{C}]
-$$
+$$\mathrm{SmokePoint}[\mathrm{mm}] = sp_0 + sp_1\,\mathrm{AP}[^{\circ}\mathrm{C}]$$
 
 with defaults $sp_0 = 8.5$, $sp_1 = 0.325$.
 
@@ -465,9 +456,7 @@ The **cold filter plugging point (CFPP)** is the highest temperature at which a 
 
 ### Formula
 
-$$
-\mathrm{CFPP}[^{\circ}\mathrm{C}] = \mathrm{cloudPoint}[^{\circ}\mathrm{C}] + \mathrm{offset}
-$$
+$$\mathrm{CFPP}[^{\circ}\mathrm{C}] = \mathrm{cloudPoint}[^{\circ}\mathrm{C}] + \mathrm{offset}$$
 
 ### Example
 
@@ -501,13 +490,9 @@ The **salt content** of crude oil is reported as PTB (pounds of NaCl-equivalent 
 
 ### Formula
 
-$$
-\mathrm{PTB} = w_{\mathrm{water}} \cdot S_{\mathrm{brine}}[\mathrm{kg/m^3}] \cdot 350.51
-$$
+$$\mathrm{PTB} = w_{\mathrm{water}} \cdot S_{\mathrm{brine}}[\mathrm{kg/m^3}] \cdot 350.51$$
 
-$$
-\mathrm{ppmw} = \frac{w_{\mathrm{water}} \cdot S_{\mathrm{brine}}[\mathrm{kg/m^3}]}{\rho_{\mathrm{crude}}[\mathrm{kg/m^3}]} \cdot 10^6
-$$
+$$\mathrm{ppmw} = \frac{w_{\mathrm{water}} \cdot S_{\mathrm{brine}}[\mathrm{kg/m^3}]}{\rho_{\mathrm{crude}}[\mathrm{kg/m^3}]} \cdot 10^6$$
 
 where the PTB factor $350.51 = 158.987\ \mathrm{m^3/1000\,bbl} \cdot 2.20462\ \mathrm{lb/kg}$, and the crude density is obtained internally from `Standard_ASTM_D4052`.
 
@@ -617,8 +602,9 @@ Determines the water and sediment volume fraction in crude oil per ASTM D4007 / 
 | Parameter | Description | Unit |
 |-----------|-------------|------|
 | `BSW` | Basic sediment & water | vol% |
-| `waterVolumeFraction` | Water volume fraction | fraction |
-| `oilVolumeFraction` | Oil volume fraction | fraction |
+| `waterCut` | Thermodynamic aqueous share of aqueous + oil liquid volume | vol% |
+
+The implementation has no sediment model and exposes no separate oil-volume getter; `BSW` and `waterCut` are the same thermodynamic water-cut result in vol%.
 
 ### Spec Checking
 
@@ -646,24 +632,26 @@ Generate a comprehensive quality report for a crude oil:
 SystemSrkEos oil = new SystemSrkEos(273.15 + 15.0, 1.01325);
 oil.addComponent("methane", 0.01);
 oil.addComponent("H2S", 0.005);
-oil.addTBPfraction("C7", 0.10, 95.0, 0.72);
-oil.addTBPfraction("C10", 0.20, 135.0, 0.78);
-oil.addTBPfraction("C20", 0.35, 280.0, 0.85);
-oil.addTBPfraction("C30", 0.295, 450.0, 0.91);
+oil.addTBPfraction("C7", 0.10, 0.095, 0.72);
+oil.addTBPfraction("C10", 0.20, 0.135, 0.78);
+oil.addTBPfraction("C20", 0.35, 0.280, 0.85);
+oil.addTBPfraction("C30", 0.295, 0.450, 0.91);
 oil.addComponent("water", 0.01);
 oil.setMixingRule(2);
+oil.setMultiPhaseCheck(true);
+oil.init(0);
 
 // API Gravity & Density
 Standard_ASTM_D4052 d4052 = new Standard_ASTM_D4052(oil);
 d4052.calculate();
 System.out.printf("API Gravity: %.1f (%s)%n",
-    d4052.getValue("API gravity"), d4052.getOilClassification());
+    d4052.getValue("API"), d4052.getOilClassification());
 
 // Sulfur Content
 Standard_ASTM_D4294 d4294 = new Standard_ASTM_D4294(oil);
 d4294.calculate();
 System.out.printf("Sulfur: %.3f wt%% (%s)%n",
-    d4294.getValue("sulfurContent"), d4294.getSulfurClassification());
+    d4294.getValue("sulfur"), d4294.getSulfurClassification());
 
 // BS&W
 Standard_BSW bsw = new Standard_BSW(oil);
@@ -697,15 +685,16 @@ Standard_ASTM_D445 = jneqsim.standards.oilquality.Standard_ASTM_D445
 
 oil = SystemSrkEos(273.15 + 15.0, 1.01325)
 oil.addComponent("methane", 0.01)
-oil.addTBPfraction("C7", 0.15, 95.0, 0.72)
-oil.addTBPfraction("C10", 0.25, 135.0, 0.78)
-oil.addTBPfraction("C20", 0.30, 280.0, 0.85)
-oil.addTBPfraction("C30", 0.29, 450.0, 0.91)
+# TBP molar mass is kg/mol; density is specific gravity (g/cm3 numerically).
+oil.addTBPfraction("C7", 0.15, 0.095, 0.72)
+oil.addTBPfraction("C10", 0.25, 0.135, 0.78)
+oil.addTBPfraction("C20", 0.30, 0.280, 0.85)
+oil.addTBPfraction("C30", 0.29, 0.450, 0.91)
 oil.setMixingRule(2)
 
 d4052 = Standard_ASTM_D4052(oil)
 d4052.calculate()
-print(f"API gravity: {d4052.getValue('API gravity'):.1f}")
+print(f"API gravity: {d4052.getValue('API'):.1f}")
 print(f"Classification: {d4052.getOilClassification()}")
 ```
 
@@ -713,6 +702,6 @@ print(f"Classification: {d4052.getOilClassification()}")
 
 ## Related Documentation
 
-- [ASTM D6377 - Reid Vapor Pressure](astm_d6377_rvp)
-- [Sales Contracts](sales_contracts)
-- [ISO 6976 - Calorific Values](iso6976_calorific_values)
+- [ASTM D6377 - simulated vapour pressure](astm_d6377_rvp.md)
+- [Sales Contracts](sales_contracts.md)
+- [ISO 6976 - Calorific Values](iso6976_calorific_values.md)
