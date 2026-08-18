@@ -5,16 +5,17 @@ import java.io.Serializable;
 /**
  * Coupled pressure-momentum correction for the transient two-fluid finite-volume state.
  *
- * <p>The explicit transport step supplies a provisional conservative state. This class solves a
- * compressible pressure equation formed from the fixed-cell-volume residual and the pressure
- * correction to the total volumetric flux. The same face pressure correction is then applied to
- * every phase mass flux and momentum, so phase masses remain globally conservative while pressure
- * and velocity are advanced in the same accepted step.
+ * <p>
+ * The explicit transport step supplies a provisional conservative state. This class solves a compressible pressure
+ * equation formed from the fixed-cell-volume residual and the pressure correction to the total volumetric flux. The
+ * same face pressure correction is then applied to every phase mass flux and momentum, so phase masses remain globally
+ * conservative while pressure and velocity are advanced in the same accepted step.
  *
- * <p>The correction is intentionally independent of closure correlations. Phase compressibility is
- * supplied through the local phase sound speeds, and the pressure equation uses the mobility
- * {@code A * sum(alpha_k / rho_k)}. A fixed outlet pressure is represented by a Dirichlet pressure
- * correction; the inlet and non-fixed outlet use zero correction gradient.
+ * <p>
+ * The correction is intentionally independent of closure correlations. Phase compressibility is supplied through the
+ * local phase sound speeds, and the pressure equation uses the mobility {@code A * sum(alpha_k / rho_k)}. A fixed
+ * outlet pressure is represented by a Dirichlet pressure correction; the inlet and non-fixed outlet use zero correction
+ * gradient.
  */
 public final class CoupledPressureMomentumSolver implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -49,16 +50,8 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     private final boolean converged;
     private final boolean pressureCorrectionLimited;
 
-    private Result(
-        double[][] state,
-        double[] pressure,
-        double[] gasDensity,
-        double[] oilDensity,
-        double[] waterDensity,
-        int iterations,
-        double maximumRelativeVolumeResidual,
-        boolean converged,
-        boolean pressureCorrectionLimited) {
+    private Result(double[][] state, double[] pressure, double[] gasDensity, double[] oilDensity, double[] waterDensity,
+        int iterations, double maximumRelativeVolumeResidual, boolean converged, boolean pressureCorrectionLimited) {
       this.state = state;
       this.pressure = pressure;
       this.gasDensity = gasDensity;
@@ -134,48 +127,22 @@ public final class CoupledPressureMomentumSolver implements Serializable {
    * @param outletPressureFixed true for a Dirichlet outlet pressure
    * @return corrected state, pressure, density, and convergence diagnostics
    */
-  public Result correct(
-      double[][] provisionalState,
-      double timeStep,
-      double[] pressure,
-      double[] areas,
-      double[] lengths,
-      double[] gasDensity,
-      double[] oilDensity,
-      double[] waterDensity,
-      double[] gasSoundSpeed,
-      double[] oilSoundSpeed,
-      double[] waterSoundSpeed,
-      double outletPressure,
-      boolean outletPressureFixed) {
-    validateInputs(
-        provisionalState,
-        timeStep,
-        pressure,
-        areas,
-        lengths,
-        gasDensity,
-        oilDensity,
-        waterDensity,
-        gasSoundSpeed,
-        oilSoundSpeed,
-        waterSoundSpeed);
+  public Result correct(double[][] provisionalState, double timeStep, double[] pressure, double[] areas,
+      double[] lengths, double[] gasDensity, double[] oilDensity, double[] waterDensity, double[] gasSoundSpeed,
+      double[] oilSoundSpeed, double[] waterSoundSpeed, double outletPressure, boolean outletPressureFixed) {
+    validateInputs(provisionalState, timeStep, pressure, areas, lengths, gasDensity, oilDensity, waterDensity,
+        gasSoundSpeed, oilSoundSpeed, waterSoundSpeed);
 
     int cellCount = provisionalState.length;
     double[][] correctedState = copy(provisionalState);
     double[] correctedPressure = pressure.clone();
-    double[][] densities = {
-      gasDensity.clone(), oilDensity.clone(), waterDensity.clone()
-    };
-    double[][] soundSpeeds = {
-      gasSoundSpeed.clone(), oilSoundSpeed.clone(), waterSoundSpeed.clone()
-    };
+    double[][] densities = { gasDensity.clone(), oilDensity.clone(), waterDensity.clone() };
+    double[][] soundSpeeds = { gasSoundSpeed.clone(), oilSoundSpeed.clone(), waterSoundSpeed.clone() };
 
     int iterations = 0;
     boolean converged = false;
     boolean correctionLimited = false;
-    double maximumResidual = calculateMaximumRelativeVolumeResidual(
-        correctedState, areas, densities);
+    double maximumResidual = calculateMaximumRelativeVolumeResidual(correctedState, areas, densities);
 
     while (iterations < maximumIterations && maximumResidual > relativeVolumeTolerance) {
       iterations++;
@@ -196,30 +163,22 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         double leftCoefficient = 0.0;
         if (cell > 0) {
           double faceDistance = 0.5 * (lengths[cell - 1] + lengths[cell]);
-          double mobility = faceMobility(
-              cell - 1, cell, phaseAreas, areas, densities);
-          leftCoefficient =
-              timeStep * timeStep * mobility / (lengths[cell] * faceDistance);
+          double mobility = faceMobility(cell - 1, cell, phaseAreas, areas, densities);
+          leftCoefficient = timeStep * timeStep * mobility / (lengths[cell] * faceDistance);
         }
 
         double rightCoefficient = 0.0;
         if (cell < cellCount - 1) {
           double faceDistance = 0.5 * (lengths[cell] + lengths[cell + 1]);
-          double mobility = faceMobility(
-              cell, cell + 1, phaseAreas, areas, densities);
-          rightCoefficient =
-              timeStep * timeStep * mobility / (lengths[cell] * faceDistance);
+          double mobility = faceMobility(cell, cell + 1, phaseAreas, areas, densities);
+          rightCoefficient = timeStep * timeStep * mobility / (lengths[cell] * faceDistance);
         }
 
         lower[cell] = -leftCoefficient;
-        diagonal[cell] = Math.max(
-            compressibleArea + leftCoefficient + rightCoefficient, MIN_DIAGONAL);
+        diagonal[cell] = Math.max(compressibleArea + leftCoefficient + rightCoefficient, MIN_DIAGONAL);
         upper[cell] = -rightCoefficient;
-        rightHandSide[cell] =
-            phaseAreas[GAS_MASS][cell]
-                + phaseAreas[OIL_MASS][cell]
-                + phaseAreas[WATER_MASS][cell]
-                - areas[cell];
+        rightHandSide[cell] = phaseAreas[GAS_MASS][cell] + phaseAreas[OIL_MASS][cell] + phaseAreas[WATER_MASS][cell]
+            - areas[cell];
       }
 
       if (outletPressureFixed) {
@@ -230,202 +189,130 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         rightHandSide[outlet] = outletPressure - correctedPressure[outlet];
       }
 
-      double[] pressureCorrection =
-          solveTridiagonal(lower, diagonal, upper, rightHandSide);
+      double[] pressureCorrection = solveTridiagonal(lower, diagonal, upper, rightHandSide);
       for (int cell = 0; cell < cellCount; cell++) {
         pressureCorrection[cell] *= pressureRelaxation;
-        double limit = Math.max(
-            1.0e4, maximumRelativePressureCorrection * correctedPressure[cell]);
+        double limit = Math.max(1.0e4, maximumRelativePressureCorrection * correctedPressure[cell]);
         if (Math.abs(pressureCorrection[cell]) > limit) {
-          pressureCorrection[cell] =
-              Math.copySign(limit, pressureCorrection[cell]);
+          pressureCorrection[cell] = Math.copySign(limit, pressureCorrection[cell]);
           correctionLimited = true;
         }
       }
 
-      applyConservativeMassFluxCorrection(
-          correctedState,
-          timeStep,
-          pressureCorrection,
-          phaseAreas,
-          areas,
-          lengths);
-      applyMomentumCorrection(
-          correctedState,
-          timeStep,
-          pressureCorrection,
-          phaseAreas,
-          lengths);
+      applyConservativeMassFluxCorrection(correctedState, timeStep, pressureCorrection, phaseAreas, areas, lengths);
+      applyMomentumCorrection(correctedState, timeStep, pressureCorrection, phaseAreas, lengths);
 
       for (int cell = 0; cell < cellCount; cell++) {
-        correctedPressure[cell] =
-            Math.max(1.0e5, correctedPressure[cell] + pressureCorrection[cell]);
+        correctedPressure[cell] = Math.max(1.0e5, correctedPressure[cell] + pressureCorrection[cell]);
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
           double soundSpeed = Math.max(soundSpeeds[phase][cell], MIN_SOUND_SPEED);
-          densities[phase][cell] = Math.max(
-              MIN_DENSITY,
-              densities[phase][cell]
-                  + pressureCorrection[cell] / (soundSpeed * soundSpeed));
+          densities[phase][cell] = Math.max(MIN_DENSITY,
+              densities[phase][cell] + pressureCorrection[cell] / (soundSpeed * soundSpeed));
         }
       }
 
-      maximumResidual = calculateMaximumRelativeVolumeResidual(
-          correctedState, areas, densities);
+      maximumResidual = calculateMaximumRelativeVolumeResidual(correctedState, areas, densities);
     }
 
     converged = maximumResidual <= relativeVolumeTolerance;
-    return new Result(
-        correctedState,
-        correctedPressure,
-        densities[GAS_MASS],
-        densities[OIL_MASS],
-        densities[WATER_MASS],
-        iterations,
-        maximumResidual,
-        converged,
-        correctionLimited);
+    return new Result(correctedState, correctedPressure, densities[GAS_MASS], densities[OIL_MASS],
+        densities[WATER_MASS], iterations, maximumResidual, converged, correctionLimited);
   }
 
-  private static double[][] calculatePhaseAreas(
-      double[][] state, double[][] densities) {
+  private static double[][] calculatePhaseAreas(double[][] state, double[][] densities) {
     int cellCount = state.length;
     double[][] phaseAreas = new double[PHASE_COUNT][cellCount];
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
       for (int cell = 0; cell < cellCount; cell++) {
-        phaseAreas[phase][cell] =
-            Math.max(state[cell][phase], 0.0)
-                / Math.max(densities[phase][cell], MIN_DENSITY);
+        phaseAreas[phase][cell] = Math.max(state[cell][phase], 0.0) / Math.max(densities[phase][cell], MIN_DENSITY);
       }
     }
     return phaseAreas;
   }
 
-  private static double faceMobility(
-      int leftCell,
-      int rightCell,
-      double[][] phaseAreas,
-      double[] cellAreas,
+  private static double faceMobility(int leftCell, int rightCell, double[][] phaseAreas, double[] cellAreas,
       double[][] densities) {
     double faceArea = 0.5 * (cellAreas[leftCell] + cellAreas[rightCell]);
     double mobility = 0.0;
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
-      double leftAlpha = Math.max(
-          0.0, Math.min(1.0, phaseAreas[phase][leftCell] / cellAreas[leftCell]));
-      double rightAlpha = Math.max(
-          0.0, Math.min(1.0, phaseAreas[phase][rightCell] / cellAreas[rightCell]));
+      double leftAlpha = Math.max(0.0, Math.min(1.0, phaseAreas[phase][leftCell] / cellAreas[leftCell]));
+      double rightAlpha = Math.max(0.0, Math.min(1.0, phaseAreas[phase][rightCell] / cellAreas[rightCell]));
       double alpha = 0.5 * (leftAlpha + rightAlpha);
-      double density =
-          0.5 * (densities[phase][leftCell] + densities[phase][rightCell]);
+      double density = 0.5 * (densities[phase][leftCell] + densities[phase][rightCell]);
       mobility += alpha / Math.max(density, MIN_DENSITY);
     }
     return faceArea * mobility;
   }
 
-  private static void applyConservativeMassFluxCorrection(
-      double[][] state,
-      double timeStep,
-      double[] pressureCorrection,
-      double[][] phaseAreas,
-      double[] areas,
-      double[] lengths) {
+  private static void applyConservativeMassFluxCorrection(double[][] state, double timeStep,
+      double[] pressureCorrection, double[][] phaseAreas, double[] areas, double[] lengths) {
     int cellCount = state.length;
-    double[][] faceMassFlowCorrection =
-        new double[PHASE_COUNT][cellCount + 1];
+    double[][] faceMassFlowCorrection = new double[PHASE_COUNT][cellCount + 1];
 
     for (int face = 1; face < cellCount; face++) {
       int leftCell = face - 1;
       int rightCell = face;
       double faceDistance = 0.5 * (lengths[leftCell] + lengths[rightCell]);
-      double pressureGradient =
-          (pressureCorrection[rightCell] - pressureCorrection[leftCell])
-              / faceDistance;
+      double pressureGradient = (pressureCorrection[rightCell] - pressureCorrection[leftCell]) / faceDistance;
       double faceArea = 0.5 * (areas[leftCell] + areas[rightCell]);
 
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        double leftAlpha = Math.max(
-            0.0, Math.min(1.0, phaseAreas[phase][leftCell] / areas[leftCell]));
-        double rightAlpha = Math.max(
-            0.0, Math.min(1.0, phaseAreas[phase][rightCell] / areas[rightCell]));
+        double leftAlpha = Math.max(0.0, Math.min(1.0, phaseAreas[phase][leftCell] / areas[leftCell]));
+        double rightAlpha = Math.max(0.0, Math.min(1.0, phaseAreas[phase][rightCell] / areas[rightCell]));
         double faceAlpha = 0.5 * (leftAlpha + rightAlpha);
-        faceMassFlowCorrection[phase][face] =
-            -timeStep * faceAlpha * faceArea * pressureGradient;
+        faceMassFlowCorrection[phase][face] = -timeStep * faceAlpha * faceArea * pressureGradient;
       }
     }
 
     for (int cell = 0; cell < cellCount; cell++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        double divergence =
-            (faceMassFlowCorrection[phase][cell + 1]
-                    - faceMassFlowCorrection[phase][cell])
-                / lengths[cell];
+        double divergence = (faceMassFlowCorrection[phase][cell + 1] - faceMassFlowCorrection[phase][cell])
+            / lengths[cell];
         state[cell][phase] -= timeStep * divergence;
       }
     }
   }
 
-  private static void applyMomentumCorrection(
-      double[][] state,
-      double timeStep,
-      double[] pressureCorrection,
-      double[][] phaseAreas,
-      double[] lengths) {
+  private static void applyMomentumCorrection(double[][] state, double timeStep, double[] pressureCorrection,
+      double[][] phaseAreas, double[] lengths) {
     int cellCount = state.length;
     for (int cell = 0; cell < cellCount; cell++) {
       double pressureGradient;
       if (cell == 0) {
-        pressureGradient =
-            (pressureCorrection[1] - pressureCorrection[0])
-                / (0.5 * (lengths[0] + lengths[1]));
+        pressureGradient = (pressureCorrection[1] - pressureCorrection[0]) / (0.5 * (lengths[0] + lengths[1]));
       } else if (cell == cellCount - 1) {
-        pressureGradient =
-            (pressureCorrection[cell] - pressureCorrection[cell - 1])
-                / (0.5 * (lengths[cell - 1] + lengths[cell]));
+        pressureGradient = (pressureCorrection[cell] - pressureCorrection[cell - 1])
+            / (0.5 * (lengths[cell - 1] + lengths[cell]));
       } else {
-        double distance =
-            0.5 * lengths[cell - 1]
-                + lengths[cell]
-                + 0.5 * lengths[cell + 1];
-        pressureGradient =
-            (pressureCorrection[cell + 1] - pressureCorrection[cell - 1])
-                / distance;
+        double distance = 0.5 * lengths[cell - 1] + lengths[cell] + 0.5 * lengths[cell + 1];
+        pressureGradient = (pressureCorrection[cell + 1] - pressureCorrection[cell - 1]) / distance;
       }
 
-      state[cell][GAS_MOMENTUM] -=
-          timeStep * phaseAreas[GAS_MASS][cell] * pressureGradient;
-      state[cell][OIL_MOMENTUM] -=
-          timeStep * phaseAreas[OIL_MASS][cell] * pressureGradient;
-      state[cell][WATER_MOMENTUM] -=
-          timeStep * phaseAreas[WATER_MASS][cell] * pressureGradient;
+      state[cell][GAS_MOMENTUM] -= timeStep * phaseAreas[GAS_MASS][cell] * pressureGradient;
+      state[cell][OIL_MOMENTUM] -= timeStep * phaseAreas[OIL_MASS][cell] * pressureGradient;
+      state[cell][WATER_MOMENTUM] -= timeStep * phaseAreas[WATER_MASS][cell] * pressureGradient;
     }
   }
 
-  private static double calculateMaximumRelativeVolumeResidual(
-      double[][] state, double[] areas, double[][] densities) {
+  private static double calculateMaximumRelativeVolumeResidual(double[][] state, double[] areas, double[][] densities) {
     double maximumResidual = 0.0;
     for (int cell = 0; cell < state.length; cell++) {
       double occupiedArea = 0.0;
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        occupiedArea +=
-            Math.max(state[cell][phase], 0.0)
-                / Math.max(densities[phase][cell], MIN_DENSITY);
+        occupiedArea += Math.max(state[cell][phase], 0.0) / Math.max(densities[phase][cell], MIN_DENSITY);
       }
-      maximumResidual = Math.max(
-          maximumResidual,
-          Math.abs(occupiedArea - areas[cell]) / areas[cell]);
+      maximumResidual = Math.max(maximumResidual, Math.abs(occupiedArea - areas[cell]) / areas[cell]);
     }
     return maximumResidual;
   }
 
-  private static double[] solveTridiagonal(
-      double[] lower, double[] diagonal, double[] upper, double[] rightHandSide) {
+  private static double[] solveTridiagonal(double[] lower, double[] diagonal, double[] upper, double[] rightHandSide) {
     int size = rightHandSide.length;
     double[] modifiedUpper = new double[size];
     double[] modifiedRightHandSide = new double[size];
     double[] solution = new double[size];
 
-    double firstPivot = Math.abs(diagonal[0]) > MIN_DIAGONAL
-        ? diagonal[0]
-        : Math.copySign(MIN_DIAGONAL, diagonal[0]);
+    double firstPivot = Math.abs(diagonal[0]) > MIN_DIAGONAL ? diagonal[0] : Math.copySign(MIN_DIAGONAL, diagonal[0]);
     modifiedUpper[0] = upper[0] / firstPivot;
     modifiedRightHandSide[0] = rightHandSide[0] / firstPivot;
 
@@ -434,67 +321,40 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       if (Math.abs(pivot) <= MIN_DIAGONAL) {
         pivot = Math.copySign(MIN_DIAGONAL, pivot);
       }
-      modifiedUpper[row] =
-          row < size - 1 ? upper[row] / pivot : 0.0;
-      modifiedRightHandSide[row] =
-          (rightHandSide[row]
-                  - lower[row] * modifiedRightHandSide[row - 1])
-              / pivot;
+      modifiedUpper[row] = row < size - 1 ? upper[row] / pivot : 0.0;
+      modifiedRightHandSide[row] = (rightHandSide[row] - lower[row] * modifiedRightHandSide[row - 1]) / pivot;
     }
 
     solution[size - 1] = modifiedRightHandSide[size - 1];
     for (int row = size - 2; row >= 0; row--) {
-      solution[row] =
-          modifiedRightHandSide[row] - modifiedUpper[row] * solution[row + 1];
+      solution[row] = modifiedRightHandSide[row] - modifiedUpper[row] * solution[row + 1];
     }
     return solution;
   }
 
-  private static void validateInputs(
-      double[][] state,
-      double timeStep,
-      double[] pressure,
-      double[] areas,
-      double[] lengths,
-      double[] gasDensity,
-      double[] oilDensity,
-      double[] waterDensity,
-      double[] gasSoundSpeed,
-      double[] oilSoundSpeed,
-      double[] waterSoundSpeed) {
+  private static void validateInputs(double[][] state, double timeStep, double[] pressure, double[] areas,
+      double[] lengths, double[] gasDensity, double[] oilDensity, double[] waterDensity, double[] gasSoundSpeed,
+      double[] oilSoundSpeed, double[] waterSoundSpeed) {
     if (state == null || state.length < 2 || state[0].length < 6) {
-      throw new IllegalArgumentException(
-          "At least two cells and six conservative variables are required");
+      throw new IllegalArgumentException("At least two cells and six conservative variables are required");
     }
     if (!Double.isFinite(timeStep) || timeStep <= 0.0) {
       throw new IllegalArgumentException("timeStep must be positive and finite");
     }
     int cellCount = state.length;
-    double[][] arrays = {
-      pressure,
-      areas,
-      lengths,
-      gasDensity,
-      oilDensity,
-      waterDensity,
-      gasSoundSpeed,
-      oilSoundSpeed,
-      waterSoundSpeed
-    };
+    double[][] arrays = { pressure, areas, lengths, gasDensity, oilDensity, waterDensity, gasSoundSpeed, oilSoundSpeed,
+        waterSoundSpeed };
     for (double[] array : arrays) {
       if (array == null || array.length != cellCount) {
-        throw new IllegalArgumentException(
-            "Every cell-property array must match the state length");
+        throw new IllegalArgumentException("Every cell-property array must match the state length");
       }
     }
     for (int cell = 0; cell < cellCount; cell++) {
       if (state[cell] == null || state[cell].length != state[0].length) {
-        throw new IllegalArgumentException(
-            "The conservative state must be rectangular");
+        throw new IllegalArgumentException("The conservative state must be rectangular");
       }
       if (!(areas[cell] > 0.0) || !(lengths[cell] > 0.0)) {
-        throw new IllegalArgumentException(
-            "Cell area and length must be positive");
+        throw new IllegalArgumentException("Cell area and length must be positive");
       }
     }
   }
