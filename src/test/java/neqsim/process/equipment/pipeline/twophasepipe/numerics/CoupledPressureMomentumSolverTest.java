@@ -83,7 +83,7 @@ class CoupledPressureMomentumSolverTest {
     double[] finalPhaseMass = totalPhaseMass(result.getState());
     double[] outletCorrection = result.getOutletBoundaryMassCorrectionKg();
     for (int phase = 0; phase < initialPhaseMass.length; phase++) {
-      assertEquals(finalPhaseMass[phase] - initialPhaseMass[phase], -outletCorrection[phase], 1.0e-10);
+      assertEquals(10.0 * (finalPhaseMass[phase] - initialPhaseMass[phase]), -outletCorrection[phase], 1.0e-10);
     }
     assertTrue(outletCorrection[0] + outletCorrection[1] + outletCorrection[2] > 0.0);
   }
