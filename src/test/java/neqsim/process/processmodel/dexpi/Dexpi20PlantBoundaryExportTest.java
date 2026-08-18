@@ -66,10 +66,8 @@ public class Dexpi20PlantBoundaryExportTest extends NeqSimTest {
 
     Dexpi20XmlWriter.write(process, established.toFile(), metadata);
     Dexpi20XmlWriter.write(process, defaultOptions.toFile(), Dexpi20PlantExportOptions.builder(metadata).build());
-    Dexpi20XmlWriter.write(process, explicit.toFile(),
-        Dexpi20PlantExportOptions.builder(metadata)
-            .boundaryConnectionMode(Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS)
-            .build());
+    Dexpi20XmlWriter.write(process, explicit.toFile(), Dexpi20PlantExportOptions.builder(metadata)
+        .boundaryConnectionMode(Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS).build());
 
     assertArrayEquals(Files.readAllBytes(established), Files.readAllBytes(defaultOptions));
     assertNotEquals(new String(Files.readAllBytes(established), "UTF-8"),
@@ -138,10 +136,8 @@ public class Dexpi20PlantBoundaryExportTest extends NeqSimTest {
   }
 
   private static Dexpi20PlantExportMetadata metadata() {
-    return Dexpi20PlantExportMetadata.builder("2026-08-18T11:00:00Z", "NeqSim", "Equinor", "3.17.0")
-        .plantProperty(Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_IDENTIFICATION_CODE,
-            "SYNTHETIC-BOUNDARY-PLANT")
-        .build();
+    return Dexpi20PlantExportMetadata.builder("2026-08-18T11:00:00Z", "NeqSim", "Equinor", "3.17.0").plantProperty(
+        Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_IDENTIFICATION_CODE, "SYNTHETIC-BOUNDARY-PLANT").build();
   }
 
   private static ProcessSystem process() {
