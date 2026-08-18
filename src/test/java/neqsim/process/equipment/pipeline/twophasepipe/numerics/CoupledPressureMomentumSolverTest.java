@@ -21,21 +21,8 @@ class CoupledPressureMomentumSolverTest {
     double[] gasSoundSpeed = filled(4, 300.0);
     double[] liquidSoundSpeed = filled(4, 1200.0);
 
-    CoupledPressureMomentumSolver.Result result =
-        solver.correct(
-            state,
-            0.1,
-            pressure,
-            area,
-            length,
-            gasDensity,
-            oilDensity,
-            waterDensity,
-            gasSoundSpeed,
-            liquidSoundSpeed,
-            liquidSoundSpeed,
-            5.0e6,
-            true);
+    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, pressure, area, length, gasDensity,
+        oilDensity, waterDensity, gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed, 5.0e6, true);
 
     assertTrue(result.isConverged());
     assertEquals(0, result.getIterations());
@@ -63,21 +50,8 @@ class CoupledPressureMomentumSolverTest {
     double[] liquidSoundSpeed = filled(4, 1200.0);
     double initialResidual = 0.05;
 
-    CoupledPressureMomentumSolver.Result result =
-        solver.correct(
-            state,
-            0.1,
-            pressure,
-            area,
-            length,
-            gasDensity,
-            oilDensity,
-            waterDensity,
-            gasSoundSpeed,
-            liquidSoundSpeed,
-            liquidSoundSpeed,
-            5.0e6,
-            false);
+    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, pressure, area, length, gasDensity,
+        oilDensity, waterDensity, gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed, 5.0e6, false);
 
     assertTrue(result.isConverged());
     assertTrue(result.getMaximumRelativeVolumeResidual() < initialResidual * 1.0e-4);
