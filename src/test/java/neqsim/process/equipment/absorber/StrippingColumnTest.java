@@ -1,7 +1,6 @@
 package neqsim.process.equipment.absorber;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,8 +26,8 @@ class StrippingColumnTest extends NeqSimTest {
     private final StrippingColumn stripper;
     private final ProcessSystem process;
 
-    private StripperCase(StreamInterface strippingGas, StreamInterface richLiquid,
-        StrippingColumn stripper, ProcessSystem process) {
+    private StripperCase(StreamInterface strippingGas, StreamInterface richLiquid, StrippingColumn stripper,
+        ProcessSystem process) {
       this.strippingGas = strippingGas;
       this.richLiquid = richLiquid;
       this.stripper = stripper;
@@ -50,13 +49,10 @@ class StrippingColumnTest extends NeqSimTest {
     double idealStrippedFraction = strippedFraction(idealCase, "methanol");
     double reducedEfficiencyStrippedFraction = strippedFraction(reducedEfficiencyCase, "methanol");
     assertTrue(idealStrippedFraction > 0.0, "The ideal column must strip methanol");
-    assertTrue(reducedEfficiencyStrippedFraction > 0.0,
-        "The reduced-efficiency column must still strip methanol");
+    assertTrue(reducedEfficiencyStrippedFraction > 0.0, "The reduced-efficiency column must still strip methanol");
     assertTrue(idealStrippedFraction > reducedEfficiencyStrippedFraction,
         "Ideal stages must strip more methanol than 40% efficient stages");
-    assertEquals(0.40,
-        reducedEfficiencyCase.stripper.getComponentMurphreeEfficiency(2, "methanol"),
-        1.0e-12);
+    assertEquals(0.40, reducedEfficiencyCase.stripper.getComponentMurphreeEfficiency(2, "methanol"), 1.0e-12);
   }
 
   @Test
@@ -79,7 +75,9 @@ class StrippingColumnTest extends NeqSimTest {
     stripperCase.process.run();
 
     assertAcceptedAndConservative(stripperCase);
-    assertTrue(stripper.wasSequentialWarmStateReused(), stripper.getConvergenceDiagnostics());
+    assertEquals(0, stripper.getLastIterationCount(), stripper.getConvergenceDiagnostics());
+    assertEquals("Reused unchanged sequential solution", stripper.getLastSolveStatusReason(),
+        stripper.getConvergenceDiagnostics());
     assertEquals(initialOverheadPropane, componentFlow(stripper.getOverheadGasStream(), "propane"),
         Math.max(1.0e-9, 1.0e-9 * initialOverheadPropane));
     assertEquals(initialLeanPropane, componentFlow(stripper.getLeanLiquidStream(), "propane"),
@@ -90,11 +88,10 @@ class StrippingColumnTest extends NeqSimTest {
     stripperCase.process.run();
 
     assertAcceptedAndConservative(stripperCase);
-    assertFalse(stripper.wasSequentialWarmStateReused(), stripper.getConvergenceDiagnostics());
-    assertNotEquals(initialOverheadPropane,
-        componentFlow(stripper.getOverheadGasStream(), "propane"), 1.0e-8);
-    assertNotEquals(initialLeanPropane, componentFlow(stripper.getLeanLiquidStream(), "propane"),
-        1.0e-8);
+    assertNotEquals("Reused unchanged sequential solution", stripper.getLastSolveStatusReason(),
+        stripper.getConvergenceDiagnostics());
+    assertNotEquals(initialOverheadPropane, componentFlow(stripper.getOverheadGasStream(), "propane"), 1.0e-8);
+    assertNotEquals(initialLeanPropane, componentFlow(stripper.getLeanLiquidStream(), "propane"), 1.0e-8);
   }
 
   private static StripperCase createMethanolStripperCase(double methanolEfficiency) {
@@ -122,12 +119,10 @@ class StrippingColumnTest extends NeqSimTest {
     richLiquid.setTemperature(60.0, "C");
     richLiquid.setPressure(2.0, "bara");
 
-    StripperCase stripperCase = configureIsothermalStripper(
-        "rigorous methanol stripper", strippingGas, richLiquid, 4, 2.0, 333.15);
-    for (int trayNumber = 0; trayNumber < stripperCase.stripper.getNumberOfTrays();
-        trayNumber++) {
-      stripperCase.stripper.setComponentMurphreeEfficiency(
-          trayNumber, "methanol", methanolEfficiency);
+    StripperCase stripperCase = configureIsothermalStripper("rigorous methanol stripper", strippingGas, richLiquid, 4,
+        2.0, 333.15);
+    for (int trayNumber = 0; trayNumber < stripperCase.stripper.getNumberOfTrays(); trayNumber++) {
+      stripperCase.stripper.setComponentMurphreeEfficiency(trayNumber, "methanol", methanolEfficiency);
     }
     return stripperCase;
   }
@@ -161,13 +156,11 @@ class StrippingColumnTest extends NeqSimTest {
     richLiquid.setTemperature(70.0, "C");
     richLiquid.setPressure(12.0, "bara");
 
-    return configureIsothermalStripper(
-        "rigorous hydrocarbon stripper", strippingGas, richLiquid, 5, 12.0, 343.15);
+    return configureIsothermalStripper("rigorous hydrocarbon stripper", strippingGas, richLiquid, 5, 12.0, 343.15);
   }
 
-  private static StripperCase configureIsothermalStripper(String name,
-      StreamInterface strippingGas, StreamInterface richLiquid, int numberOfTrays,
-      double pressure, double stageTemperature) {
+  private static StripperCase configureIsothermalStripper(String name, StreamInterface strippingGas,
+      StreamInterface richLiquid, int numberOfTrays, double pressure, double stageTemperature) {
     StrippingColumn stripper = new StrippingColumn(name, numberOfTrays);
     stripper.addStrippingGasStream(strippingGas);
     stripper.addRichLiquidStream(richLiquid);
@@ -196,14 +189,11 @@ class StrippingColumnTest extends NeqSimTest {
     StrippingColumn stripper = stripperCase.stripper;
     String diagnostics = stripper.getConvergenceDiagnostics();
     assertTrue(stripper.solved(), diagnostics);
-    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS,
-        stripper.getLastSolveStatus(), diagnostics);
-    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL,
-        stripper.getLastSolverTypeUsed(), diagnostics);
+    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, stripper.getLastSolveStatus(), diagnostics);
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, stripper.getLastSolverTypeUsed(), diagnostics);
     assertTrue(stripper.isEnforceMeshResidualTolerance(), diagnostics);
     assertTrue(Double.isFinite(stripper.getLastMeshResidualNorm()), diagnostics);
-    assertTrue(stripper.getLastMeshResidualNorm() <= stripper.getMeshResidualTolerance(),
-        diagnostics);
+    assertTrue(stripper.getLastMeshResidualNorm() <= stripper.getMeshResidualTolerance(), diagnostics);
     assertTrue(Double.isFinite(stripper.getEnergyBalanceError()), diagnostics);
 
     StreamInterface overheadGas = stripper.getOverheadGasStream();
@@ -215,39 +205,30 @@ class StrippingColumnTest extends NeqSimTest {
     assertTrue(overheadGas.getTemperature("K") > 0.0, diagnostics);
     assertTrue(leanLiquid.getTemperature("K") > 0.0, diagnostics);
 
-    double inletMass = stripperCase.strippingGas.getFlowRate("kg/hr")
-        + stripperCase.richLiquid.getFlowRate("kg/hr");
-    double outletMass = overheadGas.getFlowRate("kg/hr")
-        + leanLiquid.getFlowRate("kg/hr");
-    assertEquals(inletMass, outletMass, Math.max(1.0e-6, 5.0e-3 * inletMass),
-        diagnostics);
+    double inletMass = stripperCase.strippingGas.getFlowRate("kg/hr") + stripperCase.richLiquid.getFlowRate("kg/hr");
+    double outletMass = overheadGas.getFlowRate("kg/hr") + leanLiquid.getFlowRate("kg/hr");
+    assertEquals(inletMass, outletMass, Math.max(1.0e-6, 5.0e-3 * inletMass), diagnostics);
 
-    for (String componentName
-        : componentNames(stripperCase.strippingGas, stripperCase.richLiquid)) {
+    for (String componentName : componentNames(stripperCase.strippingGas, stripperCase.richLiquid)) {
       double inletComponentFlow = componentFlow(stripperCase.strippingGas, componentName)
           + componentFlow(stripperCase.richLiquid, componentName);
-      double outletComponentFlow = componentFlow(overheadGas, componentName)
-          + componentFlow(leanLiquid, componentName);
-      assertEquals(inletComponentFlow, outletComponentFlow,
-          Math.max(1.0e-6, 5.0e-3 * Math.abs(inletComponentFlow)),
+      double outletComponentFlow = componentFlow(overheadGas, componentName) + componentFlow(leanLiquid, componentName);
+      assertEquals(inletComponentFlow, outletComponentFlow, Math.max(1.0e-6, 5.0e-3 * Math.abs(inletComponentFlow)),
           componentName + " balance. " + diagnostics);
     }
   }
 
-  private static double strippedFraction(StripperCase stripperCase,
-      String componentName) {
+  private static double strippedFraction(StripperCase stripperCase, String componentName) {
     double richFeedFlow = componentFlow(stripperCase.richLiquid, componentName);
-    double overheadGain = componentFlow(stripperCase.stripper.getOverheadGasStream(),
-        componentName) - componentFlow(stripperCase.strippingGas, componentName);
+    double overheadGain = componentFlow(stripperCase.stripper.getOverheadGasStream(), componentName)
+        - componentFlow(stripperCase.strippingGas, componentName);
     return richFeedFlow > 0.0 ? overheadGain / richFeedFlow : 0.0;
   }
 
   private static double componentFlow(StreamInterface stream, String componentName) {
     double flow = 0.0;
-    for (int phaseNumber = 0; phaseNumber < stream.getFluid().getNumberOfPhases();
-        phaseNumber++) {
-      ComponentInterface component =
-          stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
+    for (int phaseNumber = 0; phaseNumber < stream.getFluid().getNumberOfPhases(); phaseNumber++) {
+      ComponentInterface component = stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
       if (component != null) {
         flow += component.getFlowRate("kg/hr");
       }
@@ -258,9 +239,8 @@ class StrippingColumnTest extends NeqSimTest {
   private static Set<String> componentNames(StreamInterface... streams) {
     Set<String> names = new LinkedHashSet<String>();
     for (StreamInterface stream : streams) {
-      for (int componentNumber = 0;
-          componentNumber < stream.getFluid().getPhase(0).getNumberOfComponents();
-          componentNumber++) {
+      for (int componentNumber = 0; componentNumber < stream.getFluid().getPhase(0)
+          .getNumberOfComponents(); componentNumber++) {
         names.add(stream.getFluid().getPhase(0).getComponent(componentNumber).getName());
       }
     }
