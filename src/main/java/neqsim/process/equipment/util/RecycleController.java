@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.process.util.uncertainty.SensitivityMatrix;
 
 /**
@@ -46,7 +48,10 @@ public class RecycleController implements Serializable {
   /** Whether to use coordinated acceleration across all recycles at current priority. */
   private boolean useCoordinatedAcceleration = false;
 
-  /** Recycles whose previously accepted state can seed the first observation of this solve. */
+  /**
+   * Recycles whose previously accepted state can seed the first observation of this solve. Transient because it is
+   * per-solve scratch state, and because XStream cannot reflect over {@link IdentityHashMap} on JDK 9+.
+   */
   private Map<Recycle, Boolean> acceptedRecycleSeeds = new IdentityHashMap<>();
 
   /** Stable provenance identity for this controller's transaction state. */
