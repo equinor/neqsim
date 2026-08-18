@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -11,6 +12,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Long-horizon acceptance case for the coupled transient pressure-momentum path.
  */
+@Tag("slow")
 class TwoFluidPressureMomentumLongHorizonTest {
   @Test
   void liquidRichLineRemainsBoundedForTwelveHundredSeconds() {
