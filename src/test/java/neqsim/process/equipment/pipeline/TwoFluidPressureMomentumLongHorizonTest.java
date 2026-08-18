@@ -58,10 +58,8 @@ class TwoFluidPressureMomentumLongHorizonTest {
       TwoFluidMassBalanceReport balance = pipe.getLastMassBalanceReport();
       assertTrue(balance.isWithinTolerance(TwoFluidMassBalanceReport.Phase.TOTAL, 1.0e-6, 1.0e-8),
           "discrete mass balance failed at t=" + (interval + 1) * 5.0 + " s");
-      cumulativeAbsoluteLiquidOutletMassKg +=
-          Math.abs(balance.getOutletMassKg(TwoFluidMassBalanceReport.Phase.LIQUID));
-      maximumLiquidHoldup =
-          Math.max(maximumLiquidHoldup, maximumAbsolute(pipe.getLiquidHoldupProfile()));
+      cumulativeAbsoluteLiquidOutletMassKg += Math.abs(balance.getOutletMassKg(TwoFluidMassBalanceReport.Phase.LIQUID));
+      maximumLiquidHoldup = Math.max(maximumLiquidHoldup, maximumAbsolute(pipe.getLiquidHoldupProfile()));
     }
 
     double inletPressureBara = pipe.getPressureProfile()[0] / 1.0e5;
@@ -70,8 +68,7 @@ class TwoFluidPressureMomentumLongHorizonTest {
         "60 bara feed reconstructed an inlet pressure of " + inletPressureBara + " bara");
     assertTrue(finalInventoryRatio > 0.25 && finalInventoryRatio < 1.75,
         "liquid-rich line inventory ratio became " + finalInventoryRatio);
-    assertTrue(maximumLiquidHoldup < 0.94,
-        "liquid-rich line packed to a maximum holdup of " + maximumLiquidHoldup);
+    assertTrue(maximumLiquidHoldup < 0.94, "liquid-rich line packed to a maximum holdup of " + maximumLiquidHoldup);
     assertTrue(cumulativeAbsoluteLiquidOutletMassKg > 1.0,
         "liquid outlet transfer remained frozen over the long-horizon run");
     assertTrue(maximumAbsolute(pipe.getGasVelocityProfile()) < 80.0);
