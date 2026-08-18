@@ -15,8 +15,8 @@ public class ReliefValveSizingDocumentationTest {
     ReliefValveSizing.LiquidPSVSizingResult liquidResult = ReliefValveSizing.calculateLiquidReliefArea(50.0 / 3600.0,
         850.0, 25.0e5, 0.10, 1.013e5, 0.004, false);
 
-    double twoPhaseArea = ReliefValveSizing.calculateTwoPhaseReliefArea(30000.0 / 3600.0, 80.0e5, 0.10, 5.0e5,
-        373.15, 0.30, 50.0, 700.0, 250000.0, 2500.0);
+    double twoPhaseArea = ReliefValveSizing.calculateTwoPhaseReliefArea(30000.0 / 3600.0, 80.0e5, 0.10, 5.0e5, 373.15,
+        0.30, 50.0, 700.0, 250000.0, 2500.0);
     double fireHeatInput = ReliefValveSizing.calculateAPI521FireHeatInput(80.0, true, true);
 
     assertEquals(6.7388e-5, gasResult.getRequiredArea(), 1.0e-9);
@@ -34,8 +34,7 @@ public class ReliefValveSizingDocumentationTest {
     double withoutFireFighting = ReliefValveSizing.calculateAPI521FireHeatInput(80.0, true, false);
     double withoutDrainage = ReliefValveSizing.calculateAPI521FireHeatInput(80.0, false, true);
 
-    assertEquals(withFireFighting, withoutFireFighting, 0.0,
-        "The current helper does not apply a firefighting credit");
+    assertEquals(withFireFighting, withoutFireFighting, 0.0, "The current helper does not apply a firefighting credit");
     assertTrue(withoutDrainage > withFireFighting);
   }
 }
