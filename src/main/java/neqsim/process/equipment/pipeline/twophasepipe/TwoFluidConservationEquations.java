@@ -141,6 +141,9 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private boolean outletBackflowClamped = false;
 
+  /** Allow a zero-gradient pressure outlet to carry a phase back into the domain. */
+  private boolean allowOutletPhaseBackflow = false;
+
   /** Interface gas holdup used by the pressure part of the momentum flux, one per interface. */
   private double[] interfaceGasHoldup = new double[0];
 
@@ -519,14 +522,10 @@ public class TwoFluidConservationEquations implements Serializable {
    * Calculate outlet flux using upwind scheme (transmissive boundary).
    *
    * <p>
-   * Each phase velocity is clamped at zero because a transmissive boundary can only carry mass out: with a reversed
-   * velocity there is no upstream state to advect in. Extrapolating the interior state instead lets the pressure
-   * boundary pull mass back into the domain, which was measured to inflate the liquid-rich inventory further rather
-   * than relieve it. The clamp is correct as a boundary condition but it is also a one-way trap, because the phase
-   * momentum equations of the classical two-fluid system are ill-posed in liquid-rich flow and can develop sustained
-   * backflow. The outflow of that phase then pins at exactly zero while the inlet keeps feeding it, and the inventory
-   * grows without bound. The condition is recorded so it can be reported rather than silently producing a diverging
-   * answer.
+   * By default, each reversed phase velocity is clamped at zero because a one-way transmissive boundary has no
+   * upstream state to advect in. When signed outlet flow is explicitly enabled, the zero-gradient interior phase state
+   * supplies that boundary state and a reversed phase carries signed mass and energy back into the domain. Use signed
+   * flow only with a well-posed pressure-momentum model and a boundary whose physical interpretation permits fallback.
    * </p>
    *
    * @param sec the outlet pipe section
@@ -536,7 +535,8 @@ public class TwoFluidConservationEquations implements Serializable {
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
 
-    if (sec.getGasVelocity() < 0.0 || sec.getOilVelocity() < 0.0 || sec.getWaterVelocity() < 0.0) {
+    if (!allowOutletPhaseBackflow
+        && (sec.getGasVelocity() < 0.0 || sec.getOilVelocity() < 0.0 || sec.getWaterVelocity() < 0.0)) {
       outletBackflowClamped = true;
     }
 
@@ -544,7 +544,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double rhoG = sec.getGasDensity();
     if (rhoG < 0.1)
       rhoG = 1.0; // Default gas density
-    double vG = Math.max(0, sec.getGasVelocity()); // Only outflow
+    double vG = allowOutletPhaseBackflow ? sec.getGasVelocity() : Math.max(0.0, sec.getGasVelocity());
     double alphaG = sec.getGasMassPerLength() / (rhoG * A);
     alphaG = Math.max(0, Math.min(1, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
@@ -554,7 +554,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double rhoO = sec.getOilDensity();
     if (rhoO < 100)
       rhoO = 700.0; // Default oil density
-    double vO = Math.max(0, sec.getOilVelocity());
+    double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
     double alphaO = sec.getOilMassPerLength() / (rhoO * A);
     alphaO = Math.max(0, Math.min(alphaG > 0.99 ? 0 : 1, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
@@ -564,7 +564,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double rhoW = sec.getWaterDensity();
     if (rhoW < 100)
       rhoW = 1000.0; // Default water density
-    double vW = Math.max(0, sec.getWaterVelocity());
+    double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
     double alphaW = sec.getWaterMassPerLength() / (rhoW * A);
     alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
@@ -1647,6 +1647,20 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Clear the outlet backflow record. */
   public void clearOutletBackflowClamped() {
     this.outletBackflowClamped = false;
+  }
+
+  /**
+   * Allow signed phase flow through the zero-gradient outlet.
+   *
+   * @param allow true to extrapolate the interior phase state for outlet fallback
+   */
+  public void setAllowOutletPhaseBackflow(boolean allow) {
+    this.allowOutletPhaseBackflow = allow;
+  }
+
+  /** @return true when signed outlet phase flow is enabled */
+  public boolean isOutletPhaseBackflowAllowed() {
+    return allowOutletPhaseBackflow;
   }
 
   /** @return interfacial pressure coefficient delta */
