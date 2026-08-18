@@ -331,19 +331,21 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     process.add(sep);
     process.run();
 
-    sep.getGasOutStream().setTemperature(30.707918388829, "C");
+    sep.getGasOutStream().setTemperature(51.772939162, "C");
     ByteArrayOutputStream firstOut = new ByteArrayOutputStream();
     DexpiXmlWriter.write(process, firstOut);
     String firstXml = firstOut.toString(StandardCharsets.UTF_8.name());
 
-    sep.getGasOutStream().setTemperature(30.707918388769, "C");
+    sep.getGasOutStream().setTemperature(51.772939074, "C");
     ByteArrayOutputStream secondOut = new ByteArrayOutputStream();
     DexpiXmlWriter.write(process, secondOut);
     String secondXml = secondOut.toString(StandardCharsets.UTF_8.name());
 
-    assertTrue(firstXml.contains("Name=\"OperatingTemperatureValue\" Unit=\"C\" Value=\"30.707918389\""));
+    assertTrue(firstXml.contains("Name=\"OperatingTemperatureValue\" Unit=\"C\" Value=\"51.772939\""));
     assertEquals(normalizeEmissionMetadata(firstXml), normalizeEmissionMetadata(secondXml));
-    assertEquals("0.00000012345678901", DexpiXmlWriter.formatNumericAttribute(0.0000001234567890123));
+    assertEquals("30.707918", DexpiXmlWriter.formatNumericAttribute(30.707918388829));
+    assertEquals("30.707918", DexpiXmlWriter.formatNumericAttribute(30.707918388769));
+    assertEquals("0.00000012345679", DexpiXmlWriter.formatNumericAttribute(0.0000001234567890123));
   }
 
   private static String normalizeEmissionMetadata(String xml) {

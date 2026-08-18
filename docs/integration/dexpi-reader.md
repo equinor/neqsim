@@ -284,7 +284,7 @@ Each piping connection carries operating line data and a NORSOK Z-003 line-ident
 - Operating pressure, temperature and flow generic attributes when available on the stream
 - A line-number text label (e.g. `PG-001`) composed by `NorsokLineNumber`
 
-The writer serializes numeric generic-attribute values with eleven significant digits. This
+The writer serializes numeric generic-attribute values with eight significant digits. This
 scale-aware canonical precision suppresses insignificant solver noise so repeated exports remain
 stable without rounding small, non-zero engineering values to zero.
 
