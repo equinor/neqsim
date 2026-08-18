@@ -60,6 +60,34 @@ class CoupledPressureMomentumSolverTest {
     assertTrue(Math.abs(result.getState()[2][3]) > 0.0);
   }
 
+  @Test
+  void fixedPressureBoundaryCorrectionIsReportedAsOutletMass() {
+    CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
+    double[][] state = uniformState();
+    state[state.length - 1][0] += 0.5;
+    double[] initialPhaseMass = totalPhaseMass(state);
+    double[] pressure = filled(4, 5.0e6);
+    double[] area = filled(4, 1.0);
+    double[] length = filled(4, 10.0);
+    double[] gasDensity = filled(4, 10.0);
+    double[] oilDensity = filled(4, 800.0);
+    double[] waterDensity = filled(4, 1000.0);
+    double[] gasSoundSpeed = filled(4, 300.0);
+    double[] liquidSoundSpeed = filled(4, 1200.0);
+
+    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, pressure, area, length, gasDensity,
+        oilDensity, waterDensity, gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed, 5.0e6, true);
+
+    assertTrue(result.isConverged());
+    assertEquals(5.0e6, result.getPressure()[3], 0.0);
+    double[] finalPhaseMass = totalPhaseMass(result.getState());
+    double[] outletCorrection = result.getOutletBoundaryMassCorrectionKg();
+    for (int phase = 0; phase < initialPhaseMass.length; phase++) {
+      assertEquals(finalPhaseMass[phase] - initialPhaseMass[phase], -outletCorrection[phase], 1.0e-10);
+    }
+    assertTrue(outletCorrection[0] + outletCorrection[1] + outletCorrection[2] > 0.0);
+  }
+
   private static double[][] uniformState() {
     double[][] state = new double[4][7];
     for (int cell = 0; cell < state.length; cell++) {
