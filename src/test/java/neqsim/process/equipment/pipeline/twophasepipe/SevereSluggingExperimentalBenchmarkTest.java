@@ -364,15 +364,11 @@ class SevereSluggingExperimentalBenchmarkTest {
 
     LimitCycleMetrics pressureCycle = TwoFluidBenchmarkMetrics.analyzeLimitCycle(toArray(sampleTimes),
         toArray(pressureSamples), WARM_UP_SECONDS);
-    double liquidCyclePeriodSeconds = estimateLowProductionCyclePeriod(sampleTimes, liquidOutletSamples);
-    int completedLiquidCycleCount = Double.isFinite(liquidCyclePeriodSeconds)
-        ? (int) Math.floor((sampleTimes.get(sampleTimes.size() - 1) - sampleTimes.get(0))
-            / liquidCyclePeriodSeconds)
-        : 0;
+    LowProductionCycleMetrics liquidCycle = analyzeLowProductionCycles(sampleTimes, liquidOutletSamples);
     double maximumSlugLength = pipe.getMaxSlugLengthAtOutlet();
     return new TransientMetrics(label, SOURCE_URL, maximum(pressureSamples) - minimum(pressureSamples),
-        pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCyclePeriodSeconds,
-        completedLiquidCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples),
+        pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCycle.periodSeconds,
+        liquidCycle.completedCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples),
         maximumSlugLength, pipe.isSteadyStateWallClockLimited(), maximumClosure, finalInventory);
   }
 
@@ -441,7 +437,8 @@ class SevereSluggingExperimentalBenchmarkTest {
     return result;
   }
 
-  private static double estimateLowProductionCyclePeriod(List<Double> times, List<Double> liquidRates) {
+  private static LowProductionCycleMetrics analyzeLowProductionCycles(List<Double> times,
+      List<Double> liquidRates) {
     double minimum = minimum(liquidRates);
     double threshold = minimum + 0.15 * (maximum(liquidRates) - minimum);
     List<Integer> troughIndices = new ArrayList<>();
@@ -468,14 +465,15 @@ class SevereSluggingExperimentalBenchmarkTest {
       }
       index++;
     }
-    if (troughIndices.size() < 2) {
-      return Double.NaN;
+    int completedCycleCount = Math.max(0, troughIndices.size() - 1);
+    if (completedCycleCount == 0) {
+      return new LowProductionCycleMetrics(Double.NaN, 0);
     }
     double sum = 0.0;
     for (int i = 1; i < troughIndices.size(); i++) {
       sum += times.get(troughIndices.get(i)) - times.get(troughIndices.get(i - 1));
     }
-    return sum / (troughIndices.size() - 1);
+    return new LowProductionCycleMetrics(sum / completedCycleCount, completedCycleCount);
   }
 
   private static double percentile(List<Double> sortedValues, double fraction) {
@@ -557,6 +555,16 @@ class SevereSluggingExperimentalBenchmarkTest {
 
   private static double relativeDifference(double first, double second) {
     return Math.abs(first - second) / Math.max(Math.max(Math.abs(first), Math.abs(second)), 1.0e-12);
+  }
+
+  private static final class LowProductionCycleMetrics {
+    private final double periodSeconds;
+    private final int completedCycleCount;
+
+    private LowProductionCycleMetrics(double periodSeconds, int completedCycleCount) {
+      this.periodSeconds = periodSeconds;
+      this.completedCycleCount = completedCycleCount;
+    }
   }
 
   private static final class TransientMetrics {
