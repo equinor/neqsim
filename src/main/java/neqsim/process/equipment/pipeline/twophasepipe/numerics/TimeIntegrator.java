@@ -655,6 +655,12 @@ public class TimeIntegrator implements Serializable {
     return lastCoupledPressureMomentumResult == null ? 0 : lastCoupledPressureMomentumResult.getIterations();
   }
 
+  /** @return signed gas, oil, and water outlet mass corrections in kg */
+  public double[] getCoupledPressureMomentumOutletMassCorrectionKg() {
+    return lastCoupledPressureMomentumResult == null ? new double[3]
+        : lastCoupledPressureMomentumResult.getOutletBoundaryMassCorrectionKg();
+  }
+
   /** @return corrected pressure from the latest coupled correction, or null */
   public double[] getCoupledPressureMomentumPressure() {
     return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getPressure();
