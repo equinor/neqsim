@@ -1628,6 +1628,15 @@ Set<ProcessEquipmentInterface> seen =
     Collections.newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
 ```
 
+**Caveat — persisted fields.** Use these for locals and `transient` fields only. XStream has no
+converter for `IdentityHashMap` or `Collections.newSetFromMap(...)` and falls back to reflecting
+into `java.util`, which the JDK module system blocks. Maven Surefire passes
+`--add-opens java.base/java.util=ALL-UNNAMED` so Java tests never see it, but embedded hosts such
+as neqsim-python do not, and `save_neqsim` then fails with "No converter available" and writes a
+truncated file. For a non-transient field, store the identity set as a `List` scanned with `==`
+(see `RecycleController.acceptedRecycleSeeds`).
+`ProcessSystemXStreamPortabilityTest` walks a run `ProcessSystem` and fails on any such field.
+
 To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` rather
 than `equals()`.
 
