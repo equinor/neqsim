@@ -47,7 +47,7 @@ reviewed public-API migration says otherwise.
 | Supported semantic profile | `Dexpi20SemanticValidator`, `Dexpi20ModelInspector`, `Dexpi20ConformanceAssessment` | Automated for NeqSim's declared supported subset; not full DEXPI coverage |
 | Proteus layout | `DexpiLayoutEngine`, `DexpiLayoutConfig`, `DexpiShapeCatalog` | Deterministic compatibility layout with routing, symbols, title fields, and off-page graphics |
 | Simulator/P&ID bridge | `diagram.DexpiDiagramBridge` and Python rendering helpers | Convenience import, export, and external rendering path; not canonical ownership |
-| pyDEXPI qualification helper | `devtools/validate_dexpi_interoperability.py` and `render_neqsim_dexpi_with_pydexpi.py` | Reproducible public-tool check when an exact environment is supplied |
+| Public-tool qualification helper | `devtools/validate_dexpi_interoperability.py`, pinned DEXPIViewer baseline, and `render_neqsim_dexpi_with_pydexpi.py` | Exact-checkout DEXPIViewer findings and pyDEXPI import are machine-readable and separate from clean/commercial qualification |
 | Commercial CAE evidence | `dexpi-commercial-cae-evidence-template.json`, `DexpiToolQualificationRunner`, `DexpiToolQualificationEvidence` | Template and evidence contract only; named product/version observation and accountable difference review are required |
 | Native professional SVG/PDF | No shared native renderer or controlled document-set model | Confirmed gap; Graphviz and external/tool-specific paths remain available |
 
@@ -100,7 +100,10 @@ study preparation, coordinated packages, and qualification evidence.
 
 The repository also contains deterministic native fixtures under
 `src/test/resources/dexpi/2.0/golden`, including the branching Plant fixture, manifest, semantic
-summary, and schema provenance. The coordinated
+summary, schema provenance, and a reviewed DEXPIViewer baseline pinned to commit
+`18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad`. That external baseline has eight errors and three warnings; it detects
+drift while required provenance, plant metadata, genuine representation groups, and boundary-node handling remain
+open implementation work. The coordinated
 [engineering-diagram reference cases](dexpi-reference-cases.md) add executable, synthetic public
 simple, branched, and multi-area process fixtures. They check canonical topology, material balance,
 native Process/Plant exchange where supported, Proteus compatibility, legacy DOT, and governed P&ID
@@ -171,7 +174,7 @@ licensed standards, a named external tool, or accountable engineering review.
 | Simulation-backed engineering enrichment | Partial | Coordinated cases, registers, calculations, DEXPI packages and selected canonical stream values exist; governing envelopes and all equipment/design selections are not uniformly linked through the exchange |
 | DEXPI-centred study audits | Partial | Completeness, HAZOP preparation, SIS/HIPPS and qualification evidence exist; revision/MOC deltas and reusable selected-object study hooks are incomplete |
 | Java/Python engineer usability | Partial | Java writers/compilers and Python/Colab examples exist; one concise model-to-package-to-drawing-to-study API is not yet qualified |
-| Public DEXPI/pyDEXPI validation | Partial | Bundled schema, public helper and internal fixtures exist; exact-version external execution must be rerun per release/reference case |
+| Public DEXPI/pyDEXPI validation | Partial | Bundled schema, a pinned DEXPIViewer runner/baseline, pyDEXPI import helper, and internal fixtures exist; the reviewed external baseline is not clean and exact-version execution must be rerun per release/reference case |
 | Commercial CAE qualification | External | Evidence template exists; observed named-product/version import, export, semantic diff and accountable review are mandatory |
 | Executed reference workflows | Partial | Saved notebooks and CI workflows exist; the full realistic multi-area, recycle, isolation, relief, flare, cross-sheet, revision-delta acceptance workflow remains a gap |
 | Performance and completion release gate | Gap | Representative export/import/render/revision benchmarks and the final independent current-master audit are not complete |

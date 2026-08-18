@@ -330,6 +330,28 @@ qualification. Commercial import and round-trip evidence must follow
 `docs/integration/dexpi-commercial-cae-evidence-template.json`; a missing vendor test remains
 `QUALIFICATION_REQUIRED` rather than being inferred from schema validity.
 
+The same helper can run the independent MIT-licensed DEXPIViewer validator without downloading or silently updating
+the tool. Supply a local checkout pinned to commit
+`18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad` after installing that checkout's locked Node.js dependencies:
+
+```text
+python devtools/validate_dexpi_interoperability.py . \
+  --native-file src/test/resources/dexpi/2.0/golden/branching-process.dexpi.xml \
+  --dexpi-viewer /absolute/path/to/DEXPIViewer \
+  --dexpi-viewer-baseline src/test/resources/dexpi/2.0/golden/dexpi-viewer-baseline.json \
+  --require-dexpi-viewer \
+  --require-dexpi-viewer-baseline \
+  --output dexpi-viewer-report.json
+```
+
+The helper verifies the checkout's exact Git commit before execution, parses the validator's documented CSV into
+deterministically ordered JSON findings, and records the input and CSV SHA-256 digests. The reviewed golden baseline
+currently contains eight errors and three warnings; matching it is a regression gate, not a clean-validation claim.
+Use `--require-dexpi-viewer-clean` only when the selected native file is expected to have zero errors and zero warnings.
+The present findings identify required export provenance and plant metadata, absent native representation groups, and
+unconnected boundary piping nodes. They must be resolved through controlled metadata and genuine representation
+semantics, not placeholder timestamps or empty graphics.
+
 The DEXPI model contains explicit, graphically positioned process-instrumentation functions, signal-generating
 functions, instrumentation loops, information-flow relationships, control valves, shutdown valves, check valves,
 pressure-safety valves, and blowdown valves. Every generated object is associated with its protected equipment and
