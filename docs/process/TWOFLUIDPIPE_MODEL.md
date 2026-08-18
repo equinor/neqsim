@@ -1007,11 +1007,15 @@ steady pressure reconstruction afterward.
 pipe.setEnableInterfacialPressure(true);
 pipe.setImplicitInterfacialPressureCoupling(true);
 pipe.setEnableCoupledPressureMomentum(true);
+pipe.setAllowOutletPhaseBackflow(true);
 ```
 
-Use the three settings together for liquid-rich transients. The interfacial-pressure term makes
-the phase-momentum system hyperbolic, its implicit treatment removes the small void-wave CFL
-limit, and the coupled correction supplies compressibility feedback. The mode reports
+Use the four settings together for liquid-rich transients whose pressure outlet permits phase
+fallback. The interfacial-pressure term makes the phase-momentum system hyperbolic, its implicit
+treatment removes the small void-wave CFL limit, the coupled correction supplies compressibility
+feedback, and the signed outlet prevents a reversed liquid phase from being silently pinned at
+zero. Signed fallback extrapolates the interior phase state and remains opt-in because a one-way
+export boundary may instead require a check valve or a supplied external inflow composition. The mode reports
 `isCoupledPressureMomentumConverged()`,
 `getCoupledPressureMomentumVolumeResidual()`, and
 `getCoupledPressureMomentumIterations()`. A non-converged non-adaptive step throws instead of
