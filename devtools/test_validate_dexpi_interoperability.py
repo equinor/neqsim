@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from unittest import mock
+import unittest.mock
 
 
 SCRIPT = Path(__file__).with_name("validate_dexpi_interoperability.py")
@@ -103,7 +103,7 @@ class ValidateDexpiInteroperabilityTest(unittest.TestCase):
                     )
                 return subprocess.CompletedProcess(command, 1, stdout="issues", stderr="")
 
-            with mock.patch.object(MODULE.subprocess, "run", side_effect=fake_run):
+            with unittest.mock.patch.object(MODULE.subprocess, "run", side_effect=fake_run):
                 result = MODULE.run_dexpi_viewer(
                     native, root, MODULE.DEXPI_VIEWER_COMMIT
                 )
