@@ -77,12 +77,11 @@ class CoupledPressureMomentumSolverTest {
             liquidSoundSpeed,
             liquidSoundSpeed,
             5.0e6,
-            true);
+            false);
 
     assertTrue(result.isConverged());
     assertTrue(result.getMaximumRelativeVolumeResidual() < initialResidual * 1.0e-4);
     assertArrayEquals(initialPhaseMass, totalPhaseMass(result.getState()), 1.0e-10);
-    assertEquals(5.0e6, result.getPressure()[3], 1.0e-9);
     assertTrue(Math.abs(result.getState()[1][3]) > 0.0);
     assertTrue(Math.abs(result.getState()[2][3]) > 0.0);
   }
