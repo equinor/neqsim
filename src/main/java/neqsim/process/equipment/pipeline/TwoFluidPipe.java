@@ -152,7 +152,8 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Whether pressure, phase mass fluxes, and phase momenta are corrected in the same transient step.
    *
-   * <p>Off by default until the long-horizon liquid-rich and severe-slugging acceptance cases pass.
+   * <p>
+   * Off by default until the long-horizon liquid-rich and severe-slugging acceptance cases pass.
    */
   private boolean coupledPressureMomentumEnabled = false;
 
@@ -4312,18 +4313,8 @@ public class TwoFluidPipe extends Pipeline {
             oilDensities, waterDensities, dx, useImplicitVoidWave);
         boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
             || outletBCType == BoundaryCondition.CHARACTERISTIC);
-        timeIntegrator.setCoupledPressureMomentumProperties(
-            pressures,
-            areas,
-            lengths,
-            gasDensities,
-            oilDensities,
-            waterDensities,
-            gasSoundSpeeds,
-            oilSoundSpeeds,
-            waterSoundSpeeds,
-            outletPressure,
-            outletFixed,
+        timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
+            waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, outletPressure, outletFixed,
             coupledPressureMomentumEnabled);
       } else {
         timeIntegrator.setCoupledPressureMomentumEnabled(false);
@@ -4333,23 +4324,17 @@ public class TwoFluidPipe extends Pipeline {
       double[][] U_new = timeIntegrator.step(splitState, rhs, dtFinal);
       U_new = applyStiffBubbleDragSourceStep(U_new, 0.5 * dtFinal);
 
-      if (coupledPressureMomentumEnabled
-          && !timeIntegrator.isCoupledPressureMomentumConverged()) {
+      if (coupledPressureMomentumEnabled && !timeIntegrator.isCoupledPressureMomentumConverged()) {
         equations.applyState(sections, U_prev);
         if (enableAdaptiveTimestepping) {
-          adaptiveDtFactor = Math.max(
-              adaptiveDtFactor * 0.5, MIN_ADAPTIVE_DT_FACTOR);
+          adaptiveDtFactor = Math.max(adaptiveDtFactor * 0.5, MIN_ADAPTIVE_DT_FACTOR);
           currentStep--;
           continue;
         }
         throw new IllegalStateException(
-            getName()
-                + ": coupled pressure-momentum correction did not converge; maximum relative "
-                + "cell-volume residual="
-                + timeIntegrator.getCoupledPressureMomentumVolumeResidual()
-                + " after "
-                + timeIntegrator.getCoupledPressureMomentumIterations()
-                + " iterations");
+            getName() + ": coupled pressure-momentum correction did not converge; maximum relative "
+                + "cell-volume residual=" + timeIntegrator.getCoupledPressureMomentumVolumeResidual() + " after "
+                + timeIntegrator.getCoupledPressureMomentumIterations() + " iterations");
       }
 
       // 4. ADAPTIVE: check RAW state for NaN/Inf/negative mass BEFORE clamping
@@ -4907,13 +4892,9 @@ public class TwoFluidPipe extends Pipeline {
     double[] gasDensity = timeIntegrator.getCoupledPressureMomentumGasDensity();
     double[] oilDensity = timeIntegrator.getCoupledPressureMomentumOilDensity();
     double[] waterDensity = timeIntegrator.getCoupledPressureMomentumWaterDensity();
-    if (pressure == null
-        || gasDensity == null
-        || oilDensity == null
-        || waterDensity == null
+    if (pressure == null || gasDensity == null || oilDensity == null || waterDensity == null
         || pressure.length != numberOfSections) {
-      throw new IllegalStateException(
-          "Coupled pressure-momentum correction did not return a complete cell state");
+      throw new IllegalStateException("Coupled pressure-momentum correction did not return a complete cell state");
     }
 
     for (int cell = 0; cell < numberOfSections; cell++) {
@@ -4925,9 +4906,8 @@ public class TwoFluidPipe extends Pipeline {
 
       double oilMass = Math.max(state[cell][TwoFluidConservationEquations.IDX_OIL_MASS], 0.0);
       double waterMass = Math.max(state[cell][TwoFluidConservationEquations.IDX_WATER_MASS], 0.0);
-      double liquidVolume =
-          oilMass / Math.max(oilDensity[cell], CLOSURE_DENOMINATOR_EPSILON)
-              + waterMass / Math.max(waterDensity[cell], CLOSURE_DENOMINATOR_EPSILON);
+      double liquidVolume = oilMass / Math.max(oilDensity[cell], CLOSURE_DENOMINATOR_EPSILON)
+          + waterMass / Math.max(waterDensity[cell], CLOSURE_DENOMINATOR_EPSILON);
       if (liquidVolume > CLOSURE_DENOMINATOR_EPSILON) {
         section.setLiquidDensity((oilMass + waterMass) / liquidVolume);
       }
@@ -7538,13 +7518,14 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Enable the coupled compressible pressure-momentum transient correction.
    *
-   * <p>The option solves the cell-volume pressure equation and corrects phase mass fluxes and
-   * phase momenta with the same face pressure gradients. It replaces the post-step steady
-   * friction/gravity pressure reconstruction. The option remains off by default while the
-   * long-horizon liquid-rich and severe-slugging validation suite is being qualified.
+   * <p>
+   * The option solves the cell-volume pressure equation and corrects phase mass fluxes and phase momenta with the same
+   * face pressure gradients. It replaces the post-step steady friction/gravity pressure reconstruction. The option
+   * remains off by default while the long-horizon liquid-rich and severe-slugging validation suite is being qualified.
    *
-   * <p>Use together with {@link #setEnableInterfacialPressure(boolean)} so the transient momentum
-   * equations use the physically correct pressure force and the Bestion hyperbolicity closure.
+   * <p>
+   * Use together with {@link #setEnableInterfacialPressure(boolean)} so the transient momentum equations use the
+   * physically correct pressure force and the Bestion hyperbolicity closure.
    *
    * @param enabled true to use the coupled correction
    */
@@ -7562,8 +7543,7 @@ public class TwoFluidPipe extends Pipeline {
 
   /** @return convergence status of the most recent coupled correction */
   public boolean isCoupledPressureMomentumConverged() {
-    return !coupledPressureMomentumEnabled
-        || timeIntegrator.isCoupledPressureMomentumConverged();
+    return !coupledPressureMomentumEnabled || timeIntegrator.isCoupledPressureMomentumConverged();
   }
 
   /** @return maximum relative cell-volume residual of the most recent correction */
