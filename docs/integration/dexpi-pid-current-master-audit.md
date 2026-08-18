@@ -102,11 +102,13 @@ The repository also contains deterministic native fixtures under
 `src/test/resources/dexpi/2.0/golden`, including the branching Plant fixture, manifest, semantic
 summary, schema provenance, and a reviewed DEXPIViewer baseline pinned to commit
 `18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad`. That external baseline has eight errors and three warnings. The native
-Plant writer now has an additive controlled-metadata overload for caller-supplied `Core/EngineeringModel` export
-provenance and non-empty `Plant/Diagram.PlantMetaData`; the compatibility overload and committed golden fixture
-remain unchanged. The reviewed baseline therefore continues to report the metadata findings until a controlled
-fixture is regenerated and the pinned verifier is rerun. Genuine representation groups and boundary-node handling
-remain separate open implementation work. The coordinated
+Plant writer now has additive controlled metadata and export-options overloads. The options path can explicitly
+connect detected feed and product boundaries through directional `FlowInPipeOffPageConnector` and
+`FlowOutPipeOffPageConnector` objects with owned piping nodes and complete segment item/node references. The
+compatibility and metadata-only overloads plus the committed golden fixture remain byte-unchanged. The reviewed
+baseline therefore remains an 8-error/3-warning drift gate until a controlled fixture is regenerated and the pinned
+verifier is rerun; no clean result is inferred. Genuine graphical representation groups remain separate open work,
+and reciprocal controlled-sheet connector pairs remain owned by the document-set layer. The coordinated
 [engineering-diagram reference cases](dexpi-reference-cases.md) add executable, synthetic public
 simple, branched, and multi-area process fixtures. They check canonical topology, material balance,
 native Process/Plant exchange where supported, Proteus compatibility, legacy DOT, and governed P&ID
