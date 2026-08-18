@@ -1062,6 +1062,36 @@ independent OLGA/public benchmark qualification is completed. Do not use short s
 limit-cycle evidence; report period, the P10-P90 band, and completed cycle count over a settled
 window.
 
+### Standing benchmark acceptance metrics
+
+Use `TwoFluidBenchmarkMetrics` to compare a rate sweep, a section profile, mesh realizations, and
+a settled transient with the same definitions in every benchmark:
+
+```java
+double exponent = TwoFluidBenchmarkMetrics.fitRateExponent(rates, pressureDrops);
+double terrainLocalization =
+    TwoFluidBenchmarkMetrics.maximumToMedianRatio(liquidHoldupProfile);
+double meshSpread =
+    TwoFluidBenchmarkMetrics.relativeMeshSpread(coarseResult, refinedResult);
+TwoFluidBenchmarkMetrics.LimitCycleMetrics cycle =
+    TwoFluidBenchmarkMetrics.analyzeLimitCycle(times, pressure, settledWindowStart);
+```
+
+The limit-cycle result reports period, P10, median, P90, P10-P90 band, sample window, and completed
+median-upcrossing cycle count. A large startup peak followed by a flat trace reports zero completed
+cycles, so it cannot pass as a sustained oscillation.
+
+The slow public Tengesdal benchmark now uses these settled-window definitions and requires at least
+two completed liquid-rate cycles in every mesh/timestep realization. It retains the published
+experimental source and its phase-mass, mean-pressure, mesh, amplitude, and deterministic-repeat
+checks.
+
+A user-supplied like-for-like OLGA run for the same geometry reported a 21.7 s cycle and a
+0.37-4.03 kg/s liquid-outlet range, while the public experiment reports 38 +/- 2 s. These values
+are comparison evidence, not embedded commercial correlations. A NeqSim/OLGA comparison should
+record exported time series and evaluate both with the same settled window and metrics; it should
+not compare one startup peak or tune a closure to one trajectory.
+
 ### Adaptive Timestepping
 
 Adaptive timestepping provides robustness for challenging geometries. Enable via
