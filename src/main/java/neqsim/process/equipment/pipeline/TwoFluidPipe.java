@@ -8951,6 +8951,9 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public double getInletPressure() {
+    if (upstreamCompressibleVolume != null) {
+      return upstreamCompressibleVolume.getPressurePa() / 1e5;
+    }
     if (sections == null || sections.length == 0) {
       return getInletStream().getPressure("bara");
     }
