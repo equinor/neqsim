@@ -6,17 +6,16 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Rigorous counter-current equilibrium-tray stripper based on the distillation MESH solver.
  *
  * <p>
- * The stripping gas enters tray zero and the rich liquid enters the highest numbered tray. Tray
- * numbers are zero based from bottom to top. The class reuses {@link AbsorptionColumn} because
- * absorption and stripping use the same counter-current equilibrium-stage equations; the
- * thermodynamic driving force determines the direction of component transfer.
+ * The stripping gas enters tray zero and the rich liquid enters the highest numbered tray. Tray numbers are zero based
+ * from bottom to top. The class reuses {@link AbsorptionColumn} because absorption and stripping use the same
+ * counter-current equilibrium-stage equations; the thermodynamic driving force determines the direction of component
+ * transfer.
  * </p>
  *
  * <p>
- * Overall, per-tray, per-component, and per-tray/per-component Murphree vapor efficiencies are
- * inherited. The gas and liquid outlet streams remain ordinary NeqSim streams, and all inherited
- * convergence, MESH residual, material-balance, energy-diagnostic, warm-start, and solver-selection
- * APIs remain available.
+ * Overall, per-tray, per-component, and per-tray/per-component Murphree vapor efficiencies are inherited. The gas and
+ * liquid outlet streams remain ordinary NeqSim streams, and all inherited convergence, MESH residual, material-balance,
+ * energy-diagnostic, warm-start, and solver-selection APIs remain available.
  * </p>
  *
  * @author esolbraa
