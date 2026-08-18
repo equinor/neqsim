@@ -945,7 +945,9 @@ sum_k M_k / rho_k(p) = fixed volume,  with d rho_k / d p = 1 / c_k^2.
 
 Signed pipe transfer is supported, so a phase returning from the pipe adds upstream inventory.
 Phase depletion and non-converged pressure closure throw rather than clamping mass. Connecting the
-volume selects a constant-pressure inlet whose value is updated from the volume; the ordinary
+volume selects a constant-pressure inlet whose value is updated from the volume. When a volume is
+attached, `pipe.getInletPressure()` reports that current boundary pressure after the accepted
+inventory transfer; the axial pressure profile remains the accepted internal pipe state. The ordinary
 stream remains the source of thermodynamic composition for the pipe boundary. Component mixing,
 heat transfer, and a momentum-resolved vessel/nozzle model are outside this lumped boundary's
 current scope.
