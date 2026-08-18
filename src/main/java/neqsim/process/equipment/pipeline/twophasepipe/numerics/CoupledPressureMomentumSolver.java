@@ -292,8 +292,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       int outlet = cellCount - 1;
       double occupiedArea = 0.0;
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        occupiedArea += Math.max(state[outlet][phase], 0.0)
-            / Math.max(densities[phase][outlet], MIN_DENSITY);
+        occupiedArea += Math.max(state[outlet][phase], 0.0) / Math.max(densities[phase][outlet], MIN_DENSITY);
       }
       if (!(occupiedArea > 0.0) || !Double.isFinite(occupiedArea)) {
         throw new IllegalStateException("Fixed-pressure outlet has no finite phase volume");
