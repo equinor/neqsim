@@ -360,6 +360,31 @@ conformance, or evidence that graphical representations and boundary nodes are c
 The committed external baseline is intentionally not changed by this API alone. Regenerate a controlled fixture with
 the metadata overload and rerun the pinned verifier before changing its reviewed error and warning counts.
 
+### Explicit process-boundary connectors
+
+A controlled export can opt in to directional boundary semantics without changing either established byte path:
+
+```java
+Dexpi20PlantExportOptions options =
+    Dexpi20PlantExportOptions.builder(metadata)
+        .boundaryConnectionMode(
+            Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS)
+        .build();
+Dexpi20XmlWriter.write(process, outputFile, options);
+```
+
+For each detected feed crossing into the exported `ProcessSystem`, the writer adds a
+`Plant/Piping.FlowInPipeOffPageConnector`; for every unconsumed product it adds a
+`Plant/Piping.FlowOutPipeOffPageConnector`. Each connector owns a stable piping node, and its boundary segment carries
+explicit source/target item and node references. Ordering follows the process-system and outlet ordering, so repeated
+exports are byte-deterministic. `BoundaryConnectionMode.NONE` is the default and is byte-identical to the metadata-only
+overload.
+
+These objects record a simulation/export boundary proposal. They are not reciprocal controlled-document connector
+pairs, sheet or grid references, graphical representation groups, line-design evidence, or accountable P&ID approval.
+Use the canonical document-set APIs for reviewed cross-sheet intent, and verify the selected Plant artifact with the
+target tool before controlled issue.
+
 The same helper can run the independent MIT-licensed DEXPIViewer validator without downloading or silently updating
 the tool. Supply a local checkout pinned to commit
 `18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad` after installing that checkout's locked Node.js dependencies:
