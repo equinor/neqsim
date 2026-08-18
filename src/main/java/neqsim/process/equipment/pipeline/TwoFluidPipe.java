@@ -149,6 +149,17 @@ public class TwoFluidPipe extends Pipeline {
   /** Whether the interfacial-pressure stabilizer is advanced implicitly by the time integrator. */
   private boolean implicitInterfacialPressureCoupling = true;
 
+  /**
+   * Whether pressure, phase mass fluxes, and phase momenta are corrected in the same transient step.
+   *
+   * <p>
+   * Off by default until the long-horizon liquid-rich and severe-slugging acceptance cases pass.
+   */
+  private boolean coupledPressureMomentumEnabled = false;
+
+  /** Optional phase-resolved compressible volume supplying the inlet pressure boundary. */
+  private UpstreamCompressibleVolume upstreamCompressibleVolume = null;
+
   /** Default closed-flow fluid-side heat-transfer coefficient in W/(m2 K). */
   private static final double DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT = 50.0;
 
@@ -4134,6 +4145,7 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalArgumentException("Transient time step must be positive and finite");
     }
     isTransientMode = true;
+    synchronizeUpstreamCompressibleVolumePressure();
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
@@ -4251,13 +4263,19 @@ public class TwoFluidPipe extends Pipeline {
         return derivative;
       };
 
-      // Provide cell properties for the implicit acoustic and void-wave solves.
-      if (isIMEX || useImplicitVoidWave) {
+      // Provide cell properties for the implicit acoustic, void-wave, and
+      // coupled pressure-momentum solves.
+      if (isIMEX || useImplicitVoidWave || coupledPressureMomentumEnabled) {
         double[] soundSpeeds = new double[numberOfSections];
+        double[] gasSoundSpeeds = new double[numberOfSections];
+        double[] oilSoundSpeeds = new double[numberOfSections];
+        double[] waterSoundSpeeds = new double[numberOfSections];
         double[] voidWaveSpeeds = new double[numberOfSections];
         double[] voidWaveSlipCoefficients = new double[numberOfSections];
         double[] densities = new double[numberOfSections];
         double[] areas = new double[numberOfSections];
+        double[] lengths = new double[numberOfSections];
+        double[] pressures = new double[numberOfSections];
         double[] gasDensities = new double[numberOfSections];
         double[] oilDensities = new double[numberOfSections];
         double[] waterDensities = new double[numberOfSections];
@@ -4278,6 +4296,11 @@ public class TwoFluidPipe extends Pipeline {
           double rhoMix = densities[i];
           double cG = Math.max(sec.getGasSoundSpeed(), 100.0);
           double cL = Math.max(sec.getLiquidSoundSpeed(), 500.0);
+          gasSoundSpeeds[i] = cG;
+          oilSoundSpeeds[i] = cL;
+          waterSoundSpeeds[i] = cL;
+          lengths[i] = sec.getLength();
+          pressures[i] = sec.getPressure();
           double invC2 = alphaG / (rhoG * cG * cG) + alphaL / (rhoL * cL * cL);
           soundSpeeds[i] = (invC2 > 0) ? Math.sqrt(1.0 / (rhoMix * invC2)) : cG;
           soundSpeeds[i] = Math.max(soundSpeeds[i], 1.0);
@@ -4292,11 +4315,31 @@ public class TwoFluidPipe extends Pipeline {
         }
         timeIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, voidWaveSlipCoefficients, areas, gasDensities,
             oilDensities, waterDensities, dx, useImplicitVoidWave);
+        boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
+            || outletBCType == BoundaryCondition.CHARACTERISTIC);
+        timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
+            waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, outletPressure, outletFixed,
+            coupledPressureMomentumEnabled);
+      } else {
+        timeIntegrator.setCoupledPressureMomentumEnabled(false);
       }
 
       double[][] splitState = applyStiffBubbleDragSourceStep(U_prev, 0.5 * dtFinal);
       double[][] U_new = timeIntegrator.step(splitState, rhs, dtFinal);
       U_new = applyStiffBubbleDragSourceStep(U_new, 0.5 * dtFinal);
+
+      if (coupledPressureMomentumEnabled && !timeIntegrator.isCoupledPressureMomentumConverged()) {
+        equations.applyState(sections, U_prev);
+        if (enableAdaptiveTimestepping) {
+          adaptiveDtFactor = Math.max(adaptiveDtFactor * 0.5, MIN_ADAPTIVE_DT_FACTOR);
+          currentStep--;
+          continue;
+        }
+        throw new IllegalStateException(
+            getName() + ": coupled pressure-momentum correction did not converge; maximum relative "
+                + "cell-volume residual=" + timeIntegrator.getCoupledPressureMomentumVolumeResidual() + " after "
+                + timeIntegrator.getCoupledPressureMomentumIterations() + " iterations");
+      }
 
       // 4. ADAPTIVE: check RAW state for NaN/Inf/negative mass BEFORE clamping
       // Only hard-reject on unphysical values. Normal transient changes (even large)
@@ -4336,12 +4379,17 @@ public class TwoFluidPipe extends Pipeline {
       // 5. Now safe to apply corrections and state
       validateAndCorrectState(U_new, U_prev);
 
+      if (coupledPressureMomentumEnabled) {
+        applyCoupledPressureMomentumState(U_new);
+      }
       equations.applyState(sections, U_new);
 
-      // 6. Reconstruct pressure profile from evolved state
-      // The conservative variables (mass, momentum) have evolved but pressure
-      // must be reconstructed. March from outlet (fixed P BC) backward.
-      reconstructPressureProfile();
+      // 6. The coupled path has already solved pressure from compressibility and
+      // corrected phase mass fluxes and momenta with the same face gradients.
+      // The legacy path retains the steady friction/gravity pressure march.
+      if (!coupledPressureMomentumEnabled) {
+        reconstructPressureProfile();
+      }
 
       // 7. Apply boundary conditions
       applyBoundaryConditions();
@@ -4513,6 +4561,7 @@ public class TwoFluidPipe extends Pipeline {
   private void accumulateAcceptedMassBalance(List<TwoFluidConservationEquations.MassBalanceRate> stageRates,
       double timeStepSeconds, double[] inletMassKg, double[] outletMassKg, double[] sourceMassKg) {
     double[] weights = getTimeIntegrationStageWeights(stageRates.size());
+    double[] acceptedInletMassKg = new double[3];
     for (int stage = 0; stage < stageRates.size(); stage++) {
       TwoFluidConservationEquations.MassBalanceRate rate = stageRates.get(stage);
       double[] inletRate = rate.getInletMassFlowKgPerSecond();
@@ -4520,11 +4569,32 @@ public class TwoFluidPipe extends Pipeline {
       double[] sourceRate = rate.getSourceMassFlowKgPerSecond();
       double weightedTime = weights[stage] * timeStepSeconds;
       for (int phase = 0; phase < 3; phase++) {
-        inletMassKg[phase] += inletRate[phase] * weightedTime;
+        double acceptedInlet = inletRate[phase] * weightedTime;
+        inletMassKg[phase] += acceptedInlet;
+        acceptedInletMassKg[phase] += acceptedInlet;
         outletMassKg[phase] += outletRate[phase] * weightedTime;
         sourceMassKg[phase] += sourceRate[phase] * weightedTime;
       }
     }
+    if (upstreamCompressibleVolume != null) {
+      upstreamCompressibleVolume.advance(timeStepSeconds, acceptedInletMassKg);
+      synchronizeUpstreamCompressibleVolumePressure();
+    }
+    if (coupledPressureMomentumEnabled) {
+      double[] outletCorrectionKg = timeIntegrator.getCoupledPressureMomentumOutletMassCorrectionKg();
+      for (int phase = 0; phase < 3; phase++) {
+        outletMassKg[phase] += outletCorrectionKg[phase];
+      }
+    }
+  }
+
+  private void synchronizeUpstreamCompressibleVolumePressure() {
+    if (upstreamCompressibleVolume == null) {
+      return;
+    }
+    inletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+    inletPressure = upstreamCompressibleVolume.getPressurePa();
+    inletPressureSet = true;
   }
 
   private double[] getTimeIntegrationStageWeights(int stageCount) {
@@ -4834,6 +4904,38 @@ public class TwoFluidPipe extends Pipeline {
               + sec.getPosition() + ": " + e.getMessage(), e);
         }
         logger.warn("Flash calculation failed for section at position {}", sec.getPosition());
+      }
+    }
+  }
+
+  /**
+   * Apply pressure and phase densities from the latest coupled correction.
+   *
+   * @param state corrected conservative state
+   */
+  private void applyCoupledPressureMomentumState(double[][] state) {
+    double[] pressure = timeIntegrator.getCoupledPressureMomentumPressure();
+    double[] gasDensity = timeIntegrator.getCoupledPressureMomentumGasDensity();
+    double[] oilDensity = timeIntegrator.getCoupledPressureMomentumOilDensity();
+    double[] waterDensity = timeIntegrator.getCoupledPressureMomentumWaterDensity();
+    if (pressure == null || gasDensity == null || oilDensity == null || waterDensity == null
+        || pressure.length != numberOfSections) {
+      throw new IllegalStateException("Coupled pressure-momentum correction did not return a complete cell state");
+    }
+
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      TwoFluidSection section = sections[cell];
+      section.setPressure(pressure[cell]);
+      section.setGasDensity(gasDensity[cell]);
+      section.setOilDensity(oilDensity[cell]);
+      section.setWaterDensity(waterDensity[cell]);
+
+      double oilMass = Math.max(state[cell][TwoFluidConservationEquations.IDX_OIL_MASS], 0.0);
+      double waterMass = Math.max(state[cell][TwoFluidConservationEquations.IDX_WATER_MASS], 0.0);
+      double liquidVolume = oilMass / Math.max(oilDensity[cell], CLOSURE_DENOMINATOR_EPSILON)
+          + waterMass / Math.max(waterDensity[cell], CLOSURE_DENOMINATOR_EPSILON);
+      if (liquidVolume > CLOSURE_DENOMINATOR_EPSILON) {
+        section.setLiquidDensity((oilMass + waterMass) / liquidVolume);
       }
     }
   }
@@ -7440,6 +7542,130 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Allow signed phase flow through the zero-gradient outlet boundary.
+   *
+   * <p>
+   * A reversed phase then uses the extrapolated interior phase state instead of being clamped at zero. Enable only for
+   * a pressure boundary that physically permits fallback and use a well-posed pressure-momentum formulation.
+   *
+   * @param allow true to carry signed phase mass and energy through the outlet
+   */
+  public void setAllowOutletPhaseBackflow(boolean allow) {
+    equations.setAllowOutletPhaseBackflow(allow);
+  }
+
+  /** @return true when signed outlet phase flow is enabled */
+  public boolean isOutletPhaseBackflowAllowed() {
+    return equations.isOutletPhaseBackflowAllowed();
+  }
+
+  /**
+   * Enable the coupled compressible pressure-momentum transient correction.
+   *
+   * <p>
+   * The option solves the cell-volume pressure equation and corrects phase mass fluxes and phase momenta with the same
+   * face pressure gradients. It replaces the post-step steady friction/gravity pressure reconstruction. The option
+   * remains off by default while the long-horizon liquid-rich and severe-slugging validation suite is being qualified.
+   *
+   * <p>
+   * Use together with {@link #setEnableInterfacialPressure(boolean)} so the transient momentum equations use the
+   * physically correct pressure force and the Bestion hyperbolicity closure.
+   *
+   * @param enabled true to use the coupled correction
+   */
+  public void setEnableCoupledPressureMomentum(boolean enabled) {
+    coupledPressureMomentumEnabled = enabled;
+    if (timeIntegrator != null) {
+      timeIntegrator.setCoupledPressureMomentumEnabled(enabled);
+    }
+  }
+
+  /** @return true when the coupled pressure-momentum correction is selected */
+  public boolean isCoupledPressureMomentumEnabled() {
+    return coupledPressureMomentumEnabled;
+  }
+
+  /** @return convergence status of the most recent coupled correction */
+  public boolean isCoupledPressureMomentumConverged() {
+    return !coupledPressureMomentumEnabled || timeIntegrator.isCoupledPressureMomentumConverged();
+  }
+
+  /**
+   * Connect a phase-resolved compressible volume to the inlet pressure boundary.
+   *
+   * <p>
+   * The pipe withdraws the phase masses measured by its accepted finite-volume inlet flux. The volume updates pressure
+   * from its fixed-volume compressibility closure after every accepted internal substep. Connecting a volume selects
+   * {@link BoundaryCondition#CONSTANT_PRESSURE} at the inlet; removing it does not otherwise change the selected
+   * boundary condition.
+   * </p>
+   *
+   * @param volume upstream volume, or {@code null} to disconnect it
+   */
+  public void setUpstreamCompressibleVolume(UpstreamCompressibleVolume volume) {
+    upstreamCompressibleVolume = volume;
+    synchronizeUpstreamCompressibleVolumePressure();
+  }
+
+  /** @return connected upstream compressible volume, or {@code null} when disconnected */
+  public UpstreamCompressibleVolume getUpstreamCompressibleVolume() {
+    return upstreamCompressibleVolume;
+  }
+
+  /**
+   * Initialize and connect an upstream volume from the current inlet-section phase state.
+   *
+   * <p>
+   * Call {@link #run()} first so phase holdups, densities, and sound speeds are initialized. The new volume begins in
+   * pressure and volume equilibrium with the first pipe section.
+   * </p>
+   *
+   * @param volumeM3 fixed upstream volume in m3
+   * @return the initialized and connected volume
+   */
+  public UpstreamCompressibleVolume initializeUpstreamCompressibleVolume(double volumeM3) {
+    if (sections == null || sections.length == 0) {
+      throw new IllegalStateException("Run the pipe before initializing an upstream compressible volume");
+    }
+    TwoFluidSection inlet = sections[0];
+    double gasHoldup = Math.max(inlet.getGasHoldup(), 0.0);
+    double oilHoldup = Math.max(inlet.getOilHoldup(), 0.0);
+    double waterHoldup = Math.max(inlet.getWaterHoldup(), 0.0);
+    double holdupSum = gasHoldup + oilHoldup + waterHoldup;
+    if (!(holdupSum > 0.0)) {
+      throw new IllegalStateException("Inlet section has no initialized phase volume");
+    }
+    gasHoldup /= holdupSum;
+    oilHoldup /= holdupSum;
+    waterHoldup /= holdupSum;
+
+    double gasDensity = Math.max(inlet.getGasDensity(), CLOSURE_DENOMINATOR_EPSILON);
+    double oilDensity = Math.max(inlet.getOilDensity(), CLOSURE_DENOMINATOR_EPSILON);
+    double waterDensity = Math.max(inlet.getWaterDensity(), CLOSURE_DENOMINATOR_EPSILON);
+    double[] phaseMassKg = { gasHoldup * volumeM3 * gasDensity, oilHoldup * volumeM3 * oilDensity,
+        waterHoldup * volumeM3 * waterDensity };
+    double[] phaseDensityKgM3 = { gasDensity, oilDensity, waterDensity };
+    double gasSoundSpeed = Math.max(inlet.getGasSoundSpeed(), CLOSURE_DENOMINATOR_EPSILON);
+    double liquidSoundSpeed = Math.max(inlet.getLiquidSoundSpeed(), CLOSURE_DENOMINATOR_EPSILON);
+    double[] phaseSoundSpeedMS = { gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed };
+
+    UpstreamCompressibleVolume volume = new UpstreamCompressibleVolume(volumeM3, inlet.getPressure(), phaseMassKg,
+        phaseDensityKgM3, phaseSoundSpeedMS);
+    setUpstreamCompressibleVolume(volume);
+    return volume;
+  }
+
+  /** @return maximum relative cell-volume residual of the most recent correction */
+  public double getCoupledPressureMomentumVolumeResidual() {
+    return timeIntegrator.getCoupledPressureMomentumVolumeResidual();
+  }
+
+  /** @return nonlinear iterations used by the most recent correction */
+  public int getCoupledPressureMomentumIterations() {
+    return timeIntegrator.getCoupledPressureMomentumIterations();
+  }
+
+  /**
    * Select how the interfacial-pressure stabilizer is advanced in time.
    *
    * <p>
@@ -8725,6 +8951,9 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public double getInletPressure() {
+    if (upstreamCompressibleVolume != null) {
+      return upstreamCompressibleVolume.getPressurePa() / 1e5;
+    }
     if (sections == null || sections.length == 0) {
       return getInletStream().getPressure("bara");
     }
