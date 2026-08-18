@@ -270,8 +270,8 @@ public final class Dexpi20XmlWriter {
             String sourceNode = outletNodes.get(inlet);
             if (sourceNode == null || targetNode == null) {
               if (explicitBoundaryConnectors && targetNode != null) {
-                appendBoundarySegment(document, segments, segmentNumber++, true, targetNode,
-                    nodeOwners.get(targetNode), boundaryLabel(inlet, unit.getName() + " feed"));
+                appendBoundarySegment(document, segments, segmentNumber++, true, targetNode, nodeOwners.get(targetNode),
+                    boundaryLabel(inlet, unit.getName() + " feed"));
               }
               continue;
             }
