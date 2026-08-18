@@ -24,31 +24,23 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Tests controlled provenance and plant identity in native DEXPI 2.0 Plant export. */
 public class Dexpi20PlantExportMetadataTest extends NeqSimTest {
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   /** Verifies deterministic schema-valid export and the exact DEXPI metadata placement. */
   @Test
   public void writesControlledMetadataDeterministically() throws Exception {
     ProcessSystem process = process();
-    Dexpi20PlantExportMetadata metadata =
-        Dexpi20PlantExportMetadata.builder("2026-08-18T05:00:00Z", "NeqSim", "Equinor",
-            "3.17.0")
-            .plantProperty(
-                Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_IDENTIFICATION_CODE,
-                "SYNTHETIC-PLANT")
-            .plantProperty(Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_NAME,
-                "Synthetic regression plant")
-            .plantProperty(
-                Dexpi20PlantExportMetadata.PlantProperty.PLANT_AREA_IDENTIFICATION_CODE,
-                "AREA-10")
-            .plantProperty(Dexpi20PlantExportMetadata.PlantProperty.PLANT_AREA_NAME,
-                "Synthetic process area")
-            .build();
+    Dexpi20PlantExportMetadata metadata = Dexpi20PlantExportMetadata
+        .builder("2026-08-18T05:00:00Z", "NeqSim", "Equinor", "3.17.0")
+        .plantProperty(Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_IDENTIFICATION_CODE, "SYNTHETIC-PLANT")
+        .plantProperty(Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_NAME, "Synthetic regression plant")
+        .plantProperty(Dexpi20PlantExportMetadata.PlantProperty.PLANT_AREA_IDENTIFICATION_CODE, "AREA-10")
+        .plantProperty(Dexpi20PlantExportMetadata.PlantProperty.PLANT_AREA_NAME, "Synthetic process area").build();
     Path first = temporaryDirectory.resolve("controlled-first.dexpi.xml");
     Path second = temporaryDirectory.resolve("controlled-second.dexpi.xml");
 
-    Dexpi20ConformanceAssessment.Report report =
-        Dexpi20XmlWriter.writeAndAssess(process, first.toFile(), metadata);
+    Dexpi20ConformanceAssessment.Report report = Dexpi20XmlWriter.writeAndAssess(process, first.toFile(), metadata);
     Dexpi20XmlWriter.write(process, second.toFile(), metadata);
 
     assertTrue(report.isSchemaAndProfileConformant(), report.getErrors().toString());
@@ -64,8 +56,7 @@ public class Dexpi20PlantExportMetadataTest extends NeqSimTest {
     Element plantModel = objectByType(document, "Plant/PlantModel");
     Element plantMetadata = componentObject(plantModel, "MetaData");
     assertEquals("Plant/Diagram.PlantMetaData", plantMetadata.getAttribute("type"));
-    assertEquals("SYNTHETIC-PLANT",
-        dataValue(plantMetadata, "ProcessPlantIdentificationCode"));
+    assertEquals("SYNTHETIC-PLANT", dataValue(plantMetadata, "ProcessPlantIdentificationCode"));
     assertEquals("Synthetic regression plant", dataValue(plantMetadata, "ProcessPlantName"));
     assertEquals("AREA-10", dataValue(plantMetadata, "PlantAreaIdentificationCode"));
     assertEquals("Synthetic process area", dataValue(plantMetadata, "PlantAreaName"));
@@ -94,11 +85,9 @@ public class Dexpi20PlantExportMetadataTest extends NeqSimTest {
     assertThrows(IllegalArgumentException.class,
         () -> Dexpi20PlantExportMetadata.builder("not-a-date", "NeqSim", "Equinor", "3.17.0"));
     assertThrows(IllegalArgumentException.class,
-        () -> Dexpi20PlantExportMetadata.builder("2026-08-18T05:00:00Z", " ", "Equinor",
-            "3.17.0"));
-    Dexpi20PlantExportMetadata.Builder builder =
-        Dexpi20PlantExportMetadata.builder("2026-08-18T05:00:00Z", "NeqSim", "Equinor",
-            "3.17.0");
+        () -> Dexpi20PlantExportMetadata.builder("2026-08-18T05:00:00Z", " ", "Equinor", "3.17.0"));
+    Dexpi20PlantExportMetadata.Builder builder = Dexpi20PlantExportMetadata.builder("2026-08-18T05:00:00Z", "NeqSim",
+        "Equinor", "3.17.0");
     assertThrows(IllegalStateException.class, builder::build);
   }
 
