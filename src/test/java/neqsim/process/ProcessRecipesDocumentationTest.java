@@ -60,6 +60,7 @@ class ProcessRecipesDocumentationTest {
   @Test
   void polytropicHeaterExpanderAndHeatExchangerRecipesExecute() {
     Stream feed = createFeed("Feed");
+    feed.run();
 
     Compressor compressor = new Compressor("Polytropic compressor", feed);
     compressor.setOutletPressure(100.0, "bara");
