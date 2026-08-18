@@ -522,10 +522,10 @@ public class TwoFluidConservationEquations implements Serializable {
    * Calculate outlet flux using upwind scheme (transmissive boundary).
    *
    * <p>
-   * By default, each reversed phase velocity is clamped at zero because a one-way transmissive boundary has no
-   * upstream state to advect in. When signed outlet flow is explicitly enabled, the zero-gradient interior phase state
-   * supplies that boundary state and a reversed phase carries signed mass and energy back into the domain. Use signed
-   * flow only with a well-posed pressure-momentum model and a boundary whose physical interpretation permits fallback.
+   * By default, each reversed phase velocity is clamped at zero because a one-way transmissive boundary has no upstream
+   * state to advect in. When signed outlet flow is explicitly enabled, the zero-gradient interior phase state supplies
+   * that boundary state and a reversed phase carries signed mass and energy back into the domain. Use signed flow only
+   * with a well-posed pressure-momentum model and a boundary whose physical interpretation permits fallback.
    * </p>
    *
    * @param sec the outlet pipe section
