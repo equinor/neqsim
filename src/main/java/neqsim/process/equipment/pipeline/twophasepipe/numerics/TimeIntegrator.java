@@ -626,6 +626,23 @@ public class TimeIntegrator implements Serializable {
     }
   }
 
+  /**
+   * Enable or disable the coupled pressure-momentum correction.
+   *
+   * @param enabled true to apply the configured correction
+   */
+  public void setCoupledPressureMomentumEnabled(boolean enabled) {
+    coupledPressureMomentumEnabled = enabled;
+    if (!enabled) {
+      lastCoupledPressureMomentumResult = null;
+    }
+  }
+
+  /** @return true when the coupled pressure-momentum correction is enabled */
+  public boolean isCoupledPressureMomentumEnabled() {
+    return coupledPressureMomentumEnabled;
+  }
+
   private double[][] applyCoupledPressureMomentumCorrection(
       double[][] state, double dt) {
     if (!coupledPressureMomentumEnabled) {
