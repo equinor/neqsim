@@ -84,6 +84,7 @@ NeqSim outlet streams, conservation diagnostics, and warm-start behavior.
 
 ```java
 import neqsim.process.equipment.absorber.StrippingColumn;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
 StrippingColumn stripper = new StrippingColumn("methanol stripper", 5);
