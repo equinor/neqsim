@@ -40,14 +40,35 @@ public final class Dexpi20XmlWriter {
   private Dexpi20XmlWriter() {
   }
 
-  /** Writes and validates a native DEXPI 2.0 model. */
+  /** Writes and validates a native DEXPI 2.0 model using the compatibility path. */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
+    writeValidated(processSystem, file, null);
+  }
+
+  /**
+   * Writes and validates a native DEXPI 2.0 Plant model with controlled export metadata.
+   *
+   * @param processSystem source simulation topology
+   * @param file destination DEXPI XML file
+   * @param metadata caller-supplied export provenance and plant identity
+   * @throws IOException if serialization or validation fails
+   */
+  public static void write(ProcessSystem processSystem, File file,
+      Dexpi20PlantExportMetadata metadata) throws IOException {
+    if (metadata == null) {
+      throw new IllegalArgumentException("metadata must not be null");
+    }
+    writeValidated(processSystem, file, metadata);
+  }
+
+  private static void writeValidated(ProcessSystem processSystem, File file,
+      Dexpi20PlantExportMetadata metadata) throws IOException {
     if (file == null) {
       throw new IllegalArgumentException("file must not be null");
     }
     FileOutputStream stream = new FileOutputStream(file);
     try {
-      write(processSystem, stream);
+      writeDocument(processSystem, stream, metadata);
     } finally {
       stream.close();
     }
@@ -66,8 +87,44 @@ public final class Dexpi20XmlWriter {
     return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID);
   }
 
-  /** Writes a native DEXPI 2.0 model to a stream. */
+  /**
+   * Writes a metadata-bearing Plant exchange and returns its auditable conformance assessment.
+   *
+   * @param processSystem source simulation topology
+   * @param file destination DEXPI XML file
+   * @param metadata caller-supplied export provenance and plant identity
+   * @return schema and supported-profile assessment
+   * @throws IOException if serialization, validation, or assessment fails
+   */
+  public static Dexpi20ConformanceAssessment.Report writeAndAssess(ProcessSystem processSystem, File file,
+      Dexpi20PlantExportMetadata metadata) throws IOException {
+    write(processSystem, file, metadata);
+    return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID);
+  }
+
+  /** Writes a native DEXPI 2.0 model to a stream using the compatibility path. */
   public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
+    writeDocument(processSystem, outputStream, null);
+  }
+
+  /**
+   * Writes a native DEXPI 2.0 Plant model with controlled export metadata to a stream.
+   *
+   * @param processSystem source simulation topology
+   * @param outputStream destination stream
+   * @param metadata caller-supplied export provenance and plant identity
+   * @throws IOException if serialization fails
+   */
+  public static void write(ProcessSystem processSystem, OutputStream outputStream,
+      Dexpi20PlantExportMetadata metadata) throws IOException {
+    if (metadata == null) {
+      throw new IllegalArgumentException("metadata must not be null");
+    }
+    writeDocument(processSystem, outputStream, metadata);
+  }
+
+  private static void writeDocument(ProcessSystem processSystem, OutputStream outputStream,
+      Dexpi20PlantExportMetadata metadata) throws IOException {
     if (processSystem == null || outputStream == null) {
       throw new IllegalArgumentException("processSystem and outputStream must not be null");
     }
@@ -82,9 +139,15 @@ public final class Dexpi20XmlWriter {
 
       Element engineeringModel = object(document, null, "Core/EngineeringModel");
       model.appendChild(engineeringModel);
+      if (metadata != null) {
+        appendEngineeringModelMetadata(document, engineeringModel, metadata);
+      }
       Element conceptualModel = components(document, engineeringModel, "ConceptualModel");
       Element plant = object(document, "PlantModel1", "Plant/PlantModel");
       conceptualModel.appendChild(plant);
+      if (metadata != null) {
+        appendPlantMetadata(document, plant, metadata);
+      }
 
       Element taggedItems = components(document, plant, "TaggedPlantItems");
       Element pipingSystems = components(document, plant, "PipingNetworkSystems");
@@ -195,6 +258,37 @@ public final class Dexpi20XmlWriter {
     Element string = document.createElement("String");
     string.setTextContent(value == null ? "" : value);
     data.appendChild(string);
+    parent.appendChild(data);
+  }
+
+  private static void appendEngineeringModelMetadata(Document document, Element engineeringModel,
+      Dexpi20PlantExportMetadata metadata) {
+    data(document, engineeringModel, "OriginatingSystemName", metadata.getOriginatingSystemName());
+    data(document, engineeringModel, "OriginatingSystemVendorName",
+        metadata.getOriginatingSystemVendorName());
+    data(document, engineeringModel, "OriginatingSystemVersion",
+        metadata.getOriginatingSystemVersion());
+    dateTimeData(document, engineeringModel, "ExportDateTime", metadata.getExportDateTime());
+  }
+
+  private static void appendPlantMetadata(Document document, Element plant,
+      Dexpi20PlantExportMetadata metadata) {
+    Element metadataObjects = components(document, plant, "MetaData");
+    Element plantMetadata = object(document, "PlantMetaData1", "Plant/Diagram.PlantMetaData");
+    for (Map.Entry<Dexpi20PlantExportMetadata.PlantProperty, String> entry :
+        metadata.getPlantProperties().entrySet()) {
+      data(document, plantMetadata, entry.getKey().getDexpiProperty(), entry.getValue());
+    }
+    metadataObjects.appendChild(plantMetadata);
+  }
+
+  private static void dateTimeData(Document document, Element parent, String property,
+      String value) {
+    Element data = document.createElement("Data");
+    data.setAttribute("property", property);
+    Element dateTime = document.createElement("DateTime");
+    dateTime.setTextContent(value);
+    data.appendChild(dateTime);
     parent.appendChild(data);
   }
 
