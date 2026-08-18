@@ -7516,6 +7516,24 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Allow signed phase flow through the zero-gradient outlet boundary.
+   *
+   * <p>
+   * A reversed phase then uses the extrapolated interior phase state instead of being clamped at zero. Enable only for
+   * a pressure boundary that physically permits fallback and use a well-posed pressure-momentum formulation.
+   *
+   * @param allow true to carry signed phase mass and energy through the outlet
+   */
+  public void setAllowOutletPhaseBackflow(boolean allow) {
+    equations.setAllowOutletPhaseBackflow(allow);
+  }
+
+  /** @return true when signed outlet phase flow is enabled */
+  public boolean isOutletPhaseBackflowAllowed() {
+    return equations.isOutletPhaseBackflowAllowed();
+  }
+
+  /**
    * Enable the coupled compressible pressure-momentum transient correction.
    *
    * <p>
