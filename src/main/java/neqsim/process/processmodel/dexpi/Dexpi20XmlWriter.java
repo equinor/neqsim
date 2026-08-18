@@ -53,16 +53,16 @@ public final class Dexpi20XmlWriter {
    * @param metadata caller-supplied export provenance and plant identity
    * @throws IOException if serialization or validation fails
    */
-  public static void write(ProcessSystem processSystem, File file,
-      Dexpi20PlantExportMetadata metadata) throws IOException {
+  public static void write(ProcessSystem processSystem, File file, Dexpi20PlantExportMetadata metadata)
+      throws IOException {
     if (metadata == null) {
       throw new IllegalArgumentException("metadata must not be null");
     }
     writeValidated(processSystem, file, metadata);
   }
 
-  private static void writeValidated(ProcessSystem processSystem, File file,
-      Dexpi20PlantExportMetadata metadata) throws IOException {
+  private static void writeValidated(ProcessSystem processSystem, File file, Dexpi20PlantExportMetadata metadata)
+      throws IOException {
     if (file == null) {
       throw new IllegalArgumentException("file must not be null");
     }
@@ -115,8 +115,8 @@ public final class Dexpi20XmlWriter {
    * @param metadata caller-supplied export provenance and plant identity
    * @throws IOException if serialization fails
    */
-  public static void write(ProcessSystem processSystem, OutputStream outputStream,
-      Dexpi20PlantExportMetadata metadata) throws IOException {
+  public static void write(ProcessSystem processSystem, OutputStream outputStream, Dexpi20PlantExportMetadata metadata)
+      throws IOException {
     if (metadata == null) {
       throw new IllegalArgumentException("metadata must not be null");
     }
@@ -264,26 +264,21 @@ public final class Dexpi20XmlWriter {
   private static void appendEngineeringModelMetadata(Document document, Element engineeringModel,
       Dexpi20PlantExportMetadata metadata) {
     data(document, engineeringModel, "OriginatingSystemName", metadata.getOriginatingSystemName());
-    data(document, engineeringModel, "OriginatingSystemVendorName",
-        metadata.getOriginatingSystemVendorName());
-    data(document, engineeringModel, "OriginatingSystemVersion",
-        metadata.getOriginatingSystemVersion());
+    data(document, engineeringModel, "OriginatingSystemVendorName", metadata.getOriginatingSystemVendorName());
+    data(document, engineeringModel, "OriginatingSystemVersion", metadata.getOriginatingSystemVersion());
     dateTimeData(document, engineeringModel, "ExportDateTime", metadata.getExportDateTime());
   }
 
-  private static void appendPlantMetadata(Document document, Element plant,
-      Dexpi20PlantExportMetadata metadata) {
+  private static void appendPlantMetadata(Document document, Element plant, Dexpi20PlantExportMetadata metadata) {
     Element metadataObjects = components(document, plant, "MetaData");
     Element plantMetadata = object(document, "PlantMetaData1", "Plant/Diagram.PlantMetaData");
-    for (Map.Entry<Dexpi20PlantExportMetadata.PlantProperty, String> entry :
-        metadata.getPlantProperties().entrySet()) {
+    for (Map.Entry<Dexpi20PlantExportMetadata.PlantProperty, String> entry : metadata.getPlantProperties().entrySet()) {
       data(document, plantMetadata, entry.getKey().getDexpiProperty(), entry.getValue());
     }
     metadataObjects.appendChild(plantMetadata);
   }
 
-  private static void dateTimeData(Document document, Element parent, String property,
-      String value) {
+  private static void dateTimeData(Document document, Element parent, String property, String value) {
     Element data = document.createElement("Data");
     data.setAttribute("property", property);
     Element dateTime = document.createElement("DateTime");
