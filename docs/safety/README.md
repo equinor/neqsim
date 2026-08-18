@@ -68,6 +68,7 @@ This folder contains guides for implementing safety systems in process simulatio
 
 | Document | Description |
 |----------|-------------|
+| [Relief-Valve Sizing Screening](relief_valve_sizing_api.md) | Static gas, liquid, two-phase, and wetted-surface fire screening APIs with explicit SI units and qualification limits |
 | [Trapped Inventory Calculator](trapped_inventory_calculator.md) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
 | [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Fire exposure, thermal expansion, pipe/flange failure screening, PFP demand, and source-term handoff |
 | [Blocked-In Liquid Thermal Expansion](blocked_in_liquid_thermal_expansion.md) | Isochoric pressure-rise screening and simplified beta/kappa relation for blocked-in liquid thermal relief screening |
@@ -89,4 +90,3 @@ This folder contains guides for implementing safety systems in process simulatio
 - [Process Package](../process/) - Process simulation overview
 - [Process Safety](../process/safety/) - Safety equipment classes
 - [Controllers](../process/controllers.md) - Controller devices
-
