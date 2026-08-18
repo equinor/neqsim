@@ -914,6 +914,42 @@ Avoid over-specifying the same side. For example, a `STREAM_CONNECTED` inlet alr
 temperature, pressure, and composition from the inlet stream; switch to `CONSTANT_FLOW` only when
 the flow should be independent of the stream flow rate.
 
+### Compressible upstream-volume boundary
+
+A real well, flowline, or laboratory loop normally has compressible inventory upstream of the
+modeled pipe. A fixed stream rate removes that storage and can shorten a severe-slug cycle.
+`UpstreamCompressibleVolume` supplies a phase-resolved dynamic inlet pressure without adding
+pipeline closures to the boundary model.
+
+Initialize the pipe to steady state, create the volume from its inlet section, and specify the
+external phase source rates:
+
+```java
+pipe.run();
+UpstreamCompressibleVolume sourceVolume =
+    pipe.initializeUpstreamCompressibleVolume(25.0);
+sourceVolume.setSourceMassFlowRates(gasSourceKgS, oilSourceKgS, waterSourceKgS);
+
+pipe.runTransient(0.1, UUID.randomUUID());
+double sourcePressurePa = sourceVolume.getPressurePa();
+double volumeClosure = sourceVolume.getMaximumRelativeVolumeResidual();
+```
+
+After every accepted internal substep, the pipe passes its integration-weighted gas, oil, and water
+inlet masses to the volume. The volume applies
+
+```text
+M_k(new) = M_k(old) + source_k dt - pipe_inlet_k
+sum_k M_k / rho_k(p) = fixed volume,  with d rho_k / d p = 1 / c_k^2.
+```
+
+Signed pipe transfer is supported, so a phase returning from the pipe adds upstream inventory.
+Phase depletion and non-converged pressure closure throw rather than clamping mass. Connecting the
+volume selects a constant-pressure inlet whose value is updated from the volume; the ordinary
+stream remains the source of thermodynamic composition for the pipe boundary. Component mixing,
+heat transfer, and a momentum-resolved vessel/nozzle model are outside this lumped boundary's
+current scope.
+
 ### Choosing Time Step, Sections, and Pipeline Length
 
 `runTransient(dt, id)` takes a macro time step in seconds. Internally, the solver sub-steps to
