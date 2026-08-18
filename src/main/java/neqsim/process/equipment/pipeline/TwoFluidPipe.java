@@ -4569,6 +4569,12 @@ public class TwoFluidPipe extends Pipeline {
         sourceMassKg[phase] += sourceRate[phase] * weightedTime;
       }
     }
+    if (coupledPressureMomentumEnabled) {
+      double[] outletCorrectionKg = timeIntegrator.getCoupledPressureMomentumOutletMassCorrectionKg();
+      for (int phase = 0; phase < 3; phase++) {
+        outletMassKg[phase] += outletCorrectionKg[phase];
+      }
+    }
   }
 
   private double[] getTimeIntegrationStageWeights(int stageCount) {
