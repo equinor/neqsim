@@ -190,6 +190,10 @@ public final class UpstreamCompressibleVolume implements Serializable {
     return phaseMassKg[phase];
   }
 
+  public double getSourceMassFlowRateKgS(int phase) {
+    return sourceMassFlowKgS[phase];
+  }
+
   public double getTotalMassKg() {
     return phaseMassKg[0] + phaseMassKg[1] + phaseMassKg[2];
   }
