@@ -153,7 +153,7 @@ class OilQualityStandardsDocumentationContractTest(unittest.TestCase):
         stale_contracts = (
             'getValue("API gravity")',
             "getValue('API gravity')",
-            'getValue("sulfurContent")',
+            '"sulfurContent"',
             "setMinAPIGravity(",
             "setMaxAPIGravity(",
             "`waterVolumeFraction`",
