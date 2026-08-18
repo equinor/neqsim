@@ -914,6 +914,73 @@ Avoid over-specifying the same side. For example, a `STREAM_CONNECTED` inlet alr
 temperature, pressure, and composition from the inlet stream; switch to `CONSTANT_FLOW` only when
 the flow should be independent of the stream flow rate.
 
+### Compressible upstream-volume boundary
+
+A real well, flowline, or laboratory loop normally has compressible inventory upstream of the
+modeled pipe. A fixed stream rate removes that storage and can shorten a severe-slug cycle.
+`UpstreamCompressibleVolume` supplies a phase-resolved dynamic inlet pressure without adding
+pipeline closures to the boundary model.
+
+Initialize the pipe to steady state, create the volume from its inlet section, and specify the
+external phase source rates:
+
+```java
+pipe.run();
+UpstreamCompressibleVolume sourceVolume =
+    pipe.initializeUpstreamCompressibleVolume(25.0);
+sourceVolume.setSourceMassFlowRates(gasSourceKgS, oilSourceKgS, waterSourceKgS);
+
+pipe.runTransient(0.1, UUID.randomUUID());
+double sourcePressurePa = sourceVolume.getPressurePa();
+double volumeClosure = sourceVolume.getMaximumRelativeVolumeResidual();
+```
+
+After every accepted internal substep, the pipe passes its integration-weighted gas, oil, and water
+inlet masses to the volume. The volume applies
+
+```text
+M_k(new) = M_k(old) + source_k dt - pipe_inlet_k
+sum_k M_k / rho_k(p) = fixed volume,  with d rho_k / d p = 1 / c_k^2.
+```
+
+Signed pipe transfer is supported, so a phase returning from the pipe adds upstream inventory.
+Phase depletion and non-converged pressure closure throw rather than clamping mass. Connecting the
+volume selects a constant-pressure inlet whose value is updated from the volume; the ordinary
+stream remains the source of thermodynamic composition for the pipe boundary. Component mixing,
+heat transfer, and a momentum-resolved vessel/nozzle model are outside this lumped boundary's
+current scope.
+
+### Multi-branch pressure-node network
+
+`TwoFluidPipeNetwork` connects named `TwoFluidPipe` branches through fixed-pressure reservoirs
+and phase-resolved compressible storage nodes. It supports directed splits, merges, manifolds, and
+injection branches:
+
+```java
+TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("subsea network");
+network.addFixedPressureNode("well", 120.0e5);
+network.addCompressibleNode("manifold", manifoldVolume);
+network.addFixedPressureNode("separator", 55.0e5);
+network.addPipe("flowline A", "well", "manifold", flowlineA);
+network.addPipe("riser", "manifold", "separator", riser);
+
+network.runTransient(0.1, UUID.randomUUID());
+double nodePressure = network.getNodePressurePa("manifold");
+double closure = network.getLastBalanceReport()
+    .getRelativeResidual(TwoFluidMassBalanceReport.Phase.TOTAL);
+```
+
+Every branch sees the node pressures at the beginning of the network step. After all branches
+advance, their accepted gas, oil, and water boundary transfers update every compressible node
+simultaneously. Branch iteration order therefore does not become an implicit pressure solve.
+The whole-network report includes pipe and node inventories, fixed-boundary transfers, phase
+sources, and gas/oil/water/liquid/total residuals.
+
+This first network implementation requires finite compressible storage at internal junctions.
+Fixed-pressure nodes are external reservoirs or sinks. Algebraic zero-volume junctions, a global
+Newton pressure-flow solve, component and enthalpy mixing, reverse-flow boundary composition, and
+branch subcycling remain outside the validated scope.
+
 ### Choosing Time Step, Sections, and Pipeline Length
 
 `runTransient(dt, id)` takes a macro time step in seconds. Internally, the solver sub-steps to
@@ -1025,6 +1092,36 @@ The option remains off by default while long-horizon severe-slugging, mesh, time
 independent OLGA/public benchmark qualification is completed. Do not use short startup peaks as
 limit-cycle evidence; report period, the P10-P90 band, and completed cycle count over a settled
 window.
+
+### Standing benchmark acceptance metrics
+
+Use `TwoFluidBenchmarkMetrics` to compare a rate sweep, a section profile, mesh realizations, and
+a settled transient with the same definitions in every benchmark:
+
+```java
+double exponent = TwoFluidBenchmarkMetrics.fitRateExponent(rates, pressureDrops);
+double terrainLocalization =
+    TwoFluidBenchmarkMetrics.maximumToMedianRatio(liquidHoldupProfile);
+double meshSpread =
+    TwoFluidBenchmarkMetrics.relativeMeshSpread(coarseResult, refinedResult);
+TwoFluidBenchmarkMetrics.LimitCycleMetrics cycle =
+    TwoFluidBenchmarkMetrics.analyzeLimitCycle(times, pressure, settledWindowStart);
+```
+
+The limit-cycle result reports period, P10, median, P90, P10-P90 band, sample window, and completed
+median-upcrossing cycle count. A large startup peak followed by a flat trace reports zero completed
+cycles, so it cannot pass as a sustained oscillation.
+
+The slow public Tengesdal benchmark now uses these settled-window definitions and requires at least
+two completed liquid-rate cycles in every mesh/timestep realization. It retains the published
+experimental source and its phase-mass, mean-pressure, mesh, amplitude, and deterministic-repeat
+checks.
+
+A user-supplied like-for-like OLGA run for the same geometry reported a 21.7 s cycle and a
+0.37-4.03 kg/s liquid-outlet range, while the public experiment reports 38 +/- 2 s. These values
+are comparison evidence, not embedded commercial correlations. A NeqSim/OLGA comparison should
+record exported time series and evaluate both with the same settled window and metrics; it should
+not compare one startup peak or tune a closure to one trajectory.
 
 ### Adaptive Timestepping
 

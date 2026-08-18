@@ -15,6 +15,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.TwoFluidBenchmarkMetrics;
+import neqsim.process.equipment.pipeline.TwoFluidBenchmarkMetrics.LimitCycleMetrics;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
@@ -174,11 +176,11 @@ class SevereSluggingExperimentalBenchmarkTest {
     for (TransientMetrics metrics : ensemble) {
       logger.info(String.format(Locale.ROOT,
           "%s: meanP=%.0f Pa peakToPeak=%.0f Pa (%.2f x riser head) p10p90=%.0f Pa period=%.2f s "
-              + "qMax=%.3f qMin=%.3f kg/s slug=%.3f m",
+              + "cycles=%d qMax=%.3f qMin=%.3f kg/s slug=%.3f m",
           metrics.label, metrics.meanInletPressurePa, metrics.peakToPeakPressurePa,
           metrics.peakToPeakPressurePa / RISER_HYDROSTATIC_HEAD_PA, metrics.p10ToP90PressurePa,
-          metrics.cyclePeriodSeconds, metrics.maximumLiquidOutletKgPerSecond, metrics.minimumLiquidOutletKgPerSecond,
-          metrics.maximumSlugLengthM));
+          metrics.cyclePeriodSeconds, metrics.completedCycleCount, metrics.maximumLiquidOutletKgPerSecond,
+          metrics.minimumLiquidOutletKgPerSecond, metrics.maximumSlugLengthM));
     }
   }
 
@@ -202,6 +204,8 @@ class SevereSluggingExperimentalBenchmarkTest {
           metrics.label + ": no repeated blowout/fallback cycle was detected");
       assertTrue(metrics.cyclePeriodSeconds > 5.0, metrics.label
           + ": cycle period is shorter than the riser filling time, period=" + metrics.cyclePeriodSeconds);
+      assertTrue(metrics.completedCycleCount >= 2, metrics.label
+          + ": fewer than two completed settled-window cycles were detected, count=" + metrics.completedCycleCount);
       assertTrue(
           metrics.peakToPeakPressurePa > RECORDED_PRESSURE_SWING_LOWER_BOUND_IN_RISER_HEADS * RISER_HYDROSTATIC_HEAD_PA,
           metrics.label + ": the riser-base swing is too small to be severe slugging, peakToPeak="
@@ -318,6 +322,7 @@ class SevereSluggingExperimentalBenchmarkTest {
     assertEquals(reference.peakToPeakPressurePa, referenceRepeat.peakToPeakPressurePa, 0.0);
     assertEquals(reference.meanInletPressurePa, referenceRepeat.meanInletPressurePa, 0.0);
     assertEquals(reference.cyclePeriodSeconds, referenceRepeat.cyclePeriodSeconds, 0.0);
+    assertEquals(reference.completedCycleCount, referenceRepeat.completedCycleCount);
     assertEquals(reference.maximumLiquidOutletKgPerSecond, referenceRepeat.maximumLiquidOutletKgPerSecond, 0.0);
     assertEquals(reference.maximumSlugLengthM, referenceRepeat.maximumSlugLengthM, 0.0);
     for (Phase phase : Phase.values()) {
@@ -357,14 +362,15 @@ class SevereSluggingExperimentalBenchmarkTest {
       }
     }
 
-    List<Double> sortedPressures = new ArrayList<>(pressureSamples);
-    Collections.sort(sortedPressures);
+    LimitCycleMetrics pressureCycle = TwoFluidBenchmarkMetrics.analyzeLimitCycle(toArray(sampleTimes),
+        toArray(pressureSamples), WARM_UP_SECONDS);
+    LimitCycleMetrics liquidCycle = TwoFluidBenchmarkMetrics.analyzeLimitCycle(toArray(sampleTimes),
+        toArray(liquidOutletSamples), WARM_UP_SECONDS);
     double maximumSlugLength = pipe.getMaxSlugLengthAtOutlet();
     return new TransientMetrics(label, SOURCE_URL, maximum(pressureSamples) - minimum(pressureSamples),
-        percentile(sortedPressures, 0.90) - percentile(sortedPressures, 0.10), mean(pressureSamples),
-        estimateLowProductionCyclePeriod(sampleTimes, liquidOutletSamples), minimum(liquidOutletSamples),
-        maximum(liquidOutletSamples), maximumSlugLength, pipe.isSteadyStateWallClockLimited(), maximumClosure,
-        finalInventory);
+        pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCycle.getPeriodSeconds(),
+        liquidCycle.getCompletedCycleCount(), minimum(liquidOutletSamples), maximum(liquidOutletSamples),
+        maximumSlugLength, pipe.isSteadyStateWallClockLimited(), maximumClosure, finalInventory);
   }
 
   private static TwoFluidPipe createLargeFacilityTestThree(int numberOfSections, double inletPressurePerturbation) {
@@ -422,6 +428,14 @@ class SevereSluggingExperimentalBenchmarkTest {
     pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
     pipe.run();
     return pipe;
+  }
+
+  private static double[] toArray(List<Double> values) {
+    double[] result = new double[values.size()];
+    for (int index = 0; index < values.size(); index++) {
+      result[index] = values.get(index);
+    }
+    return result;
   }
 
   private static double estimateLowProductionCyclePeriod(List<Double> times, List<Double> liquidRates) {
@@ -549,6 +563,7 @@ class SevereSluggingExperimentalBenchmarkTest {
     private final double p10ToP90PressurePa;
     private final double meanInletPressurePa;
     private final double cyclePeriodSeconds;
+    private final int completedCycleCount;
     private final double minimumLiquidOutletKgPerSecond;
     private final double maximumLiquidOutletKgPerSecond;
     private final double maximumSlugLengthM;
@@ -557,15 +572,17 @@ class SevereSluggingExperimentalBenchmarkTest {
     private final Map<Phase, Double> finalInventoryKg;
 
     private TransientMetrics(String label, String sourceUrl, double peakToPeakPressurePa, double p10ToP90PressurePa,
-        double meanInletPressurePa, double cyclePeriodSeconds, double minimumLiquidOutletKgPerSecond,
-        double maximumLiquidOutletKgPerSecond, double maximumSlugLengthM, boolean steadyStateWallClockLimited,
-        Map<Phase, Double> maximumRelativeClosure, Map<Phase, Double> finalInventoryKg) {
+        double meanInletPressurePa, double cyclePeriodSeconds, int completedCycleCount,
+        double minimumLiquidOutletKgPerSecond, double maximumLiquidOutletKgPerSecond, double maximumSlugLengthM,
+        boolean steadyStateWallClockLimited, Map<Phase, Double> maximumRelativeClosure,
+        Map<Phase, Double> finalInventoryKg) {
       this.label = label;
       this.sourceUrl = sourceUrl;
       this.peakToPeakPressurePa = peakToPeakPressurePa;
       this.p10ToP90PressurePa = p10ToP90PressurePa;
       this.meanInletPressurePa = meanInletPressurePa;
       this.cyclePeriodSeconds = cyclePeriodSeconds;
+      this.completedCycleCount = completedCycleCount;
       this.minimumLiquidOutletKgPerSecond = minimumLiquidOutletKgPerSecond;
       this.maximumLiquidOutletKgPerSecond = maximumLiquidOutletKgPerSecond;
       this.maximumSlugLengthM = maximumSlugLengthM;
