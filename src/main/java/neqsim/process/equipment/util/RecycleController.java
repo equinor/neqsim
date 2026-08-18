@@ -52,7 +52,7 @@ public class RecycleController implements Serializable {
    * Recycles whose previously accepted state can seed the first observation of this solve. Transient because it is
    * per-solve scratch state, and because XStream cannot reflect over {@link IdentityHashMap} on JDK 9+.
    */
-  private Map<Recycle, Boolean> acceptedRecycleSeeds = new IdentityHashMap<>();
+  private transient Map<Recycle, Boolean> acceptedRecycleSeeds = new IdentityHashMap<>();
 
   /** Stable provenance identity for this controller's transaction state. */
   private String transientStateIdentity = UUID.randomUUID().toString();
