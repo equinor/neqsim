@@ -48,8 +48,7 @@ public class OilQualityStandardsDocumentationTest {
     assertFalse(Double.isNaN(initialBoilingPointC));
     assertTrue(initialBoilingPointC < midpointC);
     assertTrue(midpointC < finalBoilingPointC);
-    assertEquals(distillation.getValue("WatsonK"),
-        distillation.getValue("WatsonK", "K"), 0.0);
+    assertEquals(distillation.getValue("WatsonK"), distillation.getValue("WatsonK", "K"), 0.0);
 
     Standard_ASTM_D445 viscosity = new Standard_ASTM_D445(oil);
     viscosity.calculate();
