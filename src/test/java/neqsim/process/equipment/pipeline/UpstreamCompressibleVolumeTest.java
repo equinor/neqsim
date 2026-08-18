@@ -77,7 +77,7 @@ class UpstreamCompressibleVolumeTest {
     double transferredMass = report.getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL);
     assertTrue(transferredMass > 0.0);
     assertEquals(initialMass - transferredMass, volume.getTotalMassKg(), 1.0e-8);
-    assertEquals(volume.getPressurePa(), pipe.getInletPressure() * 1.0e5, 0.1);
+    assertEquals(volume.getPressurePa(), pipe.getInletPressure() * 1.0e5, 1.0e-6);
   }
 
   @Test
