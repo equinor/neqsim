@@ -29,6 +29,7 @@ Documentation for mass transfer columns in NeqSim.
 | Class                   | Description                                           |
 | ----------------------- | ----------------------------------------------------- |
 | `AbsorptionColumn`      | Rigorous counter-current equilibrium-tray absorber with Murphree efficiencies |
+| `StrippingColumn`       | Rigorous counter-current equilibrium-tray stripper with Murphree efficiencies |
 | `SimpleAbsorber`        | Simplified absorber model (base class)                |
 | `SimpleTEGAbsorber`     | TEG dehydration with Fs-factor sizing                 |
 | `SimpleAmineAbsorber`   | Amine gas sweetening (MDEA, DEA, MEA)                 |
@@ -74,19 +75,49 @@ absorber.setStageEfficiency(0.7);  // Murphree efficiency
 
 ## Stripper
 
-### Basic Usage
+Use `StrippingColumn` for a rigorous counter-current equilibrium-tray calculation.
+It is the stripping counterpart to `AbsorptionColumn`: stripping gas enters tray 0,
+rich liquid enters tray `numberOfTrays - 1`, and the thermodynamic driving force
+determines whether each component transfers from liquid to gas or from gas to liquid.
+The class retains the established MESH solver, Murphree-efficiency hierarchy, ordinary
+NeqSim outlet streams, conservation diagnostics, and warm-start behavior.
 
 ```java
-import neqsim.process.equipment.absorber.WaterStripperColumn;
+import neqsim.process.equipment.absorber.StrippingColumn;
+import neqsim.process.processmodel.ProcessSystem;
 
-WaterStripperColumn stripper = new WaterStripperColumn("Regenerator");
-stripper.addGasInStream(stripGas);
-stripper.addSolventInStream(richAmine);
-stripper.run();
+StrippingColumn stripper = new StrippingColumn("methanol stripper", 5);
+stripper.addStrippingGasStream(stripGas);
+stripper.addRichLiquidStream(richLiquid);
+stripper.setTopPressure(2.0);     // bara
+stripper.setBottomPressure(2.0);  // bara
+stripper.setComponentMurphreeEfficiency("methanol", 0.70);
 
-Stream leanAmine = (Stream) stripper.getLiquidOutStream();
-Stream acidGas = (Stream) stripper.getGasOutStream();
+ProcessSystem process = new ProcessSystem();
+process.add(stripGas);
+process.add(richLiquid);
+process.add(stripper);
+process.run();
+
+if (!stripper.solved()) {
+    throw new IllegalStateException(stripper.getConvergenceDiagnostics());
+}
+
+StreamInterface overheadGas = stripper.getOverheadGasStream();
+StreamInterface leanLiquid = stripper.getLeanLiquidStream();
 ```
+
+Always verify total and named-component closure, the active specification and MESH
+residuals, physical product bounds, and sensitivity to tray count and efficiency.
+When tray temperatures are fixed, the required heating or cooling is implicit;
+`getEnergyBalanceError()` remains a diagnostic but is not an equipment-duty result.
+Use a reboiled `DistillationColumn` when the reboiler duty or boilup ratio is part
+of the process specification, and use `RateBasedPackedColumn` for packed-column
+film transfer and hydraulics.
+
+`WaterStripperColumn` remains the legacy water-specific shortcut. It does not expose
+the rigorous tray MESH, component-efficiency, residual, or retained-state contracts of
+`StrippingColumn`.
 
 ---
 
