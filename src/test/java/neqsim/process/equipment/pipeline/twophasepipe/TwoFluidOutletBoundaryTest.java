@@ -27,13 +27,13 @@ class TwoFluidOutletBoundaryTest {
     outlet.setWaterMassPerLength(0.0);
 
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
-    double[][] clamped = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {outlet}, 1.0);
+    double[][] clamped = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] { outlet }, 1.0);
     assertEquals(0.0, clamped[1][1], 0.0);
     assertTrue(equations.isOutletBackflowClamped());
 
     equations.clearOutletBackflowClamped();
     equations.setAllowOutletPhaseBackflow(true);
-    double[][] signed = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {outlet}, 1.0);
+    double[][] signed = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] { outlet }, 1.0);
 
     assertEquals(-0.25 * 0.5 * 800.0 * area, signed[1][1], 1.0e-12);
     assertTrue(signed[1][0] > 0.0);
