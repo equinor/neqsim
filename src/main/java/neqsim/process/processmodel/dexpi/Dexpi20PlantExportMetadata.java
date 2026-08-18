@@ -7,32 +7,24 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Immutable, caller-supplied provenance and plant identity for a native DEXPI 2.0 Plant
- * exchange.
+ * Immutable, caller-supplied provenance and plant identity for a native DEXPI 2.0 Plant exchange.
  *
- * <p>The export timestamp and plant identity are deliberately required inputs. The exporter never
- * invents a current timestamp or project metadata, and use of this class does not imply drawing
- * approval or DEXPI qualification.</p>
+ * <p>
+ * The export timestamp and plant identity are deliberately required inputs. The exporter never invents a current
+ * timestamp or project metadata, and use of this class does not imply drawing approval or DEXPI qualification.
+ * </p>
  */
 public final class Dexpi20PlantExportMetadata {
   /** Data properties defined by {@code Plant/Diagram.PlantMetaData}. */
   public enum PlantProperty {
-    ENTERPRISE_IDENTIFICATION_CODE("EnterpriseIdentificationCode"),
-    ENTERPRISE_NAME("EnterpriseName"),
+    ENTERPRISE_IDENTIFICATION_CODE("EnterpriseIdentificationCode"), ENTERPRISE_NAME("EnterpriseName"),
     INDUSTRIAL_COMPLEX_IDENTIFICATION_CODE("IndustrialComplexIdentificationCode"),
-    INDUSTRIAL_COMPLEX_NAME("IndustrialComplexName"),
-    PLANT_AREA_IDENTIFICATION_CODE("PlantAreaIdentificationCode"),
-    PLANT_AREA_NAME("PlantAreaName"),
-    PLANT_SECTION_IDENTIFICATION_CODE("PlantSectionIdentificationCode"),
-    PLANT_SECTION_NAME("PlantSectionName"),
-    PLANT_SYSTEM_IDENTIFICATION_CODE("PlantSystemIdentificationCode"),
-    PLANT_SYSTEM_NAME("PlantSystemName"),
-    PLANT_TRAIN_IDENTIFICATION_CODE("PlantTrainIdentificationCode"),
-    PLANT_TRAIN_NAME("PlantTrainName"),
-    PROCESS_PLANT_IDENTIFICATION_CODE("ProcessPlantIdentificationCode"),
-    PROCESS_PLANT_NAME("ProcessPlantName"),
-    SITE_IDENTIFICATION_CODE("SiteIdentificationCode"),
-    SITE_NAME("SiteName");
+    INDUSTRIAL_COMPLEX_NAME("IndustrialComplexName"), PLANT_AREA_IDENTIFICATION_CODE("PlantAreaIdentificationCode"),
+    PLANT_AREA_NAME("PlantAreaName"), PLANT_SECTION_IDENTIFICATION_CODE("PlantSectionIdentificationCode"),
+    PLANT_SECTION_NAME("PlantSectionName"), PLANT_SYSTEM_IDENTIFICATION_CODE("PlantSystemIdentificationCode"),
+    PLANT_SYSTEM_NAME("PlantSystemName"), PLANT_TRAIN_IDENTIFICATION_CODE("PlantTrainIdentificationCode"),
+    PLANT_TRAIN_NAME("PlantTrainName"), PROCESS_PLANT_IDENTIFICATION_CODE("ProcessPlantIdentificationCode"),
+    PROCESS_PLANT_NAME("ProcessPlantName"), SITE_IDENTIFICATION_CODE("SiteIdentificationCode"), SITE_NAME("SiteName");
 
     private final String dexpiProperty;
 
@@ -61,8 +53,7 @@ public final class Dexpi20PlantExportMetadata {
     originatingSystemName = builder.originatingSystemName;
     originatingSystemVendorName = builder.originatingSystemVendorName;
     originatingSystemVersion = builder.originatingSystemVersion;
-    plantProperties = Collections.unmodifiableMap(
-        new EnumMap<PlantProperty, String>(builder.plantProperties));
+    plantProperties = Collections.unmodifiableMap(new EnumMap<PlantProperty, String>(builder.plantProperties));
   }
 
   /**
@@ -74,10 +65,9 @@ public final class Dexpi20PlantExportMetadata {
    * @param originatingSystemVersion exact originating-system version
    * @return metadata builder
    */
-  public static Builder builder(String exportDateTime, String originatingSystemName,
-      String originatingSystemVendorName, String originatingSystemVersion) {
-    return new Builder(exportDateTime, originatingSystemName, originatingSystemVendorName,
-        originatingSystemVersion);
+  public static Builder builder(String exportDateTime, String originatingSystemName, String originatingSystemVendorName,
+      String originatingSystemVersion) {
+    return new Builder(exportDateTime, originatingSystemName, originatingSystemVendorName, originatingSystemVersion);
   }
 
   /** @return caller-supplied ISO-8601 export date-time */
@@ -115,17 +105,15 @@ public final class Dexpi20PlantExportMetadata {
     private final String originatingSystemName;
     private final String originatingSystemVendorName;
     private final String originatingSystemVersion;
-    private final EnumMap<PlantProperty, String> plantProperties =
-        new EnumMap<PlantProperty, String>(PlantProperty.class);
+    private final EnumMap<PlantProperty, String> plantProperties = new EnumMap<PlantProperty, String>(
+        PlantProperty.class);
 
-    private Builder(String exportDateTime, String originatingSystemName,
-        String originatingSystemVendorName, String originatingSystemVersion) {
+    private Builder(String exportDateTime, String originatingSystemName, String originatingSystemVendorName,
+        String originatingSystemVersion) {
       this.exportDateTime = requiredDateTime(exportDateTime);
       this.originatingSystemName = required(originatingSystemName, "originatingSystemName");
-      this.originatingSystemVendorName =
-          required(originatingSystemVendorName, "originatingSystemVendorName");
-      this.originatingSystemVersion =
-          required(originatingSystemVersion, "originatingSystemVersion");
+      this.originatingSystemVendorName = required(originatingSystemVendorName, "originatingSystemVendorName");
+      this.originatingSystemVersion = required(originatingSystemVersion, "originatingSystemVersion");
     }
 
     /**
@@ -144,8 +132,8 @@ public final class Dexpi20PlantExportMetadata {
     }
 
     /**
-     * Builds immutable metadata. At least one real plant value is required so an empty metadata
-     * object cannot be emitted merely to satisfy a validator.
+     * Builds immutable metadata. At least one real plant value is required so an empty metadata object cannot be
+     * emitted merely to satisfy a validator.
      *
      * @return immutable export metadata
      */
@@ -162,8 +150,7 @@ public final class Dexpi20PlantExportMetadata {
     try {
       OffsetDateTime.parse(result);
     } catch (DateTimeParseException ex) {
-      throw new IllegalArgumentException(
-          "exportDateTime must be an ISO-8601 date-time with an offset", ex);
+      throw new IllegalArgumentException("exportDateTime must be an ISO-8601 date-time with an offset", ex);
     }
     return result;
   }
