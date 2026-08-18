@@ -168,7 +168,7 @@ class OilQualityStandardsDocumentationContractTest(unittest.TestCase):
         bsw_source = self.sources["Standard_BSW"]
         self.assertNotIn("setMinAPIGravity", d4052_source)
         self.assertNotIn("setMaxAPIGravity", d4052_source)
-        self.assertIn("isOnSpec() currently means only", self.guide)
+        self.assertIn("`isOnSpec()` currently means only", self.guide)
         self.assertIn(
             "the class does not store minimum or maximum product limits",
             self.guide,
