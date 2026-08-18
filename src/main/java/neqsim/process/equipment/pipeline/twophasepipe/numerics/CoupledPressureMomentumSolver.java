@@ -45,18 +45,21 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     private final double[] gasDensity;
     private final double[] oilDensity;
     private final double[] waterDensity;
+    private final double[] outletBoundaryMassCorrectionKg;
     private final int iterations;
     private final double maximumRelativeVolumeResidual;
     private final boolean converged;
     private final boolean pressureCorrectionLimited;
 
     private Result(double[][] state, double[] pressure, double[] gasDensity, double[] oilDensity, double[] waterDensity,
-        int iterations, double maximumRelativeVolumeResidual, boolean converged, boolean pressureCorrectionLimited) {
+        double[] outletBoundaryMassCorrectionKg, int iterations, double maximumRelativeVolumeResidual,
+        boolean converged, boolean pressureCorrectionLimited) {
       this.state = state;
       this.pressure = pressure;
       this.gasDensity = gasDensity;
       this.oilDensity = oilDensity;
       this.waterDensity = waterDensity;
+      this.outletBoundaryMassCorrectionKg = outletBoundaryMassCorrectionKg;
       this.iterations = iterations;
       this.maximumRelativeVolumeResidual = maximumRelativeVolumeResidual;
       this.converged = converged;
@@ -86,6 +89,11 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     /** @return corrected water density in kg/m3 */
     public double[] getWaterDensity() {
       return waterDensity.clone();
+    }
+
+    /** @return signed gas, oil, and water mass added to the reported outlet transfer in kg */
+    public double[] getOutletBoundaryMassCorrectionKg() {
+      return outletBoundaryMassCorrectionKg.clone();
     }
 
     /** @return nonlinear correction iterations used */
@@ -140,6 +148,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     double[][] soundSpeeds = { gasSoundSpeed.clone(), oilSoundSpeed.clone(), waterSoundSpeed.clone() };
 
     int iterations = 0;
+    double[] outletBoundaryMassCorrectionKg = new double[PHASE_COUNT];
     boolean converged = false;
     boolean correctionLimited = false;
     double maximumResidual = calculateMaximumRelativeVolumeResidual(correctedState, areas, densities);
@@ -199,7 +208,11 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         }
       }
 
-      applyConservativeMassFluxCorrection(correctedState, timeStep, pressureCorrection, phaseAreas, areas, lengths);
+      double[] iterationOutletCorrection = applyConservativeMassFluxCorrection(correctedState, timeStep,
+          pressureCorrection, phaseAreas, areas, lengths, densities, outletPressureFixed);
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        outletBoundaryMassCorrectionKg[phase] += iterationOutletCorrection[phase];
+      }
       applyMomentumCorrection(correctedState, timeStep, pressureCorrection, phaseAreas, lengths);
 
       for (int cell = 0; cell < cellCount; cell++) {
@@ -216,7 +229,8 @@ public final class CoupledPressureMomentumSolver implements Serializable {
 
     converged = maximumResidual <= relativeVolumeTolerance;
     return new Result(correctedState, correctedPressure, densities[GAS_MASS], densities[OIL_MASS],
-        densities[WATER_MASS], iterations, maximumResidual, converged, correctionLimited);
+        densities[WATER_MASS], outletBoundaryMassCorrectionKg, iterations, maximumResidual, converged,
+        correctionLimited);
   }
 
   private static double[][] calculatePhaseAreas(double[][] state, double[][] densities) {
@@ -244,8 +258,9 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     return faceArea * mobility;
   }
 
-  private static void applyConservativeMassFluxCorrection(double[][] state, double timeStep,
-      double[] pressureCorrection, double[][] phaseAreas, double[] areas, double[] lengths) {
+  private static double[] applyConservativeMassFluxCorrection(double[][] state, double timeStep,
+      double[] pressureCorrection, double[][] phaseAreas, double[] areas, double[] lengths, double[][] densities,
+      boolean outletPressureFixed) {
     int cellCount = state.length;
     double[][] faceMassFlowCorrection = new double[PHASE_COUNT][cellCount + 1];
 
@@ -271,6 +286,28 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         state[cell][phase] -= timeStep * divergence;
       }
     }
+
+    double[] outletBoundaryMassCorrectionKg = new double[PHASE_COUNT];
+    if (outletPressureFixed) {
+      int outlet = cellCount - 1;
+      double occupiedArea = 0.0;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        occupiedArea += Math.max(state[outlet][phase], 0.0)
+            / Math.max(densities[phase][outlet], MIN_DENSITY);
+      }
+      if (!(occupiedArea > 0.0) || !Double.isFinite(occupiedArea)) {
+        throw new IllegalStateException("Fixed-pressure outlet has no finite phase volume");
+      }
+      double areaResidual = occupiedArea - areas[outlet];
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        double density = Math.max(densities[phase][outlet], MIN_DENSITY);
+        double phaseArea = Math.max(state[outlet][phase], 0.0) / density;
+        double massPerLengthCorrection = -areaResidual * phaseArea / occupiedArea * density;
+        state[outlet][phase] += massPerLengthCorrection;
+        outletBoundaryMassCorrectionKg[phase] -= massPerLengthCorrection * lengths[outlet];
+      }
+    }
+    return outletBoundaryMassCorrectionKg;
   }
 
   private static void applyMomentumCorrection(double[][] state, double timeStep, double[] pressureCorrection,
