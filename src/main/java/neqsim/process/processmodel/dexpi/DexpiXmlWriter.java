@@ -95,7 +95,7 @@ public final class DexpiXmlWriter {
     format.setGroupingUsed(false);
     return format;
   });
-  private static final MathContext NUMERIC_ATTRIBUTE_PRECISION = new MathContext(11, RoundingMode.HALF_EVEN);
+  private static final MathContext NUMERIC_ATTRIBUTE_PRECISION = new MathContext(8, RoundingMode.HALF_EVEN);
 
   /**
    * Thread-local flag controlling whether the root {@code PlantModel} element declares the DEXPI default XML namespace.
