@@ -53,7 +53,8 @@ class AbsorberDocumentationTest(unittest.TestCase):
         self.assertNotRegex(prose, r"(?m)^# ")
         self.assertEqual(0, self.guide.count("```") % 2)
 
-        headings = re.findall(r"(?m)^##+ (.+)$", prose)
+        scoped_prose = re.sub(r"```.*?```", "", self.scoped_guide, flags=re.DOTALL)
+        headings = re.findall(r"(?m)^##+ (.+)$", scoped_prose)
         self.assertEqual(len(headings), len(set(headings)))
 
     def test_legacy_simple_absorber_boundary_matches_source(self):
