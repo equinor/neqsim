@@ -1188,8 +1188,8 @@ public class TPflash extends Flash {
           continue;
         }
         double gasFugacityCoefficient = system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
-        double aqueousFugacityCoefficient =
-            system.getPhase(aqueousPhase).getComponent(component).getFugacityCoefficient();
+        double aqueousFugacityCoefficient = system.getPhase(aqueousPhase).getComponent(component)
+            .getFugacityCoefficient();
         if (!(gasFugacityCoefficient > 0.0) || !(aqueousFugacityCoefficient > 0.0)
             || !Double.isFinite(gasFugacityCoefficient) || !Double.isFinite(aqueousFugacityCoefficient)) {
           failed = true;
@@ -1222,8 +1222,8 @@ public class TPflash extends Flash {
         double gasComposition = equilibriumRatios[component] * aqueousComposition;
         maxChange = Math.max(maxChange,
             Math.abs(aqueousComposition - system.getPhase(aqueousPhase).getComponent(component).getx()));
-        maxChange =
-            Math.max(maxChange, Math.abs(gasComposition - system.getPhase(gasPhase).getComponent(component).getx()));
+        maxChange = Math.max(maxChange,
+            Math.abs(gasComposition - system.getPhase(gasPhase).getComponent(component).getx()));
         system.getPhase(aqueousPhase).getComponent(component).setx(aqueousComposition);
         system.getPhase(gasPhase).getComponent(component).setx(gasComposition);
       }
@@ -1307,10 +1307,10 @@ public class TPflash extends Flash {
         continue;
       }
       if (gasComposition > 1.0e-30 && aqueousComposition > 1.0e-30) {
-        double gasFugacity =
-            gasComposition * system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
-        double aqueousFugacity =
-            aqueousComposition * system.getPhase(aqueousPhase).getComponent(component).getFugacityCoefficient();
+        double gasFugacity = gasComposition
+            * system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
+        double aqueousFugacity = aqueousComposition
+            * system.getPhase(aqueousPhase).getComponent(component).getFugacityCoefficient();
         if (!(gasFugacity > 0.0) || !(aqueousFugacity > 0.0) || !Double.isFinite(gasFugacity)
             || !Double.isFinite(aqueousFugacity) || Math.abs(Math.log(gasFugacity / aqueousFugacity)) > 1.0e-8) {
           return false;
