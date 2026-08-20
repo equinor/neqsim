@@ -1,9 +1,8 @@
 ---
 title: "Frequently Asked Questions (FAQ)"
-description: "NeqSim (Non-Equilibrium Simulator) is a Java library for thermodynamic calculations and process simulation, specializing in oil and gas applications. It provides:"
+description: "Answers to common NeqSim installation, thermodynamics, process-simulation, physical-property, troubleshooting, and contribution questions."
 ---
 
-# Frequently Asked Questions (FAQ)
 
 ## Table of Contents
 - [General](#general)
@@ -22,14 +21,14 @@ description: "NeqSim (Non-Equilibrium Simulator) is a Java library for thermodyn
 
 NeqSim (Non-Equilibrium Simulator) is a Java library for thermodynamic calculations and process simulation, specializing in oil and gas applications. It provides:
 - Rigorous equations of state (SRK, PR, CPA, GERG-2008)
-- 50+ unit operations for process modeling
+- Process-equipment models for separation, compression, heat transfer, flow control, and pipelines
 - Physical property calculations (viscosity, density, thermal conductivity)
 - Pipeline and multiphase flow simulation
 - Dynamic simulation capabilities
 
 ### Where can I find the API documentation?
 
-The full JavaDoc is available at <https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html>.
+The full JavaDoc is available at <https://equinor.github.io/neqsim/javadoc/index.html>.
 
 ### Is NeqSim open source?
 
@@ -54,17 +53,17 @@ NeqSim requires Java 8 or higher. Java 11+ is recommended for best performance.
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.0.0</version>
+    <version>3.18.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```groovy
-implementation 'com.equinor.neqsim:neqsim:3.0.0'
+implementation 'com.equinor.neqsim:neqsim:3.18.0'
 ```
 
 **Direct Download:**
-Download the shaded JAR from [GitHub releases](https://github.com/equinor/neqsimsource/releases).
+Download the shaded JAR from [GitHub releases](https://github.com/equinor/neqsim/releases).
 
 ### How do I build NeqSim from source?
 
