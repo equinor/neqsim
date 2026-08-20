@@ -1028,8 +1028,8 @@ Study = jneqsim.process.util.optimizer.ProcessModelDebottleneckStudy
 
 candidates = ArrayList()
 candidates.add(JArray(JDouble)([800.0]))
-candidates.add(JArray(JDouble)([1000.0]))
-candidates.add(JArray(JDouble)([1200.0]))
+candidates.add(JArray(JDouble)([999.0]))
+candidates.add(JArray(JDouble)([1199.0]))
 
 search = Study.CandidateListSearch(
     "throughput-grid",
@@ -1053,6 +1053,10 @@ metric_deltas = {
 }
 diagnostics = list(result.getDiagnostics())
 ```
+
+Here the 999 and 1199 kg/hr candidates retain 1 kg/hr of declared headroom below nominal
+1000 and 1200 kg/hr installed limits. Do not rely on a unit conversion or floating-point process
+reconstruction to land exactly on a hard constraint boundary.
 
 The study independently re-evaluates the selected point after the search callback returns. A
 custom external search therefore supplies a candidate vector, not trusted convergence or
