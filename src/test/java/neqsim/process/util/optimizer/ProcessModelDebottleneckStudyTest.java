@@ -59,8 +59,9 @@ class ProcessModelDebottleneckStudyTest {
   }
 
   /**
-   * A 20% installed-capacity increase must produce a paired 20% throughput increase while every original mutable limit
-   * field and the pre-study operating point are restored exactly.
+   * A 20% installed-capacity increase must produce a paired 200 kg/hr throughput gain using candidates 1 kg/hr below
+   * each installed limit, while every original mutable limit field and the pre-study operating point are restored
+   * exactly.
    *
    * @throws Exception when result serialization fails
    */
@@ -77,8 +78,8 @@ class ProcessModelDebottleneckStudyTest {
     assertTrue(first.isCapacityRestored());
     assertTrue(first.isProcessStateRestored());
     assertTrue(first.isRecoverySimulationConverged());
-    assertArrayEquals(new double[] { 1000.0 }, first.getBaseline().getSelectedParameters(), 0.0);
-    assertArrayEquals(new double[] { 1200.0 }, first.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] { 999.0 }, first.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] { 1199.0 }, first.getAlternative().getSelectedParameters(), 0.0);
     assertEquals(200.0, first.getObjectiveDelta(), 1.0e-8);
     assertEquals(5, first.getBaseline().getEvaluationCount());
     assertEquals(5, first.getAlternative().getEvaluationCount());
@@ -105,7 +106,7 @@ class ProcessModelDebottleneckStudyTest {
 
     double[] exposed = first.getAlternative().getSelectedParameters();
     exposed[0] = -1.0;
-    assertArrayEquals(new double[] { 1200.0 }, first.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] { 1199.0 }, first.getAlternative().getSelectedParameters(), 0.0);
     assertThrows(UnsupportedOperationException.class, () -> first.getMetricComparisons().clear());
 
     StudyResult serialized = roundTrip(first);
@@ -175,8 +176,9 @@ class ProcessModelDebottleneckStudyTest {
   private ProcessModelDebottleneckStudy createStudy(Fixture fixture, String alternativeUnit) {
     List<double[]> candidates = new ArrayList<double[]>();
     candidates.add(new double[] { 800.0 });
-    candidates.add(new double[] { 1000.0 });
-    candidates.add(new double[] { 1200.0 });
+    // Keep selected points 1 kg/hr inside each limit so unit-conversion roundoff cannot make equality infeasible.
+    candidates.add(new double[] { 999.0 });
+    candidates.add(new double[] { 1199.0 });
     candidates.add(new double[] { 1400.0 });
     CandidateListSearch search = new CandidateListSearch("ordered-throughput-grid", "Ordered throughput grid",
         "synthetic acceptance candidate set", candidates, 0, 0.0);
