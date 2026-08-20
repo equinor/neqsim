@@ -1336,14 +1336,24 @@ public class DistillationSolverBenchmarkTest {
     double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
     double massbalance = Math.abs(100.0 - gasFlow - liquidFlow);
     assertTrue(massbalance < 1.5, "Newton mass balance error=" + massbalance + " kg/hr");
-    assertTrue(column.getLastNewtonLineSearchTrialCount() >= 1 && column.getLastNewtonLineSearchTrialCount() <= 4,
-        "Newton diagnostics should report the evaluated trial set");
-    assertTrue(column.getLastNewtonLineSearchStepLength() >= 0.125 && column.getLastNewtonLineSearchStepLength() <= 1.0,
-        "Newton should retain one evaluated bounded step");
-    assertTrue(Double.isFinite(column.getLastNewtonLineSearchResidual()),
-        "Newton should report the finite residual belonging to the retained step");
-    assertTrue(column.getConvergenceDiagnostics().contains("Newton line search:"),
-        "combined diagnostics should expose the retained step and trial count");
+    int lineSearchTrialCount = column.getLastNewtonLineSearchTrialCount();
+    assertTrue(lineSearchTrialCount >= 0 && lineSearchTrialCount <= 4,
+        "Newton diagnostics should report a bounded evaluated trial set");
+    if (lineSearchTrialCount > 0) {
+      assertTrue(
+          column.getLastNewtonLineSearchStepLength() >= 0.125
+              && column.getLastNewtonLineSearchStepLength() <= 1.0,
+          "Newton should retain one evaluated bounded step");
+      assertTrue(Double.isFinite(column.getLastNewtonLineSearchResidual()),
+          "Newton should report the finite residual belonging to the retained step");
+      assertTrue(column.getConvergenceDiagnostics().contains("Newton line search:"),
+          "combined diagnostics should expose the retained step and trial count");
+    } else {
+      assertTrue(Double.isNaN(column.getLastNewtonLineSearchStepLength()),
+          "a solve that converges before line search should not report an unevaluated step");
+      assertTrue(Double.isNaN(column.getLastNewtonLineSearchResidual()),
+          "a solve that converges before line search should not report an unevaluated residual");
+    }
 
     column.run();
 
