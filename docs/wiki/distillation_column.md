@@ -400,7 +400,7 @@ accelerator. The residual is $f_i(\mathbf{T}) = T_i^{sweep} - T_i$ and the Jacob
 
 $$J_{ij} \approx \frac{f_i(\mathbf{T} + \epsilon \mathbf{e}_j) - f_i(\mathbf{T})}{\epsilon}$$
 
-A line search ($\lambda = 1, 0.5, 0.25, 0.125$) controls step size, and 2–3 warm-up direct substitution iterations establish the convergence basin.
+A line search ($\lambda = 1, 0.5, 0.25, 0.125$) controls step size. It retains the evaluated trial with the lowest finite residual, including when every trial is non-descent, and the applied state, reported step, and reported residual refer to that same trial. Inspect `getLastNewtonLineSearchStepLength()`, `getLastNewtonLineSearchResidual()`, and `getLastNewtonLineSearchTrialCount()` after a `NEWTON` run. Two to three warm-up direct-substitution iterations establish the convergence basin.
 
 **MESH_RESIDUAL** starts from `INSIDE_OUT` and evaluates the scaled MESH residual vector without
 running an additional Newton-polishing solve. When the residual or product-draw gate is not

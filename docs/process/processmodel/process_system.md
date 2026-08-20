@@ -279,9 +279,10 @@ process.runTransient(1.0, calcId);
 
 | Method | Best For | Description |
 |--------|----------|-------------|
-| `run()` | General use | Sequential execution in insertion order |
+| `run()` | General use | Optimized execution by default; sequential when explicitly disabled |
 | `runOptimized()` | **Recommended** | Auto-selects best strategy based on topology |
 | `runParallel()` | Feed-forward processes | Maximum parallelism for no-recycle processes |
+| `runDataflow()` | Wide feed-forward processes | Direct predecessor scheduling without level barriers |
 | `runHybrid()` | Complex processes | Parallel feed-forward + iterative recycle |
 
 ### Recommended: runOptimized()
@@ -298,8 +299,13 @@ process.runOptimized(calcId);
 ```
 
 **How it works:**
-- **No recycles detected**: Uses `runParallel()` for maximum speed
+- **Adjusters detected**: Uses `runSequential()` because implicit feedback is not represented by stream dependencies
 - **Recycles detected**: Uses `runHybrid()` which runs feed-forward sections in parallel, then iterates on recycle sections
+- **Wide feed-forward topology**: Uses `runDataflow()` so each task starts after its direct predecessors
+- **Small or narrow feed-forward topology**: Uses `runParallel()` to avoid unnecessary future scheduling
+
+Multi-input equipment is supported in both feed-forward strategies. Dependency ordering and shared-input grouping keep
+mixers, manifolds, and heat exchangers from running before their inlet producers or racing another mutable consumer.
 
 **Performance gains** (typical separation train with 40 units, 3 recycles):
 | Mode | Time | Speedup |
@@ -311,7 +317,7 @@ process.runOptimized(calcId);
 ### Steady-State Simulation
 
 ```java
-// Basic sequential execution
+// General execution (optimized by default)
 process.run();
 
 // Run with calculation ID for tracking
@@ -333,6 +339,9 @@ try {
 ```
 
 **Note:** `runParallel()` does not handle recycles or adjusters. Use `runOptimized()` for processes with recycles.
+
+For a sufficiently wide feed-forward graph, `runOptimized()` selects `runDataflow()` instead. Dataflow removes global
+level barriers while retaining the same predecessor dependencies and shared-input groups as `runParallel()`.
 
 ### Thread Safety: Shared Stream Handling
 
@@ -373,13 +382,15 @@ Stream sharedInput = valve.getOutletStream();
 Heater heater1 = new Heater("heater1", sharedInput);  // Same stream object
 Heater heater2 = new Heater("heater2", sharedInput);  // Same stream object
 
-// NeqSim detects shared input and runs heater1 and heater2 sequentially
-// Other independent units at this level still run in parallel
+// These single-input units only read/clone the shared stream and may run in parallel.
+// If either consumer were multi-input, NeqSim would group the consumers into one
+// sequential task to protect mutable mixing behavior.
 process.runParallel();
 ```
 
 **Applies to:**
 - `runParallel()` - Groups by shared input streams
+- `runDataflow()` - Uses the same groups plus direct predecessor dependencies
 - `runHybrid()` - Groups in Phase 1 (feed-forward section)
 - `runTransient()` - Groups at each time step
 
@@ -637,8 +648,8 @@ process.runOptimized();  // Auto-selects best strategy
 
 // Or manually choose strategy:
 
-// 1. Sequential (default)
-process.run();
+// 1. Sequential (explicit legacy mode)
+process.runSequential(UUID.randomUUID());
 
 // 2. Graph-based ordering
 process.setUseGraphBasedExecution(true);
@@ -647,7 +658,10 @@ process.run();
 // 3. Parallel execution (no recycles)
 process.runParallel();
 
-// 4. Hybrid execution (recycle processes)
+// 4. Dependency-aware dataflow (wide feed-forward processes)
+process.runDataflow();
+
+// 5. Hybrid execution (recycle processes)
 process.runHybrid();
 ```
 

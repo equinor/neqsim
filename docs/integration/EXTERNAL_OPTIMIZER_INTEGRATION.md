@@ -1008,6 +1008,68 @@ The ranking is over the common selected-objective unit and finite sampled points
 non-causal evidence, not a capacity-sizing answer, global optimum, KKT multiplier, shadow price,
 production-loss estimate, economic value, or operating approval.
 
+### Paired debottleneck studies from Python
+
+`ProcessModelDebottleneckStudy` evaluates one documented direct installed-capacity alternative
+with the same `ScenarioSearch` in both cases. The built-in `CandidateListSearch` is useful when
+Python has already generated a bounded candidate design and NeqSim must remain the physical
+feasibility authority.
+
+JPype callers should pass an ordered Java `List<double[]>`. Result arrays are defensive copies,
+and result lists are unmodifiable Java lists. Convert them explicitly when native Python containers
+are needed:
+
+```python
+import jpype
+from jpype.types import JArray, JDouble
+
+ArrayList = jpype.JClass("java.util.ArrayList")
+Study = jneqsim.process.util.optimizer.ProcessModelDebottleneckStudy
+
+candidates = ArrayList()
+candidates.add(JArray(JDouble)([800.0]))
+candidates.add(JArray(JDouble)([999.0]))
+candidates.add(JArray(JDouble)([1199.0]))
+
+search = Study.CandidateListSearch(
+    "throughput-grid",
+    "Ordered throughput grid",
+    "screening candidate set rev A",
+    candidates,
+    0,
+    0.0,
+)
+
+# Configure CapacityAlternative, ProcessModelDebottleneckStudy, and metric
+# definitions with explicit units/provenance as shown in the optimization guide.
+result = study.evaluate()
+
+baseline_parameters = list(result.getBaseline().getSelectedParameters())
+alternative_parameters = list(result.getAlternative().getSelectedParameters())
+metric_deltas = {
+    row.getBaseline().getId(): row.getDelta()
+    for row in result.getMetricComparisons()
+    if row.isCalculable()
+}
+diagnostics = list(result.getDiagnostics())
+```
+
+Here the 999 and 1199 kg/hr candidates retain 1 kg/hr of declared headroom below nominal
+1000 and 1200 kg/hr installed limits. Do not rely on a unit conversion or floating-point process
+reconstruction to land exactly on a hard constraint boundary.
+
+The study independently re-evaluates the selected point after the search callback returns. A
+custom external search therefore supplies a candidate vector, not trusted convergence or
+feasibility flags. Do not mutate the same evaluator or process model concurrently. The study
+restores and reconverges the pre-study parameter vector before returning.
+
+The immutable `StudyResult` retains the alternative identity and provenance, original and applied
+capacity state, paired objectives and constraint residuals, installed-capacity and process-boundary
+evidence, physical/screening metrics, evaluation counts, recovery flags, and diagnostics. It
+retains no process model, equipment, live capacity constraint, or Python callback and can be
+Java-serialized for restartable records. Screening economics and emissions remain caller-supplied
+metrics with explicit basis and provenance; NeqSim does not certify them.
+
 ### Export Problem Definition
 
 ```python
@@ -1188,6 +1250,18 @@ on `ProcessSimulationEvaluator`.
 | `getRankedHydraulicConstraintsAtBestSampledObjective()` | Stable descending-utilization evidence at the best sampled objective |
 | `getInstalledCapacityEvidenceAtBestFeasible()` | Complete immutable installed-capacity evidence at the feasible incumbent |
 | `getInstalledCapacityEvidenceAtBestSampledObjective()` | Complete immutable installed-capacity evidence at the best sampled objective |
+
+### ProcessModelDebottleneckStudy
+
+| Method | Description |
+|--------|-------------|
+| `evaluate()` | Run the common search for baseline and alternative, independently verify each selected point, sample metrics, and recover state |
+| `CandidateListSearch(...)` | Deterministic direction-aware search over an ordered bounded candidate list; equal objective values retain the first candidate |
+| `CapacityAlternative(...)` | Stable direct-constraint identity plus proposed applicable limit, unit, direction, source, confidence, and validity range |
+| `addMetric(MetricDefinition)` | Register one production, power, energy, emissions, screening-economic, or other metric with unit, basis, provenance, period, confidence, and required status |
+| `StudyResult.getBaseline()` / `getAlternative()` | Immutable scenario evidence with selected parameters, objectives, margins, installed/boundary evidence, metrics, and diagnostics |
+| `StudyResult.getMetricComparisons()` | Identically defined metric rows with `alternative - baseline` deltas |
+| `StudyResult.isCapacityRestored()` / `isProcessStateRestored()` | Explicit transaction-recovery evidence |
 
 ### EvaluationResult
 
