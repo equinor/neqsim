@@ -17,23 +17,20 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDe
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ParameterDefinition;
 
 /**
- * Evaluates one installed-capacity alternative against a common deterministic production-search
- * policy.
+ * Evaluates one installed-capacity alternative against a common deterministic production-search policy.
  *
  * <p>
- * The study resolves one direct {@link CapacityConstraint} by its stable
- * {@code area::equipment/constraint} address, freezes its complete observable state, evaluates the
- * baseline, applies and verifies the proposed applicable limit, evaluates the alternative, and
- * finally restores both the installed constraint and the pre-study process operating point. Every
- * result is immutable and serializable; no live model, equipment, constraint, search callback, or
- * metric callback is retained.
+ * The study resolves one direct {@link CapacityConstraint} by its stable {@code area::equipment/constraint} address,
+ * freezes its complete observable state, evaluates the baseline, applies and verifies the proposed applicable limit,
+ * evaluates the alternative, and finally restores both the installed constraint and the pre-study process operating
+ * point. Every result is immutable and serializable; no live model, equipment, constraint, search callback, or metric
+ * callback is retained.
  * </p>
  *
  * <p>
- * A result is paired simulator evidence for the declared candidate set. It is not proof of causal
- * production loss, global optimality, a KKT multiplier, design adequacy, certified emissions, or
- * investment approval. Physical, energy, emission, and economic metrics remain separate and are
- * compared only through identical metric definitions and units.
+ * A result is paired simulator evidence for the declared candidate set. It is not proof of causal production loss,
+ * global optimality, a KKT multiplier, design adequacy, certified emissions, or investment approval. Physical, energy,
+ * emission, and economic metrics remain separate and are compared only through identical metric definitions and units.
  * </p>
  *
  * @author NeqSim Development Team
@@ -76,21 +73,12 @@ public final class ProcessModelDebottleneckStudy {
 
   /** Engineering role of a registered scenario metric. */
   public enum MetricKind {
-    PRODUCTION,
-    POWER,
-    ENERGY,
-    DIRECT_EMISSIONS,
-    INDIRECT_EMISSIONS,
-    SCREENING_ECONOMIC,
-    OTHER
+    PRODUCTION, POWER, ENERGY, DIRECT_EMISSIONS, INDIRECT_EMISSIONS, SCREENING_ECONOMIC, OTHER
   }
 
   /** Availability of one sampled metric. */
   public enum MetricStatus {
-    AVAILABLE,
-    NON_FINITE,
-    SAMPLING_FAILED,
-    NOT_SAMPLED
+    AVAILABLE, NON_FINITE, SAMPLING_FAILED, NOT_SAMPLED
   }
 
   /** Serializable callback implementing the same search policy for both scenarios. */
@@ -161,10 +149,9 @@ public final class ProcessModelDebottleneckStudy {
      * @param validityMinimum inclusive proposal validity minimum, or NaN when unset
      * @param validityMaximum inclusive proposal validity maximum, or NaN when unset
      */
-    public CapacityAlternative(String id, String name, String provenance, String areaName,
-        String equipmentName, String constraintName, double proposedLimit, String unit,
-        LimitDirection limitDirection, String proposalSource, double confidence,
-        double validityMinimum, double validityMaximum) {
+    public CapacityAlternative(String id, String name, String provenance, String areaName, String equipmentName,
+        String constraintName, double proposedLimit, String unit, LimitDirection limitDirection, String proposalSource,
+        double confidence, double validityMinimum, double validityMaximum) {
       this.id = requireText(id, "Alternative identifier");
       this.name = requireText(name, "Alternative name");
       this.provenance = requireText(provenance, "Alternative provenance");
@@ -202,8 +189,7 @@ public final class ProcessModelDebottleneckStudy {
       this.validityRangeSet = minimumSet;
       this.validityMinimum = minimumSet ? validityMinimum : Double.NaN;
       this.validityMaximum = maximumSet ? validityMaximum : Double.NaN;
-      if (validityRangeSet
-          && (proposedLimit < validityMinimum || proposedLimit > validityMaximum)) {
+      if (validityRangeSet && (proposedLimit < validityMinimum || proposedLimit > validityMaximum)) {
         throw new IllegalArgumentException("Proposed limit lies outside its declared validity range");
       }
     }
@@ -409,9 +395,8 @@ public final class ProcessModelDebottleneckStudy {
    * Deterministic derivative-free search over an explicit ordered list of parameter vectors.
    *
    * <p>
-   * Only converged feasible candidates with finite selected-objective values are eligible. Ties
-   * inside the declared absolute tolerance retain the earliest candidate, making repeated Java and
-   * JPype execution deterministic.
+   * Only converged feasible candidates with finite selected-objective values are eligible. Ties inside the declared
+   * absolute tolerance retain the earliest candidate, making repeated Java and JPype execution deterministic.
    * </p>
    */
   public static final class CandidateListSearch implements ScenarioSearch {
@@ -424,8 +409,8 @@ public final class ProcessModelDebottleneckStudy {
     private final int objectiveIndex;
     private final double objectiveTolerance;
 
-    public CandidateListSearch(String id, String name, String provenance, List<double[]> candidates,
-        int objectiveIndex, double objectiveTolerance) {
+    public CandidateListSearch(String id, String name, String provenance, List<double[]> candidates, int objectiveIndex,
+        double objectiveTolerance) {
       this.id = requireText(id, "Search identifier");
       this.name = requireText(name, "Search name");
       this.provenance = requireText(provenance, "Search provenance");
@@ -500,9 +485,8 @@ public final class ProcessModelDebottleneckStudy {
         }
         EvaluationResult result = evaluator.evaluate(candidate);
         double[] rawObjectives = result.getObjectivesRaw();
-        if (result.isSimulationConverged() && result.isFeasible()
-            && rawObjectives != null && objectiveIndex < rawObjectives.length
-            && isFinite(rawObjectives[objectiveIndex])) {
+        if (result.isSimulationConverged() && result.isFeasible() && rawObjectives != null
+            && objectiveIndex < rawObjectives.length && isFinite(rawObjectives[objectiveIndex])) {
           double value = rawObjectives[objectiveIndex];
           if (selected == null || improves(value, selectedValue, objective.getDirection())) {
             selected = Arrays.copyOf(candidate, candidate.length);
@@ -535,8 +519,7 @@ public final class ProcessModelDebottleneckStudy {
       return null;
     }
 
-    private boolean improves(double candidate, double incumbent,
-        ObjectiveDefinition.Direction direction) {
+    private boolean improves(double candidate, double incumbent, ObjectiveDefinition.Direction direction) {
       if (direction == ObjectiveDefinition.Direction.MAXIMIZE) {
         return candidate > incumbent + objectiveTolerance;
       }
@@ -558,9 +541,8 @@ public final class ProcessModelDebottleneckStudy {
     private final boolean required;
     private final MetricSampler sampler;
 
-    public MetricDefinition(String id, String name, MetricKind kind, String unit, String basis,
-        String provenance, String effectivePeriod, double confidence, boolean required,
-        MetricSampler sampler) {
+    public MetricDefinition(String id, String name, MetricKind kind, String unit, String basis, String provenance,
+        String effectivePeriod, double confidence, boolean required, MetricSampler sampler) {
       this.id = requireText(id, "Metric identifier");
       this.name = requireText(name, "Metric name");
       if (kind == null) {
@@ -647,8 +629,7 @@ public final class ProcessModelDebottleneckStudy {
     private final double value;
     private final String diagnostic;
 
-    private MetricEvidence(MetricDefinition definition, MetricStatus status, double value,
-        String diagnostic) {
+    private MetricEvidence(MetricDefinition definition, MetricStatus status, double value, String diagnostic) {
       id = definition.id;
       name = definition.name;
       kind = definition.kind;
@@ -733,9 +714,8 @@ public final class ProcessModelDebottleneckStudy {
     private MetricComparison(MetricEvidence baseline, MetricEvidence alternative) {
       this.baseline = baseline;
       this.alternative = alternative;
-      calculable = baseline != null && alternative != null && baseline.isAvailable()
-          && alternative.isAvailable() && baseline.getId().equals(alternative.getId())
-          && baseline.getUnit().equals(alternative.getUnit());
+      calculable = baseline != null && alternative != null && baseline.isAvailable() && alternative.isAvailable()
+          && baseline.getId().equals(alternative.getId()) && baseline.getUnit().equals(alternative.getUnit());
       delta = calculable ? alternative.getValue() - baseline.getValue() : Double.NaN;
     }
 
@@ -768,8 +748,7 @@ public final class ProcessModelDebottleneckStudy {
     private final double rawValue;
     private final double minimizerValue;
 
-    private ObjectiveEvidence(int index, ObjectiveDefinition definition, double rawValue,
-        double minimizerValue) {
+    private ObjectiveEvidence(int index, ObjectiveDefinition definition, double rawValue, double minimizerValue) {
       this.index = index;
       name = safeText(definition.getName());
       direction = definition.getDirection();
@@ -820,8 +799,7 @@ public final class ProcessModelDebottleneckStudy {
     private final double value;
     private final double margin;
 
-    private ConstraintEvidence(int index, ConstraintDefinition definition, double value,
-        double margin) {
+    private ConstraintEvidence(int index, ConstraintDefinition definition, double value, double margin) {
       this.index = index;
       name = safeText(definition.getName());
       type = definition.getType();
@@ -880,10 +858,9 @@ public final class ProcessModelDebottleneckStudy {
     private final List<MetricEvidence> metrics;
     private final List<String> diagnostics;
 
-    private ScenarioEvidence(String label, ScenarioSearch search, ScenarioStatus status,
-        double[] selectedParameters, EvaluationResult result, int evaluationCount,
-        List<ObjectiveEvidence> objectives, List<ConstraintEvidence> constraints,
-        List<MetricEvidence> metrics, List<String> diagnostics) {
+    private ScenarioEvidence(String label, ScenarioSearch search, ScenarioStatus status, double[] selectedParameters,
+        EvaluationResult result, int evaluationCount, List<ObjectiveEvidence> objectives,
+        List<ConstraintEvidence> constraints, List<MetricEvidence> metrics, List<String> diagnostics) {
       this.label = label;
       searchId = search.getId();
       searchName = search.getName();
@@ -990,12 +967,11 @@ public final class ProcessModelDebottleneckStudy {
     private final double objectiveDelta;
     private final List<String> diagnostics;
 
-    private StudyResult(String id, String name, String provenance,
-        CapacityAlternative alternativeDefinition, CapacityState originalCapacityState,
-        CapacityState appliedCapacityState, StudyOutcome outcome, ScenarioEvidence baseline,
-        ScenarioEvidence alternative, boolean capacityRestored, boolean processStateRestored,
-        boolean recoverySimulationConverged, List<MetricComparison> metricComparisons,
-        boolean objectiveDeltaCalculable, double objectiveDelta, List<String> diagnostics) {
+    private StudyResult(String id, String name, String provenance, CapacityAlternative alternativeDefinition,
+        CapacityState originalCapacityState, CapacityState appliedCapacityState, StudyOutcome outcome,
+        ScenarioEvidence baseline, ScenarioEvidence alternative, boolean capacityRestored, boolean processStateRestored,
+        boolean recoverySimulationConverged, List<MetricComparison> metricComparisons, boolean objectiveDeltaCalculable,
+        double objectiveDelta, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -1109,8 +1085,8 @@ public final class ProcessModelDebottleneckStudy {
    * @param objectiveIndex objective used for the paired delta
    */
   public ProcessModelDebottleneckStudy(String id, String name, String provenance,
-      ProcessModelSimulationEvaluator evaluator, CapacityAlternative alternative,
-      ScenarioSearch search, int objectiveIndex) {
+      ProcessModelSimulationEvaluator evaluator, CapacityAlternative alternative, ScenarioSearch search,
+      int objectiveIndex) {
     this.id = requireText(id, "Study identifier");
     this.name = requireText(name, "Study name");
     this.provenance = requireText(provenance, "Study provenance");
@@ -1124,10 +1100,8 @@ public final class ProcessModelDebottleneckStudy {
     this.alternative = alternative;
     this.search = search;
     this.objectiveIndex = objectiveIndex;
-    if (search instanceof CandidateListSearch
-        && ((CandidateListSearch) search).getObjectiveIndex() != objectiveIndex) {
-      throw new IllegalArgumentException(
-          "Candidate-list search and study must use the same objective index");
+    if (search instanceof CandidateListSearch && ((CandidateListSearch) search).getObjectiveIndex() != objectiveIndex) {
+      throw new IllegalArgumentException("Candidate-list search and study must use the same objective index");
     }
   }
 
@@ -1194,8 +1168,7 @@ public final class ProcessModelDebottleneckStudy {
       target = resolveTarget(model);
     } catch (RuntimeException exception) {
       diagnostics.add(exception.getMessage());
-      return result(StudyOutcome.ALTERNATIVE_NOT_APPLICABLE, null, null, null, null,
-          false, false, false, diagnostics);
+      return result(StudyOutcome.ALTERNATIVE_NOT_APPLICABLE, null, null, null, null, false, false, false, diagnostics);
     }
 
     CapacityState originalState = new CapacityState(target.constraint);
@@ -1221,8 +1194,7 @@ public final class ProcessModelDebottleneckStudy {
         if (!alternativeScenario.isQualified()) {
           diagnostics.add("Alternative search or verification did not produce a qualified point");
           provisionalOutcome = StudyOutcome.ALTERNATIVE_FAILED;
-        } else if (hasUnavailableRequiredMetric(baseline)
-            || hasUnavailableRequiredMetric(alternativeScenario)) {
+        } else if (hasUnavailableRequiredMetric(baseline) || hasUnavailableRequiredMetric(alternativeScenario)) {
           diagnostics.add("At least one required scenario metric was unavailable");
           provisionalOutcome = StudyOutcome.REQUIRED_METRIC_UNAVAILABLE;
         } else {
@@ -1231,8 +1203,8 @@ public final class ProcessModelDebottleneckStudy {
       }
     } catch (RuntimeException exception) {
       diagnostics.add("Study execution failed: " + safeText(exception.getMessage()));
-      provisionalOutcome = baseline == null || !baseline.isQualified()
-          ? StudyOutcome.BASELINE_FAILED : StudyOutcome.ALTERNATIVE_FAILED;
+      provisionalOutcome = baseline == null || !baseline.isQualified() ? StudyOutcome.BASELINE_FAILED
+          : StudyOutcome.ALTERNATIVE_FAILED;
     } finally {
       try {
         restoreConstraint(target.constraint, originalState);
@@ -1244,8 +1216,7 @@ public final class ProcessModelDebottleneckStudy {
       try {
         EvaluationResult recovery = evaluator.evaluate(recoveryParameters);
         recoveryConverged = recovery.isSimulationConverged();
-        processStateRestored = recoveryConverged
-            && arraysEqual(recoveryParameters, recovery.getParameters(), 0.0);
+        processStateRestored = recoveryConverged && arraysEqual(recoveryParameters, recovery.getParameters(), 0.0);
       } catch (RuntimeException exception) {
         diagnostics.add("Pre-study process-state recovery failed: " + safeText(exception.getMessage()));
       }
@@ -1254,34 +1225,33 @@ public final class ProcessModelDebottleneckStudy {
     if (!alternativeApplied && appliedState != null) {
       diagnostics.add("Internal diagnostic: applied capacity state was retained without an applied alternative");
     }
-    StudyOutcome outcome = capacityRestored && processStateRestored && recoveryConverged
-        ? provisionalOutcome : StudyOutcome.RESTORATION_FAILED;
+    StudyOutcome outcome = capacityRestored && processStateRestored && recoveryConverged ? provisionalOutcome
+        : StudyOutcome.RESTORATION_FAILED;
     if (capacityRestored) {
       diagnostics.add("The complete installed-capacity state was restored and verified");
     }
     if (processStateRestored && recoveryConverged) {
       diagnostics.add("The pre-study parameter vector was restored and the process model reconverged");
     }
-    return result(outcome, originalState, appliedState, baseline, alternativeScenario,
-        capacityRestored, processStateRestored, recoveryConverged, diagnostics);
+    return result(outcome, originalState, appliedState, baseline, alternativeScenario, capacityRestored,
+        processStateRestored, recoveryConverged, diagnostics);
   }
 
   private CapacityTarget resolveTarget(ProcessModel model) {
     ProcessSystem area = model.get(alternative.getAreaName());
     if (area == null) {
-      throw new IllegalArgumentException("Alternative process area was not found: "
-          + alternative.getAreaName());
+      throw new IllegalArgumentException("Alternative process area was not found: " + alternative.getAreaName());
     }
     ProcessEquipmentInterface equipment = area.getUnit(alternative.getEquipmentName());
     if (equipment == null) {
-      throw new IllegalArgumentException("Alternative equipment was not found: "
-          + alternative.getQualifiedConstraintName());
+      throw new IllegalArgumentException(
+          "Alternative equipment was not found: " + alternative.getQualifiedConstraintName());
     }
     Map<String, CapacityConstraint> direct = equipment.getCapacityConstraints();
     CapacityConstraint constraint = direct == null ? null : direct.get(alternative.getConstraintName());
     if (constraint == null) {
-      throw new IllegalArgumentException("A direct installed capacity constraint was not found: "
-          + alternative.getQualifiedConstraintName());
+      throw new IllegalArgumentException(
+          "A direct installed capacity constraint was not found: " + alternative.getQualifiedConstraintName());
     }
     if (!constraint.isEnabled()) {
       throw new IllegalArgumentException("The installed capacity constraint is disabled");
@@ -1289,13 +1259,11 @@ public final class ProcessModelDebottleneckStudy {
     if (!alternative.getUnit().equals(constraint.getUnit())) {
       throw new IllegalArgumentException("Alternative unit does not match the installed constraint unit");
     }
-    LimitDirection actual = constraint.isMinimumConstraint()
-        ? LimitDirection.MINIMUM : LimitDirection.MAXIMUM;
+    LimitDirection actual = constraint.isMinimumConstraint() ? LimitDirection.MINIMUM : LimitDirection.MAXIMUM;
     if (actual != alternative.getLimitDirection()) {
       throw new IllegalArgumentException("Alternative direction does not match the installed constraint");
     }
-    if (!isFinite(constraint.getDisplayDesignValue())
-        || constraint.getDisplayDesignValue() == Double.MAX_VALUE
+    if (!isFinite(constraint.getDisplayDesignValue()) || constraint.getDisplayDesignValue() == Double.MAX_VALUE
         || constraint.getDisplayDesignValue() <= 0.0) {
       throw new IllegalArgumentException("Installed applicable limit must be finite and positive");
     }
@@ -1315,13 +1283,12 @@ public final class ProcessModelDebottleneckStudy {
       constraint.clearConfidence();
     }
     if (alternative.hasValidityRange()) {
-      constraint.setValidityRange(alternative.getValidityMinimum(),
-          alternative.getValidityMaximum());
+      constraint.setValidityRange(alternative.getValidityMinimum(), alternative.getValidityMaximum());
     } else {
       constraint.clearValidityRange();
     }
-    if (Double.doubleToLongBits(constraint.getDisplayDesignValue())
-        != Double.doubleToLongBits(alternative.getProposedLimit())) {
+    if (Double.doubleToLongBits(constraint.getDisplayDesignValue()) != Double
+        .doubleToLongBits(alternative.getProposedLimit())) {
       throw new IllegalStateException("Proposed installed limit failed exact read-back verification");
     }
   }
@@ -1348,23 +1315,23 @@ public final class ProcessModelDebottleneckStudy {
     String invalid = validateSelectedParameters(parameters);
     if (invalid != null) {
       diagnostics.add(invalid);
-      return new ScenarioEvidence(label, search, ScenarioStatus.VERIFICATION_FAILED, parameters,
-          null, evaluator.getEvaluationCount() - before,
-          Collections.<ObjectiveEvidence>emptyList(), Collections.<ConstraintEvidence>emptyList(),
-          notSampledMetrics(), diagnostics);
+      return new ScenarioEvidence(label, search, ScenarioStatus.VERIFICATION_FAILED, parameters, null,
+          evaluator.getEvaluationCount() - before, Collections.<ObjectiveEvidence>emptyList(),
+          Collections.<ConstraintEvidence>emptyList(), notSampledMetrics(), diagnostics);
     }
     EvaluationResult result = evaluator.evaluate(parameters);
     List<ObjectiveEvidence> objectives = snapshotObjectives(result);
     List<ConstraintEvidence> constraints = snapshotConstraints(result);
-    ScenarioStatus status = result.isSimulationConverged() && result.isFeasible()
-        ? ScenarioStatus.QUALIFIED : ScenarioStatus.VERIFICATION_FAILED;
+    ScenarioStatus status = result.isSimulationConverged() && result.isFeasible() ? ScenarioStatus.QUALIFIED
+        : ScenarioStatus.VERIFICATION_FAILED;
     if (status != ScenarioStatus.QUALIFIED) {
       diagnostics.add("Selected point did not pass independent convergence and feasibility verification");
     }
     List<MetricEvidence> metricEvidence = status == ScenarioStatus.QUALIFIED
-        ? sampleMetrics(evaluator.getProcessModel()) : notSampledMetrics();
-    return new ScenarioEvidence(label, search, status, parameters, result,
-        evaluator.getEvaluationCount() - before, objectives, constraints, metricEvidence, diagnostics);
+        ? sampleMetrics(evaluator.getProcessModel())
+        : notSampledMetrics();
+    return new ScenarioEvidence(label, search, status, parameters, result, evaluator.getEvaluationCount() - before,
+        objectives, constraints, metricEvidence, diagnostics);
   }
 
   private String validateSelectedParameters(double[] parameters) {
@@ -1385,8 +1352,7 @@ public final class ProcessModelDebottleneckStudy {
     double[] raw = result.getObjectivesRaw();
     double[] adjusted = result.getObjectives();
     for (int index = 0; index < evaluator.getObjectives().size(); index++) {
-      evidence.add(new ObjectiveEvidence(index, evaluator.getObjectives().get(index), raw[index],
-          adjusted[index]));
+      evidence.add(new ObjectiveEvidence(index, evaluator.getObjectives().get(index), raw[index], adjusted[index]));
     }
     return evidence;
   }
@@ -1396,8 +1362,7 @@ public final class ProcessModelDebottleneckStudy {
     double[] values = result.getConstraintValues();
     double[] margins = result.getConstraintMargins();
     for (int index = 0; index < evaluator.getConstraints().size(); index++) {
-      evidence.add(new ConstraintEvidence(index, evaluator.getConstraints().get(index), values[index],
-          margins[index]));
+      evidence.add(new ConstraintEvidence(index, evaluator.getConstraints().get(index), values[index], margins[index]));
     }
     return evidence;
   }
@@ -1415,8 +1380,8 @@ public final class ProcessModelDebottleneckStudy {
               "Metric sampler returned a non-finite value"));
         }
       } catch (RuntimeException exception) {
-        evidence.add(new MetricEvidence(metric, MetricStatus.SAMPLING_FAILED, Double.NaN,
-            safeText(exception.getMessage())));
+        evidence.add(
+            new MetricEvidence(metric, MetricStatus.SAMPLING_FAILED, Double.NaN, safeText(exception.getMessage())));
       }
     }
     return evidence;
@@ -1440,10 +1405,9 @@ public final class ProcessModelDebottleneckStudy {
     return false;
   }
 
-  private StudyResult result(StudyOutcome outcome, CapacityState originalState,
-      CapacityState appliedState, ScenarioEvidence baseline, ScenarioEvidence alternativeScenario,
-      boolean capacityRestored, boolean processStateRestored, boolean recoveryConverged,
-      List<String> diagnostics) {
+  private StudyResult result(StudyOutcome outcome, CapacityState originalState, CapacityState appliedState,
+      ScenarioEvidence baseline, ScenarioEvidence alternativeScenario, boolean capacityRestored,
+      boolean processStateRestored, boolean recoveryConverged, List<String> diagnostics) {
     List<MetricComparison> comparisons = compareMetrics(baseline, alternativeScenario);
     boolean deltaCalculable = baseline != null && alternativeScenario != null
         && baseline.getObjectives().size() > objectiveIndex
@@ -1454,13 +1418,12 @@ public final class ProcessModelDebottleneckStudy {
         ? alternativeScenario.getObjectives().get(objectiveIndex).getRawValue()
             - baseline.getObjectives().get(objectiveIndex).getRawValue()
         : Double.NaN;
-    return new StudyResult(id, name, provenance, alternative, originalState, appliedState, outcome,
-        baseline, alternativeScenario, capacityRestored, processStateRestored,
-        recoveryConverged, comparisons, deltaCalculable, delta, diagnostics);
+    return new StudyResult(id, name, provenance, alternative, originalState, appliedState, outcome, baseline,
+        alternativeScenario, capacityRestored, processStateRestored, recoveryConverged, comparisons, deltaCalculable,
+        delta, diagnostics);
   }
 
-  private List<MetricComparison> compareMetrics(ScenarioEvidence baseline,
-      ScenarioEvidence alternativeScenario) {
+  private List<MetricComparison> compareMetrics(ScenarioEvidence baseline, ScenarioEvidence alternativeScenario) {
     if (baseline == null || alternativeScenario == null) {
       return Collections.emptyList();
     }
@@ -1469,8 +1432,7 @@ public final class ProcessModelDebottleneckStudy {
     List<MetricComparison> comparisons = new ArrayList<MetricComparison>();
     int count = Math.min(baselineMetrics.size(), alternativeMetrics.size());
     for (int index = 0; index < count; index++) {
-      comparisons.add(new MetricComparison(baselineMetrics.get(index),
-          alternativeMetrics.get(index)));
+      comparisons.add(new MetricComparison(baselineMetrics.get(index), alternativeMetrics.get(index)));
     }
     return comparisons;
   }
@@ -1497,18 +1459,15 @@ public final class ProcessModelDebottleneckStudy {
   }
 
   private static boolean statesEqual(CapacityState first, CapacityState second) {
-    return bitsEqual(first.designValue, second.designValue)
-        && bitsEqual(first.maximumValue, second.maximumValue)
+    return bitsEqual(first.designValue, second.designValue) && bitsEqual(first.maximumValue, second.maximumValue)
         && bitsEqual(first.minimumValue, second.minimumValue)
-        && bitsEqual(first.warningThreshold, second.warningThreshold)
-        && first.unit.equals(second.unit) && first.severity == second.severity
-        && first.enabled == second.enabled && first.dataSource.equals(second.dataSource)
-        && first.confidenceSet == second.confidenceSet
+        && bitsEqual(first.warningThreshold, second.warningThreshold) && first.unit.equals(second.unit)
+        && first.severity == second.severity && first.enabled == second.enabled
+        && first.dataSource.equals(second.dataSource) && first.confidenceSet == second.confidenceSet
         && (!first.confidenceSet || bitsEqual(first.confidence, second.confidence))
         && first.validityRangeSet == second.validityRangeSet
-        && (!first.validityRangeSet
-            || bitsEqual(first.validityMinimum, second.validityMinimum)
-                && bitsEqual(first.validityMaximum, second.validityMaximum))
+        && (!first.validityRangeSet || bitsEqual(first.validityMinimum, second.validityMinimum)
+            && bitsEqual(first.validityMaximum, second.validityMaximum))
         && bitsEqual(first.shadowPrice, second.shadowPrice);
   }
 
