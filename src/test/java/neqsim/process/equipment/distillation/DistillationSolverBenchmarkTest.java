@@ -1341,8 +1341,7 @@ public class DistillationSolverBenchmarkTest {
         "Newton diagnostics should report a bounded evaluated trial set");
     if (lineSearchTrialCount > 0) {
       assertTrue(
-          column.getLastNewtonLineSearchStepLength() >= 0.125
-              && column.getLastNewtonLineSearchStepLength() <= 1.0,
+          column.getLastNewtonLineSearchStepLength() >= 0.125 && column.getLastNewtonLineSearchStepLength() <= 1.0,
           "Newton should retain one evaluated bounded step");
       assertTrue(Double.isFinite(column.getLastNewtonLineSearchResidual()),
           "Newton should report the finite residual belonging to the retained step");
