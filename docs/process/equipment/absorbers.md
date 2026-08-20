@@ -1,13 +1,13 @@
 ---
 title: Absorbers and Strippers
-description: "Documentation for mass transfer columns in NeqSim: rate-based packed absorber and stripper modeling, TEG dehydration with Fs-factor sizing, amine gas sweetening (MDEA/DEA/MEA), simple absorber models, and water stripping."
+description: "Model selection and executable workflows for rigorous tray, shortcut, and rate-based absorber and stripper models."
 ---
 
-# Absorbers and Strippers
-
-Documentation for mass transfer columns in NeqSim.
+Documentation for gas-liquid mass-transfer equipment in NeqSim. Select the model from the
+engineering question first; the classes do not represent interchangeable fidelity levels.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Absorber](#absorber)
 - [Stripper](#stripper)
@@ -23,127 +23,189 @@ Documentation for mass transfer columns in NeqSim.
 
 ## Overview
 
-**Location:** `neqsim.process.equipment.absorber`
+**Package:** `neqsim.process.equipment.absorber`
 
-**Classes:**
-| Class                   | Description                                           |
-| ----------------------- | ----------------------------------------------------- |
-| `AbsorptionColumn`      | Rigorous counter-current equilibrium-tray absorber with Murphree efficiencies |
-| `StrippingColumn`       | Rigorous counter-current equilibrium-tray stripper with Murphree efficiencies |
-| `SimpleAbsorber`        | Simplified absorber model (base class)                |
-| `SimpleTEGAbsorber`     | TEG dehydration with Fs-factor sizing                 |
-| `SimpleAmineAbsorber`   | Amine gas sweetening (MDEA, DEA, MEA)                 |
-| `WaterStripperColumn`   | Water stripping column                                |
-| `RateBasedPackedColumn` | Counter-current packed absorber/stripper with segment profiles |
-| `RateBasedAbsorber`     | Legacy first-pass gas-to-liquid rate absorber with enhancement factors |
-| `H2SScavenger`          | H2S scavenger model                                   |
+| Class | Use when | Important boundary |
+| --- | --- | --- |
+| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | No tray hydraulics, reactions, entrainment, or flooding |
+| `StrippingColumn` | Counter-current equilibrium trays for stripping service | Fixed tray temperatures imply unreported heating or cooling |
+| `RateBasedPackedColumn` | Packed-column films, hydraulics, profiles, or local transfer reversal | Requires packing and transport-property inputs |
+| `SimpleTEGAbsorber` | Fast TEG dehydration screening and Fs-factor sizing | Shortcut rather than a rigorous tray or rate-based model |
+| `SimpleAmineAbsorber` | User-specified CO2/H2S removal and preliminary amine sizing | Removal efficiencies are inputs, not reaction-rate predictions |
+| `SimpleAbsorber` | Compatibility with the legacy single-feed MDEA/CO2 shortcut | Not a general two-stream absorber; do not use for new rigorous studies |
+| `WaterStripperColumn` | Compatibility with the legacy water-specific shortcut | Does not expose the rigorous tray MESH and residual contracts |
+| `RateBasedAbsorber` | Compatibility with the earlier one-direction film model | Prefer `RateBasedPackedColumn` for new packed-column studies |
+| `H2SScavenger` | H2S scavenger screening | Separate from staged or packed solvent columns |
 
-Absorbers transfer components from gas to liquid phase, while strippers transfer from liquid to gas. Use `RateBasedPackedColumn` when the transfer direction may reverse locally, when packing hydraulics matter, or when segment-by-segment profiles are needed.
+Absorption means net transfer from gas to liquid; stripping means net transfer from liquid to
+gas. The rigorous tray classes allow either direction for an individual component when the
+thermodynamic driving force reverses.
 
 ---
 
 ## Absorber
 
-The absorber classes in NeqSim model gas-liquid contactors where components transfer
-from the gas phase into a liquid solvent. Use `AbsorptionColumn` for a rigorous
-counter-current equilibrium-tray calculation, `SimpleTEGAbsorber` for a fast TEG
-shortcut and sizing calculation, `SimpleAmineAbsorber` for a removal-efficiency amine
-model, or `RateBasedPackedColumn` when packing and local mass-transfer rates matter.
+Use `AbsorptionColumn` when a thermodynamic model can represent both gas and solvent phases and
+the engineering question is tray count or Murphree-efficiency sensitivity. Use
+`RateBasedPackedColumn` when packing hydraulics or film rates matter. Use the named TEG or amine
+shortcut only when its documented screening assumptions are acceptable.
 
-### Basic Usage (SimpleAbsorber)
-
-```java
-import neqsim.process.equipment.absorber.SimpleAbsorber;
-
-SimpleAbsorber absorber = new SimpleAbsorber("Gas Absorber", gasStream, solventStream);
-absorber.setNumberOfStages(10);
-absorber.setAproachToEquilibrium(0.7);  // Murphree stage efficiency
-absorber.run();
-
-Stream treatedGas = (Stream) absorber.getGasOutStream();
-Stream richSolvent = (Stream) absorber.getLiquidOutStream();
-```
-
-### Stage Configuration
-
-```java
-absorber.setNumberOfStages(20);
-absorber.setStageEfficiency(0.7);  // Murphree efficiency
-```
+The rigorous absorber accepts the gas at tray 0 and the solvent at tray
+`numberOfTrays - 1`. Tray numbering is bottom-up. Pressure setters use bara; stream
+temperature, pressure, and flow calls remain unit-bearing.
 
 ---
 
 ## Stripper
 
-Use `StrippingColumn` for a rigorous counter-current equilibrium-tray calculation.
-It is the stripping counterpart to `AbsorptionColumn`: stripping gas enters tray 0,
-rich liquid enters tray `numberOfTrays - 1`, and the thermodynamic driving force
-determines whether each component transfers from liquid to gas or from gas to liquid.
-The class retains the established MESH solver, Murphree-efficiency hierarchy, ordinary
-NeqSim outlet streams, conservation diagnostics, and warm-start behavior.
+`StrippingColumn` is the rigorous tray counterpart to `AbsorptionColumn`. Stripping gas enters
+tray 0 and rich liquid enters tray `numberOfTrays - 1`. This complete methanol/water example is
+grounded in `StrippingColumnTest` and uses the MESH-residual solver explicitly.
 
 ```java
 import neqsim.process.equipment.absorber.StrippingColumn;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkCPA;
 
-StrippingColumn stripper = new StrippingColumn("methanol stripper", 5);
-stripper.addStrippingGasStream(stripGas);
+SystemSrkCPA gasFluid = new SystemSrkCPA(333.15, 2.0);
+gasFluid.addComponent("nitrogen", 0.999);
+gasFluid.addComponent("methanol", 0.001);
+gasFluid.addComponent("water", 0.0);
+gasFluid.setMixingRule(10);
+gasFluid.setMultiPhaseCheck(false);
+
+Stream strippingGas = new Stream("methanol stripping gas", gasFluid);
+strippingGas.setFlowRate(100.0, "kg/hr");
+strippingGas.setTemperature(60.0, "C");
+strippingGas.setPressure(2.0, "bara");
+
+SystemSrkCPA liquidFluid = new SystemSrkCPA(333.15, 2.0);
+liquidFluid.addComponent("nitrogen", 0.0);
+liquidFluid.addComponent("methanol", 0.04);
+liquidFluid.addComponent("water", 0.96);
+liquidFluid.setMixingRule(10);
+liquidFluid.setMultiPhaseCheck(false);
+
+Stream richLiquid = new Stream("methanol rich water", liquidFluid);
+richLiquid.setFlowRate(1000.0, "kg/hr");
+richLiquid.setTemperature(60.0, "C");
+richLiquid.setPressure(2.0, "bara");
+
+StrippingColumn stripper = new StrippingColumn("methanol stripper", 4);
+stripper.addStrippingGasStream(strippingGas);
 stripper.addRichLiquidStream(richLiquid);
-stripper.setTopPressure(2.0);     // bara
-stripper.setBottomPressure(2.0);  // bara
-stripper.setComponentMurphreeEfficiency("methanol", 0.70);
+stripper.setTopPressure(2.0);
+stripper.setBottomPressure(2.0);
+stripper.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+stripper.setTemperatureTolerance(1.0e-2);
+stripper.setMassBalanceTolerance(5.0e-2);
+stripper.setEnthalpyBalanceTolerance(5.0e-2);
+stripper.setMaxNumberOfIterations(80);
+for (int trayNumber = 0; trayNumber < stripper.getNumberOfTrays(); trayNumber++) {
+  stripper.getTray(trayNumber).setOutTemperature(333.15);
+  stripper.setComponentMurphreeEfficiency(trayNumber, "methanol", 0.70);
+}
 
 ProcessSystem process = new ProcessSystem();
-process.add(stripGas);
+process.add(strippingGas);
 process.add(richLiquid);
 process.add(stripper);
 process.run();
 
 if (!stripper.solved()) {
-    throw new IllegalStateException(stripper.getConvergenceDiagnostics());
+  throw new IllegalStateException(stripper.getConvergenceDiagnostics());
 }
 
 StreamInterface overheadGas = stripper.getOverheadGasStream();
 StreamInterface leanLiquid = stripper.getLeanLiquidStream();
+double inletMass = strippingGas.getFlowRate("kg/hr") + richLiquid.getFlowRate("kg/hr");
+double massBalanceError = Math.abs(stripper.getMassBalance("kg/hr"));
+if (massBalanceError > 5.0e-3 * inletMass || leanLiquid.getFlowRate("kg/hr") <= 0.0) {
+  throw new IllegalStateException("Stripper total mass balance did not close");
+}
+
+double inletGasMethanol =
+    strippingGas.getFluid().getPhase(0).getComponent("methanol").getFlowRate("kg/hr");
+double overheadMethanol =
+    overheadGas.getFluid().getPhase(0).getComponent("methanol").getFlowRate("kg/hr");
+if (!(overheadMethanol > inletGasMethanol)) {
+  throw new IllegalStateException("The configured case did not strip methanol");
+}
 ```
 
-Always verify total and named-component closure, the active specification and MESH
-residuals, physical product bounds, and sensitivity to tray count and efficiency.
-When tray temperatures are fixed, the required heating or cooling is implicit;
-`getEnergyBalanceError()` remains a diagnostic but is not an equipment-duty result.
-Use a reboiled `DistillationColumn` when the reboiler duty or boilup ratio is part
-of the process specification, and use `RateBasedPackedColumn` for packed-column
-film transfer and hydraulics.
+Always verify total and named-component closure, the active solver and MESH residuals, physical
+product bounds, and sensitivity to tray count and efficiency. The focused repository regression
+checks every named component and verifies that changing methanol efficiency changes transfer.
 
-`WaterStripperColumn` remains the legacy water-specific shortcut. It does not expose
-the rigorous tray MESH, component-efficiency, residual, or retained-state contracts of
-`StrippingColumn`.
+When tray temperatures are fixed, their required heating or cooling is implicit.
+`getEnergyBalanceError()` is a convergence diagnostic, not an equipment-duty result. Use a
+reboiled `DistillationColumn` when reboiler duty or boilup ratio is a process specification, and
+use `RateBasedPackedColumn` for packed-column films and hydraulics.
 
 ---
 
 ## Rigorous Tray Absorber
 
-`AbsorptionColumn` reuses the rigorous distillation-column MESH solver without a
-condenser or reboiler. Gas enters tray 0 and solvent enters tray
-`numberOfTrays - 1`; tray numbering is bottom-up. The specified pressure values are
-in bara and stream temperatures follow the usual NeqSim unit-aware stream API.
+`AbsorptionColumn` reuses the rigorous distillation-column solver without a condenser or
+reboiler. This complete TEG example uses the same component set in both feeds, CPA with mixing
+rule 10, fixed tray temperatures, explicit convergence tolerances, and component-specific
+Murphree efficiencies.
 
 ```java
 import neqsim.process.equipment.absorber.AbsorptionColumn;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 
-AbsorptionColumn absorber = new AbsorptionColumn("TEG contactor", 6);
+SystemSrkCPAstatoil gasFluid = new SystemSrkCPAstatoil(303.15, 70.0);
+gasFluid.addComponent("nitrogen", 0.01);
+gasFluid.addComponent("CO2", 0.02);
+gasFluid.addComponent("methane", 0.90);
+gasFluid.addComponent("ethane", 0.05);
+gasFluid.addComponent("propane", 0.0195);
+gasFluid.addComponent("water", 0.0005);
+gasFluid.addComponent("TEG", 0.0);
+gasFluid.setMixingRule(10);
+gasFluid.setMultiPhaseCheck(false);
+
+Stream wetGas = new Stream("wet feed gas", gasFluid);
+wetGas.setFlowRate(5000.0, "kg/hr");
+wetGas.setTemperature(30.0, "C");
+wetGas.setPressure(70.0, "bara");
+
+SystemSrkCPAstatoil tegFluid = new SystemSrkCPAstatoil(308.15, 70.0);
+tegFluid.addComponent("nitrogen", 0.0);
+tegFluid.addComponent("CO2", 0.0);
+tegFluid.addComponent("methane", 0.0);
+tegFluid.addComponent("ethane", 0.0);
+tegFluid.addComponent("propane", 0.0);
+tegFluid.addComponent("water", 0.005);
+tegFluid.addComponent("TEG", 0.995);
+tegFluid.setMixingRule(10);
+tegFluid.setMultiPhaseCheck(false);
+
+Stream leanTeg = new Stream("lean TEG", tegFluid);
+leanTeg.setFlowRate(500.0, "kg/hr");
+leanTeg.setTemperature(35.0, "C");
+leanTeg.setPressure(70.0, "bara");
+
+AbsorptionColumn absorber = new AbsorptionColumn("TEG contactor", 4);
 absorber.addGasInStream(wetGas);
 absorber.addSolventInStream(leanTeg);
 absorber.setTopPressure(70.0);
 absorber.setBottomPressure(70.0);
-
-// Overall default, one-tray override, and component-specific overrides.
-absorber.setMurphreeEfficiency(0.70);
-absorber.setMurphreeEfficiency(0, 0.60);
-absorber.setComponentMurphreeEfficiency("water", 0.50);
-absorber.setComponentMurphreeEfficiency(2, "water", 0.40);
+absorber.setTemperatureTolerance(1.0e-2);
+absorber.setMassBalanceTolerance(5.0e-2);
+absorber.setEnthalpyBalanceTolerance(5.0e-2);
+absorber.setMaxNumberOfIterations(80);
+for (int trayNumber = 0; trayNumber < absorber.getNumberOfTrays(); trayNumber++) {
+  absorber.getTray(trayNumber).setOutTemperature(303.15);
+  absorber.setComponentMurphreeEfficiency(trayNumber, "water", 0.70);
+}
 
 ProcessSystem process = new ProcessSystem();
 process.add(wetGas);
@@ -152,55 +214,51 @@ process.add(absorber);
 process.run();
 
 if (!absorber.solved()) {
-    throw new IllegalStateException(absorber.getConvergenceDiagnostics());
+  throw new IllegalStateException(absorber.getConvergenceDiagnostics());
 }
 
-double massBalanceError = absorber.getMassBalance("kg/hr");
+StreamInterface treatedGas = absorber.getGasOutStream();
+StreamInterface richTeg = absorber.getLiquidOutStream();
+double inletMass = wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr");
+double massBalanceError = Math.abs(absorber.getMassBalance("kg/hr"));
+if (massBalanceError > 5.0e-3 * inletMass || richTeg.getFlowRate("kg/hr") <= 0.0) {
+  throw new IllegalStateException("Absorber total mass balance did not close");
+}
+
+double wetGasWater =
+    wetGas.getFluid().getPhase(0).getComponent("water").getFlowRate("kg/hr");
+double treatedGasWater =
+    treatedGas.getFluid().getPhase(0).getComponent("water").getFlowRate("kg/hr");
+if (!(treatedGasWater < wetGasWater)) {
+  throw new IllegalStateException("The configured case did not remove water");
+}
 ```
 
-An efficiency of 1.0 gives an ideal equilibrium stage. A per-tray/per-component
-value has the highest priority, followed by the column-wide component value,
-the inherited per-tray value, and the inherited column-wide value. When different
-efficiencies are used for different components, the vapor composition is normalized
-and constrained by the component inventory available on the tray. The complementary
-liquid correction preserves every component on that tray.
+An efficiency of 1.0 gives an ideal equilibrium stage. A tray/component value has the highest
+priority, followed by the column-wide component value, inherited tray value, and inherited
+column-wide value. The correction normalizes the vapor composition and applies a complementary
+liquid correction so the tray component inventory is preserved.
 
-This model is intended for staged physical absorption when a thermodynamic model can
-represent both phases. For TEG-water-natural-gas systems, use a CPA model such as
-`SystemSrkCPAstatoil` with mixing rule 10. Always inspect
-`getConvergenceDiagnostics()`, total and component balances, temperature profiles,
-and sensitivity to tray count and efficiencies. The class does not currently model
-rate-based packing, tray hydraulics, reactions, entrainment, or flooding; use
-`RateBasedPackedColumn` when packed-column mass-transfer and hydraulic detail are
-required.
+The model is intended for staged physical absorption. It does not model rate-based packing, tray
+hydraulics, reactions, entrainment, or flooding. The repository regression covers TEG
+dehydration, lean-oil hydrocarbon recovery, methanol water wash, convergence, total balance,
+named-component balance, and efficiency sensitivity.
 
 ---
 
 ## Simple Absorber
 
-Simplified mass transfer model.
+`SimpleAbsorber` is a legacy single-feed MDEA/CO2 shortcut. Its public constructors accept only
+a name or a name plus one inlet stream. It internally creates a second MDEA/water state from the
+feed CO2 inventory; there is no three-argument gas-plus-solvent constructor.
 
-### Usage
-
-```java
-import neqsim.process.equipment.absorber.SimpleAbsorber;
-
-SimpleAbsorber absorber = new SimpleAbsorber("CO2 Absorber", feedGas, solvent);
-absorber.setAproachToEquilibrium(0.90);  // 90% approach to equilibrium
-absorber.run();
-```
-
-### Fs-Factor and Wetting Rate
-
-The base `SimpleAbsorber` class provides Fs-factor and wetting rate calculations used by all absorber subclasses:
-
-$$F_s = v_s \cdot \sqrt{\rho_g}$$
-
-where $v_s$ is the superficial gas velocity (m/s) and $\rho_g$ is gas density (kg/m3).
-
-The wetting rate is the liquid volume flowing per unit packing area:
-
-$$WR = \frac{Q_L}{\pi / 4 \cdot D^2}$$
+Do not describe `setAproachToEquilibrium(double)` as a Murphree tray efficiency. In this class it
+sets the legacy CO2 loading target. Likewise, `setNumberOfStages`,
+`setNumberOfTheoreticalStages`, `setStageEfficiency`, `setHTU`, and `setNTU` store
+shortcut/sizing metadata; the current `run()` method does not turn those values into a
+counter-current tray calculation. Use `AbsorptionColumn` for tray efficiencies,
+`RateBasedPackedColumn` for packed-column transfer, or `SimpleAmineAbsorber` for the supported
+user-specified removal-efficiency shortcut.
 
 ---
 
