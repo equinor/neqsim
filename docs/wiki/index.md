@@ -14,7 +14,7 @@ Welcome to the NeqSim documentation. This comprehensive wiki provides guides, tu
 
 - **Phase behavior** using rigorous equations of state (SRK, PR, CPA, GERG-2008)
 - **Physical properties** (viscosity, density, thermal conductivity, interfacial tension)
-- **Process equipment** (50+ unit operations including separators, compressors, heat exchangers)
+- **Process equipment** (separators, compressors, heat exchangers, columns, and other unit operations)
 - **Pipeline flow** (two-phase, multiphase, transient simulation)
 - **Flow assurance** (hydrates, wax, asphaltene, scaling)
 
@@ -25,23 +25,34 @@ Development was initiated at the [Norwegian University of Science and Technology
 ## Quick Start
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create a fluid
-SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);  // T(K), P(bara)
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.07);
-fluid.addComponent("propane", 0.03);
-fluid.setMixingRule("classic");
+public final class NeqSimQuickStart {
+  private static final Logger logger = LogManager.getLogger(NeqSimQuickStart.class);
 
-// Run flash calculation
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+  private NeqSimQuickStart() {}
 
-// Get results
-System.out.println("Z-factor: " + fluid.getZ());
-System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
+  public static void main(String[] args) {
+    SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.05);
+    gas.addComponent("propane", 0.03);
+    gas.addComponent("CO2", 0.02);
+    gas.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(gas);
+    operations.TPflash();
+    gas.initProperties();
+
+    logger.info("Density: {} kg/m3", gas.getDensity("kg/m3"));
+    logger.info("Compressibility: {}", gas.getZ());
+  }
+}
 ```
 
 ---
@@ -131,7 +142,7 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.17.0</version>
+    <version>3.18.0</version>
 </dependency>
 ```
 
