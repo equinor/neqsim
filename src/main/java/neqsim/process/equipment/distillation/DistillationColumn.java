@@ -818,7 +818,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
   /** Step length whose state was retained by the latest NEWTON line search. */
   private transient double lastNewtonLineSearchStepLength = Double.NaN;
-  /** Residual norm recomputed for the retained NEWTON line-search state. */
+  /** Residual norm evaluated for the retained NEWTON line-search state. */
   private transient double lastNewtonLineSearchResidual = Double.NaN;
   /** Number of candidate steps evaluated by the latest NEWTON line search. */
   private transient int lastNewtonLineSearchTrialCount = 0;
@@ -3998,6 +3998,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastMatrixInsideOutIterationCount = candidate.lastMatrixInsideOutIterationCount;
     this.lastMatrixInsideOutTemperatureResidual = candidate.lastMatrixInsideOutTemperatureResidual;
     this.lastMatrixInsideOutSolveTimeSeconds = candidate.lastMatrixInsideOutSolveTimeSeconds;
+    this.lastNewtonLineSearchStepLength = candidate.lastNewtonLineSearchStepLength;
+    this.lastNewtonLineSearchResidual = candidate.lastNewtonLineSearchResidual;
+    this.lastNewtonLineSearchTrialCount = candidate.lastNewtonLineSearchTrialCount;
     this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
     this.lastNaphtaliFiniteDifferenceJacobianColumns = candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
     this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
@@ -9415,7 +9418,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Retrieve the residual norm recomputed for the retained NEWTON line-search state.
+   * Retrieve the residual norm evaluated for the retained NEWTON line-search state.
    *
    * @return retained-state residual norm, or {@link Double#NaN} when no NEWTON line search ran
    */
