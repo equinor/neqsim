@@ -20,7 +20,7 @@ Add the current project version to a Maven build:
 
 Use [Maven Central](https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim) to inspect
 published versions and [GitHub Releases](https://github.com/equinor/neqsim/releases) for release
-notes and downloadable assets. Do not use the retired `equinor/neqsimsource` repository.
+notes and downloadable assets. Older predecessor repositories are not authoritative.
 
 ## Build the current source
 
