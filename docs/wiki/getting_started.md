@@ -1,50 +1,32 @@
 ---
 title: "Getting Started with NeqSim"
-description: "Use this page as a launchpad into the NeqSim documentation. It mirrors the high-level structure from the Colab introduction notebook and links directly to reference guides and examples."
+description: "Install the current NeqSim release, run the repository-tested Java quick start, and choose a maintained thermodynamics, process, PVT, pipeline, or engineering guide."
 ---
 
-# Getting Started with NeqSim
+Use this page to install NeqSim, run one complete thermodynamic calculation, and choose the
+maintained guide that matches your task. NeqSim uses kelvin for constructor temperatures and bara
+for constructor pressures unless an API explicitly accepts a unit string.
 
-Use this page as a launchpad into the NeqSim documentation. It mirrors the high-level structure from the Colab introduction notebook and links directly to reference guides and examples.
+## Install the released library
 
-## Table of Contents
-- [Quick Start](#quick-start)
-- [Set up NeqSim locally](#set-up-neqsim-locally)
-- [Your First Calculation](#your-first-calculation)
-- [Fundamentals and thermodynamics](#fundamentals-and-thermodynamics)
-- [Fluid characterization and PVT workflows](#fluid-characterization-and-pvt-workflows)
-- [Process simulation](#process-simulation)
-- [Pipeline and multiphase flow](#pipeline-and-multiphase-flow)
-- [Dynamic behavior and process safety](#dynamic-behavior-and-process-safety)
-- [Unit operations and equipment models](#unit-operations-and-equipment-models)
-- [Integration, control, and automation](#integration-control-and-automation)
-- [Examples and tutorials](#examples-and-tutorials)
-
----
-
-## Quick Start
-
-### Using Maven (Recommended)
-
-Add NeqSim as a dependency in your `pom.xml`:
+Add the current release to a Maven project:
 
 ```xml
 <dependency>
-    <groupId>com.equinor.neqsim</groupId>
-    <artifactId>neqsim</artifactId>
-    <version>3.0.0</version>
+  <groupId>com.equinor.neqsim</groupId>
+  <artifactId>neqsim</artifactId>
+  <version>3.18.0</version>
 </dependency>
 ```
 
-### Direct JAR Download
+Use [Maven Central](https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim) to inspect
+published artifacts and [GitHub Releases](https://github.com/equinor/neqsim/releases) for release
+notes and downloadable assets. Application builds should pin a released version rather than track
+the changing `master` branch.
 
-Download the shaded JAR from the [releases page](https://github.com/equinor/neqsimsource/releases) and add to your classpath.
+## Build the current source
 
----
-
-## Set up NeqSim locally
-
-Clone the repository and build with the Maven wrapper:
+Clone the repository when contributing to NeqSim or validating changes against current source:
 
 ```bash
 git clone https://github.com/equinor/neqsim.git
@@ -52,307 +34,86 @@ cd neqsim
 ./mvnw install
 ```
 
-On Windows:
-```cmd
-mvnw.cmd install
-```
+On Windows, run `mvnw.cmd install`. The Maven wrapper supplies the repository's Maven version.
+NeqSim source remains Java 8 compatible; continuous integration also tests newer supported JDKs.
+See the [developer setup guide](../development/DEVELOPER_SETUP.md) for prerequisites, formatting,
+tests, and platform-specific troubleshooting.
 
-The command downloads dependencies, compiles the project, and runs the test suite. For environment notes and troubleshooting tips, see the [README](../../) and [developer setup guide](../development/DEVELOPER_SETUP).
+## Run the canonical Java quick start
 
-### Requirements
-- Java 8 or higher (Java 11+ recommended)
-- Maven 3.6+ (included via wrapper)
-
----
-
-## Your First Calculation
-
-### Simple Flash Calculation
+The following complete program is shared with the documentation landing pages and protected by
+the landing-page regression contract:
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class FirstCalculation {
-    public static void main(String[] args) {
-        // 1. Create a natural gas system at 25°C and 50 bar
-        SystemSrkEos gas = new SystemSrkEos(298.15, 50.0);
-        gas.addComponent("methane", 0.90);
-        gas.addComponent("ethane", 0.06);
-        gas.addComponent("propane", 0.03);
-        gas.addComponent("n-butane", 0.01);
-        gas.setMixingRule("classic");
+public final class NeqSimQuickStart {
+  private static final Logger logger = LogManager.getLogger(NeqSimQuickStart.class);
 
-        // 2. Perform flash calculation
-        ThermodynamicOperations ops = new ThermodynamicOperations(gas);
-        ops.TPflash();
+  private NeqSimQuickStart() {}
 
-        // 3. Initialize properties — REQUIRED before reading physical properties.
-        // TPflash only solves phase equilibrium (compositions, phase fractions).
-        // Physical and transport properties (density, viscosity, thermal conductivity)
-        // are NOT calculated automatically by TPflash — this is by design to improve
-        // performance, since many workflows only need equilibrium results.
-        // Call initProperties() to compute both thermodynamic and transport properties.
-        gas.initProperties();
+  public static void main(String[] args) {
+    SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.05);
+    gas.addComponent("propane", 0.03);
+    gas.addComponent("CO2", 0.02);
+    gas.setMixingRule("classic");
 
-        // 4. Print results
-        System.out.println("Number of phases: " + gas.getNumberOfPhases());
-        System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m³");
-        System.out.println("Z-factor: " + gas.getPhase("gas").getZ());
-        System.out.println("Molecular weight: " + gas.getMolarMass() * 1000 + " g/mol");
-    }
+    ThermodynamicOperations operations = new ThermodynamicOperations(gas);
+    operations.TPflash();
+    gas.initProperties();
+
+    logger.info("Density: {} kg/m3", gas.getDensity("kg/m3"));
+    logger.info("Compressibility: {}", gas.getZ());
+  }
 }
 ```
 
-### Simple Process Simulation
+`TPflash()` solves phase equilibrium at the system temperature and pressure. The explicit
+`initProperties()` call prepares physical-property results before the example reads density. The
+example logs values instead of writing directly to standard output, in line with repository rules.
 
-```java
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemSrkEos;
+For compilation and dependency details, continue with the
+[Java getting-started guide](../java-getting-started.md). Python users should start from the
+[Python integration on the documentation landing page](../index.md#python-integration), which uses
+the supported `jneqsim` gateway.
 
-public class FirstProcess {
-    public static void main(String[] args) {
-        // 1. Create fluid
-        SystemSrkEos fluid = new SystemSrkEos(320.0, 100.0);
-        fluid.addComponent("methane", 0.80);
-        fluid.addComponent("ethane", 0.10);
-        fluid.addComponent("propane", 0.05);
-        fluid.addComponent("n-pentane", 0.05);
-        fluid.setMixingRule("classic");
+## Choose a maintained workflow
 
-        // 2. Create stream
-        Stream feed = new Stream("Feed", fluid);
-        feed.setFlowRate(10000.0, "kg/hr");
-        feed.setTemperature(50.0, "C");
-        feed.setPressure(100.0, "bara");
+| Goal | Recommended guide |
+| --- | --- |
+| Create fluids, run flashes, and read properties | [Thermodynamics recipes](../cookbook/thermodynamics-recipes.md) |
+| Understand models and phase-equilibrium methods | [Thermodynamics guide](thermodynamics_guide.md) |
+| Inspect flash equations and validation | [Flash equations and tests](flash_equations_and_tests.md) |
+| Characterize oils and heavy fractions | [Fluid characterization](fluid_characterization.md) |
+| Run laboratory-style PVT studies | [PVT simulation workflows](pvt_simulation_workflows.md) |
+| Build a steady-state process | [Process recipes](../cookbook/process-recipes.md) |
+| Understand process execution and reporting | [ProcessSystem guide](../process/processmodel/process_system.md) |
+| Model absorbers and strippers | [Absorber and stripper guide](../process/equipment/absorbers.md) |
+| Select a pipeline workflow | [Pipeline documentation index](pipeline_index.md) |
+| Build dynamic cases | [Process transient simulation guide](process_transient_simulation_guide.md) |
+| Screen oil-quality methods | [Oil-quality standards](../standards/oil_quality_standards.md) |
+| Find runnable tutorials and notebooks | [Examples index](../examples/index.md) |
+| Diagnose setup or runtime problems | [Troubleshooting guide](../troubleshooting/index.md) |
 
-        // 3. Add equipment
-        ThrottlingValve valve = new ThrottlingValve("Valve", feed);
-        valve.setOutletPressure(20.0, "bara");
+The [curated usage-example catalog](usage_examples.md) groups these guides by engineering task and
+records the validation expectations for complete programs and notebooks.
 
-        Separator separator = new Separator("Separator", valve.getOutletStream());
+## Interpret results responsibly
 
-        // 4. Build and run process
-        ProcessSystem process = new ProcessSystem();
-        process.add(feed);
-        process.add(valve);
-        process.add(separator);
+- Keep temperature, pressure, flow, composition, and property units explicit.
+- Select the thermodynamic model and mixing rule for the fluid and property of interest.
+- Check phase count before requesting a named phase from a result that may be single phase.
+- Initialize the state required by each property API and verify mass or component closure where
+  the workflow changes streams.
+- Treat examples as reproducible screening workflows, not mechanical design, safety approval, or
+  standards certification.
 
-        // Use runOptimized() for best performance (auto-selects strategy)
-        process.runOptimized();
-
-        // 5. Results
-        System.out.println("Gas rate: " + separator.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
-        System.out.println("Liquid rate: " + separator.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
-    }
-}
-```
-
-### Execution Strategies
-
-NeqSim provides optimized execution strategies for complex process simulations:
-
-| Method | Best For | Speedup |
-|--------|----------|---------|
-| `run()` | Simple processes | baseline |
-| `runOptimized()` | **Recommended** | 28-40% |
-| `runParallel()` | Feed-forward (no recycles) | 40-57% |
-| `runHybrid()` | Complex recycle processes | 38% |
-
-```java
-// Recommended - auto-selects best strategy based on process topology
-process.runOptimized();
-
-// Analyze process structure
-System.out.println(process.getExecutionPartitionInfo());
-```
-
-See [ProcessSystem documentation](../process/processmodel/process_system) for details.
-
----
-
-## Fundamentals and thermodynamics
-
-### Equations of State
-NeqSim supports multiple equations of state for different applications:
-
-| EOS | Class | Best For |
-|-----|-------|----------|
-| SRK | `SystemSrkEos` | General hydrocarbon systems |
-| Peng-Robinson | `SystemPrEos` | Reservoir/liquid density |
-| SRK-CPA | `SystemSrkCPAstatoil` | Water, glycols, alcohols |
-| GERG-2008 | `SystemGERG2008Eos` | Natural gas custody transfer |
-
-### Documentation Links
-- Read the [Thermodynamics Guide](thermodynamics_guide) for an overview of models, correlations, and implementation notes.
-- Explore validated calculations in [Flash equations and tests](flash_equations_and_tests) and the [Thermodynamics of gas processing](process_simulation#thermodynamics).
-- Review property-focused workflows in [Property flash workflows](property_flash_workflows) and viscosity models in [Viscosity models](viscosity_models).
-- See [Steam Tables IF97](steam_tables_if97) for water/steam calculations.
-
----
-
-## Fluid characterization and PVT workflows
-
-### Heavy Fraction Handling
-For oils with C7+ fractions:
-
-```java
-SystemSrkEos oil = new SystemSrkEos(350.0, 100.0);
-oil.addComponent("methane", 10.0);
-oil.addComponent("ethane", 5.0);
-// ... light components ...
-
-// Add TBP fractions
-oil.addTBPfraction("C7", 5.0, 0.092, 730.0);
-oil.addTBPfraction("C8", 4.0, 0.104, 750.0);
-oil.addPlusFraction("C10+", 20.0, 0.200, 820.0);
-
-// Characterize
-oil.getCharacterization().setTBPModel("PedersenSRK");
-oil.getCharacterization().characterisePlusFraction();
-```
-
-### Documentation Links
-- Follow [Fluid Characterization](fluid_characterization) for setting up equations of state and component data.
-- Use the [PVT simulation workflows](pvt_simulation_workflows) and [Black-oil flash playbook](black_oil_flash_playbook) for reservoir-focused setups.
-- See [TBP Fraction Models](tbp_fraction_models) for detailed characterization methods.
-- See [Gas quality standards from tests](gas_quality_standards_from_tests) for handling analytical measurements.
-
----
-
-## Process simulation
-
-### Available Equipment
-NeqSim includes 50+ unit operations:
-
-| Category | Equipment |
-|----------|-----------|
-| **Separation** | Separator, ThreePhaseSeparator, DistillationColumn, MembraneSeparator |
-| **Compression** | Compressor, Pump, Expander, Ejector |
-| **Heat Transfer** | Heater, Cooler, HeatExchanger |
-| **Flow Control** | ThrottlingValve, FlowRateController |
-| **Pipelines** | PipeBeggsAndBrills, AdiabaticPipe, WaterHammerPipe |
-| **Specialty** | Electrolyzer, WindTurbine, SolarPanel, Battery |
-
-### Documentation Links
-- Start with the [Process Simulation Guide](process_simulation) for steady-state modeling patterns.
-- Dive deeper into [Advanced process simulation](advanced_process_simulation) and [Logical unit operations](logical_unit_operations) for custom flowsheets.
-- Consult the [Modules overview](../modules) and [Process calculator](../simulation/process_calculator) when wiring NeqSim into larger systems.
-
----
-
-## Pipeline and multiphase flow
-
-### Pipeline Models
-
-```java
-PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("Pipeline", inletStream);
-pipeline.setLength(10000.0);           // 10 km
-pipeline.setDiameter(0.2);             // 8 inch
-pipeline.setElevation(50.0);           // 50m elevation gain
-pipeline.setPipeWallRoughness(4.5e-5); // Steel
-pipeline.run();
-```
-
-### Documentation Links
-- See the [Pipeline Index](pipeline_index) for all pipeline documentation
-- [Beggs and Brill Correlation](beggs_and_brill_correlation) for multiphase pressure drop
-- [Pipeline Heat Transfer](pipeline_heat_transfer) for non-adiabatic flow
-- [Multiphase Transient Model](multiphase_transient_model) for dynamic simulation
-- [Water Hammer Implementation](water_hammer_implementation) for fast transients
-
----
-
-## Dynamic behavior and process safety
-
-### Safety Systems
-NeqSim provides comprehensive safety simulation:
-
-```java
-// PSV sizing example
-ValveController psv = new ValveController("PSV-001");
-psv.setMaxPressure(50.0, "bara");
-psv.setReliefPressure(55.0, "bara");
-```
-
-### Documentation Links
-- Study dynamic blowdown and protection behavior in [ESD blowdown systems](../safety/ESD_BLOWDOWN_SYSTEM), [PSV dynamic sizing](psv_dynamic_sizing_example), and [HIPPS implementation](../safety/hipps_implementation).
-- Review layered safety topics in [Integrated safety systems](../safety/INTEGRATED_SAFETY_SYSTEMS), [HIPPS summary](../safety/HIPPS_SUMMARY), and [Layered safety architecture](../safety/layered_safety_architecture).
-- For alarm logic and shutdown sequencing, see [Alarm system guide](../safety/alarm_system_guide), [SIS logic implementation](../safety/sis_logic_implementation), and [Integration safety chain tests](../safety/integration_safety_chain_tests).
-- See [Process Transient Simulation Guide](process_transient_simulation_guide) for dynamic simulations.
-
----
-
-## Unit operations and equipment models
-
-### Equipment Categories
-- **Compressors**: [Compressor calculations](../process/equipment/compressors), performance curves, staging
-- **Pumps**: [Pump usage guide](pump_usage_guide), [Pump theory](pump_theory_and_implementation)
-- **Separation**: [Distillation column](distillation_column), [Membrane separation](membrane_separation)
-- **Heat Exchange**: [Air cooler](air_cooler), [Water cooler](water_cooler), [Steam heater](steam_heater)
-- **Metering**: [Flow meter models](flow_meter_models), [Venturi calculation](venturi_calculation)
-- **Specialty**: [Battery storage](battery_storage), [Solar panel](solar_panel), [Gibbs reactor](gibbs_reactor)
-
-### Documentation Links
-- Browse individual equipment pages such as [Distillation column](distillation_column), [Air cooler](air_cooler), [Water cooler](water_cooler), and [Heat exchanger mechanical design](heat_exchanger_mechanical_design).
-- For specialized models, see [Flow meter models](flow_meter_models), [Battery storage unit](battery_storage), [Solar panel](solar_panel), and [Pump usage guide](pump_usage_guide).
-- Additional unit operations and mechanical details are covered in the [Process logic enhancements](../simulation/ProcessLogicEnhancements) series.
-
----
-
-## Integration, control, and automation
-
-### PID Control Example
-
-```java
-ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass();
-controller.setControllerSetPoint(50.0);
-controller.setControllerParameters(0.5, 100.0, 0.0); // Kp, Ti, Td
-valve.setController(controller);
-```
-
-### Documentation Links
-- Connect NeqSim to control systems using the [Process control framework](process_control) and [Real-time integration guide](../integration/REAL_TIME_INTEGRATION_GUIDE).
-- Learn about runtime flexibility in [Runtime logic flexibility](../simulation/RuntimeLogicFlexibility) and alarm handling in [Alarm triggered logic example](../safety/alarm_triggered_logic_example).
-- For AI/ML integration, see [AI Platform Integration](../integration/ai_platform_integration) and [ML Integration](../integration/ml_integration).
-- For MPC, see [MPC Integration](../integration/mpc_integration) and [Industrial MPC Integration](../integration/neqsim_industrial_mpc_integration).
-- For scripting and hybrid workflows, see [Java simulations from Colab notebooks](java_simulation_from_colab_notebooks) and [Java/Python usage examples](usage_examples).
-
----
-
-## Examples and tutorials
-
-### Jupyter Notebooks
-
-GitHub Pages publishes the rendered tutorial pages, while the source notebooks remain
-available on GitHub and can be opened directly in Google Colab.
-
-- [ESP Pump Tutorial](../examples/ESP_Pump_Tutorial.html)
-  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb)
-  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb))
-- [PVT Simulation and Tuning](../examples/PVT_Simulation_and_Tuning.html)
-  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb)
-  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb))
-- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial.html)
-  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb)
-  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb))
-- [AI Platform Integration](../examples/AIPlatformIntegration.html)
-  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/AIPlatformIntegration.ipynb)
-  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/AIPlatformIntegration.ipynb))
-- [Graph-Based Simulation](../examples/GraphBasedProcessSimulation.html)
-  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb)
-  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb))
-
-### Documentation Links
-- Work through the [Usage examples](usage_examples) for end-to-end flows in both Java and Python.
-- Try the [Process transient simulation guide](process_transient_simulation_guide) and [Process simulation using NeqSim](process_simulation) for hands-on modeling patterns.
-- Explore extended topics such as [Process automation and logic implementation summary](../simulation/process_logic_implementation_summary) and integration tests in [Test overview](test-overview).
-
-### External Resources
-- [NeqSim Colab Demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7)
-- [Java Test Examples](https://github.com/equinor/neqsim/tree/master/src/test/java/neqsim)
-- [NeqSim Python](https://github.com/equinor/neqsimpython)
-- [NeqSim Matlab](https://github.com/equinor/neqsimmatlab)
+Use current source, focused tests, published benchmarks, and accountable engineering review before
+using a result for design or operational decisions.
