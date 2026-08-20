@@ -262,6 +262,14 @@ top reflux-ratio specification.
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
 | `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first; other configurations retain the relaxed damped base and guarded fallback ladder. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
 
+The `NEWTON` backtracking search evaluates bounded step lengths down to 0.125. It retains the
+trial with the lowest finite temperature residual, even if no trial is a descent step, and then
+keeps the applied state, step diagnostic, and residual diagnostic aligned. Use
+`getLastNewtonLineSearchStepLength()`, `getLastNewtonLineSearchResidual()`, and
+`getLastNewtonLineSearchTrialCount()` to audit that decision. A `NEWTON` result still requires the
+ordinary column material, energy, specification, physical-state, and optional MESH gates; these
+line-search diagnostics are evidence about globalization, not an independent convergence claim.
+
 ```java
 column.setSolverType(DistillationColumn.SolverType.AUTO);
 column.run();

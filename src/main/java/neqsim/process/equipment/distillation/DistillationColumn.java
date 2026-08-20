@@ -816,6 +816,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient double lastMatrixInsideOutTemperatureResidual = Double.NaN;
   /** Matrix warm-start wall time from the latest solve in seconds. */
   private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
+  /** Step length whose state was retained by the latest NEWTON line search. */
+  private transient double lastNewtonLineSearchStepLength = Double.NaN;
+  /** Residual norm evaluated for the retained NEWTON line-search state. */
+  private transient double lastNewtonLineSearchResidual = Double.NaN;
+  /** Number of candidate steps evaluated by the latest NEWTON line search. */
+  private transient int lastNewtonLineSearchTrialCount = 0;
   /** Latest Naphtali-Sandholm analytically differentiated Jacobian column count. */
   private transient int lastNaphtaliAnalyticJacobianColumns = 0;
   /** Latest Naphtali-Sandholm finite-difference Jacobian column count. */
@@ -3992,6 +3998,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastMatrixInsideOutIterationCount = candidate.lastMatrixInsideOutIterationCount;
     this.lastMatrixInsideOutTemperatureResidual = candidate.lastMatrixInsideOutTemperatureResidual;
     this.lastMatrixInsideOutSolveTimeSeconds = candidate.lastMatrixInsideOutSolveTimeSeconds;
+    this.lastNewtonLineSearchStepLength = candidate.lastNewtonLineSearchStepLength;
+    this.lastNewtonLineSearchResidual = candidate.lastNewtonLineSearchResidual;
+    this.lastNewtonLineSearchTrialCount = candidate.lastNewtonLineSearchTrialCount;
     this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
     this.lastNaphtaliFiniteDifferenceJacobianColumns = candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
     this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
@@ -8408,6 +8417,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveNewton(UUID id) {
+    lastNewtonLineSearchStepLength = Double.NaN;
+    lastNewtonLineSearchResidual = Double.NaN;
+    lastNewtonLineSearchTrialCount = 0;
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -8630,24 +8642,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         continue;
       }
 
-      // Line search: try full Newton step, halve if residual increases.
-      // Damping memo: start at min(1.0, 2.0 * lastSuccessful) to skip probes that
-      // would predictably fail given prior nonlinearity. Periodically reset to 1.0
-      // so the algorithm can recover the full step when conditions improve.
+      // Line search: try the memoized Newton step and halve while the residual
+      // does not improve. Record every finite trial so an all-non-descent search
+      // retains the least harmful evaluated state instead of reporting the
+      // unevaluated default step while leaving the final trial applied.
       double trialStart = (iter % LINESEARCH_RESET_PERIOD == 0) ? 1.0 : Math.min(1.0, 2.0 * lastSuccessfulStepLength);
-      double bestStepLength = trialStart;
-      double bestNormRes = normRes;
-      for (double stepLength = trialStart; stepLength >= 0.125; stepLength *= 0.5) {
-        // Apply trial step
+      double[] trialStepLengths = new double[4];
+      double[] trialResidualNorms = new double[4];
+      int trialCount = 0;
+      double lastEvaluatedStepLength = Double.NaN;
+      for (double stepLength = trialStart; stepLength >= 0.125
+          && trialCount < trialStepLengths.length; stepLength *= 0.5) {
         for (int i = 0; i < numberOfTrays; i++) {
           double newTemp = temperatures[i] + stepLength * deltaT[i];
-          // Safeguard: keep temperatures reasonable
           newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
           trays.get(i).setTemperature(newTemp);
           trays.get(i).getThermoSystem().setTemperature(newTemp);
         }
 
-        // Check trial step quality with a sweep
         performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
 
         double trialNormRes = 0.0;
@@ -8656,29 +8668,54 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           trialNormRes += Math.abs(trialRes);
         }
         trialNormRes /= Math.max(1, numberOfTrays);
+        trialStepLengths[trialCount] = stepLength;
+        trialResidualNorms[trialCount] = trialNormRes;
+        trialCount++;
+        lastEvaluatedStepLength = stepLength;
 
-        if (trialNormRes < bestNormRes) {
-          bestStepLength = stepLength;
-          bestNormRes = trialNormRes;
-          break; // Accept first improving step
+        if (Double.isFinite(trialNormRes) && trialNormRes < normRes) {
+          break;
         }
       }
 
-      // Apply the best step
-      if (bestStepLength < 1.0) {
-        // Need to re-apply since the loop may have tried smaller steps
+      int selectedTrial = selectLowestFiniteResidualIndex(trialResidualNorms, trialCount);
+      double selectedStepLength = 0.0;
+      double selectedNormRes = Double.POSITIVE_INFINITY;
+      if (selectedTrial >= 0) {
+        selectedStepLength = trialStepLengths[selectedTrial];
+        selectedNormRes = trialResidualNorms[selectedTrial];
+
+        if (selectedStepLength != lastEvaluatedStepLength) {
+          for (int i = 0; i < numberOfTrays; i++) {
+            double newTemp = temperatures[i] + selectedStepLength * deltaT[i];
+            newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
+            trays.get(i).setTemperature(newTemp);
+            trays.get(i).getThermoSystem().setTemperature(newTemp);
+          }
+          performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+          selectedNormRes = 0.0;
+          for (int i = 0; i < numberOfTrays; i++) {
+            double selectedResidual = trays.get(i).getThermoSystem().getTemperature() - temperatures[i]
+                - selectedStepLength * deltaT[i];
+            selectedNormRes += Math.abs(selectedResidual);
+          }
+          selectedNormRes /= Math.max(1, numberOfTrays);
+        }
+      } else {
         for (int i = 0; i < numberOfTrays; i++) {
-          double newTemp = temperatures[i] + bestStepLength * deltaT[i];
-          newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
-          trays.get(i).setTemperature(newTemp);
-          trays.get(i).getThermoSystem().setTemperature(newTemp);
+          trays.get(i).setTemperature(temperatures[i]);
+          trays.get(i).getThermoSystem().setTemperature(temperatures[i]);
         }
+        performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
       }
 
-      // Update damping memo for next iteration's line-search start point.
-      lastSuccessfulStepLength = bestStepLength;
+      lastNewtonLineSearchStepLength = selectedStepLength;
+      lastNewtonLineSearchResidual = selectedNormRes;
+      lastNewtonLineSearchTrialCount = trialCount;
+      lastSuccessfulStepLength = selectedStepLength > 0.0 ? selectedStepLength : 0.125;
 
-      logger.debug("newton iteration {} step={} normRes={}->{}", iter, bestStepLength, normRes, bestNormRes);
+      logger.debug("newton iteration {} step={} trials={} normRes={}->{}", iter, selectedStepLength, trialCount,
+          normRes, selectedNormRes);
 
       // Overflow: extend limit if not converged
       if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
@@ -8694,6 +8731,27 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     energyErr = getEnergyBalanceError();
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+  }
+
+  /**
+   * Select the evaluated line-search trial with the lowest finite residual.
+   *
+   * @param residualNorms residual norm for each evaluated trial
+   * @param count number of populated entries in {@code residualNorms}
+   * @return index of the lowest finite residual, or {@code -1} when no finite trial exists
+   */
+  static int selectLowestFiniteResidualIndex(double[] residualNorms, int count) {
+    int bestIndex = -1;
+    double bestResidual = Double.POSITIVE_INFINITY;
+    int limit = Math.min(Math.max(count, 0), residualNorms.length);
+    for (int index = 0; index < limit; index++) {
+      double residual = residualNorms[index];
+      if (Double.isFinite(residual) && residual < bestResidual) {
+        bestResidual = residual;
+        bestIndex = index;
+      }
+    }
+    return bestIndex;
   }
 
   /**
@@ -9351,6 +9409,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve the step length whose state was retained by the latest NEWTON line search.
+   *
+   * @return retained step length, zero when no finite trial existed, or {@link Double#NaN} when no NEWTON line search
+   * ran
+   */
+  public double getLastNewtonLineSearchStepLength() {
+    return lastNewtonLineSearchStepLength;
+  }
+
+  /**
+   * Retrieve the residual norm evaluated for the retained NEWTON line-search state.
+   *
+   * @return retained-state residual norm, or {@link Double#NaN} when no NEWTON line search ran
+   */
+  public double getLastNewtonLineSearchResidual() {
+    return lastNewtonLineSearchResidual;
+  }
+
+  /**
+   * Retrieve the number of candidate steps evaluated by the latest NEWTON line search.
+   *
+   * @return evaluated trial count
+   */
+  public int getLastNewtonLineSearchTrialCount() {
+    return lastNewtonLineSearchTrialCount;
+  }
+
+  /**
    * Retrieve the iteration count of the most recent solve.
    *
    * @return iteration count
@@ -9853,6 +9939,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    matrix temperature residual: ").append(lastMatrixInsideOutTemperatureResidual)
           .append(" K\n");
       diagnostics.append("    matrix time: ").append(lastMatrixInsideOutSolveTimeSeconds).append(" s\n");
+    }
+    if (lastNewtonLineSearchTrialCount > 0) {
+      diagnostics.append("  Newton line search:\n");
+      diagnostics.append("    retained step length: ").append(lastNewtonLineSearchStepLength).append("\n");
+      diagnostics.append("    retained residual norm: ").append(lastNewtonLineSearchResidual).append("\n");
+      diagnostics.append("    evaluated trials: ").append(lastNewtonLineSearchTrialCount).append("\n");
     }
     if (lastNaphtaliAnalyticJacobianColumns > 0 || lastNaphtaliFiniteDifferenceJacobianColumns > 0
         || lastNaphtaliThermoEvaluationCount > 0) {
@@ -13430,6 +13522,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastInitializationReport = "";
     lastAutoSolverHistory = new ArrayList<String>();
     lastSpecificationHomotopyStepCount = 0;
+    lastNewtonLineSearchStepLength = Double.NaN;
+    lastNewtonLineSearchResidual = Double.NaN;
+    lastNewtonLineSearchTrialCount = 0;
     // A reset means the column no longer holds a result, so it cannot hold a reusable one either.
     hasNaphtaliSandholmWarmState = false;
     naphtaliSandholmStateOwned = false;
