@@ -59,15 +59,15 @@ class ProcessModelDebottleneckStudyTest {
   }
 
   /**
-   * A 20% installed-capacity increase must produce a paired 20% throughput increase while every
-   * original mutable limit field and the pre-study operating point are restored exactly.
+   * A 20% installed-capacity increase must produce a paired 20% throughput increase while every original mutable limit
+   * field and the pre-study operating point are restored exactly.
    *
    * @throws Exception when result serialization fails
    */
   @Test
   void pairedCapacityAlternativeIsDeterministicSerializableAndReversible() throws Exception {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] {800.0});
+    fixture.evaluator.evaluate(new double[] { 800.0 });
     int evaluationCountBeforeStudy = fixture.evaluator.getEvaluationCount();
 
     ProcessModelDebottleneckStudy study = createStudy(fixture, "kg/hr");
@@ -77,8 +77,8 @@ class ProcessModelDebottleneckStudyTest {
     assertTrue(first.isCapacityRestored());
     assertTrue(first.isProcessStateRestored());
     assertTrue(first.isRecoverySimulationConverged());
-    assertArrayEquals(new double[] {1000.0}, first.getBaseline().getSelectedParameters(), 0.0);
-    assertArrayEquals(new double[] {1200.0}, first.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] { 1000.0 }, first.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] { 1200.0 }, first.getAlternative().getSelectedParameters(), 0.0);
     assertEquals(200.0, first.getObjectiveDelta(), 1.0e-8);
     assertEquals(5, first.getBaseline().getEvaluationCount());
     assertEquals(5, first.getAlternative().getEvaluationCount());
@@ -92,26 +92,21 @@ class ProcessModelDebottleneckStudyTest {
     assertEquals("kg/hr", first.getMetricComparisons().get(0).getBaseline().getUnit());
     assertEquals("synthetic linear power relationship",
         first.getMetricComparisons().get(1).getBaseline().getProvenance());
-    assertEquals(MetricKind.SCREENING_ECONOMIC,
-        first.getMetricComparisons().get(3).getBaseline().getKind());
+    assertEquals(MetricKind.SCREENING_ECONOMIC, first.getMetricComparisons().get(3).getBaseline().getKind());
 
     assertEquals(1000.0, first.getOriginalCapacityState().getApplicableLimit(), 0.0);
     assertEquals(1200.0, first.getAppliedCapacityState().getApplicableLimit(), 0.0);
-    assertEquals(1000.0,
-        first.getBaseline().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
-    assertEquals(1200.0,
-        first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
+    assertEquals(1000.0, first.getBaseline().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
+    assertEquals(1200.0, first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
     assertEquals("synthetic replacement equipment basis",
         first.getAlternative().getInstalledCapacityEvidence().get(0).getDataSource());
-    assertEquals(0.90,
-        first.getAlternative().getInstalledCapacityEvidence().get(0).getConfidence(), 0.0);
+    assertEquals(0.90, first.getAlternative().getInstalledCapacityEvidence().get(0).getConfidence(), 0.0);
     assertOriginalStateRestored(fixture);
 
     double[] exposed = first.getAlternative().getSelectedParameters();
     exposed[0] = -1.0;
-    assertArrayEquals(new double[] {1200.0}, first.getAlternative().getSelectedParameters(), 0.0);
-    assertThrows(UnsupportedOperationException.class,
-        () -> first.getMetricComparisons().clear());
+    assertArrayEquals(new double[] { 1200.0 }, first.getAlternative().getSelectedParameters(), 0.0);
+    assertThrows(UnsupportedOperationException.class, () -> first.getMetricComparisons().clear());
 
     StudyResult serialized = roundTrip(first);
     assertEquals(first.getOutcome(), serialized.getOutcome());
@@ -123,10 +118,9 @@ class ProcessModelDebottleneckStudyTest {
 
     StudyResult second = study.evaluate();
     assertEquals(first.getOutcome(), second.getOutcome());
-    assertArrayEquals(first.getBaseline().getSelectedParameters(),
-        second.getBaseline().getSelectedParameters(), 0.0);
-    assertArrayEquals(first.getAlternative().getSelectedParameters(),
-        second.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(first.getBaseline().getSelectedParameters(), second.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(first.getAlternative().getSelectedParameters(), second.getAlternative().getSelectedParameters(),
+        0.0);
     assertEquals(first.getObjectiveDelta(), second.getObjectiveDelta(), 0.0);
     assertNotSame(first.getMetricComparisons(), second.getMetricComparisons());
     assertOriginalStateRestored(fixture);
@@ -136,7 +130,7 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void incompatibleCapacityAlternativeFailsClosedWithoutEvaluation() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] {800.0});
+    fixture.evaluator.evaluate(new double[] { 800.0 });
     int evaluationCountBeforeStudy = fixture.evaluator.getEvaluationCount();
 
     StudyResult result = createStudy(fixture, "t/day").evaluate();
@@ -153,11 +147,10 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void unavailableRequiredMetricRetainsPhysicalEvidenceAndRestoresState() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] {800.0});
+    fixture.evaluator.evaluate(new double[] { 800.0 });
     ProcessModelDebottleneckStudy study = createStudy(fixture, "kg/hr");
-    study.addMetric(new MetricDefinition("required-quality", "Required quality", MetricKind.OTHER,
-        "mol/mol", "dry product basis", "synthetic unavailable analyzer", "single steady state",
-        0.5, true, new MetricSampler() {
+    study.addMetric(new MetricDefinition("required-quality", "Required quality", MetricKind.OTHER, "mol/mol",
+        "dry product basis", "synthetic unavailable analyzer", "single steady state", 0.5, true, new MetricSampler() {
           private static final long serialVersionUID = 1L;
 
           @Override
@@ -181,33 +174,31 @@ class ProcessModelDebottleneckStudyTest {
   /** Creates the deterministic paired study used by the focused tests. */
   private ProcessModelDebottleneckStudy createStudy(Fixture fixture, String alternativeUnit) {
     List<double[]> candidates = new ArrayList<double[]>();
-    candidates.add(new double[] {800.0});
-    candidates.add(new double[] {1000.0});
-    candidates.add(new double[] {1200.0});
-    candidates.add(new double[] {1400.0});
-    CandidateListSearch search = new CandidateListSearch("ordered-throughput-grid",
-        "Ordered throughput grid", "synthetic acceptance candidate set", candidates, 0, 0.0);
+    candidates.add(new double[] { 800.0 });
+    candidates.add(new double[] { 1000.0 });
+    candidates.add(new double[] { 1200.0 });
+    candidates.add(new double[] { 1400.0 });
+    CandidateListSearch search = new CandidateListSearch("ordered-throughput-grid", "Ordered throughput grid",
+        "synthetic acceptance candidate set", candidates, 0, 0.0);
     CapacityAlternative alternative = new CapacityAlternative("separator-gas-1200",
-        "Raise separator installed gas capacity", "synthetic brownfield screening case",
-        "separation", "separator", "installed gas rate", 1200.0, alternativeUnit,
-        LimitDirection.MAXIMUM, "synthetic replacement equipment basis", 0.90, 900.0, 1300.0);
+        "Raise separator installed gas capacity", "synthetic brownfield screening case", "separation", "separator",
+        "installed gas rate", 1200.0, alternativeUnit, LimitDirection.MAXIMUM, "synthetic replacement equipment basis",
+        0.90, 900.0, 1300.0);
     ProcessModelDebottleneckStudy study = new ProcessModelDebottleneckStudy("paired-separator-study",
-        "Paired separator capacity study", "synthetic deterministic regression", fixture.evaluator,
-        alternative, search, 0);
-    study.addMetric(new MetricDefinition("production", "Feed production", MetricKind.PRODUCTION,
-        "kg/hr", "wet feed mass rate", "NeqSim stream result", "single steady state", 1.0,
-        true, model -> model.getVariableValue("wells::feed.flowRate", "kg/hr")));
-    study.addMetric(new MetricDefinition("power", "Synthetic power", MetricKind.POWER, "kW",
-        "shaft power", "synthetic linear power relationship", "single steady state", 0.8,
-        true, model -> 0.01 * model.getVariableValue("wells::feed.flowRate", "kg/hr")));
+        "Paired separator capacity study", "synthetic deterministic regression", fixture.evaluator, alternative, search,
+        0);
+    study.addMetric(new MetricDefinition("production", "Feed production", MetricKind.PRODUCTION, "kg/hr",
+        "wet feed mass rate", "NeqSim stream result", "single steady state", 1.0, true,
+        model -> model.getVariableValue("wells::feed.flowRate", "kg/hr")));
+    study.addMetric(new MetricDefinition("power", "Synthetic power", MetricKind.POWER, "kW", "shaft power",
+        "synthetic linear power relationship", "single steady state", 0.8, true,
+        model -> 0.01 * model.getVariableValue("wells::feed.flowRate", "kg/hr")));
     study.addMetric(new MetricDefinition("indirect-emissions", "Synthetic indirect emissions",
-        MetricKind.INDIRECT_EMISSIONS, "kgCO2e/hr", "location-based electricity",
-        "synthetic 0.4 kgCO2e/kWh factor", "single steady state", 0.5, false,
-        model -> 0.004 * model.getVariableValue("wells::feed.flowRate", "kg/hr")));
-    study.addMetric(new MetricDefinition("screening-value", "Synthetic screening value",
-        MetricKind.SCREENING_ECONOMIC, "NOK/hr", "gross value before costs",
-        "synthetic educational 5 NOK/kg factor", "single steady state", 0.2, false,
-        model -> 5.0 * model.getVariableValue("wells::feed.flowRate", "kg/hr")));
+        MetricKind.INDIRECT_EMISSIONS, "kgCO2e/hr", "location-based electricity", "synthetic 0.4 kgCO2e/kWh factor",
+        "single steady state", 0.5, false, model -> 0.004 * model.getVariableValue("wells::feed.flowRate", "kg/hr")));
+    study.addMetric(new MetricDefinition("screening-value", "Synthetic screening value", MetricKind.SCREENING_ECONOMIC,
+        "NOK/hr", "gross value before costs", "synthetic educational 5 NOK/kg factor", "single steady state", 0.2,
+        false, model -> 5.0 * model.getVariableValue("wells::feed.flowRate", "kg/hr")));
     return study;
   }
 
@@ -219,17 +210,15 @@ class ProcessModelDebottleneckStudyTest {
     fluid.setMixingRule("classic");
     fluid.setTotalFlowRate(800.0, "kg/hr");
     final Stream feed = new Stream("feed", fluid);
-    final CapacityConstraint installed = new CapacityConstraint("installed gas rate", "kg/hr",
-        ConstraintType.HARD).setDesignValue(1000.0).setMaxValue(1100.0)
-            .setWarningThreshold(0.90).setSeverity(ConstraintSeverity.HARD)
-            .setDataSource("synthetic installed basis").setConfidence(0.95)
-            .setValidityRange(500.0, 1400.0).setShadowPrice(12.3)
-            .setValueSupplier(new DoubleSupplier() {
-              @Override
-              public double getAsDouble() {
-                return feed.getFlowRate("kg/hr");
-              }
-            });
+    final CapacityConstraint installed = new CapacityConstraint("installed gas rate", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(1000.0).setMaxValue(1100.0).setWarningThreshold(0.90).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("synthetic installed basis").setConfidence(0.95).setValidityRange(500.0, 1400.0)
+        .setShadowPrice(12.3).setValueSupplier(new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return feed.getFlowRate("kg/hr");
+          }
+        });
     Separator separator = new Separator("separator", feed);
     separator.clearCapacityConstraints();
     separator.addCapacityConstraint(installed);
@@ -250,8 +239,7 @@ class ProcessModelDebottleneckStudyTest {
           public double applyAsDouble(ProcessModel completedModel) {
             return completedModel.getVariableValue("wells::feed.flowRate", "kg/hr");
           }
-        }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE)
-        .addEquipmentCapacityConstraints();
+        }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE).addEquipmentCapacityConstraints();
     evaluator.getObjectives().get(0).setUnit("kg/hr");
     return new Fixture(feed, installed, model, evaluator);
   }
