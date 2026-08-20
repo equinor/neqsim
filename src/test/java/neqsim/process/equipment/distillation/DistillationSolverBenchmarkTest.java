@@ -1295,8 +1295,8 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
-   * The Newton line search must choose the lowest finite residual even when none of the evaluated
-   * trials is a descent step.
+   * The Newton line search must choose the lowest finite residual even when none of the evaluated trials is a descent
+   * step.
    */
   @Test
   public void newtonLineSearchSelectsLowestFiniteTrial() {
@@ -1304,16 +1304,15 @@ public class DistillationSolverBenchmarkTest {
     assertEquals(2, DistillationColumn.selectLowestFiniteResidualIndex(nonDescentResiduals, 4),
         "the lowest finite non-descent trial should be retained");
     assertEquals(-1,
-        DistillationColumn.selectLowestFiniteResidualIndex(
-            new double[] { Double.NaN, Double.POSITIVE_INFINITY }, 2),
+        DistillationColumn.selectLowestFiniteResidualIndex(new double[] { Double.NaN, Double.POSITIVE_INFINITY }, 2),
         "an all-non-finite trial set should request restoration");
     assertEquals(0, DistillationColumn.selectLowestFiniteResidualIndex(new double[] { 1.0, 1.0 }, 2),
         "equal residuals should retain the first evaluated trial deterministically");
   }
 
   /**
-   * Newton solver on a 10-tray column — verify convergence, balances, selected-trial
-   * diagnostics, and unchanged-input repeatability.
+   * Newton solver on a 10-tray column — verify convergence, balances, selected-trial diagnostics, and unchanged-input
+   * repeatability.
    */
   @Test
   public void newtonOnLargerColumn() {
@@ -1337,11 +1336,9 @@ public class DistillationSolverBenchmarkTest {
     double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
     double massbalance = Math.abs(100.0 - gasFlow - liquidFlow);
     assertTrue(massbalance < 1.5, "Newton mass balance error=" + massbalance + " kg/hr");
-    assertTrue(column.getLastNewtonLineSearchTrialCount() >= 1
-        && column.getLastNewtonLineSearchTrialCount() <= 4,
+    assertTrue(column.getLastNewtonLineSearchTrialCount() >= 1 && column.getLastNewtonLineSearchTrialCount() <= 4,
         "Newton diagnostics should report the evaluated trial set");
-    assertTrue(column.getLastNewtonLineSearchStepLength() >= 0.125
-        && column.getLastNewtonLineSearchStepLength() <= 1.0,
+    assertTrue(column.getLastNewtonLineSearchStepLength() >= 0.125 && column.getLastNewtonLineSearchStepLength() <= 1.0,
         "Newton should retain one evaluated bounded step");
     assertTrue(Double.isFinite(column.getLastNewtonLineSearchResidual()),
         "Newton should report the finite residual belonging to the retained step");
@@ -1355,10 +1352,9 @@ public class DistillationSolverBenchmarkTest {
         "Repeated unchanged NEWTON solve should preserve gas production");
     assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), Math.max(0.01, liquidFlow * 1.0e-3),
         "Repeated unchanged NEWTON solve should preserve liquid production");
-    double repeatedMassBalance = Math.abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr")
-        - column.getLiquidOutStream().getFlowRate("kg/hr"));
-    assertTrue(repeatedMassBalance < 1.5,
-        "Repeated Newton mass balance error=" + repeatedMassBalance + " kg/hr");
+    double repeatedMassBalance = Math
+        .abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr") - column.getLiquidOutStream().getFlowRate("kg/hr"));
+    assertTrue(repeatedMassBalance < 1.5, "Repeated Newton mass balance error=" + repeatedMassBalance + " kg/hr");
   }
 
   /**
