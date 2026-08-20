@@ -753,8 +753,8 @@ excluded because they are not a stable installed asset transaction.
 ```java
 List<double[]> candidates = Arrays.asList(
     new double[] {800.0},
-    new double[] {1000.0},
-    new double[] {1200.0});
+    new double[] {999.0},
+    new double[] {1199.0});
 
 ProcessModelDebottleneckStudy.CandidateListSearch search =
     new ProcessModelDebottleneckStudy.CandidateListSearch(
@@ -804,6 +804,10 @@ study.addMetric(new ProcessModelDebottleneckStudy.MetricDefinition(
 
 ProcessModelDebottleneckStudy.StudyResult result = study.evaluate();
 ```
+
+The 999 and 1199 kg/hr candidates deliberately retain 1 kg/hr below the documented
+1000 and 1200 kg/hr installed limits. Keep a declared engineering/numerical feasibility margin
+instead of depending on floating-point reconstruction of stream flow to equal a hard limit exactly.
 
 A `COMPLETED` outcome requires two converged, feasible verification runs, all required metrics,
 and successful state recovery. Inspect `getOriginalCapacityState()`,
