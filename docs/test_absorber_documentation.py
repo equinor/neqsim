@@ -69,8 +69,14 @@ class AbsorberDocumentationTest(unittest.TestCase):
         )
         self.assertNotIn("new SimpleAbsorber(", self.scoped_guide)
         self.assertIn("legacy single-feed MDEA/CO2 shortcut", self.scoped_guide)
-        self.assertIn("there is no three-argument gas-plus-solvent constructor", self.scoped_guide)
-        self.assertIn("current `run()` method does not turn those values", self.scoped_guide)
+        self.assertIn(
+            "there is no three-argument gas-plus-solvent constructor",
+            self.scoped_guide,
+        )
+        self.assertIn(
+            "current `run()` method does not turn those values",
+            self.scoped_guide,
+        )
 
     def test_rigorous_examples_define_every_feed_and_unit(self):
         for required in (
@@ -98,14 +104,16 @@ class AbsorberDocumentationTest(unittest.TestCase):
             "public AbsorptionColumn(String name, int numberOfTrays)",
             "public void addGasInStream(StreamInterface stream)",
             "public void addSolventInStream(StreamInterface stream)",
-            "public void setComponentMurphreeEfficiency(int trayNumber, String componentName, double efficiency)",
+            "public void setComponentMurphreeEfficiency(int trayNumber, "
+            "String componentName, double efficiency)",
         ):
             self.assertIn(token, self.absorption_source)
 
         for token in (
             'gasFluid.setMixingRule(10)',
             'tegFluid.setMixingRule(10)',
-            'absorber.setComponentMurphreeEfficiency(trayNumber, "water", 0.70)',
+            'absorber.setComponentMurphreeEfficiency(trayNumber, "water", '
+            "0.70)",
             "absorber.getConvergenceDiagnostics()",
             'absorber.getMassBalance("kg/hr")',
             "treatedGasWater < wetGasWater",
@@ -131,7 +139,8 @@ class AbsorberDocumentationTest(unittest.TestCase):
 
         for token in (
             "DistillationColumn.SolverType.MESH_RESIDUAL",
-            'stripper.setComponentMurphreeEfficiency(trayNumber, "methanol", 0.70)',
+            'stripper.setComponentMurphreeEfficiency(trayNumber, "methanol", '
+            "0.70)",
             "stripper.getConvergenceDiagnostics()",
             'stripper.getMassBalance("kg/hr")',
             "overheadMethanol > inletGasMethanol",
@@ -151,7 +160,8 @@ class AbsorberDocumentationTest(unittest.TestCase):
             "No tray hydraulics, reactions, entrainment, or flooding",
             "Fixed tray temperatures imply unreported heating or cooling",
             "Removal efficiencies are inputs, not reaction-rate predictions",
-            "`getEnergyBalanceError()` is a convergence diagnostic, not an equipment-duty result",
+            "`getEnergyBalanceError()` is a convergence diagnostic, not an "
+            "equipment-duty result",
         ):
             self.assertIn(statement, self.scoped_guide)
 
