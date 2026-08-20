@@ -8651,8 +8651,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double[] trialResidualNorms = new double[4];
       int trialCount = 0;
       double lastEvaluatedStepLength = Double.NaN;
-      for (double stepLength = trialStart; stepLength >= 0.125 && trialCount < trialStepLengths.length;
-          stepLength *= 0.5) {
+      for (double stepLength = trialStart; stepLength >= 0.125
+          && trialCount < trialStepLengths.length; stepLength *= 0.5) {
         for (int i = 0; i < numberOfTrays; i++) {
           double newTemp = temperatures[i] + stepLength * deltaT[i];
           newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
@@ -8695,8 +8695,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
           selectedNormRes = 0.0;
           for (int i = 0; i < numberOfTrays; i++) {
-            double selectedResidual =
-                trays.get(i).getThermoSystem().getTemperature() - temperatures[i] - selectedStepLength * deltaT[i];
+            double selectedResidual = trays.get(i).getThermoSystem().getTemperature() - temperatures[i]
+                - selectedStepLength * deltaT[i];
             selectedNormRes += Math.abs(selectedResidual);
           }
           selectedNormRes /= Math.max(1, numberOfTrays);
@@ -9411,7 +9411,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Retrieve the step length whose state was retained by the latest NEWTON line search.
    *
-   * @return retained step length, zero when no finite trial existed, or {@link Double#NaN} when no NEWTON line search ran
+   * @return retained step length, zero when no finite trial existed, or {@link Double#NaN} when no NEWTON line search
+   * ran
    */
   public double getLastNewtonLineSearchStepLength() {
     return lastNewtonLineSearchStepLength;
