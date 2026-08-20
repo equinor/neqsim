@@ -211,7 +211,7 @@ class ProcessModelDebottleneckStudyTest {
     fluid.setTotalFlowRate(800.0, "kg/hr");
     final Stream feed = new Stream("feed", fluid);
     final CapacityConstraint installed = new CapacityConstraint("installed gas rate", "kg/hr", ConstraintType.HARD)
-        .setDesignValue(1000.0).setMaxValue(1100.0).setWarningThreshold(0.90).setSeverity(ConstraintSeverity.HARD)
+        .setDesignValue(1000.0).setMaxValue(1300.0).setWarningThreshold(0.90).setSeverity(ConstraintSeverity.HARD)
         .setDataSource("synthetic installed basis").setConfidence(0.95).setValidityRange(500.0, 1400.0)
         .setShadowPrice(12.3).setValueSupplier(new DoubleSupplier() {
           @Override
@@ -247,7 +247,7 @@ class ProcessModelDebottleneckStudyTest {
   /** Confirms exact recovery of every mutable installed-capacity field and the process set point. */
   private void assertOriginalStateRestored(Fixture fixture) {
     assertEquals(1000.0, fixture.installedCapacity.getDesignValue(), 0.0);
-    assertEquals(1100.0, fixture.installedCapacity.getMaxValue(), 0.0);
+    assertEquals(1300.0, fixture.installedCapacity.getMaxValue(), 0.0);
     assertEquals(0.0, fixture.installedCapacity.getMinValue(), 0.0);
     assertEquals(0.90, fixture.installedCapacity.getWarningThreshold(), 0.0);
     assertEquals("kg/hr", fixture.installedCapacity.getUnit());
