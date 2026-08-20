@@ -122,8 +122,8 @@ if (!stripper.solved()) {
 StreamInterface overheadGas = stripper.getOverheadGasStream();
 StreamInterface leanLiquid = stripper.getLeanLiquidStream();
 double inletMass = strippingGas.getFlowRate("kg/hr") + richLiquid.getFlowRate("kg/hr");
-double outletMass = overheadGas.getFlowRate("kg/hr") + leanLiquid.getFlowRate("kg/hr");
-if (Math.abs(outletMass - inletMass) > 5.0e-3 * inletMass) {
+double massBalanceError = Math.abs(stripper.getMassBalance("kg/hr"));
+if (massBalanceError > 5.0e-3 * inletMass || leanLiquid.getFlowRate("kg/hr") <= 0.0) {
   throw new IllegalStateException("Stripper total mass balance did not close");
 }
 
@@ -220,8 +220,8 @@ if (!absorber.solved()) {
 StreamInterface treatedGas = absorber.getGasOutStream();
 StreamInterface richTeg = absorber.getLiquidOutStream();
 double inletMass = wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr");
-double outletMass = treatedGas.getFlowRate("kg/hr") + richTeg.getFlowRate("kg/hr");
-if (Math.abs(outletMass - inletMass) > 5.0e-3 * inletMass) {
+double massBalanceError = Math.abs(absorber.getMassBalance("kg/hr"));
+if (massBalanceError > 5.0e-3 * inletMass || richTeg.getFlowRate("kg/hr") <= 0.0) {
   throw new IllegalStateException("Absorber total mass balance did not close");
 }
 
