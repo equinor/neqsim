@@ -257,8 +257,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Whether to use optimized execution (parallel/hybrid) by default when run() is called. When true, run() delegates to
    * runOptimized() which automatically selects the best strategy. When false, run() uses sequential execution in
    * insertion order (legacy behavior). Default is true for optimal performance - runOptimized() automatically falls
-   * back to sequential execution for processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve
-   * correct mass balance.
+   * back to level-based execution when a feed-forward topology is too small or too narrow to amortize dataflow
+   * scheduling.
    */
   private boolean useOptimizedExecution = true;
 
@@ -1483,10 +1483,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * <ul>
    * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and read downstream
    * targets, creating implicit feedback loops)</li>
-   * <li>For processes with recycles (no adjusters): sequential execution for full convergence</li>
-   * <li>For processes with multi-input equipment (Mixer, Manifold, HeatExchanger, etc.): sequential execution to ensure
-   * correct mass balance</li>
-   * <li>For simple feed-forward processes: parallel execution for maximum speed</li>
+   * <li>For processes with recycles (no adjusters): hybrid feed-forward parallelism and iterative convergence</li>
+   * <li>For feed-forward processes, including multi-input equipment: dependency-aware dataflow for sufficiently wide
+   * topologies, otherwise level-based parallel execution</li>
    * </ul>
    *
    * @param id calculation identifier for tracking
@@ -1517,26 +1516,15 @@ public class ProcessSystem extends SimulationBaseClass {
           logger.warn("Hybrid execution interrupted, falling back to sequential");
           runSequential(id);
         }
-      } else if (hasMultiInputEquipment()) {
-        // Process has multi-input equipment (Mixer, HeatExchanger, etc.) but no
-        // recycles or adjusters. The graph correctly places multi-input equipment
-        // at levels after all their input producers, so parallel execution of
-        // independent units at earlier levels is safe. Use runParallel which
-        // respects the topological order and Union-Find grouping.
-        try {
-          runParallel(id);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("Parallel execution interrupted, falling back to sequential");
-          runSequential(id);
-        }
       } else {
-        // Feed-forward process with single-input equipment only. For larger,
-        // genuinely wide flowsheets use dataflow scheduling (no level barriers,
-        // units fire as soon as predecessors complete). Serial plans cannot
-        // benefit from futures, and small trees do not amortize their overhead.
+        // Feed-forward process. For larger, genuinely wide flowsheets use dataflow
+        // scheduling (no level barriers, units fire as soon as predecessors
+        // complete). Multi-input equipment is safe because the dataflow plan uses
+        // the same predecessor graph and shared-input grouping as runParallel().
+        // Serial plans cannot benefit from futures, and small trees do not
+        // amortize their overhead.
         try {
-          if (unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD && getCachedDataflowPlan().hasParallelTasks) {
+          if (shouldUseDataflowExecution()) {
             runDataflow(id);
           } else {
             runParallel(id);
@@ -1550,6 +1538,15 @@ public class ProcessSystem extends SimulationBaseClass {
     } finally {
       exitRunScope();
     }
+  }
+
+  /**
+   * Returns whether this feed-forward process is wide enough to amortize dataflow scheduling.
+   *
+   * @return true when the cached plan contains useful parallel tasks and meets the size threshold
+   */
+  private boolean shouldUseDataflowExecution() {
+    return unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD && getCachedDataflowPlan().hasParallelTasks;
   }
 
   /**
@@ -2232,12 +2229,15 @@ public class ProcessSystem extends SimulationBaseClass {
     } else if (!recycles.isEmpty()) {
       strategy = "hybrid (parallel feed-forward then iterative recycle section)";
       reason = "process contains Recycle units - iterative convergence required";
-    } else if (!multiInput.isEmpty()) {
-      strategy = "parallel (topological levels with union-find grouping)";
-      reason = "process contains multi-input equipment - level-based parallelism applied";
+    } else if (shouldUseDataflowExecution()) {
+      strategy = "dataflow (dependency-aware parallel tasks)";
+      reason = multiInput.isEmpty()
+          ? "wide feed-forward process has independent tasks that can run without level barriers"
+          : "wide feed-forward process includes multi-input equipment protected by predecessor dependencies and "
+              + "shared-input grouping";
     } else {
-      strategy = "parallel (fully data-parallel)";
-      reason = "feed-forward process with single-input equipment only";
+      strategy = "parallel (topological levels with union-find grouping)";
+      reason = "feed-forward plan is too small or too narrow to amortize dataflow scheduling";
     }
     sb.append("Strategy: ").append(strategy).append("\n");
     sb.append("Reason: ").append(reason).append("\n");
