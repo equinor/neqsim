@@ -138,8 +138,7 @@ public final class ProcessSystemDataflowBenchmark {
       run(fixture, strategy, new UUID(1L, i + 2L));
     }
 
-    com.sun.management.ThreadMXBean threadBean =
-        (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+    com.sun.management.ThreadMXBean threadBean = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
     long allocatedBefore = threadBean.getThreadAllocatedBytes(Thread.currentThread().getId());
     long start = System.nanoTime();
     double checksum = 0.0;
@@ -156,9 +155,8 @@ public final class ProcessSystemDataflowBenchmark {
     long elapsed = System.nanoTime() - start;
     long allocatedAfter = threadBean.getThreadAllocatedBytes(Thread.currentThread().getId());
     System.out.printf(Locale.US,
-        "strategy=%s topology=%s fluid=%s units=%d nsPerRun=%.3f bytesPerRun=%.3f checksum=%.12f solved=%s%n",
-        strategy, (imbalanced ? "imbalanced" : "balanced") + (multiInput ? "-mixer" : ""),
-        cpa ? "cpa" : "srk",
+        "strategy=%s topology=%s fluid=%s units=%d nsPerRun=%.3f bytesPerRun=%.3f checksum=%.12f solved=%s%n", strategy,
+        (imbalanced ? "imbalanced" : "balanced") + (multiInput ? "-mixer" : ""), cpa ? "cpa" : "srk",
         fixture.process.getUnitOperations().size(), elapsed / (double) measured,
         (allocatedAfter - allocatedBefore) / (double) measured, checksum, fixture.process.solved());
   }
