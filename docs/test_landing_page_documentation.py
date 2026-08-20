@@ -8,6 +8,8 @@ DOCS_DIR = Path(__file__).resolve().parent
 LANDING_PAGE = DOCS_DIR / "index.md"
 PACKAGE_INDEX = DOCS_DIR / "README.md"
 WIKI_INDEX = DOCS_DIR / "wiki" / "index.md"
+FAQ = DOCS_DIR / "wiki" / "faq.md"
+GITHUB_GUIDE = DOCS_DIR / "wiki" / "Getting-started-with-NeqSim-and-Github.md"
 POM = DOCS_DIR.parent / "pom.xml"
 
 
@@ -59,6 +61,8 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
             LANDING_PAGE: LANDING_PAGE.read_text(encoding="utf-8"),
             PACKAGE_INDEX: PACKAGE_INDEX.read_text(encoding="utf-8"),
             WIKI_INDEX: WIKI_INDEX.read_text(encoding="utf-8"),
+            FAQ: FAQ.read_text(encoding="utf-8"),
+            GITHUB_GUIDE: GITHUB_GUIDE.read_text(encoding="utf-8"),
         }
 
     def test_front_matter_title_structure_and_fences(self):
@@ -94,32 +98,41 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
                         )
 
     def test_wiki_uses_current_release_and_api_destinations(self):
-        wiki = self.documents[WIKI_INDEX]
         current_version = re.search(
             r"<revision>([^<]+)</revision>",
             POM.read_text(encoding="utf-8"),
         )
         self.assertIsNotNone(current_version)
+        version = current_version.group(1)
+
+        for source_path in (WIKI_INDEX, FAQ, GITHUB_GUIDE):
+            content = self.documents[source_path]
+            with self.subTest(source=source_path.name):
+                self.assertIn(f"<version>{version}</version>", content)
+                self.assertIn(
+                    "https://github.com/equinor/neqsim/releases",
+                    content,
+                )
+                self.assertNotIn("equinor/neqsimsource", content)
+                self.assertNotIn("htmlpreview.github.io", content)
+                self.assertNotIn("equinor/neqsimhome/blob", content)
+
         self.assertIn(
-            f"<version>{current_version.group(1)}</version>",
-            wiki,
+            f"com.equinor.neqsim:neqsim:{version}",
+            self.documents[FAQ],
         )
-        self.assertIn(
-            "https://github.com/equinor/neqsim/releases",
-            wiki,
-        )
-        self.assertIn(
-            "https://equinor.github.io/neqsim/javadoc/index.html",
-            wiki,
-        )
-        self.assertNotIn("equinor/neqsimsource", wiki)
-        self.assertNotIn("htmlpreview.github.io", wiki)
-        self.assertNotIn("equinor/neqsimhome/blob", wiki)
+        for source_path in (WIKI_INDEX, FAQ, GITHUB_GUIDE):
+            self.assertIn(
+                "https://equinor.github.io/neqsim/javadoc/index.html",
+                self.documents[source_path],
+            )
 
     def test_shared_java_example_is_complete_and_repository_safe(self):
         landing_example = extract_fence(self.documents[LANDING_PAGE], "java")
         package_example = extract_fence(self.documents[PACKAGE_INDEX], "java")
+        wiki_example = extract_fence(self.documents[WIKI_INDEX], "java")
         self.assertEqual(landing_example, package_example)
+        self.assertEqual(landing_example, wiki_example)
         self.assertIn("public final class NeqSimQuickStart", landing_example)
         self.assertIn("public static void main(String[] args)", landing_example)
         self.assertIn("LogManager.getLogger", landing_example)
