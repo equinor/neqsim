@@ -729,6 +729,99 @@ OptimizationResult result = new ProductionOptimizer().optimize(process, feed, co
 | `getIterations()` | Number of iterations used |
 | `getInfeasibilityDiagnosis()` | Detailed constraint violation report |
 
+
+---
+
+## Paired Installed-Capacity Alternatives
+
+Use \`ProcessModelDebottleneckStudy\` when an installed direct \`CapacityConstraint\` has
+one documented replacement or expansion basis and both the existing and proposed cases must be
+searched with the same deterministic policy. The study:
+
+1. resolves the exact \`area::equipment/constraint\` identity;
+2. freezes the installed limit, direction, unit, severity, provenance, confidence, validity range,
+   and shadow-price field;
+3. searches and independently verifies the baseline;
+4. applies the proposed limit and its evidence metadata, then searches and verifies the alternative;
+5. samples registered production, power, energy, emissions, or screening-economic metrics once at
+   each selected operating point; and
+6. restores the installed constraint and pre-study parameter vector and reconverges the model.
+
+Only direct equipment constraints are eligible. Strategy-generated defaults are deliberately
+excluded because they are not a stable installed asset transaction.
+
+\`\`\`java
+List<double[]> candidates = Arrays.asList(
+    new double[] {800.0},
+    new double[] {1000.0},
+    new double[] {1200.0});
+
+ProcessModelDebottleneckStudy.CandidateListSearch search =
+    new ProcessModelDebottleneckStudy.CandidateListSearch(
+        "throughput-grid",
+        "Ordered throughput grid",
+        "screening candidate set rev A",
+        candidates,
+        0,
+        0.0);
+
+ProcessModelDebottleneckStudy.CapacityAlternative alternative =
+    new ProcessModelDebottleneckStudy.CapacityAlternative(
+        "separator-gas-1200",
+        "Raise separator gas capacity",
+        "brownfield screening case rev A",
+        "separation",
+        "separator",
+        "installed gas rate",
+        1200.0,
+        "kg/hr",
+        ProcessModelDebottleneckStudy.LimitDirection.MAXIMUM,
+        "vendor budget curve rev A",
+        0.8,
+        900.0,
+        1300.0);
+
+ProcessModelDebottleneckStudy study = new ProcessModelDebottleneckStudy(
+    "separator-study",
+    "Paired separator capacity study",
+    "2026 screening basis",
+    evaluator,
+    alternative,
+    search,
+    0);
+
+study.addMetric(new ProcessModelDebottleneckStudy.MetricDefinition(
+    "production",
+    "Feed production",
+    ProcessModelDebottleneckStudy.MetricKind.PRODUCTION,
+    "kg/hr",
+    "wet feed mass rate",
+    "NeqSim stream result",
+    "single steady state",
+    1.0,
+    true,
+    model -> model.getVariableValue("wells::feed.flowRate", "kg/hr")));
+
+ProcessModelDebottleneckStudy.StudyResult result = study.evaluate();
+\`\`\`
+
+A \`COMPLETED\` outcome requires two converged, feasible verification runs, all required metrics,
+and successful state recovery. Inspect \`getOriginalCapacityState()\`,
+\`getAppliedCapacityState()\`, both scenario evidence objects, \`getMetricComparisons()\`, and
+\`getDiagnostics()\`. Scenario evidence retains objective values, physical constraint margins,
+installed-equipment evidence, and boundary evidence. Arrays and lists returned by the result are
+defensive copies or unmodifiable views, and the result is Java-serializable for Python/JPype and
+restartable study records.
+
+Metric deltas are always \`alternative - baseline\`. Units, physical or commercial basis,
+provenance, effective period, confidence, and required/optional status are explicit. Economic
+metrics are screening indicators only; no price, discount rate, emissions factor, or cost is
+implied by NeqSim.
+
+The paired result is sampled simulator evidence over the declared candidates. It is not proof of
+causality, a global optimum, a KKT shadow price, certified emissions, mechanical design adequacy,
+or investment approval.
+
 ---
 
 ## References
