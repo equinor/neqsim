@@ -241,13 +241,14 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     threePhaseNoSalt.addComponent("n-butane", 0.1); // partitions between gas and oil
     threePhaseNoSalt.addComponent("water", 1.0); // aqueous phase
     threePhaseNoSalt.setMixingRule(10);
+    threePhaseNoSalt.setMultiPhaseCheck(true);
     ThermodynamicOperations opsNoSalt = new ThermodynamicOperations(threePhaseNoSalt);
     opsNoSalt.TPflash();
     threePhaseNoSalt.initProperties();
 
-    // Should have 3 phases
+    // This regression specifically verifies the three-phase path excluded from two-phase ionic refinement.
     int numPhasesNoSalt = threePhaseNoSalt.getNumberOfPhases();
-    assertTrue(numPhasesNoSalt >= 2, "System should have at least 2 phases, got: " + numPhasesNoSalt);
+    assertEquals(3, numPhasesNoSalt, "System without salt should have gas, oil, and aqueous phases");
 
     double ch4InWaterNoSalt = threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
     double butaneInWaterNoSalt = threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
@@ -261,9 +262,13 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     threePhaseWithSalt.addComponent("Na+", 0.02); // ~1 mol/kg NaCl
     threePhaseWithSalt.addComponent("Cl-", 0.02);
     threePhaseWithSalt.setMixingRule(10);
+    threePhaseWithSalt.setMultiPhaseCheck(true);
     ThermodynamicOperations opsSalt = new ThermodynamicOperations(threePhaseWithSalt);
     opsSalt.TPflash();
     threePhaseWithSalt.initProperties();
+
+    int numPhasesWithSalt = threePhaseWithSalt.getNumberOfPhases();
+    assertEquals(3, numPhasesWithSalt, "System with salt should have gas, oil, and aqueous phases");
 
     double ch4InWaterWithSalt = threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
     double butaneInWaterWithSalt = threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
