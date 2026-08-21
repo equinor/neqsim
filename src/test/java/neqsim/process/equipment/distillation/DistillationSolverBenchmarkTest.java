@@ -292,6 +292,11 @@ public class DistillationSolverBenchmarkTest {
 
     assertTrue(direct.solved(), "Direct substitution should converge");
     assertTrue(wegstein.solved(), "Wegstein should converge: " + wegstein.getConvergenceDiagnostics());
+    assertEquals(0, direct.getLastAcceleratedFullTraySweepCount(),
+        "Direct substitution should not report accelerated full-tray sweep work");
+    assertEquals(0, direct.getLastAcceleratedInternalStreamTransferCount(),
+        "Direct substitution should not report accelerated internal stream transfers");
+    assertSingleCloneAcceleratedSweepWork(wegstein, 5, "Wegstein final stream synchronization");
 
     // Wegstein should use at most the same number of iterations (typically fewer)
     assertTrue(wegstein.getLastIterationCount() <= direct.getLastIterationCount() * 1.2 + 2,
@@ -1295,6 +1300,24 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Assert accelerated full-tray sweep telemetry follows the single-clone transfer contract.
+   *
+   * @param column accelerated column result
+   * @param firstFeedTrayNumber lowest feed tray index used by the full sweep
+   * @param message assertion message prefix
+   */
+  private void assertSingleCloneAcceleratedSweepWork(DistillationColumn column, int firstFeedTrayNumber,
+      String message) {
+    int sweepCount = column.getLastAcceleratedFullTraySweepCount();
+    int transfersPerSweep = firstFeedTrayNumber + column.getNumberOfTrays() - 1;
+    assertTrue(sweepCount > 0, message + " should report at least one full-tray sweep");
+    assertEquals(sweepCount * transfersPerSweep, column.getLastAcceleratedInternalStreamTransferCount(),
+        message + " should retain one owned stream clone for every internal transfer");
+    assertTrue(column.getConvergenceDiagnostics().contains("Accelerated full-tray sweep work:"),
+        message + " should be visible in combined diagnostics");
+  }
+
+  /**
    * The Newton line search must choose the lowest finite residual even when none of the evaluated trials is a descent
    * step.
    */
@@ -1353,10 +1376,12 @@ public class DistillationSolverBenchmarkTest {
       assertTrue(Double.isNaN(column.getLastNewtonLineSearchResidual()),
           "a solve that converges before line search should not report an unevaluated residual");
     }
+    assertSingleCloneAcceleratedSweepWork(column, 5, "Newton solve");
 
     column.run();
 
     assertTrue(column.solved(), "Repeated unchanged NEWTON solve should converge");
+    assertSingleCloneAcceleratedSweepWork(column, 5, "Repeated unchanged Newton solve");
     double productRepeatabilityTolerance = 1.5e-2;
     assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"),
         Math.max(0.01, gasFlow * productRepeatabilityTolerance),
