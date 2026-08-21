@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -651,7 +650,6 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
    * @throws Exception if calculation fails
    */
   @Test
-  @Disabled("Complex fluid with n-pentane/n-hexane + electrolytes + MEG gives inaccurate hydrate temperature (49°C vs expected <35°C)")
   @DisplayName("test hydrate temperature - comprehensive offshore scenario")
   public void testHydrateTemperatureComprehensiveScenario() throws Exception {
     // Realistic offshore production fluid
