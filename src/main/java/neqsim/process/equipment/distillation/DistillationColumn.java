@@ -8774,8 +8774,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
       int target = stage - 1;
       int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
-      StreamInterface transferredLiquid =
-          applyRelaxationFast(null, trays.get(stage).getLiquidOutStream(), 1.0);
+      StreamInterface transferredLiquid = applyRelaxationFast(null, trays.get(stage).getLiquidOutStream(), 1.0);
       trays.get(target).replaceStream(replaceStream, transferredLiquid);
       lastAcceleratedInternalStreamTransferCount++;
       trays.get(target).run(id);
@@ -8788,8 +8787,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (stage == (numberOfTrays - 1)) {
         replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
       }
-      StreamInterface transferredGas =
-          applyRelaxationFast(null, trays.get(stage - 1).getGasOutStream(), 1.0);
+      StreamInterface transferredGas = applyRelaxationFast(null, trays.get(stage - 1).getGasOutStream(), 1.0);
       trays.get(stage).replaceStream(replaceStream, transferredGas);
       lastAcceleratedInternalStreamTransferCount++;
       trays.get(stage).run(id);
@@ -9445,8 +9443,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Retrieve the number of accelerated full-tray sweeps attempted by the latest NEWTON or WEGSTEIN route.
    *
    * <p>
-   * The value describes attempted accelerator work, including work retained through AUTO candidate adoption or
-   * followed by a coordinated fallback. It is not an independent convergence claim.
+   * The value describes attempted accelerator work, including work retained through AUTO candidate adoption or followed
+   * by a coordinated fallback. It is not an independent convergence claim.
    * </p>
    *
    * @return number of full-tray sweeps, or zero when the latest route did not attempt one
