@@ -828,6 +828,87 @@ or investment approval.
 
 ---
 
+## Ranking Independent Debottleneck Alternatives
+
+Use `ProcessModelDebottleneckRanking` after two or more independent
+`ProcessModelDebottleneckStudy` runs have completed. It ranks one explicitly declared metric at a
+time and rejects evidence that is not directly comparable. It does not normalize, weight, or add
+production, power, energy, emissions, and screening economics.
+
+```java
+ProcessModelDebottleneckRanking.RankingPolicy productionPolicy =
+    new ProcessModelDebottleneckRanking.RankingPolicy(
+        "production-delta",
+        "Production delta ranking",
+        "screening portfolio rev A",
+        "production",
+        "Feed production",
+        ProcessModelDebottleneckStudy.MetricKind.PRODUCTION,
+        "kg/hr",
+        "wet feed mass rate",
+        "NeqSim stream result",
+        "single steady state",
+        ProcessModelDebottleneckRanking.RankingDirection.MAXIMIZE,
+        1.0e-8,
+        1.0e-8,
+        0.5,
+        0.9);
+
+ProcessModelDebottleneckRanking ranking =
+    new ProcessModelDebottleneckRanking(
+        "separator-portfolio",
+        "Separator alternatives portfolio",
+        "brownfield screening alternatives rev A",
+        productionPolicy);
+
+ProcessModelDebottleneckRanking.RankingResult ranked =
+    ranking.rank(Arrays.asList(study1100, study1150, study1200));
+
+ProcessModelDebottleneckRanking.CandidateEvidence best = ranked.getBestCandidate();
+List<ProcessModelDebottleneckRanking.CandidateEvidence> rejected =
+    ranked.getRejectedCandidates();
+```
+
+The policy above requires exact metric id, name, kind, unit, basis, provenance, and effective
+period. The first tolerance is in `kg/hr` for ranking ties. The second is dimensionless and applies
+only to repeated finite simulator values from an otherwise identical baseline; metadata and selected
+parameter values still match exactly. The two confidence floors apply separately to the documented
+capacity alternative and the baseline/alternative metric evidence; use `Double.NaN` only when a
+confidence floor is deliberately unset. A submitted study is rankable only when it:
+
+- completed both scenarios and independently verified convergence and feasibility;
+- restored the complete installed-capacity state and reconverged the pre-study process state;
+- supplies a finite `alternative - baseline` delta for the declared metric; and
+- reproduces the reference baseline's search identity/provenance, selected parameter vector and
+  evidence schema exactly, with finite metric/objective/constraint values inside the declared
+  dimensionless relative tolerance.
+
+The first otherwise-qualified submission establishes the baseline reference. This deliberately
+strict comparison prevents alternatives based on a changed candidate set, process configuration,
+constraint registration, objective definition, data period, emission factor, or price basis from
+being silently mixed into one list. Rejected rows remain available through
+`getRejectedCandidates()` and `getCandidatesInInputOrder()` with a `CandidateStatus` and explicit
+diagnostics.
+
+Ranking values are always the declared metric's paired delta in its stated unit. Candidates are
+ordered by the policy direction. The tie tolerance is in that same unit; ties receive competition
+ranks and retain deterministic input order. Run separate rankings for production, power, emissions,
+or screening value. A screening-economic ranking is only comparable when currency/time basis,
+factor provenance, effective period, and confidence match exactly; it is not an NPV calculation or
+investment decision.
+
+For weighted field-concept decisions across economics, risk, emissions, strategic fit, and other
+normalized criteria, use the field-development `DevelopmentOptionRanker`. That is a separate MCDA
+layer with accountable weights. `ProcessModelDebottleneckRanking` deliberately stays at the
+simulator-evidence layer and never invents those weights.
+
+`RankingPolicy`, `CandidateEvidence`, and `RankingResult` are immutable and Java-serializable. The
+result retains each complete immutable `StudyResult`, so JPype callers can inspect the original and
+applied capacity states, selected operating points, physical constraint margins, boundary evidence,
+all registered metrics, restoration flags, and diagnostics after ranking.
+
+---
+
 ## References
 
 ### Related Documentation
