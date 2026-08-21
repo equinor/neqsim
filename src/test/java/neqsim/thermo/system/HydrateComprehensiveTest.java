@@ -385,14 +385,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       logger.info("  Methane: " + methaneInAq);
       logger.info("  n-Butane: " + nButaneInAq);
 
-      // TODO: Known limitation - methane solubility in brine with ions is currently
-      // computed as very small values (near 1E-50). This is a known issue with the
-      // electrolyte model when ions are present with hydrocarbons. The solubility
-      // should ideally be in the range 1E-4 to 1E-3 for these conditions.
-      // For now, just log the value without asserting.
-      if (methaneInAq < 1E-10) {
-        logger.info("  NOTE: Methane solubility is very low - known limitation with electrolyte+HC");
-      }
+      assertTrue(methaneInAq > 1E-10, "Methane should have finite solubility in the electrolyte aqueous phase");
+      assertTrue(nButaneInAq > 1E-15, "n-Butane should have finite solubility in the electrolyte aqueous phase");
     }
   }
 
