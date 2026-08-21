@@ -85,6 +85,22 @@ stability during the matrix warm-start stage.
 | `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization followed by full MESH residual evaluation. | Best for auditing material, equilibrium, summation, energy, specification, and product-draw residuals. |
 | `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs a feasibility pre-screen and copy-based solver probes. A fixed-specification reboiler-only stripper tries native sum-rates before paying for the relaxed damped base; other configurations retain the robust base/fallback ladder. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
 
+### Accelerated full-sweep workspace
+
+The finite-difference `NEWTON` route and the final `WEGSTEIN` stream synchronization use
+undamped full-tray sweeps. Each internal vapor or liquid transfer now takes one owned clone of the
+already-flashed tray outlet and installs that same snapshot as the target tray inlet. Because unit
+relaxation never consumes a previous iterate, these sweeps do not allocate per-tray previous-stream
+arrays or create a second cache clone. The unchanged-clone fast path also avoids reflashing the
+snapshot unless an internal-traffic correction is required.
+
+Use `getLastAcceleratedFullTraySweepCount()` and
+`getLastAcceleratedInternalStreamTransferCount()` to audit this work. The transfer count equals the
+number of downward liquid plus upward vapor transfers across all reported sweeps. These values
+describe accelerator work attempted by the latest route; they are preserved when `AUTO` adopts a
+candidate and can remain nonzero when a later coordinated fallback completes the solve. They do
+not replace mass, energy, specification, physical-state, or MESH convergence evidence.
+
 ### Sequential substitution details
 
 - Upward sweep: for trays below the lowest feed, new liquid draws from the tray above.
