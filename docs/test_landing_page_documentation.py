@@ -34,6 +34,19 @@ def heading_slugs(content):
     }
 
 
+def declared_permalink(path):
+    content = path.read_text(encoding="utf-8")
+    front_matter = re.match(r"\\A---\\n(.*?)\\n---(?:\\n|\\Z)", content, flags=re.DOTALL)
+    if front_matter is None:
+        return None
+    match = re.search(
+        r"^permalink:\\s*[\"']?([^\"'\\s]+)[\"']?\\s*$",
+        front_matter.group(1),
+        flags=re.MULTILINE,
+    )
+    return match.group(1) if match else None
+
+
 def resolve_internal_target(source_path, destination):
     target, _, fragment = unquote(destination).partition("#")
     if not target:
@@ -53,6 +66,17 @@ def resolve_internal_target(source_path, destination):
     for candidate in candidates:
         if candidate.is_file():
             return candidate.resolve(), fragment
+
+    try:
+        route = "/" + raw_target.resolve().relative_to(DOCS_DIR.resolve()).as_posix()
+    except ValueError:
+        route = ""
+    if target.endswith("/") and route and not route.endswith("/"):
+        route += "/"
+    for candidate in DOCS_DIR.rglob("*.md"):
+        if declared_permalink(candidate) == route:
+            return candidate.resolve(), fragment
+
     raise AssertionError(f"Unresolved link from {source_path}: {destination}")
 
 
