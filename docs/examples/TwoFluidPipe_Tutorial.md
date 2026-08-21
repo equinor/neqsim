@@ -122,9 +122,9 @@ fluid_system = SystemSrkEos(313.15, 80.0)  # T in Kelvin, P in bara
 # Add components (mole fractions will be normalized)
 fluid_system.addComponent("methane", 0.75)      # Main component
 fluid_system.addComponent("ethane", 0.10)       # Light hydrocarbons
-fluid_system.addComponent("propane", 0.05)
-fluid_system.addComponent("n-butane", 0.03)
-fluid_system.addComponent("n-pentane", 0.02)
+fluid_system.addComponent("propane", 0.05)      
+fluid_system.addComponent("n-butane", 0.03)     
+fluid_system.addComponent("n-pentane", 0.02)    
 fluid_system.addComponent("n-heptane", 0.03)    # Heavy end (condensate)
 fluid_system.addComponent("nC10", 0.02)         # More condensate (use nC10 format)
 
@@ -596,7 +596,7 @@ ax3.grid(True, alpha=0.3)
 high_holdup_threshold = np.mean(h_terrain) * 1.5
 high_holdup_mask = h_terrain > high_holdup_threshold
 if np.any(high_holdup_mask):
-    ax3.fill_between(pos_terrain, 0, h_terrain,
+    ax3.fill_between(pos_terrain, 0, h_terrain, 
                     where=high_holdup_mask, alpha=0.5, color='red',
                     label='High holdup region')
     ax3.legend(loc='upper right')
@@ -631,13 +631,13 @@ for flow_rate in flow_rates:
     fluid_study.addComponent("n-heptane", 0.03)
     fluid_study.addComponent("nC10", 0.02)
     fluid_study.setMixingRule("classic")
-
+    
     inlet_study = Stream("Study Inlet", fluid_study)
     inlet_study.setFlowRate(float(flow_rate), "kg/hr")
     inlet_study.setTemperature(40.0, "C")
     inlet_study.setPressure(80.0, "bara")
     inlet_study.run()
-
+    
     # Create and run pipe
     pipe_study = TwoFluidPipe("Study Pipe", inlet_study)
     pipe_study.setLength(10000.0)
@@ -645,15 +645,15 @@ for flow_rate in flow_rates:
     pipe_study.setNumberOfSections(25)
     pipe_study.setOutletPressure(50.0, "bara")
     pipe_study.run()
-
+    
     # Calculate results
     dP = inlet_study.getPressure("bara") - pipe_study.getOutletStream().getPressure("bara")
     holdup_profile = np.array(pipe_study.getLiquidHoldupProfile())
     avg_holdup = np.mean(holdup_profile)
-
+    
     pressure_drops.append(dP)
     avg_holdups.append(avg_holdup)
-
+    
     print(f"{flow_rate:<20} {dP:<15.2f} {avg_holdup:<15.4f}")
 
 print("-" * 60)
@@ -666,14 +666,14 @@ print("Parameter study complete!")
 ```
 Running parameter study...
 ------------------------------------------------------------
-Flow Rate (kg/hr)    ΔP (bar)        Avg Holdup
+Flow Rate (kg/hr)    ΔP (bar)        Avg Holdup     
 ------------------------------------------------------------
-1000                 0.00            0.2843
-2000                 0.01            0.2853
-3000                 0.02            0.2863
-5000                 0.04            0.2658
-7500                 0.08            0.2502
-10000                0.13            0.2403
+1000                 0.00            0.2843         
+2000                 0.01            0.2853         
+3000                 0.02            0.2863         
+5000                 0.04            0.2658         
+7500                 0.08            0.2502         
+10000                0.13            0.2403         
 ------------------------------------------------------------
 Parameter study complete!
 ```
@@ -901,7 +901,7 @@ except AttributeError:
 print("\nFor more information, see:")
 print("  - NeqSim documentation: https://equinor.github.io/neqsim/")
 print("  - GitHub repository: https://github.com/equinor/neqsim")
-print("  - Two-fluid model docs: docs/wiki/two_fluid_model_review.md")
+print("  - Two-fluid model docs: docs/wiki/two_fluid_model_olga_comparison.md")
 ```
 
 <details>
@@ -917,7 +917,7 @@ NeqSim loaded successfully
 For more information, see:
   - NeqSim documentation: https://equinor.github.io/neqsim/
   - GitHub repository: https://github.com/equinor/neqsim
-  - Two-fluid model docs: docs/wiki/two_fluid_model_review.md
+  - Two-fluid model docs: docs/wiki/two_fluid_model_olga_comparison.md
 ```
 
 </details>
