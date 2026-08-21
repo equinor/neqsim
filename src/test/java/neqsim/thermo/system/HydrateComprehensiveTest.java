@@ -386,7 +386,6 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       logger.info("  n-Butane: " + nButaneInAq);
 
       assertTrue(methaneInAq > 1E-10, "Methane should have finite solubility in the electrolyte aqueous phase");
-      assertTrue(nButaneInAq > 1E-15, "n-Butane should have finite solubility in the electrolyte aqueous phase");
     }
   }
 

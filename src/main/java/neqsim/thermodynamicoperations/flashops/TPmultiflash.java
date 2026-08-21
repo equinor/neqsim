@@ -297,9 +297,6 @@ public class TPmultiflash extends TPflash {
       return 0.0;
     }
     double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
-    if (!(fugacityCoefficient > 0.0) || !Double.isFinite(fugacityCoefficient)) {
-      return 0.0;
-    }
     return 1.0 / fugacityCoefficient;
   }
 
@@ -2535,13 +2532,22 @@ public class TPmultiflash extends TPflash {
     system.getChemicalReactionOperations().solveChemEq(aqueousPhase, 1);
 
     double[] reactionDeltas = getConservativeReactionDeltas(aqueousPhase, oldAqueousMoles);
+    double[] updatedOverallMoles = new double[numberOfComponents];
     for (int component = 0; component < numberOfComponents; component++) {
-      reactiveOverallMoles[component] += reactionDeltas[component];
-      if (!Double.isFinite(reactiveOverallMoles[component]) || reactiveOverallMoles[component] < -1.0e-9) {
+      updatedOverallMoles[component] = reactiveOverallMoles[component] + reactionDeltas[component];
+      if (!Double.isFinite(updatedOverallMoles[component]) || updatedOverallMoles[component] < -1.0e-9) {
         throw new IllegalStateException("Aqueous chemical equilibrium produced an invalid overall amount for "
-            + system.getPhase(0).getComponent(component).getComponentName() + ": " + reactiveOverallMoles[component]);
+            + system.getPhase(0).getComponent(component).getComponentName() + ": " + updatedOverallMoles[component]);
       }
-      reactiveOverallMoles[component] = Math.max(MINIMUM_REACTIVE_COMPONENT_MOLES, reactiveOverallMoles[component]);
+      updatedOverallMoles[component] = Math.max(MINIMUM_REACTIVE_COMPONENT_MOLES, updatedOverallMoles[component]);
+    }
+    for (int component = 0; component < numberOfComponents; component++) {
+      double appliedDelta = updatedOverallMoles[component] - reactiveOverallMoles[component];
+      double projectedAqueousMoles = oldAqueousMoles[component] + appliedDelta;
+      ComponentInterface phaseComponent = system.getPhase(aqueousPhase).getComponent(component);
+      system.getPhase(aqueousPhase).addMoles(component,
+          projectedAqueousMoles - phaseComponent.getNumberOfMolesInPhase());
+      reactiveOverallMoles[component] = updatedOverallMoles[component];
     }
     synchronizeReactiveOverallComposition();
 
@@ -2834,33 +2840,30 @@ public class TPmultiflash extends TPflash {
             }
           }
         }
+        setDoubleArrays();
         iterations = 0;
-        if (system.isChemicalSystem()) {
-          iterations = 1;
+        do {
+          iterations++;
+          // oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
+          // system.init(1);
           oldDiff = diff;
-          diff = projectReactiveInventoryOntoCurrentPhases();
-        } else {
-          setDoubleArrays();
-          do {
-            iterations++;
-            // oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
-            // system.init(1);
-            oldDiff = diff;
-            diff = this.solveBeta();
-            // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
-            // oldBeta);
-            // System.out.println("diff multiphase " + diff);
-            if (iterations % 50 == 0) {
-              maxerr *= 100.0;
-            }
-          } while (diff > maxerr && !removePhase && (diff < oldDiff || iterations < 50) && iterations < 200);
-          // this.solveBeta(true);
-          if (iterations >= 199) {
-            logger.error("error in multiphase flash..did not solve in 200 iterations");
-            logger.error("diff " + diff + " temperaure " + system.getTemperature("C") + " pressure "
-                + system.getPressure("bara"));
-            diff = this.solveBeta();
+          diff = this.solveBeta();
+          // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) /
+          // oldBeta);
+          // System.out.println("diff multiphase " + diff);
+          if (iterations % 50 == 0) {
+            maxerr *= 100.0;
           }
+        } while (diff > maxerr && !removePhase && (diff < oldDiff || iterations < 50) && iterations < 200);
+        // this.solveBeta(true);
+        if (iterations >= 199) {
+          logger.error("error in multiphase flash..did not solve in 200 iterations");
+          logger.error("diff " + diff + " temperaure " + system.getTemperature("C") + " pressure "
+              + system.getPressure("bara"));
+          diff = this.solveBeta();
+        }
+        if (system.isChemicalSystem()) {
+          diff = Math.max(diff, projectReactiveInventoryOntoCurrentPhases());
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
           || (iterOut < 3 && system.isChemicalSystem() && system.hasPhaseType(PhaseType.AQUEOUS)));
@@ -3148,8 +3151,11 @@ public class TPmultiflash extends TPflash {
       aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
       for (int outerIteration = 0; outerIteration < 100; outerIteration++) {
         double chemicalDeviation = solveReactiveAqueousEquilibrium(aqueousPhaseNumber, false);
+        setDoubleArrays();
+        double phaseEquilibriumResidual = solveBeta();
         double betaResidual = projectReactiveInventoryOntoCurrentPhases();
-        if (outerIteration >= 2 && chemicalDeviation <= 1.0e-10 && betaResidual <= 1.0e-10) {
+        if (outerIteration >= 2 && chemicalDeviation <= 1.0e-10 && phaseEquilibriumResidual <= 1.0e-10
+            && betaResidual <= 1.0e-10) {
           break;
         }
       }
