@@ -36,11 +36,11 @@ def heading_slugs(content):
 
 def declared_permalink(path):
     content = path.read_text(encoding="utf-8")
-    front_matter = re.match(r"\\A---\\n(.*?)\\n---(?:\\n|\\Z)", content, flags=re.DOTALL)
+    front_matter = re.match(r"\A---\n(.*?)\n---(?:\n|\Z)", content, flags=re.DOTALL)
     if front_matter is None:
         return None
     match = re.search(
-        r"^permalink:\\s*[\"']?([^\"'\\s]+)[\"']?\\s*$",
+        r"^permalink:\s*[\"']?([^\"'\s]+)[\"']?\s*$",
         front_matter.group(1),
         flags=re.MULTILINE,
     )
