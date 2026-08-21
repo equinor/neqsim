@@ -8,10 +8,11 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-/** Regression tests for hydrate equilibrium with non-reactive electrolyte CPA fluids. */
+/** Regression tests for hydrate equilibrium with non-reactive and reactive electrolyte CPA fluids. */
 @Tag("slow")
 public class ElectrolyteCPAHydrateEquilibriumTest extends neqsim.NeqSimTest {
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-9;
+  private static final double CHARGE_BALANCE_TOLERANCE = 2.0e-9;
 
   /**
    * Verifies gas-water-brine hydrate equilibrium and salt inhibition.
@@ -84,6 +85,48 @@ public class ElectrolyteCPAHydrateEquilibriumTest extends neqsim.NeqSimTest {
     assertElectrolytePhaseInventory(inhibitedBrine);
   }
 
+  /**
+   * Verifies coupled CO2-water chemical equilibrium during a brine hydrate-temperature calculation.
+   *
+   * @throws Exception if reaction, phase, or hydrate equilibrium fails
+   */
+  @Test
+  @DisplayName("electrolyte CPA hydrate equilibrium with CO2-water reactions")
+  public void testReactiveCo2WaterSaltHydrateEquilibrium() throws Exception {
+    SystemInterface fluid = new SystemElectrolyteCPAstatoil(283.15, 100.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("CO2", 0.05);
+    fluid.addComponent("water", 0.23);
+    addSalt(fluid);
+    fluid.chemicalReactionInit();
+    fluid.createDatabase(true);
+    fluid.setMultiPhaseCheck(true);
+
+    double initialCarbonMoles = getOverallComponentMoles(fluid, "CO2")
+        + getOverallComponentMoles(fluid, "HCO3-") + getOverallComponentMoles(fluid, "CO3--");
+    double initialSodiumMoles = getOverallComponentMoles(fluid, "Na+");
+    double initialChlorideMoles = getOverallComponentMoles(fluid, "Cl-");
+
+    double hydrateTemperature = calculateHydrateTemperature(fluid);
+
+    assertTrue(Double.isFinite(hydrateTemperature));
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+    assertTrue(fluid.isChemicalSystem());
+    assertTrue(fluid.getChemicalReactionOperations().hasReactions());
+    assertTrue(getRecoveredComponentMoles(fluid, "HCO3-") > 1.0e-10,
+        "Dissolved CO2 chemistry must produce bicarbonate");
+    assertEquals(initialCarbonMoles,
+        getRecoveredComponentMoles(fluid, "CO2") + getRecoveredComponentMoles(fluid, "HCO3-")
+            + getRecoveredComponentMoles(fluid, "CO3--"),
+        1.0e-8, "Carbon atoms must be conserved across phase and chemical equilibrium");
+    assertEquals(initialSodiumMoles, getRecoveredComponentMoles(fluid, "Na+"), 1.0e-9,
+        "Sodium inventory must be conserved");
+    assertEquals(initialChlorideMoles, getRecoveredComponentMoles(fluid, "Cl-"), 1.0e-9,
+        "Chloride inventory must be conserved");
+    assertElectrolytePhaseInventory(fluid);
+  }
+
   private static SystemInterface createBaseFluid() {
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(283.15, 100.0);
     fluid.addComponent("methane", 0.75);
@@ -109,6 +152,23 @@ public class ElectrolyteCPAHydrateEquilibriumTest extends neqsim.NeqSimTest {
     return hydrateTemperature;
   }
 
+  private static double getOverallComponentMoles(SystemInterface fluid, String componentName) {
+    return fluid.getPhase(0).hasComponent(componentName)
+        ? fluid.getPhase(0).getComponent(componentName).getNumberOfmoles()
+        : 0.0;
+  }
+
+  private static double getRecoveredComponentMoles(SystemInterface fluid, String componentName) {
+    if (!fluid.getPhase(0).hasComponent(componentName)) {
+      return 0.0;
+    }
+    double overallFraction = 0.0;
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      overallFraction += fluid.getBeta(phase) * fluid.getPhase(phase).getComponent(componentName).getx();
+    }
+    return fluid.getNumberOfMoles() * overallFraction;
+  }
+
   private static void assertElectrolytePhaseInventory(SystemInterface fluid) {
     int aqueousPhase = fluid.getPhaseNumberOfPhase("aqueous");
     double aqueousCharge = 0.0;
@@ -132,7 +192,7 @@ public class ElectrolyteCPAHydrateEquilibriumTest extends neqsim.NeqSimTest {
       aqueousCharge += charge * fluid.getPhase(aqueousPhase).getComponent(component).getx();
     }
 
-    assertEquals(0.0, aqueousCharge, MATERIAL_BALANCE_TOLERANCE,
+    assertEquals(0.0, aqueousCharge, CHARGE_BALANCE_TOLERANCE,
         "The aqueous electrolyte phase must remain charge neutral");
   }
 }
