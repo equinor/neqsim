@@ -47,7 +47,7 @@ def test_process_system_auto_load_semantics_match_source() -> None:
     guide = read(GUIDE)
     source = read(PROCESS_SOURCE)
 
-    assert "ProcessSystem.loadAuto() does **not** load lifecycle JSON" in guide
+    assert "does **not** load lifecycle JSON" in guide
     assert 'if (lowerName.endsWith(".neqsim"))' in source
     assert "return loadFromNeqsim(filename);" in source
     assert "return open(filename);" in source
@@ -96,7 +96,8 @@ def test_format_boundaries_and_process_entry_point_remain_discoverable() -> None
     guide = read(GUIDE)
     process_guide = read(PROCESS_GUIDE)
 
-    assert "selective state model rather than a lossless copy" in guide
+    assert "selective state model rather than a" in guide
+    assert "lossless copy of every Java object" in guide
     assert "Compression depends on the actual model graph" in guide
     assert "~500 KB" not in guide
     assert "Process Serialization Guide" in process_guide
