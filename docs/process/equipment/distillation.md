@@ -269,6 +269,14 @@ keeps the applied state, step diagnostic, and residual diagnostic aligned. Use
 `getLastNewtonLineSearchTrialCount()` to audit that decision. A `NEWTON` result still requires the
 ordinary column material, energy, specification, physical-state, and optional MESH gates; these
 line-search diagnostics are evidence about globalization, not an independent convergence claim.
+The `NEWTON` finite-difference sweeps and final `WEGSTEIN` synchronization always use unit
+relaxation. They therefore install one owned clone of each already-flashed internal outlet directly
+as the target tray inlet, without previous-stream arrays, a second cache clone, or an unchanged
+reflash unless traffic correction is required. Audit the work with
+`getLastAcceleratedFullTraySweepCount()` and
+`getLastAcceleratedInternalStreamTransferCount()`. The counters describe attempted accelerator
+work, survive accepted `AUTO` candidate adoption, and can remain nonzero if a coordinated fallback
+later completes the route; they are performance diagnostics rather than convergence gates.
 
 ```java
 column.setSolverType(DistillationColumn.SolverType.AUTO);
