@@ -8760,8 +8760,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * NEWTON and the final WEGSTEIN synchronization always use unit relaxation. Each internal transfer therefore takes
    * one owned clone of the already-flashed tray outlet and installs that same clone as the downstream inlet. No
-   * previous-iterate cache or second cache clone is required. The fast clone path also avoids reflashing an unchanged
-   * finite outlet unless the internal-traffic cap requires a correction.
+   * previous-iterate cache or second cache clone is required. The transferred snapshot is reflashed through the established relaxation path so downstream tear-state semantics
+   * remain unchanged.
    * </p>
    *
    * @param id calculation identifier
@@ -8774,7 +8774,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
       int target = stage - 1;
       int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
-      StreamInterface transferredLiquid = applyRelaxationFast(null, trays.get(stage).getLiquidOutStream(), 1.0);
+      StreamInterface transferredLiquid = applyRelaxation(null, trays.get(stage).getLiquidOutStream(), 1.0);
       trays.get(target).replaceStream(replaceStream, transferredLiquid);
       lastAcceleratedInternalStreamTransferCount++;
       trays.get(target).run(id);
@@ -8787,7 +8787,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (stage == (numberOfTrays - 1)) {
         replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
       }
-      StreamInterface transferredGas = applyRelaxationFast(null, trays.get(stage - 1).getGasOutStream(), 1.0);
+      StreamInterface transferredGas = applyRelaxation(null, trays.get(stage - 1).getGasOutStream(), 1.0);
       trays.get(stage).replaceStream(replaceStream, transferredGas);
       lastAcceleratedInternalStreamTransferCount++;
       trays.get(stage).run(id);
