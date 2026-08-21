@@ -102,8 +102,8 @@ public class ElectrolyteCPAHydrateEquilibriumTest extends neqsim.NeqSimTest {
     fluid.createDatabase(true);
     fluid.setMultiPhaseCheck(true);
 
-    double initialCarbonMoles = getOverallComponentMoles(fluid, "CO2")
-        + getOverallComponentMoles(fluid, "HCO3-") + getOverallComponentMoles(fluid, "CO3--");
+    double initialCarbonMoles = getOverallComponentMoles(fluid, "CO2") + getOverallComponentMoles(fluid, "HCO3-")
+        + getOverallComponentMoles(fluid, "CO3--");
     double initialSodiumMoles = getOverallComponentMoles(fluid, "Na+");
     double initialChlorideMoles = getOverallComponentMoles(fluid, "Cl-");
 
