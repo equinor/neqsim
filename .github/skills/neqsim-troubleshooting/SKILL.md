@@ -152,6 +152,19 @@ for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
 **Fix:** divide by 1000 at the call site —
 `fluid.addTBPfraction("C10-C12", 0.054, 150.0 / 1000.0, 0.790);`
 
+## Pipe Outlet Temperature Equals Ambient
+
+**Symptom:** A `PipeBeggsAndBrills` tubing string or flowline always arrives at the
+ambient / formation temperature, no matter the length, rate or insulation. Hydrate
+margins, cooldown times and arrival temperatures all look pessimistic and insensitive.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Call `pipe.setUseOverallHeatTransferCoefficient(true)` and `pipe.setHeatTransferCoefficient(U)` | Without it the pipe behaves as if `U` were infinite and equilibrates to ambient |
+| 2 | Use screening `U` values: ~15 W/m²K cased/cemented well, ~20 W/m²K uninsulated subsea flowline, ~5 W/m²K wet-insulated | Gives physical wellhead and arrival temperatures |
+| 3 | Do **not** rely on `setAdiabatic(true)` | It currently leaves the outlet temperature unchanged |
+| 4 | Sanity-check the wellhead temperature against expectation before using it downstream | A gas well lifting from 62 °C over 1040 m should arrive near 50 °C, not 5 °C |
+
 ## CO2 Injection Well Issues
 
 **Symptom:** CO2 wellbore model gives unexpected phase splits or impurity enrichment.
