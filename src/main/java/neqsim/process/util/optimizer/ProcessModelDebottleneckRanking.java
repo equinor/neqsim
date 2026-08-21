@@ -120,8 +120,8 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
      * @param effectivePeriod exact metric effective period
      * @param direction direction in which the paired delta improves
      * @param tieTolerance non-negative tie tolerance in the metric unit
-     * @param baselineRelativeTolerance dimensionless relative tolerance in [0, 1] for repeated
-     *        simulator values in an otherwise identical baseline
+     * @param baselineRelativeTolerance dimensionless relative tolerance in [0, 1] for repeated simulator values in an
+     * otherwise identical baseline
      * @param minimumAlternativeConfidence confidence floor in [0, 1], or NaN when unset
      * @param minimumMetricConfidence confidence floor in [0, 1], or NaN when unset
      */
@@ -150,8 +150,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
         throw new IllegalArgumentException("Ranking tie tolerance must be finite and non-negative");
       }
       this.tieTolerance = tieTolerance;
-      if (!isFinite(baselineRelativeTolerance) || baselineRelativeTolerance < 0.0
-          || baselineRelativeTolerance > 1.0) {
+      if (!isFinite(baselineRelativeTolerance) || baselineRelativeTolerance < 0.0 || baselineRelativeTolerance > 1.0) {
         throw new IllegalArgumentException("Baseline relative tolerance must be finite and in [0, 1]");
       }
       this.baselineRelativeTolerance = baselineRelativeTolerance;
@@ -676,8 +675,8 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       ConstraintEvidence a = left.get(index);
       ConstraintEvidence b = right.get(index);
       if (a.getIndex() != b.getIndex() || !a.getName().equals(b.getName()) || a.getType() != b.getType()
-          || !a.getUnit().equals(b.getUnit()) || a.isHard() != b.isHard()
-          || !relativeEqual(a.getValue(), b.getValue()) || !relativeEqual(a.getMargin(), b.getMargin())) {
+          || !a.getUnit().equals(b.getUnit()) || a.isHard() != b.isHard() || !relativeEqual(a.getValue(), b.getValue())
+          || !relativeEqual(a.getMargin(), b.getMargin())) {
         return false;
       }
     }
