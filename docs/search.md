@@ -34,10 +34,20 @@ permalink: /search/
             <span class="sp-topic-label">Thermodynamics</span>
             <span class="sp-topic-desc">EOS, flash, fluids, properties</span>
           </a>
+          <a href="{{ '/physical_properties/' | relative_url }}" class="sp-topic-card">
+            <span class="sp-topic-icon" style="background:#607D8B;">P</span>
+            <span class="sp-topic-label">Physical Properties</span>
+            <span class="sp-topic-desc">Viscosity, conductivity, diffusivity</span>
+          </a>
           <a href="{{ '/process/' | relative_url }}" class="sp-topic-card">
             <span class="sp-topic-icon" style="background:#4CAF50;">P</span>
             <span class="sp-topic-label">Process Simulation</span>
             <span class="sp-topic-desc">Equipment, flowsheets, dynamic</span>
+          </a>
+          <a href="{{ '/fluidmechanics/' | relative_url }}" class="sp-topic-card">
+            <span class="sp-topic-icon" style="background:#03A9F4;">F</span>
+            <span class="sp-topic-label">Fluid Mechanics</span>
+            <span class="sp-topic-desc">Pipelines, pressure drop, multiphase flow</span>
           </a>
           <a href="{{ '/engineering/' | relative_url }}" class="sp-topic-card">
             <span class="sp-topic-icon" style="background:#FF9800;">E</span>

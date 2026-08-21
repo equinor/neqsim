@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
 SEARCH_TEMPLATE = DOCS / "search-index.json"
 SEARCH_SCRIPT = DOCS / "assets" / "js" / "search.js"
+SEARCH_PAGE = DOCS / "search.md"
+LANDING_PAGE = DOCS / "index.md"
 NON_CONTENT_HTML_DIRS = {"_includes", "_layouts"}
 NOTEBOOK_LINK_PATTERN = re.compile(
     r"""(?:\[[^\]]*\]\(\s*|href\s*=\s*["'])
@@ -149,7 +151,14 @@ def source_audit() -> List[str]:
     template = SEARCH_TEMPLATE.read_text(encoding="utf-8")
     required_template_contracts = {
         "regular and collection pages": "site.pages | concat: site.documents",
-        "complete content": "doc.content | strip_html | normalize_whitespace",
+        "rendered Markdown": "assign rendered_content = doc.content | markdownify",
+        "complete rendered content": (
+            "assign content_text = rendered_content | strip_html | normalize_whitespace"
+        ),
+        "rendered heading extraction": (
+            "assign h_parts = rendered_content | split: '</h'"
+        ),
+        "inline-markup-safe headings": "remove_first: opening_tag",
         "source-path traceability": '"path": {{ source_path | jsonify }}',
         "title field": '"title": {{ title | jsonify }}',
         "description field": '"description": {{ description | jsonify }}',
@@ -161,6 +170,10 @@ def source_audit() -> List[str]:
             errors.append(f"docs/search-index.json: missing {contract} contract")
     if re.search(r"content_text[^\n]*\|\s*truncate", template):
         errors.append("docs/search-index.json: page content must not be truncated")
+    if "assign content_text = doc.content | strip_html" in template:
+        errors.append("docs/search-index.json: raw Markdown must be rendered before prose extraction")
+    if "assign h_parts = doc.content" in template:
+        errors.append("docs/search-index.json: headings must be extracted from rendered Markdown")
 
     for path in html:
         relative = path.relative_to(DOCS).as_posix()
@@ -179,12 +192,29 @@ def source_audit() -> List[str]:
     script = SEARCH_SCRIPT.read_text(encoding="utf-8")
     required_script_contracts = {
         "path field": "this.field('path'",
-        "complete corpus iteration": "data.forEach(function (doc) { self.add(doc); });",
+        "complete corpus iteration": "data.forEach(function (doc) {",
+        "normalized indexed content": "content: normalizeQuery(doc.content || '')",
+        "technical notation normalization": "function normalizeTechnicalNotation(value)",
+        "chemical subscript normalization": ".replace(/[₂²]/g, '2')",
+        "engineering unit superscript normalization": ".replace(/[₃³]/g, '3')",
         "punctuation-safe queries": "function normalizeQuery(query)",
     }
     for contract, marker in required_script_contracts.items():
         if marker not in script:
             errors.append(f"docs/assets/js/search.js: missing {contract} contract")
+
+    landing = LANDING_PAGE.read_text(encoding="utf-8")
+    if 'href="search/"' not in landing:
+        errors.append("docs/index.md: landing-page CTA must expose documentation search")
+
+    search_page = SEARCH_PAGE.read_text(encoding="utf-8")
+    required_browse_hubs = {
+        "physical properties": "{{ '/physical_properties/' | relative_url }}",
+        "fluid mechanics": "{{ '/fluidmechanics/' | relative_url }}",
+    }
+    for hub, marker in required_browse_hubs.items():
+        if marker not in search_page:
+            errors.append(f"docs/search.md: missing {hub} browse hub")
 
     if not errors:
         print(
@@ -208,7 +238,21 @@ def generated_site_audit(site: Path) -> List[str]:
     if not isinstance(entries, list):
         return [f"{index_path}: expected a JSON array"]
 
-    expected = set(relative_sources(markdown_files() + content_html_files()))
+    markdown = markdown_files()
+    html = content_html_files()
+    expected = set(relative_sources(markdown + html))
+    heading_sources = set()
+    for path in markdown:
+        try:
+            _, body = parse_front_matter(path)
+        except ValueError:
+            continue
+        if re.search(
+            r"^\s{0,3}#{1,6}\s+\S",
+            markdown_prose(body),
+            flags=re.MULTILINE,
+        ):
+            heading_sources.add(path.relative_to(DOCS).as_posix())
     actual: Dict[str, dict] = {}
     urls: Dict[str, int] = {}
     for position, entry in enumerate(entries):
@@ -226,6 +270,10 @@ def generated_site_audit(site: Path) -> List[str]:
         for field in ("url", "title", "description", "path", "content"):
             if not str(entry.get(field, "")).strip():
                 errors.append(f"search entry {position} ({source or url}): empty {field}")
+        if source in heading_sources and not str(entry.get("headings", "")).strip():
+            errors.append(
+                f"search entry {position} ({source}): empty headings for heading-bearing source"
+            )
 
     missing = sorted(expected - set(actual))
     for source in missing:
