@@ -91,8 +91,8 @@ The finite-difference `NEWTON` route and the final `WEGSTEIN` stream synchroniza
 undamped full-tray sweeps. Each internal vapor or liquid transfer now takes one owned clone of the
 already-flashed tray outlet and installs that same snapshot as the target tray inlet. Because unit
 relaxation never consumes a previous iterate, these sweeps do not allocate per-tray previous-stream
-arrays or create a second cache clone. The unchanged-clone fast path also avoids reflashing the
-snapshot unless an internal-traffic correction is required.
+arrays or create a second cache clone. The one owned snapshot still follows the established
+relaxation and reflash path, preserving downstream tear-state thermodynamic semantics.
 
 Use `getLastAcceleratedFullTraySweepCount()` and
 `getLastAcceleratedInternalStreamTransferCount()` to audit this work. The transfer count equals the
