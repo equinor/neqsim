@@ -125,6 +125,7 @@ The CPA (Cubic Plus Association) hydrate model is the recommended model for syst
 - Accurate for inhibitor systems (MEG, methanol, ethanol)
 - Consistent with CPA mixing rules
 - Validated for North Sea gas compositions
+- Supports explicit electrolyte inventories in gas-aqueous and gas-oil-aqueous phase splits
 
 **Usage:**
 ```java
@@ -134,6 +135,40 @@ fluid.addComponent("water", 0.1);
 fluid.setMixingRule(10);  // CPA mixing rule
 fluid.setHydrateCheck(true);
 ```
+
+#### Electrolyte CPA hydrate equilibrium
+
+Use `SystemElectrolyteCPAstatoil` when the aqueous phase contains explicit ions. Hydrate formation-temperature
+calculations support these material phase configurations:
+
+- gas + aqueous water + salt ions
+- gas + oil + aqueous water + salt ions
+- gas + aqueous water + thermodynamic inhibitor (for example MEG or methanol) + salt ions
+
+The multiphase flash solves the molecular gas-oil-aqueous split on a normalized ion-free basis and then restores the
+conserved ion inventory to the aqueous phase. This keeps ions out of gas and oil while satisfying the component balance
+$z_i = \sum_p \beta_p x_{i,p}$. Salt and organic inhibitor effects enter the hydrate calculation through the water
+fugacity of the converged aqueous phase.
+
+```java
+SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
+fluid.addComponent("methane", 0.75);
+fluid.addComponent("ethane", 0.05);
+fluid.addComponent("propane", 0.03);
+fluid.addComponent("water", 0.12);
+fluid.addComponent("MEG", 0.03);
+fluid.addComponent("Na+", 0.01);
+fluid.addComponent("Cl-", 0.01);
+fluid.setMixingRule(10);
+fluid.setHydrateCheck(true);
+
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+operations.hydrateFormationTemperature();
+double hydrateTemperatureC = fluid.getTemperature("C");
+```
+
+Add C5+ components to the same fluid when a separate oil or condensate phase must be included. The hydrate calculation
+uses guest fugacities from the gas phase and water fugacity from the water-rich aqueous phase.
 
 ### PVTsim Hydrate Model
 
