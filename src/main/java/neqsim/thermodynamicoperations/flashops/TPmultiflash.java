@@ -2452,8 +2452,8 @@ public class TPmultiflash extends TPflash {
    * Finds the active aqueous phase containing the largest material amount of water.
    *
    * <p>
-   * Multiplying water composition by phase fraction prevents a salt-free numerical phase at the beta floor from
-   * being selected ahead of the material brine.
+   * Multiplying water composition by phase fraction prevents a salt-free numerical phase at the beta floor from being
+   * selected ahead of the material brine.
    * </p>
    *
    * @return active aqueous phase index, or {@code -1} when none exists
@@ -2484,8 +2484,8 @@ public class TPmultiflash extends TPflash {
    * Ion-free stability analysis can leave a third gas, oil, or duplicate aqueous phase with a fraction of only a few
    * times {@link neqsim.thermo.ThermodynamicModelSettings#phaseFractionMinimumLimit}. Such a phase is below the
    * incipient-phase seed used by this flash and can make generic aqueous-phase lookup select the wrong liquid. The
-   * material aqueous phase is always retained. Material gas-oil-aqueous topology is preserved, while two aqueous
-   * phases can collapse to one when the second phase is only numerical storage.
+   * material aqueous phase is always retained. Material gas-oil-aqueous topology is preserved, while two aqueous phases
+   * can collapse to one when the second phase is only numerical storage.
    * </p>
    *
    * @return {@code true} when a numerical phase was removed
@@ -2914,8 +2914,8 @@ public class TPmultiflash extends TPflash {
         for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
           ComponentInterface phaseComponent = system.getPhase(phase).getComponent(component);
           phaseComponent.setz(legacyIonicZ[component]);
-          phaseComponent.setx(system.getPhase(phase).getType() == PhaseType.AQUEOUS ? legacyIonicZ[component]
-              : 1.0e-50);
+          phaseComponent
+              .setx(system.getPhase(phase).getType() == PhaseType.AQUEOUS ? legacyIonicZ[component] : 1.0e-50);
         }
       }
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
