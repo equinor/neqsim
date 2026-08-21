@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
 SEARCH_TEMPLATE = DOCS / "search-index.json"
 SEARCH_SCRIPT = DOCS / "assets" / "js" / "search.js"
+SEARCH_PAGE = DOCS / "search.md"
+LANDING_PAGE = DOCS / "index.md"
 NON_CONTENT_HTML_DIRS = {"_includes", "_layouts"}
 NOTEBOOK_LINK_PATTERN = re.compile(
     r"""(?:\[[^\]]*\]\(\s*|href\s*=\s*["'])
@@ -193,11 +195,26 @@ def source_audit() -> List[str]:
         "complete corpus iteration": "data.forEach(function (doc) {",
         "normalized indexed content": "content: normalizeQuery(doc.content || '')",
         "technical notation normalization": "function normalizeTechnicalNotation(value)",
+        "chemical subscript normalization": ".replace(/[₂²]/g, '2')",
+        "engineering unit superscript normalization": ".replace(/[₃³]/g, '3')",
         "punctuation-safe queries": "function normalizeQuery(query)",
     }
     for contract, marker in required_script_contracts.items():
         if marker not in script:
             errors.append(f"docs/assets/js/search.js: missing {contract} contract")
+
+    landing = LANDING_PAGE.read_text(encoding="utf-8")
+    if 'href="search/"' not in landing:
+        errors.append("docs/index.md: landing-page CTA must expose documentation search")
+
+    search_page = SEARCH_PAGE.read_text(encoding="utf-8")
+    required_browse_hubs = {
+        "physical properties": "{{ '/physical_properties/' | relative_url }}",
+        "fluid mechanics": "{{ '/fluidmechanics/' | relative_url }}",
+    }
+    for hub, marker in required_browse_hubs.items():
+        if marker not in search_page:
+            errors.append(f"docs/search.md: missing {hub} browse hub")
 
     if not errors:
         print(
