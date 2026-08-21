@@ -294,8 +294,7 @@ public class TPmultiflash extends TPflash {
    * @return inverse fugacity coefficient, or zero when an ion is excluded from the phase
    */
   private double inverseFugacityCoefficient(int phase, int component) {
-    if (isCoupledReactiveHydrateFlash() && isIon(component)
-        && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+    if (isCoupledReactiveHydrateFlash() && isIon(component) && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
       return 0.0;
     }
     double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
@@ -2596,8 +2595,8 @@ public class TPmultiflash extends TPflash {
 
     double chemicalDeviation = 0.0;
     for (int component = 0; component < numberOfComponents; component++) {
-      chemicalDeviation +=
-          Math.abs(oldComposition[component] - system.getPhase(aqueousPhase).getComponent(component).getx());
+      chemicalDeviation += Math
+          .abs(oldComposition[component] - system.getPhase(aqueousPhase).getComponent(component).getx());
     }
     return chemicalDeviation;
   }
