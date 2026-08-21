@@ -2244,6 +2244,105 @@ public class TPmultiflash extends TPflash {
     return true;
   }
 
+  /**
+   * Restores ions after phase stability has been evaluated on the ion-free molecular fluid.
+   *
+   * <p>
+   * The ion-free flash returns phase fractions on a molecular-feed basis. Adding the conserved ion inventory to the
+   * aqueous phase therefore requires both a phase-fraction transformation and a composition transformation. Assigning
+   * an ion mole fraction directly from its overall composition violates {@code z_i = beta_aqueous x_i} and dilutes the
+   * brine whenever the aqueous phase occupies less than the complete feed. The transformation below preserves every
+   * molecular component, confines ions to one aqueous phase, and keeps both phase fractions and compositions
+   * normalized.
+   * </p>
+   *
+   * @param overallZ overall mole fractions captured before the ion-free flash calculation
+   * @return index of the aqueous phase that received the ion inventory, or {@code -1} when no aqueous phase exists
+   */
+  private int restoreIonsToAqueousPhase(double[] overallZ) {
+    int aqueousPhase = findPreferredAqueousPhase();
+    if (aqueousPhase < 0) {
+      logger.warn("Cannot restore ionic inventory because the flash has no aqueous phase");
+      return -1;
+    }
+
+    double ionicFraction = 0.0;
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+      if (isIon(component)) {
+        ionicFraction += Math.max(overallZ[component], 0.0);
+      }
+    }
+    if (ionicFraction <= 0.0) {
+      return aqueousPhase;
+    }
+    if (ionicFraction >= 1.0) {
+      throw new IllegalStateException("Overall ionic mole fraction must be smaller than one");
+    }
+
+    double molecularFraction = 1.0 - ionicFraction;
+    double ionFreeAqueousBeta = system.getBeta(aqueousPhase);
+    double aqueousBeta = ionFreeAqueousBeta * molecularFraction + ionicFraction;
+    double aqueousMolecularScale = ionFreeAqueousBeta * molecularFraction / aqueousBeta;
+
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      double phaseBeta = system.getBeta(phase);
+      system.setBeta(phase,
+          phase == aqueousPhase ? aqueousBeta : phaseBeta * molecularFraction);
+
+      for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
+        ComponentInterface phaseComponent = system.getPhase(phase).getComponent(component);
+        phaseComponent.setz(overallZ[component]);
+        if (isIon(component)) {
+          phaseComponent.setx(phase == aqueousPhase ? overallZ[component] / aqueousBeta : 1.0e-50);
+        } else if (phase == aqueousPhase) {
+          phaseComponent.setx(phaseComponent.getx() * aqueousMolecularScale);
+        }
+      }
+    }
+
+    system.normalizeBeta();
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      throw new IllegalStateException("Failed to initialize the ion-restored phase inventory", ex);
+    }
+    return aqueousPhase;
+  }
+
+  /**
+   * Finds the water-richest active aqueous phase.
+   *
+   * @return active aqueous phase index, or {@code -1} when none exists
+   */
+  private int findPreferredAqueousPhase() {
+    int aqueousPhase = -1;
+    double highestWaterFraction = -1.0;
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+        continue;
+      }
+      double waterFraction = system.getPhase(phase).hasComponent("water")
+          ? system.getPhase(phase).getComponent("water").getx()
+          : 0.0;
+      if (waterFraction > highestWaterFraction) {
+        highestWaterFraction = waterFraction;
+        aqueousPhase = phase;
+      }
+    }
+    return aqueousPhase;
+  }
+
+  /**
+   * Checks whether a component is ionic in the active thermodynamic model.
+   *
+   * @param component component index
+   * @return {@code true} for charged or explicitly tagged ion components
+   */
+  private boolean isIon(int component) {
+    ComponentInterface feedComponent = system.getPhase(0).getComponent(component);
+    return feedComponent.getIonicCharge() != 0 || feedComponent.isIsIon();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run() {
@@ -2252,23 +2351,51 @@ public class TPmultiflash extends TPflash {
     betaSolveStalled = false;
     // logger.info("Starting multiphase-flash....");
 
-    // For systems with ions, temporarily remove ions before stability analysis
-    // This allows proper oil-water-gas phase separation without ion interference
-    // Ions will be restored to aqueous phase(s) after stability analysis
+    // For systems with ions, temporarily remove ions before stability analysis.
+    // Non-reactive electrolyte systems remain on a normalized molecular-feed basis until the complete multiphase
+    // calculation has converged; the conserved ion inventory is then added back to the aqueous phase.
     // Note: This must be done for ANY system with ions, not just chemical reaction systems
     double[] ionicZ = null;
+    double[] ionFreeOverallZ = null;
     boolean hasIons = system.hasIons();
+    boolean useIonFreeFlash = hasIons && !system.isChemicalSystem();
 
     // Store ion compositions and temporarily remove them for stability analysis
     if (hasIons) {
       ionicZ = new double[system.getPhase(0).getNumberOfComponents()];
+      if (useIonFreeFlash) {
+        ionFreeOverallZ = new double[system.getPhase(0).getNumberOfComponents()];
+      }
+      double ionicFraction = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        if (useIonFreeFlash) {
+          ionFreeOverallZ[i] = system.getPhase(0).getComponent(i).getz();
+        }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0 || system.getPhase(0).getComponent(i).isIsIon()) {
           ionicZ[i] = system.getPhase(0).getComponent(i).getz();
+          ionicFraction += Math.max(ionicZ[i], 0.0);
           // Temporarily set ion z to near-zero for stability analysis
           for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
             system.getPhase(phase).getComponent(i).setz(1e-100);
+            if (useIonFreeFlash) {
+              system.getPhase(phase).getComponent(i).setx(1e-50);
+            }
           }
+        }
+      }
+      if (useIonFreeFlash) {
+        if (ionicFraction >= 1.0) {
+          throw new IllegalStateException("Overall ionic mole fraction must be smaller than one");
+        }
+        double molecularFraction = 1.0 - ionicFraction;
+        for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+          for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
+            if (!isIon(component)) {
+              system.getPhase(phase).getComponent(component)
+                  .setz(ionFreeOverallZ[component] / molecularFraction);
+            }
+          }
+          system.getPhase(phase).normalize();
         }
       }
       try {
@@ -2371,32 +2498,26 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // Restore ions to aqueous phase(s) after stability analysis
-    if (hasIons && ionicZ != null) {
+    // Reactive systems need their ions available while chemical equilibrium is solved. Non-reactive electrolyte
+    // systems stay on the normalized molecular feed until the complete multiphase flash has converged.
+    if (hasIons && !useIonFreeFlash && ionicZ != null) {
       aqueousPhaseNumber = system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if ((system.getPhase(0).getComponent(i).getIonicCharge() != 0 || system.getPhase(0).getComponent(i).isIsIon())
-            && ionicZ[i] > 1e-100) {
-          // Restore z values
+        if (isIon(i) && ionicZ[i] > 1e-100) {
           for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
             system.getPhase(phase).getComponent(i).setz(ionicZ[i]);
-            // Set ions only in aqueous phase, near-zero in others
-            if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
-              system.getPhase(phase).getComponent(i).setx(ionicZ[i]);
-            } else {
-              system.getPhase(phase).getComponent(i).setx(1e-50);
-            }
+            system.getPhase(phase).getComponent(i)
+                .setx(system.getPhase(phase).getType() == PhaseType.AQUEOUS ? ionicZ[i] : 1e-50);
           }
         }
       }
-      // Normalize aqueous phase and reinitialize
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         system.getPhase(phase).normalize();
       }
       try {
         system.init(1);
       } catch (Exception ex) {
-        logger.warn("Ion-restore init failed: " + ex.getMessage());
+        logger.warn("Ion-restore init failed: {}", ex.getMessage());
       }
     }
 
@@ -2746,6 +2867,18 @@ public class TPmultiflash extends TPflash {
       /*
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */
+    }
+
+    if (useIonFreeFlash && ionFreeOverallZ != null) {
+      if (system.getNumberOfPhases() > 1) {
+        setDoubleArrays();
+        for (int refinement = 0; refinement < 50; refinement++) {
+          if (solveBeta() < 1.0e-10) {
+            break;
+          }
+        }
+      }
+      restoreIonsToAqueousPhase(ionFreeOverallZ);
     }
   }
 
