@@ -294,7 +294,8 @@ public class TPmultiflash extends TPflash {
    * @return inverse fugacity coefficient, or zero when an ion is excluded from the phase
    */
   private double inverseFugacityCoefficient(int phase, int component) {
-    if (isCoupledReactiveHydrateFlash() && isIon(component) && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+    if (isCoupledReactiveHydrateFlash() && isIon(component)
+        && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
       return 0.0;
     }
     double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
@@ -2160,12 +2161,17 @@ public class TPmultiflash extends TPflash {
       return; // Already have at most one aqueous phase
     }
 
-    // Find the phase with highest aqueous component content - this will be the true aqueous phase
+    // Hydrate and non-reactive electrolyte flashes select the aqueous phase containing the largest material amount of
+    // aqueous components. Weighting the composition by beta prevents a salt-free numerical phase at the beta floor
+    // from replacing the material brine. Other reactive calculations retain their established composition-only
+    // selection across non-gas phases.
+    boolean useMaterialAqueousInventory = !system.isChemicalSystem() || isCoupledReactiveHydrateFlash();
     int bestAqueousPhase = -1;
-    double maxAqueousContent = 0.0;
+    double maxAqueousInventory = -1.0;
 
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      if (system.getPhase(phase).getType() == PhaseType.GAS) {
+      if ((useMaterialAqueousInventory && system.getPhase(phase).getType() != PhaseType.AQUEOUS)
+          || (!useMaterialAqueousInventory && system.getPhase(phase).getType() == PhaseType.GAS)) {
         continue;
       }
 
@@ -2181,8 +2187,9 @@ public class TPmultiflash extends TPflash {
         }
       }
 
-      if (aqueousContent > maxAqueousContent) {
-        maxAqueousContent = aqueousContent;
+      double aqueousInventory = useMaterialAqueousInventory ? system.getBeta(phase) * aqueousContent : aqueousContent;
+      if (aqueousInventory > maxAqueousInventory) {
+        maxAqueousInventory = aqueousInventory;
         bestAqueousPhase = phase;
       }
     }
@@ -2444,13 +2451,18 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Finds the water-richest active aqueous phase.
+   * Finds the active aqueous phase containing the largest material amount of water.
+   *
+   * <p>
+   * Multiplying water composition by phase fraction prevents a salt-free numerical phase at the beta floor from
+   * being selected ahead of the material brine.
+   * </p>
    *
    * @return active aqueous phase index, or {@code -1} when none exists
    */
   private int findPreferredAqueousPhase() {
     int aqueousPhase = -1;
-    double highestWaterFraction = -1.0;
+    double highestWaterInventory = -1.0;
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       if (system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
         continue;
@@ -2458,12 +2470,54 @@ public class TPmultiflash extends TPflash {
       double waterFraction = system.getPhase(phase).hasComponent("water")
           ? system.getPhase(phase).getComponent("water").getx()
           : 0.0;
-      if (waterFraction > highestWaterFraction) {
-        highestWaterFraction = waterFraction;
+      double waterInventory = system.getBeta(phase) * waterFraction;
+      if (waterInventory > highestWaterInventory) {
+        highestWaterInventory = waterInventory;
         aqueousPhase = phase;
       }
     }
     return aqueousPhase;
+  }
+
+  /**
+   * Removes phases left at the numerical beta floor before ions are restored.
+   *
+   * <p>
+   * Ion-free stability analysis can leave a third gas, oil, or duplicate aqueous phase with a fraction of only a few
+   * times {@link neqsim.thermo.ThermodynamicModelSettings#phaseFractionMinimumLimit}. Such a phase is below the
+   * incipient-phase seed used by this flash and can make generic aqueous-phase lookup select the wrong liquid. The
+   * material aqueous phase is always retained. Material gas-oil-aqueous topology is preserved, while two aqueous
+   * phases can collapse to one when the second phase is only numerical storage.
+   * </p>
+   *
+   * @return {@code true} when a numerical phase was removed
+   */
+  private boolean removeNumericalTracePhasesForIonicFlash() {
+    if (!system.hasIons() || system.getNumberOfPhases() <= 1) {
+      return false;
+    }
+
+    int preferredAqueousPhase = findPreferredAqueousPhase();
+    boolean removedPhase = false;
+    for (int phase = system.getNumberOfPhases() - 1; phase >= 0 && system.getNumberOfPhases() > 1; phase--) {
+      boolean duplicateAqueousPhase = phase != preferredAqueousPhase
+          && system.getPhase(phase).getType() == PhaseType.AQUEOUS;
+      if ((!duplicateAqueousPhase && system.getNumberOfPhases() <= 2) || phase == preferredAqueousPhase
+          || system.getBeta(phase) >= 100.0 * phaseFractionMinimumLimit) {
+        continue;
+      }
+      system.removePhaseKeepTotalComposition(phase);
+      removedPhase = true;
+      if (phase < preferredAqueousPhase) {
+        preferredAqueousPhase--;
+      }
+    }
+
+    if (removedPhase) {
+      system.normalizeBeta();
+      system.init(1);
+    }
+    return removedPhase;
   }
 
   /**
@@ -2595,8 +2649,8 @@ public class TPmultiflash extends TPflash {
 
     double chemicalDeviation = 0.0;
     for (int component = 0; component < numberOfComponents; component++) {
-      chemicalDeviation += Math
-          .abs(oldComposition[component] - system.getPhase(aqueousPhase).getComponent(component).getx());
+      chemicalDeviation +=
+          Math.abs(oldComposition[component] - system.getPhase(aqueousPhase).getComponent(component).getx());
     }
     return chemicalDeviation;
   }
@@ -2706,11 +2760,14 @@ public class TPmultiflash extends TPflash {
     // calculation has converged. Reactive systems restore the ions after phase discovery and then couple the
     // reaction-adjusted species inventory to the phase-fraction solve.
     double[] ionFreeOverallZ = null;
+    double[] legacyIonicZ = null;
     boolean hasIons = system.hasIons();
-    boolean useIonFreeFlash = hasIons;
+    boolean useIonFreeFlash = hasIons && (!system.isChemicalSystem() || isCoupledReactiveHydrateFlash());
 
-    // Store ion compositions and temporarily remove them for stability analysis
-    if (hasIons) {
+    // Hydrate and non-reactive electrolyte flashes stay on a normalized molecular basis until conservative ion
+    // restoration. Other reactive operations retain the established ion stripping/restoration path because their
+    // component inventories may be intentionally changed by specialized operations such as salt saturation.
+    if (useIonFreeFlash) {
       ionFreeOverallZ = new double[system.getPhase(0).getNumberOfComponents()];
       double ionicFraction = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -2735,6 +2792,21 @@ public class TPmultiflash extends TPflash {
           }
         }
         system.getPhase(phase).normalize();
+      }
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ion-stripping init failed: " + ex.getMessage());
+      }
+    } else if (hasIons) {
+      legacyIonicZ = new double[system.getPhase(0).getNumberOfComponents()];
+      for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+        if (isIon(component)) {
+          legacyIonicZ[component] = system.getPhase(0).getComponent(component).getz();
+          for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+            system.getPhase(phase).getComponent(component).setz(1.0e-100);
+          }
+        }
       }
       try {
         system.init(1);
@@ -2836,8 +2908,30 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // Reactive systems require the complete ionic inventory before chemical equilibrium is solved. The conservative
-    // restore transforms the ion-free phase fractions back to the full species basis.
+    if (hasIons && !useIonFreeFlash && legacyIonicZ != null) {
+      for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+        if (!isIon(component) || legacyIonicZ[component] <= 1.0e-100) {
+          continue;
+        }
+        for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+          ComponentInterface phaseComponent = system.getPhase(phase).getComponent(component);
+          phaseComponent.setz(legacyIonicZ[component]);
+          phaseComponent.setx(system.getPhase(phase).getType() == PhaseType.AQUEOUS ? legacyIonicZ[component]
+              : 1.0e-50);
+        }
+      }
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        system.getPhase(phase).normalize();
+      }
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ion-restore init failed: " + ex.getMessage());
+      }
+    }
+
+    // Reactive hydrate systems require the complete ionic inventory before chemical equilibrium is solved. The
+    // conservative restore transforms the ion-free phase fractions back to the full species basis.
     if (system.isChemicalSystem() && useIonFreeFlash && ionFreeOverallZ != null) {
       aqueousPhaseNumber = restoreIonsToAqueousPhase(ionFreeOverallZ);
       if (isCoupledReactiveHydrateFlash()) {
@@ -3217,7 +3311,16 @@ public class TPmultiflash extends TPflash {
     }
 
     if (useIonFreeFlash && !system.isChemicalSystem() && ionFreeOverallZ != null) {
+      removeNumericalTracePhasesForIonicFlash();
       if (system.getNumberOfPhases() > 1) {
+        setDoubleArrays();
+        for (int refinement = 0; refinement < 50; refinement++) {
+          if (solveBeta() < 1.0e-10) {
+            break;
+          }
+        }
+      }
+      if (removeNumericalTracePhasesForIonicFlash() && system.getNumberOfPhases() > 1) {
         setDoubleArrays();
         for (int refinement = 0; refinement < 50; refinement++) {
           if (solveBeta() < 1.0e-10) {
