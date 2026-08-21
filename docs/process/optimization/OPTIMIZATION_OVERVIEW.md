@@ -37,6 +37,7 @@ This document provides a high-level introduction to the process optimization cap
 | Optimize full multi-area process models | `ProcessModelSimulationEvaluator` | Use area-qualified `ProcessAutomation` addresses and installed `CapacityConstraint` limits |
 | Ramp producers until a full facility reaches a bottleneck | `ProcessModelThroughputOptimizer` | Use producer mappings, installed capacity tables, and exported case traces |
 | Compare one installed capacity alternative with the same search policy | `ProcessModelDebottleneckStudy` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#paired-installed-capacity-alternatives) |
+| Rank independently documented capacity alternatives on one compatible metric | `ProcessModelDebottleneckRanking` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#ranking-independent-debottleneck-alternatives) |
 | Solve constrained NLP (equality + inequality) | `SQPoptimizer` | [SQP Optimizer](sqp_optimizer.md) |
 | Calibrate model parameters to data | `BatchParameterEstimator` | [Data Reconciliation and Steady-State Detection](data-reconciliation.md) |
 | Load optimization config from YAML/JSON | `ProductionOptimizationSpecLoader` | [YAML Spec Format](#yaml-specification-files) |
@@ -216,6 +217,7 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 | "Trade off throughput vs power consumption" | `ProductionOptimizer.optimizePareto()` | Pareto multi-objective |
 | "Increase several producers until the full facility reaches a bottleneck" | `ProcessModelThroughputOptimizer` | Maps producers, loads installed capacities, and records the active bottleneck per case |
 | "Quantify one documented equipment expansion against the installed case" | `ProcessModelDebottleneckStudy` | Pairs identical searches, metrics, evidence, and state recovery |
+| "Rank several independently evaluated equipment alternatives" | `ProcessModelDebottleneckRanking` | Requires one exact metric definition and one identical deterministic baseline; rejects unlike evidence |
 | "Evaluate 100 scenarios in parallel" | `ProductionOptimizer` | Has parallel evaluation |
 | "Calibrate model to match field data" | `BatchParameterEstimator` | Levenberg-Marquardt for data fitting |
 
@@ -228,6 +230,11 @@ Use `ProcessModelThroughputOptimizer` for large fixed-equipment studies such as 
 Use `ProcessModelSimulationEvaluator` directly when you need a lower-level black-box bridge to SciPy, NLopt, SQP, Pyomo, or another external optimizer.
 
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
+
+Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives
+must be ordered by one comparable production, power, energy, emissions, or screening-economic
+delta. The policy requires exact units and provenance plus an identical deterministic baseline. It
+does not combine unlike metrics, infer a shadow price, or provide investment approval.
 
 The evaluator is deliberately a black-box bridge. It keeps the full plant model intact, lets external optimizers pass a vector of decision variables, runs `ProcessModel.run()`, and returns objective values, constraint margins, feasibility, and the active bottleneck.
 

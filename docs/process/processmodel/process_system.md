@@ -1068,28 +1068,47 @@ System.out.println("Product rate: " + product.getFlowRate("kg/hr") + " kg/hr");
 
 ## Saving and Loading
 
-ProcessSystem supports saving and loading to/from compressed `.neqsim` files and JSON state files for version control.
+`ProcessSystem` supports compressed full-object `.neqsim` archives and selective lifecycle JSON
+state. These formats are not interchangeable.
 
 ```java
-// Save to compressed .neqsim file (recommended)
-process.saveToNeqsim("my_process.neqsim");
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.lifecycle.ProcessSystemState;
 
-// Load (auto-runs after loading)
+// Full object graph. Check the boolean result.
+if (!process.saveToNeqsim("my_process.neqsim")) {
+    throw new IllegalStateException("Could not save process");
+}
+
+// The convenience loader runs a restored process and returns null on failure.
 ProcessSystem loaded = ProcessSystem.loadFromNeqsim("my_process.neqsim");
+if (loaded == null) {
+    throw new IllegalStateException("Could not load process");
+}
 
-// Auto-detect format by extension
-process.saveAuto("my_process.neqsim");  // Compressed XStream XML
-process.saveAuto("my_process.json");    // JSON state export
-
-// JSON state for version control
+// Selective JSON state for review, versioning, or a matching model definition.
 ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
 state.setVersion("1.0.0");
 state.saveToFile("my_process_v1.0.0.json");
 ```
 
-For full documentation on serialization options, see [Process Serialization Guide](../../simulation/process_serialization).
+`ProcessSystem.saveAuto()` writes `.neqsim` archives, `.json` lifecycle state, or legacy binary
+serialization for another extension. `ProcessSystem.loadAuto()` does not load lifecycle JSON: it
+loads `.neqsim` through `loadFromNeqsim()` and treats every other extension as legacy binary. Load
+JSON with `ProcessSystemState.loadFromFile()`, validate it, and apply it to a compatible pre-built
+process.
+
+Full-object XStream archives are a trusted-input format. A failed save can leave a partial file, so
+save to a temporary path, check the return value, reopen and run the temporary archive, and only
+then replace the last verified checkpoint. The embedded-host portability regression includes a
+recycle-bearing process; report any new `No converter available` failure with a minimal equipment
+graph instead of masking it with JVM `--add-opens` flags.
+
+For complete format selection, Python behavior, compatibility limits, and recovery steps, see the
+[Process Serialization Guide](../../simulation/process_serialization).
 
 ---
+
 
 ## Related Documentation
 
