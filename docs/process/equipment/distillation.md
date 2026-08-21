@@ -272,8 +272,9 @@ line-search diagnostics are evidence about globalization, not an independent con
 
 The `NEWTON` finite-difference sweeps and final `WEGSTEIN` synchronization always use unit
 relaxation. They therefore install one owned clone of each already-flashed internal outlet directly
-as the target tray inlet, without previous-stream arrays, a second cache clone, or an unchanged
-reflash unless traffic correction is required. Audit the work with
+as the target tray inlet, without previous-stream arrays or a second cache clone. The owned
+snapshot still follows the established relaxation and reflash path, preserving downstream
+tear-state thermodynamic semantics. Audit the work with
 `getLastAcceleratedFullTraySweepCount()` and
 `getLastAcceleratedInternalStreamTransferCount()`. The counters describe attempted accelerator
 work, survive accepted `AUTO` candidate adoption, and can remain nonzero if a coordinated fallback
