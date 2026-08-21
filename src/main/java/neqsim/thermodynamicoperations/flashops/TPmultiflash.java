@@ -294,8 +294,7 @@ public class TPmultiflash extends TPflash {
    * @return inverse fugacity coefficient, or zero when an ion is excluded from the phase
    */
   private double inverseFugacityCoefficient(int phase, int component) {
-    if (isCoupledReactiveHydrateFlash() && isIon(component)
-        && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+    if (isCoupledReactiveHydrateFlash() && isIon(component) && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
       return 0.0;
     }
     double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
@@ -2162,9 +2161,8 @@ public class TPmultiflash extends TPflash {
     }
 
     // Hydrate and non-reactive electrolyte flashes select the aqueous phase containing the largest material amount of
-    // aqueous components. Weighting the composition by beta prevents a salt-free numerical phase at the beta floor
-    // from replacing the material brine. Other reactive calculations retain their established composition-only
-    // selection across non-gas phases.
+    // aqueous components. Weighting by beta prevents a salt-free numerical phase at the phase-fraction floor from
+    // replacing the material brine. Other reactive operations retain their established composition-only selection.
     boolean useMaterialAqueousInventory = !system.isChemicalSystem() || isCoupledReactiveHydrateFlash();
     int bestAqueousPhase = -1;
     double maxAqueousInventory = -1.0;
@@ -2649,8 +2647,8 @@ public class TPmultiflash extends TPflash {
 
     double chemicalDeviation = 0.0;
     for (int component = 0; component < numberOfComponents; component++) {
-      chemicalDeviation +=
-          Math.abs(oldComposition[component] - system.getPhase(aqueousPhase).getComponent(component).getx());
+      chemicalDeviation += Math
+          .abs(oldComposition[component] - system.getPhase(aqueousPhase).getComponent(component).getx());
     }
     return chemicalDeviation;
   }
