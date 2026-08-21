@@ -99,6 +99,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     private final String effectivePeriod;
     private final RankingDirection direction;
     private final double tieTolerance;
+    private final double baselineRelativeTolerance;
     private final boolean alternativeConfidenceFloorSet;
     private final double minimumAlternativeConfidence;
     private final boolean metricConfidenceFloorSet;
@@ -119,13 +120,15 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
      * @param effectivePeriod exact metric effective period
      * @param direction direction in which the paired delta improves
      * @param tieTolerance non-negative tie tolerance in the metric unit
+     * @param baselineRelativeTolerance dimensionless relative tolerance in [0, 1] for repeated
+     *        simulator values in an otherwise identical baseline
      * @param minimumAlternativeConfidence confidence floor in [0, 1], or NaN when unset
      * @param minimumMetricConfidence confidence floor in [0, 1], or NaN when unset
      */
     public RankingPolicy(String id, String name, String provenance, String metricId, String metricName,
         MetricKind metricKind, String unit, String basis, String metricProvenance, String effectivePeriod,
-        RankingDirection direction, double tieTolerance, double minimumAlternativeConfidence,
-        double minimumMetricConfidence) {
+        RankingDirection direction, double tieTolerance, double baselineRelativeTolerance,
+        double minimumAlternativeConfidence, double minimumMetricConfidence) {
       this.id = requireText(id, "Ranking policy identifier");
       this.name = requireText(name, "Ranking policy name");
       this.provenance = requireText(provenance, "Ranking policy provenance");
@@ -147,6 +150,11 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
         throw new IllegalArgumentException("Ranking tie tolerance must be finite and non-negative");
       }
       this.tieTolerance = tieTolerance;
+      if (!isFinite(baselineRelativeTolerance) || baselineRelativeTolerance < 0.0
+          || baselineRelativeTolerance > 1.0) {
+        throw new IllegalArgumentException("Baseline relative tolerance must be finite and in [0, 1]");
+      }
+      this.baselineRelativeTolerance = baselineRelativeTolerance;
       alternativeConfidenceFloorSet = !Double.isNaN(minimumAlternativeConfidence);
       this.minimumAlternativeConfidence = validateConfidence(minimumAlternativeConfidence,
           "Minimum alternative confidence");
@@ -212,6 +220,11 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     /** @return tie tolerance in the ranking metric unit */
     public double getTieTolerance() {
       return tieTolerance;
+    }
+
+    /** @return dimensionless relative tolerance for repeated baseline simulator values */
+    public double getBaselineRelativeTolerance() {
+      return baselineRelativeTolerance;
     }
 
     /** @return true when an alternative-confidence floor is enforced */
@@ -479,12 +492,13 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       if (draft.status == CandidateStatus.QUALIFIED) {
         if (reference == null) {
           reference = new BaselineReference(draft.studyResult.getBaseline(), draft.baselineMetric);
-          draft.diagnostics.add("Established the exact deterministic portfolio baseline");
+          draft.diagnostics.add("Established the deterministic portfolio baseline with relative numeric tolerance "
+              + policy.getBaselineRelativeTolerance());
         } else if (!baselineMatches(reference, draft.studyResult.getBaseline(), draft.baselineMetric)) {
           draft.status = CandidateStatus.BASELINE_INCOMPATIBLE;
           draft.delta = Double.NaN;
-          draft.diagnostics.add("Baseline search, parameters, metric, objectives, or constraints differ from the "
-              + "portfolio reference baseline");
+          draft.diagnostics.add("Baseline search, parameters, metric metadata, or simulator values differ from the "
+              + "portfolio reference baseline beyond relative tolerance " + policy.getBaselineRelativeTolerance());
         }
       }
       drafts.add(draft);
@@ -634,7 +648,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     return metadataMatches(left) && metadataMatches(right) && left.getStatus() == right.getStatus()
         && left.isRequired() == right.isRequired() && left.hasConfidence() == right.hasConfidence()
         && (!left.hasConfidence() || bitsEqual(left.getConfidence(), right.getConfidence()))
-        && bitsEqual(left.getValue(), right.getValue());
+        && relativeEqual(left.getValue(), right.getValue());
   }
 
   private boolean objectivesEqual(List<ObjectiveEvidence> left, List<ObjectiveEvidence> right) {
@@ -646,7 +660,8 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       ObjectiveEvidence b = right.get(index);
       if (a.getIndex() != b.getIndex() || !a.getName().equals(b.getName()) || a.getDirection() != b.getDirection()
           || !a.getUnit().equals(b.getUnit()) || !bitsEqual(a.getWeight(), b.getWeight())
-          || !bitsEqual(a.getRawValue(), b.getRawValue()) || !bitsEqual(a.getMinimizerValue(), b.getMinimizerValue())) {
+          || !relativeEqual(a.getRawValue(), b.getRawValue())
+          || !relativeEqual(a.getMinimizerValue(), b.getMinimizerValue())) {
         return false;
       }
     }
@@ -661,8 +676,8 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       ConstraintEvidence a = left.get(index);
       ConstraintEvidence b = right.get(index);
       if (a.getIndex() != b.getIndex() || !a.getName().equals(b.getName()) || a.getType() != b.getType()
-          || !a.getUnit().equals(b.getUnit()) || a.isHard() != b.isHard() || !bitsEqual(a.getValue(), b.getValue())
-          || !bitsEqual(a.getMargin(), b.getMargin())) {
+          || !a.getUnit().equals(b.getUnit()) || a.isHard() != b.isHard()
+          || !relativeEqual(a.getValue(), b.getValue()) || !relativeEqual(a.getMargin(), b.getMargin())) {
         return false;
       }
     }
@@ -765,6 +780,17 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
 
   private static boolean bitsEqual(double left, double right) {
     return Double.doubleToLongBits(left) == Double.doubleToLongBits(right);
+  }
+
+  private boolean relativeEqual(double left, double right) {
+    if (bitsEqual(left, right)) {
+      return true;
+    }
+    if (!isFinite(left) || !isFinite(right)) {
+      return false;
+    }
+    double scale = Math.max(Math.abs(left), Math.abs(right));
+    return scale > 0.0 && Math.abs(left - right) <= policy.getBaselineRelativeTolerance() * scale;
   }
 
   private static boolean isFinite(double value) {

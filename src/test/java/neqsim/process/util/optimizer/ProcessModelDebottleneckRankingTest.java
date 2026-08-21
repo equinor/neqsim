@@ -79,7 +79,7 @@ class ProcessModelDebottleneckRankingTest {
         .evaluate();
     assertOriginalStateRestored(fixture);
 
-    ProcessModelDebottleneckRanking ranking = createProductionRanking(0.0, 0.50, 0.90);
+    ProcessModelDebottleneckRanking ranking = createProductionRanking(1.0e-8, 0.50, 0.90);
     RankingResult first = ranking.rank(Arrays.asList(result1100, result1150, result1200));
 
     assertEquals(RankingOutcome.COMPLETED, first.getOutcome());
@@ -168,7 +168,7 @@ class ProcessModelDebottleneckRankingTest {
     RankingPolicy policy = new RankingPolicy("production-delta", "Production delta ranking",
         "synthetic deterministic portfolio policy", "production", "Feed production", MetricKind.PRODUCTION, "kg/hr",
         "wet feed mass rate", "NeqSim stream result", "single steady state", RankingDirection.MAXIMIZE, tieTolerance,
-        minimumAlternativeConfidence, minimumMetricConfidence);
+        1.0e-8, minimumAlternativeConfidence, minimumMetricConfidence);
     return new ProcessModelDebottleneckRanking("separator-portfolio", "Separator alternatives portfolio",
         "synthetic deterministic portfolio", policy);
   }

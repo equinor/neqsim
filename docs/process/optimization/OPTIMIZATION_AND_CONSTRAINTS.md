@@ -849,7 +849,8 @@ ProcessModelDebottleneckRanking.RankingPolicy productionPolicy =
         "NeqSim stream result",
         "single steady state",
         ProcessModelDebottleneckRanking.RankingDirection.MAXIMIZE,
-        0.0,
+        1.0e-8,
+        1.0e-8,
         0.5,
         0.9);
 
@@ -869,15 +870,18 @@ List<ProcessModelDebottleneckRanking.CandidateEvidence> rejected =
 ```
 
 The policy above requires exact metric id, name, kind, unit, basis, provenance, and effective
-period. The two confidence floors apply separately to the documented capacity alternative and the
-baseline/alternative metric evidence; use `Double.NaN` only when a confidence floor is deliberately
-unset. A submitted study is rankable only when it:
+period. The first tolerance is in `kg/hr` for ranking ties. The second is dimensionless and applies
+only to repeated finite simulator values from an otherwise identical baseline; metadata and selected
+parameter values still match exactly. The two confidence floors apply separately to the documented
+capacity alternative and the baseline/alternative metric evidence; use `Double.NaN` only when a
+confidence floor is deliberately unset. A submitted study is rankable only when it:
 
 - completed both scenarios and independently verified convergence and feasibility;
 - restored the complete installed-capacity state and reconverged the pre-study process state;
 - supplies a finite `alternative - baseline` delta for the declared metric; and
-- reproduces the reference baseline's search identity/provenance, selected parameter vector,
-  ranking metric, objective rows, and constraint rows exactly.
+- reproduces the reference baseline's search identity/provenance, selected parameter vector and
+  evidence schema exactly, with finite metric/objective/constraint values inside the declared
+  dimensionless relative tolerance.
 
 The first otherwise-qualified submission establishes the baseline reference. This deliberately
 strict comparison prevents alternatives based on a changed candidate set, process configuration,

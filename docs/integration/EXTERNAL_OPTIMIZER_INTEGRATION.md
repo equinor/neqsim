@@ -1091,7 +1091,8 @@ policy = Ranking.RankingPolicy(
     "NeqSim stream result",
     "single steady state",
     Ranking.RankingDirection.MAXIMIZE,
-    0.0,
+    1.0e-8,
+    1.0e-8,
     0.5,
     0.9,
 )
@@ -1335,7 +1336,7 @@ on `ProcessSimulationEvaluator`.
 
 | Method | Description |
 |--------|-------------|
-| `RankingPolicy(...)` | Exact single-metric identity, unit, basis, provenance, period, direction, tie tolerance, and optional confidence floors |
+| `RankingPolicy(...)` | Exact single-metric identity, unit, basis, provenance, period and direction; in-unit tie tolerance; dimensionless repeated-baseline relative tolerance; optional confidence floors |
 | `rank(List<StudyResult>)` | Fail-closed qualification, exact-baseline comparison, deterministic ordering, and competition ranks |
 | `RankingResult.getRankedCandidates()` | Compatible candidates in deterministic rank order with their complete paired-study evidence |
 | `RankingResult.getRejectedCandidates()` | Incompatible studies with status and diagnostics; no synthetic normalized score |
@@ -1363,4 +1364,3 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
-
