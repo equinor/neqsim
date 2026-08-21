@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-08-20 — Gas-turbine water-wash interval planning and permanent-wash business case
+**Type:** E (Feature)
+**Keywords:** gas turbine, compressor fouling, water wash, on-line wash, crank wash, corrected efficiency, degradation, wash interval, heat rate, fuel gas, CO2 tax, payback, GasTurbineWashPlanner, GasTurbineDegradation
+**Solution:** `neqsim.process.equipment.powergeneration.gasturbine.GasTurbineWashPlanner`, `GasTurbineDegradation.onlineWash(double)`, `GasTurbineWashPlannerTest`
+**Notes:** Driven by an operational action asking whether to resume water washing of an export-compressor gas-turbine driver and install a permanent wash arrangement. `GasTurbineDegradation` previously modelled a wash only as a full reset, so an on-line wash (which recovers ~30-50 %) could not be represented, and there was no path from a plant's trended "corrected turbine efficiency" KPI to a wash interval. The planner carries the steady-state sawtooth with partial recovery (`L0 = (1-e)rT/e`), integrates the extra-fuel fraction `1/(1-L)-1` over the cycle instead of evaluating it at the mean loss, prices fuel/CO2/wash/outage, optimises the interval and returns the payback of a permanent installation; `lossRateFromCorrectedEfficiencyTrend` is the KPI-to-model bridge. Two gotchas worth remembering: the outage/deferment term dominates any off-line crank-wash case, so report the payback excluding it as the headline; and an off-line optimum that lands on the scan upper bound means annual crank washing is already correct and on-line washing is the actual lever. Applied in a private task folder (redacted) where a measured degradation of 0.24 pp of corrected efficiency per 1000 fired hours and a measured wash recovery of 1.75 pp on a 22 MW driver were converted, via `GasTurbineUnit` and `Standard_ISO6976`, into ~1 MSm3/yr of fuel gas and ~2100 t CO2/yr.
+
 ### 2026-08-09 — Expose Naphtali-Sandholm tray K-value convergence work
 **Type:** E (Feature)
 **Keywords:** distillation, Naphtali-Sandholm, MESH, fugacity, K-value, convergence, diagnostics, telemetry

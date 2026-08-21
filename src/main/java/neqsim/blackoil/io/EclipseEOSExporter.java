@@ -385,11 +385,14 @@ public final class EclipseEOSExporter {
 
     // Write DENSITY keyword
     if (config.includeDensity) {
+      double finiteOilDensity = finitePositive(rhoOilSc) ? rhoOilSc : 800.0;
+      double finiteWaterDensity = finitePositive(rhoWaterSc) ? rhoWaterSc : 1000.0;
+      double finiteGasDensity = finitePositive(rhoGasSc) ? rhoGasSc : 1.2;
       bw.write("-- Stock tank densities at standard conditions\n");
       bw.write("-- Oil density, Water density, Gas density (" + rhoUnit + ")\n");
       bw.write("DENSITY\n");
-      bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f /\n\n", rhoOilSc * rhoFactor, rhoWaterSc * rhoFactor,
-          rhoGasSc * rhoFactor));
+      bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f /\n\n", finiteOilDensity * rhoFactor,
+          finiteWaterDensity * rhoFactor, finiteGasDensity * rhoFactor));
     }
 
     // Generate pressure points for table
@@ -397,7 +400,7 @@ public final class EclipseEOSExporter {
     List<Double> pressurePoints = generateTablePressures(bubblePoint, config);
 
     // Write PVTO keyword (live oil table)
-    if (config.includePVTO) {
+    if (config.includePVTO && hasFiniteOilTable(pvt, pressurePoints)) {
       bw.write("-- Live Oil PVT Table\n");
       bw.write("-- Rs (" + rsUnit + "), P (" + pUnit + "), Bo (RM3/SM3), Viscosity (" + viscUnit + ")\n");
       bw.write("PVTO\n");
@@ -436,7 +439,7 @@ public final class EclipseEOSExporter {
     }
 
     // Write PVTG keyword (wet gas table)
-    if (config.includePVTG) {
+    if (config.includePVTG && hasFiniteGasTable(pvt, pressurePoints)) {
       bw.write("-- Wet Gas PVT Table\n");
       bw.write("-- P (" + pUnit + "), Rv (" + rsUnit + "), Bg (RM3/SM3), Viscosity (" + viscUnit + ")\n");
       bw.write("PVTG\n");
@@ -446,7 +449,7 @@ public final class EclipseEOSExporter {
         double bg = pvt.Bg(p);
         double muG = pvt.mu_g(p) * viscFactor;
 
-        if (!Double.isNaN(bg) && bg > 0) {
+        if (finitePositive(rv) && finitePositive(bg) && finitePositive(muG)) {
           bw.write(String.format(Locale.US, "  %.4f  %.8f  %.8f  %.8f /\n", p * pFactor, rv, bg, muG));
         }
       }
@@ -483,6 +486,49 @@ public final class EclipseEOSExporter {
     }
 
     bw.flush();
+  }
+
+  /**
+   * Check whether every pressure required by the nested PVTO representation has finite oil properties.
+   *
+   * @param pvt black-oil table
+   * @param pressurePoints export pressure points
+   * @return true when a complete finite PVTO table can be written
+   */
+  private static boolean hasFiniteOilTable(BlackOilPVTTable pvt, List<Double> pressurePoints) {
+    for (Double pressure : pressurePoints) {
+      if (!Double.isFinite(pvt.Rs(pressure)) || !finitePositive(pvt.Bo(pressure))
+          || !finitePositive(pvt.mu_o(pressure))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Check whether at least one finite wet-gas row is available.
+   *
+   * @param pvt black-oil table
+   * @param pressurePoints export pressure points
+   * @return true when PVTG has at least one finite row
+   */
+  private static boolean hasFiniteGasTable(BlackOilPVTTable pvt, List<Double> pressurePoints) {
+    for (Double pressure : pressurePoints) {
+      if (Double.isFinite(pvt.Rv(pressure)) && finitePositive(pvt.Bg(pressure)) && finitePositive(pvt.mu_g(pressure))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Test whether a value is finite and strictly positive.
+   *
+   * @param value value to inspect
+   * @return true for finite positive values
+   */
+  private static boolean finitePositive(double value) {
+    return Double.isFinite(value) && value > 0.0;
   }
 
   private static List<Double> generateTablePressures(double bubblePoint, ExportConfig config) {

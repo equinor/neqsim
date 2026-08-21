@@ -153,6 +153,30 @@ ops.calcPTphaseEnvelope();              // Phase envelope
 | Flow rate | — | `setFlowRate(50000.0, "kg/hr")` |
 | Getting temp | Returns **Kelvin** | `getTemperature() - 273.15` for °C |
 
+### Non-obvious return units
+
+| Call | Returns | Trap |
+|------|---------|------|
+| `Standard_ISO6976(sys, 15, 15, "volume").getValue("GCV")` | **kJ/Sm³** (~40 000) | Dividing by 1e6 gives a nonsense 0.04 MJ/Sm³ — divide by **1e3** |
+| `Standard_ISO6976(...).getValue("WI")` | **kJ/Sm³** | Same |
+| `SURFCostEstimator.setContingencyPct(x)` | — | Takes a **fraction** (0.35), not a percent, despite the name. Same for `WellCostEstimator` |
+| `Cooler.getDuty()` | **W** | Divide by 1e3 for kW |
+
+### Dense-phase CO₂ needs GERG-2008, not a cubic
+
+Benchmarked against CoolProp (Span-Wagner) — density deviation at 40 °C / 100 bara and
+100 °C / 200 bara:
+
+| System class | Deviation |
+|---|---|
+| `SystemSrkEos` | −14.1 % / −7.3 % |
+| `SystemPrEos`, `SystemPrEos1978`, `SystemUMRPRUMCEos` | −12.4 % / −6.1 % |
+| `SystemSrkCPAstatoil` | −17.5 % / −10.3 % |
+| **`SystemGERG2008Eos`** | **+0.01 % / +0.02 %** |
+
+Use `SystemGERG2008Eos` for any CO₂ compression, injection or transport duty. Cubics are
+acceptable for the gas-phase part of the train but not near or above the critical density.
+
 ## Process Equipment Patterns
 
 ### Stream
@@ -1055,6 +1079,27 @@ pipe.setFormationTemperatureGradient(4.0, -0.03, "C"); // 4°C top, -30°C/km (i
 pipe.run();
 ```
 
+#### CRITICAL: set the overall heat-transfer coefficient explicitly
+
+Without `setUseOverallHeatTransferCoefficient(true)` the pipe behaves as if `U` were
+infinite: the outlet equilibrates to the ambient / formation temperature regardless of
+length, rate or insulation. On a 1040 m gas tubing string this puts the **wellhead at
+seabed temperature** (5 °C instead of ~51 °C), which silently destroys any hydrate,
+cooldown or arrival-temperature screening built on top of it.
+
+```java
+pipe.setUseOverallHeatTransferCoefficient(true);
+pipe.setHeatTransferCoefficient(15.0);   // W/m2K
+```
+
+Screening values: cased and cemented well in formation ~15 W/m²K; uninsulated subsea
+carbon-steel flowline ~20 W/m²K; wet-insulated flowline ~5 W/m²K. Measured effect on a
+10 km, 0.30 m line with a 40 °C inlet and 6 °C seabed at 4 MSm³/d: default 5.7 °C outlet,
+`U = 20` gives 7.6 °C, `U = 5` gives 21.7 °C.
+
+`setAdiabatic(true)` is **not** a substitute — it currently has no effect on the outlet
+temperature.
+
 ### CO2FlowCorrections (Static Utility)
 
 ```java
@@ -1145,6 +1190,27 @@ double[] cricondenBar = envelope.getCricondenBar();    // [T_K, P_bara, 0]
 double[] cricondenTherm = envelope.getCricondenTherm(); // [T_K, P_bara, 0]
 double critT = envelope.getCriticalTemperature();       // Kelvin
 double critP = envelope.getCriticalPressure();          // bara
+```
+
+### CRITICAL: `dewPointPressureFlash()` finds the wrong branch for a gas condensate
+
+For a lean gas condensate `ops.dewPointPressureFlash()` converges on the **lower**
+(normal) dew point — often a fraction of a bar — not the retrograde upper dew point that
+matters for reservoir and flowline work. To get the retrograde branch, walk the pressure
+down from above the cricondenbar until a second phase appears, then bisect:
+
+```java
+// pseudo: n_phases(p) = TPflash at (t, p) then getNumberOfPhases()
+double pHi = 900.0, pLo = Double.NaN;
+for (double p = 900.0; p > 50.0; p -= 10.0) {
+  if (nPhases(fluid, tC, p) > 1) { pLo = p; break; }
+  pHi = p;
+}
+while (pHi - pLo > 0.05) {                      // bisect
+  double mid = 0.5 * (pHi + pLo);
+  if (nPhases(fluid, tC, mid) > 1) { pLo = mid; } else { pHi = mid; }
+}
+double retrogradeDewPointBara = 0.5 * (pHi + pLo);
 ```
 
 ### CRITICAL: Branch Classification Bug with bubblePointFirst=true

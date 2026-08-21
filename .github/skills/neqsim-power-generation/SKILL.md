@@ -239,12 +239,51 @@ with `ProcessSystem` and link to `Compressor.getPower()` via the
 | `GasTurbineCatalog` | Loads the bundled `gas_turbine_catalog.csv` (14 aero + industrial models: LM2500, LM2500PLUS_G4, LM6000PF/PG, RB211_6562, Trent 60, SGT-700/750, Centaur 50, Taurus 60/70, Mars 100, Titan 130/250) |
 | `GasTurbineSpec` | Immutable rating point (rated MW, ISO heat rate, exhaust flow/T, NOx, mass) |
 | `GasTurbinePerformanceMap` | Part-load + ambient correction (aero vs industrial polynomials, min-load fraction) |
-| `GasTurbineDegradation` | Recoverable + non-recoverable fouling vs fired hours, water-wash and overhaul reset |
+| `GasTurbineDegradation` | Recoverable + non-recoverable fouling vs fired hours, `offlineWash()` full reset and `onlineWash(effectiveness)` partial recovery |
+| `GasTurbineWashPlanner` | Wash-interval economics: sawtooth with partial recovery, extra fuel/CO2/cost per interval, optimal interval, payback of a permanent on-line wash installation |
 | `GasTurbineEmissions` | Full-carbon-balance CO2, NOx, methane slip from fuel composition |
 | `CO2TaxSchedule` | Loads `co2_tax_norway.csv` (2020–2040 NOK/tonne, CO2 tax + EU ETS), linear interpolation |
 | `GasTurbineUnit` | `TwoPortEquipment` — runs inside a `ProcessSystem`, accepts fuel `Stream`, aggregates `Compressor` shaft load via `addPowerConsumer` |
 | `TurbineDispatchOptimizer` | Picks the cheapest feasible on/off combination (brute-force ≤8 units, merit-order above) with N+1 reserve |
 | `LateLifeRetrofitStudy` | Year-by-year NPV / CO2-avoided / payback for baseline vs retrofit fleet over a declining demand profile |
+
+### Water-wash interval and permanent-wash business case
+
+When the question is *"how often should we wash, and is a permanent on-line wash
+skid worth it?"*, drive `GasTurbineWashPlanner` from the plant's **measured**
+corrected-efficiency trend rather than a generic OEM rate. An energy-management
+system usually trends "corrected turbine efficiency" in percentage points;
+`lossRateFromCorrectedEfficiencyTrend(ppPer1000FiredHours, cleanEfficiencyPercent)`
+converts that KPI slope into the fractional loss rate the planner needs.
+
+```java
+GasTurbineWashPlanner planner = new GasTurbineWashPlanner();
+planner.setShaftPowerW(22.1e6);
+planner.setBaselineHeatRateKJPerKWh(10090.0);
+planner.setFuelLhvKJPerSm3(36500.0);          // from Standard_ISO6976 getValue("LCV","kJ/m3")
+planner.setCo2PerSm3Fuel(2.06);               // carbon balance on the fuel composition
+planner.setEfficiencyLossRatePerFiredHour(
+    GasTurbineWashPlanner.lossRateFromCorrectedEfficiencyTrend(0.24, 92.0));
+planner.setRecoveryEffectiveness(0.40);       // on-line ~0.3-0.5, off-line crank ~0.85-0.95
+planner.setOutageHoursPerWash(0.0);           // on-line washing has no outage
+planner.setWashCostPerEvent(20000.0);
+planner.setFuelValuePerSm3(3.0);
+planner.setCo2PricePerTonne(CO2TaxSchedule.loadDefault().getTotalNOKPerTonne(2026));
+GasTurbineWashPlanner.WashPlan best = planner.optimize(24.0, 4380.0, 12.0);
+double payback = GasTurbineWashPlanner.paybackYears(6.0e6, currentPractice, best);
+```
+
+Gotchas:
+
+- The **outage/deferment term dominates** an off-line crank-wash case. Price it
+  with an explicit deferment fraction and report the payback **excluding** it as
+  the headline; a fully-deferred outage makes crank washing look arbitrarily bad.
+- An off-line optimum that lands on the scan upper bound means annual crank
+  washing is already the best off-line practice — the lever is on-line washing,
+  not a shorter crank cycle.
+- The two methods are complementary: on-line washing controls the sawtooth
+  amplitude, off-line washing resets the residual `(1-e)rT/e` that an imperfect
+  on-line wash leaves behind.
 
 ### Catalog & site-corrected available power
 

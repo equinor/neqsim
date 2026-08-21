@@ -157,6 +157,7 @@ surf.setRiserLengthM(525.0);
 surf.setInfieldFlowlineLengthKm(8.0);
 surf.setExportPipelineLengthKm(25.0);
 surf.setExportPipelineDiameterInches(12.0);
+surf.setContingencyPct(0.35);        // FRACTION, not a percent - see the warning below
 
 surf.calculate();
 double surfCapex = surf.getTotalSURFCostUSD();
@@ -166,6 +167,21 @@ double risers = surf.getRiserCostUSD();
 double flowlines = surf.getFlowlineCostUSD();
 List<Map<String, Object>> lineItems = surf.getLineItems();
 ```
+
+### WARNING: `setContingencyPct` takes a FRACTION, not a percent
+
+Despite the `Pct` in the name, both `SURFCostEstimator.setContingencyPct` and
+`WellCostEstimator.setContingencyPct` multiply the subtotal by the value **as given**:
+
+```java
+est.setContingencyPct(30.0);   // WRONG - contingency = 30 x subtotal
+est.setContingencyPct(0.30);   // RIGHT - contingency = 0.30 x subtotal
+```
+
+The symptom is a cost that is roughly 100x too large and still looks internally
+consistent, e.g. a subsea gas well at 2 295 MUSD instead of 96 MUSD. Always sanity-check
+the result against `getCostBreakdown()` / `getLineItems()`, where the reported
+`contingencyPct` field shows the value actually applied.
 
 ### Regional Cost Factors
 
