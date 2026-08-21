@@ -296,7 +296,12 @@ public class DistillationSolverBenchmarkTest {
         "Direct substitution should not report accelerated full-tray sweep work");
     assertEquals(0, direct.getLastAcceleratedInternalStreamTransferCount(),
         "Direct substitution should not report accelerated internal stream transfers");
-    assertSingleCloneAcceleratedSweepWork(wegstein, 5, "Wegstein final stream synchronization");
+    assertEquals(DistillationColumn.SolverType.DIRECT_SUBSTITUTION, wegstein.getLastSolverTypeUsed(),
+        "Guarded Wegstein should report the direct-substitution route that produced the accepted state");
+    assertEquals(0, wegstein.getLastAcceleratedFullTraySweepCount(),
+        "Guarded Wegstein should not report a full-tray sweep that was never attempted");
+    assertEquals(0, wegstein.getLastAcceleratedInternalStreamTransferCount(),
+        "Guarded Wegstein should not report internal transfers that were never attempted");
 
     // Wegstein should use at most the same number of iterations (typically fewer)
     assertTrue(wegstein.getLastIterationCount() <= direct.getLastIterationCount() * 1.2 + 2,
