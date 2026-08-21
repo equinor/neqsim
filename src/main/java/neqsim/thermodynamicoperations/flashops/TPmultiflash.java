@@ -133,8 +133,7 @@ public class TPmultiflash extends TPflash {
             }
           } else {
             // Non-ionic components: normal flash calculation
-            double newX = overallFraction / Erow[i]
-                / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+            double newX = overallFraction / Erow[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
             if (!Double.isFinite(newX) || newX <= 0.0) {
               newX = Math.max(overallFraction, 1.0e-30);
             }
@@ -150,9 +149,9 @@ public class TPmultiflash extends TPflash {
 
       if (coupledReactiveFlash && isAqueous) {
         if (!(ionFractionSum < 1.0) || !(neutralFractionSum > 0.0)) {
-          throw new IllegalStateException("Reactive aqueous composition cannot accommodate the ionic inventory: "
-              + "ionFraction=" + ionFractionSum + ", neutralFraction=" + neutralFractionSum + ", beta="
-              + system.getBeta(k));
+          throw new IllegalStateException(
+              "Reactive aqueous composition cannot accommodate the ionic inventory: " + "ionFraction=" + ionFractionSum
+                  + ", neutralFraction=" + neutralFractionSum + ", beta=" + system.getBeta(k));
         }
         double neutralScale = (1.0 - ionFractionSum) / neutralFractionSum;
         for (int component = 0; component < system.getPhase(k).getNumberOfComponents(); component++) {
@@ -253,8 +252,7 @@ public class TPmultiflash extends TPflash {
       Erow[component] = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
-        if (system.isChemicalSystem() && isIon(component)
-            && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+        if (system.isChemicalSystem() && isIon(component) && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
           fugacityCoefficient = Double.POSITIVE_INFINITY;
         }
         fugacityCoefficients[phase][component] = fugacityCoefficient;
@@ -295,8 +293,7 @@ public class TPmultiflash extends TPflash {
    * @return inverse fugacity coefficient, or zero when an ion is excluded from the phase
    */
   private double inverseFugacityCoefficient(int phase, int component) {
-    if (system.isChemicalSystem() && isIon(component)
-        && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+    if (system.isChemicalSystem() && isIon(component) && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
       return 0.0;
     }
     double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
@@ -2443,8 +2440,7 @@ public class TPmultiflash extends TPflash {
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         recoveredFraction += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
       }
-      maximumResidual = Math.max(maximumResidual,
-          Math.abs(reactiveOverallFractions[component] - recoveredFraction));
+      maximumResidual = Math.max(maximumResidual, Math.abs(reactiveOverallFractions[component] - recoveredFraction));
     }
     return maximumResidual;
   }
@@ -2543,11 +2539,9 @@ public class TPmultiflash extends TPflash {
       reactiveOverallMoles[component] += reactionDeltas[component];
       if (!Double.isFinite(reactiveOverallMoles[component]) || reactiveOverallMoles[component] < -1.0e-9) {
         throw new IllegalStateException("Aqueous chemical equilibrium produced an invalid overall amount for "
-            + system.getPhase(0).getComponent(component).getComponentName() + ": "
-            + reactiveOverallMoles[component]);
+            + system.getPhase(0).getComponent(component).getComponentName() + ": " + reactiveOverallMoles[component]);
       }
-      reactiveOverallMoles[component] = Math.max(MINIMUM_REACTIVE_COMPONENT_MOLES,
-          reactiveOverallMoles[component]);
+      reactiveOverallMoles[component] = Math.max(MINIMUM_REACTIVE_COMPONENT_MOLES, reactiveOverallMoles[component]);
     }
     synchronizeReactiveOverallComposition();
 
@@ -2608,8 +2602,7 @@ public class TPmultiflash extends TPflash {
     boolean feasible = conservationMatrix.mult(conservativeDelta).normF() <= 1.0e-10;
     for (int reactiveIndex = 0; reactiveIndex < reactiveComponents.length; reactiveIndex++) {
       int component = reactiveComponents[reactiveIndex].getComponentNumber();
-      feasible = feasible && reactiveOverallMoles[component] + conservativeDelta.get(reactiveIndex, 0)
-          >= -1.0e-12;
+      feasible = feasible && reactiveOverallMoles[component] + conservativeDelta.get(reactiveIndex, 0) >= -1.0e-12;
     }
     if (!feasible) {
       logger.warn("Discarding an infeasible reactive species update after element-and-charge projection");
