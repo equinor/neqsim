@@ -22,18 +22,17 @@ import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.StudyResult;
  * Ranks independently completed paired debottleneck studies on one explicitly compatible metric.
  *
  * <p>
- * The ranking consumes immutable {@link StudyResult} objects and never reruns or mutates a process
- * model. A candidate is rankable only when its paired study completed with verified state recovery,
- * its declared metric identity and engineering basis match the ranking policy exactly, and its
- * baseline is identical to the first qualified baseline. Unlike units, bases, provenance, effective
- * periods, search policies, parameter vectors, objective evidence, or constraint evidence are never
- * normalized or compared.
+ * The ranking consumes immutable {@link StudyResult} objects and never reruns or mutates a process model. A candidate
+ * is rankable only when its paired study completed with verified state recovery, its declared metric identity and
+ * engineering basis match the ranking policy exactly, and its baseline is identical to the first qualified baseline.
+ * Unlike units, bases, provenance, effective periods, search policies, parameter vectors, objective evidence, or
+ * constraint evidence are never normalized or compared.
  * </p>
  *
  * <p>
- * One ranking uses one physical or screening metric. Production, power, energy, emissions, and
- * economics remain separate. Results are sampled screening evidence, not causal production loss,
- * global optimality, a KKT multiplier, design approval, certified emissions, or investment approval.
+ * One ranking uses one physical or screening metric. Production, power, energy, emissions, and economics remain
+ * separate. Results are sampled screening evidence, not causal production loss, global optimality, a KKT multiplier,
+ * design approval, certified emissions, or investment approval.
  * </p>
  *
  * @author NeqSim Development Team
@@ -123,10 +122,10 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
      * @param minimumAlternativeConfidence confidence floor in [0, 1], or NaN when unset
      * @param minimumMetricConfidence confidence floor in [0, 1], or NaN when unset
      */
-    public RankingPolicy(String id, String name, String provenance, String metricId,
-        String metricName, MetricKind metricKind, String unit, String basis,
-        String metricProvenance, String effectivePeriod, RankingDirection direction,
-        double tieTolerance, double minimumAlternativeConfidence, double minimumMetricConfidence) {
+    public RankingPolicy(String id, String name, String provenance, String metricId, String metricName,
+        MetricKind metricKind, String unit, String basis, String metricProvenance, String effectivePeriod,
+        RankingDirection direction, double tieTolerance, double minimumAlternativeConfidence,
+        double minimumMetricConfidence) {
       this.id = requireText(id, "Ranking policy identifier");
       this.name = requireText(name, "Ranking policy name");
       this.provenance = requireText(provenance, "Ranking policy provenance");
@@ -152,8 +151,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       this.minimumAlternativeConfidence = validateConfidence(minimumAlternativeConfidence,
           "Minimum alternative confidence");
       metricConfidenceFloorSet = !Double.isNaN(minimumMetricConfidence);
-      this.minimumMetricConfidence = validateConfidence(minimumMetricConfidence,
-          "Minimum metric confidence");
+      this.minimumMetricConfidence = validateConfidence(minimumMetricConfidence, "Minimum metric confidence");
     }
 
     /** @return stable ranking-policy identifier */
@@ -326,10 +324,9 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     private final List<CandidateEvidence> candidatesInInputOrder;
     private final List<String> diagnostics;
 
-    private RankingResult(String id, String name, String provenance, RankingPolicy policy,
-        RankingOutcome outcome, List<CandidateEvidence> rankedCandidates,
-        List<CandidateEvidence> rejectedCandidates, List<CandidateEvidence> candidatesInInputOrder,
-        List<String> diagnostics) {
+    private RankingResult(String id, String name, String provenance, RankingPolicy policy, RankingOutcome outcome,
+        List<CandidateEvidence> rankedCandidates, List<CandidateEvidence> rejectedCandidates,
+        List<CandidateEvidence> candidatesInInputOrder, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -433,8 +430,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
    * @param provenance source and assumptions for the portfolio
    * @param policy exact single-metric comparison policy
    */
-  public ProcessModelDebottleneckRanking(String id, String name, String provenance,
-      RankingPolicy policy) {
+  public ProcessModelDebottleneckRanking(String id, String name, String provenance, RankingPolicy policy) {
     this.id = requireText(id, "Portfolio identifier");
     this.name = requireText(name, "Portfolio name");
     this.provenance = requireText(provenance, "Portfolio provenance");
@@ -523,12 +519,12 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     List<String> diagnostics = new ArrayList<String>();
     diagnostics.add("Ranked " + rankedEvidence.size() + " compatible alternatives and rejected "
         + rejectedEvidence.size() + " alternatives");
-    diagnostics.add("Ranking uses one declared metric and does not aggregate unlike physical, emission, or "
-        + "economic units");
+    diagnostics.add(
+        "Ranking uses one declared metric and does not aggregate unlike physical, emission, or " + "economic units");
     diagnostics.add("Results are sampled screening evidence, not causal value, global optimality, design approval, "
         + "certified emissions, or investment approval");
-    return new RankingResult(id, name, provenance, policy, outcome, rankedEvidence, rejectedEvidence,
-        inputEvidence, diagnostics);
+    return new RankingResult(id, name, provenance, policy, outcome, rankedEvidence, rejectedEvidence, inputEvidence,
+        diagnostics);
   }
 
   /**
@@ -551,14 +547,13 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       draft.diagnostics.add("Study outcome is " + study.getOutcome());
       return draft;
     }
-    if (!study.isCapacityRestored() || !study.isProcessStateRestored()
-        || !study.isRecoverySimulationConverged()) {
+    if (!study.isCapacityRestored() || !study.isProcessStateRestored() || !study.isRecoverySimulationConverged()) {
       draft.status = CandidateStatus.RECOVERY_NOT_VERIFIED;
       draft.diagnostics.add("Installed-capacity and process-state recovery must all be verified");
       return draft;
     }
-    if (study.getBaseline() == null || study.getAlternative() == null
-        || !study.getBaseline().isQualified() || !study.getAlternative().isQualified()) {
+    if (study.getBaseline() == null || study.getAlternative() == null || !study.getBaseline().isQualified()
+        || !study.getAlternative().isQualified()) {
       draft.status = CandidateStatus.SCENARIO_NOT_QUALIFIED;
       draft.diagnostics.add("Both baseline and alternative scenarios must be qualified");
       return draft;
@@ -584,8 +579,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     }
     CapacityAlternative alternative = study.getAlternativeDefinition();
     if (policy.hasMinimumAlternativeConfidence()
-        && (!alternative.hasConfidence()
-            || alternative.getConfidence() < policy.getMinimumAlternativeConfidence())) {
+        && (!alternative.hasConfidence() || alternative.getConfidence() < policy.getMinimumAlternativeConfidence())) {
       draft.status = CandidateStatus.ALTERNATIVE_CONFIDENCE_TOO_LOW;
       draft.diagnostics.add("Alternative confidence is absent or below the declared floor");
       return draft;
@@ -609,8 +603,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       MetricEvidence baseline = comparison.getBaseline();
       if (baseline != null && policy.getMetricId().equals(baseline.getId())) {
         if (found != null) {
-          throw new IllegalArgumentException(
-              "Study contains duplicate ranking metric identifiers: " + study.getId());
+          throw new IllegalArgumentException("Study contains duplicate ranking metric identifiers: " + study.getId());
         }
         found = comparison;
       }
@@ -620,15 +613,13 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
 
   private boolean metadataMatches(MetricEvidence evidence) {
     return evidence != null && policy.getMetricId().equals(evidence.getId())
-        && policy.getMetricName().equals(evidence.getName())
-        && policy.getMetricKind() == evidence.getKind() && policy.getUnit().equals(evidence.getUnit())
-        && policy.getBasis().equals(evidence.getBasis())
+        && policy.getMetricName().equals(evidence.getName()) && policy.getMetricKind() == evidence.getKind()
+        && policy.getUnit().equals(evidence.getUnit()) && policy.getBasis().equals(evidence.getBasis())
         && policy.getMetricProvenance().equals(evidence.getProvenance())
         && policy.getEffectivePeriod().equals(evidence.getEffectivePeriod());
   }
 
-  private boolean baselineMatches(BaselineReference reference, ScenarioEvidence baseline,
-      MetricEvidence metric) {
+  private boolean baselineMatches(BaselineReference reference, ScenarioEvidence baseline, MetricEvidence metric) {
     ScenarioEvidence expected = reference.baseline;
     return expected.getSearchId().equals(baseline.getSearchId())
         && expected.getSearchName().equals(baseline.getSearchName())
@@ -653,10 +644,9 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     for (int index = 0; index < left.size(); index++) {
       ObjectiveEvidence a = left.get(index);
       ObjectiveEvidence b = right.get(index);
-      if (a.getIndex() != b.getIndex() || !a.getName().equals(b.getName())
-          || a.getDirection() != b.getDirection() || !a.getUnit().equals(b.getUnit())
-          || !bitsEqual(a.getWeight(), b.getWeight()) || !bitsEqual(a.getRawValue(), b.getRawValue())
-          || !bitsEqual(a.getMinimizerValue(), b.getMinimizerValue())) {
+      if (a.getIndex() != b.getIndex() || !a.getName().equals(b.getName()) || a.getDirection() != b.getDirection()
+          || !a.getUnit().equals(b.getUnit()) || !bitsEqual(a.getWeight(), b.getWeight())
+          || !bitsEqual(a.getRawValue(), b.getRawValue()) || !bitsEqual(a.getMinimizerValue(), b.getMinimizerValue())) {
         return false;
       }
     }
@@ -670,9 +660,8 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     for (int index = 0; index < left.size(); index++) {
       ConstraintEvidence a = left.get(index);
       ConstraintEvidence b = right.get(index);
-      if (a.getIndex() != b.getIndex() || !a.getName().equals(b.getName())
-          || a.getType() != b.getType() || !a.getUnit().equals(b.getUnit())
-          || a.isHard() != b.isHard() || !bitsEqual(a.getValue(), b.getValue())
+      if (a.getIndex() != b.getIndex() || !a.getName().equals(b.getName()) || a.getType() != b.getType()
+          || !a.getUnit().equals(b.getUnit()) || a.isHard() != b.isHard() || !bitsEqual(a.getValue(), b.getValue())
           || !bitsEqual(a.getMargin(), b.getMargin())) {
         return false;
       }
@@ -696,8 +685,7 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
     while (start < qualified.size()) {
       double groupLeader = qualified.get(start).delta;
       int end = start + 1;
-      while (end < qualified.size()
-          && Math.abs(qualified.get(end).delta - groupLeader) <= policy.getTieTolerance()) {
+      while (end < qualified.size() && Math.abs(qualified.get(end).delta - groupLeader) <= policy.getTieTolerance()) {
         end++;
       }
       List<CandidateDraft> tieGroup = qualified.subList(start, end);
@@ -710,8 +698,8 @@ public final class ProcessModelDebottleneckRanking implements Serializable {
       int rank = start + 1;
       for (CandidateDraft draft : tieGroup) {
         draft.rank = rank;
-        draft.diagnostics.add("Assigned competition rank " + rank + " using tie tolerance "
-            + policy.getTieTolerance() + " " + policy.getUnit());
+        draft.diagnostics.add("Assigned competition rank " + rank + " using tie tolerance " + policy.getTieTolerance()
+            + " " + policy.getUnit());
       }
       start = end;
     }
