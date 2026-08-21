@@ -241,15 +241,18 @@ def generated_site_audit(site: Path) -> List[str]:
     markdown = markdown_files()
     html = content_html_files()
     expected = set(relative_sources(markdown + html))
-    heading_sources = {
-        path.relative_to(DOCS).as_posix()
-        for path in markdown
+    heading_sources = set()
+    for path in markdown:
+        try:
+            _, body = parse_front_matter(path)
+        except ValueError:
+            continue
         if re.search(
             r"^\s{0,3}#{1,6}\s+\S",
-            markdown_prose(parse_front_matter(path)[1]),
+            markdown_prose(body),
             flags=re.MULTILINE,
-        )
-    }
+        ):
+            heading_sources.add(path.relative_to(DOCS).as_posix())
     actual: Dict[str, dict] = {}
     urls: Dict[str, int] = {}
     for position, entry in enumerate(entries):
