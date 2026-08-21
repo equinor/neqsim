@@ -245,7 +245,7 @@ def generated_site_audit(site: Path) -> List[str]:
         path.relative_to(DOCS).as_posix()
         for path in markdown
         if re.search(
-            r"^\\s{0,3}#{1,6}\\s+\\S",
+            r"^\s{0,3}#{1,6}\s+\S",
             markdown_prose(parse_front_matter(path)[1]),
             flags=re.MULTILINE,
         )
