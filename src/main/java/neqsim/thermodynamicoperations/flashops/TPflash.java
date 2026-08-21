@@ -1118,6 +1118,7 @@ public class TPflash extends Flash {
     restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterRichInput);
     restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterRichInput);
     normalizeSourGasSinglePhaseEndpoint();
+    refineIonicGasAqueousEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -1135,6 +1136,235 @@ public class TPflash extends Flash {
         logger.warn("Final chemical eq init failed: " + ex.getMessage());
       }
     }
+  }
+
+  /**
+   * Restores constrained material balance and fugacity equilibrium for a non-reactive ionic GAS+AQUEOUS endpoint.
+   *
+   * <p>
+   * Ionic components are physically restricted to the aqueous phase. Treating their phase compositions as ordinary
+   * normalized mole fractions after the two-phase solve changes the non-ionic compositions without updating the phase
+   * fraction, so the returned endpoint can be normalized yet fail component balance. This refinement solves the
+   * two-phase Rachford-Rice equation with {@code K_ion = 0}; molecular K-values continue to come from the two phases'
+   * fugacity coefficients. A safeguarded bisection keeps beta inside its physical interval, while successive
+   * substitution updates the molecular K-values.
+   * </p>
+   */
+  private void refineIonicGasAqueousEndpoint() {
+    if (system.isChemicalSystem() || !system.hasIons() || system.getNumberOfPhases() != 2
+        || !system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return;
+    }
+
+    int gasPhase = system.getPhaseNumberOfPhase("gas");
+    int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
+    int componentCount = system.getPhase(0).getNumberOfComponents();
+    double[] equilibriumRatios = new double[componentCount];
+    double[] originalBeta = { system.getBeta(0), system.getBeta(1) };
+    double[][] originalComposition = new double[2][componentCount];
+    for (int phase = 0; phase < 2; phase++) {
+      for (int component = 0; component < componentCount; component++) {
+        originalComposition[phase][component] = system.getPhase(phase).getComponent(component).getx();
+      }
+    }
+    double originalGibbsEnergy = system.getGibbsEnergy();
+    boolean converged = false;
+    boolean failed = false;
+
+    for (int iteration = 0; iteration < 100; iteration++) {
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ionic endpoint refinement init failed: " + ex.getMessage());
+        failed = true;
+        break;
+      }
+
+      for (int component = 0; component < componentCount; component++) {
+        boolean ion = system.getPhase(0).getComponent(component).getIonicCharge() != 0
+            || system.getPhase(0).getComponent(component).isIsIon();
+        if (ion) {
+          equilibriumRatios[component] = 0.0;
+          continue;
+        }
+        double gasFugacityCoefficient = system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
+        double aqueousFugacityCoefficient = system.getPhase(aqueousPhase).getComponent(component)
+            .getFugacityCoefficient();
+        if (!(gasFugacityCoefficient > 0.0) || !(aqueousFugacityCoefficient > 0.0)
+            || !Double.isFinite(gasFugacityCoefficient) || !Double.isFinite(aqueousFugacityCoefficient)) {
+          failed = true;
+          break;
+        }
+        equilibriumRatios[component] = Math.max(1.0e-50,
+            Math.min(1.0e50, aqueousFugacityCoefficient / gasFugacityCoefficient));
+      }
+      if (failed) {
+        break;
+      }
+
+      double gasBeta = solveIonicGasBeta(equilibriumRatios);
+      if (!Double.isFinite(gasBeta)) {
+        failed = true;
+        break;
+      }
+      double maxChange = Math.abs(gasBeta - system.getBeta(gasPhase));
+      system.setBeta(gasPhase, gasBeta);
+      system.setBeta(aqueousPhase, 1.0 - gasBeta);
+
+      for (int component = 0; component < componentCount; component++) {
+        double z = system.getPhase(0).getComponent(component).getz();
+        double denominator = 1.0 + gasBeta * (equilibriumRatios[component] - 1.0);
+        if (!(denominator > 0.0) || !Double.isFinite(denominator)) {
+          failed = true;
+          break;
+        }
+        double aqueousComposition = z / denominator;
+        double gasComposition = equilibriumRatios[component] * aqueousComposition;
+        maxChange = Math.max(maxChange,
+            Math.abs(aqueousComposition - system.getPhase(aqueousPhase).getComponent(component).getx()));
+        maxChange = Math.max(maxChange,
+            Math.abs(gasComposition - system.getPhase(gasPhase).getComponent(component).getx()));
+        system.getPhase(aqueousPhase).getComponent(component).setx(aqueousComposition);
+        system.getPhase(gasPhase).getComponent(component).setx(gasComposition);
+      }
+      if (failed) {
+        break;
+      }
+
+      if (maxChange < 1.0e-12) {
+        converged = true;
+        break;
+      }
+    }
+
+    if (!failed) {
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Final ionic endpoint refinement init failed: " + ex.getMessage());
+        failed = true;
+      }
+    }
+    double refinedGibbsEnergy = system.getGibbsEnergy();
+    double gibbsTolerance = Math.max(1.0e-8, Math.abs(originalGibbsEnergy) * 1.0e-12);
+    if (failed || !converged || !isValidIonicGasAqueousEndpoint(gasPhase, aqueousPhase)
+        || !Double.isFinite(refinedGibbsEnergy) || refinedGibbsEnergy > originalGibbsEnergy + gibbsTolerance) {
+      for (int phase = 0; phase < 2; phase++) {
+        system.setBeta(phase, originalBeta[phase]);
+        for (int component = 0; component < componentCount; component++) {
+          system.getPhase(phase).getComponent(component).setx(originalComposition[phase][component]);
+        }
+      }
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ionic endpoint rollback init failed: " + ex.getMessage());
+      }
+      logger.warn("Rejected non-converged or invalid ionic GAS+AQUEOUS endpoint refinement");
+    }
+  }
+
+  /**
+   * Checks closure of a refined non-reactive ionic GAS+AQUEOUS endpoint.
+   *
+   * @param gasPhase gas phase index
+   * @param aqueousPhase aqueous phase index
+   * @return true when phase normalization, material balance, ion confinement, and molecular fugacity equality pass
+   */
+  private boolean isValidIonicGasAqueousEndpoint(int gasPhase, int aqueousPhase) {
+    double betaSum = system.getBeta(gasPhase) + system.getBeta(aqueousPhase);
+    if (!Double.isFinite(betaSum) || Math.abs(betaSum - 1.0) > 1.0e-12) {
+      return false;
+    }
+    for (int phase : new int[] { gasPhase, aqueousPhase }) {
+      double compositionSum = 0.0;
+      for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
+        double composition = system.getPhase(phase).getComponent(component).getx();
+        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
+          return false;
+        }
+        compositionSum += composition;
+      }
+      if (Math.abs(compositionSum - 1.0) > 1.0e-12) {
+        return false;
+      }
+    }
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+      double gasComposition = system.getPhase(gasPhase).getComponent(component).getx();
+      double aqueousComposition = system.getPhase(aqueousPhase).getComponent(component).getx();
+      double reconstructed = system.getBeta(gasPhase) * gasComposition
+          + system.getBeta(aqueousPhase) * aqueousComposition;
+      double z = system.getPhase(0).getComponent(component).getz();
+      if (Math.abs(reconstructed - z) > 1.0e-10) {
+        return false;
+      }
+      boolean ion = system.getPhase(0).getComponent(component).getIonicCharge() != 0
+          || system.getPhase(0).getComponent(component).isIsIon();
+      if (ion) {
+        if (gasComposition > 1.0e-40) {
+          return false;
+        }
+        continue;
+      }
+      if (gasComposition > 1.0e-30 && aqueousComposition > 1.0e-30) {
+        double gasFugacity = gasComposition
+            * system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
+        double aqueousFugacity = aqueousComposition
+            * system.getPhase(aqueousPhase).getComponent(component).getFugacityCoefficient();
+        if (!(gasFugacity > 0.0) || !(aqueousFugacity > 0.0) || !Double.isFinite(gasFugacity)
+            || !Double.isFinite(aqueousFugacity) || Math.abs(Math.log(gasFugacity / aqueousFugacity)) > 1.0e-8) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Solves the two-phase Rachford-Rice equation with ionic K-values fixed to zero.
+   *
+   * @param equilibriumRatios gas-to-aqueous equilibrium ratios
+   * @return gas phase fraction, or NaN when no interior two-phase root exists
+   */
+  private double solveIonicGasBeta(double[] equilibriumRatios) {
+    double lowerBeta = phaseFractionMinimumLimit;
+    double upperBeta = 1.0 - phaseFractionMinimumLimit;
+    double lowerResidual = ionicRachfordRiceResidual(lowerBeta, equilibriumRatios);
+    double upperResidual = ionicRachfordRiceResidual(upperBeta, equilibriumRatios);
+    if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual) || lowerResidual <= 0.0
+        || upperResidual >= 0.0) {
+      return Double.NaN;
+    }
+    for (int iteration = 0; iteration < 100; iteration++) {
+      double beta = 0.5 * (lowerBeta + upperBeta);
+      double residual = ionicRachfordRiceResidual(beta, equilibriumRatios);
+      if (!Double.isFinite(residual)) {
+        return Double.NaN;
+      }
+      if (residual > 0.0) {
+        lowerBeta = beta;
+      } else {
+        upperBeta = beta;
+      }
+    }
+    return 0.5 * (lowerBeta + upperBeta);
+  }
+
+  /**
+   * Evaluates the Rachford-Rice residual for an ionic gas/aqueous split.
+   *
+   * @param gasBeta trial gas phase fraction
+   * @param equilibriumRatios gas-to-aqueous equilibrium ratios
+   * @return Rachford-Rice residual
+   */
+  private double ionicRachfordRiceResidual(double gasBeta, double[] equilibriumRatios) {
+    double residual = 0.0;
+    for (int component = 0; component < equilibriumRatios.length; component++) {
+      double z = system.getPhase(0).getComponent(component).getz();
+      double kMinusOne = equilibriumRatios[component] - 1.0;
+      residual += z * kMinusOne / (1.0 + gasBeta * kMinusOne);
+    }
+    return residual;
   }
 
   /**

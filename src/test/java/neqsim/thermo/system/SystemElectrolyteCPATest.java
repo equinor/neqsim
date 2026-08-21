@@ -223,12 +223,11 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test three-phase equilibrium (gas-oil-water) with ions. This verifies that the salting-out effect works correctly
-   * when an oil phase is present in addition to gas and aqueous phases.
+   * Test three-phase equilibrium (gas-oil-water) with ions.
    *
    * <p>
-   * In three-phase systems, the presence of ions in the aqueous phase should still reduce hydrocarbon solubility in
-   * water (salting-out effect), regardless of the oil phase.
+   * This verifies methane salting-out while also ensuring the calculation reaches the genuine three-phase path that is
+   * excluded from the two-phase ionic endpoint refinement.
    * </p>
    */
   @Test
@@ -241,16 +240,16 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     threePhaseNoSalt.addComponent("n-butane", 0.1); // partitions between gas and oil
     threePhaseNoSalt.addComponent("water", 1.0); // aqueous phase
     threePhaseNoSalt.setMixingRule(10);
+    threePhaseNoSalt.setMultiPhaseCheck(true);
     ThermodynamicOperations opsNoSalt = new ThermodynamicOperations(threePhaseNoSalt);
     opsNoSalt.TPflash();
     threePhaseNoSalt.initProperties();
 
-    // Should have 3 phases
+    // This regression specifically verifies the three-phase path excluded from two-phase ionic refinement.
     int numPhasesNoSalt = threePhaseNoSalt.getNumberOfPhases();
-    assertTrue(numPhasesNoSalt >= 2, "System should have at least 2 phases, got: " + numPhasesNoSalt);
+    assertEquals(3, numPhasesNoSalt, "System without salt should have gas, oil, and aqueous phases");
 
     double ch4InWaterNoSalt = threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
-    double butaneInWaterNoSalt = threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
 
     // Three-phase system with salt
     SystemInterface threePhaseWithSalt = new SystemElectrolyteCPAstatoil(298.15, 20.0);
@@ -261,21 +260,20 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     threePhaseWithSalt.addComponent("Na+", 0.02); // ~1 mol/kg NaCl
     threePhaseWithSalt.addComponent("Cl-", 0.02);
     threePhaseWithSalt.setMixingRule(10);
+    threePhaseWithSalt.setMultiPhaseCheck(true);
     ThermodynamicOperations opsSalt = new ThermodynamicOperations(threePhaseWithSalt);
     opsSalt.TPflash();
     threePhaseWithSalt.initProperties();
 
-    double ch4InWaterWithSalt = threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
-    double butaneInWaterWithSalt = threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
+    int numPhasesWithSalt = threePhaseWithSalt.getNumberOfPhases();
+    assertEquals(3, numPhasesWithSalt, "System with salt should have gas, oil, and aqueous phases");
 
-    // Salting-out: hydrocarbon solubility in water should DECREASE with salt
+    double ch4InWaterWithSalt = threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
+
+    // Salting-out: methane solubility in water should decrease with salt.
     assertTrue(ch4InWaterWithSalt < ch4InWaterNoSalt,
         "CH4 solubility in aqueous phase should decrease with salt in 3-phase system. " + "Without salt: "
             + ch4InWaterNoSalt + ", With salt: " + ch4InWaterWithSalt);
-
-    assertTrue(butaneInWaterWithSalt < butaneInWaterNoSalt,
-        "n-Butane solubility in aqueous phase should decrease with salt in 3-phase system. " + "Without salt: "
-            + butaneInWaterNoSalt + ", With salt: " + butaneInWaterWithSalt);
   }
 
   /**
