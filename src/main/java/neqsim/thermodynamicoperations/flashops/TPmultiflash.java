@@ -102,7 +102,7 @@ public class TPmultiflash extends TPflash {
    * setXY.
    */
   public void setXY() {
-    boolean coupledReactiveFlash = system.isChemicalSystem() && reactiveOverallFractions != null;
+    boolean coupledReactiveFlash = isCoupledReactiveHydrateFlash() && reactiveOverallFractions != null;
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       boolean isAqueous = system.getPhase(k).getType() == PhaseType.AQUEOUS;
       double ionFractionSum = 0.0;
@@ -252,7 +252,8 @@ public class TPmultiflash extends TPflash {
       Erow[component] = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
-        if (system.isChemicalSystem() && isIon(component) && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+        if (isCoupledReactiveHydrateFlash() && isIon(component)
+            && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
           fugacityCoefficient = Double.POSITIVE_INFINITY;
         }
         fugacityCoefficients[phase][component] = fugacityCoefficient;
@@ -293,7 +294,8 @@ public class TPmultiflash extends TPflash {
    * @return inverse fugacity coefficient, or zero when an ion is excluded from the phase
    */
   private double inverseFugacityCoefficient(int phase, int component) {
-    if (system.isChemicalSystem() && isIon(component) && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+    if (isCoupledReactiveHydrateFlash() && isIon(component)
+        && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
       return 0.0;
     }
     double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
@@ -2477,6 +2479,15 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
+   * Return whether this flash owns coupled phase and reaction equilibrium for an electrolyte hydrate calculation.
+   *
+   * @return {@code true} for reactive hydrate flashes
+   */
+  private boolean isCoupledReactiveHydrateFlash() {
+    return system.isChemicalSystem() && system.getHydrateCheck();
+  }
+
+  /**
    * Capture the exact overall species inventory before coupled phase and chemical equilibrium.
    */
   private void initializeReactiveOverallInventory() {
@@ -2558,6 +2569,35 @@ public class TPmultiflash extends TPflash {
         return Double.POSITIVE_INFINITY;
       }
       chemicalDeviation += Math.abs(oldComposition[component] - moleFraction);
+    }
+    return chemicalDeviation;
+  }
+
+  /**
+   * Preserve the established chemical-equilibrium iteration for non-hydrate multiphase calculations.
+   *
+   * @param aqueousPhase active aqueous phase index
+   * @param initialise whether to request the chemical solver's initial-estimate stage
+   * @return sum of absolute aqueous mole-fraction changes
+   */
+  private double solveLegacyAqueousEquilibrium(int aqueousPhase, boolean initialise) {
+    if (aqueousPhase < 0 || aqueousPhase >= system.getNumberOfPhases()) {
+      return 0.0;
+    }
+    int numberOfComponents = system.getPhase(aqueousPhase).getNumberOfComponents();
+    double[] oldComposition = new double[numberOfComponents];
+    for (int component = 0; component < numberOfComponents; component++) {
+      oldComposition[component] = system.getPhase(aqueousPhase).getComponent(component).getx();
+    }
+    if (initialise) {
+      system.getChemicalReactionOperations().solveChemEq(aqueousPhase, 0);
+    }
+    system.getChemicalReactionOperations().solveChemEq(aqueousPhase, 1);
+
+    double chemicalDeviation = 0.0;
+    for (int component = 0; component < numberOfComponents; component++) {
+      chemicalDeviation +=
+          Math.abs(oldComposition[component] - system.getPhase(aqueousPhase).getComponent(component).getx());
     }
     return chemicalDeviation;
   }
@@ -2657,7 +2697,7 @@ public class TPmultiflash extends TPflash {
     int aqueousPhaseNumber = 0;
     enhancedStabilityChecked = false;
     betaSolveStalled = false;
-    if (system.isChemicalSystem()) {
+    if (isCoupledReactiveHydrateFlash()) {
       initializeReactiveOverallInventory();
     }
     // logger.info("Starting multiphase-flash....");
@@ -2801,14 +2841,20 @@ public class TPmultiflash extends TPflash {
     // restore transforms the ion-free phase fractions back to the full species basis.
     if (system.isChemicalSystem() && useIonFreeFlash && ionFreeOverallZ != null) {
       aqueousPhaseNumber = restoreIonsToAqueousPhase(ionFreeOverallZ);
-      synchronizeReactiveOverallComposition();
+      if (isCoupledReactiveHydrateFlash()) {
+        synchronizeReactiveOverallComposition();
+      }
     }
 
     // system.init(1);
     // system.display();
     aqueousPhaseNumber = system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
     if (system.isChemicalSystem() && aqueousPhaseNumber >= 0) {
-      solveReactiveAqueousEquilibrium(aqueousPhaseNumber, true);
+      if (isCoupledReactiveHydrateFlash()) {
+        solveReactiveAqueousEquilibrium(aqueousPhaseNumber, true);
+      } else {
+        solveLegacyAqueousEquilibrium(aqueousPhaseNumber, true);
+      }
     }
 
     int iterations = 0;
@@ -2833,7 +2879,11 @@ public class TPmultiflash extends TPflash {
           if (aqueousPhaseNumber >= 0 && aqueousPhaseNumber < system.getNumberOfPhases()) {
             try {
               system.init(1);
-              chemdev = solveReactiveAqueousEquilibrium(aqueousPhaseNumber, initialiseChemistry);
+              if (isCoupledReactiveHydrateFlash()) {
+                chemdev = solveReactiveAqueousEquilibrium(aqueousPhaseNumber, initialiseChemistry);
+              } else {
+                chemdev = solveLegacyAqueousEquilibrium(aqueousPhaseNumber, initialiseChemistry);
+              }
             } catch (Exception ex) {
               logger.warn("Chemical equilibrium init failed: {}", ex.getMessage());
               chemdev = 0.0;
@@ -2858,11 +2908,11 @@ public class TPmultiflash extends TPflash {
         // this.solveBeta(true);
         if (iterations >= 199) {
           logger.error("error in multiphase flash..did not solve in 200 iterations");
-          logger.error("diff " + diff + " temperaure " + system.getTemperature("C") + " pressure "
-              + system.getPressure("bara"));
+          logger.error(
+              "diff " + diff + " temperaure " + system.getTemperature("C") + " pressure " + system.getPressure("bara"));
           diff = this.solveBeta();
         }
-        if (system.isChemicalSystem()) {
+        if (isCoupledReactiveHydrateFlash()) {
           diff = Math.max(diff, projectReactiveInventoryOntoCurrentPhases());
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
@@ -3146,7 +3196,7 @@ public class TPmultiflash extends TPflash {
 
     // A warm-started reactive flash can retain the existing phase topology, leaving multiPhaseTest false. Chemistry
     // still changes the overall species inventory, so couple it to the beta equations even when no new phase was found.
-    if (system.isChemicalSystem() && !multiPhaseTest && system.getNumberOfPhases() > 1
+    if (isCoupledReactiveHydrateFlash() && !multiPhaseTest && system.getNumberOfPhases() > 1
         && system.hasPhaseType(PhaseType.AQUEOUS)) {
       aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
       for (int outerIteration = 0; outerIteration < 100; outerIteration++) {
@@ -3163,7 +3213,7 @@ public class TPmultiflash extends TPflash {
 
     // Always leave a reactive multiphase flash on the phase-equilibrium projection of its final reaction-adjusted
     // species inventory. This is required after phase removal or bounded reruns, whose last operation can be chemistry.
-    if (system.isChemicalSystem() && system.getNumberOfPhases() > 1) {
+    if (isCoupledReactiveHydrateFlash() && system.getNumberOfPhases() > 1) {
       projectReactiveInventoryOntoCurrentPhases();
     }
 
