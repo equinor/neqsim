@@ -20,24 +20,28 @@ permalink: /search-index.json
   {%- endunless -%}
 {%- endfor -%}
 {%- for doc in filtered_pages -%}
-  {%- comment -%}Index the complete page. A fixed character cutoff made later sections of long guides impossible to find.{%- endcomment -%}
-  {%- assign content_text = doc.content | strip_html | normalize_whitespace -%}
+  {%- comment -%}
+    Render Markdown before extracting searchable prose. Stripping HTML directly from
+    doc.content leaves Markdown punctuation in snippets and provides no heading tags
+    for the boosted heading field.
+  {%- endcomment -%}
+  {%- assign rendered_content = doc.content | markdownify -%}
+  {%- assign content_text = rendered_content | strip_html | normalize_whitespace -%}
   {%- assign title = doc.title | default: doc.name | default: doc.url -%}
   {%- assign description = doc.description | default: '' -%}
   {%- assign keywords = doc.keywords | default: '' -%}
   {%- assign source_path = doc.path | default: doc.url -%}
   {%- comment -%}Auto-extract heading text so every page is searchable by its sections{%- endcomment -%}
   {%- assign headings = '' -%}
-  {%- assign h_parts = doc.content | split: '</h' -%}
+  {%- assign h_parts = rendered_content | split: '</h' -%}
   {%- for part in h_parts -%}
     {%- if part contains '<h' -%}
-      {%- assign after_open = part | split: '>' -%}
-      {%- if after_open.size > 1 -%}
-        {%- assign h_text = after_open | last | strip_html | strip | normalize_whitespace -%}
-        {%- unless h_text == '' -%}
-          {%- assign headings = headings | append: ' ' | append: h_text -%}
-        {%- endunless -%}
-      {%- endif -%}
+      {%- assign heading_markup = part | split: '<h' | last -%}
+      {%- assign opening_tag = heading_markup | split: '>' | first -%}
+      {%- assign h_text = heading_markup | remove_first: opening_tag | remove_first: '>' | strip_html | strip | normalize_whitespace -%}
+      {%- unless h_text == '' -%}
+        {%- assign headings = headings | append: ' ' | append: h_text -%}
+      {%- endunless -%}
     {%- endif -%}
   {%- endfor -%}
   {%- assign headings = headings | strip -%}
