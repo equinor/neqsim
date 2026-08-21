@@ -8760,8 +8760,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * NEWTON and the final WEGSTEIN synchronization always use unit relaxation. Each internal transfer therefore takes
    * one owned clone of the already-flashed tray outlet and installs that same clone as the downstream inlet. No
-   * previous-iterate cache or second cache clone is required. The transferred snapshot is reflashed through the established relaxation path so downstream tear-state semantics
-   * remain unchanged.
+   * previous-iterate cache or second cache clone is required. The transferred snapshot is reflashed through the
+   * established relaxation path so downstream tear-state semantics remain unchanged.
    * </p>
    *
    * @param id calculation identifier
