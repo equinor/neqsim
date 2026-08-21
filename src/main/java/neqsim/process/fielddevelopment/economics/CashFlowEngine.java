@@ -124,6 +124,9 @@ public class CashFlowEngine implements Serializable {
   /** Oil transport tariff in USD per barrel. */
   private double oilTariffUsdPerBbl = 2.0;
 
+  /** Processing, terminal, handling, and fixed service fees. */
+  private CommodityFeeSchedule commodityFeeSchedule = CommodityFeeSchedule.none();
+
   // ============================================================================
   // INSTANCE VARIABLES - CAPEX
   // ============================================================================
@@ -359,6 +362,15 @@ public class CashFlowEngine implements Serializable {
     this.oilTariffUsdPerBbl = tariffUsdPerBbl;
   }
 
+  /**
+   * Sets non-transport commodity processing and service fees.
+   *
+   * @param feeSchedule immutable fee schedule, or null to clear all processing fees
+   */
+  public void setCommodityFeeSchedule(CommodityFeeSchedule feeSchedule) {
+    this.commodityFeeSchedule = feeSchedule != null ? feeSchedule : CommodityFeeSchedule.none();
+  }
+
   // ============================================================================
   // PRODUCTION METHODS
   // ============================================================================
@@ -447,8 +459,11 @@ public class CashFlowEngine implements Serializable {
       double gasTariffCost = gasProd * gasTariffUsdPerSm3 / 1.0e6;
       double tariff = oilTariffCost + gasTariffCost;
 
-      // Net revenue after tariff
-      double netRevenue = grossRevenue - tariff;
+      // Calculate non-transport processing and service fees (in MUSD)
+      double processingFee = commodityFeeSchedule.calculateAnnualFeeMusd(oilProd, gasProd, nglProd);
+
+      // Net revenue after tariff and processing fees
+      double netRevenue = grossRevenue - tariff - processingFee;
 
       // Get CAPEX for this year
       double capex = getOrDefault(capexByYear, year, 0.0);
@@ -485,9 +500,9 @@ public class CashFlowEngine implements Serializable {
       }
 
       // Create annual record
-      AnnualCashFlow annual = new AnnualCashFlow(year, grossRevenue, tariff, netRevenue, capex, opex, depreciation,
-          uplift, taxResult.getCorporateTax(), taxResult.getPetroleumTax(), taxResult.getTotalTax(), preTaxCashFlow,
-          afterTaxCashFlow, cumulativeCashFlow, discountedCashFlow);
+      AnnualCashFlow annual = new AnnualCashFlow(year, grossRevenue, tariff, processingFee, netRevenue, capex, opex,
+          depreciation, uplift, taxResult.getCorporateTax(), taxResult.getPetroleumTax(), taxResult.getTotalTax(),
+          preTaxCashFlow, afterTaxCashFlow, cumulativeCashFlow, discountedCashFlow);
       annualCashFlows.add(annual);
     }
 
@@ -791,6 +806,15 @@ public class CashFlowEngine implements Serializable {
   }
 
   /**
+   * Gets the non-transport commodity processing and service fee schedule.
+   *
+   * @return immutable commodity fee schedule
+   */
+  public CommodityFeeSchedule getCommodityFeeSchedule() {
+    return commodityFeeSchedule;
+  }
+
+  /**
    * Gets OPEX as a fraction of total CAPEX per year.
    *
    * @return OPEX fraction of CAPEX
@@ -883,6 +907,7 @@ public class CashFlowEngine implements Serializable {
     clone.setNglPrice(nglPriceUsdPerBbl);
     clone.setGasTariff(gasTariffUsdPerSm3);
     clone.setOilTariff(oilTariffUsdPerBbl);
+    clone.setCommodityFeeSchedule(commodityFeeSchedule);
     clone.setOpexPercentOfCapex(opexPercentOfCapex);
     clone.setFixedOpexPerYear(fixedOpexPerYear);
     clone.setFixedOpexStartYear(fixedOpexStartYear);
@@ -923,6 +948,7 @@ public class CashFlowEngine implements Serializable {
     private final int year;
     private final double grossRevenue;
     private final double tariff;
+    private final double processingFee;
     private final double netRevenue;
     private final double capex;
     private final double opex;
@@ -942,7 +968,8 @@ public class CashFlowEngine implements Serializable {
      * @param year the year
      * @param grossRevenue gross revenue (MUSD)
      * @param tariff tariff costs (MUSD)
-     * @param netRevenue net revenue after tariff (MUSD)
+     * @param processingFee processing and service fees (MUSD)
+     * @param netRevenue net revenue after tariff and processing fees (MUSD)
      * @param capex capital expenditure (MUSD)
      * @param opex operating expenditure (MUSD)
      * @param depreciation depreciation deduction (MUSD)
@@ -955,12 +982,14 @@ public class CashFlowEngine implements Serializable {
      * @param cumulativeCashFlow cumulative cash flow (MUSD)
      * @param discountedCashFlow discounted cash flow (MUSD)
      */
-    public AnnualCashFlow(int year, double grossRevenue, double tariff, double netRevenue, double capex, double opex,
-        double depreciation, double uplift, double corporateTax, double petroleumTax, double totalTax,
-        double preTaxCashFlow, double afterTaxCashFlow, double cumulativeCashFlow, double discountedCashFlow) {
+    public AnnualCashFlow(int year, double grossRevenue, double tariff, double processingFee, double netRevenue,
+        double capex, double opex, double depreciation, double uplift, double corporateTax, double petroleumTax,
+        double totalTax, double preTaxCashFlow, double afterTaxCashFlow, double cumulativeCashFlow,
+        double discountedCashFlow) {
       this.year = year;
       this.grossRevenue = grossRevenue;
       this.tariff = tariff;
+      this.processingFee = processingFee;
       this.netRevenue = netRevenue;
       this.capex = capex;
       this.opex = opex;
@@ -985,6 +1014,15 @@ public class CashFlowEngine implements Serializable {
 
     public double getTariff() {
       return tariff;
+    }
+
+    /**
+     * Gets processing and service fees.
+     *
+     * @return processing and service fees in MUSD
+     */
+    public double getProcessingFee() {
+      return processingFee;
     }
 
     public double getNetRevenue() {
