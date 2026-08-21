@@ -861,8 +861,9 @@ public class TPflash extends Flash {
         rescueSinglePhaseMultiphaseEndpoint();
         rejectUnnormalizedAqueousEndpointAfterStableSinglePhase();
 
-        // Chemical equilibrium for stable single-phase case
-        if (system.isChemicalSystem()) {
+        // TPmultiflash owns the coupled phase/reaction solve for multiphase chemical systems.
+        // Solve chemistry here only when no multiphase calculation was requested.
+        if (system.isChemicalSystem() && (!system.doMultiPhaseCheck() || !system.getHydrateCheck())) {
           for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
             String phaseType = system.getPhase(phaseNum).getPhaseTypeName();
             if ("aqueous".equalsIgnoreCase(phaseType) || "liquid".equalsIgnoreCase(phaseType)) {
@@ -1120,9 +1121,9 @@ public class TPflash extends Flash {
     normalizeSourGasSinglePhaseEndpoint();
     refineIonicGasAqueousEndpoint();
 
-    // Final chemical equilibrium call after all phase reordering
-    // This ensures chemical equilibrium is solved on the final phase configuration
-    if (system.isChemicalSystem()) {
+    // TPmultiflash already finalized coupled chemistry on a multiphase configuration. For an
+    // ordinary single-topology calculation, solve chemistry after all phase reordering here.
+    if (system.isChemicalSystem() && (!system.doMultiPhaseCheck() || !system.getHydrateCheck())) {
       for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
         String phaseType = system.getPhase(phaseNum).getPhaseTypeName();
         if ("aqueous".equalsIgnoreCase(phaseType) || "liquid".equalsIgnoreCase(phaseType)) {

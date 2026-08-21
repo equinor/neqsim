@@ -125,6 +125,7 @@ The CPA (Cubic Plus Association) hydrate model is the recommended model for syst
 - Accurate for inhibitor systems (MEG, methanol, ethanol)
 - Consistent with CPA mixing rules
 - Validated for North Sea gas compositions
+- Supports explicit electrolyte inventories in gas-aqueous and gas-oil-aqueous phase splits
 
 **Usage:**
 ```java
@@ -133,6 +134,65 @@ fluid.addComponent("methane", 0.9);
 fluid.addComponent("water", 0.1);
 fluid.setMixingRule(10);  // CPA mixing rule
 fluid.setHydrateCheck(true);
+```
+
+#### Electrolyte CPA hydrate equilibrium
+
+Use `SystemElectrolyteCPAstatoil` when the aqueous phase contains explicit ions. Hydrate formation-temperature
+calculations support these material phase configurations:
+
+- gas + aqueous water + salt ions
+- gas + oil + aqueous water + salt ions
+- gas + aqueous water + thermodynamic inhibitor (for example MEG or methanol) + salt ions
+- the same material phase configurations with aqueous reactions, including CO₂-water speciation
+
+The multiphase flash solves the molecular gas-oil-aqueous split on a normalized ion-free basis and then restores the
+conserved ion inventory to the aqueous phase. This keeps ions out of gas and oil while satisfying the component balance
+$z_i = \sum_p \beta_p x_{i,p}$. Salt and organic inhibitor effects enter the hydrate calculation through the water
+fugacity of the converged aqueous phase.
+
+For a reactive fluid, call `chemicalReactionInit()` before creating the database and selecting the mixing rule. Phase
+and chemical equilibrium are then iterated together. Reactions may change the species inventory—for example, dissolved
+CO₂ can form bicarbonate and carbonate—so the coupled flash propagates reaction-adjusted species amounts while
+conserving elements and aqueous charge. Fixed salt ions remain confined to the aqueous phase.
+
+```java
+SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
+fluid.addComponent("methane", 0.75);
+fluid.addComponent("ethane", 0.05);
+fluid.addComponent("propane", 0.03);
+fluid.addComponent("water", 0.12);
+fluid.addComponent("MEG", 0.03);
+fluid.addComponent("Na+", 0.01);
+fluid.addComponent("Cl-", 0.01);
+fluid.setMixingRule(10);
+fluid.setHydrateCheck(true);
+
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+operations.hydrateFormationTemperature();
+double hydrateTemperatureC = fluid.getTemperature("C");
+```
+
+Add C5+ components to the same fluid when a separate oil or condensate phase must be included. The hydrate calculation
+uses guest fugacities from the gas phase and water fugacity from the water-rich aqueous phase.
+
+For reactive CO₂-water brine:
+
+```java
+SystemInterface reactiveFluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
+reactiveFluid.addComponent("methane", 0.70);
+reactiveFluid.addComponent("CO2", 0.05);
+reactiveFluid.addComponent("water", 0.23);
+reactiveFluid.addComponent("Na+", 0.01);
+reactiveFluid.addComponent("Cl-", 0.01);
+reactiveFluid.chemicalReactionInit();
+reactiveFluid.createDatabase(true);
+reactiveFluid.setMixingRule(10);
+reactiveFluid.setMultiPhaseCheck(true);
+reactiveFluid.setHydrateCheck(true);
+
+ThermodynamicOperations reactiveOperations = new ThermodynamicOperations(reactiveFluid);
+reactiveOperations.hydrateFormationTemperature();
 ```
 
 ### PVTsim Hydrate Model
