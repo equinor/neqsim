@@ -9,6 +9,36 @@
 
 ---
 
+## 2026-08-20 — Gas-turbine water-wash planning: `GasTurbineWashPlanner` + partial on-line wash
+
+`GasTurbineDegradation` could only model a wash as `offlineWash()`, a full reset of the recoverable
+penalty, and nothing turned a *measured* corrected-efficiency trend into a wash decision. Both gaps
+are now closed in `neqsim.process.equipment.powergeneration.gasturbine`.
+
+**New: `GasTurbineWashPlanner`.** Screening-level planner for compressor water-wash programmes.
+
+- Steady-state sawtooth with **partial** recovery: a wash removing a fraction `e` of the accumulated
+  loss leaves a residual `L0 = (1-e)*r*T/e` at the start of every cycle, so an imperfect on-line wash
+  never returns the machine to clean.
+- The extra-fuel fraction `1/(1-L) - 1` is **integrated over the cycle**, not evaluated at the mean
+  loss.
+- `evaluate(intervalHours)` returns a `WashPlan` with washes/year, mean efficiency loss, extra fuel
+  (Sm3/yr), extra CO2 (t/yr), and the fuel / CO2 / wash / outage cost split.
+- `optimize(min, max, step)` scans for the lowest total annual cost;
+  `paybackYears(capex, reference, withPermanentSystem)` gives the payback of a permanent
+  installation (`POSITIVE_INFINITY` when it does not save money).
+- `lossRateFromCorrectedEfficiencyTrend(ppPer1000FiredHours, cleanEfficiencyPercent)` converts the
+  "corrected turbine efficiency" KPI that energy-management systems trend into the fractional loss
+  rate the planner needs — the bridge from plant data to the model.
+
+**Extended: `GasTurbineDegradation.onlineWash(double effectiveness)`** — partial recovery of the
+recoverable penalty (clamped to 0–1; 1.0 is equivalent to `offlineWash()`).
+
+Tests: `GasTurbineWashPlannerTest` (9 tests). Skill updated: `neqsim-power-generation` gained a
+"Water-wash interval and permanent-wash business case" section with the usage pattern and the
+gotchas (deferment cost dominates an off-line case; an off-line optimum at the scan bound means
+annual crank washing is already right and on-line washing is the lever).
+
 ## 2026-08-15 — Beggs and Brill correlation corrected in `PipeBeggsAndBrills`
 
 Four defects in the Beggs and Brill (1973) implementation, found by auditing the correlation term
