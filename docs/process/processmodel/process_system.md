@@ -382,9 +382,9 @@ Stream sharedInput = valve.getOutletStream();
 Heater heater1 = new Heater("heater1", sharedInput);  // Same stream object
 Heater heater2 = new Heater("heater2", sharedInput);  // Same stream object
 
-// These single-input units only read/clone the shared stream and may run in parallel.
-// If either consumer were multi-input, NeqSim would group the consumers into one
-// sequential task to protect mutable mixing behavior.
+// NeqSim groups both consumers into one sequential task because cloning and
+// initializing the shared thermodynamic state is not a read-only operation.
+// Consumers attached to distinct stream objects remain parallel.
 process.runParallel();
 ```
 
