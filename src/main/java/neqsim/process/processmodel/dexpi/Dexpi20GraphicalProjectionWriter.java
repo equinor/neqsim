@@ -367,12 +367,23 @@ public final class Dexpi20GraphicalProjectionWriter {
     property.setAttribute("property", propertyName);
     Element value = document.createElement("AggregatedDataValue");
     value.setAttribute("type", "Core/Diagram.Color");
-    int rgb = Integer.parseInt(color.substring(1), 16);
+    int rgb = parseColorOrBlack(color);
     integerData(document, value, "B", rgb & 255);
     integerData(document, value, "G", (rgb >> 8) & 255);
     integerData(document, value, "R", (rgb >> 16) & 255);
     property.appendChild(value);
     parent.appendChild(property);
+  }
+
+  static int parseColorOrBlack(String color) {
+    if (color == null || color.length() != 7 || color.charAt(0) != '#') {
+      return 0;
+    }
+    try {
+      return Integer.parseInt(color.substring(1), 16);
+    } catch (NumberFormatException exception) {
+      return 0;
+    }
   }
 
   private static void data(Document document, Element parent, String propertyName, String value) {

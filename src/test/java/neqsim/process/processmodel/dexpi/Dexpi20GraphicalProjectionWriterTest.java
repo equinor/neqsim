@@ -100,6 +100,15 @@ public class Dexpi20GraphicalProjectionWriterTest extends NeqSimTest {
     assertTrue(report.isValid());
   }
 
+  /** Verifies defensive black fallback for malformed internal color values. */
+  @Test
+  public void parsesMalformedColorAsBlack() {
+    assertEquals(0x123456, Dexpi20GraphicalProjectionWriter.parseColorOrBlack("#123456"));
+    assertEquals(0, Dexpi20GraphicalProjectionWriter.parseColorOrBlack(null));
+    assertEquals(0, Dexpi20GraphicalProjectionWriter.parseColorOrBlack("123456"));
+    assertEquals(0, Dexpi20GraphicalProjectionWriter.parseColorOrBlack("#12gg56"));
+  }
+
   private static EngineeringGraphicalProjection projection() {
     Primitive rectangle = Primitive.rectangle("separator:shape", "equipment:separator", "10-VA-001", 10.0, 20.0, 28.0,
         14.0, "#123456", "#abcdef", 0.8);
