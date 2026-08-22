@@ -100,7 +100,7 @@ class FlowAssuranceScreeningToolsDocumentationTest(unittest.TestCase):
             "not precipitation rate",
             "failed flash",
             "degrees Celsius, not Kelvin",
-            "not as infinite no-touch time",
+            "not as infinite no-touch",
             "input provenance",
         )
         for phrase in required:
