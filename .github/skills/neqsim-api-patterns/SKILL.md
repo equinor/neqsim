@@ -1,12 +1,32 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
-last_verified: "2026-07-10"
+last_verified: "2026-08-22"
 ---
 
 # NeqSim API Patterns
 
 Copy-paste reference for common NeqSim operations. All Java code must be Java 8 compatible.
+
+## MCP Runtime Capability Routing
+
+When a calculation is not exposed by a curated MCP domain tool, use the generic runtime index
+before proposing a new tool:
+
+1. Search with `runCapability({"action":"search","query":"<domain method>"})`.
+2. Inspect the selected class with `inspectApi` to pin the deployed signature.
+3. Follow the returned route:
+     - `static-json`: invoke through `runCapability` with exact `className`, `methodName`,
+         `parameterTypes`, and ordered JSON `arguments`.
+     - `process-json`: build the stateful equipment through `runProcess`.
+     - `inspect-only`: use a curated tool or add an explicit, reviewed adapter.
+
+Discovery is broader than execution by design. `runCapability` only invokes public static methods
+in approved domain packages with scalar, enum, or bounded-array JSON types; MCP runners, raw generic
+containers, oversized payloads, arbitrary objects, and instance methods are excluded. Its timeout
+uses cooperative Java interruption, so route long-running calculations through a curated runner or
+`runProcess`. Treat runtime presence as capability evidence, then check tests, benchmark trust, and
+standards before using the result for engineering decisions.
 
 ## EOS Selection Guide
 
@@ -178,6 +198,36 @@ Use `SystemGERG2008Eos` for any CO₂ compression, injection or transport duty. 
 acceptable for the gas-phase part of the train but not near or above the critical density.
 
 ## Process Equipment Patterns
+
+### Standard outlet-stream contract
+
+Equipment that produces phase-separated gas and liquid products must expose the
+conventional `getGasOutStream()` and `getLiquidOutStream()` methods. A
+three-phase unit should also expose its conventional water outlet. Domain names
+such as `getOverheadGasStream()`, `getLeanLiquidStream()`, or
+`getBottomsStream()` are useful aliases, but they supplement rather than replace
+the conventional accessors and must return the same stream objects.
+
+Every equipment class must also report all connected streams through
+`getInletStreams()` and `getOutletStreams()`. These topology lists must contain
+the live public stream objects, not clones or solver-internal tray streams. Once
+an outlet has been handed to downstream equipment, preserve its object identity
+across `run(...)` calls by updating its thermodynamic system in place or using
+the established identity-preserving adoption helper.
+
+For phase-separated equipment, add a focused contract test after a successful
+solve that verifies:
+
+- `assertSame` between conventional accessors, domain aliases, and the matching
+    entries in `getOutletStreams()`;
+- the gas product contains a `gas` phase and the liquid product contains an
+    `oil`, `liquid`, or `aqueous` phase;
+- expected product flows are positive and total/per-component balances close;
+- outlet identity remains unchanged after a warm rerun or changed feed.
+
+Do not add a new equipment-wide interface solely for gas/liquid naming. The
+generic topology contract belongs to `ProcessEquipmentInterface`; conventional
+phase-product methods belong on the phase-separating equipment abstraction.
 
 ### Stream
 

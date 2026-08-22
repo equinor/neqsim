@@ -150,11 +150,11 @@ class McpToolSurfaceContractTest {
   @Test
   @DisplayName("Tier sizes match the documented tool counts")
   void testDocumentedTierCounts() {
-    assertEquals(23, IndustrialProfile.getIndustrialCore().size(),
+    assertEquals(24, IndustrialProfile.getIndustrialCore().size(),
         "Trusted-core tier size changed — update README.md and MCP_CONTRACT.md");
     assertEquals(32, IndustrialProfile.getEngineeringAdvanced().size(),
         "Engineering-advanced tier size changed — update README.md");
-    assertEquals(69, IndustrialProfile.getAllKnownTools().size(),
+    assertEquals(71, IndustrialProfile.getAllKnownTools().size(),
         "Published tool count changed — update README.md and MCP_CONTRACT.md");
   }
 

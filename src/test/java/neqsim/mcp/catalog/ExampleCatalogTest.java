@@ -86,6 +86,14 @@ class ExampleCatalogTest {
   }
 
   @Test
+  void testProcessMixerSplitterRecycle_runsSuccessfully() {
+    String result = ProcessRunner.run(ExampleCatalog.processMixerSplitterRecycle());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString(), result);
+  }
+
+  @Test
   void testValidationErrorFlash_hasErrors() {
     String result = Validator.validate(ExampleCatalog.validationErrorFlash());
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -118,7 +126,8 @@ class ExampleCatalogTest {
     assertTrue(flashExamples.contains("tp-simple-gas"));
 
     List<String> processExamples = ExampleCatalog.getExampleNames("process");
-    assertEquals(2, processExamples.size());
+    assertEquals(3, processExamples.size());
+    assertTrue(processExamples.contains("mixer-splitter-recycle"));
     assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
     assertTrue(ExampleCatalog.getExampleNames("open-drain-review").contains("norsok-s001-stid"));
     assertTrue(ExampleCatalog.getExampleNames("process-safety-review").contains("norsok-s001-clause10"));

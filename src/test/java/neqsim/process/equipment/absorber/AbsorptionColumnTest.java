@@ -1,8 +1,8 @@
 package neqsim.process.equipment.absorber;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Tag;
@@ -219,6 +219,15 @@ class AbsorptionColumnTest extends NeqSimTest {
 
     StreamInterface treatedGas = absorber.getGasOutStream();
     StreamInterface richSolvent = absorber.getLiquidOutStream();
+    assertEquals(2, absorber.getOutletStreams().size());
+    assertSame(treatedGas, absorber.getOutletStreams().get(0));
+    assertSame(richSolvent, absorber.getOutletStreams().get(1));
+    assertTrue(treatedGas.getThermoSystem().hasPhaseType("gas"),
+        "The standard gas outlet must contain a gas phase. " + absorber.getConvergenceDiagnostics());
+    assertTrue(
+        richSolvent.getThermoSystem().hasPhaseType("oil") || richSolvent.getThermoSystem().hasPhaseType("liquid")
+            || richSolvent.getThermoSystem().hasPhaseType("aqueous"),
+        "The standard liquid outlet must contain a liquid-like phase. " + absorber.getConvergenceDiagnostics());
     double inletMass = absorberCase.gasFeed.getFlowRate("kg/hr") + absorberCase.solventFeed.getFlowRate("kg/hr");
     double outletMass = treatedGas.getFlowRate("kg/hr") + richSolvent.getFlowRate("kg/hr");
     assertEquals(inletMass, outletMass, inletMass * 5.0e-3, absorber.getConvergenceDiagnostics());

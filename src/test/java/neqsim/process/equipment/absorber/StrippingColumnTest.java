@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Tag;
@@ -200,6 +199,15 @@ class StrippingColumnTest extends NeqSimTest {
     StreamInterface leanLiquid = stripper.getLeanLiquidStream();
     assertSame(stripper.getGasOutStream(), overheadGas);
     assertSame(stripper.getLiquidOutStream(), leanLiquid);
+    assertEquals(2, stripper.getOutletStreams().size());
+    assertSame(overheadGas, stripper.getOutletStreams().get(0));
+    assertSame(leanLiquid, stripper.getOutletStreams().get(1));
+    assertTrue(overheadGas.getThermoSystem().hasPhaseType("gas"),
+        "The standard gas outlet must contain a gas phase. " + diagnostics);
+    assertTrue(
+        leanLiquid.getThermoSystem().hasPhaseType("oil") || leanLiquid.getThermoSystem().hasPhaseType("liquid")
+            || leanLiquid.getThermoSystem().hasPhaseType("aqueous"),
+        "The standard liquid outlet must contain a liquid-like phase. " + diagnostics);
     assertTrue(overheadGas.getFlowRate("kg/hr") > 0.0, diagnostics);
     assertTrue(leanLiquid.getFlowRate("kg/hr") > 0.0, diagnostics);
     assertTrue(overheadGas.getTemperature("K") > 0.0, diagnostics);

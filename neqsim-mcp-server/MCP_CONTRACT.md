@@ -286,7 +286,7 @@ on tool availability, validation behavior, and execution permissions.
 | `DESKTOP_ENGINEER` | Full access for individual engineering work | Core + Advanced + Experimental (all tiers, labeled) | On by default |
 | `STUDY_TEAM` | Collaborative team environment | Core + Advanced (no PLATFORM) | Enforced |
 | `DIGITAL_TWIN` | Advisory-only for live operations | ADVISORY + CALCULATION only; no plant control, no write-back, no autonomous execution | Enforced |
-| `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (23 tools) | Enforced, approval gates on EXECUTION |
+| `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (24 tools) | Enforced, approval gates on EXECUTION |
 
 **ENTERPRISE** constraints:
 
@@ -434,6 +434,14 @@ An operation exceeding its timeout is cancelled and reported with status
 `timed_out`. Exceeding the per-principal cap returns a `CONCURRENCY_LIMIT`
 error rather than queueing. Active limits are reported by `getCapabilities`
 under `modelLifecycle.executionPolicy` and by `streamSimulation(action='list')`.
+
+`runCapability(action='invoke')` has a separate five-second in-process worker budget for bounded
+static calculations. It rejects MCP runners and dispatchers, raw generic containers, requests over
+64 KiB, argument arrays over 4096 elements, and results over 256 KiB. Conversion and serialization
+are included in that budget. Cancellation uses Java interruption and is cooperative, not a hard
+process kill; calculations that may run for a long time or ignore interruption must use a curated
+runner, `runProcess`, or an isolated external execution environment.
+
 ### Transport Security & Observability (opt-in)
 
 The HTTP transport supports two enterprise-grade, transport-layer capabilities
@@ -464,7 +472,7 @@ consumes, so transport configuration does affect which state a caller can reach.
 
 ### Industrial Core Toolset
 
-These 23 tools form the approved industrial subset for governed deployments.
+These 24 tools form the approved industrial subset for governed deployments.
 The industrial core toolset represents tools intended for controlled engineering use.
 These tools vary in validation maturity and should be interpreted according to their
 benchmark trust metadata.
@@ -479,7 +487,7 @@ searchComponents, getCapabilities, getExample, getSchema,
 getBenchmarkTrust, checkToolAccess, manageIndustrialProfile,
 listSimulationUnits, listUnitVariables, getSimulationVariable,
 getAdjustableParameters, compareSimulationStates, diagnoseAutomation,
-getAutomationLearningReport, getProgress, manageModel
+getAutomationLearningReport, getProgress, manageModel, inspectApi
 ```
 
 Tools such as `runFlowAssurance`, `runWaterHammer`, `runMaterialsReview`, `crossValidateModels`, `runParametricStudy`,

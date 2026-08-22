@@ -66,6 +66,16 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
+   * Constructor for a named SafetyReliefValve that can be wired after creation.
+   *
+   * @param name name of the safety relief valve
+   */
+  public SafetyReliefValve(String name) {
+    super(name);
+    valveMechanicalDesign = new SafetyValveMechanicalDesign(this);
+  }
+
+  /**
    * Constructor for SafetyReliefValve.
    *
    * @param name a {@link java.lang.String} object

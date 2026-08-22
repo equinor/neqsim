@@ -12,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
+import neqsim.process.equipment.EquipmentFactory;
 
 /**
  * Capabilities discovery runner for MCP integration.
@@ -538,6 +539,11 @@ public class CapabilitiesRunner {
         "Configure jurisdiction-specific validation profiles", "safety-governance");
     addGenericToolCapability(tools, "queryDataCatalog", "query_data_catalog", "data",
         "Browse components, standards, materials, and EOS model data", "data-catalog");
+    addGenericToolCapability(tools, "inspectApi", "inspect_api", "knowledge",
+        "Inspect version-matched public Java constructors and methods with source and documentation pointers",
+        "capability-discovery");
+    addGenericToolCapability(tools, "runCapability", "run_capability", "knowledge",
+        "Search runtime NeqSim functionality and invoke bounded JSON-safe static calculations", "capability-discovery");
     addGenericToolCapability(tools, "runRelief", "run_relief", "safety",
         "Size relief devices and API 521 fire input cases", "safety-governance");
     addGenericToolCapability(tools, "runLOPA", "run_lopa", "safety",
@@ -874,22 +880,24 @@ public class CapabilitiesRunner {
    */
   private static JsonObject buildProcessJsonContract() {
     JsonObject contract = new JsonObject();
-    contract.add("rootFields",
-        toJsonArray(Arrays.asList("name", "fluid", "fluids", "process", "connections", "areas", "autoRun")));
+    contract.add("rootFields", toJsonArray(Arrays.asList("name", "fluid", "fluids", "process", "connections", "areas",
+        "interAreaLinks", "autoRun", "maxIterations", "flowTolerance", "temperatureTolerance", "pressureTolerance")));
     contract.add("fluidFields", toJsonArray(Arrays.asList("model", "temperature", "pressure", "mixingRule",
         "components", "characterizedComponents", "e300FilePath", "binaryInteractionParameters", "multiPhaseCheck")));
     contract.add("unitFields", toJsonArray(Arrays.asList("type", "name", "inlet", "inlets", "fluidRef", "properties")));
     contract.add("connectionFields", toJsonArray(Arrays.asList("from", "sourcePort", "to", "targetPort", "type")));
-    contract.add("supportedEquipmentTypes",
-        toJsonArray(Arrays.asList("Stream", "Separator", "ThreePhaseSeparator", "GasScrubber", "Compressor", "Pump",
-            "Expander", "Heater", "Cooler", "HeatExchanger", "ThrottlingValve", "Mixer", "Splitter",
-            "ComponentSplitter", "DistillationColumn", "Recycle", "Adjuster", "SetPoint", "Calculator", "Tank",
-            "AdiabaticPipe", "PipeBeggsAndBrills", "SimpleReservoir", "Manifold", "Flare", "FlareStack", "GibbsReactor",
-            "PlugFlowReactor", "StirredTankReactor", "SimpleTEGAbsorber", "Electrolyzer", "CO2Electrolyzer", "FuelCell",
-            "WindTurbine", "BatteryStorage", "SolarPanel", "WindFarm", "OffshoreEnergySystem", "SubseaPowerCable",
-            "StreamSaturatorUtil")));
-    contract.add("streamReferencePorts", toJsonArray(Arrays.asList("outlet", "gasOut", "gas", "liquidOut", "liquid",
-        "oilOut", "oil", "waterOut", "water", "split0", "split1", "hx0", "hx1")));
+    contract.add("supportedEquipmentTypes", toJsonArray(EquipmentFactory.getSupportedEquipmentTypes()));
+    contract.addProperty("equipmentTypeDiscovery",
+        "Recursive runtime discovery plus specialized EquipmentFactory enum construction");
+    contract.addProperty("equipmentSupportScope",
+        "Types are constructible from type and name; wiring, properties, required ports, and runnable state depend on the equipment API");
+    contract.add("streamReferencePorts",
+        toJsonArray(Arrays.asList("out", "outlet", "gasOut", "gas", "liquidOut", "liquid", "oilOut", "oil", "waterOut",
+            "water", "split0", "split1", "splitStream_0", "splitStream_1", "hx0", "hx1")));
+    contract.add("recommendedWorkflow",
+        toJsonArray(Arrays.asList("getCapabilities", "getSchema(run_process,input)",
+            "getExample(process,mixer-splitter-recycle)", "validateInput", "runProcess",
+            "inspect convergence, warnings, and mass/energy balance evidence")));
 
     JsonObject commonProperties = new JsonObject();
     commonProperties.add("Stream", toJsonArray(Arrays.asList("flowRate", "temperature", "pressure")));

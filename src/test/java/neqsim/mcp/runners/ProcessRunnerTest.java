@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.mcp.catalog.ExampleCatalog;
 
 /**
  * Tests for {@link ProcessRunner}.
@@ -111,6 +112,16 @@ class ProcessRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("success", root.get("status").getAsString());
+  }
+
+  @Test
+  void testValidateAndRun_catalogMixerSplitterRecycleExample() {
+    String result = ProcessRunner.validateAndRun(ExampleCatalog.processMixerSplitterRecycle());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString(), result);
+    assertTrue(root.has("report"));
+    assertFalse(result.contains("Unresolved inlet"), result);
   }
 
   @Test

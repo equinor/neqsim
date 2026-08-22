@@ -72,7 +72,7 @@ public class SeparatorNewFeatureTest extends neqsim.NeqSimTest {
 | Test Type | Assert On |
 |-----------|-----------|
 | Thermo | Fugacity coefficients, density, compressibility, phase fractions |
-| Process equipment | Outlet T/P/flow, duty, power, efficiency |
+| Process equipment | Outlet T/P/flow and phase, stream identity/topology, duty, power, efficiency |
 | Solver convergence | Residuals, iteration counts, convergence flags |
 | Standards | Calculated properties (GCV, Wobbe, density) against known values |
 | Mechanical design | Wall thickness, weight, design margins |
@@ -82,6 +82,26 @@ public class SeparatorNewFeatureTest extends neqsim.NeqSimTest {
 - **Thermodynamic consistency**: Verify fugacity coefficient derivatives, Gibbs-Duhem consistency
 - **Mass/energy balance**: Total in = total out across equipment
 - **Phase behavior**: Correct number of phases, phase types present
+
+## Phase-Separated Outlet Contract
+
+For absorbers, strippers, distillation columns, separators, scrubbers, and
+similar phase-separating units, do not stop at checking that getters compile.
+After a successful solve, verify all of the following:
+
+- conventional `getGasOutStream()` and `getLiquidOutStream()` products have the
+    expected phase types;
+- domain aliases such as `getOverheadGasStream()` or `getLeanLiquidStream()` are
+    `assertSame` as the conventional products;
+- `getOutletStreams()` contains those exact live objects in the class's
+    documented order;
+- positive product flow where the test feed is expected to split, total and
+    per-component conservation, and the intended component transfer;
+- stream object identity is preserved after a warm rerun or a changed feed, so
+    already-connected downstream equipment cannot retain a stale stream.
+
+A liquid-like product may be typed `oil`, `liquid`, or `aqueous`; test the
+physically appropriate set instead of assuming every solvent is `oil`.
 
 ## Regression Test Pattern
 

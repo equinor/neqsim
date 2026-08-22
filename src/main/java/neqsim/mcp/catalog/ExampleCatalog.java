@@ -137,6 +137,35 @@ public final class ExampleCatalog {
         + "    }\n" + "  ]\n" + "}";
   }
 
+  /**
+   * Returns a process demonstrating splitter outlets, plural mixer inlets, and a recycle loop.
+   *
+   * @return JSON string for ProcessRunner.run()
+   */
+  public static String processMixerSplitterRecycle() {
+    return "{\n" + "  \"fluid\": {\n" + "    \"model\": \"SRK\",\n" + "    \"temperature\": 298.15,\n"
+        + "    \"pressure\": 70.0,\n" + "    \"mixingRule\": \"classic\",\n" + "    \"components\": {\n"
+        + "      \"methane\": 0.88,\n" + "      \"ethane\": 0.08,\n" + "      \"propane\": 0.04\n" + "    }\n"
+        + "  },\n" + "  \"autoRun\": true,\n" + "  \"process\": [\n" + "    {\"type\": \"Stream\", \"name\": \"feed\", "
+        + "\"properties\": {\"flowRate\": [250000.0, \"kg/hr\"]}},\n"
+        + "    {\"type\": \"Mixer\", \"name\": \"Feed + Recycle\", " + "\"inlets\": [\"feed\", \"Gas Recycle.out\"]},\n"
+        + "    {\"type\": \"Splitter\", \"name\": \"Feed Splitter\", " + "\"inlet\": \"Feed + Recycle.out\", "
+        + "\"properties\": {\"splitFactors\": [0.60, 0.40]}},\n"
+        + "    {\"type\": \"Cooler\", \"name\": \"Train A Cooler\", " + "\"inlet\": \"Feed Splitter.splitStream_0\", "
+        + "\"properties\": {\"outTemperature\": [20.0, \"C\"]}},\n"
+        + "    {\"type\": \"ThrottlingValve\", \"name\": \"Train B Valve\", "
+        + "\"inlet\": \"Feed Splitter.splitStream_1\", " + "\"properties\": {\"outletPressure\": [65.0, \"bara\"]}},\n"
+        + "    {\"type\": \"Mixer\", \"name\": \"Combined Mixer\", "
+        + "\"inlets\": [\"Train A Cooler.out\", \"Train B Valve.out\"]},\n"
+        + "    {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"Combined Mixer.out\"},\n"
+        + "    {\"type\": \"Compressor\", \"name\": \"Recycle Comp\", \"inlet\": \"HP Sep.gasOut\", "
+        + "\"properties\": {\"outletPressure\": [72.0, \"bara\"]}},\n"
+        + "    {\"type\": \"Splitter\", \"name\": \"Export Splitter\", " + "\"inlet\": \"Recycle Comp.out\", "
+        + "\"properties\": {\"splitFactors\": [0.95, 0.05]}},\n"
+        + "    {\"type\": \"Recycle\", \"name\": \"Gas Recycle\", " + "\"inlet\": \"Export Splitter.splitStream_1\"}\n"
+        + "  ]\n" + "}";
+  }
+
   // ========== Batch Examples ==========
 
   /**
@@ -945,7 +974,7 @@ public final class ExampleCatalog {
     if ("flash".equals(category)) {
       return Arrays.asList("tp-simple-gas", "tp-two-phase", "dew-point-t", "bubble-point-p", "cpa-with-water");
     } else if ("process".equals(category)) {
-      return Arrays.asList("simple-separation", "compression-with-cooling");
+      return Arrays.asList("simple-separation", "compression-with-cooling", "mixer-splitter-recycle");
     } else if ("validation".equals(category)) {
       return Arrays.asList("error-flash");
     } else if ("batch".equals(category)) {
@@ -1103,6 +1132,9 @@ public final class ExampleCatalog {
       if ("compression-with-cooling".equals(name)) {
         return processCompressionWithCooling();
       }
+      if ("mixer-splitter-recycle".equals(name)) {
+        return processMixerSplitterRecycle();
+      }
     } else if ("validation".equals(category)) {
       if ("error-flash".equals(name)) {
         return validationErrorFlash();
@@ -1256,6 +1288,8 @@ public final class ExampleCatalog {
     Map<String, String> processExamples = new LinkedHashMap<String, String>();
     processExamples.put("simple-separation", "Minimal feed stream + HP separator process");
     processExamples.put("compression-with-cooling", "Two-stage compression with intercooling");
+    processExamples.put("mixer-splitter-recycle",
+        "Splitter branches, plural mixer inlets, named outlet aliases, and a recycle unit");
     catalog.put("process", processExamples);
 
     // Validation examples

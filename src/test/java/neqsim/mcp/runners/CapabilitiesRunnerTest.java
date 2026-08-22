@@ -1,5 +1,6 @@
 package neqsim.mcp.runners;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
@@ -82,8 +83,17 @@ class CapabilitiesRunnerTest {
 
     JsonObject processContract = obj.getAsJsonObject("processJsonContract");
     assertTrue(processContract.has("supportedEquipmentTypes"));
+    assertTrue(processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("ElectricMotor"));
+    assertTrue(
+        processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("ClausCatalyticConverter"));
+    assertFalse(processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("Ejector"));
+    assertTrue(processContract.has("equipmentTypeDiscovery"));
+    assertTrue(processContract.has("equipmentSupportScope"));
     assertTrue(processContract.has("commonPropertiesByEquipment"));
     assertTrue(processContract.has("units"));
+    assertTrue(processContract.getAsJsonArray("rootFields").toString().contains("interAreaLinks"));
+    assertTrue(processContract.getAsJsonArray("streamReferencePorts").toString().contains("splitStream_0"));
+    assertTrue(processContract.has("recommendedWorkflow"));
 
     JsonObject graph = obj.getAsJsonObject("capabilityGraph");
     assertTrue(graph.get("nodeCount").getAsInt() > 50);

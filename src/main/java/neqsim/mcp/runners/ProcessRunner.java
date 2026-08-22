@@ -114,7 +114,9 @@ public class ProcessRunner {
       return runProcessSystem(normalizedJson, startTime, true, valIssues);
     } catch (Exception e) {
       return errorJson("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
-          "Check the JSON definition. Validation passed but simulation threw an exception.");
+          "Retrieve getSchema(run_process,input) and a matching process example, then check plural 'inlets', "
+              + "unit.port references, forward recycle references, named fluidRef values, and area/interAreaLinks wiring. "
+              + "After repair, validateInput and rerun; inspect convergence warnings and balance evidence.");
     }
   }
 
@@ -173,7 +175,8 @@ public class ProcessRunner {
       return envelope;
     } catch (Exception e) {
       return typedError("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
-          "Check the JSON definition. Use Validator.validate() first to catch common issues.");
+          "Use Validator.validate() first, then compare the definition with getSchema(run_process,input) and "
+              + "the mixer-splitter-recycle example. Check inlet ports, forward references, named fluids, and area links.");
     }
   }
 

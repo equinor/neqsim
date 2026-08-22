@@ -124,7 +124,7 @@ observability for enterprise deployments.
 
 ---
 
-## Tier 1 — Trusted Core (23 tools)
+## Tier 1 — Trusted Core (24 tools)
 
 Validated against NIST/experimental data. Available in all deployment modes.
 Each tool has documented accuracy bounds and clear error behavior.
@@ -156,6 +156,7 @@ Each tool has documented accuracy bounds and clear error behavior.
 | `getAutomationLearningReport` | ADVISORY    | Automation correction and failure history                       |
 | `getProgress`                 | ADVISORY    | Progress query for tracked long-running work                    |
 | `manageModel`                 | EXECUTION   | Register a process model once and reuse it by `modelId`         |
+| `inspectApi`                  | ADVISORY    | Inspect version-matched public Java API signatures              |
 
 ### Model handles
 
@@ -248,7 +249,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 
 ---
 
-## Tier 3 — Experimental (14 tools)
+## Tier 3 — Experimental (15 tools)
 
 Functional but limited validation or high-autonomy tools. `DESKTOP_ENGINEER`
 only. Blocked in all other modes by code-level `enforceAccess()`.
@@ -270,6 +271,7 @@ Interfaces may change between minor versions.
 | `manageState`                | Persist/restore simulation states                                   |
 | `manageValidationProfile`    | Jurisdiction-specific validation profiles                           |
 | `runPlugin`                  | Run or list registered MCP runner plugins                           |
+| `runCapability`              | Discover runtime methods and invoke bounded JSON-safe static calculations |
 
 ### Enforcement Example
 
@@ -331,14 +333,37 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 69 tools organized as 23 trusted-core, 32 engineering-advanced,
-and 14 experimental tools, plus 9 guided-workflow prompts and 13 browsable resources.
+The server exposes 71 tools organized as 24 trusted-core, 32 engineering-advanced,
+and 15 experimental tools, plus 9 guided-workflow prompts and 13 browsable resources.
 
-Discovery is intentionally machine-readable. `getCapabilities` describes all 69 tools with schema
+Discovery is intentionally machine-readable. `getCapabilities` describes all 71 tools with schema
 links, examples, setup templates, unit guidance, process JSON contracts, benchmark trust, lifecycle
 metadata, and safety-review policy. High-use tools have detailed schemas and runnable examples; the
 remaining tools have generic contract-level schemas and starter examples so agents can still detect
 and route every advertised capability.
+
+### Runtime Java Capability Discovery
+
+Use `runCapability` when the required calculation is not represented by a curated domain tool.
+Its search action indexes the NeqSim classes present in the running artifact, so discovery stays
+matched to the deployed version. Each result declares one execution route:
+
+- `static-json` — a public static method with JSON-safe parameters and return type; invoke it with
+  `runCapability` using the exact class, method, parameter types, and ordered arguments.
+- `process-json` — stateful process equipment; construct and run it through `runProcess` rather than
+  reflective instantiation.
+- `inspect-only` — discoverable API that is not eligible for generic execution; use `inspectApi` to
+  confirm signatures and then select a curated tool or implement an explicit adapter.
+
+Generic execution is intentionally narrower than discovery. It permits only public static methods
+in approved NeqSim domain packages with scalar, enum, or bounded-array inputs and outputs. MCP
+runners, agentic dispatchers, raw generic containers, unsafe Java/platform types, oversized
+requests, and oversized results are rejected. Argument conversion and result serialization happen
+inside the five-second worker budget. Timeout cancellation uses Java interruption and is therefore
+cooperative; methods that ignore interruption may continue on a daemon thread, so long-running or
+stateful calculations must use a curated runner or `runProcess`. This supports newly added
+thermodynamic correlations without adding one MCP tool per Java method while preserving the safety
+boundary for stateful simulations.
 
 ## Complete Tool Inventory
 
@@ -701,7 +726,7 @@ java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
 
 Never widen the CORS allowlist to `*` — it is the Origin gate that prevents
 DNS-rebinding attacks against the Streamable HTTP transport. `NEQSIM_MCP_PROFILE=ENTERPRISE`
-also reduces the exposed surface to the 23 trusted-core tools, which keeps the
+also reduces the exposed surface to the 24 trusted-core tools, which keeps the
 tool list within what a Copilot Studio agent can reason about.
 
 ---
@@ -802,7 +827,7 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 69 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 71 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
    `neqsim://components`, `neqsim://models`, and `neqsim://setup-templates` to
@@ -850,7 +875,7 @@ neqsim-mcp-server/                        # Separate Maven project (Java 21+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-  ├── NeqSimTools.java                   # 69 @Tool-annotated MCP tools
+  ├── NeqSimTools.java                   # 71 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 7 @Resource + 6 @ResourceTemplate (13 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
@@ -904,7 +929,7 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
     ├── ExampleCatalog.java                # Examples for base categories and all MCP tools
-    └── SchemaCatalog.java                 # JSON Schema definitions for all 69 MCP tools
+    └── SchemaCatalog.java                 # JSON Schema definitions for all 71 MCP tools
 ```
 
 The MCP server is a **thin Quarkus wrapper** around the framework-agnostic
@@ -933,11 +958,11 @@ setup templates, and validation behavior:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 69 tools across all three tiers:
+and validates all 71 tools across all three tiers:
 
 | Category           | Checks | Description                                                                                                                        |
 | ------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Protocol           | 9      | Tool/resource/template registration (69 tools, 7 resources, 6 templates)                                                           |
+| Protocol           | 9      | Tool/resource/template registration (71 tools, 7 resources, 7 templates)                                                           |
 | Component search   | 9      | Exact, partial, empty, no-match                                                                                                    |
 | Examples & schemas | 10     | Catalog retrieval                                                                                                                  |
 | Flash calculations | 30     | SRK, PR, CPA; single/two-phase; density, Z, viscosity                                                                              |

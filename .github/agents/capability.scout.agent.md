@@ -82,6 +82,17 @@ For each capability in the matrix, **systematically search** the NeqSim source:
 4. **Check for recent changes**:
    - Read `CHANGELOG_AGENT_NOTES.md` for any recent additions
 
+5. **Use runtime MCP discovery when the server is available**:
+   - Call `runCapability` with `action: search` and a domain phrase to search the exact NeqSim
+     artifact currently deployed, including functionality absent from curated MCP tools.
+   - Route `static-json` matches back to `runCapability`; route `process-json` matches to
+     `runProcess`; treat `inspect-only` matches as discovery evidence, not executable calculations.
+   - Call `inspectApi` for the selected class before coding or invoking it to verify exact
+     constructors, overloads, parameter types, and return types.
+   - Do not classify a capability as missing from source-tree search alone when the deployed JAR
+     reports a runtime match. Conversely, a runtime match is not proof of validation quality; still
+     inspect tests, benchmark trust, and applicable standards.
+
 ### Step 4: Assess Coverage
 
 For each capability, classify as:

@@ -149,7 +149,7 @@ public final class IndustrialProfile {
           "calculateStandard", "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
           "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
           "listUnitVariables", "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
-          "getAutomationLearningReport", "getProgress", "getAdjustableParameters", "manageModel")));
+          "getAutomationLearningReport", "getProgress", "getAdjustableParameters", "manageModel", "inspectApi")));
 
   /**
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening studies and
@@ -167,10 +167,10 @@ public final class IndustrialProfile {
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that are difficult to
    * validate for industrial use. Available in DESKTOP_ENGINEER only.
    */
-  private static final Set<String> EXPERIMENTAL_TOOLS = Collections
-      .unmodifiableSet(new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
-          "solveTask", "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
-          "manageSecurity", "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
+  private static final Set<String> EXPERIMENTAL_TOOLS = Collections.unmodifiableSet(
+      new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess", "solveTask",
+          "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow", "manageSecurity",
+          "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow", "runCapability")));
 
   /** Union of all tier sets — the authoritative published tool surface. */
   private static final Set<String> ALL_TOOLS = buildAllTools();
@@ -213,6 +213,7 @@ public final class IndustrialProfile {
     map.put("checkToolAccess", ToolCategory.ADVISORY);
     map.put("manageIndustrialProfile", ToolCategory.ADVISORY);
     map.put("queryDataCatalog", ToolCategory.ADVISORY);
+    map.put("inspectApi", ToolCategory.ADVISORY);
     map.put("generateReport", ToolCategory.ADVISORY);
     map.put("bridgeTaskWorkflow", ToolCategory.ADVISORY);
     map.put("getAdjustableParameters", ToolCategory.ADVISORY);
@@ -227,6 +228,7 @@ public final class IndustrialProfile {
     map.put("runFlowAssurance", ToolCategory.CALCULATION);
     map.put("runChemistry", ToolCategory.CALCULATION);
     map.put("calculateStandard", ToolCategory.CALCULATION);
+    map.put("runCapability", ToolCategory.CALCULATION);
     map.put("runPipeline", ToolCategory.CALCULATION);
     map.put("runWaterHammer", ToolCategory.CALCULATION);
     map.put("runRootCauseAnalysis", ToolCategory.CALCULATION);

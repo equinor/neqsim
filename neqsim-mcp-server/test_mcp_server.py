@@ -1,10 +1,10 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 69 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 71 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
-Tier 1 — Trusted Core (23 tools):
+Tier 1 — Trusted Core (24 tools):
   - TP flash (single phase, two-phase, multi-component)
   - Dew point / bubble point calculations
   - Different EOS models (SRK, PR, CPA)
@@ -16,6 +16,7 @@ Tier 1 — Trusted Core (23 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
   - Reusable process model handles (manageModel)
+    - Version-matched Java API inspection (inspectApi)
 
 Tier 2 — Engineering Advanced (32 tools):
   - PVT laboratory experiments
@@ -34,7 +35,7 @@ Tier 2 — Engineering Advanced (32 tools):
   - Parametric studies
     - Relief, LOPA, SIL, risk matrix, flare, HAZOP, barrier register, safety performance
 
-Tier 3 — Experimental (14 tools):
+Tier 3 — Experimental (15 tools):
   - Session management
   - Task solver, workflow composition
   - Report generation, visualization
@@ -42,6 +43,7 @@ Tier 3 — Experimental (14 tools):
   - Multi-server composition
   - Security, state persistence
   - Validation profiles, data catalog
+    - Generic runtime capability discovery and bounded static execution
 """
 import subprocess
 import json
@@ -85,6 +87,7 @@ JSON_TOOL_ARGS = {
     "manageState": "persistJson",
     "manageValidationProfile": "profileJson",
     "queryDataCatalog": "catalogJson",
+    "runCapability": "capabilityJson",
     "manageIndustrialProfile": "profileJson",
     "getBenchmarkTrust": "trustJson",
 }
@@ -258,9 +261,9 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("69 tools registered", len(tools) == 69, f"got {len(tools)}: {tool_names}")
+    check("71 tools registered", len(tools) == 71, f"got {len(tools)}: {tool_names}")
 
-    # Tier 1 — Trusted Core (23 tools)
+    # Tier 1 — Trusted Core (24 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
              "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
              "getCapabilities", "runBatch", "listSimulationUnits",
@@ -268,7 +271,7 @@ def test_protocol():
              "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
              "getAutomationLearningReport", "manageIndustrialProfile",
              "getBenchmarkTrust", "checkToolAccess", "getAdjustableParameters",
-             "manageModel"]
+             "manageModel", "inspectApi"]
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
@@ -287,12 +290,12 @@ def test_protocol():
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 
-    # Tier 3 — Experimental (14 tools)
+    # Tier 3 — Experimental (15 tools)
     tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
              "runPlugin", "getProgress", "streamSimulation",
              "generateVisualization", "composeMultiServerWorkflow",
              "manageSecurity", "manageState", "manageValidationProfile",
-             "queryDataCatalog", "bridgeTaskWorkflow"]
+             "queryDataCatalog", "bridgeTaskWorkflow", "runCapability"]
     for name in tier3:
         check(f"tier3 tool '{name}'", name in tool_names)
 
@@ -304,7 +307,7 @@ def test_protocol():
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("6 templates", len(templates) == 6, f"got {len(templates)}")
+    check("7 templates", len(templates) == 7, f"got {len(templates)}")
 
 
 def test_component_search():
@@ -1319,6 +1322,36 @@ def test_capabilities():
     check("capabilities has equipment", "processEquipment" in r)
 
 
+def test_run_capability_search_and_invoke():
+    """Discover and execute a runtime capability through the generic MCP route."""
+    print("\n=== Generic Runtime Capability ===")
+
+    search = call_tool("runCapability", {
+        "capabilityJson": json.dumps({
+            "action": "search",
+            "query": "sulfur vapour pressure",
+            "limit": 25,
+        })
+    })
+    check("capability search status=success", search.get("status") == "success", search.get("message", ""))
+    matches = json.dumps(search.get("matches", []))
+    check("capability search finds static sulfur method", "calculateVapourPressureBar" in matches, matches)
+    check("capability search labels static execution", "static-json" in matches, matches)
+
+    invoke = call_tool("runCapability", {
+        "capabilityJson": json.dumps({
+            "action": "invoke",
+            "className": "neqsim.thermo.util.sulfur.SulfurThermodynamics",
+            "methodName": "calculateVapourPressureBar",
+            "parameterTypes": ["double"],
+            "arguments": [717.76],
+        })
+    })
+    check("capability invoke status=success", invoke.get("status") == "success", invoke.get("message", ""))
+    check("capability invoke result", abs(invoke.get("result", 0.0) - 1.01325) < 1.0e-10,
+          f"got {invoke.get('result')}")
+
+
 # ===========================================================================
 # TIER 2 TOOL TESTS — Engineering Advanced
 # ===========================================================================
@@ -2053,6 +2086,7 @@ if __name__ == "__main__":
 
         # Capabilities
         test_capabilities()
+        test_run_capability_search_and_invoke()
 
         # ── Tier 2: Engineering Advanced tools ──
         test_pvt_saturation_pressure()

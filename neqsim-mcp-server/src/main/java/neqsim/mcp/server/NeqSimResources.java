@@ -6,6 +6,7 @@ import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
 import neqsim.mcp.runners.CapabilitiesRunner;
 import neqsim.mcp.runners.DataCatalogRunner;
+import neqsim.mcp.runners.ApiKnowledgeRunner;
 
 /**
  * MCP resources exposing NeqSim example and schema catalogs, component data, design standards,
@@ -82,6 +83,20 @@ public class NeqSimResources {
     String schema = SchemaCatalog.getSchema(tool, type);
     String content = schema != null ? schema : "{\"error\": \"Schema not found\"}";
     return TextResourceContents.create("neqsim://schemas/" + tool + "/" + type, content);
+  }
+
+  /**
+   * Inspect a class from the running NeqSim public API.
+   *
+   * @param className fully qualified class, common class name, or equipment alias
+   * @return resource contents with runtime-derived API signatures and knowledge pointers
+   */
+  @io.quarkiverse.mcp.server.ResourceTemplate(uriTemplate = "neqsim://api/{className}",
+      name = "NeqSim Runtime API",
+      description = "Inspect version-matched public constructors and methods for a NeqSim class or equipment alias")
+  public TextResourceContents api(String className) {
+    String content = ApiKnowledgeRunner.inspect(className, "");
+    return TextResourceContents.create("neqsim://api/" + className, content);
   }
 
   /**
