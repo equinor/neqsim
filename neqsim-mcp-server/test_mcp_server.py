@@ -165,6 +165,33 @@ def call_tool(name, arguments):
     return {}
 
 
+def read_json_resource(uri):
+    """Read and decode a JSON MCP resource through the real protocol."""
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": next_id(),
+            "method": "resources/read",
+            "params": {"uri": uri},
+        }
+    )
+    response = recv()
+    contents = response.get("result", {}).get("contents", [])
+    if not contents:
+        return {"_protocolError": response}
+
+    resource = contents[0]
+    if resource.get("uri") != uri:
+        return {
+            "_protocolError": f"requested {uri}, received {resource.get('uri')}"
+        }
+
+    try:
+        return json.loads(resource.get("text", ""))
+    except json.JSONDecodeError as error:
+        return {"_protocolError": f"invalid JSON at {uri}: {error}"}
+
+
 def normalize_tool_arguments(name, arguments):
     json_arg = JSON_TOOL_ARGS.get(name)
     if not json_arg or json_arg in arguments:
@@ -254,7 +281,7 @@ def get_composition(result, phase, component):
 # ===========================================================================
 
 def test_protocol():
-    """Test MCP protocol basics: tools/list, resources/list."""
+    """Test the exact MCP publication surface through list operations."""
     print("\n=== Protocol Tests ===")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "tools/list", "params": {}})
@@ -302,12 +329,55 @@ def test_protocol():
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
     r = recv()
     resources = r.get("result", {}).get("resources", [])
-    check("7 resources", len(resources) == 7, f"got {len(resources)}")
+    resource_uris = sorted(resource["uri"] for resource in resources)
+    expected_resource_uris = sorted([
+        "neqsim://components",
+        "neqsim://data-tables",
+        "neqsim://example-catalog",
+        "neqsim://models",
+        "neqsim://schema-catalog",
+        "neqsim://setup-templates",
+        "neqsim://standards",
+    ])
+    check("exact static resource inventory",
+          resource_uris == expected_resource_uris,
+          f"got {resource_uris}")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("7 templates", len(templates) == 7, f"got {len(templates)}")
+    template_uris = sorted(template["uriTemplate"] for template in templates)
+    expected_template_uris = sorted([
+        "neqsim://api/{className}",
+        "neqsim://components/{name}",
+        "neqsim://examples/{category}/{name}",
+        "neqsim://materials/{type}",
+        "neqsim://schemas/{tool}/{type}",
+        "neqsim://setup-templates/{id}",
+        "neqsim://standards/{code}",
+    ])
+    check("exact resource-template inventory",
+          template_uris == expected_template_uris,
+          f"got {template_uris}")
+
+    send({"jsonrpc": "2.0", "id": next_id(), "method": "prompts/list", "params": {}})
+    r = recv()
+    prompts = r.get("result", {}).get("prompts", [])
+    prompt_names = sorted(prompt["name"] for prompt in prompts)
+    expected_prompt_names = sorted([
+        "biorefinery_analysis",
+        "co2_ccs_chain",
+        "design_gas_processing",
+        "dynamic_simulation",
+        "field_development_screening",
+        "flow_assurance_screening",
+        "pipeline_sizing",
+        "pvt_study",
+        "teg_dehydration_design",
+    ])
+    check("exact guided-prompt inventory",
+          prompt_names == expected_prompt_names,
+          f"got {prompt_names}")
 
 
 def test_component_search():
@@ -340,8 +410,70 @@ def test_component_search():
 
 
 def test_examples_and_schemas():
-    """Test example catalog and schema retrieval."""
+    """Test complete example/schema catalogs and representative tool retrieval."""
     print("\n=== Examples & Schemas Tests ===")
+
+    schema_catalog = read_json_resource("neqsim://schema-catalog")
+    check("schema catalog is JSON", "_protocolError" not in schema_catalog,
+          schema_catalog.get("_protocolError", ""))
+    check("schema catalog has 71 tools", len(schema_catalog) == 71,
+          f"got {len(schema_catalog)}")
+
+    schema_uri_errors = []
+    schema_resource_errors = []
+    for tool_name, schema_refs in sorted(schema_catalog.items()):
+        if tool_name == "_protocolError":
+            continue
+        for schema_type in ("input", "output"):
+            ref_name = f"{schema_type}SchemaUri"
+            expected_uri = f"neqsim://schemas/{tool_name}/{schema_type}"
+            schema_uri = schema_refs.get(ref_name)
+            if schema_uri != expected_uri:
+                schema_uri_errors.append(
+                    f"{tool_name}/{schema_type}: {schema_uri!r} != {expected_uri!r}"
+                )
+                continue
+            schema = read_json_resource(schema_uri)
+            if ("_protocolError" in schema or schema.get("type") != "object"
+                    or not isinstance(schema.get("properties"), dict)):
+                schema_resource_errors.append(f"{tool_name}/{schema_type}")
+
+    check("all 142 catalog schema URIs are canonical", not schema_uri_errors,
+          "; ".join(schema_uri_errors))
+    check("all 142 catalog schemas resolve as JSON objects",
+          not schema_resource_errors,
+          f"invalid: {schema_resource_errors}")
+
+    example_catalog = read_json_resource("neqsim://example-catalog")
+    check("example catalog is JSON", "_protocolError" not in example_catalog,
+          example_catalog.get("_protocolError", ""))
+    check("example catalog has 24 categories", len(example_catalog) == 24,
+          f"got {len(example_catalog)}")
+    example_count = sum(
+        len(examples) for examples in example_catalog.values()
+        if isinstance(examples, dict)
+    )
+    check("example catalog has 114 entries", example_count == 114,
+          f"got {example_count}")
+
+    tool_examples = example_catalog.get("tool", {})
+    check("schema tools exactly match canonical tool examples",
+          set(tool_examples) == set(schema_catalog),
+          f"missing={sorted(set(schema_catalog) - set(tool_examples))}, "
+          f"extra={sorted(set(tool_examples) - set(schema_catalog))}")
+
+    example_resource_errors = []
+    for category, examples in sorted(example_catalog.items()):
+        if not isinstance(examples, dict):
+            example_resource_errors.append(f"{category}: not an object")
+            continue
+        for name in sorted(examples):
+            example = read_json_resource(f"neqsim://examples/{category}/{name}")
+            if "_protocolError" in example or not isinstance(example, dict):
+                example_resource_errors.append(f"{category}/{name}")
+    check("all 114 catalog examples resolve as JSON objects",
+          not example_resource_errors,
+          f"invalid: {example_resource_errors}")
 
     r = call_tool("getExample", {"category": "flash", "name": "tp-simple-gas"})
     check("flash example has model", "model" in r)
@@ -1320,6 +1452,20 @@ def test_capabilities():
     check("capabilities has engine", r.get("engine") == "NeqSim")
     check("capabilities has thermo models", "thermodynamicModels" in r)
     check("capabilities has equipment", "processEquipment" in r)
+    coverage = r.get("toolCatalogCoverage", {})
+    check("capability descriptors cover every published tool",
+          coverage.get("complete") is True,
+          str(coverage))
+    check("capability coverage reports 71 published tools",
+          coverage.get("publishedToolCount") == 71,
+          str(coverage))
+    check("capability coverage reports 71 described tools",
+          coverage.get("describedToolCount") == 71,
+          str(coverage))
+    check("capability coverage has no missing or undeclared descriptors",
+          not coverage.get("missingDescriptors")
+          and not coverage.get("undeclaredDescriptors"),
+          str(coverage))
 
 
 def test_run_capability_search_and_invoke():

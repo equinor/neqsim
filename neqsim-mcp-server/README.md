@@ -823,6 +823,10 @@ For detailed parameter documentation, JSON formats, example calls, and
 response schemas for all tools and browsable resources, see
 **[docs/API_REFERENCE.md](docs/API_REFERENCE.md)**.
 
+For the exact protocol-tested inventory of published tools, resources, resource templates, guided
+prompts, deployment profiles, and cross-layer capability coverage, see
+**[docs/SURFACE_INVENTORY.md](docs/SURFACE_INVENTORY.md)**.
+
 ---
 
 ## How the LLM Uses the Server (Typical Flow)
