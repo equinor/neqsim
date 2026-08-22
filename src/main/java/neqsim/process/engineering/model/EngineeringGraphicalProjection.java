@@ -18,10 +18,9 @@ import com.google.gson.JsonParser;
  * Immutable exchange-neutral graphical projection of the canonical engineering graph.
  *
  * <p>
- * Coordinates and dimensions use millimetres. Primitives retain stable semantic identities, but
- * deliberately carry no DEXPI profile symbol, ISO symbol, or accountable drawing-approval claim.
- * Format adapters may render these generic primitives natively or translate the supported subset
- * into an exchange format while reporting every loss.
+ * Coordinates and dimensions use millimetres. Primitives retain stable semantic identities, but deliberately carry no
+ * DEXPI profile symbol, ISO symbol, or accountable drawing-approval claim. Format adapters may render these generic
+ * primitives natively or translate the supported subset into an exchange format while reporting every loss.
  * </p>
  */
 public final class EngineeringGraphicalProjection implements Serializable {
@@ -100,18 +99,17 @@ public final class EngineeringGraphicalProjection implements Serializable {
     private final String textAnchor;
     private final boolean protectedGeometry;
 
-    private Primitive(String id, PrimitiveType type, String representedObjectId,
-        String representedExternalKey, List<Point> points, double x, double y, double width,
-        double height, double size, String text, String strokeColor, String fillColor,
-        double strokeWidth, String dashPattern, String textAnchor, boolean protectedGeometry) {
+    private Primitive(String id, PrimitiveType type, String representedObjectId, String representedExternalKey,
+        List<Point> points, double x, double y, double width, double height, double size, String text,
+        String strokeColor, String fillColor, double strokeWidth, String dashPattern, String textAnchor,
+        boolean protectedGeometry) {
       this.id = requireText(id, "id");
       if (type == null) {
         throw new IllegalArgumentException("type must not be null");
       }
       this.type = type;
       this.representedObjectId = requireText(representedObjectId, "representedObjectId");
-      this.representedExternalKey =
-          requireText(representedExternalKey, "representedExternalKey");
+      this.representedExternalKey = requireText(representedExternalKey, "representedExternalKey");
       this.points = immutablePoints(points);
       this.x = finite(x, "x");
       this.y = finite(y, "y");
@@ -128,36 +126,30 @@ public final class EngineeringGraphicalProjection implements Serializable {
       validateGeometry();
     }
 
-    public static Primitive rectangle(String id, String representedObjectId,
-        String representedExternalKey, double x, double y, double width, double height,
-        String strokeColor, String fillColor, double strokeWidth) {
-      return new Primitive(id, PrimitiveType.RECTANGLE, representedObjectId,
-          representedExternalKey, Collections.<Point>emptyList(), x, y, width, height, 0.0, "",
-          strokeColor, fillColor, strokeWidth, "", "", false);
+    public static Primitive rectangle(String id, String representedObjectId, String representedExternalKey, double x,
+        double y, double width, double height, String strokeColor, String fillColor, double strokeWidth) {
+      return new Primitive(id, PrimitiveType.RECTANGLE, representedObjectId, representedExternalKey,
+          Collections.<Point>emptyList(), x, y, width, height, 0.0, "", strokeColor, fillColor, strokeWidth, "", "",
+          false);
     }
 
-    public static Primitive polyline(String id, String representedObjectId,
-        String representedExternalKey, List<Point> points, String strokeColor, double strokeWidth,
-        String dashPattern, boolean protectedGeometry) {
-      return new Primitive(id, PrimitiveType.POLYLINE, representedObjectId,
-          representedExternalKey, points, 0.0, 0.0, 0.0, 0.0, 0.0, "", strokeColor, "none",
-          strokeWidth, dashPattern, "", protectedGeometry);
+    public static Primitive polyline(String id, String representedObjectId, String representedExternalKey,
+        List<Point> points, String strokeColor, double strokeWidth, String dashPattern, boolean protectedGeometry) {
+      return new Primitive(id, PrimitiveType.POLYLINE, representedObjectId, representedExternalKey, points, 0.0, 0.0,
+          0.0, 0.0, 0.0, "", strokeColor, "none", strokeWidth, dashPattern, "", protectedGeometry);
     }
 
-    public static Primitive polygon(String id, String representedObjectId,
-        String representedExternalKey, List<Point> points, String strokeColor, String fillColor,
-        double strokeWidth) {
-      return new Primitive(id, PrimitiveType.POLYGON, representedObjectId,
-          representedExternalKey, points, 0.0, 0.0, 0.0, 0.0, 0.0, "", strokeColor, fillColor,
-          strokeWidth, "", "", false);
+    public static Primitive polygon(String id, String representedObjectId, String representedExternalKey,
+        List<Point> points, String strokeColor, String fillColor, double strokeWidth) {
+      return new Primitive(id, PrimitiveType.POLYGON, representedObjectId, representedExternalKey, points, 0.0, 0.0,
+          0.0, 0.0, 0.0, "", strokeColor, fillColor, strokeWidth, "", "", false);
     }
 
-    public static Primitive text(String id, String representedObjectId,
-        String representedExternalKey, double x, double y, double size, String text,
-        String fillColor, String textAnchor) {
+    public static Primitive text(String id, String representedObjectId, String representedExternalKey, double x,
+        double y, double size, String text, String fillColor, String textAnchor) {
       return new Primitive(id, PrimitiveType.TEXT, representedObjectId, representedExternalKey,
-          Collections.<Point>emptyList(), x, y, 0.0, 0.0, size, requireText(text, "text"), "none",
-          fillColor, 0.0, "", textAnchor, false);
+          Collections.<Point>emptyList(), x, y, 0.0, 0.0, size, requireText(text, "text"), "none", fillColor, 0.0, "",
+          textAnchor, false);
     }
 
     public String getId() {
@@ -326,9 +318,9 @@ public final class EngineeringGraphicalProjection implements Serializable {
   private final List<Primitive> primitives;
   private final List<Diagnostic> diagnostics;
 
-  public EngineeringGraphicalProjection(String projectId, String revision,
-      String sourceGraphFingerprint, String sourceReference, VerificationStatus verificationStatus,
-      List<Primitive> primitives, List<Diagnostic> diagnostics) {
+  public EngineeringGraphicalProjection(String projectId, String revision, String sourceGraphFingerprint,
+      String sourceReference, VerificationStatus verificationStatus, List<Primitive> primitives,
+      List<Diagnostic> diagnostics) {
     this.projectId = requireText(projectId, "projectId");
     this.revision = requireText(revision, "revision");
     this.sourceGraphFingerprint = requireText(sourceGraphFingerprint, "sourceGraphFingerprint");
@@ -432,14 +424,11 @@ public final class EngineeringGraphicalProjection implements Serializable {
     for (JsonElement element : root.getAsJsonArray("diagnostics")) {
       JsonObject item = element.getAsJsonObject();
       diagnostics.add(new Diagnostic(Severity.valueOf(item.get("severity").getAsString()),
-          item.get("code").getAsString(), item.get("message").getAsString(),
-          item.get("subjectId").getAsString()));
+          item.get("code").getAsString(), item.get("message").getAsString(), item.get("subjectId").getAsString()));
     }
-    return new EngineeringGraphicalProjection(root.get("projectId").getAsString(),
-        root.get("revision").getAsString(), root.get("sourceGraphFingerprint").getAsString(),
-        root.get("sourceReference").getAsString(),
-        VerificationStatus.valueOf(root.get("verificationStatus").getAsString()), primitives,
-        diagnostics);
+    return new EngineeringGraphicalProjection(root.get("projectId").getAsString(), root.get("revision").getAsString(),
+        root.get("sourceGraphFingerprint").getAsString(), root.get("sourceReference").getAsString(),
+        VerificationStatus.valueOf(root.get("verificationStatus").getAsString()), primitives, diagnostics);
   }
 
   private static Primitive primitiveFromJson(JsonObject item) {
@@ -453,13 +442,12 @@ public final class EngineeringGraphicalProjection implements Serializable {
       JsonObject point = element.getAsJsonObject();
       points.add(new Point(point.get("x").getAsDouble(), point.get("y").getAsDouble()));
     }
-    return new Primitive(id, type, representedObjectId, representedExternalKey, points,
-        item.get("x").getAsDouble(), item.get("y").getAsDouble(),
-        item.get("width").getAsDouble(), item.get("height").getAsDouble(),
-        item.get("size").getAsDouble(), item.get("text").getAsString(),
-        item.get("strokeColor").getAsString(), item.get("fillColor").getAsString(),
-        item.get("strokeWidth").getAsDouble(), item.get("dashPattern").getAsString(),
-        item.get("textAnchor").getAsString(), item.get("protectedGeometry").getAsBoolean());
+    return new Primitive(id, type, representedObjectId, representedExternalKey, points, item.get("x").getAsDouble(),
+        item.get("y").getAsDouble(), item.get("width").getAsDouble(), item.get("height").getAsDouble(),
+        item.get("size").getAsDouble(), item.get("text").getAsString(), item.get("strokeColor").getAsString(),
+        item.get("fillColor").getAsString(), item.get("strokeWidth").getAsDouble(),
+        item.get("dashPattern").getAsString(), item.get("textAnchor").getAsString(),
+        item.get("protectedGeometry").getAsBoolean());
   }
 
   private static List<Primitive> immutablePrimitives(List<Primitive> values) {
