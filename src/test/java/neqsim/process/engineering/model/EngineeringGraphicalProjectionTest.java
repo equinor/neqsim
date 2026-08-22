@@ -66,6 +66,16 @@ class EngineeringGraphicalProjectionTest {
   }
 
   @Test
+  void rejectsRestartThatWeakensApprovalBoundary() {
+    EngineeringGraphicalProjection projection = EngineeringGraphicalProjectionBuilder.build(graph(),
+        new EngineeringDiagramConventionRegister(), "DOC-PFD-001", VerificationStatus.PROPOSAL);
+    String weakened = projection.toJson().replace("\"engineeringApprovalRequired\": true",
+        "\"engineeringApprovalRequired\": false");
+
+    assertThrows(IllegalArgumentException.class, () -> EngineeringGraphicalProjection.fromJson(weakened));
+  }
+
+  @Test
   void rejectsDuplicatePrimitiveIdentity() {
     Primitive first = Primitive.rectangle("duplicate", "pump-a", "P-100", 0.0, 0.0, 10.0, 10.0, "#000000", "none", 0.5);
     Primitive second = Primitive.text("duplicate", "pump-a", "P-100", 5.0, 5.0, 3.0, "P-100", "#000000", "middle");
