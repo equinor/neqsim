@@ -497,7 +497,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void checkStability(boolean val);
 
   /**
-   * chemicalReactionInit.
+   * Initialize chemical-reaction topology for the current component identities.
+   *
+   * <p>
+   * Adding, removing, or renaming a component after this call makes the reaction state stale. Before the next reactive
+   * calculation, call this method again, repopulate the component database, and reapply the mixing rule.
+   * </p>
    */
   public void chemicalReactionInit();
 

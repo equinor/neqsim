@@ -156,6 +156,10 @@ and chemical equilibrium are then iterated together. Reactions may change the sp
 CO₂ can form bicarbonate and carbonate—so the coupled flash propagates reaction-adjusted species amounts while
 conserving elements and aqueous charge. Fixed salt ions remain confined to the aqueous phase.
 
+If a component is added, removed, or renamed after reaction initialization, repeat
+`chemicalReactionInit()`, `createDatabase(true)`, and `setMixingRule(...)`. NeqSim rejects the stale
+reaction topology instead of silently applying the earlier reaction set.
+
 ```java
 SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
 fluid.addComponent("methane", 0.75);

@@ -184,6 +184,16 @@ flash.run();
 
 When you provide only molecular species, the flash can automatically discover ionic products from the reaction database:
 
+`chemicalReactionInit()` captures the component identities present at that call. If a component is
+later added, removed, or renamed, NeqSim rejects access to the stale reaction state. Repeat
+`chemicalReactionInit()`, `createDatabase(true)`, and `setMixingRule(...)` before the next reactive
+calculation. Changing only the amount of an existing component does not invalidate the reaction
+topology.
+
+This lifecycle rule is shared by electrolyte EOS systems and electrolyte GE systems such as Pitzer.
+Reinitialization reruns the existing reaction-database selection for that system; it does not make the
+reaction tables or equilibrium-constant parameters interchangeable between thermodynamic models.
+
 ```java
 SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
 system.addComponent("CO2", 0.01);
