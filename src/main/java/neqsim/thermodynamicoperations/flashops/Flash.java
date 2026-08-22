@@ -189,8 +189,10 @@ public abstract class Flash extends BaseOperation {
    * Wilson K values approach 1 and standard trials converge to trivial solutions).
    *
    * <p>
-   * Only runs when Wilson K-values indicate near-critical conditions (trial sums close to 1.0), avoiding false
-   * positives in clearly non-critical systems.
+   * Runs at moderate-to-high pressure, or below 50 bar for feeds containing more than one mole percent hydrogen, and
+   * only proceeds when the Wilson K-value sums or tangent-plane result indicate an ambiguous phase boundary. The
+   * existing K-value-spread and non-physical-state rollback gates avoid false positives in clearly single-phase
+   * systems.
    *
    * @return true if instability was found (K-values on system are updated)
    */
@@ -214,8 +216,20 @@ public abstract class Flash extends BaseOperation {
     boolean nearlyPure = maxZ > 0.999;
     boolean trivialSolution = !nearlyPure && ((Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12));
 
-    // Only retry at moderate-to-high pressures where near-critical VLE issues occur.
-    if (system.getPressure() < 50.0) {
+    boolean hydrogenRichFeed = false;
+    for (int i = 0; i < numComp; i++) {
+      ComponentInterface component = system.getPhase(0).getComponent(i);
+      if ("hydrogen".equalsIgnoreCase(component.getComponentName()) && component.getz() > 1.0e-2) {
+        hydrogenRichFeed = true;
+        break;
+      }
+    }
+
+    // Most supplementary retries target moderate-to-high-pressure near-critical VLE. Hydrogen
+    // binaries can have equally difficult, highly asymmetric boundaries below 50 bar, so retain
+    // the later Wilson-sum and TPD screens for hydrogen-bearing feeds instead of rejecting them
+    // only on pressure.
+    if (system.getPressure() < 50.0 && !hydrogenRichFeed) {
       return false;
     }
 
