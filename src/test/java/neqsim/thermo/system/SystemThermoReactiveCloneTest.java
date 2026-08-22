@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
-import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -162,14 +161,7 @@ class SystemThermoReactiveCloneTest extends neqsim.NeqSimTest {
     }
     assertEquals(0.0, charge, BALANCE_TOLERANCE, "Aqueous phase must be electroneutral");
 
-    double maximumLogReactionResidual = 0.0;
-    for (ChemicalReaction reaction : fluid.getChemicalReactionOperations().getReactionList()
-        .getChemicalReactionList()) {
-      double reactionQuotient = reaction.calcK(fluid, aqueousPhase);
-      double equilibriumConstant = reaction.getK(aqueous);
-      maximumLogReactionResidual = Math.max(maximumLogReactionResidual,
-          Math.abs(Math.log(reactionQuotient / equilibriumConstant)));
-    }
+    double maximumLogReactionResidual = fluid.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual();
     assertTrue(maximumLogReactionResidual <= 2.0e-6, "Maximum absolute ln(Q/K) was " + maximumLogReactionResidual);
   }
 
