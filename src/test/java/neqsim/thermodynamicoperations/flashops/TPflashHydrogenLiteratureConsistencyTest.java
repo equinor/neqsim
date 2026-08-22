@@ -25,6 +25,7 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
   private static final double MODEL_COMPOSITION_TOLERANCE = 0.04;
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
+  private static final double BOUNDARY_COMPOSITION_OFFSET = 1.0e-4;
   private static final TieLine[] TIE_LINES = { new TieLine("methane", 123.15, 20.0, 0.0192, 0.818),
       new TieLine("methane", 143.05, 40.2, 0.0477, 0.721), new TieLine("methane", 173.65, 59.9, 0.0709, 0.362),
       new TieLine("ethane", 148.15, 20.0, 0.00618, 0.986), new TieLine("ethane", 173.15, 40.0, 0.0168, 0.977) };
@@ -55,6 +56,61 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
             tieLine.label(eos) + " liquid-composition side");
         assertSinglePhaseAcrossAlgorithms(eos, tieLine, vaporSideHydrogen,
             tieLine.label(eos) + " vapor-composition side");
+      }
+    }
+  }
+
+  @Test
+  void calculatedBoundariesPreserveTinyPhasesAndAdjacentSinglePhaseStates() {
+    for (Eos eos : Eos.values()) {
+      for (TieLine tieLine : TIE_LINES) {
+        if (tieLine.pressureBar() >= 50.0) {
+          continue;
+        }
+        SystemInterface midpoint = flash(createSystem(eos, tieLine, tieLine.midpoint(), false), false);
+        Integer[] order = phaseOrder(midpoint);
+        double vaporHydrogen = midpoint.getPhase(order[0]).getComponent("hydrogen").getx();
+        double liquidHydrogen = midpoint.getPhase(order[1]).getComponent("hydrogen").getx();
+
+        assertBoundaryStateAcrossAlgorithms(eos, tieLine, liquidHydrogen - BOUNDARY_COMPOSITION_OFFSET, 1,
+            tieLine.label(eos) + " below calculated liquid boundary");
+        assertBoundaryStateAcrossAlgorithms(eos, tieLine, liquidHydrogen + BOUNDARY_COMPOSITION_OFFSET, 2,
+            tieLine.label(eos) + " inside calculated liquid boundary");
+        assertBoundaryStateAcrossAlgorithms(eos, tieLine, vaporHydrogen - BOUNDARY_COMPOSITION_OFFSET, 2,
+            tieLine.label(eos) + " inside calculated vapor boundary");
+        assertBoundaryStateAcrossAlgorithms(eos, tieLine, vaporHydrogen + BOUNDARY_COMPOSITION_OFFSET, 1,
+            tieLine.label(eos) + " above calculated vapor boundary");
+      }
+    }
+  }
+
+  @Test
+  void calculatedBoundaryTransitionsDoNotRetainStalePhaseState() {
+    TieLine tieLine = TIE_LINES[1];
+    for (Eos eos : Eos.values()) {
+      SystemInterface midpoint = flash(createSystem(eos, tieLine, tieLine.midpoint(), false), false);
+      double vaporHydrogen = midpoint.getPhase(phaseOrder(midpoint)[0]).getComponent("hydrogen").getx();
+      double insideHydrogen = vaporHydrogen - BOUNDARY_COMPOSITION_OFFSET;
+      double outsideHydrogen = vaporHydrogen + BOUNDARY_COMPOSITION_OFFSET;
+
+      for (boolean multiphase : new boolean[] { false, true }) {
+        SystemInterface insideReference = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), false);
+        SystemInterface poorGuess = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), true);
+        assertEquivalent(insideReference, poorGuess, tieLine.label(eos) + " boundary poor initialization");
+
+        SystemInterface repeatedReference = insideReference.clone();
+        flash(insideReference, false);
+        assertEquivalent(repeatedReference, insideReference, tieLine.label(eos) + " boundary repeat");
+
+        insideReference.setMolarComposition(new double[] { outsideHydrogen, 1.0 - outsideHydrogen });
+        flash(insideReference, false);
+        SystemInterface outsideReference = flash(createSystem(eos, tieLine, outsideHydrogen, multiphase), false);
+        assertEquals(1, outsideReference.getNumberOfPhases(), tieLine.label(eos) + " boundary disappearance");
+        assertEquivalent(outsideReference, insideReference, tieLine.label(eos) + " boundary disappearance");
+
+        insideReference.setMolarComposition(new double[] { insideHydrogen, 1.0 - insideHydrogen });
+        flash(insideReference, false);
+        assertEquivalent(poorGuess, insideReference, tieLine.label(eos) + " boundary reappearance");
       }
     }
   }
@@ -91,6 +147,16 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
     SystemInterface multiphase = flash(createSystem(eos, tieLine, hydrogenFraction, true), false);
 
     assertEquals(1, ordinary.getNumberOfPhases(), label);
+    assertEquivalent(ordinary, multiphase, label);
+  }
+
+  private static void assertBoundaryStateAcrossAlgorithms(Eos eos, TieLine tieLine, double hydrogenFraction,
+      int expectedPhases, String label) {
+    SystemInterface ordinary = flash(createSystem(eos, tieLine, hydrogenFraction, false), false);
+    SystemInterface multiphase = flash(createSystem(eos, tieLine, hydrogenFraction, true), false);
+
+    assertEquals(expectedPhases, ordinary.getNumberOfPhases(), label + " ordinary path");
+    assertEquals(expectedPhases, multiphase.getNumberOfPhases(), label + " multiphase path");
     assertEquivalent(ordinary, multiphase, label);
   }
 
