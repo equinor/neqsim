@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.thermo.phase.PhaseKentEisenberg;
 import neqsim.thermo.phase.PhaseSrkEos;
 
@@ -50,6 +51,12 @@ public class SystemKentEisenberg extends SystemEosGE {
     attractiveTermNumber = 0;
 
     configureHybridEosGePhases(T, P, new PhaseSrkEos(), new PhaseKentEisenberg(), new PhaseSrkEos());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ChemicalReactionDataSource getChemicalReactionDataSource() {
+    return ChemicalReactionDataSource.KENT_EISENBERG;
   }
 
   /** {@inheritDoc} */

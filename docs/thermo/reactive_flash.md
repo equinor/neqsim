@@ -194,6 +194,14 @@ This lifecycle rule is shared by electrolyte EOS systems and electrolyte GE syst
 Reinitialization reruns the existing reaction-database selection for that system; it does not make the
 reaction tables or equilibrium-constant parameters interchangeable between thermodynamic models.
 
+Reaction data selection is explicit and inspectable. `SystemKentEisenberg` selects the dedicated
+`KENT_EISENBERG` source of apparent equilibrium constants; electrolyte EOS systems and electrolyte
+GE systems (including Pitzer) currently select `STANDARD`. This mapping records the implemented
+database choice—it is not evidence that a parameter set has been independently validated for every
+model or salinity range. Use `system.getChemicalReactionDataSource()` before initialization and
+`system.getChemicalReactionOperations().getReactionDataSource()` after initialization to record the
+selection in calculation provenance.
+
 ```java
 SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
 system.addComponent("CO2", 0.01);
@@ -243,11 +251,22 @@ inspect the database-selected reaction set without multiplying trace activities 
 |--------|-------------|
 | `getReactionLogResiduals()` | Immutable reaction-name map of signed `ln(Q/K)` residuals in reaction-list order |
 | `getMaximumAbsoluteReactionLogResidual()` | Largest absolute `ln(Q/K)`, or `NaN` if no reactive liquid phase or reaction is available |
+| `getReactionDataSource()` | Typed source selected for the loaded reaction set |
 
 Individual `ChemicalReaction` objects also expose `calcLogReactionQuotient(system, phase)` and
 `calcLogReactionResidual(system, phase)`. These methods use the same mole-fraction and activity-
 coefficient standard-state convention as `calcK`, but sum logarithms directly so trace ionic
 activities do not underflow or overflow before the residual is evaluated.
+
+For parameter-level provenance, `getReference()`, `getEquilibriumConstantCoefficients()`, and
+`getReferenceTemperature()` expose the reference identifier and a defensive copy of the stored
+temperature-correlation data. The `CO2water` entry in `STANDARD`, for example, cites Plummer and
+Busenberg (1982), DOI: [10.1016/0016-7037(82)90056-4](https://doi.org/10.1016/0016-7037(82)90056-4).
+Kent-Eisenberg parameters are kept distinct because that screening model uses apparent constants;
+see Kent and Eisenberg, *Hydrocarbon Processing* 55 (1976), 87–90. For rigorous MDEA modeling,
+Huttenhuis et al. describe activity-based constants on a mole-fraction, infinite-dilution-in-water
+reference state and report their temperature validity ranges, DOI:
+[10.1016/j.fluid.2007.10.020](https://doi.org/10.1016/j.fluid.2007.10.020).
 
 ### FormulaMatrix
 
