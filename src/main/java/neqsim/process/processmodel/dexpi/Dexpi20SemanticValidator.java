@@ -26,7 +26,8 @@ public final class Dexpi20SemanticValidator {
   private static final Set<String> SUPPORTED_TYPES = Collections
       .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue",
           "Core/PhysicalQuantities.PhysicalQuantity", "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup",
-          "Core/Diagram.Text", "Core/Diagram.Point", "Plant/PlantModel", "Plant/Diagram.PlantMetaData",
+          "Core/Diagram.Static", "Core/Diagram.PolyLine", "Core/Diagram.Polygon", "Core/Diagram.Text",
+          "Core/Diagram.Color", "Core/Diagram.Point", "Core/Diagram.Stroke", "Plant/PlantModel", "Plant/Diagram.PlantMetaData",
           "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
           "Plant/ProcessEquipment.CentrifugalPump", "Plant/ProcessEquipment.Separator",
           "Plant/ProcessEquipment.AirCoolingSystem", "Plant/ProcessEquipment.TubularHeatExchanger",
@@ -151,6 +152,7 @@ public final class Dexpi20SemanticValidator {
     validateReferences(root, objectsById, errors);
     validateEquipment(objects, errors, warnings);
     validatePipingReferences(root, objectsById, errors);
+    validateGraphicalRepresentations(objects, errors);
     validateProcessModel(objects, objectsById, errors, warnings);
     return new ValidationReport(errors, warnings);
   }
@@ -214,6 +216,51 @@ public final class Dexpi20SemanticValidator {
         }
       }
     }
+  }
+
+
+  private static void validateGraphicalRepresentations(NodeList objects, List<String> errors) {
+    for (int i = 0; i < objects.getLength(); i++) {
+      Element object = (Element) objects.item(i);
+      String type = object.getAttribute("type");
+      if ("Core/Diagram.RepresentationGroup".equals(type)) {
+        if (directReference(object, "Represents") == null) {
+          errors.add("DEXPI RepresentationGroup has no Represents reference: " + object.getAttribute("id"));
+        }
+        Element groups = directComponents(object, "Groups");
+        if (groups == null || !containsSupportedPrimitive(groups)) {
+          errors.add("DEXPI RepresentationGroup has no non-empty supported primitive group: "
+              + object.getAttribute("id"));
+        }
+      } else if ("Core/Diagram.Static".equals(type)) {
+        Element elements = directComponents(object, "Elements");
+        if (elements == null || !containsSupportedPrimitive(elements)) {
+          errors.add("DEXPI Static group has no supported graphical primitive.");
+        }
+      }
+    }
+  }
+
+  private static boolean containsSupportedPrimitive(Element root) {
+    NodeList descendants = root.getElementsByTagName("Object");
+    for (int i = 0; i < descendants.getLength(); i++) {
+      String type = ((Element) descendants.item(i)).getAttribute("type");
+      if ("Core/Diagram.PolyLine".equals(type) || "Core/Diagram.Polygon".equals(type)
+          || "Core/Diagram.Text".equals(type)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Element directComponents(Element object, String property) {
+    for (Node child = object.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof Element && "Components".equals(((Element) child).getTagName())
+          && property.equals(((Element) child).getAttribute("property"))) {
+        return (Element) child;
+      }
+    }
+    return null;
   }
 
   private static void validateEquipment(NodeList objects, List<String> errors, List<String> warnings) {
