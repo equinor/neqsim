@@ -9,14 +9,17 @@ For controlled design cases, equipment and discipline sizing, safety verificatio
 handover, use the separate [Engineering documentation](../engineering/).
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Documentation Structure](#documentation-structure)
-- [Package Structure](#package-structure)
+- [Package Architecture](#package-architecture)
 - [ProcessSystem](#processsystem)
-- [Equipment Categories](#equipment-categories)
-- [Controllers and Logic](#controllers-and-logic)
-- [Safety Systems](#safety-systems)
-- [Basic Usage](#basic-usage)
+- [Choosing Equipment](#choosing-equipment)
+- [Specifications, Recycles, and Calculators](#specifications-recycles-and-calculators)
+- [Transient and Safety Boundaries](#transient-and-safety-boundaries)
+- [Result Handling](#result-handling)
+- [Best Practices](#best-practices)
+
 
 ---
 
@@ -226,161 +229,23 @@ This documentation is organized into the following sections:
 
 ---
 
-## Package Structure
+## Package Architecture
 
-```
-process/
-├── SimulationBaseClass.java         # Base class for simulations
-├── SimulationInterface.java         # Simulation interface
-│
-├── equipment/                        # Process equipment
-│   ├── ProcessEquipmentBaseClass.java
-│   ├── ProcessEquipmentInterface.java
-│   ├── TwoPortEquipment.java         # Equipment with inlet/outlet
-│   ├── EquipmentFactory.java         # Factory for creating equipment
-│   │
-│   ├── stream/                       # Streams
-│   │   ├── Stream.java
-│   │   ├── StreamInterface.java
-│   │   ├── EnergyStream.java
-│   │   └── VirtualStream.java
-│   │
-│   ├── separator/                    # Separators
-│   │   ├── Separator.java
-│   │   ├── ThreePhaseSeparator.java
-│   │   ├── GasScrubber.java
-│   │   └── SeparatorInterface.java
-│   │
-│   ├── heatexchanger/               # Heat transfer
-│   │   ├── Heater.java
-│   │   ├── Cooler.java
-│   │   ├── HeatExchanger.java
-│   │   ├── NeqHeater.java
-│   │   └── Condenser.java
-│   │
-│   ├── compressor/                  # Compression
-│   │   ├── Compressor.java
-│   │   ├── CompressorInterface.java
-│   │   └── CompressorChartInterface.java
-│   │
-│   ├── pump/                        # Pumps
-│   │   ├── Pump.java
-│   │   └── PumpInterface.java
-│   │
-│   ├── expander/                    # Expanders
-│   │   ├── Expander.java
-│   │   └── ExpanderInterface.java
-│   │
-│   ├── valve/                       # Valves
-│   │   ├── ThrottlingValve.java
-│   │   ├── ValveInterface.java
-│   │   └── SafetyValve.java
-│   │
-│   ├── mixer/                       # Mixers
-│   │   ├── Mixer.java
-│   │   ├── StaticMixer.java
-│   │   └── MixerInterface.java
-│   │
-│   ├── splitter/                    # Splitters
-│   │   ├── Splitter.java
-│   │   └── SplitterInterface.java
-│   │
-│   ├── distillation/                # Distillation
-│   │   ├── DistillationColumn.java
-│   │   ├── SimpleTray.java
-│   │   ├── Condenser.java
-│   │   └── Reboiler.java
-│   │
-│   ├── reactor/                     # Reactors
-│   │   ├── Reactor.java
-│   │   └── PFReactor.java
-│   │
-│   ├── absorber/                    # Absorption
-│   │   ├── Absorber.java
-│   │   └── SimpleTEGAbsorber.java
-│   │
-│   ├── pipeline/                    # Pipelines
-│   │   ├── Pipeline.java
-│   │   └── PipelineInterface.java
-│   │
-│   ├── well/                        # Wells
-│   │   ├── SimpleWell.java
-│   │   └── WellFlow.java
-│   │
-│   ├── tank/                        # Tanks and vessels
-│   │   ├── Tank.java
-│   │   └── ProcessVessel.java
-│   │
-│   ├── filter/                      # Filters
-│   │   └── Filter.java
-│   │
-│   ├── membrane/                    # Membranes
-│   │   └── Membrane.java
-│   │
-│   ├── ejector/                     # Ejectors
-│   │   └── Ejector.java
-│   │
-│   ├── electrolyzer/                # Electrolyzers
-│   │   └── PEM_Electrolyzer.java
-│   │
-│   └── util/                        # Utility equipment
-│       ├── Adjuster.java
-│       ├── Recycle.java
-│       ├── Calculator.java
-│       ├── Setter.java
-│       └── MoleFractionSetter.java
-│
-├── processmodel/                    # Process system
-│   ├── ProcessSystem.java
-│   ├── ProcessModule.java
-│   └── graph/                       # Graph-based execution
-│       ├── ProcessGraph.java
-│       └── ProcessGraphBuilder.java
-│
-├── controllerdevice/                # Controllers
-│   ├── ControllerDevice.java
-│   └── PIDController.java
-│
-├── measurementdevice/               # Measurements
-│   ├── MeasurementDevice.java
-│   ├── TemperatureMeasurement.java
-│   ├── PressureMeasurement.java
-│   └── FlowMeasurement.java
-│
-├── logic/                           # Process logic
-│   ├── ProcessLogicController.java
-│   └── ConditionalLogic.java
-│
-├── alarm/                           # Alarm system
-│   └── ProcessAlarmManager.java
-│
-├── safety/                          # Safety systems
-│   ├── PSV/
-│   ├── ESD/
-│   └── Blowdown/
-│
-├── calibration/                     # Equipment calibration
-├── conditionmonitor/                # Condition monitoring
-├── costestimation/                  # Cost estimation
-├── mechanicaldesign/                # Mechanical design calculations
-│   ├── separator/                   # Separator vessel design
-│   ├── compressor/                  # Compressor design (API 617)
-│   ├── valve/                       # Valve body, sizing, actuator
-│   └── designstandards/             # ASME, API, IEC standards
-├── mpc/                             # Model predictive control
-├── ml/                              # Machine learning
-└── streaming/                       # Data streaming
-```
+The process package separates common simulation behavior from equipment-specific stream topology.
+Use the narrowest API that represents the operation being modeled.
 
-### Mechanical Design Documentation
+| Responsibility | Current API | Boundary |
+|---|---|---|
+| Simulation lifecycle | `SimulationInterface`, `SimulationBaseClass` | Execution identity, run state, and common simulation behavior |
+| Equipment contract | `ProcessEquipmentInterface` | Reporting, mechanical design, validation, fluid access, capacity, and common operating properties |
+| Shared equipment implementation | `ProcessEquipmentBaseClass` | Common state and default implementations; it does not imply one inlet and one outlet |
+| One-inlet/one-outlet equipment | `TwoPortInterface`, `TwoPortEquipment` | Single-stream inlet/outlet methods used by heaters, compressors, pumps, and throttling valves |
+| Multiport equipment | Equipment-specific classes | Separators, mixers, splitters, and columns expose topology-specific stream methods |
+| Flowsheet orchestration | `ProcessSystem` | Named units, topology, execution strategy, convergence, reporting, and transient time |
+| Controls and measurements | `controllerdevice`, `measurementdevice`, `logic` | Controllers, sensors, alarms, and process logic |
 
-| Equipment | Documentation | Standards |
-|-----------|--------------|-----------|
-| Separators | See SeparatorMechanicalDesign | ASME, BS 5500 |
-| Compressors | [CompressorMechanicalDesign.md](CompressorMechanicalDesign.md) | API 617, API 672 |
-| Valves | [ValveMechanicalDesign.md](ValveMechanicalDesign.md) | IEC 60534, ANSI/ISA-75, ASME B16.34 |
-
----
+See the [equipment index](equipment/README.md) for the current category map and
+[ProcessSystem guide](processmodel/process_system.md) for orchestration details.
 
 ## ProcessSystem
 
@@ -491,133 +356,37 @@ topology-derived execution plan. The complete quick start above executes both ca
 
 ---
 
-## Equipment Categories
+## Choosing Equipment
 
-### Streams
+The [equipment index](equipment/README.md) is the authoritative navigation page for individual
+unit-operation guides. The complete quick start above is the canonical package example; individual
+guides add equipment-specific constructors, specifications, units, and validation.
 
-```java
-// Material stream
-Stream gas = new Stream("Natural Gas", fluid);
-gas.setFlowRate(5000.0, "Sm3/hr");
-gas.setTemperature(25.0, "C");
-gas.setPressure(100.0, "bara");
-gas.run();
+Stream topology determines which accessor is valid:
 
-// Energy stream
-EnergyStream heat = new EnergyStream("Heating Duty");
-heat.setEnergyFlow(1000.0, "kW");
-```
+| Topology | Examples | Access pattern |
+|---|---|---|
+| One inlet, one outlet | Heater, compressor, pump, throttling valve | `TwoPortEquipment.getInletStream()` and `getOutletStream()` |
+| Multiple outlets | Separator, splitter | Equipment-specific getters such as `Separator.getGasOutStream()` and `getLiquidOutStream()` |
+| Multiple inlets | Mixer, separator | Equipment-specific `addStream(...)` or inlet-list APIs |
+| Staged equipment | Distillation column, absorber | Stage/feed APIs plus equipment-specific product streams |
+| Utility graph node | Recycle, adjuster, calculator | Declared input/output dependencies rather than a universal material outlet |
 
-### Separators
+Do not cast the result of `ProcessSystem.getUnit(name)` until the expected equipment type has
+been established. Prefer retaining a typed reference when constructing the flowsheet.
 
-```java
-// Two-phase separator
-Separator sep2p = new Separator("V-100", inletStream);
-sep2p.run();
-Stream gas = sep2p.getGasOutStream();
-Stream liquid = sep2p.getLiquidOutStream();
+## Specifications, Recycles, and Calculators
 
-// Three-phase separator
-ThreePhaseSeparator sep3p = new ThreePhaseSeparator("V-200", inletStream);
-sep3p.run();
-Stream gas = sep3p.getGasOutStream();
-Stream oil = sep3p.getOilOutStream();
-Stream water = sep3p.getWaterOutStream();
-```
+- Use [adjusters](equipment/util/adjusters.md) for a bounded variable-to-target solve.
+- Use [recycles](equipment/util/recycles.md) to close material loops and document the convergence
+  variable, tolerance, and maximum iterations.
+- Use [calculators and setters](equipment/util/calculators.md) for explicit Java callbacks and
+  supported setter targets. `Calculator` does not parse expression strings.
+- Add each utility object to the same `ProcessSystem` as its dependencies so topology and
+  convergence logic can account for it.
 
-### Heat Exchangers
-
-```java
-// Heater (duty specified)
-Heater heater = new Heater("E-100", inletStream);
-heater.setOutTemperature(80.0, "C");
-heater.run();
-System.out.println("Duty: " + heater.getDuty() + " W");
-
-// Cooler
-Cooler cooler = new Cooler("E-200", inletStream);
-cooler.setOutTemperature(30.0, "C");
-cooler.run();
-
-// Shell-tube heat exchanger
-HeatExchanger hx = new HeatExchanger("E-300", hotStream, coldStream);
-hx.setUAvalue(5000.0);  // W/K
-hx.run();
-```
-
-### Compressors
-
-```java
-// Compressor with polytropic efficiency
-Compressor comp = new Compressor("K-100", inletStream);
-comp.setOutletPressure(80.0, "bara");
-comp.setPolytropicEfficiency(0.75);
-comp.setUsePolytropicCalc(true);
-comp.run();
-
-System.out.println("Power: " + comp.getPower("kW") + " kW");
-System.out.println("Outlet T: " + comp.getOutletStream().getTemperature("C") + " °C");
-```
-
-### Valves
-
-```java
-// Throttling valve (Joule-Thomson)
-ThrottlingValve valve = new ThrottlingValve("FV-100", inletStream);
-valve.setOutletPressure(50.0, "bara");
-valve.run();
-
-// Valve with Cv
-valve.setCv(100.0, "US");
-valve.setPercentValveOpening(50.0);
-```
-
-### Distillation
-
-```java
-// Simple distillation column
-DistillationColumn column = new DistillationColumn("T-100", 10, true, true);
-column.addFeedStream(feedStream, 5);
-column.setCondenserTemperature(40.0, "C");
-column.setReboilerTemperature(120.0, "C");
-column.run();
-
-Stream overhead = column.getGasOutStream();
-Stream bottoms = column.getLiquidOutStream();
-```
-
----
-
-## Controllers and Logic
-
-### Adjusters
-
-Adjust a parameter to meet a specification.
-
-```java
-// Adjust heater duty to achieve target temperature
-Adjuster tempAdjuster = new Adjuster("TC-100");
-tempAdjuster.setAdjustedVariable(heater, "duty");
-tempAdjuster.setTargetVariable(heater.getOutletStream(), "temperature", 80.0, "C");
-process.add(tempAdjuster);
-```
-
-### Recycles
-
-Handle recycle loops in the process.
-
-```java
-Recycle recycle = new Recycle("Recycle");
-recycle.addStream(recycleStream);
-recycle.setOutletStream(recycleInletStream);
-recycle.setTolerance(1e-6);
-process.add(recycle);
-```
-
-### Calculators
-
-Use an explicit Java callback; `Calculator` does not parse expression strings. Register the
-equipment objects themselves so optimized process execution can derive graph dependencies.
+A focused calculator callback looks like this when `stream` and `heater` are already typed
+objects in the same running flowsheet:
 
 ```java
 Calculator calc = new Calculator("heater target calculator");
@@ -631,71 +400,54 @@ calc.setCalculationMethod((inputs, output) -> {
 process.add(calc);
 ```
 
-See [Calculators and setters](equipment/util/calculators.md) for a complete executable example,
-preset calculations, recycle-coupling behavior, supported setter targets, and validation
-boundaries.
+The [calculator guide](equipment/util/calculators.md) supplies the imports, complete executable
+context, supported presets, setter targets, and recycle-coupling boundaries.
 
----
+## Transient and Safety Boundaries
 
-## Safety Systems
+A steady-state flowsheet is not automatically a valid dynamic model. Before advancing time:
 
-### Pressure Safety Valves
+1. converge and validate the steady-state case;
+2. confirm that each participating unit implements the required transient state and holdup;
+3. choose a time step appropriate for the fastest modeled response;
+4. configure controllers, events, and boundary conditions explicitly;
+5. call `runTransient(double, UUID)` when the caller needs explicit step duration and calculation
+   identity, or the configured no-argument helper when that behavior is intentional;
+6. capture results through reports, monitors, or callbacks rather than console printing.
 
-```java
-SafetyValve psv = new SafetyValve("PSV-100", vessel);
-psv.setSetPressure(120.0, "bara");
-psv.setBlowdownPressure(0.1);  // 10% blowdown
-process.add(psv);
-```
+See [dynamic simulation](dynamic-simulation.md) for instrumentation and controller setup.
 
-### Blowdown Systems
+A `SafetyValve` is constructed from a `StreamInterface`, not a vessel object, and its current
+set-pressure method is `setPressureSpec(double)`; there is no `setSetPressure(...)` API.
+Pressure-relief simulation is not design certification. Use the [valve guide](equipment/valves.md)
+and [safety roadmap](../safety/SAFETY_SIMULATION_ROADMAP.md), record units and scenarios explicitly,
+and obtain the required engineering review.
 
-See [Safety Simulation Roadmap](../safety/SAFETY_SIMULATION_ROADMAP.md) for detailed safety system documentation.
+## Result Handling
 
----
+After a successful run:
 
-## Dynamic Simulation
+- use `getReport_json()` for a structured process report;
+- use `getStreamSummaryTable()` for a formatted stream-property table;
+- use equipment-specific getters for engineering quantities and always supply units where the API
+  accepts them;
+- check conservation and operating constraints before interpreting results.
 
-```java
-// Run transient simulation
-double simulationTime = 3600.0;  // 1 hour
-double timeStep = 1.0;           // 1 second
-
-process.setTimeStep(timeStep);
-for (double t = 0; t < simulationTime; t += timeStep) {
-    process.runTransient();
-
-    // Log data
-    System.out.println(t + ", " +
-        separator.getPressure() + ", " +
-        separator.getGasOutStream().getFlowRate("kg/hr"));
-}
-```
-
----
-
-## Process Reports
-
-After a successful run, use `getReport_json()` for the structured process report and
-`getStreamSummaryTable()` for a formatted stream summary. The legacy `reportResults()` aggregator
-assumes that every equipment type supplies a non-null row array and is not safe as a general
-flowsheet reporting contract. The complete quick start executes both supported APIs. Treat
-`display()` as an interactive console helper rather than a machine-readable result contract.
-
----
-
----
+The legacy `reportResults()` aggregator assumes every equipment type supplies a non-null row
+array and is not a general flowsheet reporting contract. Treat interactive display helpers as
+diagnostic UI, not serialized evidence.
 
 ## Best Practices
 
-1. **Use unique names** for all equipment
-2. **Set flow rate and conditions** before running
-3. **Add equipment in flow order** for clarity
-4. **Use Recycle** for recycle loops
-5. **Check mass balance** after simulation
-6. **Clone streams** before branching to avoid shared state
+1. Give every stream, equipment object, controller, and measurement a stable unique name.
+2. Set feed composition, flow basis, temperature, and pressure with explicit units.
+3. Retain typed object references and add units to the `ProcessSystem` in readable flow order.
+4. Use graph-aware recycle, adjuster, and calculator objects instead of manual outer loops.
+5. Validate mass and energy balances, convergence, phase behavior, and operating constraints.
+6. Clone a stream before intentional branching when downstream cases must not share mutable state.
+7. Preserve the `ProcessSystem`, named streams, calculation identity, and structured reports when
+   the model will be serialized, restarted, or embedded in a larger workflow.
 
----
 
 ## Future Infrastructure
 
