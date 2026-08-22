@@ -558,6 +558,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * @return a boolean
    */
   public boolean solveChemEq(int phaseNum, int type) {
+    if (!system.isChemicalSystem()) {
+      return false;
+    }
     // Get the reactive phase - this finds aqueous or liquid phases
     int reactivePhase = getReactivePhaseIndex();
     if (reactivePhase < 0) {
@@ -573,10 +576,6 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       // Keep chem ref potentials updated for the current reactive phase.
       chemRefPot = calcChemRefPot(phaseNum);
     }
-    if (!system.isChemicalSystem()) {
-      return false;
-    }
-
     if (Amatrix == null) {
       Amatrix = calcAmatrix();
     }
@@ -663,6 +662,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * @return immutable map from reaction name to signed {@code ln(Q/K)} residual
    */
   public Map<String, Double> getReactionLogResiduals() {
+    if (!system.isChemicalSystem()) {
+      return Collections.emptyMap();
+    }
     int reactivePhase = getReactivePhaseIndex();
     if (reactivePhase < 0 || reactionList == null) {
       return Collections.emptyMap();
