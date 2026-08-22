@@ -88,10 +88,8 @@ class ProcessSafetyOverviewDocumentationTest {
   void hippsDocumentationNamesTheCurrentLogicTypes() throws Exception {
     assertSame(VotingLogic.class,
         HIPPSLogic.class.getConstructor(String.class, VotingLogic.class).getParameterTypes()[1]);
-    assertSame(void.class,
-        HIPPSLogic.class.getMethod("setIsolationValve", ThrottlingValve.class).getReturnType());
-    assertSame(void.class,
-        HIPPSLogic.class.getMethod("update", double[].class).getReturnType());
+    assertSame(void.class, HIPPSLogic.class.getMethod("setIsolationValve", ThrottlingValve.class).getReturnType());
+    assertSame(void.class, HIPPSLogic.class.getMethod("update", double[].class).getReturnType());
   }
 
   private static Stream createFeed() {
