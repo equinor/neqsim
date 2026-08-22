@@ -621,7 +621,7 @@ from both semantic engineering state and renderer-specific SVG, PDF, or DEXPI ob
 - stable primitive and represented-object identities;
 - explicit millimetre coordinates, dimensions, colours, line styles, and text anchors;
 - source graph fingerprint, controlled source reference, revision, and verification status;
-- separate primitives for parallel semantic connections; and
+- separate primitives with deterministic 3 mm interior lane offsets for parallel semantic connections; and
 - deterministic structured diagnostics for generic symbol fallback or missing semantic objects.
 
 The generic `RECTANGLE`, `POLYGON`, `POLYLINE`, and `TEXT` primitives are an adapter contract, not
