@@ -2,6 +2,7 @@ package neqsim.process.engineering.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,8 +29,11 @@ class EngineeringGraphicalProjectionTest {
     assertEquals(first.toJson(), second.toJson());
     assertEquals(Unit.MILLIMETRE, first.getUnit());
     assertEquals(2L, first.getPrimitives().stream().filter(item -> item.getType() == PrimitiveType.POLYLINE).count());
-    assertNotNull(primitive(first, "flow-main:route"));
-    assertNotNull(primitive(first, "flow-bypass:route"));
+    Primitive mainRoute = primitive(first, "flow-main:route");
+    Primitive bypassRoute = primitive(first, "flow-bypass:route");
+    assertNotNull(mainRoute);
+    assertNotNull(bypassRoute);
+    assertNotEquals(mainRoute.getPoints().get(1).getX(), bypassRoute.getPoints().get(1).getX());
     assertTrue(first.isComplete());
     assertTrue(first.getDiagnostics().stream()
         .anyMatch(item -> "GRAPHICAL_PROJECTION_GENERIC_SYMBOL_FALLBACK".equals(item.getCode())));

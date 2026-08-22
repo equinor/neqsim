@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.EvidenceState;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolConvention;
@@ -21,6 +22,7 @@ import neqsim.process.engineering.model.EngineeringGraphicalProjection.Verificat
 public final class EngineeringGraphicalProjectionBuilder {
   private static final String FALLBACK_STROKE = "#374151";
   private static final String FALLBACK_FILL = "#ffffff";
+  private static final double PARALLEL_LANE_SPACING = 3.0;
 
   private EngineeringGraphicalProjectionBuilder() {
   }
@@ -95,6 +97,16 @@ public final class EngineeringGraphicalProjectionBuilder {
         return text(left.get("edgeId")).compareTo(text(right.get("edgeId")));
       }
     });
+    Map<String, Integer> laneCountByEndpoints = new TreeMap<String, Integer>();
+    for (Map<String, Object> route : routes) {
+      EngineeringEdge edge = graph.getEdges().get(text(route.get("edgeId")));
+      if (edge != null) {
+        String laneKey = laneKey(edge);
+        Integer count = laneCountByEndpoints.get(laneKey);
+        laneCountByEndpoints.put(laneKey, Integer.valueOf(count == null ? 1 : count.intValue() + 1));
+      }
+    }
+    Map<String, Integer> laneIndexByEndpoints = new TreeMap<String, Integer>();
     for (Map<String, Object> route : routes) {
       String edgeId = text(route.get("edgeId"));
       EngineeringEdge edge = graph.getEdges().get(edgeId);
@@ -104,9 +116,22 @@ public final class EngineeringGraphicalProjectionBuilder {
         continue;
       }
       routedEdgeIds.add(edgeId);
+      String laneKey = laneKey(edge);
+      int laneCount = laneCountByEndpoints.get(laneKey).intValue();
+      Integer previousLaneIndex = laneIndexByEndpoints.get(laneKey);
+      int laneIndex = previousLaneIndex == null ? 0 : previousLaneIndex.intValue();
+      laneIndexByEndpoints.put(laneKey, Integer.valueOf(laneIndex + 1));
+      double laneOffset = PARALLEL_LANE_SPACING * (laneIndex - 0.5 * (laneCount - 1));
+
+      List<Map<String, Object>> routePoints = maps(route.get("points"));
       List<Point> points = new ArrayList<Point>();
-      for (Map<String, Object> point : maps(route.get("points"))) {
-        points.add(new Point(number(point.get("x")), number(point.get("y"))));
+      for (int pointIndex = 0; pointIndex < routePoints.size(); pointIndex++) {
+        Map<String, Object> point = routePoints.get(pointIndex);
+        double x = number(point.get("x"));
+        if (laneCount > 1 && pointIndex > 0 && pointIndex < routePoints.size() - 1) {
+          x += laneOffset;
+        }
+        points.add(new Point(x, number(point.get("y"))));
       }
       primitives.add(Primitive.polyline(edgeId + ":route", edgeId, edgeId, points, routeColor(edge.getKind()), 0.8,
           routeDash(edge.getKind()), false));
@@ -151,6 +176,11 @@ public final class EngineeringGraphicalProjectionBuilder {
     }
     return Primitive.rectangle(id, node.getId(), node.getExternalKey(), x - width / 2.0, y - height / 2.0, width,
         height, stroke, fill, 0.8);
+  }
+
+  private static String laneKey(EngineeringEdge edge) {
+    String sourceId = edge.getSourceId();
+    return sourceId.length() + ":" + sourceId + edge.getTargetId();
   }
 
   private static String routeColor(EngineeringEdge.Kind kind) {
