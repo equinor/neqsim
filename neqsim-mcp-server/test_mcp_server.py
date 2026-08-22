@@ -254,7 +254,7 @@ def get_composition(result, phase, component):
 # ===========================================================================
 
 def test_protocol():
-    """Test MCP protocol basics: tools/list, resources/list."""
+    """Test the exact MCP publication surface through list operations."""
     print("\n=== Protocol Tests ===")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "tools/list", "params": {}})
@@ -302,12 +302,55 @@ def test_protocol():
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
     r = recv()
     resources = r.get("result", {}).get("resources", [])
-    check("7 resources", len(resources) == 7, f"got {len(resources)}")
+    resource_uris = sorted(resource["uri"] for resource in resources)
+    expected_resource_uris = sorted([
+        "neqsim://components",
+        "neqsim://data-tables",
+        "neqsim://example-catalog",
+        "neqsim://models",
+        "neqsim://schema-catalog",
+        "neqsim://setup-templates",
+        "neqsim://standards",
+    ])
+    check("exact static resource inventory",
+          resource_uris == expected_resource_uris,
+          f"got {resource_uris}")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("7 templates", len(templates) == 7, f"got {len(templates)}")
+    template_uris = sorted(template["uriTemplate"] for template in templates)
+    expected_template_uris = sorted([
+        "neqsim://api/{className}",
+        "neqsim://components/{name}",
+        "neqsim://examples/{category}/{name}",
+        "neqsim://materials/{type}",
+        "neqsim://schemas/{tool}/{type}",
+        "neqsim://setup-templates/{id}",
+        "neqsim://standards/{code}",
+    ])
+    check("exact resource-template inventory",
+          template_uris == expected_template_uris,
+          f"got {template_uris}")
+
+    send({"jsonrpc": "2.0", "id": next_id(), "method": "prompts/list", "params": {}})
+    r = recv()
+    prompts = r.get("result", {}).get("prompts", [])
+    prompt_names = sorted(prompt["name"] for prompt in prompts)
+    expected_prompt_names = sorted([
+        "biorefinery_analysis",
+        "co2_ccs_chain",
+        "design_gas_processing",
+        "dynamic_simulation",
+        "field_development_screening",
+        "flow_assurance_screening",
+        "pipeline_sizing",
+        "pvt_study",
+        "teg_dehydration_design",
+    ])
+    check("exact guided-prompt inventory",
+          prompt_names == expected_prompt_names,
+          f"got {prompt_names}")
 
 
 def test_component_search():
@@ -1320,6 +1363,20 @@ def test_capabilities():
     check("capabilities has engine", r.get("engine") == "NeqSim")
     check("capabilities has thermo models", "thermodynamicModels" in r)
     check("capabilities has equipment", "processEquipment" in r)
+    coverage = r.get("toolCatalogCoverage", {})
+    check("capability descriptors cover every published tool",
+          coverage.get("complete") is True,
+          str(coverage))
+    check("capability coverage reports 71 published tools",
+          coverage.get("publishedToolCount") == 71,
+          str(coverage))
+    check("capability coverage reports 71 described tools",
+          coverage.get("describedToolCount") == 71,
+          str(coverage))
+    check("capability coverage has no missing or undeclared descriptors",
+          not coverage.get("missingDescriptors")
+          and not coverage.get("undeclaredDescriptors"),
+          str(coverage))
 
 
 def test_run_capability_search_and_invoke():
