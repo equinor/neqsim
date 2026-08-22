@@ -1127,20 +1127,24 @@ public class NeqSimTools {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Simulate multiphase pipeline flow using Beggs and Brill correlation.
+  * Simulate multiphase pipeline flow using Beggs and Brill or the finite-volume two-fluid solver.
    *
    * @param pipelineJson JSON specification with fluid, pipe geometry, and flow conditions
    * @return JSON with pressure drop, temperature profile, and flow regime
    */
-  @Tool(description = "Simulate multiphase pipeline flow using the Beggs & Brill "
-      + "correlation. Calculates pressure drop, outlet temperature, liquid holdup, "
-      + "and flow regime for gas-liquid flow in pipes. Specify pipe geometry "
-      + "(diameter, length, elevation, roughness) and flow conditions.")
+    @Tool(description = "Simulate multiphase pipeline flow using Beggs & Brill (default) or the "
+      + "finite-volume two-fluid solver. Calculates pressure, temperature, liquid holdup, flow regime, "
+      + "phase velocities, inventory, erosion margin, and flow-assurance/slug indicators. The two-fluid "
+      + "solver accepts nonuniform length, elevation, heat-transfer, and ambient-temperature profiles and "
+      + "can return full section profiles or summary/minimum responses.")
   public String runPipeline(
       @ToolArg(description = "JSON specification with: 'components' (composition map), "
           + "'model' (SRK/PR), 'temperature_C', 'pressure_bara', "
-          + "'flowRate' ({value, unit}), 'pipe' ({diameter_m, length_m, "
-          + "elevation_m, roughness_m, numberOfIncrements}).") String pipelineJson) {
+          + "'flowRate' ({value, unit}), optional 'solver' (beggsBrill/twoFluid), "
+          + "optional 'detailLevel' (FULL/SUMMARY/MINIMUM/HIDE), and 'pipe' ({diameter_m, length_m, "
+          + "elevation_m or elevationProfile_m, roughness_m, numberOfIncrements or sectionLengths_m, "
+          + "heatTransferCoefficient_W_m2K or heatTransferProfile_W_m2K, and "
+          + "surfaceTemperature_C/K or surfaceTemperatureProfile_C/K}).") String pipelineJson) {
     String policyBlocked = enforceToolAccess("runPipeline");
     if (policyBlocked != null) {
       return policyBlocked;

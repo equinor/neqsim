@@ -92,6 +92,14 @@ index; maps from vendor curve sheets; limits from datasheets + piping class. For
 the governed enterprise checklist and readiness gates use
 `enterprise-process-model-build-verify` (`target_fidelity="optimization_ready"`).
 
+For MCP `runProcess` compressor protection, keep embedded compressor
+`antiSurge` as screening control only. Use root-level `antiSurgeSystems` when
+the model must bind `CompressorAntiSurgeApplication` to explicit named hot/cold
+recycle valves, cooler, suction mixer, and recycle blocks. Multi-area systems
+must include `area`. Follow `neqsim-compressor-antisurge-recycle` for the JSON
+contract, screening-map provenance, commissioning evidence, and the mandatory
+`NOT_CERTIFIED_FOR_PROTECTION` boundary.
+
 ## Per-Area Three-Phase Flash Control (Speed-Up)
 
 Switch the multiphase (three-phase) flash off on areas that are known to be

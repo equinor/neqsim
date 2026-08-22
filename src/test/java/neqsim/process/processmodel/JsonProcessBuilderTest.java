@@ -1,5 +1,6 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,6 +19,7 @@ import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.energy.ElectricMotor;
 import neqsim.process.equipment.heatexchanger.AirCooler;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -652,6 +654,26 @@ class JsonProcessBuilderTest {
     SimulationResult result = new JsonProcessBuilder().build(json);
     assertTrue(result.isSuccess(), "Build should succeed: " + result);
     assertNotNull(result.getProcessSystem().getUnit("pipe1"));
+  }
+
+  @Test
+  void testBuildWithTwoFluidPipeProfiles() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.9, \"n-heptane\": 0.1}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"TwoFluidPipe\", \"name\": \"multiphase pipe\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {\"length\": 1000.0, \"diameter\": 0.3, \"numberOfSections\": 4,"
+        + "    \"elevationProfile\": [0.0, -5.0, -5.0, 10.0]," + "    \"heatTransferProfile\": [4.0, 4.0, 8.0, 8.0]}}"
+        + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    TwoFluidPipe pipe = (TwoFluidPipe) result.getProcessSystem().getUnit("multiphase pipe");
+    assertNotNull(pipe);
+    assertEquals(1000.0, pipe.getLength(), 1.0e-12);
+    assertEquals(0.3, pipe.getDiameter(), 1.0e-12);
+    assertEquals(4, pipe.getNumberOfSections());
+    assertArrayEquals(new double[] { 4.0, 4.0, 8.0, 8.0 }, pipe.getHeatTransferProfile(), 1.0e-12);
   }
 
   @Test

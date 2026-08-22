@@ -12,6 +12,7 @@ import com.google.gson.JsonParser;
 import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
 import neqsim.mcp.runners.OpenDrainReviewRunner;
+import neqsim.mcp.runners.PipelineRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.Validator;
@@ -91,6 +92,20 @@ class ExampleCatalogTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("success", root.get("status").getAsString(), result);
+  }
+
+  @Test
+  void testPipelineMultiphaseUsesTwoFluidProfilesAndRunsSuccessfully() {
+    String example = ExampleCatalog.pipelineMultiphase();
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    JsonObject pipe = input.getAsJsonObject("pipe");
+
+    assertEquals("twoFluid", input.get("solver").getAsString());
+    assertEquals(pipe.getAsJsonArray("sectionLengths_m").size(), pipe.getAsJsonArray("elevationProfile_m").size());
+    assertEquals(pipe.getAsJsonArray("sectionLengths_m").size(),
+        pipe.getAsJsonArray("heatTransferProfile_W_m2K").size());
+    assertEquals("success",
+        JsonParser.parseString(PipelineRunner.run(example)).getAsJsonObject().get("status").getAsString());
   }
 
   @Test

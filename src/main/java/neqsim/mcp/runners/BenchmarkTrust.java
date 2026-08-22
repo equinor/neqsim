@@ -458,13 +458,19 @@ public final class BenchmarkTrust {
     JsonObject trust = new JsonObject();
     trust.addProperty("maturityLevel", "TESTED");
     trust.addProperty("description",
-        "Multiphase pipeline flow using Beggs & Brill correlation. " + "Validated for vertical and horizontal flow.");
+        "Multiphase pipeline flow using Beggs & Brill (default) or the finite-volume two-fluid solver. "
+            + "Both expose engineering summaries; twoFluid additionally returns section profiles.");
 
     JsonArray cases = new JsonArray();
     cases.add(validationCase("Single-phase gas pipeline", "SRK", "Pressure drop within 5% of analytical Darcy-Weisbach",
         "Standard pipe flow textbooks"));
     cases.add(validationCase("Multiphase flow in vertical well", "SRK", "Pressure profile within 10% of field data",
         "Beggs & Brill (1973) correlation basis"));
+    cases.add(validationCase("Two-fluid single-phase gas cross-check", "SRK",
+        "Pressure drop ratio between 0.5 and 2.0 relative to Beggs & Brill", "NeqSim JUnit comparison test"));
+    cases.add(validationCase("Two-fluid wet-gas and three-phase physical checks", "SRK",
+        "Positive pressure drop, bounded holdup/water cut, and conserved outlet mass flow",
+        "NeqSim JUnit physical-range tests"));
     trust.add("validationCases", cases);
 
     JsonArray limitations = new JsonArray();
@@ -472,6 +478,10 @@ public final class BenchmarkTrust {
     limitations.add("Slug flow prediction is approximate");
     limitations.add("Not suitable for very high GVF (>0.99) or very low GVF (<0.01)");
     limitations.add("Does not model terrain effects (slug catcher sizing)");
+    limitations
+        .add("The finite-volume two-fluid solver is sensitive to mesh, closure correlations, and convergence settings");
+    limitations.add(
+        "Two-fluid slug and flow-assurance indicators are screening outputs, not final slug-catcher design inputs");
     trust.add("knownLimitations", limitations);
 
     return trust;

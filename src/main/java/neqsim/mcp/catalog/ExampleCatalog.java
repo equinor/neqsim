@@ -343,11 +343,15 @@ public final class ExampleCatalog {
    * @return JSON string for PipelineRunner.run()
    */
   public static String pipelineMultiphase() {
-    return "{\n" + "  \"model\": \"SRK\",\n" + "  \"temperature_C\": 40.0,\n" + "  \"pressure_bara\": 80.0,\n"
-        + "  \"components\": {\n" + "    \"methane\": 0.85,\n" + "    \"ethane\": 0.10,\n" + "    \"propane\": 0.05\n"
-        + "  },\n" + "  \"flowRate\": {\"value\": 50000.0, \"unit\": \"kg/hr\"},\n" + "  \"pipe\": {\n"
-        + "    \"diameter_m\": 0.254,\n" + "    \"length_m\": 50000.0,\n" + "    \"elevation_m\": 0.0,\n"
-        + "    \"roughness_m\": 0.00005,\n" + "    \"numberOfIncrements\": 20\n" + "  }\n" + "}";
+    return "{\n" + "  \"solver\": \"twoFluid\",\n" + "  \"detailLevel\": \"FULL\",\n" + "  \"model\": \"SRK\",\n"
+        + "  \"temperature_C\": 40.0,\n" + "  \"pressure_bara\": 80.0,\n" + "  \"components\": {\n"
+        + "    \"methane\": 0.85,\n" + "    \"ethane\": 0.10,\n" + "    \"propane\": 0.05\n" + "  },\n"
+        + "  \"flowRate\": {\"value\": 30000.0, \"unit\": \"kg/hr\"},\n" + "  \"pipe\": {\n"
+        + "    \"diameter_m\": 0.254,\n" + "    \"length_m\": 1000.0,\n"
+        + "    \"sectionLengths_m\": [100.0, 150.0, 200.0, 250.0, 300.0],\n"
+        + "    \"elevationProfile_m\": [0.0, -5.0, -10.0, -4.0, 2.0],\n" + "    \"roughness_m\": 0.000046,\n"
+        + "    \"heatTransferProfile_W_m2K\": [5.0, 5.0, 4.0, 3.0, 3.0],\n"
+        + "    \"surfaceTemperatureProfile_C\": [10.0, 9.0, 8.0, 7.0, 6.0]\n" + "  }\n" + "}";
   }
 
   /**

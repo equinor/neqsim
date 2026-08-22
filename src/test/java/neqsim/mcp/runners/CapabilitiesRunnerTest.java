@@ -76,6 +76,15 @@ class CapabilitiesRunnerTest {
     assertTrue(flashDescriptor.has("schemas"));
     assertTrue(flashDescriptor.has("examples"));
     assertTrue(flashDescriptor.has("setupTemplates"));
+    JsonObject pipelineDescriptor = toolCapabilities.getAsJsonObject("runPipeline");
+    assertTrue(pipelineDescriptor.get("purpose").getAsString().contains("two-fluid"));
+    assertTrue(pipelineDescriptor.getAsJsonArray("optionalFields").toString().contains("sectionLengths_m"));
+    assertTrue(pipelineDescriptor.getAsJsonArray("knownLimitations").toString().contains("mesh"));
+
+    JsonObject pipelineTrust = JsonParser.parseString(BenchmarkTrust.getToolTrust("runPipeline")).getAsJsonObject()
+        .getAsJsonObject("trust");
+    assertTrue(pipelineTrust.get("description").getAsString().contains("two-fluid"));
+    assertTrue(pipelineTrust.getAsJsonArray("knownLimitations").toString().contains("closure correlations"));
 
     // Trust model should describe provenance
     JsonObject trust = obj.getAsJsonObject("trustModel");

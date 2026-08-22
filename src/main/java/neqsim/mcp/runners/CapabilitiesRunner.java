@@ -154,7 +154,7 @@ public class CapabilitiesRunner {
         "runOpenDrainReview — NORSOK S-001 Clause 9 open-drain review from normalized STID/P&ID and optional tagreader evidence",
         "runNorsokS001Clause10Review — NORSOK S-001 Clause 10 process safety system review from normalized C&E, SRS, PSV, instrument, tagreader, and optional dynamic simulation evidence",
         "calculateStandard — Gas/oil quality per 22 industry standards (ISO, AGA, GPA, EN, ASTM)",
-        "runPipeline — Multiphase pipeline flow simulation (Beggs & Brill)",
+        "runPipeline — Multiphase pipeline flow (Beggs & Brill or finite-volume two-fluid solver)",
         "runWaterHammer — Liquid-hammer screening for valve closure, pump trip, and check-valve scenarios",
         "runReservoir — Material balance reservoir simulation (tank model, depletion)",
         "runFieldEconomics — NPV/IRR with fiscal regimes (Norwegian NCS, UK, Brazil, US-GOM) + decline curves",
@@ -324,9 +324,14 @@ public class CapabilitiesRunner {
         Arrays.asList("standardConfig", "model"), Arrays.asList("SRK", "PR", "GERG2008"), thermoUnits(),
         "standards-calculation", Arrays.asList("Custody-transfer use requires standard-specific input verification"));
     addToolCapability(tools, "runPipeline", "run_pipeline", "PipelineRunner", "pipeline",
-        "Beggs and Brill multiphase pipeline simulation", Arrays.asList("components", "pipe"),
-        Arrays.asList("flowRate", "model", "temperature_C", "pressure_bara"), eosModels(), processUnits(),
-        "pipeline-flow", Arrays.asList("Correlation validity depends on flow regime and inclination"));
+        "Multiphase pipeline simulation using Beggs and Brill (default) or a finite-volume two-fluid solver",
+        Arrays.asList("components", "pipe"),
+        Arrays.asList("solver", "flowRate", "model", "temperature_C", "pressure_bara", "detailLevel",
+            "pipe.sectionLengths_m", "pipe.elevationProfile_m", "pipe.heatTransferProfile_W_m2K",
+            "pipe.surfaceTemperatureProfile_C"),
+        eosModels(), processUnits(), "pipeline-flow",
+        Arrays.asList("Beggs and Brill correlation validity depends on flow regime and inclination",
+            "Two-fluid predictions require mesh, closure-model, convergence, and timestep review"));
     addToolCapability(tools, "runReservoir", "run_reservoir", "ReservoirRunner", "reservoir",
         "Material-balance reservoir simulation", Arrays.asList("components"),
         Arrays.asList("gasVolume_Sm3", "oilVolume_Sm3", "producers", "simulationYears"), Arrays.asList("SRK", "PR"),

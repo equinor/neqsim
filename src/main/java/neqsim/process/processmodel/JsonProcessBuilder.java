@@ -2613,9 +2613,16 @@ public class JsonProcessBuilder {
 
     try {
       if (value.isJsonArray()) {
-        // Array format: [value, "unit"] — e.g., [50000, "kg/hr"]
         JsonArray arr = value.getAsJsonArray();
-        if (arr.size() >= 2) {
+        if (isNumericArray(arr)) {
+          double[] values = new double[arr.size()];
+          for (int i = 0; i < arr.size(); i++) {
+            values[i] = arr.get(i).getAsDouble();
+          }
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, double[].class);
+          method.invoke(target, new Object[] { values });
+        } else if (arr.size() >= 2) {
+          // Unit-bearing array format: [value, "unit"] — e.g., [50000, "kg/hr"]
           double numValue = arr.get(0).getAsDouble();
           String unit = arr.get(1).getAsString();
           java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class, String.class);
@@ -2645,6 +2652,24 @@ public class JsonProcessBuilder {
     } catch (Exception e) {
       warnings.add("Error setting '" + propName + "' on " + targetName + ": " + e.getMessage());
     }
+  }
+
+  /**
+   * Reports whether every element in a JSON array is numeric.
+   *
+   * @param array array to inspect
+   * @return {@code true} when the array is non-empty and contains only numeric primitives
+   */
+  private boolean isNumericArray(JsonArray array) {
+    if (array.size() == 0) {
+      return false;
+    }
+    for (JsonElement element : array) {
+      if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void invokeNoArg(Object target, String targetName, String methodName) {

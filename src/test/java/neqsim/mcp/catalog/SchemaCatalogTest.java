@@ -92,6 +92,21 @@ class SchemaCatalogTest {
   }
 
   @Test
+  void testPipelineInputSchemaAdvertisesTwoFluidProfiles() {
+    JsonObject root = JsonParser.parseString(SchemaCatalog.pipelineInputSchema()).getAsJsonObject();
+    JsonObject properties = root.getAsJsonObject("properties");
+    JsonObject pipeProperties = properties.getAsJsonObject("pipe").getAsJsonObject("properties");
+
+    assertTrue(properties.getAsJsonObject("solver").getAsJsonArray("enum").toString().contains("twoFluid"));
+    assertTrue(properties.getAsJsonObject("detailLevel").getAsJsonArray("enum").toString().contains("MINIMUM"));
+    assertEquals("array", pipeProperties.getAsJsonObject("sectionLengths_m").get("type").getAsString());
+    assertTrue(pipeProperties.has("elevationProfile_m"));
+    assertTrue(pipeProperties.has("heatTransferProfile_W_m2K"));
+    assertTrue(pipeProperties.has("surfaceTemperatureProfile_K"));
+    assertTrue(pipeProperties.has("steadyStateMaxWallClockTime_s"));
+  }
+
+  @Test
   void testValidateInputSchema_isValidJson() {
     String schema = SchemaCatalog.validateInputSchema();
     JsonObject root = JsonParser.parseString(schema).getAsJsonObject();

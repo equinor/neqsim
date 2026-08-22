@@ -1090,10 +1090,15 @@ public final class SchemaCatalog {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
     schema.put("title", "PipelineInput");
-    schema.put("description", "Input for pipeline simulation (run_pipeline tool)");
+    schema.put("description", "Input for pipeline simulation (run_pipeline tool). Beggs and Brill is the default; "
+        + "select twoFluid for finite-volume spatial multiphase profiles.");
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("solver",
+        enumProp("Pipeline solver (default: beggsBrill)", Arrays.asList("beggsBrill", "twoFluid")));
+    properties.put("detailLevel",
+        enumProp("Two-fluid response detail (default: FULL)", Arrays.asList("FULL", "SUMMARY", "MINIMUM", "HIDE")));
     properties.put("model", enumProp("Thermodynamic model", Arrays.asList("SRK", "PR", "CPA")));
 
     Map<String, Object> components = new LinkedHashMap<String, Object>();
@@ -1124,7 +1129,24 @@ public final class SchemaCatalog {
     pipeProps.put("length_m", numberProp("Length in metres"));
     pipeProps.put("elevation_m", numberProp("Elevation change in metres"));
     pipeProps.put("roughness_m", numberProp("Surface roughness in metres"));
-    pipeProps.put("numberOfIncrements", intProp("Number of calculation segments"));
+    pipeProps.put("numberOfIncrements", intProp("Number of calculation segments (both solvers)"));
+    pipeProps.put("numberOfSections", intProp("Number of finite-volume sections for twoFluid"));
+    pipeProps.put("sectionLengths_m",
+        numberArraySchema("Per-section lengths in metres; values define the twoFluid mesh and must sum to length_m"));
+    pipeProps.put("elevationProfile_m",
+        numberArraySchema("Per-section elevations in metres for twoFluid; length must match the mesh"));
+    pipeProps.put("heatTransferCoefficient_W_m2K",
+        numberProp("Uniform twoFluid overall heat-transfer coefficient in W/(m2 K)"));
+    pipeProps.put("heatTransferProfile_W_m2K",
+        numberArraySchema("Per-section twoFluid overall heat-transfer coefficients in W/(m2 K)"));
+    pipeProps.put("surfaceTemperature_C", numberProp("Uniform twoFluid ambient/surface temperature in Celsius"));
+    pipeProps.put("surfaceTemperature_K", numberProp("Uniform twoFluid ambient/surface temperature in kelvin"));
+    pipeProps.put("surfaceTemperatureProfile_C",
+        numberArraySchema("Per-section twoFluid ambient/surface temperatures in Celsius"));
+    pipeProps.put("surfaceTemperatureProfile_K",
+        numberArraySchema("Per-section twoFluid ambient/surface temperatures in kelvin"));
+    pipeProps.put("steadyStateMaxWallClockTime_s",
+        numberProp("Optional twoFluid steady-state wall-clock limit in seconds"));
     pipe.put("properties", pipeProps);
     properties.put("pipe", pipe);
 
@@ -2425,6 +2447,22 @@ public final class SchemaCatalog {
     array.put("description", description);
     Map<String, Object> item = new LinkedHashMap<String, Object>();
     item.put("type", "string");
+    array.put("items", item);
+    return array;
+  }
+
+  /**
+   * Creates a number-array property schema.
+   *
+   * @param description the array description
+   * @return the schema map
+   */
+  private static Map<String, Object> numberArraySchema(String description) {
+    Map<String, Object> array = new LinkedHashMap<String, Object>();
+    array.put("type", "array");
+    array.put("description", description);
+    Map<String, Object> item = new LinkedHashMap<String, Object>();
+    item.put("type", "number");
     array.put("items", item);
     return array;
   }
