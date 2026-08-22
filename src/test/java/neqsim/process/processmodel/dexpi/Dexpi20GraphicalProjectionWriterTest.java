@@ -85,6 +85,21 @@ public class Dexpi20GraphicalProjectionWriterTest extends NeqSimTest {
         .anyMatch(item -> item.contains("RepresentationGroup has no non-empty supported primitive")));
   }
 
+  /** Verifies that existing anonymous legacy representation scaffolds remain accepted. */
+  @Test
+  public void acceptsLegacyAnonymousRepresentationGroupScaffold() throws Exception {
+    Path file = temporaryDirectory.resolve("legacy-group.dexpi.xml");
+    Dexpi20GraphicalProjectionWriter.write(process(), projection(), file.toFile(), options());
+    Document document = parse(file);
+    Element group = firstObject(document, "Core/Diagram.RepresentationGroup");
+    group.removeAttribute("id");
+    group.removeChild(directComponents(group, "Groups"));
+
+    Dexpi20SemanticValidator.ValidationReport report = Dexpi20SemanticValidator.validate(document);
+
+    assertTrue(report.isValid());
+  }
+
   private static EngineeringGraphicalProjection projection() {
     Primitive rectangle = Primitive.rectangle("separator:shape", "equipment:separator", "10-VA-001", 10.0, 20.0, 28.0,
         14.0, "#123456", "#abcdef", 0.8);
