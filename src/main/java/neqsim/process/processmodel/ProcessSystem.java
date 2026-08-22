@@ -1660,8 +1660,8 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Multi-input equipment (Mixer, Manifold, TurboExpanderCompressor, Ejector, HeatExchanger, MultiStreamHeatExchanger)
-   * require sequential execution to ensure correct mass balance. Parallel execution can change the order in which input
-   * streams are processed, leading to incorrect results.
+   * requires dependency-aware execution to ensure correct mass balance. Parallel and dataflow execution preserve inlet
+   * ordering and serialize consumers that share the same mutable stream object.
    * </p>
    *
    * @return true if there are multi-input equipment units in the process
@@ -1714,41 +1714,6 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     cachedHasMultiInput = false;
-    return false;
-  }
-
-  /**
-   * Returns true if the given graph node represents multi-input equipment. Used by
-   * {@link #groupNodesBySharedInputStreams(List)} to decide whether shared-stream consumers need to be serialised
-   * within a group.
-   *
-   * @param node the graph node
-   * @return {@code true} if the underlying equipment has 2+ inlet streams or is one of the class-based multi-input
-   * types
-   */
-  private boolean isMultiInputNode(ProcessNode node) {
-    ProcessEquipmentInterface unit = node.getEquipment();
-    if (unit == null) {
-      return false;
-    }
-    if (unit instanceof MixerInterface || unit instanceof Manifold || unit instanceof TurboExpanderCompressor
-        || unit instanceof Ejector || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
-        || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
-      return true;
-    }
-    if (unit instanceof neqsim.process.equipment.separator.Separator) {
-      if (((neqsim.process.equipment.separator.Separator) unit).numberOfInputStreams > 1) {
-        return true;
-      }
-    }
-    try {
-      java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets = unit.getInletStreams();
-      if (inlets != null && inlets.size() > 1) {
-        return true;
-      }
-    } catch (Exception e) {
-      // Fall through - conservative default is false
-    }
     return false;
   }
 
@@ -2711,27 +2676,13 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
 
-    // Union nodes that share the same input stream.
-    //
-    // Optimisation: only union when at least one of the nodes sharing the
-    // stream is multi-input equipment (Mixer, HeatExchanger, Separator with
-    // >1 inlets, etc.). Two single-input consumers reading the same upstream
-    // stream can run in parallel safely because the thermo clone() path is
-    // thread-safe for concurrent reads (shared read-only invariant on
-    // mixing-rule matrices). Forcing them into the same group was a legacy
-    // over-conservative grouping that limits parallelism unnecessarily.
+    // Union every pair of consumers that shares the same mutable stream object.
+    // Equipment commonly clones its inlet before calculating, but SystemInterface
+    // clone and initialization can touch shared thermodynamic helper state. Treating
+    // single-input consumers as read-only therefore permits platform-dependent races.
+    // Consumers of distinct stream objects remain in independent parallel groups.
     for (List<ProcessNode> nodesWithSameStream : streamToNodes.values()) {
       if (nodesWithSameStream.size() > 1) {
-        boolean anyMultiInput = false;
-        for (ProcessNode n : nodesWithSameStream) {
-          if (isMultiInputNode(n)) {
-            anyMultiInput = true;
-            break;
-          }
-        }
-        if (!anyMultiInput) {
-          continue; // Pure single-input readers - safe to run in parallel.
-        }
         ProcessNode first = nodesWithSameStream.get(0);
         for (int i = 1; i < nodesWithSameStream.size(); i++) {
           union.accept(first, nodesWithSameStream.get(i));
