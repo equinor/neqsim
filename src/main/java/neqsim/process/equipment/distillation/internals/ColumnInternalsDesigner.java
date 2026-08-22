@@ -90,6 +90,9 @@ public class ColumnInternalsDesigner implements Serializable {
   /** Packed bed height [m] (for packed columns). */
   private double packedHeight = 5.0;
 
+  /** Relative hydraulic capacity factor for the selected packing. */
+  private double packingHydraulicCapacityFactor = 1.0;
+
   /** Column diameter override [m]. If &gt; 0, use this instead of auto-sizing. */
   private double columnDiameterOverride = -1.0;
 
@@ -234,6 +237,19 @@ public class ColumnInternalsDesigner implements Serializable {
    */
   public void setPackedHeight(double height) {
     this.packedHeight = height;
+  }
+
+  /**
+   * Set the relative hydraulic capacity factor for the selected packing.
+   *
+   * @param factor positive relative capacity factor, with 1.0 representing the base correlation
+   * @throws IllegalArgumentException if the factor is not positive and finite
+   */
+  public void setPackingHydraulicCapacityFactor(double factor) {
+    if (!Double.isFinite(factor) || factor <= 0.0) {
+      throw new IllegalArgumentException("packing hydraulic capacity factor must be positive and finite");
+    }
+    this.packingHydraulicCapacityFactor = factor;
   }
 
   /**
@@ -399,6 +415,7 @@ public class ColumnInternalsDesigner implements Serializable {
     }
 
     packingResult.setDesignFloodFraction(designFloodFraction);
+    packingResult.setHydraulicCapacityFactor(packingHydraulicCapacityFactor);
     packingResult.setVaporMassFlow(flows[0]);
     packingResult.setLiquidMassFlow(flows[1]);
     packingResult.setVaporDensity(props[0]);
@@ -653,6 +670,7 @@ public class ColumnInternalsDesigner implements Serializable {
       packing.addProperty("packingName", packingPreset);
       packing.addProperty("packingCategory", structuredPacking ? "structured" : "random");
       packing.addProperty("packedHeight_m", packedHeight);
+      packing.addProperty("hydraulicCapacityFactor", packingHydraulicCapacityFactor);
       packing.addProperty("columnDiameter_m", requiredDiameter);
       packing.addProperty("floodingVelocity_ms", packingResult.getFloodingVelocity());
       packing.addProperty("actualVelocity_ms", packingResult.getActualVelocity());

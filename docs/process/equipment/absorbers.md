@@ -12,6 +12,7 @@ engineering question first; the classes do not represent interchangeable fidelit
 - [Absorber](#absorber)
 - [Stripper](#stripper)
 - [Rigorous Tray Absorber](#rigorous-tray-absorber)
+- [Mechanical Design and Debottlenecking](#mechanical-design-and-debottlenecking)
 - [Simple Absorber](#simple-absorber)
 - [Simple TEG Absorber](#simple-teg-absorber)
 - [Simple Amine Absorber](#simple-amine-absorber)
@@ -27,8 +28,9 @@ engineering question first; the classes do not represent interchangeable fidelit
 
 | Class | Use when | Important boundary |
 | --- | --- | --- |
-| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | No tray hydraulics, reactions, entrainment, or flooding |
-| `StrippingColumn` | Counter-current equilibrium trays for stripping service | Fixed tray temperatures imply unreported heating or cooling |
+| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | No tray hydraulics, reactions, entrainment, or flooding in the MESH solver; use the post-process mechanical-design rating |
+| `StrippingColumn` | Counter-current equilibrium trays for stripping service | Fixed tray temperatures imply unreported heating or cooling; the column shares the mechanical-design rating |
+| `PackedColumn` | Equilibrium-stage contactor with packing HETP and hydraulic rating | Use `RateBasedPackedColumn` when axial film-rate profiles or local transfer reversal matter |
 | `RateBasedPackedColumn` | Packed-column films, hydraulics, profiles, or local transfer reversal | Requires packing and transport-property inputs |
 | `SimpleTEGAbsorber` | Fast TEG dehydration screening and Fs-factor sizing | Shortcut rather than a rigorous tray or rate-based model |
 | `SimpleAmineAbsorber` | User-specified CO2/H2S removal and preliminary amine sizing | Removal efficiencies are inputs, not reaction-rate predictions |
@@ -239,10 +241,63 @@ priority, followed by the column-wide component value, inherited tray value, and
 column-wide value. The correction normalizes the vapor composition and applies a complementary
 liquid correction so the tray component inventory is preserved.
 
-The model is intended for staged physical absorption. It does not model rate-based packing, tray
-hydraulics, reactions, entrainment, or flooding. The repository regression covers TEG
+The process model is intended for staged physical absorption. It does not feed tray hydraulics,
+entrainment, or flooding back into the MESH equations, but the shared column mechanical design can
+rate those limits after convergence. It does not model rate-based packing or reactions. The repository regression covers TEG
 dehydration, lean-oil hydrocarbon recovery, methanol water wash, convergence, total balance,
 named-component balance, and efficiency sensitivity.
+
+---
+
+## Mechanical Design and Debottlenecking
+
+`DistillationColumnMechanicalDesign` provides a common hydraulic-capacity layer for
+`PackedColumn`, `AbsorptionColumn`, `StrippingColumn`, and ordinary `DistillationColumn`
+equipment. It combines the controlling packing or tray flood fraction, Fs factor, optional outlet
+mist eliminator K-factor, minimum packing wetting, and total pressure drop. Calling `calcDesign()`
+also registers normalized capacity constraints on the column, so process utilization snapshots and
+bottleneck tools can see `column internals flooding`, `outlet demister`, and
+`contactor pressure drop`.
+
+For a brownfield study, set the actual shell diameter rather than allowing automatic sizing. The
+following fragment is exercised by `PackedColumnTest` after the TEG contactor has been run:
+
+```java
+import neqsim.process.mechanicaldesign.distillation.ContactorCapacityComparison;
+import neqsim.process.mechanicaldesign.distillation.ContactorCapacityResult;
+import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanicalDesign;
+
+DistillationColumnMechanicalDesign design =
+    (DistillationColumnMechanicalDesign) contactor.getMechanicalDesign();
+design.setColumnDiameterOverride(contactor.getInternalDiameter());
+design.configureOutletDemister("wire_mesh", "Standard Knitted");
+design.setMaxContactorPressureDropBar(0.5);
+design.calcDesign();
+
+ContactorCapacityResult operatingPoint = design.getContactorCapacityResult();
+double utilization = operatingPoint.getOverallUtilization();
+String bottleneck = operatingPoint.getBottleneck();
+double fs = operatingPoint.getFsFactor();
+
+ContactorCapacityComparison retrofit = design.comparePackedInternals(
+    "Mellapak-250Y", true, 1.30, "wire_mesh", "Low Pressure Drop");
+double estimatedUpliftPercent = retrofit.getEstimatedCapacityIncreasePercent();
+String candidateBottleneck = retrofit.getCandidate().getBottleneck();
+```
+
+The `1.30` value is an explicit, relative hydraulic-capacity factor, not a property inferred from
+the packing trade name. Keep it at `1.0` for the base GPDC correlation and use another value only
+when vendor data supports it at the relevant gas density, liquid load, pressure, and solvent
+service. Demister subtypes resolve through `designdata/SeparatorInternals.csv`; a glycol service
+does not automatically change K-factor. Add or select the applicable vendor-tested mist-eliminator
+record.
+
+The reported maximum gas rate is a screening estimate. It assumes unchanged physical properties
+and liquid rate, treats packing and demister headroom as approximately linear with gas rate, and
+uses a square-root pressure-drop headroom. Re-run the process and mechanical design at candidate
+rates, check solvent distribution and glycol carry-over, and obtain final guarantees from the
+internals supplier. A stated 20–40% retrofit objective is therefore an input hypothesis to test;
+the calculation can return a smaller gain or a new controlling bottleneck.
 
 ---
 
