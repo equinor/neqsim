@@ -369,6 +369,31 @@ CURATED_NOTEBOOKS = (
     },
 )
 
+JAVA_EXAMPLE_DESCRIPTIONS = {
+    'EclipseE300ExportImportExample': 'Eclipse E300 fluid export and import workflow',
+    'FlowRegimeDebug': 'Flow-regime diagnostic calculations',
+    'FlowRegimeDetectionExample': 'Flow-regime detection across operating cases',
+    'MultiScenarioVFPExample': 'Multi-scenario vertical-flow-performance comparison',
+    'MultiphaseModelPressureDropComparison': (
+        'Multiphase pressure-drop model comparison'
+    ),
+    'OffshoreEmissionReportingExample': 'Offshore emissions accounting workflow',
+    'RealTimeIntegrationExample': 'Real-time process-data integration pattern',
+    'SlugTrackingComparisonExample': 'Slug-tracking model comparison',
+    'TransientPipelineLiquidAccumulationExample': (
+        'Transient pipeline liquid-accumulation study'
+    ),
+    'TwoFluidPipeExample': 'Two-fluid pipe setup and reporting',
+    'TwoFluidPipeSlugTrackingExample': 'Two-fluid slug-tracking workflow',
+    'TwoFluidPipelineLiquidAccumulationExample': (
+        'Two-fluid pipeline accumulation study'
+    ),
+    'TwoFluidVsDriftFluxComparisonExample': (
+        'Two-fluid and drift-flux comparison'
+    ),
+    'WellToOilStabilizationExample': 'Well-to-oil-stabilization process workflow',
+}
+
 
 def markdown_table_cell(value):
     """Return one normalized, escaped Markdown table cell."""
@@ -398,6 +423,34 @@ def notebook_view_links(repository_path, markdown_path=None, guide=None):
     return r" \| ".join(links)
 
 
+def notebook_stored_status(notebook):
+    """Describe the execution evidence stored in one notebook."""
+
+    code_cells = [
+        cell
+        for cell in notebook.get('cells', [])
+        if cell.get('cell_type') == 'code'
+    ]
+    execution_counts = [cell.get('execution_count') for cell in code_cells]
+    outputs = [
+        output
+        for cell in code_cells
+        for output in cell.get('outputs', [])
+    ]
+
+    has_error = any(output.get('output_type') == 'error' for output in outputs)
+    has_stderr = any(output.get('name') == 'stderr' for output in outputs)
+    if has_error or has_stderr:
+        raise ValueError('Notebook retains an exception or stderr output')
+
+    executed_count = sum(count is not None for count in execution_counts)
+    if executed_count == len(code_cells):
+        return 'Executed'
+    if executed_count:
+        return 'Partial'
+    return 'Source only'
+
+
 def create_examples_index(examples_dir):
     """
     Create an index.md file listing all notebooks.
@@ -422,9 +475,11 @@ has_children: true
 
 This section contains tutorials, code examples, and Jupyter notebooks demonstrating NeqSim capabilities.
 
-## Jupyter Notebook Tutorials
+## Maintained workflow notebooks
 
-Interactive Python notebooks using NeqSim through [neqsim-python](https://github.com/equinor/neqsim-python):
+These repository workflows live under `examples/notebooks/` and are maintained
+with their engineering guides. Their rows describe the validation evidence stored
+with each notebook; follow the linked guide for exact scope and limitations.
 
 | Notebook | Description | View Options |
 |----------|-------------|--------------|
@@ -436,6 +491,25 @@ Interactive Python notebooks using NeqSim through [neqsim-python](https://github
             f"{markdown_table_cell(entry['description'])} | "
             f"{notebook_view_links(entry['path'], guide=entry.get('guide'))} |\n"
         )
+
+    content += """
+## Local notebook catalog
+
+Stored status describes the committed notebook only; it is not a rerun against the
+current `master` branch:
+
+- **Executed** — every code cell has a stored execution count and there is no stored
+  exception or standard-error stream.
+- **Partial** — some, but not all, code cells have stored execution counts.
+- **Source only** — no code cell has a stored execution count.
+
+For engineering use, rerun from a clean environment, inspect all outputs, and validate
+the model, units, assumptions, and operating range. A rendered Markdown page is a
+reading aid, not execution evidence.
+
+| Stored status | Notebook | Description | View options |
+|---------------|----------|-------------|--------------|
+"""
 
     for nb in notebooks:
         name = nb.stem
@@ -457,29 +531,35 @@ Interactive Python notebooks using NeqSim through [neqsim-python](https://github
             f"docs/examples/{name}.ipynb",
             f"{name}.md",
         )
+        stored_status = notebook_stored_status(notebook)
         content += (
-            f"| **{markdown_table_cell(title)}** | "
+            f"| **{stored_status}** | "
+            f"**{markdown_table_cell(title)}** | "
             f"{markdown_table_cell(description)} | {links} |\n"
         )
 
     if java_files:
         content += """
-## Java Examples
+## Standalone Java source examples
 
-Example Java code demonstrating NeqSim APIs:
+These files are outside Maven's compiled source tree. They are retained as source-only
+references and are not catalogued as build-verified or policy-compliant examples.
+They currently contain legacy console output; review and port the required calls into a
+tested `src/test/java` example before reuse. For a supported starting point, use the
+[Java getting-started guide](../java-getting-started.md).
 
-| Example | Description |
-|---------|-------------|
+| Example | Stored status | Capability |
+|---------|---------------|------------|
 """
         for java_file in java_files:
             name = java_file.stem
             title = name.replace('_', ' ')
-            encoded_name = quote(java_file.name, safe="")
-            github_link = (
-                "https://github.com/equinor/neqsim/blob/master/"
-                f"docs/examples/{encoded_name}"
+            encoded_name = quote(java_file.name, safe='')
+            description = JAVA_EXAMPLE_DESCRIPTIONS.get(name, 'Java example')
+            content += (
+                f"| [{title}]({encoded_name}) | **Source only** | "
+                f"{description} |\n"
             )
-            content += f"| [{title}]({github_link}) | Java example |\n"
 
     if md_files:
         content += """
@@ -505,7 +585,7 @@ Additional documentation and guides:
    pip install neqsim
    ```
 
-2. Or use Google Colab (click the Colab links above) - no installation needed!
+2. Or open a Google Colab link above. Run and inspect the notebook's setup cell first; dependency installation and stored execution status vary by notebook.
 
 ### Local Jupyter Setup
 

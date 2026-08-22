@@ -254,6 +254,36 @@ class ConvertNotebooksTest(unittest.TestCase):
                 generated_content,
             )
 
+    def test_index_preserves_validation_contract_sections(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            examples_dir = Path(temp_dir)
+            notebook_path = examples_dir / "Curated.ipynb"
+            java_path = examples_dir / "Example.java"
+            write_notebook(notebook_path, "Notebook title")
+            java_path.write_text("class Example {}\n", encoding="utf-8")
+
+            create_examples_index(examples_dir)
+
+            generated_content = (
+                examples_dir / "index.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("## Maintained workflow notebooks", generated_content)
+            self.assertIn("## Local notebook catalog", generated_content)
+            self.assertIn(
+                "## Standalone Java source examples",
+                generated_content,
+            )
+            self.assertIn("| **Executed** | **Curated** |", generated_content)
+            self.assertIn(
+                "[Example](Example.java) | **Source only** |",
+                generated_content,
+            )
+            self.assertNotIn("no installation needed", generated_content.lower())
+            self.assertIn(
+                "dependency installation and stored execution status vary",
+                generated_content,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
