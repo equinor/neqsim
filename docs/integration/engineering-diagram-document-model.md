@@ -612,3 +612,26 @@ route/object and route-label obstacle diagnostics, collision, clipping, label-ov
 broken-reference diagnostics, normalized visual fingerprints, multi-page drawing sets, fresh-model
 determinism, and unchanged Classic DOT and controlled-document JSON.
 
+## Exchange-neutral graphical projection
+
+`EngineeringGraphicalProjectionBuilder` converts the canonical `EngineeringGraph` into an
+immutable, restartable `EngineeringGraphicalProjection`. The projection is deliberately separate
+from both semantic engineering state and renderer-specific SVG, PDF, or DEXPI objects. It carries:
+
+- stable primitive and represented-object identities;
+- explicit millimetre coordinates, dimensions, colours, line styles, and text anchors;
+- source graph fingerprint, controlled source reference, revision, and verification status;
+- separate primitives with deterministic 3 mm interior lane offsets for parallel semantic connections; and
+- deterministic structured diagnostics for generic symbol fallback or missing semantic objects.
+
+The generic `RECTANGLE`, `POLYGON`, `POLYLINE`, and `TEXT` primitives are an adapter contract, not
+a symbol standard. A `REVIEWED` projection records reviewed input evidence only; it does not approve
+a drawing for design or construction. Missing project conventions use an explicit generic rectangle
+and emit `GRAPHICAL_PROJECTION_GENERIC_SYMBOL_FALLBACK`. No ISO 10628, ISO 14617, ISA, DEXPI profile,
+or company-symbol conformance is inferred.
+
+The projection is deterministic JSON (`neqsim_engineering_graphical_projection.v1`) and can be
+restored with `EngineeringGraphicalProjection.fromJson(...)`. Native SVG/PDF and DEXPI Core adapters
+should consume this same projection. Each adapter must preserve supported stable identities and
+report unsupported primitive, symbol, or semantic-reference mappings as structured losses. DEXPI
+`RepresentationGroup` objects must not be emitted as empty placeholders.
