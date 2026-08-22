@@ -416,8 +416,7 @@ public final class EngineeringGraphicalProjection implements Serializable {
     if (!Unit.MILLIMETRE.name().equals(root.get("unit").getAsString())) {
       throw new IllegalArgumentException("Unsupported graphical projection unit");
     }
-    if (!root.has("engineeringApprovalRequired")
-        || !root.get("engineeringApprovalRequired").isJsonPrimitive()
+    if (!root.has("engineeringApprovalRequired") || !root.get("engineeringApprovalRequired").isJsonPrimitive()
         || !root.getAsJsonPrimitive("engineeringApprovalRequired").isBoolean()
         || !root.get("engineeringApprovalRequired").getAsBoolean()) {
       throw new IllegalArgumentException("engineeringApprovalRequired must be true");
