@@ -38,6 +38,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   double[][] tempStocMatrix;
   /** Components array for reference potential calculations. */
   private ComponentInterface[] refPotComponents;
+  private ChemicalReactionDataSource reactionDataSource = ChemicalReactionDataSource.STANDARD;
 
   /**
    * readReactions.
@@ -54,15 +55,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     double actH;
     double[] K = new double[4];
     boolean useReaction = false;
+    reactionDataSource = system.getChemicalReactionDataSource();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      java.sql.ResultSet dataSet = null;
-      if (system.getModelName().equals("Kent Eisenberg-model")) {
-        // System.out.println("selecting Kent-Eisenberg reaction set");
-        dataSet = database.getResultSet("SELECT * FROM reactiondatakenteisenberg");
-      } else {
-        // System.out.println("selecting standard reaction set");
-        dataSet = database.getResultSet("SELECT * FROM reactiondata");
-      }
+      java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM " + reactionDataSource.getDatabaseTableName());
 
       double[] coefArray;
       String[] nameArray;
@@ -81,6 +76,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           refT = Double.parseDouble(dataSet.getString("Tref"));
           r = Double.parseDouble(dataSet.getString("r"));
           actH = Double.parseDouble(dataSet.getString("ACTENERGY"));
+          String reference = dataSet.getString("Reference");
 
           try (neqsim.util.database.NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
               java.sql.ResultSet dataSet2 = database2
@@ -103,7 +99,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             nameArray[i] = names.get(i);
           }
 
-          ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT);
+          ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT, reference);
           chemicalReactionList.add(reaction);
           // System.out.println("reaction added ok...");
         }
@@ -111,6 +107,15 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     } catch (Exception ex) {
       logger.error("could not add reaction: ", ex);
     }
+  }
+
+  /**
+   * Get the reaction-data source selected when this list was loaded.
+   *
+   * @return selected reaction-data source
+   */
+  public ChemicalReactionDataSource getReactionDataSource() {
+    return reactionDataSource == null ? ChemicalReactionDataSource.STANDARD : reactionDataSource;
   }
 
   /**
