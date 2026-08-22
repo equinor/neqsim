@@ -1466,6 +1466,32 @@ def test_capabilities():
           not coverage.get("missingDescriptors")
           and not coverage.get("undeclaredDescriptors"),
           str(coverage))
+    implementation = r.get("implementationInventory", {})
+    bindings = implementation.get("toolImplementationBindings", {})
+    check("implementation inventory is complete",
+          implementation.get("complete") is True,
+          str(implementation))
+    check("implementation inventory binds 71 tools",
+          implementation.get("toolBindingCount") == 71 and len(bindings) == 71,
+          str(implementation))
+    check("implementation inventory resolves 60 classes",
+          implementation.get("implementationClassCount") == 60,
+          str(implementation))
+    check("implementation inventory exposes 205 factory equipment types",
+          implementation.get("equipmentTypeCount") == 205,
+          str(implementation))
+    report_paths = implementation.get("reportPaths", [])
+    check("implementation inventory exposes two report paths",
+          implementation.get("reportPathCount") == 2
+          and [path.get("tool") for path in report_paths]
+          == ["generateReport", "bridgeTaskWorkflow"],
+          str(report_paths))
+    check("canonical process and report implementations are explicit",
+          bindings.get("runProcess") == "neqsim.mcp.runners.ProcessRunner"
+          and bindings.get("generateReport") == "neqsim.mcp.runners.ReportRunner"
+          and bindings.get("bridgeTaskWorkflow")
+          == "neqsim.mcp.runners.TaskWorkflowBridge",
+          str(bindings))
 
 
 def test_run_capability_search_and_invoke():
