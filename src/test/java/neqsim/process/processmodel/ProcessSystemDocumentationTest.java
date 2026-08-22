@@ -41,14 +41,9 @@ class ProcessSystemDocumentationTest {
 
     double inletMassFlowKgPerHr = feed.getFlowRate("kg/hr");
     double gasMassFlowKgPerHr = separator.getGasOutStream().getFlowRate("kg/hr");
-    double liquidMassFlowKgPerHr =
-        separator.getLiquidOutStream().getFlowRate("kg/hr");
-    double relativeMassBalanceError =
-        Math.abs(
-                inletMassFlowKgPerHr
-                    - gasMassFlowKgPerHr
-                    - liquidMassFlowKgPerHr)
-            / inletMassFlowKgPerHr;
+    double liquidMassFlowKgPerHr = separator.getLiquidOutStream().getFlowRate("kg/hr");
+    double relativeMassBalanceError = Math.abs(inletMassFlowKgPerHr - gasMassFlowKgPerHr - liquidMassFlowKgPerHr)
+        / inletMassFlowKgPerHr;
 
     assertTrue(gasMassFlowKgPerHr > 0.0);
     assertTrue(relativeMassBalanceError < 1.0e-6);
@@ -60,32 +55,15 @@ class ProcessSystemDocumentationTest {
   }
 
   @Test
-  void equipmentIndexDocumentsStreamTopologyOwnership()
-      throws NoSuchMethodException {
-    assertTrue(
-        ProcessEquipmentInterface.class.isAssignableFrom(
-            ProcessEquipmentBaseClass.class));
-    assertTrue(
-        ProcessEquipmentBaseClass.class.isAssignableFrom(
-            TwoPortEquipment.class));
+  void equipmentIndexDocumentsStreamTopologyOwnership() throws NoSuchMethodException {
+    assertTrue(ProcessEquipmentInterface.class.isAssignableFrom(ProcessEquipmentBaseClass.class));
+    assertTrue(ProcessEquipmentBaseClass.class.isAssignableFrom(TwoPortEquipment.class));
     assertTrue(TwoPortEquipment.class.isAssignableFrom(ThrottlingValve.class));
     assertFalse(TwoPortEquipment.class.isAssignableFrom(Separator.class));
 
-    assertSame(
-        StreamInterface.class,
-        TwoPortEquipment.class
-            .getMethod("getInletStream")
-            .getReturnType());
-    assertSame(
-        StreamInterface.class,
-        TwoPortEquipment.class
-            .getMethod("getOutletStream")
-            .getReturnType());
-    assertSame(
-        StreamInterface.class,
-        Separator.class.getMethod("getGasOutStream").getReturnType());
-    assertSame(
-        StreamInterface.class,
-        Separator.class.getMethod("getLiquidOutStream").getReturnType());
+    assertSame(StreamInterface.class, TwoPortEquipment.class.getMethod("getInletStream").getReturnType());
+    assertSame(StreamInterface.class, TwoPortEquipment.class.getMethod("getOutletStream").getReturnType());
+    assertSame(StreamInterface.class, Separator.class.getMethod("getGasOutStream").getReturnType());
+    assertSame(StreamInterface.class, Separator.class.getMethod("getLiquidOutStream").getReturnType());
   }
 }
