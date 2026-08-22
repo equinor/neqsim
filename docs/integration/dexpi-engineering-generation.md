@@ -718,3 +718,17 @@ Company or project rules can implement `EngineeringRule` and be registered with 
 operator-specific alarm philosophy, trip thresholds, voting, proprietary design requirements, and
 internal document references in a private rule package; the public NORSOK profile remains
 plant-agnostic.
+## Exchange-neutral graphical projection contract
+
+`EngineeringGraphicalProjection` is the controlled, exchange-neutral source for future DEXPI Core
+diagram primitives. It preserves stable semantic and external keys, millimetre geometry, parallel
+routes, source/revision evidence, verification status, and structured fallback diagnostics without
+binding NeqSim to a licensed or project-specific symbol catalogue.
+
+This tranche defines and regression-tests the projection contract only. The native DEXPI 2.0 Plant
+writer continues to emit its existing semantic exchange bytes unless an existing export option is
+explicitly selected; it does not yet serialize the projection as Core `Diagram`/
+`RepresentationGroup` elements. That adapter must map every represented-object identity to a real
+DEXPI object, emit non-empty supported primitives, and report every dropped shape, route, or
+reference. Until that adapter and external DEXPIViewer evidence exist, the projection is not a
+clean-validation, profile-conformance, or drawing-approval claim.
