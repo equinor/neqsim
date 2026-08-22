@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.EvidenceState;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolConvention;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolShape;
@@ -55,6 +56,7 @@ public final class EngineeringGraphicalProjectionBuilder {
     List<Primitive> primitives = new ArrayList<Primitive>();
     List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
     Set<EngineeringNode.Kind> fallbackKinds = EnumSet.noneOf(EngineeringNode.Kind.class);
+    Set<EngineeringNode.Kind> proposedKinds = EnumSet.noneOf(EngineeringNode.Kind.class);
 
     for (Map<String, Object> placement : maps(layout.get("placements"))) {
       String nodeId = text(placement.get("nodeId"));
@@ -78,7 +80,8 @@ public final class EngineeringGraphicalProjectionBuilder {
             "GRAPHICAL_PROJECTION_GENERIC_SYMBOL_FALLBACK",
             "No project convention is registered; generic rectangles are retained without a standards-symbol claim",
             node.getKind().name()));
-      } else if (convention != null && convention.getEvidenceState() == EvidenceState.PROPOSED) {
+      } else if (convention != null && convention.getEvidenceState() == EvidenceState.PROPOSED
+          && proposedKinds.add(node.getKind())) {
         diagnostics.add(new Diagnostic(Severity.INFO,
             "GRAPHICAL_PROJECTION_PROPOSED_CONVENTION",
             "Project convention is proposed and still requires accountable review",
@@ -90,6 +93,7 @@ public final class EngineeringGraphicalProjectionBuilder {
     }
 
     List<Map<String, Object>> routes = maps(layout.get("routes"));
+    Set<String> routedEdgeIds = new TreeSet<String>();
     Collections.sort(routes, new Comparator<Map<String, Object>>() {
       @Override
       public int compare(Map<String, Object> left, Map<String, Object> right) {
@@ -105,12 +109,25 @@ public final class EngineeringGraphicalProjectionBuilder {
             edgeId));
         continue;
       }
+      routedEdgeIds.add(edgeId);
       List<Point> points = new ArrayList<Point>();
       for (Map<String, Object> point : maps(route.get("points"))) {
         points.add(new Point(number(point.get("x")), number(point.get("y"))));
       }
       primitives.add(Primitive.polyline(edgeId + ":route", edgeId, edgeId, points,
           routeColor(edge.getKind()), 0.8, routeDash(edge.getKind()), false));
+    }
+    for (EngineeringEdge edge : graph.getEdges().values()) {
+      if (isGraphicalRoute(edge.getKind()) && !routedEdgeIds.contains(edge.getId())) {
+        diagnostics.add(new Diagnostic(Severity.WARNING,
+            "GRAPHICAL_PROJECTION_ROUTE_ENDPOINT_NOT_PLACED",
+            "Graphical relationship is retained semantically but has no route because an endpoint is not drawable",
+            edge.getId()));
+      }
+    }
+    if (primitives.isEmpty()) {
+      diagnostics.add(new Diagnostic(Severity.ERROR, "GRAPHICAL_PROJECTION_EMPTY",
+          "Canonical engineering graph contains no drawable nodes or routes", graph.getProjectId()));
     }
 
     return new EngineeringGraphicalProjection(graph.getProjectId(), graph.getRevision(),
@@ -162,6 +179,13 @@ public final class EngineeringGraphicalProjectionBuilder {
     return kind == EngineeringEdge.Kind.SIGNAL_FLOW || kind == EngineeringEdge.Kind.MEASURES
         ? "4 2"
         : "";
+  }
+
+  private static boolean isGraphicalRoute(EngineeringEdge.Kind kind) {
+    return kind == EngineeringEdge.Kind.PROCESS_FLOW || kind == EngineeringEdge.Kind.SIGNAL_FLOW
+        || kind == EngineeringEdge.Kind.ENERGY_FLOW || kind == EngineeringEdge.Kind.CONNECTS_TO
+        || kind == EngineeringEdge.Kind.HAS_PORT || kind == EngineeringEdge.Kind.PART_OF_LINE
+        || kind == EngineeringEdge.Kind.MEASURES;
   }
 
   @SuppressWarnings("unchecked")
