@@ -95,7 +95,7 @@ class FlowAssuranceScreeningToolsDocumentationTest(unittest.TestCase):
 
     def test_engineering_boundaries_and_executable_coverage_are_explicit(self):
         required = (
-            "not a complete NORSOK M-506 calculation",
+            "Not a complete NORSOK M-506 calculation",
             "does not use them",
             "not precipitation rate",
             "failed flash",
