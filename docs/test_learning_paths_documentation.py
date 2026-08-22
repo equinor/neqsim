@@ -54,7 +54,9 @@ class LearningPathsDocumentationTest(unittest.TestCase):
             self.assertIn(f"| **{status}** |", catalog_row)
             self.assertIn(status, page_line)
 
-        self.assertIn("Rerun either kind against the current `master` branch", self.page)
+        self.assertIn(
+            "Rerun either kind against the current `master` branch", self.page
+        )
         self.assertNotIn("**Run**: [PVT Simulation", self.page)
         self.assertNotIn("**Run**: [Network Solver", self.page)
         self.assertNotIn("**Run**: [Production Optimizer", self.page)
