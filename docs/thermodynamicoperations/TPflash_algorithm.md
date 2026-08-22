@@ -1933,6 +1933,21 @@ For each experimental tie line, the regression verifies the following:
 This is an evidence-level-1 literature qualification of phase topology and numerical consistency. It does not claim
 that classic cubic EOS models reproduce every hydrogen-rich VLE dataset within experimental uncertainty.
 
+The same reference matrix also anchors a low-pressure phase-boundary safeguard. At 143.05 K and 40.2 atm, an overall
+hydrogen fraction `1e-4` inside the calculated vapor boundary previously collapsed to one phase through ordinary
+`TPflash`, while the explicit-multiphase path retained the equilibrium liquid with beta `1.4778e-4` for SRK and
+`1.5109e-4` for PR. The ordinary stability path had rejected every amplified-K supplementary trial below 50 bar before
+applying its Wilson-sum or tangent-plane screens.
+
+For feeds containing more than `0.01` overall hydrogen, the pressure prefilter now permits that existing supplementary
+trial below 50 bar. All later Wilson-sum, K-value-spread, convergence, non-trivial-composition, and non-physical-state
+rollback gates remain unchanged. The regression recomputes each EOS boundary for the four literature points below
+50 bar, then evaluates overall compositions `1e-4` to either side of both calculated endpoints. Inside states retain
+GAS+OIL with a small phase of order `1e-4`; outside states remain single-phase. Ordinary and explicit-multiphase paths
+must satisfy the same normalization, material-balance, fugacity, property, repeat, poor-initialization, phase
+disappearance, and reappearance gates listed above. Non-hydrogen feeds, hydrogen at or below one mole percent, and the
+established pressure-at-or-above-50-bar path are unchanged.
+
 ---
 
 ## 7. References
