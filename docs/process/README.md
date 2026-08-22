@@ -246,11 +246,6 @@ Use the narrowest API that represents the operation being modeled.
 
 See the [equipment index](equipment/README.md) for the current category map and
 [ProcessSystem guide](processmodel/process_system.md) for orchestration details.
-API 672 |
-| Valves | [ValveMechanicalDesign.md](ValveMechanicalDesign.md) | IEC 60534, ANSI/ISA-75, ASME B16.34 |
-
----
-
 
 ## ProcessSystem
 
@@ -389,6 +384,24 @@ been established. Prefer retaining a typed reference when constructing the flows
   supported setter targets. `Calculator` does not parse expression strings.
 - Add each utility object to the same `ProcessSystem` as its dependencies so topology and
   convergence logic can account for it.
+
+A focused calculator callback looks like this when `stream` and `heater` are already typed
+objects in the same running flowsheet:
+
+```java
+Calculator calc = new Calculator("heater target calculator");
+calc.addInputVariable(stream);
+calc.setOutputVariable(heater);
+calc.setCalculationMethod((inputs, output) -> {
+    Stream feed = (Stream) inputs.get(0);
+    Heater target = (Heater) output;
+    target.setOutTemperature(feed.getTemperature("K") + 10.0, "K");
+});
+process.add(calc);
+```
+
+The [calculator guide](equipment/util/calculators.md) supplies the imports, complete executable
+context, supported presets, setter targets, and recycle-coupling boundaries.
 
 ## Transient and Safety Boundaries
 
