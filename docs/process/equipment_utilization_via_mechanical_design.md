@@ -110,6 +110,12 @@ Equipment subclasses (or specialised `MechanicalDesign` subclasses) may override
 kW, m/s). Until a hook is overridden, the corresponding design limit simply produces no
 constraint, so utilization is never reported on an undefined basis.
 
+`ValveMechanicalDesign` supplies the Cv hook as the calculated required Cv. When an explicit
+vendor trim catalog is configured, `maxDesignCv` is the selected trim maximum Cv (or the largest
+available maximum when no option is feasible), so `design Cv` utilization is
+`Cv_required / Cv_trim,max`. See [Valve Mechanical Design](ValveMechanicalDesign.md) for relative
+trim sizes, utilization reserve, and severe-service carbide/brickstopper metadata.
+
 ## Worked example
 
 ```java

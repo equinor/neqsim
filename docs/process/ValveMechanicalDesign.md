@@ -12,10 +12,86 @@ This document describes the mechanical design calculations for control valves in
 The valve mechanical design module provides sizing and design calculations for control valves based on **IEC 60534**, **ANSI/ISA-75**, and **ASME B16.34** standards. The calculations enable:
 
 - Valve body sizing and pressure rating selection
+- Vendor trim-capacity selection and Cv utilization
 - Body wall thickness estimation
 - Weight estimation for procurement and installation planning
 - Actuator sizing for control applications
 - Module dimension calculation for layout planning
+
+## Required Cv versus available trim Cv
+
+`ValveMechanicalDesign` distinguishes the process-case requirement from the capacity of an
+available physical trim:
+
+| Quantity | Meaning |
+| --- | --- |
+| Required Cv | Full-open Cv required for the simulated flow, pressure drop, valve characteristic, and opening |
+| Trim maximum design Cv | Vendor-qualified capacity limit for one body/trim configuration |
+| Trim Cv utilization | `required Cv / selected maximum design Cv` |
+| Cv capacity margin | `selected maximum design Cv - required Cv` |
+
+The available trim catalog is explicit input. NeqSim does not embed vendor product tables or infer
+a universal derating from a material/construction label. This is important for severe-service
+tungsten-carbide trims: a metallic **brickstopper** protects brittle carbide components from impact
+by large debris, but it is not itself a universal Cv correction. Use the maximum design Cv values
+qualified by the applicable vendor for the body, trim, pressure class, flow direction, and service.
+
+### Carbide trim with brickstopper example
+
+```java
+import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
+import neqsim.process.mechanicaldesign.valve.ValveTrimOption;
+import neqsim.process.mechanicaldesign.valve.ValveTrimSizingResult;
+
+ValveMechanicalDesign design = valve.getMechanicalDesign();
+design.setMaximumAllowedTrimUtilization(0.80); // reserve at least 20% Cv capacity
+design.addAvailableTrimOption(
+    "TC-BS-50", 50.0, 42.0, "tungsten carbide", "metallic brickstopper");
+design.addAvailableTrimOption(
+    "TC-BS-75", 75.0, 68.0, "tungsten carbide", "metallic brickstopper");
+design.addAvailableTrimOption(
+    "TC-BS-100", 100.0, 95.0, "tungsten carbide", "metallic brickstopper");
+
+design.calcDesign();
+ValveTrimSizingResult trimResult = design.getTrimSizingResult();
+
+boolean feasible = trimResult.isFeasible();
+double requiredCv = trimResult.getRequiredCv();
+double utilization = trimResult.getUtilization();
+double marginCv = trimResult.getCapacityMarginCv();
+ValveTrimOption selectedTrim = trimResult.getSelectedTrimOption();
+```
+
+Automatic selection chooses the smallest relative trim satisfying the configured utilization
+limit. Equal-size options are ordered by maximum design Cv and then identifier. If none is
+feasible, `getSelectedTrimOption()` returns `null`; the result status is `NO_FEASIBLE_TRIM`, and
+utilization/margin are evaluated against the largest supplied maximum design Cv so the bottleneck
+stays visible.
+
+For a required Cv that already includes project-specific flow cases, safety factors, or target
+opening, call `assessTrimOptionsForRequiredCv(requiredCv)` directly. Setting
+`setMaxDesignCv(value)` without a catalog also works: the operating numerator is the latest
+calculated required Cv.
+
+The assessment is exposed through `ValveMechanicalDesignResponse`/JSON and through the generic
+mechanical-design utilization bridge:
+
+```java
+double cvUtilization = design.getDesignUtilization().get("design Cv");
+valve.applyMechanicalDesignCapacityConstraints();
+double bottleneckUtilization = valve.getMaxUtilization();
+```
+
+The trim-capacity assessment is a preliminary engineering screen, not vendor certification.
+
+Engineering context:
+
+- [Trillium Flow Technologies BV992/BV993 choke valves](https://www.trilliumflow.com/product/blakeborough-bv992-and-bv993-choke/)
+  lists non-collapsible brickstopper and high-toughness carbide trim options.
+- S. Tattersall, *Choke Valve Technology in Subsea Environments*, Measurement and Control 49(3),
+  2016, [DOI 10.1177/0020294016640556](https://doi.org/10.1177/0020294016640556), describes
+  metallic brick stoppers as impact protection and identifies trim capacity and design Cv as key
+  selection inputs.
 
 ## Design Standards Reference
 
@@ -190,6 +266,9 @@ System.out.println("Total Weight: " + mechDesign.getWeightTotal() + " kg");
 | `getDesignPressure()`         | double | Returns design pressure in bara                     |
 | `getDesignTemperature()`      | double | Returns design temperature in °C                    |
 | `getWeightTotal()`            | double | Returns total valve weight in kg                    |
+| `getRequiredCv()`             | double | Returns the calculated required full-open Cv        |
+| `addAvailableTrimOption(...)` | void   | Adds an explicit relative trim size and maximum Cv  |
+| `getTrimSizingResult()`       | `ValveTrimSizingResult` | Returns selection, utilization, margin, and feasibility |
 
 ## Valve Sizing Standards
 

@@ -2,7 +2,11 @@ package neqsim.process.mechanicaldesign.valve;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -52,6 +56,34 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   /** Design pressure margin factor. */
   private static final double DESIGN_PRESSURE_MARGIN = 1.10;
 
+  /** Deterministic ordering used when selecting the smallest feasible relative trim. */
+  private static final Comparator<ValveTrimOption> TRIM_OPTION_ORDER = new Comparator<ValveTrimOption>() {
+    @Override
+    public int compare(ValveTrimOption first, ValveTrimOption second) {
+      int sizeComparison = Double.compare(first.getRelativeTrimSizePercent(), second.getRelativeTrimSizePercent());
+      if (sizeComparison != 0) {
+        return sizeComparison;
+      }
+      int cvComparison = Double.compare(first.getMaximumDesignCv(), second.getMaximumDesignCv());
+      if (cvComparison != 0) {
+        return cvComparison;
+      }
+      return first.getIdentifier().compareTo(second.getIdentifier());
+    }
+  };
+
+  /** Deterministic ordering used to identify the largest available design Cv. */
+  private static final Comparator<ValveTrimOption> TRIM_CAPACITY_ORDER = new Comparator<ValveTrimOption>() {
+    @Override
+    public int compare(ValveTrimOption first, ValveTrimOption second) {
+      int cvComparison = Double.compare(first.getMaximumDesignCv(), second.getMaximumDesignCv());
+      if (cvComparison != 0) {
+        return cvComparison;
+      }
+      return TRIM_OPTION_ORDER.compare(first, second);
+    }
+  };
+
   /** ANSI Class 150 maximum pressure at ambient [bara]. */
   private static final double ANSI_150_MAX_PRESSURE = 19.6;
 
@@ -75,6 +107,12 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   // ============================================================================
 
   double valveCvMax = 1.0;
+  private double requiredCv = Double.NaN;
+  private final List<ValveTrimOption> availableTrimOptions = new ArrayList<ValveTrimOption>();
+  private double maximumAllowedTrimUtilization = 1.0;
+  private ValveTrimSizingResult trimSizingResult = ValveTrimSizingResult.notEvaluated(Double.NaN,
+      "No valve sizing case or trim catalog has been evaluated", maximumAllowedTrimUtilization);
+  private boolean trimCatalogControlsMaxDesignCv = false;
   double valveWeight = 100.0;
   double inletPressure = 0.0;
   double outletPressure = 0.0;
@@ -361,13 +399,15 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
     // Calculate valve sizing
     Map<String, Object> result = calcValveSize();
-    this.valveCvMax = (double) result.get("Cv");
+    this.requiredCv = (double) result.get("Cv");
+    this.valveCvMax = requiredCv;
+    evaluateAvailableTrimOptions();
 
     // Select ANSI pressure class
     selectPressureClass(designPressure);
 
     // Calculate nominal valve size from Cv
-    calculateNominalSize(valveCvMax);
+    calculateNominalSize(requiredCv);
 
     // Calculate face-to-face dimension
     calculateFaceToFace();
@@ -581,6 +621,217 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   // ============================================================================
+  // Vendor Trim Capacity Assessment
+  // ============================================================================
+
+  /**
+   * Adds an available trim capacity option without material or construction metadata.
+   *
+   * @param identifier unique option identifier or catalog label
+   * @param relativeTrimSizePercent relative trim size in percent of the vendor reference trim
+   * @param maximumDesignCv vendor-qualified maximum design Cv
+   * @throws IllegalArgumentException when the option data is invalid or the identifier is duplicated
+   */
+  public void addAvailableTrimOption(String identifier, double relativeTrimSizePercent, double maximumDesignCv) {
+    addAvailableTrimOption(identifier, relativeTrimSizePercent, maximumDesignCv, "", "");
+  }
+
+  /**
+   * Adds an available trim capacity option with engineering provenance.
+   *
+   * <p>
+   * Material and construction are descriptive metadata. NeqSim does not apply a universal Cv correction for terms such
+   * as tungsten carbide or brickstopper; the supplied maximum design Cv remains authoritative.
+   * </p>
+   *
+   * @param identifier unique option identifier or catalog label
+   * @param relativeTrimSizePercent relative trim size in percent of the vendor reference trim
+   * @param maximumDesignCv vendor-qualified maximum design Cv
+   * @param material trim material description
+   * @param construction trim construction or protection description
+   * @throws IllegalArgumentException when the option data is invalid or the identifier is duplicated
+   */
+  public void addAvailableTrimOption(String identifier, double relativeTrimSizePercent, double maximumDesignCv,
+      String material, String construction) {
+    ValveTrimOption option = new ValveTrimOption(identifier, relativeTrimSizePercent, maximumDesignCv, material,
+        construction);
+    for (ValveTrimOption existing : availableTrimOptions) {
+      if (existing.getIdentifier().equals(option.getIdentifier())) {
+        throw new IllegalArgumentException("Duplicate trim option identifier: " + option.getIdentifier());
+      }
+    }
+    availableTrimOptions.add(option);
+    evaluateAvailableTrimOptions();
+  }
+
+  /**
+   * Removes all available trim capacity options.
+   */
+  public void clearAvailableTrimOptions() {
+    availableTrimOptions.clear();
+    trimSizingResult = ValveTrimSizingResult.notEvaluated(requiredCv, "No vendor trim capacity options were supplied",
+        maximumAllowedTrimUtilization);
+    if (trimCatalogControlsMaxDesignCv) {
+      setMaxDesignCv(0.0);
+      trimCatalogControlsMaxDesignCv = false;
+    }
+  }
+
+  /**
+   * Gets an immutable snapshot of the available trim options.
+   *
+   * @return trim options in insertion order
+   */
+  public List<ValveTrimOption> getAvailableTrimOptions() {
+    return Collections.unmodifiableList(new ArrayList<ValveTrimOption>(availableTrimOptions));
+  }
+
+  /**
+   * Sets the maximum Cv utilization allowed when automatically selecting a trim.
+   *
+   * <p>
+   * A value of {@code 1.0} permits selection up to the vendor-qualified maximum design Cv. A lower value reserves
+   * capacity margin, for example {@code 0.8} limits the design case to 80% of the option's maximum Cv.
+   * </p>
+   *
+   * @param maximumAllowedTrimUtilization utilization fraction in the interval (0, 1]
+   * @throws IllegalArgumentException when the value is non-finite or outside the permitted interval
+   */
+  public void setMaximumAllowedTrimUtilization(double maximumAllowedTrimUtilization) {
+    if (!Double.isFinite(maximumAllowedTrimUtilization) || maximumAllowedTrimUtilization <= 0.0
+        || maximumAllowedTrimUtilization > 1.0) {
+      throw new IllegalArgumentException("Maximum allowed trim utilization must be finite and in the interval (0, 1]");
+    }
+    this.maximumAllowedTrimUtilization = maximumAllowedTrimUtilization;
+    evaluateAvailableTrimOptions();
+  }
+
+  /**
+   * Gets the maximum Cv utilization allowed for automatic trim selection.
+   *
+   * @return allowed utilization fraction
+   */
+  public double getMaximumAllowedTrimUtilization() {
+    return maximumAllowedTrimUtilization;
+  }
+
+  /**
+   * Compares the calculated required Cv with the available trim catalog.
+   *
+   * <p>
+   * The smallest relative trim satisfying {@code requiredCv / maximumDesignCv <=
+   * maximumAllowedTrimUtilization} is selected. Equal-size options are ordered by maximum design Cv and then
+   * identifier. When none is feasible, no option is selected and utilization is reported against the largest supplied
+   * maximum design Cv so overload remains visible.
+   * </p>
+   *
+   * @return trim sizing result
+   */
+  public ValveTrimSizingResult evaluateAvailableTrimOptions() {
+    if (!Double.isFinite(requiredCv) || requiredCv <= 0.0) {
+      trimSizingResult = ValveTrimSizingResult.notEvaluated(requiredCv,
+          "A positive finite required Cv is needed before trim selection", maximumAllowedTrimUtilization);
+      return trimSizingResult;
+    }
+    if (availableTrimOptions.isEmpty()) {
+      trimSizingResult = ValveTrimSizingResult.notEvaluated(requiredCv, "No vendor trim capacity options were supplied",
+          maximumAllowedTrimUtilization);
+      return trimSizingResult;
+    }
+
+    List<ValveTrimOption> orderedOptions = new ArrayList<ValveTrimOption>(availableTrimOptions);
+    Collections.sort(orderedOptions, TRIM_OPTION_ORDER);
+    ValveTrimOption largestOption = Collections.max(orderedOptions, TRIM_CAPACITY_ORDER);
+    ValveTrimOption selectedOption = null;
+    for (ValveTrimOption option : orderedOptions) {
+      double utilization = requiredCv / option.getMaximumDesignCv();
+      if (utilization <= maximumAllowedTrimUtilization) {
+        selectedOption = option;
+        break;
+      }
+    }
+
+    if (selectedOption != null) {
+      trimSizingResult = ValveTrimSizingResult.feasible(requiredCv, selectedOption, largestOption.getMaximumDesignCv(),
+          maximumAllowedTrimUtilization);
+    } else {
+      trimSizingResult = ValveTrimSizingResult.infeasible(requiredCv, largestOption, maximumAllowedTrimUtilization);
+    }
+
+    setMaxDesignCv(trimSizingResult.getLimitingTrimOption().getMaximumDesignCv());
+    trimCatalogControlsMaxDesignCv = true;
+    return trimSizingResult;
+  }
+
+  /**
+   * Assesses the available trim catalog for an explicitly supplied required Cv.
+   *
+   * <p>
+   * This is useful when the required Cv includes a project-specific design opening, flow case, or safety factor
+   * calculated outside {@link #calcDesign()}. The supplied value becomes the current required Cv used by
+   * mechanical-design utilization.
+   * </p>
+   *
+   * @param requiredCv required full-open Cv for the design case
+   * @return trim sizing result
+   * @throws IllegalArgumentException when required Cv is non-finite or not greater than zero
+   */
+  public ValveTrimSizingResult assessTrimOptionsForRequiredCv(double requiredCv) {
+    if (!Double.isFinite(requiredCv) || requiredCv <= 0.0) {
+      throw new IllegalArgumentException("Required Cv must be finite and greater than zero");
+    }
+    this.requiredCv = requiredCv;
+    this.valveCvMax = requiredCv;
+    return evaluateAvailableTrimOptions();
+  }
+
+  /**
+   * Gets the latest trim capacity assessment.
+   *
+   * @return trim sizing result
+   */
+  public ValveTrimSizingResult getTrimSizingResult() {
+    return trimSizingResult;
+  }
+
+  /**
+   * Gets the selected trim option.
+   *
+   * @return selected option, or {@code null} when no feasible option was found
+   */
+  public ValveTrimOption getSelectedTrimOption() {
+    return trimSizingResult.getSelectedTrimOption();
+  }
+
+  /**
+   * Gets the Cv utilization reported by the trim assessment.
+   *
+   * @return required Cv divided by the limiting option maximum Cv, or zero when not evaluated
+   */
+  public double getTrimCvUtilization() {
+    return trimSizingResult.getUtilization();
+  }
+
+  /**
+   * Gets the largest maximum design Cv in the supplied trim catalog.
+   *
+   * @return maximum available Cv, or zero when not evaluated
+   */
+  public double getMaximumAvailableTrimCv() {
+    return trimSizingResult.getMaximumAvailableCv();
+  }
+
+  /**
+   * Returns the required Cv as the operating value for mechanical-design utilization.
+   *
+   * @return required Cv, or {@link Double#NaN} before a valid sizing calculation
+   */
+  @Override
+  protected double getOperatingCv() {
+    return Double.isFinite(requiredCv) && requiredCv > 0.0 ? requiredCv : Double.NaN;
+  }
+
+  // ============================================================================
   // Getters for Design Results
   // ============================================================================
 
@@ -666,12 +917,26 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Get the maximum valve Cv.
+   * Gets the calculated required full-open Cv for the current sizing case.
    *
-   * @return maximum Cv at full open
+   * <p>
+   * This legacy method retains its historical behavior. Use {@link #getRequiredCv()} for explicit semantics and
+   * {@link #getTrimSizingResult()} for the selected trim maximum Cv.
+   * </p>
+   *
+   * @return required full-open Cv
    */
   public double getValveCvMax() {
     return valveCvMax;
+  }
+
+  /**
+   * Gets the calculated required full-open Cv for the current sizing case.
+   *
+   * @return required Cv, or {@link Double#NaN} before sizing
+   */
+  public double getRequiredCv() {
+    return requiredCv;
   }
 
   /**
