@@ -2,7 +2,6 @@ package neqsim.process.engineering.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,7 +32,12 @@ class EngineeringGraphicalProjectionTest {
     Primitive bypassRoute = primitive(first, "flow-bypass:route");
     assertNotNull(mainRoute);
     assertNotNull(bypassRoute);
-    assertNotEquals(mainRoute.getPoints().get(1).getX(), bypassRoute.getPoints().get(1).getX());
+    assertEquals(3.0,
+        Math.abs(mainRoute.getPoints().get(1).getX() - bypassRoute.getPoints().get(1).getX()), 1.0e-12);
+    assertEquals(mainRoute.getPoints().get(0).getX(), bypassRoute.getPoints().get(0).getX(), 0.0);
+    assertEquals(mainRoute.getPoints().get(0).getY(), bypassRoute.getPoints().get(0).getY(), 0.0);
+    assertEquals(mainRoute.getPoints().get(3).getX(), bypassRoute.getPoints().get(3).getX(), 0.0);
+    assertEquals(mainRoute.getPoints().get(3).getY(), bypassRoute.getPoints().get(3).getY(), 0.0);
     assertTrue(first.isComplete());
     assertTrue(first.getDiagnostics().stream()
         .anyMatch(item -> "GRAPHICAL_PROJECTION_GENERIC_SYMBOL_FALLBACK".equals(item.getCode())));
