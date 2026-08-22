@@ -51,6 +51,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /** Logger. */
   private static final Logger logger = LogManager.getLogger(ProcessModelSimulationEvaluator.class);
 
+  /** Deterministic terminal penalty for an invalid external-optimizer candidate. */
+  private static final double INVALID_CANDIDATE_PENALTY = Double.MAX_VALUE / 2.0;
+
   /** Serializable callback that returns one structured boundary sample after a model run. */
   public interface BoundarySampleEvaluator extends Serializable {
     /**
@@ -3840,6 +3843,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
           "Parameter array length (" + (parameterValues == null ? "null" : Integer.toString(parameterValues.length))
               + ") must match parameter count (" + parameters.size() + ")");
     }
+    for (int parameterIndex = 0; parameterIndex < parameterValues.length; parameterIndex++) {
+      if (!Double.isFinite(parameterValues[parameterIndex])) {
+        throw new IllegalArgumentException(
+            "Parameter " + parameterIndex + " must be finite, but was " + parameterValues[parameterIndex]);
+      }
+    }
 
     long startTime = System.currentTimeMillis();
     evaluationCount++;
@@ -3855,10 +3864,14 @@ public class ProcessModelSimulationEvaluator implements Serializable {
 
       double[] objectiveValues = new double[objectives.size()];
       double[] rawObjectiveValues = new double[objectives.size()];
+      List<String> invalidSamples = new ArrayList<String>();
       for (int objectiveIndex = 0; objectiveIndex < objectives.size(); objectiveIndex++) {
         ObjectiveDefinition objective = objectives.get(objectiveIndex);
         rawObjectiveValues[objectiveIndex] = objective.evaluateRaw(processModel);
         objectiveValues[objectiveIndex] = objective.toMinimizerValue(rawObjectiveValues[objectiveIndex]);
+        if (!Double.isFinite(rawObjectiveValues[objectiveIndex]) || !Double.isFinite(objectiveValues[objectiveIndex])) {
+          invalidSamples.add("Non-finite objective '" + objective.getName() + "'");
+        }
       }
       result.setObjectives(objectiveValues);
       result.setObjectivesRaw(rawObjectiveValues);
@@ -3913,6 +3926,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
         if (evaluatedBoundary == null) {
           margins[constraintIndex] = constraint.marginFromValue(constraintValues[constraintIndex]);
         }
+        if (!Double.isFinite(constraintValues[constraintIndex]) || !Double.isFinite(margins[constraintIndex])) {
+          margins[constraintIndex] = Double.NEGATIVE_INFINITY;
+          invalidSamples.add("Non-finite constraint '" + constraint.getName() + "'");
+          feasible = false;
+          continue;
+        }
         if (margins[constraintIndex] < 0.0) {
           if (evaluatedBoundary == null) {
             penaltySum += constraint.penaltyFromMargin(margins[constraintIndex]);
@@ -3934,13 +3953,19 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       List<BottleneckStatus> rankedCapacityConstraints = toBottleneckStatuses(installedCapacityEvidence);
       result.setRankedCapacityConstraints(rankedCapacityConstraints);
       result.setActiveBottleneck(selectActiveBottleneck(rankedCapacityConstraints));
+      if (!invalidSamples.isEmpty()) {
+        feasible = false;
+        penaltySum = INVALID_CANDIDATE_PENALTY;
+        result.setPenaltySum(penaltySum);
+        result.setErrorMessage(String.join("; ", invalidSamples));
+      }
       result.setFeasible(feasible);
     } catch (Exception exception) {
       logger.warn("ProcessModel evaluation failed: " + exception.getMessage());
       result.setSimulationConverged(false);
       result.setFeasible(false);
       result.setErrorMessage(exception.getMessage());
-      result.setPenaltySum(Double.MAX_VALUE / 2.0);
+      result.setPenaltySum(INVALID_CANDIDATE_PENALTY);
       double[] objectiveValues = new double[objectives.size()];
       Arrays.fill(objectiveValues, Double.NaN);
       result.setObjectives(objectiveValues);

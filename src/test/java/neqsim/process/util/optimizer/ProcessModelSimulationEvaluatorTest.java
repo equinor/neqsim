@@ -333,6 +333,42 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(1000.0, result.getPenaltySum(), 0.0);
   }
 
+  /** Verifies non-finite objective and constraint samples can never be accepted as feasible. */
+  @Test
+  void evaluateFailsClosedForNonFiniteSamples() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addObjective("invalid production objective", model -> Double.NaN);
+    evaluator.addConstraintUpperBound("invalid total power", model -> Double.POSITIVE_INFINITY, 10.0);
+    evaluator.getConstraints().get(0).setHard(false);
+
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
+
+    assertTrue(result.isSimulationConverged(), "the process solve itself should remain distinguishable");
+    assertFalse(result.isFeasible(), "non-finite evidence must fail closed even for a soft constraint");
+    assertEquals(Double.MAX_VALUE / 2.0, result.getPenaltySum(), 0.0);
+    assertTrue(Double.isNaN(result.getObjectivesRaw()[0]));
+    assertEquals(Double.POSITIVE_INFINITY, result.getConstraintValues()[0]);
+    assertEquals(Double.NEGATIVE_INFINITY, result.getConstraintMargins()[0]);
+    assertTrue(result.getErrorMessage().contains("invalid production objective"));
+    assertTrue(result.getErrorMessage().contains("invalid total power"));
+  }
+
+  /** Verifies a non-finite external proposal is rejected before it can mutate live process state. */
+  @Test
+  void evaluateRejectsNonFiniteParameterBeforeApplyingIt() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
+    double originalFlowRate = fixture.feed.getFlowRate("kg/hr");
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        () -> evaluator.evaluate(new double[] { Double.NaN }));
+
+    assertTrue(exception.getMessage().contains("Parameter 0"));
+    assertEquals(originalFlowRate, fixture.feed.getFlowRate("kg/hr"), 0.0);
+  }
+
   /**
    * Verifies installed capacity discovery and active bottleneck reporting across model areas.
    */

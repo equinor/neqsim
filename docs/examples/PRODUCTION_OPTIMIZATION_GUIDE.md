@@ -715,6 +715,36 @@ and multi-variable optimization, multi-objective (Pareto) optimization, and scen
 > The bottleneck reported in the result is the plant-wide bottleneck — the most-utilized unit
 > across every area — consistent with `ProcessModel.getBottleneck()`.
 
+#### Fail-closed external candidate evaluation
+
+Use `ProcessModelSimulationEvaluator` when an external solver proposes a vector of plant setpoints.
+The evaluator applies the complete vector, runs the full `ProcessModel`, and samples each objective
+and constraint callback once. Candidate values must be finite before they are applied. After the
+solve, every raw/scalarized objective value and every constraint value/margin must also be finite.
+
+An invalid proposal is rejected before it can mutate the live process state. A non-finite callback
+sample makes the result infeasible even when the affected constraint is configured as soft; the
+sample remains visible for diagnosis, its margin is reported as negative infinity, and
+`getErrorMessage()` identifies the affected objective or constraint. `isSimulationConverged()` is
+kept separate so callers can distinguish a valid process solve from invalid optimization evidence.
+Invalid evidence receives a deterministic terminal penalty and must not be accepted or cached by an
+external optimizer.
+
+```java
+ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(plant);
+evaluator.addParameter("separation::feed.flowRate", 500.0, 12000.0, "kg/hr");
+evaluator.addObjective("export rate", model -> export.getFlowRate("kg/hr"),
+    ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+evaluator.addConstraintUpperBound("total power", model -> model.getPower("MW"), 40.0);
+
+ProcessModelSimulationEvaluator.EvaluationResult candidate =
+    evaluator.evaluate(new double[] { proposedFeedRate });
+if (!candidate.isSimulationConverged() || !candidate.isFeasible()
+    || candidate.getErrorMessage() != null) {
+  // Reject the external-solver proposal; do not use it as a plant operating point.
+}
+```
+
 #### Multi-objective (Pareto) optimization of a plant
 
 Provide **two or more** objectives (for example, maximize throughput while minimizing compression
@@ -1521,4 +1551,3 @@ try {
 | `getMaxUtilization()` | Get maximum utilization across constraints |
 | `isOverloaded()` | Any constraint > 100% |
 | `isHardLimitExceeded()` | Any HARD constraint violated |
-
