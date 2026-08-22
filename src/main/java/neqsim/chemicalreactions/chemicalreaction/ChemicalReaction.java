@@ -216,6 +216,49 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
+   * Calculate the natural logarithm of the reaction quotient directly in log space.
+   *
+   * <p>
+   * This method follows the same mole-fraction/activity-coefficient convention as {@link #calcK(SystemInterface, int)},
+   * but avoids overflow and underflow when ionic species are present at trace concentrations.
+   * </p>
+   *
+   * @param system thermodynamic system containing the reaction species
+   * @param phaseNumb phase in which the reaction quotient is evaluated
+   * @return natural logarithm of the reaction quotient
+   */
+  public double calcLogReactionQuotient(SystemInterface system, int phaseNumb) {
+    PhaseInterface phase = system.getPhase(phaseNumb);
+    double logReactionQuotient = 0.0;
+    for (int componentIndex = 0; componentIndex < names.length; componentIndex++) {
+      double stoichiometricCoefficient = stocCoefs[componentIndex];
+      if (stoichiometricCoefficient == 0.0) {
+        continue;
+      }
+      ComponentInterface component = phase.getComponent(names[componentIndex]);
+      double logActivity = Math.log(component.getx());
+      if (component.calcActivity()) {
+        double activityCoefficient = phase.getActivityCoefficient(component.getComponentNumber(),
+            phase.getComponent("water").getComponentNumber());
+        logActivity += Math.log(activityCoefficient);
+      }
+      logReactionQuotient += stoichiometricCoefficient * logActivity;
+    }
+    return logReactionQuotient;
+  }
+
+  /**
+   * Calculate the signed logarithmic reaction-equilibrium residual, {@code ln(Q/K)}.
+   *
+   * @param system thermodynamic system containing the reaction species
+   * @param phaseNumb phase in which the reaction residual is evaluated
+   * @return signed residual {@code ln(Q) - ln(K)}
+   */
+  public double calcLogReactionResidual(SystemInterface system, int phaseNumb) {
+    return calcLogReactionQuotient(system, phaseNumb) - Math.log(getK(system.getPhase(phaseNumb)));
+  }
+
+  /**
    * Generaters initial estimates for the molenumbers.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

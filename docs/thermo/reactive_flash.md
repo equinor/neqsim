@@ -224,6 +224,21 @@ Main entry point for the reactive flash.
 | `setMaxNumberOfPhases(int)` | Override the system's max phases (use when `init()` resets it) |
 | `setUseDIIS(boolean)` | Enable/disable DIIS acceleration (default: true) |
 
+### Reaction-equilibrium diagnostics
+
+Use `ChemicalReactionOperations` after a chemical-equilibrium or reactive-flash calculation to
+inspect the database-selected reaction set without multiplying trace activities in product space.
+
+| Method | Description |
+|--------|-------------|
+| `getReactionLogResiduals()` | Immutable reaction-name map of signed `ln(Q/K)` residuals in reaction-list order |
+| `getMaximumAbsoluteReactionLogResidual()` | Largest absolute `ln(Q/K)`, or `NaN` if no reactive liquid phase or reaction is available |
+
+Individual `ChemicalReaction` objects also expose `calcLogReactionQuotient(system, phase)` and
+`calcLogReactionResidual(system, phase)`. These methods use the same mole-fraction and activity-
+coefficient standard-state convention as `calcK`, but sum logarithms directly so trace ionic
+activities do not underflow or overflow before the residual is evaluated.
+
 ### FormulaMatrix
 
 Builds the element-component mapping from the thermodynamic system.

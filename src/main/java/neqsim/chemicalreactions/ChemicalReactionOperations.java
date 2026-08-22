@@ -6,13 +6,17 @@
 
 package neqsim.chemicalreactions;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.chemicalreactions.chemicalequilibrium.ChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
 import neqsim.chemicalreactions.kinetics.Kinetics;
 import neqsim.thermo.component.ComponentInterface;
@@ -645,6 +649,49 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    */
   public ChemicalReactionList getReactionList() {
     return reactionList;
+  }
+
+  /**
+   * Get signed logarithmic equilibrium residuals for all reactions in the reactive phase.
+   *
+   * <p>
+   * Residuals use the reaction database's mole-fraction/activity-coefficient standard-state convention and are
+   * evaluated as {@code ln(Q/K)} directly in log space. The returned map keeps reaction-list order and is immutable. An
+   * empty map indicates that no reactive liquid phase or reaction is available.
+   * </p>
+   *
+   * @return immutable map from reaction name to signed {@code ln(Q/K)} residual
+   */
+  public Map<String, Double> getReactionLogResiduals() {
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0 || reactionList == null) {
+      return Collections.emptyMap();
+    }
+    Map<String, Double> residuals = new LinkedHashMap<String, Double>();
+    for (ChemicalReaction reaction : reactionList.getChemicalReactionList()) {
+      residuals.put(reaction.getName(), reaction.calcLogReactionResidual(system, reactivePhase));
+    }
+    return Collections.unmodifiableMap(residuals);
+  }
+
+  /**
+   * Get the largest absolute logarithmic reaction-equilibrium residual.
+   *
+   * @return maximum absolute {@code ln(Q/K)}, or {@link Double#NaN} when no reaction residual is available
+   */
+  public double getMaximumAbsoluteReactionLogResidual() {
+    Map<String, Double> residuals = getReactionLogResiduals();
+    if (residuals.isEmpty()) {
+      return Double.NaN;
+    }
+    double maximumResidual = 0.0;
+    for (double residual : residuals.values()) {
+      if (Double.isNaN(residual)) {
+        return Double.NaN;
+      }
+      maximumResidual = Math.max(maximumResidual, Math.abs(residual));
+    }
+    return maximumResidual;
   }
 
   /**
