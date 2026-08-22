@@ -216,7 +216,9 @@ Main entry point for the reactive flash.
 | `isConverged()` | Check if the flash converged |
 | `getTotalIterations()` | Total RAND iterations used |
 | `getNumberOfReactions()` | Number of independent reactions ($N_R = N_C - \text{rank}(A)$) |
-| `getEquilibriumTotalMoles()` | Total moles at equilibrium (may differ from 1.0 when reactions change total moles) |
+| `getEquilibriumTotalMoles()` | Extensive total moles at equilibrium (may differ from the feed when reactions change total moles) |
+| `getFinalResidual()` | Final normalized chemical-potential/element-balance residual |
+| `getFinalElementResidual()` | Element-balance contribution to the final normalized residual |
 | `getFinalGibbsEnergy()` | Final Gibbs energy of the equilibrium state |
 | `setUseChemicalReactionInit(boolean)` | Enable auto-discovery of reaction products |
 | `setMaxNumberOfPhases(int)` | Override the system's max phases (use when `init()` resets it) |
