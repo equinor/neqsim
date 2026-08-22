@@ -610,7 +610,9 @@ The native-renderer regression verifies byte-deterministic SVG/PDF, A3 and A1 ge
 coordinates and protected routes, reciprocal off-page references, deterministic connection labels,
 route/object and route-label obstacle diagnostics, collision, clipping, label-overflow and
 broken-reference diagnostics, normalized visual fingerprints, multi-page drawing sets, fresh-model
-determinism, and unchanged Classic DOT and controlled-document JSON.\n\n## Exchange-neutral graphical projection
+determinism, and unchanged Classic DOT and controlled-document JSON.
+
+## Exchange-neutral graphical projection
 
 `EngineeringGraphicalProjectionBuilder` converts the canonical `EngineeringGraph` into an
 immutable, restartable `EngineeringGraphicalProjection`. The projection is deliberately separate
