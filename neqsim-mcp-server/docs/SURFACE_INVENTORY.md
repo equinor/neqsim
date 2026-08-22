@@ -11,6 +11,8 @@ manually maintained Java method list.
 | Static resources | 7 | `resources/list` | `NeqSimResources` MCP annotations |
 | Resource templates | 7 | `resources/templates/list` | `NeqSimResources` MCP annotations |
 | Guided prompts | 9 | `prompts/list` | `NeqSimPrompts` MCP annotations |
+| Schema entries | 71 tools / 142 documents | `resources/read` | `SchemaCatalog` |
+| Example entries | 24 categories / 114 documents | `resources/read` | `ExampleCatalog` |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -30,6 +32,21 @@ the governance and capability registries without introducing a second MCP-only s
 | `neqsim://standards` | `neqsim://standards/{code}` |
 
 The two columns are independent inventories; rows do not imply a one-to-one relationship.
+
+## Schemas and examples
+
+Every one of the 71 schema-backed tool names has an input and output document at the canonical
+`neqsim://schemas/{tool}/input` and `neqsim://schemas/{tool}/output` resource URIs. The protocol
+regression reads all 142 documents and requires each to decode as a JSON Schema object with a
+top-level `properties` map. It also requires the schema catalog's URI fields to match the requested
+resource exactly, preventing stale or redirected catalog entries from passing silently.
+
+The example catalog contains 114 entries across 24 categories. Seventy-one are canonical
+`tool/{schema_tool_name}` starters, and their names must exactly equal the schema catalog names.
+The regression reads every catalog entry through `neqsim://examples/{category}/{name}` and requires
+valid JSON objects. Domain examples remain representative inputs or contract-level starters; their
+presence does not by itself establish scientific validation, benchmark maturity, or fitness for a
+specific facility decision.
 
 ## Guided prompts
 
@@ -59,13 +76,13 @@ fluids, streams, `ProcessSystem`, and `ProcessModel` objects.
 
 ## Phase 0 stop boundary
 
-This increment freezes the exact transport-facing tools, resources, resource templates, prompts,
-deployment-profile names, and tool-capability reconciliation on the tested baseline. It does not
-complete the campaign's full Phase 0 inventory. Follow-up work must still inventory individual
-schemas, examples, runners, equipment factories, report paths, tests, guides, and known
-limitations; reconcile merged foundations #2874, #2875, and #3152 criterion by criterion; add the
-four acceptance scales; build the full traceability and discipline-maturity matrices; and record
-runtime, memory, payload, convergence, balance-closure, and report-usefulness baselines.
+The baseline now freezes the exact transport-facing tools, resources, resource templates, prompts,
+deployment-profile names, tool-capability reconciliation, schema resource graph, and example
+resource graph. It does not complete the campaign's full Phase 0 inventory. Follow-up work must
+still inventory runners, equipment factories, report paths, tests, guides, and known limitations;
+reconcile merged foundations #2874, #2875, and #3152 criterion by criterion; add the four
+acceptance scales; build the full traceability and discipline-maturity matrices; and record runtime,
+memory, payload, convergence, balance-closure, and report-usefulness baselines.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing

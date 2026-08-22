@@ -165,6 +165,33 @@ def call_tool(name, arguments):
     return {}
 
 
+def read_json_resource(uri):
+    """Read and decode a JSON MCP resource through the real protocol."""
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": next_id(),
+            "method": "resources/read",
+            "params": {"uri": uri},
+        }
+    )
+    response = recv()
+    contents = response.get("result", {}).get("contents", [])
+    if not contents:
+        return {"_protocolError": response}
+
+    resource = contents[0]
+    if resource.get("uri") != uri:
+        return {
+            "_protocolError": f"requested {uri}, received {resource.get('uri')}"
+        }
+
+    try:
+        return json.loads(resource.get("text", ""))
+    except json.JSONDecodeError as error:
+        return {"_protocolError": f"invalid JSON at {uri}: {error}"}
+
+
 def normalize_tool_arguments(name, arguments):
     json_arg = JSON_TOOL_ARGS.get(name)
     if not json_arg or json_arg in arguments:
@@ -383,8 +410,70 @@ def test_component_search():
 
 
 def test_examples_and_schemas():
-    """Test example catalog and schema retrieval."""
+    """Test complete example/schema catalogs and representative tool retrieval."""
     print("\n=== Examples & Schemas Tests ===")
+
+    schema_catalog = read_json_resource("neqsim://schema-catalog")
+    check("schema catalog is JSON", "_protocolError" not in schema_catalog,
+          schema_catalog.get("_protocolError", ""))
+    check("schema catalog has 71 tools", len(schema_catalog) == 71,
+          f"got {len(schema_catalog)}")
+
+    schema_uri_errors = []
+    schema_resource_errors = []
+    for tool_name, schema_refs in sorted(schema_catalog.items()):
+        if tool_name == "_protocolError":
+            continue
+        for schema_type in ("input", "output"):
+            ref_name = f"{schema_type}SchemaUri"
+            expected_uri = f"neqsim://schemas/{tool_name}/{schema_type}"
+            schema_uri = schema_refs.get(ref_name)
+            if schema_uri != expected_uri:
+                schema_uri_errors.append(
+                    f"{tool_name}/{schema_type}: {schema_uri!r} != {expected_uri!r}"
+                )
+                continue
+            schema = read_json_resource(schema_uri)
+            if ("_protocolError" in schema or schema.get("type") != "object"
+                    or not isinstance(schema.get("properties"), dict)):
+                schema_resource_errors.append(f"{tool_name}/{schema_type}")
+
+    check("all 142 catalog schema URIs are canonical", not schema_uri_errors,
+          "; ".join(schema_uri_errors))
+    check("all 142 catalog schemas resolve as JSON objects",
+          not schema_resource_errors,
+          f"invalid: {schema_resource_errors}")
+
+    example_catalog = read_json_resource("neqsim://example-catalog")
+    check("example catalog is JSON", "_protocolError" not in example_catalog,
+          example_catalog.get("_protocolError", ""))
+    check("example catalog has 24 categories", len(example_catalog) == 24,
+          f"got {len(example_catalog)}")
+    example_count = sum(
+        len(examples) for examples in example_catalog.values()
+        if isinstance(examples, dict)
+    )
+    check("example catalog has 114 entries", example_count == 114,
+          f"got {example_count}")
+
+    tool_examples = example_catalog.get("tool", {})
+    check("schema tools exactly match canonical tool examples",
+          set(tool_examples) == set(schema_catalog),
+          f"missing={sorted(set(schema_catalog) - set(tool_examples))}, "
+          f"extra={sorted(set(tool_examples) - set(schema_catalog))}")
+
+    example_resource_errors = []
+    for category, examples in sorted(example_catalog.items()):
+        if not isinstance(examples, dict):
+            example_resource_errors.append(f"{category}: not an object")
+            continue
+        for name in sorted(examples):
+            example = read_json_resource(f"neqsim://examples/{category}/{name}")
+            if "_protocolError" in example or not isinstance(example, dict):
+                example_resource_errors.append(f"{category}/{name}")
+    check("all 114 catalog examples resolve as JSON objects",
+          not example_resource_errors,
+          f"invalid: {example_resource_errors}")
 
     r = call_tool("getExample", {"category": "flash", "name": "tp-simple-gas"})
     check("flash example has model", "model" in r)
