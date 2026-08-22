@@ -507,7 +507,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void clearAll();
 
   /**
-   * clone.
+   * Creates an independently mutable copy of this thermodynamic system.
+   *
+   * <p>
+   * Phase, component, and initialized chemical-reaction state in the returned system are owned by the copy. Changing or
+   * solving a reactive clone must therefore not mutate the source system.
+   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -1497,8 +1497,6 @@ public abstract class SystemThermo implements SystemInterface {
     SystemThermo clonedSystem = null;
     try {
       clonedSystem = (SystemThermo) super.clone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
     } catch (CloneNotSupportedException ex) {
       throw new AssertionError("Clone failed for SystemThermo", ex);
     }
@@ -1531,6 +1529,10 @@ public abstract class SystemThermo implements SystemInterface {
     clonedSystem.phaseArray = phaseArray.clone();
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       clonedSystem.phaseArray[i] = phaseArray[i].clone();
+    }
+
+    if (chemicalReactionOperations != null) {
+      clonedSystem.chemicalReactionInit();
     }
 
     return clonedSystem;
