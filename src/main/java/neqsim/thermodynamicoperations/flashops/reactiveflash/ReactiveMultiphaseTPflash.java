@@ -286,7 +286,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
           // Accept near-converged multi-phase solutions to prevent outer loop
           // from restarting and overshooting a good solution
           if (system.getNumberOfPhases() > 1 && randSolver.getFinalResidual() < 5.0e-3
-              && randSolver.getFinalElementResidual() < 1.0e-8) {
+              && (!formulaMatrix.hasIonicSpecies() || randSolver.getFinalElementResidual() < 1.0e-8)) {
             converged = true;
             logger.info("Accepted near-converged (residual=" + randSolver.getFinalResidual() + ")");
             break;
