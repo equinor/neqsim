@@ -5,8 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -37,9 +41,14 @@ class ProcessSystemDocumentationTest {
 
     double inletMassFlowKgPerHr = feed.getFlowRate("kg/hr");
     double gasMassFlowKgPerHr = separator.getGasOutStream().getFlowRate("kg/hr");
-    double liquidMassFlowKgPerHr = separator.getLiquidOutStream().getFlowRate("kg/hr");
-    double relativeMassBalanceError = Math.abs(inletMassFlowKgPerHr - gasMassFlowKgPerHr - liquidMassFlowKgPerHr)
-        / inletMassFlowKgPerHr;
+    double liquidMassFlowKgPerHr =
+        separator.getLiquidOutStream().getFlowRate("kg/hr");
+    double relativeMassBalanceError =
+        Math.abs(
+                inletMassFlowKgPerHr
+                    - gasMassFlowKgPerHr
+                    - liquidMassFlowKgPerHr)
+            / inletMassFlowKgPerHr;
 
     assertTrue(gasMassFlowKgPerHr > 0.0);
     assertTrue(relativeMassBalanceError < 1.0e-6);
@@ -48,5 +57,35 @@ class ProcessSystemDocumentationTest {
     assertFalse(process.getExecutionPartitionInfo().isEmpty());
     assertFalse(process.getReport_json().isEmpty());
     assertFalse(process.getStreamSummaryTable().isEmpty());
+  }
+
+  @Test
+  void equipmentIndexDocumentsStreamTopologyOwnership()
+      throws NoSuchMethodException {
+    assertTrue(
+        ProcessEquipmentInterface.class.isAssignableFrom(
+            ProcessEquipmentBaseClass.class));
+    assertTrue(
+        ProcessEquipmentBaseClass.class.isAssignableFrom(
+            TwoPortEquipment.class));
+    assertTrue(TwoPortEquipment.class.isAssignableFrom(ThrottlingValve.class));
+    assertFalse(TwoPortEquipment.class.isAssignableFrom(Separator.class));
+
+    assertSame(
+        StreamInterface.class,
+        TwoPortEquipment.class
+            .getMethod("getInletStream")
+            .getReturnType());
+    assertSame(
+        StreamInterface.class,
+        TwoPortEquipment.class
+            .getMethod("getOutletStream")
+            .getReturnType());
+    assertSame(
+        StreamInterface.class,
+        Separator.class.getMethod("getGasOutStream").getReturnType());
+    assertSame(
+        StreamInterface.class,
+        Separator.class.getMethod("getLiquidOutStream").getReturnType());
   }
 }
