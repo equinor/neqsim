@@ -28,8 +28,8 @@ engineering question first; the classes do not represent interchangeable fidelit
 
 | Class | Use when | Important boundary |
 | --- | --- | --- |
-| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | Hydraulics are a post-process mechanical-design rating, not solver feedback |
-| `StrippingColumn` | Counter-current equilibrium trays for stripping service | Shares the column mechanical-design rating; fixed tray temperatures imply unreported heating or cooling |
+| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | No tray hydraulics, reactions, entrainment, or flooding in the MESH solver; use the post-process mechanical-design rating |
+| `StrippingColumn` | Counter-current equilibrium trays for stripping service | Fixed tray temperatures imply unreported heating or cooling; the column shares the mechanical-design rating |
 | `PackedColumn` | Equilibrium-stage contactor with packing HETP and hydraulic rating | Use `RateBasedPackedColumn` when axial film-rate profiles or local transfer reversal matter |
 | `RateBasedPackedColumn` | Packed-column films, hydraulics, profiles, or local transfer reversal | Requires packing and transport-property inputs |
 | `SimpleTEGAbsorber` | Fast TEG dehydration screening and Fs-factor sizing | Shortcut rather than a rigorous tray or rate-based model |
