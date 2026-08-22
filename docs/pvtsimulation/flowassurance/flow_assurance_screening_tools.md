@@ -1,362 +1,236 @@
 ---
 title: "Flow Assurance Screening Tools"
-description: "Pipeline cooldown calculator, CO2 corrosion (de Waard-Milliams), scale prediction (CaCO3/BaSO4/SrSO4), and wax curve monotonicity enforcement for field development studies."
+description: "Current API, unit, result, and engineering boundaries for NeqSim cooldown, corrosion, scale, and wax screening utilities."
 ---
 
-# Flow Assurance Screening Tools
+NeqSim provides focused utilities for early flow-assurance screening. They are useful for
+comparing cases and exposing margins, but they do not replace a qualified transient model,
+water-analysis workflow, corrosion/materials assessment, laboratory programme, or operating
+procedure.
 
-NeqSim provides a set of quantitative screening tools for the main flow assurance risks encountered in subsea and onshore pipeline systems. These complement the existing hydrate and asphaltene models.
+## Select the correct tool
 
-| Tool | Class | Key Output |
-|------|-------|------------|
-| Pipeline cooldown | `PipelineCooldownCalculator` | Time to WAT / hydrate temperature |
-| CO2 corrosion rate | `DeWaardMilliamsCorrosion` | Corrosion rate (mm/yr), severity |
-| Mineral scale | `ScalePredictionCalculator` | Saturation Index for CaCO3, BaSO4, etc. |
-| Wax curves | `WaxCurveCalculator` | WAT, wax fraction vs temperature |
-| [Sand erosion](erosion_prediction) | `ErosionPredictionCalculator` | API RP 14E velocity, DNV RP O501 erosion rate |
-| [Emulsion viscosity](emulsion_viscosity_calculator) | `EmulsionViscosityCalculator` | Effective viscosity, phase inversion |
+| Question | Class | Primary result | Required interpretation |
+| --- | --- | --- | --- |
+| How quickly can a stagnant line cool? | `PipelineCooldownCalculator` | Temperature profile, threshold time, and lumped time constant | A one-dimensional lumped screen; no axial gradients, multiphase redistribution, or restart hydraulics |
+| What is the simplified internal CO2-corrosion rate? | `DeWaardMilliamsCorrosion` | Baseline/corrected rate and screening diagnostics | Not a complete NORSOK M-506 calculation, material qualification, inhibitor-dose design, or remaining-life assessment |
+| Is a specified water analysis supersaturated? | `ScalePredictionCalculator` | Mineral saturation indices and positive-SI flags | Supersaturation is not precipitation rate, deposited mass, adhesion, or inhibitor dose |
+| What wax curve does a characterized fluid produce? | `WaxCurveCalculator` | WAT, raw/enforced wax fractions, and flash diagnostics | Requires a suitable wax-enabled fluid model and calibration; curve correction is not a deposition or restart model |
 
-All classes live in `neqsim.pvtsimulation.flowassurance`.
+All four classes are in `neqsim.pvtsimulation.flowassurance`.
 
----
+## Units and state contract
 
-## Pipeline Cooldown Calculator
+| Input or result | Unit/meaning |
+| --- | --- |
+| Cooldown temperatures | Kelvin |
+| Cooldown time step / horizon | minutes / hours |
+| Pipeline dimensions | metres |
+| Overall heat-transfer coefficient | W/(m2 K), referenced to outside diameter |
+| Fluid density / heat capacity | kg/m3 / J/(kg K) |
+| Corrosion temperature | degrees Celsius |
+| CO2 and H2S partial pressure | bar |
+| Corrosion rate / linear allowance screen | mm/year / mm |
+| Water-ion and total-dissolved-solids inputs | mg/L |
+| Scale pressure | bara |
+| Wax pressure / temperature range | bara / degrees Celsius |
+| Wax fraction | mass fraction of the total flashed system |
 
-Calculates thermal cooldown of a pipeline after shutdown using a lumped-parameter radial heat transfer model. This determines how long operators have before the fluid temperature drops below the WAT or hydrate equilibrium temperature.
+Set all inputs before calling `calculate()`. These mutable calculators retain their configured
+state and results. Create separate instances for independent cases, or reset every case-defining
+input explicitly.
 
-### When to Use
+## Executable Java 8 screening example
 
-- Shutdown/restart planning
-- Insulation specification
-- Deadleg thermal analysis
-- No-touch time assessment
-
-### Java Example
+The following program executes cooldown, simplified corrosion, and mineral-scale screens. The
+focused regression in
+`src/test/java/neqsim/pvtsimulation/flowassurance/FlowAssuranceDocumentationTest.java`
+exercises the same APIs and result bounds.
 
 ```java
-import neqsim.pvtsimulation.flowassurance.PipelineCooldownCalculator;
-
-PipelineCooldownCalculator calc = new PipelineCooldownCalculator();
-
-// Geometry: 10-inch pipeline with 50 mm PUF insulation
-calc.setInternalDiameter(0.254);
-calc.setWallThickness(0.0127);
-calc.setInsulationThickness(0.050);
-calc.setInsulationConductivity(0.17);  // W/mK for PUF
-
-// Boundary conditions
-calc.setInitialFluidTemperature(273.15 + 80.0);  // 80 C at shutdown
-calc.setAmbientTemperature(273.15 + 4.0);         // 4 C seawater
-
-// Fluid properties at shutdown conditions
-calc.setFluidDensity(750.0);          // kg/m3
-calc.setFluidSpecificHeat(2200.0);    // J/kgK
-
-// Overall U-value (or use useLayerCalculation() to compute from layers)
-calc.setOverallUValue(3.0);           // W/m2K
-
-// Time parameters
-calc.setTimeStepMinutes(5.0);
-calc.setTotalTimeHours(48.0);
-
-// Run
-calc.calculate();
-
-// Key results
-double timeToHydrate = calc.getTimeToReachTemperature(273.15 + 20.0);
-double timeToWAT = calc.getTimeToReachTemperature(273.15 + 35.0);
-double tau = calc.getTimeConstantHours();
-double tempAt12h = calc.getTemperatureAtTime(12.0);
-
-System.out.println("Time to hydrate temp (20 C): " + timeToHydrate + " hours");
-System.out.println("Time to WAT (35 C): " + timeToWAT + " hours");
-System.out.println("Time constant: " + tau + " hours");
-System.out.println("Temperature at 12 h: " + (tempAt12h - 273.15) + " C");
-
-// Full JSON report
-System.out.println(calc.toJson());
-```
-
-### Python Example
-
-```python
-from neqsim import jneqsim
-
-CooldownCalc = jneqsim.pvtsimulation.flowassurance.PipelineCooldownCalculator
-
-calc = CooldownCalc()
-calc.setInternalDiameter(0.254)
-calc.setWallThickness(0.0127)
-calc.setInsulationThickness(0.050)
-calc.setInsulationConductivity(0.17)
-calc.setInitialFluidTemperature(273.15 + 80.0)
-calc.setAmbientTemperature(273.15 + 4.0)
-calc.setFluidDensity(750.0)
-calc.setFluidSpecificHeat(2200.0)
-calc.setOverallUValue(3.0)
-calc.setTotalTimeHours(48.0)
-calc.calculate()
-
-time_to_hydrate = calc.getTimeToReachTemperature(273.15 + 20.0)
-print(f"Time to hydrate temperature: {time_to_hydrate:.1f} hours")
-```
-
-### Model Details
-
-The lumped model treats fluid, steel wall, and insulation as a combined thermal mass:
-
-$$
-\frac{dT}{dt} = -\frac{U \cdot A_{outer} \cdot (T_{fluid} - T_{ambient})}{m_{fluid} C_{p,fluid} + m_{steel} C_{p,steel} + m_{ins} C_{p,ins}}
-$$
-
-The analytical time constant is:
-
-$$
-\tau = \frac{\sum m_i C_{p,i}}{U \cdot A_{outer}}
-$$
-
-The U-value can be set directly or computed from individual layer thermal resistances (steel wall, insulation, external convection).
-
----
-
-## CO2 Corrosion - de Waard-Milliams Model
-
-Predicts internal CO2 corrosion rate for carbon steel pipelines using the de Waard-Milliams (1991) empirical correlation. This is the standard model referenced in NORSOK M-506.
-
-### When to Use
-
-- Material selection (carbon steel vs CRA)
-- Corrosion allowance sizing
-- Inhibitor requirement assessment
-- Pipeline design life calculations
-
-### Java Example
-
-```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion;
-
-DeWaardMilliamsCorrosion model = new DeWaardMilliamsCorrosion();
-
-// Operating conditions
-model.setTemperatureCelsius(60.0);
-model.setCO2PartialPressure(2.0);  // bar
-model.setPH(4.5);
-model.setTotalPressure(100.0);
-
-// Optional corrections
-model.setInhibitorEfficiency(0.80);  // 80% inhibitor
-model.setGlycolFraction(0.0);
-model.setH2SPartialPressure(0.001);
-
-// Calculate
-double rate = model.calculateCorrosionRate();
-String severity = model.getCorrosionSeverity();
-double allowance25yr = model.estimateCorrosionAllowance(25.0);
-boolean sour = model.isSourService();
-
-System.out.println("Corrosion rate: " + rate + " mm/yr");
-System.out.println("Severity: " + severity);
-System.out.println("25-year allowance: " + allowance25yr + " mm");
-System.out.println("Sour service: " + sour);
-
-// Temperature profile
-java.util.List<java.util.Map<String, Object>> profile =
-    model.calculateOverTemperatureRange(20.0, 120.0, 20);
-
-// Full JSON report
-System.out.println(model.toJson());
-```
-
-### Baseline Equation
-
-$$
-\log_{10}(V_{cor}) = 5.8 - \frac{1710}{T + 273.15} + 0.67 \cdot \log_{10}(p_{CO_2})
-$$
-
-where $V_{cor}$ is in mm/yr, $T$ in Celsius, $p_{CO_2}$ in bar.
-
-### Correction Factors
-
-The corrected rate applies multiplicative factors:
-
-$$
-V_{corrected} = V_{baseline} \times f_{pH} \times f_{scale} \times f_{glycol} \times (1 - IE)
-$$
-
-| Factor | Description | Source |
-|--------|-------------|--------|
-| $f_{pH}$ | pH correction for FeCO3 film | de Waard-Lotz (1993) |
-| $f_{scale}$ | Protective scale at high T/pH | Empirical |
-| $f_{glycol}$ | Glycol water activity reduction | Empirical |
-| $IE$ | Chemical inhibitor efficiency | Field data |
-
-### Severity Classification (NORSOK M-001)
-
-| Category | Rate (mm/yr) |
-|----------|-------------|
-| Low | less than 0.1 |
-| Medium | 0.1 - 0.3 |
-| High | 0.3 - 1.0 |
-| Very High | greater than 1.0 |
-
-> **Full NORSOK M-506 implementation:** For the complete standard with fugacity-based CO2 calculation,
-> wall shear stress correction, bicarbonate/ionic-strength pH model, and integration with
-> pipeline mechanical design, see the **[NORSOK M-506 Corrosion Rate](../../process/corrosion/norsok_m506_corrosion_rate)**
-> module in `neqsim.process.corrosion`. The De Waard-Milliams class above provides a simpler
-> screening-level estimate; the M-506 module adds all correction factors from the standard and
-> couples with **[NORSOK M-001 Material Selection](../../process/corrosion/norsok_m001_material_selection)**.
-
----
-
-## Scale Prediction Calculator
-
-Calculates the Saturation Index (SI) for common oilfield mineral scales based on water chemistry and thermodynamic conditions.
-
-### When to Use
-
-- Produced water management
-- Seawater injection compatibility studies
-- Scale inhibitor dosing assessment
-- Commingling studies
-
-### Supported Scale Types
-
-| Scale | Mineral | Formula |
-|-------|---------|---------|
-| Calcite | CaCO3 | Calcium carbonate |
-| Barite | BaSO4 | Barium sulphate |
-| Celestite | SrSO4 | Strontium sulphate |
-| Anhydrite | CaSO4 | Calcium sulphate |
-| Siderite | FeCO3 | Iron carbonate |
-
-### Java Example
-
-```java
+import neqsim.pvtsimulation.flowassurance.PipelineCooldownCalculator;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 
-ScalePredictionCalculator calc = new ScalePredictionCalculator();
+public final class FlowAssuranceScreeningQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(FlowAssuranceScreeningQuickStart.class);
 
-// Conditions
-calc.setTemperatureCelsius(80.0);
-calc.setPressureBara(100.0);
-calc.setCO2PartialPressure(2.0);
-calc.setPH(6.5);
+  private FlowAssuranceScreeningQuickStart() {}
 
-// Water chemistry (mg/L)
-calc.setCalciumConcentration(1000.0);
-calc.setBicarbonateConcentration(500.0);
-calc.setBariumConcentration(50.0);
-calc.setSulphateConcentration(200.0);
-calc.setStrontiumConcentration(10.0);
-calc.setIronConcentration(5.0);
-calc.setTotalDissolvedSolids(50000.0);
+  public static void main(String[] args) {
+    PipelineCooldownCalculator cooldown = new PipelineCooldownCalculator();
+    cooldown.setInternalDiameter(0.254);
+    cooldown.setWallThickness(0.0127);
+    cooldown.setInsulationThickness(0.050);
+    cooldown.setInitialFluidTemperature(273.15 + 80.0);
+    cooldown.setAmbientTemperature(273.15 + 4.0);
+    cooldown.setFluidDensity(750.0);
+    cooldown.setFluidSpecificHeat(2200.0);
+    cooldown.setOverallUValue(3.0);
+    cooldown.setTimeStepMinutes(5.0);
+    cooldown.setTotalTimeHours(48.0);
+    cooldown.calculate();
 
-// Calculate
-calc.calculate();
+    double timeConstantHours = cooldown.getTimeConstantHours();
+    double temperatureAt12HoursK = cooldown.getTemperatureAtTime(12.0);
+    double timeTo20CHours = cooldown.getTimeToReachTemperature(273.15 + 20.0);
 
-// Results
-double siCaCO3 = calc.getCaCO3SaturationIndex();
-double siBaSO4 = calc.getBaSO4SaturationIndex();
-boolean risk = calc.hasScalingRisk();
+    DeWaardMilliamsCorrosion corrosion = new DeWaardMilliamsCorrosion();
+    corrosion.setTemperatureCelsius(60.0);
+    corrosion.setCO2PartialPressure(2.0);
+    corrosion.setPH(4.5);
+    corrosion.setFlowVelocity(2.0);
+    corrosion.setInhibitorEfficiency(0.80);
+    double corrosionRateMmPerYear = corrosion.calculateCorrosionRate();
 
-System.out.println("CaCO3 SI: " + siCaCO3);
-System.out.println("BaSO4 SI: " + siBaSO4);
-System.out.println("Scaling risk: " + risk);
+    ScalePredictionCalculator scale = new ScalePredictionCalculator();
+    scale.setTemperatureCelsius(80.0);
+    scale.setPressureBara(100.0);
+    scale.setCalciumConcentration(1000.0);
+    scale.setBicarbonateConcentration(500.0);
+    scale.setBariumConcentration(50.0);
+    scale.setSulphateConcentration(200.0);
+    scale.setTotalDissolvedSolids(50000.0);
+    scale.setCO2PartialPressure(2.0);
+    scale.enableAutoPH();
+    scale.calculate();
 
-// All risks
-for (String r : calc.getScaleRisks()) {
-    System.out.println("  Risk: " + r);
+    double calciteSI = scale.getCaCO3SaturationIndex();
+    double bariteSI = scale.getBaSO4SaturationIndex();
+    if (!Double.isFinite(timeConstantHours)
+        || temperatureAt12HoursK >= 273.15 + 80.0
+        || temperatureAt12HoursK <= 273.15 + 4.0
+        || !Double.isFinite(corrosionRateMmPerYear)
+        || corrosionRateMmPerYear < 0.0
+        || !Double.isFinite(calciteSI)
+        || !Double.isFinite(bariteSI)) {
+      throw new IllegalStateException("Flow-assurance screening result is invalid");
+    }
+
+    logger.info(
+        "Cooldown tau {} h, time to 20 C {} h, corrosion {} mm/year, calcite SI {}, barite SI {}",
+        timeConstantHours,
+        timeTo20CHours,
+        corrosionRateMmPerYear,
+        calciteSI,
+        bariteSI);
+    logger.debug("Cooldown result: {}", cooldown.toJson());
+    logger.debug("Scale result: {}", scale.toJson());
+  }
 }
-
-// Full JSON report
-System.out.println(calc.toJson());
 ```
 
-### Saturation Index
+`getTimeToReachTemperature(...)` returns `-1.0` if the threshold is not reached within the
+configured horizon. Treat that as “not reached in this simulation,” not as infinite no-touch
+time. The time-step result comes from explicit Euler integration; repeat important cases with a
+smaller step and check that the decision-relevant threshold time is stable.
 
-$$
-SI = \log_{10}\left(\frac{IAP}{K_{sp}}\right)
-$$
+## Pipeline cooldown
 
-| SI Value | Interpretation |
-|----------|---------------|
-| SI less than 0 | Undersaturated - no scaling |
-| SI = 0 | Equilibrium |
-| 0 less than SI less than 0.5 | Moderate tendency |
-| SI greater than 0.5 | High scaling tendency |
+The model treats the fluid, steel wall, and insulation as a combined thermal mass per unit
+length. With an outside-diameter-referenced overall coefficient, its governing screen is:
 
-### Solubility Products
+$$\frac{dT}{dt}=-\frac{U A_o(T-T_a)}{\sum_i m_i C_{p,i}}$$
 
-Temperature-dependent $K_{sp}$ correlations are used:
+and the corresponding lumped time constant is:
 
-- **CaCO3**: Plummer and Busenberg (1982) calcite correlation
-- **BaSO4**: Temperature-adjusted barite correlation
-- **SrSO4**: Celestite solubility model
-- **CaSO4**: Anhydrite solubility model
-- **FeCO3**: Siderite solubility model
+$$\tau=\frac{\sum_i m_i C_{p,i}}{U A_o}$$
 
-Activity coefficients are calculated using the Davies equation with ionic strength estimated from TDS.
+Use either `setOverallUValue(...)` or `useLayerCalculation()`. The layer route uses the configured
+steel, insulation, coating, and external-convection properties. It does not resolve axial thermal
+gradients, phase redistribution, soil/seabed transients, natural convection, or changing fluid
+properties during cooldown.
 
----
+Preserve the time and temperature arrays from `getTimeHours()` and `getFluidTemperature()` when a
+downstream study needs the profile. `toJson()` is a serializable result handoff, but the calculator
+itself does not own asset identity, input provenance, or approval state; store those alongside the
+JSON in the study record.
 
-## Wax Curve Calculator
+## Simplified CO2-corrosion screen
 
-Calculates wax weight fraction as a function of temperature with post-processing to enforce physical monotonicity. Numerical artifacts from flash calculations can produce non-physical decreases in wax fraction — this calculator corrects them automatically.
+The implemented baseline is:
 
-### When to Use
+$$\log_{10}(V_{cor})=5.8-\frac{1710}{T+273.15}+0.67\log_{10}(p_{CO_2})$$
 
-- Wax fraction vs temperature curves for flow assurance studies
-- WAT determination
-- Pipeline restart assessment
-- Pigging frequency estimation
+where `T` is in degrees Celsius, `pCO2` is in bar, and `Vcor` is returned in mm/year. The corrected
+screen multiplies empirical pH, scale, glycol, flow, and inhibitor-efficiency factors and can add
+an elemental-sulfur contribution.
 
-### Java Example
+Important ownership boundaries:
+
+- `setTotalPressure(...)` and `setPipeDiameter(...)` are retained in the object and JSON report,
+  but the current corrosion-rate calculation does not use them. Supply CO2 partial pressure
+  directly and use `setFlowVelocity(...)` for the implemented flow factor.
+- `setInhibitorEfficiency(...)` supplies an assumed fractional efficiency. The class does not
+  calculate inhibitor dose, availability, partitioning, compatibility, or persistence.
+- `estimateCorrosionAllowance(years)` is only rate times duration. It is not a remaining-life or
+  corrosion-allowance design procedure.
+- `isSourService()` is a simple H2S-partial-pressure flag. Apply the controlled project edition of
+  the applicable materials standard and its complete environmental limits separately.
+
+Use the fuller [NORSOK M-506 calculation guide](../../process/corrosion/norsok_m506_corrosion_rate.md)
+and [NORSOK M-001 material-selection guide](../../process/corrosion/norsok_m001_material_selection.md)
+when those workflows apply. Neither guide removes the need for accountable materials and
+integrity review.
+
+## Mineral-scale saturation screen
+
+The calculator reports:
+
+$$SI=\log_{10}\left(\frac{IAP}{K_{sp}}\right)$$
+
+A positive SI is a supersaturation flag in this calculator. `getScaleRisks()` and
+`hasScalingRisk()` use the same `SI > 0` boundary; the JSON labels values above `0.5` as high and
+positive values up to `0.5` as moderate. These labels are screen presentation, not a kinetic or
+operability acceptance criterion.
+
+Record the original water-analysis units and sampling conditions. `enableAutoPH()` estimates pH
+from configured conditions; use measured or independently calculated aqueous-phase pH when the
+decision requires it. For high salinity, mixed waters, coupled precipitation, or chemical
+treatment, continue with [mineral-scale formation](../mineral_scale_formation.md),
+[scale-prediction API details](../scale_prediction_api.md), and
+[chemical-treatment validation](../mineral_scale_chemical_treatment_validation.md).
+
+## Wax curve API
+
+`WaxCurveCalculator` accepts one `SystemInterface`; pressure is configured separately. Temperature
+range inputs and WAT results are in degrees Celsius, not Kelvin:
 
 ```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.pvtsimulation.flowassurance.WaxCurveCalculator;
+WaxCurveCalculator waxCurve = new WaxCurveCalculator(waxFluid);
+waxCurve.setPressure(50.0);
+waxCurve.setTemperatureRange(-10.0, 60.0, 1.0);
+waxCurve.calculate();
 
-// Create fluid with wax-forming components
-SystemSrkEos fluid = new SystemSrkEos(273.15 + 60, 50.0);
-fluid.addComponent("methane", 0.50);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.addTBPfraction("C7", 0.10, 95.0, 0.72);
-fluid.addTBPfraction("C20", 0.15, 280.0, 0.85);
-fluid.addTBPfraction("C30+", 0.10, 450.0, 0.91);
-fluid.setMixingRule("classic");
-fluid.setMultiPhaseCheck(true);
-
-// Calculate wax curve
-WaxCurveCalculator waxCalc = new WaxCurveCalculator(fluid, 50.0);
-waxCalc.setTemperatureRange(273.15 - 10, 273.15 + 60, 1.0);
-waxCalc.calculate();
-
-// Results
-double wat = waxCalc.getWAT();
-int violations = waxCalc.getMonotonicityViolationCount();
-System.out.println("WAT: " + (wat - 273.15) + " C");
-System.out.println("Monotonicity violations corrected: " + violations);
-
-// Full JSON report
-System.out.println(waxCalc.toJson());
+double watC = waxCurve.getWaxAppearanceTemperatureC();
+double[] temperaturesC = waxCurve.getTemperaturesC();
+double[] rawWaxFractions = waxCurve.getRawWaxFractions();
+double[] enforcedWaxFractions = waxCurve.getWaxWeightFractions();
+int corrections = waxCurve.getMonotonicityCorrections();
+int failedFlashes = waxCurve.getFailCount();
 ```
 
-### Monotonicity Enforcement
+This fragment assumes that `waxFluid` is already characterized with a suitable wax model. The
+calculator scans from high to low temperature. When monotonicity enforcement is enabled, it
+replaces decreases in wax mass fraction with the preceding maximum and reports the number of
+corrections. A failed flash is retained as a diagnostic and the curve substitutes the previous
+fraction; therefore inspect `getSuccessCount()`, `getFailCount()`, raw values, and corrected values
+before accepting a curve. `calculateWAT()` runs the separate built-in WAT operation and returns
+degrees Celsius.
 
-The algorithm applies a running-maximum correction from high to low temperature:
+See [wax characterization](../../thermo/characterization/wax_characterization.md) for fluid setup,
+calibration, and interpretation. Neither the WAT nor wax-fraction curve predicts deposition rate,
+gel strength, restart pressure, pigging interval, or chemical performance.
 
-1. Flash at each temperature point (high to low)
-2. Extract wax phase fraction
-3. Apply running maximum: if $w(T_i) < w(T_{i+1})$ where $T_i < T_{i+1}$, set $w(T_i) = w(T_{i+1})$
-4. Report number of violations corrected
+## Related documentation
 
----
+- [Flow-assurance landing page](README.md)
+- [Integrated flow-assurance overview](../flow_assurance_overview.md)
+- [De Boer asphaltene screening](asphaltene_deboer_screening.md)
+- [Erosion prediction](erosion_prediction.md)
+- [Emulsion viscosity](emulsion_viscosity_calculator.md)
+- [Hydrate models](../../thermo/hydrate_models.md)
 
-## Related Documentation
-
-- [Flow Assurance Overview](../flow_assurance_overview.md) - Hydrate, wax, asphaltene, scale screening workflows
-- [Asphaltene Modeling](asphaltene_modeling.md) - CPA-based asphaltene prediction
-- [Mineral Scale Formation](../mineral_scale_formation.md) - Carbonate/sulfate scale and seawater mixing
-- [pH Stabilization and Corrosion](../ph_stabilization_corrosion.md) - Corrosion control with Electrolyte CPA EoS
-- [Wax Characterization](../../thermo/characterization/wax_characterization.md) - Wax modeling and WAT calculation
