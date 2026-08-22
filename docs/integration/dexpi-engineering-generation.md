@@ -717,8 +717,7 @@ must define the required cases, documents, checks, approvals and authoring-tool 
 Company or project rules can implement `EngineeringRule` and be registered with `addRule(...)`. Keep
 operator-specific alarm philosophy, trip thresholds, voting, proprietary design requirements, and
 internal document references in a private rule package; the public NORSOK profile remains
-plant-agnostic.
-## Exchange-neutral graphical projection contract
+plant-agnostic.\n\n## Exchange-neutral graphical projection contract
 
 `EngineeringGraphicalProjection` is the controlled, exchange-neutral source for future DEXPI Core
 diagram primitives. It preserves stable semantic and external keys, millimetre geometry, parallel
