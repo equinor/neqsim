@@ -135,7 +135,7 @@ class FlowAssuranceDocumentationTest {
     waxCurve.setTemperatureRange(-10.0, 60.0, 1.0);
     assertEquals(50.0, waxCurve.getPressureBara(), 1.0e-12);
 
-    double[] fractions = {0.0, 0.02, 0.01, 0.03};
+    double[] fractions = { 0.0, 0.02, 0.01, 0.03 };
     assertEquals(1, WaxCurveCalculator.countMonotonicityViolations(fractions, true));
     assertEquals(1, WaxCurveCalculator.enforceNonDecreasing(fractions));
     assertEquals(0.02, fractions[2], 1.0e-12);
