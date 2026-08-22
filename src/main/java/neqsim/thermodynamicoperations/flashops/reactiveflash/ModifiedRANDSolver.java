@@ -93,6 +93,9 @@ public class ModifiedRANDSolver implements java.io.Serializable {
   /** Element balance vector (total atoms). */
   private double[] b;
 
+  /** Frozen element balance supplied by the owning reactive flash. */
+  private double[] specifiedElementBalance;
+
   /** Formula matrix A[ne][nc]. */
   private double[][] A;
 
@@ -107,6 +110,9 @@ public class ModifiedRANDSolver implements java.io.Serializable {
 
   /** Final residual. */
   private double finalResidual;
+
+  /** Final normalized element-balance residual. */
+  private double finalElementResidual;
 
   /** Whether converged. */
   private boolean converged;
@@ -196,12 +202,14 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     initialize();
     computeG0();
 
-    // Compute element balance from feed
-    double[] z = new double[nc];
+    // Compute the extensive element inventory from the feed when the owning flash
+    // has not supplied a frozen target.
+    double[] feedMoles = new double[nc];
     for (int i = 0; i < nc; i++) {
-      z[i] = system.getPhase(0).getComponent(i).getz();
+      feedMoles[i] = system.getPhase(0).getComponent(i).getNumberOfmoles();
     }
-    b = formulaMatrix.computeElementVector(z);
+    b = specifiedElementBalance == null ? formulaMatrix.computeElementVector(feedMoles)
+        : specifiedElementBalance.clone();
 
     // When NR=0 (no independent reactions), the element balance constraints fully
     // determine the composition. The RAND Newton matrix C = A*diag(n)*A^T is singular
@@ -214,7 +222,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       updateLnPhi();
       converged = true;
       iterationsUsed = 0;
-      finalResidual = computeElementResidual();
+      finalElementResidual = computeElementResidual();
+      finalResidual = finalElementResidual;
       return true;
     }
 
@@ -436,6 +445,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
         }
       }
       double elemResid = computeElementResidual();
+      finalElementResidual = elemResid;
       finalResidual = Math.max(maxE, elemResid);
 
       // Debug logging for first few and periodic iterations
@@ -455,7 +465,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       // Achieving TOL=1e-9 simultaneously for both chemical potential and element
       // balance is extremely difficult with damped iteration. Accept 1e-4 for
       // multi-phase — this is engineering-accurate (composition error < 0.01%).
-      if (np > 1 && maxE < 1.0e-4 && elemResid < 1.0e-4) {
+      if (np > 1 && maxE < 1.0e-4 && elemResid < 1.0e-8) {
         converged = true;
         break;
       }
@@ -504,7 +514,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       }
 
       // If stagnating for many iterations at a small residual, accept
-      if (stagnationCount > 50 && finalResidual < 1.0e-3) {
+      if (stagnationCount > 50 && maxE < 1.0e-3 && elemResid < 1.0e-8) {
         converged = true;
         break;
       }
@@ -740,6 +750,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       }
     }
 
+    double feedTotalMoles = system.getTotalNumberOfMoles();
     for (int j = 0; j < np; j++) {
       PhaseInterface phase = system.getPhase(j);
       beta[j] = phase.getBeta();
@@ -748,7 +759,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       }
       for (int i = 0; i < nc; i++) {
         x[j][i] = phase.getComponent(i).getx();
-        n[j][i] = x[j][i] * beta[j];
+        n[j][i] = x[j][i] * beta[j] * feedTotalMoles;
         if (n[j][i] < EPS) {
           n[j][i] = EPS;
         }
@@ -757,7 +768,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
           n[j][i] = EPS;
         }
       }
-      nPhase[j] = beta[j];
+      nPhase[j] = beta[j] * feedTotalMoles;
     }
     totalMoles = 0.0;
     for (int j = 0; j < np; j++) {
@@ -974,10 +985,27 @@ public class ModifiedRANDSolver implements java.io.Serializable {
    * Update the thermodynamic system from current mole fractions and phase fractions.
    */
   private void updateSystem() {
+    double[] overallMoles = null;
+    if (hasIonicSpecies) {
+      overallMoles = new double[nc];
+      for (int i = 0; i < nc; i++) {
+        for (int j = 0; j < np; j++) {
+          overallMoles[i] += n[j][i];
+        }
+      }
+      system.setTotalNumberOfMoles(totalMoles);
+    }
     for (int j = 0; j < np; j++) {
       PhaseInterface ph = system.getPhase(j);
       for (int i = 0; i < nc; i++) {
         ph.getComponent(i).setx(x[j][i]);
+        if (hasIonicSpecies) {
+          ph.getComponent(i).setNumberOfmoles(overallMoles[i]);
+          ph.getComponent(i).setz(overallMoles[i] / totalMoles);
+        }
+      }
+      if (hasIonicSpecies) {
+        system.setBeta(j, beta[j]);
       }
       ph.setBeta(beta[j]);
     }
@@ -1060,6 +1088,27 @@ public class ModifiedRANDSolver implements java.io.Serializable {
    */
   public double getFinalResidual() {
     return finalResidual;
+  }
+
+  /**
+   * Get the normalized element-balance contribution to the final residual.
+   *
+   * @return normalized element-balance residual
+   */
+  public double getFinalElementResidual() {
+    return finalElementResidual;
+  }
+
+  /**
+   * Freeze the element inventory enforced by this solve.
+   *
+   * @param elementBalance element abundance vector in the formula-matrix row order
+   */
+  public void setElementBalance(double[] elementBalance) {
+    if (elementBalance == null || elementBalance.length != ne) {
+      throw new IllegalArgumentException("Element balance must contain exactly " + ne + " entries");
+    }
+    specifiedElementBalance = elementBalance.clone();
   }
 
   /**
