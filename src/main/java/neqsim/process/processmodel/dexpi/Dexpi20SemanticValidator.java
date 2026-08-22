@@ -23,11 +23,11 @@ public final class Dexpi20SemanticValidator {
   private static final String CORE_MODEL = "https://data.dexpi.org/models/2.0.0/Core.xml";
   private static final String PLANT_MODEL = "https://data.dexpi.org/models/2.0.0/Plant.xml";
   private static final String PROCESS_MODEL = "https://data.dexpi.org/models/2.0.0/Process.xml";
-  private static final Set<String> SUPPORTED_TYPES = Collections
-      .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue",
-          "Core/PhysicalQuantities.PhysicalQuantity", "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup",
-          "Core/Diagram.Static", "Core/Diagram.PolyLine", "Core/Diagram.Polygon", "Core/Diagram.Text",
-          "Core/Diagram.Color", "Core/Diagram.Point", "Core/Diagram.Stroke", "Plant/PlantModel", "Plant/Diagram.PlantMetaData",
+  private static final Set<String> SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<String>(
+      Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue", "Core/PhysicalQuantities.PhysicalQuantity",
+          "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup", "Core/Diagram.Static", "Core/Diagram.PolyLine",
+          "Core/Diagram.Polygon", "Core/Diagram.Text", "Core/Diagram.Color", "Core/Diagram.Point",
+          "Core/Diagram.Stroke", "Plant/PlantModel", "Plant/Diagram.PlantMetaData",
           "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
           "Plant/ProcessEquipment.CentrifugalPump", "Plant/ProcessEquipment.Separator",
           "Plant/ProcessEquipment.AirCoolingSystem", "Plant/ProcessEquipment.TubularHeatExchanger",
@@ -218,7 +218,6 @@ public final class Dexpi20SemanticValidator {
     }
   }
 
-
   private static void validateGraphicalRepresentations(NodeList objects, List<String> errors) {
     for (int i = 0; i < objects.getLength(); i++) {
       Element object = (Element) objects.item(i);
@@ -229,8 +228,8 @@ public final class Dexpi20SemanticValidator {
         }
         Element groups = directComponents(object, "Groups");
         if (groups == null || !containsSupportedPrimitive(groups)) {
-          errors.add("DEXPI RepresentationGroup has no non-empty supported primitive group: "
-              + object.getAttribute("id"));
+          errors.add(
+              "DEXPI RepresentationGroup has no non-empty supported primitive group: " + object.getAttribute("id"));
         }
       } else if ("Core/Diagram.Static".equals(type)) {
         Element elements = directComponents(object, "Elements");

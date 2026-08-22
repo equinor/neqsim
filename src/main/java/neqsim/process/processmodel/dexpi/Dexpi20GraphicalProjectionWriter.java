@@ -41,10 +41,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Opt-in adapter from the exchange-neutral graphical projection to DEXPI 2.0 Core primitives.
  *
  * <p>
- * The adapter emits only generic Core {@code Diagram}, {@code RepresentationGroup},
- * {@code Static}, {@code Polygon}, {@code PolyLine}, and {@code Text} objects. It never invents a
- * DEXPI profile symbol. Every identity or graphical property that cannot be mapped is recorded in
- * the returned structured report.
+ * The adapter emits only generic Core {@code Diagram}, {@code RepresentationGroup}, {@code Static}, {@code Polygon},
+ * {@code PolyLine}, and {@code Text} objects. It never invents a DEXPI profile symbol. Every identity or graphical
+ * property that cannot be mapped is recorded in the returned structured report.
  * </p>
  */
 public final class Dexpi20GraphicalProjectionWriter {
@@ -55,9 +54,9 @@ public final class Dexpi20GraphicalProjectionWriter {
    * Writes a schema- and NeqSim-profile-valid DEXPI Plant exchange with opt-in generic graphics.
    *
    * <p>
-   * The base Plant document is written first through {@link Dexpi20XmlWriter}. The graphical
-   * extension is validated in a temporary file and atomically replaces the destination only after
-   * both the bundled DEXPI XML schema and semantic profile pass.
+   * The base Plant document is written first through {@link Dexpi20XmlWriter}. The graphical extension is validated in
+   * a temporary file and atomically replaces the destination only after both the bundled DEXPI XML schema and semantic
+   * profile pass.
    * </p>
    *
    * @param processSystem source simulation topology
@@ -68,15 +67,13 @@ public final class Dexpi20GraphicalProjectionWriter {
    * @throws IOException if base export, parsing, graphical serialization, or validation fails
    */
   public static Dexpi20GraphicalProjectionReport write(ProcessSystem processSystem,
-      EngineeringGraphicalProjection projection, File file, Dexpi20PlantExportOptions options)
-      throws IOException {
+      EngineeringGraphicalProjection projection, File file, Dexpi20PlantExportOptions options) throws IOException {
     if (processSystem == null || projection == null || file == null || options == null) {
       throw new IllegalArgumentException("processSystem, projection, file and options must not be null");
     }
     Dexpi20XmlWriter.write(processSystem, file, options);
 
-    List<Dexpi20GraphicalProjectionReport.Diagnostic> diagnostics =
-        new ArrayList<Dexpi20GraphicalProjectionReport.Diagnostic>();
+    List<Dexpi20GraphicalProjectionReport.Diagnostic> diagnostics = new ArrayList<Dexpi20GraphicalProjectionReport.Diagnostic>();
     copyProjectionDiagnostics(projection, diagnostics);
     try {
       Document document = parse(file);
@@ -95,17 +92,16 @@ public final class Dexpi20GraphicalProjectionWriter {
         List<String> objectIds = representedObjects.get(item.getKey());
         if (objectIds == null || objectIds.isEmpty()) {
           skipped += item.getValue().size();
-          diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR,
-              "DEXPI_GRAPHICS_UNMAPPED_REPRESENTED_OBJECT",
-              "No exported DEXPI conceptual object has this represented external key", item.getKey()));
+          diagnostics.add(
+              diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR, "DEXPI_GRAPHICS_UNMAPPED_REPRESENTED_OBJECT",
+                  "No exported DEXPI conceptual object has this represented external key", item.getKey()));
           continue;
         }
         if (objectIds.size() != 1) {
           skipped += item.getValue().size();
-          diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR,
-              "DEXPI_GRAPHICS_AMBIGUOUS_REPRESENTED_OBJECT",
-              "More than one exported DEXPI conceptual object has this represented external key",
-              item.getKey()));
+          diagnostics.add(
+              diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR, "DEXPI_GRAPHICS_AMBIGUOUS_REPRESENTED_OBJECT",
+                  "More than one exported DEXPI conceptual object has this represented external key", item.getKey()));
           continue;
         }
         if (diagram == null) {
@@ -122,9 +118,9 @@ public final class Dexpi20GraphicalProjectionWriter {
           String objectId = "GraphicalPrimitive_" + digest(primitive.getId());
           if (!primitiveIds.add(objectId)) {
             skipped++;
-            diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR,
-                "DEXPI_GRAPHICS_PRIMITIVE_ID_COLLISION",
-                "A stable DEXPI primitive identifier collided after normalization", primitive.getId()));
+            diagnostics.add(
+                diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR, "DEXPI_GRAPHICS_PRIMITIVE_ID_COLLISION",
+                    "A stable DEXPI primitive identifier collided after normalization", primitive.getId()));
             continue;
           }
           elements.appendChild(primitive(document, primitive, objectId, diagnostics));
@@ -141,16 +137,14 @@ public final class Dexpi20GraphicalProjectionWriter {
       if (diagram != null) {
         appendBounds(document, diagram, emitted);
       } else {
-        diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR,
-            "DEXPI_GRAPHICS_EMPTY_DIAGRAM",
+        diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.ERROR, "DEXPI_GRAPHICS_EMPTY_DIAGRAM",
             "No projection primitive could be attached to an exported DEXPI conceptual object",
             projection.getProjectId()));
       }
       skipped = projection.getPrimitives().size() - emitted.size();
-      Dexpi20GraphicalProjectionReport report =
-          new Dexpi20GraphicalProjectionReport(projection.getSourceGraphFingerprint(),
-              projection.getSourceReference(), projection.getRevision(), emittedGroups, emitted.size(),
-              skipped, diagnostics);
+      Dexpi20GraphicalProjectionReport report = new Dexpi20GraphicalProjectionReport(
+          projection.getSourceGraphFingerprint(), projection.getSourceReference(), projection.getRevision(),
+          emittedGroups, emitted.size(), skipped, diagnostics);
       validateAndReplace(document, file);
       return report;
     } catch (ParserConfigurationException ex) {
@@ -165,15 +159,13 @@ public final class Dexpi20GraphicalProjectionWriter {
   private static void copyProjectionDiagnostics(EngineeringGraphicalProjection projection,
       List<Dexpi20GraphicalProjectionReport.Diagnostic> diagnostics) {
     for (EngineeringGraphicalProjection.Diagnostic source : projection.getDiagnostics()) {
-      Dexpi20GraphicalProjectionReport.Severity severity =
-          Dexpi20GraphicalProjectionReport.Severity.valueOf(source.getSeverity().name());
-      diagnostics.add(diagnostic(severity, "SOURCE_" + source.getCode(), source.getMessage(),
-          source.getSubjectId()));
+      Dexpi20GraphicalProjectionReport.Severity severity = Dexpi20GraphicalProjectionReport.Severity
+          .valueOf(source.getSeverity().name());
+      diagnostics.add(diagnostic(severity, "SOURCE_" + source.getCode(), source.getMessage(), source.getSubjectId()));
     }
   }
 
-  private static Document parse(File file)
-      throws ParserConfigurationException, SAXException, IOException {
+  private static Document parse(File file) throws ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
     factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
@@ -230,8 +222,7 @@ public final class Dexpi20GraphicalProjectionWriter {
   private static Element appendDiagram(Document document, Element engineeringModel, Element plantModel,
       EngineeringGraphicalProjection projection) {
     Element diagrams = components(document, engineeringModel, "Diagram");
-    Element diagram = object(document,
-        "Diagram_" + digest(projection.getProjectId() + ":" + projection.getRevision()),
+    Element diagram = object(document, "Diagram_" + digest(projection.getProjectId() + ":" + projection.getRevision()),
         "Core/Diagram.Diagram");
     colorData(document, diagram, "BackgroundColor", "#ffffff");
     data(document, diagram, "Name",
@@ -266,10 +257,10 @@ public final class Dexpi20GraphicalProjectionWriter {
     String fillStyle = "none".equals(source.getFillColor()) ? "Transparent" : "Solid";
     dataReference(document, result, "FillStyle", "Core/Diagram.FillStyle." + fillStyle);
     if (!"none".equals(source.getFillColor())) {
-      diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.WARNING,
-          "DEXPI_GRAPHICS_FILL_COLOR_NOT_PRESERVED",
-          "DEXPI Core Polygon preserves solid/transparent fill state but not this projection fill color",
-          source.getId()));
+      diagnostics
+          .add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.WARNING, "DEXPI_GRAPHICS_FILL_COLOR_NOT_PRESERVED",
+              "DEXPI Core Polygon preserves solid/transparent fill state but not this projection fill color",
+              source.getId()));
     }
     List<Point> points = source.getPoints();
     if (source.getType() == PrimitiveType.RECTANGLE) {
@@ -308,10 +299,9 @@ public final class Dexpi20GraphicalProjectionWriter {
     String dash = source.getDashPattern().isEmpty() ? "Solid" : "Dash";
     dataReference(document, stroke, "DashStyle", "Core/Diagram.DashStyle." + dash);
     if (!source.getDashPattern().isEmpty()) {
-      diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.WARNING,
-          "DEXPI_GRAPHICS_DASH_PATTERN_APPROXIMATED",
-          "Numeric projection dash pattern was mapped to the generic DEXPI Dash enumeration",
-          source.getId()));
+      diagnostics
+          .add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.WARNING, "DEXPI_GRAPHICS_DASH_PATTERN_APPROXIMATED",
+              "Numeric projection dash pattern was mapped to the generic DEXPI Dash enumeration", source.getId()));
     }
     doubleData(document, stroke, "Width", source.getStrokeWidth());
     property.appendChild(stroke);
@@ -323,10 +313,8 @@ public final class Dexpi20GraphicalProjectionWriter {
     if (!"none".equals(color)) {
       return color;
     }
-    diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.WARNING,
-        "DEXPI_GRAPHICS_COLOR_FALLBACK",
-        "DEXPI Core requires a color for this primitive; black was used for projection color none",
-        subjectId));
+    diagnostics.add(diagnostic(Dexpi20GraphicalProjectionReport.Severity.WARNING, "DEXPI_GRAPHICS_COLOR_FALLBACK",
+        "DEXPI Core requires a color for this primitive; black was used for projection color none", subjectId));
     return "#000000";
   }
 
@@ -335,8 +323,7 @@ public final class Dexpi20GraphicalProjectionWriter {
     for (Primitive primitive : primitives) {
       if (primitive.getType() == PrimitiveType.RECTANGLE) {
         bounds.include(primitive.getX(), primitive.getY());
-        bounds.include(primitive.getX() + primitive.getWidth(),
-            primitive.getY() + primitive.getHeight());
+        bounds.include(primitive.getX() + primitive.getWidth(), primitive.getY() + primitive.getHeight());
       } else if (primitive.getType() == PrimitiveType.TEXT) {
         bounds.include(primitive.getX(), primitive.getY());
       } else {
@@ -415,8 +402,7 @@ public final class Dexpi20GraphicalProjectionWriter {
     parent.appendChild(property);
   }
 
-  private static void dataReference(Document document, Element parent, String propertyName,
-      String reference) {
+  private static void dataReference(Document document, Element parent, String propertyName, String reference) {
     Element property = document.createElement("Data");
     property.setAttribute("property", propertyName);
     Element value = document.createElement("DataReference");
@@ -473,8 +459,7 @@ public final class Dexpi20GraphicalProjectionWriter {
 
   private static String digest(String value) {
     try {
-      byte[] bytes = MessageDigest.getInstance("SHA-256")
-          .digest(value.getBytes(StandardCharsets.UTF_8));
+      byte[] bytes = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
       StringBuilder result = new StringBuilder();
       for (int index = 0; index < 8; index++) {
         result.append(String.format(java.util.Locale.ROOT, "%02x", Integer.valueOf(bytes[index] & 255)));
@@ -486,13 +471,11 @@ public final class Dexpi20GraphicalProjectionWriter {
   }
 
   private static Dexpi20GraphicalProjectionReport.Diagnostic diagnostic(
-      Dexpi20GraphicalProjectionReport.Severity severity, String code, String message,
-      String subjectId) {
+      Dexpi20GraphicalProjectionReport.Severity severity, String code, String message, String subjectId) {
     return new Dexpi20GraphicalProjectionReport.Diagnostic(severity, code, message, subjectId);
   }
 
-  private static void validateAndReplace(Document document, File destination)
-      throws IOException, TransformerException {
+  private static void validateAndReplace(Document document, File destination) throws IOException, TransformerException {
     Path parent = destination.toPath().toAbsolutePath().getParent();
     Path temporary = Files.createTempFile(parent, "neqsim-dexpi-graphics-", ".xml");
     try {

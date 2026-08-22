@@ -13,8 +13,8 @@ import com.google.gson.GsonBuilder;
  * Immutable structured result from the opt-in DEXPI Core graphical-projection adapter.
  *
  * <p>
- * A complete report means that every projection primitive was attached to one exported conceptual
- * object. It is not a DEXPI profile, standards-conformance, or accountable drawing-approval claim.
+ * A complete report means that every projection primitive was attached to one exported conceptual object. It is not a
+ * DEXPI profile, standards-conformance, or accountable drawing-approval claim.
  * </p>
  */
 public final class Dexpi20GraphicalProjectionReport implements Serializable {
