@@ -13,6 +13,9 @@ manually maintained Java method list.
 | Guided prompts | 9 | `prompts/list` | `NeqSimPrompts` MCP annotations |
 | Schema entries | 71 tools / 142 documents | `resources/read` | `SchemaCatalog` |
 | Example entries | 24 categories / 114 documents | `resources/read` | `ExampleCatalog` |
+| Tool implementations | 71 bindings / 60 classes | `getCapabilities.implementationInventory` | `McpImplementationInventory` |
+| Factory equipment | 205 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
+| Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -48,6 +51,32 @@ valid JSON objects. Domain examples remain representative inputs or contract-lev
 presence does not by itself establish scientific validation, benchmark maturity, or fitness for a
 specific facility decision.
 
+## Implementation, equipment, and reporting traceability
+
+`getCapabilities.implementationInventory` preserves a compact exact binding from every one of the
+71 public MCP tools to the Java class that performs its work. The 71 bindings currently resolve to
+60 implementation classes. Contract tests require the registry to have no missing or undeclared
+tool and load every named class from the running NeqSim version. This supplements the existing
+`runnerClass` descriptor: server-facade tools retain that compatibility field while
+`implementationClass` identifies the actual catalog, runner, registry, validator, or policy class.
+
+Process construction continues through the canonical
+`neqsim.process.equipment.EquipmentFactory` and
+`neqsim.process.processmodel.JsonProcessBuilder`. The inventory exposes the same 205 name-only
+factory-supported equipment types as `processJsonContract.supportedEquipmentTypes`; it does not
+claim that every type has the same input grammar, validation maturity, or multi-port construction
+support. Equipment requiring additional constructor context remains outside this name-only list.
+
+Two bounded reporting paths are explicit:
+
+| Path | MCP tool | Implementation | Output boundary |
+| --- | --- | --- | --- |
+| Engineering report | `generateReport` | `ReportRunner` | Markdown, tables, chart data, validation, and summary in the MCP response |
+| Task-workflow handoff | `bridgeTaskWorkflow` | `TaskWorkflowBridge` | `results.json`-compatible handoff for a separately reviewed rendering step |
+
+Neither path writes to a live plant system. The direct path does not persist a file, and the bridge
+does not claim that an external Word/HTML artifact has been generated or engineering-approved.
+
 ## Guided prompts
 
 - `biorefinery_analysis`
@@ -70,19 +99,20 @@ validation maturity. Call `getCapabilities`, `getBenchmarkTrust`, and `checkTool
 execution and preserve each calculation's provenance, convergence, validation, assumptions, and
 limitations.
 
-This increment changes no tool name, input or output schema, deployment default, thermodynamic
-model, process model, or response envelope. Process execution continues to use canonical NeqSim
-fluids, streams, `ProcessSystem`, and `ProcessModel` objects.
+This increment changes no tool name, tool input, deployment default, thermodynamic model, process
+model, or response envelope. It adds an optional discovery field to the `getCapabilities` output
+schema. Process execution continues to use canonical NeqSim fluids, streams, `ProcessSystem`, and
+`ProcessModel` objects.
 
 ## Phase 0 stop boundary
 
 The baseline now freezes the exact transport-facing tools, resources, resource templates, prompts,
-deployment-profile names, tool-capability reconciliation, schema resource graph, and example
-resource graph. It does not complete the campaign's full Phase 0 inventory. Follow-up work must
-still inventory runners, equipment factories, report paths, tests, guides, and known limitations;
-reconcile merged foundations #2874, #2875, and #3152 criterion by criterion; add the four
-acceptance scales; build the full traceability and discipline-maturity matrices; and record runtime,
-memory, payload, convergence, balance-closure, and report-usefulness baselines.
+deployment-profile names, tool-capability reconciliation, schema resource graph, example resource
+graph, tool implementation bindings, factory-backed equipment, and report paths. It does not
+complete the campaign's full Phase 0 inventory. Follow-up work must still inventory tests, guides,
+and known limitations; reconcile merged foundations #2874, #2875, and #3152 criterion by criterion;
+add the four acceptance scales; build the full traceability and discipline-maturity matrices; and
+record runtime, memory, payload, convergence, balance-closure, and report-usefulness baselines.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing

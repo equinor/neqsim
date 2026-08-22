@@ -178,6 +178,7 @@ public class CapabilitiesRunner {
     JsonObject toolCapabilities = buildToolCapabilities();
     root.add("toolCapabilities", toolCapabilities);
     root.add("toolCatalogCoverage", buildToolCatalogCoverage(toolCapabilities));
+    root.add("implementationInventory", McpImplementationInventory.build(toolCapabilities));
     root.add("setupTemplates", buildSetupTemplates());
     root.add("processJsonContract", buildProcessJsonContract());
     root.add("capabilityGraph", buildCapabilityGraph());
@@ -618,6 +619,7 @@ public class CapabilitiesRunner {
     descriptor.addProperty("schemaToolName", schemaToolName);
     descriptor.addProperty("runnerClass",
         runnerClass.indexOf('.') >= 0 ? runnerClass : "neqsim.mcp.runners." + runnerClass);
+    descriptor.addProperty("implementationClass", McpImplementationInventory.getImplementationClass(mcpToolName));
     descriptor.addProperty("workflowCategory", workflowCategory);
     descriptor.addProperty("maturityLevel", BenchmarkTrust.getMaturityLevel(mcpToolName));
     IndustrialProfile.ToolTier tier = IndustrialProfile.getToolTier(mcpToolName);
