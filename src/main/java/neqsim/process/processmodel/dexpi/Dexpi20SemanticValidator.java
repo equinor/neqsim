@@ -222,7 +222,7 @@ public final class Dexpi20SemanticValidator {
     for (int i = 0; i < objects.getLength(); i++) {
       Element object = (Element) objects.item(i);
       String type = object.getAttribute("type");
-      if ("Core/Diagram.RepresentationGroup".equals(type)) {
+      if (isAdapterRepresentationGroup(object)) {
         if (directReference(object, "Represents") == null) {
           errors.add("DEXPI RepresentationGroup has no Represents reference: " + object.getAttribute("id"));
         }
@@ -238,6 +238,11 @@ public final class Dexpi20SemanticValidator {
         }
       }
     }
+  }
+
+  private static boolean isAdapterRepresentationGroup(Element object) {
+    return "Core/Diagram.RepresentationGroup".equals(object.getAttribute("type"))
+        && object.getAttribute("id").startsWith("RepresentationGroup_");
   }
 
   private static boolean containsSupportedPrimitive(Element root) {
