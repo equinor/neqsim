@@ -4,6 +4,10 @@ Detailed parameter documentation for MCP tools and resources.
 For the governance model, tier structure, and stability promises, see
 [MCP_CONTRACT.md](../MCP_CONTRACT.md).
 
+The exact protocol-tested tool, resource, resource-template, prompt, deployment-profile, and
+capability-coverage baseline is recorded in
+[MCP published-surface inventory](SURFACE_INVENTORY.md).
+
 ---
 
 ## `runFlash` — Thermodynamic Flash Calculation
