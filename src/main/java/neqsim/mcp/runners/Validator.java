@@ -13,6 +13,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.equipment.EquipmentFactory;
 
 /**
  * Pre-flight validator for NeqSim JSON inputs (flash or process definitions).
@@ -63,71 +64,6 @@ public class Validator {
 
   private static final Set<String> KNOWN_FLASH_TYPES = Collections.unmodifiableSet(new HashSet<String>(
       Arrays.asList("TP", "PH", "PS", "TV", "dewPointT", "dewPointP", "bubblePointT", "bubblePointP", "hydrateTP")));
-
-  /**
-   * Known process equipment types recognized by JsonProcessBuilder and EquipmentFactory.
-   */
-  private static final Set<String> KNOWN_EQUIPMENT_TYPES;
-
-  static {
-    Set<String> types = new HashSet<String>();
-    types.add("Stream");
-    types.add("VirtualStream");
-    types.add("Separator");
-    types.add("ThreePhaseSeparator");
-    types.add("GasScrubber");
-    types.add("Compressor");
-    types.add("Pump");
-    types.add("Expander");
-    types.add("Heater");
-    types.add("Cooler");
-    types.add("HeatExchanger");
-    types.add("Mixer");
-    types.add("Splitter");
-    types.add("ComponentSplitter");
-    types.add("Valve");
-    types.add("ThrottlingValve");
-    types.add("Recycle");
-    types.add("SetPoint");
-    types.add("Adjuster");
-    types.add("FlowRateAdjuster");
-    types.add("Calculator");
-    types.add("SpreadsheetBlock");
-    types.add("UnisimCalculator");
-    types.add("DistillationColumn");
-    types.add("Column");
-    types.add("SimpleTEGAbsorber");
-    types.add("Tank");
-    types.add("SimpleReservoir");
-    types.add("Manifold");
-    types.add("Flare");
-    types.add("FlareStack");
-    types.add("FuelCell");
-    types.add("Electrolyzer");
-    types.add("AdiabaticPipe");
-    types.add("Pipe");
-    types.add("Pipeline");
-    types.add("PipeBeggsAndBrills");
-    types.add("WaterHammerPipe");
-    types.add("WaterHammer");
-    types.add("LiquidHammer");
-    types.add("HydraulicTransientPipe");
-    types.add("StreamSaturatorUtil");
-    types.add("Saturator");
-    types.add("Separator_3phase");
-    types.add("Separator3phase");
-    types.add("Gas_Scrubber");
-    types.add("CO2Electrolyzer");
-    types.add("CO2Electrolyser");
-    types.add("WindTurbine");
-    types.add("BatteryStorage");
-    types.add("SolarPanel");
-    types.add("WindFarm");
-    types.add("OffshoreEnergySystem");
-    types.add("AmmoniaSynthesisReactor");
-    types.add("SubseaPowerCable");
-    KNOWN_EQUIPMENT_TYPES = Collections.unmodifiableSet(types);
-  }
 
   /**
    * Private constructor — all methods are static.
@@ -358,16 +294,7 @@ public class Validator {
 
     String type = unit.get("type").getAsString();
 
-    // Check if type is known (case-insensitive with separator-insensitive aliases)
-    boolean typeKnown = false;
-    for (String known : KNOWN_EQUIPMENT_TYPES) {
-      if (known.equalsIgnoreCase(type)
-          || normalizeEquipmentType(known).equalsIgnoreCase(normalizeEquipmentType(type))) {
-        typeKnown = true;
-        break;
-      }
-    }
-    if (!typeKnown) {
+    if (!EquipmentFactory.supportsEquipmentType(type)) {
       issues.add(Issue.warning("UNKNOWN_EQUIPMENT_TYPE", "Unknown equipment type '" + type + "' at index " + index,
           "Known types include: Stream, Separator, Compressor, Heater, Cooler, Mixer, "
               + "Splitter, Valve, Pump, Recycle, HeatExchanger, DistillationColumn, Pipe, "
@@ -390,16 +317,6 @@ public class Validator {
             "Provide a valid inlet reference (equipment name or name.portName)"));
       }
     }
-  }
-
-  /**
-   * Normalizes an equipment type for alias matching.
-   *
-   * @param equipmentType the raw equipment type
-   * @return the normalized equipment type with whitespace, underscore, and hyphen removed
-   */
-  private static String normalizeEquipmentType(String equipmentType) {
-    return equipmentType == null ? "" : equipmentType.replaceAll("[\\s_-]", "");
   }
 
   /**

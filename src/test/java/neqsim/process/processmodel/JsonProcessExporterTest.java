@@ -1,5 +1,6 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,6 +23,7 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
@@ -68,6 +70,8 @@ class JsonProcessExporterTest {
     comp.setSpeed(10250.0);
     ThrottlingValve valve = new ThrottlingValve("Valve", hpSep.getLiquidOutStream());
     valve.setOutletPressure(10.0);
+    valve.setCv(42.5);
+    valve.setPercentValveOpening(55.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -166,6 +170,83 @@ class JsonProcessExporterTest {
     double outP = props.get("outletPressure").getAsDouble();
     assertTrue(Math.abs(outP - 120.0) < 0.1, "Compressor outlet pressure should be ~120 bara, got: " + outP);
     assertEquals(10250.0, props.get("speed").getAsDouble(), 1.0e-12);
+  }
+
+  @Test
+  void testValveDesignPropertiesRoundTrip() {
+    ProcessSystem process = createSimpleProcess();
+    JsonObject root = JsonParser.parseString(process.toJson()).getAsJsonObject();
+    JsonObject valveProperties = root.getAsJsonArray("process").get(3).getAsJsonObject().getAsJsonObject("properties");
+
+    assertEquals(42.5, valveProperties.get("cv").getAsDouble(), 1.0e-12);
+    assertEquals(55.0, valveProperties.get("percentValveOpening").getAsDouble(), 1.0e-12);
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(root.toString());
+    assertTrue(result.isSuccess(), "Valve design process should rebuild: " + result.toJson());
+    ThrottlingValve rebuiltValve = (ThrottlingValve) result.getProcessSystem().getUnit("Valve");
+    assertEquals(42.5, rebuiltValve.getCv(), 1.0e-12);
+    assertEquals(55.0, rebuiltValve.getPercentValveOpening(), 1.0e-12);
+  }
+
+  @Test
+  void testSeparatorGeometryRoundTrip() {
+    ProcessSystem process = createSimpleProcess();
+    Separator separator = (Separator) process.getUnit("HP Sep");
+    separator.setInternalDiameter(2.4);
+    separator.setSeparatorLength(8.5);
+
+    JsonObject root = JsonParser.parseString(process.toJson()).getAsJsonObject();
+    JsonObject separatorProperties = root.getAsJsonArray("process").get(1).getAsJsonObject()
+        .getAsJsonObject("properties");
+    assertEquals(2.4, separatorProperties.get("internalDiameter").getAsDouble(), 1.0e-12);
+    assertEquals(8.5, separatorProperties.get("separatorLength").getAsDouble(), 1.0e-12);
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(root.toString());
+    assertTrue(result.isSuccess(), "Separator geometry process should rebuild: " + result.toJson());
+    Separator rebuiltSeparator = (Separator) result.getProcessSystem().getUnit("HP Sep");
+    assertEquals(2.4, rebuiltSeparator.getInternalDiameter(), 1.0e-12);
+    assertEquals(8.5, rebuiltSeparator.getSeparatorLength(), 1.0e-12);
+  }
+
+  @Test
+  void testTwoFluidPipeProfilesRoundTrip() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 50.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("multiphase feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    TwoFluidPipe pipe = new TwoFluidPipe("profiled pipe", feed);
+    pipe.setLength(1000.0);
+    pipe.setDiameter(0.3);
+    pipe.setRoughness(1.0e-5);
+    pipe.setSectionLengths(new double[] { 200.0, 250.0, 300.0, 250.0 });
+    pipe.setElevationProfile(new double[] { 0.0, -5.0, -4.0, 10.0 });
+    pipe.setHeatTransferProfile(new double[] { 4.0, 4.0, 8.0, 8.0 });
+    pipe.setSurfaceTemperatureProfile(new double[] { 277.15, 277.15, 279.15, 279.15 });
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(pipe);
+
+    String json = process.toJson();
+    JsonObject pipeProperties = JsonParser.parseString(json).getAsJsonObject().getAsJsonArray("process").get(1)
+        .getAsJsonObject().getAsJsonObject("properties");
+    assertEquals(4, pipeProperties.getAsJsonArray("elevationProfile").size());
+    assertEquals(4, pipeProperties.getAsJsonArray("heatTransferProfile").size());
+    assertEquals(4, pipeProperties.getAsJsonArray("surfaceTemperatureProfile").size());
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "TwoFluidPipe should rebuild: " + result.toJson());
+    TwoFluidPipe rebuilt = (TwoFluidPipe) result.getProcessSystem().getUnit("profiled pipe");
+    assertEquals(1000.0, rebuilt.getLength(), 1.0e-12);
+    assertEquals(0.3, rebuilt.getDiameter(), 1.0e-12);
+    assertEquals(1.0e-5, rebuilt.getRoughness(), 1.0e-12);
+    assertArrayEquals(new double[] { 200.0, 250.0, 300.0, 250.0 }, rebuilt.getSectionLengths(), 1.0e-12);
+    assertArrayEquals(new double[] { 0.0, -5.0, -4.0, 10.0 }, rebuilt.getElevationProfile(), 1.0e-12);
+    assertArrayEquals(new double[] { 4.0, 4.0, 8.0, 8.0 }, rebuilt.getHeatTransferProfile(), 1.0e-12);
+    assertArrayEquals(new double[] { 277.15, 277.15, 279.15, 279.15 }, rebuilt.getSurfaceTemperatureProfile(), 1.0e-12);
   }
 
   @Test

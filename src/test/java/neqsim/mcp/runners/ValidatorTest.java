@@ -250,6 +250,19 @@ class ValidatorTest {
   }
 
   @Test
+  void testProcessFactoryDiscoveredEquipmentType() {
+    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
+        + "  {\"type\": \"AirCooler\", \"name\": \"cooler1\"},"
+        + "  {\"type\": \"ElectricMotor\", \"name\": \"motor1\"}" + "]" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertTrue(root.get("valid").getAsBoolean());
+    assertFalse(hasIssueCode(root, "UNKNOWN_EQUIPMENT_TYPE"));
+  }
+
+  @Test
   void testProcessDuplicateNames() {
     String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
         + "  {\"type\": \"Stream\", \"name\": \"feed\"}," + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";

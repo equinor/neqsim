@@ -1,9 +1,11 @@
 package neqsim.process.equipment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.powergeneration.WindTurbine;
@@ -88,6 +90,46 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
     ProcessEquipmentInterface train = EquipmentFactory.createEquipment("ct", "CompressorTrain");
     assertInstanceOf(neqsim.process.equipment.compressor.CompressorTrain.class, train);
     assertEquals("ct", train.getName());
+  }
+
+  @Test
+  public void createEquipmentFromAutomaticallyDiscoveredPackages() {
+    ProcessEquipmentInterface motor = EquipmentFactory.createEquipment("motor", "ElectricMotor");
+    assertInstanceOf(neqsim.process.equipment.energy.ElectricMotor.class, motor);
+
+    ProcessEquipmentInterface preparation = EquipmentFactory.createEquipment("preparation", "BioFeedstockPreparation");
+    assertInstanceOf(neqsim.process.equipment.solidhandling.BioFeedstockPreparation.class, preparation);
+
+    ProcessEquipmentInterface converter = EquipmentFactory.createEquipment("converter", "ClausCatalyticConverter");
+    assertInstanceOf(neqsim.process.equipment.reactor.sulfurrecovery.ClausCatalyticConverter.class, converter);
+  }
+
+  @Test
+  public void constructibleEquipmentInventoryIncludesAutomaticallyDiscoveredPackages() {
+    assertTrue(EquipmentFactory.getConstructibleEquipmentTypes().contains("ElectricMotor"));
+    assertTrue(EquipmentFactory.getConstructibleEquipmentTypes().contains("BioFeedstockPreparation"));
+    assertTrue(EquipmentFactory.getConstructibleEquipmentTypes().contains("ClausCatalyticConverter"));
+  }
+
+  @Test
+  public void supportedEquipmentInventoryExcludesContextDependentTypes() {
+    assertTrue(EquipmentFactory.supportsEquipmentType("ElectricMotor"));
+    assertTrue(EquipmentFactory.supportsEquipmentType("DistillationColumn"));
+    assertFalse(EquipmentFactory.supportsEquipmentType("Ejector"));
+    assertFalse(EquipmentFactory.supportsEquipmentType("GORfitter"));
+    assertFalse(EquipmentFactory.supportsEquipmentType("ReservoirCVDsim"));
+    assertTrue(EquipmentFactory.getSupportedEquipmentTypes().contains("ElectricMotor"));
+    assertTrue(EquipmentFactory.getSupportedEquipmentTypes().contains("DistillationColumn"));
+    assertFalse(EquipmentFactory.getSupportedEquipmentTypes().contains("Ejector"));
+  }
+
+  @Test
+  public void everyAdvertisedEquipmentTypeIsNameOnlyConstructible() {
+    for (String equipmentType : EquipmentFactory.getSupportedEquipmentTypes()) {
+      ProcessEquipmentInterface equipment = EquipmentFactory.createEquipment("audit unit", equipmentType);
+      assertNotNull(equipment, equipmentType + " was advertised but could not be constructed");
+      assertEquals("audit unit", equipment.getName());
+    }
   }
 
   @Test

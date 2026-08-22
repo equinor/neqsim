@@ -49,6 +49,8 @@ import neqsim.mcp.runners.WaterHammerRunner;
 import neqsim.mcp.runners.BenchmarkTrust;
 import neqsim.mcp.runners.CompositionRunner;
 import neqsim.mcp.runners.DataCatalogRunner;
+import neqsim.mcp.runners.ApiKnowledgeRunner;
+import neqsim.mcp.runners.GeneralCapabilityRunner;
 import neqsim.mcp.runners.EquipmentSizingRunner;
 import neqsim.mcp.runners.FlareRadiationRunner;
 import neqsim.mcp.runners.HAZOPStudyRunner;
@@ -173,10 +175,13 @@ public class NeqSimTools {
    */
   @Tool(description = "Run a process simulation from a JSON definition. "
       + "Build flowsheets with streams, separators, compressors, heat exchangers, "
-      + "valves, mixers, splitters, distillation columns, pipelines, and other "
-      + "factory-backed process equipment. Also accepts ProcessModel JSON with "
-      + "top-level 'areas' for multi-area plants. "
-      + "Use getExample with category 'process' for templates.")
+      + "valves, mixers with plural inlets, splitters, recycle loops, distillation columns, "
+      + "pipelines, and other factory-backed process equipment. Stream references accept "
+      + "unit.port aliases such as gasOut, liquidOut, out, and splitStream_0; forward references "
+      + "support recycle topology. Also accepts ProcessModel JSON with top-level areas, "
+      + "interAreaLinks, and convergence settings. Before constructing unfamiliar JSON, call "
+      + "getCapabilities, getSchema(run_process,input), and getExample; then validateInput, run, "
+      + "repair any diagnostics, and verify convergence plus mass/energy balance evidence.")
   public String runProcess(
       @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by "
           + "manageModel(action='register') to reuse a registered model without resending it, "
@@ -184,7 +189,8 @@ public class NeqSimTools {
           + "readable UTF-8 .json file (name ending in .json, <= 25 MB) containing that JSON. "
           + "The JSON must include either 'fluid' with components and model plus a 'process' array, "
           + "or top-level 'areas' containing named process-area JSON objects. "
-          + "Use getExample(category='process', name='simple-separation') for a template.") String processJson) {
+          + "Use getExample(category='process', name='simple-separation') for a basic template or "
+          + "name='mixer-splitter-recycle' for plural inlets, ports, forward references, and recycle wiring.") String processJson) {
     String policyBlocked = enforceToolAccess("runProcess");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -207,7 +213,10 @@ public class NeqSimTools {
    */
   @Tool(description = "Validate a flash or process JSON input before running it. "
       + "Checks component names, temperature/pressure ranges, EOS compatibility, "
-      + "and process wiring. Returns issues with severity and fix suggestions.")
+      + "and process wiring. Process JSON may contain named fluids, fluidRef, plural inlets, "
+      + "forward recycle references, areas, and interAreaLinks. Returns issues with severity "
+      + "and fix suggestions. Validation is pre-flight only; a successful run must still be "
+      + "checked for convergence, warnings, and mass/energy balance closure.")
   public String validateInput(
       @ToolArg(description = "JSON string to validate. Can be a flash input or "
           + "process definition - the validator auto-detects the type.") String inputJson) {
@@ -260,7 +269,7 @@ public class NeqSimTools {
   @Tool(description = "Get an example JSON template for NeqSim tools. "
       + "Categories: flash (tp-simple-gas, tp-two-phase, dew-point-t, "
       + "bubble-point-p, cpa-with-water), process (simple-separation, "
-      + "compression-with-cooling), validation (error-flash), "
+      + "compression-with-cooling, mixer-splitter-recycle), validation (error-flash), "
       + "batch (temperature-sweep, pressure-sweep), "
       + "property-table (temperature-sweep, pressure-sweep), "
       + "phase-envelope (natural-gas), safety (barrier-register, hazop-study), "
@@ -297,6 +306,9 @@ public class NeqSimTools {
    * @return JSON schema string
    */
   @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. "
+      + "For run_process, the input schema is the authoritative discoverable grammar for "
+      + "ProcessSystem and ProcessModel JSON, including equipment types, inlet/inlets wiring, "
+      + "port aliases, named fluids, connections, areas, interAreaLinks, and convergence settings. "
       + "Schema-backed tools include run_flash, run_process, validate_input, "
       + "list_components, run_batch, get_property_table, get_phase_envelope, "
       + "get_capabilities, run_pvt, run_flow_assurance, calculate_standard, "
@@ -1115,20 +1127,24 @@ public class NeqSimTools {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Simulate multiphase pipeline flow using Beggs and Brill correlation.
+  * Simulate multiphase pipeline flow using Beggs and Brill or the finite-volume two-fluid solver.
    *
    * @param pipelineJson JSON specification with fluid, pipe geometry, and flow conditions
    * @return JSON with pressure drop, temperature profile, and flow regime
    */
-  @Tool(description = "Simulate multiphase pipeline flow using the Beggs & Brill "
-      + "correlation. Calculates pressure drop, outlet temperature, liquid holdup, "
-      + "and flow regime for gas-liquid flow in pipes. Specify pipe geometry "
-      + "(diameter, length, elevation, roughness) and flow conditions.")
+    @Tool(description = "Simulate multiphase pipeline flow using Beggs & Brill (default) or the "
+      + "finite-volume two-fluid solver. Calculates pressure, temperature, liquid holdup, flow regime, "
+      + "phase velocities, inventory, erosion margin, and flow-assurance/slug indicators. The two-fluid "
+      + "solver accepts nonuniform length, elevation, heat-transfer, and ambient-temperature profiles and "
+      + "can return full section profiles or summary/minimum responses.")
   public String runPipeline(
       @ToolArg(description = "JSON specification with: 'components' (composition map), "
           + "'model' (SRK/PR), 'temperature_C', 'pressure_bara', "
-          + "'flowRate' ({value, unit}), 'pipe' ({diameter_m, length_m, "
-          + "elevation_m, roughness_m, numberOfIncrements}).") String pipelineJson) {
+          + "'flowRate' ({value, unit}), optional 'solver' (beggsBrill/twoFluid), "
+          + "optional 'detailLevel' (FULL/SUMMARY/MINIMUM/HIDE), and 'pipe' ({diameter_m, length_m, "
+          + "elevation_m or elevationProfile_m, roughness_m, numberOfIncrements or sectionLengths_m, "
+          + "heatTransferCoefficient_W_m2K or heatTransferProfile_W_m2K, and "
+          + "surfaceTemperature_C/K or surfaceTemperatureProfile_C/K}).") String pipelineJson) {
     String policyBlocked = enforceToolAccess("runPipeline");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -1948,6 +1964,62 @@ public class NeqSimTools {
       return standardizeResponse("queryDataCatalog", DataCatalogRunner.run(catalogJson), "general");
     } catch (Exception e) {
       return errorJson("Data catalog query failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Inspect the public API of a class from the running NeqSim version.
+   *
+   * @param className fully qualified class, common class name, or JSON equipment alias
+   * @param memberFilter optional method-name filter
+   * @return JSON with runtime-derived constructors, methods, and knowledge pointers
+   */
+  @Tool(description = "Inspect the exact public Java API available in the running NeqSim artifact. "
+      + "Accepts a fully qualified neqsim.* class, common classes such as ProcessSystem or "
+      + "ProcessModel, and JSON equipment aliases such as Mixer, Recycle, or Compressor. "
+      + "Returns constructors, public methods, declaring classes, source paths, and documentation "
+      + "entry points. Use this to verify code/API assumptions; use getSchema and getExample for "
+      + "the process JSON grammar.")
+  public String inspectApi(
+      @ToolArg(description = "Fully qualified neqsim.* class, common class name, or equipment alias") String className,
+      @ToolArg(description = "Optional case-insensitive method-name substring; empty returns up to 100 methods") String memberFilter) {
+    String policyBlocked = enforceToolAccess("inspectApi");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("inspectApi", ApiKnowledgeRunner.inspect(className, memberFilter), "general");
+    } catch (Exception e) {
+      return errorJson("API inspection failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Discover runtime NeqSim functionality and invoke bounded static calculations.
+   *
+   * @param capabilityJson JSON search or invocation request
+   * @return JSON with capability matches or a calculation result
+   */
+  @Tool(description = "Discover calculation methods and process equipment from the running NeqSim artifact, "
+      + "then invoke JSON-safe public static calculations without a domain-specific MCP tool. "
+      + "Use action='search' with a free-text query first. Matches labelled static-json can be passed back with "
+      + "action='invoke'; matches labelled process-json must be configured and run through runProcess. "
+      + "Execution is restricted to bounded neqsim.* methods and has a fixed timeout.")
+  public String runCapability(
+      @ToolArg(description = "JSON with action='search', query, optional limit; or action='invoke', exact "
+          + "className, methodName, optional parameterTypes, and arguments from a static-json search match") String capabilityJson) {
+    String policyBlocked = enforceToolAccess("runCapability");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runCapability", GeneralCapabilityRunner.run(capabilityJson), "general");
+    } catch (Exception e) {
+      return errorJson("General capability operation failed: " + e.getMessage());
     } finally {
       McpRequestContext.clear();
     }

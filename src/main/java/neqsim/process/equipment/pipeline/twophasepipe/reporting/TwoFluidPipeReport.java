@@ -5,15 +5,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchmarkHarness;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
  * Reporting helpers for {@link TwoFluidPipe} profiles, summaries, and benchmark comparisons.
@@ -152,24 +151,7 @@ public final class TwoFluidPipeReport {
    * @return JSON text
    */
   public static String toSummaryJson(TwoFluidPipe pipe) {
-    Map<String, Object> summary = new LinkedHashMap<>();
-    summary.put("name", pipe.getName());
-    summary.put("simulationTimeSeconds", pipe.getSimulationTime());
-    summary.put("inletPressureBara", pipe.getInletPressure());
-    summary.put("outletPressureBara", pipe.getOutletPressure());
-    summary.put("averageLiquidHoldup", pipe.getAverageLiquidHoldup());
-    summary.put("dominantFlowRegime", pipe.getDominantFlowRegime());
-    summary.put("liquidInventoryM3", pipe.getLiquidInventory("m3"));
-    summary.put("averageMixtureDensityKgM3", pipe.getAverageMixtureDensity());
-    summary.put("maximumMixtureVelocityMS", pipe.getMaxMixtureVelocity());
-    summary.put("erosionalVelocityMargin", pipe.getErosionalVelocityMargin(122.0));
-    summary.put("hydrateRiskSectionCount", pipe.getHydrateRiskSectionCount());
-    summary.put("hasWaxRisk", pipe.hasWaxRisk());
-    summary.put("outletSlugCount", pipe.getOutletSlugCount());
-    summary.put("totalSlugVolumeAtOutletM3", pipe.getTotalSlugVolumeAtOutlet());
-    summary.put("maxSlugLengthAtOutletM", pipe.getMaxSlugLengthAtOutlet());
-    summary.put("maxSlugVolumeAtOutletM3", pipe.getMaxSlugVolumeAtOutlet());
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(summary);
+    return pipe.toJson(new ReportConfig(DetailLevel.SUMMARY));
   }
 
   /**

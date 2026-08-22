@@ -1,5 +1,6 @@
 package neqsim.mcp.runners;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
@@ -75,6 +76,15 @@ class CapabilitiesRunnerTest {
     assertTrue(flashDescriptor.has("schemas"));
     assertTrue(flashDescriptor.has("examples"));
     assertTrue(flashDescriptor.has("setupTemplates"));
+    JsonObject pipelineDescriptor = toolCapabilities.getAsJsonObject("runPipeline");
+    assertTrue(pipelineDescriptor.get("purpose").getAsString().contains("two-fluid"));
+    assertTrue(pipelineDescriptor.getAsJsonArray("optionalFields").toString().contains("sectionLengths_m"));
+    assertTrue(pipelineDescriptor.getAsJsonArray("knownLimitations").toString().contains("mesh"));
+
+    JsonObject pipelineTrust = JsonParser.parseString(BenchmarkTrust.getToolTrust("runPipeline")).getAsJsonObject()
+        .getAsJsonObject("trust");
+    assertTrue(pipelineTrust.get("description").getAsString().contains("two-fluid"));
+    assertTrue(pipelineTrust.getAsJsonArray("knownLimitations").toString().contains("closure correlations"));
 
     // Trust model should describe provenance
     JsonObject trust = obj.getAsJsonObject("trustModel");
@@ -82,8 +92,17 @@ class CapabilitiesRunnerTest {
 
     JsonObject processContract = obj.getAsJsonObject("processJsonContract");
     assertTrue(processContract.has("supportedEquipmentTypes"));
+    assertTrue(processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("ElectricMotor"));
+    assertTrue(
+        processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("ClausCatalyticConverter"));
+    assertFalse(processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("Ejector"));
+    assertTrue(processContract.has("equipmentTypeDiscovery"));
+    assertTrue(processContract.has("equipmentSupportScope"));
     assertTrue(processContract.has("commonPropertiesByEquipment"));
     assertTrue(processContract.has("units"));
+    assertTrue(processContract.getAsJsonArray("rootFields").toString().contains("interAreaLinks"));
+    assertTrue(processContract.getAsJsonArray("streamReferencePorts").toString().contains("splitStream_0"));
+    assertTrue(processContract.has("recommendedWorkflow"));
 
     JsonObject graph = obj.getAsJsonObject("capabilityGraph");
     assertTrue(graph.get("nodeCount").getAsInt() > 50);

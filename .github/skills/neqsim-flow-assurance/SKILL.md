@@ -444,6 +444,21 @@ for (double qgMSm3d : gasRates) {
 > `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
 > if `isSteadyStateWallClockLimited()` is true.
 
+> **MCP `runPipeline` solver and response handoff.** Omit `solver` (or use
+> `beggsBrill`) for the established correlation path. Use `solver: "twoFluid"`
+> when the task needs finite-volume pressure, temperature, holdup, phase-velocity,
+> flow-regime, inventory, erosion-margin, hydrate/wax, or slug profiles. Pass
+> `sectionLengths_m`, `elevationProfile_m`, `heatTransferProfile_W_m2K`, and
+> `surfaceTemperatureProfile_C` or `_K` as equal-length per-section arrays; the
+> lengths must sum to `length_m`. Bound expensive solves with
+> `steadyStateMaxWallClockTime_s`. Request `detailLevel: FULL` for spatial
+> profiles, `SUMMARY` for engineering KPIs without profiles, or `MINIMUM` for
+> the compact core result. The authoritative object is `TwoFluidPipeResponse`
+> (a `BaseResponse`): preserve it through MCP/report handoffs instead of
+> independently reconstructing fields from the equipment. Always propagate its
+> convergence/pressure-floor/wall-clock validation findings and apply the
+> limitations below before quoting a result.
+
 > **Three defects found by auditing the solve against its own governing equations
 > — all fixed, but the symptoms are generic and worth recognising elsewhere.**
 > (1) *A time integrator inside a fixed-point sweep.* The steady solve integrated

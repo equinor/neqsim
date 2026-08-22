@@ -21,6 +21,9 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegime
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.monitor.TwoFluidPipeResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -107,6 +110,24 @@ public class TwoFluidPipe extends Pipeline {
 
   private static final long serialVersionUID = 1001;
   private static final Logger logger = LogManager.getLogger(TwoFluidPipe.class);
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new TwoFluidPipeResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(ReportConfig cfg) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == DetailLevel.HIDE) {
+      return null;
+    }
+    TwoFluidPipeResponse response = new TwoFluidPipeResponse(this);
+    response.applyConfig(cfg);
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(response);
+  }
 
   /** Numerical epsilon used only inside closure denominators; it is never a phase-state floor. */
   private static final double CLOSURE_DENOMINATOR_EPSILON = 1.0e-14;
@@ -6794,6 +6815,15 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setElevationProfile(double[] elevations) {
     this.elevationProfile = elevations.clone();
+  }
+
+  /**
+   * Get the configured elevation profile.
+   *
+   * @return copy of the elevation profile in metres, or {@code null} when no profile is configured
+   */
+  public double[] getElevationProfile() {
+    return elevationProfile == null ? null : elevationProfile.clone();
   }
 
   /**

@@ -63,7 +63,16 @@ class SchemaCatalogTest {
     assertTrue(root.has("properties"));
     JsonObject props = root.getAsJsonObject("properties");
     assertTrue(props.has("fluid"));
+    assertTrue(props.has("fluids"));
     assertTrue(props.has("process"));
+    assertTrue(props.has("connections"));
+    assertTrue(props.has("areas"));
+    assertTrue(props.has("interAreaLinks"));
+    JsonObject unitProps = props.getAsJsonObject("process").getAsJsonObject("items").getAsJsonObject("properties");
+    assertTrue(unitProps.has("inlet"));
+    assertTrue(unitProps.has("inlets"));
+    assertTrue(unitProps.has("fluidRef"));
+    assertTrue(root.getAsJsonArray("x-streamReferencePorts").toString().contains("splitStream_0"));
   }
 
   @Test
@@ -80,6 +89,21 @@ class SchemaCatalogTest {
     assertTrue(props.has("provenance"));
     assertTrue(props.has("validation"));
     assertTrue(props.has("qualityGate"));
+  }
+
+  @Test
+  void testPipelineInputSchemaAdvertisesTwoFluidProfiles() {
+    JsonObject root = JsonParser.parseString(SchemaCatalog.pipelineInputSchema()).getAsJsonObject();
+    JsonObject properties = root.getAsJsonObject("properties");
+    JsonObject pipeProperties = properties.getAsJsonObject("pipe").getAsJsonObject("properties");
+
+    assertTrue(properties.getAsJsonObject("solver").getAsJsonArray("enum").toString().contains("twoFluid"));
+    assertTrue(properties.getAsJsonObject("detailLevel").getAsJsonArray("enum").toString().contains("MINIMUM"));
+    assertEquals("array", pipeProperties.getAsJsonObject("sectionLengths_m").get("type").getAsString());
+    assertTrue(pipeProperties.has("elevationProfile_m"));
+    assertTrue(pipeProperties.has("heatTransferProfile_W_m2K"));
+    assertTrue(pipeProperties.has("surfaceTemperatureProfile_K"));
+    assertTrue(pipeProperties.has("steadyStateMaxWallClockTime_s"));
   }
 
   @Test
@@ -101,6 +125,35 @@ class SchemaCatalogTest {
     JsonObject props = root.getAsJsonObject("properties");
     assertTrue(props.has("valid"));
     assertTrue(props.has("issues"));
+  }
+
+  @Test
+  void testInspectApiSchemasAreDiscoverable() {
+    JsonObject input = JsonParser.parseString(SchemaCatalog.getSchema("inspect_api", "input")).getAsJsonObject();
+    JsonObject output = JsonParser.parseString(SchemaCatalog.getSchema("inspect_api", "output")).getAsJsonObject();
+
+    assertEquals("InspectApiInput", input.get("title").getAsString());
+    assertTrue(input.getAsJsonObject("properties").has("className"));
+    assertEquals("InspectApiOutput", output.get("title").getAsString());
+    assertTrue(output.getAsJsonObject("properties").has("methods"));
+  }
+
+  @Test
+  void testRunCapabilitySchemasAreDiscoverable() {
+    JsonObject input = JsonParser.parseString(SchemaCatalog.getSchema("run_capability", "input")).getAsJsonObject();
+    JsonObject output = JsonParser.parseString(SchemaCatalog.getSchema("run_capability", "output")).getAsJsonObject();
+
+    assertEquals("RunCapabilityInput", input.get("title").getAsString());
+    assertTrue(input.getAsJsonObject("properties").has("query"));
+    assertTrue(input.getAsJsonObject("properties").has("arguments"));
+    assertEquals("string", input.getAsJsonObject("properties").getAsJsonObject("parameterTypes")
+        .getAsJsonObject("items").get("type").getAsString());
+    assertTrue(input.getAsJsonObject("properties").getAsJsonObject("arguments").getAsJsonObject("items").size() == 0);
+    assertEquals(2, input.getAsJsonArray("allOf").size());
+    assertEquals("RunCapabilityOutput", output.get("title").getAsString());
+    assertTrue(output.getAsJsonObject("properties").has("matches"));
+    assertTrue(output.getAsJsonObject("properties").has("result"));
+    assertTrue(output.getAsJsonObject("properties").has("remediation"));
   }
 
   @Test

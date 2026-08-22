@@ -27,6 +27,7 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeLineInterface;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -1055,6 +1056,18 @@ public class JsonProcessExporter {
       if (outP > 0) {
         props.addProperty("outletPressure", outP);
       }
+      if (valve.isValveKvSet() || valve.isAutoSized()) {
+        props.addProperty("cv", valve.getCv());
+      }
+      props.addProperty("percentValveOpening", valve.getPercentValveOpening());
+    } else if (unit instanceof Separator) {
+      Separator separator = (Separator) unit;
+      if (separator.getInternalDiameter() > 0.0) {
+        props.addProperty("internalDiameter", separator.getInternalDiameter());
+      }
+      if (separator.getSeparatorLength() > 0.0) {
+        props.addProperty("separatorLength", separator.getSeparatorLength());
+      }
     } else if (unit instanceof HeatExchanger) {
       HeatExchanger hx = (HeatExchanger) unit;
       props.addProperty("UAvalue", hx.getUAvalue());
@@ -1149,6 +1162,39 @@ public class JsonProcessExporter {
           downstreamProperties.add(property);
         }
         props.add("downstreamProperty", downstreamProperties);
+      }
+    } else if (unit instanceof TwoFluidPipe) {
+      TwoFluidPipe pipe = (TwoFluidPipe) unit;
+      if (pipe.getLength() > 0.0) {
+        props.addProperty("length", pipe.getLength());
+      }
+      if (pipe.getDiameter() > 0.0) {
+        props.addProperty("diameter", pipe.getDiameter());
+      }
+      if (pipe.getRoughness() > 0.0) {
+        props.addProperty("roughness", pipe.getRoughness());
+      }
+      if (pipe.getNumberOfSections() > 0) {
+        props.addProperty("numberOfSections", pipe.getNumberOfSections());
+      }
+      if (pipe.getSectionLengths() != null) {
+        props.add("sectionLengths", toJsonArray(pipe.getSectionLengths()));
+      }
+      if (pipe.getElevationProfile() != null) {
+        props.add("elevationProfile", toJsonArray(pipe.getElevationProfile()));
+      }
+      if (pipe.getHeatTransferCoefficient() > 0.0) {
+        props.addProperty("heatTransferCoefficient", pipe.getHeatTransferCoefficient());
+        JsonArray surfaceTemperature = new JsonArray();
+        surfaceTemperature.add(pipe.getSurfaceTemperature());
+        surfaceTemperature.add("K");
+        props.add("surfaceTemperature", surfaceTemperature);
+      }
+      if (pipe.getHeatTransferProfile() != null) {
+        props.add("heatTransferProfile", toJsonArray(pipe.getHeatTransferProfile()));
+      }
+      if (pipe.getSurfaceTemperatureProfile() != null) {
+        props.add("surfaceTemperatureProfile", toJsonArray(pipe.getSurfaceTemperatureProfile()));
       }
     } else if (unit instanceof PipeLineInterface) {
       PipeLineInterface pipe = (PipeLineInterface) unit;

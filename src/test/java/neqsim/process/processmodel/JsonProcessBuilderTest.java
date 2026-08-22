@@ -1,9 +1,11 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,7 +16,10 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.energy.ElectricMotor;
+import neqsim.process.equipment.heatexchanger.AirCooler;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -22,6 +27,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.util.SpreadsheetBlock;
 import neqsim.process.equipment.util.UnisimCalculator;
+import neqsim.process.equipment.valve.SafetyReliefValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -170,6 +176,45 @@ class JsonProcessBuilderTest {
     ProcessSystem process = result.getProcessSystem();
     assertNotNull(process.getUnit("feed"));
     assertNotNull(process.getUnit("HP Sep"));
+  }
+
+  @Test
+  void testAutomaticallyDiscoveredEquipmentBuildsWiresAndConfiguresFromJson() {
+    String json = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
+        + "  \"components\": {\"methane\": 1.0}}," + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"AirCooler\", \"name\": \"new cooler\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"outTemperature\": [30.0, \"C\"]}},"
+        + "  {\"type\": \"ElectricMotor\", \"name\": \"new motor\"," + "   \"properties\": {\"efficiency\": 0.93}}"
+        + "], \"autoRun\": false}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+
+    assertTrue(result.isSuccess(), "Discovered equipment JSON should build: " + result.toJson());
+    AirCooler cooler = (AirCooler) result.getProcessSystem().getUnit("new cooler");
+    assertNotNull(cooler);
+    assertEquals("feed", cooler.getInletStream().getName());
+    cooler.run();
+    assertEquals(30.0, cooler.getOutletStream().getTemperature("C"), 1.0e-8);
+    ElectricMotor motor = (ElectricMotor) result.getProcessSystem().getUnit("new motor");
+    assertNotNull(motor);
+    assertEquals(0.93, motor.getEfficiency(), 1.0e-12);
+  }
+
+  @Test
+  void testSafetyReliefValveBuildsAndWiresFromJson() {
+    String json = "{\"fluid\":{\"model\":\"SRK\",\"temperature\":300.0,\"pressure\":20.0,"
+        + "\"components\":{\"methane\":1.0}},\"autoRun\":false,\"process\":["
+        + "{\"type\":\"Stream\",\"name\":\"feed\"},"
+        + "{\"type\":\"SafetyReliefValve\",\"name\":\"PSV-1\",\"inlet\":\"feed\","
+        + "\"properties\":{\"setPressureBar\":18.0}}]}";
+
+    SimulationResult result = ProcessSystem.fromJson(json);
+
+    assertTrue(result.isSuccess(), result.getErrors().toString());
+    SafetyReliefValve valve = (SafetyReliefValve) result.getProcessSystem().getUnit("PSV-1");
+    assertSame(result.getProcessSystem().getUnit("feed"), valve.getInletStream());
+    assertEquals(18.0, valve.getSetPressureBar(), 1.0e-12);
   }
 
   @Test
@@ -609,6 +654,26 @@ class JsonProcessBuilderTest {
     SimulationResult result = new JsonProcessBuilder().build(json);
     assertTrue(result.isSuccess(), "Build should succeed: " + result);
     assertNotNull(result.getProcessSystem().getUnit("pipe1"));
+  }
+
+  @Test
+  void testBuildWithTwoFluidPipeProfiles() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.9, \"n-heptane\": 0.1}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"TwoFluidPipe\", \"name\": \"multiphase pipe\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {\"length\": 1000.0, \"diameter\": 0.3, \"numberOfSections\": 4,"
+        + "    \"elevationProfile\": [0.0, -5.0, -5.0, 10.0]," + "    \"heatTransferProfile\": [4.0, 4.0, 8.0, 8.0]}}"
+        + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    TwoFluidPipe pipe = (TwoFluidPipe) result.getProcessSystem().getUnit("multiphase pipe");
+    assertNotNull(pipe);
+    assertEquals(1000.0, pipe.getLength(), 1.0e-12);
+    assertEquals(0.3, pipe.getDiameter(), 1.0e-12);
+    assertEquals(4, pipe.getNumberOfSections());
+    assertArrayEquals(new double[] { 4.0, 4.0, 8.0, 8.0 }, pipe.getHeatTransferProfile(), 1.0e-12);
   }
 
   @Test
