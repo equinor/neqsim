@@ -11,6 +11,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
+import neqsim.process.mechanicaldesign.valve.ValveTrimSizingResult;
 import neqsim.process.util.monitor.ValveResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -1632,8 +1633,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     // Set the Cv on the valve (this is what controls valve sizing)
     setCv(designCv);
 
-    // Also set maxDesignCv for capacity constraint tracking
-    getMechanicalDesign().setMaxDesignCv(designCv);
+    // Assess any explicit vendor trim catalog against the final design Cv.
+    ValveTrimSizingResult trimResult = getMechanicalDesign().assessTrimOptionsForRequiredCv(designCv);
+    if (!trimResult.isEvaluated()) {
+      // Preserve legacy behavior when no explicit trim catalog is configured.
+      getMechanicalDesign().setMaxDesignCv(designCv);
+    }
 
     // Set the valve opening to the design point for meaningful utilization
     if (hasFlow) {

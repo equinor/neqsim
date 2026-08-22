@@ -1,5 +1,9 @@
 package neqsim.process.mechanicaldesign.valve;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import neqsim.process.equipment.valve.ValveInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
@@ -36,8 +40,47 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
   /** Required valve Cv. */
   private double cvRequired;
 
-  /** Maximum valve Cv at full open. */
+  /** Selected/limiting trim maximum Cv, or legacy required Cv when no catalog is evaluated. */
   private double cvMax;
+
+  /** Available vendor trim capacity options. */
+  private List<ValveTrimOption> availableTrimOptions = new ArrayList<ValveTrimOption>();
+
+  /** Trim capacity assessment status. */
+  private String trimAssessmentStatus;
+
+  /** Identifier of the automatically selected trim. */
+  private String selectedTrimIdentifier;
+
+  /** Relative size of the selected or limiting trim [%]. */
+  private double relativeTrimSizePercent;
+
+  /** Maximum design Cv of the selected or limiting trim. */
+  private double selectedTrimMaximumCv;
+
+  /** Largest maximum design Cv in the supplied trim catalog. */
+  private double maximumAvailableTrimCv;
+
+  /** Required-Cv utilization of the selected or limiting trim. */
+  private double trimCvUtilization;
+
+  /** Remaining Cv capacity of the selected or limiting trim. */
+  private double trimCvCapacityMargin;
+
+  /** Maximum allowed trim utilization used for selection. */
+  private double maximumAllowedTrimUtilization;
+
+  /** Whether a feasible trim was selected. */
+  private boolean trimFeasible;
+
+  /** Selected or limiting trim material. */
+  private String trimMaterial;
+
+  /** Selected or limiting trim construction. */
+  private String trimConstruction;
+
+  /** Engineering recommendation from the trim capacity assessment. */
+  private String trimRecommendation;
 
   /** Valve opening percentage at design point. */
   private double valveOpening;
@@ -140,7 +183,9 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
     this.valveCharacteristic = mecDesign.getValveCharacterization();
     this.ansiPressureClass = mecDesign.getAnsiPressureClass();
     this.nominalSizeInches = mecDesign.getNominalSizeInches();
+    this.cvRequired = Double.isFinite(mecDesign.getRequiredCv()) ? mecDesign.getRequiredCv() : 0.0;
     this.cvMax = mecDesign.getValveCvMax();
+    this.availableTrimOptions = new ArrayList<ValveTrimOption>(mecDesign.getAvailableTrimOptions());
     this.faceToFace = mecDesign.getFaceToFace();
     this.bodyWallThickness = mecDesign.getBodyWallThickness();
     this.bodyWeight = mecDesign.getBodyWeight();
@@ -153,6 +198,38 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
     this.pressureDrop = mecDesign.getDp();
     this.flFactor = mecDesign.getFL();
     this.xtFactor = mecDesign.getxT();
+
+    if (mecDesign.getProcessEquipment() instanceof ValveInterface) {
+      this.valveOpening = ((ValveInterface) mecDesign.getProcessEquipment()).getPercentValveOpening();
+    }
+
+    ValveTrimSizingResult trimResult = mecDesign.getTrimSizingResult();
+    this.trimAssessmentStatus = trimResult.getStatus().name();
+    this.maximumAvailableTrimCv = trimResult.getMaximumAvailableCv();
+    this.trimCvUtilization = trimResult.getUtilization();
+    this.trimCvCapacityMargin = trimResult.getCapacityMarginCv();
+    this.maximumAllowedTrimUtilization = trimResult.getMaximumAllowedUtilization();
+    this.trimFeasible = trimResult.isFeasible();
+    this.trimRecommendation = trimResult.getRecommendation();
+
+    ValveTrimOption selectedOption = trimResult.getSelectedTrimOption();
+    if (selectedOption != null) {
+      this.selectedTrimIdentifier = selectedOption.getIdentifier();
+    } else {
+      this.selectedTrimIdentifier = "";
+    }
+
+    ValveTrimOption limitingOption = trimResult.getLimitingTrimOption();
+    if (limitingOption != null) {
+      this.cvMax = limitingOption.getMaximumDesignCv();
+      this.relativeTrimSizePercent = limitingOption.getRelativeTrimSizePercent();
+      this.selectedTrimMaximumCv = limitingOption.getMaximumDesignCv();
+      this.trimMaterial = limitingOption.getMaterial();
+      this.trimConstruction = limitingOption.getConstruction();
+    } else {
+      this.trimMaterial = "";
+      this.trimConstruction = "";
+    }
   }
 
   // ============================================================================
@@ -205,6 +282,111 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
 
   public void setCvMax(double cvMax) {
     this.cvMax = cvMax;
+  }
+
+  public List<ValveTrimOption> getAvailableTrimOptions() {
+    return Collections.unmodifiableList(new ArrayList<ValveTrimOption>(availableTrimOptions));
+  }
+
+  public void setAvailableTrimOptions(List<ValveTrimOption> availableTrimOptions) {
+    this.availableTrimOptions = availableTrimOptions == null ? new ArrayList<ValveTrimOption>()
+        : new ArrayList<ValveTrimOption>(availableTrimOptions);
+  }
+
+  public String getTrimAssessmentStatus() {
+    return trimAssessmentStatus;
+  }
+
+  public void setTrimAssessmentStatus(String trimAssessmentStatus) {
+    this.trimAssessmentStatus = trimAssessmentStatus;
+  }
+
+  public String getSelectedTrimIdentifier() {
+    return selectedTrimIdentifier;
+  }
+
+  public void setSelectedTrimIdentifier(String selectedTrimIdentifier) {
+    this.selectedTrimIdentifier = selectedTrimIdentifier;
+  }
+
+  public double getRelativeTrimSizePercent() {
+    return relativeTrimSizePercent;
+  }
+
+  public void setRelativeTrimSizePercent(double relativeTrimSizePercent) {
+    this.relativeTrimSizePercent = relativeTrimSizePercent;
+  }
+
+  public double getSelectedTrimMaximumCv() {
+    return selectedTrimMaximumCv;
+  }
+
+  public void setSelectedTrimMaximumCv(double selectedTrimMaximumCv) {
+    this.selectedTrimMaximumCv = selectedTrimMaximumCv;
+  }
+
+  public double getMaximumAvailableTrimCv() {
+    return maximumAvailableTrimCv;
+  }
+
+  public void setMaximumAvailableTrimCv(double maximumAvailableTrimCv) {
+    this.maximumAvailableTrimCv = maximumAvailableTrimCv;
+  }
+
+  public double getTrimCvUtilization() {
+    return trimCvUtilization;
+  }
+
+  public void setTrimCvUtilization(double trimCvUtilization) {
+    this.trimCvUtilization = trimCvUtilization;
+  }
+
+  public double getTrimCvCapacityMargin() {
+    return trimCvCapacityMargin;
+  }
+
+  public void setTrimCvCapacityMargin(double trimCvCapacityMargin) {
+    this.trimCvCapacityMargin = trimCvCapacityMargin;
+  }
+
+  public double getMaximumAllowedTrimUtilization() {
+    return maximumAllowedTrimUtilization;
+  }
+
+  public void setMaximumAllowedTrimUtilization(double maximumAllowedTrimUtilization) {
+    this.maximumAllowedTrimUtilization = maximumAllowedTrimUtilization;
+  }
+
+  public boolean isTrimFeasible() {
+    return trimFeasible;
+  }
+
+  public void setTrimFeasible(boolean trimFeasible) {
+    this.trimFeasible = trimFeasible;
+  }
+
+  public String getTrimMaterial() {
+    return trimMaterial;
+  }
+
+  public void setTrimMaterial(String trimMaterial) {
+    this.trimMaterial = trimMaterial;
+  }
+
+  public String getTrimConstruction() {
+    return trimConstruction;
+  }
+
+  public void setTrimConstruction(String trimConstruction) {
+    this.trimConstruction = trimConstruction;
+  }
+
+  public String getTrimRecommendation() {
+    return trimRecommendation;
+  }
+
+  public void setTrimRecommendation(String trimRecommendation) {
+    this.trimRecommendation = trimRecommendation;
   }
 
   public double getValveOpening() {

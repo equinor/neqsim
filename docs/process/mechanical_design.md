@@ -457,7 +457,10 @@ ValveMechanicalDesignResponse valveResponse =
     (ValveMechanicalDesignResponse) valve.getMechanicalDesign().getResponse();
 
 int ansiClass = valveResponse.getAnsiPressureClass();
+double cvRequired = valveResponse.getCvRequired();
 double cvMax = valveResponse.getCvMax();
+double trimUtilization = valveResponse.getTrimCvUtilization();
+boolean trimFeasible = valveResponse.isTrimFeasible();
 double faceToFace = valveResponse.getFaceToFace();  // mm
 String valveType = valveResponse.getValveType();
 ```
@@ -801,6 +804,7 @@ ValveMechanicalDesign valveDesign =
 
 // Key parameters
 double cvMax = valveDesign.getValveCvMax();
+double requiredCv = valveDesign.getRequiredCv();
 int ansiClass = valveDesign.getAnsiPressureClass();
 double faceToFace = valveDesign.getFaceToFace();           // mm
 double actuatorThrust = valveDesign.getRequiredActuatorThrust(); // N
@@ -808,6 +812,8 @@ double actuatorThrust = valveDesign.getRequiredActuatorThrust(); // N
 
 Design calculations include:
 - Cv/Kv sizing per IEC 60534
+- Explicit vendor trim catalogs with relative trim size, maximum design Cv, utilization, margin, and feasibility
+- Material/construction provenance for severe-service trims without unsupported generic derating factors
 - ANSI pressure class selection
 - Body sizing and wall thickness
 - Actuator sizing
