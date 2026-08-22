@@ -29,9 +29,9 @@ public final class EngineeringGraphicalProjectionBuilder {
    * Builds one exchange-neutral graphical projection.
    *
    * <p>
-   * Missing symbol conventions are represented by explicit generic rectangles and structured
-   * diagnostics. Reviewed project conventions control only generic shape and colour; they do not
-   * create a standards-profile symbol binding or approve a P&amp;ID.
+   * Missing symbol conventions are represented by explicit generic rectangles and structured diagnostics. Reviewed
+   * project conventions control only generic shape and colour; they do not create a standards-profile symbol binding or
+   * approve a P&amp;ID.
    * </p>
    *
    * @param graph canonical semantic graph
@@ -41,8 +41,7 @@ public final class EngineeringGraphicalProjectionBuilder {
    * @return deterministic immutable graphical projection
    */
   public static EngineeringGraphicalProjection build(EngineeringGraph graph,
-      EngineeringDiagramConventionRegister conventions, String sourceReference,
-      VerificationStatus verificationStatus) {
+      EngineeringDiagramConventionRegister conventions, String sourceReference, VerificationStatus verificationStatus) {
     if (graph == null) {
       throw new IllegalArgumentException("graph must not be null");
     }
@@ -63,8 +62,7 @@ public final class EngineeringGraphicalProjectionBuilder {
       EngineeringNode node = graph.getNode(nodeId);
       if (node == null) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "GRAPHICAL_PROJECTION_NODE_MISSING",
-            "Layout placement references a node absent from the canonical engineering graph",
-            nodeId));
+            "Layout placement references a node absent from the canonical engineering graph", nodeId));
         continue;
       }
       double x = number(placement.get("x"));
@@ -76,20 +74,17 @@ public final class EngineeringGraphicalProjectionBuilder {
       String stroke = convention == null ? FALLBACK_STROKE : convention.getStrokeColor();
       String fill = convention == null ? FALLBACK_FILL : convention.getFillColor();
       if (convention == null && fallbackKinds.add(node.getKind())) {
-        diagnostics.add(new Diagnostic(Severity.WARNING,
-            "GRAPHICAL_PROJECTION_GENERIC_SYMBOL_FALLBACK",
+        diagnostics.add(new Diagnostic(Severity.WARNING, "GRAPHICAL_PROJECTION_GENERIC_SYMBOL_FALLBACK",
             "No project convention is registered; generic rectangles are retained without a standards-symbol claim",
             node.getKind().name()));
       } else if (convention != null && convention.getEvidenceState() == EvidenceState.PROPOSED
           && proposedKinds.add(node.getKind())) {
-        diagnostics.add(new Diagnostic(Severity.INFO,
-            "GRAPHICAL_PROJECTION_PROPOSED_CONVENTION",
-            "Project convention is proposed and still requires accountable review",
-            node.getKind().name()));
+        diagnostics.add(new Diagnostic(Severity.INFO, "GRAPHICAL_PROJECTION_PROPOSED_CONVENTION",
+            "Project convention is proposed and still requires accountable review", node.getKind().name()));
       }
       primitives.add(shape(node, shape, x, y, width, height, stroke, fill));
-      primitives.add(Primitive.text(nodeId + ":label", nodeId, node.getExternalKey(), x, y,
-          3.0, node.getLabel(), "#111827", "middle"));
+      primitives.add(Primitive.text(nodeId + ":label", nodeId, node.getExternalKey(), x, y, 3.0, node.getLabel(),
+          "#111827", "middle"));
     }
 
     List<Map<String, Object>> routes = maps(layout.get("routes"));
@@ -105,8 +100,7 @@ public final class EngineeringGraphicalProjectionBuilder {
       EngineeringEdge edge = graph.getEdges().get(edgeId);
       if (edge == null) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "GRAPHICAL_PROJECTION_EDGE_MISSING",
-            "Layout route references an edge absent from the canonical engineering graph",
-            edgeId));
+            "Layout route references an edge absent from the canonical engineering graph", edgeId));
         continue;
       }
       routedEdgeIds.add(edgeId);
@@ -114,13 +108,12 @@ public final class EngineeringGraphicalProjectionBuilder {
       for (Map<String, Object> point : maps(route.get("points"))) {
         points.add(new Point(number(point.get("x")), number(point.get("y"))));
       }
-      primitives.add(Primitive.polyline(edgeId + ":route", edgeId, edgeId, points,
-          routeColor(edge.getKind()), 0.8, routeDash(edge.getKind()), false));
+      primitives.add(Primitive.polyline(edgeId + ":route", edgeId, edgeId, points, routeColor(edge.getKind()), 0.8,
+          routeDash(edge.getKind()), false));
     }
     for (EngineeringEdge edge : graph.getEdges().values()) {
       if (isGraphicalRoute(edge.getKind()) && !routedEdgeIds.contains(edge.getId())) {
-        diagnostics.add(new Diagnostic(Severity.WARNING,
-            "GRAPHICAL_PROJECTION_ROUTE_ENDPOINT_NOT_PLACED",
+        diagnostics.add(new Diagnostic(Severity.WARNING, "GRAPHICAL_PROJECTION_ROUTE_ENDPOINT_NOT_PLACED",
             "Graphical relationship is retained semantically but has no route because an endpoint is not drawable",
             edge.getId()));
       }
@@ -131,12 +124,11 @@ public final class EngineeringGraphicalProjectionBuilder {
     }
 
     return new EngineeringGraphicalProjection(graph.getProjectId(), graph.getRevision(),
-        text(graph.toMap().get("fingerprint")), sourceReference, verificationStatus, primitives,
-        diagnostics);
+        text(graph.toMap().get("fingerprint")), sourceReference, verificationStatus, primitives, diagnostics);
   }
 
-  private static Primitive shape(EngineeringNode node, SymbolShape shape, double x, double y,
-      double width, double height, String stroke, String fill) {
+  private static Primitive shape(EngineeringNode node, SymbolShape shape, double x, double y, double width,
+      double height, String stroke, String fill) {
     String id = node.getId() + ":shape";
     if (shape == SymbolShape.DIAMOND) {
       List<Point> points = new ArrayList<Point>();
@@ -157,8 +149,8 @@ public final class EngineeringGraphicalProjectionBuilder {
       points.add(new Point(x - width / 2.0, y));
       return Primitive.polygon(id, node.getId(), node.getExternalKey(), points, stroke, fill, 0.8);
     }
-    return Primitive.rectangle(id, node.getId(), node.getExternalKey(), x - width / 2.0,
-        y - height / 2.0, width, height, stroke, fill, 0.8);
+    return Primitive.rectangle(id, node.getId(), node.getExternalKey(), x - width / 2.0, y - height / 2.0, width,
+        height, stroke, fill, 0.8);
   }
 
   private static String routeColor(EngineeringEdge.Kind kind) {
@@ -176,9 +168,7 @@ public final class EngineeringGraphicalProjectionBuilder {
   }
 
   private static String routeDash(EngineeringEdge.Kind kind) {
-    return kind == EngineeringEdge.Kind.SIGNAL_FLOW || kind == EngineeringEdge.Kind.MEASURES
-        ? "4 2"
-        : "";
+    return kind == EngineeringEdge.Kind.SIGNAL_FLOW || kind == EngineeringEdge.Kind.MEASURES ? "4 2" : "";
   }
 
   private static boolean isGraphicalRoute(EngineeringEdge.Kind kind) {
