@@ -82,6 +82,34 @@ class EngineeringGraphicalProjectionTest {
             java.util.Collections.<EngineeringGraphicalProjection.Diagnostic>emptyList()));
   }
 
+  @Test
+  void reportsEmptyAndUnplacedGraphicalContent() {
+    EngineeringGraph empty = new EngineeringGraph("empty-plant", "A");
+    empty.addNode(new EngineeringNode("area-only", EngineeringNode.Kind.AREA, "AREA-ONLY",
+        "Area only"));
+    EngineeringGraphicalProjection emptyProjection = EngineeringGraphicalProjectionBuilder.build(
+        empty, new EngineeringDiagramConventionRegister(), "DOC-EMPTY",
+        VerificationStatus.PROPOSAL);
+
+    assertFalse(emptyProjection.isComplete());
+    assertTrue(emptyProjection.getDiagnostics().stream()
+        .anyMatch(item -> "GRAPHICAL_PROJECTION_EMPTY".equals(item.getCode())));
+
+    EngineeringGraph unplaced = new EngineeringGraph("unplaced-plant", "A");
+    unplaced.addNode(new EngineeringNode("area", EngineeringNode.Kind.AREA, "AREA-A", "Area"));
+    unplaced.addNode(
+        new EngineeringNode("pump", EngineeringNode.Kind.EQUIPMENT, "P-1", "Pump"));
+    unplaced.addEdge(new EngineeringEdge("unplaced-flow", "pump", "area",
+        EngineeringEdge.Kind.PROCESS_FLOW, "invalid drawing endpoint"));
+    EngineeringGraphicalProjection unplacedProjection =
+        EngineeringGraphicalProjectionBuilder.build(unplaced,
+            new EngineeringDiagramConventionRegister(), "DOC-UNPLACED",
+            VerificationStatus.PROPOSAL);
+
+    assertTrue(unplacedProjection.getDiagnostics().stream().anyMatch(
+        item -> "GRAPHICAL_PROJECTION_ROUTE_ENDPOINT_NOT_PLACED".equals(item.getCode())));
+  }
+
   private static EngineeringGraph graph() {
     EngineeringGraph graph = new EngineeringGraph("plant-alpha", "A");
     graph.addNode(new EngineeringNode("area-a", EngineeringNode.Kind.AREA, "AREA-A", "Area A"));
