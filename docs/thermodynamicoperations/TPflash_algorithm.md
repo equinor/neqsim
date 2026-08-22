@@ -1898,6 +1898,41 @@ Recommended regression coverage should include both numerical convergence and ph
 | Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
 | Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
 
+#### 6.4.1 Hydrogen-Rich Cubic-EOS Qualification
+
+The hydrogen-rich binary regression uses five experimental vapor-liquid tie lines reported by Sagara, Arai, and
+Saito [10]. Pressure is absolute and is converted from atmospheres to bar with `1 atm = 1.01325 bar`. No binary
+interaction parameters were fitted: both SRK and PR use the classic mixing rule and the database parameters available
+to a normal NeqSim calculation.
+
+| System | Temperature (K) | Pressure (atm) | Experimental x(H2) | Experimental y(H2) | SRK x/y(H2) | PR x/y(H2) |
+|--------|----------------:|---------------:|-------------------:|-------------------:|-------------:|------------:|
+| H2 + methane | 123.15 | 20.0 | 0.01920 | 0.818 | 0.019225 / 0.849073 | 0.022707 / 0.842951 |
+| H2 + methane | 143.05 | 40.2 | 0.04770 | 0.721 | 0.049051 / 0.725721 | 0.055217 / 0.717073 |
+| H2 + methane | 173.65 | 59.9 | 0.07090 | 0.362 | 0.090427 / 0.349538 | 0.096174 / 0.339973 |
+| H2 + ethane | 148.15 | 20.0 | 0.00618 | 0.986 | 0.006841 / 0.994840 | 0.008724 / 0.994161 |
+| H2 + ethane | 173.15 | 40.0 | 0.01680 | 0.977 | 0.019465 / 0.981041 | 0.023502 / 0.979088 |
+
+The experimental authors report temperature and pressure accuracies of `0.1 K` and `0.1 atm`, respectively, and
+composition uncertainty normally within `0.01` mole fraction. The regression's `0.04` absolute composition envelope
+is deliberately a separate model-qualification tolerance. The observed maximum absolute deviation is `0.031073` for
+SRK and `0.025274` for PR; these values do not imply parameter fitting or universal hydrogen-mixture accuracy.
+
+For each experimental tie line, the regression verifies the following:
+
+- the overall composition halfway between the liquid and vapor endpoints returns GAS+OIL equilibrium;
+- a liquid-side composition at half the experimental liquid endpoint and a vapor-side composition `0.05` above the
+  experimental vapor endpoint (capped at `0.999`) return the adjacent one-phase states;
+- ordinary and explicit-multiphase calculations agree within `1e-10` for beta and phase composition, `1e-8` for
+  compressibility factor, and a relative `1e-8` extensive-Gibbs tolerance;
+- phase fractions and compositions are finite, bounded, and normalized within `1e-12`, component material balance
+  closes below `1e-10`, and two-phase log-fugacity residuals remain below `1e-8`; and
+- poor phase-fraction initialization, an exact repeated flash, and a changed temperature-pressure-composition state
+  recover the same equilibrium as a fresh calculation.
+
+This is an evidence-level-1 literature qualification of phase topology and numerical consistency. It does not claim
+that classic cubic EOS models reproduce every hydrogen-rich VLE dataset within experimental uncertainty.
+
 ---
 
 ## 7. References
@@ -1934,6 +1969,12 @@ Recommended regression coverage should include both numerical convergence and ph
 ### Electrolyte Systems
 
 9. **Thomsen, K.** (2005). "Modeling electrolyte solutions with the extended UNIQUAC model." *Pure and Applied Chemistry*, 77(3), 531-542.
+
+### Hydrogen-Rich Vapor-Liquid Equilibrium
+
+10. **Sagara, H., Arai, Y., & Saito, S.** (1972). "Vapor-Liquid Equilibria of Binary and Ternary Systems Containing
+    Hydrogen and Light Hydrocarbons." *Journal of Chemical Engineering of Japan*, 5(4), 339-348.
+    [doi:10.1252/jcej.5.339](https://doi.org/10.1252/jcej.5.339)
 
 ---
 
