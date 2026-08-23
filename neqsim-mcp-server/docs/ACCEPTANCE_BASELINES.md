@@ -11,7 +11,9 @@ Run the focused exact-head gate from the repository root:
 ./mvnw test -Dtest=McpAcceptanceBaselineRunnerTests
 ```
 
-The test records the compact baseline JSON through Log4j2 in the hosted CI log. Every fixture is executed twice. The
+The test validates the compact baseline JSON returned by the runner. Every fixture is executed twice. A caller that
+needs the exact numeric observations can serialize the returned `JsonObject` in its governed evidence store; the
+repository test deliberately does not emit environment-specific baseline data through the disabled test logger. The
 report includes:
 
 | Evidence group | Recorded fields | Interpretation boundary |
@@ -44,5 +46,6 @@ convert convergence, a non-empty report, or a validation label into a balance cl
 - The harness does not establish scientific accuracy, design certification, representative-plant fidelity, causality,
   accountable engineering approval, or authority to control a live plant.
 
-Exact-head hosted CI and its retained log are the execution evidence. The static capability inventory exposes only the
-bounded measurement contract; it never performs these large calculations during capability discovery.
+Exact-head hosted CI is pass/fail execution evidence for the asserted contract, while persisted numeric observations
+remain the responsibility of the invoking evidence workflow. The static capability inventory exposes only the bounded
+measurement contract; it never performs these large calculations during capability discovery.

@@ -3,16 +3,12 @@ package neqsim.mcp.runners;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 /** Tests the bounded Phase 0 acceptance-baseline harness. */
 class McpAcceptanceBaselineRunnerTests {
-
-  private static final Logger logger = LogManager.getLogger(McpAcceptanceBaselineRunnerTests.class);
 
   @Test
   void testContractIsDiscoverableWithoutExecutingFixtures() {
@@ -32,7 +28,6 @@ class McpAcceptanceBaselineRunnerTests {
   @Test
   void testFourScaleExecutionRecordsBoundedEvidenceAndExplicitGaps() {
     JsonObject baseline = McpAcceptanceBaselineRunner.run();
-    logger.info("MCP Phase 0 acceptance baseline: {}", baseline);
 
     JsonArray measurements = baseline.getAsJsonArray("measurements");
     JsonObject summary = baseline.getAsJsonObject("summary");
