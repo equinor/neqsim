@@ -64,9 +64,6 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
   void calculatedBoundariesPreserveTinyPhasesAndAdjacentSinglePhaseStates() {
     for (Eos eos : Eos.values()) {
       for (TieLine tieLine : TIE_LINES) {
-        if (tieLine.pressureBar() >= 50.0) {
-          continue;
-        }
         SystemInterface midpoint = flash(createSystem(eos, tieLine, tieLine.midpoint(), false), false);
         Integer[] order = phaseOrder(midpoint);
         double vaporHydrogen = midpoint.getPhase(order[0]).getComponent("hydrogen").getx();
@@ -86,31 +83,32 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
 
   @Test
   void calculatedBoundaryTransitionsDoNotRetainStalePhaseState() {
-    TieLine tieLine = TIE_LINES[1];
-    for (Eos eos : Eos.values()) {
-      SystemInterface midpoint = flash(createSystem(eos, tieLine, tieLine.midpoint(), false), false);
-      double vaporHydrogen = midpoint.getPhase(phaseOrder(midpoint)[0]).getComponent("hydrogen").getx();
-      double insideHydrogen = vaporHydrogen - BOUNDARY_COMPOSITION_OFFSET;
-      double outsideHydrogen = vaporHydrogen + BOUNDARY_COMPOSITION_OFFSET;
+    for (TieLine tieLine : new TieLine[] { TIE_LINES[1], TIE_LINES[2] }) {
+      for (Eos eos : Eos.values()) {
+        SystemInterface midpoint = flash(createSystem(eos, tieLine, tieLine.midpoint(), false), false);
+        double vaporHydrogen = midpoint.getPhase(phaseOrder(midpoint)[0]).getComponent("hydrogen").getx();
+        double insideHydrogen = vaporHydrogen - BOUNDARY_COMPOSITION_OFFSET;
+        double outsideHydrogen = vaporHydrogen + BOUNDARY_COMPOSITION_OFFSET;
 
-      for (boolean multiphase : new boolean[] { false, true }) {
-        SystemInterface insideReference = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), false);
-        SystemInterface poorGuess = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), true);
-        assertEquivalent(insideReference, poorGuess, tieLine.label(eos) + " boundary poor initialization");
+        for (boolean multiphase : new boolean[] { false, true }) {
+          SystemInterface insideReference = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), false);
+          SystemInterface poorGuess = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), true);
+          assertEquivalent(insideReference, poorGuess, tieLine.label(eos) + " boundary poor initialization");
 
-        SystemInterface repeatedReference = insideReference.clone();
-        flash(insideReference, false);
-        assertEquivalent(repeatedReference, insideReference, tieLine.label(eos) + " boundary repeat");
+          SystemInterface repeatedReference = insideReference.clone();
+          flash(insideReference, false);
+          assertEquivalent(repeatedReference, insideReference, tieLine.label(eos) + " boundary repeat");
 
-        insideReference.setMolarComposition(new double[] { outsideHydrogen, 1.0 - outsideHydrogen });
-        flash(insideReference, false);
-        SystemInterface outsideReference = flash(createSystem(eos, tieLine, outsideHydrogen, multiphase), false);
-        assertEquals(1, outsideReference.getNumberOfPhases(), tieLine.label(eos) + " boundary disappearance");
-        assertEquivalent(outsideReference, insideReference, tieLine.label(eos) + " boundary disappearance");
+          insideReference.setMolarComposition(new double[] { outsideHydrogen, 1.0 - outsideHydrogen });
+          flash(insideReference, false);
+          SystemInterface outsideReference = flash(createSystem(eos, tieLine, outsideHydrogen, multiphase), false);
+          assertEquals(1, outsideReference.getNumberOfPhases(), tieLine.label(eos) + " boundary disappearance");
+          assertEquivalent(outsideReference, insideReference, tieLine.label(eos) + " boundary disappearance");
 
-        insideReference.setMolarComposition(new double[] { insideHydrogen, 1.0 - insideHydrogen });
-        flash(insideReference, false);
-        assertEquivalent(poorGuess, insideReference, tieLine.label(eos) + " boundary reappearance");
+          insideReference.setMolarComposition(new double[] { insideHydrogen, 1.0 - insideHydrogen });
+          flash(insideReference, false);
+          assertEquivalent(poorGuess, insideReference, tieLine.label(eos) + " boundary reappearance");
+        }
       }
     }
   }
