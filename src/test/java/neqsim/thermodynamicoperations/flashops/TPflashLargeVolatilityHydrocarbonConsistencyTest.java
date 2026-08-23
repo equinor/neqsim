@@ -15,9 +15,9 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
   private static final double STATE_TOLERANCE = 1.0e-10;
-  private static final Case[] REGRESSION_CASES = {
-      new Case(Eos.SRK, 180.0, 50.0, 0.05), new Case(Eos.SRK, 180.0, 100.0, 0.10),
-      new Case(Eos.SRK, 220.0, 200.0, 0.10), new Case(Eos.PR, 260.0, 200.0, 0.10) };
+  private static final Case[] REGRESSION_CASES = { new Case(Eos.SRK, 180.0, 50.0, 0.05),
+      new Case(Eos.SRK, 180.0, 100.0, 0.10), new Case(Eos.SRK, 220.0, 200.0, 0.10),
+      new Case(Eos.PR, 260.0, 200.0, 0.10) };
 
   @Test
   void largeVolatilityEndpointsCloseAndAgreeAcrossAlgorithms() {
@@ -48,8 +48,8 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
         double changedPressure = regression.pressure * 1.01;
         reference.setPressure(changedPressure, "bara");
         flash(reference, false);
-        SystemInterface changedReference =
-            flash(createSystem(regression.withPressure(changedPressure), multiphase), false);
+        SystemInterface changedReference = flash(createSystem(regression.withPressure(changedPressure), multiphase),
+            false);
         assertEquivalent(changedReference, reference, regression.label() + " changed pressure", 1.0e-8);
       }
     }
@@ -88,8 +88,7 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
   }
 
   private static SystemInterface createSystem(Case testCase, boolean multiphase) {
-    SystemInterface system = testCase.eos == Eos.PR
-        ? new SystemPrEos(testCase.temperature, testCase.pressure)
+    SystemInterface system = testCase.eos == Eos.PR ? new SystemPrEos(testCase.temperature, testCase.pressure)
         : new SystemSrkEos(testCase.temperature, testCase.pressure);
     system.addComponent("methane", 1.0 - testCase.heavyFraction);
     system.addComponent(testCase.heavyComponent, testCase.heavyFraction);
@@ -137,8 +136,7 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
   private static Integer[] phaseOrder(SystemInterface system) {
     Integer[] order = new Integer[system.getNumberOfPhases()];
     Arrays.setAll(order, index -> index);
-    Arrays.sort(order, Comparator.comparingDouble(
-        index -> system.getPhase(index).getComponent(1).getx()));
+    Arrays.sort(order, Comparator.comparingDouble(index -> system.getPhase(index).getComponent(1).getx()));
     return order;
   }
 
@@ -155,8 +153,7 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
         compositionSum += composition;
       }
       assertEquals(1.0, compositionSum, 1.0e-12, label);
-      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
-          label);
+      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0, label);
     }
     assertEquals(1.0, betaSum, 1.0e-12, label);
 
@@ -179,11 +176,9 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
             * system.getPhase(0).getComponent(component).getFugacityCoefficient();
         double second = system.getPhase(1).getComponent(component).getx()
             * system.getPhase(1).getComponent(component).getFugacityCoefficient();
-        maximumFugacityResidual =
-            Math.max(maximumFugacityResidual, Math.abs(Math.log(first / second)));
+        maximumFugacityResidual = Math.max(maximumFugacityResidual, Math.abs(Math.log(first / second)));
       }
-      assertTrue(maximumFugacityResidual < FUGACITY_TOLERANCE,
-          label + " fugacity residual " + maximumFugacityResidual);
+      assertTrue(maximumFugacityResidual < FUGACITY_TOLERANCE, label + " fugacity residual " + maximumFugacityResidual);
     }
   }
 
@@ -202,8 +197,7 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
       this(eos, temperature, pressure, heavyFraction, "n-heptane");
     }
 
-    private Case(Eos eos, double temperature, double pressure, double heavyFraction,
-        String heavyComponent) {
+    private Case(Eos eos, double temperature, double pressure, double heavyFraction, String heavyComponent) {
       this.eos = eos;
       this.temperature = temperature;
       this.pressure = pressure;
@@ -220,8 +214,8 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
     }
 
     private String label() {
-      return eos + " methane+" + heavyComponent + " at " + temperature + " K, " + pressure
-          + " bar, z(" + heavyComponent + ")=" + heavyFraction;
+      return eos + " methane+" + heavyComponent + " at " + temperature + " K, " + pressure + " bar, z(" + heavyComponent
+          + ")=" + heavyFraction;
     }
   }
 }
