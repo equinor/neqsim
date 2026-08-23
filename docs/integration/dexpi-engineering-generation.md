@@ -726,10 +726,35 @@ diagram primitives. It preserves stable semantic and external keys, millimetre g
 routes, source/revision evidence, verification status, and structured fallback diagnostics without
 binding NeqSim to a licensed or project-specific symbol catalogue.
 
-This tranche defines and regression-tests the projection contract only. The native DEXPI 2.0 Plant
-writer continues to emit its existing semantic exchange bytes unless an existing export option is
-explicitly selected; it does not yet serialize the projection as Core `Diagram`/
-`RepresentationGroup` elements. That adapter must map every represented-object identity to a real
-DEXPI object, emit non-empty supported primitives, and report every dropped shape, route, or
-reference. Until that adapter and external DEXPIViewer evidence exist, the projection is not a
-clean-validation, profile-conformance, or drawing-approval claim.
+The opt-in `Dexpi20GraphicalProjectionWriter` maps projection primitives onto real objects already
+emitted by the native DEXPI 2.0 Plant writer. It writes one Core `Diagram`, a non-empty
+`RepresentationGroup` for each uniquely resolved external key, and a `Static` group containing
+generic `Polygon`, `PolyLine`, or `Text` primitives. Rectangles are represented as four-point
+polygons. Millimetre coordinates, distinct parallel lanes, primitive identities, and the diagram
+bounds remain deterministic.
+
+The adapter deliberately does not emit `Profile/SymbolUsage` or claim a symbol catalogue.
+`Dexpi20GraphicalProjectionReport` records every unmapped or ambiguous represented identity,
+skipped primitive, fill-colour loss, colour fallback, and dash approximation. A report is complete
+only when no primitive was skipped; completeness is still not a clean external-validator,
+profile-conformance, ISO 10628, or drawing-approval claim. The compatibility writer overloads remain
+unchanged and byte-stable because Core graphics are emitted only through the new explicit adapter.
+
+Example:
+
+```java
+Dexpi20GraphicalProjectionReport report = Dexpi20GraphicalProjectionWriter.write(
+    processSystem,
+    projection,
+    outputFile,
+    Dexpi20PlantExportOptions.builder(metadata).build());
+
+if (!report.isComplete()) {
+  System.out.println(report.toJson());
+}
+```
+
+The focused regression compiles this API and verifies deterministic XML, real `Represents`
+references, all four exchange-neutral primitive mappings, loss diagnostics, and rejection of empty
+`RepresentationGroup` placeholders. External DEXPIViewer has not been rerun for this adapter, so
+no clean-validation or interoperability claim is made.
