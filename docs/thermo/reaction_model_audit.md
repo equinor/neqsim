@@ -5,9 +5,9 @@ description: "Compare active chemical reactions and parameter provenance across 
 
 # Reaction Model Audit
 
-NeqSim can use chemical-reaction equilibrium together with electrolyte EOS models such as Electrolyte-CPA and electrolyte GE models such as Pitzer. These models currently select the `STANDARD` reaction-data source, while `SystemKentEisenberg` selects the dedicated `KENT_EISENBERG` apparent-constant source.
+NeqSim can use chemical-reaction equilibrium together with electrolyte EOS models such as Electrolyte-CPA and electrolyte GE models such as Pitzer. Electrolyte EOS models select the `STANDARD` mole-fraction reaction-data source, `SystemPitzer` selects the dedicated `PITZER` molality-standard-state source, and `SystemKentEisenberg` selects the dedicated `KENT_EISENBERG` apparent-constant source.
 
-A shared reaction table is an implementation choice, not evidence that the same active reaction set, equilibrium constants, activity convention, or validity range has been independently validated for every thermodynamic model. Before splitting a table or changing model-specific reactions, capture the actual initialized state with `ChemicalReactionModelAudit`.
+A shared reaction name or stoichiometry is not evidence that its equilibrium constants, activity convention, or validity range transfer between thermodynamic models. Capture the actual initialized state with `ChemicalReactionModelAudit` before changing model-specific reactions.
 
 ```java
 SystemInterface cpa = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
@@ -30,9 +30,15 @@ The API is deliberately read-only. It requires `chemicalReactionInit()` to have 
 
 ## Pitzer reaction concentration basis
 
-`SystemPitzer` evaluates solute activities from molality, defined as moles of solute per kilogram of water solvent, while solvent activity retains its mole-fraction convention. This matches the concentration basis of the Pitzer ion-interaction equations and the thermodynamic carbonate constants represented in the standard reaction table. Electrolyte EOS and Kent-Eisenberg systems retain their existing reaction conventions.
+`SystemPitzer` evaluates solute activities from molality, defined as moles of solute per kilogram of water solvent, while solvent activity retains its mole-fraction convention. This matches the concentration basis of the Pitzer ion-interaction equations. The `PITZER` source supplies molality-standard-state correlations for CO2/HCO3-, HCO3-/CO3--, and water dissociation; Electrolyte-CPA retains the legacy `STANDARD` source and its mole-fraction reaction convention. Pitzer's thermodynamic framework is documented in DOI `10.1021/j100621a026` and the binary-electrolyte formulation in DOI `10.1021/j100638a009`.
 
-The concentration-basis selector changes only Pitzer chemical-reaction quotients and mineral saturation ratios. It does not split the shared reaction table or change any stored equilibrium or Pitzer interaction coefficient. Pitzer's thermodynamic framework is documented in DOI `10.1021/j100621a026` and the binary-electrolyte formulation in DOI `10.1021/j100638a009`.
+### Carbonate parameter evidence and validity
+
+The three Pitzer correlations reproduce the analytical expressions distributed in the public-domain USGS PHREEQC 3 `phreeqc.dat` database. The CO2 and carbonate expressions trace to Plummer and Busenberg (1982), DOI `10.1016/0016-7037(82)90056-4`; PHREEQC 3 is documented by Parkhurst and Appelo (2013), DOI `10.3133/tm6A43`. The authoritative software page marks the source and usage as public domain: <https://www.usgs.gov/software/phreeqc-version-3>.
+
+NeqSim fits its existing four-coefficient natural-log form, `ln(K) = K1 + K2/T + K3 ln(T) + K4 T`, to the PHREEQC base-10 analytical expressions. Training temperatures are 0, 10, ..., 90 degC. Held-out validation temperatures are 5, 15, ..., 85 degC. Maximum held-out absolute errors are 0.000527 log10 units for CO2 dissociation, 0.000176 for bicarbonate dissociation, and 0.000205 for water dissociation; RMS errors are 0.000318, 0.000106, and 0.000130 log10 units, respectively. The declared validity range is 0-90 degC at the infinite-dilution thermodynamic standard state; Pitzer activity coefficients provide the finite-ionic-strength correction.
+
+No Pitzer binary interaction parameter was fitted or changed. Non-carbonate rows are copied from `REACTIONDATA.csv` to preserve compatibility but remain unvalidated for the Pitzer molality convention; their provenance must be established before model-specific parameter changes.
 
 ## Scientific use
 
@@ -44,4 +50,4 @@ Use this diagnostic to freeze model-specific validation questions before changin
 4. Validate equilibrium constants and speciation against independent public data over a declared temperature, pressure, ionic-strength, and composition range.
 5. Split reaction tables or activate/deactivate model-specific reactions only when the scientific evidence requires it.
 
-Relevant foundations include Plummer and Busenberg (1982), DOI `10.1016/0016-7037(82)90056-4`, for carbonate equilibria represented in the existing standard reaction data, and the Pitzer electrolyte framework for activity-coefficient treatment. NeqSim does not infer model-specific parameter validity merely because two models currently select the same source.
+Relevant foundations include Plummer and Busenberg (1982), DOI `10.1016/0016-7037(82)90056-4`, for carbonate equilibria and the Pitzer electrolyte framework for activity-coefficient treatment. NeqSim does not infer model-specific parameter validity merely because two sources retain the same reaction name.
