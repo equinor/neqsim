@@ -75,6 +75,10 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
     assertTrue(Double.isFinite(logSaturationRatio));
     assertTrue(logSaturationRatio < -700.0);
     assertEquals(logSaturationRatio, reaction.calcLogSaturationRatio(fluid, 0), 0.0);
+
+    SystemInterface nearbyFluid = createTraceWaterSystem(1.0e-190);
+    assertTrue(reaction.calcLogSaturationRatio(nearbyFluid, 0) > logSaturationRatio,
+        "Increasing both dissolved-ion activities must increase mineral saturation");
   }
 
   @Test
