@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-/** Tests Phase 0 foundation and trust-coverage evidence exposed by MCP capability discovery. */
+/** Tests Phase 0 foundation, trust-coverage, and acceptance-fixture evidence exposed by MCP capability discovery. */
 class McpEvidenceInventoryFoundationTests {
 
   @Test
@@ -75,6 +75,22 @@ class McpEvidenceInventoryFoundationTests {
 
     // Coverage classification is complete; tool-specific trust evidence is intentionally not.
     assertFalse(limitations.get("complete").getAsBoolean());
+    assertFalse(inventory.get("complete").getAsBoolean());
+  }
+
+  @Test
+  void testFourScaleAcceptanceCatalogIsDiscoverableFromEvidenceInventory() {
+    JsonObject inventory = McpEvidenceInventory.build();
+    JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
+
+    assertEquals("1.3", inventory.get("inventoryVersion").getAsString());
+    assertEquals(4, fixtures.get("fixtureCount").getAsInt());
+    assertTrue(fixtures.get("complete").getAsBoolean());
+    assertEquals("FIXTURES_DEFINED_BASELINES_PENDING", fixtures.get("executionEvidenceStatus").getAsString());
+    assertEquals(4, fixtures.getAsJsonArray("fixtures").size());
+    assertTrue(fixtures.get("remainingPhase0Boundary").getAsString().contains("runtime"));
+
+    // Fixture definition is complete; measured baselines and campaign matrices are still open.
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 }
