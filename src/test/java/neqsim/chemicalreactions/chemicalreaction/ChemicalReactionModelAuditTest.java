@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
@@ -23,8 +24,7 @@ class ChemicalReactionModelAuditTest {
 
     ChemicalReactionModelAudit.AuditSnapshot cpaAudit = ChemicalReactionModelAudit.inspect(cpa);
     ChemicalReactionModelAudit.AuditSnapshot pitzerAudit = ChemicalReactionModelAudit.inspect(pitzer);
-    ChemicalReactionModelAudit.AuditComparison comparison =
-        ChemicalReactionModelAudit.compare(cpaAudit, pitzerAudit);
+    ChemicalReactionModelAudit.AuditComparison comparison = ChemicalReactionModelAudit.compare(cpaAudit, pitzerAudit);
 
     assertNotEquals(cpaAudit.getModelName(), pitzerAudit.getModelName());
     assertTrue(cpaAudit.getReactionCount() > 0);
@@ -43,8 +43,7 @@ class ChemicalReactionModelAuditTest {
     SystemInterface cpa = reactiveCo2WaterSystem(new SystemElectrolyteCPAstatoil(298.15, 1.01325));
     SystemInterface kent = reactiveCo2WaterSystem(new SystemKentEisenberg(298.15, 1.01325));
 
-    ChemicalReactionModelAudit.AuditComparison comparison =
-        ChemicalReactionModelAudit.compare(cpa, kent);
+    ChemicalReactionModelAudit.AuditComparison comparison = ChemicalReactionModelAudit.compare(cpa, kent);
 
     assertFalse(comparison.hasSameReactionDataSource());
     assertFalse(comparison.isEquivalent());
@@ -63,6 +62,7 @@ class ChemicalReactionModelAuditTest {
     double[] modified = reaction.getEquilibriumConstantCoefficients();
     modified[0] = -123.0;
     assertArrayEquals(original, reaction.getEquilibriumConstantCoefficients(), 0.0);
+    assertNotSame(audit.getReactions(), audit.getReactions());
     assertThrows(UnsupportedOperationException.class, () -> audit.getReactions().clear());
   }
 
