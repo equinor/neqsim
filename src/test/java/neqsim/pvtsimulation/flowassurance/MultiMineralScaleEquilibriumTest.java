@@ -241,8 +241,8 @@ public class MultiMineralScaleEquilibriumTest {
   @Test
   @DisplayName("Diagnostics expose deterministic iteration-limited mineral states")
   void testIterationLimitDiagnostics() {
-    MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine())
-        .setSolverControls(1, 0.5, 1.0e-30);
+    MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine()).setSolverControls(1, 0.5,
+        1.0e-30);
     eq.solve();
 
     assertTrue(eq.hasReachedIterationLimit(), "One coordinate update must expose the configured stop boundary");
