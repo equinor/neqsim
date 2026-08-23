@@ -29,6 +29,30 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void mapsKaasaAppendixFCoefficientOrderWithoutChangingSemantics() {
+    double[] kaasaOrder = {1.0, 2.0e-3, -3.0e-6, 4.0, -0.5, 6.0};
+    PitzerTemperatureFunction function =
+        PitzerTemperatureFunction.fromKaasa1998(REFERENCE_TEMPERATURE, kaasaOrder);
+
+    assertArrayEquals(new double[] {1.0, 4.0, -0.5, 2.0e-3, -3.0e-6, 6.0},
+        function.getCoefficients(), 0.0);
+    assertEquals(1.0, function.valueAt(REFERENCE_TEMPERATURE), 0.0);
+
+    double temperature = 373.15;
+    double expected = 1.0 + 2.0e-3 * (temperature - REFERENCE_TEMPERATURE)
+        - 3.0e-6 * (temperature * temperature
+            - REFERENCE_TEMPERATURE * REFERENCE_TEMPERATURE)
+        + 4.0 * (1.0 / temperature - 1.0 / REFERENCE_TEMPERATURE)
+        - 0.5 * Math.log(temperature / REFERENCE_TEMPERATURE)
+        + 6.0 * (1.0 / (temperature * temperature)
+            - 1.0 / (REFERENCE_TEMPERATURE * REFERENCE_TEMPERATURE));
+    assertEquals(expected, function.valueAt(temperature), 1.0e-15);
+
+    assertThrows(IllegalArgumentException.class,
+        () -> PitzerTemperatureFunction.fromKaasa1998(REFERENCE_TEMPERATURE, new double[5]));
+  }
+
+  @Test
   void rejectsInvalidInputsAndProtectsCoefficientState() {
     assertThrows(IllegalArgumentException.class,
         () -> new PitzerTemperatureFunction(0.0, COEFFICIENTS));
