@@ -13,9 +13,10 @@ import com.google.gson.JsonParser;
  *
  * <p>
  * Source evidence counts are frozen by the repository and protocol tests. Runtime limitation coverage is derived
- * directly from {@link BenchmarkTrust}, so tools that still use the generic trust fallback remain explicit gaps rather
- * than being presented as validated. The merged-foundation inventory records what campaign prerequisites #2874,
- * #2875, and #3152 actually established and the current source evidence that preserves those contracts.
+ * directly from {@link BenchmarkTrust}. Every published tool is classified as either having tool-specific trust
+ * metadata or an explicit confirmed gap, so a generic fallback is never mistaken for benchmark validation. The
+ * merged-foundation inventory records what campaign prerequisites #2874, #2875, and #3152 actually established and
+ * the current source evidence that preserves those contracts.
  * </p>
  */
 public final class McpEvidenceInventory {
@@ -34,7 +35,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.1");
+    inventory.addProperty("inventoryVersion", "1.2");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -43,7 +44,7 @@ public final class McpEvidenceInventory {
         "Evidence discovery does not certify a calculation or replace qualified engineering review");
     inventory.addProperty("complete", false);
     inventory.addProperty("completionReason",
-        "Published surfaces and merged foundations are inventoried, but not every tool has explicit benchmark and limitation metadata and the Phase 0 acceptance baselines remain incomplete");
+        "Published surfaces, merged foundations, and per-tool trust coverage are inventoried, but confirmed trust gaps, four-scale acceptance fixtures, traceability/maturity matrices, and measured Phase 0 baselines remain incomplete");
     return inventory;
   }
 
@@ -123,7 +124,7 @@ public final class McpEvidenceInventory {
 
     foundations.add("entries", entries);
     foundations.addProperty("remainingPhase0Boundary",
-        "Convert generic trust fallbacks into evidence-backed capability or confirmed-gap records, define four acceptance scales and traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
+        "Close confirmed trust gaps where evidence exists, define four acceptance scales and traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
     return foundations;
   }
 
@@ -141,7 +142,7 @@ public final class McpEvidenceInventory {
     return entry;
   }
 
-  /** Builds limitation and maturity coverage directly from BenchmarkTrust. */
+  /** Builds limitation, maturity, and explicit per-tool trust coverage from BenchmarkTrust. */
   private static JsonObject buildKnownLimitations() {
     JsonObject trustReport = JsonParser.parseString(BenchmarkTrust.getTrustReport()).getAsJsonObject();
     JsonObject explicitTools = trustReport.getAsJsonObject("tools");
@@ -160,23 +161,64 @@ public final class McpEvidenceInventory {
       limitationCount += arraySize(trust, "knownLimitations");
       unsupportedConditionCount += arraySize(trust, "unsupported");
       validationCaseCount += arraySize(trust, "validationCases");
-      if (trust.has("validationCases")) {
-        for (JsonElement validationCase : trust.getAsJsonArray("validationCases")) {
-          if (validationCase.getAsJsonObject().has("verifiedBy")) {
-            verifiedValidationCaseCount++;
-          }
-        }
-      }
+      verifiedValidationCaseCount += verifiedValidationCaseCount(trust);
       String maturity = trust.has("maturityLevel") ? trust.get("maturityLevel").getAsString() : "UNDECLARED";
       int current = maturityCounts.has(maturity) ? maturityCounts.get(maturity).getAsInt() : 0;
       maturityCounts.addProperty(maturity, current + 1);
     }
+
+    JsonObject coverageRecords = new JsonObject();
+    int explicitCoverageRecordCount = 0;
+    int confirmedGapRecordCount = 0;
+    for (String toolName : new java.util.TreeSet<String>(publishedTools)) {
+      JsonObject record = new JsonObject();
+      String implementationClass = McpImplementationInventory.getImplementationClass(toolName);
+      if (implementationClass != null) {
+        record.addProperty("implementationClass", implementationClass);
+      }
+
+      if (explicitTools.has(toolName)) {
+        JsonObject trust = explicitTools.getAsJsonObject(toolName);
+        record.addProperty("coverageStatus", "EXPLICIT_TRUST");
+        record.addProperty("toolSpecificTrustAvailable", true);
+        record.addProperty("maturityLevel",
+            trust.has("maturityLevel") ? trust.get("maturityLevel").getAsString() : "UNDECLARED");
+        record.addProperty("knownLimitationCount", arraySize(trust, "knownLimitations"));
+        record.addProperty("unsupportedConditionCount", arraySize(trust, "unsupported"));
+        record.addProperty("validationCaseCount", arraySize(trust, "validationCases"));
+        record.addProperty("verifiedValidationCaseCount", verifiedValidationCaseCount(trust));
+        explicitCoverageRecordCount++;
+      } else {
+        record.addProperty("coverageStatus", "CONFIRMED_GAP");
+        record.addProperty("toolSpecificTrustAvailable", false);
+        record.addProperty("maturityLevel", BenchmarkTrust.getMaturityLevel(toolName));
+        record.addProperty("knownLimitationCount", 0);
+        record.addProperty("unsupportedConditionCount", 0);
+        record.addProperty("validationCaseCount", 0);
+        record.addProperty("verifiedValidationCaseCount", 0);
+        record.addProperty("gapReason",
+            "No tool-specific BenchmarkTrust entry exists; the generic TESTED fallback is compatibility metadata, not benchmark, accuracy, applicability, or no-limitations evidence");
+        confirmedGapRecordCount++;
+      }
+      coverageRecords.add(toolName, record);
+    }
+
+    JsonObject coverageDefinitions = new JsonObject();
+    coverageDefinitions.addProperty("EXPLICIT_TRUST",
+        "Tool-specific BenchmarkTrust metadata exists; use its declared maturity, validation cases, accuracy bounds, and limitations");
+    coverageDefinitions.addProperty("CONFIRMED_GAP",
+        "No tool-specific BenchmarkTrust entry exists; generic fallback maturity must not be interpreted as benchmark validation");
 
     JsonObject limitations = new JsonObject();
     limitations.addProperty("sourceTool", "getBenchmarkTrust");
     limitations.addProperty("publishedToolCount", publishedTools.size());
     limitations.addProperty("explicitTrustToolCount", explicitTools.size());
     limitations.addProperty("genericTrustToolCount", genericTools.size());
+    limitations.addProperty("confirmedGapToolCount", confirmedGapRecordCount);
+    limitations.addProperty("coverageRecordCount", coverageRecords.size());
+    limitations.addProperty("explicitCoverageRecordCount", explicitCoverageRecordCount);
+    limitations.addProperty("coverageComplete", coverageRecords.size() == publishedTools.size());
+    limitations.addProperty("scientificValidationComplete", false);
     limitations.addProperty("knownLimitationCount", limitationCount);
     limitations.addProperty("unsupportedConditionCount", unsupportedConditionCount);
     limitations.addProperty("validationCaseCount", validationCaseCount);
@@ -184,12 +226,28 @@ public final class McpEvidenceInventory {
     limitations.add("maturityCounts", maturityCounts);
     limitations.add("explicitTrustTools", toJsonArray(explicitTools.keySet()));
     limitations.add("genericTrustTools", toJsonArray(genericTools));
+    limitations.add("coverageStatusDefinitions", coverageDefinitions);
+    limitations.add("coverageRecords", coverageRecords);
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Generic fallback means no tool-specific benchmark, accuracy, unsupported-condition, or limitation claim is available");
+        "Every published tool now has an explicit coverage record; CONFIRMED_GAP records identify missing tool-specific trust evidence without implying validation");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
+  }
+
+  /** Counts validation cases that identify a concrete verification source. */
+  private static int verifiedValidationCaseCount(JsonObject trust) {
+    if (!trust.has("validationCases")) {
+      return 0;
+    }
+    int count = 0;
+    for (JsonElement validationCase : trust.getAsJsonArray("validationCases")) {
+      if (validationCase.getAsJsonObject().has("verifiedBy")) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /** Builds one guide descriptor. */
