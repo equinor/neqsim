@@ -3,6 +3,7 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
 import java.util.Set;
@@ -733,7 +734,6 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.addComponent("Cl-", 1.5);
     system.setMixingRule("classic");
     system.init(0);
-    system.init(1);
 
     PhasePitzer liq = (PhasePitzer) system.getPhase(1);
     int na = liq.getComponent("Na+").getComponentNumber();
@@ -741,12 +741,23 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     int cl = liq.getComponent("Cl-").getComponentNumber();
     int water = liq.getComponent("water").getComponentNumber();
 
-    // Get baseline gamma without theta
+    assertFalse(liq.getPitzerParameterCoverage().isComplete());
+    assertTrue(liq.getPitzerParameterCoverage().getMissingThetaPairs().contains("K+|Na+"));
+    assertTrue(liq.getPitzerParameterCoverage().getMissingPsiTuples().contains("K+|Na+|Cl-"));
+    IllegalStateException missingParameters = assertThrows(IllegalStateException.class,
+        liq::requireCompletePitzerParameterCoverage);
+    assertTrue(missingParameters.getMessage().contains("missingTheta=[K+|Na+]"));
+    assertTrue(missingParameters.getMessage().contains("missingPsi=[K+|Na+|Cl-]"));
+
+    // Explicit zero definitions are scientifically distinct from absent parameters.
+    liq.setTheta(na, k, 0.0);
+    liq.setPsi(na, k, cl, 0.0);
+    assertTrue(liq.getPitzerParameterCoverage().isComplete());
+    system.init(1);
     double gammaBaseline = system.getPhase(1).getActivityCoefficient(na, water);
 
-    // Set Na-K theta (cation-cation interaction)
-    liq.setTheta(na, k, -0.012); // Harvie & Weare value
-
+    liq.setTheta(na, k, -0.012);
+    liq.setPsi(na, k, cl, -0.0018);
     system.init(1);
     double gammaWithTheta = system.getPhase(1).getActivityCoefficient(na, water);
 
@@ -771,17 +782,13 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.addComponent("SO4--", 0.05);
     system.setMixingRule("classic");
 
-    ThermodynamicOperations ops = new ThermodynamicOperations(system);
-    assertDoesNotThrow(() -> ops.TPflash());
-
-    // Verify all ion gammas are finite
     PhasePitzer liq = (PhasePitzer) system.getPhase(1);
-    int water = liq.getComponent("water").getComponentNumber();
-    for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-      double gamma = system.getPhase(1).getActivityCoefficient(i, water);
-      assertTrue(Double.isFinite(gamma),
-          "Activity coefficient for " + system.getPhase(1).getComponent(i).getName() + " must be finite: " + gamma);
-    }
+    system.init(0);
+    assertFalse(liq.getPitzerParameterCoverage().isComplete());
+    IllegalStateException missingParameters = assertThrows(IllegalStateException.class,
+        liq::requireCompletePitzerParameterCoverage);
+    assertTrue(missingParameters.getMessage().contains("missingTheta="));
+    assertTrue(missingParameters.getMessage().contains("missingPsi="));
 
     // Verify parameters were loaded for common salt pairs.
     assertTrue(liq.isParametersLoaded(), "Pitzer parameters should be loaded from database");

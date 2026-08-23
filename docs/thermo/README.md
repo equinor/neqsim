@@ -45,6 +45,7 @@ thermo/
 - [Reactive Flash](reactive_flash.md): **Simultaneous chemical and phase equilibrium** using the Modified RAND method. Covers reactive TP and PH flash for systems with gas-phase reactions, ionic equilibria, and multiphase reactive systems.
 - [Hydrate Models Guide](hydrate_models.md): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
 - [Electrolyte CPA Model](ElectrolyteCPAModel.md): **Detailed documentation** of the electrolyte CPA model, including Fürst electrostatic contributions, validation data, and usage examples.
+- [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance.md): **Dataset and safety reference** for Pitzer equation conventions, source/licensing comparisons, mixed-ion coverage diagnostics, and parameter-adoption gates.
 
 ### Database Documentation
 

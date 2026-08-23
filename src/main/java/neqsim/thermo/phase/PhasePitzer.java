@@ -1,5 +1,9 @@
 package neqsim.thermo.phase;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -19,6 +23,10 @@ public class PhasePitzer extends PhaseGE {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(PhasePitzer.class);
+  /** Stable identity for the built-in legacy Pitzer parameter table. */
+  public static final String DEFAULT_PARAMETER_DATASET_ID = "neqsim-legacy-pitzer-parameters-v1";
+  /** Molality below which an ion is inactive for parameter-coverage auditing. */
+  private static final double ACTIVE_ION_MOLALITY = 1.0e-8;
 
   private double[][] beta0;
   private double[][] beta1;
@@ -41,6 +49,26 @@ public class PhasePitzer extends PhaseGE {
   private double[][] cphiT2;
   /** Whether parameters have been loaded from database. */
   private boolean parametersLoaded = false;
+  /** Whether immutable parameter arrays are shared with a clone until the next setter call. */
+  private boolean parameterStorageShared;
+  /** Stable identity of the selected parameter dataset. */
+  private String parameterDatasetId = DEFAULT_PARAMETER_DATASET_ID;
+  /** Explicitly defined cation-anion binary parameter pairs. */
+  private Set<String> definedBinaryPairs = new HashSet<String>();
+  /** Explicitly defined same-sign theta parameter pairs. */
+  private Set<String> definedThetaPairs = new HashSet<String>();
+  /** Explicitly defined ternary psi parameter tuples. */
+  private Set<String> definedPsiTuples = new HashSet<String>();
+  /** Revision incremented whenever a parameter definition changes. */
+  private long parameterDefinitionRevision = 0L;
+  /** Last active-topology fingerprint audited for parameter coverage. */
+  private transient long cachedCoverageFingerprint;
+  /** Parameter-definition revision associated with the cached coverage. */
+  private transient long cachedCoverageRevision = Long.MIN_VALUE;
+  /** Cached immutable coverage result. */
+  private transient PitzerParameterCoverage cachedCoverage;
+  /** Whether the current initialized primary-salt state passed the coverage gate. */
+  private transient boolean parameterCoverageValidated;
 
   /** Constructor for PhasePitzer. */
   public PhasePitzer() {
@@ -62,6 +90,32 @@ public class PhasePitzer extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public PhasePitzer clone() {
+    ensureDefinitionSets();
+    PhasePitzer clonedPhase = (PhasePitzer) super.clone();
+    parameterStorageShared = true;
+    clonedPhase.parameterStorageShared = true;
+    clonedPhase.definedBinaryPairs = new HashSet<String>(definedBinaryPairs);
+    clonedPhase.definedThetaPairs = new HashSet<String>(definedThetaPairs);
+    clonedPhase.definedPsiTuples = new HashSet<String>(definedPsiTuples);
+    clonedPhase.cachedCoverageFingerprint = 0L;
+    clonedPhase.cachedCoverageRevision = Long.MIN_VALUE;
+    clonedPhase.cachedCoverage = null;
+    clonedPhase.parameterCoverageValidated = false;
+    return clonedPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
+    if (initType == 0) {
+      parameterCoverageValidated = false;
+    }
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGePitzer(name, moles, molesInPhase, compNumber);
@@ -74,6 +128,7 @@ public class PhasePitzer extends PhaseGE {
     if (!parametersLoaded) {
       loadParametersFromDatabase();
     }
+    validateParameterCoverageOncePerState();
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       GE += phase.getComponent(i).getx() * Math
@@ -116,12 +171,16 @@ public class PhasePitzer extends PhaseGE {
    * @param c cPhi parameter
    */
   public void setBinaryParameters(int i, int j, double b0, double b1, double c) {
+    ensureOwnedParameterStorage();
     beta0[i][j] = b0;
     beta0[j][i] = b0;
     beta1[i][j] = b1;
     beta1[j][i] = b1;
     cphi[i][j] = c;
     cphi[j][i] = c;
+    ensureDefinitionSets();
+    definedBinaryPairs.add(pairKey(componentName(i), componentName(j)));
+    invalidateCoverageCache();
   }
 
   /**
@@ -133,6 +192,7 @@ public class PhasePitzer extends PhaseGE {
    * @param t2 coefficient for ln(T/Tr) term
    */
   public void setBeta0T(int i, int j, double t1, double t2) {
+    ensureOwnedParameterStorage();
     beta0T1[i][j] = t1;
     beta0T1[j][i] = t1;
     beta0T2[i][j] = t2;
@@ -148,6 +208,7 @@ public class PhasePitzer extends PhaseGE {
    * @param t2 coefficient for ln(T/Tr) term
    */
   public void setBeta1T(int i, int j, double t1, double t2) {
+    ensureOwnedParameterStorage();
     beta1T1[i][j] = t1;
     beta1T1[j][i] = t1;
     beta1T2[i][j] = t2;
@@ -163,6 +224,7 @@ public class PhasePitzer extends PhaseGE {
    * @param t2 coefficient for ln(T/Tr) term
    */
   public void setCphiT(int i, int j, double t1, double t2) {
+    ensureOwnedParameterStorage();
     cphiT1[i][j] = t1;
     cphiT1[j][i] = t1;
     cphiT2[i][j] = t2;
@@ -307,6 +369,97 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
+   * Gets the stable identity of the selected Pitzer parameter dataset.
+   *
+   * @return parameter dataset identity
+   */
+  public String getParameterDatasetId() {
+    return parameterDatasetId;
+  }
+
+  /**
+   * Sets the identity used to report a manually configured Pitzer parameter dataset.
+   *
+   * <p>
+   * This method changes provenance metadata only. Callers remain responsible for defining all binary and mixed-ion
+   * interactions with the parameter setter methods.
+   * </p>
+   *
+   * @param datasetId non-empty stable parameter dataset identity
+   */
+  public void setParameterDatasetId(String datasetId) {
+    if (datasetId == null || datasetId.trim().isEmpty()) {
+      throw new IllegalArgumentException("Pitzer parameter dataset identity must not be empty");
+    }
+    parameterDatasetId = datasetId.trim();
+    invalidateCoverageCache();
+  }
+
+  /**
+   * Audits whether all Pitzer interactions required by the active primary-salt species are explicitly defined.
+   *
+   * <p>
+   * An explicitly configured zero is treated as defined; an absent database or setter entry is reported as missing.
+   * Ions below {@value #ACTIVE_ION_MOLALITY} mol/kg are excluded so numerical trace material does not change the active
+   * parameter topology.
+   * </p>
+   *
+   * @return immutable deterministic parameter-coverage diagnostic
+   */
+  public PitzerParameterCoverage getPitzerParameterCoverage() {
+    if (definedBinaryPairs == null || definedThetaPairs == null || definedPsiTuples == null) {
+      ensureDefinitionSets();
+      parametersLoaded = false;
+    }
+    if (!parametersLoaded) {
+      loadParametersFromDatabase();
+    }
+
+    long fingerprint = activeTopologyFingerprint();
+    if (cachedCoverage != null && fingerprint == cachedCoverageFingerprint
+        && parameterDefinitionRevision == cachedCoverageRevision) {
+      return cachedCoverage;
+    }
+
+    List<Integer> cationIndexes = activeIonIndexes(true);
+    List<Integer> anionIndexes = activeIonIndexes(false);
+    List<String> activeCations = componentNames(cationIndexes);
+    List<String> activeAnions = componentNames(anionIndexes);
+    List<String> missingBinary = new ArrayList<String>();
+    List<String> missingTheta = new ArrayList<String>();
+    List<String> missingPsi = new ArrayList<String>();
+
+    for (int cation : cationIndexes) {
+      for (int anion : anionIndexes) {
+        String key = pairKey(componentName(cation), componentName(anion));
+        if (!definedBinaryPairs.contains(key)) {
+          missingBinary.add(key);
+        }
+      }
+    }
+    findMissingMixedInteractions(cationIndexes, anionIndexes, missingTheta, missingPsi);
+    findMissingMixedInteractions(anionIndexes, cationIndexes, missingTheta, missingPsi);
+
+    cachedCoverage = new PitzerParameterCoverage(parameterDatasetId, activeCations, activeAnions, missingBinary,
+        missingTheta, missingPsi);
+    cachedCoverageFingerprint = fingerprint;
+    cachedCoverageRevision = parameterDefinitionRevision;
+    return cachedCoverage;
+  }
+
+  /**
+   * Requires complete Pitzer parameter coverage for the current active ionic topology.
+   *
+   * @throws IllegalStateException when one or more required interactions are absent
+   */
+  public void requireCompletePitzerParameterCoverage() {
+    PitzerParameterCoverage coverage = getPitzerParameterCoverage();
+    if (!coverage.isComplete()) {
+      throw new IllegalStateException(coverage.formatDiagnostic());
+    }
+  }
+
+  /**
    * Get beta2 parameter for 2-2 electrolytes.
    *
    * @param i component index i
@@ -325,6 +478,7 @@ public class PhasePitzer extends PhaseGE {
    * @param value beta2 value
    */
   public void setBeta2(int i, int j, double value) {
+    ensureOwnedParameterStorage();
     beta2[i][j] = value;
     beta2[j][i] = value;
   }
@@ -348,8 +502,12 @@ public class PhasePitzer extends PhaseGE {
    * @param value theta value
    */
   public void setTheta(int i, int j, double value) {
+    ensureOwnedParameterStorage();
     theta[i][j] = value;
     theta[j][i] = value;
+    ensureDefinitionSets();
+    definedThetaPairs.add(pairKey(componentName(i), componentName(j)));
+    invalidateCoverageCache();
   }
 
   /**
@@ -373,12 +531,16 @@ public class PhasePitzer extends PhaseGE {
    * @param value psi value
    */
   public void setPsi(int i, int j, int k, double value) {
+    ensureOwnedParameterStorage();
     psi[i][j][k] = value;
     psi[j][i][k] = value;
     psi[i][k][j] = value;
     psi[j][k][i] = value;
     psi[k][i][j] = value;
     psi[k][j][i] = value;
+    ensureDefinitionSets();
+    definedPsiTuples.add(psiKey(componentName(i), componentName(j), componentName(k)));
+    invalidateCoverageCache();
   }
 
   /**
@@ -662,6 +824,7 @@ public class PhasePitzer extends PhaseGE {
     if (!parametersLoaded) {
       loadParametersFromDatabase();
     }
+    validateParameterCoverageOncePerState();
 
     double ionicStrength = getIonicStrength();
     double sqrtIonicStrength = Math.sqrt(ionicStrength);
@@ -834,5 +997,260 @@ public class PhasePitzer extends PhaseGE {
       step = Math.max(1.0e-6, 0.5 * (temperature - 1.0));
     }
     return step;
+  }
+
+  /**
+   * Finds active ions of one charge sign.
+   *
+   * @param positive {@code true} for cations, {@code false} for anions
+   * @return component indexes whose molality exceeds the active-ion threshold
+   */
+  private List<Integer> activeIonIndexes(boolean positive) {
+    List<Integer> indexes = new ArrayList<Integer>();
+    double activeMoles = ACTIVE_ION_MOLALITY * getSolventWeight();
+    for (int i = 0; i < numberOfComponents; i++) {
+      double charge = getComponent(i).getIonicCharge();
+      boolean requestedSign = positive ? charge > 0.0 : charge < 0.0;
+      if (requestedSign && isPrimarySaltCoverageSpecies(componentName(i))
+          && getComponent(i).getNumberOfMolesInPhase() > activeMoles) {
+        indexes.add(i);
+      }
+    }
+    return indexes;
+  }
+
+  /**
+   * Reports whether an ion belongs to the primary salt-parameter coverage gate.
+   *
+   * <p>
+   * Acid-base species generated inside the reaction solver are excluded because their intermediate trial molalities do
+   * not represent a stable input-brine topology. Their reaction and interaction coverage requires a separate
+   * model-specific reaction-dataset gate.
+   * </p>
+   *
+   * @param componentName component name
+   * @return {@code true} when the component is covered by this primary-salt audit
+   */
+  private static boolean isPrimarySaltCoverageSpecies(String componentName) {
+    return !"H3O+".equals(componentName) && !"OH-".equals(componentName) && !"HCO3-".equals(componentName)
+        && !"CO3--".equals(componentName);
+  }
+
+  /**
+   * Converts component indexes to component names.
+   *
+   * @param indexes component indexes
+   * @return component names
+   */
+  private List<String> componentNames(List<Integer> indexes) {
+    List<String> names = new ArrayList<String>();
+    for (int index : indexes) {
+      names.add(componentName(index));
+    }
+    return names;
+  }
+
+  /**
+   * Adds absent theta and psi definitions for all same-sign pairs and opposite-sign ions.
+   *
+   * @param sameSignIndexes indexes of ions with one charge sign
+   * @param oppositeSignIndexes indexes of ions with the opposite charge sign
+   * @param missingTheta destination for missing theta keys
+   * @param missingPsi destination for missing psi keys
+   */
+  private void findMissingMixedInteractions(List<Integer> sameSignIndexes, List<Integer> oppositeSignIndexes,
+      List<String> missingTheta, List<String> missingPsi) {
+    for (int first = 0; first < sameSignIndexes.size(); first++) {
+      String firstName = componentName(sameSignIndexes.get(first));
+      for (int second = first + 1; second < sameSignIndexes.size(); second++) {
+        String secondName = componentName(sameSignIndexes.get(second));
+        String thetaKey = pairKey(firstName, secondName);
+        if (!definedThetaPairs.contains(thetaKey)) {
+          missingTheta.add(thetaKey);
+        }
+        for (int opposite : oppositeSignIndexes) {
+          String tupleKey = psiKey(firstName, secondName, componentName(opposite));
+          if (!definedPsiTuples.contains(tupleKey)) {
+            missingPsi.add(tupleKey);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Computes a no-allocation fingerprint of the active primary-salt topology.
+   *
+   * @return deterministic active-topology fingerprint
+   */
+  private long activeTopologyFingerprint() {
+    long fingerprint = 0xcbf29ce484222325L;
+    double activeMoles = ACTIVE_ION_MOLALITY * getSolventWeight();
+    for (int i = 0; i < numberOfComponents; i++) {
+      double charge = getComponent(i).getIonicCharge();
+      if (charge != 0.0 && isPrimarySaltCoverageSpecies(componentName(i))
+          && getComponent(i).getNumberOfMolesInPhase() > activeMoles) {
+        fingerprint ^= i + 1L;
+        fingerprint *= 0x100000001b3L;
+        fingerprint ^= charge > 0.0 ? 1L : 2L;
+        fingerprint *= 0x100000001b3L;
+      }
+    }
+    return fingerprint;
+  }
+
+  /**
+   * Gets a component name for parameter-key construction.
+   *
+   * @param index component index
+   * @return component name
+   */
+  private String componentName(int index) {
+    return getComponent(index).getComponentName();
+  }
+
+  /**
+   * Creates an order-independent binary or theta parameter key.
+   *
+   * @param first first species name
+   * @param second second species name
+   * @return canonical parameter key
+   */
+  private static String pairKey(String first, String second) {
+    return first.compareTo(second) <= 0 ? first + "|" + second : second + "|" + first;
+  }
+
+  /**
+   * Creates a psi key while retaining the role of the same-sign and opposite-sign species.
+   *
+   * @param first first same-sign species
+   * @param second second same-sign species
+   * @param opposite opposite-sign species
+   * @return canonical ternary parameter key
+   */
+  private static String psiKey(String first, String second, String opposite) {
+    return pairKey(first, second) + "|" + opposite;
+  }
+
+  /** Ensures definition sets exist for objects read from older serialized forms. */
+  private void ensureDefinitionSets() {
+    if (definedBinaryPairs == null) {
+      definedBinaryPairs = new HashSet<String>();
+    }
+    if (definedThetaPairs == null) {
+      definedThetaPairs = new HashSet<String>();
+    }
+    if (definedPsiTuples == null) {
+      definedPsiTuples = new HashSet<String>();
+    }
+    if (parameterDatasetId == null || parameterDatasetId.trim().isEmpty()) {
+      parameterDatasetId = DEFAULT_PARAMETER_DATASET_ID;
+    }
+  }
+
+  /** Invalidates the cached coverage result after a parameter-definition change. */
+  private void invalidateCoverageCache() {
+    parameterDefinitionRevision++;
+    cachedCoverageFingerprint = 0L;
+    cachedCoverageRevision = Long.MIN_VALUE;
+    cachedCoverage = null;
+    parameterCoverageValidated = false;
+  }
+
+  /** Validates coverage once after each level-zero phase-state initialization. */
+  private void validateParameterCoverageOncePerState() {
+    if (!parameterCoverageValidated) {
+      if (hasMixedPrimarySaltTopology()) {
+        requireCompletePitzerParameterCoverage();
+      }
+      parameterCoverageValidated = true;
+    }
+  }
+
+  /**
+   * Detects whether the state needs same-sign and ternary mixed-salt parameters.
+   *
+   * <p>
+   * Legacy single-cation/single-anion calculations retain their established binary behavior. The explicit coverage API
+   * can still audit their binary row.
+   * </p>
+   *
+   * @return {@code true} when more than one active cation or anion is present
+   */
+  private boolean hasMixedPrimarySaltTopology() {
+    int cations = 0;
+    int anions = 0;
+    double activeMoles = ACTIVE_ION_MOLALITY * getSolventWeight();
+    for (int i = 0; i < numberOfComponents; i++) {
+      double charge = getComponent(i).getIonicCharge();
+      if (charge == 0.0 || !isPrimarySaltCoverageSpecies(componentName(i))
+          || getComponent(i).getNumberOfMolesInPhase() <= activeMoles) {
+        continue;
+      }
+      if (charge > 0.0) {
+        cations++;
+      } else {
+        anions++;
+      }
+      if (cations > 1 || anions > 1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Deep-copies a two-dimensional parameter matrix.
+   *
+   * @param source source matrix
+   * @return independent matrix copy
+   */
+  private static double[][] cloneMatrix(double[][] source) {
+    double[][] copy = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      copy[i] = source[i].clone();
+    }
+    return copy;
+  }
+
+  /**
+   * Deep-copies a three-dimensional parameter tensor.
+   *
+   * @param source source tensor
+   * @return independent tensor copy
+   */
+  private static double[][][] cloneTensor(double[][][] source) {
+    double[][][] copy = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      copy[i] = cloneMatrix(source[i]);
+    }
+    return copy;
+  }
+
+  /**
+   * Detaches copy-on-write parameter storage before a setter mutates it.
+   *
+   * <p>
+   * Read-only clones share the large psi tensor without copying. The first parameter mutation creates independent
+   * matrices and a tensor, preserving clone independence without charging ordinary flash clones.
+   * </p>
+   */
+  private void ensureOwnedParameterStorage() {
+    if (!parameterStorageShared) {
+      return;
+    }
+    beta0 = cloneMatrix(beta0);
+    beta1 = cloneMatrix(beta1);
+    cphi = cloneMatrix(cphi);
+    beta2 = cloneMatrix(beta2);
+    theta = cloneMatrix(theta);
+    psi = cloneTensor(psi);
+    beta0T1 = cloneMatrix(beta0T1);
+    beta0T2 = cloneMatrix(beta0T2);
+    beta1T1 = cloneMatrix(beta1T1);
+    beta1T2 = cloneMatrix(beta1T2);
+    cphiT1 = cloneMatrix(cphiT1);
+    cphiT2 = cloneMatrix(cphiT2);
+    parameterStorageShared = false;
   }
 }

@@ -162,6 +162,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Mixing Rule Package       | [docs/thermo/mixingrule/README.md](thermo/mixingrule/README.md)             | Mixing rule implementations                                                                                          |
 | Phase Package             | [docs/thermo/phase/README.md](thermo/phase/README.md)                       | Phase modeling                                                                                                       |
 | Electrolyte CPA           | [docs/thermo/ElectrolyteCPAModel.md](thermo/ElectrolyteCPAModel.md)   | Electrolyte CPA model                                                                                                |
+| Pitzer Parameters         | [docs/thermo/pitzer_parameter_provenance.md](thermo/pitzer_parameter_provenance.md) | Pitzer dataset identity, provenance, mixed-ion coverage diagnostics, and adoption gates                              |
 
 ### Chapter 7: Flash Calculations
 
