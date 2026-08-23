@@ -22,8 +22,8 @@ import neqsim.thermo.system.SystemPitzer;
  */
 class ChemicalReactionProvenanceTest {
   private static final double[] STANDARD_CO2_WATER = new double[] { 253.235548, -12865.665607, -39.440767, 0.0 };
-  private static final double[] PITZER_CO2_WATER =
-      new double[] { 653.705141388, -23927.318205735, -108.892446382, 0.108492068 };
+  private static final double[] PITZER_CO2_WATER = new double[] { 653.705141388, -23927.318205735, -108.892446382,
+      0.108492068 };
   private static final double[] KENT_CO2_WATER = new double[] { 231.465, -12092.1, -36.7816, 0.0 };
 
   /** Verify that Kent-Eisenberg explicitly selects its apparent-constant parameter set. */
@@ -74,12 +74,10 @@ class ChemicalReactionProvenanceTest {
 
     assertEquals(ChemicalReactionDataSource.PITZER,
         cloned.getChemicalReactionOperations().getReactionDataSource());
-    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(cloned).getEquilibriumConstantCoefficients(),
-        1.0e-12);
+    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(cloned).getEquilibriumConstantCoefficients(), 1.0e-12);
     assertEquals(ChemicalReactionDataSource.PITZER,
         restored.getChemicalReactionOperations().getReactionDataSource());
-    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(restored).getEquilibriumConstantCoefficients(),
-        1.0e-12);
+    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(restored).getEquilibriumConstantCoefficients(), 1.0e-12);
   }
 
   /** Verify that callers cannot mutate stored equilibrium-constant coefficients. */
