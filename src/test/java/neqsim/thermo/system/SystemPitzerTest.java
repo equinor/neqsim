@@ -270,19 +270,42 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Verify NaCl mean ionic activity and osmotic coefficients against standard Pitzer literature values at 25 C.
+   * Validate dilute-to-moderate NaCl activity and osmotic coefficients against traceable 25 C reference values.
+   *
+   * <p>
+   * Reference values are from Partanen and Partanen (2020), Tables 6 and 10, DOI
+   * 10.1021/acs.jced.0c00402 (CC BY 4.0). The Pitzer parameters are not fitted in this test.
+   * </p>
    */
   @Test
-  public void testNaClActivityAndOsmoticCoefficientAgainstLiterature() {
-    double[] molalities = { 0.1, 0.5, 1.0, 2.0, 3.0 };
-    double[] meanActivityCoefficients = { 0.778, 0.681, 0.657, 0.668, 0.714 };
-    double[] osmoticCoefficients = { 0.932, 0.921, 0.936, 1.002, 1.085 };
+  public void testNaClActivityAndOsmoticCoefficientAgainstPartanen2020() {
+    assertNaClReferenceValues(new double[][] { { 0.2, 0.735, 0.924 }, { 0.5, 0.684, 0.924 },
+        { 1.0, 0.662, 0.940 } });
+  }
 
-    for (int i = 0; i < molalities.length; i++) {
+  /**
+   * Validate concentrated NaCl behavior on reference points excluded from the core validation set.
+   */
+  @Test
+  public void testConcentratedNaClActivityAndOsmoticCoefficientHoldout() {
+    assertNaClReferenceValues(new double[][] { { 2.0, 0.677, 0.989 }, { 3.0, 0.721, 1.047 } });
+  }
+
+  /**
+   * Compare Pitzer results with independent traceable NaCl reference values.
+   *
+   * @param referenceRows rows of molality, mean molal activity coefficient and osmotic coefficient
+   */
+  private static void assertNaClReferenceValues(double[][] referenceRows) {
+    final double maximumMeanActivityRelativeDeviation = 0.02;
+    final double maximumOsmoticRelativeDeviation = 0.0075;
+
+    for (double[] referenceRow : referenceRows) {
+      double molality = referenceRow[0];
       SystemInterface system = new SystemPitzer(298.15, 1.01325);
       system.addComponent("water", 55.508);
-      system.addComponent("Na+", molalities[i]);
-      system.addComponent("Cl-", molalities[i]);
+      system.addComponent("Na+", molality);
+      system.addComponent("Cl-", molality);
       system.setMixingRule("classic");
       system.init(0);
       system.init(1);
@@ -290,12 +313,17 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
       PhaseInterface phase = system.getPhase(1);
       int sodiumComponentNumber = phase.getComponent("Na+").getComponentNumber();
       int chlorideComponentNumber = phase.getComponent("Cl-").getComponentNumber();
+      double actualMolality = phase.getComponent("Na+").getMolality(phase);
+      double meanActivityCoefficient = phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber);
+      double osmoticCoefficient = phase.getOsmoticCoefficientOfWater();
 
-      assertEquals(meanActivityCoefficients[i],
-          phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber),
-          0.08 * meanActivityCoefficients[i]);
-      assertEquals(osmoticCoefficients[i], phase.getOsmoticCoefficientOfWater(), 0.04 * osmoticCoefficients[i]);
-      assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficientOfWaterMolality(), 1.0e-12);
+      assertEquals(molality, actualMolality, 2.0e-5, "Reference composition must be on the molality basis");
+      assertEquals(referenceRow[1], meanActivityCoefficient,
+          maximumMeanActivityRelativeDeviation * referenceRow[1]);
+      assertEquals(referenceRow[2], osmoticCoefficient, maximumOsmoticRelativeDeviation * referenceRow[2]);
+      assertEquals(meanActivityCoefficient, phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber),
+          0.0, "Repeated mean activity evaluation must be deterministic");
+      assertEquals(osmoticCoefficient, phase.getOsmoticCoefficientOfWaterMolality(), 1.0e-12);
     }
   }
 
