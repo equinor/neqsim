@@ -9,8 +9,8 @@ import java.util.Arrays;
  * <p>
  * The function is evaluated on the absolute-temperature scale as
  * {@code a0 + a1(1/T - 1/Tr) + a2 ln(T/Tr) + a3(T - Tr) + a4(T^2 - Tr^2)
- * + a5(1/T^2 - 1/Tr^2)}. It follows the public-domain PHREEQC
- * {@code calc_pitz_param} convention and performs no unit or standard-state conversion.
+ * + a5(1/T^2 - 1/Tr^2)}. It follows the public-domain PHREEQC {@code calc_pitz_param} convention and performs no unit
+ * or standard-state conversion.
  * </p>
  */
 public final class PitzerTemperatureFunction implements Serializable {
@@ -63,8 +63,7 @@ public final class PitzerTemperatureFunction implements Serializable {
         + coefficients[2] * Math.log(temperature / referenceTemperature)
         + coefficients[3] * (temperature - referenceTemperature)
         + coefficients[4] * (temperature * temperature - referenceTemperature * referenceTemperature)
-        + coefficients[5]
-            * (inverseTemperature * inverseTemperature - inverseReference * inverseReference);
+        + coefficients[5] * (inverseTemperature * inverseTemperature - inverseReference * inverseReference);
   }
 
   /**
