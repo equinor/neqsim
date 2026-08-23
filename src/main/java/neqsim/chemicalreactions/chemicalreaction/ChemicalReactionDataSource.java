@@ -12,8 +12,11 @@ package neqsim.chemicalreactions.chemicalreaction;
  * @version 1.0
  */
 public enum ChemicalReactionDataSource {
-  /** General NeqSim reaction data used by electrolyte EOS and electrolyte GE systems. */
+  /** General NeqSim reaction data used by electrolyte EOS systems. */
   STANDARD("standard", "reactiondata"),
+
+  /** Molality-standard-state reaction data used by the Pitzer electrolyte GE model. */
+  PITZER("pitzer", "reactiondatapitzer"),
 
   /** Apparent-equilibrium-constant data used by the Kent-Eisenberg model. */
   KENT_EISENBERG("kent-eisenberg", "reactiondatakenteisenberg");
