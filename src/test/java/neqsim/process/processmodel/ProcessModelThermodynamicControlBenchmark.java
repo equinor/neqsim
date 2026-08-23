@@ -98,9 +98,17 @@ public final class ProcessModelThermodynamicControlBenchmark {
         + fixture.model.getLastMassClosureError() + fixture.model.getTotalFeedFlowRate();
   }
 
+  private static int parseIntOrDefault(String value, int defaultValue) {
+    try {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException exception) {
+      return defaultValue;
+    }
+  }
+
   public static void main(String[] args) {
-    int warmups = args.length > 0 ? Integer.parseInt(args[0]) : 8;
-    int measured = args.length > 1 ? Integer.parseInt(args[1]) : 20;
+    int warmups = args.length > 0 ? parseIntOrDefault(args[0], 8) : 8;
+    int measured = args.length > 1 ? parseIntOrDefault(args[1], 20) : 20;
     String mode = args.length > 2 ? args[2] : "stable";
     boolean cpa = "cpa".equals(mode);
     boolean nearby = "nearby".equals(mode);

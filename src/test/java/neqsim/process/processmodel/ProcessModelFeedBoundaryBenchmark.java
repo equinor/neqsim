@@ -131,9 +131,17 @@ public final class ProcessModelFeedBoundaryBenchmark {
     return sum;
   }
 
+  private static int parseIntOrDefault(String value, int defaultValue) {
+    try {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException exception) {
+      return defaultValue;
+    }
+  }
+
   public static void main(String[] args) {
-    int warmups = args.length > 0 ? Integer.parseInt(args[0]) : 100;
-    int measured = args.length > 1 ? Integer.parseInt(args[1]) : 1000;
+    int warmups = args.length > 0 ? parseIntOrDefault(args[0], 100) : 100;
+    int measured = args.length > 1 ? parseIntOrDefault(args[1], 1000) : 1000;
     String mode = args.length > 2 ? args[2] : "stable";
     Fixture fixture = createFixture();
     boolean nearby = "nearby".equals(mode);
