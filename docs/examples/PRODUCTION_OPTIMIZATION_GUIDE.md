@@ -45,6 +45,7 @@ This guide provides comprehensive examples for setting up and running production
 | [Multi-Objective Optimization](../process/optimization/multi-objective-optimization) | Pareto fronts and trade-offs |
 | [Flow Rate Optimization](../process/optimization/flow-rate-optimization) | FlowRateOptimizer and lift curves |
 | [Batch Studies](../process/optimization/batch-studies) | Parallel parameter sweeps |
+| [Industrial Process Optimization Baseline](../process/optimization/industrial-process-optimization-baseline) | Capability coverage, restriction gaps, and frozen large-plant benchmark contract |
 | [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment and bottleneck detection |
 
