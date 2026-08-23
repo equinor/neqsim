@@ -22,6 +22,8 @@ import neqsim.thermo.system.SystemPitzer;
  */
 class ChemicalReactionProvenanceTest {
   private static final double[] STANDARD_CO2_WATER = new double[] { 253.235548, -12865.665607, -39.440767, 0.0 };
+  private static final double[] PITZER_CO2_WATER = new double[] { 653.705141388, -23927.318205735, -108.892446382,
+      0.108492068 };
   private static final double[] KENT_CO2_WATER = new double[] { 231.465, -12092.1, -36.7816, 0.0 };
 
   /** Verify that Kent-Eisenberg explicitly selects its apparent-constant parameter set. */
@@ -47,10 +49,33 @@ class ChemicalReactionProvenanceTest {
     assertStandardSource(reactiveCo2WaterSystem(new SystemElectrolyteCPAstatoil(298.15, 1.01325)));
   }
 
-  /** Verify source and parameter provenance for the Pitzer electrolyte GE model. */
+  /** Verify source and molality-standard-state parameter provenance for the Pitzer electrolyte GE model. */
   @Test
-  void electrolyteGeUsesStandardReactionSource() {
-    assertStandardSource(reactiveCo2WaterSystem(new SystemPitzer(298.15, 1.01325)));
+  void electrolyteGeUsesDedicatedPitzerReactionSource() {
+    SystemInterface system = reactiveCo2WaterSystem(new SystemPitzer(298.15, 1.01325));
+
+    assertEquals(ChemicalReactionDataSource.PITZER, system.getChemicalReactionDataSource());
+    assertEquals(ChemicalReactionDataSource.PITZER, system.getChemicalReactionOperations().getReactionDataSource());
+    ChemicalReaction reaction = getCo2WaterReaction(system);
+    assertEquals("USGS-PHREEQC3-PlummerBusenberg1982-fit-0-90C", reaction.getReference());
+    assertArrayEquals(PITZER_CO2_WATER, reaction.getEquilibriumConstantCoefficients(), 1.0e-12);
+  }
+
+  /**
+   * Verify clone and serialization preservation of the Pitzer source.
+   *
+   * @throws Exception if Java serialization fails
+   */
+  @Test
+  void pitzerSourceSurvivesCloneAndSerialization() throws Exception {
+    SystemInterface original = reactiveCo2WaterSystem(new SystemPitzer(298.15, 1.01325));
+    SystemInterface cloned = original.clone();
+    SystemInterface restored = roundTrip(original);
+
+    assertEquals(ChemicalReactionDataSource.PITZER, cloned.getChemicalReactionOperations().getReactionDataSource());
+    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(cloned).getEquilibriumConstantCoefficients(), 1.0e-12);
+    assertEquals(ChemicalReactionDataSource.PITZER, restored.getChemicalReactionOperations().getReactionDataSource());
+    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(restored).getEquilibriumConstantCoefficients(), 1.0e-12);
   }
 
   /** Verify that callers cannot mutate stored equilibrium-constant coefficients. */
