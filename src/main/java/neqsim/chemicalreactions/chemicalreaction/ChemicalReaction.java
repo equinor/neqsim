@@ -518,3 +518,78 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   public void setRateFactor(double rateFactor) {
     this.rateFactor = rateFactor;
   }
+
+  /**
+   * Getter for property activationEnergy.
+   *
+   * @return Value of property activationEnergy.
+   */
+  public double getActivationEnergy() {
+    return activationEnergy;
+  }
+
+  /**
+   * Setter for property activationEnergy.
+   *
+   * @param activationEnergy New value of property activationEnergy.
+   */
+  public void setActivationEnergy(double activationEnergy) {
+    this.activationEnergy = activationEnergy;
+  }
+
+  /**
+   * Getter for property reactionHeat. Van't HOffs equation dh = d lnK/dT * R * T^2
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return Value of property reactionHeat.
+   */
+  public double getReactionHeat(PhaseInterface phase) {
+    double diffKt = -K[1] / Math.pow(phase.getTemperature(), 2.0) + K[2] / phase.getTemperature() + K[3];
+    double sign = shiftSignK ? -1.0 : 1.0;
+    return sign * diffKt * Math.pow(phase.getTemperature(), 2.0) * R;
+  }
+
+  /**
+   * Getter for property k.
+   *
+   * @return Value of property k.
+   */
+  public double[] getK() {
+    return this.K;
+  }
+
+  /**
+   * getK.
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @return a double
+   */
+  public double getK(PhaseInterface phase) {
+    double temperature = phase.getTemperature();
+    lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
+    if (shiftSignK) {
+      lnK = -lnK;
+    }
+    // System.out.println("K " + Math.exp(lnK));
+    return Math.exp(lnK);
+  }
+
+  /**
+   * Setter for property k.
+   *
+   * @param k New value of property k.
+   */
+  public void setK(double[] k) {
+    this.K = k;
+  }
+
+  /**
+   * setK.
+   *
+   * @param i a int
+   * @param Kd a double
+   */
+  public void setK(int i, double Kd) {
+    this.K[i] = Kd;
+  }
+}
