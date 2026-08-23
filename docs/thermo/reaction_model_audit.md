@@ -24,7 +24,9 @@ ChemicalReactionModelAudit.AuditComparison comparison =
     ChemicalReactionModelAudit.compare(cpa, pitzer);
 ```
 
-The audit reports the selected typed data source, reaction-quotient concentration basis, deterministic active-reaction list, stoichiometry, stored literature/data reference, reference temperature, and equilibrium-constant coefficients. The comparison separates concentration conventions, reactions present in only one model, and common reactions whose stored parameters differ.
+The audit reports the selected typed data source, reaction-quotient concentration basis, deterministic active-reaction list, stoichiometry, stored literature/data reference, reference temperature, equilibrium-constant coefficients, and the validation status declared by that model-specific data row. The comparison separates concentration conventions, reactions present in only one model, and common reactions whose stored parameters or validation declarations differ.
+
+Use `audit.getReactionsWithoutValidatedEvidence()` to list active rows that are not marked `VALIDATED`, and `audit.hasValidatedEvidenceForAllActiveReactions()` as a conservative publication gate. Individual reaction snapshots and `ChemicalReaction` objects expose `getValidationStatus()`. The status qualifies only the stored equilibrium-constant correlation for the selected source, standard state, and documented range; it does not prove complete finite-salinity speciation, phase equilibrium, or process performance.
 
 The API is deliberately read-only. It requires `chemicalReactionInit()` to have been called and never initializes reactions implicitly, runs a flash, or changes model state. It therefore adds no work to ordinary neutral PR/SRK/CPA calculations and no work to electrolyte calculations unless the audit is explicitly requested.
 
@@ -38,7 +40,9 @@ The three Pitzer correlations reproduce the analytical expressions distributed i
 
 NeqSim fits its existing four-coefficient natural-log form, `ln(K) = K1 + K2/T + K3 ln(T) + K4 T`, to the PHREEQC base-10 analytical expressions. Training temperatures are 0, 10, ..., 90 degC. Held-out validation temperatures are 5, 15, ..., 85 degC. Maximum held-out absolute errors are 0.000471 log10 units for CO2 dissociation, 0.000157 for bicarbonate dissociation, and 0.000192 for water dissociation; RMS errors are 0.000311, 0.000104, and 0.000127 log10 units, respectively. The declared validity range is 0-90 degC at the infinite-dilution thermodynamic standard state; Pitzer activity coefficients provide the finite-ionic-strength correction.
 
-No Pitzer binary interaction parameter was fitted or changed. Non-carbonate rows are copied from `REACTIONDATA.csv` to preserve compatibility but remain unvalidated for the Pitzer molality convention; their provenance must be established before model-specific parameter changes.
+No Pitzer binary interaction parameter was fitted or changed. `REACTIONDATAPITZER.csv` therefore marks only `CO2water`, `carbonate`, and `waterreac` as `VALIDATED`. All other rows are marked `UNVALIDATED` because they are compatibility copies from `REACTIONDATA.csv`; this includes currently active H2S and amine rows. The declaration is diagnostic and does not activate or deactivate a reaction, change a coefficient, or alter a solve path. Independent model-specific evidence must precede any change to those active sets or parameters.
+
+Legacy `STANDARD` and `KENT_EISENBERG` rows currently return `UNSPECIFIED`. That value means the table has not yet adopted the explicit declaration; it must not be interpreted as evidence that a row is invalid.
 
 ## Scientific use
 

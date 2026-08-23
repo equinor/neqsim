@@ -35,6 +35,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   double activationEnergy;
   double refT;
   String reference = "";
+  ChemicalReactionValidationStatus validationStatus = ChemicalReactionValidationStatus.UNSPECIFIED;
   double G = 0;
   double lnK = 0;
   int numberOfReactants = 0;
@@ -69,6 +70,24 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
       double activationEnergy, double refT, String reference) {
+    this(name, names, stocCoefs, K, r, activationEnergy, refT, reference, ChemicalReactionValidationStatus.UNSPECIFIED);
+  }
+
+  /**
+   * Constructor for a chemical reaction with parameter provenance and validation status.
+   *
+   * @param name reaction name
+   * @param names component names
+   * @param stocCoefs stoichiometric coefficients
+   * @param K equilibrium-constant correlation coefficients
+   * @param r rate factor
+   * @param activationEnergy activation energy
+   * @param refT reference temperature in kelvin
+   * @param reference literature or data reference stored with the parameters
+   * @param validationStatus model-specific validation status of the stored correlation
+   */
+  public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
+      double activationEnergy, double refT, String reference, ChemicalReactionValidationStatus validationStatus) {
     /*
      * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
      */
@@ -81,6 +100,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     this.refT = refT;
     this.activationEnergy = activationEnergy;
     this.reference = reference == null ? "" : reference;
+    this.validationStatus = validationStatus == null ? ChemicalReactionValidationStatus.UNSPECIFIED : validationStatus;
 
     System.arraycopy(names, 0, this.names, 0, names.length);
     System.arraycopy(stocCoefs, 0, this.stocCoefs, 0, stocCoefs.length);
@@ -118,6 +138,16 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public String getReference() {
     return reference == null ? "" : reference;
+  }
+
+  /**
+   * Get the model-specific validation status declared by the selected reaction-data source.
+   *
+   * @return declared validation status; old serialized objects return
+   * {@link ChemicalReactionValidationStatus#UNSPECIFIED}
+   */
+  public ChemicalReactionValidationStatus getValidationStatus() {
+    return validationStatus == null ? ChemicalReactionValidationStatus.UNSPECIFIED : validationStatus;
   }
 
   /**

@@ -58,6 +58,7 @@ class ChemicalReactionProvenanceTest {
     assertEquals(ChemicalReactionDataSource.PITZER, system.getChemicalReactionOperations().getReactionDataSource());
     ChemicalReaction reaction = getCo2WaterReaction(system);
     assertEquals("USGS-PHREEQC3-PlummerBusenberg1982-fit-0-90C", reaction.getReference());
+    assertEquals(ChemicalReactionValidationStatus.VALIDATED, reaction.getValidationStatus());
     assertArrayEquals(PITZER_CO2_WATER, reaction.getEquilibriumConstantCoefficients(), 1.0e-12);
   }
 
@@ -74,8 +75,10 @@ class ChemicalReactionProvenanceTest {
 
     assertEquals(ChemicalReactionDataSource.PITZER, cloned.getChemicalReactionOperations().getReactionDataSource());
     assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(cloned).getEquilibriumConstantCoefficients(), 1.0e-12);
+    assertEquals(ChemicalReactionValidationStatus.VALIDATED, getCo2WaterReaction(cloned).getValidationStatus());
     assertEquals(ChemicalReactionDataSource.PITZER, restored.getChemicalReactionOperations().getReactionDataSource());
     assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(restored).getEquilibriumConstantCoefficients(), 1.0e-12);
+    assertEquals(ChemicalReactionValidationStatus.VALIDATED, getCo2WaterReaction(restored).getValidationStatus());
   }
 
   /** Verify that callers cannot mutate stored equilibrium-constant coefficients. */
@@ -83,6 +86,7 @@ class ChemicalReactionProvenanceTest {
   void coefficientDiagnosticReturnsDefensiveCopy() {
     SystemInterface system = reactiveCo2WaterSystem(new SystemElectrolyteCPAstatoil(298.15, 1.01325));
     ChemicalReaction reaction = getCo2WaterReaction(system);
+    assertEquals(ChemicalReactionValidationStatus.UNSPECIFIED, reaction.getValidationStatus());
     double[] first = reaction.getEquilibriumConstantCoefficients();
     double[] second = reaction.getEquilibriumConstantCoefficients();
 

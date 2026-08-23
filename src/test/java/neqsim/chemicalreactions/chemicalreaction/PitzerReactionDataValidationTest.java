@@ -28,6 +28,7 @@ class PitzerReactionDataValidationTest {
   private static void validateReaction(SystemInterface system, String reactionName, ReferenceExpression reference) {
     ChemicalReaction reaction = system.getChemicalReactionOperations().getReactionList().getReaction(reactionName);
     assertNotNull(reaction);
+    assertEquals(ChemicalReactionValidationStatus.VALIDATED, reaction.getValidationStatus());
     for (double temperatureC : VALIDATION_TEMPERATURES_C) {
       double temperatureK = temperatureC + 273.15;
       system.setTemperature(temperatureK);
