@@ -9,15 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Builds the Phase 0 MCP test, guide, limitation, merged-foundation, and acceptance-fixture evidence inventory.
- *
- * <p>
- * Source evidence counts are frozen by the repository and protocol tests. Runtime limitation coverage is derived
- * directly from {@link BenchmarkTrust}, so tools that still use the generic trust fallback remain explicit gaps rather
- * than being presented as validated. The merged-foundation inventory records what campaign prerequisites #2874, #2875,
- * and #3152 actually established and the current source evidence that preserves those contracts. The acceptance fixture
- * catalog freezes the four public synthetic scales used by later Phase 0 measurement and maturity work.
- * </p>
+ * Builds the Phase 0 MCP test, guide, limitation, merged-foundation, acceptance, and campaign-matrix evidence inventory.
  */
 public final class McpEvidenceInventory {
 
@@ -31,22 +23,23 @@ public final class McpEvidenceInventory {
   /**
    * Builds the evidence inventory.
    *
-   * @return test, guide, limitation, foundation, and acceptance-fixture evidence
+   * @return current Phase 0 evidence
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.4");
+    inventory.addProperty("inventoryVersion", "1.5");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
     inventory.add("knownLimitations", buildKnownLimitations());
     inventory.add("acceptanceFixtures", McpAcceptanceFixtureCatalog.build());
     inventory.add("acceptanceBaselineContract", McpAcceptanceBaselineRunner.describe());
+    inventory.add("campaignMatrix", McpCampaignMatrix.build());
     inventory.addProperty("advisoryBoundary",
         "Evidence discovery does not certify a calculation or replace qualified engineering review");
     inventory.addProperty("complete", false);
     inventory.addProperty("completionReason",
-        "Published surfaces, merged foundations, per-tool trust coverage, four-scale fixtures, and the bounded baseline harness are inventoried, but confirmed trust gaps, traceability/maturity matrices, run-specific measurements, and explicit balance-evidence gaps remain incomplete");
+        "Published surfaces, merged foundations, per-tool trust coverage, four-scale fixtures, bounded baseline harness, and current-tree campaign matrices are inventoried, but confirmed trust gaps, run-specific numeric closure gaps, later-phase acceptance evidence, and merged-master completion audit remain incomplete");
     return inventory;
   }
 
@@ -82,19 +75,14 @@ public final class McpEvidenceInventory {
         "Four public synthetic acceptance scales and canonical execution routes"));
     entries.add(guide("acceptance-baselines", "neqsim-mcp-server/docs/ACCEPTANCE_BASELINES.md",
         "Bounded exact-run measurements, interpretation limits, and explicit evidence gaps"));
+    entries.add(guide("campaign-matrix", "neqsim-mcp-server/docs/CAMPAIGN_MATRIX.md",
+        "All 66 campaign criteria and discipline-level trust maturity with explicit gaps"));
     guides.addProperty("guideCount", entries.size());
     guides.add("entries", entries);
     return guides;
   }
 
-  /**
-   * Builds a criterion-level reconciliation of the three merged MCP campaign foundations.
-   *
-   * <p>
-   * This is deliberately evidence metadata, not a second implementation registry. Each entry names the merged PR and
-   * merge commit, the durable capability contract, representative current source, and the remaining campaign boundary.
-   * </p>
-   */
+  /** Builds a criterion-level reconciliation of the three merged MCP campaign foundations. */
   private static JsonObject buildMergedFoundations() {
     JsonObject foundations = new JsonObject();
     foundations.addProperty("complete", true);
@@ -132,7 +120,7 @@ public final class McpEvidenceInventory {
 
     foundations.add("entries", entries);
     foundations.addProperty("remainingPhase0Boundary",
-        "Close confirmed trust gaps where evidence exists, execute the four acceptance scales for measured baselines, complete traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
+        "Close defensible trust and numeric balance/report gaps, merge and re-audit the campaign matrices, and preserve explicit later-phase evidence gaps");
     return foundations;
   }
 
@@ -238,7 +226,7 @@ public final class McpEvidenceInventory {
     limitations.add("coverageRecords", coverageRecords);
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool now has an explicit coverage record; CONFIRMED_GAP records identify missing tool-specific trust evidence without implying validation");
+        "Every published tool has an explicit coverage record; CONFIRMED_GAP identifies missing tool-specific trust evidence without implying validation");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
