@@ -1955,7 +1955,8 @@ liquid boundary retained the heavy-phase vapor-like cubic root (`Z = 0.605203`) 
 log-fugacity residual was `1.25942` and total Gibbs energy was `3906.28697 J`, compared with `3734.24830 J` for the
 lower-root equilibrium.
 
-A bounded reciprocal ordinary/multiphase refinement now covers only neutral two-phase feeds above `50 bar` containing
+A bounded reciprocal ordinary/multiphase refinement now covers only neutral two-phase feeds at or above `50 bar`
+containing
 more than `0.01` overall hydrogen, at least one hydrocarbon, no other active non-inert component, and an incipient phase
 below `0.01`. It first retains the existing beta refinement and complete rollback behavior. An invalid endpoint may be
 replaced only by the reciprocal path when phase topology is preserved, all strict normalization, material-balance, and
