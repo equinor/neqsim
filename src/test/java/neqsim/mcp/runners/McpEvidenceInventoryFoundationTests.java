@@ -8,6 +8,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /** Tests Phase 0 foundation, trust-coverage, and acceptance-fixture evidence exposed by MCP capability discovery. */
 class McpEvidenceInventoryFoundationTests {
@@ -79,8 +80,9 @@ class McpEvidenceInventoryFoundationTests {
   }
 
   @Test
-  void testFourScaleAcceptanceCatalogIsDiscoverableFromEvidenceInventory() {
-    JsonObject inventory = McpEvidenceInventory.build();
+  void testFourScaleAcceptanceCatalogIsDiscoverableThroughCapabilities() {
+    JsonObject capabilities = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
     assertEquals("1.3", inventory.get("inventoryVersion").getAsString());
