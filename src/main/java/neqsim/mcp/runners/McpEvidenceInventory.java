@@ -13,10 +13,9 @@ import com.google.gson.JsonParser;
  *
  * <p>
  * Source evidence counts are frozen by the repository and protocol tests. Runtime limitation coverage is derived
- * directly from {@link BenchmarkTrust}. Every published tool is classified as either having tool-specific trust
- * metadata or an explicit confirmed gap, so a generic fallback is never mistaken for benchmark validation. The
- * merged-foundation inventory records what campaign prerequisites #2874, #2875, and #3152 actually established and the
- * current source evidence that preserves those contracts.
+ * directly from {@link BenchmarkTrust}, so tools that still use the generic trust fallback remain explicit gaps rather
+ * than being presented as validated. The merged-foundation inventory records what campaign prerequisites #2874, #2875,
+ * and #3152 actually established and the current source evidence that preserves those contracts.
  * </p>
  */
 public final class McpEvidenceInventory {
