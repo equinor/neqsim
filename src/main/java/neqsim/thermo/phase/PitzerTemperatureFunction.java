@@ -45,6 +45,31 @@ public final class PitzerTemperatureFunction implements Serializable {
   }
 
   /**
+   * Creates a temperature function from Kaasa (1998) Appendix F coefficient order.
+   *
+   * <p>
+   * Appendix F equation (F.1) lists coefficients as {@code [a,b,c,d,e,f]} for the
+   * constant, {@code (T-Tr)}, {@code (T^2-Tr^2)}, {@code (1/T-1/Tr)},
+   * {@code ln(T/Tr)}, and {@code (1/T^2-1/Tr^2)} terms. The internal PHREEQC order is
+   * therefore {@code [a,d,e,b,c,f]}. This factory performs only that permutation; it
+   * does not copy a source table or convert units, standard states, or parameter families.
+   * </p>
+   *
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients exactly six finite coefficients in Kaasa Appendix F order
+   * @return immutable temperature function in the internal PHREEQC order
+   */
+  public static PitzerTemperatureFunction fromKaasa1998(double referenceTemperature,
+      double[] coefficients) {
+    if (coefficients == null || coefficients.length != 6) {
+      throw new IllegalArgumentException("Kaasa Pitzer temperature function requires exactly six coefficients");
+    }
+    return new PitzerTemperatureFunction(referenceTemperature,
+        new double[] {coefficients[0], coefficients[3], coefficients[4], coefficients[1],
+            coefficients[2], coefficients[5]});
+  }
+
+  /**
    * Evaluates the parameter at a temperature.
    *
    * @param temperature temperature in K
