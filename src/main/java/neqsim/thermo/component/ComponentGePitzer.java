@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PitzerElectrostaticMixing;
 
 /**
  * Component class for the Pitzer model.
@@ -208,6 +209,30 @@ public class ComponentGePitzer extends ComponentGE {
     }
 
     // Theta and psi mixing terms for same-sign ion interactions
+    double fEthetaPrime = 0.0;
+    double[] electrostaticMixing = null;
+    boolean hasElectrostaticMixing = pitz.hasUnequalChargeSameSignPair();
+    if (hasElectrostaticMixing) {
+      for (int i = 0; i < numberOfComponents; i++) {
+        double chargei = phase.getComponent(i).getIonicCharge();
+        if (Math.abs(chargei) < 0.5) {
+          continue;
+        }
+        double m_i = phase.getComponent(i).getMolality(phase);
+        for (int j = i + 1; j < numberOfComponents; j++) {
+          double chargej = phase.getComponent(j).getIonicCharge();
+          if (chargei * chargej <= 0 || Math.abs(chargei - chargej) < 1.0e-12) {
+            continue;
+          }
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(chargei, chargej, I, Aphi, electrostaticMixing);
+          fEthetaPrime += m_i * phase.getComponent(j).getMolality(phase) * electrostaticMixing[1];
+        }
+      }
+    }
+
     for (int j = 0; j < numberOfComponents; j++) {
       if (j == componentNumber) {
         continue;
@@ -219,7 +244,15 @@ public class ComponentGePitzer extends ComponentGE {
       }
       double m_j = phase.getComponent(j).getMolality(phase);
       double thetaij = pitz.getThetaij(componentNumber, j);
-      sum += m_j * 2.0 * thetaij;
+      double eTheta = 0.0;
+      if (hasElectrostaticMixing && Math.abs(charge - chargej) >= 1.0e-12) {
+        if (electrostaticMixing == null) {
+          electrostaticMixing = new double[2];
+        }
+        PitzerElectrostaticMixing.calculate(charge, chargej, I, Aphi, electrostaticMixing);
+        eTheta = electrostaticMixing[0];
+      }
+      sum += m_j * 2.0 * (thetaij + eTheta);
 
       // Psi ternary terms: sum over opposite-sign ions
       for (int k = 0; k < numberOfComponents; k++) {
@@ -234,7 +267,7 @@ public class ComponentGePitzer extends ComponentGE {
     }
 
     // ln(gamma_M) = z_M^2 * F + binary/mixing terms
-    double F = fDH + fBprime;
+    double F = fDH + fBprime + fEthetaPrime;
     lngamma = charge * charge * F + sum;
     gamma = Math.exp(lngamma);
     return gamma;
@@ -342,6 +375,8 @@ public class ComponentGePitzer extends ComponentGE {
 
     // Theta and psi contributions to osmotic coefficient
     double thetaPsiSum = 0.0;
+    double[] electrostaticMixing = null;
+    boolean hasElectrostaticMixing = pitz.hasUnequalChargeSameSignPair();
     // Cation-cation theta + psi
     for (int ic1 = 0; ic1 < numberOfComponents; ic1++) {
       double zc1 = phase.getComponent(ic1).getIonicCharge();
@@ -356,7 +391,15 @@ public class ComponentGePitzer extends ComponentGE {
         }
         double mc2 = phase.getComponent(ic2).getMolality(phase);
         double thetaCC = pitz.getThetaij(ic1, ic2);
-        thetaPsiSum += mc1 * mc2 * thetaCC;
+        double electrostaticPhi = 0.0;
+        if (hasElectrostaticMixing && Math.abs(zc1 - zc2) >= 1.0e-12) {
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(zc1, zc2, I, Aphi, electrostaticMixing);
+          electrostaticPhi = electrostaticMixing[0] + I * electrostaticMixing[1];
+        }
+        thetaPsiSum += mc1 * mc2 * (thetaCC + electrostaticPhi);
         // Psi cation-cation-anion
         for (int ia = 0; ia < numberOfComponents; ia++) {
           double za = phase.getComponent(ia).getIonicCharge();
@@ -382,7 +425,15 @@ public class ComponentGePitzer extends ComponentGE {
         }
         double ma2 = phase.getComponent(ia2).getMolality(phase);
         double thetaAA = pitz.getThetaij(ia1, ia2);
-        thetaPsiSum += ma1 * ma2 * thetaAA;
+        double electrostaticPhi = 0.0;
+        if (hasElectrostaticMixing && Math.abs(za1 - za2) >= 1.0e-12) {
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(za1, za2, I, Aphi, electrostaticMixing);
+          electrostaticPhi = electrostaticMixing[0] + I * electrostaticMixing[1];
+        }
+        thetaPsiSum += ma1 * ma2 * (thetaAA + electrostaticPhi);
         // Psi anion-anion-cation
         for (int ic = 0; ic < numberOfComponents; ic++) {
           double zc = phase.getComponent(ic).getIonicCharge();

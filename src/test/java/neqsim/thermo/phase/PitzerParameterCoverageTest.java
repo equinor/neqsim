@@ -74,6 +74,23 @@ public class PitzerParameterCoverageTest extends neqsim.NeqSimTest {
     assertTrue("test-explicit-mixed-v1".equals(restored.getParameterDatasetId()));
   }
 
+  /** Verify the unequal-charge fast-path cache follows component topology and clone state. */
+  @Test
+  public void testUnequalChargeTopologyFastPath() {
+    SystemInterface equalChargeSystem = createMixedSystem(0.5);
+    PhasePitzer equalChargePhase = (PhasePitzer) equalChargeSystem.getPhase(1);
+    assertFalse(equalChargePhase.hasUnequalChargeSameSignPair());
+
+    SystemInterface unequalChargeSystem = new SystemPitzer(298.15, 1.01325);
+    unequalChargeSystem.addComponent("water", 55.508);
+    unequalChargeSystem.addComponent("Na+", 0.2);
+    unequalChargeSystem.addComponent("Ca++", 0.4);
+    unequalChargeSystem.addComponent("Cl-", 1.0);
+    PhasePitzer unequalChargePhase = (PhasePitzer) unequalChargeSystem.getPhase(1);
+    assertTrue(unequalChargePhase.hasUnequalChargeSameSignPair());
+    assertTrue(unequalChargePhase.clone().hasUnequalChargeSameSignPair());
+  }
+
   /**
    * Creates a water/Na/K/Cl phase and loads its binary database parameters.
    *

@@ -69,6 +69,8 @@ public class PhasePitzer extends PhaseGE {
   private transient PitzerParameterCoverage cachedCoverage;
   /** Whether the current initialized primary-salt state passed the coverage gate. */
   private transient boolean parameterCoverageValidated;
+  /** Cached component-topology state: zero unknown, one no unequal same-sign pair, two pair present. */
+  private transient byte unequalChargeSameSignPairState;
 
   /** Constructor for PhasePitzer. */
   public PhasePitzer() {
@@ -102,6 +104,7 @@ public class PhasePitzer extends PhaseGE {
     clonedPhase.cachedCoverageRevision = Long.MIN_VALUE;
     clonedPhase.cachedCoverage = null;
     clonedPhase.parameterCoverageValidated = false;
+    clonedPhase.unequalChargeSameSignPairState = unequalChargeSameSignPairState;
     return clonedPhase;
   }
 
@@ -119,6 +122,38 @@ public class PhasePitzer extends PhaseGE {
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGePitzer(name, moles, molesInPhase, compNumber);
+    unequalChargeSameSignPairState = 0;
+  }
+
+  /**
+   * Returns whether the component topology contains a same-sign pair with unequal ionic charges.
+   *
+   * <p>
+   * The result depends only on immutable component charge identities, not on phase composition, so it is cached after
+   * the first query and invalidated only when a component is added. Ordinary binary electrolytes use this fast path to
+   * avoid entering the higher-order electrostatic kernel.
+   * </p>
+   *
+   * @return {@code true} when an unequal-charge cation-cation or anion-anion pair exists
+   */
+  public boolean hasUnequalChargeSameSignPair() {
+    if (unequalChargeSameSignPairState == 0) {
+      unequalChargeSameSignPairState = 1;
+      for (int i = 0; i < numberOfComponents; i++) {
+        double chargei = componentArray[i].getIonicCharge();
+        if (Math.abs(chargei) < 0.5) {
+          continue;
+        }
+        for (int j = i + 1; j < numberOfComponents; j++) {
+          double chargej = componentArray[j].getIonicCharge();
+          if (chargei * chargej > 0.0 && Math.abs(chargei - chargej) >= 1.0e-12) {
+            unequalChargeSameSignPairState = 2;
+            return true;
+          }
+        }
+      }
+    }
+    return unequalChargeSameSignPairState == 2;
   }
 
   /** {@inheritDoc} */
@@ -866,7 +901,7 @@ public class PhasePitzer extends PhaseGE {
       }
     }
 
-    double thetaPsiSum = getThetaPsiOsmoticContribution();
+    double thetaPsiSum = getThetaPsiOsmoticContribution(ionicStrength, aPhi);
     return 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum);
   }
 
@@ -921,10 +956,14 @@ public class PhasePitzer extends PhaseGE {
   /**
    * Calculates theta and psi contributions to the osmotic coefficient.
    *
-   * @return theta and psi contribution to the Pitzer osmotic-coefficient sum
+   * @param ionicStrength molal ionic strength in mol/kg
+   * @param aPhi Pitzer Debye-Huckel osmotic coefficient parameter
+   * @return theta, psi, and nonsymmetric electrostatic contribution to the Pitzer osmotic-coefficient sum
    */
-  private double getThetaPsiOsmoticContribution() {
+  private double getThetaPsiOsmoticContribution(double ionicStrength, double aPhi) {
     double thetaPsiSum = 0.0;
+    double[] electrostaticMixing = null;
+    boolean hasElectrostaticMixing = hasUnequalChargeSameSignPair();
     for (int cation1 = 0; cation1 < numberOfComponents; cation1++) {
       if (getComponent(cation1).getIonicCharge() <= 0.0) {
         continue;
@@ -935,7 +974,17 @@ public class PhasePitzer extends PhaseGE {
           continue;
         }
         double molalityCation2 = getComponent(cation2).getMolality(this);
-        thetaPsiSum += molalityCation1 * molalityCation2 * getThetaij(cation1, cation2);
+        double electrostaticPhi = 0.0;
+        double cation2Charge = getComponent(cation2).getIonicCharge();
+        if (hasElectrostaticMixing && Math.abs(getComponent(cation1).getIonicCharge() - cation2Charge) >= 1.0e-12) {
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(getComponent(cation1).getIonicCharge(), cation2Charge, ionicStrength,
+              aPhi, electrostaticMixing);
+          electrostaticPhi = electrostaticMixing[0] + ionicStrength * electrostaticMixing[1];
+        }
+        thetaPsiSum += molalityCation1 * molalityCation2 * (getThetaij(cation1, cation2) + electrostaticPhi);
         for (int anion = 0; anion < numberOfComponents; anion++) {
           if (getComponent(anion).getIonicCharge() >= 0.0) {
             continue;
@@ -956,7 +1005,17 @@ public class PhasePitzer extends PhaseGE {
           continue;
         }
         double molalityAnion2 = getComponent(anion2).getMolality(this);
-        thetaPsiSum += molalityAnion1 * molalityAnion2 * getThetaij(anion1, anion2);
+        double electrostaticPhi = 0.0;
+        double anion2Charge = getComponent(anion2).getIonicCharge();
+        if (hasElectrostaticMixing && Math.abs(getComponent(anion1).getIonicCharge() - anion2Charge) >= 1.0e-12) {
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(getComponent(anion1).getIonicCharge(), anion2Charge, ionicStrength, aPhi,
+              electrostaticMixing);
+          electrostaticPhi = electrostaticMixing[0] + ionicStrength * electrostaticMixing[1];
+        }
+        thetaPsiSum += molalityAnion1 * molalityAnion2 * (getThetaij(anion1, anion2) + electrostaticPhi);
         for (int cation = 0; cation < numberOfComponents; cation++) {
           if (getComponent(cation).getIonicCharge() <= 0.0) {
             continue;
