@@ -268,8 +268,7 @@ public final class ChemicalReactionModelAudit {
      */
     public boolean isEquivalent() {
       return sameReactionDataSource && sameReactionConcentrationBasis && reactionsOnlyInFirst.isEmpty()
-          && reactionsOnlyInSecond.isEmpty()
-          && parameterDifferences.isEmpty();
+          && reactionsOnlyInSecond.isEmpty() && parameterDifferences.isEmpty();
     }
 
     private static List<String> immutableCopy(List<String> values) {

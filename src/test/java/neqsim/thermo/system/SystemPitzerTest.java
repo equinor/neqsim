@@ -259,14 +259,12 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double chlorideMolality = phase.getComponent("Cl-").getMolality(phase);
     double sodiumGamma = phase.getActivityCoefficient(phase.getComponent("Na+").getComponentNumber(), waterNumber);
     double chlorideGamma = phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterNumber);
-    double expectedLogQuotient = Math.log(sodiumMolality * sodiumGamma)
-        + Math.log(chlorideMolality * chlorideGamma);
+    double expectedLogQuotient = Math.log(sodiumMolality * sodiumGamma) + Math.log(chlorideMolality * chlorideGamma);
 
     ChemicalReaction ionicProduct = new ChemicalReaction("PitzerMolalityProbe", new String[] { "Na+", "Cl-" },
         new double[] { 1.0, 1.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 }, 0.0, 0.0, 298.15);
 
-    assertEquals(ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY,
-        system.getChemicalReactionConcentrationBasis());
+    assertEquals(ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY, system.getChemicalReactionConcentrationBasis());
     assertEquals(sodiumMolality * chlorideMolality, ionicProduct.calcKx(system, 1), 1.0e-12);
     assertEquals(expectedLogQuotient, ionicProduct.calcLogReactionQuotient(system, 1), 1.0e-12);
   }
