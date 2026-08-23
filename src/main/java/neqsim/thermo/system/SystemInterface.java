@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
@@ -664,6 +665,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public default ChemicalReactionDataSource getChemicalReactionDataSource() {
     return ChemicalReactionDataSource.STANDARD;
+  }
+
+  /**
+   * Get the concentration basis used to evaluate chemical-reaction quotients.
+   *
+   * @return reaction concentration basis used by chemical equilibrium
+   */
+  public default ChemicalReactionConcentrationBasis getChemicalReactionConcentrationBasis() {
+    return ChemicalReactionConcentrationBasis.MOLE_FRACTION;
   }
 
   /**

@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PhaseSrkEos;
 
@@ -65,6 +66,12 @@ public class SystemPitzer extends SystemEosGE {
     for (int i = 1; i < numberOfPhases; i++) {
       phaseArray[i].initRefPhases(false);
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ChemicalReactionConcentrationBasis getChemicalReactionConcentrationBasis() {
+    return ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY;
   }
 
   /** {@inheritDoc} */
