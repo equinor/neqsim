@@ -92,6 +92,11 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
     phase.setPhreeqcBinaryTemperatureCoefficients(calcium, chloride, REFERENCE_TEMPERATURE,
         zeros, zeros, COEFFICIENTS);
 
+    assertEquals(COEFFICIENTS[0],
+        phase.getCphiij(sodium, chloride, REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(COEFFICIENTS[0],
+        phase.getCphiij(calcium, chloride, REFERENCE_TEMPERATURE), 0.0);
+
     double expectedCphi = -0.11371073586719137;
     assertEquals(expectedCphi, phase.getCphiij(sodium, chloride, 373.15), 2.0e-15);
     assertEquals(expectedCphi, phase.getCphiij(calcium, chloride, 373.15), 2.0e-15);
