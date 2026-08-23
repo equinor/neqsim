@@ -274,8 +274,7 @@ pitzer.addComponent("methane", 5.0);
 pitzer.addComponent("CO2", 0.05);
 pitzer.addComponent("n-heptane", 2.0);
 pitzer.addComponent("water", 55.5);
-pitzer.addComponent("Ca++", 1.0e-4);
-pitzer.addComponent("Na+", 1.0e-3);
+pitzer.addComponent("Ca++", 6.0e-4);
 pitzer.addComponent("Cl-", 2.0e-4);
 pitzer.addComponent("HCO3-", 1.0e-3);
 pitzer.chemicalReactionInit();
@@ -291,6 +290,15 @@ double calciteScalePotential = ops.getRelativeScalePotential("CaCO3");
 ```
 
 The example couples SRK gas and oil phases to Pitzer aqueous chemistry. Remove `n-heptane` for a gas-aqueous case.
+Its ionic feed is electroneutral: `2 m(Ca++) = m(Cl-) + m(HCO3-)`. The primary-salt coverage topology is therefore
+the qualified binary Ca/Cl pair; bicarbonate remains part of the reactive carbonate subsystem.
+
+Do not extend this fixture to a mixed primary salt by adding Na, Ba, Sr, Mg, sulfate, or another ion without defining
+the complete binary, same-sign `theta`, and ternary `psi` family from one convention-mapped dataset.
+`PhasePitzer.getPitzerParameterCoverage()` reports the exact missing tuples, and standard initialization fails closed
+when a mixed primary-salt topology is incomplete. An explicit zero is a scientific parameter definition, not a
+placeholder.
+
 The returned value is the calcite saturation ratio, where values above one indicate thermodynamic supersaturation.
 It does not calculate precipitated mass or deposition kinetics. The fixed-role hybrid flash currently rejects explicit
 solid- and wax-phase checks.

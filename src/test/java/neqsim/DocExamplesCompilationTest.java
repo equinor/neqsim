@@ -778,8 +778,7 @@ public class DocExamplesCompilationTest {
     pitzer.addComponent("CO2", 0.05);
     pitzer.addComponent("n-heptane", 2.0);
     pitzer.addComponent("water", 55.5);
-    pitzer.addComponent("Ca++", 1.0e-4);
-    pitzer.addComponent("Na+", 1.0e-3);
+    pitzer.addComponent("Ca++", 6.0e-4);
     pitzer.addComponent("Cl-", 2.0e-4);
     pitzer.addComponent("HCO3-", 1.0e-3);
     pitzer.chemicalReactionInit();
