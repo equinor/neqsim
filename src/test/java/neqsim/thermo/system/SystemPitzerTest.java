@@ -240,6 +240,27 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(1.0, gammaNa * naMolality * gammaCl * clMolality / naclKsp, 1.0e-3);
   }
 
+  /** Pitzer molality is solute amount per kilogram of water, not per kilogram of solution. */
+  @Test
+  public void testMolalityUsesWaterSolventMass() {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+
+    PhaseInterface phase = system.getPhase(1);
+    double waterMassKg = phase.getComponent("water").getNumberOfMolesInPhase()
+        * phase.getComponent("water").getMolarMass();
+    double expectedMolality = 1.0 / waterMassKg;
+
+    assertEquals(expectedMolality, phase.getComponent("Na+").getMolality(phase), 1.0e-12);
+    assertEquals(expectedMolality, phase.getComponent("Cl-").getMolality(phase), 1.0e-12);
+    assertEquals(expectedMolality, ((PhasePitzer) phase).getIonicStrength(), 1.0e-12);
+  }
+
   /**
    * Verify NaCl mean ionic activity and osmotic coefficients against standard Pitzer literature values at 25 C.
    */
