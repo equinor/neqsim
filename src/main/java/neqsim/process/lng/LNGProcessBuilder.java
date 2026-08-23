@@ -389,19 +389,28 @@ public class LNGProcessBuilder {
    */
   private LNGProcessModel buildC3MR() {
     BuildContext context = newContext();
+    // Preserve the seeded main-exchanger tear state until the first recycle pass, as in
+    // the SMR route. Graph scheduling would otherwise evaluate the JT valve first.
+    context.process.setUseOptimizedExecution(false);
 
-    Stream propaneSuction = createPureRefrigerant(name + " propane suction", "propane", -35.0, 1.5,
-        context.feedFlowKgPerHour * 1.25);
+    // At 1.5 bara the -35 C pure-propane suction is liquid, so the suction scrubber
+    // produces an empty gas stream. A slightly lower pressure supplies vapor to the
+    // compressors, while the larger circulation rate covers both precooler hot streams.
+    Stream propaneSuction = createPureRefrigerant(name + " propane suction", "propane", -35.0, 1.2,
+        context.feedFlowKgPerHour * 2.5);
     context.process.add(propaneSuction);
     CompressionTrain propaneTrain = addTwoStageCompression(context, name + " propane", propaneSuction, 15.0, 0.80);
 
     ThrottlingValve propaneValve = new ThrottlingValve(name + " propane JT valve", propaneTrain.outlet);
-    propaneValve.setOutletPressure(1.5, "bara");
+    propaneValve.setOutletPressure(1.2, "bara");
     context.process.add(propaneValve);
 
+    // Keep the cold MR return vapor at the suction scrubber. At the former 4 bara
+    // setting it partially condensed during recycle convergence, silently removing
+    // refrigerant inventory through the scrubber liquid outlet.
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.04, 0.43, 0.36, 0.17 }, 20.0, 4.0,
-        context.feedFlowKgPerHour * 1.75);
+        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.04, 0.43, 0.36, 0.17 }, 20.0,
+        0.75, context.feedFlowKgPerHour * 1.75);
     context.process.add(mrSuction);
     CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 45.0, compressorEfficiency);
 
@@ -419,7 +428,7 @@ public class LNGProcessBuilder {
     mche.addInStreamMSHE(precooler.getOutStream(1), "hot", null);
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
-    mrValve.setOutletPressure(4.0, "bara");
+    mrValve.setOutletPressure(0.75, "bara");
     initializeExpansionInlet(mche.getOutStream(1), mrExpansionInletSeedTemperatureC, 45.0);
     mrValve.run();
     initializeColdSideWarmStart(mrValve.getOutletStream(), mrExpansionInletSeedTemperatureC,
