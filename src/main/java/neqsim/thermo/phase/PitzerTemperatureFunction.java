@@ -18,6 +18,8 @@ public final class PitzerTemperatureFunction implements Serializable {
   private static final long serialVersionUID = 1000L;
   /** PHREEQC treats temperatures within this distance of the reference as identical. */
   private static final double REFERENCE_TOLERANCE_K = 1.0e-3;
+  /** Kaasa Appendix F defines coefficient a at 25 degrees Celsius. */
+  private static final double KAASA_REFERENCE_TEMPERATURE_K = 298.15;
 
   private final double referenceTemperature;
   private final double[] coefficients;
@@ -54,11 +56,10 @@ public final class PitzerTemperatureFunction implements Serializable {
    * table or convert units, standard states, or parameter families.
    * </p>
    *
-   * @param referenceTemperature reference temperature in K
    * @param coefficients exactly six finite coefficients in Kaasa Appendix F order
    * @return immutable temperature function in the internal PHREEQC order
    */
-  public static PitzerTemperatureFunction fromKaasa1998(double referenceTemperature, double[] coefficients) {
+  public static PitzerTemperatureFunction fromKaasa1998(double[] coefficients) {
     if (coefficients == null || coefficients.length != 6) {
       throw new IllegalArgumentException("Kaasa Pitzer temperature function requires exactly six coefficients");
     }
