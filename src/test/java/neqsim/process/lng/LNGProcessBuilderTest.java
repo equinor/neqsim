@@ -86,6 +86,28 @@ class LNGProcessBuilderTest {
   }
 
   @Test
+  void testC3MrRouteRunsForPublicFeedReproduction() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 60.0);
+    fluid.addComponent("nitrogen", 0.005);
+    fluid.addComponent("methane", 0.890);
+    fluid.addComponent("ethane", 0.065);
+    fluid.addComponent("propane", 0.025);
+    fluid.addComponent("i-butane", 0.007);
+    fluid.addComponent("n-butane", 0.008);
+    fluid.setMixingRule("classic");
+
+    LNGProcessModel model = new LNGProcessBuilder().setName("C3MR reproduction").setCycle(LNGProcessCycle.C3MR)
+        .setFeedFluid(fluid).setFeedFlowRate(20000.0).setFeedTemperature(25.0).setFeedPressure(60.0)
+        .setProductPressure(1.20).setTargetLiquefactionTemperature(-155.0).setMinimumApproach(3.0).setNumberOfZones(12)
+        .setAdaptiveRefinement(true).setUseFlashWarmStart(true).setCompressorEfficiency(0.78).build();
+
+    LNGProcessModel.Result result = model.run();
+
+    assertTrue(Double.isFinite(result.getLNGMassFlowKgPerHour()));
+    assertTrue(result.getLNGMassFlowKgPerHour() > 0.0);
+  }
+
+  @Test
   void testAcceptsLiveNeqSimFeedStream() {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 60.0);
     fluid.addComponent("methane", 0.92);
