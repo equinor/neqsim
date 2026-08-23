@@ -61,8 +61,9 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
       system.addComponent("n-heptane", 2.0);
     }
     system.addComponent("water", 55.5);
-    system.addComponent("Ca++", 1.0e-4);
-    system.addComponent("Na+", 1.0e-3);
+    // The feed is electrically neutral, while the primary-salt coverage topology remains
+    // the qualified binary Ca++/Cl- pair.
+    system.addComponent("Ca++", 6.0e-4);
     system.addComponent("Cl-", 2.0e-4);
     system.addComponent("HCO3-", 1.0e-3);
     system.chemicalReactionInit();
