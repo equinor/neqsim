@@ -1948,6 +1948,27 @@ must satisfy the same normalization, material-balance, fugacity, property, repea
 disappearance, and reappearance gates listed above. Non-hydrogen feeds, hydrogen at or below one mole percent, and the
 established pressure-at-or-above-50-bar path are unchanged.
 
+The remaining `59.9 atm` hydrogen+methane point also qualifies the established high-pressure path at both calculated
+phase boundaries. Before the high-pressure boundary refinement, the ordinary SRK result `1e-4` inside the calculated
+liquid boundary retained the heavy-phase vapor-like cubic root (`Z = 0.605203`) instead of the lower liquid root
+(`Z = 0.256018`). The returned phase fractions and compositions were normalized and material-balanced, but the maximum
+log-fugacity residual was `1.25942` and total Gibbs energy was `3906.28697 J`, compared with `3734.24830 J` for the
+lower-root equilibrium.
+
+A bounded reciprocal ordinary/multiphase refinement now covers only neutral two-phase feeds above `50 bar` containing
+more than `0.01` overall hydrogen, at least one hydrocarbon, no other active non-inert component, and an incipient phase
+below `0.01`. It first retains the existing beta refinement and complete rollback behavior. An invalid endpoint may be
+replaced only by the reciprocal path when phase topology is preserved, all strict normalization, material-balance, and
+fugacity checks pass, and Gibbs energy is not increased. The corrected SRK residual is `1.63e-12`; PR remains within
+`1.00e-12`. The five-point SRK/PR matrix now checks compositions `1e-4` inside and outside both model boundaries, and
+the `40.2 atm` and `59.9 atm` points both cover poor initialization, deterministic repeat, phase disappearance, and
+reappearance.
+
+This is a correctness fallback, not a performance optimization. A constrained fresh-system probe (20 warmups and five
+blocks of 30 flashes) measured the corrected SRK boundary at about `8.5 ms/flash`, versus `4.3-5.4 ms/flash` for the
+invalid higher-root baseline. The PR boundary and adjacent retained one-phase controls were within run-to-run noise.
+Common flashes return before the hydrogen/high-pressure/incipient-phase screen.
+
 ---
 
 ## 7. References
