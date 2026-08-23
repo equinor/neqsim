@@ -138,6 +138,20 @@ One record is emitted for every case, mode, candidate, and repetition. It must c
 Unknown metrics are recorded as unavailable with a reason; they are never written as zero. A
 benchmark PR must preserve raw machine-readable records and a concise human-readable comparison.
 
+## Executed S/M baseline
+
+Cases S and M now have a maintained test-only harness and a five-fork reference record at exact
+commit `5a851750f8d12b3a598a87da0acadb3faef8b4e6`. Case M contains 27 units, three parallel
+compression trains, and one tail recycle. The harness exercises cold, unchanged, nearby-state,
+constraint-change, discrete-line-up, restoration, and non-finite-candidate rejection modes without
+changing production execution or solver behavior.
+
+See the [Industrial S/M Benchmark Evidence](industrial-sm-benchmark) for the exact command,
+environment, raw samples, acceptance criteria, and unavailable metrics. The record intentionally
+does not claim the complete M bottleneck-shift requirement: it observes an export-pipe constraint
+and a controlled installed feed-pipe limit, while the ordered piping/compressor/separator shift
+remains dependent on the next stable plant constraint-identity increment.
+
 ## Acceptance gates for later increments
 
 A later implementation may claim improvement only when all applicable gates pass:
