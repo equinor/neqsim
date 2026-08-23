@@ -439,7 +439,7 @@ public class PhasePitzer extends PhaseGE {
    * @return beta0 at temperature T
    */
   public double getBeta0ij(int i, int j, double TK) {
-    PitzerTemperatureFunction function = getTemperatureFunction(pairTemperatureKey("B0", i, j));
+    PitzerTemperatureFunction function = getPairTemperatureFunction("B0", i, j);
     if (function != null) {
       return function.valueAt(TK);
     }
@@ -462,7 +462,7 @@ public class PhasePitzer extends PhaseGE {
    * @return beta1 at temperature T
    */
   public double getBeta1ij(int i, int j, double TK) {
-    PitzerTemperatureFunction function = getTemperatureFunction(pairTemperatureKey("B1", i, j));
+    PitzerTemperatureFunction function = getPairTemperatureFunction("B1", i, j);
     if (function != null) {
       return function.valueAt(TK);
     }
@@ -485,7 +485,7 @@ public class PhasePitzer extends PhaseGE {
    */
   public double getCphiij(int i, int j, double TK) {
     PitzerTemperatureFunction function =
-        getTemperatureFunction(pairTemperatureKey("CPHI", i, j));
+        getPairTemperatureFunction("CPHI", i, j);
     if (function != null) {
       return function.valueAt(TK);
     }
@@ -618,7 +618,7 @@ public class PhasePitzer extends PhaseGE {
    * @return beta2 parameter at temperature
    */
   public double getBeta2ij(int i, int j, double temperature) {
-    PitzerTemperatureFunction function = getTemperatureFunction(pairTemperatureKey("B2", i, j));
+    PitzerTemperatureFunction function = getPairTemperatureFunction("B2", i, j);
     return function == null ? beta2[i][j] : function.valueAt(temperature);
   }
 
@@ -656,7 +656,7 @@ public class PhasePitzer extends PhaseGE {
    */
   public double getThetaij(int i, int j, double temperature) {
     PitzerTemperatureFunction function =
-        getTemperatureFunction(pairTemperatureKey("THETA", i, j));
+        getPairTemperatureFunction("THETA", i, j);
     return function == null ? theta[i][j] : function.valueAt(temperature);
   }
 
@@ -699,7 +699,7 @@ public class PhasePitzer extends PhaseGE {
    */
   public double getPsiijk(int i, int j, int k, double temperature) {
     PitzerTemperatureFunction function =
-        getTemperatureFunction(tripleTemperatureKey("PSI", i, j, k));
+        getTripleTemperatureFunction("PSI", i, j, k);
     return function == null ? psi[i][j][k] : function.valueAt(temperature);
   }
 
@@ -1344,13 +1344,24 @@ public class PhasePitzer extends PhaseGE {
     hasTemperatureFunctions = true;
   }
 
-  /** Returns a sparse temperature function without a map lookup for legacy datasets. */
-  private PitzerTemperatureFunction getTemperatureFunction(String key) {
+  /** Returns a binary temperature function without key allocation for legacy datasets. */
+  private PitzerTemperatureFunction getPairTemperatureFunction(String family, int first,
+      int second) {
     if (!hasTemperatureFunctions) {
       return null;
     }
     ensureTemperatureFunctions();
-    return temperatureFunctions.get(key);
+    return temperatureFunctions.get(pairTemperatureKey(family, first, second));
+  }
+
+  /** Returns a ternary temperature function without key allocation for legacy datasets. */
+  private PitzerTemperatureFunction getTripleTemperatureFunction(String family, int first,
+      int second, int third) {
+    if (!hasTemperatureFunctions) {
+      return null;
+    }
+    ensureTemperatureFunctions();
+    return temperatureFunctions.get(tripleTemperatureKey(family, first, second, third));
   }
 
   /** Ensures temperature-function state exists for objects read from older serialized forms. */
