@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -238,6 +240,33 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double naclKsp = 92.78 - 0.407 * 298.15 + 0.000747 * 298.15 * 298.15;
 
     assertEquals(1.0, gammaNa * naMolality * gammaCl * clMolality / naclKsp, 1.0e-3);
+  }
+
+  /** Pitzer reaction quotients use solute molality with solvent mole-fraction activity. */
+  @Test
+  public void testReactionQuotientUsesPitzerMolalityBasis() {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+
+    PhaseInterface phase = system.getPhase(1);
+    int waterNumber = phase.getComponent("water").getComponentNumber();
+    double sodiumMolality = phase.getComponent("Na+").getMolality(phase);
+    double chlorideMolality = phase.getComponent("Cl-").getMolality(phase);
+    double sodiumGamma = phase.getActivityCoefficient(phase.getComponent("Na+").getComponentNumber(), waterNumber);
+    double chlorideGamma = phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterNumber);
+    double expectedLogQuotient = Math.log(sodiumMolality * sodiumGamma) + Math.log(chlorideMolality * chlorideGamma);
+
+    ChemicalReaction ionicProduct = new ChemicalReaction("PitzerMolalityProbe", new String[] { "Na+", "Cl-" },
+        new double[] { 1.0, 1.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 }, 0.0, 0.0, 298.15);
+
+    assertEquals(ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY, system.getChemicalReactionConcentrationBasis());
+    assertEquals(sodiumMolality * chlorideMolality, ionicProduct.calcKx(system, 1), 1.0e-12);
+    assertEquals(expectedLogQuotient, ionicProduct.calcLogReactionQuotient(system, 1), 1.0e-12);
   }
 
   /**
