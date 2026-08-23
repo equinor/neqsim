@@ -77,7 +77,7 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void pitzerDiagnosticsDetectElementAndChargePerturbation() {
+  void pitzerDiagnosticsDistinguishReactiveAndSpectatorPerturbations() {
     SystemInterface fluid = new SystemPitzer(298.15, 1.01325);
     fluid.addComponent("water", 55.508);
     fluid.addComponent("Na+", 1.0);
@@ -105,16 +105,25 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
 
     fluid.getPhase(aqueousPhase).getComponent("Na+").addMolesChemReac(1.0e-6, 0.0);
 
+    Map<String, Double> elementResidualsAfterSpectator = diagnostics.getElementBalanceResiduals();
+    assertEquals(elementResidualsBefore, elementResidualsAfterSpectator,
+        "A spectator ion outside the active reaction basis must not alter A*n-b");
+    assertEquals(chargeBefore + 1.0e-6, diagnostics.getReactivePhaseChargeMoles(), 1.0e-12);
+    double normalizedChargeAfterSpectator = diagnostics.getNormalizedReactivePhaseChargeResidual();
+    assertTrue(normalizedChargeAfterSpectator > normalizedChargeBefore);
+
+    fluid.getPhase(aqueousPhase).getComponent("OH-").addMolesChemReac(1.0e-6, 0.0);
+
     Map<String, Double> elementResidualsAfter = diagnostics.getElementBalanceResiduals();
     double largestElementResidualChange = 0.0;
     for (Map.Entry<String, Double> entry : elementResidualsAfter.entrySet()) {
       largestElementResidualChange = Math.max(largestElementResidualChange,
-          Math.abs(entry.getValue() - elementResidualsBefore.get(entry.getKey())));
+          Math.abs(entry.getValue() - elementResidualsAfterSpectator.get(entry.getKey())));
     }
 
     assertEquals(1.0e-6, largestElementResidualChange, 1.0e-12);
-    assertEquals(chargeBefore + 1.0e-6, diagnostics.getReactivePhaseChargeMoles(), 1.0e-12);
-    assertTrue(diagnostics.getNormalizedReactivePhaseChargeResidual() > normalizedChargeBefore);
+    assertEquals(chargeBefore, diagnostics.getReactivePhaseChargeMoles(), 1.0e-12);
+    assertTrue(diagnostics.getNormalizedReactivePhaseChargeResidual() < normalizedChargeAfterSpectator);
   }
 
   private SystemInterface createTraceWaterSystem(double ionicMoles) {

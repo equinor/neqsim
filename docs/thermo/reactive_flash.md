@@ -263,11 +263,12 @@ activity convention—solute molality for Pitzer and the established mole-fracti
 Electrolyte-CPA and Kent-Eisenberg—and sum logarithms directly so trace ionic activities do not
 underflow or overflow before the residual is evaluated.
 
-Element residuals compare the current reactive-phase inventory with the `b` vector captured during
-reaction initialization or immediately before the most recent chemical-equilibrium solve. An empty map
-means that no same-phase reference is current. Charge diagnostics include all phase components, so
-spectator ions are included even when they do not participate in an active reaction. The normalized
-charge residual is scale independent; a value of zero denotes exact electroneutrality.
+Element residuals compare the current active-reaction inventory with the `b` vector captured during
+reaction initialization or immediately before the most recent chemical-equilibrium solve. Only
+components in the active reaction basis have columns in `A`; spectator species outside that basis do not
+change `A n - b`. Charge diagnostics include all phase components, so spectator ions are included even
+when they do not participate in an active reaction. The normalized charge residual is scale independent;
+a value of zero denotes exact electroneutrality.
 
 For parameter-level provenance, `getReference()`, `getEquilibriumConstantCoefficients()`, and
 `getReferenceTemperature()` expose the reference identifier and a defensive copy of the stored

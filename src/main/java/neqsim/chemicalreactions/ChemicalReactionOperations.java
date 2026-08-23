@@ -712,8 +712,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * <p>
    * Each value is {@code A * n - b} in moles for the current reactive phase. The reference vector {@code b} is captured
    * during reaction initialization or immediately before the most recent chemical-equilibrium solve. Results are
-   * returned in deterministic element-name order and cannot be mutated. An empty map indicates that no current
-   * same-phase balance reference is available.
+   * returned in deterministic element-name order and cannot be mutated. The matrix {@code A} contains the active
+   * reaction components only, so spectator species outside that basis are intentionally excluded. An empty map
+   * indicates that no current same-phase balance reference is available.
    * </p>
    *
    * @return immutable element-name map of signed balance residuals in moles
