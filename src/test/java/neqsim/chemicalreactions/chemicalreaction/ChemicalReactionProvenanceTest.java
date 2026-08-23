@@ -61,6 +61,25 @@ class ChemicalReactionProvenanceTest {
     assertArrayEquals(PITZER_CO2_WATER, reaction.getEquilibriumConstantCoefficients(), 1.0e-12);
   }
 
+  /**
+   * Verify clone and serialization preservation of the Pitzer source.
+   *
+   * @throws Exception if Java serialization fails
+   */
+  @Test
+  void pitzerSourceSurvivesCloneAndSerialization() throws Exception {
+    SystemInterface original = reactiveCo2WaterSystem(new SystemPitzer(298.15, 1.01325));
+    SystemInterface cloned = original.clone();
+    SystemInterface restored = roundTrip(original);
+
+    assertEquals(ChemicalReactionDataSource.PITZER,
+        cloned.getChemicalReactionOperations().getReactionDataSource());
+    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(cloned).getEquilibriumConstantCoefficients(), 1.0e-12);
+    assertEquals(ChemicalReactionDataSource.PITZER,
+        restored.getChemicalReactionOperations().getReactionDataSource());
+    assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(restored).getEquilibriumConstantCoefficients(), 1.0e-12);
+  }
+
   /** Verify that callers cannot mutate stored equilibrium-constant coefficients. */
   @Test
   void coefficientDiagnosticReturnsDefensiveCopy() {
