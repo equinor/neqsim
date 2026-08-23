@@ -9,12 +9,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Builds the Phase 0 MCP test, guide, and limitation-evidence inventory.
+ * Builds the Phase 0 MCP test, guide, limitation, and merged-foundation evidence inventory.
  *
  * <p>
  * Source evidence counts are frozen by the repository and protocol tests. Runtime limitation coverage is derived
  * directly from {@link BenchmarkTrust}, so tools that still use the generic trust fallback remain explicit gaps rather
- * than being presented as validated.
+ * than being presented as validated. The merged-foundation inventory records what campaign prerequisites #2874,
+ * #2875, and #3152 actually established and the current source evidence that preserves those contracts.
  * </p>
  */
 public final class McpEvidenceInventory {
@@ -29,19 +30,20 @@ public final class McpEvidenceInventory {
   /**
    * Builds the evidence inventory.
    *
-   * @return test, guide, and limitation evidence
+   * @return test, guide, limitation, and foundation evidence
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.0");
+    inventory.addProperty("inventoryVersion", "1.1");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
+    inventory.add("mergedFoundations", buildMergedFoundations());
     inventory.add("knownLimitations", buildKnownLimitations());
     inventory.addProperty("advisoryBoundary",
         "Evidence discovery does not certify a calculation or replace qualified engineering review");
     inventory.addProperty("complete", false);
     inventory.addProperty("completionReason",
-        "Test and guide sources are inventoried, but not every published tool has explicit benchmark and limitation metadata");
+        "Published surfaces and merged foundations are inventoried, but not every tool has explicit benchmark and limitation metadata and the Phase 0 acceptance baselines remain incomplete");
     return inventory;
   }
 
@@ -74,6 +76,69 @@ public final class McpEvidenceInventory {
     guides.addProperty("guideCount", entries.size());
     guides.add("entries", entries);
     return guides;
+  }
+
+  /**
+   * Builds a criterion-level reconciliation of the three merged MCP campaign foundations.
+   *
+   * <p>
+   * This is deliberately evidence metadata, not a second implementation registry. Each entry names the merged PR and
+   * merge commit, the durable capability contract, representative current source, and the remaining campaign boundary.
+   * </p>
+   */
+  private static JsonObject buildMergedFoundations() {
+    JsonObject foundations = new JsonObject();
+    foundations.addProperty("complete", true);
+    foundations.addProperty("foundationCount", 3);
+    foundations.addProperty("evidenceDocument", "neqsim-mcp-server/docs/FOUNDATION_TRACEABILITY.md");
+
+    JsonArray entries = new JsonArray();
+    entries.add(foundation(2874, "0894b7820b6317c64ccaaaee5a3326f5bbdf5d77",
+        "Caller identity, recoverable security enforcement, principal-scoped approvals, and fail-closed admin actions",
+        new String[] {"src/main/java/neqsim/mcp/runners/McpRequestContext.java",
+            "src/main/java/neqsim/mcp/runners/SecurityRunner.java",
+            "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
+            "neqsim-mcp-server/src/main/java/neqsim/mcp/server/McpIdentityResolver.java"},
+        new String[] {"src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java"},
+        "Security remains disabled by default for local desktop use; governed deployments must supply transport identity and configured admin policy"));
+    entries.add(foundation(2875, "7dac75744ebf25cfbe2b4ccd763bb30c3d14cbdf",
+        "Tenant-scoped model handles, solved-model reuse, response-size protection, execution bounds, and complete tool-catalog coverage",
+        new String[] {"src/main/java/neqsim/mcp/runners/ModelRegistry.java",
+            "src/main/java/neqsim/mcp/runners/ResponseSizeGuard.java",
+            "src/main/java/neqsim/mcp/runners/McpExecutionPolicy.java",
+            "src/main/java/neqsim/mcp/runners/CapabilitiesRunner.java"},
+        new String[] {"src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
+            "src/test/java/neqsim/mcp/runners/ResponseSizeGuardTest.java",
+            "src/test/java/neqsim/mcp/runners/McpToolSurfaceContractTest.java"},
+        "Bounded execution and selective retrieval do not by themselves establish scientific accuracy for every published tool"));
+    entries.add(foundation(3152, "bd07729f105efb48b14c641697e0f99fe9af6898",
+        "Runtime capability discovery/execution, canonical replayable ProcessSystem/ProcessModel definitions, design/capacity evidence, and typed two-fluid pipeline results",
+        new String[] {"src/main/java/neqsim/mcp/runners/GeneralCapabilityRunner.java",
+            "src/main/java/neqsim/mcp/runners/ProcessRunner.java",
+            "src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java",
+            "src/main/java/neqsim/mcp/model/TwoFluidPipeResponse.java"},
+        new String[] {"src/test/java/neqsim/mcp/runners/CapabilitiesRunnerTest.java",
+            "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"},
+        "Generic execution remains narrower than discovery; stateful calculations stay behind curated runners and domain validation remains authoritative"));
+
+    foundations.add("entries", entries);
+    foundations.addProperty("remainingPhase0Boundary",
+        "Convert generic trust fallbacks into evidence-backed capability or confirmed-gap records, define four acceptance scales and traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
+    return foundations;
+  }
+
+  /** Builds one merged-foundation descriptor. */
+  private static JsonObject foundation(int pullRequest, String mergeCommit, String capability, String[] sourcePaths,
+      String[] testPaths, String boundary) {
+    JsonObject entry = new JsonObject();
+    entry.addProperty("pullRequest", pullRequest);
+    entry.addProperty("mergeCommit", mergeCommit);
+    entry.addProperty("status", "MERGED_CURRENT_MASTER_FOUNDATION");
+    entry.addProperty("capability", capability);
+    entry.add("sourcePaths", toJsonArray(java.util.Arrays.asList(sourcePaths)));
+    entry.add("testPaths", toJsonArray(java.util.Arrays.asList(testPaths)));
+    entry.addProperty("boundary", boundary);
+    return entry;
   }
 
   /** Builds limitation and maturity coverage directly from BenchmarkTrust. */
