@@ -22,6 +22,51 @@ The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis 
 > equipment's design envelope (max design pressure drop, volume flow, power, etc.), see
 > [Equipment Utilization via Mechanical Design](equipment_utilization_via_mechanical_design.md).
 
+## Plant-wide constraint registration
+
+`PlantConstraintRegistry` adds deterministic plant identity and engineering-basis metadata without
+replacing equipment-local `CapacityConstraint` calculations. It can register constraints on an
+equipment item, stream, area, complete model, shared resource, or coupled group such as compressors
+on a common shaft. Definitions are immutable, serializable, callback-free, and directly accessible
+from Python through JPype.
+
+The registry deliberately does **not** calculate utilization or declare a process candidate feasible.
+It is the metadata layer consumed by the later complete-snapshot and solver layers.
+
+| Registration field | Contract |
+|---|---|
+| Stable identity | Escaped model, area, subject, and caller-owned constraint ID |
+| Aggregation | `DIRECT`, `SUM`, `MAXIMUM`, `MINIMUM`, `SHARED_BUDGET`, `COMMON_SETPOINT`, or explicit rate-basis conversion |
+| Engineering basis | Target unit, measurement/rating basis, provenance, owner, reference, and calculation method |
+| Evidence quality | Optional confidence and scalar validity interval |
+| Status | Registered, disabled, incomplete basis, or disabled with incomplete basis |
+
+Aggregated participants must use the target unit and basis. NeqSim never guesses a conversion; an
+unlike source must declare an explicit finite affine conversion. Aggregates also require a non-empty
+target unit and basis. This prevents, for example, silently adding shaft `kW` to electrical `MW`, or
+combining standard and actual volumetric rates.
+
+```java
+PlantConstraintRegistry registry = new PlantConstraintRegistry();
+PlantConstraintDefinition totalPower = PlantConstraintDefinition
+    .builder("total-power", PlantConstraintScope.sharedResource("NorthPlant", "electrical-power"))
+    .aggregationPolicy(PlantConstraintDefinition.AggregationPolicy.SHARED_BUDGET)
+    .unit("MW")
+    .basis("instantaneous electrical load")
+    .provenance("site power study 2026")
+    .participant(PlantConstraintParticipant.direct(
+        "compression/K-101", "MW", "instantaneous electrical load"))
+    .participant(PlantConstraintParticipant.converted(
+        "compression/K-102", "kW", "shaft power", 0.001, 0.0))
+    .build();
+registry.register(totalPower);
+```
+
+Use `registerEquipmentConstraint(...)` to copy identity-relevant metadata from an existing
+`CapacityConstraint`. The adapter does not invoke or retain its live value supplier. Runtime values,
+applicability, convergence, margins, and utilization belong in a complete immutable snapshot and
+must be regenerated after every process solve.
+
 ## Important: Constraints Disabled by Default
 
 > **⚠️ Key Behavior**: All separator, valve, pipeline, pump, and manifold constraints are **disabled by default** for backward compatibility. The optimizer checks whether any constraints are enabled before using the `CapacityConstrainedEquipment` interface.
