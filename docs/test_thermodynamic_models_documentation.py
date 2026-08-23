@@ -47,11 +47,18 @@ class ThermodynamicModelsDocumentationContractTest(unittest.TestCase):
             'return setModel("SRK-TwuCoon-Statoil-EOS");',
             'return setModel("SRK-EOS");',
         )
+        method_start = self.system_thermo.index(
+            "public SystemInterface autoSelectModel()"
+        )
+        method_end = self.system_thermo.index(
+            "/** {@inheritDoc} */", method_start + 1
+        )
+        auto_select_method = self.system_thermo[method_start:method_end]
         positions = []
         for contract in source_contracts:
             with self.subTest(source_contract=contract):
-                self.assertIn(contract, self.system_thermo)
-                positions.append(self.system_thermo.index(contract))
+                self.assertIn(contract, auto_select_method)
+                positions.append(auto_select_method.index(contract))
         self.assertEqual(sorted(positions), positions)
 
         documented_contracts = (
