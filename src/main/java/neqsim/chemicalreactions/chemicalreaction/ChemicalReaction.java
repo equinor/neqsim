@@ -34,6 +34,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   double rateFactor = 0;
   double activationEnergy;
   double refT;
+  String reference = "";
   double G = 0;
   double lnK = 0;
   int numberOfReactants = 0;
@@ -51,6 +52,23 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
       double activationEnergy, double refT) {
+    this(name, names, stocCoefs, K, r, activationEnergy, refT, "");
+  }
+
+  /**
+   * Constructor for a chemical reaction with parameter provenance.
+   *
+   * @param name reaction name
+   * @param names component names
+   * @param stocCoefs stoichiometric coefficients
+   * @param K equilibrium-constant correlation coefficients
+   * @param r rate factor
+   * @param activationEnergy activation energy
+   * @param refT reference temperature in kelvin
+   * @param reference literature or data reference stored with the parameters
+   */
+  public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
+      double activationEnergy, double refT, String reference) {
     /*
      * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
      */
@@ -62,6 +80,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     this.rateFactor = r;
     this.refT = refT;
     this.activationEnergy = activationEnergy;
+    this.reference = reference == null ? "" : reference;
 
     System.arraycopy(names, 0, this.names, 0, names.length);
     System.arraycopy(stocCoefs, 0, this.stocCoefs, 0, stocCoefs.length);
@@ -90,6 +109,37 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
         productNames[l++] = this.names[i];
       }
     }
+  }
+
+  /**
+   * Get the literature or data reference stored with the equilibrium parameters.
+   *
+   * @return reference identifier, or an empty string when no reference was supplied
+   */
+  public String getReference() {
+    return reference == null ? "" : reference;
+  }
+
+  /**
+   * Get a defensive copy of the equilibrium-constant correlation coefficients.
+   *
+   * <p>
+   * The coefficients are used by {@link #getK(PhaseInterface)} in the order defined by the reaction database.
+   * </p>
+   *
+   * @return copied equilibrium-constant coefficient array
+   */
+  public double[] getEquilibriumConstantCoefficients() {
+    return K.clone();
+  }
+
+  /**
+   * Get the reference temperature stored with the reaction parameters.
+   *
+   * @return reference temperature in kelvin
+   */
+  public double getReferenceTemperature() {
+    return refT;
   }
 
   /**

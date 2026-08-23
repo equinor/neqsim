@@ -39,6 +39,7 @@ public final class ChemicalReactionFactory {
     double refT = 0;
     double rateFactor = 0;
     double activationEnergy = 0;
+    String reference = "";
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM reactiondata where name='" + name + "'")) {
@@ -50,6 +51,7 @@ public final class ChemicalReactionFactory {
         K[3] = Double.parseDouble(dataSet.getString("K4"));
         refT = Double.parseDouble(dataSet.getString("Tref"));
         rateFactor = Double.parseDouble(dataSet.getString("r"));
+        reference = dataSet.getString("Reference");
 
         activationEnergy = Double.parseDouble(dataSet.getString("ACTENERGY"));
         try (java.sql.ResultSet dataSet2 = database
@@ -80,7 +82,7 @@ public final class ChemicalReactionFactory {
       nameArray[i] = names.get(i);
       stocCoefArray[i] = Double.parseDouble(stocCoef.get(i));
     }
-    return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy, refT);
+    return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy, refT, reference);
   }
 
   /**

@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -650,6 +651,20 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a {@link neqsim.chemicalreactions.ChemicalReactionOperations} object
    */
   public ChemicalReactionOperations getChemicalReactionOperations();
+
+  /**
+   * Get the reaction-data source appropriate for this thermodynamic model.
+   *
+   * <p>
+   * The default source is shared by electrolyte EOS and electrolyte GE systems. Models with a dedicated
+   * parameterization override this method explicitly.
+   * </p>
+   *
+   * @return reaction-data source used by {@link #chemicalReactionInit()}
+   */
+  public default ChemicalReactionDataSource getChemicalReactionDataSource() {
+    return ChemicalReactionDataSource.STANDARD;
+  }
 
   /**
    * getCompFormulaes.

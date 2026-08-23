@@ -651,6 +651,15 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   }
 
   /**
+   * Get the database source selected for this system's reaction set.
+   *
+   * @return selected reaction-data source
+   */
+  public neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource getReactionDataSource() {
+    return reactionList.getReactionDataSource();
+  }
+
+  /**
    * Get signed logarithmic equilibrium residuals for all reactions in the reactive phase.
    *
    * <p>
