@@ -251,12 +251,23 @@ inspect the database-selected reaction set without multiplying trace activities 
 |--------|-------------|
 | `getReactionLogResiduals()` | Immutable reaction-name map of signed `ln(Q/K)` residuals in reaction-list order |
 | `getMaximumAbsoluteReactionLogResidual()` | Largest absolute `ln(Q/K)`, or `NaN` if no reactive liquid phase or reaction is available |
+| `getElementBalanceResiduals()` | Immutable element-name map of signed `A n - b` residuals in moles |
+| `getMaximumAbsoluteElementBalanceResidual()` | Largest absolute elemental-balance residual in moles |
+| `getReactivePhaseChargeMoles()` | Signed aqueous/reactive-phase charge inventory in moles of elementary charge |
+| `getNormalizedReactivePhaseChargeResidual()` | Absolute net charge divided by total absolute ionic charge inventory |
 | `getReactionDataSource()` | Typed source selected for the loaded reaction set |
 
 Individual `ChemicalReaction` objects also expose `calcLogReactionQuotient(system, phase)` and
-`calcLogReactionResidual(system, phase)`. These methods use the same mole-fraction and activity-
-coefficient standard-state convention as `calcK`, but sum logarithms directly so trace ionic
-activities do not underflow or overflow before the residual is evaluated.
+`calcLogReactionResidual(system, phase)`. These methods use the system-selected concentration and
+activity convention—solute molality for Pitzer and the established mole-fraction path for
+Electrolyte-CPA and Kent-Eisenberg—and sum logarithms directly so trace ionic activities do not
+underflow or overflow before the residual is evaluated.
+
+Element residuals compare the current reactive-phase inventory with the `b` vector captured during
+reaction initialization or immediately before the most recent chemical-equilibrium solve. An empty map
+means that no same-phase reference is current. Charge diagnostics include all phase components, so
+spectator ions are included even when they do not participate in an active reaction. The normalized
+charge residual is scale independent; a value of zero denotes exact electroneutrality.
 
 For parameter-level provenance, `getReference()`, `getEquilibriumConstantCoefficients()`, and
 `getReferenceTemperature()` expose the reference identifier and a defensive copy of the stored
