@@ -45,3 +45,21 @@ Use this diagnostic to freeze model-specific validation questions before changin
 5. Split reaction tables or activate/deactivate model-specific reactions only when the scientific evidence requires it.
 
 Relevant foundations include Plummer and Busenberg (1982), DOI `10.1016/0016-7037(82)90056-4`, for carbonate equilibria represented in the existing standard reaction data, and the Pitzer electrolyte framework for activity-coefficient treatment. NeqSim does not infer model-specific parameter validity merely because two models currently select the same source.
+
+## Public NaCl control for the Pitzer activity model
+
+Before changing Pitzer reaction tables or equilibrium constants, validate the underlying molality-scale activity model independently from the reaction-equilibrium regression. `SystemPitzerTest.testNaClActivityAndOsmoticCoefficientAgainstLiterature` compares the current Pitzer phase against Hamer and Wu's evaluated NaCl data at 298.15 K and approximately atmospheric pressure:
+
+| NaCl molality (mol/kg water) | Mean ionic activity coefficient | Osmotic coefficient |
+|---:|---:|---:|
+| 0.1 | 0.778 | 0.932 |
+| 0.5 | 0.681 | 0.921 |
+| 1.0 | 0.657 | 0.936 |
+| 2.0 | 0.668 | 0.984 |
+| 3.0 | 0.714 | 1.045 |
+
+The source is Hamer and Wu (1972), DOI `10.1063/1.3253108`. Values are transcribed directly at the published three-decimal precision; there is no digitization, interpolation, unit conversion, or fitting. The selected range is 0.1-3.0 mol NaCl per kg water at 298.15 K. The test accepts one percent relative error in mean ionic activity and 0.001 absolute error in osmotic coefficient, the latter including the source's rounding precision.
+
+The numerical facts are reproduced with attribution under NIST's public-information guidance; the test does not copy the article's prose or table layout. See the [NIST Library public-domain guidance](https://www.nist.gov/nist-research-library/library-faqs). Existing NeqSim code and repository data remain Apache-2.0.
+
+This control is validation evidence for the present NaCl activity implementation, not a calibration dataset introduced by this change and not independent hold-out evidence for the historical Pitzer interaction parameters. It does not validate carbonate reaction constants, prove that the shared `STANDARD` reaction table is transferable between Pitzer and Electrolyte-CPA, or justify a model-specific table split. Those decisions still require species-specific equilibrium/speciation data with explicit standard-state conventions and an independent validation subset.
