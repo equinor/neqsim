@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
@@ -663,9 +664,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * Get signed logarithmic equilibrium residuals for all reactions in the reactive phase.
    *
    * <p>
-   * Residuals use the reaction database's mole-fraction/activity-coefficient standard-state convention and are
-   * evaluated as {@code ln(Q/K)} directly in log space. The returned map keeps reaction-list order and is immutable. An
-   * empty map indicates that no reactive liquid phase or reaction is available.
+   * Residuals use the system-selected reaction concentration and activity convention and are evaluated as
+   * {@code ln(Q/K)} directly in log space. The returned map keeps reaction-list order and is immutable. An empty map
+   * indicates that no reactive liquid phase or reaction is available.
    * </p>
    *
    * @return immutable map from reaction name to signed {@code ln(Q/K)} residual
@@ -703,6 +704,115 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       maximumResidual = Math.max(maximumResidual, Math.abs(residual));
     }
     return maximumResidual;
+  }
+
+  /**
+   * Get residuals of the elemental balances used by the most recent chemical-equilibrium basis.
+   *
+   * <p>
+   * Each value is {@code A * n - b} in moles for the current reactive phase. The reference vector {@code b} is captured
+   * during reaction initialization or immediately before the most recent chemical-equilibrium solve. Results are
+   * returned in deterministic element-name order and cannot be mutated. The matrix {@code A} contains the active
+   * reaction components only, so spectator species outside that basis are intentionally excluded. An empty map
+   * indicates that no current same-phase balance reference is available.
+   * </p>
+   *
+   * @return immutable element-name map of signed balance residuals in moles
+   */
+  public Map<String, Double> getElementBalanceResiduals() {
+    if (!system.isChemicalSystem() || Amatrix == null || bVector == null || elements == null) {
+      return Collections.emptyMap();
+    }
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0 || reactivePhase != phase) {
+      return Collections.emptyMap();
+    }
+
+    double[] currentMoles = calcNVector();
+    Map<String, Double> residuals = new TreeMap<String, Double>();
+    for (int elementIndex = 0; elementIndex < elements.length; elementIndex++) {
+      double elementAmount = 0.0;
+      for (int componentIndex = 0; componentIndex < currentMoles.length; componentIndex++) {
+        elementAmount += Amatrix[elementIndex][componentIndex] * currentMoles[componentIndex];
+      }
+      residuals.put(elements[elementIndex], elementAmount - bVector[elementIndex]);
+    }
+    return Collections.unmodifiableMap(residuals);
+  }
+
+  /**
+   * Get the largest absolute elemental-balance residual.
+   *
+   * @return maximum absolute {@code A * n - b} in moles, or {@link Double#NaN} when no balance reference is available
+   */
+  public double getMaximumAbsoluteElementBalanceResidual() {
+    Map<String, Double> residuals = getElementBalanceResiduals();
+    if (residuals.isEmpty()) {
+      return Double.NaN;
+    }
+    double maximumResidual = 0.0;
+    for (double residual : residuals.values()) {
+      if (!Double.isFinite(residual)) {
+        return Double.NaN;
+      }
+      maximumResidual = Math.max(maximumResidual, Math.abs(residual));
+    }
+    return maximumResidual;
+  }
+
+  /**
+   * Get the signed electric charge in the current reactive phase.
+   *
+   * <p>
+   * The sum includes every phase component, including spectator ions not participating in an active reaction.
+   * </p>
+   *
+   * @return sum of {@code z_i * n_i} in moles of elementary charge, or {@link Double#NaN} when no reactive phase exists
+   */
+  public double getReactivePhaseChargeMoles() {
+    if (!system.isChemicalSystem()) {
+      return Double.NaN;
+    }
+    int reactivePhaseIndex = getReactivePhaseIndex();
+    if (reactivePhaseIndex < 0) {
+      return Double.NaN;
+    }
+    PhaseInterface reactivePhase = system.getPhase(reactivePhaseIndex);
+    double netCharge = 0.0;
+    for (int componentIndex = 0; componentIndex < reactivePhase.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = reactivePhase.getComponent(componentIndex);
+      netCharge += component.getIonicCharge() * component.getNumberOfMolesInPhase();
+    }
+    return netCharge;
+  }
+
+  /**
+   * Get a scale-independent reactive-phase electroneutrality residual.
+   *
+   * @return {@code abs(sum(z_i*n_i)) / sum(abs(z_i*n_i))}; zero when no charged material is present, or
+   * {@link Double#NaN} when no reactive phase exists
+   */
+  public double getNormalizedReactivePhaseChargeResidual() {
+    if (!system.isChemicalSystem()) {
+      return Double.NaN;
+    }
+    int reactivePhaseIndex = getReactivePhaseIndex();
+    if (reactivePhaseIndex < 0) {
+      return Double.NaN;
+    }
+    PhaseInterface reactivePhase = system.getPhase(reactivePhaseIndex);
+    double netCharge = 0.0;
+    double absoluteChargeInventory = 0.0;
+    for (int componentIndex = 0; componentIndex < reactivePhase.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = reactivePhase.getComponent(componentIndex);
+      double componentCharge = component.getIonicCharge() * component.getNumberOfMolesInPhase();
+      netCharge += componentCharge;
+      absoluteChargeInventory += Math.abs(componentCharge);
+    }
+    if (absoluteChargeInventory == 0.0) {
+      return 0.0;
+    }
+    return Math.abs(netCharge) / absoluteChargeInventory;
   }
 
   /**

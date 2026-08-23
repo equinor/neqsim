@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression tests for stable reaction-equilibrium diagnostics. */
@@ -59,8 +60,70 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
     }
     assertEquals(expectedMaximum, fluid.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual(), 0.0);
     assertTrue(expectedMaximum <= 2.0e-6, "Maximum absolute ln(Q/K) was " + expectedMaximum);
+
+    Map<String, Double> elementResiduals = fluid.getChemicalReactionOperations().getElementBalanceResiduals();
+    assertFalse(elementResiduals.isEmpty(), "The chemical-equilibrium basis must expose element balances");
+    for (double residual : elementResiduals.values()) {
+      assertTrue(Double.isFinite(residual), "Every elemental balance residual must be finite");
+    }
+    assertTrue(fluid.getChemicalReactionOperations().getMaximumAbsoluteElementBalanceResidual() <= 1.0e-8);
+    assertTrue(Math.abs(fluid.getChemicalReactionOperations().getReactivePhaseChargeMoles()) <= 1.0e-8);
+    assertTrue(fluid.getChemicalReactionOperations().getNormalizedReactivePhaseChargeResidual() <= 1.0e-6);
+
     assertThrows(UnsupportedOperationException.class, () -> residuals.put("mutation", 0.0),
         "Callers must not mutate reaction-operation diagnostics");
+    assertThrows(UnsupportedOperationException.class, () -> elementResiduals.put("mutation", 0.0),
+        "Callers must not mutate element-balance diagnostics");
+  }
+
+  @Test
+  void pitzerDiagnosticsDistinguishReactiveAndSpectatorPerturbations() {
+    SystemInterface fluid = new SystemPitzer(298.15, 1.01325);
+    fluid.addComponent("water", 55.508);
+    fluid.addComponent("Na+", 1.0);
+    fluid.addComponent("Cl-", 1.0);
+    fluid.chemicalReactionInit();
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+    fluid.init(1);
+
+    ChemicalReactionOperations diagnostics = fluid.getChemicalReactionOperations();
+    Map<String, Double> elementResidualsBefore = diagnostics.getElementBalanceResiduals();
+    assertFalse(elementResidualsBefore.isEmpty());
+    double chargeBefore = diagnostics.getReactivePhaseChargeMoles();
+    double normalizedChargeBefore = diagnostics.getNormalizedReactivePhaseChargeResidual();
+
+    int aqueousPhase = -1;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      if ("aqueous".equalsIgnoreCase(fluid.getPhase(phaseIndex).getPhaseTypeName())) {
+        aqueousPhase = phaseIndex;
+        break;
+      }
+    }
+    assertTrue(aqueousPhase >= 0, "Pitzer system must expose its aqueous phase");
+
+    fluid.getPhase(aqueousPhase).getComponent("Na+").addMolesChemReac(1.0e-6, 0.0);
+
+    Map<String, Double> elementResidualsAfterSpectator = diagnostics.getElementBalanceResiduals();
+    assertEquals(elementResidualsBefore, elementResidualsAfterSpectator,
+        "A spectator ion outside the active reaction basis must not alter A*n-b");
+    assertEquals(chargeBefore + 1.0e-6, diagnostics.getReactivePhaseChargeMoles(), 1.0e-12);
+    double normalizedChargeAfterSpectator = diagnostics.getNormalizedReactivePhaseChargeResidual();
+    assertTrue(normalizedChargeAfterSpectator > normalizedChargeBefore);
+
+    fluid.getPhase(aqueousPhase).getComponent("OH-").addMolesChemReac(1.0e-6, 0.0);
+
+    Map<String, Double> elementResidualsAfter = diagnostics.getElementBalanceResiduals();
+    double largestElementResidualChange = 0.0;
+    for (Map.Entry<String, Double> entry : elementResidualsAfter.entrySet()) {
+      largestElementResidualChange = Math.max(largestElementResidualChange,
+          Math.abs(entry.getValue() - elementResidualsAfterSpectator.get(entry.getKey())));
+    }
+
+    assertEquals(1.0e-6, largestElementResidualChange, 1.0e-12);
+    assertEquals(chargeBefore, diagnostics.getReactivePhaseChargeMoles(), 1.0e-12);
+    assertTrue(diagnostics.getNormalizedReactivePhaseChargeResidual() < normalizedChargeAfterSpectator);
   }
 
   private SystemInterface createTraceWaterSystem(double ionicMoles) {
