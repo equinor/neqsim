@@ -72,11 +72,9 @@ class ChemicalReactionProvenanceTest {
     SystemInterface cloned = original.clone();
     SystemInterface restored = roundTrip(original);
 
-    assertEquals(ChemicalReactionDataSource.PITZER,
-        cloned.getChemicalReactionOperations().getReactionDataSource());
+    assertEquals(ChemicalReactionDataSource.PITZER, cloned.getChemicalReactionOperations().getReactionDataSource());
     assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(cloned).getEquilibriumConstantCoefficients(), 1.0e-12);
-    assertEquals(ChemicalReactionDataSource.PITZER,
-        restored.getChemicalReactionOperations().getReactionDataSource());
+    assertEquals(ChemicalReactionDataSource.PITZER, restored.getChemicalReactionOperations().getReactionDataSource());
     assertArrayEquals(PITZER_CO2_WATER, getCo2WaterReaction(restored).getEquilibriumConstantCoefficients(), 1.0e-12);
   }
 

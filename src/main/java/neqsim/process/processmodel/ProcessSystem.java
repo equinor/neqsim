@@ -6696,7 +6696,6 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return a map with failed unit operation names and their mass balance results
    */
   public Map<String, MassBalanceResult> getFailedMassBalance(String unit, double percentThreshold) {
-    Map<String, MassBalanceResult> allResults = checkMassBalance(unit);
     Map<String, MassBalanceResult> failedUnits = new HashMap<>();
 
     // Convert minimum flow threshold to the requested unit
@@ -6716,13 +6715,27 @@ public class ProcessSystem extends SimulationBaseClass {
       minimumFlowInUnit = minimumFlowForMassBalanceError;
     }
 
-    for (Map.Entry<String, MassBalanceResult> entry : allResults.entrySet()) {
-      MassBalanceResult result = entry.getValue();
-      if (result.isBypassed()) {
+    // Evaluate and filter in one pass. Calling checkMassBalance() here materialized a
+    // result for every unit and then read every active unit's inlet flow a second time.
+    for (ProcessEquipmentInterface unitOp : unitOperations) {
+      boolean bypassed = unitOp.isLockedInactive() || !unitOp.isActive();
+      double massBalanceError;
+      double inletFlow;
+      double percentError;
+      try {
+        massBalanceError = unitOp.getMassBalance(unit);
+        inletFlow = calculateInletFlow(unitOp, unit);
+        percentError = calculatePercentError(massBalanceError, inletFlow);
+      } catch (Exception e) {
+        logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
+        massBalanceError = Double.NaN;
+        percentError = Double.NaN;
+        inletFlow = calculateInletFlow(unitOp, unit);
+      }
+
+      if (bypassed) {
         continue;
       }
-      ProcessEquipmentInterface unitOp = getUnit(entry.getKey());
-      double inletFlow = calculateInletFlow(unitOp, unit);
 
       // Skip units with insignificant inlet flow
       if (Math.abs(inletFlow) < minimumFlowInUnit) {
@@ -6739,8 +6752,8 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       }
 
-      if (Double.isNaN(result.getPercentError()) || Math.abs(result.getPercentError()) > percentThreshold) {
-        failedUnits.put(entry.getKey(), result);
+      if (Double.isNaN(percentError) || Math.abs(percentError) > percentThreshold) {
+        failedUnits.put(unitOp.getName(), new MassBalanceResult(massBalanceError, percentError, unit, bypassed));
       }
     }
     return failedUnits;

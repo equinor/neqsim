@@ -21,11 +21,13 @@ public final class ProcessModelFeedBoundaryBenchmark {
     private static final long serialVersionUID = 1L;
     private final List<StreamInterface> inlets;
     private final StreamInterface outlet;
+    private final AtomicLong inletReads;
 
-    TopologyUnit(String name, List<StreamInterface> inlets, StreamInterface outlet) {
+    TopologyUnit(String name, List<StreamInterface> inlets, StreamInterface outlet, AtomicLong inletReads) {
       super(name);
       this.inlets = inlets;
       this.outlet = outlet;
+      this.inletReads = inletReads;
     }
 
     @Override
@@ -35,6 +37,7 @@ public final class ProcessModelFeedBoundaryBenchmark {
 
     @Override
     public List<StreamInterface> getInletStreams() {
+      inletReads.incrementAndGet();
       return inlets;
     }
 
@@ -68,11 +71,13 @@ public final class ProcessModelFeedBoundaryBenchmark {
     final ProcessModel model;
     final List<Stream> feeds;
     final List<LightweightArea> areas;
+    final AtomicLong inletReads;
 
-    Fixture(ProcessModel model, List<Stream> feeds, List<LightweightArea> areas) {
+    Fixture(ProcessModel model, List<Stream> feeds, List<LightweightArea> areas, AtomicLong inletReads) {
       this.model = model;
       this.feeds = feeds;
       this.areas = areas;
+      this.inletReads = inletReads;
     }
   }
 
@@ -92,6 +97,7 @@ public final class ProcessModelFeedBoundaryBenchmark {
     model.setMaxIterations(4);
     List<Stream> feeds = new ArrayList<>();
     List<LightweightArea> areas = new ArrayList<>();
+    AtomicLong inletReads = new AtomicLong();
     StreamInterface upstreamBoundary = null;
     for (int areaIndex = 0; areaIndex < AREA_COUNT; areaIndex++) {
       LightweightArea area = new LightweightArea("area-" + areaIndex);
@@ -109,7 +115,7 @@ public final class ProcessModelFeedBoundaryBenchmark {
         if (unitIndex == 0 && upstreamBoundary != null) {
           inlets.add(upstreamBoundary);
         }
-        area.add(new TopologyUnit("area-" + areaIndex + "-unit-" + unitIndex, inlets, outlet));
+        area.add(new TopologyUnit("area-" + areaIndex + "-unit-" + unitIndex, inlets, outlet, inletReads));
         current = outlet;
       }
       upstreamBoundary = current;
@@ -117,7 +123,7 @@ public final class ProcessModelFeedBoundaryBenchmark {
       model.add(area.getName(), area);
     }
     model.run();
-    return new Fixture(model, feeds, areas);
+    return new Fixture(model, feeds, areas, inletReads);
   }
 
   private static double checksum(Fixture fixture) {
@@ -156,6 +162,7 @@ public final class ProcessModelFeedBoundaryBenchmark {
         fixture.model.run();
       }
     }
+    fixture.inletReads.set(0L);
 
     com.sun.management.ThreadMXBean bean = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
     long allocatedBefore = bean.getThreadAllocatedBytes(Thread.currentThread().getId());
@@ -175,10 +182,11 @@ public final class ProcessModelFeedBoundaryBenchmark {
     long elapsed = System.nanoTime() - start;
     long allocatedAfter = bean.getThreadAllocatedBytes(Thread.currentThread().getId());
     System.out.printf(Locale.US,
-        "mode=%s areas=%d units=%d nsPerRun=%.3f bytesPerRun=%.3f checksum=%.12f feed=%.12f iterations=%d boundaries=%d converged=%s massError=%.12g%n",
+        "mode=%s areas=%d units=%d nsPerRun=%.3f bytesPerRun=%.3f inletReadsPerRun=%.3f checksum=%.12f feed=%.12f iterations=%d boundaries=%d converged=%s massError=%.12g%n",
         mode, AREA_COUNT, AREA_COUNT * UNITS_PER_AREA, elapsed / (double) measured,
-        (allocatedAfter - allocatedBefore) / (double) measured, checksum, fixture.model.getTotalFeedFlowRate(),
-        fixture.model.getLastIterationCount(), fixture.model.getLastBoundaryStreamErrors().size(),
-        fixture.model.isModelConverged(), fixture.model.getLastMassClosureError());
+        (allocatedAfter - allocatedBefore) / (double) measured, fixture.inletReads.get() / (double) measured, checksum,
+        fixture.model.getTotalFeedFlowRate(), fixture.model.getLastIterationCount(),
+        fixture.model.getLastBoundaryStreamErrors().size(), fixture.model.isModelConverged(),
+        fixture.model.getLastMassClosureError());
   }
 }

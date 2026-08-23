@@ -104,6 +104,30 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     }
   }
 
+  private static final class CountingMassBalanceTestUnit extends MassBalanceTestUnit {
+    private static final long serialVersionUID = 1000L;
+    private final AtomicInteger inletReads = new AtomicInteger();
+
+    CountingMassBalanceTestUnit(String name, StreamInterface inletStream) {
+      super(name, inletStream);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<StreamInterface> getInletStreams() {
+      inletReads.incrementAndGet();
+      return super.getInletStreams();
+    }
+
+    int getInletReads() {
+      return inletReads.get();
+    }
+
+    void resetInletReads() {
+      inletReads.set(0);
+    }
+  }
+
   private static class SharedInletFailingUnit extends FailingProcessUnit {
     private static final long serialVersionUID = 1000L;
     private final List<StreamInterface> inletStreams;
@@ -1348,6 +1372,29 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Assertions.assertNotNull(result);
     assertEquals(5.0, result.getAbsoluteError(), 1e-12);
     assertEquals(5.0, result.getPercentError(), 1e-12);
+  }
+
+  @Test
+  public void testFailedMassBalanceEvaluatesEachUnitInletOnce() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream inletStream = new Stream("single-pass mass balance feed", fluid);
+    inletStream.setFlowRate(100.0, "kg/hr");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(inletStream);
+    CountingMassBalanceTestUnit unit = new CountingMassBalanceTestUnit("single-pass mass balance unit", inletStream);
+    process.add(unit);
+    unit.resetInletReads();
+
+    Map<String, ProcessSystem.MassBalanceResult> failures = process.getFailedMassBalance("kg/hr", 0.1);
+
+    ProcessSystem.MassBalanceResult failure = failures.get(unit.getName());
+    Assertions.assertNotNull(failure);
+    assertEquals(5.0, failure.getAbsoluteError(), 1e-12);
+    assertEquals(5.0, failure.getPercentError(), 1e-12);
+    assertEquals(1, unit.getInletReads(), "failure filtering must reuse the inlet flow from balance evaluation");
   }
 
   @Test
