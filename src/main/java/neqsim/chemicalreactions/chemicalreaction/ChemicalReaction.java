@@ -237,23 +237,44 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
-   * getSaturationRatio.
+   * Calculate the mineral saturation ratio from reactant activities.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param phaseNumb a int
-   * @return a double
+   * <p>
+   * The ratio is {@code IAP / Ksp}. Reactant activities follow the system-selected concentration convention and include
+   * activity coefficients. Values below one are undersaturated and values above one are supersaturated.
+   * </p>
+   *
+   * @param system thermodynamic system containing the dissolved mineral species
+   * @param phaseNumb aqueous phase in which saturation is evaluated
+   * @return mineral saturation ratio {@code IAP / Ksp}
    */
-  public double getSaturationRatio(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
-    double ksp = 1.0;
+  public double getSaturationRatio(SystemInterface system, int phaseNumb) {
+    return Math.exp(calcLogSaturationRatio(system, phaseNumb));
+  }
+
+  /**
+   * Calculate the natural logarithm of the mineral saturation ratio directly in log space.
+   *
+   * <p>
+   * Only negative-stoichiometry reactants contribute to the ion activity product because the mineral product is not a
+   * dissolved phase component. Log-space evaluation retains a finite diagnostic for trace activities when the
+   * corresponding linear saturation ratio underflows.
+   * </p>
+   *
+   * @param system thermodynamic system containing the dissolved mineral species
+   * @param phaseNumb aqueous phase in which saturation is evaluated
+   * @return natural logarithm of {@code IAP / Ksp}
+   */
+  public double calcLogSaturationRatio(SystemInterface system, int phaseNumb) {
     PhaseInterface phase = system.getPhase(phaseNumb);
-    for (int i = 0; i < names.length; i++) {
-      if (stocCoefs[i] < 0) {
-        ComponentInterface component = phase.getComponent(names[i]);
-        ksp *= Math.pow(getReactionConcentration(system, phase, component), -stocCoefs[i]);
+    double logSaturationRatio = -Math.log(getK(phase));
+    for (int componentIndex = 0; componentIndex < names.length; componentIndex++) {
+      if (stocCoefs[componentIndex] < 0.0) {
+        ComponentInterface component = phase.getComponent(names[componentIndex]);
+        logSaturationRatio -= stocCoefs[componentIndex] * getLogReactionActivity(system, phase, component);
       }
     }
-    ksp /= getK(phase);
-    return ksp;
+    return logSaturationRatio;
   }
 
   /**
@@ -271,8 +292,9 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    * Calculate the natural logarithm of the reaction quotient directly in log space.
    *
    * <p>
-   * This method follows the same mole-fraction/activity-coefficient convention as {@link #calcK(SystemInterface, int)},
-   * but avoids overflow and underflow when ionic species are present at trace concentrations.
+   * This method follows the same system-selected concentration/activity convention as
+   * {@link #calcK(SystemInterface, int)}, but avoids overflow and underflow when ionic species are present at trace
+   * concentrations.
    * </p>
    *
    * @param system thermodynamic system containing the reaction species
@@ -288,13 +310,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
         continue;
       }
       ComponentInterface component = phase.getComponent(names[componentIndex]);
-      double logActivity = Math.log(getReactionConcentration(system, phase, component));
-      if (component.calcActivity()) {
-        double activityCoefficient = phase.getActivityCoefficient(component.getComponentNumber(),
-            phase.getComponent("water").getComponentNumber());
-        logActivity += Math.log(activityCoefficient);
-      }
-      logReactionQuotient += stoichiometricCoefficient * logActivity;
+      logReactionQuotient += stoichiometricCoefficient * getLogReactionActivity(system, phase, component);
     }
     return logReactionQuotient;
   }
@@ -329,6 +345,23 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
       return component.getMolality(phase);
     }
     return component.getx();
+  }
+
+  /**
+   * Get the logarithm of a reaction activity using the system-selected standard-state convention.
+   *
+   * @param system thermodynamic system selecting the reaction convention
+   * @param phase reactive phase
+   * @param component reaction component
+   * @return logarithm of the dimensionless reaction activity
+   */
+  private double getLogReactionActivity(SystemInterface system, PhaseInterface phase, ComponentInterface component) {
+    double logActivity = Math.log(getReactionConcentration(system, phase, component));
+    if (component.calcActivity()) {
+      int waterComponentNumber = phase.getComponent("water").getComponentNumber();
+      logActivity += Math.log(phase.getActivityCoefficient(component.getComponentNumber(), waterComponentNumber));
+    }
+    return logActivity;
   }
 
   /**
