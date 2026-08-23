@@ -16,9 +16,9 @@ import neqsim.thermo.system.SystemPitzer;
 
 /** Tests model-to-model reaction set and parameter audit diagnostics. */
 class ChemicalReactionModelAuditTest {
-  /** Electrolyte CPA and Pitzer currently share the same active standard reaction data. */
+  /** Electrolyte CPA and Pitzer expose their distinct reaction standard states. */
   @Test
-  void electrolyteEosAndGeCanBeAuditedWithoutAssumingInterchangeability() {
+  void electrolyteEosAndGeReportDedicatedReactionSources() {
     SystemInterface cpa = reactiveCo2WaterSystem(new SystemElectrolyteCPAstatoil(298.15, 1.01325));
     SystemInterface pitzer = reactiveCo2WaterSystem(new SystemPitzer(298.15, 1.01325));
 
@@ -29,11 +29,13 @@ class ChemicalReactionModelAuditTest {
     assertNotEquals(cpaAudit.getModelName(), pitzerAudit.getModelName());
     assertTrue(cpaAudit.getReactionCount() > 0);
     assertTrue(pitzerAudit.getReactionCount() > 0);
-    assertTrue(comparison.hasSameReactionDataSource());
+    assertFalse(comparison.hasSameReactionDataSource());
     assertFalse(comparison.hasSameReactionConcentrationBasis());
     assertTrue(comparison.getReactionsOnlyInFirst().isEmpty());
     assertTrue(comparison.getReactionsOnlyInSecond().isEmpty());
-    assertTrue(comparison.getParameterDifferences().isEmpty());
+    assertTrue(comparison.getParameterDifferences().contains("CO2water"));
+    assertTrue(comparison.getParameterDifferences().contains("carbonate"));
+    assertTrue(comparison.getParameterDifferences().contains("waterreac"));
     assertFalse(comparison.isEquivalent());
     assertNotNull(findReaction(cpaAudit, "CO2water"));
   }
