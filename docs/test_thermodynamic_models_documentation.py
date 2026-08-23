@@ -40,8 +40,8 @@ class ThermodynamicModelsDocumentationContractTest(unittest.TestCase):
         source_contracts = (
             'hasComponent("MDEA")',
             'hasComponent("water")',
-            'hasComponent("Na+")',
             'return setModel("Electrolyte-ScRK-EOS");',
+            'hasComponent("Na+")',
             'return setModel("Electrolyte-CPA-EOS-statoil");',
             'return setModel("CPAs-SRK-EOS-statoil");',
             'return setModel("SRK-TwuCoon-Statoil-EOS");',
