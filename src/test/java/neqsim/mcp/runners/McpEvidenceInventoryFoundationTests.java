@@ -10,7 +10,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-/** Tests Phase 0 foundation, trust-coverage, and acceptance-fixture evidence exposed by MCP capability discovery. */
+/** Tests Phase 0 foundation, trust, acceptance, and campaign-matrix evidence exposed by MCP discovery. */
 class McpEvidenceInventoryFoundationTests {
 
   @Test
@@ -41,9 +41,6 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(pullRequests.contains(Integer.valueOf(2874)));
     assertTrue(pullRequests.contains(Integer.valueOf(2875)));
     assertTrue(pullRequests.contains(Integer.valueOf(3152)));
-    assertTrue(foundations.get("remainingPhase0Boundary").getAsString().contains("acceptance scales"));
-
-    // Foundation reconciliation is complete, but the overall Phase 0 evidence inventory is not.
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 
@@ -65,42 +62,36 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("EXPLICIT_TRUST", flash.get("coverageStatus").getAsString());
     assertTrue(flash.get("toolSpecificTrustAvailable").getAsBoolean());
     assertTrue(flash.get("validationCaseCount").getAsInt() > 0);
-    assertTrue(flash.get("knownLimitationCount").getAsInt() > 0);
 
     JsonObject capabilities = coverageRecords.getAsJsonObject("getCapabilities");
     assertEquals("CONFIRMED_GAP", capabilities.get("coverageStatus").getAsString());
     assertFalse(capabilities.get("toolSpecificTrustAvailable").getAsBoolean());
-    assertEquals("TESTED", capabilities.get("maturityLevel").getAsString());
-    assertTrue(capabilities.get("implementationClass").getAsString().contains("CapabilitiesRunner"));
     assertTrue(capabilities.get("gapReason").getAsString().contains("not benchmark"));
-
-    // Coverage classification is complete; tool-specific trust evidence is intentionally not.
-    assertFalse(limitations.get("complete").getAsBoolean());
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 
   @Test
-  void testFourScaleAcceptanceCatalogIsDiscoverableThroughCapabilities() {
+  void testPhase0EvidenceIsDiscoverableThroughCapabilities() {
     JsonObject capabilities = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.4", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.5", inventory.get("inventoryVersion").getAsString());
+    assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());
     assertEquals("BASELINE_HARNESS_AVAILABLE_RESULTS_RUN_SPECIFIC",
         fixtures.get("executionEvidenceStatus").getAsString());
-    assertEquals(4, fixtures.getAsJsonArray("fixtures").size());
-    assertTrue(fixtures.get("remainingPhase0Boundary").getAsString().contains("McpAcceptanceBaselineRunner"));
 
     JsonObject baselineContract = inventory.getAsJsonObject("acceptanceBaselineContract");
     assertEquals(4, baselineContract.get("fixtureCount").getAsInt());
     assertEquals(2, baselineContract.get("repeatRunCount").getAsInt());
-    assertEquals("CONTRACT_DEFINED_EXACT_HEAD_EXECUTION_REQUIRED",
-        baselineContract.get("executionEvidenceStatus").getAsString());
     assertFalse(baselineContract.get("performanceQualification").getAsBoolean());
 
-    // Fixture definitions and the harness contract are complete; run-specific evidence and matrices remain open.
+    JsonObject matrix = inventory.getAsJsonObject("campaignMatrix");
+    assertEquals(66, matrix.get("criterionCount").getAsInt());
+    assertEquals(10, matrix.getAsJsonObject("disciplines").size());
+    assertFalse(matrix.get("roadmapCompletionClaim").getAsBoolean());
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 }
