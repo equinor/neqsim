@@ -32,9 +32,12 @@ public final class McpCampaignMatrix {
 
   private static JsonObject statusDefinitions() {
     JsonObject definitions = new JsonObject();
-    definitions.addProperty("MERGED_EVIDENCE", "Current-tree source, tests, documentation, or merged campaign evidence directly supports the criterion");
-    definitions.addProperty("PARTIAL_EVIDENCE", "Relevant capability exists, but one or more criterion requirements remain unproven or incomplete");
-    definitions.addProperty("CONFIRMED_GAP", "Current evidence does not demonstrate the criterion; the gap remains explicit");
+    definitions.addProperty("MERGED_EVIDENCE",
+        "Merged current-tree source, tests, documentation, or campaign evidence directly supports the criterion");
+    definitions.addProperty("PARTIAL_EVIDENCE",
+        "Relevant capability or current-tree evidence exists, but one or more criterion requirements remain unproven, unmerged, or incomplete");
+    definitions.addProperty("CONFIRMED_GAP",
+        "Current evidence does not demonstrate the criterion; the gap remains explicit");
     return definitions;
   }
 
@@ -47,12 +50,13 @@ public final class McpCampaignMatrix {
         "Trace every campaign criterion to evidence or a confirmed gap",
         "Record runtime, memory, response size, tool-call, convergence, balance and report baselines",
         "Define a machine-readable capability/maturity matrix by engineering discipline"},
-        new String[] {"MERGED_EVIDENCE", "MERGED_EVIDENCE", "MERGED_EVIDENCE", "MERGED_EVIDENCE",
-            "PARTIAL_EVIDENCE", "MERGED_EVIDENCE"},
+        new String[] {"MERGED_EVIDENCE", "MERGED_EVIDENCE", "MERGED_EVIDENCE", "PARTIAL_EVIDENCE",
+            "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE"},
         new String[] {"McpEvidenceInventory; SURFACE_INVENTORY.md", "mergedFoundations; FOUNDATION_TRACEABILITY.md",
-            "McpAcceptanceFixtureCatalog; ACCEPTANCE_FIXTURES.md", "McpCampaignMatrix; CAMPAIGN_MATRIX.md",
+            "McpAcceptanceFixtureCatalog; ACCEPTANCE_FIXTURES.md",
+            "McpCampaignMatrix; CAMPAIGN_MATRIX.md; merged-master audit still required",
             "McpAcceptanceBaselineRunner; ACCEPTANCE_BASELINES.md; numeric closure gaps remain explicit",
-            "McpCampaignMatrix.disciplines"});
+            "McpCampaignMatrix.disciplines; merged-master audit still required"});
     add(rows, 1, new String[] {
         "Versioned facility-description contract", "Deterministic normalized facility specification",
         "Component/equipment/tag synonym resolution", "Pre-solve topology/unit/component/model validation",
@@ -62,7 +66,8 @@ public final class McpCampaignMatrix {
     add(rows, 2, new String[] {
         "Reusable oil-and-gas process building blocks", "Preserve topology, recycles, controls and design identity",
         "Composition, cloning, revision, comparison and replay", "Explicit unsupported equipment/connections",
-        "Deterministic small, medium and large execution"}, partial(5), evidence("JsonProcessBuilder/ProcessModel/ModelRegistry", 5));
+        "Deterministic small, medium and large execution"}, partial(5),
+        evidence("JsonProcessBuilder/ProcessModel/ModelRegistry", 5));
     add(rows, 3, new String[] {
         "Fluids and PVT calculation coverage", "Flow-assurance calculation coverage", "Core-equipment coverage",
         "Facility studies, balances, capacity and case comparison", "Governed generic static capability execution"},
@@ -77,7 +82,8 @@ public final class McpCampaignMatrix {
     add(rows, 5, new String[] {
         "Bounded steady/quasi-steady/dynamic orchestration", "Compose validated transient scenarios",
         "Coordinate dynamic-model implementation with #2911", "Preserve initial state, chronology and replay",
-        "Separate screening from qualified dynamic studies"}, partial(5), evidence("DynamicRunner/#2911 ownership boundary", 5));
+        "Separate screening from qualified dynamic studies"}, partial(5),
+        evidence("DynamicRunner/#2911 ownership boundary", 5));
     add(rows, 6, new String[] {
         "Benchmark small, medium, large and stress-scale facilities", "Lifecycle, revision, caching, isolation and cancellation",
         "Avoid unnecessary full solves for retrieval", "Paged/selective large-result retrieval",
@@ -96,7 +102,8 @@ public final class McpCampaignMatrix {
         "Resumable multi-step study handoffs", "STDIO and Streamable HTTP end-to-end protocol tests",
         "Synchronize NeqSim agents/skills with MCP contracts"},
         new String[] {"PARTIAL_EVIDENCE", "MERGED_EVIDENCE", "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE",
-            "PARTIAL_EVIDENCE", "MERGED_EVIDENCE"}, evidence("CapabilitiesRunner/SchemaCatalog/test_mcp_server.py/tool-reference lint", 6));
+            "PARTIAL_EVIDENCE", "MERGED_EVIDENCE"},
+        evidence("CapabilitiesRunner/SchemaCatalog/test_mcp_server.py/tool-reference lint", 6));
     add(rows, 9, new String[] {
         "Profile, identity, tenant, audit, approval and execution security", "Correlation IDs and structured observability",
         "Malformed/adversarial/resource-exhaustion tests", "Deployment and secret/privacy evidence"},
@@ -108,32 +115,42 @@ public final class McpCampaignMatrix {
         "Independent engineering validation of key results", "Full protocol/security/static/documentation release gates",
         "Final capability/maturity/benchmark/limitation matrix", "Independent current-master completion audit"},
         new String[] {"PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE",
-            "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE", "CONFIRMED_GAP"}, evidence("Phase 10 remains completion-gate work", 7));
+            "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE", "CONFIRMED_GAP"},
+        evidence("Phase 10 remains completion-gate work", 7));
     return rows;
   }
 
   private static JsonObject buildDisciplines() {
     JsonObject disciplines = new JsonObject();
     addDiscipline(disciplines, "thermodynamics-pvt", "Thermodynamics and PVT",
-        new String[] {"runFlash", "runPVT", "getPhaseEnvelope", "getPropertyTable", "crossValidateModels"}, "#2937 for generic flash internals");
+        new String[] {"runFlash", "runPVT", "getPhaseEnvelope", "getPropertyTable", "crossValidateModels"},
+        "#2937 for generic flash internals");
     addDiscipline(disciplines, "process-simulation", "Process simulation and facility studies",
-        new String[] {"runProcess", "manageModel", "getCapabilities", "runParametricStudy"}, "#2939/#3154 for execution performance and optimization");
+        new String[] {"runProcess", "manageModel", "getCapabilities", "runParametricStudy"},
+        "#2939/#3154 for execution performance and optimization");
     addDiscipline(disciplines, "flow-assurance", "Flow assurance",
-        new String[] {"runFlowAssurance", "runPipeline", "runWaterHammer", "runChemistry"}, "#2907/#2935 for pipeline solver physics");
+        new String[] {"runFlowAssurance", "runPipeline", "runWaterHammer", "runChemistry"},
+        "#2907/#2935 for pipeline solver physics");
     addDiscipline(disciplines, "rotating-equipment", "Compressors, pumps and rotating equipment",
-        new String[] {"runProcess", "runOperationalStudy", "runDynamic"}, "#2911 for dynamic machinery behavior");
+        new String[] {"runProcess", "runOperationalStudy", "runDynamic"},
+        "#2911 for dynamic machinery behavior");
     addDiscipline(disciplines, "separation-treating", "Separation, treating and columns",
-        new String[] {"runProcess", "runChemistry", "runOperationalStudy"}, "#2936/#205 for column and reactive-absorber internals");
+        new String[] {"runProcess", "runChemistry", "runOperationalStudy"},
+        "#2936/#205 for column and reactive-absorber internals");
     addDiscipline(disciplines, "reservoir-wells", "Reservoir, wells and production technology",
-        new String[] {"runReservoir", "runPipeline", "runProcess"}, "Core reservoir/well models remain authoritative");
+        new String[] {"runReservoir", "runPipeline", "runProcess"},
+        "Core reservoir/well models remain authoritative");
     addDiscipline(disciplines, "dynamics-controls", "Dynamics and controls",
-        new String[] {"runDynamic", "runOperationalStudy", "runSafetySystemPerformance"}, "#2911 owns the dynamic engine");
+        new String[] {"runDynamic", "runOperationalStudy", "runSafetySystemPerformance"},
+        "#2911 owns the dynamic engine");
     addDiscipline(disciplines, "safety-integrity", "Safety, integrity and materials",
-        new String[] {"runHAZOP", "runBarrierRegister", "runSafetySystemPerformance", "runMaterialsReview"}, "Advisory only; accountable engineering remains external");
+        new String[] {"runHAZOP", "runBarrierRegister", "runSafetySystemPerformance", "runMaterialsReview"},
+        "Advisory only; accountable engineering remains external");
     addDiscipline(disciplines, "engineering-data", "Engineering data, diagrams and interoperability",
         new String[] {"runProcess", "validateInput", "getCapabilities"}, "#2899 owns DEXPI/P&ID semantics");
     addDiscipline(disciplines, "reporting-governance", "Reporting, lifecycle and governance",
-        new String[] {"generateReport", "manageModel", "checkToolAccess", "getBenchmarkTrust"}, "MCP-owned transport, evidence and governance layer");
+        new String[] {"generateReport", "manageModel", "checkToolAccess", "getBenchmarkTrust"},
+        "MCP-owned transport, evidence and governance layer");
     return disciplines;
   }
 
@@ -146,7 +163,7 @@ public final class McpCampaignMatrix {
       JsonObject item = new JsonObject();
       item.addProperty("tool", tool);
       boolean isPublished = IndustrialProfile.getAllKnownTools().contains(tool);
-      boolean hasTrust = trust.has(tool);
+      boolean hasTrust = isPublished && trust.has(tool);
       item.addProperty("published", isPublished);
       item.addProperty("toolSpecificTrust", hasTrust);
       if (isPublished) {
@@ -162,7 +179,7 @@ public final class McpCampaignMatrix {
     row.add("representativeTools", toolArray);
     row.addProperty("publishedRepresentativeToolCount", published);
     row.addProperty("toolSpecificTrustCount", explicit);
-    row.addProperty("maturityStatus", explicit == tools.length ? "TOOL_SPECIFIC_TRUST"
+    row.addProperty("maturityStatus", published > 0 && explicit == published ? "TOOL_SPECIFIC_TRUST"
         : explicit == 0 ? "CONFIRMED_TRUST_GAP" : "PARTIAL_TOOL_SPECIFIC_TRUST");
     row.addProperty("ownerBoundary", boundary);
     row.addProperty("qualifiedForAccountableEngineeringApproval", false);
