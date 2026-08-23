@@ -208,9 +208,10 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public double calcKx(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
     double kx = 1.0;
+    PhaseInterface phase = system.getPhase(phaseNumb);
     for (int i = 0; i < names.length; i++) {
-      // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
-      kx *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), stocCoefs[i]);
+      ComponentInterface component = phase.getComponent(names[i]);
+      kx *= Math.pow(getReactionConcentration(system, phase, component), stocCoefs[i]);
     }
     return kx;
   }
@@ -244,13 +245,14 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public double getSaturationRatio(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
     double ksp = 1.0;
+    PhaseInterface phase = system.getPhase(phaseNumb);
     for (int i = 0; i < names.length; i++) {
-      // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
       if (stocCoefs[i] < 0) {
-        ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), -stocCoefs[i]);
+        ComponentInterface component = phase.getComponent(names[i]);
+        ksp *= Math.pow(getReactionConcentration(system, phase, component), -stocCoefs[i]);
       }
     }
-    ksp /= (getK(system.getPhase(phaseNumb)));
+    ksp /= getK(phase);
     return ksp;
   }
 
@@ -286,7 +288,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
         continue;
       }
       ComponentInterface component = phase.getComponent(names[componentIndex]);
-      double logActivity = Math.log(component.getx());
+      double logActivity = Math.log(getReactionConcentration(system, phase, component));
       if (component.calcActivity()) {
         double activityCoefficient = phase.getActivityCoefficient(component.getComponentNumber(),
             phase.getComponent("water").getComponentNumber());
@@ -306,6 +308,28 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public double calcLogReactionResidual(SystemInterface system, int phaseNumb) {
     return calcLogReactionQuotient(system, phaseNumb) - Math.log(getK(system.getPhase(phaseNumb)));
+  }
+
+  /**
+   * Get the dimensionless concentration used by the system's reaction-equilibrium convention.
+   *
+   * <p>
+   * Pitzer equilibrium constants use solute molality divided by the standard molality of 1 mol/kg. Solvent activities
+   * remain on the mole-fraction convention. Other models retain the established mole-fraction concentration path.
+   * </p>
+   *
+   * @param system thermodynamic system selecting the reaction convention
+   * @param phase reactive phase
+   * @param component reaction component
+   * @return dimensionless reaction concentration
+   */
+  private double getReactionConcentration(SystemInterface system, PhaseInterface phase,
+      ComponentInterface component) {
+    if (system.getChemicalReactionConcentrationBasis() == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY
+        && !"solvent".equalsIgnoreCase(component.getReferenceStateType())) {
+      return component.getMolality(phase);
+    }
+    return component.getx();
   }
 
   /**

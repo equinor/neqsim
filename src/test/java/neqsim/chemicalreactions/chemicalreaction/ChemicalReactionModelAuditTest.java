@@ -30,10 +30,11 @@ class ChemicalReactionModelAuditTest {
     assertTrue(cpaAudit.getReactionCount() > 0);
     assertTrue(pitzerAudit.getReactionCount() > 0);
     assertTrue(comparison.hasSameReactionDataSource());
+    assertFalse(comparison.hasSameReactionConcentrationBasis());
     assertTrue(comparison.getReactionsOnlyInFirst().isEmpty());
     assertTrue(comparison.getReactionsOnlyInSecond().isEmpty());
     assertTrue(comparison.getParameterDifferences().isEmpty());
-    assertTrue(comparison.isEquivalent());
+    assertFalse(comparison.isEquivalent());
     assertNotNull(findReaction(cpaAudit, "CO2water"));
   }
 

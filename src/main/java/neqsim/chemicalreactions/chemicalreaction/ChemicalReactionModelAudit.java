@@ -52,7 +52,8 @@ public final class ChemicalReactionModelAudit {
       reactions.add(new ReactionParameterSnapshot(reaction));
     }
     Collections.sort(reactions);
-    return new AuditSnapshot(system.getModelName(), operations.getReactionDataSource(), reactions);
+    return new AuditSnapshot(system.getModelName(), operations.getReactionDataSource(),
+        system.getChemicalReactionConcentrationBasis(), reactions);
   }
 
   /**
@@ -97,20 +98,23 @@ public final class ChemicalReactionModelAudit {
       }
     }
 
-    return new AuditComparison(first.getReactionDataSource() == second.getReactionDataSource(), onlyInFirst,
-        onlyInSecond, parameterDifferences);
+    return new AuditComparison(first.getReactionDataSource() == second.getReactionDataSource(),
+        first.getReactionConcentrationBasis() == second.getReactionConcentrationBasis(), onlyInFirst, onlyInSecond,
+        parameterDifferences);
   }
 
   /** Immutable snapshot of one system's selected reaction source and active reactions. */
   public static final class AuditSnapshot {
     private final String modelName;
     private final ChemicalReactionDataSource reactionDataSource;
+    private final ChemicalReactionConcentrationBasis reactionConcentrationBasis;
     private final List<ReactionParameterSnapshot> reactions;
 
     private AuditSnapshot(String modelName, ChemicalReactionDataSource reactionDataSource,
-        List<ReactionParameterSnapshot> reactions) {
+        ChemicalReactionConcentrationBasis reactionConcentrationBasis, List<ReactionParameterSnapshot> reactions) {
       this.modelName = modelName;
       this.reactionDataSource = reactionDataSource;
+      this.reactionConcentrationBasis = reactionConcentrationBasis;
       this.reactions = Collections.unmodifiableList(new ArrayList<ReactionParameterSnapshot>(reactions));
     }
 
@@ -122,6 +126,11 @@ public final class ChemicalReactionModelAudit {
     /** @return selected reaction-data source */
     public ChemicalReactionDataSource getReactionDataSource() {
       return reactionDataSource;
+    }
+
+    /** @return concentration basis used to evaluate reaction quotients */
+    public ChemicalReactionConcentrationBasis getReactionConcentrationBasis() {
+      return reactionConcentrationBasis;
     }
 
     /** @return immutable active-reaction snapshots in deterministic name order */
@@ -215,13 +224,15 @@ public final class ChemicalReactionModelAudit {
   /** Immutable difference summary between two reaction-model audit snapshots. */
   public static final class AuditComparison {
     private final boolean sameReactionDataSource;
+    private final boolean sameReactionConcentrationBasis;
     private final List<String> reactionsOnlyInFirst;
     private final List<String> reactionsOnlyInSecond;
     private final List<String> parameterDifferences;
 
-    private AuditComparison(boolean sameReactionDataSource, List<String> reactionsOnlyInFirst,
-        List<String> reactionsOnlyInSecond, List<String> parameterDifferences) {
+    private AuditComparison(boolean sameReactionDataSource, boolean sameReactionConcentrationBasis,
+        List<String> reactionsOnlyInFirst, List<String> reactionsOnlyInSecond, List<String> parameterDifferences) {
       this.sameReactionDataSource = sameReactionDataSource;
+      this.sameReactionConcentrationBasis = sameReactionConcentrationBasis;
       this.reactionsOnlyInFirst = immutableCopy(reactionsOnlyInFirst);
       this.reactionsOnlyInSecond = immutableCopy(reactionsOnlyInSecond);
       this.parameterDifferences = immutableCopy(parameterDifferences);
@@ -230,6 +241,11 @@ public final class ChemicalReactionModelAudit {
     /** @return true when both systems selected the same typed reaction-data source */
     public boolean hasSameReactionDataSource() {
       return sameReactionDataSource;
+    }
+
+    /** @return true when both systems use the same reaction-quotient concentration basis */
+    public boolean hasSameReactionConcentrationBasis() {
+      return sameReactionConcentrationBasis;
     }
 
     /** @return immutable reaction names active only in the first system */
@@ -251,7 +267,8 @@ public final class ChemicalReactionModelAudit {
      * @return true when data source, active reaction names, stoichiometry, and auditable parameters are identical
      */
     public boolean isEquivalent() {
-      return sameReactionDataSource && reactionsOnlyInFirst.isEmpty() && reactionsOnlyInSecond.isEmpty()
+      return sameReactionDataSource && sameReactionConcentrationBasis && reactionsOnlyInFirst.isEmpty()
+          && reactionsOnlyInSecond.isEmpty()
           && parameterDifferences.isEmpty();
     }
 

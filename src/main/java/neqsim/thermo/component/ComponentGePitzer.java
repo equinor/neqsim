@@ -46,28 +46,6 @@ public class ComponentGePitzer extends ComponentGE {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Pitzer ion-interaction equations use moles of solute per kilogram of water solvent. The generic component
-   * implementation derives moles per kilogram of total solution from molarity and density, which is not the Pitzer
-   * concentration basis at finite salinity.
-   * </p>
-   */
-  @Override
-  public double getMolality(PhaseInterface phase) {
-    if (!phase.hasComponent("water")) {
-      return super.getMolality(phase);
-    }
-    ComponentInterface water = phase.getComponent("water");
-    double solventMassKg = water.getNumberOfMolesInPhase() * water.getMolarMass();
-    if (!(solventMassKg > 0.0) || !Double.isFinite(solventMassKg)) {
-      return super.getMolality(phase);
-    }
-    return getNumberOfMolesInPhase() / solventMassKg;
-  }
-
-  /**
    * Check the database molecular formula for a pure hydrocarbon.
    *
    * <p>
