@@ -2067,3 +2067,44 @@ system.setMultiPhaseCheck(true);
 ThermodynamicOperations ops = new ThermodynamicOperations(system);
 ops.TPflash();  // Automatically solves chemical equilibrium in aqueous phase
 ```
+
+### Large-volatility hydrocarbon endpoint refinement
+
+For neutral high-pressure hydrocarbon mixtures with a large volatility contrast, an ordinary
+two-phase flash can retain a higher-Gibbs stationary point even though the reciprocal explicit
+multiphase path finds a closed equilibrium. A private finalization screen now admits a reciprocal
+candidate only when all active components are hydrocarbons or inerts, pressure is at least 50 bar,
+at least two components are active, the component critical-temperature span is at least 300 K, and
+the least volatile component contributes at least 0.01 of the feed. Public API and tolerances are
+unchanged.
+
+Four deterministic methane/n-heptane regressions were reproduced on SRK and PR:
+
+| EOS | Temperature (K) | Pressure (bar) | `z(n-heptane)` | Ordinary maximum log-fugacity residual before refinement |
+| --- | ---: | ---: | ---: | ---: |
+| SRK | 180 | 50 | 0.05 | 4.58128e-2 |
+| SRK | 180 | 100 | 0.10 | 1.10606e-2 |
+| SRK | 220 | 200 | 0.10 | 5.80033e-5 |
+| PR | 260 | 200 | 0.10 | 1.02025e-2 |
+
+The reciprocal candidate is reset to the feed before reflashing. If it retains two liquid-like
+cubic roots and fails material closure, the lighter phase is initialized on the gas root and the
+heavier phase on the oil root before bounded multiphase beta refinement. Acceptance still requires
+neutral fluid phases, normalized and bounded compositions, maximum component material-balance
+residual below `1e-10`, maximum log-fugacity residual below `1e-8`, and a lower Gibbs energy within
+the existing numerical allowance. Recursion is guarded and a rejected or failed candidate cannot
+modify the original state.
+
+An exact-master qualification matrix covered 1,200 SRK/PR states: methane/n-heptane and the
+nearby methane/ethane control, 180--380 K, 5--200 bar, and heavy-component feed fractions from
+`1e-8` to `0.8`. All states met ordinary/multiphase agreement of `1e-10` for beta and compositions
+and `1e-8` for compressibility factor. Focused regressions also cover poor initialization, exact
+settled repeats, cold-to-warm and changed-state continuity, nearby compositions, material balance,
+fugacity equality, and screen-excluded controls.
+
+This is a correctness fallback rather than a speed optimization. In a constrained fresh-system
+probe (20 warmups and five blocks of 60 flashes), the corrected SRK 180 K/50 bar case changed from
+a median 14.25 ms/flash for the invalid endpoint to 18.20 ms/flash for the accepted equilibrium.
+The screen-excluded SRK 300 K/100 bar trace-heavy control was 10.98 versus 10.88 ms/flash, within
+run-to-run noise. No speedup is claimed, and common flashes return before the new refinement.
+
