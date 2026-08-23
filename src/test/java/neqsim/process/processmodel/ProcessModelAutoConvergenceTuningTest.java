@@ -74,6 +74,34 @@ class ProcessModelAutoConvergenceTuningTest {
     }
   }
 
+  /** Active module probe that executes its deliberately imbalanced internal recycle. */
+  private static final class ActiveRecycleModule extends WellFluidModule {
+    private static final long serialVersionUID = 1000L;
+
+    ActiveRecycleModule(String name) {
+      super(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initializeModule() {
+      // This probe already owns its intentionally minimal internal operations.
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initializeStreams() {
+      // The enclosing area owns the active feed boundary used by the closure scale.
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      getOperations().run(id);
+      setCalculationIdentifier(id);
+    }
+  }
+
   /** Recycle probe that remains solved while exposing a standing tear imbalance. */
   private static final class RecycleMassImbalanceProbe extends Recycle {
     private static final long serialVersionUID = 1000L;
@@ -539,6 +567,34 @@ class ProcessModelAutoConvergenceTuningTest {
     assertEquals(0.0, massClosure.get("relativeError").getAsDouble(), 0.0,
         "The active feed boundary must make closure evaluable while the inactive recycle remains excluded");
     assertFalse(massClosure.get("worstUnits").getAsString().contains("stale inactive recycle"));
+  }
+
+  /** Adding an active module after plan creation must refresh the fast-path guard and inspect its recycle. */
+  @Test
+  void testMassClosureGateFindsRecycleInModuleAddedAfterPlanCreation() {
+    Stream feed = new Stream("active module feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    Separator feedBoundary = new Separator("active module feed boundary", feed);
+
+    ProcessSystem area = new ProcessSystem("active module area");
+    area.add(feed);
+    area.add(feedBoundary);
+
+    ProcessModel model = new ProcessModel();
+    model.add("active module area", area);
+    assertEquals(1000.0, model.getTotalFeedFlowRate(), 1.0e-12,
+        "Initial diagnostic read should build a no-module execution plan");
+
+    RecycleMassImbalanceProbe recycle = new RecycleMassImbalanceProbe("late nested recycle");
+    recycle.addStream(feed);
+    ActiveRecycleModule module = new ActiveRecycleModule("late active module");
+    module.getOperations().add(recycle);
+    area.add(module);
+
+    assertFalse(model.runUntilConverged(5),
+        "A module added after plan creation must invalidate the no-recycle fast path");
+    assertEquals(0.1, model.getLastMassClosureError(), 1.0e-12);
+    assertTrue(model.getConvergenceReportJson().contains("late nested recycle"));
   }
 
   /** Disabled closure evaluation must be reported as disabled and serialize the unevaluated error as JSON null. */

@@ -117,6 +117,9 @@ public class ProcessModel implements Runnable, Serializable {
     /** Streams entering the model from outside its cached topology, keyed by identity. */
     private final java.util.Set<StreamInterface> feedStreams;
 
+    /** Top-level areas containing modules whose internal recycle units require recursive inspection. */
+    private final java.util.Set<ProcessSystem> areasWithModules;
+
     /** Structure versions observed when this plan was built. */
     private final Map<ProcessSystem, Long> structureVersions;
 
@@ -129,18 +132,21 @@ public class ProcessModel implements Runnable, Serializable {
      * @param boundaryConsumers consumer areas for each boundary stream
      * @param streamProducers producing {@code "area::unit"} label per stream identity
      * @param feedStreams streams entering the model from outside its topology
+     * @param areasWithModules top-level areas containing module equipment
      * @param structureVersions process structure versions observed while building the plan
      */
     private AreaExecutionPlan(List<List<ProcessSystem>> levels,
         Map<ProcessSystem, java.util.Set<ProcessSystem>> successors, java.util.Set<Object> boundaryStreams,
         Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers, Map<Object, String> streamProducers,
-        java.util.Set<StreamInterface> feedStreams, Map<ProcessSystem, Long> structureVersions) {
+        java.util.Set<StreamInterface> feedStreams, java.util.Set<ProcessSystem> areasWithModules,
+        Map<ProcessSystem, Long> structureVersions) {
       this.levels = levels;
       this.successors = successors;
       this.boundaryStreams = boundaryStreams;
       this.boundaryConsumers = boundaryConsumers;
       this.streamProducers = streamProducers;
       this.feedStreams = feedStreams;
+      this.areasWithModules = areasWithModules;
       this.structureVersions = structureVersions;
     }
   }
@@ -2746,13 +2752,15 @@ public class ProcessModel implements Runnable, Serializable {
         .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
     java.util.Set<StreamInterface> plantInletStreams = java.util.Collections
         .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
+    java.util.Set<ProcessSystem> areasWithModules = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<ProcessSystem, Boolean>());
     for (ProcessSystem process : allProcesses) {
       successorMap.put(process, java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
     }
 
     if (n == 0) {
       return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams, boundaryConsumers, streamProducers,
-          plantInletStreams, structureVersions);
+          plantInletStreams, areasWithModules, structureVersions);
     }
 
     // Index processes by their position in the insertion order for
@@ -2772,6 +2780,9 @@ public class ProcessModel implements Runnable, Serializable {
       java.util.Set<Object> outs = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
       java.util.Set<Object> mem = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
       for (Object unit : p.getUnitOperations()) {
+        if (unit instanceof ModuleInterface) {
+          areasWithModules.add(p);
+        }
         if (unit instanceof StreamInterface) {
           mem.add(unit);
         }
@@ -2908,7 +2919,7 @@ public class ProcessModel implements Runnable, Serializable {
         fallback.add(single);
       }
       return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
-          plantInletStreams, structureVersions);
+          plantInletStreams, areasWithModules, structureVersions);
     }
 
     int maxLevel = 0;
@@ -2923,7 +2934,7 @@ public class ProcessModel implements Runnable, Serializable {
       levels.get(level[i]).add(allProcesses.get(i));
     }
     return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
-        plantInletStreams, structureVersions);
+        plantInletStreams, areasWithModules, structureVersions);
   }
 
   /**
@@ -3973,8 +3984,7 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * @return relative mass-closure error, or NaN when no usable flow scale exists
    */
-  private double computeMassClosureError() {
-    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+  private double computeMassClosureError(AreaExecutionPlan plan, double scale) {
     if (!(scale > 0.0) || Double.isInfinite(scale)) {
       massClosureOffenders = "";
       return Double.NaN;
@@ -3982,7 +3992,11 @@ public class ProcessModel implements Runnable, Serializable {
     double created = 0.0;
     List<Map.Entry<String, Double>> offenders = new ArrayList<>();
     for (Map.Entry<String, ProcessSystem> area : processes.entrySet()) {
-      for (Map.Entry<String, Recycle> recycleEntry : getRecycleUnits(area.getValue())) {
+      ProcessSystem process = area.getValue();
+      if (!process.hasRecycles() && !plan.areasWithModules.contains(process)) {
+        continue;
+      }
+      for (Map.Entry<String, Recycle> recycleEntry : getRecycleUnits(process)) {
         Recycle recycle = recycleEntry.getValue();
         if (recycle.isLockedInactive() || !recycle.isActive()) {
           continue;
@@ -4042,8 +4056,7 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * @return relative unit-level closure error, or NaN when no usable flow scale exists
    */
-  private double computeUnitMassClosureError() {
-    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+  private double computeUnitMassClosureError(double scale) {
     if (!(scale > 0.0) || Double.isInfinite(scale)) {
       unitMassClosureOffenders = "";
       return Double.NaN;
@@ -4084,9 +4097,11 @@ public class ProcessModel implements Runnable, Serializable {
     if (!autoConvergenceTuning || !autoMassClosureGate) {
       return true;
     }
-    double closure = computeMassClosureError();
+    AreaExecutionPlan plan = getAreaExecutionPlan();
+    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate(plan));
+    double closure = computeMassClosureError(plan, scale);
     lastMassClosureError = closure;
-    double unitClosure = computeUnitMassClosureError();
+    double unitClosure = computeUnitMassClosureError(scale);
     lastUnitMassClosureError = unitClosure;
 
     boolean recycleAccepted = Double.isNaN(closure) || closure <= massClosureTolerance;
@@ -4199,8 +4214,18 @@ public class ProcessModel implements Runnable, Serializable {
    * @return total feed mass flow in kg/hr, or 0.0 when no feed stream could be read
    */
   public double getTotalFeedFlowRate() {
+    return getTotalFeedFlowRate(getAreaExecutionPlan());
+  }
+
+  /**
+   * Sums live feed flow values from an already-validated execution plan.
+   *
+   * @param plan current area execution plan
+   * @return total feed mass flow in kg/hr, or 0.0 when no feed stream could be read
+   */
+  private double getTotalFeedFlowRate(AreaExecutionPlan plan) {
     double total = 0.0;
-    for (StreamInterface stream : getAreaExecutionPlan().feedStreams) {
+    for (StreamInterface stream : plan.feedStreams) {
       try {
         double flow = stream.getFlowRate("kg/hr");
         if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0.0) {
