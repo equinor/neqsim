@@ -47,6 +47,13 @@ public class MultiMineralScaleEquilibriumTest {
     MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine());
     eq.solve();
 
+    assertFalse(eq.hasReachedIterationLimit(), "Reference brine should converge before the iteration limit");
+    assertTrue(eq.getIterationCount() > 0, "Supersaturated reference brine should require an equilibrium update");
+    assertTrue(eq.getMaximumComplementarityViolation() <= 1.0e-3,
+        "Converged reference brine should satisfy the frozen complementarity tolerance");
+    assertEquals(0.0, eq.getMaximumIonBalanceResidualMolPerL(), 1.0e-12,
+        "Precipitation extents must close every tracked free-ion balance");
+
     for (MultiMineralScaleEquilibrium.MineralResult r : eq.getResults().values()) {
       if (r.getPrecipitatedMolPerL() > 1.0e-12) {
         assertEquals(0.0, r.getFinalSI(), 1.0e-3,
@@ -232,12 +239,38 @@ public class MultiMineralScaleEquilibriumTest {
   }
 
   @Test
+  @DisplayName("Diagnostics expose deterministic iteration-limited mineral states")
+  void testIterationLimitDiagnostics() {
+    MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine())
+        .setSolverControls(1, 0.5, 1.0e-30);
+    eq.solve();
+
+    assertTrue(eq.hasReachedIterationLimit(), "One coordinate update must expose the configured stop boundary");
+    assertEquals(1, eq.getIterationCount(), "Exactly one coordinate update was allowed");
+    assertTrue(eq.getMaximumComplementarityViolation() > 1.0e-3,
+        "The deliberately truncated solve must not be reported as satisfying complementarity");
+    assertEquals(0.0, eq.getMaximumIonBalanceResidualMolPerL(), 1.0e-12,
+        "Even a truncated solve must conserve tracked ions");
+
+    double firstComplementarity = eq.getMaximumComplementarityViolation();
+    double firstBalance = eq.getMaximumIonBalanceResidualMolPerL();
+    eq.solve();
+    assertEquals(firstComplementarity, eq.getMaximumComplementarityViolation(), 0.0,
+        "Repeated execution must reproduce the complementarity residual exactly");
+    assertEquals(firstBalance, eq.getMaximumIonBalanceResidualMolPerL(), 0.0,
+        "Repeated execution must reproduce the ion-balance residual exactly");
+  }
+
+  @Test
   @DisplayName("JSON report is produced and contains total scale mass")
   void testJsonReport() {
     MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine());
     String json = eq.toJson();
     assertTrue(json.contains("totalScaleMass_mgL"), "JSON must report total scale mass");
     assertTrue(json.contains("residualFreeIons_molL"), "JSON must report residual free ions");
+    assertTrue(json.contains("maximumComplementarityViolation_SI"),
+        "JSON must report the complementarity acceptance diagnostic");
+    assertTrue(json.contains("maximumIonBalanceResidual_molL"), "JSON must report the ion-balance diagnostic");
   }
 
   /**
