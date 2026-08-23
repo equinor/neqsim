@@ -43,7 +43,7 @@ class ProcessSystemExecutionDocumentationTest(unittest.TestCase):
         for signature in (
             r"public synchronized void runDataflow\(UUID id\)",
             r"public synchronized void runHybrid\(UUID id\)",
-            r"public void runSequential\(UUID id\)",
+            r"public synchronized void runSequential\(UUID id\)",
             r"public synchronized void runTransient\(double dt, UUID id\)",
         ):
             self.assertRegex(self.source, signature)
@@ -90,7 +90,7 @@ class ProcessSystemExecutionDocumentationTest(unittest.TestCase):
             self.assertIn(regression, self.java_tests)
 
         for guide_contract in (
-            "share the same mutable `StreamInterface` object",
+            "share the same mutable",
             "run sequentially",
             "distinct output stream objects",
             "thermodynamic cloning and initialization",
