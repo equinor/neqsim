@@ -50,6 +50,8 @@ import json
 import time
 import sys
 import math
+import re
+from pathlib import Path
 
 JAR = "target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
 
@@ -1492,6 +1494,63 @@ def test_capabilities():
           and bindings.get("bridgeTaskWorkflow")
           == "neqsim.mcp.runners.TaskWorkflowBridge",
           str(bindings))
+
+    evidence = r.get("phase0EvidenceInventory", {})
+    tests = evidence.get("tests", {})
+    guides = evidence.get("guides", {})
+    limitations = evidence.get("knownLimitations", {})
+    check("evidence inventory freezes 67 Java test classes",
+          tests.get("javaTestClassCount") == 67,
+          str(tests))
+    check("evidence inventory freezes 94 protocol scenarios",
+          tests.get("protocolScenarioCount") == 94,
+          str(tests))
+    check("evidence inventory lists four MCP guides",
+          guides.get("guideCount") == 4
+          and len(guides.get("entries", [])) == 4,
+          str(guides))
+
+    repo_root = Path(__file__).resolve().parent.parent
+    java_test_root = repo_root / tests.get("javaTestRoot", "")
+    java_test_files = sorted(java_test_root.rglob("*Test.java"))
+    protocol_source = Path(__file__).read_text(encoding="utf-8")
+    protocol_scenarios = re.findall(r"^def test_", protocol_source, re.MULTILINE)
+    guide_paths = [repo_root / entry.get("path", "")
+                   for entry in guides.get("entries", [])]
+    check("Java test source count matches the evidence inventory",
+          len(java_test_files) == tests.get("javaTestClassCount"),
+          f"found {len(java_test_files)}")
+    check("protocol scenario count matches the evidence inventory",
+          len(protocol_scenarios) == tests.get("protocolScenarioCount"),
+          f"found {len(protocol_scenarios)}")
+    check("every inventoried MCP guide resolves on the exact source tree",
+          all(path.is_file() for path in guide_paths),
+          str(guide_paths))
+
+    trust_report = call_tool("getBenchmarkTrust", {"action": "getAll"})
+    explicit_trust = trust_report.get("tools", {})
+    limitation_count = sum(len(tool.get("knownLimitations", []))
+                           for tool in explicit_trust.values())
+    validation_case_count = sum(len(tool.get("validationCases", []))
+                                for tool in explicit_trust.values())
+    verified_case_count = sum(
+        1 for tool in explicit_trust.values()
+        for case in tool.get("validationCases", [])
+        if "verifiedBy" in case)
+    check("limitation inventory reconciles the runtime trust report",
+          set(explicit_trust) == set(limitations.get("explicitTrustTools", []))
+          and limitation_count == limitations.get("knownLimitationCount")
+          and validation_case_count == limitations.get("validationCaseCount")
+          and verified_case_count == limitations.get("verifiedValidationCaseCount"),
+          str(limitations))
+    check("uncovered tool-specific trust remains an explicit Phase 0 gap",
+          limitations.get("publishedToolCount") == 71
+          and limitations.get("explicitTrustToolCount") == 20
+          and limitations.get("genericTrustToolCount") == 51
+          and limitations.get("unsupportedConditionCount") == 0
+          and limitations.get("complete") is False
+          and evidence.get("complete") is False,
+          str(limitations))
 
 
 def test_run_capability_search_and_invoke():

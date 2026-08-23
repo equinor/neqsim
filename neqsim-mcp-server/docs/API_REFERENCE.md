@@ -4,8 +4,8 @@ Detailed parameter documentation for MCP tools and resources.
 For the governance model, tier structure, and stability promises, see
 [MCP_CONTRACT.md](../MCP_CONTRACT.md).
 
-The exact protocol-tested tool, resource, resource-template, prompt, deployment-profile, and
-capability-coverage baseline is recorded in
+The exact protocol-tested tool, resource, resource-template, prompt, deployment-profile,
+capability, test-source, guide, and known-limit/trust baseline is recorded in
 [MCP published-surface inventory](SURFACE_INVENTORY.md).
 
 ---
@@ -229,6 +229,11 @@ the canonical name-only `EquipmentFactory` surface, and the bounded
 `generateReport` / `bridgeTaskWorkflow` reporting paths. Use this inventory for
 discovery and audit; availability is not equivalent to benchmark validation or
 engineering approval.
+
+`phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, the four MCP
+guide paths, and a runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false
+while published tools use generic trust fallbacks. Test presence is not test execution, and generic
+`TESTED` maturity is not a benchmark, accuracy, applicability, or no-limitations claim.
 
 ---
 

@@ -809,6 +809,9 @@ public final class SchemaCatalog {
     properties.put("implementationInventory",
         objectProp("Compact tool-to-implementation bindings, canonical EquipmentFactory surface, "
             + "and bounded engineering-report paths"));
+    properties.put("phase0EvidenceInventory",
+        objectProp("Phase 0 test and guide source inventory plus explicit benchmark, validation-case, "
+            + "known-limitation, and uncovered-tool evidence"));
 
     Map<String, Object> thermo = new LinkedHashMap<String, Object>();
     thermo.put("type", "object");
