@@ -27,6 +27,24 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void mapsKaasaAppendixFCoefficientOrderWithoutChangingSemantics() {
+    double[] kaasaOrder = { 1.0, 2.0e-3, -3.0e-6, 4.0, -0.5, 6.0 };
+    PitzerTemperatureFunction function = PitzerTemperatureFunction.fromKaasa1998(kaasaOrder);
+
+    assertArrayEquals(new double[] { 1.0, 4.0, -0.5, 2.0e-3, -3.0e-6, 6.0 }, function.getCoefficients(), 0.0);
+    assertEquals(1.0, function.valueAt(REFERENCE_TEMPERATURE), 0.0);
+
+    double temperature = 373.15;
+    double expected = 1.0 + 2.0e-3 * (temperature - REFERENCE_TEMPERATURE)
+        - 3.0e-6 * (temperature * temperature - REFERENCE_TEMPERATURE * REFERENCE_TEMPERATURE)
+        + 4.0 * (1.0 / temperature - 1.0 / REFERENCE_TEMPERATURE) - 0.5 * Math.log(temperature / REFERENCE_TEMPERATURE)
+        + 6.0 * (1.0 / (temperature * temperature) - 1.0 / (REFERENCE_TEMPERATURE * REFERENCE_TEMPERATURE));
+    assertEquals(expected, function.valueAt(temperature), 1.0e-15);
+
+    assertThrows(IllegalArgumentException.class, () -> PitzerTemperatureFunction.fromKaasa1998(new double[5]));
+  }
+
+  @Test
   void rejectsInvalidInputsAndProtectsCoefficientState() {
     assertThrows(IllegalArgumentException.class, () -> new PitzerTemperatureFunction(0.0, COEFFICIENTS));
     assertThrows(IllegalArgumentException.class,
@@ -49,7 +67,7 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
     int potassium = phase.getComponent("K+").getComponentNumber();
     int chloride = phase.getComponent("Cl-").getComponentNumber();
 
-    phase.setBinaryTemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE, COEFFICIENTS, COEFFICIENTS,
+    phase.setPhreeqcBinaryTemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE, COEFFICIENTS, COEFFICIENTS,
         COEFFICIENTS);
     phase.setBeta2TemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE, COEFFICIENTS);
     phase.setThetaTemperatureCoefficients(sodium, potassium, REFERENCE_TEMPERATURE, COEFFICIENTS);
@@ -68,6 +86,28 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
         new double[] { 0.25, 0.0, 0.0, 0.0, 0.0, 0.0 });
     assertEquals(expected, phase.getThetaij(sodium, potassium, 373.15), 2.0e-15);
     assertEquals(0.25, clone.getThetaij(sodium, potassium, 373.15), 0.0);
+  }
+
+  @Test
+  void mapsPhreeqcC0DirectlyToCphiForDifferentChargeProducts() {
+    PhasePitzer phase = createPhase();
+    int sodium = phase.getComponent("Na+").getComponentNumber();
+    int calcium = phase.getComponent("Ca++").getComponentNumber();
+    int chloride = phase.getComponent("Cl-").getComponentNumber();
+    double[] zeros = new double[6];
+
+    phase.setPhreeqcBinaryTemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE, zeros, zeros, COEFFICIENTS);
+    phase.setPhreeqcBinaryTemperatureCoefficients(calcium, chloride, REFERENCE_TEMPERATURE, zeros, zeros, COEFFICIENTS);
+
+    assertEquals(COEFFICIENTS[0], phase.getCphiij(sodium, chloride, REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(COEFFICIENTS[0], phase.getCphiij(calcium, chloride, REFERENCE_TEMPERATURE), 0.0);
+
+    double expectedCphi = -0.11371073586719137;
+    assertEquals(expectedCphi, phase.getCphiij(sodium, chloride, 373.15), 2.0e-15);
+    assertEquals(expectedCphi, phase.getCphiij(calcium, chloride, 373.15), 2.0e-15);
+    assertEquals(expectedCphi / 2.0, phase.getCphiij(sodium, chloride, 373.15) / 2.0, 2.0e-15);
+    assertEquals(expectedCphi / (2.0 * Math.sqrt(2.0)),
+        phase.getCphiij(calcium, chloride, 373.15) / (2.0 * Math.sqrt(2.0)), 2.0e-15);
   }
 
   @Test
@@ -109,7 +149,8 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
     system.addComponent("water", 55.508);
     system.addComponent("Na+", 1.0);
     system.addComponent("K+", 0.1);
-    system.addComponent("Cl-", 1.1);
+    system.addComponent("Cl-", 1.3);
+    system.addComponent("Ca++", 0.1);
     return (PhasePitzer) system.getPhase(1);
   }
 }
