@@ -118,12 +118,15 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * @return declared status, or {@link ChemicalReactionValidationStatus#UNSPECIFIED} when the selected table has no
    * status column
    */
-  private static ChemicalReactionValidationStatus readValidationStatus(java.sql.ResultSet dataSet) {
-    try {
-      return ChemicalReactionValidationStatus.fromDatabaseValue(dataSet.getString("ValidationStatus"));
-    } catch (java.sql.SQLException ex) {
-      return ChemicalReactionValidationStatus.UNSPECIFIED;
+  private static ChemicalReactionValidationStatus readValidationStatus(java.sql.ResultSet dataSet)
+      throws java.sql.SQLException {
+    java.sql.ResultSetMetaData metadata = dataSet.getMetaData();
+    for (int column = 1; column <= metadata.getColumnCount(); column++) {
+      if ("ValidationStatus".equalsIgnoreCase(metadata.getColumnLabel(column))) {
+        return ChemicalReactionValidationStatus.fromDatabaseValue(dataSet.getString(column));
+      }
     }
+    return ChemicalReactionValidationStatus.UNSPECIFIED;
   }
 
   /**
