@@ -270,13 +270,25 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Verify NaCl mean ionic activity and osmotic coefficients against standard Pitzer literature values at 25 C.
+   * Verify NaCl mean ionic activity and osmotic coefficients against evaluated 25 C reference data.
+   *
+   * <p>
+   * The values are transcribed at their published three-decimal precision from Hamer and Wu, J. Phys. Chem. Ref. Data 1
+   * (1972), 1047-1100, DOI 10.1063/1.3253108. They cover 0.1-3.0 mol NaCl per kg water. No interpolation or fitting is
+   * performed in this test. The activity-coefficient tolerance is one percent; the osmotic-coefficient tolerance is
+   * 0.001 absolute, accounting for source rounding while rejecting the formerly mis-transcribed 2 and 3 mol/kg values.
+   * This is a public reference regression, not independent hold-out evidence for the stored Pitzer parameters.
+   * </p>
+   *
+   * @see <a href="https://doi.org/10.1063/1.3253108">Hamer and Wu (1972)</a>
    */
   @Test
   public void testNaClActivityAndOsmoticCoefficientAgainstLiterature() {
     double[] molalities = { 0.1, 0.5, 1.0, 2.0, 3.0 };
     double[] meanActivityCoefficients = { 0.778, 0.681, 0.657, 0.668, 0.714 };
-    double[] osmoticCoefficients = { 0.932, 0.921, 0.936, 1.002, 1.085 };
+    double[] osmoticCoefficients = { 0.932, 0.921, 0.936, 0.984, 1.045 };
+    double[] calculatedMeanActivityCoefficients = new double[molalities.length];
+    double[] calculatedOsmoticCoefficients = new double[molalities.length];
 
     for (int i = 0; i < molalities.length; i++) {
       SystemInterface system = new SystemPitzer(298.15, 1.01325);
@@ -290,13 +302,31 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
       PhaseInterface phase = system.getPhase(1);
       int sodiumComponentNumber = phase.getComponent("Na+").getComponentNumber();
       int chlorideComponentNumber = phase.getComponent("Cl-").getComponentNumber();
+      calculatedMeanActivityCoefficients[i] = phase.getMeanIonicActivity(sodiumComponentNumber,
+          chlorideComponentNumber);
+      calculatedOsmoticCoefficients[i] = phase.getOsmoticCoefficientOfWater();
 
-      assertEquals(meanActivityCoefficients[i],
-          phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber),
-          0.08 * meanActivityCoefficients[i]);
-      assertEquals(osmoticCoefficients[i], phase.getOsmoticCoefficientOfWater(), 0.04 * osmoticCoefficients[i]);
+      assertEquals(meanActivityCoefficients[i], calculatedMeanActivityCoefficients[i],
+          0.01 * meanActivityCoefficients[i]);
+      assertEquals(osmoticCoefficients[i], calculatedOsmoticCoefficients[i], 0.001);
       assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficientOfWaterMolality(), 1.0e-12);
+
+      system.init(1);
+      assertEquals(calculatedMeanActivityCoefficients[i],
+          system.getPhase(1).getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber), 0.0,
+          "Repeated initialization must retain the mean ionic activity");
+      assertEquals(calculatedOsmoticCoefficients[i], system.getPhase(1).getOsmoticCoefficientOfWater(), 0.0,
+          "Repeated initialization must retain the osmotic coefficient");
     }
+
+    assertTrue(calculatedMeanActivityCoefficients[0] > calculatedMeanActivityCoefficients[1]);
+    assertTrue(calculatedMeanActivityCoefficients[1] > calculatedMeanActivityCoefficients[2]);
+    assertTrue(calculatedMeanActivityCoefficients[2] < calculatedMeanActivityCoefficients[3]);
+    assertTrue(calculatedMeanActivityCoefficients[3] < calculatedMeanActivityCoefficients[4]);
+    assertTrue(calculatedOsmoticCoefficients[0] > calculatedOsmoticCoefficients[1]);
+    assertTrue(calculatedOsmoticCoefficients[1] < calculatedOsmoticCoefficients[2]);
+    assertTrue(calculatedOsmoticCoefficients[2] < calculatedOsmoticCoefficients[3]);
+    assertTrue(calculatedOsmoticCoefficients[3] < calculatedOsmoticCoefficients[4]);
   }
 
   @Test
