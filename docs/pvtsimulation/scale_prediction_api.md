@@ -453,6 +453,41 @@ System.out.println("Total SI: " + ss.getTotalSaturationIndex());
 
 ---
 
+## Coupled mineral-equilibrium diagnostics
+
+`MultiMineralScaleEquilibrium` exposes the numerical evidence needed to decide whether a coupled precipitation result
+is acceptable:
+
+- `getIterationCount()` reports coordinate-descent updates;
+- `hasReachedIterationLimit()` distinguishes normal step convergence from an exhausted solver budget;
+- `getMaximumComplementarityViolation()` reports `abs(SI)` for minerals with solid present and
+  `max(SI, 0)` for absent solids;
+- `getMaximumIonBalanceResidualMolPerL()` closes each tracked free-ion inventory against the sum of 1:1 mineral
+  precipitation extents.
+
+The same values appear in the JSON `diagnostics` object. Acceptance remains case-specific: an iteration-limit flag is
+not itself a thermodynamic residual, and a small step does not prove that the mineral inequalities are satisfied. The
+reference regression requires maximum complementarity violation <= 1e-3 SI and maximum tracked-ion balance residual <=
+1e-12 mol/L. A deliberately one-iteration solve remains material-balanced but fails complementarity, preventing silent
+classification as an equilibrated mineral state.
+
+This contract follows the equilibrium-phase convention in Parkhurst (1995), *U.S. Geological Survey
+Water-Resources Investigations Report 95-4227*, [doi:10.3133/wri954227](https://doi.org/10.3133/wri954227):
+minerals in the stable phase assemblage satisfy the target SI equality, while absent minerals remain inequality
+constraints at or below the target. The current PHREEQC 3
+[`EQUILIBRIUM_PHASES` documentation](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-13.htm)
+states the same convention. USGS-authored information is
+[public domain](https://www.usgs.gov/faqs/are-usgs-reportspublications-copyrighted). No numerical data, parameter,
+correlation or PHREEQC code is copied or fitted by this diagnostic regression.
+
+The diagnostic is limited to the standalone coupled solver's tracked free ions and fixed 1:1 mineral stoichiometries.
+It does not prove elemental/charge closure for the predictor's aqueous speciation, update activity coefficients during
+precipitation, select a globally stable phase topology, or validate Ksp and activity parameters against independent
+precipitation data. Full electrolyte EOS/GE calculations must continue to apply their model-specific activity,
+speciation and balance gates.
+
+---
+
 ## Comparison of thermodynamic routes
 
 | Feature | Davies standalone | Pitzer binary + coupled solids | Electrolyte EOS / full Pitzer |

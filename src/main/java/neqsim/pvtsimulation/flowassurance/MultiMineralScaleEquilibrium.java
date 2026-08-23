@@ -1,5 +1,7 @@
 package neqsim.pvtsimulation.flowassurance;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -119,6 +121,10 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   private double convergenceThreshold = 1.0e-15;
 
   private boolean solved = false;
+  private int iterationsUsed = 0;
+  private boolean iterationLimitReached = false;
+  private double maximumComplementarityViolation = Double.NaN;
+  private double maximumIonBalanceResidualMolPerL = Double.NaN;
   private double divalentGamma = Double.NaN;
   private final Map<String, MineralResult> results = new LinkedHashMap<String, MineralResult>();
   private final Map<String, Double> residualFreeIons = new LinkedHashMap<String, Double>();
@@ -236,6 +242,10 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     results.clear();
     residualFreeIons.clear();
     activityCoefficients.clear();
+    iterationsUsed = 0;
+    iterationLimitReached = false;
+    maximumComplementarityViolation = Double.NaN;
+    maximumIonBalanceResidualMolPerL = Double.NaN;
 
     double ionicStrength = predictor.getIonicStrengthMolPerL();
     double gamma2 = Double.NaN;
@@ -261,6 +271,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     free[FE] = Math.max(predictor.getTotalIronMolPerL(), 0.0);
     free[SO4] = Math.max(predictor.getFreeSulphateMolPerL(), 0.0);
     free[CO3] = Math.max(predictor.getFreeCarbonateMolPerL(), 0.0);
+    double[] initialFree = free.clone();
 
     // Mineral definitions: {cation index, anion index, Ksp, molar mass, name, formula}.
     List<Mineral> minerals = new ArrayList<Mineral>();
@@ -287,6 +298,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     // competition (e.g. barite, celestite and anhydrite drawing on one sulphate pool), which a
     // simultaneous Gauss-Seidel sweep can stall on.
     double convThreshold = convergenceThreshold;
+    boolean stoppedBeforeIterationLimit = false;
     for (int iter = 0; iter < maxIterations; iter++) {
       Mineral best = null;
       double bestAbs = 0.0;
@@ -332,6 +344,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
       }
 
       if (best == null || bestAbs < convThreshold) {
+        stoppedBeforeIterationLimit = true;
         break;
       }
 
@@ -348,9 +361,14 @@ public class MultiMineralScaleEquilibrium implements Serializable {
       if (free[best.anion] < 0.0) {
         free[best.anion] = 0.0;
       }
+      iterationsUsed++;
     }
+    iterationLimitReached = !stoppedBeforeIterationLimit && iterationsUsed >= maxIterations;
 
-    // Store results.
+    // Store results and evaluate the pure-phase complementarity residual. USGS PHREEQC
+    // treats absent equilibrium phases as inequality constraints (SI <= target) and phases
+    // present in the stable assemblage as equality constraints (SI = target).
+    maximumComplementarityViolation = 0.0;
     for (Mineral m : minerals) {
       double massMgL = m.precipitatedMolL * m.molarMass * 1000.0;
       double finalSI = saturationIndex(free[m.cation], free[m.anion], m.activityCoefficientProduct, m.ksp);
@@ -366,6 +384,23 @@ public class MultiMineralScaleEquilibrium implements Serializable {
       r.limitingIonExhausted = (free[m.cation] <= 10.0 * EPS || free[m.anion] <= 10.0 * EPS)
           && m.precipitatedMolL > EPS;
       results.put(m.name, r);
+
+      double violation = m.precipitatedMolL > EPS ? Math.abs(finalSI) : Math.max(finalSI, 0.0);
+      if (!Double.isFinite(violation)) {
+        violation = Double.POSITIVE_INFINITY;
+      }
+      maximumComplementarityViolation = Math.max(maximumComplementarityViolation, violation);
+    }
+
+    double[] precipitatedByIon = new double[free.length];
+    for (Mineral m : minerals) {
+      precipitatedByIon[m.cation] += m.precipitatedMolL;
+      precipitatedByIon[m.anion] += m.precipitatedMolL;
+    }
+    maximumIonBalanceResidualMolPerL = 0.0;
+    for (int ion = 0; ion < free.length; ion++) {
+      double balanceResidual = initialFree[ion] - free[ion] - precipitatedByIon[ion];
+      maximumIonBalanceResidualMolPerL = Math.max(maximumIonBalanceResidualMolPerL, Math.abs(balanceResidual));
     }
 
     residualFreeIons.put("Ca++", free[CA]);
@@ -525,6 +560,62 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   }
 
   /**
+   * Returns the number of coordinate-descent updates used by the last solve.
+   *
+   * @return iteration count
+   */
+  public int getIterationCount() {
+    ensureSolved();
+    return iterationsUsed;
+  }
+
+  /**
+   * Returns whether the last solve exhausted the configured iteration limit.
+   *
+   * <p>
+   * This is an algorithmic stop diagnostic. Call {@link #getMaximumComplementarityViolation()} and
+   * {@link #getMaximumIonBalanceResidualMolPerL()} to apply case-specific scientific acceptance tolerances.
+   * </p>
+   *
+   * @return true if the solver stopped at {@code maxIterations}
+   */
+  public boolean hasReachedIterationLimit() {
+    ensureSolved();
+    return iterationLimitReached;
+  }
+
+  /**
+   * Returns the maximum pure-phase complementarity violation in saturation-index units.
+   *
+   * <p>
+   * For a mineral with precipitated solid, the violation is {@code abs(SI)}. For an absent solid, it is
+   * {@code max(SI, 0)}, so undersaturation is admissible.
+   * </p>
+   *
+   * @return maximum complementarity violation in log10 saturation-index units
+   */
+  public double getMaximumComplementarityViolation() {
+    ensureSolved();
+    return maximumComplementarityViolation;
+  }
+
+  /**
+   * Returns the maximum absolute free-ion material-balance residual from precipitation.
+   *
+   * <p>
+   * The residual compares each initial free-ion amount with the final free amount plus all 1:1 mineral extents that
+   * consumed that ion. Ion-pairing and aqueous speciation are frozen by the configured predictor before this standalone
+   * precipitation solve.
+   * </p>
+   *
+   * @return maximum absolute ion-balance residual in mol/L
+   */
+  public double getMaximumIonBalanceResidualMolPerL() {
+    ensureSolved();
+    return maximumIonBalanceResidualMolPerL;
+  }
+
+  /**
    * Returns the common divalent coefficient used by Davies/B-dot, or the calcium coefficient for binary Pitzer.
    *
    * @return common divalent or representative calcium activity coefficient, or NaN if not solved
@@ -547,6 +638,28 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   public Map<String, Double> getActivityCoefficientsUsed() {
     ensureSolved();
     return new LinkedHashMap<String, Double>(activityCoefficients);
+  }
+
+  /**
+   * Invalidates cached equilibrium and diagnostic state after deserialization.
+   *
+   * <p>
+   * Older serialized objects do not contain the diagnostic fields. Requiring a lazy re-solve prevents their
+   * default-zero values from being interpreted as evidence of convergence and also prevents stale cached results after
+   * a version transition.
+   * </p>
+   *
+   * @param stream serialized object input
+   * @throws IOException if the object cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    stream.defaultReadObject();
+    solved = false;
+    iterationsUsed = 0;
+    iterationLimitReached = false;
+    maximumComplementarityViolation = Double.NaN;
+    maximumIonBalanceResidualMolPerL = Double.NaN;
   }
 
   /**
@@ -598,6 +711,13 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     out.put("minerals", mineralMap);
     out.put("totalScaleMass_mgL", getTotalScaleMassMgPerL());
     out.put("residualFreeIons_molL", residualFreeIons);
+
+    Map<String, Object> diagnostics = new LinkedHashMap<String, Object>();
+    diagnostics.put("iterationCount", iterationsUsed);
+    diagnostics.put("iterationLimitReached", iterationLimitReached);
+    diagnostics.put("maximumComplementarityViolation_SI", maximumComplementarityViolation);
+    diagnostics.put("maximumIonBalanceResidual_molL", maximumIonBalanceResidualMolPerL);
+    out.put("diagnostics", diagnostics);
 
     Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(out);
