@@ -9,13 +9,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Builds the Phase 0 MCP test, guide, limitation, and merged-foundation evidence inventory.
+ * Builds the Phase 0 MCP test, guide, limitation, merged-foundation, and acceptance-fixture evidence inventory.
  *
  * <p>
  * Source evidence counts are frozen by the repository and protocol tests. Runtime limitation coverage is derived
  * directly from {@link BenchmarkTrust}, so tools that still use the generic trust fallback remain explicit gaps rather
  * than being presented as validated. The merged-foundation inventory records what campaign prerequisites #2874, #2875,
- * and #3152 actually established and the current source evidence that preserves those contracts.
+ * and #3152 actually established and the current source evidence that preserves those contracts. The acceptance fixture
+ * catalog freezes the four public synthetic scales used by later Phase 0 measurement and maturity work.
  * </p>
  */
 public final class McpEvidenceInventory {
@@ -30,20 +31,21 @@ public final class McpEvidenceInventory {
   /**
    * Builds the evidence inventory.
    *
-   * @return test, guide, limitation, and foundation evidence
+   * @return test, guide, limitation, foundation, and acceptance-fixture evidence
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.2");
+    inventory.addProperty("inventoryVersion", "1.3");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
     inventory.add("knownLimitations", buildKnownLimitations());
+    inventory.add("acceptanceFixtures", McpAcceptanceFixtureCatalog.build());
     inventory.addProperty("advisoryBoundary",
         "Evidence discovery does not certify a calculation or replace qualified engineering review");
     inventory.addProperty("complete", false);
     inventory.addProperty("completionReason",
-        "Published surfaces, merged foundations, and per-tool trust coverage are inventoried, but confirmed trust gaps, four-scale acceptance fixtures, traceability/maturity matrices, and measured Phase 0 baselines remain incomplete");
+        "Published surfaces, merged foundations, per-tool trust coverage, and four-scale acceptance fixtures are inventoried, but confirmed trust gaps, traceability/maturity matrices, and measured Phase 0 baselines remain incomplete");
     return inventory;
   }
 
@@ -95,35 +97,35 @@ public final class McpEvidenceInventory {
     JsonArray entries = new JsonArray();
     entries.add(foundation(2874, "0894b7820b6317c64ccaaaee5a3326f5bbdf5d77",
         "Caller identity, recoverable security enforcement, principal-scoped approvals, and fail-closed admin actions",
-        new String[] { "src/main/java/neqsim/mcp/runners/McpRequestContext.java",
+        new String[] {"src/main/java/neqsim/mcp/runners/McpRequestContext.java",
             "src/main/java/neqsim/mcp/runners/SecurityRunner.java",
             "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
-            "neqsim-mcp-server/src/main/java/neqsim/mcp/server/McpIdentityResolver.java" },
-        new String[] { "src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java" },
+            "neqsim-mcp-server/src/main/java/neqsim/mcp/server/McpIdentityResolver.java"},
+        new String[] {"src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java"},
         "Security remains disabled by default for local desktop use; governed deployments must supply transport identity and configured admin policy"));
     entries.add(foundation(2875, "7dac75744ebf25cfbe2b4ccd763bb30c3d14cbdf",
         "Tenant-scoped model handles, solved-model reuse, response-size protection, execution bounds, and complete tool-catalog coverage",
-        new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
+        new String[] {"src/main/java/neqsim/mcp/runners/ModelRegistry.java",
             "src/main/java/neqsim/mcp/runners/ResponseSizeGuard.java",
             "src/main/java/neqsim/mcp/runners/McpExecutionPolicy.java",
-            "src/main/java/neqsim/mcp/runners/CapabilitiesRunner.java" },
-        new String[] { "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
+            "src/main/java/neqsim/mcp/runners/CapabilitiesRunner.java"},
+        new String[] {"src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
             "src/test/java/neqsim/mcp/runners/ResponseSizeGuardTest.java",
-            "src/test/java/neqsim/mcp/runners/McpToolSurfaceContractTest.java" },
+            "src/test/java/neqsim/mcp/runners/McpToolSurfaceContractTest.java"},
         "Bounded execution and selective retrieval do not by themselves establish scientific accuracy for every published tool"));
     entries.add(foundation(3152, "bd07729f105efb48b14c641697e0f99fe9af6898",
         "Runtime capability discovery/execution, canonical replayable ProcessSystem/ProcessModel definitions, design/capacity evidence, and typed two-fluid pipeline results",
-        new String[] { "src/main/java/neqsim/mcp/runners/GeneralCapabilityRunner.java",
+        new String[] {"src/main/java/neqsim/mcp/runners/GeneralCapabilityRunner.java",
             "src/main/java/neqsim/mcp/runners/ProcessRunner.java",
             "src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java",
-            "src/main/java/neqsim/process/util/monitor/TwoFluidPipeResponse.java" },
-        new String[] { "src/test/java/neqsim/mcp/runners/CapabilitiesRunnerTest.java",
-            "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java" },
+            "src/main/java/neqsim/process/util/monitor/TwoFluidPipeResponse.java"},
+        new String[] {"src/test/java/neqsim/mcp/runners/CapabilitiesRunnerTest.java",
+            "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"},
         "Generic execution remains narrower than discovery; stateful calculations stay behind curated runners and domain validation remains authoritative"));
 
     foundations.add("entries", entries);
     foundations.addProperty("remainingPhase0Boundary",
-        "Close confirmed trust gaps where evidence exists, define four acceptance scales and traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
+        "Close confirmed trust gaps where evidence exists, execute the four acceptance scales for measured baselines, complete traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
     return foundations;
   }
 
