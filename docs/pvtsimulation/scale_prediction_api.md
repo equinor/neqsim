@@ -213,6 +213,22 @@ for i in range(1, len(table)):
 - MEG-aware (temporarily replaces MEG with water for calculation)
 - Returns **saturation ratio** (SR = IAP/Ksp), where SR > 1 = supersaturated
 
+### Reaction-level saturation diagnostics
+
+`ChemicalReaction.getSaturationRatio(system, phaseNumber)` evaluates the same thermodynamic definition for
+reaction-backed minerals:
+
+$\mathrm{SR}=\frac{\mathrm{IAP}}{K_{sp}},\quad \mathrm{IAP}=\prod_i a_i^{-\nu_i}$
+
+Here $\nu_i<0$ identifies each dissolved reactant and $a_i$ is its dimensionless activity. Electrolyte-CPA uses its
+established mole-fraction/activity-coefficient convention; Pitzer uses solute molality and molality-scale activity
+coefficients while retaining the solvent convention. `calcLogSaturationRatio(...)` returns $\ln(\mathrm{SR})$ directly
+for trace systems where the linear ratio may underflow.
+
+This activity-based definition is consistent with USGS PHREEQC saturation-index reporting and the calcite equilibrium
+treatment of Plummer and Busenberg (1982), DOI `10.1016/0016-7037(82)90056-4`. The regression uses synthetic
+compositions and an analytical identity; it copies or fits no external numerical data.
+
 ---
 
 ## 3. Pitzer Activity Coefficient Model
