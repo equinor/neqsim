@@ -1,6 +1,7 @@
 package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ class CapabilitiesRunnerTest {
     assertTrue(obj.has("processSimulation"));
     assertTrue(obj.has("calculationModes"));
     assertTrue(obj.has("toolCapabilities"));
+    assertTrue(obj.has("implementationInventory"));
     assertTrue(obj.has("setupTemplates"));
     assertTrue(obj.has("processJsonContract"));
     assertTrue(obj.has("capabilityGraph"));
@@ -110,6 +112,48 @@ class CapabilitiesRunnerTest {
 
     JsonObject safetyGate = obj.getAsJsonObject("safetyGatePolicy");
     assertTrue(safetyGate.get("engineeringReviewRequired").getAsBoolean());
+  }
+
+  @Test
+  void testImplementationInventoryIsCompleteAndResolvable() throws ClassNotFoundException {
+    JsonObject root = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject inventory = root.getAsJsonObject("implementationInventory");
+    JsonObject bindings = inventory.getAsJsonObject("toolImplementationBindings");
+
+    assertTrue(inventory.get("complete").getAsBoolean());
+    assertEquals(71, inventory.get("toolBindingCount").getAsInt());
+    assertEquals(60, inventory.get("implementationClassCount").getAsInt());
+    assertEquals(71, bindings.size());
+    assertEquals(IndustrialProfile.getAllKnownTools(), McpImplementationInventory.getToolImplementations().keySet());
+    assertEquals(0, inventory.getAsJsonArray("missingToolBindings").size());
+    assertEquals(0, inventory.getAsJsonArray("mismatchedCapabilityBindings").size());
+    assertEquals(0, inventory.getAsJsonArray("undeclaredToolBindings").size());
+
+    JsonObject toolCapabilities = root.getAsJsonObject("toolCapabilities");
+    for (Map.Entry<String, JsonElement> entry : bindings.entrySet()) {
+      String toolName = entry.getKey();
+      String implementationClass = entry.getValue().getAsString();
+      assertEquals(implementationClass,
+          toolCapabilities.getAsJsonObject(toolName).get("implementationClass").getAsString());
+      assertNotNull(Class.forName(implementationClass), "Implementation class does not resolve for " + toolName);
+    }
+
+    JsonArray equipmentTypes = inventory.getAsJsonArray("supportedEquipmentTypes");
+    JsonArray contractEquipment = root.getAsJsonObject("processJsonContract").getAsJsonArray("supportedEquipmentTypes");
+    assertEquals(205, inventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(contractEquipment, equipmentTypes);
+    assertTrue(equipmentTypes.toString().contains("Compressor"));
+    assertTrue(equipmentTypes.toString().contains("ThreePhaseSeparator"));
+    assertTrue(equipmentTypes.toString().contains("ThrottlingValve"));
+
+    JsonArray reportPaths = inventory.getAsJsonArray("reportPaths");
+    assertEquals(2, inventory.get("reportPathCount").getAsInt());
+    assertEquals("generateReport", reportPaths.get(0).getAsJsonObject().get("tool").getAsString());
+    assertEquals("neqsim.mcp.runners.ReportRunner",
+        reportPaths.get(0).getAsJsonObject().get("implementationClass").getAsString());
+    assertEquals("bridgeTaskWorkflow", reportPaths.get(1).getAsJsonObject().get("tool").getAsString());
+    assertEquals("neqsim.mcp.runners.TaskWorkflowBridge",
+        reportPaths.get(1).getAsJsonObject().get("implementationClass").getAsString());
   }
 
   @Test

@@ -223,6 +223,13 @@ and routed through `EquipmentFactory`. Equipment that needs non-generic
 construction or custom multi-port semantics may still require a dedicated MCP
 runner or builder extension.
 
+The `getCapabilities` response also includes `implementationInventory`, a compact
+machine-readable trace from all published tools to their implementation classes,
+the canonical name-only `EquipmentFactory` surface, and the bounded
+`generateReport` / `bridgeTaskWorkflow` reporting paths. Use this inventory for
+discovery and audit; availability is not equivalent to benchmark validation or
+engineering approval.
+
 ---
 
 ## `runOperationalStudy` — P&ID and Plant-Data Operational Studies

@@ -806,6 +806,9 @@ public final class SchemaCatalog {
     properties.put("toolCapabilities",
         objectProp("Machine-readable descriptors for high-use MCP tools, including required fields, "
             + "supported models, units, limitations, and response contract fields"));
+    properties.put("implementationInventory",
+        objectProp("Compact tool-to-implementation bindings, canonical EquipmentFactory surface, "
+            + "and bounded engineering-report paths"));
 
     Map<String, Object> thermo = new LinkedHashMap<String, Object>();
     thermo.put("type", "object");

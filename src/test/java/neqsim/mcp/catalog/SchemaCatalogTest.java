@@ -326,6 +326,7 @@ class SchemaCatalogTest {
     assertNotNull(output);
     assertTrue(output.contains("CapabilitiesOutput"));
     assertTrue(output.contains("toolCapabilities"));
+    assertTrue(output.contains("implementationInventory"));
     assertStandardOutputProps(output);
   }
 
