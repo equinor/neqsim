@@ -47,6 +47,8 @@ MechanicalDesign (base class)
 │   └── PipeMechanicalDesignCalculator (wall thickness, stress, cost)
 ├── AdsorberMechanicalDesign       → ASME VIII
 ├── AbsorberMechanicalDesign       → ASME VIII
+├── DistillationColumnMechanicalDesign
+│   └── Tray/packing flood, Fs, demister K-factor, pressure drop, and bottleneck rating
 ├── EjectorMechanicalDesign        → HEI
 ├── SafetyValveMechanicalDesign    → API 520/521
 └── WellMechanicalDesign           → NORSOK D-010 / API 5CT / API Bull 5C3
@@ -142,6 +144,21 @@ double designPressure = mecDesign.getMaxDesignPressure(); // bara
 // Display results in GUI
 mecDesign.displayResults();
 ```
+
+### Gas-liquid contactor capacity
+
+The mechanical design attached to `PackedColumn`, `AbsorptionColumn`, `StrippingColumn`, and
+`DistillationColumn` is a `DistillationColumnMechanicalDesign`. After the process column has
+converged, it can rate a fixed vessel or size new internals and expose the controlling utilization
+through `ContactorCapacityResult`.
+
+For packed brownfield contactors, configure the actual diameter, packing flood target, optional
+vendor-supported relative capacity factor, outlet demister database subtype, and maximum pressure
+drop. The result and `toJson()` include Fs, packing or tray flood, wetting status, demister
+Souders-Brown K-factor, pressure drop, overall utilization, estimated gas headroom, and bottleneck.
+`comparePackedInternals(...)` holds vessel diameter and process conditions fixed while screening a
+candidate packing and demister. See [Absorbers and Strippers](equipment/absorbers#mechanical-design-and-debottlenecking)
+for the executable TEG contactor example and the correlation limitations.
 
 ### Declared design conditions and units
 
