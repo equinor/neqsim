@@ -273,14 +273,13 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    * Validate dilute-to-moderate NaCl activity and osmotic coefficients against traceable 25 C reference values.
    *
    * <p>
-   * Reference values are from Partanen and Partanen (2020), Tables 6 and 10, DOI
-   * 10.1021/acs.jced.0c00402 (CC BY 4.0). The Pitzer parameters are not fitted in this test.
+   * Reference values are from Partanen and Partanen (2020), Tables 6 and 10, DOI 10.1021/acs.jced.0c00402 (CC BY 4.0).
+   * The Pitzer parameters are not fitted in this test.
    * </p>
    */
   @Test
   public void testNaClActivityAndOsmoticCoefficientAgainstPartanen2020() {
-    assertNaClReferenceValues(new double[][] { { 0.2, 0.735, 0.924 }, { 0.5, 0.684, 0.924 },
-        { 1.0, 0.662, 0.940 } });
+    assertNaClReferenceValues(new double[][] { { 0.2, 0.735, 0.924 }, { 0.5, 0.684, 0.924 }, { 1.0, 0.662, 0.940 } });
   }
 
   /**
@@ -318,8 +317,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
       double osmoticCoefficient = phase.getOsmoticCoefficientOfWater();
 
       assertEquals(molality, actualMolality, 2.0e-5, "Reference composition must be on the molality basis");
-      assertEquals(referenceRow[1], meanActivityCoefficient,
-          maximumMeanActivityRelativeDeviation * referenceRow[1]);
+      assertEquals(referenceRow[1], meanActivityCoefficient, maximumMeanActivityRelativeDeviation * referenceRow[1]);
       assertEquals(referenceRow[2], osmoticCoefficient, maximumOsmoticRelativeDeviation * referenceRow[2]);
       assertEquals(meanActivityCoefficient, phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber),
           0.0, "Repeated mean activity evaluation must be deterministic");
