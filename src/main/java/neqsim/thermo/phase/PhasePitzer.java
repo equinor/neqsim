@@ -283,22 +283,22 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
-   * Sets PHREEQC six-term temperature functions for a cation-anion binary tuple.
+   * Sets six-term temperature functions for a cation-anion binary tuple.
    *
    * <p>
    * Each coefficient array is ordered {@code a0..a5}; the function is
    * {@code a0 + a1(1/T-1/Tr) + a2 ln(T/Tr) + a3(T-Tr) + a4(T^2-Tr^2)
-   * + a5(1/T^2-1/Tr^2)}. This method defines beta0, beta1, and Cphi as one
-   * coherent binary tuple. It performs no conversion between PHREEQC C0 and a dataset using another C
-   * convention.
+   * + a5(1/T^2-1/Tr^2)}. This method defines beta0, beta1, and NeqSim Cphi as one
+   * coherent binary tuple. Use {@link #setPhreeqcBinaryTemperatureCoefficients} when the source
+   * fields are PHREEQC {@code -B0}, {@code -B1}, and {@code -C0}.
    * </p>
    *
    * @param i component index i
    * @param j component index j
    * @param referenceTemperature reference temperature in K
-   * @param beta0Coefficients beta0 coefficients in PHREEQC order
-   * @param beta1Coefficients beta1 coefficients in PHREEQC order
-   * @param cphiCoefficients Cphi coefficients in PHREEQC order
+   * @param beta0Coefficients beta0 coefficients in six-term order
+   * @param beta1Coefficients beta1 coefficients in six-term order
+   * @param cphiCoefficients NeqSim Cphi coefficients in six-term order
    */
   public void setBinaryTemperatureCoefficients(int i, int j, double referenceTemperature,
       double[] beta0Coefficients, double[] beta1Coefficients, double[] cphiCoefficients) {
@@ -312,6 +312,30 @@ public class PhasePitzer extends PhaseGE {
     setTemperatureFunction(pairTemperatureKey(TEMPERATURE_BETA0, i, j), beta0Function);
     setTemperatureFunction(pairTemperatureKey(TEMPERATURE_BETA1, i, j), beta1Function);
     setTemperatureFunction(pairTemperatureKey(TEMPERATURE_CPHI, i, j), cphiFunction);
+  }
+
+  /**
+   * Sets PHREEQC six-term {@code -B0}, {@code -B1}, and {@code -C0} functions.
+   *
+   * <p>
+   * PHREEQC stores {@code -C0} as the Pitzer {@code Cphi} parameter and divides it by
+   * {@code 2*sqrt(abs(zM*zX))} inside the thermodynamic sums. NeqSim applies the same normalization
+   * to its Cphi value, so every {@code -C0} coefficient is passed unchanged. Callers must not
+   * pre-divide or multiply PHREEQC values by the charge normalization.
+   * </p>
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param referenceTemperature reference temperature in K
+   * @param beta0Coefficients PHREEQC {@code -B0} coefficients in {@code a0..a5} order
+   * @param beta1Coefficients PHREEQC {@code -B1} coefficients in {@code a0..a5} order
+   * @param c0Coefficients PHREEQC {@code -C0} coefficients in {@code a0..a5} order
+   */
+  public void setPhreeqcBinaryTemperatureCoefficients(int i, int j,
+      double referenceTemperature, double[] beta0Coefficients, double[] beta1Coefficients,
+      double[] c0Coefficients) {
+    setBinaryTemperatureCoefficients(i, j, referenceTemperature, beta0Coefficients,
+        beta1Coefficients, c0Coefficients);
   }
 
   /**
