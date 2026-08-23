@@ -1,12 +1,10 @@
 ---
 title: ProcessSystem Class
-description: Documentation for the ProcessSystem class in NeqSim.
+description: ProcessSystem flowsheet execution, optimized scheduling, recycles, parallel and dataflow strategies, shared-stream safety, transient stepping, and diagnostics.
 keywords: "ProcessSystem, flowsheet, process model, run, add equipment, recycle, adjuster, simulation, process train"
 ---
 
-# ProcessSystem Class
-
-Documentation for the ProcessSystem class in NeqSim.
+Build, execute, diagnose, and report NeqSim flowsheets with topology-aware steady-state and transient strategies.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -275,245 +273,154 @@ process.runTransient(1.0, calcId);
 
 ## Running Simulations
 
-### Execution Methods Overview
+### Execution methods
 
-| Method | Best For | Description |
-|--------|----------|-------------|
-| `run()` | General use | Optimized execution by default; sequential when explicitly disabled |
-| `runOptimized()` | **Recommended** | Auto-selects best strategy based on topology |
-| `runParallel()` | Feed-forward processes | Maximum parallelism for no-recycle processes |
-| `runDataflow()` | Wide feed-forward processes | Direct predecessor scheduling without level barriers |
-| `runHybrid()` | Complex processes | Parallel feed-forward + iterative recycle |
+`run()` is the normal entry point. Optimized execution is enabled by default, so `run()`
+delegates to `runOptimized(UUID)`. Call `setUseOptimizedExecution(false)` only when a
+single-threaded insertion-order or graph-ordered diagnostic run is required.
 
-### Recommended: runOptimized()
+| Entry point | Contract | Use |
+|----------|----------|----------|
+| `run()` / `run(UUID)` | Uses the optimized dispatcher by default | Normal steady-state execution |
+| `runOptimized()` / `runOptimized(UUID)` | Selects sequential, hybrid, dataflow, or level-parallel execution | Preferred explicit dispatcher |
+| `runSequential(UUID)` | Runs one unit at a time | Diagnostics or deliberate optimized-execution opt-out |
+| `runParallel()` / `runParallel(UUID)` | Uses topological levels and waits at each level barrier | Feed-forward flowsheets |
+| `runDataflow(UUID)` | Starts each task after its direct predecessors complete | Wide, asymmetric feed-forward flowsheets |
+| `runHybrid(UUID)` | Runs the feed-forward prefix in parallel and iterates the recycle section | Recycle flowsheets |
+| `runTransient()` / `runTransient(double, UUID)` | Advances one transient step | Dynamic simulation |
 
-The `runOptimized()` method automatically analyzes your process and selects the best execution strategy:
+There are no zero-argument `runDataflow()`, `runHybrid()`, or `runSequential()` overloads.
+The direct methods throw `InterruptedException`; application code must preserve the interrupted
+status or otherwise apply its interruption policy.
+
+### Optimized strategy selection
+
+The dispatcher applies these source-owned rules:
+
+1. An `Adjuster` or `MultiVariableAdjuster` selects `runSequential(UUID)` because its implicit
+   feedback is not represented by stream dependencies.
+2. A `Recycle` with no adjuster selects `runHybrid(UUID)`.
+3. A feed-forward graph that is sufficiently large and has useful parallel tasks selects
+   `runDataflow(UUID)`.
+4. Other feed-forward graphs select `runParallel(UUID)`.
+
+Multi-input equipment is supported in both feed-forward strategies. Predecessor ordering keeps a
+mixer, manifold, or heat exchanger behind its producers. Shared mutable input streams are handled
+as described below.
+
+Use one calculation identifier for all units in a run:
 
 ```java
-// Recommended - auto-selects best strategy
-process.runOptimized();
+import java.util.UUID;
 
-// With calculation ID for tracking
-UUID calcId = UUID.randomUUID();
-process.runOptimized(calcId);
+UUID calculationId = UUID.randomUUID();
+process.runOptimized(calculationId);
 ```
 
-**How it works:**
-- **Adjusters detected**: Uses `runSequential()` because implicit feedback is not represented by stream dependencies
-- **Recycles detected**: Uses `runHybrid()` which runs feed-forward sections in parallel, then iterates on recycle sections
-- **Wide feed-forward topology**: Uses `runDataflow()` so each task starts after its direct predecessors
-- **Small or narrow feed-forward topology**: Uses `runParallel()` to avoid unnecessary future scheduling
+The dispatcher catches an interruption from a direct hybrid, dataflow, or parallel attempt,
+restores the thread's interrupted status, and falls back to sequential execution. Code that calls a
+direct strategy remains responsible for handling `InterruptedException`.
 
-Multi-input equipment is supported in both feed-forward strategies. Dependency ordering and shared-input grouping keep
-mixers, manifolds, and heat exchangers from running before their inlet producers or racing another mutable consumer.
+### Explain the selected strategy
 
-**Performance gains** (typical separation train with 40 units, 3 recycles):
-| Mode | Time | Speedup |
-|------|------|---------|
-| Regular `run()` | 464 ms | baseline |
-| Graph-based | 336 ms | 28% |
-| `runOptimized()` | 286 ms | **38%** |
-
-### Steady-State Simulation
+Inspect the current topology instead of relying on fixed performance claims:
 
 ```java
-// General execution (optimized by default)
-process.run();
+String strategy = process.getExecutionStrategyExplanation();
+String partition = process.getExecutionPartitionInfo();
 
-// Run with calculation ID for tracking
-UUID calcId = UUID.randomUUID();
-process.run(calcId);
+boolean parallelCandidate = process.isParallelExecutionBeneficial();
+int levels = process.getParallelPartition().getLevelCount();
+int maximumParallelism = process.getParallelPartition().getMaxParallelism();
 ```
 
-### Parallel Execution
+`getExecutionStrategyExplanation()` names the selected strategy and controlling adjusters,
+recycles, calculators, or multi-input equipment. `getExecutionPartitionInfo()` reports topology
+levels and recycle sections. These diagnostics describe the current process structure; they are not
+a throughput guarantee. Benchmark the actual flowsheet on its target JVM and hardware before
+choosing a direct strategy for performance reasons.
 
-For feed-forward processes (no recycles), parallel execution runs independent units simultaneously:
+### Shared-stream safety
+
+Parallel and dataflow execution group consumers that share the same mutable
+`StreamInterface` object. Units inside a shared-input group run sequentially; independent groups
+can run concurrently. This protects thermodynamic cloning and initialization, which are not
+read-only operations even for two single-input consumers.
+
+A `Splitter` creates distinct output stream objects, so separate branches can remain parallel:
 
 ```java
-// Run independent units in parallel
-try {
-    process.runParallel();
-} catch (InterruptedException e) {
-    Thread.currentThread().interrupt();
-}
+Stream feed = new Stream("feed", fluid);
+Splitter splitter = new Splitter("splitter", feed, 2);
+Heater firstBranch = new Heater("first branch", splitter.getSplitStream(0));
+Heater secondBranch = new Heater("second branch", splitter.getSplitStream(1));
 ```
 
-**Note:** `runParallel()` does not handle recycles or adjusters. Use `runOptimized()` for processes with recycles.
+By contrast, two units constructed with exactly the same stream object are placed in one sequential
+task:
 
-For a sufficiently wide feed-forward graph, `runOptimized()` selects `runDataflow()` instead. Dataflow removes global
-level barriers while retaining the same predecessor dependencies and shared-input groups as `runParallel()`.
-
-### Thread Safety: Shared Stream Handling
-
-When multiple units share the same input stream (e.g., a splitter/manifold feeding parallel branches), NeqSim automatically groups them to prevent race conditions.
-
-**How it works:**
-1. Units at the same execution level are analyzed for shared input streams
-2. Units sharing an input stream are grouped together using a Union-Find algorithm
-3. Groups with shared streams run **sequentially** within the group
-4. Independent groups (no shared streams) run **in parallel**
-
-**Example - Parallel Pipelines:**
 ```java
-// Three pipelines fed by the same manifold
-Stream feedStream = new Stream("feed", fluid);
-Splitter manifold = new Splitter("manifold", feedStream, 3);
-
-AdiabaticPipe pipe1 = new AdiabaticPipe("pipe1", manifold.getSplitStream(0));
-AdiabaticPipe pipe2 = new AdiabaticPipe("pipe2", manifold.getSplitStream(1));
-AdiabaticPipe pipe3 = new AdiabaticPipe("pipe3", manifold.getSplitStream(2));
-
-process.add(feedStream);
-process.add(manifold);
-process.add(pipe1);
-process.add(pipe2);
-process.add(pipe3);
-
-// Safe: Each pipe has its own split stream (different objects)
-// Pipes run in parallel without race conditions
-process.runParallel();
-```
-
-**Example - Shared Input Stream (handled automatically):**
-```java
-// Two units explicitly sharing the same input stream object
 Stream sharedInput = valve.getOutletStream();
-
-Heater heater1 = new Heater("heater1", sharedInput);  // Same stream object
-Heater heater2 = new Heater("heater2", sharedInput);  // Same stream object
-
-// NeqSim groups both consumers into one sequential task because cloning and
-// initializing the shared thermodynamic state is not a read-only operation.
-// Consumers attached to distinct stream objects remain parallel.
-process.runParallel();
+Heater firstConsumer = new Heater("first consumer", sharedInput);
+Heater secondConsumer = new Heater("second consumer", sharedInput);
 ```
 
-**Applies to:**
-- `runParallel()` - Groups by shared input streams
-- `runDataflow()` - Uses the same groups plus direct predecessor dependencies
-- `runHybrid()` - Groups in Phase 1 (feed-forward section)
-- `runTransient()` - Groups at each time step
+This grouping applies to `runParallel(UUID)`, `runDataflow(UUID)`, and the feed-forward phase
+of `runHybrid(UUID)`. Direct parallel/dataflow execution does not solve recycles or adjusters; use
+the optimized dispatcher for those topologies.
 
-### Hybrid Execution
+### Graph-ordered sequential diagnostics
 
-For processes with recycles, hybrid execution combines parallel and iterative strategies:
-
-```java
-// Hybrid: parallel feed-forward + iterative recycle
-try {
-    process.runHybrid();
-} catch (InterruptedException e) {
-    Thread.currentThread().interrupt();
-}
-```
-
-**How hybrid works:**
-1. **Phase 1 (Parallel)**: Run feed-forward units (before recycles) in parallel
-2. **Phase 2 (Iterative)**: Run recycle section with graph-based iteration until convergence
-
-### Graph-Based Execution
-
-Enable graph-based execution for optimized unit ordering:
+`setUseGraphBasedExecution(true)` changes the order used by the legacy sequential path. Because
+optimized execution is enabled by default, opt out explicitly when graph-ordered single-threaded
+execution is the intended diagnostic:
 
 ```java
-// Enable graph-based execution order
+process.setUseOptimizedExecution(false);
 process.setUseGraphBasedExecution(true);
 process.run();
-
-// Or use runOptimized() which handles this automatically
-process.runOptimized();
 ```
 
-### Transient Simulation
+This mode derives a topological order from stream references. It does not make explicit
+`ProcessConnection` metadata drive material flow.
 
-Transient simulations use graph-based parallel execution for independent branches, applying the same shared-stream grouping as steady-state methods.
+### Transient stepping
+
+Transient equipment execution is sequential by default. Use either the configured timestep or the
+explicit `double, UUID` overload:
 
 ```java
-// Set time step
-double dt = 1.0;  // seconds
+process.runTransient();
 
-// Run single transient step
-process.runTransient(dt);
-
-// Run for specified duration
-double totalTime = 3600.0;  // 1 hour
-for (double t = 0; t < totalTime; t += dt) {
-    process.runTransient(dt);
-    logResults(t);
-}
+double timestepSeconds = 1.0;
+UUID calculationId = UUID.randomUUID();
+process.runTransient(timestepSeconds, calculationId);
 ```
 
-### Transient with Events
+The timestep must be finite and greater than zero. A `runTransient(double)` convenience overload
+and a `runTransient(double, callback)` overload do not exist.
+
+Parallel transient equipment stepping is opt-in:
 
 ```java
-// Run transient with event handling
-process.runTransient(dt, (time) -> {
-    if (time > 600.0) {
-        // Open blowdown valve after 10 minutes
-        bdv.setOpen(true);
-    }
-});
+process.setParallelTransientEnabled(true);
+process.setTransientThreadPoolSize(4);
+process.runTransient(timestepSeconds, calculationId);
 ```
+
+When enabled, process-graph level barriers and shared-input grouping protect independent transient
+branches. Recycle and other iterative transient couplings still require their own convergence
+semantics. Event-driven actions are configured through the process event scheduler; they are not a
+callback argument to `runTransient`.
 
 ---
 
 ## Execution Strategy Analysis
 
-### Check Process Topology
-
-```java
-// Check if process has recycles
-boolean hasRecycles = process.hasRecycleLoops();
-
-// Check if parallel execution would be beneficial
-boolean useParallel = process.isParallelExecutionBeneficial();
-
-// Get detailed partition analysis
-String partitionInfo = process.getExecutionPartitionInfo();
-System.out.println(partitionInfo);
-```
-
-**Example output:**
-```
-=== Execution Partition Analysis ===
-Total units: 40
-Has recycle loops: true
-Parallel levels: 29
-Max parallelism: 6
-Units in recycle loops: 30
-
-=== Hybrid Execution Strategy ===
-Phase 1 (Parallel): 4 levels, 8 units
-Phase 2 (Iterative): 25 levels, 32 units
-
-Execution levels:
-  Level 0 [PARALLEL]: feed TP setter, first stage oil reflux, LP stream temp controller
-  Level 1 [PARALLEL]: 1st stage separator
-  Level 2 [PARALLEL]: oil depres valve
-  Level 3 [PARALLEL]:
-  --- Recycle Section Start (iterative) ---
-  Level 4: oil heater second stage [RECYCLE]
-  Level 5: 2nd stage separator [RECYCLE]
-  ...
-```
-
-### Get Parallel Partition Details
-
-```java
-// Get parallel partition
-ProcessGraph.ParallelPartition partition = process.getParallelPartition();
-
-// Number of execution levels
-int levels = partition.getLevelCount();
-
-// Maximum units that can run simultaneously
-int maxParallelism = partition.getMaxParallelism();
-
-System.out.println("Execution levels: " + levels);
-System.out.println("Max parallelism: " + maxParallelism);
-```
-
----
+Use `getExecutionStrategyExplanation()` for the dispatch decision and controlling units. Use
+`getExecutionPartitionInfo()` or `getParallelPartition()` for detailed topology information.
+The partition reports levels and possible concurrency before shared-input groups and runtime unit
+costs are considered.
 
 ## Retrieving Equipment
 
@@ -642,30 +549,13 @@ assert originalT == ((Stream) process.getUnit("Feed")).getTemperature("C");
 
 ### Execution Strategy Selection
 
-```java
-// Use optimized execution (recommended)
-process.runOptimized();  // Auto-selects best strategy
-
-// Or manually choose strategy:
-
-// 1. Sequential (explicit legacy mode)
-process.runSequential(UUID.randomUUID());
-
-// 2. Graph-based ordering
-process.setUseGraphBasedExecution(true);
-process.run();
-
-// 3. Parallel execution (no recycles)
-process.runParallel();
-
-// 4. Dependency-aware dataflow (wide feed-forward processes)
-process.runDataflow();
-
-// 5. Hybrid execution (recycle processes)
-process.runHybrid();
-```
+Prefer `run()` or `runOptimized()`. When diagnosing a specific feed-forward or recycle
+topology, call the exact UUID-bearing direct methods documented in
+[Running Simulations](#running-simulations). Direct dataflow and hybrid execution do not have
+zero-argument overloads.
 
 ### Asynchronous Execution
+
 
 ```java
 // Run in background thread
