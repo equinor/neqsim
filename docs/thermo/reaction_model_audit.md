@@ -28,6 +28,12 @@ The audit reports the selected typed data source, deterministic active-reaction 
 
 The API is deliberately read-only. It requires `chemicalReactionInit()` to have been called and never initializes reactions implicitly, runs a flash, or changes model state. It therefore adds no work to ordinary neutral PR/SRK/CPA calculations and no work to electrolyte calculations unless the audit is explicitly requested.
 
+## Pitzer concentration basis
+
+`SystemPitzer` evaluates solute molality as moles of solute per kilogram of water solvent. This is the concentration basis of the Pitzer ion-interaction equations, rather than moles per kilogram of total solution. The distinction grows with salinity and affects ionic strength, activity coefficients, osmotic properties, reactive speciation, and mineral saturation.
+
+The basis correction is confined to `ComponentGePitzer`; electrolyte EOS and neutral calculations keep their existing paths. It does not split the shared reaction table or change any stored equilibrium-constant coefficient. Pitzer's thermodynamic framework is documented in DOI `10.1021/j100621a026` and the binary-electrolyte formulation in DOI `10.1021/j100638a009`.
+
 ## Scientific use
 
 Use this diagnostic to freeze model-specific validation questions before changing reaction data:
