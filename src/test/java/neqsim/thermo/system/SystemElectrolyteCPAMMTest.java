@@ -1476,8 +1476,9 @@ public class SystemElectrolyteCPAMMTest {
     unqualifiedPitzerMix.addComponent("SO4--", 0.005);
     unqualifiedPitzerMix.setMixingRule("classic");
 
+    unqualifiedPitzerMix.init(0);
     IllegalStateException missingParameters =
-        assertThrows(IllegalStateException.class, () -> unqualifiedPitzerMix.init(0));
+        assertThrows(IllegalStateException.class, () -> unqualifiedPitzerMix.init(1));
     assertTrue(missingParameters.getMessage().contains("missingTheta"));
     assertTrue(missingParameters.getMessage().contains("Ba++|Na+"));
     assertTrue(missingParameters.getMessage().contains("Cl-|SO4--"));
