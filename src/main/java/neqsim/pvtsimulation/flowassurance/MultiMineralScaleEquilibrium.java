@@ -398,8 +398,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     maximumIonBalanceResidualMolPerL = 0.0;
     for (int ion = 0; ion < free.length; ion++) {
       double balanceResidual = initialFree[ion] - free[ion] - precipitatedByIon[ion];
-      maximumIonBalanceResidualMolPerL =
-          Math.max(maximumIonBalanceResidualMolPerL, Math.abs(balanceResidual));
+      maximumIonBalanceResidualMolPerL = Math.max(maximumIonBalanceResidualMolPerL, Math.abs(balanceResidual));
     }
 
     residualFreeIons.put("Ca++", free[CA]);
