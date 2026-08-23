@@ -1,18 +1,16 @@
 ---
 title: Python Extension Patterns for NeqSim
-description: Guide to extending NeqSim from Python using JPype, implementing Java interfaces, and creating custom models.
+description: Safe JPype interop, Python composition wrappers, narrow interface proxies, batch calculations, and scientific-Python integration for NeqSim.
 ---
 
-# Python Extension Patterns for NeqSim
-
-This guide covers how to extend NeqSim functionality from Python, including implementing Java interfaces, creating custom calculation wrappers, and integrating with Python scientific libraries.
+This guide shows how to use NeqSim safely from Python, wrap Java objects by composition, implement only narrow Java interfaces when a proxy is genuinely required, and integrate calculations with scientific Python. Core thermodynamic and physical-property models should be implemented and tested in Java rather than approximated with incomplete Python proxies.
 
 ## Table of Contents
 
 1. [Overview](#overview)
 2. [Setting Up JPype with NeqSim](#setting-up-jpype-with-neqsim)
 3. [Calling Java from Python](#calling-java-from-python)
-4. [Implementing Java Interfaces in Python](#implementing-java-interfaces-in-python)
+4. [Python Proxies and Extension Boundaries](#python-proxies-and-extension-boundaries)
 5. [Custom Process Equipment Wrappers](#custom-process-equipment-wrappers)
 6. [Custom Thermodynamic Calculations](#custom-thermodynamic-calculations)
 7. [Batch Processing and Optimization](#batch-processing-and-optimization)
@@ -24,19 +22,21 @@ This guide covers how to extend NeqSim functionality from Python, including impl
 
 ## Overview
 
-NeqSim Python integration works through three approaches:
+NeqSim Python integration has four distinct boundaries:
 
-| Approach | Use Case | Complexity |
-|----------|----------|------------|
-| Direct Java Access | Use existing NeqSim classes | Low |
-| Python Wrappers | Simplify API, add features | Medium |
-| Interface Implementation | Custom calculations in Python | High |
+| Approach | Use case | Boundary |
+|----------|----------|----------|
+| Direct Java access | Use released NeqSim classes | Preferred for standard simulations |
+| Python composition wrapper | Add Python ergonomics, validation, or tabular results around Java objects | Does not become a NeqSim process unit or thermodynamic model |
+| Narrow Java-interface proxy | Supply callbacks to an API that explicitly accepts a small interface | Must implement every abstract method; validate lifetime and threading |
+| Java extension | Add process equipment, thermodynamic models, or physical-property methods | Implement and test in `src/main/java` and `src/test/java` |
 
-### When to Use Each Approach
+### When to use each approach
 
-- **Direct Java Access**: Standard simulations using existing models
-- **Python Wrappers**: When you need Pythonic interfaces or want to combine with NumPy/pandas
-- **Interface Implementation**: When you need custom behavior that integrates into NeqSim's calculation flow
+- **Direct Java access** for standard simulations using existing models.
+- **Python composition wrappers** for units, validation, orchestration, NumPy, pandas, plotting, and result shaping.
+- **Narrow interface proxies** only when a current Java API explicitly accepts that interface and its complete method contract is practical to implement.
+- **Java extensions** for reusable NeqSim equipment, stateful calculations, serialization, cloning, thermodynamic models, and physical-property methods.
 
 ---
 
@@ -183,122 +183,75 @@ numpy_back = np.array(list(java_array))
 
 ---
 
-## Implementing Java Interfaces in Python
+## Python Proxies and Extension Boundaries
 
-### Using @JImplements Decorator
+JPype can expose a Python object as an implementation of an existing Java **interface**. A proxy
+must implement every abstract method with compatible argument and return types. It does not create
+a Java class, cannot extend a concrete Java class, and does not automatically acquire NeqSim
+lifecycle, cloning, serialization, calculation-identity, or thread-safety behavior.
 
-JPype allows you to implement Java interfaces directly in Python:
+### Do not proxy core thermodynamic or property-model interfaces
+
+The following shortcuts are invalid extension patterns:
+
+- `neqsim.util.CalculationInterface` does not exist on current `master`.
+- `ComponentInterface` is a large core thermodynamic contract; implementing a few getters does
+  not create a usable component.
+- The viscosity contract is
+  `neqsim.physicalproperties.methods.methodinterface.ViscosityInterface`. It extends
+  `PhysicalPropertyMethodInterface` and requires the inherited phase and cloning contract in
+  addition to viscosity methods.
+
+Implement reusable components, phases, equations of state, physical-property methods, and process
+equipment in Java with focused Java tests. Use Python composition for study-specific calculations
+that do not need to enter NeqSim's Java object graph.
+
+### Complete narrow-interface proxy example
+
+`NamedInterface` is a deliberately small example with four abstract methods. Importing
+`jneqsim` starts the JVM before JPype resolves the interface name.
 
 ```python
-import jpype
-from jpype import JImplements, JOverride
+from jpype import JImplements
+from jpype import JOverride
 from neqsim import jneqsim
 
-@JImplements('neqsim.thermo.component.ComponentInterface')
-class CustomComponent:
-    """Custom component implementation in Python."""
 
-    def __init__(self, name, moles):
-        self.name = name
-        self.moles = moles
-        self.mole_fraction = 0.0
-        self.fugacity_coeff = 1.0
+@JImplements("neqsim.util.NamedInterface")
+class PythonTag:
+    """Complete proxy for NeqSim's narrow NamedInterface contract."""
+
+    def __init__(self, name, tag_number):
+        self._name = str(name)
+        self._tag_number = str(tag_number)
 
     @JOverride
     def getName(self):
-        return self.name
+        return self._name
 
     @JOverride
-    def getNumberOfMolesInPhase(self):
-        return self.moles
+    def setName(self, name):
+        self._name = str(name)
 
     @JOverride
-    def getx(self):
-        """Get mole fraction."""
-        return self.mole_fraction
+    def getTagNumber(self):
+        return self._tag_number
 
     @JOverride
-    def setx(self, x):
-        """Set mole fraction."""
-        self.mole_fraction = float(x)
+    def setTagNumber(self, tag_number):
+        self._tag_number = str(tag_number)
 
-    @JOverride
-    def getFugacityCoefficient(self):
-        return self.fugacity_coeff
 
-    @JOverride
-    def getTC(self):
-        """Critical temperature in K."""
-        # Return from database or calculate
-        return 190.56  # Example: methane
-
-    @JOverride
-    def getPC(self):
-        """Critical pressure in bar."""
-        return 45.99  # Example: methane
+python_tag = PythonTag("inlet separator", "20-VG-001")
+assert python_tag.getName() == "inlet separator"
+assert python_tag.getTagNumber() == "20-VG-001"
 ```
 
-### Implementing Custom Calculation Interface
-
-```python
-@JImplements('neqsim.util.CalculationInterface')
-class CustomCalculation:
-    """Custom calculation that can be called from NeqSim."""
-
-    def __init__(self, param1=1.0, param2=2.0):
-        self.param1 = param1
-        self.param2 = param2
-        self.result = None
-
-    @JOverride
-    def run(self):
-        """Execute the calculation."""
-        # Your custom logic here
-        self.result = self.param1 * self.param2
-        return True
-
-    @JOverride
-    def getResult(self):
-        return self.result
-```
-
-### Implementing Property Models
-
-```python
-@JImplements('neqsim.physicalproperties.ViscosityInterface')
-class CustomViscosityModel:
-    """Custom viscosity model in Python."""
-
-    def __init__(self):
-        self.viscosity = 0.0
-        self._phase = None
-
-    @JOverride
-    def setPhase(self, phase):
-        self._phase = phase
-
-    @JOverride
-    def calcViscosity(self):
-        """Calculate viscosity using custom correlation."""
-        if self._phase is None:
-            return 0.0
-
-        T = self._phase.getTemperature()  # K
-        P = self._phase.getPressure()     # bar
-        rho = self._phase.getDensity()    # mol/m³
-
-        # Custom correlation (example: simple gas viscosity)
-        # mu = A * T^0.5 / (1 + B/T)
-        A = 2.6693e-6
-        B = 127.0
-
-        self.viscosity = A * (T ** 0.5) / (1.0 + B / T)
-        return self.viscosity
-
-    @JOverride
-    def getViscosity(self):
-        return self.viscosity
-```
+This proxy only demonstrates the JPype boundary. It is not a process unit and cannot be added to a
+`ProcessSystem`. Before using any proxy in production, read the current
+[NamedInterface JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/util/NamedInterface.html)
+and the accepting Java API, then test callback lifetime, exceptions, Java threads, and repeated
+execution.
 
 ---
 
@@ -1208,9 +1161,9 @@ T_K = uc.C_to_K(25)  # 298.15 K
 
 ## See Also
 
-- [Extending Process Equipment](extending_process_equipment)
-- [Extending Physical Properties](extending_physical_properties)
-- [Extending Thermodynamic Models](extending_thermodynamic_models)
+- [Extending Process Equipment](extending_process_equipment.md)
+- [Extending Physical Properties](extending_physical_properties.md)
+- [Extending Thermodynamic Models](extending_thermodynamic_models.md)
 - [NeqSim Python Documentation](https://equinor.github.io/neqsim-python/)
 - [JPype Documentation](https://jpype.readthedocs.io/)
 

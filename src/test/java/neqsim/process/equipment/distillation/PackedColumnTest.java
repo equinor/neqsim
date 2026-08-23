@@ -5,8 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.distillation.ContactorCapacityComparison;
+import neqsim.process.mechanicaldesign.distillation.ContactorCapacityResult;
+import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -147,5 +151,70 @@ public class PackedColumnTest {
     assertTrue(json.contains("packingConfiguration"), "JSON should contain packing config");
     assertTrue(json.contains("hydraulicResults"), "JSON should contain hydraulic results");
     assertTrue(json.contains("columnPerformance"), "JSON should contain performance");
+  }
+
+  /**
+   * Rates a fixed-shell TEG-style packed contactor and screens high-capacity packing plus a glycol mist eliminator.
+   */
+  @Test
+  public void testTegContactorMechanicalDesignRetrofit() {
+    SystemInterface gas = new SystemSrkCPAstatoil(303.15, 70.0);
+    gas.addComponent("methane", 0.98);
+    gas.addComponent("water", 0.02);
+    gas.addComponent("TEG", 0.0);
+    gas.setMixingRule(10);
+    gas.setMultiPhaseCheck(false);
+
+    Stream wetGas = new Stream("wet gas", gas);
+    wetGas.setFlowRate(5000.0, "kg/hr");
+
+    SystemInterface solvent = new SystemSrkCPAstatoil(308.15, 70.0);
+    solvent.addComponent("methane", 0.0);
+    solvent.addComponent("water", 0.01);
+    solvent.addComponent("TEG", 0.99);
+    solvent.setMixingRule(10);
+    solvent.setMultiPhaseCheck(false);
+
+    Stream leanTeg = new Stream("lean TEG", solvent);
+    leanTeg.setFlowRate(500.0, "kg/hr");
+
+    PackedColumn contactor = new PackedColumn("TEG contactor retrofit", wetGas);
+    contactor.setPackedHeight(6.0);
+    contactor.setPackingType("Mellapak-250Y");
+    contactor.setStructuredPacking(true);
+    contactor.setDesignFloodFraction(0.70);
+    contactor.addSolventStream(leanTeg);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(wetGas);
+    process.add(leanTeg);
+    process.add(contactor);
+    process.run();
+
+    DistillationColumnMechanicalDesign design = (DistillationColumnMechanicalDesign) contactor.getMechanicalDesign();
+    design.setColumnDiameterOverride(contactor.getInternalDiameter());
+    design.configureOutletDemister("wire_mesh", "Standard Knitted");
+    design.setMaxContactorPressureDropBar(0.5);
+    design.calcDesign();
+
+    ContactorCapacityResult baseline = design.getContactorCapacityResult();
+    assertTrue(baseline.getColumnDiameter() > 0.0);
+    assertTrue(baseline.getFsFactor() > 0.0);
+    assertTrue(baseline.getPercentFlood() > 0.0);
+    assertTrue(baseline.getDemisterMaximumKFactor() > 0.0);
+    assertEquals(baseline.getFloodingUtilization(), contactor.getFsFactorUtilization(), 1.0e-10);
+    assertTrue(contactor.getCapacityConstraints().containsKey("column internals flooding"));
+    assertTrue(contactor.getCapacityConstraints().containsKey("outlet demister"));
+    assertTrue(contactor.getCapacityConstraints().containsKey("contactor pressure drop"));
+
+    ContactorCapacityComparison retrofit = design.comparePackedInternals("Mellapak-250Y", true, 1.30, "wire_mesh",
+        "Low Pressure Drop");
+    assertTrue(retrofit.getEstimatedCapacityIncreasePercent() >= 20.0,
+        "Expected at least 20% screening uplift, got " + retrofit.getEstimatedCapacityIncreasePercent());
+    assertTrue(retrofit.getEstimatedCapacityIncreasePercent() <= 40.0,
+        "Expected no more than 40% screening uplift, got " + retrofit.getEstimatedCapacityIncreasePercent());
+    assertTrue(retrofit.getCandidate().getEstimatedMaximumGasFlowKgPerHour() > retrofit.getBaseline()
+        .getEstimatedMaximumGasFlowKgPerHour());
+    assertTrue(retrofit.toJson().contains("estimatedCapacityIncreasePercent"));
   }
 }
