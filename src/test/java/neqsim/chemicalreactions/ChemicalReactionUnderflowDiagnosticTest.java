@@ -61,8 +61,7 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
     pitzer.setMixingRule("classic");
     pitzer.init(0);
     pitzer.init(1);
-    assertActivityBasedSodiumChlorideSaturation(pitzer, 1,
-        ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY);
+    assertActivityBasedSodiumChlorideSaturation(pitzer, 1, ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY);
   }
 
   @Test
@@ -175,12 +174,10 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
     double chlorideConcentration = expectedBasis == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY
         ? phase.getComponent("Cl-").getMolality(phase)
         : phase.getComponent("Cl-").getx();
-    double sodiumGamma =
-        phase.getActivityCoefficient(phase.getComponent("Na+").getComponentNumber(), waterNumber);
-    double chlorideGamma =
-        phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterNumber);
-    double expectedLogSaturationRatio =
-        Math.log(sodiumConcentration * sodiumGamma) + Math.log(chlorideConcentration * chlorideGamma);
+    double sodiumGamma = phase.getActivityCoefficient(phase.getComponent("Na+").getComponentNumber(), waterNumber);
+    double chlorideGamma = phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterNumber);
+    double expectedLogSaturationRatio = Math.log(sodiumConcentration * sodiumGamma)
+        + Math.log(chlorideConcentration * chlorideGamma);
     double concentrationOnlyLog = Math.log(sodiumConcentration) + Math.log(chlorideConcentration);
 
     ChemicalReaction reaction = new ChemicalReaction("NaCl mineral probe", new String[] { "Na+", "Cl-" },
