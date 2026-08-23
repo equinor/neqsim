@@ -789,7 +789,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * Get a scale-independent reactive-phase electroneutrality residual.
    *
    * @return {@code abs(sum(z_i*n_i)) / sum(abs(z_i*n_i))}; zero when no charged material is present, or
-   *         {@link Double#NaN} when no reactive phase exists
+   * {@link Double#NaN} when no reactive phase exists
    */
   public double getNormalizedReactivePhaseChargeResidual() {
     if (!system.isChemicalSystem()) {
