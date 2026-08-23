@@ -92,3 +92,44 @@ mapping: no Kaasa page, table, symbol, or value was read, copied, inferred, or O
 
 The next dependency is the PHREEQC six-term temperature function, followed by a complete
 redistributable Na/K/Cl binary–theta–psi set and held-out mixed-brine validation.
+
+## Six-term temperature-function mapping
+
+NeqSim also supports the PHREEQC six-coefficient temperature function as an explicit, sparse,
+dataset-owned override:
+
+`p(T) = a0 + a1(1/T - 1/Tr) + a2 ln(T/Tr) + a3(T - Tr) + a4(T² - Tr²) + a5(1/T² - 1/Tr²)`
+
+The mapping follows `calc_pitz_param` in the audited public-domain PHREEQC source
+(commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/src/pitzer.cpp#L1721-L1850)).
+PHREEQC fixes (T_r=298.15) K in `PTEMP`; the NeqSim value object stores the reference
+temperature explicitly so imported datasets cannot silently assume a different reference. Values within
+0.001 K of the reference reproduce PHREEQC's exact (a_0) branch. Temperature is absolute kelvin, and
+the returned parameter retains the source parameter's units and standard-state convention.
+
+| Family | PHREEQC six-term support | NeqSim mapping in this increment | Adoption decision |
+| --- | --- | --- | --- |
+| `beta(0)`, `beta(1)`, `C` | `B0`, `B1`, `C0` use all six coefficients | atomic binary setter for `beta0`, `beta1`, and NeqSim `Cphi` | Function adopted; no `C0`/ `Cphi` numerical conversion or coefficient adopted |
+| `beta(2)` | `B2` uses all six coefficients | explicit `beta2` temperature setter and temperature-aware activity/osmotic calls | Function adopted; no coefficient adopted |
+| `theta` | `THETA` uses all six coefficients | sparse same-sign-pair function, including both ion and water paths | Function adopted; no coefficient adopted |
+| `psi` | `PSI` uses all six coefficients | sparse ternary function, including both ion and water paths | Function adopted; no coefficient adopted |
+| `lambda`, `zeta`, `mu`, `eta` | supported by PHREEQC | NeqSim Pitzer does not yet implement these interaction families | Not mapped; fail closed rather than storing a value in another family |
+| `Aphi` | optional database function | NeqSim retains its existing water dielectric/density correlation | Not replaced; separate validation is required |
+
+The legacy NeqSim database columns `*_25`, `*_T1`, and `*_T2` keep their established
+three-coefficient behavior. The six-term layer is empty by default and guarded before map lookup, so
+legacy binary systems pay only one predictable boolean branch and non-Pitzer models execute no new
+code. Setter calls are explicit and retain dataset identity and mixed-brine coverage diagnostics.
+Functions survive serialization; clones copy only the sparse map and share immutable function values.
+
+This increment uses synthetic coefficients only to test the public equation at 298.15 and 373.15 K.
+It does not import `pitzer.dat`, change the reaction database, select reactions, or establish a
+parameter validity range. The applicable temperature, pressure, molality, ionic-strength, activity-scale,
+and standard-state limits remain those of the future versioned source dataset, which must be recorded
+row by row before adoption. Extrapolation is evaluated continuously but is not represented as validated.
+
+The National Library scan of Kaasa (1998) remained inaccessible for this mapping. No thesis page,
+table, parameter symbol, coefficient, or value was read, copied, inferred, or OCRed. The next parameter
+dependency is a redistributable, independently checked Na/K/Cl binary–theta–psi set with resolved
+`C0`/ `Cphi` semantics and held-out mean-activity, osmotic, water-activity, speciation, and
+mixed-brine validation.

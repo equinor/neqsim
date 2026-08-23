@@ -1,8 +1,10 @@
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +29,12 @@ public class PhasePitzer extends PhaseGE {
   public static final String DEFAULT_PARAMETER_DATASET_ID = "neqsim-legacy-pitzer-parameters-v1";
   /** Molality below which an ion is inactive for parameter-coverage auditing. */
   private static final double ACTIVE_ION_MOLALITY = 1.0e-8;
+  private static final int TEMPERATURE_BETA0 = 1;
+  private static final int TEMPERATURE_BETA1 = 2;
+  private static final int TEMPERATURE_CPHI = 3;
+  private static final int TEMPERATURE_BETA2 = 4;
+  private static final int TEMPERATURE_THETA = 5;
+  private static final int TEMPERATURE_PSI = 6;
 
   private double[][] beta0;
   private double[][] beta1;
@@ -47,6 +55,11 @@ public class PhasePitzer extends PhaseGE {
   /** T-dependent coefficients for Cphi. */
   private double[][] cphiT1;
   private double[][] cphiT2;
+  /** Sparse opt-in PHREEQC six-term temperature functions, keyed by parameter family and tuple. */
+  private Map<Long, PitzerTemperatureFunction> temperatureFunctions =
+      new HashMap<Long, PitzerTemperatureFunction>();
+  /** Fast gate that avoids map lookup for legacy parameter datasets. */
+  private boolean hasTemperatureFunctions;
   /** Whether parameters have been loaded from database. */
   private boolean parametersLoaded = false;
   /** Whether immutable parameter arrays are shared with a clone until the next setter call. */
@@ -94,12 +107,15 @@ public class PhasePitzer extends PhaseGE {
   @Override
   public PhasePitzer clone() {
     ensureDefinitionSets();
+    ensureTemperatureFunctions();
     PhasePitzer clonedPhase = (PhasePitzer) super.clone();
     parameterStorageShared = true;
     clonedPhase.parameterStorageShared = true;
     clonedPhase.definedBinaryPairs = new HashSet<String>(definedBinaryPairs);
     clonedPhase.definedThetaPairs = new HashSet<String>(definedThetaPairs);
     clonedPhase.definedPsiTuples = new HashSet<String>(definedPsiTuples);
+    clonedPhase.temperatureFunctions =
+        new HashMap<Long, PitzerTemperatureFunction>(temperatureFunctions);
     clonedPhase.cachedCoverageFingerprint = 0L;
     clonedPhase.cachedCoverageRevision = Long.MIN_VALUE;
     clonedPhase.cachedCoverage = null;
@@ -267,6 +283,87 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
+   * Sets PHREEQC six-term temperature functions for a cation-anion binary tuple.
+   *
+   * <p>
+   * Each coefficient array is ordered {@code a0..a5}; the function is
+   * {@code a0 + a1(1/T-1/Tr) + a2 ln(T/Tr) + a3(T-Tr) + a4(T^2-Tr^2)
+   * + a5(1/T^2-1/Tr^2)}. This method defines beta0, beta1, and Cphi as one
+   * coherent binary tuple. It performs no conversion between PHREEQC C0 and a dataset using another C
+   * convention.
+   * </p>
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param referenceTemperature reference temperature in K
+   * @param beta0Coefficients beta0 coefficients in PHREEQC order
+   * @param beta1Coefficients beta1 coefficients in PHREEQC order
+   * @param cphiCoefficients Cphi coefficients in PHREEQC order
+   */
+  public void setBinaryTemperatureCoefficients(int i, int j, double referenceTemperature,
+      double[] beta0Coefficients, double[] beta1Coefficients, double[] cphiCoefficients) {
+    PitzerTemperatureFunction beta0Function =
+        new PitzerTemperatureFunction(referenceTemperature, beta0Coefficients);
+    PitzerTemperatureFunction beta1Function =
+        new PitzerTemperatureFunction(referenceTemperature, beta1Coefficients);
+    PitzerTemperatureFunction cphiFunction =
+        new PitzerTemperatureFunction(referenceTemperature, cphiCoefficients);
+    setBinaryParameters(i, j, beta0Coefficients[0], beta1Coefficients[0], cphiCoefficients[0]);
+    setTemperatureFunction(pairTemperatureKey(TEMPERATURE_BETA0, i, j), beta0Function);
+    setTemperatureFunction(pairTemperatureKey(TEMPERATURE_BETA1, i, j), beta1Function);
+    setTemperatureFunction(pairTemperatureKey(TEMPERATURE_CPHI, i, j), cphiFunction);
+  }
+
+  /**
+   * Sets a PHREEQC six-term beta2 temperature function.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients six coefficients in PHREEQC order
+   */
+  public void setBeta2TemperatureCoefficients(int i, int j, double referenceTemperature,
+      double[] coefficients) {
+    PitzerTemperatureFunction function =
+        new PitzerTemperatureFunction(referenceTemperature, coefficients);
+    setBeta2(i, j, coefficients[0]);
+    setTemperatureFunction(pairTemperatureKey(TEMPERATURE_BETA2, i, j), function);
+  }
+
+  /**
+   * Sets a PHREEQC six-term theta temperature function.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients six coefficients in PHREEQC order
+   */
+  public void setThetaTemperatureCoefficients(int i, int j, double referenceTemperature,
+      double[] coefficients) {
+    PitzerTemperatureFunction function =
+        new PitzerTemperatureFunction(referenceTemperature, coefficients);
+    setTheta(i, j, coefficients[0]);
+    setTemperatureFunction(pairTemperatureKey(TEMPERATURE_THETA, i, j), function);
+  }
+
+  /**
+   * Sets a PHREEQC six-term psi temperature function.
+   *
+   * @param i first same-sign component index
+   * @param j second same-sign component index
+   * @param k opposite-sign component index
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients six coefficients in PHREEQC order
+   */
+  public void setPsiTemperatureCoefficients(int i, int j, int k, double referenceTemperature,
+      double[] coefficients) {
+    PitzerTemperatureFunction function =
+        new PitzerTemperatureFunction(referenceTemperature, coefficients);
+    setPsi(i, j, k, coefficients[0]);
+    setTemperatureFunction(tripleTemperatureKey(TEMPERATURE_PSI, i, j, k), function);
+  }
+
+  /**
    * Loads Pitzer binary parameters from the PitzerParameters database table.
    *
    * <p>
@@ -348,6 +445,10 @@ public class PhasePitzer extends PhaseGE {
    * @return beta0 at temperature T
    */
   public double getBeta0ij(int i, int j, double TK) {
+    PitzerTemperatureFunction function = getPairTemperatureFunction(TEMPERATURE_BETA0, i, j);
+    if (function != null) {
+      return function.valueAt(TK);
+    }
     double b0_25 = beta0[i][j];
     double t1 = beta0T1[i][j];
     double t2 = beta0T2[i][j];
@@ -367,6 +468,10 @@ public class PhasePitzer extends PhaseGE {
    * @return beta1 at temperature T
    */
   public double getBeta1ij(int i, int j, double TK) {
+    PitzerTemperatureFunction function = getPairTemperatureFunction(TEMPERATURE_BETA1, i, j);
+    if (function != null) {
+      return function.valueAt(TK);
+    }
     double b1_25 = beta1[i][j];
     double t1 = beta1T1[i][j];
     double t2 = beta1T2[i][j];
@@ -385,6 +490,11 @@ public class PhasePitzer extends PhaseGE {
    * @return Cphi at temperature T
    */
   public double getCphiij(int i, int j, double TK) {
+    PitzerTemperatureFunction function =
+        getPairTemperatureFunction(TEMPERATURE_CPHI, i, j);
+    if (function != null) {
+      return function.valueAt(TK);
+    }
     double c_25 = cphi[i][j];
     double t1 = cphiT1[i][j];
     double t2 = cphiT2[i][j];
@@ -506,6 +616,19 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
+   * Gets the temperature-adjusted beta2 parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param temperature temperature in K
+   * @return beta2 parameter at temperature
+   */
+  public double getBeta2ij(int i, int j, double temperature) {
+    PitzerTemperatureFunction function = getPairTemperatureFunction(TEMPERATURE_BETA2, i, j);
+    return function == null ? beta2[i][j] : function.valueAt(temperature);
+  }
+
+  /**
    * Set beta2 parameter for 2-2 electrolytes.
    *
    * @param i component index i
@@ -527,6 +650,20 @@ public class PhasePitzer extends PhaseGE {
    */
   public double getThetaij(int i, int j) {
     return theta[i][j];
+  }
+
+  /**
+   * Gets the temperature-adjusted theta parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param temperature temperature in K
+   * @return theta parameter at temperature
+   */
+  public double getThetaij(int i, int j, double temperature) {
+    PitzerTemperatureFunction function =
+        getPairTemperatureFunction(TEMPERATURE_THETA, i, j);
+    return function == null ? theta[i][j] : function.valueAt(temperature);
   }
 
   /**
@@ -555,6 +692,21 @@ public class PhasePitzer extends PhaseGE {
    */
   public double getPsiijk(int i, int j, int k) {
     return psi[i][j][k];
+  }
+
+  /**
+   * Gets the temperature-adjusted psi parameter.
+   *
+   * @param i first component index
+   * @param j second component index
+   * @param k third component index
+   * @param temperature temperature in K
+   * @return psi parameter at temperature
+   */
+  public double getPsiijk(int i, int j, int k, double temperature) {
+    PitzerTemperatureFunction function =
+        getTripleTemperatureFunction(TEMPERATURE_PSI, i, j, k);
+    return function == null ? psi[i][j][k] : function.valueAt(temperature);
   }
 
   /**
@@ -948,7 +1100,7 @@ public class PhasePitzer extends PhaseGE {
     double bPhi = getBeta0ij(cation, anion, temperature)
         + getBeta1ij(cation, anion, temperature) * Math.exp((is22 ? -1.4 : -2.0) * sqrtIonicStrength);
     if (is22) {
-      bPhi += getBeta2ij(cation, anion) * Math.exp(-12.0 * sqrtIonicStrength);
+      bPhi += getBeta2ij(cation, anion, temperature) * Math.exp(-12.0 * sqrtIonicStrength);
     }
     return bPhi;
   }
@@ -984,13 +1136,13 @@ public class PhasePitzer extends PhaseGE {
               aPhi, electrostaticMixing);
           electrostaticPhi = electrostaticMixing[0] + ionicStrength * electrostaticMixing[1];
         }
-        thetaPsiSum += molalityCation1 * molalityCation2 * (getThetaij(cation1, cation2) + electrostaticPhi);
+        thetaPsiSum += molalityCation1 * molalityCation2 * (getThetaij(cation1, cation2, temperature) + electrostaticPhi);
         for (int anion = 0; anion < numberOfComponents; anion++) {
           if (getComponent(anion).getIonicCharge() >= 0.0) {
             continue;
           }
           thetaPsiSum += molalityCation1 * molalityCation2 * getComponent(anion).getMolality(this)
-              * getPsiijk(cation1, cation2, anion);
+              * getPsiijk(cation1, cation2, anion, temperature);
         }
       }
     }
@@ -1015,13 +1167,13 @@ public class PhasePitzer extends PhaseGE {
               electrostaticMixing);
           electrostaticPhi = electrostaticMixing[0] + ionicStrength * electrostaticMixing[1];
         }
-        thetaPsiSum += molalityAnion1 * molalityAnion2 * (getThetaij(anion1, anion2) + electrostaticPhi);
+        thetaPsiSum += molalityAnion1 * molalityAnion2 * (getThetaij(anion1, anion2, temperature) + electrostaticPhi);
         for (int cation = 0; cation < numberOfComponents; cation++) {
           if (getComponent(cation).getIonicCharge() <= 0.0) {
             continue;
           }
           thetaPsiSum += molalityAnion1 * molalityAnion2 * getComponent(cation).getMolality(this)
-              * getPsiijk(anion1, anion2, cation);
+              * getPsiijk(anion1, anion2, cation, temperature);
         }
       }
     }
@@ -1189,6 +1341,57 @@ public class PhasePitzer extends PhaseGE {
    */
   private static String psiKey(String first, String second, String opposite) {
     return pairKey(first, second) + "|" + opposite;
+  }
+
+  /** Stores a sparse temperature function and enables the fast gate. */
+  private void setTemperatureFunction(long key, PitzerTemperatureFunction function) {
+    ensureTemperatureFunctions();
+    temperatureFunctions.put(key, function);
+    hasTemperatureFunctions = true;
+  }
+
+  /** Returns a binary temperature function without key allocation for legacy datasets. */
+  private PitzerTemperatureFunction getPairTemperatureFunction(int family, int first,
+      int second) {
+    if (!hasTemperatureFunctions) {
+      return null;
+    }
+    ensureTemperatureFunctions();
+    return temperatureFunctions.get(pairTemperatureKey(family, first, second));
+  }
+
+  /** Returns a ternary temperature function without key allocation for legacy datasets. */
+  private PitzerTemperatureFunction getTripleTemperatureFunction(int family, int first,
+      int second, int third) {
+    if (!hasTemperatureFunctions) {
+      return null;
+    }
+    ensureTemperatureFunctions();
+    return temperatureFunctions.get(tripleTemperatureKey(family, first, second, third));
+  }
+
+  /** Ensures temperature-function state exists for objects read from older serialized forms. */
+  private void ensureTemperatureFunctions() {
+    if (temperatureFunctions == null) {
+      temperatureFunctions = new HashMap<Long, PitzerTemperatureFunction>();
+      hasTemperatureFunctions = false;
+    }
+  }
+
+  /** Builds an order-independent allocation-free binary temperature-function key. */
+  private static long pairTemperatureKey(int family, int first, int second) {
+    int low = Math.min(first, second);
+    int high = Math.max(first, second);
+    return ((long) family << 54) | ((long) low << 18) | (long) high;
+  }
+
+  /** Builds a permutation-independent allocation-free ternary temperature-function key. */
+  private static long tripleTemperatureKey(int family, int first, int second, int third) {
+    int low = Math.min(first, Math.min(second, third));
+    int high = Math.max(first, Math.max(second, third));
+    int middle = first + second + third - low - high;
+    return ((long) family << 54) | ((long) low << 36) | ((long) middle << 18)
+        | (long) high;
   }
 
   /** Ensures definition sets exist for objects read from older serialized forms. */
