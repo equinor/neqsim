@@ -116,7 +116,7 @@ public final class McpEvidenceInventory {
         new String[] {"src/main/java/neqsim/mcp/runners/GeneralCapabilityRunner.java",
             "src/main/java/neqsim/mcp/runners/ProcessRunner.java",
             "src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java",
-            "src/main/java/neqsim/mcp/model/TwoFluidPipeResponse.java"},
+            "src/main/java/neqsim/process/util/monitor/TwoFluidPipeResponse.java"},
         new String[] {"src/test/java/neqsim/mcp/runners/CapabilitiesRunnerTest.java",
             "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"},
         "Generic execution remains narrower than discovery; stateful calculations stay behind curated runners and domain validation remains authoritative"));
