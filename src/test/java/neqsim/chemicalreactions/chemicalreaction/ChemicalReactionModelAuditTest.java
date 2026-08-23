@@ -1,6 +1,7 @@
 package neqsim.chemicalreactions.chemicalreaction;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,6 +30,10 @@ class ChemicalReactionModelAuditTest {
     assertNotEquals(cpaAudit.getModelName(), pitzerAudit.getModelName());
     assertTrue(cpaAudit.getReactionCount() > 0);
     assertTrue(pitzerAudit.getReactionCount() > 0);
+    assertTrue(pitzerAudit.hasValidatedEvidenceForAllActiveReactions());
+    assertTrue(pitzerAudit.getReactionsWithoutValidatedEvidence().isEmpty());
+    assertFalse(cpaAudit.hasValidatedEvidenceForAllActiveReactions());
+    assertTrue(cpaAudit.getReactionsWithoutValidatedEvidence().contains("CO2water"));
     assertFalse(comparison.hasSameReactionDataSource());
     assertFalse(comparison.hasSameReactionConcentrationBasis());
     assertTrue(comparison.getReactionsOnlyInFirst().isEmpty());
@@ -38,6 +43,27 @@ class ChemicalReactionModelAuditTest {
     assertTrue(comparison.getParameterDifferences().contains("waterreac"));
     assertFalse(comparison.isEquivalent());
     assertNotNull(findReaction(cpaAudit, "CO2water"));
+    assertEquals(ChemicalReactionValidationStatus.VALIDATED,
+        findReaction(pitzerAudit, "CO2water").getValidationStatus());
+    assertEquals(ChemicalReactionValidationStatus.UNSPECIFIED,
+        findReaction(cpaAudit, "CO2water").getValidationStatus());
+  }
+
+  /** Compatibility-copy Pitzer rows remain active but are explicitly reported as unvalidated. */
+  @Test
+  void pitzerReportsUnvalidatedActiveSulfideReactions() {
+    SystemInterface pitzer = new SystemPitzer(298.15, 1.01325);
+    pitzer.addComponent("H2S", 0.01);
+    pitzer.addComponent("water", 0.99);
+    pitzer.chemicalReactionInit();
+
+    ChemicalReactionModelAudit.AuditSnapshot audit = ChemicalReactionModelAudit.inspect(pitzer);
+
+    assertFalse(audit.hasValidatedEvidenceForAllActiveReactions());
+    assertTrue(audit.getReactionsWithoutValidatedEvidence().contains("water-H2S"));
+    assertTrue(audit.getReactionsWithoutValidatedEvidence().contains("water-HS"));
+    assertEquals(ChemicalReactionValidationStatus.UNVALIDATED, findReaction(audit, "water-H2S").getValidationStatus());
+    assertThrows(UnsupportedOperationException.class, () -> audit.getReactionsWithoutValidatedEvidence().clear());
   }
 
   /** A dedicated Kent-Eisenberg source is reported as a parameter/source difference. */

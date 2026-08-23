@@ -77,6 +77,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           r = Double.parseDouble(dataSet.getString("r"));
           actH = Double.parseDouble(dataSet.getString("ACTENERGY"));
           String reference = dataSet.getString("Reference");
+          ChemicalReactionValidationStatus validationStatus = readValidationStatus(dataSet);
 
           try (neqsim.util.database.NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
               java.sql.ResultSet dataSet2 = database2
@@ -99,13 +100,29 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             nameArray[i] = names.get(i);
           }
 
-          ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT, reference);
+          ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT, reference,
+              validationStatus);
           chemicalReactionList.add(reaction);
           // System.out.println("reaction added ok...");
         }
       } while (dataSet.next());
     } catch (Exception ex) {
       logger.error("could not add reaction: ", ex);
+    }
+  }
+
+  /**
+   * Read the optional validation-status column while preserving legacy reaction tables.
+   *
+   * @param dataSet current reaction row
+   * @return declared status, or {@link ChemicalReactionValidationStatus#UNSPECIFIED} when the selected table has no
+   * status column
+   */
+  private static ChemicalReactionValidationStatus readValidationStatus(java.sql.ResultSet dataSet) {
+    try {
+      return ChemicalReactionValidationStatus.fromDatabaseValue(dataSet.getString("ValidationStatus"));
+    } catch (java.sql.SQLException ex) {
+      return ChemicalReactionValidationStatus.UNSPECIFIED;
     }
   }
 
