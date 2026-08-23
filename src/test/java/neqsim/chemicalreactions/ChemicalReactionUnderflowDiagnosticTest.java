@@ -2,11 +2,14 @@ package neqsim.chemicalreactions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
@@ -37,6 +40,42 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
     assertTrue(Double.isFinite(nearbyLogReactionQuotient));
     assertTrue(nearbyLogReactionQuotient > logReactionQuotient,
         "Increasing both ionic trace activities must increase the reaction quotient");
+  }
+
+  @Test
+  void mineralSaturationUsesActivitiesForElectrolyteEosAndGe() {
+    SystemInterface cpa = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+    cpa.addComponent("water", 55.508);
+    cpa.addComponent("Na+", 0.1);
+    cpa.addComponent("Cl-", 0.1);
+    cpa.createDatabase(true);
+    cpa.setMixingRule(10);
+    cpa.init(0);
+    cpa.init(1);
+    assertActivityBasedSodiumChlorideSaturation(cpa, 1, ChemicalReactionConcentrationBasis.MOLE_FRACTION);
+
+    SystemInterface pitzer = new SystemPitzer(298.15, 1.01325);
+    pitzer.addComponent("water", 55.508);
+    pitzer.addComponent("Na+", 0.1);
+    pitzer.addComponent("Cl-", 0.1);
+    pitzer.setMixingRule("classic");
+    pitzer.init(0);
+    pitzer.init(1);
+    assertActivityBasedSodiumChlorideSaturation(pitzer, 1,
+        ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY);
+  }
+
+  @Test
+  void traceMineralSaturationRetainsFiniteLogarithmicDiagnostic() {
+    SystemInterface fluid = createTraceWaterSystem(1.0e-200);
+    ChemicalReaction reaction = new ChemicalReaction("trace mineral probe", new String[] { "H3O+", "OH-" },
+        new double[] { -1.0, -1.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 }, 0.0, 0.0, 298.15);
+
+    assertEquals(0.0, reaction.getSaturationRatio(fluid, 0));
+    double logSaturationRatio = reaction.calcLogSaturationRatio(fluid, 0);
+    assertTrue(Double.isFinite(logSaturationRatio));
+    assertTrue(logSaturationRatio < -700.0);
+    assertEquals(logSaturationRatio, reaction.calcLogSaturationRatio(fluid, 0), 0.0);
   }
 
   @Test
@@ -124,6 +163,35 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
     assertEquals(1.0e-6, largestElementResidualChange, 1.0e-12);
     assertEquals(chargeBefore, diagnostics.getReactivePhaseChargeMoles(), 1.0e-12);
     assertTrue(diagnostics.getNormalizedReactivePhaseChargeResidual() < normalizedChargeAfterSpectator);
+  }
+
+  private void assertActivityBasedSodiumChlorideSaturation(SystemInterface fluid, int phaseNumber,
+      ChemicalReactionConcentrationBasis expectedBasis) {
+    PhaseInterface phase = fluid.getPhase(phaseNumber);
+    int waterNumber = phase.getComponent("water").getComponentNumber();
+    double sodiumConcentration = expectedBasis == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY
+        ? phase.getComponent("Na+").getMolality(phase)
+        : phase.getComponent("Na+").getx();
+    double chlorideConcentration = expectedBasis == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY
+        ? phase.getComponent("Cl-").getMolality(phase)
+        : phase.getComponent("Cl-").getx();
+    double sodiumGamma =
+        phase.getActivityCoefficient(phase.getComponent("Na+").getComponentNumber(), waterNumber);
+    double chlorideGamma =
+        phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterNumber);
+    double expectedLogSaturationRatio =
+        Math.log(sodiumConcentration * sodiumGamma) + Math.log(chlorideConcentration * chlorideGamma);
+    double concentrationOnlyLog = Math.log(sodiumConcentration) + Math.log(chlorideConcentration);
+
+    ChemicalReaction reaction = new ChemicalReaction("NaCl mineral probe", new String[] { "Na+", "Cl-" },
+        new double[] { -1.0, -1.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 }, 0.0, 0.0, 298.15);
+
+    assertEquals(expectedBasis, fluid.getChemicalReactionConcentrationBasis());
+    assertNotEquals(concentrationOnlyLog, expectedLogSaturationRatio, 1.0e-6,
+        "The fixture must distinguish activities from concentrations");
+    assertEquals(expectedLogSaturationRatio, reaction.calcLogSaturationRatio(fluid, phaseNumber), 1.0e-12);
+    assertEquals(Math.exp(expectedLogSaturationRatio), reaction.getSaturationRatio(fluid, phaseNumber),
+        Math.abs(Math.exp(expectedLogSaturationRatio)) * 1.0e-12);
   }
 
   private SystemInterface createTraceWaterSystem(double ionicMoles) {
