@@ -140,11 +140,13 @@ benchmark PR must preserve raw machine-readable records and a concise human-read
 
 ## Executed S/M baseline
 
-Cases S and M now have a maintained test-only harness and a five-fork reference record at exact
-commit `5a851750f8d12b3a598a87da0acadb3faef8b4e6`. Case M contains 27 units, three parallel
-compression trains, and one tail recycle. The harness exercises cold, unchanged, nearby-state,
-constraint-change, discrete-line-up, restoration, and non-finite-candidate rejection modes without
-changing production execution or solver behavior.
+Cases S and M now have a maintained test-only harness and a reproducible five-fork reference record
+at exact commit `f3a2cf5f0891322ab2462817f0c06d0d9409f1f6`. Case M contains 27 units, three parallel
+compression trains, and one tail recycle. The checked-in runner preserves the exact harness schema,
+validates every mode and acceptance threshold, derives statistics from the raw reports, and records
+canonical SHA-256 digests. The harness exercises cold, unchanged, nearby-state, constraint-change,
+discrete-line-up, restoration, and non-finite-candidate rejection modes without changing production
+execution or solver behavior.
 
 See the [Industrial S/M Benchmark Evidence](industrial-sm-benchmark) for the exact command,
 environment, raw samples, acceptance criteria, and unavailable metrics. The record intentionally

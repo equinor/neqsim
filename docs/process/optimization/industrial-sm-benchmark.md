@@ -11,7 +11,7 @@ evidence for roadmap [#3154](https://github.com/equinor/neqsim/issues/3154), not
 improvement claim and not qualification of the flowsheets for design or operations.
 
 The measured source is unmodified NeqSim `master` commit
-`5a851750f8d12b3a598a87da0acadb3faef8b4e6`. The harness is additive test code. It does not change
+`f3a2cf5f0891322ab2462817f0c06d0d9409f1f6`. The harness is additive test code. It does not change
 process calculations, thermodynamics, scheduling, recycle convergence, caching, or optimizer search
 behavior.
 
@@ -42,20 +42,34 @@ unset provenance or validity, which is recorded rather than inferred.
 The class is tagged `slow`. NeqSim excludes slow tests by default, so both the selected group and an
 empty exclusion list are mandatory. A zero-test Maven result is not valid benchmark evidence.
 
+First prepare Maven as required by the NeqSim development workflow. Then use the checked-in runner;
+it executes five independent Maven/JVM forks, rejects a zero-test or malformed report, preserves
+each exact harness report under `forks[].rawReport`, derives the statistics, and validates the final
+aggregate before writing it.
+
 ```bash
 eval "$(python3 /path/to/work-with-neqsim/scripts/prepare_maven.py)"
-./mvnw -Dgroups=slow "-DexcludedTestGroups=" -Djacoco.skip=true \
-  -Dtest=neqsim.process.util.optimizer.IndustrialPlantOptimizationBaselineTest \
-  -Dneqsim.optimization.baseline.commit="$(git rev-parse HEAD)" \
-  -Dneqsim.optimization.baseline.output=target/industrial-optimization-sm-baseline.json \
-  test
+python devtools/industrial_sm_benchmark.py run \
+  --baseline-commit "$(git rev-parse HEAD)" \
+  --forks 5 \
+  --raw-dir target/industrial-sm-benchmark \
+  --output target/industrial-sm-baseline.json
 ```
 
-Confirm that Surefire reports one executed test with zero failures. Repeat the command in at least
-five independent Maven/JVM forks before comparing wall time. The JSON output records deterministic
-calculation identities, case and topology counts, every mode, per-equipment execution work,
-mass-balance residuals, constraint evidence, heap before/after proxy, observation size, failure or
-restoration outcome, and unsupported metrics with reasons.
+Validate a previously generated or checked-in aggregate without running Maven:
+
+```bash
+python devtools/industrial_sm_benchmark.py validate \
+  --input docs/process/optimization/benchmarks/industrial-sm-baseline-f3a2cf5f.json
+```
+
+The aggregate uses schema `2.0`. It records the generator, raw schema, fork count, wall time,
+canonical byte count and SHA-256 digest for every preserved raw report. Validation recomputes the
+full aggregate from those reports and fails if any field or statistic differs. Each raw report
+contains deterministic calculation identities, case and topology counts, every mode,
+per-equipment calls and timing, run status, mass-balance residuals, constraint evidence, the
+heap-before/after proxy, observation size, failure or restoration outcome, and unsupported metrics
+with reasons.
 
 ## Reference environment
 
@@ -74,25 +88,32 @@ count, heap, and JVM input arguments are also stored in the machine-readable rec
 
 | Observation | Samples | Median | Median absolute deviation | Range |
 |---|---:|---:|---:|---:|
-| Startup-inclusive S/M harness wall time | 5 forks | 18,954.293 ms | 245.332 ms | 18,507.921–19,222.640 ms |
-| S cold process solve | 5 forks | 54.215 ms | 3.757 ms | 50.208–69.074 ms |
-| S unchanged process solve | 5 forks | 0.175 ms | 0.027 ms | 0.142–0.256 ms |
-| M cold process solve | 5 forks | 155.787 ms | 6.491 ms | 131.767–162.277 ms |
-| M unchanged process solve | 25 runs | 33.460 ms | 4.618 ms | 22.612–50.351 ms |
+| Maven-fork-inclusive S/M harness wall time | 5 forks | 49,955.003 ms | 5,482.386 ms | 41,493.165–67,879.749 ms |
+| S cold process solve | 5 forks | 110.738 ms | 20.099 ms | 90.192–147.210 ms |
+| S unchanged process solve | 5 forks | 0.192 ms | 0.005 ms | 0.144–0.197 ms |
+| M cold process solve | 5 forks | 422.029 ms | 147.526 ms | 274.503–822.562 ms |
+| M unchanged process solve | 25 runs | 140.867 ms | 44.528 ms | 59.881–602.387 ms |
 
-The five startup-inclusive fork samples are `18507.921`, `19222.640`, `18925.934`, `18954.293`,
-and `19199.625` ms. The full raw arrays and per-mode measurements are in
-[`industrial-sm-baseline-5a851750.json`](benchmarks/industrial-sm-baseline-5a851750.json).
+The five Maven-fork-inclusive samples are `67879.749`, `41493.165`, `55437.389`, `48105.170`,
+and `49955.003` ms. They include Maven startup and any compile work and therefore are not a pure
+process-solve performance metric. The exact preserved raw reports and derived measurements are in
+[`industrial-sm-baseline-f3a2cf5f.json`](benchmarks/industrial-sm-baseline-f3a2cf5f.json).
 
 Every unchanged M run reproduced the cold product mass rate exactly within double precision. Across
 the five forks, the restored-line-up product differed from cold by a median `0.0258211 kg/hr`; the
-largest observed difference was `0.0258364 kg/hr`, below the `0.1 kg/hr` acceptance criterion. The
+largest observed difference was `0.0258211 kg/hr`, below the `0.1 kg/hr` acceptance criterion. The
 largest unit mass-balance residual across 50 M mode records was `0.0222922 kg/hr`. Serialized M
-utilization observations ranged from 24,428 to 24,734 bytes.
+utilization observations ranged from 24,429 to 24,733 bytes. All 70 successful mode records retain
+their per-equipment execution maps; total equipment calls range from 1 to 63 per mode.
 
 Case S rejected a non-finite external proposal before it mutated the feed. Case M observed the
 default export-pipe velocity constraint, then a controlled installed feed-pipe velocity constraint
 after the limit change, and completed a train-unavailable action plus full replay restoration.
+
+The earlier
+[`industrial-sm-baseline-5a851750.json`](benchmarks/industrial-sm-baseline-5a851750.json) is retained
+as historical evidence but is superseded. It normalized harness fields without a checked-in
+aggregation contract and cannot satisfy the reproducibility gate used by later roadmap increments.
 
 ## Measured gaps and handoffs
 
