@@ -181,7 +181,7 @@ public class ComponentGePitzer extends ComponentGE {
 
       // Add beta2 contribution for 2-2 electrolytes
       if (is22) {
-        double beta2val = pitz.getBeta2ij(componentNumber, j);
+        double beta2val = pitz.getBeta2ij(componentNumber, j, temperature);
         if (Math.abs(beta2val) > 1e-20) {
           double x2 = alpha2 * sqrtI;
           double g2 = 0.0;
@@ -243,7 +243,7 @@ public class ComponentGePitzer extends ComponentGE {
         continue;
       }
       double m_j = phase.getComponent(j).getMolality(phase);
-      double thetaij = pitz.getThetaij(componentNumber, j);
+      double thetaij = pitz.getThetaij(componentNumber, j, temperature);
       double eTheta = 0.0;
       if (hasElectrostaticMixing && Math.abs(charge - chargej) >= 1.0e-12) {
         if (electrostaticMixing == null) {
@@ -261,7 +261,7 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double m_k = phase.getComponent(k).getMolality(phase);
-        double psiijk = pitz.getPsiijk(componentNumber, j, k);
+        double psiijk = pitz.getPsiijk(componentNumber, j, k, temperature);
         sum += m_j * m_k * psiijk;
       }
     }
@@ -358,7 +358,7 @@ public class ComponentGePitzer extends ComponentGE {
 
         // Add beta2 contribution for 2-2 electrolytes
         if (is22) {
-          double beta2val = pitz.getBeta2ij(ic, ia);
+          double beta2val = pitz.getBeta2ij(ic, ia, TK);
           if (Math.abs(beta2val) > 1e-20) {
             double alpha2 = 12.0;
             BphiCA += beta2val * Math.exp(-alpha2 * sqrtI);
@@ -390,7 +390,7 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double mc2 = phase.getComponent(ic2).getMolality(phase);
-        double thetaCC = pitz.getThetaij(ic1, ic2);
+        double thetaCC = pitz.getThetaij(ic1, ic2, TK);
         double electrostaticPhi = 0.0;
         if (hasElectrostaticMixing && Math.abs(zc1 - zc2) >= 1.0e-12) {
           if (electrostaticMixing == null) {
@@ -407,7 +407,7 @@ public class ComponentGePitzer extends ComponentGE {
             continue;
           }
           double ma = phase.getComponent(ia).getMolality(phase);
-          thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia);
+          thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia, TK);
         }
       }
     }
@@ -424,7 +424,7 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double ma2 = phase.getComponent(ia2).getMolality(phase);
-        double thetaAA = pitz.getThetaij(ia1, ia2);
+        double thetaAA = pitz.getThetaij(ia1, ia2, TK);
         double electrostaticPhi = 0.0;
         if (hasElectrostaticMixing && Math.abs(za1 - za2) >= 1.0e-12) {
           if (electrostaticMixing == null) {
@@ -441,7 +441,7 @@ public class ComponentGePitzer extends ComponentGE {
             continue;
           }
           double mc = phase.getComponent(ic).getMolality(phase);
-          thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic);
+          thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic, TK);
         }
       }
     }
