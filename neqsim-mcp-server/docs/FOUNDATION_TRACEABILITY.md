@@ -23,6 +23,8 @@ The reconciliation is intentionally conservative:
 
 ## Remaining Phase 0 work
 
-The full Phase 0 audit is still incomplete. The next dependency is to turn the current generic benchmark-trust fallbacks into evidence-backed capability records or explicit confirmed gaps, then define the four acceptance scales and the campaign traceability/maturity matrices. Measured runtime, memory, payload size, convergence, balance closure, and report-usefulness baselines also remain to be frozen.
+The full Phase 0 audit is still incomplete. Every published tool now has an explicit trust-coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`: 20 have tool-specific `BenchmarkTrust` metadata and 51 are explicit `CONFIRMED_GAP` records rather than an implicit generic-fallback set. Those gap records are not validation; they identify where tool-specific benchmark, accuracy, limitation, or unsupported-condition evidence is still missing.
+
+The next dependency is to establish the four public synthetic acceptance scales and the campaign traceability/maturity matrices, while closing confirmed trust gaps when current source and public evidence support a specific claim. Measured runtime, memory, payload size, convergence, balance closure, and report-usefulness baselines also remain to be frozen.
 
 This document and the `mergedFoundations` object therefore must not be interpreted as campaign completion or as accountable engineering approval.

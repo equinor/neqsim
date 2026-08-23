@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-/** Tests the Phase 0 merged-foundation reconciliation exposed by MCP capability discovery. */
+/** Tests Phase 0 foundation and trust-coverage evidence exposed by MCP capability discovery. */
 class McpEvidenceInventoryFoundationTests {
 
   @Test
@@ -43,6 +43,38 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(foundations.get("remainingPhase0Boundary").getAsString().contains("acceptance scales"));
 
     // Foundation reconciliation is complete, but the overall Phase 0 evidence inventory is not.
+    assertFalse(inventory.get("complete").getAsBoolean());
+  }
+
+  @Test
+  void testEveryPublishedToolHasExplicitTrustCoverageStatus() {
+    JsonObject inventory = McpEvidenceInventory.build();
+    JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
+    JsonObject coverageRecords = limitations.getAsJsonObject("coverageRecords");
+
+    assertEquals(71, limitations.get("publishedToolCount").getAsInt());
+    assertEquals(71, limitations.get("coverageRecordCount").getAsInt());
+    assertEquals(20, limitations.get("explicitCoverageRecordCount").getAsInt());
+    assertEquals(51, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(71, coverageRecords.size());
+    assertTrue(limitations.get("coverageComplete").getAsBoolean());
+    assertFalse(limitations.get("scientificValidationComplete").getAsBoolean());
+
+    JsonObject flash = coverageRecords.getAsJsonObject("runFlash");
+    assertEquals("EXPLICIT_TRUST", flash.get("coverageStatus").getAsString());
+    assertTrue(flash.get("toolSpecificTrustAvailable").getAsBoolean());
+    assertTrue(flash.get("validationCaseCount").getAsInt() > 0);
+    assertTrue(flash.get("knownLimitationCount").getAsInt() > 0);
+
+    JsonObject capabilities = coverageRecords.getAsJsonObject("getCapabilities");
+    assertEquals("CONFIRMED_GAP", capabilities.get("coverageStatus").getAsString());
+    assertFalse(capabilities.get("toolSpecificTrustAvailable").getAsBoolean());
+    assertEquals("TESTED", capabilities.get("maturityLevel").getAsString());
+    assertTrue(capabilities.get("implementationClass").getAsString().contains("CapabilitiesRunner"));
+    assertTrue(capabilities.get("gapReason").getAsString().contains("not benchmark"));
+
+    // Coverage classification is complete; tool-specific trust evidence is intentionally not.
+    assertFalse(limitations.get("complete").getAsBoolean());
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 }
