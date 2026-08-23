@@ -193,6 +193,40 @@ class ProcessModelAutoConvergenceTuningTest {
   }
 
   /**
+   * Feed-boundary topology may be cached, but the flow values must remain live so scenario changes are observed without
+   * rebuilding the execution plan.
+   */
+  @Test
+  void testCachedFeedBoundaryTracksLiveFlowValues() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    assertEquals(1_000_000.05, model.getTotalFeedFlowRate(), 1e-6);
+
+    Stream feed = (Stream) model.get("main train").getUnit("feed");
+    feed.setFlowRate(2.0e6, "kg/hr");
+
+    assertEquals(2_000_000.05, model.getTotalFeedFlowRate(), 1e-6,
+        "Cached feed identities must read the current stream flow on every call");
+  }
+
+  /**
+   * A ProcessSystem structure-version change must rebuild the cached feed boundary before the next diagnostic read.
+   */
+  @Test
+  void testFeedBoundaryRebuildsAfterAreaTopologyChange() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    assertEquals(1_000_000.05, model.getTotalFeedFlowRate(), 1e-6);
+
+    Stream addedFeed = new Stream("added feed", createGasFluid());
+    addedFeed.setFlowRate(25_000.0, "kg/hr");
+    Heater addedConsumer = new Heater("added consumer", addedFeed);
+    model.get("main train").add(addedFeed);
+    model.get("main train").add(addedConsumer);
+
+    assertEquals(1_025_000.05, model.getTotalFeedFlowRate(), 1e-6,
+        "The execution plan must refresh feed identities after an area topology change");
+  }
+
+  /**
    * A dead leg below the detected noise floor should be auto-bypassed without any per-section configuration.
    */
   @Test

@@ -114,6 +114,9 @@ public class ProcessModel implements Runnable, Serializable {
     /** Producing {@code "area::unit"} label for each stream, keyed by stream identity. */
     private final Map<Object, String> streamProducers;
 
+    /** Streams entering the model from outside its cached topology, keyed by identity. */
+    private final java.util.Set<StreamInterface> feedStreams;
+
     /** Structure versions observed when this plan was built. */
     private final Map<ProcessSystem, Long> structureVersions;
 
@@ -125,17 +128,19 @@ public class ProcessModel implements Runnable, Serializable {
      * @param boundaryStreams streams crossing process-area boundaries
      * @param boundaryConsumers consumer areas for each boundary stream
      * @param streamProducers producing {@code "area::unit"} label per stream identity
+     * @param feedStreams streams entering the model from outside its topology
      * @param structureVersions process structure versions observed while building the plan
      */
     private AreaExecutionPlan(List<List<ProcessSystem>> levels,
         Map<ProcessSystem, java.util.Set<ProcessSystem>> successors, java.util.Set<Object> boundaryStreams,
         Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers, Map<Object, String> streamProducers,
-        Map<ProcessSystem, Long> structureVersions) {
+        java.util.Set<StreamInterface> feedStreams, Map<ProcessSystem, Long> structureVersions) {
       this.levels = levels;
       this.successors = successors;
       this.boundaryStreams = boundaryStreams;
       this.boundaryConsumers = boundaryConsumers;
       this.streamProducers = streamProducers;
+      this.feedStreams = feedStreams;
       this.structureVersions = structureVersions;
     }
   }
@@ -2737,13 +2742,17 @@ public class ProcessModel implements Runnable, Serializable {
     java.util.Set<Object> boundaryStreams = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers = new IdentityHashMap<>();
     Map<Object, String> streamProducers = new IdentityHashMap<>();
+    java.util.Set<StreamInterface> producedStreams = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
+    java.util.Set<StreamInterface> plantInletStreams = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
     for (ProcessSystem process : allProcesses) {
       successorMap.put(process, java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
     }
 
     if (n == 0) {
       return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams, boundaryConsumers, streamProducers,
-          structureVersions);
+          plantInletStreams, structureVersions);
     }
 
     // Index processes by their position in the insertion order for
@@ -2773,6 +2782,11 @@ public class ProcessModel implements Runnable, Serializable {
             if (outletStreams != null) {
               outs.addAll(outletStreams);
               recordStreamProducers(streamProducers, outletStreams, p, unit);
+              for (StreamInterface outletStream : outletStreams) {
+                if (outletStream != null && outletStream != unit) {
+                  producedStreams.add(outletStream);
+                }
+              }
             }
           } catch (Exception e) {
             // Not all equipment implements getOutletStreams cleanly; ignore.
@@ -2782,6 +2796,11 @@ public class ProcessModel implements Runnable, Serializable {
                 .getInletStreams();
             if (inletStreams != null) {
               mem.addAll(inletStreams);
+              for (StreamInterface inletStream : inletStreams) {
+                if (inletStream != null && inletStream != unit) {
+                  plantInletStreams.add(inletStream);
+                }
+              }
             }
           } catch (Exception e) {
             // ignore
@@ -2791,6 +2810,7 @@ public class ProcessModel implements Runnable, Serializable {
       outputs.add(outs);
       members.add(mem);
     }
+    plantInletStreams.removeAll(producedStreams);
 
     java.util.Map<Object, Integer> occurrenceCounts = new java.util.IdentityHashMap<>();
     for (int i = 0; i < n; i++) {
@@ -2888,7 +2908,7 @@ public class ProcessModel implements Runnable, Serializable {
         fallback.add(single);
       }
       return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
-          structureVersions);
+          plantInletStreams, structureVersions);
     }
 
     int maxLevel = 0;
@@ -2903,7 +2923,7 @@ public class ProcessModel implements Runnable, Serializable {
       levels.get(level[i]).add(allProcesses.get(i));
     }
     return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
-        structureVersions);
+        plantInletStreams, structureVersions);
   }
 
   /**
@@ -4179,19 +4199,8 @@ public class ProcessModel implements Runnable, Serializable {
    * @return total feed mass flow in kg/hr, or 0.0 when no feed stream could be read
    */
   public double getTotalFeedFlowRate() {
-    java.util.Set<StreamInterface> produced = java.util.Collections
-        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
-    java.util.Set<StreamInterface> inlets = java.util.Collections
-        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
-    for (ProcessSystem process : processes.values()) {
-      process.collectProducedStreams(produced);
-      process.collectInletStreams(inlets);
-    }
     double total = 0.0;
-    for (StreamInterface stream : inlets) {
-      if (produced.contains(stream)) {
-        continue;
-      }
+    for (StreamInterface stream : getAreaExecutionPlan().feedStreams) {
       try {
         double flow = stream.getFlowRate("kg/hr");
         if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0.0) {
