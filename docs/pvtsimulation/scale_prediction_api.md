@@ -251,7 +251,20 @@ Parameters follow the form:
 
 $$\beta(T) = \beta_{25} + T_1 \left(\frac{1}{T} - \frac{1}{298.15}\right) + T_2 \ln\left(\frac{T}{298.15}\right)$$
 
-The Pitzer parameter database (`PitzerParameters.csv`) currently contains 30 cation-anion rows. Of these, 23 non-estimated rows have populated binary parameters and are covered by regression tests for database loading plus finite mean ionic activity and osmotic coefficients. The covered ions include Na, K, Ca, Mg, Ba, Sr, Fe and H with Cl, SO4, HCO3, CO3 and OH. NaCl is additionally benchmarked against Robinson & Stokes / Pitzer 25 C mean ionic activity and osmotic-coefficient data.
+The Pitzer parameter database (`PitzerParameters.csv`) currently contains 30 cation-anion rows. Of these, 23 non-estimated rows have populated binary parameters and are covered by regression tests for database loading plus finite mean ionic activity and osmotic coefficients. The covered ions include Na, K, Ca, Mg, Ba, Sr, Fe and H with Cl, SO4, HCO3, CO3 and OH.
+
+At 298.15 K and 1.01325 bara, NaCl has a separate public reference validation against the traceable recommended
+values in Tables 6 and 10 of Partanen and Partanen (2020), DOI
+[10.1021/acs.jced.0c00402](https://doi.org/10.1021/acs.jced.0c00402), licensed
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The validation covers 0.2, 0.5 and 1.0 mol/kg water;
+2.0 and 3.0 mol/kg water are retained as a concentrated hold-out. Pointwise acceptance limits are 2% relative for the
+mean molal activity coefficient and 0.75% relative for the osmotic coefficient. The tabulated values are rounded to
+0.001 and were derived by the authors from traceable electrochemical, isopiestic, vapor-pressure and solubility
+evidence. NeqSim parameters are not fitted or changed by this validation.
+
+This evidence applies only to binary NaCl(aq) at 298.15 K on the molality standard state. It does not validate
+temperature dependence, mixed salts, carbonate speciation, mineral parameters, precipitation complementarity or
+transfer of Pitzer parameters to electrolyte EOS models.
 
 ### Using the Pitzer Model
 
