@@ -93,16 +93,12 @@ mapping: no Kaasa page, table, symbol, or value was read, copied, inferred, or O
 The next dependency is the PHREEQC six-term temperature function, followed by a complete
 redistributable Na/K/Cl binary–theta–psi set and held-out mixed-brine validation.
 
-
 ## Six-term temperature-function mapping
 
 NeqSim also supports the PHREEQC six-coefficient temperature function as an explicit, sparse,
 dataset-owned override:
 
-[
-p(T)=a_0+a_1(1/T-1/T_r)+a_2ln(T/T_r)+a_3(T-T_r)
-+a_4(T^2-T_r^2)+a_5(1/T^2-1/T_r^2).
-]
+`p(T) = a0 + a1(1/T - 1/Tr) + a2 ln(T/Tr) + a3(T - Tr) + a4(T² - Tr²) + a5(1/T² - 1/Tr²)`
 
 The mapping follows `calc_pitz_param` in the audited public-domain PHREEQC source
 (commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/src/pitzer.cpp#L1721-L1850)).
