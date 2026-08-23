@@ -651,7 +651,7 @@ public class ProcessRunner {
    * @return non-empty string value
    */
   private static String requireString(JsonObject object, String name) {
-    String value = getOptionalString(object, "name".equals(name) ? name : name, null);
+    String value = getOptionalString(object, name, null);
     if (value == null) {
       throw new IllegalArgumentException("Required string property '" + name + "' is missing");
     }
