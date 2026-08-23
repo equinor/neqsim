@@ -10,10 +10,10 @@ import neqsim.mcp.catalog.ExampleCatalog;
  * Builds the public synthetic acceptance-fixture catalog for MCP campaign Phase 0.
  *
  * <p>
- * The fixtures deliberately reuse the normal MCP runner inputs and canonical NeqSim process JSON. They are not a
- * second simulator or an optimization benchmark. The catalog spans a single calculation, a small recycle train, a
- * multi-area {@code ProcessModel}, and a generated 150+ unit recycle facility so later Phase 0 measurements can use
- * stable, public, reproducible inputs.
+ * The fixtures deliberately reuse the normal MCP runner inputs and canonical NeqSim process JSON. They are not a second
+ * simulator or an optimization benchmark. The catalog spans a single calculation, a small recycle train, a multi-area
+ * {@code ProcessModel}, and a generated 150+ unit recycle facility so later Phase 0 measurements can use stable,
+ * public, reproducible inputs.
  * </p>
  */
 public final class McpAcceptanceFixtureCatalog {
@@ -38,22 +38,22 @@ public final class McpAcceptanceFixtureCatalog {
     JsonArray fixtures = new JsonArray();
     fixtures.add(fixture("single-calculation", "SINGLE_CALCULATION", "runFlash", "thermodynamic-flash",
         singleCalculationInput(), 0, 0, 0,
-        new String[] {"successful standard MCP envelope", "finite phase/property result", "provenance and validation"},
+        new String[] { "successful standard MCP envelope", "finite phase/property result",
+            "provenance and validation" },
         "Thermodynamic accuracy remains governed by the selected model and BenchmarkTrust evidence."));
-    fixtures.add(fixture("small-recycle-train", "SMALL_TRAIN", "runProcess", "ProcessSystem",
-        smallTrainInput(), 1, 10, 1,
-        new String[] {"successful process solve", "canonical processDefinition replay", "mass/energy validation evidence",
-            "deterministic repeated execution"},
+    fixtures.add(fixture("small-recycle-train", "SMALL_TRAIN", "runProcess", "ProcessSystem", smallTrainInput(), 1, 10,
+        1,
+        new String[] { "successful process solve", "canonical processDefinition replay",
+            "mass/energy validation evidence", "deterministic repeated execution" },
         "This fixture exercises MCP process composition and recycle delivery, not optimization or dynamic qualification."));
-    fixtures.add(fixture("multi-area-facility", "MULTI_AREA", "runProcess", "ProcessModel",
-        multiAreaInput(), 3, 8, 0,
-        new String[] {"three named areas", "successful ProcessModel solve", "area ordering and canonical replay",
-            "convergence summary and validation evidence"},
+    fixtures.add(fixture("multi-area-facility", "MULTI_AREA", "runProcess", "ProcessModel", multiAreaInput(), 3, 8, 0,
+        new String[] { "three named areas", "successful ProcessModel solve", "area ordering and canonical replay",
+            "convergence summary and validation evidence" },
         "The Phase 0 fixture qualifies multi-area MCP construction/delivery; plant-wide optimization remains #3154-owned."));
     fixtures.add(fixture("large-recycle-facility", "LARGE_FACILITY", "runProcess", "ProcessSystem",
         largeFacilityInput(), 1, 154, 1,
-        new String[] {"150+ unit executable definition", "successful bounded solve", "recycle convergence",
-            "canonical replay", "response-size and selective-retrieval baseline"},
+        new String[] { "150+ unit executable definition", "successful bounded solve", "recycle convergence",
+            "canonical replay", "response-size and selective-retrieval baseline" },
         "This fixture freezes an MCP transport/execution scale. Generic process performance remains #2939-owned and optimization fidelity remains #3154-owned."));
     catalog.add("fixtures", fixtures);
 
@@ -83,7 +83,8 @@ public final class McpAcceptanceFixtureCatalog {
     areas.add("inlet-separation", JsonParser.parseString(ExampleCatalog.processSimpleSeparation()).getAsJsonObject());
     areas.add("gas-compression",
         JsonParser.parseString(ExampleCatalog.processCompressionWithCooling()).getAsJsonObject());
-    areas.add("export-conditioning", JsonParser.parseString(ExampleCatalog.processSimpleSeparation()).getAsJsonObject());
+    areas.add("export-conditioning",
+        JsonParser.parseString(ExampleCatalog.processSimpleSeparation()).getAsJsonObject());
     root.add("areas", areas);
     root.addProperty("maxIterations", 50);
     root.addProperty("flowTolerance", 1.0e-6);
