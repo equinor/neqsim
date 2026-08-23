@@ -33,6 +33,7 @@ class CapabilitiesRunnerTest {
     assertTrue(obj.has("calculationModes"));
     assertTrue(obj.has("toolCapabilities"));
     assertTrue(obj.has("implementationInventory"));
+    assertTrue(obj.has("phase0EvidenceInventory"));
     assertTrue(obj.has("setupTemplates"));
     assertTrue(obj.has("processJsonContract"));
     assertTrue(obj.has("capabilityGraph"));
@@ -154,6 +155,33 @@ class CapabilitiesRunnerTest {
     assertEquals("bridgeTaskWorkflow", reportPaths.get(1).getAsJsonObject().get("tool").getAsString());
     assertEquals("neqsim.mcp.runners.TaskWorkflowBridge",
         reportPaths.get(1).getAsJsonObject().get("implementationClass").getAsString());
+  }
+
+  @Test
+  void testPhase0EvidenceInventoryMakesTrustGapsExplicit() {
+    JsonObject root = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject inventory = root.getAsJsonObject("phase0EvidenceInventory");
+
+    JsonObject tests = inventory.getAsJsonObject("tests");
+    assertEquals(67, tests.get("javaTestClassCount").getAsInt());
+    assertEquals(94, tests.get("protocolScenarioCount").getAsInt());
+
+    JsonObject guides = inventory.getAsJsonObject("guides");
+    assertEquals(4, guides.get("guideCount").getAsInt());
+    assertEquals(4, guides.getAsJsonArray("entries").size());
+
+    JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
+    assertEquals(71, limitations.get("publishedToolCount").getAsInt());
+    assertEquals(20, limitations.get("explicitTrustToolCount").getAsInt());
+    assertEquals(51, limitations.get("genericTrustToolCount").getAsInt());
+    assertEquals(64, limitations.get("knownLimitationCount").getAsInt());
+    assertEquals(0, limitations.get("unsupportedConditionCount").getAsInt());
+    assertEquals(30, limitations.get("validationCaseCount").getAsInt());
+    assertEquals(5, limitations.get("verifiedValidationCaseCount").getAsInt());
+    assertEquals(20, limitations.getAsJsonArray("explicitTrustTools").size());
+    assertEquals(51, limitations.getAsJsonArray("genericTrustTools").size());
+    assertFalse(limitations.get("complete").getAsBoolean());
+    assertFalse(inventory.get("complete").getAsBoolean());
   }
 
   @Test

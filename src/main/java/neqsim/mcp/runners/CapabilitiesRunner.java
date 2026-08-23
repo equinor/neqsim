@@ -179,6 +179,7 @@ public class CapabilitiesRunner {
     root.add("toolCapabilities", toolCapabilities);
     root.add("toolCatalogCoverage", buildToolCatalogCoverage(toolCapabilities));
     root.add("implementationInventory", McpImplementationInventory.build(toolCapabilities));
+    root.add("phase0EvidenceInventory", McpEvidenceInventory.build());
     root.add("setupTemplates", buildSetupTemplates());
     root.add("processJsonContract", buildProcessJsonContract());
     root.add("capabilityGraph", buildCapabilityGraph());
