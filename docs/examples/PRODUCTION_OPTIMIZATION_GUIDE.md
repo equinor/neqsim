@@ -46,7 +46,7 @@ This guide provides comprehensive examples for setting up and running production
 | [Flow Rate Optimization](../process/optimization/flow-rate-optimization) | FlowRateOptimizer and lift curves |
 | [Batch Studies](../process/optimization/batch-studies) | Parallel parameter sweeps |
 | [Industrial Process Optimization Baseline](../process/optimization/industrial-process-optimization-baseline) | Capability coverage, restriction gaps, and frozen large-plant benchmark contract |
-| [Industrial S/M Benchmark Evidence](../process/optimization/industrial-sm-benchmark) | Executed small guide and 27-unit multi-train recycle baseline with reproducible raw records |
+| [Industrial S/M Benchmark Evidence](../process/optimization/industrial-sm-benchmark) | Executed small guide and 27-unit multi-train recycle baseline with a checked-in five-fork runner, exact raw records, and validation |
 | [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment and bottleneck detection |
 
