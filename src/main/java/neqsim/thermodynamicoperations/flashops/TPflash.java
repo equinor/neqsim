@@ -102,6 +102,14 @@ public class TPflash extends Flash {
   private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
   /** Maximum multiphase beta updates used to repair an invalid neutral two-phase endpoint. */
   private static final int MAX_FINAL_BETA_REFINEMENT_ITERATIONS = 20;
+  /** Maximum beta updates used by the rare large-volatility hydrocarbon root refinement. */
+  private static final int MAX_LARGE_VOLATILITY_REFINEMENT_ITERATIONS = 160;
+  /** Tight closure target for the rare large-volatility hydrocarbon root refinement. */
+  private static final double LARGE_VOLATILITY_REFINEMENT_TOLERANCE = 1.0e-14;
+  /** Minimum critical-temperature span (K) for a large-volatility hydrocarbon refinement. */
+  private static final double LARGE_VOLATILITY_CRITICAL_TEMPERATURE_SPAN = 300.0;
+  /** Minimum feed fraction of the least volatile component for large-volatility refinement. */
+  private static final double LARGE_VOLATILITY_LEAST_VOLATILE_FEED_FRACTION = 1.0e-2;
   /** Cubic phase roots evaluated by the post-convergence root checks. */
   private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
   /** Iteration limit for damped direct gamma-phi flashes near a phase-fraction boundary. */
@@ -2121,10 +2129,11 @@ public class TPflash extends Flash {
    * <p>
    * Post-convergence phase-root selection can leave a gas/oil split with valid material balance but component
    * fugacities outside the flash tolerance. The refinement is attempted only for a qualified sour-gas endpoint or a
-   * high-pressure hydrogen/hydrocarbon endpoint with an incipient phase. It retains the selected active set and accepts
-   * the result only when phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the
-   * existing strict checks. A reciprocal ordinary/multiphase trial can recover a lower cubic root; otherwise the
-   * complete two-phase iteration state is restored.
+   * high-pressure hydrogen/hydrocarbon endpoint with an incipient phase, or a high-pressure hydrocarbon endpoint with a
+   * large critical-temperature span. It retains the selected active set and accepts the result only when phase
+   * fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the existing strict checks. A
+   * reciprocal ordinary/multiphase trial can recover a lower cubic root; otherwise the complete two-phase iteration
+   * state is restored.
    * </p>
    */
   private void refineInvalidNeutralTwoPhaseEndpoint() {
@@ -2140,7 +2149,8 @@ public class TPflash extends Flash {
     }
 
     boolean hydrogenBoundaryCase = isHydrogenHydrocarbonBoundaryRefinementCase();
-    if (!isSourGasConsistencyRefinementCase() && !hydrogenBoundaryCase) {
+    boolean largeVolatilityHydrocarbonCase = isLargeVolatilityHydrocarbonRefinementCase();
+    if (!isSourGasConsistencyRefinementCase() && !hydrogenBoundaryCase && !largeVolatilityHydrocarbonCase) {
       return;
     }
 
@@ -2158,27 +2168,29 @@ public class TPflash extends Flash {
     boolean referenceWasInvalid = !Double.isFinite(referenceMaterialResidual)
         || referenceMaterialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE
         || !Double.isFinite(referenceFugacityResidual) || referenceFugacityResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
-    try {
-      TPmultiflash endpointSolver = new TPmultiflash(system, false);
-      endpointSolver.setDoubleArrays();
-      for (int refinement = 0; refinement < MAX_FINAL_BETA_REFINEMENT_ITERATIONS
-          && !isBalancedEquilibriumCandidate(system); refinement++) {
-        endpointSolver.solveBeta();
-      }
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
-      if (isBalancedEquilibriumCandidate(system) && preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
-          && (referenceWasInvalid || system.getGibbsEnergy() <= referenceState.gibbsEnergy + gibbsTolerance)) {
-        rescueLowerGibbsHydrocarbonPhaseRoots();
-        system.orderByDensity();
-        system.init(1);
-        if (isBalancedEquilibriumCandidate(system)) {
-          return;
+    if (!largeVolatilityHydrocarbonCase) {
+      try {
+        TPmultiflash endpointSolver = new TPmultiflash(system, false);
+        endpointSolver.setDoubleArrays();
+        for (int refinement = 0; refinement < MAX_FINAL_BETA_REFINEMENT_ITERATIONS
+            && !isBalancedEquilibriumCandidate(system); refinement++) {
+          endpointSolver.solveBeta();
         }
+        double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
+        if (isBalancedEquilibriumCandidate(system) && preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
+            && (referenceWasInvalid || system.getGibbsEnergy() <= referenceState.gibbsEnergy + gibbsTolerance)) {
+          rescueLowerGibbsHydrocarbonPhaseRoots();
+          system.orderByDensity();
+          system.init(1);
+          if (isBalancedEquilibriumCandidate(system)) {
+            return;
+          }
+        }
+        restoreTwoPhaseIterationState(referenceState);
+      } catch (Exception ex) {
+        restoreTwoPhaseIterationState(referenceState);
+        logger.debug("Final neutral two-phase beta refinement failed: {}", ex.getMessage());
       }
-      restoreTwoPhaseIterationState(referenceState);
-    } catch (Exception ex) {
-      restoreTwoPhaseIterationState(referenceState);
-      logger.debug("Final neutral two-phase beta refinement failed: {}", ex.getMessage());
     }
 
     if (MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()) {
@@ -2192,6 +2204,9 @@ public class TPflash extends Flash {
       candidate.setEnhancedMultiPhaseCheck(false);
       new TPflash(candidate, false).run();
       candidate.init(1);
+      if (largeVolatilityHydrocarbonCase && !isBalancedEquilibriumCandidate(candidate)) {
+        refineLargeVolatilityHydrocarbonCandidate(candidate);
+      }
       double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
       boolean replacesInvalidIncipientPhase = !Double.isFinite(referenceFugacityResidual)
           || referenceFugacityResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
@@ -2208,6 +2223,46 @@ public class TPflash extends Flash {
       logger.debug("Final neutral two-phase cross-algorithm refinement failed: {}", ex.getMessage());
     } finally {
       MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
+    }
+  }
+
+  /**
+   * Refines a reciprocal large-volatility hydrocarbon candidate whose compositions are equilibrated but whose phase
+   * fractions do not close material balance.
+   *
+   * <p>
+   * Near a high-pressure cubic-root crossover, both converged phases can retain liquid-like labels. Initializing the
+   * lighter phase on the gas root and the heavier phase on the liquid root supplies the missing root distinction before
+   * the bounded multiphase beta solve. The caller still applies the ordinary material-balance, fugacity, Gibbs,
+   * active-set, and rollback acceptance checks.
+   * </p>
+   *
+   * @param candidate reciprocal two-phase candidate
+   */
+  private void refineLargeVolatilityHydrocarbonCandidate(SystemInterface candidate) {
+    if (candidate.getNumberOfPhases() != 2) {
+      return;
+    }
+    int lightPhaseIndex =
+        candidate.getPhase(0).getMolarMass() <= candidate.getPhase(1).getMolarMass() ? 0 : 1;
+    int heavyPhaseIndex = 1 - lightPhaseIndex;
+    try {
+      candidate.setPhaseType(lightPhaseIndex, PhaseType.GAS);
+      candidate.setPhaseType(heavyPhaseIndex, PhaseType.OIL);
+      candidate.init(1);
+      TPmultiflash endpointSolver = new TPmultiflash(candidate, false);
+      endpointSolver.setDoubleArrays();
+      for (int refinement = 0; refinement < MAX_LARGE_VOLATILITY_REFINEMENT_ITERATIONS
+          && (maximumComponentMaterialBalanceResidual(candidate) > LARGE_VOLATILITY_REFINEMENT_TOLERANCE
+              || maximumLogFugacityResidual(candidate.getPhase(0),
+                  candidate.getPhase(1)) > LARGE_VOLATILITY_REFINEMENT_TOLERANCE);
+          refinement++) {
+        endpointSolver.solveBeta();
+      }
+      candidate.orderByDensity();
+      candidate.init(1);
+    } catch (Exception ex) {
+      logger.debug("Large-volatility hydrocarbon candidate refinement failed: {}", ex.getMessage());
     }
   }
 
@@ -2418,6 +2473,49 @@ public class TPflash extends Flash {
       }
     }
     return hydrogenFraction > 1.0e-2 && hasHydrocarbon;
+  }
+
+  /**
+   * Screens a high-pressure hydrocarbon endpoint with a large critical-temperature span.
+   *
+   * <p>
+   * Strongly asymmetric light/heavy hydrocarbon mixtures can retain a non-equilibrium ordinary two-phase endpoint
+   * while the reciprocal multiphase path converges to the balanced lower-Gibbs split. The screen requires only
+   * hydrocarbon/inert active components, pressure at or above 50 bar, at least two active components, a critical
+   * temperature span of at least 300 K, and at least one mole percent of the least volatile component. The subsequent
+   * material-balance, fugacity, active-set, Gibbs, and rollback gates remain authoritative.
+   * </p>
+   *
+   * @return true when the endpoint is inside the qualified large-volatility hydrocarbon family
+   */
+  private boolean isLargeVolatilityHydrocarbonRefinementCase() {
+    if (system.getPressure() < 50.0 || system.getNumberOfPhases() != 2) {
+      return false;
+    }
+    int activeComponents = 0;
+    double minimumCriticalTemperature = Double.POSITIVE_INFINITY;
+    double maximumCriticalTemperature = Double.NEGATIVE_INFINITY;
+    double leastVolatileFeedFraction = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (feedFraction <= 1.0e-50) {
+        continue;
+      }
+      if (!component.isHydrocarbon() && !component.isInert()) {
+        return false;
+      }
+      activeComponents++;
+      minimumCriticalTemperature = Math.min(minimumCriticalTemperature, component.getTC());
+      if (component.getTC() > maximumCriticalTemperature) {
+        maximumCriticalTemperature = component.getTC();
+        leastVolatileFeedFraction = feedFraction;
+      }
+    }
+    return activeComponents >= 2
+        && leastVolatileFeedFraction >= LARGE_VOLATILITY_LEAST_VOLATILE_FEED_FRACTION
+        && maximumCriticalTemperature
+            - minimumCriticalTemperature >= LARGE_VOLATILITY_CRITICAL_TEMPERATURE_SPAN;
   }
 
   /**
