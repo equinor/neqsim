@@ -952,6 +952,7 @@ public class ProcessRunner {
       }
     }
     result.addProperty("convergenceSummary", buildResult.model.getConvergenceSummary());
+    result.add("convergenceReport", JsonParser.parseString(buildResult.model.getConvergenceReportJson()));
     if (autoSizing != null) {
       result.add("autoSizing", autoSizing);
     }
@@ -1543,8 +1544,9 @@ public class ProcessRunner {
       return;
     }
     JsonObject data = new JsonObject();
-    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report", "autoSizing",
-        "designReport", "utilizationSnapshot", "bottleneckRanking", "processDefinition", "pythonScript" };
+    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report",
+        "convergenceSummary", "convergenceReport", "autoSizing", "designReport", "utilizationSnapshot",
+        "bottleneckRanking", "processDefinition", "pythonScript" };
     for (String field : fields) {
       if (response.has(field)) {
         data.add(field, response.get(field));
