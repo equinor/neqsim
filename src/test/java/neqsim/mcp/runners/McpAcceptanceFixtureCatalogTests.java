@@ -18,7 +18,8 @@ class McpAcceptanceFixtureCatalogTests {
     JsonObject catalog = McpAcceptanceFixtureCatalog.build();
     assertTrue(catalog.get("complete").getAsBoolean());
     assertEquals(4, catalog.get("fixtureCount").getAsInt());
-    assertEquals("FIXTURES_DEFINED_BASELINES_PENDING", catalog.get("executionEvidenceStatus").getAsString());
+    assertEquals("BASELINE_HARNESS_AVAILABLE_RESULTS_RUN_SPECIFIC",
+        catalog.get("executionEvidenceStatus").getAsString());
 
     Set<String> scales = new HashSet<String>();
     for (com.google.gson.JsonElement element : catalog.getAsJsonArray("fixtures")) {

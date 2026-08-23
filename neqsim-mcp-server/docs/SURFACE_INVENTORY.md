@@ -18,7 +18,7 @@ manually maintained Java method list.
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 67 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
-| MCP guides | 4 | `getCapabilities.phase0EvidenceInventory` | MCP README, contract, API reference, and this inventory |
+| MCP guides | 7 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, and baseline harness |
 | Explicit tool trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
 | Trust coverage records | 71 = 20 explicit + 51 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory` |
 
@@ -92,7 +92,7 @@ trees and fails if the manifest drifts. These counts identify evidence locations
 claim that a test ran or passed. Exact-head CI and recorded command output remain the execution
 evidence.
 
-The four MCP guides have distinct roles:
+The seven MCP guides have distinct roles:
 
 | Guide | Role |
 | --- | --- |
@@ -100,6 +100,9 @@ The four MCP guides have distinct roles:
 | `neqsim-mcp-server/MCP_CONTRACT.md` | Versioning, stability, envelopes, governance, security, and trust metadata |
 | `neqsim-mcp-server/docs/API_REFERENCE.md` | Parameters, schemas, examples, resources, and selected result contracts |
 | `neqsim-mcp-server/docs/SURFACE_INVENTORY.md` | Exact protocol, implementation, equipment, reporting, and evidence inventory |
+| `neqsim-mcp-server/docs/FOUNDATION_TRACEABILITY.md` | Merged foundation capability evidence and remaining boundaries |
+| `neqsim-mcp-server/docs/ACCEPTANCE_FIXTURES.md` | Four public synthetic scales and canonical execution routes |
+| `neqsim-mcp-server/docs/ACCEPTANCE_BASELINES.md` | Bounded exact-run measurements, interpretation limits, and explicit evidence gaps |
 
 `BenchmarkTrust` currently contains 20 tool-specific trust pages with 64 known-limit entries and 30
 validation cases, of which 5 name a concrete `verifiedBy` test. The other 51 published tools still

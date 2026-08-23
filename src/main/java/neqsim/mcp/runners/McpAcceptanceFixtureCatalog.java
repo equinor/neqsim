@@ -32,7 +32,7 @@ public final class McpAcceptanceFixtureCatalog {
     catalog.addProperty("catalogVersion", "1.0");
     catalog.addProperty("fixtureCount", 4);
     catalog.addProperty("complete", true);
-    catalog.addProperty("executionEvidenceStatus", "FIXTURES_DEFINED_BASELINES_PENDING");
+    catalog.addProperty("executionEvidenceStatus", "BASELINE_HARNESS_AVAILABLE_RESULTS_RUN_SPECIFIC");
     catalog.addProperty("evidenceDocument", "neqsim-mcp-server/docs/ACCEPTANCE_FIXTURES.md");
 
     JsonArray fixtures = new JsonArray();
@@ -58,7 +58,7 @@ public final class McpAcceptanceFixtureCatalog {
     catalog.add("fixtures", fixtures);
 
     catalog.addProperty("remainingPhase0Boundary",
-        "Execute and record runtime, memory, response size, tool-call count, convergence, balance closure, and report-usefulness baselines; then complete the campaign traceability and discipline-maturity matrices");
+        "Execute McpAcceptanceBaselineRunner on each exact head, close explicit numerical balance/report gaps where justified, then complete the campaign traceability and discipline-maturity matrices");
     return catalog;
   }
 
