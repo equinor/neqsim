@@ -53,7 +53,17 @@ inferred from the source.
 
 ## Kaasa 1998 supplied-scan audit
 
-The supplied scan removed the access blocker but not the scientific or licensing gates. Appendix F
+The supplied scan removed the access blocker but not the scientific or licensing gates. Selected
+Appendix F citations were checked against their primary publisher records before any adoption decision:
+
+| Kaasa reference | Primary source and verified scope | Agreement / conflict decision |
+| --- | --- | --- |
+| [8] | He and Morse (1993), [carbonate/calcite brines](https://doi.org/10.1016/0016-7037(93)90137-L): CO2, bicarbonate, carbonate, and calcite evidence in Na/K/Ca/Mg chloride/sulfate solutions from 0 to 90 °C at about 0.1032 MPa | Supports the thesis family and temperature lineage, but does not establish redistribution rights or validate every transcribed coefficient. No row adopted. |
+| [13] | Harvie, Møller and Weare (1984), [natural-water model](https://doi.org/10.1016/0016-7037(84)90098-X): mixed Na/K/Mg/Ca/H chloride/sulfate/carbonate system at 25 °C and high ionic strength | Family topology agrees with Appendix F. The primary model is a 25 °C reference, so it cannot independently qualify Kaasa's later temperature fits. No row adopted. |
+| [14] | Pabalan and Pitzer (1987), [high-temperature mixed electrolytes](https://doi.org/10.1016/0016-7037(87)90295-X): Na/K/Mg chloride/sulfate/hydroxide mixtures and mineral solubility | Supports temperature-dependent theta/psi lineage for its stated system. Species coverage is narrower than the full thesis table and reuse remains publisher-controlled. No row adopted. |
+| [16] | Duan et al. (1992), [methane in brines](https://doi.org/10.1016/0016-7037(92)90215-5): CH4 solubility in 0–6 molal brines, 0–250 °C, and 0–1600 bar | Supports the neutral-methane interaction lane only. NeqSim lacks the required neutral Pitzer family representation, so these rows fail closed. |
+
+Appendix F
 printed page 259 defines
 
 `p(T) = a + b(T-Tr) + c(T²-Tr²) + d(1/T-1/Tr) + e ln(T/Tr) + f(1/T²-1/Tr²)`,
