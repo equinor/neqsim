@@ -9,13 +9,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Builds the Phase 0 MCP test, guide, limitation, and merged-foundation evidence inventory.
+ * Builds the Phase 0 MCP test, guide, limitation, merged-foundation, and acceptance-fixture evidence inventory.
  *
  * <p>
  * Source evidence counts are frozen by the repository and protocol tests. Runtime limitation coverage is derived
  * directly from {@link BenchmarkTrust}, so tools that still use the generic trust fallback remain explicit gaps rather
  * than being presented as validated. The merged-foundation inventory records what campaign prerequisites #2874, #2875,
- * and #3152 actually established and the current source evidence that preserves those contracts.
+ * and #3152 actually established and the current source evidence that preserves those contracts. The acceptance fixture
+ * catalog freezes the four public synthetic scales used by later Phase 0 measurement and maturity work.
  * </p>
  */
 public final class McpEvidenceInventory {
@@ -30,20 +31,21 @@ public final class McpEvidenceInventory {
   /**
    * Builds the evidence inventory.
    *
-   * @return test, guide, limitation, and foundation evidence
+   * @return test, guide, limitation, foundation, and acceptance-fixture evidence
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.2");
+    inventory.addProperty("inventoryVersion", "1.3");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
     inventory.add("knownLimitations", buildKnownLimitations());
+    inventory.add("acceptanceFixtures", McpAcceptanceFixtureCatalog.build());
     inventory.addProperty("advisoryBoundary",
         "Evidence discovery does not certify a calculation or replace qualified engineering review");
     inventory.addProperty("complete", false);
     inventory.addProperty("completionReason",
-        "Published surfaces, merged foundations, and per-tool trust coverage are inventoried, but confirmed trust gaps, four-scale acceptance fixtures, traceability/maturity matrices, and measured Phase 0 baselines remain incomplete");
+        "Published surfaces, merged foundations, per-tool trust coverage, and four-scale acceptance fixtures are inventoried, but confirmed trust gaps, traceability/maturity matrices, and measured Phase 0 baselines remain incomplete");
     return inventory;
   }
 
@@ -123,7 +125,7 @@ public final class McpEvidenceInventory {
 
     foundations.add("entries", entries);
     foundations.addProperty("remainingPhase0Boundary",
-        "Close confirmed trust gaps where evidence exists, define four acceptance scales and traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
+        "Close confirmed trust gaps where evidence exists, execute the four acceptance scales for measured baselines, complete traceability/maturity matrices, and measure runtime, memory, payload, convergence, balance closure, and report usefulness");
     return foundations;
   }
 
