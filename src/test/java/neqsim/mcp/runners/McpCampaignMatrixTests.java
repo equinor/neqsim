@@ -32,8 +32,8 @@ class McpCampaignMatrixTests {
       assertFalse(row.get("criterion").getAsString().isEmpty());
       assertFalse(row.get("evidence").getAsString().isEmpty());
       String status = row.get("evidenceStatus").getAsString();
-      assertTrue(status.equals("MERGED_EVIDENCE") || status.equals("PARTIAL_EVIDENCE")
-          || status.equals("CONFIRMED_GAP"));
+      assertTrue(
+          status.equals("MERGED_EVIDENCE") || status.equals("PARTIAL_EVIDENCE") || status.equals("CONFIRMED_GAP"));
       if (status.equals("MERGED_EVIDENCE")) {
         merged++;
       } else if (status.equals("PARTIAL_EVIDENCE")) {
@@ -72,8 +72,8 @@ class McpCampaignMatrixTests {
       JsonObject discipline = entry.getValue().getAsJsonObject();
       assertFalse(discipline.get("qualifiedForAccountableEngineeringApproval").getAsBoolean());
       assertTrue(discipline.get("publishedRepresentativeToolCount").getAsInt() > 0);
-      assertTrue(discipline.get("toolSpecificTrustCount").getAsInt()
-          <= discipline.get("publishedRepresentativeToolCount").getAsInt());
+      assertTrue(discipline.get("toolSpecificTrustCount").getAsInt() <= discipline
+          .get("publishedRepresentativeToolCount").getAsInt());
       String maturity = discipline.get("maturityStatus").getAsString();
       assertTrue(maturity.equals("TOOL_SPECIFIC_TRUST") || maturity.equals("PARTIAL_TOOL_SPECIFIC_TRUST")
           || maturity.equals("CONFIRMED_TRUST_GAP"));
