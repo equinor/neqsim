@@ -12,7 +12,8 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * calling {@code setMultiPhaseCheck(true)} before running the flash. Phase disappearance only changes the active
  * mapping; repeated flashes, cloning and serialization retain the role objects. Systems initialized through
  * {@code chemicalReactionInit()} alternate fixed-role phase equilibrium with chemical equilibrium in the Pitzer aqueous
- * phase, enabling reactive gas-aqueous and gas-oil-aqueous scale-potential calculations.
+ * phase, enabling reactive gas-aqueous and gas-oil-aqueous scale-potential calculations. Pitzer solute molalities
+ * are evaluated per kilogram of water solvent, independent of dissolved-salt mass.
  * </p>
  *
  * <p>
