@@ -3,6 +3,10 @@ package neqsim.pvtsimulation.flowassurance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -259,6 +263,35 @@ public class MultiMineralScaleEquilibriumTest {
         "Repeated execution must reproduce the complementarity residual exactly");
     assertEquals(firstBalance, eq.getMaximumIonBalanceResidualMolPerL(), 0.0,
         "Repeated execution must reproduce the ion-balance residual exactly");
+  }
+
+  @Test
+  @DisplayName("Serialization invalidates cached diagnostics and recomputes deterministically")
+  void testSerializationInvalidatesCachedDiagnostics() throws Exception {
+    MultiMineralScaleEquilibrium original = new MultiMineralScaleEquilibrium(sulphateLimitedBrine());
+    original.solve();
+    double expectedComplementarity = original.getMaximumComplementarityViolation();
+    double expectedBalance = original.getMaximumIonBalanceResidualMolPerL();
+
+    byte[] serialized;
+    try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(original);
+      output.flush();
+      serialized = bytes.toByteArray();
+    }
+
+    MultiMineralScaleEquilibrium restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(serialized))) {
+      restored = (MultiMineralScaleEquilibrium) input.readObject();
+    }
+
+    assertFalse(restored.isSolved(), "Deserialization must invalidate cached solve and diagnostic state");
+    assertEquals(expectedComplementarity, restored.getMaximumComplementarityViolation(), 0.0,
+        "Lazy post-deserialization solve must reproduce complementarity exactly");
+    assertEquals(expectedBalance, restored.getMaximumIonBalanceResidualMolPerL(), 0.0,
+        "Lazy post-deserialization solve must reproduce ion balance exactly");
+    assertTrue(restored.isSolved(), "Reading a diagnostic should complete the lazy re-solve");
   }
 
   @Test
