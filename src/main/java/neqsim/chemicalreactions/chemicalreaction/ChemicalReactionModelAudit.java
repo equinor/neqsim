@@ -14,24 +14,23 @@ import neqsim.thermo.system.SystemInterface;
  * Audits the active chemical-reaction set and parameter provenance of a thermodynamic system.
  *
  * <p>
- * Electrolyte EOS and electrolyte GE models may legitimately share a reaction table when their
- * activity/standard-state conventions are compatible, but sharing a table is not evidence that the
- * same active reactions or parameters have been independently validated for both model families.
- * This utility provides an explicit, side-effect-free comparison surface before changing reaction
- * activation or splitting parameter tables.
+ * Electrolyte EOS and electrolyte GE models may legitimately share a reaction table when their activity/standard-state
+ * conventions are compatible, but sharing a table is not evidence that the same active reactions or parameters have
+ * been independently validated for both model families. This utility provides an explicit, side-effect-free comparison
+ * surface before changing reaction activation or splitting parameter tables.
  * </p>
  *
  * <p>
- * The audit only reads an already initialized {@link ChemicalReactionOperations} object. It does
- * not initialize reactions, run equilibrium calculations, change a thermodynamic model, or add work
- * to ordinary neutral calculations.
+ * The audit only reads an already initialized {@link ChemicalReactionOperations} object. It does not initialize
+ * reactions, run equilibrium calculations, change a thermodynamic model, or add work to ordinary neutral calculations.
  * </p>
  *
  * @author OpenAI Codex
  * @version 1.0
  */
 public final class ChemicalReactionModelAudit {
-  private ChemicalReactionModelAudit() {}
+  private ChemicalReactionModelAudit() {
+  }
 
   /**
    * Capture the active reaction set and equilibrium-parameter provenance for a system.
@@ -98,8 +97,8 @@ public final class ChemicalReactionModelAudit {
       }
     }
 
-    return new AuditComparison(first.getReactionDataSource() == second.getReactionDataSource(),
-        onlyInFirst, onlyInSecond, parameterDifferences);
+    return new AuditComparison(first.getReactionDataSource() == second.getReactionDataSource(), onlyInFirst,
+        onlyInSecond, parameterDifferences);
   }
 
   /** Immutable snapshot of one system's selected reaction source and active reactions. */
@@ -127,7 +126,7 @@ public final class ChemicalReactionModelAudit {
 
     /** @return immutable active-reaction snapshots in deterministic name order */
     public List<ReactionParameterSnapshot> getReactions() {
-      return reactions;
+      return Collections.unmodifiableList(new ArrayList<ReactionParameterSnapshot>(reactions));
     }
 
     /** @return number of active independent reactions retained after initialization */
@@ -136,8 +135,7 @@ public final class ChemicalReactionModelAudit {
     }
 
     private Map<String, ReactionParameterSnapshot> asMap() {
-      Map<String, ReactionParameterSnapshot> values =
-          new LinkedHashMap<String, ReactionParameterSnapshot>();
+      Map<String, ReactionParameterSnapshot> values = new LinkedHashMap<String, ReactionParameterSnapshot>();
       for (ReactionParameterSnapshot reaction : reactions) {
         values.put(reaction.getName(), reaction);
       }
@@ -146,8 +144,7 @@ public final class ChemicalReactionModelAudit {
   }
 
   /** Immutable per-reaction parameter/provenance snapshot. */
-  public static final class ReactionParameterSnapshot
-      implements Comparable<ReactionParameterSnapshot> {
+  public static final class ReactionParameterSnapshot implements Comparable<ReactionParameterSnapshot> {
     private final String name;
     private final String reference;
     private final double referenceTemperature;
