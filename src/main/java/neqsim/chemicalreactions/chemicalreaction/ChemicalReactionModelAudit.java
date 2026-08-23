@@ -143,6 +143,30 @@ public final class ChemicalReactionModelAudit {
       return reactions.size();
     }
 
+    /**
+     * Get active reactions whose selected data row lacks declared model-specific validation.
+     *
+     * @return immutable reaction-name list in deterministic order
+     */
+    public List<String> getReactionsWithoutValidatedEvidence() {
+      List<String> names = new ArrayList<String>();
+      for (ReactionParameterSnapshot reaction : reactions) {
+        if (reaction.getValidationStatus() != ChemicalReactionValidationStatus.VALIDATED) {
+          names.add(reaction.getName());
+        }
+      }
+      return Collections.unmodifiableList(names);
+    }
+
+    /**
+     * Check whether every active reaction declares model-specific validation evidence.
+     *
+     * @return true when all active reactions are marked {@link ChemicalReactionValidationStatus#VALIDATED}
+     */
+    public boolean hasValidatedEvidenceForAllActiveReactions() {
+      return getReactionsWithoutValidatedEvidence().isEmpty();
+    }
+
     private Map<String, ReactionParameterSnapshot> asMap() {
       Map<String, ReactionParameterSnapshot> values = new LinkedHashMap<String, ReactionParameterSnapshot>();
       for (ReactionParameterSnapshot reaction : reactions) {
@@ -156,6 +180,7 @@ public final class ChemicalReactionModelAudit {
   public static final class ReactionParameterSnapshot implements Comparable<ReactionParameterSnapshot> {
     private final String name;
     private final String reference;
+    private final ChemicalReactionValidationStatus validationStatus;
     private final double referenceTemperature;
     private final double[] equilibriumConstantCoefficients;
     private final String[] componentNames;
@@ -164,6 +189,7 @@ public final class ChemicalReactionModelAudit {
     private ReactionParameterSnapshot(ChemicalReaction reaction) {
       this.name = reaction.getName();
       this.reference = reaction.getReference();
+      this.validationStatus = reaction.getValidationStatus();
       this.referenceTemperature = reaction.getReferenceTemperature();
       this.equilibriumConstantCoefficients = reaction.getEquilibriumConstantCoefficients();
       this.componentNames = reaction.getNames().clone();
@@ -178,6 +204,15 @@ public final class ChemicalReactionModelAudit {
     /** @return stored literature/data reference identifier */
     public String getReference() {
       return reference;
+    }
+
+    /**
+     * Get the validation status declared by the selected model-specific reaction-data row.
+     *
+     * @return declared validation status
+     */
+    public ChemicalReactionValidationStatus getValidationStatus() {
+      return validationStatus;
     }
 
     /** @return reference temperature in kelvin */
@@ -207,7 +242,7 @@ public final class ChemicalReactionModelAudit {
      * @return true when all auditable reaction parameters are equal
      */
     public boolean hasSameParameters(ReactionParameterSnapshot other) {
-      return other != null && Objects.equals(reference, other.reference)
+      return other != null && validationStatus == other.validationStatus && Objects.equals(reference, other.reference)
           && Double.doubleToLongBits(referenceTemperature) == Double.doubleToLongBits(other.referenceTemperature)
           && Arrays.equals(equilibriumConstantCoefficients, other.equilibriumConstantCoefficients)
           && Arrays.equals(componentNames, other.componentNames)
