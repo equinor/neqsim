@@ -651,7 +651,7 @@ public class ProcessRunner {
    * @return non-empty string value
    */
   private static String requireString(JsonObject object, String name) {
-    String value = getOptionalString(object, name, null);
+    String value = getOptionalString(object, "name".equals(name) ? name : name, null);
     if (value == null) {
       throw new IllegalArgumentException("Required string property '" + name + "' is missing");
     }
@@ -1544,9 +1544,9 @@ public class ProcessRunner {
       return;
     }
     JsonObject data = new JsonObject();
-    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report",
-        "convergenceSummary", "convergenceReport", "autoSizing", "designReport", "utilizationSnapshot",
-        "bottleneckRanking", "processDefinition", "pythonScript" };
+    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report", "convergenceSummary",
+        "convergenceReport", "autoSizing", "designReport", "utilizationSnapshot", "bottleneckRanking",
+        "processDefinition", "pythonScript" };
     for (String field : fields) {
       if (response.has(field)) {
         data.add(field, response.get(field));
