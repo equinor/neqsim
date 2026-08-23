@@ -1505,10 +1505,19 @@ def test_capabilities():
     check("evidence inventory freezes 94 protocol scenarios",
           tests.get("protocolScenarioCount") == 94,
           str(tests))
-    check("evidence inventory lists four MCP guides",
-          guides.get("guideCount") == 4
-          and len(guides.get("entries", [])) == 4,
+    check("evidence inventory lists seven MCP guides",
+          guides.get("guideCount") == 7
+          and len(guides.get("entries", [])) == 7,
           str(guides))
+    baseline_contract = evidence.get("acceptanceBaselineContract", {})
+    check("acceptance baseline contract is bounded and non-qualifying",
+          baseline_contract.get("fixtureCount") == 4
+          and baseline_contract.get("repeatRunCount") == 2
+          and baseline_contract.get("executionMode")
+          == "ON_DEMAND_TEST_HARNESS"
+          and baseline_contract.get("performanceQualification") is False
+          and baseline_contract.get("scientificValidationComplete") is False,
+          str(baseline_contract))
 
     repo_root = Path(__file__).resolve().parent.parent
     java_test_root = repo_root / tests.get("javaTestRoot", "")

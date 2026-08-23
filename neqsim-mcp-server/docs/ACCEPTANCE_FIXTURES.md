@@ -45,17 +45,20 @@ The large fixture is the #3153 transport/execution scale. Generic process execut
 
 Hosted exact-head CI is the execution authority when local validation is unavailable. A source fixture existing in the repository is not evidence that it passed on a particular head.
 
-## Remaining Phase 0 measurements
+## Phase 0 measurement harness
 
-The next acceptance increment must run these frozen inputs under a measurement harness and record, at minimum:
+`McpAcceptanceBaselineRunner` now runs these frozen inputs twice through the production runners and records:
 
 - runtime and environment identity;
 - memory/allocation evidence where available;
 - response size before and after MCP response guarding;
 - tool-call count and selective-retrieval behavior;
 - convergence and warnings;
-- mass/component/energy closure as applicable;
+- explicit mass/component/energy closure response paths, or a confirmed response-evidence gap;
 - deterministic repeat evidence;
-- report completeness/usefulness and explicit limitations.
+- structural report coverage and explicit usefulness limitations.
 
-The full campaign traceability matrix and discipline-level capability/maturity matrix also remain open. These fixtures provide the stable inputs those later measurements should reference.
+See [ACCEPTANCE_BASELINES.md](ACCEPTANCE_BASELINES.md) for the executable contract and interpretation boundaries.
+Exact-head values remain environment-specific and are retained in hosted CI logs rather than embedded as portable
+performance claims. The full campaign traceability matrix, discipline-level capability/maturity matrix, and justified
+closure of explicit numerical balance/report gaps remain open.

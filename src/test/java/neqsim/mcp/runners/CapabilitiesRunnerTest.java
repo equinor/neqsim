@@ -167,8 +167,8 @@ class CapabilitiesRunnerTest {
     assertEquals(94, tests.get("protocolScenarioCount").getAsInt());
 
     JsonObject guides = inventory.getAsJsonObject("guides");
-    assertEquals(4, guides.get("guideCount").getAsInt());
-    assertEquals(4, guides.getAsJsonArray("entries").size());
+    assertEquals(7, guides.get("guideCount").getAsInt());
+    assertEquals(7, guides.getAsJsonArray("entries").size());
 
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
     assertEquals(71, limitations.get("publishedToolCount").getAsInt());

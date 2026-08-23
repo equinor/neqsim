@@ -85,14 +85,22 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.3", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.4", inventory.get("inventoryVersion").getAsString());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());
-    assertEquals("FIXTURES_DEFINED_BASELINES_PENDING", fixtures.get("executionEvidenceStatus").getAsString());
+    assertEquals("BASELINE_HARNESS_AVAILABLE_RESULTS_RUN_SPECIFIC",
+        fixtures.get("executionEvidenceStatus").getAsString());
     assertEquals(4, fixtures.getAsJsonArray("fixtures").size());
-    assertTrue(fixtures.get("remainingPhase0Boundary").getAsString().contains("runtime"));
+    assertTrue(fixtures.get("remainingPhase0Boundary").getAsString().contains("McpAcceptanceBaselineRunner"));
 
-    // Fixture definition is complete; measured baselines and campaign matrices are still open.
+    JsonObject baselineContract = inventory.getAsJsonObject("acceptanceBaselineContract");
+    assertEquals(4, baselineContract.get("fixtureCount").getAsInt());
+    assertEquals(2, baselineContract.get("repeatRunCount").getAsInt());
+    assertEquals("CONTRACT_DEFINED_EXACT_HEAD_EXECUTION_REQUIRED",
+        baselineContract.get("executionEvidenceStatus").getAsString());
+    assertFalse(baselineContract.get("performanceQualification").getAsBoolean());
+
+    // Fixture definitions and the harness contract are complete; run-specific evidence and matrices remain open.
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 }

@@ -35,17 +35,18 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.3");
+    inventory.addProperty("inventoryVersion", "1.4");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
     inventory.add("knownLimitations", buildKnownLimitations());
     inventory.add("acceptanceFixtures", McpAcceptanceFixtureCatalog.build());
+    inventory.add("acceptanceBaselineContract", McpAcceptanceBaselineRunner.describe());
     inventory.addProperty("advisoryBoundary",
         "Evidence discovery does not certify a calculation or replace qualified engineering review");
     inventory.addProperty("complete", false);
     inventory.addProperty("completionReason",
-        "Published surfaces, merged foundations, per-tool trust coverage, and four-scale acceptance fixtures are inventoried, but confirmed trust gaps, traceability/maturity matrices, and measured Phase 0 baselines remain incomplete");
+        "Published surfaces, merged foundations, per-tool trust coverage, four-scale fixtures, and the bounded baseline harness are inventoried, but confirmed trust gaps, traceability/maturity matrices, run-specific measurements, and explicit balance-evidence gaps remain incomplete");
     return inventory;
   }
 
@@ -75,6 +76,12 @@ public final class McpEvidenceInventory {
         "Tool parameters, schemas, examples, resources, and selected result contracts"));
     entries.add(guide("surface-inventory", "neqsim-mcp-server/docs/SURFACE_INVENTORY.md",
         "Exact protocol, implementation, equipment, reporting, and Phase 0 evidence inventory"));
+    entries.add(guide("foundation-traceability", "neqsim-mcp-server/docs/FOUNDATION_TRACEABILITY.md",
+        "Merged #2874, #2875, and #3152 capability evidence and remaining boundaries"));
+    entries.add(guide("acceptance-fixtures", "neqsim-mcp-server/docs/ACCEPTANCE_FIXTURES.md",
+        "Four public synthetic acceptance scales and canonical execution routes"));
+    entries.add(guide("acceptance-baselines", "neqsim-mcp-server/docs/ACCEPTANCE_BASELINES.md",
+        "Bounded exact-run measurements, interpretation limits, and explicit evidence gaps"));
     guides.addProperty("guideCount", entries.size());
     guides.add("entries", entries);
     return guides;
