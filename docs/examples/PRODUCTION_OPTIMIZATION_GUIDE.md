@@ -52,6 +52,37 @@ This guide provides comprehensive examples for setting up and running production
 
 ---
 
+## Register plant-wide restrictions before solving
+
+Large plants have restrictions that do not belong to one equipment item: total power and utilities,
+common-shaft compressor trains, gathering and export networks, area limits, product quality, emissions,
+produced-water handling, flare capacity, availability, and nomination limits. Use
+`PlantConstraintRegistry` to give each restriction a stable identity and explicit engineering basis.
+
+The registry complements equipment constraints for compressor maps, surge/choke, speed, temperature
+and power; separator gas/oil/water capacity, residence and settling; and piping pressure, velocity,
+erosion, FIV, thermal and phase limits. It does not infer operating authority from advisory safety or
+integrity calculations.
+
+```java
+PlantConstraintRegistry registry = new PlantConstraintRegistry();
+registry.register(PlantConstraintDefinition
+    .builder("export-pressure", PlantConstraintScope.stream("Plant", "Export", "Gas export"))
+    .unit("bara")
+    .basis("absolute pressure at export battery limit")
+    .provenance("sales-gas agreement rev 3")
+    .category(PlantConstraintDefinition.Category.COMMERCIAL)
+    .build());
+```
+
+Treat this as registration, not solved evidence. A later utilization snapshot must sample every
+enabled restriction after successful convergence, validate finite values and consistent units/bases,
+and fail closed if evidence is incomplete. See the
+[Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK#plant-wide-constraint-registration)
+for aggregation and conversion rules.
+
+---
+
 ## Overview
 
 NeqSim provides a powerful production optimization framework that combines:

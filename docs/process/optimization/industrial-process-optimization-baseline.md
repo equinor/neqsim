@@ -190,11 +190,29 @@ A later implementation may claim improvement only when all applicable gates pass
   [#3153](https://github.com/equinor/neqsim/issues/3153) after the Java evidence and result schemas
   are stable.
 
+## Stable plant constraint registration contract
+
+`PlantConstraintScope`, `PlantConstraintDefinition`, `PlantConstraintParticipant`, and
+`PlantConstraintRegistry` provide the dependency-ready identity layer for the restriction inventory
+above. A constraint is addressed independently of Java object identity at equipment, stream, area,
+model, shared-resource, or coupled-group scope. Registration retains unit, basis, provenance, owner,
+reference, calculation method, confidence, validity, severity, and enablement. Disabled and incomplete
+registrations remain visible instead of disappearing from the audit trail.
+
+Registration is deterministic across insertion order and Java serialization. Aggregation is explicit,
+participants are ordered by stable identity, and unlike units or bases are rejected unless the caller
+supplies a finite conversion. The equipment adapter copies the established #2941
+`CapacityConstraint` metadata without evaluating or retaining its mutable value supplier.
+
+This increment is metadata only. It does not yet sample values, aggregate total power, coordinate a
+common shaft, compute separator or piping utilization, determine feasibility, or alter process solving.
+Those operations require complete post-solve evidence and fail-closed snapshot validation.
+
 ## Next dependency-ready increments
 
 1. Execute and version cases S and M on unmodified master, then add the missing measurement fields
    without changing scheduling behavior.
-2. Introduce one stable plant-wide constraint/resource identity and complete immutable utilization
+2. Consume the stable plant-wide constraint/resource registry in a complete immutable utilization
    snapshot, reusing `InstalledEquipmentCapacityEvidence` and `ProcessBoundaryConstraintEvidence`.
 3. Add first-class total-power/shared-utility evidence, followed by a common-shaft compressor-train
    resource constraint.
