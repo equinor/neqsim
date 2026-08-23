@@ -2243,8 +2243,7 @@ public class TPflash extends Flash {
     if (candidate.getNumberOfPhases() != 2) {
       return;
     }
-    int lightPhaseIndex =
-        candidate.getPhase(0).getMolarMass() <= candidate.getPhase(1).getMolarMass() ? 0 : 1;
+    int lightPhaseIndex = candidate.getPhase(0).getMolarMass() <= candidate.getPhase(1).getMolarMass() ? 0 : 1;
     int heavyPhaseIndex = 1 - lightPhaseIndex;
     try {
       candidate.setPhaseType(lightPhaseIndex, PhaseType.GAS);
@@ -2255,8 +2254,7 @@ public class TPflash extends Flash {
       for (int refinement = 0; refinement < MAX_LARGE_VOLATILITY_REFINEMENT_ITERATIONS
           && (maximumComponentMaterialBalanceResidual(candidate) > LARGE_VOLATILITY_REFINEMENT_TOLERANCE
               || maximumLogFugacityResidual(candidate.getPhase(0),
-                  candidate.getPhase(1)) > LARGE_VOLATILITY_REFINEMENT_TOLERANCE);
-          refinement++) {
+                  candidate.getPhase(1)) > LARGE_VOLATILITY_REFINEMENT_TOLERANCE); refinement++) {
         endpointSolver.solveBeta();
       }
       candidate.orderByDensity();
@@ -2479,8 +2477,8 @@ public class TPflash extends Flash {
    * Screens a high-pressure hydrocarbon endpoint with a large critical-temperature span.
    *
    * <p>
-   * Strongly asymmetric light/heavy hydrocarbon mixtures can retain a non-equilibrium ordinary two-phase endpoint
-   * while the reciprocal multiphase path converges to the balanced lower-Gibbs split. The screen requires only
+   * Strongly asymmetric light/heavy hydrocarbon mixtures can retain a non-equilibrium ordinary two-phase endpoint while
+   * the reciprocal multiphase path converges to the balanced lower-Gibbs split. The screen requires only
    * hydrocarbon/inert active components, pressure at or above 50 bar, at least two active components, a critical
    * temperature span of at least 300 K, and at least one mole percent of the least volatile component. The subsequent
    * material-balance, fugacity, active-set, Gibbs, and rollback gates remain authoritative.
@@ -2512,10 +2510,8 @@ public class TPflash extends Flash {
         leastVolatileFeedFraction = feedFraction;
       }
     }
-    return activeComponents >= 2
-        && leastVolatileFeedFraction >= LARGE_VOLATILITY_LEAST_VOLATILE_FEED_FRACTION
-        && maximumCriticalTemperature
-            - minimumCriticalTemperature >= LARGE_VOLATILITY_CRITICAL_TEMPERATURE_SPAN;
+    return activeComponents >= 2 && leastVolatileFeedFraction >= LARGE_VOLATILITY_LEAST_VOLATILE_FEED_FRACTION
+        && maximumCriticalTemperature - minimumCriticalTemperature >= LARGE_VOLATILITY_CRITICAL_TEMPERATURE_SPAN;
   }
 
   /**
