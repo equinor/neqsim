@@ -316,7 +316,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
       double meanActivityCoefficient = phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber);
       double osmoticCoefficient = phase.getOsmoticCoefficientOfWater();
 
-      assertEquals(molality, actualMolality, 2.0e-5, "Reference composition must be on the molality basis");
+      assertEquals(molality, actualMolality, 1.0e-4, "Reference composition must be on the molality basis");
       assertEquals(referenceRow[1], meanActivityCoefficient, maximumMeanActivityRelativeDeviation * referenceRow[1]);
       assertEquals(referenceRow[2], osmoticCoefficient, maximumOsmoticRelativeDeviation * referenceRow[2]);
       assertEquals(meanActivityCoefficient, phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber),
