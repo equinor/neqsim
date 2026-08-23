@@ -54,7 +54,7 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
     int potassium = phase.getComponent("K+").getComponentNumber();
     int chloride = phase.getComponent("Cl-").getComponentNumber();
 
-    phase.setBinaryTemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE,
+    phase.setPhreeqcBinaryTemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE,
         COEFFICIENTS, COEFFICIENTS, COEFFICIENTS);
     phase.setBeta2TemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE,
         COEFFICIENTS);
@@ -77,6 +77,29 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
         new double[] {0.25, 0.0, 0.0, 0.0, 0.0, 0.0});
     assertEquals(expected, phase.getThetaij(sodium, potassium, 373.15), 2.0e-15);
     assertEquals(0.25, clone.getThetaij(sodium, potassium, 373.15), 0.0);
+  }
+
+  @Test
+  void mapsPhreeqcC0DirectlyToCphiForDifferentChargeProducts() {
+    PhasePitzer phase = createPhase();
+    int sodium = phase.getComponent("Na+").getComponentNumber();
+    int calcium = phase.getComponent("Ca++").getComponentNumber();
+    int chloride = phase.getComponent("Cl-").getComponentNumber();
+    double[] zeros = new double[6];
+
+    phase.setPhreeqcBinaryTemperatureCoefficients(sodium, chloride, REFERENCE_TEMPERATURE,
+        zeros, zeros, COEFFICIENTS);
+    phase.setPhreeqcBinaryTemperatureCoefficients(calcium, chloride, REFERENCE_TEMPERATURE,
+        zeros, zeros, COEFFICIENTS);
+
+    double expectedCphi = -0.11371073586719137;
+    assertEquals(expectedCphi, phase.getCphiij(sodium, chloride, 373.15), 2.0e-15);
+    assertEquals(expectedCphi, phase.getCphiij(calcium, chloride, 373.15), 2.0e-15);
+    assertEquals(expectedCphi / 2.0,
+        phase.getCphiij(sodium, chloride, 373.15) / 2.0, 2.0e-15);
+    assertEquals(expectedCphi / (2.0 * Math.sqrt(2.0)),
+        phase.getCphiij(calcium, chloride, 373.15) / (2.0 * Math.sqrt(2.0)),
+        2.0e-15);
   }
 
   @Test
@@ -121,7 +144,8 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
     system.addComponent("water", 55.508);
     system.addComponent("Na+", 1.0);
     system.addComponent("K+", 0.1);
-    system.addComponent("Cl-", 1.1);
+    system.addComponent("Cl-", 1.3);
+    system.addComponent("Ca++", 0.1);
     return (PhasePitzer) system.getPhase(1);
   }
 }
