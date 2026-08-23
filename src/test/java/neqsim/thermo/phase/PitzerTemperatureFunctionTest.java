@@ -3,6 +3,10 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
@@ -73,6 +77,28 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
         new double[] {0.25, 0.0, 0.0, 0.0, 0.0, 0.0});
     assertEquals(expected, phase.getThetaij(sodium, potassium, 373.15), 2.0e-15);
     assertEquals(0.25, clone.getThetaij(sodium, potassium, 373.15), 0.0);
+  }
+
+  @Test
+  void serializationPreservesSparseTemperatureFunctions() throws Exception {
+    PhasePitzer phase = createPhase();
+    int sodium = phase.getComponent("Na+").getComponentNumber();
+    int potassium = phase.getComponent("K+").getComponentNumber();
+    phase.setThetaTemperatureCoefficients(sodium, potassium, REFERENCE_TEMPERATURE,
+        COEFFICIENTS);
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(phase);
+    }
+    PhasePitzer restored;
+    try (ObjectInputStream input =
+        new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restored = (PhasePitzer) input.readObject();
+    }
+
+    assertEquals(-0.11371073586719137,
+        restored.getThetaij(sodium, potassium, 373.15), 2.0e-15);
   }
 
   @Test
