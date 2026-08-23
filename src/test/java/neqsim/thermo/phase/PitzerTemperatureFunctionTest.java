@@ -41,8 +41,7 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
         + 6.0 * (1.0 / (temperature * temperature) - 1.0 / (REFERENCE_TEMPERATURE * REFERENCE_TEMPERATURE));
     assertEquals(expected, function.valueAt(temperature), 1.0e-15);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> PitzerTemperatureFunction.fromKaasa1998(new double[5]));
+    assertThrows(IllegalArgumentException.class, () -> PitzerTemperatureFunction.fromKaasa1998(new double[5]));
   }
 
   @Test
