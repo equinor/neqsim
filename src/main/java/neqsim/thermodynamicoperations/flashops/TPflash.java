@@ -2116,14 +2116,15 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Performs a bounded final SSI refinement of a stale neutral gas/liquid two-phase endpoint.
+   * Performs a bounded final refinement of a qualified neutral gas/liquid two-phase endpoint.
    *
    * <p>
    * Post-convergence phase-root selection can leave a gas/oil split with valid material balance but component
-   * fugacities just outside the flash tolerance. The refinement is attempted only for a neutral, non-aqueous,
-   * exactly-two-phase endpoint whose material balance already closes. It retains the selected active set and accepts
+   * fugacities outside the flash tolerance. The refinement is attempted only for a qualified sour-gas endpoint or a
+   * high-pressure hydrogen/hydrocarbon endpoint with an incipient phase. It retains the selected active set and accepts
    * the result only when phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the
-   * existing strict checks. Otherwise the complete two-phase iteration state is restored.
+   * existing strict checks. A reciprocal ordinary/multiphase trial can recover a lower cubic root; otherwise the
+   * complete two-phase iteration state is restored.
    * </p>
    */
   private void refineInvalidNeutralTwoPhaseEndpoint() {
@@ -2138,7 +2139,8 @@ public class TPflash extends Flash {
       }
     }
 
-    if (!isSourGasConsistencyRefinementCase()) {
+    boolean hydrogenBoundaryCase = isHydrogenHydrocarbonBoundaryRefinementCase();
+    if (!isSourGasConsistencyRefinementCase() && !hydrogenBoundaryCase) {
       return;
     }
 
@@ -2381,6 +2383,41 @@ public class TPflash extends Flash {
     }
     return carbonDioxideFraction >= 0.05 && hydrogenSulfideFraction >= 0.20
         && carbonDioxideFraction + hydrogenSulfideFraction >= 0.30 && hydrocarbonFraction > 0.0;
+  }
+
+  /**
+   * Screens a high-pressure hydrogen/hydrocarbon endpoint with an incipient second phase.
+   *
+   * <p>
+   * Near a hydrogen-rich phase boundary, the ordinary flash can retain a higher-Gibbs cubic root while the explicit
+   * multiphase path selects the lower root. The reciprocal refinement remains restricted to neutral feeds containing
+   * only hydrogen, hydrocarbons, and inert components, with more than one mole percent hydrogen and a secondary phase
+   * below one percent. Lower-pressure hydrogen phase appearance is handled by the supplementary stability trial.
+   * </p>
+   *
+   * @return true when the endpoint is inside the qualified hydrogen/hydrocarbon boundary family
+   */
+  private boolean isHydrogenHydrocarbonBoundaryRefinementCase() {
+    if (system.getPressure() < 50.0 || system.getNumberOfPhases() != 2
+        || Math.min(system.getBeta(0), system.getBeta(1)) >= INVALID_INCIPIENT_PHASE_FRACTION_LIMIT) {
+      return false;
+    }
+    double hydrogenFraction = 0.0;
+    boolean hasHydrocarbon = false;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if (component.getz() <= 1.0e-50) {
+        continue;
+      }
+      if ("hydrogen".equalsIgnoreCase(component.getComponentName())) {
+        hydrogenFraction += component.getz();
+      } else if (component.isHydrocarbon()) {
+        hasHydrocarbon = true;
+      } else if (!component.isInert()) {
+        return false;
+      }
+    }
+    return hydrogenFraction > 1.0e-2 && hasHydrocarbon;
   }
 
   /**
