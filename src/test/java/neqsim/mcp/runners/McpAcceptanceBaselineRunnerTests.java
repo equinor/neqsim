@@ -53,8 +53,7 @@ class McpAcceptanceBaselineRunnerTests {
       assertFalse(measurement.getAsJsonObject("balanceEvidence").get("status").getAsString().trim().isEmpty());
       if ("multi-area-facility".equals(measurement.get("fixtureId").getAsString())) {
         JsonObject balanceEvidence = measurement.getAsJsonObject("balanceEvidence");
-        assertEquals("RESPONSE_EVIDENCE_PRESENT", balanceEvidence.get("status").getAsString(),
-            measurement.toString());
+        assertEquals("RESPONSE_EVIDENCE_PRESENT", balanceEvidence.get("status").getAsString(), measurement.toString());
         assertTrue(balanceEvidence.getAsJsonArray("responsePaths").toString().contains("massClosure"),
             balanceEvidence.toString());
         multiAreaMassClosureEvidenceFound = true;
