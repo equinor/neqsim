@@ -1,5 +1,7 @@
 package neqsim.pvtsimulation.flowassurance;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -636,6 +638,28 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   public Map<String, Double> getActivityCoefficientsUsed() {
     ensureSolved();
     return new LinkedHashMap<String, Double>(activityCoefficients);
+  }
+
+  /**
+   * Invalidates cached equilibrium and diagnostic state after deserialization.
+   *
+   * <p>
+   * Older serialized objects do not contain the diagnostic fields. Requiring a lazy re-solve prevents their
+   * default-zero values from being interpreted as evidence of convergence and also prevents stale cached results after
+   * a version transition.
+   * </p>
+   *
+   * @param stream serialized object input
+   * @throws IOException if the object cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    stream.defaultReadObject();
+    solved = false;
+    iterationsUsed = 0;
+    iterationLimitReached = false;
+    maximumComplementarityViolation = Double.NaN;
+    maximumIonBalanceResidualMolPerL = Double.NaN;
   }
 
   /**
