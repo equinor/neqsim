@@ -576,6 +576,10 @@ ops.TPflash();
 | `SystemDuanSun` | Duan-Sun, currently CO2-only | CO2 correlation; not hybrid gas-oil-aqueous |
 | `SystemFurstElectrolyteEos` | Fürst electrolyte EoS | General electrolytes |
 
+Mixed-ion `SystemPitzer` states fail before activity or osmotic-coefficient evaluation when a required binary,
+same-sign `theta`, or ternary `psi` interaction is absent. See [Pitzer Parameter Provenance and
+Coverage](pitzer_parameter_provenance.md) for dataset identity, diagnostics, and the parameter-adoption gate.
+
 All subclasses of `SystemEosGE` can call `enableHybridEosGeFlash()` to use the fixed EOS-gas / EOS-oil / GE-aqueous
 topology. This does not add missing ionic species, reactions or activity parameters to the selected GE model.
 
