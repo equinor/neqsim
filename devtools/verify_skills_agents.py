@@ -8,6 +8,8 @@ Checks performed:
   4. The TF-IDF retriever (``skill_search.py``) can parse every SKILL.md
      and returns at least one match for each skill's own description.
   5. The flat keyword index in ``skill-index.json`` is valid JSON.
+  6. OpenAI Codex discovers the canonical skills through the
+     ``.agents/skills`` symbolic link without maintaining a second copy.
 
 Exit code is 1 if any structural error is found; warnings are printed but
 do not fail the run unless ``--strict`` is set.
@@ -18,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -25,6 +28,7 @@ from typing import Dict, List, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / ".github" / "skills"
+CODEX_SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
 AGENTS_DIR = REPO_ROOT / ".github" / "agents"
 INDEX_PATH = SKILLS_DIR / "skill-index.json"
 
@@ -144,6 +148,41 @@ def check_skill_index() -> Tuple[List[str], List[str]]:
     return errors, warnings
 
 
+def check_codex_skill_discovery() -> Tuple[List[str], List[str]]:
+    """Verify that Codex discovers the canonical skill directory via symlink."""
+    errors: List[str] = []
+    warnings: List[str] = []
+    expected_target = "../.github/skills"
+
+    if not CODEX_SKILLS_DIR.is_symlink():
+        errors.append(
+            ".agents/skills must be a symbolic link to ../.github/skills; "
+            "do not maintain a copied skill tree"
+        )
+        return errors, warnings
+
+    actual_target = os.readlink(str(CODEX_SKILLS_DIR))
+    if actual_target != expected_target:
+        errors.append(
+            ".agents/skills points to {!r}; expected {!r}".format(
+                actual_target, expected_target
+            )
+        )
+        return errors, warnings
+
+    try:
+        if not CODEX_SKILLS_DIR.resolve(strict=True).samefile(
+            SKILLS_DIR.resolve(strict=True)
+        ):
+            errors.append(
+                ".agents/skills does not resolve to the canonical .github/skills directory"
+            )
+    except OSError as error:
+        errors.append(".agents/skills cannot be resolved: {}".format(error))
+
+    return errors, warnings
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -154,14 +193,18 @@ def main() -> int:
     args = parser.parse_args()
 
     print(f"Skills dir: {SKILLS_DIR}")
+    print(f"Codex skills link: {CODEX_SKILLS_DIR}")
     print(f"Agents dir: {AGENTS_DIR}")
 
     skill_errors, skill_warnings = check_skills()
     agent_errors, agent_warnings = check_agents()
     index_errors, index_warnings = check_skill_index()
+    codex_errors, codex_warnings = check_codex_skill_discovery()
 
-    all_errors = skill_errors + agent_errors + index_errors
-    all_warnings = skill_warnings + agent_warnings + index_warnings
+    all_errors = skill_errors + agent_errors + index_errors + codex_errors
+    all_warnings = (
+        skill_warnings + agent_warnings + index_warnings + codex_warnings
+    )
 
     if all_errors:
         print("\n=== ERRORS ===")

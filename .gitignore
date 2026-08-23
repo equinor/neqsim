@@ -140,6 +140,11 @@ neqsim_profile.jfr
 # Local agent data (not tracked, as it may contain sensitive information or be large)
 .agents/
 
+# Track only the OpenAI Codex repository-skill discovery link.
+!.agents/
+.agents/*
+!.agents/skills
+
 .release-run-jobs.json
 .release-run-status.json
 benchmark_results.txt
