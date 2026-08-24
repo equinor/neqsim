@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-modeling
 description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation."
-last_verified: "2026-07-18"
+last_verified: "2026-08-22"
 ---
 
 # NeqSim Process Modeling Skill
@@ -92,6 +92,14 @@ index; maps from vendor curve sheets; limits from datasheets + piping class. For
 the governed enterprise checklist and readiness gates use
 `enterprise-process-model-build-verify` (`target_fidelity="optimization_ready"`).
 
+For MCP `runProcess` compressor protection, keep embedded compressor
+`antiSurge` as screening control only. Use root-level `antiSurgeSystems` when
+the model must bind `CompressorAntiSurgeApplication` to explicit named hot/cold
+recycle valves, cooler, suction mixer, and recycle blocks. Multi-area systems
+must include `area`. Follow `neqsim-compressor-antisurge-recycle` for the JSON
+contract, screening-map provenance, commissioning evidence, and the mandatory
+`NOT_CERTIFIED_FOR_PROTECTION` boundary.
+
 ## Per-Area Three-Phase Flash Control (Speed-Up)
 
 Switch the multiphase (three-phase) flash off on areas that are known to be
@@ -156,6 +164,14 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 - Temperatures and pressures use explicit units in setters.
 - Fluids have a mixing rule before simulation.
 - Branching streams use cloned fluids or well-defined equipment outlet streams.
+- Phase-separating equipment exposes conventional gas/liquid product accessors;
+  domain aliases return those same objects rather than separate streams.
+- `getInletStreams()` and `getOutletStreams()` contain every externally connected,
+  live stream. Their entries remain object-identical across reruns so downstream
+  equipment never retains a stale product reference.
+- After solving a phase separator or column, verify the gas outlet contains a gas
+  phase, the liquid outlet contains an oil/liquid/aqueous phase, and total plus
+  per-component balances close. Getter existence alone is not product validation.
 - Every equipment item has a unique name inside the process.
 - Recycles and adjusters are added after their connected equipment.
 - **Pick the separator class by orientation, or set it explicitly.** Gas-capacity

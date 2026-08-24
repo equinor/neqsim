@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -40,14 +42,51 @@ public final class Dexpi20XmlWriter {
   private Dexpi20XmlWriter() {
   }
 
-  /** Writes and validates a native DEXPI 2.0 model. */
+  /** Writes and validates a native DEXPI 2.0 model using the compatibility path. */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
+    writeValidated(processSystem, file, null);
+  }
+
+  /**
+   * Writes and validates a native DEXPI 2.0 Plant model with controlled export metadata.
+   *
+   * @param processSystem source simulation topology
+   * @param file destination DEXPI XML file
+   * @param metadata caller-supplied export provenance and plant identity
+   * @throws IOException if serialization or validation fails
+   */
+  public static void write(ProcessSystem processSystem, File file, Dexpi20PlantExportMetadata metadata)
+      throws IOException {
+    if (metadata == null) {
+      throw new IllegalArgumentException("metadata must not be null");
+    }
+    writeValidated(processSystem, file, Dexpi20PlantExportOptions.builder(metadata).build());
+  }
+
+  /**
+   * Writes and validates a native DEXPI 2.0 Plant model using explicit export options.
+   *
+   * @param processSystem source simulation topology
+   * @param file destination DEXPI XML file
+   * @param options controlled metadata and opt-in boundary handling
+   * @throws IOException if serialization or validation fails
+   */
+  public static void write(ProcessSystem processSystem, File file, Dexpi20PlantExportOptions options)
+      throws IOException {
+    if (options == null) {
+      throw new IllegalArgumentException("options must not be null");
+    }
+    writeValidated(processSystem, file, options);
+  }
+
+  private static void writeValidated(ProcessSystem processSystem, File file, Dexpi20PlantExportOptions options)
+      throws IOException {
     if (file == null) {
       throw new IllegalArgumentException("file must not be null");
     }
     FileOutputStream stream = new FileOutputStream(file);
     try {
-      write(processSystem, stream);
+      writeDocument(processSystem, stream, options);
     } finally {
       stream.close();
     }
@@ -66,11 +105,81 @@ public final class Dexpi20XmlWriter {
     return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID);
   }
 
-  /** Writes a native DEXPI 2.0 model to a stream. */
+  /**
+   * Writes a metadata-bearing Plant exchange and returns its auditable conformance assessment.
+   *
+   * @param processSystem source simulation topology
+   * @param file destination DEXPI XML file
+   * @param metadata caller-supplied export provenance and plant identity
+   * @return schema and supported-profile assessment
+   * @throws IOException if serialization, validation, or assessment fails
+   */
+  public static Dexpi20ConformanceAssessment.Report writeAndAssess(ProcessSystem processSystem, File file,
+      Dexpi20PlantExportMetadata metadata) throws IOException {
+    write(processSystem, file, metadata);
+    return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID);
+  }
+
+  /**
+   * Writes an option-controlled Plant exchange and returns its auditable conformance assessment.
+   *
+   * @param processSystem source simulation topology
+   * @param file destination DEXPI XML file
+   * @param options controlled metadata and opt-in boundary handling
+   * @return schema and supported-profile assessment
+   * @throws IOException if serialization, validation, or assessment fails
+   */
+  public static Dexpi20ConformanceAssessment.Report writeAndAssess(ProcessSystem processSystem, File file,
+      Dexpi20PlantExportOptions options) throws IOException {
+    write(processSystem, file, options);
+    return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID);
+  }
+
+  /** Writes a native DEXPI 2.0 model to a stream using the compatibility path. */
   public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
+    writeDocument(processSystem, outputStream, null);
+  }
+
+  /**
+   * Writes a native DEXPI 2.0 Plant model with controlled export metadata to a stream.
+   *
+   * @param processSystem source simulation topology
+   * @param outputStream destination stream
+   * @param metadata caller-supplied export provenance and plant identity
+   * @throws IOException if serialization fails
+   */
+  public static void write(ProcessSystem processSystem, OutputStream outputStream, Dexpi20PlantExportMetadata metadata)
+      throws IOException {
+    if (metadata == null) {
+      throw new IllegalArgumentException("metadata must not be null");
+    }
+    writeDocument(processSystem, outputStream, Dexpi20PlantExportOptions.builder(metadata).build());
+  }
+
+  /**
+   * Writes a native DEXPI 2.0 Plant model using explicit export options to a stream.
+   *
+   * @param processSystem source simulation topology
+   * @param outputStream destination stream
+   * @param options controlled metadata and opt-in boundary handling
+   * @throws IOException if serialization fails
+   */
+  public static void write(ProcessSystem processSystem, OutputStream outputStream, Dexpi20PlantExportOptions options)
+      throws IOException {
+    if (options == null) {
+      throw new IllegalArgumentException("options must not be null");
+    }
+    writeDocument(processSystem, outputStream, options);
+  }
+
+  private static void writeDocument(ProcessSystem processSystem, OutputStream outputStream,
+      Dexpi20PlantExportOptions options) throws IOException {
     if (processSystem == null || outputStream == null) {
       throw new IllegalArgumentException("processSystem and outputStream must not be null");
     }
+    Dexpi20PlantExportMetadata metadata = options == null ? null : options.getMetadata();
+    boolean explicitBoundaryConnectors = options != null && options
+        .getBoundaryConnectionMode() == Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS;
     try {
       Document document = createDocument();
       Element model = document.createElement("Model");
@@ -82,9 +191,15 @@ public final class Dexpi20XmlWriter {
 
       Element engineeringModel = object(document, null, "Core/EngineeringModel");
       model.appendChild(engineeringModel);
+      if (metadata != null) {
+        appendEngineeringModelMetadata(document, engineeringModel, metadata);
+      }
       Element conceptualModel = components(document, engineeringModel, "ConceptualModel");
       Element plant = object(document, "PlantModel1", "Plant/PlantModel");
       conceptualModel.appendChild(plant);
+      if (metadata != null) {
+        appendPlantMetadata(document, plant, metadata);
+      }
 
       Element taggedItems = components(document, plant, "TaggedPlantItems");
       Element pipingSystems = components(document, plant, "PipingNetworkSystems");
@@ -95,6 +210,8 @@ public final class Dexpi20XmlWriter {
 
       Map<StreamInterface, String> outletNodes = new IdentityHashMap<StreamInterface, String>();
       Map<String, String> inletNodes = new LinkedHashMap<String, String>();
+      Map<String, String> nodeOwners = new LinkedHashMap<String, String>();
+      Map<String, String> boundaryOutletNodes = new LinkedHashMap<String, String>();
       int equipmentNumber = 1;
       int nodeNumber = 1;
       for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
@@ -107,19 +224,30 @@ public final class Dexpi20XmlWriter {
         Element nozzles = components(document, equipment, "Nozzles");
 
         String inletNode = "PipingNode" + nodeNumber++;
-        appendNozzle(document, nozzles, equipmentId + "Inlet", inletNode, "INLET");
+        String inletNozzleId = equipmentId + "Inlet";
+        appendNozzle(document, nozzles, inletNozzleId, inletNode, "INLET");
         inletNodes.put(unit.getName(), inletNode);
+        nodeOwners.put(inletNode, inletNozzleId);
 
         List<StreamInterface> outlets = unit.getOutletStreams();
         if (outlets == null || outlets.isEmpty()) {
           String outletNode = "PipingNode" + nodeNumber++;
-          appendNozzle(document, nozzles, equipmentId + "Outlet", outletNode, "OUTLET");
+          String outletNozzleId = equipmentId + "Outlet";
+          appendNozzle(document, nozzles, outletNozzleId, outletNode, "OUTLET");
+          nodeOwners.put(outletNode, outletNozzleId);
+          boundaryOutletNodes.put(outletNode, unit.getName() + " product");
         } else {
           for (int i = 0; i < outlets.size(); i++) {
             String outletNode = "PipingNode" + nodeNumber++;
-            appendNozzle(document, nozzles, equipmentId + "Outlet" + (i + 1), outletNode, "OUTLET_" + (i + 1));
+            String outletNozzleId = equipmentId + "Outlet" + (i + 1);
+            appendNozzle(document, nozzles, outletNozzleId, outletNode, "OUTLET_" + (i + 1));
+            nodeOwners.put(outletNode, outletNozzleId);
             if (outlets.get(i) != null) {
               outletNodes.put(outlets.get(i), outletNode);
+              boundaryOutletNodes.put(outletNode,
+                  boundaryLabel(outlets.get(i), unit.getName() + " product " + (i + 1)));
+            } else {
+              boundaryOutletNodes.put(outletNode, unit.getName() + " product " + (i + 1));
             }
           }
         }
@@ -127,17 +255,37 @@ public final class Dexpi20XmlWriter {
       }
 
       int segmentNumber = 1;
+      Set<String> connectedOutletNodes = new LinkedHashSet<String>();
       for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
         if (unit == null || unit instanceof Stream) {
           continue;
         }
         String targetNode = inletNodes.get(unit.getName());
-        for (StreamInterface inlet : unit.getInletStreams()) {
-          String sourceNode = outletNodes.get(inlet);
-          if (sourceNode == null || targetNode == null) {
-            continue;
+        List<StreamInterface> inlets = unit.getInletStreams();
+        if ((inlets == null || inlets.isEmpty()) && explicitBoundaryConnectors && targetNode != null) {
+          appendBoundarySegment(document, segments, segmentNumber++, true, targetNode, nodeOwners.get(targetNode),
+              unit.getName() + " feed");
+        } else if (inlets != null) {
+          for (StreamInterface inlet : inlets) {
+            String sourceNode = outletNodes.get(inlet);
+            if (sourceNode == null || targetNode == null) {
+              if (explicitBoundaryConnectors && targetNode != null) {
+                appendBoundarySegment(document, segments, segmentNumber++, true, targetNode, nodeOwners.get(targetNode),
+                    boundaryLabel(inlet, unit.getName() + " feed"));
+              }
+              continue;
+            }
+            appendSegment(document, segments, segmentNumber++, sourceNode, targetNode);
+            connectedOutletNodes.add(sourceNode);
           }
-          appendSegment(document, segments, segmentNumber++, sourceNode, targetNode);
+        }
+      }
+      if (explicitBoundaryConnectors) {
+        for (Map.Entry<String, String> boundary : boundaryOutletNodes.entrySet()) {
+          if (!connectedOutletNodes.contains(boundary.getKey())) {
+            appendBoundarySegment(document, segments, segmentNumber++, false, boundary.getKey(),
+                nodeOwners.get(boundary.getKey()), boundary.getValue());
+          }
         }
       }
 
@@ -198,12 +346,71 @@ public final class Dexpi20XmlWriter {
     parent.appendChild(data);
   }
 
+  private static void appendEngineeringModelMetadata(Document document, Element engineeringModel,
+      Dexpi20PlantExportMetadata metadata) {
+    data(document, engineeringModel, "OriginatingSystemName", metadata.getOriginatingSystemName());
+    data(document, engineeringModel, "OriginatingSystemVendorName", metadata.getOriginatingSystemVendorName());
+    data(document, engineeringModel, "OriginatingSystemVersion", metadata.getOriginatingSystemVersion());
+    dateTimeData(document, engineeringModel, "ExportDateTime", metadata.getExportDateTime());
+  }
+
+  private static void appendPlantMetadata(Document document, Element plant, Dexpi20PlantExportMetadata metadata) {
+    Element metadataObjects = components(document, plant, "MetaData");
+    Element plantMetadata = object(document, "PlantMetaData1", "Plant/Diagram.PlantMetaData");
+    for (Map.Entry<Dexpi20PlantExportMetadata.PlantProperty, String> entry : metadata.getPlantProperties().entrySet()) {
+      data(document, plantMetadata, entry.getKey().getDexpiProperty(), entry.getValue());
+    }
+    metadataObjects.appendChild(plantMetadata);
+  }
+
+  private static void dateTimeData(Document document, Element parent, String property, String value) {
+    Element data = document.createElement("Data");
+    data.setAttribute("property", property);
+    Element dateTime = document.createElement("DateTime");
+    dateTime.setTextContent(value);
+    data.appendChild(dateTime);
+    parent.appendChild(data);
+  }
+
   private static void appendNozzle(Document document, Element nozzles, String nozzleId, String nodeId, String subTag) {
     Element nozzle = object(document, nozzleId, "Plant/ProcessEquipment.Nozzle");
     Element nodes = components(document, nozzle, "Nodes");
     nodes.appendChild(object(document, nodeId, "Plant/Piping.PipingNode"));
     data(document, nozzle, "SubTagName", subTag);
     nozzles.appendChild(nozzle);
+  }
+
+  private static void appendBoundarySegment(Document document, Element segments, int number, boolean inbound,
+      String equipmentNode, String equipmentItem, String label) {
+    Element segment = object(document, "PipingNetworkSegment" + number, "Plant/Piping.PipingNetworkSegment");
+    Element items = components(document, segment, "Items");
+    String connectorId = "BoundaryConnector" + number;
+    String boundaryNode = "BoundaryPipingNode" + number;
+    String connectorType = inbound ? "Plant/Piping.FlowInPipeOffPageConnector"
+        : "Plant/Piping.FlowOutPipeOffPageConnector";
+    Element connector = object(document, connectorId, connectorType);
+    Element nodes = components(document, connector, "Nodes");
+    nodes.appendChild(object(document, boundaryNode, "Plant/Piping.PipingNode"));
+    data(document, connector, "PipeConnectorNumber", label);
+    items.appendChild(connector);
+
+    String sourceNode = inbound ? boundaryNode : equipmentNode;
+    String targetNode = inbound ? equipmentNode : boundaryNode;
+    String sourceItem = inbound ? connectorId : equipmentItem;
+    String targetItem = inbound ? equipmentItem : connectorId;
+    Element connections = components(document, segment, "Connections");
+    Element pipe = object(document, "Pipe" + number, "Plant/Piping.Pipe");
+    references(document, pipe, "SourceItem", sourceItem);
+    references(document, pipe, "SourceNode", sourceNode);
+    references(document, pipe, "TargetItem", targetItem);
+    references(document, pipe, "TargetNode", targetNode);
+    connections.appendChild(pipe);
+    references(document, segment, "SourceItem", sourceItem);
+    references(document, segment, "SourceNode", sourceNode);
+    references(document, segment, "TargetItem", targetItem);
+    references(document, segment, "TargetNode", targetNode);
+    data(document, segment, "SegmentNumber", Integer.toString(number));
+    segments.appendChild(segment);
   }
 
   private static void appendSegment(Document document, Element segments, int number, String sourceNode,
@@ -225,6 +432,15 @@ public final class Dexpi20XmlWriter {
     reference.setAttribute("property", property);
     reference.setAttribute("objects", "#" + identifier(id, "Object"));
     parent.appendChild(reference);
+  }
+
+  private static String boundaryLabel(StreamInterface stream, String fallback) {
+    try {
+      return stream == null || stream.getName() == null || stream.getName().trim().isEmpty() ? fallback
+          : stream.getName();
+    } catch (RuntimeException ex) {
+      return fallback;
+    }
   }
 
   private static String dexpiType(ProcessEquipmentInterface unit) {

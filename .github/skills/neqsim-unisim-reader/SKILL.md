@@ -235,8 +235,9 @@ for i in range(n):
     pc = comp.CriticalPressure.GetValue("kPa") * 0.01      # bara
     nbp = comp.NormalBoilingPt.GetValue("C") + 273.15      # K
     vc = comp.CriticalVolume.GetValue("m3/kgmole") # m3/kmol
-    # Acentric factor — not directly available via .AcentricFactor
-    # Use Edmister correlation: w = (3/7) * log10(Pc/1.01325) / (Tc/Tbp - 1) - 1
+    # Acentric factor: the UniSim COM attribute is `Acentricity` (NOT
+    # `AcentricFactor`). Only fall back to Edmister if it is absent.
+    omega = comp.AcentricityValue
 ```
 
 **Notes:**
@@ -247,13 +248,57 @@ for i in range(n):
    `NormalBoilingPoint` in `C` first and convert to K; request `CriticalPressure`
    in `kPa` first and convert to bara. Sanity-check known components after export:
    methane Tc ≈ 190.7 K and Pc ≈ 46.4 bara; water Tc ≈ 647.3 K and Pc ≈ 221 bara.
-- Acentric factor is NOT directly accessible via COM for all property packages.
-   `comp.AcentricFactor` may not exist. Try property-package vectors
-   (`AcentricFactor`, `AcentricFactors`, `Omega`, `ACF`) first, then use the
-   Edmister correlation as fallback when Tc, Pc, and normal boiling point exist.
+- **Acentric factor: read `comp.Acentricity` / `comp.AcentricityValue`.** This is
+   the attribute UniSim actually exposes; `AcentricFactor` / `Omega` do NOT exist on
+   the component COM surface. Reading the Edmister estimate instead silently changes
+   the EOS alpha function and shifts every bubble point / TVP of the converted fluid
+   (measured: 12–15 % low on a 23-component SRK-Peneloux oil, and `0.0` for the
+   heaviest pseudos where the Edmister value exceeded the `omega > 2` sanity guard).
+   With `Acentricity` read correctly, a NeqSim E300 round-trip reproduces UniSim
+   bubble points to < 0.5 %. Keep the property-package vectors
+   (`Acentricity`, `AcentricFactor`, `Omega`, `ACF`) and Edmister only as fallbacks.
 - Parachor can sometimes be read via `pp.Parachor.Values` (same pattern as Kij).
 - Volume shift: `pp.VolumShift.Values` (note the UniSim spelling: "VolumShift",
   not "VolumeShift").
+
+### 1.2.1 Reading TVP / RVP (Cold Properties) off a stream
+
+Vapour-pressure results live on the **material stream**, in **kPa** (temperatures
+in **°C**). Missing values return the sentinel `-32767`.
+
+```python
+s = case.Flowsheet.MaterialStreams.Item(0)
+s.TrueVPValue                 # TVP, evaluated at 37.8 C
+s.RVP_37_8_DegCValue          # Reid VP at 37.8 C
+s.RVPASTM_D323_73_79Value     # ASTM / API RVP correlations
+s.RVPAPI_5B_1_1Value, s.RVPAPI_5B_1_2Value
+cp = s.ColdProperty           # Cold Properties utility
+cp.TrueVapourPressureValue, cp.ReidVapourPressureValue
+cp.FlashPointValue, cp.PourPointValue, cp.D86CurveValue
+```
+
+For TVP at **any other temperature** (e.g. a 30 °C export spec), flash a duplicate —
+this never touches the case:
+
+```python
+f = s.DuplicateFluid()
+f.TVFlash(30.0, 0.0)          # (T [C], vapour fraction) -> bubble point
+tvp_bara = f.PressureValue * 0.01
+```
+
+Water-free basis: assign a renormalised `f.MolarFractionsValue` with H2O zeroed
+*before* the flash (the setter works); `f.MassFractionsValue` gives water wt%
+directly. Free water only adds its own saturation pressure (~0.04 bara at 30 °C).
+
+> **NeqSim comparison gotcha:** `bubblePointPressureFlash` is not three-phase aware.
+> With free water in the feed it returns a grossly inflated TVP (measured 5–6.5 bara
+> instead of 2.2) because water is treated as dissolved in the oil, and
+> `getPhase("oil")` then returns the aqueous phase. Strip water first, or use
+> `Standard_ASTM_D6377`'s `VPCR4_no_water` / `RVP_ASTM_D323_73_79` variants.
+>
+> A TVP/RVP ratio far above ~1.3 is usually **physical**, not an error: a bubble
+> point is hypersensitive to trace dissolved light ends (N2/C1/CO2) while the
+> V/L = 4, 80 vol %-vaporised RVP test is not. It signals incompletely stabilised oil.
 
 ### 1.3 Generating E300 Fluid Files from UniSim Data
 
@@ -891,6 +936,10 @@ comparator.print_report(comparisons)
    +70% water flow error at secondary stages is structurally expected if recycles are missing.
 5. **Hypothetical components**: Pseudo-component property estimation differs between simulators.
    Critical properties and acentric factor estimation methods vary.
+   **First check the acentric factor was transferred, not estimated** — compare the exported
+   `ACF` block against `comp.AcentricityValue`. Estimated (or `0.0`) values biased a
+   23-component SRK-Peneloux oil's bubble point / TVP by 12–15 %; reading `Acentricity`
+   brought it to < 0.5 % (Section 1.2).
 6. **Compressor efficiency**: UniSim COM sometimes returns `None` for `AdiabaticEfficiency`.
    Always check extracted efficiency values; default to 75% isentropic with a warning.
 7. **Mixing rules**: UniSim may use advanced mixing rules not available in NeqSim.

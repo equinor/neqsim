@@ -281,6 +281,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
 | Unchanged one-phase closure | `abs(beta - 1) < 1e-12`; `abs(delta Z) <= 1e-11`; `max abs(delta x_i) <= 1e-11` | When multiphase checking finds no new stable phase and returns the same phase type, compressibility factor, and composition as the accepted one-phase reference, normalize a stale beta and reinitialize. Different roots, chemical-equilibrium states, and internal multiphase trial states retain their existing finalization paths. |
+| Ionic GAS+AQUEOUS closure | exactly two phases, ions present, and `isChemicalSystem() == false` | Set ionic gas-to-aqueous K-values to zero, retain molecular fugacity-coefficient K-values, and solve the constrained Rachford-Rice equation by safeguarded bisection. Successive substitution continues until beta and compositions change by less than `1e-12`. Accept only normalized phases with `1e-10` component balance, `1e-8` molecular log-fugacity equality, gas-phase ion exclusion, and no Gibbs increase; otherwise restore the original endpoint and emit a diagnostic. One-phase, OIL+AQUEOUS, reactive, and genuine three-phase paths are unchanged. |
 | Trace duplicate phase cleanup | `min(beta_i, beta_j) < 10 beta_min`, same `PhaseType`, and `max abs(x_i - x_j) < 1e-6` | Merge and remove an already-disappeared numerical duplicate for any EOS while conserving phase fraction. Material-fraction duplicate cleanup remains limited to CPA models to protect near-critical cubic-EOS splits. |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
 | `accelerateInterval` | 5 | Apply DEM every 5th iteration in the ordinary TPflash loop |
@@ -1649,6 +1650,14 @@ Ionic species present special challenges for stability analysis because they can
    }
    ```
 
+4. **Refining a non-reactive two-phase GAS+AQUEOUS endpoint** after final phase selection. Ionic K-values are fixed to
+   zero because ions are excluded from the gas phase. Molecular K-values remain the ratio of aqueous and gas fugacity
+   coefficients. A safeguarded Rachford-Rice solve and successive-substitution update restore both component balance and
+   molecular fugacity equality. The candidate is rejected and the original endpoint restored unless beta and phase
+   compositions are bounded and normalized, component balance is below `1e-10`, molecular log-fugacity residuals are
+   below `1e-8`, and Gibbs energy does not increase. Reactive, one-phase, OIL+AQUEOUS, and genuine three-phase endpoints
+   retain their existing paths.
+
 ### 4.3 Aqueous Phase Management
 
 For electrolyte systems, NeqSim ensures proper aqueous phase handling:
@@ -1889,6 +1898,112 @@ Recommended regression coverage should include both numerical convergence and ph
 | Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
 | Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
 
+#### 6.4.1 Hydrogen-Rich Cubic-EOS Qualification
+
+The hydrogen-rich binary regression uses five experimental vapor-liquid tie lines reported by Sagara, Arai, and
+Saito [10]. Pressure is absolute and is converted from atmospheres to bar with `1 atm = 1.01325 bar`. No binary
+interaction parameters were fitted: both SRK and PR use the classic mixing rule and the database parameters available
+to a normal NeqSim calculation.
+
+| System | Temperature (K) | Pressure (atm) | Experimental x(H2) | Experimental y(H2) | SRK x/y(H2) | PR x/y(H2) |
+|--------|----------------:|---------------:|-------------------:|-------------------:|-------------:|------------:|
+| H2 + methane | 123.15 | 20.0 | 0.01920 | 0.818 | 0.019225 / 0.849073 | 0.022707 / 0.842951 |
+| H2 + methane | 143.05 | 40.2 | 0.04770 | 0.721 | 0.049051 / 0.725721 | 0.055217 / 0.717073 |
+| H2 + methane | 173.65 | 59.9 | 0.07090 | 0.362 | 0.090427 / 0.349538 | 0.096174 / 0.339973 |
+| H2 + ethane | 148.15 | 20.0 | 0.00618 | 0.986 | 0.006841 / 0.994840 | 0.008724 / 0.994161 |
+| H2 + ethane | 173.15 | 40.0 | 0.01680 | 0.977 | 0.019465 / 0.981041 | 0.023502 / 0.979088 |
+
+The experimental authors report temperature and pressure accuracies of `0.1 K` and `0.1 atm`, respectively, and
+composition uncertainty normally within `0.01` mole fraction. The regression's `0.04` absolute composition envelope
+is deliberately a separate model-qualification tolerance. The observed maximum absolute deviation is `0.031073` for
+SRK and `0.025274` for PR; these values do not imply parameter fitting or universal hydrogen-mixture accuracy.
+
+For each experimental tie line, the regression verifies the following:
+
+- the overall composition halfway between the liquid and vapor endpoints returns GAS+OIL equilibrium;
+- a liquid-side composition at half the experimental liquid endpoint and a vapor-side composition `0.05` above the
+  experimental vapor endpoint (capped at `0.999`) return the adjacent one-phase states;
+- ordinary and explicit-multiphase calculations agree within `1e-10` for beta and phase composition, `1e-8` for
+  compressibility factor, and a relative `1e-8` extensive-Gibbs tolerance;
+- phase fractions and compositions are finite, bounded, and normalized within `1e-12`, component material balance
+  closes below `1e-10`, and two-phase log-fugacity residuals remain below `1e-8`; and
+- poor phase-fraction initialization, an exact repeated flash, and a changed temperature-pressure-composition state
+  recover the same equilibrium as a fresh calculation.
+
+This is an evidence-level-1 literature qualification of phase topology and numerical consistency. It does not claim
+that classic cubic EOS models reproduce every hydrogen-rich VLE dataset within experimental uncertainty.
+
+The same reference matrix also anchors a low-pressure phase-boundary safeguard. At 143.05 K and 40.2 atm, an overall
+hydrogen fraction `1e-4` inside the calculated vapor boundary previously collapsed to one phase through ordinary
+`TPflash`, while the explicit-multiphase path retained the equilibrium liquid with beta `1.4778e-4` for SRK and
+`1.5109e-4` for PR. The ordinary stability path had rejected every amplified-K supplementary trial below 50 bar before
+applying its Wilson-sum or tangent-plane screens.
+
+For feeds containing more than `0.01` overall hydrogen, the pressure prefilter now permits that existing supplementary
+trial below 50 bar. All later Wilson-sum, K-value-spread, convergence, non-trivial-composition, and non-physical-state
+rollback gates remain unchanged. The regression recomputes each EOS boundary for the four literature points below
+50 bar, then evaluates overall compositions `1e-4` to either side of both calculated endpoints. Inside states retain
+GAS+OIL with a small phase of order `1e-4`; outside states remain single-phase. Ordinary and explicit-multiphase paths
+must satisfy the same normalization, material-balance, fugacity, property, repeat, poor-initialization, phase
+disappearance, and reappearance gates listed above. Non-hydrogen feeds, hydrogen at or below one mole percent, and the
+established pressure-at-or-above-50-bar path are unchanged.
+
+The remaining `59.9 atm` hydrogen+methane point also qualifies the established high-pressure path at both calculated
+phase boundaries. Before the high-pressure boundary refinement, the ordinary SRK result `1e-4` inside the calculated
+liquid boundary retained the heavy-phase vapor-like cubic root (`Z = 0.605203`) instead of the lower liquid root
+(`Z = 0.256018`). The returned phase fractions and compositions were normalized and material-balanced, but the maximum
+log-fugacity residual was `1.25942` and total Gibbs energy was `3906.28697 J`, compared with `3734.24830 J` for the
+lower-root equilibrium.
+
+A bounded reciprocal ordinary/multiphase refinement now covers only neutral two-phase feeds at or above `50 bar`
+containing
+more than `0.01` overall hydrogen, at least one hydrocarbon, no other active non-inert component, and an incipient phase
+below `0.01`. It first retains the existing beta refinement and complete rollback behavior. An invalid endpoint may be
+replaced only by the reciprocal path when phase topology is preserved, all strict normalization, material-balance, and
+fugacity checks pass, and Gibbs energy is not increased. The corrected SRK residual is `1.63e-12`; PR remains within
+`1.00e-12`. The five-point SRK/PR matrix now checks compositions `1e-4` inside and outside both model boundaries, and
+the `40.2 atm` and `59.9 atm` points both cover poor initialization, deterministic repeat, phase disappearance, and
+reappearance.
+
+This is a correctness fallback, not a performance optimization. A constrained fresh-system probe (20 warmups and five
+blocks of 30 flashes) measured the corrected SRK boundary at about `8.5 ms/flash`, versus `4.3-5.4 ms/flash` for the
+invalid higher-root baseline. The PR boundary and adjacent retained one-phase controls were within run-to-run noise.
+Common flashes return before the hydrogen/high-pressure/incipient-phase screen.
+
+### 6.5 Hybrid EOS-GE ionic-capacity safeguard
+
+In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
+Consequently the aqueous phase fraction must remain strictly greater than the sum of the overall
+ionic mole fractions: otherwise the required aqueous ionic mole fractions sum to one or more and no
+normalized neutral solvent composition exists.
+
+The unconstrained beta Newton correction can cross that physical boundary during an intermediate
+iteration even when the final gas-aqueous equilibrium is feasible. The hybrid solver now projects
+only such infeasible iterates back to
+`sum(zIon) + 100 * phaseFractionMinimumLimit`. The required fraction is removed proportionally
+from the adjustable part of the other active roles, their minimum fractions are preserved, and the
+phase-split denominator is rebuilt before compositions are evaluated. Feasible iterates, public
+tolerances, dataset parameters, and final acceptance checks are unchanged. If the ionic inventory
+cannot fit while retaining the active roles at their numerical minima, the solver still fails with
+explicit capacity diagnostics.
+
+The regression uses the public-domain PHREEQC CO2-Na2SO4 subset documented in
+`docs/thermo/pitzer_parameter_provenance.md`. It forces a formerly invalid intermediate beta below
+the ionic inventory, then checks projection, ion confinement, normalization, and exact ionic
+material balance. A complete 373.15 K gas-aqueous flash at 150 bar is repeated and changed to
+140 bar; both states must retain gas and aqueous roles, bounded normalized compositions, component
+material balance below `1e-7`, and molecular log-fugacity residual below `1e-5`.
+
+Pitzer neutral activities and the CO2 Henry correlation both use the molality standard state. The
+aqueous fugacity coefficient consequently converts `m_i gamma_i H_i` to the common
+`x_i phi_i P` representation through `m_i/x_i`; omitting that factor mixes standard states and can
+drive the flash toward an unphysical, CO2-rich aqueous iterate.
+
+This is a feasibility safeguard, not a performance optimization. The common feasible hybrid path
+adds one allocation-free component scan to each composition update and performs no extra property
+initialization. Only a projected iterate rebuilds the already allocated phase-split denominator.
+Neutral EOS flashes do not dispatch to this solver.
+
 ---
 
 ## 7. References
@@ -1925,6 +2040,12 @@ Recommended regression coverage should include both numerical convergence and ph
 ### Electrolyte Systems
 
 9. **Thomsen, K.** (2005). "Modeling electrolyte solutions with the extended UNIQUAC model." *Pure and Applied Chemistry*, 77(3), 531-542.
+
+### Hydrogen-Rich Vapor-Liquid Equilibrium
+
+10. **Sagara, H., Arai, Y., & Saito, S.** (1972). "Vapor-Liquid Equilibria of Binary and Ternary Systems Containing
+    Hydrogen and Light Hydrocarbons." *Journal of Chemical Engineering of Japan*, 5(4), 339-348.
+    [doi:10.1252/jcej.5.339](https://doi.org/10.1252/jcej.5.339)
 
 ---
 
@@ -1980,3 +2101,43 @@ system.setMultiPhaseCheck(true);
 ThermodynamicOperations ops = new ThermodynamicOperations(system);
 ops.TPflash();  // Automatically solves chemical equilibrium in aqueous phase
 ```
+
+### Large-volatility hydrocarbon endpoint refinement
+
+For neutral high-pressure hydrocarbon mixtures with a large volatility contrast, an ordinary
+two-phase flash can retain a higher-Gibbs stationary point even though the reciprocal explicit
+multiphase path finds a closed equilibrium. A private finalization screen now admits a reciprocal
+candidate only when all active components are hydrocarbons or inerts, pressure is at least 50 bar,
+at least two components are active, the component critical-temperature span is at least 300 K, and
+the least volatile component contributes at least 0.01 of the feed. Public API and tolerances are
+unchanged.
+
+Four deterministic methane/n-heptane regressions were reproduced on SRK and PR:
+
+| EOS | Temperature (K) | Pressure (bar) | `z(n-heptane)` | Ordinary maximum log-fugacity residual before refinement |
+| --- | ---: | ---: | ---: | ---: |
+| SRK | 180 | 50 | 0.05 | 4.58128e-2 |
+| SRK | 180 | 100 | 0.10 | 1.10606e-2 |
+| SRK | 220 | 200 | 0.10 | 5.80033e-5 |
+| PR | 260 | 200 | 0.10 | 1.02025e-2 |
+
+The reciprocal candidate is reset to the feed before reflashing. If it retains two liquid-like
+cubic roots and fails material closure, the lighter phase is initialized on the gas root and the
+heavier phase on the oil root before bounded multiphase beta refinement. Acceptance still requires
+neutral fluid phases, normalized and bounded compositions, maximum component material-balance
+residual below `1e-10`, maximum log-fugacity residual below `1e-8`, and a lower Gibbs energy within
+the existing numerical allowance. Recursion is guarded and a rejected or failed candidate cannot
+modify the original state.
+
+An exact-master qualification matrix covered 1,200 SRK/PR states: methane/n-heptane and the
+nearby methane/ethane control, 180--380 K, 5--200 bar, and heavy-component feed fractions from
+`1e-8` to `0.8`. All states met ordinary/multiphase agreement of `1e-10` for beta and compositions
+and `1e-8` for compressibility factor. Focused regressions also cover poor initialization, exact
+settled repeats, cold-to-warm and changed-state continuity, nearby compositions, material balance,
+fugacity equality, and screen-excluded controls.
+
+This is a correctness fallback rather than a speed optimization. In a constrained fresh-system
+probe (20 warmups and five blocks of 60 flashes), the corrected SRK 180 K/50 bar case changed from
+a median 14.25 ms/flash for the invalid endpoint to 18.20 ms/flash for the accepted equilibrium.
+The screen-excluded SRK 300 K/100 bar trace-heavy control was 10.98 versus 10.88 ms/flash, within
+run-to-run noise. No speedup is claimed, and common flashes return before the new refinement.

@@ -1,10 +1,10 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 69 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 71 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
-Tier 1 — Trusted Core (23 tools):
+Tier 1 — Trusted Core (24 tools):
   - TP flash (single phase, two-phase, multi-component)
   - Dew point / bubble point calculations
   - Different EOS models (SRK, PR, CPA)
@@ -16,6 +16,7 @@ Tier 1 — Trusted Core (23 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
   - Reusable process model handles (manageModel)
+    - Version-matched Java API inspection (inspectApi)
 
 Tier 2 — Engineering Advanced (32 tools):
   - PVT laboratory experiments
@@ -34,7 +35,7 @@ Tier 2 — Engineering Advanced (32 tools):
   - Parametric studies
     - Relief, LOPA, SIL, risk matrix, flare, HAZOP, barrier register, safety performance
 
-Tier 3 — Experimental (14 tools):
+Tier 3 — Experimental (15 tools):
   - Session management
   - Task solver, workflow composition
   - Report generation, visualization
@@ -42,12 +43,15 @@ Tier 3 — Experimental (14 tools):
   - Multi-server composition
   - Security, state persistence
   - Validation profiles, data catalog
+    - Generic runtime capability discovery and bounded static execution
 """
 import subprocess
 import json
 import time
 import sys
 import math
+import re
+from pathlib import Path
 
 JAR = "target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
 
@@ -85,6 +89,7 @@ JSON_TOOL_ARGS = {
     "manageState": "persistJson",
     "manageValidationProfile": "profileJson",
     "queryDataCatalog": "catalogJson",
+    "runCapability": "capabilityJson",
     "manageIndustrialProfile": "profileJson",
     "getBenchmarkTrust": "trustJson",
 }
@@ -160,6 +165,33 @@ def call_tool(name, arguments):
         except json.JSONDecodeError:
             return {"status": "error", "message": text}
     return {}
+
+
+def read_json_resource(uri):
+    """Read and decode a JSON MCP resource through the real protocol."""
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": next_id(),
+            "method": "resources/read",
+            "params": {"uri": uri},
+        }
+    )
+    response = recv()
+    contents = response.get("result", {}).get("contents", [])
+    if not contents:
+        return {"_protocolError": response}
+
+    resource = contents[0]
+    if resource.get("uri") != uri:
+        return {
+            "_protocolError": f"requested {uri}, received {resource.get('uri')}"
+        }
+
+    try:
+        return json.loads(resource.get("text", ""))
+    except json.JSONDecodeError as error:
+        return {"_protocolError": f"invalid JSON at {uri}: {error}"}
 
 
 def normalize_tool_arguments(name, arguments):
@@ -251,16 +283,16 @@ def get_composition(result, phase, component):
 # ===========================================================================
 
 def test_protocol():
-    """Test MCP protocol basics: tools/list, resources/list."""
+    """Test the exact MCP publication surface through list operations."""
     print("\n=== Protocol Tests ===")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "tools/list", "params": {}})
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("69 tools registered", len(tools) == 69, f"got {len(tools)}: {tool_names}")
+    check("71 tools registered", len(tools) == 71, f"got {len(tools)}: {tool_names}")
 
-    # Tier 1 — Trusted Core (23 tools)
+    # Tier 1 — Trusted Core (24 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
              "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
              "getCapabilities", "runBatch", "listSimulationUnits",
@@ -268,7 +300,7 @@ def test_protocol():
              "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
              "getAutomationLearningReport", "manageIndustrialProfile",
              "getBenchmarkTrust", "checkToolAccess", "getAdjustableParameters",
-             "manageModel"]
+             "manageModel", "inspectApi"]
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
@@ -287,24 +319,67 @@ def test_protocol():
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 
-    # Tier 3 — Experimental (14 tools)
+    # Tier 3 — Experimental (15 tools)
     tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
              "runPlugin", "getProgress", "streamSimulation",
              "generateVisualization", "composeMultiServerWorkflow",
              "manageSecurity", "manageState", "manageValidationProfile",
-             "queryDataCatalog", "bridgeTaskWorkflow"]
+             "queryDataCatalog", "bridgeTaskWorkflow", "runCapability"]
     for name in tier3:
         check(f"tier3 tool '{name}'", name in tool_names)
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
     r = recv()
     resources = r.get("result", {}).get("resources", [])
-    check("7 resources", len(resources) == 7, f"got {len(resources)}")
+    resource_uris = sorted(resource["uri"] for resource in resources)
+    expected_resource_uris = sorted([
+        "neqsim://components",
+        "neqsim://data-tables",
+        "neqsim://example-catalog",
+        "neqsim://models",
+        "neqsim://schema-catalog",
+        "neqsim://setup-templates",
+        "neqsim://standards",
+    ])
+    check("exact static resource inventory",
+          resource_uris == expected_resource_uris,
+          f"got {resource_uris}")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("6 templates", len(templates) == 6, f"got {len(templates)}")
+    template_uris = sorted(template["uriTemplate"] for template in templates)
+    expected_template_uris = sorted([
+        "neqsim://api/{className}",
+        "neqsim://components/{name}",
+        "neqsim://examples/{category}/{name}",
+        "neqsim://materials/{type}",
+        "neqsim://schemas/{tool}/{type}",
+        "neqsim://setup-templates/{id}",
+        "neqsim://standards/{code}",
+    ])
+    check("exact resource-template inventory",
+          template_uris == expected_template_uris,
+          f"got {template_uris}")
+
+    send({"jsonrpc": "2.0", "id": next_id(), "method": "prompts/list", "params": {}})
+    r = recv()
+    prompts = r.get("result", {}).get("prompts", [])
+    prompt_names = sorted(prompt["name"] for prompt in prompts)
+    expected_prompt_names = sorted([
+        "biorefinery_analysis",
+        "co2_ccs_chain",
+        "design_gas_processing",
+        "dynamic_simulation",
+        "field_development_screening",
+        "flow_assurance_screening",
+        "pipeline_sizing",
+        "pvt_study",
+        "teg_dehydration_design",
+    ])
+    check("exact guided-prompt inventory",
+          prompt_names == expected_prompt_names,
+          f"got {prompt_names}")
 
 
 def test_component_search():
@@ -337,8 +412,70 @@ def test_component_search():
 
 
 def test_examples_and_schemas():
-    """Test example catalog and schema retrieval."""
+    """Test complete example/schema catalogs and representative tool retrieval."""
     print("\n=== Examples & Schemas Tests ===")
+
+    schema_catalog = read_json_resource("neqsim://schema-catalog")
+    check("schema catalog is JSON", "_protocolError" not in schema_catalog,
+          schema_catalog.get("_protocolError", ""))
+    check("schema catalog has 71 tools", len(schema_catalog) == 71,
+          f"got {len(schema_catalog)}")
+
+    schema_uri_errors = []
+    schema_resource_errors = []
+    for tool_name, schema_refs in sorted(schema_catalog.items()):
+        if tool_name == "_protocolError":
+            continue
+        for schema_type in ("input", "output"):
+            ref_name = f"{schema_type}SchemaUri"
+            expected_uri = f"neqsim://schemas/{tool_name}/{schema_type}"
+            schema_uri = schema_refs.get(ref_name)
+            if schema_uri != expected_uri:
+                schema_uri_errors.append(
+                    f"{tool_name}/{schema_type}: {schema_uri!r} != {expected_uri!r}"
+                )
+                continue
+            schema = read_json_resource(schema_uri)
+            if ("_protocolError" in schema or schema.get("type") != "object"
+                    or not isinstance(schema.get("properties"), dict)):
+                schema_resource_errors.append(f"{tool_name}/{schema_type}")
+
+    check("all 142 catalog schema URIs are canonical", not schema_uri_errors,
+          "; ".join(schema_uri_errors))
+    check("all 142 catalog schemas resolve as JSON objects",
+          not schema_resource_errors,
+          f"invalid: {schema_resource_errors}")
+
+    example_catalog = read_json_resource("neqsim://example-catalog")
+    check("example catalog is JSON", "_protocolError" not in example_catalog,
+          example_catalog.get("_protocolError", ""))
+    check("example catalog has 24 categories", len(example_catalog) == 24,
+          f"got {len(example_catalog)}")
+    example_count = sum(
+        len(examples) for examples in example_catalog.values()
+        if isinstance(examples, dict)
+    )
+    check("example catalog has 114 entries", example_count == 114,
+          f"got {example_count}")
+
+    tool_examples = example_catalog.get("tool", {})
+    check("schema tools exactly match canonical tool examples",
+          set(tool_examples) == set(schema_catalog),
+          f"missing={sorted(set(schema_catalog) - set(tool_examples))}, "
+          f"extra={sorted(set(tool_examples) - set(schema_catalog))}")
+
+    example_resource_errors = []
+    for category, examples in sorted(example_catalog.items()):
+        if not isinstance(examples, dict):
+            example_resource_errors.append(f"{category}: not an object")
+            continue
+        for name in sorted(examples):
+            example = read_json_resource(f"neqsim://examples/{category}/{name}")
+            if "_protocolError" in example or not isinstance(example, dict):
+                example_resource_errors.append(f"{category}/{name}")
+    check("all 114 catalog examples resolve as JSON objects",
+          not example_resource_errors,
+          f"invalid: {example_resource_errors}")
 
     r = call_tool("getExample", {"category": "flash", "name": "tp-simple-gas"})
     check("flash example has model", "model" in r)
@@ -1317,6 +1454,142 @@ def test_capabilities():
     check("capabilities has engine", r.get("engine") == "NeqSim")
     check("capabilities has thermo models", "thermodynamicModels" in r)
     check("capabilities has equipment", "processEquipment" in r)
+    coverage = r.get("toolCatalogCoverage", {})
+    check("capability descriptors cover every published tool",
+          coverage.get("complete") is True,
+          str(coverage))
+    check("capability coverage reports 71 published tools",
+          coverage.get("publishedToolCount") == 71,
+          str(coverage))
+    check("capability coverage reports 71 described tools",
+          coverage.get("describedToolCount") == 71,
+          str(coverage))
+    check("capability coverage has no missing or undeclared descriptors",
+          not coverage.get("missingDescriptors")
+          and not coverage.get("undeclaredDescriptors"),
+          str(coverage))
+    implementation = r.get("implementationInventory", {})
+    bindings = implementation.get("toolImplementationBindings", {})
+    check("implementation inventory is complete",
+          implementation.get("complete") is True,
+          str(implementation))
+    check("implementation inventory binds 71 tools",
+          implementation.get("toolBindingCount") == 71 and len(bindings) == 71,
+          str(implementation))
+    check("implementation inventory resolves 60 classes",
+          implementation.get("implementationClassCount") == 60,
+          str(implementation))
+    check("implementation inventory exposes 205 factory equipment types",
+          implementation.get("equipmentTypeCount") == 205,
+          str(implementation))
+    report_paths = implementation.get("reportPaths", [])
+    check("implementation inventory exposes two report paths",
+          implementation.get("reportPathCount") == 2
+          and [path.get("tool") for path in report_paths]
+          == ["generateReport", "bridgeTaskWorkflow"],
+          str(report_paths))
+    check("canonical process and report implementations are explicit",
+          bindings.get("runProcess") == "neqsim.mcp.runners.ProcessRunner"
+          and bindings.get("generateReport") == "neqsim.mcp.runners.ReportRunner"
+          and bindings.get("bridgeTaskWorkflow")
+          == "neqsim.mcp.runners.TaskWorkflowBridge",
+          str(bindings))
+
+    evidence = r.get("phase0EvidenceInventory", {})
+    tests = evidence.get("tests", {})
+    guides = evidence.get("guides", {})
+    limitations = evidence.get("knownLimitations", {})
+    check("evidence inventory freezes 67 Java test classes",
+          tests.get("javaTestClassCount") == 67,
+          str(tests))
+    check("evidence inventory freezes 94 protocol scenarios",
+          tests.get("protocolScenarioCount") == 94,
+          str(tests))
+    check("evidence inventory lists seven MCP guides",
+          guides.get("guideCount") == 7
+          and len(guides.get("entries", [])) == 7,
+          str(guides))
+    baseline_contract = evidence.get("acceptanceBaselineContract", {})
+    check("acceptance baseline contract is bounded and non-qualifying",
+          baseline_contract.get("fixtureCount") == 4
+          and baseline_contract.get("repeatRunCount") == 2
+          and baseline_contract.get("executionMode")
+          == "ON_DEMAND_TEST_HARNESS"
+          and baseline_contract.get("performanceQualification") is False
+          and baseline_contract.get("scientificValidationComplete") is False,
+          str(baseline_contract))
+
+    repo_root = Path(__file__).resolve().parent.parent
+    java_test_root = repo_root / tests.get("javaTestRoot", "")
+    java_test_files = sorted(java_test_root.rglob("*Test.java"))
+    protocol_source = Path(__file__).read_text(encoding="utf-8")
+    protocol_scenarios = re.findall(r"^def test_", protocol_source, re.MULTILINE)
+    guide_paths = [repo_root / entry.get("path", "")
+                   for entry in guides.get("entries", [])]
+    check("Java test source count matches the evidence inventory",
+          len(java_test_files) == tests.get("javaTestClassCount"),
+          f"found {len(java_test_files)}")
+    check("protocol scenario count matches the evidence inventory",
+          len(protocol_scenarios) == tests.get("protocolScenarioCount"),
+          f"found {len(protocol_scenarios)}")
+    check("every inventoried MCP guide resolves on the exact source tree",
+          all(path.is_file() for path in guide_paths),
+          str(guide_paths))
+
+    trust_report = call_tool("getBenchmarkTrust", {"action": "getAll"})
+    explicit_trust = trust_report.get("tools", {})
+    limitation_count = sum(len(tool.get("knownLimitations", []))
+                           for tool in explicit_trust.values())
+    validation_case_count = sum(len(tool.get("validationCases", []))
+                                for tool in explicit_trust.values())
+    verified_case_count = sum(
+        1 for tool in explicit_trust.values()
+        for case in tool.get("validationCases", [])
+        if "verifiedBy" in case)
+    check("limitation inventory reconciles the runtime trust report",
+          set(explicit_trust) == set(limitations.get("explicitTrustTools", []))
+          and limitation_count == limitations.get("knownLimitationCount")
+          and validation_case_count == limitations.get("validationCaseCount")
+          and verified_case_count == limitations.get("verifiedValidationCaseCount"),
+          str(limitations))
+    check("uncovered tool-specific trust remains an explicit Phase 0 gap",
+          limitations.get("publishedToolCount") == 71
+          and limitations.get("explicitTrustToolCount") == 20
+          and limitations.get("genericTrustToolCount") == 51
+          and limitations.get("unsupportedConditionCount") == 0
+          and limitations.get("complete") is False
+          and evidence.get("complete") is False,
+          str(limitations))
+
+
+def test_run_capability_search_and_invoke():
+    """Discover and execute a runtime capability through the generic MCP route."""
+    print("\n=== Generic Runtime Capability ===")
+
+    search = call_tool("runCapability", {
+        "capabilityJson": json.dumps({
+            "action": "search",
+            "query": "sulfur vapour pressure",
+            "limit": 25,
+        })
+    })
+    check("capability search status=success", search.get("status") == "success", search.get("message", ""))
+    matches = json.dumps(search.get("matches", []))
+    check("capability search finds static sulfur method", "calculateVapourPressureBar" in matches, matches)
+    check("capability search labels static execution", "static-json" in matches, matches)
+
+    invoke = call_tool("runCapability", {
+        "capabilityJson": json.dumps({
+            "action": "invoke",
+            "className": "neqsim.thermo.util.sulfur.SulfurThermodynamics",
+            "methodName": "calculateVapourPressureBar",
+            "parameterTypes": ["double"],
+            "arguments": [717.76],
+        })
+    })
+    check("capability invoke status=success", invoke.get("status") == "success", invoke.get("message", ""))
+    check("capability invoke result", abs(invoke.get("result", 0.0) - 1.01325) < 1.0e-10,
+          f"got {invoke.get('result')}")
 
 
 # ===========================================================================
@@ -2053,6 +2326,7 @@ if __name__ == "__main__":
 
         # Capabilities
         test_capabilities()
+        test_run_capability_search_and_invoke()
 
         # ── Tier 2: Engineering Advanced tools ──
         test_pvt_saturation_pressure()

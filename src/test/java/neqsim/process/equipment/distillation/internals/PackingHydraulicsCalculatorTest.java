@@ -226,4 +226,42 @@ public class PackingHydraulicsCalculatorTest {
     assertTrue(calcHigh.getPressureDropPerMeter() > calcLow.getPressureDropPerMeter(),
         "Higher vapor flow should give higher DP");
   }
+
+  /**
+   * Tests an explicit vendor-supported high-capacity factor scales flood velocity without changing actual Fs.
+   */
+  @Test
+  public void testHighCapacityPackingFactor() {
+    PackingHydraulicsCalculator baseline = createStructuredPackingRating(1.0);
+    PackingHydraulicsCalculator highCapacity = createStructuredPackingRating(1.30);
+
+    assertEquals(1.30, highCapacity.getHydraulicCapacityFactor(), 1.0e-12);
+    assertEquals(1.30, highCapacity.getFloodingVelocity() / baseline.getFloodingVelocity(), 1.0e-12);
+    assertEquals(baseline.getPercentFlood() / 1.30, highCapacity.getPercentFlood(), 1.0e-10);
+    assertEquals(baseline.getFsFactor(), highCapacity.getFsFactor(), 1.0e-12);
+  }
+
+  /**
+   * Create a fixed-geometry structured-packing rating for the capacity-factor test.
+   *
+   * @param capacityFactor relative packing hydraulic capacity factor
+   * @return calculated packing hydraulics
+   */
+  private static PackingHydraulicsCalculator createStructuredPackingRating(double capacityFactor) {
+    PackingHydraulicsCalculator calc = new PackingHydraulicsCalculator();
+    calc.setStructuredPackingPreset("Mellapak-250Y");
+    calc.setHydraulicCapacityFactor(capacityFactor);
+    calc.setColumnDiameter(1.5);
+    calc.setPackedHeight(6.0);
+    calc.setDesignFloodFraction(0.70);
+    calc.setVaporMassFlow(2.0);
+    calc.setLiquidMassFlow(5.0);
+    calc.setVaporDensity(3.0);
+    calc.setLiquidDensity(800.0);
+    calc.setVaporViscosity(1.2e-5);
+    calc.setLiquidViscosity(0.001);
+    calc.setSurfaceTension(0.030);
+    calc.calculate();
+    return calc;
+  }
 }

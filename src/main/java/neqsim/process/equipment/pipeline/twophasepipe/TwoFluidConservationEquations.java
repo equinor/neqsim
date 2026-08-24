@@ -122,12 +122,27 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private boolean enableInterfacialPressure = false;
 
+  /** Whether the Bestion stabilizer is handled by the time integrator instead of the explicit RHS. */
+  private boolean implicitInterfacialPressure = false;
+
   /**
    * Interfacial pressure coefficient delta in the Bestion closure. The two-fluid system has real characteristics for
    * delta greater than or equal to one; a value slightly above one leaves margin. Reference: Bestion, D. (1990), "The
    * physical closure laws in the CATHARE code", Nuclear Engineering and Design 124, 229-245.
    */
   private double interfacialPressureCoefficient = 1.2;
+
+  /**
+   * Whether the transmissive outlet has had to suppress a reversed phase velocity.
+   *
+   * <p>
+   * Sticky once set, so a caller can ask after a sequence of steps. Cleared with {@link #clearOutletBackflowClamped()}.
+   * </p>
+   */
+  private boolean outletBackflowClamped = false;
+
+  /** Allow a zero-gradient pressure outlet to carry a phase back into the domain. */
+  private boolean allowOutletPhaseBackflow = false;
 
   /** Interface gas holdup used by the pressure part of the momentum flux, one per interface. */
   private double[] interfaceGasHoldup = new double[0];
@@ -506,6 +521,13 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Calculate outlet flux using upwind scheme (transmissive boundary).
    *
+   * <p>
+   * By default, each reversed phase velocity is clamped at zero because a one-way transmissive boundary has no upstream
+   * state to advect in. When signed outlet flow is explicitly enabled, the zero-gradient interior phase state supplies
+   * that boundary state and a reversed phase carries signed mass and energy back into the domain. Use signed flow only
+   * with a well-posed pressure-momentum model and a boundary whose physical interpretation permits fallback.
+   * </p>
+   *
    * @param sec the outlet pipe section
    * @return array of flux values for each conserved variable
    */
@@ -513,11 +535,16 @@ public class TwoFluidConservationEquations implements Serializable {
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
 
+    if (!allowOutletPhaseBackflow
+        && (sec.getGasVelocity() < 0.0 || sec.getOilVelocity() < 0.0 || sec.getWaterVelocity() < 0.0)) {
+      outletBackflowClamped = true;
+    }
+
     // Gas flux (positive velocity means outflow) - use default density if not set
     double rhoG = sec.getGasDensity();
     if (rhoG < 0.1)
       rhoG = 1.0; // Default gas density
-    double vG = Math.max(0, sec.getGasVelocity()); // Only outflow
+    double vG = allowOutletPhaseBackflow ? sec.getGasVelocity() : Math.max(0.0, sec.getGasVelocity());
     double alphaG = sec.getGasMassPerLength() / (rhoG * A);
     alphaG = Math.max(0, Math.min(1, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
@@ -527,7 +554,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double rhoO = sec.getOilDensity();
     if (rhoO < 100)
       rhoO = 700.0; // Default oil density
-    double vO = Math.max(0, sec.getOilVelocity());
+    double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
     double alphaO = sec.getOilMassPerLength() / (rhoO * A);
     alphaO = Math.max(0, Math.min(alphaG > 0.99 ? 0 : 1, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
@@ -537,7 +564,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double rhoW = sec.getWaterDensity();
     if (rhoW < 100)
       rhoW = 1000.0; // Default water density
-    double vW = Math.max(0, sec.getWaterVelocity());
+    double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
     double alphaW = sec.getWaterMassPerLength() / (rhoW * A);
     alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
@@ -961,8 +988,8 @@ public class TwoFluidConservationEquations implements Serializable {
 
       double gasSpurious = (gasRight * pRight - gasLeft * pLeft) - sec.getGasHoldup() * dp;
       double liqSpurious = (liqRight * pRight - liqLeft * pLeft) - sec.getLiquidHoldup() * dp;
-      double gasStabiliser = deltaPi * (gasRight - gasLeft);
-      double liqStabiliser = deltaPi * (liqRight - liqLeft);
+      double gasStabiliser = implicitInterfacialPressure ? 0.0 : deltaPi * (gasRight - gasLeft);
+      double liqStabiliser = implicitInterfacialPressure ? 0.0 : deltaPi * (liqRight - liqLeft);
 
       double gasSource = (gasSpurious - gasStabiliser) * area / secDx;
       double liqSource = (liqSpurious - liqStabiliser) * area / secDx;
@@ -1009,6 +1036,31 @@ public class TwoFluidConservationEquations implements Serializable {
     double slip = sec.getGasVelocity() - sec.getLiquidVelocity();
     double deltaPi = interfacialPressureCoefficient * alphaG * alphaL * rhoG * rhoL * slip * slip / mixed;
     return Double.isFinite(deltaPi) ? Math.max(0.0, deltaPi) : 0.0;
+  }
+
+  /**
+   * Get the drift-flux slip coefficient of the interfacial pressure term.
+   *
+   * <p>
+   * Converting the two phase momentum sources {@code -delta_p_i * A * d(alpha_k)/dx} into an equation for the drift
+   * flux {@code q = alpha_g * alpha_l * (u_g - u_l)} gives {@code dq/dt = -K * d(alpha_g)/dx} with
+   * {@code K = delta_p_i * (alpha_l / rho_g + alpha_g / rho_l)}. That coefficient is what the implicit void-wave update
+   * needs, and it is not the same as the square of {@link #calcVoidWaveSpeed(TwoFluidSection)}.
+   * </p>
+   *
+   * @param sec pipe section to evaluate
+   * @return slip coefficient in m2/s2, never negative
+   */
+  public double calcVoidWaveSlipCoefficient(TwoFluidSection sec) {
+    double alphaG = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
+    double alphaL = Math.max(0.0, Math.min(1.0, sec.getLiquidHoldup()));
+    double rhoG = sec.getGasDensity();
+    double rhoL = sec.getLiquidDensity();
+    if (!enableInterfacialPressure || !(rhoG > 0.0) || !(rhoL > 0.0) || alphaG <= 0.0 || alphaL <= 0.0) {
+      return 0.0;
+    }
+    double coefficient = calcInterfacialPressureDifference(sec) * (alphaL / rhoG + alphaG / rhoL);
+    return Double.isFinite(coefficient) ? Math.max(0.0, coefficient) : 0.0;
   }
 
   /**
@@ -1572,6 +1624,43 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public void setEnableInterfacialPressure(boolean enableInterfacialPressure) {
     this.enableInterfacialPressure = enableInterfacialPressure;
+  }
+
+  /**
+   * Select whether the time integrator handles the stiff Bestion stabilizer implicitly.
+   *
+   * @param implicitInterfacialPressure true to omit the stabilizer from the explicit RHS
+   */
+  public void setImplicitInterfacialPressure(boolean implicitInterfacialPressure) {
+    this.implicitInterfacialPressure = implicitInterfacialPressure;
+  }
+
+  /**
+   * Whether the transmissive outlet has had to suppress a reversed phase velocity.
+   *
+   * @return true when at least one phase reversed at the outlet since the flag was last cleared
+   */
+  public boolean isOutletBackflowClamped() {
+    return outletBackflowClamped;
+  }
+
+  /** Clear the outlet backflow record. */
+  public void clearOutletBackflowClamped() {
+    this.outletBackflowClamped = false;
+  }
+
+  /**
+   * Allow signed phase flow through the zero-gradient outlet.
+   *
+   * @param allow true to extrapolate the interior phase state for outlet fallback
+   */
+  public void setAllowOutletPhaseBackflow(boolean allow) {
+    this.allowOutletPhaseBackflow = allow;
+  }
+
+  /** @return true when signed outlet phase flow is enabled */
+  public boolean isOutletPhaseBackflowAllowed() {
+    return allowOutletPhaseBackflow;
   }
 
   /** @return interfacial pressure coefficient delta */

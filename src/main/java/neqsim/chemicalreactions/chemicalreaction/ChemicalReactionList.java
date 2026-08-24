@@ -38,6 +38,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   double[][] tempStocMatrix;
   /** Components array for reference potential calculations. */
   private ComponentInterface[] refPotComponents;
+  private ChemicalReactionDataSource reactionDataSource = ChemicalReactionDataSource.STANDARD;
 
   /**
    * readReactions.
@@ -54,15 +55,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     double actH;
     double[] K = new double[4];
     boolean useReaction = false;
+    reactionDataSource = system.getChemicalReactionDataSource();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      java.sql.ResultSet dataSet = null;
-      if (system.getModelName().equals("Kent Eisenberg-model")) {
-        // System.out.println("selecting Kent-Eisenberg reaction set");
-        dataSet = database.getResultSet("SELECT * FROM reactiondatakenteisenberg");
-      } else {
-        // System.out.println("selecting standard reaction set");
-        dataSet = database.getResultSet("SELECT * FROM reactiondata");
-      }
+      java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM " + reactionDataSource.getDatabaseTableName());
 
       double[] coefArray;
       String[] nameArray;
@@ -81,6 +76,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           refT = Double.parseDouble(dataSet.getString("Tref"));
           r = Double.parseDouble(dataSet.getString("r"));
           actH = Double.parseDouble(dataSet.getString("ACTENERGY"));
+          String reference = dataSet.getString("Reference");
+          ChemicalReactionValidationStatus validationStatus = readValidationStatus(dataSet);
 
           try (neqsim.util.database.NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
               java.sql.ResultSet dataSet2 = database2
@@ -103,7 +100,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             nameArray[i] = names.get(i);
           }
 
-          ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT);
+          ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT, reference,
+              validationStatus);
           chemicalReactionList.add(reaction);
           // System.out.println("reaction added ok...");
         }
@@ -111,6 +109,33 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     } catch (Exception ex) {
       logger.error("could not add reaction: ", ex);
     }
+  }
+
+  /**
+   * Read the optional validation-status column while preserving legacy reaction tables.
+   *
+   * @param dataSet current reaction row
+   * @return declared status, or {@link ChemicalReactionValidationStatus#UNSPECIFIED} when the selected table has no
+   * status column
+   */
+  private static ChemicalReactionValidationStatus readValidationStatus(java.sql.ResultSet dataSet)
+      throws java.sql.SQLException {
+    java.sql.ResultSetMetaData metadata = dataSet.getMetaData();
+    for (int column = 1; column <= metadata.getColumnCount(); column++) {
+      if ("ValidationStatus".equalsIgnoreCase(metadata.getColumnLabel(column))) {
+        return ChemicalReactionValidationStatus.fromDatabaseValue(dataSet.getString(column));
+      }
+    }
+    return ChemicalReactionValidationStatus.UNSPECIFIED;
+  }
+
+  /**
+   * Get the reaction-data source selected when this list was loaded.
+   *
+   * @return selected reaction-data source
+   */
+  public ChemicalReactionDataSource getReactionDataSource() {
+    return reactionDataSource == null ? ChemicalReactionDataSource.STANDARD : reactionDataSource;
   }
 
   /**

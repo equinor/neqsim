@@ -267,7 +267,17 @@
       this.searchPipeline.remove(lunr.stemmer);
 
       var self = this;
-      data.forEach(function (doc) { self.add(doc); });
+      data.forEach(function (doc) {
+        self.add({
+          url: doc.url,
+          title: normalizeQuery(doc.title || ''),
+          description: normalizeQuery(doc.description || ''),
+          keywords: normalizeQuery(doc.keywords || ''),
+          headings: normalizeQuery(doc.headings || ''),
+          path: normalizeQuery(doc.path || ''),
+          content: normalizeQuery(doc.content || '')
+        });
+      });
     });
   }
 
@@ -300,8 +310,26 @@
   /* -------------------------------------------------- */
   /*  Core search                                       */
   /* -------------------------------------------------- */
+  function normalizeTechnicalNotation(value) {
+    return String(value || '')
+      .replace(/[₀⁰]/g, '0')
+      .replace(/[₁¹]/g, '1')
+      .replace(/[₂²]/g, '2')
+      .replace(/[₃³]/g, '3')
+      .replace(/[₄⁴]/g, '4')
+      .replace(/[₅⁵]/g, '5')
+      .replace(/[₆⁶]/g, '6')
+      .replace(/[₇⁷]/g, '7')
+      .replace(/[₈⁸]/g, '8')
+      .replace(/[₉⁹]/g, '9')
+      .replace(/[µμ]/g, ' micro ')
+      .replace(/[Δδ]/g, ' delta ')
+      .replace(/°/g, ' degree ')
+      .replace(/[·×]/g, ' ');
+  }
+
   function normalizeQuery(query) {
-    return query.toLowerCase()
+    return normalizeTechnicalNotation(query).toLowerCase()
       .replace(/[^a-z0-9]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();

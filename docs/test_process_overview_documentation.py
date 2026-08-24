@@ -7,9 +7,34 @@ from urllib.parse import unquote
 DOCS_DIR = Path(__file__).resolve().parent
 REPOSITORY_ROOT = DOCS_DIR.parent
 PROCESS_OVERVIEW = DOCS_DIR / "process" / "README.md"
+EQUIPMENT_OVERVIEW = DOCS_DIR / "process" / "equipment" / "README.md"
 PROCESS_SYSTEM = (
     REPOSITORY_ROOT
     / "src/main/java/neqsim/process/processmodel/ProcessSystem.java"
+)
+PROCESS_EQUIPMENT_INTERFACE = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/process/equipment/ProcessEquipmentInterface.java"
+)
+PROCESS_EQUIPMENT_BASE = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/process/equipment/ProcessEquipmentBaseClass.java"
+)
+TWO_PORT_INTERFACE = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/process/equipment/TwoPortInterface.java"
+)
+TWO_PORT_EQUIPMENT = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/process/equipment/TwoPortEquipment.java"
+)
+SEPARATOR = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/process/equipment/separator/Separator.java"
+)
+SAFETY_VALVE = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/process/equipment/valve/SafetyValve.java"
 )
 
 
@@ -53,50 +78,79 @@ def resolve_internal_target(source_path, destination):
 class ProcessOverviewDocumentationContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.overview = PROCESS_OVERVIEW.read_text(encoding="utf-8")
+        cls.pages = {
+            PROCESS_OVERVIEW: PROCESS_OVERVIEW.read_text(encoding="utf-8"),
+            EQUIPMENT_OVERVIEW: EQUIPMENT_OVERVIEW.read_text(
+                encoding="utf-8"
+            ),
+        }
+        cls.overview = cls.pages[PROCESS_OVERVIEW]
+        cls.equipment_overview = cls.pages[EQUIPMENT_OVERVIEW]
         cls.process_system = PROCESS_SYSTEM.read_text(encoding="utf-8")
+        cls.process_equipment_interface = (
+            PROCESS_EQUIPMENT_INTERFACE.read_text(encoding="utf-8")
+        )
+        cls.process_equipment_base = PROCESS_EQUIPMENT_BASE.read_text(
+            encoding="utf-8"
+        )
+        cls.two_port_interface = TWO_PORT_INTERFACE.read_text(
+            encoding="utf-8"
+        )
+        cls.two_port_equipment = TWO_PORT_EQUIPMENT.read_text(
+            encoding="utf-8"
+        )
+        cls.separator = SEPARATOR.read_text(encoding="utf-8")
+        cls.safety_valve = SAFETY_VALVE.read_text(encoding="utf-8")
 
     def test_structure_and_internal_links_are_source_safe(self):
-        self.assertTrue(self.overview.startswith("---\n"))
-        self.assertEqual(self.overview.count("```") % 2, 0)
-
-        content_without_fences = re.sub(
-            r"```.*?```",
-            "",
-            self.overview,
-            flags=re.DOTALL,
-        )
-        self.assertNotRegex(
-            content_without_fences,
-            re.compile(r"^# ", re.MULTILINE),
-        )
-
         markdown_links = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
-        for destination in markdown_links.findall(self.overview):
-            if destination.startswith(("http://", "https://", "mailto:")):
-                continue
 
-            target, _, fragment = destination.partition("#")
-            with self.subTest(destination=destination):
-                if target and not target.endswith("/"):
-                    self.assertTrue(
-                        target.endswith(".md"),
-                        "Documentation source links must include .md",
-                    )
+        for source_path, content in self.pages.items():
+            with self.subTest(source_path=source_path):
+                self.assertTrue(content.startswith("---\n"))
+                self.assertEqual(content.count("```") % 2, 0)
 
-                target_path, resolved_fragment = resolve_internal_target(
-                    PROCESS_OVERVIEW,
-                    destination,
+                content_without_fences = re.sub(
+                    r"```.*?```",
+                    "",
+                    content,
+                    flags=re.DOTALL,
                 )
-                self.assertTrue(target_path.is_file())
-                if fragment:
-                    self.assertEqual(fragment, resolved_fragment)
-                    self.assertIn(
-                        resolved_fragment,
-                        heading_slugs(
-                            target_path.read_text(encoding="utf-8")
-                        ),
+                self.assertNotRegex(
+                    content_without_fences,
+                    re.compile(r"^# ", re.MULTILINE),
+                )
+
+            for destination in markdown_links.findall(content):
+                if destination.startswith(
+                    ("http://", "https://", "mailto:")
+                ):
+                    continue
+
+                target, _, fragment = destination.partition("#")
+                with self.subTest(
+                    source_path=source_path,
+                    destination=destination,
+                ):
+                    if target and not target.endswith("/"):
+                        self.assertTrue(
+                            target.endswith(".md"),
+                            "Documentation source links must include .md",
+                        )
+
+                    target_path, resolved_fragment = resolve_internal_target(
+                        source_path,
+                        destination,
                     )
+                    self.assertTrue(target_path.is_file())
+                    if fragment:
+                        self.assertEqual(fragment, resolved_fragment)
+                        self.assertIn(
+                            resolved_fragment,
+                            heading_slugs(
+                                target_path.read_text(encoding="utf-8")
+                            ),
+                        )
 
     def test_process_system_claims_match_current_source(self):
         for signature in (
@@ -107,6 +161,7 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
             "public String getExecutionPartitionInfo()",
             "public String getStreamSummaryTable()",
             "public String getReport_json()",
+            "public synchronized void runTransient(double dt, UUID id)",
         ):
             with self.subTest(signature=signature):
                 self.assertIn(signature, self.process_system)
@@ -121,25 +176,86 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
             with self.subTest(documented_call=documented_call):
                 self.assertIn(documented_call, self.overview)
 
-    def test_stale_execution_and_report_patterns_do_not_return(self):
+    def test_equipment_api_ownership_matches_current_source(self):
+        self.assertIn(
+            "implements ProcessEquipmentInterface",
+            self.process_equipment_base,
+        )
+        self.assertIn(
+            "implements TwoPortInterface",
+            self.two_port_equipment,
+        )
+        for signature in (
+            "StreamInterface getInletStream();",
+            "StreamInterface getOutletStream();",
+        ):
+            with self.subTest(signature=signature):
+                self.assertIn(signature, self.two_port_interface)
+
+        for signature in (
+            "public StreamInterface getInletStream()",
+            "public StreamInterface getOutletStream()",
+        ):
+            with self.subTest(signature=signature):
+                self.assertIn(signature, self.two_port_equipment)
+
+        for signature in (
+            "public StreamInterface getGasOutStream()",
+            "public StreamInterface getLiquidOutStream()",
+            "public void addStream(StreamInterface newStream)",
+        ):
+            with self.subTest(signature=signature):
+                self.assertIn(signature, self.separator)
+
+        for signature in (
+            "public SafetyValve(String name, StreamInterface inletStream)",
+            "public void setPressureSpec(double pressureSpec)",
+            "public void setBlowdown(double blowdownPercent)",
+        ):
+            with self.subTest(signature=signature):
+                self.assertIn(signature, self.safety_valve)
+
+        for claim in (
+            "`ProcessEquipmentInterface`",
+            "`ProcessEquipmentBaseClass`",
+            "`TwoPortInterface`",
+            "`TwoPortEquipment`",
+            "`Separator`",
+        ):
+            with self.subTest(claim=claim):
+                self.assertIn(claim, self.equipment_overview)
+
+    def test_stale_fragments_and_pseudo_code_do_not_return(self):
+        combined = self.overview + self.equipment_overview
         for stale_pattern in (
             "process.runHybrid();",
             "getUnitOperationsAsTable()",
             "process.reportResults()",
             "runTransient(time, dt)",
-            "28-40%",
-            "40-57%",
-            "`getReport()`",
+            "EquipmentType equipment =",
+            "equipment.setParameter(value)",
+            "System.out.println",
+            "psv.setSetPressure(",
+            "new SafetyValve(\"PSV-100\", vessel)",
+            "All equipment follows similar pattern",
         ):
             with self.subTest(stale_pattern=stale_pattern):
-                self.assertNotIn(stale_pattern, self.overview)
+                self.assertNotIn(stale_pattern, combined)
 
-        self.assertIn("public final class ProcessSystemQuickStart", self.overview)
-        self.assertIn("public static void main(String[] args)", self.overview)
-        quick_start = self.overview.split(
-            "public final class ProcessSystemQuickStart", 1
-        )[1].split("```", 1)[0]
-        self.assertNotIn("System.out.println", quick_start)
+        self.assertEqual(
+            self.overview.count(
+                "public final class ProcessSystemQuickStart"
+            ),
+            1,
+        )
+        self.assertIn(
+            "public static void main(String[] args)",
+            self.overview,
+        )
+        self.assertIn(
+            "[process-package quick start](../README.md)",
+            self.equipment_overview,
+        )
 
 
 if __name__ == "__main__":

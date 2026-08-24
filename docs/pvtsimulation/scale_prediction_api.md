@@ -213,6 +213,22 @@ for i in range(1, len(table)):
 - MEG-aware (temporarily replaces MEG with water for calculation)
 - Returns **saturation ratio** (SR = IAP/Ksp), where SR > 1 = supersaturated
 
+### Reaction-level saturation diagnostics
+
+`ChemicalReaction.getSaturationRatio(system, phaseNumber)` evaluates the same thermodynamic definition for
+reaction-backed minerals:
+
+$\mathrm{SR}=\frac{\mathrm{IAP}}{K_{sp}},\quad \mathrm{IAP}=\prod_i a_i^{-\nu_i}$
+
+Here $\nu_i<0$ identifies each dissolved reactant and $a_i$ is its dimensionless activity. Electrolyte-CPA uses its
+established mole-fraction/activity-coefficient convention; Pitzer uses solute molality and molality-scale activity
+coefficients while retaining the solvent convention. `calcLogSaturationRatio(...)` returns $\ln(\mathrm{SR})$ directly
+for trace systems where the linear ratio may underflow.
+
+This activity-based definition is consistent with USGS PHREEQC saturation-index reporting and the calcite equilibrium
+treatment of Plummer and Busenberg (1982), DOI `10.1016/0016-7037(82)90056-4`. The regression uses synthetic
+compositions and an analytical identity; it copies or fits no external numerical data.
+
 ---
 
 ## 3. Pitzer Activity Coefficient Model
@@ -235,7 +251,20 @@ Parameters follow the form:
 
 $$\beta(T) = \beta_{25} + T_1 \left(\frac{1}{T} - \frac{1}{298.15}\right) + T_2 \ln\left(\frac{T}{298.15}\right)$$
 
-The Pitzer parameter database (`PitzerParameters.csv`) currently contains 30 cation-anion rows. Of these, 23 non-estimated rows have populated binary parameters and are covered by regression tests for database loading plus finite mean ionic activity and osmotic coefficients. The covered ions include Na, K, Ca, Mg, Ba, Sr, Fe and H with Cl, SO4, HCO3, CO3 and OH. NaCl is additionally benchmarked against Robinson & Stokes / Pitzer 25 C mean ionic activity and osmotic-coefficient data.
+The Pitzer parameter database (`PitzerParameters.csv`) currently contains 30 cation-anion rows. Of these, 23 non-estimated rows have populated binary parameters and are covered by regression tests for database loading plus finite mean ionic activity and osmotic coefficients. The covered ions include Na, K, Ca, Mg, Ba, Sr, Fe and H with Cl, SO4, HCO3, CO3 and OH.
+
+At 298.15 K and 1.01325 bara, NaCl has a separate public reference validation against the traceable recommended
+values in Tables 6 and 10 of Partanen and Partanen (2020), DOI
+[10.1021/acs.jced.0c00402](https://doi.org/10.1021/acs.jced.0c00402), licensed
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The validation covers 0.2, 0.5 and 1.0 mol/kg water;
+2.0 and 3.0 mol/kg water are retained as a concentrated hold-out. Pointwise acceptance limits are 2% relative for the
+mean molal activity coefficient and 0.75% relative for the osmotic coefficient. The tabulated values are rounded to
+0.001 and were derived by the authors from traceable electrochemical, isopiestic, vapor-pressure and solubility
+evidence. NeqSim parameters are not fitted or changed by this validation.
+
+This evidence applies only to binary NaCl(aq) at 298.15 K on the molality standard state. It does not validate
+temperature dependence, mixed salts, carbonate speciation, mineral parameters, precipitation complementarity or
+transfer of Pitzer parameters to electrolyte EOS models.
 
 ### Using the Pitzer Model
 
@@ -245,8 +274,7 @@ pitzer.addComponent("methane", 5.0);
 pitzer.addComponent("CO2", 0.05);
 pitzer.addComponent("n-heptane", 2.0);
 pitzer.addComponent("water", 55.5);
-pitzer.addComponent("Ca++", 1.0e-4);
-pitzer.addComponent("Na+", 1.0e-3);
+pitzer.addComponent("Ca++", 6.0e-4);
 pitzer.addComponent("Cl-", 2.0e-4);
 pitzer.addComponent("HCO3-", 1.0e-3);
 pitzer.chemicalReactionInit();
@@ -262,6 +290,15 @@ double calciteScalePotential = ops.getRelativeScalePotential("CaCO3");
 ```
 
 The example couples SRK gas and oil phases to Pitzer aqueous chemistry. Remove `n-heptane` for a gas-aqueous case.
+Its ionic feed is electroneutral: `2 m(Ca++) = m(Cl-) + m(HCO3-)`. The primary-salt coverage topology is therefore
+the qualified binary Ca/Cl pair; bicarbonate remains part of the reactive carbonate subsystem.
+
+Do not extend this fixture to a mixed primary salt by adding Na, Ba, Sr, Mg, sulfate, or another ion without defining
+the complete binary, same-sign `theta`, and ternary `psi` family from one convention-mapped dataset.
+`PhasePitzer.getPitzerParameterCoverage()` reports the exact missing tuples, and standard initialization fails closed
+when a mixed primary-salt topology is incomplete. An explicit zero is a scientific parameter definition, not a
+placeholder.
+
 The returned value is the calcite saturation ratio, where values above one indicate thermodynamic supersaturation.
 It does not calculate precipitated mass or deposition kinetics. The fixed-role hybrid flash currently rejects explicit
 solid- and wax-phase checks.
@@ -421,6 +458,41 @@ ss.calculate();
 System.out.println("BaSO4 in solid: " + (ss.getBaSO4MoleFraction() * 100) + "%");
 System.out.println("Total SI: " + ss.getTotalSaturationIndex());
 ```
+
+---
+
+## Coupled mineral-equilibrium diagnostics
+
+`MultiMineralScaleEquilibrium` exposes the numerical evidence needed to decide whether a coupled precipitation result
+is acceptable:
+
+- `getIterationCount()` reports coordinate-descent updates;
+- `hasReachedIterationLimit()` distinguishes normal step convergence from an exhausted solver budget;
+- `getMaximumComplementarityViolation()` reports `abs(SI)` for minerals with solid present and
+  `max(SI, 0)` for absent solids;
+- `getMaximumIonBalanceResidualMolPerL()` closes each tracked free-ion inventory against the sum of 1:1 mineral
+  precipitation extents.
+
+The same values appear in the JSON `diagnostics` object. Acceptance remains case-specific: an iteration-limit flag is
+not itself a thermodynamic residual, and a small step does not prove that the mineral inequalities are satisfied. The
+reference regression requires maximum complementarity violation <= 1e-3 SI and maximum tracked-ion balance residual <=
+1e-12 mol/L. A deliberately one-iteration solve remains material-balanced but fails complementarity, preventing silent
+classification as an equilibrated mineral state.
+
+This contract follows the equilibrium-phase convention in Parkhurst (1995), *U.S. Geological Survey
+Water-Resources Investigations Report 95-4227*, [doi:10.3133/wri954227](https://doi.org/10.3133/wri954227):
+minerals in the stable phase assemblage satisfy the target SI equality, while absent minerals remain inequality
+constraints at or below the target. The current PHREEQC 3
+[`EQUILIBRIUM_PHASES` documentation](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-13.htm)
+states the same convention. USGS-authored information is
+[public domain](https://www.usgs.gov/faqs/are-usgs-reportspublications-copyrighted). No numerical data, parameter,
+correlation or PHREEQC code is copied or fitted by this diagnostic regression.
+
+The diagnostic is limited to the standalone coupled solver's tracked free ions and fixed 1:1 mineral stoichiometries.
+It does not prove elemental/charge closure for the predictor's aqueous speciation, update activity coefficients during
+precipitation, select a globally stable phase topology, or validate Ksp and activity parameters against independent
+precipitation data. Full electrolyte EOS/GE calculations must continue to apply their model-specific activity,
+speciation and balance gates.
 
 ---
 

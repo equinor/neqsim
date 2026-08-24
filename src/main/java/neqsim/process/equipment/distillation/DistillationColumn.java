@@ -816,6 +816,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient double lastMatrixInsideOutTemperatureResidual = Double.NaN;
   /** Matrix warm-start wall time from the latest solve in seconds. */
   private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
+  /** Step length whose state was retained by the latest NEWTON line search. */
+  private transient double lastNewtonLineSearchStepLength = Double.NaN;
+  /** Residual norm evaluated for the retained NEWTON line-search state. */
+  private transient double lastNewtonLineSearchResidual = Double.NaN;
+  /** Number of candidate steps evaluated by the latest NEWTON line search. */
+  private transient int lastNewtonLineSearchTrialCount = 0;
+  /** Number of accelerated full-tray sweeps attempted by the latest NEWTON or WEGSTEIN route. */
+  private transient int lastAcceleratedFullTraySweepCount = 0;
+  /** Number of internal stream transfers performed by accelerated full-tray sweeps. */
+  private transient int lastAcceleratedInternalStreamTransferCount = 0;
   /** Latest Naphtali-Sandholm analytically differentiated Jacobian column count. */
   private transient int lastNaphtaliAnalyticJacobianColumns = 0;
   /** Latest Naphtali-Sandholm finite-difference Jacobian column count. */
@@ -3992,6 +4002,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastMatrixInsideOutIterationCount = candidate.lastMatrixInsideOutIterationCount;
     this.lastMatrixInsideOutTemperatureResidual = candidate.lastMatrixInsideOutTemperatureResidual;
     this.lastMatrixInsideOutSolveTimeSeconds = candidate.lastMatrixInsideOutSolveTimeSeconds;
+    this.lastNewtonLineSearchStepLength = candidate.lastNewtonLineSearchStepLength;
+    this.lastNewtonLineSearchResidual = candidate.lastNewtonLineSearchResidual;
+    this.lastNewtonLineSearchTrialCount = candidate.lastNewtonLineSearchTrialCount;
+    this.lastAcceleratedFullTraySweepCount = candidate.lastAcceleratedFullTraySweepCount;
+    this.lastAcceleratedInternalStreamTransferCount = candidate.lastAcceleratedInternalStreamTransferCount;
     this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
     this.lastNaphtaliFiniteDifferenceJacobianColumns = candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
     this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
@@ -6996,10 +7011,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveInsideOut(UUID id) {
+    long invocationStartTime = System.nanoTime();
+    lastSequentialWarmStateReused = false;
     resetInsideOutTelemetry();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
+    }
+
+    if (hasSequentialExactReuseState) {
+      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
+        reuseSequentialWarmState(id, invocationStartTime);
+        return;
+      }
+      hasSequentialExactReuseState = false;
     }
 
     int firstFeedTrayNumber = prepareColumnForSolve();
@@ -7366,6 +7392,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).finalizeTrayProperties();
     }
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+    if (!hasActiveColumnTearVariables()) {
+      hasBeenSolvedBefore = true;
+      lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
+      commitSequentialWarmState();
+    }
   }
 
   /**
@@ -7916,6 +7947,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveWegstein(UUID id) {
+    resetAcceleratedSweepTelemetry();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -8103,13 +8135,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param firstFeedTrayNumber index of the lowest feed tray
    */
   private void synchronizeTrayStreamsAfterAcceleratedTemperatureUpdate(UUID id, int firstFeedTrayNumber) {
-    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      previousGasStreams[trayIndex] = trays.get(trayIndex).getGasOutStream().clone();
-      previousLiquidStreams[trayIndex] = trays.get(trayIndex).getLiquidOutStream().clone();
-    }
-    performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+    performFullTraySweep(id, firstFeedTrayNumber);
   }
 
   /**
@@ -8392,6 +8418,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveNewton(UUID id) {
+    lastNewtonLineSearchStepLength = Double.NaN;
+    lastNewtonLineSearchResidual = Double.NaN;
+    lastNewtonLineSearchTrialCount = 0;
+    resetAcceleratedSweepTelemetry();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -8430,13 +8460,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // profile
     int warmUpIterations = Math.min(3, iterationLimit / 3);
     trays.get(firstFeedTrayNumber).run(id);
-    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
 
     for (int w = 0; w < warmUpIterations; w++) {
       iter++;
       double[] warmUpTemperatures = captureTrayTemperatures();
-      performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+      performFullTraySweep(id, firstFeedTrayNumber);
       double tempRes = computeTemperatureResidual(warmUpTemperatures);
       err = tempRes;
 
@@ -8477,7 +8505,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       // Compute base residuals: run a full sweep at current temperatures,
       // residual = (post-sweep temperature) - (pre-sweep temperature)
-      performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+      performFullTraySweep(id, firstFeedTrayNumber);
       for (int i = 0; i < numberOfTrays; i++) {
         residuals[i] = trays.get(i).getThermoSystem().getTemperature() - temperatures[i];
       }
@@ -8563,7 +8591,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(j).getThermoSystem().setTemperature(pertT);
 
         // Run sweep with perturbed temperature
-        performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+        performFullTraySweep(id, firstFeedTrayNumber);
 
         // Compute perturbed residuals — only for rows within band of column j
         int rowStart = numberOfTrays <= 6 ? 0 : Math.max(0, j - halfBand);
@@ -8614,25 +8642,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         continue;
       }
 
-      // Line search: try full Newton step, halve if residual increases.
-      // Damping memo: start at min(1.0, 2.0 * lastSuccessful) to skip probes that
-      // would predictably fail given prior nonlinearity. Periodically reset to 1.0
-      // so the algorithm can recover the full step when conditions improve.
+      // Line search: try the memoized Newton step and halve while the residual
+      // does not improve. Record every finite trial so an all-non-descent search
+      // retains the least harmful evaluated state instead of reporting the
+      // unevaluated default step while leaving the final trial applied.
       double trialStart = (iter % LINESEARCH_RESET_PERIOD == 0) ? 1.0 : Math.min(1.0, 2.0 * lastSuccessfulStepLength);
-      double bestStepLength = trialStart;
-      double bestNormRes = normRes;
-      for (double stepLength = trialStart; stepLength >= 0.125; stepLength *= 0.5) {
-        // Apply trial step
+      double[] trialStepLengths = new double[4];
+      double[] trialResidualNorms = new double[4];
+      int trialCount = 0;
+      double lastEvaluatedStepLength = Double.NaN;
+      for (double stepLength = trialStart; stepLength >= 0.125
+          && trialCount < trialStepLengths.length; stepLength *= 0.5) {
         for (int i = 0; i < numberOfTrays; i++) {
           double newTemp = temperatures[i] + stepLength * deltaT[i];
-          // Safeguard: keep temperatures reasonable
           newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
           trays.get(i).setTemperature(newTemp);
           trays.get(i).getThermoSystem().setTemperature(newTemp);
         }
 
-        // Check trial step quality with a sweep
-        performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+        performFullTraySweep(id, firstFeedTrayNumber);
 
         double trialNormRes = 0.0;
         for (int i = 0; i < numberOfTrays; i++) {
@@ -8640,29 +8668,54 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           trialNormRes += Math.abs(trialRes);
         }
         trialNormRes /= Math.max(1, numberOfTrays);
+        trialStepLengths[trialCount] = stepLength;
+        trialResidualNorms[trialCount] = trialNormRes;
+        trialCount++;
+        lastEvaluatedStepLength = stepLength;
 
-        if (trialNormRes < bestNormRes) {
-          bestStepLength = stepLength;
-          bestNormRes = trialNormRes;
-          break; // Accept first improving step
+        if (Double.isFinite(trialNormRes) && trialNormRes < normRes) {
+          break;
         }
       }
 
-      // Apply the best step
-      if (bestStepLength < 1.0) {
-        // Need to re-apply since the loop may have tried smaller steps
+      int selectedTrial = selectLowestFiniteResidualIndex(trialResidualNorms, trialCount);
+      double selectedStepLength = 0.0;
+      double selectedNormRes = Double.POSITIVE_INFINITY;
+      if (selectedTrial >= 0) {
+        selectedStepLength = trialStepLengths[selectedTrial];
+        selectedNormRes = trialResidualNorms[selectedTrial];
+
+        if (selectedStepLength != lastEvaluatedStepLength) {
+          for (int i = 0; i < numberOfTrays; i++) {
+            double newTemp = temperatures[i] + selectedStepLength * deltaT[i];
+            newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
+            trays.get(i).setTemperature(newTemp);
+            trays.get(i).getThermoSystem().setTemperature(newTemp);
+          }
+          performFullTraySweep(id, firstFeedTrayNumber);
+          selectedNormRes = 0.0;
+          for (int i = 0; i < numberOfTrays; i++) {
+            double selectedResidual = trays.get(i).getThermoSystem().getTemperature() - temperatures[i]
+                - selectedStepLength * deltaT[i];
+            selectedNormRes += Math.abs(selectedResidual);
+          }
+          selectedNormRes /= Math.max(1, numberOfTrays);
+        }
+      } else {
         for (int i = 0; i < numberOfTrays; i++) {
-          double newTemp = temperatures[i] + bestStepLength * deltaT[i];
-          newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
-          trays.get(i).setTemperature(newTemp);
-          trays.get(i).getThermoSystem().setTemperature(newTemp);
+          trays.get(i).setTemperature(temperatures[i]);
+          trays.get(i).getThermoSystem().setTemperature(temperatures[i]);
         }
+        performFullTraySweep(id, firstFeedTrayNumber);
       }
 
-      // Update damping memo for next iteration's line-search start point.
-      lastSuccessfulStepLength = bestStepLength;
+      lastNewtonLineSearchStepLength = selectedStepLength;
+      lastNewtonLineSearchResidual = selectedNormRes;
+      lastNewtonLineSearchTrialCount = trialCount;
+      lastSuccessfulStepLength = selectedStepLength > 0.0 ? selectedStepLength : 0.125;
 
-      logger.debug("newton iteration {} step={} normRes={}->{}", iter, bestStepLength, normRes, bestNormRes);
+      logger.debug("newton iteration {} step={} trials={} normRes={}->{}", iter, selectedStepLength, trialCount,
+          normRes, selectedNormRes);
 
       // Overflow: extend limit if not converged
       if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
@@ -8672,7 +8725,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Final sweep to ensure consistent tray state
     double[] finalTemperatures = captureTrayTemperatures();
-    performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
+    performFullTraySweep(id, firstFeedTrayNumber);
     err = computeTemperatureResidual(finalTemperatures);
     massErr = getMassBalanceError();
     energyErr = getEnergyBalanceError();
@@ -8681,24 +8734,49 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Perform a full upward+downward tray sweep, running PH-flash on each tray.
+   * Select the evaluated line-search trial with the lowest finite residual.
+   *
+   * @param residualNorms residual norm for each evaluated trial
+   * @param count number of populated entries in {@code residualNorms}
+   * @return index of the lowest finite residual, or {@code -1} when no finite trial exists
+   */
+  static int selectLowestFiniteResidualIndex(double[] residualNorms, int count) {
+    int bestIndex = -1;
+    double bestResidual = Double.POSITIVE_INFINITY;
+    int limit = Math.min(Math.max(count, 0), residualNorms.length);
+    for (int index = 0; index < limit; index++) {
+      double residual = residualNorms[index];
+      if (Double.isFinite(residual) && residual < bestResidual) {
+        bestResidual = residual;
+        bestIndex = index;
+      }
+    }
+    return bestIndex;
+  }
+
+  /**
+   * Perform an undamped upward and downward accelerated tray sweep.
+   *
+   * <p>
+   * NEWTON and the final WEGSTEIN synchronization always use unit relaxation. Each internal transfer therefore takes
+   * one owned clone of the already-flashed tray outlet and installs that same clone as the downstream inlet. No
+   * previous-iterate cache or second cache clone is required. The transferred snapshot is reflashed through the
+   * established relaxation path so downstream tear-state semantics remain unchanged.
+   * </p>
    *
    * @param id calculation identifier
    * @param firstFeedTrayNumber index of the lowest feed tray
-   * @param previousGasStreams cached gas streams from previous iteration (updated in-place)
-   * @param previousLiquidStreams cached liquid streams from previous iteration (updated in-place)
-   * @param relaxation relaxation factor for stream blending
    */
-  private void performFullTraySweep(UUID id, int firstFeedTrayNumber, StreamInterface[] previousGasStreams,
-      StreamInterface[] previousLiquidStreams, double relaxation) {
+  private void performFullTraySweep(UUID id, int firstFeedTrayNumber) {
+    lastAcceleratedFullTraySweepCount++;
+
     // Downward liquid sweep: feed → reboiler
     for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
       int target = stage - 1;
       int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
-      StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage],
-          trays.get(stage).getLiquidOutStream(), relaxation);
-      trays.get(target).replaceStream(replaceStream, relaxedLiquid);
-      previousLiquidStreams[stage] = relaxedLiquid.clone();
+      StreamInterface transferredLiquid = applyRelaxation(null, trays.get(stage).getLiquidOutStream(), 1.0);
+      trays.get(target).replaceStream(replaceStream, transferredLiquid);
+      lastAcceleratedInternalStreamTransferCount++;
       trays.get(target).run(id);
       applyMurphreeCorrection(target);
     }
@@ -8709,10 +8787,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (stage == (numberOfTrays - 1)) {
         replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
       }
-      StreamInterface relaxedGas = applyRelaxation(previousGasStreams[stage - 1],
-          trays.get(stage - 1).getGasOutStream(), relaxation);
-      trays.get(stage).replaceStream(replaceStream, relaxedGas);
-      previousGasStreams[stage - 1] = relaxedGas.clone();
+      StreamInterface transferredGas = applyRelaxation(null, trays.get(stage - 1).getGasOutStream(), 1.0);
+      trays.get(stage).replaceStream(replaceStream, transferredGas);
+      lastAcceleratedInternalStreamTransferCount++;
       trays.get(stage).run(id);
       applyMurphreeCorrection(stage);
     }
@@ -9335,6 +9412,62 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve the step length whose state was retained by the latest NEWTON line search.
+   *
+   * @return retained step length, zero when no finite trial existed, or {@link Double#NaN} when no NEWTON line search
+   * ran
+   */
+  public double getLastNewtonLineSearchStepLength() {
+    return lastNewtonLineSearchStepLength;
+  }
+
+  /**
+   * Retrieve the residual norm evaluated for the retained NEWTON line-search state.
+   *
+   * @return retained-state residual norm, or {@link Double#NaN} when no NEWTON line search ran
+   */
+  public double getLastNewtonLineSearchResidual() {
+    return lastNewtonLineSearchResidual;
+  }
+
+  /**
+   * Retrieve the number of candidate steps evaluated by the latest NEWTON line search.
+   *
+   * @return evaluated trial count
+   */
+  public int getLastNewtonLineSearchTrialCount() {
+    return lastNewtonLineSearchTrialCount;
+  }
+
+  /**
+   * Retrieve the number of accelerated full-tray sweeps attempted by the latest NEWTON or WEGSTEIN route.
+   *
+   * <p>
+   * The value describes attempted accelerator work, including work retained through AUTO candidate adoption or followed
+   * by a coordinated fallback. It is not an independent convergence claim.
+   * </p>
+   *
+   * @return number of full-tray sweeps, or zero when the latest route did not attempt one
+   */
+  public int getLastAcceleratedFullTraySweepCount() {
+    return lastAcceleratedFullTraySweepCount;
+  }
+
+  /**
+   * Retrieve the internal stream transfers performed by accelerated full-tray sweeps.
+   *
+   * <p>
+   * Each counted transfer owns exactly one cloned stream snapshot. The snapshot is reused directly as the target tray
+   * inlet and is not cloned again for a previous-iterate cache.
+   * </p>
+   *
+   * @return internal gas and liquid stream transfer count
+   */
+  public int getLastAcceleratedInternalStreamTransferCount() {
+    return lastAcceleratedInternalStreamTransferCount;
+  }
+
+  /**
    * Retrieve the iteration count of the most recent solve.
    *
    * @return iteration count
@@ -9837,6 +9970,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    matrix temperature residual: ").append(lastMatrixInsideOutTemperatureResidual)
           .append(" K\n");
       diagnostics.append("    matrix time: ").append(lastMatrixInsideOutSolveTimeSeconds).append(" s\n");
+    }
+    if (lastNewtonLineSearchTrialCount > 0) {
+      diagnostics.append("  Newton line search:\n");
+      diagnostics.append("    retained step length: ").append(lastNewtonLineSearchStepLength).append("\n");
+      diagnostics.append("    retained residual norm: ").append(lastNewtonLineSearchResidual).append("\n");
+      diagnostics.append("    evaluated trials: ").append(lastNewtonLineSearchTrialCount).append("\n");
+    }
+    if (lastAcceleratedFullTraySweepCount > 0) {
+      diagnostics.append("  Accelerated full-tray sweep work:\n");
+      diagnostics.append("    full tray sweeps: ").append(lastAcceleratedFullTraySweepCount).append("\n");
+      diagnostics.append("    internal stream transfers: ").append(lastAcceleratedInternalStreamTransferCount)
+          .append("\n");
     }
     if (lastNaphtaliAnalyticJacobianColumns > 0 || lastNaphtaliFiniteDifferenceJacobianColumns > 0
         || lastNaphtaliThermoEvaluationCount > 0) {
@@ -11989,7 +12134,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param trayIndex index of the tray in the {@code trays} list
    */
-  private void applyMurphreeCorrection(int trayIndex) {
+  protected void applyMurphreeCorrection(int trayIndex) {
     double emv = getEffectiveMurphreeEfficiency(trayIndex);
     if (emv >= 1.0 - 1e-10) {
       return; // ideal tray, no correction needed
@@ -13228,23 +13373,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Calculates total component mole amounts entering the column through all external feeds.
    *
-   * @return component mole amounts on the stream-flow basis used by NeqSim streams, or an empty array if external feeds
-   * do not share a common component basis
+   * <p>
+   * Feed systems may expose different component subsets or component ordering. Accumulation therefore uses the combined
+   * column product basis and matches components by name instead of assuming that every feed shares the first feed's
+   * array indices.
+   * </p>
+   *
+   * @return component mole amounts aligned with the current column product component basis
    */
   private double[] getFeedComponentMoles() {
-    int componentCount = getNumberOfComponentsFromFeeds();
-    if (componentCount == 0) {
-      return new double[0];
-    }
-    double[] feedComponentMoles = new double[componentCount];
+    String[] componentNames = getColumnComponentNames();
+    double[] feedComponentMoles = new double[componentNames.length];
     for (StreamInterface feed : getAllExternalFeedStreams()) {
-      double[] componentMoles = getComponentMoles(feed.getThermoSystem());
-      if (componentMoles.length != componentCount) {
-        return new double[0];
-      }
-      for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-        feedComponentMoles[componentIndex] += componentMoles[componentIndex];
-      }
+      addComponentMolesOnBasis(feedComponentMoles, componentNames, feed.getThermoSystem());
     }
     return feedComponentMoles;
   }
@@ -13256,29 +13397,81 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return component mole amounts withdrawn through side draws
    */
   private double[] getSideDrawComponentMoles(int componentCount) {
+    String[] componentNames = getColumnComponentNames();
+    if (componentCount != componentNames.length) {
+      return new double[0];
+    }
     double[] sideDrawComponentMoles = new double[componentCount];
     for (StreamInterface sideDrawStream : getSideDrawStreams()) {
-      double[] componentMoles = getComponentMoles(sideDrawStream.getThermoSystem());
-      if (componentMoles.length != componentCount) {
-        continue;
-      }
-      for (int componentIndex = 0; componentIndex < sideDrawComponentMoles.length; componentIndex++) {
-        sideDrawComponentMoles[componentIndex] += componentMoles[componentIndex];
-      }
+      addComponentMolesOnBasis(sideDrawComponentMoles, componentNames, sideDrawStream.getThermoSystem());
     }
     return sideDrawComponentMoles;
   }
 
   /**
-   * Gets the number of components from the first available feed stream.
+   * Get the combined component basis used by the current column products.
    *
-   * @return number of components, or zero when no feeds are connected
+   * <p>
+   * {@link #addFeedStream(StreamInterface, int)} updates both public product templates from the feed mixer after every
+   * feed addition. Once a solve starts, the terminal tray systems retain that same combined basis. Falling back to an
+   * external feed keeps legacy direct-tray-feed configurations diagnosable before their first initialization.
+   * </p>
+   *
+   * @return ordered component names for reconciliation, or an empty array when no component basis is available
    */
-  private int getNumberOfComponentsFromFeeds() {
-    for (StreamInterface feed : getAllExternalFeedStreams()) {
-      return feed.getThermoSystem().getNumberOfComponents();
+  private String[] getColumnComponentNames() {
+    if (gasOutStream != null && gasOutStream.getThermoSystem() != null
+        && gasOutStream.getThermoSystem().getNumberOfComponents() > 0) {
+      return gasOutStream.getThermoSystem().getComponentNames();
     }
-    return 0;
+    if (liquidOutStream != null && liquidOutStream.getThermoSystem() != null
+        && liquidOutStream.getThermoSystem().getNumberOfComponents() > 0) {
+      return liquidOutStream.getThermoSystem().getComponentNames();
+    }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      if (feed != null && feed.getThermoSystem() != null) {
+        return feed.getThermoSystem().getComponentNames();
+      }
+    }
+    return new String[0];
+  }
+
+  /**
+   * Add component amounts from one thermodynamic system to a named destination basis.
+   *
+   * @param destination accumulated component amounts aligned with {@code componentNames}
+   * @param componentNames destination component-name basis
+   * @param system source thermodynamic system
+   */
+  private void addComponentMolesOnBasis(double[] destination, String[] componentNames, SystemInterface system) {
+    if (system == null || destination.length != componentNames.length) {
+      return;
+    }
+    String[] sourceComponentNames = system.getComponentNames();
+    double[] sourceComponentMoles = getComponentMoles(system);
+    int sourceCount = Math.min(sourceComponentNames.length, sourceComponentMoles.length);
+    for (int sourceIndex = 0; sourceIndex < sourceCount; sourceIndex++) {
+      int destinationIndex = findComponentIndex(componentNames, sourceComponentNames[sourceIndex]);
+      if (destinationIndex >= 0) {
+        destination[destinationIndex] += sourceComponentMoles[sourceIndex];
+      }
+    }
+  }
+
+  /**
+   * Find a component in an ordered reconciliation basis.
+   *
+   * @param componentNames ordered component names
+   * @param componentName component name to find
+   * @return component index, or {@code -1} when the component is absent
+   */
+  private int findComponentIndex(String[] componentNames, String componentName) {
+    for (int componentIndex = 0; componentIndex < componentNames.length; componentIndex++) {
+      if (componentNames[componentIndex].equals(componentName)) {
+        return componentIndex;
+      }
+    }
+    return -1;
   }
 
   /**
@@ -13366,6 +13559,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastInitializationReport = "";
     lastAutoSolverHistory = new ArrayList<String>();
     lastSpecificationHomotopyStepCount = 0;
+    lastNewtonLineSearchStepLength = Double.NaN;
+    lastNewtonLineSearchResidual = Double.NaN;
+    lastNewtonLineSearchTrialCount = 0;
+    resetAcceleratedSweepTelemetry();
     // A reset means the column no longer holds a result, so it cannot hold a reusable one either.
     hasNaphtaliSandholmWarmState = false;
     naphtaliSandholmStateOwned = false;
@@ -13381,6 +13578,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
     resetMatrixInsideOutDiagnostics();
+  }
+
+  /** Reset accelerated full-tray sweep telemetry. */
+  private void resetAcceleratedSweepTelemetry() {
+    lastAcceleratedFullTraySweepCount = 0;
+    lastAcceleratedInternalStreamTransferCount = 0;
   }
 
   /** Reset rigorous inside-out telemetry fields. */

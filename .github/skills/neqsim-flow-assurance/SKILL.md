@@ -444,6 +444,21 @@ for (double qgMSm3d : gasRates) {
 > `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
 > if `isSteadyStateWallClockLimited()` is true.
 
+> **MCP `runPipeline` solver and response handoff.** Omit `solver` (or use
+> `beggsBrill`) for the established correlation path. Use `solver: "twoFluid"`
+> when the task needs finite-volume pressure, temperature, holdup, phase-velocity,
+> flow-regime, inventory, erosion-margin, hydrate/wax, or slug profiles. Pass
+> `sectionLengths_m`, `elevationProfile_m`, `heatTransferProfile_W_m2K`, and
+> `surfaceTemperatureProfile_C` or `_K` as equal-length per-section arrays; the
+> lengths must sum to `length_m`. Bound expensive solves with
+> `steadyStateMaxWallClockTime_s`. Request `detailLevel: FULL` for spatial
+> profiles, `SUMMARY` for engineering KPIs without profiles, or `MINIMUM` for
+> the compact core result. The authoritative object is `TwoFluidPipeResponse`
+> (a `BaseResponse`): preserve it through MCP/report handoffs instead of
+> independently reconstructing fields from the equipment. Always propagate its
+> convergence/pressure-floor/wall-clock validation findings and apply the
+> limitations below before quoting a result.
+
 > **Three defects found by auditing the solve against its own governing equations
 > — all fixed, but the symptoms are generic and worth recognising elsewhere.**
 > (1) *A time integrator inside a fixed-point sweep.* The steady solve integrated
@@ -497,6 +512,35 @@ for (double qgMSm3d : gasRates) {
 > three-phase bookkeeping is sound — gas/oil/water fractions sum to one and stay in
 > range at every node.
 
+> **The minimum-slip bound applies only level and uphill.** `alphaL >= lambdaL *
+> minimumSlipFactor` (default 2.0) states that the gas outruns the liquid, which is a
+> property of gas-driven transport. On a downhill section gravity moves the liquid and
+> the slip ratio legitimately falls, so the bound is not applied there. It used to be
+> applied everywhere and was binding on 39 of 42 downhill sections of an undulating
+> fixture, replacing the momentum balance with a constant.
+
+> **The horizontal annular criterion is the Taitel-Dukler equilibrium level.**
+> `pipe.setUseEquilibriumLevelAnnularTransition(false)` restores the earlier path, the
+> vertical droplet-entrainment threshold `U_SG > 3.1*(sigma*g*drho/rhoG^2)^0.25`, which is
+> about 0.75 m/s on a 14-inch export line and so classified essentially any horizontal gas
+> pipeline as annular, solving a shallow stratified layer with a thin-film closure. The two
+> agree wherever the Kelvin-Helmholtz margin exceeds one — identical at 10 MSm3/d on the
+> export line — and differ at 4 MSm3/d, where the equilibrium branch reclassifies 272 of 320
+> sections as stratified-wavy.
+
+> **Friction is per-phase wall shear in stratified flow.**
+> `setSeparatedFrictionModel(false)` restores the mixture correlation, which charges the whole
+> perimeter with a holdup-weighted density; on a stratified line at 41% holdup that
+> over-predicts ΔP by ~2.3x, and because it scales as `G^2/rho_mix` it makes extra liquid
+> REDUCE the gradient, inverting the terrain response. The separated form is scoped to
+> stratified flow because its perimeters come from a circular-segment layer; annular flow,
+> whose film wets the whole perimeter, is not that geometry.
+
+> **Measured accuracy on the 73.8 km reference line**, across a threefold rate range:
+> ΔP +1.4 / +1.6 / +0.1 / −2.7 % and maximum holdup −2.4 / −7.1 / −6.6 / +3.5 % at
+> 4 / 7 / 10 / 12 MSm3/d, all converged and grid-converged. The earlier defaults gave
+> ΔP +5.7 / +5.6 / +1.4 / −0.0 % and holdup −25.5 / −18.6 / −6.2 / +3.3 %.
+
 > **Direct electrical heating (DEH)** is available on both models with the same
 > convention — the power set is what reaches the fluid, so cable and coating
 > losses must already be deducted:
@@ -531,6 +575,31 @@ for (double qgMSm3d : gasRates) {
 > — at the default 0.5 it diverges. At that CFL the holdup it settles on is not
 > yet validated, so it is not a drop-in replacement. Finishing it means folding
 > the term into the IMEX implicit pressure solve.
+>
+> **Re-measured (PR #3086): the interfacial-pressure term does NOT rescue this
+> case.** Sweeping CFL 0.05/0.1/0.2/0.35/0.5/0.8 with and without the term, using
+> `isTransientOutletBackflowClamped()` as the objective detector, every one of the
+> twelve combinations is unstable — with the term ON, backflow trips at *every*
+> CFL including 0.05. So do not reach for `setEnableInterfacialPressure(true)`
+> expecting a stable liquid-rich transient, and note that folding the term into
+> the IMEX solve would only buy step-size relief for a term that does not deliver
+> stability here. `calcVoidWaveSpeed` already feeds the CFL limit, so the small
+> step it needs is a genuine stability limit, not a controller oversight.
+>
+> **What did help: fixing the regime.** The same case classified SLUG rather than
+> ANNULAR (PR #3086, Barnea bridging limit) cuts the 30-minute inventory runaway
+> from **+56.3% to +20.1%** at default settings. Still unusable, still gated by
+> the flag, but the regime branch is a bigger lever on the runaway than the
+> interfacial-pressure term is.
+>
+> **The transient now tells you when it has failed — always check it.** As of
+> PR #3080, `pipe.isTransientOutletBackflowClamped()` returns true once any phase
+> has reversed at the outlet, which is the first event in the runaway above. This
+> is the transient counterpart of `isSteadyStatePressureFloorLimited()`: ALWAYS
+> read it after `runTransient` and discard the profile when it is true, exactly
+> as with the steady-state flags. The mass-balance report will NOT warn you — it
+> closes to 1e-16 throughout, because it is computed from the same clamped flux.
+> The flag is sticky for the run and is cleared by the next `run()`.
 >
 > **Three-phase (gas/oil/water) steady state is fixed.** The oil/water slip
 > ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls

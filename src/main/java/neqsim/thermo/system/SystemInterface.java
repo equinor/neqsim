@@ -1,6 +1,8 @@
 package neqsim.thermo.system;
 
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -497,7 +499,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void checkStability(boolean val);
 
   /**
-   * chemicalReactionInit.
+   * Initialize chemical-reaction topology for the current component identities.
+   *
+   * <p>
+   * Adding, removing, or renaming a component after this call makes the reaction state stale. Before the next reactive
+   * calculation, call this method again, repopulate the component database, and reapply the mixing rule.
+   * </p>
    */
   public void chemicalReactionInit();
 
@@ -507,7 +514,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void clearAll();
 
   /**
-   * clone.
+   * Creates an independently mutable copy of this thermodynamic system.
+   *
+   * <p>
+   * Phase, component, and initialized chemical-reaction state in the returned system are owned by the copy. Changing or
+   * solving a reactive clone must therefore not mutate the source system.
+   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -640,6 +652,29 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a {@link neqsim.chemicalreactions.ChemicalReactionOperations} object
    */
   public ChemicalReactionOperations getChemicalReactionOperations();
+
+  /**
+   * Get the reaction-data source appropriate for this thermodynamic model.
+   *
+   * <p>
+   * The default source is shared by electrolyte EOS and electrolyte GE systems. Models with a dedicated
+   * parameterization override this method explicitly.
+   * </p>
+   *
+   * @return reaction-data source used by {@link #chemicalReactionInit()}
+   */
+  public default ChemicalReactionDataSource getChemicalReactionDataSource() {
+    return ChemicalReactionDataSource.STANDARD;
+  }
+
+  /**
+   * Get the concentration basis used to evaluate chemical-reaction quotients.
+   *
+   * @return reaction concentration basis used by chemical equilibrium
+   */
+  public default ChemicalReactionConcentrationBasis getChemicalReactionConcentrationBasis() {
+    return ChemicalReactionConcentrationBasis.MOLE_FRACTION;
+  }
 
   /**
    * getCompFormulaes.

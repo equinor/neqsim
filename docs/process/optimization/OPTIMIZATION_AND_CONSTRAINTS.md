@@ -16,6 +16,7 @@ This document provides an integrated view of NeqSim's optimization and constrain
 - [Overview](#overview)
 - [Constraint Framework Architecture](#constraint-framework-architecture)
   - [Core Constraint Classes](#core-constraint-classes)
+  - [Process-Boundary Constraint Evidence](#process-boundary-constraint-evidence)
   - [Equipment Capacity Strategies](#equipment-capacity-strategies)
   - [Constraint Types and Severity](#constraint-types-and-severity)
 - [Optimization Framework](#optimization-framework)
@@ -144,6 +145,38 @@ CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", Cons
 | `isNearLimit()` | `boolean` | True if above warning threshold (default 90%) |
 | `getMargin()` | `double` | Remaining headroom (1.0 - utilization) |
 | `isEnabled()` | `boolean` | True if constraint participates in capacity analysis |
+
+### Process-Boundary Constraint Evidence
+
+`ProcessModelSimulationEvaluator` can register injection, receiving-capacity, export-capacity,
+product-quality, and nomination limits as qualified process-boundary constraints. Each completed
+operating point returns immutable `ProcessBoundaryConstraintEvidence` containing:
+
+- stable area/point/constraint identity and boundary kind;
+- flow direction and an explicit mass, molar, standard-volume, actual-volume, or energy basis;
+- physical unit, fixed bounds or target/tolerance, sampled value, and signed physical margin;
+- non-negative physical violation plus a separately scaled dimensionless violation;
+- provenance, confidence, effective-period labels, applicability, calculation status, and diagnostics.
+
+Missing, non-finite, not-calculable, or explicitly out-of-validity evidence fails a hard boundary
+constraint closed. A boundary callback is sampled exactly once after the `ProcessModel` run, and
+the resulting evidence is propagated to single-action and coupled action-set evaluations. The
+`NetworkNomination` and `NetworkQualityResult` adapters retain their existing rate-basis, quality
+method, reference-condition, margin, and provenance metadata without changing the underlying
+network or thermodynamic calculation.
+
+```java
+evaluator.addNominationConstraint(
+    "sales nomination", "export", nomination, periodIndex,
+    ProcessBoundaryConstraintEvidence.FlowDirection.OUT_OF_PROCESS,
+    model -> model.getVariableValue("export::sales gas.flowRate", "kg/hr"),
+    true, 1000.0, 1000.0, "shipper nomination");
+```
+
+The residual scale is expressed in the same physical unit as the constraint. It is used only to
+form the dimensionless optimization penalty; it never changes the reported engineering value,
+limit, or margin. These APIs qualify optimization-facing evidence and do not implement nominations,
+market settlement, gas-quality physics, injection physics, or equipment solvers.
 
 ### Equipment Capacity Strategies
 
@@ -695,6 +728,184 @@ OptimizationResult result = new ProductionOptimizer().optimize(process, feed, co
 | `getDecisionVariables()` | Map of optimized variable values |
 | `getIterations()` | Number of iterations used |
 | `getInfeasibilityDiagnosis()` | Detailed constraint violation report |
+
+
+---
+
+## Paired Installed-Capacity Alternatives
+
+Use `ProcessModelDebottleneckStudy` when an installed direct `CapacityConstraint` has
+one documented replacement or expansion basis and both the existing and proposed cases must be
+searched with the same deterministic policy. The study:
+
+1. resolves the exact `area::equipment/constraint` identity;
+2. freezes the installed limit, direction, unit, severity, provenance, confidence, validity range,
+   and shadow-price field;
+3. searches and independently verifies the baseline;
+4. applies the proposed limit and its evidence metadata, then searches and verifies the alternative;
+5. samples registered production, power, energy, emissions, or screening-economic metrics once at
+   each selected operating point; and
+6. restores the installed constraint and pre-study parameter vector and reconverges the model.
+
+Only direct equipment constraints are eligible. Strategy-generated defaults are deliberately
+excluded because they are not a stable installed asset transaction.
+
+```java
+List<double[]> candidates = Arrays.asList(
+    new double[] {800.0},
+    new double[] {999.0},
+    new double[] {1199.0});
+
+ProcessModelDebottleneckStudy.CandidateListSearch search =
+    new ProcessModelDebottleneckStudy.CandidateListSearch(
+        "throughput-grid",
+        "Ordered throughput grid",
+        "screening candidate set rev A",
+        candidates,
+        0,
+        0.0);
+
+ProcessModelDebottleneckStudy.CapacityAlternative alternative =
+    new ProcessModelDebottleneckStudy.CapacityAlternative(
+        "separator-gas-1200",
+        "Raise separator gas capacity",
+        "brownfield screening case rev A",
+        "separation",
+        "separator",
+        "installed gas rate",
+        1200.0,
+        "kg/hr",
+        ProcessModelDebottleneckStudy.LimitDirection.MAXIMUM,
+        "vendor budget curve rev A",
+        0.8,
+        900.0,
+        1300.0);
+
+ProcessModelDebottleneckStudy study = new ProcessModelDebottleneckStudy(
+    "separator-study",
+    "Paired separator capacity study",
+    "2026 screening basis",
+    evaluator,
+    alternative,
+    search,
+    0);
+
+study.addMetric(new ProcessModelDebottleneckStudy.MetricDefinition(
+    "production",
+    "Feed production",
+    ProcessModelDebottleneckStudy.MetricKind.PRODUCTION,
+    "kg/hr",
+    "wet feed mass rate",
+    "NeqSim stream result",
+    "single steady state",
+    1.0,
+    true,
+    model -> model.getVariableValue("wells::feed.flowRate", "kg/hr")));
+
+ProcessModelDebottleneckStudy.StudyResult result = study.evaluate();
+```
+
+The 999 and 1199 kg/hr candidates deliberately retain 1 kg/hr below the documented
+1000 and 1200 kg/hr installed limits. Keep a declared engineering/numerical feasibility margin
+instead of depending on floating-point reconstruction of stream flow to equal a hard limit exactly.
+
+A `COMPLETED` outcome requires two converged, feasible verification runs, all required metrics,
+and successful state recovery. Inspect `getOriginalCapacityState()`,
+`getAppliedCapacityState()`, both scenario evidence objects, `getMetricComparisons()`, and
+`getDiagnostics()`. Scenario evidence retains objective values, physical constraint margins,
+installed-equipment evidence, and boundary evidence. Arrays and lists returned by the result are
+defensive copies or unmodifiable views, and the result is Java-serializable for Python/JPype and
+restartable study records.
+
+Metric deltas are always `alternative - baseline`. Units, physical or commercial basis,
+provenance, effective period, confidence, and required/optional status are explicit. Economic
+metrics are screening indicators only; no price, discount rate, emissions factor, or cost is
+implied by NeqSim.
+
+The paired result is sampled simulator evidence over the declared candidates. It is not proof of
+causality, a global optimum, a KKT shadow price, certified emissions, mechanical design adequacy,
+or investment approval.
+
+---
+
+## Ranking Independent Debottleneck Alternatives
+
+Use `ProcessModelDebottleneckRanking` after two or more independent
+`ProcessModelDebottleneckStudy` runs have completed. It ranks one explicitly declared metric at a
+time and rejects evidence that is not directly comparable. It does not normalize, weight, or add
+production, power, energy, emissions, and screening economics.
+
+```java
+ProcessModelDebottleneckRanking.RankingPolicy productionPolicy =
+    new ProcessModelDebottleneckRanking.RankingPolicy(
+        "production-delta",
+        "Production delta ranking",
+        "screening portfolio rev A",
+        "production",
+        "Feed production",
+        ProcessModelDebottleneckStudy.MetricKind.PRODUCTION,
+        "kg/hr",
+        "wet feed mass rate",
+        "NeqSim stream result",
+        "single steady state",
+        ProcessModelDebottleneckRanking.RankingDirection.MAXIMIZE,
+        1.0e-8,
+        1.0e-8,
+        0.5,
+        0.9);
+
+ProcessModelDebottleneckRanking ranking =
+    new ProcessModelDebottleneckRanking(
+        "separator-portfolio",
+        "Separator alternatives portfolio",
+        "brownfield screening alternatives rev A",
+        productionPolicy);
+
+ProcessModelDebottleneckRanking.RankingResult ranked =
+    ranking.rank(Arrays.asList(study1100, study1150, study1200));
+
+ProcessModelDebottleneckRanking.CandidateEvidence best = ranked.getBestCandidate();
+List<ProcessModelDebottleneckRanking.CandidateEvidence> rejected =
+    ranked.getRejectedCandidates();
+```
+
+The policy above requires exact metric id, name, kind, unit, basis, provenance, and effective
+period. The first tolerance is in `kg/hr` for ranking ties. The second is dimensionless and applies
+only to repeated finite simulator values from an otherwise identical baseline; metadata and selected
+parameter values still match exactly. The two confidence floors apply separately to the documented
+capacity alternative and the baseline/alternative metric evidence; use `Double.NaN` only when a
+confidence floor is deliberately unset. A submitted study is rankable only when it:
+
+- completed both scenarios and independently verified convergence and feasibility;
+- restored the complete installed-capacity state and reconverged the pre-study process state;
+- supplies a finite `alternative - baseline` delta for the declared metric; and
+- reproduces the reference baseline's search identity/provenance, selected parameter vector and
+  evidence schema exactly, with finite metric/objective/constraint values inside the declared
+  dimensionless relative tolerance.
+
+The first otherwise-qualified submission establishes the baseline reference. This deliberately
+strict comparison prevents alternatives based on a changed candidate set, process configuration,
+constraint registration, objective definition, data period, emission factor, or price basis from
+being silently mixed into one list. Rejected rows remain available through
+`getRejectedCandidates()` and `getCandidatesInInputOrder()` with a `CandidateStatus` and explicit
+diagnostics.
+
+Ranking values are always the declared metric's paired delta in its stated unit. Candidates are
+ordered by the policy direction. The tie tolerance is in that same unit; ties receive competition
+ranks and retain deterministic input order. Run separate rankings for production, power, emissions,
+or screening value. A screening-economic ranking is only comparable when currency/time basis,
+factor provenance, effective period, and confidence match exactly; it is not an NPV calculation or
+investment decision.
+
+For weighted field-concept decisions across economics, risk, emissions, strategic fit, and other
+normalized criteria, use the field-development `DevelopmentOptionRanker`. That is a separate MCDA
+layer with accountable weights. `ProcessModelDebottleneckRanking` deliberately stays at the
+simulator-evidence layer and never invents those weights.
+
+`RankingPolicy`, `CandidateEvidence`, and `RankingResult` are immutable and Java-serializable. The
+result retains each complete immutable `StudyResult`, so JPype callers can inspect the original and
+applied capacity states, selected operating points, physical constraint margins, boundary evidence,
+all registered metrics, restoration flags, and diagnostics after ranking.
 
 ---
 

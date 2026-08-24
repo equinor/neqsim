@@ -181,6 +181,25 @@ class EconomicsTest {
   }
 
   @Test
+  void testCommodityFeesAreSeparateFromTransportTariffs() {
+    engine.setCapex(0.0, 2025);
+    engine.setGasPrice(1.0);
+    engine.setGasTariff(0.02);
+    engine.setOilTariff(0.0);
+    engine.setOpexPercentOfCapex(0.0);
+    engine.setCommodityFeeSchedule(CommodityFeeSchedule.builder().gasProcessingFee(0.03).annualFixedFee(2.0).build());
+    engine.addAnnualProduction(2025, 0.0, 100.0e6, 0.0);
+
+    CashFlowResult result = engine.calculate(0.0);
+    CashFlowEngine.AnnualCashFlow annual = result.getAnnualCashFlows().get(0);
+
+    assertEquals(2.0, annual.getTariff(), 1.0e-12);
+    assertEquals(5.0, annual.getProcessingFee(), 1.0e-12);
+    assertEquals(93.0, annual.getNetRevenue(), 1.0e-12);
+    assertEquals(0.03, engine.copy().getCommodityFeeSchedule().getGasProcessingFeeUsdPerSm3(), 1.0e-12);
+  }
+
+  @Test
   void testBreakevenGasPrice() {
     // Set up a marginal project
     engine.setCapex(500.0, 2025);

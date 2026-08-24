@@ -155,17 +155,44 @@ class FlowRegimeHorizontalTransitionTest {
   }
 
   /**
-   * The transition stays opt-in, while the blending it depends on is always available.
+   * The horizontal transition is the default, and the blending it depends on is always available.
    */
   @Test
-  @DisplayName("Equilibrium-level transition is off by default, blending is on")
-  void testEquilibriumLevelTransitionIsOffByDefault() {
+  @DisplayName("Equilibrium-level transition is on by default, blending is on")
+  void testEquilibriumLevelTransitionIsOnByDefault() {
     FlowRegimeDetector detector = new FlowRegimeDetector();
 
-    Assertions.assertFalse(detector.isUseEquilibriumLevelAnnularTransition(),
-        "the transition must stay opt-in until the terrain response it implies is anchored");
+    Assertions.assertTrue(detector.isUseEquilibriumLevelAnnularTransition(),
+        "the horizontal branch must decide annular flow on the equilibrium level, not on a vertical criterion");
     Assertions.assertTrue(detector.isBlendRegimeTransitions(),
         "closure blending must default on, otherwise the transition steps hold-up");
+  }
+
+  /**
+   * A pipe must be able to select the criterion its own detector uses.
+   *
+   * <p>
+   * {@link neqsim.process.equipment.pipeline.TwoFluidPipe} owns a private detector with no accessor, so before the
+   * delegating setter the choice of horizontal criterion was unreachable from the equipment class and could only be
+   * exercised by reflection.
+   * </p>
+   */
+  @Test
+  @DisplayName("TwoFluidPipe exposes the horizontal annular criterion")
+  void testPipeDelegatesTheTransitionSetting() {
+    neqsim.process.equipment.pipeline.TwoFluidPipe pipe = new neqsim.process.equipment.pipeline.TwoFluidPipe(
+        "criterion-delegation");
+
+    Assertions.assertTrue(pipe.isUseEquilibriumLevelAnnularTransition(),
+        "a new pipe must start on the same criterion as a new detector");
+
+    pipe.setUseEquilibriumLevelAnnularTransition(false);
+    Assertions.assertFalse(pipe.isUseEquilibriumLevelAnnularTransition(),
+        "the pipe must delegate the criterion to the detector it owns");
+
+    pipe.setUseEquilibriumLevelAnnularTransition(true);
+    Assertions.assertTrue(pipe.isUseEquilibriumLevelAnnularTransition(),
+        "the criterion must be selectable in both directions");
   }
 
   /**

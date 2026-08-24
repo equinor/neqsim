@@ -1,10 +1,8 @@
 ---
 title: "Thermodynamic Models in NeqSim"
-description: "This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are cla..."
+description: "Source-anchored guide to NeqSim thermodynamic model families, selection boundaries, mixing rules, and representative APIs."
 keywords: "thermodynamic model, SRK, Peng-Robinson, CPA, UMR-CPA, SystemUMRCPAEoS, TEG dehydration, GERG-2008, EOS-CG, UMR-PRU, electrolyte, cubic EOS, activity coefficient, NRTL, UNIFAC"
 ---
-
-# Thermodynamic Models in NeqSim
 
 This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are classified into categories based on their mathematical formulation and application domain.
 
@@ -26,7 +24,7 @@ This document provides a comprehensive overview of the thermodynamic models avai
 
 ## 1. Introduction
 
-NeqSim (Non-Equilibrium Simulator) provides a rich library of thermodynamic models for simulating phase equilibria, physical properties, and process operations. Choosing the appropriate thermodynamic model is crucial for obtaining accurate results in process simulation.
+NeqSim (Non-Equilibrium Simulator) provides thermodynamic models for phase equilibria, physical properties, and process operations. Model choice must follow the components, phases, property targets, operating envelope, and available parameter validation; the tables below are starting points, not accuracy guarantees.
 
 ### General Workflow
 
@@ -69,9 +67,7 @@ fluid.init(0);
 
 Cubic equations of state express pressure as a function of temperature and molar volume in a cubic polynomial form:
 
-$$
-P = \frac{RT}{v - b} - \frac{a(T)}{(v + \epsilon b)(v + \sigma b)}
-$$
+$$P = \frac{RT}{v - b} - \frac{a(T)}{(v + \epsilon b)(v + \sigma b)}$$
 
 Where:
 - $P$ = pressure
@@ -84,9 +80,7 @@ Where:
 
 The energy parameter typically uses an alpha function:
 
-$$
-a(T) = a_c \cdot \alpha(T_r, \omega)
-$$
+$$a(T) = a_c \cdot \alpha(T_r, \omega)$$
 
 Where $T_r = T/T_c$ is the reduced temperature and $\omega$ is the acentric factor.
 
@@ -94,9 +88,7 @@ Where $T_r = T/T_c$ is the reduced temperature and $\omega$ is the acentric fact
 
 For SRK: $\epsilon = 0$, $\sigma = 1$
 
-$$
-P = \frac{RT}{v - b} - \frac{a(T)}{v(v + b)}
-$$
+$$P = \frac{RT}{v - b} - \frac{a(T)}{v(v + b)}$$
 
 | Class | Description | Best For |
 |-------|-------------|----------|
@@ -120,9 +112,7 @@ fluid.setMixingRule("classic");
 
 For PR: $\epsilon = 1 - \sqrt{2}$, $\sigma = 1 + \sqrt{2}$
 
-$$
-P = \frac{RT}{v - b} - \frac{a(T)}{v(v + b) + b(v - b)}
-$$
+$$P = \frac{RT}{v - b} - \frac{a(T)}{v(v + b) + b(v - b)}$$
 
 | Class | Description | Best For |
 |-------|-------------|----------|
@@ -159,15 +149,11 @@ fluid.setMixingRule("classic");
 
 CPA (Cubic Plus Association) extends cubic EoS to handle hydrogen bonding in polar molecules like water, alcohols, and glycols. The pressure is expressed as:
 
-$$
-P = P_{\text{cubic}} + P_{\text{association}}
-$$
+$$P = P_{\text{cubic}} + P_{\text{association}}$$
 
 The association term accounts for hydrogen bonding:
 
-$$
-P_{\text{association}} = -\frac{1}{2} RT \rho \sum_i x_i \sum_{A_i} \left( 1 - X_{A_i} \right) \frac{\partial \ln g}{\partial v}
-$$
+$$P_{\text{association}} = -\frac{1}{2} RT \rho \sum_i x_i \sum_{A_i} \left( 1 - X_{A_i} \right) \frac{\partial \ln g}{\partial v}$$
 
 Where:
 - $X_{A_i}$ = fraction of site A on molecule $i$ not bonded to other active sites
@@ -176,9 +162,7 @@ Where:
 
 The non-bonded site fraction $X_{A_i}$ is determined by solving:
 
-$$
-X_{A_i} = \frac{1}{1 + \rho \sum_j x_j \sum_{B_j} X_{B_j} \Delta^{A_i B_j}}
-$$
+$$X_{A_i} = \frac{1}{1 + \rho \sum_j x_j \sum_{B_j} X_{B_j} \Delta^{A_i B_j}}$$
 
 Where $\Delta^{A_i B_j}$ is the association strength between site A on molecule $i$ and site B on molecule $j$.
 
@@ -238,9 +222,7 @@ in a single equation of state:
 
 The pressure is the sum of a physical and an association contribution:
 
-$$
-P = P_{\text{PR}}(\text{UMR mixing, MC alpha}) + P_{\text{association}}(\text{CPA})
-$$
+$$P = P_{\text{PR}}(\text{UMR mixing, MC alpha}) + P_{\text{association}}(\text{CPA})$$
 
 A key design principle is the **division of labour** between the terms:
 hydrogen bonding is captured by the **CPA association** term (not by dedicated
@@ -326,9 +308,7 @@ to molecular type:
 
 Reference equations of state are explicit in the dimensionless Helmholtz free energy $\alpha$:
 
-$$
-\alpha(\delta, \tau, \bar{x}) = \frac{a(\rho, T, \bar{x})}{RT} = \alpha^0(\delta, \tau, \bar{x}) + \alpha^r(\delta, \tau, \bar{x})
-$$
+$$\alpha(\delta, \tau, \bar{x}) = \frac{a(\rho, T, \bar{x})}{RT} = \alpha^0(\delta, \tau, \bar{x}) + \alpha^r(\delta, \tau, \bar{x})$$
 
 Where:
 - $\delta = \rho / \rho_r$ = reduced density
@@ -338,9 +318,7 @@ Where:
 
 The residual contribution is fitted to high-accuracy experimental data:
 
-$$
-\alpha^r(\delta, \tau, \bar{x}) = \sum_{i=1}^{N} x_i \alpha_{0i}^r(\delta, \tau) + \sum_{i=1}^{N-1} \sum_{j=i+1}^{N} x_i x_j F_{ij} \alpha_{ij}^r(\delta, \tau)
-$$
+$$\alpha^r(\delta, \tau, \bar{x}) = \sum_{i=1}^{N} x_i \alpha_{0i}^r(\delta, \tau) + \sum_{i=1}^{N-1} \sum_{j=i+1}^{N} x_i x_j F_{ij} \alpha_{ij}^r(\delta, \tau)$$
 
 These models provide superior accuracy for density, speed of sound, and heat capacity compared to cubic EoS.
 
@@ -424,9 +402,7 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 
 Activity coefficient models describe non-ideal liquid behavior through the excess Gibbs energy:
 
-$$
-G^E = RT \sum_i x_i \ln \gamma_i
-$$
+$$G^E = RT \sum_i x_i \ln \gamma_i$$
 
 Where $\gamma_i$ is the activity coefficient of component $i$.
 
@@ -434,9 +410,7 @@ Where $\gamma_i$ is the activity coefficient of component $i$.
 
 Group contribution method that predicts activity coefficients from molecular group interactions:
 
-$$
-\ln \gamma_i = \ln \gamma_i^C + \ln \gamma_i^R
-$$
+$$\ln \gamma_i = \ln \gamma_i^C + \ln \gamma_i^R$$
 
 Where the combinatorial ($C$) and residual ($R$) contributions are calculated from group properties.
 
@@ -452,9 +426,7 @@ fluid.addComponent("water", 0.7);
 
 Local composition model with binary interaction parameters:
 
-$$
-\ln \gamma_i = \frac{\sum_j x_j \tau_{ji} G_{ji}}{\sum_k x_k G_{ki}} + \sum_j \frac{x_j G_{ij}}{\sum_k x_k G_{kj}} \left( \tau_{ij} - \frac{\sum_m x_m \tau_{mj} G_{mj}}{\sum_k x_k G_{kj}} \right)
-$$
+$$\ln \gamma_i = \frac{\sum_j x_j \tau_{ji} G_{ji}}{\sum_k x_k G_{ki}} + \sum_j \frac{x_j G_{ij}}{\sum_k x_k G_{kj}} \left( \tau_{ij} - \frac{\sum_m x_m \tau_{mj} G_{mj}}{\sum_k x_k G_{kj}} \right)$$
 
 ```java
 import neqsim.thermo.system.SystemNRTL;
@@ -481,15 +453,11 @@ fluid.addComponent("water", 0.6);
 
 Electrolyte models extend CPA with electrostatic contributions for aqueous salt solutions:
 
-$$
-A^{res} = A^{CPA} + A^{elec}
-$$
+$$A^{res} = A^{CPA} + A^{elec}$$
 
 The electrostatic contribution typically includes:
 
-$$
-A^{elec} = A^{MSA} + A^{Born} + A^{SR}
-$$
+$$A^{elec} = A^{MSA} + A^{Born} + A^{SR}$$
 
 Where:
 - $A^{MSA}$ = Mean Spherical Approximation (ion-ion screening)
@@ -498,9 +466,7 @@ Where:
 
 **Born Solvation Term:**
 
-$$
-\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{8\pi\varepsilon_0 k_B T} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)
-$$
+$$\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{8\pi\varepsilon_0 k_B T} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)$$
 
 ### 7.2 Electrolyte-CPA (Equinor)
 
@@ -519,10 +485,9 @@ system.setMixingRule(10);  // Required for electrolyte CPA
 
 ThermodynamicOperations ops = new ThermodynamicOperations(system);
 ops.TPflash();
-
-// Access activity coefficients
-double meanGamma = system.getPhase(0).getMeanIonicActivityCoefficient("Na+", "Cl-");
 ```
+
+`PhaseInterface` does not expose a general `getMeanIonicActivityCoefficient(...)` method. Activity and osmotic-coefficient access is model-specific; use the APIs and parameter-coverage checks documented in [Electrolyte CPA Model](ElectrolyteCPAModel.md) and [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance.md).
 
 ### 7.3 Søreide-Whitson Model
 
@@ -532,15 +497,11 @@ The Søreide-Whitson model is a modified Peng-Robinson equation of state specifi
 
 The key innovation is a modified alpha function for water that incorporates salinity:
 
-$$
-\alpha = A^2
-$$
+$$\alpha = A^2$$
 
 where:
 
-$$
-A(T_r, c_s) = 1.0 + 0.453 \left[ 1.0 - T_r \left( 1.0 - 0.0103 \cdot c_s^{1.1} \right) \right] + 0.0034 \left( T_r^{-3} - 1.0 \right)
-$$
+$$A(T_r, c_s) = 1.0 + 0.453 \left[ 1.0 - T_r \left( 1.0 - 0.0103 \cdot c_s^{1.1} \right) \right] + 0.0034 \left( T_r^{-3} - 1.0 \right)$$
 
 - $T_r = T / T_c$ is the reduced temperature
 - $c_s$ is the salinity expressed as equivalent NaCl molality (mol/kg H₂O)
@@ -564,7 +525,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 ```
 
-> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel).
+> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel.md).
 >
 > **Reference:** Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240.
 
@@ -577,6 +538,10 @@ ops.TPflash();
 | `SystemKentEisenberg` | Kent-Eisenberg aqueous GE + SRK gas/oil | Reactive CO2/H2S amine VLLE screening |
 | `SystemDuanSun` | Duan-Sun, currently CO2-only | CO2 correlation; not hybrid gas-oil-aqueous |
 | `SystemFurstElectrolyteEos` | Fürst electrolyte EoS | General electrolytes |
+
+Mixed-ion `SystemPitzer` states fail before activity or osmotic-coefficient evaluation when a required binary,
+same-sign `theta`, or ternary `psi` interaction is absent. See [Pitzer Parameter Provenance and
+Coverage](pitzer_parameter_provenance.md) for dataset identity, diagnostics, and the parameter-adoption gate.
 
 All subclasses of `SystemEosGE` can call `enableHybridEosGeFlash()` to use the fixed EOS-gas / EOS-oil / GE-aqueous
 topology. This does not add missing ionic species, reactions or activity parameters to the selected GE model.
@@ -593,34 +558,26 @@ Mixing rules determine how pure-component parameters are combined for mixtures. 
 
 **van der Waals One-Fluid Mixing Rule:**
 
-$$
-a_{mix} = \sum_i \sum_j x_i x_j a_{ij}
-$$
+$$a_{mix} = \sum_i \sum_j x_i x_j a_{ij}$$
 
-$$
-b_{mix} = \sum_i x_i b_i
-$$
+$$b_{mix} = \sum_i x_i b_i$$
 
 With combining rule:
 
-$$
-a_{ij} = \sqrt{a_i a_j}(1 - k_{ij})
-$$
+$$a_{ij} = \sqrt{a_i a_j}(1 - k_{ij})$$
 
 | Type | Name | Description |
 |------|------|-------------|
 | 1 | `NO` | All $k_{ij} = 0$ (no interactions) |
 | 2 | `CLASSIC` | Classic with database $k_{ij}$ |
-| 8 | `CLASSIC_T` | Temperature-dependent: $k_{ij}(T) = k_{ij,0} + k_{ij,T} \cdot T$ |
-| 12 | `CLASSIC_T2` | Inverse T-dependency: $k_{ij}(T) = k_{ij,0} + k_{ij,T}/T$ |
+| 8 | `CLASSIC_T` | Normalized T-dependency: $k_{ij}(T) = k_{ij,0} + k_{ij,T} \left(\frac{T}{273.15\ \mathrm{K}} - 1\right)$ |
+| 12 | `CLASSIC_T2` | Inverse T-dependency: $k_{ij}(T) = k_{ij,0} + \frac{k_{ij,T}}{T}$ |
 
 ### 8.3 Huron-Vidal Mixing Rules
 
 Combines cubic EoS with activity coefficient models at infinite pressure:
 
-$$
-a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} - \frac{G^E}{\Lambda} \right)
-$$
+$$a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} - \frac{G^E}{\Lambda} \right)$$
 
 Where $\Lambda \approx 0.693$ for SRK.
 
@@ -640,9 +597,7 @@ fluid.setMixingRule("HV", "NRTL");
 
 Matches both second virial coefficient and excess Gibbs energy:
 
-$$
-b_{mix} = \frac{\sum_i \sum_j x_i x_j \left( b - \frac{a}{RT} \right)_{ij}}{1 - \frac{A_\infty^E}{CRT} - \sum_i x_i \frac{a_i}{RTb_i}}
-$$
+$$b_{mix} = \frac{\sum_i \sum_j x_i x_j \left( b - \frac{a}{RT} \right)_{ij}}{1 - \frac{A_\infty^E}{CRT} - \sum_i x_i \frac{a_i}{RTb_i}}$$
 
 | Type | Name | Description |
 |------|------|-------------|
@@ -707,10 +662,17 @@ mixRule.setBinaryInteractionParameter(0, 1, 0.12);
 mixRule.setBinaryInteractionParameterij(0, 1, 0.08);  // kij
 mixRule.setBinaryInteractionParameterji(0, 1, 0.12);  // kji
 
-// Set temperature-dependent kij
-mixRule.setBinaryInteractionParameter(0, 1, 0.10);      // kij0
-mixRule.setBinaryInteractionParameterT1(0, 1, 0.001);   // kijT
+// Obtain the rule again after selecting CLASSIC_T
+fluid.setMixingRule(EosMixingRuleType.CLASSIC_T);
+EosMixingRulesInterface temperatureDependentRule =
+    fluid.getPhase(0).getMixingRule();
+temperatureDependentRule.setBinaryInteractionParameter(0, 1, 0.10);
+temperatureDependentRule.setBinaryInteractionParameterT1(0, 1, 0.001);
 ```
+
+For `CLASSIC_T`, `kij0` is the interaction parameter at 273.15 K and `kijT` is a
+dimensionless coefficient for the normalized temperature shift. For `CLASSIC_T2`, `kijT`
+has units of kelvin because the implementation divides it by absolute temperature in kelvin.
 
 ---
 
@@ -720,49 +682,26 @@ mixRule.setBinaryInteractionParameterT1(0, 1, 0.001);   // kijT
 
 NeqSim provides an `autoSelectModel()` method that automatically chooses an appropriate thermodynamic model based on the components in your fluid. This is useful for quick setups or when you're unsure which model to use.
 
-### 9.2 Auto-Selection Logic
+### 9.2 Current Source Behavior
 
-The `autoSelectModel()` method follows this decision tree:
+The heuristic is implemented by `SystemThermo.autoSelectModel()`. It returns a model-converted
+`SystemInterface`, so callers must retain the returned object. The current decision order is:
 
-```java
-public SystemInterface autoSelectModel() {
-    if (hasComponent("MDEA") && hasComponent("water") && hasComponent("CO2")) {
-        return setModel("Electrolyte-ScRK-EOS");  // Amine systems
-    }
-    else if (hasComponent("water") || hasComponent("methanol") ||
-             hasComponent("MEG") || hasComponent("TEG") ||
-             hasComponent("ethanol") || hasComponent("DEG")) {
-        if (hasComponent("Na+") || hasComponent("K+") ||
-            hasComponent("Br-") || hasComponent("Mg++") ||
-            hasComponent("Cl-") || hasComponent("Ca++") ||
-            hasComponent("Fe++") || hasComponent("SO4--")) {
-            return setModel("Electrolyte-CPA-EOS-statoil");  // Electrolytes
-        } else {
-            return setModel("CPAs-SRK-EOS-statoil");  // Polar/associating
-        }
-    }
-    else if (hasComponent("water")) {
-        return setModel("ScRK-EOS");  // Water present
-    }
-    else if (hasComponent("mercury")) {
-        return setModel("SRK-TwuCoon-Statoil-EOS");  // Mercury
-    }
-    else {
-        return setModel("SRK-EOS");  // Default: standard SRK
-    }
-}
-```
+| First matching condition | Returned model |
+|--------------------------|----------------|
+| MDEA + water + CO₂ | `Electrolyte-ScRK-EOS` |
+| Any of water, methanol, MEG, TEG, ethanol, or DEG, plus a recognized ion | `Electrolyte-CPA-EOS-statoil` |
+| Any of water, methanol, MEG, TEG, ethanol, or DEG, without a recognized ion | `CPAs-SRK-EOS-statoil` |
+| Mercury, with none of the earlier associating components | `SRK-TwuCoon-Statoil-EOS` |
+| Otherwise | `SRK-EOS` |
 
-### 9.3 Model Selection Summary
+The source contains a later pure-water `ScRK-EOS` branch, but it is unreachable because water
+already matches the preceding associating-component condition. Consequently, current pure-water
+auto-selection returns `CPAs-SRK-EOS-statoil`, not `ScRK-EOS`.
 
-| Components Present | Selected Model |
-|-------------------|----------------|
-| MDEA + water + CO2 | Electrolyte-ScRK-EOS |
-| Water/glycols + ions | Electrolyte-CPA-EOS-statoil |
-| Water/glycols (no ions) | CPAs-SRK-EOS-statoil |
-| Only water (no glycols) | ScRK-EOS |
-| Mercury | SRK-TwuCoon-Statoil-EOS |
-| Default (hydrocarbons only) | SRK-EOS |
+This is a convenience heuristic, not a validation or model-ranking service. It does not inspect
+property targets, operating range, binary-parameter coverage, or uncertainty. For engineering
+work, make the model choice explicit and validate it against relevant data.
 
 ### 9.4 Usage
 
@@ -781,13 +720,14 @@ gas.addComponent("water", 0.15);
 gas.addComponent("MEG", 0.05);
 gas.createDatabase(true);
 
-// Auto-select will switch to CPA model
+// Retain the returned model-converted system.
 SystemInterface optimizedFluid = gas.autoSelectModel();
+optimizedFluid.autoSelectMixingRule();
 ```
 
 ### 9.5 Auto-Select Mixing Rule
 
-There is also an `autoSelectMixingRule()` method that selects an appropriate mixing rule based on the model type:
+There is also an `autoSelectMixingRule()` method. It mutates the selected system and uses model-name/component checks; it does not validate parameter coverage:
 
 ```java
 fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
@@ -929,15 +869,14 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide) - Complete guide to creating fluids
-- [Mixing Rules Guide](mixing_rules_guide) - Detailed mixing rule documentation
-- [GERG-2008 and EOS-CG](gerg2008_eoscg) - Reference equation details
-- [Electrolyte CPA Model](ElectrolyteCPAModel) - Electrolyte model documentation
-- [Søreide-Whitson Model](SoreideWhitsonModel) - Gas solubility in brine, produced water emissions
-- [Flash Calculations Guide](flash_calculations_guide) - Thermodynamic operations
-- [Mathematical Models](mathematical_models) - Equation derivations
-- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING) - Emission calculations using Søreide-Whitson
+- [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
+- [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
+- [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
+- [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
+- [Søreide-Whitson Model](SoreideWhitsonModel.md) - Gas solubility in brine, produced water emissions
+- [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations
+- [Mathematical Models](mathematical_models.md) - Equation derivations
+- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING.md) - Emission calculations using Søreide-Whitson
 
 ---
 
-*Last updated: February 2026*

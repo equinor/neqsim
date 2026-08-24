@@ -523,6 +523,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       updateTable("ISO6976constants2016");
       updateTable("STOCCOEFDATA");
       updateTable("REACTIONDATA");
+      updateTable("REACTIONDATAPITZER");
       // Table ReactionKSPdata is not in use anywhere
       updateTable("ReactionKSPdata");
       updateTable("AdsorptionParameters");

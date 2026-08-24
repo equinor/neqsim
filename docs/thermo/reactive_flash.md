@@ -184,6 +184,24 @@ flash.run();
 
 When you provide only molecular species, the flash can automatically discover ionic products from the reaction database:
 
+`chemicalReactionInit()` captures the component identities present at that call. If a component is
+later added, removed, or renamed, NeqSim rejects access to the stale reaction state. Repeat
+`chemicalReactionInit()`, `createDatabase(true)`, and `setMixingRule(...)` before the next reactive
+calculation. Changing only the amount of an existing component does not invalidate the reaction
+topology.
+
+This lifecycle rule is shared by electrolyte EOS systems and electrolyte GE systems such as Pitzer.
+Reinitialization reruns the existing reaction-database selection for that system; it does not make the
+reaction tables or equilibrium-constant parameters interchangeable between thermodynamic models.
+
+Reaction data selection is explicit and inspectable. `SystemKentEisenberg` selects the dedicated
+`KENT_EISENBERG` source of apparent equilibrium constants; electrolyte EOS systems and electrolyte
+GE systems (including Pitzer) currently select `STANDARD`. This mapping records the implemented
+database choice—it is not evidence that a parameter set has been independently validated for every
+model or salinity range. Use `system.getChemicalReactionDataSource()` before initialization and
+`system.getChemicalReactionOperations().getReactionDataSource()` after initialization to record the
+selection in calculation provenance.
+
 ```java
 SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
 system.addComponent("CO2", 0.01);
@@ -216,11 +234,51 @@ Main entry point for the reactive flash.
 | `isConverged()` | Check if the flash converged |
 | `getTotalIterations()` | Total RAND iterations used |
 | `getNumberOfReactions()` | Number of independent reactions ($N_R = N_C - \text{rank}(A)$) |
-| `getEquilibriumTotalMoles()` | Total moles at equilibrium (may differ from 1.0 when reactions change total moles) |
+| `getEquilibriumTotalMoles()` | Extensive total moles at equilibrium (may differ from the feed when reactions change total moles) |
+| `getFinalResidual()` | Final normalized chemical-potential/element-balance residual |
+| `getFinalElementResidual()` | Element-balance contribution to the final normalized residual |
 | `getFinalGibbsEnergy()` | Final Gibbs energy of the equilibrium state |
 | `setUseChemicalReactionInit(boolean)` | Enable auto-discovery of reaction products |
 | `setMaxNumberOfPhases(int)` | Override the system's max phases (use when `init()` resets it) |
 | `setUseDIIS(boolean)` | Enable/disable DIIS acceleration (default: true) |
+
+### Reaction-equilibrium diagnostics
+
+Use `ChemicalReactionOperations` after a chemical-equilibrium or reactive-flash calculation to
+inspect the database-selected reaction set without multiplying trace activities in product space.
+
+| Method | Description |
+|--------|-------------|
+| `getReactionLogResiduals()` | Immutable reaction-name map of signed `ln(Q/K)` residuals in reaction-list order |
+| `getMaximumAbsoluteReactionLogResidual()` | Largest absolute `ln(Q/K)`, or `NaN` if no reactive liquid phase or reaction is available |
+| `getElementBalanceResiduals()` | Immutable element-name map of signed `A n - b` residuals in moles |
+| `getMaximumAbsoluteElementBalanceResidual()` | Largest absolute elemental-balance residual in moles |
+| `getReactivePhaseChargeMoles()` | Signed aqueous/reactive-phase charge inventory in moles of elementary charge |
+| `getNormalizedReactivePhaseChargeResidual()` | Absolute net charge divided by total absolute ionic charge inventory |
+| `getReactionDataSource()` | Typed source selected for the loaded reaction set |
+
+Individual `ChemicalReaction` objects also expose `calcLogReactionQuotient(system, phase)` and
+`calcLogReactionResidual(system, phase)`. These methods use the system-selected concentration and
+activity convention—solute molality for Pitzer and the established mole-fraction path for
+Electrolyte-CPA and Kent-Eisenberg—and sum logarithms directly so trace ionic activities do not
+underflow or overflow before the residual is evaluated.
+
+Element residuals compare the current active-reaction inventory with the `b` vector captured during
+reaction initialization or immediately before the most recent chemical-equilibrium solve. Only
+components in the active reaction basis have columns in `A`; spectator species outside that basis do not
+change `A n - b`. Charge diagnostics include all phase components, so spectator ions are included even
+when they do not participate in an active reaction. The normalized charge residual is scale independent;
+a value of zero denotes exact electroneutrality.
+
+For parameter-level provenance, `getReference()`, `getEquilibriumConstantCoefficients()`, and
+`getReferenceTemperature()` expose the reference identifier and a defensive copy of the stored
+temperature-correlation data. The `CO2water` entry in `STANDARD`, for example, cites Plummer and
+Busenberg (1982), DOI: [10.1016/0016-7037(82)90056-4](https://doi.org/10.1016/0016-7037(82)90056-4).
+Kent-Eisenberg parameters are kept distinct because that screening model uses apparent constants;
+see Kent and Eisenberg, *Hydrocarbon Processing* 55 (1976), 87–90. For rigorous MDEA modeling,
+Huttenhuis et al. describe activity-based constants on a mole-fraction, infinite-dilution-in-water
+reference state and report their temperature validity ranges, DOI:
+[10.1016/j.fluid.2007.10.020](https://doi.org/10.1016/j.fluid.2007.10.020).
 
 ### FormulaMatrix
 

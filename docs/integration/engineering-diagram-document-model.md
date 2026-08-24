@@ -29,11 +29,93 @@ The initial model provides:
   affected drawing and sheet; and
 - opt-in manual sheet definitions, stable object-to-sheet assignments, pinned coordinates, and
   protected connection routes with explicit review evidence; and
+- distinct conservative BFD, PFD, and P&ID drawing views over the same complete canonical semantic
+  object snapshot, with structured diagnostics for every profile omission; and
 - byte-deterministic JSON for equivalent fresh process models.
 
 The automatic partition remains deliberately conservative. It does not choose sheet sizes, grids,
 symbols, legends, or title-block geometry. Manual layout intent is supplied separately through an
 `EngineeringDiagramLayoutRegister`; it is never hidden in the process execution graph.
+
+## Content profiles
+
+`ContentProfile` controls only drawing and sheet membership. `getSemanticObjects()` always retains
+the complete canonical model with the same stable identities, properties, units, provenance, and
+connections, regardless of the selected profile.
+
+| Profile | Drawing-view content | Deliberate omissions |
+| --- | --- | --- |
+| `BFD` | Areas, equipment blocks, boundaries, material ports/nozzles, and material connections | Controlled line detail, energy connections, instrumentation, and signal connections |
+| `PFD` | Areas, equipment, boundaries, controlled lines, material and energy ports/connections | Instrumentation and signal ports/connections |
+| `PID` | Every visual semantic object currently represented by the canonical model | None at the content-policy layer; source-adapter losses remain diagnostic |
+
+Parallel material connections remain distinct in all three profiles. Multi-area off-page connector
+pairs are created only for connections visible in the selected profile, so a BFD does not acquire
+energy or signal cross-sheet references and a PFD does not acquire signal references. Manual sheet,
+pinned-position, or protected-route evidence targeting an omitted object is retained in its source
+register but reported as `DIAGRAM_CONTENT_PROFILE_LAYOUT_OMITTED` rather than silently changing the
+profile.
+
+Every document set records `DIAGRAM_CONTENT_PROFILE_PROPOSAL_ONLY`, and each omitted visual object
+records `DIAGRAM_CONTENT_PROFILE_OBJECT_OMITTED`. These are loss/projection diagnostics, not errors;
+the omitted objects remain available in the canonical semantic snapshot and to other drawing or
+exchange projections.
+
+The BFD policy treats current unit operations as conservative functional blocks; it does not infer
+or aggregate licensed-standard process blocks. The PFD and P&ID policies likewise do not qualify
+symbols, content, layout, measurement/control conventions, or drawing practice. None of the three
+profiles claims ISO 10628, ISO 14617, ISA, or project-standard conformance or engineering approval.
+
+## Project symbol conventions
+
+`EngineeringDiagramConventionRegister` provides an opt-in, immutable project input for native
+SVG/PDF symbol selection. A convention maps one canonical `EngineeringNode.Kind` to one of the
+renderer-native generic vector shapes (`RECTANGLE`, `DIAMOND`, or `HEXAGON`), explicit
+`#RRGGBB` stroke/fill colours, source/revision metadata, and a `PROPOSED` or `REVIEWED`
+evidence state. Reviewed entries require reviewer and review-record references; they still do not
+approve a generated drawing for design or construction.
+
+Pass the register to `NativeEngineeringDiagramRenderer` through the additive constructor overloads.
+An empty register retains byte-compatible legacy rectangle rendering. Once a non-empty register is
+selected, every visible drawable node kind without an exact convention continues to render with the
+legacy rectangle and records `DIAGRAM_RENDER_SYMBOL_FALLBACK`. Proposed mappings record
+`DIAGRAM_RENDER_SYMBOL_CONVENTION_PROPOSAL`. Both diagnostics are deterministic and retain the
+canonical semantic object identity as their subject.
+
+The generic shapes are intentionally project-configurable primitives, not a qualified standards
+catalog. They do not claim ISO 10628, ISO 14617, ISA, company-standard, or project-standard
+conformance. Standards-aligned mappings require licensed clause/symbol traceability, versioned
+fixtures, accountable discipline review, and separate qualification evidence. Existing Classic
+DOT/Graphviz, controlled-document JSON, DEXPI 2.0, and Proteus/P&ID outputs do not consume this
+register and remain unchanged.
+
+## Fixed-port orthogonal routing
+
+Native rendering retains `RoutingMode.LEGACY_CENTER` by default, so every existing constructor keeps
+the previous center-to-center SVG/PDF bytes and visual fingerprints. Select
+`RoutingMode.FIXED_PORT_ORTHOGONAL` through the additive renderer constructors when a controlled
+drawing view needs explicit canonical port geometry:
+
+```java
+NativeEngineeringDiagramRenderer renderer =
+    new NativeEngineeringDiagramRenderer(
+        documents, NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL);
+NativeEngineeringDiagramRenderer.Result result = renderer.render();
+```
+
+The opt-in mode resolves each connection's stable `sourceEndpointId` and `targetEndpointId`, anchors
+the corresponding port/nozzle at the left or right bound of its owner symbol, and exposes the endpoint
+identity on the SVG port marker. Port slots are sorted by stable identity. Branches therefore retain
+distinct anchors, connections between the same owner pair receive deterministic parallel lanes, and
+declared recycle or backward connections receive a deterministic orthogonal return path. Reciprocal
+off-page connectors remain the cross-sheet boundary, while a reviewed protected route remains
+authoritative and is never replaced by automatic routing.
+
+`DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED` reports a malformed endpoint that cannot resolve to an owner.
+A valid peer owner absent from an off-page connection's current sheet is expected and does not create a
+false warning. Fixed-port routing is deterministic proposal geometry; it is not obstacle-optimal,
+standards-qualified, or drawing-approved. Projects should retain protected routes where accountable
+layout refinement is required.
 
 ## Java example
 
@@ -529,3 +611,27 @@ coordinates and protected routes, reciprocal off-page references, deterministic 
 route/object and route-label obstacle diagnostics, collision, clipping, label-overflow and
 broken-reference diagnostics, normalized visual fingerprints, multi-page drawing sets, fresh-model
 determinism, and unchanged Classic DOT and controlled-document JSON.
+
+## Exchange-neutral graphical projection
+
+`EngineeringGraphicalProjectionBuilder` converts the canonical `EngineeringGraph` into an
+immutable, restartable `EngineeringGraphicalProjection`. The projection is deliberately separate
+from both semantic engineering state and renderer-specific SVG, PDF, or DEXPI objects. It carries:
+
+- stable primitive and represented-object identities;
+- explicit millimetre coordinates, dimensions, colours, line styles, and text anchors;
+- source graph fingerprint, controlled source reference, revision, and verification status;
+- separate primitives with deterministic 3 mm interior lane offsets for parallel semantic connections; and
+- deterministic structured diagnostics for generic symbol fallback or missing semantic objects.
+
+The generic `RECTANGLE`, `POLYGON`, `POLYLINE`, and `TEXT` primitives are an adapter contract, not
+a symbol standard. A `REVIEWED` projection records reviewed input evidence only; it does not approve
+a drawing for design or construction. Missing project conventions use an explicit generic rectangle
+and emit `GRAPHICAL_PROJECTION_GENERIC_SYMBOL_FALLBACK`. No ISO 10628, ISO 14617, ISA, DEXPI profile,
+or company-symbol conformance is inferred.
+
+The projection is deterministic JSON (`neqsim_engineering_graphical_projection.v1`) and can be
+restored with `EngineeringGraphicalProjection.fromJson(...)`. Native SVG/PDF and DEXPI Core adapters
+should consume this same projection. Each adapter must preserve supported stable identities and
+report unsupported primitive, symbol, or semantic-reference mappings as structured losses. DEXPI
+`RepresentationGroup` objects must not be emitted as empty placeholders.

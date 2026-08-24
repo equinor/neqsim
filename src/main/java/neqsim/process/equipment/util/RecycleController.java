@@ -2,13 +2,13 @@ package neqsim.process.equipment.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.process.util.uncertainty.SensitivityMatrix;
 
 /**
@@ -46,8 +46,12 @@ public class RecycleController implements Serializable {
   /** Whether to use coordinated acceleration across all recycles at current priority. */
   private boolean useCoordinatedAcceleration = false;
 
-  /** Recycles whose previously accepted state can seed the first observation of this solve. */
-  private Map<Recycle, Boolean> acceptedRecycleSeeds = new IdentityHashMap<>();
+  /**
+   * Recycles whose previously accepted state can seed the first observation of this solve. Held as a list scanned by
+   * identity rather than an {@link java.util.IdentityHashMap} because XStream has no converter for that type and cannot
+   * reflect into {@code java.util} on JDK 9+, which breaks saving a process from an embedded host.
+   */
+  private List<Recycle> acceptedRecycleSeeds = new ArrayList<Recycle>();
 
   /** Stable provenance identity for this controller's transaction state. */
   private String transientStateIdentity = UUID.randomUUID().toString();
@@ -69,7 +73,7 @@ public class RecycleController implements Serializable {
       boolean hadAcceptedState = hasReusableAcceptedState(recyc);
       recyc.resetIterations();
       if (hadAcceptedState) {
-        acceptedRecycleSeeds().put(recyc, Boolean.TRUE);
+        acceptedRecycleSeeds().add(recyc);
       }
       if (recyc.getPriority() < minimumPriorityLevel) {
         minimumPriorityLevel = recyc.getPriority();
@@ -112,7 +116,7 @@ public class RecycleController implements Serializable {
    */
   public boolean doSolveRecycle(Recycle recycle) {
     if (recycle.getPriority() == getCurrentPriorityLevel()) {
-      if (recycle.iterations == 0 && acceptedRecycleSeeds().containsKey(recycle)) {
+      if (recycle.iterations == 0 && containsIdentity(acceptedRecycleSeeds(), recycle)) {
         recycle.iterations = 1;
       }
       return true;
@@ -229,8 +233,8 @@ public class RecycleController implements Serializable {
    * minimum of two recycle observations.
    */
   private void normalizeAcceptedRecycleSeeds() {
-    Map<Recycle, Boolean> seeds = acceptedRecycleSeeds();
-    for (Recycle recycle : seeds.keySet()) {
+    List<Recycle> seeds = acceptedRecycleSeeds();
+    for (Recycle recycle : seeds) {
       if (recycle.iterations > 0) {
         recycle.iterations = Math.max(2, recycle.iterations - 1);
       }
@@ -239,15 +243,31 @@ public class RecycleController implements Serializable {
   }
 
   /**
-   * Returns the transient identity map, recreating it after deserialization.
+   * Returns the accepted-seed list, recreating it after deserialization of an older model.
    *
    * @return accepted recycle seeds for the active solve
    */
-  private Map<Recycle, Boolean> acceptedRecycleSeeds() {
+  private List<Recycle> acceptedRecycleSeeds() {
     if (acceptedRecycleSeeds == null) {
-      acceptedRecycleSeeds = new IdentityHashMap<>();
+      acceptedRecycleSeeds = new ArrayList<Recycle>();
     }
     return acceptedRecycleSeeds;
+  }
+
+  /**
+   * Tests membership by reference, because {@link Recycle} inherits value-based equality.
+   *
+   * @param seeds list to scan
+   * @param recycle recycle to look for
+   * @return true when the exact instance is present
+   */
+  private static boolean containsIdentity(List<Recycle> seeds, Recycle recycle) {
+    for (int i = 0; i < seeds.size(); i++) {
+      if (seeds.get(i) == recycle) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -827,9 +847,9 @@ public class RecycleController implements Serializable {
    */
   public Snapshot captureTransientState() {
     ArrayList<Integer> acceptedSeedIndexes = new ArrayList<Integer>();
-    Map<Recycle, Boolean> seeds = acceptedRecycleSeeds();
+    List<Recycle> seeds = acceptedRecycleSeeds();
     for (int i = 0; i < recycleArray.size(); i++) {
-      if (seeds.containsKey(recycleArray.get(i))) {
+      if (containsIdentity(seeds, recycleArray.get(i))) {
         acceptedSeedIndexes.add(i);
       }
     }
@@ -870,13 +890,13 @@ public class RecycleController implements Serializable {
       coordinatedAccelerator.restoreState(snapshot.coordinatedAcceleratorState);
     }
 
-    Map<Recycle, Boolean> seeds = acceptedRecycleSeeds();
+    List<Recycle> seeds = acceptedRecycleSeeds();
     seeds.clear();
     for (int index : snapshot.acceptedSeedIndexes) {
       if (index < 0 || index >= recycleArray.size()) {
         throw new IllegalArgumentException("Snapshot contains an invalid accepted-recycle index " + index);
       }
-      seeds.put(recycleArray.get(index), Boolean.TRUE);
+      seeds.add(recycleArray.get(index));
     }
   }
 

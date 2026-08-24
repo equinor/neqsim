@@ -241,8 +241,31 @@ Fixed-floor mode is opt-in and should be supported by fluid, wall-wetting, and f
 |--------|---------|-------------|
 | `setUseAdaptiveMinimumOnly(boolean)` | `true` | Use correlation-only minimum (no absolute floor) |
 | `setMinimumLiquidHoldup(double)` | 0.001 | Absolute minimum holdup floor (when adaptive-only is false) |
-| `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup in adaptive mode |
+| `setMinimumSlipFactor(double)` | 2.0 | Minimum ratio of gas to liquid velocity in adaptive mode |
 | `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum slip constraint entirely |
+| `setUseEquilibriumLevelAnnularTransition(boolean)` | `true` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
+| `setSeparatedFrictionModel(boolean)` | `true` | Charge each phase its own wall shear where the phases are separated |
+
+The minimum slip constraint states that the gas outruns the liquid by at least the given factor, which is a property of
+gas-driven transport, so it is applied only on level and uphill sections. On a downhill section gravity moves the
+liquid and the slip ratio legitimately falls; applying the bound there overwrote the momentum balance with a constant,
+and it was binding on 39 of 42 downhill sections of an undulating fixture while binding on none of the uphill ones.
+
+The bound is inverted from the slip ratio itself, `alphaL >= X / (1 + X)` with `X = slipFactor * vsL / vsG`, which is
+below one at every liquid loading. The earlier form `alphaL >= lambdaL * slipFactor` is the same statement only in the
+lean-gas limit; past `lambdaL > 1 / slipFactor` it exceeds one as a hold-up and degenerates into the clamp it was
+truncated to, which is how the Tengesdal severe-slugging facility came to be held liquid-full at a constant 0.9 in
+every section.
+
+The horizontal annular criterion follows the equilibrium liquid level of Taitel and Dukler (1976). Disabling it
+restores the vertical droplet-entrainment threshold, which classified effectively any horizontal gas pipeline as
+annular. The two differ only below the Kelvin-Helmholtz threshold, which on a 73.8 km export line means they agree at
+10 MSm3/d and differ at 4 MSm3/d, where the equilibrium branch moves the maximum holdup error from -25.5 to -2.4
+per cent.
+
+The friction gradient uses per-phase wall shear in stratified flow and the mixture correlation elsewhere. On the same
+export line the pressure drop error across a threefold rate range is +1.4, +1.6, +0.1 and -2.7 per cent, against +5.7,
++5.6, +1.4 and -0.0 per cent for the earlier mixture-only default.
 
 ### Example: Lean Gas vs Rich Condensate
 
@@ -456,11 +479,11 @@ a bubble-size distribution, deformation, coalescence, breakup, or turbulent-diss
 
 The stiff corrected mode is opt-in. Existing simulations retain the legacy `C_D × d_b/(4D)` scaling
 unless enabled, because the corrected mode is not yet quantitatively validated by the public
-Tengesdal severe-slugging benchmark. With the published bounds unchanged, the compatibility default
-passes 6 of 6 cases, while the stable corrected mode passes 3 of 6. Its smallest pressure swing is
-167.1 kPa against 98 +/- 5 kPa, its slug-length ratio is 1.164, and the 16-section, 0.1 s case does
-not establish a repeated cycle. This is a documented physical closure/regime-transition limitation,
-not evidence of numerical source instability.
+Tengesdal severe-slugging benchmark. That comparison was made when the benchmark still asserted a
+riser-head-scaled pressure swing, which has since been shown to come from a saturated minimum-slip
+bound rather than the momentum balance, so the recorded pass counts predate the rebased acceptance
+bounds and the comparison has to be repeated before it means anything. This is a documented
+physical closure/regime-transition limitation, not evidence of numerical source instability.
 
 #### Hart et al. (1989) Correlation
 

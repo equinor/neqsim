@@ -330,6 +330,83 @@ qualification. Commercial import and round-trip evidence must follow
 `docs/integration/dexpi-commercial-cae-evidence-template.json`; a missing vendor test remains
 `QUALIFICATION_REQUIRED` rather than being inferred from schema validity.
 
+### Controlled native Plant export metadata
+
+The compatibility `Dexpi20XmlWriter.write(process, file)` overload remains unchanged and does not invent
+provenance. When the exporting workflow has accountable source values, use
+`Dexpi20PlantExportMetadata` and the additive metadata overload:
+
+```java
+Dexpi20PlantExportMetadata metadata =
+    Dexpi20PlantExportMetadata.builder(
+            "2026-08-18T05:00:00Z", "NeqSim", "Equinor", "3.17.0")
+        .plantProperty(
+            Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_IDENTIFICATION_CODE,
+            "SYNTHETIC-PLANT")
+        .plantProperty(
+            Dexpi20PlantExportMetadata.PlantProperty.PROCESS_PLANT_NAME,
+            "Synthetic regression plant")
+        .build();
+Dexpi20XmlWriter.write(process, outputFile, metadata);
+```
+
+The builder requires a caller-supplied ISO-8601 timestamp with an offset, all four required
+`Core/EngineeringModel` provenance values, and at least one non-blank official
+`Plant/Diagram.PlantMetaData` property. It rejects an empty metadata object so a validator cannot be silenced with
+placeholder content. The exporter places PlantMetaData under the PlantModel's inherited `MetaData` composition and
+serializes plant fields in stable declaration order. This is source provenance, not drawing approval, standards
+conformance, or evidence that graphical representations and boundary nodes are complete.
+
+The committed external baseline is intentionally not changed by this API alone. Regenerate a controlled fixture with
+the metadata overload and rerun the pinned verifier before changing its reviewed error and warning counts.
+
+### Explicit process-boundary connectors
+
+A controlled export can opt in to directional boundary semantics without changing either established byte path:
+
+```java
+Dexpi20PlantExportOptions options =
+    Dexpi20PlantExportOptions.builder(metadata)
+        .boundaryConnectionMode(
+            Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS)
+        .build();
+Dexpi20XmlWriter.write(process, outputFile, options);
+```
+
+For each detected feed crossing into the exported `ProcessSystem`, the writer adds a
+`Plant/Piping.FlowInPipeOffPageConnector`; for every unconsumed product it adds a
+`Plant/Piping.FlowOutPipeOffPageConnector`. Each connector owns a stable piping node, and its boundary segment carries
+explicit source/target item and node references. Ordering follows the process-system and outlet ordering, so repeated
+exports are byte-deterministic. `BoundaryConnectionMode.NONE` is the default and is byte-identical to the metadata-only
+overload.
+
+These objects record a simulation/export boundary proposal. They are not reciprocal controlled-document connector
+pairs, sheet or grid references, graphical representation groups, line-design evidence, or accountable P&ID approval.
+Use the canonical document-set APIs for reviewed cross-sheet intent, and verify the selected Plant artifact with the
+target tool before controlled issue.
+
+The same helper can run the independent MIT-licensed DEXPIViewer validator without downloading or silently updating
+the tool. Supply a local checkout pinned to commit
+`18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad` after installing that checkout's locked Node.js dependencies:
+
+```text
+python devtools/validate_dexpi_interoperability.py . \
+  --native-file src/test/resources/dexpi/2.0/golden/branching-process.dexpi.xml \
+  --dexpi-viewer /absolute/path/to/DEXPIViewer \
+  --dexpi-viewer-baseline src/test/resources/dexpi/2.0/golden/dexpi-viewer-baseline.json \
+  --require-dexpi-viewer \
+  --require-dexpi-viewer-baseline \
+  --output dexpi-viewer-report.json
+```
+
+The helper verifies the checkout's exact Git commit before execution, parses the validator's documented CSV into
+deterministically ordered JSON findings, and records the input and CSV SHA-256 digests. The reviewed golden baseline
+currently contains eight errors and three warnings; matching it is a regression gate, not a clean-validation claim.
+Use `--require-dexpi-viewer-clean` only when the selected native file is expected to have zero errors and zero warnings.
+The present findings identify required export provenance and plant metadata, absent native representation groups, and
+unconnected boundary piping nodes. They must be resolved through controlled metadata and genuine representation
+semantics, not placeholder timestamps or empty graphics.
+
 The DEXPI model contains explicit, graphically positioned process-instrumentation functions, signal-generating
 functions, instrumentation loops, information-flow relationships, control valves, shutdown valves, check valves,
 pressure-safety valves, and blowdown valves. Every generated object is associated with its protected equipment and
@@ -641,3 +718,43 @@ Company or project rules can implement `EngineeringRule` and be registered with 
 operator-specific alarm philosophy, trip thresholds, voting, proprietary design requirements, and
 internal document references in a private rule package; the public NORSOK profile remains
 plant-agnostic.
+
+## Exchange-neutral graphical projection contract
+
+`EngineeringGraphicalProjection` is the controlled, exchange-neutral source for future DEXPI Core
+diagram primitives. It preserves stable semantic and external keys, millimetre geometry, parallel
+routes, source/revision evidence, verification status, and structured fallback diagnostics without
+binding NeqSim to a licensed or project-specific symbol catalogue.
+
+The opt-in `Dexpi20GraphicalProjectionWriter` maps projection primitives onto real objects already
+emitted by the native DEXPI 2.0 Plant writer. It writes one Core `Diagram`, a non-empty
+`RepresentationGroup` for each uniquely resolved external key, and a `Static` group containing
+generic `Polygon`, `PolyLine`, or `Text` primitives. Rectangles are represented as four-point
+polygons. Millimetre coordinates, distinct parallel lanes, primitive identities, and the diagram
+bounds remain deterministic.
+
+The adapter deliberately does not emit `Profile/SymbolUsage` or claim a symbol catalogue.
+`Dexpi20GraphicalProjectionReport` records every unmapped or ambiguous represented identity,
+skipped primitive, fill-colour loss, colour fallback, and dash approximation. A report is complete
+only when no primitive was skipped; completeness is still not a clean external-validator,
+profile-conformance, ISO 10628, or drawing-approval claim. The compatibility writer overloads remain
+unchanged and byte-stable because Core graphics are emitted only through the new explicit adapter.
+
+Example:
+
+```java
+Dexpi20GraphicalProjectionReport report = Dexpi20GraphicalProjectionWriter.write(
+    processSystem,
+    projection,
+    outputFile,
+    Dexpi20PlantExportOptions.builder(metadata).build());
+
+if (!report.isComplete()) {
+  System.out.println(report.toJson());
+}
+```
+
+The focused regression compiles this API and verifies deterministic XML, real `Represents`
+references, all four exchange-neutral primitive mappings, loss diagnostics, and rejection of empty
+`RepresentationGroup` placeholders. External DEXPIViewer has not been rerun for this adapter, so
+no clean-validation or interoperability claim is made.

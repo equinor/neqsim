@@ -74,6 +74,34 @@ class ProcessModelAutoConvergenceTuningTest {
     }
   }
 
+  /** Active module probe that executes its deliberately imbalanced internal recycle. */
+  private static final class ActiveRecycleModule extends WellFluidModule {
+    private static final long serialVersionUID = 1000L;
+
+    ActiveRecycleModule(String name) {
+      super(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initializeModule() {
+      // This probe already owns its intentionally minimal internal operations.
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initializeStreams() {
+      // The enclosing area owns the active feed boundary used by the closure scale.
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      getOperations().run(id);
+      setCalculationIdentifier(id);
+    }
+  }
+
   /** Recycle probe that remains solved while exposing a standing tear imbalance. */
   private static final class RecycleMassImbalanceProbe extends Recycle {
     private static final long serialVersionUID = 1000L;
@@ -190,6 +218,40 @@ class ProcessModelAutoConvergenceTuningTest {
     // A recycle-fed or internally produced stream is not a feed even though a unit consumes it.
     assertEquals(2, model.get("main train").getFeedStreams().size() + model.get("dead leg").getFeedStreams().size(),
         "Only the two source streams should be reported as feeds");
+  }
+
+  /**
+   * Feed-boundary topology may be cached, but the flow values must remain live so scenario changes are observed without
+   * rebuilding the execution plan.
+   */
+  @Test
+  void testCachedFeedBoundaryTracksLiveFlowValues() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    assertEquals(1_000_000.05, model.getTotalFeedFlowRate(), 1e-6);
+
+    Stream feed = (Stream) model.get("main train").getUnit("feed");
+    feed.setFlowRate(2.0e6, "kg/hr");
+
+    assertEquals(2_000_000.05, model.getTotalFeedFlowRate(), 1e-6,
+        "Cached feed identities must read the current stream flow on every call");
+  }
+
+  /**
+   * A ProcessSystem structure-version change must rebuild the cached feed boundary before the next diagnostic read.
+   */
+  @Test
+  void testFeedBoundaryRebuildsAfterAreaTopologyChange() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    assertEquals(1_000_000.05, model.getTotalFeedFlowRate(), 1e-6);
+
+    Stream addedFeed = new Stream("added feed", createGasFluid());
+    addedFeed.setFlowRate(25_000.0, "kg/hr");
+    Heater addedConsumer = new Heater("added consumer", addedFeed);
+    model.get("main train").add(addedFeed);
+    model.get("main train").add(addedConsumer);
+
+    assertEquals(1_025_000.05, model.getTotalFeedFlowRate(), 1e-6,
+        "The execution plan must refresh feed identities after an area topology change");
   }
 
   /**
@@ -505,6 +567,34 @@ class ProcessModelAutoConvergenceTuningTest {
     assertEquals(0.0, massClosure.get("relativeError").getAsDouble(), 0.0,
         "The active feed boundary must make closure evaluable while the inactive recycle remains excluded");
     assertFalse(massClosure.get("worstUnits").getAsString().contains("stale inactive recycle"));
+  }
+
+  /** Adding an active module after plan creation must refresh the fast-path guard and inspect its recycle. */
+  @Test
+  void testMassClosureGateFindsRecycleInModuleAddedAfterPlanCreation() {
+    Stream feed = new Stream("active module feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    Separator feedBoundary = new Separator("active module feed boundary", feed);
+
+    ProcessSystem area = new ProcessSystem("active module area");
+    area.add(feed);
+    area.add(feedBoundary);
+
+    ProcessModel model = new ProcessModel();
+    model.add("active module area", area);
+    assertEquals(1000.0, model.getTotalFeedFlowRate(), 1.0e-12,
+        "Initial diagnostic read should build a no-module execution plan");
+
+    RecycleMassImbalanceProbe recycle = new RecycleMassImbalanceProbe("late nested recycle");
+    recycle.addStream(feed);
+    ActiveRecycleModule module = new ActiveRecycleModule("late active module");
+    module.getOperations().add(recycle);
+    area.add(module);
+
+    assertFalse(model.runUntilConverged(5),
+        "A module added after plan creation must invalidate the no-recycle fast path");
+    assertEquals(0.1, model.getLastMassClosureError(), 1.0e-12);
+    assertTrue(model.getConvergenceReportJson().contains("late nested recycle"));
   }
 
   /** Disabled closure evaluation must be reported as disabled and serialize the unevaluated error as JSON null. */

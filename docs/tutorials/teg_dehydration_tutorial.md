@@ -323,6 +323,14 @@ lists. Its gas and rich-TEG outlets close both the water-component and total
 mass balances; this behavior is protected by the regression for
 [issue #2659](https://github.com/equinor/neqsim/issues/2659).
 
+Outlet construction follows the thermodynamic system's logical gas and aqueous
+phase mapping rather than its internal backing-array order. This preserves the
+four-port component inventory if a flash has reordered its internal phase
+slots or a downstream `Stream` wrapper reflashes an outlet. The absorber checks
+the unchanged feed inventory after its TP and PH flashes and after extracting
+both outlets; it reports an invalid state instead of rescaling a converged
+flash result.
+
 The conservative outlet behavior does not turn `SimpleTEGAbsorber` into a
 rate-based equipment model. Continue to apply the packing, hydraulics,
 mass-transfer, regeneration, and operating-envelope limitations described

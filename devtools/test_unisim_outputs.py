@@ -189,6 +189,23 @@ class _FakeComponentWithoutAcentricFactor:
         raise AttributeError(attribute_name)
 
 
+class _FakeComponentWithAcentricity:
+    """Component exposing the real UniSim COM name for the acentric factor."""
+
+    name = 'C29-C35*'
+    Name = 'C29-C35*'
+    Acentricity = _FakeQuantity({None: 1.277})
+    CriticalTemperature = _FakeQuantity({'K': 829.84})
+    CriticalPressure = _FakeQuantity({'bar': 13.632})
+    MolecularWeight = _FakeQuantity({None: 438.573})
+    NormalBoilingPt = _FakeQuantity({'K': 733.32})
+    CriticalVolume = _FakeQuantity({'m3/kgmole': 1.6})
+
+    def __getattr__(self, attribute_name):
+        """Raise the same style of missing-property error seen in COM."""
+        raise AttributeError(attribute_name)
+
+
 def _build_e300_test_model(tmpdir):
     """Create a model with an exported PR-LK E300 fluid package."""
     components = [
@@ -634,6 +651,48 @@ def test_missing_acentric_factor_uses_edmister_fallback():
     print("  PASS")
 
 
+def test_acentricity_attribute_is_preferred_over_edmister_estimate():
+    """UniSim exposes the acentric factor as 'Acentricity'; use it verbatim.
+
+    Reading the Edmister estimate instead silently changes the EOS alpha
+    function and shifts every bubble point / TVP of the converted fluid.
+    """
+    reader = UniSimReader()
+    extracted_component = UniSimComponent('C29-C35*', 0)
+    reader._populate_component_properties(
+        _FakeComponentWithAcentricity(), extracted_component)
+
+    assert extracted_component.acentric_factor == 1.277
+    print("  PASS")
+
+
+def test_package_vector_does_not_overwrite_component_acentricity():
+    """A property-package acentricity vector must not clobber the COM value."""
+
+    class _FakePropertyPackage:
+        Acentricity = _FakeQuantity({None: None})
+        Acentricities = (0.11, 0.22)
+
+        def __getattr__(self, attribute_name):
+            raise AttributeError(attribute_name)
+
+    class _FakeFluidPackage:
+        PropertyPackage = _FakePropertyPackage()
+
+    reader = UniSimReader()
+    pkg = UniSimFluidPackage(
+        name='Common PVT',
+        property_package='SRK',
+        components=[UniSimComponent('C29-C35*', 0, acentric_factor=1.277),
+                    UniSimComponent('C36-C43*', 1)],
+    )
+    reader._populate_property_package_vectors(_FakeFluidPackage(), pkg)
+
+    assert pkg.components[0].acentric_factor == 1.277
+    assert pkg.components[1].acentric_factor == 0.22
+    print("  PASS")
+
+
 def test_e300_fluid_package_export_and_usage():
     """Verify UniSim fluid packages export to E300 and are consumed as E300."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1045,6 +1104,10 @@ if __name__ == "__main__":
          test_operation_handler_registry_documents_mapping_strategy),
         ("missing_acentric_factor_uses_edmister_fallback",
          test_missing_acentric_factor_uses_edmister_fallback),
+        ("acentricity_attribute_is_preferred_over_edmister_estimate",
+         test_acentricity_attribute_is_preferred_over_edmister_estimate),
+        ("package_vector_does_not_overwrite_component_acentricity",
+         test_package_vector_does_not_overwrite_component_acentricity),
         ("e300_fluid_package_export_and_usage", test_e300_fluid_package_export_and_usage),
         ("all_fluid_packages_are_exposed_as_e300", test_all_fluid_packages_are_exposed_as_e300),
         ("compressor_discharge_temperature_when_efficiency_missing",

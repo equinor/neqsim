@@ -146,6 +146,7 @@ public abstract class SystemThermo implements SystemInterface {
   protected boolean checkStability = true;
   protected ChemicalReactionOperations chemicalReactionOperations = null;
   protected boolean chemicalSystem = false;
+  private boolean chemicalReactionStateStale = false;
   private ArrayList<String> componentNames = new ArrayList<String>();
 
   // TODO: componentNameTag is not working yet, a kind of alias-postfix for
@@ -378,6 +379,7 @@ public abstract class SystemThermo implements SystemInterface {
         getPhase(i).setAttractiveTerm(attractiveTermNumber);
       }
       numberOfComponents++;
+      markChemicalReactionStateStale();
     } else {
       for (PhaseInterface tmpPhase : phaseArray) {
         if (tmpPhase != null && (tmpPhase.getComponent(componentName).getNumberOfMolesInPhase() + moles) < 0.0) {
@@ -465,6 +467,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
     }
     numberOfComponents++;
+    markChemicalReactionStateStale();
     // TODO: isInitialized = false;
   }
 
@@ -1431,6 +1434,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void changeComponentName(String name, String newName) {
+    markChemicalReactionStateStale();
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentNames.get(i).equals(name)) {
         componentNames.set(i, newName);
@@ -1454,9 +1458,28 @@ public abstract class SystemThermo implements SystemInterface {
     checkStability = val;
   }
 
+  /** Mark initialized chemical-reaction topology stale after a component identity change. */
+  private void markChemicalReactionStateStale() {
+    if (chemicalReactionOperations != null) {
+      chemicalReactionStateStale = true;
+    }
+  }
+
+  /** Reject use of chemical-reaction state built for a different component set. */
+  private void requireCurrentChemicalReactionState() {
+    if (chemicalReactionStateStale) {
+      throw new IllegalStateException(
+          "Chemical-reaction state is stale because component identities changed after chemicalReactionInit(). "
+              + "Re-run chemicalReactionInit(), createDatabase(true), and setMixingRule(...) before the next reactive calculation.");
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void chemicalReactionInit() {
+    chemicalReactionOperations = null;
+    chemicalSystem = false;
+    chemicalReactionStateStale = false;
     chemicalReactionOperations = new ChemicalReactionOperations(this);
     chemicalSystem = chemicalReactionOperations.hasReactions();
   }
@@ -1476,6 +1499,8 @@ public abstract class SystemThermo implements SystemInterface {
     beta[4] = 1.0;
     beta[5] = 1.0;
     chemicalSystem = false;
+    chemicalReactionOperations = null;
+    chemicalReactionStateStale = false;
 
     double oldTemp = phaseArray[0].getTemperature();
     double oldPres = phaseArray[0].getPressure();
@@ -1497,8 +1522,6 @@ public abstract class SystemThermo implements SystemInterface {
     SystemThermo clonedSystem = null;
     try {
       clonedSystem = (SystemThermo) super.clone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
     } catch (CloneNotSupportedException ex) {
       throw new AssertionError("Clone failed for SystemThermo", ex);
     }
@@ -1531,6 +1554,10 @@ public abstract class SystemThermo implements SystemInterface {
     clonedSystem.phaseArray = phaseArray.clone();
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       clonedSystem.phaseArray[i] = phaseArray[i].clone();
+    }
+
+    if (chemicalReactionOperations != null) {
+      clonedSystem.chemicalReactionInit();
     }
 
     return clonedSystem;
@@ -2027,6 +2054,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public ChemicalReactionOperations getChemicalReactionOperations() {
+    requireCurrentChemicalReactionState();
     return chemicalReactionOperations;
   }
 
@@ -4130,6 +4158,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final boolean isChemicalSystem() {
+    requireCurrentChemicalReactionState();
     return chemicalSystem;
   }
 
@@ -4478,6 +4507,7 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void removeComponent(String name) {
     name = ComponentInterface.getComponentNameFromAlias(name);
+    markChemicalReactionStateStale();
 
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {

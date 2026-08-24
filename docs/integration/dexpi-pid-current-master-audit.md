@@ -47,7 +47,7 @@ reviewed public-API migration says otherwise.
 | Supported semantic profile | `Dexpi20SemanticValidator`, `Dexpi20ModelInspector`, `Dexpi20ConformanceAssessment` | Automated for NeqSim's declared supported subset; not full DEXPI coverage |
 | Proteus layout | `DexpiLayoutEngine`, `DexpiLayoutConfig`, `DexpiShapeCatalog` | Deterministic compatibility layout with routing, symbols, title fields, and off-page graphics |
 | Simulator/P&ID bridge | `diagram.DexpiDiagramBridge` and Python rendering helpers | Convenience import, export, and external rendering path; not canonical ownership |
-| pyDEXPI qualification helper | `devtools/validate_dexpi_interoperability.py` and `render_neqsim_dexpi_with_pydexpi.py` | Reproducible public-tool check when an exact environment is supplied |
+| Public-tool qualification helper | `devtools/validate_dexpi_interoperability.py`, pinned DEXPIViewer baseline, and `render_neqsim_dexpi_with_pydexpi.py` | Exact-checkout DEXPIViewer findings and pyDEXPI import are machine-readable and separate from clean/commercial qualification |
 | Commercial CAE evidence | `dexpi-commercial-cae-evidence-template.json`, `DexpiToolQualificationRunner`, `DexpiToolQualificationEvidence` | Template and evidence contract only; named product/version observation and accountable difference review are required |
 | Native professional SVG/PDF | No shared native renderer or controlled document-set model | Confirmed gap; Graphviz and external/tool-specific paths remain available |
 
@@ -100,7 +100,15 @@ study preparation, coordinated packages, and qualification evidence.
 
 The repository also contains deterministic native fixtures under
 `src/test/resources/dexpi/2.0/golden`, including the branching Plant fixture, manifest, semantic
-summary, and schema provenance. The coordinated
+summary, schema provenance, and a reviewed DEXPIViewer baseline pinned to commit
+`18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad`. That external baseline has eight errors and three warnings. The native
+Plant writer now has additive controlled metadata and export-options overloads. The options path can explicitly
+connect detected feed and product boundaries through directional `FlowInPipeOffPageConnector` and
+`FlowOutPipeOffPageConnector` objects with owned piping nodes and complete segment item/node references. The
+compatibility and metadata-only overloads plus the committed golden fixture remain byte-unchanged. The reviewed
+baseline therefore remains an 8-error/3-warning drift gate until a controlled fixture is regenerated and the pinned
+verifier is rerun; no clean result is inferred. Genuine graphical representation groups remain separate open work,
+and reciprocal controlled-sheet connector pairs remain owned by the document-set layer. The coordinated
 [engineering-diagram reference cases](dexpi-reference-cases.md) add executable, synthetic public
 simple, branched, and multi-area process fixtures. They check canonical topology, material balance,
 native Process/Plant exchange where supported, Proteus compatibility, legacy DOT, and governed P&ID
@@ -164,6 +172,7 @@ licensed standards, a named external tool, or accountable engineering review.
 | Schema/API compatibility and migration | Partial | Compatibility facades and byte-equivalent tested paths exist; no comprehensive versioned package migration suite covers every serialized artifact |
 | Revision semantic diff/impact | Partial | Engineering graph/package revision impact exists; affected drawing/sheet/register/study completeness is not yet end-to-end |
 | Professional symbols and project conventions | Partial/external | Proteus shapes, ISA/NORSOK tag helpers and proposal rules exist; a licensed ISO 10628/14617 mapping and reviewed vector catalog remain external/gap |
+| Native DEXPI Core graphical projection | Partial | The opt-in exchange-neutral adapter emits non-empty Core Diagram/RepresentationGroup structures with generic Polygon, PolyLine, and Text primitives and structured mapping/loss reports; no Profile/SymbolUsage, clean external-validator, standards, or approval claim is made |
 | Multi-sheet documents and off-page references | Gap | Compatibility per-area sheets and off-page graphics exist, but no controlled document/drawing/sheet identity, paired connector, zone reference, completeness, or persistent override model exists |
 | Professional native SVG/PDF | Gap | Current SVG/PDF paths depend on Graphviz or external/tool-specific rendering; no shared deterministic native renderer is qualified |
 | Drawing-quality metrics and visual regression | Partial | Structural/routing tests exist; normalized native SVG/PDF collision, clipping, label, and readability gates do not |
@@ -171,7 +180,7 @@ licensed standards, a named external tool, or accountable engineering review.
 | Simulation-backed engineering enrichment | Partial | Coordinated cases, registers, calculations, DEXPI packages and selected canonical stream values exist; governing envelopes and all equipment/design selections are not uniformly linked through the exchange |
 | DEXPI-centred study audits | Partial | Completeness, HAZOP preparation, SIS/HIPPS and qualification evidence exist; revision/MOC deltas and reusable selected-object study hooks are incomplete |
 | Java/Python engineer usability | Partial | Java writers/compilers and Python/Colab examples exist; one concise model-to-package-to-drawing-to-study API is not yet qualified |
-| Public DEXPI/pyDEXPI validation | Partial | Bundled schema, public helper and internal fixtures exist; exact-version external execution must be rerun per release/reference case |
+| Public DEXPI/pyDEXPI validation | Partial | Bundled schema, a pinned DEXPIViewer runner/baseline, pyDEXPI import helper, and internal fixtures exist; the reviewed external baseline is not clean and exact-version execution must be rerun per release/reference case |
 | Commercial CAE qualification | External | Evidence template exists; observed named-product/version import, export, semantic diff and accountable review are mandatory |
 | Executed reference workflows | Partial | Saved notebooks and CI workflows exist; the full realistic multi-area, recycle, isolation, relief, flare, cross-sheet, revision-delta acceptance workflow remains a gap |
 | Performance and completion release gate | Gap | Representative export/import/render/revision benchmarks and the final independent current-master audit are not complete |

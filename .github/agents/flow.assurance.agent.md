@@ -95,6 +95,15 @@ pipe2.setAngle(0.0);          // inclination angle
 pipe2.setDiameter(0.508);
 ```
 
+For MCP execution, `runPipeline` defaults to `beggsBrill`. Select `twoFluid`
+only when section-resolved mechanistic outputs are required. Then pass equal-length
+section-length, elevation, U-value, and ambient-temperature arrays and request
+`FULL`, `SUMMARY`, or `MINIMUM` through `detailLevel`. Preserve the returned
+`TwoFluidPipeResponse` as the agent-to-report handoff; do not create a parallel
+response schema. Gate the result on convergence, pressure-floor, and wall-clock
+findings, then apply the steady/transient limitations in the loaded
+`neqsim-flow-assurance` skill.
+
 When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
 basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless
 screen. Do not infer effective mass, axial force, hydrodynamic diameter, or trigger values silently

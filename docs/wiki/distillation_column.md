@@ -85,6 +85,22 @@ stability during the matrix warm-start stage.
 | `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization followed by full MESH residual evaluation. | Best for auditing material, equilibrium, summation, energy, specification, and product-draw residuals. |
 | `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs a feasibility pre-screen and copy-based solver probes. A fixed-specification reboiler-only stripper tries native sum-rates before paying for the relaxed damped base; other configurations retain the robust base/fallback ladder. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
 
+### Accelerated full-sweep workspace
+
+The finite-difference `NEWTON` route and the final `WEGSTEIN` stream synchronization use
+undamped full-tray sweeps. Each internal vapor or liquid transfer now takes one owned clone of the
+already-flashed tray outlet and installs that same snapshot as the target tray inlet. Because unit
+relaxation never consumes a previous iterate, these sweeps do not allocate per-tray previous-stream
+arrays or create a second cache clone. The one owned snapshot still follows the established
+relaxation and reflash path, preserving downstream tear-state thermodynamic semantics.
+
+Use `getLastAcceleratedFullTraySweepCount()` and
+`getLastAcceleratedInternalStreamTransferCount()` to audit this work. The transfer count equals the
+number of downward liquid plus upward vapor transfers across all reported sweeps. These values
+describe accelerator work attempted by the latest route; they are preserved when `AUTO` adopts a
+candidate and can remain nonzero when a later coordinated fallback completes the solve. They do
+not replace mass, energy, specification, physical-state, or MESH convergence evidence.
+
 ### Sequential substitution details
 
 - Upward sweep: for trays below the lowest feed, new liquid draws from the tray above.
@@ -400,7 +416,7 @@ accelerator. The residual is $f_i(\mathbf{T}) = T_i^{sweep} - T_i$ and the Jacob
 
 $$J_{ij} \approx \frac{f_i(\mathbf{T} + \epsilon \mathbf{e}_j) - f_i(\mathbf{T})}{\epsilon}$$
 
-A line search ($\lambda = 1, 0.5, 0.25, 0.125$) controls step size, and 2–3 warm-up direct substitution iterations establish the convergence basin.
+A line search ($\lambda = 1, 0.5, 0.25, 0.125$) controls step size. It retains the evaluated trial with the lowest finite residual, including when every trial is non-descent, and the applied state, reported step, and reported residual refer to that same trial. Inspect `getLastNewtonLineSearchStepLength()`, `getLastNewtonLineSearchResidual()`, and `getLastNewtonLineSearchTrialCount()` after a `NEWTON` run. Two to three warm-up direct-substitution iterations establish the convergence basin.
 
 **MESH_RESIDUAL** starts from `INSIDE_OUT` and evaluates the scaled MESH residual vector without
 running an additional Newton-polishing solve. When the residual or product-draw gate is not

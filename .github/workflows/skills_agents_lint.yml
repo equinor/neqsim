@@ -6,6 +6,7 @@ permissions:
 on:
   pull_request:
     paths:
+      - ".agents/**"
       - ".github/skills/**"
       - ".github/agents/**"
       - "devtools/verify_skills_agents.py"
@@ -21,6 +22,7 @@ on:
   push:
     branches: [master]
     paths:
+      - ".agents/**"
       - ".github/skills/**"
       - ".github/agents/**"
 

@@ -45,8 +45,41 @@ This guide provides comprehensive examples for setting up and running production
 | [Multi-Objective Optimization](../process/optimization/multi-objective-optimization) | Pareto fronts and trade-offs |
 | [Flow Rate Optimization](../process/optimization/flow-rate-optimization) | FlowRateOptimizer and lift curves |
 | [Batch Studies](../process/optimization/batch-studies) | Parallel parameter sweeps |
+| [Industrial Process Optimization Baseline](../process/optimization/industrial-process-optimization-baseline) | Capability coverage, restriction gaps, and frozen large-plant benchmark contract |
+| [Industrial S/M Benchmark Evidence](../process/optimization/industrial-sm-benchmark) | Executed small guide and 27-unit multi-train recycle baseline with a checked-in five-fork runner, exact raw records, and validation |
 | [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment and bottleneck detection |
+
+---
+
+## Register plant-wide restrictions before solving
+
+Large plants have restrictions that do not belong to one equipment item: total power and utilities,
+common-shaft compressor trains, gathering and export networks, area limits, product quality, emissions,
+produced-water handling, flare capacity, availability, and nomination limits. Use
+`PlantConstraintRegistry` to give each restriction a stable identity and explicit engineering basis.
+
+The registry complements equipment constraints for compressor maps, surge/choke, speed, temperature
+and power; separator gas/oil/water capacity, residence and settling; and piping pressure, velocity,
+erosion, FIV, thermal and phase limits. It does not infer operating authority from advisory safety or
+integrity calculations.
+
+```java
+PlantConstraintRegistry registry = new PlantConstraintRegistry();
+registry.register(PlantConstraintDefinition
+    .builder("export-pressure", PlantConstraintScope.stream("Plant", "Export", "Gas export"))
+    .unit("bara")
+    .basis("absolute pressure at export battery limit")
+    .provenance("sales-gas agreement rev 3")
+    .category(PlantConstraintDefinition.Category.COMMERCIAL)
+    .build());
+```
+
+Treat this as registration, not solved evidence. A later utilization snapshot must sample every
+enabled restriction after successful convergence, validate finite values and consistent units/bases,
+and fail closed if evidence is incomplete. See the
+[Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK#plant-wide-constraint-registration)
+for aggregation and conversion rules.
 
 ---
 
@@ -714,6 +747,36 @@ and multi-variable optimization, multi-objective (Pareto) optimization, and scen
 
 > The bottleneck reported in the result is the plant-wide bottleneck — the most-utilized unit
 > across every area — consistent with `ProcessModel.getBottleneck()`.
+
+#### Fail-closed external candidate evaluation
+
+Use `ProcessModelSimulationEvaluator` when an external solver proposes a vector of plant setpoints.
+The evaluator applies the complete vector, runs the full `ProcessModel`, and samples each objective
+and constraint callback once. Candidate values must be finite before they are applied. After the
+solve, every raw/scalarized objective value and every constraint value/margin must also be finite.
+
+An invalid proposal is rejected before it can mutate the live process state. A non-finite callback
+sample makes the result infeasible even when the affected constraint is configured as soft; the
+sample remains visible for diagnosis, its margin is reported as negative infinity, and
+`getErrorMessage()` identifies the affected objective or constraint. `isSimulationConverged()` is
+kept separate so callers can distinguish a valid process solve from invalid optimization evidence.
+Invalid evidence receives a deterministic terminal penalty and must not be accepted or cached by an
+external optimizer.
+
+```java
+ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(plant);
+evaluator.addParameter("separation::feed.flowRate", 500.0, 12000.0, "kg/hr");
+evaluator.addObjective("export rate", model -> export.getFlowRate("kg/hr"),
+    ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+evaluator.addConstraintUpperBound("total power", model -> model.getPower("MW"), 40.0);
+
+ProcessModelSimulationEvaluator.EvaluationResult candidate =
+    evaluator.evaluate(new double[] { proposedFeedRate });
+if (!candidate.isSimulationConverged() || !candidate.isFeasible()
+    || candidate.getErrorMessage() != null) {
+  // Reject the external-solver proposal; do not use it as a plant operating point.
+}
+```
 
 #### Multi-objective (Pareto) optimization of a plant
 
@@ -1521,4 +1584,3 @@ try {
 | `getMaxUtilization()` | Get maximum utilization across constraints |
 | `isOverloaded()` | Any constraint > 100% |
 | `isHardLimitExceeded()` | Any HARD constraint violated |
-

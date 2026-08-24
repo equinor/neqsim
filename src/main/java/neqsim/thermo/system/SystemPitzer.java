@@ -1,6 +1,9 @@
 package neqsim.thermo.system;
 
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.thermo.phase.PhasePitzer;
+import neqsim.thermo.phase.PitzerParameterDatasets;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
@@ -65,6 +68,30 @@ public class SystemPitzer extends SystemEosGE {
     for (int i = 1; i < numberOfPhases; i++) {
       phaseArray[i].initRefPhases(false);
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ChemicalReactionConcentrationBasis getChemicalReactionConcentrationBasis() {
+    return ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ChemicalReactionDataSource getChemicalReactionDataSource() {
+    return ChemicalReactionDataSource.PITZER;
+  }
+
+  /**
+   * Applies the qualified public-domain PHREEQC CO2-Na2SO4 parameter subset to this system's Pitzer aqueous role.
+   *
+   * <p>
+   * The dataset is intentionally fail-closed: additional active species require explicit companion interactions. See
+   * {@link PitzerParameterDatasets#applyPhreeqcCo2SodiumSulfate(PhasePitzer)} for source identity and validation scope.
+   * </p>
+   */
+  public void applyPhreeqcCo2SodiumSulfateParameters() {
+    PitzerParameterDatasets.applyPhreeqcCo2SodiumSulfate((PhasePitzer) phaseArray[1]);
   }
 
   /** {@inheritDoc} */

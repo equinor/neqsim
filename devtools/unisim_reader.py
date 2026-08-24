@@ -263,7 +263,16 @@ class UniSimFluidPackage:
         _write_section(lines, 'PCRIT', pc_vals, '   {:.4f}', 'Pc (Bar)')
         lines.append('')
 
-        # ACF (acentric factor)
+        # ACF (acentric factor). A silent 0.0 here changes the EOS alpha
+        # function and shifts every bubble point of the exported fluid, so a
+        # missing value is reported instead of being quietly defaulted.
+        missing_acf = [c.name for c in self.components
+                       if c.acentric_factor is None]
+        if missing_acf:
+            logger.warning(
+                "E300 export of fluid package '%s': acentric factor missing for "
+                "%s - writing 0.0, which will bias VLE. Check the UniSim COM "
+                "attribute 'Acentricity'.", self.name, ', '.join(missing_acf))
         acf_vals = [c.acentric_factor if c.acentric_factor is not None else 0.0
                     for c in self.components]
         _write_section(lines, 'ACF', acf_vals, '   {:.6f}', 'Omega')
@@ -1087,8 +1096,11 @@ class UniSimReader:
         extracted_component.pc_bara = self._extract_quantity(
             comp, ['CriticalPressure'], [('kPa', 0.01, 0.0), ('bar', 1.0, 0.0),
                                         ('bara', 1.0, 0.0), (None, 0.01, 0.0)])
+        # 'Acentricity' is the attribute UniSim actually exposes; the other
+        # aliases are kept for other UniSim/HYSYS builds.
         extracted_component.acentric_factor = self._extract_quantity(
-            comp, ['AcentricFactor', 'AcentricityFactor', 'Omega'], [(None, 1.0, 0.0)])
+            comp, ['Acentricity', 'AcentricFactor', 'AcentricityFactor', 'Omega'],
+            [(None, 1.0, 0.0)])
         extracted_component.mw = self._extract_quantity(
             comp, ['MolecularWeight'], [(None, 1.0, 0.0), ('kg/kmol', 1.0, 0.0)])
         extracted_component.tboil_K = self._extract_quantity(
@@ -1229,7 +1241,8 @@ class UniSimReader:
         except Exception:
             return
         vector_specs = [
-            ('acentric_factor', ['AcentricFactor', 'AcentricFactors',
+            ('acentric_factor', ['Acentricity', 'Acentricities',
+                                 'AcentricFactor', 'AcentricFactors',
                                  'AcentricityFactor', 'AcentricityFactors',
                                  'Omega', 'Omegas', 'ACF']),
             ('volume_shift', ['VolumShift', 'VolumeShift', 'VolumeShifts', 'SSHIFT']),
@@ -1238,14 +1251,22 @@ class UniSimReader:
             ('omegab', ['OmegaB', 'OMEGAB']),
             ('sshifts', ['VolumShiftSurface', 'VolumeShiftSurface', 'SSHIFTS']),
         ]
+        # The per-component `Acentricity` read is authoritative; the package
+        # vector (often an estimate) must not overwrite it.
+        gap_fill_only = {'acentric_factor'}
         for attribute_name, candidate_names in vector_specs:
             values = self._extract_package_vector(property_package, candidate_names,
                                                   len(pkg.components))
             if values is None:
                 continue
             for component_index, value in enumerate(values):
-                if value is not None:
-                    setattr(pkg.components[component_index], attribute_name, value)
+                if value is None:
+                    continue
+                if (attribute_name in gap_fill_only
+                        and getattr(pkg.components[component_index],
+                                    attribute_name) is not None):
+                    continue
+                setattr(pkg.components[component_index], attribute_name, value)
         for component_index, extracted_component in enumerate(pkg.components):
             if extracted_component.volume_shift is not None:
                 continue

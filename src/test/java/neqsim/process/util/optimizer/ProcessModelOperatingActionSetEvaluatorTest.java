@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
+import neqsim.process.equipment.network.NetworkDecisionVariable;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.separator.Separator;
@@ -97,6 +98,16 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     simulation.addObjective("total production",
         model -> fixture.producerA.getFlowRate("kg/hr") + fixture.producerB.getFlowRate("kg/hr"),
         ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    ProcessBoundaryConstraintEvidence.Metadata boundary = new ProcessBoundaryConstraintEvidence.Metadata(
+        "host-receiving", "gathering", "host inlet", ProcessBoundaryConstraintEvidence.Kind.RECEIVING_CAPACITY,
+        ProcessBoundaryConstraintEvidence.FlowDirection.INTO_PROCESS, NetworkDecisionVariable.RateBasis.MASS,
+        "synthetic host receiving basis", 1.0, null, null,
+        ProcessBoundaryConstraintEvidence.ApplicabilityStatus.NOT_ASSESSED, "total rate", null, null, -1);
+    simulation.addBoundaryConstraint("host receiving rate", boundary,
+        model -> ProcessBoundaryConstraintEvidence.Sample
+            .available(fixture.producerA.getFlowRate("kg/hr") + fixture.producerB.getFlowRate("kg/hr")),
+        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.UPPER_BOUND, Double.NEGATIVE_INFINITY, 2000.0, 0.0,
+        "kg/hr", true, 10.0, 1000.0);
     ProcessModelOperatingAction actionA = ProcessModelOperatingAction.continuous("producer-a-rate", "Producer A rate",
         "wells::producer A.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer A envelope");
     ProcessModelOperatingAction actionB = ProcessModelOperatingAction.continuous("producer-b-rate", "Producer B rate",
@@ -123,6 +134,8 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     assertArrayEquals(new double[] { 600.0, 400.0 }, redistributed.getBaselineValues(), 1.0e-8);
     assertArrayEquals(new double[] { 700.0, 300.0 }, redistributed.getCandidateValues(), 0.0);
     assertEquals(1000.0, redistributed.getRawObjectives()[0], 1.0e-8);
+    assertEquals(1, redistributed.getProcessBoundaryConstraintEvidence().size());
+    assertEquals(1000.0, redistributed.getProcessBoundaryConstraintEvidence().get(0).getSampledValue(), 1.0e-8);
     assertEquals(1000.0 / 1200.0, redistributed.getHydraulicConstraints().get(0).getUtilization(), 1.0e-12);
     assertEquals(1.0 - 1000.0 / 1200.0, redistributed.getHydraulicConstraints().get(0).getMargin(), 1.0e-12);
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
@@ -210,10 +223,12 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     assertNotSame(restored.getActions(), restored.getActions());
     assertNotSame(restored.getActionEvidence(), restored.getActionEvidence());
     assertNotSame(restored.getHydraulicConstraints(), restored.getHydraulicConstraints());
+    assertNotSame(restored.getProcessBoundaryConstraintEvidence(), restored.getProcessBoundaryConstraintEvidence());
     assertNotSame(restored.getDiagnostics(), restored.getDiagnostics());
     assertThrows(UnsupportedOperationException.class, () -> restored.getActions().clear());
     assertThrows(UnsupportedOperationException.class, () -> restored.getActionEvidence().clear());
     assertThrows(UnsupportedOperationException.class, () -> restored.getHydraulicConstraints().clear());
+    assertThrows(UnsupportedOperationException.class, () -> restored.getProcessBoundaryConstraintEvidence().clear());
     assertThrows(UnsupportedOperationException.class, () -> restored.getDiagnostics().clear());
   }
 

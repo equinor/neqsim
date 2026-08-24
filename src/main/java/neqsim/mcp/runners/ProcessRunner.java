@@ -11,7 +11,19 @@ import com.google.gson.JsonParser;
 import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ProcessResult;
 import neqsim.mcp.model.ResultProvenance;
+import neqsim.process.design.AutoSizeable;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorAntiSurgeApplication;
+import neqsim.process.equipment.compressor.CompressorAntiSurgeApplication.CommissioningCheck;
+import neqsim.process.equipment.compressor.CompressorAntiSurgeApplication.CommissioningReport;
+import neqsim.process.equipment.compressor.CompressorAntiSurgeApplication.StageApplication;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.JsonProcessBuilder;
+import neqsim.process.processmodel.JsonProcessExporter;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
@@ -100,6 +112,7 @@ public class ProcessRunner {
       result.addProperty("status", "error");
       result.addProperty("phase", "validation");
       result.add("validation", validation);
+      addProcessDefinition(result, normalizedJson);
       ApiEnvelope.applyStandardFields(result, "runProcess", null, validation,
           ApiEnvelope.qualityGate("failed", "Pre-flight validation failed", true));
       return GSON.toJson(result);
@@ -114,7 +127,9 @@ public class ProcessRunner {
       return runProcessSystem(normalizedJson, startTime, true, valIssues);
     } catch (Exception e) {
       return errorJson("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
-          "Check the JSON definition. Validation passed but simulation threw an exception.");
+          "Retrieve getSchema(run_process,input) and a matching process example, then check plural 'inlets', "
+              + "unit.port references, forward recycle references, named fluidRef values, and area/interAreaLinks wiring. "
+              + "After repair, validateInput and rerun; inspect convergence warnings and balance evidence.");
     }
   }
 
@@ -173,7 +188,8 @@ public class ProcessRunner {
       return envelope;
     } catch (Exception e) {
       return typedError("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
-          "Check the JSON definition. Use Validator.validate() first to catch common issues.");
+          "Use Validator.validate() first, then compare the definition with getSchema(run_process,input) and "
+              + "the mixer-splitter-recycle example. Check inlet ports, forward references, named fluids, and area links.");
     }
   }
 
@@ -223,14 +239,646 @@ public class ProcessRunner {
     addValidationIssueLimitations(provenance, validationIssues);
 
     JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
+    String responseProcessJson = normalizedJson;
+    if (!result.isError() && result.getProcessSystem() != null) {
+      ProcessSystem process = result.getProcessSystem();
+      JsonObject autoSizing = applyAutoSizing(process, normalizedJson);
+      if (autoSizing != null) {
+        simObj.add("autoSizing", autoSizing);
+        if (autoSizing.get("sizedCount").getAsInt() > 0) {
+          process.run();
+          simObj.add("report", parseJsonOrString(process.getReport_json()));
+        }
+      }
+      JsonObject antiSurgeSystems = applyAntiSurgeSystems(process, normalizedJson, null);
+      if (antiSurgeSystems != null) {
+        simObj.add("antiSurgeSystems", antiSurgeSystems);
+        if (antiSurgeSystems.get("generatedScreeningMapCount").getAsInt() > 0) {
+          process.run();
+          simObj.add("report", parseJsonOrString(process.getReport_json()));
+        }
+      }
+      attachProcessDesignData(simObj, process);
+      responseProcessJson = exportCanonicalProcess(process, normalizedJson);
+    }
     addValidationIssues(simObj, validationIssues);
     simObj.add("provenance", GSON.toJsonTree(provenance));
+    addProcessDefinition(simObj, responseProcessJson);
     ensureProcessDataBlock(simObj);
     ApiEnvelope.applyStandardFields(simObj, "runProcess", provenance,
         buildProcessValidationBlock(preValidationPassed, validationIssues),
         ApiEnvelope.qualityGate(result.isError() ? "failed" : "passed",
             result.isError() ? "Process simulation returned errors" : "Process simulation completed", true));
     return GSON.toJson(simObj);
+  }
+
+  /**
+   * Attaches design, capacity-utilization, and bottleneck reports for a completed process run.
+   *
+   * @param response process response object to mutate
+   * @param process live process system after its final run
+   */
+  private static void attachProcessDesignData(JsonObject response, ProcessSystem process) {
+    response.add("designReport", parseJsonOrString(process.getDesignReportJson()));
+    process.applyMechanicalDesignCapacityConstraints();
+    process.getAutomation().enableCapacityConstraints();
+    response.add("utilizationSnapshot", parseJsonOrString(process.getAutomation().getUtilizationSnapshot()));
+    response.add("bottleneckRanking",
+        parseJsonOrString(process.getAutomation().getBottleneckRankingJson(process.getUnitOperations().size())));
+  }
+
+  /**
+   * Exports the live process and preserves request-level execution options that are not part of the flowsheet model.
+   *
+   * @param process live process system to export
+   * @param requestJson normalized request JSON
+   * @return canonical, replayable process JSON
+   */
+  private static String exportCanonicalProcess(ProcessSystem process, String requestJson) {
+    JsonObject exported = JsonParser.parseString(new JsonProcessExporter().toJson(process)).getAsJsonObject();
+    JsonObject request = JsonParser.parseString(requestJson).getAsJsonObject();
+    if (request.has("autoSizing")) {
+      exported.add("autoSizing", request.get("autoSizing"));
+    }
+    if (request.has("antiSurgeSystems")) {
+      exported.add("antiSurgeSystems", request.get("antiSurgeSystems"));
+    }
+    return GSON.toJson(exported);
+  }
+
+  /**
+   * Binds root anti-surge system definitions to physical units in one process area.
+   *
+   * @param process live process system containing the referenced topology
+   * @param requestJson normalized root or area request JSON
+   * @param areaName optional area name used for filtering and reporting
+   * @return anti-surge configuration report, or {@code null} when no systems are requested for this area
+   */
+  private static JsonObject applyAntiSurgeSystems(ProcessSystem process, String requestJson, String areaName) {
+    JsonObject root = JsonParser.parseString(requestJson).getAsJsonObject();
+    if (!root.has("antiSurgeSystems") || !root.get("antiSurgeSystems").isJsonArray()) {
+      return null;
+    }
+    JsonArray requestedSystems = root.getAsJsonArray("antiSurgeSystems");
+    JsonArray systemReports = new JsonArray();
+    int configuredCount = 0;
+    int failedCount = 0;
+    int generatedScreeningMapCount = 0;
+    for (int systemIndex = 0; systemIndex < requestedSystems.size(); systemIndex++) {
+      if (!requestedSystems.get(systemIndex).isJsonObject()) {
+        failedCount++;
+        systemReports.add(
+            antiSurgeError("anti-surge system " + systemIndex, "System definition must be a JSON object", areaName));
+        continue;
+      }
+      JsonObject systemDefinition = requestedSystems.get(systemIndex).getAsJsonObject();
+      String configuredArea = getOptionalString(systemDefinition, "area", null);
+      if (areaName != null) {
+        if (configuredArea == null) {
+          continue;
+        }
+        if (!areaName.equals(configuredArea)) {
+          continue;
+        }
+      }
+      String systemName = getOptionalString(systemDefinition, "name", "anti-surge system " + (systemIndex + 1));
+      JsonObject systemReport = new JsonObject();
+      systemReport.addProperty("name", systemName);
+      if (areaName != null) {
+        systemReport.addProperty("area", areaName);
+      }
+      systemReport.addProperty("certificationStatus", "NOT_CERTIFIED_FOR_PROTECTION");
+      CompressorAntiSurgeApplication application = new CompressorAntiSurgeApplication(systemName);
+      JsonArray stageReports = new JsonArray();
+      int systemFailures = 0;
+      if (!systemDefinition.has("stages") || !systemDefinition.get("stages").isJsonArray()
+          || systemDefinition.getAsJsonArray("stages").size() == 0) {
+        systemFailures++;
+        stageReports.add(antiSurgeError(systemName, "A non-empty 'stages' array is required", areaName));
+      } else {
+        JsonArray stages = systemDefinition.getAsJsonArray("stages");
+        for (int stageIndex = 0; stageIndex < stages.size(); stageIndex++) {
+          JsonObject stageReport;
+          try {
+            JsonObject stageDefinition = stages.get(stageIndex).getAsJsonObject();
+            stageReport = bindAntiSurgeStage(process, application, stageDefinition, areaName,
+                hasSubmittedActiveSurgeMap(root, getOptionalString(stageDefinition, "compressor", null)));
+            if (stageReport.get("screeningGradeMap").getAsBoolean()) {
+              generatedScreeningMapCount++;
+            }
+          } catch (RuntimeException exception) {
+            systemFailures++;
+            stageReport = antiSurgeError(systemName + " stage " + (stageIndex + 1), exception.getMessage(), areaName);
+          }
+          stageReports.add(stageReport);
+        }
+      }
+      systemReport.add("stages", stageReports);
+      CommissioningReport commissioning = application.runCommissioningChecks();
+      systemReport.add("commissioning", commissioningToJson(commissioning));
+      systemReport.addProperty("certificationStatement", commissioning.getCertificationStatement());
+      if (systemFailures == 0) {
+        systemReport.addProperty("status", "configured");
+        configuredCount++;
+      } else {
+        systemReport.addProperty("status", "failed");
+        failedCount++;
+      }
+      systemReports.add(systemReport);
+    }
+    if (systemReports.size() == 0) {
+      return null;
+    }
+    JsonObject report = new JsonObject();
+    report.addProperty("configuredCount", configuredCount);
+    report.addProperty("failedCount", failedCount);
+    report.addProperty("generatedScreeningMapCount", generatedScreeningMapCount);
+    report.addProperty("certificationStatus", "NOT_CERTIFIED_FOR_PROTECTION");
+    report.add("systems", systemReports);
+    return report;
+  }
+
+  /**
+   * Resolves and binds one anti-surge stage to a complete physical recycle path.
+   *
+   * @param process process system containing the named units
+   * @param application anti-surge application receiving the stage
+   * @param definition stage definition
+   * @param areaName optional area label
+   * @param submittedMap true when the request explicitly supplied the compressor map
+   * @return stage binding report
+   */
+  private static JsonObject bindAntiSurgeStage(ProcessSystem process, CompressorAntiSurgeApplication application,
+      JsonObject definition, String areaName, boolean submittedMap) {
+    String compressorName = requireString(definition, "compressor");
+    Compressor compressor = requireUnit(process, compressorName, Compressor.class);
+    boolean generateScreeningMap = readBoolean(definition, "generateScreeningMap", false);
+    boolean generatedMap = false;
+    if (!hasActiveSurgeMap(compressor)) {
+      if (!generateScreeningMap) {
+        throw new IllegalArgumentException("Compressor '" + compressorName
+            + "' requires an active compressor chart and surge curve; supply a vendor map, enable autoSizing, "
+            + "or set generateScreeningMap=true");
+      }
+      double safetyFactor = definition.has("screeningMapSafetyFactor")
+          ? definition.get("screeningMapSafetyFactor").getAsDouble()
+          : 1.2;
+      compressor.autoSize(safetyFactor);
+      generatedMap = true;
+      if (!hasActiveSurgeMap(compressor)) {
+        throw new IllegalArgumentException(
+            "Screening map generation did not create an active surge curve for '" + compressorName + "'");
+      }
+    }
+
+    String hotValveName = getOptionalString(definition, "hotRecycleValve", null);
+    String coldValveName = getOptionalString(definition, "coldRecycleValve", null);
+    String hotRecycleName = getOptionalString(definition, "hotRecycle", null);
+    String coldRecycleName = getOptionalString(definition, "coldRecycle", null);
+    if ((hotValveName == null || hotRecycleName == null) && (coldValveName == null || coldRecycleName == null)) {
+      throw new IllegalArgumentException("Stage '" + compressorName
+          + "' requires a complete hot or cold recycle path with both valve and Recycle unit names");
+    }
+    ThrottlingValve hotValve = optionalUnit(process, hotValveName, ThrottlingValve.class);
+    ThrottlingValve coldValve = optionalUnit(process, coldValveName, ThrottlingValve.class);
+    Recycle hotRecycle = optionalUnit(process, hotRecycleName, Recycle.class);
+    Recycle coldRecycle = optionalUnit(process, coldRecycleName, Recycle.class);
+    Mixer suctionMixer = requireUnit(process, requireString(definition, "suctionMixer"), Mixer.class);
+    Cooler aftercooler = optionalUnit(process, getOptionalString(definition, "aftercooler", null), Cooler.class);
+
+    String stageName = getOptionalString(definition, "name", compressorName);
+    StageApplication stage = application.addStage(stageName, compressor);
+    stage.bindTopology(process, compressor, hotValve, coldValve, aftercooler, suctionMixer, hotRecycle, coldRecycle);
+    configureAntiSurgeStage(stage, definition);
+
+    JsonObject report = new JsonObject();
+    report.addProperty("name", stageName);
+    if (areaName != null) {
+      report.addProperty("area", areaName);
+    }
+    report.addProperty("status", "bound");
+    report.addProperty("physicalTopologyBound", true);
+    report.addProperty("compressor", compressorName);
+    report.addProperty("suctionMixer", suctionMixer.getName());
+    addOptionalProperty(report, "hotRecycleValve", hotValveName);
+    addOptionalProperty(report, "coldRecycleValve", coldValveName);
+    addOptionalProperty(report, "aftercooler", aftercooler == null ? null : aftercooler.getName());
+    addOptionalProperty(report, "hotRecycle", hotRecycleName);
+    addOptionalProperty(report, "coldRecycle", coldRecycleName);
+    report.addProperty("generatedScreeningMap", generatedMap);
+    boolean screeningGradeMap = generatedMap || !submittedMap;
+    report.addProperty("screeningGradeMap", screeningGradeMap);
+    report.addProperty("mapProvenance",
+        generatedMap ? "stage_generated_screening" : submittedMap ? "submitted" : "auto_sized_screening");
+    report.addProperty("speedControlEnabled", stage.getTopologyBinding().isSpeedControlEnabled());
+    if (screeningGradeMap) {
+      report.addProperty("warning", "Generated compressor map is a screening estimate, not vendor-certified.");
+    }
+    return report;
+  }
+
+  /**
+   * Checks whether a compressor map was explicitly submitted in a process definition.
+   *
+   * @param root request or area JSON object
+   * @param compressorName compressor unit name
+   * @return true when the compressor properties contain a compressor chart
+   */
+  private static boolean hasSubmittedActiveSurgeMap(JsonObject root, String compressorName) {
+    if (compressorName == null || !root.has("process") || !root.get("process").isJsonArray()) {
+      return false;
+    }
+    for (com.google.gson.JsonElement element : root.getAsJsonArray("process")) {
+      if (!element.isJsonObject()) {
+        continue;
+      }
+      JsonObject unit = element.getAsJsonObject();
+      if (!compressorName.equals(getOptionalString(unit, "name", null)) || !unit.has("properties")
+          || !unit.get("properties").isJsonObject()) {
+        continue;
+      }
+      JsonObject properties = unit.getAsJsonObject("properties");
+      if (!properties.has("compressorChart") || !properties.get("compressorChart").isJsonObject()) {
+        return false;
+      }
+      JsonObject chart = properties.getAsJsonObject("compressorChart");
+      if (chart.has("useCompressorChart") && !chart.get("useCompressorChart").getAsBoolean()) {
+        return false;
+      }
+      return chart.has("surgeCurve") && chart.get("surgeCurve").isJsonObject()
+          && readBoolean(chart.getAsJsonObject("surgeCurve"), "active", false);
+    }
+    return false;
+  }
+
+  /**
+   * Applies optional design and response settings to an anti-surge stage.
+   *
+   * @param stage stage to configure
+   * @param definition stage JSON definition
+   */
+  private static void configureAntiSurgeStage(StageApplication stage, JsonObject definition) {
+    if (definition.has("designBasis") && definition.get("designBasis").isJsonObject()) {
+      JsonObject design = definition.getAsJsonObject("designBasis");
+      stage.setDesignBasis(requireDouble(design, "inletFlow"), requireDouble(design, "surgeFlow"),
+          requireDouble(design, "suctionDensity"));
+    }
+    if (definition.has("recycleDesign") && definition.get("recycleDesign").isJsonObject()) {
+      JsonObject recycle = definition.getAsJsonObject("recycleDesign");
+      stage.setRecycleDesign(requireDouble(recycle, "controlMargin"), requireDouble(recycle, "valvePressureDrop"),
+          requireDouble(recycle, "pipingVolume"), requireDouble(recycle, "requiredResponseTime"));
+    }
+    if (definition.has("valveStrokeTimes") && definition.get("valveStrokeTimes").isJsonObject()) {
+      JsonObject strokes = definition.getAsJsonObject("valveStrokeTimes");
+      stage.setValveStrokeTimes(requireDouble(strokes, "hot"), requireDouble(strokes, "cold"));
+    }
+    if (definition.has("speedControl") && definition.get("speedControl").isJsonObject()) {
+      JsonObject speedControl = definition.getAsJsonObject("speedControl");
+      if (!readBoolean(speedControl, "enabled", true)) {
+        stage.getTopologyBinding().disableSpeedControl();
+        return;
+      }
+      Compressor compressor = stage.getCompressor();
+      double currentSpeed = compressor.getSpeed();
+      double minimumSpeed = readFiniteDouble(speedControl, "minimumSpeed", Math.max(0.0, currentSpeed * 0.5));
+      double maximumSpeed = readFiniteDouble(speedControl, "maximumSpeed",
+          Math.max(currentSpeed * 1.5, minimumSpeed + 1.0));
+      if (minimumSpeed < 0.0 || maximumSpeed < minimumSpeed) {
+        throw new IllegalArgumentException("speedControl requires 0 <= minimumSpeed <= maximumSpeed");
+      }
+      stage.getTopologyBinding().enableSpeedControl(requireDouble(speedControl, "dischargePressureSetPoint"),
+          readFiniteDouble(speedControl, "speedGain", 50.0), minimumSpeed, maximumSpeed,
+          readFiniteDouble(speedControl, "recycleRunbackRate", 100.0));
+    }
+  }
+
+  /**
+   * Checks that a compressor has an enabled chart with an active surge boundary.
+   *
+   * @param compressor compressor to inspect
+   * @return true when the map can support anti-surge calculations
+   */
+  private static boolean hasActiveSurgeMap(Compressor compressor) {
+    return compressor.getCompressorChart() != null && compressor.getCompressorChart().isUseCompressorChart()
+        && compressor.getCompressorChart().getSurgeCurve() != null
+        && compressor.getCompressorChart().getSurgeCurve().isActive();
+  }
+
+  /**
+   * Resolves a required named unit and checks its concrete type.
+   *
+   * @param process process system to search
+   * @param name required unit name
+   * @param type required concrete type
+   * @param <T> process equipment type
+   * @return resolved typed unit
+   */
+  private static <T extends ProcessEquipmentInterface> T requireUnit(ProcessSystem process, String name,
+      Class<T> type) {
+    ProcessEquipmentInterface unit = process.getUnit(name);
+    if (unit == null) {
+      throw new IllegalArgumentException("Required unit '" + name + "' was not found");
+    }
+    if (!type.isInstance(unit)) {
+      throw new IllegalArgumentException(
+          "Unit '" + name + "' must be " + type.getSimpleName() + " but is " + unit.getClass().getSimpleName());
+    }
+    return type.cast(unit);
+  }
+
+  /**
+   * Resolves an optional named unit and checks its concrete type.
+   *
+   * @param process process system to search
+   * @param name optional unit name
+   * @param type required concrete type when named
+   * @param <T> process equipment type
+   * @return resolved unit, or {@code null} when no name was supplied
+   */
+  private static <T extends ProcessEquipmentInterface> T optionalUnit(ProcessSystem process, String name,
+      Class<T> type) {
+    return name == null ? null : requireUnit(process, name, type);
+  }
+
+  /**
+   * Converts an anti-surge commissioning report to stable response JSON.
+   *
+   * @param commissioning commissioning report
+   * @return JSON commissioning evidence
+   */
+  private static JsonObject commissioningToJson(CommissioningReport commissioning) {
+    JsonObject result = new JsonObject();
+    result.addProperty("allPassed", commissioning.allPassed());
+    result.addProperty("certificationStatus", commissioning.getCertificationStatus().name());
+    result.addProperty("certificationStatement", commissioning.getCertificationStatement());
+    JsonArray checks = new JsonArray();
+    for (CommissioningCheck check : commissioning.getChecks()) {
+      JsonObject item = new JsonObject();
+      item.addProperty("name", check.getName());
+      item.addProperty("status", check.getStatus().name());
+      item.addProperty("evidence", check.getEvidence());
+      item.addProperty("recommendation", check.getRecommendation());
+      checks.add(item);
+    }
+    result.add("checks", checks);
+    return result;
+  }
+
+  /**
+   * Creates a bounded anti-surge configuration error.
+   *
+   * @param name system or stage name
+   * @param message actionable error message
+   * @param areaName optional area label
+   * @return error report
+   */
+  private static JsonObject antiSurgeError(String name, String message, String areaName) {
+    JsonObject error = new JsonObject();
+    error.addProperty("name", name);
+    error.addProperty("status", "failed");
+    error.addProperty("error", message == null ? "Unknown anti-surge configuration error" : message);
+    if (areaName != null) {
+      error.addProperty("area", areaName);
+    }
+    return error;
+  }
+
+  /**
+   * Reads a required string property.
+   *
+   * @param object JSON object
+   * @param name property name
+   * @return non-empty string value
+   */
+  private static String requireString(JsonObject object, String name) {
+    String value = getOptionalString(object, name, null);
+    if (value == null) {
+      throw new IllegalArgumentException("Required string property '" + name + "' is missing");
+    }
+    return value;
+  }
+
+  /**
+   * Reads an optional string property.
+   *
+   * @param object JSON object
+   * @param name property name
+   * @param defaultValue fallback value
+   * @return property value or fallback
+   */
+  private static String getOptionalString(JsonObject object, String name, String defaultValue) {
+    if (!object.has(name) || object.get(name).isJsonNull()) {
+      return defaultValue;
+    }
+    String value = object.get(name).getAsString().trim();
+    return value.isEmpty() ? defaultValue : value;
+  }
+
+  /**
+   * Reads a required finite double property.
+   *
+   * @param object JSON object
+   * @param name property name
+   * @return finite property value
+   */
+  private static double requireDouble(JsonObject object, String name) {
+    if (!object.has(name)) {
+      throw new IllegalArgumentException("Required numeric property '" + name + "' is missing");
+    }
+    double value = object.get(name).getAsDouble();
+    if (!Double.isFinite(value)) {
+      throw new IllegalArgumentException("Numeric property '" + name + "' must be finite");
+    }
+    return value;
+  }
+
+  /**
+   * Reads an optional finite double property.
+   *
+   * @param object JSON object
+   * @param name property name
+   * @param defaultValue fallback value
+   * @return finite property value or fallback
+   */
+  private static double readFiniteDouble(JsonObject object, String name, double defaultValue) {
+    if (!object.has(name)) {
+      return defaultValue;
+    }
+    return requireDouble(object, name);
+  }
+
+  /**
+   * Adds a non-null string property.
+   *
+   * @param object JSON object to mutate
+   * @param name property name
+   * @param value optional value
+   */
+  private static void addOptionalProperty(JsonObject object, String name, String value) {
+    if (value != null) {
+      object.addProperty(name, value);
+    }
+  }
+
+  /**
+   * Parses JSON text, falling back to a JSON string value when the text is not valid JSON.
+   *
+   * @param value JSON text or plain text
+   * @return parsed JSON element represented as an object-compatible value
+   */
+  private static com.google.gson.JsonElement parseJsonOrString(String value) {
+    try {
+      return JsonParser.parseString(value);
+    } catch (RuntimeException exception) {
+      return GSON.toJsonTree(value);
+    }
+  }
+
+  /**
+   * Applies optional selective equipment autosizing to a successfully run process.
+   *
+   * <p>
+   * Explicit compressor maps and valve {@code Cv} values are preserved by default. Set
+   * {@code autoSizing.overwriteExplicit=true} (or {@code preserveExplicit=false}) to replace them. Generated compressor
+   * maps are marked as screening estimates and are not vendor-certified.
+   * </p>
+   *
+   * @param process live process system after its initial successful run
+   * @param normalizedJson canonical request JSON containing the optional {@code autoSizing} object
+   * @return sizing result JSON, or {@code null} when autosizing is not requested
+   */
+  private static JsonObject applyAutoSizing(ProcessSystem process, String normalizedJson) {
+    JsonObject root = JsonParser.parseString(normalizedJson).getAsJsonObject();
+    if (!root.has("autoSizing") || !root.get("autoSizing").isJsonObject()) {
+      return null;
+    }
+    JsonObject options = root.getAsJsonObject("autoSizing");
+    if (!readBoolean(options, "enabled", false)) {
+      return null;
+    }
+
+    double safetyFactor = options.has("safetyFactor") ? options.get("safetyFactor").getAsDouble() : 1.2;
+    if (!Double.isFinite(safetyFactor) || safetyFactor <= 0.0) {
+      safetyFactor = 1.2;
+    }
+    boolean overwriteExplicit = readBoolean(options, "overwriteExplicit", false)
+        || !readBoolean(options, "preserveExplicit", true);
+
+    JsonObject report = new JsonObject();
+    JsonArray equipment = new JsonArray();
+    int sizedCount = 0;
+    int preservedCount = 0;
+    int failedCount = 0;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!(unit instanceof AutoSizeable)) {
+        continue;
+      }
+      JsonObject item = new JsonObject();
+      item.addProperty("name", unit.getName());
+      item.addProperty("type", unit.getClass().getSimpleName());
+      String explicitEvidence = getExplicitSizingEvidence(unit, root);
+      if (!overwriteExplicit && explicitEvidence != null) {
+        item.addProperty("status", "preserved");
+        item.addProperty("provenance", "supplied");
+        item.addProperty("evidence", explicitEvidence);
+        preservedCount++;
+      } else {
+        try {
+          ((AutoSizeable) unit).autoSize(safetyFactor);
+          item.addProperty("status", "sized");
+          item.addProperty("provenance", "generated_screening");
+          if (unit instanceof Compressor) {
+            item.addProperty("warning", "Generated compressor map is a screening estimate, not vendor-certified.");
+          }
+          sizedCount++;
+        } catch (RuntimeException exception) {
+          item.addProperty("status", "failed");
+          item.addProperty("error", exception.getClass().getSimpleName() + ": " + exception.getMessage());
+          failedCount++;
+        }
+      }
+      equipment.add(item);
+    }
+
+    report.addProperty("enabled", true);
+    report.addProperty("safetyFactor", safetyFactor);
+    report.addProperty("preserveExplicit", !overwriteExplicit);
+    report.addProperty("sizedCount", sizedCount);
+    report.addProperty("preservedCount", preservedCount);
+    report.addProperty("failedCount", failedCount);
+    report.add("equipment", equipment);
+    return report;
+  }
+
+  /**
+   * Returns recognized explicit sizing evidence that should not be overwritten by default.
+   *
+   * @param unit process equipment to inspect
+   * @param requestRoot normalized request containing the submitted process units
+   * @return evidence label, or {@code null} when no recognized explicit sizing evidence exists
+   */
+  private static String getExplicitSizingEvidence(ProcessEquipmentInterface unit, JsonObject requestRoot) {
+    if (unit instanceof Compressor) {
+      Compressor compressor = (Compressor) unit;
+      if (compressor.getCompressorChart() != null && compressor.getCompressorChart().isUseCompressorChart()) {
+        return "compressorChart";
+      }
+    }
+    if (unit instanceof ThrottlingValve && ((ThrottlingValve) unit).isValveKvSet()) {
+      return "cv";
+    }
+    JsonObject properties = findSubmittedProperties(requestRoot, unit.getName());
+    if (properties == null) {
+      return null;
+    }
+    if (properties.has("mechanicalDesign")) {
+      return "mechanicalDesign";
+    }
+    String[] designProperties = { "compressorChart", "cv", "internalDiameter", "separatorLength", "diameter",
+        "pipeWallThickness", "maxDesignDuty", "designDuty", "maxDesignPower", "maxDesignVolumeFlow" };
+    for (String designProperty : designProperties) {
+      if (properties.has(designProperty)) {
+        return designProperty;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds the submitted property object for a named single-area process unit.
+   *
+   * @param requestRoot normalized request JSON
+   * @param unitName process unit name
+   * @return submitted properties, or {@code null} when the unit or properties are absent
+   */
+  private static JsonObject findSubmittedProperties(JsonObject requestRoot, String unitName) {
+    if (!requestRoot.has("process") || !requestRoot.get("process").isJsonArray()) {
+      return null;
+    }
+    JsonArray units = requestRoot.getAsJsonArray("process");
+    for (int i = 0; i < units.size(); i++) {
+      if (!units.get(i).isJsonObject()) {
+        continue;
+      }
+      JsonObject submittedUnit = units.get(i).getAsJsonObject();
+      if (submittedUnit.has("name") && unitName.equals(submittedUnit.get("name").getAsString())
+          && submittedUnit.has("properties") && submittedUnit.get("properties").isJsonObject()) {
+        return submittedUnit.getAsJsonObject("properties");
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Reads an optional Boolean property.
+   *
+   * @param object JSON object containing the property
+   * @param name property name
+   * @param defaultValue value returned when the property is absent
+   * @return parsed property or the supplied default
+   */
+  private static boolean readBoolean(JsonObject object, String name, boolean defaultValue) {
+    return object.has(name) ? object.get(name).getAsBoolean() : defaultValue;
   }
 
   /**
@@ -254,6 +902,26 @@ public class ProcessRunner {
     } catch (Exception e) {
       return errorJson("SIMULATION_ERROR", "Process model simulation failed: " + e.getMessage(),
           "Check area wiring, recycle settings, and equipment parameters in the 'areas' object.");
+    }
+
+    JsonObject autoSizing = applyProcessModelAutoSizing(buildResult.model, normalizedJson);
+    if (autoSizing != null && autoSizing.get("sizedCount").getAsInt() > 0) {
+      try {
+        buildResult.model.run();
+      } catch (Exception e) {
+        return errorJson("SIMULATION_ERROR", "Post-sizing process model simulation failed: " + e.getMessage(),
+            "Review the generated screening sizes or disable autoSizing for supplied equipment design.");
+      }
+    }
+
+    JsonObject antiSurgeSystems = applyProcessModelAntiSurgeSystems(buildResult.model, normalizedJson);
+    if (antiSurgeSystems != null && antiSurgeSystems.get("generatedScreeningMapCount").getAsInt() > 0) {
+      try {
+        buildResult.model.run();
+      } catch (Exception e) {
+        return errorJson("SIMULATION_ERROR", "Post anti-surge map process model simulation failed: " + e.getMessage(),
+            "Review generated screening maps or provide validated vendor compressor maps.");
+      }
     }
 
     JsonObject result = new JsonObject();
@@ -284,6 +952,14 @@ public class ProcessRunner {
       }
     }
     result.addProperty("convergenceSummary", buildResult.model.getConvergenceSummary());
+    result.add("convergenceReport", JsonParser.parseString(buildResult.model.getConvergenceReportJson()));
+    if (autoSizing != null) {
+      result.add("autoSizing", autoSizing);
+    }
+    if (antiSurgeSystems != null) {
+      result.add("antiSurgeSystems", antiSurgeSystems);
+    }
+    attachProcessModelDesignData(result, buildResult.model);
 
     ResultProvenance provenance = ResultProvenance.forProcess(extractModel(normalizedJson),
         extractMixingRule(normalizedJson), extractEquipmentCount(normalizedJson));
@@ -303,12 +979,182 @@ public class ProcessRunner {
     addValidationIssueLimitations(provenance, validationIssues);
     addValidationIssues(result, validationIssues);
     result.add("provenance", GSON.toJsonTree(provenance));
+    addProcessDefinition(result, exportCanonicalProcessModel(buildResult.model, normalizedJson));
     ensureProcessDataBlock(result);
     ApiEnvelope.applyStandardFields(result, "runProcess", provenance,
         buildProcessValidationBlock(preValidationPassed, validationIssues),
         ApiEnvelope.qualityGate("passed", "ProcessModel simulation completed", true));
 
     return GSON.toJson(result);
+  }
+
+  /**
+   * Applies the root autosizing policy independently to every process-model area.
+   *
+   * @param model live multi-area process model
+   * @param normalizedJson normalized root request JSON
+   * @return aggregate sizing report, or {@code null} when autosizing is not enabled
+   */
+  private static JsonObject applyProcessModelAutoSizing(ProcessModel model, String normalizedJson) {
+    JsonObject root = JsonParser.parseString(normalizedJson).getAsJsonObject();
+    if (!root.has("autoSizing") || !root.get("autoSizing").isJsonObject()
+        || !readBoolean(root.getAsJsonObject("autoSizing"), "enabled", false)) {
+      return null;
+    }
+    JsonObject report = new JsonObject();
+    JsonArray equipment = new JsonArray();
+    int sizedCount = 0;
+    int preservedCount = 0;
+    int failedCount = 0;
+    for (String areaName : model.getProcessSystemNames()) {
+      JsonObject areaRequest = root.getAsJsonObject("areas").getAsJsonObject(areaName).deepCopy();
+      areaRequest.add("autoSizing", root.get("autoSizing").deepCopy());
+      JsonObject areaReport = applyAutoSizing(model.get(areaName), GSON.toJson(areaRequest));
+      sizedCount += areaReport.get("sizedCount").getAsInt();
+      preservedCount += areaReport.get("preservedCount").getAsInt();
+      failedCount += areaReport.get("failedCount").getAsInt();
+      for (com.google.gson.JsonElement element : areaReport.getAsJsonArray("equipment")) {
+        JsonObject item = element.getAsJsonObject();
+        item.addProperty("area", areaName);
+        equipment.add(item);
+      }
+    }
+    JsonObject options = root.getAsJsonObject("autoSizing");
+    boolean overwriteExplicit = readBoolean(options, "overwriteExplicit", false)
+        || !readBoolean(options, "preserveExplicit", true);
+    double safetyFactor = options.has("safetyFactor") ? options.get("safetyFactor").getAsDouble() : 1.2;
+    report.addProperty("enabled", true);
+    report.addProperty("safetyFactor", safetyFactor);
+    report.addProperty("preserveExplicit", !overwriteExplicit);
+    report.addProperty("sizedCount", sizedCount);
+    report.addProperty("preservedCount", preservedCount);
+    report.addProperty("failedCount", failedCount);
+    report.add("equipment", equipment);
+    return report;
+  }
+
+  /**
+   * Applies area-qualified anti-surge systems across a multi-area process model.
+   *
+   * @param model live process model
+   * @param normalizedJson normalized root request JSON
+   * @return aggregate anti-surge report, or {@code null} when none are configured
+   */
+  private static JsonObject applyProcessModelAntiSurgeSystems(ProcessModel model, String normalizedJson) {
+    JsonObject root = JsonParser.parseString(normalizedJson).getAsJsonObject();
+    if (!root.has("antiSurgeSystems") || !root.get("antiSurgeSystems").isJsonArray()) {
+      return null;
+    }
+    JsonArray systems = new JsonArray();
+    int configuredCount = 0;
+    int failedCount = 0;
+    int generatedScreeningMapCount = 0;
+    List<String> areaNames = model.getProcessSystemNames();
+    for (com.google.gson.JsonElement element : root.getAsJsonArray("antiSurgeSystems")) {
+      if (!element.isJsonObject()) {
+        JsonObject failure = antiSurgeAreaFailure(null, "Each antiSurgeSystems entry must be an object");
+        systems.add(failure);
+        failedCount++;
+        continue;
+      }
+      JsonObject definition = element.getAsJsonObject();
+      String configuredArea = getOptionalString(definition, "area", null);
+      if (configuredArea == null) {
+        systems.add(antiSurgeAreaFailure(definition,
+            "Multi-area anti-surge system requires an explicit 'area' matching a process-model area"));
+        failedCount++;
+      } else if (!areaNames.contains(configuredArea)) {
+        systems.add(antiSurgeAreaFailure(definition,
+            "Anti-surge system area '" + configuredArea + "' does not exist in the process model"));
+        failedCount++;
+      }
+    }
+    for (String areaName : areaNames) {
+      JsonObject areaRequest = new JsonObject();
+      areaRequest.add("antiSurgeSystems", root.get("antiSurgeSystems").deepCopy());
+      JsonObject areaDefinition = root.getAsJsonObject("areas").getAsJsonObject(areaName);
+      if (areaDefinition.has("process")) {
+        areaRequest.add("process", areaDefinition.get("process").deepCopy());
+      }
+      JsonObject areaReport = applyAntiSurgeSystems(model.get(areaName), GSON.toJson(areaRequest), areaName);
+      if (areaReport == null) {
+        continue;
+      }
+      configuredCount += areaReport.get("configuredCount").getAsInt();
+      failedCount += areaReport.get("failedCount").getAsInt();
+      generatedScreeningMapCount += areaReport.get("generatedScreeningMapCount").getAsInt();
+      for (com.google.gson.JsonElement system : areaReport.getAsJsonArray("systems")) {
+        systems.add(system);
+      }
+    }
+    JsonObject report = new JsonObject();
+    report.addProperty("configuredCount", configuredCount);
+    report.addProperty("failedCount", failedCount);
+    report.addProperty("generatedScreeningMapCount", generatedScreeningMapCount);
+    report.addProperty("certificationStatus", "NOT_CERTIFIED_FOR_PROTECTION");
+    report.add("systems", systems);
+    return report;
+  }
+
+  /**
+   * Creates a bounded multi-area anti-surge routing failure.
+   *
+   * @param definition optional anti-surge system definition
+   * @param message failure description
+   * @return failed system report
+   */
+  private static JsonObject antiSurgeAreaFailure(JsonObject definition, String message) {
+    JsonObject failure = new JsonObject();
+    failure.addProperty("name",
+        definition == null ? "anti-surge system" : getOptionalString(definition, "name", "anti-surge system"));
+    if (definition != null) {
+      addOptionalProperty(failure, "area", getOptionalString(definition, "area", null));
+    }
+    failure.addProperty("status", "failed");
+    failure.addProperty("error", message);
+    failure.addProperty("certificationStatus", "NOT_CERTIFIED_FOR_PROTECTION");
+    return failure;
+  }
+
+  /**
+   * Attaches area design reports and plant-wide capacity reports after the final model run.
+   *
+   * @param response process-model response object to mutate
+   * @param model live process model after its final run
+   */
+  private static void attachProcessModelDesignData(JsonObject response, ProcessModel model) {
+    JsonObject designReport = new JsonObject();
+    JsonObject areas = new JsonObject();
+    int unitCount = 0;
+    for (String areaName : model.getProcessSystemNames()) {
+      ProcessSystem area = model.get(areaName);
+      areas.add(areaName, parseJsonOrString(area.getDesignReportJson()));
+      unitCount += area.getUnitOperations().size();
+    }
+    designReport.add("areas", areas);
+    response.add("designReport", designReport);
+    model.applyMechanicalDesignCapacityConstraints();
+    model.getAutomation().enableCapacityConstraints();
+    response.add("utilizationSnapshot", parseJsonOrString(model.getAutomation().getUtilizationSnapshot()));
+    response.add("bottleneckRanking", parseJsonOrString(model.getAutomation().getBottleneckRankingJson(unitCount)));
+  }
+
+  /**
+   * Exports every live area while retaining model-level execution controls and inter-area links.
+   *
+   * @param model live process model to export
+   * @param requestJson normalized request JSON
+   * @return canonical replayable multi-area JSON
+   */
+  private static String exportCanonicalProcessModel(ProcessModel model, String requestJson) {
+    JsonObject exported = JsonParser.parseString(requestJson).getAsJsonObject().deepCopy();
+    JsonObject areas = new JsonObject();
+    JsonProcessExporter exporter = new JsonProcessExporter();
+    for (String areaName : model.getProcessSystemNames()) {
+      areas.add(areaName, exporter.toJsonObject(model.get(areaName)));
+    }
+    exported.add("areas", areas);
+    return GSON.toJson(exported);
   }
 
   /**
@@ -698,7 +1544,9 @@ public class ProcessRunner {
       return;
     }
     JsonObject data = new JsonObject();
-    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report" };
+    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report", "convergenceSummary",
+        "convergenceReport", "autoSizing", "designReport", "utilizationSnapshot", "bottleneckRanking",
+        "processDefinition", "pythonScript" };
     for (String field : fields) {
       if (response.has(field)) {
         data.add(field, response.get(field));
@@ -707,6 +1555,56 @@ public class ProcessRunner {
     if (data.size() > 0) {
       response.add("data", data);
     }
+  }
+
+  /**
+   * Adds the canonical process definition to a response so clients can inspect, edit, and submit it again.
+   *
+   * @param response process response object to mutate
+   * @param normalizedJson normalized process JSON
+   */
+  private static void addProcessDefinition(JsonObject response, String normalizedJson) {
+    try {
+      response.add("processDefinition", JsonParser.parseString(normalizedJson));
+      response.addProperty("pythonScript", renderPythonScript(normalizedJson));
+    } catch (RuntimeException exception) {
+      response.addProperty("processDefinition", normalizedJson);
+    }
+  }
+
+  /**
+   * Renders a standalone Python script that executes the canonical process JSON.
+   *
+   * <p>
+   * Single-area definitions use {@link ProcessSystem#fromJsonAndRun(String)} directly and retain the live process in a
+   * {@code process} variable. Multi-area definitions use this runner because it owns the JSON-to-{@link ProcessModel}
+   * construction contract, including inter-area links and convergence settings.
+   * </p>
+   *
+   * @param normalizedJson canonical process JSON to embed
+   * @return deterministic Python source code
+   */
+  static String renderPythonScript(String normalizedJson) {
+    String processLiteral = GSON.toJson(GSON.toJson(JsonParser.parseString(normalizedJson)));
+    StringBuilder script = new StringBuilder();
+    script.append("import json\n");
+    script.append("from neqsim import jneqsim\n\n");
+    script.append("PROCESS_JSON = ").append(processLiteral).append("\n\n");
+    if (isProcessModelJson(normalizedJson)) {
+      script.append("ProcessRunner = jneqsim.mcp.runners.ProcessRunner\n");
+      script.append("response = json.loads(str(ProcessRunner.validateAndRun(PROCESS_JSON)))\n");
+      script.append("if response.get(\"status\") != \"success\":\n");
+      script.append("    raise RuntimeError(json.dumps(response, indent=2))\n");
+      script.append("print(json.dumps(response, indent=2))\n");
+    } else {
+      script.append("ProcessSystem = jneqsim.process.processmodel.ProcessSystem\n");
+      script.append("result = ProcessSystem.fromJsonAndRun(PROCESS_JSON)\n");
+      script.append("if result.isError():\n");
+      script.append("    raise RuntimeError(str(result.toJson()))\n");
+      script.append("process = result.getProcessSystem()\n");
+      script.append("print(str(result.toJson()))\n");
+    }
+    return script.toString();
   }
 
   /**

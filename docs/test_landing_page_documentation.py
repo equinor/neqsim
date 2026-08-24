@@ -8,6 +8,10 @@ DOCS_DIR = Path(__file__).resolve().parent
 LANDING_PAGE = DOCS_DIR / "index.md"
 PACKAGE_INDEX = DOCS_DIR / "README.md"
 WIKI_INDEX = DOCS_DIR / "wiki" / "index.md"
+FAQ = DOCS_DIR / "wiki" / "faq.md"
+GITHUB_GUIDE = DOCS_DIR / "wiki" / "Getting-started-with-NeqSim-and-Github.md"
+GETTING_STARTED = DOCS_DIR / "wiki" / "getting_started.md"
+USAGE_EXAMPLES = DOCS_DIR / "wiki" / "usage_examples.md"
 POM = DOCS_DIR.parent / "pom.xml"
 
 
@@ -30,6 +34,19 @@ def heading_slugs(content):
     }
 
 
+def declared_permalink(path):
+    content = path.read_text(encoding="utf-8")
+    front_matter = re.match(r"\A---\n(.*?)\n---(?:\n|\Z)", content, flags=re.DOTALL)
+    if front_matter is None:
+        return None
+    match = re.search(
+        r"^permalink:\s*[\"']?([^\"'\s]+)[\"']?\s*$",
+        front_matter.group(1),
+        flags=re.MULTILINE,
+    )
+    return match.group(1) if match else None
+
+
 def resolve_internal_target(source_path, destination):
     target, _, fragment = unquote(destination).partition("#")
     if not target:
@@ -49,6 +66,17 @@ def resolve_internal_target(source_path, destination):
     for candidate in candidates:
         if candidate.is_file():
             return candidate.resolve(), fragment
+
+    try:
+        route = "/" + raw_target.resolve().relative_to(DOCS_DIR.resolve()).as_posix()
+    except ValueError:
+        route = ""
+    if target.endswith("/") and route and not route.endswith("/"):
+        route += "/"
+    for candidate in DOCS_DIR.rglob("*.md"):
+        if declared_permalink(candidate) == route:
+            return candidate.resolve(), fragment
+
     raise AssertionError(f"Unresolved link from {source_path}: {destination}")
 
 
@@ -59,6 +87,10 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
             LANDING_PAGE: LANDING_PAGE.read_text(encoding="utf-8"),
             PACKAGE_INDEX: PACKAGE_INDEX.read_text(encoding="utf-8"),
             WIKI_INDEX: WIKI_INDEX.read_text(encoding="utf-8"),
+            FAQ: FAQ.read_text(encoding="utf-8"),
+            GITHUB_GUIDE: GITHUB_GUIDE.read_text(encoding="utf-8"),
+            GETTING_STARTED: GETTING_STARTED.read_text(encoding="utf-8"),
+            USAGE_EXAMPLES: USAGE_EXAMPLES.read_text(encoding="utf-8"),
         }
 
     def test_front_matter_title_structure_and_fences(self):
@@ -94,37 +126,76 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
                         )
 
     def test_wiki_uses_current_release_and_api_destinations(self):
-        wiki = self.documents[WIKI_INDEX]
         current_version = re.search(
             r"<revision>([^<]+)</revision>",
             POM.read_text(encoding="utf-8"),
         )
         self.assertIsNotNone(current_version)
+        version = current_version.group(1)
+
+        for source_path in (WIKI_INDEX, FAQ, GITHUB_GUIDE, GETTING_STARTED):
+            content = self.documents[source_path]
+            with self.subTest(source=source_path.name):
+                self.assertIn(f"<version>{version}</version>", content)
+                self.assertIn(
+                    "https://github.com/equinor/neqsim/releases",
+                    content,
+                )
+                self.assertNotIn("equinor/neqsimsource", content)
+                self.assertNotIn("htmlpreview.github.io", content)
+                self.assertNotIn("equinor/neqsimhome/blob", content)
+
         self.assertIn(
-            f"<version>{current_version.group(1)}</version>",
-            wiki,
+            f"com.equinor.neqsim:neqsim:{version}",
+            self.documents[FAQ],
         )
-        self.assertIn(
-            "https://github.com/equinor/neqsim/releases",
-            wiki,
-        )
-        self.assertIn(
-            "https://equinor.github.io/neqsim/javadoc/index.html",
-            wiki,
-        )
-        self.assertNotIn("equinor/neqsimsource", wiki)
-        self.assertNotIn("htmlpreview.github.io", wiki)
-        self.assertNotIn("equinor/neqsimhome/blob", wiki)
+        for source_path in (WIKI_INDEX, FAQ, GITHUB_GUIDE):
+            self.assertIn(
+                "https://equinor.github.io/neqsim/javadoc/index.html",
+                self.documents[source_path],
+            )
 
     def test_shared_java_example_is_complete_and_repository_safe(self):
         landing_example = extract_fence(self.documents[LANDING_PAGE], "java")
         package_example = extract_fence(self.documents[PACKAGE_INDEX], "java")
+        wiki_example = extract_fence(self.documents[WIKI_INDEX], "java")
+        getting_started_example = extract_fence(
+            self.documents[GETTING_STARTED],
+            "java",
+        )
         self.assertEqual(landing_example, package_example)
+        self.assertEqual(landing_example, wiki_example)
+        self.assertEqual(landing_example, getting_started_example)
         self.assertIn("public final class NeqSimQuickStart", landing_example)
         self.assertIn("public static void main(String[] args)", landing_example)
         self.assertIn("LogManager.getLogger", landing_example)
         self.assertNotIn("System.out", landing_example)
         self.assertNotIn("System.err", landing_example)
+
+    def test_wiki_tutorials_are_curated_and_repository_safe(self):
+        for source_path in (GETTING_STARTED, USAGE_EXAMPLES):
+            content = self.documents[source_path]
+            with self.subTest(source=source_path.name):
+                self.assertNotIn("System.out", content)
+                self.assertNotIn("System.err", content)
+                self.assertNotIn("equinor/neqsimsource", content)
+                self.assertNotIn("htmlpreview.github.io", content)
+                self.assertNotIn("50+", content)
+                self.assertNotRegex(content, re.compile(r"\b\d{2}-\d{2}%\b"))
+
+        usage = self.documents[USAGE_EXAMPLES]
+        self.assertNotIn("```java", usage)
+        for destination in (
+            "../cookbook/thermodynamics-recipes.md",
+            "../cookbook/process-recipes.md",
+            "../process/processmodel/process_system.md",
+            "../process/equipment/absorbers.md",
+            "pipeline_index.md",
+            "../examples/index.md",
+            "../troubleshooting/index.md",
+        ):
+            with self.subTest(destination=destination):
+                self.assertIn(f"]({destination})", usage)
 
     def test_python_example_uses_public_gateway(self):
         example = extract_fence(self.documents[LANDING_PAGE], "python")
