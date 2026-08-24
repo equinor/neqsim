@@ -72,10 +72,10 @@ public final class ProcessSystemAutoTuningBenchmark {
     }
     long elapsed = System.nanoTime() - start;
     long allocatedAfter = bean.getThreadAllocatedBytes(Thread.currentThread().getId());
-    System.out.printf(Locale.US,
-        "units=%d recycles=%d nsPerTune=%.3f bytesPerTune=%.3f checksum=%d%n", UNIT_COUNT, RECYCLE_COUNT,
-        elapsed / (double) measured, (allocatedAfter - allocatedBefore) / (double) measured, checksum);
+    System.out.printf(Locale.US, "units=%d recycles=%d nsPerTune=%.3f bytesPerTune=%.3f checksum=%d%n", UNIT_COUNT,
+        RECYCLE_COUNT, elapsed / (double) measured, (allocatedAfter - allocatedBefore) / (double) measured, checksum);
   }
 
-  private ProcessSystemAutoTuningBenchmark() {}
+  private ProcessSystemAutoTuningBenchmark() {
+  }
 }
