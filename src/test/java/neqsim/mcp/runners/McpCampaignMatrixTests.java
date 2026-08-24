@@ -18,6 +18,7 @@ class McpCampaignMatrixTests {
     JsonObject matrix = McpCampaignMatrix.build();
     JsonArray criteria = matrix.getAsJsonArray("criteria");
 
+    assertEquals("1.1", matrix.get("matrixVersion").getAsString());
     assertEquals(66, matrix.get("criterionCount").getAsInt());
     assertEquals(66, criteria.size());
     assertFalse(matrix.get("roadmapCompletionClaim").getAsBoolean());
@@ -51,16 +52,21 @@ class McpCampaignMatrixTests {
   }
 
   @Test
-  void testPhase0MatrixDoesNotSelfCertifyCurrentTreeWork() {
+  void testPhase0MergedMatrixCriteriaAndPartialBaselinesAreExplicit() {
     JsonArray criteria = McpCampaignMatrix.build().getAsJsonArray("criteria");
     JsonObject traceability = criterion(criteria, "P0-C4");
     JsonObject baselines = criterion(criteria, "P0-C5");
     JsonObject maturity = criterion(criteria, "P0-C6");
 
-    assertEquals("PARTIAL_EVIDENCE", traceability.get("evidenceStatus").getAsString());
+    assertEquals("MERGED_EVIDENCE", traceability.get("evidenceStatus").getAsString());
     assertEquals("PARTIAL_EVIDENCE", baselines.get("evidenceStatus").getAsString());
-    assertEquals("PARTIAL_EVIDENCE", maturity.get("evidenceStatus").getAsString());
-    assertTrue(baselines.get("evidence").getAsString().contains("numeric closure gaps"));
+    assertEquals("MERGED_EVIDENCE", maturity.get("evidenceStatus").getAsString());
+    assertTrue(traceability.get("evidence").getAsString().contains("364e8e72729c"));
+    assertTrue(maturity.get("evidence").getAsString().contains("364e8e72729c"));
+    assertTrue(baselines.get("evidence").getAsString().contains("#3209"));
+    assertTrue(baselines.get("evidence").getAsString().contains("#3218"));
+    assertTrue(baselines.get("evidence").getAsString().contains("component"));
+    assertTrue(baselines.get("evidence").getAsString().contains("energy"));
   }
 
   @Test
