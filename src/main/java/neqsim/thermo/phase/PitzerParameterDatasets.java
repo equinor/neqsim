@@ -1,6 +1,8 @@
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,6 +61,12 @@ public final class PitzerParameterDatasets {
 
   /** Highest total chloride molality checked for the Na-K-Cl subset, in mol/kg water. */
   public static final double NA_K_CL_VALIDATION_MAX_CHLORIDE_MOLALITY = 3.0;
+
+  /** Lowest independently checked binary CaCl2 or MgCl2 molality, in mol/kg water. */
+  public static final double CA_MG_CL_SO4_BINARY_VALIDATION_MIN_MOLALITY = 0.1;
+
+  /** Highest independently checked binary CaCl2 or MgCl2 molality, in mol/kg water. */
+  public static final double CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY = 2.0;
 
   /** Utility class. */
   private PitzerParameterDatasets() {
@@ -407,6 +415,57 @@ public final class PitzerParameterDatasets {
     double chargeScale = Math.max(1.0, chlorideMolality);
     return temperature >= NA_K_CL_VALIDATION_MIN_TEMPERATURE_K && temperature <= NA_K_CL_VALIDATION_MAX_TEMPERATURE_K
         && Math.abs(sodiumMolality + potassiumMolality - chlorideMolality) <= 1.0e-12 * chargeScale;
+  }
+
+  /**
+   * Returns reviewed scientific qualification metadata for a named built-in dataset.
+   *
+   * <p>
+   * Complete interaction coverage does not imply experimental qualification. In particular, the broad PHREEQC catalog
+   * has exact public-domain source provenance while only named subsystems have independent experimental evidence.
+   * Unknown/manual identities fail closed as {@link PitzerParameterQualification.Level#UNQUALIFIED}.
+   * </p>
+   *
+   * @param datasetId stable dataset identity reported by {@link PhasePitzer#getParameterDatasetId()}
+   * @return immutable qualification metadata
+   */
+  public static PitzerParameterQualification getQualification(String datasetId) {
+    if (PHREEQC_CO2_NA2SO4_ID.equals(datasetId)) {
+      return new PitzerParameterQualification(datasetId,
+          PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE,
+          Arrays.asList("CO2-Na2SO4 activity, mean ionic activity, osmotic coefficient, and salting-out trend"),
+          Arrays.asList("303.15-423.15 K; 1-2 mol/kg Na2SO4; no gas-forming VLE qualification"));
+    }
+    if (PHREEQC_NA_K_CL_ID.equals(datasetId)) {
+      return new PitzerParameterQualification(datasetId,
+          PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE,
+          Arrays.asList("NaCl and KCl mean activity", "Na-K-Cl activity and water properties versus IPhreeqc"),
+          Arrays.asList("298.15-423.15 K implementation matrix; mixed-salt experimental evidence remains limited"));
+    }
+    if (PHREEQC_PITZER_CATALOG_ID.equals(datasetId)) {
+      return new PitzerParameterQualification(datasetId,
+          PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
+          Arrays.asList("CaCl2 mean activity at 298.15 K", "MgCl2 mean activity at 298.15 K"),
+          Arrays.asList("Other catalog species are source-mapped, not independently qualified",
+              "Mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain unqualified"));
+    }
+    String identity = datasetId == null || datasetId.trim().isEmpty() ? "unknown" : datasetId;
+    return new PitzerParameterQualification(identity, PitzerParameterQualification.Level.UNQUALIFIED,
+        Collections.<String>emptyList(), Arrays.asList("No reviewed qualification record is registered"));
+  }
+
+  /**
+   * Reports whether a binary CaCl2 or MgCl2 state is inside the held-out experimental envelope.
+   *
+   * @param temperature temperature in K
+   * @param saltMolality formula-unit molality in mol/kg water
+   * @return {@code true} for finite states from 0.1 to 2.0 mol/kg at 298.15 K
+   */
+  public static boolean isWithinCalciumMagnesiumChlorideBinaryValidationRange(double temperature, double saltMolality) {
+    return Double.isFinite(temperature) && Double.isFinite(saltMolality)
+        && Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) <= 1.0e-9
+        && saltMolality >= CA_MG_CL_SO4_BINARY_VALIDATION_MIN_MOLALITY
+        && saltMolality <= CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY;
   }
 
   private static int requiredComponentIndex(PhasePitzer phase, String componentName) {
