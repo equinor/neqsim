@@ -68,8 +68,7 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("CONTRACT_TESTED", capabilities.get("coverageStatus").getAsString());
     assertFalse(capabilities.get("toolSpecificTrustAvailable").getAsBoolean());
     assertTrue(capabilities.get("contractTrustAvailable").getAsBoolean());
-    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_DISCOVERY",
-        capabilities.get("benchmarkApplicability").getAsString());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_DISCOVERY", capabilities.get("benchmarkApplicability").getAsString());
     assertEquals("TESTED", capabilities.get("maturityLevel").getAsString());
     assertEquals(4, capabilities.get("contractEvidenceCount").getAsInt());
     assertTrue(capabilities.get("evidenceBoundary").getAsString().contains("not scientific validation"));
