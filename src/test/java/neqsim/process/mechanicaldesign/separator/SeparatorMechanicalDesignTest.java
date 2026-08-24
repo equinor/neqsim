@@ -135,6 +135,28 @@ public class SeparatorMechanicalDesignTest {
     logger.info("Design temperature margin: " + tempMargin + " C");
   }
 
+  /** Verifies that Fg derates horizontal gas area but does not derate vertical cross-sectional area. */
+  @Test
+  public void testSizingUsesOrientationSpecificGasArea() {
+    separator.setOrientation("vertical");
+    mechDesign.setFg(0.2);
+    mechDesign.performSizingCalculations();
+    double verticalDiameterAtLowFg = mechDesign.getInnerDiameter();
+    mechDesign.setFg(0.8);
+    mechDesign.performSizingCalculations();
+    double verticalDiameterAtHighFg = mechDesign.getInnerDiameter();
+    assertEquals(verticalDiameterAtLowFg, verticalDiameterAtHighFg, verticalDiameterAtLowFg * 1.0e-12);
+
+    separator.setOrientation("horizontal");
+    mechDesign.setFg(0.2);
+    mechDesign.performSizingCalculations();
+    double horizontalDiameterAtLowFg = mechDesign.getInnerDiameter();
+    mechDesign.setFg(0.8);
+    mechDesign.performSizingCalculations();
+    double horizontalDiameterAtHighFg = mechDesign.getInnerDiameter();
+    assertEquals(2.0, horizontalDiameterAtLowFg / horizontalDiameterAtHighFg, 1.0e-12);
+  }
+
   // ============================================================================
   // Validation Method Tests
   // ============================================================================
