@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -231,6 +233,16 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
    */
   @Override
   public void run() {
+    setReferencePhaseEnvelopeCalculation(system, true);
+    try {
+      traceEnvelope();
+    } finally {
+      setReferencePhaseEnvelopeCalculation(system, false);
+    }
+  }
+
+  /** Trace the phase envelope after model-specific calculation state has been configured. */
+  private void traceEnvelope() {
     double initialTemp = system.getTemperature();
     double initialPres = system.getPressure();
 
@@ -519,6 +531,15 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     buildOutputArrays();
   }
 
+  /** Enable or disable reference-EOS derivative handling without changing the continuation algorithm. */
+  private void setReferencePhaseEnvelopeCalculation(SystemInterface candidateSystem, boolean enabled) {
+    for (PhaseInterface phase : candidateSystem.getPhases()) {
+      if (phase instanceof PhaseGERG2008Eos) {
+        ((PhaseGERG2008Eos) phase).setPhaseEnvelopeCalculation(enabled);
+      }
+    }
+  }
+
   /**
    * Check whether the phase envelope is closed, meaning both dew and bubble branches have been successfully traced with
    * at least 3 points each.
@@ -567,6 +588,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       }
 
       SystemInterface clonedSystem = system.clone();
+      setReferencePhaseEnvelopeCalculation(clonedSystem, true);
 
       // Estimate initial temperature at low pressure for this beta
       double temp = tempKWilsonForSystem(clonedSystem, beta, lowPres);
