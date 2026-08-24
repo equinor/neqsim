@@ -421,13 +421,10 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     }
 
     double ionOverallFraction = 0.0;
-    double currentAqueousIonFraction = 0.0;
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
       if (component.getIonicCharge() != 0 || component.isIsIon()) {
         ionOverallFraction += Math.max(getCoupledOverallFraction(componentIndex), 0.0);
-        currentAqueousIonFraction += Math.max(system.getPhase(aqueousPhaseIndex).getComponent(componentIndex).getx(),
-            0.0);
       }
     }
     if (!(ionOverallFraction > 0.0) || !Double.isFinite(ionOverallFraction)) {
@@ -435,12 +432,14 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     }
 
     double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
-    double maximumProjectedIonFraction = Double.isFinite(currentAqueousIonFraction)
-        && currentAqueousIonFraction > HYBRID_ION_CAPACITY_MARGIN
-            ? Math.min(1.0 - HYBRID_ION_CAPACITY_MARGIN,
-                HYBRID_ION_CONCENTRATION_STEP_LIMIT * currentAqueousIonFraction)
-            : 1.0 / HYBRID_ION_CONCENTRATION_STEP_LIMIT;
-    double concentrationLimitedAqueousFraction = ionOverallFraction / maximumProjectedIonFraction;
+    // The phase object retains the synchronized pre-Newton beta while the system beta array
+    // contains the current proposal. Limiting beta reduction therefore bounds the corresponding
+    // ionic-concentration increase without consulting a possibly invalid trial composition.
+    double previousAqueousFraction = system.getPhase(aqueousPhaseIndex).getBeta();
+    double concentrationLimitedAqueousFraction =
+        Double.isFinite(previousAqueousFraction) && previousAqueousFraction > 0.0
+            ? previousAqueousFraction / HYBRID_ION_CONCENTRATION_STEP_LIMIT
+            : ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN;
     double minimumAqueousFraction = Math.min(maximumAqueousFraction,
         Math.max(ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN, concentrationLimitedAqueousFraction));
     double currentAqueousFraction = system.getBeta(aqueousPhaseIndex);
@@ -458,9 +457,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     if (adjustableFraction + phaseFractionMinimumLimit < requiredTransfer) {
       throw new IllegalStateException("Hybrid EOS-GE phase fractions cannot accommodate the ionic inventory: "
           + "ionOverallFraction=" + ionOverallFraction + ", aqueousBeta=" + currentAqueousFraction
-          + ", requiredAqueousBeta=" + minimumAqueousFraction + ", previousAqueousIonFraction="
-          + currentAqueousIonFraction + ", maximumProjectedIonFraction=" + maximumProjectedIonFraction
-          + ", adjustableFraction=" + adjustableFraction);
+          + ", requiredAqueousBeta=" + minimumAqueousFraction + ", previousAqueousBeta="
+          + previousAqueousFraction + ", adjustableFraction=" + adjustableFraction);
     }
 
     double remainingTransfer = requiredTransfer;

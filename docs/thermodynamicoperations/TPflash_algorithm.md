@@ -1981,9 +1981,12 @@ The unconstrained beta Newton correction can cross that physical boundary during
 iteration even when the final gas-aqueous equilibrium is feasible. The hybrid solver now projects
 only such infeasible iterates back above
 `sum(zIon) + 100 * phaseFractionMinimumLimit`. The projection also limits a single correction to
-at most a twofold increase in aqueous ionic mole fraction, using the preceding finite composition
-as a trust-region reference. This prevents a formally normalized but nearly solvent-free
-intermediate brine from overflowing activity and fugacity coefficients before Newton recovery.
+at most a twofold increase in aqueous ionic mole fraction. It uses the synchronized
+pre-Newton aqueous phase fraction as the trust-region reference; because ions are confined to that
+phase, limiting one beta reduction to one half limits the corresponding concentration increase to
+twofold without consulting a possibly invalid trial composition. This prevents a formally
+normalized but nearly solvent-free intermediate brine from overflowing activity and fugacity
+coefficients before Newton recovery.
 The required fraction is removed proportionally from the adjustable part of the other active roles,
 their minimum fractions are preserved, and the phase-split denominator is rebuilt before
 compositions are evaluated. Feasible iterates, public tolerances, dataset parameters, and final
