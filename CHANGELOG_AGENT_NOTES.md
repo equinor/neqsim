@@ -9,6 +9,60 @@
 
 ---
 
+## 2026-08-24 — Component name resolution, parameterised component lookup, COMP_EXT superset fix
+
+Three related changes around how a component name reaches the component database.
+
+**1. New `neqsim.thermo.component.ComponentNameResolver`.**
+`addComponent(...)` previously mapped names through an 18-entry hardcoded map of reservoir
+shorthand (`C1`, `nC4`, `H2O`), matched case-sensitively. Nothing else was recognised, so a
+systematic or trivial name from a laboratory report failed with "not found in database" even when
+the component was present under the in-house shorthand.
+
+The resolver now recognises, in this order: any database name regardless of letter case; the
+reservoir shorthand as before; a 148-entry synonym table covering systematic names
+(`2,2,4-trimethylpentane` → `224-TM-C5`) and trivial names (`isopentane` → `i-pentane`,
+`cyclohexane` → `c-hexane`); and inverted CAS index names as printed by chromatography software
+(`Cyclohexane, 1,2,4-trimethyl-` → `1.2.4-TMcyC6`). A `.` between two digits is accepted wherever
+the database writes a locant separator, so `1,2,3-TM-Benzene` and `1.2.3-TM-Benzene` both work.
+
+Stereochemistry is never guessed. Where the database holds both partners of a cis/trans pair
+(the 1,2- and 1,3-dimethylcyclopentanes, the 1,2- and 1,4-dimethylcyclohexanes, 2-butene), the
+unqualified parent name is deliberately absent from the synonym table and is passed through
+unchanged rather than silently resolved to one of the two.
+
+- **No migration needed.** `ComponentInterface.getComponentNameFromAlias(String)` keeps its
+  signature and delegates to the resolver, so all ~28 existing call sites gain the new behaviour.
+  Every previously accepted name still resolves to the same component.
+- `ComponentInterface.getComponentNameMap()` is **deprecated**; use
+  `ComponentNameResolver.getSynonyms()`.
+- Unknown names are still returned unchanged, so components that exist only in the extended
+  database are unaffected.
+
+**2. `NeqSimDataBase.hasComponent` / `hasTempComponent` now use a prepared statement.**
+The query was assembled as `"... WHERE NAME='" + name + "'"`. A name containing an apostrophe
+produced invalid SQL — 2,061 names in the extended database contain one, for example
+`4'-hydroxyacetophenone`, so those components could never be looked up. Both methods now bind the
+name as a parameter and return `false` for `null` instead of reaching the database.
+
+**3. `COMP_EXT.csv` is now genuinely a superset of `COMP.csv`.**
+The documentation stated that the extended database contains every standard component; eleven were
+missing (`NO2-`, `H2O2`, `NaNO2`, `NH2SO3H`, `NH2SO3-`, `NaHSO4`, `N2O4`, `N2O4-`, `asphaltene`,
+`MEA+`, `MEACOO-`). Because `useExtendedComponentDatabase(true)` replaces the `COMP` table, calling
+it silently removed those components from any fluid built afterwards. The rows are copied verbatim
+from `COMP.csv`, and the relationship is now enforced by a test.
+
+**Documentation:** `docs/thermo/component_list.md` gains a "Component Name Resolution" section,
+corrects the component counts (257 standard, 76,704 extended — it claimed "~250" and "50,000+"),
+and records that the provenance of the extended database is undocumented and its parameters are
+unvalidated against a primary source.
+
+**Tests:** `ComponentNameResolverTest` (14 tests, including a check that every database name
+resolves to itself and that every synonym target exists) and
+`NeqSimDataBaseComponentLookupTest` (4 tests).
+
+---
+
 ## 2026-08-15 — Beggs and Brill correlation corrected in `PipeBeggsAndBrills`
 
 Four defects in the Beggs and Brill (1973) implementation, found by auditing the correlation term
