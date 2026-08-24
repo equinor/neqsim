@@ -28,7 +28,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.5");
+    inventory.addProperty("inventoryVersion", "1.6");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -166,6 +166,7 @@ public final class McpEvidenceInventory {
 
     JsonObject coverageRecords = new JsonObject();
     int explicitCoverageRecordCount = 0;
+    int contractTestedRecordCount = 0;
     int confirmedGapRecordCount = 0;
     for (String toolName : new java.util.TreeSet<String>(publishedTools)) {
       JsonObject record = new JsonObject();
@@ -185,6 +186,20 @@ public final class McpEvidenceInventory {
         record.addProperty("validationCaseCount", arraySize(trust, "validationCases"));
         record.addProperty("verifiedValidationCaseCount", verifiedValidationCaseCount(trust));
         explicitCoverageRecordCount++;
+      } else if ("getCapabilities".equals(toolName)) {
+        record.addProperty("coverageStatus", "CONTRACT_TESTED");
+        record.addProperty("toolSpecificTrustAvailable", false);
+        record.addProperty("contractTrustAvailable", true);
+        record.addProperty("benchmarkApplicability", "NOT_APPLICABLE_NON_NUMERICAL_DISCOVERY");
+        record.addProperty("maturityLevel", "TESTED");
+        record.addProperty("contractEvidenceCount", 4);
+        record.addProperty("knownLimitationCount", 0);
+        record.addProperty("unsupportedConditionCount", 0);
+        record.addProperty("validationCaseCount", 0);
+        record.addProperty("verifiedValidationCaseCount", 0);
+        record.addProperty("evidenceBoundary",
+            "CapabilitiesRunnerTest, McpToolSurfaceContractTest, ResponseSizeGuardTest, and the packaged MCP protocol verify discovery-contract fidelity; this is not scientific validation of advertised calculations");
+        contractTestedRecordCount++;
       } else {
         record.addProperty("coverageStatus", "CONFIRMED_GAP");
         record.addProperty("toolSpecificTrustAvailable", false);
@@ -203,14 +218,17 @@ public final class McpEvidenceInventory {
     JsonObject coverageDefinitions = new JsonObject();
     coverageDefinitions.addProperty("EXPLICIT_TRUST",
         "Tool-specific BenchmarkTrust metadata exists; use its declared maturity, validation cases, accuracy bounds, and limitations");
+    coverageDefinitions.addProperty("CONTRACT_TESTED",
+        "Non-numerical MCP contract behavior has direct source, contract-test, response-guard, and real-protocol evidence; no engineering accuracy benchmark is applicable or implied");
     coverageDefinitions.addProperty("CONFIRMED_GAP",
-        "No tool-specific BenchmarkTrust entry exists; generic fallback maturity must not be interpreted as benchmark validation");
+        "No tool-specific BenchmarkTrust entry or bounded non-numerical contract evidence closes the gap; generic fallback maturity must not be interpreted as benchmark validation");
 
     JsonObject limitations = new JsonObject();
     limitations.addProperty("sourceTool", "getBenchmarkTrust");
     limitations.addProperty("publishedToolCount", publishedTools.size());
     limitations.addProperty("explicitTrustToolCount", explicitTools.size());
     limitations.addProperty("genericTrustToolCount", genericTools.size());
+    limitations.addProperty("contractTestedToolCount", contractTestedRecordCount);
     limitations.addProperty("confirmedGapToolCount", confirmedGapRecordCount);
     limitations.addProperty("coverageRecordCount", coverageRecords.size());
     limitations.addProperty("explicitCoverageRecordCount", explicitCoverageRecordCount);
@@ -227,7 +245,7 @@ public final class McpEvidenceInventory {
     limitations.add("coverageRecords", coverageRecords);
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; CONFIRMED_GAP identifies missing tool-specific trust evidence without implying validation");
+        "Every published tool has an explicit coverage record; getCapabilities is contract-tested without a numerical benchmark claim, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
