@@ -671,7 +671,6 @@ class ProcessModelAutoConvergenceTuningTest {
     assertEquals(0.1, massClosure.get("unitRelativeError").getAsDouble(), 1.0e-12);
   }
 
-
   /**
    * Topology mutations must invalidate both cached auto-tuning subsets so units added after an initial scan are tuned.
    */
