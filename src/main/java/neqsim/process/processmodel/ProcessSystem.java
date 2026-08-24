@@ -242,9 +242,9 @@ public class ProcessSystem extends SimulationBaseClass {
   /** Cached result of hasRecycles() - null means not yet computed. */
   private transient Boolean cachedHasRecycles = null;
   /** Topology-derived units eligible for automatic low-flow tuning. */
-  private transient List<ProcessEquipmentBaseClass> cachedAutoLowFlowUnits = null;
+  private transient volatile List<ProcessEquipmentBaseClass> cachedAutoLowFlowUnits = null;
   /** Topology-derived recycle subset shared by automatic recycle tuning passes. */
-  private transient List<Recycle> cachedAutoTuningRecycles = null;
+  private transient volatile List<Recycle> cachedAutoTuningRecycles = null;
   /** Cached result of hasCalculators() - null means not yet computed. */
   private transient Boolean cachedHasCalculators = null;
   /** Cached result of hasMultiInputEquipment() - null means not yet computed. */
@@ -3872,28 +3872,32 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /** Returns the topology-stable set of units eligible for automatic low-flow tuning. */
   private List<ProcessEquipmentBaseClass> getAutoLowFlowUnits() {
-    if (cachedAutoLowFlowUnits == null) {
-      cachedAutoLowFlowUnits = new ArrayList<ProcessEquipmentBaseClass>();
+    List<ProcessEquipmentBaseClass> cached = cachedAutoLowFlowUnits;
+    if (cached == null) {
+      cached = new ArrayList<ProcessEquipmentBaseClass>();
       for (ProcessEquipmentInterface unit : unitOperations) {
         if (!(unit instanceof Setter) && unit instanceof ProcessEquipmentBaseClass) {
-          cachedAutoLowFlowUnits.add((ProcessEquipmentBaseClass) unit);
+          cached.add((ProcessEquipmentBaseClass) unit);
         }
       }
+      cachedAutoLowFlowUnits = cached;
     }
-    return cachedAutoLowFlowUnits;
+    return cached;
   }
 
   /** Returns the topology-stable recycle subset used by automatic recycle tuning. */
   private List<Recycle> getAutoTuningRecycles() {
-    if (cachedAutoTuningRecycles == null) {
-      cachedAutoTuningRecycles = new ArrayList<Recycle>();
+    List<Recycle> cached = cachedAutoTuningRecycles;
+    if (cached == null) {
+      cached = new ArrayList<Recycle>();
       for (ProcessEquipmentInterface unit : unitOperations) {
         if (unit instanceof Recycle) {
-          cachedAutoTuningRecycles.add((Recycle) unit);
+          cached.add((Recycle) unit);
         }
       }
+      cachedAutoTuningRecycles = cached;
     }
-    return cachedAutoTuningRecycles;
+    return cached;
   }
 
   /**
