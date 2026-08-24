@@ -11,6 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseGEInterface;
@@ -172,6 +173,24 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
             component.getComponentName());
       }
     }
+  }
+
+  /** Pitzer neutral fugacity converts its molality activity to the flash mole-fraction basis. */
+  @Test
+  void pitzerNeutralFugacityUsesMolalityStandardState() {
+    SystemPitzer system = createQualifiedCarbonDioxideSodiumSulfateSystem();
+    system.prepareHybridEosGeFlash();
+    system.init(1);
+
+    PhaseInterface aqueous = findPhase(system, PhaseType.AQUEOUS);
+    ComponentInterface carbonDioxide = aqueous.getComponent("CO2");
+    double molalityToMoleFraction = carbonDioxide.getMolality(aqueous) / carbonDioxide.getx();
+    double expectedFugacityCoefficient = ((ComponentGEInterface) carbonDioxide).getGamma() * molalityToMoleFraction
+        * carbonDioxide.getHenryCoef(system.getTemperature()) / system.getPressure();
+
+    assertEquals(expectedFugacityCoefficient, carbonDioxide.getFugacityCoefficient(),
+        expectedFugacityCoefficient * 1.0e-12);
+    assertTrue(molalityToMoleFraction > 50.0);
   }
 
   /** Qualified gas-forming CO2/Na2SO4 flashes remain closed across repeats and nearby pressure. */

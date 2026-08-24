@@ -50,7 +50,10 @@ It is copied exactly from public-domain PHREEQC commit `b0b3be7`, database blob 
 marks the phase as manually populated so the legacy table cannot be mixed into the selected set.
 The species use the molality standard state, pressure is not an argument of these interaction
 functions, the reference temperature is 298.15 K, and the six coefficients are stored in PHREEQC
-order. The Na+/SO4-- 1-2 binary uses alpha1=2 and has no beta2 term.
+order. For a neutral solute with a molality-based Henry coefficient, the hybrid flash converts that
+standard state to its mole-fraction fugacity convention with
+`phi_i = gamma_i * H_i * (m_i / x_i) / P`; consequently `x_i * phi_i * P = gamma_i * m_i * H_i`.
+The Na+/SO4-- 1-2 binary uses alpha1=2 and has no beta2 term.
 Java and Python callers can use `SystemPitzer.applyPhreeqcCo2SodiumSulfateParameters()` after adding
 the required species; cloning and subsequent `init(0)` calls preserve the selected dataset.
 

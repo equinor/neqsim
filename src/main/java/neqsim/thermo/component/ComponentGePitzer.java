@@ -50,7 +50,14 @@ public class ComponentGePitzer extends ComponentGE {
           || henryCoefficient > 1.0e12) {
         henryCoefficient = 1.0e12;
       }
-      fugacityCoefficient = gamma * henryCoefficient / phase.getPressure();
+      double molalityToMoleFraction = getx() > 0.0 ? getMolality(phase) / getx() : Double.NaN;
+      if (!(molalityToMoleFraction > 0.0) || !Double.isFinite(molalityToMoleFraction)) {
+        molalityToMoleFraction = 1.0;
+      }
+      // Pitzer neutral activities use the molality standard state, while NeqSim's
+      // phase-equilibrium kernel multiplies phi by mole fraction. Convert m_i/x_i here so
+      // x_i*phi_i*P equals gamma_i*m_i*H_i.
+      fugacityCoefficient = gamma * molalityToMoleFraction * henryCoefficient / phase.getPressure();
       gammaRefCor = gamma;
       return fugacityCoefficient;
     }
