@@ -50,7 +50,15 @@ public class ComponentGePitzer extends ComponentGE {
           || henryCoefficient > 1.0e12) {
         henryCoefficient = 1.0e12;
       }
-      fugacityCoefficient = gamma * henryCoefficient / phase.getPressure();
+      // Pitzer neutral activities and the database Henry constants are on the molality
+      // scale, while the common phase-equilibrium kernel evaluates x_i * phi_i * P.
+      // Convert m_i * gamma_i * H_i to that mole-fraction representation explicitly.
+      double moleFraction = getx();
+      double molalityPerMoleFraction = moleFraction > 0.0 ? getMolality(phase) / moleFraction : Double.NaN;
+      if (!(molalityPerMoleFraction > 0.0) || !Double.isFinite(molalityPerMoleFraction)) {
+        molalityPerMoleFraction = 1.0;
+      }
+      fugacityCoefficient = gamma * henryCoefficient * molalityPerMoleFraction / phase.getPressure();
       gammaRefCor = gamma;
       return fugacityCoefficient;
     }
