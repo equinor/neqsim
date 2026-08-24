@@ -1955,23 +1955,27 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * getComponentNameFromAlias. Used to look up normal component name aliases.
    *
+   * <p>
+   * Delegates to {@link ComponentNameResolver#resolve(String)}, which additionally understands case differences,
+   * systematic and trivial names, and inverted CAS index names. The reservoir shorthand handled by the previous
+   * implementation ({@code C1}, {@code nC4}, {@code H2O}) is still recognised.
+   * </p>
+   *
    * @param name Component name or alias of component name.
    * @return Component name as used in database.
    */
   public static String getComponentNameFromAlias(String name) {
-    LinkedHashMap<String, String> c = getComponentNameMap();
-    if (c.containsKey(name)) {
-      return c.get(name);
-    } else {
-      return name;
-    }
+    return ComponentNameResolver.resolve(name);
   }
 
   /**
    * Get lookup map for component name alias.
    *
    * @return a {@link java.util.LinkedHashMap} Map with component alias name as key and component name as value.
+   * @deprecated Use {@link ComponentNameResolver#getSynonyms()}, which also covers systematic names, trivial names and
+   * case differences.
    */
+  @Deprecated
   public static LinkedHashMap<String, String> getComponentNameMap() {
     LinkedHashMap<String, String> c = new LinkedHashMap<>();
     c.put("H2O", "water");

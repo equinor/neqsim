@@ -27,12 +27,21 @@ NeqSim provides two pure component parameter databases:
 
 | Database | Components | Performance | Use Case |
 |----------|------------|-------------|----------|
-| **Standard** | ~250 | Fast (embedded) | Typical oil & gas simulations |
-| **Extended** | 50,000+ | Slower (loaded on demand) | Specialty chemicals, research |
+| **Standard** | 257 | Fast (embedded) | Typical oil & gas simulations |
+| **Extended** | 76,704 | Slower (loaded on demand) | Specialty chemicals, research |
 
 The **standard database** is the default and covers most components needed for oil & gas applications. It loads instantly as an embedded database.
 
-The **extended database** contains all components from the standard database (with identical parameters) plus over 50,000 additional components from external chemical databases. This is useful when working with specialty chemicals, pharmaceuticals, or research applications.
+The **extended database** contains every component of the standard database with identical
+parameters, plus around 76,000 additional components. `useExtendedComponentDatabase(true)` replaces
+the `COMP` table rather than adding to it, so this superset relationship matters: any component
+present only in the standard file would disappear from fluids created after the switch. It is
+enforced by `NeqSimDataBaseComponentLookupTest.extendedDatabaseContainsEveryStandardComponent`.
+
+> **Data provenance**: the origin of the additional components in `COMP_EXT.csv` is not currently
+> documented, and its entries have not been validated against a primary source such as DIPPR 801 or
+> NIST. Treat parameters taken from the extended database as unverified, and check them before using
+> them in engineering work.
 
 ### Switching Between Databases
 
@@ -45,7 +54,7 @@ import neqsim.thermo.system.SystemSrkEos;
 // Default: use standard database (fast)
 NeqSimDataBase.useExtendedComponentDatabase(false);
 
-// Switch to extended database (50,000+ components)
+// Switch to extended database (76,000+ components)
 NeqSimDataBase.useExtendedComponentDatabase(true);
 
 // Now you can use specialty components
@@ -111,6 +120,51 @@ The database CSV files are located in the NeqSim repository:
 | Unknown component lookup | Extended |
 
 > **Performance Note**: The extended database loads components into an embedded database on demand, which takes slightly longer than the pre-loaded standard database. For production simulations with common components, use the standard database.
+
+---
+
+## Component Name Resolution
+
+The same molecule is named differently by different tools. `addComponent` therefore passes the name
+through `neqsim.thermo.component.ComponentNameResolver` before looking it up, so all of the
+following reach the same component:
+
+```java
+fluid.addComponent("224-TM-C5", 1.0);               // database shorthand
+fluid.addComponent("2,2,4-trimethylpentane", 1.0);  // systematic name
+fluid.addComponent("isooctane", 1.0);               // trivial name
+fluid.addComponent("ISOOCTANE", 1.0);               // any letter case
+```
+
+The resolver recognises:
+
+| Convention | Example | Resolves to |
+|------------|---------|-------------|
+| Database name, any case | `N-HEPTANE` | `n-heptane` |
+| Reservoir shorthand | `C1`, `nC4`, `iC5`, `H2O` | `methane`, `n-butane`, `i-pentane`, `water` |
+| Systematic name | `2,2,4-trimethylpentane` | `224-TM-C5` |
+| Trivial name | `isopentane`, `neopentane`, `cyclohexane` | `i-pentane`, `22-dim-C3`, `c-hexane` |
+| Inverted CAS index name | `Cyclohexane, 1,2,4-trimethyl-` | `1.2.4-TMcyC6` |
+| Either locant separator | `1,2,3-TM-Benzene` or `1.2.3-TM-Benzene` | `1.2.3-TM-Benzene` |
+
+**Stereochemistry is never guessed.** Where the database holds both partners of a cis/trans pair,
+the unqualified parent name is deliberately not resolved and is passed through unchanged:
+
+```java
+ComponentNameResolver.resolve("cis-1,3-dimethylcyclohexane"); // "cis-13-DM-cy-C6"
+ComponentNameResolver.resolve("1,3-dimethylcyclopentane");    // unchanged - cis and trans both exist
+```
+
+A name the resolver does not know is returned unchanged, so components that exist only in the
+extended database are unaffected.
+
+To inspect or extend the tables:
+
+```java
+ComponentNameResolver.getSynonyms();        // normalised synonym -> database name
+ComponentNameResolver.getCanonicalNames();  // normalised database name -> exact database name
+ComponentNameResolver.isKnownName("isooctane");
+```
 
 ---
 
