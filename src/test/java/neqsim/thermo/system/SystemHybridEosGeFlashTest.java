@@ -150,8 +150,7 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     assertTrue(aqueousPhaseIndex >= 0);
     assertTrue(system.getNumberOfPhases() >= 2);
     system.setBeta(aqueousPhaseIndex, 0.5 * ionOverallFraction);
-    double nonAqueousBeta = (1.0 - system.getBeta(aqueousPhaseIndex))
-        / (system.getNumberOfPhases() - 1.0);
+    double nonAqueousBeta = (1.0 - system.getBeta(aqueousPhaseIndex)) / (system.getNumberOfPhases() - 1.0);
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (phaseIndex != aqueousPhaseIndex) {
         system.setBeta(phaseIndex, nonAqueousBeta);

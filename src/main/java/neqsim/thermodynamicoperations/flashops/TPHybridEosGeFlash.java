@@ -396,11 +396,11 @@ public class TPHybridEosGeFlash extends TPmultiflash {
    *
    * <p>
    * Ions are excluded from EOS gas and oil roles, so their aqueous mole fractions sum to
-   * {@code sum(zIon) / betaAqueous}. An unconstrained Newton correction can temporarily move
-   * {@code betaAqueous} below {@code sum(zIon)} even when the final equilibrium is feasible. That iterate has no
-   * normalized aqueous composition and formerly failed before the next correction could recover. This method projects
-   * only such infeasible iterates onto the ionic-capacity boundary, taking the required fraction proportionally from the
-   * adjustable part of the other active phases. Feasible iterates and the final acceptance tolerances are unchanged.
+   * {@code sum(zIon) / betaAqueous}. An unconstrained Newton correction can temporarily move {@code betaAqueous} below
+   * {@code sum(zIon)} even when the final equilibrium is feasible. That iterate has no normalized aqueous composition
+   * and formerly failed before the next correction could recover. This method projects only such infeasible iterates
+   * onto the ionic-capacity boundary, taking the required fraction proportionally from the adjustable part of the other
+   * active phases. Feasible iterates and the final acceptance tolerances are unchanged.
    * </p>
    *
    * @return {@code true} when the phase fractions were projected
@@ -428,10 +428,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
       return false;
     }
 
-    double maximumAqueousFraction =
-        1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
-    double minimumAqueousFraction =
-        Math.min(maximumAqueousFraction, ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN);
+    double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
+    double minimumAqueousFraction = Math.min(maximumAqueousFraction, ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN);
     double currentAqueousFraction = system.getBeta(aqueousPhaseIndex);
     if (currentAqueousFraction >= minimumAqueousFraction) {
       return false;
