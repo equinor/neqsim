@@ -513,7 +513,17 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
         neqsim.thermo.component.ComponentInterface phaseComponent = getPhase(phaseIndex).getComponent(componentIndex);
         double moleFraction = phaseComponent.getx();
         double fugacityCoefficient = phaseComponent.getFugacityCoefficient();
-        if (!(moleFraction > 1.0e-30) || !(fugacityCoefficient > 0.0) || !Double.isFinite(fugacityCoefficient)) {
+        if (!Double.isFinite(moleFraction) || moleFraction < 0.0) {
+          lastHybridLogFugacityResidual = Double.POSITIVE_INFINITY;
+          lastHybridWorstFugacityComponent = phaseComponent.getComponentName();
+          continue;
+        }
+        if (moleFraction <= 1.0e-30) {
+          continue;
+        }
+        if (!(fugacityCoefficient > 0.0) || !Double.isFinite(fugacityCoefficient)) {
+          lastHybridLogFugacityResidual = Double.POSITIVE_INFINITY;
+          lastHybridWorstFugacityComponent = phaseComponent.getComponentName();
           continue;
         }
         double logFugacity = Math.log(moleFraction * fugacityCoefficient * getPhase(phaseIndex).getPressure());
