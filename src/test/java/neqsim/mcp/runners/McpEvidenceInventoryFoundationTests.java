@@ -53,7 +53,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(71, limitations.get("publishedToolCount").getAsInt());
     assertEquals(71, limitations.get("coverageRecordCount").getAsInt());
     assertEquals(20, limitations.get("explicitCoverageRecordCount").getAsInt());
-    assertEquals(51, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(1, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(50, limitations.get("confirmedGapToolCount").getAsInt());
     assertEquals(71, coverageRecords.size());
     assertTrue(limitations.get("coverageComplete").getAsBoolean());
     assertFalse(limitations.get("scientificValidationComplete").getAsBoolean());
@@ -64,9 +65,13 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(flash.get("validationCaseCount").getAsInt() > 0);
 
     JsonObject capabilities = coverageRecords.getAsJsonObject("getCapabilities");
-    assertEquals("CONFIRMED_GAP", capabilities.get("coverageStatus").getAsString());
+    assertEquals("CONTRACT_TESTED", capabilities.get("coverageStatus").getAsString());
     assertFalse(capabilities.get("toolSpecificTrustAvailable").getAsBoolean());
-    assertTrue(capabilities.get("gapReason").getAsString().contains("not benchmark"));
+    assertTrue(capabilities.get("contractTrustAvailable").getAsBoolean());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_DISCOVERY", capabilities.get("benchmarkApplicability").getAsString());
+    assertEquals("TESTED", capabilities.get("maturityLevel").getAsString());
+    assertEquals(4, capabilities.get("contractEvidenceCount").getAsInt());
+    assertTrue(capabilities.get("evidenceBoundary").getAsString().contains("not scientific validation"));
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 
@@ -76,7 +81,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.5", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.6", inventory.get("inventoryVersion").getAsString());
     assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());

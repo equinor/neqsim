@@ -19,8 +19,8 @@ manually maintained Java method list.
 | MCP Java test classes | 67 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
-| Explicit tool trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit + 51 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory` |
+| Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
+| Trust coverage records | 71 = 20 explicit benchmark + 1 contract-tested discovery + 50 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -111,25 +111,33 @@ equivalent selective-retrieval route. Omitted catalog detail remains identified 
 can be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and the MCP catalog
 resources.
 
-`BenchmarkTrust` currently contains 20 tool-specific trust pages with 64 known-limit entries and 30
-validation cases, of which 5 name a concrete `verifiedBy` test. The other 51 published tools still
-use the compatibility-level generic `TESTED` fallback from `getBenchmarkTrust`.
+`BenchmarkTrust` currently contains 20 tool-specific numerical/engineering trust pages with 64
+known-limit entries and 30 validation cases, of which 5 name a concrete `verifiedBy` test. The
+other 51 published tools still use the compatibility-level generic `TESTED` benchmark fallback
+from `getBenchmarkTrust`.
 
-Phase 0 no longer leaves those 51 tools as an implicit set. `knownLimitations.coverageRecords`
-contains one deterministic record for every published tool and classifies it as either:
+Phase 0 does not equate that generic benchmark fallback with an unresolved scientific gap when the
+tool is intrinsically non-numerical. `knownLimitations.coverageRecords` contains one deterministic
+record for every published tool and now uses three bounded states:
 
 - `EXPLICIT_TRUST` — a tool-specific `BenchmarkTrust` page exists, with its declared maturity and
-  counts for validation cases, verified cases, limitations, and unsupported conditions; or
-- `CONFIRMED_GAP` — no tool-specific trust page exists. The record names the implementation class,
-  retains the current compatibility maturity for backward compatibility, and explicitly states that
-  the generic `TESTED` fallback is not benchmark, accuracy, applicability, or no-limitations
-  evidence.
+  counts for validation cases, verified cases, limitations, and unsupported conditions;
+- `CONTRACT_TESTED` — the tool is non-numerical and direct source, contract-test, response-guard,
+  and real-protocol evidence demonstrates its MCP contract. `getCapabilities` is the first such
+  record. Its engineering benchmark applicability is explicitly
+  `NOT_APPLICABLE_NON_NUMERICAL_DISCOVERY`; this status does not validate any advertised
+  thermodynamic or process calculation; or
+- `CONFIRMED_GAP` — no tool-specific benchmark trust page or bounded non-numerical contract
+  evidence closes the gap. The record names the implementation class, retains the compatibility
+  maturity, and explicitly states that generic `TESTED` is not benchmark, accuracy,
+  applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 51 records remain
-`CONFIRMED_GAP`, `scientificValidationComplete=false`, and the existing `complete` flag remains
-false until tool-specific trust metadata exists for every published tool. No explicit trust page
-currently publishes a structured `unsupported` condition.
+classification. It does **not** mean the MCP surface is scientifically validated: 50 records remain
+`CONFIRMED_GAP`, one is `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the overall
+Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at 20
+explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
+protocol contracts are preserved.
 
 Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative
 for an executed calculation. The evidence inventory is advisory discovery metadata; it does not
@@ -168,13 +176,16 @@ NeqSim fluids, streams, `ProcessSystem`, and `ProcessModel` objects.
 The baseline now freezes the exact transport-facing tools, resources, resource templates, prompts,
 deployment-profile names, tool-capability reconciliation, schema resource graph, example resource
 graph, tool implementation bindings, factory-backed equipment, report paths, test sources, guides,
-merged-foundation reconciliation, and explicit trust-coverage status for every published tool. It
-does not complete the campaign's full Phase 0 audit.
+merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
+baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
+every published tool. `getCapabilities` is now contract-tested without being misrepresented as a
+scientifically benchmarked calculation.
 
-Follow-up work must close confirmed trust gaps where current source/public evidence supports a
-specific claim; establish the four public synthetic acceptance scales; build the full campaign
-traceability and discipline-maturity matrices; and record runtime, memory, payload, convergence,
-balance-closure, and report-usefulness baselines.
+Follow-up work should close the remaining 50 confirmed trust gaps only where current source and
+public evidence support a specific claim, and continue closing explicit numeric component,
+energy, and facility-wide conservation/report gaps only where canonical NeqSim APIs provide
+independent evidence. Later-phase campaign criteria remain incomplete until their own merged
+acceptance evidence exists.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing
