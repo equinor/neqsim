@@ -314,8 +314,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   @Override
   public double calcQ() {
     int aqueousPhaseIndex = getHybridAqueousPhaseNumber();
-    previousAqueousFractionBeforeBetaCorrection =
-        aqueousPhaseIndex >= 0 ? system.getPhase(aqueousPhaseIndex).getBeta() : Double.NaN;
+    previousAqueousFractionBeforeBetaCorrection = aqueousPhaseIndex >= 0 ? system.getPhase(aqueousPhaseIndex).getBeta()
+        : Double.NaN;
     calcE();
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double overallFraction = getCoupledOverallFraction(componentIndex);
