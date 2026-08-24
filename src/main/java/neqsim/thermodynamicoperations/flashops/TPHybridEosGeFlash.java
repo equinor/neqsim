@@ -475,6 +475,11 @@ public class TPHybridEosGeFlash extends TPmultiflash {
       }
     }
     system.setBeta(aqueousPhaseIndex, 1.0 - nonAqueousFraction);
+    // SystemThermo keeps beta in both the mapped system array and each phase object. The
+    // composition kernel reads the phase copy immediately, before the next system init.
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      system.getPhase(phaseIndex).setBeta(system.getBeta(phaseIndex));
+    }
     return true;
   }
 
