@@ -190,6 +190,7 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     assertTrue(aqueousPhaseIndex >= 0);
 
     TPHybridEosGeFlash solver = new TPHybridEosGeFlash(system, system);
+    solver.setDoubleArrays();
     solver.calcQ();
     double settledAqueousBeta = system.getBeta(aqueousPhaseIndex);
     system.setBeta(aqueousPhaseIndex, 0.999);
