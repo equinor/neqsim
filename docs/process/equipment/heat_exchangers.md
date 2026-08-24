@@ -1,385 +1,196 @@
 ---
 title: Heat Exchanger Equipment
-description: Documentation for heat transfer equipment in NeqSim process simulation.
-keywords: "heat exchanger, heater, cooler, shell and tube, plate, TEMA, LMTD, UA, duty, condenser, reboiler, intercooler, aftercooler, air cooler"
+description: Source-anchored guide to heater, cooler, two-stream heat-exchanger, sizing, and dynamic heat-transfer APIs in NeqSim.
+keywords: "heat exchanger, heater, cooler, UA, duty, effectiveness, LMTD, dynamic heat exchanger, auto sizing"
 ---
 
 # Heat Exchanger Equipment
 
-Documentation for heat transfer equipment in NeqSim process simulation.
+NeqSim provides single-stream temperature or duty equipment and a two-stream heat exchanger.
+This guide separates their specifications and result APIs so that a model does not accidentally
+mix heater, exchanger, column-condenser, or mechanical-design semantics.
 
-## Table of Contents
-- [Overview](#overview)
-- [Equipment Types](#equipment-types)
-- [Usage Examples](#usage-examples)
-- [Heat Exchanger Networks](#heat-exchanger-networks)
+## API ownership
 
-> **Thermal-Hydraulic Design:** For detailed tube-side/shell-side HTC calculations,
-> pressure drops, LMTD correction factors, Bell-Delaware method, vibration screening,
-> and rating mode, see the
-> [Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design).
+| Equipment | Package | Primary use |
+|---|---|---|
+| `Heater` | `neqsim.process.equipment.heatexchanger` | Add heat, specify an outlet temperature, or connect a heat-duty stream |
+| `Cooler` | `neqsim.process.equipment.heatexchanger` | The `Heater` calculation with cooler naming and typically a lower outlet temperature |
+| `HeatExchanger` | `neqsim.process.equipment.heatexchanger` | Exchange heat between exactly two process streams |
+| `MultiStreamHeatExchanger2` | `neqsim.process.equipment.heatexchanger` | Exchange heat among more than two streams; see the [multi-stream guide](multistream_heat_exchanger) |
+| `ReBoiler` | `neqsim.process.equipment.heatexchanger` | Apply a specified reboiler duty to one stream |
+| `Condenser` | `neqsim.process.equipment.distillation` | Model a distillation-column condenser and reflux split; it is not a two-stream exchanger |
 
-> **Two-Phase Services:** For condensation, boiling, two-phase pressure drop,
-> dynamic fouling, and tube insert enhancement, see the
-> [Two-Phase Heat Transfer Guide](../mechanical_design/two_phase_heat_transfer).
+`WaterCooler`, air-cooler, steam-heater, and detailed shell-and-tube calculations have dedicated
+guides under [water cooler and reboiler](water_cooler_reboiler),
+[air cooler](../../wiki/air_cooler), [steam heater](../../wiki/steam_heater), and
+[thermal-hydraulic design](../mechanical_design/thermal_hydraulic_design).
 
----
+## Runnable two-stream quick start
 
-## Overview
-
-**Location:** `neqsim.process.equipment.heatexchanger`
-
-**Classes:**
-- `Heater` - Simple heater (duty or outlet T specified)
-- `Cooler` - Simple cooler (duty or outlet T specified)
-- `HeatExchanger` - Shell-tube heat exchanger
-- `NeqHeater` - Non-equilibrium heater
-- `Condenser` - Overhead condenser
-- `WaterCooler` - Seawater/cooling water cooler with IAPWS
-- `ReBoiler` - Column reboiler with duty specification
-
-> **📖 Additional Heat Exchanger Documentation:**
-> - [Multi-Stream Heat Exchanger](multistream_heat_exchanger) - Comprehensive MSHE guide with composite curves, pinch analysis
-> - [Water Cooler and Reboiler](water_cooler_reboiler) - WaterCooler and ReBoiler documentation
-> - [Air Cooler](../../wiki/air_cooler) - Air-cooled heat exchangers
-> - [Steam Heater](../../wiki/steam_heater) - Steam heating with IAPWS
-
----
-
-## Equipment Types
-
-### Heater
-
-```java
-import neqsim.process.equipment.heatexchanger.Heater;
-
-// Specify outlet temperature
-Heater heater = new Heater("E-100", inletStream);
-heater.setOutTemperature(80.0, "C");
-heater.run();
-
-double duty = heater.getDuty();  // W
-System.out.println("Heating duty: " + duty/1000.0 + " kW");
-
-// Or specify duty
-Heater heater2 = new Heater("E-101", inletStream);
-heater2.setEnergyInput(500000.0);  // 500 kW
-heater2.run();
-```
-
-### Cooler
-
-```java
-import neqsim.process.equipment.heatexchanger.Cooler;
-
-Cooler cooler = new Cooler("E-200", hotStream);
-cooler.setOutTemperature(30.0, "C");
-cooler.run();
-
-double duty = cooler.getDuty();  // Negative for cooling
-System.out.println("Cooling duty: " + (-duty/1000.0) + " kW");
-```
-
-### Heat Exchanger
-
-Two-stream heat exchanger with hot and cold sides.
+The following complete Java program creates independent hot and cold inlet streams, sets a UA in
+W/K, solves the exchanger, and checks the energy-transfer direction. `getDuty()` is reported in W;
+use `Math.abs(...)` when the engineering question is the transferred-duty magnitude because the
+sign follows the internally selected calculation side.
 
 ```java
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-HeatExchanger hx = new HeatExchanger("E-300", hotStream, coldStream);
+public final class HeatExchangerGuideExample {
+  private HeatExchangerGuideExample() {}
 
-// Specify UA value
-hx.setUAvalue(10000.0);  // W/K
+  public static void main(String[] args) {
+    SystemInterface gas = new SystemSrkEos(303.15, 30.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.10);
+    gas.setMixingRule("classic");
 
-// Or specify approach temperature
-hx.setApproachTemperature(10.0, "C");
+    Stream hot = new Stream("hot feed", gas);
+    hot.setTemperature(100.0, "C");
+    hot.setFlowRate(10000.0, "kg/hr");
+    hot.run();
 
-hx.run();
+    Stream cold = new Stream("cold feed", gas.clone());
+    cold.setTemperature(20.0, "C");
+    cold.setFlowRate(8000.0, "kg/hr");
+    cold.run();
 
-// Results
-double hotOut = hx.getOutStream(0).getTemperature("C");
-double coldOut = hx.getOutStream(1).getTemperature("C");
-double duty = hx.getDuty();
-double LMTD = hx.getLMTD();
-```
+    HeatExchanger exchanger = new HeatExchanger("E-100", hot, cold);
+    exchanger.setUAvalue(5000.0);
+    exchanger.setGuessOutTemperature(70.0, "C");
+    exchanger.run();
 
-### Multi-Stream Heat Exchanger
+    double hotOutletC = exchanger.getOutStream(0).getTemperature("C");
+    double coldOutletC = exchanger.getOutStream(1).getTemperature("C");
+    double dutyKW = Math.abs(exchanger.getDuty()) / 1000.0;
+    double effectiveness = exchanger.getThermalEffectiveness();
+    double minimumApproachK = exchanger.getApproachTemperature();
 
-For detailed documentation including mathematical foundations, composite curves, and advanced usage, see:
+    if (!(hotOutletC < 100.0 && coldOutletC > 20.0 && dutyKW > 0.0)) {
+      throw new IllegalStateException("Unexpected heat-exchanger result");
+    }
 
-> **📖 [Multi-Stream Heat Exchanger Guide](multistream_heat_exchanger.md)**
-
-Quick example:
-
-```java
-import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
-
-MultiStreamHeatExchanger2 mshx = new MultiStreamHeatExchanger2("LNG-100");
-
-// Add streams: (stream, "hot"/"cold", outletTemp or null for unknown)
-mshx.addInStreamMSHE(stream1, "hot", 40.0);    // Known outlet
-mshx.addInStreamMSHE(stream2, "hot", null);    // Solve for this
-mshx.addInStreamMSHE(stream3, "cold", null);   // Solve for this
-mshx.addInStreamMSHE(stream4, "cold", 80.0);   // Known outlet
-
-// Set approach temperature (required for 2+ unknowns)
-mshx.setTemperatureApproach(5.0);
-
-mshx.run();
-
-// Get results
-double solvedTemp = mshx.getOutStream(1).getTemperature("C");
-double ua = mshx.getUA();
-```
-
----
-
-## Operating Modes
-
-### Temperature Specification
-
-```java
-// Outlet temperature
-heater.setOutTemperature(100.0, "C");
-
-// Temperature change
-heater.setdT(50.0, "C");  // ΔT = 50°C
-```
-
-### Duty Specification
-
-```java
-// Fixed duty
-heater.setEnergyInput(1000000.0);  // 1 MW
-
-// Duty from energy stream
-EnergyStream energyIn = new EnergyStream("Heat Source");
-energyIn.setEnergyFlow(500.0, "kW");
-heater.setEnergyStream(energyIn);
-```
-
-### UA Specification
-
-```java
-// For heat exchangers
-hx.setUAvalue(5000.0);  // W/K
-
-// Calculate UA from geometry
-double U = 500.0;  // Overall HTC, W/(m²·K)
-double A = 100.0;  // Area, m²
-hx.setUAvalue(U * A);
-```
-
----
-
-## Condenser
-
-```java
-import neqsim.process.equipment.heatexchanger.Condenser;
-
-Condenser condenser = new Condenser("Overhead Condenser", vaporStream);
-
-// Total condensation
-condenser.setOutTemperature(40.0, "C");
-condenser.run();
-
-// Partial condensation
-condenser.setDewPointTemperature(true);  // Operate at dew point
-condenser.run();
-
-// Sub-cooling
-condenser.setSubCooling(5.0, "C");  // 5°C subcooling
-```
-
----
-
-## Dynamic Simulation
-
-```java
-heater.setCalculateSteadyState(false);
-
-// Set thermal mass
-heater.setThermalMass(10000.0);  // J/K
-
-// Transient response
-for (double t = 0; t < 3600; t += 1.0) {
-    heater.runTransient();
-    double Tout = heater.getOutletStream().getTemperature("C");
+    System.out.printf(
+        "hot out %.2f C, cold out %.2f C, duty %.2f kW, effectiveness %.3f, approach %.2f K%n",
+        hotOutletC, coldOutletC, dutyKW, effectiveness, minimumApproachK);
+  }
 }
 ```
 
----
+`setGuessOutTemperature(...)` supplies an initial estimate; it is not an outlet specification.
+The two outlets retain side indices 0 and 1 from the constructor. `getOutletStream()` returns only
+side 0, so use `getOutStream(int)` or `getOutletStreams()` when both sides matter.
 
-## Example: Gas Cooling Train
+## Single-stream heater and cooler specifications
 
-```java
-ProcessSystem process = new ProcessSystem();
+Use `setOutletTemperature(value, unit)` for a unit-bearing heater or cooler temperature
+specification. The legacy `setOutTemperature(double)` accepts kelvin only and is deprecated;
+there is no `setOutTemperature(double, String)` overload on `Heater` or `Cooler`.
 
-// Hot gas inlet
-Stream hotGas = new Stream("Hot Gas", gasFluid);
-hotGas.setFlowRate(50000.0, "kg/hr");
-hotGas.setTemperature(150.0, "C");
-hotGas.setPressure(80.0, "bara");
-process.add(hotGas);
+Other supported modes are:
 
-// Air cooler
-Cooler airCooler = new Cooler("Air Cooler", hotGas);
-airCooler.setOutTemperature(60.0, "C");
-process.add(airCooler);
+- `setdT(double)` for a temperature difference in kelvin; there is no unit-bearing overload.
+- `setEnergyInput(double)` or `setDuty(double)` for a duty in W. Positive duty adds enthalpy and
+  negative duty removes it.
+- `setEnergyStream(EnergyStream)` to use a connected energy stream as the specification.
 
-// Trim cooler (seawater)
-Cooler trimCooler = new Cooler("Trim Cooler", airCooler.getOutletStream());
-trimCooler.setOutTemperature(25.0, "C");
-process.add(trimCooler);
+The most recently selected temperature, duty, or energy-stream mode controls the calculation.
+After `run()`, read `getDuty()` in W or `getDuty(unit)` in a supported power unit such as `"kW"`.
 
-// Separator for condensate
-Separator separator = new Separator("Inlet Sep", trimCooler.getOutletStream());
-process.add(separator);
+## Two-stream exchanger specifications
 
-process.run();
+### UA mode
 
-// Total cooling duty
-double airDuty = -airCooler.getDuty() / 1e6;  // MW
-double trimDuty = -trimCooler.getDuty() / 1e6;  // MW
-System.out.println("Air cooler duty: " + airDuty + " MW");
-System.out.println("Trim cooler duty: " + trimDuty + " MW");
-```
+`setUAvalue(double)` stores UA in W/K. In this mode, give a reasonable initial outlet estimate
+with `setGuessOutTemperature(value, unit)` and solve the exchanger. Read the retained setting with
+`getUAvalue()`.
 
----
+For a counter-current exchanger,
 
-## Heat Exchanger Design
+$$Q=UA\Delta T_{\mathrm{lm}}$$
 
-### LMTD Method
+with
 
-```java
-HeatExchanger hx = new HeatExchanger("E-400", hotIn, coldIn);
-hx.setUAvalue(ua);
-hx.run();
-```
+$$\Delta T_{\mathrm{lm}}=\frac{\Delta T_1-\Delta T_2}{\ln(\Delta T_1/\Delta T_2)}$$
 
-### Thermal-Hydraulic Design (Shell-and-Tube)
+where $\Delta T_1=T_{h,in}-T_{c,out}$ and $\Delta T_2=T_{h,out}-T_{c,in}$. The public exchanger
+API does not expose `getLMTD()` or `getNTU()`. `getSizingReport()` includes the calculated LMTD;
+`getThermalEffectiveness()` returns the solved effectiveness. The array-valued `getEffectiveness()`
+and `getNtu()` methods belong to `FoulingScreeningResult`, not to `HeatExchanger` itself.
 
-For rigorous tube-side and shell-side heat transfer coefficient calculations,
-pressure drops, LMTD correction factors, Bell-Delaware method, flow-induced
-vibration screening, and TEMA-level mechanical design, see the dedicated guide:
+### Fixed outlet temperature
 
-> **[Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design)**
+To pin one exchanger side, first call `setOutStreamSpecificationNumber(0)` or
+`setOutStreamSpecificationNumber(1)`, then call `setOutTemperature(value, unit)`. The selected
+side is flashed to that temperature at its inlet pressure and the other side is energy-balanced.
+This unit-bearing overload exists on `HeatExchanger`; do not confuse it with the heater API.
 
-Key classes in `neqsim.process.mechanicaldesign.heatexchanger`:
+### Results and checks
 
-| Class | Purpose |
-|-------|---------|
-| `ThermalDesignCalculator` | Tube/shell-side HTCs (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops |
-| `BellDelawareMethod` | Shell-side HTC with J-factor corrections (Jc, Jl, Jb, Js, Jr) |
-| `LMTDcorrectionFactor` | F_t for multi-pass configurations (Bowman-Mueller-Nagle 1940) |
-| `VibrationAnalysis` | Vortex shedding, fluid-elastic instability, acoustic resonance per TEMA RCB-4.6 |
-| `ShellAndTubeDesignCalculator` | Full TEMA + ASME VIII Div.1 design with NACE sour service, cost, BOM |
+After a successful run, inspect:
 
-### Mechanical Design
+- `getOutStream(0)` and `getOutStream(1)` for outlet states;
+- `getDuty()` for transferred duty in W;
+- `getThermalEffectiveness()` for the dimensionless solved effectiveness;
+- `getApproachTemperature()` for the current minimum approach in K;
+- `getHotColdDutyBalance()` as the exchanger's internal balance diagnostic; and
+- `getSizingReport()` or `toJson()` for reporting.
 
-For equipment sizing (area, weight, type selection), see:
+Always confirm hot- and cold-side energy changes independently when using results for design or
+optimization. A converged process calculation is not a mechanical guarantee.
 
-> **[Heat Exchanger Mechanical Design](../../wiki/heat_exchanger_mechanical_design)**
+## Dynamic model
 
-double LMTD = hx.getLMTD();
-double duty = hx.getDuty();
-double UA = duty / LMTD;
-double area = UA / overallHTC;
-```
+The dynamic wall model is opt-in. Configure `setDynamicModelEnabled(true)`, a positive wall mass
+with `setWallMass(...)`, wall heat capacity with `setWallCp(...)`, heat-transfer area with
+`setHeatTransferArea(...)`, and shell/tube heat-transfer coefficients with
+`setShellSideHtc(...)` and `setTubeSideHtc(...)`. Advance it with
+`runTransient(double dt, UUID id)`, where `dt` is seconds. The no-argument `runTransient()` call
+shown in older examples is not a `HeatExchanger` API.
 
-### Effectiveness-NTU
+Use a `ProcessSystem` transient workflow when the exchanger is coupled to upstream equipment,
+controllers, or recycles; see [dynamic simulation](../dynamic-simulation).
 
-```java
-double NTU = hx.getNTU();
-double effectiveness = hx.getEffectiveness();
-```
+## Auto-sizing and mechanical design
 
----
+Call `autoSize(safetyFactor)` only after the exchanger has two connected streams and a solved
+operating point. The safety factor multiplies the absolute calculated duty. Then inspect
+`isAutoSized()` and `getSizingReport()`.
 
-## Auto-Sizing
+Detailed candidate geometry belongs to `HeatExchangerMechanicalDesign`:
 
-Heat exchanger equipment implements the `AutoSizeable` interface for automatic sizing based on duty requirements.
+1. Obtain it with `exchanger.getMechanicalDesign()`.
+2. Call `calcDesign()` after the process-side duty and temperatures are available.
+3. Iterate `getSizingResults()`.
+4. Read `HeatExchangerSizingResult.getRequiredArea()`, `getRequiredUA()`,
+   `getEstimatedPressureDrop()`, and the other typed result getters.
 
-### Heater/Cooler Auto-Sizing
+There is no `HeatExchangerSizingResult.getArea()` method. The calculations are screening and
+sizing support; accountable TEMA, materials, vibration, relief, fabrication, and code compliance
+remain engineering-review tasks. See the [mechanical-design guide](../../wiki/heat_exchanger_mechanical_design),
+[two-phase heat-transfer guide](../mechanical_design/two_phase_heat_transfer), and
+[design framework](../DESIGN_FRAMEWORK).
 
-```java
-import neqsim.process.equipment.heatexchanger.Heater;
+## Condenser and reboiler boundary
 
-Heater heater = new Heater("E-100", inletStream);
-heater.setOutTemperature(80.0, "C");
-heater.run();
+`neqsim.process.equipment.distillation.Condenser` is a column-tray component constructed with a
+name and configured through condenser/reflux APIs such as `setTotalCondenser(...)` and
+`setRefluxRatio(...)`. It does not accept a vapor stream in its constructor and does not provide
+heater-style `setOutTemperature(...)`, `setDewPointTemperature(...)`, or `setSubCooling(...)`
+methods. Use the owning distillation-column workflow rather than treating it as a stand-alone
+cooler.
 
-// Auto-size with 20% safety factor
-heater.autoSize(1.2);
+`ReBoiler` is a simpler two-port unit. `setReboilerDuty(double)` accepts W and adds that enthalpy
+to its inlet during `run()`; it does not perform a full column-equilibrium reboiler design.
 
-// Get sizing report
-System.out.println(heater.getSizingReport());
-// Output includes:
-// - Inlet/Outlet temperatures
-// - Duty
-// - Max design duty
-// - Duty utilization %
+## Related documentation
 
-// Get JSON report for programmatic access
-String jsonReport = heater.getSizingReportJson();
-```
-
-### Heat Exchanger Auto-Sizing
-
-Two-stream heat exchangers provide enhanced sizing reports:
-
-```java
-import neqsim.process.equipment.heatexchanger.HeatExchanger;
-
-HeatExchanger hx = new HeatExchanger("E-300", hotStream, coldStream);
-hx.setUAvalue(10000.0);
-hx.run();
-
-// Auto-size with 25% safety factor
-hx.autoSize(1.25);
-
-// Get detailed sizing report
-System.out.println(hx.getSizingReport());
-// Output includes:
-// - Hot side: inlet/outlet temperatures, flow rate
-// - Cold side: inlet/outlet temperatures, flow rate
-// - Duty, UA value, thermal effectiveness
-// - LMTD (Log Mean Temperature Difference)
-// - Mechanical design parameters
-```
-
-### Using Company Standards
-
-```java
-// Auto-size using company-specific standards
-heater.autoSize("Equinor", "TR3100");
-
-// Standards are loaded from TechnicalRequirements_Process.csv
-// and design standards tables (api_standards.csv, etc.)
-```
-
----
-
-## Mechanical Design
-
-Access mechanical design calculations:
-
-```java
-HeatExchangerMechanicalDesign mechDesign = hx.getMechanicalDesign();
-mechDesign.calcDesign();
-
-// Get exchanger type recommendations
-List<HeatExchangerSizingResult> results = mechDesign.getSizingResults();
-for (HeatExchangerSizingResult result : results) {
-    System.out.println(result.getType() + ": " + result.getArea() + " m²");
-}
-```
-
----
-
-## Related Documentation
-
-- [Process Package](../) - Package overview
-- [Compressors](compressors) - Compression equipment
-- [Design Framework](../DESIGN_FRAMEWORK) - AutoSizeable interface
+- [Multi-stream heat exchanger](multistream_heat_exchanger)
+- [Water cooler and reboiler](water_cooler_reboiler)
+- [Thermal-hydraulic design](../mechanical_design/thermal_hydraulic_design)
+- [Two-phase heat transfer](../mechanical_design/two_phase_heat_transfer)
+- [Heat-exchanger mechanical design](../../wiki/heat_exchanger_mechanical_design)
+- [Process package](../)

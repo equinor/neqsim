@@ -13,6 +13,17 @@ import neqsim.thermo.phase.PitzerElectrostaticMixing;
 public class ComponentGePitzer extends ComponentGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Setup-time mirror of the phase's sparse neutral-interaction gate. */
+  private boolean neutralPitzerInteractionsActive;
+
+  /**
+   * Updates the setup-time fast gate for neutral Pitzer interactions.
+   *
+   * @param active whether the owning Pitzer phase has any neutral interactions
+   */
+  public void setNeutralPitzerInteractionsActive(boolean active) {
+    neutralPitzerInteractionsActive = active;
+  }
 
   /**
    * Constructor for ComponentGePitzer.
@@ -39,7 +50,15 @@ public class ComponentGePitzer extends ComponentGE {
           || henryCoefficient > 1.0e12) {
         henryCoefficient = 1.0e12;
       }
-      fugacityCoefficient = gamma * henryCoefficient / phase.getPressure();
+      // Pitzer neutral activities and the database Henry constants are on the molality
+      // scale, while the common phase-equilibrium kernel evaluates x_i * phi_i * P.
+      // Convert m_i * gamma_i * H_i to that mole-fraction representation explicitly.
+      double moleFraction = getx();
+      double molalityPerMoleFraction = moleFraction > 0.0 ? getMolality(phase) / moleFraction : Double.NaN;
+      if (!(molalityPerMoleFraction > 0.0) || !Double.isFinite(molalityPerMoleFraction)) {
+        molalityPerMoleFraction = 1.0;
+      }
+      fugacityCoefficient = gamma * henryCoefficient * molalityPerMoleFraction / phase.getPressure();
       gammaRefCor = gamma;
       return fugacityCoefficient;
     }
@@ -90,7 +109,8 @@ public class ComponentGePitzer extends ComponentGE {
    * For ions (charge != 0): computes the single-ion activity coefficient from the Pitzer Debye-Huckel term and binary
    * cation-anion interaction parameters. For the solvent (water, referenceStateType = "solvent"): computes the activity
    * coefficient from the Pitzer osmotic coefficient using the Harvie and Weare (1980) mixed-electrolyte framework. For
-   * other neutral species (dissolved gases): returns gamma = 1.0 (no lambda/mu parameters available).
+   * other neutral species (dissolved gases): applies the explicitly configured lambda, zeta, mu, and eta families, with
+   * an exact gamma = 1.0 legacy fallback when that sparse layer is empty.
    * </p>
    *
    * @param phase phase object
@@ -103,6 +123,7 @@ public class ComponentGePitzer extends ComponentGE {
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
     double charge = getIonicCharge();
+    PhasePitzer pitz = (PhasePitzer) phase;
 
     // Solvent (water): compute gamma from Pitzer osmotic coefficient
     if (Math.abs(charge) < 0.5 && "water".equalsIgnoreCase(getComponentName())
@@ -110,10 +131,12 @@ public class ComponentGePitzer extends ComponentGE {
       return getWaterGamma(phase, numberOfComponents, temperature);
     }
 
-    // Non-ionic, non-solvent species (dissolved gases): no Pitzer interaction parameters
+    // Non-ionic, non-solvent species use the sparse neutral Pitzer layer when configured.
     if (Math.abs(charge) < 0.5) {
-      gamma = 1.0;
-      lngamma = 0.0;
+      lngamma = neutralPitzerInteractionsActive
+          ? pitz.getNeutralPitzerLogGammaContribution(componentNumber, temperature)
+          : 0.0;
+      gamma = Math.exp(lngamma);
       return gamma;
     }
 
@@ -122,7 +145,6 @@ public class ComponentGePitzer extends ComponentGE {
     // F = -Aphi*[sqrtI/(1+b*sqrtI) + (2/b)*ln(1+b*sqrtI)] + sum_c sum_a m_c*m_a*B'_ca
     // Handles 1-1, 1-2, 2-1 electrolytes (alpha=2.0) and 2-2 electrolytes
     // (alpha1=1.4, alpha2=12.0 with beta2 parameter per Harvie & Weare 1984).
-    PhasePitzer pitz = (PhasePitzer) phase;
     double I = pitz.getIonicStrength();
     double sqrtI = Math.sqrt(I);
     // debyeHuckelAphi() returns Agamma = 3*Aphi; convert to Aphi for Pitzer formula
@@ -181,7 +203,7 @@ public class ComponentGePitzer extends ComponentGE {
 
       // Add beta2 contribution for 2-2 electrolytes
       if (is22) {
-        double beta2val = pitz.getBeta2ij(componentNumber, j);
+        double beta2val = pitz.getBeta2ij(componentNumber, j, temperature);
         if (Math.abs(beta2val) > 1e-20) {
           double x2 = alpha2 * sqrtI;
           double g2 = 0.0;
@@ -243,7 +265,7 @@ public class ComponentGePitzer extends ComponentGE {
         continue;
       }
       double m_j = phase.getComponent(j).getMolality(phase);
-      double thetaij = pitz.getThetaij(componentNumber, j);
+      double thetaij = pitz.getThetaij(componentNumber, j, temperature);
       double eTheta = 0.0;
       if (hasElectrostaticMixing && Math.abs(charge - chargej) >= 1.0e-12) {
         if (electrostaticMixing == null) {
@@ -261,7 +283,7 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double m_k = phase.getComponent(k).getMolality(phase);
-        double psiijk = pitz.getPsiijk(componentNumber, j, k);
+        double psiijk = pitz.getPsiijk(componentNumber, j, k, temperature);
         sum += m_j * m_k * psiijk;
       }
     }
@@ -269,6 +291,9 @@ public class ComponentGePitzer extends ComponentGE {
     // ln(gamma_M) = z_M^2 * F + binary/mixing terms
     double F = fDH + fBprime + fEthetaPrime;
     lngamma = charge * charge * F + sum;
+    if (neutralPitzerInteractionsActive) {
+      lngamma += pitz.getNeutralPitzerLogGammaContribution(componentNumber, temperature);
+    }
     gamma = Math.exp(lngamma);
     return gamma;
   }
@@ -306,10 +331,11 @@ public class ComponentGePitzer extends ComponentGE {
     double Aphi = debyeHuckelAphi(TK) / 3.0;
     double b = 1.2;
 
-    // Sum of all ion molalities
+    // Preserve the legacy ion-only denominator until a neutral Pitzer dataset is explicitly active.
     double sumMolalities = 0.0;
     for (int k = 0; k < numberOfComponents; k++) {
-      if (phase.getComponent(k).getIonicCharge() != 0) {
+      boolean isWater = "water".equalsIgnoreCase(phase.getComponent(k).getComponentName());
+      if (phase.getComponent(k).getIonicCharge() != 0 || (neutralPitzerInteractionsActive && !isWater)) {
         sumMolalities += phase.getComponent(k).getMolality(phase);
       }
     }
@@ -358,7 +384,7 @@ public class ComponentGePitzer extends ComponentGE {
 
         // Add beta2 contribution for 2-2 electrolytes
         if (is22) {
-          double beta2val = pitz.getBeta2ij(ic, ia);
+          double beta2val = pitz.getBeta2ij(ic, ia, TK);
           if (Math.abs(beta2val) > 1e-20) {
             double alpha2 = 12.0;
             BphiCA += beta2val * Math.exp(-alpha2 * sqrtI);
@@ -390,7 +416,7 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double mc2 = phase.getComponent(ic2).getMolality(phase);
-        double thetaCC = pitz.getThetaij(ic1, ic2);
+        double thetaCC = pitz.getThetaij(ic1, ic2, TK);
         double electrostaticPhi = 0.0;
         if (hasElectrostaticMixing && Math.abs(zc1 - zc2) >= 1.0e-12) {
           if (electrostaticMixing == null) {
@@ -407,7 +433,7 @@ public class ComponentGePitzer extends ComponentGE {
             continue;
           }
           double ma = phase.getComponent(ia).getMolality(phase);
-          thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia);
+          thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia, TK);
         }
       }
     }
@@ -424,7 +450,7 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double ma2 = phase.getComponent(ia2).getMolality(phase);
-        double thetaAA = pitz.getThetaij(ia1, ia2);
+        double thetaAA = pitz.getThetaij(ia1, ia2, TK);
         double electrostaticPhi = 0.0;
         if (hasElectrostaticMixing && Math.abs(za1 - za2) >= 1.0e-12) {
           if (electrostaticMixing == null) {
@@ -441,13 +467,14 @@ public class ComponentGePitzer extends ComponentGE {
             continue;
           }
           double mc = phase.getComponent(ic).getMolality(phase);
-          thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic);
+          thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic, TK);
         }
       }
     }
 
-    // Osmotic coefficient: phi - 1 = (2/sumM) * (fPhi + binarySum + thetaPsiSum)
-    double phi = 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum);
+    double neutralSum = neutralPitzerInteractionsActive ? pitz.getNeutralPitzerOsmoticContribution(TK) : 0.0;
+    // Osmotic coefficient: phi - 1 = (2/sumM) * interaction sum
+    double phi = 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum + neutralSum);
 
     // Water activity: ln(a_w) = -phi * M_w * sumM / 1000
     double Mw = 18.015; // molar mass of water in g/mol
