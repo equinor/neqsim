@@ -94,6 +94,20 @@ public class SystemPitzer extends SystemEosGE {
     PitzerParameterDatasets.applyPhreeqcCo2SodiumSulfate((PhasePitzer) phaseArray[1]);
   }
 
+  /**
+   * Applies the qualified public-domain PHREEQC Na-K-Cl parameter subset to this system's Pitzer aqueous role.
+   *
+   * <p>
+   * The dataset contains both binary families and their same-sign and ternary mixed-ion companions. It is intentionally
+   * fail-closed if another active ionic or neutral species lacks a qualified interaction. See
+   * {@link PitzerParameterDatasets#applyPhreeqcSodiumPotassiumChloride(PhasePitzer)} for source identity and validation
+   * scope.
+   * </p>
+   */
+  public void applyPhreeqcSodiumPotassiumChlorideParameters() {
+    PitzerParameterDatasets.applyPhreeqcSodiumPotassiumChloride((PhasePitzer) phaseArray[1]);
+  }
+
   /** {@inheritDoc} */
   @Override
   public SystemPitzer clone() {

@@ -67,6 +67,8 @@ public class PhasePitzer extends PhaseGE {
   private Map<Long, PitzerNeutralInteraction> neutralInteractions = new HashMap<Long, PitzerNeutralInteraction>();
   /** Fast gate keeping legacy Pitzer and every non-Pitzer path out of neutral interaction loops. */
   private boolean hasNeutralInteractions;
+  /** Enables PHREEQC common F and C0/Cphi ion terms for explicitly mapped datasets only. */
+  private boolean phreeqcCommonIonTermsActive;
   /** Whether the active neutral-solute topology has passed its fail-closed parameter audit. */
   private transient boolean neutralParameterCoverageValidated;
   /** Whether parameters have been loaded from database. */
@@ -551,6 +553,21 @@ public class PhasePitzer extends PhaseGE {
    */
   public boolean hasNeutralPitzerInteractions() {
     return hasNeutralInteractions;
+  }
+
+  /**
+   * Reports whether the selected dataset uses PHREEQC's common ion-activity terms.
+   *
+   * <p>
+   * The opt-in keeps the historical NeqSim Pitzer dataset numerically unchanged. Explicit PHREEQC datasets evaluate the
+   * common binary-derivative F sum over every cation-anion pair and add
+   * {@code |z_i| * sum_c sum_a m_c m_a C0_ca/(2 sqrt(|z_c z_a|))} to each ion's natural-log activity coefficient.
+   * </p>
+   *
+   * @return {@code true} for an explicitly mapped PHREEQC dataset
+   */
+  public boolean isPhreeqcCommonIonTermsActive() {
+    return phreeqcCommonIonTermsActive;
   }
 
   /**
@@ -1770,6 +1787,11 @@ public class PhasePitzer extends PhaseGE {
     parametersLoaded = true;
     parameterCoverageValidated = false;
     neutralParameterCoverageValidated = false;
+  }
+
+  /** Enables PHREEQC's common binary-derivative and C0/Cphi terms for a package-owned dataset. */
+  void enablePhreeqcCommonIonTerms() {
+    phreeqcCommonIonTermsActive = true;
   }
 
   /** Returns a binary temperature function without key allocation for legacy datasets. */

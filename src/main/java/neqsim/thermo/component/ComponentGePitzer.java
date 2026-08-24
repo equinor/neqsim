@@ -157,6 +157,10 @@ public class ComponentGePitzer extends ComponentGE {
     // B' contribution to F: sum_c sum_a m_c * m_a * B'_ca
     double fBprime = 0.0;
     double sum = 0.0;
+    boolean phreeqcCommonIonTerms = pitz.isPhreeqcCommonIonTermsActive();
+    double phreeqcCommonIonContribution = phreeqcCommonIonTerms
+        ? phreeqcCommonIonContribution(phase, pitz, numberOfComponents, temperature, I, sqrtI, charge)
+        : 0.0;
     for (int j = 0; j < numberOfComponents; j++) {
       if (j == componentNumber) {
         continue;
@@ -219,7 +223,9 @@ public class ComponentGePitzer extends ComponentGE {
       // B' contribution to F: accumulate m_i * m_j * B'_ij
       // (only count each pair once — this ion paired with opposite-sign ion j)
       double m_this = getMolality(phase);
-      fBprime += m_this * m_j * Bprime;
+      if (!phreeqcCommonIonTerms) {
+        fBprime += m_this * m_j * Bprime;
+      }
     }
 
     // Theta and psi mixing terms for same-sign ion interactions
@@ -282,12 +288,60 @@ public class ComponentGePitzer extends ComponentGE {
 
     // ln(gamma_M) = z_M^2 * F + binary/mixing terms
     double F = fDH + fBprime + fEthetaPrime;
-    lngamma = charge * charge * F + sum;
+    lngamma = charge * charge * F + sum + phreeqcCommonIonContribution;
     if (neutralPitzerInteractionsActive) {
       lngamma += pitz.getNeutralPitzerLogGammaContribution(componentNumber, temperature);
     }
     gamma = Math.exp(lngamma);
     return gamma;
+  }
+
+  /** Calculates PHREEQC's common B-prime and C0 contributions to one ion's ln(gamma). */
+  private static double phreeqcCommonIonContribution(PhaseInterface phase, PhasePitzer pitz, int numberOfComponents,
+      double temperature, double ionicStrength, double squareRootIonicStrength, double targetCharge) {
+    double fBprime = 0.0;
+    double cphiCommonSum = 0.0;
+    for (int cation = 0; cation < numberOfComponents; cation++) {
+      double cationCharge = phase.getComponent(cation).getIonicCharge();
+      if (cationCharge <= 0.0) {
+        continue;
+      }
+      double cationMolality = phase.getComponent(cation).getMolality(phase);
+      for (int anion = 0; anion < numberOfComponents; anion++) {
+        double anionCharge = phase.getComponent(anion).getIonicCharge();
+        if (anionCharge >= 0.0) {
+          continue;
+        }
+        double anionMolality = phase.getComponent(anion).getMolality(phase);
+        fBprime += cationMolality * anionMolality * phreeqcBinaryBprime(pitz, cation, anion, temperature, ionicStrength,
+            squareRootIonicStrength, cationCharge, anionCharge);
+        cphiCommonSum += cationMolality * anionMolality * pitz.getCphiij(cation, anion, temperature)
+            / (2.0 * Math.sqrt(Math.abs(cationCharge * anionCharge)));
+      }
+    }
+    return targetCharge * targetCharge * fBprime + Math.abs(targetCharge) * cphiCommonSum;
+  }
+
+  /** Calculates one binary pair's contribution to PHREEQC's common B-prime term. */
+  private static double phreeqcBinaryBprime(PhasePitzer phase, int first, int second, double temperature,
+      double ionicStrength, double squareRootIonicStrength, double firstCharge, double secondCharge) {
+    boolean is22 = Math.abs(firstCharge) >= 1.5 && Math.abs(secondCharge) >= 1.5;
+    double alpha1 = is22 ? 1.4 : 2.0;
+    double x1 = alpha1 * squareRootIonicStrength;
+    double derivative = 0.0;
+    if (x1 > 1.0e-12 && ionicStrength > 1.0e-12) {
+      double gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
+      derivative = phase.getBeta1ij(first, second, temperature) * gp1 / ionicStrength;
+    }
+    if (is22) {
+      double beta2Value = phase.getBeta2ij(first, second, temperature);
+      double x2 = 12.0 * squareRootIonicStrength;
+      if (Math.abs(beta2Value) > 1.0e-20 && x2 > 1.0e-12 && ionicStrength > 1.0e-12) {
+        double gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
+        derivative += beta2Value * gp2 / ionicStrength;
+      }
+    }
+    return derivative;
   }
 
   /**
