@@ -671,4 +671,34 @@ class ProcessModelAutoConvergenceTuningTest {
     assertEquals(0.1, massClosure.get("unitRelativeError").getAsDouble(), 1.0e-12);
   }
 
+  /**
+   * Topology mutations must invalidate both cached auto-tuning subsets so units added after an initial scan are tuned.
+   */
+  @Test
+  void testAutoTuningCandidateCachesFollowTopologyChanges() {
+    ProcessSystem process = new ProcessSystem("changing process");
+    Stream initialFeed = new Stream("initial feed", createGasFluid());
+    process.add(initialFeed);
+
+    assertTrue(process.applyAutoLowFlowThreshold(1.0) > 0);
+    assertEquals(0, process.applyAutoRecycleFlowTolerance(1.0));
+    assertEquals(0, process.applyAutoRecycleAdaptiveAcceleration());
+
+    Stream addedFeed = new Stream("added feed", createGasFluid());
+    Heater addedHeater = new Heater("added heater", addedFeed);
+    Recycle addedRecycle = new Recycle("added recycle");
+    process.add(addedFeed);
+    process.add(addedHeater);
+    process.add(addedRecycle);
+
+    assertTrue(process.applyAutoLowFlowThreshold(2.0) >= 3);
+    assertEquals(2.0, addedHeater.getMinimumFlow(), 1.0e-12,
+        "a unit added after cache creation must receive the automatic threshold");
+    assertEquals(1, process.applyAutoRecycleFlowTolerance(2.0),
+        "a recycle added after cache creation must receive the automatic tolerance");
+    assertEquals(2.0, addedRecycle.getAbsoluteFlowTolerance(), 1.0e-12);
+    assertEquals(1, process.applyAutoRecycleAdaptiveAcceleration(),
+        "a recycle added after cache creation must receive automatic acceleration");
+  }
+
 }
