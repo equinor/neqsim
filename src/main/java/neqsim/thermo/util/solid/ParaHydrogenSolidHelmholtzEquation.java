@@ -15,8 +15,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @author esol
  * @version 1.0
  */
-public final class ParaHydrogenSolidHelmholtzEquation
-    implements SolidHelmholtzEquation, ThermodynamicConstantsInterface {
+public final class ParaHydrogenSolidHelmholtzEquation implements SolidHelmholtzEquation {
   private static final long serialVersionUID = 1000L;
 
   /** Triple-point temperature in K. */
@@ -102,7 +101,8 @@ public final class ParaHydrogenSolidHelmholtzEquation
     double gibbsEnergy = helmholtz.value + pressurePa * molarVolume;
     double heatCapacityCv = -temperature * helmholtz.dtt;
     double heatCapacityCp = heatCapacityCv + temperature * helmholtz.dtv * helmholtz.dtv / helmholtz.dvv;
-    double logFugacityCoefficient = gibbsEnergy / (R * temperature) - Math.log(pressure);
+    double logFugacityCoefficient = gibbsEnergy / (ThermodynamicConstantsInterface.R * temperature)
+        - Math.log(pressure);
     return new SolidHelmholtzState(molarVolume, helmholtz.value, internalEnergy, entropy, enthalpy, gibbsEnergy,
         heatCapacityCp, heatCapacityCv, logFugacityCoefficient);
   }
@@ -291,7 +291,7 @@ public final class ParaHydrogenSolidHelmholtzEquation
       einsteinWeightSum += weight;
     }
     Derivative2 debye = debyeFreeEnergy(thetaD.divide(temp)).multiply(temp)
-        .multiply(R * EXTERNAL_MODES_PER_MOLECULE * (1.0 - einsteinWeightSum));
+        .multiply(ThermodynamicConstantsInterface.R * EXTERNAL_MODES_PER_MOLECULE * (1.0 - einsteinWeightSum));
 
     Derivative2 einstein = Derivative2.constant(0.0);
     for (int i = 0; i < EINSTEIN_WEIGHTS.length; i++) {
@@ -299,20 +299,21 @@ public final class ParaHydrogenSolidHelmholtzEquation
           .multiply(EINSTEIN_TEMPERATURES[i]);
       einstein = einstein.add(logOneMinusExpNegative(theta.divide(temp)).multiply(EINSTEIN_WEIGHTS[i]));
     }
-    einstein = einstein.multiply(temp).multiply(R * EXTERNAL_MODES_PER_MOLECULE);
+    einstein = einstein.multiply(temp).multiply(ThermodynamicConstantsInterface.R * EXTERNAL_MODES_PER_MOLECULE);
 
     Derivative2 thetaInternal = Derivative2.constant(1.0).subtract(reducedVolume).multiply(GAMMA_INTERNAL).exp()
         .multiply(THETA_INTERNAL0);
-    Derivative2 internal = logOneMinusExpNegative(thetaInternal.divide(temp)).multiply(temp).multiply(R);
+    Derivative2 internal = logOneMinusExpNegative(thetaInternal.divide(temp)).multiply(temp)
+        .multiply(ThermodynamicConstantsInterface.R);
 
     Derivative2 temperatureRatio = temp.multiply(1.0 / THETA_D0);
     Derivative2 anharmonicTemperature = temperatureRatio.pow(4.0)
         .divide(temperatureRatio.pow(2.0).multiply(B2).add(1.0)).multiply(thetaDTemperature).multiply(B1)
-        .multiply(reducedVolume.subtract(1.0).multiply(B3).exp()).multiply(R);
+        .multiply(reducedVolume.subtract(1.0).multiply(B3).exp()).multiply(ThermodynamicConstantsInterface.R);
     Derivative2 anharmonicCold = Derivative2.constant(1.0).subtract(reducedVolume).multiply(C2).exp().multiply(C1)
         .add(reducedVolume.reciprocal().multiply(C3)
             .multiply(Derivative2.constant(1.0).subtract(reducedVolume).multiply(C4).exp()))
-        .multiply(R);
+        .multiply(ThermodynamicConstantsInterface.R);
 
     Derivative2 referenceShift = temp.subtract(TRIPLE_POINT_TEMPERATURE).multiply(-triplePointEntropyShift)
         .add(triplePointGibbsShift);
