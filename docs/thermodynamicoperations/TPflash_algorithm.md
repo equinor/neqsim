@@ -1987,11 +1987,13 @@ prevents a gas-forming neutral component from displacing nearly all aqueous solv
 step. Both bounds are evaluated before the trial composition is used. Ionic hybrid flashes also
 cap the common beta Newton scale at 0.1, damping every phase correction along the same simplex
 direction; non-ionic hybrid and ordinary multiphase flashes retain the general iteration-dependent
-scale. The aqueous neutral composition uses the same 0.1 convex relaxation before activity and
-fugacity coefficients are reinitialized, retaining the exact ionic inventory and normalization while
-preventing a single proposal from replacing nearly all solvent. Together these guards prevent
-non-finite coefficients and clipping-driven oscillation while allowing subsequent corrections to
-approach equilibrium.
+scale. A valid aqueous neutral-composition proposal remains unchanged. If its reinitialized
+material-component fugacity coefficient is non-finite or non-positive, the ionic hybrid solver
+backtracks the neutral composition halfway toward the last finite normalized composition until all
+material neutral coefficients are finite. This retains the exact ionic inventory and normalization
+without perturbing non-ionic or already-valid paths. Together these guards prevent non-finite
+coefficients and clipping-driven oscillation while allowing subsequent corrections to approach
+equilibrium.
 The required fraction is removed proportionally from the adjustable part of the other active roles,
 their minimum fractions are preserved, and the phase-split denominator is rebuilt before
 compositions are evaluated. Feasible iterates, public tolerances, dataset parameters, and final
