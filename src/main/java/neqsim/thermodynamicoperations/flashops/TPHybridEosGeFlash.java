@@ -88,8 +88,7 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   protected double limitBetaStepScale(double proposedScale) {
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
-      if ((component.getIonicCharge() != 0 || component.isIsIon())
-          && getCoupledOverallFraction(componentIndex) > 0.0) {
+      if ((component.getIonicCharge() != 0 || component.isIsIon()) && getCoupledOverallFraction(componentIndex) > 0.0) {
         return Math.min(proposedScale, HYBRID_IONIC_BETA_STEP_SCALE);
       }
     }
