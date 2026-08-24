@@ -435,10 +435,9 @@ public class TPHybridEosGeFlash extends TPmultiflash {
             double proposedNeutralShare = aqueousComponent.getx() / neutralFractionSum;
             double relaxedNeutralShare = proposedNeutralShare;
             if (previousNeutralFractionSum > 0.0) {
-              double previousNeutralShare =
-                  previousNeutralComposition[componentIndex] / previousNeutralFractionSum;
-              relaxedNeutralShare = previousNeutralShare + HYBRID_AQUEOUS_COMPOSITION_RELAXATION
-                  * (proposedNeutralShare - previousNeutralShare);
+              double previousNeutralShare = previousNeutralComposition[componentIndex] / previousNeutralFractionSum;
+              relaxedNeutralShare = previousNeutralShare
+                  + HYBRID_AQUEOUS_COMPOSITION_RELAXATION * (proposedNeutralShare - previousNeutralShare);
             }
             aqueousComponent.setx(neutralTotal * relaxedNeutralShare);
           }
