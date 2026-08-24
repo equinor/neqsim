@@ -3,6 +3,8 @@ package neqsim.process.processmodel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -367,7 +369,11 @@ public class SimulationResult {
     // Report (embedded as parsed JSON to avoid double-escaping)
     if (reportJson != null) {
       try {
-        root.add("report", com.google.gson.JsonParser.parseString(reportJson));
+        JsonElement report = JsonParser.parseString(reportJson);
+        if (status == Status.SUCCESS && processSystem != null && report.isJsonObject()) {
+          report.getAsJsonObject().add("massBalanceEvidence", buildMassBalanceEvidence(processSystem));
+        }
+        root.add("report", report);
       } catch (Exception e) {
         root.addProperty("report", reportJson);
       }
@@ -375,6 +381,64 @@ public class SimulationResult {
 
     Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(root);
+  }
+
+  /**
+   * Builds solver-owned unit-operation mass-balance evidence for a completed process system.
+   *
+   * <p>
+   * This method delegates to {@link ProcessSystem#checkMassBalance()} and {@link ProcessSystem#getFailedMassBalance()}.
+   * It does not reconstruct a facility balance from MCP-visible stream values. The evidence is deliberately scoped to
+   * individual unit operations; it is not a complete facility feed/export, component, or energy closure claim.
+   * </p>
+   *
+   * @param process completed canonical process system
+   * @return deterministic mass-balance evidence ordered by unit name
+   */
+  private static JsonObject buildMassBalanceEvidence(ProcessSystem process) {
+    Map<String, ProcessSystem.MassBalanceResult> checked = process.checkMassBalance();
+    Map<String, ProcessSystem.MassBalanceResult> failed = process.getFailedMassBalance();
+    Map<String, ProcessSystem.MassBalanceResult> ordered = new TreeMap<String, ProcessSystem.MassBalanceResult>(
+        checked);
+
+    JsonObject units = new JsonObject();
+    int bypassedCount = 0;
+    int evaluatedCount = 0;
+    for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : ordered.entrySet()) {
+      ProcessSystem.MassBalanceResult balance = entry.getValue();
+      JsonObject unit = new JsonObject();
+      unit.addProperty("unit", balance.getUnit());
+      unit.addProperty("bypassed", balance.isBypassed());
+      boolean evaluated = Double.isFinite(balance.getAbsoluteError()) && Double.isFinite(balance.getPercentError());
+      unit.addProperty("evaluated", evaluated);
+      unit.addProperty("failedConfiguredThreshold", failed.containsKey(entry.getKey()));
+      if (evaluated) {
+        unit.addProperty("absoluteError", balance.getAbsoluteError());
+        unit.addProperty("percentError", balance.getPercentError());
+        evaluatedCount++;
+      }
+      if (balance.isBypassed()) {
+        bypassedCount++;
+      }
+      units.add(entry.getKey(), unit);
+    }
+
+    JsonObject evidence = new JsonObject();
+    evidence.addProperty("scope", "PER_UNIT_PROCESS_SYSTEM_MASS_BALANCE");
+    evidence.addProperty("flowUnit", "kg/sec");
+    evidence.addProperty("configuredPercentErrorThreshold", process.getMassBalanceErrorThreshold());
+    evidence.addProperty("minimumFlowForErrorCheckKgPerSec", process.getMinimumFlowForMassBalanceError());
+    evidence.addProperty("checkedUnitCount", checked.size());
+    evidence.addProperty("evaluatedUnitCount", evaluatedCount);
+    evidence.addProperty("bypassedUnitCount", bypassedCount);
+    evidence.addProperty("failedUnitCount", failed.size());
+    evidence.addProperty("status",
+        failed.isEmpty() ? "NO_FAILED_UNITS_AT_CONFIGURED_THRESHOLD" : "FAILED_UNITS_PRESENT");
+    evidence.add("units", units);
+    evidence.addProperty("qualification", "CANONICAL_PROCESS_SYSTEM_UNIT_EVIDENCE_NOT_FACILITY_CLOSURE");
+    evidence.addProperty("boundary",
+        "Canonical per-unit ProcessSystem mass-balance diagnostics only; this does not establish complete facility feed/export, component, or energy closure");
+    return evidence;
   }
 
   /**

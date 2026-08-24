@@ -35,18 +35,32 @@ retaining the standard envelope and selective-retrieval guidance.
 
 Balance evidence is deliberately fail-visible. A successful `runProcess` response without an explicitly named numeric
 mass, component, or energy closure field is classified as `GAP_NO_NUMERIC_CLOSURE_IN_MCP_RESPONSE`. The harness does not
-convert convergence, a non-empty report, or a validation label into a balance claim.
+convert convergence, a non-empty report, or a validation label into a balance claim. `RESPONSE_EVIDENCE_PRESENT` means
+that at least one explicit response path exists; it does not mean that mass, component, and energy closure are all
+available or qualified.
 
-For multi-area `ProcessModel` execution, `runProcess` now exposes the existing solver-native
-`convergenceReport` returned by `ProcessModel.getConvergenceReportJson()`. Its `massClosure` object carries the numeric
-`relativeError`, configured `tolerance`, summary, and worst-unit evidence already used by the canonical ProcessModel
-convergence machinery. `relativeError` is a fraction of detected plant feed, not an independently reconstructed MCP
-balance. The same report is retained in both the legacy top-level response and the strict `data` block.
+For multi-area `ProcessModel` execution, `runProcess` exposes the existing solver-native `convergenceReport` returned by
+`ProcessModel.getConvergenceReportJson()`. Its `massClosure` object carries the numeric `relativeError`, configured
+`tolerance`, summary, and worst-unit evidence already used by the canonical ProcessModel convergence machinery.
+`relativeError` is a fraction of detected plant feed, not an independently reconstructed MCP balance. The same report is
+retained in both the legacy top-level response and the strict `data` block.
 
-This closes one defensible response-evidence gap for the public multi-area acceptance fixture. It does **not** establish
-component closure or energy closure, and it does not invent a corresponding balance for single-area `ProcessSystem`
-responses. Those response paths remain explicit gaps until the canonical model exposes equally defensible numerical
-evidence. A successful solver result therefore remains distinct from conservation evidence and scientific validation.
+For ordinary single-area `ProcessSystem` execution, the structured `SimulationResult` report now carries
+`massBalanceEvidence` derived directly from the canonical `ProcessSystem.checkMassBalance()` and
+`ProcessSystem.getFailedMassBalance()` diagnostics. The evidence records the `kg/sec` basis, configured percentage-error
+threshold, minimum-flow threshold, per-unit absolute and percentage errors when evaluable, bypass state, and the exact
+set of units failing the configured ProcessSystem threshold. Unit entries are ordered deterministically by name.
+
+That single-area evidence has a deliberately narrower meaning than the ProcessModel plant-feed closure. It is
+**per-unit operation mass-balance evidence**, not a reconstructed facility feed/export balance. It does not establish
+component closure or energy closure, and it does not convert successful execution into scientific validation. Optional
+post-configuration paths that rerun a process and replace the serialized report must not reuse stale evidence; if an
+explicit balance field is absent after such a path, the acceptance harness continues to treat it as an evidence gap.
+
+Together, the public small and large `ProcessSystem` fixtures can therefore demonstrate canonical unit-operation mass
+balance response evidence, while the multi-area fixture demonstrates solver-native ProcessModel mass closure. The
+remaining Phase 0 conservation boundary is explicit component/energy closure and any facility-wide single-area closure
+that current canonical APIs do not independently expose.
 
 ## Ownership and qualification boundaries
 
