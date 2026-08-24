@@ -83,6 +83,7 @@ public final class BenchmarkTrust {
     tools.add("getPhaseEnvelope", buildPhaseEnvelopeTrust());
     tools.add("getPropertyTable", buildPropertyTableTrust());
     tools.add("sizeEquipment", buildEquipmentSizingTrust());
+    tools.add("getCapabilities", buildCapabilitiesTrust());
 
     root.add("tools", tools);
     return GSON.toJson(root);
@@ -160,6 +161,9 @@ public final class BenchmarkTrust {
     case "sizeEquipment":
       root.add("trust", buildEquipmentSizingTrust());
       break;
+    case "getCapabilities":
+      root.add("trust", buildCapabilitiesTrust());
+      break;
     default:
       root.addProperty("maturityLevel", "TESTED");
       root.addProperty("note", "No specific benchmark data available for this tool. "
@@ -233,6 +237,9 @@ public final class BenchmarkTrust {
     case "sizeEquipment":
       trust = buildEquipmentSizingTrust();
       break;
+    case "getCapabilities":
+      trust = buildCapabilitiesTrust();
+      break;
     default:
       return "TESTED";
     }
@@ -251,7 +258,6 @@ public final class BenchmarkTrust {
             + "SRK and PR are validated against published VLE data for common hydrocarbons. "
             + "GERG-2008 is the ISO reference model for natural gas.");
 
-    // Validation cases
     JsonArray cases = new JsonArray();
     cases.add(validationCase("Methane density at 25C, 100 bara", "SRK", "Density within 15% of NIST reference",
         "NIST Chemistry WebBook", "neqsim.mcp.runners.BenchmarkValidationTest#testMethaneDensity_vsNIST"));
@@ -267,7 +273,6 @@ public final class BenchmarkTrust {
         "Sloan & Koh (2008)"));
     trust.add("validationCases", cases);
 
-    // Accuracy bounds
     JsonObject accuracy = new JsonObject();
     accuracy.addProperty("lightHydrocarbons",
         "Dense-phase density within 15% (SRK without volume translation, CI-verified); "
@@ -281,7 +286,6 @@ public final class BenchmarkTrust {
         "Above 500 bara, all cubic EOS lose accuracy. Use GERG-2008 for natural gas at high P.");
     trust.add("accuracyBounds", accuracy);
 
-    // Known limitations
     JsonArray limitations = new JsonArray();
     limitations.add("SRK/PR liquid density can be 5-15% off without volume translation");
     limitations.add("Hydrate predictions require the CPA EOS with water as a component");
@@ -720,6 +724,50 @@ public final class BenchmarkTrust {
     limitations.add("Compressor staging is rule-of-thumb, not optimized");
     trust.add("knownLimitations", limitations);
 
+    return trust;
+  }
+
+  /** Builds trust metadata for capability discovery. */
+  private static JsonObject buildCapabilitiesTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description",
+        "Static capability discovery and evidence catalog. Contract-tested against the published MCP surface, "
+            + "implementation/equipment inventories, Phase 0 evidence, and response-size guarding. This trust page "
+            + "describes discovery-contract fidelity only; it is not a scientific validation of the calculations "
+            + "advertised by other tools.");
+
+    JsonArray cases = new JsonArray();
+    cases.add(validationCase("Published tool catalog reconciliation", "discovery",
+        "Published and described tool sets reconcile with no missing or undeclared entries", "NeqSim MCP contract tests",
+        "neqsim.mcp.runners.CapabilitiesRunnerTest#testToolCatalogCoverage"));
+    cases.add(validationCase("Phase 0 evidence survives default response guard", "discovery",
+        "phase0EvidenceInventory remains retrievable after default response-size reduction",
+        "NeqSim MCP transport regression tests", "neqsim.mcp.runners.ResponseSizeGuardTest#testCapabilitiesPreservesPhase0Evidence"));
+    cases.add(validationCase("Real MCP discovery protocol", "stdio",
+        "Capabilities and Phase 0 evidence are returned through the packaged MCP server",
+        "neqsim-mcp-server/test_mcp_server.py"));
+    trust.add("validationCases", cases);
+
+    JsonArray limitations = new JsonArray();
+    limitations.add("TESTED means discovery-contract coverage, not scientific validation of advertised calculations");
+    limitations.add("Large catalog sections may be response-guarded and require focused schema/example retrieval routes");
+    limitations.add("Capability presence does not prove applicability, accuracy, convergence, or validation maturity for an executed case");
+    limitations.add("Per-tool BenchmarkTrust and per-result provenance/validation remain authoritative for engineering use");
+    trust.add("knownLimitations", limitations);
+
+    JsonArray bounds = new JsonArray();
+    bounds.add("Deterministic static manifest generation is covered by Java contract tests");
+    bounds.add("Transport preservation is covered by response-guard and packaged MCP protocol tests");
+    bounds.add("No numerical engineering accuracy bound is claimed for capability discovery");
+    trust.add("accuracyBounds", bounds);
+
+    JsonArray references = new JsonArray();
+    references.add("CapabilitiesRunnerTest");
+    references.add("ResponseSizeGuardTest");
+    references.add("McpToolSurfaceContractTest");
+    references.add("neqsim-mcp-server/test_mcp_server.py");
+    trust.add("referenceData", references);
     return trust;
   }
 
