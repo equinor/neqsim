@@ -46,8 +46,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** Extra aqueous phase-fraction room retained above the fixed ionic inventory. */
   private static final double HYBRID_ION_CAPACITY_MARGIN = 100.0 * phaseFractionMinimumLimit;
 
-  /** Largest ionic-concentration increase allowed in one projected beta correction. */
-  private static final double HYBRID_ION_CONCENTRATION_STEP_LIMIT = 2.0;
+  /** Largest aqueous phase-fraction ratio allowed in one projected beta correction. */
+  private static final double HYBRID_AQUEOUS_FRACTION_STEP_LIMIT = 2.0;
 
   /** Reaction-adjusted overall component fractions used by the coupled phase solve. */
   private transient double[] coupledOverallFractions;
@@ -349,7 +349,7 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** {@inheritDoc} */
   @Override
   public void setXY() {
-    if (enforceAqueousIonCapacityBound()) {
+    if (enforceAqueousFractionBounds()) {
       // The beta Newton step was projected back into the physically admissible region. Rebuild
       // E with the projected fractions before calculating component compositions.
       calcE();
@@ -406,15 +406,16 @@ public class TPHybridEosGeFlash extends TPmultiflash {
    * <p>
    * Ions are excluded from EOS gas and oil roles, so their aqueous mole fractions sum to
    * {@code sum(zIon) / betaAqueous}. An unconstrained Newton correction can temporarily move {@code betaAqueous} below
-   * {@code sum(zIon)} even when the final equilibrium is feasible. That iterate has no normalized aqueous composition
-   * and formerly failed before the next correction could recover. This method projects only such infeasible iterates
-   * onto the ionic-capacity boundary, taking the required fraction proportionally from the adjustable part of the other
-   * active phases. Feasible iterates and the final acceptance tolerances are unchanged.
+   * {@code sum(zIon)} even when the final equilibrium is feasible. A correction in the other direction can likewise
+   * displace nearly all aqueous solvent before the phase model can update its fugacities. This method projects the
+   * aqueous fraction onto the ionic-capacity boundary and a bidirectional step-ratio trust region, transferring the
+   * correction proportionally to or from the other active phases. Feasible iterates and the final acceptance tolerances
+   * are unchanged.
    * </p>
    *
    * @return {@code true} when the phase fractions were projected
    */
-  private boolean enforceAqueousIonCapacityBound() {
+  private boolean enforceAqueousFractionBounds() {
     int aqueousPhaseIndex = -1;
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (hybridModel.isHybridEosGeAqueousPhase(phaseIndex)) {
@@ -439,17 +440,43 @@ public class TPHybridEosGeFlash extends TPmultiflash {
 
     double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
     // calcQ captures the settled beta before the Newton proposal is written and initialized.
-    // Limiting beta reduction therefore bounds the corresponding ionic-concentration increase
-    // without consulting a possibly invalid trial composition.
+    // Limiting beta reduction bounds the corresponding ionic-concentration increase, while
+    // limiting beta growth prevents one proposal from displacing nearly all aqueous solvent.
     double previousAqueousFraction = previousAqueousFractionBeforeBetaCorrection;
-    double concentrationLimitedAqueousFraction = Double.isFinite(previousAqueousFraction)
-        && previousAqueousFraction > 0.0 ? previousAqueousFraction / HYBRID_ION_CONCENTRATION_STEP_LIMIT
+    double stepLimitedMinimumAqueousFraction = Double.isFinite(previousAqueousFraction)
+        && previousAqueousFraction > 0.0 ? previousAqueousFraction / HYBRID_AQUEOUS_FRACTION_STEP_LIMIT
             : ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN;
     double minimumAqueousFraction = Math.min(maximumAqueousFraction,
-        Math.max(ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN, concentrationLimitedAqueousFraction));
+        Math.max(ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN, stepLimitedMinimumAqueousFraction));
+    double stepLimitedMaximumAqueousFraction = Double.isFinite(previousAqueousFraction)
+        && previousAqueousFraction > 0.0
+            ? Math.min(maximumAqueousFraction,
+                previousAqueousFraction * HYBRID_AQUEOUS_FRACTION_STEP_LIMIT)
+            : maximumAqueousFraction;
     double currentAqueousFraction = system.getBeta(aqueousPhaseIndex);
-    if (currentAqueousFraction >= minimumAqueousFraction) {
+    if (currentAqueousFraction >= minimumAqueousFraction
+        && currentAqueousFraction <= stepLimitedMaximumAqueousFraction) {
       return false;
+    }
+
+    if (currentAqueousFraction > stepLimitedMaximumAqueousFraction) {
+      double excessAqueousFraction = currentAqueousFraction - stepLimitedMaximumAqueousFraction;
+      double nonAqueousFraction = 0.0;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        if (phaseIndex != aqueousPhaseIndex) {
+          nonAqueousFraction += system.getBeta(phaseIndex);
+        }
+      }
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        if (phaseIndex != aqueousPhaseIndex) {
+          double share = nonAqueousFraction > 0.0 ? system.getBeta(phaseIndex) / nonAqueousFraction
+              : 1.0 / (system.getNumberOfPhases() - 1.0);
+          system.setBeta(phaseIndex, system.getBeta(phaseIndex) + excessAqueousFraction * share);
+        }
+      }
+      system.setBeta(aqueousPhaseIndex, stepLimitedMaximumAqueousFraction);
+      synchronizePhaseBetaMirrors();
+      return true;
     }
 
     double requiredTransfer = minimumAqueousFraction - currentAqueousFraction;
@@ -495,10 +522,15 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     system.setBeta(aqueousPhaseIndex, 1.0 - nonAqueousFraction);
     // SystemThermo keeps beta in both the mapped system array and each phase object. The
     // composition kernel reads the phase copy immediately, before the next system init.
+    synchronizePhaseBetaMirrors();
+    return true;
+  }
+
+  /** Synchronize the mapped system beta values into their active phase objects. */
+  private void synchronizePhaseBetaMirrors() {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       system.getPhase(phaseIndex).setBeta(system.getBeta(phaseIndex));
     }
-    return true;
   }
 
   /**
