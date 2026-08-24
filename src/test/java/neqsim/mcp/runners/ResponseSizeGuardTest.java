@@ -98,6 +98,35 @@ class ResponseSizeGuardTest {
   }
 
   /**
+   * The Phase 0 evidence inventory has no separate selective-retrieval route, so it must remain discoverable when the
+   * larger capability catalog is trimmed.
+   */
+  @Test
+  @DisplayName("Capability trimming preserves the Phase 0 evidence contract")
+  void testCapabilitiesPreservePhase0EvidenceWhenTrimmed() {
+    JsonObject response = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    int originalBytes = GSON.toJson(response).getBytes(StandardCharsets.UTF_8).length;
+    assertTrue(originalBytes > ResponseSizeGuard.getMaxBytes(),
+        "Capability fixture must exercise the response-size guard, was " + originalBytes);
+
+    assertTrue(ResponseSizeGuard.enforce(response, "getCapabilities"), "Oversized capability response must be trimmed");
+
+    int trimmedBytes = GSON.toJson(response).getBytes(StandardCharsets.UTF_8).length;
+    assertTrue(trimmedBytes <= ResponseSizeGuard.getMaxBytes(),
+        "Trimmed capability response must fit the limit, was " + trimmedBytes);
+    assertTrue(response.has("phase0EvidenceInventory"),
+        "The non-retrievable Phase 0 evidence contract must survive trimming");
+    assertTrue(response.getAsJsonObject("data").has("phase0EvidenceInventory"),
+        "The canonical data view must retain the same evidence contract");
+    assertTrue(response.getAsJsonObject("phase0EvidenceInventory").has("tests"));
+    assertTrue(response.getAsJsonObject("phase0EvidenceInventory").has("knownLimitations"));
+    JsonObject truncation = response.getAsJsonObject("truncation");
+    assertFalse(truncation.getAsJsonArray("omitted").toString().contains("phase0EvidenceInventory"));
+    assertTrue(truncation.get("howToRetrieve").getAsString().contains("getSchema"),
+        "Discovery truncation must point to focused capability retrieval");
+  }
+
+  /**
    * The trimmed response must still be parseable JSON — a truncated payload is worse than useless if the client cannot
    * read it.
    */

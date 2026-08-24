@@ -1505,9 +1505,9 @@ def test_capabilities():
     check("evidence inventory freezes 94 protocol scenarios",
           tests.get("protocolScenarioCount") == 94,
           str(tests))
-    check("evidence inventory lists seven MCP guides",
-          guides.get("guideCount") == 7
-          and len(guides.get("entries", [])) == 7,
+    check("evidence inventory lists eight MCP guides",
+          guides.get("guideCount") == 8
+          and len(guides.get("entries", [])) == 8,
           str(guides))
     baseline_contract = evidence.get("acceptanceBaselineContract", {})
     check("acceptance baseline contract is bounded and non-qualifying",

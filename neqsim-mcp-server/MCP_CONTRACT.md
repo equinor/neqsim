@@ -220,6 +220,14 @@ Schema resource paths use snake_case tool names such as `run_flash`, but respons
 the MCP method names such as `runFlash`. Schema lookups accept only `input` and `output` as schema
 types; any other type is treated as schema-not-found.
 
+Responses larger than 256 KiB are reduced by the shared transport guard unless
+`neqsim.mcp.maxResponseBytes` or `NEQSIM_MCP_MAX_RESPONSE_BYTES` configures another limit. The
+`truncation` block identifies omitted root fields and focused retrieval routes, and the legacy
+top-level and canonical `data` views are reduced together. For `getCapabilities`,
+`phase0EvidenceInventory` is retained because it has no equivalent selective-retrieval route;
+larger catalog sections may be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and
+the MCP catalog resources.
+
 ### Warning taxonomy
 
 Warnings in the root `warnings` array, and any tool-specific warning details, use these standard
