@@ -208,6 +208,23 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     costEstimate = new SeparatorCostEstimate(this);
   }
 
+  /**
+   * Returns the separator gas-outlet volumetric flow used by the generic mechanical-design capacity bridge.
+   *
+   * @return actual gas volumetric flow in cubic metres per hour, or {@link Double#NaN} when unavailable
+   */
+  @Override
+  protected double getOperatingGasVolumeFlow() {
+    if (!(getProcessEquipment() instanceof Separator)) {
+      return Double.NaN;
+    }
+    try {
+      return ((Separator) getProcessEquipment()).getGasOutStream().getFlowRate("m3/hr");
+    } catch (RuntimeException ex) {
+      return Double.NaN;
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void readDesignSpecifications() {
@@ -307,7 +324,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     Separator separator = (Separator) getProcessEquipment();
     separator.getThermoSystem().initPhysicalProperties();
-    separator.setDesignLiquidLevelFraction(Fg);
+    separator.setDesignLiquidLevelFraction(1.0 - Fg);
 
     double emptyVesselWeight = 0.0;
     double internalsWeight = 0.0;
@@ -338,15 +355,17 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+    double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
+    double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
     outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
-    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * Fg * 3600.0; // m³/hr
+    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
 
     // tantanLength = innerDiameter * 5.0;
     retentionTime = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
@@ -354,7 +373,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     tantanLength = Math
         .sqrt(4.0 * retentionTime * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getLiquidVolume()
-            / 1e5 / (Math.PI * innerDiameter * innerDiameter * (1 - Fg)));
+            / 1e5 / (Math.PI * innerDiameter * innerDiameter * liquidAreaFraction));
     double sepratorLength = tantanLength + innerDiameter;
 
     if (sepratorLength / innerDiameter > 6 || sepratorLength / innerDiameter < 3) {
@@ -477,22 +496,24 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     // Souders-Brown equation for max gas velocity
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+    double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
+    double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
-    // Calculate diameter based on gas area (Fg is gas fraction = 1 - liquid level)
+    // Calculate diameter based on the orientation-specific gas area.
     innerDiameter = Math.sqrt(4.0 * (maxDesignVolumeFlow / 3600.0)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
     outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
-    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * Fg * 3600.0; // m³/hr
+    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
 
     // Calculate length based on liquid retention time
     double liquidVolume = separator.getThermoSystem().getLiquidVolume() / 1e5;
     if (liquidVolume > 1e-10) {
       tantanLength = Math.sqrt(4.0 * retentionTime * liquidVolume * volumeSafetyFactor
-          / (Math.PI * innerDiameter * innerDiameter * (1 - Fg)));
+          / (Math.PI * innerDiameter * innerDiameter * liquidAreaFraction));
     } else {
       // No liquid - use L/D ratio of 4
       tantanLength = innerDiameter * 4.0;
