@@ -11,6 +11,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseGEInterface;
@@ -122,6 +125,40 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
           if (system.getPhase(phaseIndex) != aqueous) {
             assertTrue(system.getPhase(phaseIndex).getComponent(componentIndex).getx() <= 1.0e-40);
           }
+        }
+      }
+    }
+  }
+
+  /** Hybrid EOS-Pitzer states retain ions and finite properties through ordinary process equipment. */
+  @Test
+  void gasOilAqueousPitzerStateIsProcessComposable() {
+    SystemPitzer system = createGasOilAqueousSystem();
+    Stream feed = new Stream("electrolyte feed", system);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater heater = new Heater("electrolyte heater", feed);
+    heater.setOutTemperature(318.15);
+    ProcessSystem process = new ProcessSystem("electrolyte process property smoke test");
+    process.add(feed);
+    process.add(heater);
+
+    process.run();
+
+    SystemInterface outlet = heater.getOutletStream().getThermoSystem();
+    assertEquals(1000.0, heater.getOutletStream().getFlowRate("kg/hr"), 1.0e-6);
+    assertTrue(hasPhaseType(outlet, PhaseType.GAS));
+    assertTrue(hasPhaseType(outlet, PhaseType.OIL));
+    assertTrue(hasPhaseType(outlet, PhaseType.AQUEOUS));
+    assertBalancedAndAtEquilibrium(outlet);
+    for (int phaseIndex = 0; phaseIndex < outlet.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = outlet.getPhase(phaseIndex);
+      assertTrue(Double.isFinite(phase.getDensity()) && phase.getDensity() > 0.0, phase.getType().toString());
+      assertTrue(Double.isFinite(phase.getEnthalpy()), phase.getType().toString());
+      assertTrue(Double.isFinite(phase.getCp()) && phase.getCp() > 0.0, phase.getType().toString());
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        ComponentInterface component = phase.getComponent(componentIndex);
+        if ((component.isIsIon() || component.getIonicCharge() != 0.0) && phase.getType() != PhaseType.AQUEOUS) {
+          assertTrue(component.getx() <= 1.0e-40, component.getComponentName() + " escaped the aqueous phase");
         }
       }
     }
