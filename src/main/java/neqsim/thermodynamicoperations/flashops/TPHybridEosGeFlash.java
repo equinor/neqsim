@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.HybridEosGeFlashModel;
 import neqsim.thermo.system.SystemInterface;
 
@@ -51,7 +52,6 @@ public class TPHybridEosGeFlash extends TPmultiflash {
 
   /** Maximum common Newton beta-step scale for a hybrid flash carrying ions. */
   private static final double HYBRID_IONIC_BETA_STEP_SCALE = 0.1;
-
 
   /** Reaction-adjusted overall component fractions used by the coupled phase solve. */
   private transient double[] coupledOverallFractions;
@@ -477,8 +477,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
         for (int componentIndex = 0; componentIndex < aqueousPhase.getNumberOfComponents(); componentIndex++) {
           ComponentInterface component = aqueousPhase.getComponent(componentIndex);
           if (component.getIonicCharge() == 0 && !component.isIsIon()) {
-            double neutralShare = previousNeutralShares[componentIndex] + lineSearchFraction
-                * (proposedNeutralShares[componentIndex] - previousNeutralShares[componentIndex]);
+            double neutralShare = previousNeutralShares[componentIndex]
+                + lineSearchFraction * (proposedNeutralShares[componentIndex] - previousNeutralShares[componentIndex]);
             component.setx(lineSearchNeutralTotal * neutralShare);
           }
         }
@@ -507,8 +507,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
           || component.isIsIon()) {
         continue;
       }
-      if (!(component.getx() > 0.0) || !Double.isFinite(component.getx())
-          || !(component.getFugacityCoefficient() > 0.0) || !Double.isFinite(component.getFugacityCoefficient())) {
+      if (!(component.getx() > 0.0) || !Double.isFinite(component.getx()) || !(component.getFugacityCoefficient() > 0.0)
+          || !Double.isFinite(component.getFugacityCoefficient())) {
         return false;
       }
     }
