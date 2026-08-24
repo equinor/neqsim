@@ -436,9 +436,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     // contains the current proposal. Limiting beta reduction therefore bounds the corresponding
     // ionic-concentration increase without consulting a possibly invalid trial composition.
     double previousAqueousFraction = system.getPhase(aqueousPhaseIndex).getBeta();
-    double concentrationLimitedAqueousFraction =
-        Double.isFinite(previousAqueousFraction) && previousAqueousFraction > 0.0
-            ? previousAqueousFraction / HYBRID_ION_CONCENTRATION_STEP_LIMIT
+    double concentrationLimitedAqueousFraction = Double.isFinite(previousAqueousFraction)
+        && previousAqueousFraction > 0.0 ? previousAqueousFraction / HYBRID_ION_CONCENTRATION_STEP_LIMIT
             : ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN;
     double minimumAqueousFraction = Math.min(maximumAqueousFraction,
         Math.max(ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN, concentrationLimitedAqueousFraction));
@@ -457,8 +456,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     if (adjustableFraction + phaseFractionMinimumLimit < requiredTransfer) {
       throw new IllegalStateException("Hybrid EOS-GE phase fractions cannot accommodate the ionic inventory: "
           + "ionOverallFraction=" + ionOverallFraction + ", aqueousBeta=" + currentAqueousFraction
-          + ", requiredAqueousBeta=" + minimumAqueousFraction + ", previousAqueousBeta="
-          + previousAqueousFraction + ", adjustableFraction=" + adjustableFraction);
+          + ", requiredAqueousBeta=" + minimumAqueousFraction + ", previousAqueousBeta=" + previousAqueousFraction
+          + ", adjustableFraction=" + adjustableFraction);
     }
 
     double remainingTransfer = requiredTransfer;
