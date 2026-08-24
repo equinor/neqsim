@@ -32,9 +32,9 @@ class SalesContractDocumentationTest extends NeqSimTest {
     int specificationCount = contract.getSpecificationsNumber();
     int rowsWithinLimits = 0;
     for (int rowIndex = 0; rowIndex < specificationCount; rowIndex++) {
-      double value = Double.parseDouble(rows[rowIndex][1]);
-      double minimum = Double.parseDouble(rows[rowIndex][4]);
-      double maximum = Double.parseDouble(rows[rowIndex][5]);
+      double value = parseDoubleOrFail(rows[rowIndex][1], rowIndex, 1);
+      double minimum = parseDoubleOrFail(rows[rowIndex][4], rowIndex, 4);
+      double maximum = parseDoubleOrFail(rows[rowIndex][5], rowIndex, 5);
       if (Double.isFinite(value) && value >= minimum && value <= maximum) {
         rowsWithinLimits++;
       }
@@ -44,14 +44,24 @@ class SalesContractDocumentationTest extends NeqSimTest {
     assertEquals(8, rows.length);
     assertEquals(12, rows[0].length);
     assertEquals("CO2", rows[1][0]);
-    assertEquals(2.18817727816606, Double.parseDouble(rows[1][1]), 1.0e-6);
+    assertEquals(2.18817727816606, parseDoubleOrFail(rows[1][1], 1, 1), 1.0e-6);
     assertEquals("Brazil", rows[1][2]);
     assertEquals("central", rows[1][3]);
-    assertEquals(0.0, Double.parseDouble(rows[1][4]), 0.0);
-    assertEquals(3.0, Double.parseDouble(rows[1][5]), 0.0);
+    assertEquals(0.0, parseDoubleOrFail(rows[1][4], 1, 4), 0.0);
+    assertEquals(3.0, parseDoubleOrFail(rows[1][5], 1, 5), 0.0);
     assertEquals("mol%", rows[1][6]);
-    assertEquals(1.0, Double.parseDouble(rows[1][10]), 0.0);
+    assertEquals(1.0, parseDoubleOrFail(rows[1][10], 1, 10), 0.0);
     assertEquals("", rows[1][11]);
     assertTrue(rowsWithinLimits > 0);
+  }
+
+  private static double parseDoubleOrFail(String value, int rowIndex, int columnIndex) {
+    try {
+      return Double.parseDouble(value);
+    } catch (NumberFormatException | NullPointerException exception) {
+      throw new AssertionError(
+          "Expected a numeric contract result at row " + rowIndex + ", column " + columnIndex,
+          exception);
+    }
   }
 }
