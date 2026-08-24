@@ -35,6 +35,10 @@ public class PhasePitzer extends PhaseGE {
   private static final int TEMPERATURE_BETA2 = 4;
   private static final int TEMPERATURE_THETA = 5;
   private static final int TEMPERATURE_PSI = 6;
+  static final int NEUTRAL_FAMILY_LAMBDA = 7;
+  static final int NEUTRAL_FAMILY_ZETA = 8;
+  static final int NEUTRAL_FAMILY_MU = 9;
+  static final int NEUTRAL_FAMILY_ETA = 10;
 
   private double[][] beta0;
   private double[][] beta1;
@@ -59,6 +63,12 @@ public class PhasePitzer extends PhaseGE {
   private Map<Long, PitzerTemperatureFunction> temperatureFunctions = new HashMap<Long, PitzerTemperatureFunction>();
   /** Fast gate that avoids map lookup for legacy parameter datasets. */
   private boolean hasTemperatureFunctions;
+  /** Sparse opt-in neutral-solute interaction families, keyed without tuple allocation. */
+  private Map<Long, PitzerNeutralInteraction> neutralInteractions = new HashMap<Long, PitzerNeutralInteraction>();
+  /** Fast gate keeping legacy Pitzer and every non-Pitzer path out of neutral interaction loops. */
+  private boolean hasNeutralInteractions;
+  /** Whether the active neutral-solute topology has passed its fail-closed parameter audit. */
+  private transient boolean neutralParameterCoverageValidated;
   /** Whether parameters have been loaded from database. */
   private boolean parametersLoaded = false;
   /** Whether immutable parameter arrays are shared with a clone until the next setter call. */
@@ -107,6 +117,7 @@ public class PhasePitzer extends PhaseGE {
   public PhasePitzer clone() {
     ensureDefinitionSets();
     ensureTemperatureFunctions();
+    ensureNeutralInteractions();
     PhasePitzer clonedPhase = (PhasePitzer) super.clone();
     parameterStorageShared = true;
     clonedPhase.parameterStorageShared = true;
@@ -114,10 +125,12 @@ public class PhasePitzer extends PhaseGE {
     clonedPhase.definedThetaPairs = new HashSet<String>(definedThetaPairs);
     clonedPhase.definedPsiTuples = new HashSet<String>(definedPsiTuples);
     clonedPhase.temperatureFunctions = new HashMap<Long, PitzerTemperatureFunction>(temperatureFunctions);
+    clonedPhase.neutralInteractions = new HashMap<Long, PitzerNeutralInteraction>(neutralInteractions);
     clonedPhase.cachedCoverageFingerprint = 0L;
     clonedPhase.cachedCoverageRevision = Long.MIN_VALUE;
     clonedPhase.cachedCoverage = null;
     clonedPhase.parameterCoverageValidated = false;
+    clonedPhase.neutralParameterCoverageValidated = false;
     clonedPhase.unequalChargeSameSignPairState = unequalChargeSameSignPairState;
     return clonedPhase;
   }
@@ -127,6 +140,7 @@ public class PhasePitzer extends PhaseGE {
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     if (initType == 0) {
       parameterCoverageValidated = false;
+      neutralParameterCoverageValidated = false;
     }
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
   }
@@ -136,7 +150,9 @@ public class PhasePitzer extends PhaseGE {
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGePitzer(name, moles, molesInPhase, compNumber);
+    ((ComponentGePitzer) componentArray[compNumber]).setNeutralPitzerInteractionsActive(hasNeutralInteractions);
     unequalChargeSameSignPairState = 0;
+    neutralParameterCoverageValidated = false;
   }
 
   /**
@@ -371,6 +387,207 @@ public class PhasePitzer extends PhaseGE {
     PitzerTemperatureFunction function = new PitzerTemperatureFunction(referenceTemperature, coefficients);
     setPsi(i, j, k, coefficients[0]);
     setTemperatureFunction(tripleTemperatureKey(TEMPERATURE_PSI, i, j, k), function);
+  }
+
+  /**
+   * Sets a constant Pitzer lambda parameter containing at least one neutral solute.
+   *
+   * @param first first component index
+   * @param second second component index; may be an ion or another neutral solute
+   * @param value lambda parameter on the source dataset's molality convention
+   */
+  public void setLambda(int first, int second, double value) {
+    setLambdaTemperatureCoefficients(first, second, 298.15, new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+  }
+
+  /**
+   * Sets a PHREEQC six-term lambda temperature function containing at least one neutral solute.
+   *
+   * @param first first component index
+   * @param second second component index; may be an ion or another neutral solute
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients six coefficients in PHREEQC order
+   */
+  public void setLambdaTemperatureCoefficients(int first, int second, double referenceTemperature,
+      double[] coefficients) {
+    requireComponentIndex(first);
+    requireComponentIndex(second);
+    if (!isNeutralSolute(first) && !isNeutralSolute(second)) {
+      throw new IllegalArgumentException("Pitzer lambda requires at least one neutral non-water solute");
+    }
+    if ((!isNeutralSolute(first) && Math.abs(getComponent(first).getIonicCharge()) < 0.5)
+        || (!isNeutralSolute(second) && Math.abs(getComponent(second).getIonicCharge()) < 0.5)) {
+      throw new IllegalArgumentException("Pitzer lambda does not permit water");
+    }
+    setNeutralInteraction(NEUTRAL_FAMILY_LAMBDA, new int[] { first, second },
+        new PitzerTemperatureFunction(referenceTemperature, coefficients));
+  }
+
+  /**
+   * Sets a constant neutral-cation-anion Pitzer zeta parameter.
+   *
+   * @param neutral neutral non-water component index
+   * @param cation cation component index
+   * @param anion anion component index
+   * @param value zeta parameter
+   */
+  public void setZeta(int neutral, int cation, int anion, double value) {
+    setZetaTemperatureCoefficients(neutral, cation, anion, 298.15, new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+  }
+
+  /**
+   * Sets a PHREEQC six-term neutral-cation-anion zeta temperature function.
+   *
+   * @param neutral neutral non-water component index
+   * @param cation cation component index
+   * @param anion anion component index
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients six coefficients in PHREEQC order
+   */
+  public void setZetaTemperatureCoefficients(int neutral, int cation, int anion, double referenceTemperature,
+      double[] coefficients) {
+    requireNeutralSolute(neutral, "zeta");
+    requireChargeSign(cation, 1, "zeta cation");
+    requireChargeSign(anion, -1, "zeta anion");
+    setNeutralInteraction(NEUTRAL_FAMILY_ZETA, new int[] { neutral, cation, anion },
+        new PitzerTemperatureFunction(referenceTemperature, coefficients));
+  }
+
+  /**
+   * Sets a constant neutral-neutral-neutral Pitzer mu parameter.
+   *
+   * @param first first neutral non-water component index
+   * @param second second neutral non-water component index
+   * @param third third neutral non-water component index
+   * @param value mu parameter
+   */
+  public void setMu(int first, int second, int third, double value) {
+    setMuTemperatureCoefficients(first, second, third, 298.15, new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+  }
+
+  /**
+   * Sets a PHREEQC six-term neutral-neutral-neutral mu temperature function.
+   *
+   * @param first first neutral non-water component index
+   * @param second second neutral non-water component index
+   * @param third third neutral non-water component index
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients six coefficients in PHREEQC order
+   */
+  public void setMuTemperatureCoefficients(int first, int second, int third, double referenceTemperature,
+      double[] coefficients) {
+    requireNeutralSolute(first, "mu");
+    requireNeutralSolute(second, "mu");
+    requireNeutralSolute(third, "mu");
+    setNeutralInteraction(NEUTRAL_FAMILY_MU, new int[] { first, second, third },
+        new PitzerTemperatureFunction(referenceTemperature, coefficients));
+  }
+
+  /**
+   * Sets a constant neutral/same-sign-ion Pitzer eta parameter.
+   *
+   * @param neutral neutral non-water component index
+   * @param firstIon first ionic component index
+   * @param secondIon second same-sign ionic component index
+   * @param value eta parameter
+   */
+  public void setEta(int neutral, int firstIon, int secondIon, double value) {
+    setEtaTemperatureCoefficients(neutral, firstIon, secondIon, 298.15,
+        new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+  }
+
+  /**
+   * Sets a PHREEQC six-term neutral/same-sign-ion eta temperature function.
+   *
+   * @param neutral neutral non-water component index
+   * @param firstIon first ionic component index
+   * @param secondIon second same-sign ionic component index
+   * @param referenceTemperature reference temperature in K
+   * @param coefficients six coefficients in PHREEQC order
+   */
+  public void setEtaTemperatureCoefficients(int neutral, int firstIon, int secondIon, double referenceTemperature,
+      double[] coefficients) {
+    requireNeutralSolute(neutral, "eta");
+    requireIon(firstIon, "eta");
+    requireIon(secondIon, "eta");
+    if (getComponent(firstIon).getIonicCharge() * getComponent(secondIon).getIonicCharge() <= 0.0) {
+      throw new IllegalArgumentException("Pitzer eta requires two ions with the same charge sign");
+    }
+    setNeutralInteraction(NEUTRAL_FAMILY_ETA, new int[] { neutral, firstIon, secondIon },
+        new PitzerTemperatureFunction(referenceTemperature, coefficients));
+  }
+
+  /**
+   * Gets a temperature-adjusted neutral-ion or neutral-neutral lambda parameter.
+   *
+   * @param first first component index
+   * @param second second component index
+   * @param temperature temperature in K
+   * @return lambda value, or zero when the tuple is not defined
+   */
+  public double getLambda(int first, int second, double temperature) {
+    return getNeutralInteractionValue(NEUTRAL_FAMILY_LAMBDA, first, second, -1, temperature);
+  }
+
+  /** Gets a temperature-adjusted zeta parameter, or zero when absent. */
+  public double getZeta(int neutral, int cation, int anion, double temperature) {
+    return getNeutralInteractionValue(NEUTRAL_FAMILY_ZETA, neutral, cation, anion, temperature);
+  }
+
+  /** Gets a temperature-adjusted mu parameter, or zero when absent. */
+  public double getMu(int first, int second, int third, double temperature) {
+    return getNeutralInteractionValue(NEUTRAL_FAMILY_MU, first, second, third, temperature);
+  }
+
+  /** Gets a temperature-adjusted eta parameter, or zero when absent. */
+  public double getEta(int neutral, int firstIon, int secondIon, double temperature) {
+    return getNeutralInteractionValue(NEUTRAL_FAMILY_ETA, neutral, firstIon, secondIon, temperature);
+  }
+
+  /**
+   * Reports whether the sparse neutral-solute interaction layer is active.
+   *
+   * @return {@code true} after at least one lambda, zeta, mu, or eta tuple is defined
+   */
+  public boolean hasNeutralPitzerInteractions() {
+    return hasNeutralInteractions;
+  }
+
+  /**
+   * Calculates all neutral-family contributions to one component's ln(gamma).
+   *
+   * @param componentIndex target component index
+   * @param temperature temperature in K
+   * @return neutral-family contribution to ln(gamma)
+   */
+  public double getNeutralPitzerLogGammaContribution(int componentIndex, double temperature) {
+    if (!hasNeutralInteractions) {
+      return 0.0;
+    }
+    validateNeutralParameterCoverageOncePerState();
+    double contribution = 0.0;
+    for (PitzerNeutralInteraction interaction : neutralInteractions.values()) {
+      contribution += interaction.logGammaContribution(componentIndex, this, temperature);
+    }
+    return contribution;
+  }
+
+  /**
+   * Calculates all neutral-family contributions to PHREEQC's osmotic sum.
+   *
+   * @param temperature temperature in K
+   * @return contribution before the common {@code 2/sum(m)} factor
+   */
+  public double getNeutralPitzerOsmoticContribution(double temperature) {
+    if (!hasNeutralInteractions) {
+      return 0.0;
+    }
+    validateNeutralParameterCoverageOncePerState();
+    double contribution = 0.0;
+    for (PitzerNeutralInteraction interaction : neutralInteractions.values()) {
+      contribution += interaction.osmoticContribution(this, temperature);
+    }
+    return contribution;
   }
 
   /**
@@ -1033,6 +1250,8 @@ public class PhasePitzer extends PhaseGE {
         double molality = getComponent(i).getMolality(this);
         sumMolalities += molality;
         zSum += Math.abs(charge) * molality;
+      } else if (hasNeutralInteractions && isNeutralSolute(i)) {
+        sumMolalities += getComponent(i).getMolality(this);
       }
     }
 
@@ -1061,7 +1280,8 @@ public class PhasePitzer extends PhaseGE {
     }
 
     double thetaPsiSum = getThetaPsiOsmoticContribution(ionicStrength, aPhi);
-    return 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum);
+    double neutralSum = hasNeutralInteractions ? getNeutralPitzerOsmoticContribution(temperature) : 0.0;
+    return 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum + neutralSum);
   }
 
   /**
@@ -1356,6 +1576,200 @@ public class PhasePitzer extends PhaseGE {
     ensureTemperatureFunctions();
     temperatureFunctions.put(key, function);
     hasTemperatureFunctions = true;
+  }
+
+  /**
+   * Audits neutral Pitzer families against the active opt-in topology.
+   *
+   * <p>
+   * Once any neutral family is configured, lambda is required for every active neutral-neutral pair (with repetition)
+   * and neutral-ion pair, and zeta for every active neutral-cation-anion tuple. Mu and eta are audited across their
+   * active topology only when that higher-order family is present in the selected dataset. An explicitly defined zero
+   * counts as a definition.
+   * </p>
+   *
+   * @return immutable coverage diagnostic
+   */
+  public PitzerNeutralParameterCoverage auditNeutralPitzerParameterCoverage() {
+    ensureDefinitionSets();
+    ensureNeutralInteractions();
+    List<Integer> neutrals = new ArrayList<Integer>();
+    List<Integer> cations = new ArrayList<Integer>();
+    List<Integer> anions = new ArrayList<Integer>();
+    List<String> neutralNames = new ArrayList<String>();
+    double activeMoles = ACTIVE_ION_MOLALITY * getSolventWeight();
+    for (int index = 0; index < numberOfComponents; index++) {
+      if (getComponent(index).getNumberOfMolesInPhase() <= activeMoles) {
+        continue;
+      }
+      double charge = getComponent(index).getIonicCharge();
+      if (Math.abs(charge) < 0.5) {
+        if (isNeutralSolute(index)) {
+          neutrals.add(index);
+          neutralNames.add(componentName(index));
+        }
+      } else if (charge > 0.0) {
+        cations.add(index);
+      } else {
+        anions.add(index);
+      }
+    }
+
+    List<String> missingLambda = new ArrayList<String>();
+    List<String> missingZeta = new ArrayList<String>();
+    List<String> missingMu = new ArrayList<String>();
+    List<String> missingEta = new ArrayList<String>();
+    for (int neutralPosition = 0; neutralPosition < neutrals.size(); neutralPosition++) {
+      int neutral = neutrals.get(neutralPosition);
+      for (int secondNeutral = neutralPosition; secondNeutral < neutrals.size(); secondNeutral++) {
+        addMissingPairIfAbsent(NEUTRAL_FAMILY_LAMBDA, neutral, neutrals.get(secondNeutral), missingLambda);
+      }
+      for (int cation : cations) {
+        addMissingPairIfAbsent(NEUTRAL_FAMILY_LAMBDA, neutral, cation, missingLambda);
+      }
+      for (int anion : anions) {
+        addMissingPairIfAbsent(NEUTRAL_FAMILY_LAMBDA, neutral, anion, missingLambda);
+      }
+      for (int cation : cations) {
+        for (int anion : anions) {
+          addMissingTripleIfAbsent(NEUTRAL_FAMILY_ZETA, neutral, cation, anion, missingZeta);
+        }
+      }
+    }
+
+    if (hasNeutralFamily(NEUTRAL_FAMILY_MU)) {
+      for (int first = 0; first < neutrals.size(); first++) {
+        for (int second = first; second < neutrals.size(); second++) {
+          for (int third = second; third < neutrals.size(); third++) {
+            addMissingTripleIfAbsent(NEUTRAL_FAMILY_MU, neutrals.get(first), neutrals.get(second), neutrals.get(third),
+                missingMu);
+          }
+        }
+      }
+    }
+    if (hasNeutralFamily(NEUTRAL_FAMILY_ETA)) {
+      for (int neutral : neutrals) {
+        addMissingEtaPairs(neutral, cations, missingEta);
+        addMissingEtaPairs(neutral, anions, missingEta);
+      }
+    }
+
+    return new PitzerNeutralParameterCoverage(parameterDatasetId, neutralNames, missingLambda, missingZeta, missingMu,
+        missingEta);
+  }
+
+  /** Throws a deterministic diagnostic when the active neutral topology is incomplete. */
+  public void requireCompleteNeutralPitzerParameterCoverage() {
+    PitzerNeutralParameterCoverage coverage = auditNeutralPitzerParameterCoverage();
+    if (!coverage.isComplete()) {
+      throw new IllegalStateException(coverage.formatDiagnostic());
+    }
+  }
+
+  private void addMissingEtaPairs(int neutral, List<Integer> ions, List<String> missing) {
+    for (int first = 0; first < ions.size(); first++) {
+      for (int second = first + 1; second < ions.size(); second++) {
+        addMissingTripleIfAbsent(NEUTRAL_FAMILY_ETA, neutral, ions.get(first), ions.get(second), missing);
+      }
+    }
+  }
+
+  private void addMissingPairIfAbsent(int family, int first, int second, List<String> missing) {
+    if (!neutralInteractions.containsKey(pairTemperatureKey(family, first, second))) {
+      missing.add(pairKey(componentName(first), componentName(second)));
+    }
+  }
+
+  private void addMissingTripleIfAbsent(int family, int first, int second, int third, List<String> missing) {
+    if (!neutralInteractions.containsKey(tripleTemperatureKey(family, first, second, third))) {
+      missing.add(psiKey(componentName(first), componentName(second), componentName(third)));
+    }
+  }
+
+  private boolean hasNeutralFamily(int family) {
+    for (PitzerNeutralInteraction interaction : neutralInteractions.values()) {
+      if (interaction.getFamily() == family) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void setNeutralInteraction(int family, int[] componentIndexes, PitzerTemperatureFunction function) {
+    ensureNeutralInteractions();
+    long key = componentIndexes.length == 2 ? pairTemperatureKey(family, componentIndexes[0], componentIndexes[1])
+        : tripleTemperatureKey(family, componentIndexes[0], componentIndexes[1], componentIndexes[2]);
+    neutralInteractions.put(key, new PitzerNeutralInteraction(family, componentIndexes, function));
+    hasNeutralInteractions = true;
+    for (int index = 0; index < numberOfComponents; index++) {
+      ((ComponentGePitzer) componentArray[index]).setNeutralPitzerInteractionsActive(true);
+    }
+    neutralParameterCoverageValidated = false;
+    invalidateCoverageCache();
+  }
+
+  private double getNeutralInteractionValue(int family, int first, int second, int third, double temperature) {
+    if (!hasNeutralInteractions) {
+      return 0.0;
+    }
+    ensureNeutralInteractions();
+    long key = third < 0 ? pairTemperatureKey(family, first, second)
+        : tripleTemperatureKey(family, first, second, third);
+    PitzerNeutralInteraction interaction = neutralInteractions.get(key);
+    return interaction == null ? 0.0 : interaction.valueAt(temperature);
+  }
+
+  private void requireNeutralSolute(int index, String family) {
+    requireComponentIndex(index);
+    if (!isNeutralSolute(index)) {
+      throw new IllegalArgumentException("Pitzer " + family + " requires a neutral non-water solute");
+    }
+  }
+
+  private void requireIon(int index, String family) {
+    requireComponentIndex(index);
+    if (Math.abs(getComponent(index).getIonicCharge()) < 0.5) {
+      throw new IllegalArgumentException("Pitzer " + family + " requires an ionic species");
+    }
+  }
+
+  private void requireChargeSign(int index, int sign, String role) {
+    requireComponentIndex(index);
+    if (sign * getComponent(index).getIonicCharge() <= 0.0) {
+      throw new IllegalArgumentException("Pitzer " + role + " has the wrong charge sign");
+    }
+  }
+
+  private void requireComponentIndex(int index) {
+    if (index < 0 || index >= numberOfComponents) {
+      throw new IllegalArgumentException("Pitzer component index out of range: " + index);
+    }
+  }
+
+  private boolean isNeutralSolute(int index) {
+    return Math.abs(getComponent(index).getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(componentName(index));
+  }
+
+  private void validateNeutralParameterCoverageOncePerState() {
+    if (hasNeutralInteractions && !neutralParameterCoverageValidated) {
+      requireCompleteNeutralPitzerParameterCoverage();
+      neutralParameterCoverageValidated = true;
+    }
+  }
+
+  /** Ensures sparse neutral-interaction state exists for older serialized objects. */
+  private void ensureNeutralInteractions() {
+    if (neutralInteractions == null) {
+      neutralInteractions = new HashMap<Long, PitzerNeutralInteraction>();
+      hasNeutralInteractions = false;
+    }
+  }
+
+  /** Marks a package-owned coherent parameter dataset as complete without loading the legacy table. */
+  void markManualParameterDatasetLoaded() {
+    parametersLoaded = true;
+    parameterCoverageValidated = false;
+    neutralParameterCoverageValidated = false;
   }
 
   /** Returns a binary temperature function without key allocation for legacy datasets. */
