@@ -174,6 +174,45 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     }
   }
 
+  /** An oversized beta proposal is damped before it can invalidate the aqueous neutral fugacities. */
+  @Test
+  void hybridBetaIterationLimitsAqueousFractionIncrease() {
+    SystemPitzer system = createQualifiedCarbonDioxideSodiumSulfateSystem();
+    system.prepareHybridEosGeFlash();
+    system.init(1);
+
+    int aqueousPhaseIndex = -1;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (system.isHybridEosGeAqueousPhase(phaseIndex)) {
+        aqueousPhaseIndex = phaseIndex;
+      }
+    }
+    assertTrue(aqueousPhaseIndex >= 0);
+
+    TPHybridEosGeFlash solver = new TPHybridEosGeFlash(system, system);
+    solver.calcQ();
+    double settledAqueousBeta = system.getBeta(aqueousPhaseIndex);
+    system.setBeta(aqueousPhaseIndex, 0.999);
+    double nonAqueousBeta = 0.001 / (system.getNumberOfPhases() - 1.0);
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (phaseIndex != aqueousPhaseIndex) {
+        system.setBeta(phaseIndex, nonAqueousBeta);
+      }
+    }
+    system.init(1);
+
+    solver.setXY();
+    system.init(1);
+
+    assertTrue(system.getBeta(aqueousPhaseIndex) <= 2.0 * settledAqueousBeta + 1.0e-12);
+    assertEquals(1.0, betaSum(system), 1.0e-12);
+    for (int componentIndex = 0; componentIndex < system.getPhase(aqueousPhaseIndex)
+        .getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = system.getPhase(aqueousPhaseIndex).getComponent(componentIndex);
+      assertTrue(Double.isFinite(component.getx()) && component.getx() > 0.0, component.getComponentName());
+    }
+  }
+
   /** Qualified gas-forming CO2/Na2SO4 flashes remain closed across repeats and nearby pressure. */
   @Test
   void qualifiedCarbonDioxideSodiumSulfateGasAqueousFlashConverges() {
