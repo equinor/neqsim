@@ -47,7 +47,14 @@ public class PhasePitzer extends PhaseGE {
   private double[][] beta2;
   /** Cation-cation or anion-anion mixing parameter theta (Harvie &amp; Weare 1984). */
   private double[][] theta;
-  /** Ternary mixing parameter psi (cation-cation-anion or anion-anion-cation). */
+  /**
+   * Ternary mixing parameter psi (cation-cation-anion or anion-anion-cation).
+   *
+   * <p>
+   * Only rows containing defined tuples are allocated. A dense tensor at the global 200-component limit would require
+   * about 64 MB for every Pitzer phase, including short-lived reference phases.
+   * </p>
+   */
   private double[][][] psi;
 
   /** T-dependent coefficients for beta0: beta0(T) = beta0_25 + T1*(1/T-1/Tr) + T2*ln(T/Tr). */
@@ -67,6 +74,8 @@ public class PhasePitzer extends PhaseGE {
   private Map<Long, PitzerNeutralInteraction> neutralInteractions = new HashMap<Long, PitzerNeutralInteraction>();
   /** Fast gate keeping legacy Pitzer and every non-Pitzer path out of neutral interaction loops. */
   private boolean hasNeutralInteractions;
+  /** Enables PHREEQC common F and C0/Cphi ion terms for explicitly mapped datasets only. */
+  private boolean phreeqcCommonIonTermsActive;
   /** Whether the active neutral-solute topology has passed its fail-closed parameter audit. */
   private transient boolean neutralParameterCoverageValidated;
   /** Whether parameters have been loaded from database. */
@@ -96,14 +105,14 @@ public class PhasePitzer extends PhaseGE {
 
   /** Constructor for PhasePitzer. */
   public PhasePitzer() {
-    setPhysicalPropertyModel(PhysicalPropertyModel.SALT_WATER);
+    setPpm(PhysicalPropertyModel.SALT_WATER);
     int max = componentArray.length;
     beta0 = new double[max][max];
     beta1 = new double[max][max];
     cphi = new double[max][max];
     beta2 = new double[max][max];
     theta = new double[max][max];
-    psi = new double[max][max][max];
+    psi = new double[max][][];
     beta0T1 = new double[max][max];
     beta0T2 = new double[max][max];
     beta1T1 = new double[max][max];
@@ -554,6 +563,21 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
+   * Reports whether the selected dataset uses PHREEQC's common ion-activity terms.
+   *
+   * <p>
+   * The opt-in keeps the historical NeqSim Pitzer dataset numerically unchanged. Explicit PHREEQC datasets evaluate the
+   * common binary-derivative F sum over every cation-anion pair and add
+   * {@code |z_i| * sum_c sum_a m_c m_a C0_ca/(2 sqrt(|z_c z_a|))} to each ion's natural-log activity coefficient.
+   * </p>
+   *
+   * @return {@code true} for an explicitly mapped PHREEQC dataset
+   */
+  public boolean isPhreeqcCommonIonTermsActive() {
+    return phreeqcCommonIonTermsActive;
+  }
+
+  /**
    * Calculates all neutral-family contributions to one component's ln(gamma).
    *
    * @param componentIndex target component index
@@ -916,7 +940,7 @@ public class PhasePitzer extends PhaseGE {
    * @return psi parameter
    */
   public double getPsiijk(int i, int j, int k) {
-    return psi[i][j][k];
+    return getPsiValue(i, j, k);
   }
 
   /**
@@ -930,7 +954,7 @@ public class PhasePitzer extends PhaseGE {
    */
   public double getPsiijk(int i, int j, int k, double temperature) {
     PitzerTemperatureFunction function = getTripleTemperatureFunction(TEMPERATURE_PSI, i, j, k);
-    return function == null ? psi[i][j][k] : function.valueAt(temperature);
+    return function == null ? getPsiValue(i, j, k) : function.valueAt(temperature);
   }
 
   /**
@@ -943,12 +967,12 @@ public class PhasePitzer extends PhaseGE {
    */
   public void setPsi(int i, int j, int k, double value) {
     ensureOwnedParameterStorage();
-    psi[i][j][k] = value;
-    psi[j][i][k] = value;
-    psi[i][k][j] = value;
-    psi[j][k][i] = value;
-    psi[k][i][j] = value;
-    psi[k][j][i] = value;
+    setPsiValue(i, j, k, value);
+    setPsiValue(j, i, k, value);
+    setPsiValue(i, k, j, value);
+    setPsiValue(j, k, i, value);
+    setPsiValue(k, i, j, value);
+    setPsiValue(k, j, i, value);
     ensureDefinitionSets();
     definedPsiTuples.add(psiKey(componentName(i), componentName(j), componentName(k)));
     invalidateCoverageCache();
@@ -1772,6 +1796,11 @@ public class PhasePitzer extends PhaseGE {
     neutralParameterCoverageValidated = false;
   }
 
+  /** Enables PHREEQC's common binary-derivative and C0/Cphi terms for a package-owned dataset. */
+  void enablePhreeqcCommonIonTerms() {
+    phreeqcCommonIonTermsActive = true;
+  }
+
   /** Returns a binary temperature function without key allocation for legacy datasets. */
   private PitzerTemperatureFunction getPairTemperatureFunction(int family, int first, int second) {
     if (!hasTemperatureFunctions) {
@@ -1881,26 +1910,68 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
-   * Deep-copies a two-dimensional parameter matrix.
+   * Reads one sparse ternary parameter.
+   *
+   * @param first first component index
+   * @param second second component index
+   * @param third third component index
+   * @return defined value, or zero when the tuple has no allocated row
+   */
+  private double getPsiValue(int first, int second, int third) {
+    if (psi == null || psi[first] == null || psi[first][second] == null) {
+      return 0.0;
+    }
+    return psi[first][second][third];
+  }
+
+  /**
+   * Writes one sparse ternary parameter, allocating only its required row.
+   *
+   * @param first first component index
+   * @param second second component index
+   * @param third third component index
+   * @param value parameter value
+   */
+  private void setPsiValue(int first, int second, int third, double value) {
+    if (psi == null) {
+      psi = new double[componentArray.length][][];
+    }
+    if (psi[first] == null) {
+      psi[first] = new double[componentArray.length][];
+    }
+    if (psi[first][second] == null) {
+      psi[first][second] = new double[componentArray.length];
+    }
+    psi[first][second][third] = value;
+  }
+
+  /**
+   * Deep-copies a two-dimensional parameter matrix, preserving unallocated sparse rows.
    *
    * @param source source matrix
    * @return independent matrix copy
    */
   private static double[][] cloneMatrix(double[][] source) {
+    if (source == null) {
+      return null;
+    }
     double[][] copy = source.clone();
     for (int i = 0; i < source.length; i++) {
-      copy[i] = source[i].clone();
+      copy[i] = source[i] == null ? null : source[i].clone();
     }
     return copy;
   }
 
   /**
-   * Deep-copies a three-dimensional parameter tensor.
+   * Deep-copies a three-dimensional parameter tensor, preserving unallocated sparse rows.
    *
    * @param source source tensor
    * @return independent tensor copy
    */
   private static double[][][] cloneTensor(double[][][] source) {
+    if (source == null) {
+      return null;
+    }
     double[][][] copy = source.clone();
     for (int i = 0; i < source.length; i++) {
       copy[i] = cloneMatrix(source[i]);
