@@ -387,10 +387,9 @@ public class SimulationResult {
    * Builds solver-owned unit-operation mass-balance evidence for a completed process system.
    *
    * <p>
-   * This method delegates to {@link ProcessSystem#checkMassBalance()} and
-   * {@link ProcessSystem#getFailedMassBalance()}. It does not reconstruct a facility balance from MCP-visible stream
-   * values. The evidence is deliberately scoped to individual unit operations; it is not a complete facility
-   * feed/export, component, or energy closure claim.
+   * This method delegates to {@link ProcessSystem#checkMassBalance()} and {@link ProcessSystem#getFailedMassBalance()}.
+   * It does not reconstruct a facility balance from MCP-visible stream values. The evidence is deliberately scoped to
+   * individual unit operations; it is not a complete facility feed/export, component, or energy closure claim.
    * </p>
    *
    * @param process completed canonical process system
@@ -399,8 +398,8 @@ public class SimulationResult {
   private static JsonObject buildMassBalanceEvidence(ProcessSystem process) {
     Map<String, ProcessSystem.MassBalanceResult> checked = process.checkMassBalance();
     Map<String, ProcessSystem.MassBalanceResult> failed = process.getFailedMassBalance();
-    Map<String, ProcessSystem.MassBalanceResult> ordered =
-        new TreeMap<String, ProcessSystem.MassBalanceResult>(checked);
+    Map<String, ProcessSystem.MassBalanceResult> ordered = new TreeMap<String, ProcessSystem.MassBalanceResult>(
+        checked);
 
     JsonObject units = new JsonObject();
     int bypassedCount = 0;
