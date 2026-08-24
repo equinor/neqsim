@@ -143,8 +143,8 @@ public class ComponentGePitzer extends ComponentGE {
     // --- Ion activity coefficient (extended Pitzer formulation) ---
     // Pitzer (1991) Eq. 8-3-2: ln(gamma_M) = z_M^2 * F + sum_a m_a*(2*B_Ma + Z*C_Ma)
     // F = -Aphi*[sqrtI/(1+b*sqrtI) + (2/b)*ln(1+b*sqrtI)] + sum_c sum_a m_c*m_a*B'_ca
-    // Handles 1-1, 1-2, 2-1 electrolytes (alpha=2.0) and 2-2 electrolytes
-    // (alpha1=1.4, alpha2=12.0 with beta2 parameter per Harvie & Weare 1984).
+    // Handles PHREEQC's charge-dependent alpha defaults, including beta2 for both
+    // 2-1 CaCl2 and 2-2 electrolytes.
     double I = pitz.getIonicStrength();
     double sqrtI = Math.sqrt(I);
     // debyeHuckelAphi() returns Agamma = 3*Aphi; convert to Aphi for Pitzer formula
@@ -182,17 +182,8 @@ public class ComponentGePitzer extends ComponentGE {
       double beta1 = pitz.getBeta1ij(componentNumber, j, temperature);
       double CphiVal = pitz.getCphiij(componentNumber, j, temperature);
 
-      // Determine alpha values based on electrolyte type
-      double alpha1;
-      double alpha2;
-      boolean is22 = (Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5);
-      if (is22) {
-        alpha1 = 1.4;
-        alpha2 = 12.0;
-      } else {
-        alpha1 = 2.0;
-        alpha2 = 0.0;
-      }
+      double alpha1 = Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5 ? 1.4 : 2.0;
+      boolean isTwoTwo = Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5;
 
       double x1 = alpha1 * sqrtI;
       double g1 = 0.0;
@@ -205,11 +196,10 @@ public class ComponentGePitzer extends ComponentGE {
       // B'(I) = dB/dI for the F-term (Pitzer 1991 Eq. 8-2-8)
       double Bprime = (I > 1e-12) ? beta1 * gp1 / I : 0.0;
 
-      // Add beta2 contribution for 2-2 electrolytes
-      if (is22) {
+      if (isTwoTwo || pitz.isNonTwoTwoBeta2Active()) {
         double beta2val = pitz.getBeta2ij(componentNumber, j, temperature);
         if (Math.abs(beta2val) > 1e-20) {
-          double x2 = alpha2 * sqrtI;
+          double x2 = pitz.getPitzerAlpha2(componentNumber, j) * sqrtI;
           double g2 = 0.0;
           double gp2 = 0.0;
           if (x2 > 1e-12) {
@@ -333,21 +323,18 @@ public class ComponentGePitzer extends ComponentGE {
   /** Calculates one binary pair's contribution to PHREEQC's common B-prime term. */
   private static double phreeqcBinaryBprime(PhasePitzer phase, int first, int second, double temperature,
       double ionicStrength, double squareRootIonicStrength, double firstCharge, double secondCharge) {
-    boolean is22 = Math.abs(firstCharge) >= 1.5 && Math.abs(secondCharge) >= 1.5;
-    double alpha1 = is22 ? 1.4 : 2.0;
+    double alpha1 = Math.abs(firstCharge) >= 1.5 && Math.abs(secondCharge) >= 1.5 ? 1.4 : 2.0;
     double x1 = alpha1 * squareRootIonicStrength;
     double derivative = 0.0;
     if (x1 > 1.0e-12 && ionicStrength > 1.0e-12) {
       double gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
       derivative = phase.getBeta1ij(first, second, temperature) * gp1 / ionicStrength;
     }
-    if (is22) {
-      double beta2Value = phase.getBeta2ij(first, second, temperature);
-      double x2 = 12.0 * squareRootIonicStrength;
-      if (Math.abs(beta2Value) > 1.0e-20 && x2 > 1.0e-12 && ionicStrength > 1.0e-12) {
-        double gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
-        derivative += beta2Value * gp2 / ionicStrength;
-      }
+    double beta2Value = phase.getBeta2ij(first, second, temperature);
+    double x2 = phase.getPitzerAlpha2(first, second) * squareRootIonicStrength;
+    if (Math.abs(beta2Value) > 1.0e-20 && x2 > 1.0e-12 && ionicStrength > 1.0e-12) {
+      double gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
+      derivative += beta2Value * gp2 / ionicStrength;
     }
     return derivative;
   }
@@ -429,19 +416,16 @@ public class ComponentGePitzer extends ComponentGE {
         double beta1 = pitz.getBeta1ij(ic, ia, TK);
         double Cphi = pitz.getCphiij(ic, ia, TK);
 
-        // Determine alpha values based on electrolyte type
-        boolean is22 = (Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5);
-        double alpha1 = is22 ? 1.4 : 2.0;
+        double alpha1 = Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5 ? 1.4 : 2.0;
 
         // B^phi_ca = beta0 + beta1 * exp(-alpha1 * sqrt(I))
         double BphiCA = beta0 + beta1 * Math.exp(-alpha1 * sqrtI);
 
-        // Add beta2 contribution for 2-2 electrolytes
-        if (is22) {
+        boolean isTwoTwo = Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5;
+        if (isTwoTwo || pitz.isNonTwoTwoBeta2Active()) {
           double beta2val = pitz.getBeta2ij(ic, ia, TK);
           if (Math.abs(beta2val) > 1e-20) {
-            double alpha2 = 12.0;
-            BphiCA += beta2val * Math.exp(-alpha2 * sqrtI);
+            BphiCA += beta2val * Math.exp(-pitz.getPitzerAlpha2(ic, ia) * sqrtI);
           }
         }
 

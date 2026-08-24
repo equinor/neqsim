@@ -320,6 +320,144 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     }
   }
 
+  @Test
+  void bundledCatalogHasBroadFamiliesAndExactScaleRows() {
+    PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
+    assertTrue(catalog.size(PhreeqcPitzerParameterCatalog.Family.B0) > 50);
+    assertTrue(catalog.size(PhreeqcPitzerParameterCatalog.Family.B1) > 40);
+    assertTrue(catalog.size(PhreeqcPitzerParameterCatalog.Family.THETA) > 20);
+    assertTrue(catalog.size(PhreeqcPitzerParameterCatalog.Family.PSI) > 40);
+    assertEquals(0.3159, catalog.require(PhreeqcPitzerParameterCatalog.Family.B0, "Ca++", "Cl-")[0], 0.0);
+    assertEquals(-1.13, catalog.require(PhreeqcPitzerParameterCatalog.Family.B2, "Ca++", "Cl-")[0], 0.0);
+    assertEquals(-0.122, catalog.require(PhreeqcPitzerParameterCatalog.Family.PSI, "Ca++", "Cl-", "SO4--")[0], 0.0);
+  }
+
+  @Test
+  void completeCalciumMagnesiumChlorideSulfateFamilyIsApplied() {
+    SystemPitzer system = createCalciumMagnesiumChlorideSulfateSystem(REFERENCE_TEMPERATURE, 0.2, 0.3, 0.4, 0.3);
+    system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
+    PhasePitzer phase = (PhasePitzer) system.getPhase(1);
+    int calcium = index(phase, "Ca++");
+    int magnesium = index(phase, "Mg++");
+    int chloride = index(phase, "Cl-");
+    int sulfate = index(phase, "SO4--");
+
+    assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, phase.getParameterDatasetId());
+    assertEquals(0.3159, phase.getBeta0ij(calcium, chloride, REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(-1.13, phase.getBeta2ij(calcium, chloride, REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(12.0, phase.getPitzerAlpha2(calcium, chloride), 0.0);
+    assertEquals(1.4, phase.getPitzerAlpha1(calcium, sulfate), 0.0);
+    assertEquals(0.007, phase.getThetaij(calcium, magnesium, REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(0.03, phase.getThetaij(chloride, sulfate, REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(-0.122, phase.getPsiijk(calcium, chloride, sulfate, REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(-0.008, phase.getPsiijk(chloride, magnesium, sulfate, REFERENCE_TEMPERATURE), 0.0);
+    assertTrue(phase.getPitzerParameterCoverage().isComplete());
+
+    double chargeResidual = 0.0;
+    double compositionSum = 0.0;
+    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
+      double moleFraction = phase.getComponent(component).getx();
+      assertTrue(Double.isFinite(moleFraction) && moleFraction >= 0.0);
+      compositionSum += moleFraction;
+      chargeResidual += phase.getComponent(component).getMolality(phase)
+          * phase.getComponent(component).getIonicCharge();
+    }
+    assertEquals(1.0, compositionSum, 1.0e-12);
+    assertEquals(0.0, chargeResidual, 1.0e-12);
+    assertTrue(Double.isFinite(componentLogGamma(phase, "Ca++")));
+    assertTrue(Double.isFinite(componentLogGamma(phase, "Mg++")));
+    assertTrue(Double.isFinite(componentLogGamma(phase, "Cl-")));
+    assertTrue(Double.isFinite(componentLogGamma(phase, "SO4--")));
+    assertTrue(waterActivity(phase) > 0.0 && waterActivity(phase) <= 1.0);
+
+    system.init(3);
+    system.initPhysicalProperties();
+    assertTrue(system.getPhase(0) instanceof PhaseSrkEos);
+    assertTrue(system.getPhase(1) instanceof PhasePitzer);
+    assertTrue(system.getPhase(2) instanceof PhaseSrkEos);
+    assertTrue(Double.isFinite(system.getPhase(1).getDensity()) && system.getPhase(1).getDensity() > 0.0);
+    assertTrue(Double.isFinite(system.getPhase(1).getEnthalpy()));
+    assertTrue(Double.isFinite(system.getPhase(1).getCp()) && system.getPhase(1).getCp() > 0.0);
+  }
+
+  @Test
+  void calciumChlorideMatchesIndependentNistThermoMlValues() {
+    // Partanen, J. Chem. Eng. Data 58 (2013) 132-144, DOI 10.1021/je300852v.
+    // NIST ThermoML archive values are molality-scale mean ionic activity
+    // coefficients at 298.15 K and 101 kPa, uncertainty 0.001. No parameter was
+    // fitted to these held-out values.
+    double[][] reference = { { 0.1, 0.517 }, { 0.5, 0.449 }, { 1.0, 0.502 }, { 2.0, 0.790 } };
+    for (double[] state : reference) {
+      double molality = state[0];
+      PhasePitzer phase = createCalciumMagnesiumChlorideSulfatePhase(REFERENCE_TEMPERATURE, molality, 0.0,
+          2.0 * molality, 0.0);
+      PitzerParameterDatasets.applyCompletePhreeqcPitzerCatalog(phase);
+      double meanLogGamma = (componentLogGamma(phase, "Ca++") + 2.0 * componentLogGamma(phase, "Cl-")) / 3.0;
+      double relativeResidual = Math.abs(Math.exp(meanLogGamma) / state[1] - 1.0);
+      assertTrue(relativeResidual <= 0.012,
+          "CaCl2 mean activity residual at " + molality + " mol/kg: " + relativeResidual);
+    }
+  }
+
+  @Test
+  void catalogFailsBeforeMutationForMissingCarbonateFamily() {
+    SystemPitzer system = createCalciumMagnesiumChlorideSulfateSystem(REFERENCE_TEMPERATURE, 0.2, 0.3, 0.6, 0.2);
+    system.addComponent("CO3--", 0.1);
+    system.init(0);
+    PhasePitzer phase = (PhasePitzer) system.getPhase(1);
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> PitzerParameterDatasets.applyCompletePhreeqcPitzerCatalog(phase));
+    assertTrue(error.getMessage().contains("no explicit"));
+    assertNotEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, phase.getParameterDatasetId());
+  }
+
+  @Test
+  void changedIonTopologyCannotReuseStaleCatalogCoverage() {
+    SystemPitzer system = createCalciumMagnesiumChlorideSulfateSystem(REFERENCE_TEMPERATURE, 0.2, 0.3, 0.4, 0.3);
+    system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
+    system.addComponent("Ba++", 0.05);
+    system.addComponent("Cl-", 0.10);
+    system.init(0);
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> ((PhasePitzer) system.getPhase(1)).requireCompletePitzerParameterCoverage());
+    assertTrue(error.getMessage().contains("Ba++"));
+  }
+
+  @Test
+  void scaleFamilySurvivesCloneSerializationAndParallelConstruction() throws Exception {
+    SystemPitzer system = createCalciumMagnesiumChlorideSulfateSystem(REFERENCE_TEMPERATURE, 0.2, 0.3, 0.4, 0.3);
+    system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
+    double checksum = scaleFamilyChecksum((PhasePitzer) system.getPhase(1));
+    assertEquals(checksum, scaleFamilyChecksum((PhasePitzer) system.clone().getPhase(1)), 0.0);
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(system);
+    }
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      SystemPitzer restored = (SystemPitzer) input.readObject();
+      assertEquals(checksum, scaleFamilyChecksum((PhasePitzer) restored.getPhase(1)), 1.0e-12);
+    }
+
+    ExecutorService executor = Executors.newFixedThreadPool(4);
+    try {
+      List<Callable<Double>> tasks = new ArrayList<Callable<Double>>();
+      for (int task = 0; task < 8; task++) {
+        tasks.add(() -> {
+          SystemPitzer independent = createCalciumMagnesiumChlorideSulfateSystem(REFERENCE_TEMPERATURE, 0.2, 0.3, 0.4,
+              0.3);
+          independent.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
+          return scaleFamilyChecksum((PhasePitzer) independent.getPhase(1));
+        });
+      }
+      for (Future<Double> result : executor.invokeAll(tasks)) {
+        assertEquals(checksum, result.get(), 1.0e-12);
+      }
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
   private static void assertNaKClBinaryIphreeqc(String activeCation, double sodiumMolality, double potassiumMolality,
       double expectedMeanLog10Gamma, double expectedWaterActivity, double expectedOsmoticCoefficient) {
     PhasePitzer phase = createNaKClPhase(REFERENCE_TEMPERATURE, sodiumMolality, potassiumMolality, 1.0);
@@ -384,6 +522,11 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
         + waterActivity(phase) + phase.getOsmoticCoefficientOfWater();
   }
 
+  private static double scaleFamilyChecksum(PhasePitzer phase) {
+    return componentLogGamma(phase, "Ca++") + componentLogGamma(phase, "Mg++") + componentLogGamma(phase, "Cl-")
+        + componentLogGamma(phase, "SO4--") + waterActivity(phase) + phase.getOsmoticCoefficientOfWater();
+  }
+
   private static void assertPhreeqcCo2LogGamma(double temperature, double carbonDioxideMolality, double sodiumMolality,
       double sulfateMolality, double expectedNaturalLogGamma) {
     assertEquals(expectedNaturalLogGamma,
@@ -428,6 +571,25 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     system.addComponent("Na+", sodiumMolality);
     system.addComponent("K+", potassiumMolality);
     system.addComponent("Cl-", chlorideMolality);
+    system.setMixingRule("classic");
+    system.init(0);
+    return system;
+  }
+
+  private static PhasePitzer createCalciumMagnesiumChlorideSulfatePhase(double temperature, double calciumMolality,
+      double magnesiumMolality, double chlorideMolality, double sulfateMolality) {
+    return (PhasePitzer) createCalciumMagnesiumChlorideSulfateSystem(temperature, calciumMolality, magnesiumMolality,
+        chlorideMolality, sulfateMolality).getPhase(1);
+  }
+
+  private static SystemPitzer createCalciumMagnesiumChlorideSulfateSystem(double temperature, double calciumMolality,
+      double magnesiumMolality, double chlorideMolality, double sulfateMolality) {
+    SystemPitzer system = new SystemPitzer(temperature, 1.01325);
+    system.addComponent("water", 55.508);
+    system.addComponent("Ca++", calciumMolality);
+    system.addComponent("Mg++", magnesiumMolality);
+    system.addComponent("Cl-", chlorideMolality);
+    system.addComponent("SO4--", sulfateMolality);
     system.setMixingRule("classic");
     system.init(0);
     return system;

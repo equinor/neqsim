@@ -164,10 +164,73 @@ license was established in this audit. No table value is stored. The exact-compo
 matrix therefore remains the mixed-family numerical gate; licensing-clear held-out mixed-salt
 experimental data are still the next evidence dependency.
 
+### Versioned PHREEQC catalog and Ca-Mg-Cl-SO4 scale-brine qualification
+
+`PhreeqcPitzerParameterCatalog` lazily reads the exact `PITZER` block from public-domain USGS
+PHREEQC commit `b0b3be767158ccc3322d2c816625cf470045e67e`, database blob
+`324f852784be84650b77bd7f07f8316aafd8188b`. The bundled catalog contains 54 `B0`, 48 `B1`,
+8 `B2`, 32 `C0`, 30 `theta`, 59 `psi`, 27 `lambda`, and 10 `zeta` rows. No reaction constant,
+mineral `log K`, gas binary, SIT, eNRTL, Extended-UNIQUAC, or electrolyte-EOS coefficient is
+imported. The resource is parsed only after an explicit catalog API call, so neutral EOS and legacy
+Pitzer paths do no catalog I/O or lookup work.
+
+`applyCompletePhreeqcPitzerCatalog` selects rows by the active aqueous species. Every active
+opposite-sign pair requires explicit `B0`, `B1`, and `C0`; every same-sign pair requires `theta`;
+every mixed-ion triple requires `psi`; and active neutral solutes require their complete `lambda`
+and `zeta` topology. An absent required row fails before phase mutation. A `B2` row is optional
+only in the strict sense that it is applied whenever the source defines it; the loader never creates
+one or silently substitutes an unqualified zero. This makes a broad source database available while
+preserving a closed, reviewable calculation topology.
+
+The first fully exercised four-ion family is Ca++/Mg++/Cl-/SO4--. It includes all four binaries,
+both same-sign pairs, and all four ternary compositions:
+
+| Tuple | Family | PHREEQC coefficients `[a0,a1,a2,a3,a4,a5]` |
+|---|---|---|
+| Ca++ / Cl- | `B0`; `B1`; `B2`; `C0` | `[0.3159,0,0,-3.27e-4,1.4e-7,0]`; `[1.614,0,0,7.63e-3,-8.19e-7,0]`; `[-1.13,0,0,-0.0476,0,0]`; `[1.4e-4,-57,-0.098,-7.83e-4,7.18e-7,0]` |
+| Ca++ / SO4-- | `B0`; `B1`; `B2`; `C0` | `[0,0,0,0,0,0]`; `[3.546,0,0,5.77e-3,0,0]`; `[-59.3,0,0,-0.443,-3.96e-6,0]`; `[0.114,0,0,0,0,0]` |
+| Mg++ / Cl- | `B0`; `B1`; `C0` | `[0.351,0,0,-9.32e-4,5.94e-7,0]`; `[1.65,0,0,-1.09e-2,2.6e-5,0]`; `[0.00651,0,0,-2.5e-4,2.418e-7,0]` |
+| Mg++ / SO4-- | `B0`; `B1`; `B2`; `C0` | `[0.2135,-951,0,-2.34e-2,2.28e-5,0]`; `[3.367,-5.78e3,0,-0.148,1.576e-4,0]`; `[-32.45,0,-3.236e3,21.812,-1.8859e-2,0]`; `[2.875e-2,0,-2.084,1.1428e-2,-8.228e-6,0]` |
+| Ca++ / Mg++; Cl- / SO4-- | `theta` | `[0.007,0,0,0,0,0]`; `[0.03,0,0,0,0,0]` |
+| Ca++ / Cl- / Mg++; Ca++ / Cl- / SO4-- | `psi` | `[-0.012,0,0,0,0,0]`; `[-0.122,0,0,-1.21e-3,0,0]` |
+| Ca++ / Mg++ / SO4--; Cl- / Mg++ / SO4-- | `psi` | `[0.024,0,0,0,0,0]`; `[-0.008,32.63,0,0,0,0]` |
+
+PHREEQC source assigns `alpha1=2` and `alpha2=12` to pairs containing a monovalent ion,
+`alpha1=1.4` and `alpha2=12` to 2-2 pairs, and `alpha1=2`, `alpha2=50` to the remaining charge
+orders. Current-master NeqSim previously discarded `B2` for every non-2-2 pair, which omitted the
+explicit CaCl2 term. The catalog path now maps this PHREEQC convention in activity, common
+`B-prime`, and both water/osmotic calculations; legacy rows with zero `B2` are unchanged.
+
+Held-out CaCl2 mean ionic activity coefficients come from Partanen (2013),
+[DOI 10.1021/je300852v](https://doi.org/10.1021/je300852v), through the NIST ThermoML archive.
+The archived states are on the molality scale at 298.15 K and 101 kPa with reported uncertainty
+0.001. At 0.1, 0.5, 1.0, and 2.0 mol/kg, NeqSim predicts 0.515385, 0.444320, 0.497186, and
+0.798718 versus 0.517, 0.449, 0.502, and 0.790; the maximum relative residual is 1.104%, without
+parameter fitting. NIST identifies the ThermoML archive as publisher-permitted and its Data.gov
+catalog applies the [NIST public-data license](https://www.nist.gov/open/license). Exact-version
+mixed-family PHREEQC activity/water comparisons and independent Mg/SO4 evidence remain validation
+dependencies; the family must stay draft until those numerical gates are recorded.
+
+The catalog is an aqueous-GE parameter source, not a complete scale or process model by itself.
+`SystemPitzer` keeps SRK gas and oil role phases and exposes catalog application on its Pitzer
+aqueous role. Hybrid gas-oil-water phase stability, model-specific aqueous reactions, mineral
+solubility/precipitation complementarity, and process mass/energy/property closure retain their
+separate gates and database semantics.
+
+`PitzerCatalogPerformanceBenchmark` measures nine fixed-work batches after warmup. On OpenJDK 17
+in the development container, the median four-ion activity/osmotic kernel was 8.29 microseconds and
+the complete aqueous `init(3)` plus physical-property calculation was 0.191 milliseconds. The same
+neutral SRK property control measured 47.7 microseconds before catalog loading and 22.0 microseconds
+after loading (ratio 0.462, reflecting additional JIT warmup rather than a regression). No neutral
+EOS production class is changed, and catalog parsing is absent until its explicit API is called.
+These figures are diagnostic wall-clock evidence, not portable hardware guarantees.
+
 ## Source-comparison matrix
 
-Only the complete CO2-Na2SO4 and Na-K-Cl subsets above are adopted. Other candidate values remain
-comparison evidence unless this document explicitly identifies them as part of a versioned set.
+The exact PHREEQC Pitzer block is now stored as a versioned catalog. A calculation may activate only
+an explicit, complete topology; the CO2-Na2SO4, Na-K-Cl, and Ca-Mg-Cl-SO4 families above have
+dedicated evidence. Other catalog rows remain source-available rather than scientifically qualified
+until their complete topology and validation matrix are documented.
 
 | Source / version | Species and parameter families | Conditions, equation, scale, and alpha | Evidence, range, uncertainty | Lineage and reuse status | Mapping decision / conflict |
 |---|---|---|---|---|---|
@@ -175,7 +238,7 @@ comparison evidence unless this document explicitly identifies them as part of a
 | Pitzer (1973), [general equations](https://doi.org/10.1021/j100621a026), and Pitzer–Mayorga (1973), [strong electrolytes](https://doi.org/10.1021/j100638a009) | Foundational binary virial families for strong electrolytes; individual tuples must be read from the original article | Molality-scale Pitzer formulation near 298.15 K; exact parameter-specific alpha and fitted range must be taken from the paper | Mean activity and osmotic-coefficient fits; no value transcribed in this review | Primary publications; ACS copyright, so values require row-level reuse review or redistributable corroboration | Equation lineage accepted; no direct adoption pending exact NeqSim term-by-term mapping. |
 | Harvie, Møller and Weare (1984), [natural-water model](https://doi.org/10.1016/0016-7037(84)90098-X) | Na/K/Mg/Ca/H with Cl/SO4/OH/HCO3/CO3/CO2/H2O; binary and mixed interactions | 25 °C, high ionic strength; molality-scale Pitzer model | Fitted isopiestic, EMF, and solubility data; multicomponent comparisons outside subsystems are reported | Primary Elsevier article; numerical-table redistribution not established here | High-priority scientific comparison. No coefficient copied; full family and electrostatic convention must be mapped together. |
 | Pitzer (1975), [higher-order electrostatic mixing](https://doi.org/10.1007/BF00646562) | Nonsymmetric same-sign electrostatic terms `Etheta` and its ionic-strength derivative for unequal charge pairs; no fitted short-range coefficient is supplied by this term | Molality-scale Pitzer formulation; the term is zero for equal charges and depends on charge tuple, ionic strength, and `Aphi` | Primary equation source; it establishes model structure rather than a parameter fit | Primary Springer article; no numerical table copied | Equation structure accepted in this increment: the public PHREEQC recurrence and its ion/activity/osmotic placement are mapped directly. No fitted coefficient is copied; short-range tuple coverage remains independently fail-closed. |
-| USGS PHRQPITZ (Plummer et al. 1988), [WRIR 88-4153](https://doi.org/10.3133/wri884153), PHREEQC 3.8.6 tag commit [`74cdaf0`](https://github.com/phreeqc-dev/phreeqc3/commit/74cdaf00f90b15b7a5bbc03f405eb2f8129aacf1), and audited current source commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/commit/b0b3be767158ccc3322d2c816625cf470045e67e) | Na/K/Mg/Ca/H plus major anions and extended Fe/Mn/Sr/Ba/Li/Br; `B0`, `B1`, `B2`, `C0`, `theta`, `psi`, `lambda`, `zeta`, `mu`, `eta`, alpha, and six temperature coefficients | Molality scale; PHREEQC enables nonsymmetric electrostatic mixing by default. The adopted Na+/SO4-- 1-2 and NaCl/KCl 1-1 binaries use alpha1=2. At 298.15 K, NaCl is `B0=0.07534`, `B1=0.2769`, `C0=0.00148`; KCl is `0.04808`, `0.2168`, `-0.000788`; K/Na `theta=-0.012`; Cl/K/Na `psi=-0.0015`. Pressure is absent from these interaction functions. | Appelo (2015), [DOI 10.1016/j.apgeochem.2014.11.007](https://doi.org/10.1016/j.apgeochem.2014.11.007), documents database principles and calculations from 0–200 °C and 1–1000 atm; applicability remains parameter/system specific. Pabalan and Pitzer (1987), [DOI 10.1016/0016-7037(87)90295-X](https://doi.org/10.1016/0016-7037(87)90295-X), is primary high-temperature Na/K brine lineage. Exact fitted observables, residuals, and uncertainty remain row/source specific. Rumpf and Maurer (1993), [DOI 10.1002/bbpc.19930970116](https://doi.org/10.1002/bbpc.19930970116), fitted CO2 in sulfate brines at 313.15–433.15 K and up to 10 MPa. | USGS software and data are public domain. Audited blobs: [`pitzer.cpp` `1f32a08`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/src/pitzer.cpp) and [`pitzer.dat` `324f852`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/database/pitzer.dat). The selected rows were read twice; a locally installed database had a different full-file hash, so no unselected row was inferred from it. | The complete CO2-Na2SO4 and Na-K-Cl subsets listed above are adopted under separate identities and independently checked. Legacy rows remain default and are not overwritten. Common `B-prime`/`C0`, parameter-free `Etheta`, six-term functions, neutral-family placement, and `C0`/`Cphi` mapping are accepted only for explicitly mapped datasets. |
+| USGS PHRQPITZ (Plummer et al. 1988), [WRIR 88-4153](https://doi.org/10.3133/wri884153), PHREEQC 3.8.6 tag commit [`74cdaf0`](https://github.com/phreeqc-dev/phreeqc3/commit/74cdaf00f90b15b7a5bbc03f405eb2f8129aacf1), and audited current source commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/commit/b0b3be767158ccc3322d2c816625cf470045e67e) | Na/K/Mg/Ca/H plus major anions and extended Fe/Mn/Sr/Ba/Li/Br; `B0`, `B1`, `B2`, `C0`, `theta`, `psi`, `lambda`, `zeta`, and six temperature coefficients | Molality scale; PHREEQC enables nonsymmetric electrostatic mixing by default. Default alpha is charge dependent: `2/12` when a pair contains a monovalent ion, `1.4/12` for 2-2, and `2/50` otherwise. Pressure is absent from these interaction functions. | Appelo (2015), [DOI 10.1016/j.apgeochem.2014.11.007](https://doi.org/10.1016/j.apgeochem.2014.11.007), documents database principles and calculations from 0–200 °C and 1–1000 atm; applicability remains parameter/system specific. Exact fitted observables, residuals, and uncertainty remain row/source specific. | USGS software and data are public domain. Audited blobs: [`pitzer.cpp` `1f32a08`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/src/pitzer.cpp) and [`pitzer.dat` `324f852`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/database/pitzer.dat). | The exact interaction block is stored as a lazy catalog; calculation activation fails closed on incomplete topologies. CO2-Na2SO4, Na-K-Cl, and Ca-Mg-Cl-SO4 have dedicated mappings/evidence. Legacy rows remain default and are not overwritten. |
 | Partanen and Partanen (2020), [traceable NaCl values](https://doi.org/10.1021/acs.jced.0c00402) | Recommended NaCl mean activity and water osmotic coefficients; no Pitzer parameter is supplied or adopted | 273.15–373.15 K, 0.2 mol/kg to saturation; molality scale; extended-Huckel model fitted independently of the PHREEQC implementation | Traceable synthesis of vapor-pressure, electrochemical, cryoscopic, and solubility evidence; tabulated values are rounded to 0.001 | Primary open-access article and numerical tables under CC BY 4.0 | Four 298.15 K points from 0.2–2.0 mol/kg are held-out validation only. Max NeqSim residuals are 1.36% in mean activity, 0.0053 in osmotic coefficient, and below 0.0004 in derived water activity; no coefficient was refitted. |
 | Hamer and Wu (1972), [NBS/NIST critical evaluation](https://doi.org/10.1063/1.3253108), independently reproduced by Dash et al. (2012), [open-access table](https://doi.org/10.5402/2012/730154) | Critically evaluated KCl mean activity coefficients; no Pitzer parameter is supplied or adopted | 298.15 K, molality scale, 1:1 electrolyte; four selected states span 0.0982–1.9895 mol/kg | Hamer-Wu evaluates thermodynamic literature; reproduced values are rounded to 0.001. Dash et al.'s direct single-ion-selective-electrode means are 10.7–13.4% higher at the same states and are treated as a method conflict. | U.S. NBS authorship and U.S. Secretary of Commerce publication; the four checked values are also reproduced in a CC BY open-access primary experiment | Held-out binary validation only. Max NeqSim mean-activity residual is 0.110% against a 0.20% gate; no coefficient was refitted. The critically evaluated values take precedence over the conflicting single-ion method. |
 | Rodil, Arce, Wilczek-Vera and Vera (2009), [mixed NaCl+KCl experiment](https://doi.org/10.1021/je800389q) and [mandatory correction](https://doi.org/10.1021/je9002674) | Individual Cl-/Na+/K+ activity evidence in mixed NaCl+KCl at cation molal fractions 0.75, 0.5, and 0.25 | 298.15 K; total chloride to 4 mol/kg; Henderson liquid-junction correction and single-ion convention | Original paper reports the experiment; the correction replaces erroneous Na+/K+ tabulations without changing conclusions | ACS supporting information is publicly downloadable, but copyright and no explicit data-redistribution license were established | Candidate held-out mixed-family validation only. No value is stored; licensing-clear data and convention mapping remain the blocker. Exact-composition IPhreeqc checks are retained as implementation evidence, not a substitute for experiment. |
@@ -192,7 +255,7 @@ Appendix F citations were checked against their primary publisher records before
 | [8] | He and Morse (1993), [carbonate/calcite brines](https://doi.org/10.1016/0016-7037(93)90137-L): CO2, bicarbonate, carbonate, and calcite evidence in Na/K/Ca/Mg chloride/sulfate solutions from 0 to 90 °C at about 0.1032 MPa | Supports the thesis family and temperature lineage, but does not establish redistribution rights or validate every transcribed coefficient. No row adopted. |
 | [13] | Harvie, Møller and Weare (1984), [natural-water model](https://doi.org/10.1016/0016-7037(84)90098-X): mixed Na/K/Mg/Ca/H chloride/sulfate/carbonate system at 25 °C and high ionic strength | Family topology agrees with Appendix F. The primary model is a 25 °C reference, so it cannot independently qualify Kaasa's later temperature fits. No row adopted. |
 | [14] | Pabalan and Pitzer (1987), [high-temperature mixed electrolytes](https://doi.org/10.1016/0016-7037(87)90295-X): Na/K/Mg chloride/sulfate/hydroxide mixtures and mineral solubility | Supports temperature-dependent theta/psi lineage for its stated system. Species coverage is narrower than the full thesis table and reuse remains publisher-controlled. No row adopted. |
-| [16] | Duan et al. (1992), [methane in brines](https://doi.org/10.1016/0016-7037(92)90215-5): CH4 solubility in 0–6 molal brines, 0–250 °C, and 0–1600 bar | Supports the neutral-methane interaction lane only. NeqSim lacks the required neutral Pitzer family representation, so these rows fail closed. |
+| [16] | Duan et al. (1992), [methane in brines](https://doi.org/10.1016/0016-7037(92)90215-5): CH4 solubility in 0–6 molal brines, 0–250 °C, and 0–1600 bar | Supports the neutral-methane interaction lane only. NeqSim represents neutral Pitzer families, but no complete, redistributable CH4 family with the required hybrid EOS-GE validation is adopted, so this topology still fails closed. |
 
 Appendix F
 printed page 259 defines
