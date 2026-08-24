@@ -210,6 +210,10 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
         .getNumberOfComponents(); componentIndex++) {
       ComponentInterface component = system.getPhase(aqueousPhaseIndex).getComponent(componentIndex);
       assertTrue(Double.isFinite(component.getx()) && component.getx() > 0.0, component.getComponentName());
+      if (component.getz() > 1.0e-30 && component.getIonicCharge() == 0 && !component.isIsIon()) {
+        assertTrue(Double.isFinite(component.getFugacityCoefficient()) && component.getFugacityCoefficient() > 0.0,
+            component.getComponentName());
+      }
     }
   }
 
