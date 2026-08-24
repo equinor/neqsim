@@ -135,7 +135,7 @@ public final class PhreeqcPitzerParameterCatalog {
         String[] species = Arrays.copyOf(tokens, currentFamily.speciesCount);
         double[] coefficients = new double[6];
         int coefficientCount = Math.min(6, tokens.length - currentFamily.speciesCount);
-        for (int index = 0; index < coefficientCount; index++) {
+        for (int index = 0; index < coefficientCount && currentFamily.speciesCount + index < tokens.length; index++) {
           coefficients[index] = Double.parseDouble(tokens[currentFamily.speciesCount + index]);
         }
         String key = key(species);
