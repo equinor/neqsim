@@ -59,8 +59,7 @@ class SalesContractDocumentationTest extends NeqSimTest {
     try {
       return Double.parseDouble(value);
     } catch (NumberFormatException | NullPointerException exception) {
-      throw new AssertionError(
-          "Expected a numeric contract result at row " + rowIndex + ", column " + columnIndex,
+      throw new AssertionError("Expected a numeric contract result at row " + rowIndex + ", column " + columnIndex,
           exception);
     }
   }
