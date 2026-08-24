@@ -187,8 +187,7 @@ public final class McpEvidenceInventory {
         record.addProperty("validationCaseCount", arraySize(trust, "validationCases"));
         record.addProperty("verifiedValidationCaseCount", verifiedValidationCaseCount(trust));
         explicitCoverageRecordCount++;
-      } else if ("getCapabilities".equals(toolName) || "getSchema".equals(toolName)
-          || "getExample".equals(toolName)) {
+      } else if ("getCapabilities".equals(toolName) || "getSchema".equals(toolName) || "getExample".equals(toolName)) {
         record.addProperty("coverageStatus", "CONTRACT_TESTED");
         record.addProperty("toolSpecificTrustAvailable", false);
         record.addProperty("contractTrustAvailable", true);
