@@ -54,11 +54,7 @@ public class PhaseEOSCGEos extends PhaseGERG2008Eos {
   @Override
   public double getDensity_GERG2008() {
     NeqSimEOSCG eosCg = new NeqSimEOSCG(this);
-    double molarDensity = eosCg.getMolarDensity(referenceMolarDensityGuess);
-    if (getType() == PhaseType.LIQUID || getType() == PhaseType.OIL || getType() == PhaseType.AQUEOUS) {
-      referenceMolarDensityGuess = molarDensity;
-    }
-    return molarDensity * getMolarMass() * 1000.0;
+    return eosCg.getMolarDensity() * getMolarMass() * 1000.0;
   }
 
   @Override

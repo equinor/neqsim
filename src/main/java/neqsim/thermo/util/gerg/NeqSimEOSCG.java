@@ -104,16 +104,6 @@ public class NeqSimEOSCG {
   }
 
   public double getMolarDensity() {
-    return getMolarDensity(Double.NaN);
-  }
-
-  /**
-   * Get molar density, using a previous liquid density as a continuation estimate when available.
-   *
-   * @param initialLiquidDensity previous liquid molar density in mol/L, or {@link Double#NaN}
-   * @return molar density in mol/L
-   */
-  public double getMolarDensity(double initialLiquidDensity) {
     int flag = 0;
     if (phase != null) {
       PhaseType type = phase.getType();
@@ -126,7 +116,7 @@ public class NeqSimEOSCG {
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 1.0e2;
     if (flag == 2) {
-      double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, initialLiquidDensity, density -> {
+      double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, density -> {
         doubleW calculatedPressure = new doubleW(0.0);
         doubleW compressibility = new doubleW(0.0);
         eosCG.pressure(phase.getTemperature(), density, normalizedComposition, calculatedPressure, compressibility);

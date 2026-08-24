@@ -57,8 +57,10 @@ class PTPhaseEnvelopeReferenceEosTest {
     double[] cricondenbar = operations.get("cricondenbar");
     double[] cricondentherm = operations.get("cricondentherm");
 
-    assertTrue(countFinitePositive(dewTemperatures) >= 3, modelName + " should trace at least three dew points, got T="
-        + Arrays.toString(dewTemperatures) + ", P=" + Arrays.toString(dewPressures));
+    assertTrue(countFinitePositive(dewTemperatures) >= 3,
+        modelName + " should trace at least three dew points, got T=" + Arrays.toString(dewTemperatures) + ", P="
+            + Arrays.toString(dewPressures) + "; bubble T=" + Arrays.toString(bubbleTemperatures) + ", bubble P="
+            + Arrays.toString(bubblePressures));
     assertTrue(countFinitePositive(bubbleTemperatures) >= 3,
         modelName + " should trace at least three bubble points, got T=" + Arrays.toString(bubbleTemperatures) + ", P="
             + Arrays.toString(bubblePressures));

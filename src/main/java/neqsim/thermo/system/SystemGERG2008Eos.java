@@ -104,6 +104,22 @@ public class SystemGERG2008Eos extends SystemEos {
     setImplementedTemperatureDeriativesofFugacity(false);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void init(int initType) {
+    if (requiresNumericPhaseEnvelopeDerivatives(initType)) {
+      initNumeric(initType);
+    } else {
+      super.init(initType);
+    }
+  }
+
+  /** Use numerical fugacity derivatives only while the reference-EOS phase-envelope tracer is active. */
+  private boolean requiresNumericPhaseEnvelopeDerivatives(int initType) {
+    return initType >= 2 && getPhase(0) instanceof PhaseGERG2008Eos
+        && ((PhaseGERG2008Eos) getPhase(0)).isPhaseEnvelopeCalculation();
+  }
+
   /**
    * Get the current GERG-2008 model type.
    *

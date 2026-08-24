@@ -50,7 +50,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   private transient double[] cachedLogFugacityCoefficients = null;
   private transient PhaseType cachedPhaseType = null;
   private transient boolean propertiesCalculated = false;
-  protected transient double referenceMolarDensityGuess = Double.NaN;
+  private transient boolean phaseEnvelopeCalculation = false;
 
   /**
    * Constructor for PhaseGERG2008Eos.
@@ -107,12 +107,15 @@ public class PhaseGERG2008Eos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
-    IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
+    PhaseType referencePhaseType = isLiquidPhase(pt) ? PhaseType.LIQUID : PhaseType.GAS;
+    IPHASE = referencePhaseType == PhaseType.LIQUID ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    setType(referencePhaseType);
 
     if (!okVolume) {
-      IPHASE = pt == PhaseType.LIQUID ? -2 : -1;
+      IPHASE = referencePhaseType == PhaseType.LIQUID ? -2 : -1;
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+      setType(referencePhaseType);
     }
 
     // For initType >= 1, check if state has changed since last calculation
@@ -120,7 +123,9 @@ public class PhaseGERG2008Eos extends PhaseEos {
     if (initType >= 1) {
       // Check if we can skip GERG calculations (state unchanged)
       if (propertiesCalculated && !hasStateChanged()) {
-        // State unchanged - skip expensive GERG-2008 calculations
+        // State unchanged - skip expensive GERG-2008 calculations, but keep the
+        // component-level fugacity fields synchronized with the phase cache.
+        synchronizeComponentFugacities();
         return;
       }
 
@@ -145,13 +150,24 @@ public class PhaseGERG2008Eos extends PhaseEos {
       CpGERG2008 = temp[10];
       CvGERG2008 = temp[9];
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+      setType(referencePhaseType);
 
       // Cache current state after successful calculation
       cacheCurrentState();
-      for (int i = 0; i < numberOfComponents; i++) {
-        componentArray[i].fugcoef(this);
-      }
+      synchronizeComponentFugacities();
     }
+  }
+
+  /** Copy the current phase fugacity coefficients into the component state used by flash algorithms. */
+  private void synchronizeComponentFugacities() {
+    for (int i = 0; i < numberOfComponents; i++) {
+      componentArray[i].fugcoef(this);
+    }
+  }
+
+  /** Return whether a phase type requests a liquid density root. */
+  private boolean isLiquidPhase(PhaseType phaseType) {
+    return phaseType == PhaseType.LIQUID || phaseType == PhaseType.OIL || phaseType == PhaseType.AQUEOUS;
   }
 
   /**
@@ -213,6 +229,27 @@ public class PhaseGERG2008Eos extends PhaseEos {
   }
 
   /**
+   * Mark whether this reference phase is currently used by the phase-envelope continuation solver.
+   *
+   * @param enabled true while tracing a phase envelope
+   */
+  public void setPhaseEnvelopeCalculation(boolean enabled) {
+    if (phaseEnvelopeCalculation != enabled) {
+      phaseEnvelopeCalculation = enabled;
+      cachedLogFugacityCoefficients = null;
+    }
+  }
+
+  /**
+   * Check whether this reference phase is currently used by the phase-envelope continuation solver.
+   *
+   * @return true while tracing a phase envelope
+   */
+  public boolean isPhaseEnvelopeCalculation() {
+    return phaseEnvelopeCalculation;
+  }
+
+  /**
    * Get the logarithm of a component fugacity coefficient from the GERG residual Helmholtz energy.
    *
    * <p>
@@ -254,29 +291,49 @@ public class PhaseGERG2008Eos extends PhaseEos {
     double compressibilityFactor = getProperties_GERG2008()[1];
     if (!Double.isFinite(molarDensity) || molarDensity <= 0.0 || !Double.isFinite(compressibilityFactor)
         || compressibilityFactor <= 0.0) {
-      throw new IllegalStateException("GERG fugacity calculation requires positive density and compressibility");
+      throw new IllegalStateException(
+          "GERG fugacity calculation requires positive density and compressibility: T=" + getTemperature() + ", P="
+              + getPressure() + ", phase=" + getType() + ", density=" + molarDensity + ", Z=" + compressibilityFactor);
     }
 
     for (int component = 0; component < componentCount; component++) {
       double perturbation = Math.max(COMPOSITION_PERTURBATION_FLOOR,
           moleFractions[component] * RELATIVE_COMPOSITION_PERTURBATION);
-      boolean centralDifference = moleFractions[component] > 2.0 * perturbation;
-      double plusMoles = 1.0 + perturbation;
-      double[] plusComposition = perturbComposition(moleFractions, component, perturbation, plusMoles);
-      double plusAlphaR = residualHelmholtzEnergy(molarDensity * plusMoles, plusComposition);
       double residualChemicalPotential;
 
-      if (centralDifference) {
-        double minusMoles = 1.0 - perturbation;
-        double[] minusComposition = perturbComposition(moleFractions, component, -perturbation, minusMoles);
-        double minusAlphaR = residualHelmholtzEnergy(molarDensity * minusMoles, minusComposition);
-        residualChemicalPotential = (plusMoles * plusAlphaR - minusMoles * minusAlphaR) / (2.0 * perturbation);
+      if (requiresHighAccuracyFugacityDerivative() && moleFractions[component] > 2.0 * perturbation) {
+        double plusOne = residualHelmholtzMoleEnergy(molarDensity, moleFractions, component, perturbation);
+        double plusTwo = residualHelmholtzMoleEnergy(molarDensity, moleFractions, component, 2.0 * perturbation);
+        double minusOne = residualHelmholtzMoleEnergy(molarDensity, moleFractions, component, -perturbation);
+        double minusTwo = residualHelmholtzMoleEnergy(molarDensity, moleFractions, component, -2.0 * perturbation);
+        residualChemicalPotential = (-plusTwo + 8.0 * plusOne - 8.0 * minusOne + minusTwo) / (12.0 * perturbation);
+      } else if (moleFractions[component] > 2.0 * perturbation) {
+        double plusOne = residualHelmholtzMoleEnergy(molarDensity, moleFractions, component, perturbation);
+        double minusOne = residualHelmholtzMoleEnergy(molarDensity, moleFractions, component, -perturbation);
+        residualChemicalPotential = (plusOne - minusOne) / (2.0 * perturbation);
       } else {
+        double plusMoles = 1.0 + perturbation;
+        double[] plusComposition = perturbComposition(moleFractions, component, perturbation, plusMoles);
+        double plusAlphaR = residualHelmholtzEnergy(molarDensity * plusMoles, plusComposition);
         double baseAlphaR = residualHelmholtzEnergy(molarDensity, moleFractions);
         residualChemicalPotential = (plusMoles * plusAlphaR - baseAlphaR) / perturbation;
       }
       cachedLogFugacityCoefficients[component] = residualChemicalPotential - Math.log(compressibilityFactor);
     }
+  }
+
+  /** Use the fourth-order derivative only for the incipient phases traced by phase-envelope calculations. */
+  private boolean requiresHighAccuracyFugacityDerivative() {
+    return phaseEnvelopeCalculation;
+  }
+
+  /** Evaluate {@code n * alphaR} after perturbing one component at constant volume. */
+  private double residualHelmholtzMoleEnergy(double molarDensity, double[] composition, int component,
+      double componentMoleChange) {
+    double perturbedTotalMoles = 1.0 + componentMoleChange;
+    double[] perturbedComposition = perturbComposition(composition, component, componentMoleChange,
+        perturbedTotalMoles);
+    return perturbedTotalMoles * residualHelmholtzEnergy(molarDensity * perturbedTotalMoles, perturbedComposition);
   }
 
   /**
@@ -526,11 +583,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   @Override
   public double getDensity_GERG2008() {
     NeqSimGERG2008 gerg = new NeqSimGERG2008(this, gergModelType);
-    double molarDensity = gerg.getMolarDensity(referenceMolarDensityGuess);
-    if (getType() == PhaseType.LIQUID || getType() == PhaseType.OIL || getType() == PhaseType.AQUEOUS) {
-      referenceMolarDensityGuess = molarDensity;
-    }
-    return molarDensity * getMolarMass() * 1000.0;
+    return gerg.getMolarDensity() * getMolarMass() * 1000.0;
   }
 
   /** {@inheritDoc} */

@@ -197,16 +197,6 @@ public class NeqSimGERG2008 {
    * @return a double
    */
   public double getMolarDensity() {
-    return getMolarDensity(Double.NaN);
-  }
-
-  /**
-   * Get molar density, using a previous liquid density as a continuation estimate when available.
-   *
-   * @param initialLiquidDensity previous liquid molar density in mol/L, or {@link Double#NaN}
-   * @return molar density in mol/L
-   */
-  public double getMolarDensity(double initialLiquidDensity) {
     int flag = 0;
     if (phase != null) {
       PhaseType type = phase.getType();
@@ -219,7 +209,7 @@ public class NeqSimGERG2008 {
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
     if (flag == 2) {
-      double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, initialLiquidDensity, density -> {
+      double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, density -> {
         doubleW calculatedPressure = new doubleW(0.0);
         doubleW compressibility = new doubleW(0.0);
         GERG2008.PressureGERG(phase.getTemperature(), density, normalizedGERGComposition, calculatedPressure,

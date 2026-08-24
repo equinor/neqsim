@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseEOSCGEos;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseType;
@@ -58,5 +59,21 @@ public class SystemEOSCGEos extends SystemEos {
     setImplementedCompositionDeriativesofFugacity(false);
     setImplementedPressureDeriativesofFugacity(false);
     setImplementedTemperatureDeriativesofFugacity(false);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void init(int initType) {
+    if (requiresNumericPhaseEnvelopeDerivatives(initType)) {
+      initNumeric(initType);
+    } else {
+      super.init(initType);
+    }
+  }
+
+  /** Use numerical fugacity derivatives only while the reference-EOS phase-envelope tracer is active. */
+  private boolean requiresNumericPhaseEnvelopeDerivatives(int initType) {
+    return initType >= 2 && getPhase(0) instanceof PhaseGERG2008Eos
+        && ((PhaseGERG2008Eos) getPhase(0)).isPhaseEnvelopeCalculation();
   }
 }

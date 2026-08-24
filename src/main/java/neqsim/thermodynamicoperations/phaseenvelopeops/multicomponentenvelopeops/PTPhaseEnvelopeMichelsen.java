@@ -27,7 +27,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseGERG2008Eos;
-import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -77,10 +77,6 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private static final int FIRST_POINT_ATTEMPTS = 5;
   /** Temperature step (K) used when searching for the first point. */
   private static final double FIRST_POINT_STEP = 2.0;
-  /** Maximum successive-substitution iterations for a reference-EOS saturation state. */
-  private static final int MAX_REFERENCE_SATURATION_ITERATIONS = 300;
-  /** Maximum temperature bracket expansions for a reference-EOS first point. */
-  private static final int MAX_REFERENCE_TEMPERATURE_SEARCH = 16;
   /** Maximum envelope points per branch to prevent infinite loops. */
   private static final int MAX_ENVELOPE_ITERATIONS = 9980;
   /** Maximum points per quality line. */
@@ -237,13 +233,23 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
    */
   @Override
   public void run() {
+    setReferencePhaseEnvelopeCalculation(system, true);
+    try {
+      traceEnvelope();
+    } finally {
+      setReferencePhaseEnvelopeCalculation(system, false);
+    }
+  }
+
+  /** Trace the phase envelope after model-specific calculation state has been configured. */
+  private void traceEnvelope() {
     double initialTemp = system.getTemperature();
     double initialPres = system.getPressure();
 
     // isDewPhase determines which list receives each traced point.
     // When starting from dew side (bubblePointFirst=false, phaseFraction~1),
     // points go to dew lists. At CP, they switch to bubble lists.
-    isDewPhase = !bubblePointFirst;
+    isDewPhase = true;
 
     boolean needRestart = false;
     double restartTmin = 0.0;
@@ -274,7 +280,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
         // Flip conditions for second pass
         phaseFraction = 1.0 - phaseFraction;
         bubblePointFirst = !bubblePointFirst;
-        isDewPhase = !bubblePointFirst;
+        isDewPhase = false;
         kValuesDivergedAfterCP = false;
 
         // Insert NaN "break" markers so plotters do not draw a straight line
@@ -320,21 +326,33 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
       // Converge first point using saturation flash
       ThermodynamicOperations testOps = new ThermodynamicOperations(system);
-      boolean firstPointConverged;
-      if (usesReferenceEquationOfState(system)) {
-        firstPointConverged = convergeReferenceEosFirstPoint(system, phaseFraction, temp, lowPres);
-        if (!firstPointConverged) {
-          firstPointConverged = convergeLegacyFirstPoint(system, testOps, phaseFraction, temp);
+      boolean firstPointConverged = false;
+      for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
+        try {
+          if (phaseFraction < 0.5) {
+            temp += attempt * FIRST_POINT_STEP;
+            system.setTemperature(temp);
+            testOps.bubblePointTemperatureFlash();
+          } else {
+            temp += attempt * FIRST_POINT_STEP;
+            system.setTemperature(temp);
+            testOps.dewPointTemperatureFlash();
+          }
+        } catch (Exception ex) {
+          continue;
         }
-        temp = system.getTemperature();
-      } else {
-        firstPointConverged = convergeLegacyFirstPoint(system, testOps, phaseFraction, temp);
-        temp = system.getTemperature();
+        double tempNy = system.getTemperature();
+        if (!Double.isNaN(tempNy)) {
+          temp = tempNy;
+          firstPointConverged = true;
+          break;
+        }
       }
       if (!firstPointConverged) {
         logger.warn("Could not converge first envelope point for pass={}, beta={}", pass, phaseFraction);
         continue;
       }
+
       // Set up for continuation
       system.setBeta(phaseFraction);
       system.setPressure(lowPres);
@@ -354,7 +372,6 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
           nonLinSolver.calcInc(np);
           nonLinSolver.solve(np);
         } catch (Exception e0) {
-          logger.warn("Phase-envelope continuation failed on pass {} at point {}: {}", pass, np, e0.getMessage());
           if (pass == 0) {
             // Primary trace crashed: schedule restart from opposite side
             needRestart = true;
@@ -382,6 +399,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
             / system.getPhase(1).getComponent(nonLinSolver.lc).getx();
         double Kvalhc = system.getPhase(0).getComponent(nonLinSolver.hc).getx()
             / system.getPhase(1).getComponent(nonLinSolver.hc).getx();
+
         if (!nonLinSolver.etterCP) {
           if (Kvallc < 1.05 && Kvalhc > 0.95) {
             nonLinSolver.npCrit = np;
@@ -450,8 +468,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
         if (currentP > maxPressure) {
           break;
         }
-        if (pass == 1 && restartTmin > 0 && currentT > restartTmin
-            && countPhysicalPoints(isDewPhase ? dewPointTemperatures : bubblePointTemperatures) >= 3) {
+        if (pass == 1 && restartTmin > 0 && currentT > restartTmin) {
           break;
         }
 
@@ -479,23 +496,9 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
         }
       }
 
-      if (pass == 0
-          && (countPhysicalPoints(dewPointTemperatures) < 3 || countPhysicalPoints(bubblePointTemperatures) < 3)) {
-        needRestart = true;
-        if (restartTmin <= 0.0) {
-          restartTmin = system.getTemperature();
-        }
-      }
-
-    }
-
-    if (!criticalPoints.isEmpty()) {
-      double[] lastCriticalPoint = criticalPoints.get(criticalPoints.size() - 1);
-      system.setTemperature(lastCriticalPoint[0]);
-      system.setPressure(lastCriticalPoint[1]);
-    } else {
-      system.setTemperature(initialTemp);
-      system.setPressure(initialPres);
+      // Set critical point on the system
+      system.setTemperature(system.getTC());
+      system.setPressure(system.getPC());
     }
 
     // === Merge cricondentherm/bar from first and second passes ===
@@ -526,6 +529,15 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
     // Convert ArrayLists to output arrays
     buildOutputArrays();
+  }
+
+  /** Enable or disable reference-EOS derivative handling without changing the continuation algorithm. */
+  private void setReferencePhaseEnvelopeCalculation(SystemInterface candidateSystem, boolean enabled) {
+    for (PhaseInterface phase : candidateSystem.getPhases()) {
+      if (phase instanceof PhaseGERG2008Eos) {
+        ((PhaseGERG2008Eos) phase).setPhaseEnvelopeCalculation(enabled);
+      }
+    }
   }
 
   /**
@@ -576,6 +588,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       }
 
       SystemInterface clonedSystem = system.clone();
+      setReferencePhaseEnvelopeCalculation(clonedSystem, true);
 
       // Estimate initial temperature at low pressure for this beta
       double temp = tempKWilsonForSystem(clonedSystem, beta, lowPres);
@@ -587,16 +600,25 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
       // Converge first point using saturation flash
       ThermodynamicOperations flashOps = new ThermodynamicOperations(clonedSystem);
-      boolean converged;
-      if (usesReferenceEquationOfState(clonedSystem)) {
-        converged = convergeReferenceEosFirstPoint(clonedSystem, beta, temp, lowPres);
-        if (!converged) {
-          converged = convergeLegacyFirstPoint(clonedSystem, flashOps, beta, temp);
+      boolean converged = false;
+      for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
+        try {
+          double tempAttempt = temp + attempt * FIRST_POINT_STEP;
+          clonedSystem.setTemperature(tempAttempt);
+          if (beta < 0.5) {
+            flashOps.bubblePointTemperatureFlash();
+          } else {
+            flashOps.dewPointTemperatureFlash();
+          }
+        } catch (Exception ex) {
+          continue;
         }
-        temp = clonedSystem.getTemperature();
-      } else {
-        converged = convergeLegacyFirstPoint(clonedSystem, flashOps, beta, temp);
-        temp = clonedSystem.getTemperature();
+        double tempNy = clonedSystem.getTemperature();
+        if (!Double.isNaN(tempNy)) {
+          temp = tempNy;
+          converged = true;
+          break;
+        }
       }
       if (!converged) {
         logger.debug("Could not converge first quality line point for beta={}", beta);
@@ -700,277 +722,6 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       s = s.substring(0, s.length() - 1);
     }
     return s;
-  }
-
-  /**
-   * Check that a saturation flash found two distinct phases instead of the always-present trivial {@code K_i = 1}
-   * solution.
-   *
-   * @param candidateSystem flashed system to inspect
-   * @return true when every K-value is finite and at least one component partitions measurably between the phases
-   */
-  private boolean hasNonTrivialPhaseSplit(SystemInterface candidateSystem) {
-    if (candidateSystem.getPhase(0).getNumberOfComponents() == 1) {
-      double kValue = candidateSystem.getPhase(0).getComponent(0).getK();
-      return Double.isFinite(kValue) && kValue > 0.0;
-    }
-    double maximumLogK = 0.0;
-    for (int i = 0; i < candidateSystem.getPhase(0).getNumberOfComponents(); i++) {
-      double kValue = candidateSystem.getPhase(0).getComponent(i).getK();
-      if (!Double.isFinite(kValue) || kValue <= 0.0) {
-        return false;
-      }
-      maximumLogK = Math.max(maximumLogK, Math.abs(Math.log(kValue)));
-    }
-    return maximumLogK > 1.0e-3;
-  }
-
-  /** Count finite physical points in a branch list, excluding NaN plot separators. */
-  private int countPhysicalPoints(ArrayList<Double> values) {
-    int count = 0;
-    for (double value : values) {
-      if (Double.isFinite(value)) {
-        count++;
-      }
-    }
-    return count;
-  }
-
-  /**
-   * Determine whether a system uses the GERG-style multiparameter reference-EOS phase implementation.
-   *
-   * @param candidateSystem system to inspect
-   * @return true for GERG-2008 and subclasses such as EOS-CG
-   */
-  private boolean usesReferenceEquationOfState(SystemInterface candidateSystem) {
-    return candidateSystem.getPhase(0) instanceof PhaseGERG2008Eos;
-  }
-
-  /**
-   * Converge the first point with the established saturation flashes used by traditional equations of state.
-   *
-   * @param candidateSystem system to flash
-   * @param flashOperations saturation operations for the system
-   * @param beta target vapor fraction
-   * @param initialTemperature initial temperature estimate in K
-   * @return true when a finite, non-trivial saturation state was found
-   */
-  private boolean convergeLegacyFirstPoint(SystemInterface candidateSystem, ThermodynamicOperations flashOperations,
-      double beta, double initialTemperature) {
-    double attemptTemperature = initialTemperature;
-    for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
-      try {
-        attemptTemperature += attempt * FIRST_POINT_STEP;
-        candidateSystem.setTemperature(attemptTemperature);
-        if (beta < 0.5) {
-          flashOperations.bubblePointTemperatureFlash();
-        } else {
-          flashOperations.dewPointTemperatureFlash();
-        }
-      } catch (Exception ex) {
-        continue;
-      }
-      if (Double.isFinite(candidateSystem.getTemperature()) && hasNonTrivialPhaseSplit(candidateSystem)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Converge a non-trivial saturation point for a multiparameter reference EOS.
-   *
-   * <p>
-   * A Wilson-seeded successive-substitution solve is nested in a safeguarded temperature bracket. Resetting the
-   * K-values at every temperature trial keeps the calculation on the incipient phase branch and prevents convergence to
-   * the mathematically valid but physically useless {@code K_i = 1} solution.
-   * </p>
-   *
-   * @param candidateSystem system to flash
-   * @param beta target vapor fraction
-   * @param initialTemperature Wilson temperature estimate in K
-   * @param pressure fixed pressure in bara
-   * @return true when a finite, non-trivial saturation point was found
-   */
-  private boolean convergeReferenceEosFirstPoint(SystemInterface candidateSystem, double beta,
-      double initialTemperature, double pressure) {
-    boolean dewPoint = beta >= 0.5;
-    double initialResidual = evaluateReferenceSaturationResidual(candidateSystem, initialTemperature, pressure,
-        dewPoint);
-    if (Double.isFinite(initialResidual) && Math.abs(initialResidual) < 1.0e-8) {
-      return true;
-    }
-
-    double preferredDirection = 1.0;
-    if (Double.isFinite(initialResidual)) {
-      preferredDirection = dewPoint == (initialResidual > 0.0) ? 1.0 : -1.0;
-    }
-    double[] bracket = searchReferenceTemperatureBracket(candidateSystem, initialTemperature, initialResidual, pressure,
-        dewPoint, preferredDirection);
-    if (bracket == null) {
-      bracket = searchReferenceTemperatureBracket(candidateSystem, initialTemperature, initialResidual, pressure,
-          dewPoint, -preferredDirection);
-    }
-    if (bracket == null) {
-      return false;
-    }
-
-    double lowerTemperature = bracket[0];
-    double upperTemperature = bracket[1];
-    double lowerResidual = evaluateReferenceSaturationResidual(candidateSystem, lowerTemperature, pressure, dewPoint);
-    for (int iteration = 0; iteration < 35; iteration++) {
-      double middleTemperature = 0.5 * (lowerTemperature + upperTemperature);
-      double middleResidual = evaluateReferenceSaturationResidual(candidateSystem, middleTemperature, pressure,
-          dewPoint);
-      if (!Double.isFinite(middleResidual)) {
-        return false;
-      }
-      if (Math.abs(middleResidual) < 1.0e-8 || upperTemperature - lowerTemperature < 1.0e-7) {
-        return hasNonTrivialPhaseSplit(candidateSystem);
-      }
-      if (Math.copySign(1.0, middleResidual) == Math.copySign(1.0, lowerResidual)) {
-        lowerTemperature = middleTemperature;
-        lowerResidual = middleResidual;
-      } else {
-        upperTemperature = middleTemperature;
-      }
-    }
-    double finalTemperature = 0.5 * (lowerTemperature + upperTemperature);
-    double finalResidual = evaluateReferenceSaturationResidual(candidateSystem, finalTemperature, pressure, dewPoint);
-    return Double.isFinite(finalResidual) && Math.abs(finalResidual) < 1.0e-6
-        && hasNonTrivialPhaseSplit(candidateSystem);
-  }
-
-  /** Search in one temperature direction for a sign change in the saturation residual. */
-  private double[] searchReferenceTemperatureBracket(SystemInterface candidateSystem, double initialTemperature,
-      double initialResidual, double pressure, boolean dewPoint, double direction) {
-    double previousTemperature = initialTemperature;
-    double previousResidual = initialResidual;
-    double step = 5.0;
-    for (int iteration = 0; iteration < MAX_REFERENCE_TEMPERATURE_SEARCH; iteration++) {
-      double trialTemperature = Math.max(40.0, previousTemperature + direction * step);
-      if (trialTemperature == previousTemperature || trialTemperature > 1000.0) {
-        break;
-      }
-      double trialResidual = evaluateReferenceSaturationResidual(candidateSystem, trialTemperature, pressure, dewPoint);
-      if (Double.isFinite(previousResidual) && Double.isFinite(trialResidual)
-          && Math.copySign(1.0, previousResidual) != Math.copySign(1.0, trialResidual)) {
-        return new double[] { Math.min(previousTemperature, trialTemperature),
-            Math.max(previousTemperature, trialTemperature) };
-      }
-      if (Double.isFinite(trialResidual)) {
-        previousResidual = trialResidual;
-      }
-      previousTemperature = trialTemperature;
-      step *= 1.35;
-    }
-    return null;
-  }
-
-  /**
-   * Evaluate a dew- or bubble-point material-balance residual after non-trivial K-value iteration.
-   *
-   * @param candidateSystem system to evaluate
-   * @param temperature trial temperature in K
-   * @param pressure fixed pressure in bara
-   * @param dewPoint true for dew point, false for bubble point
-   * @return {@code sum(z_i/K_i)-1} for dew point or {@code sum(z_i*K_i)-1} for bubble point; NaN on failure
-   */
-  private double evaluateReferenceSaturationResidual(SystemInterface candidateSystem, double temperature,
-      double pressure, boolean dewPoint) {
-    candidateSystem.setTemperature(temperature);
-    candidateSystem.setPressure(pressure);
-    candidateSystem.setNumberOfPhases(2);
-    candidateSystem.init(0);
-    candidateSystem.setPhaseType(0, PhaseType.GAS);
-    candidateSystem.setPhaseType(1, PhaseType.LIQUID);
-    candidateSystem.setBeta(dewPoint ? 1.0 - 1.0e-10 : 1.0e-10);
-
-    int componentCount = candidateSystem.getPhase(0).getNumberOfComponents();
-    double[] logK = new double[componentCount];
-    for (int i = 0; i < componentCount; i++) {
-      double wilsonK = candidateSystem.getPhase(0).getComponent(i).getK();
-      if (!Double.isFinite(wilsonK) || wilsonK <= 0.0) {
-        return Double.NaN;
-      }
-      logK[i] = Math.log(wilsonK);
-    }
-    double[] previousLogK = new double[componentCount];
-    double[] previousUpdatedLogK = new double[componentCount];
-    java.util.Arrays.fill(previousLogK, Double.NaN);
-    java.util.Arrays.fill(previousUpdatedLogK, Double.NaN);
-
-    for (int iteration = 0; iteration < MAX_REFERENCE_SATURATION_ITERATIONS; iteration++) {
-      setReferenceSaturationCompositions(candidateSystem, logK, dewPoint);
-      try {
-        candidateSystem.init(1);
-      } catch (Exception ex) {
-        return Double.NaN;
-      }
-
-      double maximumChange = 0.0;
-      double maximumLogK = 0.0;
-      for (int i = 0; i < componentCount; i++) {
-        double liquidLogPhi = candidateSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient();
-        double vaporLogPhi = candidateSystem.getPhase(0).getComponent(i).getLogFugacityCoefficient();
-        double updatedLogK = liquidLogPhi - vaporLogPhi;
-        if (!Double.isFinite(updatedLogK) || Math.abs(updatedLogK) > 100.0) {
-          return Double.NaN;
-        }
-        double currentLogK = logK[i];
-        maximumChange = Math.max(maximumChange, Math.abs(updatedLogK - currentLogK));
-        double nextLogK = currentLogK + 0.1 * (updatedLogK - currentLogK);
-        if (iteration > 2 && Double.isFinite(previousLogK[i]) && Double.isFinite(previousUpdatedLogK[i])) {
-          double iterateChange = currentLogK - previousLogK[i];
-          if (Math.abs(iterateChange) > 1.0e-12) {
-            double fixedPointSlope = (updatedLogK - previousUpdatedLogK[i]) / iterateChange;
-            if (Double.isFinite(fixedPointSlope) && Math.abs(1.0 - fixedPointSlope) > 1.0e-8) {
-              double acceleratedLogK = (updatedLogK - fixedPointSlope * currentLogK) / (1.0 - fixedPointSlope);
-              if (Double.isFinite(acceleratedLogK)) {
-                double acceleratedStep = Math.max(-1.0, Math.min(1.0, acceleratedLogK - currentLogK));
-                nextLogK = currentLogK + acceleratedStep;
-              }
-            }
-          }
-        }
-        previousLogK[i] = currentLogK;
-        previousUpdatedLogK[i] = updatedLogK;
-        logK[i] = nextLogK;
-        maximumLogK = Math.max(maximumLogK, Math.abs(logK[i]));
-      }
-      if (maximumLogK < 1.0e-3) {
-        return Double.NaN;
-      }
-      if (maximumChange < 1.0e-8) {
-        setReferenceSaturationCompositions(candidateSystem, logK, dewPoint);
-        candidateSystem.init(1);
-        double residual = -1.0;
-        for (int i = 0; i < componentCount; i++) {
-          double z = candidateSystem.getPhase(0).getComponent(i).getz();
-          residual += dewPoint ? z / Math.exp(logK[i]) : z * Math.exp(logK[i]);
-          candidateSystem.getPhase(0).getComponent(i).setK(Math.exp(logK[i]));
-          candidateSystem.getPhase(1).getComponent(i).setK(Math.exp(logK[i]));
-        }
-        return residual;
-      }
-    }
-    return Double.NaN;
-  }
-
-  /** Set normalized phase compositions from K-values while retaining the overall composition. */
-  private void setReferenceSaturationCompositions(SystemInterface candidateSystem, double[] logK, boolean dewPoint) {
-    double incipientTotal = 0.0;
-    for (int i = 0; i < logK.length; i++) {
-      double z = candidateSystem.getPhase(0).getComponent(i).getz();
-      candidateSystem.getPhase(dewPoint ? 0 : 1).getComponent(i).setx(z);
-      double incipientFraction = dewPoint ? z / Math.exp(logK[i]) : z * Math.exp(logK[i]);
-      candidateSystem.getPhase(dewPoint ? 1 : 0).getComponent(i).setx(incipientFraction);
-      incipientTotal += incipientFraction;
-    }
-    for (int i = 0; i < logK.length; i++) {
-      double normalized = candidateSystem.getPhase(dewPoint ? 1 : 0).getComponent(i).getx() / incipientTotal;
-      candidateSystem.getPhase(dewPoint ? 1 : 0).getComponent(i).setx(normalized);
-    }
   }
 
   /**

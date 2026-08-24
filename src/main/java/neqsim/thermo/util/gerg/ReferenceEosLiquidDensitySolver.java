@@ -24,18 +24,10 @@ final class ReferenceEosLiquidDensitySolver {
    * </p>
    *
    * @param targetPressure target pressure in kPa
-   * @param initialDensity previous liquid molar density in mol/L, or {@link Double#NaN}
    * @param pressureFunction pressure in kPa as a function of molar density in mol/L
    * @return liquid molar density in mol/L, or {@link Double#NaN} when no separate liquid root exists
    */
-  static double solve(double targetPressure, double initialDensity, DoubleUnaryOperator pressureFunction) {
-    if (Double.isFinite(initialDensity) && initialDensity > MIN_DENSITY && initialDensity < MAX_DENSITY) {
-      double warmRoot = bracketAroundInitialGuess(targetPressure, initialDensity, pressureFunction);
-      if (Double.isFinite(warmRoot)) {
-        return warmRoot;
-      }
-    }
-
+  static double solve(double targetPressure, DoubleUnaryOperator pressureFunction) {
     double upperDensity = MAX_DENSITY;
     double upperResidual = residual(targetPressure, upperDensity, pressureFunction);
     for (int iteration = 0; iteration < MAX_SEARCH_ITERATIONS; iteration++) {
@@ -49,37 +41,6 @@ final class ReferenceEosLiquidDensitySolver {
       }
       upperDensity = lowerDensity;
       upperResidual = lowerResidual;
-    }
-    return Double.NaN;
-  }
-
-  /** Try to bracket a changed state near the preceding liquid-density root. */
-  private static double bracketAroundInitialGuess(double targetPressure, double initialDensity,
-      DoubleUnaryOperator pressureFunction) {
-    double residualAtGuess = residual(targetPressure, initialDensity, pressureFunction);
-    if (!Double.isFinite(residualAtGuess)) {
-      return Double.NaN;
-    }
-    if (Math.abs(residualAtGuess) <= pressureTolerance(targetPressure)) {
-      return initialDensity;
-    }
-
-    double lowerDensity = initialDensity;
-    double upperDensity = initialDensity;
-    double lowerResidual = residualAtGuess;
-    double upperResidual = residualAtGuess;
-    for (int iteration = 0; iteration < 30; iteration++) {
-      if (lowerResidual > 0.0 && lowerDensity > MIN_DENSITY) {
-        lowerDensity = Math.max(MIN_DENSITY, lowerDensity * SEARCH_FACTOR);
-        lowerResidual = residual(targetPressure, lowerDensity, pressureFunction);
-      }
-      if (upperResidual <= 0.0 && upperDensity < MAX_DENSITY) {
-        upperDensity = Math.min(MAX_DENSITY, upperDensity / SEARCH_FACTOR);
-        upperResidual = residual(targetPressure, upperDensity, pressureFunction);
-      }
-      if (isBracket(lowerResidual, upperResidual)) {
-        return bisect(targetPressure, lowerDensity, upperDensity, pressureFunction);
-      }
     }
     return Double.NaN;
   }
