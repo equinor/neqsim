@@ -36,8 +36,10 @@ class McpAcceptanceBaselineRunnerTests {
     assertEquals(4, summary.get("successCount").getAsInt(), baseline.toString());
     assertEquals(4, summary.get("convergedCount").getAsInt(), baseline.toString());
     assertEquals(4, summary.get("deterministicCount").getAsInt(), baseline.toString());
+    assertTrue(summary.get("balanceEvidencePresentCount").getAsInt() >= 1, baseline.toString());
     assertTrue(summary.get("status").getAsString().startsWith("EXECUTION_COMPLETE"), baseline.toString());
 
+    boolean multiAreaMassClosureEvidenceFound = false;
     for (com.google.gson.JsonElement element : measurements) {
       JsonObject measurement = element.getAsJsonObject();
       assertTrue(measurement.get("successful").getAsBoolean(), measurement.toString());
@@ -49,8 +51,16 @@ class McpAcceptanceBaselineRunnerTests {
       assertTrue(measurement.getAsJsonObject("determinism").get("stableOutcomeMatch").getAsBoolean(),
           measurement.toString());
       assertFalse(measurement.getAsJsonObject("balanceEvidence").get("status").getAsString().trim().isEmpty());
+      if ("multi-area-facility".equals(measurement.get("fixtureId").getAsString())) {
+        JsonObject balanceEvidence = measurement.getAsJsonObject("balanceEvidence");
+        assertEquals("RESPONSE_EVIDENCE_PRESENT", balanceEvidence.get("status").getAsString(), measurement.toString());
+        assertTrue(balanceEvidence.getAsJsonArray("responsePaths").toString().contains("massClosure"),
+            balanceEvidence.toString());
+        multiAreaMassClosureEvidenceFound = true;
+      }
       assertEquals("NOT_ESTABLISHED_BY_PHASE0_EXECUTION_HARNESS",
           measurement.get("scientificValidationStatus").getAsString());
     }
+    assertTrue(multiAreaMassClosureEvidenceFound, baseline.toString());
   }
 }

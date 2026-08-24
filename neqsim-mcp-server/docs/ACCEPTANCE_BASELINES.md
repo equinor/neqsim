@@ -8,7 +8,7 @@ qualification workflow.
 Run the focused exact-head gate from the repository root:
 
 ```bash
-./mvnw test -Dtest=McpAcceptanceBaselineRunnerTests
+./mvnw test -Dtest=McpAcceptanceBaselineRunnerTests,ProcessRunnerBalanceEvidenceTests
 ```
 
 The test validates the compact baseline JSON returned by the runner. Every fixture is executed twice. A caller that
@@ -36,6 +36,17 @@ retaining the standard envelope and selective-retrieval guidance.
 Balance evidence is deliberately fail-visible. A successful `runProcess` response without an explicitly named numeric
 mass, component, or energy closure field is classified as `GAP_NO_NUMERIC_CLOSURE_IN_MCP_RESPONSE`. The harness does not
 convert convergence, a non-empty report, or a validation label into a balance claim.
+
+For multi-area `ProcessModel` execution, `runProcess` now exposes the existing solver-native
+`convergenceReport` returned by `ProcessModel.getConvergenceReportJson()`. Its `massClosure` object carries the numeric
+`relativeError`, configured `tolerance`, summary, and worst-unit evidence already used by the canonical ProcessModel
+convergence machinery. `relativeError` is a fraction of detected plant feed, not an independently reconstructed MCP
+balance. The same report is retained in both the legacy top-level response and the strict `data` block.
+
+This closes one defensible response-evidence gap for the public multi-area acceptance fixture. It does **not** establish
+component closure or energy closure, and it does not invent a corresponding balance for single-area `ProcessSystem`
+responses. Those response paths remain explicit gaps until the canonical model exposes equally defensible numerical
+evidence. A successful solver result therefore remains distinct from conservation evidence and scientific validation.
 
 ## Ownership and qualification boundaries
 
