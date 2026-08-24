@@ -52,6 +52,9 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** Maximum common Newton beta-step scale for a hybrid flash carrying ions. */
   private static final double HYBRID_IONIC_BETA_STEP_SCALE = 0.1;
 
+  /** Fraction of a new aqueous neutral-composition proposal accepted per iteration. */
+  private static final double HYBRID_AQUEOUS_COMPOSITION_RELAXATION = 0.1;
+
   /** Reaction-adjusted overall component fractions used by the coupled phase solve. */
   private transient double[] coupledOverallFractions;
 
@@ -383,9 +386,21 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       boolean aqueous = hybridModel.isHybridEosGeAqueousPhase(phaseIndex);
       double phaseFraction = Math.max(system.getPhase(phaseIndex).getBeta(), phaseFractionMinimumLimit);
+      int numberOfComponents = system.getPhase(0).getNumberOfComponents();
+      double[] previousNeutralComposition = aqueous ? new double[numberOfComponents] : null;
+      double previousNeutralFractionSum = 0.0;
+      if (aqueous) {
+        for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+          ComponentInterface component = system.getPhase(phaseIndex).getComponent(componentIndex);
+          if (component.getIonicCharge() == 0 && !component.isIsIon()) {
+            previousNeutralComposition[componentIndex] = Math.max(component.getx(), 0.0);
+            previousNeutralFractionSum += previousNeutralComposition[componentIndex];
+          }
+        }
+      }
       double ionFractionSum = 0.0;
       double neutralFractionSum = 0.0;
-      for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
         ComponentInterface referenceComponent = system.getPhase(0).getComponent(componentIndex);
         double feedFraction = getCoupledOverallFraction(componentIndex);
         double newMoleFraction;
@@ -412,12 +427,20 @@ public class TPHybridEosGeFlash extends TPmultiflash {
               "Hybrid EOS-GE aqueous composition cannot accommodate overall ion amount: " + "ionFractionSum="
                   + ionFractionSum + ", neutralFractionSum=" + neutralFractionSum + ", phaseFraction=" + phaseFraction);
         }
-        double neutralScale = (1.0 - ionFractionSum) / neutralFractionSum;
-        for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+        double neutralTotal = 1.0 - ionFractionSum;
+        for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
           ComponentInterface referenceComponent = system.getPhase(0).getComponent(componentIndex);
           if (referenceComponent.getIonicCharge() == 0 && !referenceComponent.isIsIon()) {
             ComponentInterface aqueousComponent = system.getPhase(phaseIndex).getComponent(componentIndex);
-            aqueousComponent.setx(aqueousComponent.getx() * neutralScale);
+            double proposedNeutralShare = aqueousComponent.getx() / neutralFractionSum;
+            double relaxedNeutralShare = proposedNeutralShare;
+            if (previousNeutralFractionSum > 0.0) {
+              double previousNeutralShare =
+                  previousNeutralComposition[componentIndex] / previousNeutralFractionSum;
+              relaxedNeutralShare = previousNeutralShare + HYBRID_AQUEOUS_COMPOSITION_RELAXATION
+                  * (proposedNeutralShare - previousNeutralShare);
+            }
+            aqueousComponent.setx(neutralTotal * relaxedNeutralShare);
           }
         }
       } else {
