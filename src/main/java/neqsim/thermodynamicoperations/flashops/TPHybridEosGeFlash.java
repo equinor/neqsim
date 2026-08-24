@@ -507,8 +507,14 @@ public class TPHybridEosGeFlash extends TPmultiflash {
           || component.isIsIon()) {
         continue;
       }
-      if (!(component.getx() > 0.0) || !Double.isFinite(component.getx()) || !(component.getFugacityCoefficient() > 0.0)
-          || !Double.isFinite(component.getFugacityCoefficient())) {
+      double moleFraction = component.getx();
+      if (!Double.isFinite(moleFraction) || moleFraction < 0.0) {
+        return false;
+      }
+      if (moleFraction <= 1.0e-30) {
+        continue;
+      }
+      if (!(component.getFugacityCoefficient() > 0.0) || !Double.isFinite(component.getFugacityCoefficient())) {
         return false;
       }
     }
