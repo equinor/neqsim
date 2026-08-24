@@ -213,6 +213,25 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void potassiumChlorideMatchesIndependentNistEvaluation() {
+    // Hamer and Wu, J. Phys. Chem. Ref. Data 1 (1972) 1047-1100,
+    // DOI 10.1063/1.3253108. These NBS/NIST critically evaluated KCl values
+    // are reproduced in Table 2 of Dash et al. (2012), DOI
+    // 10.5402/2012/730154 (CC BY), independently of PHREEQC. Values are on
+    // the molality scale at 298.15 K and rounded to 0.001.
+    double[][] reference = { { 0.0982, 0.768 }, { 0.5001, 0.649 }, { 0.9926, 0.604 }, { 1.9895, 0.573 } };
+    for (double[] state : reference) {
+      double molality = state[0];
+      PhasePitzer phase = createNaKClPhase(REFERENCE_TEMPERATURE, 0.0, molality, molality);
+      PitzerParameterDatasets.applyPhreeqcSodiumPotassiumChloride(phase);
+      double actualMeanGamma = Math.exp(0.5 * (componentLogGamma(phase, "K+") + componentLogGamma(phase, "Cl-")));
+      double relativeGammaResidual = Math.abs(actualMeanGamma / state[1] - 1.0);
+      assertTrue(relativeGammaResidual <= 0.002,
+          "KCl mean activity residual at " + molality + " mol/kg: " + relativeGammaResidual);
+    }
+  }
+
+  @Test
   void naKClValidationRangeChargeAndExtraSpeciesFailClosed() {
     assertTrue(PitzerParameterDatasets.isWithinSodiumPotassiumChlorideValidationRange(298.15, 0.05, 0.05, 0.1));
     assertTrue(PitzerParameterDatasets.isWithinSodiumPotassiumChlorideValidationRange(423.15, 1.5, 1.5, 3.0));
