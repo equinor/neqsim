@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-08-24 — Assess a solid para-hydrogen Helmholtz EOS for NeqSim
+**Type:** A (Property)
+**Keywords:** para-hydrogen, solid Phase I, Helmholtz EOS, Vinet, Leachman, freezing point, phase equilibrium, experimental model
+**Solution:** `task_solve/2026-08-24_solid_para_hydrogen_eos_thesis_assessment/`
+**Notes:** A 2026 academic formulation adds dedicated Vinet, vibrational, and anharmonic Helmholtz terms that are not represented by the generic `ComponentSolid` liquid-reference path. Treat its reported property and phase-boundary deviations as author-reported until independently reproduced; the 17.64% sublimation Gibbs-consistency deviation precludes production-ready adoption. Recommended sequence: repair the `SystemLeachmanEos(T, P, true)` null-phase constructor defect, replace the `-500 K` freezing sentinel with explicit failure status, then add an opt-in experimental Phase I para-hydrogen model with coefficient/derivative audit and independent PVT, caloric, melting, sublimation, and triple-point regressions.
+
 ### 2026-08-20 — Gas-turbine water-wash interval planning and permanent-wash business case
 **Type:** E (Feature)
 **Keywords:** gas turbine, compressor fouling, water wash, on-line wash, crank wash, corrected efficiency, degradation, wash interval, heat rate, fuel gas, CO2 tax, payback, GasTurbineWashPlanner, GasTurbineDegradation
