@@ -241,6 +241,10 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient Boolean cachedHasAdjusters = null;
   /** Cached result of hasRecycles() - null means not yet computed. */
   private transient Boolean cachedHasRecycles = null;
+  /** Topology-derived units eligible for automatic low-flow tuning. */
+  private transient List<ProcessEquipmentBaseClass> cachedAutoLowFlowUnits = null;
+  /** Topology-derived recycle subset shared by automatic recycle tuning passes. */
+  private transient List<Recycle> cachedAutoTuningRecycles = null;
   /** Cached result of hasCalculators() - null means not yet computed. */
   private transient Boolean cachedHasCalculators = null;
   /** Cached result of hasMultiInputEquipment() - null means not yet computed. */
@@ -3725,12 +3729,8 @@ public class ProcessSystem extends SimulationBaseClass {
           "Low-flow threshold must be a finite non-negative number, was " + thresholdKgPerHour);
     }
     int managed = 0;
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof Setter) {
-        continue;
-      }
-      if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass
-          && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).applyAutoMinimumFlow(thresholdKgPerHour)) {
+    for (ProcessEquipmentBaseClass unit : getAutoLowFlowUnits()) {
+      if (unit.applyAutoMinimumFlow(thresholdKgPerHour)) {
         managed++;
       }
     }
@@ -3757,9 +3757,8 @@ public class ProcessSystem extends SimulationBaseClass {
           "Recycle flow tolerance must be a finite non-negative number, was " + thresholdKgPerHour);
     }
     int applied = 0;
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof neqsim.process.equipment.util.Recycle
-          && ((neqsim.process.equipment.util.Recycle) unit).applyAutoAbsoluteFlowTolerance(thresholdKgPerHour)) {
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.applyAutoAbsoluteFlowTolerance(thresholdKgPerHour)) {
         applied++;
       }
     }
@@ -3773,9 +3772,8 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   int resetAutoRecycleFlowTolerance() {
     int cleared = 0;
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof neqsim.process.equipment.util.Recycle
-          && ((neqsim.process.equipment.util.Recycle) unit).resetAutoAbsoluteFlowTolerance()) {
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.resetAutoAbsoluteFlowTolerance()) {
         cleared++;
       }
     }
@@ -3789,8 +3787,8 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   int applyAutoRecycleAdaptiveAcceleration() {
     int managed = 0;
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof Recycle && ((Recycle) unit).applyAutoAdaptiveAcceleration()) {
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.applyAutoAdaptiveAcceleration()) {
         managed++;
       }
     }
@@ -3804,8 +3802,8 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   int resetAutoRecycleAdaptiveAcceleration() {
     int cleared = 0;
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof Recycle && ((Recycle) unit).resetAutoAdaptiveAcceleration()) {
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.resetAutoAdaptiveAcceleration()) {
         cleared++;
       }
     }
@@ -3861,9 +3859,8 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public int resetAutoLowFlowThreshold() {
     int cleared = 0;
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass
-          && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).resetAutoMinimumFlow()) {
+    for (ProcessEquipmentBaseClass unit : getAutoLowFlowUnits()) {
+      if (unit.resetAutoMinimumFlow()) {
         cleared++;
         if (!unit.isLockedInactive()) {
           unit.isActive(true);
@@ -3871,6 +3868,32 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return cleared;
+  }
+
+  /** Returns the topology-stable set of units eligible for automatic low-flow tuning. */
+  private List<ProcessEquipmentBaseClass> getAutoLowFlowUnits() {
+    if (cachedAutoLowFlowUnits == null) {
+      cachedAutoLowFlowUnits = new ArrayList<ProcessEquipmentBaseClass>();
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (!(unit instanceof Setter) && unit instanceof ProcessEquipmentBaseClass) {
+          cachedAutoLowFlowUnits.add((ProcessEquipmentBaseClass) unit);
+        }
+      }
+    }
+    return cachedAutoLowFlowUnits;
+  }
+
+  /** Returns the topology-stable recycle subset used by automatic recycle tuning. */
+  private List<Recycle> getAutoTuningRecycles() {
+    if (cachedAutoTuningRecycles == null) {
+      cachedAutoTuningRecycles = new ArrayList<Recycle>();
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (unit instanceof Recycle) {
+          cachedAutoTuningRecycles.add((Recycle) unit);
+        }
+      }
+    }
+    return cachedAutoTuningRecycles;
   }
 
   /**
@@ -7740,6 +7763,8 @@ public class ProcessSystem extends SimulationBaseClass {
     cachedHybridPlan = null;
     cachedHasAdjusters = null;
     cachedHasRecycles = null;
+    cachedAutoLowFlowUnits = null;
+    cachedAutoTuningRecycles = null;
     cachedHasCalculators = null;
     cachedHasMultiInput = null;
   }
