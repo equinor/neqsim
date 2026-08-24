@@ -190,6 +190,29 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void sodiumChlorideMatchesIndependentTraceableExperimentSynthesis() {
+    // Partanen and Partanen, J. Chem. Eng. Data 65 (2020) 5226-5239,
+    // DOI 10.1021/acs.jced.0c00402, Tables 6 and 10 (CC BY 4.0). Their
+    // extended-Huckel recommendations synthesize vapor-pressure,
+    // electrochemical, cryoscopic, and solubility evidence independently of
+    // the PHREEQC implementation used for the equation-convention regressions.
+    double[][] reference = { { 0.2, 0.7344, 0.9242 }, { 0.5, 0.684, 0.924 }, { 1.0, 0.662, 0.940 },
+        { 2.0, 0.677, 0.989 } };
+    for (double[] state : reference) {
+      double molality = state[0];
+      PhasePitzer phase = createNaKClPhase(REFERENCE_TEMPERATURE, molality, 0.0, molality);
+      PitzerParameterDatasets.applyPhreeqcSodiumPotassiumChloride(phase);
+      double actualMeanGamma = Math.exp(0.5 * (componentLogGamma(phase, "Na+") + componentLogGamma(phase, "Cl-")));
+      double relativeGammaResidual = Math.abs(actualMeanGamma / state[1] - 1.0);
+      assertTrue(relativeGammaResidual <= 0.015,
+          "NaCl mean activity residual at " + molality + " mol/kg: " + relativeGammaResidual);
+      assertEquals(state[2], phase.getOsmoticCoefficientOfWater(), 0.006);
+      double referenceWaterActivity = Math.exp(-2.0 * molality * 18.015 * state[2] / 1000.0);
+      assertEquals(referenceWaterActivity, waterActivity(phase), 5.0e-4);
+    }
+  }
+
+  @Test
   void naKClValidationRangeChargeAndExtraSpeciesFailClosed() {
     assertTrue(PitzerParameterDatasets.isWithinSodiumPotassiumChlorideValidationRange(298.15, 0.05, 0.05, 0.1));
     assertTrue(PitzerParameterDatasets.isWithinSodiumPotassiumChlorideValidationRange(423.15, 1.5, 1.5, 3.0));
