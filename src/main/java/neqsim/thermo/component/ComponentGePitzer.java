@@ -157,28 +157,10 @@ public class ComponentGePitzer extends ComponentGE {
     // B' contribution to F: sum_c sum_a m_c * m_a * B'_ca
     double fBprime = 0.0;
     double sum = 0.0;
-    double cphiCommonSum = 0.0;
     boolean phreeqcCommonIonTerms = pitz.isPhreeqcCommonIonTermsActive();
-    if (phreeqcCommonIonTerms) {
-      for (int cation = 0; cation < numberOfComponents; cation++) {
-        double cationCharge = phase.getComponent(cation).getIonicCharge();
-        if (cationCharge <= 0.0) {
-          continue;
-        }
-        double cationMolality = phase.getComponent(cation).getMolality(phase);
-        for (int anion = 0; anion < numberOfComponents; anion++) {
-          double anionCharge = phase.getComponent(anion).getIonicCharge();
-          if (anionCharge >= 0.0) {
-            continue;
-          }
-          double normalizedCphi = pitz.getCphiij(cation, anion, temperature)
-              / (2.0 * Math.sqrt(Math.abs(cationCharge * anionCharge)));
-          fBprime += cationMolality * phase.getComponent(anion).getMolality(phase)
-              * binaryBprime(pitz, cation, anion, temperature, I, sqrtI, cationCharge, anionCharge);
-          cphiCommonSum += cationMolality * phase.getComponent(anion).getMolality(phase) * normalizedCphi;
-        }
-      }
-    }
+    double phreeqcCommonIonContribution = phreeqcCommonIonTerms
+        ? phreeqcCommonIonContribution(phase, pitz, numberOfComponents, temperature, I, sqrtI, charge)
+        : 0.0;
     for (int j = 0; j < numberOfComponents; j++) {
       if (j == componentNumber) {
         continue;
@@ -306,7 +288,7 @@ public class ComponentGePitzer extends ComponentGE {
 
     // ln(gamma_M) = z_M^2 * F + binary/mixing terms
     double F = fDH + fBprime + fEthetaPrime;
-    lngamma = charge * charge * F + sum + Math.abs(charge) * cphiCommonSum;
+    lngamma = charge * charge * F + sum + phreeqcCommonIonContribution;
     if (neutralPitzerInteractionsActive) {
       lngamma += pitz.getNeutralPitzerLogGammaContribution(componentNumber, temperature);
     }
@@ -314,9 +296,35 @@ public class ComponentGePitzer extends ComponentGE {
     return gamma;
   }
 
+  /** Calculates PHREEQC's common B-prime and C0 contributions to one ion's ln(gamma). */
+  private static double phreeqcCommonIonContribution(PhaseInterface phase, PhasePitzer pitz, int numberOfComponents,
+      double temperature, double ionicStrength, double squareRootIonicStrength, double targetCharge) {
+    double fBprime = 0.0;
+    double cphiCommonSum = 0.0;
+    for (int cation = 0; cation < numberOfComponents; cation++) {
+      double cationCharge = phase.getComponent(cation).getIonicCharge();
+      if (cationCharge <= 0.0) {
+        continue;
+      }
+      double cationMolality = phase.getComponent(cation).getMolality(phase);
+      for (int anion = 0; anion < numberOfComponents; anion++) {
+        double anionCharge = phase.getComponent(anion).getIonicCharge();
+        if (anionCharge >= 0.0) {
+          continue;
+        }
+        double anionMolality = phase.getComponent(anion).getMolality(phase);
+        fBprime += cationMolality * anionMolality * phreeqcBinaryBprime(pitz, cation, anion, temperature, ionicStrength,
+            squareRootIonicStrength, cationCharge, anionCharge);
+        cphiCommonSum += cationMolality * anionMolality * pitz.getCphiij(cation, anion, temperature)
+            / (2.0 * Math.sqrt(Math.abs(cationCharge * anionCharge)));
+      }
+    }
+    return targetCharge * targetCharge * fBprime + Math.abs(targetCharge) * cphiCommonSum;
+  }
+
   /** Calculates one binary pair's contribution to PHREEQC's common B-prime term. */
-  private static double binaryBprime(PhasePitzer phase, int first, int second, double temperature, double ionicStrength,
-      double squareRootIonicStrength, double firstCharge, double secondCharge) {
+  private static double phreeqcBinaryBprime(PhasePitzer phase, int first, int second, double temperature,
+      double ionicStrength, double squareRootIonicStrength, double firstCharge, double secondCharge) {
     boolean is22 = Math.abs(firstCharge) >= 1.5 && Math.abs(secondCharge) >= 1.5;
     double alpha1 = is22 ? 1.4 : 2.0;
     double x1 = alpha1 * squareRootIonicStrength;
