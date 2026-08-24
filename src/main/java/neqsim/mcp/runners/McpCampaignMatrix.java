@@ -18,7 +18,7 @@ public final class McpCampaignMatrix {
    */
   public static JsonObject build() {
     JsonObject result = new JsonObject();
-    result.addProperty("matrixVersion", "1.0");
+    result.addProperty("matrixVersion", "1.1");
     result.addProperty("campaignIssue", 3153);
     result.addProperty("criterionCount", 66);
     result.add("statusDefinitions", statusDefinitions());
@@ -49,13 +49,13 @@ public final class McpCampaignMatrix {
             "Trace every campaign criterion to evidence or a confirmed gap",
             "Record runtime, memory, response size, tool-call, convergence, balance and report baselines",
             "Define a machine-readable capability/maturity matrix by engineering discipline" },
-        new String[] { "MERGED_EVIDENCE", "MERGED_EVIDENCE", "MERGED_EVIDENCE", "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE",
-            "PARTIAL_EVIDENCE" },
+        new String[] { "MERGED_EVIDENCE", "MERGED_EVIDENCE", "MERGED_EVIDENCE", "MERGED_EVIDENCE", "PARTIAL_EVIDENCE",
+            "MERGED_EVIDENCE" },
         new String[] { "McpEvidenceInventory; SURFACE_INVENTORY.md", "mergedFoundations; FOUNDATION_TRACEABILITY.md",
             "McpAcceptanceFixtureCatalog; ACCEPTANCE_FIXTURES.md",
-            "McpCampaignMatrix; CAMPAIGN_MATRIX.md; merged-master audit still required",
-            "McpAcceptanceBaselineRunner; ACCEPTANCE_BASELINES.md; numeric closure gaps remain explicit",
-            "McpCampaignMatrix.disciplines; merged-master audit still required" });
+            "McpCampaignMatrix; CAMPAIGN_MATRIX.md; merged #3203 (364e8e72729c952a111d503d3aff38485c3b808a)",
+            "McpAcceptanceBaselineRunner; ACCEPTANCE_BASELINES.md; merged #3209 ProcessModel mass closure and #3218 ProcessSystem per-unit mass evidence; component, energy, and facility-wide single-area closure gaps remain explicit",
+            "McpCampaignMatrix.disciplines; merged #3203 (364e8e72729c952a111d503d3aff38485c3b808a)" });
     add(rows, 1,
         new String[] { "Versioned facility-description contract", "Deterministic normalized facility specification",
             "Component/equipment/tag synonym resolution", "Pre-solve topology/unit/component/model validation",
