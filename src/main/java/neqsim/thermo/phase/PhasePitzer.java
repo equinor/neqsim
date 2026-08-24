@@ -98,7 +98,7 @@ public class PhasePitzer extends PhaseGE {
 
   /** Constructor for PhasePitzer. */
   public PhasePitzer() {
-    setPhysicalPropertyModel(PhysicalPropertyModel.SALT_WATER);
+    setPpm(PhysicalPropertyModel.SALT_WATER);
     int max = componentArray.length;
     beta0 = new double[max][max];
     beta1 = new double[max][max];
