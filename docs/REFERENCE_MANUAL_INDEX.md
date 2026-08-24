@@ -1025,7 +1025,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Field Development Overview        | [docs/fielddevelopment/README.md](fielddevelopment/README.md)                                                                       | Field development module overview                                       |
 | **Digital Field Twin**            | [docs/fielddevelopment/DIGITAL_FIELD_TWIN.md](fielddevelopment/DIGITAL_FIELD_TWIN.md)                                         | **NEW** Comprehensive architecture for lifecycle consistency            |
 | **Mathematical Reference**        | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE.md)                                 | **NEW** Mathematical foundations for all calculations                   |
-| **API Guide**                     | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE.md)                                                           | **NEW** Detailed usage examples for all components                      |
+| Field Development API Guide      | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE.md)                                                           | Current concept inputs, screening KPIs, option ranking, units, and boundaries |
 | **Integrated Framework**          | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) | PVT→Reservoir→Well→Process integration guide                            |
 | **Decision Engine Workflows**      | [docs/fielddevelopment/DECISION_ENGINE_WORKFLOWS.md](fielddevelopment/DECISION_ENGINE_WORKFLOWS.md)                           | Tieback, greenfield, portfolio, process, reservoir, and reporting workflows |
 | **Host Tie-In Capacity**          | [docs/fielddevelopment/HOST_TIE_IN_CAPACITY.md](fielddevelopment/HOST_TIE_IN_CAPACITY.md)                                     | Base-host and satellite production capacity, holdback, process bottlenecks, and debottleneck decisions |
@@ -1044,7 +1044,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | ------------------- | --------------------------- | -------------------------------------------------------------- |
 | Screening (DG0-DG1) | DIGITAL_FIELD_TWIN §3       | Concept comparison, flow assurance screening, tieback analysis |
 | Selection (DG2)     | MATHEMATICAL_REFERENCE §4-5 | NPV calculation, MCDA ranking, Norwegian tax model             |
-| Definition (DG3)    | API_GUIDE §5-6              | Process system auto-generation, network modeling               |
+| Definition (DG3)    | API_GUIDE § Move from screening to simulation | Screening-to-`ProcessSystem` ownership and validation boundaries |
 | Execution (DG4)     | DIGITAL_FIELD_TWIN §4       | VFP table export, reservoir coupling                           |
 | Operations          | DIGITAL_FIELD_TWIN §5       | Real-time optimization, Monte Carlo uncertainty                |
 | Late-Life           | LATE_LIFE_OPERATIONS        | Turndown, debottlenecking, decommissioning timing              |

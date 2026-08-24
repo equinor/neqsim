@@ -341,6 +341,28 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(0.0318, vap, 1e-3);
   }
 
+  /** Neutral-solute Henry fugacity uses the same molality standard state as Pitzer activity. */
+  @Test
+  public void testNeutralHenryFugacityUsesMolalityBasis() {
+    SystemPitzer system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("water", 55.508);
+    system.addComponent("CO2", 1.0e-4);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+
+    PhaseInterface aqueous = system.getPhase(1);
+    double moleFraction = aqueous.getComponent("CO2").getx();
+    double molality = aqueous.getComponent("CO2").getMolality(aqueous);
+    double gamma = aqueous.getActivityCoefficient(aqueous.getComponent("CO2").getComponentNumber());
+    double henryCoefficient = aqueous.getComponent("CO2").getHenryCoef(aqueous.getTemperature());
+    double expectedFugacityCoefficient = gamma * henryCoefficient * molality / (moleFraction * aqueous.getPressure());
+
+    assertTrue(molality / moleFraction > 50.0);
+    assertEquals(expectedFugacityCoefficient, aqueous.getComponent("CO2").getFugacityCoefficient(),
+        expectedFugacityCoefficient * 1.0e-12);
+  }
+
   @Test
   public void testCpCvAndEnthalpyAccess() {
     SystemInterface system = new SystemPitzer(298.15, 1.0);

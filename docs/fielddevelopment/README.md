@@ -15,7 +15,7 @@ The high-level helpers are screening tools. They do not by themselves provide a 
 |----------|-------------|
 | [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN.md) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
 | [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE.md) | Mathematical foundations for all calculations (EoS, economics, flow) |
-| [API_GUIDE.md](API_GUIDE.md) | Detailed usage examples for every class and method |
+| [API_GUIDE.md](API_GUIDE.md) | Source-anchored concept, screening-KPI, option-ranking, unit, and engineering-boundary guide |
 | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS.md) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
 | [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY.md) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
 | [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING.md) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |

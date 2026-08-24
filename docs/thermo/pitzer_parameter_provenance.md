@@ -242,8 +242,11 @@ topology-complete gates when their family is present. This prevents a partly imp
 dataset from silently treating an unqualified missing cross-interaction as zero.
 
 The equations are mapped on the molality scale and contribute to natural-log activity coefficients
-and the common Pitzer osmotic sum. They do not convert activity scales, standard states, pressure
-corrections, or species definitions. The Kaasa Appendix F `lambda` and `ksi` (`zeta`) rows for CO2,
+and the common Pitzer osmotic sum. For phase equilibrium, neutral-solute Henry fugacity is therefore
+evaluated as `m_i gamma_i H_i`; the component fugacity coefficient includes the explicit `m_i/x_i`
+conversion required by NeqSim's common `x_i phi_i P` kernel. The interaction equations themselves do
+not convert activity scales, pressure corrections, or species definitions. The Kaasa Appendix F
+`lambda` and `ksi` (`zeta`) rows for CO2,
 H2S, and CH4 are now structurally representable, but no thesis value is copied or adopted. Row-level
 lineage, reuse rights, range, uncertainty, complete companion interactions, and held-out validation
 remain mandatory before a versioned parameter dataset can use them.
