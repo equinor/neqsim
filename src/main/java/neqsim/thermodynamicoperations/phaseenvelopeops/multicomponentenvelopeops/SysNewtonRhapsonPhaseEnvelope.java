@@ -201,7 +201,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   public void useAsSpecEq(int i) {
     speceq = i;
     specVal = u.get(i, 0);
-    System.out.println("Enforced Scec Variable" + speceq + "  " + specVal);
+    logger.info("Enforced specification variable {} with value {}", speceq, specVal);
   }
 
   /**
@@ -323,7 +323,32 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
     calc_x_y();
     system.calc_x_y();
-    system.init(3);
+    initSystemWithFugacityDerivatives();
+  }
+
+  /**
+   * Initialize fugacity coefficients and the derivatives required by the continuation Jacobian.
+   *
+   * <p>
+   * Cubic equations of state provide the derivatives analytically. Multiparameter reference equations such as GERG-2008
+   * and EOS-CG currently do not provide a complete, thermodynamically consistent analytic derivative set, so the
+   * system-level numerical derivative implementation is used for those models. The caller's derivative-mode setting is
+   * restored after initialization.
+   * </p>
+   */
+  private void initSystemWithFugacityDerivatives() {
+    boolean originalNumericDerivatives = system.isNumericDerivatives();
+    boolean requireNumericDerivatives = !system.isImplementedCompositionDeriativesofFugacity()
+        || !system.isImplementedPressureDeriativesofFugacity()
+        || !system.isImplementedTemperatureDeriativesofFugacity();
+    try {
+      if (requireNumericDerivatives) {
+        system.setNumericDerivatives(true);
+      }
+      system.init(3);
+    } finally {
+      system.setNumericDerivatives(originalNumericDerivatives);
+    }
   }
 
   /**
@@ -454,6 +479,10 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       try {
         xcoef = a.solve(xg.transpose());
       } catch (Exception ex) {
+        if (xcoefOld == null) {
+          u.set(j, 0, uold.get(j, 0) + dxds.get(j, 0) * ds);
+          continue;
+        }
         xcoef = xcoefOld.copy();
       }
       u.set(j, 0, xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
@@ -534,7 +563,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
           system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0)));
           calc_x_y();
           system.calc_x_y();
-          system.init(3);
+          initSystemWithFugacityDerivatives();
 
           // Build residual vector
           for (int i = 0; i < numberOfComponents; i++) {
@@ -667,55 +696,63 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     do {
       localIter++;
       iter++;
-      init();
-      setfvec();
-      setJac();
-
-      dx = Jac.solve(fvec);
-      u.minusEquals(dx);
-
-      if (Double.isNaN(dx.norm2()) || Double.isInfinite(dx.norm2())) {
+      try {
+        init();
+        setfvec();
+        setJac();
+        dx = Jac.solve(fvec);
+        u.minusEquals(dx);
+      } catch (Exception failure) {
         if (iter2 >= 15) {
-          // Signal non-convergence with NaN
-          ds = Double.NaN;
-          u.set(numberOfComponents, 0, ds);
-          u.set(numberOfComponents + 1, 0, ds);
+          throw new IllegalStateException("Phase-envelope Newton solver could not initialize a valid trial state",
+              failure);
         }
-        // if the norm is NAN reduce step and try again
         iter2++;
         u = uold.copy();
         ds *= 0.3;
-        calcInc2(np);
-        solve(np);
-      } else if (dxOldNorm < dx.norm2()) {
+        predictAfterBacktracking(np);
+        dxOldNorm = 1.0e10;
+        norm = dxOldNorm;
+        continue;
+      }
+
+      double correctionNorm = dx.norm2();
+      if (!Double.isFinite(correctionNorm) || dxOldNorm < correctionNorm) {
         if (iter2 == 0) {
           uolder = uold.copy();
         }
         if (iter2 >= 15) {
-          // Signal non-convergence with NaN
-          ds = Double.NaN;
-          u.set(numberOfComponents, 0, ds);
-          u.set(numberOfComponents + 1, 0, ds);
+          throw new IllegalStateException("Phase-envelope Newton solver did not converge after step backtracking");
         }
-        // if the norm does not reduce there is a danger of entering trivial solution
-        // reduce step and try again to avoid it
         iter2++;
         u = uold.copy();
         ds *= 0.3;
-        calcInc2(np);
-        solve(np);
+        predictAfterBacktracking(np);
+        dxOldNorm = 1.0e10;
+        norm = dxOldNorm;
+        continue;
       }
-
-      if (Double.isNaN(dx.norm2())) {
-        norm = 1e10;
-      } else {
-        norm = dx.norm2();
-        dxOldNorm = norm;
-      }
+      norm = correctionNorm;
+      dxOldNorm = norm;
     } while (norm > 1.e-5 && localIter < 50);
+
+    if (norm > 1.e-5) {
+      throw new IllegalStateException("Phase-envelope Newton solver exceeded 50 iterations");
+    }
 
     init();
 
     uold = u.copy();
+  }
+
+  /** Rebuild the continuation predictor after reducing the arc-length step. */
+  private void predictAfterBacktracking(int np) {
+    if (np < 5 || xcoefOld == null) {
+      u = uold.copy();
+      u.plusEquals(dxds.times(ds));
+      specVal = u.get(speceq, 0);
+    } else {
+      calcInc2(np);
+    }
   }
 }

@@ -3825,7 +3825,13 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 1; i < numberOfPhases; i++) {
       if (isPhase(i)) {
         if (getPhase(i).getType() == PhaseType.GAS) {
-          getPhase(i).setType(PhaseType.OIL);
+          PhaseInterface ph = getPhase(i);
+          ph.setType(PhaseType.OIL);
+          if (type > 0) {
+            for (int j = 0; j < numberOfComponents; j++) {
+              ph.getComponent(j).fugcoef(ph);
+            }
+          }
         }
       }
     }
@@ -3874,7 +3880,13 @@ public abstract class SystemThermo implements SystemInterface {
     // This is consistent with initAnalytic(type) which only reclassifies phases >=
     // 1.
     if (phaseNum >= 1 && getPhase(phaseNum).getType() == PhaseType.GAS) {
-      getPhase(phaseNum).setType(PhaseType.OIL);
+      PhaseInterface ph = getPhase(phaseNum);
+      ph.setType(PhaseType.OIL);
+      if (type > 0) {
+        for (int j = 0; j < numberOfComponents; j++) {
+          ph.getComponent(j).fugcoef(ph);
+        }
+      }
     }
 
     this.isInitialized = true;

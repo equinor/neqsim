@@ -55,8 +55,8 @@ public class SystemEOSCGEos extends SystemEos {
   }
 
   public void commonInitialization() {
-    setImplementedCompositionDeriativesofFugacity(true);
-    setImplementedPressureDeriativesofFugacity(true);
-    setImplementedTemperatureDeriativesofFugacity(true);
+    setImplementedCompositionDeriativesofFugacity(false);
+    setImplementedPressureDeriativesofFugacity(false);
+    setImplementedTemperatureDeriativesofFugacity(false);
   }
 }

@@ -197,6 +197,16 @@ public class NeqSimGERG2008 {
    * @return a double
    */
   public double getMolarDensity() {
+    return getMolarDensity(Double.NaN);
+  }
+
+  /**
+   * Get molar density, using a previous liquid density as a continuation estimate when available.
+   *
+   * @param initialLiquidDensity previous liquid molar density in mol/L, or {@link Double#NaN}
+   * @return molar density in mol/L
+   */
+  public double getMolarDensity(double initialLiquidDensity) {
     int flag = 0;
     if (phase != null) {
       PhaseType type = phase.getType();
@@ -208,6 +218,18 @@ public class NeqSimGERG2008 {
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
+    if (flag == 2) {
+      double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, initialLiquidDensity, density -> {
+        doubleW calculatedPressure = new doubleW(0.0);
+        doubleW compressibility = new doubleW(0.0);
+        GERG2008.PressureGERG(phase.getTemperature(), density, normalizedGERGComposition, calculatedPressure,
+            compressibility);
+        return calculatedPressure.val;
+      });
+      if (Double.isFinite(liquidDensity)) {
+        return liquidDensity;
+      }
+    }
     GERG2008.DensityGERG(flag, phase.getTemperature(), pressure, normalizedGERGComposition, D, ierr, herr);
     return D.val;
   }
@@ -484,6 +506,29 @@ public class NeqSimGERG2008 {
     // Return the computed dimensionless residual Helmholtz free energy.
     // This is equivalent to alpha_res = A^r/(RT)
     return ar;
+  }
+
+  /**
+   * Calculate the dimensionless residual Helmholtz energy at a prescribed molar density.
+   *
+   * <p>
+   * This method is used for constant-volume composition derivatives. The composition is the normalized GERG composition
+   * captured from the phase supplied to this wrapper.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/L
+   * @return dimensionless residual Helmholtz energy, {@code alphaR = Ares/(nRT)}
+   */
+  public double getResidualHelmholtzEnergy(double temperature, double molarDensity) {
+    doubleW[][] residualHelmholtz = new doubleW[4][4];
+    for (int i = 0; i < residualHelmholtz.length; i++) {
+      for (int j = 0; j < residualHelmholtz[i].length; j++) {
+        residualHelmholtz[i][j] = new doubleW(0.0);
+      }
+    }
+    GERG2008.AlpharGERG(1, 0, temperature, molarDensity, normalizedGERGComposition, residualHelmholtz);
+    return residualHelmholtz[0][0].val;
   }
 
   /**

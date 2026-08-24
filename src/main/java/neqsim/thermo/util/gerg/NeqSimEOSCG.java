@@ -82,11 +82,11 @@ public class NeqSimEOSCG {
 
   public double getDensity(PhaseInterface phase) {
     this.setPhase(phase);
-    return getMolarDensity() * phase.getMolarMass();
+    return getMolarDensity() * phase.getMolarMass() * 1000.0;
   }
 
   public double getDensity() {
-    return getMolarDensity() * phase.getMolarMass();
+    return getMolarDensity() * phase.getMolarMass() * 1000.0;
   }
 
   public double getPressure() {
@@ -104,6 +104,16 @@ public class NeqSimEOSCG {
   }
 
   public double getMolarDensity() {
+    return getMolarDensity(Double.NaN);
+  }
+
+  /**
+   * Get molar density, using a previous liquid density as a continuation estimate when available.
+   *
+   * @param initialLiquidDensity previous liquid molar density in mol/L, or {@link Double#NaN}
+   * @return molar density in mol/L
+   */
+  public double getMolarDensity(double initialLiquidDensity) {
     int flag = 0;
     if (phase != null) {
       PhaseType type = phase.getType();
@@ -115,6 +125,17 @@ public class NeqSimEOSCG {
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 1.0e2;
+    if (flag == 2) {
+      double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, initialLiquidDensity, density -> {
+        doubleW calculatedPressure = new doubleW(0.0);
+        doubleW compressibility = new doubleW(0.0);
+        eosCG.pressure(phase.getTemperature(), density, normalizedComposition, calculatedPressure, compressibility);
+        return calculatedPressure.val;
+      });
+      if (Double.isFinite(liquidDensity)) {
+        return liquidDensity;
+      }
+    }
     eosCG.density(flag, phase.getTemperature(), pressure, normalizedComposition, D, ierr, herr);
     if (ierr.val != 0) {
       // System.out.println("NeqSimEOSCG: Density solver failed. ierr=" + ierr.val + ", herr=" +
@@ -332,5 +353,28 @@ public class NeqSimEOSCG {
 
     eosCG.alphar(2, 3, temperature, molarDensity, normalizedComposition, ar);
     return ar;
+  }
+
+  /**
+   * Calculate the dimensionless residual Helmholtz energy at a prescribed molar density.
+   *
+   * <p>
+   * This method is used for constant-volume composition derivatives. The composition is the normalized EOS-CG
+   * composition captured from the phase supplied to this wrapper.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/L
+   * @return dimensionless residual Helmholtz energy, {@code alphaR = Ares/(nRT)}
+   */
+  public double getResidualHelmholtzEnergy(double temperature, double molarDensity) {
+    doubleW[][] residualHelmholtz = new doubleW[4][4];
+    for (int i = 0; i < residualHelmholtz.length; i++) {
+      for (int j = 0; j < residualHelmholtz[i].length; j++) {
+        residualHelmholtz[i][j] = new doubleW(0.0);
+      }
+    }
+    eosCG.alphar(1, 0, temperature, molarDensity, normalizedComposition, residualHelmholtz);
+    return residualHelmholtz[0][0].val;
   }
 }
