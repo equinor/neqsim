@@ -9,7 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import neqsim.thermo.phase.PhaseLeachmanEos;
+import neqsim.thermo.phase.PhaseSolidHelmholtzEos;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemLeachmanEos;
+import neqsim.thermo.util.solid.ParaHydrogenSolidHelmholtzEquation;
 
 /**
  * @author victorigi99
@@ -22,6 +27,54 @@ public class LeachmanTest {
   @BeforeEach
   public void setUp() {
     Leachman = new Leachman();
+  }
+
+  /** Verifies that the solid-enabled Leachman system initializes every configured phase. */
+  @Test
+  void testSolidEnabledSystemConstruction() {
+    SystemInterface system = new neqsim.thermo.system.SystemLeachmanEos(13.8033, 0.07041, true);
+
+    assertEquals(5, system.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      assertTrue(system.getPhase(phaseIndex) != null);
+    }
+    assertEquals(PhaseType.SOLID, system.getPhase(system.getNumberOfPhases() - 1).getType());
+  }
+
+  /** Verifies para-hydrogen solid reference calibration at the triple point. */
+  @Test
+  void testParaHydrogenTriplePointCalibration() {
+    SystemInterface system = new SystemLeachmanEos(ParaHydrogenSolidHelmholtzEquation.TRIPLE_POINT_TEMPERATURE,
+        ParaHydrogenSolidHelmholtzEquation.TRIPLE_POINT_PRESSURE, "para-hydrogen", true);
+    system.init(2);
+
+    int liquidPhaseIndex = 1;
+    int solidPhaseIndex = system.getNumberOfPhases() - 1;
+    assertEquals("para-hydrogen", system.getPhase(0).getComponent(0).getComponentName());
+    assertTrue(system.getPhase(solidPhaseIndex) instanceof PhaseSolidHelmholtzEos);
+    assertEquals(76.9773, system.getPhase(liquidPhaseIndex).getDensity(), 1.0e-3);
+    assertEquals(system.getPhase(liquidPhaseIndex).getGibbsEnergy(), system.getPhase(solidPhaseIndex).getGibbsEnergy(),
+        1.0e-6);
+    assertEquals(ParaHydrogenSolidHelmholtzEquation.TRIPLE_POINT_ENTHALPY_OF_FUSION,
+        system.getPhase(liquidPhaseIndex).getEnthalpy() - system.getPhase(solidPhaseIndex).getEnthalpy(), 1.0e-6);
+  }
+
+  /** Verifies that an explicitly liquid phase selects the stable dense Leachman root. */
+  @Test
+  void testParaHydrogenTriplePointLiquidRoot() {
+    PhaseLeachmanEos liquid = new PhaseLeachmanEos();
+    liquid.setTemperature(ParaHydrogenSolidHelmholtzEquation.TRIPLE_POINT_TEMPERATURE);
+    liquid.setPressure(ParaHydrogenSolidHelmholtzEquation.TRIPLE_POINT_PRESSURE);
+    liquid.addComponent("para-hydrogen", 1.0, 1.0, 0);
+    liquid.init(1.0, 1, 2, PhaseType.LIQUID, 1.0);
+
+    NeqSimLeachman liquidProperties = new NeqSimLeachman(liquid, "para");
+    double[] properties = liquidProperties.propertiesLeachman();
+
+    assertEquals(38.1854658027, liquidProperties.getMolarDensity(), 1.0e-8);
+    assertEquals(76.9773, liquid.getDensity(), 1.0e-3);
+    assertEquals(-108.3372921, liquid.getEnthalpy(), 1.0e-5);
+    assertTrue(properties[2] > 0.0, "The liquid root must be mechanically stable.");
   }
 
   @Test

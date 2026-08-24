@@ -4,6 +4,7 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -15,6 +16,15 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author victorigi99
  */
 public class NeqSimLeachman {
+  /** Dense-side initial molar density used to select the liquid hydrogen root, in mol/L. */
+  private static final double LIQUID_DENSITY_INITIAL_GUESS = 45.0;
+
+  /** Number of intervals used to locate dense pressure roots. */
+  private static final int LIQUID_ROOT_SCAN_INTERVALS = 2000;
+
+  /** Maximum number of bisection iterations used to refine a dense pressure root. */
+  private static final int LIQUID_ROOT_MAX_ITERATIONS = 100;
+
   PhaseInterface phase = null;
   Leachman Leachman = new Leachman();
 
@@ -95,13 +105,120 @@ public class NeqSimLeachman {
    * @return a double representing the molar density
    */
   public double getMolarDensity() {
-    int flag = 0;
+    double pressure = phase.getPressure() * 100.0;
+    if (phase.getTemperature() < Leachman.Tc && phase instanceof PhaseLeachmanEos
+        && ((PhaseLeachmanEos) phase).isLiquidRootRequested()) {
+      return getLiquidMolarDensity(phase.getTemperature(), pressure);
+    }
+
     intW ierr = new intW(0);
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
-    double pressure = phase.getPressure() * 100.0;
-    Leachman.DensityLeachman(flag, phase.getTemperature(), pressure, D, ierr, herr);
+    Leachman.DensityLeachman(0, phase.getTemperature(), pressure, D, ierr, herr);
     return D.val;
+  }
+
+  /**
+   * Finds the highest mechanically stable density root above the critical density. The scan is deliberately independent
+   * of {@link Leachman#DensityLeachman(int, double, double, doubleW, intW, StringW)} because that routine may restart
+   * on the vapor branch and return its ideal-gas fallback after a failed liquid iteration.
+   *
+   * @param temperature temperature in K
+   * @param targetPressure target pressure in kPa
+   * @return stable liquid molar density in mol/L
+   * @throws IllegalStateException if no stable dense pressure root can be found
+   */
+  private double getLiquidMolarDensity(double temperature, double targetPressure) {
+    double minimumDensity = Leachman.Dc * (1.0 + 1.0e-8);
+    double maximumDensity = Math.max(4.0 * Leachman.Dc, 1.5 * LIQUID_DENSITY_INITIAL_GUESS);
+    double densityStep = (maximumDensity - minimumDensity) / LIQUID_ROOT_SCAN_INTERVALS;
+    double upperDensity = maximumDensity;
+    double upperResidual = pressureResidual(temperature, upperDensity, targetPressure);
+
+    for (int interval = 0; interval < LIQUID_ROOT_SCAN_INTERVALS; interval++) {
+      double lowerDensity = upperDensity - densityStep;
+      double lowerResidual = pressureResidual(temperature, lowerDensity, targetPressure);
+      if (isFinite(upperResidual) && isFinite(lowerResidual) && haveOppositeSigns(upperResidual, lowerResidual)) {
+        double root = bisectPressureRoot(temperature, targetPressure, lowerDensity, upperDensity, lowerResidual,
+            upperResidual);
+        pressureResidual(temperature, root, targetPressure);
+        if (Leachman.dPdDsave > 0.0) {
+          return root;
+        }
+      }
+      upperDensity = lowerDensity;
+      upperResidual = lowerResidual;
+    }
+
+    throw new IllegalStateException("No mechanically stable liquid Leachman density root found at T=" + temperature
+        + " K and P=" + targetPressure + " kPa.");
+  }
+
+  /**
+   * Refines a bracketed pressure root by bisection.
+   *
+   * @param temperature temperature in K
+   * @param targetPressure target pressure in kPa
+   * @param lowerDensity lower density bound in mol/L
+   * @param upperDensity upper density bound in mol/L
+   * @param lowerResidual pressure residual at the lower bound in kPa
+   * @param upperResidual pressure residual at the upper bound in kPa
+   * @return refined density root in mol/L
+   */
+  private double bisectPressureRoot(double temperature, double targetPressure, double lowerDensity, double upperDensity,
+      double lowerResidual, double upperResidual) {
+    double pressureTolerance = Math.max(1.0e-10, Math.abs(targetPressure) * 1.0e-10);
+    for (int iteration = 0; iteration < LIQUID_ROOT_MAX_ITERATIONS; iteration++) {
+      double middleDensity = 0.5 * (lowerDensity + upperDensity);
+      double middleResidual = pressureResidual(temperature, middleDensity, targetPressure);
+      if (Math.abs(middleResidual) <= pressureTolerance || Math.abs(upperDensity - lowerDensity) <= 1.0e-12) {
+        return middleDensity;
+      }
+      if (haveOppositeSigns(lowerResidual, middleResidual)) {
+        upperDensity = middleDensity;
+        upperResidual = middleResidual;
+      } else {
+        lowerDensity = middleDensity;
+        lowerResidual = middleResidual;
+      }
+    }
+    return 0.5 * (lowerDensity + upperDensity);
+  }
+
+  /**
+   * Evaluates the EOS pressure residual at a trial density.
+   *
+   * @param temperature temperature in K
+   * @param density molar density in mol/L
+   * @param targetPressure target pressure in kPa
+   * @return calculated pressure minus target pressure in kPa
+   */
+  private double pressureResidual(double temperature, double density, double targetPressure) {
+    doubleW calculatedPressure = new doubleW(0.0);
+    doubleW compressibilityFactor = new doubleW(0.0);
+    Leachman.PressureLeachman(temperature, density, calculatedPressure, compressibilityFactor);
+    return calculatedPressure.val - targetPressure;
+  }
+
+  /**
+   * Tests whether two finite values bracket zero, including an endpoint root.
+   *
+   * @param first first value
+   * @param second second value
+   * @return true when zero lies between the values
+   */
+  private boolean haveOppositeSigns(double first, double second) {
+    return first == 0.0 || second == 0.0 || (first < 0.0 && second > 0.0) || (first > 0.0 && second < 0.0);
+  }
+
+  /**
+   * Tests whether a value is neither NaN nor infinite without requiring a newer Java API.
+   *
+   * @param value value to inspect
+   * @return true when the value is finite
+   */
+  private boolean isFinite(double value) {
+    return !Double.isNaN(value) && !Double.isInfinite(value);
   }
 
   /**

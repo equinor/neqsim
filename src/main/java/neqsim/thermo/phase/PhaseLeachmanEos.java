@@ -127,6 +127,9 @@ public class PhaseLeachmanEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
+    if (isLiquidRootRequested() != (pt == PhaseType.LIQUID)) {
+      invalidateCache();
+    }
     IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
@@ -163,6 +166,20 @@ public class PhaseLeachmanEos extends PhaseEos {
 
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
+  }
+
+  /**
+   * Reports whether the caller requested the liquid Leachman density root for the current initialization.
+   *
+   * <p>
+   * The requested phase type is recorded before {@link PhaseEos#init(double, int, int, PhaseType, double)} computes the
+   * molar volume because that method may subsequently classify the phase as gas, oil, or aqueous.
+   * </p>
+   *
+   * @return true when the current initialization requests the liquid density root
+   */
+  public boolean isLiquidRootRequested() {
+    return IPHASE == -1;
   }
 
   /** {@inheritDoc} */

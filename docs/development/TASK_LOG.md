@@ -36,6 +36,18 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-08-24 — Solid-argon Helmholtz reference EOS and publication regression
+**Type:** A (Property) / E (Feature)
+**Keywords:** argon, solid, Helmholtz EOS, Buckingham exp-6, FCC lattice, Debye, Einstein, anharmonicity, 16 GPa, Table 8, reference state
+**Solution:** `ArgonSolidHelmholtzEquation`, `SystemArgonSolidHelmholtzEos`, and `ArgonSolidHelmholtzEquationTest`
+**Notes:** Implemented the Maltby-Hammer-Wilhelmsen JPCRD 53, 043102 (2024) equation with second-order automatic derivatives and a safeguarded physical-branch volume solve. The paper does not publish its two absolute Gibbs/entropy reference offsets, so they are recovered from the authors' Table 8 sample calculation rather than from NeqSim GERG-2008, which uses a different caloric convention. Reproducing Table 8 with the rounded parameter table requires the finite 20-shell FCC lattice sum; independently adding the printed continuum long-range integral changes the low-pressure cancellation and does not reproduce the sample. Regression covers all nine tabulated properties plus molar volume, derivative identities, and pressure inversion through 300 K and 16 GPa.
+
+### 2026-08-24 — Assess a solid para-hydrogen Helmholtz EOS for NeqSim
+**Type:** A (Property)
+**Keywords:** para-hydrogen, solid Phase I, Helmholtz EOS, Vinet, Leachman, freezing point, phase equilibrium, experimental model
+**Solution:** `task_solve/2026-08-24_solid_para_hydrogen_eos_thesis_assessment/`
+**Notes:** A 2026 academic formulation adds dedicated Vinet, vibrational, and anharmonic Helmholtz terms that are not represented by the generic `ComponentSolid` liquid-reference path. Treat its reported property and phase-boundary deviations as author-reported until independently reproduced; the 17.64% sublimation Gibbs-consistency deviation precludes production-ready adoption. Recommended sequence: repair the `SystemLeachmanEos(T, P, true)` null-phase constructor defect, replace the `-500 K` freezing sentinel with explicit failure status, then add an opt-in experimental Phase I para-hydrogen model with coefficient/derivative audit and independent PVT, caloric, melting, sublimation, and triple-point regressions.
+
 ### 2026-08-20 — Gas-turbine water-wash interval planning and permanent-wash business case
 **Type:** E (Feature)
 **Keywords:** gas turbine, compressor fouling, water wash, on-line wash, crank wash, corrected efficiency, degradation, wash interval, heat rate, fuel gas, CO2 tax, payback, GasTurbineWashPlanner, GasTurbineDegradation
