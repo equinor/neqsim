@@ -55,6 +55,9 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** Exact reaction-adjusted overall component mole inventory. */
   private transient double[] coupledOverallMoles;
 
+  /** Settled aqueous phase fraction captured immediately before a beta Newton correction. */
+  private transient double previousAqueousFractionBeforeBetaCorrection = Double.NaN;
+
   /**
    * Create a hybrid multiphase flash.
    *
@@ -310,6 +313,9 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** {@inheritDoc} */
   @Override
   public double calcQ() {
+    int aqueousPhaseIndex = getHybridAqueousPhaseNumber();
+    previousAqueousFractionBeforeBetaCorrection =
+        aqueousPhaseIndex >= 0 ? system.getPhase(aqueousPhaseIndex).getBeta() : Double.NaN;
     calcE();
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double overallFraction = getCoupledOverallFraction(componentIndex);
@@ -432,10 +438,10 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     }
 
     double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
-    // The phase object retains the synchronized pre-Newton beta while the system beta array
-    // contains the current proposal. Limiting beta reduction therefore bounds the corresponding
-    // ionic-concentration increase without consulting a possibly invalid trial composition.
-    double previousAqueousFraction = system.getPhase(aqueousPhaseIndex).getBeta();
+    // calcQ captures the settled beta before the Newton proposal is written and initialized.
+    // Limiting beta reduction therefore bounds the corresponding ionic-concentration increase
+    // without consulting a possibly invalid trial composition.
+    double previousAqueousFraction = previousAqueousFractionBeforeBetaCorrection;
     double concentrationLimitedAqueousFraction = Double.isFinite(previousAqueousFraction)
         && previousAqueousFraction > 0.0 ? previousAqueousFraction / HYBRID_ION_CONCENTRATION_STEP_LIMIT
             : ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN;
