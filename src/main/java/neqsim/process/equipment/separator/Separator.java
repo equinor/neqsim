@@ -1654,8 +1654,8 @@ public class Separator extends ProcessEquipmentBaseClass
       // For horizontal, gas flows through upper section above design liquid level
       gasArea = getSepCrossArea() * (1.0 - designLiquidLevelFraction);
     } else {
-      // For vertical separator
-      gasArea = getSepCrossArea() * (1.0 - designLiquidLevelFraction);
+      // For vertical separators, gas flows through the full vessel cross-section.
+      gasArea = getSepCrossArea();
     }
     return maxVelocity * gasArea;
   }
@@ -1705,6 +1705,16 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     return currentGasFlow / maxFlow;
+  }
+
+  /**
+   * Captures a detached, fail-closed gas-capacity assessment for optimization and reporting.
+   *
+   * @param designBasisProvenance non-blank source for geometry and K-factor limits
+   * @return immutable separator capacity evidence
+   */
+  public SeparatorCapacityAssessment getCapacityAssessment(String designBasisProvenance) {
+    return SeparatorCapacityAssessment.from(this, designBasisProvenance);
   }
 
   /**
@@ -1912,9 +1922,8 @@ public class Separator extends ProcessEquipmentBaseClass
     // Required gas area
     double requiredGasArea = gasVolumeFlow / maxVelocity;
 
-    // Calculate diameter (assuming gas area fraction based on orientation)
-    double gasAreaFraction = orientation.equals("horizontal") ? (1.0 - designLiquidLevelFraction)
-        : (1.0 - designLiquidLevelFraction);
+    // Calculate diameter using the orientation-specific gas flow area.
+    double gasAreaFraction = orientation.equals("horizontal") ? (1.0 - designLiquidLevelFraction) : 1.0;
     double requiredTotalArea = requiredGasArea / gasAreaFraction;
     double requiredDiameter = Math.sqrt(4.0 * requiredTotalArea / Math.PI);
 
@@ -2085,8 +2094,9 @@ public class Separator extends ProcessEquipmentBaseClass
 
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+      double gasAreaFraction = orientation.equals("horizontal") ? 1.0 - designLiquidLevelFraction : 1.0;
       double actualVelocity = gasVolumeFlow / 3600.0
-          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * gasAreaFraction);
 
       sb.append("\n--- Operating Conditions ---\n");
       sb.append("Gas Volume Flow: ").append(String.format("%.1f m3/hr", gasVolumeFlow)).append("\n");
@@ -2133,8 +2143,9 @@ public class Separator extends ProcessEquipmentBaseClass
 
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+      double gasAreaFraction = orientation.equals("horizontal") ? 1.0 - designLiquidLevelFraction : 1.0;
       double actualVelocity = gasVolumeFlow / 3600.0
-          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * gasAreaFraction);
 
       report.put("gasVolumeFlow_m3hr", gasVolumeFlow);
       report.put("gasDensity_kgm3", gasDensity);

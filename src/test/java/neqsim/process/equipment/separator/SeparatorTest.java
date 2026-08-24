@@ -475,4 +475,71 @@ class SeparatorTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(kHorizontal > kVertical, "Horizontal K (" + kHorizontal + ") should exceed vertical K ("
         + kVertical + ") because the gas area is derated by the design liquid level");
   }
+
+  /**
+   * Regression for GitHub issue #3154: vertical separator design capacity uses the full vessel cross-section and is
+   * independent of the horizontal liquid-area fraction.
+   */
+  @Test
+  void testVerticalDesignCapacityUsesFullCrossSection() {
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(300.0, 50.0);
+    fluid.addComponent("methane", 95.0);
+    fluid.addComponent("ethane", 5.0);
+    fluid.setMixingRule(2);
+
+    Stream feed = new Stream("capacity feed", fluid);
+    feed.setTemperature(30.0, "C");
+    feed.setFlowRate(50000.0, "kg/hr");
+    Separator vertical = new Separator("vertical capacity separator", feed);
+    vertical.setInternalDiameter(3.0);
+    vertical.setOrientation("vertical");
+    vertical.setDesignLiquidLevelFraction(0.8);
+    ProcessSystem verticalProcess = new ProcessSystem();
+    verticalProcess.add(feed);
+    verticalProcess.add(vertical);
+    verticalProcess.run();
+
+    double capacityAtHighLiquidFraction = vertical.getMaxAllowableGasFlowRate();
+    vertical.setDesignLiquidLevelFraction(0.2);
+    double capacityAtLowLiquidFraction = vertical.getMaxAllowableGasFlowRate();
+
+    Assertions.assertEquals(capacityAtHighLiquidFraction, capacityAtLowLiquidFraction,
+        capacityAtHighLiquidFraction * 1.0e-12);
+
+    vertical.setDesignLiquidLevelFraction(0.8);
+    Stream horizontalFeed = new Stream("horizontal capacity feed", fluid.clone());
+    horizontalFeed.setTemperature(30.0, "C");
+    horizontalFeed.setFlowRate(50000.0, "kg/hr");
+    Separator horizontal = new Separator("horizontal capacity separator", horizontalFeed);
+    horizontal.setInternalDiameter(3.0);
+    horizontal.setOrientation("horizontal");
+    horizontal.setDesignLiquidLevelFraction(0.8);
+    ProcessSystem horizontalProcess = new ProcessSystem();
+    horizontalProcess.add(horizontalFeed);
+    horizontalProcess.add(horizontal);
+    horizontalProcess.run();
+
+    Assertions.assertEquals(5.0, vertical.getMaxAllowableGasFlowRate() / horizontal.getMaxAllowableGasFlowRate(),
+        1.0e-10);
+
+    SeparatorCapacityAssessment assessment = vertical.getCapacityAssessment("Issue #3154 design basis");
+    Assertions.assertEquals(SeparatorCapacityAssessment.Status.FEASIBLE, assessment.getStatus());
+    Assertions.assertEquals(Math.PI * 3.0 * 3.0 / 4.0, assessment.getGasAreaM2(), 1.0e-12);
+    Assertions.assertTrue(Double.isFinite(assessment.getUtilization()));
+    Assertions.assertTrue(assessment.toJson().contains("Issue #3154 design basis"));
+
+    double mechanicalLimit = assessment.getSoudersBrownMaximumGasFlowM3PerS() * 0.8;
+    vertical.getMechanicalDesign().setMaxDesignGassVolumeFlow(mechanicalLimit * 3600.0);
+    SeparatorCapacityAssessment mechanicallyLimited = vertical
+        .getCapacityAssessment("Issue #3154 mechanical design basis");
+    Assertions.assertEquals("mechanicalDesign", mechanicallyLimited.getDesignBasisSource());
+    Assertions.assertEquals("mechanicalDesignGasFlow", mechanicallyLimited.getGoverningCapacityBasis());
+    Assertions.assertEquals(mechanicalLimit, mechanicallyLimited.getMaximumGasFlowM3PerS(), mechanicalLimit * 1.0e-12);
+    Assertions.assertEquals(mechanicalLimit, mechanicallyLimited.getMechanicalDesignMaximumGasFlowM3PerS(),
+        mechanicalLimit * 1.0e-12);
+
+    SeparatorCapacityAssessment missingProvenance = vertical.getCapacityAssessment(" ");
+    Assertions.assertEquals(SeparatorCapacityAssessment.Status.UNASSESSED, missingProvenance.getStatus());
+    Assertions.assertFalse(missingProvenance.isFeasible());
+  }
 }
