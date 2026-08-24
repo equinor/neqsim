@@ -426,8 +426,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
       ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
       if (component.getIonicCharge() != 0 || component.isIsIon()) {
         ionOverallFraction += Math.max(getCoupledOverallFraction(componentIndex), 0.0);
-        currentAqueousIonFraction +=
-            Math.max(system.getPhase(aqueousPhaseIndex).getComponent(componentIndex).getx(), 0.0);
+        currentAqueousIonFraction += Math.max(system.getPhase(aqueousPhaseIndex).getComponent(componentIndex).getx(),
+            0.0);
       }
     }
     if (!(ionOverallFraction > 0.0) || !Double.isFinite(ionOverallFraction)) {
@@ -435,8 +435,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     }
 
     double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
-    double maximumProjectedIonFraction =
-        Double.isFinite(currentAqueousIonFraction) && currentAqueousIonFraction > HYBRID_ION_CAPACITY_MARGIN
+    double maximumProjectedIonFraction = Double.isFinite(currentAqueousIonFraction)
+        && currentAqueousIonFraction > HYBRID_ION_CAPACITY_MARGIN
             ? Math.min(1.0 - HYBRID_ION_CAPACITY_MARGIN,
                 HYBRID_ION_CONCENTRATION_STEP_LIMIT * currentAqueousIonFraction)
             : 1.0 / HYBRID_ION_CONCENTRATION_STEP_LIMIT;
