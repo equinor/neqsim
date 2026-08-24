@@ -18,7 +18,7 @@ manually maintained Java method list.
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 67 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
-| MCP guides | 7 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, and baseline harness |
+| MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit tool trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
 | Trust coverage records | 71 = 20 explicit + 51 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory` |
 
@@ -92,7 +92,7 @@ trees and fails if the manifest drifts. These counts identify evidence locations
 claim that a test ran or passed. Exact-head CI and recorded command output remain the execution
 evidence.
 
-The seven MCP guides have distinct roles:
+The eight MCP guides have distinct roles:
 
 | Guide | Role |
 | --- | --- |
@@ -103,6 +103,13 @@ The seven MCP guides have distinct roles:
 | `neqsim-mcp-server/docs/FOUNDATION_TRACEABILITY.md` | Merged foundation capability evidence and remaining boundaries |
 | `neqsim-mcp-server/docs/ACCEPTANCE_FIXTURES.md` | Four public synthetic scales and canonical execution routes |
 | `neqsim-mcp-server/docs/ACCEPTANCE_BASELINES.md` | Bounded exact-run measurements, interpretation limits, and explicit evidence gaps |
+| `neqsim-mcp-server/docs/CAMPAIGN_MATRIX.md` | All 66 campaign criteria and discipline-level trust maturity with explicit gaps |
+
+The default response-size guard may omit large capability-catalog sections when the full manifest
+exceeds 256 KiB. It retains `phase0EvidenceInventory` because that evidence contract has no
+equivalent selective-retrieval route. Omitted catalog detail remains identified in `truncation` and
+can be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and the MCP catalog
+resources.
 
 `BenchmarkTrust` currently contains 20 tool-specific trust pages with 64 known-limit entries and 30
 validation cases, of which 5 name a concrete `verifiedBy` test. The other 51 published tools still

@@ -29,6 +29,11 @@ import com.google.gson.JsonObject;
  * </p>
  *
  * <p>
+ * The {@code getCapabilities} manifest uses discovery-specific recovery guidance and retains its Phase 0 evidence
+ * inventory because that contract has no separate selective-retrieval route.
+ * </p>
+ *
+ * <p>
  * The limit is configurable through the {@code neqsim.mcp.maxResponseBytes} system property or the
  * {@code NEQSIM_MCP_MAX_RESPONSE_BYTES} environment variable. Set it to {@code 0} to disable trimming.
  * </p>
@@ -50,6 +55,10 @@ public final class ResponseSizeGuard {
   private static final List<String> PROTECTED_FIELDS = Collections
       .unmodifiableList(java.util.Arrays.asList("apiVersion", "status", "tool", "message", "provenance", "validation",
           "qualityGate", "warnings", "errors", "truncation"));
+
+  /** Discovery members that have no equivalent selective-retrieval route. */
+  private static final List<String> PROTECTED_CAPABILITY_FIELDS = Collections
+      .unmodifiableList(java.util.Arrays.asList("phase0EvidenceInventory"));
 
   /**
    * Private constructor — utility class.
@@ -83,7 +92,7 @@ public final class ResponseSizeGuard {
     }
 
     JsonArray omitted = new JsonArray();
-    for (String field : trimCandidates(response)) {
+    for (String field : trimCandidates(response, toolName)) {
       JsonElement removed = response.remove(field);
       if (removed == null) {
         continue;
@@ -117,9 +126,7 @@ public final class ResponseSizeGuard {
     truncation.addProperty("returnedBytes", size);
     truncation.addProperty("limitBytes", MAX_BYTES);
     truncation.add("omitted", omitted);
-    truncation.addProperty("howToRetrieve",
-        "Register the model with manageModel(action='register'), then read only what you need via "
-            + "listSimulationUnits, listUnitVariables and getSimulationVariable on the returned modelId.");
+    truncation.addProperty("howToRetrieve", recoveryGuidance(toolName));
     truncation.addProperty("configuration",
         "Raise or disable the limit with neqsim.mcp.maxResponseBytes (0 disables trimming).");
     response.add("truncation", truncation);
@@ -136,12 +143,13 @@ public final class ResponseSizeGuard {
    * Lists trimmable members in descending serialized size.
    *
    * @param response the response object
+   * @param toolName the MCP tool that produced the response
    * @return field names eligible for removal, largest first
    */
-  private static List<String> trimCandidates(JsonObject response) {
+  private static List<String> trimCandidates(JsonObject response, String toolName) {
     List<Map.Entry<String, Integer>> sized = new ArrayList<Map.Entry<String, Integer>>();
     for (Map.Entry<String, JsonElement> entry : response.entrySet()) {
-      if (PROTECTED_FIELDS.contains(entry.getKey()) || "data".equals(entry.getKey())) {
+      if (isProtected(entry.getKey(), toolName) || "data".equals(entry.getKey())) {
         continue;
       }
       sized.add(new java.util.AbstractMap.SimpleEntry<String, Integer>(entry.getKey(),
@@ -158,6 +166,34 @@ public final class ResponseSizeGuard {
       names.add(entry.getKey());
     }
     return names;
+  }
+
+  /**
+   * Returns whether a response member must survive transport trimming.
+   *
+   * @param fieldName response member name
+   * @param toolName MCP tool that produced the response
+   * @return true when the member must not be removed
+   */
+  private static boolean isProtected(String fieldName, String toolName) {
+    return PROTECTED_FIELDS.contains(fieldName)
+        || ("getCapabilities".equals(toolName) && PROTECTED_CAPABILITY_FIELDS.contains(fieldName));
+  }
+
+  /**
+   * Returns selective-retrieval guidance appropriate for the response type.
+   *
+   * @param toolName MCP tool that produced the response
+   * @return recovery guidance for omitted fields
+   */
+  private static String recoveryGuidance(String toolName) {
+    if ("getCapabilities".equals(toolName)) {
+      return "Use getSchema and getExample for focused tool contracts, getBenchmarkTrust for "
+          + "tool-specific trust evidence, and MCP catalog resources for selective discovery. "
+          + "The Phase 0 evidence inventory is retained in this response.";
+    }
+    return "Register the model with manageModel(action='register'), then read only what you need via "
+        + "listSimulationUnits, listUnitVariables and getSimulationVariable on the returned modelId.";
   }
 
   /**

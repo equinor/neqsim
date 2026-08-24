@@ -230,10 +230,13 @@ the canonical name-only `EquipmentFactory` surface, and the bounded
 discovery and audit; availability is not equivalent to benchmark validation or
 engineering approval.
 
-`phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, the four MCP
-guide paths, and a runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false
-while published tools use generic trust fallbacks. Test presence is not test execution, and generic
-`TESTED` maturity is not a benchmark, accuracy, applicability, or no-limitations claim.
+`phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
+guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
+runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false while 51 published
+tools have explicit `CONFIRMED_GAP` coverage records instead of tool-specific trust pages. Test
+presence is not test execution, and generic `TESTED` maturity is not a benchmark, accuracy,
+applicability, or no-limitations claim. The transport response-size guard retains this inventory
+when larger capability-catalog sections must be omitted.
 
 ---
 
