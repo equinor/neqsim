@@ -19,12 +19,24 @@ The reconciliation is intentionally conservative:
 - a merged foundation is recorded as a software contract, not as universal validation of every downstream calculation;
 - current source and tests remain authoritative when historical PR prose and current implementation differ;
 - per-result provenance, convergence, warnings, assumptions, validation maturity, and limitations remain authoritative for engineering use;
-- DEXPI/P&ID remains owned by #2899, dynamics by #2911, flash/stability/performance by #2937, and production optimization by #2941.
+- DEXPI/P&ID remains owned by #2899, dynamics by #2911, flash/stability/performance by #2937, generic process performance by #2939, and production optimization by #2941/#3154.
+
+## Current Phase 0 trust evidence
+
+Every published tool has an explicit coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`.
+
+- 20 tools have tool-specific `BenchmarkTrust` pages and remain `EXPLICIT_TRUST`.
+- `getCapabilities`, `getSchema`, and `getExample` are `CONTRACT_TESTED`: they are non-numerical discovery/catalog contracts with direct source, contract-test, and real-protocol evidence, so an engineering-accuracy benchmark is not applicable.
+- 48 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
+
+The underlying `BenchmarkTrust` registry itself is intentionally unchanged at 20 explicit pages and 51 generic fallbacks. Contract-tested catalog/discovery evidence is a separate Phase 0 classification and does not certify any thermodynamic, process, pipeline, dynamic, safety, or optimization calculation advertised by those catalogs.
+
+The catalog classification is backed by current source plus the packaged MCP protocol suite: all 142 canonical input/output schema resources resolve as JSON schema objects, all 114 example-catalog entries resolve through MCP resources, and `CapabilitiesRunnerTest` cross-checks advertised schemas/examples against the current catalogs. These are software-contract checks, not scientific benchmark cases.
 
 ## Remaining Phase 0 work
 
-The full Phase 0 audit is still incomplete. Every published tool now has an explicit trust-coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`: 20 have tool-specific `BenchmarkTrust` metadata and 51 are explicit `CONFIRMED_GAP` records rather than an implicit generic-fallback set. Those gap records are not validation; they identify where tool-specific benchmark, accuracy, limitation, or unsupported-condition evidence is still missing.
+The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 48 published tools still lack a defensible tool-specific or bounded non-numerical trust classification.
 
-The next dependency is to establish the four public synthetic acceptance scales and the campaign traceability/maturity matrices, while closing confirmed trust gaps when current source and public evidence support a specific claim. Measured runtime, memory, payload size, convergence, balance closure, and report-usefulness baselines also remain to be frozen.
+Close those trust gaps only where current source plus concrete tests, public benchmark evidence, authoritative data, or a clearly non-numerical contract supports the classification. Do not manufacture accuracy bounds for discovery/catalog tools and do not reconstruct a second MCP-side conservation model when canonical NeqSim does not expose independent evidence.
 
-This document and the `mergedFoundations` object therefore must not be interpreted as campaign completion or as accountable engineering approval.
+This document and the `mergedFoundations` object therefore must not be interpreted as campaign completion, plant authority, design certification, or accountable engineering approval.
