@@ -49,6 +49,9 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** Largest aqueous phase-fraction ratio allowed in one projected beta correction. */
   private static final double HYBRID_AQUEOUS_FRACTION_STEP_LIMIT = 2.0;
 
+  /** Maximum common Newton beta-step scale for a hybrid flash carrying ions. */
+  private static final double HYBRID_IONIC_BETA_STEP_SCALE = 0.1;
+
   /** Reaction-adjusted overall component fractions used by the coupled phase solve. */
   private transient double[] coupledOverallFractions;
 
@@ -67,6 +70,30 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   public TPHybridEosGeFlash(SystemInterface system, HybridEosGeFlashModel hybridModel) {
     super(system, false);
     this.hybridModel = hybridModel;
+  }
+
+  /**
+   * Damp the complete beta correction while an ionic inventory is confined to the aqueous role.
+   *
+   * <p>
+   * Scaling every phase correction together preserves the Newton direction and avoids the oscillation produced by
+   * independently clipping one phase after the step. Non-ionic hybrid and ordinary multiphase flashes retain the
+   * general solver's iteration-dependent scale.
+   * </p>
+   *
+   * @param proposedScale iteration-dependent scale selected by the general solver
+   * @return damped common scale for ionic hybrid flashes
+   */
+  @Override
+  protected double limitBetaStepScale(double proposedScale) {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if ((component.getIonicCharge() != 0 || component.isIsIon())
+          && getCoupledOverallFraction(componentIndex) > 0.0) {
+        return Math.min(proposedScale, HYBRID_IONIC_BETA_STEP_SCALE);
+      }
+    }
+    return proposedScale;
   }
 
   /** {@inheritDoc} */
