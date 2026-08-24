@@ -346,7 +346,7 @@ public class TPmultiflash extends TPflash {
 
       // The linear solve already returns a column vector. Apply it directly to avoid allocating
       // transposed, scaled, and subtracted temporary matrices in every beta iteration.
-      double betaStepScale = iter / (iter + 3.0);
+      double betaStepScale = limitBetaStepScale(iter / (iter + 3.0));
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
         double currBeta = system.getPhase(k).getBeta() - betaCorrection.get(k, 0) * betaStepScale;
@@ -375,6 +375,21 @@ public class TPmultiflash extends TPflash {
     } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
+  }
+
+  /**
+   * Allow a specialized fixed-topology solver to damp the common beta Newton step.
+   *
+   * <p>
+   * The default leaves the existing multiphase correction unchanged. Subclasses must return one common scale so the
+   * phase-fraction correction continues to preserve its simplex direction before normalization.
+   * </p>
+   *
+   * @param proposedScale iteration-dependent scale selected by the general solver
+   * @return scale applied to every phase-fraction correction
+   */
+  protected double limitBetaStepScale(double proposedScale) {
+    return proposedScale;
   }
 
   /**

@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.HybridEosGeFlashModel;
 import neqsim.thermo.system.SystemInterface;
 
@@ -46,11 +47,20 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** Extra aqueous phase-fraction room retained above the fixed ionic inventory. */
   private static final double HYBRID_ION_CAPACITY_MARGIN = 100.0 * phaseFractionMinimumLimit;
 
+  /** Largest aqueous phase-fraction ratio allowed in one projected beta correction. */
+  private static final double HYBRID_AQUEOUS_FRACTION_STEP_LIMIT = 2.0;
+
+  /** Maximum common Newton beta-step scale for a hybrid flash carrying ions. */
+  private static final double HYBRID_IONIC_BETA_STEP_SCALE = 0.1;
+
   /** Reaction-adjusted overall component fractions used by the coupled phase solve. */
   private transient double[] coupledOverallFractions;
 
   /** Exact reaction-adjusted overall component mole inventory. */
   private transient double[] coupledOverallMoles;
+
+  /** Settled aqueous phase fraction captured immediately before a beta Newton correction. */
+  private transient double previousAqueousFractionBeforeBetaCorrection = Double.NaN;
 
   /**
    * Create a hybrid multiphase flash.
@@ -61,6 +71,38 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   public TPHybridEosGeFlash(SystemInterface system, HybridEosGeFlashModel hybridModel) {
     super(system, false);
     this.hybridModel = hybridModel;
+  }
+
+  /**
+   * Damp the complete beta correction while an ionic inventory is confined to the aqueous role.
+   *
+   * <p>
+   * Scaling every phase correction together preserves the Newton direction and avoids the oscillation produced by
+   * independently clipping one phase after the step. Non-ionic hybrid and ordinary multiphase flashes retain the
+   * general solver's iteration-dependent scale.
+   * </p>
+   *
+   * @param proposedScale iteration-dependent scale selected by the general solver
+   * @return damped common scale for ionic hybrid flashes
+   */
+  @Override
+  protected double limitBetaStepScale(double proposedScale) {
+    return hasPositiveHybridIonicInventory() ? Math.min(proposedScale, HYBRID_IONIC_BETA_STEP_SCALE) : proposedScale;
+  }
+
+  /**
+   * Check whether the current coupled inventory contains an ion confined to the aqueous role.
+   *
+   * @return {@code true} when a positive ionic overall fraction is present
+   */
+  private boolean hasPositiveHybridIonicInventory() {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if ((component.getIonicCharge() != 0 || component.isIsIon()) && getCoupledOverallFraction(componentIndex) > 0.0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
@@ -307,6 +349,9 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** {@inheritDoc} */
   @Override
   public double calcQ() {
+    int aqueousPhaseIndex = getHybridAqueousPhaseNumber();
+    previousAqueousFractionBeforeBetaCorrection = aqueousPhaseIndex >= 0 ? system.getPhase(aqueousPhaseIndex).getBeta()
+        : Double.NaN;
     calcE();
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double overallFraction = getCoupledOverallFraction(componentIndex);
@@ -340,17 +385,43 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** {@inheritDoc} */
   @Override
   public void setXY() {
-    if (enforceAqueousIonCapacityBound()) {
+    if (enforceAqueousFractionBounds()) {
       // The beta Newton step was projected back into the physically admissible region. Rebuild
       // E with the projected fractions before calculating component compositions.
       calcE();
     }
+
+    int lineSearchAqueousPhase = -1;
+    double[] previousNeutralShares = null;
+    double[] proposedNeutralShares = null;
+    double lineSearchNeutralTotal = Double.NaN;
+    boolean ionicInventory = hasPositiveHybridIonicInventory();
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       boolean aqueous = hybridModel.isHybridEosGeAqueousPhase(phaseIndex);
       double phaseFraction = Math.max(system.getPhase(phaseIndex).getBeta(), phaseFractionMinimumLimit);
+      int numberOfComponents = system.getPhase(0).getNumberOfComponents();
+      double previousNeutralFractionSum = 0.0;
+      if (aqueous && ionicInventory) {
+        lineSearchAqueousPhase = phaseIndex;
+        previousNeutralShares = new double[numberOfComponents];
+        proposedNeutralShares = new double[numberOfComponents];
+        for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+          ComponentInterface component = system.getPhase(phaseIndex).getComponent(componentIndex);
+          if (component.getIonicCharge() == 0 && !component.isIsIon()) {
+            previousNeutralShares[componentIndex] = Math.max(component.getx(), 0.0);
+            previousNeutralFractionSum += previousNeutralShares[componentIndex];
+          }
+        }
+        if (previousNeutralFractionSum > 0.0) {
+          for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+            previousNeutralShares[componentIndex] /= previousNeutralFractionSum;
+          }
+        }
+      }
+
       double ionFractionSum = 0.0;
       double neutralFractionSum = 0.0;
-      for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
         ComponentInterface referenceComponent = system.getPhase(0).getComponent(componentIndex);
         double feedFraction = getCoupledOverallFraction(componentIndex);
         double newMoleFraction;
@@ -377,18 +448,78 @@ public class TPHybridEosGeFlash extends TPmultiflash {
               "Hybrid EOS-GE aqueous composition cannot accommodate overall ion amount: " + "ionFractionSum="
                   + ionFractionSum + ", neutralFractionSum=" + neutralFractionSum + ", phaseFraction=" + phaseFraction);
         }
-        double neutralScale = (1.0 - ionFractionSum) / neutralFractionSum;
-        for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+        double neutralTotal = 1.0 - ionFractionSum;
+        for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
           ComponentInterface referenceComponent = system.getPhase(0).getComponent(componentIndex);
           if (referenceComponent.getIonicCharge() == 0 && !referenceComponent.isIsIon()) {
             ComponentInterface aqueousComponent = system.getPhase(phaseIndex).getComponent(componentIndex);
-            aqueousComponent.setx(aqueousComponent.getx() * neutralScale);
+            double proposedNeutralShare = aqueousComponent.getx() / neutralFractionSum;
+            aqueousComponent.setx(neutralTotal * proposedNeutralShare);
+            if (phaseIndex == lineSearchAqueousPhase) {
+              proposedNeutralShares[componentIndex] = proposedNeutralShare;
+              lineSearchNeutralTotal = neutralTotal;
+            }
           }
         }
       } else {
         system.getPhase(phaseIndex).normalize();
       }
     }
+
+    if (lineSearchAqueousPhase >= 0 && previousNeutralShares != null && proposedNeutralShares != null
+        && Double.isFinite(previousAqueousFractionBeforeBetaCorrection)) {
+      system.init(1);
+      if (hasFiniteAqueousNeutralFugacities(lineSearchAqueousPhase)) {
+        return;
+      }
+      double lineSearchFraction = 0.5;
+      while (lineSearchFraction >= 1.0e-6) {
+        PhaseInterface aqueousPhase = system.getPhase(lineSearchAqueousPhase);
+        for (int componentIndex = 0; componentIndex < aqueousPhase.getNumberOfComponents(); componentIndex++) {
+          ComponentInterface component = aqueousPhase.getComponent(componentIndex);
+          if (component.getIonicCharge() == 0 && !component.isIsIon()) {
+            double neutralShare = previousNeutralShares[componentIndex]
+                + lineSearchFraction * (proposedNeutralShares[componentIndex] - previousNeutralShares[componentIndex]);
+            component.setx(lineSearchNeutralTotal * neutralShare);
+          }
+        }
+        system.init(1);
+        if (hasFiniteAqueousNeutralFugacities(lineSearchAqueousPhase)) {
+          return;
+        }
+        lineSearchFraction *= 0.5;
+      }
+      throw new IllegalStateException(
+          "Hybrid EOS-GE aqueous neutral-composition line search could not retain finite fugacity coefficients.");
+    }
+  }
+
+  /**
+   * Check finite positive fugacity coefficients for material neutral components in the aqueous role.
+   *
+   * @param aqueousPhaseIndex active aqueous phase index
+   * @return {@code true} when every material neutral component has a finite positive coefficient
+   */
+  private boolean hasFiniteAqueousNeutralFugacities(int aqueousPhaseIndex) {
+    PhaseInterface aqueousPhase = system.getPhase(aqueousPhaseIndex);
+    for (int componentIndex = 0; componentIndex < aqueousPhase.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = aqueousPhase.getComponent(componentIndex);
+      if (getCoupledOverallFraction(componentIndex) <= 1.0e-30 || component.getIonicCharge() != 0
+          || component.isIsIon()) {
+        continue;
+      }
+      double moleFraction = component.getx();
+      if (!Double.isFinite(moleFraction) || moleFraction < 0.0) {
+        return false;
+      }
+      if (moleFraction <= 1.0e-30) {
+        continue;
+      }
+      if (!(component.getFugacityCoefficient() > 0.0) || !Double.isFinite(component.getFugacityCoefficient())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -397,15 +528,16 @@ public class TPHybridEosGeFlash extends TPmultiflash {
    * <p>
    * Ions are excluded from EOS gas and oil roles, so their aqueous mole fractions sum to
    * {@code sum(zIon) / betaAqueous}. An unconstrained Newton correction can temporarily move {@code betaAqueous} below
-   * {@code sum(zIon)} even when the final equilibrium is feasible. That iterate has no normalized aqueous composition
-   * and formerly failed before the next correction could recover. This method projects only such infeasible iterates
-   * onto the ionic-capacity boundary, taking the required fraction proportionally from the adjustable part of the other
-   * active phases. Feasible iterates and the final acceptance tolerances are unchanged.
+   * {@code sum(zIon)} even when the final equilibrium is feasible. A correction in the other direction can likewise
+   * displace nearly all aqueous solvent before the phase model can update its fugacities. This method projects the
+   * aqueous fraction onto the ionic-capacity boundary and a bidirectional step-ratio trust region, transferring the
+   * correction proportionally to or from the other active phases. Feasible iterates and the final acceptance tolerances
+   * are unchanged.
    * </p>
    *
    * @return {@code true} when the phase fractions were projected
    */
-  private boolean enforceAqueousIonCapacityBound() {
+  private boolean enforceAqueousFractionBounds() {
     int aqueousPhaseIndex = -1;
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (hybridModel.isHybridEosGeAqueousPhase(phaseIndex)) {
@@ -429,10 +561,42 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     }
 
     double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
-    double minimumAqueousFraction = Math.min(maximumAqueousFraction, ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN);
+    // calcQ captures the settled beta before the Newton proposal is written and initialized.
+    // Limiting beta reduction bounds the corresponding ionic-concentration increase, while
+    // limiting beta growth prevents one proposal from displacing nearly all aqueous solvent.
+    double previousAqueousFraction = previousAqueousFractionBeforeBetaCorrection;
+    double stepLimitedMinimumAqueousFraction = Double.isFinite(previousAqueousFraction) && previousAqueousFraction > 0.0
+        ? previousAqueousFraction / HYBRID_AQUEOUS_FRACTION_STEP_LIMIT
+        : ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN;
+    double minimumAqueousFraction = Math.min(maximumAqueousFraction,
+        Math.max(ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN, stepLimitedMinimumAqueousFraction));
+    double stepLimitedMaximumAqueousFraction = Double.isFinite(previousAqueousFraction) && previousAqueousFraction > 0.0
+        ? Math.min(maximumAqueousFraction, previousAqueousFraction * HYBRID_AQUEOUS_FRACTION_STEP_LIMIT)
+        : maximumAqueousFraction;
     double currentAqueousFraction = system.getBeta(aqueousPhaseIndex);
-    if (currentAqueousFraction >= minimumAqueousFraction) {
+    if (currentAqueousFraction >= minimumAqueousFraction
+        && currentAqueousFraction <= stepLimitedMaximumAqueousFraction) {
       return false;
+    }
+
+    if (currentAqueousFraction > stepLimitedMaximumAqueousFraction) {
+      double excessAqueousFraction = currentAqueousFraction - stepLimitedMaximumAqueousFraction;
+      double nonAqueousFraction = 0.0;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        if (phaseIndex != aqueousPhaseIndex) {
+          nonAqueousFraction += system.getBeta(phaseIndex);
+        }
+      }
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        if (phaseIndex != aqueousPhaseIndex) {
+          double share = nonAqueousFraction > 0.0 ? system.getBeta(phaseIndex) / nonAqueousFraction
+              : 1.0 / (system.getNumberOfPhases() - 1.0);
+          system.setBeta(phaseIndex, system.getBeta(phaseIndex) + excessAqueousFraction * share);
+        }
+      }
+      system.setBeta(aqueousPhaseIndex, stepLimitedMaximumAqueousFraction);
+      synchronizePhaseBetaMirrors();
+      return true;
     }
 
     double requiredTransfer = minimumAqueousFraction - currentAqueousFraction;
@@ -445,7 +609,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     if (adjustableFraction + phaseFractionMinimumLimit < requiredTransfer) {
       throw new IllegalStateException("Hybrid EOS-GE phase fractions cannot accommodate the ionic inventory: "
           + "ionOverallFraction=" + ionOverallFraction + ", aqueousBeta=" + currentAqueousFraction
-          + ", requiredAqueousBeta=" + minimumAqueousFraction + ", adjustableFraction=" + adjustableFraction);
+          + ", requiredAqueousBeta=" + minimumAqueousFraction + ", previousAqueousBeta=" + previousAqueousFraction
+          + ", adjustableFraction=" + adjustableFraction);
     }
 
     double remainingTransfer = requiredTransfer;
@@ -477,10 +642,15 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     system.setBeta(aqueousPhaseIndex, 1.0 - nonAqueousFraction);
     // SystemThermo keeps beta in both the mapped system array and each phase object. The
     // composition kernel reads the phase copy immediately, before the next system init.
+    synchronizePhaseBetaMirrors();
+    return true;
+  }
+
+  /** Synchronize the mapped system beta values into their active phase objects. */
+  private void synchronizePhaseBetaMirrors() {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       system.getPhase(phaseIndex).setBeta(system.getBeta(phaseIndex));
     }
-    return true;
   }
 
   /**

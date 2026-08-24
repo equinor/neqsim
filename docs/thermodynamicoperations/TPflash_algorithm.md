@@ -1979,13 +1979,28 @@ normalized neutral solvent composition exists.
 
 The unconstrained beta Newton correction can cross that physical boundary during an intermediate
 iteration even when the final gas-aqueous equilibrium is feasible. The hybrid solver now projects
-only such infeasible iterates back to
-`sum(zIon) + 100 * phaseFractionMinimumLimit`. The required fraction is removed proportionally
-from the adjustable part of the other active roles, their minimum fractions are preserved, and the
-phase-split denominator is rebuilt before compositions are evaluated. Feasible iterates, public
-tolerances, dataset parameters, and final acceptance checks are unchanged. If the ionic inventory
-cannot fit while retaining the active roles at their numerical minima, the solver still fails with
-explicit capacity diagnostics.
+only such infeasible iterates back above
+`sum(zIon) + 100 * phaseFractionMinimumLimit`. The projection also limits a single correction to
+between one half and twice the synchronized pre-Newton aqueous phase fraction. Limiting beta
+reduction bounds the corresponding ionic-concentration increase, while limiting beta growth
+prevents a gas-forming neutral component from displacing nearly all aqueous solvent in one Newton
+step. Both bounds are evaluated before the trial composition is used. Ionic hybrid flashes also
+cap the common beta Newton scale at 0.1, damping every phase correction along the same simplex
+direction; non-ionic hybrid and ordinary multiphase flashes retain the general iteration-dependent
+scale. A valid aqueous neutral-composition proposal remains unchanged. If its reinitialized
+material-component fugacity coefficient is non-finite or non-positive, the ionic hybrid solver
+backtracks the neutral composition halfway toward the last finite normalized composition until all
+material neutral coefficients are finite. This retains the exact ionic inventory and normalization
+without perturbing non-ionic or already-valid paths. Together these guards prevent non-finite
+coefficients and clipping-driven oscillation while allowing subsequent corrections to approach
+equilibrium.
+The required fraction is removed proportionally from the adjustable part of the other active roles,
+their minimum fractions are preserved, and the phase-split denominator is rebuilt before
+compositions are evaluated. Feasible iterates, public tolerances, dataset parameters, and final
+acceptance checks are unchanged. If the ionic inventory cannot fit while retaining the active roles
+at their numerical minima, the solver still fails with explicit capacity diagnostics. Finalization
+also treats non-finite mole fractions or fugacity coefficients in a material phase as a failed
+equilibrium gate and records the offending component rather than silently excluding it.
 
 The regression uses the public-domain PHREEQC CO2-Na2SO4 subset documented in
 `docs/thermo/pitzer_parameter_provenance.md`. It forces a formerly invalid intermediate beta below
