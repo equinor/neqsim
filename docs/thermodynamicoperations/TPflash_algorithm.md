@@ -1984,8 +1984,11 @@ only such infeasible iterates back above
 between one half and twice the synchronized pre-Newton aqueous phase fraction. Limiting beta
 reduction bounds the corresponding ionic-concentration increase, while limiting beta growth
 prevents a gas-forming neutral component from displacing nearly all aqueous solvent in one Newton
-step. Both bounds are evaluated before the trial composition is used, preventing invalid activity
-or fugacity coefficients while allowing subsequent corrections to approach equilibrium.
+step. Both bounds are evaluated before the trial composition is used. Ionic hybrid flashes also
+cap the common beta Newton scale at 0.1, damping every phase correction along the same simplex
+direction; non-ionic hybrid and ordinary multiphase flashes retain the general iteration-dependent
+scale. Together these guards prevent invalid activity or fugacity coefficients and clipping-driven
+oscillation while allowing subsequent corrections to approach equilibrium.
 The required fraction is removed proportionally from the adjustable part of the other active roles,
 their minimum fractions are preserved, and the phase-split denominator is rebuilt before
 compositions are evaluated. Feasible iterates, public tolerances, dataset parameters, and final
