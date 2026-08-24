@@ -1994,6 +1994,11 @@ material balance. A complete 373.15 K gas-aqueous flash at 150 bar is repeated a
 140 bar; both states must retain gas and aqueous roles, bounded normalized compositions, component
 material balance below `1e-7`, and molecular log-fugacity residual below `1e-5`.
 
+Pitzer neutral activities and the CO2 Henry correlation both use the molality standard state. The
+aqueous fugacity coefficient consequently converts `m_i gamma_i H_i` to the common
+`x_i phi_i P` representation through `m_i/x_i`; omitting that factor mixes standard states and can
+drive the flash toward an unphysical, CO2-rich aqueous iterate.
+
 This is a feasibility safeguard, not a performance optimization. The common feasible hybrid path
 adds one allocation-free component scan to each composition update and performs no extra property
 initialization. Only a projected iterate rebuilds the already allocated phase-split denominator.
@@ -2136,4 +2141,3 @@ probe (20 warmups and five blocks of 60 flashes), the corrected SRK 180 K/50 bar
 a median 14.25 ms/flash for the invalid endpoint to 18.20 ms/flash for the accepted equilibrium.
 The screen-excluded SRK 300 K/100 bar trace-heavy control was 10.98 versus 10.88 ms/flash, within
 run-to-run noise. No speedup is claimed, and common flashes return before the new refinement.
-
