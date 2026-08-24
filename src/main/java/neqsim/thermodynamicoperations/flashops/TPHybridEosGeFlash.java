@@ -443,16 +443,14 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     // Limiting beta reduction bounds the corresponding ionic-concentration increase, while
     // limiting beta growth prevents one proposal from displacing nearly all aqueous solvent.
     double previousAqueousFraction = previousAqueousFractionBeforeBetaCorrection;
-    double stepLimitedMinimumAqueousFraction = Double.isFinite(previousAqueousFraction)
-        && previousAqueousFraction > 0.0 ? previousAqueousFraction / HYBRID_AQUEOUS_FRACTION_STEP_LIMIT
-            : ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN;
+    double stepLimitedMinimumAqueousFraction = Double.isFinite(previousAqueousFraction) && previousAqueousFraction > 0.0
+        ? previousAqueousFraction / HYBRID_AQUEOUS_FRACTION_STEP_LIMIT
+        : ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN;
     double minimumAqueousFraction = Math.min(maximumAqueousFraction,
         Math.max(ionOverallFraction + HYBRID_ION_CAPACITY_MARGIN, stepLimitedMinimumAqueousFraction));
-    double stepLimitedMaximumAqueousFraction = Double.isFinite(previousAqueousFraction)
-        && previousAqueousFraction > 0.0
-            ? Math.min(maximumAqueousFraction,
-                previousAqueousFraction * HYBRID_AQUEOUS_FRACTION_STEP_LIMIT)
-            : maximumAqueousFraction;
+    double stepLimitedMaximumAqueousFraction = Double.isFinite(previousAqueousFraction) && previousAqueousFraction > 0.0
+        ? Math.min(maximumAqueousFraction, previousAqueousFraction * HYBRID_AQUEOUS_FRACTION_STEP_LIMIT)
+        : maximumAqueousFraction;
     double currentAqueousFraction = system.getBeta(aqueousPhaseIndex);
     if (currentAqueousFraction >= minimumAqueousFraction
         && currentAqueousFraction <= stepLimitedMaximumAqueousFraction) {
