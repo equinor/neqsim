@@ -18,6 +18,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.TPHybridEosGeFlash;
 
 /** Regression tests for fixed-role EOS-gas / EOS-oil / GE-aqueous flashes. */
 class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
@@ -42,6 +43,24 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     system.addComponent("water", 55.5);
     system.addComponent("Na+", 1.0);
     system.addComponent("Cl-", 1.0);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+    return system;
+  }
+
+  /**
+   * Build a gas-forming system using the qualified PHREEQC CO2-Na2SO4 subset.
+   *
+   * @return configured unflashed system
+   */
+  private SystemPitzer createQualifiedCarbonDioxideSodiumSulfateSystem() {
+    SystemPitzer system = new SystemPitzer(373.15, 150.0);
+    system.addComponent("CO2", 100.0);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 2.0);
+    system.addComponent("SO4--", 1.0);
+    system.init(0);
+    system.applyPhreeqcCo2SodiumSulfateParameters();
     system.setMixingRule("classic");
     system.setMultiPhaseCheck(true);
     return system;
@@ -106,6 +125,79 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
         }
       }
     }
+  }
+
+  /** An infeasible beta iterate is projected above the aqueous phase's fixed ionic inventory. */
+  @Test
+  void hybridBetaIterationRetainsAqueousIonCapacity() {
+    SystemPitzer system = createQualifiedCarbonDioxideSodiumSulfateSystem();
+    system.prepareHybridEosGeFlash();
+    system.init(1);
+
+    int aqueousPhaseIndex = -1;
+    double ionOverallFraction = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (system.isHybridEosGeAqueousPhase(phaseIndex)) {
+        aqueousPhaseIndex = phaseIndex;
+      }
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if (component.getIonicCharge() != 0 || component.isIsIon()) {
+        ionOverallFraction += component.getz();
+      }
+    }
+    assertTrue(aqueousPhaseIndex >= 0);
+    assertTrue(system.getNumberOfPhases() >= 2);
+    system.setBeta(aqueousPhaseIndex, 0.5 * ionOverallFraction);
+    double nonAqueousBeta = (1.0 - system.getBeta(aqueousPhaseIndex))
+        / (system.getNumberOfPhases() - 1.0);
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (phaseIndex != aqueousPhaseIndex) {
+        system.setBeta(phaseIndex, nonAqueousBeta);
+      }
+    }
+
+    TPHybridEosGeFlash solver = new TPHybridEosGeFlash(system, system);
+    solver.calcE();
+    solver.setXY();
+    system.init(1);
+
+    assertTrue(system.getBeta(aqueousPhaseIndex) > ionOverallFraction);
+    assertEquals(1.0, betaSum(system), 1.0e-12);
+    PhaseInterface aqueous = system.getPhase(aqueousPhaseIndex);
+    for (int componentIndex = 0; componentIndex < aqueous.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = aqueous.getComponent(componentIndex);
+      if (component.getIonicCharge() != 0 || component.isIsIon()) {
+        assertEquals(component.getz(), system.getBeta(aqueousPhaseIndex) * component.getx(), 1.0e-12,
+            component.getComponentName());
+      }
+    }
+  }
+
+  /** Qualified gas-forming CO2/Na2SO4 flashes remain closed across repeats and nearby pressure. */
+  @Test
+  void qualifiedCarbonDioxideSodiumSulfateGasAqueousFlashConverges() {
+    SystemPitzer system = createQualifiedCarbonDioxideSodiumSulfateSystem();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+
+    operations.TPflash();
+    assertEquals(2, system.getNumberOfPhases(), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.GAS), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.AQUEOUS), phaseDiagnostics(system));
+    assertBalancedAndAtEquilibrium(system);
+    double firstGasBeta = findPhaseBeta(system, PhaseType.GAS);
+
+    operations.TPflash();
+    assertEquals(firstGasBeta, findPhaseBeta(system, PhaseType.GAS), 1.0e-10);
+    assertBalancedAndAtEquilibrium(system);
+
+    system.setPressure(140.0);
+    operations.TPflash();
+    assertEquals(2, system.getNumberOfPhases(), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.GAS), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.AQUEOUS), phaseDiagnostics(system));
+    assertBalancedAndAtEquilibrium(system);
   }
 
   /** Every SystemEosGE subclass can explicitly promote its GE liquid to the hybrid aqueous role. */
@@ -565,6 +657,36 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       if (system.getPhase(phaseIndex).getType() == phaseType) {
         return system.getPhase(phaseIndex);
+      }
+    }
+    throw new AssertionError("Missing phase type " + phaseType);
+  }
+
+  /**
+   * Sum active phase fractions.
+   *
+   * @param system system to inspect
+   * @return active phase-fraction sum
+   */
+  private double betaSum(SystemInterface system) {
+    double total = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      total += system.getBeta(phaseIndex);
+    }
+    return total;
+  }
+
+  /**
+   * Find the active fraction of a phase type.
+   *
+   * @param system system to inspect
+   * @param phaseType requested phase type
+   * @return matching phase fraction
+   */
+  private double findPhaseBeta(SystemInterface system, PhaseType phaseType) {
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (system.getPhase(phaseIndex).getType() == phaseType) {
+        return system.getBeta(phaseIndex);
       }
     }
     throw new AssertionError("Missing phase type " + phaseType);

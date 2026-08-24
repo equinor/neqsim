@@ -1970,6 +1970,35 @@ blocks of 30 flashes) measured the corrected SRK boundary at about `8.5 ms/flash
 invalid higher-root baseline. The PR boundary and adjacent retained one-phase controls were within run-to-run noise.
 Common flashes return before the hydrogen/high-pressure/incipient-phase screen.
 
+### 6.5 Hybrid EOS-GE ionic-capacity safeguard
+
+In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
+Consequently the aqueous phase fraction must remain strictly greater than the sum of the overall
+ionic mole fractions: otherwise the required aqueous ionic mole fractions sum to one or more and no
+normalized neutral solvent composition exists.
+
+The unconstrained beta Newton correction can cross that physical boundary during an intermediate
+iteration even when the final gas-aqueous equilibrium is feasible. The hybrid solver now projects
+only such infeasible iterates back to
+`sum(zIon) + 100 * phaseFractionMinimumLimit`. The required fraction is removed proportionally
+from the adjustable part of the other active roles, their minimum fractions are preserved, and the
+phase-split denominator is rebuilt before compositions are evaluated. Feasible iterates, public
+tolerances, dataset parameters, and final acceptance checks are unchanged. If the ionic inventory
+cannot fit while retaining the active roles at their numerical minima, the solver still fails with
+explicit capacity diagnostics.
+
+The regression uses the public-domain PHREEQC CO2-Na2SO4 subset documented in
+`docs/thermo/pitzer_parameter_provenance.md`. It forces a formerly invalid intermediate beta below
+the ionic inventory, then checks projection, ion confinement, normalization, and exact ionic
+material balance. A complete 373.15 K gas-aqueous flash at 150 bar is repeated and changed to
+140 bar; both states must retain gas and aqueous roles, bounded normalized compositions, component
+material balance below `1e-7`, and molecular log-fugacity residual below `1e-5`.
+
+This is a feasibility safeguard, not a performance optimization. The common feasible hybrid path
+adds one allocation-free component scan to each composition update and performs no extra property
+initialization. Only a projected iterate rebuilds the already allocated phase-split denominator.
+Neutral EOS flashes do not dispatch to this solver.
+
 ---
 
 ## 7. References
