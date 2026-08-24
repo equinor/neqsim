@@ -466,7 +466,8 @@ public class TPHybridEosGeFlash extends TPmultiflash {
       }
     }
 
-    if (lineSearchAqueousPhase >= 0 && previousNeutralShares != null && proposedNeutralShares != null) {
+    if (lineSearchAqueousPhase >= 0 && previousNeutralShares != null && proposedNeutralShares != null
+        && Double.isFinite(previousAqueousFractionBeforeBetaCorrection)) {
       system.init(1);
       if (hasFiniteAqueousNeutralFugacities(lineSearchAqueousPhase)) {
         return;
