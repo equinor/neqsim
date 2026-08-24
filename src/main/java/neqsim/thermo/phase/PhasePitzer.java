@@ -76,6 +76,8 @@ public class PhasePitzer extends PhaseGE {
   private boolean hasNeutralInteractions;
   /** Enables PHREEQC common F and C0/Cphi ion terms for explicitly mapped datasets only. */
   private boolean phreeqcCommonIonTermsActive;
+  /** Fast gate for a qualified beta2 row outside the legacy 2-2 branch. */
+  private boolean nonTwoTwoBeta2Active;
   /** Whether the active neutral-solute topology has passed its fail-closed parameter audit. */
   private transient boolean neutralParameterCoverageValidated;
   /** Whether parameters have been loaded from database. */
@@ -855,7 +857,7 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
-   * Get beta2 parameter for 2-2 electrolytes.
+   * Get beta2 parameter for ion pairs that define the second exponential term.
    *
    * @param i component index i
    * @param j component index j
@@ -879,7 +881,7 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
-   * Set beta2 parameter for 2-2 electrolytes.
+   * Set beta2 parameter for ion pairs that define the second exponential term.
    *
    * @param i component index i
    * @param j component index j
@@ -889,6 +891,60 @@ public class PhasePitzer extends PhaseGE {
     ensureOwnedParameterStorage();
     beta2[i][j] = value;
     beta2[j][i] = value;
+    double firstCharge = Math.abs(getComponent(i).getIonicCharge());
+    double secondCharge = Math.abs(getComponent(j).getIonicCharge());
+    if (!(firstCharge >= 1.5 && secondCharge >= 1.5) && Math.abs(value) > 1.0e-20) {
+      nonTwoTwoBeta2Active = true;
+    }
+  }
+
+  /**
+   * Reports whether a qualified dataset activates beta2 outside the legacy 2-2 branch.
+   *
+   * @return {@code true} when a non-2-2 beta2 row was configured
+   */
+  public boolean isNonTwoTwoBeta2Active() {
+    return nonTwoTwoBeta2Active;
+  }
+
+  /**
+   * Returns the PHREEQC default alpha1 coefficient for an opposite-sign ion pair.
+   *
+   * <p>
+   * PHREEQC uses 1.4 for 2-2 pairs and 2.0 for pairs containing a monovalent ion or an ion of charge magnitude above
+   * two. Dataset-specific {@code ALPHAS} overrides are not currently exposed; qualified datasets must therefore use
+   * these defaults.
+   * </p>
+   *
+   * @param i first ion component index
+   * @param j second ion component index
+   * @return alpha1 in (kg/mol)<sup>1/2</sup>
+   */
+  public double getPitzerAlpha1(int i, int j) {
+    double firstCharge = Math.abs(getComponent(i).getIonicCharge());
+    double secondCharge = Math.abs(getComponent(j).getIonicCharge());
+    return firstCharge >= 1.5 && firstCharge < 2.5 && secondCharge >= 1.5 && secondCharge < 2.5 ? 1.4 : 2.0;
+  }
+
+  /**
+   * Returns the PHREEQC default alpha2 coefficient for an opposite-sign ion pair.
+   *
+   * <p>
+   * PHREEQC assigns 12.0 when either ion is monovalent and also for 2-2 pairs; pairs containing no monovalent ion and
+   * not exactly 2-2 use 50.0. This is significant for CaCl2: its qualified PHREEQC {@code B2} row is a 2-1 term with
+   * alpha2=12 and must not be discarded by a 2-2-only branch.
+   * </p>
+   *
+   * @param i first ion component index
+   * @param j second ion component index
+   * @return alpha2 in (kg/mol)<sup>1/2</sup>
+   */
+  public double getPitzerAlpha2(int i, int j) {
+    double firstCharge = Math.abs(getComponent(i).getIonicCharge());
+    double secondCharge = Math.abs(getComponent(j).getIonicCharge());
+    boolean containsMonovalent = firstCharge < 1.5 || secondCharge < 1.5;
+    boolean isTwoTwo = firstCharge >= 1.5 && firstCharge < 2.5 && secondCharge >= 1.5 && secondCharge < 2.5;
+    return containsMonovalent || isTwoTwo ? 12.0 : 50.0;
   }
 
   /**
@@ -1344,14 +1400,18 @@ public class PhasePitzer extends PhaseGE {
    * @return B-phi interaction function
    */
   private double getBphi(int cation, int anion, double ionicStrength) {
-    double cationCharge = getComponent(cation).getIonicCharge();
-    double anionCharge = getComponent(anion).getIonicCharge();
-    boolean is22 = Math.abs(cationCharge) >= 1.5 && Math.abs(anionCharge) >= 1.5;
+    double cationCharge = Math.abs(getComponent(cation).getIonicCharge());
+    double anionCharge = Math.abs(getComponent(anion).getIonicCharge());
+    double alpha1 = cationCharge >= 1.5 && anionCharge >= 1.5 ? 1.4 : 2.0;
     double sqrtIonicStrength = Math.sqrt(ionicStrength);
     double bPhi = getBeta0ij(cation, anion, temperature)
-        + getBeta1ij(cation, anion, temperature) * Math.exp((is22 ? -1.4 : -2.0) * sqrtIonicStrength);
-    if (is22) {
-      bPhi += getBeta2ij(cation, anion, temperature) * Math.exp(-12.0 * sqrtIonicStrength);
+        + getBeta1ij(cation, anion, temperature) * Math.exp(-alpha1 * sqrtIonicStrength);
+    boolean isTwoTwo = cationCharge >= 1.5 && anionCharge >= 1.5;
+    if (isTwoTwo || nonTwoTwoBeta2Active) {
+      double beta2Value = getBeta2ij(cation, anion, temperature);
+      if (Math.abs(beta2Value) > 1.0e-20) {
+        bPhi += beta2Value * Math.exp(-getPitzerAlpha2(cation, anion) * sqrtIonicStrength);
+      }
     }
     return bPhi;
   }

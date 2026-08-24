@@ -108,6 +108,26 @@ public class SystemPitzer extends SystemEosGE {
     PitzerParameterDatasets.applyPhreeqcSodiumPotassiumChloride((PhasePitzer) phaseArray[1]);
   }
 
+  /**
+   * Applies the complete explicit PHREEQC Pitzer subset required by this system's active aqueous species.
+   *
+   * <p>
+   * The bundled source catalog is broad, but activation remains fail-closed: every required binary, same-sign, ternary,
+   * and neutral interaction for the active aqueous topology must exist explicitly. Gas and oil remain on their EOS role
+   * phases and do not invoke the catalog.
+   * </p>
+   */
+  public void applyCompletePhreeqcPitzerCatalogParameters() {
+    PitzerParameterDatasets.applyCompletePhreeqcPitzerCatalog((PhasePitzer) phaseArray[1]);
+  }
+
+  /**
+   * Applies the complete qualified PHREEQC Ca-Mg-Cl-SO4 family to this system's Pitzer aqueous role.
+   */
+  public void applyPhreeqcCalciumMagnesiumChlorideSulfateParameters() {
+    PitzerParameterDatasets.applyPhreeqcCalciumMagnesiumChlorideSulfate((PhasePitzer) phaseArray[1]);
+  }
+
   /** {@inheritDoc} */
   @Override
   public SystemPitzer clone() {
