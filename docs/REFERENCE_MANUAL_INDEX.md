@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 51252)
-Total output lines: 1264
-
 ---
 title: NeqSim Reference Manual - Master Index
 description: Curated source-level navigation for NeqSim guides, tutorials, references, examples, and engineering workflows.
@@ -458,7 +455,251 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Optimization Overview**            | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW.md)                 | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer**                        |
 | **Process Researcher**               | [docs/process/optimization/process-researcher.md](process/optimization/process-researcher.md)                       | **Generate, simulate, optimize, and rank candidate flowsheets from feed/product targets, including reaction routes**                      |
 | **ProductionOptimizer Tutorial**     | [docs/examples/ProductionOptimizer_Tutorial.md](examples/ProductionOptimizer_Tutorial.md)                           | **Interactive Jupyter notebook with complete ProductionOptimizer guide: algorithms, single/multi-variable, Pareto, constraints**          |
-| **Python Optimization Tutorial**     | [docs/examples/NeqSim_Python_Optimization.md](examples/NeqSim_Python_Optimization.md)                               | **Using SciPy/Python…11252 tokens truncated…s** |
+| **Python Optimization Tutorial**     | [docs/examples/NeqSim_Python_Optimization.md](examples/NeqSim_Python_Optimization.md)                               | **Using SciPy/Python optimizers with NeqSim process simulations: constraints, Pareto, global optimization**                               |
+| **Capacity Constraint Framework**    | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md)                           | **Framework for equipment capacity limits, bottleneck detection, utilization tracking, and AIV/FIV vibration analysis**                   |
+| **Equipment Utilization via Mechanical Design** | [docs/process/equipment_utilization_via_mechanical_design.md](process/equipment_utilization_via_mechanical_design.md) | **Set design limits on MechanicalDesign so capacity utilization can be calculated and reported for any equipment type**                 |
+| **Optimizer Plugin Architecture**    | [docs/process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md](process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | **Equipment capacity strategies, throughput optimization, gradient descent, sensitivity analysis, shadow prices, and Eclipse VFP export** |
+| **External Optimizer Integration**   | [docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](integration/EXTERNAL_OPTIMIZER_INTEGRATION.md)                 | **ProcessSimulationEvaluator for Python/SciPy/NLopt/Pyomo integration with gradient estimation**                                          |
+| **Capacity Constraints Demo**        | [examples/notebooks/capacity_constraints_optimization_demo.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/capacity_constraints_optimization_demo.ipynb) | **Interactive notebook: constraint builder API, equipment/system queries, strategy registry, enable/disable, flow sweep, utilization charts** |
+| **Web API / JSON Process Builder**   | [docs/integration/web_api_json_process_builder.md](integration/web_api_json_process_builder.md)                     | **Build and run process simulations from JSON, structured error responses, equipment wiring API, multi-user session management**          |
+| **MCP Core Layer**                   | [docs/integration/mcp_neqsim_core_layer.md](integration/mcp_neqsim_core_layer.md)                                  | **MCP runners (FlashRunner, ProcessRunner, Validator, ComponentQuery), typed models, example/schema catalogs**                            |
+| **MCP Getting Started**              | [docs/integration/mcp_getting_started.md](integration/mcp_getting_started.md)                                       | **5-minute guide: connect any LLM to NeqSim via MCP — setup, first calculation, tool selection, common patterns**                        |
+| **MCP Server Guide**                | [docs/integration/mcp_server_guide.md](integration/mcp_server_guide.md)                                             | **Quarkus MCP Server for VS Code Copilot, Claude Desktop, Cursor — installation, tools, resources, testing**                              |
+| **MCP Agentic Workflow Improvements** | [docs/integration/mcp_agentic_workflow_improvements.md](integration/mcp_agentic_workflow_improvements.md)          | **Response contracts, provenance, validation-first execution, all-tool schema/example coverage, setup templates, process JSON contracts, benchmark trust, lifecycle metadata, safety gates, and coverage tests for MCP agent workflows** |
+| **Production Optimization Guide**    | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE.md)                         | **Complete guide to production optimization with Java and Python examples**                                                               |
+| **Reservoir-to-Market Optimization** | [docs/examples/reservoir_to_market_optimization.md](examples/reservoir_to_market_optimization.md)                   | **Notebook: integrated reservoir-to-market value chain optimization — production, plant operation, energy, CO₂, economics, multi-objective trade-offs** |
+| **ProcessModel Plant Optimization**  | [docs/examples/processmodel_plant_optimization.md](examples/processmodel_plant_optimization.md)                     | **Notebook: closed-loop multi-area ProcessModel optimization via ProcessAutomation adjustable parameters, evaluate() gating, utilization snapshots** |
+| **Oil & Gas Production & Energy Optimization** | [docs/examples/oilgas_production_energy_optimization.md](examples/oilgas_production_energy_optimization.md) | **Notebook: optimize production for throughput and energy efficiency, Pareto trade-off of rate vs compression power and CO₂ emissions** |
+| **Autosize & Optimize Workflows**    | [docs/examples/autosize_and_optimize_workflows.md](examples/autosize_and_optimize_workflows.md)                     | **Notebook: auto-size equipment from mechanical design, then optimize operating setpoints with capacity-constraint awareness**            |
+| **Pressure Boundary Optimization**   | [docs/process/pressure_boundary_optimization.md](process/pressure_boundary_optimization.md)                         | **Calculate flow rates for pressure boundaries, generate Eclipse VFP lift curves, optimize compressor power**                             |
+| **Flow Rate Optimization**           | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md)               | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation**                                         |
+| **Compressor Optimization Guide**    | [docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md](process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md) | **Specialized guide for compressor train optimization, anti-surge control, and power minimization**                                       |
+| **Practical Examples**               | [docs/process/optimization/PRACTICAL_EXAMPLES.md](process/optimization/PRACTICAL_EXAMPLES.md)                       | **Working examples for optimization scenarios including gas processing, LNG, and offshore platforms**                                     |
+| **SQP Optimizer**                    | [docs/process/optimization/sqp_optimizer.md](process/optimization/sqp_optimizer.md)                                 | **Sequential Quadratic Programming — constrained NLP with BFGS Hessian, active-set QP, L1 merit function**                              |
+
+### Chapter 23: Mechanical Design
+
+| Document                          | Path                                                                                                                                                   | Description                                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Mechanical Design                 | [docs/process/mechanical_design.md](process/mechanical_design.md)                                                                                         | Mechanical design overview, process design parameters, validation, and JSON export                                               |
+| **Equipment Design Parameters**   | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS.md)                                                                     | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, validation methods, and capacity constraints**             |
+| **Process Design Parameters**     | [docs/process/mechanical_design.md#process-design-parameters](process/mechanical_design.md#process-design-parameters)                                     | **Industry-standard process design parameters for separators, compressors, pumps, heat exchangers**                              |
+| **Design Validation**             | [docs/process/mechanical_design.md#design-validation](process/mechanical_design.md#design-validation)                                                     | **Validation methods per API-610, API-617, TEMA, API-12J standards**                                                             |
+| **Mechanical Design Report**      | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design.md#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)**                                                     |
+| **Compressor Casing Design**      | [docs/process/CompressorMechanicalDesign.md#casing-wall-thickness-asme-viii-div-1-ug-27](process/CompressorMechanicalDesign.md#casing-wall-thickness-asme-viii-div-1-ug-27) | **Compressor casing design per API 617 / ASME VIII: wall thickness, material selection, flange rating, nozzle loads, NACE MR0175, thermal growth, split-line bolts, barrel casing** |
+| Design Standards                  | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md)                                                                     | Design standards                                                                                                                 |
+| **Standards Implementation Program** | [docs/process/process_design_standards_program.md](process/process_design_standards_program.md)                                                         | Standards priorities, evidence gates, requirement coverage, and change control                                                   |
+| **Typed Standards Migration**     | [docs/process/standard_design_kernel_migration.md](process/standard_design_kernel_migration.md)                                                           | Fail-closed migration to explicit editions, kernels, requirement packs, and complete case envelopes                              |
+| Design Database                   | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md)                                                                       | Design database                                                                                                                  |
+| **Pipeline Mechanical Design**    | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design.md)                                                                       | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation**                               |
+| **DNV-RP-F109 On-Bottom Stability** | [docs/process/dnv_rp_f109_on_bottom_stability.md](process/dnv_rp_f109_on_bottom_stability.md)                                                           | **Fail-closed vertical, transparent absolute-static lateral, and external-response displacement screening for pipelines, cables, and umbilicals** |
+| **DNV-ST-F101 Pipeline Screening** | [docs/process/dnv_st_f101_pipeline_screening.md](process/dnv_st_f101_pipeline_screening.md)                                                               | **Fail-closed 2021 screening for containment, collapse, propagation, load interaction, fatigue, pressure cases, ovality, fabrication, and installation strain** |
+| **Topside Piping Design**         | [docs/process/topside_piping_design.md](process/topside_piping_design.md)                                                                                 | **Topside piping design with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3**                    |
+| **Manifold Mechanical Design**    | [docs/process/equipment/manifold_design.md](process/equipment/manifold_design.md)                                                                         | **Manifold design for topside, onshore, and subsea with velocity limits, reinforcement, support per ASME B31.3 and DNV-ST-F101** |
+| **Riser Mechanical Design**       | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design.md)                                                                             | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201**                                                           |
+| **Pipeline Design Math**          | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math.md)                                                             | **Mathematical methods and formulas for pipeline design**                                                                        |
+| **Subsea SURF Mechanical Design** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design](process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design)                                             | **Mechanical design for PLET, PLEM, trees, manifolds, jumpers, umbilicals, flexible pipes, boosters per DNV, API, ISO, NORSOK**  |
+| **Well Mechanical Design**        | [docs/process/well_mechanical_design.md](process/well_mechanical_design.md)                                                                               | **Standards-based well design: barrier elements/envelopes per NORSOK D-010, MAASP per API RP 90, CSV-driven design factors, cost estimation**|
+| **Equipment Datasheet Generator** | [docs/process/equipment_datasheets.md](process/equipment_datasheets.md)                                                                                   | **Structured JSON equipment datasheets from process simulation (separator, compressor, heater, valve)**                          |
+| **Dual EoS Comparison**           | [docs/process/dual_eos_comparison.md](process/dual_eos_comparison.md)                                                                                     | **SRK vs PR78 cross-check per TR1244 for field development QA**                                                                  |
+| TORG Integration                  | [docs/process/torg_integration.md](process/torg_integration.md)                                                                                           | TORG integration                                                                                                                 |
+| Field Development                 | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md)                                                             | Field development orchestration                                                                                                  |
+
+### Chapter 24: Electrical Design
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Electrical Design Guide**       | [docs/process/electrical-design.md](process/electrical-design.md)                                             | **Comprehensive guide to electrical design: motor sizing (IEC 60034), VFD topology, cable sizing, transformer, switchgear, hazardous area, load list, equipment-specific designs (separator, heater/cooler, pipeline), plant-wide SystemElectricalDesign** |
+| **Motor Mechanical Design**       | [docs/process/motor-mechanical-design.md](process/motor-mechanical-design.md)                                 | **Motor physical/mechanical design: foundation loads (IEEE 841), cooling (IEC 60034-6), bearings (ISO 281), vibration (ISO 10816-3), noise (IEC 60034-9, NORSOK S-002), enclosure (IEC 60034-5, IEC 60079), derating (IEC 60034-1)** |
+| **Combined Equipment Design Report** | [docs/process/motor-mechanical-design.md#equipmentdesignreport](process/motor-mechanical-design.md#equipmentdesignreport) | **EquipmentDesignReport: combined mechanical + electrical + motor design report with feasibility verdict for any equipment** |
+| **Compressor Electrical Design**  | [examples/notebooks/electrical/compressor_electrical_design.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/electrical/compressor_electrical_design.ipynb) | **Jupyter notebook: 2-stage compression electrical design with motor curves, power triangle, efficiency chain** |
+| **Process Plant Load List**       | [examples/notebooks/electrical/process_plant_load_list.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/electrical/process_plant_load_list.ipynb) | **Jupyter notebook: plant-wide electrical load list, demand/diversity factors, transformer sizing** |
+| **Motor & VFD Analysis**          | [examples/notebooks/electrical/motor_vfd_analysis.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/electrical/motor_vfd_analysis.ipynb) | **Jupyter notebook: motor efficiency classes IE1-IE4, VFD topology selection, harmonics, efficiency maps, cable sizing, hazardous area** |
+| **Power-from-Shore Feasibility**  | [examples/notebooks/electrical/power_from_shore_feasibility.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/electrical/power_from_shore_feasibility.ipynb) | **Jupyter notebook: submarine cable sizing, HVAC/HVDC, cost estimation, CO₂ comparison, regional analysis (Norway, UK, Brazil, GoM)** |
+
+### Chapter 25: Instrument Design
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Instrument Design Guide**       | [docs/process/instrument-design.md](process/instrument-design.md)                                             | **Comprehensive guide to instrument design: ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
+
+### Chapter 26: Dynamic Simulation
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Dynamic Simulation Guide**      | [docs/process/dynamic-simulation.md](process/dynamic-simulation.md)                                           | **DynamicProcessHelper utility — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation, configurable PID tuning, flow and temperature control loops** |
+| **Dynamic Simulation Enhancements** | [docs/process/dynamic-simulation-enhancements.md](process/dynamic-simulation-enhancements.md)               | **Advanced dynamic features: controller modes (AUTO/MANUAL/CASCADE), bumpless transfer, 2-DOF PID, SFC sequencing (IEC 61131-3), override/split-range control, sensor fault injection, transmitter filtering, alarm shelving, valve nonlinearities (deadband/stiction/hysteresis), separator internals (weir, mist eliminator), HX thermal ODE (wall + CSTR holdup), distillation MESH dynamics, adaptive time stepping, parallel transient, RK4 integration** |
+
+### Chapter 23b: Cost Estimation
+
+| Document                        | Path                                                                                                                                         | Description                                                                                                 |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Cost Estimation Framework**   | [docs/process/COST_ESTIMATION_FRAMEWORK.md](process/COST_ESTIMATION_FRAMEWORK.md)                                                               | **Comprehensive capital and operating cost estimation framework with scope-safe result reconciliation**      |
+| **Cost Estimation API**         | [docs/process/COST_ESTIMATION_API_REFERENCE.md](process/COST_ESTIMATION_API_REFERENCE.md)                                                       | **Detailed API reference for all cost estimation classes and CostEstimateResult output maps**                |
+| **Subsea SURF Cost Estimation** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#cost-estimation](process/SURF_SUBSEA_EQUIPMENT.md#cost-estimation)                                       | **Cost estimation for all SURF equipment with regional factors, labor rates, vessel costs, BOM generation** |
+| **Cost Result Schema**          | [docs/process/COST_ESTIMATION_FRAMEWORK.md#result-schema-and-reconciliation](process/COST_ESTIMATION_FRAMEWORK.md#result-schema-and-reconciliation) | **Additive cost, summary total, breakdown, quantity-basis, and located/base reconciliation rules**           |
+| Equipment Costs                 | [docs/process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation](process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation)           | Equipment-specific cost correlations                                                                        |
+| Tank Costs                      | [docs/process/COST_ESTIMATION_FRAMEWORK.md#tank-cost](process/COST_ESTIMATION_FRAMEWORK.md#tank-cost)                                           | Storage tank cost estimation (API 650/620)                                                                  |
+| Expander Costs                  | [docs/process/COST_ESTIMATION_FRAMEWORK.md#expander-cost](process/COST_ESTIMATION_FRAMEWORK.md#expander-cost)                                   | Turboexpander cost estimation                                                                               |
+| Ejector Costs                   | [docs/process/COST_ESTIMATION_FRAMEWORK.md#ejector-cost](process/COST_ESTIMATION_FRAMEWORK.md#ejector-cost)                                     | Ejector and vacuum system costs                                                                             |
+| Absorber Costs                  | [docs/process/COST_ESTIMATION_FRAMEWORK.md#absorber-cost](process/COST_ESTIMATION_FRAMEWORK.md#absorber-cost)                                   | Absorption tower cost estimation                                                                            |
+| Currency & Location             | [docs/process/COST_ESTIMATION_FRAMEWORK.md#currency-and-location-support](process/COST_ESTIMATION_FRAMEWORK.md#currency-and-location-support)   | Multi-currency and location factors                                                                         |
+| OPEX Estimation                 | [docs/process/COST_ESTIMATION_FRAMEWORK.md#operating-cost-opex-estimation](process/COST_ESTIMATION_FRAMEWORK.md#operating-cost-opex-estimation) | Operating cost calculation                                                                                  |
+| Financial Metrics               | [docs/process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics](process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics)                           | Payback, ROI, NPV calculations                                                                              |
+
+### Chapter 23c: Corrosion Analysis
+
+| Document                              | Path                                                                                                             | Description                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Corrosion Module Overview**         | [docs/process/corrosion/index.md](process/corrosion/index.md)                                                           | **Package overview, quick start, standards coverage for NORSOK M-506 and M-001**                                 |
+| **Process-Wide Materials Review**     | [docs/process/corrosion/materials_review.md](process/corrosion/materials_review.md)                                 | **STID-backed material selection, degradation, CUI, remaining-life, and MCP materials review workflow**           |
+| **NORSOK M-506 Corrosion Rate**       | [docs/process/corrosion/norsok_m506_corrosion_rate.md](process/corrosion/norsok_m506_corrosion_rate.md)             | **CO2 corrosion rate prediction — fugacity, pH, correction factors, parameter sweeps, JSON reporting**           |
+| **NORSOK M-001 Material Selection**   | [docs/process/corrosion/norsok_m001_material_selection.md](process/corrosion/norsok_m001_material_selection.md)     | **Material grade recommendation — sweet/sour classification, CRA selection, chloride SCC, corrosion allowance** |
+| **Pipeline Corrosion Integration**    | [docs/process/corrosion/pipeline_corrosion_integration.md](process/corrosion/pipeline_corrosion_integration.md)     | **Automated corrosion analysis from process simulation — stream extraction, combined mechanical + corrosion**    |
+| **Sour Service Assessment**           | [docs/process/corrosion/sour_service_assessment.md](process/corrosion/sour_service_assessment.md)                   | **ISO 15156 / NACE MR0175 sour region classification, SSC/HIC/SOHIC risk, material recommendations**           |
+| **CO2 Corrosion Material Selection**  | [docs/process/corrosion/co2_corrosion_material_selection.md](process/corrosion/co2_corrosion_material_selection.md) | **CRA selection hierarchy — 13Cr/22Cr/25Cr/nickel alloy based on CO2 rate, H2S, chloride, temperature**        |
+| **Chloride SCC Assessment**           | [docs/process/corrosion/chloride_scc_assessment.md](process/corrosion/chloride_scc_assessment.md)                   | **Chloride stress corrosion cracking risk for austenitic and duplex stainless steels per NORSOK M-001/MTI 15**  |
+| **Oxygen Corrosion Assessment**       | [docs/process/corrosion/oxygen_corrosion_assessment.md](process/corrosion/oxygen_corrosion_assessment.md)           | **Dissolved O2 corrosion/pitting for injection water and utility systems per NORSOK M-001 / NACE SP0499**       |
+| **Dense Phase CO2 Corrosion**         | [docs/process/corrosion/dense_phase_co2_corrosion.md](process/corrosion/dense_phase_co2_corrosion.md)               | **CCS pipeline corrosion — impurity specs, free water risk, water solubility per DNV-RP-J202 / ISO 27913**      |
+| **Ammonia Compatibility**             | [docs/process/corrosion/ammonia_compatibility.md](process/corrosion/ammonia_compatibility.md)                       | **NH3 service material assessment — SCC, O2 inhibitor, copper restriction per CGA G-2.1 / ASME B31.3**         |
+
+### Chapter 24: Serialization & Persistence
+
+| Document                | Path                                                                                           | Description                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Process Serialization   | [docs/simulation/process_serialization.md](simulation/process_serialization.md)                   | Save/load process models                                             |
+| Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle.md) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
+| Process Automation API  | [docs/simulation/process_automation.md](simulation/process_automation.md)                         | String-addressable API for reading/writing simulation variables       |
+| ProcessAutomation Foundations | [docs/simulation/automation/automation_foundations.md](simulation/automation/automation_foundations.md) | Address resolution, variable catalogs, unit handling, and safe-access schema |
+| ProcessAutomation Integration Patterns | [docs/simulation/automation/automation_integrations.md](simulation/automation/automation_integrations.md) | Multi-area addressing plus optimizer/digital-twin integration workflows |
+| ProcessAutomation Operations and Troubleshooting | [docs/simulation/automation/automation_operations.md](simulation/automation/automation_operations.md) | Diagnostics playbook, bounds validation, and troubleshooting checklist |
+
+---
+
+## Part IIIb: Engineering
+
+### Engineering workflow and governance
+
+| Document | Path | Description |
+| --- | --- | --- |
+| **Engineering Hub** | [docs/engineering/index.md](engineering/index.md) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
+| **Engineering Guide** | [docs/engineering/guide.md](engineering/guide.md) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
+| **Current Engineering Capabilities** | [docs/engineering/current-capabilities.md](engineering/current-capabilities.md) | **Implemented entry points, discipline coverage, qualification layers, readiness levels, and accountable-review boundaries** |
+| **Design Cases and Governing Envelopes** | [docs/engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes.md) | **Controlled cases, metric direction, acceptance limits, isolated execution, and governing-value selection** |
+| **DEXPI Engineering Guide** | [docs/engineering/dexpi-guide.md](engineering/dexpi-guide.md) | **Choose, generate, validate, and qualify DEXPI Plant, Process, Proteus, and pyDEXPI exchanges, including SIS/HIPPS semantics** |
+| **Engineering Deliverables and Handover** | [docs/engineering/deliverables-and-handover.md](engineering/deliverables-and-handover.md) | **Package layers, registers, DEXPI, CFIHOS, issue controls, approvals, and revisions** |
+| Engineering Simulator Foundations | [docs/integration/engineering-simulator-foundations.md](integration/engineering-simulator-foundations.md) | Isolated case execution, provenance, readiness, uncertainty, and dynamic verification contracts |
+| Process-to-Engineering Simulator | [docs/integration/process-to-engineering-simulator.md](integration/process-to-engineering-simulator.md) | Iterative process/design convergence and explicit discipline sizing modules |
+| Process Model to Engineering Workflow | [docs/integration/process-to-engineering-workflow.md](integration/process-to-engineering-workflow.md) | Governed compilation, artifact contracts, approvals, and revision workflow |
+| Numerical Health and Engineering Closure | [docs/integration/numerical-health-and-engineering-closure.md](integration/numerical-health-and-engineering-closure.md) | Convergence, closure, residual, and sensitivity evidence |
+
+### Discipline engineering and deliverables
+
+| Document | Path | Description |
+| --- | --- | --- |
+| Process Design Guide | [docs/process/process_design_guide.md](process/process_design_guide.md) | Process design, mechanical design, validation, and reporting |
+| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Equipment sizing, ratings, standards, and design reports |
+| Topside Piping Design | [docs/process/topside_piping_design.md](process/topside_piping_design.md) | Hydraulic, mechanical, vibration, and stress screening |
+| Instrument Design | [docs/process/instrument-design.md](process/instrument-design.md) | Instrument ranges, I/O, uncertainty, response, and SIS interfaces |
+| Electrical Design | [docs/process/electrical-design.md](process/electrical-design.md) | Motors, VFDs, cables, transformers, switchgear, and load lists |
+| DEXPI Engineering Generation | [docs/integration/dexpi-engineering-generation.md](integration/dexpi-engineering-generation.md) | Canonical graph, governed DEXPI, registers, datasheets, and calculation evidence |
+| CFIHOS Engineering Handover | [docs/integration/cfihos-20-engineering-handover.md](integration/cfihos-20-engineering-handover.md) | Controlled engineering data handover and readiness assessment |
+
+### Examples and lifecycle
+
+| Document | Path | Description |
+| --- | --- | --- |
+| Complete Offshore Engineering Study | [docs/integration/complete-offshore-process-engineering-study.md](integration/complete-offshore-process-engineering-study.md) | Full-facility executed example from benchmark to review-governed package |
+| Model Change Events | [docs/process/model-change-events.md](process/model-change-events.md) | Controlled model revisions and event identity |
+| Model Impact Analysis | [docs/process/model-impact-analysis.md](process/model-impact-analysis.md) | Dependency-derived recalculation, revalidation, and reapproval scope |
+| Operational Evidence Package | [docs/process/operational_evidence_package.md](process/operational_evidence_package.md) | Evidence linking simulation results, constraints, and review status |
+| Industrial Method Qualification | [docs/integration/industrial-method-qualification.md](integration/industrial-method-qualification.md) | Method qualification boundaries and external evidence requirements |
+
+---
+
+## Part IV: Pipeline & Multiphase Flow
+
+### Chapter 24: Pipeline Fundamentals
+
+| Document                   | Path                                                                                   | Description                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Fluid Mechanics Overview   | [docs/fluidmechanics/README.md](fluidmechanics/README.md)                                       | Fluid mechanics module                                                                                          |
+| Pipeline Index             | [docs/wiki/pipeline_index.md](wiki/pipeline_index.md)                                     | Pipeline documentation index                                                                                    |
+| **Pipeline Simulation**    | [docs/process/equipment/pipeline_simulation.md](process/equipment/pipeline_simulation.md) | **Comprehensive pipeline simulation guide with PipeLineInterface, all pipe types, flow regimes, heat transfer** |
+| Flow Equations             | [docs/wiki/pipeline_flow_equations.md](wiki/pipeline_flow_equations.md)                   | Pipeline flow equations                                                                                         |
+| Single Phase Flow          | [docs/fluidmechanics/single_phase_pipe_flow.md](fluidmechanics/single_phase_pipe_flow.md) | Single phase pipe flow                                                                                          |
+| **Flow Pattern Detection** | [docs/fluidmechanics/flow_pattern_detection.md](fluidmechanics/flow_pattern_detection.md) | **Taitel-Dukler, Baker, Barnea models, FlowPatternDetector API**                                                |
+
+### Chapter 25: Pressure Drop Calculations
+
+| Document         | Path                                                                         | Description               |
+| ---------------- | ---------------------------------------------------------------------------- | ------------------------- |
+| Pressure Drop    | [docs/wiki/pipeline_pressure_drop.md](wiki/pipeline_pressure_drop.md)           | Pressure drop calculation |
+| Beggs & Brill    | [docs/wiki/beggs_and_brill_correlation.md](wiki/beggs_and_brill_correlation.md) | Beggs & Brill correlation |
+| Friction Factors | [docs/wiki/friction_factor_models.md](wiki/friction_factor_models.md)           | Friction factor models    |
+
+### Chapter 26: Heat Transfer in Pipelines
+
+| Document                               | Path                                                                                                       | Description                                                                             |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Heat Transfer                          | [docs/wiki/pipeline_heat_transfer.md](wiki/pipeline_heat_transfer.md)                                         | Pipeline heat transfer                                                                  |
+| Heat Transfer Module                   | [docs/fluidmechanics/heat_transfer.md](fluidmechanics/heat_transfer.md)                                       | Heat transfer module                                                                    |
+| Pipe Wall                              | [docs/wiki/pipe_wall_heat_transfer.md](wiki/pipe_wall_heat_transfer.md)                                       | Pipe wall heat transfer                                                                 |
+| Interphase                             | [docs/fluidmechanics/InterphaseHeatMassTransfer.md](fluidmechanics/InterphaseHeatMassTransfer.md)             | Interphase heat/mass transfer                                                           |
+| **Droplet/Bubble Flow Correlations**   | [docs/fluidmechanics/droplet_flow_correlations.md](fluidmechanics/droplet_flow_correlations.md)               | **Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano for dispersed flow**                 |
+| Mass Transfer                          | [docs/fluidmechanics/mass_transfer.md](fluidmechanics/mass_transfer.md)                                       | Mass transfer models                                                                    |
+| **Mass Transfer API**                  | [docs/fluidmechanics/MassTransferAPI.md](fluidmechanics/MassTransferAPI.md)                                   | **Complete API documentation for mass transfer with methods, parameters, and examples** |
+| **Evaporation & Dissolution Tutorial** | [docs/fluidmechanics/EvaporationDissolutionTutorial.md](fluidmechanics/EvaporationDissolutionTutorial.md)     | **Practical tutorial for liquid evaporation and gas dissolution with worked examples**  |
+| **Model Improvements**                 | [docs/fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md](fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md) | **Technical review of mass transfer model with improvement recommendations**            |
+
+### Chapter 27: Two-Phase & Multiphase Flow
+
+| Document             | Path                                                                                                                     | Description               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| Two-Phase Model      | [docs/fluidmechanics/TwoPhasePipeFlowModel.md](fluidmechanics/TwoPhasePipeFlowModel.md)                                     | Two-phase pipe flow       |
+| Two-Fluid Model      | [docs/wiki/two_fluid_model.md](wiki/two_fluid_model.md)                                                                     | Two-fluid model           |
+| Multiphase Transient | [docs/wiki/multiphase_transient_model.md](wiki/multiphase_transient_model.md)                                               | Multiphase transient      |
+| Transient Pipe Wiki  | [docs/wiki/transient_multiphase_pipe.md](wiki/transient_multiphase_pipe.md)                                                 | Transient multiphase pipe |
+| Development Plan     | [docs/fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md](fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md) | Development plan          |
+
+### Chapter 28: Transient Pipeline Simulation
+
+| Document              | Path                                                                               | Description           |
+| --------------------- | ---------------------------------------------------------------------------------- | --------------------- |
+| Transient Simulation  | [docs/wiki/pipeline_transient_simulation.md](wiki/pipeline_transient_simulation.md)   | Transient pipeline    |
+| Model Recommendations | [docs/wiki/pipeline_model_recommendations.md](wiki/pipeline_model_recommendations.md) | Model recommendations |
+| Water Hammer          | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md)       | Water hammer          |
+
+---
+
+## Part V: Safety & Reliability
+
+### Chapter 29: Safety Overview
+
+| Document             | Path                                                                             | Description                 |
+| -------------------- | -------------------------------------------------------------------------------- | --------------------------- |
+| Safety Overview      | [docs/safety/README.md](safety/README.md)                                                 | Safety systems module       |
+| Safety Roadmap       | [docs/safety/SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP.md)     | Safety simulation roadmap   |
+| Layered Architecture | [docs/safety/layered_safety_architecture.md](safety/layered_safety_architecture.md) | Layered safety architecture |
+| Process Safety       | [docs/process/safety/README.md](process/safety/README.md)                                 | Process safety module       |
+
+### Chapter 30: Alarm Systems
+
+| Document            | Path                                                                                 | Description                |
+| ------------------- | ------------------------------------------------------------------------------------ | -------------------------- |
+| Alarm System Guide  | [docs/safety/alarm_system_guide.md](safety/alarm_system_guide.md)                       | Alarm system configuration |
+| Alarm Logic Example | [docs/safety/alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example.md) | Alarm-triggered logic      |
+| ESD Fire Alarm      | [docs/wiki/esd_fire_alarm_system.md](wiki/esd_fire_alarm_system.md)                     | ESD/Fire alarm systems     |
+
+### Chapter 31: Pressure Relief Systems
+
+| Document                    | Path                                                                                 | Description                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| PSV Dynamic Sizing Wiki     | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example.md)           | PSV dynamic sizing                                                                    |
+| PSV Dynamic Sizing          | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example.md)       | PSV sizing example                                                                    |
+| Trapped Inventory Calculator | [docs/safety/trapped_inventory_calculator.md](safety/trapped_inventory_calculator.md) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
+| Trapped Liquid Fire Rupture | [docs/safety/trapped_liquid_fire_rupture.md](safety/trapped_liquid_fire_rupture.md) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
+| **Blocked-In Liquid Thermal Expansion** | [docs/safety/blocked_in_liquid_thermal_expansion.md](safety/blocked_in_liquid_thermal_expansion.md) | **Rigorous isochoric pressure-rise screening (API 521 §4.4.12) plus simplified beta/kappa relation for blocked-in liquid segments** |
 | Vessel Thermomechanical Safety | [docs/safety/vessel_thermomechanical_safety.md](safety/vessel_thermomechanical_safety.md) | Transient non-equilibrium blowdown, dynamic PSV sizing, fast filling, cryogenic boil-off, composite-wall conduction, and fire/blowdown wall rupture |
 | **Relief Valve Sizing API** | [docs/safety/relief_valve_sizing_api.md](safety/relief_valve_sizing_api.md)             | **API 520/521 PSV sizing for gas, liquid, and two-phase relief with fire heat input** |
 | PSD Valve Trip              | [docs/wiki/psd_valve_hihi_trip.md](wiki/psd_valve_hihi_trip.md)                         | PSD valve HIHI trip                                                                   |
