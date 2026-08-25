@@ -28,7 +28,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.11");
+    inventory.addProperty("inventoryVersion", "1.12");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -238,10 +238,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "getProgress remains CONFIRMED_GAP until its classification accounting and packaged protocol expectation are changed together on one validated exact head");
+        "No promotion candidate is queued; close further gaps only when current source and concrete evidence support a bounded classification");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; eight non-numerical discovery, catalog, lookup, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "Every published tool has an explicit coverage record; nine non-numerical discovery, catalog, lookup, progress, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
@@ -249,28 +249,7 @@ public final class McpEvidenceInventory {
 
   /** Builds evidence-qualified candidates for a future atomic contract-status promotion. */
   private static JsonObject buildContractPromotionCandidates() {
-    JsonObject candidates = new JsonObject();
-    candidates.add("getProgress", contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_PROGRESS_RETRIEVAL",
-        new String[] { "src/main/java/neqsim/mcp/runners/ProgressTracker.java",
-            "src/test/java/neqsim/mcp/runners/McpEvidenceInventoryFoundationTests.java",
-            "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md" },
-        "Active-operation discovery, point retrieval, milestone visibility, completion state, missing-operation errors, and real-protocol listActive retrieval are directly tested; this evidence does not validate the underlying calculation, cancellation, durability, deployment isolation, or plant authority"));
-    return candidates;
-  }
-
-  /** Builds one bounded contract-promotion candidate. */
-  private static JsonObject contractPromotionCandidate(String benchmarkApplicability, String[] evidenceSources,
-      String evidenceBoundary) {
-    JsonObject candidate = new JsonObject();
-    candidate.addProperty("targetCoverageStatus", "CONTRACT_TESTED");
-    candidate.addProperty("benchmarkApplicability", benchmarkApplicability);
-    candidate.addProperty("contractEvidenceCount", evidenceSources.length);
-    candidate.add("contractEvidenceSources", toJsonArray(java.util.Arrays.asList(evidenceSources)));
-    candidate.addProperty("evidenceBoundary", evidenceBoundary);
-    candidate.addProperty("promotionReady", false);
-    candidate.addProperty("remainingGate",
-        "Update frozen protocol classification accounting atomically and pass exact-head hosted validation before changing coverageStatus");
-    return candidate;
+    return new JsonObject();
   }
 
   /**
@@ -338,6 +317,13 @@ public final class McpEvidenceInventory {
       evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/DataCatalogRunner.java",
           "src/test/java/neqsim/mcp/runners/DataCatalogRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" };
       evidenceBoundary = "Read-only catalog dispatch and representative component-family, EOS-model, component-property, and real-protocol catalog retrieval are tested; database contents, standards applicability, EOS accuracy, and material or design decisions are not validated by this evidence";
+      break;
+    case "getProgress":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_PROGRESS_RETRIEVAL";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ProgressTracker.java",
+          "src/test/java/neqsim/mcp/runners/McpEvidenceInventoryFoundationTests.java",
+          "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md" };
+      evidenceBoundary = "Active-operation discovery, point retrieval, milestone visibility, completion state, missing-operation errors, and real-protocol listActive retrieval are directly tested; this evidence does not validate the underlying calculation, cancellation, durability, deployment isolation, or plant authority";
       break;
     default:
       return false;
