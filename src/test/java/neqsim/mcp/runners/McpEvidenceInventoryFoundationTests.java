@@ -53,15 +53,17 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(71, limitations.get("publishedToolCount").getAsInt());
     assertEquals(71, limitations.get("coverageRecordCount").getAsInt());
     assertEquals(20, limitations.get("explicitCoverageRecordCount").getAsInt());
-    assertEquals(6, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(45, limitations.get("confirmedGapToolCount").getAsInt());
-    assertEquals(6, limitations.getAsJsonArray("contractTestedTools").size());
+    assertEquals(8, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(43, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(8, limitations.getAsJsonArray("contractTestedTools").size());
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getCapabilities"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getSchema"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getExample"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getBenchmarkTrust"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("checkToolAccess"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("manageIndustrialProfile"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("searchComponents"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("queryDataCatalog"));
     assertEquals(71, coverageRecords.size());
     assertTrue(limitations.get("coverageComplete").getAsBoolean());
     assertFalse(limitations.get("scientificValidationComplete").getAsBoolean());
@@ -116,6 +118,24 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(5, profile.get("contractEvidenceCount").getAsInt());
     assertEquals(5, profile.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(profile.get("evidenceBoundary").getAsString().contains("external identity"));
+
+    JsonObject componentSearch = coverageRecords.getAsJsonObject("searchComponents");
+    assertEquals("CONTRACT_TESTED", componentSearch.get("coverageStatus").getAsString());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP",
+        componentSearch.get("benchmarkApplicability").getAsString());
+    assertEquals(3, componentSearch.get("contractEvidenceCount").getAsInt());
+    assertEquals(3, componentSearch.getAsJsonArray("contractEvidenceSources").size());
+    assertTrue(componentSearch.get("evidenceBoundary").getAsString().contains("real-protocol retrieval"));
+    assertTrue(componentSearch.get("evidenceBoundary").getAsString().contains("does not validate thermodynamic"));
+
+    JsonObject dataCatalog = coverageRecords.getAsJsonObject("queryDataCatalog");
+    assertEquals("CONTRACT_TESTED", dataCatalog.get("coverageStatus").getAsString());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY",
+        dataCatalog.get("benchmarkApplicability").getAsString());
+    assertEquals(3, dataCatalog.get("contractEvidenceCount").getAsInt());
+    assertEquals(3, dataCatalog.getAsJsonArray("contractEvidenceSources").size());
+    assertTrue(dataCatalog.get("evidenceBoundary").getAsString().contains("Read-only catalog"));
+    assertTrue(dataCatalog.get("evidenceBoundary").getAsString().contains("standards applicability"));
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 
@@ -125,7 +145,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.8", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.9", inventory.get("inventoryVersion").getAsString());
     assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());
