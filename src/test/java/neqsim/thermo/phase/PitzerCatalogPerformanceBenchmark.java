@@ -26,6 +26,13 @@ public final class PitzerCatalogPerformanceBenchmark {
 
     SystemPitzer pitzer = createPitzerSystem();
     PhasePitzer aqueous = (PhasePitzer) pitzer.getPhase(1);
+    long selectionStart = System.nanoTime();
+    sink += kernelChecksum(aqueous);
+    long automaticCatalogSelection = System.nanoTime() - selectionStart;
+    if (!PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID.equals(aqueous.getParameterDatasetId())) {
+      throw new IllegalStateException("Automatic Pitzer catalog selection did not activate");
+    }
+    System.out.println("pitzerAutomaticCatalogSelectionNs=" + automaticCatalogSelection);
     for (int warmup = 0; warmup < 500; warmup++) {
       sink += kernelChecksum(aqueous);
       pitzer.init(3);
@@ -87,7 +94,6 @@ public final class PitzerCatalogPerformanceBenchmark {
     system.addComponent("SO4--", 0.3);
     system.setMixingRule("classic");
     system.init(0);
-    system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
     return system;
   }
 
