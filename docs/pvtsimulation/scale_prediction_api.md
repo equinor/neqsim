@@ -226,8 +226,8 @@ SystemPitzer fluid = new SystemPitzer(298.15, 50.0);
 fluid.addComponent("water", 55.508);
 fluid.addComponent("Na+", 1.0);
 fluid.addComponent("Ca++", 0.2);
-fluid.addComponent("Mg++", 0.0);
-fluid.addComponent("Cl-", 1.0);
+fluid.addComponent("Mg++", 0.15);
+fluid.addComponent("Cl-", 1.3);
 fluid.addComponent("SO4--", 0.2);
 fluid.init(0);
 fluid.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
@@ -297,8 +297,11 @@ the aqueous ion reaction and does not explicitly include crystallization-water a
 so hydrated-mineral standard-state treatment remains outside this API's qualified scope.
 
 The process-system test carries the solid ledger beside the residual fluid through a
-`Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Fluid-phase
-density, enthalpy and heat capacity remain finite and ions remain aqueous. Solid density, enthalpy,
+`Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Its
+charge-balanced feed contains nonzero Ca++, Mg++, Cl-, and SO4--; Ca/SO4 close against the solid
+ledger while Mg/Cl remain unchanged spectators. Fluid-phase density, enthalpy and heat capacity
+remain finite and ions remain aqueous. This exercises the complete four-ion PHREEQC topology but
+does not by itself qualify quaternary mixed-brine observables. Solid density, enthalpy,
 heat capacity and heat of precipitation are not yet represented, so rigorous process energy balances
 with a material solid stream remain a separate model/property boundary.
 
