@@ -68,6 +68,15 @@ public final class PitzerParameterDatasets {
   /** Highest independently checked binary CaCl2 or MgCl2 molality, in mol/kg water. */
   public static final double CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY = 2.0;
 
+  /** Lowest total formula-unit molality in the mixed MgCl2-MgSO4 water-activity evidence. */
+  public static final double MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MIN_TOTAL_MOLALITY = 0.35;
+
+  /** Highest total formula-unit molality in the mixed MgCl2-MgSO4 water-activity evidence. */
+  public static final double MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MAX_TOTAL_MOLALITY = 3.80;
+
+  private static final double MG_CL_SO4_IONIC_STRENGTH_FRACTION_TOLERANCE = 3.0e-3;
+  private static final double MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE = 1.0e-12;
+
   /** Utility class. */
   private PitzerParameterDatasets() {
   }
@@ -445,9 +454,10 @@ public final class PitzerParameterDatasets {
     if (PHREEQC_PITZER_CATALOG_ID.equals(datasetId)) {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
-          Arrays.asList("CaCl2 mean activity at 298.15 K", "MgCl2 mean activity at 298.15 K"),
+          Arrays.asList("CaCl2 mean activity at 298.15 K", "MgCl2 mean activity at 298.15 K",
+              "MgCl2-MgSO4 water activity at 298.15 K"),
           Arrays.asList("Other catalog species are source-mapped, not independently qualified",
-              "Mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain unqualified"));
+              "Ca-bearing mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain unqualified"));
     }
     String identity = datasetId == null || datasetId.trim().isEmpty() ? "unknown" : datasetId;
     return new PitzerParameterQualification(identity, PitzerParameterQualification.Level.UNQUALIFIED,
@@ -466,6 +476,48 @@ public final class PitzerParameterDatasets {
         && Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) <= 1.0e-9
         && saltMolality >= CA_MG_CL_SO4_BINARY_VALIDATION_MIN_MOLALITY
         && saltMolality <= CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY;
+  }
+
+  /**
+   * Reports whether a mixed MgCl2-MgSO4 state is inside the independently checked water-activity envelope.
+   *
+   * <p>
+   * The evidence contains three composition lines at MgCl2 ionic-strength fractions 0.20, 0.50, and 0.80. The
+   * line-specific total formula-unit molality ranges are 0.60-2.96, 0.35-3.50, and 0.95-3.80 mol/kg water,
+   * respectively. The small fraction tolerance represents the source table's two-decimal composition rounding; this
+   * method does not qualify interpolation between the three composition lines.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param magnesiumChlorideMolality MgCl2 formula-unit molality in mol/kg water
+   * @param magnesiumSulfateMolality MgSO4 formula-unit molality in mol/kg water
+   * @return {@code true} for finite, non-negative inputs on a checked composition line and inside its molality range
+   */
+  public static boolean isWithinMagnesiumChlorideSulfateWaterActivityValidationRange(double temperature,
+      double magnesiumChlorideMolality, double magnesiumSulfateMolality) {
+    if (!Double.isFinite(temperature) || !Double.isFinite(magnesiumChlorideMolality)
+        || !Double.isFinite(magnesiumSulfateMolality) || magnesiumChlorideMolality < 0.0
+        || magnesiumSulfateMolality < 0.0 || Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) > 1.0e-9) {
+      return false;
+    }
+    double totalMolality = magnesiumChlorideMolality + magnesiumSulfateMolality;
+    double ionicStrength = 3.0 * magnesiumChlorideMolality + 4.0 * magnesiumSulfateMolality;
+    if (totalMolality <= 0.0 || ionicStrength <= 0.0) {
+      return false;
+    }
+    double magnesiumChlorideIonicStrengthFraction = 3.0 * magnesiumChlorideMolality / ionicStrength;
+    if (Math.abs(magnesiumChlorideIonicStrengthFraction - 0.20) <= MG_CL_SO4_IONIC_STRENGTH_FRACTION_TOLERANCE) {
+      return totalMolality >= 0.60 - MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE
+          && totalMolality <= 2.96 + MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE;
+    }
+    if (Math.abs(magnesiumChlorideIonicStrengthFraction - 0.50) <= MG_CL_SO4_IONIC_STRENGTH_FRACTION_TOLERANCE) {
+      return totalMolality >= MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MIN_TOTAL_MOLALITY
+          - MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE && totalMolality <= 3.50 + MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE;
+    }
+    return Math.abs(magnesiumChlorideIonicStrengthFraction - 0.80) <= MG_CL_SO4_IONIC_STRENGTH_FRACTION_TOLERANCE
+        && totalMolality >= 0.95 - MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE
+        && totalMolality <= MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MAX_TOTAL_MOLALITY
+            + MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE;
   }
 
   private static int requiredComponentIndex(PhasePitzer phase, String componentName) {
