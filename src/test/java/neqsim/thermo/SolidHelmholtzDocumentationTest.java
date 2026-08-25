@@ -9,6 +9,7 @@ import neqsim.thermo.system.SystemLeachmanEos;
 import neqsim.thermo.util.solid.SolidHelmholtzState;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointResult;
+import neqsim.util.exception.IsNaNException;
 
 /** Executes the examples in docs/thermo/solid_helmholtz_models.md. */
 class SolidHelmholtzDocumentationTest {
@@ -32,7 +33,7 @@ class SolidHelmholtzDocumentationTest {
 
   /** Execute the documented structured para-hydrogen freezing-point workflow. */
   @Test
-  void paraHydrogenFreezingPointExample() {
+  void paraHydrogenFreezingPointExample() throws IsNaNException {
     SystemLeachmanEos hydrogen = new SystemLeachmanEos(13.6, 0.07042, "para-hydrogen", true);
     hydrogen.setSolidPhaseCheck("para-hydrogen");
 
