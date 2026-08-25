@@ -77,7 +77,7 @@ class ReferenceManualIndexDocumentationTest(unittest.TestCase):
                 continue
             checked += 1
             expected = label[len("docs/") :]
-            actual = unquote(path_text)
+            actual = unquote(target)
             if expected != actual:
                 mismatches.append("{} -> {}".format(label, target))
         self.assertGreater(checked, 600)
