@@ -229,9 +229,8 @@ fluid.addComponent("Ca++", 0.2);
 fluid.addComponent("Mg++", 0.15);
 fluid.addComponent("Cl-", 1.3);
 fluid.addComponent("SO4--", 0.2);
-fluid.init(0);
-fluid.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
 fluid.setMixingRule("classic");
+fluid.init(0); // Automatically selects the complete PHREEQC Pitzer catalog topology.
 fluid.setMultiPhaseCheck(true);
 
 ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
@@ -242,6 +241,12 @@ double solidAmountMol = solid.getPrecipitatedMoles();
 double solidMassGram = solid.getPrecipitatedMassGrams();
 double materialResidualMol = solid.getMaximumIonBalanceResidualMoles();
 ```
+
+The default `SystemPitzer` policy automatically selects the bundled PHREEQC catalog when every
+interaction required by the active aqueous topology is present; this complete Ca/Mg/Cl/SO4 example
+needs no manual dataset-selection call. Missing mixed interactions still fail closed rather than
+becoming zero. `useLegacyPitzerParameters()` is an explicit compatibility opt-out that must be
+called before the first property evaluation.
 
 The operation uses the selected aqueous activity model without transferring Pitzer parameters into
 the mineral-reaction database. Every trial extent is evaluated on a fresh clone; the accepted
