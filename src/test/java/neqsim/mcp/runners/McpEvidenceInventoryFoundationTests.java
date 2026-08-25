@@ -158,6 +158,37 @@ class McpEvidenceInventoryFoundationTests {
   }
 
   @Test
+  void testProgressRetrievalContractIsBoundedAndReadOnly() {
+    String operationId = ProgressTracker.start("phase0-progress-contract", 2);
+
+    JsonObject active = JsonParser.parseString(ProgressTracker.listActive()).getAsJsonObject();
+    assertEquals("success", active.get("status").getAsString());
+    assertTrue(active.getAsJsonArray("operations").toString().contains(operationId));
+
+    ProgressTracker.update(operationId, 1, "half complete");
+    JsonObject progress = JsonParser.parseString(ProgressTracker.getProgress(operationId)).getAsJsonObject();
+    assertEquals(operationId, progress.get("operationId").getAsString());
+    assertEquals("phase0-progress-contract", progress.get("operationType").getAsString());
+    assertEquals(2, progress.get("totalSteps").getAsInt());
+    assertEquals(1, progress.get("currentStep").getAsInt());
+    assertEquals(50, progress.get("percentComplete").getAsInt());
+    assertFalse(progress.get("completed").getAsBoolean());
+    assertTrue(progress.getAsJsonArray("recentMilestones").toString().contains("half complete"));
+
+    ProgressTracker.complete(operationId, "complete");
+    JsonObject completed = JsonParser.parseString(ProgressTracker.getProgress(operationId)).getAsJsonObject();
+    assertEquals(100, completed.get("percentComplete").getAsInt());
+    assertTrue(completed.get("completed").getAsBoolean());
+    assertFalse(completed.get("failed").getAsBoolean());
+
+    JsonObject after = JsonParser.parseString(ProgressTracker.listActive()).getAsJsonObject();
+    assertFalse(after.getAsJsonArray("operations").toString().contains(operationId));
+
+    JsonObject missing = JsonParser.parseString(ProgressTracker.getProgress("missing-phase0-operation")).getAsJsonObject();
+    assertEquals("error", missing.get("status").getAsString());
+  }
+
+  @Test
   void testPhase0EvidenceIsDiscoverableThroughCapabilities() {
     JsonObject capabilities = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
