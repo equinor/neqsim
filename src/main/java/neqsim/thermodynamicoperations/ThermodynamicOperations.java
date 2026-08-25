@@ -54,7 +54,6 @@ import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTempera
 import neqsim.thermodynamicoperations.flashops.saturationops.CricondenbarFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HCdewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateEquilibriumLine;
@@ -63,6 +62,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationTem
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorConcentrationFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorwtFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
+import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointEquilibriumLine;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureFlash;
@@ -1174,23 +1174,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void freezingPointTemperatureFlash() throws IsNaNException {
-    freezingPointTemperatureFlashResult();
-  }
-
-  /**
-   * Runs a freezing-point flash and returns structured convergence diagnostics.
-   *
-   * @return freezing-point calculation result
-   * @throws neqsim.util.exception.IsNaNException if the calculated temperature is not finite
-   */
-  public FreezingPointResult freezingPointTemperatureFlashResult() throws IsNaNException {
     operation = new FreezingPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new IsNaNException(this, "freezingPointTemperatureFlashResult",
+      throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
           "Could not find solution - possible no freezing point exists");
     }
-    return ((FreezingPointTemperatureFlash) operation).getResult();
   }
 
   /**
@@ -1200,7 +1189,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void freezingPointTemperatureFlash(String phaseName) throws IsNaNException {
-    freezingPointTemperatureFlashResult();
+    operation = new FreezingPointTemperatureFlash(system);
+    getOperation().run();
+    if (Double.isNaN(system.getTemperature())) {
+      throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
+          "Could not find solution - possible no freezing point exists");
+    }
   }
 
   /**
@@ -1277,6 +1271,23 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       throw new neqsim.util.exception.IsNaNException(this, "calcSaltSaturation",
           "Could not find solution - possible no dew point exists");
     }
+  }
+
+  /**
+   * Precipitates one supersaturated pure salt to aqueous activity equilibrium.
+   *
+   * <p>
+   * The dissolved system is updated and reflashed. The returned immutable result carries the pure-solid amount needed
+   * to close the material ledger; the solid is not inserted as a NeqSim phase.
+   * </p>
+   *
+   * @param saltName salt name from the COMPSALT database, for example {@code "CaSO4_A"}
+   * @return precipitation amount, saturation and material-balance diagnostics
+   */
+  public SaltPrecipitationResult precipitateScale(String saltName) {
+    CalcSaltSatauration saltOperation = new CalcSaltSatauration(system, saltName);
+    operation = saltOperation;
+    return saltOperation.precipitate();
   }
 
   /**

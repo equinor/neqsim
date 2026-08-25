@@ -213,6 +213,56 @@ for i in range(1, len(table)):
 - MEG-aware (temporarily replaces MEG with water for calculation)
 - Returns **saturation ratio** (SR = IAP/Ksp), where SR > 1 = supersaturated
 
+### Activity-consistent pure-mineral precipitation
+
+`ThermodynamicOperations.precipitateScale(String)` removes one named COMPSALT mineral
+stoichiometrically until its aqueous activity saturation ratio is one. It returns an immutable
+`SaltPrecipitationResult`; the thermodynamic system is the residual gas/oil/aqueous fluid, while
+the result is the corresponding pure-solid material ledger. The solid is deliberately not inserted
+as a NeqSim phase.
+
+```java
+SystemPitzer fluid = new SystemPitzer(298.15, 50.0);
+fluid.addComponent("water", 55.508);
+fluid.addComponent("Na+", 1.0);
+fluid.addComponent("Ca++", 0.2);
+fluid.addComponent("Mg++", 0.0);
+fluid.addComponent("Cl-", 1.0);
+fluid.addComponent("SO4--", 0.2);
+fluid.init(0);
+fluid.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+SaltPrecipitationResult solid = operations.precipitateScale("CaSO4_A");
+
+double residualSaturationRatio = solid.getFinalSaturationRatio();
+double solidAmountMol = solid.getPrecipitatedMoles();
+double solidMassGram = solid.getPrecipitatedMassGrams();
+double materialResidualMol = solid.getMaximumIonBalanceResidualMoles();
+```
+
+The operation uses the selected aqueous activity model without transferring Pitzer parameters into
+the mineral-reaction database. Every trial extent is evaluated on a fresh clone; the accepted
+composition is reflashed and physical properties are reinitialised. Consequently the residual
+fluid can continue through `Stream`, `Heater`, and `ProcessSystem` calculations. Ions remain in the
+aqueous phase, while gas and oil phases retain their EOS roles.
+
+This API is a single-pure-mineral equilibrium operation. Callers should require a complementarity
+residual such as `solid.getComplementarityViolation() <= 1e-5` and independently check total and
+elemental balances. It does not yet solve simultaneous competition among several solid phases,
+solid solutions, nucleation, kinetics, deposition, or inhibitor performance. A Pitzer calculation
+must first select a parameter dataset complete for its active aqueous topology. Missing binary,
+same-sign, ternary, or neutral interactions remain an error; they are not silently set to zero.
+
+`SaltPrecipitationPerformanceBenchmark` records explicit-operation cost separately from the neutral
+control. On OpenJDK 17 in the development container, its median fresh-system calculations were
+78.9 ms for aqueous anhydrite precipitation and 1.018 s for the complete gas-oil-aqueous case.
+The unchanged neutral SRK control measured 0.215 ms before and 0.055 ms after the Pitzer batches
+(ratio 0.254, reflecting JIT warmup rather than a regression). This operation is invoked only by
+`precipitateScale`; neutral PR/SRK/CPA calculations execute no new branch or allocation.
+
 ### Reaction-level saturation diagnostics
 
 `ChemicalReaction.getSaturationRatio(system, phaseNumber)` evaluates the same thermodynamic definition for

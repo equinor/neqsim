@@ -134,6 +134,91 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   }
 
   /**
+   * Precipitates a supersaturated pure salt and leaves the residual fluid at activity equilibrium.
+   *
+   * <p>
+   * Trial extents are evaluated on fresh clones. The accepted extent is then removed stoichiometrically from the real
+   * system, which is reflashed so gas, oil and aqueous phase properties remain process-composable. The returned result
+   * is the solid ledger; the solid is not added as a thermodynamic phase.
+   * </p>
+   *
+   * @return immutable precipitation amount, saturation and material-balance diagnostics
+   */
+  public SaltPrecipitationResult precipitate() {
+    SaltData saltData = readSaltData();
+    ensureSaltIonsPresent(saltData);
+    initialisePrecipitationSystem();
+
+    int aqueousPhaseNumber = getAqueousPhaseNumber();
+    double initialSaturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+    if (!Double.isFinite(initialSaturationRatio) || initialSaturationRatio < 0.0) {
+      throw new IllegalStateException(
+          "Invalid initial saturation ratio for " + saltName + ": " + initialSaturationRatio);
+    }
+
+    double initialIon1Moles = system.getComponent(saltData.name1).getNumberOfmoles();
+    double initialIon2Moles = system.getComponent(saltData.name2).getNumberOfmoles();
+    if (initialSaturationRatio <= 1.0) {
+      return new SaltPrecipitationResult(saltName, 0.0, 0.0, initialSaturationRatio, initialSaturationRatio, 0.0);
+    }
+
+    double maximumExtent = Math.min(initialIon1Moles / saltData.stoc1, initialIon2Moles / saltData.stoc2);
+    if (!(maximumExtent > 0.0) || !Double.isFinite(maximumExtent)) {
+      throw new IllegalStateException("No finite positive precipitation extent is available for " + saltName);
+    }
+
+    SystemInterface baseSystem = system.clone();
+    double lowerExtent = 0.0;
+    double upperExtent = maximumExtent * (1.0 - 1.0e-12);
+    double upperSaturationRatio = calculateSaturationRatioForRemoval(baseSystem, saltData, upperExtent);
+    if (!(upperSaturationRatio < 1.0)) {
+      throw new IllegalStateException(
+          "Could not bracket precipitation equilibrium for " + saltName + ", SR=" + upperSaturationRatio);
+    }
+
+    double acceptedExtent = Double.NaN;
+    for (int iteration = 0; iteration < 100; iteration++) {
+      double trialExtent = 0.5 * (lowerExtent + upperExtent);
+      double trialSaturationRatio = calculateSaturationRatioForRemoval(baseSystem, saltData, trialExtent);
+      acceptedExtent = trialExtent;
+      if (Math.abs(Math.log10(trialSaturationRatio)) <= 1.0e-8) {
+        break;
+      }
+      if (trialSaturationRatio > 1.0) {
+        lowerExtent = trialExtent;
+      } else {
+        upperExtent = trialExtent;
+      }
+    }
+
+    removeSaltAmount(saltData, acceptedExtent);
+    initialisePrecipitationSystem();
+    double finalSaturationRatio = calculateSaturationRatio(saltData, getAqueousPhaseNumber());
+
+    double ion1BalanceResidual = initialIon1Moles - system.getComponent(saltData.name1).getNumberOfmoles()
+        - saltData.stoc1 * acceptedExtent;
+    double ion2BalanceResidual = initialIon2Moles - system.getComponent(saltData.name2).getNumberOfmoles()
+        - saltData.stoc2 * acceptedExtent;
+    double maximumBalanceResidual = Math.max(Math.abs(ion1BalanceResidual), Math.abs(ion2BalanceResidual));
+    double solidMolarMassGrams = 1000.0 * (saltData.stoc1 * system.getComponent(saltData.name1).getMolarMass()
+        + saltData.stoc2 * system.getComponent(saltData.name2).getMolarMass());
+    return new SaltPrecipitationResult(saltName, acceptedExtent, acceptedExtent * solidMolarMassGrams,
+        initialSaturationRatio, finalSaturationRatio, maximumBalanceResidual);
+  }
+
+  private double calculateSaturationRatioForRemoval(SystemInterface baseSystem, SaltData saltData, double saltAmount) {
+    SystemInterface originalSystem = system;
+    try {
+      system = createTrialSystem(baseSystem);
+      removeSaltAmount(saltData, saltAmount);
+      initialisePrecipitationSystem();
+      return calculateSaturationRatio(saltData, getAqueousPhaseNumber());
+    } finally {
+      system = originalSystem;
+    }
+  }
+
+  /**
    * Calculates the saturation ratio after adding a trial salt amount to a fresh clone of a base system.
    *
    * @param baseSystem initialized system before the trial salt addition
@@ -269,6 +354,17 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     } catch (Exception ex) {
       throw new IllegalStateException("Failed running TPflash for salt saturation of " + saltName, ex);
     }
+    system.initPhysicalProperties();
+  }
+
+  /** Reflashes a precipitation trial so accepted phase amounts and properties are self-consistent. */
+  private void initialisePrecipitationSystem() {
+    try {
+      new TPflash(system).run();
+    } catch (Exception ex) {
+      throw new IllegalStateException("Failed running precipitation TPflash for " + saltName, ex);
+    }
+    system.init(1);
     system.initPhysicalProperties();
   }
 
