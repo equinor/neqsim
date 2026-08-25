@@ -68,6 +68,18 @@ public final class PitzerParameterDatasets {
   /** Highest independently checked binary CaCl2 or MgCl2 molality, in mol/kg water. */
   public static final double CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY = 2.0;
 
+  /** Lowest temperature in the independent SrCl2 ThermoML validation matrix, in K. */
+  public static final double SR_CL_BINARY_VALIDATION_MIN_TEMPERATURE_K = 283.15;
+
+  /** Highest temperature in the independent SrCl2 ThermoML validation matrix, in K. */
+  public static final double SR_CL_BINARY_VALIDATION_MAX_TEMPERATURE_K = 333.15;
+
+  /** Lowest SrCl2 molality in the independent ThermoML validation matrix, in mol/kg water. */
+  public static final double SR_CL_BINARY_VALIDATION_MIN_MOLALITY = 0.01;
+
+  /** Highest SrCl2 molality in the independent ThermoML validation matrix, in mol/kg water. */
+  public static final double SR_CL_BINARY_VALIDATION_MAX_MOLALITY = 3.52;
+
   /** Lowest total formula-unit molality in the checked CaCl2-MgCl2 validation matrix. */
   public static final double CA_MG_CL_MIXTURE_VALIDATION_MIN_TOTAL_MOLALITY = 0.548;
 
@@ -525,9 +537,10 @@ public final class PitzerParameterDatasets {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
           Arrays.asList("CaCl2 mean activity at 298.15 K", "MgCl2 mean activity at 298.15 K",
+              "SrCl2 mean activity at 283.15-333.15 K",
               "CaCl2-MgCl2 osmotic coefficient and water activity at 298.15 K",
               "MgCl2-MgSO4 water activity at 298.15 K"),
-          Arrays.asList("Other catalog species are source-mapped, not independently qualified",
+          Arrays.asList("Other catalog species, including BaCl2, are source-mapped, not independently qualified",
               "Quaternary Ca-Mg-Cl-SO4 activity and sulfate-mineral thermodynamics remain unqualified"));
     }
     String identity = datasetId == null || datasetId.trim().isEmpty() ? "unknown" : datasetId;
@@ -547,6 +560,27 @@ public final class PitzerParameterDatasets {
         && Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) <= 1.0e-9
         && saltMolality >= CA_MG_CL_SO4_BINARY_VALIDATION_MIN_MOLALITY
         && saltMolality <= CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY;
+  }
+
+  /**
+   * Reports whether an SrCl2 state is inside the independent NIST ThermoML validation envelope.
+   *
+   * <p>
+   * The archive contains 22 values at 298.15 K from 0.01 to 3.52 mol/kg and 36 temperature-dependent values from 283.15
+   * to 333.15 K at 0.01 to 0.30 mol/kg. This helper describes the enclosing rectangle; callers needing the exact
+   * measured state set must consult the stored validation fixture.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param strontiumChlorideMolality SrCl2 formula-unit molality in mol/kg water
+   * @return {@code true} for finite states inside the inclusive validation envelope
+   */
+  public static boolean isWithinStrontiumChlorideValidationRange(double temperature, double strontiumChlorideMolality) {
+    return Double.isFinite(temperature) && Double.isFinite(strontiumChlorideMolality)
+        && temperature >= SR_CL_BINARY_VALIDATION_MIN_TEMPERATURE_K
+        && temperature <= SR_CL_BINARY_VALIDATION_MAX_TEMPERATURE_K
+        && strontiumChlorideMolality >= SR_CL_BINARY_VALIDATION_MIN_MOLALITY
+        && strontiumChlorideMolality <= SR_CL_BINARY_VALIDATION_MAX_MOLALITY;
   }
 
   /**
