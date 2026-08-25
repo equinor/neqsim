@@ -313,7 +313,7 @@ src/
 ## Next steps
 
 - [NeqSim User Documentation](https://equinor.github.io/neqsim/) — Full docs site
-- [JavaDoc API Reference](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) — Complete API docs
+- [JavaDoc API Reference](https://equinor.github.io/neqsim/javadoc/index.html) — Complete API docs
 - [Java Wiki & examples](https://github.com/equinor/neqsim/wiki) — Usage patterns and guides
 - [Jupyter notebooks](https://github.com/equinor/neqsim/tree/master/examples/notebooks) — 30+ runnable examples
 - [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL) — Try NeqSim interactively

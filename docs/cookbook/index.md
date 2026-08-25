@@ -44,5 +44,5 @@ Each recipe includes:
 ## API Reference
 
 For complete API documentation, see:
-- **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - All classes and methods
+- **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - All classes and methods
 - **[Reference Manual](../REFERENCE_MANUAL_INDEX.md)** - Comprehensive guides

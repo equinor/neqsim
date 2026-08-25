@@ -1326,4 +1326,4 @@ print(f"Total flow: {export.getOutletStream().getFlowRate('kg/hr'):.0f} kg/hr")
 - **[TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial)** - Complete tutorial with slug tracking
 - **[Pipeline Network Example](../examples/LoopedPipelineNetworkExample)** - Complex network modeling
 - **[Dynamic Simulation Guide](../simulation/dynamic_simulation_guide)** - Transient simulation concepts
-- **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - Complete reference
+- **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Complete reference

@@ -314,4 +314,4 @@ changing temperature, pressure, composition, or model settings.
 - **[Reading Fluid Properties Guide](../thermo/reading_fluid_properties)** - Property access and initialization
 - **[Thermodynamic Models](../thermo/thermodynamic_models)** - Model theory and selection
 - **[Phase Envelope Guide](../pvtsimulation/phase_envelope_guide)** - Algorithms, results, and troubleshooting
-- **[JavaDoc: SystemInterface](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/thermo/system/SystemInterface.html)** - Complete API
+- **[JavaDoc: SystemInterface](https://equinor.github.io/neqsim/javadoc/neqsim/thermo/system/SystemInterface.html)** - Complete API

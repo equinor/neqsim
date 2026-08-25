@@ -79,8 +79,8 @@ The AI workflow automates the process around PVT calculations — scoping, runni
 
 ### PVT reference materials
 
-- [JavaDoc: SystemInterface](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/thermo/system/SystemInterface.html)
-- [JavaDoc: ThermodynamicOperations](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/thermodynamicoperations/ThermodynamicOperations.html)
+- [JavaDoc: SystemInterface](https://equinor.github.io/neqsim/javadoc/neqsim/thermo/system/SystemInterface.html)
+- [JavaDoc: ThermodynamicOperations](https://equinor.github.io/neqsim/javadoc/neqsim/thermodynamicoperations/ThermodynamicOperations.html)
 - [Component Database Guide](../thermo/component_database_guide.md)
 
 ---
@@ -132,8 +132,8 @@ The AI workflow automates the work around process simulation — scoping, litera
 
 ### Process reference materials
 
-- [JavaDoc: ProcessSystem](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/processmodel/ProcessSystem.html)
-- [JavaDoc: ProcessEquipmentInterface](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/equipment/ProcessEquipmentInterface.html)
+- [JavaDoc: ProcessSystem](https://equinor.github.io/neqsim/javadoc/neqsim/process/processmodel/ProcessSystem.html)
+- [JavaDoc: ProcessEquipmentInterface](https://equinor.github.io/neqsim/javadoc/neqsim/process/equipment/ProcessEquipmentInterface.html)
 - [Equipment Index](../process/equipment/README.md)
 
 ---
@@ -150,8 +150,8 @@ The AI workflow automates the work around process simulation — scoping, litera
 
 ### Level 2: Core APIs (2 hours)
 
-1. **[SystemInterface JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/thermo/system/SystemInterface.html)** - Fluid API
-2. **[ProcessEquipmentInterface JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/equipment/ProcessEquipmentInterface.html)** - Equipment API
+1. **[SystemInterface JavaDoc](https://equinor.github.io/neqsim/javadoc/neqsim/thermo/system/SystemInterface.html)** - Fluid API
+2. **[ProcessEquipmentInterface JavaDoc](https://equinor.github.io/neqsim/javadoc/neqsim/process/equipment/ProcessEquipmentInterface.html)** - Equipment API
 3. **[Test Overview](../wiki/test-overview.md)** - Testing patterns
 
 ### Level 3: Thermodynamic Implementation (2 hours)
@@ -174,7 +174,7 @@ The AI workflow automates the work around process simulation — scoping, litera
 
 ### Developer reference materials
 
-- [Full JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)
+- [Full JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)
 - [Reference Manual Index](../REFERENCE_MANUAL_INDEX.md)
 - [GitHub Repository](https://github.com/equinor/neqsim)
 

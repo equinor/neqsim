@@ -154,7 +154,7 @@ When a conversion fails or looks implausible:
 
 For errors involving overload selection, stale properties, or phase availability, see the
 [troubleshooting guide](../troubleshooting/index.md). For API signatures, use the
-[current JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html).
+[current JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html).
 
 ## Engineering boundary
 
