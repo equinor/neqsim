@@ -75,9 +75,19 @@ registry.register(PlantConstraintDefinition
     .build());
 ```
 
-Treat this as registration, not solved evidence. A later utilization snapshot must sample every
-enabled restriction after successful convergence, validate finite values and consistent units/bases,
-and fail closed if evidence is incomplete. See the
+Treat this as registration, not solved evidence. After a successful full-process solve, create one
+`PlantConstraintSample` per enabled definition and assemble them with
+`PlantUtilizationSnapshot.builder(registry, calculationId)`. The immutable result retains every
+registered row, including disabled and unavailable restrictions, and exposes a deterministic
+`getBottleneckLadder()` for Java and JPype reporting. `isComplete()` is false for missing, stale,
+out-of-validity, non-finite, calculation-ID-mismatched, metadata-mismatched, exception, or incomplete-
+convergence evidence. `isFeasible()` additionally requires that no complete hard or critical row is
+violated. Soft and advisory violations remain visible without being promoted to hard infeasibility.
+
+Reuse `PlantConstraintSample.fromInstalledEquipmentEvidence(...)` and
+`fromProcessBoundaryEvidence(...)` for existing #2941 installed-capacity and boundary evidence. The
+adapters copy already sampled immutable values; they do not re-run equipment suppliers or the
+process model. See the
 [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK#plant-wide-constraint-registration)
 for aggregation and conversion rules.
 

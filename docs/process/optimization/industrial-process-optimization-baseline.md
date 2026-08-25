@@ -204,21 +204,27 @@ participants are ordered by stable identity, and unlike units or bases are rejec
 supplies a finite conversion. The equipment adapter copies the established #2941
 `CapacityConstraint` metadata without evaluating or retaining its mutable value supplier.
 
-This increment is metadata only. It does not yet sample values, aggregate total power, coordinate a
-common shaft, compute separator or piping utilization, determine feasibility, or alter process solving.
-Those operations require complete post-solve evidence and fail-closed snapshot validation.
+`PlantConstraintSample`, `PlantConstraintEvidence`, and `PlantUtilizationSnapshot` now provide the
+next additive post-solve layer. A snapshot retains one row for every registry definition, requires an
+exact calculation identity, validates finite unit/basis-consistent evidence, and fails closed for
+missing, stale, out-of-validity, exception, metadata-mismatched, or incomplete-convergence evidence.
+It exposes deterministic complete coverage and bottleneck ladders without retaining callbacks or
+mutable process state. Existing installed-equipment and boundary evidence are adapted rather than
+recalculated or duplicated.
+
+This snapshot layer does not aggregate total power, coordinate a common shaft, compute separator or
+piping physics, alter process solving, or accept an optimizer proposal. Those operations remain later
+increments and must provide qualified samples after a complete full-model solve.
 
 ## Next dependency-ready increments
 
-1. Execute and version cases S and M on unmodified master, then add the missing measurement fields
-   without changing scheduling behavior.
-2. Consume the stable plant-wide constraint/resource registry in a complete immutable utilization
-   snapshot, reusing `InstalledEquipmentCapacityEvidence` and `ProcessBoundaryConstraintEvidence`.
-3. Add first-class total-power/shared-utility evidence, followed by a common-shaft compressor-train
+1. Add first-class total-power/shared-utility evidence, using the complete immutable utilization
+   snapshot without adding execution-layer scheduling or caching.
+2. Add a common-shaft compressor-train
    resource constraint.
-4. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
+3. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
    and solver orchestration.
-5. Expose the stable result through Java JSON and Python/JPype, then execute M, L, C, B, and R as
+4. Expose the stable result through Java JSON and Python/JPype, then execute M, L, C, B, and R as
    maintained workflows.
 
 Until those increments are merged and measured, this page is the authoritative baseline contract,
