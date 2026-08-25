@@ -18,6 +18,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhasePitzer;
+import neqsim.thermo.phase.PitzerParameterDatasets;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -194,14 +196,16 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     system.addComponent("Mg++", 0.15);
     system.addComponent("Cl-", 1.3);
     system.addComponent("SO4--", 0.2);
-    system.init(0);
-    system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
     if (includeHydrocarbons) {
       system.addComponent("methane", 5.0);
       system.addComponent("n-heptane", 2.0);
     }
     system.setMixingRule("classic");
     system.setMultiPhaseCheck(true);
+    system.init(0);
+    PhasePitzer aqueous = (PhasePitzer) system.getPhase(1);
+    aqueous.requireCompletePitzerParameterCoverage();
+    assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, aqueous.getParameterDatasetId());
     return system;
   }
 
