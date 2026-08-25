@@ -164,8 +164,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("getProgress remains CONFIRMED_GAP"));
     assertEquals(8, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(43, limitations.get("confirmedGapToolCount").getAsInt());
-    assertEquals("CONFIRMED_GAP",
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("getProgress").get("coverageStatus").getAsString());
+    assertEquals("CONFIRMED_GAP", limitations.getAsJsonObject("coverageRecords").getAsJsonObject("getProgress")
+        .get("coverageStatus").getAsString());
   }
 
   @Test
@@ -195,7 +195,8 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject after = JsonParser.parseString(ProgressTracker.listActive()).getAsJsonObject();
     assertFalse(after.getAsJsonArray("operations").toString().contains(operationId));
 
-    JsonObject missing = JsonParser.parseString(ProgressTracker.getProgress("missing-phase0-operation")).getAsJsonObject();
+    JsonObject missing = JsonParser.parseString(ProgressTracker.getProgress("missing-phase0-operation"))
+        .getAsJsonObject();
     assertEquals("error", missing.get("status").getAsString());
   }
 
