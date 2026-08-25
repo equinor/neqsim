@@ -33,8 +33,7 @@ class SolidHelmholtzDocumentationTest {
   /** Execute the documented structured para-hydrogen freezing-point workflow. */
   @Test
   void paraHydrogenFreezingPointExample() {
-    SystemLeachmanEos hydrogen =
-        new SystemLeachmanEos(13.6, 0.07042, "para-hydrogen", true);
+    SystemLeachmanEos hydrogen = new SystemLeachmanEos(13.6, 0.07042, "para-hydrogen", true);
     hydrogen.setSolidPhaseCheck("para-hydrogen");
 
     ThermodynamicOperations operations = new ThermodynamicOperations(hydrogen);
