@@ -1554,12 +1554,13 @@ def test_capabilities():
           str(limitations))
     contract_tools = {
         "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
-        "checkToolAccess", "manageIndustrialProfile",
+        "checkToolAccess", "manageIndustrialProfile", "searchComponents",
+        "queryDataCatalog",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("six non-numerical contracts have bounded evidence",
-          limitations.get("contractTestedToolCount") == 6
-          and limitations.get("confirmedGapToolCount") == 45
+    check("eight non-numerical contracts have bounded evidence",
+          limitations.get("contractTestedToolCount") == 8
+          and limitations.get("confirmedGapToolCount") == 43
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1581,7 +1582,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 45
+          and limitations.get("confirmedGapToolCount") == 43
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

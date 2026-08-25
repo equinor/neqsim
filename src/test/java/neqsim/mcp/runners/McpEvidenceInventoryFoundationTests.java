@@ -53,15 +53,17 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(71, limitations.get("publishedToolCount").getAsInt());
     assertEquals(71, limitations.get("coverageRecordCount").getAsInt());
     assertEquals(20, limitations.get("explicitCoverageRecordCount").getAsInt());
-    assertEquals(6, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(45, limitations.get("confirmedGapToolCount").getAsInt());
-    assertEquals(6, limitations.getAsJsonArray("contractTestedTools").size());
+    assertEquals(8, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(43, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(8, limitations.getAsJsonArray("contractTestedTools").size());
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getCapabilities"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getSchema"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getExample"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getBenchmarkTrust"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("checkToolAccess"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("manageIndustrialProfile"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("searchComponents"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("queryDataCatalog"));
     assertEquals(71, coverageRecords.size());
     assertTrue(limitations.get("coverageComplete").getAsBoolean());
     assertFalse(limitations.get("scientificValidationComplete").getAsBoolean());
@@ -118,43 +120,39 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(profile.get("evidenceBoundary").getAsString().contains("external identity"));
 
     JsonObject componentSearch = coverageRecords.getAsJsonObject("searchComponents");
-    assertEquals("CONFIRMED_GAP", componentSearch.get("coverageStatus").getAsString());
-    JsonObject dataCatalog = coverageRecords.getAsJsonObject("queryDataCatalog");
-    assertEquals("CONFIRMED_GAP", dataCatalog.get("coverageStatus").getAsString());
-    assertFalse(inventory.get("complete").getAsBoolean());
-  }
-
-  @Test
-  void testReadOnlyCatalogPromotionCandidatesAreEvidenceQualifiedButNotPromoted() {
-    JsonObject limitations = McpEvidenceInventory.build().getAsJsonObject("knownLimitations");
-    JsonObject candidates = limitations.getAsJsonObject("contractPromotionCandidates");
-
-    assertEquals(2, limitations.get("contractPromotionCandidateCount").getAsInt());
-    assertEquals(2, candidates.size());
-
-    JsonObject componentSearch = candidates.getAsJsonObject("searchComponents");
-    assertEquals("CONTRACT_TESTED", componentSearch.get("targetCoverageStatus").getAsString());
+    assertEquals("CONTRACT_TESTED", componentSearch.get("coverageStatus").getAsString());
+    assertFalse(componentSearch.get("toolSpecificTrustAvailable").getAsBoolean());
+    assertTrue(componentSearch.get("contractTrustAvailable").getAsBoolean());
     assertEquals("NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP",
         componentSearch.get("benchmarkApplicability").getAsString());
     assertEquals(3, componentSearch.get("contractEvidenceCount").getAsInt());
     assertEquals(3, componentSearch.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(componentSearch.get("evidenceBoundary").getAsString().contains("real-protocol retrieval"));
     assertTrue(componentSearch.get("evidenceBoundary").getAsString().contains("does not validate thermodynamic"));
-    assertFalse(componentSearch.get("promotionReady").getAsBoolean());
 
-    JsonObject dataCatalog = candidates.getAsJsonObject("queryDataCatalog");
-    assertEquals("CONTRACT_TESTED", dataCatalog.get("targetCoverageStatus").getAsString());
+    JsonObject dataCatalog = coverageRecords.getAsJsonObject("queryDataCatalog");
+    assertEquals("CONTRACT_TESTED", dataCatalog.get("coverageStatus").getAsString());
+    assertFalse(dataCatalog.get("toolSpecificTrustAvailable").getAsBoolean());
+    assertTrue(dataCatalog.get("contractTrustAvailable").getAsBoolean());
     assertEquals("NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY",
         dataCatalog.get("benchmarkApplicability").getAsString());
     assertEquals(3, dataCatalog.get("contractEvidenceCount").getAsInt());
     assertEquals(3, dataCatalog.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(dataCatalog.get("evidenceBoundary").getAsString().contains("Read-only catalog"));
     assertTrue(dataCatalog.get("evidenceBoundary").getAsString().contains("standards applicability"));
-    assertFalse(dataCatalog.get("promotionReady").getAsBoolean());
+    assertFalse(inventory.get("complete").getAsBoolean());
+  }
 
-    assertTrue(limitations.get("promotionBoundary").getAsString().contains("packaged protocol contract"));
-    assertEquals(6, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(45, limitations.get("confirmedGapToolCount").getAsInt());
+  @Test
+  void testPromotedReadOnlyCatalogContractsRetirePendingCandidates() {
+    JsonObject limitations = McpEvidenceInventory.build().getAsJsonObject("knownLimitations");
+    JsonObject candidates = limitations.getAsJsonObject("contractPromotionCandidates");
+
+    assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
+    assertEquals(0, candidates.size());
+    assertTrue(limitations.get("promotionBoundary").getAsString().contains("No read-only catalog promotion candidate"));
+    assertEquals(8, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(43, limitations.get("confirmedGapToolCount").getAsInt());
   }
 
   @Test
@@ -194,7 +192,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.9", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.10", inventory.get("inventoryVersion").getAsString());
     assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());
