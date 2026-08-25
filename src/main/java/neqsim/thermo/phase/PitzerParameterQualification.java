@@ -67,12 +67,12 @@ public final class PitzerParameterQualification implements Serializable {
 
   /** @return immutable descriptions of independently checked systems and observables */
   public List<String> getValidatedSystems() {
-    return validatedSystems;
+    return Collections.unmodifiableList(new ArrayList<String>(validatedSystems));
   }
 
   /** @return immutable descriptions of unresolved validation or applicability boundaries */
   public List<String> getLimitations() {
-    return limitations;
+    return Collections.unmodifiableList(new ArrayList<String>(limitations));
   }
 
   /**
