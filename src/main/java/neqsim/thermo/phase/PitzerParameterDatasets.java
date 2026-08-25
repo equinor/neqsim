@@ -202,7 +202,10 @@ public final class PitzerParameterDatasets {
     try {
       validateCatalogTopology(phase, catalog, ions, neutrals);
     } catch (IllegalArgumentException missingSourceRow) {
-      return false;
+      if (missingSourceRow.getMessage() != null && missingSourceRow.getMessage().contains("no explicit")) {
+        return false;
+      }
+      throw missingSourceRow;
     }
     applyValidatedCatalog(phase, catalog, ions, neutrals);
     return true;
