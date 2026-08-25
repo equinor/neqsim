@@ -33,11 +33,15 @@ public final class SaltPrecipitationPerformanceBenchmark {
     }
     long aqueousPrecipitation = medianBatches(() -> precipitationChecksum(false), 2);
     long multiphasePrecipitation = medianBatches(() -> precipitationChecksum(true), 2);
+    long simultaneousAqueousPrecipitation = medianBatches(() -> simultaneousPrecipitationChecksum(false), 2);
+    long simultaneousMultiphasePrecipitation = medianBatches(() -> simultaneousPrecipitationChecksum(true), 2);
     long neutralAfter = medianBatches(() -> neutralFlashChecksum(neutral), 20);
 
     SaltPrecipitationResult evidence = precipitate(false);
     LOGGER.info("aqueousPrecipitationNs={}", aqueousPrecipitation);
     LOGGER.info("gasOilAqueousPrecipitationNs={}", multiphasePrecipitation);
+    LOGGER.info("simultaneousAqueousPrecipitationNs={}", simultaneousAqueousPrecipitation);
+    LOGGER.info("simultaneousGasOilAqueousPrecipitationNs={}", simultaneousMultiphasePrecipitation);
     LOGGER.info("neutralSrkBeforeNs={}", neutralBefore);
     LOGGER.info("neutralSrkAfterNs={}", neutralAfter);
     LOGGER.info("neutralSrkRatio={}", (double) neutralAfter / neutralBefore);
@@ -45,6 +49,10 @@ public final class SaltPrecipitationPerformanceBenchmark {
     LOGGER.info("finalSaturationRatio={}", evidence.getFinalSaturationRatio());
     LOGGER.info("precipitatedMoles={}", evidence.getPrecipitatedMoles());
     LOGGER.info("ionBalanceResidualMoles={}", evidence.getMaximumIonBalanceResidualMoles());
+    MultiSaltPrecipitationResult simultaneousEvidence = precipitateSimultaneously(false);
+    LOGGER.info("simultaneousEquilibriumUpdates={}", simultaneousEvidence.getEquilibriumUpdates());
+    LOGGER.info("simultaneousComplementarityViolation={}", simultaneousEvidence.getMaximumComplementarityViolation());
+    LOGGER.info("simultaneousBalanceResidualMoles={}", simultaneousEvidence.getMaximumComponentBalanceResidualMoles());
     if (!Double.isFinite(sink)) {
       throw new IllegalStateException("Benchmark checksum is not finite");
     }
@@ -72,6 +80,17 @@ public final class SaltPrecipitationPerformanceBenchmark {
   private static SaltPrecipitationResult precipitate(boolean includeHydrocarbons) {
     SystemPitzer system = createPitzerSystem(includeHydrocarbons);
     return new ThermodynamicOperations(system).precipitateScale("CaSO4_A");
+  }
+
+  private static double simultaneousPrecipitationChecksum(boolean includeHydrocarbons) {
+    MultiSaltPrecipitationResult result = precipitateSimultaneously(includeHydrocarbons);
+    return result.getTotalPrecipitatedMassGrams() + result.getMaximumComplementarityViolation()
+        + result.getMaximumComponentBalanceResidualMoles();
+  }
+
+  private static MultiSaltPrecipitationResult precipitateSimultaneously(boolean includeHydrocarbons) {
+    SystemPitzer system = createPitzerSystem(includeHydrocarbons);
+    return new ThermodynamicOperations(system).precipitateScales("CaSO4_A", "CaSO4_G");
   }
 
   private static double neutralFlashChecksum(SystemSrkEos system) {

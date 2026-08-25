@@ -62,6 +62,8 @@ import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationPre
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorConcentrationFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorwtFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitation;
+import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
@@ -1295,6 +1297,31 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     CalcSaltSatauration saltOperation = new CalcSaltSatauration(system, saltName);
     operation = saltOperation;
     return saltOperation.precipitate();
+  }
+
+  /**
+   * Equilibrates several competing pure COMPSALT minerals against the active aqueous model.
+   *
+   * <p>
+   * The dissolved system is updated and reflashed after each active-set adjustment. The immutable result contains the
+   * non-negative pure-solid material ledger; solids are not inserted as NeqSim phases.
+   * </p>
+   *
+   * @param saltNames unique COMPSALT mineral names
+   * @return simultaneous precipitation/dissolution result and convergence diagnostics
+   */
+  public MultiSaltPrecipitationResult precipitateScales(String... saltNames) {
+    return new MultiSaltPrecipitation(system, saltNames).solve();
+  }
+
+  /**
+   * Re-equilibrates an existing pure-mineral ledger after temperature, pressure, or composition changes.
+   *
+   * @param previousResult previous simultaneous-mineral result whose solid inventory accompanies this fluid
+   * @return updated absolute solid ledger and convergence diagnostics
+   */
+  public MultiSaltPrecipitationResult equilibrateScales(MultiSaltPrecipitationResult previousResult) {
+    return new MultiSaltPrecipitation(system, previousResult).solve();
   }
 
   /**

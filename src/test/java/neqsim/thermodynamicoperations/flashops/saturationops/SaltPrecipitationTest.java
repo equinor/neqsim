@@ -140,6 +140,7 @@ class SaltPrecipitationTest extends neqsim.NeqSimTest {
     assertSaturationLogKMatchesPhreeqc("BaSO4", -9.97, 0.04);
     assertSaturationLogKMatchesPhreeqc("SrSO4", -6.63, 0.01);
     assertSaturationLogKMatchesPhreeqc("CaSO4_A", -4.362, 0.01);
+    assertSaturationLogKMatchesPhreeqc("CaSO4_G", -4.58, 0.01);
   }
 
   private static SystemPitzer createCalciumSulphateBrine(boolean includeHydrocarbons, double scaleIonMolality) {

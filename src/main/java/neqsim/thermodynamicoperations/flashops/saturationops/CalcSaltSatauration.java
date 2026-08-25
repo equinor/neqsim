@@ -20,6 +20,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(CalcSaltSatauration.class);
 
   String saltName;
+  private transient SaltData saltDataCache;
 
   /**
    * Constructor for calcSaltSatauration.
@@ -206,11 +207,117 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         initialSaturationRatio, finalSaturationRatio, maximumBalanceResidual);
   }
 
+  /**
+   * Returns the current activity-based saturation ratio after a complete TP flash.
+   *
+   * @return current ion-activity product divided by the COMPSALT solubility product
+   */
+  double getCurrentSaturationRatio() {
+    SaltData saltData = readSaltData();
+    ensureSaltIonsPresent(saltData);
+    initialisePrecipitationSystem();
+    return calculateSaturationRatio(saltData, getAqueousPhaseNumber());
+  }
+
+  /**
+   * Dissolves at most the supplied amount of an existing pure-solid ledger.
+   *
+   * <p>
+   * If all available solid can dissolve while the aqueous phase remains undersaturated, the full amount is returned.
+   * Otherwise a clone-isolated bisection adds just enough stoichiometric ions to restore saturation equilibrium.
+   * </p>
+   *
+   * @param availableSolidMoles available pure-solid formula units in mol
+   * @return formula units dissolved in mol
+   */
+  double dissolve(double availableSolidMoles) {
+    if (!(availableSolidMoles > 0.0) || !Double.isFinite(availableSolidMoles)) {
+      throw new IllegalArgumentException("Available solid amount must be finite and positive for " + saltName);
+    }
+    SaltData saltData = readSaltData();
+    ensureSaltIonsPresent(saltData);
+    initialisePrecipitationSystem();
+    double initialSaturationRatio = calculateSaturationRatio(saltData, getAqueousPhaseNumber());
+    if (initialSaturationRatio >= 1.0) {
+      return 0.0;
+    }
+
+    SystemInterface baseSystem = system.clone();
+    double upperSaturationRatio = calculateSaturationRatioForDissolution(baseSystem, saltData, availableSolidMoles);
+    double acceptedDissolution;
+    if (upperSaturationRatio <= 1.0) {
+      acceptedDissolution = availableSolidMoles;
+    } else {
+      double lowerDissolution = 0.0;
+      double upperDissolution = availableSolidMoles;
+      acceptedDissolution = Double.NaN;
+      for (int iteration = 0; iteration < 100; iteration++) {
+        double trialDissolution = 0.5 * (lowerDissolution + upperDissolution);
+        double trialSaturationRatio = calculateSaturationRatioForDissolution(baseSystem, saltData, trialDissolution);
+        acceptedDissolution = trialDissolution;
+        if (Math.abs(Math.log10(trialSaturationRatio)) <= 1.0e-8) {
+          break;
+        }
+        if (trialSaturationRatio < 1.0) {
+          lowerDissolution = trialDissolution;
+        } else {
+          upperDissolution = trialDissolution;
+        }
+      }
+    }
+
+    addSaltAmount(saltData, acceptedDissolution);
+    initialisePrecipitationSystem();
+    return acceptedDissolution;
+  }
+
+  /** @return first COMPSALT ion name */
+  String getIon1Name() {
+    return readSaltData().name1;
+  }
+
+  /** @return second COMPSALT ion name */
+  String getIon2Name() {
+    return readSaltData().name2;
+  }
+
+  /** @return first-ion stoichiometric coefficient per formula unit */
+  double getIon1Stoichiometry() {
+    return readSaltData().stoc1;
+  }
+
+  /** @return second-ion stoichiometric coefficient per formula unit */
+  double getIon2Stoichiometry() {
+    return readSaltData().stoc2;
+  }
+
+  /** @return pure-solid molar mass in grams per mole of formula units */
+  double getSolidMolarMassGrams() {
+    SaltData saltData = readSaltData();
+    ensureSaltIonsPresent(saltData);
+    return 1000.0 * (saltData.stoc1 * system.getComponent(saltData.name1).getMolarMass()
+        + saltData.stoc2 * system.getComponent(saltData.name2).getMolarMass());
+  }
+
   private double calculateSaturationRatioForRemoval(SystemInterface baseSystem, SaltData saltData, double saltAmount) {
     SystemInterface originalSystem = system;
     try {
       system = createTrialSystem(baseSystem);
       removeSaltAmount(saltData, saltAmount);
+      initialisePrecipitationSystem();
+      return calculateSaturationRatio(saltData, getAqueousPhaseNumber());
+    } finally {
+      system = originalSystem;
+    }
+  }
+
+  /** Evaluates dissolution on a fresh clone using the same full-flash path as precipitation. */
+  private double calculateSaturationRatioForDissolution(SystemInterface baseSystem, SaltData saltData,
+      double saltAmount) {
+    SystemInterface originalSystem = system;
+    try {
+      system = createTrialSystem(baseSystem);
+      addSaltAmount(saltData, saltAmount);
       initialisePrecipitationSystem();
       return calculateSaturationRatio(saltData, getAqueousPhaseNumber());
     } finally {
@@ -244,6 +351,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    * @return salt data for the requested salt
    */
   private SaltData readSaltData() {
+    if (saltDataCache != null) {
+      return saltDataCache;
+    }
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database
             .getResultSet("SELECT * FROM compsalt WHERE SaltName='" + saltName + "'")) {
@@ -261,6 +371,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       data.kspwater4 = Double.parseDouble(dataSet.getString("Kspwater4"));
       data.kspwater5 = Double.parseDouble(dataSet.getString("Kspwater5"));
       data.vdelta = Double.parseDouble(dataSet.getString("Vdelta"));
+      saltDataCache = data;
       return data;
     } catch (RuntimeException ex) {
       throw ex;
