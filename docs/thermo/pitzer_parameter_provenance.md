@@ -263,6 +263,23 @@ aqueous role. Hybrid gas-oil-water phase stability, model-specific aqueous react
 solubility/precipitation complementarity, and process mass/energy/property closure retain their
 separate gates and database semantics.
 
+### Mineral-solubility and precipitation boundary
+
+`ThermodynamicOperations.precipitateScale` now couples the selected aqueous activity model to the
+existing COMPSALT solubility-product correlations for one named pure mineral. At 298.15 K and
+1.01325 bara, the unmodified COMPSALT correlations give log10 Ksp values -9.934923 for BaSO4,
+-6.631329 for SrSO4, and -4.355596 for anhydrite (`CaSO4_A`). The exact public-domain PHREEQC
+3.9.0-17591 database at commit `b0b3be767158ccc3322d2c816625cf470045e67e` gives -9.97, -6.63,
+and -4.362, respectively. These are independent mineral-constant comparisons; no PHREEQC mineral
+constant was fitted or copied into COMPSALT.
+
+The complete PHREEQC Ca-Mg-Cl-SO4 interaction family is therefore used for activity-consistent
+anhydrite precipitation validation. The same catalog contains no explicit Ba++/SO4-- `B0` row, so
+a fully qualified barite Pitzer precipitation calculation still fails closed. The close barite Ksp
+agreement does not qualify its missing aqueous interaction family. A redistributable, coherent
+Ba/Sr sulfate family with binary and all required mixed-brine terms plus held-out solubility or
+saturation evidence is the next parameter dependency.
+
 `PitzerCatalogPerformanceBenchmark` measures nine fixed-work batches after warmup. On OpenJDK 17
 in the development container, the median four-ion activity/osmotic kernel was 10.542 microseconds
 and the complete aqueous `init(3)` plus physical-property calculation was 0.168756 milliseconds.

@@ -63,6 +63,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationTem
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorConcentrationFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorwtFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
+import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointEquilibriumLine;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureFlash;
@@ -1277,6 +1278,23 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       throw new neqsim.util.exception.IsNaNException(this, "calcSaltSaturation",
           "Could not find solution - possible no dew point exists");
     }
+  }
+
+  /**
+   * Precipitates one supersaturated pure salt to aqueous activity equilibrium.
+   *
+   * <p>
+   * The dissolved system is updated and reflashed. The returned immutable result carries the pure-solid amount needed
+   * to close the material ledger; the solid is not inserted as a NeqSim phase.
+   * </p>
+   *
+   * @param saltName salt name from the COMPSALT database, for example {@code "CaSO4_A"}
+   * @return precipitation amount, saturation and material-balance diagnostics
+   */
+  public SaltPrecipitationResult precipitateScale(String saltName) {
+    CalcSaltSatauration saltOperation = new CalcSaltSatauration(system, saltName);
+    operation = saltOperation;
+    return saltOperation.precipitate();
   }
 
   /**
