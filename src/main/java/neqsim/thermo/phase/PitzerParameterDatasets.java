@@ -566,17 +566,16 @@ public final class PitzerParameterDatasets {
    * Reports whether an SrCl2 state is inside the independent NIST ThermoML validation envelope.
    *
    * <p>
-   * The archive contains 22 values at 298.15 K from 0.01 to 3.52 mol/kg and 36 temperature-dependent values from
-   * 283.15 to 333.15 K at 0.01 to 0.30 mol/kg. This helper describes the enclosing rectangle; callers needing the
-   * exact measured state set must consult the stored validation fixture.
+   * The archive contains 22 values at 298.15 K from 0.01 to 3.52 mol/kg and 36 temperature-dependent values from 283.15
+   * to 333.15 K at 0.01 to 0.30 mol/kg. This helper describes the enclosing rectangle; callers needing the exact
+   * measured state set must consult the stored validation fixture.
    * </p>
    *
    * @param temperature temperature in K
    * @param strontiumChlorideMolality SrCl2 formula-unit molality in mol/kg water
    * @return {@code true} for finite states inside the inclusive validation envelope
    */
-  public static boolean isWithinStrontiumChlorideValidationRange(double temperature,
-      double strontiumChlorideMolality) {
+  public static boolean isWithinStrontiumChlorideValidationRange(double temperature, double strontiumChlorideMolality) {
     return Double.isFinite(temperature) && Double.isFinite(strontiumChlorideMolality)
         && temperature >= SR_CL_BINARY_VALIDATION_MIN_TEMPERATURE_K
         && temperature <= SR_CL_BINARY_VALIDATION_MAX_TEMPERATURE_K
