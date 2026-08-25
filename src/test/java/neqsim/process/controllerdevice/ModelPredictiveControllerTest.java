@@ -307,6 +307,36 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void testAggregateMoveConstraintUsesAppliedControlFeedback() {
+    ModelPredictiveController controller = new ModelPredictiveController("groupMoveMpc");
+    controller.configureControls("chokeA", "chokeB", "chokeC");
+    controller.setInitialControlValues(40.0, 40.0, 40.0);
+    controller.setControlLimits("chokeA", 0.0, 100.0);
+    controller.setControlLimits("chokeB", 0.0, 100.0);
+    controller.setControlLimits("chokeC", 0.0, 100.0);
+    controller.setControlWeights(1.0, 1.0, 1.0);
+    controller.setMoveWeights(0.0, 0.0, 0.0);
+    controller.setPreferredControlVector(80.0, 80.0, 80.0);
+    controller.addLinearMoveConstraint(new ModelPredictiveController.LinearMoveConstraint("shared choke movement",
+        new double[] { 1.0, 1.0, 1.0 }, -6.0, 6.0));
+
+    controller.runTransient(Double.NaN, 1.0, UUID.randomUUID());
+    double[] openingControls = controller.getControlVector();
+    Assertions.assertEquals(6.0, openingControls[0] + openingControls[1] + openingControls[2] - 120.0, 1.0e-6,
+        "The aggregate opening move should be limited to the shared budget");
+
+    controller.synchronizeAppliedControlValues(30.0, 30.0, 30.0);
+    Assertions.assertArrayEquals(new double[] { 30.0, 30.0, 30.0 }, controller.getControlVector(), 1.0e-12,
+        "Measured actuator positions should replace stale requested controls");
+    controller.setPreferredControlVector(0.0, 0.0, 0.0);
+
+    controller.runTransient(Double.NaN, 1.0, UUID.randomUUID());
+    double[] closingControls = controller.getControlVector();
+    Assertions.assertEquals(-6.0, closingControls[0] + closingControls[1] + closingControls[2] - 90.0, 1.0e-6,
+        "The aggregate closing move should be measured from applied feedback");
+  }
+
+  @Test
   @Disabled("Temporarily disabled until quality constraint biasing is stabilised")
   public void testModelPredictiveControllerHandlesQualityConstraints() {
     Map<String, Double> baseComposition = new LinkedHashMap<>();
