@@ -54,6 +54,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTempera
 import neqsim.thermodynamicoperations.flashops.saturationops.CricondenbarFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HCdewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateEquilibriumLine;
@@ -1174,12 +1175,23 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void freezingPointTemperatureFlash() throws IsNaNException {
+    freezingPointTemperatureFlashResult();
+  }
+
+  /**
+   * Runs a freezing-point flash and returns structured convergence diagnostics.
+   *
+   * @return freezing-point calculation result
+   * @throws neqsim.util.exception.IsNaNException if the calculated temperature is not finite
+   */
+  public FreezingPointResult freezingPointTemperatureFlashResult() throws IsNaNException {
     operation = new FreezingPointTemperatureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
+      throw new IsNaNException(this, "freezingPointTemperatureFlashResult",
           "Could not find solution - possible no freezing point exists");
     }
+    return ((FreezingPointTemperatureFlash) operation).getResult();
   }
 
   /**
@@ -1189,12 +1201,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void freezingPointTemperatureFlash(String phaseName) throws IsNaNException {
-    operation = new FreezingPointTemperatureFlash(system);
-    getOperation().run();
-    if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this, "freezingPointTemperatureFlash",
-          "Could not find solution - possible no freezing point exists");
-    }
+    freezingPointTemperatureFlashResult();
   }
 
   /**
