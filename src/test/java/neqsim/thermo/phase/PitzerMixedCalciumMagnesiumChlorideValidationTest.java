@@ -220,15 +220,25 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     private final double waterActivity;
 
     private ReferenceState(String[] fields) {
-      mbMolality = Double.parseDouble(fields[0]);
-      mbPhi = Double.parseDouble(fields[1]);
-      a = Double.parseDouble(fields[2]);
-      b = Double.parseDouble(fields[3]);
-      calciumFraction = Double.parseDouble(fields[4]);
-      magnesiumChlorideMolality = Double.parseDouble(fields[5]);
-      calciumChlorideMolality = Double.parseDouble(fields[6]);
-      osmoticCoefficient = Double.parseDouble(fields[7]);
-      waterActivity = Double.parseDouble(fields[8]);
+      mbMolality = parseDoubleField(fields, 0);
+      mbPhi = parseDoubleField(fields, 1);
+      a = parseDoubleField(fields, 2);
+      b = parseDoubleField(fields, 3);
+      calciumFraction = parseDoubleField(fields, 4);
+      magnesiumChlorideMolality = parseDoubleField(fields, 5);
+      calciumChlorideMolality = parseDoubleField(fields, 6);
+      osmoticCoefficient = parseDoubleField(fields, 7);
+      waterActivity = parseDoubleField(fields, 8);
+    }
+
+    private static double parseDoubleField(String[] fields, int index) {
+      String rawValue = fields[index];
+      try {
+        return Double.parseDouble(rawValue);
+      } catch (NumberFormatException exception) {
+        String message = "Invalid numeric reference field " + index + " value '" + rawValue + "'";
+        throw new IllegalArgumentException(message, exception);
+      }
     }
   }
 }
