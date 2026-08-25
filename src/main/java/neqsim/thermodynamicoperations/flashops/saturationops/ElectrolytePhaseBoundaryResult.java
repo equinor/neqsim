@@ -7,9 +7,8 @@ import neqsim.thermo.phase.PhaseType;
  * Immutable diagnostics for a bracketed electrolyte phase-boundary calculation.
  *
  * <p>
- * The boundary is represented by the final bracket because a finite phase-fraction threshold is
- * required to classify a phase as material. The thermodynamic system is left at the bracket endpoint
- * where the requested phase is present.
+ * The boundary is represented by the final bracket because a finite phase-fraction threshold is required to classify a
+ * phase as material. The thermodynamic system is left at the bracket endpoint where the requested phase is present.
  * </p>
  */
 public final class ElectrolytePhaseBoundaryResult implements Serializable {
@@ -61,11 +60,10 @@ public final class ElectrolytePhaseBoundaryResult implements Serializable {
    * @param maximumIonMoleFractionOutsideAqueous largest ionic mole fraction outside aqueous phases
    * @param maximumLogFugacityResidual largest neutral-component cross-phase ln-fugacity residual
    */
-  public ElectrolytePhaseBoundaryResult(Specification specification, PhaseType targetPhase,
-      double lowerBound, double upperBound, boolean targetPresentAtLowerBound,
-      double targetPresentValue, double targetPhaseFraction, int iterations, int flashEvaluations,
-      String lowerTopology, String upperTopology, double maximumMaterialBalanceResidual,
-      double maximumPhaseNormalizationResidual, double aqueousChargeMolality,
+  public ElectrolytePhaseBoundaryResult(Specification specification, PhaseType targetPhase, double lowerBound,
+      double upperBound, boolean targetPresentAtLowerBound, double targetPresentValue, double targetPhaseFraction,
+      int iterations, int flashEvaluations, String lowerTopology, String upperTopology,
+      double maximumMaterialBalanceResidual, double maximumPhaseNormalizationResidual, double aqueousChargeMolality,
       double maximumIonMoleFractionOutsideAqueous, double maximumLogFugacityResidual) {
     this.specification = specification;
     this.targetPhase = targetPhase;
