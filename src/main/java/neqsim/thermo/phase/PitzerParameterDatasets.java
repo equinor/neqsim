@@ -68,6 +68,18 @@ public final class PitzerParameterDatasets {
   /** Highest independently checked binary CaCl2 or MgCl2 molality, in mol/kg water. */
   public static final double CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY = 2.0;
 
+  /** Lowest total formula-unit molality in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MIN_TOTAL_MOLALITY = 0.548;
+
+  /** Highest total formula-unit molality in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MAX_TOTAL_MOLALITY = 2.161;
+
+  /** Lowest CaCl2 fraction of total salt in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MIN_CALCIUM_FRACTION = 0.25;
+
+  /** Highest CaCl2 fraction of total salt in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MAX_CALCIUM_FRACTION = 0.75;
+
   /** Lowest total formula-unit molality in the mixed MgCl2-MgSO4 water-activity evidence. */
   public static final double MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MIN_TOTAL_MOLALITY = 0.35;
 
@@ -455,9 +467,10 @@ public final class PitzerParameterDatasets {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
           Arrays.asList("CaCl2 mean activity at 298.15 K", "MgCl2 mean activity at 298.15 K",
+              "CaCl2-MgCl2 osmotic coefficient and water activity at 298.15 K",
               "MgCl2-MgSO4 water activity at 298.15 K"),
           Arrays.asList("Other catalog species are source-mapped, not independently qualified",
-              "Ca-bearing mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain unqualified"));
+              "Quaternary Ca-Mg-Cl-SO4 activity and sulfate-mineral thermodynamics remain unqualified"));
     }
     String identity = datasetId == null || datasetId.trim().isEmpty() ? "unknown" : datasetId;
     return new PitzerParameterQualification(identity, PitzerParameterQualification.Level.UNQUALIFIED,
@@ -476,6 +489,37 @@ public final class PitzerParameterDatasets {
         && Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) <= 1.0e-9
         && saltMolality >= CA_MG_CL_SO4_BINARY_VALIDATION_MIN_MOLALITY
         && saltMolality <= CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY;
+  }
+
+  /**
+   * Reports whether a mixed CaCl2-MgCl2 state is inside the independently checked isopiestic envelope.
+   *
+   * <p>
+   * The public-domain NBS evidence covers 298.15 K, total formula-unit molality 0.548-2.161 mol/kg water,
+   * and CaCl2 fractions 0.25-0.75. This helper describes that rectangular evidence envelope; it does not
+   * qualify sulfate-bearing mixtures or extrapolation beyond the underlying three isopiestic levels.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param calciumChlorideMolality CaCl2 formula-unit molality in mol/kg water
+   * @param magnesiumChlorideMolality MgCl2 formula-unit molality in mol/kg water
+   * @return {@code true} for finite, non-negative inputs inside the checked mixed-chloride envelope
+   */
+  public static boolean isWithinCalciumMagnesiumChlorideMixtureValidationRange(double temperature,
+      double calciumChlorideMolality, double magnesiumChlorideMolality) {
+    if (!Double.isFinite(temperature) || !Double.isFinite(calciumChlorideMolality)
+        || !Double.isFinite(magnesiumChlorideMolality) || calciumChlorideMolality < 0.0
+        || magnesiumChlorideMolality < 0.0 || Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) > 1.0e-9) {
+      return false;
+    }
+    double totalMolality = calciumChlorideMolality + magnesiumChlorideMolality;
+    if (totalMolality < CA_MG_CL_MIXTURE_VALIDATION_MIN_TOTAL_MOLALITY
+        || totalMolality > CA_MG_CL_MIXTURE_VALIDATION_MAX_TOTAL_MOLALITY) {
+      return false;
+    }
+    double calciumFraction = calciumChlorideMolality / totalMolality;
+    return calciumFraction >= CA_MG_CL_MIXTURE_VALIDATION_MIN_CALCIUM_FRACTION
+        && calciumFraction <= CA_MG_CL_MIXTURE_VALIDATION_MAX_CALCIUM_FRACTION;
   }
 
   /**
