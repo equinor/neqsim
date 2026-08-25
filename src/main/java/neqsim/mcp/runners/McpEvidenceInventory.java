@@ -250,13 +250,11 @@ public final class McpEvidenceInventory {
   /** Builds evidence-qualified candidates for a future atomic contract-status promotion. */
   private static JsonObject buildContractPromotionCandidates() {
     JsonObject candidates = new JsonObject();
-    candidates.add("getProgress",
-        contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_PROGRESS_RETRIEVAL",
-            new String[] { "src/main/java/neqsim/mcp/runners/ProgressTracker.java",
-                "src/test/java/neqsim/mcp/runners/McpEvidenceInventoryFoundationTests.java",
-                "neqsim-mcp-server/test_mcp_server.py",
-                "neqsim-mcp-server/docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md" },
-            "Active-operation discovery, point retrieval, milestone visibility, completion state, missing-operation errors, and real-protocol listActive retrieval are directly tested; this evidence does not validate the underlying calculation, cancellation, durability, deployment isolation, or plant authority"));
+    candidates.add("getProgress", contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_PROGRESS_RETRIEVAL",
+        new String[] { "src/main/java/neqsim/mcp/runners/ProgressTracker.java",
+            "src/test/java/neqsim/mcp/runners/McpEvidenceInventoryFoundationTests.java",
+            "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md" },
+        "Active-operation discovery, point retrieval, milestone visibility, completion state, missing-operation errors, and real-protocol listActive retrieval are directly tested; this evidence does not validate the underlying calculation, cancellation, durability, deployment isolation, or plant authority"));
     return candidates;
   }
 
