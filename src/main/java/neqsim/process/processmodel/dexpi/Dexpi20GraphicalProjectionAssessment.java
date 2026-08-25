@@ -106,9 +106,8 @@ public final class Dexpi20GraphicalProjectionAssessment {
     private final int matchedPrimitiveCount;
     private final List<Diagnostic> diagnostics;
 
-    Report(EngineeringGraphicalProjection projection, String inspectedFileSha256,
-        Map<String, String> expected, Map<String, String> exported, int matchedPrimitiveCount,
-        List<Diagnostic> diagnostics) {
+    Report(EngineeringGraphicalProjection projection, String inspectedFileSha256, Map<String, String> expected,
+        Map<String, String> exported, int matchedPrimitiveCount, List<Diagnostic> diagnostics) {
       this.sourceGraphFingerprint = projection.getSourceGraphFingerprint();
       this.sourceReference = projection.getSourceReference();
       this.revision = projection.getRevision();
@@ -347,8 +346,7 @@ public final class Dexpi20GraphicalProjectionAssessment {
     return result.toString();
   }
 
-  private static int compare(Map<String, String> expected, Map<String, String> exported,
-      List<Diagnostic> diagnostics) {
+  private static int compare(Map<String, String> expected, Map<String, String> exported, List<Diagnostic> diagnostics) {
     Set<String> ids = new LinkedHashSet<String>();
     ids.addAll(expected.keySet());
     ids.addAll(exported.keySet());
@@ -372,8 +370,8 @@ public final class Dexpi20GraphicalProjectionAssessment {
 
   private static void assessDiagram(Document document, EngineeringGraphicalProjection projection,
       List<Diagnostic> diagnostics) {
-    String id = "Diagram_" + Dexpi20GraphicalProjectionWriter
-        .digest(projection.getProjectId() + ":" + projection.getRevision());
+    String id = "Diagram_"
+        + Dexpi20GraphicalProjectionWriter.digest(projection.getProjectId() + ":" + projection.getRevision());
     Element diagram = objectById(document, id);
     if (diagram == null || !"Core/Diagram.Diagram".equals(diagram.getAttribute("type"))) {
       diagnostics.add(error("DEXPI_GRAPHICS_DIAGRAM_MISSING",
@@ -387,8 +385,8 @@ public final class Dexpi20GraphicalProjectionAssessment {
           "Diagram name does not retain project, revision, and controlled source reference", id));
     }
     double[] expected = bounds(projection.getPrimitives());
-    double[] actual = new double[] {directDouble(diagram, "MinX"), directDouble(diagram, "MinY"),
-        directDouble(diagram, "MaxX"), directDouble(diagram, "MaxY")};
+    double[] actual = new double[] { directDouble(diagram, "MinX"), directDouble(diagram, "MinY"),
+        directDouble(diagram, "MaxX"), directDouble(diagram, "MaxY") };
     for (int index = 0; index < expected.length; index++) {
       if (Double.compare(expected[index], actual[index]) != 0) {
         diagnostics.add(error("DEXPI_GRAPHICS_DIAGRAM_BOUNDS_MISMATCH",
@@ -641,7 +639,7 @@ public final class Dexpi20GraphicalProjectionAssessment {
         maxY = Math.max(maxY, value.getY());
       }
     }
-    return new double[] {minX - 10.0, minY - 10.0, maxX + 10.0, maxY + 10.0};
+    return new double[] { minX - 10.0, minY - 10.0, maxX + 10.0, maxY + 10.0 };
   }
 
   private static Diagnostic warning(String code, String message, String subjectId) {

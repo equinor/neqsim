@@ -78,8 +78,8 @@ public class Dexpi20GraphicalProjectionAssessmentTest extends NeqSimTest {
 
     assertFalse(report.isSupportedProjectionEquivalent());
     assertEquals(3, report.getMatchedPrimitiveCount());
-    assertTrue(report.getDiagnostics().stream()
-        .anyMatch(item -> "DEXPI_GRAPHICS_PRIMITIVE_MISSING".equals(item.getCode())));
+    assertTrue(
+        report.getDiagnostics().stream().anyMatch(item -> "DEXPI_GRAPHICS_PRIMITIVE_MISSING".equals(item.getCode())));
     assertTrue(report.getDiagnostics().stream()
         .anyMatch(item -> "DEXPI_GRAPHICS_PRIMITIVE_UNEXPECTED".equals(item.getCode())));
   }
@@ -105,11 +105,10 @@ public class Dexpi20GraphicalProjectionAssessmentTest extends NeqSimTest {
   }
 
   private static EngineeringGraphicalProjection projection() {
-    Primitive rectangle = Primitive.rectangle("separator:shape", "equipment:separator", "10-VA-001", 10.0, 20.0,
-        28.0, 14.0, "#123456", "#abcdef", 0.8);
+    Primitive rectangle = Primitive.rectangle("separator:shape", "equipment:separator", "10-VA-001", 10.0, 20.0, 28.0,
+        14.0, "#123456", "#abcdef", 0.8);
     Primitive polygon = Primitive.polygon("separator:proposal", "equipment:separator", "10-VA-001",
-        Arrays.asList(new Point(20.0, 18.0), new Point(24.0, 22.0), new Point(20.0, 26.0)), "#654321", "none",
-        0.6);
+        Arrays.asList(new Point(20.0, 18.0), new Point(24.0, 22.0), new Point(20.0, 26.0)), "#654321", "none", 0.6);
     Primitive route = Primitive.polyline("separator:route", "equipment:separator", "10-VA-001",
         Arrays.asList(new Point(5.0, 20.0), new Point(10.0, 20.0)), "#2563eb", 0.8, "4 2", false);
     Primitive label = Primitive.text("separator:label", "equipment:separator", "10-VA-001", 24.0, 27.0, 3.0,
