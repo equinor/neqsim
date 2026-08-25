@@ -1,3 +1,8 @@
+---
+title: "Electrolyte VLE and VLLE Phase Boundaries"
+description: "Bracketed saturation-pressure and saturation-temperature calculations for Pitzer and electrolyte-EOS VLE/VLLE with scientific diagnostics."
+---
+
 # Electrolyte VLE and VLLE phase boundaries
 
 NeqSim provides a bracketed saturation operation for electrolyte systems in which gas, oil and a
