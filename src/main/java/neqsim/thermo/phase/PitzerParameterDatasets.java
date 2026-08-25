@@ -189,7 +189,7 @@ public final class PitzerParameterDatasets {
    * @param phase Pitzer aqueous role
    * @return {@code true} when the complete source topology was found and applied
    */
-  public static boolean tryApplyCompletePhreeqcPitzerCatalog(PhasePitzer phase) {
+  static boolean tryApplyCompletePhreeqcPitzerCatalog(PhasePitzer phase) {
     if (phase == null) {
       throw new IllegalArgumentException("Pitzer phase must not be null");
     }
