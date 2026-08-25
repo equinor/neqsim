@@ -47,6 +47,7 @@ thermo/
 - [Hydrate Models Guide](hydrate_models): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
 - [Electrolyte CPA Model](ElectrolyteCPAModel): **Detailed documentation** of the electrolyte CPA model, including Fürst electrostatic contributions, validation data, and usage examples.
 - [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance): **Dataset and safety reference** for Pitzer equation conventions, source/licensing comparisons, mixed-ion coverage diagnostics, and parameter-adoption gates.
+- [Electrolyte VLE and VLLE Phase Boundaries](electrolyte_phase_boundaries): **Bracketed saturation API** for Pitzer and electrolyte-EOS gas, oil and aqueous phase appearance with balance, charge, fugacity and topology diagnostics.
 
 ### Database Documentation
 
