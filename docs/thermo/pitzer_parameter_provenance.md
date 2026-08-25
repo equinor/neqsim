@@ -13,8 +13,18 @@ derived and reviewed equation mapping.
 
 ## Current dataset and coverage contract
 
-The bundled table is identified as `neqsim-legacy-pitzer-parameters-v1`. It stores molality-scale
-binary coefficients at 298.15 K and a NeqSim three-term temperature expression:
+New `SystemPitzer` phases use a catalog-first default: on the first Pitzer activity/property
+evaluation, NeqSim selects the complete bundled PHREEQC topology when every required active aqueous
+interaction exists. Hydrocarbons remain on the EOS role phases and do not create aqueous neutral-
+interaction requirements. Other non-hydrocarbon aqueous neutrals still require explicit complete
+`lambda` and `zeta` families. If the catalog is incomplete, loading falls back to the historical
+binary table; mixed primary-salt coverage then still fails closed on missing binary, `theta`, or
+`psi` rows. No missing interaction is silently converted to zero. Call
+`SystemPitzer.useLegacyPitzerParameters()` before the first property evaluation only to reproduce
+a historical result.
+
+The compatibility table is identified as `neqsim-legacy-pitzer-parameters-v1`. It stores
+molality-scale binary coefficients at 298.15 K and a NeqSim three-term temperature expression:
 
 `p(T) = p(298.15 K) + pT1 (1/T - 1/298.15 K) + pT2 ln(T/298.15 K)`.
 
@@ -174,16 +184,19 @@ Mg++, Ba++, CO3--, HCO3-, CO2, and related bicarbonate and neutral-hydrogen Pitz
 The bundled catalog contains 54 `B0`, 48 `B1`,
 8 `B2`, 32 `C0`, 30 `theta`, 59 `psi`, 27 `lambda`, and 10 `zeta` rows. No reaction constant,
 mineral `log K`, gas binary, SIT, eNRTL, Extended-UNIQUAC, or electrolyte-EOS coefficient is
-imported. The resource is parsed only after an explicit catalog API call, so neutral EOS and legacy
-Pitzer paths do no catalog I/O or lookup work.
+imported. The resource is parsed lazily on the first catalog-eligible Pitzer evaluation and cached as
+one immutable catalog. Neutral EOS paths do no catalog I/O or lookup work; a Pitzer phase performs
+automatic topology selection only once when its parameter dataset is first loaded.
 
-`applyCompletePhreeqcPitzerCatalog` selects rows by the active aqueous species. Every active
-opposite-sign pair requires explicit `B0`, `B1`, and `C0`; every same-sign pair requires `theta`;
+The default selector and explicit `applyCompletePhreeqcPitzerCatalog` API select rows by the active
+aqueous species. Every active opposite-sign pair requires explicit `B0`, `B1`, and `C0`; every
+same-sign pair requires `theta`;
 every mixed-ion triple requires `psi`; and active neutral solutes require their complete `lambda`
 and `zeta` topology. An absent required row fails before phase mutation. A `B2` row is optional
 only in the strict sense that it is applied whenever the source defines it; the loader never creates
-one or silently substitutes an unqualified zero. This makes a broad source database available while
-preserving a closed, reviewable calculation topology.
+one or silently substitutes an unqualified zero. This makes a broad source database available without a manual selection call while preserving a
+closed, reviewable calculation topology. Explicit subset APIs remain available for audited
+reproduction and validation work.
 
 The first fully exercised four-ion family is Ca++/Mg++/Cl-/SO4--. It includes all four binaries,
 both same-sign pairs, and all four ternary compositions:
