@@ -198,7 +198,7 @@ public final class PitzerParameterDatasets {
     if (ions.isEmpty()) {
       return false;
     }
-    List<Integer> neutrals = activeAqueousNeutrals(phase);
+    List<Integer> neutrals = activeAqueousNeutrals(phase, true);
     try {
       validateCatalogTopology(phase, catalog, ions, neutrals);
     } catch (IllegalArgumentException missingSourceRow) {
@@ -231,7 +231,7 @@ public final class PitzerParameterDatasets {
     }
     PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
     List<Integer> ions = activeIons(phase);
-    List<Integer> neutrals = activeAqueousNeutrals(phase);
+    List<Integer> neutrals = activeAqueousNeutrals(phase, false);
     validateCatalogTopology(phase, catalog, ions, neutrals);
     applyValidatedCatalog(phase, catalog, ions, neutrals);
   }
@@ -268,13 +268,13 @@ public final class PitzerParameterDatasets {
     return ions;
   }
 
-  private static List<Integer> activeAqueousNeutrals(PhasePitzer phase) {
+  private static List<Integer> activeAqueousNeutrals(PhasePitzer phase, boolean excludeHydrocarbons) {
     List<Integer> neutrals = new ArrayList<Integer>();
     for (int component = 0; component < phase.getNumberOfComponents(); component++) {
       if (phase.getComponent(component).getNumberOfMolesInPhase() <= 1.0e-20
           || Math.abs(phase.getComponent(component).getIonicCharge()) >= 0.5
           || "water".equalsIgnoreCase(phase.getComponent(component).getComponentName())
-          || phase.getComponent(component).isHydrocarbon()) {
+          || (excludeHydrocarbons && phase.getComponent(component).isHydrocarbon())) {
         continue;
       }
       neutrals.add(component);
