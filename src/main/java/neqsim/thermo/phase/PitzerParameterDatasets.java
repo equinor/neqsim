@@ -177,6 +177,35 @@ public final class PitzerParameterDatasets {
   }
 
   /**
+   * Tries to apply every explicit PHREEQC row required by the active aqueous topology.
+   *
+   * <p>
+   * Validation completes before any phase mutation. Hydrocarbons are excluded because they remain on the EOS gas/oil
+   * role phases; non-hydrocarbon aqueous neutrals still require complete lambda and zeta coverage. A missing source row
+   * returns {@code false}, allowing the caller to retain the legacy single-salt dataset. Mixed legacy topologies still
+   * fail through the ordinary coverage gate rather than receiving silent zero interactions.
+   * </p>
+   *
+   * @param phase Pitzer aqueous role
+   * @return {@code true} when the complete source topology was found and applied
+   */
+  public static boolean tryApplyCompletePhreeqcPitzerCatalog(PhasePitzer phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("Pitzer phase must not be null");
+    }
+    PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
+    List<Integer> ions = activeIons(phase);
+    List<Integer> neutrals = activeAqueousNeutrals(phase);
+    try {
+      validateCatalogTopology(phase, catalog, ions, neutrals);
+    } catch (IllegalArgumentException missingSourceRow) {
+      return false;
+    }
+    applyValidatedCatalog(phase, catalog, ions, neutrals);
+    return true;
+  }
+
+  /**
    * Applies every explicit PHREEQC Pitzer row required by the phase's active species topology.
    *
    * <p>
@@ -195,28 +224,10 @@ public final class PitzerParameterDatasets {
       throw new IllegalArgumentException("Pitzer phase must not be null");
     }
     PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
-    List<Integer> ions = new ArrayList<Integer>();
-    List<Integer> neutrals = new ArrayList<Integer>();
-    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
-      if (phase.getComponent(component).getNumberOfMolesInPhase() <= 1.0e-20) {
-        continue;
-      }
-      double charge = phase.getComponent(component).getIonicCharge();
-      if (Math.abs(charge) >= 0.5) {
-        ions.add(component);
-      } else if (!"water".equalsIgnoreCase(phase.getComponent(component).getComponentName())) {
-        neutrals.add(component);
-      }
-    }
-
+    List<Integer> ions = activeIons(phase);
+    List<Integer> neutrals = activeAqueousNeutrals(phase);
     validateCatalogTopology(phase, catalog, ions, neutrals);
-    phase.setParameterDatasetId(PHREEQC_PITZER_CATALOG_ID);
-    applyCatalogIonRows(phase, catalog, ions);
-    applyCatalogNeutralRows(phase, catalog, ions, neutrals);
-    phase.enablePhreeqcCommonIonTerms();
-    phase.markManualParameterDatasetLoaded();
-    phase.requireCompletePitzerParameterCoverage();
-    phase.requireCompleteNeutralPitzerParameterCoverage();
+    applyValidatedCatalog(phase, catalog, ions, neutrals);
   }
 
   /**
@@ -238,6 +249,42 @@ public final class PitzerParameterDatasets {
       throw new IllegalArgumentException("PHREEQC Ca-Mg-Cl-SO4 dataset species have incompatible charge roles");
     }
     applyCompletePhreeqcPitzerCatalog(phase);
+  }
+
+  private static List<Integer> activeIons(PhasePitzer phase) {
+    List<Integer> ions = new ArrayList<Integer>();
+    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
+      if (phase.getComponent(component).getNumberOfMolesInPhase() > 1.0e-20
+          && Math.abs(phase.getComponent(component).getIonicCharge()) >= 0.5) {
+        ions.add(component);
+      }
+    }
+    return ions;
+  }
+
+  private static List<Integer> activeAqueousNeutrals(PhasePitzer phase) {
+    List<Integer> neutrals = new ArrayList<Integer>();
+    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
+      if (phase.getComponent(component).getNumberOfMolesInPhase() <= 1.0e-20
+          || Math.abs(phase.getComponent(component).getIonicCharge()) >= 0.5
+          || "water".equalsIgnoreCase(phase.getComponent(component).getComponentName())
+          || phase.getComponent(component).isHydrocarbon()) {
+        continue;
+      }
+      neutrals.add(component);
+    }
+    return neutrals;
+  }
+
+  private static void applyValidatedCatalog(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
+      List<Integer> ions, List<Integer> neutrals) {
+    phase.setParameterDatasetId(PHREEQC_PITZER_CATALOG_ID);
+    applyCatalogIonRows(phase, catalog, ions);
+    applyCatalogNeutralRows(phase, catalog, ions, neutrals);
+    phase.enablePhreeqcCommonIonTerms();
+    phase.markManualParameterDatasetLoaded();
+    phase.requireCompletePitzerParameterCoverage();
+    phase.requireCompleteNeutralPitzerParameterCoverage();
   }
 
   private static void validateCatalogTopology(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
