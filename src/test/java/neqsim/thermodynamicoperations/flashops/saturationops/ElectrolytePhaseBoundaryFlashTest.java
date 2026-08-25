@@ -90,9 +90,9 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   }
 
   private static ElectrolytePhaseBoundaryResult solveOilBoundary(SystemInterface system) {
-    return new ElectrolytePhaseBoundaryFlash(system,
-        ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE, PhaseType.OIL,
-        LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20).solve();
+    return new ThermodynamicOperations(system).electrolytePhaseBoundaryTemperatureFlash(
+        PhaseType.OIL, LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K,
+        BOUNDARY_TOLERANCE_K, 20);
   }
 
   private static void assertBoundaryContract(ElectrolytePhaseBoundaryResult result,
