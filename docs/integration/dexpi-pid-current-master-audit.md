@@ -172,10 +172,10 @@ licensed standards, a named external tool, or accountable engineering review.
 | Schema/API compatibility and migration | Partial | Compatibility facades and byte-equivalent tested paths exist; no comprehensive versioned package migration suite covers every serialized artifact |
 | Revision semantic diff/impact | Partial | Engineering graph/package revision impact exists; affected drawing/sheet/register/study completeness is not yet end-to-end |
 | Professional symbols and project conventions | Partial/external | Proteus shapes, ISA/NORSOK tag helpers and proposal rules exist; a licensed ISO 10628/14617 mapping and reviewed vector catalog remain external/gap |
-| Native DEXPI Core graphical projection | Partial | The opt-in exchange-neutral adapter emits non-empty Core Diagram/RepresentationGroup structures with generic Polygon, PolyLine, and Text primitives and structured mapping/loss reports; no Profile/SymbolUsage, clean external-validator, standards, or approval claim is made |
-| Multi-sheet documents and off-page references | Gap | Compatibility per-area sheets and off-page graphics exist, but no controlled document/drawing/sheet identity, paired connector, zone reference, completeness, or persistent override model exists |
-| Professional native SVG/PDF | Gap | Current SVG/PDF paths depend on Graphviz or external/tool-specific rendering; no shared deterministic native renderer is qualified |
-| Drawing-quality metrics and visual regression | Partial | Structural/routing tests exist; normalized native SVG/PDF collision, clipping, label, and readability gates do not |
+| Native DEXPI Core graphical projection | Assessed supported subset | The opt-in exchange-neutral adapter emits non-empty Core Diagram/RepresentationGroup structures with generic Polygon, PolyLine, and Text primitives. `Dexpi20GraphicalProjectionAssessment` verifies stable represented identities, mapped geometry/style, diagram metadata/bounds, exact-file SHA-256 provenance, and explicit losses; no Profile/SymbolUsage, clean external-validator, standards, or approval claim is made |
+| Multi-sheet documents and off-page references | Implemented foundation | `EngineeringDiagramDocumentSet` owns deterministic drawing/sheet IDs, controlled references, paired off-page connectors, zones, revision/status metadata, validation, and restartable layout overrides; accountable completeness and project-specific approval remain external |
+| Professional native SVG/PDF | Implemented foundation | `NativeEngineeringDiagramRenderer` produces deterministic opt-in SVG/PDF from the shared document model with fixed-port orthogonal routing, parallel lanes, title/revision fields, off-page connectors, and diagnostics while legacy Graphviz remains unchanged |
+| Drawing-quality metrics and visual regression | Partial | Native rendering reports collision, clearance, bounds, routing, label, and off-page findings with deterministic regressions; a broader reviewed symbol/readability reference corpus remains incomplete |
 | Detailed P&ID object coverage | Partial | Governed proposal rules cover important controls and safeguards; complete nozzle, fitting, reducer, drain/vent, bypass, blind, valve, analyzer, package, and line-design evidence is not uniform |
 | Simulation-backed engineering enrichment | Partial | Coordinated cases, registers, calculations, DEXPI packages and selected canonical stream values exist; governing envelopes and all equipment/design selections are not uniformly linked through the exchange |
 | DEXPI-centred study audits | Partial | Completeness, HAZOP preparation, SIS/HIPPS and qualification evidence exist; revision/MOC deltas and reusable selected-object study hooks are incomplete |
@@ -187,8 +187,15 @@ licensed standards, a named external tool, or accountable engineering review.
 
 ## Dependency-ordered next work
 
-After this reference-case baseline is merged and its exact-head CI is recorded, the shared lane can
-start the Phase 1 immutable diagram/document model. That model must own stable
-document/drawing/sheet IDs, views of one semantic plant, paired off-page references,
-revision/status metadata, persistent layout decisions, and structured loss diagnostics while
-leaving legacy DOT/Graphviz, native DEXPI 2.0, and Proteus/P&ID APIs unchanged.
+The immutable diagram/document model, deterministic native SVG/PDF renderer, fixed-port routing,
+exchange-neutral graphical projection, generic DEXPI Core adapter, and supported-content
+export-inspection assessment now form the merged dependency chain. The next graphical tranche is
+blocked on a controlled choice between an exchange-neutral reviewed symbol projection and a pinned,
+legally distributable DEXPI profile-symbol catalogue. Empty placeholder representation groups and
+invented standards mappings are not acceptable substitutes.
+
+Independent remaining work includes native Process multi-area and energy/information scope,
+end-to-end revision/MOC impact, broader P&ID object coverage, a reviewed visual-reference corpus,
+fresh exact-version external DEXPIViewer execution, and named commercial-CAE qualification. These
+items must retain legacy DOT/Graphviz, native DEXPI 2.0, and Proteus/P&ID compatibility and must not
+be reported as standards conformance or drawing approval without accountable evidence.
