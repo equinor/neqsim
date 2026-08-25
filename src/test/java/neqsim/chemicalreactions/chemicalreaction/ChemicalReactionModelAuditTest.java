@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
@@ -49,9 +50,9 @@ class ChemicalReactionModelAuditTest {
         findReaction(cpaAudit, "CO2water").getValidationStatus());
   }
 
-  /** Compatibility-copy Pitzer rows remain active but are explicitly reported as unvalidated. */
+  /** Pitzer activates only the independently supported first sulfide dissociation. */
   @Test
-  void pitzerReportsUnvalidatedActiveSulfideReactions() {
+  void pitzerReportsValidatedFirstSulfideDissociationOnly() {
     SystemInterface pitzer = new SystemPitzer(298.15, 1.01325);
     pitzer.addComponent("H2S", 0.01);
     pitzer.addComponent("water", 0.99);
@@ -59,10 +60,10 @@ class ChemicalReactionModelAuditTest {
 
     ChemicalReactionModelAudit.AuditSnapshot audit = ChemicalReactionModelAudit.inspect(pitzer);
 
-    assertFalse(audit.hasValidatedEvidenceForAllActiveReactions());
-    assertTrue(audit.getReactionsWithoutValidatedEvidence().contains("water-H2S"));
-    assertTrue(audit.getReactionsWithoutValidatedEvidence().contains("water-HS"));
-    assertEquals(ChemicalReactionValidationStatus.UNVALIDATED, findReaction(audit, "water-H2S").getValidationStatus());
+    assertTrue(audit.hasValidatedEvidenceForAllActiveReactions());
+    assertTrue(audit.getReactionsWithoutValidatedEvidence().isEmpty());
+    assertEquals(ChemicalReactionValidationStatus.VALIDATED, findReaction(audit, "water-H2S").getValidationStatus());
+    assertNull(findReaction(audit, "water-HS"));
     assertThrows(UnsupportedOperationException.class, () -> audit.getReactionsWithoutValidatedEvidence().clear());
   }
 
