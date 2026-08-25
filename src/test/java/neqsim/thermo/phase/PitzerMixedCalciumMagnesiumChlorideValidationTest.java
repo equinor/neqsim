@@ -31,6 +31,7 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
       assertSourcePreprocessing(state);
       SystemPitzer system = createSystem(state.calciumChlorideMolality, state.magnesiumChlorideMolality);
       PhasePitzer phase = (PhasePitzer) system.getPhase(1);
+      assertTrue(system.isUsingPhreeqcPitzerParametersByDefault());
       phase.requireCompletePitzerParameterCoverage();
 
       assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, phase.getParameterDatasetId());
@@ -89,6 +90,23 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     assertEquals(freshActivity, changedActivity, 1.0e-12);
   }
 
+  @Test
+  void legacyCompatibilityOptOutRemainsExplicitAndDeterministic() {
+    SystemPitzer system = new SystemPitzer(298.15, 1.01325);
+    system.useLegacyPitzerParameters();
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
+    system.setMixingRule("classic");
+    system.init(0);
+
+    PhasePitzer phase = (PhasePitzer) system.getPhase(1);
+    phase.requireCompletePitzerParameterCoverage();
+    assertFalse(system.isUsingPhreeqcPitzerParametersByDefault());
+    assertEquals(PhasePitzer.DEFAULT_PARAMETER_DATASET_ID, phase.getParameterDatasetId());
+    assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficientOfWater(), 0.0);
+  }
+
   private static SystemPitzer createSystem(double calciumChlorideMolality, double magnesiumChlorideMolality) {
     SystemPitzer system = new SystemPitzer(298.15, 1.01325);
     system.addComponent("water", 55.508);
@@ -98,7 +116,6 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     system.addComponent("SO4--", 0.0);
     system.setMixingRule("classic");
     system.init(0);
-    system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
     return system;
   }
 
