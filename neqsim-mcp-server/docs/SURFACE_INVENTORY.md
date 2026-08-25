@@ -20,7 +20,8 @@ manually maintained Java method list.
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 8 contract-tested non-numerical contracts + 43 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Trust coverage records | 71 = 20 explicit benchmark + 6 contract-tested non-numerical contracts + 45 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 2 | `getCapabilities.phase0EvidenceInventory` | Existing runner tests plus real MCP protocol scenarios |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -118,28 +119,42 @@ from `getBenchmarkTrust`.
 
 Phase 0 does not equate that generic benchmark fallback with an unresolved scientific gap when the
 tool is intrinsically non-numerical. `knownLimitations.coverageRecords` contains one deterministic
-record for every published tool and now uses three bounded states:
+record for every published tool and uses three bounded states:
 
 - `EXPLICIT_TRUST` — a tool-specific `BenchmarkTrust` page exists, with its declared maturity and
   counts for validation cases, verified cases, limitations, and unsupported conditions;
 - `CONTRACT_TESTED` — the tool is non-numerical and its exact source, test, and real-protocol
-  evidence is listed in `contractEvidenceSources`. This applies to capability/schema/example
-  discovery, component lookup and read-only data-catalog retrieval, trust-catalog retrieval, and
-  industrial-profile access/governance policy. It does not validate advertised calculations,
-  database contents, standards applicability, EOS accuracy, component-property models, the
-  scientific claims inside trust pages, external identity or authorization, a facility
-  deployment, or accountable engineering approval; or
+  evidence is listed in `contractEvidenceSources`. This currently applies to capability/schema/
+  example discovery plus trust-catalog retrieval and industrial-profile access/governance policy.
+  It does not validate advertised calculations, the scientific claims inside trust pages, external
+  identity or authorization, a facility deployment, or accountable engineering approval; or
 - `CONFIRMED_GAP` — no tool-specific benchmark trust page or bounded non-numerical contract
-  evidence closes the gap. The record names the implementation class, retains the compatibility
-  maturity, and explicitly states that generic `TESTED` is not benchmark, accuracy,
+  classification closes the gap. The record names the implementation class, retains the
+  compatibility maturity, and explicitly states that generic `TESTED` is not benchmark, accuracy,
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 43 records remain
-`CONFIRMED_GAP`, eight are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the overall
+classification. It does **not** mean the MCP surface is scientifically validated: 45 records remain
+`CONFIRMED_GAP`, six are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the overall
 Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at 20
 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
+
+### Evidence-qualified promotion candidates
+
+Two of the 45 confirmed gaps now carry separate bounded promotion-candidate records. These records
+make the supporting evidence and stop boundary machine-readable without changing the frozen
+classification accounting:
+
+| Candidate | Existing direct evidence | Boundary |
+| --- | --- | --- |
+| `searchComponents` | `ComponentQuery`, `ComponentQueryTest`, and real MCP searches for exact, partial, empty, and no-match queries | Component lookup behavior only; no thermodynamic calculation or component-property-model validation |
+| `queryDataCatalog` | `DataCatalogRunner`, `DataCatalogRunnerTest`, and real MCP EOS/component-family catalog calls | Read-only catalog dispatch/retrieval only; no database-content, standards-applicability, EOS-accuracy, materials, or design validation |
+
+Each candidate targets `CONTRACT_TESTED` but explicitly reports `promotionReady=false`. Promotion
+requires one atomic exact-head change that updates both the evidence classification and the
+packaged protocol's frozen 6/45 accounting, followed by hosted validation. Until then both tools
+remain `CONFIRMED_GAP`; the candidate record is evidence traceability, not a maturity claim.
 
 Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative
 for an executed calculation. The evidence inventory is advisory discovery metadata; it does not
@@ -180,14 +195,15 @@ deployment-profile names, tool-capability reconciliation, schema resource graph,
 graph, tool implementation bindings, factory-backed equipment, report paths, test sources, guides,
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
-every published tool. Eight non-numerical discovery, catalog, lookup, trust-retrieval, and
-governance tools are contract-tested without being misrepresented as scientifically benchmarked
-calculations or as plant-authority controls.
+every published tool. Six non-numerical discovery, catalog, trust-retrieval, and governance tools
+remain contract-tested; two additional read-only lookup/catalog gaps now have bounded promotion
+candidate evidence without being prematurely reclassified.
 
-Follow-up work should close the remaining 43 confirmed trust gaps only where current source and
-public evidence support a specific claim, and continue closing explicit numeric component,
-energy, and facility-wide conservation/report gaps only where canonical NeqSim APIs provide
-independent evidence. Later-phase campaign criteria remain incomplete until their own merged
+Follow-up work should atomically promote those candidates only when the packaged protocol
+classification contract is updated and validated on the same exact head. The remaining 45
+confirmed trust gaps should be closed only where current source and public evidence support a
+specific claim, and explicit numeric component, energy, and facility-wide conservation/report gaps
+remain separate work. Later-phase campaign criteria remain incomplete until their own merged
 acceptance evidence exists.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
