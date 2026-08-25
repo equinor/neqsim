@@ -548,9 +548,9 @@ public final class PitzerParameterDatasets {
    * Reports whether a mixed CaCl2-MgCl2 state is inside the independently checked isopiestic envelope.
    *
    * <p>
-   * The public-domain NBS evidence covers 298.15 K, total formula-unit molality 0.548-2.161 mol/kg water,
-   * and CaCl2 fractions 0.25-0.75. This helper describes that rectangular evidence envelope; it does not
-   * qualify sulfate-bearing mixtures or extrapolation beyond the underlying three isopiestic levels.
+   * The public-domain NBS evidence covers 298.15 K, total formula-unit molality 0.548-2.161 mol/kg water, and CaCl2
+   * fractions 0.25-0.75. This helper describes that rectangular evidence envelope; it does not qualify sulfate-bearing
+   * mixtures or extrapolation beyond the underlying three isopiestic levels.
    * </p>
    *
    * @param temperature temperature in K
