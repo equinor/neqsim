@@ -80,6 +80,15 @@ public final class ComponentNameResolver {
     if (hit != null) {
       return hit;
     }
+    // 'n-' marks a straight chain and carries no information the database name needs.
+    // It is only stripped after a direct lookup fails, so database names that legitimately
+    // start with it ('n-butane', 'n-heptane') are matched first and untouched.
+    if (key.length() > 2 && key.charAt(0) == 'n' && key.charAt(1) == '-') {
+      hit = lookup(key.substring(2));
+      if (hit != null) {
+        return hit;
+      }
+    }
     String deinverted = deinvertCasIndexName(key);
     if (!deinverted.equals(key)) {
       hit = lookup(deinverted);
@@ -115,7 +124,9 @@ public final class ComponentNameResolver {
       return false;
     }
     String key = normalize(name);
-    return lookup(key) != null || lookup(deinvertCasIndexName(key)) != null;
+    return lookup(key) != null
+        || (key.length() > 2 && key.charAt(0) == 'n' && key.charAt(1) == '-' && lookup(key.substring(2)) != null)
+        || lookup(deinvertCasIndexName(key)) != null;
   }
 
   /**
