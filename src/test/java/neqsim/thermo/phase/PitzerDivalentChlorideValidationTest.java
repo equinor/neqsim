@@ -19,8 +19,7 @@ import neqsim.thermo.component.ComponentGePitzer;
 import neqsim.thermo.system.SystemPitzer;
 
 /**
- * Independent validation and default-selection regressions for the PHREEQC BaCl2 and SrCl2
- * binary families.
+ * Independent validation and default-selection regressions for the PHREEQC BaCl2 and SrCl2 binary families.
  */
 class PitzerDivalentChlorideValidationTest extends neqsim.NeqSimTest {
   private static final double REFERENCE_TEMPERATURE = 298.15;
@@ -39,12 +38,12 @@ class PitzerDivalentChlorideValidationTest extends neqsim.NeqSimTest {
     PhasePitzer strontium = createBinaryPhase("Sr++", 0.5, REFERENCE_TEMPERATURE);
     triggerDefaultCatalogSelection(strontium);
     assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, strontium.getParameterDatasetId());
-    assertEquals(0.2858,
-        strontium.getBeta0ij(index(strontium, "Sr++"), index(strontium, "Cl-"), REFERENCE_TEMPERATURE), 0.0);
-    assertEquals(1.667,
-        strontium.getBeta1ij(index(strontium, "Sr++"), index(strontium, "Cl-"), REFERENCE_TEMPERATURE), 0.0);
-    assertEquals(-0.0013,
-        strontium.getCphiij(index(strontium, "Sr++"), index(strontium, "Cl-"), REFERENCE_TEMPERATURE), 0.0);
+    assertEquals(0.2858, strontium.getBeta0ij(index(strontium, "Sr++"), index(strontium, "Cl-"), REFERENCE_TEMPERATURE),
+        0.0);
+    assertEquals(1.667, strontium.getBeta1ij(index(strontium, "Sr++"), index(strontium, "Cl-"), REFERENCE_TEMPERATURE),
+        0.0);
+    assertEquals(-0.0013, strontium.getCphiij(index(strontium, "Sr++"), index(strontium, "Cl-"), REFERENCE_TEMPERATURE),
+        0.0);
     assertBinaryState(strontium, "Sr++");
   }
 
@@ -61,9 +60,8 @@ class PitzerDivalentChlorideValidationTest extends neqsim.NeqSimTest {
       double relativeResidual = Math.abs(actual / state.meanActivityCoefficient - 1.0);
       maximumRelativeResidual = Math.max(maximumRelativeResidual, relativeResidual);
       assertTrue(relativeResidual <= MAXIMUM_SRCL2_RELATIVE_ACTIVITY_RESIDUAL,
-          "SrCl2 relative mean-activity residual at " + state.temperature + " K and " + state.molality
-              + " mol/kg: " + relativeResidual + " (archive 95% expanded uncertainty "
-              + state.expandedUncertainty + ")");
+          "SrCl2 relative mean-activity residual at " + state.temperature + " K and " + state.molality + " mol/kg: "
+              + relativeResidual + " (archive 95% expanded uncertainty " + state.expandedUncertainty + ")");
       assertBinaryState(phase, "Sr++");
     }
     assertTrue(maximumRelativeResidual > 0.03,
@@ -78,8 +76,8 @@ class PitzerDivalentChlorideValidationTest extends neqsim.NeqSimTest {
     assertFalse(PitzerParameterDatasets.isWithinStrontiumChlorideValidationRange(298.15, 3.53));
     assertFalse(PitzerParameterDatasets.isWithinStrontiumChlorideValidationRange(Double.NaN, 0.1));
 
-    PitzerParameterQualification qualification =
-        PitzerParameterDatasets.getQualification(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID);
+    PitzerParameterQualification qualification = PitzerParameterDatasets
+        .getQualification(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID);
     assertTrue(qualification.getValidatedSystems().toString().contains("SrCl2"));
     assertTrue(qualification.getLimitations().toString().contains("BaCl2"));
   }
@@ -199,8 +197,7 @@ class PitzerDivalentChlorideValidationTest extends neqsim.NeqSimTest {
       throw new IllegalStateException("Missing SrCl2 validation resource " + resource);
     }
     List<ReferenceState> states = new ArrayList<ReferenceState>();
-    try (BufferedReader reader =
-        new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       String line;
       while ((line = reader.readLine()) != null) {
         if (line.isEmpty() || line.charAt(0) == '#' || line.startsWith("temperature_K")) {
