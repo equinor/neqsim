@@ -298,6 +298,42 @@ aqueous role. Hybrid gas-oil-water phase stability, model-specific aqueous react
 solubility/precipitation complementarity, and process mass/energy/property closure retain their
 separate gates and database semantics.
 
+### Default BaCl2 and SrCl2 binary qualification
+
+The catalog-first default also activates the complete PHREEQC binary rows for charge-balanced
+Ba++/Cl- and Sr++/Cl- aqueous topologies; users do not select a dataset. At 298.15 K the audited
+six-term rows are:
+
+| Species tuple | Family | PHREEQC coefficients `[a0,a1,a2,a3,a4,a5]` | Qualification |
+|---|---|---|---|
+| Ba++ / Cl- | `B0`; `B1`; `C0` | `[0.5268,0,0,0,0,4.75e4]`; `[0.687,0,0,0,0,0]`; `[-0.143,-114.5,0,0,0,0]` | Source-mapped only; the high-concentration Partanen (2014) table is not stored because a redistribution route was not established. |
+| Sr++ / Cl- | `B0`; `B1`; `C0` | `[0.2858,0,0,7.17e-4,0,0]`; `[1.667,0,0,2.8425e-3,0,0]`; `[-0.0013,0,0,0,0,0]` | Independently validated against all 58 publisher-permitted NIST ThermoML values described below. |
+
+The SrCl2 evidence is Partanen (2013),
+[DOI 10.1021/je400472v](https://doi.org/10.1021/je400472v), NIST ThermoML archive MD5
+`0f26a7668fdc333b8a9d6f35223d3fbd`. It contains 22 mean ionic activity coefficients at
+298.15 K and 0.01-3.52 mol/kg plus 36 temperature-dependent values at 283.15-333.15 K and
+0.01-0.30 mol/kg, all at 101 kPa with reported 95% expanded uncertainty 0.001. NeqSim uses every
+point without refitting: maximum relative mean-activity residual is 3.11%, relative RMSE 1.58%, and
+mean absolute relative residual 1.35%. The 3.2% engineering gate is deliberately separate from the
+source's point uncertainty because it tests the independently fitted PHREEQC family and NeqSim's
+unchanged water electrostatic correlation rather than reproducing the source Hückel equation.
+
+Partanen (2014), [DOI 10.1016/j.jct.2014.02.023](https://doi.org/10.1016/j.jct.2014.02.023),
+reports traceable BaCl2 activity and osmotic equations from 273 to 333 K and to 1.7884 mol/kg at
+298.15 K. The article confirms the relevant observable and range, but no publisher-permitted
+numerical archive or explicit table-reuse license was found in this audit. BaCl2 therefore remains
+source-mapped rather than experimentally qualified; no value is inferred or copied. Hamer's public
+NBS NSRDS 24 report, [DOI 10.6028/NBS.NSRDS.24](https://doi.org/10.6028/NBS.NSRDS.24), is retained
+as low-ionic-strength theoretical context, not substituted for the missing high-concentration
+experiment.
+
+A mixed Ba++/Sr++/Cl- topology requires a same-sign `theta(Ba,Sr)` row and the corresponding
+`psi(Ba,Sr,Cl)` companion. The bundled PHREEQC release does not provide that complete family, so
+NeqSim fails closed rather than treating either coefficient as zero. Sulfate-bearing Ba/Sr scale
+chemistry remains a separate boundary because its binary `C0` and mixed-brine companions are also
+incomplete.
+
 ### Mineral-solubility and precipitation boundary
 
 `ThermodynamicOperations.precipitateScale` now couples the selected aqueous activity model to the
@@ -360,9 +396,10 @@ molality increased physically from `3.3995e-5` at 298.15 K to `4.3531e-5` at 318
 ## Source-comparison matrix
 
 The exact PHREEQC Pitzer block is now stored as a versioned catalog. A calculation may activate only
-an explicit, complete topology; the CO2-Na2SO4, Na-K-Cl, and Ca-Mg-Cl-SO4 families above have
-dedicated evidence. Other catalog rows remain source-available rather than scientifically qualified
-until their complete topology and validation matrix are documented.
+an explicit, complete topology; the CO2-Na2SO4, Na-K-Cl, Ca-Mg-Cl-SO4, and SrCl2 families above have
+dedicated evidence. BaCl2 is source-mapped and automatically available as a complete binary, while
+other catalog rows remain source-available rather than scientifically qualified until their complete
+topology and validation matrix are documented.
 
 | Source / version | Species and parameter families | Conditions, equation, scale, and alpha | Evidence, range, uncertainty | Lineage and reuse status | Mapping decision / conflict |
 |---|---|---|---|---|---|
@@ -373,6 +410,8 @@ until their complete topology and validation matrix are documented.
 | USGS PHRQPITZ (Plummer et al. 1988), [WRIR 88-4153](https://doi.org/10.3133/wri884153), PHREEQC 3.8.6 tag commit [`74cdaf0`](https://github.com/phreeqc-dev/phreeqc3/commit/74cdaf00f90b15b7a5bbc03f405eb2f8129aacf1), and [PHREEQC 3.9.0-17591](https://github.com/phreeqc-dev/phreeqc3/releases/tag/v3.9.0) commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/commit/b0b3be767158ccc3322d2c816625cf470045e67e) | Na/K/Mg/Ca/H plus major anions and extended Fe/Mn/Sr/Ba/Li/Br; `B0`, `B1`, `B2`, `C0`, `theta`, `psi`, `lambda`, `zeta`, and six temperature coefficients. Release 3.9.0 revises Mg/Ba/carbonate/bicarbonate/CO2 species and related HCO3 and neutral-H2 Pitzer interactions. | Molality scale; PHREEQC enables nonsymmetric electrostatic mixing by default. Default alpha is charge dependent: `2/12` when a pair contains a monovalent ion, `1.4/12` for 2-2, and `2/50` otherwise. Pressure is absent from these interaction functions. | Appelo (2015), [DOI 10.1016/j.apgeochem.2014.11.007](https://doi.org/10.1016/j.apgeochem.2014.11.007), documents database principles and calculations from 0–200 °C and 1–1000 atm; applicability remains parameter/system specific. Exact fitted observables, residuals, and uncertainty remain row/source specific. | USGS software and data are public domain. Audited release date: 2026-05-13. Audited blobs: [`pitzer.cpp` `1f32a08`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/src/pitzer.cpp) and [`pitzer.dat` `324f852`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/database/pitzer.dat). | The exact interaction block is stored as a lazy catalog; calculation activation fails closed on incomplete topologies. CO2-Na2SO4, Na-K-Cl, and Ca-Mg-Cl-SO4 have dedicated mappings/evidence. Legacy rows remain default and are not overwritten. |
 | Xia, Maurer and coworkers (2000), [DOI 10.1021/ie990416p](https://doi.org/10.1021/ie990416p), as cited on PHREEQC H2S rows | Neutral `H2Sg` with Na+/Cl-: `lambda(Cl-,H2Sg)=-0.005`, `lambda(H2Sg,Na+)=[0.1047,0,-0.0413]`, and `zeta(H2Sg,Cl-,Na+)=-0.0123`; PHREEQC also defines separate `(H2Sg)2` rows and a dimerization reaction | Molality-scale PHREEQC neutral-ion convention; Xia measurements cover H2S solubility in 4-6 mol/kg NaCl from 313-393 K and total pressures to 10 MPa. Pressure dependence is not encoded in the listed Pitzer functions. | Primary H2S solubility observables; public abstract does not provide row-wise parameter uncertainty. The PHREEQC row is redistributable public-domain data, while the ACS article remains copyright. | No primary table is copied. The exact PHREEQC values and source comment are recorded for comparison. | Rejected for activation in NeqSim: the available family lacks an `H2Sg-H2Sg` self interaction and instead relies on an explicit `(H2Sg)2` species that NeqSim does not model. Partial aliasing would violate fail-closed topology and change the source species model. |
 | Hershey, Pleše and Millero (1988), [DOI 10.1016/0016-7037(88)90183-4](https://doi.org/10.1016/0016-7037(88)90183-4) | First H2S dissociation only; pK1 and HS- interactions with Na+, K+, Mg+2, and Ca+2. It supplies no second-dissociation or neutral-H2S self/dimer family. | Molality scale; NaCl from 0.1 mol/kg to saturation at 5, 25, and 45 °C, KCl at 5 and 25 °C, and selected MgCl2/CaCl2 additions to ionic strength 6 mol/kg. Infinite-dilution `pK1=-98.080+5765.4/T+15.0455 ln(T)`. | EMF measurements; replicate uncertainty is reported in the paper and the infinite-dilution correlation provides an independent check of PHREEQC pK1. | Publisher-controlled primary article; only its published equation, DOI, scope, and residual summary are recorded, not its tables. | Accepted solely as independent validation of the Pitzer reaction-table pK1. No interaction coefficient is adopted or transferred. |
+| Partanen (2013), [traceable SrCl2 values](https://doi.org/10.1021/je400472v), NIST ThermoML MD5 `0f26a7668fdc333b8a9d6f35223d3fbd` | Recommended SrCl2 mean ionic activity coefficients; no Pitzer parameter is supplied or adopted | 283.15-333.15 K, 101 kPa, molality scale; 22 points at 298.15 K from 0.01-3.52 mol/kg and 36 temperature states from 0.01-0.30 mol/kg | Rounded values have 95% expanded uncertainty 0.001; all 58 are checked without refitting; maximum relative residual 3.11%, relative RMSE 1.58% | Primary ACS article; numerical record distributed through the publisher-permitted NIST ThermoML archive and stored with exact archive checksum | Accepted as held-out binary validation of the PHREEQC Sr++/Cl- B0/B1/C0 temperature family and NeqSim equation convention. It does not qualify mixed Sr brines, chloride minerals, or sulfate scale. |
+| Partanen (2014), [traceable BaCl2 study](https://doi.org/10.1016/j.jct.2014.02.023), and Hamer (1968), [public NBS theoretical report](https://doi.org/10.6028/NBS.NSRDS.24) | BaCl2 mean activity/osmotic evidence and low-I theoretical context; no coefficient is adopted from either source | Primary study covers 273-333 K and 298.15 K to 1.7884 mol/kg; molality scale. NBS report covers low ionic strength from 0-100 C | Primary study reports transparent equations but its numerical table was not available through a permission-clear archive in this audit; NBS values are theoretical, not a replacement experiment | Elsevier article reuse not established; NBS report is a U.S. Government work and public use is permitted | PHREEQC Ba++/Cl- rows remain source-mapped and automatically usable as a complete binary, but not independently qualified. No table value is copied or inferred. |
 | Partanen and Partanen (2020), [traceable NaCl values](https://doi.org/10.1021/acs.jced.0c00402) | Recommended NaCl mean activity and water osmotic coefficients; no Pitzer parameter is supplied or adopted | 273.15–373.15 K, 0.2 mol/kg to saturation; molality scale; extended-Huckel model fitted independently of the PHREEQC implementation | Traceable synthesis of vapor-pressure, electrochemical, cryoscopic, and solubility evidence; tabulated values are rounded to 0.001 | Primary open-access article and numerical tables under CC BY 4.0 | Four 298.15 K points from 0.2–2.0 mol/kg are held-out validation only. Max NeqSim residuals are 1.36% in mean activity, 0.0053 in osmotic coefficient, and below 0.0004 in derived water activity; no coefficient was refitted. |
 | Hamer and Wu (1972), [NBS/NIST critical evaluation](https://doi.org/10.1063/1.3253108), independently reproduced by Dash et al. (2012), [open-access table](https://doi.org/10.5402/2012/730154) | Critically evaluated KCl mean activity coefficients; no Pitzer parameter is supplied or adopted | 298.15 K, molality scale, 1:1 electrolyte; four selected states span 0.0982–1.9895 mol/kg | Hamer-Wu evaluates thermodynamic literature; reproduced values are rounded to 0.001. Dash et al.'s direct single-ion-selective-electrode means are 10.7–13.4% higher at the same states and are treated as a method conflict. | U.S. NBS authorship and U.S. Secretary of Commerce publication; the four checked values are also reproduced in a CC BY open-access primary experiment | Held-out binary validation only. Max NeqSim mean-activity residual is 0.110% against a 0.20% gate; no coefficient was refitted. The critically evaluated values take precedence over the conflicting single-ion method. |
 | Partanen (2013), [traceable MgCl2 values](https://doi.org/10.1016/j.jct.2013.06.016) | Recommended MgCl2 mean activity and water osmotic coefficients; no Pitzer parameter is supplied or adopted | 298.15 K, 0–3 mol/kg, molality scale; four checked states span 0.1667–2.0 mol/kg | Traceable synthesis and tests against isopiestic and vapor-pressure literature; tabulated values are rounded | Journal of Chemical Thermodynamics data distributed through the publisher-permitted NIST ThermoML archive; NIST public-data terms and citation request recorded | Held-out binary validation only. Max NeqSim mean-activity residual is 2.27% without refitting; this does not qualify mixed Mg chloride/sulfate brines. |
