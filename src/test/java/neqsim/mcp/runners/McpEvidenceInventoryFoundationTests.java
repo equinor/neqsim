@@ -182,7 +182,8 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject after = JsonParser.parseString(ProgressTracker.listActive()).getAsJsonObject();
     assertFalse(after.getAsJsonArray("operations").toString().contains(operationId));
 
-    JsonObject missing = JsonParser.parseString(ProgressTracker.getProgress("missing-phase0-operation")).getAsJsonObject();
+    JsonObject missing = JsonParser.parseString(ProgressTracker.getProgress("missing-phase0-operation"))
+        .getAsJsonObject();
     assertEquals("error", missing.get("status").getAsString());
   }
 
