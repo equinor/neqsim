@@ -31,6 +31,8 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
   void competingCalciumSulfatePolymorphsSelectLowerKspIndependentOfInputOrder() {
     SystemPitzer forwardSystem = createPitzerBrine(false);
     double initialCalcium = forwardSystem.getComponent("Ca++").getNumberOfmoles();
+    double initialMagnesium = forwardSystem.getComponent("Mg++").getNumberOfmoles();
+    double initialChloride = forwardSystem.getComponent("Cl-").getNumberOfmoles();
     double initialSulfate = forwardSystem.getComponent("SO4--").getNumberOfmoles();
     MultiSaltPrecipitationResult forward = new ThermodynamicOperations(forwardSystem).precipitateScales("CaSO4_A",
         "CaSO4_G");
@@ -46,6 +48,8 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
             + forward.getMineralResult("CaSO4_A").getPrecipitatedMoles()
             + forward.getMineralResult("CaSO4_G").getPrecipitatedMoles(),
         1.0e-10);
+    assertEquals(initialMagnesium, forwardSystem.getComponent("Mg++").getNumberOfmoles(), 1.0e-12);
+    assertEquals(initialChloride, forwardSystem.getComponent("Cl-").getNumberOfmoles(), 1.0e-12);
     assertAqueousChargeAndPhaseState(forwardSystem);
 
     SystemPitzer reverseSystem = createPitzerBrine(false);
@@ -187,8 +191,8 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     system.addComponent("water", 55.508);
     system.addComponent("Na+", 1.0);
     system.addComponent("Ca++", 0.2);
-    system.addComponent("Mg++", 0.0);
-    system.addComponent("Cl-", 1.0);
+    system.addComponent("Mg++", 0.15);
+    system.addComponent("Cl-", 1.3);
     system.addComponent("SO4--", 0.2);
     system.init(0);
     system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
