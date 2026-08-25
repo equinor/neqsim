@@ -13,11 +13,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Brackets the appearance or disappearance of one material phase with complete TP/VLLE flashes.
  *
  * <p>
- * Legacy bubble/dew solvers assume two interchangeable phase slots. Electrolyte systems instead
- * have model-specific aqueous roles and may contain gas, oil and aqueous phases simultaneously.
- * This operation therefore varies one intensive variable on isolated clones and delegates every
- * state evaluation to the system's normal TP flash. It does not replace phase stability or alter
- * non-electrolyte flash paths.
+ * Legacy bubble/dew solvers assume two interchangeable phase slots. Electrolyte systems instead have model-specific
+ * aqueous roles and may contain gas, oil and aqueous phases simultaneously. This operation therefore varies one
+ * intensive variable on isolated clones and delegates every state evaluation to the system's normal TP flash. It does
+ * not replace phase stability or alter non-electrolyte flash paths.
  * </p>
  */
 public final class ElectrolytePhaseBoundaryFlash {
@@ -50,13 +49,12 @@ public final class ElectrolytePhaseBoundaryFlash {
    * @param maximumIterations maximum bisection iterations
    */
   public ElectrolytePhaseBoundaryFlash(SystemInterface system,
-      ElectrolytePhaseBoundaryResult.Specification specification, PhaseType targetPhase,
-      double lowerBound, double upperBound, double absoluteTolerance, int maximumIterations) {
+      ElectrolytePhaseBoundaryResult.Specification specification, PhaseType targetPhase, double lowerBound,
+      double upperBound, double absoluteTolerance, int maximumIterations) {
     if (system == null || specification == null || targetPhase == null) {
       throw new IllegalArgumentException("System, specification and target phase are required");
     }
-    if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound) || lowerBound <= 0.0
-        || upperBound <= lowerBound) {
+    if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound) || lowerBound <= 0.0 || upperBound <= lowerBound) {
       throw new IllegalArgumentException("Phase-boundary bounds must be finite, positive and ordered");
     }
     if (!Double.isFinite(absoluteTolerance) || absoluteTolerance <= 0.0
@@ -84,8 +82,8 @@ public final class ElectrolytePhaseBoundaryFlash {
     Snapshot lower = evaluate(initialLowerBound);
     Snapshot upper = evaluate(initialUpperBound);
     if (lower.targetPresent == upper.targetPresent) {
-      throw new IllegalArgumentException("Bounds do not bracket a " + targetPhase
-          + " phase transition: lower=" + lower.topology + ", upper=" + upper.topology);
+      throw new IllegalArgumentException("Bounds do not bracket a " + targetPhase + " phase transition: lower="
+          + lower.topology + ", upper=" + upper.topology);
     }
 
     int iterations = 0;
@@ -110,11 +108,10 @@ public final class ElectrolytePhaseBoundaryFlash {
     Diagnostics diagnostics = calculateDiagnostics(system);
     validateDiagnostics(diagnostics);
 
-    return new ElectrolytePhaseBoundaryResult(specification, targetPhase, lower.value, upper.value,
-        lower.targetPresent, retained.value, phaseFraction(system, targetPhase), iterations,
-        flashEvaluations, lower.topology, upper.topology, diagnostics.materialBalanceResidual,
-        diagnostics.normalizationResidual, diagnostics.aqueousChargeMolality,
-        diagnostics.maximumIonLeakage, diagnostics.maximumLogFugacityResidual);
+    return new ElectrolytePhaseBoundaryResult(specification, targetPhase, lower.value, upper.value, lower.targetPresent,
+        retained.value, phaseFraction(system, targetPhase), iterations, flashEvaluations, lower.topology,
+        upper.topology, diagnostics.materialBalanceResidual, diagnostics.normalizationResidual,
+        diagnostics.aqueousChargeMolality, diagnostics.maximumIonLeakage, diagnostics.maximumLogFugacityResidual);
   }
 
   /** Evaluates one state on a fresh clone to protect the bracket against solver history. */
@@ -126,8 +123,7 @@ public final class ElectrolytePhaseBoundaryFlash {
     setSpecification(trial, value);
     new ThermodynamicOperations(trial).TPflash();
     flashEvaluations++;
-    return new Snapshot(value, phaseFraction(trial, targetPhase) > MATERIAL_PHASE_FRACTION,
-        topology(trial));
+    return new Snapshot(value, phaseFraction(trial, targetPhase) > MATERIAL_PHASE_FRACTION, topology(trial));
   }
 
   /** Applies the selected intensive variable. */
@@ -172,12 +168,10 @@ public final class ElectrolytePhaseBoundaryFlash {
       for (int component = 0; component < phase.getNumberOfComponents(); component++) {
         moleFractionSum += phase.getComponent(component).getx();
       }
-      maximumNormalizationResidual =
-          Math.max(maximumNormalizationResidual, Math.abs(1.0 - moleFractionSum));
+      maximumNormalizationResidual = Math.max(maximumNormalizationResidual, Math.abs(1.0 - moleFractionSum));
       betaSum += targetSystem.getBeta(phaseIndex);
     }
-    maximumNormalizationResidual =
-        Math.max(maximumNormalizationResidual, Math.abs(1.0 - betaSum));
+    maximumNormalizationResidual = Math.max(maximumNormalizationResidual, Math.abs(1.0 - betaSum));
 
     double maximumMaterialResidual = 0.0;
     double maximumLogFugacityResidual = 0.0;
@@ -189,31 +183,27 @@ public final class ElectrolytePhaseBoundaryFlash {
             * targetSystem.getPhase(phase).getComponent(component).getx();
       }
       ComponentInterface reference = targetSystem.getPhase(0).getComponent(component);
-      maximumMaterialResidual =
-          Math.max(maximumMaterialResidual, Math.abs(reference.getz() - calculatedOverallFraction));
+      maximumMaterialResidual = Math.max(maximumMaterialResidual,
+          Math.abs(reference.getz() - calculatedOverallFraction));
 
-      if (!reference.isIsIon() && reference.getIonicCharge() == 0.0
-          && reference.getz() > COMPONENT_TRACE) {
+      if (!reference.isIsIon() && reference.getIonicCharge() == 0.0 && reference.getz() > COMPONENT_TRACE) {
         double minimumLogFugacity = Double.POSITIVE_INFINITY;
         double maximumLogFugacity = Double.NEGATIVE_INFINITY;
         int materialPhases = 0;
         for (int phase = 0; phase < targetSystem.getNumberOfPhases(); phase++) {
           PhaseInterface activePhase = targetSystem.getPhase(phase);
           ComponentInterface activeComponent = activePhase.getComponent(component);
-          if (targetSystem.getBeta(phase) > MATERIAL_PHASE_FRACTION
-              && activeComponent.getx() > COMPONENT_TRACE
+          if (targetSystem.getBeta(phase) > MATERIAL_PHASE_FRACTION && activeComponent.getx() > COMPONENT_TRACE
               && Double.isFinite(activeComponent.getFugacityCoefficient())
               && activeComponent.getFugacityCoefficient() > 0.0) {
-            double logFugacity =
-                Math.log(activeComponent.getx() * activeComponent.getFugacityCoefficient());
+            double logFugacity = Math.log(activeComponent.getx() * activeComponent.getFugacityCoefficient());
             minimumLogFugacity = Math.min(minimumLogFugacity, logFugacity);
             maximumLogFugacity = Math.max(maximumLogFugacity, logFugacity);
             materialPhases++;
           }
         }
         if (materialPhases > 1) {
-          maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual,
-              maximumLogFugacity - minimumLogFugacity);
+          maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual, maximumLogFugacity - minimumLogFugacity);
         }
       }
     }
@@ -233,8 +223,8 @@ public final class ElectrolytePhaseBoundaryFlash {
         }
       }
     }
-    return new Diagnostics(maximumMaterialResidual, maximumNormalizationResidual, aqueousCharge,
-        maximumIonLeakage, maximumLogFugacityResidual);
+    return new Diagnostics(maximumMaterialResidual, maximumNormalizationResidual, aqueousCharge, maximumIonLeakage,
+        maximumLogFugacityResidual);
   }
 
   /** Fails closed when the retained boundary state violates the electrolyte acceptance contract. */
@@ -242,32 +232,26 @@ public final class ElectrolytePhaseBoundaryFlash {
     if (!Double.isFinite(diagnostics.materialBalanceResidual)
         || diagnostics.materialBalanceResidual > MATERIAL_BALANCE_TOLERANCE) {
       throw new IllegalStateException(
-          "Electrolyte phase-boundary material balance failed: "
-              + diagnostics.materialBalanceResidual);
+          "Electrolyte phase-boundary material balance failed: " + diagnostics.materialBalanceResidual);
     }
     if (!Double.isFinite(diagnostics.normalizationResidual)
         || diagnostics.normalizationResidual > NORMALIZATION_TOLERANCE) {
       throw new IllegalStateException(
-          "Electrolyte phase-boundary normalization failed: "
-              + diagnostics.normalizationResidual);
+          "Electrolyte phase-boundary normalization failed: " + diagnostics.normalizationResidual);
     }
     if (!Double.isFinite(diagnostics.aqueousChargeMolality)
         || Math.abs(diagnostics.aqueousChargeMolality) > CHARGE_TOLERANCE_MOLAL) {
       throw new IllegalStateException(
-          "Electrolyte phase-boundary electroneutrality failed: "
-              + diagnostics.aqueousChargeMolality + " mol/kg");
+          "Electrolyte phase-boundary electroneutrality failed: " + diagnostics.aqueousChargeMolality + " mol/kg");
     }
-    if (!Double.isFinite(diagnostics.maximumIonLeakage)
-        || diagnostics.maximumIonLeakage > ION_LEAKAGE_TOLERANCE) {
+    if (!Double.isFinite(diagnostics.maximumIonLeakage) || diagnostics.maximumIonLeakage > ION_LEAKAGE_TOLERANCE) {
       throw new IllegalStateException(
-          "Electrolyte phase-boundary ion confinement failed: "
-              + diagnostics.maximumIonLeakage);
+          "Electrolyte phase-boundary ion confinement failed: " + diagnostics.maximumIonLeakage);
     }
     if (!Double.isFinite(diagnostics.maximumLogFugacityResidual)
         || diagnostics.maximumLogFugacityResidual > LOG_FUGACITY_TOLERANCE) {
       throw new IllegalStateException(
-          "Electrolyte phase-boundary fugacity closure failed: "
-              + diagnostics.maximumLogFugacityResidual);
+          "Electrolyte phase-boundary fugacity closure failed: " + diagnostics.maximumLogFugacityResidual);
     }
   }
 
@@ -292,9 +276,8 @@ public final class ElectrolytePhaseBoundaryFlash {
     private final double maximumIonLeakage;
     private final double maximumLogFugacityResidual;
 
-    private Diagnostics(double materialBalanceResidual, double normalizationResidual,
-        double aqueousChargeMolality, double maximumIonLeakage,
-        double maximumLogFugacityResidual) {
+    private Diagnostics(double materialBalanceResidual, double normalizationResidual, double aqueousChargeMolality,
+        double maximumIonLeakage, double maximumLogFugacityResidual) {
       this.materialBalanceResidual = materialBalanceResidual;
       this.normalizationResidual = normalizationResidual;
       this.aqueousChargeMolality = aqueousChargeMolality;
