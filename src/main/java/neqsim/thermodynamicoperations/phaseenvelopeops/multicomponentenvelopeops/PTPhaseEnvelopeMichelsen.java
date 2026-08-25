@@ -329,6 +329,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       boolean firstPointConverged = false;
       for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
         try {
+          // A failed saturation flash may leave pressure non-finite; restore the retry state.
+          system.setPressure(lowPres);
           if (phaseFraction < 0.5) {
             temp += attempt * FIRST_POINT_STEP;
             system.setTemperature(temp);
@@ -603,6 +605,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       boolean converged = false;
       for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
         try {
+          // A failed saturation flash may leave pressure non-finite; restore the retry state.
+          clonedSystem.setPressure(lowPres);
           double tempAttempt = temp + attempt * FIRST_POINT_STEP;
           clonedSystem.setTemperature(tempAttempt);
           if (beta < 0.5) {
