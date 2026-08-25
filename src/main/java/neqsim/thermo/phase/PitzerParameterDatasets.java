@@ -80,6 +80,9 @@ public final class PitzerParameterDatasets {
   /** Highest CaCl2 fraction of total salt in the checked CaCl2-MgCl2 validation matrix. */
   public static final double CA_MG_CL_MIXTURE_VALIDATION_MAX_CALCIUM_FRACTION = 0.75;
 
+  /** Boundary tolerance for fractions reconstructed from the rounded mixed-chloride fixture. */
+  private static final double CA_MG_CL_MIXTURE_CALCIUM_FRACTION_TOLERANCE = 1.0e-12;
+
   /** Lowest total formula-unit molality in the mixed MgCl2-MgSO4 water-activity evidence. */
   public static final double MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MIN_TOTAL_MOLALITY = 0.35;
 
@@ -207,6 +210,7 @@ public final class PitzerParameterDatasets {
       }
       throw missingSourceRow;
     }
+    phase.setExcludeHydrocarbonsFromNeutralPitzerTopology(true);
     applyValidatedCatalog(phase, catalog, ions, neutrals);
     return true;
   }
@@ -232,6 +236,7 @@ public final class PitzerParameterDatasets {
     PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
     List<Integer> ions = activeIons(phase);
     List<Integer> neutrals = activeAqueousNeutrals(phase, false);
+    phase.setExcludeHydrocarbonsFromNeutralPitzerTopology(false);
     validateCatalogTopology(phase, catalog, ions, neutrals);
     applyValidatedCatalog(phase, catalog, ions, neutrals);
   }
@@ -572,7 +577,9 @@ public final class PitzerParameterDatasets {
     }
     double calciumFraction = calciumChlorideMolality / totalMolality;
     return calciumFraction >= CA_MG_CL_MIXTURE_VALIDATION_MIN_CALCIUM_FRACTION
-        && calciumFraction <= CA_MG_CL_MIXTURE_VALIDATION_MAX_CALCIUM_FRACTION;
+        - CA_MG_CL_MIXTURE_CALCIUM_FRACTION_TOLERANCE
+        && calciumFraction <= CA_MG_CL_MIXTURE_VALIDATION_MAX_CALCIUM_FRACTION
+            + CA_MG_CL_MIXTURE_CALCIUM_FRACTION_TOLERANCE;
   }
 
   /**
