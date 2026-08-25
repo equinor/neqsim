@@ -1,3 +1,8 @@
+---
+title: "NRC-3144: Make the qualified PHREEQC Pitzer catalog the default"
+description: Proposal for automatic complete-topology PHREEQC Pitzer parameter selection with an explicit legacy migration path.
+---
+
 # NRC-3144: Make the qualified PHREEQC Pitzer catalog the default
 
 - Status: PROPOSED
