@@ -195,6 +195,9 @@ public final class PitzerParameterDatasets {
     }
     PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
     List<Integer> ions = activeIons(phase);
+    if (ions.isEmpty()) {
+      return false;
+    }
     List<Integer> neutrals = activeAqueousNeutrals(phase);
     try {
       validateCatalogTopology(phase, catalog, ions, neutrals);
