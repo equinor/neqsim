@@ -144,15 +144,28 @@ class McpEvidenceInventoryFoundationTests {
   }
 
   @Test
-  void testPromotedReadOnlyCatalogContractsRetirePendingCandidates() {
+  void testProgressPromotionCandidateIsEvidenceQualifiedButNotPromoted() {
     JsonObject limitations = McpEvidenceInventory.build().getAsJsonObject("knownLimitations");
     JsonObject candidates = limitations.getAsJsonObject("contractPromotionCandidates");
 
-    assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
-    assertEquals(0, candidates.size());
-    assertTrue(limitations.get("promotionBoundary").getAsString().contains("No read-only catalog promotion candidate"));
+    assertEquals(1, limitations.get("contractPromotionCandidateCount").getAsInt());
+    assertEquals(1, candidates.size());
+    JsonObject progress = candidates.getAsJsonObject("getProgress");
+    assertEquals("CONTRACT_TESTED", progress.get("targetCoverageStatus").getAsString());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_PROGRESS_RETRIEVAL",
+        progress.get("benchmarkApplicability").getAsString());
+    assertEquals(4, progress.get("contractEvidenceCount").getAsInt());
+    assertEquals(4, progress.getAsJsonArray("contractEvidenceSources").size());
+    assertTrue(progress.getAsJsonArray("contractEvidenceSources").toString().contains("ProgressTracker.java"));
+    assertTrue(progress.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+    assertTrue(progress.get("evidenceBoundary").getAsString().contains("real-protocol listActive"));
+    assertTrue(progress.get("evidenceBoundary").getAsString().contains("does not validate"));
+    assertFalse(progress.get("promotionReady").getAsBoolean());
+    assertTrue(limitations.get("promotionBoundary").getAsString().contains("getProgress remains CONFIRMED_GAP"));
     assertEquals(8, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(43, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals("CONFIRMED_GAP", limitations.getAsJsonObject("coverageRecords").getAsJsonObject("getProgress")
+        .get("coverageStatus").getAsString());
   }
 
   @Test
@@ -182,7 +195,8 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject after = JsonParser.parseString(ProgressTracker.listActive()).getAsJsonObject();
     assertFalse(after.getAsJsonArray("operations").toString().contains(operationId));
 
-    JsonObject missing = JsonParser.parseString(ProgressTracker.getProgress("missing-phase0-operation")).getAsJsonObject();
+    JsonObject missing = JsonParser.parseString(ProgressTracker.getProgress("missing-phase0-operation"))
+        .getAsJsonObject();
     assertEquals("error", missing.get("status").getAsString());
   }
 
@@ -192,7 +206,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.10", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.11", inventory.get("inventoryVersion").getAsString());
     assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());

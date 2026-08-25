@@ -21,7 +21,7 @@ manually maintained Java method list.
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
 | Trust coverage records | 71 = 20 explicit benchmark + 8 contract-tested non-numerical contracts + 43 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | Candidate queue retired after atomic read-only catalog promotion |
+| Contract-promotion candidates | 1 (`getProgress`) | `getCapabilities.phase0EvidenceInventory` | `ProgressTracker`, focused lifecycle regression, and real MCP `listActive` retrieval |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -145,17 +145,28 @@ protocol contracts are preserved.
 ### Promoted read-only catalog contracts
 
 The two evidence-qualified candidates from inventory version 1.9 have now been promoted atomically
-to `CONTRACT_TESTED` and removed from the pending-candidate queue. The promotion changes only the
-non-numerical trust classification and its frozen protocol accounting:
+to `CONTRACT_TESTED`. The promotion changes only the non-numerical trust classification and its
+frozen protocol accounting:
 
 | Tool | Direct evidence | Boundary |
 | --- | --- | --- |
 | `searchComponents` | `ComponentQuery`, `ComponentQueryTest`, and real MCP searches for exact, partial, empty, and no-match queries | Component lookup behavior only; no thermodynamic calculation or component-property-model validation |
 | `queryDataCatalog` | `DataCatalogRunner`, `DataCatalogRunnerTest`, and real MCP EOS/component-family catalog calls | Read-only catalog dispatch/retrieval only; no database-content, standards-applicability, EOS-accuracy, materials, or design validation |
 
-Their full source lists and boundaries are now carried directly on their
-`coverageRecords` entries. `contractPromotionCandidateCount` is zero. The generic `BenchmarkTrust`
-registry is unchanged, and neither promotion adds an engineering accuracy claim.
+Their full source lists and boundaries are carried directly on their `coverageRecords` entries.
+The generic `BenchmarkTrust` registry is unchanged, and neither promotion adds an engineering
+accuracy claim.
+
+### Pending progress-retrieval promotion
+
+Inventory version 1.11 records `getProgress` as the sole pending promotion candidate. Its bounded
+evidence is `ProgressTracker`, the focused lifecycle regression in
+`McpEvidenceInventoryFoundationTests`, the existing real-MCP `getProgress(action=listActive)`
+scenario, and `docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md`. The current classification remains
+`CONFIRMED_GAP`, so the 20/8/43 coverage accounting is intentionally unchanged. Promotion requires
+the machine-readable classification and packaged protocol expectation to move together on one
+validated exact head. The evidence covers progress retrieval only; it does not validate the
+underlying calculation, cancellation, durability, deployment isolation, or plant authority.
 
 Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative
 for an executed calculation. The evidence inventory is advisory discovery metadata; it does not
@@ -197,13 +208,13 @@ graph, tool implementation bindings, factory-backed equipment, report paths, tes
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
 every published tool. Eight non-numerical discovery, catalog, lookup, trust-retrieval, and
-governance tools are contract-tested. The previous two read-only catalog promotion candidates are
-now part of that eight-tool set, leaving 43 confirmed trust gaps.
+governance tools are contract-tested, leaving 43 confirmed trust gaps. `getProgress` is now an
+explicit evidence-qualified promotion candidate rather than an unstructured future gap.
 
-Follow-up work should close the remaining confirmed gaps only where current source and public
-evidence support a specific claim. Explicit numeric component, energy, and facility-wide
-conservation/report gaps remain separate work. Later-phase campaign criteria remain incomplete
-until their own merged acceptance evidence exists.
+Follow-up work should first complete that atomic progress promotion, then close other remaining
+confirmed gaps only where current source and public evidence support a specific claim. Explicit
+numeric component, energy, and facility-wide conservation/report gaps remain separate work.
+Later-phase campaign criteria remain incomplete until their own merged acceptance evidence exists.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing
