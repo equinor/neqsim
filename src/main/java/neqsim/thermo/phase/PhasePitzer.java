@@ -82,6 +82,8 @@ public class PhasePitzer extends PhaseGE {
   private transient boolean neutralParameterCoverageValidated;
   /** Whether parameters have been loaded from database. */
   private boolean parametersLoaded = false;
+  /** Prefer the complete bundled PHREEQC catalog when it covers the active topology. */
+  private boolean usePhreeqcCatalogByDefault = true;
   /** Whether immutable parameter arrays are shared with a clone until the next setter call. */
   private boolean parameterStorageShared;
   /** Stable identity of the selected parameter dataset. */
@@ -625,6 +627,9 @@ public class PhasePitzer extends PhaseGE {
    * </p>
    */
   public void loadParametersFromDatabase() {
+    if (usePhreeqcCatalogByDefault && PitzerParameterDatasets.tryApplyCompletePhreeqcPitzerCatalog(this)) {
+      return;
+    }
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
       while (dataSet.next()) {
@@ -763,6 +768,34 @@ public class PhasePitzer extends PhaseGE {
    */
   public boolean isParametersLoaded() {
     return parametersLoaded;
+  }
+
+  /**
+   * Configures automatic use of the bundled PHREEQC catalog.
+   *
+   * <p>
+   * New Pitzer phases prefer the catalog by default. When its explicit rows do not cover the complete active topology,
+   * loading falls back to the legacy binary table; the existing mixed-topology coverage gate still rejects missing
+   * theta or psi terms. Change this policy only before parameters are first evaluated.
+   * </p>
+   *
+   * @param useCatalog {@code true} to prefer the complete PHREEQC topology, {@code false} for legacy loading
+   * @throws IllegalStateException if parameter evaluation already selected a dataset
+   */
+  public void setUsePhreeqcCatalogByDefault(boolean useCatalog) {
+    if (parametersLoaded) {
+      throw new IllegalStateException("Pitzer parameter dataset has already been selected");
+    }
+    usePhreeqcCatalogByDefault = useCatalog;
+  }
+
+  /**
+   * Reports the automatic dataset-selection policy.
+   *
+   * @return {@code true} when the complete PHREEQC catalog is preferred
+   */
+  public boolean isUsePhreeqcCatalogByDefault() {
+    return usePhreeqcCatalogByDefault;
   }
 
   /**
