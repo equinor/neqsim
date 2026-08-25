@@ -19,7 +19,7 @@ nav_order: 1
 
 This notebook demonstrates comprehensive greenhouse gas emissions calculation (CO₂, methane, nmVOC) from produced water handling systems using NeqSim.
 
-**Reference:** Based on ["Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator"](../GFMW_2023_Emissions_Paper.txt) (GFMW 2023).
+**Reference:** Based on *Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator* (GFMW 2023).
 
 ---
 
@@ -978,7 +978,7 @@ Annual carbon cost: NOK 26,952,680
 - [Norwegian Methods Comparison](NorwegianEmissionMethods_Comparison.md)
 - [NeqSim Documentation](https://equinor.github.io/neqsim/)
 - [neqsim-python GitHub](https://github.com/equinor/neqsim-python)
-- [GFMW 2023 Paper](../GFMW_2023_Emissions_Paper.txt)
+- *Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator* (GFMW 2023)
 
 ### 📞 Support
 
@@ -1182,4 +1182,3 @@ For more information:
 ```
 
 </details>
-

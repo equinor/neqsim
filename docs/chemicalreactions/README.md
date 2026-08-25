@@ -137,7 +137,7 @@ screening trace-reaction trends in CO₂-rich streams. The implementation applie
 stoichiometry, non-negative extent bounds, configurable residence time and material-dependent R8
 kinetics. Its default parameters require calibration before engineering use.
 
-See the [CO₂ impurity kinetics guide](co2_impurity_kinetics_guide.md) for reaction definitions,
+See the [CO₂ impurity kinetics guide](co2_impurity_kinetics_guide) for reaction definitions,
 Java usage, numerical safeguards, and model limitations.
 
 

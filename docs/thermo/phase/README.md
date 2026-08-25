@@ -97,7 +97,7 @@ Use the following sequence for phase-equilibrium and property work:
 `TPflash()` determines the equilibrium phase split. `initProperties()` initializes the
 thermodynamic state and the selected physical-property models. Diffusion is not exposed as a
 zero-argument method on `PhaseInterface`; use the initialized physical-properties API described in
-the [physical-properties guide](../../physical_properties/README.md).
+the [physical-properties guide](../../physical_properties/README).
 
 ## Phase types and safe lookup
 
@@ -168,7 +168,7 @@ internal conventions and are less clear in examples.
 Generic phase objects do not expose `getdZdT()`, `getdZdP()`, excess enthalpy/entropy/volume,
 or component fugacity-derivative getters under the names previously shown on this page. Do not
 build workflows around those names. For equilibrium and state-function calculations, use the
-supported operations in the [thermodynamic operations guide](../thermodynamic_operations.md).
+supported operations in the [thermodynamic operations guide](../thermodynamic_operations).
 
 ## Aqueous phases
 
@@ -193,14 +193,14 @@ Additional phases appear only when the corresponding model and calculation are e
 
 - **Hydrate:** configure hydrate checking, run a hydrate-specific operation, then use
   `fluid.hasHydratePhase()`, `fluid.getHydratePhase()`, and
-  `fluid.getHydrateFraction()`. See [hydrate flash operations](../../thermodynamicoperations/hydrate_flash_operations.md)
-  and [hydrate models](../hydrate_models.md).
+  `fluid.getHydrateFraction()`. See [hydrate flash operations](../../thermodynamicoperations/hydrate_flash_operations)
+  and [hydrate models](../hydrate_models).
 - **Wax and generic solids:** use the relevant solid/wax configuration and operation, then inspect
   `hasPhaseType(PhaseType.WAX)` or `hasPhaseType(PhaseType.SOLID)`. There is no generic
   `setWaxCheck()` or `hasWax()` pair on `SystemInterface`.
 - **Asphaltene:** inspect `PhaseType.ASPHALTENE` or
   `PhaseType.LIQUID_ASPHALTENE` after the selected characterization/equilibrium workflow. See
-  [asphaltene characterization](../characterization/asphaltene_characterization.md). Density,
+  [asphaltene characterization](../characterization/asphaltene_characterization). Density,
   viscosity, and phase fraction are calculated results, not fixed constants.
 
 Do not infer a formation temperature from a phase object. Formation-temperature and stability
@@ -215,9 +215,9 @@ the exact interface or implementation used.
 
 ## Related documentation
 
-- [Fluid creation guide](../fluid_creation_guide.md)
-- [Thermodynamic models](../thermodynamic_models.md)
-- [Thermodynamic operations](../thermodynamic_operations.md)
-- [Physical-properties guide](../../physical_properties/README.md)
-- [Hydrate models](../hydrate_models.md)
-- [Asphaltene characterization](../characterization/asphaltene_characterization.md)
+- [Fluid creation guide](../fluid_creation_guide)
+- [Thermodynamic models](../thermodynamic_models)
+- [Thermodynamic operations](../thermodynamic_operations)
+- [Physical-properties guide](../../physical_properties/README)
+- [Hydrate models](../hydrate_models)
+- [Asphaltene characterization](../characterization/asphaltene_characterization)

@@ -155,12 +155,12 @@ and scenario boundary conditions must also be represented.
 
 ## Relief and fire screening boundary
 
-Use [Relief-Valve Sizing Screening](../../safety/relief_valve_sizing_api.md) for the maintained
+Use [Relief-Valve Sizing Screening](../../safety/relief_valve_sizing_api) for the maintained
 gas, liquid, two-phase, and wetted-fire sizing interfaces. Do not attach an undocumented heat
 input to an arbitrary vessel or infer an API 526 letter from `SafetyValve`; the dynamic equipment
 class does not expose those sizing methods.
 
-Use [Integrated Facility Safety Response](integrated-facility-safety-response.md) when relief,
+Use [Integrated Facility Safety Response](integrated-facility-safety-response) when relief,
 blowdown, flare, compressor trip, process limits, MDMT, and hydrate margin must be reviewed as one
 scenario. Static relief sizing and dynamic transient response answer different questions and
 should both retain method, unit, input-basis, and qualification metadata.
@@ -182,15 +182,15 @@ basis and trace each acceptance criterion to the applicable controlled source.
 
 ## Related documentation
 
-- [Safety documentation index](../../safety/README.md)
-- [Relief-Valve Sizing Screening](../../safety/relief_valve_sizing_api.md)
-- [ESD Dynamic Testing Workflow](../../safety/esd_testing_workflow.md)
-- [HIPPS overview](../../safety/HIPPS_SUMMARY.md)
-- [Closed-loop SIF verification](closed-loop-sif-verification.md)
-- [SIF reliability and degraded modes](sif-reliability-and-degraded-modes.md)
-- [HAZOP/LOPA to draft SRS handoff](hazop-lopa-srs-handoff.md)
-- [Integrated facility safety response](integrated-facility-safety-response.md)
-- [Safety change revalidation and benchmarks](safety-change-revalidation-and-benchmarks.md)
-- [Release and dispersion scenarios](release-dispersion-scenarios.md)
-- [Valve equipment guide](../equipment/valves.md)
-- [Process package overview](../README.md)
+- [Safety documentation index](../../safety/README)
+- [Relief-Valve Sizing Screening](../../safety/relief_valve_sizing_api)
+- [ESD Dynamic Testing Workflow](../../safety/esd_testing_workflow)
+- [HIPPS overview](../../safety/HIPPS_SUMMARY)
+- [Closed-loop SIF verification](closed-loop-sif-verification)
+- [SIF reliability and degraded modes](sif-reliability-and-degraded-modes)
+- [HAZOP/LOPA to draft SRS handoff](hazop-lopa-srs-handoff)
+- [Integrated facility safety response](integrated-facility-safety-response)
+- [Safety change revalidation and benchmarks](safety-change-revalidation-and-benchmarks)
+- [Release and dispersion scenarios](release-dispersion-scenarios)
+- [Valve equipment guide](../equipment/valves)
+- [Process package overview](../README)

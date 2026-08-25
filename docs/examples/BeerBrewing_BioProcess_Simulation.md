@@ -2398,7 +2398,7 @@ recipe), here's a recap of the NeqSim `ProcessSystem` we built:
 ### Further Reading
 
 - [NeqSim Bio-Processing Documentation](../process/bioprocessing.md)
-- [NeqSim Thermodynamic Models](../thermo/equations-of-state.md)
+- [NeqSim Thermodynamic Models](../thermo/thermodynamic_models)
 - [CPA Equation of State](https://en.wikipedia.org/wiki/Cubic-plus-association_equation_of_state)
 
 ## Step 17 — Bridging Brew Day and Thermodynamics: ABV from First Principles
@@ -4105,4 +4105,3 @@ density/VLE data (analogous to the glucose fitting shown above) to improve
 multi-sugar phase equilibrium predictions.
 
 *Skaal! — E.C. Dahls G.O.D.S. NEIPA successfully simulated with NeqSim on Grainfather G30v3*
-

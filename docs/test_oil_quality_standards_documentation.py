@@ -184,7 +184,7 @@ class OilQualityStandardsDocumentationContractTest(unittest.TestCase):
         )
 
     def test_standards_indexes_discover_the_guide(self):
-        link = "[Oil-quality methods](oil_quality_standards.md)"
+        link = "[Oil-quality methods](oil_quality_standards)"
         self.assertIn(link, self.standards_index)
         self.assertIn("standards/oil_quality_standards.md", self.reference_index)
 

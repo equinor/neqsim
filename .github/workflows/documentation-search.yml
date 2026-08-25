@@ -11,6 +11,8 @@ on:
     paths:
       - "docs/**"
       - "devtools/check_documentation_search.py"
+      - "devtools/generate_equipment_documentation_catalog.py"
+      - "src/main/java/neqsim/process/equipment/**"
       - ".pre-commit-config.yaml"
       - ".github/workflows/documentation-search.yml"
 
