@@ -28,7 +28,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.7");
+    inventory.addProperty("inventoryVersion", "1.8");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -187,31 +187,7 @@ public final class McpEvidenceInventory {
         record.addProperty("validationCaseCount", arraySize(trust, "validationCases"));
         record.addProperty("verifiedValidationCaseCount", verifiedValidationCaseCount(trust));
         explicitCoverageRecordCount++;
-      } else if ("getCapabilities".equals(toolName) || "getSchema".equals(toolName) || "getExample".equals(toolName)) {
-        record.addProperty("coverageStatus", "CONTRACT_TESTED");
-        record.addProperty("toolSpecificTrustAvailable", false);
-        record.addProperty("contractTrustAvailable", true);
-        record.addProperty("maturityLevel", "TESTED");
-        record.addProperty("knownLimitationCount", 0);
-        record.addProperty("unsupportedConditionCount", 0);
-        record.addProperty("validationCaseCount", 0);
-        record.addProperty("verifiedValidationCaseCount", 0);
-        if ("getCapabilities".equals(toolName)) {
-          record.addProperty("benchmarkApplicability", "NOT_APPLICABLE_NON_NUMERICAL_DISCOVERY");
-          record.addProperty("contractEvidenceCount", 4);
-          record.addProperty("evidenceBoundary",
-              "CapabilitiesRunnerTest, McpToolSurfaceContractTest, ResponseSizeGuardTest, and the packaged MCP protocol verify discovery-contract fidelity; this is not scientific validation of advertised calculations");
-        } else if ("getSchema".equals(toolName)) {
-          record.addProperty("benchmarkApplicability", "NOT_APPLICABLE_NON_NUMERICAL_SCHEMA_CATALOG");
-          record.addProperty("contractEvidenceCount", 3);
-          record.addProperty("evidenceBoundary",
-              "SchemaCatalog source, CapabilitiesRunnerTest catalog resolution, and the packaged MCP protocol verify all 142 canonical input/output schema resources; schema availability does not validate the calculations described by those schemas");
-        } else {
-          record.addProperty("benchmarkApplicability", "NOT_APPLICABLE_NON_NUMERICAL_EXAMPLE_CATALOG");
-          record.addProperty("contractEvidenceCount", 3);
-          record.addProperty("evidenceBoundary",
-              "ExampleCatalog source, CapabilitiesRunnerTest example resolution, and the packaged MCP protocol verify all 114 catalog examples; example availability does not establish scientific accuracy or fitness for a facility decision");
-        }
+      } else if (addContractTestedEvidence(toolName, record)) {
         contractTestedTools.add(toolName);
         contractTestedRecordCount++;
       } else {
@@ -260,10 +236,83 @@ public final class McpEvidenceInventory {
     limitations.add("coverageRecords", coverageRecords);
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; getCapabilities, getSchema, and getExample are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "Every published tool has an explicit coverage record; six non-numerical discovery, catalog, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
+  }
+
+  /**
+   * Adds bounded contract evidence for a non-numerical MCP tool.
+   *
+   * @param toolName published MCP tool name
+   * @param record mutable coverage record
+   * @return true when the tool has a bounded contract-evidence definition
+   */
+  private static boolean addContractTestedEvidence(String toolName, JsonObject record) {
+    String benchmarkApplicability;
+    String evidenceBoundary;
+    String[] evidenceSources;
+
+    switch (toolName) {
+    case "getCapabilities":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_DISCOVERY";
+      evidenceSources = new String[] { "src/test/java/neqsim/mcp/runners/CapabilitiesRunnerTest.java",
+          "src/test/java/neqsim/mcp/runners/McpToolSurfaceContractTest.java",
+          "src/test/java/neqsim/mcp/runners/ResponseSizeGuardTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "Capability discovery, published-surface reconciliation, response guarding, and real-protocol retrieval are contract-tested; this is not scientific validation of advertised calculations";
+      break;
+    case "getSchema":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_SCHEMA_CATALOG";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/catalog/SchemaCatalog.java",
+          "src/test/java/neqsim/mcp/runners/CapabilitiesRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "All 142 canonical input/output schema resources resolve through source, catalog reconciliation, and the packaged MCP protocol; schema availability does not validate the calculations described by those schemas";
+      break;
+    case "getExample":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_EXAMPLE_CATALOG";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/catalog/ExampleCatalog.java",
+          "src/test/java/neqsim/mcp/runners/CapabilitiesRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "All 114 catalog examples resolve through source, catalog reconciliation, and the packaged MCP protocol; example availability does not establish scientific accuracy or fitness for a facility decision";
+      break;
+    case "getBenchmarkTrust":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_TRUST_CATALOG";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/BenchmarkTrust.java",
+          "src/test/java/neqsim/mcp/runners/McpEvidenceInventoryFoundationTests.java",
+          "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "Trust-catalog all-tool and single-tool retrieval plus runtime inventory reconciliation are contract-tested; retrieval fidelity does not validate the scientific claims inside any trust page";
+      break;
+    case "checkToolAccess":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_ACCESS_POLICY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
+          "src/test/java/neqsim/mcp/runners/IndustrialProfileTest.java",
+          "src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "The profile-tier access matrix, fail-closed security enforcement, and real-protocol access response are contract-tested; this does not grant external authorization or plant authority";
+      break;
+    case "manageIndustrialProfile":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_GOVERNANCE_POLICY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
+          "src/test/java/neqsim/mcp/runners/IndustrialProfileTest.java",
+          "src/test/java/neqsim/mcp/runners/McpPrincipalScopingTest.java",
+          "src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "Profile discovery, classification, admin-gated mode changes, and principal-scoped one-shot approvals are contract-tested; deployments still require external identity, policy configuration, and accountable review";
+      break;
+    default:
+      return false;
+    }
+
+    record.addProperty("coverageStatus", "CONTRACT_TESTED");
+    record.addProperty("toolSpecificTrustAvailable", false);
+    record.addProperty("contractTrustAvailable", true);
+    record.addProperty("benchmarkApplicability", benchmarkApplicability);
+    record.addProperty("maturityLevel", "TESTED");
+    record.addProperty("contractEvidenceCount", evidenceSources.length);
+    record.add("contractEvidenceSources", toJsonArray(java.util.Arrays.asList(evidenceSources)));
+    record.addProperty("knownLimitationCount", 0);
+    record.addProperty("unsupportedConditionCount", 0);
+    record.addProperty("validationCaseCount", 0);
+    record.addProperty("verifiedValidationCaseCount", 0);
+    record.addProperty("evidenceBoundary", evidenceBoundary);
+    return true;
   }
 
   /** Counts validation cases that identify a concrete verification source. */
