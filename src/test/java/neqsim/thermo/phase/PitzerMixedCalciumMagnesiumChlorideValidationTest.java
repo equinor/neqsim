@@ -18,8 +18,7 @@ import neqsim.thermo.system.SystemPitzer;
 
 /** Held-out mixed CaCl2-MgCl2 validation for the public-domain PHREEQC Pitzer catalog. */
 class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTest {
-  private static final String REFERENCE_RESOURCE =
-      "/data/chemistry_benchmarks/pitzer_cacl2_mgcl2_osmotic_298k.csv";
+  private static final String REFERENCE_RESOURCE = "/data/chemistry_benchmarks/pitzer_cacl2_mgcl2_osmotic_298k.csv";
 
   @Test
   void mixedChlorideOsmoticPropertiesMatchIndependentNbsEvidence() throws IOException {
@@ -44,17 +43,16 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
       double calculatedWaterActivity = waterActivity(phase);
       assertEquals(calculatedOsmoticCoefficient, phase.getOsmoticCoefficientOfWater(), 0.0,
           "Repeated evaluation changed the osmotic coefficient");
-      assertEquals(calculatedWaterActivity, waterActivity(phase), 0.0,
-          "Repeated evaluation changed water activity");
+      assertEquals(calculatedWaterActivity, waterActivity(phase), 0.0, "Repeated evaluation changed water activity");
       assertTrue(Double.isFinite(calculatedOsmoticCoefficient) && calculatedOsmoticCoefficient > 0.0);
-      assertTrue(Double.isFinite(calculatedWaterActivity) && calculatedWaterActivity > 0.0
-          && calculatedWaterActivity <= 1.0);
+      assertTrue(
+          Double.isFinite(calculatedWaterActivity) && calculatedWaterActivity > 0.0 && calculatedWaterActivity <= 1.0);
       assertWaterActivityOsmoticConsistency(phase, calculatedWaterActivity);
 
-      maximumOsmoticResidual =
-          Math.max(maximumOsmoticResidual, Math.abs(calculatedOsmoticCoefficient - state.osmoticCoefficient));
-      maximumWaterActivityResidual =
-          Math.max(maximumWaterActivityResidual, Math.abs(calculatedWaterActivity - state.waterActivity));
+      maximumOsmoticResidual = Math.max(maximumOsmoticResidual,
+          Math.abs(calculatedOsmoticCoefficient - state.osmoticCoefficient));
+      maximumWaterActivityResidual = Math.max(maximumWaterActivityResidual,
+          Math.abs(calculatedWaterActivity - state.waterActivity));
     }
 
     assertTrue(maximumOsmoticResidual <= 0.04,
@@ -68,11 +66,11 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideMixtureValidationRange(298.15, -0.1, 1.0));
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideMixtureValidationRange(298.15, 0.05, 2.0));
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideMixtureValidationRange(308.15, 0.5, 0.5));
-    PitzerParameterQualification qualification =
-        PitzerParameterDatasets.getQualification(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID);
+    PitzerParameterQualification qualification = PitzerParameterDatasets
+        .getQualification(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID);
     assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED, qualification.getLevel());
-    assertTrue(qualification.getValidatedSystems()
-        .contains("CaCl2-MgCl2 osmotic coefficient and water activity at 298.15 K"));
+    assertTrue(
+        qualification.getValidatedSystems().contains("CaCl2-MgCl2 osmotic coefficient and water activity at 298.15 K"));
     assertTrue(qualification.getLimitations()
         .contains("Quaternary Ca-Mg-Cl-SO4 activity and sulfate-mineral thermodynamics remain unqualified"));
 
@@ -146,14 +144,12 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
   }
 
   private static void assertSourcePreprocessing(ReferenceState state) {
-    double ratio = 1.0 - state.a * state.calciumFraction
-        - state.b * state.calciumFraction * state.calciumFraction;
+    double ratio = 1.0 - state.a * state.calciumFraction - state.b * state.calciumFraction * state.calciumFraction;
     double totalMolality = state.mbMolality / ratio;
     assertEquals((1.0 - state.calciumFraction) * totalMolality, state.magnesiumChlorideMolality, 5.0e-12);
     assertEquals(state.calciumFraction * totalMolality, state.calciumChlorideMolality, 5.0e-12);
     assertEquals(state.mbPhi * ratio / state.mbMolality, state.osmoticCoefficient, 5.0e-11);
-    double derivedWaterActivity =
-        Math.exp(-0.01801528 * 3.0 * totalMolality * state.osmoticCoefficient);
+    double derivedWaterActivity = Math.exp(-0.01801528 * 3.0 * totalMolality * state.osmoticCoefficient);
     assertEquals(derivedWaterActivity, state.waterActivity, 5.0e-12);
   }
 
@@ -170,8 +166,8 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     assertEquals(1.0, compositionSum, 1.0e-12);
     assertEquals(0.0, chargeResidual, 1.0e-12);
 
-    double totalDivalentCationMolality =
-        phase.getComponent("Ca++").getMolality(phase) + phase.getComponent("Mg++").getMolality(phase);
+    double totalDivalentCationMolality = phase.getComponent("Ca++").getMolality(phase)
+        + phase.getComponent("Mg++").getMolality(phase);
     assertEquals(2.0 * totalDivalentCationMolality, phase.getComponent("Cl-").getMolality(phase), 1.0e-12,
         "Ca/Mg/Cl formula-unit material balance");
   }
