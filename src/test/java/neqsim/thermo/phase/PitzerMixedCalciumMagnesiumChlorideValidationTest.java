@@ -66,6 +66,13 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideMixtureValidationRange(298.15, -0.1, 1.0));
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideMixtureValidationRange(298.15, 0.05, 2.0));
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideMixtureValidationRange(308.15, 0.5, 0.5));
+    PitzerParameterQualification qualification =
+        PitzerParameterDatasets.getQualification(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID);
+    assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED, qualification.getLevel());
+    assertTrue(qualification.getValidatedSystems()
+        .contains("CaCl2-MgCl2 osmotic coefficient and water activity at 298.15 K"));
+    assertTrue(qualification.getLimitations()
+        .contains("Quaternary Ca-Mg-Cl-SO4 activity and sulfate-mineral thermodynamics remain unqualified"));
 
     SystemPitzer changed = createSystem(0.25, 0.75);
     double initialActivity = waterActivity((PhasePitzer) changed.getPhase(1));
