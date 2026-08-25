@@ -95,7 +95,7 @@ The same facade provides the following public operations:
 Solid checking is a fluid configuration used by `TPflash()`; there is no public
 `TPsolidflash()` method on `ThermodynamicOperations`. Hydrate calculations also
 require a fluid model and components suitable for hydrate equilibrium. See the
-[thermodynamic model guide](../thermo/thermodynamic_models.md) before selecting an
+[thermodynamic model guide](../thermo/thermodynamic_models) before selecting an
 equation of state.
 
 ## PT phase envelope
@@ -158,7 +158,7 @@ if (Math.abs(compositionSum - 1.0) > 1.0e-10) {
 
 There are no `setChemicalReactions(true)` or `calcChemicalEquilibrium()` methods
 on these public interfaces. For reaction selection, phase constraints, and
-reactive PH/PS operations, see the [reactive flash guide](../thermo/reactive_flash.md).
+reactive PH/PS operations, see the [reactive flash guide](../thermo/reactive_flash).
 
 ## Convergence and result checks
 
@@ -182,8 +182,8 @@ example previously shown on this page.
 
 ## Related documentation
 
-- [Thermodynamics overview](../thermo/README.md)
-- [Reading fluid properties](../thermo/reading_fluid_properties.md)
-- [Thermodynamic model selection](../thermo/thermodynamic_models.md)
-- [Reactive flash calculations](../thermo/reactive_flash.md)
-- [Thermodynamics cookbook recipes](../cookbook/thermodynamics-recipes.md)
+- [Thermodynamics overview](../thermo/README)
+- [Reading fluid properties](../thermo/reading_fluid_properties)
+- [Thermodynamic model selection](../thermo/thermodynamic_models)
+- [Reactive flash calculations](../thermo/reactive_flash)
+- [Thermodynamics cookbook recipes](../cookbook/thermodynamics-recipes)

@@ -57,5 +57,41 @@ class DocumentationNotebookLinkAuditTest(unittest.TestCase):
         )
 
 
+class DocumentationPageLinkAuditTest(unittest.TestCase):
+    def test_included_markdown_requires_extensionless_links(self) -> None:
+        errors = audit.included_markdown_suffix_errors(
+            audit.DOCS / "process" / "equipment" / "README.md",
+            "[Separators](separators.md) and [external](https://example.com/guide.md)",
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("retains a .md suffix", errors[0])
+
+    def test_existing_extensionless_document_link_is_allowed(self) -> None:
+        errors = audit.internal_document_link_errors(
+            audit.DOCS / "process" / "equipment" / "README.md",
+            "[Separators](separators)",
+        )
+
+        self.assertEqual(errors, [])
+
+    def test_missing_internal_document_link_is_rejected(self) -> None:
+        errors = audit.internal_document_link_errors(
+            audit.DOCS / "process" / "equipment" / "README.md",
+            "[Missing](equipment-page-that-does-not-exist)",
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("target does not exist", errors[0])
+
+    def test_repository_source_link_outside_docs_is_not_treated_as_a_page(self) -> None:
+        errors = audit.internal_document_link_errors(
+            audit.DOCS / "development" / "example.md",
+            "[Agent](../../.github/agents/documentation.agent.md)",
+        )
+
+        self.assertEqual(errors, [])
+
+
 if __name__ == "__main__":
     unittest.main()

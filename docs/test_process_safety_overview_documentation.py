@@ -50,6 +50,14 @@ def resolve_internal_target(source_path, destination):
     candidates = [raw_target]
     if target.endswith("/"):
         candidates = [raw_target / "README.md", raw_target / "index.md"]
+    elif not Path(target).suffix:
+        candidates.extend(
+            (
+                Path("{}.md".format(raw_target)),
+                raw_target / "README.md",
+                raw_target / "index.md",
+            )
+        )
 
     for candidate in candidates:
         if candidate.is_file():
@@ -87,10 +95,8 @@ class ProcessSafetyOverviewDocumentationContractTest(unittest.TestCase):
         for destination in markdown_links.findall(self.overview):
             if destination.startswith(("http://", "https://", "mailto:")):
                 continue
-            target, _, fragment = destination.partition("#")
+            _target, _, fragment = destination.partition("#")
             with self.subTest(destination=destination):
-                if target and not target.endswith("/"):
-                    self.assertTrue(target.endswith(".md"))
                 target_path, resolved_fragment = resolve_internal_target(
                     OVERVIEW,
                     destination,

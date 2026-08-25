@@ -277,12 +277,15 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Streams            | [docs/process/equipment/streams.md](process/equipment/streams.md)                   | Stream models             |
 | Mixers/Splitters   | [docs/process/equipment/mixers_splitters.md](process/equipment/mixers_splitters.md) | Mixer and splitter models |
 | Equipment Overview | [docs/process/equipment/README.md](process/equipment/README.md)                           | Equipment module overview |
+| Complete Equipment Catalog | [docs/process/equipment/equipment_catalog.md](process/equipment/equipment_catalog.md) | Source-generated inventory of every concrete `ProcessEquipmentInterface` class and its maintained guide |
+| Energy Conversion Equipment | [docs/process/equipment/energy_conversion.md](process/equipment/energy_conversion.md) | Motors, generators, converters, typed utility sources and consumers, and energy-network solvers |
 
 ### Chapter 13b: Bio-Processing Unit Operations
 
 | Document             | Path                                                   | Description                                                                                                                                                                                                 |
 | -------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bio-Processing Guide | [docs/process/bioprocessing.md](process/bioprocessing.md) | **Reactors, fermenters, enzyme treatment, solid-liquid separators, liquid-liquid extraction, multi-effect evaporators, dryers, crystallizers — mathematical models, design equations, simulation examples** |
+| Solid Handling Equipment | [docs/process/equipment/solid_handling.md](process/equipment/solid_handling.md) | Feedstock preparation, dewatering, filtration, pressing, drying, evaporation, crystallization, and mass/energy closure |
 
 ### Chapter 14: Separation Equipment
 
@@ -305,6 +308,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes.md)             | Membrane equipment                                                                                                                                                                                                 |
 | Filters            | [docs/process/equipment/filters.md](process/equipment/filters.md)                 | Oil and gas filter types, beta-ratio capture, measured/flow-scaled/Ergun pressure drop, dynamic loading, bypass, sulfur `S8` capture, and mechanical design                                                            |
 | Water Treatment    | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment.md) | **Hydrocyclones (physics-based d50, DSD integration, PDR model, liner sizing, OSPAR compliance, ASME VIII mechanical design), GasFlotationUnit (IGF/DGF, per-stage efficiency, reject flow)**, produced water treatment trains, OIW limits |
+| Black-Oil Separator | [docs/process/equipment/black_oil_separator.md](process/equipment/black_oil_separator.md) | `SystemBlackOil` pressure-temperature separation with oil, free-gas, and water products for `ProcessSystem` |
 
 ### Chapter 15: Rotating Equipment
 

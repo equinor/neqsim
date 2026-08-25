@@ -125,7 +125,7 @@ class Iso15403DocumentationContractTest(unittest.TestCase):
     def test_page_is_discoverable_from_both_indexes(self):
         standards_index = STANDARDS_INDEX.read_text(encoding="utf-8")
         reference_index = REFERENCE_INDEX.read_text(encoding="utf-8")
-        self.assertIn("iso15403_cng_quality.md", standards_index)
+        self.assertIn("iso15403_cng_quality", standards_index)
         self.assertIn("standards/iso15403_cng_quality", reference_index)
 
 

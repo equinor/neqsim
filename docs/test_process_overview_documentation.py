@@ -66,6 +66,14 @@ def resolve_internal_target(source_path, destination):
     candidates = [raw_target]
     if target.endswith("/"):
         candidates = [raw_target / "README.md", raw_target / "index.md"]
+    elif not Path(target).suffix:
+        candidates.extend(
+            (
+                Path("{}.md".format(raw_target)),
+                raw_target / "README.md",
+                raw_target / "index.md",
+            )
+        )
 
     for candidate in candidates:
         if candidate.is_file():
@@ -127,17 +135,11 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
                 ):
                     continue
 
-                target, _, fragment = destination.partition("#")
+                _target, _, fragment = destination.partition("#")
                 with self.subTest(
                     source_path=source_path,
                     destination=destination,
                 ):
-                    if target and not target.endswith("/"):
-                        self.assertTrue(
-                            target.endswith(".md"),
-                            "Documentation source links must include .md",
-                        )
-
                     target_path, resolved_fragment = resolve_internal_target(
                         source_path,
                         destination,
@@ -253,7 +255,7 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
             self.overview,
         )
         self.assertIn(
-            "[process-package quick start](../README.md)",
+            "[process-package quick start](../README)",
             self.equipment_overview,
         )
 

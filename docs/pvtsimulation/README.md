@@ -105,12 +105,12 @@ Javadocs before building an automated regression workflow.
 
 ## Related documentation
 
-- [PVT laboratory-test guide](pvt_lab_tests.md)
-- [Phase-envelope guide](phase_envelope_guide.md)
-- [PVT and fluid characterization](../thermo/pvt_fluid_characterization.md)
-- [Eclipse E300 fluid import](eclipse_e300_fluid_import.md)
-- [NeqSim JSON fluid format](json_fluid_format.md)
-- [Black-oil package](../blackoil/README.md)
-- [Reservoir material balance](reservoir_material_balance.md)
-- [Relative-permeability tables](relative_permeability.md)
-- [Flow-assurance screening](flowassurance/README.md)
+- [PVT laboratory-test guide](pvt_lab_tests)
+- [Phase-envelope guide](phase_envelope_guide)
+- [PVT and fluid characterization](../thermo/pvt_fluid_characterization)
+- [Eclipse E300 fluid import](eclipse_e300_fluid_import)
+- [NeqSim JSON fluid format](json_fluid_format)
+- [Black-oil package](../blackoil/README)
+- [Reservoir material balance](reservoir_material_balance)
+- [Relative-permeability tables](relative_permeability)
+- [Flow-assurance screening](flowassurance/README)

@@ -13,13 +13,13 @@ The high-level helpers are screening tools. They do not by themselves provide a 
 
 | Document | Description |
 |----------|-------------|
-| [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN.md) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
-| [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE.md) | Mathematical foundations for all calculations (EoS, economics, flow) |
-| [API_GUIDE.md](API_GUIDE.md) | Source-anchored concept, screening-KPI, option-ranking, unit, and engineering-boundary guide |
-| [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS.md) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
-| [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY.md) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
-| [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING.md) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |
-| [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION.md) | Time-marching field and area concepts with multi-host routing, facility sizing, product specifications, NPV and break-even |
+| [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
+| [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE) | Mathematical foundations for all calculations (EoS, economics, flow) |
+| [API_GUIDE.md](API_GUIDE) | Source-anchored concept, screening-KPI, option-ranking, unit, and engineering-boundary guide |
+| [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
+| [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
+| [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |
+| [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) | Time-marching field and area concepts with multi-host routing, facility sizing, product specifications, NPV and break-even |
 
 ---
 
@@ -279,7 +279,7 @@ Depending on the equipment type, the mechanical-design helper can provide:
 - regionalized screening-cost estimates;
 - bill-of-material and JSON-report outputs.
 
-See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md) for detailed documentation.
+See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed documentation.
 
 ---
 
@@ -287,13 +287,13 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md) for detai
 
 | Topic | Document |
 |-------|----------|
-| Integrated Field Lifecycle Simulation | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION.md) — detailed wells/SURF/process lifetime, multi-host area routing, product specifications, bottlenecks, NPV and break-even |
-| SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT.md) |
-| Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS.md) |
-| Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY.md) |
-| Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) |
-| Decision Engine Workflows | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS.md) |
-| **Multi-Scenario Production Optimization** | [MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md) |
+| Integrated Field Lifecycle Simulation | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) — detailed wells/SURF/process lifetime, multi-host area routing, product specifications, bottlenecks, NPV and break-even |
+| SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT) |
+| Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
+| Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |
+| Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) |
+| Decision Engine Workflows | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) |
+| **Multi-Scenario Production Optimization** | [MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](MULTI_SCENARIO_PRODUCTION_OPTIMIZATION) |
 
 ---
 
@@ -310,10 +310,10 @@ The following developer notebooks import NeqSim Java classes from the workspace 
 
 ## See Also
 
-- [Process Simulation Guide](../wiki/process_simulation.md)
-- [Thermodynamic Models](../thermo/thermodynamic_models.md)
+- [Process Simulation Guide](../wiki/process_simulation)
+- [Thermodynamic Models](../thermo/thermodynamic_models)
 - [Economics Module](../process/economics/)
-- [Reference Manual Index](../REFERENCE_MANUAL_INDEX.md)
+- [Reference Manual Index](../REFERENCE_MANUAL_INDEX)
 
 ---
 
@@ -329,4 +329,4 @@ This agent automatically loads the following skills:
 | `neqsim-subsea-and-wells` | Subsea systems, casing design (API 5C3), SURF costs, tieback analysis |
 | `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, IOR/EOR screening |
 
-See [AI Agents Reference](../integration/ai_agents_reference.md) for the full catalog.
+See [AI Agents Reference](../integration/ai_agents_reference) for the full catalog.

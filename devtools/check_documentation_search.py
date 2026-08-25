@@ -7,8 +7,14 @@ import argparse
 import json
 import re
 import sys
+import urllib.parse
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
+
+try:
+    from devtools import generate_equipment_documentation_catalog as equipment_catalog
+except ModuleNotFoundError:  # Direct execution: python devtools/check_documentation_search.py
+    import generate_equipment_documentation_catalog as equipment_catalog
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -22,6 +28,14 @@ NOTEBOOK_LINK_PATTERN = re.compile(
     r"""(?:\[[^\]]*\]\(\s*|href\s*=\s*["'])
     (?P<target>[^)\s"']+\.ipynb(?:[?#][^)\s"']*)?)""",
     re.IGNORECASE | re.VERBOSE,
+)
+MARKDOWN_LINK_PATTERN = re.compile(
+    r"(?<!!)\[[^\]]*\]\(\s*(?P<target><[^>]+>|[^)\s]+)",
+    re.IGNORECASE,
+)
+INCLUDE_RELATIVE_PATTERN = re.compile(
+    r"{%-?\s*include_relative\s+(?P<target>[^\s%]+)\s*-?%}",
+    re.IGNORECASE,
 )
 
 
@@ -124,6 +138,85 @@ def relative_notebook_link_errors(
     return errors
 
 
+def markdown_link_targets(text: str) -> List[str]:
+    """Return link destinations from Markdown prose, excluding images and code."""
+
+    return [
+        match.group("target").strip("<>")
+        for match in MARKDOWN_LINK_PATTERN.finditer(markdown_prose(text))
+    ]
+
+
+def is_external_link(target: str) -> bool:
+    """Return whether a link uses a URI scheme or protocol-relative URL."""
+
+    return bool(re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target)) or target.startswith("//")
+
+
+def included_markdown_sources(paths: Iterable[Path]) -> List[Path]:
+    """Return Markdown sources inserted into pages through ``include_relative``."""
+
+    included = set()
+    for path in paths:
+        text = path.read_text(encoding="utf-8-sig")
+        for match in INCLUDE_RELATIVE_PATTERN.finditer(text):
+            target = match.group("target").strip("\"'")
+            included.add((path.parent / target).resolve())
+    return sorted(included)
+
+
+def included_markdown_suffix_errors(path: Path, text: str) -> List[str]:
+    """Reject ``.md`` URLs that Jekyll cannot rewrite after a Liquid include."""
+
+    errors: List[str] = []
+    for target in markdown_link_targets(text):
+        if is_external_link(target) or target.startswith(("#", "{{", "{%")):
+            continue
+        link_path = urllib.parse.unquote(target.split("#", 1)[0].split("?", 1)[0])
+        if link_path.lower().endswith(".md"):
+            errors.append(
+                f"{path.relative_to(ROOT)}: included Markdown link {target} retains a .md "
+                "suffix; use the extensionless published URL"
+            )
+    return errors
+
+
+def internal_document_link_errors(path: Path, text: str) -> List[str]:
+    """Reject relative documentation links whose local source target is missing."""
+
+    errors: List[str] = []
+    for target in markdown_link_targets(text):
+        if is_external_link(target) or target.startswith(("#", "{{", "{%")):
+            continue
+        link_path = urllib.parse.unquote(target.split("#", 1)[0].split("?", 1)[0])
+        if not link_path or any(character in link_path for character in "\\{}"):
+            continue
+        candidate = DOCS / link_path.lstrip("/") if link_path.startswith("/") else path.parent / link_path
+        candidate = candidate.resolve()
+        try:
+            candidate.relative_to(DOCS.resolve())
+        except ValueError:
+            # Repository-source links outside docs are valid but are not published pages.
+            continue
+        candidates = [candidate]
+        if not candidate.suffix:
+            candidates.extend(
+                [
+                    Path(str(candidate) + ".md"),
+                    candidate / "index.md",
+                    candidate / "README.md",
+                    Path(str(candidate) + ".html"),
+                ]
+            )
+        elif candidate.suffix.lower() == ".html":
+            candidates.append(candidate.with_suffix(".md"))
+        if not any(item.exists() for item in candidates):
+            errors.append(
+                f"{path.relative_to(ROOT)}: internal documentation link target does not exist: {target}"
+            )
+    return errors
+
+
 def relative_sources(paths: Iterable[Path]) -> List[str]:
     """Return source paths in the same form emitted by Jekyll's ``page.path``."""
     return [path.relative_to(DOCS).as_posix() for path in paths]
@@ -147,6 +240,33 @@ def source_audit() -> List[str]:
         if not body:
             errors.append(f"{path.relative_to(ROOT)}: documentation body is empty")
         errors.extend(relative_notebook_link_errors(path, body))
+        errors.extend(internal_document_link_errors(path, body))
+
+    for path in included_markdown_sources(markdown):
+        if not path.is_file():
+            errors.append(f"{path.relative_to(ROOT)}: include_relative target does not exist")
+            continue
+        try:
+            _, body = parse_front_matter(path)
+        except ValueError:
+            body = path.read_text(encoding="utf-8-sig")
+        errors.extend(included_markdown_suffix_errors(path, body))
+
+    try:
+        expected_catalog = equipment_catalog.expected_catalog()
+    except ValueError as exc:
+        errors.append(f"equipment catalog generation failed: {exc}")
+    else:
+        actual_catalog = (
+            equipment_catalog.CATALOG.read_text(encoding="utf-8-sig")
+            if equipment_catalog.CATALOG.is_file()
+            else ""
+        )
+        if actual_catalog != expected_catalog:
+            errors.append(
+                "docs/process/equipment/equipment_catalog.md is stale; run "
+                "python devtools/generate_equipment_documentation_catalog.py"
+            )
 
     template = SEARCH_TEMPLATE.read_text(encoding="utf-8")
     required_template_contracts = {
