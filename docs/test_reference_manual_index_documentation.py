@@ -54,6 +54,35 @@ class ReferenceManualIndexDocumentationTest(unittest.TestCase):
                 failures.append("{} -> {}".format(target, resolved.relative_to(ROOT)))
         self.assertEqual([], failures)
 
+    def test_maintenance_claims_are_generated_not_date_or_count_bound(self):
+        self.assertIn("not a hand-counted inventory", self.index)
+        self.assertIn("reports the audited Markdown", self.index)
+        self.assertNotIn("## Document Statistics", self.index)
+        self.assertNotIn("**NEW**", self.index)
+        self.assertNotIn("Last updated:", self.index)
+
+    def test_appendices_are_in_alphabetical_navigation_order(self):
+        appendices = re.findall(r"(?m)^### Appendix ([A-Z]):", self.index)
+        self.assertEqual(list("ABCDEFGHI"), appendices)
+
+    def test_source_path_labels_match_their_internal_targets(self):
+        source_links = re.findall(r"\\[([^\\]]+)\\]\\(([^)\\s]+)\\)", self.index)
+        checked = 0
+        mismatches = []
+        for label, target in source_links:
+            if not label.startswith("docs/"):
+                continue
+            path_text = target.split("#", 1)[0].split("?", 1)[0]
+            if re.match(r"^[a-z][a-z0-9+.-]*:", path_text, re.IGNORECASE):
+                continue
+            checked += 1
+            expected = label[len("docs/") :]
+            actual = unquote(path_text)
+            if expected != actual:
+                mismatches.append("{} -> {}".format(label, target))
+        self.assertGreater(checked, 600)
+        self.assertEqual([], mismatches)
+
     def test_fragment_and_landing_targets_are_source_safe(self):
         self.assertIn(
             "(process/plant-data-tagreader.md#step-5-neqsimapi-cloud-rest)",
