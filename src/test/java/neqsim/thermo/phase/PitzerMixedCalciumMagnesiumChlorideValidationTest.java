@@ -3,6 +3,7 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -105,6 +106,31 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     assertFalse(system.isUsingPhreeqcPitzerParametersByDefault());
     assertEquals(PhasePitzer.DEFAULT_PARAMETER_DATASET_ID, phase.getParameterDatasetId());
     assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficientOfWater(), 0.0);
+  }
+
+  @Test
+  void incompleteCatalogFallsBackOnlyWhenLegacyCoverageIsExplicit() {
+    SystemPitzer binary = new SystemPitzer(298.15, 1.01325);
+    binary.addComponent("water", 55.508);
+    binary.addComponent("Ba++", 0.1);
+    binary.addComponent("SO4--", 0.1);
+    binary.setMixingRule("classic");
+    binary.init(0);
+    PhasePitzer binaryPhase = (PhasePitzer) binary.getPhase(1);
+    binaryPhase.requireCompletePitzerParameterCoverage();
+    assertEquals(PhasePitzer.DEFAULT_PARAMETER_DATASET_ID, binaryPhase.getParameterDatasetId());
+
+    SystemPitzer mixed = new SystemPitzer(298.15, 1.01325);
+    mixed.addComponent("water", 55.508);
+    mixed.addComponent("Na+", 0.2);
+    mixed.addComponent("Ba++", 0.1);
+    mixed.addComponent("Cl-", 0.2);
+    mixed.addComponent("SO4--", 0.1);
+    mixed.setMixingRule("classic");
+    mixed.init(0);
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> ((PhasePitzer) mixed.getPhase(1)).requireCompletePitzerParameterCoverage());
+    assertTrue(error.getMessage().contains("missing"));
   }
 
   private static SystemPitzer createSystem(double calciumChlorideMolality, double magnesiumChlorideMolality) {
