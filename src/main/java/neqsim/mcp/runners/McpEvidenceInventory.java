@@ -28,7 +28,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.9");
+    inventory.addProperty("inventoryVersion", "1.10");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -213,7 +213,7 @@ public final class McpEvidenceInventory {
     coverageDefinitions.addProperty("CONFIRMED_GAP",
         "No tool-specific BenchmarkTrust entry or bounded non-numerical contract evidence closes the gap; generic fallback maturity must not be interpreted as benchmark validation");
 
-    JsonObject promotionCandidates = buildContractPromotionCandidates();
+    JsonObject promotionCandidates = new JsonObject();
     JsonObject limitations = new JsonObject();
     limitations.addProperty("sourceTool", "getBenchmarkTrust");
     limitations.addProperty("publishedToolCount", publishedTools.size());
@@ -238,47 +238,13 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "Promotion candidates remain CONFIRMED_GAP until their classification accounting and packaged protocol contract are changed together on one validated exact head");
+        "No read-only catalog promotion candidate remains queued; future promotions still require classification accounting and packaged protocol expectations to change together on one validated exact head");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; six non-numerical discovery, catalog, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "Every published tool has an explicit coverage record; eight non-numerical discovery, catalog, lookup, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
-  }
-
-  /**
-   * Builds evidence-qualified candidates for a future atomic contract-status promotion.
-   *
-   * @return candidate records keyed by public MCP tool name
-   */
-  private static JsonObject buildContractPromotionCandidates() {
-    JsonObject candidates = new JsonObject();
-    candidates.add("searchComponents", contractPromotionCandidate(
-        "NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP",
-        new String[] { "src/main/java/neqsim/mcp/runners/ComponentQuery.java",
-            "src/test/java/neqsim/mcp/runners/ComponentQueryTest.java", "neqsim-mcp-server/test_mcp_server.py" },
-        "Component-name lookup, substring search, empty-query enumeration, typo handling, and no-match behavior are directly tested, including real-protocol retrieval; catalog lookup does not validate thermodynamic calculations or component-property models"));
-    candidates.add("queryDataCatalog", contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY",
-        new String[] { "src/main/java/neqsim/mcp/runners/DataCatalogRunner.java",
-            "src/test/java/neqsim/mcp/runners/DataCatalogRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" },
-        "Read-only catalog dispatch and representative component-family, EOS-model, component-property, and real-protocol catalog retrieval are tested; database contents, standards applicability, EOS accuracy, and material or design decisions are not validated by this evidence"));
-    return candidates;
-  }
-
-  /** Builds one bounded contract-promotion candidate. */
-  private static JsonObject contractPromotionCandidate(String benchmarkApplicability, String[] evidenceSources,
-      String evidenceBoundary) {
-    JsonObject candidate = new JsonObject();
-    candidate.addProperty("targetCoverageStatus", "CONTRACT_TESTED");
-    candidate.addProperty("benchmarkApplicability", benchmarkApplicability);
-    candidate.addProperty("contractEvidenceCount", evidenceSources.length);
-    candidate.add("contractEvidenceSources", toJsonArray(java.util.Arrays.asList(evidenceSources)));
-    candidate.addProperty("evidenceBoundary", evidenceBoundary);
-    candidate.addProperty("promotionReady", false);
-    candidate.addProperty("remainingGate",
-        "Update frozen protocol classification accounting atomically and pass exact-head hosted validation before changing coverageStatus");
-    return candidate;
   }
 
   /**
@@ -334,6 +300,18 @@ public final class McpEvidenceInventory {
           "src/test/java/neqsim/mcp/runners/McpPrincipalScopingTest.java",
           "src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java", "neqsim-mcp-server/test_mcp_server.py" };
       evidenceBoundary = "Profile discovery, classification, admin-gated mode changes, and principal-scoped one-shot approvals are contract-tested; deployments still require external identity, policy configuration, and accountable review";
+      break;
+    case "searchComponents":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ComponentQuery.java",
+          "src/test/java/neqsim/mcp/runners/ComponentQueryTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "Component-name lookup, substring search, empty-query enumeration, typo handling, and no-match behavior are directly tested, including real-protocol retrieval; catalog lookup does not validate thermodynamic calculations or component-property models";
+      break;
+    case "queryDataCatalog":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/DataCatalogRunner.java",
+          "src/test/java/neqsim/mcp/runners/DataCatalogRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "Read-only catalog dispatch and representative component-family, EOS-model, component-property, and real-protocol catalog retrieval are tested; database contents, standards applicability, EOS accuracy, and material or design decisions are not validated by this evidence";
       break;
     default:
       return false;
