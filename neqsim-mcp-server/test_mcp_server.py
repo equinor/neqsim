@@ -1552,10 +1552,36 @@ def test_capabilities():
           and validation_case_count == limitations.get("validationCaseCount")
           and verified_case_count == limitations.get("verifiedValidationCaseCount"),
           str(limitations))
+    contract_tools = {
+        "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
+        "checkToolAccess", "manageIndustrialProfile",
+    }
+    coverage_records = limitations.get("coverageRecords", {})
+    check("six non-numerical contracts have bounded evidence",
+          limitations.get("contractTestedToolCount") == 6
+          and limitations.get("confirmedGapToolCount") == 45
+          and set(limitations.get("contractTestedTools", [])) == contract_tools
+          and all(coverage_records.get(tool, {}).get("coverageStatus")
+                  == "CONTRACT_TESTED" for tool in contract_tools),
+          str(limitations))
+    contract_sources = [
+        source
+        for tool in contract_tools
+        for source in coverage_records.get(tool, {}).get(
+            "contractEvidenceSources", [])
+    ]
+    check("contract evidence paths resolve on the exact source tree",
+          all((repo_root / source).is_file() for source in contract_sources)
+          and all(len(coverage_records.get(tool, {}).get(
+              "contractEvidenceSources", []))
+              == coverage_records.get(tool, {}).get("contractEvidenceCount")
+              for tool in contract_tools),
+          str(contract_sources))
     check("uncovered tool-specific trust remains an explicit Phase 0 gap",
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
+          and limitations.get("confirmedGapToolCount") == 45
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

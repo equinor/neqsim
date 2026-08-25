@@ -26,16 +26,16 @@ The reconciliation is intentionally conservative:
 Every published tool has an explicit coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`.
 
 - 20 tools have tool-specific `BenchmarkTrust` pages and remain `EXPLICIT_TRUST`.
-- `getCapabilities`, `getSchema`, and `getExample` are `CONTRACT_TESTED`: they are non-numerical discovery/catalog contracts with direct source, contract-test, and real-protocol evidence, so an engineering-accuracy benchmark is not applicable.
-- 48 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
+- `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, and `manageIndustrialProfile` are `CONTRACT_TESTED`: they are non-numerical discovery, catalog, trust-retrieval, and governance contracts with exact source/test/protocol evidence, so an engineering-accuracy benchmark is not applicable.
+- 45 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
 
 The underlying `BenchmarkTrust` registry itself is intentionally unchanged at 20 explicit pages and 51 generic fallbacks. Contract-tested catalog/discovery evidence is a separate Phase 0 classification and does not certify any thermodynamic, process, pipeline, dynamic, safety, or optimization calculation advertised by those catalogs.
 
-The catalog classification is backed by current source plus the packaged MCP protocol suite: all 142 canonical input/output schema resources resolve as JSON schema objects, all 114 example-catalog entries resolve through MCP resources, and `CapabilitiesRunnerTest` cross-checks advertised schemas/examples against the current catalogs. These are software-contract checks, not scientific benchmark cases.
+The discovery/catalog classification is backed by current source plus the packaged MCP protocol suite: all 142 canonical input/output schema resources resolve as JSON schema objects, all 114 example-catalog entries resolve through MCP resources, and `CapabilitiesRunnerTest` cross-checks advertised schemas/examples against the current catalogs. The trust/governance classification additionally uses the complete `IndustrialProfileTest` access matrix, fail-closed security and principal-scoping regressions, and real-protocol trust/profile/access calls. Exact paths are carried in each record's `contractEvidenceSources` array. These are software-policy and transport-contract checks, not validation of scientific trust-page claims, external authorization, or a configured facility deployment.
 
 ## Remaining Phase 0 work
 
-The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 48 published tools still lack a defensible tool-specific or bounded non-numerical trust classification.
+The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 45 published tools still lack a defensible tool-specific or bounded non-numerical trust classification.
 
 Close those trust gaps only where current source plus concrete tests, public benchmark evidence, authoritative data, or a clearly non-numerical contract supports the classification. Do not manufacture accuracy bounds for discovery/catalog tools and do not reconstruct a second MCP-side conservation model when canonical NeqSim does not expose independent evidence.
 
