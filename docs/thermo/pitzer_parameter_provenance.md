@@ -229,11 +229,33 @@ uncertainties, while psi differs by about 10.3. These are fitted parameters from
 experimental/model lineage, not direct transferable validation values. NeqSim keeps the coherent
 PHREEQC family unchanged and records the disagreement; it does not mix the two parameter sets.
 
+Independent observable validation now uses the 28 mixed MgCl2+MgSO4 water activities of Guendouzi
+and Errougui (2007), [DOI 10.1021/je7002176](https://doi.org/10.1021/je7002176). The hygrometric
+measurements are at 298.15 K and 101 kPa for MgCl2 ionic-strength fractions 0.20, 0.50, and 0.80,
+with total formula-unit molality from 0.35 to 3.80 mol/kg water. The NIST ThermoML record specifies
+the pure-water standard state and 95% combined expanded water-activity uncertainties of 0.001 to
+0.004. The checked JSON has MD5 `29969a5f814eb0ad6d7ca5b4f093b658`; the unchanged numerical
+subset is stored with NIST acknowledgment under the
+[NIST public-data license](https://www.nist.gov/open/license). Composition is mapped without
+speciation or fitting as Mg++ = m(MgCl2)+m(MgSO4), Cl- = 2m(MgCl2), and SO4-- = m(MgSO4).
+
+Across all 28 states, NeqSim's maximum absolute water-activity residual is 0.002985 and its RMSE is
+0.001275; 26 states fall inside their individual reported 95% expanded uncertainty. Both calculated
+and experimental water activity decrease monotonically with total molality on each composition
+line. The regression also checks formula-unit material balance, electroneutrality, normalized and
+non-negative phase state, water-activity/osmotic-coefficient identity, deterministic repetition,
+changed-state equivalence, and complete parameter coverage. No coefficient was fitted or changed.
+This qualifies only mixed Mg-Cl-SO4 water activity at the three documented composition lines and
+298.15 K; it does not qualify Ca-bearing mixtures, pressure/temperature extrapolation, individual
+ion activities, mineral saturation, or precipitation.
+
 `PitzerParameterDatasets.getQualification(datasetId)` exposes this distinction to Java and Python
 callers. Complete PHREEQC catalog topology reports `PARTIALLY_EXPERIMENTALLY_VALIDATED`, lists the
-CaCl2 and MgCl2 binaries as checked, and explicitly lists mixed Ca-Mg-Cl-SO4 and mineral
-precipitation as unresolved. Unknown or private dataset identities report `UNQUALIFIED`. This
-metadata lookup is outside the activity/property kernels and adds no non-electrolyte overhead.
+CaCl2 and MgCl2 binaries plus mixed MgCl2-MgSO4 water activity as checked, and explicitly leaves
+Ca-bearing mixed activity and mineral precipitation unresolved. The range diagnostic accepts only
+the three experimentally checked ionic-strength-fraction lines and their line-specific molality
+intervals. Unknown or private dataset identities report `UNQUALIFIED`. This metadata lookup is
+outside the activity/property kernels and adds no non-electrolyte overhead.
 
 The catalog is an aqueous-GE parameter source, not a complete scale or process model by itself.
 `SystemPitzer` keeps SRK gas and oil role phases and exposes catalog application on its Pitzer
@@ -242,11 +264,12 @@ solubility/precipitation complementarity, and process mass/energy/property closu
 separate gates and database semantics.
 
 `PitzerCatalogPerformanceBenchmark` measures nine fixed-work batches after warmup. On OpenJDK 17
-in the development container, the median four-ion activity/osmotic kernel was 8.61 microseconds and
-the complete aqueous `init(3)` plus physical-property calculation was 0.173 milliseconds. The same
-neutral SRK property control measured 34.5 microseconds before catalog loading and 25.3 microseconds
-after loading (ratio 0.733, reflecting additional JIT warmup rather than a regression). No neutral
-EOS production class is changed, and catalog parsing is absent until its explicit API is called.
+in the development container, the median four-ion activity/osmotic kernel was 10.542 microseconds
+and the complete aqueous `init(3)` plus physical-property calculation was 0.168756 milliseconds.
+The same neutral SRK property control measured 31.940 microseconds before catalog loading and
+22.576 microseconds after loading (ratio 0.707, reflecting additional JIT warmup rather than a
+regression). No neutral EOS production class is changed, and catalog parsing is absent until its
+explicit API is called.
 These figures are diagnostic wall-clock evidence, not portable hardware guarantees.
 
 ## Source-comparison matrix
@@ -266,7 +289,8 @@ until their complete topology and validation matrix are documented.
 | Partanen and Partanen (2020), [traceable NaCl values](https://doi.org/10.1021/acs.jced.0c00402) | Recommended NaCl mean activity and water osmotic coefficients; no Pitzer parameter is supplied or adopted | 273.15–373.15 K, 0.2 mol/kg to saturation; molality scale; extended-Huckel model fitted independently of the PHREEQC implementation | Traceable synthesis of vapor-pressure, electrochemical, cryoscopic, and solubility evidence; tabulated values are rounded to 0.001 | Primary open-access article and numerical tables under CC BY 4.0 | Four 298.15 K points from 0.2–2.0 mol/kg are held-out validation only. Max NeqSim residuals are 1.36% in mean activity, 0.0053 in osmotic coefficient, and below 0.0004 in derived water activity; no coefficient was refitted. |
 | Hamer and Wu (1972), [NBS/NIST critical evaluation](https://doi.org/10.1063/1.3253108), independently reproduced by Dash et al. (2012), [open-access table](https://doi.org/10.5402/2012/730154) | Critically evaluated KCl mean activity coefficients; no Pitzer parameter is supplied or adopted | 298.15 K, molality scale, 1:1 electrolyte; four selected states span 0.0982–1.9895 mol/kg | Hamer-Wu evaluates thermodynamic literature; reproduced values are rounded to 0.001. Dash et al.'s direct single-ion-selective-electrode means are 10.7–13.4% higher at the same states and are treated as a method conflict. | U.S. NBS authorship and U.S. Secretary of Commerce publication; the four checked values are also reproduced in a CC BY open-access primary experiment | Held-out binary validation only. Max NeqSim mean-activity residual is 0.110% against a 0.20% gate; no coefficient was refitted. The critically evaluated values take precedence over the conflicting single-ion method. |
 | Partanen (2013), [traceable MgCl2 values](https://doi.org/10.1016/j.jct.2013.06.016) | Recommended MgCl2 mean activity and water osmotic coefficients; no Pitzer parameter is supplied or adopted | 298.15 K, 0–3 mol/kg, molality scale; four checked states span 0.1667–2.0 mol/kg | Traceable synthesis and tests against isopiestic and vapor-pressure literature; tabulated values are rounded | Journal of Chemical Thermodynamics data distributed through the publisher-permitted NIST ThermoML archive; NIST public-data terms and citation request recorded | Held-out binary validation only. Max NeqSim mean-activity residual is 2.27% without refitting; this does not qualify mixed Mg chloride/sulfate brines. |
-| Dinane, Messnaoui and Abou Nohra (2012), [mixed MgCl2+MgSO4 experiment](https://doi.org/10.1016/j.jct.2011.08.020) | Mean MgCl2 activities over total ionic strength 0.001–8 mol/kg; fitted `theta(Cl,SO4)` and `psi(Mg,Cl,SO4)` | 298.15 K; salt ratios 2.5, 5, 7.5, 10, and 15; potentiometric Mg-ISE/Ag-AgCl method and Pitzer fit | `theta=0.0252 +/- 0.0042`, `psi=-0.0049 +/- 0.0003`; PHREEQC has 0.03 and -0.008 | Primary Elsevier article; no table is copied and numerical-table redistribution was not established | Theta broadly agrees, but psi materially conflicts. No coefficient is adopted or mixed; exact mixed-composition observable validation remains required. |
+| Dinane, Messnaoui and Abou Nohra (2012), [mixed MgCl2+MgSO4 experiment](https://doi.org/10.1016/j.jct.2011.08.020) | Mean MgCl2 activities over total ionic strength 0.001–8 mol/kg; fitted `theta(Cl,SO4)` and `psi(Mg,Cl,SO4)` | 298.15 K; salt ratios 2.5, 5, 7.5, 10, and 15; potentiometric Mg-ISE/Ag-AgCl method and Pitzer fit | `theta=0.0252 +/- 0.0042`, `psi=-0.0049 +/- 0.0003`; PHREEQC has 0.03 and -0.008 | Primary Elsevier article; no table is copied and numerical-table redistribution was not established | Theta broadly agrees, but psi materially conflicts. No coefficient is adopted or mixed; the coherent PHREEQC family is assessed against separate observable data. |
+| Guendouzi and Errougui (2007), [mixed MgCl2+MgSO4 water activity](https://doi.org/10.1021/je7002176), NIST ThermoML MD5 `29969a5f814eb0ad6d7ca5b4f093b658` | 28 measured water activities; no interaction parameter is adopted. The paper also fits mixing parameters, but they are not transcribed or mixed with PHREEQC. | 298.15 K, 101 kPa; MgCl2 ionic-strength fractions 0.20, 0.50, 0.80; total formula-unit molality 0.35–3.80 mol/kg; molality composition and pure-water activity standard state | Hygrometric method; per-state 95% combined expanded uncertainty 0.001–0.004. NeqSim max absolute residual 0.002985, RMSE 0.001275, and 26/28 states inside individual uncertainty without refitting. | Primary article; numerical record is publisher-permitted NIST ThermoML. Stored unchanged subset follows the NIST public-data license and acknowledgment terms. | Accepted as held-out mixed Mg-Cl-SO4 water-activity evidence only. It supports PHREEQC `B0/B1/B2/C0`, Cl-/SO4-- `theta`, Mg++/Cl-/SO4-- `psi`, charge-dependent alpha, and electrostatic conventions as one coherent calculation; it does not transfer a fitted parameter or qualify Ca/minerals. |
 | Rodil, Arce, Wilczek-Vera and Vera (2009), [mixed NaCl+KCl experiment](https://doi.org/10.1021/je800389q) and [mandatory correction](https://doi.org/10.1021/je9002674) | Individual Cl-/Na+/K+ activity evidence in mixed NaCl+KCl at cation molal fractions 0.75, 0.5, and 0.25 | 298.15 K; total chloride to 4 mol/kg; Henderson liquid-junction correction and single-ion convention | Original paper reports the experiment; the correction replaces erroneous Na+/K+ tabulations without changing conclusions | ACS supporting information is publicly downloadable, but copyright and no explicit data-redistribution license were established | Candidate held-out mixed-family validation only. No value is stored; licensing-clear data and convention mapping remain the blocker. Exact-composition IPhreeqc checks are retained as implementation evidence, not a substitute for experiment. |
 | Kaasa (1998), *Prediction of pH, mineral precipitation and multiphase equilibria during oil recovery*, [National Library item](https://www.nb.no/items/d1d68b489b8ee6704786a011fd2e7283), supplied scan inspected 2026-08-23 | Appendix F printed pp. 260–263: binary `beta(0)`, `beta(1)`, occasional `beta(2)`, and `Cphi` for oil-recovery-brine ions; pp. 264–266: same-sign `theta` and ternary `psi`; pp. 266–267: neutral `lambda` and `ksi` (zeta) for CO2, H2S, and CH4 systems | Molality-scale Pitzer model; 298.15 K reference. Appendix F equation (F.1) uses six coefficients in raw order `[a,b,c,d,e,f]`; NeqSim/PHREEQC order is `[a,d,e,b,c,f]`. Pressure effects are handled separately in chapter 4. | Appendix F cites sources 1–16, including primary literature and rows marked “This work.” Chapter 4 §4.3.2, printed pp. 100–101, states that source ranges differ and some high-temperature fits were forced toward zero where extrapolation became nonphysical, with a poorer fit to experiments. Row uncertainty and complete validity are not tabulated. | User-supplied scan was visually inspected against its text layer. Thesis-table redistribution terms remain unclear; no numerical row was copied. Original cited publications require independent row-level checks and their own reuse review. | Formula, page/family inventory, and coefficient-order permutation accepted. `PitzerTemperatureFunction.fromKaasa1998` performs only the tested order mapping. No coefficient, forced extrapolation, or “This work” estimate was adopted. |
 | THEREDA release 2026-01, [official database](https://www.thereda.de/) | Quality-controlled high-salinity Pitzer datasets, including variable-temperature sets | Official site reports an oceanic set from 0 to 110 °C; formulation and scale are dataset specific | Official site reports 425 tests and more than 3200 results; row-level uncertainty remains dataset specific | Current release and licensing/reuse terms must be confirmed before storage | Candidate validation and provenance source only; no value adopted while row-level lineage, reuse, range, and complete family compatibility remain unresolved. |

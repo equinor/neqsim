@@ -1,0 +1,36 @@
+# Guendouzi and Errougui (2007), J. Chem. Eng. Data 52, 2188-2194.
+# DOI: https://doi.org/10.1021/je7002176
+# Source: NIST ThermoML JSON https://trc.nist.gov/ThermoML/10.1021/je7002176.json
+# ThermoML MD5: 29969a5f814eb0ad6d7ca5b4f093b658; accessed 2026-08-25.
+# License: https://www.nist.gov/open/license; numerical values are an unchanged subset and NIST is acknowledged.
+# Conditions: 298.15 K, 101 kPa; molality scale; H2O pure-compound standard state; hygrometric method.
+# expanded_uncertainty_aw is the ThermoML 95% combined expanded uncertainty evaluated by the data-file compiler.
+mgcl2_molality_mol_per_kg,mgso4_molality_mol_per_kg,water_activity,expanded_uncertainty_aw
+0.15,0.45,0.983,0.001
+0.20,0.15,0.987,0.001
+0.20,0.60,0.977,0.001
+0.25,0.75,0.970,0.001
+0.30,0.90,0.963,0.001
+0.40,0.30,0.971,0.001
+0.40,1.20,0.946,0.002
+0.50,1.50,0.925,0.002
+0.60,0.45,0.955,0.001
+0.60,1.80,0.898,0.004
+0.70,2.10,0.870,0.004
+0.74,2.22,0.857,0.003
+0.80,0.15,0.951,0.001
+0.80,0.60,0.934,0.002
+1.00,0.75,0.910,0.002
+1.07,0.20,0.929,0.002
+1.20,0.90,0.882,0.004
+1.30,0.24,0.906,0.002
+1.40,1.05,0.850,0.003
+1.60,0.30,0.873,0.004
+1.60,1.20,0.816,0.003
+1.80,1.35,0.777,0.003
+1.85,0.35,0.842,0.003
+2.00,1.50,0.738,0.003
+2.13,0.40,0.805,0.003
+2.40,0.45,0.766,0.003
+2.78,0.52,0.708,0.003
+3.20,0.60,0.640,0.003

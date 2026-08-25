@@ -425,7 +425,8 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED, scaleFamily.getLevel());
     assertFalse(scaleFamily.isValidatedWithinDeclaredEnvelope());
     assertTrue(scaleFamily.getValidatedSystems().toString().contains("MgCl2"));
-    assertTrue(scaleFamily.getLimitations().toString().contains("Mixed Ca-Mg-Cl-SO4"));
+    assertTrue(scaleFamily.getValidatedSystems().toString().contains("MgCl2-MgSO4 water activity"));
+    assertTrue(scaleFamily.getLimitations().toString().contains("Ca-bearing mixed Ca-Mg-Cl-SO4"));
     assertThrows(UnsupportedOperationException.class, () -> scaleFamily.getLimitations().add("unsafe"));
 
     PitzerParameterQualification unknown = PitzerParameterDatasets.getQualification("private-project-dataset");
@@ -435,6 +436,13 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     assertTrue(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideBinaryValidationRange(298.15, 2.0));
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideBinaryValidationRange(298.15, 2.1));
     assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideBinaryValidationRange(323.15, 1.0));
+    assertTrue(PitzerParameterDatasets.isWithinMagnesiumChlorideSulfateWaterActivityValidationRange(298.15, 0.2, 0.15));
+    assertTrue(
+        PitzerParameterDatasets.isWithinMagnesiumChlorideSulfateWaterActivityValidationRange(298.15, 0.15, 0.45));
+    assertTrue(PitzerParameterDatasets.isWithinMagnesiumChlorideSulfateWaterActivityValidationRange(298.15, 3.2, 0.6));
+    assertFalse(PitzerParameterDatasets.isWithinMagnesiumChlorideSulfateWaterActivityValidationRange(298.15, 0.1, 0.1));
+    assertFalse(
+        PitzerParameterDatasets.isWithinMagnesiumChlorideSulfateWaterActivityValidationRange(323.15, 0.2, 0.15));
   }
 
   @Test
