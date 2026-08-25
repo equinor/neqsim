@@ -540,5 +540,5 @@ public class FieldDevelopmentExample {
 
 ## API Reference
 
-See the [JavaDoc API Documentation](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) for complete API details.
+See the [JavaDoc API Documentation](https://equinor.github.io/neqsim/javadoc/index.html) for complete API details.
 
