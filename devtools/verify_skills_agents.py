@@ -10,6 +10,8 @@ Checks performed:
   5. The flat keyword index in ``skill-index.json`` is valid JSON.
   6. OpenAI Codex discovers the canonical skills through the
      ``.agents/skills`` symbolic link without maintaining a second copy.
+  7. Agent instructions do not launch bare Python tools, select/create/activate
+      interpreter environments, or direct fallback to another interpreter.
 
 Exit code is 1 if any structural error is found; warnings are printed but
 do not fail the run unless ``--strict`` is set.
@@ -33,6 +35,22 @@ AGENTS_DIR = REPO_ROOT / ".github" / "agents"
 INDEX_PATH = SKILLS_DIR / "skill-index.json"
 
 FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+BARE_PYTHON_LAUNCH_RE = re.compile(
+    r"(?<![A-Za-z0-9_./\\-])(?:(python(?:\.exe)?|py)\s+"
+    r"(?:-m\s+|-[A-Za-z]|[^\s`]+\.py\b|devtools[\\/]|<)|"
+    r"(pip)\s+(?:install|uninstall|list|show|check|freeze)\b|"
+    r"(pytest)\s+)"
+)
+PYTHON_ENV_CONFLICT_RE = re.compile(
+    r"(?:select (?:a |another |the )?(?:python )?interpreter|"
+    r"(?:create|activate) (?:a |the )?(?:new |per-agent )?"
+    r"(?:virtual environment|venv)|"
+    r"fall back to (?:the )?(?:system|another|different) (?:python|interpreter))",
+    re.IGNORECASE,
+)
+NEGATED_RUNTIME_DIRECTIVE_RE = re.compile(
+    r"\b(?:do not|don't|never|must not|without|no)\b", re.IGNORECASE
+)
 
 
 def parse_front_matter(text: str) -> Dict[str, str]:
@@ -113,7 +131,36 @@ def check_agents() -> Tuple[List[str], List[str]]:
             errors.append(f"{agent_md.name}: front-matter missing 'description'")
         elif len(fm["description"]) < 40:
             warnings.append(f"{agent_md.name}: description is very short")
+        for runtime_error in check_python_runtime_instructions(agent_md):
+            errors.append(f"{agent_md.name}: {runtime_error}")
     return errors, warnings
+
+
+def check_python_runtime_instructions(agent_md: Path) -> List[str]:
+    """Return conflicts with the inherited shared Python runtime policy."""
+    errors: List[str] = []
+    try:
+        lines = agent_md.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return errors
+    for line_number, line in enumerate(lines, start=1):
+        context = " ".join(lines[max(0, line_number - 4) : line_number])
+        if NEGATED_RUNTIME_DIRECTIVE_RE.search(context):
+            continue
+        bare_match = BARE_PYTHON_LAUNCH_RE.search(line)
+        conflict_match = PYTHON_ENV_CONFLICT_RE.search(line)
+        if bare_match:
+            launcher = next(group for group in bare_match.groups() if group)
+            errors.append(
+                f"line {line_number} uses bare '{launcher}' launcher; use the "
+                "parent-selected absolute executable or sys.executable"
+            )
+        elif conflict_match:
+            errors.append(
+                f"line {line_number} conflicts with the shared Python runtime "
+                f"policy: '{conflict_match.group(0)}'"
+            )
+    return errors
 
 
 def check_skill_index() -> Tuple[List[str], List[str]]:

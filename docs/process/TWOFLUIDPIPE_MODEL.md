@@ -530,12 +530,11 @@ This is 70.7% binary accuracy, 84.6% severe-slug recall, and 46.7% stable recall
 a conservative screen but is not a high-specificity classifier and must not be described as
 quantitative dynamic validation.
 
-The slow dynamic benchmark reproduces large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
-$v_{SG}=1.00$ m/s). **The model reproduces the liquid side of severe slugging and not the pressure
-side.** The outlet liquid rate blows out to about twice the liquid feed and falls back to zero on a
-repeating cycle of about 14 s, but the riser-base pressure swing is 0.06–0.08 riser hydrostatic
-heads against a measured 0.78, an under-prediction by a factor of 10–13, and the outlet slug
-tracker registers nothing.
+The slow dynamic benchmark exercises large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
+$v_{SG}=1.00$ m/s). It is currently a **failing qualification fixture**, not a validated model.
+The coupled transient route does not progress beyond its initial transient state, while the legacy
+route activates `isTransientOutletBackflowClamped()`. Both outcomes are rejected before amplitude,
+period, or slug-length agreement is considered.
 
 This benchmark previously reported a riser-head-scaled swing of 0.40–0.54 heads and a tracked slug
 of about 2 m. Those results did not come from the momentum balance. The minimum-slip hold-up bound
@@ -560,9 +559,10 @@ reclassifies the riser as bubble flow, so that change is **not mesh converged an
 Severe slugging in this configuration is additionally a **deterministically chaotic** limit
 cycle, so instantaneous extremes taken from a single trajectory are not asserted numerically.
 
-The benchmark evaluates a four-member ensemble — 16 sections at 0.1 s, the same case with a
-$10^{-12}$ inlet perturbation, 24 sections at 0.1 s, and 16 sections at 0.2 s — and separates
-trajectory-robust from trajectory-sensitive quantities:
+Earlier closure-development runs evaluated a four-member ensemble — 16 sections at 0.1 s, the same
+case with a $10^{-12}$ inlet perturbation, 24 sections at 0.1 s, and 16 sections at 0.2 s — to
+separate trajectory-robust from trajectory-sensitive quantities. Those runs activated the outlet
+backflow clamp and therefore remain diagnostic development evidence only:
 
 | Quantity | Observed across the ensemble | How it is asserted |
 |----------|------------------------------|--------------------|
@@ -573,11 +573,11 @@ trajectory-robust from trajectory-sensitive quantities:
 | Apparent cycle period | 13.2–14.4 s | each realization above the riser filling time, and the ensemble mean below the experimental 38 ± 2 s |
 | Maximum tracked outlet slug | 0 m in every realization | asserted to be zero, so a non-zero length forces re-measurement |
 
-The digitized experiment has about 98 ± 5 kPa inlet-pressure amplitude and a 38 ± 2 s cycle period.
-Both the pressure amplitude and the cycle period are systematically under-predicted, and the
-outlet slug tracker registers nothing. None of these support a claim of quantitative
-severe-slugging validation; only the liquid blowout/fallback signature, the mass closure and the
-time-averaged riser-base pressure are treated as reproducible evidence.
+The green experimental `SS` trace in Tengesdal Figure 5-6 (printed page 91, physical PDF page 111)
+gives approximately 98 ± 5 kPa inlet-pressure amplitude and 38 ± 2 s cycle period by direct figure
+digitization. These are not printed tabular values, and the black `Model` trace is excluded. The
+values are independent benchmark targets only; they are not Troll C plant values. No clamped or
+non-progressing NeqSim trajectory may be compared with them as a valid prediction.
 
 The dynamic reproduction uses the physical 19.81 m flowline plus riser, 0.0762 m diameter,
 atmospheric outlet, nitrogen as an air surrogate, and a single non-volatile TBP fraction fitted to
@@ -1119,11 +1119,13 @@ two completed liquid-rate cycles in every mesh/timestep realization. It retains 
 experimental source and its phase-mass, mean-pressure, mesh, amplitude, and deterministic-repeat
 checks.
 
-A user-supplied like-for-like OLGA run for the same geometry reported a 21.7 s cycle and a
-0.37-4.03 kg/s liquid-outlet range, while the public experiment reports 38 +/- 2 s. These values
-are comparison evidence, not embedded commercial correlations. A NeqSim/OLGA comparison should
-record exported time series and evaluate both with the same settled window and metrics; it should
-not compare one startup peak or tune a closure to one trajectory.
+A fresh OLGA 2025.1 execution for the same geometry reached normal stop and reported a 34.9234 kPa
+pressure amplitude and 21.7100 s liquid-trough period (21.7364 s from pressure), compared with the
+approximately 98 ± 5 kPa and 38 ± 2 s Figure 5-6 digitizations. That one-point run is 64.36% low in
+amplitude and 42.87% short in period, so it is a parseable comparator but not a qualified benchmark
+reproduction. These values are comparison evidence, not embedded commercial correlations. A
+NeqSim/OLGA comparison must record exported time series and evaluate both with the same settled
+window and metrics; it must not compare one startup peak or tune a closure to one trajectory.
 
 ### Adaptive Timestepping
 
@@ -1200,6 +1202,11 @@ if (pipe.isTransientOutletBackflowClamped()) {
   throw new IllegalStateException("Transient liquid inventory is running away");
 }
 ```
+
+Any trajectory for which this flag becomes true is invalid for engineering comparison or model
+qualification, even if its mass-balance residual, pressure amplitude, period, or other headline
+metric appears acceptable. The flag is sticky for the transient run and must be checked after the
+full evaluated window.
 
 **Why outlet backflow matters.** The outlet is transmissive: it can carry mass out but not in, so a
 reversed phase velocity is clamped to zero. That is correct as a boundary condition and is also a

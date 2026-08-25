@@ -24,13 +24,13 @@ fix it.
 
 1. **Schema check.**
    ```bash
-   python devtools/validate_task_results.py <task_folder>
+   <python-executable> devtools/validate_task_results.py <task_folder>
    ```
    Report errors as FAIL, warnings as WARN.
 
 2. **Consistency check.**
    ```bash
-   python devtools/consistency_checker.py <task_folder>
+   <python-executable> devtools/consistency_checker.py <task_folder>
    ```
    Report any CRITICAL issues as FAIL; non-critical as WARN.
 

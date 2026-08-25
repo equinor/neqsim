@@ -55,11 +55,11 @@ individual VS Code Chat agents.
 Run commands from the repository root unless the user asks otherwise:
 
 ```powershell
-python <paperlab-workspace>\paperflow.py status <paper-or-book-path>
-python <paperlab-workspace>\paperflow.py render <paper-path>
-python <paperlab-workspace>\paperflow.py book-status <book-path>
-python <paperlab-workspace>\paperflow.py book-check <book-path>
-python <paperlab-workspace>\paperflow.py book-render <book-path> --format html
+& <python-executable> <paperlab-workspace>\paperflow.py status <paper-or-book-path>
+& <python-executable> <paperlab-workspace>\paperflow.py render <paper-path>
+& <python-executable> <paperlab-workspace>\paperflow.py book-status <book-path>
+& <python-executable> <paperlab-workspace>\paperflow.py book-check <book-path>
+& <python-executable> <paperlab-workspace>\paperflow.py book-render <book-path> --format html
 ```
 
 ## Guardrails

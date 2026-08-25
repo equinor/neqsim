@@ -135,7 +135,7 @@ Loaded skills: neqsim-literature-search, neqsim-stid-retriever, neqsim-technical
    question, with pruned candidates + reasons), and append the "Literature &
    Reference Documents" section in notes.md.
 7. Write/update references/manifest.json, then run
-   `python devtools/generate_sources_md.py task_solve/<slug> --organize` to
+   `<python-executable> devtools/generate_sources_md.py task_solve/<slug> --organize` to
    (re)build the distributable `references/SOURCES.md` +
    `references/collection_manifest.json`.
 8. Report a 1-paragraph summary plus the manifest path back to the caller.

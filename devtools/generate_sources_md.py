@@ -304,7 +304,6 @@ def _collect_gaps(task_dir: Path, references_dir: Path) -> list:
     gaps: list = []
     seen = set()
     for path in [
-        references_dir / "collection_manifest.json",
         task_dir / "step1_scope_and_research" / "retrieval_manifest.json",
         task_dir / "step1_scope_and_research" / "document_evidence_manifest.json",
     ]:

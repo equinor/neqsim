@@ -85,7 +85,7 @@ out_dir = os.path.join(os.path.dirname(__file__), "..", "figures", "stid_docs") 
 
 **For PDF-to-PNG conversion:** Output converted images to the task's `figures/`:
 ```bash
-python devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/ \
+<python-executable> devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/ \
     --outdir task_solve/YYYY-MM-DD_slug/figures/
 ```
 
@@ -390,7 +390,7 @@ checks before writing Step 1 content:
 2. **Agent & skill review (ALWAYS — thorough).** Before writing any analysis,
    do a deliberate review of the available **agents and skills** to find what
    can help solve this task instead of solving from scratch:
-   - Run `python devtools/skill_search.py "<task title>" --top 5` and load the
+  - Run `<python-executable> devtools/skill_search.py "<task title>" --top 5` and load the
      top-3 SKILL.md files with `read_file`.
    - Scan the agent list (community + enterprise, e.g. `.github/agents/`,
      `neqsim-community-agents/`, `neqsim-enterprise-agents/`) for discipline
@@ -447,8 +447,8 @@ checks before writing Step 1 content:
   capability-map prose, or mirrored task sources:
 
    ```bash
-   python devtools/skill_search.py "<task title>" --top 5
-   python devtools/agent_search.py "<task title>" --top 8 \
+  <python-executable> devtools/skill_search.py "<task title>" --top 5
+  <python-executable> devtools/agent_search.py "<task title>" --top 8 \
        --json --out step1_scope_and_research/agent_plan.json
    ```
 
@@ -670,7 +670,7 @@ notebooks:
   analysis, risk register, figure discussion, or consistency check cannot be
   produced, record the reason in `progress.json`, `results.json` limitations,
   and the final report.
-7. Before Step 3, run `python step3_report/generate_report.py`; the report
+7. Before Step 3, run `<python-executable> step3_report/generate_report.py`; the report
   generator reads `study_config.yaml` and warns about missing configured
   deliverables. Fix warnings marked as required before finalizing unless the
   user explicitly accepts the limitation.
@@ -881,7 +881,7 @@ notebooks:
       criteria. Missing evidence must be written to `results.json` as assumptions/gaps.
    - **Extract figures from reference PDFs** placed in `step1_scope_and_research/references/`:
      ```bash
-     python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+    <python-executable> devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
      ```
      Then use `view_image` on extracted PNGs to read engineering drawings, P&IDs,
      charts, data tables, and compressor maps. This makes PDF content available
@@ -1808,7 +1808,7 @@ Document the independent check in `step2_analysis/notes.md` under a
 
 17. **Run consistency checker** (MANDATORY before report generation):
     ```
-    Run in terminal: python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/
+    Run in terminal: <python-executable> devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/
     ```
     The consistency checker:
     - Extracts numerical values from all notebooks and results.json
@@ -1819,7 +1819,7 @@ Document the independent check in `step2_analysis/notes.md` under a
 
 18. **Run the report generator** to produce the engineering report (Word + HTML):
     ```
-    Run in terminal: python step3_report/generate_report.py
+    Run in terminal: <python-executable> step3_report/generate_report.py
     ```
     This is the **default and preferred output** — an engineering technical report.
     Only generate a scientific paper if the user explicitly requests it

@@ -62,7 +62,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * {@code sin(45) = 71%} of its hydrostatic head; and the last section, having no downstream elevation, was always left
  * horizontal, which removed {@code 1/nRiserCells} of the riser and therefore removed a mesh-dependent amount of it.
  * With the inclination taken as {@code asin(dz/secDx)} and the last section inheriting its neighbour, the ensemble
- * spans 81 to 97 kPa against a measured 98 kPa and the resolved and refined meshes agree to within 20 per cent.
+ * spans 81 to 97 kPa against an approximately 98 kPa experimental swing digitized from the green SS trace in Tengesdal
+ * Figure 5-6 (printed page 91, PDF page 111), and the resolved and refined meshes agree to within 20 per cent.
  * </p>
  *
  * <p>
@@ -104,8 +105,10 @@ class SevereSluggingExperimentalBenchmarkTest {
       * CRYSTEX_DENSITY_KG_PER_M3;
   /** Hydrostatic head of a fully liquid-filled riser, the natural pressure scale of severe slugging. */
   private static final double RISER_HYDROSTATIC_HEAD_PA = CRYSTEX_DENSITY_KG_PER_M3 * 9.80665 * RISER_HEIGHT_M;
+  /** Approximate experimental SS-trace swing digitized from Tengesdal Figure 5-6. */
   private static final double EXPERIMENTAL_PRESSURE_AMPLITUDE_PA = 98_000.0;
   private static final double EXPERIMENTAL_PRESSURE_AMPLITUDE_DIGITIZATION_UNCERTAINTY_PA = 5_000.0;
+  /** Approximate experimental SS-trace peak spacing digitized from Tengesdal Figure 5-6. */
   private static final double EXPERIMENTAL_CYCLE_PERIOD_S = 38.0;
   private static final double EXPERIMENTAL_CYCLE_PERIOD_DIGITIZATION_UNCERTAINTY_S = 2.0;
   private static final double WARM_UP_SECONDS = 20.0;
@@ -122,12 +125,13 @@ class SevereSluggingExperimentalBenchmarkTest {
   /** Refined mesh used for the mesh-convergence comparison. */
   private static final int REFINED_SECTION_COUNT = 24;
   /**
-   * Bound on how far below the measured amplitude a realization may fall.
+   * Bound on how far below the digitized experimental amplitude a realization may fall.
    *
    * <p>
-   * The ensemble spans 10.8 kPa on the refined mesh to 96.9 kPa on the resolved one, against a measured 98 kPa, so the
-   * spread is set by mesh refinement and not by the trajectory. The bound is set at 12 so a further collapse of the
-   * swing still fails while the measured mesh dependence does not.
+   * The ensemble spans 10.8 kPa on the refined mesh to 96.9 kPa on the resolved one, against an approximately 98 kPa
+   * experimental swing digitized from Tengesdal Figure 5-6. The spread is set by mesh refinement and not by the
+   * trajectory. The bound is set at 12 so a further collapse of the swing still fails while the recorded mesh
+   * dependence does not.
    * </p>
    */
   private static final double MAXIMUM_AMPLITUDE_UNDERPREDICTION_FACTOR = 12.0;
@@ -135,8 +139,8 @@ class SevereSluggingExperimentalBenchmarkTest {
    * Allowance on the largest realization above the digitized amplitude and its uncertainty.
    *
    * <p>
-   * The ensemble maximum is 96.9 kPa against a measured 98 +/- 5 kPa, so nothing over-predicts today; the allowance
-   * only leaves room for the trajectory spread of a chaotic limit cycle.
+   * The ensemble maximum is 96.9 kPa against a digitized 98 +/- 5 kPa experimental estimate, so nothing over-predicts
+   * today; the allowance only leaves room for the trajectory spread of a chaotic limit cycle.
    * </p>
    */
   private static final double AMPLITUDE_OVERPREDICTION_ALLOWANCE = 1.25;
@@ -144,9 +148,9 @@ class SevereSluggingExperimentalBenchmarkTest {
    * Largest riser-base swing the measured behaviour admits, as a multiple of the riser hydrostatic head.
    *
    * <p>
-   * The ensemble spans 0.43 to 0.77 heads against a measured 0.78. A swing above one head cannot come from draining the
-   * riser, so exceeding this bound means the riser pressure signature changed and has to be re-measured before the
-   * benchmark can describe it.
+   * The ensemble spans 0.43 to 0.77 heads against an approximately 0.78-head experimental swing digitized from Figure
+   * 5-6. A swing above one head cannot come from draining the riser, so exceeding this bound means the riser pressure
+   * signature changed and has to be re-measured before the benchmark can describe it.
    * </p>
    */
   private static final double RECORDED_PRESSURE_SWING_UPPER_BOUND_IN_RISER_HEADS = 1.10;
@@ -196,6 +200,8 @@ class SevereSluggingExperimentalBenchmarkTest {
       assertFalse(metrics.steadyStateWallClockLimited,
           metrics.label + ": steady-state initialization hit the wall-clock guard, so the initial condition would "
               + "depend on machine speed");
+      assertFalse(metrics.transientOutletBackflowClamped,
+          metrics.label + ": outlet phase backflow was clamped, so the transient profile is not a solution");
       assertTrue(metrics.maximumLiquidOutletKgPerSecond > 1.25 * LIQUID_FEED_KG_PER_S,
           metrics.label + ": no liquid blowout above the feed rate, max=" + metrics.maximumLiquidOutletKgPerSecond);
       assertTrue(metrics.minimumLiquidOutletKgPerSecond < 0.75 * LIQUID_FEED_KG_PER_S,
@@ -218,10 +224,10 @@ class SevereSluggingExperimentalBenchmarkTest {
   }
 
   /**
-   * Comparison with the digitized experiment. On the resolved mesh the swing reaches the measured amplitude; on the
-   * refined mesh it is an order of magnitude below it. The claim asserted here is therefore only that the whole
-   * ensemble stays inside that measured band, and that the cycle period is still under-predicted. A tighter claim on
-   * the amplitude is not supportable while it is mesh dependent.
+   * Comparison with the digitized experimental SS trace in Tengesdal Figure 5-6. On the resolved mesh the swing reaches
+   * the approximate digitized amplitude; on the refined mesh it is an order of magnitude below it. The claim asserted
+   * here is therefore only that the whole ensemble stays inside that broad digitized band, and that the cycle period is
+   * still under-predicted. A tighter claim on the amplitude is not supportable while it is mesh dependent.
    */
   @Test
   void staysInsideTheMeasuredAmplitudeBandAndUnderpredictsPeriod() {
@@ -231,7 +237,7 @@ class SevereSluggingExperimentalBenchmarkTest {
     assertTrue(
         maximumPeakToPeak() < AMPLITUDE_OVERPREDICTION_ALLOWANCE
             * (EXPERIMENTAL_PRESSURE_AMPLITUDE_PA + EXPERIMENTAL_PRESSURE_AMPLITUDE_DIGITIZATION_UNCERTAINTY_PA),
-        "a realization over-predicts the measured amplitude by more than the digitization uncertainty and the "
+        "a realization over-predicts the digitized experimental amplitude by more than the digitization uncertainty and the "
             + "ensemble spread allow; largest peak-to-peak=" + maximumPeakToPeak());
 
     double meanPeriod = 0.0;
@@ -369,7 +375,7 @@ class SevereSluggingExperimentalBenchmarkTest {
     return new TransientMetrics(label, SOURCE_URL, maximum(pressureSamples) - minimum(pressureSamples),
         pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCycle.periodSeconds,
         liquidCycle.completedCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples), maximumSlugLength,
-        pipe.isSteadyStateWallClockLimited(), maximumClosure, finalInventory);
+        pipe.isSteadyStateWallClockLimited(), pipe.isTransientOutletBackflowClamped(), maximumClosure, finalInventory);
   }
 
   private static TwoFluidPipe createLargeFacilityTestThree(int numberOfSections, double inletPressurePerturbation) {
@@ -578,14 +584,15 @@ class SevereSluggingExperimentalBenchmarkTest {
     private final double maximumLiquidOutletKgPerSecond;
     private final double maximumSlugLengthM;
     private final boolean steadyStateWallClockLimited;
+    private final boolean transientOutletBackflowClamped;
     private final Map<Phase, Double> maximumRelativeClosure;
     private final Map<Phase, Double> finalInventoryKg;
 
     private TransientMetrics(String label, String sourceUrl, double peakToPeakPressurePa, double p10ToP90PressurePa,
         double meanInletPressurePa, double cyclePeriodSeconds, int completedCycleCount,
         double minimumLiquidOutletKgPerSecond, double maximumLiquidOutletKgPerSecond, double maximumSlugLengthM,
-        boolean steadyStateWallClockLimited, Map<Phase, Double> maximumRelativeClosure,
-        Map<Phase, Double> finalInventoryKg) {
+        boolean steadyStateWallClockLimited, boolean transientOutletBackflowClamped,
+        Map<Phase, Double> maximumRelativeClosure, Map<Phase, Double> finalInventoryKg) {
       this.label = label;
       this.sourceUrl = sourceUrl;
       this.peakToPeakPressurePa = peakToPeakPressurePa;
@@ -597,6 +604,7 @@ class SevereSluggingExperimentalBenchmarkTest {
       this.maximumLiquidOutletKgPerSecond = maximumLiquidOutletKgPerSecond;
       this.maximumSlugLengthM = maximumSlugLengthM;
       this.steadyStateWallClockLimited = steadyStateWallClockLimited;
+      this.transientOutletBackflowClamped = transientOutletBackflowClamped;
       this.maximumRelativeClosure = new EnumMap<>(maximumRelativeClosure);
       this.finalInventoryKg = new EnumMap<>(finalInventoryKg);
     }
