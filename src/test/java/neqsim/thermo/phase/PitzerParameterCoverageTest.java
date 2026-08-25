@@ -111,7 +111,8 @@ public class PitzerParameterCoverageTest extends neqsim.NeqSimTest {
    * @return initialized Pitzer system
    */
   private static SystemInterface createMixedSystem(double potassiumMoles) {
-    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    SystemPitzer system = new SystemPitzer(298.15, 1.01325);
+    system.useLegacyPitzerParameters();
     system.addComponent("water", 55.508);
     system.addComponent("Na+", 1.0);
     system.addComponent("K+", potassiumMoles);

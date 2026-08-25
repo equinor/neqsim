@@ -65,12 +65,19 @@ public class ComponentGePitzer extends ComponentGE {
     return super.fugcoef(phase);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHydrocarbon() {
+    return super.isHydrocarbon() || hasHydrocarbonFormula();
+  }
+
   /**
    * Check the database molecular formula for a pure hydrocarbon.
    *
    * <p>
-   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}, so
-   * {@link #isHydrocarbon()} alone is not a stable aqueous-reference discriminator.
+   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}. The
+   * formula check keeps Pitzer aqueous-reference and parameter-topology decisions independent of that initialization
+   * detail.
    * </p>
    *
    * @return {@code true} when the formula contains carbon and hydrogen only

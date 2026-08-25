@@ -84,6 +84,8 @@ public class PhasePitzer extends PhaseGE {
   private boolean parametersLoaded = false;
   /** Prefer the complete bundled PHREEQC catalog when it covers the active topology. */
   private boolean usePhreeqcCatalogByDefault = true;
+  /** Keep EOS-role hydrocarbons outside only the automatically selected aqueous-neutral topology. */
+  private boolean excludeHydrocarbonsFromNeutralPitzerTopology;
   /** Whether immutable parameter arrays are shared with a clone until the next setter call. */
   private boolean parameterStorageShared;
   /** Stable identity of the selected parameter dataset. */
@@ -1864,7 +1866,8 @@ public class PhasePitzer extends PhaseGE {
   }
 
   private boolean isNeutralSolute(int index) {
-    return Math.abs(getComponent(index).getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(componentName(index));
+    return Math.abs(getComponent(index).getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(componentName(index))
+        && (!excludeHydrocarbonsFromNeutralPitzerTopology || !getComponent(index).isHydrocarbon());
   }
 
   private void validateNeutralParameterCoverageOncePerState() {
@@ -1886,6 +1889,16 @@ public class PhasePitzer extends PhaseGE {
   void markManualParameterDatasetLoaded() {
     parametersLoaded = true;
     parameterCoverageValidated = false;
+    neutralParameterCoverageValidated = false;
+  }
+
+  /**
+   * Configures whether the automatic catalog selection omits EOS-role hydrocarbons from its neutral topology.
+   *
+   * @param exclude {@code true} for automatic aqueous-role selection, {@code false} for explicit neutral datasets
+   */
+  void setExcludeHydrocarbonsFromNeutralPitzerTopology(boolean exclude) {
+    excludeHydrocarbonsFromNeutralPitzerTopology = exclude;
     neutralParameterCoverageValidated = false;
   }
 

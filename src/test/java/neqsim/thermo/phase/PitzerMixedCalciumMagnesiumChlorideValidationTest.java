@@ -144,10 +144,11 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
   }
 
   private static void assertSourcePreprocessing(ReferenceState state) {
-    double ratio = 1.0 - state.a * state.calciumFraction - state.b * state.calciumFraction * state.calciumFraction;
+    double ratio = 1.0 - state.a * state.magnesiumFraction
+        - state.b * state.magnesiumFraction * state.magnesiumFraction;
     double totalMolality = state.mbMolality / ratio;
-    assertEquals((1.0 - state.calciumFraction) * totalMolality, state.magnesiumChlorideMolality, 5.0e-12);
-    assertEquals(state.calciumFraction * totalMolality, state.calciumChlorideMolality, 5.0e-12);
+    assertEquals(state.magnesiumFraction * totalMolality, state.magnesiumChlorideMolality, 5.0e-12);
+    assertEquals((1.0 - state.magnesiumFraction) * totalMolality, state.calciumChlorideMolality, 5.0e-12);
     assertEquals(state.mbPhi * ratio / state.mbMolality, state.osmoticCoefficient, 5.0e-11);
     double derivedWaterActivity = Math.exp(-0.01801528 * 3.0 * totalMolality * state.osmoticCoefficient);
     assertEquals(derivedWaterActivity, state.waterActivity, 5.0e-12);
@@ -184,6 +185,7 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
   }
 
   private static double waterActivity(PhasePitzer phase) {
+    phase.requireCompletePitzerParameterCoverage();
     int water = phase.getComponent("water").getComponentNumber();
     ComponentGePitzer waterComponent = (ComponentGePitzer) phase.getComponent(water);
     return waterComponent.getGamma(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure(),
@@ -213,7 +215,7 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
     private final double mbPhi;
     private final double a;
     private final double b;
-    private final double calciumFraction;
+    private final double magnesiumFraction;
     private final double magnesiumChlorideMolality;
     private final double calciumChlorideMolality;
     private final double osmoticCoefficient;
@@ -224,7 +226,7 @@ class PitzerMixedCalciumMagnesiumChlorideValidationTest extends neqsim.NeqSimTes
       mbPhi = parseDoubleField(fields, 1);
       a = parseDoubleField(fields, 2);
       b = parseDoubleField(fields, 3);
-      calciumFraction = parseDoubleField(fields, 4);
+      magnesiumFraction = parseDoubleField(fields, 4);
       magnesiumChlorideMolality = parseDoubleField(fields, 5);
       calciumChlorideMolality = parseDoubleField(fields, 6);
       osmoticCoefficient = parseDoubleField(fields, 7);
