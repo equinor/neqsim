@@ -1227,8 +1227,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 This page is a curated navigation surface, not a hand-counted inventory. Repository CI builds the
 search index from every publishable documentation source and reports the audited Markdown and
-standalone HTML totals. Use [Documentation Search](search/index.md) when a topic is not listed
-here.
+standalone HTML totals. Use the site search when a topic is not listed here.
 
 The index is maintained by topic and source path. Entries do not carry date-sensitive "new"
 badges; version history and merge dates remain available in Git.
