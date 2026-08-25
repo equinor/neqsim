@@ -400,6 +400,44 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void magnesiumChlorideMatchesIndependentTraceableValues() {
+    // Partanen, J. Chem. Thermodynamics 66 (2013) 65-70,
+    // DOI 10.1016/j.jct.2013.06.016. The publisher-permitted NIST ThermoML
+    // archive records the paper's molality-scale quantities at 298.15 K and
+    // 101.325 kPa. No PHREEQC parameter was fitted to these held-out values.
+    double[][] reference = { { 0.1667, 0.5018 }, { 0.3333, 0.4796 }, { 1.0, 0.5776 }, { 2.0, 1.0695 } };
+    for (double[] state : reference) {
+      double molality = state[0];
+      PhasePitzer phase = createCalciumMagnesiumChlorideSulfatePhase(REFERENCE_TEMPERATURE, 0.0, molality,
+          2.0 * molality, 0.0);
+      PitzerParameterDatasets.applyCompletePhreeqcPitzerCatalog(phase);
+      double meanLogGamma = (componentLogGamma(phase, "Mg++") + 2.0 * componentLogGamma(phase, "Cl-")) / 3.0;
+      double relativeResidual = Math.abs(Math.exp(meanLogGamma) / state[1] - 1.0);
+      assertTrue(relativeResidual <= 0.025,
+          "MgCl2 mean activity residual at " + molality + " mol/kg: " + relativeResidual);
+    }
+  }
+
+  @Test
+  void qualificationSeparatesCoverageFromIndependentEvidence() {
+    PitzerParameterQualification scaleFamily = PitzerParameterDatasets
+        .getQualification(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID);
+    assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED, scaleFamily.getLevel());
+    assertFalse(scaleFamily.isValidatedWithinDeclaredEnvelope());
+    assertTrue(scaleFamily.getValidatedSystems().toString().contains("MgCl2"));
+    assertTrue(scaleFamily.getLimitations().toString().contains("Mixed Ca-Mg-Cl-SO4"));
+    assertThrows(UnsupportedOperationException.class, () -> scaleFamily.getLimitations().add("unsafe"));
+
+    PitzerParameterQualification unknown = PitzerParameterDatasets.getQualification("private-project-dataset");
+    assertEquals(PitzerParameterQualification.Level.UNQUALIFIED, unknown.getLevel());
+    assertFalse(unknown.isValidatedWithinDeclaredEnvelope());
+    assertTrue(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideBinaryValidationRange(298.15, 0.1));
+    assertTrue(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideBinaryValidationRange(298.15, 2.0));
+    assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideBinaryValidationRange(298.15, 2.1));
+    assertFalse(PitzerParameterDatasets.isWithinCalciumMagnesiumChlorideBinaryValidationRange(323.15, 1.0));
+  }
+
+  @Test
   void catalogFailsBeforeMutationForMissingCarbonateFamily() {
     SystemPitzer system = createCalciumMagnesiumChlorideSulfateSystem(REFERENCE_TEMPERATURE, 0.2, 0.3, 0.6, 0.2);
     system.addComponent("CO3--", 0.1);

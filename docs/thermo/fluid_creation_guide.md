@@ -412,6 +412,22 @@ with meaningful activities for all requested aqueous species. Pitzer has the bro
 coverage; the amine models retain their narrower component and validity ranges. `SystemDuanSun` remains excluded from
 this topology because its current public API accepts only CO2.
 
+For imported Pitzer datasets, check both interaction coverage and scientific qualification. Coverage answers whether
+the active binary, same-sign, ternary, and neutral topology is explicit; qualification answers which systems and
+observables have independent evidence:
+
+```java
+PhasePitzer aqueous = (PhasePitzer) fluid.getGeLiquidPhase();
+aqueous.requireCompletePitzerParameterCoverage();
+PitzerParameterQualification evidence =
+    PitzerParameterDatasets.getQualification(aqueous.getParameterDatasetId());
+```
+
+The complete PHREEQC catalog is intentionally reported as partially validated: CaCl2 and MgCl2 binaries have held-out
+activity evidence, while exact mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain separate gates. Process
+equipment can carry hybrid EOS-Pitzer states and calculate phase density, enthalpy, and heat capacity, but a finite
+saturation ratio is not yet a mineral-amount or precipitation-complementarity result.
+
 ---
 
 ## 8. Mixing Rules
