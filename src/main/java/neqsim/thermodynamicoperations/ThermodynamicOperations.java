@@ -1212,9 +1212,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Brackets an electrolyte VLE or VLLE phase boundary at constant temperature.
    *
    * <p>
-   * Every pressure evaluation uses the system's complete TP flash on an isolated clone. This is the
-   * preferred saturation-pressure path when gas, oil and model-specific aqueous roles may coexist.
-   * The supplied system is left at the target-present side of the final bracket.
+   * Every pressure evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
+   * saturation-pressure path when gas, oil and model-specific aqueous roles may coexist. The supplied system is left at
+   * the target-present side of the final bracket.
    * </p>
    *
    * @param targetPhase phase whose appearance or disappearance is bracketed
@@ -1224,11 +1224,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param maximumIterations maximum bisection iterations
    * @return boundary, topology and scientific acceptance diagnostics
    */
-  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryPressureFlash(
-      PhaseType targetPhase, double lowerPressureBara, double upperPressureBara,
-      double toleranceBara, int maximumIterations) {
-    return new ElectrolytePhaseBoundaryFlash(system,
-        ElectrolytePhaseBoundaryResult.Specification.PRESSURE, targetPhase,
+  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryPressureFlash(PhaseType targetPhase,
+      double lowerPressureBara, double upperPressureBara, double toleranceBara, int maximumIterations) {
+    return new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.PRESSURE, targetPhase,
         lowerPressureBara, upperPressureBara, toleranceBara, maximumIterations).solve();
   }
 
@@ -1236,9 +1234,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Brackets an electrolyte VLE or VLLE phase boundary at constant pressure.
    *
    * <p>
-   * Every temperature evaluation uses the system's complete TP flash on an isolated clone. This is
-   * the preferred saturation-temperature path when gas, oil and model-specific aqueous roles may
-   * coexist. The supplied system is left at the target-present side of the final bracket.
+   * Every temperature evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
+   * saturation-temperature path when gas, oil and model-specific aqueous roles may coexist. The supplied system is left
+   * at the target-present side of the final bracket.
    * </p>
    *
    * @param targetPhase phase whose appearance or disappearance is bracketed
@@ -1248,12 +1246,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param maximumIterations maximum bisection iterations
    * @return boundary, topology and scientific acceptance diagnostics
    */
-  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryTemperatureFlash(
-      PhaseType targetPhase, double lowerTemperatureK, double upperTemperatureK,
-      double toleranceK, int maximumIterations) {
-    return new ElectrolytePhaseBoundaryFlash(system,
-        ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE, targetPhase,
-        lowerTemperatureK, upperTemperatureK, toleranceK, maximumIterations).solve();
+  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryTemperatureFlash(PhaseType targetPhase,
+      double lowerTemperatureK, double upperTemperatureK, double toleranceK, int maximumIterations) {
+    return new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
+        targetPhase, lowerTemperatureK, upperTemperatureK, toleranceK, maximumIterations).solve();
   }
 
   /**
