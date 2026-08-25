@@ -61,6 +61,28 @@ public class SystemPitzer extends SystemEosGE {
     configureHybridEosGePhases(T, P, new PhaseSrkEos(), new PhasePitzer(), new PhaseSrkEos());
   }
 
+  /**
+   * Selects legacy Pitzer parameter loading for compatibility with historical calculations.
+   *
+   * <p>
+   * The default is to use the bundled PHREEQC catalog whenever it contains every interaction required by the active
+   * aqueous topology. Call this method before the first activity or property evaluation only when reproducing a legacy
+   * result is required.
+   * </p>
+   */
+  public void useLegacyPitzerParameters() {
+    ((PhasePitzer) phaseArray[1]).setUsePhreeqcCatalogByDefault(false);
+  }
+
+  /**
+   * Reports whether automatic parameter loading prefers the bundled PHREEQC catalog.
+   *
+   * @return {@code true} for the default catalog-first policy
+   */
+  public boolean isUsingPhreeqcPitzerParametersByDefault() {
+    return ((PhasePitzer) phaseArray[1]).isUsePhreeqcCatalogByDefault();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setMixingRule(String typename) {

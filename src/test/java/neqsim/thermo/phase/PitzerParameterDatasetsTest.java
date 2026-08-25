@@ -425,8 +425,9 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED, scaleFamily.getLevel());
     assertFalse(scaleFamily.isValidatedWithinDeclaredEnvelope());
     assertTrue(scaleFamily.getValidatedSystems().toString().contains("MgCl2"));
+    assertTrue(scaleFamily.getValidatedSystems().toString().contains("CaCl2-MgCl2 osmotic coefficient"));
     assertTrue(scaleFamily.getValidatedSystems().toString().contains("MgCl2-MgSO4 water activity"));
-    assertTrue(scaleFamily.getLimitations().toString().contains("Ca-bearing mixed Ca-Mg-Cl-SO4"));
+    assertTrue(scaleFamily.getLimitations().toString().contains("Quaternary Ca-Mg-Cl-SO4"));
     assertThrows(UnsupportedOperationException.class, () -> scaleFamily.getLimitations().add("unsafe"));
 
     PitzerParameterQualification unknown = PitzerParameterDatasets.getQualification("private-project-dataset");

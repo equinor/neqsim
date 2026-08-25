@@ -139,26 +139,34 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
         if not isinstance(unc, dict):
             errors.append("uncertainty: must be a JSON object")
         else:
-            for need in ("p10", "p50", "p90"):
-                if need not in unc:
-                    warnings.append(f"uncertainty.{need}: missing percentile")
-            # Percentiles must be numeric and ordered p10 <= p50 <= p90.
-            pcts = {}
-            for need in ("p10", "p50", "p90"):
-                val = unc.get(need)
-                if val is not None:
-                    if isinstance(val, bool) or not isinstance(val, (int, float)):
-                        errors.append(f"uncertainty.{need}: must be a number")
-                    else:
-                        pcts[need] = float(val)
-            if "p10" in pcts and "p50" in pcts and pcts["p10"] > pcts["p50"]:
-                errors.append(
-                    f"uncertainty.p10: p10 ({pcts['p10']}) must be <= p50 ({pcts['p50']})"
-                )
-            if "p50" in pcts and "p90" in pcts and pcts["p50"] > pcts["p90"]:
-                errors.append(
-                    f"uncertainty.p50: p50 ({pcts['p50']}) must be <= p90 ({pcts['p90']})"
-                )
+            status = str(unc.get("status") or "").strip().lower()
+            if status == "not_quantified":
+                rationale = unc.get("rationale")
+                if not isinstance(rationale, str) or not rationale.strip():
+                    errors.append(
+                        "uncertainty.rationale: required when status is not_quantified"
+                    )
+            else:
+                for need in ("p10", "p50", "p90"):
+                    if need not in unc:
+                        warnings.append(f"uncertainty.{need}: missing percentile")
+                # Percentiles must be numeric and ordered p10 <= p50 <= p90.
+                pcts = {}
+                for need in ("p10", "p50", "p90"):
+                    val = unc.get(need)
+                    if val is not None:
+                        if isinstance(val, bool) or not isinstance(val, (int, float)):
+                            errors.append(f"uncertainty.{need}: must be a number")
+                        else:
+                            pcts[need] = float(val)
+                if "p10" in pcts and "p50" in pcts and pcts["p10"] > pcts["p50"]:
+                    errors.append(
+                        f"uncertainty.p10: p10 ({pcts['p10']}) must be <= p50 ({pcts['p50']})"
+                    )
+                if "p50" in pcts and "p90" in pcts and pcts["p50"] > pcts["p90"]:
+                    errors.append(
+                        f"uncertainty.p50: p50 ({pcts['p50']}) must be <= p90 ({pcts['p90']})"
+                    )
 
     # risk_evaluation
     risk = results.get("risk_evaluation")

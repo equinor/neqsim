@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -94,6 +93,37 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
     controller.runTransient(controller.getResponse(), 1.0, stepId);
     assertArrayEquals(trialControls, controller.getControlVector(), TOLERANCE);
     assertEquals(trialPrediction, controller.getPredictedQuality("product"), TOLERANCE);
+  }
+
+  @Test
+  void multivariableRollbackRestoresLinearMoveConstraints() {
+    ModelPredictiveController controller = new ModelPredictiveController("constrained multivariable");
+    controller.configureControls("choke A", "choke B");
+    controller.setInitialControlValues(10.0, 10.0);
+    controller.setControlLimits(0, 0.0, 100.0);
+    controller.setControlLimits(1, 0.0, 100.0);
+    controller.setControlWeights(1.0, 1.0);
+    controller.setMoveWeights(0.0, 0.0);
+    controller.setPreferredControlVector(30.0, 30.0);
+    controller.addLinearMoveConstraint(new ModelPredictiveController.LinearMoveConstraint("shared opening budget",
+        new double[] { 1.0, 1.0 }, Double.NEGATIVE_INFINITY, 2.0));
+    ProcessSystem process = new ProcessSystem("linear constraint transaction");
+    process.add(controller);
+
+    UUID stepId = TransientStepIdentifier.deterministicPhysicalStep("linear-constraint-replay", 0L);
+    TransientStepTransaction transaction = process.beginTransientStepTransaction();
+    controller.clearLinearMoveConstraints();
+    controller.addLinearMoveConstraint(new ModelPredictiveController.LinearMoveConstraint("trial opening budget",
+        new double[] { 1.0, 1.0 }, Double.NEGATIVE_INFINITY, 100.0));
+    controller.runTransient(Double.NaN, 1.0, stepId);
+    double unconstrainedOpening = controller.getControlValue(0) + controller.getControlValue(1) - 20.0;
+    assertTrue(unconstrainedOpening > 2.0 + 1.0e-6);
+    transaction.rollback();
+
+    assertArrayEquals(new double[] { 10.0, 10.0 }, controller.getControlVector(), 0.0);
+    controller.runTransient(Double.NaN, 1.0, stepId);
+    double constrainedOpening = controller.getControlValue(0) + controller.getControlValue(1) - 20.0;
+    assertEquals(2.0, constrainedOpening, 1.0e-6);
   }
 
   @Test

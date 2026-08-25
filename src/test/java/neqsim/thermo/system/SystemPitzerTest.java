@@ -749,7 +749,8 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testThetaPsiMixing() {
-    SystemInterface system = new SystemPitzer(298.15, 1.0);
+    SystemPitzer system = new SystemPitzer(298.15, 1.0);
+    system.useLegacyPitzerParameters();
     system.addComponent("water", 55.5);
     system.addComponent("Na+", 1.0);
     system.addComponent("K+", 0.5);
@@ -794,7 +795,8 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testDatabaseLoadMultipleSalts() {
-    SystemInterface system = new SystemPitzer(298.15, 1.0);
+    SystemPitzer system = new SystemPitzer(298.15, 1.0);
+    system.useLegacyPitzerParameters();
     system.addComponent("water", 55.5);
     system.addComponent("Na+", 0.5);
     system.addComponent("K+", 0.1);
@@ -885,7 +887,8 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    */
   private static void assertPopulatedPitzerPairCanBeUsed(String cation, String anion, boolean expectBeta0,
       boolean expectBeta1, boolean expectBeta2) {
-    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    SystemPitzer system = new SystemPitzer(298.15, 1.01325);
+    system.useLegacyPitzerParameters();
     system.addComponent("water", 55.508);
     system.addComponent(cation, 0.1 * getAbsoluteChargeFromIonName(anion));
     system.addComponent(anion, 0.1 * getAbsoluteChargeFromIonName(cation));
