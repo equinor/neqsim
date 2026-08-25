@@ -53,8 +53,12 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(71, limitations.get("publishedToolCount").getAsInt());
     assertEquals(71, limitations.get("coverageRecordCount").getAsInt());
     assertEquals(20, limitations.get("explicitCoverageRecordCount").getAsInt());
-    assertEquals(1, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(50, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(3, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(48, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(3, limitations.getAsJsonArray("contractTestedTools").size());
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getCapabilities"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getSchema"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getExample"));
     assertEquals(71, coverageRecords.size());
     assertTrue(limitations.get("coverageComplete").getAsBoolean());
     assertFalse(limitations.get("scientificValidationComplete").getAsBoolean());
@@ -72,6 +76,18 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("TESTED", capabilities.get("maturityLevel").getAsString());
     assertEquals(4, capabilities.get("contractEvidenceCount").getAsInt());
     assertTrue(capabilities.get("evidenceBoundary").getAsString().contains("not scientific validation"));
+
+    JsonObject schema = coverageRecords.getAsJsonObject("getSchema");
+    assertEquals("CONTRACT_TESTED", schema.get("coverageStatus").getAsString());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_SCHEMA_CATALOG", schema.get("benchmarkApplicability").getAsString());
+    assertEquals(3, schema.get("contractEvidenceCount").getAsInt());
+    assertTrue(schema.get("evidenceBoundary").getAsString().contains("142 canonical"));
+
+    JsonObject example = coverageRecords.getAsJsonObject("getExample");
+    assertEquals("CONTRACT_TESTED", example.get("coverageStatus").getAsString());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_EXAMPLE_CATALOG", example.get("benchmarkApplicability").getAsString());
+    assertEquals(3, example.get("contractEvidenceCount").getAsInt());
+    assertTrue(example.get("evidenceBoundary").getAsString().contains("114 catalog examples"));
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 
@@ -81,7 +97,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.6", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.7", inventory.get("inventoryVersion").getAsString());
     assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());
