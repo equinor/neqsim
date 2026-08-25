@@ -280,6 +280,27 @@ agreement does not qualify its missing aqueous interaction family. A redistribut
 Ba/Sr sulfate family with binary and all required mixed-brine terms plus held-out solubility or
 saturation evidence is the next parameter dependency.
 
+`ThermodynamicOperations.precipitateScales` adds a model-neutral orchestration layer for competing
+pure COMPSALT minerals. It does not merge parameter semantics: `SystemPitzer` continues to evaluate
+molality-scale activities from the explicitly selected PHREEQC family, while electrolyte EOS
+systems continue to use their own aqueous fugacity/activity implementation. No Pitzer interaction
+is copied into an EOS or reaction table.
+
+The active set owns an external, non-negative pure-solid ledger, precipitates supersaturated
+minerals, and redissolves undersaturated present minerals until the maximum complementarity
+violation is at most `1e-6` log10-SR. It fails closed on non-convergence and on a dissolved-plus-solid
+component residual above `1e-10 mol`. A continuation API accepts the previous ledger after a T/P or
+composition change, preventing a stale solid state in process sequences.
+
+The algorithmic regression uses `CaSO4_A` and `CaSO4_G`, whose unmodified COMPSALT correlations at
+298.15 K give log10 Ksp values `-4.355596` and `-4.578529`, respectively. Because both consume one
+Ca++ and one SO4--, the lower-Ksp correlation must be present and the higher-Ksp phase absent,
+independent of input order. This is an internal complementarity/topology regression, separate from
+the PHREEQC anhydrite Ksp comparison and from fitted-data validation. The `CaSO4_G` COMPSALT row
+does not explicitly represent crystallization-water activity or mass; therefore the regression does
+not qualify gypsum hydration thermodynamics, and that standard-state extension remains a distinct
+parameter/model boundary.
+
 `PitzerCatalogPerformanceBenchmark` measures nine fixed-work batches after warmup. On OpenJDK 17
 in the development container, the median four-ion activity/osmotic kernel was 10.542 microseconds
 and the complete aqueous `init(3)` plus physical-property calculation was 0.168756 milliseconds.

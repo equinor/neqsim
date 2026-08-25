@@ -249,10 +249,61 @@ composition is reflashed and physical properties are reinitialised. Consequently
 fluid can continue through `Stream`, `Heater`, and `ProcessSystem` calculations. Ions remain in the
 aqueous phase, while gas and oil phases retain their EOS roles.
 
-This API is a single-pure-mineral equilibrium operation. Callers should require a complementarity
-residual such as `solid.getComplementarityViolation() <= 1e-5` and independently check total and
-elemental balances. It does not yet solve simultaneous competition among several solid phases,
-solid solutions, nucleation, kinetics, deposition, or inhibitor performance. A Pitzer calculation
+Callers should require a complementarity residual such as
+`solid.getComplementarityViolation() <= 1e-5` and independently check total and elemental balances.
+
+### Simultaneous competing pure minerals
+
+`ThermodynamicOperations.precipitateScales(String...)` enforces non-negative pure-solid amounts and
+aqueous saturation complementarity for several named COMPSALT minerals. The active set precipitates
+supersaturated minerals and redissolves an undersaturated present mineral. Names are sorted before
+iteration, so caller ordering cannot select a different solid topology.
+
+```java
+MultiSaltPrecipitationResult scales =
+    operations.precipitateScales("CaSO4_A", "CaSO4_G");
+
+SaltPrecipitationResult anhydrite = scales.getMineralResult("CaSO4_A");
+SaltPrecipitationResult gypsumCorrelation = scales.getMineralResult("CaSO4_G");
+double complementarity = scales.getMaximumComplementarityViolation();
+double componentBalanceMol = scales.getMaximumComponentBalanceResidualMoles();
+```
+
+The returned ledger is absolute for that call and is not inserted into the NeqSim phase list. Carry
+it with the residual fluid. After a heater, pressure change, dilution, or composition change, pass
+the same ledger back so available solids can dissolve as well as precipitate:
+
+```java
+MultiSaltPrecipitationResult updatedScales =
+    new ThermodynamicOperations(changedFluid).equilibrateScales(scales);
+```
+
+The continuation API conserves dissolved plus ledgered formula units and fails closed if the
+bounded active set cannot reach `1e-6` log10-SR complementarity or `1e-10 mol` component balance.
+The result reports the update count, maximum complementarity violation, component-ledger residual,
+per-mineral saturation ratios and non-negative amounts. It is serializable and its mineral map is
+defensively immutable for Java and Python process workflows. A thermodynamic system remains mutable
+and must not be shared between threads. Sequential clones are deterministic, and independently
+constructed systems are covered by a parallel determinism regression. Concurrent use of clones from
+one Pitzer instance is not qualified because current shared Pitzer internals can race; construct each
+parallel system independently until that separate prerequisite is resolved.
+
+The deterministic regression uses the two existing calcium-sulfate COMPSALT correlations because
+they share the same dissolved ions: the lower-Ksp `CaSO4_G` correlation must displace
+`CaSO4_A`, independent of caller order. A separate dilution continuation proves that an existing
+solid can redissolve without stale-state carryover. This proves the active-set algorithm; it is not
+independent validation of gypsum hydration thermodynamics. COMPSALT represents
+the aqueous ion reaction and does not explicitly include crystallization-water activity or mass,
+so hydrated-mineral standard-state treatment remains outside this API's qualified scope.
+
+The process-system test carries the solid ledger beside the residual fluid through a
+`Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Fluid-phase
+density, enthalpy and heat capacity remain finite and ions remain aqueous. Solid density, enthalpy,
+heat capacity and heat of precipitation are not yet represented, so rigorous process energy balances
+with a material solid stream remain a separate model/property boundary.
+
+Neither pure-mineral API solves solid solutions, nucleation, kinetics, deposition, or inhibitor
+performance. A Pitzer calculation
 must first select a parameter dataset complete for its active aqueous topology. Missing binary,
 same-sign, ternary, or neutral interactions remain an error; they are not silently set to zero.
 
@@ -261,7 +312,15 @@ control. On OpenJDK 17 in the development container, its median fresh-system cal
 78.9 ms for aqueous anhydrite precipitation and 1.018 s for the complete gas-oil-aqueous case.
 The unchanged neutral SRK control measured 0.215 ms before and 0.055 ms after the Pitzer batches
 (ratio 0.254, reflecting JIT warmup rather than a regression). This operation is invoked only by
-`precipitateScale`; neutral PR/SRK/CPA calculations execute no new branch or allocation.
+`precipitateScale` or `precipitateScales`; neutral PR/SRK/CPA calculations execute no new branch or
+allocation.
+
+With simultaneous `CaSO4_A`/`CaSO4_G` enabled in the same benchmark, median fresh-system times were
+80.5 ms for the aqueous calculation and 1.206 s for gas-oil-aqueous. The active set required one
+solid update, reached `9.995e-9` maximum log10-SR complementarity violation, and closed the component
+ledger to reported machine zero. The unchanged neutral SRK control measured 0.205 ms before and
+0.049 ms after the electrolyte batches (ratio 0.238, JIT dominated). Timings are diagnostic and not
+portable hardware guarantees.
 
 ### Reaction-level saturation diagnostics
 
