@@ -64,7 +64,8 @@ substance or a mixed phase.
 
 Construct the Leachman system for the explicit `"para-hydrogen"` component with solid
 checking enabled. `freezingPointTemperatureFlashResult()` returns convergence,
-temperature, iteration count, residual, controlling component, and a failure reason.
+temperature, iteration count, residual, controlling component, and a failure reason. The
+call declares `IsNaNException`; catch it or declare it in the surrounding method.
 
 ```java
 import neqsim.thermo.system.SystemLeachmanEos;
