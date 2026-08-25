@@ -28,7 +28,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.12");
+    inventory.addProperty("inventoryVersion", "1.13");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -238,7 +238,7 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "No promotion candidate is queued; close further gaps only when current source and concrete evidence support a bounded classification");
+        "inspectApi is evidence-qualified but remains CONFIRMED_GAP until a direct real-MCP invocation and frozen protocol classification accounting are added atomically on one validated exact head");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
         "Every published tool has an explicit coverage record; nine non-numerical discovery, catalog, lookup, progress, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
@@ -249,7 +249,29 @@ public final class McpEvidenceInventory {
 
   /** Builds evidence-qualified candidates for a future atomic contract-status promotion. */
   private static JsonObject buildContractPromotionCandidates() {
-    return new JsonObject();
+    JsonObject candidates = new JsonObject();
+    candidates.add("inspectApi", contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_RUNTIME_API_INSPECTION",
+        new String[] { "src/main/java/neqsim/mcp/runners/ApiKnowledgeRunner.java",
+            "src/test/java/neqsim/mcp/runners/ApiKnowledgeRunnerTest.java",
+            "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+            "neqsim-mcp-server/docs/evidence/API_INSPECTION_CONTRACT.md" },
+        "Version-matched reflection is restricted to neqsim.* classes, common NeqSim process aliases, and EquipmentFactory aliases; source-level tests cover representative resolution, member filtering, source pointers, and rejection of java.lang.Runtime, but the packaged MCP protocol does not yet directly invoke inspectApi"));
+    return candidates;
+  }
+
+  /** Builds one bounded contract-promotion candidate. */
+  private static JsonObject contractPromotionCandidate(String benchmarkApplicability, String[] evidenceSources,
+      String evidenceBoundary) {
+    JsonObject candidate = new JsonObject();
+    candidate.addProperty("targetCoverageStatus", "CONTRACT_TESTED");
+    candidate.addProperty("benchmarkApplicability", benchmarkApplicability);
+    candidate.addProperty("contractEvidenceCount", evidenceSources.length);
+    candidate.add("contractEvidenceSources", toJsonArray(java.util.Arrays.asList(evidenceSources)));
+    candidate.addProperty("evidenceBoundary", evidenceBoundary);
+    candidate.addProperty("promotionReady", false);
+    candidate.addProperty("remainingGate",
+        "Add a direct real-MCP inspectApi invocation and update frozen protocol classification accounting atomically, then pass exact-head hosted validation before changing coverageStatus");
+    return candidate;
   }
 
   /**
