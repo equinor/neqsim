@@ -66,7 +66,7 @@ class ReferenceManualIndexDocumentationTest(unittest.TestCase):
         self.assertEqual(list("ABCDEFGHI"), appendices)
 
     def test_source_path_labels_match_their_internal_targets(self):
-        source_links = re.findall(r"\\[([^\\]]+)\\]\\(([^)\\s]+)\\)", self.index)
+        source_links = re.findall(r"\[([^\]]+)\]\(([^)\s]+)\)", self.index)
         checked = 0
         mismatches = []
         for label, target in source_links:
