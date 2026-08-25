@@ -142,7 +142,7 @@ public final class PlantUtilizationSnapshot implements Serializable {
 
   /** @return deterministic immutable list containing every registered row */
   public List<PlantConstraintEvidence> getEvidence() {
-    return evidence;
+    return Collections.unmodifiableList(new ArrayList<PlantConstraintEvidence>(evidence));
   }
 
   /**
@@ -157,7 +157,7 @@ public final class PlantUtilizationSnapshot implements Serializable {
 
   /** @return immutable available-evidence ranking in descending utilization order */
   public List<PlantConstraintEvidence> getBottleneckLadder() {
-    return bottleneckLadder;
+    return Collections.unmodifiableList(new ArrayList<PlantConstraintEvidence>(bottleneckLadder));
   }
 
   /** @return first available limiting row, or null when no enabled evidence is available */
@@ -177,12 +177,12 @@ public final class PlantUtilizationSnapshot implements Serializable {
 
   /** @return immutable deterministic list of incomplete-coverage diagnostics */
   public List<String> getCoverageDiagnostics() {
-    return coverageDiagnostics;
+    return Collections.unmodifiableList(new ArrayList<String>(coverageDiagnostics));
   }
 
   /** @return immutable deterministic list of hard-limit violation diagnostics */
   public List<String> getFeasibilityDiagnostics() {
-    return feasibilityDiagnostics;
+    return Collections.unmodifiableList(new ArrayList<String>(feasibilityDiagnostics));
   }
 
   /** Callback-free builder suitable for Java and JPype callers. */
