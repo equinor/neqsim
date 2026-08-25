@@ -221,6 +221,27 @@ NeqSim predicts 0.493757, 0.469707, 0.564503, and 1.051132 versus 0.5018, 0.4796
 MgCl2 evidence is acceptable for screening inside this narrow envelope, but it does not qualify the
 four-ion mixture.
 
+Independent mixed CaCl2+MgCl2 observable evidence comes from Robinson and Bower (1966),
+[DOI 10.6028/jres.070A.026](https://doi.org/10.6028/jres.070A.026), Table 2. The
+National Bureau of Standards article is a U.S. Government work and is public domain. Its isopiestic
+correlation is
+
+`R = M_B / m_total = 1 - a y_Ca - b y_Ca^2`,
+
+where `M_B` and `M_B phi_B` describe the MgCl2 reference solution and `y_Ca` is the CaCl2
+fraction of total formula-unit molality. The stored regression states are transparently derived as
+`m_total=M_B/R`, `m_CaCl2=y_Ca m_total`, `m_MgCl2=(1-y_Ca)m_total`, and
+`phi=(M_B phi_B)R/M_B`. Water activity follows
+`ln(a_w)=-0.01801528*3*m_total*phi`; both salts dissociate into three ions per formula unit.
+Nine points cover the three tabulated isopiestic levels and CaCl2 fractions 0.25, 0.50, and 0.75,
+for total salt 0.548-2.161 mol/kg water at 298.15 K. The source reports no pointwise uncertainty for
+Table 2, so the independent regression uses explicit engineering gates of 0.04 maximum absolute
+osmotic-coefficient residual and 0.004 maximum water-activity residual. It also checks the published
+preprocessing equation, formula balance, electroneutrality, normalized/non-negative phase state,
+water-activity/osmotic identity, repeated evaluation, and changed-state freshness. No parameter is
+fitted or adopted. This validates mixed chloride observables only; it does not qualify sulfate-
+bearing quaternary mixtures or mineral standard states.
+
 The independent MgCl2+MgSO4 potentiometric study at 298.15 K,
 [DOI 10.1016/j.jct.2011.08.020](https://doi.org/10.1016/j.jct.2011.08.020), reports
 `theta(Cl,SO4)=0.0252 +/- 0.0042` and `psi(Mg,Cl,SO4)=-0.0049 +/- 0.0003`. The PHREEQC catalog
@@ -251,10 +272,11 @@ ion activities, mineral saturation, or precipitation.
 
 `PitzerParameterDatasets.getQualification(datasetId)` exposes this distinction to Java and Python
 callers. Complete PHREEQC catalog topology reports `PARTIALLY_EXPERIMENTALLY_VALIDATED`, lists the
-CaCl2 and MgCl2 binaries plus mixed MgCl2-MgSO4 water activity as checked, and explicitly leaves
-Ca-bearing mixed activity and mineral precipitation unresolved. The range diagnostic accepts only
-the three experimentally checked ionic-strength-fraction lines and their line-specific molality
-intervals. Unknown or private dataset identities report `UNQUALIFIED`. This metadata lookup is
+CaCl2 and MgCl2 binaries, mixed CaCl2-MgCl2 osmotic/water properties, and mixed MgCl2-MgSO4 water
+activity as checked, and explicitly leaves quaternary Ca-Mg-Cl-SO4 activity and sulfate-mineral
+thermodynamics unresolved. Separate range diagnostics expose the mixed-chloride envelope and only
+the three experimentally checked MgCl2-MgSO4 ionic-strength-fraction lines with their line-specific
+molality intervals. Unknown or private dataset identities report `UNQUALIFIED`. This metadata lookup is
 outside the activity/property kernels and adds no non-electrolyte overhead.
 
 The catalog is an aqueous-GE parameter source, not a complete scale or process model by itself.
@@ -292,10 +314,13 @@ violation is at most `1e-6` log10-SR. It fails closed on non-convergence and on 
 component residual above `1e-10 mol`. A continuation API accepts the previous ledger after a T/P or
 composition change, preventing a stale solid state in process sequences.
 
-The algorithmic regression uses `CaSO4_A` and `CaSO4_G`, whose unmodified COMPSALT correlations at
-298.15 K give log10 Ksp values `-4.355596` and `-4.578529`, respectively. Because both consume one
-Ca++ and one SO4--, the lower-Ksp correlation must be present and the higher-Ksp phase absent,
-independent of input order. This is an internal complementarity/topology regression, separate from
+The algorithmic regression uses a charge-balanced Na/Ca/Mg/Cl/SO4 brine with nonzero amounts of all
+four Ca/Mg/Cl/SO4 ions and the `CaSO4_A` and `CaSO4_G` correlations. Their unmodified COMPSALT
+correlations at 298.15 K give log10 Ksp values `-4.355596` and `-4.578529`, respectively. Because
+both consume one Ca++ and one SO4--, the lower-Ksp correlation must be present and the higher-Ksp
+phase absent, independent of input order. The regression closes the Ca/SO4 dissolved-plus-solid
+ledger and proves that Mg/Cl spectators are unchanged, then carries the same four-ion fluid through
+the gas-oil-aqueous process-property path. This is an internal complementarity/topology regression, separate from
 the PHREEQC anhydrite Ksp comparison and from fitted-data validation. The `CaSO4_G` COMPSALT row
 does not explicitly represent crystallization-water activity or mass; therefore the regression does
 not qualify gypsum hydration thermodynamics, and that standard-state extension remains a distinct
@@ -327,6 +352,7 @@ until their complete topology and validation matrix are documented.
 | Partanen and Partanen (2020), [traceable NaCl values](https://doi.org/10.1021/acs.jced.0c00402) | Recommended NaCl mean activity and water osmotic coefficients; no Pitzer parameter is supplied or adopted | 273.15–373.15 K, 0.2 mol/kg to saturation; molality scale; extended-Huckel model fitted independently of the PHREEQC implementation | Traceable synthesis of vapor-pressure, electrochemical, cryoscopic, and solubility evidence; tabulated values are rounded to 0.001 | Primary open-access article and numerical tables under CC BY 4.0 | Four 298.15 K points from 0.2–2.0 mol/kg are held-out validation only. Max NeqSim residuals are 1.36% in mean activity, 0.0053 in osmotic coefficient, and below 0.0004 in derived water activity; no coefficient was refitted. |
 | Hamer and Wu (1972), [NBS/NIST critical evaluation](https://doi.org/10.1063/1.3253108), independently reproduced by Dash et al. (2012), [open-access table](https://doi.org/10.5402/2012/730154) | Critically evaluated KCl mean activity coefficients; no Pitzer parameter is supplied or adopted | 298.15 K, molality scale, 1:1 electrolyte; four selected states span 0.0982–1.9895 mol/kg | Hamer-Wu evaluates thermodynamic literature; reproduced values are rounded to 0.001. Dash et al.'s direct single-ion-selective-electrode means are 10.7–13.4% higher at the same states and are treated as a method conflict. | U.S. NBS authorship and U.S. Secretary of Commerce publication; the four checked values are also reproduced in a CC BY open-access primary experiment | Held-out binary validation only. Max NeqSim mean-activity residual is 0.110% against a 0.20% gate; no coefficient was refitted. The critically evaluated values take precedence over the conflicting single-ion method. |
 | Partanen (2013), [traceable MgCl2 values](https://doi.org/10.1016/j.jct.2013.06.016) | Recommended MgCl2 mean activity and water osmotic coefficients; no Pitzer parameter is supplied or adopted | 298.15 K, 0–3 mol/kg, molality scale; four checked states span 0.1667–2.0 mol/kg | Traceable synthesis and tests against isopiestic and vapor-pressure literature; tabulated values are rounded | Journal of Chemical Thermodynamics data distributed through the publisher-permitted NIST ThermoML archive; NIST public-data terms and citation request recorded | Held-out binary validation only. Max NeqSim mean-activity residual is 2.27% without refitting; this does not qualify mixed Mg chloride/sulfate brines. |
+| Robinson and Bower (1966), [NBS mixed CaCl2+MgCl2 isopiestic data](https://doi.org/10.6028/jres.070A.026) | Table 2 `R=1-a*yCa-b*yCa^2` correlations for osmotic coefficient and derived water activity; no Pitzer coefficient is supplied or adopted | 298.15 K; three MgCl2 reference levels; checked CaCl2 fractions 0.25/0.50/0.75; total salt 0.548–2.161 mol/kg; molality and pure-water activity standard state | Nine checked states; source gives no pointwise uncertainty. Gates are max absolute 0.04 in osmotic coefficient and 0.004 in water activity, without refitting. | U.S. National Bureau of Standards authorship; U.S. Government work, public domain; exact table inputs and transparent derived values are stored | Accepted as independent mixed-chloride observable validation. It does not qualify sulfate-bearing quaternary mixtures or mineral parameters. |
 | Dinane, Messnaoui and Abou Nohra (2012), [mixed MgCl2+MgSO4 experiment](https://doi.org/10.1016/j.jct.2011.08.020) | Mean MgCl2 activities over total ionic strength 0.001–8 mol/kg; fitted `theta(Cl,SO4)` and `psi(Mg,Cl,SO4)` | 298.15 K; salt ratios 2.5, 5, 7.5, 10, and 15; potentiometric Mg-ISE/Ag-AgCl method and Pitzer fit | `theta=0.0252 +/- 0.0042`, `psi=-0.0049 +/- 0.0003`; PHREEQC has 0.03 and -0.008 | Primary Elsevier article; no table is copied and numerical-table redistribution was not established | Theta broadly agrees, but psi materially conflicts. No coefficient is adopted or mixed; the coherent PHREEQC family is assessed against separate observable data. |
 | Guendouzi and Errougui (2007), [mixed MgCl2+MgSO4 water activity](https://doi.org/10.1021/je7002176), NIST ThermoML MD5 `29969a5f814eb0ad6d7ca5b4f093b658` | 28 measured water activities; no interaction parameter is adopted. The paper also fits mixing parameters, but they are not transcribed or mixed with PHREEQC. | 298.15 K, 101 kPa; MgCl2 ionic-strength fractions 0.20, 0.50, 0.80; total formula-unit molality 0.35–3.80 mol/kg; molality composition and pure-water activity standard state | Hygrometric method; per-state 95% combined expanded uncertainty 0.001–0.004. NeqSim max absolute residual 0.002985, RMSE 0.001275, and 26/28 states inside individual uncertainty without refitting. | Primary article; numerical record is publisher-permitted NIST ThermoML. Stored unchanged subset follows the NIST public-data license and acknowledgment terms. | Accepted as held-out mixed Mg-Cl-SO4 water-activity evidence only. It supports PHREEQC `B0/B1/B2/C0`, Cl-/SO4-- `theta`, Mg++/Cl-/SO4-- `psi`, charge-dependent alpha, and electrostatic conventions as one coherent calculation; it does not transfer a fitted parameter or qualify Ca/minerals. |
 | Rodil, Arce, Wilczek-Vera and Vera (2009), [mixed NaCl+KCl experiment](https://doi.org/10.1021/je800389q) and [mandatory correction](https://doi.org/10.1021/je9002674) | Individual Cl-/Na+/K+ activity evidence in mixed NaCl+KCl at cation molal fractions 0.75, 0.5, and 0.25 | 298.15 K; total chloride to 4 mol/kg; Henderson liquid-junction correction and single-ion convention | Original paper reports the experiment; the correction replaces erroneous Na+/K+ tabulations without changing conclusions | ACS supporting information is publicly downloadable, but copyright and no explicit data-redistribution license were established | Candidate held-out mixed-family validation only. No value is stored; licensing-clear data and convention mapping remain the blocker. Exact-composition IPhreeqc checks are retained as implementation evidence, not a substitute for experiment. |
