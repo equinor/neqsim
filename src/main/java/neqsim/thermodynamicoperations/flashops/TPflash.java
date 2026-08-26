@@ -3575,10 +3575,11 @@ public class TPflash extends Flash {
    * {@link TPmultiflash} can converge a balanced gas/aqueous split on a higher-Gibbs cubic root while the ordinary
    * two-phase path reaches the lower root and a slightly adjusted equilibrium composition. A cheap alternate-root
    * comparison screens the converged gas phase before any retry. Only a lower root beyond numerical noise starts an
-   * ordinary TP flash on a clone; the candidate is replayed on the live system only when it retains exactly gas and
-   * aqueous phases, passes the existing strict phase-fraction, normalization, material-balance, distinct-composition,
-   * and fugacity checks, and lowers total extensive Gibbs energy beyond the same tolerance. Three-phase results and
-   * chemical, electrolyte, solid, and wax calculations remain on their existing paths.
+   * ordinary TP flash on a clone; the candidate is replayed on the live system only when it retains exactly one aqueous
+   * phase and one cubic fluid phase. The cubic phase may change from gas to oil/liquid when the alternate root is
+   * stable. The candidate must still pass the existing strict phase-fraction, normalization, material-balance,
+   * distinct-composition, and fugacity checks, and lower total extensive Gibbs energy beyond the same tolerance.
+   * Three-phase results and chemical, electrolyte, solid, and wax calculations remain on their existing paths.
    * </p>
    */
   private void rescueLowerGibbsMultiphaseAqueousRoot() {
@@ -3597,10 +3598,7 @@ public class TPflash extends Flash {
       candidate.setMultiPhaseCheck(false);
       new TPflash(candidate, false).run();
       candidate.init(1);
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
-      if (candidate.getNumberOfPhases() == 2 && candidate.hasPhaseType(PhaseType.GAS)
-          && candidate.hasPhaseType(PhaseType.AQUEOUS) && isBalancedEquilibriumCandidate(candidate)
-          && candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance) {
+      if (isLowerGibbsMultiphaseAqueousRootCandidate(candidate, referenceGibbsEnergy)) {
         runAcceptedOrdinaryWaterRichFallback(candidate);
       }
     } catch (Exception ex) {
@@ -3608,6 +3606,34 @@ public class TPflash extends Flash {
     } finally {
       MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
     }
+  }
+
+  /**
+   * Checks an ordinary candidate for the reciprocal multiphase aqueous-root rescue.
+   *
+   * @param candidate ordinary TP flash candidate
+   * @param referenceGibbsEnergy Gibbs energy of the multiphase reference endpoint
+   * @return true when the candidate retains the expected topology, is feasible, and lowers Gibbs energy
+   */
+  boolean isLowerGibbsMultiphaseAqueousRootCandidate(SystemInterface candidate, double referenceGibbsEnergy) {
+    if (candidate.getNumberOfPhases() != 2 || !candidate.hasPhaseType(PhaseType.AQUEOUS)) {
+      return false;
+    }
+    int aqueousPhaseCount = 0;
+    int cubicFluidPhaseCount = 0;
+    for (int phaseIndex = 0; phaseIndex < candidate.getNumberOfPhases(); phaseIndex++) {
+      PhaseType phaseType = candidate.getPhase(phaseIndex).getType();
+      if (phaseType == PhaseType.AQUEOUS) {
+        aqueousPhaseCount++;
+      } else if (phaseType == PhaseType.GAS || phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID) {
+        cubicFluidPhaseCount++;
+      } else {
+        return false;
+      }
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    return aqueousPhaseCount == 1 && cubicFluidPhaseCount == 1 && isBalancedEquilibriumCandidate(candidate)
+        && candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance;
   }
 
   /**
