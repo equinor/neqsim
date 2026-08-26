@@ -83,8 +83,8 @@ public final class ElectrolytePhaseBoundaryFlash {
    * @return immutable boundary and equilibrium diagnostics
    */
   public ElectrolytePhaseBoundaryResult solve() {
-    Snapshot lower = evaluate(initialLowerBound);
-    Snapshot upper = evaluate(initialUpperBound);
+    Snapshot lower = evaluate(initialLowerBound, system, null);
+    Snapshot upper = evaluate(initialUpperBound, system, lower.system);
     if (lower.targetPresent == upper.targetPresent) {
       throw new IllegalArgumentException("Bounds do not bracket a " + targetPhase + " phase transition: lower="
           + lower.topology + ", upper=" + upper.topology);
@@ -92,7 +92,8 @@ public final class ElectrolytePhaseBoundaryFlash {
 
     int iterations = 0;
     while (upper.value - lower.value > absoluteTolerance && iterations < maximumIterations) {
-      Snapshot middle = evaluate(0.5 * (lower.value + upper.value));
+      SystemInterface continuationSeed = lower.targetPresent ? lower.system : upper.system;
+      Snapshot middle = evaluate(0.5 * (lower.value + upper.value), system, continuationSeed);
       if (middle.targetPresent == lower.targetPresent) {
         lower = middle;
       } else {
@@ -116,15 +117,41 @@ public final class ElectrolytePhaseBoundaryFlash {
         diagnostics.aqueousChargeMolality, diagnostics.maximumIonLeakage, diagnostics.maximumLogFugacityResidual);
   }
 
-  /** Evaluates one state on a fresh clone to protect the bracket against solver history. */
-  private Snapshot evaluate(double value) {
-    SystemInterface trial = system.clone();
+  /**
+   * Evaluates one state from a cold feed clone, with one deterministic converged-endpoint fallback.
+   *
+   * <p>
+   * The cold feed remains the primary seed so a prior topology cannot silently determine the result. Some hybrid EOS-GE
+   * states cannot initialize finite fugacity coefficients directly after a large specification change. In that case,
+   * and only in that case, the operation retries once from a defensively cloned converged target-present endpoint. Both
+   * attempted complete TP flashes are included in the reported evaluation count.
+   * </p>
+   */
+  private Snapshot evaluate(double value, SystemInterface primarySeed, SystemInterface fallbackSeed) {
+    try {
+      return evaluateFromSeed(value, primarySeed);
+    } catch (RuntimeException primaryFailure) {
+      if (fallbackSeed == null) {
+        throw primaryFailure;
+      }
+      try {
+        return evaluateFromSeed(value, fallbackSeed);
+      } catch (RuntimeException fallbackFailure) {
+        fallbackFailure.addSuppressed(primaryFailure);
+        throw fallbackFailure;
+      }
+    }
+  }
+
+  /** Evaluates one state on a fresh clone of the selected seed. */
+  private Snapshot evaluateFromSeed(double value, SystemInterface seed) {
+    SystemInterface trial = seed.clone();
     if (trial == null) {
       throw new IllegalStateException("Thermodynamic system could not be cloned");
     }
     setSpecification(trial, value);
-    new neqsim.thermodynamicoperations.ThermodynamicOperations(trial).TPflash();
     flashEvaluations++;
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(trial).TPflash();
     return new Snapshot(value, phaseFraction(trial, targetPhase) > MATERIAL_PHASE_FRACTION, topology(trial), trial);
   }
 
