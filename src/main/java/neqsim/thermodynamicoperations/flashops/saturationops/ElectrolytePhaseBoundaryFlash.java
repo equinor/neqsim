@@ -7,7 +7,6 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Brackets the appearance or disappearance of one material phase with complete TP/VLLE flashes.
@@ -64,6 +63,10 @@ public final class ElectrolytePhaseBoundaryFlash {
     if (maximumIterations <= 0) {
       throw new IllegalArgumentException("Maximum iterations must be positive");
     }
+    if (system.isChemicalSystem()) {
+      throw new IllegalArgumentException(
+          "Reactive electrolyte phase boundaries require an elemental-balance contract and are not supported yet");
+    }
     this.system = system;
     this.specification = specification;
     this.targetPhase = targetPhase;
@@ -102,9 +105,7 @@ public final class ElectrolytePhaseBoundaryFlash {
     }
 
     Snapshot retained = lower.targetPresent ? lower : upper;
-    setSpecification(system, retained.value);
-    new ThermodynamicOperations(system).TPflash();
-    flashEvaluations++;
+    retainConvergedState(retained.system);
     Diagnostics diagnostics = calculateDiagnostics(system);
     validateDiagnostics(diagnostics);
 
@@ -121,9 +122,48 @@ public final class ElectrolytePhaseBoundaryFlash {
       throw new IllegalStateException("Thermodynamic system could not be cloned");
     }
     setSpecification(trial, value);
-    new ThermodynamicOperations(trial).TPflash();
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(trial).TPflash();
     flashEvaluations++;
-    return new Snapshot(value, phaseFraction(trial, targetPhase) > MATERIAL_PHASE_FRACTION, topology(trial));
+    return new Snapshot(value, phaseFraction(trial, targetPhase) > MATERIAL_PHASE_FRACTION, topology(trial), trial);
+  }
+
+  /**
+   * Transfers the already converged endpoint without repeating a history-sensitive TP flash.
+   *
+   * <p>
+   * Active and inactive phase mappings are copied so hybrid EOS-GE creation-order roles remain complete. Phase objects
+   * are cloned before insertion, preventing the result retained by the caller from sharing mutable state with a bracket
+   * snapshot.
+   * </p>
+   *
+   * @param retainedSystem successfully flashed endpoint
+   */
+  private void retainConvergedState(SystemInterface retainedSystem) {
+    int maximumPhases = retainedSystem.getMaxNumberOfPhases();
+    system.setMaxNumberOfPhases(maximumPhases);
+    for (int mappingIndex = 0; mappingIndex < maximumPhases; mappingIndex++) {
+      int creationOrderSlot = retainedSystem.getPhaseIndex(mappingIndex);
+      PhaseInterface retainedPhase = retainedSystem.getPhase(mappingIndex);
+      PhaseInterface copiedPhase = retainedPhase.clone();
+      if (copiedPhase == null) {
+        throw new IllegalStateException("Retained phase could not be cloned");
+      }
+      system.setPhase(copiedPhase, creationOrderSlot);
+    }
+    for (int mappingIndex = 0; mappingIndex < maximumPhases; mappingIndex++) {
+      system.setPhaseIndex(mappingIndex, retainedSystem.getPhaseIndex(mappingIndex));
+    }
+    system.setNumberOfPhases(retainedSystem.getNumberOfPhases());
+    system.setTemperature(retainedSystem.getTemperature());
+    system.setPressure(retainedSystem.getPressure());
+    for (int mappingIndex = 0; mappingIndex < maximumPhases; mappingIndex++) {
+      system.setBeta(mappingIndex, retainedSystem.getBeta(mappingIndex));
+      system.getPhase(mappingIndex).setTemperature(retainedSystem.getPhase(mappingIndex).getTemperature());
+      system.getPhase(mappingIndex).setPressure(retainedSystem.getPhase(mappingIndex).getPressure());
+    }
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      system.setPhaseType(phase, retainedSystem.getPhase(phase).getType());
+    }
   }
 
   /** Applies the selected intensive variable. */
@@ -260,11 +300,13 @@ public final class ElectrolytePhaseBoundaryFlash {
     private final double value;
     private final boolean targetPresent;
     private final String topology;
+    private final SystemInterface system;
 
-    private Snapshot(double value, boolean targetPresent, String topology) {
+    private Snapshot(double value, boolean targetPresent, String topology, SystemInterface system) {
       this.value = value;
       this.targetPresent = targetPresent;
       this.topology = topology;
+      this.system = system;
     }
   }
 
