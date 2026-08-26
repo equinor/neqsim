@@ -17,15 +17,15 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Qualification coverage for repeated and changed-state neutral SRK-CPA three-phase flashes.
  *
  * <p>
- * {@code Component.K} is a single scalar per (phase, component), so after a GAS/OIL/AQUEOUS
- * equilibrium it describes only one phase pair. Reusing those values in the next two-phase loop
- * is blind to water and MEG partitioning into the third phase. These tests qualify the complete
- * equilibrium returned by the warm-start guard rather than checking only one phase fraction.
+ * {@code Component.K} is a single scalar per (phase, component), so after a GAS/OIL/AQUEOUS equilibrium it describes
+ * only one phase pair. Reusing those values in the next two-phase loop is blind to water and MEG partitioning into the
+ * third phase. These tests qualify the complete equilibrium returned by the warm-start guard rather than checking only
+ * one phase fraction.
  * </p>
  *
  * <p>
- * The synthetic natural-gas/water/MEG case is a numerical regression, not independent
- * experimental validation of the CPA parameters.
+ * The synthetic natural-gas/water/MEG case is a numerical regression, not independent experimental validation of the
+ * CPA parameters.
  * </p>
  */
 class TPflashWarmStartThreePhaseTest {
@@ -149,24 +149,20 @@ class TPflashWarmStartThreePhaseTest {
     double betaTotal = 0.0;
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       double beta = fluid.getBeta(phaseIndex);
-      assertTrue(Double.isFinite(beta) && beta > 0.0 && beta < 1.0,
-          "phase fraction must be finite and bounded");
+      assertTrue(Double.isFinite(beta) && beta > 0.0 && beta < 1.0, "phase fraction must be finite and bounded");
       betaTotal += beta;
 
       double compositionTotal = 0.0;
-      for (int componentIndex = 0;
-          componentIndex < fluid.getPhase(phaseIndex).getNumberOfComponents();
-          componentIndex++) {
+      for (int componentIndex = 0; componentIndex < fluid.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
         double composition = fluid.getPhase(phaseIndex).getComponent(componentIndex).getx();
         assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
             "phase composition must be finite and bounded");
         compositionTotal += composition;
       }
-      assertEquals(1.0, compositionTotal, COMPOSITION_TOLERANCE,
-          "phase composition must be normalized");
+      assertEquals(1.0, compositionTotal, COMPOSITION_TOLERANCE, "phase composition must be normalized");
     }
-    assertEquals(1.0, betaTotal, PHASE_FRACTION_TOLERANCE,
-        "phase fractions must be normalized");
+    assertEquals(1.0, betaTotal, PHASE_FRACTION_TOLERANCE, "phase fractions must be normalized");
 
     double materialResidual = maximumComponentMaterialBalanceResidual(fluid);
     assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE,
@@ -185,21 +181,18 @@ class TPflashWarmStartThreePhaseTest {
     for (int expectedPhase = 0; expectedPhase < expected.getNumberOfPhases(); expectedPhase++) {
       PhaseType phaseType = expected.getPhase(expectedPhase).getType();
       int actualPhase = findPhase(actual, phaseType);
-      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase),
-          EQUIVALENCE_TOLERANCE, "phase fraction for " + phaseType);
-      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(),
-          1.0e-8, "compressibility factor for " + phaseType);
-      assertEquals(expected.getPhase(expectedPhase).getDensity(),
-          actual.getPhase(actualPhase).getDensity(),
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), EQUIVALENCE_TOLERANCE,
+          "phase fraction for " + phaseType);
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), 1.0e-8,
+          "compressibility factor for " + phaseType);
+      assertEquals(expected.getPhase(expectedPhase).getDensity(), actual.getPhase(actualPhase).getDensity(),
           Math.max(1.0e-8, 1.0e-8 * Math.abs(expected.getPhase(expectedPhase).getDensity())),
           "density for " + phaseType);
 
-      for (int componentIndex = 0;
-          componentIndex < expected.getPhase(expectedPhase).getNumberOfComponents();
-          componentIndex++) {
+      for (int componentIndex = 0; componentIndex < expected.getPhase(expectedPhase)
+          .getNumberOfComponents(); componentIndex++) {
         assertEquals(expected.getPhase(expectedPhase).getComponent(componentIndex).getx(),
-            actual.getPhase(actualPhase).getComponent(componentIndex).getx(),
-            EQUIVALENCE_TOLERANCE,
+            actual.getPhase(actualPhase).getComponent(componentIndex).getx(), EQUIVALENCE_TOLERANCE,
             "composition for component " + componentIndex + " in " + phaseType);
       }
     }
@@ -220,46 +213,34 @@ class TPflashWarmStartThreePhaseTest {
 
   private double maximumComponentMaterialBalanceResidual(SystemInterface fluid) {
     double maximumResidual = 0.0;
-    for (int componentIndex = 0;
-        componentIndex < fluid.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < fluid.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed +=
-            fluid.getBeta(phaseIndex)
-                * fluid.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += fluid.getBeta(phaseIndex) * fluid.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
-      maximumResidual =
-          Math.max(maximumResidual,
-              Math.abs(fluid.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
+      maximumResidual = Math.max(maximumResidual,
+          Math.abs(fluid.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
     }
     return maximumResidual;
   }
 
   private double maximumLogFugacityResidual(SystemInterface fluid) {
     double maximumResidual = 0.0;
-    for (int componentIndex = 0;
-        componentIndex < fluid.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < fluid.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double referenceLogFugacity = componentLogFugacity(fluid, 0, componentIndex);
       for (int phaseIndex = 1; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
-        maximumResidual =
-            Math.max(maximumResidual,
-                Math.abs(referenceLogFugacity
-                    - componentLogFugacity(fluid, phaseIndex, componentIndex)));
+        maximumResidual = Math.max(maximumResidual,
+            Math.abs(referenceLogFugacity - componentLogFugacity(fluid, phaseIndex, componentIndex)));
       }
     }
     return maximumResidual;
   }
 
-  private double componentLogFugacity(
-      SystemInterface fluid, int phaseIndex, int componentIndex) {
+  private double componentLogFugacity(SystemInterface fluid, int phaseIndex, int componentIndex) {
     double composition = fluid.getPhase(phaseIndex).getComponent(componentIndex).getx();
-    double fugacityCoefficient =
-        fluid.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
+    double fugacityCoefficient = fluid.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
     assertTrue(Double.isFinite(fugacityCoefficient) && fugacityCoefficient > 0.0,
         "fugacity coefficient must be finite and positive");
-    return Math.log(Math.max(composition, Double.MIN_NORMAL))
-        + Math.log(fugacityCoefficient);
+    return Math.log(Math.max(composition, Double.MIN_NORMAL)) + Math.log(fugacityCoefficient);
   }
 }
