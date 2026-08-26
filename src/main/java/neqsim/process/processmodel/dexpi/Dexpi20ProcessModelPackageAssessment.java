@@ -285,8 +285,7 @@ public final class Dexpi20ProcessModelPackageAssessment {
       this.operatingCaseId = operatingCaseId;
       this.canonicalFingerprint = canonicalFingerprint;
       this.areaEvidence = Collections.unmodifiableList(new ArrayList<AreaEvidence>(areaEvidence));
-      this.connectionEvidence =
-          Collections.unmodifiableList(new ArrayList<ConnectionEvidence>(connectionEvidence));
+      this.connectionEvidence = Collections.unmodifiableList(new ArrayList<ConnectionEvidence>(connectionEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
     }
 
