@@ -12,11 +12,13 @@ The runner has five built-in profiles (`ncs`, `ukcs`, `gom`, `brazil`, and `gene
 
 ## Focused contract evidence
 
-- `src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java` checks built-in discovery, profile details, equipment-standard retrieval, a create/activate/read/delete custom-profile lifecycle with state restoration, and fail-closed mutation errors.
-- `neqsim-mcp-server/test_validation_profile_protocol.py` starts the packaged MCP server over STDIO and repeats the bounded discovery/lifecycle/fail-closed contract through real `tools/call` requests.
+- `src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java` checks built-in discovery, profile details, equipment-standard retrieval, the `validateWithProfile` response shape and profile/standards/design-factor metadata, a create/activate/read/delete custom-profile lifecycle with state restoration, and fail-closed mutation errors.
+- `neqsim-mcp-server/test_validation_profile_protocol.py` starts the packaged MCP server over STDIO and repeats the bounded discovery, validation-metadata, lifecycle, and fail-closed contract through real `tools/call` requests.
 - `.github/workflows/mcp_protocol_qualification.yml` builds the exact NeqSim core and MCP package with Java 21 and executes the focused protocol qualification on relevant PRs and `master` pushes with read-only repository permissions.
 
 The packaged qualification uses an isolated synthetic profile name and restores/deletes its process-local state before server shutdown. It does not persist a profile to disk, write to a plant system, or alter another client or tenant.
+
+The `validateWithProfile` checks are intentionally structural only: they prove that the underlying validator verdict remains visible and that the selected profile name, applicable-standards array, and required-design-factor object survive the runner and MCP response path. They do not assert that any listed standard, threshold, factor, or engineering verdict is correct for a real facility.
 
 ## Evidence that is not established
 
