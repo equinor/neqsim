@@ -17,23 +17,19 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Deterministic revision-impact evidence between two valid assessed multi-area DEXPI Process
- * packages.
+ * Deterministic revision-impact evidence between two valid assessed multi-area DEXPI Process packages.
  *
  * <p>
- * The comparison operates only on immutable snapshots returned by
- * {@link Dexpi20ProcessModelPackageReader}. It distinguishes exact package-byte changes,
- * per-area native DEXPI Process document changes, stable area-identity changes, and plant-wide
- * material, energy, or signal connection changes. It does not reconstruct or execute a process
- * model, infer native whole-plant DEXPI relationships, approve a drawing, or determine fitness for
- * construction.
+ * The comparison operates only on immutable snapshots returned by {@link Dexpi20ProcessModelPackageReader}. It
+ * distinguishes exact package-byte changes, per-area native DEXPI Process document changes, stable area-identity
+ * changes, and plant-wide material, energy, or signal connection changes. It does not reconstruct or execute a process
+ * model, infer native whole-plant DEXPI relationships, approve a drawing, or determine fitness for construction.
  * </p>
  */
 public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final Gson GSON = new Gson();
-  public static final String SCHEMA_VERSION =
-      "neqsim_dexpi_2_0_process_model_package_revision_impact.v1";
+  public static final String SCHEMA_VERSION = "neqsim_dexpi_2_0_process_model_package_revision_impact.v1";
 
   /** Overall comparison status. */
   public enum Status {
@@ -203,11 +199,9 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     boolean sameAs(ConnectionState other) {
       return other != null && sameText(connectionId, other.connectionId)
           && sameText(connectionType, other.connectionType) && sameText(sourceArea, other.sourceArea)
-          && sameText(targetArea, other.targetArea)
-          && sameText(sourceEquipment, other.sourceEquipment)
-          && sameText(targetEquipment, other.targetEquipment)
-          && sameText(sourcePort, other.sourcePort) && sameText(targetPort, other.targetPort)
-          && crossArea == other.crossArea && recycle == other.recycle
+          && sameText(targetArea, other.targetArea) && sameText(sourceEquipment, other.sourceEquipment)
+          && sameText(targetEquipment, other.targetEquipment) && sameText(sourcePort, other.sourcePort)
+          && sameText(targetPort, other.targetPort) && crossArea == other.crossArea && recycle == other.recycle
           && sameText(exchangeStatus, other.exchangeStatus);
     }
   }
@@ -261,8 +255,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     private final ConnectionState baseline;
     private final ConnectionState revised;
 
-    ConnectionChange(String connectionId, ChangeType changeType, ConnectionState baseline,
-        ConnectionState revised) {
+    ConnectionChange(String connectionId, ChangeType changeType, ConnectionState baseline, ConnectionState revised) {
       this.connectionId = connectionId;
       this.changeType = changeType;
       this.baseline = baseline;
@@ -310,8 +303,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
   private final List<ConnectionChange> connectionChanges;
   private final Status status;
 
-  private Dexpi20ProcessModelPackageRevisionImpact(
-      Dexpi20ProcessModelPackageReader.Snapshot baseline,
+  private Dexpi20ProcessModelPackageRevisionImpact(Dexpi20ProcessModelPackageReader.Snapshot baseline,
       Dexpi20ProcessModelPackageReader.Snapshot revised, List<AreaChange> areaChanges,
       List<ConnectionChange> connectionChanges) {
     plantId = baseline.getPlantId();
@@ -328,8 +320,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     this.areaChanges = immutableAreaChanges(areaChanges);
     this.connectionChanges = immutableConnectionChanges(connectionChanges);
     status = countChangedAreas(areaChanges) == 0 && countChangedConnections(connectionChanges) == 0
-        && sameText(baselinePackageFileSha256, revisedPackageFileSha256) ? Status.UNCHANGED
-            : Status.CHANGED;
+        && sameText(baselinePackageFileSha256, revisedPackageFileSha256) ? Status.UNCHANGED : Status.CHANGED;
   }
 
   /**
@@ -339,8 +330,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
    * @param revised immutable revised package snapshot
    * @return deterministic package revision impact
    */
-  public static Dexpi20ProcessModelPackageRevisionImpact compare(
-      Dexpi20ProcessModelPackageReader.Snapshot baseline,
+  public static Dexpi20ProcessModelPackageRevisionImpact compare(Dexpi20ProcessModelPackageReader.Snapshot baseline,
       Dexpi20ProcessModelPackageReader.Snapshot revised) {
     if (baseline == null || revised == null) {
       throw new IllegalArgumentException("baseline and revised must not be null");
@@ -370,8 +360,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     for (String connectionId : connectionIds) {
       ConnectionState before = baselineConnections.get(connectionId);
       ConnectionState after = revisedConnections.get(connectionId);
-      connections
-          .add(new ConnectionChange(connectionId, changeType(before, after), before, after));
+      connections.add(new ConnectionChange(connectionId, changeType(before, after), before, after));
     }
     return new Dexpi20ProcessModelPackageRevisionImpact(baseline, revised, areas, connections);
   }
@@ -455,8 +444,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
    */
   public boolean isAreaIdentitySetEquivalent() {
     for (AreaChange change : areaChanges) {
-      if (change.getChangeType() == ChangeType.ADDED
-          || change.getChangeType() == ChangeType.REMOVED) {
+      if (change.getChangeType() == ChangeType.ADDED || change.getChangeType() == ChangeType.REMOVED) {
         return false;
       }
     }
@@ -514,8 +502,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     result.put("status", status.name());
     result.put("exactPackageMatch", Boolean.valueOf(isExactPackageMatch()));
     result.put("areaIdentitySetEquivalent", Boolean.valueOf(isAreaIdentitySetEquivalent()));
-    result.put("connectionTopologyEquivalent",
-        Boolean.valueOf(isConnectionTopologyEquivalent()));
+    result.put("connectionTopologyEquivalent", Boolean.valueOf(isConnectionTopologyEquivalent()));
     result.put("changedAreaCount", Integer.valueOf(getChangedAreaCount()));
     result.put("changedConnectionCount", Integer.valueOf(getChangedConnectionCount()));
     List<Map<String, Object>> areas = new ArrayList<Map<String, Object>>();
@@ -532,9 +519,8 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     result.put("engineeringReviewRequired", Boolean.TRUE);
     result.put("fitnessForConstruction", Boolean.FALSE);
     result.put("nativeWholePlantDexpiExchange", Boolean.FALSE);
-    result.put("scope",
-        "Exact assessed package, per-area native DEXPI Process document, stable area identity, "
-            + "and manifest connection revision evidence");
+    result.put("scope", "Exact assessed package, per-area native DEXPI Process document, stable area identity, "
+        + "and manifest connection revision evidence");
     result.put("fingerprint", fingerprint(result));
     return result;
   }
@@ -544,8 +530,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     return new GsonBuilder().setPrettyPrinting().create().toJson(toMap());
   }
 
-  private static Map<String, AreaState> areasById(
-      Dexpi20ProcessModelPackageReader.Snapshot snapshot) {
+  private static Map<String, AreaState> areasById(Dexpi20ProcessModelPackageReader.Snapshot snapshot) {
     Map<String, AreaState> result = new TreeMap<String, AreaState>();
     for (Dexpi20ProcessModelPackageReader.AreaDocument area : snapshot.getAreaDocuments()) {
       result.put(area.getAreaId(), new AreaState(area));
@@ -553,11 +538,9 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     return result;
   }
 
-  private static Map<String, ConnectionState> connectionsById(
-      Dexpi20ProcessModelPackageReader.Snapshot snapshot) {
+  private static Map<String, ConnectionState> connectionsById(Dexpi20ProcessModelPackageReader.Snapshot snapshot) {
     Map<String, ConnectionState> result = new TreeMap<String, ConnectionState>();
-    for (Dexpi20ProcessModelPackageAssessment.ConnectionEvidence connection : snapshot
-        .getConnectionEvidence()) {
+    for (Dexpi20ProcessModelPackageAssessment.ConnectionEvidence connection : snapshot.getConnectionEvidence()) {
       result.put(connection.getConnectionId(), new ConnectionState(connection));
     }
     return result;
@@ -607,8 +590,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     return Collections.unmodifiableList(new ArrayList<AreaChange>(changes));
   }
 
-  private static List<ConnectionChange> immutableConnectionChanges(
-      List<ConnectionChange> changes) {
+  private static List<ConnectionChange> immutableConnectionChanges(List<ConnectionChange> changes) {
     return Collections.unmodifiableList(new ArrayList<ConnectionChange>(changes));
   }
 
@@ -633,3 +615,4 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     }
   }
 }
+
