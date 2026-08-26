@@ -178,28 +178,34 @@ class McpEvidenceInventoryFoundationTests {
   }
 
   @Test
-  void testApiInspectionPromotionCandidateIsQualifiedButNotPromoted() {
-    JsonObject limitations = McpEvidenceInventory.build().getAsJsonObject("knownLimitations");
+  void testApiInspectionTransportEvidenceIsQualifiedButNotPromoted() {
+    JsonObject inventory = McpEvidenceInventory.build();
+    JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
     JsonObject candidates = limitations.getAsJsonObject("contractPromotionCandidates");
     JsonObject candidate = candidates.getAsJsonObject("inspectApi");
     JsonObject coverage = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("inspectApi");
+    JsonObject tests = inventory.getAsJsonObject("tests");
 
     assertEquals(1, limitations.get("contractPromotionCandidateCount").getAsInt());
     assertEquals(1, candidates.size());
     assertEquals("CONTRACT_TESTED", candidate.get("targetCoverageStatus").getAsString());
     assertEquals("NOT_APPLICABLE_NON_NUMERICAL_RUNTIME_API_INSPECTION",
         candidate.get("benchmarkApplicability").getAsString());
-    assertEquals(4, candidate.get("contractEvidenceCount").getAsInt());
-    assertEquals(4, candidate.getAsJsonArray("contractEvidenceSources").size());
+    assertEquals(5, candidate.get("contractEvidenceCount").getAsInt());
+    assertEquals(5, candidate.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(candidate.getAsJsonArray("contractEvidenceSources").toString().contains("ApiKnowledgeRunner.java"));
     assertTrue(candidate.getAsJsonArray("contractEvidenceSources").toString().contains("ApiKnowledgeRunnerTest.java"));
-    assertTrue(candidate.get("evidenceBoundary").getAsString().contains("java.lang.Runtime"));
-    assertFalse(candidate.get("promotionReady").getAsBoolean());
-    assertTrue(candidate.get("remainingGate").getAsString().contains("real-MCP inspectApi"));
+    assertTrue(candidate.getAsJsonArray("contractEvidenceSources").toString().contains("test_inspect_api_protocol.py"));
+    assertTrue(candidate.get("evidenceBoundary").getAsString().contains("fail-closed non-NeqSim rejection"));
+    assertTrue(candidate.get("promotionReady").getAsBoolean());
+    assertTrue(candidate.get("remainingGate").getAsString().contains("classification accounting"));
     assertEquals("CONFIRMED_GAP", coverage.get("coverageStatus").getAsString());
-    assertTrue(limitations.get("promotionBoundary").getAsString().contains("inspectApi"));
+    assertTrue(limitations.get("promotionBoundary").getAsString().contains("transport-qualified"));
     assertEquals(9, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(42, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(3, tests.get("focusedApiProtocolScenarioCount").getAsInt());
+    assertEquals("neqsim-mcp-server/test_inspect_api_protocol.py",
+        tests.get("focusedApiProtocolHarness").getAsString());
   }
 
   @Test
@@ -240,7 +246,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.13", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.14", inventory.get("inventoryVersion").getAsString());
     assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());
