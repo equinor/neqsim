@@ -80,6 +80,14 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
             PhaseType.AQUEOUS, LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20).solve());
     assertTrue(error.getMessage().contains("do not bracket"));
     assertEquals(initialTemperature, system.getTemperature(), 0.0);
+
+    SystemInterface reactive = createElectrolyteCpaSystem();
+    reactive.chemicalReactionInit();
+    IllegalArgumentException reactiveError = assertThrows(IllegalArgumentException.class,
+        () -> new ElectrolytePhaseBoundaryFlash(reactive,
+            ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE, PhaseType.OIL,
+            LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20));
+    assertTrue(reactiveError.getMessage().contains("elemental-balance"));
   }
 
   private static ElectrolytePhaseBoundaryResult solveOilBoundary(SystemInterface system) {
@@ -96,7 +104,7 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     assertNotEquals(result.getLowerTopology(), result.getUpperTopology());
     assertTrue(result.getLowerTopology().contains("oil") || result.getUpperTopology().contains("oil"));
     assertTrue(result.getTargetPhaseFraction() > 1.0e-10);
-    assertTrue(result.getFlashEvaluations() <= result.getIterations() + 3);
+    assertEquals(result.getIterations() + 2, result.getFlashEvaluations());
     assertTrue(result.getMaximumMaterialBalanceResidual() <= 1.0e-7);
     assertTrue(result.getMaximumPhaseNormalizationResidual() <= 1.0e-10);
     assertTrue(Math.abs(result.getAqueousChargeMolality()) <= 1.0e-8);
@@ -116,8 +124,6 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   private static SystemInterface createElectrolyteCpaSystem() {
     SystemInterface system = new SystemElectrolyteCPAstatoil(LOWER_TEMPERATURE_K, 50.0);
     addGasOilBrine(system);
-    system.chemicalReactionInit();
-    system.createDatabase(true);
     system.setMixingRule(10);
     system.setMultiPhaseCheck(true);
     return system;
