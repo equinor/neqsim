@@ -129,6 +129,25 @@ import, and NeqSim supported-profile assessment for each XML. A restarted packag
 `REVIEW_REQUIRED`, `fitnessForConstruction=false`, or
 `nativeWholePlantDexpiExchange=false`; altered approval fields fail closed.
 
+After assessment, use the bounded reader when a caller needs exact per-area XML and connection
+evidence without extracting archive paths or trusting the embedded manifest:
+
+```java
+Dexpi20ProcessModelPackageReader.Snapshot snapshot =
+    Dexpi20ProcessModelPackageReader.read(processPackage);
+for (Dexpi20ProcessModelPackageReader.AreaDocument area : snapshot.getAreaDocuments()) {
+  byte[] exactAssessedXml = area.getXmlBytes();
+  // Pass the defensive copy to a controlled DEXPI Process consumer.
+}
+```
+
+`read(...)` reassesses first, captures the archive only within the bounded package size, and
+requires the captured bytes to match the assessment SHA-256 before exposing content. The serializable
+snapshot retains plant/revision/case provenance, package and manifest fingerprints, defensive exact
+area XML, and immutable material/energy/signal connection evidence. It deliberately does not extract
+files, reconstruct or execute a `ProcessModel`, reinterpret manifest-only connections as native
+DEXPI Process relationships, or change the engineering approval state.
+
 The single-area assessed path reports energy and signal connections, multi-area `ProcessModel`
 hierarchy, controlled document/sheet semantics, and drawing graphics as unsupported scopes. These
 warnings do not hide a supported material-topology error; missing, unexpected, unresolved-port, and

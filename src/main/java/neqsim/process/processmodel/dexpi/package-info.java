@@ -22,6 +22,8 @@
  * assessed native Process exchanges and explicit plant-wide manifest-only connection evidence</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageAssessment} - Offline, fail-closed package
  * integrity, engineering-boundary, identity, loss-status, hash, and per-area conformance assessment</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageReader} - Immutable intake snapshot with
+ * defensive exact-area XML and independently assessed connection evidence</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionWriter} - Opt-in native DEXPI Core graphical
  * projection</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionAssessment} - Deterministic inspection of
