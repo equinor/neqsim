@@ -2,8 +2,10 @@ package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -25,12 +27,31 @@ class StatePersistenceRunnerTest {
   }
 
   @Test
-  void testListStates() {
-    String json = "{\"action\": \"list\"}";
-    String result = StatePersistenceRunner.run(json);
-    assertNotNull(result);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(), "List states failed: " + result);
+  void testListStates(@TempDir Path temporaryDirectory) {
+    String allowExternalProperty = "neqsim.mcp.allowExternalStateDir";
+    String previousAllowExternal = System.getProperty(allowExternalProperty);
+    System.setProperty(allowExternalProperty, "true");
+    try {
+      JsonObject configureInput = new JsonObject();
+      configureInput.addProperty("action", "setStorageDir");
+      configureInput.addProperty("directory", temporaryDirectory.resolve("saved_simulations").toString());
+      String configureResult = StatePersistenceRunner.run(configureInput.toString());
+      JsonObject configureObject = JsonParser.parseString(configureResult).getAsJsonObject();
+      assertEquals("success", configureObject.get("status").getAsString(),
+          "Configure temporary storage failed: " + configureResult);
+
+      String result = StatePersistenceRunner.run("{\"action\": \"list\"}");
+      assertNotNull(result);
+      JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
+      assertEquals("success", obj.get("status").getAsString(), "List states failed: " + result);
+      assertEquals(0, obj.get("count").getAsInt());
+    } finally {
+      if (previousAllowExternal == null) {
+        System.clearProperty(allowExternalProperty);
+      } else {
+        System.setProperty(allowExternalProperty, previousAllowExternal);
+      }
+    }
   }
 
   @Test
