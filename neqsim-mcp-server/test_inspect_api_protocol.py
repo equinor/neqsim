@@ -101,9 +101,15 @@ def require(condition, message, detail=None):
 
 
 def payload(response):
-    """Return the standardized response data object when present."""
+    """Return domain data while retaining standardized envelope state."""
     data = response.get("data") if isinstance(response, dict) else None
-    return data if isinstance(data, dict) else response
+    if not isinstance(data, dict):
+        return response
+    merged = dict(data)
+    for key in ("status", "message", "tool"):
+        if key in response:
+            merged.setdefault(key, response[key])
+    return merged
 
 
 def test_successful_inspection(client):
