@@ -18,10 +18,11 @@ manually maintained Java method list.
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 67 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
+| Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
 | Trust coverage records | 71 = 20 explicit benchmark + 9 contract-tested non-numerical contracts + 42 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 1 (`inspectApi`) | `getCapabilities.phase0EvidenceInventory` | Source/test/facade evidence is qualified; direct real-MCP invocation and atomic protocol accounting remain required before promotion |
+| Contract-promotion candidates | 1 (`inspectApi`, promotion-ready) | `getCapabilities.phase0EvidenceInventory` | Source/core tests plus focused packaged-MCP success and fail-closed evidence; primary protocol classification accounting remains the promotion gate |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -87,11 +88,13 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
 Phase 0 inventory. The exact current source contains 67 JUnit test classes under
-`src/test/java/neqsim/mcp` and 94 named scenarios in the packaged real-STDIO JSON-RPC harness
-`neqsim-mcp-server/test_mcp_server.py`. The protocol regression independently recounts both source
-trees and fails if the manifest drifts. These counts identify evidence locations; they are not a
-claim that a test ran or passed. Exact-head CI and recorded command output remain the execution
-evidence.
+`src/test/java/neqsim/mcp`, 94 named scenarios in the primary real-STDIO JSON-RPC harness
+`neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
+`neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
+recounts its source tree and fails if the manifest drifts; the focused harness is separately
+published in the inventory and executed by the read-only `MCP protocol qualification` workflow.
+These counts identify evidence locations; they are not a claim that a test ran or passed. Exact-head
+CI and recorded command output remain the execution evidence.
 
 The eight MCP guides have distinct roles:
 
@@ -173,20 +176,27 @@ real-protocol `listActive` retrieval. It does not validate the underlying calcul
 cancellation, durability across process restarts, deployment isolation, authorization, delivery
 guarantees, or plant authority.
 
-### Qualified runtime API-inspection candidate
+### Transport-qualified runtime API-inspection candidate
 
-Inventory version 1.13 records `inspectApi` as the sole promotion candidate while deliberately
-leaving its coverage record at `CONFIRMED_GAP`. Current source confines runtime reflection to
-fully qualified `neqsim.*` classes, a small explicit common-class map, and canonical
-`EquipmentFactory` aliases. `ApiKnowledgeRunnerTest` covers representative alias/class resolution,
-member filtering and source pointers, and rejects `java.lang.Runtime`; the MCP server facade also
-preserves normal access enforcement and the standard response envelope.
+Inventory version 1.14 records `inspectApi` as the sole promotion-ready candidate while deliberately
+leaving its coverage record at `CONFIRMED_GAP`. Current source confines runtime reflection to fully
+qualified `neqsim.*` classes, a small explicit common-class map, and canonical `EquipmentFactory`
+aliases. `ApiKnowledgeRunnerTest` covers representative alias/class resolution, member filtering and
+source pointers, and rejects `java.lang.Runtime`; the MCP server facade preserves normal access
+enforcement and the standard response envelope.
 
-The missing evidence is transport-specific and explicit: the packaged real-MCP harness currently
-freezes `inspectApi` in the 71-tool publication inventory but does not call it through `tools/call`.
-Promotion therefore requires one representative successful real-MCP inspection plus a fail-closed
-non-NeqSim case, with the frozen classification accounting changed on that same exact validated
-head. The detailed boundary is recorded in `docs/evidence/API_INSPECTION_CONTRACT.md`.
+The transport prerequisite is now explicit and executable. `test_inspect_api_protocol.py` starts the
+packaged STDIO server and calls `inspectApi` through `tools/call`, requiring `ProcessModel` to resolve
+to the exact runtime class with a filtered public `run` method and requiring `java.lang.Runtime` to
+fail closed. It also calls `getCapabilities` and freezes inventory 1.14, the unchanged 20/9/42
+coverage accounting, `inspectApi=CONFIRMED_GAP`, and `promotionReady=true`. The read-only
+`MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes these
+three scenarios on pull requests and `master`.
+
+The remaining gate is the deliberately separate classification commit: the primary packaged
+`test_mcp_server.py` accounting and the machine-readable `inspectApi` coverage status must move
+together from 20/9/42 to 20/10/41 on one exact validated head. The detailed evidence and safety
+boundary is recorded in `docs/evidence/API_INSPECTION_CONTRACT.md`.
 
 Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative
 for an executed calculation. The evidence inventory is advisory discovery metadata; it does not
@@ -228,15 +238,15 @@ graph, tool implementation bindings, factory-backed equipment, report paths, tes
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
 every published tool. Nine non-numerical discovery, catalog, lookup, progress, trust-retrieval, and
-governance tools are contract-tested, leaving 42 confirmed trust gaps and one evidence-qualified
-`inspectApi` promotion candidate.
+governance tools are contract-tested, leaving 42 confirmed trust gaps and one transport-qualified,
+promotion-ready `inspectApi` candidate.
 
-Follow-up work should first close the candidate's explicit transport gate: add direct real-MCP
-`inspectApi` success and fail-closed calls, update the frozen classification accounting atomically,
-and validate that exact head. After that, audit the remaining confirmed gaps and promote only the
-next one supported by current source and concrete bounded evidence. Explicit numeric component,
-energy, and facility-wide conservation/report gaps remain separate work. Later-phase campaign
-criteria remain incomplete until their own merged acceptance evidence exists.
+Follow-up work should first complete that candidate's narrow classification gate: update the primary
+packaged protocol accounting and the `inspectApi` coverage record atomically from 20/9/42 to
+20/10/41 and validate that exact head. After that, audit the remaining confirmed gaps and promote
+only the next one supported by current source and concrete bounded evidence. Explicit numeric
+component, energy, and facility-wide conservation/report gaps remain separate work. Later-phase
+campaign criteria remain incomplete until their own merged acceptance evidence exists.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing
