@@ -531,10 +531,12 @@ a conservative screen but is not a high-specificity classifier and must not be d
 quantitative dynamic validation.
 
 The slow dynamic benchmark exercises large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
-$v_{SG}=1.00$ m/s). It is currently a **failing qualification fixture**, not a validated model.
+$v_{SG}=1.00$ m/s). It is currently a **disabled qualification fixture**, not a validated model.
 The coupled transient route does not progress beyond its initial transient state, while the legacy
 route activates `isTransientOutletBackflowClamped()`. Both outcomes are rejected before amplitude,
-period, or slug-length agreement is considered.
+period, or slug-length agreement is considered. The class remains in source so issues #2909 and
+#2911 can re-enable the unchanged public benchmark after the numerical gap is resolved; unrelated CI
+must not treat the known-invalid trajectory as a passing or intentionally failing prediction.
 
 This benchmark previously reported a riser-head-scaled swing of 0.40–0.54 heads and a tracked slug
 of about 2 m. Those results did not come from the momentum balance. The minimum-slip hold-up bound

@@ -21,7 +21,7 @@ manually maintained Java method list.
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
 | Trust coverage records | 71 = 20 explicit benchmark + 9 contract-tested non-numerical contracts + 42 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued; new promotions require current-source evidence and an atomic protocol-accounting update |
+| Contract-promotion candidates | 1 (`inspectApi`) | `getCapabilities.phase0EvidenceInventory` | Source/test/facade evidence is qualified; direct real-MCP invocation and atomic protocol accounting remain required before promotion |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -165,13 +165,28 @@ evidence: `ProgressTracker`, the focused lifecycle regression in
 `McpEvidenceInventoryFoundationTests`, the real-MCP `getProgress(action=listActive)` scenario, and
 `docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md`. The machine-readable classification and packaged
 protocol expectation move together on the same exact head, changing coverage accounting from
-20/8/43 to 20/9/42 and leaving zero queued promotion candidates.
+20/8/43 to 20/9/42.
 
 This is a software-contract classification only. It covers active-operation discovery, point
 retrieval, milestone visibility, successful completion state, missing-operation errors, and
 real-protocol `listActive` retrieval. It does not validate the underlying calculation, convergence,
 cancellation, durability across process restarts, deployment isolation, authorization, delivery
 guarantees, or plant authority.
+
+### Qualified runtime API-inspection candidate
+
+Inventory version 1.13 records `inspectApi` as the sole promotion candidate while deliberately
+leaving its coverage record at `CONFIRMED_GAP`. Current source confines runtime reflection to
+fully qualified `neqsim.*` classes, a small explicit common-class map, and canonical
+`EquipmentFactory` aliases. `ApiKnowledgeRunnerTest` covers representative alias/class resolution,
+member filtering and source pointers, and rejects `java.lang.Runtime`; the MCP server facade also
+preserves normal access enforcement and the standard response envelope.
+
+The missing evidence is transport-specific and explicit: the packaged real-MCP harness currently
+freezes `inspectApi` in the 71-tool publication inventory but does not call it through `tools/call`.
+Promotion therefore requires one representative successful real-MCP inspection plus a fail-closed
+non-NeqSim case, with the frozen classification accounting changed on that same exact validated
+head. The detailed boundary is recorded in `docs/evidence/API_INSPECTION_CONTRACT.md`.
 
 Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative
 for an executed calculation. The evidence inventory is advisory discovery metadata; it does not
@@ -213,13 +228,15 @@ graph, tool implementation bindings, factory-backed equipment, report paths, tes
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
 every published tool. Nine non-numerical discovery, catalog, lookup, progress, trust-retrieval, and
-governance tools are contract-tested, leaving 42 confirmed trust gaps and no queued promotion
-candidate.
+governance tools are contract-tested, leaving 42 confirmed trust gaps and one evidence-qualified
+`inspectApi` promotion candidate.
 
-Follow-up work should audit the remaining confirmed gaps and promote only the next one supported by
-current source and concrete bounded evidence. Explicit numeric component, energy, and facility-wide
-conservation/report gaps remain separate work. Later-phase campaign criteria remain incomplete
-until their own merged acceptance evidence exists.
+Follow-up work should first close the candidate's explicit transport gate: add direct real-MCP
+`inspectApi` success and fail-closed calls, update the frozen classification accounting atomically,
+and validate that exact head. After that, audit the remaining confirmed gaps and promote only the
+next one supported by current source and concrete bounded evidence. Explicit numeric component,
+energy, and facility-wide conservation/report gaps remain separate work. Later-phase campaign
+criteria remain incomplete until their own merged acceptance evidence exists.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing
