@@ -84,9 +84,8 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     SystemInterface reactive = createElectrolyteCpaSystem();
     reactive.chemicalReactionInit();
     IllegalArgumentException reactiveError = assertThrows(IllegalArgumentException.class,
-        () -> new ElectrolytePhaseBoundaryFlash(reactive,
-            ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE, PhaseType.OIL,
-            LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20));
+        () -> new ElectrolytePhaseBoundaryFlash(reactive, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
+            PhaseType.OIL, LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20));
     assertTrue(reactiveError.getMessage().contains("elemental-balance"));
   }
 
