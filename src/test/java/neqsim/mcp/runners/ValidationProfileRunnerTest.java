@@ -65,6 +65,16 @@ class ValidationProfileRunnerTest {
   }
 
   @Test
+  void testValidateWithProfileReturnsProfileMetadata() {
+    String json = "{\"action\":\"validateWithProfile\",\"profileName\":\"generic\"}";
+    JsonObject obj = JsonParser.parseString(ValidationProfileRunner.run(json)).getAsJsonObject();
+    assertTrue(obj.has("verdict"), "Validator verdict should remain visible");
+    assertEquals("generic", obj.get("validationProfile").getAsString());
+    assertTrue(obj.has("applicableStandards"));
+    assertTrue(obj.has("requiredDesignFactors"));
+  }
+
+  @Test
   void testCustomProfileLifecycleIsExplicitAndRecoverable() {
     String profileName = "phase0-contract-profile";
     ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"generic\"}");
