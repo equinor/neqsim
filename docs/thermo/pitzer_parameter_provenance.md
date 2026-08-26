@@ -15,8 +15,10 @@ derived and reviewed equation mapping.
 
 New `SystemPitzer` phases use a catalog-first default: on the first Pitzer activity/property
 evaluation, NeqSim selects the complete bundled PHREEQC topology when every required active aqueous
-interaction exists. Hydrocarbons remain on the EOS role phases and do not create aqueous neutral-
-interaction requirements. Other non-hydrocarbon aqueous neutrals still require explicit complete
+interaction exists. EOS-role pure hydrocarbons are identified by molecular formula as well as
+component-type metadata and do not create aqueous neutral-interaction requirements; this includes
+normal database components such as methane whose GE-phase type is not reliably `HC`. Other
+non-hydrocarbon aqueous neutrals still require explicit complete
 `lambda` and `zeta` families. If the catalog is incomplete, loading falls back to the historical
 binary table; mixed primary-salt coverage then still fails closed on missing binary, `theta`, or
 `psi` rows. No missing interaction is silently converted to zero. Call

@@ -1867,7 +1867,8 @@ public class PhasePitzer extends PhaseGE {
 
   private boolean isNeutralSolute(int index) {
     return Math.abs(getComponent(index).getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(componentName(index))
-        && (!excludeHydrocarbonsFromNeutralPitzerTopology || !getComponent(index).isHydrocarbon());
+        && (!excludeHydrocarbonsFromNeutralPitzerTopology
+            || !PitzerParameterDatasets.isHydrocarbonForAutomaticCatalog(getComponent(index)));
   }
 
   private void validateNeutralParameterCoverageOncePerState() {
