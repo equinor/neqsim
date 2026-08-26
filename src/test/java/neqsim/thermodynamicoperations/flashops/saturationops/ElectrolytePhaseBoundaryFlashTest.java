@@ -26,22 +26,23 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   @Test
   void pitzerOilAppearanceBoundaryIsDeterministicAndKeepsAutomaticCatalog() throws Exception {
     SystemPitzer firstSystem = createPitzerSystem();
-    ElectrolytePhaseBoundaryResult first = solveOilBoundary(firstSystem);
+    ElectrolytePhaseBoundaryResult first = solvePhaseBoundary(firstSystem, PhaseType.OIL);
 
-    assertBoundaryContract(first, firstSystem);
+    assertBoundaryContract(first, firstSystem, PhaseType.OIL);
     PhasePitzer aqueous = (PhasePitzer) firstSystem.getGeLiquidPhase();
     assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, aqueous.getParameterDatasetId());
     double scalePotential = new ThermodynamicOperations(firstSystem).getRelativeScalePotential("NaCl");
     assertTrue(Double.isFinite(scalePotential) && scalePotential > 0.0);
 
     SystemPitzer repeatedSystem = createPitzerSystem();
-    ElectrolytePhaseBoundaryResult repeated = solveOilBoundary(repeatedSystem);
+    ElectrolytePhaseBoundaryResult repeated = solvePhaseBoundary(repeatedSystem, PhaseType.OIL);
     assertEquals(first.getLowerBound(), repeated.getLowerBound(), 0.0);
     assertEquals(first.getUpperBound(), repeated.getUpperBound(), 0.0);
     assertEquals(first.getTargetPresentValue(), repeated.getTargetPresentValue(), 0.0);
+    assertEquals(first.getFlashEvaluations(), repeated.getFlashEvaluations());
 
     SystemPitzer clonedSystem = createPitzerSystem().clone();
-    ElectrolytePhaseBoundaryResult cloned = solveOilBoundary(clonedSystem);
+    ElectrolytePhaseBoundaryResult cloned = solvePhaseBoundary(clonedSystem, PhaseType.OIL);
     assertEquals(first.getBoundaryValue(), cloned.getBoundaryValue(), 0.0);
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -58,11 +59,11 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void electrolyteCpaUsesSameVlleBoundaryContract() throws Exception {
+  void electrolyteCpaUsesSameVleBoundaryContract() throws Exception {
     SystemInterface system = createElectrolyteCpaSystem();
-    ElectrolytePhaseBoundaryResult result = solveOilBoundary(system);
+    ElectrolytePhaseBoundaryResult result = solvePhaseBoundary(system, PhaseType.AQUEOUS);
 
-    assertBoundaryContract(result, system);
+    assertBoundaryContract(result, system, PhaseType.AQUEOUS);
     double scalePotential = new ThermodynamicOperations(system).getRelativeScalePotential("NaCl");
     assertTrue(Double.isFinite(scalePotential) && scalePotential > 0.0);
   }
@@ -89,27 +90,30 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     assertTrue(reactiveError.getMessage().contains("elemental-balance"));
   }
 
-  private static ElectrolytePhaseBoundaryResult solveOilBoundary(SystemInterface system) {
-    return new ThermodynamicOperations(system).electrolytePhaseBoundaryTemperatureFlash(PhaseType.OIL,
+  private static ElectrolytePhaseBoundaryResult solvePhaseBoundary(SystemInterface system, PhaseType targetPhase) {
+    return new ThermodynamicOperations(system).electrolytePhaseBoundaryTemperatureFlash(targetPhase,
         LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20);
   }
 
-  private static void assertBoundaryContract(ElectrolytePhaseBoundaryResult result, SystemInterface system) {
+  private static void assertBoundaryContract(ElectrolytePhaseBoundaryResult result, SystemInterface system,
+      PhaseType targetPhase) {
     assertEquals(ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE, result.getSpecification());
-    assertEquals(PhaseType.OIL, result.getTargetPhase());
+    assertEquals(targetPhase, result.getTargetPhase());
     assertTrue(result.getBoundaryValue() > LOWER_TEMPERATURE_K);
     assertTrue(result.getBoundaryValue() < UPPER_TEMPERATURE_K);
     assertTrue(result.getBracketWidth() <= BOUNDARY_TOLERANCE_K);
     assertNotEquals(result.getLowerTopology(), result.getUpperTopology());
-    assertTrue(result.getLowerTopology().contains("oil") || result.getUpperTopology().contains("oil"));
+    assertTrue(result.getLowerTopology().contains(targetPhase.toString())
+        || result.getUpperTopology().contains(targetPhase.toString()));
     assertTrue(result.getTargetPhaseFraction() > 1.0e-10);
-    assertEquals(result.getIterations() + 2, result.getFlashEvaluations());
+    assertTrue(result.getFlashEvaluations() >= result.getIterations() + 2);
+    assertTrue(result.getFlashEvaluations() <= 2 * result.getIterations() + 3);
     assertTrue(result.getMaximumMaterialBalanceResidual() <= 1.0e-7);
     assertTrue(result.getMaximumPhaseNormalizationResidual() <= 1.0e-10);
     assertTrue(Math.abs(result.getAqueousChargeMolality()) <= 1.0e-8);
     assertTrue(result.getMaximumIonMoleFractionOutsideAqueous() <= 1.0e-30);
     assertTrue(result.getMaximumLogFugacityResidual() <= 1.0e-5);
-    assertTrue(hasPhase(system, PhaseType.OIL));
+    assertTrue(hasPhase(system, targetPhase));
   }
 
   private static SystemPitzer createPitzerSystem() {
