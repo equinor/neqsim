@@ -18,7 +18,7 @@ accountable review remain mandatory.
 | Need | Guide |
 | --- | --- |
 | Choose equipment, logic, or scenario APIs | [Process-safety API overview](../process/safety/README) |
-| Size or screen relief devices | [Relief-valve sizing screening](relief_valve_sizing_api) |
+| Size or screen relief devices | [Relief-Valve Sizing Screening](relief_valve_sizing_api) |
 | Test ESD logic dynamically | [ESD dynamic testing workflow](esd_testing_workflow) |
 | Model HIPPS voting and action | [HIPPS implementation](hipps_implementation) |
 | Generate safety scenarios | [Safety scenario generation](../process/safety/scenario-generation) |
@@ -73,7 +73,7 @@ accountable review remain mandatory.
 
 | Document | Description |
 | --- | --- |
-| [Relief-valve sizing screening](relief_valve_sizing_api) | Static gas, liquid, two-phase, and wetted-fire sizing APIs with explicit SI units |
+| [Relief-Valve Sizing Screening](relief_valve_sizing_api) | Static gas, liquid, two-phase, and wetted-fire sizing APIs with explicit SI units |
 | [PSV dynamic sizing example](psv_dynamic_sizing_example) | Pressure-safety-valve dynamic sizing workflow |
 | [Rupture-disk dynamic behavior](rupture_disk_dynamic_behavior) | Burst, opening, flow, and reset-state behavior |
 | [Trapped inventory calculator](trapped_inventory_calculator) | Evidence-linked isolation inventory for blowdown, flare-load, and MDMT screening |
