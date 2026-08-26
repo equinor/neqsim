@@ -79,7 +79,10 @@ class DewPointStandardsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.hydrocarbon_source)
         self.assertIn("fixed `specPressure` of 50.0 bara", self.guide)
-        self.assertIn("inherited `setReferencePressure(double)`", self.guide)
+        self.assertIn(
+            "`setReferencePressure(double)` method does not change",
+            self.guide,
+        )
         self.assertNotIn("for (double P : pressures)", self.guide)
         self.assertIn("A dew point at 50 bara is not the cricondentherm", self.guide)
 
