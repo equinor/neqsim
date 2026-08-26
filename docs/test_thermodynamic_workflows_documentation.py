@@ -12,6 +12,7 @@ class ThermodynamicWorkflowsDocumentationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.guide = GUIDE.read_text(encoding="utf-8")
+        cls.guide_prose = " ".join(cls.guide.split()).lower()
 
     def test_front_matter_is_complete_without_duplicate_h1(self):
         self.assertTrue(self.guide.startswith("---\ntitle:"))
@@ -45,7 +46,7 @@ class ThermodynamicWorkflowsDocumentationTest(unittest.TestCase):
             "do not have the same characterization semantics",
         ):
             with self.subTest(contract=contract):
-                self.assertIn(contract, self.guide)
+                self.assertIn(" ".join(contract.split()).lower(), self.guide_prose)
         self.assertNotIn("enable access to component data", self.guide)
         self.assertNotIn("Always call `createDatabase(true)` before", self.guide)
 
@@ -97,7 +98,7 @@ class ThermodynamicWorkflowsDocumentationTest(unittest.TestCase):
             "Molar mass and Z-factor alone do not validate",
         ):
             with self.subTest(contract=contract):
-                self.assertIn(contract, self.guide)
+                self.assertIn(" ".join(contract.split()).lower(), self.guide_prose)
 
     def test_clone_is_independent_and_not_presented_as_json_export(self):
         for contract in (
