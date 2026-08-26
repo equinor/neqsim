@@ -2,25 +2,38 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import neqsim.thermo.ThermodynamicModelSettings;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Regression test for the warm-start K-value guard in TPflash for systems that previously converged to 3+ phases.
+ * Qualification coverage for repeated and changed-state neutral SRK-CPA three-phase flashes.
  *
  * <p>
- * Background: {@code Component.K} is a single scalar per (phase, component), so when a flash converges to 3 phases (gas
- * / HC-liquid / aqueous) the stored K only describes the gas ↔ HC-liquid split. Using those K as a warm-start in the
- * 2-phase loop of the next TPflash call is blind to components that mostly distributed to the 3rd phase (water,
- * glycols, methanol under CPA / electrolyte EOS). The guard in {@link TPflash#run()} disables warm-start for a single
- * flash call when {@code system.getNumberOfPhases() > 2}.
+ * {@code Component.K} is a single scalar per (phase, component), so after a GAS/OIL/AQUEOUS
+ * equilibrium it describes only one phase pair. Reusing those values in the next two-phase loop
+ * is blind to water and MEG partitioning into the third phase. These tests qualify the complete
+ * equilibrium returned by the warm-start guard rather than checking only one phase fraction.
+ * </p>
+ *
+ * <p>
+ * The synthetic natural-gas/water/MEG case is a numerical regression, not independent
+ * experimental validation of the CPA parameters.
+ * </p>
  */
 class TPflashWarmStartThreePhaseTest {
+  private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
+  private static final double FUGACITY_TOLERANCE = 1.0e-8;
+  private static final double PHASE_FRACTION_TOLERANCE = 1.0e-12;
+  private static final double COMPOSITION_TOLERANCE = 1.0e-12;
+  private static final double EQUIVALENCE_TOLERANCE = 1.0e-10;
 
   private boolean originalWarmStart;
 
@@ -35,12 +48,69 @@ class TPflashWarmStartThreePhaseTest {
     ThermodynamicModelSettings.setUseWarmStartKValues(originalWarmStart);
   }
 
-  /**
-   * Build a natural-gas + water + MEG fluid under SRK-CPA that naturally forms a 3-phase split (gas / HC-liquid /
-   * aqueous) at the test conditions.
-   */
-  private SystemInterface buildCpaFluid() {
-    SystemInterface fluid = new SystemSrkCPAstatoil(298.15, 60.0);
+  @Test
+  void repeatedThreePhaseFlashIsFullyConvergedAndDeterministic() {
+    SystemInterface fluid = buildCpaFluid(298.15, 60.0);
+    flash(fluid);
+    assertThreePhaseEquilibrium(fluid);
+
+    SystemInterface firstEquilibrium = fluid.clone();
+    flash(fluid);
+
+    assertThreePhaseEquilibrium(fluid);
+    assertEquivalentEquilibrium(firstEquilibrium, fluid);
+  }
+
+  @Test
+  void perturbedRecycleStepMatchesFreshColdFlashAndReturnState() {
+    SystemInterface changedState = buildCpaFluid(298.15, 60.0);
+    flash(changedState);
+
+    changedState.setTemperature(300.15);
+    changedState.setPressure(59.5);
+    flash(changedState);
+
+    SystemInterface freshChangedState = coldFlash(buildCpaFluid(300.15, 59.5));
+    assertThreePhaseEquilibrium(changedState);
+    assertThreePhaseEquilibrium(freshChangedState);
+    assertEquivalentEquilibrium(freshChangedState, changedState);
+
+    changedState.setTemperature(298.15);
+    changedState.setPressure(60.0);
+    flash(changedState);
+
+    SystemInterface freshOriginalState = coldFlash(buildCpaFluid(298.15, 60.0));
+    assertThreePhaseEquilibrium(changedState);
+    assertEquivalentEquilibrium(freshOriginalState, changedState);
+  }
+
+  @Test
+  void poorPhaseFractionGuessRecoversFreshThreePhaseEquilibrium() {
+    SystemInterface poorGuess = buildCpaFluid(298.15, 60.0);
+    poorGuess.init(0);
+    poorGuess.setBeta(0, 1.0e-10);
+    poorGuess.setBeta(1, 1.0 - 1.0e-10);
+    flash(poorGuess);
+
+    SystemInterface freshReference = coldFlash(buildCpaFluid(298.15, 60.0));
+    assertThreePhaseEquilibrium(poorGuess);
+    assertEquivalentEquilibrium(freshReference, poorGuess);
+  }
+
+  @Test
+  void warmStartFlagIsRestoredAfterThreePhaseFlash() {
+    SystemInterface fluid = buildCpaFluid(298.15, 60.0);
+    assertTrue(ThermodynamicModelSettings.isUseWarmStartKValues(),
+        "test precondition: warm-start enabled by @BeforeEach");
+
+    flash(fluid);
+
+    assertTrue(ThermodynamicModelSettings.isUseWarmStartKValues(),
+        "warm-start flag must be restored after TPflash on a three-phase system");
+  }
+
+  private SystemInterface buildCpaFluid(double temperature, double pressure) {
+    SystemInterface fluid = new SystemSrkCPAstatoil(temperature, pressure);
     fluid.addComponent("nitrogen", 1.0);
     fluid.addComponent("methane", 85.0);
     fluid.addComponent("ethane", 5.0);
@@ -54,86 +124,142 @@ class TPflashWarmStartThreePhaseTest {
     return fluid;
   }
 
-  /**
-   * Flashing the same 3-phase CPA fluid twice with warm-start enabled must give the same result as the first flash.
-   * Without the guard, the second flash reuses stale gas ↔ HC-liquid K for water/MEG (which actually live in the
-   * aqueous phase) and can diverge or converge to a different split.
-   */
-  @Test
-  void repeatedThreePhaseFlashIsStableWithWarmStart() {
-    SystemInterface fluid = buildCpaFluid();
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-    // First flash: cold start, authoritative result.
-    ops.TPflash();
-    int phasesFirst = fluid.getNumberOfPhases();
-    double betaGasFirst = fluid.getBeta(0);
-    double waterInGasFirst = fluid.getPhase(0).getComponent("water").getx();
-    assertTrue(phasesFirst >= 2, "expected at least 2 phases on first flash");
-
-    // Second flash at identical conditions. Guard must force Wilson because
-    // the system is carrying 3 phases from the previous call.
-    ops.TPflash();
-    int phasesSecond = fluid.getNumberOfPhases();
-    double betaGasSecond = fluid.getBeta(0);
-    double waterInGasSecond = fluid.getPhase(0).getComponent("water").getx();
-
-    assertEquals(phasesFirst, phasesSecond, "phase count must be stable across repeated flashes");
-    assertEquals(betaGasFirst, betaGasSecond, 1e-6, "gas phase beta must be reproducible");
-    assertEquals(waterInGasFirst, waterInGasSecond, 1e-8, "water mole fraction in gas must be reproducible");
+  private void flash(SystemInterface fluid) {
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
   }
 
-  /**
-   * Perturb the operating conditions slightly (simulating a recycle-loop step) and re-flash. The guard ensures the
-   * result matches a fresh cold flash started from Wilson K at the same perturbed conditions.
-   */
-  @Test
-  void perturbedRecycleStepMatchesColdFlash() {
-    SystemInterface fluid = buildCpaFluid();
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.TPflash();
-
-    // Perturb T/P (typical recycle-loop change): +2 K, -0.5 bar.
-    fluid.setTemperature(300.15);
-    fluid.setPressure(59.5);
-    ops.TPflash();
-    double warmBetaGas = fluid.getBeta(0);
-    double warmWaterInAq = fluid.getPhase(fluid.getNumberOfPhases() - 1).getComponent("water").getx();
-    int warmPhases = fluid.getNumberOfPhases();
-
-    // Cold reference: flash a fresh fluid at the perturbed conditions from
-    // Wilson K (warm-start disabled for this reference to avoid any reuse).
-    SystemInterface cold = buildCpaFluid();
-    cold.setTemperature(300.15);
-    cold.setPressure(59.5);
-    boolean prev = ThermodynamicModelSettings.isUseWarmStartKValues();
+  private SystemInterface coldFlash(SystemInterface fluid) {
+    boolean previousWarmStart = ThermodynamicModelSettings.isUseWarmStartKValues();
     ThermodynamicModelSettings.setUseWarmStartKValues(false);
     try {
-      new ThermodynamicOperations(cold).TPflash();
+      flash(fluid);
+      return fluid;
     } finally {
-      ThermodynamicModelSettings.setUseWarmStartKValues(prev);
+      ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
     }
-    double coldBetaGas = cold.getBeta(0);
-    double coldWaterInAq = cold.getPhase(cold.getNumberOfPhases() - 1).getComponent("water").getx();
-    int coldPhases = cold.getNumberOfPhases();
-
-    assertEquals(coldPhases, warmPhases, "warm-restart must find the same number of phases as a cold flash");
-    assertEquals(coldBetaGas, warmBetaGas, 1e-4, "gas beta must match cold flash within 1e-4");
-    assertEquals(coldWaterInAq, warmWaterInAq, 1e-4, "water mole fraction in aqueous phase must match cold flash");
   }
 
-  /**
-   * Sanity check: after the 3-phase flash returns, the thread-local warm-start flag must be restored to its entry value
-   * (try/finally contract).
-   */
-  @Test
-  void warmStartFlagIsRestoredAfterThreePhaseFlash() {
-    SystemInterface fluid = buildCpaFluid();
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    assertTrue(ThermodynamicModelSettings.isUseWarmStartKValues(),
-        "test precondition: warm-start enabled by @BeforeEach");
-    ops.TPflash();
-    assertTrue(ThermodynamicModelSettings.isUseWarmStartKValues(),
-        "warm-start flag must be restored after TPflash on a 3-phase system");
+  private void assertThreePhaseEquilibrium(SystemInterface fluid) {
+    assertEquals(3, fluid.getNumberOfPhases(), "expected GAS/OIL/AQUEOUS equilibrium");
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+    assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+
+    double betaTotal = 0.0;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      double beta = fluid.getBeta(phaseIndex);
+      assertTrue(Double.isFinite(beta) && beta > 0.0 && beta < 1.0,
+          "phase fraction must be finite and bounded");
+      betaTotal += beta;
+
+      double compositionTotal = 0.0;
+      for (int componentIndex = 0;
+          componentIndex < fluid.getPhase(phaseIndex).getNumberOfComponents();
+          componentIndex++) {
+        double composition = fluid.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
+            "phase composition must be finite and bounded");
+        compositionTotal += composition;
+      }
+      assertEquals(1.0, compositionTotal, COMPOSITION_TOLERANCE,
+          "phase composition must be normalized");
+    }
+    assertEquals(1.0, betaTotal, PHASE_FRACTION_TOLERANCE,
+        "phase fractions must be normalized");
+
+    double materialResidual = maximumComponentMaterialBalanceResidual(fluid);
+    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE,
+        "maximum component material-balance residual was " + materialResidual);
+
+    double fugacityResidual = maximumLogFugacityResidual(fluid);
+    assertTrue(fugacityResidual < FUGACITY_TOLERANCE,
+        "maximum cross-phase log-fugacity residual was " + fugacityResidual);
+  }
+
+  private void assertEquivalentEquilibrium(SystemInterface expected, SystemInterface actual) {
+    assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
+    assertExtensiveEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), "Gibbs energy");
+    assertExtensiveEquals(expected.getEnthalpy(), actual.getEnthalpy(), "enthalpy");
+
+    for (int expectedPhase = 0; expectedPhase < expected.getNumberOfPhases(); expectedPhase++) {
+      PhaseType phaseType = expected.getPhase(expectedPhase).getType();
+      int actualPhase = findPhase(actual, phaseType);
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase),
+          EQUIVALENCE_TOLERANCE, "phase fraction for " + phaseType);
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(),
+          1.0e-8, "compressibility factor for " + phaseType);
+      assertEquals(expected.getPhase(expectedPhase).getDensity(),
+          actual.getPhase(actualPhase).getDensity(),
+          Math.max(1.0e-8, 1.0e-8 * Math.abs(expected.getPhase(expectedPhase).getDensity())),
+          "density for " + phaseType);
+
+      for (int componentIndex = 0;
+          componentIndex < expected.getPhase(expectedPhase).getNumberOfComponents();
+          componentIndex++) {
+        assertEquals(expected.getPhase(expectedPhase).getComponent(componentIndex).getx(),
+            actual.getPhase(actualPhase).getComponent(componentIndex).getx(),
+            EQUIVALENCE_TOLERANCE,
+            "composition for component " + componentIndex + " in " + phaseType);
+      }
+    }
+  }
+
+  private void assertExtensiveEquals(double expected, double actual, String property) {
+    assertEquals(expected, actual, Math.max(1.0e-6, 1.0e-8 * Math.abs(expected)), property);
+  }
+
+  private int findPhase(SystemInterface fluid, PhaseType phaseType) {
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      if (fluid.getPhase(phaseIndex).getType() == phaseType) {
+        return phaseIndex;
+      }
+    }
+    throw new AssertionError("missing phase " + phaseType);
+  }
+
+  private double maximumComponentMaterialBalanceResidual(SystemInterface fluid) {
+    double maximumResidual = 0.0;
+    for (int componentIndex = 0;
+        componentIndex < fluid.getPhase(0).getNumberOfComponents();
+        componentIndex++) {
+      double recoveredFeed = 0.0;
+      for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+        recoveredFeed +=
+            fluid.getBeta(phaseIndex)
+                * fluid.getPhase(phaseIndex).getComponent(componentIndex).getx();
+      }
+      maximumResidual =
+          Math.max(maximumResidual,
+              Math.abs(fluid.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
+    }
+    return maximumResidual;
+  }
+
+  private double maximumLogFugacityResidual(SystemInterface fluid) {
+    double maximumResidual = 0.0;
+    for (int componentIndex = 0;
+        componentIndex < fluid.getPhase(0).getNumberOfComponents();
+        componentIndex++) {
+      double referenceLogFugacity = componentLogFugacity(fluid, 0, componentIndex);
+      for (int phaseIndex = 1; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+        maximumResidual =
+            Math.max(maximumResidual,
+                Math.abs(referenceLogFugacity
+                    - componentLogFugacity(fluid, phaseIndex, componentIndex)));
+      }
+    }
+    return maximumResidual;
+  }
+
+  private double componentLogFugacity(
+      SystemInterface fluid, int phaseIndex, int componentIndex) {
+    double composition = fluid.getPhase(phaseIndex).getComponent(componentIndex).getx();
+    double fugacityCoefficient =
+        fluid.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
+    assertTrue(Double.isFinite(fugacityCoefficient) && fugacityCoefficient > 0.0,
+        "fugacity coefficient must be finite and positive");
+    return Math.log(Math.max(composition, Double.MIN_NORMAL))
+        + Math.log(fugacityCoefficient);
   }
 }
