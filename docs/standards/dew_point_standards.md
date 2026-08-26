@@ -1,333 +1,195 @@
 ---
-title: "Dew Point Standards"
-description: "Standards for calculating water and hydrocarbon dew points of natural gas."
+title: "Water and Hydrocarbon Dew-Point Methods"
+description: "Use NeqSim water- and hydrocarbon-dew-point standards classes with explicit pressure, model, units, validation, and contract boundaries."
+keywords: "water dew point, hydrocarbon dew point, ISO 18453, GERG-water, SRK, gas quality, sales gas, reference pressure, phase envelope"
 ---
 
-# Dew Point Standards
+Dew-point calculations locate a phase-appearance boundary for a defined gas
+composition and pressure. They are sensitive to sampling, water or heavy-end
+content, model selection, binary-interaction parameters, and the specified
+pressure. Treat NeqSim results as calculation evidence, not as proof that a
+sample, measurement procedure, or delivery point complies with a standard or
+contract.
 
-Standards for calculating water and hydrocarbon dew points of natural gas.
+## Choose the maintained calculation path
 
-## Table of Contents
-- [Overview](#overview)
-- [Water Dew Point (ISO 18453)](#water-dew-point-iso-18453)
-- [Hydrocarbon Dew Point](#hydrocarbon-dew-point)
-- [Usage Examples](#usage-examples)
-- [Comparison of Methods](#comparison-of-methods)
+| Engineering question | Current class | Current boundary |
+| --- | --- | --- |
+| Water dew point at one pressure | `Standard_ISO18453` | Converts a non-GERG-water input composition to an internal `SystemGERGwaterEos` and runs `waterDewPointTemperatureFlash()` |
+| Legacy database-backed water-dew-point rows | `Draft_ISO18453` | Retained for compatibility in `BaseContract`; new direct calculations should use `Standard_ISO18453` |
+| Hydrocarbon dew point at the class's fixed pressure | `BestPracticeHydrocarbonDewPoint` | Copies non-water components into an internal SRK system, applies mixing rule 2, and calculates at 50 bara |
+| Dew-point curve, cricondentherm, or cricondenbar | Phase-envelope or saturation operations | The fixed-pressure standards classes do not calculate these envelope extrema |
 
----
+A dew point at 50 bara is not the cricondentherm. The cricondentherm is the
+maximum temperature on the complete phase envelope and generally occurs at a
+pressure determined by the envelope calculation.
 
-## Overview
+## Water dew point with `Standard_ISO18453`
 
-Dew point specifications are critical for:
-- Pipeline transport (preventing liquid dropout)
-- Custody transfer specifications
-- Processing plant design
-- Sales contract compliance
+The current class is documented in source as superseding
+`Draft_ISO18453`. It accepts any `SystemInterface`; when the input is not
+already a GERG-water system, the constructor copies the phase-0 component names
+and mole amounts into a new `SystemGERGwaterEos`.
 
-**Available Implementations:**
-- `Draft_ISO18453` - Water dew point using GERG-water equation
-- `BestPracticeHydrocarbonDewPoint` - Hydrocarbon dew point using SRK-EoS
+The calculation pressure is absolute pressure in bara. Use `setPressure(double)`
+or `setReferencePressure(double)` before `calculate()`. The primary result key
+is `dewPointTemperature`; the no-unit getter returns degrees Celsius, while the
+two-argument getter recognizes `"K"` and `"F"` conversions.
 
----
-
-## Water Dew Point (ISO 18453)
-
-### Standard
-
-**ISO 18453:2004** - Natural gas — Correlation between water content and water dew point
-
-### Purpose
-
-Calculate the temperature at which water vapor in natural gas begins to condense at a given pressure.
-
-### Implementation
-
-**Class:** `Draft_ISO18453`
-
-Uses the GERG-water equation of state which is specifically designed for water in natural gas systems.
-
-### Constructor
+### Executable Java 8 example
 
 ```java
-import neqsim.standards.gasquality.Draft_ISO18453;
+import neqsim.standards.gasquality.Standard_ISO18453;
+import neqsim.thermo.system.SystemGERGwaterEos;
+import neqsim.thermo.system.SystemInterface;
 
-// Create standard from any fluid
-Draft_ISO18453 waterDewPoint = new Draft_ISO18453(thermoSystem);
+SystemInterface wetGas = new SystemGERGwaterEos(268.15, 20.0);
+wetGas.addComponent("methane", 0.9);
+wetGas.addComponent("water", 0.0000051);
+wetGas.createDatabase(true);
+wetGas.setMixingRule(8);
+wetGas.init(0);
+
+Standard_ISO18453 waterDewPoint = new Standard_ISO18453(wetGas);
+waterDewPoint.setPressure(70.0);
+waterDewPoint.calculate();
+
+double waterDewPointC =
+    waterDewPoint.getValue("dewPointTemperature", "C");
+double calculationPressureBara = waterDewPoint.getValue("pressure");
 ```
 
-### How It Works
+For the repository fixture, the result is approximately -21.776 °C at
+70 bara. That number validates the documented API and bundled model behavior; it
+is not a generic natural-gas expectation.
 
-1. Converts input fluid to GERG-water EoS if not already
-2. Sets pressure to reference pressure (default 70 bar)
-3. Performs water dew point temperature flash
-4. Returns temperature where water just begins to condense
+### Water-dew-point contract decisions
 
-### Key Methods
-
-| Method | Description |
-|--------|-------------|
-| `calculate()` | Perform dew point calculation |
-| `getValue("dewPointTemperature")` | Get dew point in °C |
-| `getValue("pressure")` | Get reference pressure in bar |
-| `setReferencePressure(P)` | Set reference pressure |
-| `isOnSpec()` | Check against sales contract specification |
-
-### Example
+Apply the governing limit explicitly in the project layer:
 
 ```java
-import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.standards.gasquality.Draft_ISO18453;
-
-// Natural gas with water
-SystemInterface wetGas = new SystemSrkCPAstatoil(273.15 + 20, 50.0);
-wetGas.addComponent("methane", 0.90);
-wetGas.addComponent("ethane", 0.05);
-wetGas.addComponent("propane", 0.02);
-wetGas.addComponent("CO2", 0.02);
-wetGas.addComponent("water", 100e-6);  // 100 ppm water
-wetGas.setMixingRule("CPA_Statoil");
-
-// Calculate water dew point
-Draft_ISO18453 iso18453 = new Draft_ISO18453(wetGas);
-iso18453.setReferencePressure(70.0);  // 70 bar reference
-iso18453.calculate();
-
-double wdp = iso18453.getValue("dewPointTemperature");
-System.out.printf("Water Dew Point at 70 bar = %.1f °C%n", wdp);
+double maximumWaterDewPointC = -8.0;
+boolean withinWaterDewPointLimit =
+    Double.isFinite(waterDewPointC)
+        && waterDewPointC <= maximumWaterDewPointC;
 ```
 
-### Specification Checking
+`isOnSpec()` compares the calculated value with
+`getSalesContract().getWaterDewPointTemperature()`. The default embedded
+`BaseContract` limit is not evidence for a particular delivery point.
+`setDewPointTemperatureSpec(double)` stores a separate class field that the
+current `isOnSpec()` implementation does not read. Prefer the explicit
+comparison above unless a verified `ContractInterface` has been attached.
 
-```java
-// Check against contract specification
-iso18453.getSalesContract().setWaterDewPointTemperature(-8.0);  // Max -8°C
+A failed flash is logged by the current class rather than rethrown. Callers
+should therefore reject non-finite or physically implausible output and retain
+the input composition, model, pressure, NeqSim version, and calculation
+diagnostics.
 
-if (iso18453.isOnSpec()) {
-    System.out.println("Gas meets water dew point specification");
-} else {
-    System.out.println("Gas FAILS water dew point specification");
-}
-```
+## Hydrocarbon dew point with `BestPracticeHydrocarbonDewPoint`
 
----
+The constructor copies every phase-0 component except exact component name
+`water` into a new `SystemSrkEos`, applies mixing rule 2, and initializes an
+internal calculation system. It does not reuse the input fluid's EOS or fitted
+binary-interaction parameters.
 
-## Hydrocarbon Dew Point
+The current implementation has a fixed `specPressure` of 50.0 bara.
+`calculate()` resets the internal system to that pressure.
+The inherited `setReferencePressure(double)` method does not change
+`specPressure`, and changing the pressure of the input fluid after construction
+does not change the calculation pressure.
 
-### Purpose
-
-Calculate the temperature at which hydrocarbon liquids begin to condense from natural gas (cricondentherm).
-
-### Implementation
-
-**Class:** `BestPracticeHydrocarbonDewPoint`
-
-Uses SRK equation of state with Peneloux volume correction (mixing rule 2) for hydrocarbon phase behavior.
-
-### Constructor
+### Executable Java 8 example
 
 ```java
 import neqsim.standards.gasquality.BestPracticeHydrocarbonDewPoint;
-
-// Create from any fluid (water is automatically removed)
-BestPracticeHydrocarbonDewPoint hcDewPoint = 
-    new BestPracticeHydrocarbonDewPoint(thermoSystem);
-```
-
-### How It Works
-
-1. Creates new SRK-EoS system from input (excludes water)
-2. Sets reference pressure (default 50 bar)
-3. Performs dew point temperature flash
-4. Returns hydrocarbon dew point temperature
-
-### Key Methods
-
-| Method | Description |
-|--------|-------------|
-| `calculate()` | Perform dew point calculation |
-| `getValue("hydrocarbondewpointTemperature")` | Get dew point in °C |
-| `getValue("pressure")` | Get reference pressure in bar |
-| `isOnSpec()` | Check against specification |
-
-### Example
-
-```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.standards.gasquality.BestPracticeHydrocarbonDewPoint;
 
-// Rich natural gas
-SystemInterface richGas = new SystemSrkEos(273.15 + 20, 50.0);
+SystemInterface richGas = new SystemSrkEos(293.15, 70.0);
 richGas.addComponent("methane", 0.85);
-richGas.addComponent("ethane", 0.06);
+richGas.addComponent("ethane", 0.05);
 richGas.addComponent("propane", 0.03);
-richGas.addComponent("n-butane", 0.02);
-richGas.addComponent("n-pentane", 0.01);
-richGas.addComponent("n-hexane", 0.005);
-richGas.addComponent("n-heptane", 0.003);
-richGas.addComponent("n-octane", 0.002);
+richGas.addComponent("i-butane", 0.01);
+richGas.addComponent("n-butane", 0.015);
+richGas.addComponent("i-pentane", 0.005);
+richGas.addComponent("n-pentane", 0.005);
+richGas.addComponent("n-hexane", 0.003);
 richGas.addComponent("nitrogen", 0.02);
+richGas.addComponent("CO2", 0.012);
 richGas.setMixingRule("classic");
 
-// Calculate hydrocarbon dew point
-BestPracticeHydrocarbonDewPoint hcDP = new BestPracticeHydrocarbonDewPoint(richGas);
-hcDP.calculate();
+BestPracticeHydrocarbonDewPoint hydrocarbonDewPoint =
+    new BestPracticeHydrocarbonDewPoint(richGas);
+hydrocarbonDewPoint.calculate();
 
-double hcdp = hcDP.getValue("hydrocarbondewpointTemperature");
-System.out.printf("Hydrocarbon Dew Point at 50 bar = %.1f °C%n", hcdp);
+double hydrocarbonDewPointC =
+    hydrocarbonDewPoint.getValue(
+        "hydrocarbondewpointTemperature", "C");
+double calculationPressureBara =
+    hydrocarbonDewPoint.getValue("pressure");
 ```
 
-### Multiple Pressures
+The result should be finite and the reported calculation pressure is 50 bara.
+The two-argument getter does not currently convert hydrocarbon-dew-point units;
+use `"C"` and report degrees Celsius.
+
+Do not use `BestPracticeHydrocarbonDewPoint.isOnSpec()` for a hydrocarbon limit.
+The current method compares the hydrocarbon result with the attached contract's
+*water*-dew-point temperature. Apply the verified hydrocarbon limit explicitly:
 
 ```java
-// Calculate HCDP curve at multiple pressures
-double[] pressures = {20, 30, 40, 50, 60, 70, 80};
-
-System.out.println("Pressure (bar) | HC Dew Point (°C)");
-System.out.println("---------------|-----------------");
-
-for (double P : pressures) {
-    richGas.setPressure(P);
-    BestPracticeHydrocarbonDewPoint hcDP = new BestPracticeHydrocarbonDewPoint(richGas);
-    hcDP.calculate();
-    double hcdp = hcDP.getValue("hydrocarbondewpointTemperature");
-    System.out.printf("%14.0f | %16.1f%n", P, hcdp);
-}
+double maximumHydrocarbonDewPointC = -2.0;
+boolean withinHydrocarbonDewPointLimit =
+    Double.isFinite(hydrocarbonDewPointC)
+        && hydrocarbonDewPointC <= maximumHydrocarbonDewPointC;
 ```
 
----
+The value above only illustrates caller-owned comparison logic. Replace it with
+the controlled limit, pressure range, uncertainty, and rounding rules from the
+governing agreement.
 
-## Usage Examples
+## Curves and envelope extrema
 
-### Combined Water and HC Dew Points
+Do not build a pressure curve by changing the source fluid pressure and repeatedly
+constructing `BestPracticeHydrocarbonDewPoint`; every instance still calculates
+at 50 bara. For a curve or envelope extremum, use a thermodynamic phase-envelope
+or saturation workflow that exposes pressure as a calculation input, then
+validate the selected EOS and characterization against measured dew-point data.
 
-```java
-import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.standards.gasquality.Draft_ISO18453;
-import neqsim.standards.gasquality.BestPracticeHydrocarbonDewPoint;
+For hydrocarbon-dew-point work, preserve and qualify:
 
-// Create wet gas with heavy ends
-SystemInterface gas = new SystemSrkCPAstatoil(273.15 + 20, 70.0);
-gas.addComponent("methane", 0.88);
-gas.addComponent("ethane", 0.05);
-gas.addComponent("propane", 0.02);
-gas.addComponent("n-butane", 0.01);
-gas.addComponent("n-pentane", 0.005);
-gas.addComponent("n-hexane", 0.002);
-gas.addComponent("CO2", 0.02);
-gas.addComponent("water", 50e-6);
-gas.setMixingRule("CPA_Statoil");
+- representative sampling and recombination;
+- C6+ or plus-fraction characterization;
+- selected EOS, volume translation, and binary-interaction parameters;
+- water, glycol, methanol, and other excluded or separately modeled components;
+- convergence branch and phase-appearance interpretation;
+- pressure and temperature measurement uncertainty.
 
-// Water dew point
-Draft_ISO18453 waterDP = new Draft_ISO18453(gas);
-waterDP.setReferencePressure(70.0);
-waterDP.calculate();
-double wdp = waterDP.getValue("dewPointTemperature");
+For water-dew-point work, also qualify water-content measurement, acid gases,
+glycols or inhibitors, salinity where relevant, and the applicability range of
+the chosen water model.
 
-// Hydrocarbon dew point
-BestPracticeHydrocarbonDewPoint hcDP = new BestPracticeHydrocarbonDewPoint(gas);
-hcDP.calculate();
-double hcdp = hcDP.getValue("hydrocarbondewpointTemperature");
+## Reporting and engineering boundary
 
-System.out.println("=== Dew Point Analysis ===");
-System.out.printf("Water Dew Point (at 70 bar): %.1f °C%n", wdp);
-System.out.printf("Hydrocarbon Dew Point (at 50 bar): %.1f °C%n", hcdp);
-```
+Every reported result should include:
 
-### Effect of Water Content on WDP
+1. sample or case identity and composition basis;
+2. NeqSim version and class name;
+3. EOS, mixing rule, characterization, and parameter provenance;
+4. absolute calculation pressure in bara;
+5. dew-point temperature and unit;
+6. convergence or failure diagnostics;
+7. governing standard or contract edition from a controlled source;
+8. project limit, uncertainty, rounding rule, and accountable reviewer.
 
-```java
-// Analyze water dew point vs water content
-double[] waterContents = {10, 20, 50, 100, 200, 500};  // ppm
+Class names such as `Standard_ISO18453` do not establish that sampling,
+instrumentation, calibration, data reduction, or the complete requirements of a
+licensed standard have been satisfied.
 
-System.out.println("Water Content (ppm) | Water Dew Point (°C)");
-System.out.println("--------------------|--------------------");
+## Related documentation
 
-for (double ppm : waterContents) {
-    SystemInterface gas = new SystemSrkCPAstatoil(273.15 + 20, 70.0);
-    gas.addComponent("methane", 0.95);
-    gas.addComponent("ethane", 0.03);
-    gas.addComponent("CO2", 0.01);
-    gas.addComponent("water", ppm * 1e-6);
-    gas.setMixingRule("CPA_Statoil");
-    
-    Draft_ISO18453 waterDP = new Draft_ISO18453(gas);
-    waterDP.setReferencePressure(70.0);
-    waterDP.calculate();
-    double wdp = waterDP.getValue("dewPointTemperature");
-    
-    System.out.printf("%19.0f | %19.1f%n", ppm, wdp);
-}
-```
-
----
-
-## Comparison of Methods
-
-### Water Dew Point Approaches
-
-| Aspect | ISO 18453 (GERG-water) | CPA-EoS |
-|--------|------------------------|---------|
-| Model | GERG-water specific | General CPA |
-| Accuracy | Optimized for NG | Good general accuracy |
-| Speed | Fast | Moderate |
-| Water association | Empirical | Explicit |
-
-### Hydrocarbon Dew Point Approaches
-
-| Aspect | Best Practice (SRK) | PR-EoS | GERG-2004 |
-|--------|---------------------|--------|-----------|
-| Heavy ends | Good | Good | Limited |
-| Accuracy | Typical ±2-3°C | Typical ±2-3°C | Best for lean gas |
-| Speed | Fast | Fast | Moderate |
-
----
-
-## Typical Specifications
-
-### European Gas Specifications
-
-| Parameter | Typical Limit |
-|-----------|---------------|
-| Water dew point | < -8°C at 70 bar |
-| HC dew point | < -2°C at 1-70 bar |
-
-### US Pipeline Specifications
-
-| Parameter | Typical Limit |
-|-----------|---------------|
-| Water dew point | < -7°C (20°F) at max operating P |
-| HC dew point | < -4°C (25°F) at cricondenbar |
-
----
-
-## Accuracy Considerations
-
-### Factors Affecting Water Dew Point
-
-- Water content measurement uncertainty
-- Pressure accuracy
-- EoS model selection
-- Presence of glycols or methanol
-
-### Factors Affecting HC Dew Point
-
-- Heavy end characterization (C6+ components)
-- Retrograde behavior near cricondentherm
-- EoS binary interaction parameters
-- Pressure at measurement
-
-### Recommendations
-
-1. Use CPA or GERG-water for water dew point
-2. Characterize C6+ fraction carefully for HC dew point
-3. Report dew point with reference pressure
-4. Consider measurement at multiple pressures for HC dew point curve
-
----
-
-## References
-
-1. ISO 18453:2004 - Natural gas — Correlation between water content and water dew point
-2. Folas, G.K., et al. (2007). High-pressure vapor-liquid equilibria of systems containing ethylene glycol, water and methane. Fluid Phase Equilibria.
-3. ISO 23874:2006 - Natural gas — Gas chromatographic requirements for hydrocarbon dewpoint calculation
-4. GERG Technical Monograph TM14 (2007) - The GERG-2004 Wide-Range Equation of State for Natural Gases
+- [Standards package overview](README.md)
+- [Sales-contract checks](sales_contracts.md)
+- [Phase-envelope guide](../pvtsimulation/phase_envelope_guide.md)
+- [Thermodynamic operations](../thermodynamicoperations/README.md)
