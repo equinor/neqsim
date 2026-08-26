@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -235,11 +236,31 @@ public final class Dexpi20ProcessModelPackageReader {
       throw new InvalidPackageException(assessment);
     }
 
-    byte[] archiveBytes = Files.readAllBytes(path);
+    byte[] archiveBytes = readBoundedFile(path);
     if (!assessment.getPackageFileSha256().equals(sha256(archiveBytes))) {
       throw new IOException("DEXPI ProcessModel package changed during assessed intake");
     }
     return new Snapshot(assessment, readAreaDocuments(archiveBytes, assessment));
+  }
+
+  private static byte[] readBoundedFile(Path path) throws IOException {
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    InputStream input = Files.newInputStream(path);
+    try {
+      byte[] buffer = new byte[8192];
+      long total = 0L;
+      int count;
+      while ((count = input.read(buffer)) != -1) {
+        total += count;
+        if (total > MAX_PACKAGE_FILE_BYTES) {
+          throw new IOException("DEXPI ProcessModel package exceeds the bounded file-size limit");
+        }
+        output.write(buffer, 0, count);
+      }
+    } finally {
+      input.close();
+    }
+    return output.toByteArray();
   }
 
   private static List<AreaDocument> readAreaDocuments(byte[] archiveBytes,
