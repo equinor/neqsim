@@ -4,11 +4,10 @@ description: "Documentation for separator equipment in NeqSim process simulation
 keywords: "separator, two-phase, three-phase, gas-oil-water, test separator, scrubber, knockout drum, flash drum, liquid level, entrainment"
 ---
 
-# Separator Equipment
-
 Documentation for separator equipment in NeqSim process simulation.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Separator Types](#separator-types)
 - [Three-Phase Separator in Detail](#three-phase-separator-in-detail)
@@ -46,13 +45,14 @@ Documentation for separator equipment in NeqSim process simulation.
 
 ```java
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.StreamInterface;
 
 Separator separator = new Separator("V-100", inletStream);
 separator.run();
 
 // Get outlet streams
-Stream gasOut = separator.getGasOutStream();
-Stream liquidOut = separator.getLiquidOutStream();
+StreamInterface gasOut = separator.getGasOutStream();
+StreamInterface liquidOut = separator.getLiquidOutStream();
 
 // Properties
 double gasRate = gasOut.getFlowRate("kg/hr");
@@ -64,32 +64,38 @@ double liquidLevel = separator.getLiquidLevel();
 
 ```java
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.StreamInterface;
 
 ThreePhaseSeparator separator = new ThreePhaseSeparator("V-200", inletStream);
 separator.run();
 
 // Get outlet streams
-Stream gasOut = separator.getGasOutStream();
-Stream oilOut = separator.getOilOutStream();
-Stream waterOut = separator.getWaterOutStream();
+StreamInterface gasOut = separator.getGasOutStream();
+StreamInterface oilOut = separator.getOilOutStream();
+StreamInterface waterOut = separator.getWaterOutStream();
 
-// Water cut
-double waterCut = separator.getWaterCut();
+// Produced-liquid water mass fraction (explicit basis)
+double waterMassFlow = waterOut.getFlowRate("kg/hr");
+double oilMassFlow = oilOut.getFlowRate("kg/hr");
+double producedLiquidMassFlow = oilMassFlow + waterMassFlow;
+double producedLiquidWaterMassFraction =
+    producedLiquidMassFlow > 0.0 ? waterMassFlow / producedLiquidMassFlow : 0.0;
 ```
 
 ### Gas Scrubber
 
 ```java
 import neqsim.process.equipment.separator.GasScrubber;
+import neqsim.process.equipment.stream.StreamInterface;
 
 GasScrubber scrubber = new GasScrubber("Inlet Scrubber", gasStream);
 scrubber.run();
 
 // Dry gas output
-Stream dryGas = scrubber.getGasOutStream();
+StreamInterface dryGas = scrubber.getGasOutStream();
 
 // Condensate removal
-Stream condensate = scrubber.getLiquidOutStream();
+StreamInterface condensate = scrubber.getLiquidOutStream();
 ```
 
 > **Note:** Gas scrubbers automatically use K-value only constraints (`useGasScrubberConstraints()`).
@@ -99,7 +105,7 @@ Stream condensate = scrubber.getLiquidOutStream();
 
 ## Three-Phase Separator in Detail
 
-The `ThreePhaseSeparator` extends `Separator` and separates a multiphase feed into three outlet streams: gas, oil, and water (aqueous). It requires the fluid to have `setMultiPhaseCheck(true)` so the thermodynamic flash produces distinct oil and aqueous phases.
+The `ThreePhaseSeparator` extends `Separator` and separates a multiphase feed into three outlet streams: gas, oil, and water (aqueous). During `run()`, it temporarily enables the thermodynamic multiphase check for its internal flash and restores the cloned fluid setting afterward. Calling `setMultiPhaseCheck(true)` on the feed is therefore not a separator prerequisite; use it when the upstream feed itself must be initialized or inspected as multiphase. Distinct oil and aqueous phases still depend on the selected thermodynamic model, composition, temperature, and pressure.
 
 ### Creating a Three-Phase Separator
 
@@ -114,7 +120,7 @@ fluid.addComponent("methane", 72.0);
 fluid.addComponent("n-heptane", 14.0);
 fluid.addComponent("water", 40.0);
 fluid.setMixingRule(10);
-fluid.setMultiPhaseCheck(true);  // REQUIRED for three-phase separation
+fluid.setMultiPhaseCheck(true);  // Optional here; useful for inspecting the feed phases
 
 Stream feed = new Stream("Feed", fluid);
 feed.setTemperature(72.0, "C");
@@ -163,7 +169,7 @@ process.add(oilHeater);
 
 // Water to treatment
 ThrottlingValve waterValve = new ThrottlingValve("Water Valve", separator.getWaterOutStream());
-waterValve.setOutletPressure(1.01325);
+waterValve.setOutletPressure(1.01325, "bara");
 process.add(waterValve);
 
 process.run();
@@ -321,7 +327,7 @@ wellStream.setPressure(120.0, "bara");
 
 // Inlet choke
 ThrottlingValve chokeValve = new ThrottlingValve("Inlet Choke", wellStream);
-chokeValve.setOutletPressure(35.0);
+chokeValve.setOutletPressure(35.0, "bara");
 
 // 1st stage separator with entrainment
 ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Separator", chokeValve.getOutletStream());
@@ -333,7 +339,7 @@ Heater oilHeater = new Heater("Oil Heater", hpSep.getOilOutStream());
 oilHeater.setOutTemperature(85.0, "C");
 
 ThrottlingValve mpValve = new ThrottlingValve("MP Valve", oilHeater.getOutletStream());
-mpValve.setOutletPressure(7.0);
+mpValve.setOutletPressure(7.0, "bara");
 
 // 2nd stage separator
 ThreePhaseSeparator mpSep = new ThreePhaseSeparator("MP Separator", mpValve.getOutletStream());
@@ -341,7 +347,7 @@ mpSep.setEntrainment(0.003, "mass", "product", "aqueous", "oil");
 
 // Water treatment
 ThrottlingValve waterValve = new ThrottlingValve("Water DP Valve", hpSep.getWaterOutStream());
-waterValve.setOutletPressure(1.01325);
+waterValve.setOutletPressure(1.01325, "bara");
 Separator waterDegasser = new Separator("Water Degasser", waterValve.getOutletStream());
 
 // Build and run process
@@ -422,11 +428,18 @@ Horizontal separators have specific geometry parameters for sizing and level cal
 
 ### Vessel Geometry
 
-| Parameter         | Method                       | Description                                   | Unit |
-| ----------------- | ---------------------------- | --------------------------------------------- | ---- |
-| Internal Diameter | `setInternalDiameter(value)` | Vessel ID (meters)                            | m    |
-| Length            | `setLength(value, unit)`     | Tan-to-tan length                             | m    |
-| L/D Ratio         | `getLengthDiameterRatio()`   | Length to diameter ratio (design target: 3-5) | -    |
+| Parameter         | Method                                         | Description                                   | Unit |
+| ----------------- | ---------------------------------------------- | --------------------------------------------- | ---- |
+| Internal Diameter | `setInternalDiameter(value)`                   | Vessel ID                                     | m    |
+| Length            | `setSeparatorLength(value)`                    | Tan-to-tan length                             | m    |
+| L/D Ratio         | `getSeparatorLength() / getInternalDiameter()` | Derived length-to-diameter ratio              | -    |
+
+```java
+separator.setInternalDiameter(2.5);
+separator.setSeparatorLength(10.0);
+double lengthDiameterRatio =
+    separator.getSeparatorLength() / separator.getInternalDiameter();
+```
 
 ### Liquid Levels (Horizontal Separators)
 
@@ -434,24 +447,23 @@ Liquid levels are defined as percentages of internal diameter (ID). The mechanic
 
 | Level | Method      | Description                             | Default % of ID |
 | ----- | ----------- | --------------------------------------- | --------------- |
-| HHLL  | `getHHLL()` | High-High Liquid Level (alarm/shutdown) | 75%             |
+| HHLL  | `getHHLL()` | High-High Liquid Level (alarm/shutdown) | 80%             |
 | HLL   | `getHLL()`  | High Liquid Level (K-value reference)   | 70%             |
 | NLL   | `getNLL()`  | Normal Liquid Level (design point)      | 50%             |
 | LLL   | `getLLL()`  | Low Liquid Level (control warning)      | 30%             |
-| LLLL  | `getLLLL()` | Low-Low Liquid Level (alarm/shutdown)   | 25%             |
+| LLLL  | `getLLLL()` | Low-Low Liquid Level (alarm/shutdown)   | 15%             |
 
 ```java
 // Configure liquid levels (percentage of internal diameter)
 SeparatorMechanicalDesign design = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
-design.setHHLLFraction(0.75);  // 75% of ID
+design.setHHLLFraction(0.80);  // 80% of ID
 design.setHLLFraction(0.70);   // 70% of ID
 design.setNLLFraction(0.50);   // 50% of ID
 design.setLLLFraction(0.30);   // 30% of ID
-design.setLLLLFraction(0.25);  // 25% of ID
+design.setLLLLFraction(0.15);  // 15% of ID
 
-// Calculate and retrieve absolute levels
-design.calcDesign();
-double hhlAbsolute = design.getHHLL();  // in meters
+// Retrieve absolute levels; the getters return meters.
+double hhllAbsolute = design.getHHLL();
 double hllAbsolute = design.getHLL();
 ```
 
@@ -461,38 +473,37 @@ For horizontal separators, effective lengths define zones for gas-liquid separat
 
 | Parameter               | Method                       | Description                                        |
 | ----------------------- | ---------------------------- | -------------------------------------------------- |
-| Gas Effective Length    | `getGasEffectiveLength()`    | Length for gas separation (inlet to outlet nozzle) |
-| Liquid Effective Length | `getLiquidEffectiveLength()` | Length for liquid settling                         |
+| Gas Effective Length    | `getEffectiveLengthGas()`    | Length for gas separation (inlet to outlet nozzle) |
+| Liquid Effective Length | `getEffectiveLengthLiquid()` | Length for liquid settling                         |
 
 ```java
 // Get effective lengths for capacity calculations
-double Leff_gas = separator.getMechanicalDesign().getGasEffectiveLength();
-double Leff_liquid = separator.getMechanicalDesign().getLiquidEffectiveLength();
+SeparatorMechanicalDesign design = separator.getMechanicalDesign();
+double effectiveGasLength = design.getEffectiveLengthGas();
+double effectiveLiquidLength = design.getEffectiveLengthLiquid();
 ```
 
 ### Pre-Designed Separator Setup
 
-For existing/pre-designed separators, use the convenience methods:
+Pre-designed geometry is configured on `SeparatorMechanicalDesign`. Set the process-equipment geometry as well when runtime or dynamic vessel holdup uses the imported dimensions. All values below are in meters.
 
 ```java
-// Option 1: Set from existing design
-separator.setFromExistingDesign(
-    2.5,    // internal diameter [m]
-    10.0,   // length (tan-to-tan) [m]
-    0.70,   // HLL fraction (% of ID)
-    0.50,   // NLL fraction (% of ID)
-    8.0,    // liquid effective length [m]
-    9.0     // gas effective length [m]
-);
+SeparatorMechanicalDesign design = separator.getMechanicalDesign();
 
-// Option 2: Alternative design specification
-separator.setFromDesignSpec(
-    2.5,    // internal diameter [m]
-    10.0,   // length [m]
-    0.70,   // HLL fraction
-    0.50    // NLL fraction
-);
-// Effective lengths default to 80% and 90% of total length
+// Runtime/dynamic vessel geometry
+separator.setInternalDiameter(2.5);
+separator.setSeparatorLength(10.0);
+
+// Complete existing design: ID, tan-to-tan length, wall thickness,
+// liquid/gas effective lengths, then inlet/gas/oil/water nozzle IDs.
+design.setFromExistingDesign(
+    2.5, 10.0, 0.025, 8.0, 9.0, 0.50, 0.45, 0.35, 0.30);
+
+// Alternative design specification: ID, length, effective lengths, inlet nozzle,
+// HHLL, HLL, NLL, LLL, weir, HIL, NIL, and LIL absolute heights.
+design.setFromDesignSpec(
+    2.5, 10.0, 8.0, 9.0, 0.50,
+    2.00, 1.75, 1.25, 0.75, 0.625, 0.60, 0.50, 0.35);
 ```
 
 ---
@@ -501,26 +512,25 @@ separator.setFromDesignSpec(
 
 Three-phase separators have additional interface level parameters for oil-water separation.
 
+Fresh mechanical-design objects use the interface defaults below. Calling `calculateDefaultLevelFractions()` explicitly changes HIL, NIL, and LIL to 24%, 21%, and 14% of ID, respectively.
+
 ### Interface Levels
 
 | Level | Method     | Description                           | Default % of ID |
 | ----- | ---------- | ------------------------------------- | --------------- |
-| HIL   | `getHIL()` | High Interface Level                  | 45%             |
-| NIL   | `getNIL()` | Normal Interface Level (design point) | 40%             |
-| LIL   | `getLIL()` | Low Interface Level                   | 35%             |
+| HIL   | `getHIL()` | High Interface Level                  | 25%             |
+| NIL   | `getNIL()` | Normal Interface Level (design point) | 20%             |
+| LIL   | `getLIL()` | Low Interface Level                   | 15%             |
 
 ```java
 // Configure interface levels
 SeparatorMechanicalDesign design = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
-design.setHILFraction(0.45);  // 45% of ID
-design.setNILFraction(0.40);  // 40% of ID
-design.setLILFraction(0.35);  // 35% of ID
+design.setHILFraction(0.25);  // 25% of ID
+design.setNILFraction(0.20);  // 20% of ID
+design.setLILFraction(0.15);  // 15% of ID
 
-// Calculate designs
-design.calcDesign();
-
-// Get absolute interface levels
-double nilAbsolute = design.getNIL();  // in meters
+// Get the absolute interface level in meters.
+double nilAbsolute = design.getNIL();
 ```
 
 ### Weir Configuration
@@ -528,8 +538,8 @@ double nilAbsolute = design.getNIL();  // in meters
 Three-phase separators typically use a weir to maintain the oil-water interface.
 
 ```java
-// Set weir height (typically at or slightly above NIL)
-design.setWeirHeight(design.getNIL() * 1.05);  // 5% above NIL
+// Set an absolute weir height for design and dynamic overflow control.
+design.setWeirHeightAbsolute(design.getNIL() * 1.05);  // 5% above NIL
 ```
 
 ### Three-Phase Specific Calculations
@@ -540,13 +550,14 @@ separator.setInternalDiameter(2.5);  // meters
 separator.setSeparatorLength(12.0);  // meters
 separator.run();
 
-// Oil retention time (from NLL to NIL)
+// Oil retention time for the layer between NIL (interface) and NLL (oil surface)
 double oilRetention = separator.calcOilRetentionTime();  // minutes
 
-// Water retention time (from NIL to vessel bottom)
+// Water retention time for the layer below NIL
 double waterRetention = separator.calcWaterRetentionTime();  // minutes
 
-// Interface settling time
+// Screening time for a fixed 150 µm water droplet settling through the oil layer
+// with the Stokes-law expression implemented by the current model
 double settlingTime = separator.calcInterfaceSettlingTime();  // minutes
 ```
 
@@ -993,6 +1004,7 @@ Example JSON output:
 ```java
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.thermo.system.SystemSrkEos;
 
 // Create feed
@@ -1009,14 +1021,11 @@ feed.run();
 
 // Create separator with pre-designed dimensions
 ThreePhaseSeparator separator = new ThreePhaseSeparator("Production Sep", feed);
-separator.setFromExistingDesign(
-    2.5,    // ID [m]
-    10.0,   // Length [m]
-    0.70,   // HLL fraction
-    0.50,   // NLL fraction
-    8.0,    // Liquid Leff [m]
-    9.0     // Gas Leff [m]
-);
+separator.setInternalDiameter(2.5);
+separator.setSeparatorLength(10.0);
+SeparatorMechanicalDesign design = separator.getMechanicalDesign();
+design.setFromExistingDesign(
+    2.5, 10.0, 0.025, 8.0, 9.0, 0.50, 0.45, 0.35, 0.30);
 
 // Apply Equinor TR3500 constraints
 separator.useEquinorConstraints();
