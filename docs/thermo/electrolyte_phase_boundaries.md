@@ -56,9 +56,11 @@ ElectrolytePhaseBoundaryResult gasBoundary =
         PhaseType.GAS, lowerPressureBara, upperPressureBara, toleranceBara, 60);
 ```
 
-The same methods work with `SystemElectrolyteCPAstatoil`; configure its database, reaction set and
-mixing rule in the usual model-specific order. Pitzer coefficients are used only by the Pitzer
-aqueous phase and are never transferred into electrolyte-CPA parameters.
+The same methods work with a non-reactive `SystemElectrolyteCPAstatoil`; add explicit ions and
+configure mixing rule 10 in the usual model-specific order. Reactive phase boundaries are currently
+rejected because species-level component balance is not conserved by a reaction set; that extension
+requires a separately reviewed elemental-balance and reaction-residual contract. Pitzer coefficients
+are used only by the Pitzer aqueous phase and are never transferred into electrolyte-CPA parameters.
 
 ## Python / JPype use
 
@@ -99,9 +101,9 @@ bracket does not converge, or the retained state exceeds these direct gates:
 | Cross-phase neutral `ln(f)` closure | `1e-5` |
 
 Every trial uses a fresh clone. This makes repeated and cloned execution deterministic and prevents
-a previous VLE or VLLE topology from becoming a hidden initial-state dependency. The original
-system is changed only after the bracket converges, when it is flashed at the target-present
-endpoint.
+a previous VLE or VLLE topology from becoming a hidden initial-state dependency. After convergence,
+the already converged target-present endpoint is defensively cloned into the supplied system. The
+operation does not repeat a history-sensitive TP flash from the original feed state.
 
 ## Scientific basis and evidence boundary
 
@@ -124,11 +126,12 @@ dataset within the chosen EOS and aqueous-parameter validity ranges.
 
 ## Performance and limits
 
-A bisection requires two endpoint flashes, one complete TP flash per iteration and one final flash.
-The count is reported explicitly. The code is called only through the new API, so neutral PR, SRK,
+A bisection requires two endpoint flashes and one complete TP flash per iteration. The converged
+endpoint is retained without another flash, and the count is reported explicitly. The code is called only through the new API, so neutral PR, SRK,
 CPA and non-electrolyte TP flashes have zero added runtime path or parameter lookup.
 
 The bracket must contain one monotonic target-phase transition. Multiple disconnected phase
 regions require separate brackets. The operation currently locates fluid-phase boundaries only;
-hydrate and mineral-solid complementarity retain their dedicated operations. It does not create
-new Pitzer parameters, reaction constants or electrolyte-EOS parameters.
+hydrate and mineral-solid complementarity retain their dedicated operations. It does not create new Pitzer parameters, reaction constants or electrolyte-EOS parameters. Reactive
+chemical-equilibrium boundaries remain outside this increment until elemental conservation and
+maximum `|ln(Q/K)|` diagnostics can be enforced together.
