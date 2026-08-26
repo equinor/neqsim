@@ -230,8 +230,7 @@ public final class Dexpi20ProcessModelPackageReader {
       throw new IOException("DEXPI ProcessModel package exceeds the bounded file-size limit");
     }
 
-    Dexpi20ProcessModelPackageAssessment.Report assessment =
-        Dexpi20ProcessModelPackageAssessment.assess(packageFile);
+    Dexpi20ProcessModelPackageAssessment.Report assessment = Dexpi20ProcessModelPackageAssessment.assess(packageFile);
     if (!assessment.isValid()) {
       throw new InvalidPackageException(assessment);
     }
@@ -265,8 +264,7 @@ public final class Dexpi20ProcessModelPackageReader {
 
   private static List<AreaDocument> readAreaDocuments(byte[] archiveBytes,
       Dexpi20ProcessModelPackageAssessment.Report assessment) throws IOException {
-    Map<String, Dexpi20ProcessModelPackageAssessment.AreaEvidence> expected =
-        new LinkedHashMap<String, Dexpi20ProcessModelPackageAssessment.AreaEvidence>();
+    Map<String, Dexpi20ProcessModelPackageAssessment.AreaEvidence> expected = new LinkedHashMap<String, Dexpi20ProcessModelPackageAssessment.AreaEvidence>();
     for (Dexpi20ProcessModelPackageAssessment.AreaEvidence area : assessment.getAreaEvidence()) {
       expected.put(area.getEntryName(), area);
     }
