@@ -33,18 +33,17 @@ import java.util.zip.ZipInputStream;
  * Assesses a deterministic multi-area NeqSim DEXPI Process package without trusting its manifest.
  *
  * <p>
- * The assessment verifies archive safety, the controlled package contract, exact entry hashes,
- * stable area and connection identities, and the mandatory engineering-review boundary. Every
- * embedded area XML is independently reassessed against the bundled DEXPI 2.0 schema, official
- * Process imports, and NeqSim supported semantic profile. The package remains a NeqSim container;
- * successful assessment is not native whole-plant DEXPI conformance or drawing approval.
+ * The assessment verifies archive safety, the controlled package contract, exact entry hashes, stable area and
+ * connection identities, and the mandatory engineering-review boundary. Every embedded area XML is independently
+ * reassessed against the bundled DEXPI 2.0 schema, official Process imports, and NeqSim supported semantic profile. The
+ * package remains a NeqSim container; successful assessment is not native whole-plant DEXPI conformance or drawing
+ * approval.
  * </p>
  */
 public final class Dexpi20ProcessModelPackageAssessment {
   private static final String MANIFEST_ENTRY = "manifest.json";
   private static final String SCHEMA_VERSION = "neqsim_dexpi_2_0_process_model_package.v1";
-  private static final String PACKAGE_FORMAT =
-      "NEQSIM_DETERMINISTIC_ZIP_WITH_NATIVE_DEXPI_AREA_FILES";
+  private static final String PACKAGE_FORMAT = "NEQSIM_DETERMINISTIC_ZIP_WITH_NATIVE_DEXPI_AREA_FILES";
   private static final long MAX_ENTRY_BYTES = 64L * 1024L * 1024L;
   private static final long MAX_PACKAGE_CONTENT_BYTES = 256L * 1024L * 1024L;
   private static final int MAX_ENTRIES = 1024;
@@ -113,8 +112,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
     private final String actualFileSha256;
     private final Dexpi20ConformanceAssessment.Report conformanceReport;
 
-    AreaEvidence(String areaName, String areaId, String entryName, String declaredFileSha256,
-        String actualFileSha256, Dexpi20ConformanceAssessment.Report conformanceReport) {
+    AreaEvidence(String areaName, String areaId, String entryName, String declaredFileSha256, String actualFileSha256,
+        Dexpi20ConformanceAssessment.Report conformanceReport) {
       this.areaName = areaName;
       this.areaId = areaId;
       this.entryName = entryName;
@@ -183,17 +182,15 @@ public final class Dexpi20ProcessModelPackageAssessment {
     private final List<AreaEvidence> areaEvidence;
     private final List<Diagnostic> diagnostics;
 
-    Report(String packageFileSha256, String manifestSha256, String plantId, String revision,
-        String operatingCaseId, String canonicalFingerprint, List<AreaEvidence> areaEvidence,
-        List<Diagnostic> diagnostics) {
+    Report(String packageFileSha256, String manifestSha256, String plantId, String revision, String operatingCaseId,
+        String canonicalFingerprint, List<AreaEvidence> areaEvidence, List<Diagnostic> diagnostics) {
       this.packageFileSha256 = packageFileSha256;
       this.manifestSha256 = manifestSha256;
       this.plantId = plantId;
       this.revision = revision;
       this.operatingCaseId = operatingCaseId;
       this.canonicalFingerprint = canonicalFingerprint;
-      this.areaEvidence =
-          Collections.unmodifiableList(new ArrayList<AreaEvidence>(areaEvidence));
+      this.areaEvidence = Collections.unmodifiableList(new ArrayList<AreaEvidence>(areaEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
     }
 
@@ -304,18 +301,16 @@ public final class Dexpi20ProcessModelPackageAssessment {
     Map<String, byte[]> entries = readArchive(packagePath, diagnostics);
     byte[] manifestBytes = entries.get(MANIFEST_ENTRY);
     if (manifestBytes == null) {
-      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_MISSING",
-          "Package does not contain manifest.json", MANIFEST_ENTRY));
+      diagnostics.add(
+          error("DEXPI_PROCESS_PACKAGE_MANIFEST_MISSING", "Package does not contain manifest.json", MANIFEST_ENTRY));
       sortDiagnostics(diagnostics);
-      return new Report(packageSha, "", "", "", null, "",
-          Collections.<AreaEvidence>emptyList(), diagnostics);
+      return new Report(packageSha, "", "", "", null, "", Collections.<AreaEvidence>emptyList(), diagnostics);
     }
 
     String manifestSha = sha256(new ByteArrayInputStream(manifestBytes));
     JsonObject manifest;
     try {
-      manifest = new Gson().fromJson(new String(manifestBytes, StandardCharsets.UTF_8),
-          JsonObject.class);
+      manifest = new Gson().fromJson(new String(manifestBytes, StandardCharsets.UTF_8), JsonObject.class);
       if (manifest == null) {
         throw new JsonParseException("manifest root is null");
       }
@@ -323,34 +318,29 @@ public final class Dexpi20ProcessModelPackageAssessment {
       diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_INVALID_JSON",
           "Package manifest is not valid JSON: " + exception.getMessage(), MANIFEST_ENTRY));
       sortDiagnostics(diagnostics);
-      return new Report(packageSha, manifestSha, "", "", null, "",
-          Collections.<AreaEvidence>emptyList(), diagnostics);
+      return new Report(packageSha, manifestSha, "", "", null, "", Collections.<AreaEvidence>emptyList(), diagnostics);
     }
 
     String plantId = requiredText(manifest, "plantId", diagnostics);
     String revision = requiredText(manifest, "revision", diagnostics);
     String operatingCaseId = optionalText(manifest, "operatingCaseId", diagnostics);
-    String canonicalFingerprint =
-        requiredText(manifest, "canonicalFingerprint", diagnostics);
+    String canonicalFingerprint = requiredText(manifest, "canonicalFingerprint", diagnostics);
     verifyManifestContract(manifest, canonicalFingerprint, diagnostics);
 
     Set<String> declaredAreaEntries = new LinkedHashSet<String>();
     Set<String> areaNames = new LinkedHashSet<String>();
     Set<String> areaIds = new LinkedHashSet<String>();
-    List<AreaEvidence> areas = assessAreas(manifest, entries, declaredAreaEntries, areaNames,
-        areaIds, diagnostics);
+    List<AreaEvidence> areas = assessAreas(manifest, entries, declaredAreaEntries, areaNames, areaIds, diagnostics);
     verifyConnections(manifest, areaNames, diagnostics);
     verifyDeclaredEntries(entries.keySet(), declaredAreaEntries, diagnostics);
     sortDiagnostics(diagnostics);
-    return new Report(packageSha, manifestSha, plantId, revision, operatingCaseId,
-        canonicalFingerprint, areas, diagnostics);
+    return new Report(packageSha, manifestSha, plantId, revision, operatingCaseId, canonicalFingerprint, areas,
+        diagnostics);
   }
 
-  private static Map<String, byte[]> readArchive(Path packagePath,
-      List<Diagnostic> diagnostics) throws IOException {
+  private static Map<String, byte[]> readArchive(Path packagePath, List<Diagnostic> diagnostics) throws IOException {
     Map<String, byte[]> entries = new LinkedHashMap<String, byte[]>();
-    ZipInputStream input = new ZipInputStream(Files.newInputStream(packagePath),
-        StandardCharsets.UTF_8);
+    ZipInputStream input = new ZipInputStream(Files.newInputStream(packagePath), StandardCharsets.UTF_8);
     long totalBytes = 0L;
     int entryCount = 0;
     try {
@@ -387,8 +377,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
           output.write(buffer, 0, count);
         }
         if (entries.put(name, output.toByteArray()) != null) {
-          diagnostics.add(error("DEXPI_PROCESS_PACKAGE_DUPLICATE_ENTRY",
-              "Archive contains a duplicate entry name", name));
+          diagnostics
+              .add(error("DEXPI_PROCESS_PACKAGE_DUPLICATE_ENTRY", "Archive contains a duplicate entry name", name));
         }
       }
     } finally {
@@ -428,8 +418,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
   }
 
   private static List<AreaEvidence> assessAreas(JsonObject manifest, Map<String, byte[]> entries,
-      Set<String> declaredEntries, Set<String> areaNames, Set<String> areaIds,
-      List<Diagnostic> diagnostics) throws IOException {
+      Set<String> declaredEntries, Set<String> areaNames, Set<String> areaIds, List<Diagnostic> diagnostics)
+      throws IOException {
     List<AreaEvidence> result = new ArrayList<AreaEvidence>();
     JsonArray areas = requiredArray(manifest, "areaExchanges", diagnostics);
     if (areas == null || areas.size() == 0) {
@@ -454,20 +444,18 @@ public final class Dexpi20ProcessModelPackageAssessment {
       requireTrue(area, "schemaProfileAndSupportedTopologyValid", diagnostics, subject);
       addUnique(areaNames, areaName, "DEXPI_PROCESS_PACKAGE_DUPLICATE_AREA_NAME", diagnostics);
       addUnique(areaIds, areaId, "DEXPI_PROCESS_PACKAGE_DUPLICATE_AREA_ID", diagnostics);
-      addUnique(declaredEntries, entryName, "DEXPI_PROCESS_PACKAGE_DUPLICATE_AREA_ENTRY",
-          diagnostics);
-      if (!entryName.startsWith("areas/") || !entryName.endsWith(".xml")
-          || !isSafeEntryName(entryName)) {
+      addUnique(declaredEntries, entryName, "DEXPI_PROCESS_PACKAGE_DUPLICATE_AREA_ENTRY", diagnostics);
+      if (!entryName.startsWith("areas/") || !entryName.endsWith(".xml") || !isSafeEntryName(entryName)) {
         diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_ENTRY_NAME_INVALID",
             "Area entry must be a safe areas/*.xml path", entryName));
       }
       if (!areaId.matches("area:[a-z0-9][a-z0-9-]*")) {
-        diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_ID_INVALID",
-            "areaId must be a stable canonical area identity", areaId));
+        diagnostics.add(
+            error("DEXPI_PROCESS_PACKAGE_AREA_ID_INVALID", "areaId must be a stable canonical area identity", areaId));
       }
       if (!isSha256(declaredSha)) {
-        diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_HASH_INVALID",
-            "fileSha256 must be a lowercase SHA-256 value", entryName));
+        diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_HASH_INVALID", "fileSha256 must be a lowercase SHA-256 value",
+            entryName));
       }
       byte[] xml = entries.get(entryName);
       if (xml == null) {
@@ -485,12 +473,10 @@ public final class Dexpi20ProcessModelPackageAssessment {
       Dexpi20ConformanceAssessment.Report conformance = assessAreaXml(xml);
       if (!conformance.isSchemaAndProfileConformant()) {
         diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_CONFORMANCE_FAILED",
-            "Embedded area XML failed independent DEXPI 2.0 Process assessment: "
-                + conformance.getErrors(),
+            "Embedded area XML failed independent DEXPI 2.0 Process assessment: " + conformance.getErrors(),
             entryName));
       }
-      result.add(
-          new AreaEvidence(areaName, areaId, entryName, declaredSha, actualSha, conformance));
+      result.add(new AreaEvidence(areaName, areaId, entryName, declaredSha, actualSha, conformance));
     }
     Collections.sort(result, new Comparator<AreaEvidence>() {
       @Override
@@ -501,13 +487,11 @@ public final class Dexpi20ProcessModelPackageAssessment {
     return result;
   }
 
-  private static Dexpi20ConformanceAssessment.Report assessAreaXml(byte[] xml)
-      throws IOException {
+  private static Dexpi20ConformanceAssessment.Report assessAreaXml(byte[] xml) throws IOException {
     Path temporary = Files.createTempFile("neqsim-dexpi-process-package-assessment-", ".xml");
     try {
       Files.write(temporary, xml);
-      return Dexpi20ConformanceAssessment.assess(temporary,
-          Dexpi20ConformanceAssessment.Profile.PROCESS_PFD_BFD);
+      return Dexpi20ConformanceAssessment.assess(temporary, Dexpi20ConformanceAssessment.Profile.PROCESS_PFD_BFD);
     } finally {
       Files.deleteIfExists(temporary);
     }
@@ -527,16 +511,14 @@ public final class Dexpi20ProcessModelPackageAssessment {
           "Embedded writer assessment has no conformance evidence", entryName));
       return;
     }
-    String nestedSha = optionalText(conformanceElement.getAsJsonObject(), "fileSha256", diagnostics,
-        entryName);
+    String nestedSha = optionalText(conformanceElement.getAsJsonObject(), "fileSha256", diagnostics, entryName);
     if (nestedSha == null || !declaredSha.equals(nestedSha)) {
       diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_ASSESSMENT_HASH_MISMATCH",
           "Embedded writer assessment hash does not match the area declaration", entryName));
     }
   }
 
-  private static void verifyConnections(JsonObject manifest, Set<String> areaNames,
-      List<Diagnostic> diagnostics) {
+  private static void verifyConnections(JsonObject manifest, Set<String> areaNames, List<Diagnostic> diagnostics) {
     JsonArray connections = requiredArray(manifest, "connections", diagnostics);
     if (connections == null) {
       return;
@@ -625,8 +607,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
     return result;
   }
 
-  private static void verifyDeclaredEntries(Set<String> actualEntries,
-      Set<String> declaredAreaEntries, List<Diagnostic> diagnostics) {
+  private static void verifyDeclaredEntries(Set<String> actualEntries, Set<String> declaredAreaEntries,
+      List<Diagnostic> diagnostics) {
     Set<String> expected = new LinkedHashSet<String>(declaredAreaEntries);
     expected.add(MANIFEST_ENTRY);
     for (String entry : actualEntries) {
@@ -637,100 +619,84 @@ public final class Dexpi20ProcessModelPackageAssessment {
     }
   }
 
-  private static void addUnique(Set<String> values, String value, String code,
-      List<Diagnostic> diagnostics) {
+  private static void addUnique(Set<String> values, String value, String code, List<Diagnostic> diagnostics) {
     if (!values.add(value)) {
       diagnostics.add(error(code, "Package identity must be unique", value));
     }
   }
 
-  private static JsonArray requiredArray(JsonObject object, String name,
-      List<Diagnostic> diagnostics) {
+  private static JsonArray requiredArray(JsonObject object, String name, List<Diagnostic> diagnostics) {
     JsonElement value = object.get(name);
     if (value == null || !value.isJsonArray()) {
-      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_INVALID",
-          name + " must be a JSON array", name));
+      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_INVALID", name + " must be a JSON array", name));
       return null;
     }
     return value.getAsJsonArray();
   }
 
-  private static String requiredText(JsonObject object, String name,
-      List<Diagnostic> diagnostics) {
+  private static String requiredText(JsonObject object, String name, List<Diagnostic> diagnostics) {
     return requiredText(object, name, diagnostics, name);
   }
 
-  private static String requiredText(JsonObject object, String name,
-      List<Diagnostic> diagnostics, String subject) {
+  private static String requiredText(JsonObject object, String name, List<Diagnostic> diagnostics, String subject) {
     String value = optionalText(object, name, diagnostics, subject);
     if (value == null || value.trim().isEmpty()) {
-      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_MISSING",
-          name + " must be a non-empty string", subject));
+      diagnostics
+          .add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_MISSING", name + " must be a non-empty string", subject));
       return "";
     }
     return value;
   }
 
-  private static String optionalText(JsonObject object, String name,
-      List<Diagnostic> diagnostics) {
+  private static String optionalText(JsonObject object, String name, List<Diagnostic> diagnostics) {
     return optionalText(object, name, diagnostics, name);
   }
 
-  private static String optionalText(JsonObject object, String name,
-      List<Diagnostic> diagnostics, String subject) {
+  private static String optionalText(JsonObject object, String name, List<Diagnostic> diagnostics, String subject) {
     JsonElement value = object.get(name);
     if (value == null || value.isJsonNull()) {
       return null;
     }
     String text = scalarText(value);
     if (text == null) {
-      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_INVALID",
-          name + " must be a JSON string", subject));
+      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_INVALID", name + " must be a JSON string", subject));
     }
     return text;
   }
 
   private static String scalarText(JsonElement value) {
-    if (value == null || !value.isJsonPrimitive()
-        || !value.getAsJsonPrimitive().isString()) {
+    if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
       return null;
     }
     return value.getAsString();
   }
 
-  private static Boolean requiredBoolean(JsonObject object, String name,
-      List<Diagnostic> diagnostics, String subject) {
+  private static Boolean requiredBoolean(JsonObject object, String name, List<Diagnostic> diagnostics, String subject) {
     JsonElement value = object.get(name);
-    if (value == null || !value.isJsonPrimitive()
-        || !value.getAsJsonPrimitive().isBoolean()) {
-      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_INVALID",
-          name + " must be a JSON boolean", subject));
+    if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) {
+      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_FIELD_INVALID", name + " must be a JSON boolean", subject));
       return null;
     }
     return Boolean.valueOf(value.getAsBoolean());
   }
 
-  private static void requireValue(JsonObject object, String name, String expected,
-      List<Diagnostic> diagnostics) {
+  private static void requireValue(JsonObject object, String name, String expected, List<Diagnostic> diagnostics) {
     String actual = optionalText(object, name, diagnostics);
     if (!expected.equals(actual)) {
-      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_CONTRACT_MISMATCH",
-          name + " must equal " + expected, name));
+      diagnostics
+          .add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_CONTRACT_MISMATCH", name + " must equal " + expected, name));
     }
   }
 
-  private static void requireFalse(JsonObject object, String name,
-      List<Diagnostic> diagnostics) {
+  private static void requireFalse(JsonObject object, String name, List<Diagnostic> diagnostics) {
     requireBooleanValue(object, name, false, diagnostics, name);
   }
 
-  private static void requireTrue(JsonObject object, String name,
-      List<Diagnostic> diagnostics) {
+  private static void requireTrue(JsonObject object, String name, List<Diagnostic> diagnostics) {
     requireBooleanValue(object, name, true, diagnostics, name);
   }
 
-  private static void requireTrue(JsonObject object, String name,
-      List<Diagnostic> diagnostics, String subject) {
+  private static void requireTrue(JsonObject object, String name, List<Diagnostic> diagnostics, String subject) {
     requireBooleanValue(object, name, true, diagnostics, subject);
   }
 
@@ -738,8 +704,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
       List<Diagnostic> diagnostics, String subject) {
     Boolean actual = requiredBoolean(object, name, diagnostics, subject);
     if (actual == null || actual.booleanValue() != expected) {
-      diagnostics.add(error("DEXPI_PROCESS_PACKAGE_ENGINEERING_BOUNDARY_INVALID",
-          name + " must remain " + expected, subject));
+      diagnostics
+          .add(error("DEXPI_PROCESS_PACKAGE_ENGINEERING_BOUNDARY_INVALID", name + " must remain " + expected, subject));
     }
   }
 
@@ -765,8 +731,7 @@ public final class Dexpi20ProcessModelPackageAssessment {
       }
       return result.toString();
     } catch (NoSuchAlgorithmException exception) {
-      throw new IllegalStateException("SHA-256 is required by every supported Java runtime",
-          exception);
+      throw new IllegalStateException("SHA-256 is required by every supported Java runtime", exception);
     }
   }
 
