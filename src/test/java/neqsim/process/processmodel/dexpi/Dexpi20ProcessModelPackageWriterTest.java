@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -48,6 +49,9 @@ class Dexpi20ProcessModelPackageWriterTest {
     assertEquals(firstReport.toJson(), secondReport.toJson());
     assertTrue(firstReport.isComplete(), firstReport.toJson());
     assertFalse(firstReport.isNativeWholePlantDexpiExchange());
+    assertEquals("PLANT-30", firstReport.getPlantId());
+    assertEquals("REV-A", firstReport.getRevision());
+    assertNull(firstReport.getOperatingCaseId());
     assertEquals(4, firstReport.getAreaExchanges().size());
     assertEquals(9, firstReport.getConnections().size());
     assertEquals(64, firstReport.getCanonicalFingerprint().length());
@@ -79,6 +83,8 @@ class Dexpi20ProcessModelPackageWriterTest {
     assertEquals("manifest.json", entries.get(4));
     String manifest = zipEntry(first.toPath(), "manifest.json");
     assertTrue(manifest.contains("\"nativeWholePlantDexpiExchange\": false"));
+    assertTrue(manifest.contains("\"dexpiVersion\": \"2.0.0\""));
+    assertTrue(manifest.contains("\"dexpiModel\": \"Process\""));
     assertTrue(manifest.contains("\"approvalStatus\": \"REVIEW_REQUIRED\""));
     assertTrue(manifest.contains("\"fitnessForConstruction\": false"));
     assertTrue(manifest.contains("\"canonicalFingerprint\": \""

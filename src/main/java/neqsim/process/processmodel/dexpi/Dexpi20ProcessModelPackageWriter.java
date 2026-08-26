@@ -258,8 +258,24 @@ public final class Dexpi20ProcessModelPackageWriter {
       this.manifestSha256 = manifestSha256;
     }
 
+    /** @return canonical plant-wide engineering-graph SHA-256 fingerprint */
     public String getCanonicalFingerprint() {
       return canonicalFingerprint;
+    }
+
+    /** @return controlled plant or project identifier */
+    public String getPlantId() {
+      return plantId;
+    }
+
+    /** @return controlled source-model revision */
+    public String getRevision() {
+      return revision;
+    }
+
+    /** @return operating-case identifier, or {@code null} for topology-only output */
+    public String getOperatingCaseId() {
+      return operatingCaseId;
     }
 
     public List<AreaExchange> getAreaExchanges() {
@@ -331,6 +347,8 @@ public final class Dexpi20ProcessModelPackageWriter {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("schemaVersion", SCHEMA_VERSION);
       result.put("packageFormat", "NEQSIM_DETERMINISTIC_ZIP_WITH_NATIVE_DEXPI_AREA_FILES");
+      result.put("dexpiVersion", "2.0.0");
+      result.put("dexpiModel", "Process");
       result.put("manifestEntry", MANIFEST_ENTRY);
       result.put("plantId", plantId);
       result.put("revision", revision);
@@ -427,8 +445,12 @@ public final class Dexpi20ProcessModelPackageWriter {
                 controlledPlantId + "/" + areaName, controlledRevision, controlledCaseId);
         byte[] xml = Files.readAllBytes(temporaryFile);
         entries.put(entryName, xml);
-        areas.add(new AreaExchange(areaName, areaId(canonical.getGraph(), areaName), area.getName(), entryName,
-            sha256(xml), assessment));
+        String stableAreaId = areaId(canonical.getGraph(), areaName);
+        areas.add(new AreaExchange(areaName, stableAreaId, area.getName(), entryName, sha256(xml), assessment));
+        if (stableAreaId.isEmpty()) {
+          diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_ID_MISSING",
+              "Canonical ProcessModel snapshot did not expose a stable area identity", areaName));
+        }
         if (!assessment.isSchemaProfileAndSupportedTopologyValid()) {
           diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_ASSESSMENT_FAILED",
               "Area DEXPI Process exchange failed schema/profile or supported-topology assessment", areaName));
