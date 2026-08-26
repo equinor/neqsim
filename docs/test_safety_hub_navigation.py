@@ -30,14 +30,14 @@ class SafetyHubNavigationTest(unittest.TestCase):
                 )
                 self.assertNotRegex(body_without_fences, r"(?m)^# ")
 
-    def test_local_links_use_explicit_markdown_targets(self):
+    def test_included_hubs_use_extensionless_published_targets(self):
         for path, content in self.hubs.items():
             for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", content):
                 target_path = target.split("#", 1)[0]
                 if "://" in target_path or target_path.startswith("#"):
                     continue
                 with self.subTest(path=path, target=target):
-                    self.assertTrue(target_path.endswith(".md"))
+                    self.assertFalse(target_path.endswith(".md"))
 
     def test_every_local_target_resolves(self):
         for path, content in self.hubs.items():
@@ -45,7 +45,7 @@ class SafetyHubNavigationTest(unittest.TestCase):
                 target_path = target.split("#", 1)[0]
                 if "://" in target_path or target_path.startswith("#"):
                     continue
-                resolved = (path.parent / target_path).resolve()
+                resolved = (path.parent / (target_path + ".md")).resolve()
                 with self.subTest(path=path, target=target):
                     self.assertTrue(resolved.is_file(), resolved)
 
@@ -57,24 +57,24 @@ class SafetyHubNavigationTest(unittest.TestCase):
     def test_safety_hub_exposes_core_risk_and_consequence_guides(self):
         safety_hub = self.hubs[SAFETY_HUB]
         for target in (
-            "HAZOP.md",
-            "FMEA.md",
-            "event_fault_trees.md",
-            "depressurization_per_API_521.md",
-            "mdmt_assessment.md",
-            "dispersion_and_consequence.md",
-            "../process/safety/scenario-generation.md",
-            "../process/safety/release-dispersion-scenarios.md",
+            "HAZOP",
+            "FMEA",
+            "event_fault_trees",
+            "depressurization_per_API_521",
+            "mdmt_assessment",
+            "dispersion_and_consequence",
+            "../process/safety/scenario-generation",
+            "../process/safety/release-dispersion-scenarios",
         ):
             with self.subTest(target=target):
                 self.assertIn(f"]({target})", safety_hub)
 
     def test_hubs_cross_link_and_remain_indexed(self):
         self.assertIn(
-            "](../process/safety/README.md)", self.hubs[SAFETY_HUB]
+            "](../process/safety/README)", self.hubs[SAFETY_HUB]
         )
         self.assertIn(
-            "](../../safety/README.md)", self.hubs[PROCESS_SAFETY_HUB]
+            "](../../safety/README)", self.hubs[PROCESS_SAFETY_HUB]
         )
         self.assertIn(
             "[docs/safety/README.md](safety/README.md)", self.reference_index
