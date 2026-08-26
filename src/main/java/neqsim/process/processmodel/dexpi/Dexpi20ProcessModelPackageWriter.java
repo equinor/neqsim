@@ -33,8 +33,8 @@ import neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter;
  * <p>
  * DEXPI Process files remain independently schema/profile assessed, one per {@link ProcessSystem} area. A NeqSim
  * manifest preserves the plant-wide canonical graph fingerprint, stable area identities and cross-area connection
- * identities. The package is not a new DEXPI profile and does not claim that manifest-only connections are present in
- * a native whole-plant DEXPI model.
+ * identities. The package is not a new DEXPI profile and does not claim that manifest-only connections are present in a
+ * native whole-plant DEXPI model.
  * </p>
  */
 public final class Dexpi20ProcessModelPackageWriter {
@@ -431,8 +431,8 @@ public final class Dexpi20ProcessModelPackageWriter {
     for (String areaName : areaNames) {
       ProcessSystem area = processModel.get(areaName);
       if (area == null) {
-        diagnostics.add(error("DEXPI_PROCESS_PACKAGE_AREA_MISSING", "ProcessModel area could not be resolved",
-            areaName));
+        diagnostics
+            .add(error("DEXPI_PROCESS_PACKAGE_AREA_MISSING", "ProcessModel area could not be resolved", areaName));
         continue;
       }
       String entryName = areaEntryName(controlledPlantId, areaName);
@@ -483,8 +483,7 @@ public final class Dexpi20ProcessModelPackageWriter {
     List<Diagnostic> result = new ArrayList<Diagnostic>();
     for (ProcessDiagramGraphAdapter.Diagnostic diagnostic : canonical.getDiagnostics()) {
       Severity severity = diagnostic.getSeverity() == ProcessDiagramGraphAdapter.Severity.ERROR ? Severity.ERROR
-          : diagnostic.getSeverity() == ProcessDiagramGraphAdapter.Severity.WARNING ? Severity.WARNING
-              : Severity.INFO;
+          : diagnostic.getSeverity() == ProcessDiagramGraphAdapter.Severity.WARNING ? Severity.WARNING : Severity.INFO;
       String subject = diagnostic.getArea();
       if (!diagnostic.getSubject().isEmpty()) {
         subject = subject.isEmpty() ? diagnostic.getSubject() : subject + "/" + diagnostic.getSubject();
@@ -537,8 +536,7 @@ public final class Dexpi20ProcessModelPackageWriter {
   }
 
   private static String areaEntryName(String plantId, String areaName) {
-    return "areas/" + safeSegment(areaName) + "-" + shortHash(plantId + "/" + areaName)
-        + ".process.dexpi.xml";
+    return "areas/" + safeSegment(areaName) + "-" + shortHash(plantId + "/" + areaName) + ".process.dexpi.xml";
   }
 
   private static String safeSegment(String value) {

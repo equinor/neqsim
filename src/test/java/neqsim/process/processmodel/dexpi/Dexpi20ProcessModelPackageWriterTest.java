@@ -25,25 +25,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class Dexpi20ProcessModelPackageWriterTest {
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   @Test
   void writesDeterministicAssessedAreaPackageWithPlantWideConnectionEvidence() throws IOException {
-    EngineeringDiagramReferenceFixtures.ModelCase fixture =
-        EngineeringDiagramReferenceFixtures.multiAreaFacility();
-    fixture.getProcessModel().get("Inlet").connect("30-XV-001", "energyOut", "30-VA-001",
-        "energyIn", ProcessConnection.ConnectionType.ENERGY);
-    fixture.getProcessModel().get("Inlet").connect("30-VA-001", "signalOut", "30-SP-001",
-        "signalIn", ProcessConnection.ConnectionType.SIGNAL);
+    EngineeringDiagramReferenceFixtures.ModelCase fixture = EngineeringDiagramReferenceFixtures.multiAreaFacility();
+    fixture.getProcessModel().get("Inlet").connect("30-XV-001", "energyOut", "30-VA-001", "energyIn",
+        ProcessConnection.ConnectionType.ENERGY);
+    fixture.getProcessModel().get("Inlet").connect("30-VA-001", "signalOut", "30-SP-001", "signalIn",
+        ProcessConnection.ConnectionType.SIGNAL);
 
     File first = temporaryDirectory.resolve("first.zip").toFile();
     File second = temporaryDirectory.resolve("second.zip").toFile();
-    Dexpi20ProcessModelPackageWriter.Report firstReport =
-        Dexpi20ProcessModelPackageWriter.writeAndAssess(fixture.getProcessModel(), first,
-            "PLANT-30", "REV-A");
-    Dexpi20ProcessModelPackageWriter.Report secondReport =
-        Dexpi20ProcessModelPackageWriter.writeAndAssess(fixture.getProcessModel(), second,
-            "PLANT-30", "REV-A");
+    Dexpi20ProcessModelPackageWriter.Report firstReport = Dexpi20ProcessModelPackageWriter
+        .writeAndAssess(fixture.getProcessModel(), first, "PLANT-30", "REV-A");
+    Dexpi20ProcessModelPackageWriter.Report secondReport = Dexpi20ProcessModelPackageWriter
+        .writeAndAssess(fixture.getProcessModel(), second, "PLANT-30", "REV-A");
 
     assertArrayEquals(Files.readAllBytes(first.toPath()), Files.readAllBytes(second.toPath()));
     assertEquals(firstReport.toJson(), secondReport.toJson());
@@ -61,17 +59,14 @@ class Dexpi20ProcessModelPackageWriterTest {
     for (Dexpi20ProcessModelPackageWriter.AreaExchange area : firstReport.getAreaExchanges()) {
       assertFalse(area.getAreaId().isEmpty());
       assertEquals(64, area.getFileSha256().length());
-      assertTrue(area.getAssessment().isSchemaProfileAndSupportedTopologyValid(),
-          area.getAssessment().toJson());
+      assertTrue(area.getAssessment().isSchemaProfileAndSupportedTopologyValid(), area.getAssessment().toJson());
     }
     assertEquals(7, connectionCount(firstReport, "MATERIAL"));
     assertEquals(1, connectionCount(firstReport, "ENERGY"));
     assertEquals(1, connectionCount(firstReport, "SIGNAL"));
     assertEquals(3, connectionStatusCount(firstReport, "MANIFEST_ONLY_CROSS_AREA"));
-    assertEquals(2,
-        connectionStatusCount(firstReport, "MANIFEST_ONLY_NOT_MAPPED_TO_NATIVE_PROCESS"));
-    assertTrue(hasDiagnostic(firstReport,
-        "DEXPI_PROCESS_PACKAGE_CROSS_AREA_CONNECTION_MANIFEST_ONLY"));
+    assertEquals(2, connectionStatusCount(firstReport, "MANIFEST_ONLY_NOT_MAPPED_TO_NATIVE_PROCESS"));
+    assertTrue(hasDiagnostic(firstReport, "DEXPI_PROCESS_PACKAGE_CROSS_AREA_CONNECTION_MANIFEST_ONLY"));
     assertTrue(hasDiagnostic(firstReport, "DEXPI_PROCESS_PACKAGE_ENERGY_CONNECTION_MANIFEST_ONLY"));
     assertTrue(hasDiagnostic(firstReport, "DEXPI_PROCESS_PACKAGE_SIGNAL_CONNECTION_MANIFEST_ONLY"));
     assertTrue(hasDiagnostic(firstReport, "DEXPI_PROCESS_PACKAGE_NOT_NATIVE_WHOLE_PLANT_PROFILE"));
@@ -87,8 +82,7 @@ class Dexpi20ProcessModelPackageWriterTest {
     assertTrue(manifest.contains("\"dexpiModel\": \"Process\""));
     assertTrue(manifest.contains("\"approvalStatus\": \"REVIEW_REQUIRED\""));
     assertTrue(manifest.contains("\"fitnessForConstruction\": false"));
-    assertTrue(manifest.contains("\"canonicalFingerprint\": \""
-        + firstReport.getCanonicalFingerprint() + "\""));
+    assertTrue(manifest.contains("\"canonicalFingerprint\": \"" + firstReport.getCanonicalFingerprint() + "\""));
   }
 
   @Test
@@ -97,11 +91,9 @@ class Dexpi20ProcessModelPackageWriterTest {
     assertThrows(IllegalArgumentException.class,
         () -> Dexpi20ProcessModelPackageWriter.writeAndAssess(null, output.toFile(), "P", "R"));
     assertThrows(IllegalArgumentException.class,
-        () -> Dexpi20ProcessModelPackageWriter.writeAndAssess(new ProcessModel(), output.toFile(),
-            "P", "R"));
+        () -> Dexpi20ProcessModelPackageWriter.writeAndAssess(new ProcessModel(), output.toFile(), "P", "R"));
     assertThrows(IllegalArgumentException.class,
-        () -> Dexpi20ProcessModelPackageWriter.writeAndAssess(new ProcessModel(), output.toFile(),
-            " ", "R"));
+        () -> Dexpi20ProcessModelPackageWriter.writeAndAssess(new ProcessModel(), output.toFile(), " ", "R"));
   }
 
   @Test
@@ -109,10 +101,10 @@ class Dexpi20ProcessModelPackageWriterTest {
     ProcessModel model = EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel();
     File first = temporaryDirectory.resolve("revision-a.zip").toFile();
     File second = temporaryDirectory.resolve("revision-b.zip").toFile();
-    Dexpi20ProcessModelPackageWriter.Report firstReport =
-        Dexpi20ProcessModelPackageWriter.writeAndAssess(model, first, "PLANT-30", "REV-A");
-    Dexpi20ProcessModelPackageWriter.Report secondReport =
-        Dexpi20ProcessModelPackageWriter.writeAndAssess(model, second, "PLANT-30", "REV-B");
+    Dexpi20ProcessModelPackageWriter.Report firstReport = Dexpi20ProcessModelPackageWriter.writeAndAssess(model, first,
+        "PLANT-30", "REV-A");
+    Dexpi20ProcessModelPackageWriter.Report secondReport = Dexpi20ProcessModelPackageWriter.writeAndAssess(model,
+        second, "PLANT-30", "REV-B");
 
     assertNotEquals(firstReport.getCanonicalFingerprint(), secondReport.getCanonicalFingerprint());
     assertNotEquals(firstReport.getPackageFileSha256(), secondReport.getPackageFileSha256());
@@ -128,8 +120,7 @@ class Dexpi20ProcessModelPackageWriterTest {
     return count;
   }
 
-  private static long connectionStatusCount(Dexpi20ProcessModelPackageWriter.Report report,
-      String status) {
+  private static long connectionStatusCount(Dexpi20ProcessModelPackageWriter.Report report, String status) {
     long count = 0L;
     for (Dexpi20ProcessModelPackageWriter.ConnectionRecord connection : report.getConnections()) {
       if (status.equals(connection.getExchangeStatus())) {
