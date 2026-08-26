@@ -27,6 +27,7 @@ public final class ElectrolytePhaseBoundaryFlash {
   private static final double CHARGE_TOLERANCE_MOLAL = 1.0e-8;
   private static final double ION_LEAKAGE_TOLERANCE = 1.0e-30;
   private static final double LOG_FUGACITY_TOLERANCE = 1.0e-5;
+  private static final int CONTINUATION_STEPS = 8;
 
   private final SystemInterface system;
   private final ElectrolytePhaseBoundaryResult.Specification specification;
@@ -118,12 +119,13 @@ public final class ElectrolytePhaseBoundaryFlash {
   }
 
   /**
-   * Evaluates one state from a cold feed clone, with one deterministic converged-endpoint fallback.
+   * Evaluates one state from a cold feed clone, with bounded converged-endpoint fallbacks.
    *
    * <p>
    * The cold feed remains the primary seed so a prior topology cannot silently determine the result. Some hybrid EOS-GE
    * states cannot initialize finite fugacity coefficients directly after a large specification change. In that case,
-   * and only in that case, the operation retries once from a defensively cloned converged target-present endpoint. Both
+   * and only in that case, the operation first retries from a defensively cloned converged target-present endpoint. If
+   * the direct endpoint jump also fails, eight evenly spaced continuation flashes bridge the specification change. All
    * attempted complete TP flashes are included in the reported evaluation count.
    * </p>
    */
@@ -137,10 +139,29 @@ public final class ElectrolytePhaseBoundaryFlash {
       try {
         return evaluateFromSeed(value, fallbackSeed);
       } catch (RuntimeException fallbackFailure) {
-        fallbackFailure.addSuppressed(primaryFailure);
-        throw fallbackFailure;
+        try {
+          return evaluateByContinuation(value, fallbackSeed);
+        } catch (RuntimeException continuationFailure) {
+          continuationFailure.addSuppressed(primaryFailure);
+          continuationFailure.addSuppressed(fallbackFailure);
+          throw continuationFailure;
+        }
       }
     }
+  }
+
+  /** Bridges one failed direct endpoint jump with a fixed number of complete TP flashes. */
+  private Snapshot evaluateByContinuation(double value, SystemInterface seed) {
+    double seedValue = getSpecification(seed);
+    SystemInterface continuationSeed = seed;
+    Snapshot snapshot = null;
+    for (int step = 1; step <= CONTINUATION_STEPS; step++) {
+      double intermediateValue = step == CONTINUATION_STEPS ? value
+          : seedValue + (value - seedValue) * step / CONTINUATION_STEPS;
+      snapshot = evaluateFromSeed(intermediateValue, continuationSeed);
+      continuationSeed = snapshot.system;
+    }
+    return snapshot;
   }
 
   /** Evaluates one state on a fresh clone of the selected seed. */
@@ -192,6 +213,12 @@ public final class ElectrolytePhaseBoundaryFlash {
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       system.setPhaseType(phase, retainedSystem.getPhase(phase).getType());
     }
+  }
+
+  /** Returns the selected intensive variable. */
+  private double getSpecification(SystemInterface targetSystem) {
+    return specification == ElectrolytePhaseBoundaryResult.Specification.PRESSURE ? targetSystem.getPressure()
+        : targetSystem.getTemperature();
   }
 
   /** Applies the selected intensive variable. */
