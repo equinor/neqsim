@@ -67,8 +67,8 @@ class Dexpi20ProcessModelPackageReaderTest {
 
   @Test
   void returnsDefensiveSerializableRestartSnapshot() throws IOException, ClassNotFoundException {
-    Dexpi20ProcessModelPackageReader.Snapshot snapshot =
-        Dexpi20ProcessModelPackageReader.read(writeReferencePackage("restart.zip"));
+    Dexpi20ProcessModelPackageReader.Snapshot snapshot = Dexpi20ProcessModelPackageReader
+        .read(writeReferencePackage("restart.zip"));
     Dexpi20ProcessModelPackageReader.AreaDocument area = snapshot.getAreaDocuments().get(0);
     byte[] changed = area.getXmlBytes();
     byte originalFirstByte = changed[0];
@@ -78,8 +78,7 @@ class Dexpi20ProcessModelPackageReaderTest {
     assertNotEquals(changed[0], area.getXmlBytes()[0]);
     assertThrows(UnsupportedOperationException.class,
         () -> snapshot.getAreaDocuments().add(snapshot.getAreaDocuments().get(0)));
-    assertThrows(UnsupportedOperationException.class,
-        () -> snapshot.getConnectionEvidence().clear());
+    assertThrows(UnsupportedOperationException.class, () -> snapshot.getConnectionEvidence().clear());
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -120,9 +119,9 @@ class Dexpi20ProcessModelPackageReaderTest {
       output.close();
     }
 
-    Dexpi20ProcessModelPackageReader.InvalidPackageException exception =
-        assertThrows(Dexpi20ProcessModelPackageReader.InvalidPackageException.class,
-            () -> Dexpi20ProcessModelPackageReader.read(invalid.toFile()));
+    Dexpi20ProcessModelPackageReader.InvalidPackageException exception = assertThrows(
+        Dexpi20ProcessModelPackageReader.InvalidPackageException.class,
+        () -> Dexpi20ProcessModelPackageReader.read(invalid.toFile()));
 
     assertFalse(exception.getAssessmentReport().isValid());
     assertTrue(exception.getAssessmentReport().toJson().contains("DEXPI_PROCESS_PACKAGE_UNSAFE_ENTRY_NAME"));
