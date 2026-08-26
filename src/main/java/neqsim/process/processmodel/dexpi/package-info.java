@@ -18,6 +18,8 @@
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessTopologyAssessment} - Canonical material-topology
  * projection, canonical operating-value provenance, and structured scope evidence for assessed native Process
  * exchange</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageWriter} - Deterministic multi-area package
+ * of assessed native Process exchanges and explicit plant-wide manifest-only connection evidence</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionWriter} - Opt-in native DEXPI Core graphical
  * projection</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionAssessment} - Deterministic inspection of
