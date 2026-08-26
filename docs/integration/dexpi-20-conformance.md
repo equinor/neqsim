@@ -111,6 +111,24 @@ reports `nativeWholePlantDexpiExchange=false`, `approvalStatus=REVIEW_REQUIRED`,
 `fitnessForConstruction=false`; it is not a new DEXPI profile, standards-conformance claim, or
 drawing approval.
 
+For package intake or restart, independently reassess rather than trusting the embedded manifest:
+
+```java
+Dexpi20ProcessModelPackageAssessment.Report intakeReport =
+    Dexpi20ProcessModelPackageAssessment.assess(processPackage);
+if (!intakeReport.isValid()) {
+  throw new IllegalStateException(intakeReport.toJson());
+}
+```
+
+The offline assessment enforces bounded archive entry names and sizes, the versioned manifest
+contract, exact manifest/area/package SHA-256 evidence, unique stable area and connection identities,
+and the declared manifest-only status plus loss diagnostic for every cross-area material, energy,
+and information connection. It independently reruns the bundled DEXPI 2.0 schema, official Process
+import, and NeqSim supported-profile assessment for each XML. A restarted package cannot promote
+`REVIEW_REQUIRED`, `fitnessForConstruction=false`, or
+`nativeWholePlantDexpiExchange=false`; altered approval fields fail closed.
+
 The single-area assessed path reports energy and signal connections, multi-area `ProcessModel`
 hierarchy, controlled document/sheet semantics, and drawing graphics as unsupported scopes. These
 warnings do not hide a supported material-topology error; missing, unexpected, unresolved-port, and
