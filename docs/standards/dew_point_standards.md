@@ -94,10 +94,10 @@ internal calculation system. It does not reuse the input fluid's EOS or fitted
 binary-interaction parameters.
 
 The current implementation has a fixed `specPressure` of 50.0 bara.
-`calculate()` resets the internal system to that pressure. The inherited
-`setReferencePressure(double)` method does not change `specPressure`, and
-changing the pressure of the input fluid after construction does not change the
-calculation pressure.
+`calculate()` resets the internal system to that pressure.
+The inherited `setReferencePressure(double)` method does not change
+`specPressure`, and changing the pressure of the input fluid after construction
+does not change the calculation pressure.
 
 ### Executable Java 8 example
 
