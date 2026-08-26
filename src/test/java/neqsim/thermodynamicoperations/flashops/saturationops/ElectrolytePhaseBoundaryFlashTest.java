@@ -74,6 +74,26 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void reactivePitzerBoundaryRetainsReactionAndElementClosure() {
+    SystemInterface system = createReactivePitzerSystem();
+    ElectrolytePhaseBoundaryResult result = new ThermodynamicOperations(system)
+        .electrolytePhaseBoundaryPressureFlash(PhaseType.GAS, 200.0, 400.0, 0.5, 20);
+
+    assertBoundaryContract(result, system, PhaseType.GAS, ElectrolytePhaseBoundaryResult.Specification.PRESSURE, 200.0,
+        400.0, 0.5);
+    assertReactiveContract(result);
+  }
+
+  @Test
+  void reactiveElectrolyteCpaBoundaryFailsClosedUntilConservativeCouplingIsAvailable() {
+    SystemInterface system = createReactiveElectrolyteCpaSystem();
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.PRESSURE,
+            PhaseType.GAS, 400.0, 800.0, 5.0, 10));
+    assertTrue(error.getMessage().contains("conservative multiphase reaction coupling"));
+  }
+
+  @Test
   void invalidOrUnbracketedRequestsFailClosedWithoutChangingTheFeed() {
     SystemPitzer system = createPitzerSystem();
     double initialTemperature = system.getTemperature();
@@ -87,12 +107,6 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     assertTrue(error.getMessage().contains("do not bracket"));
     assertEquals(initialTemperature, system.getTemperature(), 0.0);
 
-    SystemInterface reactive = createElectrolyteCpaSystem();
-    reactive.chemicalReactionInit();
-    IllegalArgumentException reactiveError = assertThrows(IllegalArgumentException.class,
-        () -> new ElectrolytePhaseBoundaryFlash(reactive, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
-            PhaseType.OIL, LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20));
-    assertTrue(reactiveError.getMessage().contains("elemental-balance"));
   }
 
   private static ElectrolytePhaseBoundaryResult solvePitzerPressureBoundary(SystemInterface system) {
@@ -128,6 +142,11 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     assertTrue(hasPhase(system, targetPhase));
   }
 
+  private static void assertReactiveContract(ElectrolytePhaseBoundaryResult result) {
+    assertTrue(result.getMaximumAbsoluteElementBalanceResidual() <= 1.0e-8);
+    assertTrue(result.getMaximumAbsoluteReactionLogResidual() <= 2.0e-6);
+  }
+
   private static SystemPitzer createPitzerSystem() {
     SystemPitzer system = new SystemPitzer(LOWER_TEMPERATURE_K, 50.0);
     addGasOilBrine(system);
@@ -142,6 +161,33 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     system.setMixingRule(10);
     system.setMultiPhaseCheck(true);
     return system;
+  }
+
+  private static SystemInterface createReactivePitzerSystem() {
+    SystemPitzer system = new SystemPitzer(LOWER_TEMPERATURE_K, 50.0);
+    addReactiveGasOilWater(system);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+    return system;
+  }
+
+  private static SystemInterface createReactiveElectrolyteCpaSystem() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(LOWER_TEMPERATURE_K, 50.0);
+    addReactiveGasOilWater(system);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+    return system;
+  }
+
+  private static void addReactiveGasOilWater(SystemInterface system) {
+    system.addComponent("methane", 5.0);
+    system.addComponent("n-heptane", 2.0);
+    system.addComponent("water", 55.508);
+    system.addComponent("CO2", 0.1);
   }
 
   private static void addGasOilBrine(SystemInterface system) {

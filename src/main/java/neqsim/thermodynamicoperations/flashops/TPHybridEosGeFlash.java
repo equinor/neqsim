@@ -44,6 +44,9 @@ public class TPHybridEosGeFlash extends TPmultiflash {
   /** Positive floor for trace species after conservative reaction-delta projection. */
   private static final double MINIMUM_COUPLED_COMPONENT_MOLES = 1.0e-45;
 
+  /** Maximum raw reaction-delta conservation residual accepted without numerical projection. */
+  private static final double REACTION_DELTA_CONSERVATION_TOLERANCE_MOLES = 1.0e-8;
+
   /** Extra aqueous phase-fraction room retained above the fixed ionic inventory. */
   private static final double HYBRID_ION_CAPACITY_MARGIN = 100.0 * phaseFractionMinimumLimit;
 
@@ -310,8 +313,35 @@ public class TPHybridEosGeFlash extends TPmultiflash {
       rawDelta.set(reactiveIndex, 0, newMoles - oldAqueousMoles[componentIndex]);
     }
     SimpleMatrix conservationMatrix = new SimpleMatrix(conservationArray);
-    SimpleMatrix conservativeDelta = rawDelta
-        .minus(conservationMatrix.pseudoInverse().mult(conservationMatrix).mult(rawDelta));
+    SimpleMatrix conservationResidual = conservationMatrix.mult(rawDelta);
+    double maximumConservationResidual = 0.0;
+    for (int row = 0; row < conservationResidual.getNumRows(); row++) {
+      maximumConservationResidual = Math.max(maximumConservationResidual, Math.abs(conservationResidual.get(row, 0)));
+    }
+    boolean rawDeltaIsNonNegative = true;
+    for (int reactiveIndex = 0; reactiveIndex < reactiveComponents.length; reactiveIndex++) {
+      int componentIndex = reactiveComponents[reactiveIndex].getComponentNumber();
+      if (coupledOverallMoles[componentIndex] + rawDelta.get(reactiveIndex, 0) < -1.0e-9) {
+        rawDeltaIsNonNegative = false;
+        break;
+      }
+    }
+    SimpleMatrix conservativeDelta = maximumConservationResidual <= REACTION_DELTA_CONSERVATION_TOLERANCE_MOLES
+        && rawDeltaIsNonNegative ? rawDelta
+            : rawDelta.minus(conservationMatrix.pseudoInverse().mult(conservationResidual));
+    double feasibleStep = 1.0;
+    for (int reactiveIndex = 0; reactiveIndex < reactiveComponents.length; reactiveIndex++) {
+      double delta = conservativeDelta.get(reactiveIndex, 0);
+      if (delta >= 0.0) {
+        continue;
+      }
+      int componentIndex = reactiveComponents[reactiveIndex].getComponentNumber();
+      double available = Math.max(0.0, coupledOverallMoles[componentIndex] - MINIMUM_COUPLED_COMPONENT_MOLES);
+      feasibleStep = Math.min(feasibleStep, available / -delta);
+    }
+    if (feasibleStep < 1.0) {
+      conservativeDelta = conservativeDelta.scale(Math.max(0.0, feasibleStep));
+    }
     for (int reactiveIndex = 0; reactiveIndex < reactiveComponents.length; reactiveIndex++) {
       reactionDeltas[reactiveComponents[reactiveIndex].getComponentNumber()] = conservativeDelta.get(reactiveIndex, 0);
     }

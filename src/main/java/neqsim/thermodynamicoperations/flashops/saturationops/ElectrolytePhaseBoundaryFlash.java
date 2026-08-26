@@ -7,6 +7,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPitzer;
 
 /**
  * Brackets the appearance or disappearance of one material phase with complete TP/VLLE flashes.
@@ -15,8 +16,8 @@ import neqsim.thermo.system.SystemInterface;
  * Legacy bubble/dew solvers assume two interchangeable phase slots. Electrolyte systems instead have model-specific
  * aqueous roles and may contain gas, oil and aqueous phases simultaneously. This operation therefore varies one
  * intensive variable on isolated clones and delegates every state evaluation to the system's normal TP flash. It does
- * not replace phase stability or alter non-electrolyte flash paths. Reactive systems are rejected until their
- * phase-boundary contract can enforce elemental conservation and reaction residuals.
+ * not replace phase stability or alter non-electrolyte flash paths. Reactive systems retain the same phase-topology
+ * contract and add direct elemental-balance and reaction-residual gates.
  * </p>
  */
 public final class ElectrolytePhaseBoundaryFlash {
@@ -27,6 +28,8 @@ public final class ElectrolytePhaseBoundaryFlash {
   private static final double CHARGE_TOLERANCE_MOLAL = 1.0e-8;
   private static final double ION_LEAKAGE_TOLERANCE = 1.0e-30;
   private static final double LOG_FUGACITY_TOLERANCE = 1.0e-5;
+  private static final double ELEMENT_BALANCE_TOLERANCE_MOLES = 1.0e-8;
+  private static final double REACTION_LOG_RESIDUAL_TOLERANCE = 2.0e-6;
   private static final int CONTINUATION_STEPS = 8;
 
   private final SystemInterface system;
@@ -41,7 +44,7 @@ public final class ElectrolytePhaseBoundaryFlash {
   /**
    * Creates a bracketed phase-boundary calculation.
    *
-   * @param system non-reactive electrolyte-capable thermodynamic system
+   * @param system electrolyte-capable thermodynamic system
    * @param specification pressure or temperature scan
    * @param targetPhase phase whose material appearance/disappearance is sought
    * @param lowerBound lower pressure in bara or temperature in K
@@ -65,9 +68,9 @@ public final class ElectrolytePhaseBoundaryFlash {
     if (maximumIterations <= 0) {
       throw new IllegalArgumentException("Maximum iterations must be positive");
     }
-    if (system.isChemicalSystem()) {
-      throw new IllegalArgumentException(
-          "Reactive electrolyte phase boundaries require an elemental-balance contract and are not supported yet");
+    if (system.isChemicalSystem() && !(system instanceof SystemPitzer)) {
+      throw new IllegalArgumentException("Reactive phase boundaries are currently qualified only for the Pitzer "
+          + "hybrid path; electrolyte-EOS and other reactive models require conservative multiphase reaction coupling");
     }
     this.system = system;
     this.specification = specification;
@@ -108,14 +111,15 @@ public final class ElectrolytePhaseBoundaryFlash {
     }
 
     Snapshot retained = lower.targetPresent ? lower : upper;
-    retainConvergedState(retained.system);
-    Diagnostics diagnostics = calculateDiagnostics(system);
+    Diagnostics diagnostics = calculateDiagnostics(retained.system);
     validateDiagnostics(diagnostics);
+    retainConvergedState(retained.system);
 
     return new ElectrolytePhaseBoundaryResult(specification, targetPhase, lower.value, upper.value, lower.targetPresent,
         retained.value, phaseFraction(system, targetPhase), iterations, flashEvaluations, lower.topology,
         upper.topology, diagnostics.materialBalanceResidual, diagnostics.normalizationResidual,
-        diagnostics.aqueousChargeMolality, diagnostics.maximumIonLeakage, diagnostics.maximumLogFugacityResidual);
+        diagnostics.aqueousChargeMolality, diagnostics.maximumIonLeakage, diagnostics.maximumLogFugacityResidual,
+        diagnostics.maximumElementBalanceResidual, diagnostics.maximumReactionLogResidual);
   }
 
   /**
@@ -318,8 +322,14 @@ public final class ElectrolytePhaseBoundaryFlash {
         }
       }
     }
+    double maximumElementBalanceResidual = targetSystem.isChemicalSystem()
+        ? targetSystem.getChemicalReactionOperations().getMaximumAbsoluteElementBalanceResidual()
+        : 0.0;
+    double maximumReactionLogResidual = targetSystem.isChemicalSystem()
+        ? targetSystem.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual()
+        : 0.0;
     return new Diagnostics(maximumMaterialResidual, maximumNormalizationResidual, aqueousCharge, maximumIonLeakage,
-        maximumLogFugacityResidual);
+        maximumLogFugacityResidual, maximumElementBalanceResidual, maximumReactionLogResidual);
   }
 
   /** Fails closed when the retained boundary state violates the electrolyte acceptance contract. */
@@ -348,6 +358,16 @@ public final class ElectrolytePhaseBoundaryFlash {
       throw new IllegalStateException(
           "Electrolyte phase-boundary fugacity closure failed: " + diagnostics.maximumLogFugacityResidual);
     }
+    if (!Double.isFinite(diagnostics.maximumElementBalanceResidual)
+        || diagnostics.maximumElementBalanceResidual > ELEMENT_BALANCE_TOLERANCE_MOLES) {
+      throw new IllegalStateException(
+          "Electrolyte phase-boundary elemental balance failed: " + diagnostics.maximumElementBalanceResidual);
+    }
+    if (!Double.isFinite(diagnostics.maximumReactionLogResidual)
+        || diagnostics.maximumReactionLogResidual > REACTION_LOG_RESIDUAL_TOLERANCE) {
+      throw new IllegalStateException(
+          "Electrolyte phase-boundary reaction closure failed: " + diagnostics.maximumReactionLogResidual);
+    }
   }
 
   /** One isolated TP-flash classification. */
@@ -372,14 +392,19 @@ public final class ElectrolytePhaseBoundaryFlash {
     private final double aqueousChargeMolality;
     private final double maximumIonLeakage;
     private final double maximumLogFugacityResidual;
+    private final double maximumElementBalanceResidual;
+    private final double maximumReactionLogResidual;
 
     private Diagnostics(double materialBalanceResidual, double normalizationResidual, double aqueousChargeMolality,
-        double maximumIonLeakage, double maximumLogFugacityResidual) {
+        double maximumIonLeakage, double maximumLogFugacityResidual, double maximumElementBalanceResidual,
+        double maximumReactionLogResidual) {
       this.materialBalanceResidual = materialBalanceResidual;
       this.normalizationResidual = normalizationResidual;
       this.aqueousChargeMolality = aqueousChargeMolality;
       this.maximumIonLeakage = maximumIonLeakage;
       this.maximumLogFugacityResidual = maximumLogFugacityResidual;
+      this.maximumElementBalanceResidual = maximumElementBalanceResidual;
+      this.maximumReactionLogResidual = maximumReactionLogResidual;
     }
   }
 }

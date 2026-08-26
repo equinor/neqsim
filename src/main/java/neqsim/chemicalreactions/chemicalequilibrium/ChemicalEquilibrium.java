@@ -32,6 +32,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   /** Counter for consecutive non-improving iterations to detect stagnation. */
   private static final int STAGNATION_LIMIT = 10;
 
+  /** Relative conservation residual above which a single-phase Newton step restores the constraint manifold. */
+  private static final double CONSERVATION_CORRECTION_TOLERANCE = 1e-8;
+
   /**
    * Iteration threshold to switch from simple to derivative-based iterations. First iterations use simple M_matrix
    * (cheap), then switch to derivatives for faster quadratic convergence near the solution.
@@ -302,24 +305,28 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     AMU_matrix = A_Jama_matrix.times(M_inv_mu);
     Matrix nmol = new Matrix(n_mol, 1);
     nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
-    // AMA_matrix.pr
-    // Added by Neeraj
-    // Matrix bm_matrix = (A_Jama_matrix.times(nmol.transpose()).transpose());
-    // ((b_matrix.minus(bm_matrix)).times(R*system.getTemperature()).transpose()).print(10,10);
-    // AMU_matrix.print(20,20);
-
+    Matrix couplingQuantities = b_matrix;
+    Matrix conservationCorrection = new Matrix(NELE, 1);
+    if (system.getNumberOfPhases() == 1) {
+      Matrix currentConservedQuantities = A_Jama_matrix.times(nmol.transpose()).transpose();
+      for (int elementIndex = 0; elementIndex < NELE; elementIndex++) {
+        double target = b_matrix.get(0, elementIndex);
+        double current = currentConservedQuantities.get(0, elementIndex);
+        if (Math.abs(target - current) > CONSERVATION_CORRECTION_TOLERANCE * Math.max(1.0, Math.abs(target))) {
+          couplingQuantities = currentConservedQuantities;
+          conservationCorrection = b_matrix.minus(currentConservedQuantities).transpose();
+          break;
+        }
+      }
+    }
     A_solve.setMatrix(0, NELE - 1, 0, NELE - 1, AMA_matrix);
-    A_solve.setMatrix(0, NELE - 1, NELE, NELE, b_matrix.transpose());
-    A_solve.setMatrix(NELE, NELE, 0, NELE - 1, b_matrix);
+    A_solve.setMatrix(0, NELE - 1, NELE, NELE, couplingQuantities.transpose());
+    A_solve.setMatrix(NELE, NELE, 0, NELE - 1, couplingQuantities);
     A_solve.set(NELE, NELE, 0.0);
 
     // A_solve.print(10,20);
     // System.out.println("Rank of A_solve "+A_solve.rank());
-    // Term subtracted from AMU_matrix -- Neeraj
-    // b_solve.setMatrix(0,NELE-1,0,0,
-    // AMU_matrix.minus((b_matrix.minus(bm_matrix)).times(R*system.getTemperature()).transpose()));
-    // Commented out by Neeraj
-    b_solve.setMatrix(0, NELE - 1, 0, 0, AMU_matrix);
+    b_solve.setMatrix(0, NELE - 1, 0, 0, AMU_matrix.plus(conservationCorrection));
     b_solve.setMatrix(NELE, NELE, 0, 0, nmu);
     // b_solve.print(10,5);
     // System.out.println("det "+A_solve.det());
