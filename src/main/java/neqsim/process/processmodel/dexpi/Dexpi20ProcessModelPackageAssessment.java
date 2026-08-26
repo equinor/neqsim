@@ -170,6 +170,98 @@ public final class Dexpi20ProcessModelPackageAssessment {
     }
   }
 
+  /** Independently verified evidence for one declared plant-wide connection. */
+  public static final class ConnectionEvidence implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String connectionId;
+    private final String connectionType;
+    private final String sourceArea;
+    private final String targetArea;
+    private final String sourceEquipment;
+    private final String targetEquipment;
+    private final String sourcePort;
+    private final String targetPort;
+    private final boolean crossArea;
+    private final boolean recycle;
+    private final String exchangeStatus;
+
+    ConnectionEvidence(String connectionId, String connectionType, String sourceArea, String targetArea,
+        String sourceEquipment, String targetEquipment, String sourcePort, String targetPort, boolean crossArea,
+        boolean recycle, String exchangeStatus) {
+      this.connectionId = connectionId;
+      this.connectionType = connectionType;
+      this.sourceArea = sourceArea;
+      this.targetArea = targetArea;
+      this.sourceEquipment = sourceEquipment;
+      this.targetEquipment = targetEquipment;
+      this.sourcePort = sourcePort;
+      this.targetPort = targetPort;
+      this.crossArea = crossArea;
+      this.recycle = recycle;
+      this.exchangeStatus = exchangeStatus;
+    }
+
+    public String getConnectionId() {
+      return connectionId;
+    }
+
+    public String getConnectionType() {
+      return connectionType;
+    }
+
+    public String getSourceArea() {
+      return sourceArea;
+    }
+
+    public String getTargetArea() {
+      return targetArea;
+    }
+
+    public String getSourceEquipment() {
+      return sourceEquipment;
+    }
+
+    public String getTargetEquipment() {
+      return targetEquipment;
+    }
+
+    public String getSourcePort() {
+      return sourcePort;
+    }
+
+    public String getTargetPort() {
+      return targetPort;
+    }
+
+    public boolean isCrossArea() {
+      return crossArea;
+    }
+
+    public boolean isRecycle() {
+      return recycle;
+    }
+
+    public String getExchangeStatus() {
+      return exchangeStatus;
+    }
+
+    Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("connectionId", connectionId);
+      result.put("connectionType", connectionType);
+      result.put("sourceArea", sourceArea);
+      result.put("targetArea", targetArea);
+      result.put("sourceEquipment", sourceEquipment);
+      result.put("targetEquipment", targetEquipment);
+      result.put("sourcePort", sourcePort);
+      result.put("targetPort", targetPort);
+      result.put("crossArea", Boolean.valueOf(crossArea));
+      result.put("recycle", Boolean.valueOf(recycle));
+      result.put("exchangeStatus", exchangeStatus);
+      return result;
+    }
+  }
+
   /** Immutable independent assessment of one package file. */
   public static final class Report implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -180,10 +272,12 @@ public final class Dexpi20ProcessModelPackageAssessment {
     private final String operatingCaseId;
     private final String canonicalFingerprint;
     private final List<AreaEvidence> areaEvidence;
+    private final List<ConnectionEvidence> connectionEvidence;
     private final List<Diagnostic> diagnostics;
 
     Report(String packageFileSha256, String manifestSha256, String plantId, String revision, String operatingCaseId,
-        String canonicalFingerprint, List<AreaEvidence> areaEvidence, List<Diagnostic> diagnostics) {
+        String canonicalFingerprint, List<AreaEvidence> areaEvidence, List<ConnectionEvidence> connectionEvidence,
+        List<Diagnostic> diagnostics) {
       this.packageFileSha256 = packageFileSha256;
       this.manifestSha256 = manifestSha256;
       this.plantId = plantId;
@@ -191,6 +285,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
       this.operatingCaseId = operatingCaseId;
       this.canonicalFingerprint = canonicalFingerprint;
       this.areaEvidence = Collections.unmodifiableList(new ArrayList<AreaEvidence>(areaEvidence));
+      this.connectionEvidence =
+          Collections.unmodifiableList(new ArrayList<ConnectionEvidence>(connectionEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
     }
 
@@ -220,6 +316,10 @@ public final class Dexpi20ProcessModelPackageAssessment {
 
     public List<AreaEvidence> getAreaEvidence() {
       return areaEvidence;
+    }
+
+    public List<ConnectionEvidence> getConnectionEvidence() {
+      return connectionEvidence;
     }
 
     public List<Diagnostic> getDiagnostics() {
@@ -265,6 +365,11 @@ public final class Dexpi20ProcessModelPackageAssessment {
         areas.add(area.toMap());
       }
       result.put("areaEvidence", areas);
+      List<Map<String, Object>> connections = new ArrayList<Map<String, Object>>();
+      for (ConnectionEvidence connection : connectionEvidence) {
+        connections.add(connection.toMap());
+      }
+      result.put("connectionEvidence", connections);
       List<Map<String, Object>> findings = new ArrayList<Map<String, Object>>();
       for (Diagnostic diagnostic : diagnostics) {
         findings.add(diagnostic.toMap());
@@ -304,7 +409,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
       diagnostics.add(
           error("DEXPI_PROCESS_PACKAGE_MANIFEST_MISSING", "Package does not contain manifest.json", MANIFEST_ENTRY));
       sortDiagnostics(diagnostics);
-      return new Report(packageSha, "", "", "", null, "", Collections.<AreaEvidence>emptyList(), diagnostics);
+      return new Report(packageSha, "", "", "", null, "", Collections.<AreaEvidence>emptyList(),
+          Collections.<ConnectionEvidence>emptyList(), diagnostics);
     }
 
     String manifestSha = sha256(new ByteArrayInputStream(manifestBytes));
@@ -318,7 +424,8 @@ public final class Dexpi20ProcessModelPackageAssessment {
       diagnostics.add(error("DEXPI_PROCESS_PACKAGE_MANIFEST_INVALID_JSON",
           "Package manifest is not valid JSON: " + exception.getMessage(), MANIFEST_ENTRY));
       sortDiagnostics(diagnostics);
-      return new Report(packageSha, manifestSha, "", "", null, "", Collections.<AreaEvidence>emptyList(), diagnostics);
+      return new Report(packageSha, manifestSha, "", "", null, "", Collections.<AreaEvidence>emptyList(),
+          Collections.<ConnectionEvidence>emptyList(), diagnostics);
     }
 
     String plantId = requiredText(manifest, "plantId", diagnostics);
@@ -331,11 +438,11 @@ public final class Dexpi20ProcessModelPackageAssessment {
     Set<String> areaNames = new LinkedHashSet<String>();
     Set<String> areaIds = new LinkedHashSet<String>();
     List<AreaEvidence> areas = assessAreas(manifest, entries, declaredAreaEntries, areaNames, areaIds, diagnostics);
-    verifyConnections(manifest, areaNames, diagnostics);
+    List<ConnectionEvidence> connections = verifyConnections(manifest, areaNames, diagnostics);
     verifyDeclaredEntries(entries.keySet(), declaredAreaEntries, diagnostics);
     sortDiagnostics(diagnostics);
     return new Report(packageSha, manifestSha, plantId, revision, operatingCaseId, canonicalFingerprint, areas,
-        diagnostics);
+        connections, diagnostics);
   }
 
   private static Map<String, byte[]> readArchive(Path packagePath, List<Diagnostic> diagnostics) throws IOException {
@@ -518,10 +625,12 @@ public final class Dexpi20ProcessModelPackageAssessment {
     }
   }
 
-  private static void verifyConnections(JsonObject manifest, Set<String> areaNames, List<Diagnostic> diagnostics) {
+  private static List<ConnectionEvidence> verifyConnections(JsonObject manifest, Set<String> areaNames,
+      List<Diagnostic> diagnostics) {
+    List<ConnectionEvidence> result = new ArrayList<ConnectionEvidence>();
     JsonArray connections = requiredArray(manifest, "connections", diagnostics);
     if (connections == null) {
-      return;
+      return result;
     }
     Set<String> ids = new LinkedHashSet<String>();
     Set<String> manifestDiagnosticKeys = manifestDiagnosticKeys(manifest);
@@ -538,13 +647,13 @@ public final class Dexpi20ProcessModelPackageAssessment {
       String type = requiredText(connection, "connectionType", diagnostics, id);
       String sourceArea = requiredText(connection, "sourceArea", diagnostics, id);
       String targetArea = requiredText(connection, "targetArea", diagnostics, id);
-      requiredText(connection, "sourceEquipment", diagnostics, id);
-      requiredText(connection, "targetEquipment", diagnostics, id);
-      requiredText(connection, "sourcePort", diagnostics, id);
-      requiredText(connection, "targetPort", diagnostics, id);
+      String sourceEquipment = requiredText(connection, "sourceEquipment", diagnostics, id);
+      String targetEquipment = requiredText(connection, "targetEquipment", diagnostics, id);
+      String sourcePort = requiredText(connection, "sourcePort", diagnostics, id);
+      String targetPort = requiredText(connection, "targetPort", diagnostics, id);
       String status = requiredText(connection, "exchangeStatus", diagnostics, id);
       Boolean crossArea = requiredBoolean(connection, "crossArea", diagnostics, id);
-      requiredBoolean(connection, "recycle", diagnostics, id);
+      Boolean recycle = requiredBoolean(connection, "recycle", diagnostics, id);
       addUnique(ids, id, "DEXPI_PROCESS_PACKAGE_DUPLICATE_CONNECTION_ID", diagnostics);
       if (!areaNames.contains(sourceArea) || !areaNames.contains(targetArea)) {
         diagnostics.add(error("DEXPI_PROCESS_PACKAGE_CONNECTION_AREA_UNKNOWN",
@@ -563,7 +672,16 @@ public final class Dexpi20ProcessModelPackageAssessment {
         diagnostics.add(error("DEXPI_PROCESS_PACKAGE_CONNECTION_LOSS_DIAGNOSTIC_MISSING",
             "Manifest-only connection has no matching structured loss diagnostic", id));
       }
+      result.add(new ConnectionEvidence(id, type, sourceArea, targetArea, sourceEquipment, targetEquipment, sourcePort,
+          targetPort, Boolean.TRUE.equals(crossArea), Boolean.TRUE.equals(recycle), status));
     }
+    Collections.sort(result, new Comparator<ConnectionEvidence>() {
+      @Override
+      public int compare(ConnectionEvidence first, ConnectionEvidence second) {
+        return first.getConnectionId().compareTo(second.getConnectionId());
+      }
+    });
+    return result;
   }
 
   private static String expectedConnectionStatus(String type, boolean crossArea) {
