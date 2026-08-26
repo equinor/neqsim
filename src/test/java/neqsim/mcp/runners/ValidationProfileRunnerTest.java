@@ -70,20 +70,21 @@ class ValidationProfileRunnerTest {
     ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"generic\"}");
     try {
       JsonObject cleanup = JsonParser
-          .parseString(ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName
-              + "\"}"))
+          .parseString(
+              ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName + "\"}"))
           .getAsJsonObject();
       assertEquals("success", cleanup.get("status").getAsString());
 
-      JsonObject created = JsonParser.parseString(ValidationProfileRunner.run(
-          "{\"action\":\"createProfile\",\"profileName\":\"" + profileName
+      JsonObject created = JsonParser
+          .parseString(ValidationProfileRunner.run("{\"action\":\"createProfile\",\"profileName\":\"" + profileName
               + "\",\"basedOn\":\"generic\",\"description\":\"Phase 0 contract fixture\"}"))
           .getAsJsonObject();
       assertEquals("success", created.get("status").getAsString());
       assertEquals(profileName, created.get("profileName").getAsString());
 
-      JsonObject activated = JsonParser.parseString(ValidationProfileRunner.run(
-          "{\"action\":\"setActiveProfile\",\"profileName\":\"" + profileName + "\"}"))
+      JsonObject activated = JsonParser
+          .parseString(
+              ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"" + profileName + "\"}"))
           .getAsJsonObject();
       assertEquals("success", activated.get("status").getAsString());
       assertEquals(profileName, activated.get("activeProfile").getAsString());
@@ -95,38 +96,38 @@ class ValidationProfileRunnerTest {
       assertEquals("custom", active.get("type").getAsString());
       assertEquals("Phase 0 contract fixture", active.getAsJsonObject("profile").get("description").getAsString());
 
-      JsonObject deleted = JsonParser.parseString(ValidationProfileRunner.run(
-          "{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName + "\"}"))
+      JsonObject deleted = JsonParser
+          .parseString(
+              ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName + "\"}"))
           .getAsJsonObject();
       assertEquals("success", deleted.get("status").getAsString());
       assertTrue(deleted.get("deleted").getAsBoolean());
       assertEquals("generic", deleted.get("activeProfile").getAsString());
     } finally {
-      ValidationProfileRunner.run(
-          "{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName + "\"}");
+      ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName + "\"}");
       ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"generic\"}");
     }
   }
 
   @Test
   void testMutationErrorsFailClosed() {
-    JsonObject reservedDelete = JsonParser.parseString(
-        ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"generic\"}"))
+    JsonObject reservedDelete = JsonParser
+        .parseString(ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"generic\"}"))
         .getAsJsonObject();
     assertEquals("error", reservedDelete.get("status").getAsString());
     assertEquals("CANNOT_DELETE",
         reservedDelete.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
 
-    JsonObject missingProfile = JsonParser.parseString(
-        ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"does-not-exist\"}"))
+    JsonObject missingProfile = JsonParser
+        .parseString(
+            ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"does-not-exist\"}"))
         .getAsJsonObject();
     assertEquals("error", missingProfile.get("status").getAsString());
     assertEquals("PROFILE_NOT_FOUND",
         missingProfile.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
 
     JsonObject unknownAction = JsonParser
-        .parseString(ValidationProfileRunner.run("{\"action\":\"unsupported-phase0-action\"}"))
-        .getAsJsonObject();
+        .parseString(ValidationProfileRunner.run("{\"action\":\"unsupported-phase0-action\"}")).getAsJsonObject();
     assertEquals("error", unknownAction.get("status").getAsString());
     JsonObject error = unknownAction.getAsJsonArray("errors").get(0).getAsJsonObject();
     assertEquals("UNKNOWN_ACTION", error.get("code").getAsString());
