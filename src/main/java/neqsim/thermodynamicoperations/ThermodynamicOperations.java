@@ -54,6 +54,8 @@ import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTempera
 import neqsim.thermodynamicoperations.flashops.saturationops.CricondenbarFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.ElectrolytePhaseBoundaryFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.ElectrolytePhaseBoundaryResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HCdewPointPressureFlash;
@@ -1204,6 +1206,50 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void freezingPointTemperatureFlash(String phaseName) throws IsNaNException {
     freezingPointTemperatureFlashResult();
+  }
+
+  /**
+   * Brackets a non-reactive electrolyte VLE or VLLE phase boundary at constant temperature.
+   *
+   * <p>
+   * Every pressure evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
+   * saturation-pressure path when gas, oil and model-specific aqueous roles may coexist. The supplied system is left at
+   * the target-present side of the final bracket.
+   * </p>
+   *
+   * @param targetPhase phase whose appearance or disappearance is bracketed
+   * @param lowerPressureBara lower pressure in bara
+   * @param upperPressureBara upper pressure in bara
+   * @param toleranceBara maximum final bracket width in bara
+   * @param maximumIterations maximum bisection iterations
+   * @return boundary, topology and scientific acceptance diagnostics
+   */
+  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryPressureFlash(PhaseType targetPhase,
+      double lowerPressureBara, double upperPressureBara, double toleranceBara, int maximumIterations) {
+    return new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.PRESSURE, targetPhase,
+        lowerPressureBara, upperPressureBara, toleranceBara, maximumIterations).solve();
+  }
+
+  /**
+   * Brackets a non-reactive electrolyte VLE or VLLE phase boundary at constant pressure.
+   *
+   * <p>
+   * Every temperature evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
+   * saturation-temperature path when gas, oil and model-specific aqueous roles may coexist. The supplied system is left
+   * at the target-present side of the final bracket.
+   * </p>
+   *
+   * @param targetPhase phase whose appearance or disappearance is bracketed
+   * @param lowerTemperatureK lower temperature in K
+   * @param upperTemperatureK upper temperature in K
+   * @param toleranceK maximum final bracket width in K
+   * @param maximumIterations maximum bisection iterations
+   * @return boundary, topology and scientific acceptance diagnostics
+   */
+  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryTemperatureFlash(PhaseType targetPhase,
+      double lowerTemperatureK, double upperTemperatureK, double toleranceK, int maximumIterations) {
+    return new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
+        targetPhase, lowerTemperatureK, upperTemperatureK, toleranceK, maximumIterations).solve();
   }
 
   /**
