@@ -66,8 +66,8 @@ class ValidationProfileRunnerTest {
 
   @Test
   void testCustomProfileLifecycleIsExplicitAndRecoverable() {
-    String originalProfile = ValidationProfileRunner.getActiveProfileName();
     String profileName = "phase0-contract-profile";
+    ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"generic\"}");
     try {
       JsonObject cleanup = JsonParser
           .parseString(ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName
@@ -104,8 +104,7 @@ class ValidationProfileRunnerTest {
     } finally {
       ValidationProfileRunner.run(
           "{\"action\":\"deleteProfile\",\"profileName\":\"" + profileName + "\"}");
-      ValidationProfileRunner.run(
-          "{\"action\":\"setActiveProfile\",\"profileName\":\"" + originalProfile + "\"}");
+      ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"generic\"}");
     }
   }
 
