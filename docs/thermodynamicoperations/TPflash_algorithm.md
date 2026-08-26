@@ -2186,3 +2186,47 @@ probe (20 warmups and five blocks of 60 flashes), the corrected SRK 180 K/50 bar
 a median 14.25 ms/flash for the invalid endpoint to 18.20 ms/flash for the accepted equilibrium.
 The screen-excluded SRK 300 K/100 bar trace-heavy control was 10.98 versus 10.88 ms/flash, within
 run-to-run noise. No speedup is claimed, and common flashes return before the new refinement.
+
+### Near-cricondenbar rich-gas endpoint refinement
+
+An ordinary SRK or PR flash near a rich natural gas's cricondenbar can retain a local cubic root or
+collapse a valid gas/oil split even when the explicit multiphase path finds a conservative,
+fugacity-equal, lower-Gibbs equilibrium. The private performance screen is limited to 50--200 bar,
+neutral water-free feeds containing at least four active hydrocarbons, at least 0.90 total
+hydrocarbon, at least 0.30 methane, at least 0.05 condensable hydrocarbon, no more than 0.05 carbon
+dioxide, and a hydrocarbon critical-temperature span of at least 250 K. Other active components
+must be inert. These conditions select only whether to run the established reciprocal stability
+flash; thermodynamic acceptance remains authoritative.
+
+The qualification fluid contains nitrogen, carbon dioxide, methane through n-hexane and uses the
+classic mixing rule. Deterministic failures included:
+
+| EOS | Temperature (K) | Pressure (bara) | Ordinary result before refinement | Maximum log-fugacity residual before refinement | Lower-Gibbs result (J) |
+| --- | ---: | ---: | --- | ---: | ---: |
+| SRK | 273.15 | 100 | GAS+OIL | 1.30055e-2 | 626518.842 |
+| SRK | 283.15 | 100 | GAS+OIL | 1.51337e-2 | 670464.297 |
+| PR | 268.15 | 95 | GAS+OIL | 8.42662e-2 | 586168.078 |
+| PR | 273.15 | 100 | GAS only; material residual 9.88469e-4 | not applicable | 614120.253 |
+| PR | 278.15 | 100 | GAS+OIL | 5.2598e-3 | 636403.262 |
+| PR | 283.15 | 100 | GAS+OIL | 3.1720e-3 | 657662.282 |
+
+The reciprocal candidate must contain one or two neutral fluid phases, remain bounded and
+normalized, close component material balance below `1e-10`, close maximum log-fugacity residual
+below `1e-8`, and lower Gibbs energy beyond the existing allowance. Complete initialized phase
+objects preserve the accepted cubic roots during transfer. A final maximum of five bounded beta
+updates targets a tighter `1e-10` log-fugacity residual without changing the selected active set;
+failure, Gibbs increase, or lost closure restores the complete accepted candidate. Final one-phase
+states are normalized to beta one and `x = z`.
+
+Focused SRK/PR regressions cover the six states above, poor initial beta values, deterministic
+repeats, changed-temperature and return-to-state execution, gas/oil appearance, single-phase
+disappearance, material balance, fugacity equality, phase normalization, bounded compositions,
+compressibility factor, density, and ordinary/multiphase agreement. The near-critical comparison
+uses `1e-7` for beta and composition because phase fraction is ill-conditioned at the boundary;
+the independent conservation and fugacity gates remain `1e-10` and `1e-8` respectively.
+
+This is a correctness fallback, not a speed optimization. Valid nonqualifying flashes perform no
+additional thermodynamic solve. A qualifying invalid endpoint performs one reciprocal flash and at
+most five beta updates; qualifying endpoints that already meet the equilibrium gate return after
+an allocation-free composition screen and residual audit. No public API, model parameter, unit, or
+default changes.
