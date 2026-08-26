@@ -153,11 +153,13 @@ public final class Dexpi20ProcessModelPackageReader {
     }
 
     public List<AreaDocument> getAreaDocuments() {
-      return areaDocuments;
+      return Collections.unmodifiableList(new ArrayList<AreaDocument>(areaDocuments));
     }
 
     public List<Dexpi20ProcessModelPackageAssessment.ConnectionEvidence> getConnectionEvidence() {
-      return assessmentReport.getConnectionEvidence();
+      return Collections.unmodifiableList(
+          new ArrayList<Dexpi20ProcessModelPackageAssessment.ConnectionEvidence>(
+              assessmentReport.getConnectionEvidence()));
     }
 
     /** @return always {@code REVIEW_REQUIRED} */
