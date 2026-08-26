@@ -1,93 +1,108 @@
 ---
 title: Safety Systems Documentation
-description: Documentation for safety-related features and systems in NeqSim.
+description: Navigation for NeqSim process-safety, relief, ESD, HIPPS, risk, consequence, and barrier-analysis guides.
+keywords: "safety, SIS, ESD, HIPPS, blowdown, depressurization, relief valve, PSV, API 520, API 521, fire case, source term, consequence, HAZOP, LOPA, alarm, trip"
 ---
 
-Documentation for safety-related features and systems in NeqSim.
+Use this hub to choose the safety-analysis layer that matches the engineering question. The
+[process-safety API overview](../process/safety/README) explains current equipment, logic,
+scenario-runner, units, and lifecycle boundaries. The guides below provide focused workflows and
+screening methods.
 
----
+NeqSim results are engineering evidence, not approval. Project-specific hazards, design
+conditions, standards editions, safeguard independence, uncertainty, acceptance criteria, and
+accountable review remain mandatory.
 
-## Overview
+## Start here
 
-This folder contains guides for implementing safety systems in process simulations, including Emergency Shutdown (ESD), High Integrity Pressure Protection Systems (HIPPS), blowdown analysis, and alarm management.
+| Need | Guide |
+| --- | --- |
+| Choose equipment, logic, or scenario APIs | [Process-safety API overview](../process/safety/README) |
+| Size or screen relief devices | [Relief-Valve Sizing Screening](relief_valve_sizing_api) |
+| Test ESD logic dynamically | [ESD dynamic testing workflow](esd_testing_workflow) |
+| Model HIPPS voting and action | [HIPPS implementation](hipps_implementation) |
+| Generate safety scenarios | [Safety scenario generation](../process/safety/scenario-generation) |
+| Review releases and consequence inputs | [Release and dispersion scenarios](../process/safety/release-dispersion-scenarios) |
+| Trace barriers and safety-critical elements | [Barrier management and SCE traceability](barrier_management) |
 
----
-
-## Documentation Index
-
-### Emergency Shutdown (ESD)
-
-| Document | Description |
-|----------|-------------|
-| [ESD Dynamic Testing Workflow](esd_testing_workflow) | Dynamic ESD testing with process logic, OperationalTagMap/tagreader evidence, and JSON criteria reports |
-| [ESD_BLOWDOWN_SYSTEM.md](ESD_BLOWDOWN_SYSTEM) | Complete ESD and blowdown system guide |
-| [PRESSURE_MONITORING_ESD.md](PRESSURE_MONITORING_ESD) | Pressure monitoring for ESD |
-
-### HIPPS (High Integrity Pressure Protection)
-
-| Document | Description |
-|----------|-------------|
-| [HIPPS_SUMMARY.md](HIPPS_SUMMARY) | HIPPS overview and summary |
-| [hipps_implementation.md](hipps_implementation) | HIPPS implementation details |
-| [hipps_safety_logic.md](hipps_safety_logic) | HIPPS safety logic programming |
-
-### Safety Architecture
+## Emergency shutdown and blowdown
 
 | Document | Description |
-|----------|-------------|
-| [INTEGRATED_SAFETY_SYSTEMS.md](INTEGRATED_SAFETY_SYSTEMS) | Integrated safety systems overview |
-| [layered_safety_architecture.md](layered_safety_architecture) | Layered safety architecture (defense in depth) |
-| [sis_logic_implementation.md](sis_logic_implementation) | Safety Instrumented Systems (SIS) logic |
-| [integration_safety_chain_tests.md](integration_safety_chain_tests) | Safety chain integration testing |
-| [SAFETY_SIMULATION_ROADMAP.md](SAFETY_SIMULATION_ROADMAP) | Safety simulation development roadmap |
+| --- | --- |
+| [ESD dynamic testing workflow](esd_testing_workflow) | Dynamic ESD testing with process logic, OperationalTagMap/tagreader evidence, and JSON criteria reports |
+| [ESD and blowdown system](ESD_BLOWDOWN_SYSTEM) | Complete ESD and blowdown-system guide |
+| [Pressure monitoring for ESD](PRESSURE_MONITORING_ESD) | Pressure monitoring and shutdown logic |
+| [API 521 depressurization workflow](depressurization_per_API_521) | Dynamic depressurization screening and API 521 interpretation boundary |
+| [Integrated safety systems](INTEGRATED_SAFETY_SYSTEMS) | Integrated shutdown, isolation, blowdown, and relief overview |
 
-### Standards Compliance and Hazard Screening
-
-| Document | Description |
-|----------|-------------|
-| [NOG 070 SIL, STS-0131 Gate and ESD Response Time](nog070_sil_sts0131_esd) | Pre-determined SIL (NOG 070), aggregated STS-0131 acceptance gate, and IEC 61511 ESD response-time budget |
-| [API 14C SAFE Chart and NORSOK P-002 Compliance](api14c_norsok_p002) | API RP 14C / ISO 10418 SAFE chart, NORSOK P-002 flare/blowdown/vent screening, and coupled multi-vessel blowdown header load |
-| [ISO 17776 MAH Bow-Tie and EI AVIFF FIV Screening](mah_bowtie_fiv_screening) | Major-accident-hazard bow-tie from the ISO 17776 catalogue and Energy Institute AVIFF flow-induced-vibration screening |
-| [Flare Flame, Hazardous Area and PFP Demand](flare_flame_hazardous_area_pfp) | API 537 flare flame/radiation/noise, IEC 60079-10-1 hazardous-area zoning, and API 521 passive-fire-protection demand |
-| [Automated HAZOP from STID and Simulation](automated_hazop_from_stid) | End-to-end STID/P&ID, plant data, NeqSim simulation, HAZOP, barrier, and report workflow |
-| [AI-HAZOP Input Data Format](ai_hazop_input_format) | Required input-data format for a P&ID Safety Analyser / AI-HAZOP front-end: process model JSON, per-deviation `runHazopScenario` request, DEXPI design-conditions, limit-basis policy, and blocked-outlet overpressure screening |
-| [Open Drain Review with NeqSim Evidence](open_drain_review) | NORSOK S-001 Clause 9 review using NeqSim-calculated liquid leak rate, firewater load, density, pressure, and drain capacity plus STID/tagreader evidence |
-| [Barrier Management and SCE Traceability](barrier_management) | Evidence-linked PSFs, SCEs, performance standards, and safety-analysis handoffs |
-
-### Fire and Thermal Protection
+## HIPPS and safety-instrumented functions
 
 | Document | Description |
-|----------|-------------|
-| [fire_blowdown_capabilities.md](fire_blowdown_capabilities) | Fire case blowdown simulation |
-| [fire_heat_transfer_enhancements.md](fire_heat_transfer_enhancements) | Fire heat transfer modeling |
-| [Vessel Thermomechanical Safety](vessel_thermomechanical_safety) | Transient non-equilibrium blowdown, fast filling, cryogenic boil-off, composite-wall conduction, and fire/blowdown wall rupture |
-| [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
-| [Blocked-In Liquid Thermal Expansion](blocked_in_liquid_thermal_expansion) | Isochoric pressure-rise screening (API 521 §4.4.12) for blocked-in liquid segments, independent of fire exposure |
+| --- | --- |
+| [HIPPS overview](HIPPS_SUMMARY) | HIPPS concepts, voting, and implementation map |
+| [HIPPS implementation](hipps_implementation) | Detector, voting, logic, and final-action workflow |
+| [HIPPS safety logic](hipps_safety_logic) | Safety-logic programming and state behavior |
+| [SIS logic implementation](sis_logic_implementation) | Safety-instrumented-system logic |
+| [NOG 070 SIL, STS-0131 gate, and ESD response time](nog070_sil_sts0131_esd) | Predetermined SIL, acceptance gate, and response-time budget |
+| [Safety-chain integration tests](integration_safety_chain_tests) | Integrated safety-chain verification |
 
-### Relief Systems
-
-| Document | Description |
-|----------|-------------|
-| [Relief-Valve Sizing Screening](relief_valve_sizing_api) | Static gas, liquid, two-phase, and wetted-surface fire screening APIs with explicit SI units and qualification limits |
-| [Trapped Inventory Calculator](trapped_inventory_calculator) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
-| [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture) | Fire exposure, thermal expansion, pipe/flange failure screening, PFP demand, and source-term handoff |
-| [Blocked-In Liquid Thermal Expansion](blocked_in_liquid_thermal_expansion) | Isochoric pressure-rise screening and simplified beta/kappa relation for blocked-in liquid thermal relief screening |
-| [psv_dynamic_sizing_example.md](psv_dynamic_sizing_example) | Pressure Safety Valve dynamic sizing |
-| [Vessel Thermomechanical Safety](vessel_thermomechanical_safety) | Dynamic PSV sizing vs steady-state API 521 conservatism, plus blowdown, filling, boil-off, and rupture models |
-| [rupture_disk_dynamic_behavior.md](rupture_disk_dynamic_behavior) | Rupture disk dynamic behavior |
-
-### Alarms
+## Hazard identification, risk, and barriers
 
 | Document | Description |
-|----------|-------------|
-| [alarm_system_guide.md](alarm_system_guide) | Alarm system implementation guide |
-| [alarm_triggered_logic_example.md](alarm_triggered_logic_example) | Alarm-triggered logic examples |
+| --- | --- |
+| [HAZOP guide](HAZOP) | Hazard-and-operability study structure and guidewords |
+| [Automated HAZOP from STID and simulation](automated_hazop_from_stid) | STID/P&ID, plant data, simulation, HAZOP, barrier, and report workflow |
+| [AI-HAZOP input-data format](ai_hazop_input_format) | Required process, deviation, design-condition, and limit-basis inputs |
+| [FMEA guide](FMEA) | Failure-mode and effects analysis workflow |
+| [Event and fault trees](event_fault_trees) | Event-tree and fault-tree modeling |
+| [Layered safety architecture](layered_safety_architecture) | Defense-in-depth and protection-layer structure |
+| [Barrier management and SCE traceability](barrier_management) | Evidence-linked PSFs, SCEs, performance standards, and analysis handoffs |
+| [ISO 17776 MAH bow-tie and EI AVIFF FIV screening](mah_bowtie_fiv_screening) | Major-accident-hazard bow-tie and flow-induced-vibration screening |
+| [Safety simulation roadmap](SAFETY_SIMULATION_ROADMAP) | Maintained capability and development roadmap |
 
----
+## Standards and facility screening
 
-## Related Documentation
+| Document | Description |
+| --- | --- |
+| [API RP 14C SAFE chart and NORSOK P-002 compliance](api14c_norsok_p002) | SAFE chart, flare/blowdown/vent screening, and multi-vessel header load |
+| [Flare flame, hazardous area, and PFP demand](flare_flame_hazardous_area_pfp) | API 537, IEC 60079-10-1, and API 521 screening |
+| [Open-drain review with NeqSim evidence](open_drain_review) | NORSOK S-001 open-drain review using calculated leak and firewater loads |
+| [Minimum design metal temperature assessment](mdmt_assessment) | MDMT evidence and low-temperature screening |
 
-- [Process Package](../process/) - Process simulation overview
-- [Process Safety](../process/safety/) - Safety equipment classes
-- [Controllers](../process/controllers) - Controller devices
+## Relief systems and trapped inventory
 
+| Document | Description |
+| --- | --- |
+| [Relief-Valve Sizing Screening](relief_valve_sizing_api) | Static gas, liquid, two-phase, and wetted-fire sizing APIs with explicit SI units |
+| [PSV dynamic sizing example](psv_dynamic_sizing_example) | Pressure-safety-valve dynamic sizing workflow |
+| [Rupture-disk dynamic behavior](rupture_disk_dynamic_behavior) | Burst, opening, flow, and reset-state behavior |
+| [Trapped inventory calculator](trapped_inventory_calculator) | Evidence-linked isolation inventory for blowdown, flare-load, and MDMT screening |
+| [Blocked-in liquid thermal expansion](blocked_in_liquid_thermal_expansion) | Isochoric pressure-rise and thermal-relief screening |
+| [Trapped liquid fire rupture](trapped_liquid_fire_rupture) | Fire exposure, expansion, failure screening, PFP demand, and source-term handoff |
+| [Vessel thermomechanical safety](vessel_thermomechanical_safety) | Blowdown, filling, boil-off, composite-wall conduction, and rupture models |
+
+## Fire, release, and consequence
+
+| Document | Description |
+| --- | --- |
+| [Fire-case blowdown capabilities](fire_blowdown_capabilities) | Fire-exposed blowdown simulation |
+| [Fire heat-transfer enhancements](fire_heat_transfer_enhancements) | Fire heat flux and wall heat-transfer modeling |
+| [Dispersion and consequence](dispersion_and_consequence) | Source-term, dispersion, radiation, and consequence-analysis handoff |
+| [Release and dispersion scenarios](../process/safety/release-dispersion-scenarios) | Structured release scenarios with explicit inputs and limitations |
+| [Vessel thermomechanical safety](vessel_thermomechanical_safety) | Dynamic PSV screening and thermomechanical response |
+| [Trapped liquid fire rupture](trapped_liquid_fire_rupture) | Blocked-in liquid fire and rupture screening |
+
+## Alarms and architecture
+
+| Document | Description |
+| --- | --- |
+| [Alarm-system guide](alarm_system_guide) | Alarm configuration and behavior |
+| [Alarm-triggered logic examples](alarm_triggered_logic_example) | Alarm-driven process logic |
+| [Integrated safety systems](INTEGRATED_SAFETY_SYSTEMS) | Facility safety-system overview |
+| [Layered safety architecture](layered_safety_architecture) | Independent protection layers and defense in depth |
+
+## Related documentation
+
+- [Process package overview](../process/README)
+- [Process-safety API overview](../process/safety/README)
+- [Controller devices](../process/controllers)
