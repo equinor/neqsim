@@ -115,20 +115,24 @@ class ValidationProfileRunnerTest {
         ValidationProfileRunner.run("{\"action\":\"deleteProfile\",\"profileName\":\"generic\"}"))
         .getAsJsonObject();
     assertEquals("error", reservedDelete.get("status").getAsString());
-    assertEquals("CANNOT_DELETE", reservedDelete.get("errorCode").getAsString());
+    assertEquals("CANNOT_DELETE",
+        reservedDelete.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
 
     JsonObject missingProfile = JsonParser.parseString(
         ValidationProfileRunner.run("{\"action\":\"setActiveProfile\",\"profileName\":\"does-not-exist\"}"))
         .getAsJsonObject();
     assertEquals("error", missingProfile.get("status").getAsString());
-    assertEquals("PROFILE_NOT_FOUND", missingProfile.get("errorCode").getAsString());
+    assertEquals("PROFILE_NOT_FOUND",
+        missingProfile.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
 
     JsonObject unknownAction = JsonParser
         .parseString(ValidationProfileRunner.run("{\"action\":\"unsupported-phase0-action\"}"))
         .getAsJsonObject();
     assertEquals("error", unknownAction.get("status").getAsString());
-    assertEquals("UNKNOWN_ACTION", unknownAction.get("errorCode").getAsString());
-    assertFalse(unknownAction.get("message").getAsString().isEmpty());
+    JsonObject error = unknownAction.getAsJsonArray("errors").get(0).getAsJsonObject();
+    assertEquals("UNKNOWN_ACTION", error.get("code").getAsString());
+    assertFalse(error.get("message").getAsString().isEmpty());
+    assertFalse(error.get("remediation").getAsString().isEmpty());
   }
 
   @Test
