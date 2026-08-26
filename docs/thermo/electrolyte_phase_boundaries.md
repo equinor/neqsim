@@ -38,22 +38,22 @@ fluid.setMixingRule("classic");
 fluid.setMultiPhaseCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ElectrolytePhaseBoundaryResult oilBoundary =
-    ops.electrolytePhaseBoundaryTemperatureFlash(
-        PhaseType.OIL, 313.15, 700.0, 0.5, 20);
-double temperatureK = oilBoundary.getBoundaryValue();
+ElectrolytePhaseBoundaryResult gasBoundary =
+    ops.electrolytePhaseBoundaryPressureFlash(
+        PhaseType.GAS, 200.0, 400.0, 0.25, 20);
+double pressureBara = gasBoundary.getBoundaryValue();
 ```
 
 `SystemPitzer` automatically selects the bundled complete PHREEQC parameter topology. No parameter
 dataset selection is required. The legacy dataset remains an explicit compatibility option only.
 Missing interaction families still fail closed.
 
-The equivalent constant-temperature pressure calculation is:
+The equivalent constant-pressure temperature calculation is:
 
 ```java
-ElectrolytePhaseBoundaryResult gasBoundary =
-    ops.electrolytePhaseBoundaryPressureFlash(
-        PhaseType.GAS, lowerPressureBara, upperPressureBara, toleranceBara, 60);
+ElectrolytePhaseBoundaryResult oilBoundary =
+    ops.electrolytePhaseBoundaryTemperatureFlash(
+        PhaseType.OIL, lowerTemperatureK, upperTemperatureK, toleranceK, 60);
 ```
 
 The same methods work with a non-reactive `SystemElectrolyteCPAstatoil`; add explicit ions and
@@ -69,8 +69,8 @@ from neqsim.thermo.phase import PhaseType
 from neqsim.thermodynamicoperations import ThermodynamicOperations
 
 ops = ThermodynamicOperations(fluid)
-result = ops.electrolytePhaseBoundaryTemperatureFlash(
-    PhaseType.OIL, 313.15, 700.0, 0.5, 20
+result = ops.electrolytePhaseBoundaryPressureFlash(
+    PhaseType.GAS, 200.0, 400.0, 0.25, 20
 )
 print(result.getBoundaryValue(), result.getLowerTopology(), result.getUpperTopology())
 ```

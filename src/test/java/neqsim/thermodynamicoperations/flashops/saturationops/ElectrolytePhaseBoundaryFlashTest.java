@@ -22,27 +22,31 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   private static final double LOWER_TEMPERATURE_K = 313.15;
   private static final double UPPER_TEMPERATURE_K = 700.0;
   private static final double BOUNDARY_TOLERANCE_K = 0.5;
+  private static final double LOWER_PRESSURE_BARA = 200.0;
+  private static final double UPPER_PRESSURE_BARA = 400.0;
+  private static final double BOUNDARY_TOLERANCE_BARA = 0.25;
 
   @Test
-  void pitzerOilAppearanceBoundaryIsDeterministicAndKeepsAutomaticCatalog() throws Exception {
+  void pitzerGasPressureBoundaryIsDeterministicAndKeepsAutomaticCatalog() throws Exception {
     SystemPitzer firstSystem = createPitzerSystem();
-    ElectrolytePhaseBoundaryResult first = solvePhaseBoundary(firstSystem, PhaseType.OIL);
+    ElectrolytePhaseBoundaryResult first = solvePitzerPressureBoundary(firstSystem);
 
-    assertBoundaryContract(first, firstSystem, PhaseType.OIL);
+    assertBoundaryContract(first, firstSystem, PhaseType.GAS, ElectrolytePhaseBoundaryResult.Specification.PRESSURE,
+        LOWER_PRESSURE_BARA, UPPER_PRESSURE_BARA, BOUNDARY_TOLERANCE_BARA);
     PhasePitzer aqueous = (PhasePitzer) firstSystem.getGeLiquidPhase();
     assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, aqueous.getParameterDatasetId());
     double scalePotential = new ThermodynamicOperations(firstSystem).getRelativeScalePotential("NaCl");
     assertTrue(Double.isFinite(scalePotential) && scalePotential > 0.0);
 
     SystemPitzer repeatedSystem = createPitzerSystem();
-    ElectrolytePhaseBoundaryResult repeated = solvePhaseBoundary(repeatedSystem, PhaseType.OIL);
+    ElectrolytePhaseBoundaryResult repeated = solvePitzerPressureBoundary(repeatedSystem);
     assertEquals(first.getLowerBound(), repeated.getLowerBound(), 0.0);
     assertEquals(first.getUpperBound(), repeated.getUpperBound(), 0.0);
     assertEquals(first.getTargetPresentValue(), repeated.getTargetPresentValue(), 0.0);
     assertEquals(first.getFlashEvaluations(), repeated.getFlashEvaluations());
 
     SystemPitzer clonedSystem = createPitzerSystem().clone();
-    ElectrolytePhaseBoundaryResult cloned = solvePhaseBoundary(clonedSystem, PhaseType.OIL);
+    ElectrolytePhaseBoundaryResult cloned = solvePitzerPressureBoundary(clonedSystem);
     assertEquals(first.getBoundaryValue(), cloned.getBoundaryValue(), 0.0);
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -61,9 +65,10 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   @Test
   void electrolyteCpaUsesSameVleBoundaryContract() throws Exception {
     SystemInterface system = createElectrolyteCpaSystem();
-    ElectrolytePhaseBoundaryResult result = solvePhaseBoundary(system, PhaseType.AQUEOUS);
+    ElectrolytePhaseBoundaryResult result = solveTemperatureBoundary(system, PhaseType.AQUEOUS);
 
-    assertBoundaryContract(result, system, PhaseType.AQUEOUS);
+    assertBoundaryContract(result, system, PhaseType.AQUEOUS, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
+        LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K);
     double scalePotential = new ThermodynamicOperations(system).getRelativeScalePotential("NaCl");
     assertTrue(Double.isFinite(scalePotential) && scalePotential > 0.0);
   }
@@ -90,18 +95,25 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     assertTrue(reactiveError.getMessage().contains("elemental-balance"));
   }
 
-  private static ElectrolytePhaseBoundaryResult solvePhaseBoundary(SystemInterface system, PhaseType targetPhase) {
+  private static ElectrolytePhaseBoundaryResult solvePitzerPressureBoundary(SystemInterface system) {
+    return new ThermodynamicOperations(system).electrolytePhaseBoundaryPressureFlash(PhaseType.GAS, LOWER_PRESSURE_BARA,
+        UPPER_PRESSURE_BARA, BOUNDARY_TOLERANCE_BARA, 20);
+  }
+
+  private static ElectrolytePhaseBoundaryResult solveTemperatureBoundary(SystemInterface system,
+      PhaseType targetPhase) {
     return new ThermodynamicOperations(system).electrolytePhaseBoundaryTemperatureFlash(targetPhase,
         LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20);
   }
 
   private static void assertBoundaryContract(ElectrolytePhaseBoundaryResult result, SystemInterface system,
-      PhaseType targetPhase) {
-    assertEquals(ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE, result.getSpecification());
+      PhaseType targetPhase, ElectrolytePhaseBoundaryResult.Specification specification, double lowerBound,
+      double upperBound, double tolerance) {
+    assertEquals(specification, result.getSpecification());
     assertEquals(targetPhase, result.getTargetPhase());
-    assertTrue(result.getBoundaryValue() > LOWER_TEMPERATURE_K);
-    assertTrue(result.getBoundaryValue() < UPPER_TEMPERATURE_K);
-    assertTrue(result.getBracketWidth() <= BOUNDARY_TOLERANCE_K);
+    assertTrue(result.getBoundaryValue() > lowerBound);
+    assertTrue(result.getBoundaryValue() < upperBound);
+    assertTrue(result.getBracketWidth() <= tolerance);
     assertNotEquals(result.getLowerTopology(), result.getUpperTopology());
     assertTrue(result.getLowerTopology().contains(targetPhase.toString())
         || result.getUpperTopology().contains(targetPhase.toString()));
