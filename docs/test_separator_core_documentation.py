@@ -37,7 +37,10 @@ class SeparatorCoreDocumentationTest(unittest.TestCase):
     def test_front_matter_has_no_duplicate_body_h1(self):
         self.assertTrue(self.guide.startswith("---\ntitle:"))
         body = self.guide.split("---", 2)[2]
-        self.assertNotRegex(body, r"(?m)^# ")
+        body_without_fenced_code = re.sub(
+            r"```.*?```", "", body, flags=re.DOTALL
+        )
+        self.assertNotRegex(body_without_fenced_code, r"(?m)^# ")
 
     def test_outlet_examples_use_declared_stream_interface_types(self):
         for source_contract in (
