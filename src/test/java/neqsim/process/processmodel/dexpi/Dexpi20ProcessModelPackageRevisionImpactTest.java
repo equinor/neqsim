@@ -148,4 +148,3 @@ class Dexpi20ProcessModelPackageRevisionImpactTest {
     return Dexpi20ProcessModelPackageReader.read(packageFile);
   }
 }
-
