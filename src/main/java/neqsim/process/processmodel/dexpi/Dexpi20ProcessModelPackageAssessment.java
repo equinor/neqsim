@@ -314,15 +314,15 @@ public final class Dexpi20ProcessModelPackageAssessment {
     }
 
     public List<AreaEvidence> getAreaEvidence() {
-      return areaEvidence;
+      return Collections.unmodifiableList(new ArrayList<AreaEvidence>(areaEvidence));
     }
 
     public List<ConnectionEvidence> getConnectionEvidence() {
-      return connectionEvidence;
+      return Collections.unmodifiableList(new ArrayList<ConnectionEvidence>(connectionEvidence));
     }
 
     public List<Diagnostic> getDiagnostics() {
-      return diagnostics;
+      return Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
     }
 
     /** @return true when the independently assessed archive and declared contents have no error */
