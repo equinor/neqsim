@@ -88,6 +88,16 @@ class TPflashNearCricondenbarConsistencyTest extends neqsim.NeqSimTest {
     }
   }
 
+  @Test
+  void lowPressureScreenExcludedControlRemainsCrossAlgorithmConsistent() {
+    for (Eos eos : Eos.values()) {
+      Case control = new Case(eos, 273.15, 20.0);
+      SystemInterface ordinary = flash(createSystem(control, false), false);
+      SystemInterface multiphase = flash(createSystem(control, true), false);
+      assertEquivalent(ordinary, multiphase, control.label(), 1.0e-10);
+    }
+  }
+
   private static SystemInterface createSystem(Case testCase, boolean multiphase) {
     SystemInterface system = testCase.eos == Eos.PR ? new SystemPrEos(testCase.temperature, testCase.pressure)
         : new SystemSrkEos(testCase.temperature, testCase.pressure);
