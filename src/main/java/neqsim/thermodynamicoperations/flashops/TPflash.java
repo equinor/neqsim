@@ -102,7 +102,9 @@ public class TPflash extends Flash {
   private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
   /** Maximum multiphase beta updates used to repair an invalid neutral two-phase endpoint. */
   private static final int MAX_FINAL_BETA_REFINEMENT_ITERATIONS = 20;
+  /** Maximum beta updates used for final near-critical rich-gas polishing. */
   private static final int MAX_NEAR_CRITICAL_BETA_REFINEMENT_ITERATIONS = 5;
+  /** Tight log-fugacity target for final near-critical rich-gas polishing. */
   private static final double NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE = 1.0e-10;
   /** Maximum beta updates used by the rare large-volatility hydrocarbon root refinement. */
   private static final int MAX_LARGE_VOLATILITY_REFINEMENT_ITERATIONS = 160;
