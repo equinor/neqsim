@@ -291,12 +291,44 @@ public final class PitzerParameterDatasets {
       if (phase.getComponent(component).getNumberOfMolesInPhase() <= 1.0e-20
           || Math.abs(phase.getComponent(component).getIonicCharge()) >= 0.5
           || "water".equalsIgnoreCase(phase.getComponent(component).getComponentName())
-          || (excludeHydrocarbons && phase.getComponent(component).isHydrocarbon())) {
+          || (excludeHydrocarbons && isHydrocarbonForAutomaticCatalog(phase.getComponent(component)))) {
         continue;
       }
       neutrals.add(component);
     }
     return neutrals;
+  }
+
+  /**
+   * Identifies EOS-role hydrocarbons without relying only on the mutable component-type flag.
+   *
+   * <p>
+   * Normal database components such as methane can retain component type {@code normal} in a GE phase. Their molecular
+   * formula remains an unambiguous discriminator: a pure hydrocarbon contains carbon and hydrogen only. Explicit
+   * neutral Pitzer datasets are unaffected; this helper is used only by automatic catalog selection.
+   * </p>
+   */
+  static boolean isHydrocarbonForAutomaticCatalog(neqsim.thermo.component.ComponentInterface component) {
+    if (component.isHydrocarbon() || component.isIsTBPfraction()) {
+      return true;
+    }
+    String formula = component.getFormulae();
+    if (formula == null || formula.isEmpty()) {
+      return false;
+    }
+    boolean carbon = false;
+    boolean hydrogen = false;
+    for (int index = 0; index < formula.length(); index++) {
+      char character = formula.charAt(index);
+      if (character == 'C') {
+        carbon = true;
+      } else if (character == 'H') {
+        hydrogen = true;
+      } else if (!Character.isDigit(character)) {
+        return false;
+      }
+    }
+    return carbon && hydrogen;
   }
 
   private static void applyValidatedCatalog(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
