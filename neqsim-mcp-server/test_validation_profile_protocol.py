@@ -1,8 +1,8 @@
 """Focused real-MCP qualification for manageValidationProfile.
 
 This dependency-free harness starts the packaged NeqSim MCP server over STDIO and
-checks built-in profile discovery, an isolated custom-profile lifecycle, and
-fail-closed error behavior. It qualifies software-contract behavior only; it
+checks built-in profile discovery, bounded validation metadata, an isolated custom-profile lifecycle,
+and fail-closed error behavior. It qualifies software-contract behavior only; it
 is not scientific, regulatory, authorization, or plant-control validation.
 """
 import json
@@ -144,6 +144,21 @@ def test_builtin_profile_discovery(client):
     require(isinstance(profile.get("standards"), list), "ncs standards missing", ncs)
 
 
+def test_validation_metadata_is_preserved(client):
+    result = client.validation_profile(
+        {"action": "validateWithProfile", "profileName": "generic"}
+    )
+    data = payload(result)
+    require("verdict" in data, "validator verdict was omitted", result)
+    require(
+        data.get("validationProfile") == "generic",
+        "validation profile provenance drifted",
+        result,
+    )
+    require(isinstance(data.get("applicableStandards"), list), "standards metadata missing", result)
+    require(isinstance(data.get("requiredDesignFactors"), dict), "design-factor metadata missing", result)
+
+
 def test_custom_profile_lifecycle(client):
     client.validation_profile({"action": "deleteProfile", "profileName": PROFILE_NAME})
     created = payload(
@@ -213,6 +228,7 @@ def main():
     try:
         client.start()
         test_builtin_profile_discovery(client)
+        test_validation_metadata_is_preserved(client)
         test_custom_profile_lifecycle(client)
         test_mutation_errors_fail_closed(client)
     finally:
@@ -222,7 +238,7 @@ def main():
                 client.validation_profile({"action": "setActiveProfile", "profileName": "generic"})
         finally:
             client.close()
-    print("manageValidationProfile real-MCP qualification: 3/3 scenarios passed")
+    print("manageValidationProfile real-MCP qualification: 4/4 scenarios passed")
     return 0
 
 
