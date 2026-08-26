@@ -1970,6 +1970,36 @@ blocks of 30 flashes) measured the corrected SRK boundary at about `8.5 ms/flash
 invalid higher-root baseline. The PR boundary and adjacent retained one-phase controls were within run-to-run noise.
 Common flashes return before the hydrogen/high-pressure/incipient-phase screen.
 
+#### 6.4.2 Neutral SRK-CPA MEG Three-Phase Qualification
+
+The neutral associating regression uses `SystemSrkCPAstatoil` with mixing rule 10 at
+298.15 K and 60.0 bara. The synthetic overall inventory is 1 mol nitrogen, 85 mol
+methane, 5 mol ethane, 3 mol propane, 1 mol n-hexane, 1 mol n-decane, 2 mol MEG, and
+5 mol water. It is a numerical qualification of the existing CPA flash path, not an
+independent experimental validation of phase fractions or CPA parameters.
+
+The expected topology is GAS+OIL+AQUEOUS. The focused test now requires every phase
+fraction and composition to be finite, bounded, and normalized within `1e-12`,
+component material balance below `1e-10`, and maximum cross-phase log-fugacity
+residual below `1e-8`. It compares the complete equilibrium by phase type, including
+beta, every component composition, compressibility factor, density, Gibbs energy, and
+enthalpy.
+
+The same matrix covers an exact repeated flash, a deliberately poor initial
+phase-fraction split, a changed state at 300.15 K and 59.5 bara, and a return to the
+original state. Warm and changed-state results must reproduce a fresh cold flash,
+which guards against stale gas-to-oil K-values hiding the water/MEG partitioning into
+the third phase. The thread-local warm-start policy must also be restored after each
+call.
+
+This tranche changes tests and algorithm documentation only; production flash code,
+public APIs, model parameters, tolerances, and runtime paths are unchanged. Therefore
+no production performance change is possible and no speedup is claimed. The added
+focused test performs seven complete neutral CPA flashes so hosted CI records the
+qualification cost without placing a timing threshold on shared runners. Electrolyte
+phase-boundary calculation, ion confinement, and Pitzer parameterization remain
+outside this neutral-fluid matrix.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
