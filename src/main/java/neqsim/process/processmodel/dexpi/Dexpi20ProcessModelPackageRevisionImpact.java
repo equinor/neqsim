@@ -615,4 +615,3 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
     }
   }
 }
-
