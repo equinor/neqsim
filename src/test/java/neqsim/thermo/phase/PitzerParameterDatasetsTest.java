@@ -343,10 +343,8 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, automaticPhase.getParameterDatasetId());
     assertTrue(automaticPhase.getPitzerParameterCoverage().isComplete());
     assertTrue(automaticPhase.auditNeutralPitzerParameterCoverage().isComplete());
-    assertTrue(PitzerParameterDatasets
-        .isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("methane")));
-    assertFalse(PitzerParameterDatasets
-        .isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("water")));
+    assertTrue(PitzerParameterDatasets.isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("methane")));
+    assertFalse(PitzerParameterDatasets.isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("water")));
 
     SystemPitzer legacy = createMethaneSodiumChlorideSystem(true);
     PhasePitzer legacyPhase = (PhasePitzer) legacy.getGeLiquidPhase();
