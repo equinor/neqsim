@@ -70,8 +70,7 @@ python3 -m venv .venv && source .venv/bin/activate
 ./install.sh
 ```
 
-**Restart the terminal** (or fully quit and reopen VS Code) so PATH updates apply,
-then verify:
+Keep the virtual environment active and verify in the same terminal:
 
 ```powershell
 neqsim --help
@@ -80,6 +79,8 @@ neqsim doctor
 
 If `neqsim` is not found, use `python -m neqsim_cli --help` and see
 [devtools/README.md](../../devtools/README.md#troubleshooting-neqsim-not-found).
+If you installed outside a virtual environment, fully quit and reopen VS Code so
+its captured PATH is refreshed.
 
 ---
 
