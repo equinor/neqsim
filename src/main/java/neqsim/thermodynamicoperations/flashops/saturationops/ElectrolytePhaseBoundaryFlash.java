@@ -15,7 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  * Legacy bubble/dew solvers assume two interchangeable phase slots. Electrolyte systems instead have model-specific
  * aqueous roles and may contain gas, oil and aqueous phases simultaneously. This operation therefore varies one
  * intensive variable on isolated clones and delegates every state evaluation to the system's normal TP flash. It does
- * not replace phase stability or alter non-electrolyte flash paths.
+ * not replace phase stability or alter non-electrolyte flash paths. Reactive systems are rejected until their
+ * phase-boundary contract can enforce elemental conservation and reaction residuals.
  * </p>
  */
 public final class ElectrolytePhaseBoundaryFlash {
@@ -39,7 +40,7 @@ public final class ElectrolytePhaseBoundaryFlash {
   /**
    * Creates a bracketed phase-boundary calculation.
    *
-   * @param system electrolyte-capable thermodynamic system
+   * @param system non-reactive electrolyte-capable thermodynamic system
    * @param specification pressure or temperature scan
    * @param targetPhase phase whose material appearance/disappearance is sought
    * @param lowerBound lower pressure in bara or temperature in K
