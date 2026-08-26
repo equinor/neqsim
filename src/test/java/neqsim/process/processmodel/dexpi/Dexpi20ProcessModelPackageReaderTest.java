@@ -79,10 +79,8 @@ class Dexpi20ProcessModelPackageReaderTest {
     assertThrows(UnsupportedOperationException.class,
         () -> snapshot.getAreaDocuments().add(snapshot.getAreaDocuments().get(0)));
     assertThrows(UnsupportedOperationException.class, () -> snapshot.getConnectionEvidence().clear());
-    assertThrows(UnsupportedOperationException.class,
-        () -> snapshot.getAssessmentReport().getAreaEvidence().clear());
-    assertThrows(UnsupportedOperationException.class,
-        () -> snapshot.getAssessmentReport().getDiagnostics().clear());
+    assertThrows(UnsupportedOperationException.class, () -> snapshot.getAssessmentReport().getAreaEvidence().clear());
+    assertThrows(UnsupportedOperationException.class, () -> snapshot.getAssessmentReport().getDiagnostics().clear());
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
