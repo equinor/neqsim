@@ -32,18 +32,18 @@ class ReactiveElectrolyteEquilibriumTest extends neqsim.NeqSimTest {
     Map<String, Double> feedElements = elementInventoryFromOverallMoles(system);
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
 
-    runModelSelectedReactiveFlash(operations, system);
+    runModelSelectedReactiveFlash(operations);
     assertEquilibriumState(system, feedElements);
 
-    runModelSelectedReactiveFlash(operations, system);
+    runModelSelectedReactiveFlash(operations);
     assertEquilibriumState(system, feedElements);
 
     system.setPressure(60.0);
-    runModelSelectedReactiveFlash(operations, system);
+    runModelSelectedReactiveFlash(operations);
     assertEquilibriumState(system, feedElements);
 
     SystemInterface clonedSystem = system.clone();
-    runModelSelectedReactiveFlash(new ThermodynamicOperations(clonedSystem), clonedSystem);
+    runModelSelectedReactiveFlash(new ThermodynamicOperations(clonedSystem));
     assertEquilibriumState(clonedSystem, feedElements);
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -54,11 +54,11 @@ class ReactiveElectrolyteEquilibriumTest extends neqsim.NeqSimTest {
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       restoredSystem = (SystemInterface) input.readObject();
     }
-    runModelSelectedReactiveFlash(new ThermodynamicOperations(restoredSystem), restoredSystem);
+    runModelSelectedReactiveFlash(new ThermodynamicOperations(restoredSystem));
     assertEquilibriumState(restoredSystem, feedElements);
   }
 
-  private static void runModelSelectedReactiveFlash(ThermodynamicOperations operations, SystemInterface system) {
+  private static void runModelSelectedReactiveFlash(ThermodynamicOperations operations) {
     operations.TPflash();
   }
 
