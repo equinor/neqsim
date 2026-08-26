@@ -31,7 +31,7 @@ test, fixture, example, and qualification surfaces required by issue #2899.
 | Proteus-compatible export | `processmodel.dexpi.DexpiXmlWriter`, compatibility facade `processmodel.DexpiXmlWriter` | `ProcessSystem`, `ProcessModel`, pyDEXPI namespace-omitted output, layout and compatibility sheets | Not native DEXPI 2.0; sheets are not a controlled drawing set |
 | Proteus-compatible import | `DexpiXmlReader`, `DexpiTopologyResolver`, `DexpiEquipmentFactory`, `DexpiSimulationBuilder` | Equipment, nozzles, piping segments, instruments, mappings, and a runnable process scaffold | Imported topology still requires fluid, cases, specifications, dynamics, and accountable review |
 | Native DEXPI 2.0 Plant | `Dexpi20XmlWriter`, `Dexpi20EngineeringMaterializer` | Core/Plant items, piping, nozzles, instrumentation, safeguards, boundaries, and representations | Plant exchange is not Process/PFD exchange or a DEXPI EV certificate |
-| Native DEXPI 2.0 Process | `Dexpi20ProcessModelWriter`, `Dexpi20ProcessTopologyAssessment`, `Dexpi20ProcessModelPackageWriter`, `Dexpi20ProcessModelPackageAssessment`, `Dexpi20ProcessModelPackageReader` | Process steps, explicit material ports, streams, selected physical quantities, canonical topology assessment, deterministic assessed per-area packages, and immutable exact-content intake snapshots | The reader exposes defensive per-area XML plus assessed material/energy/information connection evidence; it does not reconstruct a `ProcessModel`, promote manifest-only relationships to native whole-plant DEXPI, or combine graphics/document scopes |
+| Native DEXPI 2.0 Process | `Dexpi20ProcessModelWriter`, `Dexpi20ProcessTopologyAssessment`, `Dexpi20ProcessModelPackageWriter`, `Dexpi20ProcessModelPackageAssessment`, `Dexpi20ProcessModelPackageReader`, `Dexpi20ProcessModelPackageRevisionImpact` | Process steps, explicit material ports, streams, selected physical quantities, canonical topology assessment, deterministic assessed per-area packages, immutable exact-content intake snapshots, and package-to-package area/connection revision evidence | Intake and revision APIs expose defensive per-area XML plus assessed material/energy/information connection evidence; they do not reconstruct a `ProcessModel`, promote manifest-only relationships to native whole-plant DEXPI, decide MOC, or combine graphics/document scopes |
 | Common model helpers | `DexpiMetadata`, `DexpiStream`, `DexpiProcessUnit`, `DexpiInstrumentInfo`, `DexpiStreamUtils`, `DexpiServiceClassifier`, `NorsokLineNumber` | Metadata, supported object classification, line/tag helpers, and compatibility DTOs | These helpers do not constitute a shared immutable drawing/document model |
 | Round-trip profile | `DexpiRoundTripProfile`, `EngineeringDexpiRoundTripQualifier` | Internal structural identity/reference comparison and explicit qualification status | Internal round trip is weaker than named-product import/export evidence |
 
@@ -78,6 +78,7 @@ Dexpi20ProcessModelWriterTest
 Dexpi20ProcessModelPackageWriterTest
 Dexpi20ProcessModelPackageAssessmentTest
 Dexpi20ProcessModelPackageReaderTest
+Dexpi20ProcessModelPackageRevisionImpactTest
 Dexpi20SemanticValidatorTest
 DexpiXmlWriterTest
 DexpiXmlReaderTest
@@ -173,7 +174,7 @@ licensed standards, a named external tool, or accountable engineering review.
 | Deterministic ProcessSystem/ProcessModel export | Partial | Canonical topology and native Process exports are deterministic in tested subsets; `ProcessModel` packaging adds assessed area XML, hashes, a plant manifest, fail-closed offline reassessment, and a serializable exact-content intake snapshot, while cross-area/energy/information semantics remain manifest-only rather than native whole-plant DEXPI |
 | Export-import-export semantic equivalence and loss | Partial | Assessed package intake now preserves exact per-area XML and independently validated connection/loss status without path extraction; no runnable `ProcessModel` reconstruction is inferred, and full Plant/Process/P&ID round trip remains incomplete |
 | Schema/API compatibility and migration | Partial | Compatibility facades and byte-equivalent tested paths exist; no comprehensive versioned package migration suite covers every serialized artifact |
-| Revision semantic diff/impact | Partial | Engineering graph/package revision impact exists; affected drawing/sheet/register/study completeness is not yet end-to-end |
+| Revision semantic diff/impact | Partial | Controlled document-set semantic-object impact and assessed multi-area package area/connection impact now exist with deterministic JSON and review-required boundaries; cross-artifact drawing/sheet/register/study completeness is not yet end-to-end |
 | Professional symbols and project conventions | Partial/external | Proteus shapes, ISA/NORSOK tag helpers and proposal rules exist; a licensed ISO 10628/14617 mapping and reviewed vector catalog remain external/gap |
 | Native DEXPI Core graphical projection | Assessed supported subset | The opt-in exchange-neutral adapter emits non-empty Core Diagram/RepresentationGroup structures with generic Polygon, PolyLine, and Text primitives. `Dexpi20GraphicalProjectionAssessment` verifies stable represented identities, mapped geometry/style, diagram metadata/bounds, exact-file SHA-256 provenance, and explicit losses; no Profile/SymbolUsage, clean external-validator, standards, or approval claim is made |
 | Multi-sheet documents and off-page references | Implemented foundation | `EngineeringDiagramDocumentSet` owns deterministic drawing/sheet IDs, controlled references, paired off-page connectors, zones, revision/status metadata, validation, and restartable layout overrides; accountable completeness and project-specific approval remain external |
@@ -198,8 +199,7 @@ legally distributable DEXPI profile-symbol catalogue. Empty placeholder represen
 invented standards mappings are not acceptable substitutes.
 
 Independent remaining work includes reviewed reconstruction of assessed area exchanges into a runnable model, native
-whole-plant Process hierarchy and native energy/information mappings beyond manifest-only package evidence, end-to-end
-revision/MOC impact, broader P&ID object coverage, a reviewed visual-reference corpus,
+whole-plant Process hierarchy and native energy/information mappings beyond manifest-only package evidence, cross-artifact drawing/register/study revision-MOC impact, broader P&ID object coverage, a reviewed visual-reference corpus,
 fresh exact-version external DEXPIViewer execution, and named commercial-CAE qualification. These
 items must retain legacy DOT/Graphviz, native DEXPI 2.0, and Proteus/P&ID compatibility and must not
 be reported as standards conformance or drawing approval without accountable evidence.
