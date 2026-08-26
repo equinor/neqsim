@@ -1459,7 +1459,7 @@ def _required_skill_export_path(skill_name, skill_info, target, args=None, agent
     if agent_export_path:
         agent_path = Path(agent_export_path)
         agent_dir = agent_path.parent if agent_path.suffix else agent_path
-        if agent_dir.name == "agents" and agent_dir.parent.name == ".github":
+        if agent_dir.name == "agents" and agent_dir.parent.name in (".github", ".copilot"):
             return str(agent_dir.parent / "skills" / skill_name)
         return str(agent_dir / "skills" / skill_name)
 
@@ -2296,6 +2296,12 @@ def _check_generic_manifest_fresh(kind, root_dir, installed_manifest, failures):
 def _check_export_target(target, args):
     """Check installed agent exports and required skill exports for a target."""
     agent_manifest = load_manifest()
+    source_filter = getattr(args, "source", "all")
+    if source_filter != "all":
+        agent_manifest = {
+            name: info for name, info in agent_manifest.items()
+            if info.get("source", "community") == source_filter
+        }
     try:
         skill_manifest = install_skill.load_manifest()
     except Exception:
@@ -2360,6 +2366,8 @@ def _check_export_target(target, args):
         _check_generic_manifest_fresh("skills", skill_generic_root, skill_manifest, failures)
 
     print("\n  NeqSim agent export doctor ({target})\n".format(target=target))
+    if source_filter != "all":
+        print("  Source: {source}".format(source=source_filter))
     print("  Checked exported agents: {count}".format(count=len(checked_agents)))
     if checked_agents:
         print("  Agents: {names}".format(names=", ".join(checked_agents)))
@@ -2564,6 +2572,7 @@ def main():
         "  neqsim agent schema",
         "  neqsim agent doctor",
         "  neqsim agent doctor --target vscode",
+        "  neqsim agent doctor --target vscode --source community",
         "  neqsim agent remove neqsim-example-agent",
         "  neqsim agent private-init",
         "  neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login  # register a repo + SSO",
@@ -2682,6 +2691,9 @@ def main():
     p_doctor.add_argument(
         "--profile", default=None,
         help="Optional export profile JSON (default: ~/.neqsim/export/export-profile.json if present)")
+    p_doctor.add_argument(
+        "--source", choices=["all", "community", "private"], default="all",
+        help="Check all installed agents, community agents only, or private/enterprise agents only")
 
     p_priv = sub.add_parser(
         "private-init",

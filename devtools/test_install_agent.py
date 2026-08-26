@@ -1319,6 +1319,72 @@ class AgentVsCodeExportTest(unittest.TestCase):
             self.assertIn("Result: PASS", text)
             self.assertNotIn(str(stale_workspace_export), text)
 
+    def test_cmd_doctor_vscode_uses_copilot_user_skill_folder(self):
+        """VS Code doctor should find user skills beside the Copilot agents folder."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            copilot_dir = tmp_path / ".copilot"
+            agent_export = copilot_dir / "agents" / "local-test-agent.agent.md"
+            skill_export = copilot_dir / "skills" / "neqsim-demo"
+            agent_export.parent.mkdir(parents=True)
+            skill_export.mkdir(parents=True)
+            agent_export.write_text("Agent body.\n", encoding="utf-8")
+            (skill_export / "SKILL.md").write_text("# Skill body.\n", encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"vscode": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                }
+            }
+            args = argparse.Namespace(target="vscode", export_dir=None)
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("Result: PASS", output.getvalue())
+
+    def test_cmd_doctor_vscode_can_check_community_exports_only(self):
+        """VS Code doctor should exclude stale private exports when scoped to community."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            community_export = tmp_path / "agents" / "community-agent.agent.md"
+            community_export.parent.mkdir(parents=True)
+            community_export.write_text("Agent body.\n", encoding="utf-8")
+            agent_manifest = {
+                "community-agent": {
+                    "source": "community",
+                    "exports": {"vscode": str(community_export)},
+                    "required_skills": [],
+                },
+                "private-agent": {
+                    "source": "private",
+                    "exports": {"vscode": str(tmp_path / "agents" / "missing.agent.md")},
+                    "required_skills": [],
+                },
+            }
+            args = argparse.Namespace(
+                target="vscode", export_dir=None, source="community")
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest", return_value={}):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            text = output.getvalue()
+            self.assertIn("Source: community", text)
+            self.assertIn("Checked exported agents: 1", text)
+            self.assertIn("Result: PASS", text)
+            self.assertNotIn("private-agent", text)
+
     def test_cmd_doctor_vscode_accepts_core_workspace_skill(self):
         """VS Code doctor should accept skills discoverable from core .github/skills."""
         with tempfile.TemporaryDirectory() as tmp:
