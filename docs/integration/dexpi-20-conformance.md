@@ -82,10 +82,39 @@ DEXPI Process. A missing or incompatible node omits that individual quantity and
 `DEXPI_PROCESS_OPERATING_VALUE_MISSING`; it never falls back to a live stream read. The established
 four-argument overload remains topology-only and retains its existing XML and report shape.
 
-The assessed path reports energy and signal connections, multi-area `ProcessModel` hierarchy,
-controlled document/sheet semantics, and drawing graphics as unsupported scopes. These warnings do
-not hide a supported material-topology error; missing, unexpected, unresolved-port, and reused-port
-findings are errors.
+## Multi-area ProcessModel package
+
+`Dexpi20ProcessModelPackageWriter.writeAndAssess(...)` provides a bounded multi-area delivery
+container without inventing a DEXPI whole-plant hierarchy:
+
+```java
+File processPackage = new File("facility-process-model.zip");
+Dexpi20ProcessModelPackageWriter.Report packageReport =
+    Dexpi20ProcessModelPackageWriter.writeAndAssess(
+        processModel, processPackage, "PLANT-001", "A");
+if (!packageReport.isComplete()) {
+  throw new IllegalStateException(packageReport.toJson());
+}
+```
+
+The deterministic ZIP contains one independently schema/profile/topology-assessed native DEXPI
+Process XML file per named `ProcessModel` area and a NeqSim `manifest.json`. The manifest pins the
+canonical plant fingerprint, stable area and connection IDs, source revision, file SHA-256 values,
+and structured loss diagnostics. An optional operating-case overload uses the same case-matched
+canonical calculation-node rules as the single-area assessed exporter.
+
+Cross-area material connections are preserved as `MANIFEST_ONLY_CROSS_AREA`. Energy and
+information connections are preserved as `MANIFEST_ONLY_NOT_MAPPED_TO_NATIVE_PROCESS`. They are
+therefore explicit plant-wide semantic evidence, but are not claimed to be native DEXPI Process
+relationships. Controlled documents/sheets and graphics remain separate projections. The package
+reports `nativeWholePlantDexpiExchange=false`, `approvalStatus=REVIEW_REQUIRED`, and
+`fitnessForConstruction=false`; it is not a new DEXPI profile, standards-conformance claim, or
+drawing approval.
+
+The single-area assessed path reports energy and signal connections, multi-area `ProcessModel`
+hierarchy, controlled document/sheet semantics, and drawing graphics as unsupported scopes. These
+warnings do not hide a supported material-topology error; missing, unexpected, unresolved-port, and
+reused-port findings are errors.
 
 Each process connection has a dedicated source and target `MaterialPort`. The ports and
 `Process.Stream` carry reciprocal references, stable identifiers, nominal directions, and explicit
@@ -149,6 +178,9 @@ Record that separate evidence through `DexpiToolQualificationRunner` and
 - Retain the canonical topology fingerprint, structured topology report, operating-case identifier
   and value-source evidence, and source model revision beside the XML and conformance report when
   using the opt-in operating-case overload of `writeAndAssessTopology(...)`.
+- For a multi-area package, retain the ZIP and manifest SHA-256 values and review every manifest-only
+  cross-area, energy, and information diagnostic; do not treat package completeness as native
+  whole-plant DEXPI coverage.
 - Treat graphics, project standard-library restrictions, vendor extensions, and CAE certification as
   separate qualification scopes.
 
