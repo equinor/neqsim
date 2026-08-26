@@ -16,6 +16,7 @@ public final class McpEvidenceInventory {
 
   private static final int JAVA_TEST_CLASS_COUNT = 67;
   private static final int PROTOCOL_SCENARIO_COUNT = 94;
+  private static final int FOCUSED_API_PROTOCOL_SCENARIO_COUNT = 3;
 
   /** Private constructor for utility class. */
   private McpEvidenceInventory() {
@@ -28,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.13");
+    inventory.addProperty("inventoryVersion", "1.14");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -51,8 +52,10 @@ public final class McpEvidenceInventory {
     tests.addProperty("javaTestRoot", "src/test/java/neqsim/mcp");
     tests.addProperty("protocolScenarioCount", PROTOCOL_SCENARIO_COUNT);
     tests.addProperty("protocolHarness", "neqsim-mcp-server/test_mcp_server.py");
+    tests.addProperty("focusedApiProtocolScenarioCount", FOCUSED_API_PROTOCOL_SCENARIO_COUNT);
+    tests.addProperty("focusedApiProtocolHarness", "neqsim-mcp-server/test_inspect_api_protocol.py");
     tests.addProperty("sourceCountContract",
-        "CapabilitiesRunnerTest and the packaged MCP protocol suite freeze these source inventories");
+        "CapabilitiesRunnerTest, the packaged MCP protocol suite, and focused API protocol qualification freeze these source inventories");
     tests.addProperty("executionBoundary",
         "Inventory presence is not an execution result; use exact-head CI and recorded test output as pass evidence");
     return tests;
@@ -238,7 +241,7 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "inspectApi is evidence-qualified but remains CONFIRMED_GAP until a direct real-MCP invocation and frozen protocol classification accounting are added atomically on one validated exact head");
+        "inspectApi is transport-qualified and promotion-ready but remains CONFIRMED_GAP until the primary packaged protocol classification accounting and coverage status are changed together on one exact validated head");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
         "Every published tool has an explicit coverage record; nine non-numerical discovery, catalog, lookup, progress, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
@@ -254,8 +257,9 @@ public final class McpEvidenceInventory {
         new String[] { "src/main/java/neqsim/mcp/runners/ApiKnowledgeRunner.java",
             "src/test/java/neqsim/mcp/runners/ApiKnowledgeRunnerTest.java",
             "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+            "neqsim-mcp-server/test_inspect_api_protocol.py",
             "neqsim-mcp-server/docs/evidence/API_INSPECTION_CONTRACT.md" },
-        "Version-matched reflection is restricted to neqsim.* classes, common NeqSim process aliases, and EquipmentFactory aliases; source-level tests cover representative resolution, member filtering, source pointers, and rejection of java.lang.Runtime, but the packaged MCP protocol does not yet directly invoke inspectApi"));
+        "Version-matched reflection is restricted to neqsim.* classes, common NeqSim process aliases, and EquipmentFactory aliases; source-level tests cover representative resolution, member filtering, source pointers, and rejection of java.lang.Runtime, and the focused packaged MCP protocol directly proves successful inspection plus fail-closed non-NeqSim rejection"));
     return candidates;
   }
 
@@ -268,9 +272,9 @@ public final class McpEvidenceInventory {
     candidate.addProperty("contractEvidenceCount", evidenceSources.length);
     candidate.add("contractEvidenceSources", toJsonArray(java.util.Arrays.asList(evidenceSources)));
     candidate.addProperty("evidenceBoundary", evidenceBoundary);
-    candidate.addProperty("promotionReady", false);
+    candidate.addProperty("promotionReady", true);
     candidate.addProperty("remainingGate",
-        "Add a direct real-MCP inspectApi invocation and update frozen protocol classification accounting atomically, then pass exact-head hosted validation before changing coverageStatus");
+        "Update the primary packaged protocol classification accounting and coverageStatus atomically, then pass exact-head hosted validation before promoting inspectApi");
     return candidate;
   }
 
