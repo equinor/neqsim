@@ -1755,6 +1755,49 @@ Document the independent check in `step2_analysis/notes.md` under a
 
 ### Phase 3: Report (Step 3)
 
+15d. **Analytical depth pass (MANDATORY before writing the report).**
+    Everything from here on grades whether the deliverable is *well-formed*.
+    This step decides whether it is *worth reading*. Apply Principle 0 of
+    `neqsim-professional-reporting` — a report that restates the task, lists
+    factors without ranking them, and ends in "further study is recommended"
+    passes every other gate in this agent and still fails as engineering.
+
+    Most of these moves cannot be added at write-up time, so if the analysis
+    did not produce them, **go back to Phase 2 and produce them** rather than
+    writing around the gap:
+
+    1. **Rank the contributors on one common basis** — one table, one metric,
+       so the candidate causes/levers are directly comparable → `contributor_ranking`
+    2. **Adjudicate the source document's own recommendations** — a verdict
+       (`SUPPORTED` / `SUPPORTED_WITH_CORRECTION` / `CHALLENGED`) per
+       recommendation, each decided by a number → `source_recommendation_assessment`
+    3. **Rule out competing hypotheses quantitatively** — with a stated margin
+       and any residual caveat → `ruled_out`
+    4. **Report what the source document missed** — a contributor, coupling, or
+       second-order consequence not in the original scope
+    5. **Test robustness and name the crossover** — where the conclusion or the
+       ranking order would flip → `robustness`
+    6. **State the direction of every conservatism** — each screening default
+       labelled upper or lower bound on the reported quantity → `conservatism`
+    7. **Name the cheapest discriminating test** — the one measurement that
+       separates the surviving hypotheses, with the meaning of each outcome
+       → `discriminating_test`
+    8. **Report evidence that does not fit** — as a disagreement, not smoothed over
+    9. **Convert qualitative asks into specifications** — a rating, purity,
+       limit, or setpoint with the mechanism that sets it
+
+    Also: hunt for the **natural experiment** already in the data (near-identical
+    units on different duty, a repair that failed again, a period with a barrier
+    out of service); **bound** an unmeasurable value by computing what it would
+    have to be for the conclusion to change; and report any CFD/FEM/transient/
+    Monte-Carlo result as validation → convergence check → result → what it does
+    and does not decide (a quantity still moving with refinement is an artefact).
+
+    Record `depth_score` in `results.json` (target 9/9 for Comprehensive or
+    root-cause work, ≥ 6/9 for Standard) with a reason for each move not
+    achieved. Give each conclusion its own "what remains open" instead of one
+    lumped gap register at the end.
+
 16. **Update `generate_report.py`** in `step3_report/`:
     - The report **auto-reads** `task_spec.md` and `results.json` — verify both exist
     - Fill in the executive summary with actual findings
@@ -1785,6 +1828,14 @@ Document the independent check in `step2_analysis/notes.md` under a
     4. Approach | 5. Results | 6. Discussion | 7. Validation Summary |
     8. Benchmark Validation | 9. Uncertainty Analysis | 10. Risk Evaluation |
     11. Conclusions | 12. Assumptions Register | 13. References
+
+    For a problem-solving / root-cause report, add the depth sections from
+    step 15d after the Discussion: a **contributor ranking** table, a
+    **robustness** section naming the crossover, a **ruled out** section with
+    each eliminated hypothesis and its quantitative margin, and an **assessment
+    of the originating document's recommendations** verdict table. Carry the
+    ranking table into the executive summary — it is the result, and burying it
+    in section 6 is why a reader concludes the report said nothing.
 
     **Document control block** (Design/Development mode — auto-populated
     from task folder metadata):
@@ -1840,6 +1891,16 @@ Document the independent check in `step2_analysis/notes.md` under a
     - Fill in the Problem Statement
     - Check off completed steps
     - Write the Key Results section
+
+19b. **Pre-send review (MANDATORY — `consistency_checker.py` does not catch these).**
+    A report assembled incrementally accumulates contradictions that are
+    individually well-formed. Run the pre-send pass from
+    `neqsim-professional-reporting`: sweep every quantity that appears more than
+    once and reconcile it (or label its basis explicitly); count the items behind
+    every "Three further findings"-style lead-in; list `^## ` headings and check
+    for numbering gaps; re-read every "Open" / "not yet retrieved" status against
+    what the study actually ended up doing; and confirm any quantity quoted on an
+    alternative basis is also in `results.json`.
 
 ### Phase 4: Knowledge Capture & Contribution
 
