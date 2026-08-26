@@ -157,9 +157,8 @@ public final class Dexpi20ProcessModelPackageReader {
     }
 
     public List<Dexpi20ProcessModelPackageAssessment.ConnectionEvidence> getConnectionEvidence() {
-      return Collections.unmodifiableList(
-          new ArrayList<Dexpi20ProcessModelPackageAssessment.ConnectionEvidence>(
-              assessmentReport.getConnectionEvidence()));
+      return Collections.unmodifiableList(new ArrayList<Dexpi20ProcessModelPackageAssessment.ConnectionEvidence>(
+          assessmentReport.getConnectionEvidence()));
     }
 
     /** @return always {@code REVIEW_REQUIRED} */
