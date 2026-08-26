@@ -100,10 +100,13 @@ bracket does not converge, or the retained state exceeds these direct gates:
 | Ion leakage outside aqueous | `1e-30` mole fraction |
 | Cross-phase neutral `ln(f)` closure | `1e-5` |
 
-Every trial uses a fresh clone. This makes repeated and cloned execution deterministic and prevents
-a previous VLE or VLLE topology from becoming a hidden initial-state dependency. After convergence,
-the already converged target-present endpoint is defensively cloned into the supplied system. The
-operation does not repeat a history-sensitive TP flash from the original feed state.
+Every trial first uses a fresh clone of the original feed. This makes repeated and cloned execution
+deterministic and prevents a previous VLE or VLLE topology from silently becoming the primary seed.
+If a hybrid EOS–GE state cannot initialize finite fugacity coefficients after a large specification
+change, the operation retries that point once from a fresh clone of the converged target-present
+endpoint. The actual attempted flash count includes this bounded fallback. After convergence, the
+already converged target-present endpoint is defensively cloned into the supplied system; no final
+history-sensitive TP flash is repeated from the original feed.
 
 ## Scientific basis and evidence boundary
 
@@ -126,9 +129,11 @@ dataset within the chosen EOS and aqueous-parameter validity ranges.
 
 ## Performance and limits
 
-A bisection requires two endpoint flashes and one complete TP flash per iteration. The converged
-endpoint is retained without another flash, and the count is reported explicitly. The code is called only through the new API, so neutral PR, SRK,
-CPA and non-electrolyte TP flashes have zero added runtime path or parameter lookup.
+A bisection normally requires two endpoint flashes and one complete TP flash per iteration. A failed
+cold-start hybrid state permits at most one additional converged-endpoint attempt, and every attempted
+flash is reported explicitly. The converged endpoint is retained without another flash. The code is
+called only through the new API, so neutral PR, SRK, CPA and non-electrolyte TP flashes have zero added
+runtime path or parameter lookup.
 
 The bracket must contain one monotonic target-phase transition. Multiple disconnected phase
 regions require separate brackets. The operation currently locates fluid-phase boundaries only;
