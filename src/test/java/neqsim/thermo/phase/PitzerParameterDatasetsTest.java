@@ -333,6 +333,29 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void automaticCatalogIgnoresEosRoleHydrocarbonFormulaAndKeepsLegacyOptOut() {
+    SystemPitzer automatic = createMethaneSodiumChlorideSystem(false);
+    PhasePitzer automaticPhase = (PhasePitzer) automatic.getGeLiquidPhase();
+
+    assertTrue(Double.isFinite(automaticPhase.getOsmoticCoefficientOfWater()));
+    double sodiumLogGamma = componentLogGamma(automaticPhase, "Na+");
+    assertTrue(Double.isFinite(sodiumLogGamma));
+    assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, automaticPhase.getParameterDatasetId());
+    assertTrue(automaticPhase.getPitzerParameterCoverage().isComplete());
+    assertTrue(automaticPhase.auditNeutralPitzerParameterCoverage().isComplete());
+    assertTrue(PitzerParameterDatasets
+        .isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("methane")));
+    assertFalse(PitzerParameterDatasets
+        .isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("water")));
+
+    SystemPitzer legacy = createMethaneSodiumChlorideSystem(true);
+    PhasePitzer legacyPhase = (PhasePitzer) legacy.getGeLiquidPhase();
+    assertTrue(Double.isFinite(legacyPhase.getOsmoticCoefficientOfWater()));
+    assertTrue(Double.isFinite(componentLogGamma(legacyPhase, "Na+")));
+    assertEquals(PhasePitzer.DEFAULT_PARAMETER_DATASET_ID, legacyPhase.getParameterDatasetId());
+  }
+
+  @Test
   void completeCalciumMagnesiumChlorideSulfateFamilyIsApplied() {
     SystemPitzer system = createCalciumMagnesiumChlorideSulfateSystem(REFERENCE_TEMPERATURE, 0.2, 0.3, 0.4, 0.3);
     system.applyPhreeqcCalciumMagnesiumChlorideSulfateParameters();
@@ -637,6 +660,20 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     system.addComponent("Mg++", magnesiumMolality);
     system.addComponent("Cl-", chlorideMolality);
     system.addComponent("SO4--", sulfateMolality);
+    system.setMixingRule("classic");
+    system.init(0);
+    return system;
+  }
+
+  private static SystemPitzer createMethaneSodiumChlorideSystem(boolean legacy) {
+    SystemPitzer system = new SystemPitzer(REFERENCE_TEMPERATURE, 100.0);
+    if (legacy) {
+      system.useLegacyPitzerParameters();
+    }
+    system.addComponent("methane", 1.0);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
     system.setMixingRule("classic");
     system.init(0);
     return system;
