@@ -1209,7 +1209,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Brackets an electrolyte VLE or VLLE phase boundary at constant temperature.
+   * Brackets a non-reactive electrolyte VLE or VLLE phase boundary at constant temperature.
    *
    * <p>
    * Every pressure evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
@@ -1231,7 +1231,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Brackets an electrolyte VLE or VLLE phase boundary at constant pressure.
+   * Brackets a non-reactive electrolyte VLE or VLLE phase boundary at constant pressure.
    *
    * <p>
    * Every temperature evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
