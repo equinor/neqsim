@@ -28,12 +28,10 @@ class DewPointStandardsDocumentationTest extends neqsim.NeqSimTest {
     assertEquals(-21.775841183117222, waterDewPointC, 1.0e-8);
     assertEquals(70.0, calculationPressureBara, 1.0e-12);
     assertEquals("C", waterDewPoint.getUnit("dewPointTemperature"));
-    assertEquals(waterDewPointC + 273.15,
-        waterDewPoint.getValue("dewPointTemperature", "K"), 1.0e-12);
+    assertEquals(waterDewPointC + 273.15, waterDewPoint.getValue("dewPointTemperature", "K"), 1.0e-12);
 
     double maximumWaterDewPointC = -8.0;
-    boolean withinWaterDewPointLimit =
-        Double.isFinite(waterDewPointC) && waterDewPointC <= maximumWaterDewPointC;
+    boolean withinWaterDewPointLimit = Double.isFinite(waterDewPointC) && waterDewPointC <= maximumWaterDewPointC;
     assertTrue(withinWaterDewPointLimit);
   }
 
@@ -41,12 +39,10 @@ class DewPointStandardsDocumentationTest extends neqsim.NeqSimTest {
   void documentedHydrocarbonDewPointWorkflow() {
     SystemInterface richGas = createRichGas();
 
-    BestPracticeHydrocarbonDewPoint hydrocarbonDewPoint =
-        new BestPracticeHydrocarbonDewPoint(richGas);
+    BestPracticeHydrocarbonDewPoint hydrocarbonDewPoint = new BestPracticeHydrocarbonDewPoint(richGas);
     hydrocarbonDewPoint.calculate();
 
-    double hydrocarbonDewPointC =
-        hydrocarbonDewPoint.getValue("hydrocarbondewpointTemperature", "C");
+    double hydrocarbonDewPointC = hydrocarbonDewPoint.getValue("hydrocarbondewpointTemperature", "C");
     double calculationPressureBara = hydrocarbonDewPoint.getValue("pressure");
 
     assertTrue(Double.isFinite(hydrocarbonDewPointC));
@@ -54,16 +50,13 @@ class DewPointStandardsDocumentationTest extends neqsim.NeqSimTest {
     assertEquals(50.0, calculationPressureBara, 1.0e-12);
 
     double maximumHydrocarbonDewPointC = -2.0;
-    boolean comparisonIsDefined =
-        Double.isFinite(hydrocarbonDewPointC)
-            && Double.isFinite(maximumHydrocarbonDewPointC);
+    boolean comparisonIsDefined = Double.isFinite(hydrocarbonDewPointC) && Double.isFinite(maximumHydrocarbonDewPointC);
     assertTrue(comparisonIsDefined);
   }
 
   @Test
   void hydrocarbonReferencePressureSetterDoesNotChangeFixedPressure() {
-    BestPracticeHydrocarbonDewPoint hydrocarbonDewPoint =
-        new BestPracticeHydrocarbonDewPoint(createRichGas());
+    BestPracticeHydrocarbonDewPoint hydrocarbonDewPoint = new BestPracticeHydrocarbonDewPoint(createRichGas());
     hydrocarbonDewPoint.setReferencePressure(80.0);
     hydrocarbonDewPoint.calculate();
 
