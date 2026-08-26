@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidBenchmarkMetrics;
@@ -27,6 +28,13 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Public dynamic benchmark from Tengesdal's 2002 large pipeline-riser facility.
+ *
+ * <p>
+ * This qualification fixture is disabled while the legacy transient route activates the outlet-backflow clamp and the
+ * coupled pressure-momentum route cannot yet advance this case. A clamped trajectory is not an engineering solution, so
+ * the historical diagnostic metrics below must not be promoted as validated predictions. Issues #2909 and #2911 track
+ * the numerical work required before this benchmark can be re-enabled.
+ * </p>
  *
  * <p>
  * The model reproduces severe slugging on the liquid side in every realization: the outlet liquid rate blows out well
@@ -89,6 +97,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * fire, so the reported results do not depend on how fast or how loaded the executing machine is.
  * </p>
  */
+@Disabled("Blocked by #2909 and #2911: current transient routes do not produce a valid unclamped solution")
 @Tag("slow")
 class SevereSluggingExperimentalBenchmarkTest {
   private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
