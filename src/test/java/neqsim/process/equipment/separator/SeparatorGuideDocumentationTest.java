@@ -51,13 +51,11 @@ class SeparatorGuideDocumentationTest {
     double producedLiquidMassFlow = oilMassFlow + waterMassFlow;
     assertTrue(producedLiquidMassFlow > 0.0);
 
-    double producedLiquidWaterMassFraction =
-        waterMassFlow / producedLiquidMassFlow;
+    double producedLiquidWaterMassFraction = waterMassFlow / producedLiquidMassFlow;
     assertTrue(producedLiquidWaterMassFraction >= 0.0);
     assertTrue(producedLiquidWaterMassFraction <= 1.0);
 
-    double outletMassFlow =
-        gasOut.getFlowRate("kg/hr") + oilMassFlow + waterMassFlow;
+    double outletMassFlow = gasOut.getFlowRate("kg/hr") + oilMassFlow + waterMassFlow;
     double inletMassFlow = feed.getFlowRate("kg/hr");
     assertEquals(inletMassFlow, outletMassFlow, inletMassFlow * 1.0e-5);
   }
@@ -76,17 +74,12 @@ class SeparatorGuideDocumentationTest {
     assertEquals(0.20, design.getNILFraction(), 1.0e-12);
     assertEquals(0.15, design.getLILFraction(), 1.0e-12);
 
-    design.setFromExistingDesign(
-        2.5, 10.0, 0.025, 8.0, 9.0, 0.50, 0.45, 0.35, 0.30);
-    assertEquals(4.0,
-        separator.getSeparatorLength() / separator.getInternalDiameter(),
-        1.0e-12);
+    design.setFromExistingDesign(2.5, 10.0, 0.025, 8.0, 9.0, 0.50, 0.45, 0.35, 0.30);
+    assertEquals(4.0, separator.getSeparatorLength() / separator.getInternalDiameter(), 1.0e-12);
     assertEquals(8.0, design.getEffectiveLengthLiquid(), 1.0e-12);
     assertEquals(9.0, design.getEffectiveLengthGas(), 1.0e-12);
 
-    design.setFromDesignSpec(
-        2.5, 10.0, 8.0, 9.0, 0.50,
-        2.00, 1.75, 1.25, 0.75, 0.625, 0.60, 0.50, 0.35);
+    design.setFromDesignSpec(2.5, 10.0, 8.0, 9.0, 0.50, 2.00, 1.75, 1.25, 0.75, 0.625, 0.60, 0.50, 0.35);
     assertEquals(2.00, design.getHHLL(), 1.0e-12);
     assertEquals(1.25, design.getNLL(), 1.0e-12);
     assertEquals(0.50, design.getNIL(), 1.0e-12);
