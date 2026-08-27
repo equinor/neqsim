@@ -3,6 +3,7 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -330,6 +331,9 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     assertEquals(0.3159, catalog.require(PhreeqcPitzerParameterCatalog.Family.B0, "Ca++", "Cl-")[0], 0.0);
     assertEquals(-1.13, catalog.require(PhreeqcPitzerParameterCatalog.Family.B2, "Ca++", "Cl-")[0], 0.0);
     assertEquals(-0.122, catalog.require(PhreeqcPitzerParameterCatalog.Family.PSI, "Ca++", "Cl-", "SO4--")[0], 0.0);
+    assertNull(catalog.find(PhreeqcPitzerParameterCatalog.Family.B0, "H+", "HCO3-"));
+    assertNull(catalog.find(PhreeqcPitzerParameterCatalog.Family.B1, "H+", "HCO3-"));
+    assertNull(catalog.find(PhreeqcPitzerParameterCatalog.Family.C0, "H+", "HCO3-"));
   }
 
   @Test
