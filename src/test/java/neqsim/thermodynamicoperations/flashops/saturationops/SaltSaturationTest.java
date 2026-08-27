@@ -201,7 +201,7 @@ class SaltSaturationTest {
    */
   private SystemInterface createGasAqueousSystem() throws Exception {
     SystemInterface system = new SystemElectrolyteCPAstatoil(293.15, 1.01325);
-    system.addComponent("methane", 10.0);
+    system.addComponent("methane", 1.0);
     system.addComponent("water", 1.0);
     return initializeElectrolyteSystem(system);
   }
@@ -233,6 +233,7 @@ class SaltSaturationTest {
     system.addComponent("water", 55.5);
     system.addComponent("Ca++", 1.0e-4);
     system.addComponent("Cl-", 2.0e-4);
+    system.addComponent("Na+", 1.0e-3);
     system.addComponent("OH-", 1.0e-3);
     return initializeElectrolyteSystem(system);
   }
@@ -245,7 +246,7 @@ class SaltSaturationTest {
    */
   private SystemInterface createHighPressureCalciumCarbonateCo2GasAqueousSystem() throws Exception {
     SystemInterface system = createCalciumCarbonateCo2GasAqueousSystem();
-    system.setPressure(100.0);
+    system.setPressure(50.0);
     return system;
   }
 
