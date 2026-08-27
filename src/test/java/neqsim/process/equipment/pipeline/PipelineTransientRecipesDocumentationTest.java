@@ -22,11 +22,12 @@ class PipelineTransientRecipesDocumentationTest extends NeqSimTest {
 
   @Test
   void documentedTransientUsesJavaUuidAndClosesMassBalance() {
-    TwoFluidPipe pipe = createPipe("documented-transient", 8);
+    TwoFluidPipe pipe = createConvergedTransientPipe();
     pipe.setEnableSlugTracking(false);
     pipe.run();
 
-    assertTrue(pipe.isSteadyStateConverged());
+    assertTrue(pipe.isSteadyStateConverged(), "iterations=" + pipe.getSteadyStateIterationsUsed() + ", pressureFloor="
+        + pipe.isSteadyStatePressureFloorLimited() + ", wallClock=" + pipe.isSteadyStateWallClockLimited());
     assertFalse(pipe.isSteadyStatePressureFloorLimited());
     assertFalse(pipe.isSteadyStateWallClockLimited());
 
@@ -101,6 +102,34 @@ class PipelineTransientRecipesDocumentationTest extends NeqSimTest {
     pipe.setEnableAdaptiveTimestepping(false);
     pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
     pipe.setSteadyStateMaxWallClockTime(10.0);
+    return pipe;
+  }
+
+  private static TwoFluidPipe createConvergedTransientPipe() {
+    SystemInterface fluid = new SystemSrkEos(303.15, 150.0);
+    fluid.addComponent("methane", 0.92);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("documented-transient-inlet", fluid);
+    inlet.setFlowRate(200000.0, "kg/hr");
+    inlet.setTemperature(30.0, "C");
+    inlet.setPressure(150.0, "bara");
+    inlet.run();
+
+    int sections = 40;
+    TwoFluidPipe pipe = new TwoFluidPipe("documented-transient-pipe", inlet);
+    pipe.setLength(30000.0);
+    pipe.setDiameter(0.30);
+    pipe.setRoughness(4.5e-5);
+    pipe.setNumberOfSections(sections);
+    pipe.setElevationProfile(new double[sections + 1]);
+    pipe.setIncludeEnergyEquation(false);
+    pipe.setEnableTerrainTracking(false);
+    pipe.setEnableAdaptiveTimestepping(false);
+    pipe.setEnableSlugTracking(false);
+    pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
     return pipe;
   }
 }
