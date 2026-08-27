@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "reservoir to market optimization"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Reservoir-to-Market Optimisation with NeqSim Process Equipment"
+description: "Notebook for Reservoir-to-Market Optimisation with NeqSim Process Equipment, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# reservoir to market optimization
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`reservoir_to_market_optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/reservoir_to_market_optimization.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# Reservoir-to-Market Optimisation with NeqSim Process Equipment
 
 This notebook builds a **complete reservoir-to-market chain entirely from NeqSim
 process equipment** and solves it with `ProcessSystem` and `ProcessModel`. No

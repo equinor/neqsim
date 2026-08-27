@@ -1,12 +1,11 @@
 ---
 layout: default
 title: "ESP Pump Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+description: "Notebook for ESP Pump Tutorial, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# ESP Pump Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ESP_Pump_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb).

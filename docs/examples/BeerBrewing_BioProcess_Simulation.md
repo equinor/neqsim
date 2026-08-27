@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "BeerBrewing BioProcess Simulation"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Beer Brewing Process Simulation with NeqSim Bio-Processing"
+description: "Notebook for Beer Brewing Process Simulation with NeqSim Bio-Processing, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# BeerBrewing BioProcess Simulation
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`BeerBrewing_BioProcess_Simulation.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# Beer Brewing Process Simulation with NeqSim Bio-Processing
 
 A rigorous, step-by-step thermodynamic and kinetic simulation of the beer brewing process
 using NeqSim's bio-processing equipment and the **CPA equation of state** for accurate

@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "NetworkSolverTutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Multi-Well Network Solver Tutorial"
+description: "Notebook for Multi-Well Network Solver Tutorial, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# NetworkSolverTutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`NetworkSolverTutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# Multi-Well Network Solver Tutorial
 
 This notebook demonstrates the NetworkSolver for modeling multi-well gathering systems with flowlines and manifolds.
 

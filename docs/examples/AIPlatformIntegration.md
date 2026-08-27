@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "AIPlatformIntegration"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "NeqSim AI Platform Integration"
+description: "Notebook for NeqSim AI Platform Integration, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# AIPlatformIntegration
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`AIPlatformIntegration.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/AIPlatformIntegration.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# NeqSim AI Platform Integration
 
 This notebook demonstrates how to integrate NeqSim's thermodynamic and process simulation capabilities with AI-based production optimization platforms using the **Direct Java Access** method.
 

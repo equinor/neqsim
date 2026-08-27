@@ -1,12 +1,11 @@
 ---
 layout: default
 title: "PVT Simulation and Tuning"
-description: "Jupyter notebook tutorial for NeqSim"
+description: "Notebook for PVT Simulation and Tuning, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# PVT Simulation and Tuning
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`PVT_Simulation_and_Tuning.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb).

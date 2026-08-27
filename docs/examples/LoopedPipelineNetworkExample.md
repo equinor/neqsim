@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "LoopedPipelineNetworkExample"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Looped Pipeline Network Solver - Hardy Cross Method"
+description: "Notebook for Looped Pipeline Network Solver - Hardy Cross Method, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# LoopedPipelineNetworkExample
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`LoopedPipelineNetworkExample.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/LoopedPipelineNetworkExample.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# Looped Pipeline Network Solver - Hardy Cross Method
 
 This notebook demonstrates NeqSim's Hardy Cross looped network solver for pipeline networks with multiple flow paths and ring mains.
 

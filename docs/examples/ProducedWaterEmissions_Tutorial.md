@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "ProducedWaterEmissions Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "🌱 Produced Water Emissions Calculation with NeqSim"
+description: "Notebook for 🌱 Produced Water Emissions Calculation with NeqSim, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# ProducedWaterEmissions Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ProducedWaterEmissions_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ProducedWaterEmissions_Tutorial.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# 🌱 Produced Water Emissions Calculation with NeqSim
 
 This notebook demonstrates comprehensive greenhouse gas emissions calculation (CO₂, methane, nmVOC) from produced water handling systems using NeqSim.
 

@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "autosize and optimize workflows"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Auto-size & optimize: three production-optimization workflows"
+description: "Notebook for Auto-size & optimize: three production-optimization workflows, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# autosize and optimize workflows
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`autosize_and_optimize_workflows.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/autosize_and_optimize_workflows.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# Auto-size & optimize: three production-optimization workflows
 
 This notebook shows how to drive NeqSim's **production optimizer** with a minimum of Python.
 The heavy lifting (auto-sizing equipment, building capacity constraints, the throughput search)

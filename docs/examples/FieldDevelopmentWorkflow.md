@@ -1,7 +1,7 @@
 ---
 layout: default
-title: "Transparent field-development screening"
-description: "Executable NeqSim tutorial for unit-safe gas-production profiles, after-tax cash flow, and bounded sensitivities."
+title: "Transparent field-development screening with NeqSim"
+description: "Notebook for Transparent field-development screening with NeqSim, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
@@ -13,7 +13,6 @@ nav_order: 1
 
 ---
 
-# Transparent field-development screening with NeqSim
 
 This tutorial builds an auditable gas-production forecast and after-tax cash flow from current NeqSim APIs. It deliberately uses the lower-level production-profile and economics classes so every unit conversion and assumption is visible.
 

@@ -57,6 +57,20 @@ def get_notebook_documentation_metadata(notebook, notebook_name):
         documentation_metadata.update(notebook_metadata)
     return documentation_metadata
 
+
+def get_first_markdown_h1(notebook):
+    """Return the first notebook-owned level-one heading, if present."""
+
+    for cell in notebook.get("cells", []):
+        if cell.get("cell_type") != "markdown":
+            continue
+        source = "".join(cell.get("source", []))
+        match = re.search(r"(?m)^#\\s+(.+?)\\s*$", source)
+        if match:
+            return match.group(1).strip()
+    return None
+
+
 # Ensure Unicode output works on Windows consoles (cp1252 by default).
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -107,17 +121,21 @@ def notebook_to_markdown(notebook_path):
         nb,
         notebook_name,
     )
-    title = documentation_metadata.get(
-        'title',
-        notebook_name.replace('_', ' ').replace('-', ' '),
+    default_title = (
+        get_first_markdown_h1(nb)
+        or notebook_name.replace('_', ' ').replace('-', ' ')
     )
+    title = documentation_metadata.get('title', default_title)
     description = documentation_metadata.get(
         'description',
-        'Jupyter notebook tutorial for NeqSim',
+        (
+            f"Notebook for {title}, including NeqSim Python examples "
+            "and workflow context."
+        ),
     )
     generated_title = (
         f"# {title}\n\n"
-        if documentation_metadata.get('show_generated_title', True)
+        if documentation_metadata.get('show_generated_title', False)
         else ''
     )
     colab_link_text = documentation_metadata.get(
@@ -126,7 +144,7 @@ def notebook_to_markdown(notebook_path):
     )
     strip_first_h1 = documentation_metadata.get(
         'strip_first_h1',
-        documentation_metadata.get('strip_notebook_title', False),
+        documentation_metadata.get('strip_notebook_title', True),
     )
     title_yaml = json.dumps(str(title), ensure_ascii=False)
     description_yaml = json.dumps(str(description), ensure_ascii=False)
@@ -154,24 +172,23 @@ nav_order: 1
 """
 
     markdown_content = []
-    first_markdown_cell_seen = False
+    first_h1_stripped = False
 
     for cell in nb.get('cells', []):
         cell_type = cell.get('cell_type', '')
         source = ''.join(cell.get('source', []))
 
         if cell_type == 'markdown':
-            if not first_markdown_cell_seen:
-                first_markdown_cell_seen = True
-                if strip_first_h1:
-                    # The Jekyll page title is supplied by front matter. Keep the
-                    # notebook's H1 for Colab while avoiding a duplicate page H1.
-                    source = re.sub(
-                        r'\A# [^\r\n]*(?:\r?\n){0,2}',
-                        '',
-                        source,
-                        count=1,
-                    )
+            if strip_first_h1 and not first_h1_stripped:
+                # The Jekyll page title is supplied by front matter. Keep the
+                # notebook's H1 for Colab while avoiding a duplicate page H1.
+                source, replacements = re.subn(
+                    r'(?m)^# [^\r\n]*(?:\r?\n){0,2}',
+                    '',
+                    source,
+                    count=1,
+                )
+                first_h1_stripped = replacements == 1
             # Add markdown content directly
             markdown_content.append(source)
             markdown_content.append('\n\n')

@@ -1,12 +1,11 @@
 ---
 layout: default
 title: "GraphBasedProcessSimulation"
-description: "Jupyter notebook tutorial for NeqSim"
+description: "Notebook for GraphBasedProcessSimulation, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# GraphBasedProcessSimulation
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`GraphBasedProcessSimulation.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb).

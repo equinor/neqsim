@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Reservoir-to-Market Optimisation with NeqSim Process Equipment"
-description: "Executed reservoir-to-market process-equipment workflow with field-life depletion, well and flowline hydraulics, export compression, production optimisation, and value-chain economics."
+description: "Notebook for Reservoir-to-Market Optimisation with NeqSim Process Equipment, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
@@ -13,7 +13,6 @@ nav_order: 1
 
 ---
 
-# Reservoir-to-Market Optimisation with NeqSim Process Equipment
 
 This notebook builds a **complete reservoir-to-market chain entirely from NeqSim
 process equipment** and solves it with `ProcessSystem` and `ProcessModel`. No

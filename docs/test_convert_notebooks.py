@@ -1,4 +1,5 @@
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -59,7 +60,7 @@ class ConvertNotebooksTest(unittest.TestCase):
                 generated_content,
             )
             self.assertNotIn(f"# {curated_title}", generated_content)
-            self.assertEqual(generated_content.count("# Notebook title"), 1)
+            self.assertNotIn("# Notebook title", generated_content)
 
     def test_converter_can_strip_notebook_h1_from_generated_page(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -133,7 +134,7 @@ class ConvertNotebooksTest(unittest.TestCase):
                 "field-life depletion, well and flowline hydraulics",
                 generated_content,
             )
-            self.assertEqual(generated_content.count(f"# {title}"), 1)
+            self.assertNotIn(f"# {title}", generated_content)
             self.assertNotIn("# process equipmentutl", generated_content)
             self.assertIn(
                 "docs/examples/process%20equipmentutl.ipynb",
@@ -144,7 +145,7 @@ class ConvertNotebooksTest(unittest.TestCase):
                 generated_content,
             )
 
-    def test_converter_keeps_default_metadata_behavior(self):
+    def test_converter_uses_notebook_title_as_default_page_metadata(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             examples_dir = Path(temp_dir)
             notebook_path = examples_dir / "Generated.ipynb"
@@ -154,9 +155,17 @@ class ConvertNotebooksTest(unittest.TestCase):
             convert_all_notebooks(examples_dir)
 
             generated_content = markdown_path.read_text(encoding="utf-8")
-            self.assertIn('title: "Generated"', generated_content)
-            self.assertIn("# Generated", generated_content)
-            self.assertIn("# Current notebook title", generated_content)
+            self.assertIn(
+                'title: "Current notebook title"',
+                generated_content,
+            )
+            self.assertIn(
+                "Notebook for Current notebook title, including NeqSim "
+                "Python examples and workflow context.",
+                generated_content,
+            )
+            body = generated_content.split("\n---\n", 1)[1]
+            self.assertNotRegex(body, r"(?m)^# ")
             self.assertIn("open in Google Colab", generated_content)
 
     def test_converter_ignores_non_mapping_documentation_metadata(self):
@@ -173,11 +182,44 @@ class ConvertNotebooksTest(unittest.TestCase):
             convert_all_notebooks(examples_dir)
 
             generated_content = markdown_path.read_text(encoding="utf-8")
-            self.assertIn('title: "InvalidMetadata"', generated_content)
             self.assertIn(
-                'description: "Jupyter notebook tutorial for NeqSim"',
+                'title: "Notebook title"',
                 generated_content,
             )
+            self.assertIn(
+                "Notebook for Notebook title, including NeqSim Python "
+                "examples and workflow context.",
+                generated_content,
+            )
+
+
+    def test_committed_generated_pages_use_front_matter_title_only(self):
+        docs_dir = Path(__file__).resolve().parent
+        examples_dir = docs_dir / "examples"
+
+        generated_pages = []
+        for notebook_path in sorted(examples_dir.glob("*.ipynb")):
+            markdown_path = notebook_path.with_suffix(".md")
+            if markdown_path.exists():
+                generated_pages.append(markdown_path)
+
+        self.assertGreater(len(generated_pages), 20)
+        for markdown_path in generated_pages:
+            with self.subTest(path=markdown_path.name):
+                generated_content = markdown_path.read_text(encoding="utf-8")
+                self.assertTrue(generated_content.startswith("---\n"))
+                self.assertNotIn(
+                    'description: "Jupyter notebook tutorial for NeqSim"',
+                    generated_content,
+                )
+                body = generated_content.split("\n---\n", 1)[1]
+                body_without_fences = re.sub(
+                    r"[\x60]{3}.*?[\x60]{3}",
+                    "",
+                    body,
+                    flags=re.DOTALL,
+                )
+                self.assertNotRegex(body_without_fences, r"(?m)^# ")
 
 
     def test_index_preserves_curated_notebooks(self):

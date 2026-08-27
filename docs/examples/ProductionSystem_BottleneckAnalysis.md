@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "ProductionSystem BottleneckAnalysis"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Production System Optimization & Bottleneck Analysis"
+description: "Notebook for Production System Optimization & Bottleneck Analysis, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# ProductionSystem BottleneckAnalysis
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ProductionSystem_BottleneckAnalysis.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ProductionSystem_BottleneckAnalysis.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# Production System Optimization & Bottleneck Analysis
 
 This notebook demonstrates advanced production system modeling with NeqSim, including:
 
