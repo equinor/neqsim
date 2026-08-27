@@ -84,10 +84,8 @@ class ChemicalReactionProvenanceTest {
     system.addComponent("water", 18.0);
 
     IllegalStateException failure = assertThrows(IllegalStateException.class, system::chemicalReactionInit);
-    assertEquals(
-        "Chemical-reaction initialization rejected unvalidated active rows for source 'pitzer': "
-            + "reactionsWithoutValidatedEvidence=[DEAprot, MDEAprot]",
-        failure.getMessage());
+    assertEquals("Chemical-reaction initialization rejected unvalidated active rows for source 'pitzer': "
+        + "reactionsWithoutValidatedEvidence=[DEAprot, MDEAprot]", failure.getMessage());
     assertFalse(system.hasComponent("MDEA+"));
     assertFalse(system.hasComponent("DEA+"));
   }
