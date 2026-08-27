@@ -163,7 +163,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(5, apiInspection.get("contractEvidenceCount").getAsInt());
     assertEquals(5, apiInspection.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(apiInspection.getAsJsonArray("contractEvidenceSources").toString().contains("ApiKnowledgeRunner.java"));
-    assertTrue(apiInspection.getAsJsonArray("contractEvidenceSources").toString().contains("test_inspect_api_protocol.py"));
+    assertTrue(
+        apiInspection.getAsJsonArray("contractEvidenceSources").toString().contains("test_inspect_api_protocol.py"));
     assertTrue(apiInspection.get("evidenceBoundary").getAsString().contains("without executing"));
     assertFalse(inventory.get("complete").getAsBoolean());
   }
