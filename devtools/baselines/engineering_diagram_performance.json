@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "neqsim_engineering_diagram_performance_budget.v1",
+  "referenceCase": "DEXPI-REF-MULTI-AREA",
+  "minimumSamples": 3,
+  "budgetsMilliseconds": {
+    "dexpi-package-export": 3000.0,
+    "dexpi-package-intake": 1500.0,
+    "native-svg-pdf-render": 1000.0,
+    "package-revision-impact": 500.0,
+    "package-document-impact": 500.0
+  },
+  "policy": "Conservative hosted-CI median budgets. Tighten only from repeated comparable runner evidence."
+}
