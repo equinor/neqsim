@@ -7,7 +7,8 @@ description: Synthetic public simple, branched, and multi-area regression cases 
 
 NeqSim carries three synthetic public reference cases as executable regression evidence for the
 coordinated professional PFD and DEXPI/P&ID campaigns. They establish a reproducible acceptance
-baseline without introducing a new production API or changing the legacy diagram exporters.
+baseline and exercise the additive `EngineeringDiagramDelivery` facade without changing the legacy
+diagram exporters.
 
 | Case | Source object | Topology | Material connections |
 | --- | --- | --- | ---: |
@@ -37,21 +38,26 @@ provenance, expected counts, engineering state, and qualification boundaries.
 - deterministic governed P&ID proposal models whose elements remain `REVIEW_REQUIRED` and whose
   completeness evidence remains not fit for construction.
 
+`EngineeringDiagramDeliveryTest` reuses the same fixtures to check fail-closed single-area and
+multi-area delivery of controlled semantic JSON, assessed DEXPI, native SVG/PDF, content hashes,
+visual fingerprints, and structured projection losses.
+
 Run the focused regression with the repository Maven wrapper:
 
 ```bash
-./mvnw -Dtest=EngineeringDiagramReferenceCasesTest test
+./mvnw -Dtest=EngineeringDiagramReferenceCasesTest,EngineeringDiagramDeliveryTest test
 ```
 
 ## Explicit limitations
 
 The cases do not claim ISO 10628 conformance, DEXPI EV certification, or interoperability with a
-named commercial CAE product. Native DEXPI Process export remains `ProcessSystem`-only and reports
-multi-area hierarchy, controlled document/sheet semantics, and drawing graphics as unsupported.
-The native professional SVG/PDF drawing-set renderer is also not yet available.
+named commercial CAE product. Native DEXPI Process export remains area-scoped. The multi-area
+delivery is a deterministic NeqSim package of independently assessed native area files plus explicit
+plant-wide manifest evidence; it is not a native DEXPI whole-plant profile. Controlled document and
+native SVG/PDF projections are delivered beside DEXPI and remain separate semantic and graphical
+views.
 
 The Proteus per-area files are compatibility sheets, not controlled drawings with paired off-page
 references and accountable revision approval. Generated P&ID content is a proposal until piping,
 valve, nozzle, instrument, safeguard, design-data, safety-lifecycle, and discipline reviews are
 completed by accountable engineers.
-

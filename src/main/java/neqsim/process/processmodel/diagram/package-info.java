@@ -24,6 +24,8 @@
  * project review evidence without changing process topology</li>
  * <li><b>Native controlled output</b> - Deterministic vector SVG sheets and multi-page PDF consume the same controlled
  * document model without requiring Graphviz</li>
+ * <li><b>Assessed delivery</b> - One fail-closed facade publishes controlled JSON, DEXPI Process exchange, native
+ * SVG/PDF, hashes, and explicit review-required evidence for ProcessSystem or multi-area ProcessModel inputs</li>
  * <li><b>Drawing-quality diagnostics</b> - Deterministic collision, clipping, route/object, connection-label,
  * label-overflow, and broken-reference evidence remains structured and fail-visible without silently moving reviewed
  * geometry</li>
