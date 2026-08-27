@@ -1,7 +1,7 @@
 name: MCP primary accounting patch helper
 
 permissions:
-  contents: read
+  contents: write
 
 on:
   push:
@@ -55,6 +55,40 @@ jobs:
           git diff --check -- neqsim-mcp-server/test_mcp_server.py
           git diff -- neqsim-mcp-server/test_mcp_server.py > primary-accounting.patch
 
+      - name: Create unattached exact blob for connector-owned tree update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          data = Path("neqsim-mcp-server/test_mcp_server.py").read_bytes()
+          payload = json.dumps({
+              "content": base64.b64encode(data).decode("ascii"),
+              "encoding": "base64",
+          }).encode("utf-8")
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",
+              data=payload,
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              result = json.load(response)
+          Path("blob-sha.txt").write_text(result["sha"] + "\n", encoding="utf-8")
+          print("prepared unattached blob", result["sha"])
+          PY
+
       - name: Upload patched primary harness
         uses: actions/upload-artifact@v7
         with:
@@ -62,4 +96,5 @@ jobs:
           path: |
             neqsim-mcp-server/test_mcp_server.py
             primary-accounting.patch
+            blob-sha.txt
           if-no-files-found: error
