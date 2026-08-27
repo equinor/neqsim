@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-08-11"
+last_verified: "2026-08-27"
 ---
 
 # Dynamic Simulation Guidance
@@ -421,6 +421,50 @@ split. Record EOS, mixing rule, composition, absolute pressure, temperature, mas
 relaxation time, and units. The current hydrodynamic state transports bulk phase inventories, not a
 full component-composition vector per cell, and does not establish equivalence with any commercial
 transient multiphase simulator.
+
+## TwoFluidPipe Coupled Pressure-Momentum Gate
+
+For a liquid-rich pressure outlet that physically permits phase fallback, the coupled path requires
+all four options. Keep the nonlinear controls explicit in reproducible studies:
+
+```java
+pipe.setEnableInterfacialPressure(true);
+pipe.setImplicitInterfacialPressureCoupling(true);
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.setAllowOutletPhaseBackflow(true);
+pipe.setCoupledPressureMomentumMaximumIterations(24); // default
+pipe.setCoupledPressureMomentumRelativeVolumeTolerance(1.0e-7); // default
+```
+
+The previous budget of 12 stopped the public Tengesdal progress case near a `6e-7` relative
+cell-volume residual, above the `1e-7` gate. The current 16-section Test 3 probe completes 50/50
+calls of 0.1 s and a 24-section refinement completes 100/100 calls of 0.05 s. Neither rejects a
+nonlinear substep, and phase and total discrete mass residuals remain below `1e-9`.
+
+A coupled call that exhausts its adaptive retries throws with accepted/requested elapsed time,
+residual/tolerance, iterations/cap, and limiter state. Do not catch that exception and advance the
+flowsheet clock. Successful completion still requires the sticky diagnostics to be inspected after
+the full window:
+
+```java
+if (pipe.isTransientOutletBackflowClamped()
+    || pipe.isTransientCoupledPressureMomentumFailureDetected()
+    || pipe.isTransientCoupledPressureMomentumCorrectionLimited()
+    || pipe.getTransientCoupledPressureMomentumRejectedSubsteps() > 0) {
+  throw new IllegalStateException("TwoFluidPipe transient is not qualified");
+}
+```
+
+These flags reset on the next steady `run()`. A pressure-limiter event is not itself a rejected
+substep because the volume residual can converge while the bounded correction is active, but it is
+mandatory qualification evidence. Use
+`isCoupledPressureMomentumPressureCorrectionLimited()` only for the latest correction; use the
+`isTransient...` form for the complete window. The current Tengesdal progress run still activates that flag and
+spans -18.55 to 6.88 kg/s liquid outlet versus the stored 0.375 to 4.03 kg/s comparison. It is
+therefore numerical-progress evidence only, not sustained-severe-slugging or commercial-parity
+evidence. Never tune a public closure to the commercial trace; validate the next boundary-coupling
+increment against the public Tengesdal experiment, conservation, nearby points, and mesh/time-step
+refinement.
 
 ## Running Dynamic Simulation
 

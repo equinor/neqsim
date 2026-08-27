@@ -178,6 +178,15 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean coupledPressureMomentumEnabled = false;
 
+  /** Whether any coupled nonlinear correction failed since the latest steady initialization. */
+  private boolean transientCoupledPressureMomentumFailureDetected = false;
+
+  /** Whether any coupled nonlinear pressure correction was limited since steady initialization. */
+  private boolean transientCoupledPressureMomentumCorrectionLimited = false;
+
+  /** Coupled nonlinear substeps rejected since the latest steady initialization. */
+  private int transientCoupledPressureMomentumRejectedSubsteps = 0;
+
   /** Optional phase-resolved compressible volume supplying the inlet pressure boundary. */
   private UpstreamCompressibleVolume upstreamCompressibleVolume = null;
 
@@ -4134,6 +4143,10 @@ public class TwoFluidPipe extends Pipeline {
     lastComponentConservationReport = null;
     componentConservationReports.clear();
     componentConservationTimes.clear();
+    transientOutletBackflowClamped = false;
+    transientCoupledPressureMomentumFailureDetected = false;
+    transientCoupledPressureMomentumCorrectionLimited = false;
+    transientCoupledPressureMomentumRejectedSubsteps = 0;
 
     // Initialize sections
     initializeSections();
@@ -4224,6 +4237,7 @@ public class TwoFluidPipe extends Pipeline {
     double timeRemaining = dt;
     int maxSubSteps = enableAdaptiveTimestepping ? 50000 : 10000;
     int stepCount = 0;
+    int consecutiveCoupledPressureMomentumFailures = 0;
 
     while (timeRemaining > 1e-12 && stepCount < maxSubSteps) {
       stepCount++;
@@ -4349,11 +4363,21 @@ public class TwoFluidPipe extends Pipeline {
       double[][] U_new = timeIntegrator.step(splitState, rhs, dtFinal);
       U_new = applyStiffBubbleDragSourceStep(U_new, 0.5 * dtFinal);
 
+      if (coupledPressureMomentumEnabled && timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited()) {
+        transientCoupledPressureMomentumCorrectionLimited = true;
+      }
+
       if (coupledPressureMomentumEnabled && !timeIntegrator.isCoupledPressureMomentumConverged()) {
+        transientCoupledPressureMomentumFailureDetected = true;
+        transientCoupledPressureMomentumRejectedSubsteps++;
+        consecutiveCoupledPressureMomentumFailures++;
         equations.applyState(sections, U_prev);
         if (enableAdaptiveTimestepping) {
           adaptiveDtFactor = Math.max(adaptiveDtFactor * 0.5, MIN_ADAPTIVE_DT_FACTOR);
           currentStep--;
+          if (adaptiveDtFactor <= MIN_ADAPTIVE_DT_FACTOR && consecutiveCoupledPressureMomentumFailures >= 2) {
+            break;
+          }
           continue;
         }
         throw new IllegalStateException(
@@ -4361,6 +4385,7 @@ public class TwoFluidPipe extends Pipeline {
                 + "cell-volume residual=" + timeIntegrator.getCoupledPressureMomentumVolumeResidual() + " after "
                 + timeIntegrator.getCoupledPressureMomentumIterations() + " iterations");
       }
+      consecutiveCoupledPressureMomentumFailures = 0;
 
       // 4. ADAPTIVE: check RAW state for NaN/Inf/negative mass BEFORE clamping
       // Only hard-reject on unphysical values. Normal transient changes (even large)
@@ -4564,6 +4589,17 @@ public class TwoFluidPipe extends Pipeline {
           + "outflow is clamped at zero while the inlet keeps feeding it. Liquid inventory will grow without "
           + "bound and the transient result must not be used. This is the ill-posedness of the classical "
           + "two-fluid system in liquid-rich flow; see setEnableInterfacialPressure(boolean).", getName());
+    }
+
+    if (coupledPressureMomentumEnabled && timeRemaining > 1.0e-12) {
+      throw new IllegalStateException(
+          getName() + ": coupled pressure-momentum transient advanced " + acceptedElapsedTime + " of requested " + dt
+              + " s after " + stepCount + " substep attempts; latest maximum relative cell-volume residual="
+              + timeIntegrator.getCoupledPressureMomentumVolumeResidual() + ", tolerance="
+              + timeIntegrator.getCoupledPressureMomentumRelativeVolumeTolerance() + ", iterations="
+              + timeIntegrator.getCoupledPressureMomentumIterations() + "/"
+              + timeIntegrator.getCoupledPressureMomentumMaximumIterations() + ", pressureCorrectionLimited="
+              + timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited());
     }
 
     setCalculationIdentifier(id);
@@ -7618,6 +7654,70 @@ public class TwoFluidPipe extends Pipeline {
   /** @return convergence status of the most recent coupled correction */
   public boolean isCoupledPressureMomentumConverged() {
     return !coupledPressureMomentumEnabled || timeIntegrator.isCoupledPressureMomentumConverged();
+  }
+
+  /**
+   * Set the nonlinear iteration budget for each coupled pressure-momentum correction.
+   *
+   * @param maximumIterations positive maximum iteration count
+   */
+  public void setCoupledPressureMomentumMaximumIterations(int maximumIterations) {
+    timeIntegrator.setCoupledPressureMomentumMaximumIterations(maximumIterations);
+  }
+
+  /** @return nonlinear iteration budget for each coupled pressure-momentum correction */
+  public int getCoupledPressureMomentumMaximumIterations() {
+    return timeIntegrator.getCoupledPressureMomentumMaximumIterations();
+  }
+
+  /**
+   * Set the convergence tolerance for the relative cell-volume residual.
+   *
+   * @param tolerance positive finite relative tolerance
+   */
+  public void setCoupledPressureMomentumRelativeVolumeTolerance(double tolerance) {
+    timeIntegrator.setCoupledPressureMomentumRelativeVolumeTolerance(tolerance);
+  }
+
+  /** @return convergence tolerance for the relative cell-volume residual */
+  public double getCoupledPressureMomentumRelativeVolumeTolerance() {
+    return timeIntegrator.getCoupledPressureMomentumRelativeVolumeTolerance();
+  }
+
+  /**
+   * Check whether any coupled correction failed since the latest steady initialization.
+   *
+   * @return true after at least one rejected, non-converged coupled correction
+   */
+  public boolean isTransientCoupledPressureMomentumFailureDetected() {
+    return transientCoupledPressureMomentumFailureDetected;
+  }
+
+  /**
+   * Check whether any coupled correction reached its pressure-correction limiter.
+   *
+   * @return true when pressure correction was limited since the latest steady initialization
+   */
+  public boolean isTransientCoupledPressureMomentumCorrectionLimited() {
+    return transientCoupledPressureMomentumCorrectionLimited;
+  }
+
+  /**
+   * Get the number of rejected coupled nonlinear substeps since steady initialization.
+   *
+   * @return rejected coupled substep count
+   */
+  public int getTransientCoupledPressureMomentumRejectedSubsteps() {
+    return transientCoupledPressureMomentumRejectedSubsteps;
+  }
+
+  /**
+   * Check whether the latest coupled correction reached its pressure-correction limiter.
+   *
+   * @return true when the latest coupled correction was limited
+   */
+  public boolean isCoupledPressureMomentumPressureCorrectionLimited() {
+    return coupledPressureMomentumEnabled && timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited();
   }
 
   /**

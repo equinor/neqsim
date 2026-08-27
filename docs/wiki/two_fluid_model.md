@@ -736,6 +736,45 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - RK2 (Heun's method)
 - RK4 (Classical 4th order)
 - SSPRK3 (Strong stability preserving)
+- IMEX pressure correction
+
+### Coupled Pressure-Momentum Correction
+
+The opt-in coupled route corrects phase masses, phase momenta, compressible densities, and pressure
+inside the same accepted substep. For a liquid-rich pressure outlet that physically permits phase
+fallback, configure all four coupled options and make the nonlinear gate explicit:
+
+```java
+pipe.setEnableInterfacialPressure(true);
+pipe.setImplicitInterfacialPressureCoupling(true);
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.setAllowOutletPhaseBackflow(true);
+pipe.setCoupledPressureMomentumMaximumIterations(24); // default
+pipe.setCoupledPressureMomentumRelativeVolumeTolerance(1.0e-7); // default
+```
+
+The former 12-iteration default stopped the public Tengesdal progress probe near a
+$6\times10^{-7}$ relative cell-volume residual. With 24 iterations, the 16-section Test 3 setup
+completes 50/50 calls of 0.1 s; a 24-section refinement completes 100/100 calls of 0.05 s. Neither
+rejects a nonlinear substep, and both keep gas, oil, water, liquid, and total discrete mass
+residuals below $10^{-9}$. A coupled call that cannot complete its requested interval now throws and
+reports accepted/requested time, residual/tolerance, iterations/cap, and whether pressure correction
+was limited; it never returns partial or zero progress silently.
+
+After every evaluated window, inspect the sticky diagnostics, which reset on the next steady
+`run()`:
+
+```java
+boolean failed = pipe.isTransientCoupledPressureMomentumFailureDetected();
+boolean limited = pipe.isTransientCoupledPressureMomentumCorrectionLimited();
+int rejected = pipe.getTransientCoupledPressureMomentumRejectedSubsteps();
+boolean latestLimited = pipe.isCoupledPressureMomentumPressureCorrectionLimited();
+```
+
+This progress result is not a severe-slugging qualification. The pressure limiter still fires and
+the 50-step liquid-outlet range is -18.55 to 6.88 kg/s versus the stored 0.375 to 4.03 kg/s
+comparison. Do not tune public closures to that commercial trace; use the public Tengesdal
+experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 
 ### Higher-Order Reconstruction
 
@@ -962,7 +1001,6 @@ The `runTransient()` method advances the simulation by a specified time step. It
 pipe.run();
 
 // Transient simulation loop
-UUID simId = UUID.randomUUID();
 for (int step = 0; step < 1000; step++) {
     // Change boundary conditions if needed
     if (step == 100) {
@@ -970,7 +1008,7 @@ for (int step = 0; step < 1000; step++) {
         inletStream.run();
     }
 
-    pipe.runTransient(0.1, simId);  // Advance 0.1 seconds
+    pipe.runTransient(0.1, UUID.randomUUID()); // one UUID per physical step
 
     // Monitor results
     double outletFlow = pipe.getOutletStream().getFlowRate("kg/sec");
