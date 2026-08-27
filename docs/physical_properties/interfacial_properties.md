@@ -63,7 +63,11 @@ fluid.setMixingRule("classic");
 fluid.setMultiPhaseCheck(true);
 
 ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-operations.bubblePointPressureFlash(false);
+try {
+  operations.bubblePointPressureFlash(false);
+} catch (Exception exception) {
+  throw new IllegalStateException("Bubble-point flash failed", exception);
+}
 fluid.initProperties();
 
 if (!fluid.hasPhaseType("gas") || !fluid.hasPhaseType("oil")) {
@@ -212,4 +216,3 @@ for model equations and parameter APIs.
 The methods and model names above are anchored to
 [`InterfaceProperties.java`](../../src/main/java/neqsim/physicalproperties/interfaceproperties/InterfaceProperties.java)
 and [`SystemThermo.java`](../../src/main/java/neqsim/thermo/system/SystemThermo.java).
-

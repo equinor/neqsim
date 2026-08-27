@@ -16,7 +16,11 @@ class InterfacialPropertiesDocumentationTest {
     fluid.setMultiPhaseCheck(true);
 
     ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-    operations.bubblePointPressureFlash(false);
+    try {
+      operations.bubblePointPressureFlash(false);
+    } catch (Exception exception) {
+      throw new AssertionError("Bubble-point flash failed", exception);
+    }
     fluid.initProperties();
     assertTrue(fluid.hasPhaseType("gas"));
     assertTrue(fluid.hasPhaseType("oil"));
