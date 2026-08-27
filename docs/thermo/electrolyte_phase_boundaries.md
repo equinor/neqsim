@@ -56,11 +56,14 @@ ElectrolytePhaseBoundaryResult oilBoundary =
         PhaseType.OIL, lowerTemperatureK, upperTemperatureK, toleranceK, 60);
 ```
 
-The same methods work with a non-reactive `SystemElectrolyteCPAstatoil`; add explicit ions and
-configure mixing rule 10 in the usual model-specific order. Reactive phase boundaries are currently
-rejected because species-level component balance is not conserved by a reaction set; that extension
-requires a separately reviewed elemental-balance and reaction-residual contract. Pitzer coefficients
-are used only by the Pitzer aqueous phase and are never transferred into electrolyte-CPA parameters.
+The same methods work with a non-reactive `SystemElectrolyteCPAstatoil`; configure mixing rule 10 in
+the usual model-specific order. Reactive Pitzer systems are supported after
+`chemicalReactionInit()` and database initialization. Their complete hybrid TP-flash evaluations
+enforce elemental conservation, electroneutrality and maximum absolute `ln(Q/K)` in addition to the
+ordinary phase-equilibrium contract. Reactive electrolyte-EOS phase boundaries still fail closed:
+the current generic multiphase path does not yet preserve feed elements while changing species
+amounts. Pitzer coefficients are used only by the Pitzer aqueous phase and are never transferred
+into electrolyte-CPA parameters or reaction constants.
 
 ## Python / JPype use
 
@@ -86,8 +89,10 @@ The immutable, serializable result reports:
 - maximum component material-balance residual;
 - maximum phase-composition and phase-fraction normalization residual;
 - aqueous charge residual in mol/kg water;
-- maximum ionic mole fraction outside the aqueous phase; and
-- maximum neutral-component cross-phase log-fugacity residual.
+- maximum ionic mole fraction outside the aqueous phase;
+- maximum neutral-component cross-phase log-fugacity residual;
+- maximum reactive element-balance residual; and
+- maximum absolute natural-log reaction residual.
 
 The operation fails closed if the endpoints do not have different target-phase classifications, the
 bracket does not converge, or the retained state exceeds these direct gates:
@@ -99,6 +104,8 @@ bracket does not converge, or the retained state exceeds these direct gates:
 | Aqueous electroneutrality | `1e-8 mol/kg water` |
 | Ion leakage outside aqueous | `1e-30` mole fraction |
 | Cross-phase neutral `ln(f)` closure | `1e-5` |
+| Reactive elemental balance | `1e-8 mol` |
+| Reactive maximum `|ln(Q/K)|` | `2e-6` |
 
 Every trial first uses a fresh clone of the original feed. This makes repeated and cloned execution
 deterministic and prevents a previous VLE or VLLE topology from silently becoming the primary seed.
@@ -123,9 +130,10 @@ The Pitzer aqueous activity convention follows Pitzer (1973),
 provenance, release identity, public-domain evidence and validation ranges are recorded in the
 [Pitzer parameter provenance matrix](pitzer_parameter_provenance.md).
 
-The gas–oil–NaCl–water boundary checks in this increment are deterministic software regressions,
-not independent experimental VLE validation. They verify topology, balance, charge, fugacity,
-model separation, serialization and nearby-state behavior without refitting parameters.
+The gas–oil–NaCl–water and reactive gas–oil–water–CO2 boundary checks in this increment are
+deterministic software regressions, not independent experimental VLE validation. They verify
+topology, balance, charge, fugacity, reaction closure, model separation, serialization and
+nearby-state behavior without refitting parameters.
 Quantitative predictive claims require an independently sourced composition-specific VLE/VLLE
 dataset within the chosen EOS and aqueous-parameter validity ranges.
 
@@ -140,6 +148,8 @@ flashes have zero added runtime path or parameter lookup.
 
 The bracket must contain one monotonic target-phase transition. Multiple disconnected phase
 regions require separate brackets. The operation currently locates fluid-phase boundaries only;
-hydrate and mineral-solid complementarity retain their dedicated operations. It does not create new Pitzer parameters, reaction constants or electrolyte-EOS parameters. Reactive
-chemical-equilibrium boundaries remain outside this increment until elemental conservation and
-maximum `|ln(Q/K)|` diagnostics can be enforced together.
+hydrate and mineral-solid complementarity retain their dedicated operations. It does not create new
+Pitzer parameters, reaction constants or electrolyte-EOS parameters. Reactive Pitzer calculations
+use the model-selected reaction database. The unsupported reactive electrolyte-EOS boundary remains
+a deliberate fail-closed dependency rather than silently mixing reaction or activity-model
+semantics.

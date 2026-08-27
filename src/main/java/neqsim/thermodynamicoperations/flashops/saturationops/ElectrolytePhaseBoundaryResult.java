@@ -39,6 +39,8 @@ public final class ElectrolytePhaseBoundaryResult implements Serializable {
   private final double aqueousChargeMolality;
   private final double maximumIonMoleFractionOutsideAqueous;
   private final double maximumLogFugacityResidual;
+  private final double maximumAbsoluteElementBalanceResidual;
+  private final double maximumAbsoluteReactionLogResidual;
 
   /**
    * Creates an immutable phase-boundary result.
@@ -65,6 +67,40 @@ public final class ElectrolytePhaseBoundaryResult implements Serializable {
       int iterations, int flashEvaluations, String lowerTopology, String upperTopology,
       double maximumMaterialBalanceResidual, double maximumPhaseNormalizationResidual, double aqueousChargeMolality,
       double maximumIonMoleFractionOutsideAqueous, double maximumLogFugacityResidual) {
+    this(specification, targetPhase, lowerBound, upperBound, targetPresentAtLowerBound, targetPresentValue,
+        targetPhaseFraction, iterations, flashEvaluations, lowerTopology, upperTopology, maximumMaterialBalanceResidual,
+        maximumPhaseNormalizationResidual, aqueousChargeMolality, maximumIonMoleFractionOutsideAqueous,
+        maximumLogFugacityResidual, 0.0, 0.0);
+  }
+
+  /**
+   * Creates an immutable phase-boundary result with reactive-equilibrium diagnostics.
+   *
+   * @param specification scanned variable
+   * @param targetPhase phase whose appearance or disappearance is bracketed
+   * @param lowerBound final lower numeric bound
+   * @param upperBound final upper numeric bound
+   * @param targetPresentAtLowerBound whether the target is present at the lower bound
+   * @param targetPresentValue bound value at which the system is left
+   * @param targetPhaseFraction target phase fraction at the retained state
+   * @param iterations bisection iterations
+   * @param flashEvaluations complete TP flash evaluations
+   * @param lowerTopology phase topology at the lower bound
+   * @param upperTopology phase topology at the upper bound
+   * @param maximumMaterialBalanceResidual maximum component mole-fraction balance residual
+   * @param maximumPhaseNormalizationResidual maximum phase or beta normalization residual
+   * @param aqueousChargeMolality signed aqueous charge residual in mol/kg water
+   * @param maximumIonMoleFractionOutsideAqueous largest ionic mole fraction outside aqueous phases
+   * @param maximumLogFugacityResidual largest neutral-component cross-phase ln-fugacity residual
+   * @param maximumAbsoluteElementBalanceResidual largest reactive element-balance residual in moles
+   * @param maximumAbsoluteReactionLogResidual largest absolute natural-log reaction residual
+   */
+  public ElectrolytePhaseBoundaryResult(Specification specification, PhaseType targetPhase, double lowerBound,
+      double upperBound, boolean targetPresentAtLowerBound, double targetPresentValue, double targetPhaseFraction,
+      int iterations, int flashEvaluations, String lowerTopology, String upperTopology,
+      double maximumMaterialBalanceResidual, double maximumPhaseNormalizationResidual, double aqueousChargeMolality,
+      double maximumIonMoleFractionOutsideAqueous, double maximumLogFugacityResidual,
+      double maximumAbsoluteElementBalanceResidual, double maximumAbsoluteReactionLogResidual) {
     this.specification = specification;
     this.targetPhase = targetPhase;
     this.lowerBound = lowerBound;
@@ -81,6 +117,8 @@ public final class ElectrolytePhaseBoundaryResult implements Serializable {
     this.aqueousChargeMolality = aqueousChargeMolality;
     this.maximumIonMoleFractionOutsideAqueous = maximumIonMoleFractionOutsideAqueous;
     this.maximumLogFugacityResidual = maximumLogFugacityResidual;
+    this.maximumAbsoluteElementBalanceResidual = maximumAbsoluteElementBalanceResidual;
+    this.maximumAbsoluteReactionLogResidual = maximumAbsoluteReactionLogResidual;
   }
 
   /** @return scanned variable */
@@ -171,5 +209,15 @@ public final class ElectrolytePhaseBoundaryResult implements Serializable {
   /** @return largest neutral-component cross-phase ln-fugacity residual */
   public double getMaximumLogFugacityResidual() {
     return maximumLogFugacityResidual;
+  }
+
+  /** @return largest absolute reactive element-balance residual in moles, or zero for non-reactive systems */
+  public double getMaximumAbsoluteElementBalanceResidual() {
+    return maximumAbsoluteElementBalanceResidual;
+  }
+
+  /** @return largest absolute natural-log reaction residual, or zero for non-reactive systems */
+  public double getMaximumAbsoluteReactionLogResidual() {
+    return maximumAbsoluteReactionLogResidual;
   }
 }

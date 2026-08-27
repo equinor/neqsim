@@ -21,6 +21,8 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass
   private static final long serialVersionUID = 1000;
   /** Logger object for this class. */
   private static final Logger logger = LogManager.getLogger(pHProbe.class);
+  /** Bounded device-level refinements used to certify the final aqueous reaction state. */
+  private static final int MAXIMUM_REACTION_REFINEMENTS = 8;
   /** Persistent identity used only for transient transaction provenance. */
   private String transientStateParticipantId = UUID.randomUUID().toString();
 
@@ -60,20 +62,27 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass
     hasCachedPH = false;
     if (stream != null && stream.getFluid().hasPhaseType("aqueous")) {
       reactiveThermoSystem = stream.getFluid().clone();
-      // reactiveThermoSystem = stream.getFluid().phaseToSystem("aqueous");
+      reactiveThermoSystem = reactiveThermoSystem.phaseToSystem("aqueous");
       reactiveThermoSystem = reactiveThermoSystem.setModel("Electrolyte-CPA-EOS-statoil");
+      reactiveThermoSystem.setNumberOfPhases(1);
+      reactiveThermoSystem.setPhaseType(0, neqsim.thermo.phase.PhaseType.AQUEOUS);
       if (getAlkalinity() > 1e-10) {
         double waterkg = reactiveThermoSystem.getComponent("water").getTotalFlowRate("kg/sec");
         reactiveThermoSystem.addComponent("Na+", waterkg * getAlkalinity() / 1e3);
         reactiveThermoSystem.addComponent("OH-", waterkg * getAlkalinity() / 1e3);
       }
-      if (!reactiveThermoSystem.isChemicalSystem()) {
-        reactiveThermoSystem.chemicalReactionInit();
-        reactiveThermoSystem.setMixingRule(10);
-        reactiveThermoSystem.setMultiPhaseCheck(false);
-      }
+      reactiveThermoSystem.chemicalReactionInit();
+      reactiveThermoSystem.setMixingRule(10);
+      reactiveThermoSystem.setMultiPhaseCheck(false);
       thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
       thermoOps.TPflash();
+      boolean reactionConverged = false;
+      for (int refinement = 0; refinement < MAXIMUM_REACTION_REFINEMENTS && !reactionConverged; refinement++) {
+        reactionConverged = reactiveThermoSystem.getChemicalReactionOperations().solveChemEq(1);
+      }
+      if (!reactionConverged) {
+        throw new IllegalStateException("pH calculation did not close chemical reactions and electroneutrality");
+      }
 
       lastMeasuredPH = reactiveThermoSystem.getPhase("aqueous").getpH();
       lastMeasuredStream = stream;

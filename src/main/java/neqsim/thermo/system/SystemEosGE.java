@@ -544,6 +544,7 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
         && lastHybridLogFugacityResidual <= HYBRID_LOG_FUGACITY_TOLERANCE;
     if (accepted) {
       collapseTraceHybridPhases(Math.max(HYBRID_ACTIVE_PHASE_FRACTION, 100.0 * phaseFractionMinimumLimit));
+      normalizeBeta();
       orderByDensity();
       init(1);
       // Phase implementations may classify any non-gas EOS root as a generic liquid during init. Reassert the

@@ -574,6 +574,12 @@ pHProbe ph = new pHProbe(aqueousStream);
 double phValue = ph.getMeasuredValue("");  // pH
 ```
 
+The probe extracts the stream's aqueous phase and solves it as a single-phase
+`Electrolyte-CPA-EOS-statoil` system. `setAlkalinity(value)` adds NaOH on a
+mmol/kg-water basis. The calculation fails closed if the selected reactions do not satisfy
+aqueous charge, element-balance, and reaction-residual gates after bounded refinement; it does
+not return an uncertified intermediate pH.
+
 A registered concrete local `pHProbe` participates in transient transactions. Its snapshot
 preserves the stream and reactive-system bindings, alkalinity, reaction-calculation scratch
 objects, and the last cached pH input/result. Rollback therefore restores an exact cached reading
