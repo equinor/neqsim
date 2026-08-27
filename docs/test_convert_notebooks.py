@@ -192,7 +192,6 @@ class ConvertNotebooksTest(unittest.TestCase):
                 generated_content,
             )
 
-
     def test_committed_generated_pages_use_front_matter_title_only(self):
         docs_dir = Path(__file__).resolve().parent
         examples_dir = docs_dir / "examples"
@@ -220,7 +219,6 @@ class ConvertNotebooksTest(unittest.TestCase):
                     flags=re.DOTALL,
                 )
                 self.assertNotRegex(body_without_fences, r"(?m)^# ")
-
 
     def test_index_preserves_curated_notebooks(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -1,7 +1,7 @@
 ---
 layout: default
-title: "Transparent field-development screening with NeqSim"
-description: "Notebook for Transparent field-development screening with NeqSim, including NeqSim Python examples and workflow context."
+title: "Transparent field-development screening"
+description: "Executable NeqSim tutorial for unit-safe gas-production profiles, after-tax cash flow, and bounded sensitivities."
 parent: Examples
 nav_order: 1
 ---
