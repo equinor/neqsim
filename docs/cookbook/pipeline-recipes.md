@@ -3,9 +3,10 @@ title: Pipeline Recipes
 description: Quick recipes for pipeline simulation in NeqSim - pressure drop, multiphase flow, drift-flux, two-fluid, slug tracking, three-phase flow, transient dynamics, and terrain effects.
 ---
 
-# Pipeline Recipes
-
-Copy-paste solutions for pipeline calculations and multiphase flow.
+Copy-paste solutions for pipeline calculations and multiphase flow. Treat the
+transient and multiphase recipes as model-screening workflows: verify convergence,
+conservation, mesh and time-step sensitivity, boundary conditions, and validation
+against suitable data before using their results for an engineering decision.
 
 ## Table of Contents
 
@@ -81,7 +82,7 @@ process.run()
 
 # Multiphase results
 print(f"Outlet pressure: {pipe.getOutletStream().getPressure():.2f} bara")
-print(f"Liquid holdup: {pipe.getPressureDrop():.2f} bar")  # Total DP
+print(f"Pressure drop: {pipe.getPressureDrop():.2f} bar")
 ```
 
 ### Two-Fluid Model (Detailed)
@@ -262,7 +263,7 @@ for rate in flow_rates:
 `TwoFluidPipe` solves separate momentum equations for gas and liquid phases with transient time-stepping:
 
 ```python
-import uuid
+from java.util import UUID
 
 TwoFluidPipe = jneqsim.process.equipment.pipeline.TwoFluidPipe
 
@@ -290,10 +291,16 @@ pipe.setSurfaceTemperature(4.0, "C")   # Ambient
 
 # Initialize steady-state
 pipe.run()
+if not pipe.isSteadyStateConverged():
+    if pipe.isSteadyStatePressureFloorLimited():
+        raise RuntimeError("The requested rate is not deliverable")
+    if pipe.isSteadyStateWallClockLimited():
+        raise RuntimeError("Steady initialization hit its wall-clock limit")
+    raise RuntimeError("Steady initialization did not converge")
 print(f"Steady-state liquid inventory: {pipe.getLiquidInventory('m3'):.2f} m³")
 
 # Run transient simulation
-run_id = str(uuid.uuid4())
+run_id = UUID.randomUUID()
 dt = 0.5        # 0.5 second time step
 t_end = 300.0   # 5 minutes total
 
@@ -310,7 +317,19 @@ while time < t_end:
 # Final results
 print(f"Final liquid inventory: {pipe.getLiquidInventory('m3'):.2f} m³")
 print(f"Outlet pressure: {pipe.getOutletStream().getPressure():.2f} bara")
+
+balance = pipe.getLastMassBalanceReport()
+if balance is None:
+    raise RuntimeError("No transient mass-balance report was produced")
+MassPhase = jneqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase
+if not balance.isWithinTolerance(MassPhase.TOTAL, 1.0e-7, 1.0e-8):
+    raise RuntimeError("Transient total-mass balance did not close")
 ```
+
+`runTransient(double, UUID)` requires the Java `UUID` used above; a Python UUID
+or string does not satisfy the overload. The example tolerances are diagnostic
+values for this fixture, not universal solver criteria. Inspect phase-resolved
+residuals and the accepted substep count for the study at hand.
 
 ### Key Parameters for Dynamic Simulation
 
@@ -344,12 +363,13 @@ tf.run()
 dp_bb = inlet.getPressure() - bb.getOutletStream().getPressure()
 dp_tf = inlet.getPressure() - tf.getOutletStream().getPressure()
 print(f"BB dP: {dp_bb:.3f} bar, TF dP: {dp_tf:.3f} bar, ratio: {dp_tf/dp_bb:.2f}")
-# Expect ratio 0.8-1.3 for typical two-phase horizontal flow
+# Do not apply a universal ratio; qualify both models against the same case and data
 ```
 
-> **Note:** For single-phase gas, the ratio should be ~0.98 (excellent agreement).
-> For two-phase flow, agreement varies with gas fraction — ratios of 0.8–1.3 are
-> within typical engineering accuracy for different multiphase correlations.
+> **Interpretation:** Agreement between two NeqSim implementations is a diagnostic, not
+> independent validation. Align fluid, boundary conditions, heat transfer, elevation,
+> discretization, and convergence gates; then compare with measured pressure,
+> temperature, liquid inventory, and flow-regime evidence.
 
 ---
 
@@ -401,7 +421,7 @@ print(f"Average oil holdup: {sum(oil_holdup)/len(oil_holdup):.4f}")
 For detailed slug dynamics, use the Lagrangian slug tracker:
 
 ```python
-import uuid
+from java.util import UUID
 
 # Configure pipe for slug tracking
 pipe = TwoFluidPipe("Slugging Pipeline", inlet)
@@ -410,7 +430,7 @@ pipe.setDiameter(0.15)           # 150 mm (promotes slugging)
 pipe.setNumberOfSections(400)    # Fine grid for slug resolution
 
 # Enable Lagrangian slug tracking
-pipe.setEnableSlugTracking(True)
+pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN)
 
 # Set terrain to promote terrain-induced slugging
 elevations = []
@@ -426,19 +446,24 @@ pipe.setElevationProfile(elevations)
 pipe.run()
 
 # Run transient to observe slug development
-run_id = str(uuid.uuid4())
+run_id = UUID.randomUUID()
 for step in range(600):  # 5 minutes @ 0.5s steps
     pipe.runTransient(0.5, run_id)
 
     # Monitor slugs every 30 seconds
     if step % 60 == 0:
-        slug_count = pipe.getSlugTracker().getSlugCount()
-        avg_slug_length = pipe.getSlugTracker().getAverageSlugLength()
-        slug_frequency = pipe.getSlugTracker().getSlugFrequency()
+        slug_count = pipe.getLagrangianSlugTracker().getSlugCount()
+        avg_slug_length = pipe.getLagrangianSlugTracker().getAverageSlugLength()
+        slug_frequency = pipe.getLagrangianSlugTracker().getSlugFrequency()
         print(f"Time: {step*0.5:.0f}s - Slugs: {slug_count}, "
               f"Avg length: {avg_slug_length:.1f}m, "
               f"Frequency: {slug_frequency:.3f} Hz")
 ```
+
+The default tracker mode is Lagrangian, so its statistics must be read through
+`getLagrangianSlugTracker()`. If `SlugTrackingMode.SIMPLIFIED` is selected,
+use `getSlugTracker()` instead. A zero count is a valid outcome when the selected
+initiation criteria are not met; do not change the case merely to force a slug.
 
 ### Three-Phase Capabilities Summary
 
@@ -659,8 +684,8 @@ pipe = TwoFluidPipe("Flowline-Riser", feed)
 pipe.setLength(5400.0)
 pipe.setDiameter(0.2032)
 
-# Set elevation profile FIRST
-elevation = [...]  # must be set before generateRefinedMesh
+# Set an explicit elevation profile first
+elevation = [0.0] * 100
 pipe.setElevationProfile(elevation)
 
 # Generate refined mesh: 100 base sections, 4x refinement at steep sections
@@ -697,7 +722,7 @@ per macro timestep.
 
 ### Adaptive Timestepping (TwoFluidPipe)
 
-OLGA-style adaptive timestepping provides robustness for challenging geometries (risers, S-bends):
+NeqSim's adaptive transient step control can improve numerical robustness for challenging geometries such as risers and S-bends:
 
 ```python
 pipe = TwoFluidPipe("Subsea Line", feed)
@@ -707,12 +732,13 @@ pipe.setElevationProfile(elevation)
 
 # Enable adaptive timestepping
 pipe.setEnableAdaptiveTimestepping(True)
-pipe.setAdaptiveMaxPressure(200.0)  # bar — reject step if exceeded
+pipe.setAdaptiveMaxPressure(200.0)  # bara — reject a step if exceeded
 
 # Run transient
-import java.util.UUID as UUID
+from java.util import UUID
 run_id = UUID.randomUUID()
-for step in range(n_steps):
+dt = 0.1
+for step in range(10):
     pipe.runTransient(dt, run_id)
     dt_factor = pipe.getAdaptiveDtFactor()  # 1.0 = full CFL, <1 = reduced
 ```
@@ -720,13 +746,13 @@ for step in range(n_steps):
 | Parameter | Method | Default | Description |
 |-----------|--------|---------|-------------|
 | Enable | `setEnableAdaptiveTimestepping(bool)` | `False` | Turn on/off |
-| Pressure ceiling | `setAdaptiveMaxPressure(bar)` | 1000 | Reject step if any section exceeds |
+| Pressure ceiling | `setAdaptiveMaxPressure(bara)` | 1000 | Reject a step if any section exceeds the configured absolute pressure |
 | Monitor | `getAdaptiveDtFactor()` | — | Current dt multiplier (1.0 = full CFL) |
 | Check | `isAdaptiveTimesteppingEnabled()` | — | Query state |
 
 The algorithm: (1) per-step CFL recompute from current velocities, (2) NaN/negative mass
 detection with state rollback, (3) pressure/velocity ceiling checks, (4) gradual dt recovery
-(x1.02 growth per stable step back to 1.0).
+(×1.05 growth per stable step back to 1.0).
 
 ---
 
@@ -785,7 +811,7 @@ outlet_bc = pipe.getOutletBoundaryCondition()
 ### Transient Simulation with Changing Flow Rate
 
 ```python
-import uuid
+from java.util import UUID
 
 # Configure pipe with explicit flow BC
 pipe = TwoFluidPipe("Flowline", inlet_stream)
@@ -802,7 +828,7 @@ pipe.setOutletPressure(30.0, "bara")
 pipe.run()
 
 # Transient loop with flow ramp-up
-run_id = str(uuid.uuid4())
+run_id = UUID.randomUUID()
 for t in range(120):  # 2 minutes
     # Ramp flow from 20 to 50 kg/s over first 60s
     if t < 60:
@@ -852,7 +878,7 @@ print(f"Computed outlet mass flow: {outlet.getFlowRate('kg/sec'):.2f} kg/s")
 Use the `CLOSED` boundary condition or convenience methods for shut-in and pressure surge analysis:
 
 ```python
-import uuid
+from java.util import UUID
 
 pipe = TwoFluidPipe("Pipeline", inlet_stream)
 pipe.setLength(10000)
@@ -868,7 +894,7 @@ print(f"Initial inlet pressure: {initial_P_inlet:.2f} bara")
 # --- Shut-in scenario: close outlet valve ---
 pipe.closeOutlet()  # Convenience method (or: BoundaryCondition.CLOSED)
 
-run_id = str(uuid.uuid4())
+run_id = UUID.randomUUID()
 for t in range(60):  # 1 minute transient
     pipe.runTransient(1.0, run_id)
 
@@ -907,7 +933,7 @@ pipe.closeInlet()
 pipe.openOutlet(1.0, "bara")  # Vent to atmospheric
 
 # Monitor depressurization
-run_id = str(uuid.uuid4())
+run_id = UUID.randomUUID()
 for t in range(300):  # 5 minutes
     pipe.runTransient(1.0, run_id)
 
@@ -1032,7 +1058,6 @@ pipe.setDiameter(0.15)
 pipe.setNumberOfSections(200)
 
 # Enable slug tracking (Lagrangian OLGA-style)
-pipe.setEnableSlugTracking(True)
 pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN)
 
 # Configure Lagrangian tracker for terrain and hydrodynamic slugs
@@ -1133,7 +1158,7 @@ A comprehensive reference for the TwoFluidPipe model covering all flow types, bo
 | Method | Description |
 |--------|-------------|
 | `setEnableAdaptiveTimestepping(boolean)` | Enable/disable OLGA-style adaptive dt |
-| `setAdaptiveMaxPressure(double)` | Pressure ceiling (bar) — reject step if exceeded |
+| `setAdaptiveMaxPressure(double)` | Pressure ceiling (bara) — reject step if exceeded |
 | `getAdaptiveDtFactor()` | Current dt multiplier (1.0 = full CFL) |
 | `isAdaptiveTimesteppingEnabled()` | Query state |
 
