@@ -47,7 +47,7 @@ class Dexpi20ProcessModelPackageRevisionImpactTest {
   }
 
   @Test
-  void separatesDocumentRevisionFromConnectionTopology() throws IOException {
+  void separatesPackageRevisionFromAreaAndConnectionTopology() throws IOException {
     EngineeringDiagramReferenceFixtures.ModelCase fixture = referenceFixture();
     Dexpi20ProcessModelPackageReader.Snapshot baseline = writeAndRead(fixture, "revision-a.zip", "PLANT-30", "REV-A");
     Dexpi20ProcessModelPackageReader.Snapshot revised = writeAndRead(fixture, "revision-b.zip", "PLANT-30", "REV-B");
@@ -59,14 +59,16 @@ class Dexpi20ProcessModelPackageRevisionImpactTest {
     assertEquals("REV-A", impact.getBaselineRevision());
     assertEquals("REV-B", impact.getRevisedRevision());
     assertFalse(impact.isExactPackageMatch());
+    assertNotEquals(impact.getBaselineManifestSha256(), impact.getRevisedManifestSha256());
     assertTrue(impact.isAreaIdentitySetEquivalent());
     assertTrue(impact.isConnectionTopologyEquivalent());
-    assertEquals(4, impact.getChangedAreaCount());
+    assertEquals(0, impact.getChangedAreaCount());
     assertEquals(0, impact.getChangedConnectionCount());
+    assertEquals(4, impact.getAreaChanges().size());
     for (Dexpi20ProcessModelPackageRevisionImpact.AreaChange change : impact.getAreaChanges()) {
-      assertEquals(Dexpi20ProcessModelPackageRevisionImpact.ChangeType.MODIFIED, change.getChangeType());
+      assertEquals(Dexpi20ProcessModelPackageRevisionImpact.ChangeType.UNCHANGED, change.getChangeType());
       assertEquals(change.getBaseline().getAreaId(), change.getRevised().getAreaId());
-      assertNotEquals(change.getBaseline().getFileSha256(), change.getRevised().getFileSha256());
+      assertEquals(change.getBaseline().getFileSha256(), change.getRevised().getFileSha256());
     }
   }
 
