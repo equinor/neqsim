@@ -22,7 +22,7 @@ manually maintained Java method list.
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
 | Trust coverage records | 71 = 20 explicit benchmark + 10 contract-tested non-numerical contracts + 41 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | Promotion candidates are removed only when their machine-readable classification and primary protocol accounting move together |
+| Contract-promotion candidates | 1 (`manageValidationProfile`) | `getCapabilities.phase0EvidenceInventory` | Candidate remains a gap until machine-readable classification and primary protocol accounting move together |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -91,8 +91,9 @@ Phase 0 inventory. The exact current source contains 67 JUnit test classes under
 `src/test/java/neqsim/mcp`, 94 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
-recounts its source tree and fails if the manifest drifts; the focused harness is separately
-published in the inventory and executed by the read-only `MCP protocol qualification` workflow.
+recounts its source tree and fails if the manifest drifts; the focused harnesses are separately
+executed by the read-only `MCP protocol qualification` workflow. The validation-profile harness
+adds bounded software-contract scenarios but does not alter the frozen primary-scenario count.
 These counts identify evidence locations; they are not a claim that a test ran or passed. Exact-head
 CI and recorded command output remain the execution evidence.
 
@@ -188,15 +189,34 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-freezes inventory 1.15, 20/10/41 coverage accounting, and `inspectApi=CONTRACT_TESTED`. The primary
-`test_mcp_server.py` independently includes `inspectApi` in its ten bounded non-numerical contracts
-and requires 41 confirmed gaps. The read-only `MCP protocol qualification` workflow builds the
-exact NeqSim/MCP artifacts and executes the focused scenarios on pull requests and `master`.
+freezes inventory 1.16 while preserving 20/10/41 coverage accounting and
+`inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
+in its ten bounded non-numerical contracts and requires 41 confirmed gaps. The read-only
+`MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
+focused scenarios on pull requests and `master`.
 
 This is discovery-contract evidence only. The inspected method is not executed, arbitrary JVM
 reflection remains outside the accepted boundary, and no thermodynamic/process accuracy or
 engineering applicability claim is added. The detailed evidence and safety boundary are recorded
 in `docs/evidence/API_INSPECTION_CONTRACT.md`.
+
+### Promotion-ready validation-profile contract
+
+Inventory version 1.16 records `manageValidationProfile` as the sole promotion-ready candidate for
+`CONTRACT_TESTED` while deliberately keeping its current coverage record as `CONFIRMED_GAP` and
+retaining global accounting at 20/10/41. Merged PR #3266 already established the bounded Java and
+real packaged-MCP evidence: built-in profile discovery, structural preservation of validation
+metadata, isolated custom-profile create/activate/read/delete lifecycle with recovery to `generic`,
+equipment-standard retrieval, and fail-closed mutation errors. The focused protocol harness now
+also verifies the candidate metadata through `getCapabilities`.
+
+This candidate is software/governance evidence only. The named standards and design factors are
+not asserted to be current, complete, legally applicable, licensed for redistribution, or correct
+for a real facility; `validateWithProfile` scientific correctness, persistence, multi-tenant
+isolation, external authorization, and plant authority remain outside the evidence boundary. A
+later promotion must move the machine-readable coverage status and primary packaged-protocol
+classification accounting together on one exact validated head. See
+`docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
 Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative
 for an executed calculation. The evidence inventory is advisory discovery metadata; it does not
@@ -238,13 +258,14 @@ graph, tool implementation bindings, factory-backed equipment, report paths, tes
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
 every published tool. Ten non-numerical discovery, catalog, lookup, progress, trust-retrieval,
-governance, and API-inspection tools are contract-tested, leaving 41 confirmed trust gaps and no
-pending contract-promotion candidate.
+governance, and API-inspection tools are contract-tested, leaving 41 confirmed trust gaps and one
+promotion-ready `manageValidationProfile` candidate.
 
-Follow-up work should audit the remaining confirmed gaps and promote only the next one supported by
-current source and concrete bounded evidence. Explicit numeric component, energy, and facility-wide
-conservation/report gaps remain separate work. Later-phase campaign criteria remain incomplete until
-their own merged acceptance evidence exists.
+Follow-up work should atomically promote that candidate only after changing the primary packaged
+protocol accounting and coverage status together, then continue auditing remaining confirmed gaps.
+Explicit numeric component, energy, and facility-wide conservation/report gaps remain separate
+work. Later-phase campaign criteria remain incomplete until their own merged acceptance evidence
+exists.
 
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing
