@@ -148,6 +148,26 @@ area XML, and immutable material/energy/signal connection evidence. It deliberat
 files, reconstruct or execute a `ProcessModel`, reinterpret manifest-only connections as native
 DEXPI Process relationships, or change the engineering approval state.
 
+Compare two valid snapshots when a controlled revision needs machine-readable intake evidence:
+
+```java
+Dexpi20ProcessModelPackageRevisionImpact impact =
+    Dexpi20ProcessModelPackageRevisionImpact.compare(baselineSnapshot, revisedSnapshot);
+if (!impact.isConnectionTopologyEquivalent()) {
+  Files.write(Paths.get("facility-process-model.revision-impact.json"),
+      impact.toJson().getBytes(StandardCharsets.UTF_8));
+}
+```
+
+The revision-impact report classifies every stable area and material/energy/signal connection as
+`ADDED`, `REMOVED`, `MODIFIED`, or `UNCHANGED`. Exact package, manifest, canonical, and
+per-area XML SHA-256 evidence remains separate from stable area-identity and assessed connection
+equivalence. This prevents a controlled revision or case change from being mislabeled as a
+topology change while still retaining byte-level document evidence. Comparison requires the same
+plant identity and always returns `REVIEW_REQUIRED`,
+`engineeringReviewRequired=true`, `fitnessForConstruction=false`, and
+`nativeWholePlantDexpiExchange=false`; it is revision evidence, not an MOC decision or approval.
+
 The single-area assessed path reports energy and signal connections, multi-area `ProcessModel`
 hierarchy, controlled document/sheet semantics, and drawing graphics as unsupported scopes. These
 warnings do not hide a supported material-topology error; missing, unexpected, unresolved-port, and
