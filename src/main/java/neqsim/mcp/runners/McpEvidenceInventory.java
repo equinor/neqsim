@@ -253,15 +253,15 @@ public final class McpEvidenceInventory {
   /** Builds evidence-qualified candidates for a future atomic contract-status promotion. */
   private static JsonObject buildContractPromotionCandidates() {
     JsonObject candidates = new JsonObject();
-    candidates.add("manageValidationProfile",
-        contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE",
-            new String[] { "src/main/java/neqsim/mcp/runners/ValidationProfileRunner.java",
-                "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
-                "src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java",
-                "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
-                "neqsim-mcp-server/test_validation_profile_protocol.py",
-                "neqsim-mcp-server/docs/evidence/VALIDATION_PROFILE_CONTRACT.md" },
-            "Built-in discovery, structural validation metadata preservation, isolated custom-profile lifecycle and recovery, equipment-standard retrieval, fail-closed mutation errors, and packaged-MCP transport are contract-tested; this does not validate standards currency, legal applicability or licensing, validator scientific correctness, deployment isolation or durability, external authorization, or plant authority"));
+    candidates.add("manageValidationProfile", contractPromotionCandidate(
+        "NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE",
+        new String[] { "src/main/java/neqsim/mcp/runners/ValidationProfileRunner.java",
+            "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
+            "src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java",
+            "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+            "neqsim-mcp-server/test_validation_profile_protocol.py",
+            "neqsim-mcp-server/docs/evidence/VALIDATION_PROFILE_CONTRACT.md" },
+        "Built-in discovery, structural validation metadata preservation, isolated custom-profile lifecycle and recovery, equipment-standard retrieval, fail-closed mutation errors, and packaged-MCP transport are contract-tested; this does not validate standards currency, legal applicability or licensing, validator scientific correctness, deployment isolation or durability, external authorization, or plant authority"));
     return candidates;
   }
 
