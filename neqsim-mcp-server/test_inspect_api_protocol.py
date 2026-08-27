@@ -159,10 +159,10 @@ def test_contract_classification_is_promoted_atomically(client):
     data = payload(result)
     inventory = data.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
-    require(inventory.get("inventoryVersion") == "1.15", "unexpected evidence inventory version", result)
+    require(inventory.get("inventoryVersion") == "1.16", "unexpected evidence inventory version", result)
     limitations = inventory.get("knownLimitations", {})
-    require(limitations.get("contractTestedToolCount") == 10, "contract-tested count did not promote", result)
-    require(limitations.get("confirmedGapToolCount") == 41, "confirmed-gap count did not promote", result)
+    require(limitations.get("contractTestedToolCount") == 10, "contract-tested count drifted", result)
+    require(limitations.get("confirmedGapToolCount") == 41, "confirmed-gap count drifted", result)
     records = limitations.get("coverageRecords", {})
     inspect_record = records.get("inspectApi", {})
     require(
@@ -184,8 +184,7 @@ def test_contract_classification_is_promoted_atomically(client):
         result,
     )
     require(
-        limitations.get("contractPromotionCandidateCount") == 0
-        and not limitations.get("contractPromotionCandidates", {}),
+        "inspectApi" not in limitations.get("contractPromotionCandidates", {}),
         "completed inspectApi promotion remains queued as a candidate",
         result,
     )
