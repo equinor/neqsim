@@ -1059,7 +1059,6 @@ pipe.setNumberOfSections(200)
 
 # Enable slug tracking (Lagrangian OLGA-style)
 pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN)
-pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN)
 
 # Configure Lagrangian tracker for terrain and hydrodynamic slugs
 pipe.configureLagrangianSlugTracking(True, True, True)
