@@ -2,8 +2,8 @@
 
 This dependency-free harness starts the packaged NeqSim MCP server over STDIO and
 checks built-in profile discovery, bounded validation metadata, an isolated custom-profile lifecycle,
-and fail-closed error behavior. It qualifies software-contract behavior only; it
-is not scientific, regulatory, authorization, or plant-control validation.
+fail-closed error behavior, and the machine-readable promotion-candidate state. It qualifies
+software-contract behavior only; it is not scientific, regulatory, authorization, or plant-control validation.
 """
 import json
 import subprocess
@@ -223,6 +223,36 @@ def test_mutation_errors_fail_closed(client):
     require("UNKNOWN_ACTION" in error_codes(unknown), "unknown-action error code drifted", unknown)
 
 
+def test_promotion_candidate_is_transport_qualified(client):
+    result = client.call_tool("getCapabilities", {})
+    data = payload(result)
+    inventory = data.get("phase0EvidenceInventory")
+    require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
+    require(inventory.get("inventoryVersion") == "1.16", "unexpected evidence inventory version", result)
+    limitations = inventory.get("knownLimitations", {})
+    require(limitations.get("contractTestedToolCount") == 10, "contract-tested count changed prematurely", result)
+    require(limitations.get("confirmedGapToolCount") == 41, "confirmed-gap count changed prematurely", result)
+    records = limitations.get("coverageRecords", {})
+    profile_record = records.get("manageValidationProfile", {})
+    require(
+        profile_record.get("coverageStatus") == "CONFIRMED_GAP",
+        "manageValidationProfile was promoted before primary protocol accounting",
+        result,
+    )
+    candidate = limitations.get("contractPromotionCandidates", {}).get("manageValidationProfile", {})
+    require(candidate.get("targetCoverageStatus") == "CONTRACT_TESTED", "candidate target drifted", result)
+    require(candidate.get("promotionReady") is True, "validation-profile candidate is not promotion-ready", result)
+    require(
+        candidate.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE",
+        "candidate applicability boundary drifted",
+        result,
+    )
+    evidence = json.dumps(candidate.get("contractEvidenceSources", []))
+    require("ValidationProfileRunnerTest.java" in evidence, "candidate omits Java regression evidence", result)
+    require("test_validation_profile_protocol.py" in evidence, "candidate omits packaged MCP evidence", result)
+
+
 def main():
     client = McpClient()
     try:
@@ -231,6 +261,7 @@ def main():
         test_validation_metadata_is_preserved(client)
         test_custom_profile_lifecycle(client)
         test_mutation_errors_fail_closed(client)
+        test_promotion_candidate_is_transport_qualified(client)
     finally:
         try:
             if client.proc is not None:
@@ -238,7 +269,7 @@ def main():
                 client.validation_profile({"action": "setActiveProfile", "profileName": "generic"})
         finally:
             client.close()
-    print("manageValidationProfile real-MCP qualification: 4/4 scenarios passed")
+    print("manageValidationProfile real-MCP qualification: 5/5 scenarios passed")
     return 0
 
 
