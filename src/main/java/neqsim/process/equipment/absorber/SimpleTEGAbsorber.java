@@ -513,14 +513,17 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * rich TEG outlet density (kg/m3).
    * </p>
    *
-   * @return gas load factor in m/s
+   * @return gas load factor in m/s, or 0 if the liquid density does not exceed the gas density
    */
   @Override
   public double getGasLoadFactor() {
-    double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
     double vs = getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea;
     double gasDensity = getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
     double liquidDensity = getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    if (liquidDensity <= gasDensity) {
+      return 0.0;
+    }
     return vs * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
   }
 

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -131,21 +132,43 @@ public class AbsorptionColumn extends DistillationColumn {
    * separators and scrubbers.
    * </p>
    *
-   * @return gas load factor in m/s, or 0 if the gas or liquid outlet streams are not initialized
+   * @return gas load factor in m/s, or 0 if the gas or liquid outlet streams are not initialized, or if the liquid
+   * density does not exceed the gas density
    */
   public double getGasLoadFactor() {
     double vs = getGasSuperficialVelocity();
     if (vs <= 0.0 || getLiquidOutStream() == null || getLiquidOutStream().getThermoSystem() == null) {
       return 0.0;
     }
-    getGasOutStream().getThermoSystem().initPhysicalProperties();
-    getLiquidOutStream().getThermoSystem().initPhysicalProperties();
+    getGasOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    getLiquidOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double gasDensity = getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
-    double liquidDensity = getLiquidOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
-    if (liquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
-      liquidDensity = DEFAULT_LIQUID_DENSITY;
+    double liquidDensity = resolveLiquidDensityForGasLoad(gasDensity,
+        getLiquidOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+    if (gasDensity <= 0.0 || Double.isNaN(liquidDensity)) {
+      return 0.0;
     }
     return vs * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
+  }
+
+  /**
+   * Applies the near-dry density fallback used by the gas-load-factor calculations and returns the liquid density to
+   * use, or {@link Double#NaN} when the (possibly substituted) liquid density does not exceed the gas density, which
+   * would otherwise produce a negative or zero denominator.
+   *
+   * @param gasDensity gas outlet density in kg/m3
+   * @param liquidDensity raw liquid outlet density in kg/m3
+   * @return the liquid density to use in kg/m3, or {@link Double#NaN} if unusable
+   */
+  private static double resolveLiquidDensityForGasLoad(double gasDensity, double liquidDensity) {
+    double effectiveLiquidDensity = liquidDensity;
+    if (effectiveLiquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
+      effectiveLiquidDensity = DEFAULT_LIQUID_DENSITY;
+    }
+    if (effectiveLiquidDensity <= gasDensity) {
+      return Double.NaN;
+    }
+    return effectiveLiquidDensity;
   }
 
   /**
@@ -219,13 +242,14 @@ public class AbsorptionColumn extends DistillationColumn {
     if (maxKs <= 0.0) {
       return 0.0;
     }
-    getGasOutStream().getThermoSystem().initPhysicalProperties();
-    getLiquidOutStream().getThermoSystem().initPhysicalProperties();
+    getGasOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    getLiquidOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double gasFlowM3s = getGasOutStream().getThermoSystem().getFlowRate("m3/sec");
     double gasDensity = getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
-    double liquidDensity = getLiquidOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
-    if (liquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
-      liquidDensity = DEFAULT_LIQUID_DENSITY;
+    double liquidDensity = resolveLiquidDensityForGasLoad(gasDensity,
+        getLiquidOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+    if (gasDensity <= 0.0 || Double.isNaN(liquidDensity)) {
+      return 0.0;
     }
     double vsMax = maxKs * Math.sqrt((liquidDensity - gasDensity) / gasDensity);
     if (vsMax <= 0.0) {
