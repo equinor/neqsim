@@ -2,6 +2,7 @@ package neqsim.chemicalreactions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -12,6 +13,8 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhasePitzer;
+import neqsim.thermo.phase.PitzerParameterCoverage;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
@@ -26,6 +29,29 @@ class ReactiveElectrolyteEquilibriumTest extends neqsim.NeqSimTest {
   void carbonateFlashClosesForElectrolyteEosAndGe() throws Exception {
     assertReactiveFlashContract(createPitzerSystem());
     assertReactiveFlashContract(createElectrolyteCpaSystem());
+  }
+
+  /** Reactive Pitzer diagnostics expose unqualified acid-base interactions without perturbing the flash kernel. */
+  @Test
+  void pitzerCarbonateFlashReportsMissingReactionInteraction() {
+    SystemPitzer system = (SystemPitzer) createPitzerSystem();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+
+    PhasePitzer aqueous = (PhasePitzer) system.getGeLiquidPhase();
+    assertTrue(aqueous.getPitzerParameterCoverage().isComplete());
+    PitzerParameterCoverage reactionCoverage = aqueous.getPitzerReactionParameterCoverage();
+
+    assertFalse(reactionCoverage.isComplete());
+    assertTrue(reactionCoverage.getActiveCations().contains("H3O+"));
+    assertTrue(reactionCoverage.getActiveAnions().contains("HCO3-"));
+    assertTrue(reactionCoverage.getMissingBinaryPairs().contains("H3O+|HCO3-"));
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        aqueous::requireCompletePitzerReactionParameterCoverage);
+    assertEquals(reactionCoverage.formatDiagnostic(), exception.getMessage());
+
+    operations.TPflash();
+    assertEquals(reactionCoverage.formatDiagnostic(), aqueous.getPitzerReactionParameterCoverage().formatDiagnostic());
   }
 
   private static void assertReactiveFlashContract(SystemInterface system) throws Exception {

@@ -839,6 +839,27 @@ public class PhasePitzer extends PhaseGE {
    * @return immutable deterministic parameter-coverage diagnostic
    */
   public PitzerParameterCoverage getPitzerParameterCoverage() {
+    return getPitzerParameterCoverage(false);
+  }
+
+  /**
+   * Audits Pitzer interactions for every active ion, including acid-base species created by the reaction solver.
+   *
+   * <p>
+   * Unlike {@link #getPitzerParameterCoverage()}, this explicit diagnostic includes {@code H3O+}, {@code OH-},
+   * {@code HCO3-}, and {@code CO3--}. It is intended for converged reactive states: trial compositions inside the
+   * reaction solver are not a stable parameter topology. The result is deliberately calculated on demand and does not
+   * add work to the Pitzer property kernel or to non-electrolyte models.
+   * </p>
+   *
+   * @return immutable deterministic reaction-species parameter-coverage diagnostic
+   */
+  public PitzerParameterCoverage getPitzerReactionParameterCoverage() {
+    return getPitzerParameterCoverage(true);
+  }
+
+  /** Builds a primary-salt or complete reactive-ion coverage diagnostic. */
+  private PitzerParameterCoverage getPitzerParameterCoverage(boolean includeReactionSpecies) {
     if (definedBinaryPairs == null || definedThetaPairs == null || definedPsiTuples == null) {
       ensureDefinitionSets();
       parametersLoaded = false;
@@ -847,14 +868,17 @@ public class PhasePitzer extends PhaseGE {
       loadParametersFromDatabase();
     }
 
-    long fingerprint = activeTopologyFingerprint();
-    if (cachedCoverage != null && fingerprint == cachedCoverageFingerprint
-        && parameterDefinitionRevision == cachedCoverageRevision) {
-      return cachedCoverage;
+    long fingerprint = 0L;
+    if (!includeReactionSpecies) {
+      fingerprint = activeTopologyFingerprint();
+      if (cachedCoverage != null && fingerprint == cachedCoverageFingerprint
+          && parameterDefinitionRevision == cachedCoverageRevision) {
+        return cachedCoverage;
+      }
     }
 
-    List<Integer> cationIndexes = activeIonIndexes(true);
-    List<Integer> anionIndexes = activeIonIndexes(false);
+    List<Integer> cationIndexes = activeIonIndexes(true, includeReactionSpecies);
+    List<Integer> anionIndexes = activeIonIndexes(false, includeReactionSpecies);
     List<String> activeCations = componentNames(cationIndexes);
     List<String> activeAnions = componentNames(anionIndexes);
     List<String> missingBinary = new ArrayList<String>();
@@ -872,11 +896,14 @@ public class PhasePitzer extends PhaseGE {
     findMissingMixedInteractions(cationIndexes, anionIndexes, missingTheta, missingPsi);
     findMissingMixedInteractions(anionIndexes, cationIndexes, missingTheta, missingPsi);
 
-    cachedCoverage = new PitzerParameterCoverage(parameterDatasetId, activeCations, activeAnions, missingBinary,
-        missingTheta, missingPsi);
-    cachedCoverageFingerprint = fingerprint;
-    cachedCoverageRevision = parameterDefinitionRevision;
-    return cachedCoverage;
+    PitzerParameterCoverage coverage = new PitzerParameterCoverage(parameterDatasetId, activeCations, activeAnions,
+        missingBinary, missingTheta, missingPsi);
+    if (!includeReactionSpecies) {
+      cachedCoverage = coverage;
+      cachedCoverageFingerprint = fingerprint;
+      cachedCoverageRevision = parameterDefinitionRevision;
+    }
+    return coverage;
   }
 
   /**
@@ -886,6 +913,18 @@ public class PhasePitzer extends PhaseGE {
    */
   public void requireCompletePitzerParameterCoverage() {
     PitzerParameterCoverage coverage = getPitzerParameterCoverage();
+    if (!coverage.isComplete()) {
+      throw new IllegalStateException(coverage.formatDiagnostic());
+    }
+  }
+
+  /**
+   * Requires complete Pitzer interaction coverage for every active ion in a converged reactive state.
+   *
+   * @throws IllegalStateException when one or more required reaction-species interactions are absent
+   */
+  public void requireCompletePitzerReactionParameterCoverage() {
+    PitzerParameterCoverage coverage = getPitzerReactionParameterCoverage();
     if (!coverage.isComplete()) {
       throw new IllegalStateException(coverage.formatDiagnostic());
     }
@@ -1563,13 +1602,13 @@ public class PhasePitzer extends PhaseGE {
    * @param positive {@code true} for cations, {@code false} for anions
    * @return component indexes whose molality exceeds the active-ion threshold
    */
-  private List<Integer> activeIonIndexes(boolean positive) {
+  private List<Integer> activeIonIndexes(boolean positive, boolean includeReactionSpecies) {
     List<Integer> indexes = new ArrayList<Integer>();
     double activeMoles = ACTIVE_ION_MOLALITY * getSolventWeight();
     for (int i = 0; i < numberOfComponents; i++) {
       double charge = getComponent(i).getIonicCharge();
       boolean requestedSign = positive ? charge > 0.0 : charge < 0.0;
-      if (requestedSign && isPrimarySaltCoverageSpecies(componentName(i))
+      if (requestedSign && (includeReactionSpecies || isPrimarySaltCoverageSpecies(componentName(i)))
           && getComponent(i).getNumberOfMolesInPhase() > activeMoles) {
         indexes.add(i);
       }
