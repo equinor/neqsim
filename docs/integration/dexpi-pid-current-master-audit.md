@@ -187,7 +187,7 @@ licensed standards, a named external tool, or accountable engineering review.
 | Public DEXPI/pyDEXPI validation | Partial | Bundled schema, a pinned DEXPIViewer runner/baseline, pyDEXPI import helper, and internal fixtures exist; the reviewed external baseline is not clean and exact-version execution must be rerun per release/reference case |
 | Commercial CAE qualification | External | Evidence template exists; observed named-product/version import, export, semantic diff and accountable review are mandatory |
 | Executed reference workflows | Partial | Saved notebooks and CI workflows exist; the full realistic multi-area, recycle, isolation, relief, flare, cross-sheet, revision-delta acceptance workflow remains a gap |
-| Performance and completion release gate | Gap | Representative export/import/render/revision benchmarks and the final independent current-master audit are not complete |
+| Performance and completion release gate | Partial | A synthetic multi-area harness records deterministic DEXPI package export/intake, native SVG/PDF rendering, package revision, and controlled-document impact timings against conservative CI median budgets. Comparable-runner baseline history and the final independent current-master audit remain incomplete |
 
 ## Dependency-ordered next work
 
@@ -200,6 +200,7 @@ invented standards mappings are not acceptable substitutes.
 
 Independent remaining work includes reviewed reconstruction of assessed area exchanges into a runnable model, native
 whole-plant Process hierarchy and native energy/information mappings beyond manifest-only package evidence, accountable completion evidence for every flagged table/register/study and any revision-MOC decision, broader P&ID object coverage, a reviewed visual-reference corpus,
-fresh exact-version external DEXPIViewer execution, and named commercial-CAE qualification. These
+fresh exact-version external DEXPIViewer execution, named commercial-CAE qualification, and
+comparable-runner performance history beyond the synthetic regression gate. These
 items must retain legacy DOT/Graphviz, native DEXPI 2.0, and Proteus/P&ID compatibility and must not
 be reported as standards conformance or drawing approval without accountable evidence.
