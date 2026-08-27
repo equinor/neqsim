@@ -26,6 +26,9 @@
  * defensive exact-area XML and independently assessed connection evidence</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageRevisionImpact} - Deterministic assessed
  * package, area-document, and material/energy/signal connection revision evidence</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageDocumentImpact} - Fail-closed projection of
+ * assessed package changes onto controlled document, drawing, sheet, designation, layout, table, and study review
+ * scopes</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionWriter} - Opt-in native DEXPI Core graphical
  * projection</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionAssessment} - Deterministic inspection of

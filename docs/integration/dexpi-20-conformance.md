@@ -168,6 +168,32 @@ plant identity and always returns `REVIEW_REQUIRED`,
 `engineeringReviewRequired=true`, `fitnessForConstruction=false`, and
 `nativeWholePlantDexpiExchange=false`; it is revision evidence, not an MOC decision or approval.
 
+Project assessed package changes onto independently regenerated controlled document revisions when
+the handover must identify every affected drawing and sheet without reconstructing a simulation:
+
+```java
+Dexpi20ProcessModelPackageDocumentImpact documentImpact =
+    Dexpi20ProcessModelPackageDocumentImpact.project(
+        impact, baselineDocumentSet, revisedDocumentSet);
+if (!documentImpact.isProjectionComplete()) {
+  throw new IllegalStateException(documentImpact.toJson());
+}
+Files.write(Paths.get("facility-process-model.document-impact.json"),
+    documentImpact.toJson().getBytes(StandardCharsets.UTF_8));
+```
+
+The cross-artifact report maps changed stable area and material/energy/signal connection identities
+through both controlled document revisions, including reciprocal off-page connector views. It also
+detects semantic-object, sheet-content, reviewed-designation, and persistent-layout changes and
+lists coordinated review scopes for controlled documents, drawings, sheets, designation/layout
+registers, operating-case tables, information registers, and engineering studies. An area or
+connection identity absent from both document revisions produces `INCOMPLETE`, never a silent
+success. Revision-only package evidence does not invent sheet impact.
+
+This report remains `REVIEW_REQUIRED` and not fit for construction. Its review-scope list is a
+deterministic coordination aid, not proof that a table, study, MOC process, external DEXPI validator,
+or accountable drawing review has been completed.
+
 The single-area assessed path reports energy and signal connections, multi-area `ProcessModel`
 hierarchy, controlled document/sheet semantics, and drawing graphics as unsupported scopes. These
 warnings do not hide a supported material-topology error; missing, unexpected, unresolved-port, and
