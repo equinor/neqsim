@@ -1159,7 +1159,7 @@ A comprehensive reference for the TwoFluidPipe model covering all flow types, bo
 | Method | Description |
 |--------|-------------|
 | `setEnableAdaptiveTimestepping(boolean)` | Enable/disable OLGA-style adaptive dt |
-| `setAdaptiveMaxPressure(double)` | Pressure ceiling (bar) — reject step if exceeded |
+| `setAdaptiveMaxPressure(double)` | Pressure ceiling (bara) — reject step if exceeded |
 | `getAdaptiveDtFactor()` | Current dt multiplier (1.0 = full CFL) |
 | `isAdaptiveTimesteppingEnabled()` | Query state |
 
