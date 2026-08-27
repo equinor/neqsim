@@ -42,13 +42,10 @@ class InterfacialPropertiesDocumentationTest {
     int gas = fluid.getPhaseNumberOfPhase("gas");
 
     fluid.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "cDFT");
-    assertInstanceOf(CDFTSurfaceTension.class,
-        fluid.getInterphaseProperties().getSurfaceTensionModel(gas));
+    assertInstanceOf(CDFTSurfaceTension.class, fluid.getInterphaseProperties().getSurfaceTensionModel(gas));
 
-    fluid.getInterphaseProperties()
-        .setInterfacialTensionModel("gas", "oil", "Classical DFT");
-    assertInstanceOf(CDFTSurfaceTension.class,
-        fluid.getInterphaseProperties().getSurfaceTensionModel(gas));
+    fluid.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "Classical DFT");
+    assertInstanceOf(CDFTSurfaceTension.class, fluid.getInterphaseProperties().getSurfaceTensionModel(gas));
   }
 
   @Test
