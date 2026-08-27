@@ -2008,6 +2008,39 @@ qualification cost without placing a timing threshold on shared runners. Electro
 phase-boundary calculation, ion confinement, and Pitzer parameterization remain
 outside this neutral-fluid matrix.
 
+#### 6.4.3 PR Sour-Gas Three-Phase Qualification
+
+The sour-gas regression uses the classic PR mixing rule with a synthetic overall
+composition of 49.88 mol methane, 9.87 mol CO2, and 40.22 mol H2S, normalized from a
+99.97 mol total. It is a solver qualification of the existing enhanced multiphase
+path, not an experimental validation of the predicted phase boundary or phase
+fractions. Temperature is in kelvin and pressure is absolute bar.
+
+Fresh flashes at 202 K/47 bara, 205 K/50 bara, and 208 K/53 bara must produce one
+GAS phase and two compositionally distinct OIL phases. Each endpoint requires finite,
+bounded phase fractions and compositions, phase and beta normalization within
+`1e-10`, component material balance within `1e-10`, and maximum cross-phase
+log-fugacity residual below `1e-8`. The enhanced three-phase endpoint must also have
+lower Gibbs energy than the ordinary two-phase endpoint at the same state. This last
+comparison documents why `setEnhancedMultiPhaseCheck(true)` is required for this
+qualification instead of silently treating the ordinary converged split as globally
+stable.
+
+At the interior 205 K/50 bara point, the complete three-phase endpoint must be
+recovered from an initial beta of `1e-12`. Moving the same system to 49 bara must
+remove the second liquid while preserving closure; returning to 50 bara must restore
+the cold-flash beta, compressibility factors, compositions, and Gibbs energy. An
+immediate repeated flash must reproduce that result within `1e-10`, guarding both
+phase appearance/disappearance and stale-state behavior.
+
+This deterministic matrix replaces a 25,551-state slow scan that swallowed every
+flash exception and ended with the tautology `threePhaseCount >= 0`. The focused
+six-test sour-gas class completed in 0.694-0.888 s across local runs, including the new
+qualification, while adding enforceable thermodynamic acceptance gates. Production code, public
+APIs, model parameters, and runtime behavior are unchanged, so no production speedup
+is claimed. The scope is limited to PR; SRK and experimental sour-gas tie-line
+validation remain separate model-qualification work.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
