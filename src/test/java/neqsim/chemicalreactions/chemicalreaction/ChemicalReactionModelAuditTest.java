@@ -33,8 +33,14 @@ class ChemicalReactionModelAuditTest {
     assertTrue(pitzerAudit.getReactionCount() > 0);
     assertTrue(pitzerAudit.hasValidatedEvidenceForAllActiveReactions());
     assertTrue(pitzerAudit.getReactionsWithoutValidatedEvidence().isEmpty());
+    pitzerAudit.requireValidatedEvidenceForAllActiveReactions();
     assertFalse(cpaAudit.hasValidatedEvidenceForAllActiveReactions());
     assertTrue(cpaAudit.getReactionsWithoutValidatedEvidence().contains("CO2water"));
+    IllegalStateException validationFailure =
+        assertThrows(IllegalStateException.class, cpaAudit::requireValidatedEvidenceForAllActiveReactions);
+    assertTrue(validationFailure.getMessage().contains("source 'standard'"));
+    assertTrue(validationFailure.getMessage().contains("MOLE_FRACTION"));
+    assertTrue(validationFailure.getMessage().contains("CO2water"));
     assertFalse(comparison.hasSameReactionDataSource());
     assertFalse(comparison.hasSameReactionConcentrationBasis());
     assertTrue(comparison.getReactionsOnlyInFirst().isEmpty());
@@ -43,6 +49,12 @@ class ChemicalReactionModelAuditTest {
     assertTrue(comparison.getParameterDifferences().contains("carbonate"));
     assertTrue(comparison.getParameterDifferences().contains("waterreac"));
     assertFalse(comparison.isEquivalent());
+    IllegalStateException comparisonFailure =
+        assertThrows(IllegalStateException.class, comparison::requireEquivalent);
+    assertTrue(comparisonFailure.getMessage().contains("sameReactionDataSource=false"));
+    assertTrue(comparisonFailure.getMessage().contains("sameReactionConcentrationBasis=false"));
+    assertTrue(comparisonFailure.getMessage().contains("CO2water"));
+    ChemicalReactionModelAudit.compare(cpaAudit, cpaAudit).requireEquivalent();
     assertNotNull(findReaction(cpaAudit, "CO2water"));
     assertEquals(ChemicalReactionValidationStatus.VALIDATED,
         findReaction(pitzerAudit, "CO2water").getValidationStatus());
@@ -62,6 +74,7 @@ class ChemicalReactionModelAuditTest {
 
     assertTrue(audit.hasValidatedEvidenceForAllActiveReactions());
     assertTrue(audit.getReactionsWithoutValidatedEvidence().isEmpty());
+    audit.requireValidatedEvidenceForAllActiveReactions();
     assertEquals(ChemicalReactionValidationStatus.VALIDATED, findReaction(audit, "water-H2S").getValidationStatus());
     assertNull(findReaction(audit, "water-HS"));
     assertThrows(UnsupportedOperationException.class, () -> audit.getReactionsWithoutValidatedEvidence().clear());
