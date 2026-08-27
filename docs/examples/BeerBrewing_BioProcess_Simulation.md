@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`BeerBrewing_BioProcess_Simulation.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb).
 
 ---
-
 
 A rigorous, step-by-step thermodynamic and kinetic simulation of the beer brewing process
 using NeqSim's bio-processing equipment and the **CPA equation of state** for accurate
@@ -2396,7 +2394,7 @@ recipe), here's a recap of the NeqSim `ProcessSystem` we built:
 ### Further Reading
 
 - [NeqSim Bio-Processing Documentation](../process/bioprocessing.md)
-- [NeqSim Thermodynamic Models](../thermo/thermodynamic_models)
+- [NeqSim Thermodynamic Models](../thermo/equations-of-state.md)
 - [CPA Equation of State](https://en.wikipedia.org/wiki/Cubic-plus-association_equation_of_state)
 
 ## Step 17 — Bridging Brew Day and Thermodynamics: ABV from First Principles
@@ -4103,3 +4101,4 @@ density/VLE data (analogous to the glucose fitting shown above) to improve
 multi-sugar phase equilibrium predictions.
 
 *Skaal! — E.C. Dahls G.O.D.S. NEIPA successfully simulated with NeqSim on Grainfather G30v3*
+

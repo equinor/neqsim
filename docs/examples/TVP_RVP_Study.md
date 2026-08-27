@@ -6,7 +6,6 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`TVP_RVP_Study.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb)
@@ -27,7 +26,6 @@ nav_order: 1
 # 4. RVP_ASTM_D6377 = 0.834 × VPCR4
 # 5. Stabilized crude has lower RVP than unstabilized
 ```
-
 
 ## A Comprehensive Analysis Using NeqSim
 

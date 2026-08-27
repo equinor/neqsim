@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MultiphaseFlowPipelineRiser_Interactive.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MultiphaseFlowPipelineRiser_Interactive.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/MultiphaseFlowPipelineRiser_Interactive.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MultiphaseFlowPipelineRiser_Interactive.ipynb).
 
 ---
-
 
 **Understanding Gas-Oil-Water Flow Dynamics using the OLGA Two-Fluid Model**
 

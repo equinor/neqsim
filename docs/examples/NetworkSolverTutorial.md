@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`NetworkSolverTutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb).
 
 ---
-
 
 This notebook demonstrates the NetworkSolver for modeling multi-well gathering systems with flowlines and manifolds.
 

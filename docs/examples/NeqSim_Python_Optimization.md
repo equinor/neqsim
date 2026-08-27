@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`NeqSim_Python_Optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/NeqSim_Python_Optimization.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/NeqSim_Python_Optimization.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/NeqSim_Python_Optimization.ipynb).
 
 ---
-
 
 This notebook demonstrates how to use **Python optimization libraries** (SciPy, etc.) with **NeqSim process simulations**. This approach gives you the flexibility of Python's optimization ecosystem while leveraging NeqSim's rigorous thermodynamics and equipment models.
 

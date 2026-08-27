@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`AdvancedRiskFramework_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb).
 
 ---
-
 
 This notebook demonstrates the advanced risk analysis capabilities of NeqSim, including:
 
