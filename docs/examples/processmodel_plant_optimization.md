@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`processmodel_plant_optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/processmodel_plant_optimization.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/processmodel_plant_optimization.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/processmodel_plant_optimization.ipynb).
 
 ---
-
 
 This notebook demonstrates the **agentic optimization workflow** on a large multi-area
 NeqSim `ProcessModel` — the same pattern used to optimize real offshore plants such as the

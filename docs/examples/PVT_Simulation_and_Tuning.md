@@ -6,7 +6,6 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`PVT_Simulation_and_Tuning.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb)
@@ -752,4 +751,5 @@ print("="*60)
 
 3. Whitson, C.H., Brulé, M.R. (2000). "Phase Behavior." SPE Monograph Series, Vol. 20.
 
-4. NeqSim Documentation: [Fluid characterization mathematics](../pvtsimulation/fluid_characterization_mathematics)
+4. NeqSim Documentation: [docs/fluid_characterization_mathematics.md](../fluid_characterization_mathematics.md)
+

@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MultiScenarioVFP_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MultiScenarioVFP_Tutorial.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/MultiScenarioVFP_Tutorial.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MultiScenarioVFP_Tutorial.ipynb).
 
 ---
-
 
 This notebook demonstrates how to generate VFP (Vertical Flow Performance) tables that account for varying Gas-Oil Ratio (GOR) and Water Cut (WC) conditions. This is essential for reservoir simulation coupling where fluid properties change over the field life.
 

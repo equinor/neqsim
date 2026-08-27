@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ProductionOptimizer_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb).
 
 ---
-
 
 This notebook provides a complete guide to using the `ProductionOptimizer` class from NeqSim for process optimization.
 

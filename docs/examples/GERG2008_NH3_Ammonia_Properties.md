@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`GERG2008_NH3_Ammonia_Properties.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb).
 
 ---
-
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb)
 

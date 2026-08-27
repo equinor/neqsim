@@ -13,7 +13,6 @@ nav_order: 1
 
 ---
 
-
 This notebook builds a **complete reservoir-to-market chain entirely from NeqSim
 process equipment** and solves it with `ProcessSystem` and `ProcessModel`. No
 reservoir, well or pipeline physics is implemented in Python — every pressure,

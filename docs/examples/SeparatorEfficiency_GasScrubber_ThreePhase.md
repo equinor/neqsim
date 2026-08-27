@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`SeparatorEfficiency_GasScrubber_ThreePhase.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb).
 
 ---
-
 
 This notebook demonstrates the **separation-efficiency report** for a
 **two-phase gas scrubber** and a **three-phase separator** in NeqSim.

@@ -13,7 +13,6 @@ nav_order: 1
 
 ---
 
-
 This tutorial builds an auditable gas-production forecast and after-tax cash flow from current NeqSim APIs. It deliberately uses the lower-level production-profile and economics classes so every unit conversion and assumption is visible.
 
 > **Engineering boundary:** this is a deterministic screening example, not a reserves estimate, concept approval, FEED model, or investment recommendation. Replace the synthetic rates, costs, prices, fiscal basis, and decline assumptions with traceable project data and qualified engineering models.

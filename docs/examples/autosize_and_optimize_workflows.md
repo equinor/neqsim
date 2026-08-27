@@ -6,14 +6,12 @@ parent: Examples
 nav_order: 1
 ---
 
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`autosize_and_optimize_workflows.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/autosize_and_optimize_workflows.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/autosize_and_optimize_workflows.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/autosize_and_optimize_workflows.ipynb).
 
 ---
-
 
 This notebook shows how to drive NeqSim's **production optimizer** with a minimum of Python.
 The heavy lifting (auto-sizing equipment, building capacity constraints, the throughput search)
