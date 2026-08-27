@@ -269,6 +269,59 @@ skills:
         self.assertEqual(["direct"], parsed["skills"][0]["tags"])
 
 
+class FallbackFrontmatterParserTest(unittest.TestCase):
+    """Regression tests for frontmatter parsing without PyYAML."""
+
+    def test_block_sequence_frontmatter_survives_without_pyyaml(self):
+        """Block lists in agent/skill frontmatter must not be dropped.
+
+        The old fallback skipped every indented line and every key with an
+        empty value, so ``required_skills`` written as a block sequence came
+        back missing and required skills were never installed.
+        """
+        flush = """---
+name: pvt-agent
+required_skills:
+- neqsim-fluid-quality-check
+---
+body
+"""
+        indented = """---
+name: tech-agent
+required_skills:
+  - neqsim-document-intelligence-extraction
+  - neqsim-api-patterns
+---
+body
+"""
+
+        with mock.patch.object(install_skill, "yaml", None):
+            flush_meta = install_skill._extract_frontmatter(flush)
+            indented_meta = install_skill._extract_frontmatter(indented)
+
+        self.assertEqual(["neqsim-fluid-quality-check"],
+                         flush_meta["required_skills"])
+        self.assertEqual(
+            ["neqsim-document-intelligence-extraction", "neqsim-api-patterns"],
+            indented_meta["required_skills"])
+
+    def test_fallback_scalars_ignore_trailing_comments(self):
+        """Trailing ``# comment`` text must not leak into scalar values."""
+        content = """---
+name: neqsim-example
+min_neqsim_version: "3.7.0"    # optional
+path: skills/example/SKILL.md  # default
+---
+body
+"""
+
+        with mock.patch.object(install_skill, "yaml", None):
+            metadata = install_skill._extract_frontmatter(content)
+
+        self.assertEqual("3.7.0", metadata["min_neqsim_version"])
+        self.assertEqual("skills/example/SKILL.md", metadata["path"])
+
+
 class SkillVsCodeExportTest(unittest.TestCase):
     """Tests for the --vscode export of installed skills."""
 

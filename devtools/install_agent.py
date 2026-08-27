@@ -251,33 +251,12 @@ def _parse_catalog_text(text):
 
 def _parse_catalog_fallback(text):
     """Fallback parser for the simple agent catalog format."""
-    data = {"agents": [], "repositories": []}
-    section = None
-    current = None
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if line.startswith("#") or not line:
-            continue
-        if not raw_line.startswith((" ", "\t")) and line.endswith(":"):
-            if current and section in data:
-                data[section].append(current)
-            section = line[:-1]
-            current = None
-        elif line.startswith("- "):
-            if current and section in data:
-                data[section].append(current)
-            current = {}
-            remainder = line[2:].strip()
-            if ":" in remainder:
-                key, value = remainder.split(":", 1)
-                current[key.strip()] = install_skill._parse_scalar_value(
-                    value.strip())
-        elif current is not None and ":" in line:
-            key, value = line.split(":", 1)
-            current[key.strip()] = install_skill._parse_scalar_value(
-                value.strip())
-    if current and section in data:
-        data[section].append(current)
+    data = install_skill._parse_simple_yaml(text)
+    if not isinstance(data, dict):
+        data = {}
+    for section in ("agents", "repositories"):
+        if not isinstance(data.get(section), list):
+            data[section] = []
     return data
 
 
@@ -1267,30 +1246,9 @@ def _load_agent_yaml(agent_dir):
 
 
 def _parse_flat_yaml(text):
-    """Parse simple flat YAML key/value and one-level lists without PyYAML."""
-    data = {}
-    current_list_key = None
-    for raw_line in text.splitlines():
-        is_indented = raw_line.startswith((" ", "\t"))
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if is_indented and current_list_key and line.startswith("- "):
-            data.setdefault(current_list_key, []).append(
-                line[2:].strip().strip('"').strip("'"))
-            continue
-        current_list_key = None
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        key = key.strip()
-        value = value.strip()
-        if value:
-            data[key] = install_skill._parse_scalar_value(value)
-        else:
-            data[key] = []
-            current_list_key = key
-    return data
+    """Parse simple YAML key/value pairs and lists without PyYAML."""
+    data = install_skill._parse_simple_yaml(text)
+    return data if isinstance(data, dict) else {}
 
 
 def validate_agent_dir(agent_dir):

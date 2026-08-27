@@ -245,32 +245,136 @@ def _parse_catalog_fallback(text):
     Handles the simple list-of-dicts format used in community-skills.yaml,
     including the top-level ``skills`` and ``repositories`` sections.
     """
-    data = {"skills": [], "repositories": []}
-    section = None
-    current = None
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if line.startswith("#") or not line:
-            continue
-        if not raw_line.startswith((" ", "\t")) and line.endswith(":"):
-            if current and section in data:
-                data[section].append(current)
-            section = line[:-1]
-            current = None
-        elif line.startswith("- "):
-            if current and section in data:
-                data[section].append(current)
-            current = {}
-            remainder = line[2:].strip()
-            if ":" in remainder:
-                key, val = remainder.split(":", 1)
-                current[key.strip()] = _parse_scalar_value(val.strip())
-        elif current and ":" in line:
-            key, val = line.split(":", 1)
-            current[key.strip()] = _parse_scalar_value(val.strip())
-    if current and section in data:
-        data[section].append(current)
+    data = _parse_simple_yaml(text)
+    if not isinstance(data, dict):
+        data = {}
+    for section in ("skills", "repositories"):
+        if not isinstance(data.get(section), list):
+            data[section] = []
     return data
+
+
+def _yaml_fallback_tokens(text):
+    """Return ``(indent, content)`` tokens for the minimal YAML parser."""
+    tokens = []
+    for raw_line in text.splitlines():
+        content = raw_line.strip()
+        if not content or content.startswith("#"):
+            continue
+        tokens.append((len(raw_line) - len(raw_line.lstrip(" \t")), content))
+    return tokens
+
+
+def _is_yaml_sequence_entry(content):
+    """Return true when a token line starts a block sequence entry."""
+    return content == "-" or content.startswith("- ")
+
+
+def _is_yaml_mapping_entry(content):
+    """Return true when a token line looks like ``key: value``."""
+    if content.startswith(("'", '"', "[", "{")):
+        return False
+    key, separator, remainder = content.partition(":")
+    if not separator or not key.strip():
+        return False
+    return not remainder or remainder.startswith(" ")
+
+
+def _parse_simple_yaml(text):
+    """Parse the YAML subset used by NeqSim catalogs and frontmatter.
+
+    Used only when PyYAML is unavailable. Supports nested mappings, block
+    sequences (indented or flush with their key), sequences of mappings,
+    inline ``[a, b]`` lists, quoted scalars and trailing comments.
+
+    @param text the YAML document text
+    @return the parsed mapping or sequence, or an empty dict when empty
+    """
+    tokens = _yaml_fallback_tokens(text)
+    if not tokens:
+        return {}
+    value, _ = _parse_yaml_block(tokens, 0, tokens[0][0])
+    return value
+
+
+def _parse_yaml_block(tokens, index, indent):
+    """Parse a mapping or sequence block starting at the given token index."""
+    if index >= len(tokens):
+        return {}, index
+    if _is_yaml_sequence_entry(tokens[index][1]):
+        return _parse_yaml_sequence(tokens, index, indent)
+    return _parse_yaml_mapping(tokens, index, indent)
+
+
+def _parse_yaml_sequence(tokens, index, indent):
+    """Parse a block sequence of scalars or mappings."""
+    items = []
+    while (index < len(tokens) and tokens[index][0] == indent
+           and _is_yaml_sequence_entry(tokens[index][1])):
+        dash_indent, content = tokens[index]
+        remainder = content[1:].strip()
+        index += 1
+        if not remainder:
+            if index < len(tokens) and tokens[index][0] > dash_indent:
+                child, index = _parse_yaml_block(
+                    tokens, index, tokens[index][0])
+                items.append(child)
+            else:
+                items.append("")
+            continue
+        if _is_yaml_mapping_entry(remainder):
+            # The inline key sits at the column where the dash content starts.
+            child_indent = dash_indent + len(content) - len(remainder)
+            nested = [(child_indent, remainder)]
+            while index < len(tokens) and tokens[index][0] > dash_indent:
+                nested.append(tokens[index])
+                index += 1
+            child, _ = _parse_yaml_block(nested, 0, child_indent)
+            items.append(child)
+        else:
+            items.append(_parse_scalar_value(_strip_yaml_comment(remainder)))
+    return items, index
+
+
+def _parse_yaml_mapping(tokens, index, indent):
+    """Parse a mapping block, recursing into nested mappings and sequences."""
+    mapping = {}
+    while index < len(tokens):
+        line_indent, content = tokens[index]
+        if line_indent != indent or _is_yaml_sequence_entry(content):
+            break
+        if ":" not in content:
+            index += 1
+            continue
+        key, value = content.split(":", 1)
+        key = key.strip()
+        value = _strip_yaml_comment(value.strip())
+        index += 1
+        if value:
+            mapping[key] = _parse_scalar_value(value)
+            continue
+        if index < len(tokens):
+            next_indent, next_content = tokens[index]
+            # A block sequence may be indented under its key or flush with it.
+            if next_indent > indent or (next_indent == indent
+                                        and _is_yaml_sequence_entry(next_content)):
+                child, index = _parse_yaml_block(tokens, index, next_indent)
+                mapping[key] = child
+                continue
+        mapping[key] = ""
+    return mapping, index
+
+
+def _strip_yaml_comment(value):
+    """Remove a trailing ``# comment`` from a scalar value."""
+    if not value:
+        return value
+    quote = value[0]
+    if quote in "\"'":
+        end = value.find(quote, 1)
+        return value[:end + 1] if end != -1 else value
+    marker = value.find(" #")
+    return value[:marker].rstrip() if marker != -1 else value
 
 
 def _parse_scalar_value(value):
@@ -322,18 +426,8 @@ def _extract_frontmatter(content):
     if yaml is not None:
         return yaml.safe_load(frontmatter) or {}
 
-    result = {}
-    for raw_line in frontmatter.splitlines():
-        if raw_line.startswith((" ", "\t")):
-            continue
-        line = raw_line.strip()
-        if not line or line.startswith("#") or ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        value = value.strip()
-        if value:
-            result[key.strip()] = _parse_scalar_value(value)
-    return result
+    parsed = _parse_simple_yaml(frontmatter)
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def _github_request(url, accept="application/vnd.github+json"):

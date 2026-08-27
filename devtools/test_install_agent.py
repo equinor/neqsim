@@ -83,6 +83,61 @@ agents:
         self.assertEqual(["neqsim-api-patterns"],
                          parsed["agents"][0]["required_skills"])
 
+    def test_fallback_parser_reads_block_sequence_catalog_entries(self):
+        """Block-style ``required_skills`` lists must survive the no-PyYAML path.
+
+        The published community catalog writes lists as indented ``- item``
+        blocks. The old fallback split every one of those lines into a new
+        agent, so required skills silently vanished on installs where PyYAML
+        was missing.
+        """
+        catalog = """
+catalog_version: "1.0"
+agents:
+  - name: first-agent
+    description: "First agent"
+    required_skills:
+      - neqsim-api-patterns
+      - neqsim-standards-lookup
+    supported_domains:
+      - process
+  - name: second-agent
+    description: "Second agent"
+    required_skills:
+      - neqsim-flow-assurance
+"""
+
+        parsed = install_agent._parse_catalog_fallback(catalog)
+
+        self.assertEqual(["first-agent", "second-agent"],
+                         [agent["name"] for agent in parsed["agents"]])
+        self.assertEqual(["neqsim-api-patterns", "neqsim-standards-lookup"],
+                         parsed["agents"][0]["required_skills"])
+        self.assertEqual(["process"], parsed["agents"][0]["supported_domains"])
+        self.assertEqual(["neqsim-flow-assurance"],
+                         parsed["agents"][1]["required_skills"])
+
+    def test_fallback_agent_yaml_parser_reads_flush_block_lists(self):
+        """``agent.yaml`` writes lists flush with the key, not indented."""
+        agent_yaml = """
+name: artificial-lift-agent
+description: Screens gas-lift versus ESP feasibility.
+required_skills:
+- neqsim-artificial-lift-screening
+inputs:
+- reservoir_pressure_pi
+- target_production_rate
+human_review_required: true
+"""
+
+        parsed = install_agent._parse_flat_yaml(agent_yaml)
+
+        self.assertEqual(["neqsim-artificial-lift-screening"],
+                         parsed["required_skills"])
+        self.assertEqual(["reservoir_pressure_pi", "target_production_rate"],
+                         parsed["inputs"])
+        self.assertEqual("true", parsed["human_review_required"])
+
     def test_repository_discovery_falls_back_to_scanning_agent_files(self):
         """If no remote catalog is present, .agent.md frontmatter is enough."""
         agent_md = """---
