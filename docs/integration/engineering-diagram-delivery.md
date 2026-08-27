@@ -25,6 +25,12 @@ Exactly one of the two DEXPI artifacts is present. A multi-area package is delib
 as `nativeWholePlantDexpiExchange=false`; cross-area material and unsupported energy/information
 relationships remain explicit manifest evidence with structured loss diagnostics.
 
+The DEXPI artifact always uses the 2.0 Process PFD/BFD information model. If the controlled document
+uses the `PID` profile, the manifest records
+`DELIVERY_PID_VIEW_NOT_DEXPI_PLANT_EXCHANGE`: the native view remains a proposal and the Process
+exchange does not replace the existing DEXPI Plant/Proteus P&ID workflow. Multi-area delivery also
+records `DELIVERY_DEXPI_AREA_PACKAGE_NOT_NATIVE_WHOLE_PLANT`.
+
 ## Java example
 
 ```java

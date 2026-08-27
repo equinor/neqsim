@@ -102,4 +102,20 @@ class EngineeringDiagramDeliveryTest {
     assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramDelivery
         .deliver(EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), existing, request));
   }
+
+  @Test
+  void keepsPidViewSeparateFromDexpiProcessExchange() throws IOException {
+    EngineeringDiagramDelivery.Request request = EngineeringDiagramDelivery.Request
+        .builder("PLANT-10", "A", "PID-10-001", "P&ID proposal delivery", ContentProfile.PID).build();
+
+    EngineeringDiagramDelivery.Report report = EngineeringDiagramDelivery.deliver(
+        EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), temporaryDirectory.resolve("pid"),
+        request);
+
+    assertTrue(report.isComplete(), report.toJson());
+    assertTrue(report.toJson().contains("\"contentProfiles\": [\n    \"PID\""));
+    assertTrue(report.toJson().contains("\"dexpiInformationModel\": \"PROCESS_PFD_BFD\""));
+    assertTrue(report.toJson().contains("DELIVERY_PID_VIEW_NOT_DEXPI_PLANT_EXCHANGE"));
+    assertTrue(report.toJson().contains("does not replace the existing Plant/Proteus"));
+  }
 }

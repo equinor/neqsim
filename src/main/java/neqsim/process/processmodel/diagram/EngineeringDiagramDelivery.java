@@ -268,10 +268,34 @@ public final class EngineeringDiagramDelivery {
       result.put("documentFingerprint", documentSet.toMap().get("fingerprint"));
       result.put("documentStatus", documentSet.getStatus().name());
       result.put("issuePurpose", documentSet.getIssuePurpose().name());
+      List<String> contentProfiles = new ArrayList<String>();
+      boolean includesPid = false;
+      for (EngineeringDiagramDocumentSet.Drawing drawing : documentSet.getDrawings()) {
+        String profile = drawing.getContentProfile().name();
+        if (!contentProfiles.contains(profile)) {
+          contentProfiles.add(profile);
+        }
+        includesPid = includesPid || drawing.getContentProfile() == ContentProfile.PID;
+      }
+      Collections.sort(contentProfiles);
+      result.put("contentProfiles", contentProfiles);
+      result.put("dexpiInformationModel", "PROCESS_PFD_BFD");
       result.put("approvalStatus", "REVIEW_REQUIRED");
       result.put("fitnessForConstruction", Boolean.FALSE);
       result.put("iso10628ConformanceClaimed", Boolean.FALSE);
       result.put("completeWithinDeclaredScope", Boolean.valueOf(isComplete()));
+      List<Map<String, Object>> deliveryDiagnostics = new ArrayList<Map<String, Object>>();
+      if ("PROCESS_MODEL".equals(sourceScope)) {
+        deliveryDiagnostics.add(deliveryDiagnostic("INFO", "DELIVERY_DEXPI_AREA_PACKAGE_NOT_NATIVE_WHOLE_PLANT",
+            "Multi-area output is a NeqSim package of assessed native area Process exchanges, not a native "
+                + "whole-plant DEXPI profile"));
+      }
+      if (includesPid) {
+        deliveryDiagnostics.add(deliveryDiagnostic("WARNING", "DELIVERY_PID_VIEW_NOT_DEXPI_PLANT_EXCHANGE",
+            "The controlled PID view remains an engineering proposal; the accompanying DEXPI artifact uses the "
+                + "Process PFD/BFD information model and does not replace the existing Plant/Proteus P&ID workflow"));
+      }
+      result.put("deliveryDiagnostics", deliveryDiagnostics);
       result.put("visualFingerprintsBySheetId",
           new LinkedHashMap<String, String>(rendering.getVisualFingerprintsBySheetId()));
       List<Map<String, Object>> rendererDiagnostics = new ArrayList<Map<String, Object>>();
@@ -290,6 +314,14 @@ public final class EngineeringDiagramDelivery {
         artifactMaps.add(artifact.toMap());
       }
       result.put("artifacts", artifactMaps);
+      return result;
+    }
+
+    private static Map<String, Object> deliveryDiagnostic(String severity, String code, String message) {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("severity", severity);
+      result.put("code", code);
+      result.put("message", message);
       return result;
     }
   }
