@@ -185,8 +185,11 @@ def test_invalid_requests_fail_closed(client, process_json):
         result = client.call_tool(tool_name, arguments)
         data = payload(result)
         require(data.get("status") == "error", f"{tool_name} invalid request did not fail closed", result)
+        codes = []
+        if data.get("code"):
+            codes.append(data.get("code"))
         errors = data.get("errors", [])
-        codes = [item.get("code") for item in errors if isinstance(item, dict)]
+        codes.extend(item.get("code") for item in errors if isinstance(item, dict))
         require("INPUT_ERROR" in codes, f"{tool_name} missing INPUT_ERROR diagnostic", result)
 
 
