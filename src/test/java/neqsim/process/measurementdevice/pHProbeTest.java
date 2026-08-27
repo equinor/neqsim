@@ -1,6 +1,7 @@
 package neqsim.process.measurementdevice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,14 @@ class pHProbeTest {
     phmeasurement.setAlkalinity(50.0);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(13.23, phmeasurement.getMeasuredValue(), 0.01);
+    assertEquals(13.5830, phmeasurement.getMeasuredValue(), 0.01);
+    assertEquals(1, phmeasurement.reactiveThermoSystem.getNumberOfPhases());
+    assertTrue(phmeasurement.reactiveThermoSystem.hasPhaseType("aqueous"));
+    assertTrue(Math.abs(
+        phmeasurement.reactiveThermoSystem.getChemicalReactionOperations().getReactivePhaseChargeMoles()) <= 1.0e-8);
+    assertTrue(phmeasurement.reactiveThermoSystem.getChemicalReactionOperations()
+        .getMaximumAbsoluteReactionLogResidual() <= 2.0e-6);
+    assertTrue(phmeasurement.reactiveThermoSystem.getChemicalReactionOperations()
+        .getMaximumAbsoluteElementBalanceResidual() <= 1.0e-8);
   }
 }

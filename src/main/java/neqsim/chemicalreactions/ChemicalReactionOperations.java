@@ -45,6 +45,9 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   /** Maximum accepted reactive-phase net charge in moles after a refinement. */
   private static final double REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES = 1.0e-8;
 
+  /** Maximum accepted absolute element-balance residual after a refinement. */
+  private static final double ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES = 1.0e-8;
+
   SystemInterface system;
   ComponentInterface[] components;
   ChemicalReactionList reactionList = new ChemicalReactionList();
@@ -646,9 +649,16 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
         solver.setUseAdaptiveDerivatives(refinement > 0);
         converged = solver.solve();
         if (converged && getMaximumAbsoluteReactionLogResidual() <= REACTION_LOG_RESIDUAL_TOLERANCE
-            && Math.abs(getReactivePhaseChargeMoles()) <= REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES) {
+            && Math.abs(getReactivePhaseChargeMoles()) <= REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES
+            && getMaximumAbsoluteElementBalanceResidual() <= ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES) {
           if (system.getNumberOfPhases() == 1 && system instanceof neqsim.thermo.system.SystemThermo) {
-            ((neqsim.thermo.system.SystemThermo) system).synchronizeSinglePhaseReactionComposition();
+            ((neqsim.thermo.system.SystemThermo) system).synchronizeSinglePhaseReactionComposition(components);
+            if (getMaximumAbsoluteReactionLogResidual() > REACTION_LOG_RESIDUAL_TOLERANCE
+                || Math.abs(getReactivePhaseChargeMoles()) > REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES
+                || getMaximumAbsoluteElementBalanceResidual() > ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES) {
+              converged = false;
+              continue;
+            }
           }
           return true;
         }
