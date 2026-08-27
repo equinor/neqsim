@@ -26,6 +26,7 @@ class PipelineTransientRecipesDocumentationTest extends NeqSimTest {
     pipe.setEnableSlugTracking(false);
     pipe.run();
 
+    assertTrue(pipe.isSteadyStateConverged());
     assertFalse(pipe.isSteadyStatePressureFloorLimited());
     assertFalse(pipe.isSteadyStateWallClockLimited());
 
