@@ -324,7 +324,11 @@ public final class Dexpi20ProcessModelPackageDocumentImpact implements Serializa
       SheetView second = after.get(id);
       if (first == null || second == null || !first.signature.equals(second.signature)) {
         builder.affectedSheetIds.add(id);
-        builder.affectedDrawingIds.add(first == null ? second.drawingId : first.drawingId);
+        if (first != null) {
+          builder.affectedDrawingIds.add(first.drawingId);
+        } else if (second != null) {
+          builder.affectedDrawingIds.add(second.drawingId);
+        }
       }
     }
   }
