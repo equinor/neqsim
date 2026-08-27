@@ -65,7 +65,7 @@ def get_first_markdown_h1(notebook):
         if cell.get("cell_type") != "markdown":
             continue
         source = "".join(cell.get("source", []))
-        match = re.search(r"(?m)^#\\s+(.+?)\\s*$", source)
+        match = re.search(r"(?m)^#\s+(.+?)\s*$", source)
         if match:
             return match.group(1).strip()
     return None
