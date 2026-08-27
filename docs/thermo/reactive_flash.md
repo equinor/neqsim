@@ -195,12 +195,16 @@ Reinitialization reruns the existing reaction-database selection for that system
 reaction tables or equilibrium-constant parameters interchangeable between thermodynamic models.
 
 Reaction data selection is explicit and inspectable. `SystemKentEisenberg` selects the dedicated
-`KENT_EISENBERG` source of apparent equilibrium constants; electrolyte EOS systems and electrolyte
-GE systems (including Pitzer) currently select `STANDARD`. This mapping records the implemented
-database choice—it is not evidence that a parameter set has been independently validated for every
-model or salinity range. Use `system.getChemicalReactionDataSource()` before initialization and
+`KENT_EISENBERG` source of apparent equilibrium constants, electrolyte EOS systems select the
+`STANDARD` mole-fraction source, and `SystemPitzer` selects the dedicated `PITZER`
+molality-standard-state source. This mapping records the implemented database choice—it is not
+evidence that a parameter set has been independently validated for every model or salinity range.
+Use `system.getChemicalReactionDataSource()` before initialization and
 `system.getChemicalReactionOperations().getReactionDataSource()` after initialization to record the
-selection in calculation provenance.
+selection in calculation provenance. Use
+`ChemicalReactionModelAudit.inspect(system).requireValidatedEvidenceForAllActiveReactions()` when a
+published workflow must reject an active reaction row without declared model-specific validation
+evidence.
 
 ```java
 SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.0);
