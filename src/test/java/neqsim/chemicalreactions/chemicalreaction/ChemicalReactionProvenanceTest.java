@@ -75,6 +75,23 @@ class ChemicalReactionProvenanceTest {
     assertPitzerRejectsUnvalidatedAmine("DEA", "DEA+", "DEAprot");
   }
 
+  /** Pitzer reports every relevant unvalidated row in deterministic reaction-name order. */
+  @Test
+  void pitzerReportsUnvalidatedRowsDeterministically() {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("MDEA", 1.0);
+    system.addComponent("DEA", 1.0);
+    system.addComponent("water", 18.0);
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class, system::chemicalReactionInit);
+    assertEquals(
+        "Chemical-reaction initialization rejected unvalidated active rows for source 'pitzer': "
+            + "reactionsWithoutValidatedEvidence=[DEAprot, MDEAprot]",
+        failure.getMessage());
+    assertFalse(system.hasComponent("MDEA+"));
+    assertFalse(system.hasComponent("DEA+"));
+  }
+
   /** Legacy electrolyte-EOS reaction initialization keeps its non-strict compatibility behavior. */
   @Test
   void standardSourceKeepsLegacyUnspecifiedAmineRows() {
