@@ -2,7 +2,7 @@
 
 This dependency-free harness starts the packaged NeqSim MCP server over STDIO and
 checks built-in profile discovery, bounded validation metadata, an isolated custom-profile lifecycle,
-fail-closed error behavior, and the machine-readable promotion-candidate state. It qualifies
+fail-closed error behavior, and the machine-readable CONTRACT_TESTED state. It qualifies
 software-contract behavior only; it is not scientific, regulatory, authorization, or plant-control validation.
 """
 import json
@@ -223,34 +223,39 @@ def test_mutation_errors_fail_closed(client):
     require("UNKNOWN_ACTION" in error_codes(unknown), "unknown-action error code drifted", unknown)
 
 
-def test_promotion_candidate_is_transport_qualified(client):
+def test_contract_classification_is_promoted_atomically(client):
     result = client.call_tool("getCapabilities", {})
     data = payload(result)
     inventory = data.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
-    require(inventory.get("inventoryVersion") == "1.16", "unexpected evidence inventory version", result)
+    require(inventory.get("inventoryVersion") == "1.17", "unexpected evidence inventory version", result)
     limitations = inventory.get("knownLimitations", {})
-    require(limitations.get("contractTestedToolCount") == 10, "contract-tested count changed prematurely", result)
-    require(limitations.get("confirmedGapToolCount") == 41, "confirmed-gap count changed prematurely", result)
+    require(limitations.get("contractTestedToolCount") == 11, "contract-tested count did not promote", result)
+    require(limitations.get("confirmedGapToolCount") == 40, "confirmed-gap count did not promote", result)
     records = limitations.get("coverageRecords", {})
     profile_record = records.get("manageValidationProfile", {})
     require(
-        profile_record.get("coverageStatus") == "CONFIRMED_GAP",
-        "manageValidationProfile was promoted before primary protocol accounting",
+        profile_record.get("coverageStatus") == "CONTRACT_TESTED",
+        "manageValidationProfile was not promoted atomically",
         result,
     )
-    candidate = limitations.get("contractPromotionCandidates", {}).get("manageValidationProfile", {})
-    require(candidate.get("targetCoverageStatus") == "CONTRACT_TESTED", "candidate target drifted", result)
-    require(candidate.get("promotionReady") is True, "validation-profile candidate is not promotion-ready", result)
+    require(profile_record.get("contractTrustAvailable") is True, "contract trust flag missing", result)
     require(
-        candidate.get("benchmarkApplicability")
+        profile_record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE",
-        "candidate applicability boundary drifted",
+        "validation-profile applicability boundary drifted",
         result,
     )
-    evidence = json.dumps(candidate.get("contractEvidenceSources", []))
-    require("ValidationProfileRunnerTest.java" in evidence, "candidate omits Java regression evidence", result)
-    require("test_validation_profile_protocol.py" in evidence, "candidate omits packaged MCP evidence", result)
+    evidence = json.dumps(profile_record.get("contractEvidenceSources", []))
+    require(profile_record.get("contractEvidenceCount") == 6, "contract evidence count drifted", result)
+    require("ValidationProfileRunnerTest.java" in evidence, "coverage omits Java regression evidence", result)
+    require("test_validation_profile_protocol.py" in evidence, "coverage omits packaged MCP evidence", result)
+    require(
+        limitations.get("contractPromotionCandidateCount") == 0
+        and not limitations.get("contractPromotionCandidates", {}),
+        "completed validation-profile promotion remains queued as a candidate",
+        result,
+    )
 
 
 def main():
@@ -261,7 +266,7 @@ def main():
         test_validation_metadata_is_preserved(client)
         test_custom_profile_lifecycle(client)
         test_mutation_errors_fail_closed(client)
-        test_promotion_candidate_is_transport_qualified(client)
+        test_contract_classification_is_promoted_atomically(client)
     finally:
         try:
             if client.proc is not None:
