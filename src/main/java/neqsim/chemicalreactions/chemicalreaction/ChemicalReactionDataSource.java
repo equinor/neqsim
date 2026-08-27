@@ -13,26 +13,29 @@ package neqsim.chemicalreactions.chemicalreaction;
  */
 public enum ChemicalReactionDataSource {
   /** General NeqSim reaction data used by electrolyte EOS systems. */
-  STANDARD("standard", "reactiondata"),
+  STANDARD("standard", "reactiondata", false),
 
   /** Molality-standard-state reaction data used by the Pitzer electrolyte GE model. */
-  PITZER("pitzer", "reactiondatapitzer"),
+  PITZER("pitzer", "reactiondatapitzer", true),
 
   /** Apparent-equilibrium-constant data used by the Kent-Eisenberg model. */
-  KENT_EISENBERG("kent-eisenberg", "reactiondatakenteisenberg");
+  KENT_EISENBERG("kent-eisenberg", "reactiondatakenteisenberg", false);
 
   private final String identifier;
   private final String databaseTableName;
+  private final boolean requireValidatedActiveReactions;
 
   /**
    * Create a reaction-data source descriptor.
    *
    * @param identifier stable diagnostic identifier
    * @param databaseTableName internal NeqSim database table name
+   * @param requireValidatedActiveReactions whether initialization must reject relevant unvalidated rows
    */
-  ChemicalReactionDataSource(String identifier, String databaseTableName) {
+  ChemicalReactionDataSource(String identifier, String databaseTableName, boolean requireValidatedActiveReactions) {
     this.identifier = identifier;
     this.databaseTableName = databaseTableName;
+    this.requireValidatedActiveReactions = requireValidatedActiveReactions;
   }
 
   /**
@@ -51,5 +54,14 @@ public enum ChemicalReactionDataSource {
    */
   public String getDatabaseTableName() {
     return databaseTableName;
+  }
+
+  /**
+   * Check whether this source must fail closed when a relevant active row lacks validated evidence.
+   *
+   * @return true when reaction initialization requires every relevant active row to be validated
+   */
+  public boolean requiresValidatedActiveReactions() {
+    return requireValidatedActiveReactions;
   }
 }
