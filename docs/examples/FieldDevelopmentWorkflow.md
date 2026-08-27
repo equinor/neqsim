@@ -13,7 +13,6 @@ nav_order: 1
 
 ---
 
-# Transparent field-development screening with NeqSim
 
 This tutorial builds an auditable gas-production forecast and after-tax cash flow from current NeqSim APIs. It deliberately uses the lower-level production-profile and economics classes so every unit conversion and assumption is visible.
 

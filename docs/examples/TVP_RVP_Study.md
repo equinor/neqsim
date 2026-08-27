@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "TVP RVP Study"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "True Vapor Pressure (TVP) vs Reid Vapor Pressure (RVP) Study"
+description: "Notebook for True Vapor Pressure (TVP) vs Reid Vapor Pressure (RVP) Study, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# TVP RVP Study
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`TVP_RVP_Study.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb).
@@ -29,7 +28,6 @@ nav_order: 1
 # 5. Stabilized crude has lower RVP than unstabilized
 ```
 
-# True Vapor Pressure (TVP) vs Reid Vapor Pressure (RVP) Study
 
 ## A Comprehensive Analysis Using NeqSim
 

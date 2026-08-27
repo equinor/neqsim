@@ -1,12 +1,11 @@
 ---
 layout: default
-title: "H2S Distribution Modeling"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "H2S Distribution Between Gas, Oil, and Water Phases in NeqSim"
+description: "Notebook for H2S Distribution Between Gas, Oil, and Water Phases in NeqSim, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
 
-# H2S Distribution Modeling
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`H2S_Distribution_Modeling.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/H2S_Distribution_Modeling.ipynb).
@@ -15,7 +14,6 @@ nav_order: 1
 
 ---
 
-# H2S Distribution Between Gas, Oil, and Water Phases in NeqSim
 
 ## Introduction
 
