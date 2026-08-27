@@ -167,6 +167,26 @@ public final class ChemicalReactionModelAudit {
       return getReactionsWithoutValidatedEvidence().isEmpty();
     }
 
+    /**
+     * Require every active reaction to declare model-specific validation evidence.
+     *
+     * <p>
+     * This is an explicit publication gate. It does not run automatically during reaction initialization or equilibrium
+     * calculations, and it does not claim that validated equilibrium constants alone qualify finite-salinity
+     * speciation, phase equilibrium, or process performance.
+     * </p>
+     *
+     * @throws IllegalStateException when one or more active reactions lack validated evidence
+     */
+    public void requireValidatedEvidenceForAllActiveReactions() {
+      List<String> missingEvidence = getReactionsWithoutValidatedEvidence();
+      if (!missingEvidence.isEmpty()) {
+        throw new IllegalStateException("Chemical-reaction validation evidence is incomplete for model '" + modelName
+            + "', source '" + reactionDataSource.getIdentifier() + "', concentration basis '"
+            + reactionConcentrationBasis + "': reactionsWithoutValidatedEvidence=" + missingEvidence);
+      }
+    }
+
     private Map<String, ReactionParameterSnapshot> asMap() {
       Map<String, ReactionParameterSnapshot> values = new LinkedHashMap<String, ReactionParameterSnapshot>();
       for (ReactionParameterSnapshot reaction : reactions) {
@@ -304,6 +324,21 @@ public final class ChemicalReactionModelAudit {
     public boolean isEquivalent() {
       return sameReactionDataSource && sameReactionConcentrationBasis && reactionsOnlyInFirst.isEmpty()
           && reactionsOnlyInSecond.isEmpty() && parameterDifferences.isEmpty();
+    }
+
+    /**
+     * Require both audited systems to use equivalent reaction sources, conventions, active sets, stoichiometry, and
+     * stored parameters.
+     *
+     * @throws IllegalStateException when the audited reaction models differ
+     */
+    public void requireEquivalent() {
+      if (!isEquivalent()) {
+        throw new IllegalStateException("Chemical-reaction models are not equivalent: sameReactionDataSource="
+            + sameReactionDataSource + ", sameReactionConcentrationBasis=" + sameReactionConcentrationBasis
+            + ", reactionsOnlyInFirst=" + reactionsOnlyInFirst + ", reactionsOnlyInSecond=" + reactionsOnlyInSecond
+            + ", parameterDifferences=" + parameterDifferences);
+      }
     }
 
     private static List<String> immutableCopy(List<String> values) {
