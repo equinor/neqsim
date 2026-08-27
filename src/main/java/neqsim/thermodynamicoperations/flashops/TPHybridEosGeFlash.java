@@ -315,7 +315,7 @@ public class TPHybridEosGeFlash extends TPmultiflash {
     SimpleMatrix conservationMatrix = new SimpleMatrix(conservationArray);
     SimpleMatrix conservationResidual = conservationMatrix.mult(rawDelta);
     double maximumConservationResidual = 0.0;
-    for (int row = 0; row < conservationResidual.getNumRows(); row++) {
+    for (int row = 0; row < conservationResidual.numRows(); row++) {
       maximumConservationResidual = Math.max(maximumConservationResidual, Math.abs(conservationResidual.get(row, 0)));
     }
     boolean rawDeltaIsNonNegative = true;
