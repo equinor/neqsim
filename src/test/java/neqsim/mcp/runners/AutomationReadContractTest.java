@@ -56,8 +56,7 @@ class AutomationReadContractTest {
   @Test
   void getSimulationVariableReturnsStandardEnvelopeWithoutClaimingNumericalQualification() {
     JsonObject response = parseSuccess(
-        AutomationRunner.getVariable(PROCESS_JSON, "HP Sep.gasOutStream.temperature", "C"),
-        "getSimulationVariable");
+        AutomationRunner.getVariable(PROCESS_JSON, "HP Sep.gasOutStream.temperature", "C"), "getSimulationVariable");
     JsonObject data = response.getAsJsonObject("data");
     assertTrue(data.size() > 0);
     assertTrue(response.has("provenance"));
