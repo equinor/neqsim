@@ -36,8 +36,7 @@ class PipelineTransientRecipesDocumentationTest extends NeqSimTest {
     TwoFluidMassBalanceReport balance = pipe.getLastMassBalanceReport();
     assertNotNull(balance);
     assertTrue(balance.getAcceptedSubsteps() > 0);
-    assertTrue(balance.isWithinTolerance(Phase.TOTAL, ABSOLUTE_BALANCE_TOLERANCE_KG,
-        RELATIVE_BALANCE_TOLERANCE));
+    assertTrue(balance.isWithinTolerance(Phase.TOTAL, ABSOLUTE_BALANCE_TOLERANCE_KG, RELATIVE_BALANCE_TOLERANCE));
     assertTrue(Double.isFinite(balance.getRelativeResidual(Phase.TOTAL)));
   }
 
