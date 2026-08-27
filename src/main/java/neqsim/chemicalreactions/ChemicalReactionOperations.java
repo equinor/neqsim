@@ -176,6 +176,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       reactionList.readReactions(system);
       reactionList.removeJunkReactions(componentNames);
       reactionList.removeDependentReactions();
+      reactionList.requireValidatedEvidenceForActiveReactions();
       allComponentNames = reactionList.getAllComponents();
       this.addNewComponents();
       if (system.getPhase(0).getNumberOfComponents() == old) {
