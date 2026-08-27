@@ -55,6 +55,44 @@ class AbsorptionColumnTest extends NeqSimTest {
   }
 
   @Test
+  void gasLoadFactorAndFsFactorAreNativelyAvailable() {
+    AbsorberCase absorberCase = runTegAbsorberCase(1.0);
+    AbsorptionColumn absorber = absorberCase.absorber;
+    absorber.setInternalDiameter(1.2);
+
+    assertEquals(3.0, absorber.getMaxAllowableFsFactor(), 1.0e-12, "Default max Fs factor must be 3.0");
+    assertEquals(0.15, absorber.getMaxAllowableGasLoadFactor(), 1.0e-12, "Default max gas load factor must be 0.15");
+
+    double fs = absorber.getFsFactor();
+    double ks = absorber.getGasLoadFactor();
+    assertTrue(fs > 0.0, "Fs factor must be positive once the column has run");
+    assertTrue(ks > 0.0, "Gas load factor must be positive once the column has run");
+
+    double rhoGas = absorber.getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoLiquid = absorber.getLiquidOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double expectedKs = absorber.getGasSuperficialVelocity() * Math.sqrt(rhoGas / (rhoLiquid - rhoGas));
+    assertEquals(expectedKs, ks, expectedKs * 1.0e-9,
+        "Gas load factor must use the Souders-Brown rho_g/(rho_l-rho_g) fraction");
+
+    assertEquals(fs / absorber.getMaxAllowableFsFactor(), absorber.getFsFactorUtilization(), 1.0e-12);
+    assertEquals(ks / absorber.getMaxAllowableGasLoadFactor(), absorber.getGasLoadFactorUtilization(), 1.0e-12);
+    assertEquals(fs <= absorber.getMaxAllowableFsFactor(), absorber.isFsFactorWithinDesignLimit());
+    assertEquals(ks <= absorber.getMaxAllowableGasLoadFactor(), absorber.isGasLoadFactorWithinDesignLimit());
+
+    double smallerDiameterKs = ks * 4.0;
+    absorber.setInternalDiameter(absorber.getInternalDiameter() / 2.0);
+    assertEquals(smallerDiameterKs, absorber.getGasLoadFactor(), smallerDiameterKs * 1.0e-6,
+        "Halving the diameter must quadruple the gas load factor (velocity scales with 1/D^2)");
+
+    assertTrue(absorber.getWettingRate() > 0.0, "Wetting rate must be positive once the column has run");
+    assertTrue(absorber.getCapacityConstraints().containsKey("fsFactor"));
+    assertTrue(absorber.getCapacityConstraints().containsKey("gasLoadFactor"));
+
+    absorber.setMaxAllowableGasLoadFactor(0.20);
+    assertEquals(0.20, absorber.getCapacityConstraints().get("gasLoadFactor").getMaxValue(), 1.0e-12);
+  }
+
+  @Test
   void recoversHeavyHydrocarbonsWithLeanOilAtModeratePressure() {
     SystemSrkEos gasFluid = new SystemSrkEos(303.15, 15.0);
     gasFluid.addComponent("methane", 0.920);
