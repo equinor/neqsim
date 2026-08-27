@@ -231,7 +231,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(candidate.get("promotionReady").getAsBoolean());
     assertEquals(6, candidate.get("contractEvidenceCount").getAsInt());
     assertEquals(6, candidate.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(candidate.getAsJsonArray("contractEvidenceSources").toString().contains("ValidationProfileRunnerTest.java"));
+    assertTrue(
+        candidate.getAsJsonArray("contractEvidenceSources").toString().contains("ValidationProfileRunnerTest.java"));
     assertTrue(
         candidate.getAsJsonArray("contractEvidenceSources").toString().contains("test_validation_profile_protocol.py"));
     assertTrue(candidate.get("evidenceBoundary").getAsString().contains("legal applicability"));
