@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.16");
+    inventory.addProperty("inventoryVersion", "1.17");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,43 +241,18 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "manageValidationProfile is promotion-ready from merged source/regression and packaged-protocol evidence but remains CONFIRMED_GAP until the primary packaged protocol classification accounting and coverage status are changed together on one exact validated head");
+        "manageValidationProfile is CONTRACT_TESTED from bounded source, regression, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.17");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; ten non-numerical discovery, catalog, lookup, progress, trust, governance, and runtime API-inspection tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "Every published tool has an explicit coverage record; eleven non-numerical discovery, catalog, lookup, progress, trust, governance, validation-profile, and runtime API-inspection tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
   }
 
-  /** Builds evidence-qualified candidates for a future atomic contract-status promotion. */
+  /** Returns evidence-qualified candidates for future atomic contract-status promotion. */
   private static JsonObject buildContractPromotionCandidates() {
-    JsonObject candidates = new JsonObject();
-    candidates.add("manageValidationProfile", contractPromotionCandidate(
-        "NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE",
-        new String[] { "src/main/java/neqsim/mcp/runners/ValidationProfileRunner.java",
-            "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
-            "src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java",
-            "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
-            "neqsim-mcp-server/test_validation_profile_protocol.py",
-            "neqsim-mcp-server/docs/evidence/VALIDATION_PROFILE_CONTRACT.md" },
-        "Built-in discovery, structural validation metadata preservation, isolated custom-profile lifecycle and recovery, equipment-standard retrieval, fail-closed mutation errors, and packaged-MCP transport are contract-tested; this does not validate standards currency, legal applicability or licensing, validator scientific correctness, deployment isolation or durability, external authorization, or plant authority"));
-    return candidates;
-  }
-
-  /** Builds one bounded contract-promotion candidate. */
-  private static JsonObject contractPromotionCandidate(String benchmarkApplicability, String[] evidenceSources,
-      String evidenceBoundary) {
-    JsonObject candidate = new JsonObject();
-    candidate.addProperty("targetCoverageStatus", "CONTRACT_TESTED");
-    candidate.addProperty("benchmarkApplicability", benchmarkApplicability);
-    candidate.addProperty("contractEvidenceCount", evidenceSources.length);
-    candidate.add("contractEvidenceSources", toJsonArray(java.util.Arrays.asList(evidenceSources)));
-    candidate.addProperty("evidenceBoundary", evidenceBoundary);
-    candidate.addProperty("promotionReady", true);
-    candidate.addProperty("remainingGate",
-        "Update the primary packaged protocol classification accounting and coverageStatus atomically, then pass exact-head hosted validation before promoting manageValidationProfile");
-    return candidate;
+    return new JsonObject();
   }
 
   /**
@@ -361,6 +336,16 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_inspect_api_protocol.py",
           "neqsim-mcp-server/docs/evidence/API_INSPECTION_CONTRACT.md" };
       evidenceBoundary = "Version-matched reflection is restricted to neqsim.* classes, common NeqSim process aliases, and EquipmentFactory aliases; source-level and packaged-MCP tests prove representative resolution, member filtering, source pointers, and fail-closed non-NeqSim rejection without executing the inspected method or validating engineering calculations";
+      break;
+    case "manageValidationProfile":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ValidationProfileRunner.java",
+          "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
+          "src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_validation_profile_protocol.py",
+          "neqsim-mcp-server/docs/evidence/VALIDATION_PROFILE_CONTRACT.md" };
+      evidenceBoundary = "Built-in discovery, structural validation metadata preservation, isolated custom-profile lifecycle and recovery, equipment-standard retrieval, fail-closed mutation errors, and packaged-MCP transport are contract-tested; this does not validate standards currency, legal applicability or licensing, validator scientific correctness, deployment isolation or durability, external authorization, or plant authority";
       break;
     default:
       return false;
