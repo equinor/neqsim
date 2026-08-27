@@ -21,6 +21,9 @@ from datetime import datetime
 from urllib.parse import quote
 
 NOTEBOOK_DOCUMENTATION_OVERRIDES = {
+    "ESP_Pump_Tutorial": {
+        "title": "ESP Pump Tutorial",
+    },
     "MercuryRemoval_LNG_Pretreatment": {
         "title": "Mercury Removal in LNG Pre-Treatment",
         "description": (
@@ -71,6 +74,28 @@ def get_first_markdown_h1(notebook):
     return None
 
 
+def resolve_notebook_documentation(notebook, notebook_name):
+    """Resolve shared page and catalog metadata for one notebook."""
+
+    documentation_metadata = get_notebook_documentation_metadata(
+        notebook,
+        notebook_name,
+    )
+    default_title = (
+        get_first_markdown_h1(notebook)
+        or notebook_name.replace("_", " ").replace("-", " ")
+    )
+    title = documentation_metadata.get("title", default_title)
+    description = documentation_metadata.get(
+        "description",
+        (
+            f"Notebook for {title}, including NeqSim Python examples "
+            "and workflow context."
+        ),
+    )
+    return documentation_metadata, title, description
+
+
 # Ensure Unicode output works on Windows consoles (cp1252 by default).
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -117,21 +142,11 @@ def notebook_to_markdown(notebook_path):
         nb = json.load(f)
 
     notebook_name = Path(notebook_path).stem
-    documentation_metadata = get_notebook_documentation_metadata(
-        nb,
-        notebook_name,
-    )
-    default_title = (
-        get_first_markdown_h1(nb)
-        or notebook_name.replace('_', ' ').replace('-', ' ')
-    )
-    title = documentation_metadata.get('title', default_title)
-    description = documentation_metadata.get(
-        'description',
-        (
-            f"Notebook for {title}, including NeqSim Python examples "
-            "and workflow context."
-        ),
+    documentation_metadata, title, description = (
+        resolve_notebook_documentation(
+            nb,
+            notebook_name,
+        )
     )
     generated_title = (
         f"# {title}\n\n"
@@ -532,17 +547,9 @@ reading aid, not execution evidence.
         name = nb.stem
         with open(nb, 'r', encoding='utf-8') as notebook_file:
             notebook = json.load(notebook_file)
-        documentation_metadata = get_notebook_documentation_metadata(
+        _, title, description = resolve_notebook_documentation(
             notebook,
             name,
-        )
-        title = documentation_metadata.get(
-            'title',
-            name.replace('_', ' ').replace('-', ' '),
-        )
-        description = documentation_metadata.get(
-            'description',
-            'See notebook for details',
         )
         links = notebook_view_links(
             f"docs/examples/{name}.ipynb",

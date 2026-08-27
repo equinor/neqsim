@@ -3,6 +3,7 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
+from urllib.parse import quote
 
 from convert_notebooks import (
     CURATED_NOTEBOOKS,
@@ -313,7 +314,13 @@ class ConvertNotebooksTest(unittest.TestCase):
                 "## Standalone Java source examples",
                 generated_content,
             )
-            self.assertIn("| **Executed** | **Curated** |", generated_content)
+            self.assertIn(
+                "| **Executed** | **Notebook title** | "
+                "Notebook for Notebook title, including NeqSim Python "
+                "examples and workflow context. |",
+                generated_content,
+            )
+            self.assertNotIn("See notebook for details", generated_content)
             self.assertIn(
                 "[Example](Example.java) | **Source only** |",
                 generated_content,
@@ -323,6 +330,57 @@ class ConvertNotebooksTest(unittest.TestCase):
                 "dependency installation and stored execution status vary",
                 generated_content,
             )
+
+    def test_committed_index_matches_companion_page_metadata(self):
+        docs_dir = Path(__file__).resolve().parent
+        examples_dir = docs_dir / "examples"
+        index_content = (examples_dir / "index.md").read_text(
+            encoding="utf-8",
+        )
+        catalog_rows = [
+            line
+            for line in index_content.splitlines()
+            if line.startswith("| **") and "[Markdown](" in line
+        ]
+
+        companion_pages = sorted(examples_dir.glob("*.ipynb"))
+        self.assertGreater(len(companion_pages), 20)
+        self.assertEqual(len(catalog_rows), len(companion_pages))
+        self.assertNotIn("See notebook for details", index_content)
+
+        for notebook_path in companion_pages:
+            markdown_path = notebook_path.with_suffix(".md")
+            with self.subTest(path=markdown_path.name):
+                page_content = markdown_path.read_text(encoding="utf-8")
+                title_match = re.search(
+                    r"(?m)^title:\s+(.+)$",
+                    page_content,
+                )
+                description_match = re.search(
+                    r"(?m)^description:\s+(.+)$",
+                    page_content,
+                )
+                self.assertIsNotNone(title_match)
+                self.assertIsNotNone(description_match)
+
+                title = json.loads(title_match.group(1))
+                description = json.loads(description_match.group(1))
+                encoded_markdown_name = quote(markdown_path.name, safe="")
+                link = f"[Markdown]({encoded_markdown_name})"
+                row = next(
+                    (line for line in catalog_rows if link in line),
+                    None,
+                )
+                self.assertIsNotNone(row)
+                normalized_title = " ".join(str(title).split()).replace(
+                    "|",
+                    r"\|",
+                )
+                normalized_description = (
+                    " ".join(str(description).split()).replace("|", r"\|")
+                )
+                self.assertIn(f"**{normalized_title}**", row)
+                self.assertIn(normalized_description, row)
 
 
 if __name__ == "__main__":
