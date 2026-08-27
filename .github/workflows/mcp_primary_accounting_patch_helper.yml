@@ -25,38 +25,29 @@ jobs:
           path = Path("neqsim-mcp-server/test_mcp_server.py")
           text = path.read_text(encoding="utf-8")
 
-          old_tools = '''    contract_tools = {
-              "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
-              "checkToolAccess", "manageIndustrialProfile", "searchComponents",
-              "queryDataCatalog", "getProgress", "inspectApi",
-          }'''
-          new_tools = '''    contract_tools = {
-              "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
-              "checkToolAccess", "manageIndustrialProfile", "searchComponents",
-              "queryDataCatalog", "getProgress", "inspectApi",
-              "manageValidationProfile",
-          }'''
+          old_tools = '        "queryDataCatalog", "getProgress", "inspectApi",\n'
+          new_tools = old_tools + '        "manageValidationProfile",\n'
           if text.count(old_tools) != 1:
-              raise SystemExit(f"expected one contract_tools block, found {text.count(old_tools)}")
+              raise SystemExit(f"expected one contract_tools insertion point, found {text.count(old_tools)}")
           text = text.replace(old_tools, new_tools)
 
-          old_accounting = '''    check("ten non-numerical contracts have bounded evidence",
-              limitations.get("contractTestedToolCount") == 10
-              and limitations.get("confirmedGapToolCount") == 41'''
-          new_accounting = '''    check("eleven non-numerical contracts have bounded evidence",
-              limitations.get("contractTestedToolCount") == 11
-              and limitations.get("confirmedGapToolCount") == 40'''
-          if text.count(old_accounting) != 1:
-              raise SystemExit(f"expected one primary accounting assertion, found {text.count(old_accounting)}")
-          text = text.replace(old_accounting, new_accounting)
+          old_label = 'check("ten non-numerical contracts have bounded evidence",'
+          new_label = 'check("eleven non-numerical contracts have bounded evidence",'
+          if text.count(old_label) != 1:
+              raise SystemExit(f"expected one accounting label, found {text.count(old_label)}")
+          text = text.replace(old_label, new_label)
 
-          old_gap = '''          and limitations.get("confirmedGapToolCount") == 41
-              and limitations.get("unsupportedConditionCount") == 0'''
-          new_gap = '''          and limitations.get("confirmedGapToolCount") == 40
-              and limitations.get("unsupportedConditionCount") == 0'''
-          if text.count(old_gap) != 1:
-              raise SystemExit(f"expected one remaining-gap assertion, found {text.count(old_gap)}")
-          text = text.replace(old_gap, new_gap)
+          old_contract_count = 'limitations.get("contractTestedToolCount") == 10'
+          new_contract_count = 'limitations.get("contractTestedToolCount") == 11'
+          if text.count(old_contract_count) != 1:
+              raise SystemExit(f"expected one contract-tested count, found {text.count(old_contract_count)}")
+          text = text.replace(old_contract_count, new_contract_count)
+
+          old_gap_count = 'limitations.get("confirmedGapToolCount") == 41'
+          new_gap_count = 'limitations.get("confirmedGapToolCount") == 40'
+          if text.count(old_gap_count) != 2:
+              raise SystemExit(f"expected two gap-count assertions, found {text.count(old_gap_count)}")
+          text = text.replace(old_gap_count, new_gap_count)
 
           path.write_text(text, encoding="utf-8")
           PY
