@@ -421,18 +421,33 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * calcBVector.
    *
    * <p>
-   * Element rows retain the current aqueous element inventory. The final charge row is an electroneutrality target, not
-   * a conserved non-zero feed charge, and is therefore fixed at zero.
+   * Element rows retain the current aqueous element inventory. The final row targets the reactive-species charge that
+   * exactly offsets ions outside the reaction set, so the complete phase is electroneutral. When every ion is reactive,
+   * this target is zero.
    * </p>
    *
-   * @return element inventories followed by a zero net-charge target
+   * @return element inventories followed by the reactive charge needed for total electroneutrality
    */
   public double[] calcBVector() {
     Matrix tempA = new Matrix(Amatrix);
     Matrix tempB = new Matrix(nVector, 1);
     Matrix tempN = tempA.times(tempB.transpose()).transpose();
     double[] conservedQuantities = tempN.getArray()[0];
-    conservedQuantities[conservedQuantities.length - 1] = 0.0;
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0) {
+      reactivePhase = 0;
+    }
+    double totalPhaseChargeMoles = 0.0;
+    PhaseInterface phase = system.getPhase(reactivePhase);
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = phase.getComponent(componentIndex);
+      totalPhaseChargeMoles += component.getIonicCharge() * component.getNumberOfMolesInPhase();
+    }
+    int chargeRow = conservedQuantities.length - 1;
+    double reactiveChargeMoles = conservedQuantities[chargeRow];
+    double inertChargeMoles = totalPhaseChargeMoles - reactiveChargeMoles;
+    double chargeNoiseToleranceMoles = 1.0e-10 * Math.max(1.0, phase.getNumberOfMolesInPhase());
+    conservedQuantities[chargeRow] = Math.abs(inertChargeMoles) <= chargeNoiseToleranceMoles ? 0.0 : -inertChargeMoles;
     return conservedQuantities;
   }
 
