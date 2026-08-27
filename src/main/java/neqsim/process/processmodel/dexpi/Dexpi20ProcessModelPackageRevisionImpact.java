@@ -35,7 +35,7 @@ public final class Dexpi20ProcessModelPackageRevisionImpact implements Serializa
   public enum Status {
     /** Package content and assessed evidence are unchanged. */
     UNCHANGED,
-    /** At least one area document, identity, or connection changed. */
+    /** Package content or at least one area document, identity, or connection changed. */
     CHANGED
   }
 
