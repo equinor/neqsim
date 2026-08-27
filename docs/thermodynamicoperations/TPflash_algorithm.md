@@ -184,8 +184,8 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │  IF multiPhaseCheck enabled:                                                    │
 │     → Preserve an already balanced neutral two-phase aqueous reference          │
 │     → Delegate to TPmultiflash for stability analysis and phase split           │
-│     → If a rejected third-phase trial leaves an invalid two-phase aqueous       │
-│       endpoint, restore the balanced reference                                  │
+│     → If a rejected third-phase trial leaves the same topology invalid,         │
+│       restore the balanced reference; retain GAS↔OIL root transitions          │
 │     → If cleanup collapses a strong water/non-water K split to one phase, retry │
 │       the ordinary flash and retain it only when balanced and lower in Gibbs    │
 │     → If a neutral three-phase beta solve stalls, test the three two-phase      │
@@ -242,10 +242,10 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Replace only with a lower-Gibbs root that already satisfies                │
 │       max |Δ ln(fᵢ)| < 1e-8; phase fractions and compositions stay unchanged     │
 │                                                                                 │
-│  IF multiphase, neutral GAS+AQUEOUS has water feed >= 0.01:                      │
+│  IF multiphase, neutral GAS+AQUEOUS has a lower alternate cubic root:            │
 │     → Evaluate one ordinary candidate from the unchanged feed                    │
 │     → Accept exactly one AQUEOUS plus one GAS/OIL/LIQUID phase; the cubic root   │
-│       may change label and composition only when strict thermodynamic gates pass │
+│       may change label only when balance, fugacity, and lower-Gibbs gates pass    │
 │                                                                                 │
 │  IF a final neutral two-phase aqueous endpoint with water feed ≥ 0.01 fails:     │
 │     → Audit max |Δzᵢ| and max |Δ ln(fᵢ)| against 1e-8                            │
@@ -297,15 +297,15 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
 | Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i)` is non-finite or above `1e-8`, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the guarded candidate must then pass the strict feasibility and lower-Gibbs gates. |
-| Water-rich cross-algorithm fallback | water feed `>= 0.01` and either an explicit-multiphase GAS+AQUEOUS endpoint, current `max abs(Delta ln(f_i)) >= 1e-8`, material-balance failure, or multiphase collapse to one hydrocarbon phase | Evaluate the existing cold candidate through the alternate path first. A feasible GAS+AQUEOUS endpoint still receives this one composition-relaxed candidate because fixed-composition equilibrium and cubic-root checks cannot exclude a lower-Gibbs OIL+AQUEOUS state. If an invalid ordinary two-phase split remains after that candidate is rejected, preserve its compositions as the seed for one fully initialized `TPmultiflash` trial. A multiphase endpoint collapsed to one phase may try the ordinary path, including the same seeded refinement when the cold ordinary result is invalid, but accepts only a result that restores an AQUEOUS phase; ordinary gas appearance remains outside this aqueous-recovery fallback. Genuine OIL+AQUEOUS liquid-liquid endpoints remain on the multiphase path. Prevent reciprocal recursion and replace the endpoint only when the candidate has exactly one AQUEOUS and one cubic fluid phase with distinct bounded phases, normalized beta and compositions, material balance and fugacity residuals below `1e-8`, and a Gibbs reduction larger than `max(1e-6 J, 1e-8 abs(G))`. Other already-feasible two-phase endpoints incur only the residual acceptance scan. |
+| Water-rich cross-algorithm fallback | water feed `>= 0.01` and current `max abs(Delta ln(f_i)) >= 1e-8`, material-balance failure, or multiphase collapse to one hydrocarbon phase | Evaluate the existing cold candidate through the alternate path first. If an invalid ordinary two-phase split remains after that candidate is rejected, preserve its compositions as the seed for one fully initialized `TPmultiflash` trial. A multiphase endpoint collapsed to one phase may try the ordinary path, including the same seeded refinement when the cold ordinary result is invalid, but accepts only a result that restores an AQUEOUS phase; ordinary gas appearance remains outside this aqueous-recovery fallback. Genuine OIL+AQUEOUS liquid-liquid endpoints remain on the multiphase path. Prevent reciprocal recursion and replace the endpoint only when the candidate has exactly two distinct bounded phases, normalized beta and compositions, material balance and fugacity residuals below `1e-8`, and a Gibbs reduction larger than `max(1e-6 J, 1e-8 abs(G))`. Already-feasible two-phase endpoints incur only the residual acceptance scan. |
 | CPA high-water hydrocarbon-liquid stability screen | ordinary one-phase AQUEOUS CPA endpoint, water feed `>= 0.01`, `f_water / p_water_sat >= 0.8`, and at least 0.01 hydrocarbon feed with `T_c > T + 80 K` | Use the water saturation, composition, and critical-temperature checks only as a performance gate for one cloned multiphase stability calculation. Accept only an exactly-two-phase, distinct, bounded, normalized result with material-balance and log-fugacity residuals below `1e-8` and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. Chemical, ionic, solid, wax, non-CPA, explicit-multiphase, gas, and non-aqueous endpoints retain their existing paths. |
 | Trace-water aqueous-stability screen | water feed `< 0.01`, GAS+OIL, `min(beta) <= 0.01`, and `x_water,oil >= 10 z_water` | Use the structural conditions only as a performance gate for an aqueous TPD trial. The TPD result, reduced-active-set convergence below `1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and lower Gibbs energy determine acceptance. Full recursive TPmultiflash is not run. |
 | CPA one-phase aqueous-stability screen | water feed `< 0.01`, one ordinary phase, CPA model, and `f_water / p_water_sat >= 0.8` | Use the fugacity ratio only as a conservative performance gate for the existing aqueous TPD trial. When the trial adds one phase, rebuild the two-phase active set and require beta-solver residual `< 1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. The tighter Gibbs tolerance retains independently converged incipient aqueous fractions without treating the saturation screen itself as a stability criterion. |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Dry cubic-root screen and acceptance | Screen normally ordered GAS+OIL endpoints when `max abs(Delta ln(f_i)) >= 1e-8`; accept below `1e-8` | Evaluate both roots for one phase at a time and retain a lower-Gibbs root seed only when the resulting unchanged composition split restores fugacity equality. Inverted mean-molar-mass order retains the paired-root comparison. |
-| Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Ordinary flashes accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality. A water-rich multiphase GAS+AQUEOUS endpoint independently evaluates a cold, composition-relaxed ordinary candidate containing exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, so a lower-Gibbs gas-to-oil transition is not hidden by the reference phase composition or rejected by its new label. The candidate must additionally retain normalized positive phases, distinct compositions, fugacity equality, and component balance below `1e-8`. |
+| Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Ordinary flashes accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality. A multiphase GAS+AQUEOUS endpoint may replay a lower-Gibbs ordinary candidate containing exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, so a valid gas-to-oil root transition is not rejected by its new label. The candidate must additionally retain normalized positive phases, distinct compositions, and component balance below `1e-8`. |
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
-| Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
+| Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the same two-phase topology infeasible; a valid GAS↔OIL root transition, genuine three-phase result, or already feasible endpoint is retained |
 | Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with `max abs(Delta z_i) > 1e-8`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
 | Final neutral gas/oil equilibrium refinement | `1e-8 <= max abs(Delta ln(f_i)) <= 1e-5`; at most 8 SSI updates | Repair only balanced, near-converged vapor-liquid endpoints after post-convergence root handling. Preserve both phase types and roll back unless phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the strict acceptance checks. |
 | Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive systems only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state |
@@ -1807,16 +1807,14 @@ Commercial process simulators do not publish all implementation details, but pub
   Gibbs energy by more than `max(1e-8 J, 1e-12 abs(G))`. Stable polar aqueous endpoints without condensable
   hydrocarbons stay on the ordinary fast path. Chemical, ionic, solid, wax, and explicit-multiphase calculations are
   excluded.
-- The same strict gate is reciprocal for a water-rich multiphase GAS+AQUEOUS endpoint. One ordinary candidate is
-  always evaluated from the unchanged feed, including when the reference endpoint is balanced and fugacity-equal.
-  Fixed-composition equilibrium and alternate-root checks cannot exclude a lower-Gibbs state whose cubic and aqueous
-  phase compositions re-equilibrate together. The candidate replaces the multiphase endpoint only when it contains
-  exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, is independently feasible, and lowers extensive Gibbs energy
-  beyond `max(1e-6 J, 1e-8 abs(G))`. Allowing both the cubic phase identity and composition to change prevents a stable
-  liquid state from being rejected merely because the reference endpoint called its cubic phase GAS. The accepted
-  ordinary calculation is repeated on the live system to rebuild the cubic/aqueous storage mapping; a recursion guard
-  prevents fallback ping-pong. Genuine three-phase endpoints, chemical/electrolyte systems, solid/wax calculations,
-  and dry systems do not run the additional flash.
+- The same strict gate is reciprocal for a water-rich multiphase GAS+AQUEOUS endpoint. If its gas phase has a
+  lower-Gibbs alternate cubic root, one ordinary candidate is evaluated from the unchanged feed. It replaces the
+  multiphase endpoint only when it contains exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, is independently
+  feasible, and lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))`. Allowing the cubic phase identity to
+  change prevents a stable liquid root from being rejected merely because the reference endpoint called the same
+  phase GAS. The accepted ordinary calculation is repeated on the live system to rebuild the cubic/aqueous storage
+  mapping; a recursion guard prevents fallback ping-pong. Genuine three-phase endpoints, chemical/electrolyte systems,
+  solid/wax calculations, and dry systems do not run the additional flash.
 - For a neutral non-CPA water-rich asymmetric feed, ordinary and explicit-multiphase calculations retain the cold
   pre-iteration state instead of relying on a clone of a final endpoint. A post-flash clone can preserve collapsed
   phase-storage and cubic-root history even after beta and compositions are reset, causing it to revisit a rejected
@@ -1857,9 +1855,11 @@ Commercial process simulators do not publish all implementation details, but pub
   normalized endpoints because specialized fluid and solid-phase models retain their existing convergence and
   refinement paths.
 - A neutral, balanced two-phase aqueous state is preserved before multiphase phase-appearance trials. If a trial third
-  phase is subsequently removed but its phase fractions leave the surviving two-phase state outside `1e-8` component
-  material-balance or fugacity tolerances, the pre-trial state is restored. The recovery does not run another flash and
-  is not considered for chemical, ionic, solid, wax, genuine three-phase, or already feasible endpoints.
+  phase is subsequently removed but its phase fractions leave the same surviving two-phase topology outside `1e-8`
+  component material-balance or fugacity tolerances, the pre-trial state is restored. A GAS↔OIL root transition is
+  retained for the later endpoint refinement instead of being overwritten by the saved topology. The recovery does not
+  run another flash and is not considered for chemical, ionic, solid, wax, genuine three-phase, or already feasible
+  endpoints.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
 - Balanced neutral gas/oil endpoints whose terminal fugacity residual is between `1e-8` and `1e-5` receive at most
   eight additional SSI updates. This targets stale, near-converged K-values after root selection without adding work to

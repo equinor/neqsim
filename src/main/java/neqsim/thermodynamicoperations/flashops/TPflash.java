@@ -896,6 +896,7 @@ public class TPflash extends Flash {
         rescueLiquidLiquidEndpointLegacy();
         rescueLowerGibbsNeutralEndpoint();
         rescueWaterRichEndpoint();
+        rescueLowerGibbsMultiphaseAqueousRoot();
         refineInvalidAqueousTwoPhaseEndpoint();
         refineInvalidNeutralGasLiquidTwoPhaseEndpointLegacy();
         refineInvalidNeutralTwoPhaseEndpoint();
@@ -1121,6 +1122,7 @@ public class TPflash extends Flash {
     rescueLowerGibbsHydrocarbonPhaseRoots();
     rescueLiquidLiquidEndpointLegacy();
     rescueWaterRichEndpoint();
+    rescueLowerGibbsMultiphaseAqueousRoot();
     rescueLowerGibbsPhaseRoot();
     refineInvalidAqueousTwoPhaseEndpoint();
     refineInvalidNeutralGasLiquidTwoPhaseEndpointLegacy();
@@ -1655,20 +1657,18 @@ public class TPflash extends Flash {
    * endpoint whose fugacity residual is already outside the equilibrium tolerance may still use the cloned stability
    * calculation because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase
    * beta solve are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately
-   * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint always
-   * uses one cold ordinary candidate, even when the reference endpoint is internally feasible, because a
-   * fixed-composition residual or cubic-root comparison cannot exclude a lower-Gibbs state with re-equilibrated phase
-   * compositions. A genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. A water-rich multiphase
-   * endpoint that collapsed to one hydrocarbon phase also uses a cold ordinary candidate, whose invalid two-phase
-   * cubic-root split may seed the multiphase solver. An ordinary neutral non-CPA water-rich asymmetric feed retains its
-   * pre-iteration state for this reciprocal calculation; cloning the final endpoint can retain the collapsed phase/root
-   * history and miss the cold phase set. For an ordinary endpoint, an existing invalid two-phase split is retained as
-   * the multiphase phase-set seed when the existing cold candidate is rejected. Trying the cold candidate first
-   * preserves its gas/oil cubic-root classification whenever it already reaches the same feasible equilibrium. The
-   * nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the original state only after
-   * strict phase-fraction, composition-normalization, material-balance, fugacity, distinct-composition, and lower-Gibbs
-   * checks pass. A collapsed multiphase endpoint additionally requires the candidate to restore the missing aqueous
-   * phase, keeping ordinary gas appearance outside this fallback's scope.
+   * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint uses
+   * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. A
+   * water-rich multiphase endpoint that collapsed to one hydrocarbon phase also uses a cold ordinary candidate, whose
+   * invalid two-phase cubic-root split may seed the multiphase solver. An ordinary neutral non-CPA water-rich
+   * asymmetric feed retains its pre-iteration state for this reciprocal calculation; cloning the final endpoint can
+   * retain the collapsed phase/root history and miss the cold phase set. For an ordinary endpoint, an existing invalid
+   * two-phase split is retained as the multiphase phase-set seed when the existing cold candidate is rejected. Trying
+   * the cold candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same
+   * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
+   * original state only after strict phase-fraction, composition-normalization, material-balance, fugacity,
+   * distinct-composition, and lower-Gibbs checks pass. A collapsed multiphase endpoint additionally requires the
+   * candidate to restore the missing aqueous phase, keeping ordinary gas appearance outside this fallback's scope.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
@@ -1705,10 +1705,8 @@ public class TPflash extends Flash {
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
     boolean materialBalanceInvalid = !Double.isFinite(materialBalanceResidual)
         || materialBalanceResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
-    double maximumFugacityResidual = hasAqueousPhase ? maximumLogFugacityResidualWithReplacement(0, system.getPhase(0))
-        : Double.NaN;
-    if (shouldSkipCompositionRelaxedWaterRichCandidate(hasAqueousPhase, singlePhaseCpaAqueousEndpoint,
-        gasAqueousMultiphaseEndpoint, materialBalanceInvalid, maximumFugacityResidual)) {
+    if (hasAqueousPhase && !singlePhaseCpaAqueousEndpoint && !materialBalanceInvalid
+        && maximumLogFugacityResidualWithReplacement(0, system.getPhase(0)) < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
       return;
     }
 
@@ -1748,9 +1746,9 @@ public class TPflash extends Flash {
       }
       boolean incipientCpaAqueousTrial = system.getNumberOfPhases() == 1 && !system.doMultiPhaseCheck()
           && system.getModelName() != null && system.getModelName().contains("CPA");
-      boolean requiresAqueousCandidate = gasAqueousMultiphaseEndpoint || singlePhaseWaterRichMultiphaseEndpoint;
-      boolean hasRequiredAqueousTopology = !requiresAqueousCandidate || hasExactlyOneAqueousAndOneCubicPhase(candidate);
-      if (candidateConverged && hasRequiredAqueousTopology && candidate.getNumberOfPhases() == 2
+      boolean restoresCollapsedAqueousPhase = !singlePhaseWaterRichMultiphaseEndpoint
+          || candidate.hasPhaseType(PhaseType.AQUEOUS);
+      if (candidateConverged && restoresCollapsedAqueousPhase && candidate.getNumberOfPhases() == 2
           && isBalancedEquilibriumCandidate(candidate) && shouldAcceptWaterRichCandidate(candidate,
               referenceGibbsEnergy, materialBalanceInvalid, incipientCpaAqueousTrial)) {
         if (gasAqueousMultiphaseEndpoint) {
@@ -1766,27 +1764,6 @@ public class TPflash extends Flash {
     if (invalidOrdinaryTwoPhaseSeed) {
       trySeededWaterRichPhaseSet(referenceGibbsEnergy, materialBalanceInvalid);
     }
-  }
-
-  /**
-   * Checks whether a feasible aqueous endpoint needs no composition-relaxed reciprocal candidate.
-   *
-   * <p>
-   * A balanced multiphase GAS+AQUEOUS endpoint remains eligible because its fixed phase compositions can satisfy
-   * fugacity equality while a re-equilibrated OIL+AQUEOUS state has lower total Gibbs energy.
-   * </p>
-   *
-   * @param hasAqueousPhase whether the reference contains an aqueous phase
-   * @param singlePhaseCpaAqueousEndpoint whether the reference needs the CPA aqueous stability screen
-   * @param gasAqueousMultiphaseEndpoint whether the reference is an explicit-multiphase GAS+AQUEOUS endpoint
-   * @param materialBalanceInvalid whether the reference fails component material balance
-   * @param maximumFugacityResidual maximum component log-fugacity residual of the reference
-   * @return true when the feasible endpoint may stay on the existing fast path
-   */
-  boolean shouldSkipCompositionRelaxedWaterRichCandidate(boolean hasAqueousPhase, boolean singlePhaseCpaAqueousEndpoint,
-      boolean gasAqueousMultiphaseEndpoint, boolean materialBalanceInvalid, double maximumFugacityResidual) {
-    return hasAqueousPhase && !singlePhaseCpaAqueousEndpoint && !gasAqueousMultiphaseEndpoint && !materialBalanceInvalid
-        && maximumFugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
   }
 
   /**
@@ -3346,18 +3323,46 @@ public class TPflash extends Flash {
    * a near-boundary hydrocarbon-liquid trial. If that trial disappears during {@link TPmultiflash} cleanup, the
    * remaining phases can retain phase fractions from the rejected three-phase iterate. Composition normalization alone
    * does not repair the resulting component material-balance or fugacity residuals. The pre-trial state is restored
-   * only when the final endpoint still has exactly two phases including an aqueous phase and fails the same strict
-   * acceptance checks. Genuine three-phase results and feasible multiphase refinements are unchanged.
+   * only when the final endpoint still has the same two phase types and fails the same strict acceptance checks. A
+   * gas-to-oil root transition must remain available to the later endpoint refinement. Genuine three-phase results and
+   * feasible multiphase refinements are unchanged.
    * </p>
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
    */
   private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(BalancedTwoPhaseState balancedReference) {
     if (balancedReference == null || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
-        || isBalancedEquilibriumCandidate(system)) {
+        || !hasSameTwoPhaseTopology(balancedReference) || isBalancedEquilibriumCandidate(system)) {
       return;
     }
     restoreBalancedTwoPhaseState(balancedReference);
+  }
+
+  /**
+   * Checks whether the active two-phase topology matches a saved two-phase state, independent of phase order.
+   *
+   * @param reference saved two-phase state
+   * @return {@code true} when both states contain the same phase types
+   */
+  private boolean hasSameTwoPhaseTopology(BalancedTwoPhaseState reference) {
+    PhaseType firstType = system.getPhase(0).getType();
+    PhaseType secondType = system.getPhase(1).getType();
+    return hasSameTwoPhaseTopology(firstType, secondType, reference.phaseTypes[0], reference.phaseTypes[1]);
+  }
+
+  /**
+   * Checks two unordered pairs of phase types for equality.
+   *
+   * @param firstType first active phase type
+   * @param secondType second active phase type
+   * @param referenceFirstType first saved phase type
+   * @param referenceSecondType second saved phase type
+   * @return {@code true} when both pairs describe the same topology
+   */
+  static boolean hasSameTwoPhaseTopology(PhaseType firstType, PhaseType secondType, PhaseType referenceFirstType,
+      PhaseType referenceSecondType) {
+    return firstType == referenceFirstType && secondType == referenceSecondType
+        || firstType == referenceSecondType && secondType == referenceFirstType;
   }
 
   /**
@@ -3592,12 +3597,53 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Checks whether a reciprocal water-rich candidate has one aqueous and one cubic fluid phase.
+   * Refines a feasible multiphase gas/aqueous endpoint when its gas phase has a lower-Gibbs cubic root.
+   *
+   * <p>
+   * {@link TPmultiflash} can converge a balanced gas/aqueous split on a higher-Gibbs cubic root while the ordinary
+   * two-phase path reaches the lower root and a slightly adjusted equilibrium composition. A cheap alternate-root
+   * comparison screens the converged gas phase before any retry. Only a lower root beyond numerical noise starts an
+   * ordinary TP flash on a clone; the candidate is replayed on the live system only when it retains exactly one aqueous
+   * phase and one cubic fluid phase. The cubic phase may change from gas to oil/liquid when the alternate root is
+   * stable. The candidate must still pass the existing strict phase-fraction, normalization, material-balance,
+   * distinct-composition, and fugacity checks, and lower total extensive Gibbs energy beyond the same tolerance.
+   * Three-phase results and chemical, electrolyte, solid, and wax calculations remain on their existing paths.
+   * </p>
+   */
+  private void rescueLowerGibbsMultiphaseAqueousRoot() {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+        || !system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || !waterRichCrossAlgorithmFallbackAllowed || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()
+        || !isBalancedEquilibriumCandidate(system) || !hasLowerGibbsAlternateGasRoot()) {
+      return;
+    }
+
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    SystemInterface candidate = system.clone();
+    MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
+    try {
+      candidate.setMultiPhaseCheck(false);
+      new TPflash(candidate, false).run();
+      candidate.init(1);
+      if (isLowerGibbsMultiphaseAqueousRootCandidate(candidate, referenceGibbsEnergy)) {
+        runAcceptedOrdinaryWaterRichFallback(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Multiphase aqueous lower-Gibbs root refinement failed: {}", ex.getMessage());
+    } finally {
+      MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
+    }
+  }
+
+  /**
+   * Checks an ordinary candidate for the reciprocal multiphase aqueous-root rescue.
    *
    * @param candidate ordinary TP flash candidate
-   * @return true when the candidate retains the required two-phase topology
+   * @param referenceGibbsEnergy Gibbs energy of the multiphase reference endpoint
+   * @return true when the candidate retains the expected topology, is feasible, and lowers Gibbs energy
    */
-  boolean hasExactlyOneAqueousAndOneCubicPhase(SystemInterface candidate) {
+  boolean isLowerGibbsMultiphaseAqueousRootCandidate(SystemInterface candidate, double referenceGibbsEnergy) {
     if (candidate.getNumberOfPhases() != 2 || !candidate.hasPhaseType(PhaseType.AQUEOUS)) {
       return false;
     }
@@ -3613,7 +3659,35 @@ public class TPflash extends Flash {
         return false;
       }
     }
-    return aqueousPhaseCount == 1 && cubicFluidPhaseCount == 1;
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    return aqueousPhaseCount == 1 && cubicFluidPhaseCount == 1 && isBalancedEquilibriumCandidate(candidate)
+        && candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance;
+  }
+
+  /**
+   * Screens the converged gas phase for a lower-Gibbs alternate cubic root.
+   *
+   * @return true when another cubic root lowers the gas-phase Gibbs energy beyond numerical noise
+   */
+  private boolean hasLowerGibbsAlternateGasRoot() {
+    int gasPhaseIndex = system.getPhaseNumberOfPhase(PhaseType.GAS);
+    PhaseInterface gasPhase = system.getPhase(gasPhaseIndex);
+    double referenceGibbsEnergy = gasPhase.getGibbsEnergy();
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
+      try {
+        PhaseInterface trialPhase = gasPhase.clone();
+        trialPhase.init(system.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
+            system.getBeta(gasPhaseIndex));
+        double gibbsReduction = referenceGibbsEnergy - trialPhase.getGibbsEnergy();
+        if (Double.isFinite(gibbsReduction) && gibbsReduction > gibbsTolerance) {
+          return true;
+        }
+      } catch (Exception ex) {
+        logger.debug("Multiphase gas-root screen failed for {}: {}", trialRoot, ex.getMessage());
+      }
+    }
+    return false;
   }
 
   /**
