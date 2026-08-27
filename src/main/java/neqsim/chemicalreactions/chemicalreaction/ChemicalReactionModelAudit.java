@@ -334,11 +334,10 @@ public final class ChemicalReactionModelAudit {
      */
     public void requireEquivalent() {
       if (!isEquivalent()) {
-        throw new IllegalStateException(
-            "Chemical-reaction models are not equivalent: sameReactionDataSource=" + sameReactionDataSource
-                + ", sameReactionConcentrationBasis=" + sameReactionConcentrationBasis + ", reactionsOnlyInFirst="
-                + reactionsOnlyInFirst + ", reactionsOnlyInSecond=" + reactionsOnlyInSecond + ", parameterDifferences="
-                + parameterDifferences);
+        throw new IllegalStateException("Chemical-reaction models are not equivalent: sameReactionDataSource="
+            + sameReactionDataSource + ", sameReactionConcentrationBasis=" + sameReactionConcentrationBasis
+            + ", reactionsOnlyInFirst=" + reactionsOnlyInFirst + ", reactionsOnlyInSecond=" + reactionsOnlyInSecond
+            + ", parameterDifferences=" + parameterDifferences);
       }
     }
 
