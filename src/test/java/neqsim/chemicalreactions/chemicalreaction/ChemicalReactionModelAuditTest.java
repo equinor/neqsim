@@ -36,8 +36,8 @@ class ChemicalReactionModelAuditTest {
     pitzerAudit.requireValidatedEvidenceForAllActiveReactions();
     assertFalse(cpaAudit.hasValidatedEvidenceForAllActiveReactions());
     assertTrue(cpaAudit.getReactionsWithoutValidatedEvidence().contains("CO2water"));
-    IllegalStateException validationFailure =
-        assertThrows(IllegalStateException.class, cpaAudit::requireValidatedEvidenceForAllActiveReactions);
+    IllegalStateException validationFailure = assertThrows(IllegalStateException.class,
+        cpaAudit::requireValidatedEvidenceForAllActiveReactions);
     assertTrue(validationFailure.getMessage().contains("source 'standard'"));
     assertTrue(validationFailure.getMessage().contains("MOLE_FRACTION"));
     assertTrue(validationFailure.getMessage().contains("CO2water"));
@@ -49,8 +49,7 @@ class ChemicalReactionModelAuditTest {
     assertTrue(comparison.getParameterDifferences().contains("carbonate"));
     assertTrue(comparison.getParameterDifferences().contains("waterreac"));
     assertFalse(comparison.isEquivalent());
-    IllegalStateException comparisonFailure =
-        assertThrows(IllegalStateException.class, comparison::requireEquivalent);
+    IllegalStateException comparisonFailure = assertThrows(IllegalStateException.class, comparison::requireEquivalent);
     assertTrue(comparisonFailure.getMessage().contains("sameReactionDataSource=false"));
     assertTrue(comparisonFailure.getMessage().contains("sameReactionConcentrationBasis=false"));
     assertTrue(comparisonFailure.getMessage().contains("CO2water"));
