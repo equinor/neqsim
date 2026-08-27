@@ -2,7 +2,7 @@
 
 This dependency-free harness starts the packaged NeqSim MCP server over STDIO and
 checks a successful NeqSim API inspection, fail-closed rejection of a non-NeqSim
-class, and the machine-readable Phase 0 promotion-candidate state.
+class, and the atomically promoted Phase 0 contract classification.
 """
 import json
 import subprocess
@@ -154,29 +154,39 @@ def test_non_neqsim_target_fails_closed(client):
     require("neqsim.*" in serialized, "rejection does not explain the accepted namespace", result)
 
 
-def test_candidate_state_is_transport_qualified(client):
+def test_contract_classification_is_promoted_atomically(client):
     result = client.call_tool("getCapabilities", {})
     data = payload(result)
     inventory = data.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
-    require(inventory.get("inventoryVersion") == "1.14", "unexpected evidence inventory version", result)
+    require(inventory.get("inventoryVersion") == "1.15", "unexpected evidence inventory version", result)
     limitations = inventory.get("knownLimitations", {})
-    require(limitations.get("contractTestedToolCount") == 9, "contract-tested count changed prematurely", result)
-    require(limitations.get("confirmedGapToolCount") == 42, "confirmed-gap count changed prematurely", result)
+    require(limitations.get("contractTestedToolCount") == 10, "contract-tested count did not promote", result)
+    require(limitations.get("confirmedGapToolCount") == 41, "confirmed-gap count did not promote", result)
     records = limitations.get("coverageRecords", {})
     inspect_record = records.get("inspectApi", {})
     require(
-        inspect_record.get("coverageStatus") == "CONFIRMED_GAP",
-        "inspectApi was promoted before primary protocol accounting",
+        inspect_record.get("coverageStatus") == "CONTRACT_TESTED",
+        "inspectApi coverage was not promoted with primary accounting",
         result,
     )
-    candidates = limitations.get("contractPromotionCandidates", {})
-    candidate = candidates.get("inspectApi", {})
-    require(candidate.get("targetCoverageStatus") == "CONTRACT_TESTED", "candidate target drifted", result)
-    require(candidate.get("promotionReady") is True, "transport-qualified candidate is not promotion-ready", result)
     require(
-        "test_inspect_api_protocol.py" in json.dumps(candidate.get("contractEvidenceSources", [])),
-        "candidate does not cite focused real-MCP evidence",
+        inspect_record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_RUNTIME_API_INSPECTION",
+        "inspectApi benchmark-applicability boundary drifted",
+        result,
+    )
+    require(inspect_record.get("contractTrustAvailable") is True, "contract trust flag missing", result)
+    require(inspect_record.get("contractEvidenceCount") == 5, "inspectApi evidence count drifted", result)
+    require(
+        "test_inspect_api_protocol.py" in json.dumps(inspect_record.get("contractEvidenceSources", [])),
+        "inspectApi coverage does not cite focused real-MCP evidence",
+        result,
+    )
+    require(
+        limitations.get("contractPromotionCandidateCount") == 0
+        and not limitations.get("contractPromotionCandidates", {}),
+        "completed inspectApi promotion remains queued as a candidate",
         result,
     )
 
@@ -187,7 +197,7 @@ def main():
         client.start()
         test_successful_inspection(client)
         test_non_neqsim_target_fails_closed(client)
-        test_candidate_state_is_transport_qualified(client)
+        test_contract_classification_is_promoted_atomically(client)
     finally:
         client.close()
     print("inspectApi real-MCP qualification: 3/3 scenarios passed")
