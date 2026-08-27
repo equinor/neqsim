@@ -2394,7 +2394,7 @@ recipe), here's a recap of the NeqSim `ProcessSystem` we built:
 ### Further Reading
 
 - [NeqSim Bio-Processing Documentation](../process/bioprocessing.md)
-- [NeqSim Thermodynamic Models](../thermo/equations-of-state.md)
+- [NeqSim Thermodynamic Models](../thermo/thermodynamic_models.md)
 - [CPA Equation of State](https://en.wikipedia.org/wiki/Cubic-plus-association_equation_of_state)
 
 ## Step 17 — Bridging Brew Day and Thermodynamics: ABV from First Principles
