@@ -12,15 +12,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousRootTransitionCandidateTest {
   @Test
-  void acceptsOilAqueousCandidateTopologyAcrossSeparatorPressures() {
+  void acceptsLowerGibbsOilAqueousCandidateAcrossSeparatorPressures() {
     for (double pressureBara : new double[] { 2.10, 1.62, 1.20, 0.74 }) {
       SystemInterface candidate = createOilAqueousCandidate(pressureBara);
       TPflash flash = new TPflash(candidate.clone(), false);
+      double referenceGibbsEnergy = candidate.getGibbsEnergy() + 1.0;
 
       assertTrue(candidate.hasPhaseType(PhaseType.OIL));
       assertTrue(candidate.hasPhaseType(PhaseType.AQUEOUS));
-      assertTrue(flash.hasExactlyOneAqueousAndOneCubicPhase(candidate),
-          "OIL+AQUEOUS candidate was rejected at " + pressureBara + " bara");
+      assertTrue(flash.isLowerGibbsMultiphaseAqueousRootCandidate(candidate, referenceGibbsEnergy),
+          "lower-Gibbs OIL+AQUEOUS candidate was rejected at " + pressureBara + " bara");
+      assertFalse(flash.isLowerGibbsMultiphaseAqueousRootCandidate(candidate, candidate.getGibbsEnergy() - 1.0),
+          "higher-Gibbs candidate was accepted at " + pressureBara + " bara");
     }
   }
 
@@ -29,15 +32,15 @@ class TPflashAqueousRootTransitionCandidateTest {
     SystemInterface gasAqueous = createSrkCandidate(260.0, 100.0);
     TPflash flash = new TPflash(gasAqueous.clone(), false);
 
-    assertTrue(flash.hasExactlyOneAqueousAndOneCubicPhase(gasAqueous));
+    assertTrue(flash.isLowerGibbsMultiphaseAqueousRootCandidate(gasAqueous, gasAqueous.getGibbsEnergy() + 1.0));
 
     SystemInterface threePhase = createSrkCandidate(255.0, 90.0);
-    assertFalse(flash.hasExactlyOneAqueousAndOneCubicPhase(threePhase));
+    assertFalse(flash.isLowerGibbsMultiphaseAqueousRootCandidate(threePhase, threePhase.getGibbsEnergy() + 1.0));
 
     SystemInterface dryGasOil = createDryGasOilCandidate();
     assertTrue(dryGasOil.hasPhaseType(PhaseType.GAS));
     assertTrue(dryGasOil.hasPhaseType(PhaseType.OIL));
-    assertFalse(flash.hasExactlyOneAqueousAndOneCubicPhase(dryGasOil));
+    assertFalse(flash.isLowerGibbsMultiphaseAqueousRootCandidate(dryGasOil, dryGasOil.getGibbsEnergy() + 1.0));
   }
 
   private SystemInterface createDryGasOilCandidate() {
