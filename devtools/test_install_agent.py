@@ -466,6 +466,67 @@ trust_level: private
         self.assertEqual(skill_dir, mocked_export.call_args[0][1])
         self.assertEqual(str(skill_file), mocked_export.call_args[0][3]["neqsim-core-demo"]["path"])
 
+    def test_force_reinstalls_already_available_required_skill(self):
+        """--force on agent install should reinstall required skills too, not just export them."""
+        catalog = [{
+            "name": "neqsim-demo",
+            "description": "Force reinstall test",
+            "source": "local",
+            "path": "/tmp/neqsim-demo/SKILL.md",
+        }]
+        install_args = argparse.Namespace(
+            vscode=True,
+            target=[],
+            vscode_dir=None,
+            vscode_skills_dir=None,
+            export_dir=None,
+            force=True,
+        )
+
+        with mock.patch.object(install_agent, "_find_missing_required_skills",
+                               return_value=[]), \
+                mock.patch.object(install_agent.install_skill, "load_catalog",
+                                  return_value=catalog), \
+                mock.patch.object(install_agent, "_ensure_required_skill_exports",
+                                  return_value=[]), \
+                mock.patch.object(install_agent.install_skill, "cmd_install") as mocked_install:
+            unresolved = install_agent._print_required_skill_guidance(
+                ["neqsim-demo"],
+                install_missing=True,
+                install_args=install_args,
+            )
+
+        self.assertEqual([], unresolved)
+        mocked_install.assert_called_once()
+        args_obj = mocked_install.call_args[0][1]
+        self.assertEqual("neqsim-demo", args_obj.name)
+        self.assertTrue(args_obj.force)
+
+    def test_no_force_does_not_reinstall_already_available_required_skill(self):
+        """Without --force, an already-available required skill is only exported, not reinstalled."""
+        install_args = argparse.Namespace(
+            vscode=True,
+            target=[],
+            vscode_dir=None,
+            vscode_skills_dir=None,
+            export_dir=None,
+            force=False,
+        )
+
+        with mock.patch.object(install_agent, "_find_missing_required_skills",
+                               return_value=[]), \
+                mock.patch.object(install_agent.install_skill, "cmd_install") as mocked_install, \
+                mock.patch.object(install_agent, "_ensure_required_skill_exports",
+                                  return_value=[]):
+            unresolved = install_agent._print_required_skill_guidance(
+                ["neqsim-demo"],
+                install_missing=True,
+                install_args=install_args,
+            )
+
+        self.assertEqual([], unresolved)
+        mocked_install.assert_not_called()
+
     def test_local_file_install_writes_manifest(self):
         """Installing a local .agent.md file should copy it and register metadata."""
         with tempfile.TemporaryDirectory() as tmp:

@@ -1427,10 +1427,15 @@ def _requested_skill_export_targets(install_args):
 
 
 def _skill_install_args(skill_name, install_args):
-    """Build skill installer args that preserve agent export target options."""
+    """Build skill installer args that preserve agent export target options.
+
+    Propagates ``--force`` from the agent install command so
+    ``neqsim agent install --all --vscode --force`` reinstalls each required
+    skill's content too, not just the agent itself.
+    """
     return argparse.Namespace(
         name=skill_name,
-        force=False,
+        force=getattr(install_args, "force", False),
         vscode=getattr(install_args, "vscode", False),
         target=list(getattr(install_args, "target", []) or []),
         vscode_scope=getattr(install_args, "vscode_scope", "user"),
@@ -1546,11 +1551,20 @@ def _ensure_required_skill_exports(required_skills, install_args):
 
 
 def _print_required_skill_guidance(required_skills, install_missing=False, install_args=None):
-    """Print required skill status and optionally install missing catalog skills."""
+    """Print required skill status and optionally install/reinstall catalog skills.
+
+    When the agent install was run with ``--force``, already-available required
+    skills are re-run through the installer too (not just missing ones), so
+    ``neqsim agent install --all --vscode --force`` refreshes both the agent
+    and its skills, matching the documented "reinstall" behavior.
+    """
     if not required_skills:
         return []
+    force_reinstall = install_missing and bool(getattr(install_args, "force", False))
     missing = _find_missing_required_skills(required_skills)
-    if not missing:
+    to_reinstall = required_skills if force_reinstall else missing
+
+    if not to_reinstall:
         print("  [OK] Required skills available: {skills}".format(
             skills=", ".join(required_skills)
         ))
@@ -1560,8 +1574,9 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
                 skills=", ".join(unresolved_exports)))
         return unresolved_exports
 
-    print("  [!!] Missing required skills: {skills}".format(
-        skills=", ".join(missing)))
+    if missing:
+        print("  [!!] Missing required skills: {skills}".format(
+            skills=", ".join(missing)))
     if not install_missing:
         print("  Install them with: neqsim skill install <skill-name>")
         return missing
@@ -1578,13 +1593,15 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
 
     unresolved = []
     installed_now = []
-    for skill_name in missing:
+    for skill_name in to_reinstall:
         resolved_name = _resolve_skill_name(
             skill_name, set(catalog_by_name.keys()))
         if not resolved_name:
-            unresolved.append(skill_name)
+            if skill_name in missing:
+                unresolved.append(skill_name)
             continue
-        print("  Installing missing skill: {name}".format(name=resolved_name))
+        verb = "Installing missing skill" if skill_name in missing else "Reinstalling required skill"
+        print("  {verb}: {name}".format(verb=verb, name=resolved_name))
         args = _skill_install_args(resolved_name, install_args)
         try:
             install_skill.cmd_install(skill_catalog, args)

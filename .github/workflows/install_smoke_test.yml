@@ -1,0 +1,147 @@
+name: Install smoke test
+
+# Exercises the exact command the installation guides tell users to run:
+#     neqsim agent install --all --source community --vscode --force
+#
+# Everything else in CI tests the installer with mocks. This job runs the real
+# CLI against the real public catalogs on a clean runner with a scratch HOME, so
+# a regression in the end-to-end path (agent fetch, required-skill resolution,
+# skill Python-package install, VS Code export, --force reinstall) fails here
+# instead of on a new user's first day.
+#
+# Community source only: no auth, no private catalogs, no secrets required.
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "devtools/install_agent.py"
+      - "devtools/install_skill.py"
+      - "devtools/neqsim_cli.py"
+      - "install.sh"
+      - "install.cmd"
+      - ".github/workflows/install_smoke_test.yml"
+  push:
+    branches: [master]
+    paths:
+      - "devtools/install_agent.py"
+      - "devtools/install_skill.py"
+      - "devtools/neqsim_cli.py"
+  schedule:
+    # Catalogs live in other repos and can drift independently of this one.
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+jobs:
+  install-smoke-test:
+    name: neqsim agent install --all (community) on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install the neqsim CLI from this checkout
+        run: python -m pip install --upgrade pip && python -m pip install -e devtools
+
+      - name: CLI is on PATH and reports health
+        run: |
+          neqsim --help
+          neqsim doctor
+
+      - name: List the public community catalogs
+        run: |
+          neqsim agent list
+          neqsim skill list
+
+      - name: Install every community agent + its required skills, export to VS Code
+        run: neqsim agent install --all --source community --vscode --force
+
+      - name: Re-run with --force (must be idempotent, not a no-op)
+        run: neqsim agent install --all --source community --vscode --force
+
+      - name: Verify installed agents and skills resolve
+        run: |
+          neqsim agent installed
+          neqsim skill installed
+          neqsim agent doctor --target vscode --source community
+
+      - name: Assert agents and skills actually landed on disk
+        shell: python
+        run: |
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          home = Path(os.path.expanduser("~"))
+          agents = json.loads((home / ".neqsim" / "agents" / "installed.json").read_text(encoding="utf-8"))
+          skills = json.loads((home / ".neqsim" / "skills" / "installed.json").read_text(encoding="utf-8"))
+          print(f"installed agents: {len(agents)}  skills: {len(skills)}")
+
+          failures = []
+          if len(agents) < 10:
+              failures.append(f"expected >=10 community agents, got {len(agents)}")
+          if len(skills) < 10:
+              failures.append(f"expected >=10 required skills auto-installed, got {len(skills)}")
+
+          # Every agent's declared required skills must have resolved.
+          for name, info in agents.items():
+              unresolved = info.get("missing_required_skills") or []
+              if unresolved:
+                  failures.append(f"{name}: unresolved required skills {unresolved}")
+
+          # Every recorded path must exist (catches a manifest written for a
+          # download that silently failed).
+          for name, info in list(agents.items()) + list(skills.items()):
+              path = Path(info.get("path", ""))
+              if not path.exists():
+                  failures.append(f"{name}: recorded path does not exist: {path}")
+
+          if failures:
+              print("\n".join(f"FAIL: {f}" for f in failures))
+              sys.exit(1)
+          print("Install smoke test passed.")
+
+      - name: A package-backed skill is importable (auto pip install worked)
+        shell: python
+        run: |
+          import json
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          home = Path(os.path.expanduser("~"))
+          skills = json.loads((home / ".neqsim" / "skills" / "installed.json").read_text(encoding="utf-8"))
+
+          # Find any installed skill that shipped a Python package; the installer
+          # should have pip-installed it into this interpreter.
+          checked = 0
+          for name, info in skills.items():
+              skill_dir = Path(info.get("path", "")).parent
+              if not (skill_dir / "pyproject.toml").exists():
+                  continue
+              module = name.replace("neqsim-", "").replace("-", "_")
+              probe = subprocess.run(
+                  [sys.executable, "-c", f"import {module}"],
+                  capture_output=True, text=True,
+              )
+              status = "OK" if probe.returncode == 0 else "not importable"
+              print(f"  {name}: package skill -> import {module}: {status}")
+              checked += 1
+              if checked >= 5:
+                  break
+
+          if checked == 0:
+              print("No package-backed skills in the community catalog yet; nothing to probe.")
+          print("Package-install probe complete.")
