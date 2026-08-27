@@ -84,8 +84,9 @@ class AutomationReadContractTest {
     JsonObject response = JsonParser.parseString(json).getAsJsonObject();
     assertEquals("error", response.get("status").getAsString(), json);
     assertEquals(toolName, response.get("tool").getAsString(), json);
-    assertTrue(response.has("errors"), json);
-    JsonObject error = response.getAsJsonArray("errors").get(0).getAsJsonObject();
-    assertEquals("INPUT_ERROR", error.get("code").getAsString(), json);
+    assertTrue(response.has("data"), json);
+    JsonObject data = response.getAsJsonObject("data");
+    assertEquals("INPUT_ERROR", data.get("code").getAsString(), json);
+    assertFalse(data.get("message").getAsString().trim().isEmpty(), json);
   }
 }
