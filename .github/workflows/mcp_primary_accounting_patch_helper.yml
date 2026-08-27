@@ -1,0 +1,74 @@
+name: MCP primary accounting patch helper
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - codex/3153-promote-validation-profile-contract
+
+jobs:
+  build-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v7
+
+      - name: Apply bounded primary protocol accounting edit
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("neqsim-mcp-server/test_mcp_server.py")
+          text = path.read_text(encoding="utf-8")
+
+          old_tools = '''    contract_tools = {
+              "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
+              "checkToolAccess", "manageIndustrialProfile", "searchComponents",
+              "queryDataCatalog", "getProgress", "inspectApi",
+          }'''
+          new_tools = '''    contract_tools = {
+              "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
+              "checkToolAccess", "manageIndustrialProfile", "searchComponents",
+              "queryDataCatalog", "getProgress", "inspectApi",
+              "manageValidationProfile",
+          }'''
+          if text.count(old_tools) != 1:
+              raise SystemExit(f"expected one contract_tools block, found {text.count(old_tools)}")
+          text = text.replace(old_tools, new_tools)
+
+          old_accounting = '''    check("ten non-numerical contracts have bounded evidence",
+              limitations.get("contractTestedToolCount") == 10
+              and limitations.get("confirmedGapToolCount") == 41'''
+          new_accounting = '''    check("eleven non-numerical contracts have bounded evidence",
+              limitations.get("contractTestedToolCount") == 11
+              and limitations.get("confirmedGapToolCount") == 40'''
+          if text.count(old_accounting) != 1:
+              raise SystemExit(f"expected one primary accounting assertion, found {text.count(old_accounting)}")
+          text = text.replace(old_accounting, new_accounting)
+
+          old_gap = '''          and limitations.get("confirmedGapToolCount") == 41
+              and limitations.get("unsupportedConditionCount") == 0'''
+          new_gap = '''          and limitations.get("confirmedGapToolCount") == 40
+              and limitations.get("unsupportedConditionCount") == 0'''
+          if text.count(old_gap) != 1:
+              raise SystemExit(f"expected one remaining-gap assertion, found {text.count(old_gap)}")
+          text = text.replace(old_gap, new_gap)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          git diff --check -- neqsim-mcp-server/test_mcp_server.py
+          git diff -- neqsim-mcp-server/test_mcp_server.py > primary-accounting.patch
+
+      - name: Upload patched primary harness
+        uses: actions/upload-artifact@v7
+        with:
+          name: mcp-primary-accounting-patched
+          path: |
+            neqsim-mcp-server/test_mcp_server.py
+            primary-accounting.patch
+          if-no-files-found: error
