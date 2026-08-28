@@ -2,9 +2,12 @@ package neqsim.chemicalreactions.chemicalreaction;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -63,6 +66,42 @@ class ChemicalReactionProvenanceTest {
     assertEquals("USGS-PHREEQC3-PlummerBusenberg1982-fit-0-90C", reaction.getReference());
     assertEquals(ChemicalReactionValidationStatus.VALIDATED, reaction.getValidationStatus());
     assertArrayEquals(PITZER_CO2_WATER, reaction.getEquilibriumConstantCoefficients(), 1.0e-12);
+  }
+
+  /** Pitzer reaction initialization rejects active MDEA and DEA rows that remain explicitly unvalidated. */
+  @Test
+  void pitzerRejectsUnvalidatedActiveAmineRows() {
+    assertPitzerRejectsUnvalidatedAmine("MDEA", "MDEA+", "MDEAprot");
+    assertPitzerRejectsUnvalidatedAmine("DEA", "DEA+", "DEAprot");
+  }
+
+  /** Pitzer reports every relevant unvalidated row in deterministic reaction-name order. */
+  @Test
+  void pitzerReportsUnvalidatedRowsDeterministically() {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("MDEA", 1.0);
+    system.addComponent("DEA", 1.0);
+    system.addComponent("water", 18.0);
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class, system::chemicalReactionInit);
+    assertEquals("Chemical-reaction initialization rejected unvalidated active rows for source 'pitzer': "
+        + "reactionsWithoutValidatedEvidence=[DEAprot, MDEAprot]", failure.getMessage());
+    assertFalse(system.hasComponent("MDEA+"));
+    assertFalse(system.hasComponent("DEA+"));
+  }
+
+  /** Legacy electrolyte-EOS reaction initialization keeps its non-strict compatibility behavior. */
+  @Test
+  void standardSourceKeepsLegacyUnspecifiedAmineRows() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+    system.addComponent("MDEA", 1.0);
+    system.addComponent("water", 9.0);
+    system.chemicalReactionInit();
+
+    assertFalse(ChemicalReactionDataSource.STANDARD.requiresValidatedActiveReactions());
+    ChemicalReaction reaction = system.getChemicalReactionOperations().getReactionList().getReaction("MDEAprot");
+    assertNotNull(reaction);
+    assertEquals(ChemicalReactionValidationStatus.UNSPECIFIED, reaction.getValidationStatus());
   }
 
   /**
@@ -139,6 +178,20 @@ class ChemicalReactionProvenanceTest {
     assertEquals(ChemicalReactionDataSource.KENT_EISENBERG,
         restored.getChemicalReactionOperations().getReactionDataSource());
     assertEquals("KentEisenberg1976", getCo2WaterReaction(restored).getReference());
+  }
+
+  private static void assertPitzerRejectsUnvalidatedAmine(String amineName, String protonatedAmineName,
+      String reactionName) {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent(amineName, 1.0);
+    system.addComponent("water", 9.0);
+
+    assertTrue(ChemicalReactionDataSource.PITZER.requiresValidatedActiveReactions());
+    IllegalStateException failure = assertThrows(IllegalStateException.class, system::chemicalReactionInit);
+    assertTrue(failure.getMessage().contains("source 'pitzer'"));
+    assertTrue(failure.getMessage().contains(reactionName));
+    assertFalse(system.hasComponent(protonatedAmineName),
+        "An unvalidated reaction must be rejected before its model-specific product is added");
   }
 
   /**
