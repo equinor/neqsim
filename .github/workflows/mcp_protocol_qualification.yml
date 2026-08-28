@@ -63,3 +63,6 @@ jobs:
 
       - name: Run focused real-MCP validation-profile qualification
         run: cd neqsim-mcp-server && python test_validation_profile_protocol.py
+
+      - name: Run focused real-MCP automation-read qualification
+        run: cd neqsim-mcp-server && python test_automation_read_protocol.py
