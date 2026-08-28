@@ -128,6 +128,7 @@ class BlockedInLiquidExpansionDocumentationContractTest(unittest.TestCase):
             self.assertIn(test_token, self.java_test)
 
     def test_phase_failure_and_validation_boundaries_are_explicit(self):
+        normalized_guide = " ".join(self.guide.split())
         for guide_token in (
             "does not prove that every trial or result is a single liquid phase",
             "may prevent bracketing and raise",
@@ -137,12 +138,12 @@ class BlockedInLiquidExpansionDocumentationContractTest(unittest.TestCase):
             "fixed mass and rigid volume",
             "pipe/vessel elasticity",
         ):
-            self.assertIn(guide_token, self.guide)
+            self.assertIn(guide_token, normalized_guide)
 
-        self.assertNotIn("accurate over large temperature spans", self.guide)
+        self.assertNotIn("accurate over large temperature spans", normalized_guide)
         self.assertNotIn(
             "within roughly 30% for moderate temperature spans",
-            self.guide,
+            normalized_guide,
         )
 
     def test_relief_sizing_handoff_does_not_invent_flow(self):

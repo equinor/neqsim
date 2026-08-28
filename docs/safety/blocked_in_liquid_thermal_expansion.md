@@ -141,8 +141,8 @@ provides relief-device sizing methods. Edition and section numbering must be che
 project's licensed copies; NeqSim does not reproduce or certify either standard.
 
 The repository regression is numerical software evidence for one EOS case. It is not experimental
-validation or a universal 30% acceptance criterion, and it is not evidence that SRK is suitable for
-every liquid.
+validation. It is not a universal 30% acceptance criterion, and it is not evidence that SRK is
+suitable for every liquid.
 
 ## Limitations
 
