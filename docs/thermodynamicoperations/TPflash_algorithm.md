@@ -2081,12 +2081,16 @@ qualification covers 298.15 K near 10 bara and 288.15 K near 500 bara. These
 states are synthetic solver regressions; they are not experimental validation
 of water solubility, phase fractions, or the classic-PR parameterization.
 
-At 10 bara, the multiphase endpoint must retain a closed split, preserve the
-frozen enthalpy reference, and have Gibbs energy no higher than the ordinary
-endpoint. At 500 bara, ordinary and multiphase flashes must agree. Nearby checks
-use 9.9/10.0/10.1 bara and 499/500/501 bara. Both regimes require recovery from
-beta `1e-12`, changed-pressure and return-to-state agreement, and deterministic
-repeat at the low-pressure reference.
+At 10 bara, the multiphase endpoint must retain a closed split, remain within
+`5e-5` relative of the frozen enthalpy reference, and have Gibbs energy no higher
+than the ordinary endpoint. The relative reference tolerance covers the observed
+cross-platform property difference while remaining one hundred times tighter than
+the legacy 0.5 percent enthalpy check. At 500 bara, ordinary and multiphase flashes
+must agree. Nearby checks use 9.9/10.0/10.1 bara and 499/500/501 bara. Both regimes
+require recovery from beta `1e-12`, changed-pressure and return-to-state agreement,
+and deterministic repeat at the low-pressure reference. Equivalent endpoints also
+reproduce enthalpy using the same tight state-comparison tolerance applied to Gibbs
+energy.
 
 Every accepted state requires finite, bounded and normalized beta and
 compositions, beta and phase normalization within `1e-12`, component material
