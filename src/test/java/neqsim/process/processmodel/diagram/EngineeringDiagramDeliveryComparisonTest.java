@@ -73,11 +73,11 @@ class EngineeringDiagramDeliveryComparisonTest {
     assertFalse(report.getChangedArtifactPaths().isEmpty());
     assertTrue(report.getChangedArtifactPaths().contains("document-set.json"));
     assertTrue(report.getChangedArtifactPaths().contains("drawing-set.pdf"));
-    assertTrue(report.getChangedArtifactPaths().contains("dexpi-process.xml"));
+    assertFalse(report.getChangedArtifactPaths().contains("dexpi-process.xml"));
     assertTrue(
         report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.CONTROLLED_DOCUMENT_SET));
     assertTrue(report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.DELIVERY_MANIFEST));
-    assertTrue(
+    assertFalse(
         report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.DEXPI_PROCESS_EXCHANGE));
     assertTrue(report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.NATIVE_PDF));
     assertTrue(report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.NATIVE_SVG));
