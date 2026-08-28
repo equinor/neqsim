@@ -23,17 +23,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class EngineeringDiagramDeliveryAssessmentTest {
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   @Test
-  void independentlyVerifiesSingleAreaDeliveryAndRestartEvidence()
-      throws IOException, ClassNotFoundException {
+  void independentlyVerifiesSingleAreaDeliveryAndRestartEvidence() throws IOException, ClassNotFoundException {
     Path delivery = deliverSystem("single");
 
-    EngineeringDiagramDeliveryAssessment.Report first =
-        EngineeringDiagramDeliveryAssessment.assess(delivery);
-    EngineeringDiagramDeliveryAssessment.Report second =
-        EngineeringDiagramDeliveryAssessment.assess(delivery);
+    EngineeringDiagramDeliveryAssessment.Report first = EngineeringDiagramDeliveryAssessment.assess(delivery);
+    EngineeringDiagramDeliveryAssessment.Report second = EngineeringDiagramDeliveryAssessment.assess(delivery);
 
     assertTrue(first.isComplete(), first.toJson());
     assertEquals(first.toJson(), second.toJson());
@@ -74,60 +72,47 @@ class EngineeringDiagramDeliveryAssessmentTest {
   void verifiesMultiAreaDeliveryWithoutPromotingWholePlantDexpi() throws IOException {
     Path delivery = deliverModel("multi");
 
-    EngineeringDiagramDeliveryAssessment.Report report =
-        EngineeringDiagramDeliveryAssessment.assess(delivery);
+    EngineeringDiagramDeliveryAssessment.Report report = EngineeringDiagramDeliveryAssessment.assess(delivery);
 
     assertTrue(report.isComplete(), report.toJson());
     assertEquals("PROCESS_MODEL", report.getSourceScope());
     assertTrue(report.getArtifacts().containsKey("dexpi-process-model.zip"));
     assertFalse(report.getArtifacts().containsKey("dexpi-process.xml"));
-    assertEquals(
-        "application/zip",
-        report.getArtifacts().get("dexpi-process-model.zip").getMediaType());
+    assertEquals("application/zip", report.getArtifacts().get("dexpi-process-model.zip").getMediaType());
   }
 
   @Test
   void detectsArtifactTamperingWithoutChangingManifestEvidence() throws IOException {
     Path delivery = deliverSystem("tampered");
     Path pdf = delivery.resolve("drawing-set.pdf");
-    Files.write(pdf, new byte[] {1}, StandardOpenOption.APPEND);
+    Files.write(pdf, new byte[] { 1 }, StandardOpenOption.APPEND);
 
-    EngineeringDiagramDeliveryAssessment.Report report =
-        EngineeringDiagramDeliveryAssessment.assess(delivery);
+    EngineeringDiagramDeliveryAssessment.Report report = EngineeringDiagramDeliveryAssessment.assess(delivery);
 
     assertFalse(report.isComplete());
     assertTrue(report.toJson().contains("DELIVERY_ARTIFACT_SIZE_MISMATCH"));
     assertTrue(report.toJson().contains("DELIVERY_ARTIFACT_SHA256_MISMATCH"));
-    assertNotEquals(
-        report.getArtifacts().get("drawing-set.pdf").getSha256(),
+    assertNotEquals(report.getArtifacts().get("drawing-set.pdf").getSha256(),
         manifestArtifactSha256(delivery, "drawing-set.pdf"));
   }
 
   @Test
   void rejectsUnlistedFilesAndUnsafeManifestPaths() throws IOException {
     Path extraDelivery = deliverSystem("extra");
-    Files.write(extraDelivery.resolve("unreviewed.txt"),
-        "not declared".getBytes(StandardCharsets.UTF_8));
+    Files.write(extraDelivery.resolve("unreviewed.txt"), "not declared".getBytes(StandardCharsets.UTF_8));
 
-    EngineeringDiagramDeliveryAssessment.Report extra =
-        EngineeringDiagramDeliveryAssessment.assess(extraDelivery);
+    EngineeringDiagramDeliveryAssessment.Report extra = EngineeringDiagramDeliveryAssessment.assess(extraDelivery);
     assertFalse(extra.isComplete());
     assertTrue(extra.toJson().contains("DELIVERY_UNLISTED_FILE"));
 
     Path unsafeDelivery = deliverSystem("unsafe");
     Path manifestPath = unsafeDelivery.resolve("delivery-manifest.json");
     JsonObject manifest = parseManifest(unsafeDelivery);
-    manifest.getAsJsonArray("artifacts")
-        .get(0)
-        .getAsJsonObject()
-        .addProperty("relativePath", "../escaped.json");
-    Files.write(
-        manifestPath,
-        new GsonBuilder().setPrettyPrinting().create().toJson(manifest)
-            .getBytes(StandardCharsets.UTF_8));
+    manifest.getAsJsonArray("artifacts").get(0).getAsJsonObject().addProperty("relativePath", "../escaped.json");
+    Files.write(manifestPath,
+        new GsonBuilder().setPrettyPrinting().create().toJson(manifest).getBytes(StandardCharsets.UTF_8));
 
-    EngineeringDiagramDeliveryAssessment.Report unsafe =
-        EngineeringDiagramDeliveryAssessment.assess(unsafeDelivery);
+    EngineeringDiagramDeliveryAssessment.Report unsafe = EngineeringDiagramDeliveryAssessment.assess(unsafeDelivery);
     assertFalse(unsafe.isComplete());
     assertTrue(unsafe.toJson().contains("DELIVERY_ARTIFACT_PATH_UNSAFE"));
     assertTrue(unsafe.toJson().contains("DELIVERY_MANIFEST_FINGERPRINT_MISMATCH"));
@@ -139,53 +124,42 @@ class EngineeringDiagramDeliveryAssessmentTest {
     Path manifestPath = promotedDelivery.resolve("delivery-manifest.json");
     JsonObject manifest = parseManifest(promotedDelivery);
     manifest.addProperty("fitnessForConstruction", true);
-    Files.write(
-        manifestPath,
-        new GsonBuilder().setPrettyPrinting().create().toJson(manifest)
-            .getBytes(StandardCharsets.UTF_8));
+    Files.write(manifestPath,
+        new GsonBuilder().setPrettyPrinting().create().toJson(manifest).getBytes(StandardCharsets.UTF_8));
 
-    EngineeringDiagramDeliveryAssessment.Report promoted =
-        EngineeringDiagramDeliveryAssessment.assess(promotedDelivery);
+    EngineeringDiagramDeliveryAssessment.Report promoted = EngineeringDiagramDeliveryAssessment
+        .assess(promotedDelivery);
     assertFalse(promoted.isComplete());
     assertTrue(promoted.toJson().contains("DELIVERY_QUALIFICATION_BOUNDARY_INVALID"));
 
     Path missingDelivery = deliverSystem("missing");
     Files.delete(missingDelivery.resolve("delivery-manifest.json"));
-    EngineeringDiagramDeliveryAssessment.Report missing =
-        EngineeringDiagramDeliveryAssessment.assess(missingDelivery);
+    EngineeringDiagramDeliveryAssessment.Report missing = EngineeringDiagramDeliveryAssessment.assess(missingDelivery);
     assertFalse(missing.isComplete());
     assertTrue(missing.toJson().contains("DELIVERY_MANIFEST_MISSING"));
-    assertThrows(IllegalArgumentException.class,
-        () -> EngineeringDiagramDeliveryAssessment.assess(null));
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramDeliveryAssessment.assess(null));
   }
 
   private Path deliverSystem(String name) throws IOException {
     Path target = temporaryDirectory.resolve(name);
-    EngineeringDiagramDelivery.Request request =
-        EngineeringDiagramDelivery.Request.builder(
-                "PLANT-10", "REV-A", "PFD-10-001", "Assessed delivery", ContentProfile.PFD)
-            .build();
-    EngineeringDiagramDelivery.deliver(
-        EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), target, request);
+    EngineeringDiagramDelivery.Request request = EngineeringDiagramDelivery.Request
+        .builder("PLANT-10", "REV-A", "PFD-10-001", "Assessed delivery", ContentProfile.PFD).build();
+    EngineeringDiagramDelivery.deliver(EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), target,
+        request);
     return target;
   }
 
   private Path deliverModel(String name) throws IOException {
     Path target = temporaryDirectory.resolve(name);
-    EngineeringDiagramDelivery.Request request =
-        EngineeringDiagramDelivery.Request.builder(
-                "PLANT-30", "REV-B", "PFD-30-001", "Assessed facility", ContentProfile.PFD)
-            .build();
-    EngineeringDiagramDelivery.deliver(
-        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), target, request);
+    EngineeringDiagramDelivery.Request request = EngineeringDiagramDelivery.Request
+        .builder("PLANT-30", "REV-B", "PFD-30-001", "Assessed facility", ContentProfile.PFD).build();
+    EngineeringDiagramDelivery.deliver(EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(),
+        target, request);
     return target;
   }
 
   private JsonObject parseManifest(Path delivery) throws IOException {
-    String json =
-        new String(
-            Files.readAllBytes(delivery.resolve("delivery-manifest.json")),
-            StandardCharsets.UTF_8);
+    String json = new String(Files.readAllBytes(delivery.resolve("delivery-manifest.json")), StandardCharsets.UTF_8);
     return new JsonParser().parse(json).getAsJsonObject();
   }
 
