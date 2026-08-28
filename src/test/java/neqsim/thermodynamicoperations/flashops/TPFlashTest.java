@@ -3,6 +3,8 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
+import java.util.Comparator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
@@ -58,14 +60,41 @@ class TPFlashTest {
     testSystem.setMultiPhaseCheck(true);
   }
 
-  void testRun() {
-    testSystem.setMultiPhaseCheck(true);
-    testSystem.setPressure(10.0, "bara");
-    testSystem.setTemperature(25.0, "C");
-    testOps = new ThermodynamicOperations(testSystem);
-    testOps.TPflash();
-    testSystem.initProperties();
-    assertEquals(-430041.49312169873, testSystem.getEnthalpy(), 1e-2);
+  @Test
+  void waterBearingPrLowPressureMultiphaseEndpointIsClosedAndRepeatable() {
+    SystemInterface ordinary = flashWaterBearingPr(298.15, 10.0, false, false);
+    SystemInterface reference = flashWaterBearingPr(298.15, 10.0, true, false);
+    SystemInterface poorGuess = flashWaterBearingPr(298.15, 10.0, true, true);
+
+    assertClosedEquilibrium(ordinary, "ordinary low-pressure endpoint");
+    assertClosedEquilibrium(reference, "multiphase low-pressure endpoint");
+    assertTrue(reference.getNumberOfPhases() >= 2, "multiphase flash should retain a split");
+    assertEquals(-430041.49312169873, reference.getEnthalpy(), 1.0e-2);
+    assertTrue(reference.getGibbsEnergy() <= ordinary.getGibbsEnergy()
+        + 1.0e-8 * Math.abs(ordinary.getGibbsEnergy()), "multiphase endpoint must not raise Gibbs energy");
+    assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8, "poor beta initialization");
+
+    for (double pressure : new double[] {9.9, 10.0, 10.1}) {
+      assertClosedEquilibrium(flashWaterBearingPr(298.15, pressure, true, false),
+          "nearby low-pressure endpoint at " + pressure + " bara");
+    }
+
+    SystemInterface reused = reference.clone();
+    reused.setPressure(10.1, "bara");
+    new ThermodynamicOperations(reused).TPflash();
+    reused.initProperties();
+    assertEquivalentWaterBearingState(flashWaterBearingPr(298.15, 10.1, true, false), reused, 1.0e-8,
+        "changed low-pressure state");
+
+    reused.setPressure(10.0, "bara");
+    new ThermodynamicOperations(reused).TPflash();
+    reused.initProperties();
+    assertEquivalentWaterBearingState(reference, reused, 1.0e-8, "return to low-pressure reference");
+
+    SystemInterface repeated = reused.clone();
+    new ThermodynamicOperations(reused).TPflash();
+    reused.initProperties();
+    assertEquivalentWaterBearingState(repeated, reused, 1.0e-10, "low-pressure deterministic repeat");
   }
 
   @Test
@@ -95,15 +124,154 @@ class TPFlashTest {
     assertEquals(0.0, deviation, 0.5);
   }
 
-  // @Test
-  void testRun4() {
-    testSystem.setMultiPhaseCheck(true);
-    testSystem.setPressure(500.0, "bara");
-    testSystem.setTemperature(15.0, "C");
-    testOps = new ThermodynamicOperations(testSystem);
-    testOps.TPflash();
-    testSystem.initProperties();
-    assertEquals(-936973.1969586421, testSystem.getEnthalpy(), 1e-2);
+  @Test
+  void waterBearingPrHighPressureOrdinaryAndMultiphaseEndpointsAgree() {
+    for (double pressure : new double[] {499.0, 500.0, 501.0}) {
+      SystemInterface ordinary = flashWaterBearingPr(288.15, pressure, false, false);
+      SystemInterface multiphase = flashWaterBearingPr(288.15, pressure, true, false);
+      assertClosedEquilibrium(ordinary, "ordinary high-pressure endpoint at " + pressure + " bara");
+      assertClosedEquilibrium(multiphase, "multiphase high-pressure endpoint at " + pressure + " bara");
+      assertEquivalentWaterBearingState(ordinary, multiphase, 1.0e-8,
+          "ordinary versus multiphase at " + pressure + " bara");
+    }
+
+    SystemInterface reference = flashWaterBearingPr(288.15, 500.0, true, false);
+    SystemInterface poorGuess = flashWaterBearingPr(288.15, 500.0, true, true);
+    assertEquals(-936973.1969586421, reference.getEnthalpy(), 1.0e-2);
+    assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8,
+        "high-pressure poor beta initialization");
+
+    SystemInterface reused = reference.clone();
+    reused.setPressure(501.0, "bara");
+    new ThermodynamicOperations(reused).TPflash();
+    reused.initProperties();
+    assertEquivalentWaterBearingState(flashWaterBearingPr(288.15, 501.0, true, false), reused, 1.0e-8,
+        "changed high-pressure state");
+    reused.setPressure(500.0, "bara");
+    new ThermodynamicOperations(reused).TPflash();
+    reused.initProperties();
+    assertEquivalentWaterBearingState(reference, reused, 1.0e-8, "return to high-pressure reference");
+  }
+
+  private SystemInterface flashWaterBearingPr(double temperature, double pressure, boolean multiphaseCheck,
+      boolean poorGuess) {
+    SystemInterface system = createWaterBearingPrSystem();
+    system.setTemperature(temperature, "K");
+    system.setPressure(pressure, "bara");
+    system.setMultiPhaseCheck(multiphaseCheck);
+    if (poorGuess) {
+      system.setBeta(0, 1.0e-12);
+      system.setBeta(1, 1.0 - 1.0e-12);
+    }
+    new ThermodynamicOperations(system).TPflash();
+    system.initProperties();
+    return system;
+  }
+
+  private SystemInterface createWaterBearingPrSystem() {
+    SystemInterface system = new neqsim.thermo.system.SystemPrEos(243.15, 300.0);
+    system.addComponent("nitrogen", 1.0);
+    system.addComponent("methane", 90.0);
+    system.addComponent("ethane", 2.0);
+    system.addComponent("propane", 1.0);
+    system.addComponent("i-butane", 1.0);
+    system.addComponent("n-butane", 1.0);
+    system.addComponent("i-pentane", 1.0);
+    system.addComponent("n-pentane", 1.0);
+    system.addComponent("n-hexane", 1.0);
+    system.addComponent("nC10", 1.0);
+    system.addComponent("water", 10.0);
+    system.setMixingRule("classic");
+    return system;
+  }
+
+  private void assertClosedEquilibrium(SystemInterface system, String label) {
+    double betaSum = 0.0;
+    int componentCount = system.getPhase(0).getNumberOfComponents();
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      double beta = system.getBeta(phase);
+      assertTrue(Double.isFinite(beta) && beta >= 0.0 && beta <= 1.0, label + " beta");
+      betaSum += beta;
+      double compositionSum = 0.0;
+      for (int component = 0; component < componentCount; component++) {
+        double composition = system.getPhase(phase).getComponent(component).getx();
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
+            label + " composition");
+        compositionSum += composition;
+      }
+      assertEquals(1.0, compositionSum, 1.0e-12, label + " phase normalization");
+      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
+          label + " compressibility");
+    }
+    assertEquals(1.0, betaSum, 1.0e-12, label + " beta normalization");
+
+    double maximumMaterialResidual = 0.0;
+    double maximumFugacityResidual = 0.0;
+    int fugacityComparisons = 0;
+    for (int component = 0; component < componentCount; component++) {
+      double recovered = 0.0;
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+      }
+      maximumMaterialResidual = Math.max(maximumMaterialResidual,
+          Math.abs(system.getPhase(0).getComponent(component).getz() - recovered));
+
+      if (system.getNumberOfPhases() >= 2) {
+        for (int phase = 1; phase < system.getNumberOfPhases(); phase++) {
+          double referenceComposition = system.getPhase(0).getComponent(component).getx();
+          double otherComposition = system.getPhase(phase).getComponent(component).getx();
+          double referenceCoefficient = system.getPhase(0).getComponent(component).getFugacityCoefficient();
+          double otherCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
+          if (referenceComposition > 1.0e-20 && otherComposition > 1.0e-20
+              && Double.isFinite(referenceCoefficient) && referenceCoefficient > 0.0
+              && Double.isFinite(otherCoefficient) && otherCoefficient > 0.0) {
+            maximumFugacityResidual = Math.max(maximumFugacityResidual,
+                Math.abs(Math.log(referenceComposition * referenceCoefficient)
+                    - Math.log(otherComposition * otherCoefficient)));
+            fugacityComparisons++;
+          }
+        }
+      }
+    }
+    assertTrue(maximumMaterialResidual < 1.0e-10,
+        label + " material-balance residual " + maximumMaterialResidual);
+    if (system.getNumberOfPhases() >= 2) {
+      assertTrue(fugacityComparisons > 0, label + " must expose fugacity comparisons");
+      assertTrue(maximumFugacityResidual < 1.0e-8,
+          label + " fugacity residual " + maximumFugacityResidual);
+    }
+    assertTrue(Double.isFinite(system.getGibbsEnergy()), label + " Gibbs energy");
+  }
+
+  private void assertEquivalentWaterBearingState(SystemInterface expected, SystemInterface actual,
+      double tolerance, String label) {
+    assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label);
+    assertClosedEquilibrium(expected, label + " expected");
+    assertClosedEquilibrium(actual, label + " actual");
+    Integer[] expectedOrder = phaseOrderByWaterFraction(expected);
+    Integer[] actualOrder = phaseOrderByWaterFraction(actual);
+    for (int orderedPhase = 0; orderedPhase < expectedOrder.length; orderedPhase++) {
+      int expectedPhase = expectedOrder[orderedPhase];
+      int actualPhase = actualOrder[orderedPhase];
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label);
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(),
+          tolerance, label);
+      for (int component = 0; component < expected.getPhase(expectedPhase)
+          .getNumberOfComponents(); component++) {
+        assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
+            actual.getPhase(actualPhase).getComponent(component).getx(), tolerance, label);
+      }
+    }
+    assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(),
+        Math.max(1.0e-8, tolerance * Math.abs(expected.getGibbsEnergy())), label);
+  }
+
+  private Integer[] phaseOrderByWaterFraction(SystemInterface system) {
+    Integer[] order = new Integer[system.getNumberOfPhases()];
+    Arrays.setAll(order, index -> index);
+    Arrays.sort(order, Comparator.comparingDouble(
+        (Integer index) -> system.getPhase(index).getComponent("water").getx()));
+    return order;
   }
 
   @Test
