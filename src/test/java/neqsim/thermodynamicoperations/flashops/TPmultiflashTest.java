@@ -25,12 +25,9 @@ class TPmultiflashTest {
   @Test
   void methaneHeptaneBoundaryClosesAcrossFlashModes() {
     final double binaryInteractionParameter = 0.05;
-    SystemInterface ordinary =
-        flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, false, false, false);
-    SystemInterface multiphase =
-        flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, false, false);
-    SystemInterface enhanced =
-        flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, true, false);
+    SystemInterface ordinary = flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, false, false, false);
+    SystemInterface multiphase = flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, false, false);
+    SystemInterface enhanced = flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, true, false);
 
     assertHydrocarbonTwoPhaseEquilibrium(ordinary, "ordinary");
     assertHydrocarbonTwoPhaseEquilibrium(multiphase, "multiphase");
@@ -42,42 +39,34 @@ class TPmultiflashTest {
   @Test
   void methaneHeptaneBoundarySurvivesPoorGuessNearbyStateAndRepeat() {
     final double binaryInteractionParameter = 0.05;
-    SystemInterface reference =
-        flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, true, false);
-    SystemInterface poorGuess =
-        flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, true, true);
+    SystemInterface reference = flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, true, false);
+    SystemInterface poorGuess = flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, true, true);
     assertEquivalentHydrocarbonState(reference, poorGuess, 1.0e-8, "poor beta initialization");
 
-    for (double pressure : new double[] {84.3, 84.4, 84.5}) {
-      SystemInterface ordinary =
-          flashMethaneHeptane(155.1, pressure, binaryInteractionParameter, false, false, false);
-      SystemInterface enhanced =
-          flashMethaneHeptane(155.1, pressure, binaryInteractionParameter, true, true, false);
+    for (double pressure : new double[] { 84.3, 84.4, 84.5 }) {
+      SystemInterface ordinary = flashMethaneHeptane(155.1, pressure, binaryInteractionParameter, false, false, false);
+      SystemInterface enhanced = flashMethaneHeptane(155.1, pressure, binaryInteractionParameter, true, true, false);
       assertHydrocarbonTwoPhaseEquilibrium(ordinary, "ordinary at " + pressure + " bara");
       assertHydrocarbonTwoPhaseEquilibrium(enhanced, "enhanced at " + pressure + " bara");
-      assertEquivalentHydrocarbonState(
-          ordinary, enhanced, 1.0e-8, "nearby pressure " + pressure + " bara");
+      assertEquivalentHydrocarbonState(ordinary, enhanced, 1.0e-8, "nearby pressure " + pressure + " bara");
     }
 
     SystemInterface changedState = reference.clone();
     changedState.setPressure(84.5, "bara");
     new ThermodynamicOperations(changedState).TPflash();
     changedState.init(3);
-    SystemInterface changedReference =
-        flashMethaneHeptane(155.1, 84.5, binaryInteractionParameter, true, true, false);
+    SystemInterface changedReference = flashMethaneHeptane(155.1, 84.5, binaryInteractionParameter, true, true, false);
     assertEquivalentHydrocarbonState(changedReference, changedState, 1.0e-8, "changed pressure");
 
     changedState.setPressure(84.4, "bara");
     new ThermodynamicOperations(changedState).TPflash();
     changedState.init(3);
-    assertEquivalentHydrocarbonState(
-        reference, changedState, 1.0e-8, "return to reference pressure");
+    assertEquivalentHydrocarbonState(reference, changedState, 1.0e-8, "return to reference pressure");
 
     SystemInterface repeatedReference = changedState.clone();
     new ThermodynamicOperations(changedState).TPflash();
     changedState.init(3);
-    assertEquivalentHydrocarbonState(
-        repeatedReference, changedState, 1.0e-10, "deterministic repeat");
+    assertEquivalentHydrocarbonState(repeatedReference, changedState, 1.0e-10, "deterministic repeat");
   }
 
   /**
@@ -86,22 +75,18 @@ class TPmultiflashTest {
   @Test
   void testEnhancedHydrocarbonBinaryMatchesOrdinaryMultiphaseCheck() {
     final double binaryInteractionParameter = 0.05;
-    double[][] conditions =
-        new double[][] {{110.0, 264.0}, {112.5, 276.0}, {70.0, 458.0}, {120.0, 200.0}};
+    double[][] conditions = new double[][] { { 110.0, 264.0 }, { 112.5, 276.0 }, { 70.0, 458.0 }, { 120.0, 200.0 } };
 
     for (double[] condition : conditions) {
       String label = "P=" + condition[0] + " bara, T=" + condition[1] + " K";
-      SystemInterface ordinarySystem =
-          flashMethaneHeptane(
-              condition[1], condition[0], binaryInteractionParameter, true, false, false);
-      SystemInterface enhancedSystem =
-          flashMethaneHeptane(
-              condition[1], condition[0], binaryInteractionParameter, true, true, false);
+      SystemInterface ordinarySystem = flashMethaneHeptane(condition[1], condition[0], binaryInteractionParameter, true,
+          false, false);
+      SystemInterface enhancedSystem = flashMethaneHeptane(condition[1], condition[0], binaryInteractionParameter, true,
+          true, false);
 
       assertFlashClosure(ordinarySystem, label + " ordinary");
       assertFlashClosure(enhancedSystem, label + " enhanced");
-      assertEquivalentHydrocarbonState(
-          ordinarySystem, enhancedSystem, 1.0e-10, label);
+      assertEquivalentHydrocarbonState(ordinarySystem, enhancedSystem, 1.0e-10, label);
     }
   }
 
@@ -112,38 +97,30 @@ class TPmultiflashTest {
    * @param enhancedCheck true to enable enhanced multiphase checks
    * @return configured methane/n-heptane PR thermodynamic system
    */
-  private SystemInterface createMethaneHeptanePrSystem(
-      double binaryInteractionParameter, boolean enhancedCheck) {
+  private SystemInterface createMethaneHeptanePrSystem(double binaryInteractionParameter, boolean enhancedCheck) {
     return createMethaneHeptanePrSystem(binaryInteractionParameter, true, enhancedCheck);
   }
 
-  private SystemInterface createMethaneHeptanePrSystem(
-      double binaryInteractionParameter, boolean multiphaseCheck, boolean enhancedCheck) {
+  private SystemInterface createMethaneHeptanePrSystem(double binaryInteractionParameter, boolean multiphaseCheck,
+      boolean enhancedCheck) {
     SystemInterface methaneHeptaneSystem = new neqsim.thermo.system.SystemPrEos();
     methaneHeptaneSystem.addComponent("methane", 70.0);
     methaneHeptaneSystem.addComponent("n-heptane", 30.0);
 
     methaneHeptaneSystem.setMixingRule("classic");
-    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(0).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, binaryInteractionParameter);
-    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(1).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, binaryInteractionParameter);
+    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0, 1,
+        binaryInteractionParameter);
+    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0, 1,
+        binaryInteractionParameter);
 
     methaneHeptaneSystem.setMultiPhaseCheck(multiphaseCheck);
     methaneHeptaneSystem.setEnhancedMultiPhaseCheck(enhancedCheck);
     return methaneHeptaneSystem;
   }
 
-  private SystemInterface flashMethaneHeptane(
-      double temperature,
-      double pressure,
-      double binaryInteractionParameter,
-      boolean multiphaseCheck,
-      boolean enhancedCheck,
-      boolean poorGuess) {
-    SystemInterface system =
-        createMethaneHeptanePrSystem(
-            binaryInteractionParameter, multiphaseCheck, enhancedCheck);
+  private SystemInterface flashMethaneHeptane(double temperature, double pressure, double binaryInteractionParameter,
+      boolean multiphaseCheck, boolean enhancedCheck, boolean poorGuess) {
+    SystemInterface system = createMethaneHeptanePrSystem(binaryInteractionParameter, multiphaseCheck, enhancedCheck);
     system.setTemperature(temperature, "K");
     system.setPressure(pressure, "bara");
     if (poorGuess) {
@@ -162,51 +139,32 @@ class TPmultiflashTest {
     assertFlashClosure(system, label);
   }
 
-  private void assertEquivalentHydrocarbonState(
-      SystemInterface expected, SystemInterface actual, double tolerance, String label) {
+  private void assertEquivalentHydrocarbonState(SystemInterface expected, SystemInterface actual, double tolerance,
+      String label) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label);
     assertFlashClosure(expected, label + " expected");
     assertFlashClosure(actual, label + " actual");
     Integer[] expectedOrder = phaseOrder(expected);
     Integer[] actualOrder = phaseOrder(actual);
-    for (int orderedPhase = 0;
-        orderedPhase < expectedOrder.length;
-        orderedPhase++) {
+    for (int orderedPhase = 0; orderedPhase < expectedOrder.length; orderedPhase++) {
       int expectedPhase = expectedOrder[orderedPhase];
       int actualPhase = actualOrder[orderedPhase];
-      assertEquals(
-          expected.getPhase(expectedPhase).getType(),
-          actual.getPhase(actualPhase).getType(),
-          label);
-      assertEquals(
-          expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label);
-      assertEquals(
-          expected.getPhase(expectedPhase).getZ(),
-          actual.getPhase(actualPhase).getZ(),
-          tolerance,
-          label);
+      assertEquals(expected.getPhase(expectedPhase).getType(), actual.getPhase(actualPhase).getType(), label);
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label);
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance, label);
       for (int component = 0; component < 2; component++) {
-        assertEquals(
-            expected.getPhase(expectedPhase).getComponent(component).getx(),
-            actual.getPhase(actualPhase).getComponent(component).getx(),
-            tolerance,
-            label);
+        assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
+            actual.getPhase(actualPhase).getComponent(component).getx(), tolerance, label);
       }
     }
-    assertEquals(
-        expected.getGibbsEnergy(),
-        actual.getGibbsEnergy(),
-        Math.max(1.0e-8, tolerance * Math.abs(expected.getGibbsEnergy())),
-        label);
+    assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(),
+        Math.max(1.0e-8, tolerance * Math.abs(expected.getGibbsEnergy())), label);
   }
 
   private Integer[] phaseOrder(SystemInterface system) {
     Integer[] order = new Integer[system.getNumberOfPhases()];
     Arrays.setAll(order, index -> index);
-    Arrays.sort(
-        order,
-        Comparator.comparingDouble(
-            index -> system.getPhase(index).getComponent(1).getx()));
+    Arrays.sort(order, Comparator.comparingDouble(index -> system.getPhase(index).getComponent(1).getx()));
     return order;
   }
 
@@ -214,22 +172,16 @@ class TPmultiflashTest {
     double betaTotal = 0.0;
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       double beta = system.getBeta(phase);
-      assertTrue(
-          Double.isFinite(beta) && beta >= 0.0 && beta <= 1.0, label + " beta");
+      assertTrue(Double.isFinite(beta) && beta >= 0.0 && beta <= 1.0, label + " beta");
       betaTotal += beta;
       double compositionTotal = 0.0;
       for (int component = 0; component < 2; component++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
-        assertTrue(
-            Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
-            label + " composition");
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0, label + " composition");
         compositionTotal += composition;
       }
-      assertEquals(
-          1.0, compositionTotal, 1.0e-12, label + " phase normalization");
-      assertTrue(
-          Double.isFinite(system.getPhase(phase).getZ())
-              && system.getPhase(phase).getZ() > 0.0,
+      assertEquals(1.0, compositionTotal, 1.0e-12, label + " phase normalization");
+      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
           label + " compressibility");
     }
     assertEquals(1.0, betaTotal, 1.0e-12, label + " beta normalization");
@@ -239,54 +191,27 @@ class TPmultiflashTest {
     for (int component = 0; component < 2; component++) {
       double recovered = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        recovered +=
-            system.getBeta(phase)
-                * system.getPhase(phase).getComponent(component).getx();
+        recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
       }
-      maximumMaterialBalanceResidual =
-          Math.max(
-              maximumMaterialBalanceResidual,
-              Math.abs(
-                  system.getPhase(0).getComponent(component).getz() - recovered));
+      maximumMaterialBalanceResidual = Math.max(maximumMaterialBalanceResidual,
+          Math.abs(system.getPhase(0).getComponent(component).getz() - recovered));
 
       if (system.getNumberOfPhases() >= 2) {
-        double referenceLogFugacity =
-            Math.log(
-                    Math.max(
-                        system.getPhase(0).getComponent(component).getx(),
-                        Double.MIN_NORMAL))
-                + Math.log(
-                    system
-                        .getPhase(0)
-                        .getComponent(component)
-                        .getFugacityCoefficient());
+        double referenceLogFugacity = Math
+            .log(Math.max(system.getPhase(0).getComponent(component).getx(), Double.MIN_NORMAL))
+            + Math.log(system.getPhase(0).getComponent(component).getFugacityCoefficient());
         for (int phase = 1; phase < system.getNumberOfPhases(); phase++) {
-          double otherLogFugacity =
-              Math.log(
-                      Math.max(
-                          system
-                              .getPhase(phase)
-                              .getComponent(component)
-                              .getx(),
-                          Double.MIN_NORMAL))
-                  + Math.log(
-                      system
-                          .getPhase(phase)
-                          .getComponent(component)
-                          .getFugacityCoefficient());
-          maximumFugacityResidual =
-              Math.max(
-                  maximumFugacityResidual,
-                  Math.abs(referenceLogFugacity - otherLogFugacity));
+          double otherLogFugacity = Math
+              .log(Math.max(system.getPhase(phase).getComponent(component).getx(), Double.MIN_NORMAL))
+              + Math.log(system.getPhase(phase).getComponent(component).getFugacityCoefficient());
+          maximumFugacityResidual = Math.max(maximumFugacityResidual,
+              Math.abs(referenceLogFugacity - otherLogFugacity));
         }
       }
     }
-    assertTrue(
-        maximumMaterialBalanceResidual < 1.0e-10,
+    assertTrue(maximumMaterialBalanceResidual < 1.0e-10,
         label + " material balance residual " + maximumMaterialBalanceResidual);
-    assertTrue(
-        maximumFugacityResidual < 1.0e-8,
-        label + " fugacity residual " + maximumFugacityResidual);
+    assertTrue(maximumFugacityResidual < 1.0e-8, label + " fugacity residual " + maximumFugacityResidual);
     assertTrue(Double.isFinite(system.getGibbsEnergy()), label + " Gibbs energy");
   }
 
