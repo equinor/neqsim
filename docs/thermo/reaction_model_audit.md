@@ -30,6 +30,16 @@ Use `audit.getReactionsWithoutValidatedEvidence()` to list active rows that are 
 
 The API is deliberately read-only. It requires `chemicalReactionInit()` to have been called and never initializes reactions implicitly, runs a flash, or changes model state. It therefore adds no work to ordinary neutral PR/SRK/CPA calculations and no work to electrolyte calculations unless the audit is explicitly requested.
 
+For the typed `PITZER` source, validation is also an initialization contract. After irrelevant and
+dependent reactions have been removed, `chemicalReactionInit()` rejects every remaining active
+reaction row whose status is not `VALIDATED`, before that row can add its model-specific product
+species. The current `MDEAprot` (`Huttenhuis2005`) and `DEAprot` (`Austgen1989`) compatibility
+rows remain marked `USEREACTION=1` and `UNVALIDATED`; a `SystemPitzer` feed containing the
+corresponding neutral amine therefore fails closed instead of silently using an unqualified
+molality-standard-state correlation. No reaction coefficient or activation flag is changed.
+`STANDARD` and `KENT_EISENBERG` retain their legacy initialization behavior because their
+distinct standard states require separate qualification.
+
 ## Pitzer reaction concentration basis
 
 `SystemPitzer` evaluates solute activities from molality, defined as moles of solute per kilogram of water solvent, while solvent activity retains its mole-fraction convention. This matches the concentration basis of the Pitzer ion-interaction equations. The `PITZER` source supplies molality-standard-state correlations for CO2/HCO3-, HCO3-/CO3--, and water dissociation; Electrolyte-CPA retains the legacy `STANDARD` source and its mole-fraction reaction convention. Pitzer's thermodynamic framework is documented in DOI `10.1021/j100621a026` and the binary-electrolyte formulation in DOI `10.1021/j100638a009`.

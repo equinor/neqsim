@@ -62,6 +62,25 @@ level-zero state initialization. Call `init(0)` after changing composition, as r
 general NeqSim state contract. This work is confined to `PhasePitzer` and `ComponentGePitzer`;
 neutral PR, SRK, CPA, Electrolyte-CPA, and Fürst electrolyte-EOS paths do no new work.
 
+## Pitzer reaction-data validation boundary
+
+Reaction-equilibrium constants and Pitzer ion-interaction coefficients remain separate datasets.
+The `PITZER` reaction source now treats `VALIDATED` as an initialization requirement for every
+active row that is relevant to the selected feed. The retained `MDEAprot` (`Huttenhuis2005`) and
+`DEAprot` (`Austgen1989`) rows are both active compatibility rows but are explicitly
+`UNVALIDATED`; their activation flags therefore do not authorize use by `SystemPitzer`.
+Initialization rejects either row before it can add `MDEA+` or `DEA+`. Validated carbonate,
+water-dissociation, and first H2S-dissociation rows are unchanged, as are the `STANDARD` and
+`KENT_EISENBERG` sources.
+
+No equilibrium coefficient, Pitzer interaction coefficient, table row, or thesis value is copied,
+changed, or adopted by this gate. Kaasa (1998), Appendix F, printed pp. 260–267 remains a provenance
+index only; its table-redistribution terms and row-level independent qualification remain
+unresolved. Enabling Pitzer amine chemistry requires an independently sourced and redistributable
+molality-standard-state amine equilibrium correlation, the complete applicable binary, same-sign,
+ternary, and neutral-ion interaction family, an explicit species/standard-state mapping, and
+held-out speciation plus gas-liquid-equilibrium validation.
+
 ### Qualified public-domain CO2-Na2SO4 subset
 
 `PitzerParameterDatasets.applyPhreeqcCo2SodiumSulfate` installs one coherent subset identified as
