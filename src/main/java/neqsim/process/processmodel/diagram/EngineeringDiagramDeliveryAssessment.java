@@ -30,36 +30,33 @@ import java.util.TreeMap;
  * Independently assesses a stored or transferred {@link EngineeringDiagramDelivery} directory.
  *
  * <p>
- * The assessment is bounded and fail-closed. It validates the delivery manifest schema and
- * fingerprint, engineering-review boundaries, relative artifact paths, media types, sizes and
- * SHA-256 hashes. It also rejects symbolic links, paths outside the delivery root, duplicate or
- * unlisted files, missing required projections, and an information-model artifact inconsistent
- * with the declared source scope.
+ * The assessment is bounded and fail-closed. It validates the delivery manifest schema and fingerprint,
+ * engineering-review boundaries, relative artifact paths, media types, sizes and SHA-256 hashes. It also rejects
+ * symbolic links, paths outside the delivery root, duplicate or unlisted files, missing required projections, and an
+ * information-model artifact inconsistent with the declared source scope.
  * </p>
  *
  * <p>
- * A successful assessment proves exact package integrity only. It does not reconstruct or execute
- * a process model, repeat accountable engineering review, qualify DEXPI interoperability, approve
- * a drawing, or claim standards conformance.
+ * A successful assessment proves exact package integrity only. It does not reconstruct or execute a process model,
+ * repeat accountable engineering review, qualify DEXPI interoperability, approve a drawing, or claim standards
+ * conformance.
  * </p>
  */
 public final class EngineeringDiagramDeliveryAssessment {
   private static final String DELIVERY_SCHEMA = "neqsim_engineering_diagram_delivery.v1";
-  private static final String ASSESSMENT_SCHEMA =
-      "neqsim_engineering_diagram_delivery_assessment.v1";
+  private static final String ASSESSMENT_SCHEMA = "neqsim_engineering_diagram_delivery_assessment.v1";
   private static final String MANIFEST_FILE = "delivery-manifest.json";
   private static final long MAX_MANIFEST_BYTES = 16L * 1024L * 1024L;
   private static final long MAX_ARTIFACT_BYTES = 256L * 1024L * 1024L;
   private static final long MAX_TOTAL_ARTIFACT_BYTES = 512L * 1024L * 1024L;
   private static final int MAX_ARTIFACT_COUNT = 4096;
 
-  private EngineeringDiagramDeliveryAssessment() {}
+  private EngineeringDiagramDeliveryAssessment() {
+  }
 
   /** Assessment diagnostic severity. */
   public enum Severity {
-    INFO,
-    WARNING,
-    ERROR
+    INFO, WARNING, ERROR
   }
 
   /** Immutable structured assessment diagnostic. */
@@ -113,8 +110,7 @@ public final class EngineeringDiagramDeliveryAssessment {
     private final long sizeBytes;
     private final String sha256;
 
-    private ArtifactEvidence(String relativePath, String mediaType, long sizeBytes,
-        String sha256) {
+    private ArtifactEvidence(String relativePath, String mediaType, long sizeBytes, String sha256) {
       this.relativePath = relativePath;
       this.mediaType = mediaType;
       this.sizeBytes = sizeBytes;
@@ -161,9 +157,8 @@ public final class EngineeringDiagramDeliveryAssessment {
     private final boolean complete;
     private final String fingerprint;
 
-    private Report(Path directory, String manifestSha256, String manifestFingerprint,
-        String sourceScope, String plantId, String revision,
-        Map<String, ArtifactEvidence> artifacts, List<Diagnostic> diagnostics,
+    private Report(Path directory, String manifestSha256, String manifestFingerprint, String sourceScope,
+        String plantId, String revision, Map<String, ArtifactEvidence> artifacts, List<Diagnostic> diagnostics,
         boolean manifestDeclaredComplete) {
       this.directory = directory.toString();
       this.manifestSha256 = manifestSha256;
@@ -171,12 +166,11 @@ public final class EngineeringDiagramDeliveryAssessment {
       this.sourceScope = sourceScope;
       this.plantId = plantId;
       this.revision = revision;
-      this.artifacts = Collections.unmodifiableMap(
-          new LinkedHashMap<String, ArtifactEvidence>(artifacts));
+      this.artifacts = Collections.unmodifiableMap(new LinkedHashMap<String, ArtifactEvidence>(artifacts));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
       this.complete = manifestDeclaredComplete && !hasErrors(diagnostics);
-      this.fingerprint = sha256(new GsonBuilder().create().toJson(toMapWithoutFingerprint())
-          .getBytes(StandardCharsets.UTF_8));
+      this.fingerprint = sha256(
+          new GsonBuilder().create().toJson(toMapWithoutFingerprint()).getBytes(StandardCharsets.UTF_8));
     }
 
     public Path getDirectory() {
@@ -278,8 +272,8 @@ public final class EngineeringDiagramDeliveryAssessment {
     Path root = normalized.toRealPath();
     Path manifestPath = root.resolve(MANIFEST_FILE);
     if (!Files.isRegularFile(manifestPath, LinkOption.NOFOLLOW_LINKS)) {
-      diagnostics.add(error("DELIVERY_MANIFEST_MISSING",
-          "Delivery manifest is missing or is not a regular file", MANIFEST_FILE));
+      diagnostics.add(
+          error("DELIVERY_MANIFEST_MISSING", "Delivery manifest is missing or is not a regular file", MANIFEST_FILE));
       return new Report(root, null, null, null, null, null, artifacts, diagnostics, false);
     }
 
@@ -290,17 +284,14 @@ public final class EngineeringDiagramDeliveryAssessment {
     try {
       JsonElement parsed = new JsonParser().parse(new String(manifestBytes, StandardCharsets.UTF_8));
       if (!parsed.isJsonObject()) {
-        diagnostics.add(error("DELIVERY_MANIFEST_NOT_OBJECT",
-            "Delivery manifest root must be a JSON object", MANIFEST_FILE));
-        return new Report(root, manifestSha256, null, null, null, null, artifacts,
-            diagnostics, false);
+        diagnostics
+            .add(error("DELIVERY_MANIFEST_NOT_OBJECT", "Delivery manifest root must be a JSON object", MANIFEST_FILE));
+        return new Report(root, manifestSha256, null, null, null, null, artifacts, diagnostics, false);
       }
       manifest = parsed.getAsJsonObject();
     } catch (RuntimeException exception) {
-      diagnostics.add(error("DELIVERY_MANIFEST_INVALID_JSON",
-          "Delivery manifest is not valid JSON", MANIFEST_FILE));
-      return new Report(root, manifestSha256, null, null, null, null, artifacts,
-          diagnostics, false);
+      diagnostics.add(error("DELIVERY_MANIFEST_INVALID_JSON", "Delivery manifest is not valid JSON", MANIFEST_FILE));
+      return new Report(root, manifestSha256, null, null, null, null, artifacts, diagnostics, false);
     }
 
     String schemaVersion = text(manifest, "schemaVersion", diagnostics);
@@ -308,12 +299,11 @@ public final class EngineeringDiagramDeliveryAssessment {
     String plantId = text(manifest, "plantId", diagnostics);
     String revision = text(manifest, "revision", diagnostics);
     String manifestFingerprint = text(manifest, "fingerprint", diagnostics);
-    boolean manifestDeclaredComplete = booleanValue(manifest, "completeWithinDeclaredScope",
-        diagnostics);
+    boolean manifestDeclaredComplete = booleanValue(manifest, "completeWithinDeclaredScope", diagnostics);
 
     if (!DELIVERY_SCHEMA.equals(schemaVersion)) {
-      diagnostics.add(error("DELIVERY_SCHEMA_UNSUPPORTED",
-          "Unsupported engineering-diagram delivery schema", schemaVersion));
+      diagnostics
+          .add(error("DELIVERY_SCHEMA_UNSUPPORTED", "Unsupported engineering-diagram delivery schema", schemaVersion));
     }
     requireBoundary(manifest, "approvalStatus", "REVIEW_REQUIRED", diagnostics);
     requireFalse(manifest, "fitnessForConstruction", diagnostics);
@@ -334,19 +324,17 @@ public final class EngineeringDiagramDeliveryAssessment {
 
     if (!hasErrors(diagnostics)) {
       diagnostics.add(new Diagnostic(Severity.INFO, "DELIVERY_INTEGRITY_VERIFIED",
-          "Manifest fingerprint, artifact bytes, paths, and declared review boundaries are valid",
-          plantId));
+          "Manifest fingerprint, artifact bytes, paths, and declared review boundaries are valid", plantId));
     }
-    return new Report(root, manifestSha256, manifestFingerprint, sourceScope, plantId, revision,
-        artifacts, diagnostics, manifestDeclaredComplete);
+    return new Report(root, manifestSha256, manifestFingerprint, sourceScope, plantId, revision, artifacts, diagnostics,
+        manifestDeclaredComplete);
   }
 
-  private static long readArtifactEvidence(Path root, JsonObject manifest,
-      Map<String, ArtifactEvidence> artifacts, List<Diagnostic> diagnostics) throws IOException {
+  private static long readArtifactEvidence(Path root, JsonObject manifest, Map<String, ArtifactEvidence> artifacts,
+      List<Diagnostic> diagnostics) throws IOException {
     JsonElement value = manifest.get("artifacts");
     if (value == null || !value.isJsonArray()) {
-      diagnostics.add(error("DELIVERY_ARTIFACT_LIST_MISSING",
-          "Manifest artifacts must be a JSON array", "artifacts"));
+      diagnostics.add(error("DELIVERY_ARTIFACT_LIST_MISSING", "Manifest artifacts must be a JSON array", "artifacts"));
       return 0L;
     }
     JsonArray array = value.getAsJsonArray();
@@ -359,8 +347,7 @@ public final class EngineeringDiagramDeliveryAssessment {
     long totalBytes = 0L;
     for (JsonElement element : array) {
       if (!element.isJsonObject()) {
-        diagnostics.add(error("DELIVERY_ARTIFACT_INVALID",
-            "Every artifact entry must be a JSON object", "artifacts"));
+        diagnostics.add(error("DELIVERY_ARTIFACT_INVALID", "Every artifact entry must be a JSON object", "artifacts"));
         continue;
       }
       JsonObject item = element.getAsJsonObject();
@@ -368,13 +355,12 @@ public final class EngineeringDiagramDeliveryAssessment {
       String mediaType = text(item, "mediaType", diagnostics);
       String expectedSha256 = text(item, "sha256", diagnostics);
       Long expectedSize = longValue(item, "sizeBytes", diagnostics);
-      if (relativePath == null || mediaType == null || expectedSha256 == null
-          || expectedSize == null) {
+      if (relativePath == null || mediaType == null || expectedSha256 == null || expectedSize == null) {
         continue;
       }
       if (artifacts.containsKey(relativePath)) {
-        diagnostics.add(error("DELIVERY_ARTIFACT_DUPLICATE",
-            "Manifest contains a duplicate artifact path", relativePath));
+        diagnostics
+            .add(error("DELIVERY_ARTIFACT_DUPLICATE", "Manifest contains a duplicate artifact path", relativePath));
         continue;
       }
       if (!isSafeRelativePath(relativePath) || MANIFEST_FILE.equals(relativePath)) {
@@ -401,14 +387,14 @@ public final class EngineeringDiagramDeliveryAssessment {
 
       Path target = root.resolve(relativePath).normalize();
       if (!target.startsWith(root) || !Files.isRegularFile(target, LinkOption.NOFOLLOW_LINKS)) {
-        diagnostics.add(error("DELIVERY_ARTIFACT_MISSING",
-            "Declared artifact is missing or is not a regular file", relativePath));
+        diagnostics.add(
+            error("DELIVERY_ARTIFACT_MISSING", "Declared artifact is missing or is not a regular file", relativePath));
         continue;
       }
       Path realTarget = target.toRealPath();
       if (!realTarget.startsWith(root)) {
-        diagnostics.add(error("DELIVERY_ARTIFACT_ESCAPES_ROOT",
-            "Artifact resolves outside the delivery root", relativePath));
+        diagnostics
+            .add(error("DELIVERY_ARTIFACT_ESCAPES_ROOT", "Artifact resolves outside the delivery root", relativePath));
         continue;
       }
       byte[] bytes = readBounded(realTarget, MAX_ARTIFACT_BYTES,
@@ -423,8 +409,7 @@ public final class EngineeringDiagramDeliveryAssessment {
         diagnostics.add(error("DELIVERY_ARTIFACT_SHA256_MISMATCH",
             "Artifact SHA-256 does not match its manifest evidence", relativePath));
       }
-      artifacts.put(relativePath,
-          new ArtifactEvidence(relativePath, mediaType, bytes.length, actualSha256));
+      artifacts.put(relativePath, new ArtifactEvidence(relativePath, mediaType, bytes.length, actualSha256));
     }
     return totalBytes;
   }
@@ -436,28 +421,28 @@ public final class EngineeringDiagramDeliveryAssessment {
     Collections.sort(actualFiles);
     for (String relativePath : actualFiles) {
       if (!MANIFEST_FILE.equals(relativePath) && !artifacts.containsKey(relativePath)) {
-        diagnostics.add(error("DELIVERY_UNLISTED_FILE",
-            "Delivery contains a file that is not declared in the manifest", relativePath));
+        diagnostics.add(error("DELIVERY_UNLISTED_FILE", "Delivery contains a file that is not declared in the manifest",
+            relativePath));
       }
     }
   }
 
-  private static void collectFiles(Path root, Path directory, List<String> files,
-      List<Diagnostic> diagnostics) throws IOException {
+  private static void collectFiles(Path root, Path directory, List<String> files, List<Diagnostic> diagnostics)
+      throws IOException {
     DirectoryStream<Path> children = Files.newDirectoryStream(directory);
     try {
       for (Path child : children) {
         String relativePath = root.relativize(child).toString().replace('\\', '/');
         if (Files.isSymbolicLink(child)) {
-          diagnostics.add(error("DELIVERY_SYMBOLIC_LINK_REJECTED",
-              "Delivery content must not contain symbolic links", relativePath));
+          diagnostics.add(error("DELIVERY_SYMBOLIC_LINK_REJECTED", "Delivery content must not contain symbolic links",
+              relativePath));
         } else if (Files.isDirectory(child, LinkOption.NOFOLLOW_LINKS)) {
           collectFiles(root, child, files, diagnostics);
         } else if (Files.isRegularFile(child, LinkOption.NOFOLLOW_LINKS)) {
           files.add(relativePath);
         } else {
-          diagnostics.add(error("DELIVERY_UNSUPPORTED_FILE_TYPE",
-              "Delivery contains an unsupported filesystem object", relativePath));
+          diagnostics.add(error("DELIVERY_UNSUPPORTED_FILE_TYPE", "Delivery contains an unsupported filesystem object",
+              relativePath));
         }
       }
     } finally {
@@ -465,8 +450,8 @@ public final class EngineeringDiagramDeliveryAssessment {
     }
   }
 
-  private static void verifyRequiredArtifacts(String sourceScope,
-      Map<String, ArtifactEvidence> artifacts, List<Diagnostic> diagnostics) {
+  private static void verifyRequiredArtifacts(String sourceScope, Map<String, ArtifactEvidence> artifacts,
+      List<Diagnostic> diagnostics) {
     requireArtifact(artifacts, "document-set.json", diagnostics);
     requireArtifact(artifacts, "drawing-set.pdf", diagnostics);
     boolean hasSvg = false;
@@ -474,8 +459,8 @@ public final class EngineeringDiagramDeliveryAssessment {
       hasSvg = hasSvg || path.startsWith("svg/") && path.endsWith(".svg");
     }
     if (!hasSvg) {
-      diagnostics.add(error("DELIVERY_SVG_MISSING",
-          "Delivery must contain at least one declared native SVG sheet", "svg/"));
+      diagnostics
+          .add(error("DELIVERY_SVG_MISSING", "Delivery must contain at least one declared native SVG sheet", "svg/"));
     }
     if ("PROCESS_SYSTEM".equals(sourceScope)) {
       requireArtifact(artifacts, "dexpi-process.xml", diagnostics);
@@ -484,16 +469,16 @@ public final class EngineeringDiagramDeliveryAssessment {
       requireArtifact(artifacts, "dexpi-process-model.zip", diagnostics);
       rejectArtifact(artifacts, "dexpi-process.xml", diagnostics);
     } else {
-      diagnostics.add(error("DELIVERY_SOURCE_SCOPE_INVALID",
-          "sourceScope must be PROCESS_SYSTEM or PROCESS_MODEL", sourceScope));
+      diagnostics.add(
+          error("DELIVERY_SOURCE_SCOPE_INVALID", "sourceScope must be PROCESS_SYSTEM or PROCESS_MODEL", sourceScope));
     }
   }
 
   private static void requireArtifact(Map<String, ArtifactEvidence> artifacts, String path,
       List<Diagnostic> diagnostics) {
     if (!artifacts.containsKey(path)) {
-      diagnostics.add(error("DELIVERY_REQUIRED_ARTIFACT_MISSING",
-          "Delivery does not contain a required declared artifact", path));
+      diagnostics.add(
+          error("DELIVERY_REQUIRED_ARTIFACT_MISSING", "Delivery does not contain a required declared artifact", path));
     }
   }
 
@@ -505,8 +490,7 @@ public final class EngineeringDiagramDeliveryAssessment {
     }
   }
 
-  private static void verifyMediaType(String path, String mediaType,
-      List<Diagnostic> diagnostics) {
+  private static void verifyMediaType(String path, String mediaType, List<Diagnostic> diagnostics) {
     String expected = null;
     if (path.endsWith(".json")) {
       expected = "application/json";
@@ -526,8 +510,7 @@ public final class EngineeringDiagramDeliveryAssessment {
   }
 
   private static boolean isSafeRelativePath(String value) {
-    if (value.isEmpty() || value.indexOf('\\') >= 0 || value.startsWith("/")
-        || value.matches("^[A-Za-z]:.*")) {
+    if (value.isEmpty() || value.indexOf('\\') >= 0 || value.startsWith("/") || value.matches("^[A-Za-z]:.*")) {
       return false;
     }
     Path path;
@@ -547,8 +530,7 @@ public final class EngineeringDiagramDeliveryAssessment {
     return true;
   }
 
-  private static void verifyManifestFingerprint(JsonObject manifest, String expected,
-      List<Diagnostic> diagnostics) {
+  private static void verifyManifestFingerprint(JsonObject manifest, String expected, List<Diagnostic> diagnostics) {
     if (expected == null || !expected.matches("[0-9a-f]{64}")) {
       diagnostics.add(error("DELIVERY_MANIFEST_FINGERPRINT_INVALID",
           "Manifest fingerprint must contain 64 lowercase hexadecimal characters", "fingerprint"));
@@ -572,8 +554,7 @@ public final class EngineeringDiagramDeliveryAssessment {
     JsonElement value = object.get(name);
     if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()
         || value.getAsString().trim().isEmpty()) {
-      diagnostics.add(error("DELIVERY_MANIFEST_FIELD_INVALID",
-          "Manifest field must be a non-blank string", name));
+      diagnostics.add(error("DELIVERY_MANIFEST_FIELD_INVALID", "Manifest field must be a non-blank string", name));
       return null;
     }
     return value.getAsString();
@@ -582,33 +563,27 @@ public final class EngineeringDiagramDeliveryAssessment {
   private static Long longValue(JsonObject object, String name, List<Diagnostic> diagnostics) {
     JsonElement value = object.get(name);
     try {
-      if (value == null || !value.isJsonPrimitive()
-          || !value.getAsJsonPrimitive().isNumber()
+      if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()
           || !value.getAsString().matches("-?[0-9]+")) {
         throw new NumberFormatException(name);
       }
       return Long.valueOf(value.getAsLong());
     } catch (RuntimeException exception) {
-      diagnostics.add(error("DELIVERY_MANIFEST_FIELD_INVALID",
-          "Manifest field must be an integer", name));
+      diagnostics.add(error("DELIVERY_MANIFEST_FIELD_INVALID", "Manifest field must be an integer", name));
       return null;
     }
   }
 
-  private static boolean booleanValue(JsonObject object, String name,
-      List<Diagnostic> diagnostics) {
+  private static boolean booleanValue(JsonObject object, String name, List<Diagnostic> diagnostics) {
     JsonElement value = object.get(name);
-    if (value == null || !value.isJsonPrimitive()
-        || !value.getAsJsonPrimitive().isBoolean()) {
-      diagnostics.add(error("DELIVERY_MANIFEST_FIELD_INVALID",
-          "Manifest field must be a boolean", name));
+    if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) {
+      diagnostics.add(error("DELIVERY_MANIFEST_FIELD_INVALID", "Manifest field must be a boolean", name));
       return false;
     }
     return value.getAsBoolean();
   }
 
-  private static void requireBoundary(JsonObject object, String name, String expected,
-      List<Diagnostic> diagnostics) {
+  private static void requireBoundary(JsonObject object, String name, String expected, List<Diagnostic> diagnostics) {
     String value = text(object, name, diagnostics);
     if (value != null && !expected.equals(value)) {
       diagnostics.add(error("DELIVERY_QUALIFICATION_BOUNDARY_INVALID",
@@ -616,13 +591,11 @@ public final class EngineeringDiagramDeliveryAssessment {
     }
   }
 
-  private static void requireFalse(JsonObject object, String name,
-      List<Diagnostic> diagnostics) {
+  private static void requireFalse(JsonObject object, String name, List<Diagnostic> diagnostics) {
     JsonElement value = object.get(name);
-    if (value == null || !value.isJsonPrimitive()
-        || !value.getAsJsonPrimitive().isBoolean() || value.getAsBoolean()) {
-      diagnostics.add(error("DELIVERY_QUALIFICATION_BOUNDARY_INVALID",
-          "Delivery qualification boundary must remain false", name));
+    if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean() || value.getAsBoolean()) {
+      diagnostics.add(
+          error("DELIVERY_QUALIFICATION_BOUNDARY_INVALID", "Delivery qualification boundary must remain false", name));
     }
   }
 
@@ -669,8 +642,7 @@ public final class EngineeringDiagramDeliveryAssessment {
       }
       return result.toString();
     } catch (NoSuchAlgorithmException exception) {
-      throw new IllegalStateException("SHA-256 is required by every supported Java runtime",
-          exception);
+      throw new IllegalStateException("SHA-256 is required by every supported Java runtime", exception);
     }
   }
 }
