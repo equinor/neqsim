@@ -88,8 +88,8 @@ public class SystemPitzer extends SystemEosGE {
    * Returns scientific qualification metadata for the selected Pitzer parameter dataset.
    *
    * <p>
-   * Calling this method completes lazy dataset selection and the active ionic-topology coverage audit. It does not run a
-   * flash or enter ordinary property kernels.
+   * Calling this method completes lazy dataset selection and the active ionic-topology coverage audit. It does not run
+   * a flash or enter ordinary property kernels.
    * </p>
    *
    * @return immutable qualification metadata for the selected dataset identity
@@ -104,8 +104,8 @@ public class SystemPitzer extends SystemEosGE {
    * Requires complete interaction coverage and complete scientific qualification of the named Pitzer dataset.
    *
    * <p>
-   * This is an explicit publication gate. A broad dataset with only partially validated subsystems is rejected even when
-   * it covers the active topology. A successful result still requires the caller to check the appropriate
+   * This is an explicit publication gate. A broad dataset with only partially validated subsystems is rejected even
+   * when it covers the active topology. A successful result still requires the caller to check the appropriate
    * subsystem-specific temperature and molality range helper.
    * </p>
    *
@@ -115,8 +115,8 @@ public class SystemPitzer extends SystemEosGE {
   public PitzerParameterQualification requireCompletePitzerDatasetQualification() {
     PhasePitzer aqueousPhase = (PhasePitzer) phaseArray[1];
     aqueousPhase.requireCompletePitzerParameterCoverage();
-    PitzerParameterQualification qualification =
-        PitzerParameterDatasets.getQualification(aqueousPhase.getParameterDatasetId());
+    PitzerParameterQualification qualification = PitzerParameterDatasets
+        .getQualification(aqueousPhase.getParameterDatasetId());
     qualification.requireCompleteDatasetQualification();
     return qualification;
   }
