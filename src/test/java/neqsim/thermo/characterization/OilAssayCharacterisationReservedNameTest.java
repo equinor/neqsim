@@ -20,8 +20,8 @@ public class OilAssayCharacterisationReservedNameTest {
     characterisation.clearCuts();
 
     assertThrows(IllegalArgumentException.class,
-        () -> characterisation.addTBPCutBoundariesCelsius("TBP_PC", new double[] {0.0, 100.0},
-            new double[] {90.0, 520.0}, new double[] {0.85}));
+        () -> characterisation.addTBPCutBoundariesCelsius("TBP_PC", new double[] { 0.0, 100.0 },
+            new double[] { 90.0, 520.0 }, new double[] { 0.85 }));
     assertTrue(characterisation.getCuts().isEmpty());
   }
 }
