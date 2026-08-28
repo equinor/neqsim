@@ -2050,12 +2050,15 @@ checks at 84.3 and 84.5 bara. This is a deterministic solver qualification of th
 existing model, not experimental validation of the predicted phase boundary or
 phase fractions.
 
-Ordinary, multiphase, and enhanced-multiphase flashes must return the same GAS+OIL
-equilibrium at the frozen state. Every endpoint requires finite and bounded phase
-fractions and compositions, phase and beta normalization within `1e-12`, component
-material balance below `1e-10`, maximum interphase log-fugacity residual below
-`1e-8`, positive compressibility factors, and finite Gibbs energy. The nearby
-states apply the same closure and cross-algorithm gates.
+Ordinary, multiphase, and enhanced-multiphase flashes must return the same closed
+methane-rich/n-heptane-rich two-phase equilibrium at the frozen state. The phases
+are matched by n-heptane mole fraction rather than a phase-role enum, because that
+metadata is not part of the thermodynamic equilibrium contract. Every endpoint
+requires compositionally distinct phases, finite and bounded phase fractions and
+compositions, phase and beta normalization within `1e-12`, component material
+balance below `1e-10`, maximum interphase log-fugacity residual below `1e-8`,
+positive compressibility factors, and finite Gibbs energy. The nearby states apply
+the same closure and cross-algorithm gates.
 
 The enhanced path must also recover the reference endpoint from beta `1e-12`.
 Changing a reused state to 84.5 bara, returning it to 84.4 bara, and immediately
