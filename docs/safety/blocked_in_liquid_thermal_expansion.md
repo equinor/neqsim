@@ -126,8 +126,7 @@ of acceptable pressure.
 
 This analysis supplies no heat-input model, expansion volume rate, required relieving rate,
 accumulation case, back pressure, discharge coefficient, viscosity correction, inlet/outlet
-hydraulics, or certified orifice selection. Those inputs cannot be inferred from a pressure rise
-alone.
+hydraulics, or certified orifice selection. Those inputs cannot be inferred from a pressure rise alone.
 
 `ReliefValveSizing.calculateLiquidReliefArea(...)` is a separate static screen. It requires an
 independently established liquid volume flow at relieving conditions in m³/s, liquid density in
@@ -142,7 +141,8 @@ provides relief-device sizing methods. Edition and section numbering must be che
 project's licensed copies; NeqSim does not reproduce or certify either standard.
 
 The repository regression is numerical software evidence for one EOS case. It is not experimental
-validation, a universal 30% acceptance criterion, or evidence that SRK is suitable for every liquid.
+validation or a universal 30% acceptance criterion, and it is not evidence that SRK is suitable for
+every liquid.
 
 ## Limitations
 
