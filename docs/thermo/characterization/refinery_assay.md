@@ -68,7 +68,7 @@ assay.addCut(new AssayCut("Residue")
 assay.apply();
 ```
 
-`apply()` resolves every cut before adding the first component, checks assay closure, calculates cut moles from the configured mass basis, and rejects duplicate/repeated application if the generated pseudo-component already exists.
+`apply()` resolves every cut before adding the first component, checks assay closure, calculates cut moles from the configured mass basis, and rejects duplicate/repeated application if the generated pseudo-component already exists. Every strictly positive normalized mass fraction is retained, including trace cuts below ordinary comparison tolerances; only exact-zero cuts are omitted so trace handling remains consistent with the reconstructed-mass closure gate.
 
 ## Java: cumulative TBP cut boundaries
 
