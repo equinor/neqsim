@@ -28,8 +28,7 @@ class SystemPitzerParameterQualificationTest {
     PitzerParameterQualification qualification = system.requireCompletePitzerDatasetQualification();
 
     assertEquals(PitzerParameterDatasets.PHREEQC_NA_K_CL_ID, qualification.getDatasetId());
-    assertEquals(PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE,
-        qualification.getLevel());
+    assertEquals(PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE, qualification.getLevel());
     assertTrue(qualification.isValidatedWithinDeclaredEnvelope());
   }
 
@@ -40,10 +39,9 @@ class SystemPitzerParameterQualificationTest {
     PitzerParameterQualification qualification = system.getPitzerParameterQualification();
 
     assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, qualification.getDatasetId());
-    assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
-        qualification.getLevel());
-    IllegalStateException failure =
-        assertThrows(IllegalStateException.class, system::requireCompletePitzerDatasetQualification);
+    assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED, qualification.getLevel());
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        system::requireCompletePitzerDatasetQualification);
     assertTrue(failure.getMessage().contains(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID));
     assertTrue(failure.getMessage().contains("PARTIALLY_EXPERIMENTALLY_VALIDATED"));
     assertTrue(failure.getMessage().contains("Quaternary Ca-Mg-Cl-SO4"));
@@ -56,8 +54,8 @@ class SystemPitzerParameterQualificationTest {
     PitzerParameterQualification qualification = system.getPitzerParameterQualification();
 
     assertEquals(PitzerParameterQualification.Level.UNQUALIFIED, qualification.getLevel());
-    IllegalStateException failure =
-        assertThrows(IllegalStateException.class, system::requireCompletePitzerDatasetQualification);
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        system::requireCompletePitzerDatasetQualification);
     assertEquals(qualification.formatDiagnostic(), failure.getMessage());
     assertTrue(failure.getMessage().contains("No reviewed qualification record"));
   }
