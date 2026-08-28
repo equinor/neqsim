@@ -144,7 +144,7 @@ class JavaQuickstartDocumentationContractTest(unittest.TestCase):
             "temperature in K and absolute pressure in bara",
             "component amounts in mol",
             "sum to 1.0 mol",
-            'API unit token is "kg/m3"',
+            'API unit token is `"kg/m3"`',
             "does not select or validate a density model",
             "equilibrium split at the feed state, here 50 bara",
             "does not impose a pressure reduction",
