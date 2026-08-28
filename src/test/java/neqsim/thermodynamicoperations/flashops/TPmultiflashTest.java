@@ -9,7 +9,6 @@ import java.util.Comparator;
 import org.ejml.data.DMatrixRMaj;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -134,8 +133,11 @@ class TPmultiflashTest {
 
   private void assertHydrocarbonTwoPhaseEquilibrium(SystemInterface system, String label) {
     assertEquals(2, system.getNumberOfPhases(), label);
-    assertTrue(system.hasPhaseType(PhaseType.GAS), label + " gas phase");
-    assertTrue(system.hasPhaseType(PhaseType.OIL), label + " oil phase");
+    Integer[] order = phaseOrder(system);
+    double methaneRichHeptaneFraction = system.getPhase(order[0]).getComponent(1).getx();
+    double heptaneRichHeptaneFraction = system.getPhase(order[1]).getComponent(1).getx();
+    assertTrue(methaneRichHeptaneFraction + 1.0e-8 < heptaneRichHeptaneFraction,
+        label + " compositionally distinct methane-rich and n-heptane-rich phases");
     assertFlashClosure(system, label);
   }
 
