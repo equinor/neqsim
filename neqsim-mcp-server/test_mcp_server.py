@@ -1499,11 +1499,19 @@ def test_capabilities():
     tests = evidence.get("tests", {})
     guides = evidence.get("guides", {})
     limitations = evidence.get("knownLimitations", {})
-    check("evidence inventory freezes 67 Java test classes",
-          tests.get("javaTestClassCount") == 67,
+    check("evidence inventory is version 1.18",
+          evidence.get("inventoryVersion") == "1.18",
+          str(evidence.get("inventoryVersion")))
+    check("evidence inventory freezes 68 Java test classes",
+          tests.get("javaTestClassCount") == 68,
           str(tests))
     check("evidence inventory freezes 94 protocol scenarios",
           tests.get("protocolScenarioCount") == 94,
+          str(tests))
+    check("focused automation-read protocol qualification is inventoried",
+          tests.get("focusedAutomationReadProtocolScenarioCount") == 5
+          and tests.get("focusedAutomationReadProtocolHarness")
+          == "neqsim-mcp-server/test_automation_read_protocol.py",
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1556,12 +1564,13 @@ def test_capabilities():
         "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
         "checkToolAccess", "manageIndustrialProfile", "searchComponents",
         "queryDataCatalog", "getProgress", "inspectApi",
-        "manageValidationProfile",
+        "manageValidationProfile", "listSimulationUnits",
+        "listUnitVariables", "getSimulationVariable",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("eleven non-numerical contracts have bounded evidence",
-          limitations.get("contractTestedToolCount") == 11
-          and limitations.get("confirmedGapToolCount") == 40
+    check("fourteen non-numerical contracts have bounded evidence",
+          limitations.get("contractTestedToolCount") == 14
+          and limitations.get("confirmedGapToolCount") == 37
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1583,7 +1592,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 40
+          and limitations.get("confirmedGapToolCount") == 37
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
