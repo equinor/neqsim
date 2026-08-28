@@ -6,10 +6,12 @@ import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionValidationStatu
 /**
  * Scientific qualification metadata for a {@link KineticReaction}.
  *
- * <p>This class keeps kinetic parameters separate from their evidence. It records the public
- * source, validation status, and the temperature/pressure range for which a kinetic reaction has
- * been qualified. A reaction model can therefore be reused in process and pipeline calculations
- * without silently treating an unvalidated parameter set as generally applicable.</p>
+ * <p>
+ * This class keeps kinetic parameters separate from their evidence. It records the public source, validation status,
+ * and the temperature/pressure range for which a kinetic reaction has been qualified. A reaction model can therefore be
+ * reused in process and pipeline calculations without silently treating an unvalidated parameter set as generally
+ * applicable.
+ * </p>
  *
  * @author NeqSim Team
  * @version 1.0
@@ -40,10 +42,9 @@ public class KineticReactionQualification implements Serializable {
    * @param maximumPressureBara maximum qualified pressure [bara]
    * @param limitations concise limitations or evidence boundary
    */
-  public KineticReactionQualification(String reactionName, String sourceCitation,
-      String sourceIdentifier, ChemicalReactionValidationStatus validationStatus,
-      double minimumTemperatureK, double maximumTemperatureK, double minimumPressureBara,
-      double maximumPressureBara, String limitations) {
+  public KineticReactionQualification(String reactionName, String sourceCitation, String sourceIdentifier,
+      ChemicalReactionValidationStatus validationStatus, double minimumTemperatureK, double maximumTemperatureK,
+      double minimumPressureBara, double maximumPressureBara, String limitations) {
     this.reactionName = requireText(reactionName, "reaction name");
     this.sourceCitation = requireText(sourceCitation, "source citation");
     this.sourceIdentifier = requireText(sourceIdentifier, "source identifier");
@@ -83,12 +84,12 @@ public class KineticReactionQualification implements Serializable {
    */
   public void requireValidatedAt(double temperatureK, double pressureBara) {
     if (validationStatus != ChemicalReactionValidationStatus.VALIDATED) {
-      throw new IllegalStateException("Kinetic reaction '" + reactionName
-          + "' is not independently validated: " + validationStatus);
+      throw new IllegalStateException(
+          "Kinetic reaction '" + reactionName + "' is not independently validated: " + validationStatus);
     }
     if (!isWithinRange(temperatureK, pressureBara)) {
-      throw new IllegalStateException("Kinetic reaction '" + reactionName
-          + "' is outside its qualified temperature/pressure range");
+      throw new IllegalStateException(
+          "Kinetic reaction '" + reactionName + "' is outside its qualified temperature/pressure range");
     }
   }
 
