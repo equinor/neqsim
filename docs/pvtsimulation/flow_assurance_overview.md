@@ -125,7 +125,7 @@ calculation is not evidence that no hydrate or scale risk exists.
 For a pipeline point at operating temperature $T_{op}$, define thermodynamic
 subcooling as:
 
-$\Delta T_{\mathrm{sub}}=T_{\mathrm{eq}}-T_{\mathrm{op}}$
+$$\Delta T_{\mathrm{sub}}=T_{\mathrm{eq}}-T_{\mathrm{op}}$$
 
 Here, $T_{\mathrm{eq}}$ is the calculated hydrate-equilibrium temperature and
 $T_{\mathrm{op}}$ is the operating temperature, both expressed on the same K or °C scale.
@@ -158,7 +158,7 @@ type and the configured model.
 
 The screening calculator reports:
 
-$SI=\log_{10}\left(\frac{IAP}{K_{sp}}\right)$
+$$SI=\log_{10}\left(\frac{IAP}{K_{sp}}\right)$$
 
 Here, $IAP$ is the dimensionless ion-activity product and $K_{sp}$ is the
 dimensionless thermodynamic solubility product on the same standard-state basis.
