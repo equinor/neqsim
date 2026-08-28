@@ -184,6 +184,8 @@ engineering evidence before design use.
 
 ## API quick reference
 
+Key interfaces to explore in the [JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html):
+
 | Interface | Purpose |
 |-----------|---------|
 | `SystemInterface` | Fluid composition, properties, and flash state |
