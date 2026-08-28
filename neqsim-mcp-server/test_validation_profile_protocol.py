@@ -228,10 +228,10 @@ def test_contract_classification_is_promoted_atomically(client):
     data = payload(result)
     inventory = data.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
-    require(inventory.get("inventoryVersion") == "1.17", "unexpected evidence inventory version", result)
+    require(inventory.get("inventoryVersion") == "1.18", "unexpected evidence inventory version", result)
     limitations = inventory.get("knownLimitations", {})
-    require(limitations.get("contractTestedToolCount") == 11, "contract-tested count did not promote", result)
-    require(limitations.get("confirmedGapToolCount") == 40, "confirmed-gap count did not promote", result)
+    require(limitations.get("contractTestedToolCount") == 14, "contract-tested count did not promote", result)
+    require(limitations.get("confirmedGapToolCount") == 37, "confirmed-gap count did not promote", result)
     records = limitations.get("coverageRecords", {})
     profile_record = records.get("manageValidationProfile", {})
     require(
