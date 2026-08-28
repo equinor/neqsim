@@ -51,8 +51,7 @@ class SystemPitzerParameterQualificationTest {
 
   @Test
   void legacyDatasetFailsClosedWithDeterministicEvidence() {
-    SystemPitzer system = createSodiumChlorideSystem(298.15);
-    system = createLegacySodiumChlorideSystem();
+    SystemPitzer system = createLegacySodiumChlorideSystem();
 
     PitzerParameterQualification qualification = system.getPitzerParameterQualification();
 
