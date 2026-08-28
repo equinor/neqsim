@@ -9,7 +9,9 @@ name: Install smoke test
 # skill Python-package install, VS Code export, --force reinstall) fails here
 # instead of on a new user's first day.
 #
-# Community source only: no auth, no private catalogs, no secrets required.
+# Community source only. The workflow token is read-only and is exposed to the
+# installer only to authenticate public GitHub API requests and avoid anonymous
+# API rate limits while preserving the real end-to-end download path.
 
 permissions:
   contents: read
@@ -38,6 +40,8 @@ jobs:
   install-smoke-test:
     name: neqsim agent install --all (community) on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     strategy:
       fail-fast: false
       matrix:
