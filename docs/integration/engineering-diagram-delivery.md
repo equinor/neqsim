@@ -65,6 +65,33 @@ the manifest are relative, and every published content artifact has its byte len
 and SHA-256 fingerprint. Environment-specific absolute paths are excluded, so equivalent fresh
 models produce equivalent manifest content in different directories.
 
+## Independent intake assessment
+
+Use `EngineeringDiagramDeliveryAssessment` before relying on a stored, copied, or transferred
+delivery:
+
+```java
+EngineeringDiagramDeliveryAssessment.Report assessment =
+    EngineeringDiagramDeliveryAssessment.assess(
+        Paths.get("build/received-engineering-delivery"));
+if (!assessment.isComplete()) {
+  throw new IllegalStateException(assessment.toJson());
+}
+```
+
+The assessor does not modify or extract content. It independently recomputes the manifest
+fingerprint and every declared artifact's byte length and SHA-256, validates media types and the
+mandatory review boundaries, and requires the exact declared file set. Portable relative paths
+must remain inside the delivery root; symbolic links, duplicate paths, unlisted files, missing
+projections, and a DEXPI artifact inconsistent with `PROCESS_SYSTEM` or `PROCESS_MODEL` are
+reported as structured errors. Intake is bounded to 4,096 artifacts, 256 MiB per artifact, and
+512 MiB in total.
+
+A successful report is deterministic and serializable restart evidence. It proves exact package
+integrity within the published contract; it does not reconstruct or execute a `ProcessSystem` or
+`ProcessModel`, repeat DEXPI semantic assessment, approve a drawing, or establish standards or
+commercial-CAE conformance.
+
 ## Engineering and qualification boundary
 
 The generated document status, issue purpose, source revision, calculated values, and diagnostics
