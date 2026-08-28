@@ -12,7 +12,7 @@ All three tools use the canonical NeqSim process model. `AutomationRunner` resol
 
 - `src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java` checks canonical unit discovery, variable-addressability metadata, standard-envelope variable reads, and structured fail-closed `INPUT_ERROR` responses.
 - Existing `src/test/java/neqsim/mcp/runners/McpRunnerContractTest.java` already includes the same three tools in the high-use standard-response contract against `ExampleCatalog.processSimpleSeparation()`.
-- `neqsim-mcp-server/test_automation_read_protocol.py` obtains the canonical simple-separation example through real MCP and exercises all three read tools over packaged STDIO transport, including invalid-input rejection.
+- `neqsim-mcp-server/test_automation_read_protocol.py` obtains the canonical simple-separation example through real MCP and exercises all three read tools over packaged STDIO transport, including invalid-input rejection and exact Phase 0 classification accounting.
 - `.github/workflows/mcp_protocol_qualification.yml` builds the exact NeqSim core and packaged MCP server with Java 21 and runs the focused harness with read-only repository permissions.
 
 ## Evidence that is not established
@@ -23,7 +23,7 @@ A successful read is not an engineering approval or plant measurement. Returned 
 
 ## Promotion boundary
 
-The Phase 0 inventory remains version `1.17` with `20 EXPLICIT_TRUST + 11 CONTRACT_TESTED + 40 CONFIRMED_GAP` in this qualification increment. These three tools remain `CONFIRMED_GAP` until machine-readable coverage and the authoritative primary packaged-protocol accounting are promoted atomically on one later exact validated head. This PR supplies the focused source and real-protocol prerequisite for that future classification step.
+Phase 0 inventory `1.18` promotes `listSimulationUnits`, `listUnitVariables`, and `getSimulationVariable` together to `CONTRACT_TESTED`. The machine-readable inventory, focused packaged-MCP qualification, Java foundation tests, acceptance-baseline version, and authoritative primary packaged-protocol suite now agree on `20 EXPLICIT_TRUST + 14 CONTRACT_TESTED + 37 CONFIRMED_GAP`. This classification is non-numerical contract evidence only; the `BenchmarkTrust` scientific/numerical registry remains unchanged.
 
 ## Owner-roadmap boundary
 
