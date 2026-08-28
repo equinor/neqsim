@@ -19,6 +19,17 @@ SIMPLE_SOURCE = (
     / "SimpleAbsorber.java"
 )
 ABSORPTION_SOURCE = SIMPLE_SOURCE.with_name("AbsorptionColumn.java")
+DISTILLATION_SOURCE = (
+    ROOT
+    / "src"
+    / "main"
+    / "java"
+    / "neqsim"
+    / "process"
+    / "equipment"
+    / "distillation"
+    / "DistillationColumn.java"
+)
 STRIPPING_SOURCE = SIMPLE_SOURCE.with_name("StrippingColumn.java")
 ABSORPTION_TEST = (
     ROOT
@@ -42,6 +53,7 @@ class AbsorberDocumentationTest(unittest.TestCase):
         cls.guide = GUIDE.read_text(encoding="utf-8")
         cls.simple_source = SIMPLE_SOURCE.read_text(encoding="utf-8")
         cls.absorption_source = ABSORPTION_SOURCE.read_text(encoding="utf-8")
+        cls.distillation_source = DISTILLATION_SOURCE.read_text(encoding="utf-8")
         cls.stripping_source = STRIPPING_SOURCE.read_text(encoding="utf-8")
         cls.absorption_test = ABSORPTION_TEST.read_text(encoding="utf-8")
         cls.stripping_test = STRIPPING_TEST.read_text(encoding="utf-8")
@@ -164,6 +176,95 @@ class AbsorberDocumentationTest(unittest.TestCase):
             "equipment-duty result",
         ):
             self.assertIn(statement, self.scoped_guide)
+
+
+    def test_rigorous_capacity_methods_and_units_match_source(self):
+        for token in (
+            "public double getGasSuperficialVelocity()",
+            "public double getGasLoadFactor()",
+            "public double getMaxAllowableGasLoadFactor()",
+            "public void setMaxAllowableGasLoadFactor(double",
+            "public double getGasLoadFactorUtilization()",
+            "public boolean isGasLoadFactorWithinDesignLimit()",
+            "public double getMinimumDiameterForGasLoadLimit()",
+            "public double getWettingRate()",
+        ):
+            self.assertIn(token, self.absorption_source)
+
+        for token in (
+            "public double getFsFactor()",
+            "public double getMaxAllowableFsFactor()",
+            "public void setMaxAllowableFsFactor(double",
+            "public double getFsFactorUtilization()",
+            "public boolean isFsFactorWithinDesignLimit()",
+            "public double getMinimumDiameterForFsLimit()",
+        ):
+            self.assertIn(token, self.distillation_source)
+
+        for token in (
+            "getGasSuperficialVelocity()",
+            "getMinimumDiameterForFsLimit()",
+            "getMinimumDiameterForGasLoadLimit()",
+            "liquid m³/h per m²",
+            "m/s·sqrt(kg/m³)",
+            "returns m/s",
+        ):
+            self.assertIn(token, self.scoped_guide)
+
+    def test_capacity_equations_defaults_and_fallback_are_explicit(self):
+        self.assertIn("DEFAULT_MAX_ALLOWABLE_FS_FACTOR = 3.0", self.absorption_source)
+        self.assertIn(
+            "DEFAULT_MAX_ALLOWABLE_GAS_LOAD_FACTOR = 0.15",
+            self.absorption_source,
+        )
+        self.assertIn("DEFAULT_LIQUID_DENSITY = 1000.0", self.absorption_source)
+        self.assertIn(
+            "MIN_LIQUID_GAS_DENSITY_DIFFERENCE = 10.0",
+            self.absorption_source,
+        )
+
+        for token in (
+            "$F_s=v_s\\sqrt{\\rho_g}$",
+            "$K_s=v_s\\sqrt{\\frac{\\rho_g}{\\rho_\\ell-\\rho_g}}$",
+            "software screening defaults, not vendor guarantees",
+            "substitutes 1000 kg/m³",
+            "below 10 kg/m³",
+        ):
+            self.assertIn(token, self.scoped_guide)
+
+    def test_capacity_sentinels_and_constraint_semantics_are_documented(self):
+        for token in (
+            'return 0.0;',
+            '"gasLoadFactor", "m/s"',
+            'setDataSource("equipment")',
+        ):
+            self.assertIn(token, self.absorption_source)
+        for token in (
+            '"fsFactor", "m/s*sqrt(kg/m3)"',
+            'setDataSource("equipment")',
+        ):
+            self.assertIn(token, self.distillation_source)
+
+        for token in (
+            "unavailable-result sentinel, not proof of spare capacity",
+            "can be `true` for an unavailable zero result",
+            "update the corresponding live SOFT constraint immediately",
+            '`fsFactor` and `gasLoadFactor`',
+            'dataSource = "equipment"',
+            "do not resize the column or rerun the process",
+        ):
+            self.assertIn(token, self.scoped_guide)
+
+    def test_capacity_example_is_covered_by_executable_regression(self):
+        for token in (
+            "gasLoadFactorAndFsFactorAreNativelyAvailable",
+            "getGasSuperficialVelocity()",
+            "getMinimumDiameterForFsLimit()",
+            "getMinimumDiameterForGasLoadLimit()",
+            'getCapacityConstraints().containsKey("fsFactor")',
+            'getCapacityConstraints().containsKey("gasLoadFactor")',
+        ):
+            self.assertIn(token, self.absorption_test)
 
 
 if __name__ == "__main__":

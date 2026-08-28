@@ -65,6 +65,14 @@ class AbsorptionColumnTest extends NeqSimTest {
 
     double fs = absorber.getFsFactor();
     double ks = absorber.getGasLoadFactor();
+    double minimumDiameterByFs = absorber.getMinimumDiameterForFsLimit();
+    double minimumDiameterByGasLoad = absorber.getMinimumDiameterForGasLoadLimit();
+    assertTrue(absorber.getGasSuperficialVelocity() > 0.0,
+        "Superficial velocity must be positive once the column has run and has a diameter");
+    assertTrue(Double.isFinite(minimumDiameterByFs) && minimumDiameterByFs > 0.0,
+        "The Fs-factor diameter screen must be positive and finite");
+    assertTrue(Double.isFinite(minimumDiameterByGasLoad) && minimumDiameterByGasLoad > 0.0,
+        "The gas-load-factor diameter screen must be positive and finite");
     assertTrue(fs > 0.0, "Fs factor must be positive once the column has run");
     assertTrue(ks > 0.0, "Gas load factor must be positive once the column has run");
 
@@ -88,7 +96,9 @@ class AbsorptionColumnTest extends NeqSimTest {
     assertTrue(absorber.getCapacityConstraints().containsKey("fsFactor"));
     assertTrue(absorber.getCapacityConstraints().containsKey("gasLoadFactor"));
 
+    absorber.setMaxAllowableFsFactor(3.2);
     absorber.setMaxAllowableGasLoadFactor(0.20);
+    assertEquals(3.2, absorber.getCapacityConstraints().get("fsFactor").getMaxValue(), 1.0e-12);
     assertEquals(0.20, absorber.getCapacityConstraints().get("gasLoadFactor").getMaxValue(), 1.0e-12);
   }
 

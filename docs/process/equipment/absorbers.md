@@ -1,6 +1,6 @@
 ---
 title: Absorbers and Strippers
-description: "Model selection and executable workflows for rigorous tray, shortcut, and rate-based absorber and stripper models."
+description: "Model selection, executable workflows, and hydraulic-capacity screening for rigorous tray, shortcut, and rate-based absorber and stripper models."
 ---
 
 Documentation for gas-liquid mass-transfer equipment in NeqSim. Select the model from the
@@ -12,6 +12,7 @@ engineering question first; the classes do not represent interchangeable fidelit
 - [Absorber](#absorber)
 - [Stripper](#stripper)
 - [Rigorous Tray Absorber](#rigorous-tray-absorber)
+- [Rigorous Absorber Capacity Screening](#rigorous-absorber-capacity-screening)
 - [Mechanical Design and Debottlenecking](#mechanical-design-and-debottlenecking)
 - [Simple Absorber](#simple-absorber)
 - [Simple TEG Absorber](#simple-teg-absorber)
@@ -28,7 +29,7 @@ engineering question first; the classes do not represent interchangeable fidelit
 
 | Class | Use when | Important boundary |
 | --- | --- | --- |
-| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | No tray hydraulics, reactions, entrainment, or flooding in the MESH solver; use the post-process mechanical-design rating |
+| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | No tray hydraulics, reactions, entrainment, or flooding feed back into the MESH solver; native post-run Fs, Souders-Brown, wetting, and capacity-constraint results are screening-only |
 | `StrippingColumn` | Counter-current equilibrium trays for stripping service | Fixed tray temperatures imply unreported heating or cooling; the column shares the mechanical-design rating |
 | `PackedColumn` | Equilibrium-stage contactor with packing HETP and hydraulic rating | Use `RateBasedPackedColumn` when axial film-rate profiles or local transfer reversal matter |
 | `RateBasedPackedColumn` | Packed-column films, hydraulics, profiles, or local transfer reversal | Requires packing and transport-property inputs |
@@ -196,6 +197,7 @@ leanTeg.setTemperature(35.0, "C");
 leanTeg.setPressure(70.0, "bara");
 
 AbsorptionColumn absorber = new AbsorptionColumn("TEG contactor", 4);
+absorber.setInternalDiameter(1.2); // m; actual or candidate shell internal diameter
 absorber.addGasInStream(wetGas);
 absorber.addSolventInStream(leanTeg);
 absorber.setTopPressure(70.0);
@@ -246,6 +248,89 @@ entrainment, or flooding back into the MESH equations, but the shared column mec
 rate those limits after convergence. It does not model rate-based packing or reactions. The repository regression covers TEG
 dehydration, lean-oil hydrocarbon recovery, methanol water wash, convergence, total balance,
 named-component balance, and efficiency sensitivity.
+
+---
+
+## Rigorous Absorber Capacity Screening
+
+After the rigorous column has converged, `AbsorptionColumn` exposes two live gas-capacity
+indicators plus a liquid wetting rate. These are post-process screens: they read the solved outlet
+states and current internal diameter, but they do not change tray flows, efficiencies, convergence,
+or pressure drop in the MESH solve.
+
+The inherited Fs factor and the Souders-Brown gas load factor use different density corrections:
+
+$$F_s=v_s\sqrt{\rho_g}$$
+
+$$K_s=v_s\sqrt{\frac{\rho_g}{\rho_\ell-\rho_g}}$$
+
+where $v_s=Q_g/A$ is superficial gas velocity in m/s, $A=\pi D^2/4$, and gas and liquid
+densities are in kg/m³. `getFsFactor()` therefore returns m/s·sqrt(kg/m³), while
+`getGasLoadFactor()` returns m/s. `getWettingRate()` returns liquid m³/h per m² of column
+cross-section.
+
+Continue from the complete TEG example above:
+
+```java
+import neqsim.process.equipment.capacity.CapacityConstraint;
+
+absorber.setMaxAllowableFsFactor(3.0);
+absorber.setMaxAllowableGasLoadFactor(0.15);
+
+double superficialVelocity = absorber.getGasSuperficialVelocity();
+double fsFactor = absorber.getFsFactor();
+double gasLoadFactor = absorber.getGasLoadFactor();
+double wettingRate = absorber.getWettingRate();
+
+double minimumDiameterByFs = absorber.getMinimumDiameterForFsLimit();
+double minimumDiameterByGasLoad = absorber.getMinimumDiameterForGasLoadLimit();
+
+if (!Double.isFinite(superficialVelocity) || superficialVelocity <= 0.0
+    || !Double.isFinite(fsFactor) || fsFactor <= 0.0
+    || !Double.isFinite(gasLoadFactor) || gasLoadFactor <= 0.0
+    || !Double.isFinite(wettingRate) || wettingRate <= 0.0
+    || minimumDiameterByFs <= 0.0 || minimumDiameterByGasLoad <= 0.0) {
+  throw new IllegalStateException("Absorber capacity inputs are unavailable");
+}
+
+double fsUtilization = absorber.getFsFactorUtilization();
+double gasLoadUtilization = absorber.getGasLoadFactorUtilization();
+boolean fsWithinLimit = absorber.isFsFactorWithinDesignLimit();
+boolean gasLoadWithinLimit = absorber.isGasLoadFactorWithinDesignLimit();
+
+CapacityConstraint fsConstraint =
+    absorber.getCapacityConstraints().get("fsFactor");
+CapacityConstraint gasLoadConstraint =
+    absorber.getCapacityConstraints().get("gasLoadFactor");
+if (fsConstraint == null || gasLoadConstraint == null) {
+  throw new IllegalStateException("Absorber capacity constraints were not initialized");
+}
+```
+
+The constructor defaults are 3.0 m/s·sqrt(kg/m³) for Fs and 0.15 m/s for
+`K_s`. They are software screening defaults, not vendor guarantees or universal packing/tray
+limits. Set project- and internals-specific values before using utilization in a bottleneck study.
+Both setters update the corresponding live SOFT constraint immediately. The constraints are named
+`fsFactor` and `gasLoadFactor`, have `dataSource = "equipment"`, and appear in ordinary
+process utilization snapshots.
+
+A utilization above 1.0 means the configured limit is exceeded. The two
+`getMinimumDiameter...` methods calculate screening diameters at the current solved gas rate and
+outlet densities; they do not resize the column or rerun the process.
+
+### Fail-closed interpretation
+
+A returned zero is an unavailable-result sentinel, not proof of spare capacity. It is returned
+before outlet states exist, when the diameter is not positive, or when required density data are
+invalid. Consequently, `isFsFactorWithinDesignLimit()` or
+`isGasLoadFactorWithinDesignLimit()` can be `true` for an unavailable zero result; require
+positive finite factors and diameters before accepting either boolean.
+
+For near-dry liquid outlets, the current gas-load implementation substitutes 1000 kg/m³ when the
+raw liquid-gas density difference is below 10 kg/m³. Record that fallback when it is triggered and
+replace the screen with representative liquid-property and vendor hydraulic data for design work.
+Use `DistillationColumnMechanicalDesign.calcDesign()` for the more detailed packing/tray flood,
+demister, wetting, and pressure-drop rating described next.
 
 ---
 
