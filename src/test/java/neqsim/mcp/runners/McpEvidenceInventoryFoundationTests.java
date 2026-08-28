@@ -53,9 +53,9 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(71, limitations.get("publishedToolCount").getAsInt());
     assertEquals(71, limitations.get("coverageRecordCount").getAsInt());
     assertEquals(20, limitations.get("explicitCoverageRecordCount").getAsInt());
-    assertEquals(11, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(40, limitations.get("confirmedGapToolCount").getAsInt());
-    assertEquals(11, limitations.getAsJsonArray("contractTestedTools").size());
+    assertEquals(14, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(37, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(14, limitations.getAsJsonArray("contractTestedTools").size());
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getCapabilities"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getSchema"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getExample"));
@@ -67,6 +67,9 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getProgress"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("inspectApi"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("manageValidationProfile"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("listSimulationUnits"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("listUnitVariables"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getSimulationVariable"));
     assertEquals(71, coverageRecords.size());
     assertTrue(limitations.get("coverageComplete").getAsBoolean());
     assertFalse(limitations.get("scientificValidationComplete").getAsBoolean());
@@ -181,6 +184,13 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(validationProfile.getAsJsonArray("contractEvidenceSources").toString()
         .contains("test_validation_profile_protocol.py"));
     assertTrue(validationProfile.get("evidenceBoundary").getAsString().contains("legal applicability"));
+
+    assertAutomationReadCoverage(coverageRecords, "listSimulationUnits",
+        "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY");
+    assertAutomationReadCoverage(coverageRecords, "listUnitVariables",
+        "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_DISCOVERY");
+    assertAutomationReadCoverage(coverageRecords, "getSimulationVariable",
+        "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_READ");
     assertFalse(inventory.get("complete").getAsBoolean());
   }
 
@@ -198,8 +208,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(progress.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
     assertTrue(progress.get("evidenceBoundary").getAsString().contains("real-protocol listActive"));
     assertTrue(progress.get("evidenceBoundary").getAsString().contains("does not validate"));
-    assertEquals(11, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(40, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(14, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(37, limitations.get("confirmedGapToolCount").getAsInt());
   }
 
   @Test
@@ -222,8 +232,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ApiKnowledgeRunnerTest.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_inspect_api_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("fail-closed non-NeqSim rejection"));
-    assertEquals(11, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(40, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(14, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(37, limitations.get("confirmedGapToolCount").getAsInt());
     assertEquals(3, tests.get("focusedApiProtocolScenarioCount").getAsInt());
     assertEquals("neqsim-mcp-server/test_inspect_api_protocol.py",
         tests.get("focusedApiProtocolHarness").getAsString());
@@ -236,7 +246,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject candidates = limitations.getAsJsonObject("contractPromotionCandidates");
     JsonObject coverage = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("manageValidationProfile");
 
-    assertEquals("1.17", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.18", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
     assertEquals(0, candidates.size());
     assertEquals("CONTRACT_TESTED", coverage.get("coverageStatus").getAsString());
@@ -251,8 +261,48 @@ class McpEvidenceInventoryFoundationTests {
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_validation_profile_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("legal applicability"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("CONTRACT_TESTED"));
-    assertEquals(11, limitations.get("contractTestedToolCount").getAsInt());
-    assertEquals(40, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(14, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(37, limitations.get("confirmedGapToolCount").getAsInt());
+  }
+
+  @Test
+  void testAutomationReadPromotionIsAppliedAtomically() {
+    JsonObject inventory = McpEvidenceInventory.build();
+    JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
+    JsonObject records = limitations.getAsJsonObject("coverageRecords");
+    JsonObject tests = inventory.getAsJsonObject("tests");
+
+    assertEquals("1.18", inventory.get("inventoryVersion").getAsString());
+    assertEquals(14, limitations.get("contractTestedToolCount").getAsInt());
+    assertEquals(37, limitations.get("confirmedGapToolCount").getAsInt());
+    assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
+    assertAutomationReadCoverage(records, "listSimulationUnits",
+        "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY");
+    assertAutomationReadCoverage(records, "listUnitVariables",
+        "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_DISCOVERY");
+    assertAutomationReadCoverage(records, "getSimulationVariable",
+        "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_READ");
+    assertEquals(5, tests.get("focusedAutomationReadProtocolScenarioCount").getAsInt());
+    assertEquals("neqsim-mcp-server/test_automation_read_protocol.py",
+        tests.get("focusedAutomationReadProtocolHarness").getAsString());
+    assertTrue(limitations.get("promotionBoundary").getAsString().contains("listSimulationUnits"));
+    assertTrue(limitations.get("promotionBoundary").getAsString().contains("inventory 1.18"));
+  }
+
+  private static void assertAutomationReadCoverage(JsonObject records, String toolName, String applicability) {
+    JsonObject coverage = records.getAsJsonObject(toolName);
+    assertEquals("CONTRACT_TESTED", coverage.get("coverageStatus").getAsString());
+    assertFalse(coverage.get("toolSpecificTrustAvailable").getAsBoolean());
+    assertTrue(coverage.get("contractTrustAvailable").getAsBoolean());
+    assertEquals(applicability, coverage.get("benchmarkApplicability").getAsString());
+    assertEquals(5, coverage.get("contractEvidenceCount").getAsInt());
+    assertEquals(5, coverage.getAsJsonArray("contractEvidenceSources").size());
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationRunner.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationReadContractTest.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_automation_read_protocol.py"));
+    assertTrue(coverage.get("evidenceBoundary").getAsString().contains("contract-tested"));
   }
 
   @Test
@@ -293,7 +343,7 @@ class McpEvidenceInventoryFoundationTests {
     JsonObject inventory = capabilities.getAsJsonObject("phase0EvidenceInventory");
     JsonObject fixtures = inventory.getAsJsonObject("acceptanceFixtures");
 
-    assertEquals("1.17", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.18", inventory.get("inventoryVersion").getAsString());
     assertEquals(8, inventory.getAsJsonObject("guides").get("guideCount").getAsInt());
     assertEquals(4, fixtures.get("fixtureCount").getAsInt());
     assertTrue(fixtures.get("complete").getAsBoolean());
