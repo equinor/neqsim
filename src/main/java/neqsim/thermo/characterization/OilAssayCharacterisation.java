@@ -37,7 +37,6 @@ import neqsim.thermo.system.SystemInterface;
 public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final long serialVersionUID = 1000L;
   private static final Logger logger = LogManager.getLogger(OilAssayCharacterisation.class);
-  private static final double FRACTION_TOLERANCE = 1e-10;
   private static final double ASSAY_CLOSURE_TOLERANCE = 1e-3;
   private static final double PERCENT_TOLERANCE = 1e-8;
   private static final double KELVIN_OFFSET = 273.15;
@@ -209,7 +208,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     for (int i = 0; i < cuts.size(); i++) {
       AssayCut cut = cuts.get(i);
       double massFraction = massFractions[i];
-      if (!(massFraction > FRACTION_TOLERANCE)) {
+      if (!(massFraction > 0.0)) {
         continue;
       }
 
