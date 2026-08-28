@@ -16,24 +16,22 @@ import neqsim.thermo.system.SystemInterface;
  * Utility for characterising an oil system from refinery-assay cut information.
  *
  * <p>
- * An assay is represented as a set of pre-binned cuts on one declared composition basis: all
- * cuts must use either mass fractions or volume fractions. Volume-basis cuts are converted to a
- * mass basis with the cut densities before moles are calculated. Mixing mass- and volume-basis
- * cuts in one assay is rejected because the missing conversion basis would otherwise be
- * ambiguous.
+ * An assay is represented as a set of pre-binned cuts on one declared composition basis: all cuts must use either mass
+ * fractions or volume fractions. Volume-basis cuts are converted to a mass basis with the cut densities before moles
+ * are calculated. Mixing mass- and volume-basis cuts in one assay is rejected because the missing conversion basis
+ * would otherwise be ambiguous.
  * </p>
  *
  * <p>
- * Molar masses are in kg/mol throughout this class. Density inputs used for petroleum
- * characterisation are specific gravity (numerically equivalent to g/cm3 for the supported
- * correlations); explicit kg/m3 input helpers are also provided.
+ * Molar masses are in kg/mol throughout this class. Density inputs used for petroleum characterisation are specific
+ * gravity (numerically equivalent to g/cm3 for the supported correlations); explicit kg/m3 input helpers are also
+ * provided.
  * </p>
  *
  * <p>
- * The TBP cut-boundary helpers preserve cut yields and boiling ranges, then use the midpoint of
- * each boiling interval as the representative boiling point for the existing NeqSim petroleum
- * correlation. They do not convert ASTM D86/D1160 or other laboratory distillation methods to
- * TBP.
+ * The TBP cut-boundary helpers preserve cut yields and boiling ranges, then use the midpoint of each boiling interval
+ * as the representative boiling point for the existing NeqSim petroleum correlation. They do not convert ASTM D86/D1160
+ * or other laboratory distillation methods to TBP.
  * </p>
  */
 public class OilAssayCharacterisation implements Cloneable, Serializable {
@@ -129,11 +127,10 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    * Add pre-binned true-boiling-point cuts from cumulative volume-percent boundaries.
    *
    * <p>
-   * The first cumulative point must be 0 vol% and the last must be 100 vol%. The arrays of
-   * cumulative yield and boiling-point boundaries must have the same length. One specific
-   * gravity is required for each resulting interval. The interval midpoint is retained as the
-   * representative boiling point and the complete lower/upper boiling range is stored on the
-   * generated {@link AssayCut}.
+   * The first cumulative point must be 0 vol% and the last must be 100 vol%. The arrays of cumulative yield and
+   * boiling-point boundaries must have the same length. One specific gravity is required for each resulting interval.
+   * The interval midpoint is retained as the representative boiling point and the complete lower/upper boiling range is
+   * stored on the generated {@link AssayCut}.
    * </p>
    *
    * @param namePrefix component-name prefix; generated names are prefix + 1, prefix + 2, ...
@@ -153,8 +150,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
       boilingPointKelvin[i] = boilingPointCelsius[i] + KELVIN_OFFSET;
     }
-    addTBPCutBoundariesKelvin(namePrefix, cumulativeVolumePercent, boilingPointKelvin,
-        specificGravity);
+    addTBPCutBoundariesKelvin(namePrefix, cumulativeVolumePercent, boilingPointKelvin, specificGravity);
   }
 
   /**
@@ -167,12 +163,10 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    */
   public void addTBPCutBoundariesKelvin(String namePrefix, double[] cumulativeVolumePercent,
       double[] boilingPointKelvin, double[] specificGravity) {
-    validateTBPCutBoundaries(namePrefix, cumulativeVolumePercent, boilingPointKelvin,
-        specificGravity);
+    validateTBPCutBoundaries(namePrefix, cumulativeVolumePercent, boilingPointKelvin, specificGravity);
 
     for (int i = 0; i < specificGravity.length; i++) {
-      double volumeFraction =
-          (cumulativeVolumePercent[i + 1] - cumulativeVolumePercent[i]) / 100.0;
+      double volumeFraction = (cumulativeVolumePercent[i + 1] - cumulativeVolumePercent[i]) / 100.0;
       AssayCut cut = new AssayCut(namePrefix + (i + 1)).withVolumeFraction(volumeFraction)
           .withSpecificGravity(specificGravity[i])
           .withBoilingRangeKelvin(boilingPointKelvin[i], boilingPointKelvin[i + 1]);
@@ -194,8 +188,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    * Generate TBP pseudo-components for all configured cuts and add them to the attached system.
    *
    * <p>
-   * All inputs are resolved and validated before the first pseudo-component is added. Existing
-   * component names are rejected so that repeated calls cannot silently double the assay.
+   * All inputs are resolved and validated before the first pseudo-component is added. Existing component names are
+   * rejected so that repeated calls cannot silently double the assay.
    * </p>
    */
   public void apply() {
@@ -221,8 +215,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
       String pseudoComponentName = cut.getName() + "_PC";
       if (system.hasComponent(pseudoComponentName, false)) {
-        throw new IllegalStateException(
-            "Assay pseudo-component already exists in system: " + pseudoComponentName);
+        throw new IllegalStateException("Assay pseudo-component already exists in system: " + pseudoComponentName);
       }
 
       double density = cut.resolveDensity();
@@ -244,17 +237,14 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       reconstructedMass += moles * molarMass;
     }
 
-    double relativeMassError =
-        Math.abs(reconstructedMass - totalAssayMass) / Math.max(totalAssayMass, 1.0e-30);
+    double relativeMassError = Math.abs(reconstructedMass - totalAssayMass) / Math.max(totalAssayMass, 1.0e-30);
     if (!Double.isFinite(relativeMassError) || relativeMassError > 1.0e-10) {
       throw new IllegalStateException(
-          "Resolved assay does not conserve the configured total mass; relative error="
-              + relativeMassError);
+          "Resolved assay does not conserve the configured total mass; relative error=" + relativeMassError);
     }
 
     for (ResolvedCut resolvedCut : resolvedCuts) {
-      system.addTBPfraction(resolvedCut.cut.getName(), resolvedCut.moles,
-          resolvedCut.molarMass, resolvedCut.density);
+      system.addTBPfraction(resolvedCut.cut.getName(), resolvedCut.moles, resolvedCut.molarMass, resolvedCut.density);
     }
   }
 
@@ -263,19 +253,16 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     if (namePrefix == null || namePrefix.trim().isEmpty()) {
       throw new IllegalArgumentException("TBP cut name prefix cannot be empty");
     }
-    if (cumulativeVolumePercent == null || boilingPointKelvin == null
-        || specificGravity == null) {
+    if (cumulativeVolumePercent == null || boilingPointKelvin == null || specificGravity == null) {
       throw new IllegalArgumentException("TBP cut-boundary arrays cannot be null");
     }
-    if (cumulativeVolumePercent.length < 2
-        || cumulativeVolumePercent.length != boilingPointKelvin.length
+    if (cumulativeVolumePercent.length < 2 || cumulativeVolumePercent.length != boilingPointKelvin.length
         || specificGravity.length != cumulativeVolumePercent.length - 1) {
       throw new IllegalArgumentException(
           "TBP boundaries require N cumulative yields, N temperatures, and N-1 densities");
     }
     if (Math.abs(cumulativeVolumePercent[0]) > PERCENT_TOLERANCE
-        || Math.abs(cumulativeVolumePercent[cumulativeVolumePercent.length - 1] - 100.0)
-            > PERCENT_TOLERANCE) {
+        || Math.abs(cumulativeVolumePercent[cumulativeVolumePercent.length - 1] - 100.0) > PERCENT_TOLERANCE) {
       throw new IllegalArgumentException("TBP cumulative volume yield must span 0 to 100 percent");
     }
 
@@ -333,8 +320,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       if (basis == null) {
         basis = cutBasis;
       } else if (basis != cutBasis) {
-        throw new IllegalStateException(
-            "Assay cuts cannot mix mass-fraction and volume-fraction bases");
+        throw new IllegalStateException("Assay cuts cannot mix mass-fraction and volume-fraction bases");
       }
 
       double fraction = hasMass ? cut.getMassFraction() : cut.getVolumeFraction();
@@ -346,9 +332,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       throw new IllegalStateException("No valid assay fractions supplied");
     }
     if (Math.abs(totalDeclaredFraction - 1.0) > ASSAY_CLOSURE_TOLERANCE) {
-      throw new IllegalStateException(
-          "Assay fractions must sum to 1.0 within " + ASSAY_CLOSURE_TOLERANCE
-              + "; supplied sum=" + totalDeclaredFraction);
+      throw new IllegalStateException("Assay fractions must sum to 1.0 within " + ASSAY_CLOSURE_TOLERANCE
+          + "; supplied sum=" + totalDeclaredFraction);
     }
 
     for (int i = 0; i < declaredFractions.length; i++) {
@@ -391,8 +376,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   }
 
   private enum FractionBasis {
-    MASS,
-    VOLUME
+    MASS, VOLUME
   }
 
   private static final class ResolvedCut {
@@ -491,9 +475,9 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Set petroleum density using the legacy flexible input convention.
      *
      * <p>
-     * Values up to 1.5 are interpreted as specific gravity (numerically g/cm3). Values above
-     * 1.5 are interpreted as kg/m3 and divided by 1000. New code should prefer
-     * {@link #withSpecificGravity(double)} or {@link #withDensityKgPerCubicMetre(double)}.
+     * Values up to 1.5 are interpreted as specific gravity (numerically g/cm3). Values above 1.5 are interpreted as
+     * kg/m3 and divided by 1000. New code should prefer {@link #withSpecificGravity(double)} or
+     * {@link #withDensityKgPerCubicMetre(double)}.
      * </p>
      *
      * @param density specific gravity/g/cm3 or density in kg/m3
@@ -533,8 +517,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Set API gravity at the conventional 60 degF reference.
      *
      * <p>
-     * Negative API gravities are valid for liquids denser than water; only values at or below
-     * -131.5 are rejected because the API conversion becomes undefined.
+     * Negative API gravities are valid for liquids denser than water; only values at or below -131.5 are rejected
+     * because the API conversion becomes undefined.
      * </p>
      *
      * @param apiGravity API gravity in degrees API
@@ -591,16 +575,15 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Set and preserve a boiling interval in K.
      *
      * <p>
-     * The arithmetic midpoint is used as the representative boiling point for the existing
-     * petroleum-characterisation correlation.
+     * The arithmetic midpoint is used as the representative boiling point for the existing petroleum-characterisation
+     * correlation.
      * </p>
      *
      * @param lowerTemperatureKelvin lower cut boundary in K
      * @param upperTemperatureKelvin upper cut boundary in K
      * @return this cut
      */
-    public AssayCut withBoilingRangeKelvin(double lowerTemperatureKelvin,
-        double upperTemperatureKelvin) {
+    public AssayCut withBoilingRangeKelvin(double lowerTemperatureKelvin, double upperTemperatureKelvin) {
       validatePositiveFinite(lowerTemperatureKelvin, "Lower boiling point");
       validatePositiveFinite(upperTemperatureKelvin, "Upper boiling point");
       if (!(upperTemperatureKelvin > lowerTemperatureKelvin)) {
@@ -608,8 +591,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
       this.lowerBoilingPointKelvin = lowerTemperatureKelvin;
       this.upperBoilingPointKelvin = upperTemperatureKelvin;
-      this.averageBoilingPointKelvin =
-          0.5 * (lowerTemperatureKelvin + upperTemperatureKelvin);
+      this.averageBoilingPointKelvin = 0.5 * (lowerTemperatureKelvin + upperTemperatureKelvin);
       return this;
     }
 
@@ -620,14 +602,11 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * @param upperTemperatureCelsius upper cut boundary in degC
      * @return this cut
      */
-    public AssayCut withBoilingRangeCelsius(double lowerTemperatureCelsius,
-        double upperTemperatureCelsius) {
-      if (!Double.isFinite(lowerTemperatureCelsius)
-          || !Double.isFinite(upperTemperatureCelsius)) {
+    public AssayCut withBoilingRangeCelsius(double lowerTemperatureCelsius, double upperTemperatureCelsius) {
+      if (!Double.isFinite(lowerTemperatureCelsius) || !Double.isFinite(upperTemperatureCelsius)) {
         throw new IllegalArgumentException("Boiling-point boundaries must be finite");
       }
-      return withBoilingRangeKelvin(lowerTemperatureCelsius + KELVIN_OFFSET,
-          upperTemperatureCelsius + KELVIN_OFFSET);
+      return withBoilingRangeKelvin(lowerTemperatureCelsius + KELVIN_OFFSET, upperTemperatureCelsius + KELVIN_OFFSET);
     }
 
     /**
@@ -785,8 +764,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Resolve the cut molar mass.
      *
      * <p>
-     * If no explicit molar mass is stored, the existing NeqSim inverse petroleum correlation is
-     * used with density and representative boiling point.
+     * If no explicit molar mass is stored, the existing NeqSim inverse petroleum correlation is used with density and
+     * representative boiling point.
      * </p>
      *
      * @param density specific gravity / g/cm3 numeric value
@@ -802,8 +781,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
       double exponent = 2.3776;
       double densityExponent = 0.9371;
-      return 5.805e-5 * Math.pow(boilingPointKelvin, exponent)
-          / Math.pow(density, densityExponent);
+      return 5.805e-5 * Math.pow(boilingPointKelvin, exponent) / Math.pow(density, densityExponent);
     }
 
     @Override
