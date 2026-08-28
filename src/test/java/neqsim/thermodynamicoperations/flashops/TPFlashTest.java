@@ -70,11 +70,11 @@ class TPFlashTest {
     assertClosedEquilibrium(reference, "multiphase low-pressure endpoint");
     assertTrue(reference.getNumberOfPhases() >= 2, "multiphase flash should retain a split");
     assertEquals(-430041.49312169873, reference.getEnthalpy(), 1.0e-2);
-    assertTrue(reference.getGibbsEnergy() <= ordinary.getGibbsEnergy()
-        + 1.0e-8 * Math.abs(ordinary.getGibbsEnergy()), "multiphase endpoint must not raise Gibbs energy");
+    assertTrue(reference.getGibbsEnergy() <= ordinary.getGibbsEnergy() + 1.0e-8 * Math.abs(ordinary.getGibbsEnergy()),
+        "multiphase endpoint must not raise Gibbs energy");
     assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8, "poor beta initialization");
 
-    for (double pressure : new double[] {9.9, 10.0, 10.1}) {
+    for (double pressure : new double[] { 9.9, 10.0, 10.1 }) {
       assertClosedEquilibrium(flashWaterBearingPr(298.15, pressure, true, false),
           "nearby low-pressure endpoint at " + pressure + " bara");
     }
@@ -126,7 +126,7 @@ class TPFlashTest {
 
   @Test
   void waterBearingPrHighPressureOrdinaryAndMultiphaseEndpointsAgree() {
-    for (double pressure : new double[] {499.0, 500.0, 501.0}) {
+    for (double pressure : new double[] { 499.0, 500.0, 501.0 }) {
       SystemInterface ordinary = flashWaterBearingPr(288.15, pressure, false, false);
       SystemInterface multiphase = flashWaterBearingPr(288.15, pressure, true, false);
       assertClosedEquilibrium(ordinary, "ordinary high-pressure endpoint at " + pressure + " bara");
@@ -138,8 +138,7 @@ class TPFlashTest {
     SystemInterface reference = flashWaterBearingPr(288.15, 500.0, true, false);
     SystemInterface poorGuess = flashWaterBearingPr(288.15, 500.0, true, true);
     assertEquals(-936973.1969586421, reference.getEnthalpy(), 1.0e-2);
-    assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8,
-        "high-pressure poor beta initialization");
+    assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8, "high-pressure poor beta initialization");
 
     SystemInterface reused = reference.clone();
     reused.setPressure(501.0, "bara");
@@ -195,8 +194,7 @@ class TPFlashTest {
       double compositionSum = 0.0;
       for (int component = 0; component < componentCount; component++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
-        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
-            label + " composition");
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0, label + " composition");
         compositionSum += composition;
       }
       assertEquals(1.0, compositionSum, 1.0e-12, label + " phase normalization");
@@ -222,29 +220,25 @@ class TPFlashTest {
           double otherComposition = system.getPhase(phase).getComponent(component).getx();
           double referenceCoefficient = system.getPhase(0).getComponent(component).getFugacityCoefficient();
           double otherCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
-          if (referenceComposition > 1.0e-20 && otherComposition > 1.0e-20
-              && Double.isFinite(referenceCoefficient) && referenceCoefficient > 0.0
-              && Double.isFinite(otherCoefficient) && otherCoefficient > 0.0) {
-            maximumFugacityResidual = Math.max(maximumFugacityResidual,
-                Math.abs(Math.log(referenceComposition * referenceCoefficient)
-                    - Math.log(otherComposition * otherCoefficient)));
+          if (referenceComposition > 1.0e-20 && otherComposition > 1.0e-20 && Double.isFinite(referenceCoefficient)
+              && referenceCoefficient > 0.0 && Double.isFinite(otherCoefficient) && otherCoefficient > 0.0) {
+            maximumFugacityResidual = Math.max(maximumFugacityResidual, Math.abs(
+                Math.log(referenceComposition * referenceCoefficient) - Math.log(otherComposition * otherCoefficient)));
             fugacityComparisons++;
           }
         }
       }
     }
-    assertTrue(maximumMaterialResidual < 1.0e-10,
-        label + " material-balance residual " + maximumMaterialResidual);
+    assertTrue(maximumMaterialResidual < 1.0e-10, label + " material-balance residual " + maximumMaterialResidual);
     if (system.getNumberOfPhases() >= 2) {
       assertTrue(fugacityComparisons > 0, label + " must expose fugacity comparisons");
-      assertTrue(maximumFugacityResidual < 1.0e-8,
-          label + " fugacity residual " + maximumFugacityResidual);
+      assertTrue(maximumFugacityResidual < 1.0e-8, label + " fugacity residual " + maximumFugacityResidual);
     }
     assertTrue(Double.isFinite(system.getGibbsEnergy()), label + " Gibbs energy");
   }
 
-  private void assertEquivalentWaterBearingState(SystemInterface expected, SystemInterface actual,
-      double tolerance, String label) {
+  private void assertEquivalentWaterBearingState(SystemInterface expected, SystemInterface actual, double tolerance,
+      String label) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label);
     assertClosedEquilibrium(expected, label + " expected");
     assertClosedEquilibrium(actual, label + " actual");
@@ -254,10 +248,8 @@ class TPFlashTest {
       int expectedPhase = expectedOrder[orderedPhase];
       int actualPhase = actualOrder[orderedPhase];
       assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label);
-      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(),
-          tolerance, label);
-      for (int component = 0; component < expected.getPhase(expectedPhase)
-          .getNumberOfComponents(); component++) {
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance, label);
+      for (int component = 0; component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
         assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
             actual.getPhase(actualPhase).getComponent(component).getx(), tolerance, label);
       }
@@ -269,8 +261,8 @@ class TPFlashTest {
   private Integer[] phaseOrderByWaterFraction(SystemInterface system) {
     Integer[] order = new Integer[system.getNumberOfPhases()];
     Arrays.setAll(order, index -> index);
-    Arrays.sort(order, Comparator.comparingDouble(
-        (Integer index) -> system.getPhase(index).getComponent("water").getx()));
+    Arrays.sort(order,
+        Comparator.comparingDouble((Integer index) -> system.getPhase(index).getComponent("water").getx()));
     return order;
   }
 
