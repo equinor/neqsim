@@ -62,6 +62,26 @@ level-zero state initialization. Call `init(0)` after changing composition, as r
 general NeqSim state contract. This work is confined to `PhasePitzer` and `ComponentGePitzer`;
 neutral PR, SRK, CPA, Electrolyte-CPA, and Fürst electrolyte-EOS paths do no new work.
 
+## Complete-dataset qualification publication gate
+
+Interaction coverage and scientific qualification remain independent contracts. A complete topology
+may still use a dataset whose full species/range matrix lacks held-out evidence.
+`SystemPitzer.getPitzerParameterQualification()` completes lazy dataset selection and returns the
+immutable metadata for the exact selected dataset. The opt-in
+`requireCompletePitzerDatasetQualification()` first requires complete active-ion coverage and then
+rejects any named dataset below `VALIDATED_WITHIN_DECLARED_ENVELOPE`.
+
+This gate is intentionally stricter than subsystem validation. The broad PHREEQC catalog remains
+`PARTIALLY_EXPERIMENTALLY_VALIDATED`, even when the current topology is one of its independently
+checked binaries; callers that need a complete named-dataset gate must select a separately qualified
+subset such as Na-K-Cl. A successful dataset gate does not prove that the current temperature,
+pressure, molality, or composition lies inside its evidence envelope. The applicable
+`isWithin...ValidationRange` helper remains a separate mandatory state check. Diagnostics include
+dataset identity, level, validated systems, and limitations in deterministic order.
+
+The accessor and gate are explicit setup/publication operations. They perform no flash, change no
+parameter, and add no work to Pitzer activity/property kernels or neutral PR/SRK/CPA calculations.
+
 ## Pitzer reaction-data validation boundary
 
 Reaction-equilibrium constants and Pitzer ion-interaction coefficients remain separate datasets.
