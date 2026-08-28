@@ -30,14 +30,17 @@ salinity, and phase range of interest.
 
 ## Executable first screen
 
-The following complete Java 8 program runs three independent screens. It uses:
+The following complete Java 8 program runs three independent screens and reports results through
+the repository's Log4j2 logging contract. It uses:
 
 - a hydrate equilibrium calculation for a specified gas, water, MEG, and salt mixture;
 - the repository's De Boer implementation, using absolute pressure in bar and in-situ
-  oil density in kg/m3;
+  oil density in kg/m³;
 - mineral saturation indices from explicit produced-water chemistry in mg/L.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreening;
 import neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreening.DeBoerRisk;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
@@ -46,6 +49,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class FlowAssuranceScreen {
+    private static final Logger logger =
+        LogManager.getLogger(FlowAssuranceScreen.class);
+
     public static void main(String[] args) throws Exception {
         SystemInterface hydrateFluid =
             new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
@@ -89,15 +95,15 @@ public class FlowAssuranceScreen {
         scaleScreen.enableAutoPH();
         scaleScreen.calculate();
 
-        System.out.printf(
-            "Hydrate equilibrium temperature: %.2f °C%n",
+        logger.info(
+            "Hydrate equilibrium temperature: {} °C",
             hydrateTemperatureC);
-        System.out.printf(
-            "De Boer screen: %s; risk index %.3f%n",
+        logger.info(
+            "De Boer screen: {}; risk index {}",
             asphalteneRisk,
             asphalteneRiskIndex);
-        System.out.printf(
-            "Calcite SI: %.3f; barite SI: %.3f; any scale flag: %s%n",
+        logger.info(
+            "Calcite SI: {}; barite SI: {}; any scale flag: {}",
             scaleScreen.getCaCO3SaturationIndex(),
             scaleScreen.getBaSO4SaturationIndex(),
             scaleScreen.hasScalingRisk());
@@ -119,9 +125,11 @@ calculation is not evidence that no hydrate or scale risk exists.
 For a pipeline point at operating temperature $T_{op}$, define thermodynamic
 subcooling as:
 
-$$
-\Delta T_{sub} = T_{eq} - T_{op}
-$$
+$\Delta T_{\mathrm{sub}}=T_{\mathrm{eq}}-T_{\mathrm{op}}$
+
+Here, $T_{\mathrm{eq}}$ is the calculated hydrate-equilibrium temperature and
+$T_{\mathrm{op}}$ is the operating temperature, both expressed on the same K or °C scale.
+The temperature difference has the same numerical increment in K and °C.
 
 A positive value means the operating point is below the calculated hydrate
 equilibrium temperature. It identifies thermodynamic stability, not nucleation time,
@@ -150,9 +158,10 @@ type and the configured model.
 
 The screening calculator reports:
 
-$$
-SI = \log_{10}\left(\frac{IAP}{K_{sp}}\right)
-$$
+$SI=\log_{10}\left(\frac{IAP}{K_{sp}}\right)$
+
+Here, $IAP$ is the dimensionless ion-activity product and $K_{sp}$ is the
+dimensionless thermodynamic solubility product on the same standard-state basis.
 
 Positive SI indicates supersaturation in the calculator. It does not predict how
 quickly a mineral precipitates, how much adheres to equipment, or the required
