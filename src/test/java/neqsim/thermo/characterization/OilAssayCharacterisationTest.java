@@ -314,6 +314,45 @@ public class OilAssayCharacterisationTest {
   }
 
   @Test
+  public void testMultipleTraceMassFractionsAreRetainedAndConserveMass() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    double firstTraceFraction = 4.0e-11;
+    double secondTraceFraction = 7.0e-11;
+    characterisation.addCut(new AssayCut("Main").withMassFraction(1.0 - firstTraceFraction - secondTraceFraction)
+        .withSpecificGravity(0.82).withMolarMassKgPerMol(0.200));
+    characterisation.addCut(new AssayCut("Trace1").withMassFraction(firstTraceFraction).withSpecificGravity(0.75)
+        .withMolarMassKgPerMol(0.100));
+    characterisation.addCut(new AssayCut("Trace2").withMassFraction(secondTraceFraction).withSpecificGravity(0.90)
+        .withMolarMassKgPerMol(0.300));
+
+    characterisation.apply();
+
+    assertTrue(system.hasComponent("Main_PC", false));
+    assertTrue(system.hasComponent("Trace1_PC", false));
+    assertTrue(system.hasComponent("Trace2_PC", false));
+    assertEquals(1.0, reconstructedAssayMass(system, "Main_PC", "Trace1_PC", "Trace2_PC"), 1e-12);
+  }
+
+  @Test
+  public void testInvalidTraceCutIsRejectedBeforeAnyAssayMutation() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    double traceFraction = 5.0e-11;
+    characterisation.addCut(new AssayCut("Main").withMassFraction(1.0 - traceFraction).withSpecificGravity(0.82)
+        .withMolarMassKgPerMol(0.200));
+    characterisation.addCut(new AssayCut("InvalidTrace").withMassFraction(traceFraction).withSpecificGravity(0.75));
+
+    assertThrows(IllegalStateException.class, characterisation::apply);
+    assertFalse(system.hasComponent("Main_PC", false));
+    assertFalse(system.hasComponent("InvalidTrace_PC", false));
+  }
+
+  @Test
   public void testFractionAndPercentInputsAreUnambiguous() {
     assertThrows(IllegalArgumentException.class, () -> new AssayCut("BadFraction").withMassFraction(40.0));
     assertThrows(IllegalArgumentException.class, () -> new AssayCut("BadPercent").withWeightPercent(120.0));
