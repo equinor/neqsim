@@ -52,7 +52,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - preserved lower/upper boiling ranges;
 - closure, duplicate-name, monotonicity, and repeated-application guards.
 
-See [Refinery Assay and TBP Cut Characterization](refinery_assay.md) for the complete contract and the refinery campaign gap matrix.
+See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix.
 
 ## TBP fraction models
 
@@ -68,9 +68,9 @@ fluid.addTBPfraction("C12+", 0.15, 0.250, 0.85);
 
 For equations, model selection boundaries, and references, see:
 
-- [TBP Fraction Models](../../wiki/tbp_fraction_models.md)
-- [Fluid Characterization Mathematical Foundations](../../pvtsimulation/fluid_characterization_mathematics.md)
-- [PVT Fluid Characterization](../pvt_fluid_characterization.md)
+- [TBP Fraction Models](../../wiki/tbp_fraction_models)
+- [Fluid Characterization Mathematical Foundations](../../pvtsimulation/fluid_characterization_mathematics)
+- [PVT Fluid Characterization](../pvt_fluid_characterization)
 
 ## Lumping configuration
 
@@ -111,7 +111,7 @@ fluid.getCharacterization().configureLumping()
 
 When several reservoir or process fluids need to be mixed consistently, use `PseudoComponentCombiner` rather than assuming independently generated pseudo-components have identical meaning.
 
-See [Fluid Characterization Combining](fluid_characterization_combining.md) for common-slate and reference-slate workflows.
+See [Fluid Characterization Combining](fluid_characterization_combining) for common-slate and reference-slate workflows.
 
 ## Asphaltene and wax workflows
 
@@ -119,8 +119,8 @@ NeqSim also contains specialized heavy-phase characterization used by wax and as
 
 See:
 
-- [Wax Characterization](wax_characterization.md)
-- [Asphaltene Modeling](../../pvtsimulation/flowassurance/asphaltene_modeling.md)
+- [Wax Characterization](wax_characterization)
+- [Asphaltene Modeling](../../pvtsimulation/flowassurance/asphaltene_modeling)
 
 ## Validation guidance
 
@@ -134,10 +134,10 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 
 ## Related documentation
 
-- [Refinery Assay and TBP Cut Characterization](refinery_assay.md)
-- [Fluid Characterization Guide](../../wiki/fluid_characterization.md)
-- [TBP Fraction Models](../../wiki/tbp_fraction_models.md)
-- [PVT Fluid Characterization](../pvt_fluid_characterization.md)
-- [Fluid Characterization Mathematical Foundations](../../pvtsimulation/fluid_characterization_mathematics.md)
-- [Fluid Characterization Combining](fluid_characterization_combining.md)
-- [Fluid Creation Guide](../fluid_creation_guide.md)
+- [Refinery Assay and TBP Cut Characterization](refinery_assay)
+- [Fluid Characterization Guide](../../wiki/fluid_characterization)
+- [TBP Fraction Models](../../wiki/tbp_fraction_models)
+- [PVT Fluid Characterization](../pvt_fluid_characterization)
+- [Fluid Characterization Mathematical Foundations](../../pvtsimulation/fluid_characterization_mathematics)
+- [Fluid Characterization Combining](fluid_characterization_combining)
+- [Fluid Creation Guide](../fluid_creation_guide)
