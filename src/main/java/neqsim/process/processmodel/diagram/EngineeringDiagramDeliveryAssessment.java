@@ -198,11 +198,11 @@ public final class EngineeringDiagramDeliveryAssessment {
     }
 
     public Map<String, ArtifactEvidence> getArtifacts() {
-      return artifacts;
+      return Collections.unmodifiableMap(new LinkedHashMap<String, ArtifactEvidence>(artifacts));
     }
 
     public List<Diagnostic> getDiagnostics() {
-      return diagnostics;
+      return Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
     }
 
     public boolean isComplete() {
