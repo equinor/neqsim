@@ -1,10 +1,11 @@
-"""Focused real-MCP qualification for read-only automation introspection contracts.
+"""Focused real-MCP qualification for read-only automation advisory contracts.
 
 This dependency-free harness starts the packaged NeqSim MCP server over STDIO and
-checks listSimulationUnits, listUnitVariables, and getSimulationVariable against
-the canonical simple-separation example. It qualifies software-contract and
-transport behavior only; it does not validate the numerical accuracy of the
-solved process or returned variable values.
+checks listSimulationUnits, listUnitVariables, getSimulationVariable,
+diagnoseAutomation, and getAutomationLearningReport against the canonical
+simple-separation example. It qualifies software-contract and transport behavior
+only; it does not validate numerical process accuracy or the engineering
+correctness of a diagnostic recommendation.
 """
 import json
 import subprocess
@@ -172,6 +173,43 @@ def test_variable_read(client, process_json):
     require(isinstance(data.get("qualityGate"), dict), "variable read omitted quality gate", result)
 
 
+def test_diagnostic_advice(client, process_json):
+    failed_address = "Missing Unit.temperature"
+    result = client.call_tool(
+        "diagnoseAutomation",
+        {
+            "processJson": process_json,
+            "failedAddress": failed_address,
+            "operation": "get",
+        },
+    )
+    data = payload(result)
+    require(data.get("status") == "diagnostic", "diagnoseAutomation did not return diagnostic state", result)
+    require(data.get("tool") == "diagnoseAutomation", "diagnostic tool identity drifted", result)
+    require(data.get("failedAddress") == failed_address, "diagnostic lost failed address", result)
+    require(data.get("operation") == "get", "diagnostic lost operation", result)
+    diagnosis = data.get("diagnosis", {})
+    require(diagnosis.get("category") == "UNIT_NOT_FOUND", "diagnostic category drifted", result)
+    require(isinstance(diagnosis.get("suggestions"), list), "diagnostic suggestions missing", result)
+    require(bool(diagnosis.get("remediation")), "diagnostic remediation missing", result)
+    require("learningReport" in data, "diagnostic omitted learning report", result)
+    require(isinstance(data.get("provenance"), dict), "diagnostic omitted provenance", result)
+    require(isinstance(data.get("qualityGate"), dict), "diagnostic omitted quality gate", result)
+
+
+def test_learning_report_baseline(client, process_json):
+    result = client.call_tool("getAutomationLearningReport", {"processJson": process_json})
+    data = payload(result)
+    require(data.get("status") == "success", "getAutomationLearningReport failed", result)
+    require(data.get("tool") == "getAutomationLearningReport", "learning-report tool identity drifted", result)
+    require(data.get("totalOperations") == 0, "fresh-process learning history is not empty", result)
+    require(data.get("successRate") == 1.0, "fresh-process learning success rate drifted", result)
+    require(isinstance(data.get("errorCategories"), dict), "learning report omitted error categories", result)
+    require(isinstance(data.get("learnedCorrections"), dict), "learning report omitted learned corrections", result)
+    require(isinstance(data.get("recentFailures"), list), "learning report omitted recent failures", result)
+    require(isinstance(data.get("recommendations"), list), "learning report omitted recommendations", result)
+
+
 def test_invalid_requests_fail_closed(client, process_json):
     cases = [
         ("listSimulationUnits", {"processJson": ""}),
@@ -180,6 +218,11 @@ def test_invalid_requests_fail_closed(client, process_json):
             "getSimulationVariable",
             {"processJson": process_json, "address": "", "unit": "C"},
         ),
+        (
+            "diagnoseAutomation",
+            {"processJson": process_json, "failedAddress": "", "operation": "get"},
+        ),
+        ("getAutomationLearningReport", {"processJson": ""}),
     ]
     for tool_name, arguments in cases:
         result = client.call_tool(tool_name, arguments)
@@ -201,10 +244,12 @@ def main():
         test_unit_inventory(client, process_json)
         test_variable_inventory(client, process_json)
         test_variable_read(client, process_json)
+        test_diagnostic_advice(client, process_json)
+        test_learning_report_baseline(client, process_json)
         test_invalid_requests_fail_closed(client, process_json)
     finally:
         client.close()
-    print("automation read real-MCP qualification: 4/4 scenarios passed")
+    print("automation advisory real-MCP qualification: 6/6 scenarios passed")
     return 0
 
 
