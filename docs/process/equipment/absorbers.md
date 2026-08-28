@@ -260,9 +260,9 @@ or pressure drop in the MESH solve.
 
 The inherited Fs factor and the Souders-Brown gas load factor use different density corrections:
 
-$F_s=v_s\sqrt{\rho_g}$
+$$F_s=v_s\sqrt{\rho_g}$$
 
-$K_s=v_s\sqrt{\frac{\rho_g}{\rho_\ell-\rho_g}}$
+$$K_s=v_s\sqrt{\frac{\rho_g}{\rho_\ell-\rho_g}}$$
 
 where $v_s=Q_g/A$ is superficial gas velocity in m/s, $A=\pi D^2/4$, and gas and liquid
 densities are in kg/m³. `getFsFactor()` therefore returns m/s·sqrt(kg/m³), while
