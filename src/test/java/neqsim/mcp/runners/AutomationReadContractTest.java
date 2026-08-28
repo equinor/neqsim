@@ -10,11 +10,11 @@ import com.google.gson.JsonParser;
 import neqsim.mcp.catalog.ExampleCatalog;
 
 /**
- * Focused contract tests for the read-only automation introspection surface.
+ * Focused contract tests for the read-only automation introspection and diagnostic surface.
  *
  * <p>
  * These tests qualify software-contract behavior only. They do not validate the numerical accuracy of the solved
- * process or any returned variable value.
+ * process, any returned variable value, or the engineering correctness of a diagnostic recommendation.
  * </p>
  */
 class AutomationReadContractTest {
@@ -65,10 +65,45 @@ class AutomationReadContractTest {
   }
 
   @Test
+  void diagnoseAutomationReturnsStructuredAdvisoryEvidence() {
+    String failedAddress = "Missing Unit.temperature";
+    JsonObject response = JsonParser.parseString(AutomationRunner.diagnose(PROCESS_JSON, failedAddress, "get"))
+        .getAsJsonObject();
+    assertEquals("diagnostic", response.get("status").getAsString(), response.toString());
+    assertEquals("diagnoseAutomation", response.get("tool").getAsString(), response.toString());
+    assertTrue(response.has("provenance"), response.toString());
+    assertTrue(response.has("validation"), response.toString());
+    assertTrue(response.has("qualityGate"), response.toString());
+
+    JsonObject data = response.getAsJsonObject("data");
+    assertEquals(failedAddress, data.get("failedAddress").getAsString(), response.toString());
+    assertEquals("get", data.get("operation").getAsString(), response.toString());
+    JsonObject diagnosis = data.getAsJsonObject("diagnosis");
+    assertEquals("UNIT_NOT_FOUND", diagnosis.get("category").getAsString(), response.toString());
+    assertTrue(diagnosis.has("suggestions"), response.toString());
+    assertFalse(diagnosis.get("remediation").getAsString().trim().isEmpty(), response.toString());
+    assertTrue(data.has("learningReport"), response.toString());
+  }
+
+  @Test
+  void getAutomationLearningReportReturnsDeterministicFreshProcessBaseline() {
+    JsonObject response = parseSuccess(AutomationRunner.getLearningReport(PROCESS_JSON), "getAutomationLearningReport");
+    JsonObject data = response.getAsJsonObject("data");
+    assertEquals(0, data.get("totalOperations").getAsInt(), response.toString());
+    assertEquals(1.0, data.get("successRate").getAsDouble(), 1.0e-12, response.toString());
+    assertTrue(data.get("errorCategories").isJsonObject(), response.toString());
+    assertTrue(data.get("learnedCorrections").isJsonObject(), response.toString());
+    assertTrue(data.get("recentFailures").isJsonArray(), response.toString());
+    assertTrue(data.get("recommendations").isJsonArray(), response.toString());
+  }
+
+  @Test
   void invalidReadRequestsFailClosedBeforeSimulationUse() {
     assertInputError(AutomationRunner.listUnits(""), "listSimulationUnits");
     assertInputError(AutomationRunner.listVariables(PROCESS_JSON, ""), "listUnitVariables");
     assertInputError(AutomationRunner.getVariable(PROCESS_JSON, "", "C"), "getSimulationVariable");
+    assertInputError(AutomationRunner.diagnose(PROCESS_JSON, "", "get"), "diagnoseAutomation");
+    assertInputError(AutomationRunner.getLearningReport(""), "getAutomationLearningReport");
   }
 
   private static JsonObject parseSuccess(String json, String toolName) {
