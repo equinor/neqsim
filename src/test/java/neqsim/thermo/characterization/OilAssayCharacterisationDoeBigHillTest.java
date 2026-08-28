@@ -14,29 +14,27 @@ import neqsim.thermo.system.SystemSrkEos;
  * Independent public-data qualification for refinery assay bookkeeping.
  *
  * <p>
- * The source is the U.S. Department of Energy Strategic Petroleum Reserve Big Hill Sweet assay,
- * sample MLI 009, dated 1998-05-04, published as Exhibit D to 10 CFR Part 625 Appendix A. This
- * test freezes the bounded 175-1050 degF distillate slice because every included interval has a
- * reported volume yield, weight yield, specific gravity, API gravity, and explicit cut boundary.
- * The light C5-/175 degF fraction and 1050 degF+ residuum are deliberately excluded because they
- * do not both have finite lower and upper boiling boundaries in the published table.
+ * The source is the U.S. Department of Energy Strategic Petroleum Reserve Big Hill Sweet assay, sample MLI 009, dated
+ * 1998-05-04, published as Exhibit D to 10 CFR Part 625 Appendix A. This test freezes the bounded 175-1050 degF
+ * distillate slice because every included interval has a reported volume yield, weight yield, specific gravity, API
+ * gravity, and explicit cut boundary. The light C5-/175 degF fraction and 1050 degF+ residuum are deliberately excluded
+ * because they do not both have finite lower and upper boiling boundaries in the published table.
  * </p>
  *
  * <p>
- * Source: https://www.govinfo.gov/content/pkg/CFR-2004-title10-vol4/pdf/
- * CFR-2004-title10-vol4-chapII-subchapI.pdf (SPR Crude Oil Comprehensive Analysis, Big Hill
- * Sweet, MLI 009). DOE's 2024 Crude Oil Assay Manual documents D2892/D5236 fractionation and
- * states that fractions are measured on a mass-percent basis while volume percentages are
- * calculated using fraction specific gravity.
+ * Source: https://www.govinfo.gov/content/pkg/CFR-2004-title10-vol4/pdf/ CFR-2004-title10-vol4-chapII-subchapI.pdf (SPR
+ * Crude Oil Comprehensive Analysis, Big Hill Sweet, MLI 009). DOE's 2024 Crude Oil Assay Manual documents D2892/D5236
+ * fractionation and states that fractions are measured on a mass-percent basis while volume percentages are calculated
+ * using fraction specific gravity.
  * </p>
  */
 public class OilAssayCharacterisationDoeBigHillTest {
-  private static final double[] LOWER_BOUNDARY_F = {175.0, 250.0, 375.0, 530.0, 650.0};
-  private static final double[] UPPER_BOUNDARY_F = {250.0, 375.0, 530.0, 650.0, 1050.0};
-  private static final double[] VOLUME_PERCENT = {9.8, 15.4, 15.5, 10.8, 27.8};
-  private static final double[] WEIGHT_PERCENT = {8.6, 15.2, 15.2, 11.1, 30.3};
-  private static final double[] SPECIFIC_GRAVITY = {0.7815, 0.8305, 0.8623, 0.9226, 0.9477};
-  private static final double[] API_GRAVITY = {49.6, 38.9, 32.6, 21.9, 17.8};
+  private static final double[] LOWER_BOUNDARY_F = { 175.0, 250.0, 375.0, 530.0, 650.0 };
+  private static final double[] UPPER_BOUNDARY_F = { 250.0, 375.0, 530.0, 650.0, 1050.0 };
+  private static final double[] VOLUME_PERCENT = { 9.8, 15.4, 15.5, 10.8, 27.8 };
+  private static final double[] WEIGHT_PERCENT = { 8.6, 15.2, 15.2, 11.1, 30.3 };
+  private static final double[] SPECIFIC_GRAVITY = { 0.7815, 0.8305, 0.8623, 0.9226, 0.9477 };
+  private static final double[] API_GRAVITY = { 49.6, 38.9, 32.6, 21.9, 17.8 };
 
   @Test
   public void doeSpecificGravityAndApiPairsAreConsistent() {
@@ -62,11 +60,9 @@ public class OilAssayCharacterisationDoeBigHillTest {
     double weightSum = sum(WEIGHT_PERCENT);
 
     for (int i = 0; i < VOLUME_PERCENT.length; i++) {
-      characterisation.addCut(new AssayCut("DOE_BH_" + (i + 2))
-          .withVolumeFraction(VOLUME_PERCENT[i] / volumeSum)
+      characterisation.addCut(new AssayCut("DOE_BH_" + (i + 2)).withVolumeFraction(VOLUME_PERCENT[i] / volumeSum)
           .withSpecificGravity(SPECIFIC_GRAVITY[i])
-          .withBoilingRangeCelsius(fahrenheitToCelsius(LOWER_BOUNDARY_F[i]),
-              fahrenheitToCelsius(UPPER_BOUNDARY_F[i])));
+          .withBoilingRangeCelsius(fahrenheitToCelsius(LOWER_BOUNDARY_F[i]), fahrenheitToCelsius(UPPER_BOUNDARY_F[i])));
     }
 
     double[] resolvedMassFractions = characterisation.getResolvedMassFractions();
