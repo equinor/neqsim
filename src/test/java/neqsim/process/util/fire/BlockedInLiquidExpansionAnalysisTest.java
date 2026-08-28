@@ -26,6 +26,8 @@ public class BlockedInLiquidExpansionAnalysisTest {
     double t0 = 293.15;
     double p0Bara = 15.0;
     SystemInterface fluid = subcooledPropaneLiquid(t0, p0Bara);
+    double originalTemperatureK = fluid.getTemperature();
+    double originalPressureBara = fluid.getPressure();
 
     double[] temperaturesK = { t0, t0 + 2.0, t0 + 4.0, t0 + 6.0, t0 + 8.0, t0 + 10.0 };
     double[] pressuresPa = BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(fluid, temperaturesK);
@@ -33,6 +35,14 @@ public class BlockedInLiquidExpansionAnalysisTest {
     assertEquals(temperaturesK.length, pressuresPa.length);
     assertEquals(p0Bara * 1.0e5, pressuresPa[0], p0Bara * 1.0e5 * 1.0e-3,
         "First profile point should match the initial blocked-in pressure");
+    for (double pressurePa : pressuresPa) {
+      assertTrue(Double.isFinite(pressurePa) && pressurePa > 0.0,
+          "Every documented absolute pressure must be positive and finite");
+    }
+    assertEquals(originalTemperatureK, fluid.getTemperature(), 0.0,
+        "The screening calculation must not mutate the supplied temperature");
+    assertEquals(originalPressureBara, fluid.getPressure(), 0.0,
+        "The screening calculation must not mutate the supplied pressure");
     for (int i = 1; i < pressuresPa.length; i++) {
       assertTrue(pressuresPa[i] > pressuresPa[i - 1], "Isochoric pressure must rise monotonically with temperature");
     }
@@ -78,6 +88,10 @@ public class BlockedInLiquidExpansionAnalysisTest {
         () -> BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(fluid, new double[0]));
     assertThrows(IllegalArgumentException.class,
         () -> BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(null, new double[] { 300.0 }));
+    assertThrows(IllegalArgumentException.class,
+        () -> BlockedInLiquidExpansionAnalysis.estimateThermalExpansionCoefficient(fluid, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> BlockedInLiquidExpansionAnalysis.estimateIsothermalCompressibility(fluid, 0.0));
     assertThrows(IllegalArgumentException.class,
         () -> BlockedInLiquidExpansionAnalysis.simplifiedPressureRise(1.0e-3, 0.0, 10.0));
   }
