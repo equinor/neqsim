@@ -416,8 +416,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         throw new IllegalArgumentException("Assay cut name cannot be empty");
       }
       if (name.contains("_PC")) {
-        throw new IllegalArgumentException(
-            "Assay cut name cannot contain reserved _PC pseudo-component marker");
+        throw new IllegalArgumentException("Assay cut name cannot contain reserved _PC pseudo-component marker");
       }
       this.name = name;
     }
