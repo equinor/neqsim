@@ -22,15 +22,14 @@ class EngineeringDiagramDeliveryComparisonTest {
   Path temporaryDirectory;
 
   @Test
-  void identicalTransferredCopiesProduceStableRestartableEvidence()
-      throws IOException, ClassNotFoundException {
+  void identicalTransferredCopiesProduceStableRestartableEvidence() throws IOException, ClassNotFoundException {
     Path firstDirectory = deliver("copy-a", "PLANT-CMP", "A", "Comparison case");
     Path secondDirectory = deliver("copy-b", "PLANT-CMP", "A", "Comparison case");
 
-    EngineeringDiagramDeliveryComparison.Report first =
-        EngineeringDiagramDeliveryComparison.compare(firstDirectory, secondDirectory);
-    EngineeringDiagramDeliveryComparison.Report second =
-        EngineeringDiagramDeliveryComparison.compare(secondDirectory, firstDirectory);
+    EngineeringDiagramDeliveryComparison.Report first = EngineeringDiagramDeliveryComparison.compare(firstDirectory,
+        secondDirectory);
+    EngineeringDiagramDeliveryComparison.Report second = EngineeringDiagramDeliveryComparison.compare(secondDirectory,
+        firstDirectory);
 
     assertTrue(first.isComplete(), first.toJson());
     assertEquals(EngineeringDiagramDeliveryComparison.Status.IDENTICAL, first.getStatus());
@@ -66,8 +65,8 @@ class EngineeringDiagramDeliveryComparisonTest {
     Path baseline = deliver("revision-a", "PLANT-CMP", "A", "Comparison case");
     Path revised = deliver("revision-b", "PLANT-CMP", "B", "Comparison case");
 
-    EngineeringDiagramDeliveryComparison.Report report =
-        EngineeringDiagramDeliveryComparison.compare(baseline, revised);
+    EngineeringDiagramDeliveryComparison.Report report = EngineeringDiagramDeliveryComparison.compare(baseline,
+        revised);
 
     assertTrue(report.isComplete(), report.toJson());
     assertEquals(EngineeringDiagramDeliveryComparison.Status.CHANGED, report.getStatus());
@@ -75,16 +74,13 @@ class EngineeringDiagramDeliveryComparisonTest {
     assertTrue(report.getChangedArtifactPaths().contains("document-set.json"));
     assertTrue(report.getChangedArtifactPaths().contains("drawing-set.pdf"));
     assertTrue(report.getChangedArtifactPaths().contains("dexpi-process.xml"));
-    assertTrue(report.getReviewScopes()
-        .contains(EngineeringDiagramDeliveryComparison.ReviewScope.CONTROLLED_DOCUMENT_SET));
-    assertTrue(report.getReviewScopes()
-        .contains(EngineeringDiagramDeliveryComparison.ReviewScope.DELIVERY_MANIFEST));
-    assertTrue(report.getReviewScopes()
-        .contains(EngineeringDiagramDeliveryComparison.ReviewScope.DEXPI_PROCESS_EXCHANGE));
-    assertTrue(report.getReviewScopes()
-        .contains(EngineeringDiagramDeliveryComparison.ReviewScope.NATIVE_PDF));
-    assertTrue(report.getReviewScopes()
-        .contains(EngineeringDiagramDeliveryComparison.ReviewScope.NATIVE_SVG));
+    assertTrue(
+        report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.CONTROLLED_DOCUMENT_SET));
+    assertTrue(report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.DELIVERY_MANIFEST));
+    assertTrue(
+        report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.DEXPI_PROCESS_EXCHANGE));
+    assertTrue(report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.NATIVE_PDF));
+    assertTrue(report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.NATIVE_SVG));
     assertTrue(report.toJson().contains("DELIVERY_COMPARISON_REVIEW_REQUIRED"));
     assertTrue(report.toJson().contains("\"fitnessForConstruction\": false"));
     assertTrue(report.toJson().contains("\"iso10628ConformanceClaimed\": false"));
@@ -95,14 +91,13 @@ class EngineeringDiagramDeliveryComparisonTest {
     Path baseline = deliver("title-a", "PLANT-CMP", "A", "First title");
     Path revised = deliver("title-b", "PLANT-CMP", "A", "Changed title");
 
-    EngineeringDiagramDeliveryComparison.Report report =
-        EngineeringDiagramDeliveryComparison.compare(baseline, revised);
+    EngineeringDiagramDeliveryComparison.Report report = EngineeringDiagramDeliveryComparison.compare(baseline,
+        revised);
 
     assertFalse(report.isComplete());
     assertEquals(EngineeringDiagramDeliveryComparison.Status.REVISION_REUSE, report.getStatus());
     assertTrue(report.toJson().contains("DELIVERY_REVISION_REUSED_WITH_CHANGED_CONTENT"));
-    assertTrue(report.getReviewScopes()
-        .contains(EngineeringDiagramDeliveryComparison.ReviewScope.ENGINEERING_REVIEW));
+    assertTrue(report.getReviewScopes().contains(EngineeringDiagramDeliveryComparison.ReviewScope.ENGINEERING_REVIEW));
   }
 
   @Test
@@ -110,8 +105,8 @@ class EngineeringDiagramDeliveryComparisonTest {
     Path baseline = deliverModel("model-a", "A");
     Path revised = deliverModel("model-b", "B");
 
-    EngineeringDiagramDeliveryComparison.Report report =
-        EngineeringDiagramDeliveryComparison.compare(baseline, revised);
+    EngineeringDiagramDeliveryComparison.Report report = EngineeringDiagramDeliveryComparison.compare(baseline,
+        revised);
 
     assertTrue(report.isComplete(), report.toJson());
     assertEquals("PROCESS_MODEL", report.getSourceScope());
@@ -127,10 +122,8 @@ class EngineeringDiagramDeliveryComparisonTest {
   void rejectsDifferentPlantAndIncompleteAssessment() throws IOException {
     Path first = deliver("plant-a", "PLANT-A", "A", "Plant A");
     Path second = deliver("plant-b", "PLANT-B", "B", "Plant B");
-    EngineeringDiagramDeliveryAssessment.Report firstAssessment =
-        EngineeringDiagramDeliveryAssessment.assess(first);
-    EngineeringDiagramDeliveryAssessment.Report secondAssessment =
-        EngineeringDiagramDeliveryAssessment.assess(second);
+    EngineeringDiagramDeliveryAssessment.Report firstAssessment = EngineeringDiagramDeliveryAssessment.assess(first);
+    EngineeringDiagramDeliveryAssessment.Report secondAssessment = EngineeringDiagramDeliveryAssessment.assess(second);
 
     assertThrows(IllegalArgumentException.class,
         () -> EngineeringDiagramDeliveryComparison.compare(firstAssessment, secondAssessment));
@@ -138,32 +131,28 @@ class EngineeringDiagramDeliveryComparisonTest {
         () -> EngineeringDiagramDeliveryComparison.compare(null, secondAssessment));
 
     Path damaged = deliver("damaged", "PLANT-A", "B", "Plant A");
-    Files.write(damaged.resolve("drawing-set.pdf"), new byte[] {1}, StandardOpenOption.APPEND);
-    EngineeringDiagramDeliveryAssessment.Report incomplete =
-        EngineeringDiagramDeliveryAssessment.assess(damaged);
+    Files.write(damaged.resolve("drawing-set.pdf"), new byte[] { 1 }, StandardOpenOption.APPEND);
+    EngineeringDiagramDeliveryAssessment.Report incomplete = EngineeringDiagramDeliveryAssessment.assess(damaged);
     assertFalse(incomplete.isComplete());
     assertThrows(IllegalArgumentException.class,
         () -> EngineeringDiagramDeliveryComparison.compare(firstAssessment, incomplete));
   }
 
-  private Path deliver(String name, String plantId, String revision, String title)
-      throws IOException {
+  private Path deliver(String name, String plantId, String revision, String title) throws IOException {
     Path target = temporaryDirectory.resolve(name);
     EngineeringDiagramDelivery.Request request = EngineeringDiagramDelivery.Request
         .builder(plantId, revision, "PFD-CMP-001", title, ContentProfile.PFD).build();
-    EngineeringDiagramDelivery.deliver(
-        EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), target, request);
+    EngineeringDiagramDelivery.deliver(EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), target,
+        request);
     return target;
   }
 
   private Path deliverModel(String name, String revision) throws IOException {
     Path target = temporaryDirectory.resolve(name);
     EngineeringDiagramDelivery.Request request = EngineeringDiagramDelivery.Request
-        .builder("PLANT-MODEL", revision, "PFD-MODEL-001", "Multi-area comparison",
-            ContentProfile.PFD)
-        .build();
-    EngineeringDiagramDelivery.deliver(
-        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), target, request);
+        .builder("PLANT-MODEL", revision, "PFD-MODEL-001", "Multi-area comparison", ContentProfile.PFD).build();
+    EngineeringDiagramDelivery.deliver(EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(),
+        target, request);
     return target;
   }
 }

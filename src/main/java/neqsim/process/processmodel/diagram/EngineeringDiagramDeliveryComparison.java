@@ -21,17 +21,15 @@ import java.util.TreeSet;
  * Compares two independently assessed engineering-diagram deliveries.
  *
  * <p>
- * The comparison consumes only complete {@link EngineeringDiagramDeliveryAssessment.Report}
- * instances. It classifies every declared artifact as added, removed, modified, or unchanged and
- * maps changes onto deterministic engineering-review scopes. Directory paths are deliberately
- * excluded from the comparison fingerprint so equivalent transferred copies produce identical
- * evidence.
+ * The comparison consumes only complete {@link EngineeringDiagramDeliveryAssessment.Report} instances. It classifies
+ * every declared artifact as added, removed, modified, or unchanged and maps changes onto deterministic
+ * engineering-review scopes. Directory paths are deliberately excluded from the comparison fingerprint so equivalent
+ * transferred copies produce identical evidence.
  * </p>
  *
  * <p>
- * A comparison does not reconstruct or execute a process model, repeat DEXPI semantic assessment,
- * approve a drawing, decide management of change, establish fitness for construction, or claim
- * standards conformance.
+ * A comparison does not reconstruct or execute a process model, repeat DEXPI semantic assessment, approve a drawing,
+ * decide management of change, establish fitness for construction, or claim standards conformance.
  * </p>
  */
 public final class EngineeringDiagramDeliveryComparison {
@@ -42,35 +40,23 @@ public final class EngineeringDiagramDeliveryComparison {
 
   /** Overall comparison status. */
   public enum Status {
-    IDENTICAL,
-    CHANGED,
-    REVISION_REUSE
+    IDENTICAL, CHANGED, REVISION_REUSE
   }
 
   /** Artifact-level change type. */
   public enum ChangeType {
-    ADDED,
-    REMOVED,
-    MODIFIED,
-    UNCHANGED
+    ADDED, REMOVED, MODIFIED, UNCHANGED
   }
 
   /** Controlled review scope implicated by changed delivery evidence. */
   public enum ReviewScope {
-    CONTROLLED_DOCUMENT_SET,
-    DELIVERY_MANIFEST,
-    DEXPI_PROCESS_EXCHANGE,
-    DEXPI_PROCESS_MODEL_PACKAGE,
-    ENGINEERING_REVIEW,
-    NATIVE_PDF,
-    NATIVE_SVG
+    CONTROLLED_DOCUMENT_SET, DELIVERY_MANIFEST, DEXPI_PROCESS_EXCHANGE, DEXPI_PROCESS_MODEL_PACKAGE, ENGINEERING_REVIEW,
+    NATIVE_PDF, NATIVE_SVG
   }
 
   /** Diagnostic severity. */
   public enum Severity {
-    INFO,
-    WARNING,
-    ERROR
+    INFO, WARNING, ERROR
   }
 
   /** Immutable comparison diagnostic. */
@@ -193,15 +179,14 @@ public final class EngineeringDiagramDeliveryComparison {
           && (!changedArtifactPaths.isEmpty() || !baselineManifestSha256.equals(revisedManifestSha256));
       if (revisionReused) {
         status = Status.REVISION_REUSE;
-      } else if (changedArtifactPaths.isEmpty()
-          && baselineManifestSha256.equals(revisedManifestSha256)) {
+      } else if (changedArtifactPaths.isEmpty() && baselineManifestSha256.equals(revisedManifestSha256)) {
         status = Status.IDENTICAL;
       } else {
         status = Status.CHANGED;
       }
       complete = !hasErrors(diagnostics);
-      fingerprint = sha256(new GsonBuilder().create().toJson(toMapWithoutFingerprint())
-          .getBytes(StandardCharsets.UTF_8));
+      fingerprint = sha256(
+          new GsonBuilder().create().toJson(toMapWithoutFingerprint()).getBytes(StandardCharsets.UTF_8));
     }
 
     public String getPlantId() {
@@ -345,9 +330,8 @@ public final class EngineeringDiagramDeliveryComparison {
       builder.reviewScopes.add(ReviewScope.DELIVERY_MANIFEST);
       builder.reviewScopes.add(ReviewScope.ENGINEERING_REVIEW);
     }
-    if (baseline.getRevision().equals(revised.getRevision())
-        && (!builder.changedArtifactPaths.isEmpty()
-            || !baseline.getManifestSha256().equals(revised.getManifestSha256()))) {
+    if (baseline.getRevision().equals(revised.getRevision()) && (!builder.changedArtifactPaths.isEmpty()
+        || !baseline.getManifestSha256().equals(revised.getManifestSha256()))) {
       builder.diagnostics.add(new Diagnostic(Severity.ERROR, "DELIVERY_REVISION_REUSED_WITH_CHANGED_CONTENT",
           "Changed delivery content must not reuse the same controlled revision", baseline.getRevision()));
     } else if (builder.changedArtifactPaths.isEmpty()
@@ -379,10 +363,10 @@ public final class EngineeringDiagramDeliveryComparison {
   }
 
   private static void compareArtifacts(Builder builder) {
-    Map<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence> before =
-        new TreeMap<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence>(builder.baseline.getArtifacts());
-    Map<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence> after =
-        new TreeMap<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence>(builder.revised.getArtifacts());
+    Map<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence> before = new TreeMap<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence>(
+        builder.baseline.getArtifacts());
+    Map<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence> after = new TreeMap<String, EngineeringDiagramDeliveryAssessment.ArtifactEvidence>(
+        builder.revised.getArtifacts());
     Set<String> paths = new TreeSet<String>();
     paths.addAll(before.keySet());
     paths.addAll(after.keySet());
@@ -406,8 +390,7 @@ public final class EngineeringDiagramDeliveryComparison {
     if (revised == null) {
       return ChangeType.REMOVED;
     }
-    if (baseline.getSizeBytes() == revised.getSizeBytes()
-        && baseline.getMediaType().equals(revised.getMediaType())
+    if (baseline.getSizeBytes() == revised.getSizeBytes() && baseline.getMediaType().equals(revised.getMediaType())
         && baseline.getSha256().equals(revised.getSha256())) {
       return ChangeType.UNCHANGED;
     }
@@ -429,8 +412,7 @@ public final class EngineeringDiagramDeliveryComparison {
     }
   }
 
-  private static Map<String, Object> artifactMap(
-      EngineeringDiagramDeliveryAssessment.ArtifactEvidence artifact) {
+  private static Map<String, Object> artifactMap(EngineeringDiagramDeliveryAssessment.ArtifactEvidence artifact) {
     if (artifact == null) {
       return null;
     }
