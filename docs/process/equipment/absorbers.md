@@ -29,7 +29,7 @@ engineering question first; the classes do not represent interchangeable fidelit
 
 | Class | Use when | Important boundary |
 | --- | --- | --- |
-| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | Native post-run Fs, Souders-Brown, wetting, and capacity-constraint screens do not feed hydraulics, reactions, entrainment, or flooding back into the MESH solver |
+| `AbsorptionColumn` | Counter-current equilibrium trays with Murphree efficiencies | No tray hydraulics, reactions, entrainment, or flooding feed back into the MESH solver; native post-run Fs, Souders-Brown, wetting, and capacity-constraint results are screening-only |
 | `StrippingColumn` | Counter-current equilibrium trays for stripping service | Fixed tray temperatures imply unreported heating or cooling; the column shares the mechanical-design rating |
 | `PackedColumn` | Equilibrium-stage contactor with packing HETP and hydraulic rating | Use `RateBasedPackedColumn` when axial film-rate profiles or local transfer reversal matter |
 | `RateBasedPackedColumn` | Packed-column films, hydraulics, profiles, or local transfer reversal | Requires packing and transport-property inputs |
