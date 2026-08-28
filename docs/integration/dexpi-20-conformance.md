@@ -111,6 +111,12 @@ reports `nativeWholePlantDexpiExchange=false`, `approvalStatus=REVIEW_REQUIRED`,
 `fitnessForConstruction=false`; it is not a new DEXPI profile, standards-conformance claim, or
 drawing approval.
 
+When DEXPI must be published together with its controlled document and native drawing views, use
+the [engineering diagram delivery workflow](engineering-diagram-delivery.md). The facade composes
+the assessed writer above with controlled JSON, native SVG/PDF, deterministic artifact hashes, and
+the same review-required boundaries; it does not merge graphical or document semantics into the
+DEXPI information model.
+
 For package intake or restart, independently reassess rather than trusting the embedded manifest:
 
 ```java
