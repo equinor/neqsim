@@ -2041,6 +2041,33 @@ APIs, model parameters, and runtime behavior are unchanged, so no production spe
 is claimed. The scope is limited to PR; SRK and experimental sour-gas tie-line
 validation remain separate model-qualification work.
 
+#### 6.4.4 PR Methane/Heptane Boundary Qualification
+
+The low-temperature binary regression uses 70 mol methane and 30 mol n-heptane with
+the classic Peng-Robinson mixing rule and a methane/heptane binary interaction
+parameter of 0.05. The frozen state is 155.1 K and 84.4 bara, with nearby pressure
+checks at 84.3 and 84.5 bara. This is a deterministic solver qualification of the
+existing model, not experimental validation of the predicted phase boundary or
+phase fractions.
+
+Ordinary, multiphase, and enhanced-multiphase flashes must return the same GAS+OIL
+equilibrium at the frozen state. Every endpoint requires finite and bounded phase
+fractions and compositions, phase and beta normalization within `1e-12`, component
+material balance below `1e-10`, maximum interphase log-fugacity residual below
+`1e-8`, positive compressibility factors, and finite Gibbs energy. The nearby
+states apply the same closure and cross-algorithm gates.
+
+The enhanced path must also recover the reference endpoint from beta `1e-12`.
+Changing a reused state to 84.5 bara, returning it to 84.4 bara, and immediately
+repeating the flash must match fresh-state phase fractions, compositions,
+compressibility factors, topology, and Gibbs energy. These checks guard poor
+initialization, stale state, and nearby-state continuity.
+
+This qualification replaces a JVM `assert` that was disabled in normal JUnit
+execution and removes an unannotated 1,401-state logging scan. Production code,
+public APIs, thermodynamic parameters, defaults, and runtime behavior are unchanged.
+The bounded regression adds no production performance claim.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
