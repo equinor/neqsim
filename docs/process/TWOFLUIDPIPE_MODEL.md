@@ -532,11 +532,16 @@ quantitative dynamic validation.
 
 The slow dynamic benchmark exercises large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
 $v_{SG}=1.00$ m/s). It is currently a **disabled qualification fixture**, not a validated model.
-The coupled transient route does not progress beyond its initial transient state, while the legacy
-route activates `isTransientOutletBackflowClamped()`. Both outcomes are rejected before amplitude,
-period, or slug-length agreement is considered. The class remains in source so issues #2909 and
-#2911 can re-enable the unchanged public benchmark after the numerical gap is resolved; unrelated CI
-must not treat the known-invalid trajectory as a passing or intentionally failing prediction.
+The coupled route now completes the 16-section 50 × 0.1 s progress probe and a 24-section
+100 × 0.05 s refinement with phase and aggregate mass-balance residuals below $10^{-9}$ and
+without a rejected nonlinear substep. That is a numerical-progress result, not severe-slugging
+validation: the sticky pressure-correction limiter fires and the
+interval-average liquid outlet spans -18.55 to 6.88 kg/s, outside the stored 0.375 to 4.03 kg/s
+comparison range. The legacy route still activates `isTransientOutletBackflowClamped()`. Both
+trajectories remain disqualified before amplitude, period, or slug-length agreement is considered.
+The class remains in source so issues #2909, #2911, and #3298 can re-enable the unchanged public
+benchmark after the outlet/pressure coupling is resolved; unrelated CI must not treat a
+known-invalid trajectory as a passing or intentionally failing prediction.
 
 This benchmark previously reported a riser-head-scaled swing of 0.40–0.54 heads and a tracked slug
 of about 2 m. Those results did not come from the momentum balance. The minimum-slip hold-up bound
@@ -1079,6 +1084,8 @@ pipe.setEnableInterfacialPressure(true);
 pipe.setImplicitInterfacialPressureCoupling(true);
 pipe.setEnableCoupledPressureMomentum(true);
 pipe.setAllowOutletPhaseBackflow(true);
+pipe.setCoupledPressureMomentumMaximumIterations(24); // default
+pipe.setCoupledPressureMomentumRelativeVolumeTolerance(1.0e-7); // default
 ```
 
 Use the four settings together for liquid-rich transients whose pressure outlet permits phase
@@ -1089,8 +1096,23 @@ zero. Signed fallback extrapolates the interior phase state and remains opt-in b
 export boundary may instead require a check valve or a supplied external inflow composition. The mode reports
 `isCoupledPressureMomentumConverged()`,
 `getCoupledPressureMomentumVolumeResidual()`, and
-`getCoupledPressureMomentumIterations()`. A non-converged non-adaptive step throws instead of
-returning a bounded-looking but invalid result.
+`getCoupledPressureMomentumIterations()`. The nonlinear gate is available through
+`get/setCoupledPressureMomentumMaximumIterations()` and
+`get/setCoupledPressureMomentumRelativeVolumeTolerance()`. The default iteration budget is 24;
+the former budget of 12 stopped the Tengesdal progress case at about $6\times10^{-7}$ relative
+cell-volume residual, above the $10^{-7}$ default gate.
+
+After a transient window, also read the sticky diagnostics
+`isTransientCoupledPressureMomentumFailureDetected()`,
+`isTransientCoupledPressureMomentumCorrectionLimited()`, and
+`getTransientCoupledPressureMomentumRejectedSubsteps()`. They are cleared by the next steady
+`run()`. `isCoupledPressureMomentumPressureCorrectionLimited()` reports only the latest correction.
+Adaptive execution retries a non-converged correction at a smaller internal step. If the requested
+interval is still incomplete at the minimum factor, `runTransient` throws with accepted and
+requested elapsed time, residual, tolerance, iteration count/cap, and limiter state. It never
+returns a zero- or partial-progress coupled interval silently. A limiter event is diagnostic rather
+than an automatic rejection because the nonlinear residual can converge while a bounded correction
+is active; it must still be reported in qualification evidence.
 
 The option remains off by default while long-horizon severe-slugging, mesh, timestep, and
 independent OLGA/public benchmark qualification is completed. Do not use short startup peaks as
@@ -1191,33 +1213,43 @@ both codes agree that such a case has no solution.
 
 ### Always check the transient outcome too
 
-`runTransient(dt, id)` has the same property: it does not throw when the answer stops being a
-solution, so the outcome has to be read back.
+`runTransient(dt, id)` exposes invalid outcomes that can still satisfy a discrete balance. Coupled
+non-convergence now throws if the requested interval cannot be completed; sticky diagnostics must
+still be read after successful calls.
 
 | Query | Meaning when true |
 |-------|-------------------|
 | `isTransientOutletBackflowClamped()` | A phase reversed at the outlet and its outflow is pinned at zero |
+| `isTransientCoupledPressureMomentumFailureDetected()` | At least one coupled nonlinear correction was rejected |
+| `isTransientCoupledPressureMomentumCorrectionLimited()` | At least one nonlinear pressure correction reached its limiter |
+| `getTransientCoupledPressureMomentumRejectedSubsteps() > 0` | Coupled substeps were retried at a smaller adaptive factor |
 
 ```java
 pipe.runTransient(dt, null);
 if (pipe.isTransientOutletBackflowClamped()) {
   throw new IllegalStateException("Transient liquid inventory is running away");
 }
+if (pipe.isTransientCoupledPressureMomentumFailureDetected()
+    || pipe.isTransientCoupledPressureMomentumCorrectionLimited()) {
+  throw new IllegalStateException("Coupled transient requires diagnostic review");
+}
 ```
 
-Any trajectory for which this flag becomes true is invalid for engineering comparison or model
-qualification, even if its mass-balance residual, pressure amplitude, period, or other headline
-metric appears acceptable. The flag is sticky for the transient run and must be checked after the
-full evaluated window.
+Any trajectory with one of these diagnostic flags is invalid for engineering comparison or model
+qualification until the event has been explained and accepted, even if its mass-balance residual,
+pressure amplitude, period, or other headline metric appears acceptable. The diagnostics are sticky
+for the transient run and must be checked after the full evaluated window.
 
 **Why outlet backflow matters.** The outlet is transmissive: it can carry mass out but not in, so a
 reversed phase velocity is clamped to zero. That is correct as a boundary condition and is also a
 one-way trap. The phase momentum equations of the classical two-fluid system are ill-posed at high
 liquid fraction and can develop sustained backflow, after which the outflow of that phase pins at
 exactly 0 kg/s while the inlet keeps feeding the line and the inventory grows without bound. The
-finite-volume balance still closes to machine precision throughout, so nothing else reports a
-problem — this flag is the only warning. Gas-dominated lines do not show it.
-`setEnableInterfacialPressure(true)` removes it, at the cost of a much smaller stable time step.
+finite-volume balance still closes to machine precision throughout, so the balance alone cannot
+detect the defect. Gas-dominated lines do not show it. Interfacial pressure alone is not a qualified
+remedy. The combined implicit-interfacial, coupled-pressure/momentum, and signed-outlet route now
+advances the short Tengesdal progress probe, but its sticky limiter and outlet-rate mismatch still
+disqualify the trajectory.
 
 ### Direct electrical heating (DEH)
 

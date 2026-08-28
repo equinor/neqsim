@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F104 CO2-envelope screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-08-02"
+last_verified: "2026-08-27"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -553,38 +553,34 @@ for (double qgMSm3d : gasRates) {
 > `−UπD(T−T_surf) + q ≡ −UπD(T − [T_surf + q/(UπD)])`, i.e. by raising the ambient
 > temperature by `q/(UπD)`.
 
-> **`TwoFluidPipe` transient is NOT usable for liquid-rich lines — including
-> severe slugging.** With every boundary condition held constant it leaves its
-> own steady state: on a 5 km liquid-rich line the inventory grows 114.7 → 192.7 t
-> in 30 min and the liquid holdup goes 0.45 → 0.77 while still climbing. The
-> liquid outlet flux collapses to exactly zero because the phase momentum
-> equations develop sustained backflow (oil velocity −2.5 m/s in 9 of 40 cells)
-> and `calcOutletFlux` clamps a negative phase velocity to zero outflow, trapping
-> liquid permanently. The finite-volume balance still closes to 1e-16, so this is
-> a well-posedness defect — there is no interfacial pressure term to keep the
-> two-fluid system hyperbolic at high liquid fraction. Gas-dominated lines are
-> unaffected (0.00 bar null-test drift). For severe slugging use the analytical
-> screen (`SevereSluggingBenchmarkHarnessTest`, Taitel criterion vs the Tengesdal
-> 2002 map, 70.7% accuracy) and treat any transient slug-cycle result as invalid.
+> **`TwoFluidPipe` liquid-rich and severe-slugging transients remain
+> unqualified.** The legacy route can still develop phase backflow and clamp the
+> outlet flux at zero while its finite-volume balance closes exactly. Gas-dominated
+> null cases remain usable, but do not promote a liquid-rich or severe-slugging
+> trajectory from either a small residual or a completed time loop alone. Use the
+> analytical `SevereSluggingBenchmarkHarnessTest` screen and the public Tengesdal
+> evidence until the dynamic qualification gates below pass.
 >
-> A partial remedy exists but is **off by default**:
-> `setEnableInterfacialPressure(true)` adds the missing holdup-gradient momentum
-> term with a Bestion interfacial pressure correction. It removes the backflow
-> entirely (0 of 40 cells versus 9 of 40) and stops the unbounded packing, but it
-> is acoustic in scale and evaluated explicitly, so it needs `setCflNumber(0.05)`
-> — at the default 0.5 it diverges. At that CFL the holdup it settles on is not
-> yet validated, so it is not a drop-in replacement. Finishing it means folding
-> the term into the IMEX implicit pressure solve.
+> **The coupled route is an opt-in four-part configuration.** For a pressure
+> outlet that physically permits phase fallback, use
+> `setEnableInterfacialPressure(true)`,
+> `setImplicitInterfacialPressureCoupling(true)`,
+> `setEnableCoupledPressureMomentum(true)`, and
+> `setAllowOutletPhaseBackflow(true)` together. The nonlinear controls are public:
+> `setCoupledPressureMomentumMaximumIterations(int)` and
+> `setCoupledPressureMomentumRelativeVolumeTolerance(double)`, with defaults 24
+> and `1e-7`.
 >
-> **Re-measured (PR #3086): the interfacial-pressure term does NOT rescue this
-> case.** Sweeping CFL 0.05/0.1/0.2/0.35/0.5/0.8 with and without the term, using
-> `isTransientOutletBackflowClamped()` as the objective detector, every one of the
-> twelve combinations is unstable — with the term ON, backflow trips at *every*
-> CFL including 0.05. So do not reach for `setEnableInterfacialPressure(true)`
-> expecting a stable liquid-rich transient, and note that folding the term into
-> the IMEX solve would only buy step-size relief for a term that does not deliver
-> stability here. `calcVoidWaveSpeed` already feeds the CFL limit, so the small
-> step it needs is a genuine stability limit, not a controller oversight.
+> **WS3 restores progress, not physical parity.** The 16-section Tengesdal Test 3
+> probe now completes 50/50 calls of 0.1 s; a 24-section refinement completes
+> 100/100 calls of 0.05 s. Neither rejects a nonlinear substep, and gas, oil,
+> water, liquid, and total mass residuals are below `1e-9`. The former
+> 12-iteration cap stopped around `6e-7`, above the `1e-7` gate. The sticky pressure
+> limiter still fires, however, and the liquid outlet spans -18.55 to 6.88 kg/s
+> versus the stored 0.375 to 4.03 kg/s comparison. This is a disclosed boundary/
+> pressure-coupling gap, not a reason to tune a public closure to a commercial
+> trace. Subsequent validation must use the public Tengesdal experiment, nearby
+> operating points, conservation, and mesh/time-step refinement.
 >
 > **What did help: fixing the regime.** The same case classified SLUG rather than
 > ANNULAR (PR #3086, Barnea bridging limit) cuts the 30-minute inventory runaway
@@ -592,14 +588,19 @@ for (double qgMSm3d : gasRates) {
 > the flag, but the regime branch is a bigger lever on the runaway than the
 > interfacial-pressure term is.
 >
-> **The transient now tells you when it has failed — always check it.** As of
-> PR #3080, `pipe.isTransientOutletBackflowClamped()` returns true once any phase
-> has reversed at the outlet, which is the first event in the runaway above. This
-> is the transient counterpart of `isSteadyStatePressureFloorLimited()`: ALWAYS
-> read it after `runTransient` and discard the profile when it is true, exactly
-> as with the steady-state flags. The mass-balance report will NOT warn you — it
-> closes to 1e-16 throughout, because it is computed from the same clamped flux.
-> The flag is sticky for the run and is cleared by the next `run()`.
+> **The transient tells you when it has failed — always check every diagnostic.**
+> Read `isTransientOutletBackflowClamped()`,
+> `isTransientCoupledPressureMomentumFailureDetected()`,
+> `isTransientCoupledPressureMomentumCorrectionLimited()`, and
+> `getTransientCoupledPressureMomentumRejectedSubsteps()` after the full window.
+> `isCoupledPressureMomentumPressureCorrectionLimited()` is the non-sticky view
+> of only the latest correction.
+> The flags/counter are sticky and reset on the next steady `run()`. A coupled
+> call that cannot complete its requested interval now throws with accepted time,
+> requested time, residual/tolerance, iterations/cap, and limiter state; never
+> catch it and advance the engineering timeline. The mass-balance report alone
+> cannot qualify the result because a clamped or limited route can still conserve
+> its own discrete fluxes exactly.
 >
 > **Three-phase (gas/oil/water) steady state is fixed.** The oil/water slip
 > ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls
