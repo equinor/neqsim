@@ -70,8 +70,7 @@ class JavaQuickstartDocumentationTest {
 
     assertTrue(gasFlowKgPerHour > 0.0);
     assertTrue(liquidFlowKgPerHour >= 0.0);
-    assertEquals(feedFlowKgPerHour, separatedFlowKgPerHour,
-        Math.max(1.0e-6, feedFlowKgPerHour * 1.0e-10));
+    assertEquals(feedFlowKgPerHour, separatedFlowKgPerHour, Math.max(1.0e-6, feedFlowKgPerHour * 1.0e-10));
     assertTrue(compressor.getPower("kW") > 0.0);
     assertTrue(Double.isFinite(outletTemperatureC));
     assertEquals(80.0, compressor.getOutletPressure(), 1.0e-10);
