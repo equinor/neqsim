@@ -12,6 +12,11 @@ import sys
 import time
 
 JAR = "target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
+AUTOMATION_READ_TOOLS = {
+    "listSimulationUnits": "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY",
+    "listUnitVariables": "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_DISCOVERY",
+    "getSimulationVariable": "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_READ",
+}
 
 
 class McpClient:
@@ -193,6 +198,53 @@ def test_invalid_requests_fail_closed(client, process_json):
         require("INPUT_ERROR" in codes, f"{tool_name} missing INPUT_ERROR diagnostic", result)
 
 
+def test_contract_classification_is_promoted_atomically(client):
+    result = client.call_tool("getCapabilities", {})
+    data = payload(result)
+    inventory = data.get("phase0EvidenceInventory")
+    require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
+    require(inventory.get("inventoryVersion") == "1.18", "unexpected evidence inventory version", result)
+    tests = inventory.get("tests", {})
+    require(
+        tests.get("focusedAutomationReadProtocolScenarioCount") == 5,
+        "automation-read focused scenario count drifted",
+        result,
+    )
+    require(
+        tests.get("focusedAutomationReadProtocolHarness")
+        == "neqsim-mcp-server/test_automation_read_protocol.py",
+        "automation-read focused harness pointer drifted",
+        result,
+    )
+    limitations = inventory.get("knownLimitations", {})
+    require(limitations.get("contractTestedToolCount") == 14, "contract-tested count did not promote", result)
+    require(limitations.get("confirmedGapToolCount") == 37, "confirmed-gap count did not promote", result)
+    records = limitations.get("coverageRecords", {})
+    for tool_name, expected_applicability in AUTOMATION_READ_TOOLS.items():
+        record = records.get(tool_name, {})
+        require(
+            record.get("coverageStatus") == "CONTRACT_TESTED",
+            f"{tool_name} was not promoted atomically",
+            result,
+        )
+        require(record.get("contractTrustAvailable") is True, f"{tool_name} contract trust flag missing", result)
+        require(
+            record.get("benchmarkApplicability") == expected_applicability,
+            f"{tool_name} benchmark-applicability boundary drifted",
+            result,
+        )
+        evidence = json.dumps(record.get("contractEvidenceSources", []))
+        require(record.get("contractEvidenceCount") == 5, f"{tool_name} evidence count drifted", result)
+        require("AutomationReadContractTest.java" in evidence, f"{tool_name} omits Java contract evidence", result)
+        require("test_automation_read_protocol.py" in evidence, f"{tool_name} omits packaged MCP evidence", result)
+    require(
+        limitations.get("contractPromotionCandidateCount") == 0
+        and not limitations.get("contractPromotionCandidates", {}),
+        "completed automation-read promotion remains queued as a candidate",
+        result,
+    )
+
+
 def main():
     client = McpClient()
     try:
@@ -202,9 +254,10 @@ def main():
         test_variable_inventory(client, process_json)
         test_variable_read(client, process_json)
         test_invalid_requests_fail_closed(client, process_json)
+        test_contract_classification_is_promoted_atomically(client)
     finally:
         client.close()
-    print("automation read real-MCP qualification: 4/4 scenarios passed")
+    print("automation read real-MCP qualification: 5/5 scenarios passed")
     return 0
 
 
