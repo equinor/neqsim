@@ -14,9 +14,10 @@ import com.google.gson.JsonParser;
  */
 public final class McpEvidenceInventory {
 
-  private static final int JAVA_TEST_CLASS_COUNT = 67;
+  private static final int JAVA_TEST_CLASS_COUNT = 68;
   private static final int PROTOCOL_SCENARIO_COUNT = 94;
   private static final int FOCUSED_API_PROTOCOL_SCENARIO_COUNT = 3;
+  private static final int FOCUSED_AUTOMATION_READ_PROTOCOL_SCENARIO_COUNT = 5;
 
   /** Private constructor for utility class. */
   private McpEvidenceInventory() {
@@ -29,7 +30,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.17");
+    inventory.addProperty("inventoryVersion", "1.18");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -54,8 +55,10 @@ public final class McpEvidenceInventory {
     tests.addProperty("protocolHarness", "neqsim-mcp-server/test_mcp_server.py");
     tests.addProperty("focusedApiProtocolScenarioCount", FOCUSED_API_PROTOCOL_SCENARIO_COUNT);
     tests.addProperty("focusedApiProtocolHarness", "neqsim-mcp-server/test_inspect_api_protocol.py");
+    tests.addProperty("focusedAutomationReadProtocolScenarioCount", FOCUSED_AUTOMATION_READ_PROTOCOL_SCENARIO_COUNT);
+    tests.addProperty("focusedAutomationReadProtocolHarness", "neqsim-mcp-server/test_automation_read_protocol.py");
     tests.addProperty("sourceCountContract",
-        "CapabilitiesRunnerTest, the packaged MCP protocol suite, and focused API protocol qualification freeze these source inventories");
+        "CapabilitiesRunnerTest, the packaged MCP protocol suite, focused API protocol qualification, and focused automation-read protocol qualification freeze these source inventories");
     tests.addProperty("executionBoundary",
         "Inventory presence is not an execution result; use exact-head CI and recorded test output as pass evidence");
     return tests;
@@ -241,10 +244,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "manageValidationProfile is CONTRACT_TESTED from bounded source, regression, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.17");
+        "listSimulationUnits, listUnitVariables, and getSimulationVariable are CONTRACT_TESTED from merged #3302 source, regression, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.18");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; eleven non-numerical discovery, catalog, lookup, progress, trust, governance, validation-profile, and runtime API-inspection tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "Every published tool has an explicit coverage record; fourteen non-numerical discovery, catalog, lookup, progress, trust, governance, validation-profile, runtime API-inspection, and automation-introspection tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
     return limitations;
@@ -347,6 +350,21 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/docs/evidence/VALIDATION_PROFILE_CONTRACT.md" };
       evidenceBoundary = "Built-in discovery, structural validation metadata preservation, isolated custom-profile lifecycle and recovery, equipment-standard retrieval, fail-closed mutation errors, and packaged-MCP transport are contract-tested; this does not validate standards currency, legal applicability or licensing, validator scientific correctness, deployment isolation or durability, external authorization, or plant authority";
       break;
+    case "listSimulationUnits":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY";
+      evidenceSources = automationReadEvidenceSources();
+      evidenceBoundary = "Canonical solved-ProcessSystem unit identity and type discovery plus fail-closed invalid input are contract-tested in Java and packaged MCP; this does not validate process numerical accuracy, equipment performance, persistent state, multi-client isolation, or plant authority";
+      break;
+    case "listUnitVariables":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_DISCOVERY";
+      evidenceSources = automationReadEvidenceSources();
+      evidenceBoundary = "Canonical unit-variable address, type, writability and applicability metadata plus fail-closed invalid input are contract-tested in Java and packaged MCP; metadata discovery does not validate variable values, write execution, control behavior, or engineering fitness";
+      break;
+    case "getSimulationVariable":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_READ";
+      evidenceSources = automationReadEvidenceSources();
+      evidenceBoundary = "Canonical unit-addressed variable retrieval preserves the standard response, provenance, validation and quality-gate contract through packaged MCP; this does not certify the numerical value, facility completeness, control behavior, or accountable engineering approval";
+      break;
     default:
       return false;
     }
@@ -364,6 +382,15 @@ public final class McpEvidenceInventory {
     record.addProperty("verifiedValidationCaseCount", 0);
     record.addProperty("evidenceBoundary", evidenceBoundary);
     return true;
+  }
+
+  /** Returns the common evidence set for the read-only automation-introspection cluster. */
+  private static String[] automationReadEvidenceSources() {
+    return new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+        "src/main/java/neqsim/process/automation/ProcessAutomation.java",
+        "src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java",
+        "neqsim-mcp-server/test_automation_read_protocol.py",
+        "neqsim-mcp-server/docs/evidence/AUTOMATION_READ_CONTRACT.md" };
   }
 
   /** Counts validation cases that identify a concrete verification source. */
