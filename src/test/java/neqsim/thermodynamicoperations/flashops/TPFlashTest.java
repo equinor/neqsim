@@ -69,7 +69,9 @@ class TPFlashTest {
     assertClosedEquilibrium(ordinary, "ordinary low-pressure endpoint");
     assertClosedEquilibrium(reference, "multiphase low-pressure endpoint");
     assertTrue(reference.getNumberOfPhases() >= 2, "multiphase flash should retain a split");
-    assertEquals(-430041.49312169873, reference.getEnthalpy(), 1.0e-2);
+    double referenceEnthalpy = -430041.49312169873;
+    assertEquals(referenceEnthalpy, reference.getEnthalpy(), 5.0e-5 * Math.abs(referenceEnthalpy),
+        "low-pressure enthalpy reference");
     assertTrue(reference.getGibbsEnergy() <= ordinary.getGibbsEnergy() + 1.0e-8 * Math.abs(ordinary.getGibbsEnergy()),
         "multiphase endpoint must not raise Gibbs energy");
     assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8, "poor beta initialization");
@@ -137,7 +139,9 @@ class TPFlashTest {
 
     SystemInterface reference = flashWaterBearingPr(288.15, 500.0, true, false);
     SystemInterface poorGuess = flashWaterBearingPr(288.15, 500.0, true, true);
-    assertEquals(-936973.1969586421, reference.getEnthalpy(), 1.0e-2);
+    double referenceEnthalpy = -936973.1969586421;
+    assertEquals(referenceEnthalpy, reference.getEnthalpy(), 5.0e-5 * Math.abs(referenceEnthalpy),
+        "high-pressure enthalpy reference");
     assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8, "high-pressure poor beta initialization");
 
     SystemInterface reused = reference.clone();
@@ -254,6 +258,8 @@ class TPFlashTest {
             actual.getPhase(actualPhase).getComponent(component).getx(), tolerance, label);
       }
     }
+    assertEquals(expected.getEnthalpy(), actual.getEnthalpy(),
+        Math.max(1.0e-8, tolerance * Math.abs(expected.getEnthalpy())), label);
     assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(),
         Math.max(1.0e-8, tolerance * Math.abs(expected.getGibbsEnergy())), label);
   }
