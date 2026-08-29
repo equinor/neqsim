@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
+import neqsim.thermo.component.IapwsHenryLaw;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -341,7 +342,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(0.0318, vap, 1e-3);
   }
 
-  /** Neutral-solute Henry fugacity uses the same molality standard state as Pitzer activity. */
+  /** Qualified IAPWS Henry fugacity maps from mole fraction to the Pitzer molality standard state. */
   @Test
   public void testNeutralHenryFugacityUsesMolalityBasis() {
     SystemPitzer system = new SystemPitzer(298.15, 1.01325);
@@ -355,8 +356,12 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double moleFraction = aqueous.getComponent("CO2").getx();
     double molality = aqueous.getComponent("CO2").getMolality(aqueous);
     double gamma = aqueous.getActivityCoefficient(aqueous.getComponent("CO2").getComponentNumber());
-    double henryCoefficient = aqueous.getComponent("CO2").getHenryCoef(aqueous.getTemperature());
-    double expectedFugacityCoefficient = gamma * henryCoefficient * molality / (moleFraction * aqueous.getPressure());
+    double moleFractionHenry =
+        IapwsHenryLaw.getHenryCoefficientBar("CO2", aqueous.getTemperature());
+    double molalityHenry =
+        moleFractionHenry * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
+    double expectedFugacityCoefficient =
+        gamma * molalityHenry * molality / (moleFraction * aqueous.getPressure());
 
     assertTrue(molality / moleFraction > 50.0);
     assertEquals(expectedFugacityCoefficient, aqueous.getComponent("CO2").getFugacityCoefficient(),
