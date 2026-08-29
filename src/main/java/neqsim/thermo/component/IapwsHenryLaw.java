@@ -131,6 +131,32 @@ public final class IapwsHenryLaw {
   private IapwsHenryLaw() {}
 
   /**
+   * Tests whether a component is present in the IAPWS H2O table.
+   *
+   * @param componentName NeqSim component name or IAPWS formula
+   * @return true for a supported H2O correlation species
+   */
+  public static boolean isSupportedSpecies(String componentName) {
+    return findGas(componentName) != null;
+  }
+
+  /**
+   * Tests whether the IAPWS formula is numerically usable at a state.
+   *
+   * <p>This allocation-free predicate is intended for the fugacity hot path.
+   * Use {@link #assess(String, double)} when fitted-range diagnostics are needed.</p>
+   *
+   * @param componentName NeqSim component name or IAPWS formula
+   * @param temperature temperature in K
+   * @return true for a supported species inside the liquid-water domain
+   */
+  public static boolean isUsable(String componentName, double temperature) {
+    return findGas(componentName) != null && Double.isFinite(temperature)
+        && temperature >= CORRELATION_MINIMUM_TEMPERATURE
+        && temperature < WATER_CRITICAL_TEMPERATURE;
+  }
+
+  /**
    * Assess whether the IAPWS H2O correlation supports a component at a temperature.
    *
    * @param componentName NeqSim component name or IAPWS formula
@@ -209,12 +235,17 @@ public final class IapwsHenryLaw {
   }
 
   private static GasData requireUsable(String componentName, double temperature) {
-    Assessment assessment = assess(componentName, temperature);
-    if (!assessment.isUsable()) {
-      throw new IllegalArgumentException("IAPWS Henry correlation is not usable for component '"
-          + componentName + "' at " + temperature + " K: " + assessment.getStatus());
+    GasData gas = findGas(componentName);
+    if (gas == null) {
+      throw new IllegalArgumentException(
+          "IAPWS Henry correlation does not support component '" + componentName + "'");
     }
-    return findGas(componentName);
+    if (!Double.isFinite(temperature) || temperature < CORRELATION_MINIMUM_TEMPERATURE
+        || temperature >= WATER_CRITICAL_TEMPERATURE) {
+      throw new IllegalArgumentException("IAPWS Henry correlation is outside its liquid-water domain for component '"
+          + componentName + "' at " + temperature + " K");
+    }
+    return gas;
   }
 
   private static GasData findGas(String componentName) {
