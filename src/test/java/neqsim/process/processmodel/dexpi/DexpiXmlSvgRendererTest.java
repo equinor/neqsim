@@ -2,6 +2,7 @@ package neqsim.process.processmodel.dexpi;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -48,5 +49,22 @@ class DexpiXmlSvgRendererTest extends NeqSimTest {
     assertTrue(content.contains("data-dexpi-id=\"PT-101\""));
     assertTrue(content.contains("<polyline"));
     assertTrue(content.contains("DEXPI SVG renderer regression"));
+  }
+
+  @Test
+  void rendersGlobalTrimmedCurveWithCurvePresentation() throws Exception {
+    String dexpiContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        + "<PlantModel><Drawing Name=\"Crossing hop\"><Extent><Min X=\"0\" Y=\"0\"/>"
+        + "<Max X=\"297\" Y=\"210\"/></Extent><TrimmedCurve StartAngle=\"0\" EndAngle=\"180\">"
+        + "<Presentation LineType=\"0\" LineWeight=\"0.5\" R=\"0\" G=\"0\" B=\"0\"/>"
+        + "<Circle Radius=\"1.6\"><Position><Location X=\"50\" Y=\"100\"/>"
+        + "</Position></Circle></TrimmedCurve></Drawing></PlantModel>";
+    Path dexpi = temporaryDirectory.resolve("crossing-hop.xml");
+    java.nio.file.Files.write(dexpi, dexpiContent.getBytes(StandardCharsets.UTF_8));
+
+    String content = DexpiXmlSvgRenderer.render(dexpi.toFile());
+
+    assertTrue(content.contains("<path d=\"M 51.6 110 A 1.6 1.6 0 0 0 48.4 110\""));
+    assertTrue(content.contains("stroke-width=\"0.5\""));
   }
 }
