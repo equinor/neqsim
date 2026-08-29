@@ -206,7 +206,12 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     NodeList coordinates = parent.getElementsByTagName("Coordinate");
     double maximum = -Double.MAX_VALUE;
     for (int index = 0; index < coordinates.getLength(); index++) {
-      maximum = Math.max(maximum, Double.parseDouble(((Element) coordinates.item(index)).getAttribute("Y")));
+      String rawY = ((Element) coordinates.item(index)).getAttribute("Y");
+      try {
+        maximum = Math.max(maximum, Double.parseDouble(rawY));
+      } catch (NumberFormatException exception) {
+        throw new AssertionError("Invalid Y coordinate at index " + index + ": " + rawY, exception);
+      }
     }
     return maximum;
   }
