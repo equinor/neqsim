@@ -1,11 +1,11 @@
 # Reusable model-registry contract evidence
 
-This note records the bounded Phase 0 evidence for the existing `manageModel`
-software contract used by the NeqSim MCP server. The contract is implemented by
-the core `ModelRegistry`; registered handles resolve back to the same canonical
-NeqSim process definition and are consumed by normal `ProcessSystem` /
-`ProcessModel` runners. There is no MCP-only process simulator or second
-flowsheet representation.
+This note records the bounded Phase 0 evidence and classification for the existing
+`manageModel` software contract used by the NeqSim MCP server. The contract is
+implemented by the core `ModelRegistry`; registered handles resolve back to the
+same canonical NeqSim process definition and are consumed by normal
+`ProcessSystem` / `ProcessModel` runners. There is no MCP-only process simulator
+or second flowsheet representation.
 
 ## Foundation and engineering value
 
@@ -34,9 +34,10 @@ This evidence reuses #2875 rather than adding a competing model/session layer.
 
 ## Packaged MCP qualification
 
-`test_model_registry_protocol.py` starts the exact packaged server over STDIO
-and obtains the canonical `process/simple-separation` fixture through MCP. It
-then qualifies seven bounded protocol scenarios:
+Merged PR #3325 added `test_model_registry_protocol.py`, which starts the exact
+packaged server over STDIO and obtains the canonical
+`process/simple-separation` fixture through MCP. It qualifies seven bounded
+protocol scenarios:
 
 1. registration plus idempotent repeated registration;
 2. `get`, caller-visible `list`, and structure-only `inspect`;
@@ -47,20 +48,24 @@ then qualifies seven bounded protocol scenarios:
 5. fail-closed invalid definitions, unknown actions, and unknown handles;
 6. deletion plus rejection of the deleted handle through both registry and
    process-execution paths; and
-7. preservation of current Phase 0 accounting: inventory 1.18 remains
-   **20 `EXPLICIT_TRUST` + 16 `CONTRACT_TESTED` + 35 `CONFIRMED_GAP`**, with
-   `manageModel` still `CONFIRMED_GAP`.
+7. atomic Phase 0 classification: inventory 1.19 reports
+   **20 `EXPLICIT_TRUST` + 17 `CONTRACT_TESTED` + 34 `CONFIRMED_GAP`**, with
+   `manageModel` classified `CONTRACT_TESTED` from its direct source and
+   packaged-protocol evidence.
 
-The `MCP protocol qualification` workflow now runs both the existing focused
-`ModelRegistryTest` under Java 21 and this packaged transport harness before the
-authoritative comprehensive MCP protocol regression.
+The `MCP protocol qualification` workflow runs the focused `ModelRegistryTest`
+under Java 21, this packaged transport harness, and the authoritative
+comprehensive MCP protocol regression. The primary protocol accounting also
+includes `manageModel`, so machine-readable inventory and protocol expectations
+move together.
 
 ## Qualification boundary
 
-This increment is an evidence prerequisite, not a trust promotion.
-`manageModel` remains `CONFIRMED_GAP` until a later atomic change moves its
-machine-readable coverage record and the authoritative primary packaged
-protocol accounting together on one exact validated head.
+Inventory 1.19 promotes only the bounded software-contract classification of
+`manageModel`. It does not add a numerical benchmark or scientific-validation
+claim. `CONTRACT_TESTED` means the published lifecycle/routing contract has
+direct evidence; it does not mean results produced by an arbitrary registered
+model are validated for an engineering purpose.
 
 The bounded evidence supports registry/lifecycle/transport behavior only. It
 does **not** establish:
@@ -88,18 +93,19 @@ project document control or provenance for source facility data.
 
 No public MCP tool name, argument schema, response envelope, process JSON
 grammar, model solver, numerical tolerance, security default, or agent/skill
-handoff changes. Existing inline `processJson` callers remain supported.
-No companion agent/skill repository update is required.
+handoff changes. Existing inline `processJson` callers remain supported. No
+companion agent/skill repository update is required.
 
 Owner boundaries remain unchanged: DEXPI/P&ID semantics belong to #2899,
 dynamics to #2911, TP-flash/stability/performance to #2937, and production
-optimization #2941 is complete. This evidence does not import or duplicate
-those implementations.
+optimization #2941 is complete. This classification does not import or
+duplicate those implementations.
 
 ## Next dependency
 
-After this evidence is merged and current `master` is re-audited, the next
-dependency-ready Phase 0 step is an atomic `manageModel` trust-classification
-increment, if the exact merged evidence still supports it. That later change
-must update machine-readable coverage and the authoritative primary protocol
-accounting together and retain all boundaries above.
+After inventory 1.19 is merged and current `master` is re-audited, Phase 0
+continues from the remaining **34 `CONFIRMED_GAP`** tool contracts. The next
+promotion must again be evidence-led and atomic across machine-readable
+coverage and authoritative protocol accounting. Component-wise, energy, and
+facility-wide conservation evidence remain separate engineering-validation
+dependencies and are not implied by this registry classification.
