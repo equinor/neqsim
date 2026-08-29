@@ -76,7 +76,7 @@ public class ComponentGePitzer extends ComponentGE {
   protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
     double coefficient = super.getEffectiveHenryCoefficient(phase);
     if (phase.hasComponent("water")
-        && IapwsHenryLaw.assess(getComponentName(), phase.getTemperature()).isSupportedSpecies()) {
+        && IapwsHenryLaw.isSupportedSpecies(getComponentName())) {
       return coefficient * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
     }
     return coefficient;
