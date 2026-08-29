@@ -1,0 +1,72 @@
+name: MCP Spotless patch helper
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - ai/3153-promote-model-registry-contract
+
+jobs:
+  build-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v7
+
+      - name: Apply exact hosted Spotless formatting
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/main/java/neqsim/mcp/runners/McpEvidenceInventory.java")
+          text = path.read_text(encoding="utf-8")
+          old = '''        evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
+            "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java", "neqsim-mcp-server/test_model_registry_protocol.py",
+            "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };'''
+          new = '''        evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
+            "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
+            "neqsim-mcp-server/test_model_registry_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+            "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };'''
+          if text.count(old) != 1:
+              raise SystemExit(f"expected one exact Spotless target, found {text.count(old)}")
+          path.write_text(text.replace(old, new), encoding="utf-8")
+          PY
+
+          git diff --check -- src/main/java/neqsim/mcp/runners/McpEvidenceInventory.java
+
+      - name: Create unattached exact blob for connector-owned tree update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          data = Path("src/main/java/neqsim/mcp/runners/McpEvidenceInventory.java").read_bytes()
+          payload = json.dumps({
+              "content": base64.b64encode(data).decode("ascii"),
+              "encoding": "base64",
+          }).encode("utf-8")
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",
+              data=payload,
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              result = json.load(response)
+          print("prepared unattached blob", result["sha"])
+          PY
