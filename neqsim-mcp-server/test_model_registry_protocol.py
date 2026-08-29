@@ -373,7 +373,7 @@ def test_phase0_classification_remains_a_gap(client):
         record,
     )
     require(
-        record.get("contractTrustAvailable") is False,
+        record.get("toolSpecificTrustAvailable") is False,
         "qualification evidence was incorrectly presented as promoted trust",
         record,
     )
