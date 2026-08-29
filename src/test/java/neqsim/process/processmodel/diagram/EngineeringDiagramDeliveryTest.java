@@ -83,10 +83,10 @@ class EngineeringDiagramDeliveryTest {
     assertTrue(report.isComplete(), report.toJson());
     assertTrue(Files.isRegularFile(report.getDirectory().resolve("dexpi-process.xml")));
     Map<?, ?> assessment = (Map<?, ?>) report.toMap().get("dexpiAssessment");
-    assertTrue(((List<?>) assessment.get("canonicalMaterialConnections"))
-        .contains("10-HA-EMPTY->10-PRODUCT-EMPTY"), report.toJson());
-    assertTrue(((List<?>) assessment.get("exportedMaterialConnections"))
-        .contains("10-HA-EMPTY->10-PRODUCT-EMPTY"), report.toJson());
+    assertTrue(((List<?>) assessment.get("canonicalMaterialConnections")).contains("10-HA-EMPTY->10-PRODUCT-EMPTY"),
+        report.toJson());
+    assertTrue(((List<?>) assessment.get("exportedMaterialConnections")).contains("10-HA-EMPTY->10-PRODUCT-EMPTY"),
+        report.toJson());
   }
 
   @Test
