@@ -143,7 +143,7 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
             self.assertIn(token, self.normalized)
 
     def test_guide_is_discoverable_from_both_indexes(self):
-        package_target = "co2_transport_reaction_kinetics.md"
+        package_target = "co2_transport_reaction_kinetics"
         reference_target = "chemicalreactions/co2_transport_reaction_kinetics.md"
         self.assertIn(package_target, self.package_index)
         self.assertIn(reference_target, self.reference_index)
