@@ -111,8 +111,7 @@ class ComponentGEHenryDerivativeTest {
     PhaseInterface aqueous = system.getPhase(1);
     ComponentInterface nitrogen = aqueous.getComponent("nitrogen");
     ComponentInterface water = aqueous.getComponent("water");
-    double expectedTemperatureDerivative =
-        IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("N2", TEMPERATURE);
+    double expectedTemperatureDerivative = IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("N2", TEMPERATURE);
 
     assertEquals(expectedTemperatureDerivative, nitrogen.getdfugdt(), 1.0e-12);
     assertEquals(-0.1, nitrogen.getdfugdp(), 1.0e-15);
@@ -126,8 +125,7 @@ class ComponentGEHenryDerivativeTest {
     system.init(2);
     aqueous = system.getPhase(1);
     nitrogen = aqueous.getComponent("nitrogen");
-    assertEquals(IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("N2", 318.15), nitrogen.getdfugdt(),
-        1.0e-12);
+    assertEquals(IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("N2", 318.15), nitrogen.getdfugdt(), 1.0e-12);
     assertEquals(-0.04, nitrogen.getdfugdp(), 1.0e-15);
 
     SystemPitzer cloned = system.clone();
