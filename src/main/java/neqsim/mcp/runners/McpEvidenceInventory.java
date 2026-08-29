@@ -350,8 +350,9 @@ public final class McpEvidenceInventory {
     case "manageModel":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_MODEL_REGISTRY_LIFECYCLE";
       evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
-          "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java", "neqsim-mcp-server/test_model_registry_protocol.py",
-          "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };
+          "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
+          "neqsim-mcp-server/test_model_registry_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };
       evidenceBoundary = "Content-addressed registration, caller-scoped get/list/inspect, canonical process and automation handle routing, stable revisioning, fail-closed invalid or unknown requests, deletion/invalidation, source-level tenant/principal isolation, and packaged-MCP transport are contract-tested; this does not establish persistence across server restarts, distributed cache coherence, external identity or authorization correctness, numerical model accuracy, convergence, mass or energy closure, facility fidelity, plant authority, control permission, design certification, or accountable engineering approval";
       break;
     case "listSimulationUnits":
