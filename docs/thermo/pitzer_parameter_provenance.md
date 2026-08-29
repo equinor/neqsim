@@ -581,6 +581,13 @@ the returned parameter retains the source parameter's units and standard-state c
 
 ## Neutral-solute interaction mapping
 
+The [aqueous Henry-reference record](henry_law_reference.md) is the durable
+source-comparison and runtime-boundary matrix for the IAPWS gas-reference
+increment. It does not adopt a Kaasa or PHREEQC Pitzer coefficient: reactive
+CO2/H2S Pitzer calculations retain their established reference until this
+matrix contains a complete, independently qualified neutral-interaction
+family for their exact species topology.
+
 The neutral layer follows the public [PHREEQC PITZER contract](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-37.htm)
 and exact source commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/src/pitzer.cpp).
 The parameter families remain distinct:

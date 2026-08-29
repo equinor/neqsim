@@ -3,6 +3,7 @@ package neqsim.thermo.phase;
 import java.util.Arrays;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.thermo.component.ComponentGePitzer;
+import neqsim.thermo.component.IapwsHenryLaw;
 import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -19,6 +20,12 @@ public final class PitzerCatalogPerformanceBenchmark {
    * @param args ignored
    */
   public static void main(String[] args) {
+    for (int warmup = 0; warmup < 10000; warmup++) {
+      sink += iapwsHenryKernelChecksum();
+    }
+    System.out.println(
+        "iapwsHenryKernelNs=" + medianBatches(PitzerCatalogPerformanceBenchmark::iapwsHenryKernelChecksum, 10000));
+
     SystemSrkEos neutral = createNeutralSystem();
     for (int warmup = 0; warmup < 500; warmup++) {
       neutral.init(3);
@@ -66,6 +73,14 @@ public final class PitzerCatalogPerformanceBenchmark {
         + medianBatches(PitzerCatalogPerformanceBenchmark::solveReactiveH2sState, 10));
     SystemPitzer h2sEvidence = solveReactiveH2sSystem(298.15);
     SystemPitzer warmerH2sEvidence = solveReactiveH2sSystem(318.15);
+    PhasePitzer h2sPhase = (PhasePitzer) h2sEvidence.getPhase(1);
+    System.out.println("pitzerH2sDataset=" + h2sPhase.getParameterDatasetId());
+    System.out.println("pitzerH2sNeutralCoverage=" + h2sPhase.auditNeutralPitzerParameterCoverage().formatDiagnostic());
+    System.out.println("pitzerH2sHasIons=" + h2sPhase.hasIons());
+    System.out.println("pitzerH2sHasNeutralInteractions=" + h2sPhase.hasNeutralPitzerInteractions());
+    System.out.println("pitzerH2sRawHenryBar=" + h2sPhase.getComponent("H2S").getHenryCoef(298.15));
+    System.out.println("pitzerH2sFugacityCoefficient=" + h2sPhase.getComponent("H2S").getFugacityCoefficient());
+    System.out.println("pitzerH2sActivityCoefficient=" + ((ComponentGePitzer) h2sPhase.getComponent("H2S")).getGamma());
     System.out.println("pitzerH2sMaximumReactionResidual="
         + h2sEvidence.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual());
     System.out.println("pitzerH2sMaximumElementResidual="
@@ -106,6 +121,11 @@ public final class PitzerCatalogPerformanceBenchmark {
       }
     }
     return value;
+  }
+
+  private static double iapwsHenryKernelChecksum() {
+    return IapwsHenryLaw.getHenryCoefficientBar("CH4", 298.15)
+        + IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("CH4", 298.15);
   }
 
   private static double neutralPropertyChecksum(SystemSrkEos system) {

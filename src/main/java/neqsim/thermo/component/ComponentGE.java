@@ -48,7 +48,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   @Override
   public double fugcoef(PhaseInterface phase) {
     logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
-    if (referenceStateType.equals("solvent")) {
+    if (referenceStateType.equals("solvent") && !usesIapwsAqueousReference(phase)) {
       fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
       gammaRefCor = gamma;
     } else {
@@ -59,7 +59,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
       } else {
         activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
-      double henryCoef = getEffectiveHenryCoefficient(phase.getTemperature());
+      double henryCoef = getEffectiveHenryCoefficient(phase);
       fugacityCoefficient = activinf * henryCoef / phase.getPressure();
       // gamma* benyttes ikke
       gammaRefCor = activinf;
@@ -82,6 +82,27 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   protected double getEffectiveHenryCoefficient(double temperature) {
     double henryCoefficient = getHenryCoef(temperature);
     return isHenryCoefficientCapped(henryCoefficient) ? INSOLUBLE_HENRY_COEFFICIENT : henryCoefficient;
+  }
+
+  /**
+   * Returns the phase-aware Henry coefficient, preferring the qualified IAPWS pure-water reference.
+   *
+   * <p>
+   * The IAPWS value is selected only for a supported neutral solute in a water-containing phase. Temperatures outside
+   * the liquid-water domain fail closed. Species outside the IAPWS table retain the legacy database behavior.
+   * </p>
+   *
+   * @param phase phase containing temperature and solvent topology
+   * @return effective mole-fraction Henry coefficient in bar
+   */
+  protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
+    if (!isIsIon() && IapwsHenryLaw.isSupportedSpecies(getComponentName()) && phase.hasComponent("water")) {
+      if (IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+        return IapwsHenryLaw.getHenryCoefficientBar(getComponentName(), phase.getTemperature());
+      }
+      return INSOLUBLE_HENRY_COEFFICIENT;
+    }
+    return getEffectiveHenryCoefficient(phase.getTemperature());
   }
 
   /**
@@ -115,6 +136,38 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   }
 
   /**
+   * Returns the phase-aware logarithmic derivative for the selected Henry reference.
+   *
+   * @param phase phase containing temperature and solvent topology
+   * @return d(ln H)/dT in 1/K
+   */
+  protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
+    if (!isIsIon() && IapwsHenryLaw.isSupportedSpecies(getComponentName()) && phase.hasComponent("water")) {
+      if (IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+        return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
+      }
+      return 0.0;
+    }
+    return getLnHenryCoefficientTemperatureDerivative(phase.getTemperature());
+  }
+
+  /**
+   * Tests whether this component uses a Henry rather than a solvent vapor-pressure reference in a phase.
+   *
+   * @param phase owning GE phase
+   * @return true for a solute Henry reference
+   */
+  protected boolean usesHenryReference(PhaseInterface phase) {
+    return !referenceStateType.equals("solvent") || usesIapwsAqueousReference(phase);
+  }
+
+  /** Tests whether IAPWS overrides a legacy solvent classification in an aqueous phase. */
+  private boolean usesIapwsAqueousReference(PhaseInterface phase) {
+    return !"water".equalsIgnoreCase(getComponentName()) && IapwsHenryLaw.isSupportedSpecies(getComponentName())
+        && phase.hasComponent("water");
+  }
+
+  /**
    * fugcoefDiffPres.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -123,11 +176,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   public double fugcoefDiffPres(PhaseInterface phase) {
     // double temperature = phase.getTemperature(), pressure = phase.getPressure();
     // int numberOfComponents = phase.getNumberOfComponents();
-    if (referenceStateType.equals("solvent")) {
-      dfugdp = 0.0; // forelopig uten pointing
-    } else {
-      dfugdp = 0.0; // forelopig uten pointing
-    }
+    dfugdp = 0.0; // forelopig uten pointing
     return dfugdp;
   }
 
@@ -142,11 +191,11 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     // double pressure = phase.getPressure();
     // int numberOfComponents = phase.getNumberOfComponents();
 
-    if (referenceStateType.equals("solvent")) {
+    if (referenceStateType.equals("solvent") && !usesIapwsAqueousReference(phase)) {
       dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
       logger.info("check this dfug dt - antoine");
     } else {
-      dfugdt = dlngammadt + getLnHenryCoefficientTemperatureDerivative(temperature);
+      dfugdt = dlngammadt + getLnHenryCoefficientTemperatureDerivative(phase);
     }
     return dfugdt;
   }

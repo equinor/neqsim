@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
+import neqsim.thermo.component.IapwsHenryLaw;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -346,20 +347,21 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   public void testNeutralHenryFugacityUsesMolalityBasis() {
     SystemPitzer system = new SystemPitzer(298.15, 1.01325);
     system.addComponent("water", 55.508);
-    system.addComponent("CO2", 1.0e-4);
+    system.addComponent("nitrogen", 1.0e-4);
     system.setMixingRule("classic");
     system.init(0);
     system.init(1);
 
     PhaseInterface aqueous = system.getPhase(1);
-    double moleFraction = aqueous.getComponent("CO2").getx();
-    double molality = aqueous.getComponent("CO2").getMolality(aqueous);
-    double gamma = aqueous.getActivityCoefficient(aqueous.getComponent("CO2").getComponentNumber());
-    double henryCoefficient = aqueous.getComponent("CO2").getHenryCoef(aqueous.getTemperature());
+    double moleFraction = aqueous.getComponent("nitrogen").getx();
+    double molality = aqueous.getComponent("nitrogen").getMolality(aqueous);
+    double gamma = aqueous.getActivityCoefficient(aqueous.getComponent("nitrogen").getComponentNumber());
+    double henryCoefficient = IapwsHenryLaw.getHenryCoefficientBar("N2", aqueous.getTemperature())
+        * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
     double expectedFugacityCoefficient = gamma * henryCoefficient * molality / (moleFraction * aqueous.getPressure());
 
     assertTrue(molality / moleFraction > 50.0);
-    assertEquals(expectedFugacityCoefficient, aqueous.getComponent("CO2").getFugacityCoefficient(),
+    assertEquals(expectedFugacityCoefficient, aqueous.getComponent("nitrogen").getFugacityCoefficient(),
         expectedFugacityCoefficient * 1.0e-12);
   }
 
