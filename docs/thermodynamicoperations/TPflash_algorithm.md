@@ -2071,6 +2071,39 @@ execution and removes an unannotated 1,401-state logging scan. Production code,
 public APIs, thermodynamic parameters, defaults, and runtime behavior are unchanged.
 The bounded regression adds no production performance claim.
 
+#### 6.4.5 Water-bearing PR multiphase endpoint qualification
+
+The legacy water-bearing Peng-Robinson regression contains 1 mol nitrogen,
+90 mol methane, 2 mol ethane, 1 mol each of propane, iso-/normal butane,
+iso-/normal pentane, n-hexane and nC10, plus 10 mol water. It uses the classic
+mixing rule without fitted binary interaction parameters. The bounded
+qualification covers 298.15 K near 10 bara and 288.15 K near 500 bara. These
+states are synthetic solver regressions; they are not experimental validation
+of water solubility, phase fractions, or the classic-PR parameterization.
+
+At 10 bara, the multiphase endpoint must retain a closed split, remain within
+`5e-5` relative of the frozen enthalpy reference, and have Gibbs energy no higher
+than the ordinary endpoint. The relative reference tolerance covers the observed
+cross-platform property difference while remaining one hundred times tighter than
+the legacy 0.5 percent enthalpy check. At 500 bara, ordinary and multiphase flashes
+must agree. Nearby checks use 9.9/10.0/10.1 bara and 499/500/501 bara. Both regimes
+require recovery from beta `1e-12`, changed-pressure and return-to-state agreement,
+and deterministic repeat at the low-pressure reference. Equivalent endpoints also
+reproduce enthalpy using the same tight state-comparison tolerance applied to Gibbs
+energy.
+
+Every accepted state requires finite, bounded and normalized beta and
+compositions, beta and phase normalization within `1e-12`, component material
+balance below `1e-10`, maximum interphase log-fugacity residual below `1e-8`
+for components present in both phases, positive compressibility factors, and
+finite Gibbs energy. Phases are paired by water mole fraction, so phase-role
+enum metadata is outside this thermodynamic contract.
+
+This qualification activates two previously unexecuted JUnit methods and adds a
+small fixed flash matrix. Production code, APIs, parameters, defaults and
+runtime behavior are unchanged. No production performance improvement is
+claimed.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.

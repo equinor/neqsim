@@ -4,6 +4,7 @@ import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBa
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PitzerParameterDatasets;
+import neqsim.thermo.phase.PitzerParameterQualification;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
@@ -81,6 +82,43 @@ public class SystemPitzer extends SystemEosGE {
    */
   public boolean isUsingPhreeqcPitzerParametersByDefault() {
     return ((PhasePitzer) phaseArray[1]).isUsePhreeqcCatalogByDefault();
+  }
+
+  /**
+   * Returns scientific qualification metadata for the selected Pitzer parameter dataset.
+   *
+   * <p>
+   * Calling this method completes lazy dataset selection and the active ionic-topology coverage audit. It does not run
+   * a flash or enter ordinary property kernels.
+   * </p>
+   *
+   * @return immutable qualification metadata for the selected dataset identity
+   */
+  public PitzerParameterQualification getPitzerParameterQualification() {
+    PhasePitzer aqueousPhase = (PhasePitzer) phaseArray[1];
+    aqueousPhase.getPitzerParameterCoverage();
+    return PitzerParameterDatasets.getQualification(aqueousPhase.getParameterDatasetId());
+  }
+
+  /**
+   * Requires complete interaction coverage and complete scientific qualification of the named Pitzer dataset.
+   *
+   * <p>
+   * This is an explicit publication gate. A broad dataset with only partially validated subsystems is rejected even
+   * when it covers the active topology. A successful result still requires the caller to check the appropriate
+   * subsystem-specific temperature and molality range helper.
+   * </p>
+   *
+   * @return immutable qualification metadata for the accepted dataset
+   * @throws IllegalStateException when interaction coverage is incomplete or the complete dataset is not validated
+   */
+  public PitzerParameterQualification requireCompletePitzerDatasetQualification() {
+    PhasePitzer aqueousPhase = (PhasePitzer) phaseArray[1];
+    aqueousPhase.requireCompletePitzerParameterCoverage();
+    PitzerParameterQualification qualification = PitzerParameterDatasets
+        .getQualification(aqueousPhase.getParameterDatasetId());
+    qualification.requireCompleteDatasetQualification();
+    return qualification;
   }
 
   /** {@inheritDoc} */

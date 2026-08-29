@@ -84,6 +84,33 @@ public final class PitzerParameterQualification implements Serializable {
     return level == Level.VALIDATED_WITHIN_DECLARED_ENVELOPE;
   }
 
+  /**
+   * Formats a deterministic diagnostic for publication and engineering gates.
+   *
+   * @return dataset identity, qualification level, validated systems, and limitations
+   */
+  public String formatDiagnostic() {
+    return "Pitzer parameter dataset '" + datasetId + "' qualification: level=" + level + ", validatedSystems="
+        + validatedSystems + ", limitations=" + limitations;
+  }
+
+  /**
+   * Requires complete scientific qualification of the named dataset.
+   *
+   * <p>
+   * This dataset-level gate is intentionally stricter than interaction coverage. It does not test whether the current
+   * temperature, pressure, or composition is inside a subsystem-specific validation range; callers must also apply the
+   * appropriate range helper for their exact use case.
+   * </p>
+   *
+   * @throws IllegalStateException when the complete named dataset is not validated within its declared envelope
+   */
+  public void requireCompleteDatasetQualification() {
+    if (!isValidatedWithinDeclaredEnvelope()) {
+      throw new IllegalStateException(formatDiagnostic());
+    }
+  }
+
   private static List<String> immutableCopy(List<String> values) {
     if (values == null || values.isEmpty()) {
       return Collections.emptyList();
