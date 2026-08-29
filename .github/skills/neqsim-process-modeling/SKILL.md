@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-modeling
 description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation."
-last_verified: "2026-08-22"
+last_verified: "2026-08-29"
 ---
 
 # NeqSim Process Modeling Skill
@@ -210,6 +210,10 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 - Use `Dexpi20XmlWriter` for native Plant/P&ID exchange and `Dexpi20ProcessModelWriter` for native Process/PFD/BFD
   exchange. A Proteus document with a changed header is not native DEXPI 2.0. Preserve the conformance report and still
   require a named-CAE round-trip before project qualification.
+- Keep an explicitly registered terminal product as `new Stream(productName, upstreamOutlet)` when the product must
+  remain a named topology node. NeqSim reports the wrapped outlet as that stream's inlet and the DEXPI Process exporter
+  maps the node to a sink. Zero-flow and isolated empty streams must not be deleted merely to avoid invalid empty port
+  collections.
 - Use `Cfihos20HandoverExporter` only with an exact project-controlled CFIHOS 2.0 Core or Extended RDL delivery.
   Verify its digest from controlled bytes, map canonical nodes/properties/documents to exact RDL identifiers, record
   mapping approval, and close the generated gap register. Its CSVs are staging data; Principal transformation,
