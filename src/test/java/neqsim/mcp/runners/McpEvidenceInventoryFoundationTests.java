@@ -196,10 +196,12 @@ class McpEvidenceInventoryFoundationTests {
       assertTrue(automation.get("contractTrustAvailable").getAsBoolean(), toolName);
       assertEquals(5, automation.get("contractEvidenceCount").getAsInt(), toolName);
       assertEquals(5, automation.getAsJsonArray("contractEvidenceSources").size(), toolName);
-      assertTrue(automation.getAsJsonArray("contractEvidenceSources").toString()
-          .contains("AutomationReadContractTest.java"), toolName);
-      assertTrue(automation.getAsJsonArray("contractEvidenceSources").toString()
-          .contains("test_automation_read_protocol.py"), toolName);
+      assertTrue(
+          automation.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationReadContractTest.java"),
+          toolName);
+      assertTrue(
+          automation.getAsJsonArray("contractEvidenceSources").toString().contains("test_automation_read_protocol.py"),
+          toolName);
     }
     JsonObject variableRead = coverageRecords.getAsJsonObject("getSimulationVariable");
     assertEquals("NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_READ",
