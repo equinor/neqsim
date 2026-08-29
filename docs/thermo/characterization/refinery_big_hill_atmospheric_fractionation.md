@@ -52,10 +52,12 @@ The operating point is deliberately a reproducible **screening case**, not a rec
 | Feed tray | 4, bottom-up |
 | Top pressure | 1.2 bara |
 | Bottom pressure | 1.5 bara |
-| Condenser temperature | 360 K |
+| Condenser temperature | 420 K |
 | Reboiler temperature | 690 K |
 | Condenser reflux ratio | 1.0 |
 | Liquid side draw | 10% of tray-5 liquid traffic |
+
+The 420 K partial-condenser set point lies between the representative normal-boiling temperatures of the first two bounded cuts (373.4 K and 429.0 K). This avoids the sub-light-cut 360 K condition that collapsed the vapor-overhead initialization into guarded fallback products while preserving a physically ordered separation target.
 
 `MESH_RESIDUAL` uses inside-out initialization followed by rigorous residual monitoring. Interior tray temperatures remain solver variables governed by the stage energy balances. No tuning to a commercial process simulator is used.
 
