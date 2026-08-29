@@ -44,7 +44,8 @@ class TPFlashHighTempTest {
     SystemInterface reference = flash(pengRobinson, REFERENCE_TEMPERATURE_C, true, false);
     SystemInterface poorGuess = flash(pengRobinson, REFERENCE_TEMPERATURE_C, true, true);
 
-    assertEquals(2, reference.getNumberOfPhases(), modelLabel + " reference topology");
+    int expectedReferencePhases = pengRobinson ? 1 : 2;
+    assertEquals(expectedReferencePhases, reference.getNumberOfPhases(), modelLabel + " reference topology");
     assertClosedEquilibrium(ordinary, modelLabel + " ordinary reference");
     assertClosedEquilibrium(reference, modelLabel + " multiphase reference");
     assertEquivalentState(ordinary, reference, 1.0e-8, modelLabel + " ordinary versus multiphase");
