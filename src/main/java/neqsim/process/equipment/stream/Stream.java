@@ -570,10 +570,24 @@ public class Stream extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (!getFluid().isInitialized()) {
-      getFluid().init(0);
+    SystemInterface fluid = getFluid();
+    if (fluid == null) {
+      // A named but unconfigured stream is a valid inactive topology placeholder. Treat it as
+      // solved for this pass so ProcessSystem execution, diagram generation, and exchange export
+      // can retain the placeholder without inventing a thermodynamic state.
+      isActive(false);
+      lastFlowRate = 0.0;
+      lastTemperature = Double.NaN;
+      lastPressure = Double.NaN;
+      lastComposition = null;
+      lastSpecification = getSpecification();
+      setCalculationIdentifier(id);
+      return;
     }
-    thermoSystem = getFluid().clone();
+    if (!fluid.isInitialized()) {
+      fluid.init(0);
+    }
+    thermoSystem = fluid.clone();
 
     if (getFlowRate("kg/hr") < getMinimumFlow()) {
       isActive(false);

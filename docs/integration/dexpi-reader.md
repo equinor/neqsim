@@ -146,6 +146,12 @@ DexpiXmlSvgRenderer.render(dexpi, svg);
 The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Use an independent
 DEXPI consumer as an interoperability check when qualifying an exchange for a project handoff.
 
+An intentionally unconfigured `new Stream("spare")` may remain registered in the `ProcessSystem`.
+Its `run(UUID)` call completes as an inactive topology placeholder without inventing a fluid state,
+and the DEXPI writers and renderer ignore unsupported empty geometry while preserving the connected
+process. Equipment that consumes the placeholder still requires a real thermodynamic inlet before it
+can run.
+
 ### Layout and visualization features
 
 The export path applies NeqSim's built-in auto-layout and visualization defaults: equipment tag

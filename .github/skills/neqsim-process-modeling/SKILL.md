@@ -214,6 +214,8 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
   remain a named topology node. NeqSim reports the wrapped outlet as that stream's inlet and the DEXPI Process exporter
   maps the node to a sink. Zero-flow and isolated empty streams must not be deleted merely to avoid invalid empty port
   collections.
+- An isolated `new Stream(name)` with no fluid runs as an inactive topology placeholder. Do not connect downstream
+  thermodynamic equipment to that placeholder until a real fluid state is assigned.
 - Use `Cfihos20HandoverExporter` only with an exact project-controlled CFIHOS 2.0 Core or Extended RDL delivery.
   Verify its digest from controlled bytes, map canonical nodes/properties/documents to exact RDL identifiers, record
   mapping approval, and close the generated gap register. Its CSVs are staging data; Principal transformation,
