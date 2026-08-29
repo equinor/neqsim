@@ -1,0 +1,166 @@
+name: MCP surface inventory patch helper
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - ai/3153-promote-model-registry-contract
+
+jobs:
+  build-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v7
+
+      - name: Apply bounded surface-inventory edits
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("neqsim-mcp-server/docs/SURFACE_INVENTORY.md")
+          text = path.read_text(encoding="utf-8")
+
+          replacements = [
+              (
+                  '| Trust coverage records | 71 = 20 explicit benchmark + 16 bounded contract-tested software contracts + 35 confirmed gaps |',
+                  '| Trust coverage records | 71 = 20 explicit benchmark + 17 bounded contract-tested software contracts + 34 confirmed gaps |',
+                  1,
+              ),
+              (
+                  '| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.18; any future promotion must move machine-readable coverage and primary protocol accounting atomically |',
+                  '| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.19; any future promotion must move machine-readable coverage and primary protocol accounting atomically |',
+                  1,
+              ),
+              (
+                  '  validation-profile governance, bounded runtime API inspection, and the five automation advisory\n  discovery/read/diagnostic contracts.',
+                  '  validation-profile governance, bounded runtime API inspection, the reusable model-registry\n  lifecycle, and the five automation advisory discovery/read/diagnostic contracts.',
+                  1,
+              ),
+              (
+                  'classification. It does **not** mean the MCP surface is scientifically validated: 35 records remain\n`CONFIRMED_GAP`, sixteen are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the',
+                  'classification. It does **not** mean the MCP surface is scientifically validated: 34 records remain\n`CONFIRMED_GAP`, seventeen are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the',
+                  1,
+              ),
+              (
+                  'now reconciles inventory 1.18 with 20/16/35 coverage accounting while retaining\n`inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`\namong its sixteen bounded software contracts and requires 35 confirmed gaps.',
+                  'now reconciles inventory 1.19 with 20/17/34 coverage accounting while retaining\n`inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`\namong its seventeen bounded software contracts and requires 34 confirmed gaps.',
+                  1,
+              ),
+              (
+                  '`manageValidationProfile` in its sixteen bounded software contracts and requires 35 confirmed\ngaps.',
+                  '`manageValidationProfile` in its seventeen bounded software contracts and requires 34 confirmed\ngaps.',
+                  1,
+              ),
+              (
+                  'promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.18 retains that contract\nwhile adding the automation advisory promotions below.',
+                  'promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.19 retains that contract\nalongside the later automation and model-registry promotions below.',
+                  1,
+              ),
+              (
+                  'The current promotion moves the five machine-readable coverage records, the focused\n`test_automation_read_protocol.py` assertions, and the authoritative `test_mcp_server.py`\naccounting together on one exact head.',
+                  'That promotion moved the five machine-readable coverage records, the focused\n`test_automation_read_protocol.py` assertions, and the authoritative `test_mcp_server.py`\naccounting together on one exact head.',
+                  1,
+              ),
+          ]
+          for old, new, expected in replacements:
+              found = text.count(old)
+              if found != expected:
+                  raise SystemExit(f"expected {expected} occurrences of {old!r}, found {found}")
+              text = text.replace(old, new)
+
+          old_tail = (
+              'No promotion candidate remains queued in inventory 1.18. A future transition must again move the\n'
+              'machine-readable coverage record and primary packaged-protocol accounting atomically from direct\n'
+              'evidence.\n'
+          )
+          new_tail = (
+              '### Promoted reusable model-registry contract\n\n'
+              'Inventory version 1.19 atomically promotes `manageModel` after merged #3325 established direct Java\n'
+              'and packaged-MCP evidence for the reusable model-registry lifecycle. The contract remains the core\n'
+              '`ModelRegistry` foundation from #2875: registered handles resolve back into canonical NeqSim\n'
+              '`ProcessSystem`/`ProcessModel` execution, with no MCP-only simulator or second flowsheet\n'
+              'representation. Machine-readable coverage, focused Java/protocol expectations, and the authoritative\n'
+              '`test_mcp_server.py` accounting move together from 20/16/35 to 20/17/34.\n\n'
+              'The qualified boundary covers registration and idempotency, get/list/inspect, canonical process and\n'
+              'automation routing, revisioning, fail-closed malformed/unknown requests, deletion/invalidation,\n'
+              'source-level principal/tenant isolation, and packaged transport. It does **not** establish restart\n'
+              'persistence, distributed coherence, external identity correctness, numerical accuracy, convergence,\n'
+              'component or energy closure, facility fidelity, plant authority, control-system permission, design\n'
+              'certification, or accountable engineering approval. See\n'
+              '`docs/evidence/MODEL_REGISTRY_CONTRACT.md`.\n\n'
+              'No promotion candidate remains queued in inventory 1.19. A future transition must again move the\n'
+              'machine-readable coverage record and primary packaged-protocol accounting atomically from direct\n'
+              'evidence.\n'
+          )
+          if text.count(old_tail) != 1:
+              raise SystemExit(f"expected one promotion-tail block, found {text.count(old_tail)}")
+          text = text.replace(old_tail, new_tail)
+
+          old_stop = (
+              'every published tool. Sixteen bounded discovery, catalog, lookup, progress, trust-retrieval,\n'
+              'governance, validation-profile, API-inspection, and automation advisory contracts are\n'
+              'contract-tested, leaving 35 confirmed trust gaps and no queued promotion candidate.'
+          )
+          new_stop = (
+              'every published tool. Seventeen bounded discovery, catalog, lookup, progress, trust-retrieval,\n'
+              'governance, validation-profile, API-inspection, model-registry, and automation advisory contracts are\n'
+              'contract-tested, leaving 34 confirmed trust gaps and no queued promotion candidate.'
+          )
+          if text.count(old_stop) != 1:
+              raise SystemExit(f"expected one Phase 0 stop block, found {text.count(old_stop)}")
+          text = text.replace(old_stop, new_stop)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          git diff --check -- neqsim-mcp-server/docs/SURFACE_INVENTORY.md
+          git diff -- neqsim-mcp-server/docs/SURFACE_INVENTORY.md > surface-inventory.patch
+
+      - name: Create unattached exact blob for connector-owned tree update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          data = Path("neqsim-mcp-server/docs/SURFACE_INVENTORY.md").read_bytes()
+          payload = json.dumps({
+              "content": base64.b64encode(data).decode("ascii"),
+              "encoding": "base64",
+          }).encode("utf-8")
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",
+              data=payload,
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              result = json.load(response)
+          Path("blob-sha.txt").write_text(result["sha"] + "\n", encoding="utf-8")
+          print("prepared unattached blob", result["sha"])
+          PY
+
+      - name: Upload patched surface inventory
+        uses: actions/upload-artifact@v7
+        with:
+          name: mcp-surface-inventory-patched
+          path: |
+            neqsim-mcp-server/docs/SURFACE_INVENTORY.md
+            surface-inventory.patch
+            blob-sha.txt
+          if-no-files-found: error
