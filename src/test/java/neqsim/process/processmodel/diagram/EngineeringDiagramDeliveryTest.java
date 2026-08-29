@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -81,7 +82,11 @@ class EngineeringDiagramDeliveryTest {
 
     assertTrue(report.isComplete(), report.toJson());
     assertTrue(Files.isRegularFile(report.getDirectory().resolve("dexpi-process.xml")));
-    assertTrue(report.toJson().contains("10-HA-EMPTY->10-PRODUCT-EMPTY"));
+    Map<?, ?> assessment = (Map<?, ?>) report.toMap().get("dexpiAssessment");
+    assertTrue(((List<?>) assessment.get("canonicalMaterialConnections"))
+        .contains("10-HA-EMPTY->10-PRODUCT-EMPTY"), report.toJson());
+    assertTrue(((List<?>) assessment.get("exportedMaterialConnections"))
+        .contains("10-HA-EMPTY->10-PRODUCT-EMPTY"), report.toJson());
   }
 
   @Test
