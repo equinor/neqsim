@@ -18,8 +18,7 @@ class ComponentGEHenryDerivativeTest {
     double expected = finiteDifferenceLogHenry(component, TEMPERATURE);
 
     assertEquals(expected, component.fugcoefDiffTemp(phase), 1.0e-9);
-    assertEquals(
-        1200.0 / (TEMPERATURE * TEMPERATURE) + 1.5 / TEMPERATURE + 0.002,
+    assertEquals(1200.0 / (TEMPERATURE * TEMPERATURE) + 1.5 / TEMPERATURE + 0.002,
         component.fugcoefDiffTemp(phase), 1.0e-12);
   }
 
@@ -29,8 +28,7 @@ class ComponentGEHenryDerivativeTest {
     component.setHenryCoefParameter(new double[] { 8.0, -800.0, 0.5, 0.001 });
     PhasePitzer phase = phaseAt(TEMPERATURE);
 
-    assertEquals(
-        finiteDifferenceLogHenry(component, TEMPERATURE), component.fugcoefDiffTemp(phase), 1.0e-9);
+    assertEquals(finiteDifferenceLogHenry(component, TEMPERATURE), component.fugcoefDiffTemp(phase), 1.0e-9);
   }
 
   @Test
@@ -61,7 +59,7 @@ class ComponentGEHenryDerivativeTest {
 
   private static double finiteDifferenceLogHenry(ComponentGE component, double temperature) {
     double step = 1.0e-3;
-    return (Math.log(component.getHenryCoef(temperature + step))
-        - Math.log(component.getHenryCoef(temperature - step))) / (2.0 * step);
+    return (Math.log(component.getHenryCoef(temperature + step)) - Math.log(component.getHenryCoef(temperature - step)))
+        / (2.0 * step);
   }
 }
