@@ -22,9 +22,8 @@ import neqsim.process.engineering.SafetyFunctionDesign;
 
 /** Materializes governed engineering requirements as DEXPI P&amp;ID objects. */
 public final class DexpiEngineeringMaterializer {
-  private static final int INSTRUMENT_ROWS_PER_COLUMN = 3;
-  private static final double INSTRUMENT_COLUMN_SPACING = 50.0;
-  private static final double INSTRUMENT_X_SPACING = 22.0;
+  private static final int INSTRUMENT_COLUMNS = 5;
+  private static final double INSTRUMENT_X_SPACING = 26.0;
   private static final double INSTRUMENT_ROW_SPACING = 14.0;
   private static final double INSTRUMENT_VERTICAL_CLEARANCE = 10.0;
   private static final int DEVICE_COLUMNS = 2;
@@ -282,14 +281,19 @@ public final class DexpiEngineeringMaterializer {
     int functionCount = 0;
     int deviceCount = 0;
     List<CauseAndEffectEntry> matrix = new ArrayList<CauseAndEffectEntry>();
-    Map<String, Integer> loopCounts = new LinkedHashMap<String, Integer>();
-    Map<String, Integer> nextLoopIndexes = new LinkedHashMap<String, Integer>();
+    Map<String, Integer> instrumentCounts = new LinkedHashMap<String, Integer>();
+    Map<String, Integer> nextInstrumentIndexes = new LinkedHashMap<String, Integer>();
     Map<String, Integer> nextDeviceIndexes = new LinkedHashMap<String, Integer>();
     for (EngineeringRequirement requirement : project.getRequirements()) {
       String equipmentTag = requirement.getEquipmentTag();
-      if (equipment.containsKey(equipmentTag) && definitionFor(requirement) != null) {
-        Integer count = loopCounts.get(equipmentTag);
-        loopCounts.put(equipmentTag, Integer.valueOf(count == null ? 1 : count.intValue() + 1));
+      FunctionDefinition definition = definitionFor(requirement);
+      if (equipment.containsKey(equipmentTag) && definition != null) {
+        int instrumentCount = definition.sensors.size() + (definition.controller == null ? 0 : 1);
+        if (instrumentCount > 0) {
+          Integer count = instrumentCounts.get(equipmentTag);
+          instrumentCounts.put(equipmentTag,
+              Integer.valueOf((count == null ? 0 : count.intValue()) + instrumentCount));
+        }
       }
     }
 
@@ -306,25 +310,20 @@ public final class DexpiEngineeringMaterializer {
       String number = tagNumber(equipmentTag);
       List<String> loopMembers = new ArrayList<String>();
       String initiatingTag = "";
-      int loopIndex = nextIndex(nextLoopIndexes, equipmentTag);
-      int loopCount = loopCounts.get(equipmentTag).intValue();
-      int columnCount = (loopCount + INSTRUMENT_ROWS_PER_COLUMN - 1) / INSTRUMENT_ROWS_PER_COLUMN;
-      int columnIndex = loopIndex / INSTRUMENT_ROWS_PER_COLUMN;
-      int rowIndex = loopIndex % INSTRUMENT_ROWS_PER_COLUMN;
-      double columnCenter = protectedEquipment.x
-          + (columnIndex - (columnCount - 1) / 2.0) * INSTRUMENT_COLUMN_SPACING;
+      int instrumentStartIndex = currentIndex(nextInstrumentIndexes, equipmentTag);
+      Integer totalInstrumentCountValue = instrumentCounts.get(equipmentTag);
+      int totalInstrumentCount = totalInstrumentCountValue == null ? 0 : totalInstrumentCountValue.intValue();
       int instrumentCount = definition.sensors.size() + (definition.controller == null ? 0 : 1);
-      double baseX = columnCenter - Math.max(0, instrumentCount - 1) * INSTRUMENT_X_SPACING / 2.0;
-      double baseY = protectedEquipment.annotationTopY + INSTRUMENT_VERTICAL_CLEARANCE
-          + rowIndex * INSTRUMENT_ROW_SPACING;
 
       for (int i = 0; i < definition.sensors.size(); i++) {
         String tag = definition.sensors.get(i) + "-" + number;
         if (i > 0) {
           tag += "-" + (i + 1);
         }
+        double[] instrumentPosition =
+            instrumentPosition(protectedEquipment, instrumentStartIndex + i, totalInstrumentCount);
         String id = appendInstrumentFunction(document, root, usedIds, project, requirement, protectedEquipment, tag,
-            definition.controlSystem, "SENSOR_OR_SWITCH", baseX + i * INSTRUMENT_X_SPACING, baseY);
+            definition.controlSystem, "SENSOR_OR_SWITCH", instrumentPosition[0], instrumentPosition[1]);
         loopMembers.add(id);
         functionCount++;
         if (initiatingTag.isEmpty()) {
@@ -334,9 +333,10 @@ public final class DexpiEngineeringMaterializer {
 
       if (definition.controller != null) {
         String tag = definition.controller + "-" + number;
+        double[] controllerPosition = instrumentPosition(protectedEquipment,
+            instrumentStartIndex + definition.sensors.size(), totalInstrumentCount);
         String id = appendInstrumentFunction(document, root, usedIds, project, requirement, protectedEquipment, tag,
-            definition.controlSystem, "CONTROLLER_OR_LOGIC_SOLVER",
-            baseX + definition.sensors.size() * INSTRUMENT_X_SPACING, baseY);
+            definition.controlSystem, "CONTROLLER_OR_LOGIC_SOLVER", controllerPosition[0], controllerPosition[1]);
         for (String sensorId : loopMembers) {
           appendInformationFlow(document, root, usedIds, project, requirement, sensorId, id, definition.controlSystem,
               "SignalConveyingFunction");
@@ -344,6 +344,8 @@ public final class DexpiEngineeringMaterializer {
         loopMembers.add(id);
         functionCount++;
       }
+
+      nextInstrumentIndexes.put(equipmentTag, Integer.valueOf(instrumentStartIndex + instrumentCount));
 
       String actuatingSourceId = last(loopMembers);
       int equipmentDeviceIndex = currentIndex(nextDeviceIndexes, equipmentTag);
@@ -720,6 +722,15 @@ public final class DexpiEngineeringMaterializer {
       }
     }
     return top;
+  }
+
+  private static double[] instrumentPosition(EquipmentReference equipment, int index, int total) {
+    int columns = Math.min(INSTRUMENT_COLUMNS, Math.max(1, total));
+    int column = index % columns;
+    int row = index / columns;
+    double startX = equipment.x - (columns - 1) * INSTRUMENT_X_SPACING / 2.0;
+    return new double[] { startX + column * INSTRUMENT_X_SPACING,
+        equipment.annotationTopY + INSTRUMENT_VERTICAL_CLEARANCE + row * INSTRUMENT_ROW_SPACING };
   }
 
   private static int currentIndex(Map<String, Integer> indexes, String equipmentTag) {
