@@ -5,151 +5,191 @@ description: Get started with NeqSim in Java. Maven setup, first flash calculati
 
 # Java Quickstart
 
-Get NeqSim running in your Java project in under 10 minutes.
+Get NeqSim running in a Java project with one thermodynamic calculation and one composable
+process simulation. The examples use NeqSim 3.18.0; check
+[Maven Central](https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim) for a newer
+published version before starting a new project.
 
-## Step 1: Add Maven Dependency (2 minutes)
+## Step 1: add NeqSim to a project
 
-Add to your `pom.xml`:
+Add the dependency to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>com.equinor.neqsim</groupId>
-    <artifactId>neqsim</artifactId>
-    <version>3.0.0</version>
+  <groupId>com.equinor.neqsim</groupId>
+  <artifactId>neqsim</artifactId>
+  <version>3.18.0</version>
 </dependency>
 ```
 
-Or with Gradle (`build.gradle`):
+The run command below uses Maven's exec plugin. Add this build entry if the project does not
+already configure it:
 
-```groovy
-implementation 'com.equinor.neqsim:neqsim:3.0.0'
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>exec-maven-plugin</artifactId>
+      <version>3.6.3</version>
+    </plugin>
+  </plugins>
+</build>
 ```
 
-## Step 2: First Flash Calculation (3 minutes)
+With Gradle:
+
+```groovy
+implementation 'com.equinor.neqsim:neqsim:3.18.0'
+```
+
+## Step 2: first flash calculation
 
 Create `FirstCalculation.java`:
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class FirstCalculation {
+    private static final Logger logger = LogManager.getLogger(FirstCalculation.class);
+
     public static void main(String[] args) {
-        // Create a natural gas at 25°C and 50 bar
-        SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);  // Temperature in Kelvin!
-        
-        // Add components (mole fractions)
+        // SystemSrkEos accepts temperature in K and absolute pressure in bara.
+        SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+
+        // addComponent accepts component amounts in mol. These sum to 1.0 mol,
+        // so the amounts are also the overall mole fractions for this example.
         fluid.addComponent("methane", 0.85);
         fluid.addComponent("ethane", 0.10);
         fluid.addComponent("propane", 0.05);
-        
-        // IMPORTANT: Always set mixing rule
+
+        // Select an appropriate mixing rule before flashing a cubic-EOS mixture.
         fluid.setMixingRule("classic");
-        
-        // Run flash calculation
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.TPflash();
-        
-        // Initialize properties (required for most property access)
+
+        ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+        operations.TPflash();
+
+        // Initialize physical properties before reading density or transport properties.
         fluid.initProperties();
-        
-        // Print results
-        System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-        System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m³");
-        System.out.println("Z-factor: " + fluid.getZ());
-        
-        // Pretty print full results
-        fluid.prettyPrint();
+
+        logger.info("Number of phases: {}", fluid.getNumberOfPhases());
+        logger.info("Bulk density: {} kg/m³", fluid.getDensity("kg/m3"));
+        logger.info("System Z-factor: {}", fluid.getZ());
     }
 }
 ```
 
-Run it:
+The API unit token is `"kg/m3"`; the displayed SI symbol is kg/m³. `getDensity("kg/m3")`
+converts the returned unit but does not select or validate a density model.
+
+Run it from the project directory:
+
 ```bash
 mvn compile exec:java -Dexec.mainClass="FirstCalculation"
 ```
 
-## Step 3: First Process Simulation (5 minutes)
+## Step 3: first process simulation
 
 Create `FirstProcess.java`:
 
 ```java
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.separator.Separator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class FirstProcess {
+    private static final Logger logger = LogManager.getLogger(FirstProcess.class);
+
     public static void main(String[] args) {
-        // 1. Create feed fluid
-        SystemSrkEos fluid = new SystemSrkEos(273.15 + 30, 50.0);  // 30°C, 50 bara
+        SystemSrkEos fluid = new SystemSrkEos(273.15 + 30.0, 50.0);
         fluid.addComponent("methane", 0.70);
         fluid.addComponent("ethane", 0.10);
         fluid.addComponent("propane", 0.10);
         fluid.addComponent("n-butane", 0.05);
         fluid.addComponent("n-pentane", 0.05);
         fluid.setMixingRule("classic");
-        
-        // 2. Create process system
+
         ProcessSystem process = new ProcessSystem();
-        
-        // 3. Add feed stream
+
         Stream feed = new Stream("Feed", fluid);
-        feed.setFlowRate(10000, "kg/hr");
+        feed.setFlowRate(10000.0, "kg/hr");
         process.add(feed);
-        
-        // 4. Add separator (flash to 20 bar)
+
+        // Separator performs an equilibrium split at the feed state, here 50 bara.
         Separator separator = new Separator("HP Separator", feed);
-        separator.setInternalDiameter(2.0);  // meters
+        separator.setInternalDiameter(2.0);
         process.add(separator);
-        
-        // 5. Add compressor on gas outlet
-        Compressor compressor = new Compressor("Gas Compressor", separator.getGasOutStream());
-        compressor.setOutletPressure(80.0);  // bara
+
+        Compressor compressor =
+            new Compressor("Gas Compressor", separator.getGasOutStream());
+        compressor.setOutletPressure(80.0, "bara");
         compressor.setIsentropicEfficiency(0.75);
         process.add(compressor);
-        
-        // 6. Run the process
+
         process.run();
-        
-        // 7. Print results
-        System.out.println("=== SEPARATOR ===");
-        System.out.println("Gas out: " + separator.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
-        System.out.println("Liquid out: " + separator.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
-        
-        System.out.println("\n=== COMPRESSOR ===");
-        System.out.println("Power: " + compressor.getPower("kW") + " kW");
-        System.out.println("Outlet T: " + (compressor.getOutletStream().getTemperature() - 273.15) + " °C");
+
+        double gasFlowKgPerHour =
+            separator.getGasOutStream().getFlowRate("kg/hr");
+        double liquidFlowKgPerHour =
+            separator.getLiquidOutStream().getFlowRate("kg/hr");
+
+        logger.info("Gas outlet: {} kg/hr", gasFlowKgPerHour);
+        logger.info("Liquid outlet: {} kg/hr", liquidFlowKgPerHour);
+        logger.info("Separated total: {} kg/hr", gasFlowKgPerHour + liquidFlowKgPerHour);
+        logger.info("Compressor power: {} kW", compressor.getPower("kW"));
+        logger.info(
+            "Compressor outlet temperature: {} °C",
+            compressor.getOutletStream().getTemperature("C"));
     }
 }
 ```
 
-## Common Gotchas
+A `Separator` does not impose a pressure reduction. Add a valve or another pressure-changing
+unit upstream when the engineering case requires letdown before separation. The stream, separator,
+compressor, and `ProcessSystem` remain available for extension into a larger flowsheet.
 
-| Issue | Solution |
-|-------|----------|
-| `NullPointerException` on properties | Call `fluid.initProperties()` after flash |
-| Wrong density values | Use `getDensity("kg/m3")` with unit for Peneloux correction |
-| Temperature seems wrong | NeqSim uses **Kelvin** internally. Convert: `T_K = T_C + 273.15` |
-| Missing mixing rule | Always call `setMixingRule("classic")` after adding components |
-| Flash doesn't converge | Check if T,P are in valid range for your composition |
+## Common gotchas
 
-## Next Steps
+| Issue | Corrective action |
+|-------|-------------------|
+| `NullPointerException` or unavailable physical properties | Call `fluid.initProperties()` after the flash before reading density, viscosity, or conductivity. |
+| Unexpected density | Request an explicit supported unit and verify the selected thermodynamic model, volume-correction setting, composition, temperature, and pressure. The unit string alone does not enable Peneloux correction. |
+| Temperature seems wrong | Constructors use K unless an API explicitly accepts a unit. Convert with `T_K = T_C + 273.15` or use a setter with a unit argument. |
+| Pressure basis is unclear | Constructors and single-argument process pressure setters use bara. Prefer overloads such as `setOutletPressure(80.0, "bara")` in user examples. |
+| Mixing rule is missing | Select the mixing rule appropriate to the chosen model and mixture before the first flash. `"classic"` is the simple cubic-EOS choice used here. |
+| Separator pressure is unexpected | A separator uses its inlet state; it does not perform an implicit letdown. Model pressure-changing equipment explicitly. |
+| Flash does not converge | Verify component names, positive amounts, units, model applicability, and a physically plausible temperature-pressure state. Let the exception propagate while diagnosing it. |
 
-- **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Understanding init levels and property access
-- **[Thermodynamic Models](../thermo/thermodynamic_models)** - Choosing the right equation of state
-- **[Process Equipment](../process/equipment/)** - All available unit operations
-- **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Complete API reference
+## Engineering boundary
 
-## API Quick Reference
+These examples demonstrate API composition and deterministic calculations, not fluid-model
+selection, equipment sizing, process design approval, or safety certification. Validate the model,
+composition, operating envelope, convergence, conservation, and results against suitable
+engineering evidence before design use.
+
+## Next steps
+
+- **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Understand initialization
+  levels and property access.
+- **[Thermodynamic Models](../thermo/thermodynamic_models)** - Choose an equation of state.
+- **[Process Equipment](../process/equipment/)** - Explore available unit operations.
+- **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Read the API reference.
+
+## API quick reference
 
 Key interfaces to explore in the [JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html):
 
 | Interface | Purpose |
 |-----------|---------|
-| `SystemInterface` | Fluid/mixture - composition, properties, flash |
+| `SystemInterface` | Fluid composition, properties, and flash state |
 | `PhaseInterface` | Individual phase properties |
-| `ComponentInterface` | Pure component properties |
-| `ProcessEquipmentInterface` | Base for all equipment |
-| `StreamInterface` | Material streams |
+| `ComponentInterface` | Pure-component and in-mixture properties |
+| `ProcessEquipmentInterface` | Common process-equipment contract |
+| `StreamInterface` | Composable material streams |
