@@ -37,7 +37,7 @@ Accordingly, this is an **integration and numerical-robustness qualification**, 
 
 1. Build an SRK system from the normalized measured DOE mass yields, cut specific gravities, and finite boiling ranges using `OilAssayCharacterisation`.
 2. Generate the five real NeqSim TBP pseudo-components.
-3. Feed the resulting broad-boiling slate to an eight-tray `DistillationColumn` with a reboiler, partial condenser, and one liquid side draw.
+3. Feed the resulting broad-boiling slate to an eight-tray `DistillationColumn` with a reboiler, total condenser, and one liquid side draw.
 4. Solve at near-atmospheric pressure with the residual-monitored `MESH_RESIDUAL` column solver; the solved state must satisfy the active full-MESH residual gate and guarded fallback products are not accepted.
 5. Re-run the same initialized column to qualify repeatability rather than accepting a one-off solution.
 
@@ -52,12 +52,13 @@ The operating point is deliberately a reproducible **screening case**, not a rec
 | Feed tray | 4, bottom-up |
 | Top pressure | 1.2 bara |
 | Bottom pressure | 1.5 bara |
+| Condenser mode | Total |
 | Condenser temperature | 420 K |
 | Reboiler temperature | 690 K |
 | Condenser reflux ratio | 1.0 |
 | Liquid side draw | 10% of tray-5 liquid traffic |
 
-The 420 K partial-condenser set point lies between the representative normal-boiling temperatures of the first two bounded cuts (373.4 K and 429.0 K). This avoids the sub-light-cut 360 K condition that collapsed the vapor-overhead initialization into guarded fallback products while preserving a physically ordered separation target.
+All five bounded DOE fractions are condensable petroleum cuts, so the benchmark uses a total condenser and returns part of the liquid condensate as reflux rather than requiring a noncondensed vapor overhead. The 420 K set point lies between the representative normal-boiling temperatures of the first two bounded cuts (373.4 K and 429.0 K), preserving a physically ordered screening split.
 
 `MESH_RESIDUAL` uses inside-out initialization followed by rigorous residual monitoring. Interior tray temperatures remain solver variables governed by the stage energy balances. No tuning to a commercial process simulator is used.
 
