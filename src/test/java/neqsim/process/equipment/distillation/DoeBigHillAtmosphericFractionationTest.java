@@ -120,6 +120,7 @@ public class DoeBigHillAtmosphericFractionationTest {
     column.setTopPressure(1.2);
     column.setBottomPressure(1.5);
     column.getCondenser().setOutTemperature(420.0);
+    column.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
     column.getReboiler().setOutTemperature(690.0);
     column.setCondenserRefluxRatio(1.0);
     column.setLiquidSideDrawFraction(SIDE_DRAW_TRAY, 0.10);
