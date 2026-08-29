@@ -38,8 +38,6 @@ public class DoeBigHillAtmosphericFractionationTest {
   private static final double[] WEIGHT_PERCENT = { 8.6, 15.2, 15.2, 11.1, 30.3 };
   private static final double[] SPECIFIC_GRAVITY = { 0.7815, 0.8305, 0.8623, 0.9226, 0.9477 };
   private static final int SIDE_DRAW_TRAY = 5;
-  private static final double CONDENSER_TEMPERATURE_K = 360.0;
-  private static final double REBOILER_TEMPERATURE_K = 690.0;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
   private static final double REPEAT_TOLERANCE = 1.0e-2;
 
@@ -57,7 +55,11 @@ public class DoeBigHillAtmosphericFractionationTest {
     column.run(UUID.randomUUID());
     double firstRunSeconds = (System.nanoTime() - startNanos) / 1.0e9;
 
-    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    String firstRunDiagnostics = column.getConvergenceDiagnostics();
+    assertTrue(column.solved(), firstRunDiagnostics);
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), firstRunDiagnostics);
+    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(), firstRunDiagnostics);
+    assertTrue(column.getLastMeshResidualNorm() <= column.getMeshResidualTolerance(), firstRunDiagnostics);
     assertTrue(Double.isFinite(firstRunSeconds) && firstRunSeconds >= 0.0);
     assertPhysicalProductsAndBalances(column, feed);
 
@@ -74,7 +76,12 @@ public class DoeBigHillAtmosphericFractionationTest {
 
     column.run(UUID.randomUUID());
 
-    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    String repeatedRunDiagnostics = column.getConvergenceDiagnostics();
+    assertTrue(column.solved(), repeatedRunDiagnostics);
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), repeatedRunDiagnostics);
+    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(),
+        repeatedRunDiagnostics);
+    assertTrue(column.getLastMeshResidualNorm() <= column.getMeshResidualTolerance(), repeatedRunDiagnostics);
     assertPhysicalProductsAndBalances(column, feed);
     assertRelativeRepeat(firstOverheadMassFlow, overhead.getFlowRate("kg/hr"));
     assertRelativeRepeat(firstSideDrawMassFlow, sideDraw.getFlowRate("kg/hr"));
@@ -112,28 +119,17 @@ public class DoeBigHillAtmosphericFractionationTest {
     column.addFeedStream(feed, 4);
     column.setTopPressure(1.2);
     column.setBottomPressure(1.5);
-    column.getCondenser().setOutTemperature(CONDENSER_TEMPERATURE_K);
-    column.getReboiler().setOutTemperature(REBOILER_TEMPERATURE_K);
-    seedInteriorStageTemperatures(column);
+    column.getCondenser().setOutTemperature(360.0);
+    column.getReboiler().setOutTemperature(690.0);
     column.setCondenserRefluxRatio(1.0);
     column.setLiquidSideDrawFraction(SIDE_DRAW_TRAY, 0.10);
-    column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
     column.setMaxNumberOfIterations(300);
     column.setTemperatureTolerance(0.20);
     column.setMassBalanceTolerance(BALANCE_TOLERANCE);
     column.setEnthalpyBalanceTolerance(BALANCE_TOLERANCE);
     column.setEnforceEnergyBalanceTolerance(true);
     return column;
-  }
-
-  private static void seedInteriorStageTemperatures(DistillationColumn column) {
-    int topStage = column.getNumberOfTrays() - 1;
-    for (int stage = 1; stage < topStage; stage++) {
-      double heightFraction = stage / (double) topStage;
-      double seedTemperature = REBOILER_TEMPERATURE_K
-          + heightFraction * (CONDENSER_TEMPERATURE_K - REBOILER_TEMPERATURE_K);
-      column.setSeedTemperature(stage, seedTemperature);
-    }
   }
 
   private static void assertPhysicalProductsAndBalances(DistillationColumn column, Stream feed) {
