@@ -1,11 +1,11 @@
 ---
 title: "DOE Big Hill Sweet refinery assay validation"
-description: "Independent public-data qualification of NeqSim refinery assay volume-to-mass bookkeeping using a Strategic Petroleum Reserve Big Hill Sweet crude assay."
+description: "Public-data qualification of NeqSim refinery assay volume-to-mass bookkeeping using a Strategic Petroleum Reserve Big Hill Sweet crude assay."
 ---
 
 # DOE Big Hill Sweet refinery assay validation
 
-Issue #3305 requires refinery characterization to be qualified against independent public data before atmospheric/vacuum fractionation and conversion-unit models are expanded. This page freezes the first external refinery-assay benchmark used by the campaign.
+Issue #3305 requires refinery characterization to be qualified against public refinery data before atmospheric/vacuum fractionation and conversion-unit models are expanded. This page freezes the first external refinery-assay benchmark used by the campaign.
 
 ## Source and provenance
 
@@ -15,7 +15,9 @@ The benchmark uses the U.S. Department of Energy Strategic Petroleum Reserve (SP
 - DOE SPR Crude Oil Assay Manual, 5th edition, 1 August 2024: <https://www.spr.doe.gov/reports/docs/CrudeOilAssayManual.pdf>
 - DOE SPR assay landing page: <https://www.spr.doe.gov/reports/Crude_Oil_Assays.html>
 
-The 2024 DOE manual documents atmospheric/light-vacuum fractionation by ASTM D2892 followed by D5236 for the residuum. It also states that distillation fractions are measured on a **mass-percent basis** and that volume-percent values are calculated using each fraction's specific gravity. This makes the published paired volume/weight yields and specific gravities directly useful for an independent check of NeqSim's volume-to-mass assay bookkeeping.
+The 2024 DOE manual documents atmospheric/light-vacuum fractionation by ASTM D2892 followed by D5236 for the residuum. It also states that distillation fractions are measured on a **mass-percent basis** and that volume-percent values are calculated using each fraction's specific gravity. The paired volume/weight yields and density information therefore provide a transparent public-source consistency qualification for NeqSim's volume-to-mass assay bookkeeping.
+
+The volume and weight yields are **not statistically independent measurements**: DOE states that volume percentages are derived from measured mass percentages using fraction specific gravity. The regression is intentionally a bookkeeping/provenance qualification, not an independent validation of a petroleum-property correlation.
 
 No ASTM equation or proprietary commercial-simulator implementation is reproduced. The regression freezes only numerical assay facts openly published by the U.S. Government and cites their public source.
 
@@ -31,11 +33,11 @@ The first regression intentionally uses only the bounded **175-1050 degF** disti
 | 530-650 | 10.8 | 11.1 | 0.9226 | 21.9 |
 | 650-1050 | 27.8 | 30.3 | 0.9477 | 17.8 |
 
-The same source reports whole-crude specific gravity **0.8451** and API gravity **35.9 degAPI**. Those values provide an additional independent consistency check on the conventional relation `API = 141.5 / SG - 131.5`.
+The same source reports whole-crude specific gravity **0.8451** and API gravity **35.9 degAPI**. Those values provide an additional consistency check on the conventional relation `API = 141.5 / SG - 131.5`.
 
 ## Acceptance contract
 
-`OilAssayCharacterisationDoeBigHillTest` qualifies two separate things:
+`OilAssayCharacterisationDoeBigHillTest` qualifies three separate things:
 
 1. Published SG/API pairs agree with the conventional API relation within **0.05 degAPI**, consistent with the source's one-decimal API reporting.
 2. After normalizing the bounded 175-1050 degF slice on its own basis, NeqSim's density-based conversion
@@ -43,17 +45,19 @@ The same source reports whole-crude specific gravity **0.8451** and API gravity 
    $$w_i = \frac{v_i SG_i}{\sum_j v_j SG_j}$$
 
    must reproduce the normalized DOE weight-yield shape with maximum absolute deviation below **0.007 mass fraction** (0.7 percentage points).
+3. Supplying the same cuts through the public API-gravity input path must reproduce the mass-fraction shape obtained from the four-decimal specific-gravity values within **5e-5 mass fraction**. This tolerance reflects the DOE table's one-decimal API rounding, not a thermodynamic-model uncertainty.
 
-For the frozen values, the largest pre-CI deviation is approximately **0.00667 mass fraction**. The tolerance is therefore a data-agreement gate, not a machine-precision tolerance; the underlying DOE yields and specific gravities are reported with limited decimal precision.
+For the frozen values, the largest pre-CI volume-to-mass deviation is approximately **0.00667 mass fraction**. The largest specific-gravity versus rounded-API mass-shape deviation is approximately **4.27e-5 mass fraction**. These tolerances are therefore data-agreement gates rather than machine-precision tolerances.
 
 The test then applies the normalized slice through `OilAssayCharacterisation`, requires finite positive pseudo-component molar masses and mole amounts, and requires reconstructed assay mass closure to `1e-10`.
 
 ## What this validates
 
-This benchmark provides independent evidence for:
+This benchmark provides public-source evidence for:
 
 - refinery cut basis handling;
 - SG/API consistency of the published source data;
+- equivalence of the specific-gravity and API-gravity user input paths within source reporting precision;
 - liquid-volume to mass-fraction conversion;
 - preservation of bounded cut ranges;
 - pseudo-component generation from a real refinery-assay slice;
