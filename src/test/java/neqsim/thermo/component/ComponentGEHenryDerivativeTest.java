@@ -18,8 +18,8 @@ class ComponentGEHenryDerivativeTest {
     double expected = finiteDifferenceLogHenry(component, TEMPERATURE);
 
     assertEquals(expected, component.fugcoefDiffTemp(phase), 1.0e-9);
-    assertEquals(1200.0 / (TEMPERATURE * TEMPERATURE) + 1.5 / TEMPERATURE + 0.002,
-        component.fugcoefDiffTemp(phase), 1.0e-12);
+    assertEquals(1200.0 / (TEMPERATURE * TEMPERATURE) + 1.5 / TEMPERATURE + 0.002, component.fugcoefDiffTemp(phase),
+        1.0e-12);
   }
 
   @Test
