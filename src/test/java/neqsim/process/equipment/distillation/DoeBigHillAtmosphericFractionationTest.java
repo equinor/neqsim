@@ -19,31 +19,31 @@ import neqsim.thermo.system.SystemSrkEos;
  * Atmospheric-column integration qualification using the public DOE Big Hill Sweet assay basis.
  *
  * <p>
- * The source values are the bounded 175-1050 degF distillate slice from U.S. Department of Energy
- * Strategic Petroleum Reserve Big Hill Sweet sample MLI 009 (1998-05-04). The same frozen values are
- * independently qualified in {@code OilAssayCharacterisationDoeBigHillTest}. This test deliberately
- * excludes the unbounded light and residue tails rather than inventing boiling limits for them.
+ * The source values are the bounded 175-1050 degF distillate slice from U.S. Department of Energy Strategic Petroleum
+ * Reserve Big Hill Sweet sample MLI 009 (1998-05-04). The same frozen values are independently qualified in
+ * {@code OilAssayCharacterisationDoeBigHillTest}. This test deliberately excludes the unbounded light and residue tails
+ * rather than inventing boiling limits for them.
  * </p>
  *
  * <p>
- * This is an integration and numerical-robustness benchmark. It qualifies that the public assay basis
- * can be turned into pseudo-components and separated through NeqSim's rigorous column while preserving
- * material and energy closure, boiling-order separation, and repeatability. It is not an independent
- * validation of atmospheric crude-column product yields.
+ * This is an integration and numerical-robustness benchmark. It qualifies that the public assay basis can be turned
+ * into pseudo-components and separated through NeqSim's rigorous column while preserving material and energy closure,
+ * boiling-order separation, and repeatability. It is not an independent validation of atmospheric crude-column product
+ * yields.
  * </p>
  */
 public class DoeBigHillAtmosphericFractionationTest {
-  private static final double[] LOWER_BOUNDARY_F = {175.0, 250.0, 375.0, 530.0, 650.0};
-  private static final double[] UPPER_BOUNDARY_F = {250.0, 375.0, 530.0, 650.0, 1050.0};
-  private static final double[] WEIGHT_PERCENT = {8.6, 15.2, 15.2, 11.1, 30.3};
-  private static final double[] SPECIFIC_GRAVITY = {0.7815, 0.8305, 0.8623, 0.9226, 0.9477};
+  private static final double[] LOWER_BOUNDARY_F = { 175.0, 250.0, 375.0, 530.0, 650.0 };
+  private static final double[] UPPER_BOUNDARY_F = { 250.0, 375.0, 530.0, 650.0, 1050.0 };
+  private static final double[] WEIGHT_PERCENT = { 8.6, 15.2, 15.2, 11.1, 30.3 };
+  private static final double[] SPECIFIC_GRAVITY = { 0.7815, 0.8305, 0.8623, 0.9226, 0.9477 };
   private static final int SIDE_DRAW_TRAY = 5;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
   private static final double REPEAT_TOLERANCE = 1.0e-2;
 
   /**
-   * Run a bounded public refinery-assay slate through an atmospheric fractionator and require physical,
-   * conservative, reproducible products.
+   * Run a bounded public refinery-assay slate through an atmospheric fractionator and require physical, conservative,
+   * reproducible products.
    */
   @Test
   @Timeout(value = 120, unit = TimeUnit.SECONDS)
@@ -92,8 +92,7 @@ public class DoeBigHillAtmosphericFractionationTest {
     for (int i = 0; i < WEIGHT_PERCENT.length; i++) {
       assay.addCut(new AssayCut("DOE_BH_" + (i + 2)).withMassFraction(WEIGHT_PERCENT[i] / weightSum)
           .withSpecificGravity(SPECIFIC_GRAVITY[i])
-          .withBoilingRangeCelsius(fahrenheitToCelsius(LOWER_BOUNDARY_F[i]),
-              fahrenheitToCelsius(UPPER_BOUNDARY_F[i])));
+          .withBoilingRangeCelsius(fahrenheitToCelsius(LOWER_BOUNDARY_F[i]), fahrenheitToCelsius(UPPER_BOUNDARY_F[i])));
     }
     assay.apply();
     crude.setMixingRule("classic");
@@ -107,8 +106,7 @@ public class DoeBigHillAtmosphericFractionationTest {
   }
 
   private static DistillationColumn createAtmosphericColumn(Stream feed) {
-    DistillationColumn column =
-        new DistillationColumn("DOE Big Hill atmospheric benchmark", 8, true, true);
+    DistillationColumn column = new DistillationColumn("DOE Big Hill atmospheric benchmark", 8, true, true);
     column.addFeedStream(feed, 4);
     column.setTopPressure(1.2);
     column.setBottomPressure(1.5);
@@ -138,8 +136,7 @@ public class DoeBigHillAtmosphericFractionationTest {
     assertTrue(Double.isFinite(overheadMassFlow) && overheadMassFlow > 0.0);
     assertTrue(Double.isFinite(sideDrawMassFlow) && sideDrawMassFlow > 0.0);
     assertTrue(Double.isFinite(bottomsMassFlow) && bottomsMassFlow > 0.0);
-    assertEquals(feedMassFlow, overheadMassFlow + sideDrawMassFlow + bottomsMassFlow,
-        BALANCE_TOLERANCE * feedMassFlow);
+    assertEquals(feedMassFlow, overheadMassFlow + sideDrawMassFlow + bottomsMassFlow, BALANCE_TOLERANCE * feedMassFlow);
     assertTrue(Double.isFinite(column.getMassBalanceError()));
     assertTrue(column.getMassBalanceError() <= BALANCE_TOLERANCE, column.getConvergenceDiagnostics());
     assertTrue(Double.isFinite(column.getEnergyBalanceError()));
@@ -169,8 +166,8 @@ public class DoeBigHillAtmosphericFractionationTest {
     assertNotEquals(DistillationColumn.SolveStatus.FAILED, column.getLastSolveStatus());
   }
 
-  private static void assertComponentMolarBalance(Stream feed, StreamInterface overhead,
-      StreamInterface sideDraw, StreamInterface bottoms) {
+  private static void assertComponentMolarBalance(Stream feed, StreamInterface overhead, StreamInterface sideDraw,
+      StreamInterface bottoms) {
     double feedFlow = feed.getFlowRate("mol/hr");
     double overheadFlow = overhead.getFlowRate("mol/hr");
     double sideDrawFlow = sideDraw.getFlowRate("mol/hr");
@@ -183,8 +180,7 @@ public class DoeBigHillAtmosphericFractionationTest {
     for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
       double feedComponentFlow = feedFlow * feedComposition[componentIndex];
       double productComponentFlow = overheadFlow * overheadComposition[componentIndex]
-          + sideDrawFlow * sideDrawComposition[componentIndex]
-          + bottomsFlow * bottomsComposition[componentIndex];
+          + sideDrawFlow * sideDrawComposition[componentIndex] + bottomsFlow * bottomsComposition[componentIndex];
       assertEquals(feedComponentFlow, productComponentFlow,
           Math.max(1.0e-7, BALANCE_TOLERANCE * Math.abs(feedComponentFlow)));
     }
