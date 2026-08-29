@@ -19,6 +19,8 @@ import neqsim.thermo.phase.PhaseInterface;
 public abstract class ComponentGE extends Component implements ComponentGEInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Finite fail-closed Henry coefficient used for unsupported or invalid solutes, in bar. */
+  protected static final double INSOLUBLE_HENRY_COEFFICIENT = 1.0e12;
 
   protected double gamma = 0;
   protected double gammaRefCor = 0;
@@ -57,18 +59,59 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
       } else {
         activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
-      double henryCoef = getHenryCoef(phase.getTemperature());
-      // Handle infinite or very large Henry coefficients (database error or insoluble component)
-      // Use a large but finite value to represent essentially insoluble components
-      if (Double.isInfinite(henryCoef) || henryCoef > 1.0e12 || isIsIon()) {
-        henryCoef = 1.0e12; // Cap at 1e12 bar - effectively insoluble
-      }
+      double henryCoef = getEffectiveHenryCoefficient(phase.getTemperature());
       fugacityCoefficient = activinf * henryCoef / phase.getPressure();
       // gamma* benyttes ikke
       gammaRefCor = activinf;
     }
 
     return fugacityCoefficient;
+  }
+
+  /**
+   * Returns the Henry coefficient used by the aqueous GE reference state.
+   *
+   * <p>
+   * Invalid, non-positive, unsupported ionic, and excessively large correlations fail closed to a finite insoluble
+   * limit. Model-specific GE components may extend the unsupported-species decision.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @return effective Henry coefficient in bar
+   */
+  protected double getEffectiveHenryCoefficient(double temperature) {
+    double henryCoefficient = getHenryCoef(temperature);
+    return isHenryCoefficientCapped(henryCoefficient) ? INSOLUBLE_HENRY_COEFFICIENT : henryCoefficient;
+  }
+
+  /**
+   * Tests whether a raw Henry correlation must fail closed.
+   *
+   * @param henryCoefficient raw Henry coefficient in bar
+   * @return {@code true} when the effective reference is the finite insoluble limit
+   */
+  protected boolean isHenryCoefficientCapped(double henryCoefficient) {
+    return !Double.isFinite(henryCoefficient) || henryCoefficient <= 0.0
+        || henryCoefficient > INSOLUBLE_HENRY_COEFFICIENT || isIsIon();
+  }
+
+  /**
+   * Returns the logarithmic temperature derivative of the effective Henry reference.
+   *
+   * <p>
+   * Fugacity-coefficient derivatives are derivatives of {@code ln(phi)}. The database API returns {@code dH/dT}, so an
+   * active correlation contributes {@code (dH/dT)/H}. A fail-closed constant contributes zero.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @return {@code d(ln H)/dT} in 1/K
+   */
+  protected double getLnHenryCoefficientTemperatureDerivative(double temperature) {
+    double henryCoefficient = getHenryCoef(temperature);
+    if (isHenryCoefficientCapped(henryCoefficient)) {
+      return 0.0;
+    }
+    return getHenryCoefdT(temperature) / henryCoefficient;
   }
 
   /**
@@ -103,7 +146,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
       dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
       logger.info("check this dfug dt - antoine");
     } else {
-      dfugdt = dlngammadt + getHenryCoefdT(temperature);
+      dfugdt = dlngammadt + getLnHenryCoefficientTemperatureDerivative(temperature);
     }
     return dfugdt;
   }

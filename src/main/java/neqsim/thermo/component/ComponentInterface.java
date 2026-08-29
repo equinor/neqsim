@@ -1647,10 +1647,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getHenryCoef(double temperature);
 
   /**
-   * getHenryCoefdT.
+   * Returns the temperature derivative of the Henry coefficient.
    *
-   * @param temperature a double
-   * @return a double
+   * <p>
+   * This is {@code dH/dT}, not {@code d(ln H)/dT}.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @return Henry-coefficient derivative in bar/K
    */
   public double getHenryCoefdT(double temperature);
 

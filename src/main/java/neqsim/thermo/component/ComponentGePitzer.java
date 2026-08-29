@@ -45,11 +45,7 @@ public class ComponentGePitzer extends ComponentGE {
     // reference; hydrocarbons have no Pitzer neutral-interaction parameters and are represented as effectively
     // insoluble instead of being evaluated with the water osmotic coefficient.
     if (Math.abs(getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(getComponentName())) {
-      double henryCoefficient = getHenryCoef(phase.getTemperature());
-      if (hasHydrocarbonFormula() || isHydrocarbon() || isIsTBPfraction() || !Double.isFinite(henryCoefficient)
-          || henryCoefficient > 1.0e12) {
-        henryCoefficient = 1.0e12;
-      }
+      double henryCoefficient = getEffectiveHenryCoefficient(phase.getTemperature());
       // Pitzer neutral activities and the database Henry constants are on the molality
       // scale, while the common phase-equilibrium kernel evaluates x_i * phi_i * P.
       // Convert m_i * gamma_i * H_i to that mole-fraction representation explicitly.
@@ -63,6 +59,12 @@ public class ComponentGePitzer extends ComponentGE {
       return fugacityCoefficient;
     }
     return super.fugcoef(phase);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected boolean isHenryCoefficientCapped(double henryCoefficient) {
+    return super.isHenryCoefficientCapped(henryCoefficient) || isHydrocarbon() || isIsTBPfraction();
   }
 
   /** {@inheritDoc} */
