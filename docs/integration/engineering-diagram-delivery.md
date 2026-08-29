@@ -92,6 +92,35 @@ integrity within the published contract; it does not reconstruct or execute a `P
 `ProcessModel`, repeat DEXPI semantic assessment, approve a drawing, or establish standards or
 commercial-CAE conformance.
 
+## Compare two verified deliveries
+
+Use `EngineeringDiagramDeliveryComparison` after independent intake assessment to distinguish an
+unchanged transferred copy from a controlled revision:
+
+```java
+EngineeringDiagramDeliveryComparison.Report comparison =
+    EngineeringDiagramDeliveryComparison.compare(
+        Paths.get("build/baseline-delivery"),
+        Paths.get("build/revised-delivery"));
+if (!comparison.isComplete()) {
+  throw new IllegalStateException(comparison.toJson());
+}
+```
+
+Both inputs must pass `EngineeringDiagramDeliveryAssessment`, use the same plant identity, and
+share the same `ProcessSystem` or `ProcessModel` source scope. The deterministic report classifies
+every declared artifact as `ADDED`, `REMOVED`, `MODIFIED`, or `UNCHANGED`; identifies changed
+controlled JSON, native SVG, PDF, DEXPI Process XML, or multi-area DEXPI package projections; and
+returns the corresponding review scopes. Environment-specific directory paths are excluded from
+the comparison fingerprint.
+
+Changed content with an unchanged controlled revision fails closed as
+`REVISION_REUSE` with `DELIVERY_REVISION_REUSED_WITH_CHANGED_CONTENT`. A normal revision change
+remains `REVIEW_REQUIRED`. This comparison is artifact and manifest evidence only: it does not
+repeat DEXPI semantic or external-validator assessment, reconstruct a process model, decide
+management of change, approve a drawing, or establish fitness for construction or standards
+conformance.
+
 ## Engineering and qualification boundary
 
 The generated document status, issue purpose, source revision, calculated values, and diagnostics
