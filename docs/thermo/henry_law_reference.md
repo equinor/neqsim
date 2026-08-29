@@ -66,19 +66,16 @@ $\phi_i=\frac{\gamma_i H_i}{P}$
 for a Henry solute, or the corresponding solvent vapor-pressure expression.
 NeqSim therefore exposes the constant-composition analytical derivatives
 
-$\left(\frac{\partial\ln\phi_i}{\partial T}\right)_{P,\mathbf{x}}
-=\frac{\partial\ln\gamma_i}{\partial T}
- +\frac{\partial\ln H_i}{\partial T},$
+$\left(\frac{\partial\ln\phi_i}{\partial T}\right)_{P,\mathbf{x}}=\frac{\partial\ln\gamma_i}{\partial T}+\frac{\partial\ln H_i}{\partial T}$
 
 and
 
-$\left(\frac{\partial\ln\phi_i}{\partial P}\right)_{T,\mathbf{x}}
-=\frac{\partial\ln\gamma_i}{\partial P}-\frac{1}{P}.$
+$\left(\frac{\partial\ln\phi_i}{\partial P}\right)_{T,\mathbf{x}}=\frac{\partial\ln\gamma_i}{\partial P}-\frac{1}{P}$
 
 `SystemInterface.init(2)` and `init(3)` publish these values through
 `getdfugdt()`, `getdfugdp()`, and the Java/JPype
 `getProperty("logfugdT"|"logfugdP", component, phase)` adapter. Pressure is in
-bar, so the pressure derivative is in 1/bar. The (-1/P) term is the derivative
+bar, so the pressure derivative is in 1/bar. The `-1/P` term is the derivative
 of the explicit fugacity-coefficient denominator; it is not a Poynting
 correction. The IAPWS reference remains defined at water saturation, and no
 pressure-dependent partial-molar-volume model is implied.
