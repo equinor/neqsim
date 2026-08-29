@@ -161,17 +161,19 @@ public class FailurePropagationTracer implements Serializable {
       result.addStep(new PropagationStep(directName, delay, 1, effect, impact));
     }
 
-    // Trace indirect downstream effects
-    double cumulativeDelay = DEFAULT_DIRECT_DELAY;
-    for (String indirectName : depResult.getIndirectlyAffected()) {
-      if (visited.contains(indirectName)) {
-        continue;
+    // Trace indirect downstream effects only when the configured depth includes them
+    if (maxCascadeDepth >= 2) {
+      double cumulativeDelay = DEFAULT_DIRECT_DELAY;
+      for (String indirectName : depResult.getIndirectlyAffected()) {
+        if (visited.contains(indirectName)) {
+          continue;
+        }
+        visited.add(indirectName);
+        cumulativeDelay += DEFAULT_INDIRECT_DELAY;
+        String effect = classifyEffect(failedEquipmentName, indirectName);
+        PropagationStep.ImpactLevel impact = assessImpact(indirectName);
+        result.addStep(new PropagationStep(indirectName, cumulativeDelay, 2, effect, impact));
       }
-      visited.add(indirectName);
-      cumulativeDelay += DEFAULT_INDIRECT_DELAY;
-      String effect = classifyEffect(failedEquipmentName, indirectName);
-      PropagationStep.ImpactLevel impact = assessImpact(indirectName);
-      result.addStep(new PropagationStep(indirectName, cumulativeDelay, 2, effect, impact));
     }
 
     // Add production impact

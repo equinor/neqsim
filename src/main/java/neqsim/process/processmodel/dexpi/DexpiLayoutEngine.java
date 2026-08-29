@@ -1581,13 +1581,13 @@ final class DexpiLayoutEngine {
     appendTitleCell(document, label, col3, row2Bottom, col4, row2Top, "REV");
     appendTitleCell(document, label, col4, row2Bottom, blockRight, row2Top, revision != null ? revision : "0");
 
-    // Row 3: APPROVED BY | - | STATUS | IFC
+    // Row 3: APPROVED BY | - | STATUS | PROPOSAL
     double row3Bottom = row2Top;
     double row3Top = row3Bottom + TITLE_ROW_HEIGHT;
     appendTitleCell(document, label, blockLeft, row3Bottom, col2, row3Top, "APPROVED BY");
     appendTitleCell(document, label, col2, row3Bottom, col3, row3Top, "-");
     appendTitleCell(document, label, col3, row3Bottom, col4, row3Top, "STATUS");
-    appendTitleCell(document, label, col4, row3Bottom, blockRight, row3Top, "IFC");
+    appendTitleCell(document, label, col4, row3Bottom, blockRight, row3Top, "PROPOSAL");
 
     // Row 4-6: Main title area (Name of drawing, large font)
     double titleBottom = row3Top;

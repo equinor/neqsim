@@ -152,6 +152,35 @@ class Dexpi20ProcessModelWriterTest {
   }
 
   @Test
+  void exportsZeroFlowTerminalAndIsolatedEmptyStreamsWithoutInvalidPorts() throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 1.0);
+    Stream feed = new Stream("10-FEED-EMPTY", fluid);
+    feed.setFlowRate(0.0, "kg/hr");
+    Heater heater = new Heater("10-HA-EMPTY", feed);
+    Stream product = new Stream("10-PRODUCT-EMPTY", heater.getOutletStream());
+    Stream isolated = new Stream("10-ISOLATED-EMPTY");
+    ProcessSystem process = new ProcessSystem("DEXPI empty-stream regression");
+    process.add(feed);
+    process.add(heater);
+    process.add(product);
+    process.add(isolated);
+    Path output = temporaryDirectory.resolve("empty-streams.dexpi.xml");
+
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
+        output.toFile(), "DEXPI-EMPTY-STREAMS", "A");
+
+    assertTrue(report.isSchemaProfileAndSupportedTopologyValid(), report.getDiagnostics().toString());
+    assertEquals(report.getCanonicalMaterialConnections(), report.getExportedMaterialConnections());
+    assertTrue(report.getCanonicalMaterialConnections().contains("10-HA-EMPTY->10-PRODUCT-EMPTY"));
+    assertTrue(hasAssessedConnection(report, "10-HA-EMPTY", "10-PRODUCT-EMPTY", false));
+    assertEquals("Process/Process.Sink", processStepType(output, "10-PRODUCT-EMPTY"));
+    assertEquals("Process/Process.Source", processStepType(output, "10-ISOLATED-EMPTY"));
+    assertFalse(hasDirectPorts(output, "10-ISOLATED-EMPTY"));
+    assertEquals(heater.getOutletStream(), product.getInletStreams().get(0));
+  }
+
+  @Test
   void documentationExampleWritesAssessedPlantAndProcessExchanges() throws Exception {
     ProcessSystem process = documentationProcess();
     process.run();
@@ -275,6 +304,17 @@ class Dexpi20ProcessModelWriterTest {
     return false;
   }
 
+  private static boolean hasAssessedConnection(Dexpi20ProcessTopologyAssessment.Report report, String source,
+      String target, boolean boundaryTarget) {
+    for (Dexpi20ProcessTopologyAssessment.ExportedConnection connection : report.getExportedConnections()) {
+      if (source.equals(connection.getSourceStep()) && target.equals(connection.getTargetStep())
+          && boundaryTarget == connection.isBoundaryTarget()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static double physicalQuantity(Path file, String streamLabel, String property) throws Exception {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -299,6 +339,39 @@ class Dexpi20ProcessModelWriterTest {
       }
     }
     throw new AssertionError("Missing " + property + " for stream " + streamLabel);
+  }
+
+  private static String processStepType(Path file, String stepLabel) throws Exception {
+    Element step = processStep(file, stepLabel);
+    return step.getAttribute("type");
+  }
+
+  private static boolean hasDirectPorts(Path file, String stepLabel) throws Exception {
+    Element step = processStep(file, stepLabel);
+    for (Node child = step.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof Element && "Components".equals(((Element) child).getTagName())
+          && "Ports".equals(((Element) child).getAttribute("property"))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Element processStep(Path file, String stepLabel) throws Exception {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    factory.setXIncludeAware(false);
+    factory.setExpandEntityReferences(false);
+    NodeList objects = factory.newDocumentBuilder().parse(file.toFile()).getElementsByTagName("Object");
+    for (int index = 0; index < objects.getLength(); index++) {
+      Element object = (Element) objects.item(index);
+      if (object.getAttribute("type").startsWith("Process/Process.") && stepLabel.equals(label(object))) {
+        return object;
+      }
+    }
+    throw new AssertionError("Missing process step " + stepLabel);
   }
 
   private static String label(Element object) {

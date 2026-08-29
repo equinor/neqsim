@@ -10,11 +10,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessConnection;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -55,6 +59,34 @@ class EngineeringDiagramDeliveryTest {
       assertEquals(64, artifact.getValue().getSha256().length());
       assertTrue(artifact.getValue().getSizeBytes() > 0L);
     }
+  }
+
+  @Test
+  void publishesDeliveryWithZeroFlowTerminalAndIsolatedEmptyStreams() throws IOException {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 1.0);
+    Stream feed = new Stream("10-FEED-EMPTY", fluid);
+    feed.setFlowRate(0.0, "kg/hr");
+    Heater heater = new Heater("10-HA-EMPTY", feed);
+    Stream product = new Stream("10-PRODUCT-EMPTY", heater.getOutletStream());
+    ProcessSystem process = new ProcessSystem("Empty-stream delivery");
+    process.add(feed);
+    process.add(heater);
+    process.add(product);
+    process.add(new Stream("10-ISOLATED-EMPTY"));
+    EngineeringDiagramDelivery.Request request = EngineeringDiagramDelivery.Request
+        .builder("PLANT-EMPTY", "A", "PFD-EMPTY-001", "Empty-stream delivery", ContentProfile.PFD).build();
+
+    EngineeringDiagramDelivery.Report report = EngineeringDiagramDelivery.deliver(process,
+        temporaryDirectory.resolve("empty-streams"), request);
+
+    assertTrue(report.isComplete(), report.toJson());
+    assertTrue(Files.isRegularFile(report.getDirectory().resolve("dexpi-process.xml")));
+    Map<?, ?> assessment = (Map<?, ?>) report.toMap().get("dexpiAssessment");
+    assertTrue(((List<?>) assessment.get("canonicalMaterialConnections")).contains("10-HA-EMPTY->10-PRODUCT-EMPTY"),
+        report.toJson());
+    assertTrue(((List<?>) assessment.get("exportedMaterialConnections")).contains("10-HA-EMPTY->10-PRODUCT-EMPTY"),
+        report.toJson());
   }
 
   @Test

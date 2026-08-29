@@ -22,6 +22,16 @@ import neqsim.process.engineering.SafetyFunctionDesign;
 
 /** Materializes governed engineering requirements as DEXPI P&amp;ID objects. */
 public final class DexpiEngineeringMaterializer {
+  private static final int INSTRUMENT_COLUMNS = 5;
+  private static final double INSTRUMENT_X_SPACING = 26.0;
+  private static final double INSTRUMENT_ROW_SPACING = 12.0;
+  private static final double INSTRUMENT_VERTICAL_CLEARANCE = 6.0;
+  private static final double ENGINEERING_BOUNDARY_CLEARANCE = 10.0;
+  private static final int DEVICE_COLUMNS = 2;
+  private static final double DEVICE_X_SPACING = 50.0;
+  private static final double DEVICE_ROW_SPACING = 16.0;
+  private static final double DEVICE_VERTICAL_OFFSET = 24.0;
+
   private DexpiEngineeringMaterializer() {
   }
 
@@ -186,14 +196,17 @@ public final class DexpiEngineeringMaterializer {
     private final String outletNozzleId;
     private final double x;
     private final double y;
+    private final double annotationTopY;
 
-    EquipmentReference(Element element, String id, String inletNozzleId, String outletNozzleId, double x, double y) {
+    EquipmentReference(Element element, String id, String inletNozzleId, String outletNozzleId, double x, double y,
+        double annotationTopY) {
       this.element = element;
       this.id = id;
       this.inletNozzleId = inletNozzleId;
       this.outletNozzleId = outletNozzleId;
       this.x = x;
       this.y = y;
+      this.annotationTopY = annotationTopY;
     }
   }
 
@@ -268,8 +281,21 @@ public final class DexpiEngineeringMaterializer {
     Element reliefSystem = createNetworkSystem(document, usedIds, "ReliefAndBlowdown", "FLARE_RELIEF_AND_BLOWDOWN");
     int functionCount = 0;
     int deviceCount = 0;
-    int offset = 0;
     List<CauseAndEffectEntry> matrix = new ArrayList<CauseAndEffectEntry>();
+    Map<String, Integer> instrumentCounts = new LinkedHashMap<String, Integer>();
+    Map<String, Integer> nextInstrumentIndexes = new LinkedHashMap<String, Integer>();
+    Map<String, Integer> nextDeviceIndexes = new LinkedHashMap<String, Integer>();
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      String equipmentTag = requirement.getEquipmentTag();
+      FunctionDefinition definition = definitionFor(requirement);
+      if (equipment.containsKey(equipmentTag) && definition != null) {
+        int instrumentCount = definition.sensors.size() + (definition.controller == null ? 0 : 1);
+        if (instrumentCount > 0) {
+          Integer count = instrumentCounts.get(equipmentTag);
+          instrumentCounts.put(equipmentTag, Integer.valueOf((count == null ? 0 : count.intValue()) + instrumentCount));
+        }
+      }
+    }
 
     for (EngineeringRequirement requirement : project.getRequirements()) {
       EquipmentReference protectedEquipment = equipment.get(requirement.getEquipmentTag());
@@ -280,19 +306,24 @@ public final class DexpiEngineeringMaterializer {
       if (definition == null) {
         continue;
       }
-      String number = tagNumber(requirement.getEquipmentTag());
+      String equipmentTag = requirement.getEquipmentTag();
+      String number = tagNumber(equipmentTag);
       List<String> loopMembers = new ArrayList<String>();
       String initiatingTag = "";
-      double baseX = protectedEquipment.x - 6.0 + (offset % 4) * 4.0;
-      double baseY = protectedEquipment.y + 16.0 + (offset / 4) * 8.0;
+      int instrumentStartIndex = currentIndex(nextInstrumentIndexes, equipmentTag);
+      Integer totalInstrumentCountValue = instrumentCounts.get(equipmentTag);
+      int totalInstrumentCount = totalInstrumentCountValue == null ? 0 : totalInstrumentCountValue.intValue();
+      int instrumentCount = definition.sensors.size() + (definition.controller == null ? 0 : 1);
 
       for (int i = 0; i < definition.sensors.size(); i++) {
         String tag = definition.sensors.get(i) + "-" + number;
         if (i > 0) {
           tag += "-" + (i + 1);
         }
+        double[] instrumentPosition = instrumentPosition(protectedEquipment, instrumentStartIndex + i,
+            totalInstrumentCount);
         String id = appendInstrumentFunction(document, root, usedIds, project, requirement, protectedEquipment, tag,
-            definition.controlSystem, "SENSOR_OR_SWITCH", baseX + i * 4.0, baseY);
+            definition.controlSystem, "SENSOR_OR_SWITCH", instrumentPosition[0], instrumentPosition[1]);
         loopMembers.add(id);
         functionCount++;
         if (initiatingTag.isEmpty()) {
@@ -302,8 +333,10 @@ public final class DexpiEngineeringMaterializer {
 
       if (definition.controller != null) {
         String tag = definition.controller + "-" + number;
+        double[] controllerPosition = instrumentPosition(protectedEquipment,
+            instrumentStartIndex + definition.sensors.size(), totalInstrumentCount);
         String id = appendInstrumentFunction(document, root, usedIds, project, requirement, protectedEquipment, tag,
-            definition.controlSystem, "CONTROLLER_OR_LOGIC_SOLVER", baseX + 8.0, baseY);
+            definition.controlSystem, "CONTROLLER_OR_LOGIC_SOLVER", controllerPosition[0], controllerPosition[1]);
         for (String sensorId : loopMembers) {
           appendInformationFlow(document, root, usedIds, project, requirement, sensorId, id, definition.controlSystem,
               "SignalConveyingFunction");
@@ -312,13 +345,19 @@ public final class DexpiEngineeringMaterializer {
         functionCount++;
       }
 
+      nextInstrumentIndexes.put(equipmentTag, Integer.valueOf(instrumentStartIndex + instrumentCount));
+
       String actuatingSourceId = last(loopMembers);
+      int equipmentDeviceIndex = currentIndex(nextDeviceIndexes, equipmentTag);
       for (DeviceDefinition device : definition.finalElements) {
         String tag = device.tagPrefix + "-" + number;
         Element targetSystem = isReliefOrBlowdownTag(tag) ? reliefSystem : protectionSystem;
+        int deviceColumn = equipmentDeviceIndex % DEVICE_COLUMNS;
+        int deviceRow = equipmentDeviceIndex / DEVICE_COLUMNS;
+        double deviceX = protectedEquipment.x + (deviceColumn - (DEVICE_COLUMNS - 1) / 2.0) * DEVICE_X_SPACING;
+        double deviceY = protectedEquipment.y - DEVICE_VERTICAL_OFFSET - deviceRow * DEVICE_ROW_SPACING;
         String id = appendPipingComponent(document, targetSystem, usedIds, project, requirement, protectedEquipment,
-            tag, device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
-            protectedEquipment.y);
+            tag, device.componentClass, definition.controlSystem, deviceX, deviceY);
         if (actuatingSourceId != null && !"SwingCheckValve".equals(device.componentClass)
             && !"SpringLoadedGlobeSafetyValve".equals(device.componentClass)) {
           appendInformationFlow(document, root, usedIds, project, requirement, actuatingSourceId, id,
@@ -326,7 +365,9 @@ public final class DexpiEngineeringMaterializer {
         }
         loopMembers.add(id);
         deviceCount++;
+        equipmentDeviceIndex++;
       }
+      nextDeviceIndexes.put(equipmentTag, Integer.valueOf(equipmentDeviceIndex));
 
       appendInstrumentationLoop(document, root, usedIds, project, requirement, loopMembers);
       if (definition.cause != null) {
@@ -335,7 +376,6 @@ public final class DexpiEngineeringMaterializer {
         }
         matrix.add(new CauseAndEffectEntry(requirement, initiatingTag, definition.cause, definition.effects));
       }
-      offset++;
     }
 
     if (hasPipingSegments(protectionSystem)) {
@@ -344,6 +384,7 @@ public final class DexpiEngineeringMaterializer {
     if (hasPipingSegments(reliefSystem)) {
       insertBeforeCatalogue(root, reliefSystem);
     }
+    expandBatteryLimitBoundary(document);
     return new MaterializationResult(matrix, functionCount, deviceCount);
   }
 
@@ -439,7 +480,7 @@ public final class DexpiEngineeringMaterializer {
     function.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunction");
     function.setAttribute("ComponentName", "INSTRUMENTATION_BUBBLE_SHAPE_FIELD");
     appendPosition(document, function, x, y);
-    appendLabel(document, function, id, tag, x, y);
+    appendInstrumentLabel(document, function, id, tag, x, y);
 
     String[] parts = tag.split("-", 2);
     Element dexpi = document.createElement("GenericAttributes");
@@ -657,9 +698,127 @@ public final class DexpiEngineeringMaterializer {
       String outletNozzle = nozzles.getLength() == 0 ? null
           : ((Element) nozzles.item(nozzles.getLength() - 1)).getAttribute("ID");
       result.put(tag, new EquipmentReference(equipment, equipment.getAttribute("ID"), inletNozzle, outletNozzle,
-          position[0], position[1]));
+          position[0], position[1], findAnnotationTop(equipment, position[1])));
     }
     return result;
+  }
+
+  private static double findAnnotationTop(Element equipment, double equipmentY) {
+    double top = equipmentY + 22.0;
+    NodeList labels = equipment.getElementsByTagName("Label");
+    for (int i = 0; i < labels.getLength(); i++) {
+      Element label = (Element) labels.item(i);
+      if (!"EquipmentBarLabel".equals(label.getAttribute("ComponentClass"))) {
+        continue;
+      }
+      NodeList coordinates = label.getElementsByTagName("Coordinate");
+      for (int j = 0; j < coordinates.getLength(); j++) {
+        Element coordinate = (Element) coordinates.item(j);
+        try {
+          top = Math.max(top, Double.parseDouble(coordinate.getAttribute("Y")));
+        } catch (NumberFormatException ignored) {
+          // Keep the deterministic equipment-relative fallback for malformed graphical metadata.
+        }
+      }
+    }
+    return top;
+  }
+
+  private static void expandBatteryLimitBoundary(Document document) {
+    Element boundary = null;
+    NodeList labels = document.getElementsByTagName("Label");
+    for (int i = 0; i < labels.getLength(); i++) {
+      Element candidate = (Element) labels.item(i);
+      if ("BatteryLimit-1".equals(candidate.getAttribute("ID"))) {
+        boundary = candidate;
+        break;
+      }
+    }
+    if (boundary == null) {
+      return;
+    }
+
+    NodeList coordinates = boundary.getElementsByTagName("Coordinate");
+    if (coordinates.getLength() < 5) {
+      return;
+    }
+    double left = Double.MAX_VALUE;
+    double right = -Double.MAX_VALUE;
+    double bottom = Double.MAX_VALUE;
+    double top = -Double.MAX_VALUE;
+    for (int i = 0; i < coordinates.getLength(); i++) {
+      Element coordinate = (Element) coordinates.item(i);
+      try {
+        double x = Double.parseDouble(coordinate.getAttribute("X"));
+        double y = Double.parseDouble(coordinate.getAttribute("Y"));
+        left = Math.min(left, x);
+        right = Math.max(right, x);
+        bottom = Math.min(bottom, y);
+        top = Math.max(top, y);
+      } catch (NumberFormatException ignored) {
+        return;
+      }
+    }
+
+    NodeList all = document.getElementsByTagName("*");
+    for (int i = 0; i < all.getLength(); i++) {
+      Element element = (Element) all.item(i);
+      String elementName = element.getTagName();
+      if (!"ProcessInstrumentationFunction".equals(elementName) && !"PipingComponent".equals(elementName)) {
+        continue;
+      }
+      if (findGenericAttribute(element, "ProtectedEquipmentTag") == null) {
+        continue;
+      }
+      double[] position = findPosition(element);
+      left = Math.min(left, position[0] - ENGINEERING_BOUNDARY_CLEARANCE);
+      right = Math.max(right, position[0] + ENGINEERING_BOUNDARY_CLEARANCE);
+      bottom = Math.min(bottom, position[1] - ENGINEERING_BOUNDARY_CLEARANCE);
+      top = Math.max(top, position[1] + ENGINEERING_BOUNDARY_CLEARANCE);
+    }
+
+    setCoordinate((Element) coordinates.item(0), left, bottom);
+    setCoordinate((Element) coordinates.item(1), right, bottom);
+    setCoordinate((Element) coordinates.item(2), right, top);
+    setCoordinate((Element) coordinates.item(3), left, top);
+    setCoordinate((Element) coordinates.item(4), left, bottom);
+
+    NodeList texts = boundary.getElementsByTagName("Text");
+    if (texts.getLength() > 0) {
+      Element text = (Element) texts.item(0);
+      text.setAttribute("Justification", "LeftTop");
+      NodeList locations = text.getElementsByTagName("Location");
+      if (locations.getLength() > 0) {
+        Element location = (Element) locations.item(0);
+        location.setAttribute("X", String.valueOf(left + 2.0));
+        location.setAttribute("Y", String.valueOf(top - 2.0));
+      }
+    }
+  }
+
+  private static void setCoordinate(Element coordinate, double x, double y) {
+    coordinate.setAttribute("X", String.valueOf(x));
+    coordinate.setAttribute("Y", String.valueOf(y));
+  }
+
+  private static double[] instrumentPosition(EquipmentReference equipment, int index, int total) {
+    int columns = Math.min(INSTRUMENT_COLUMNS, Math.max(1, total));
+    int column = index % columns;
+    int row = index / columns;
+    double startX = equipment.x - (columns - 1) * INSTRUMENT_X_SPACING / 2.0;
+    return new double[] { startX + column * INSTRUMENT_X_SPACING,
+        equipment.annotationTopY + INSTRUMENT_VERTICAL_CLEARANCE + row * INSTRUMENT_ROW_SPACING };
+  }
+
+  private static int currentIndex(Map<String, Integer> indexes, String equipmentTag) {
+    Integer index = indexes.get(equipmentTag);
+    return index == null ? 0 : index.intValue();
+  }
+
+  private static int nextIndex(Map<String, Integer> indexes, String equipmentTag) {
+    int index = currentIndex(indexes, equipmentTag);
+    indexes.put(equipmentTag, Integer.valueOf(index + 1));
+    return index;
   }
 
   private static double[] findPosition(Element element) {
@@ -737,6 +896,19 @@ public final class DexpiEngineeringMaterializer {
     parent.appendChild(scale);
   }
 
+  private static void appendInstrumentLabel(Document document, Element parent, String parentId, String tag, double x,
+      double y) {
+    String[] parts = tag.split("-", 2);
+    String functionText = parts[0];
+    String numberText = parts.length > 1 ? parts[1] : tag;
+    Element label = document.createElement("Label");
+    label.setAttribute("ID", parentId + "-Label");
+    label.setAttribute("ComponentClass", "ProcessInstrumentationFunctionLabel");
+    appendLabelText(document, label, functionText, x, y + 1.2, 1.8);
+    appendLabelText(document, label, numberText, x, y - 1.2, numberText.length() > 10 ? 1.1 : 1.4);
+    parent.appendChild(label);
+  }
+
   private static void appendLabel(Document document, Element parent, String parentId, String tag, double x, double y) {
     Element label = document.createElement("Label");
     label.setAttribute("ID", parentId + "-Label");
@@ -749,6 +921,17 @@ public final class DexpiEngineeringMaterializer {
     appendTextPosition(document, text, x, y + 3.5);
     label.appendChild(text);
     parent.appendChild(label);
+  }
+
+  private static void appendLabelText(Document document, Element label, String value, double x, double y,
+      double height) {
+    Element text = document.createElement("Text");
+    text.setAttribute("String", value);
+    text.setAttribute("Font", "Arial");
+    text.setAttribute("Height", String.valueOf(height));
+    text.setAttribute("Justification", "CenterCenter");
+    appendTextPosition(document, text, x, y);
+    label.appendChild(text);
   }
 
   private static void appendTextPosition(Document document, Element parent, double x, double y) {

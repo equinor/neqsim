@@ -244,9 +244,6 @@ public final class Dexpi20ProcessModelWriter {
     Map<StreamInterface, Boolean> consumed = new IdentityHashMap<StreamInterface, Boolean>();
     int number = 1;
     for (ProcessEquipmentInterface target : units) {
-      if (target instanceof StreamInterface) {
-        continue;
-      }
       for (StreamInterface inlet : target.getInletStreams()) {
         ProcessEquipmentInterface source = sourceByStream.get(inlet);
         if (source != null) {
@@ -330,9 +327,8 @@ public final class Dexpi20ProcessModelWriter {
     Element step = object(document, id, type);
     data(document, step, "Identifier", name);
     data(document, step, "Label", name);
-    Element ports = components(document, step, "Ports");
     processSteps.appendChild(step);
-    return new Step(ports);
+    return new Step(step);
   }
 
   private static String appendPort(Document document, Step step, String id, String connectionId, String direction) {
@@ -340,13 +336,13 @@ public final class Dexpi20ProcessModelWriter {
     data(document, port, "Identifier", id);
     dataReference(document, port, "NominalDirection", "Process/Enumerations.PortDirection." + direction);
     references(document, port, "ConnectorReference", connectionId);
-    step.ports.appendChild(port);
+    step.ports(document).appendChild(port);
     return id;
   }
 
   private static String type(ProcessEquipmentInterface unit) {
     if (unit instanceof StreamInterface) {
-      return "Process/Process.Source";
+      return hasMaterialInlet(unit) ? "Process/Process.Sink" : "Process/Process.Source";
     }
     if (unit instanceof Expander) {
       return "Process/Process.TransportingFluids";
@@ -389,6 +385,23 @@ public final class Dexpi20ProcessModelWriter {
     }
     throw new IllegalArgumentException(
         "No reviewed DEXPI 2.0 Process type mapping for " + unit.getClass().getName() + " (" + unit.getName() + ")");
+  }
+
+  private static boolean hasMaterialInlet(ProcessEquipmentInterface unit) {
+    try {
+      List<StreamInterface> inlets = unit.getInletStreams();
+      if (inlets == null) {
+        return false;
+      }
+      for (StreamInterface inlet : inlets) {
+        if (inlet != null && inlet != unit) {
+          return true;
+        }
+      }
+    } catch (RuntimeException ex) {
+      // An unconfigured stream remains a source and is serialized without ports.
+    }
+    return false;
   }
 
   private static void physicalQuantity(Document document, Element stream, String property, Double value,
@@ -612,10 +625,18 @@ public final class Dexpi20ProcessModelWriter {
   }
 
   private static final class Step {
-    private final Element ports;
+    private final Element processStep;
+    private Element ports;
 
-    Step(Element ports) {
-      this.ports = ports;
+    Step(Element processStep) {
+      this.processStep = processStep;
+    }
+
+    Element ports(Document document) {
+      if (ports == null) {
+        ports = components(document, processStep, "Ports");
+      }
+      return ports;
     }
   }
 

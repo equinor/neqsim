@@ -276,7 +276,7 @@ public final class Dexpi20ProcessTopologyAssessment {
     EngineeringGraph graph = canonical.getGraph();
     List<String> connectionIds = canonicalConnectionIds(graph);
     List<String> expected = canonicalMaterialConnections(graph, diagnostics);
-    List<ExportedConnection> exported = exportedConnections(file, diagnostics);
+    List<ExportedConnection> exported = exportedConnections(file, expected, diagnostics);
     List<String> actual = materialConnections(exported);
     compareMaterialConnections(expected, actual, diagnostics);
     diagnostics.add(new Diagnostic(Severity.WARNING, "DEXPI_PROCESS_MULTI_AREA_UNSUPPORTED",
@@ -336,8 +336,8 @@ public final class Dexpi20ProcessTopologyAssessment {
         + String.valueOf(node.getProperties().get("targetEquipment"));
   }
 
-  private static List<ExportedConnection> exportedConnections(Path file, List<Diagnostic> diagnostics)
-      throws IOException {
+  private static List<ExportedConnection> exportedConnections(Path file, List<String> canonicalMaterialConnections,
+      List<Diagnostic> diagnostics) throws IOException {
     Document document = parse(file);
     Map<String, StepReference> stepByPort = new LinkedHashMap<String, StepReference>();
     NodeList objects = document.getElementsByTagName("Object");
@@ -372,7 +372,9 @@ public final class Dexpi20ProcessTopologyAssessment {
         diagnostics.add(new Diagnostic(Severity.ERROR, "DEXPI_PROCESS_EXPORTED_PORT_REUSED",
             "Each exported material connection must own distinct source and target ports", stream.getAttribute("id")));
       }
-      boolean boundary = "Process/Process.Sink".equals(target.type);
+      String materialConnection = source.name + "->" + target.name;
+      boolean boundary = "Process/Process.Sink".equals(target.type)
+          && !canonicalMaterialConnections.contains(materialConnection);
       if (boundary) {
         diagnostics.add(new Diagnostic(Severity.INFO, "DEXPI_PROCESS_BOUNDARY_SINK_SYNTHESIZED",
             "An unconsumed material outlet was projected to a DEXPI Process sink", stream.getAttribute("id")));

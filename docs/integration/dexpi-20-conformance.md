@@ -58,6 +58,12 @@ is multiplicity-sensitive, so two parallel streams between the same steps must r
 Synthetic product sinks are retained in the exported-connection inventory but excluded from the
 in-model topology comparison.
 
+Registered terminal streams created with `new Stream(productName, upstreamOutlet)` remain explicit
+topology nodes and are exported as DEXPI Process sinks. Zero mass flow does not remove that
+connection. Standalone empty streams may coexist with a connected process; because they have no
+material ports, the exporter omits their `Ports` collection instead of writing schema-invalid empty
+components. A Process exchange still requires at least one actual material connection.
+
 `writeAndAssessTopology(...)` builds one canonical snapshot, uses its supported material-connection
 projection to drive the native Process exchange, and assesses the same snapshot. Regression coverage
 requires the assessed simple and parallel-branch output to preserve the existing sequential DEXPI
@@ -215,8 +221,9 @@ Reviewed NeqSim-to-DEXPI Process mappings are:
 
 | NeqSim equipment | DEXPI 2.0 Process type |
 |---|---|
-| feed or boundary `Stream` | `Source` |
-| unconsumed product outlet | `Sink` |
+| standalone feed or empty `Stream` | `Source` |
+| registered terminal `Stream` wrapping an upstream outlet | `Sink` |
+| unconsumed equipment product outlet | `Sink` |
 | compressor | `Compressing` |
 | pump | `Pumping` |
 | separator | `SeparatingByGravity` |

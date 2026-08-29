@@ -721,7 +721,7 @@ public final class DexpiXmlWriter {
 
     // Revision history (NORSOK Z-003)
     List<String[]> revisions = new ArrayList<>();
-    revisions.add(new String[] { "0", today, "Issued for Design", "NeqSim", "" });
+    revisions.add(new String[] { "0", today, "Engineering Proposal", "NeqSim", "" });
     DexpiLayoutEngine.appendRevisionHistory(document, root, revisions, sheetSize[0]);
 
     writeDocument(document, outputStream);

@@ -8,7 +8,9 @@ package neqsim.process.equipment.stream;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -568,10 +570,24 @@ public class Stream extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (!getFluid().isInitialized()) {
-      getFluid().init(0);
+    SystemInterface fluid = getFluid();
+    if (fluid == null) {
+      // A named but unconfigured stream is a valid inactive topology placeholder. Treat it as
+      // solved for this pass so ProcessSystem execution, diagram generation, and exchange export
+      // can retain the placeholder without inventing a thermodynamic state.
+      isActive(false);
+      lastFlowRate = 0.0;
+      lastTemperature = Double.NaN;
+      lastPressure = Double.NaN;
+      lastComposition = null;
+      lastSpecification = getSpecification();
+      setCalculationIdentifier(id);
+      return;
     }
-    thermoSystem = getFluid().clone();
+    if (!fluid.isInitialized()) {
+      fluid.init(0);
+    }
+    thermoSystem = fluid.clone();
 
     if (getFlowRate("kg/hr") < getMinimumFlow()) {
       isActive(false);
@@ -1132,6 +1148,23 @@ public class Stream extends ProcessEquipmentBaseClass
    */
   public void setInletStream(StreamInterface stream) {
     this.setStream(stream);
+  }
+
+  /**
+   * Returns the stream wrapped by this stream unit, when present.
+   *
+   * <p>
+   * A stream constructed from another stream is a topology node as well as a fluid-state view. Reporting that wrapped
+   * stream as its inlet lets graph, exchange, and diagram APIs retain explicit terminal product streams. A standalone
+   * feed or empty stream has no inlet.
+   * </p>
+   *
+   * @return an immutable singleton containing the wrapped stream, or an empty list
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    return stream == null || stream == this ? Collections.<StreamInterface>emptyList()
+        : Collections.singletonList(stream);
   }
 
   /**

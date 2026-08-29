@@ -62,6 +62,19 @@ class StreamTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void testUnconfiguredStreamRunsAsInactiveTopologyPlaceholder() {
+    Stream emptyStream = new Stream("empty-placeholder");
+    ProcessSystem process = new ProcessSystem();
+    process.add(emptyStream);
+
+    process.run();
+    process.run();
+
+    assertFalse(emptyStream.isActive(), "Unconfigured stream should remain an inactive placeholder");
+    assertTrue(emptyStream.getFluid() == null, "Running an empty stream must not invent a fluid state");
+  }
+
+  @Test
   public void testEquilibriumStreamCloneDoesNotReplaceOriginalFluid() {
     SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 1.0);

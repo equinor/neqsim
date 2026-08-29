@@ -127,6 +127,34 @@ process.run();
 DexpiXmlWriter.write(process, new File("output.xml"));
 ```
 
+### NeqSim-native SVG rendering
+
+`DexpiXmlSvgRenderer` renders the geometry in a Proteus-compatible DEXPI Plant/P&ID exchange
+directly to SVG. It resolves each equipment, valve, nozzle, off-page connector, and instrument
+instance against the document's `ShapeCatalogue`, and preserves process, signal, utility, label,
+stream-table, drawing-border, and title-block primitives. The SVG is therefore a view of the DEXPI
+document rather than a separately reconstructed process diagram.
+
+```java
+File dexpi = new File("plant.xml");
+File svg = new File("plant.svg");
+
+DexpiXmlWriter.write(process, dexpi);
+DexpiXmlSvgRenderer.render(dexpi, svg);
+```
+
+The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Generated title
+blocks are marked `PROPOSAL`, and their initial revision is `Engineering Proposal`; a controlled
+owner status and accountable review are required before a drawing can be issued for design or
+construction. Use an independent DEXPI consumer as an interoperability check when qualifying an
+exchange for a project handoff.
+
+An intentionally unconfigured `new Stream("spare")` may remain registered in the `ProcessSystem`.
+Its `run(UUID)` call completes as an inactive topology placeholder without inventing a fluid state,
+and the DEXPI writers and renderer ignore unsupported empty geometry while preserving the connected
+process. Equipment that consumes the placeholder still requires a real thermodynamic inlet before it
+can run.
+
 ### Layout and visualization features
 
 The export path applies NeqSim's built-in auto-layout and visualization defaults: equipment tag
