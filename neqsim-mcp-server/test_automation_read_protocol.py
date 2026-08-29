@@ -13,6 +13,13 @@ import sys
 import time
 
 JAR = "target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
+PROMOTED_TOOLS = {
+    "listSimulationUnits",
+    "listUnitVariables",
+    "getSimulationVariable",
+    "diagnoseAutomation",
+    "getAutomationLearningReport",
+}
 
 
 class McpClient:
@@ -236,6 +243,40 @@ def test_invalid_requests_fail_closed(client, process_json):
         require("INPUT_ERROR" in codes, f"{tool_name} missing INPUT_ERROR diagnostic", result)
 
 
+def test_contract_classification_is_promoted_atomically(client):
+    result = client.call_tool("getCapabilities", {})
+    data = payload(result)
+    inventory = data.get("phase0EvidenceInventory")
+    require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
+    require(inventory.get("inventoryVersion") == "1.18", "unexpected evidence inventory version", result)
+    limitations = inventory.get("knownLimitations", {})
+    require(limitations.get("contractTestedToolCount") == 16, "contract-tested count did not promote", result)
+    require(limitations.get("confirmedGapToolCount") == 35, "confirmed-gap count did not promote", result)
+    records = limitations.get("coverageRecords", {})
+    contract_tools = set(limitations.get("contractTestedTools", []))
+    require(PROMOTED_TOOLS.issubset(contract_tools), "promoted automation tools missing from contract set", result)
+    for tool_name in PROMOTED_TOOLS:
+        record = records.get(tool_name, {})
+        require(record.get("coverageStatus") == "CONTRACT_TESTED", f"{tool_name} was not promoted", result)
+        require(record.get("contractTrustAvailable") is True, f"{tool_name} contract trust flag missing", result)
+        require(record.get("contractEvidenceCount") == 5, f"{tool_name} evidence count drifted", result)
+        evidence = json.dumps(record.get("contractEvidenceSources", []))
+        require("AutomationReadContractTest.java" in evidence, f"{tool_name} omits Java regression evidence", result)
+        require("test_automation_read_protocol.py" in evidence, f"{tool_name} omits packaged-MCP evidence", result)
+    variable_read = records.get("getSimulationVariable", {})
+    require(
+        variable_read.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_READ",
+        "variable-read numerical boundary drifted",
+        result,
+    )
+    require(
+        "not benchmark-validated" in variable_read.get("evidenceBoundary", ""),
+        "variable-read evidence boundary lost numerical limitation",
+        result,
+    )
+
+
 def main():
     client = McpClient()
     try:
@@ -247,9 +288,10 @@ def main():
         test_diagnostic_advice(client, process_json)
         test_learning_report_baseline(client, process_json)
         test_invalid_requests_fail_closed(client, process_json)
+        test_contract_classification_is_promoted_atomically(client)
     finally:
         client.close()
-    print("automation advisory real-MCP qualification: 6/6 scenarios passed")
+    print("automation advisory real-MCP qualification: 7/7 scenarios passed")
     return 0
 
 
