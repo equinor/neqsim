@@ -119,7 +119,7 @@ public class DoeBigHillAtmosphericFractionationTest {
     column.addFeedStream(feed, 4);
     column.setTopPressure(1.2);
     column.setBottomPressure(1.5);
-    column.getCondenser().setOutTemperature(360.0);
+    column.getCondenser().setOutTemperature(420.0);
     column.getReboiler().setOutTemperature(690.0);
     column.setCondenserRefluxRatio(1.0);
     column.setLiquidSideDrawFraction(SIDE_DRAW_TRAY, 0.10);
