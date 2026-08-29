@@ -38,7 +38,7 @@ Accordingly, this is an **integration and numerical-robustness qualification**, 
 1. Build an SRK system from the normalized measured DOE mass yields, cut specific gravities, and finite boiling ranges using `OilAssayCharacterisation`.
 2. Generate the five real NeqSim TBP pseudo-components.
 3. Feed the resulting broad-boiling slate to an eight-tray `DistillationColumn` with a reboiler, partial condenser, and one liquid side draw.
-4. Seed the interior stages with a linear 690-to-360 K bottom-up temperature profile, then solve at near-atmospheric pressure with the simultaneous `NAPHTALI_SANDHOLM` column solver; guarded fallback products are not accepted.
+4. Solve at near-atmospheric pressure with the residual-monitored `MESH_RESIDUAL` column solver; the solved state must satisfy the active full-MESH residual gate and guarded fallback products are not accepted.
 5. Re-run the same initialized column to qualify repeatability rather than accepting a one-off solution.
 
 The operating point is deliberately a reproducible **screening case**, not a reconstruction of a proprietary or historical refinery design:
@@ -54,17 +54,17 @@ The operating point is deliberately a reproducible **screening case**, not a rec
 | Bottom pressure | 1.5 bara |
 | Condenser temperature | 360 K |
 | Reboiler temperature | 690 K |
-| Interior temperature seeds | Linear from 690 K at the bottom to 360 K at the top |
 | Condenser reflux ratio | 1.0 |
 | Liquid side draw | 10% of tray-5 liquid traffic |
 
-The seed profile is only a deterministic initial guess for the simultaneous solver; it does not pin interior tray temperatures or replace their energy balances. No tuning to a commercial process simulator is used.
+`MESH_RESIDUAL` uses inside-out initialization followed by rigorous residual monitoring. Interior tray temperatures remain solver variables governed by the stage energy balances. No tuning to a commercial process simulator is used.
 
 ## Acceptance contract
 
 The regression requires all of the following on each accepted solve:
 
-- the column reports a solved state;
+- the column reports a solved state from `MESH_RESIDUAL`, not guarded fallback products;
+- the full MESH infinity norm satisfies the solver's active residual tolerance;
 - overhead, liquid side draw, and bottoms are finite and strictly positive;
 - external mass closure is within **5%**;
 - `DistillationColumn.getMassBalanceError()` is finite and no greater than **5%**;
