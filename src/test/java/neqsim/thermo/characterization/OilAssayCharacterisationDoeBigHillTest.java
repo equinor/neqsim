@@ -29,12 +29,12 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class OilAssayCharacterisationDoeBigHillTest {
-  private static final double[] LOWER_BOUNDARY_F = {175.0, 250.0, 375.0, 530.0, 650.0};
-  private static final double[] UPPER_BOUNDARY_F = {250.0, 375.0, 530.0, 650.0, 1050.0};
-  private static final double[] VOLUME_PERCENT = {9.8, 15.4, 15.5, 10.8, 27.8};
-  private static final double[] WEIGHT_PERCENT = {8.6, 15.2, 15.2, 11.1, 30.3};
-  private static final double[] SPECIFIC_GRAVITY = {0.7815, 0.8305, 0.8623, 0.9226, 0.9477};
-  private static final double[] API_GRAVITY = {49.6, 38.9, 32.6, 21.9, 17.8};
+  private static final double[] LOWER_BOUNDARY_F = { 175.0, 250.0, 375.0, 530.0, 650.0 };
+  private static final double[] UPPER_BOUNDARY_F = { 250.0, 375.0, 530.0, 650.0, 1050.0 };
+  private static final double[] VOLUME_PERCENT = { 9.8, 15.4, 15.5, 10.8, 27.8 };
+  private static final double[] WEIGHT_PERCENT = { 8.6, 15.2, 15.2, 11.1, 30.3 };
+  private static final double[] SPECIFIC_GRAVITY = { 0.7815, 0.8305, 0.8623, 0.9226, 0.9477 };
+  private static final double[] API_GRAVITY = { 49.6, 38.9, 32.6, 21.9, 17.8 };
 
   @Test
   public void doeSpecificGravityAndApiPairsAreConsistent() {
