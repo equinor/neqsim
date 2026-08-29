@@ -1500,8 +1500,8 @@ public class SystemElectrolyteCPAMMTest {
   }
 
   @Test
-  @DisplayName("Pure liquid: MM e-CPA and Pitzer with no gas phase")
-  void testPureLiquidBothModels() {
+  @DisplayName("Liquid properties: MM e-CPA and Pitzer aqueous phases")
+  void testLiquidPropertiesBothModels() {
     // Pure aqueous NaCl 1 molal at 1 bar, 298.15 K — should stay single liquid phase
     double molesWater = 55.508;
     double m = 1.0;
@@ -1527,12 +1527,12 @@ public class SystemElectrolyteCPAMMTest {
     assertTrue(Double.isFinite(gammaMM) && gammaMM > 0,
         "MM gamma± must be finite and positive in pure liquid (got " + gammaMM + ")");
 
-    // ----- Pitzer: pure liquid -----
-    // Architectural note: SystemPitzer uses phase[0]=SRK(gas) and phase[1]=Pitzer(aqueous).
-    // Without a gas component, TPflash stays in the SRK phase, giving gamma±=1.0.
-    // The standard pattern is to add trace methane + moderate pressure to force 2 phases.
+    // ----- Pitzer: explicit aqueous phase -----
+    // SystemPitzer uses phase[0]=SRK(gas) and phase[1]=Pitzer(aqueous). Use a methane inventory
+    // that exceeds the qualified IAPWS pure-water solubility at this state, so the flash retains
+    // an explicit gas plus aqueous topology while the aqueous properties are checked.
     SystemPitzer pitzerSys = new SystemPitzer(298.15, 10.0);
-    pitzerSys.addComponent("methane", 0.01); // trace gas for 2-phase split
+    pitzerSys.addComponent("methane", 5.0);
     pitzerSys.addComponent("water", molesWater);
     pitzerSys.addComponent("Na+", m);
     pitzerSys.addComponent("Cl-", m);
@@ -1557,7 +1557,7 @@ public class SystemElectrolyteCPAMMTest {
     assertTrue(Double.isFinite(gammaPitzer) && gammaPitzer > 0,
         "Pitzer gamma± must be finite and positive in pure liquid (got " + gammaPitzer + ")");
 
-    logger.info("=== Pure Liquid (no gas) ===");
+    logger.info("=== Liquid properties ===");
     logger.info(String.format("  MM e-CPA:  γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaMM, mmVm,
         mmSys.getNumberOfPhases()));
     logger.info(String.format("  Pitzer:    γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaPitzer, pitzerVm,
