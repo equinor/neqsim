@@ -99,8 +99,8 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
    * Returns the logarithmic temperature derivative of the effective Henry reference.
    *
    * <p>
-   * Fugacity-coefficient derivatives are derivatives of {@code ln(phi)}. The database API returns {@code dH/dT}, so
-   * an active correlation contributes {@code (dH/dT)/H}. A fail-closed constant contributes zero.
+   * Fugacity-coefficient derivatives are derivatives of {@code ln(phi)}. The database API returns {@code dH/dT}, so an
+   * active correlation contributes {@code (dH/dT)/H}. A fail-closed constant contributes zero.
    * </p>
    *
    * @param temperature temperature in K
