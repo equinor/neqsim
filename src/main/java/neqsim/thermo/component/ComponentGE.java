@@ -167,16 +167,32 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
         && phase.hasComponent("water");
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double logfugcoefdP(PhaseInterface phase) {
+    return fugcoefDiffPres(phase);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double logfugcoefdT(PhaseInterface phase) {
+    return fugcoefDiffTemp(phase);
+  }
+
   /**
-   * fugcoefDiffPres.
+   * Calculates the analytical pressure derivative of the logarithmic GE fugacity coefficient.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * <p>
+   * Every GE reference implemented here has {@code phi = gamma * reference / P}. With no Poynting correction in the
+   * model, the pressure derivative is therefore {@code d(ln gamma)/dP - 1/P}. A future pressure-dependent reference
+   * must add its own derivative without removing the explicit denominator term.
+   * </p>
+   *
+   * @param phase phase containing pressure in bar
+   * @return d(ln(phi))/dP in 1/bar
    */
   public double fugcoefDiffPres(PhaseInterface phase) {
-    // double temperature = phase.getTemperature(), pressure = phase.getPressure();
-    // int numberOfComponents = phase.getNumberOfComponents();
-    dfugdp = 0.0; // forelopig uten pointing
+    dfugdp = dlngammadp - 1.0 / phase.getPressure();
     return dfugdp;
   }
 
