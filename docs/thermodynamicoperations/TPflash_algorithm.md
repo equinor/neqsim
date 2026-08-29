@@ -2111,9 +2111,10 @@ fractions, 0.163 mol% nitrogen, 0.323 mol% CO2, and zero active H2S. Both SRK an
 the classic mixing rule without fitted binary interaction parameters. Temperature is in
 degrees Celsius and pressure is absolute bar.
 
-At 268 °C and 88 bara, ordinary and explicit-multiphase flashes must return the same
-closed two-phase equilibrium for each EOS. The comparison matches phases by nC19 mole
-fraction rather than phase-role metadata and requires phase fraction, composition, and
+At 268 °C and 88 bara, SRK returns a closed two-phase equilibrium while PR returns a
+closed single-phase equilibrium. Ordinary and explicit-multiphase flashes must agree on
+that EOS-specific topology and state. Multiphase comparisons match phases by nC19 mole
+fraction rather than phase-role metadata and require phase fraction, composition, and
 compressibility agreement within `1e-8`. Every accepted endpoint requires finite and
 bounded phase fractions and compositions, phase and beta normalization within `1e-12`,
 component material balance below `1e-10`, maximum interphase log-fugacity residual
