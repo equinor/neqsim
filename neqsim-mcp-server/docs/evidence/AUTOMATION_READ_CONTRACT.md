@@ -14,8 +14,9 @@ All five tools use the canonical NeqSim process model. `AutomationRunner` resolv
 
 - `src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java` checks canonical unit discovery, variable-addressability metadata, standard-envelope variable reads, structured `UNIT_NOT_FOUND` diagnostic evidence, the deterministic zero-history learning baseline of a fresh process, and structured fail-closed `INPUT_ERROR` responses for all five tools.
 - Existing `src/test/java/neqsim/mcp/runners/McpRunnerContractTest.java` already includes the automation surface in the high-use standard-response contract against `ExampleCatalog.processSimpleSeparation()`.
-- `neqsim-mcp-server/test_automation_read_protocol.py` obtains the canonical simple-separation example through real MCP and exercises all five advisory tools over packaged STDIO transport, including invalid-input rejection.
-- `.github/workflows/mcp_protocol_qualification.yml` builds the exact NeqSim core and packaged MCP server with Java 21 and runs this focused harness with read-only repository permissions.
+- `neqsim-mcp-server/test_automation_read_protocol.py` obtains the canonical simple-separation example through real MCP and exercises all five advisory tools over packaged STDIO transport, including invalid-input rejection and the machine-readable trust-accounting transition.
+- `neqsim-mcp-server/test_mcp_server.py` is the authoritative packaged-protocol accounting gate and independently reconciles the full sixteen-tool `CONTRACT_TESTED` set against the Phase 0 inventory.
+- `.github/workflows/mcp_protocol_qualification.yml` builds the exact NeqSim core and packaged MCP server with Java 21 and runs the focused and comprehensive protocol harnesses with read-only repository permissions.
 
 The diagnostic fixture deliberately uses an impossible unit name and verifies structured advice rather than asserting that any recommendation is an engineering diagnosis. The learning-report fixture uses a fresh process and freezes only the empty-history software contract; it does not claim persistent learning across processes, restarts, clients, or tenants.
 
@@ -23,13 +24,15 @@ The diagnostic fixture deliberately uses an impossible unit name and verifies st
 
 This evidence qualifies discovery, lookup, addressability, diagnostic-response shape, process-local learning-report retrieval, standard-envelope behavior, and packaged transport only. It does **not** validate thermodynamic or process numerical accuracy, the engineering correctness of any returned variable value or diagnostic recommendation, causal diagnosis, facility topology completeness, equipment performance, control behavior, persistent model state, learning quality, multi-client or tenant isolation, or external authorization.
 
+For `getSimulationVariable`, `CONTRACT_TESTED` therefore means that addressed read routing, requested-unit handling, provenance/validation/quality-gate envelope preservation, fail-closed invalid inputs, and packaged transport have direct evidence. The returned numerical value, model fidelity, convergence adequacy, and engineering applicability are **not benchmark-validated by this classification**.
+
 A successful read or diagnostic is not an engineering approval, plant measurement, or control recommendation. Returned values and suggestions remain simulation/advisory outputs with the case-specific model, assumptions, units, convergence state, provenance, warnings, validation maturity, and limitations as the authoritative engineering context.
 
 ## Promotion boundary
 
-The Phase 0 inventory remains version `1.17` with `20 EXPLICIT_TRUST + 11 CONTRACT_TESTED + 40 CONFIRMED_GAP` in this qualification increment. All five tools covered by this note remain `CONFIRMED_GAP` until machine-readable coverage and the authoritative primary packaged-protocol accounting can be changed together on one exact validated head.
+Phase 0 inventory version `1.18` atomically promotes these five previously qualified automation advisory contracts from `CONFIRMED_GAP` to `CONTRACT_TESTED`. Accounting moves from `20 EXPLICIT_TRUST + 11 CONTRACT_TESTED + 40 CONFIRMED_GAP` to `20 EXPLICIT_TRUST + 16 CONTRACT_TESTED + 35 CONFIRMED_GAP` while keeping all numerical and engineering-validation limits explicit.
 
-Merged #3302 supplied the focused prerequisite for the three discovery/read contracts. This increment extends the same source and real-protocol evidence boundary to `diagnoseAutomation` and `getAutomationLearningReport`. After merge and current-master re-audit, the coherent atomic promotion target is therefore the five-tool automation advisory set, moving Phase 0 accounting from 20/11/40 to 20/16/35 only if the machine-readable coverage records and primary protocol expectations move together and exact-head validation passes.
+Merged #3302 supplied the focused prerequisite for `listSimulationUnits`, `listUnitVariables`, and `getSimulationVariable`; merged #3309 extended the same source and real-protocol evidence boundary to `diagnoseAutomation` and `getAutomationLearningReport`. Inventory `1.18`, Java regressions, the focused packaged-MCP harness, and the authoritative comprehensive packaged-MCP accounting now move together on the same exact head. No further promotion candidate is queued by this increment; remaining tools stay `CONFIRMED_GAP` unless separately qualified from direct evidence.
 
 ## Owner-roadmap boundary
 
