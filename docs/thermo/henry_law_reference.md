@@ -51,13 +51,53 @@ conversion then maps the Pitzer expression back to the common
 mole-fraction/fugacity kernel. The constant conversion leaves
 \(\mathrm{d}\ln H/\mathrm{d}T\) unchanged.
 
+The coherent family is identified as `iapws-g7-04-water-gases-v1`.
+Ordinary runtime evaluation accepts only the published species-specific fitted
+range. `getHenryCoefficientBarAllowExtrapolation` is deliberately named for
+reproducing guideline check values outside that range; GE and Pitzer fugacity
+paths never call it.
+
+### Versioned coefficient family
+
+The following values are transcribed from IAPWS G7-04 Tables 2 and 5. `A`, `B`,
+and `C` are dimensionless; temperature limits are in kelvin; RMS is the
+published root-mean-square deviation in `ln(kH)`.
+
+| Species | A | B | C | Tmin | Tmax | RMS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| He | -3.52839 | 7.12983 | 4.47770 | 273.21 | 553.18 | 0.0341 |
+| Ne | -3.18301 | 5.31448 | 5.43774 | 273.20 | 543.36 | 0.0577 |
+| Ar | -8.40954 | 4.29587 | 10.52779 | 273.19 | 568.36 | 0.0443 |
+| Kr | -8.97358 | 3.61508 | 11.29963 | 273.19 | 525.56 | 0.0434 |
+| Xe | -14.21635 | 4.00041 | 15.60999 | 273.22 | 574.85 | 0.0363 |
+| H2 | -4.73284 | 6.08954 | 6.06066 | 273.15 | 636.09 | 0.0517 |
+| N2 | -9.67578 | 4.72162 | 11.70585 | 278.12 | 636.46 | 0.0372 |
+| O2 | -9.44833 | 4.43822 | 11.42005 | 274.15 | 616.52 | 0.0377 |
+| CO | -10.52862 | 5.13259 | 12.01421 | 278.15 | 588.67 | 0.0039 |
+| CO2 | -8.55445 | 4.01195 | 9.52345 | 274.19 | 642.66 | 0.0528 |
+| H2S | -4.51499 | 5.23538 | 4.42126 | 273.15 | 533.09 | 0.0408 |
+| CH4 | -10.44708 | 4.66491 | 12.12986 | 275.46 | 633.11 | 0.0386 |
+| C2H6 | -19.67563 | 4.51222 | 20.62567 | 275.44 | 473.46 | 0.0259 |
+| SF6 | -16.56118 | 2.15289 | 20.35440 | 283.14 | 505.55 | 0.0505 |
+
 ## Model semantics
 
-- Generic aqueous GE models use the IAPWS mole-fraction reference only when
-  water is present and the neutral species is supported.
-- Pitzer uses the explicit molality conversion above. Pitzer \(\lambda\),
-  \(\zeta\), \(\mu\), and \(\eta\) interactions remain distinct parameter
-  families.
+| Runtime path | IAPWS reference decision | Electrolyte-interaction decision |
+| --- | --- | --- |
+| Generic aqueous GE | use the mole-fraction reference for a supported neutral gas in water, including H2/He/Ar rows historically marked as solvents | retain the GE model's own activity coefficient |
+| Pitzer, no ionic component topology | use the explicit molality conversion above | no salting-out claim; this is the pure-water limit |
+| Pitzer, ions and a coverage-checked neutral family | use the molality reference | apply the explicitly selected `lambda`, `zeta`, `mu`, and `eta` family |
+| Pitzer, ions without a qualified neutral family | preserve the established database/capping reference for the complete calculation | do not silently combine IAPWS with a unit neutral activity coefficient |
+| SRK, PR, CPA, and electrolyte EOS | do not dispatch through this GE reference | retain EOS fugacity, association, and mixing-rule semantics |
+
+The Pitzer decision depends on component topology, not the instantaneous ionic
+strength. Consequently a reaction solve cannot change reference models merely
+because trace ions appear or disappear. Pitzer \(\lambda\), \(\zeta\), \(\mu\),
+and \(\eta\) interactions remain distinct parameter families. CO2 and H2S also
+require a qualified neutral family before Pitzer changes their reference, even
+before reaction species have been added. This prevents initialization order
+from seeding a reactive calculation with a temporarily different standard
+state.
 - Pure-water Henry data do not qualify electrolyte salting-out behavior.
   Brine prediction still requires independently sourced neutral-ion
   interactions and dataset qualification.
@@ -82,7 +122,9 @@ species.
 | Fernandez-Prini et al. (2003), [DOI 10.1063/1.1564818](https://doi.org/10.1063/1.1564818) | 14 gases in H2O and 7 gases in D2O | (k_H=f/x) at water saturation; triple-point region toward critical conditions; species-specific fitted ranges and RMS residuals | primary JPCRD article available through NIST | adopted lineage and independent equation cross-check for the 14 H2O gases |
 | IAPWS G7-04, [Henry guideline](https://iapws.org/technical-guidance/release/HenGuide) | He, Ne, Ar, Kr, Xe, H2, N2, O2, CO, CO2, H2S, CH4, C2H6, SF6 in H2O | same equation and standard state; Table 2 fitted ranges; Table 6 check values at 300/400/500/600 K | guideline states that publication in whole or in part is permitted with attribution | adopted coefficients, ranges, equations, and 56 published check values |
 | Sander (2023), [DOI 10.5194/acp-23-10901-2023](https://doi.org/10.5194/acp-23-10901-2023) | water-solvent compilation | standardized alternative Henry definitions and conversions | article and supplement are CC BY 4.0 | terminology and conversion cross-check; no values adopted |
-| NIST Chemistry WebBook SRD 69, [CO2 Henry data](https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=10) | CO2 in water near ambient temperature | solubility-form values and temperature parameter | compilation is copyright protected | read-only validation index; no values copied |
+| NIST Chemistry WebBook SRD 69, [CO2](https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=10), [CH4](https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Mask=10), and [N2](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Mask=10) Henry data | three gases in water near ambient temperature | solubility-form values and temperature parameters; conventions require conversion before comparison | compilation is copyright protected | read-only independent screening index; no values copied |
+| USGS PHREEQC 3.9.0, [`pitzer.dat` provenance and license](pitzer_parameter_provenance.md) | ionic and neutral Pitzer interaction families | molality scale, PHREEQC six-term temperature functions, explicit tuple topology | USGS release is public domain; exact release/commit/blob are recorded in the linked matrix | confirms that a pure-water Henry constant is not a substitute for missing neutral-ion terms; no Pitzer value adopted here |
+| Kaasa (1998), [stable National Library item](https://www.nb.no/items/d1d68b489b8ee6704786a011fd2e7283) | oil-recovery-brine Pitzer binary, same-sign, ternary, and neutral families | Appendix F is a provenance index with its own coefficient order and row-level source lineage | scan-table redistribution terms are unresolved; original pages were not retrievable from the public item in this run | metadata/provenance index only; no value inferred, OCRed, copied, or adopted |
 
 The IAPWS high-temperature root-mean-square deviations in \(\ln k_H\) range
 from 0.0039 for CO to 0.0577 for Ne. These source residuals describe the
@@ -102,12 +144,39 @@ checks fitted/extrapolated/unsupported/out-of-domain diagnostics, verifies
 mole-fraction-to-molality mapping, and exercises fail-closed behavior.
 
 `ComponentGEHenryDerivativeTest` retains the legacy database-correlation
-regressions, including the dimensional identity
+regressions, including the dimensional identity, corrects the historic
+H2/He/Ar solvent classification in aqueous GE phases, and verifies that an
+ionic Pitzer topology without a qualified neutral family remains on one
+deterministic compatibility path even at trace ionic strength. The
+system-level Pitzer regression verifies the explicit molality conversion,
+including the fixed IAPWS water molar mass. The dimensional identity is
 
 $$\frac{\mathrm{d}\ln H}{\mathrm{d}T}=\frac{1}{H}\frac{\mathrm{d}H}{\mathrm{d}T}.$$
 
 These tests are implementation and source-table regressions. They are separate
 from independent VLE/VLLE or brine validation.
+
+## Scientific and performance controls
+
+The repository's complete reactive-H2S benchmark remains on the established
+legacy Pitzer reference because its diagnostic reports missing `H2S|H2S`,
+`H2S|H3O+`, `H2S|HS-`, and `H2S|H3O+|HS-` neutral interactions. At 298.15 K,
+the repaired branch gives maximum absolute reaction `ln(Q/K)` residual
+`4.2633e-14`, maximum elemental residual `1.1927e-13`, charge
+`-1.0825e-14` mol, and normalized charge residual `1.5922e-10`. HS- molality
+increases from `3.3995324e-5` mol/kg at 298.15 K to `4.3530791e-5` mol/kg at
+318.15 K. These are compatibility, closure, and nearby-state controls; they
+are not treated as new independent H2S-solubility validation.
+
+`PitzerCatalogPerformanceBenchmark` uses nine fixed-work batches after warmup.
+On OpenJDK 17 in the same runner, the affected combined IAPWS value/derivative
+kernel decreased from 1140 ns on exact pre-repair PR head `a3acb09cf` to 573 ns
+on the repaired tree. The complete reactive-H2S median was 40.76 ms versus
+50.25 ms on that head, with the compatible chemical state above. Absolute
+wall-clock timings remain environment-sensitive; the comparison is a
+regression screen, not a portable throughput guarantee. Neutral SRK/PR/CPA
+paths do not dispatch through this helper and remain covered by their existing
+tests.
 
 ## Remaining validation boundary
 

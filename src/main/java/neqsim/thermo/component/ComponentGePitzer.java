@@ -67,7 +67,9 @@ public class ComponentGePitzer extends ComponentGE {
    * <p>
    * IAPWS publishes {@code kH = f/x}. Pitzer neutral activities use molality, so {@code Hm = kH * Mwater}; the existing
    * {@code m/x} factor in {@link #fugcoef(PhaseInterface)} maps this back to the common mole-fraction fugacity kernel.
-   * The constant conversion does not change the logarithmic temperature derivative.
+   * The constant conversion does not change the logarithmic temperature derivative. An ionic phase adopts the new
+   * reference only with an explicitly active, coverage-checked neutral interaction family; otherwise this pure-water
+   * batch preserves the pre-existing database/capping result.
    * </p>
    *
    * @param phase aqueous Pitzer phase
@@ -75,11 +77,45 @@ public class ComponentGePitzer extends ComponentGE {
    */
   @Override
   protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
-    double coefficient = super.getEffectiveHenryCoefficient(phase);
-    if (phase.hasComponent("water") && IapwsHenryLaw.isSupportedSpecies(getComponentName())) {
-      return coefficient * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
+    if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
+      return super.getEffectiveHenryCoefficient(phase);
     }
-    return coefficient;
+    if (!neutralPitzerInteractionsActive && (phase.hasIons() || requiresReactivePitzerQualification())) {
+      return getEffectiveHenryCoefficient(phase.getTemperature());
+    }
+    if (!IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+      return INSOLUBLE_HENRY_COEFFICIENT;
+    }
+    double coefficient = IapwsHenryLaw.getHenryCoefficientBar(getComponentName(), phase.getTemperature())
+        * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
+    return super.isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
+    if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
+      return super.getLnHenryCoefficientTemperatureDerivative(phase);
+    }
+    if (!neutralPitzerInteractionsActive && (phase.hasIons() || requiresReactivePitzerQualification())) {
+      return getLnHenryCoefficientTemperatureDerivative(phase.getTemperature());
+    }
+    if (!IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+      return 0.0;
+    }
+    return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
+  }
+
+  /**
+   * Tests whether a molecular acid gas needs reaction-compatible neutral Pitzer parameters before changing its
+   * reference state.
+   *
+   * @return {@code true} for CO2 and H2S component aliases
+   */
+  private boolean requiresReactivePitzerQualification() {
+    String name = getComponentName();
+    return "CO2".equalsIgnoreCase(name) || "carbon dioxide".equalsIgnoreCase(name) || "H2S".equalsIgnoreCase(name)
+        || "hydrogen sulfide".equalsIgnoreCase(name);
   }
 
   /** {@inheritDoc} */

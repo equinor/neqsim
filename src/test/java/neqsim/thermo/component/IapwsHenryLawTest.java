@@ -24,7 +24,8 @@ class IapwsHenryLawTest {
     double[] temperatures = { 300.0, 400.0, 500.0, 600.0 };
     for (int gas = 0; gas < GASES.length; gas++) {
       for (int point = 0; point < temperatures.length; point++) {
-        double logKhGpa = Math.log(IapwsHenryLaw.getHenryCoefficientBar(GASES[gas], temperatures[point]) / 10000.0);
+        double logKhGpa = Math
+            .log(IapwsHenryLaw.getHenryCoefficientBarAllowExtrapolation(GASES[gas], temperatures[point]) / 10000.0);
         assertEquals(EXPECTED_LOG_KH_GPA[gas][point], logKhGpa, 5.1e-5,
             GASES[gas] + " at " + temperatures[point] + " K");
       }
@@ -48,10 +49,17 @@ class IapwsHenryLawTest {
     assertEquals(IapwsHenryLaw.Status.WITHIN_FITTED_RANGE, fitted.getStatus());
     assertEquals("CH4", fitted.getCanonicalGasName());
     assertTrue(fitted.isUsable());
+    assertEquals(IapwsHenryLaw.DATASET_ID, fitted.getDatasetId());
+    assertEquals(-10.44708, fitted.getCoefficientA(), 0.0);
+    assertEquals(4.66491, fitted.getCoefficientB(), 0.0);
+    assertEquals(12.12986, fitted.getCoefficientC(), 0.0);
+    assertEquals(0.0386, fitted.getRmsLogHenryResidual(), 0.0);
 
     IapwsHenryLaw.Assessment extrapolated = IapwsHenryLaw.assess("ethane", 600.0);
     assertEquals(IapwsHenryLaw.Status.GUIDELINE_EXTRAPOLATION, extrapolated.getStatus());
-    assertTrue(extrapolated.isUsable());
+    assertFalse(extrapolated.isUsable());
+    assertThrows(IllegalArgumentException.class, () -> IapwsHenryLaw.getHenryCoefficientBar("ethane", 600.0));
+    assertTrue(IapwsHenryLaw.getHenryCoefficientBarAllowExtrapolation("ethane", 600.0) > 0.0);
 
     IapwsHenryLaw.Assessment outside = IapwsHenryLaw.assess("CH4", 700.0);
     assertEquals(IapwsHenryLaw.Status.OUTSIDE_CORRELATION_DOMAIN, outside.getStatus());
@@ -89,5 +97,18 @@ class IapwsHenryLawTest {
 
     assertEquals(ComponentGE.INSOLUBLE_HENRY_COEFFICIENT, methane.getEffectiveHenryCoefficient(aqueousPhase), 0.0);
     assertEquals(0.0, methane.getLnHenryCoefficientTemperatureDerivative(aqueousPhase), 0.0);
+  }
+
+  @Test
+  void supportedSpeciesOutsideFittedRangeFailsClosedInRuntimePath() {
+    PhasePitzer aqueousPhase = new PhasePitzer();
+    aqueousPhase.setTemperature(500.0);
+    aqueousPhase.addComponent("water", 55.508, 55.508, 0);
+    ComponentGeNRTL ethane = new ComponentGeNRTL("ethane", 1.0e-6, 1.0e-6, 1);
+
+    assertEquals(IapwsHenryLaw.Status.GUIDELINE_EXTRAPOLATION,
+        IapwsHenryLaw.assess("ethane", aqueousPhase.getTemperature()).getStatus());
+    assertEquals(ComponentGE.INSOLUBLE_HENRY_COEFFICIENT, ethane.getEffectiveHenryCoefficient(aqueousPhase), 0.0);
+    assertEquals(0.0, ethane.getLnHenryCoefficientTemperatureDerivative(aqueousPhase), 0.0);
   }
 }
