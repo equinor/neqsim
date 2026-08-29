@@ -1,3 +1,9 @@
+---
+title: "Henry-Law Reference States and Aqueous Gas-Solubility Evidence"
+description: "Henry-law conventions, temperature derivatives, parameter provenance, and validation gates for aqueous GE and Pitzer models."
+keywords: "Henry law, gas solubility, electrolyte, Pitzer, activity coefficient, aqueous phase, provenance"
+---
+
 # Henry-law reference states and aqueous gas-solubility evidence
 
 NeqSim uses Henry-law reference states for neutral solutes in aqueous excess-Gibbs
