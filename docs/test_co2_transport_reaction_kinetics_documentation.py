@@ -60,6 +60,7 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
         cls.system_interface = SYSTEM_INTERFACE.read_text(encoding="utf-8")
         cls.java_test = JAVA_TEST.read_text(encoding="utf-8")
         cls.normalized = " ".join(cls.guide.split())
+        cls.example = cls.guide.split("```java", 1)[1].split("```", 1)[0]
 
     def test_front_matter_math_fences_and_links_are_renderable(self):
         self.assertTrue(self.guide.startswith("---\n"))
@@ -85,13 +86,13 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
             "logger.info(",
             "return diagnostic;",
         ):
-            self.assertIn(token, self.guide)
+            self.assertIn(token, self.example)
 
-        self.assertNotIn("System.out", self.guide)
-        self.assertNotIn("System.err", self.guide)
+        self.assertNotIn("System.out", self.example)
+        self.assertNotIn("System.err", self.example)
         self.assertLess(
-            self.guide.index("qualification.requireValidatedAt"),
-            self.guide.index("KineticReactionDiagnostics.evaluate"),
+            self.example.index("qualification.requireValidatedAt"),
+            self.example.index("KineticReactionDiagnostics.evaluate"),
         )
 
     def test_source_contracts_and_units_match_current_api(self):
@@ -118,9 +119,9 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
         self.assertIn("@return pressure in unit bara", self.system_interface)
         self.assertIn("@return temperature in unit Kelvin", self.system_interface)
         for token in (
-            "getTemperature() returns K",
-            "getPressure() returns bara",
-            "residenceTimeSeconds is in s",
+            "`getTemperature()` returns K",
+            "`getPressure()` returns bara",
+            "`residenceTimeSeconds` is in s",
             "finite and non-negative",
             "active phase index",
         ):
@@ -129,13 +130,13 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
     def test_limitations_and_boundary_behavior_are_explicit(self):
         for token in (
             "do not supply a qualified kinetic dataset",
-            "do not apply reaction source terms",
+            "or apply reaction source terms",
             "not automatically bound",
-            "accepts only KineticReaction.RateBasis.VOLUME",
-            "exactly 0.1 and 10 are COUPLED",
+            "accepts only `KineticReaction.RateBasis.VOLUME`",
+            "exactly 0.1 and 10 are `COUPLED`",
             "timescale uses its absolute value",
             "missing or zero-concentration reactant",
-            "does not update composition",
+            "do not update composition",
             "does not qualify a model",
             "default constants are experimental and illustrative",
             "Do not use them as design correlations",
