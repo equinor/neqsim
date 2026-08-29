@@ -38,7 +38,7 @@ Accordingly, this is an **integration and numerical-robustness qualification**, 
 1. Build an SRK system from the normalized measured DOE mass yields, cut specific gravities, and finite boiling ranges using `OilAssayCharacterisation`.
 2. Generate the five real NeqSim TBP pseudo-components.
 3. Feed the resulting broad-boiling slate to an eight-tray `DistillationColumn` with a reboiler, partial condenser, and one liquid side draw.
-4. Solve at near-atmospheric pressure with the `AUTO` column solver.
+4. Solve at near-atmospheric pressure with the simultaneous `NAPHTALI_SANDHOLM` column solver; guarded fallback products are not accepted.
 5. Re-run the same initialized column to qualify repeatability rather than accepting a one-off solution.
 
 The operating point is deliberately a reproducible **screening case**, not a reconstruction of a proprietary or historical refinery design:
