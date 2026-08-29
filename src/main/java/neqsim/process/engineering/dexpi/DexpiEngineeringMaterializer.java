@@ -291,8 +291,7 @@ public final class DexpiEngineeringMaterializer {
         int instrumentCount = definition.sensors.size() + (definition.controller == null ? 0 : 1);
         if (instrumentCount > 0) {
           Integer count = instrumentCounts.get(equipmentTag);
-          instrumentCounts.put(equipmentTag,
-              Integer.valueOf((count == null ? 0 : count.intValue()) + instrumentCount));
+          instrumentCounts.put(equipmentTag, Integer.valueOf((count == null ? 0 : count.intValue()) + instrumentCount));
         }
       }
     }
@@ -320,8 +319,8 @@ public final class DexpiEngineeringMaterializer {
         if (i > 0) {
           tag += "-" + (i + 1);
         }
-        double[] instrumentPosition =
-            instrumentPosition(protectedEquipment, instrumentStartIndex + i, totalInstrumentCount);
+        double[] instrumentPosition = instrumentPosition(protectedEquipment, instrumentStartIndex + i,
+            totalInstrumentCount);
         String id = appendInstrumentFunction(document, root, usedIds, project, requirement, protectedEquipment, tag,
             definition.controlSystem, "SENSOR_OR_SWITCH", instrumentPosition[0], instrumentPosition[1]);
         loopMembers.add(id);
@@ -354,8 +353,7 @@ public final class DexpiEngineeringMaterializer {
         Element targetSystem = isReliefOrBlowdownTag(tag) ? reliefSystem : protectionSystem;
         int deviceColumn = equipmentDeviceIndex % DEVICE_COLUMNS;
         int deviceRow = equipmentDeviceIndex / DEVICE_COLUMNS;
-        double deviceX = protectedEquipment.x
-            + (deviceColumn - (DEVICE_COLUMNS - 1) / 2.0) * DEVICE_X_SPACING;
+        double deviceX = protectedEquipment.x + (deviceColumn - (DEVICE_COLUMNS - 1) / 2.0) * DEVICE_X_SPACING;
         double deviceY = protectedEquipment.y - DEVICE_VERTICAL_OFFSET - deviceRow * DEVICE_ROW_SPACING;
         String id = appendPipingComponent(document, targetSystem, usedIds, project, requirement, protectedEquipment,
             tag, device.componentClass, definition.controlSystem, deviceX, deviceY);
