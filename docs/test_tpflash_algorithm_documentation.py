@@ -83,13 +83,14 @@ class TPflashAlgorithmDocumentationContractTest(unittest.TestCase):
         self.assertNotIn("system.display()", self.usage)
 
     def test_vapor_fraction_is_resolved_by_phase_type(self):
+        normalized = " ".join(self.usage.split())
         for token in (
             "system.hasPhaseType(PhaseType.GAS)",
             "system.getPhaseNumberOfPhase(PhaseType.GAS)",
             "system.getBeta(gasPhaseNumber)",
             "active phase zero is not a universal vapor-phase contract",
         ):
-            self.assertIn(token, self.usage)
+            self.assertIn(token, normalized)
 
         self.assertNotIn("system.getBeta(0)", self.usage)
 
