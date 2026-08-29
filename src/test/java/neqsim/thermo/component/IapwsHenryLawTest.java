@@ -91,4 +91,3 @@ class IapwsHenryLawTest {
     assertEquals(0.0, methane.getLnHenryCoefficientTemperatureDerivative(aqueousPhase), 0.0);
   }
 }
-

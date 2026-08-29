@@ -621,4 +621,3 @@ public class ComponentGePitzer extends ComponentGE {
     return 3.0 * Aphi;
   }
 }
-

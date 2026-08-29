@@ -234,4 +234,3 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     return gammaRefCor;
   }
 }
-
