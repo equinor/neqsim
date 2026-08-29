@@ -25,43 +25,34 @@ jobs:
           path = Path("neqsim-mcp-server/test_mcp_server.py")
           text = path.read_text(encoding="utf-8")
 
-          old_tools = '''    contract_tools = {
-              "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
-              "checkToolAccess", "manageIndustrialProfile", "searchComponents",
-              "queryDataCatalog", "getProgress", "inspectApi",
-              "manageValidationProfile", "listSimulationUnits", "listUnitVariables",
-              "getSimulationVariable", "diagnoseAutomation",
-              "getAutomationLearningReport",
-          }'''
-          new_tools = '''    contract_tools = {
-              "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
-              "checkToolAccess", "manageIndustrialProfile", "searchComponents",
-              "queryDataCatalog", "getProgress", "inspectApi",
-              "manageValidationProfile", "manageModel", "listSimulationUnits",
-              "listUnitVariables", "getSimulationVariable", "diagnoseAutomation",
-              "getAutomationLearningReport",
-          }'''
-          if text.count(old_tools) != 1:
-              raise SystemExit(f"expected one contract_tools block, found {text.count(old_tools)}")
-          text = text.replace(old_tools, new_tools)
-
-          old_accounting = '''    check("sixteen bounded software contracts have direct evidence",
-              limitations.get("contractTestedToolCount") == 16
-              and limitations.get("confirmedGapToolCount") == 35'''
-          new_accounting = '''    check("seventeen bounded software contracts have direct evidence",
-              limitations.get("contractTestedToolCount") == 17
-              and limitations.get("confirmedGapToolCount") == 34'''
-          if text.count(old_accounting) != 1:
-              raise SystemExit(f"expected one primary accounting assertion, found {text.count(old_accounting)}")
-          text = text.replace(old_accounting, new_accounting)
-
-          old_gap = '''          and limitations.get("confirmedGapToolCount") == 35
-              and limitations.get("unsupportedConditionCount") == 0'''
-          new_gap = '''          and limitations.get("confirmedGapToolCount") == 34
-              and limitations.get("unsupportedConditionCount") == 0'''
-          if text.count(old_gap) != 1:
-              raise SystemExit(f"expected one remaining-gap assertion, found {text.count(old_gap)}")
-          text = text.replace(old_gap, new_gap)
+          replacements = [
+              (
+                  '        "manageValidationProfile", "listSimulationUnits", "listUnitVariables",',
+                  '        "manageValidationProfile", "manageModel", "listSimulationUnits",\n'
+                  '        "listUnitVariables",',
+                  1,
+              ),
+              (
+                  '    check("sixteen bounded software contracts have direct evidence",',
+                  '    check("seventeen bounded software contracts have direct evidence",',
+                  1,
+              ),
+              (
+                  '          limitations.get("contractTestedToolCount") == 16',
+                  '          limitations.get("contractTestedToolCount") == 17',
+                  1,
+              ),
+              (
+                  '          and limitations.get("confirmedGapToolCount") == 35',
+                  '          and limitations.get("confirmedGapToolCount") == 34',
+                  2,
+              ),
+          ]
+          for old, new, expected in replacements:
+              found = text.count(old)
+              if found != expected:
+                  raise SystemExit(f"expected {expected} occurrences of {old!r}, found {found}")
+              text = text.replace(old, new)
 
           path.write_text(text, encoding="utf-8")
           PY
