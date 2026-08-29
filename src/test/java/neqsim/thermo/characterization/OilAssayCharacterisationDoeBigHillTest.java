@@ -29,12 +29,12 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class OilAssayCharacterisationDoeBigHillTest {
-  private static final double[] LOWER_BOUNDARY_F = { 175.0, 250.0, 375.0, 530.0, 650.0 };
-  private static final double[] UPPER_BOUNDARY_F = { 250.0, 375.0, 530.0, 650.0, 1050.0 };
-  private static final double[] VOLUME_PERCENT = { 9.8, 15.4, 15.5, 10.8, 27.8 };
-  private static final double[] WEIGHT_PERCENT = { 8.6, 15.2, 15.2, 11.1, 30.3 };
-  private static final double[] SPECIFIC_GRAVITY = { 0.7815, 0.8305, 0.8623, 0.9226, 0.9477 };
-  private static final double[] API_GRAVITY = { 49.6, 38.9, 32.6, 21.9, 17.8 };
+  private static final double[] LOWER_BOUNDARY_F = {175.0, 250.0, 375.0, 530.0, 650.0};
+  private static final double[] UPPER_BOUNDARY_F = {250.0, 375.0, 530.0, 650.0, 1050.0};
+  private static final double[] VOLUME_PERCENT = {9.8, 15.4, 15.5, 10.8, 27.8};
+  private static final double[] WEIGHT_PERCENT = {8.6, 15.2, 15.2, 11.1, 30.3};
+  private static final double[] SPECIFIC_GRAVITY = {0.7815, 0.8305, 0.8623, 0.9226, 0.9477};
+  private static final double[] API_GRAVITY = {49.6, 38.9, 32.6, 21.9, 17.8};
 
   @Test
   public void doeSpecificGravityAndApiPairsAreConsistent() {
@@ -50,21 +50,32 @@ public class OilAssayCharacterisationDoeBigHillTest {
   }
 
   @Test
+  public void doeApiGravityInputMatchesSpecificGravityMassShapeWithinReportedRounding() {
+    SystemInterface specificGravitySystem = new SystemSrkEos(298.15, 1.01325);
+    OilAssayCharacterisation specificGravityCharacterisation = specificGravitySystem.getOilAssayCharacterisation();
+    configureVolumeBasisCuts(specificGravityCharacterisation, false);
+
+    SystemInterface apiGravitySystem = new SystemSrkEos(298.15, 1.01325);
+    OilAssayCharacterisation apiGravityCharacterisation = apiGravitySystem.getOilAssayCharacterisation();
+    configureVolumeBasisCuts(apiGravityCharacterisation, true);
+
+    double[] specificGravityMassFractions = specificGravityCharacterisation.getResolvedMassFractions();
+    double[] apiGravityMassFractions = apiGravityCharacterisation.getResolvedMassFractions();
+
+    for (int i = 0; i < specificGravityMassFractions.length; i++) {
+      assertEquals(specificGravityMassFractions[i], apiGravityMassFractions[i], 5.0e-5,
+          "Published one-decimal API gravity should reproduce the mass shape from four-decimal specific gravity");
+    }
+  }
+
+  @Test
   public void doeDistillateSliceQualifiesVolumeToMassConversionAndPseudoComponentClosure() {
     SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
-    characterisation.clearCuts();
     characterisation.setTotalAssayMass(1.0);
+    configureVolumeBasisCuts(characterisation, false);
 
-    double volumeSum = sum(VOLUME_PERCENT);
     double weightSum = sum(WEIGHT_PERCENT);
-
-    for (int i = 0; i < VOLUME_PERCENT.length; i++) {
-      characterisation.addCut(new AssayCut("DOE_BH_" + (i + 2)).withVolumeFraction(VOLUME_PERCENT[i] / volumeSum)
-          .withSpecificGravity(SPECIFIC_GRAVITY[i])
-          .withBoilingRangeCelsius(fahrenheitToCelsius(LOWER_BOUNDARY_F[i]), fahrenheitToCelsius(UPPER_BOUNDARY_F[i])));
-    }
-
     double[] resolvedMassFractions = characterisation.getResolvedMassFractions();
     double maxAbsoluteMassFractionDeviation = 0.0;
     for (int i = 0; i < resolvedMassFractions.length; i++) {
@@ -90,6 +101,22 @@ public class OilAssayCharacterisationDoeBigHillTest {
     }
 
     assertEquals(1.0, reconstructedMass, 1.0e-10);
+  }
+
+  private static void configureVolumeBasisCuts(OilAssayCharacterisation characterisation, boolean useApiGravity) {
+    characterisation.clearCuts();
+    double volumeSum = sum(VOLUME_PERCENT);
+
+    for (int i = 0; i < VOLUME_PERCENT.length; i++) {
+      AssayCut cut = new AssayCut("DOE_BH_" + (i + 2)).withVolumeFraction(VOLUME_PERCENT[i] / volumeSum)
+          .withBoilingRangeCelsius(fahrenheitToCelsius(LOWER_BOUNDARY_F[i]), fahrenheitToCelsius(UPPER_BOUNDARY_F[i]));
+      if (useApiGravity) {
+        cut.withApiGravity(API_GRAVITY[i]);
+      } else {
+        cut.withSpecificGravity(SPECIFIC_GRAVITY[i]);
+      }
+      characterisation.addCut(cut);
+    }
   }
 
   private static double sum(double[] values) {
