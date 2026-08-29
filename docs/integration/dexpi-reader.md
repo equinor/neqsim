@@ -127,6 +127,25 @@ process.run();
 DexpiXmlWriter.write(process, new File("output.xml"));
 ```
 
+### NeqSim-native SVG rendering
+
+`DexpiXmlSvgRenderer` renders the geometry in a Proteus-compatible DEXPI Plant/P&ID exchange
+directly to SVG. It resolves each equipment, valve, nozzle, off-page connector, and instrument
+instance against the document's `ShapeCatalogue`, and preserves process, signal, utility, label,
+stream-table, drawing-border, and title-block primitives. The SVG is therefore a view of the DEXPI
+document rather than a separately reconstructed process diagram.
+
+```java
+File dexpi = new File("plant.xml");
+File svg = new File("plant.svg");
+
+DexpiXmlWriter.write(process, dexpi);
+DexpiXmlSvgRenderer.render(dexpi, svg);
+```
+
+The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Use an independent
+DEXPI consumer as an interoperability check when qualifying an exchange for a project handoff.
+
 ### Layout and visualization features
 
 The export path applies NeqSim's built-in auto-layout and visualization defaults: equipment tag

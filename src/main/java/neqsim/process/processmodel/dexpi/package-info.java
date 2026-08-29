@@ -10,6 +10,8 @@
  * <ul>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlReader} - Import DEXPI P&amp;ID XML to ProcessSystem</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlWriter} - Export ProcessSystem to DEXPI XML</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlSvgRenderer} - Render the graphical content and shape catalogue
+ * of a Proteus-compatible DEXPI Plant/P&amp;ID document to SVG</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiProcessUnit} - Lightweight placeholder for imported equipment</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiStream} - Runnable stream with DEXPI metadata</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiMetadata} - Shared constants for DEXPI exchanges</li>
@@ -47,6 +49,9 @@
  *
  * // Export back to DEXPI XML
  * DexpiXmlWriter.write(process, new File("export.xml"));
+ *
+ * // Render that DEXPI graphical content without an external drawing tool
+ * DexpiXmlSvgRenderer.render(new File("export.xml"), new File("export.svg"));
  * </pre>
  *
  * @author NeqSim
