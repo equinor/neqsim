@@ -45,7 +45,7 @@ public class ComponentGePitzer extends ComponentGE {
     // reference; hydrocarbons have no Pitzer neutral-interaction parameters and are represented as effectively
     // insoluble instead of being evaluated with the water osmotic coefficient.
     if (Math.abs(getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(getComponentName())) {
-      double henryCoefficient = getEffectiveHenryCoefficient(phase.getTemperature());
+      double henryCoefficient = getEffectiveHenryCoefficient(phase);
       // Pitzer neutral activities and the database Henry constants are on the molality
       // scale, while the common phase-equilibrium kernel evaluates x_i * phi_i * P.
       // Convert m_i * gamma_i * H_i to that mole-fraction representation explicitly.
@@ -59,6 +59,27 @@ public class ComponentGePitzer extends ComponentGE {
       return fugacityCoefficient;
     }
     return super.fugcoef(phase);
+  }
+
+  /**
+   * Returns the Pitzer molality-scale Henry reference.
+   *
+   * <p>IAPWS publishes {@code kH = f/x}. Pitzer neutral activities use molality, so
+   * {@code Hm = kH * Mwater}; the existing {@code m/x} factor in {@link #fugcoef(PhaseInterface)}
+   * maps this back to the common mole-fraction fugacity kernel. The constant conversion
+   * does not change the logarithmic temperature derivative.</p>
+   *
+   * @param phase aqueous Pitzer phase
+   * @return effective molality-scale Henry coefficient in bar kg/mol
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
+    double coefficient = super.getEffectiveHenryCoefficient(phase);
+    if (phase.hasComponent("water")
+        && IapwsHenryLaw.assess(getComponentName(), phase.getTemperature()).isSupportedSpecies()) {
+      return coefficient * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
+    }
+    return coefficient;
   }
 
   /** {@inheritDoc} */
