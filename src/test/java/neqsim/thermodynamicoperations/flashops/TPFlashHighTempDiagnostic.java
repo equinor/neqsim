@@ -11,9 +11,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Qualification tests for high-temperature rich-fluid TP flashes.
  *
- * <p>The historical version of this class was a logger-only {@code main} diagnostic. These tests
- * turn the same 24-component synthetic fluid into deterministic SRK and PR regressions with
- * enforceable equilibrium, initialization, and stale-state contracts.</p>
+ * <p>
+ * The historical version of this class was a logger-only {@code main} diagnostic. These tests turn the same
+ * 24-component synthetic fluid into deterministic SRK and PR regressions with enforceable equilibrium, initialization,
+ * and stale-state contracts.
+ * </p>
  */
 class TPFlashHighTempDiagnostic {
   private static final double REFERENCE_TEMPERATURE_C = 268.0;
@@ -45,18 +47,14 @@ class TPFlashHighTempDiagnostic {
     assertEquals(2, reference.getNumberOfPhases(), modelLabel + " reference topology");
     assertClosedEquilibrium(ordinary, modelLabel + " ordinary reference");
     assertClosedEquilibrium(reference, modelLabel + " multiphase reference");
-    assertEquivalentState(ordinary, reference, 1.0e-8,
-        modelLabel + " ordinary versus multiphase");
-    assertEquivalentState(reference, poorGuess, 1.0e-8,
-        modelLabel + " poor beta initialization");
+    assertEquivalentState(ordinary, reference, 1.0e-8, modelLabel + " ordinary versus multiphase");
+    assertEquivalentState(reference, poorGuess, 1.0e-8, modelLabel + " poor beta initialization");
 
-    for (double temperatureC : new double[] {267.0, 269.0}) {
+    for (double temperatureC : new double[] { 267.0, 269.0 }) {
       SystemInterface nearbyOrdinary = flash(pengRobinson, temperatureC, false, false);
       SystemInterface nearbyMultiphase = flash(pengRobinson, temperatureC, true, false);
-      assertClosedEquilibrium(nearbyOrdinary,
-          modelLabel + " ordinary at " + temperatureC + " C");
-      assertClosedEquilibrium(nearbyMultiphase,
-          modelLabel + " multiphase at " + temperatureC + " C");
+      assertClosedEquilibrium(nearbyOrdinary, modelLabel + " ordinary at " + temperatureC + " C");
+      assertClosedEquilibrium(nearbyMultiphase, modelLabel + " multiphase at " + temperatureC + " C");
       assertEquivalentState(nearbyOrdinary, nearbyMultiphase, 1.0e-8,
           modelLabel + " path agreement at " + temperatureC + " C");
     }
@@ -65,8 +63,7 @@ class TPFlashHighTempDiagnostic {
     reused.setTemperature(269.0, "C");
     new ThermodynamicOperations(reused).TPflash();
     reused.initProperties();
-    assertEquivalentState(flash(pengRobinson, 269.0, true, false), reused, 1.0e-8,
-        modelLabel + " changed state");
+    assertEquivalentState(flash(pengRobinson, 269.0, true, false), reused, 1.0e-8, modelLabel + " changed state");
 
     reused.setTemperature(REFERENCE_TEMPERATURE_C, "C");
     new ThermodynamicOperations(reused).TPflash();
@@ -76,8 +73,7 @@ class TPFlashHighTempDiagnostic {
     SystemInterface repeated = reused.clone();
     new ThermodynamicOperations(reused).TPflash();
     reused.initProperties();
-    assertEquivalentState(repeated, reused, 1.0e-10,
-        modelLabel + " deterministic repeat");
+    assertEquivalentState(repeated, reused, 1.0e-10, modelLabel + " deterministic repeat");
   }
 
   /**
@@ -89,8 +85,7 @@ class TPFlashHighTempDiagnostic {
    * @param poorGuess whether to initialize phase fractions near a bound
    * @return initialized flashed system
    */
-  private SystemInterface flash(boolean pengRobinson, double temperatureC,
-      boolean multiphaseCheck, boolean poorGuess) {
+  private SystemInterface flash(boolean pengRobinson, double temperatureC, boolean multiphaseCheck, boolean poorGuess) {
     SystemInterface system = createSystem(pengRobinson);
     system.setMultiPhaseCheck(multiphaseCheck);
     system.setPressure(REFERENCE_PRESSURE_BARA, "bara");
@@ -111,8 +106,7 @@ class TPFlashHighTempDiagnostic {
    * @return configured cubic-EOS system
    */
   private SystemInterface createSystem(boolean pengRobinson) {
-    SystemInterface system = pengRobinson
-        ? new neqsim.thermo.system.SystemPrEos(243.15, 300.0)
+    SystemInterface system = pengRobinson ? new neqsim.thermo.system.SystemPrEos(243.15, 300.0)
         : new neqsim.thermo.system.SystemSrkEos(243.15, 300.0);
     system.addComponent("nitrogen", 1.64e-3);
     system.addComponent("CO2", 1.64e-3);
@@ -139,16 +133,14 @@ class TPFlashHighTempDiagnostic {
     system.addComponent("nC18", 1.0);
     system.addComponent("nC19", 1.0);
     system.setMixingRule("classic");
-    system.setMolarComposition(new double[] {1.63e-3, 3.23e-3, 0.0, 3.0e-1, 4.6e-2,
-        1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1, 1.5e-1,
-        9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1.0e-2, 5.6e-3, 2.7e-3,
-        1.3e-3, 8.7e-4, 3.8e-4});
+    system.setMolarComposition(
+        new double[] { 1.63e-3, 3.23e-3, 0.0, 3.0e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1,
+            1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1.0e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4 });
     return system;
   }
 
   /**
-   * Verifies phase normalization, component material balance, fugacity equality, and finite
-   * properties.
+   * Verifies phase normalization, component material balance, fugacity equality, and finite properties.
    *
    * @param system flashed system
    * @param label assertion label
@@ -158,19 +150,17 @@ class TPFlashHighTempDiagnostic {
     int componentCount = system.getPhase(0).getNumberOfComponents();
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       double beta = system.getBeta(phase);
-      assertTrue(Double.isFinite(beta) && beta >= 0.0 && beta <= 1.0,
-          label + " beta");
+      assertTrue(Double.isFinite(beta) && beta >= 0.0 && beta <= 1.0, label + " beta");
       betaSum += beta;
       double compositionSum = 0.0;
       for (int component = 0; component < componentCount; component++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
-        assertTrue(Double.isFinite(composition) && composition >= 0.0
-            && composition <= 1.0, label + " composition");
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0, label + " composition");
         compositionSum += composition;
       }
       assertEquals(1.0, compositionSum, 1.0e-12, label + " phase normalization");
-      assertTrue(Double.isFinite(system.getPhase(phase).getZ())
-          && system.getPhase(phase).getZ() > 0.0, label + " compressibility");
+      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
+          label + " compressibility");
     }
     assertEquals(1.0, betaSum, 1.0e-12, label + " beta normalization");
 
@@ -180,40 +170,30 @@ class TPFlashHighTempDiagnostic {
     for (int component = 0; component < componentCount; component++) {
       double recovered = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        recovered += system.getBeta(phase)
-            * system.getPhase(phase).getComponent(component).getx();
+        recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
       }
       maximumMaterialResidual = Math.max(maximumMaterialResidual,
           Math.abs(system.getPhase(0).getComponent(component).getz() - recovered));
 
       for (int firstPhase = 0; firstPhase < system.getNumberOfPhases(); firstPhase++) {
-        for (int secondPhase = firstPhase + 1;
-            secondPhase < system.getNumberOfPhases(); secondPhase++) {
-          double firstComposition =
-              system.getPhase(firstPhase).getComponent(component).getx();
-          double secondComposition =
-              system.getPhase(secondPhase).getComponent(component).getx();
-          double firstCoefficient = system.getPhase(firstPhase).getComponent(component)
-              .getFugacityCoefficient();
-          double secondCoefficient = system.getPhase(secondPhase).getComponent(component)
-              .getFugacityCoefficient();
-          if (firstComposition > 1.0e-20 && secondComposition > 1.0e-20
-              && Double.isFinite(firstCoefficient) && firstCoefficient > 0.0
-              && Double.isFinite(secondCoefficient) && secondCoefficient > 0.0) {
-            maximumFugacityResidual = Math.max(maximumFugacityResidual,
-                Math.abs(Math.log(firstComposition * firstCoefficient)
-                    - Math.log(secondComposition * secondCoefficient)));
+        for (int secondPhase = firstPhase + 1; secondPhase < system.getNumberOfPhases(); secondPhase++) {
+          double firstComposition = system.getPhase(firstPhase).getComponent(component).getx();
+          double secondComposition = system.getPhase(secondPhase).getComponent(component).getx();
+          double firstCoefficient = system.getPhase(firstPhase).getComponent(component).getFugacityCoefficient();
+          double secondCoefficient = system.getPhase(secondPhase).getComponent(component).getFugacityCoefficient();
+          if (firstComposition > 1.0e-20 && secondComposition > 1.0e-20 && Double.isFinite(firstCoefficient)
+              && firstCoefficient > 0.0 && Double.isFinite(secondCoefficient) && secondCoefficient > 0.0) {
+            maximumFugacityResidual = Math.max(maximumFugacityResidual, Math
+                .abs(Math.log(firstComposition * firstCoefficient) - Math.log(secondComposition * secondCoefficient)));
             fugacityComparisons++;
           }
         }
       }
     }
-    assertTrue(maximumMaterialResidual < 1.0e-10,
-        label + " material-balance residual " + maximumMaterialResidual);
+    assertTrue(maximumMaterialResidual < 1.0e-10, label + " material-balance residual " + maximumMaterialResidual);
     if (system.getNumberOfPhases() >= 2) {
       assertTrue(fugacityComparisons > 0, label + " fugacity comparisons");
-      assertTrue(maximumFugacityResidual < 1.0e-8,
-          label + " fugacity residual " + maximumFugacityResidual);
+      assertTrue(maximumFugacityResidual < 1.0e-8, label + " fugacity residual " + maximumFugacityResidual);
     }
     assertTrue(Double.isFinite(system.getGibbsEnergy()), label + " Gibbs energy");
     assertTrue(Double.isFinite(system.getEnthalpy()), label + " enthalpy");
@@ -227,8 +207,7 @@ class TPFlashHighTempDiagnostic {
    * @param tolerance absolute beta, composition, and compressibility tolerance
    * @param label assertion label
    */
-  private void assertEquivalentState(SystemInterface expected, SystemInterface actual,
-      double tolerance, String label) {
+  private void assertEquivalentState(SystemInterface expected, SystemInterface actual, double tolerance, String label) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label);
     assertClosedEquilibrium(expected, label + " expected");
     assertClosedEquilibrium(actual, label + " actual");
@@ -237,24 +216,18 @@ class TPFlashHighTempDiagnostic {
     for (int orderedPhase = 0; orderedPhase < expectedOrder.length; orderedPhase++) {
       int expectedPhase = expectedOrder[orderedPhase];
       int actualPhase = actualOrder[orderedPhase];
-      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase),
-          tolerance, label + " beta");
-      assertEquals(expected.getPhase(expectedPhase).getZ(),
-          actual.getPhase(actualPhase).getZ(), tolerance, label + " compressibility");
-      for (int component = 0;
-          component < expected.getPhase(expectedPhase).getNumberOfComponents();
-          component++) {
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label + " beta");
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance,
+          label + " compressibility");
+      for (int component = 0; component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
         assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
-            actual.getPhase(actualPhase).getComponent(component).getx(), tolerance,
-            label + " composition");
+            actual.getPhase(actualPhase).getComponent(component).getx(), tolerance, label + " composition");
       }
     }
     assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(),
-        Math.max(1.0e-8, tolerance * Math.abs(expected.getGibbsEnergy())),
-        label + " Gibbs energy");
+        Math.max(1.0e-8, tolerance * Math.abs(expected.getGibbsEnergy())), label + " Gibbs energy");
     assertEquals(expected.getEnthalpy(), actual.getEnthalpy(),
-        Math.max(1.0e-8, tolerance * Math.abs(expected.getEnthalpy())),
-        label + " enthalpy");
+        Math.max(1.0e-8, tolerance * Math.abs(expected.getEnthalpy())), label + " enthalpy");
   }
 
   /**
@@ -266,8 +239,8 @@ class TPFlashHighTempDiagnostic {
   private Integer[] phaseOrderByHeavyFraction(SystemInterface system) {
     Integer[] order = new Integer[system.getNumberOfPhases()];
     Arrays.setAll(order, index -> index);
-    Arrays.sort(order, Comparator.comparingDouble(
-        (Integer index) -> system.getPhase(index).getComponent("nC19").getx()));
+    Arrays.sort(order,
+        Comparator.comparingDouble((Integer index) -> system.getPhase(index).getComponent("nC19").getx()));
     return order;
   }
 }
