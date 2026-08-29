@@ -24,13 +24,11 @@ jobs:
 
           path = Path("src/main/java/neqsim/mcp/runners/McpEvidenceInventory.java")
           text = path.read_text(encoding="utf-8")
-          old = '''        evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
-            "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java", "neqsim-mcp-server/test_model_registry_protocol.py",
-            "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };'''
-          new = '''        evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
-            "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
-            "neqsim-mcp-server/test_model_registry_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
-            "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };'''
+          old = '''"src/test/java/neqsim/mcp/runners/ModelRegistryTest.java", "neqsim-mcp-server/test_model_registry_protocol.py",
+          "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };'''
+          new = '''"src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
+          "neqsim-mcp-server/test_model_registry_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };'''
           if text.count(old) != 1:
               raise SystemExit(f"expected one exact Spotless target, found {text.count(old)}")
           path.write_text(text.replace(old, new), encoding="utf-8")
