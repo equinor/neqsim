@@ -139,7 +139,7 @@ kinetics. Its default parameters require calibration before engineering use.
 
 See the [CO₂ impurity kinetics guide](co2_impurity_kinetics_guide) for reaction definitions,
 Java usage, numerical safeguards, and model limitations. Use the
-[CO₂ transport reaction-kinetics guide](co2_transport_reaction_kinetics.md) to enforce evidence
+[CO₂ transport reaction-kinetics guide](co2_transport_reaction_kinetics) to enforce evidence
 ranges and screen reaction time against a transport residence time.
 
 
