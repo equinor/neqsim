@@ -12,6 +12,9 @@
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlWriter} - Export ProcessSystem to DEXPI XML</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlSvgRenderer} - Render the graphical content and shape catalogue
  * of a Proteus-compatible DEXPI Plant/P&amp;ID document to SVG</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiVisualQualityAssessment} - Produce deterministic structural
+ * visual-quality diagnostics and SVG fingerprints without making standards-conformance or engineering-approval
+ * claims</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiProcessUnit} - Lightweight placeholder for imported equipment</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiStream} - Runnable stream with DEXPI metadata</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiMetadata} - Shared constants for DEXPI exchanges</li>
@@ -52,6 +55,7 @@
  *
  * // Render that DEXPI graphical content without an external drawing tool
  * DexpiXmlSvgRenderer.render(new File("export.xml"), new File("export.svg"));
+ * DexpiVisualQualityAssessment.Report visualReport = DexpiVisualQualityAssessment.assess(new File("export.xml"));
  * </pre>
  *
  * @author NeqSim

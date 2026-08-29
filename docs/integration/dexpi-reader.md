@@ -143,6 +143,28 @@ DexpiXmlWriter.write(process, dexpi);
 DexpiXmlSvgRenderer.render(dexpi, svg);
 ```
 
+For automated drawing-quality gates, assess the same Proteus-compatible exchange before publishing
+the SVG:
+
+```java
+DexpiVisualQualityAssessment.Report visualReport =
+    DexpiVisualQualityAssessment.assess(dexpi);
+Files.write(
+    new File("plant.visual-quality.json").toPath(),
+    visualReport.toJson().getBytes(StandardCharsets.UTF_8)
+);
+if (visualReport.hasErrors()) {
+  throw new IllegalStateException(visualReport.toJson());
+}
+```
+
+The report records the exact `PlantInformation/@SchemaVersion`, drawing extent, source and SVG
+primitive counts, catalogue-instance coverage, positioned-coordinate bounds, text-height risks,
+duplicate identities, and the deterministic SVG SHA-256. Errors identify geometry that cannot be
+rendered faithfully; warnings identify visible review risks. The assessment is a software quality
+gate, not an ISO-conformance, DEXPI-certification, engineering-approval, or
+fitness-for-construction decision.
+
 The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Generated title
 blocks are marked `PROPOSAL`, and their initial revision is `Engineering Proposal`; a controlled
 owner status and accountable review are required before a drawing can be issued for design or
