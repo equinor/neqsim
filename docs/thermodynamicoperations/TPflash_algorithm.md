@@ -2102,6 +2102,37 @@ small fixed flash matrix. Production code, APIs, parameters, defaults and
 runtime behavior are unchanged. No production performance improvement is
 claimed.
 
+#### 6.4.6 High-temperature rich-fluid cubic-EOS qualification
+
+The high-temperature rich-fluid regression uses a synthetic 24-component normal-alkane
+distribution from nitrogen through nC19. The normalized composition contains 30 mol%
+methane, 12 mol% n-heptane, 15 mol% n-octane, successively smaller heavy-normal-alkane
+fractions, 0.163 mol% nitrogen, 0.323 mol% CO2, and zero active H2S. Both SRK and PR use
+the classic mixing rule without fitted binary interaction parameters. Temperature is in
+degrees Celsius and pressure is absolute bar.
+
+At 268 °C and 88 bara, ordinary and explicit-multiphase flashes must return the same
+closed two-phase equilibrium for each EOS. The comparison matches phases by nC19 mole
+fraction rather than phase-role metadata and requires phase fraction, composition, and
+compressibility agreement within `1e-8`. Every accepted endpoint requires finite and
+bounded phase fractions and compositions, phase and beta normalization within `1e-12`,
+component material balance below `1e-10`, maximum interphase log-fugacity residual
+below `1e-8`, positive compressibility factors, and finite Gibbs energy and enthalpy.
+
+The same contracts apply at 267 °C and 269 °C. The 268 °C equilibrium must also be
+recovered from beta `1e-12`, after changing a reused state to 269 °C and returning it
+to 268 °C, and on an immediate repeated flash. These checks cover path agreement, poor
+initialization, nearby-state continuity, stale-state recovery, and deterministic repeat
+for both cubic equations of state.
+
+This bounded JUnit matrix replaces a nine-stage logger-only `main` diagnostic that
+performed no assertions and was not run by the test suite. The two tests execute sixteen
+complete flashes, giving hosted CI a fixed-work performance record without imposing a
+timing threshold on shared runners. Production solver code, public APIs, parameters,
+defaults, and runtime behavior are unchanged, so no production speedup is claimed. The
+synthetic matrix is a numerical solver qualification, not experimental validation of the
+predicted phase fractions or phase boundary.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
