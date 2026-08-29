@@ -392,6 +392,10 @@ activity-based scale-potential screening after reactive gas-aqueous or gas-oil-a
 saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
 supported by the hybrid strategy.
 
+Neutral-gas dissolution also requires a qualified Henry-law reference and, for brines, separately qualified Pitzer
+neutral-ion interactions. See [Henry-law reference states and aqueous gas-solubility evidence](henry_law_reference.md)
+for the implemented temperature law, derivative contract, current coefficient audit, source matrix and adoption gates.
+
 The solver is not restricted to Pitzer. Desmukh-Mather and Kent-Eisenberg use the same reactive coupling when
 `chemicalReactionInit()` and `setMultiPhaseCheck(true)` are enabled. Other `SystemEosGE` systems can opt in explicitly:
 
