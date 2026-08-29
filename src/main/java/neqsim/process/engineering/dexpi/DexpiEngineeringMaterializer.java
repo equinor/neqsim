@@ -478,7 +478,7 @@ public final class DexpiEngineeringMaterializer {
     function.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunction");
     function.setAttribute("ComponentName", "INSTRUMENTATION_BUBBLE_SHAPE_FIELD");
     appendPosition(document, function, x, y);
-    appendLabel(document, function, id, tag, x, y);
+    appendInstrumentLabel(document, function, id, tag, x, y);
 
     String[] parts = tag.split("-", 2);
     Element dexpi = document.createElement("GenericAttributes");
@@ -817,6 +817,19 @@ public final class DexpiEngineeringMaterializer {
     parent.appendChild(scale);
   }
 
+  private static void appendInstrumentLabel(Document document, Element parent, String parentId, String tag, double x,
+      double y) {
+    String[] parts = tag.split("-", 2);
+    String functionText = parts[0];
+    String numberText = parts.length > 1 ? parts[1] : tag;
+    Element label = document.createElement("Label");
+    label.setAttribute("ID", parentId + "-Label");
+    label.setAttribute("ComponentClass", "ProcessInstrumentationFunctionLabel");
+    appendLabelText(document, label, functionText, x, y + 1.2, 1.8);
+    appendLabelText(document, label, numberText, x, y - 1.2, numberText.length() > 10 ? 1.1 : 1.4);
+    parent.appendChild(label);
+  }
+
   private static void appendLabel(Document document, Element parent, String parentId, String tag, double x, double y) {
     Element label = document.createElement("Label");
     label.setAttribute("ID", parentId + "-Label");
@@ -829,6 +842,17 @@ public final class DexpiEngineeringMaterializer {
     appendTextPosition(document, text, x, y + 3.5);
     label.appendChild(text);
     parent.appendChild(label);
+  }
+
+  private static void appendLabelText(Document document, Element label, String value, double x, double y,
+      double height) {
+    Element text = document.createElement("Text");
+    text.setAttribute("String", value);
+    text.setAttribute("Font", "Arial");
+    text.setAttribute("Height", String.valueOf(height));
+    text.setAttribute("Justification", "CenterCenter");
+    appendTextPosition(document, text, x, y);
+    label.appendChild(text);
   }
 
   private static void appendTextPosition(Document document, Element parent, double x, double y) {

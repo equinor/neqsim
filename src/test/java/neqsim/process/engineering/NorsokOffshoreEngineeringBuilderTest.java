@@ -218,6 +218,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(xml.contains("PROCESS_CONTROL_ISOLATION_AND_RECYCLE"));
     assertMinimumMaterializedSpacing(result.getDexpiFile(), "ProcessInstrumentationFunction", 12.0);
     assertMinimumMaterializedSpacing(result.getDexpiFile(), "PipingComponent", 14.0);
+    assertMaterializedInstrumentLabelsAreCompact(result.getDexpiFile());
 
     String dexpi20 = new String(Files.readAllBytes(result.getDexpi20File()), StandardCharsets.UTF_8);
     assertTrue(dexpi20.contains("<Model"));
@@ -323,6 +324,27 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
       }
     }
     throw new AssertionError("Relief coverage not found for: " + equipmentTag);
+  }
+
+  private static void assertMaterializedInstrumentLabelsAreCompact(Path dexpiFile) throws Exception {
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpiFile.toFile());
+    NodeList instruments = document.getElementsByTagName("ProcessInstrumentationFunction");
+    for (int i = 0; i < instruments.getLength(); i++) {
+      Element instrument = (Element) instruments.item(i);
+      String equipmentTag = genericAttribute(instrument, "ProtectedEquipmentTag");
+      if (equipmentTag == null) {
+        continue;
+      }
+      String fullTag = genericAttribute(instrument, "TagNameAssignmentClass");
+      NodeList labels = instrument.getElementsByTagName("Label");
+      assertTrue(labels.getLength() > 0, "Governed instrument must have a visible compact label");
+      NodeList texts = ((Element) labels.item(0)).getElementsByTagName("Text");
+      assertEquals(2, texts.getLength(), "Governed instrument label must use function and number rows");
+      for (int j = 0; j < texts.getLength(); j++) {
+        assertFalse(fullTag.equals(((Element) texts.item(j)).getAttribute("String")),
+            "Full stable tag must stay in metadata instead of becoming a collision-prone external label");
+      }
+    }
   }
 
   private static void assertMinimumMaterializedSpacing(Path dexpiFile, String elementName, double minimumSpacing)
