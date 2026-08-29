@@ -1,6 +1,6 @@
 # Phase 0 validation-profile contract evidence
 
-This note records bounded Phase 0 software-contract evidence for the existing `manageValidationProfile` MCP tool. Inventory `1.17` promotes it to `CONTRACT_TESTED` after the candidate recorded in inventory `1.16` completed its atomic machine-readable and primary-protocol accounting gate. This is not scientific, regulatory, authorization, or plant-control validation.
+This note records bounded Phase 0 software-contract evidence for the existing `manageValidationProfile` MCP tool. Inventory `1.17` promoted it to `CONTRACT_TESTED` after the candidate recorded in inventory `1.16` completed its atomic machine-readable and primary-protocol accounting gate. Current inventory `1.18` retains that classification while adding five separately qualified automation advisory contracts. This is not scientific, regulatory, authorization, or plant-control validation.
 
 ## Existing implementation boundary
 
@@ -13,8 +13,8 @@ The runner has five built-in profiles (`ncs`, `ukcs`, `gom`, `brazil`, and `gene
 ## Focused contract evidence
 
 - `src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java` checks built-in discovery, profile details, equipment-standard retrieval, the `validateWithProfile` response shape and profile/standards/design-factor metadata, a create/activate/read/delete custom-profile lifecycle with state restoration, and fail-closed mutation errors.
-- `neqsim-mcp-server/test_validation_profile_protocol.py` starts the packaged MCP server over STDIO and repeats the bounded discovery, validation-metadata, lifecycle, fail-closed, and promoted-classification contracts through real `tools/call` requests.
-- `neqsim-mcp-server/test_mcp_server.py` independently freezes the primary packaged-protocol trust accounting and includes `manageValidationProfile` in the bounded non-numerical contract set.
+- `neqsim-mcp-server/test_validation_profile_protocol.py` starts the packaged MCP server over STDIO and repeats the bounded discovery, validation-metadata, lifecycle, fail-closed, and current-classification contracts through real `tools/call` requests.
+- `neqsim-mcp-server/test_mcp_server.py` independently freezes the primary packaged-protocol trust accounting and includes `manageValidationProfile` in the bounded software-contract set.
 - `.github/workflows/mcp_protocol_qualification.yml` builds the exact NeqSim core and MCP package with Java 21 and executes the focused protocol qualification on relevant PRs and `master` pushes with read-only repository permissions.
 - Merged PR #3266 established the Java and packaged-MCP behavior evidence on exact validated head `a7d6944621b9abc01b3ea221208f18228b360b76` before any trust-status promotion was attempted, and merged PR #3284 established the bounded promotion-ready candidate on exact validated head `6ac472b7b48db31bdfdb665ac30bbd0c6b2a40e5`.
 
@@ -24,9 +24,9 @@ The `validateWithProfile` checks are intentionally structural only: they prove t
 
 ## Promotion boundary
 
-Inventory `1.17` classifies `manageValidationProfile` as `CONTRACT_TESTED` with `benchmarkApplicability=NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE` and cites the runner, deployment-profile classification, Java regression suite, MCP facade, real packaged-protocol harness, and this evidence note. The candidate object is removed after promotion.
+Inventory `1.17` classified `manageValidationProfile` as `CONTRACT_TESTED` with `benchmarkApplicability=NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE` and cited the runner, deployment-profile classification, Java regression suite, MCP facade, real packaged-protocol harness, and this evidence note. The candidate object was removed after promotion.
 
-The accounting is now **20 `EXPLICIT_TRUST` + 11 `CONTRACT_TESTED` + 40 `CONFIRMED_GAP`**. Machine-readable coverage, the focused packaged-protocol assertion, the primary `test_mcp_server.py` accounting, and the acceptance baseline version move together on the same exact head. Existing `BenchmarkTrust` numerical/scientific accounting remains unchanged at 20 explicit pages and 51 generic fallbacks.
+That historical transition moved accounting to **20 `EXPLICIT_TRUST` + 11 `CONTRACT_TESTED` + 40 `CONFIRMED_GAP`**. Current inventory `1.18` retains `manageValidationProfile=CONTRACT_TESTED` inside the expanded **20 `EXPLICIT_TRUST` + 16 `CONTRACT_TESTED` + 35 `CONFIRMED_GAP`** accounting. Machine-readable coverage, focused packaged-protocol assertions, primary `test_mcp_server.py` accounting, and the acceptance baseline inventory version remain synchronized. Existing `BenchmarkTrust` numerical/scientific accounting remains unchanged at 20 explicit pages and 51 generic fallbacks.
 
 ## Evidence that is not established
 
