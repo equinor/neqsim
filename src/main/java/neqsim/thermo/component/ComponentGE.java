@@ -96,12 +96,10 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
    */
   protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
     if (phase.hasComponent("water") && !isIsIon()) {
-      IapwsHenryLaw.Assessment assessment =
-          IapwsHenryLaw.assess(getComponentName(), phase.getTemperature());
-      if (assessment.isUsable()) {
+      if (IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
         return IapwsHenryLaw.getHenryCoefficientBar(getComponentName(), phase.getTemperature());
       }
-      if (assessment.isSupportedSpecies()) {
+      if (IapwsHenryLaw.isSupportedSpecies(getComponentName())) {
         return INSOLUBLE_HENRY_COEFFICIENT;
       }
     }
@@ -146,13 +144,11 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
    */
   protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
     if (phase.hasComponent("water") && !isIsIon()) {
-      IapwsHenryLaw.Assessment assessment =
-          IapwsHenryLaw.assess(getComponentName(), phase.getTemperature());
-      if (assessment.isUsable()) {
+      if (IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
         return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(
             getComponentName(), phase.getTemperature());
       }
-      if (assessment.isSupportedSpecies()) {
+      if (IapwsHenryLaw.isSupportedSpecies(getComponentName())) {
         return 0.0;
       }
     }
