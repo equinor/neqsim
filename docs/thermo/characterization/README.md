@@ -52,7 +52,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - preserved lower/upper boiling ranges;
 - closure, duplicate-name, monotonicity, and repeated-application guards.
 
-See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation).
+See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), while the next process-integration gate is documented in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation).
 
 ## TBP fraction models
 
@@ -136,6 +136,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 
 - [Refinery Assay and TBP Cut Characterization](refinery_assay)
 - [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
+- [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
 - [Fluid Characterization Guide](../../wiki/fluid_characterization)
 - [TBP Fraction Models](../../wiki/tbp_fraction_models)
 - [PVT Fluid Characterization](../pvt_fluid_characterization)
