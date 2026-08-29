@@ -20,11 +20,9 @@ class CO2TransportReactionKineticsDocumentationTest {
   void testQualifiedScreenExecutesDocumentedWorkflow() {
     SystemInterface fluid = createInitializedFluid();
     KineticReaction reaction = createSyntheticReaction();
-    KineticReactionQualification qualification = createQualification(
-        ChemicalReactionValidationStatus.VALIDATED);
+    KineticReactionQualification qualification = createQualification(ChemicalReactionValidationStatus.VALIDATED);
 
-    KineticReactionDiagnostics initial =
-        evaluateQualified(reaction, qualification, fluid, 0, 1.0);
+    KineticReactionDiagnostics initial = evaluateQualified(reaction, qualification, fluid, 0, 1.0);
     assertTrue(initial.getReactionTimeSeconds() > 0.0);
     assertTrue(Double.isFinite(initial.getReactionTimeSeconds()));
 
@@ -43,26 +41,21 @@ class CO2TransportReactionKineticsDocumentationTest {
   void testQualificationAndRateBasisFailClosed() {
     SystemInterface fluid = createInitializedFluid();
     KineticReaction reaction = createSyntheticReaction();
-    KineticReactionQualification unvalidated = createQualification(
-        ChemicalReactionValidationStatus.UNVALIDATED);
+    KineticReactionQualification unvalidated = createQualification(ChemicalReactionValidationStatus.UNVALIDATED);
 
-    assertThrows(IllegalStateException.class,
-        () -> evaluateQualified(reaction, unvalidated, fluid, 0, 1.0));
+    assertThrows(IllegalStateException.class, () -> evaluateQualified(reaction, unvalidated, fluid, 0, 1.0));
 
     reaction.setRateBasis(KineticReaction.RateBasis.CATALYST_MASS);
-    KineticReactionQualification validated = createQualification(
-        ChemicalReactionValidationStatus.VALIDATED);
-    assertThrows(IllegalArgumentException.class,
-        () -> evaluateQualified(reaction, validated, fluid, 0, 1.0));
+    KineticReactionQualification validated = createQualification(ChemicalReactionValidationStatus.VALIDATED);
+    assertThrows(IllegalArgumentException.class, () -> evaluateQualified(reaction, validated, fluid, 0, 1.0));
   }
 
   private static KineticReactionDiagnostics evaluateQualified(KineticReaction reaction,
-      KineticReactionQualification qualification, SystemInterface fluid, int phaseIndex,
-      double residenceTimeSeconds) {
+      KineticReactionQualification qualification, SystemInterface fluid, int phaseIndex, double residenceTimeSeconds) {
     qualification.requireValidatedAt(fluid.getTemperature(), fluid.getPressure());
 
-    KineticReactionDiagnostics diagnostic =
-        KineticReactionDiagnostics.evaluate(reaction, fluid, phaseIndex, residenceTimeSeconds);
+    KineticReactionDiagnostics diagnostic = KineticReactionDiagnostics.evaluate(reaction, fluid, phaseIndex,
+        residenceTimeSeconds);
 
     diagnostic.getReactionName();
     diagnostic.getDamkohlerNumber();
@@ -94,10 +87,9 @@ class CO2TransportReactionKineticsDocumentationTest {
     return reaction;
   }
 
-  private static KineticReactionQualification createQualification(
-      ChemicalReactionValidationStatus status) {
-    return new KineticReactionQualification("synthetic SO2 oxidation",
-        "Synthetic software-regression fixture", "internal:documentation-test", status, 273.15,
-        323.15, 50.0, 150.0, "Not an engineering kinetic parameterization");
+  private static KineticReactionQualification createQualification(ChemicalReactionValidationStatus status) {
+    return new KineticReactionQualification("synthetic SO2 oxidation", "Synthetic software-regression fixture",
+        "internal:documentation-test", status, 273.15, 323.15, 50.0, 150.0,
+        "Not an engineering kinetic parameterization");
   }
 }
