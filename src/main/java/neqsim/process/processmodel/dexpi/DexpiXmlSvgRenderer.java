@@ -179,6 +179,17 @@ public final class DexpiXmlSvgRenderer {
           .append(number(sheetHeight - location[1])).append("\" r=\"").append(number(attribute(circle, "Radius", 0.0)))
           .append("\" ").append(style(circle)).append("/>").append('\n');
     }
+    NodeList arcs = document.getElementsByTagName("TrimmedCurve");
+    for (int index = 0; index < arcs.getLength(); index++) {
+      Element curve = (Element) arcs.item(index);
+      if (inside(curve, "ShapeCatalogue")) {
+        continue;
+      }
+      Element circle = firstDirectChild(curve, "Circle");
+      if (circle != null) {
+        appendGlobalArc(curve, circle, sheetHeight, svg);
+      }
+    }
   }
 
   private static void renderGlobalTag(Document document, String tagName, double sheetHeight, StringBuilder svg) {
@@ -301,7 +312,26 @@ public final class DexpiXmlSvgRenderer {
     int largeArc = delta > 180.0 ? 1 : 0;
     svg.append("      <path d=\"M ").append(number(startX)).append(' ').append(number(startY)).append(" A ")
         .append(number(radius)).append(' ').append(number(radius)).append(" 0 ").append(largeArc).append(" 1 ")
-        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(style(circle)).append("/>\n");
+        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(style(curve)).append("/>\n");
+  }
+
+  private static void appendGlobalArc(Element curve, Element circle, double sheetHeight, StringBuilder svg) {
+    double[] center = location(circle);
+    if (center == null) {
+      center = new double[] { 0.0, 0.0 };
+    }
+    double radius = attribute(circle, "Radius", 0.0);
+    double start = Math.toRadians(attribute(curve, "StartAngle", 0.0));
+    double end = Math.toRadians(attribute(curve, "EndAngle", 0.0));
+    double startX = center[0] + radius * Math.cos(start);
+    double startY = sheetHeight - center[1] - radius * Math.sin(start);
+    double endX = center[0] + radius * Math.cos(end);
+    double endY = sheetHeight - center[1] - radius * Math.sin(end);
+    double delta = (Math.toDegrees(end - start) + 360.0) % 360.0;
+    int largeArc = delta > 180.0 ? 1 : 0;
+    svg.append("    <path d=\"M ").append(number(startX)).append(' ').append(number(startY)).append(" A ")
+        .append(number(radius)).append(' ').append(number(radius)).append(" 0 ").append(largeArc).append(" 0 ")
+        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(style(curve)).append("/>\n");
   }
 
   private static void renderText(Document document, double sheetHeight, StringBuilder svg) {
