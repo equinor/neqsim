@@ -51,6 +51,9 @@ jobs:
       - name: Install exact NeqSim core without tests
         run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
 
+      - name: Run focused model-registry Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.ModelRegistryTest test -ntp
+
       - name: Build exact MCP server package
         shell: bash
         run: |
@@ -66,6 +69,9 @@ jobs:
 
       - name: Run focused real-MCP automation-read qualification
         run: cd neqsim-mcp-server && python test_automation_read_protocol.py
+
+      - name: Run focused real-MCP model-registry qualification
+        run: cd neqsim-mcp-server && python test_model_registry_protocol.py
 
       - name: Run comprehensive real-MCP protocol regression
         run: cd neqsim-mcp-server && python test_mcp_server.py
