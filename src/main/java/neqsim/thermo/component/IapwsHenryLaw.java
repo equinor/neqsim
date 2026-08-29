@@ -5,14 +5,15 @@ import java.util.Locale;
 /**
  * IAPWS G7-04 Henry-law correlation for common gases at infinite dilution in liquid H2O.
  *
- * <p>The correlation returns the mole-fraction Henry constant
- * {@code kH = lim(x -> 0) f / x} on the water saturation boundary. It does not
- * include a Poynting correction or electrolyte salting-out interaction.</p>
+ * <p>
+ * The correlation returns the mole-fraction Henry constant {@code kH = lim(x -> 0) f / x} on the water saturation
+ * boundary. It does not include a Poynting correction or electrolyte salting-out interaction.
+ * </p>
  *
- * <p>Coefficients and species-specific fitted ranges are from IAPWS G7-04,
- * based on Fernandez-Prini et al., J. Phys. Chem. Ref. Data 32 (2003),
- * doi:10.1063/1.1564818. The IAPWS guideline permits reproduction with
- * attribution.</p>
+ * <p>
+ * Coefficients and species-specific fitted ranges are from IAPWS G7-04, based on Fernandez-Prini et al., J. Phys. Chem.
+ * Ref. Data 32 (2003), doi:10.1063/1.1564818. The IAPWS guideline permits reproduction with attribution.
+ * </p>
  */
 public final class IapwsHenryLaw {
   /** Water molar mass in kg/mol for converting mole-fraction to molality standard state. */
@@ -21,9 +22,9 @@ public final class IapwsHenryLaw {
   private static final double WATER_CRITICAL_TEMPERATURE = 647.096;
   private static final double WATER_CRITICAL_PRESSURE_MPA = 22.064;
   private static final double CORRELATION_MINIMUM_TEMPERATURE = 273.15;
-  private static final double[] VAPOR_PRESSURE_A = {
-      -7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719, 1.80122502};
-  private static final double[] VAPOR_PRESSURE_B = {1.0, 1.5, 3.0, 3.5, 4.0, 7.5};
+  private static final double[] VAPOR_PRESSURE_A = { -7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
+      1.80122502 };
+  private static final double[] VAPOR_PRESSURE_B = { 1.0, 1.5, 3.0, 3.5, 4.0, 7.5 };
 
   private static final GasData HE = new GasData("He", -3.52839, 7.12983, 4.47770, 273.21, 553.18);
   private static final GasData NE = new GasData("Ne", -3.18301, 5.31448, 5.43774, 273.20, 543.36);
@@ -117,8 +118,7 @@ public final class IapwsHenryLaw {
     private final double minimumTemperature;
     private final double maximumTemperature;
 
-    private GasData(String name, double a, double b, double c, double minimumTemperature,
-        double maximumTemperature) {
+    private GasData(String name, double a, double b, double c, double minimumTemperature, double maximumTemperature) {
       this.name = name;
       this.a = a;
       this.b = b;
@@ -128,7 +128,8 @@ public final class IapwsHenryLaw {
     }
   }
 
-  private IapwsHenryLaw() {}
+  private IapwsHenryLaw() {
+  }
 
   /**
    * Tests whether a component is present in the IAPWS H2O table.
@@ -143,8 +144,10 @@ public final class IapwsHenryLaw {
   /**
    * Tests whether the IAPWS formula is numerically usable at a state.
    *
-   * <p>This allocation-free predicate is intended for the fugacity hot path.
-   * Use {@link #assess(String, double)} when fitted-range diagnostics are needed.</p>
+   * <p>
+   * This allocation-free predicate is intended for the fugacity hot path. Use {@link #assess(String, double)} when
+   * fitted-range diagnostics are needed.
+   * </p>
    *
    * @param componentName NeqSim component name or IAPWS formula
    * @param temperature temperature in K
@@ -152,8 +155,7 @@ public final class IapwsHenryLaw {
    */
   public static boolean isUsable(String componentName, double temperature) {
     return findGas(componentName) != null && Double.isFinite(temperature)
-        && temperature >= CORRELATION_MINIMUM_TEMPERATURE
-        && temperature < WATER_CRITICAL_TEMPERATURE;
+        && temperature >= CORRELATION_MINIMUM_TEMPERATURE && temperature < WATER_CRITICAL_TEMPERATURE;
   }
 
   /**
@@ -190,10 +192,8 @@ public final class IapwsHenryLaw {
     GasData gas = requireUsable(componentName, temperature);
     double reducedTemperature = temperature / WATER_CRITICAL_TEMPERATURE;
     double tau = 1.0 - reducedTemperature;
-    double logPressureMpa = Math.log(WATER_CRITICAL_PRESSURE_MPA)
-        + vaporPressureSeries(tau) / reducedTemperature;
-    double logHenryMpa = logPressureMpa + gas.a / reducedTemperature
-        + gas.b * Math.pow(tau, 0.355) / reducedTemperature
+    double logPressureMpa = Math.log(WATER_CRITICAL_PRESSURE_MPA) + vaporPressureSeries(tau) / reducedTemperature;
+    double logHenryMpa = logPressureMpa + gas.a / reducedTemperature + gas.b * Math.pow(tau, 0.355) / reducedTemperature
         + gas.c * Math.pow(reducedTemperature, -0.41) * Math.exp(tau);
     return Math.exp(logHenryMpa) * 10.0;
   }
@@ -206,21 +206,17 @@ public final class IapwsHenryLaw {
    * @return d(ln(kH))/dT in 1/K
    * @throws IllegalArgumentException for an unsupported species or temperature outside the domain
    */
-  public static double getLnHenryCoefficientTemperatureDerivative(String componentName,
-      double temperature) {
+  public static double getLnHenryCoefficientTemperatureDerivative(String componentName, double temperature) {
     GasData gas = requireUsable(componentName, temperature);
     double tr = temperature / WATER_CRITICAL_TEMPERATURE;
     double tau = 1.0 - tr;
     double series = vaporPressureSeries(tau);
     double seriesDerivative = 0.0;
     for (int i = 0; i < VAPOR_PRESSURE_A.length; i++) {
-      seriesDerivative -= VAPOR_PRESSURE_A[i] * VAPOR_PRESSURE_B[i]
-          * Math.pow(tau, VAPOR_PRESSURE_B[i] - 1.0);
+      seriesDerivative -= VAPOR_PRESSURE_A[i] * VAPOR_PRESSURE_B[i] * Math.pow(tau, VAPOR_PRESSURE_B[i] - 1.0);
     }
-    double derivativeByTr = seriesDerivative / tr - series / (tr * tr)
-        - gas.a / (tr * tr)
-        + gas.b * (-0.355 * Math.pow(tau, -0.645) / tr
-            - Math.pow(tau, 0.355) / (tr * tr));
+    double derivativeByTr = seriesDerivative / tr - series / (tr * tr) - gas.a / (tr * tr)
+        + gas.b * (-0.355 * Math.pow(tau, -0.645) / tr - Math.pow(tau, 0.355) / (tr * tr));
     double finalTerm = gas.c * Math.pow(tr, -0.41) * Math.exp(tau);
     derivativeByTr += finalTerm * (-0.41 / tr - 1.0);
     return derivativeByTr / WATER_CRITICAL_TEMPERATURE;
@@ -237,8 +233,7 @@ public final class IapwsHenryLaw {
   private static GasData requireUsable(String componentName, double temperature) {
     GasData gas = findGas(componentName);
     if (gas == null) {
-      throw new IllegalArgumentException(
-          "IAPWS Henry correlation does not support component '" + componentName + "'");
+      throw new IllegalArgumentException("IAPWS Henry correlation does not support component '" + componentName + "'");
     }
     if (!Double.isFinite(temperature) || temperature < CORRELATION_MINIMUM_TEMPERATURE
         || temperature >= WATER_CRITICAL_TEMPERATURE) {
@@ -254,52 +249,53 @@ public final class IapwsHenryLaw {
     }
     String name = componentName.trim().toLowerCase(Locale.ROOT);
     switch (name) {
-      case "he":
-      case "helium":
-        return HE;
-      case "ne":
-      case "neon":
-        return NE;
-      case "ar":
-      case "argon":
-        return AR;
-      case "kr":
-      case "krypton":
-        return KR;
-      case "xe":
-      case "xenon":
-        return XE;
-      case "h2":
-      case "hydrogen":
-        return H2;
-      case "n2":
-      case "nitrogen":
-        return N2;
-      case "o2":
-      case "oxygen":
-        return O2;
-      case "co":
-      case "carbon monoxide":
-        return CO;
-      case "co2":
-      case "carbon dioxide":
-        return CO2;
-      case "h2s":
-      case "hydrogen sulfide":
-      case "hydrogen sulphide":
-        return H2S;
-      case "ch4":
-      case "methane":
-        return CH4;
-      case "c2h6":
-      case "ethane":
-        return C2H6;
-      case "sf6":
-      case "sulfur hexafluoride":
-      case "sulphur hexafluoride":
-        return SF6;
-      default:
-        return null;
+    case "he":
+    case "helium":
+      return HE;
+    case "ne":
+    case "neon":
+      return NE;
+    case "ar":
+    case "argon":
+      return AR;
+    case "kr":
+    case "krypton":
+      return KR;
+    case "xe":
+    case "xenon":
+      return XE;
+    case "h2":
+    case "hydrogen":
+      return H2;
+    case "n2":
+    case "nitrogen":
+      return N2;
+    case "o2":
+    case "oxygen":
+      return O2;
+    case "co":
+    case "carbon monoxide":
+      return CO;
+    case "co2":
+    case "carbon dioxide":
+      return CO2;
+    case "h2s":
+    case "hydrogen sulfide":
+    case "hydrogen sulphide":
+      return H2S;
+    case "ch4":
+    case "methane":
+      return CH4;
+    case "c2h6":
+    case "ethane":
+      return C2H6;
+    case "sf6":
+    case "sulfur hexafluoride":
+    case "sulphur hexafluoride":
+      return SF6;
+    default:
+      return null;
     }
   }
 }
+

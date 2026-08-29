@@ -64,10 +64,11 @@ public class ComponentGePitzer extends ComponentGE {
   /**
    * Returns the Pitzer molality-scale Henry reference.
    *
-   * <p>IAPWS publishes {@code kH = f/x}. Pitzer neutral activities use molality, so
-   * {@code Hm = kH * Mwater}; the existing {@code m/x} factor in {@link #fugcoef(PhaseInterface)}
-   * maps this back to the common mole-fraction fugacity kernel. The constant conversion
-   * does not change the logarithmic temperature derivative.</p>
+   * <p>
+   * IAPWS publishes {@code kH = f/x}. Pitzer neutral activities use molality, so {@code Hm = kH * Mwater}; the existing
+   * {@code m/x} factor in {@link #fugcoef(PhaseInterface)} maps this back to the common mole-fraction fugacity kernel.
+   * The constant conversion does not change the logarithmic temperature derivative.
+   * </p>
    *
    * @param phase aqueous Pitzer phase
    * @return effective molality-scale Henry coefficient in bar kg/mol
@@ -75,8 +76,7 @@ public class ComponentGePitzer extends ComponentGE {
   @Override
   protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
     double coefficient = super.getEffectiveHenryCoefficient(phase);
-    if (phase.hasComponent("water")
-        && IapwsHenryLaw.isSupportedSpecies(getComponentName())) {
+    if (phase.hasComponent("water") && IapwsHenryLaw.isSupportedSpecies(getComponentName())) {
       return coefficient * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
     }
     return coefficient;
@@ -621,3 +621,4 @@ public class ComponentGePitzer extends ComponentGE {
     return 3.0 * Aphi;
   }
 }
+

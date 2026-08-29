@@ -87,9 +87,10 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   /**
    * Returns the phase-aware Henry coefficient, preferring the qualified IAPWS pure-water reference.
    *
-   * <p>The IAPWS value is selected only for a supported neutral solute in a water-containing phase.
-   * Temperatures outside the liquid-water domain fail closed. Species outside the IAPWS table retain
-   * the legacy database behavior.</p>
+   * <p>
+   * The IAPWS value is selected only for a supported neutral solute in a water-containing phase. Temperatures outside
+   * the liquid-water domain fail closed. Species outside the IAPWS table retain the legacy database behavior.
+   * </p>
    *
    * @param phase phase containing temperature and solvent topology
    * @return effective mole-fraction Henry coefficient in bar
@@ -145,8 +146,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
     if (phase.hasComponent("water") && !isIsIon()) {
       if (IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
-        return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(
-            getComponentName(), phase.getTemperature());
+        return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
       }
       if (IapwsHenryLaw.isSupportedSpecies(getComponentName())) {
         return 0.0;
@@ -234,3 +234,4 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     return gammaRefCor;
   }
 }
+
