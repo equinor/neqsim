@@ -21,8 +21,8 @@ manually maintained Java method list.
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 11 contract-tested non-numerical contracts + 40 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.17; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 16 bounded contract-tested software contracts + 35 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.18; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -92,10 +92,10 @@ Phase 0 inventory. The exact current source contains 68 JUnit test classes under
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
 recounts its source tree and fails if the manifest drifts; the focused harnesses are separately
-executed by the read-only `MCP protocol qualification` workflow. The validation-profile harness
-adds bounded software-contract scenarios but does not alter the frozen primary-scenario count.
-These counts identify evidence locations; they are not a claim that a test ran or passed. Exact-head
-CI and recorded command output remain the execution evidence.
+executed by the read-only `MCP protocol qualification` workflow. The validation-profile and
+automation-advisory harnesses add bounded software-contract scenarios but do not alter the frozen
+primary-scenario count. These counts identify evidence locations; they are not a claim that a test
+ran or passed. Exact-head CI and recorded command output remain the execution evidence.
 
 The eight MCP guides have distinct roles:
 
@@ -122,29 +122,31 @@ other 51 published tools still use the compatibility-level generic `TESTED` benc
 from `getBenchmarkTrust`.
 
 Phase 0 does not equate that generic benchmark fallback with an unresolved scientific gap when the
-tool is intrinsically non-numerical. `knownLimitations.coverageRecords` contains one deterministic
-record for every published tool and uses three bounded states:
+tool's qualified scope is a bounded software contract. `knownLimitations.coverageRecords` contains
+one deterministic record for every published tool and uses three bounded states:
 
 - `EXPLICIT_TRUST` — a tool-specific `BenchmarkTrust` page exists, with its declared maturity and
   counts for validation cases, verified cases, limitations, and unsupported conditions;
-- `CONTRACT_TESTED` — the tool is non-numerical and its exact source, test, and real-protocol
-  evidence is listed in `contractEvidenceSources`. This applies to capability/schema/example
-  discovery, trust-catalog retrieval, industrial-profile access/governance policy, component-name
-  search, read-only data-catalog discovery, bounded progress retrieval, validation-profile
-  governance, and bounded runtime API inspection. It does not validate advertised calculations,
-  database contents, standards applicability, EOS accuracy, scientific claims inside trust pages,
-  calculation convergence, cancellation, durability, deployment isolation, external identity or
-  authorization, a facility deployment, plant authority, or accountable engineering approval; or
-- `CONFIRMED_GAP` — no tool-specific benchmark trust page or bounded non-numerical contract
+- `CONTRACT_TESTED` — bounded MCP software-contract behavior has direct source, regression, and
+  real-protocol evidence listed in `contractEvidenceSources`. This applies to capability/schema/
+  example discovery, trust-catalog retrieval, industrial-profile access/governance policy,
+  component-name search, read-only data-catalog discovery, bounded progress retrieval,
+  validation-profile governance, bounded runtime API inspection, and the five automation advisory
+  discovery/read/diagnostic contracts. It does not validate advertised calculations, database
+  contents, standards applicability, EOS accuracy, scientific claims inside trust pages, numerical
+  model accuracy, calculation convergence, cancellation, durability, deployment isolation,
+  external identity or authorization, facility topology completeness, a facility deployment,
+  plant authority, or accountable engineering approval; or
+- `CONFIRMED_GAP` — no tool-specific benchmark trust page or bounded software-contract
   classification closes the gap. The record names the implementation class, retains the
   compatibility maturity, and explicitly states that generic `TESTED` is not benchmark, accuracy,
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 40 records remain
-`CONFIRMED_GAP`, eleven are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the overall
-Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at 20
-explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
+classification. It does **not** mean the MCP surface is scientifically validated: 35 records remain
+`CONFIRMED_GAP`, sixteen are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
+20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
 
 ### Promoted read-only catalog contracts
@@ -189,9 +191,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-freezes inventory 1.17 while preserving 20/11/40 coverage accounting and
+now reconciles inventory 1.18 with 20/16/35 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its eleven bounded non-numerical contracts and requires 40 confirmed gaps. The read-only
+among its sixteen bounded software contracts and requires 35 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -202,28 +204,57 @@ in `docs/evidence/API_INSPECTION_CONTRACT.md`.
 
 ### Promoted validation-profile contract
 
-Inventory version 1.17 promotes `manageValidationProfile` to `CONTRACT_TESTED` after the
+Inventory version 1.17 promoted `manageValidationProfile` to `CONTRACT_TESTED` after the
 promotion-ready candidate from version 1.16 completed its atomic classification gate. Merged PR
 #3266 established the bounded Java and real packaged-MCP evidence: built-in profile discovery,
 structural preservation of validation metadata, isolated custom-profile create/activate/read/delete
 lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation
 errors. The focused protocol harness verifies the promoted coverage state through
-`getCapabilities`, while the primary `test_mcp_server.py` independently includes
-`manageValidationProfile` in its eleven bounded non-numerical contracts and requires 40 confirmed
+`getCapabilities`, while the primary `test_mcp_server.py` now includes
+`manageValidationProfile` in its sixteen bounded software contracts and requires 35 confirmed
 gaps.
 
 This is software/governance evidence only. The named standards and design factors are not asserted
 to be current, complete, legally applicable, licensed for redistribution, or correct for a real
 facility; `validateWithProfile` scientific correctness, persistence, multi-tenant isolation,
-external authorization, and plant authority remain outside the evidence boundary. Machine-readable
-coverage and both packaged-protocol accounting paths move together on this exact head from
-20/10/41 to 20/11/40. No promotion candidate remains queued in inventory 1.17. See
+external authorization, and plant authority remain outside the evidence boundary. Its historical
+promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.18 retains that contract
+while adding the automation advisory promotions below. See
 `docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
-Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative
-for an executed calculation. The evidence inventory is advisory discovery metadata; it does not
-certify a facility, claim causality, replace qualified engineering review, or write to a live plant
-system.
+### Promoted automation advisory contracts
+
+Inventory version 1.18 atomically promotes `listSimulationUnits`, `listUnitVariables`,
+`getSimulationVariable`, `diagnoseAutomation`, and `getAutomationLearningReport` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving overall Phase 0 accounting from 20/11/40 to 20/16/35.
+Merged #3302 established direct Java and packaged-MCP evidence for the three discovery/read tools;
+merged #3309 established the same bounded evidence for diagnostic and learning-report retrieval.
+The current promotion moves the five machine-readable coverage records, the focused
+`test_automation_read_protocol.py` assertions, and the authoritative `test_mcp_server.py`
+accounting together on one exact head.
+
+All five routes resolve the supplied definition or model handle through the canonical solved
+NeqSim `ProcessSystem` and use `ProcessAutomation`/`AutomationDiagnostics`; no MCP-only simulator
+or second process representation is added. The contract covers unit discovery, variable registry
+metadata, addressed variable-read routing and requested-unit handling, standard envelope/provenance/
+validation/quality-gate preservation, structured advisory diagnostics, fresh-process learning-report
+shape, fail-closed inputs, and packaged transport.
+
+For `getSimulationVariable`, the returned numerical value, model fidelity, convergence adequacy,
+and engineering applicability are **not benchmark-validated by this classification**. Diagnostic
+suggestions do not establish causality and are not plant measurements, control instructions, or
+accountable engineering approval. Learning persistence across processes/restarts/tenants and
+learning quality remain outside the evidence boundary. See
+`docs/evidence/AUTOMATION_READ_CONTRACT.md`.
+
+No promotion candidate remains queued in inventory 1.18. A future transition must again move the
+machine-readable coverage record and primary packaged-protocol accounting atomically from direct
+evidence.
+
+Per-result provenance, convergence, warnings, assumptions, units, and limitations remain
+authoritative for an executed calculation. The evidence inventory is advisory discovery metadata;
+it does not certify a facility, claim causality, replace qualified engineering review, or write to
+a live plant system.
 
 ## Guided prompts
 
@@ -259,12 +290,12 @@ deployment-profile names, tool-capability reconciliation, schema resource graph,
 graph, tool implementation bindings, factory-backed equipment, report paths, test sources, guides,
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
-every published tool. Eleven non-numerical discovery, catalog, lookup, progress, trust-retrieval,
-governance, validation-profile, and API-inspection tools are contract-tested, leaving 40 confirmed
-trust gaps and no queued promotion candidate.
+every published tool. Sixteen bounded discovery, catalog, lookup, progress, trust-retrieval,
+governance, validation-profile, API-inspection, and automation advisory contracts are
+contract-tested, leaving 35 confirmed trust gaps and no queued promotion candidate.
 
 Follow-up work should continue auditing remaining confirmed gaps and promote only when concrete
-source/test/public-benchmark evidence or a clearly non-numerical contract supports a precise
+source/test/public-benchmark evidence or a clearly bounded software contract supports a precise
 classification. Explicit numeric component, energy, and facility-wide conservation/report gaps
 remain separate work and must not be reconstructed as a second MCP-side physics model. Later-phase
 campaign criteria remain incomplete until their own merged acceptance evidence exists.
