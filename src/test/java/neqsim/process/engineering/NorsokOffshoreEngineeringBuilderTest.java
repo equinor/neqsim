@@ -219,6 +219,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertMinimumMaterializedSpacing(result.getDexpiFile(), "ProcessInstrumentationFunction", 12.0);
     assertMinimumMaterializedSpacing(result.getDexpiFile(), "PipingComponent", 14.0);
     assertMaterializedInstrumentLabelsAreCompact(result.getDexpiFile());
+    assertEngineeringFunctionsWithinBatteryLimit(result.getDexpiFile());
 
     String dexpi20 = new String(Files.readAllBytes(result.getDexpi20File()), StandardCharsets.UTF_8);
     assertTrue(dexpi20.contains("<Model"));
@@ -324,6 +325,64 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
       }
     }
     throw new AssertionError("Relief coverage not found for: " + equipmentTag);
+  }
+
+  private static void assertEngineeringFunctionsWithinBatteryLimit(Path dexpiFile) throws Exception {
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpiFile.toFile());
+    Element boundary = null;
+    NodeList labels = document.getElementsByTagName("Label");
+    for (int i = 0; i < labels.getLength(); i++) {
+      Element candidate = (Element) labels.item(i);
+      if ("BatteryLimit-1".equals(candidate.getAttribute("ID"))) {
+        boundary = candidate;
+        break;
+      }
+    }
+    assertTrue(boundary != null, "Generated engineering drawing must retain its battery-limit boundary");
+
+    NodeList coordinates = boundary.getElementsByTagName("Coordinate");
+    assertTrue(coordinates.getLength() >= 5, "Battery-limit boundary must remain a closed rectangle");
+    double left = Double.MAX_VALUE;
+    double right = -Double.MAX_VALUE;
+    double bottom = Double.MAX_VALUE;
+    double top = -Double.MAX_VALUE;
+    for (int i = 0; i < coordinates.getLength(); i++) {
+      Element coordinate = (Element) coordinates.item(i);
+      double x = Double.parseDouble(coordinate.getAttribute("X"));
+      double y = Double.parseDouble(coordinate.getAttribute("Y"));
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+      bottom = Math.min(bottom, y);
+      top = Math.max(top, y);
+    }
+
+    String[] elementNames = new String[] { "ProcessInstrumentationFunction", "PipingComponent" };
+    for (String elementName : elementNames) {
+      NodeList elements = document.getElementsByTagName(elementName);
+      for (int i = 0; i < elements.getLength(); i++) {
+        Element element = (Element) elements.item(i);
+        if (genericAttribute(element, "ProtectedEquipmentTag") == null) {
+          continue;
+        }
+        NodeList locations = element.getElementsByTagName("Location");
+        assertTrue(locations.getLength() > 0, "Governed engineering function must have a drawing position");
+        Element location = (Element) locations.item(0);
+        double x = Double.parseDouble(location.getAttribute("X"));
+        double y = Double.parseDouble(location.getAttribute("Y"));
+        assertTrue(x >= left + 9.0 && x <= right - 9.0 && y >= bottom + 9.0 && y <= top - 9.0,
+            elementName + " must remain clear of the battery-limit line: " + element.getAttribute("ID"));
+      }
+    }
+
+    NodeList areaTexts = boundary.getElementsByTagName("Text");
+    assertTrue(areaTexts.getLength() > 0, "Battery-limit boundary must retain its area label");
+    NodeList areaLocations = ((Element) areaTexts.item(0)).getElementsByTagName("Location");
+    assertTrue(areaLocations.getLength() > 0, "Battery-limit area label must have a drawing position");
+    Element areaLocation = (Element) areaLocations.item(0);
+    double labelX = Double.parseDouble(areaLocation.getAttribute("X"));
+    double labelY = Double.parseDouble(areaLocation.getAttribute("Y"));
+    assertTrue(labelX > left && labelX < right && labelY > bottom && labelY < top,
+        "Battery-limit area label must be placed inside the boundary");
   }
 
   private static void assertMaterializedInstrumentLabelsAreCompact(Path dexpiFile) throws Exception {

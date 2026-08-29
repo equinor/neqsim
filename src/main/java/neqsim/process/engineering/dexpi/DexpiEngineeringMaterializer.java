@@ -24,8 +24,9 @@ import neqsim.process.engineering.SafetyFunctionDesign;
 public final class DexpiEngineeringMaterializer {
   private static final int INSTRUMENT_COLUMNS = 5;
   private static final double INSTRUMENT_X_SPACING = 26.0;
-  private static final double INSTRUMENT_ROW_SPACING = 14.0;
-  private static final double INSTRUMENT_VERTICAL_CLEARANCE = 10.0;
+  private static final double INSTRUMENT_ROW_SPACING = 12.0;
+  private static final double INSTRUMENT_VERTICAL_CLEARANCE = 6.0;
+  private static final double ENGINEERING_BOUNDARY_CLEARANCE = 10.0;
   private static final int DEVICE_COLUMNS = 2;
   private static final double DEVICE_X_SPACING = 50.0;
   private static final double DEVICE_ROW_SPACING = 16.0;
@@ -383,6 +384,7 @@ public final class DexpiEngineeringMaterializer {
     if (hasPipingSegments(reliefSystem)) {
       insertBeforeCatalogue(root, reliefSystem);
     }
+    expandBatteryLimitBoundary(document);
     return new MaterializationResult(matrix, functionCount, deviceCount);
   }
 
@@ -720,6 +722,83 @@ public final class DexpiEngineeringMaterializer {
       }
     }
     return top;
+  }
+
+  private static void expandBatteryLimitBoundary(Document document) {
+    Element boundary = null;
+    NodeList labels = document.getElementsByTagName("Label");
+    for (int i = 0; i < labels.getLength(); i++) {
+      Element candidate = (Element) labels.item(i);
+      if ("BatteryLimit-1".equals(candidate.getAttribute("ID"))) {
+        boundary = candidate;
+        break;
+      }
+    }
+    if (boundary == null) {
+      return;
+    }
+
+    NodeList coordinates = boundary.getElementsByTagName("Coordinate");
+    if (coordinates.getLength() < 5) {
+      return;
+    }
+    double left = Double.MAX_VALUE;
+    double right = -Double.MAX_VALUE;
+    double bottom = Double.MAX_VALUE;
+    double top = -Double.MAX_VALUE;
+    for (int i = 0; i < coordinates.getLength(); i++) {
+      Element coordinate = (Element) coordinates.item(i);
+      try {
+        double x = Double.parseDouble(coordinate.getAttribute("X"));
+        double y = Double.parseDouble(coordinate.getAttribute("Y"));
+        left = Math.min(left, x);
+        right = Math.max(right, x);
+        bottom = Math.min(bottom, y);
+        top = Math.max(top, y);
+      } catch (NumberFormatException ignored) {
+        return;
+      }
+    }
+
+    NodeList all = document.getElementsByTagName("*");
+    for (int i = 0; i < all.getLength(); i++) {
+      Element element = (Element) all.item(i);
+      String elementName = element.getTagName();
+      if (!"ProcessInstrumentationFunction".equals(elementName) && !"PipingComponent".equals(elementName)) {
+        continue;
+      }
+      if (findGenericAttribute(element, "ProtectedEquipmentTag") == null) {
+        continue;
+      }
+      double[] position = findPosition(element);
+      left = Math.min(left, position[0] - ENGINEERING_BOUNDARY_CLEARANCE);
+      right = Math.max(right, position[0] + ENGINEERING_BOUNDARY_CLEARANCE);
+      bottom = Math.min(bottom, position[1] - ENGINEERING_BOUNDARY_CLEARANCE);
+      top = Math.max(top, position[1] + ENGINEERING_BOUNDARY_CLEARANCE);
+    }
+
+    setCoordinate((Element) coordinates.item(0), left, bottom);
+    setCoordinate((Element) coordinates.item(1), right, bottom);
+    setCoordinate((Element) coordinates.item(2), right, top);
+    setCoordinate((Element) coordinates.item(3), left, top);
+    setCoordinate((Element) coordinates.item(4), left, bottom);
+
+    NodeList texts = boundary.getElementsByTagName("Text");
+    if (texts.getLength() > 0) {
+      Element text = (Element) texts.item(0);
+      text.setAttribute("Justification", "LeftTop");
+      NodeList locations = text.getElementsByTagName("Location");
+      if (locations.getLength() > 0) {
+        Element location = (Element) locations.item(0);
+        location.setAttribute("X", String.valueOf(left + 2.0));
+        location.setAttribute("Y", String.valueOf(top - 2.0));
+      }
+    }
+  }
+
+  private static void setCoordinate(Element coordinate, double x, double y) {
+    coordinate.setAttribute("X", String.valueOf(x));
+    coordinate.setAttribute("Y", String.valueOf(y));
   }
 
   private static double[] instrumentPosition(EquipmentReference equipment, int index, int total) {
