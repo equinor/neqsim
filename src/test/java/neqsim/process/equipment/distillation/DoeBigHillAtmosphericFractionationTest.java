@@ -114,8 +114,8 @@ public class DoeBigHillAtmosphericFractionationTest {
     column.getReboiler().setOutTemperature(690.0);
     column.setCondenserRefluxRatio(1.0);
     column.setLiquidSideDrawFraction(SIDE_DRAW_TRAY, 0.10);
-    column.setSolverType(DistillationColumn.SolverType.AUTO);
-    column.setMaxNumberOfIterations(160);
+    column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    column.setMaxNumberOfIterations(300);
     column.setTemperatureTolerance(0.20);
     column.setMassBalanceTolerance(BALANCE_TOLERANCE);
     column.setEnthalpyBalanceTolerance(BALANCE_TOLERANCE);
