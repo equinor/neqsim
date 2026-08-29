@@ -6,12 +6,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import javax.xml.parsers.DocumentBuilderFactory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import neqsim.NeqSimTest;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter.ExportResult;
@@ -209,6 +216,8 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(xml.contains("UnresolvedBoundary"));
     assertTrue(xml.contains("FLARE_RELIEF_AND_BLOWDOWN"));
     assertTrue(xml.contains("PROCESS_CONTROL_ISOLATION_AND_RECYCLE"));
+    assertMinimumMaterializedSpacing(result.getDexpiFile(), "ProcessInstrumentationFunction", 12.0);
+    assertMinimumMaterializedSpacing(result.getDexpiFile(), "PipingComponent", 14.0);
 
     String dexpi20 = new String(Files.readAllBytes(result.getDexpi20File()), StandardCharsets.UTF_8);
     assertTrue(dexpi20.contains("<Model"));
@@ -315,4 +324,51 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     }
     throw new AssertionError("Relief coverage not found for: " + equipmentTag);
   }
+
+  private static void assertMinimumMaterializedSpacing(Path dexpiFile, String elementName, double minimumSpacing)
+      throws Exception {
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpiFile.toFile());
+    Map<String, List<double[]>> positionsByEquipment = new LinkedHashMap<String, List<double[]>>();
+    NodeList elements = document.getElementsByTagName(elementName);
+    for (int i = 0; i < elements.getLength(); i++) {
+      Element element = (Element) elements.item(i);
+      String equipmentTag = genericAttribute(element, "ProtectedEquipmentTag");
+      NodeList locations = element.getElementsByTagName("Location");
+      if (equipmentTag == null || locations.getLength() == 0) {
+        continue;
+      }
+      Element location = (Element) locations.item(0);
+      List<double[]> positions = positionsByEquipment.get(equipmentTag);
+      if (positions == null) {
+        positions = new ArrayList<double[]>();
+        positionsByEquipment.put(equipmentTag, positions);
+      }
+      positions.add(new double[] { Double.parseDouble(location.getAttribute("X")),
+          Double.parseDouble(location.getAttribute("Y")) });
+    }
+    for (Map.Entry<String, List<double[]>> entry : positionsByEquipment.entrySet()) {
+      List<double[]> positions = entry.getValue();
+      for (int i = 0; i < positions.size(); i++) {
+        for (int j = i + 1; j < positions.size(); j++) {
+          double dx = positions.get(i)[0] - positions.get(j)[0];
+          double dy = positions.get(i)[1] - positions.get(j)[1];
+          double distance = Math.sqrt(dx * dx + dy * dy);
+          assertTrue(distance >= minimumSpacing,
+              elementName + " annotations overlap on " + entry.getKey() + ": " + distance + " mm");
+        }
+      }
+    }
+  }
+
+  private static String genericAttribute(Element parent, String name) {
+    NodeList attributes = parent.getElementsByTagName("GenericAttribute");
+    for (int i = 0; i < attributes.getLength(); i++) {
+      Element attribute = (Element) attributes.item(i);
+      if (name.equals(attribute.getAttribute("Name"))) {
+        return attribute.getAttribute("Value");
+      }
+    }
+    return null;
+  }
+
 }

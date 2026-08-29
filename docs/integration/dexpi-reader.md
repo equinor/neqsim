@@ -143,8 +143,11 @@ DexpiXmlWriter.write(process, dexpi);
 DexpiXmlSvgRenderer.render(dexpi, svg);
 ```
 
-The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Use an independent
-DEXPI consumer as an interoperability check when qualifying an exchange for a project handoff.
+The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Generated title
+blocks are marked `PROPOSAL`, and their initial revision is `Engineering Proposal`; a controlled
+owner status and accountable review are required before a drawing can be issued for design or
+construction. Use an independent DEXPI consumer as an interoperability check when qualifying an
+exchange for a project handoff.
 
 An intentionally unconfigured `new Stream("spare")` may remain registered in the `ProcessSystem`.
 Its `run(UUID)` call completes as an inactive topology placeholder without inventing a fluid state,
