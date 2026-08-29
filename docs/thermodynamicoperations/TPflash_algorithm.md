@@ -3,8 +3,6 @@ title: "TPflash Algorithm Documentation"
 description: "Temperature-pressure flash algorithm reference for NeqSim, covering VLE, VLLE, LLE, Rachford-Rice, tangent-plane stability analysis, Newton refinement, multiphase flash workflow, performance, and robustness recommendations."
 ---
 
-# TPflash Algorithm Documentation
-
 ## Overview
 
 The Temperature-Pressure (TP) flash calculation is a fundamental operation in chemical engineering thermodynamics. Given a mixture composition, temperature, and pressure, the TP flash determines:
@@ -2212,44 +2210,57 @@ Neutral EOS flashes do not dispatch to this solver.
 
 ## Usage Example
 
+The constructor below uses temperature in K and absolute pressure in bara. Component additions are
+amounts in mol; these values happen to sum to 1.0 mol. Enabling multiphase checking asks NeqSim to
+test for additional fluid phases. It does not select or validate the thermodynamic model and does
+not guarantee that a gas phase exists at every state.
+
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create system
-SystemSrkEos system = new SystemSrkEos(298.15, 10.0);
-system.addComponent("methane", 0.7);
-system.addComponent("ethane", 0.2);
-system.addComponent("propane", 0.1);
-system.setMixingRule("classic");
+public final class TpFlashExample {
+  private static final Logger logger = LogManager.getLogger(TpFlashExample.class);
 
-// Enable multi-phase check for stability analysis
-system.setMultiPhaseCheck(true);
+  private TpFlashExample() {}
 
-// Perform TP flash
-ThermodynamicOperations ops = new ThermodynamicOperations(system);
-ops.TPflash();
+  public static void main(String[] args) {
+    SystemSrkEos system = new SystemSrkEos(298.15, 10.0);
+    system.addComponent("methane", 0.7);
+    system.addComponent("ethane", 0.2);
+    system.addComponent("propane", 0.1);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
 
-// Results
-System.out.println("Number of phases: " + system.getNumberOfPhases());
-System.out.println("Vapor fraction: " + system.getBeta(0));
-system.display();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+
+    double vaporFraction = 0.0;
+    if (system.hasPhaseType(PhaseType.GAS)) {
+      int gasPhaseNumber = system.getPhaseNumberOfPhase(PhaseType.GAS);
+      vaporFraction = system.getBeta(gasPhaseNumber);
+    }
+
+    logger.info("Number of phases: {}", system.getNumberOfPhases());
+    logger.info("Vapor fraction: {}", vaporFraction);
+  }
+}
 ```
 
-For electrolyte systems:
+Resolve the gas phase by `PhaseType.GAS`; active phase zero is not a universal vapor-phase
+contract after phase addition, removal, and density ordering. The example is a calculation
+workflow, not evidence that the classic SRK parameterization is accurate for a particular fluid or
+operating envelope. Check convergence, material balance, phase stability, and an independent
+benchmark before engineering use.
 
-```java
-import neqsim.thermo.system.SystemElectrolyteCPA;
-
-SystemElectrolyteCPA system = new SystemElectrolyteCPA(298.15, 1.0);
-system.addComponent("CO2", 1.0);
-system.addComponent("water", 100.0);
-system.setMixingRule(10);  // CPA mixing rule with electrolyte support
-system.setMultiPhaseCheck(true);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(system);
-ops.TPflash();  // Automatically solves chemical equilibrium in aqueous phase
-```
+Ordinary `TPflash()` equilibrates the component identities already present in the thermodynamic
+system. It does **not** discover reaction products or by itself establish electrolyte reaction
+equilibrium. For aqueous speciation or simultaneous chemical and phase equilibrium, follow the
+[reactive-flash workflow](../thermo/reactive_flash.md), including its explicit reaction-model,
+standard-state, charge-balance, and validation boundaries.
 
 ### Large-volatility hydrocarbon endpoint refinement
 
