@@ -417,11 +417,24 @@ the active binary, same-sign, ternary, and neutral topology is explicit; qualifi
 observables have independent evidence:
 
 ```java
-PhasePitzer aqueous = (PhasePitzer) fluid.getGeLiquidPhase();
-aqueous.requireCompletePitzerParameterCoverage();
-PitzerParameterQualification evidence =
-    PitzerParameterDatasets.getQualification(aqueous.getParameterDatasetId());
+PitzerParameterQualification evidence = fluid.getPitzerParameterQualification();
+
+// Strict publication gate: complete interaction coverage and complete qualification
+// of the named dataset. This rejects the broad, partially validated catalog.
+fluid.requireCompletePitzerDatasetQualification();
+
+// Dataset qualification does not prove that this exact state is inside its evidence envelope.
+boolean insideRange = PitzerParameterDatasets.isWithinSodiumPotassiumChlorideValidationRange(
+    fluid.getTemperature(),
+    0.5,  // Na+ molality, mol/kg water
+    0.5,  // K+ molality, mol/kg water
+    1.0); // Cl- molality, mol/kg water
 ```
+
+The accessor completes lazy parameter selection and interaction-coverage auditing but does not run a flash. The strict
+gate is opt-in and executes only when called, so neutral models and ordinary Pitzer property calculations do no new
+work. It accepts only a completely qualified named dataset; callers must still apply the use-case-specific range helper
+for the current temperature and molality.
 
 The complete PHREEQC catalog is intentionally reported as partially validated: CaCl2 and MgCl2 binaries have held-out
 activity evidence, while exact mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain separate gates. Process
