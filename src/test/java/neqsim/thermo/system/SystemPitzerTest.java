@@ -356,12 +356,9 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double moleFraction = aqueous.getComponent("CO2").getx();
     double molality = aqueous.getComponent("CO2").getMolality(aqueous);
     double gamma = aqueous.getActivityCoefficient(aqueous.getComponent("CO2").getComponentNumber());
-    double moleFractionHenry =
-        IapwsHenryLaw.getHenryCoefficientBar("CO2", aqueous.getTemperature());
-    double molalityHenry =
-        moleFractionHenry * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
-    double expectedFugacityCoefficient =
-        gamma * molalityHenry * molality / (moleFraction * aqueous.getPressure());
+    double moleFractionHenry = IapwsHenryLaw.getHenryCoefficientBar("CO2", aqueous.getTemperature());
+    double molalityHenry = moleFractionHenry * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
+    double expectedFugacityCoefficient = gamma * molalityHenry * molality / (moleFraction * aqueous.getPressure());
 
     assertTrue(molality / moleFraction > 50.0);
     assertEquals(expectedFugacityCoefficient, aqueous.getComponent("CO2").getFugacityCoefficient(),
