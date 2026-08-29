@@ -57,8 +57,8 @@ class TPflashAlgorithmDocumentationContractTest(unittest.TestCase):
             self.guide,
             flags=re.DOTALL,
         )
-        self.assertNotIn(r"\\[", without_fences)
-        self.assertNotIn(r"\\]", without_fences)
+        self.assertNotIn(r"\[", without_fences)
+        self.assertNotIn(r"\]", without_fences)
 
         links = re.findall(r"(?<!!)\[[^\]]+\]\(([^)]+)\)", self.guide)
         for destination in links:
