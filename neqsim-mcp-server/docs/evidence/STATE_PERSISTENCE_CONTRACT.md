@@ -1,6 +1,6 @@
 # MCP persisted-state lifecycle contract evidence
 
-`manageState` is the existing local persistence façade for canonical NeqSim sessions. This note records the bounded Phase 0 evidence prerequisite for issue #3153. It does not change production behavior or promote the Phase 0 trust inventory.
+`manageState` is the existing local persistence façade for canonical NeqSim sessions. This note records the bounded Phase 0 software-contract evidence and the atomic inventory 1.21 promotion for issue #3153. It does not change production behavior.
 
 ## Qualified software behavior
 
@@ -38,4 +38,4 @@ The saved process definition remains the reproducible input. Any executed result
 
 ## Phase 0 accounting boundary
 
-Inventory `1.20` deliberately remains `20 EXPLICIT_TRUST + 18 CONTRACT_TESTED + 33 CONFIRMED_GAP`; `manageState` remains `CONFIRMED_GAP`. After this prerequisite merges, a separate atomic promotion may update the machine-readable record, synchronized protocol accounting and primary regression expectations together. No promotion is implied by an open or unmerged evidence PR.
+Inventory `1.21` classifies `manageState` as `CONTRACT_TESTED` and moves Phase 0 accounting atomically from `20 EXPLICIT_TRUST + 18 CONTRACT_TESTED + 33 CONFIRMED_GAP` to `20 + 19 + 32`. The machine-readable record, focused Java assertions, focused packaged-STDIO expectation, synchronized protocol harnesses, and authoritative `test_mcp_server.py` accounting move together. This classification establishes only the bounded local lifecycle, path-safety, provenance, and transport contract described above; it does not imply scientific validation of persisted or restored calculations.

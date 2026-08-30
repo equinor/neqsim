@@ -1556,15 +1556,15 @@ def test_capabilities():
         "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
         "checkToolAccess", "manageIndustrialProfile", "searchComponents",
         "queryDataCatalog", "getProgress", "inspectApi",
-        "manageValidationProfile", "manageModel", "manageSession", "listSimulationUnits",
+        "manageValidationProfile", "manageModel", "manageSession", "manageState", "listSimulationUnits",
         "listUnitVariables",
         "getSimulationVariable", "diagnoseAutomation",
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("eighteen bounded software contracts have direct evidence",
-          limitations.get("contractTestedToolCount") == 18
-          and limitations.get("confirmedGapToolCount") == 33
+    check("nineteen bounded software contracts have direct evidence",
+          limitations.get("contractTestedToolCount") == 19
+          and limitations.get("confirmedGapToolCount") == 32
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1586,7 +1586,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 33
+          and limitations.get("confirmedGapToolCount") == 32
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
