@@ -212,10 +212,43 @@ public class ComponentNameResolverTest {
     assertEquals("224-TM-C5", ComponentNameResolver.resolve("isooctane"));
     assertEquals("224-TM-C5", ComponentNameResolver.resolve("ISOOCTANE"));
     assertEquals("n-heptane", ComponentNameResolver.resolve("N-HEPTANE"));
+    assertEquals("nC10", ComponentNameResolver.resolve("n-decane"));
+    assertEquals("n-water", ComponentNameResolver.resolve("n-water"));
     assertEquals("cis-13-DM-cy-C6", ComponentNameResolver.resolve("cis-1,3-dimethylcyclohexane"));
     assertTrue(ComponentNameResolver.isKnownName("isooctane"));
     assertFalse(ComponentNameResolver.getSynonyms().isEmpty());
     assertFalse(ComponentNameResolver.getCanonicalNames().isEmpty());
+  }
+
+  /**
+   * The straight-chain 'n-' prefix must be optional.
+   *
+   * <p>
+   * The database stores C4 to C9 as {@code n-butane} to {@code n-nonane} but C10 upwards as {@code nC10}, so without
+   * this the naming cliff at C10 made {@code n-decane} fail while {@code n-nonane} worked.
+   * </p>
+   */
+  @Test
+  public void straightChainPrefixIsOptional() {
+    assertEquals("nC10", ComponentNameResolver.resolve("n-decane"));
+    assertEquals("nC10", ComponentNameResolver.resolve("decane"));
+    assertEquals("nC11", ComponentNameResolver.resolve("n-undecane"));
+    assertEquals("nC12", ComponentNameResolver.resolve("n-dodecane"));
+    assertEquals("nC15", ComponentNameResolver.resolve("n-pentadecane"));
+    assertEquals("nC20", ComponentNameResolver.resolve("n-icosane"));
+    // names that already carry the prefix in the database are untouched
+    assertEquals("n-butane", ComponentNameResolver.resolve("n-butane"));
+    assertEquals("n-nonane", ComponentNameResolver.resolve("n-nonane"));
+    assertEquals("nC5-Benzene", ComponentNameResolver.resolve("n-pentylbenzene"));
+    assertTrue(ComponentNameResolver.isKnownName("n-decane"));
+    assertEquals("n-water", ComponentNameResolver.resolve("n-water"));
+    assertEquals("n-acetone", ComponentNameResolver.resolve("n-acetone"));
+    assertEquals("n-isobutane", ComponentNameResolver.resolve("n-isobutane"));
+    assertEquals("n-n-decane", ComponentNameResolver.resolve("n-n-decane"));
+    assertFalse(ComponentNameResolver.isKnownName("n-water"));
+    assertFalse(ComponentNameResolver.isKnownName("n-acetone"));
+    assertFalse(ComponentNameResolver.isKnownName("n-isobutane"));
+    assertFalse(ComponentNameResolver.isKnownName("n-n-decane"));
   }
 
   /** A fluid must accept a systematic name and build the corresponding component. */
