@@ -95,6 +95,9 @@ public class OilAssayCharacterisationDoeBigHillTest {
       assertNotNull(component);
       assertTrue(Double.isFinite(component.getMolarMass()));
       assertTrue(component.getMolarMass() > 0.0);
+      assertTrue(component.getMolarMass() < 1.0, "DOE petroleum-cut molar mass should remain on the kg/mol scale");
+      assertTrue(component.getNormalBoilingPoint() >= fahrenheitToKelvin(LOWER_BOUNDARY_F[i]));
+      assertTrue(component.getNormalBoilingPoint() <= fahrenheitToKelvin(UPPER_BOUNDARY_F[i]));
       assertTrue(Double.isFinite(component.getNumberOfmoles()));
       assertTrue(component.getNumberOfmoles() > 0.0);
       reconstructedMass += component.getNumberOfmoles() * component.getMolarMass();
@@ -129,5 +132,9 @@ public class OilAssayCharacterisationDoeBigHillTest {
 
   private static double fahrenheitToCelsius(double fahrenheit) {
     return (fahrenheit - 32.0) * 5.0 / 9.0;
+  }
+
+  private static double fahrenheitToKelvin(double fahrenheit) {
+    return fahrenheitToCelsius(fahrenheit) + 273.15;
   }
 }

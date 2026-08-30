@@ -93,6 +93,8 @@ assay.apply();
 
 This creates `TBP1_PC` through `TBP4_PC`. Each `AssayCut` retains its lower and upper TBP boundaries. The interval midpoint is used as the representative boiling temperature for the existing NeqSim molecular-weight/petroleum-property correlation.
 
+When molecular weight is not supplied, the inverse petroleum correlation first produces a g/mol-sized value and `OilAssayCharacterisation` converts it to kg/mol before creating the pseudo-component. This unit conversion is part of the assay API contract; generated refinery cuts must not be passed to `addTBPfraction(...)` with g/mol interpreted as kg/mol.
+
 The input is required to span 0 to 100 liquid-volume percent with strictly increasing yield and temperature boundaries. This is deliberate: the method represents a complete, already-TBP cut table and does not invent unmeasured light or residue tails.
 
 ## Volume-basis conversion
@@ -148,6 +150,7 @@ The regression suite for this API currently verifies:
 - mass-basis cut conversion;
 - volume-to-mass conversion and closure;
 - kg/mol and g/mol explicit molar-mass input;
+- kg/mol scaling of molar mass inferred from boiling point and density;
 - kg/m3 density normalization;
 - API-gravity handling, including negative API gravity;
 - rounding-scale closure versus incomplete-assay rejection;
