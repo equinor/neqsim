@@ -361,24 +361,45 @@ public final class DexpiVisualQualityAssessment {
     NodeList signalGenerators = document.getElementsByTagName("ProcessSignalGeneratingFunction");
     int measurementFunctions = 0;
     int sensingLocations = 0;
+    int vesselLevelMeasurements = 0;
+    int vesselLevelAttachments = 0;
+    int invalidVesselLevelAttachments = 0;
     for (int index = 0; index < signalGenerators.getLength(); index++) {
       Element generator = (Element) signalGenerators.item(index);
       if (inside(generator, "ShapeCatalogue")) {
         continue;
       }
       measurementFunctions++;
+      Element function = nearestAncestor(generator, "ProcessInstrumentationFunction");
+      boolean vesselLevel = function != null
+          && "L".equals(genericAttribute(function, "ProcessInstrumentationFunctionCategoryAssignmentClass"));
+      if (vesselLevel) {
+        vesselLevelMeasurements++;
+      }
       Element association = directAssociation(generator, "is located in");
+      Element location = null;
       if (association == null || association.getAttribute("ItemID").trim().isEmpty()) {
         add(findings, Severity.ERROR, "INSTRUMENT_SENSING_LOCATION_MISSING", generator.getAttribute("ID"),
             "Rendered measurement has no nozzle, process-segment, piping-component, or equipment-mount sensing location");
       } else {
         String locationId = association.getAttribute("ItemID").trim();
-        Element location = elementWithId(document, locationId);
+        location = elementWithId(document, locationId);
         if (location == null || !isSensingLocation(location)) {
           add(findings, Severity.ERROR, "INSTRUMENT_SENSING_LOCATION_INVALID", generator.getAttribute("ID"),
               "Measurement sensing location does not resolve to process equipment, a nozzle, mount, piping component, or process segment");
         } else {
           sensingLocations++;
+        }
+      }
+      if (vesselLevel) {
+        boolean vesselBoundary = isVesselLevelLocation(location)
+            && "ATTACHED_TO_VESSEL_BOUNDARY".equals(genericAttribute(function, "MeasurementAttachmentStatus"));
+        if (vesselBoundary) {
+          vesselLevelAttachments++;
+        } else {
+          invalidVesselLevelAttachments++;
+          add(findings, Severity.ERROR, "LEVEL_MEASUREMENT_VESSEL_ATTACHMENT_INVALID", generator.getAttribute("ID"),
+              "Level measurement must reference a separator or tank boundary, not an inlet or product nozzle");
         }
       }
     }
@@ -464,6 +485,9 @@ public final class DexpiVisualQualityAssessment {
     }
     metrics.put("measurementFunctions", measurementFunctions);
     metrics.put("measurementSensingLocations", sensingLocations);
+    metrics.put("vesselLevelMeasurements", vesselLevelMeasurements);
+    metrics.put("vesselLevelAttachments", vesselLevelAttachments);
+    metrics.put("invalidVesselLevelAttachments", invalidVesselLevelAttachments);
     metrics.put("controllerFunctions", controllerFunctions);
     metrics.put("completeControlLoops", completeLoops);
     metrics.put("incompleteControlLoops", incompleteLoops);
@@ -510,6 +534,15 @@ public final class DexpiVisualQualityAssessment {
     String type = location.getTagName();
     return "Equipment".equals(type) || "Nozzle".equals(type) || "Mount".equals(type) || "PipingComponent".equals(type)
         || "PipingNetworkSegment".equals(type);
+  }
+
+  private static boolean isVesselLevelLocation(Element location) {
+    if (location == null || !"Equipment".equals(location.getTagName())) {
+      return false;
+    }
+    String componentClass = location.getAttribute("ComponentClass");
+    return "Separator".equals(componentClass) || "ThreePhaseSeparator".equals(componentClass)
+        || "Tank".equals(componentClass);
   }
 
   private static Element elementWithId(Document document, String identity) {
@@ -701,6 +734,18 @@ public final class DexpiVisualQualityAssessment {
   private static String identifiedAncestor(Element element) {
     Element ancestor = nearestIdentifiedAncestor(element);
     return ancestor == null ? "" : ancestor.getAttribute("ID");
+  }
+
+  private static Element nearestAncestor(Element element, String ancestorName) {
+    Node current = element.getParentNode();
+    while (current instanceof Element) {
+      Element candidate = (Element) current;
+      if (ancestorName.equals(candidate.getTagName())) {
+        return candidate;
+      }
+      current = current.getParentNode();
+    }
+    return null;
   }
 
   private static boolean inside(Element element, String ancestorName) {

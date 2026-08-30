@@ -1897,7 +1897,7 @@ public final class DexpiXmlWriter {
       if (parentName != null) {
         tagToEquipment.put(entry.getKey(), parentName);
       }
-      InstrumentAttachment attachment = resolveInstrumentAttachment(entry.getValue(), parentName, processSystem,
+      InstrumentAttachment attachment = resolveInstrumentAttachment(entry.getValue(), parentName, parent, processSystem,
           equipmentInletNozzle, outletStreamToNozzle, connections, nozzlePositions, layoutPositions);
       if (attachment != null) {
         tagToAttachment.put(entry.getKey(), attachment);
@@ -1935,8 +1935,8 @@ public final class DexpiXmlWriter {
         String attachmentKey = attachment.locationId == null ? "unlocated:" + tag : attachment.locationId;
         List<String> siblings = attachmentTransmitters.get(attachmentKey);
         int idx = siblings.indexOf(tag);
-        double[] pos = DexpiLayoutEngine.computeInstrumentPositionAtSensingPoint(eqPos, attachment.x, attachment.y, idx,
-            siblings.size());
+        double[] pos = DexpiLayoutEngine.computeInstrumentPositionAtSensingPoint(eqPos, attachment.instrumentAnchorX,
+            attachment.y, idx, siblings.size());
         cx = pos[0];
         cy = pos[1];
         hasPosition = true;
@@ -2343,7 +2343,11 @@ public final class DexpiXmlWriter {
    * </tr>
    * <tr>
    * <td>Separator</td>
-   * <td>PT on gas outlet, LT on vessel/liquid outlet, TT on gas outlet</td>
+   * <td>PT and TT on gas outlet, LT on the vessel boundary</td>
+   * </tr>
+   * <tr>
+   * <td>Tank</td>
+   * <td>LT on the vessel boundary</td>
    * </tr>
    * <tr>
    * <td>Compressor</td>
@@ -2390,6 +2394,9 @@ public final class DexpiXmlWriter {
         }
         String lt = "LT-" + (base + 2);
         transmitters.put(lt, new LevelTransmitter(lt, sep));
+      } else if (unit instanceof Tank) {
+        String lt = "LT-" + (base + 2);
+        transmitters.put(lt, new LevelTransmitter(lt, unit));
       } else if (unit instanceof Compressor) {
         StreamInterface out = firstOutlet(unit);
         if (out != null) {
@@ -2456,8 +2463,8 @@ public final class DexpiXmlWriter {
       return null;
     }
     if (device instanceof LevelTransmitter) {
-      Separator sep = ((LevelTransmitter) device).getSeparator();
-      return sep != null ? sep.getName() : null;
+      ProcessEquipmentInterface vessel = ((LevelTransmitter) device).getVessel();
+      return vessel != null ? vessel.getName() : null;
     }
     if (!(device instanceof StreamMeasurementDeviceBaseClass)) {
       return null;
@@ -2497,13 +2504,20 @@ public final class DexpiXmlWriter {
   private static final class InstrumentAttachment {
     private final double x;
     private final double y;
+    private final double instrumentAnchorX;
     private final String locationId;
     private final String sensorType;
     private final String attachmentType;
 
     InstrumentAttachment(double x, double y, String locationId, String sensorType, String attachmentType) {
+      this(x, y, x, locationId, sensorType, attachmentType);
+    }
+
+    InstrumentAttachment(double x, double y, double instrumentAnchorX, String locationId, String sensorType,
+        String attachmentType) {
       this.x = x;
       this.y = y;
+      this.instrumentAnchorX = instrumentAnchorX;
       this.locationId = locationId;
       this.sensorType = sensorType;
       this.attachmentType = attachmentType;
@@ -2515,29 +2529,34 @@ public final class DexpiXmlWriter {
    *
    * <p>
    * Stream instruments attach to the routed process segment when possible, then fall back to the stream nozzle. Level
-   * instruments attach to the separator liquid nozzle and are drawn from the vessel boundary. This prevents generic
-   * measuring lines from terminating at the equipment centre or crossing its data annotation bar.
+   * instruments attach to the actual separator or tank equipment identity and start their measuring line at the
+   * rendered vessel boundary. A process/product nozzle is not relabelled as a level tap, and no unmodelled nozzle
+   * technology is invented.
    * </p>
    */
   private static InstrumentAttachment resolveInstrumentAttachment(MeasurementDeviceInterface device, String parentName,
-      ProcessSystem processSystem, Map<String, String> equipmentInletNozzle, Map<Integer, String> outletStreamToNozzle,
-      List<NozzleConnection> connections, Map<String, double[]> nozzlePositions,
-      Map<String, DexpiLayoutEngine.EquipmentPosition> layoutPositions) {
+      Element documentRoot, ProcessSystem processSystem, Map<String, String> equipmentInletNozzle,
+      Map<Integer, String> outletStreamToNozzle, List<NozzleConnection> connections,
+      Map<String, double[]> nozzlePositions, Map<String, DexpiLayoutEngine.EquipmentPosition> layoutPositions) {
     String sensorType = sensorType(device);
     if (device instanceof LevelTransmitter) {
       LevelTransmitter level = (LevelTransmitter) device;
-      Separator separator = level.getSeparator();
-      String locationId = null;
-      if (separator != null && separator.getLiquidOutStream() != null) {
-        locationId = findNozzleForStream(separator.getLiquidOutStream(), outletStreamToNozzle, processSystem);
+      ProcessEquipmentInterface vessel = level.getVessel();
+      DexpiLayoutEngine.EquipmentPosition equipment = layoutPositions.get(parentName);
+      String locationId = findEquipmentElementId(documentRoot, parentName);
+      if (vessel != null && equipment != null && locationId != null) {
+        double halfWidth = vessel instanceof Tank ? 12.5 : 10.0;
+        double localY = vessel instanceof Tank ? -2.0 : 0.0;
+        double radians = Math.toRadians(equipment.rotation);
+        double localX = halfWidth * equipment.scaleX;
+        double scaledY = localY * equipment.scaleY;
+        double boundaryX = equipment.x + localX * Math.cos(radians) - scaledY * Math.sin(radians);
+        double boundaryY = equipment.y + localX * Math.sin(radians) + scaledY * Math.cos(radians);
+        double instrumentAnchorX = boundaryX + 40.0 * equipment.scaleX;
+        return new InstrumentAttachment(boundaryX, boundaryY, instrumentAnchorX, locationId, sensorType,
+            "VESSEL_BOUNDARY");
       }
-      if (locationId == null) {
-        locationId = equipmentInletNozzle.get(parentName);
-      }
-      double[] nozzle = nozzlePositions.get(locationId);
-      if (nozzle != null) {
-        return new InstrumentAttachment(nozzle[0], nozzle[1], locationId, sensorType, "VESSEL_LEVEL_TAP");
-      }
+      return null;
     }
 
     if (device instanceof StreamMeasurementDeviceBaseClass) {
@@ -2571,6 +2590,26 @@ public final class DexpiXmlWriter {
         : new InstrumentAttachment(nozzle[0], nozzle[1], inletNozzle, sensorType, "EQUIPMENT_NOZZLE");
   }
 
+  private static String findEquipmentElementId(Element documentRoot, String equipmentName) {
+    if (documentRoot == null || equipmentName == null) {
+      return null;
+    }
+    NodeList equipment = documentRoot.getElementsByTagName("Equipment");
+    for (int index = 0; index < equipment.getLength(); index++) {
+      Element candidate = (Element) equipment.item(index);
+      NodeList attributes = candidate.getElementsByTagName("GenericAttribute");
+      for (int attributeIndex = 0; attributeIndex < attributes.getLength(); attributeIndex++) {
+        Element attribute = (Element) attributes.item(attributeIndex);
+        if (DexpiMetadata.TAG_NAME.equals(attribute.getAttribute("Name"))
+            && equipmentName.equals(attribute.getAttribute("Value"))) {
+          String identity = candidate.getAttribute("ID").trim();
+          return identity.isEmpty() ? null : identity;
+        }
+      }
+    }
+    return null;
+  }
+
   private static String sensorType(MeasurementDeviceInterface device) {
     if (device instanceof PressureTransmitter) {
       return "PressureTap";
@@ -2582,7 +2621,7 @@ public final class DexpiXmlWriter {
       return "InlineFlowMeasurement";
     }
     if (device instanceof LevelTransmitter) {
-      return "VesselLevelTap";
+      return "VesselLevelMeasurement";
     }
     return device.getClass().getSimpleName();
   }

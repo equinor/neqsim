@@ -21,6 +21,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.HIPPSValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -193,6 +194,10 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     assertTrue(xml.contains("ComponentClass=\"Tank\""), "Should map Tank to Tank");
     assertTrue(xml.contains("STORAGE_TANK_SHAPE"), "Tank symbol should be present in the ShapeCatalogue");
+    assertTrue(xml.contains("StartAngle=\"54.51065674988614\""));
+    assertTrue(xml.contains("EndAngle=\"125.48934325011386\""));
+    assertTrue(xml.contains("Radius=\"21.53125\""));
+    assertFalse(xml.contains("Radius=\"36.55\""), "Tank roof must remain connected to both side walls");
   }
 
   /**
@@ -839,6 +844,65 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     assertEquals(1, countOccurrences(xml, "Name=\"FunctionalRole\" Value=\"FinalElement\""));
     assertEquals(4, countOccurrences(xml, "Name=\"SafetyIntegrityLevel\" Value=\"3\""),
         "SIL 3 should be available on the final element and each of the three trip sensors");
+  }
+
+  /**
+   * Tests that explicit separator and tank level measurements attach to vessel identities, not process nozzles.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testVesselLevelMeasurementsAttachToEquipmentBoundaries() throws IOException {
+    Stream feed = createFeedStream();
+    Separator separator = new Separator("50-VA-001", feed);
+    Tank tank = new Tank("50-TK-001", separator.getLiquidOutStream());
+    LevelTransmitter separatorLevel = new LevelTransmitter("LT-5101", separator);
+    LevelTransmitter tankLevel = new LevelTransmitter("LT-5102", tank);
+
+    ProcessSystem process = new ProcessSystem("Explicit vessel-level measurements");
+    process.add(feed);
+    process.add(separator);
+    process.add(tank);
+    process.add(separatorLevel);
+    process.add(tankLevel);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertEquals(2,
+        countOccurrences(xml, "Name=\"MeasurementAttachmentStatus\" Value=\"ATTACHED_TO_VESSEL_BOUNDARY\""));
+    assertTrue(xml.contains("Name=\"MeasurementAttachmentTargetID\" Value=\"ID-50-VA-001\""));
+    assertTrue(xml.contains("Name=\"MeasurementAttachmentTargetID\" Value=\"ID-50-TK-001\""));
+    assertEquals(2, countOccurrences(xml, "Value=\"VesselLevelMeasurement\""));
+    assertFalse(xml.contains("Value=\"VESSEL_LEVEL_TAP\""),
+        "Liquid product nozzles must not be reclassified as level taps");
+  }
+
+  /**
+   * Tests that automatic tank level instrumentation remains an identifiable measurement-only proposal.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testAutoSynthesizedTankLevelProposal() throws IOException {
+    Stream feed = createFeedStream();
+    Tank tank = new Tank("51-TK-001", feed);
+    ProcessSystem process = new ProcessSystem("Tank level proposal");
+    process.add(feed);
+    process.add(tank);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("LT-2002"));
+    assertTrue(xml.contains("Name=\"InstrumentationSource\" Value=\"SYNTHESIZED_PROPOSAL\""));
+    assertTrue(xml.contains("Name=\"Scope\" Value=\"MEASUREMENT_ONLY\""));
+    assertTrue(xml.contains("String=\"[PROP]\""));
+    assertTrue(xml.contains("Name=\"MeasurementAttachmentTargetID\" Value=\"ID-51-TK-001\""));
+    assertTrue(xml.contains("Name=\"MeasurementAttachmentStatus\" Value=\"ATTACHED_TO_VESSEL_BOUNDARY\""));
+    assertFalse(xml.contains("ComponentClass=\"ProcessControlFunction\""));
   }
 
   /**

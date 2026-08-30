@@ -56,6 +56,8 @@ writer and rendered from its actual graphical primitives. The suite checks:
   solid fill preserved in the rendered SVG;
 - every measurement function having a resolvable process-segment, nozzle, mount, piping-component,
   or equipment sensing location;
+- separator and tank level functions referencing the vessel equipment boundary rather than an inlet
+  or liquid-product nozzle, with invalid attachments counted separately;
 - central/control-room symbols and matching location metadata for controller functions, plus a
   real tagged final element and directed actuating signal before a loop is classified complete;
 - synthesized measurement proposals being both machine-identifiable and visibly marked `[PROP]`,
@@ -85,6 +87,22 @@ symbols are explicit, and closed-loop actuation is emitted only for an attached 
 element. The assessment records measurement, sensing-location, controller, complete-loop,
 incomplete-loop, and synthesized-proposal counts so these defects fail deterministically in future
 diagram work.
+
+A vessel-level continuation found that separator measurements were associated with the liquid
+product nozzle and tanks could not host a `LevelTransmitter`. Level measurements now use the
+authoritative separator or tank liquid-level state, associate with the equipment identity, and start
+their measuring line at the rendered vessel boundary. The assessment reports vessel-level function,
+valid boundary-attachment, and invalid attachment counts; synthesized tank measurements retain
+`[PROP]` and measurement-only provenance. This is a design-support projection, not a designed
+process tap, transmitter technology selection, or approved loop.
+
+The vessel-level bubble lane also clears the outlet-side continuation symbols instead of running a
+vertical measuring line through a product connector. A coordinate regression reserves at least
+45 mm between the vessel centre and each level bubble.
+
+The same full-sheet review exposed a storage-tank roof arc whose endpoints did not meet the side
+walls and whose radius spread far outside the equipment symbol. The catalogue arc now terminates at
+both wall tops; exact start angle, end angle, and radius assertions protect that rendered geometry.
 
 The compatibility metrics from the first topology review remain available alongside the stricter
 DEXPI-oriented metrics: transmitter/controller counts, resolved and missing measurement attachments,

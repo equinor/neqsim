@@ -22,9 +22,12 @@ import neqsim.NeqSimTest;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.diagram.EngineeringDiagramReferenceFixtures;
@@ -146,11 +149,65 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
   }
 
   @Test
+  void assessesSeparatorAndTankLevelBoundariesDeterministically() throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("n-heptane", 0.15);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("52-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Separator separator = new Separator("52-VA-001", feed);
+    Tank tank = new Tank("52-TK-001", separator.getLiquidOutStream());
+    LevelTransmitter separatorLevel = new LevelTransmitter("LT-5201", separator);
+    LevelTransmitter tankLevel = new LevelTransmitter("LT-5202", tank);
+
+    ProcessSystem process = new ProcessSystem("Vessel level visual benchmark");
+    process.add(feed);
+    process.add(separator);
+    process.add(tank);
+    process.add(separatorLevel);
+    process.add(tankLevel);
+
+    Path first = temporaryDirectory.resolve("vessel-level-first.xml");
+    Path second = temporaryDirectory.resolve("vessel-level-second.xml");
+    DexpiXmlWriter.writeForPyDexpi(process, first.toFile());
+    DexpiXmlWriter.writeForPyDexpi(process, second.toFile());
+
+    DexpiVisualQualityAssessment.Report firstReport = DexpiVisualQualityAssessment.assess(first.toFile());
+    DexpiVisualQualityAssessment.Report secondReport = DexpiVisualQualityAssessment.assess(second.toFile());
+
+    assertFalse(firstReport.hasErrors(), firstReport.toJson());
+    assertEquals(2, firstReport.getMetrics().get("vesselLevelMeasurements"));
+    assertEquals(2, firstReport.getMetrics().get("vesselLevelAttachments"));
+    assertEquals(0, firstReport.getMetrics().get("invalidVesselLevelAttachments"));
+    assertEquals(firstReport.getSvgSha256(), secondReport.getSvgSha256());
+    assertEquals(firstReport.toJson(), secondReport.toJson());
+
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(first.toFile());
+    assertTrue(
+        positionX(identifiedElement(document, "LT-5201"))
+            - positionX(identifiedElement(document, "ID-52-VA-001")) >= 45.0,
+        "Separator level bubble lane must clear product off-page connectors");
+    assertTrue(
+        positionX(identifiedElement(document, "LT-5202"))
+            - positionX(identifiedElement(document, "ID-52-TK-001")) >= 45.0,
+        "Tank level bubble lane must clear vessel annotations and boundary connectors");
+  }
+
+  @Test
   void reportsInstrumentationTopologyAndProposalVisibilityDefects() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         + "<PlantModel><PlantInformation SchemaVersion=\"4.1.1\"/>"
         + "<Drawing Name=\"Instrumentation defects\"><Extent><Min X=\"0\" Y=\"0\"/>"
         + "<Max X=\"100\" Y=\"70\"/></Extent></Drawing>"
+        + "<Equipment ID=\"E-1\" ComponentClass=\"Separator\"><Nozzle ID=\"N-1\"/></Equipment>"
+        + "<ProcessInstrumentationFunction ID=\"LT-1\" ComponentClass=\"ProcessInstrumentationFunction\" "
+        + "ComponentName=\"INSTRUMENTATION_BUBBLE_SHAPE_FIELD\"><GenericAttributes>"
+        + "<GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\" Value=\"L\"/>"
+        + "<GenericAttribute Name=\"MeasurementAttachmentStatus\" Value=\"ATTACHED_TO_PROCESS_NOZZLE\"/>"
+        + "</GenericAttributes><ProcessSignalGeneratingFunction ID=\"PSGF-LT-1\">"
+        + "<Association Type=\"is located in\" ItemID=\"N-1\"/>"
+        + "</ProcessSignalGeneratingFunction></ProcessInstrumentationFunction>"
         + "<ProcessInstrumentationFunction ID=\"PT-1\" ComponentClass=\"ProcessInstrumentationFunction\" "
         + "ComponentName=\"INSTRUMENTATION_BUBBLE_SHAPE_FIELD\"><GenericAttributes>"
         + "<GenericAttribute Name=\"Origin\" Value=\"SYNTHESIZED_PROPOSAL\"/>"
@@ -169,6 +226,9 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
 
     assertTrue(report.hasErrors());
     assertTrue(hasFinding(report, "INSTRUMENT_SENSING_LOCATION_INVALID"), report.toJson());
+    assertTrue(hasFinding(report, "LEVEL_MEASUREMENT_VESSEL_ATTACHMENT_INVALID"), report.toJson());
+    assertEquals(1, report.getMetrics().get("vesselLevelMeasurements"));
+    assertEquals(1, report.getMetrics().get("invalidVesselLevelAttachments"));
     assertTrue(hasFinding(report, "SYNTHESIZED_PROPOSAL_NOT_VISIBLE"), report.toJson());
     assertTrue(hasFinding(report, "CONTROLLER_LOCATION_SYMBOL_MISMATCH"), report.toJson());
     assertTrue(hasFinding(report, "CONTROL_LOOP_FINAL_ELEMENT_MISSING"), report.toJson());
@@ -342,5 +402,18 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
       }
     }
     throw new AssertionError("Missing element " + identity);
+  }
+
+  private static double positionX(Element element) {
+    NodeList positions = element.getElementsByTagName("Position");
+    if (positions.getLength() == 0) {
+      throw new AssertionError("Missing position for " + element.getAttribute("ID"));
+    }
+    Element position = (Element) positions.item(0);
+    NodeList locations = position.getElementsByTagName("Location");
+    if (locations.getLength() == 0) {
+      throw new AssertionError("Missing location for " + element.getAttribute("ID"));
+    }
+    return Double.parseDouble(((Element) locations.item(0)).getAttribute("X"));
   }
 }
