@@ -79,6 +79,10 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     assertTrue(report.getMetrics().get("componentInstances") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceTexts") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceCenterLines") > 0, report.toJson());
+
+    Document exportedDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpi.toFile());
+    assertTrue(hasDirectedEquipmentConnection(exportedDocument, "ID-50-RC-001", "ID-50-MX-001"),
+        "The configured recycle outlet must be routed back to the mixer inlet");
   }
 
   @Test
@@ -196,6 +200,26 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
   private static boolean hasFinding(DexpiVisualQualityAssessment.Report report, String code) {
     for (DexpiVisualQualityAssessment.Finding finding : report.getFindings()) {
       if (code.equals(finding.getCode())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasDirectedEquipmentConnection(Document document, String sourceId, String targetId) {
+    Element source = identifiedElement(document, sourceId);
+    Element target = identifiedElement(document, targetId);
+    NodeList sourceNozzles = source.getElementsByTagName("Nozzle");
+    NodeList targetNozzles = target.getElementsByTagName("Nozzle");
+    if (sourceNozzles.getLength() < 2 || targetNozzles.getLength() < 1) {
+      return false;
+    }
+    String fromId = ((Element) sourceNozzles.item(sourceNozzles.getLength() - 1)).getAttribute("ID");
+    String toId = ((Element) targetNozzles.item(0)).getAttribute("ID");
+    NodeList connections = document.getElementsByTagName("Connection");
+    for (int index = 0; index < connections.getLength(); index++) {
+      Element connection = (Element) connections.item(index);
+      if (fromId.equals(connection.getAttribute("FromID")) && toId.equals(connection.getAttribute("ToID"))) {
         return true;
       }
     }
