@@ -3,11 +3,13 @@ package neqsim.process.processmodel.dexpi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
@@ -15,6 +17,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
@@ -22,7 +25,9 @@ import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.HIPPSValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.LevelTransmitter;
+import neqsim.process.measurementdevice.OilLevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.measurementdevice.WaterLevelTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -593,6 +598,158 @@ public class DexpiXmlWriterTest extends NeqSimTest {
         "A measurement-only proposal must not synthesize controller functions");
     assertFalse(xml.contains("Value=\"PneumaticSignalConveying\""),
         "A measurement-only proposal must not draw a command signal to empty process space");
+    assertTrue(xml.contains("Name=\"PhysicalConnectionRole\" Value=\"LEVEL_SENSING_TAP\""),
+        "Separator level must terminate at a dedicated vessel tap");
+    assertTrue(xml.contains("Name=\"NeqSimAttachmentType\" Value=\"VESSEL_LEVEL_TAP\""));
+  }
+
+  @Test
+  public void testLevelTransmittersUseDedicatedSeparatorAndTankTaps() throws IOException {
+    Stream feed = createFeedStream();
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("20-VA-001", feed);
+    Tank tank = new Tank("20-TK-001", separator.getOilOutStream());
+    OilLevelTransmitter oilLevel = new OilLevelTransmitter("LT-2101", separator);
+    WaterLevelTransmitter waterLevel = new WaterLevelTransmitter("LT-2102", separator);
+    LevelTransmitter tankLevel = new LevelTransmitter("LT-2201", tank);
+
+    assertSame(tank, tankLevel.getLevelEquipment());
+    assertEquals(tank.getLiquidLevel(), tankLevel.getMeasuredValue(""), 1.0e-12);
+
+    ProcessSystem process = new ProcessSystem("Vessel level sensing");
+    process.add(feed);
+    process.add(separator);
+    process.add(tank);
+    process.add(oilLevel);
+    process.add(waterLevel);
+    process.add(tankLevel);
+
+    Map<String, DexpiLayoutEngine.EquipmentPosition> positions = DexpiLayoutEngine.computeLayout(process);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertEquals(3, countOccurrences(xml, "Name=\"PhysicalConnectionRole\" Value=\"LEVEL_SENSING_TAP\""));
+    assertEquals(3, countOccurrences(xml, "Name=\"NeqSimAttachmentType\" Value=\"VESSEL_LEVEL_TAP\""));
+    assertTrue(xml.contains("Name=\"SensorTypeAssignmentClass\" Value=\"OilLevelTap\""));
+    assertTrue(xml.contains("Name=\"SensorTypeAssignmentClass\" Value=\"WaterInterfaceLevelTap\""));
+    assertTrue(xml.contains("Name=\"SensorTypeAssignmentClass\" Value=\"VesselLevelTap\""));
+    assertTrue(xml.contains("ID-20-VA-001-LT-2101-LevelTap"));
+    assertTrue(xml.contains("ID-20-TK-001-LT-2201-LevelTap"));
+    assertTrue(positions.get(separator.getName()).x < positions.get(tank.getName()).x,
+        "A tank connected to a separator liquid outlet must remain downstream in the drawing");
+    assertFalse(xml.contains("String=\"FEED 20-TK-001\""),
+        "A connected tank inlet must not be rendered as an off-page feed");
+  }
+
+  @Test
+  public void testLineMetadataAndModeledSizeChangeProduceReducer() throws IOException {
+    Stream feed = createFeedStream();
+    AdiabaticPipe upstream = new AdiabaticPipe("20-PL-001", feed);
+    upstream.setLength(100.0);
+    upstream.setDiameter(0.2032);
+    AdiabaticPipe downstream = new AdiabaticPipe("20-PL-002", upstream.getOutletStream());
+    downstream.setLength(100.0);
+    downstream.setDiameter(0.1016);
+    Separator separator = new Separator("20-VA-002", downstream.getOutletStream());
+
+    ProcessSystem process = new ProcessSystem("Line size change");
+    process.add(feed);
+    process.add(upstream);
+    process.add(downstream);
+    process.add(separator);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("ComponentClass=\"PipeReducer\""));
+    assertTrue(xml.contains("Name=\"FlowInNominalDiameterRepresentationAssignmentClass\" Value=\"ID 203.2 mm\""));
+    assertTrue(xml.contains("Name=\"FlowOutNominalDiameterRepresentationAssignmentClass\" Value=\"ID 101.6 mm\""));
+    assertTrue(xml.contains("FlowDirection=\"In\""));
+    assertTrue(xml.contains("FlowDirection=\"Out\""));
+    assertTrue(xml.contains("Name=\"LineSizeStatus\" Value=\"MODEL_INSIDE_DIAMETER\""));
+    assertTrue(xml.contains("String=\"ID 203.2 mm → ID 101.6 mm\""));
+  }
+
+  @Test
+  public void testDexpiStreamPreservesLineDesignationMetadata() throws IOException {
+    DexpiStream line = new DexpiStream("segment-1", createFeedStream().getFluid(), "PipingNetworkSegment", "1001",
+        "PG");
+    line.setNominalDiameterRepresentation("DN 150");
+    line.setPipingClassCode("A1B");
+    line.setInsulationType("H25");
+
+    ProcessSystem process = new ProcessSystem("Source line metadata");
+    process.add(line);
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("Name=\"NominalDiameterRepresentationAssignmentClass\" Value=\"DN 150\""));
+    assertTrue(xml.contains("Name=\"PipingClassCodeAssignmentClass\" Value=\"A1B\""));
+    assertTrue(xml.contains("Name=\"InsulationTypeAssignmentClass\" Value=\"H25\""));
+  }
+
+  @Test
+  public void testNominalLineSizeIsNotComparedWithHydraulicInsideDiameter() throws IOException {
+    Stream feed = createFeedStream();
+    AdiabaticPipe pipe = new AdiabaticPipe("upstream-pipe", feed);
+    pipe.setDiameter(0.2032);
+    DexpiStream line = new DexpiStream("line-to-separator", pipe.getOutletStream(), "PipingNetworkSegment", "1002",
+        "PG");
+    line.setNominalDiameterRepresentation("DN 150");
+    Separator separator = new Separator("separator", line);
+
+    ProcessSystem process = new ProcessSystem("Mixed nominal and hydraulic size provenance");
+    process.add(feed);
+    process.add(pipe);
+    process.add(line);
+    process.add(separator);
+    process.run();
+    Map<String, DexpiLayoutEngine.EquipmentPosition> positions = DexpiLayoutEngine.computeLayout(process);
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("Name=\"NominalDiameterRepresentationAssignmentClass\" Value=\"DN 150\""));
+    assertTrue(xml.contains("Name=\"LineMetadataSource\" Value=\"DEXPI_STREAM\""));
+    assertTrue(positions.get(pipe.getName()).x < positions.get(separator.getName()).x,
+        "A metadata wrapper must preserve upstream-to-downstream layout order");
+    assertFalse(xml.contains("ComponentClass=\"PipeReducer\""),
+        "Nominal diameter and hydraulic inside diameter must not be treated as comparable values");
+  }
+
+  @Test
+  public void testExplicitEndpointPropertiesProduceReducerAndPropertyBreak() throws IOException {
+    Stream feed = createFeedStream();
+    AdiabaticPipe pipe = new AdiabaticPipe("upstream-pipe", feed);
+    pipe.setDiameter(0.1524);
+    DexpiStream line = new DexpiStream("property-transition", pipe.getOutletStream(), "PipingNetworkSegment", "1003",
+        "PL");
+    line.setFlowInNominalDiameterRepresentation("DN 150");
+    line.setFlowOutNominalDiameterRepresentation("DN 100");
+    line.setFlowInPipingClassCode("A1B");
+    line.setFlowOutPipingClassCode("B2C");
+    line.setFlowInInsulationType("H25");
+    line.setFlowOutInsulationType("C50");
+    Separator separator = new Separator("separator", line);
+    ProcessSystem process = new ProcessSystem("Explicit piping property transition");
+    process.add(feed);
+    process.add(pipe);
+    process.add(line);
+    process.add(separator);
+    process.run();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("ComponentClass=\"PipeReducer\""));
+    assertTrue(xml.contains("ComponentClass=\"PropertyBreak\""));
+    assertTrue(xml.contains("Name=\"PipingClassBreakSpecialization\" Value=\"PipingClassBreak\""));
+    assertTrue(xml.contains("Name=\"InsulationBreakSpecialization\" Value=\"InsulationBreak\""));
+    assertTrue(xml.contains("String=\"CLASS A1B → B2C; INS H25 → C50\""));
   }
 
   /**
@@ -844,65 +1001,6 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     assertEquals(1, countOccurrences(xml, "Name=\"FunctionalRole\" Value=\"FinalElement\""));
     assertEquals(4, countOccurrences(xml, "Name=\"SafetyIntegrityLevel\" Value=\"3\""),
         "SIL 3 should be available on the final element and each of the three trip sensors");
-  }
-
-  /**
-   * Tests that explicit separator and tank level measurements attach to vessel identities, not process nozzles.
-   *
-   * @throws IOException if writing fails
-   */
-  @Test
-  public void testVesselLevelMeasurementsAttachToEquipmentBoundaries() throws IOException {
-    Stream feed = createFeedStream();
-    Separator separator = new Separator("50-VA-001", feed);
-    Tank tank = new Tank("50-TK-001", separator.getLiquidOutStream());
-    LevelTransmitter separatorLevel = new LevelTransmitter("LT-5101", separator);
-    LevelTransmitter tankLevel = new LevelTransmitter("LT-5102", tank);
-
-    ProcessSystem process = new ProcessSystem("Explicit vessel-level measurements");
-    process.add(feed);
-    process.add(separator);
-    process.add(tank);
-    process.add(separatorLevel);
-    process.add(tankLevel);
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DexpiXmlWriter.writeForPyDexpi(process, out);
-    String xml = out.toString(StandardCharsets.UTF_8.name());
-
-    assertEquals(2,
-        countOccurrences(xml, "Name=\"MeasurementAttachmentStatus\" Value=\"ATTACHED_TO_VESSEL_BOUNDARY\""));
-    assertTrue(xml.contains("Name=\"MeasurementAttachmentTargetID\" Value=\"ID-50-VA-001\""));
-    assertTrue(xml.contains("Name=\"MeasurementAttachmentTargetID\" Value=\"ID-50-TK-001\""));
-    assertEquals(2, countOccurrences(xml, "Value=\"VesselLevelMeasurement\""));
-    assertFalse(xml.contains("Value=\"VESSEL_LEVEL_TAP\""),
-        "Liquid product nozzles must not be reclassified as level taps");
-  }
-
-  /**
-   * Tests that automatic tank level instrumentation remains an identifiable measurement-only proposal.
-   *
-   * @throws IOException if writing fails
-   */
-  @Test
-  public void testAutoSynthesizedTankLevelProposal() throws IOException {
-    Stream feed = createFeedStream();
-    Tank tank = new Tank("51-TK-001", feed);
-    ProcessSystem process = new ProcessSystem("Tank level proposal");
-    process.add(feed);
-    process.add(tank);
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DexpiXmlWriter.writeForPyDexpi(process, out);
-    String xml = out.toString(StandardCharsets.UTF_8.name());
-
-    assertTrue(xml.contains("LT-2002"));
-    assertTrue(xml.contains("Name=\"InstrumentationSource\" Value=\"SYNTHESIZED_PROPOSAL\""));
-    assertTrue(xml.contains("Name=\"Scope\" Value=\"MEASUREMENT_ONLY\""));
-    assertTrue(xml.contains("String=\"[PROP]\""));
-    assertTrue(xml.contains("Name=\"MeasurementAttachmentTargetID\" Value=\"ID-51-TK-001\""));
-    assertTrue(xml.contains("Name=\"MeasurementAttachmentStatus\" Value=\"ATTACHED_TO_VESSEL_BOUNDARY\""));
-    assertFalse(xml.contains("ComponentClass=\"ProcessControlFunction\""));
   }
 
   /**

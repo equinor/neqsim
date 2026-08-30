@@ -49,7 +49,7 @@ final class NorsokLineNumber {
       this.size = null;
     } else {
       String s = sizeValue.trim();
-      this.size = s.endsWith("\"") ? s : s + "\"";
+      this.size = s.matches("[0-9]+(?:\\.[0-9]+)?") ? s + "\"" : s;
     }
     return this;
   }

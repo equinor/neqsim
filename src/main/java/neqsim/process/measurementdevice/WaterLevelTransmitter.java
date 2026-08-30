@@ -58,4 +58,13 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
     }
     return separator.getWaterLevel();
   }
+
+  /**
+   * Returns the three-phase separator whose water-interface level is measured.
+   *
+   * @return associated separator
+   */
+  public ThreePhaseSeparator getSeparator() {
+    return separator;
+  }
 }

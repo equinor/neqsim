@@ -231,10 +231,10 @@ double separatorFraction = separatorLevel.getMeasuredValue("");
 double tankFraction = tankLevel.getMeasuredValue("");
 ```
 
-Proteus-compatible P&ID export associates these measurements with the vessel equipment identity and
-draws the measuring line from the rendered vessel boundary. A separator's liquid product nozzle is
-not relabelled as a level tap. Automatically generated tank or separator measurements remain visibly
-and machine-readably marked as unreviewed measurement-only proposals.
+Proteus-compatible P&amp;ID export creates a dedicated sensing tap/nozzle on the owning tank or separator and terminates
+the measuring line there. A vessel's process inlet or phase outlet is never relabelled as the level tap. Automatically
+generated tank or separator measurements remain visibly and machine-readably marked as unreviewed measurement-only
+proposals.
 
 ### VolumeFlowTransmitter
 

@@ -8,6 +8,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.tank.Tank;
 
 /**
  * Shared utilities for resolving outlet streams from NeqSim process equipment.
@@ -71,6 +72,9 @@ public final class DexpiStreamUtils {
     }
     if (equipment instanceof Separator) {
       return ((Separator) equipment).getLiquidOutStream();
+    }
+    if (equipment instanceof Tank) {
+      return ((Tank) equipment).getLiquidOutStream();
     }
     return null;
   }

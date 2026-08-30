@@ -1,5 +1,8 @@
 package neqsim.process.equipment.tank;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -166,6 +169,25 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
    */
   public StreamInterface getGasOutStream() {
     return gasOutStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    return inletStreamMixer.getInletStreams();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<StreamInterface>(2);
+    if (gasOutStream != null) {
+      outlets.add(gasOutStream);
+    }
+    if (liquidOutStream != null) {
+      outlets.add(liquidOutStream);
+    }
+    return Collections.unmodifiableList(outlets);
   }
 
   /**

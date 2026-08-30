@@ -56,12 +56,16 @@ writer and rendered from its actual graphical primitives. The suite checks:
   solid fill preserved in the rendered SVG;
 - every measurement function having a resolvable process-segment, nozzle, mount, piping-component,
   or equipment sensing location;
-- separator and tank level functions referencing the vessel equipment boundary rather than an inlet
-  or liquid-product nozzle, with invalid attachments counted separately;
 - central/control-room symbols and matching location metadata for controller functions, plus a
   real tagged final element and directed actuating signal before a loop is classified complete;
 - synthesized measurement proposals being both machine-identifiable and visibly marked `[PROP]`,
   without synthesized controllers or command lines;
+- every level measurement resolving to a dedicated tank/separator sensing tap rather than a process
+  inlet or outlet nozzle;
+- every routed line exposing source-backed nominal size, an explicitly labelled model inside
+  diameter, or a visible `SIZE?` missing-data state;
+- every detected endpoint-size change having a `PipeReducer` with distinct flow-in/out sizes and
+  connection points, and every explicit piping-class or insulation change having a `PropertyBreak`;
 - deterministic report JSON and SVG output across repeated exports; and
 - preservation of an intentionally unconfigured stream through `ProcessSystem.run()` without
   inventing a fluid state.
@@ -88,27 +92,19 @@ element. The assessment records measurement, sensing-location, controller, compl
 incomplete-loop, and synthesized-proposal counts so these defects fail deterministically in future
 diagram work.
 
-A vessel-level continuation found that separator measurements were associated with the liquid
-product nozzle and tanks could not host a `LevelTransmitter`. Level measurements now use the
-authoritative separator or tank liquid-level state, associate with the equipment identity, and start
-their measuring line at the rendered vessel boundary. The assessment reports vessel-level function,
-valid boundary-attachment, and invalid attachment counts; synthesized tank measurements retain
-`[PROP]` and measurement-only provenance. This is a design-support projection, not a designed
-process tap, transmitter technology selection, or approved loop.
-
-The vessel-level bubble lane also clears the outlet-side continuation symbols instead of running a
-vertical measuring line through a product connector. A coordinate regression reserves at least
-45 mm between the vessel centre and each level bubble.
-
-The same full-sheet review exposed a storage-tank roof arc whose endpoints did not meet the side
-walls and whose radius spread far outside the equipment symbol. The catalogue arc now terminates at
-both wall tops; exact start angle, end angle, and radius assertions protect that rendered geometry.
-
 The compatibility metrics from the first topology review remain available alongside the stricter
 DEXPI-oriented metrics: transmitter/controller counts, resolved and missing measurement attachments,
 measuring-line validity, closed/incomplete loops, actuating-signal validity, and synthesized proposal
 counts. Missing source data is reported separately from renderer/layout failures; the exporter does
 not invent a nozzle, controller, valve, or operational intent to make a proposal appear complete.
+
+The same fail-closed rule now applies to piping data. Hydraulic inside diameter remains labelled
+`ID ... mm`, never silently converted to DN/NPS. Missing nominal-size source data remains visible as
+`SIZE?`. The assessment records line-size provenance, missing-size states, detected size/property
+changes, reducers, and property breaks. A line-size transition without a fitting, a reducer without
+two distinct endpoint sizes and connection points, or a property change without a break marker is
+an error. Full-sheet inspection additionally checks that stream numbers, line designations, fitting
+labels, and equipment annotations remain legible and non-overlapping.
 
 Recycle connectivity is projected when the recycle block exposes a configured outlet through the
 standard equipment outlet API and a downstream unit consumes that same stream identity. The benchmark

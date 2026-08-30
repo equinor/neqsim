@@ -193,7 +193,7 @@ final class DexpiLayoutEngine {
 
     // Also register pass-through streams (Stream wrapping separator outlets)
     for (ProcessEquipmentInterface unit : units) {
-      if (unit instanceof Stream && !(unit instanceof DexpiStream)) {
+      if (unit instanceof Stream) {
         Stream stream = (Stream) unit;
         if (stream.getFluid() != null) {
           int fluidHash = System.identityHashCode(stream.getFluid());
@@ -3154,8 +3154,9 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * Appends a prebuilt line-identification label (for example one produced by {@code NorsokLineNumber.build()}) above
-   * the pipe midpoint.
+   * Appends a prebuilt line-identification label (for example one produced by {@code NorsokLineNumber.build()}) below
+   * the pipe midpoint. Stream sequence labels use the lane above the pipe, so keeping the complete line designation
+   * below avoids the two texts being rendered on top of one another.
    *
    * @param document the XML document
    * @param parent the PipingNetworkSegment element
@@ -3172,7 +3173,7 @@ final class DexpiLayoutEngine {
     }
     double midX = (fromX + toX) / 2.0;
     double midY = (fromY + toY) / 2.0;
-    double labelY = midY + 6.0;
+    double labelY = midY - 6.0;
 
     Element text = document.createElement("Text");
     text.setAttribute("String", lineId.trim());
@@ -3203,6 +3204,146 @@ final class DexpiLayoutEngine {
     position.appendChild(ref);
     text.appendChild(position);
     parent.appendChild(text);
+  }
+
+  /**
+   * Appends a source-backed pipe reducer symbol and its size transition label at the routed line midpoint.
+   *
+   * @param document XML document
+   * @param parent PipeReducer element
+   * @param fromX source X coordinate
+   * @param fromY source Y coordinate
+   * @param toX target X coordinate
+   * @param toY target Y coordinate
+   * @param flowInSize upstream size representation
+   * @param flowOutSize downstream size representation
+   */
+  static void appendPipeReducerSymbol(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY, String flowInSize, String flowOutSize) {
+    double[] location = routeMidpointAndDirection(fromX, fromY, toX, toY);
+    double x = location[0];
+    double y = location[1];
+    boolean horizontal = Math.abs(location[2]) >= Math.abs(location[3]);
+
+    Element position = document.createElement("Position");
+    Element point = document.createElement("Location");
+    point.setAttribute("X", String.valueOf(x));
+    point.setAttribute("Y", String.valueOf(y));
+    point.setAttribute("Z", "0");
+    position.appendChild(point);
+    parent.appendChild(position);
+
+    Element reducer = document.createElement("PolyLine");
+    reducer.setAttribute("NumPoints", "5");
+    Element presentation = document.createElement("Presentation");
+    presentation.setAttribute("LineType", "0");
+    presentation.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+    presentation.setAttribute("R", "0");
+    presentation.setAttribute("G", "0");
+    presentation.setAttribute("B", "0");
+    reducer.appendChild(presentation);
+    if (horizontal) {
+      appendCoordinate(document, reducer, x - 4.0, y + 3.0);
+      appendCoordinate(document, reducer, x - 4.0, y - 3.0);
+      appendCoordinate(document, reducer, x + 4.0, y - 1.5);
+      appendCoordinate(document, reducer, x + 4.0, y + 1.5);
+      appendCoordinate(document, reducer, x - 4.0, y + 3.0);
+    } else {
+      appendCoordinate(document, reducer, x - 3.0, y - 4.0);
+      appendCoordinate(document, reducer, x + 3.0, y - 4.0);
+      appendCoordinate(document, reducer, x + 1.5, y + 4.0);
+      appendCoordinate(document, reducer, x - 1.5, y + 4.0);
+      appendCoordinate(document, reducer, x - 3.0, y - 4.0);
+    }
+    parent.appendChild(reducer);
+    // Keep the transition text clear of the stream number (+6 mm) and line
+    // designation (-6 mm) that use the same routed-line midpoint.
+    appendFittingLabel(document, parent, flowInSize + " → " + flowOutSize, x, y - 12.0);
+  }
+
+  /**
+   * Appends the conventional double-slash marker for a piping-class or insulation property break.
+   *
+   * @param document XML document
+   * @param parent PropertyBreak element
+   * @param fromX source X coordinate
+   * @param fromY source Y coordinate
+   * @param toX target X coordinate
+   * @param toY target Y coordinate
+   * @param label changed property description
+   */
+  static void appendPropertyBreakSymbol(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY, String label) {
+    double[] location = routeMidpointAndDirection(fromX, fromY, toX, toY);
+    double x = location[0];
+    double y = location[1];
+    boolean horizontal = Math.abs(location[2]) >= Math.abs(location[3]);
+    for (int offset = -2; offset <= 2; offset += 4) {
+      Element slash = document.createElement("PolyLine");
+      slash.setAttribute("NumPoints", "2");
+      Element presentation = document.createElement("Presentation");
+      presentation.setAttribute("LineType", "0");
+      presentation.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+      presentation.setAttribute("R", "0");
+      presentation.setAttribute("G", "0");
+      presentation.setAttribute("B", "0");
+      slash.appendChild(presentation);
+      if (horizontal) {
+        appendCoordinate(document, slash, x + offset - 1.5, y - 3.0);
+        appendCoordinate(document, slash, x + offset + 1.5, y + 3.0);
+      } else {
+        appendCoordinate(document, slash, x - 3.0, y + offset - 1.5);
+        appendCoordinate(document, slash, x + 3.0, y + offset + 1.5);
+      }
+      parent.appendChild(slash);
+    }
+    appendFittingLabel(document, parent, label, x, y - 12.0);
+  }
+
+  private static void appendFittingLabel(Document document, Element parent, String label, double x, double y) {
+    if (label == null || label.trim().isEmpty()) {
+      return;
+    }
+    Element text = document.createElement("Text");
+    text.setAttribute("String", label.trim());
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterTop");
+    Element presentation = document.createElement("Presentation");
+    presentation.setAttribute("R", "0");
+    presentation.setAttribute("G", "0");
+    presentation.setAttribute("B", "0");
+    text.appendChild(presentation);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x));
+    location.setAttribute("Y", String.valueOf(y));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  private static double[] routeMidpointAndDirection(double fromX, double fromY, double toX, double toY) {
+    double[][] route = routeConnection(fromX, fromY, toX, toY);
+    double totalLength = 0.0;
+    for (int index = 0; index + 1 < route.length; index++) {
+      totalLength += Math.abs(route[index + 1][0] - route[index][0]) + Math.abs(route[index + 1][1] - route[index][1]);
+    }
+    double remaining = totalLength / 2.0;
+    for (int index = 0; index + 1 < route.length; index++) {
+      double deltaX = route[index + 1][0] - route[index][0];
+      double deltaY = route[index + 1][1] - route[index][1];
+      double segmentLength = Math.abs(deltaX) + Math.abs(deltaY);
+      if (remaining <= segmentLength || index + 2 == route.length) {
+        double fraction = segmentLength <= 0.0 ? 0.0 : remaining / segmentLength;
+        return new double[] { route[index][0] + fraction * deltaX, route[index][1] + fraction * deltaY, deltaX,
+            deltaY };
+      }
+      remaining -= segmentLength;
+    }
+    return new double[] { fromX, fromY, toX - fromX, toY - fromY };
   }
 
   // ==== Revision history table (NORSOK Z-003) ====
