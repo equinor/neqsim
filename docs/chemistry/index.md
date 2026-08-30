@@ -78,8 +78,11 @@ Every analysis is exposed over the NeqSim MCP server:
 ```
 
 Send this to the `runChemistry` tool. Supported `analysis` values:
-`electrolyteScale`, `mechanisticCorrosion`, `langmuirInhibitor`,
-`packedBedScavenger`, and `pitzerQualification`. The last is a setup/publication
+`electrolyteScale`, `multiMineralScale`, `electrolyteScaleEquilibrium`,
+`mechanisticCorrosion`, `langmuirInhibitor`, `packedBedScavenger`, and
+`pitzerQualification`. `electrolyteScaleEquilibrium` is the authoritative
+single-pure-mineral operation for Pitzer GE and electrolyte CPA; the screening
+analyses retain their separate Davies/BDOT semantics. The last is a setup/publication
 gate over the authoritative Java Pitzer dataset coverage, observable
 qualification, and declared state envelope; it does not perform a flash or
 adopt parameters.
