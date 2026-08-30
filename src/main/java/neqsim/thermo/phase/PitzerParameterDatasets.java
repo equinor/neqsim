@@ -557,13 +557,18 @@ public final class PitzerParameterDatasets {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE,
           Arrays.asList("CO2-Na2SO4 activity, mean ionic activity, osmotic coefficient, and salting-out trend"),
-          Arrays.asList("303.15-423.15 K; 1-2 mol/kg Na2SO4; no gas-forming VLE qualification"));
+          Arrays.asList("303.15-423.15 K; 1-2 mol/kg Na2SO4 for activity and water-property evidence",
+              "Gas-aqueous VLE is not qualified: six held-out NIST ThermoML bubble pressures are underpredicted by 32.6-43.8%"),
+          Arrays.asList(PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS,
+              PitzerParameterQualification.ValidationTarget.WATER_ACTIVITY_AND_OSMOTIC_COEFFICIENT));
     }
     if (PHREEQC_NA_K_CL_ID.equals(datasetId)) {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE,
           Arrays.asList("NaCl and KCl mean activity", "Na-K-Cl activity and water properties versus IPhreeqc"),
-          Arrays.asList("298.15-423.15 K implementation matrix; mixed-salt experimental evidence remains limited"));
+          Arrays.asList("298.15-423.15 K implementation matrix; mixed-salt experimental evidence remains limited"),
+          Arrays.asList(PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS,
+              PitzerParameterQualification.ValidationTarget.WATER_ACTIVITY_AND_OSMOTIC_COEFFICIENT));
     }
     if (PHREEQC_PITZER_CATALOG_ID.equals(datasetId)) {
       return new PitzerParameterQualification(datasetId,

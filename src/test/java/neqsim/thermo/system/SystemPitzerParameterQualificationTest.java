@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PitzerParameterDatasets;
 import neqsim.thermo.phase.PitzerParameterQualification;
+import neqsim.thermo.phase.PitzerParameterQualification.ValidationTarget;
 
 /** Tests the explicit SystemPitzer scientific-qualification publication gate. */
 class SystemPitzerParameterQualificationTest {
@@ -30,6 +31,27 @@ class SystemPitzerParameterQualificationTest {
     assertEquals(PitzerParameterDatasets.PHREEQC_NA_K_CL_ID, qualification.getDatasetId());
     assertEquals(PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE, qualification.getLevel());
     assertTrue(qualification.isValidatedWithinDeclaredEnvelope());
+    assertTrue(qualification.isValidatedFor(ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS));
+    assertTrue(qualification.isValidatedFor(ValidationTarget.WATER_ACTIVITY_AND_OSMOTIC_COEFFICIENT));
+    assertFalse(qualification.isValidatedFor(ValidationTarget.GAS_AQUEOUS_VLE));
+    assertEquals(qualification.formatDiagnostic(),
+        system.requirePitzerDatasetValidationFor(ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS).formatDiagnostic());
+  }
+
+  @Test
+  void carbonDioxideSodiumSulfateFailsClosedForUnqualifiedVleTarget() {
+    SystemPitzer system = createCarbonDioxideSodiumSulfateSystem();
+    system.applyPhreeqcCo2SodiumSulfateParameters();
+
+    assertTrue(system.requirePitzerDatasetValidationFor(ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS)
+        .isValidatedFor(ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS));
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> system.requirePitzerDatasetValidationFor(ValidationTarget.GAS_AQUEOUS_VLE));
+
+    assertTrue(failure.getMessage().contains("requestedTarget=GAS_AQUEOUS_VLE"));
+    assertTrue(failure.getMessage().contains("NIST ThermoML"));
+    assertTrue(failure.getMessage().contains("32.6-43.8%"));
+    assertThrows(IllegalArgumentException.class, () -> system.requirePitzerDatasetValidationFor(null));
   }
 
   @Test
@@ -117,6 +139,16 @@ class SystemPitzerParameterQualificationTest {
     system.addComponent("Na+", 1.0);
     system.addComponent("Cl-", 1.0);
     system.useLegacyPitzerParameters();
+    system.init(0);
+    return system;
+  }
+
+  private static SystemPitzer createCarbonDioxideSodiumSulfateSystem() {
+    SystemPitzer system = new SystemPitzer(319.63, 80.9);
+    system.addComponent("CO2", 0.6);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 2.0);
+    system.addComponent("SO4--", 1.0);
     system.init(0);
     return system;
   }

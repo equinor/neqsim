@@ -5,6 +5,7 @@ import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PitzerParameterDatasets;
 import neqsim.thermo.phase.PitzerParameterQualification;
+import neqsim.thermo.phase.PitzerParameterQualification.ValidationTarget;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
@@ -106,7 +107,8 @@ public class SystemPitzer extends SystemEosGE {
    * <p>
    * This is an explicit publication gate. A broad dataset with only partially validated subsystems is rejected even
    * when it covers the active topology. A successful result still requires the caller to check the appropriate
-   * subsystem-specific temperature and molality range helper.
+   * subsystem-specific temperature and molality range helper. This legacy gate does not select an observable; use
+   * {@link #requirePitzerDatasetValidationFor(ValidationTarget)} before publishing a property-specific calculation.
    * </p>
    *
    * @return immutable qualification metadata for the accepted dataset
@@ -118,6 +120,32 @@ public class SystemPitzer extends SystemEosGE {
     PitzerParameterQualification qualification = PitzerParameterDatasets
         .getQualification(aqueousPhase.getParameterDatasetId());
     qualification.requireCompleteDatasetQualification();
+    return qualification;
+  }
+
+  /**
+   * Requires complete interaction coverage and independent qualification for one scientific target.
+   *
+   * <p>
+   * This explicit publication gate does not run a flash and does not check whether the current temperature, pressure,
+   * or composition lies inside the evidence envelope. Callers must also use the applicable dataset-specific range
+   * helper in {@link PitzerParameterDatasets}.
+   * </p>
+   *
+   * @param target requested property or equilibrium target
+   * @return immutable qualification metadata for the accepted dataset and target
+   * @throws IllegalArgumentException when {@code target} is null
+   * @throws IllegalStateException when coverage is incomplete or the target lacks independent qualification
+   */
+  public PitzerParameterQualification requirePitzerDatasetValidationFor(ValidationTarget target) {
+    if (target == null) {
+      throw new IllegalArgumentException("Pitzer validation target must not be null");
+    }
+    PhasePitzer aqueousPhase = (PhasePitzer) phaseArray[1];
+    aqueousPhase.requireCompletePitzerParameterCoverage();
+    PitzerParameterQualification qualification = PitzerParameterDatasets
+        .getQualification(aqueousPhase.getParameterDatasetId());
+    qualification.requireValidationFor(target);
     return qualification;
   }
 

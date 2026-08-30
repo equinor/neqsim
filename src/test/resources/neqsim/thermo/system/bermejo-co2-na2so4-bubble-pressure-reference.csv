@@ -1,0 +1,16 @@
+# Held-out CO2-Na2SO4 bubble-pressure evidence; no parameter was fitted to these rows.
+# Primary source: Bermejo et al. (2005), Fluid Phase Equilibria, doi:10.1016/j.fluid.2005.10.006.
+# Machine source: NIST ThermoML dataset 2, https://trc.nist.gov/ThermoML/10.1016/j.fluid.2005.10.006.json
+# Retrieved: 2026-08-30; JSON SHA-256: aeeff43c1aa196a749b01dbb31d22bf502fe140a85e4823ecea8544f06dd3897
+# Reuse basis: publisher-permitted NIST ThermoML archive; this fixture stores six selected numerical observations.
+# Source variables: Na2SO4 solvent molality (mol/kg), liquid CO2 mole fraction, temperature (K), pressure (kPa).
+# Preprocessing: pressure_kPa/100=pressure_bara; 95% expanded pressure uncertainty converted identically.
+# Composition mapping: 1 kg water=55.508 mol; nCO2=x/(1-x)*(nH2O+nNa2SO4); salt becomes 2 Na+ + SO4--.
+# Selection: two replicated compositions plus nearby temperature/composition states across 307.78-340.10 K.
+point_id,salt_molality_mol_per_kg,co2_liquid_mole_fraction,temperature_k,pressure_bara,expanded_uncertainty_bara,master_calculated_pressure_bara
+B2005-01,0.986703,0.00773,307.78,43.50,0.50,29.306
+B2005-02,0.986703,0.00773,327.19,64.00,0.80,43.165
+B2005-03,0.986703,0.01026,319.63,80.90,1.30,53.064
+B2005-04,0.986703,0.01026,340.10,118.20,1.70,74.040
+B2005-05,0.995676,0.00986,314.54,68.60,0.80,45.715
+B2005-06,0.996313,0.01161,316.51,104.80,2.00,58.930

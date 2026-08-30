@@ -421,24 +421,35 @@ the active binary, same-sign, ternary, and neutral topology is explicit; qualifi
 observables have independent evidence:
 
 ```java
-PitzerParameterQualification evidence = fluid.getPitzerParameterQualification();
+SystemPitzer qualifiedBrine = new SystemPitzer(298.15, 1.01325);
+qualifiedBrine.addComponent("water", 55.508);
+qualifiedBrine.addComponent("Na+", 0.5);
+qualifiedBrine.addComponent("K+", 0.5);
+qualifiedBrine.addComponent("Cl-", 1.0);
+qualifiedBrine.init(0);
+qualifiedBrine.applyPhreeqcSodiumPotassiumChlorideParameters();
 
-// Strict publication gate: complete interaction coverage and complete qualification
-// of the named dataset. This rejects the broad, partially validated catalog.
-fluid.requireCompletePitzerDatasetQualification();
+PitzerParameterQualification evidence = qualifiedBrine.getPitzerParameterQualification();
+
+// Property-specific publication gate: complete interaction coverage plus independent
+// evidence for the requested observable. A VLE request would fail for this subset.
+qualifiedBrine.requirePitzerDatasetValidationFor(
+    PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS);
 
 // Dataset qualification does not prove that this exact state is inside its evidence envelope.
 boolean insideRange = PitzerParameterDatasets.isWithinSodiumPotassiumChlorideValidationRange(
-    fluid.getTemperature(),
+    qualifiedBrine.getTemperature(),
     0.5,  // Na+ molality, mol/kg water
     0.5,  // K+ molality, mol/kg water
     1.0); // Cl- molality, mol/kg water
 ```
 
-The accessor completes lazy parameter selection and interaction-coverage auditing but does not run a flash. The strict
+The accessor completes lazy parameter selection and interaction-coverage auditing but does not run a flash. The target
 gate is opt-in and executes only when called, so neutral models and ordinary Pitzer property calculations do no new
-work. It accepts only a completely qualified named dataset; callers must still apply the use-case-specific range helper
-for the current temperature and molality.
+work. It accepts only a completely qualified named dataset with independent evidence for the requested property;
+callers must still apply the use-case-specific range helper for the current temperature and molality. The legacy
+`requireCompletePitzerDatasetQualification()` gate remains available, but its overall level alone must not be treated
+as VLE, reaction, or mineral evidence.
 
 The complete PHREEQC catalog is intentionally reported as partially validated: CaCl2 and MgCl2 binaries have held-out
 activity evidence, while exact mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain separate gates. Process

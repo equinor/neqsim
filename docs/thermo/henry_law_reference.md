@@ -180,7 +180,14 @@ including the fixed IAPWS water molar mass. The dimensional identity is
 $$\frac{\mathrm{d}\ln H}{\mathrm{d}T}=\frac{1}{H}\frac{\mathrm{d}H}{\mathrm{d}T}.$$
 
 These tests are implementation and source-table regressions. They are separate
-from independent VLE/VLLE or brine validation.
+from independent VLE/VLLE or brine validation. In particular, six held-out
+CO2-Na2SO4 bubble pressures from Bermejo et al. (2005),
+[DOI 10.1016/j.fluid.2005.10.006](https://doi.org/10.1016/j.fluid.2005.10.006),
+are underpredicted by 32.6–43.8% even though the phase-boundary calculations
+close. `SystemPitzer.requirePitzerDatasetValidationFor(GAS_AQUEOUS_VLE)`
+therefore rejects that parameter subset; aqueous-activity and water-property
+qualification are unaffected. The Pitzer provenance page records the NIST
+ThermoML checksum, preprocessing, uncertainty, and composition convention.
 
 ## Scientific and performance controls
 
