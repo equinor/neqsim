@@ -169,10 +169,10 @@ The regression suite for this API currently verifies:
 - repeated-application protection;
 - exact reconstructed assay-mass closure;
 - analytical mass- and volume-basis bulk specific-gravity reconstruction;
-- whole-assay SG/API agreement against one independent public DOE/OEDI crude analysis;
+- whole-assay SG/API agreement across all five complete four-category rows in the public DOE/OEDI COA summary workbook;
 - input-order independence and no thermodynamic-system mutation for bulk-property queries.
 
-These tests establish software and bookkeeping correctness. They are **not yet an independent refinery-property validation dataset**. Experimental/public-data qualification of pseudo-component properties and atmospheric/vacuum fractionation is a separate campaign gate in issue #3305.
+These tests establish software/bookkeeping correctness and qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765–0.847; maximum observed errors 0.006 SG and 1.5 degrees API). They do **not** qualify temperature correction, contraction, pseudo-component properties, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
 
 ## Refinery capability inventory after this increment
 
