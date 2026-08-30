@@ -79,6 +79,10 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     assertTrue(report.getMetrics().get("componentInstances") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceTexts") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceCenterLines") > 0, report.toJson());
+    assertEquals(1, report.getMetrics().get("processMeasurementAttachments"), report.toJson());
+    assertEquals(1, report.getMetrics().get("incompleteControlLoops"), report.toJson());
+    assertEquals(0, report.getMetrics().get("sourceActuatingSignals"), report.toJson());
+    assertTrue(hasFinding(report, "CONTROL_FINAL_ELEMENT_SOURCE_DATA_MISSING"), report.toJson());
     assertTrue(report.getMetrics().get("routedMaterialSegments") > 0, report.toJson());
     assertEquals(report.getMetrics().get("routedMaterialSegments"),
         report.getMetrics().get("sourceFlowDirectionArrows"), report.toJson());
@@ -142,6 +146,35 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
   }
 
   @Test
+  void reportsInstrumentationTopologyAndProposalVisibilityDefects() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        + "<PlantModel><PlantInformation SchemaVersion=\"4.1.1\"/>"
+        + "<Drawing Name=\"Instrumentation defects\"><Extent><Min X=\"0\" Y=\"0\"/>"
+        + "<Max X=\"100\" Y=\"70\"/></Extent></Drawing>"
+        + "<ProcessInstrumentationFunction ID=\"PT-1\" ComponentClass=\"ProcessInstrumentationFunction\" "
+        + "ComponentName=\"INSTRUMENTATION_BUBBLE_SHAPE_FIELD\"><GenericAttributes>"
+        + "<GenericAttribute Name=\"Origin\" Value=\"SYNTHESIZED_PROPOSAL\"/>"
+        + "</GenericAttributes><ProcessSignalGeneratingFunction ID=\"PSGF-1\">"
+        + "<Association Type=\"is located in\" ItemID=\"DOES-NOT-EXIST\"/>"
+        + "</ProcessSignalGeneratingFunction></ProcessInstrumentationFunction>"
+        + "<ProcessInstrumentationFunction ID=\"PC-1\" ComponentClass=\"ProcessControlFunction\" "
+        + "ComponentName=\"INSTRUMENTATION_BUBBLE_SHAPE_FIELD\"><GenericAttributes>"
+        + "<GenericAttribute Name=\"LocationSpecialization\" Value=\"Field\"/>"
+        + "<GenericAttribute Name=\"ControlLoopCompleteness\" Value=\"COMPLETE\"/>"
+        + "</GenericAttributes></ProcessInstrumentationFunction></PlantModel>";
+    Path dexpi = temporaryDirectory.resolve("instrumentation-defects.xml");
+    Files.write(dexpi, xml.getBytes(StandardCharsets.UTF_8));
+
+    DexpiVisualQualityAssessment.Report report = DexpiVisualQualityAssessment.assess(dexpi.toFile());
+
+    assertTrue(report.hasErrors());
+    assertTrue(hasFinding(report, "INSTRUMENT_SENSING_LOCATION_INVALID"), report.toJson());
+    assertTrue(hasFinding(report, "SYNTHESIZED_PROPOSAL_NOT_VISIBLE"), report.toJson());
+    assertTrue(hasFinding(report, "CONTROLLER_LOCATION_SYMBOL_MISMATCH"), report.toJson());
+    assertTrue(hasFinding(report, "CONTROL_LOOP_FINAL_ELEMENT_MISSING"), report.toJson());
+  }
+
+  @Test
   void keepsInstrumentBubblesClearOfDataBarsAndInsideBatteryLimit() throws Exception {
     Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
     Element root = document.createElement("PlantModel");
@@ -163,10 +196,29 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
 
     Map<String, DexpiLayoutEngine.EquipmentPosition> positions = new LinkedHashMap<String, DexpiLayoutEngine.EquipmentPosition>();
     positions.put("20-VA-001", equipment);
-    DexpiLayoutEngine.appendBatteryLimitBoundary(document, root, positions, "Area 20");
+    List<double[]> instrumentPositions = new ArrayList<double[]>();
+    instrumentPositions.add(instrument);
+    double[] rightmostInstrument = new double[] { 160.0, 170.0 };
+    instrumentPositions.add(rightmostInstrument);
+    DexpiLayoutEngine.appendBatteryLimitBoundary(document, root, positions, instrumentPositions, "Area 20");
     Element boundary = identifiedElement(document, "BatteryLimit-1");
     assertTrue(maximumCoordinateY(boundary) > instrument[1] + DexpiLayoutEngine.INSTRUMENT_BUBBLE_RADIUS,
         "Battery limit must enclose the highest instrument bubble");
+    assertTrue(maximumCoordinateX(boundary) > rightmostInstrument[0] + DexpiLayoutEngine.INSTRUMENT_BUBBLE_RADIUS,
+        "Battery limit must enclose the rightmost instrument bubble and proposal marker");
+  }
+
+  @Test
+  void positionsTapMountedInstrumentLanesOutsideEquipmentDataBars() {
+    DexpiLayoutEngine.EquipmentPosition equipment = new DexpiLayoutEngine.EquipmentPosition(100.0, 150.0, 1.0, 1.0);
+
+    for (int index = 0; index < 4; index++) {
+      double[] instrument = DexpiLayoutEngine.computeInstrumentPositionAtSensingPoint(equipment, 118.0, 150.0, index,
+          4);
+      assertTrue(instrument[0] - DexpiLayoutEngine.INSTRUMENT_BUBBLE_RADIUS > 125.0,
+          "Every bubble sharing a right-side nozzle tap must clear the 50 mm equipment data bar");
+      assertEquals(180.0, instrument[1], 1.0e-12);
+    }
   }
 
   private void assertCleanAndDeterministic(String name, ProcessSystem process) throws Exception {
@@ -262,6 +314,20 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
         maximum = Math.max(maximum, Double.parseDouble(rawY));
       } catch (NumberFormatException exception) {
         throw new AssertionError("Invalid Y coordinate at index " + index + ": " + rawY, exception);
+      }
+    }
+    return maximum;
+  }
+
+  private static double maximumCoordinateX(Element parent) {
+    NodeList coordinates = parent.getElementsByTagName("Coordinate");
+    double maximum = -Double.MAX_VALUE;
+    for (int index = 0; index < coordinates.getLength(); index++) {
+      String rawX = ((Element) coordinates.item(index)).getAttribute("X");
+      try {
+        maximum = Math.max(maximum, Double.parseDouble(rawX));
+      } catch (NumberFormatException exception) {
+        throw new AssertionError("Invalid X coordinate at index " + index + ": " + rawX, exception);
       }
     }
     return maximum;

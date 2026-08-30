@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -532,9 +533,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
-   * Tests that a process system without any explicitly modelled measurement devices or controllers still exports a
-   * realistic set of synthesized ISA-5.1 instrumentation (transmitters and matched PID controllers) so the resulting
-   * P&amp;ID resembles a real engineering diagram.
+   * Tests that a process system without explicitly modelled measurement devices still exports clearly identified
+   * ISA-5.1 measurement proposals, without inventing controllers or final control elements.
    *
    * @throws IOException if writing fails
    */
@@ -565,15 +565,102 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     assertTrue(xml.contains("PT-2001"), "Separator should get a pressure transmitter");
     assertTrue(xml.contains("LT-2002"), "Separator should get a level transmitter");
     assertTrue(xml.contains("TT-2003"), "Separator should get a temperature transmitter");
-    // Matched controllers should be present.
-    assertTrue(xml.contains("PC-2001"), "Separator pressure loop should get a controller");
-    assertTrue(xml.contains("LC-2002"), "Separator level loop should get a controller");
+    // Synthesized proposals must not imply closed control loops that do not exist in the model.
+    assertFalse(xml.contains("Value=\"PC-2001\""), "Synthesis must not invent a pressure controller");
+    assertFalse(xml.contains("Value=\"LC-2002\""), "Synthesis must not invent a level controller");
     // Compressor should get a discharge pressure transmitter and a suction flow transmitter.
     assertTrue(xml.contains("PT-2011"), "Compressor should get a discharge pressure transmitter");
     assertTrue(xml.contains("FT-2014"), "Compressor should get a suction flow transmitter");
-    // Cooler should get a temperature loop.
+    // Cooler should get a temperature measurement proposal, not an invented controller.
     assertTrue(xml.contains("TT-2023"), "Cooler should get a temperature transmitter");
-    assertTrue(xml.contains("TC-2023"), "Cooler should get a temperature controller");
+    assertFalse(xml.contains("Value=\"TC-2023\""), "Synthesis must not invent a temperature controller");
+    assertTrue(xml.contains("Name=\"Origin\" Value=\"SYNTHESIZED_PROPOSAL\""),
+        "Synthesized transmitters must be identifiable as engineering proposals");
+    assertTrue(xml.contains("Name=\"InstrumentationSource\" Value=\"SYNTHESIZED_PROPOSAL\""));
+    assertTrue(xml.contains("Name=\"EngineeringStatus\" Value=\"PROPOSED\""));
+    assertTrue(xml.contains("Name=\"Scope\" Value=\"MEASUREMENT_ONLY\""),
+        "Synthesized transmitters must declare their measurement-only scope");
+    assertTrue(xml.contains("String=\"[PROP]\""),
+        "Synthesized transmitters must be visibly identifiable without inspecting XML metadata");
+    assertTrue(xml.contains("Type=\"is located in\""),
+        "Every synthesized measurement must reference a DEXPI sensing location");
+    assertFalse(xml.contains("ComponentClass=\"ProcessControlFunction\""),
+        "A measurement-only proposal must not synthesize controller functions");
+    assertFalse(xml.contains("Value=\"PneumaticSignalConveying\""),
+        "A measurement-only proposal must not draw a command signal to empty process space");
+  }
+
+  /**
+   * Tests a complete explicit loop from line-mounted transmitter through a central controller to a connected valve.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testExplicitControllerTerminatesAtFinalControlElement() throws IOException {
+    Stream feed = createFeedStream();
+    Separator separator = new Separator("40-VA-001", feed);
+    ThrottlingValve valve = new ThrottlingValve("40-PV-4101", separator.getGasOutStream());
+    valve.setOutletPressure(45.0, "bara");
+    PressureTransmitter transmitter = new PressureTransmitter("PT-4101", separator.getGasOutStream());
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("PIC-4101");
+    controller.setControllerSetPoint(50.0);
+    controller.setTransmitter(transmitter);
+    valve.setController(controller);
+
+    ProcessSystem process = new ProcessSystem("Explicit pressure-control loop");
+    process.add(feed);
+    process.add(separator);
+    process.add(valve);
+    process.add(transmitter);
+    process.add(controller);
+    process.run();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("ComponentClass=\"ProcessControlFunction\""));
+    assertTrue(xml.contains("ComponentName=\"INSTRUMENTATION_BUBBLE_SHAPE_CENTRAL\""));
+    assertTrue(xml.contains("Name=\"LocationSpecialization\" Value=\"CentralLocation\""));
+    assertTrue(xml.contains("Name=\"ControlLoopCompleteness\" Value=\"COMPLETE\""));
+    assertTrue(xml.contains("Name=\"ControlLoopStatus\" Value=\"CLOSED_MODELLED\""));
+    assertTrue(xml.contains("Name=\"FinalControlElementTag\" Value=\"40-PV-4101\""));
+    assertTrue(xml.contains("Name=\"FinalControlElementID\""));
+    assertTrue(xml.contains("Name=\"MeasurementAttachmentTargetID\""));
+    assertTrue(xml.contains("ComponentClass=\"ActuatingFunction\""));
+    assertTrue(xml.contains("Name=\"SignalConveyingTypeSpecialization\" Value=\"PneumaticSignalConveying\""));
+    assertTrue(xml.contains("Name=\"NeqSimAttachmentType\" Value=\"PROCESS_LINE\""));
+  }
+
+  /**
+   * Tests that a modelled controller without a manipulated element is reported but has no fabricated command line.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testControllerWithoutFinalElementIsNotDrawnAsClosedLoop() throws IOException {
+    Stream feed = createFeedStream();
+    Separator separator = new Separator("40-VA-002", feed);
+    PressureTransmitter transmitter = new PressureTransmitter("PT-4201", separator.getGasOutStream());
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("PC-4201");
+    controller.setControllerSetPoint(50.0);
+    controller.setTransmitter(transmitter);
+
+    ProcessSystem process = new ProcessSystem("Incomplete pressure-control loop");
+    process.add(feed);
+    process.add(separator);
+    process.add(transmitter);
+    process.add(controller);
+    process.run();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("Name=\"ControlLoopCompleteness\" Value=\"NO_FINAL_CONTROL_ELEMENT\""));
+    assertTrue(xml.contains("Name=\"ControlLoopStatus\" Value=\"MEASUREMENT_ONLY_MISSING_FINAL_ELEMENT\""));
+    assertFalse(xml.contains("Value=\"PneumaticSignalConveying\""));
+    assertFalse(xml.contains("ComponentClass=\"ActuatingFunction\""));
   }
 
   /**

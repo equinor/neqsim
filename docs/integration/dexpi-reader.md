@@ -475,12 +475,29 @@ from crossing gas equipment. The engine produces the following visual elements:
 **Instrumentation (per ISA 5.1):**
 - Instrument circles with function letter labels (PT, TT, FT, LT, AT)
 - Proper ISA 5.1 function letter decomposition (first letter = measured variable, subsequent = function)
-- Signal lines from instruments to equipment (dashed lines with signal nodes)
+- Field transmitter bubbles connected by measuring lines to an explicit process-segment or nozzle sensing location
+- Central/control-room controller bubbles distinguished from field instruments by their symbol and DEXPI location metadata
 - PID controller parameters displayed (Kp, Ti, Td) when controllers are present
-- Controller signal lines connecting instruments to final control elements
+- Typed signal lines from transmitters to controllers and from controllers to actual final control elements
 - SIL-rated instrument visualization with concentric double-border circles for SIL 2 and above
 - Fail-position markers on control valves: **FC** (red), **FO** (green), **FL** (amber)
 - Solenoid valve symbols with diamond shape and wiring to controllers
+
+When a process contains no explicit measurement devices, the writer may add measurement-only
+engineering proposals. These are marked `[PROP]` on the sheet and carry
+`Origin=SYNTHESIZED_PROPOSAL`, `ApprovalStatus=UNREVIEWED`, and `Scope=MEASUREMENT_ONLY` metadata.
+Compatibility metadata also records `InstrumentationSource=SYNTHESIZED_PROPOSAL` and
+`EngineeringStatus=PROPOSED`. Explicit transmitters expose `MeasurementAttachmentTargetID`; closed
+loops expose both `FinalControlElementID` and `FinalControlElementTag`.
+The writer does not synthesize controllers, manipulated variables, or final control elements. A
+closed loop is drawn only when the model contains an explicit controller attached to a connected
+valve or manipulated equipment item; otherwise the controller is retained as an incomplete-loop
+warning without a command line to empty drawing space.
+
+This representation follows the separation of sensing, signal-conveying, control, and actuation
+functions used by DEXPI and the identification/location conventions used by ISA-5.1. It does not
+imply that the transmitter circle must geometrically overlap the process line: the measuring line
+and its `is located in` association identify the physical sensing point.
 
 **Safety elements:**
 - PST (Partial Stroke Test) annotation boxes near safety valves

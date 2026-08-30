@@ -212,6 +212,7 @@ public final class DexpiVisualQualityAssessment {
     assessCoordinates(document, extent, findings, metrics);
     assessText(document, findings, metrics);
     assessFlowDirectionArrows(document, svg, findings, metrics);
+    assessInstrumentationTopology(document, findings, metrics);
 
     metrics.put("sourcePolylines", countOutsideCatalogue(document, "PolyLine"));
     metrics.put("sourceCenterLines", countOutsideCatalogue(document, "CenterLine"));
@@ -353,6 +354,206 @@ public final class DexpiVisualQualityAssessment {
       add(findings, Severity.ERROR, "FLOW_DIRECTION_ARROW_NOT_RENDERED", "",
           "One or more solid source flow-direction arrows are absent from generated SVG");
     }
+  }
+
+  private static void assessInstrumentationTopology(Document document, List<Finding> findings,
+      Map<String, Integer> metrics) {
+    NodeList signalGenerators = document.getElementsByTagName("ProcessSignalGeneratingFunction");
+    int measurementFunctions = 0;
+    int sensingLocations = 0;
+    for (int index = 0; index < signalGenerators.getLength(); index++) {
+      Element generator = (Element) signalGenerators.item(index);
+      if (inside(generator, "ShapeCatalogue")) {
+        continue;
+      }
+      measurementFunctions++;
+      Element association = directAssociation(generator, "is located in");
+      if (association == null || association.getAttribute("ItemID").trim().isEmpty()) {
+        add(findings, Severity.ERROR, "INSTRUMENT_SENSING_LOCATION_MISSING", generator.getAttribute("ID"),
+            "Rendered measurement has no nozzle, process-segment, piping-component, or equipment-mount sensing location");
+      } else {
+        String locationId = association.getAttribute("ItemID").trim();
+        Element location = elementWithId(document, locationId);
+        if (location == null || !isSensingLocation(location)) {
+          add(findings, Severity.ERROR, "INSTRUMENT_SENSING_LOCATION_INVALID", generator.getAttribute("ID"),
+              "Measurement sensing location does not resolve to process equipment, a nozzle, mount, piping component, or process segment");
+        } else {
+          sensingLocations++;
+        }
+      }
+    }
+
+    NodeList instrumentation = document.getElementsByTagName("ProcessInstrumentationFunction");
+    int controllerFunctions = 0;
+    int completeLoops = 0;
+    int incompleteLoops = 0;
+    int synthesizedProposals = 0;
+    for (int index = 0; index < instrumentation.getLength(); index++) {
+      Element function = (Element) instrumentation.item(index);
+      if (inside(function, "ShapeCatalogue")) {
+        continue;
+      }
+      String source = genericAttribute(function, "InstrumentationSource");
+      if ("SYNTHESIZED_PROPOSAL".equals(genericAttribute(function, "Origin"))
+          || "SYNTHESIZED_PROPOSAL".equals(source)) {
+        synthesizedProposals++;
+        if (!hasText(function, "[PROP]")) {
+          add(findings, Severity.ERROR, "SYNTHESIZED_PROPOSAL_NOT_VISIBLE", function.getAttribute("ID"),
+              "Synthesized measurement provenance is present in metadata but not visible on the drawing");
+        }
+      }
+      if (!"ProcessControlFunction".equals(function.getAttribute("ComponentClass"))) {
+        continue;
+      }
+      controllerFunctions++;
+      String identity = function.getAttribute("ID");
+      if (!"INSTRUMENTATION_BUBBLE_SHAPE_CENTRAL".equals(function.getAttribute("ComponentName"))
+          || !"CentralLocation".equals(genericAttribute(function, "LocationSpecialization"))) {
+        add(findings, Severity.ERROR, "CONTROLLER_LOCATION_SYMBOL_MISMATCH", identity,
+            "Controller must use the central/control-room symbol and matching location metadata");
+      }
+      String completeness = genericAttribute(function, "ControlLoopCompleteness");
+      if ("COMPLETE".equals(completeness)) {
+        completeLoops++;
+        String finalElement = genericAttribute(function, "FinalControlElementTag");
+        String finalElementId = genericAttribute(function, "FinalControlElementID");
+        boolean hasActuatingFunction = function.getElementsByTagName("ActuatingFunction").getLength() > 0
+            || function.getElementsByTagName("ActuatingElectricalFunction").getLength() > 0;
+        if (finalElement.isEmpty() || finalElementId.isEmpty() || elementWithId(document, finalElementId) == null
+            || !hasActuatingFunction || !hasActuatingSignal(function)) {
+          add(findings, Severity.ERROR, "CONTROL_LOOP_FINAL_ELEMENT_MISSING", identity,
+              "Complete control loop lacks a tagged final element, actuating function, or directed command signal");
+        }
+      } else {
+        incompleteLoops++;
+        add(findings, Severity.WARNING, "CONTROL_FINAL_ELEMENT_SOURCE_DATA_MISSING", identity,
+            "Controller is rendered measurement-only because no connected final control element is modelled");
+      }
+    }
+
+    NodeList flows = document.getElementsByTagName("InformationFlow");
+    int measuringLines = 0;
+    int invalidMeasuringLines = 0;
+    int actuatingSignals = 0;
+    int invalidActuatingSignals = 0;
+    for (int index = 0; index < flows.getLength(); index++) {
+      Element flow = (Element) flows.item(index);
+      if ("MeasuringLineFunction".equals(flow.getAttribute("ComponentClass"))) {
+        measuringLines++;
+        String target = genericAttribute(flow, "MeasurementAttachmentTargetID");
+        if (target.isEmpty() || elementWithId(document, target) == null) {
+          invalidMeasuringLines++;
+          add(findings, Severity.ERROR, "MEASUREMENT_LINE_PROCESS_TARGET_MISSING", flow.getAttribute("ID"),
+              "Measuring line is not attached to an identified process location");
+        }
+        continue;
+      }
+      Element logicalEnd = directAssociation(flow, "has logical end");
+      Element signalTarget = logicalEnd == null ? null : elementWithId(document, logicalEnd.getAttribute("ItemID"));
+      if (signalTarget == null || !("ActuatingFunction".equals(signalTarget.getTagName())
+          || "ActuatingElectricalFunction".equals(signalTarget.getTagName()))) {
+        continue;
+      }
+      actuatingSignals++;
+      String finalElementId = genericAttribute(flow, "FinalControlElementID");
+      if (finalElementId.isEmpty() || elementWithId(document, finalElementId) == null) {
+        invalidActuatingSignals++;
+        add(findings, Severity.ERROR, "ACTUATING_SIGNAL_FINAL_ELEMENT_MISSING", flow.getAttribute("ID"),
+            "Actuating signal has no identified final control element");
+      }
+    }
+    metrics.put("measurementFunctions", measurementFunctions);
+    metrics.put("measurementSensingLocations", sensingLocations);
+    metrics.put("controllerFunctions", controllerFunctions);
+    metrics.put("completeControlLoops", completeLoops);
+    metrics.put("incompleteControlLoops", incompleteLoops);
+    metrics.put("synthesizedMeasurementProposals", synthesizedProposals);
+    // Compatibility metrics retained from the first instrument-topology review branch.
+    metrics.put("sourceTransmitters", measurementFunctions);
+    metrics.put("sourceControllers", controllerFunctions);
+    metrics.put("processMeasurementAttachments", sensingLocations);
+    metrics.put("measurementAttachmentDataGaps", measurementFunctions - sensingLocations);
+    metrics.put("sourceMeasuringLines", measuringLines);
+    metrics.put("invalidMeasuringLines", invalidMeasuringLines);
+    metrics.put("closedControlLoops", completeLoops);
+    metrics.put("sourceActuatingSignals", actuatingSignals);
+    metrics.put("invalidActuatingSignals", invalidActuatingSignals);
+    metrics.put("synthesizedProposalInstruments", synthesizedProposals);
+  }
+
+  private static boolean hasActuatingSignal(Element controller) {
+    List<String> actuatingIds = new ArrayList<String>();
+    NodeList hydraulic = controller.getElementsByTagName("ActuatingFunction");
+    for (int index = 0; index < hydraulic.getLength(); index++) {
+      actuatingIds.add(((Element) hydraulic.item(index)).getAttribute("ID"));
+    }
+    NodeList electrical = controller.getElementsByTagName("ActuatingElectricalFunction");
+    for (int index = 0; index < electrical.getLength(); index++) {
+      actuatingIds.add(((Element) electrical.item(index)).getAttribute("ID"));
+    }
+    NodeList flows = controller.getElementsByTagName("InformationFlow");
+    for (int index = 0; index < flows.getLength(); index++) {
+      Element flow = (Element) flows.item(index);
+      if (directAssociation(flow, "has logical start") != null && directAssociation(flow, "has logical end") != null
+          && ("PneumaticSignalConveying".equals(genericAttribute(flow, "SignalConveyingTypeSpecialization"))
+              || "ElectricalSignalConveying".equals(genericAttribute(flow, "SignalConveyingTypeSpecialization")))) {
+        String target = directAssociation(flow, "has logical end").getAttribute("ItemID");
+        if (actuatingIds.contains(target)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isSensingLocation(Element location) {
+    String type = location.getTagName();
+    return "Equipment".equals(type) || "Nozzle".equals(type) || "Mount".equals(type) || "PipingComponent".equals(type)
+        || "PipingNetworkSegment".equals(type);
+  }
+
+  private static Element elementWithId(Document document, String identity) {
+    NodeList elements = document.getElementsByTagName("*");
+    for (int index = 0; index < elements.getLength(); index++) {
+      Element element = (Element) elements.item(index);
+      if (identity.equals(element.getAttribute("ID"))) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  private static boolean hasText(Element parent, String value) {
+    NodeList texts = parent.getElementsByTagName("Text");
+    for (int index = 0; index < texts.getLength(); index++) {
+      if (value.equals(((Element) texts.item(index)).getAttribute("String"))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Element directAssociation(Element parent, String type) {
+    NodeList children = parent.getChildNodes();
+    for (int index = 0; index < children.getLength(); index++) {
+      Node child = children.item(index);
+      if (child instanceof Element && "Association".equals(((Element) child).getTagName())
+          && type.equals(((Element) child).getAttribute("Type"))) {
+        return (Element) child;
+      }
+    }
+    return null;
+  }
+
+  private static String genericAttribute(Element parent, String name) {
+    NodeList attributes = parent.getElementsByTagName("GenericAttribute");
+    for (int index = 0; index < attributes.getLength(); index++) {
+      Element attribute = (Element) attributes.item(index);
+      if (name.equals(attribute.getAttribute("Name"))) {
+        return attribute.getAttribute("Value").trim();
+      }
+    }
+    return "";
   }
 
   private static void assessCoordinates(Document document, double[] extent, List<Finding> findings,

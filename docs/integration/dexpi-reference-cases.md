@@ -54,6 +54,12 @@ writer and rendered from its actual graphical primitives. The suite checks:
 - drawing bounds, duplicate IDs, minimum text-height risks, missing symbols, and empty SVG output;
 - exactly one source-to-destination flow-direction arrow for every routed material segment, with
   solid fill preserved in the rendered SVG;
+- every measurement function having a resolvable process-segment, nozzle, mount, piping-component,
+  or equipment sensing location;
+- central/control-room symbols and matching location metadata for controller functions, plus a
+  real tagged final element and directed actuating signal before a loop is classified complete;
+- synthesized measurement proposals being both machine-identifiable and visibly marked `[PROP]`,
+  without synthesized controllers or command lines;
 - deterministic report JSON and SVG output across repeated exports; and
 - preservation of an intentionally unconfigured stream through `ProcessSystem.run()` without
   inventing a fluid state.
@@ -69,7 +75,24 @@ The first full-sheet benchmark inspection found that instrument bubbles intersec
 data bars and sat outside the generated battery limit. The layout now reserves 55 mm above an
 equipment centre for instruments and expands the battery-limit envelope through the highest bubble;
 an exact coordinate regression protects both clearances. Re-rendered simple, branched, and
-recycle/control cases show separated bubbles and data bars inside the boundary. Recycle connectivity is projected when the recycle block exposes a configured outlet through the
+recycle/control cases show separated bubbles and data bars inside the boundary.
+
+A subsequent whole-sheet instrumentation review found generic measuring lines terminating at
+equipment centres, controller bubbles using field-location symbols, and synthesized controller
+signals ending in empty process space. Measurements now resolve to process segments or nozzles,
+their bubble groups follow the sensing-point lane outside equipment data bars, controller location
+symbols are explicit, and closed-loop actuation is emitted only for an attached final control
+element. The assessment records measurement, sensing-location, controller, complete-loop,
+incomplete-loop, and synthesized-proposal counts so these defects fail deterministically in future
+diagram work.
+
+The compatibility metrics from the first topology review remain available alongside the stricter
+DEXPI-oriented metrics: transmitter/controller counts, resolved and missing measurement attachments,
+measuring-line validity, closed/incomplete loops, actuating-signal validity, and synthesized proposal
+counts. Missing source data is reported separately from renderer/layout failures; the exporter does
+not invent a nozzle, controller, valve, or operational intent to make a proposal appear complete.
+
+Recycle connectivity is projected when the recycle block exposes a configured outlet through the
 standard equipment outlet API and a downstream unit consumes that same stream identity. The benchmark
 asserts the directed recycle-to-mixer connection in the Proteus XML before rendering. The writer does
 not infer a return line from convergence state: an unconfigured outlet remains absent, and no fluid
