@@ -218,7 +218,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `runPVT`                      | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR)                                                                                         |
 | `runPipeline`                 | Multiphase pipeline flow (Beggs & Brill)                                                                                                             |
 | `runFlowAssurance`            | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion                                                                                     |
-| `runChemistry`                | Open chemistry and integrity calculations for scale, corrosion, inhibitors, and scavengers                                                           |
+| `runChemistry`                | Open chemistry and integrity calculations for Pitzer qualification, scale, corrosion, inhibitors, and scavengers                                    |
 | `runWaterHammer`              | Water/liquid-hammer screening for valve closure, pump trip, and check-valve scenarios                                                                |
 | `runRootCauseAnalysis`        | Ranked equipment root-cause hypotheses from reliability, historian, STID, and simulation evidence                                                    |
 | `runMaterialsReview`          | Process-wide material selection, degradation, CUI, and remaining-life review from process/STID data                                                  |

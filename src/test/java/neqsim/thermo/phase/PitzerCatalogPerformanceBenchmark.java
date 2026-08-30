@@ -2,6 +2,7 @@ package neqsim.thermo.phase;
 
 import java.util.Arrays;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
+import neqsim.mcp.runners.ChemistryRunner;
 import neqsim.thermo.component.ComponentGePitzer;
 import neqsim.thermo.component.IapwsHenryLaw;
 import neqsim.thermo.system.SystemPitzer;
@@ -10,6 +11,10 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Manual median benchmark for the PHREEQC catalog kernel, complete aqueous properties, and neutral SRK control. */
 public final class PitzerCatalogPerformanceBenchmark {
   private static volatile double sink;
+  private static final String QUALIFICATION_REQUEST = "{\"analysis\":\"pitzerQualification\","
+      + "\"temperature_K\":298.15,\"pressure_bara\":1.01325,\"dataset\":\"phreeqc-na-k-cl\","
+      + "\"validationTarget\":\"AQUEOUS_ACTIVITY_COEFFICIENTS\","
+      + "\"components\":{\"water\":55.508,\"Na+\":0.5,\"K+\":0.5,\"Cl-\":1.0}}";
 
   private PitzerCatalogPerformanceBenchmark() {
   }
@@ -57,6 +62,12 @@ public final class PitzerCatalogPerformanceBenchmark {
     System.out.println("neutralSrkBeforeCatalogNs=" + neutralBeforeCatalog);
     System.out.println("neutralSrkAfterCatalogNs=" + neutralAfterCatalog);
     System.out.println("neutralCatalogLoadedRatio=" + (double) neutralAfterCatalog / neutralBeforeCatalog);
+
+    for (int warmup = 0; warmup < 100; warmup++) {
+      sink += qualificationViewChecksum();
+    }
+    System.out.println("pitzerQualificationViewNs="
+        + medianBatches(PitzerCatalogPerformanceBenchmark::qualificationViewChecksum, 100));
 
     SystemPitzer reactivePitzer = createReactiveH2sSystem(298.15);
     ChemicalReaction h2sReaction = reactivePitzer.getChemicalReactionOperations().getReactionList()
@@ -126,6 +137,10 @@ public final class PitzerCatalogPerformanceBenchmark {
   private static double iapwsHenryKernelChecksum() {
     return IapwsHenryLaw.getHenryCoefficientBar("CH4", 298.15)
         + IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("CH4", 298.15);
+  }
+
+  private static double qualificationViewChecksum() {
+    return ChemistryRunner.run(QUALIFICATION_REQUEST).hashCode();
   }
 
   private static double neutralPropertyChecksum(SystemSrkEos system) {
