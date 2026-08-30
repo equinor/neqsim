@@ -63,10 +63,11 @@ The first full-sheet benchmark inspection found that instrument bubbles intersec
 data bars and sat outside the generated battery limit. The layout now reserves 55 mm above an
 equipment centre for instruments and expands the battery-limit envelope through the highest bubble;
 an exact coordinate regression protects both clearances. Re-rendered simple, branched, and
-recycle/control cases show separated bubbles and data bars inside the boundary. Recycle connectivity
-remains limited by the current Proteus topology projection: the recycle equipment symbol and tag are
-present, but a complete routed return line is not inferred from simulation state. That is a writer
-semantics gap, not an SVG primitive loss, and requires a separate topology change.
+recycle/control cases show separated bubbles and data bars inside the boundary. Recycle connectivity is projected when the recycle block exposes a configured outlet through the
+standard equipment outlet API and a downstream unit consumes that same stream identity. The benchmark
+asserts the directed recycle-to-mixer connection in the Proteus XML before rendering. The writer does
+not infer a return line from convergence state: an unconfigured outlet remains absent, and no fluid
+state or connection is invented.
 
 Run the focused regression with the repository Maven wrapper:
 
