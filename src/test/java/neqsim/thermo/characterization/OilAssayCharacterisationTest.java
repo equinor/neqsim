@@ -71,6 +71,43 @@ public class OilAssayCharacterisationTest {
   }
 
   @Test
+  public void testBulkSpecificGravityUsesResolvedMassAndVolumeBases() {
+    SystemInterface massSystem = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation massAssay = massSystem.getOilAssayCharacterisation();
+    massAssay.clearCuts();
+    massAssay.addCut(new AssayCut("MassLight").withMassFraction(0.25).withSpecificGravity(0.80));
+    massAssay.addCut(new AssayCut("MassHeavy").withMassFraction(0.75).withSpecificGravity(0.90));
+
+    double expectedMassBasisSpecificGravity = 1.0 / (0.25 / 0.80 + 0.75 / 0.90);
+    assertEquals(expectedMassBasisSpecificGravity, massAssay.getBulkSpecificGravity(), 1e-12);
+    assertEquals(141.5 / expectedMassBasisSpecificGravity - 131.5, massAssay.getBulkApiGravity(), 1e-12);
+    assertEquals(0, massSystem.getNumberOfComponents());
+
+    SystemInterface volumeSystem = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation volumeAssay = volumeSystem.getOilAssayCharacterisation();
+    volumeAssay.clearCuts();
+    volumeAssay.addCut(new AssayCut("VolumeLight").withVolumeFraction(0.25).withSpecificGravity(0.80));
+    volumeAssay.addCut(new AssayCut("VolumeHeavy").withVolumeFraction(0.75).withSpecificGravity(0.90));
+
+    double expectedVolumeBasisSpecificGravity = 0.25 * 0.80 + 0.75 * 0.90;
+    assertEquals(expectedVolumeBasisSpecificGravity, volumeAssay.getBulkSpecificGravity(), 1e-12);
+    assertEquals(0, volumeSystem.getNumberOfComponents());
+  }
+
+  @Test
+  public void testBulkSpecificGravityRejectsInvalidAssayWithoutMutation() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    assertThrows(IllegalStateException.class, characterisation::getBulkSpecificGravity);
+
+    characterisation.addCut(new AssayCut("MassCut").withMassFraction(0.5).withSpecificGravity(0.80));
+    characterisation.addCut(new AssayCut("VolumeCut").withVolumeFraction(0.5).withSpecificGravity(0.90));
+    assertThrows(IllegalStateException.class, characterisation::getBulkSpecificGravity);
+    assertEquals(0, system.getNumberOfComponents());
+  }
+
+  @Test
   public void testTotalMassScaling() {
     SystemInterface system = new SystemSrkEos(298.15, 10.0);
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
