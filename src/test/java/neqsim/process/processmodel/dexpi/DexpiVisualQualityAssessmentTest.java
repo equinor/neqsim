@@ -79,6 +79,11 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     assertTrue(report.getMetrics().get("componentInstances") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceTexts") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceCenterLines") > 0, report.toJson());
+    assertTrue(report.getMetrics().get("routedMaterialSegments") > 0, report.toJson());
+    assertEquals(report.getMetrics().get("routedMaterialSegments"),
+        report.getMetrics().get("sourceFlowDirectionArrows"), report.toJson());
+    assertEquals(report.getMetrics().get("sourceFlowDirectionArrows"),
+        report.getMetrics().get("renderedFilledFlowDirectionArrows"), report.toJson());
 
     Document exportedDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpi.toFile());
     assertTrue(hasDirectedEquipmentConnection(exportedDocument, "ID-50-RC-001", "ID-50-MX-001"),
@@ -112,6 +117,28 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     assertEquals(1, report.getMetrics().get("duplicateIds"));
     assertEquals(1, report.getMetrics().get("outOfBoundsCoordinates"));
     assertEquals(report.toJson(), DexpiVisualQualityAssessment.assess(dexpi.toFile()).toJson());
+  }
+
+  @Test
+  void reportsMissingFlowDirectionArrow() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        + "<PlantModel><PlantInformation SchemaVersion=\"4.1.1\"/>"
+        + "<Drawing Name=\"Missing arrow benchmark\"><Extent><Min X=\"0\" Y=\"0\"/>"
+        + "<Max X=\"100\" Y=\"70\"/></Extent></Drawing>"
+        + "<PipingNetworkSystem ID=\"PNS-1\"><PipingNetworkSegment ID=\"SEG-1\">"
+        + "<CenterLine><Coordinate X=\"10\" Y=\"20\"/><Coordinate X=\"90\" Y=\"20\"/>"
+        + "</CenterLine><Connection FromID=\"N-1\" ToID=\"N-2\"/>"
+        + "</PipingNetworkSegment></PipingNetworkSystem></PlantModel>";
+    Path dexpi = temporaryDirectory.resolve("missing-arrow.xml");
+    Files.write(dexpi, xml.getBytes(StandardCharsets.UTF_8));
+
+    DexpiVisualQualityAssessment.Report report = DexpiVisualQualityAssessment.assess(dexpi.toFile());
+
+    assertTrue(report.hasErrors());
+    assertTrue(hasFinding(report, "FLOW_DIRECTION_ARROW_MISSING"), report.toJson());
+    assertEquals(1, report.getMetrics().get("routedMaterialSegments"));
+    assertEquals(0, report.getMetrics().get("sourceFlowDirectionArrows"));
+    assertEquals(0, report.getMetrics().get("renderedFilledFlowDirectionArrows"));
   }
 
   @Test

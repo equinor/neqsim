@@ -211,6 +211,7 @@ public final class DexpiVisualQualityAssessment {
     assessInstances(document, shapes, svg, findings, metrics);
     assessCoordinates(document, extent, findings, metrics);
     assessText(document, findings, metrics);
+    assessFlowDirectionArrows(document, svg, findings, metrics);
 
     metrics.put("sourcePolylines", countOutsideCatalogue(document, "PolyLine"));
     metrics.put("sourceCenterLines", countOutsideCatalogue(document, "CenterLine"));
@@ -308,6 +309,50 @@ public final class DexpiVisualQualityAssessment {
     metrics.put("renderedInstances", rendered);
     metrics.put("missingShapeReferences", missingReferences);
     metrics.put("missingInstancePositions", missingPositions);
+  }
+
+  private static void assessFlowDirectionArrows(Document document, String svg, List<Finding> findings,
+      Map<String, Integer> metrics) {
+    NodeList segments = document.getElementsByTagName("PipingNetworkSegment");
+    int routedSegments = 0;
+    int sourceArrows = 0;
+    for (int index = 0; index < segments.getLength(); index++) {
+      Element segment = (Element) segments.item(index);
+      if (firstDirectChild(segment, "Connection") == null || firstDirectChild(segment, "CenterLine") == null) {
+        continue;
+      }
+      routedSegments++;
+      int segmentArrows = 0;
+      NodeList children = segment.getChildNodes();
+      for (int childIndex = 0; childIndex < children.getLength(); childIndex++) {
+        Node child = children.item(childIndex);
+        if (!(child instanceof Element)) {
+          continue;
+        }
+        Element primitive = (Element) child;
+        if ("PolyLine".equals(primitive.getTagName()) && "Solid".equalsIgnoreCase(primitive.getAttribute("Filled"))
+            && primitive.getElementsByTagName("Coordinate").getLength() >= 4) {
+          segmentArrows++;
+          sourceArrows++;
+        }
+      }
+      String identity = segment.getAttribute("ID").trim();
+      if (segmentArrows == 0) {
+        add(findings, Severity.ERROR, "FLOW_DIRECTION_ARROW_MISSING", identity,
+            "Routed material segment has no solid flow-direction arrow");
+      } else if (segmentArrows > 1) {
+        add(findings, Severity.WARNING, "FLOW_DIRECTION_ARROW_AMBIGUOUS", identity,
+            "Routed material segment has more than one solid flow-direction arrow");
+      }
+    }
+    int renderedArrows = occurrences(svg, "data-dexpi-filled=\"solid\"");
+    metrics.put("routedMaterialSegments", routedSegments);
+    metrics.put("sourceFlowDirectionArrows", sourceArrows);
+    metrics.put("renderedFilledFlowDirectionArrows", renderedArrows);
+    if (sourceArrows > renderedArrows) {
+      add(findings, Severity.ERROR, "FLOW_DIRECTION_ARROW_NOT_RENDERED", "",
+          "One or more solid source flow-direction arrows are absent from generated SVG");
+    }
   }
 
   private static void assessCoordinates(Document document, double[] extent, List<Finding> findings,
