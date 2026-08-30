@@ -2170,6 +2170,38 @@ behavior are unchanged, so no speedup is claimed. The matrix qualifies numerical
 contracts around the synthetic phase boundary; it does not validate the predicted boundary
 against experimental measurements.
 
+
+### 6.4.8 Water-bearing SRK-CPA well-fluid qualification
+
+The well-fluid regression uses `SystemSrkCPAstatoil` with mixing rule 10 and the
+existing public 28-component inventories from `TPFlashTestWellFluid`. The
+characterization contains methane through n-pentane, water, eight nonzero Frigg
+heavy fractions, and eight zero-inventory West-Central heavy-fraction identities.
+The base endpoint is 303.15 K and 65 bara. The water-rich endpoint replaces the
+component amounts with the established normalized molar composition and runs at
+339.04 K and 1.5 bara. Temperature is in kelvin, pressure is absolute bar, density
+is in kg/m3, and component inputs are amounts or normalized mole fractions.
+
+The discoverable qualification requires finite bounded phase fractions and
+compositions, phase and beta normalization within `1e-12`, component material
+balance below `1e-10`, maximum comparable interphase log-fugacity residual below
+`1e-8`, positive compressibility and density, and finite Gibbs energy and
+enthalpy. The water-rich endpoint retains its established phase-zero density
+reference of `1.432253736300898 kg/m3` within `1e-5 kg/m3`. Phase comparisons
+are ordered by water mole fraction and density so phase-array ordering cannot hide
+a lifecycle mismatch.
+
+Both endpoints must recover from beta values within `1e-12` of a bound, remain
+closed at tightly nearby pressure or temperature, match a fresh calculation after
+a changed state, return to the reference state, and repeat deterministically.
+The two JUnit tests execute a fixed matrix of complete SRK-CPA flashes. This
+replaces a class outside Surefire's default discovery pattern and a no-assertion
+method with enforceable thermodynamic contracts. The fixed workload is performance
+evidence only; production solver code, public APIs, parameters, defaults, and
+runtime behavior are unchanged, so no speedup is claimed. The public repository
+composition is numerical regression provenance, not independent experimental
+validation of the well-fluid characterization or CPA parameters.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
