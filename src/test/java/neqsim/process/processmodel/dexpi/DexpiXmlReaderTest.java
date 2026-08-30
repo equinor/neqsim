@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.EquipmentEnum;
@@ -123,5 +125,38 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiRoundTripProfile.ValidationResult result = DexpiRoundTripProfile.minimalRunnableProfile().validate(process);
     assertFalse(result.isSuccessful());
     assertTrue(result.getViolations().size() >= 2, "Expected at least 2 violations (no stream, no equipment)");
+  }
+
+  @Test
+  public void testReadWithDiagnosticsReportsUnsupportedObjectsDeterministically() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel><Equipment>"
+        + "<PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"E-1\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"E-1\"/>"
+        + "</GenericAttributes></PlateHeatExchanger>"
+        + "<ProjectSpecificObject ComponentClass=\"OwnerCustomPackage\" ID=\"X-1\"/>"
+        + "<UnclassifiedObject ID=\"X-2\"/>" + "</Equipment></PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(1, first.getProcessSystem().getAllUnitNames().size());
+    assertNotNull(first.getProcessSystem().getUnit("E-1"));
+    assertTrue(first.hasLosses());
+    assertFalse(first.hasErrors());
+    assertEquals(2, first.getDiagnostics().size());
+    assertEquals("DEXPI_IMPORT_COMPONENT_UNSUPPORTED", first.getDiagnostics().get(0).getCode());
+    assertEquals("X-1", first.getDiagnostics().get(0).getElementId());
+    assertEquals("OwnerCustomPackage", first.getDiagnostics().get(0).getComponentClass());
+    assertEquals("ProjectSpecificObject", first.getDiagnostics().get(0).getElementName());
+    assertEquals(DexpiXmlReader.ImportDiagnosticSeverity.WARNING, first.getDiagnostics().get(0).getSeverity());
+    assertEquals("DEXPI_IMPORT_COMPONENT_CLASS_MISSING", first.getDiagnostics().get(1).getCode());
+    assertEquals("X-2", first.getDiagnostics().get(1).getElementId());
+    assertEquals(first.toJson(), second.toJson());
+    assertTrue(first.toJson().contains("neqsim_dexpi_proteus_import.v1"));
+
+    ProcessSystem legacy = DexpiXmlReader.read(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    assertEquals(first.getProcessSystem().getAllUnitNames(), legacy.getAllUnitNames());
   }
 }
