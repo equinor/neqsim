@@ -156,22 +156,32 @@ def simple_process(client):
 
 
 def test_current_phase0_boundary(client):
-    """Freeze the pre-promotion accounting so qualification cannot overclaim maturity."""
+    """Freeze the atomic promoted accounting without overstating maturity."""
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
-    require(inventory.get("inventoryVersion") == "1.19", "unexpected inventory version", inventory)
+    require(inventory.get("inventoryVersion") == "1.20", "unexpected inventory version", inventory)
     limitations = inventory.get("knownLimitations", {})
     require(
-        limitations.get("contractTestedToolCount") == 17
-        and limitations.get("confirmedGapToolCount") == 34,
-        "pre-promotion trust accounting drifted",
+        limitations.get("contractTestedToolCount") == 18
+        and limitations.get("confirmedGapToolCount") == 33,
+        "promoted trust accounting drifted",
         limitations,
     )
     record = limitations.get("coverageRecords", {}).get("manageSession", {})
     require(
-        record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification PR must not prematurely promote manageSession",
+        record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_SESSION_LIFECYCLE"
+        and any(
+            source.endswith("SessionRunnerContractTest.java")
+            for source in record.get("contractEvidenceSources", [])
+        )
+        and any(
+            source.endswith("test_session_protocol.py")
+            for source in record.get("contractEvidenceSources", [])
+        ),
+        "manageSession promotion evidence drifted",
         record,
     )
 

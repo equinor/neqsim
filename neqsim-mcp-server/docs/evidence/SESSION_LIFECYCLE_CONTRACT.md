@@ -1,6 +1,6 @@
 # MCP session lifecycle contract evidence
 
-`manageSession` is the existing stateful MCP façade for incremental work on a canonical NeqSim `ProcessSystem`. This note records the bounded Phase 0 software-contract evidence added for issue #3153. It does not promote the tool's trust classification by itself.
+`manageSession` is the existing stateful MCP façade for incremental work on a canonical NeqSim `ProcessSystem`. This note records the bounded Phase 0 software-contract evidence for issue #3153 and the atomic inventory 1.20 promotion that uses it.
 
 ## Qualified software behavior
 
@@ -37,4 +37,4 @@ Executed results remain governed by their own units, provenance, convergence, va
 
 ## Phase 0 accounting boundary
 
-Inventory `1.19` remains `20 EXPLICIT_TRUST + 17 CONTRACT_TESTED + 34 CONFIRMED_GAP` in this qualification increment. `manageSession` deliberately remains `CONFIRMED_GAP` until this evidence is merged and a later atomic accounting change can promote the contract without implying scientific validation. The focused real-MCP test freezes that pre-promotion boundary to prevent accidental overclaiming.
+Inventory `1.20` classifies `manageSession` as `CONTRACT_TESTED` and moves the Phase 0 accounting atomically from `20 EXPLICIT_TRUST + 17 CONTRACT_TESTED + 34 CONFIRMED_GAP` to `20 + 18 + 33`. The machine-readable record, focused Java assertions, focused packaged-STDIO expectation, synchronized protocol harnesses and authoritative `test_mcp_server.py` accounting move together. This promotion establishes only the bounded lifecycle/ownership/transport contract described above; it does not imply scientific validation of calculations performed inside a session.
