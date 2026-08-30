@@ -37,7 +37,7 @@ public class DoeBigHillAtmosphericFractionationTest {
   private static final double[] UPPER_BOUNDARY_F = { 250.0, 375.0, 530.0, 650.0, 1050.0 };
   private static final double[] WEIGHT_PERCENT = { 8.6, 15.2, 15.2, 11.1, 30.3 };
   private static final double[] SPECIFIC_GRAVITY = { 0.7815, 0.8305, 0.8623, 0.9226, 0.9477 };
-  private static final int SIDE_DRAW_TRAY = 5;
+  private static final int SIDE_DRAW_TRAY = 4;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
   private static final double REPEAT_TOLERANCE = 1.0e-2;
 
@@ -119,9 +119,8 @@ public class DoeBigHillAtmosphericFractionationTest {
     column.addFeedStream(feed, 4);
     column.setTopPressure(1.2);
     column.setBottomPressure(1.5);
-    column.getCondenser().setOutTemperature(420.0);
-    column.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
-    column.getReboiler().setOutTemperature(690.0);
+    column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+    column.getReboiler().setOutTemperature(600.0);
     column.setCondenserRefluxRatio(1.0);
     column.setLiquidSideDrawFraction(SIDE_DRAW_TRAY, 0.10);
     column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
@@ -151,6 +150,8 @@ public class DoeBigHillAtmosphericFractionationTest {
     assertTrue(column.getMassBalanceError() <= BALANCE_TOLERANCE, column.getConvergenceDiagnostics());
     assertTrue(Double.isFinite(column.getEnergyBalanceError()));
     assertTrue(column.getEnergyBalanceError() <= BALANCE_TOLERANCE, column.getConvergenceDiagnostics());
+    assertTrue(column.getLastTrayMaterialBalanceError() <= column.getTrayMaterialBalanceTolerance(),
+        column.getConvergenceDiagnostics());
 
     assertComponentMolarBalance(feed, overhead, sideDraw, bottoms);
 

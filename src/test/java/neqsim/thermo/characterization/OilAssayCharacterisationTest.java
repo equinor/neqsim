@@ -29,7 +29,7 @@ public class OilAssayCharacterisationTest {
     characterisation.apply();
 
     double lightBoilingPoint = 200.0 + 273.15;
-    double expectedLightMolarMass = 5.805e-5 * Math.pow(lightBoilingPoint, 2.3776) / Math.pow(0.75, 0.9371);
+    double expectedLightMolarMass = 5.805e-5 * Math.pow(lightBoilingPoint, 2.3776) / Math.pow(0.75, 0.9371) / 1000.0;
     ComponentInterface lightComponent = system.getComponent("Light_PC");
     assertNotNull(lightComponent);
     assertEquals(expectedLightMolarMass, lightComponent.getMolarMass(), 1e-8);
@@ -37,7 +37,8 @@ public class OilAssayCharacterisationTest {
 
     double heavyDensity = 141.5 / (25.0 + 131.5) * 0.999016;
     double heavyBoilingPoint = 350.0 + 273.15;
-    double expectedHeavyMolarMass = 5.805e-5 * Math.pow(heavyBoilingPoint, 2.3776) / Math.pow(heavyDensity, 0.9371);
+    double expectedHeavyMolarMass = 5.805e-5 * Math.pow(heavyBoilingPoint, 2.3776) / Math.pow(heavyDensity, 0.9371)
+        / 1000.0;
     ComponentInterface heavyComponent = system.getComponent("Heavy_PC");
     assertNotNull(heavyComponent);
     assertEquals(expectedHeavyMolarMass, heavyComponent.getMolarMass(), 1e-8);
@@ -82,9 +83,11 @@ public class OilAssayCharacterisationTest {
     characterisation.apply();
 
     double boilingPoint = 300.0 + 273.15;
-    double expectedMolarMass = 5.805e-5 * Math.pow(boilingPoint, 2.3776) / Math.pow(0.82, 0.9371);
+    double expectedMolarMass = 5.805e-5 * Math.pow(boilingPoint, 2.3776) / Math.pow(0.82, 0.9371) / 1000.0;
     ComponentInterface component = system.getComponent("Assay_PC");
     assertNotNull(component);
+    assertTrue(component.getMolarMass() > 0.05 && component.getMolarMass() < 1.0,
+        "Derived petroleum-cut molar mass should remain on the kg/mol scale");
     assertEquals(2.0 / expectedMolarMass, component.getNumberOfmoles(), 1e-8);
     assertEquals(2.0, component.getNumberOfmoles() * component.getMolarMass(), 1e-10);
   }
@@ -235,7 +238,7 @@ public class OilAssayCharacterisationTest {
     characterisation.apply();
 
     double boilingPoint = 300.0 + 273.15;
-    double expectedMolarMass = 5.805e-5 * Math.pow(boilingPoint, 2.3776) / Math.pow(0.85, 0.9371);
+    double expectedMolarMass = 5.805e-5 * Math.pow(boilingPoint, 2.3776) / Math.pow(0.85, 0.9371) / 1000.0;
     assertEquals(expectedMolarMass, system.getComponent("DensityUnits_PC").getMolarMass(), 1e-10);
   }
 

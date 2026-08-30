@@ -37,7 +37,7 @@ Accordingly, this is an **integration and numerical-robustness qualification**, 
 
 1. Build an SRK system from the normalized measured DOE mass yields, cut specific gravities, and finite boiling ranges using `OilAssayCharacterisation`.
 2. Generate the five real NeqSim TBP pseudo-components.
-3. Feed the resulting broad-boiling slate to an eight-tray `DistillationColumn` with a reboiler, total condenser, and one liquid side draw.
+3. Feed the resulting broad-boiling slate to an eight-tray `DistillationColumn` with a reboiler, partial condenser, and one liquid side draw.
 4. Solve at near-atmospheric pressure with the residual-monitored `MESH_RESIDUAL` column solver; the solved state must satisfy the active full-MESH residual gate and guarded fallback products are not accepted.
 5. Re-run the same initialized column to qualify repeatability rather than accepting a one-off solution.
 
@@ -52,13 +52,13 @@ The operating point is deliberately a reproducible **screening case**, not a rec
 | Feed tray | 4, bottom-up |
 | Top pressure | 1.2 bara |
 | Bottom pressure | 1.5 bara |
-| Condenser mode | Total |
-| Condenser temperature | 420 K |
-| Reboiler temperature | 690 K |
+| Condenser mode | Partial |
+| Condenser temperature | Solved; no fixed set point |
+| Reboiler temperature | 600 K |
 | Condenser reflux ratio | 1.0 |
-| Liquid side draw | 10% of tray-5 liquid traffic |
+| Liquid side draw | 10% of tray-4 liquid traffic |
 
-All five bounded DOE fractions are condensable petroleum cuts, so the benchmark uses a total condenser and returns part of the liquid condensate as reflux rather than requiring a noncondensed vapor overhead. The 420 K set point lies between the representative normal-boiling temperatures of the first two bounded cuts (373.4 K and 429.0 K), preserving a physically ordered screening split.
+The condenser remains partial and no fixed condenser-temperature specification is imposed. Top pressure and reflux ratio define the terminal controls while the top temperature remains a solved equilibrium/energy-balance result. Fixing both condenser temperature and reflux ratio overconstrains this broad-boiling screening case and can leave a thermally converged-looking profile with open tray material balances. The 600 K equilibrium-reboiler set point lies inside the bounded assay range and below the representative normal-boiling temperature of the heaviest cut, preserving both vapor traffic and a positive heavy bottoms product.
 
 `MESH_RESIDUAL` uses inside-out initialization followed by rigorous residual monitoring. Interior tray temperatures remain solver variables governed by the stage energy balances. No tuning to a commercial process simulator is used.
 
@@ -68,6 +68,7 @@ The regression requires all of the following on each accepted solve:
 
 - the column reports a solved state from `MESH_RESIDUAL`, not guarded fallback products;
 - the full MESH infinity norm satisfies the solver's active residual tolerance;
+- the maximum normalized per-tray component material imbalance satisfies the column's dedicated tolerance;
 - overhead, liquid side draw, and bottoms are finite and strictly positive;
 - external mass closure is within **5%**;
 - `DistillationColumn.getMassBalanceError()` is finite and no greater than **5%**;

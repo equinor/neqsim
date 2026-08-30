@@ -40,6 +40,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final double ASSAY_CLOSURE_TOLERANCE = 1e-3;
   private static final double PERCENT_TOLERANCE = 1e-8;
   private static final double KELVIN_OFFSET = 273.15;
+  private static final double GRAMS_PER_KILOGRAM = 1000.0;
   private static final double WATER_DENSITY_60F_G_CC = 0.999016;
 
   private transient SystemInterface system;
@@ -767,7 +768,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      *
      * <p>
      * If no explicit molar mass is stored, the existing NeqSim inverse petroleum correlation is used with density and
-     * representative boiling point.
+     * representative boiling point. The inverse petroleum correlation returns a g/mol-sized value, which is converted
+     * to the kg/mol unit required by {@link SystemInterface#addTBPfraction(String, double, double, double)}.
      * </p>
      *
      * @param density specific gravity / g/cm3 numeric value
@@ -783,7 +785,9 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
       double exponent = 2.3776;
       double densityExponent = 0.9371;
-      return 5.805e-5 * Math.pow(boilingPointKelvin, exponent) / Math.pow(density, densityExponent);
+      double molarMassGramPerMol = 5.805e-5 * Math.pow(boilingPointKelvin, exponent)
+          / Math.pow(density, densityExponent);
+      return molarMassGramPerMol / GRAMS_PER_KILOGRAM;
     }
 
     @Override
