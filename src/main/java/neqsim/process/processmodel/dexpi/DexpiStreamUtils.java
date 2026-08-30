@@ -31,8 +31,8 @@ public final class DexpiStreamUtils {
    * <p>
    * For separators, this returns the gas outlet stream. For splitters, it returns the first split stream. For streams,
    * it returns the stream itself. For all other TwoPortEquipment (compressor, pump, valve, heater, cooler, expander,
-   * heat exchanger), it returns the outlet stream directly. Equipment such as recycle blocks that expose their
-   * primary outlet only through the standard {@code getOutletStreams()} API use the first declared outlet.
+   * heat exchanger), it returns the outlet stream directly. Equipment such as recycle blocks that expose their primary
+   * outlet only through the standard {@code getOutletStreams()} API use the first declared outlet.
    * </p>
    *
    * @param equipment the process equipment
