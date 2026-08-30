@@ -137,6 +137,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Refinery Assay and TBP Cut Characterization](refinery_assay)
 - [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
 - [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
+- [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation)
 - [Fluid Characterization Guide](../../wiki/fluid_characterization)
 - [TBP Fraction Models](../../wiki/tbp_fraction_models)
 - [PVT Fluid Characterization](../pvt_fluid_characterization)

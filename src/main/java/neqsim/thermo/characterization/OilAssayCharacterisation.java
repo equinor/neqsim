@@ -185,6 +185,51 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   }
 
   /**
+   * Reconstruct the bulk assay specific gravity from the configured cut yields and densities.
+   *
+   * <p>
+   * The calculation uses ideal additive liquid volumes. For resolved cut mass fractions {@code w_i} and cut specific
+   * gravities {@code SG_i}, the bulk value is {@code 1 / sum(w_i / SG_i)}. The same expression is used for mass- and
+   * liquid-volume-basis assays after the existing basis and closure validation has been applied. No thermodynamic
+   * component is created or modified.
+   * </p>
+   *
+   * <p>
+   * This is a screening property at the density reference conditions represented by the cut inputs. It does not apply
+   * temperature correction, excess-volume, or blend-contraction models.
+   * </p>
+   *
+   * @return reconstructed dimensionless bulk specific gravity
+   * @throws IllegalStateException if the assay is empty, incomplete, mixed-basis, or lacks a cut density
+   */
+  public double getBulkSpecificGravity() {
+    if (cuts.isEmpty()) {
+      throw new IllegalStateException("No assay cuts supplied");
+    }
+
+    double[] massFractions = resolveMassFractions();
+    double reciprocalBulkSpecificGravity = 0.0;
+    for (int i = 0; i < cuts.size(); i++) {
+      reciprocalBulkSpecificGravity += massFractions[i] / cuts.get(i).resolveDensity();
+    }
+
+    if (!Double.isFinite(reciprocalBulkSpecificGravity) || !(reciprocalBulkSpecificGravity > 0.0)) {
+      throw new IllegalStateException("Unable to reconstruct bulk specific gravity from assay cuts");
+    }
+    return 1.0 / reciprocalBulkSpecificGravity;
+  }
+
+  /**
+   * Reconstruct the bulk assay API gravity from {@link #getBulkSpecificGravity()}.
+   *
+   * @return reconstructed bulk gravity in degrees API
+   * @throws IllegalStateException if bulk specific gravity cannot be reconstructed
+   */
+  public double getBulkApiGravity() {
+    return 141.5 / getBulkSpecificGravity() - 131.5;
+  }
+
+  /**
    * Generate TBP pseudo-components for all configured cuts and add them to the attached system.
    *
    * <p>
