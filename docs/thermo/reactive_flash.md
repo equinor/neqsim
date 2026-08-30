@@ -3,8 +3,6 @@ title: "Reactive Flash: Simultaneous Chemical and Phase Equilibrium"
 description: "Guide to the Modified RAND method for simultaneous chemical and phase equilibrium in NeqSim. Covers single-phase chemical equilibrium, multiphase VLE+CE, ionic reactions in aqueous systems, auto-discovery of reaction products, and reactive PH/PS flash (isenthalpic/isentropic) for adiabatic reactor temperature calculation."
 ---
 
-# Reactive Flash: Simultaneous Chemical and Phase Equilibrium
-
 ## Overview
 
 The reactive flash solves **simultaneous chemical equilibrium (CE) and phase equilibrium (PE)** by minimizing the total Gibbs energy subject to element balance constraints. Unlike stoichiometric methods that require explicit reactions and equilibrium constants, this **non-stoichiometric approach** (Modified RAND method) only needs the elemental composition of each component — reactions are discovered automatically from the formula matrix.

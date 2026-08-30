@@ -3,8 +3,6 @@ title: "Reaction Model Audit"
 description: "Compare active chemical reactions and parameter provenance across electrolyte EOS and GE models without changing the calculation path."
 ---
 
-# Reaction Model Audit
-
 NeqSim can use chemical-reaction equilibrium together with electrolyte EOS models such as Electrolyte-CPA and electrolyte GE models such as Pitzer. Electrolyte EOS models select the `STANDARD` mole-fraction reaction-data source, `SystemPitzer` selects the dedicated `PITZER` molality-standard-state source, and `SystemKentEisenberg` selects the dedicated `KENT_EISENBERG` apparent-constant source.
 
 A shared reaction name or stoichiometry is not evidence that its equilibrium constants, activity convention, or validity range transfer between thermodynamic models. Capture the actual initialized state with `ChemicalReactionModelAudit` before changing model-specific reactions.

@@ -3,8 +3,6 @@ title: "Finite-rate Evaporation and Gas Dissolution in Pipelines"
 description: "Maxwell-Stefan mass transfer, heat transfer, droplets, bubbles, films, slip, and completion distance."
 ---
 
-# Finite-rate Evaporation and Gas Dissolution in Pipelines
-
 ## What this model answers
 
 `PipelineEvaporationStudy` estimates the axial distance needed for an injected hydrocarbon liquid to fall below a
@@ -42,24 +40,15 @@ flux.
 
 For droplets, conservation of droplet number gives
 
-\[
-\frac{A_i}{L}=\frac{6\dot V_L}{u_L d_{32}}, \qquad
-d_{32}=d_{32,0}\left(\frac{\dot V_L}{\dot V_{L,0}}\right)^{1/3}.
-\]
+$$\frac{A_i}{L}=\frac{6\dot V_L}{u_L d_{32}}, \qquad d_{32}=d_{32,0}\left(\frac{\dot V_L}{\dot V_{L,0}}\right)^{1/3}.$$
 
 For a wall film,
 
-\[
-\frac{A_i}{L}=f_w\pi(D-2\delta), \qquad
-\delta=\delta_0\frac{\dot V_L}{\dot V_{L,0}}.
-\]
+$$\frac{A_i}{L}=f_w\pi(D-2\delta), \qquad \delta=\delta_0\frac{\dot V_L}{\dot V_{L,0}}.$$
 
 For bubbles, the equivalent conserved-population relation is
 
-\[
-\frac{A_i}{L}=\frac{6\dot V_G}{u_G d_{32}}, \qquad
-d_{32}=d_{32,0}\left(\frac{\dot V_G}{\dot V_{G,0}}\right)^{1/3}.
-\]
+$$\frac{A_i}{L}=\frac{6\dot V_G}{u_G d_{32}}, \qquad d_{32}=d_{32,0}\left(\frac{\dot V_G}{\dot V_{G,0}}\right)^{1/3}.$$
 
 The geometry follows total liquid-phase volume, so gas absorbed into the liquid can grow a droplet or film even while
 the tracked injected material evaporates. Completion still uses only the mass provenance of the initial liquid phase.
@@ -83,9 +72,7 @@ profile for dense dispersions, churn/slug flow, annular films, and cases governe
 
 The component update over a step is
 
-\[
-\Delta\dot n_i=N_i A_i,
-\]
+$$\Delta\dot n_i=N_i A_i,$$
 
 with equal and opposite changes in the two phases. Donor inventories are bounded so component flows cannot become
 negative. Separate gas and liquid enthalpy targets use the boundary heat fluxes; optional wall heat is added to the gas

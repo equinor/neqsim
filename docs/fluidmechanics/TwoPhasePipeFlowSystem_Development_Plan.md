@@ -3,8 +3,6 @@ title: Two-Phase Mass Transfer Pipeline Development Plan
 description: This document outlines the development plan for enhancing the `TwoPhasePipeFlowSystem` to become a general-purpose two-phase mass and heat transfer pipeline simulation tool. The implementation is base...
 ---
 
-# Two-Phase Mass Transfer Pipeline Development Plan
-
 ## Overview
 
 This document outlines the development plan for enhancing the `TwoPhasePipeFlowSystem` to become a general-purpose two-phase mass and heat transfer pipeline simulation tool. The implementation is based on the non-equilibrium thermodynamics approach described in Solbraa (2002) and uses the Krishna-Standart film model for interphase mass transfer.

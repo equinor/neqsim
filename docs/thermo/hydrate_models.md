@@ -4,8 +4,6 @@ description: "This document describes the gas hydrate thermodynamic models imple
 keywords: "hydrate, gas hydrate, hydrate formation, hydrate curve, hydrate inhibitor, MEG, methanol, flow assurance, van der Waals, Platteeuw, hydrate equilibrium"
 ---
 
-# Hydrate Models in NeqSim
-
 This document describes the gas hydrate thermodynamic models implemented in NeqSim for predicting hydrate formation, stability, and phase equilibrium.
 
 ## Table of Contents

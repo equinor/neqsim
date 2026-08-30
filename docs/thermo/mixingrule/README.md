@@ -3,8 +3,6 @@ title: "Mixing Rules Package"
 description: "Documentation for mixing rules in NeqSim equations of state."
 ---
 
-# Mixing Rules Package
-
 Documentation for mixing rules in NeqSim equations of state.
 
 ## Table of Contents

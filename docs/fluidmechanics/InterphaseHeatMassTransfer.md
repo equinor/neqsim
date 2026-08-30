@@ -3,8 +3,6 @@ title: Interphase Multicomponent Mass and Heat Transfer in Two-Phase Pipe Flow
 description: This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. Th...
 ---
 
-# Interphase Multicomponent Mass and Heat Transfer in Two-Phase Pipe Flow
-
 ## Overview
 
 This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. The approach is based on **non-equilibrium thermodynamics** where the gas and liquid phases are not assumed to be in thermodynamic equilibrium at the interface.

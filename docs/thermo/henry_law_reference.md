@@ -30,14 +30,14 @@ boundary as
 
 $$k_H(T)=\lim_{x_i\rightarrow0}\frac{f_i}{x_i}.$$
 
-With \(T_r=T/T_c\), \(\tau=1-T_r\), and water saturation pressure \(p^*\),
+With $T_r=T/T_c$, $\tau=1-T_r$, and water saturation pressure $p^*$,
 
 $$\ln\left(\frac{k_H}{p^*}\right)
  =\frac{A}{T_r}+\frac{B\tau^{0.355}}{T_r}
   +C T_r^{-0.41}\exp(\tau).$$
 
-The implementation returns \(k_H\) in bar and provides the analytical
-\(\mathrm{d}\ln k_H/\mathrm{d}T\) required by fugacity derivatives. It reports
+The implementation returns $k_H$ in bar and provides the analytical
+$\mathrm{d}\ln k_H/\mathrm{d}T$ required by fugacity derivatives. It reports
 whether a requested state is inside the species-specific fitted range, a
 guideline extrapolation, unsupported, or outside the liquid-water correlation
 domain. A supported species outside the domain fails closed.
@@ -46,10 +46,10 @@ Pitzer neutral activities use a molality standard state. At infinite dilution,
 
 $$H_m=k_H M_{\mathrm{water}},$$
 
-where \(M_{\mathrm{water}}=0.01801528\) kg/mol. The existing \(m_i/x_i\)
+where $M_{\mathrm{water}}=0.01801528$ kg/mol. The existing $m_i/x_i$
 conversion then maps the Pitzer expression back to the common
 mole-fraction/fugacity kernel. The constant conversion leaves
-\(\mathrm{d}\ln H/\mathrm{d}T\) unchanged.
+$\mathrm{d}\ln H/\mathrm{d}T$ unchanged.
 
 The coherent family is identified as `iapws-g7-04-water-gases-v1`.
 Ordinary runtime evaluation accepts only the published species-specific fitted
@@ -115,8 +115,8 @@ published root-mean-square deviation in `ln(kH)`.
 
 The Pitzer decision depends on component topology, not the instantaneous ionic
 strength. Consequently a reaction solve cannot change reference models merely
-because trace ions appear or disappear. Pitzer \(\lambda\), \(\zeta\), \(\mu\),
-and \(\eta\) interactions remain distinct parameter families. CO2 and H2S also
+because trace ions appear or disappear. Pitzer $\lambda$, $\zeta$, $\mu$,
+and $\eta$ interactions remain distinct parameter families. CO2 and H2S also
 require a qualified neutral family before Pitzer changes their reference, even
 before reaction species have been added. This prevents initialization order
 from seeding a reactive calculation with a temporarily different standard
@@ -149,7 +149,7 @@ species.
 | USGS PHREEQC 3.9.0, [`pitzer.dat` provenance and license](pitzer_parameter_provenance.md) | ionic and neutral Pitzer interaction families | molality scale, PHREEQC six-term temperature functions, explicit tuple topology | USGS release is public domain; exact release/commit/blob are recorded in the linked matrix | confirms that a pure-water Henry constant is not a substitute for missing neutral-ion terms; no Pitzer value adopted here |
 | Kaasa (1998), [stable National Library item](https://www.nb.no/items/d1d68b489b8ee6704786a011fd2e7283) | oil-recovery-brine Pitzer binary, same-sign, ternary, and neutral families | Appendix F is a provenance index with its own coefficient order and row-level source lineage | scan-table redistribution terms are unresolved; original pages were not retrievable from the public item in this run | metadata/provenance index only; no value inferred, OCRed, copied, or adopted |
 
-The IAPWS high-temperature root-mean-square deviations in \(\ln k_H\) range
+The IAPWS high-temperature root-mean-square deviations in $\ln k_H$ range
 from 0.0039 for CO to 0.0577 for Ne. These source residuals describe the
 correlation fit; they are not NeqSim regression tolerances or independent
 held-out validation.
@@ -220,7 +220,7 @@ Publication-quality aqueous/electrolyte predictions still require:
 2. held-out pure-water and brine solubility over temperature, pressure, ionic
    strength, and salt composition;
 3. reactive CO2/H2S material balance, electroneutrality, and
-   \(\max|\ln(Q/K)|\);
+   $\max|\ln(Q/K)|$;
 4. VLE/VLLE fugacity closure, stable topology, normalized non-negative phases,
    and nearby-state trends;
 5. deterministic repeated and changed-state execution, stale-state protection,

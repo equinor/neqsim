@@ -3,8 +3,6 @@ title: H2S Distribution Modeling in NeqSim
 description: Comprehensive guide to modeling hydrogen sulfide (H2S) distribution between gas, oil, and water phases using various equations of state including SRK, PR, CPA, and electrolyte models with chemical reactions.
 ---
 
-# H2S Distribution Modeling in NeqSim
-
 > **Related Resources:**
 > - For a quick overview with Python examples, see [H2S Distribution Guide (quick)](H2S_distribution_guide)
 > - For a hands-on Python notebook, see [H2S Distribution Modeling Tutorial](../examples/H2S_Distribution_Modeling)

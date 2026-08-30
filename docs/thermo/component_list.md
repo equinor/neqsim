@@ -3,8 +3,6 @@ title: NeqSim Component Reference List
 description: Complete list of all components available in NeqSim including hydrocarbons, gases, water, glycols, amines, and plus fractions. Includes component names, CAS numbers, and EoS availability.
 ---
 
-# NeqSim Component Reference List
-
 This document provides a comprehensive list of all components available in NeqSim. Use the exact component name (case-insensitive) when adding components to your fluid.
 
 ## Quick Reference

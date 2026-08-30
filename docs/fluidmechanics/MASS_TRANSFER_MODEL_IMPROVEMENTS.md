@@ -3,8 +3,6 @@ title: Mass Transfer Model Review and Improvement Recommendations
 description: This document provides a technical review of NeqSim's evaporation and dissolution model, identifying specific areas for improvement in accuracy, stability, and usability.
 ---
 
-# Mass Transfer Model Review and Improvement Recommendations
-
 ## Executive Summary
 
 This document provides a technical review of NeqSim's evaporation and dissolution model, identifying specific areas for improvement in accuracy, stability, and usability.

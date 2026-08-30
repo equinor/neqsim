@@ -3,8 +3,6 @@ title: "Droplet and Bubble Flow Mass/Heat Transfer Correlations"
 description: "Detailed documentation of the InterphaseDropletFlow class implementing Ranz-Marshall, Kronig-Brink, and Abramzon-Sirignano correlations for dispersed two-phase pipe flow in NeqSim."
 ---
 
-# Droplet and Bubble Flow Mass/Heat Transfer Correlations
-
 ## Overview
 
 The `InterphaseDropletFlow` class provides interphase transport coefficient correlations for **dispersed flow regimes** — droplet (mist) flow and bubble flow — where one phase exists as discrete particles in a continuous carrier phase.

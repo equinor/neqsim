@@ -3,8 +3,6 @@ title: "Adsorption Isotherm Models"
 description: "Complete mathematical reference for all adsorption isotherm models in NeqSim: Langmuir, Extended Langmuir, BET, Freundlich, Sips (Langmuir-Freundlich), and Dubinin-Radushkevich-Astakhov (DRA) potential theory. Covers equilibrium thermodynamics, temperature dependence, multi-component competition, and parameter estimation."
 ---
 
-# Adsorption Isotherm Models
-
 NeqSim provides six adsorption isotherm models for calculating gas–solid equilibrium on porous adsorbents. Each model captures different physics — from ideal monolayer coverage to heterogeneous surfaces and micropore filling — and can be selected via the `IsothermType` enum.
 
 **Package:** `neqsim.physicalproperties.interfaceproperties.solidadsorption`
