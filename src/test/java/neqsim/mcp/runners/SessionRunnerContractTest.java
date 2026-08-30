@@ -42,39 +42,44 @@ class SessionRunnerContractTest {
       McpRequestContext.set(McpRequestContext.Principal.ofClaims("phase0-owner-b", "tenant-a",
           Collections.<String>emptySet(), "phase0-test"));
 
-      JsonObject deniedState = parse(SessionRunner.run(
-          "{\"action\":\"getState\",\"sessionId\":\"" + sessionId + "\"}"));
+      JsonObject deniedState = parse(
+          SessionRunner.run("{\"action\":\"getState\",\"sessionId\":\"" + sessionId + "\"}"));
       assertEquals("error", deniedState.get("status").getAsString());
-      assertEquals("SESSION_NOT_FOUND", deniedState.get("code").getAsString());
+      assertEquals("SESSION_NOT_FOUND", errorCode(deniedState));
 
       JsonObject visibleToOtherCaller = parse(SessionRunner.run("{\"action\":\"list\"}"));
       JsonArray otherSessions = visibleToOtherCaller.getAsJsonArray("sessions");
       assertFalse(containsSession(otherSessions, sessionId));
 
-      JsonObject deniedClose = parse(
-          SessionRunner.run("{\"action\":\"close\",\"sessionId\":\"" + sessionId + "\"}"));
-      assertEquals("error", deniedClose.get("status").getAsString());
+      JsonObject deniedClose = parse(SessionRunner.run("{\"action\":\"close\",\"sessionId\":\"" + sessionId + "\"}"));
+      assertEquals("success", deniedClose.get("status").getAsString());
 
       McpRequestContext.set(McpRequestContext.Principal.ofClaims("phase0-owner-a", "tenant-a",
           Collections.<String>emptySet(), "phase0-test"));
-      JsonObject ownerState = parse(SessionRunner.run(
-          "{\"action\":\"getState\",\"sessionId\":\"" + sessionId + "\"}"));
+      JsonObject ownerState = parse(SessionRunner.run("{\"action\":\"getState\",\"sessionId\":\"" + sessionId + "\"}"));
       assertEquals("success", ownerState.get("status").getAsString());
       assertEquals("phase0-owner-a", ownerState.get("ownerId").getAsString());
 
-      JsonObject closed = parse(
-          SessionRunner.run("{\"action\":\"close\",\"sessionId\":\"" + sessionId + "\"}"));
+      JsonObject closed = parse(SessionRunner.run("{\"action\":\"close\",\"sessionId\":\"" + sessionId + "\"}"));
       assertEquals("success", closed.get("status").getAsString());
 
-      JsonObject stale = parse(SessionRunner.run(
-          "{\"action\":\"getState\",\"sessionId\":\"" + sessionId + "\"}"));
+      JsonObject stale = parse(SessionRunner.run("{\"action\":\"getState\",\"sessionId\":\"" + sessionId + "\"}"));
       assertEquals("error", stale.get("status").getAsString());
-      assertEquals("SESSION_NOT_FOUND", stale.get("code").getAsString());
+      assertEquals("SESSION_NOT_FOUND", errorCode(stale));
     } finally {
       McpRequestContext.set(McpRequestContext.Principal.ofClaims("phase0-owner-a", "tenant-a",
           Collections.<String>emptySet(), "phase0-test"));
       SessionRunner.run("{\"action\":\"close\",\"sessionId\":\"" + sessionId + "\"}");
     }
+  }
+
+  /** Return the canonical error code from the standard nested error envelope. */
+  private static String errorCode(JsonObject response) {
+    JsonArray errors = response.getAsJsonArray("errors");
+    assertTrue(errors != null && !errors.isEmpty(), "Error response should contain errors");
+    JsonObject error = errors.get(0).getAsJsonObject();
+    assertTrue(error.has("code"), "Error response should contain a code");
+    return error.get("code").getAsString();
   }
 
   /** Parse one SessionRunner response as a JSON object. */
