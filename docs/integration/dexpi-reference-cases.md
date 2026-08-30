@@ -42,10 +42,36 @@ provenance, expected counts, engineering state, and qualification boundaries.
 multi-area delivery of controlled semantic JSON, assessed DEXPI, native SVG/PDF, content hashes,
 visual fingerprints, and structured projection losses.
 
+`DexpiVisualQualityAssessmentTest` expands the fixed rendering benchmark with the same simple,
+branched, and per-area cases plus a mixer/heater/splitter/recycle/control-loop case and an isolated
+empty topology placeholder. Every sheet is exported only through NeqSim's Proteus-compatible DEXPI
+writer and rendered from its actual graphical primitives. The suite checks:
+
+- exact Proteus `SchemaVersion 4.1.1` reporting without describing the document as native DEXPI
+  XML 2.0;
+- stable catalogue references, component identities, locations, line/curve/text primitives, SVG
+  identity projection, and SHA-256 fingerprints;
+- drawing bounds, duplicate IDs, minimum text-height risks, missing symbols, and empty SVG output;
+- deterministic report JSON and SVG output across repeated exports; and
+- preservation of an intentionally unconfigured stream through `ProcessSystem.run()` without
+  inventing a fluid state.
+
+The structural gate complements, but does not replace, full-sheet and readable-detail PNG visual
+inspection. It distinguishes renderer/layout defects from missing source-model engineering data.
+
+The first full-sheet benchmark inspection found that instrument bubbles intersected full equipment
+data bars and sat outside the generated battery limit. The layout now reserves 55 mm above an
+equipment centre for instruments and expands the battery-limit envelope through the highest bubble;
+an exact coordinate regression protects both clearances. Re-rendered simple, branched, and
+recycle/control cases show separated bubbles and data bars inside the boundary. Recycle connectivity
+remains limited by the current Proteus topology projection: the recycle equipment symbol and tag are
+present, but a complete routed return line is not inferred from simulation state. That is a writer
+semantics gap, not an SVG primitive loss, and requires a separate topology change.
+
 Run the focused regression with the repository Maven wrapper:
 
 ```bash
-./mvnw -Dtest=EngineeringDiagramReferenceCasesTest,EngineeringDiagramDeliveryTest test
+./mvnw -Dtest=EngineeringDiagramReferenceCasesTest,EngineeringDiagramDeliveryTest,DexpiVisualQualityAssessmentTest test
 ```
 
 ## Explicit limitations

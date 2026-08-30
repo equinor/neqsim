@@ -61,7 +61,7 @@ final class DexpiLayoutEngine {
   /** Vertical offset from equipment center to top of bar label. */
   private static final double BAR_OFFSET_Y = 22.0;
   /** Vertical offset from process line to instrument bubble center. */
-  static final double INSTRUMENT_OFFSET_Y = 45.0;
+  static final double INSTRUMENT_OFFSET_Y = 55.0;
   /** Horizontal spacing between instrument bubbles on the same equipment. */
   static final double INSTRUMENT_X_SPACING = 15.0;
   /** Radius of instrument bubble for connection point calculations. */
@@ -1954,7 +1954,10 @@ final class DexpiLayoutEngine {
     double bLeft = minX - BATTERY_LIMIT_PADDING;
     double bRight = maxX + BATTERY_LIMIT_PADDING;
     double bBottom = minY - BATTERY_LIMIT_PADDING;
-    double bTop = maxY + BATTERY_LIMIT_PADDING;
+    // Enclose instrument bubbles and their signal-line endpoints as well as equipment symbols.
+    // The previous equipment-only padding crossed both bubbles and full equipment data bars.
+    double instrumentEnvelope = INSTRUMENT_OFFSET_Y + INSTRUMENT_BUBBLE_RADIUS + 5.0;
+    double bTop = maxY + Math.max(BATTERY_LIMIT_PADDING, instrumentEnvelope);
 
     Element label = document.createElement("Label");
     label.setAttribute("ID", "BatteryLimit-1");
