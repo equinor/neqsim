@@ -2202,8 +2202,9 @@ public final class DexpiXmlWriter {
    *
    * <p>
    * Each transmitter becomes a {@code ProcessInstrumentationFunction} with a {@code ProcessSignalGeneratingFunction}
-   * child. Controllers that share a loop tag with a transmitter are linked via {@code SignalConveyingFunction} and
-   * {@code ActuatingFunction}. Finally, an {@code InstrumentationLoopFunction} groups each loop's elements.
+   * child. Controllers that share a loop tag with a transmitter are linked through {@code InformationFlow} elements
+   * classified as {@code SignalLineFunction}, together with an {@code ActuatingFunction}. Finally, an
+   * {@code InstrumentationLoopFunction} groups each loop's elements.
    * </p>
    *
    * @param document the XML document
