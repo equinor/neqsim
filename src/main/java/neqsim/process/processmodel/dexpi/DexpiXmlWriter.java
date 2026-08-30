@@ -38,6 +38,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
@@ -656,6 +657,7 @@ public final class DexpiXmlWriter {
     // Auto-collect instruments from ProcessSystem if not explicitly provided
     Map<String, MeasurementDeviceInterface> effectiveTransmitters = transmitters;
     Map<String, ControllerDeviceInterface> effectiveControllers = controllers;
+    boolean synthesizedInstrumentation = false;
     if ((effectiveTransmitters == null || effectiveTransmitters.isEmpty())
         && !processSystem.getMeasurementDevices().isEmpty()) {
       effectiveTransmitters = new LinkedHashMap<>();
@@ -687,11 +689,12 @@ public final class DexpiXmlWriter {
         effectiveControllers = new LinkedHashMap<>();
       }
       synthesizeStandardInstrumentation(processSystem, effectiveTransmitters, effectiveControllers);
+      synthesizedInstrumentation = true;
     }
 
     if (effectiveTransmitters != null && !effectiveTransmitters.isEmpty()) {
       appendInstruments(document, root, effectiveTransmitters, effectiveControllers, usedIds, layoutPositions,
-          nozzlePositions, processSystem);
+          nozzlePositions, equipmentInletNozzle, outletStreamToNozzle, processSystem, synthesizedInstrumentation);
     }
 
     // Collect stream data for stream table
@@ -1865,12 +1868,16 @@ public final class DexpiXmlWriter {
    * @param usedIds set of already used XML IDs
    * @param layoutPositions equipment layout positions keyed by equipment name
    * @param nozzlePositions nozzle positions keyed by nozzle ID
+   * @param equipmentInletNozzle inlet nozzle IDs keyed by equipment name
+   * @param outletStreamToNozzle outlet nozzle IDs keyed by stream identity
    * @param processSystem the process system for stream-to-equipment matching
+   * @param synthesizedInstrumentation whether the complete instrument set was synthesized as a proposal
    */
   private static void appendInstruments(Document document, Element parent,
       Map<String, MeasurementDeviceInterface> transmitters, Map<String, ControllerDeviceInterface> controllers,
       Set<String> usedIds, Map<String, DexpiLayoutEngine.EquipmentPosition> layoutPositions,
-      Map<String, double[]> nozzlePositions, ProcessSystem processSystem) {
+      Map<String, double[]> nozzlePositions, Map<String, String> equipmentInletNozzle,
+      Map<Integer, String> outletStreamToNozzle, ProcessSystem processSystem, boolean synthesizedInstrumentation) {
 
     // Group transmitters by parent equipment for correct positioning
     Map<String, List<String>> equipmentTransmitters = new LinkedHashMap<>();
@@ -1914,6 +1921,9 @@ public final class DexpiXmlWriter {
         cy = pos[1];
         hasPosition = true;
       }
+      String measurementTargetId =
+          findMeasurementTargetNozzle(device, processSystem, equipmentInletNozzle, outletStreamToNozzle);
+      double[] measurementTap = measurementTargetId == null ? null : nozzlePositions.get(measurementTargetId);
 
       // ProcessInstrumentationFunction (the instrument bubble)
       String pifId = uniqueIdentifier("ProcessInstrumentationFunction", tag, usedIds);
@@ -1941,6 +1951,10 @@ public final class DexpiXmlWriter {
             new String[] { "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions" });
         appendInstrumentLabelText(document, label, loopNumber, cx, cy - 1.2, pifId,
             new String[] { "ProcessInstrumentationFunctionNumber" });
+        if (synthesizedInstrumentation) {
+          appendInstrumentLabelText(document, label, "PROP", cx, cy + 6.0, pifId,
+              new String[] { "EngineeringStatus" });
+        }
 
         pif.appendChild(label);
       }
@@ -1953,6 +1967,16 @@ public final class DexpiXmlWriter {
       appendGenericAttribute(document, pifAttrs, "ProcessInstrumentationFunctionsAssignmentClass", functions);
       appendGenericAttribute(document, pifAttrs, DexpiMetadata.TAG_NAME, tag);
       appendGenericAttribute(document, pifAttrs, "MeasurementUnit", device.getUnit());
+      appendGenericAttribute(document, pifAttrs, "InstrumentationRole", "TRANSMITTER");
+      appendGenericAttribute(document, pifAttrs, "InstrumentationSource",
+          synthesizedInstrumentation ? "SYNTHESIZED_PROPOSAL" : "EXPLICIT_MODEL");
+      appendGenericAttribute(document, pifAttrs, "EngineeringStatus",
+          synthesizedInstrumentation ? "PROPOSED" : "MODELLED");
+      appendGenericAttribute(document, pifAttrs, "MeasurementAttachmentStatus",
+          measurementTap == null ? "MISSING_SOURCE_DATA" : "ATTACHED_TO_PROCESS_NOZZLE");
+      if (measurementTargetId != null) {
+        appendGenericAttribute(document, pifAttrs, "MeasurementAttachmentTargetID", measurementTargetId);
+      }
       // ISA-5.1 tag conformance check: flag non-conforming instrument tags so the diagram and the
       // exported data record the deviation rather than silently emitting an invalid tag.
       IsaTagValidator.ValidationResult tagCheck = IsaTagValidator.validate(tag);
@@ -1999,8 +2023,8 @@ public final class DexpiXmlWriter {
         pif.appendChild(assocEnd);
       }
 
-      // InformationFlow with CenterLine from process line to instrument bubble
-      if (hasPosition && eqPos != null) {
+      // InformationFlow with CenterLine from the authoritative process nozzle to the instrument bubble.
+      if (hasPosition && measurementTap != null) {
         Element infoFlow = document.createElement("InformationFlow");
         infoFlow.setAttribute("ID", mlfId);
         infoFlow.setAttribute("ComponentClass", "MeasuringLineFunction");
@@ -2011,12 +2035,22 @@ public final class DexpiXmlWriter {
         assocStart.setAttribute("ItemID", psgfId);
         infoFlow.appendChild(assocStart);
 
+        Element processAttachment = document.createElement("Association");
+        processAttachment.setAttribute("Type", "is attached to");
+        processAttachment.setAttribute("ItemID", measurementTargetId);
+        infoFlow.appendChild(processAttachment);
+
         Element assocEndInner = document.createElement("Association");
         assocEndInner.setAttribute("Type", "has logical end");
         assocEndInner.setAttribute("ItemID", pifId);
         infoFlow.appendChild(assocEndInner);
 
-        DexpiLayoutEngine.appendMeasuringLine(document, infoFlow, cx, eqPos.y, cx, cy);
+        Element attachmentAttrs = document.createElement("GenericAttributes");
+        attachmentAttrs.setAttribute("Set", "InstrumentAttachment");
+        appendGenericAttribute(document, attachmentAttrs, "MeasurementAttachmentTargetID", measurementTargetId);
+        infoFlow.appendChild(attachmentAttrs);
+
+        DexpiLayoutEngine.appendMeasuringLine(document, infoFlow, measurementTap[0], measurementTap[1], cx, cy);
 
         pif.appendChild(infoFlow);
       }
@@ -2062,6 +2096,14 @@ public final class DexpiXmlWriter {
       }
 
       String controllerPifId = null;
+      ProcessEquipmentInterface finalControlElement =
+          matchedController == null ? null : findManipulatedEquipment(matchedController, processSystem);
+      String finalControlElementId =
+          finalControlElement == null ? null : findEquipmentElementId(parent, finalControlElement.getName());
+      DexpiLayoutEngine.EquipmentPosition finalControlPosition =
+          finalControlElement == null ? null : layoutPositions.get(finalControlElement.getName());
+      boolean hasFinalControlElement =
+          finalControlElementId != null && finalControlPosition != null;
       if (matchedController != null) {
         // SignalConveyingFunction on the transmitter PIF
         String scfId = uniqueIdentifier("SignalConveyingFunction", tag, usedIds);
@@ -2070,17 +2112,20 @@ public final class DexpiXmlWriter {
         scf.setAttribute("ComponentClass", "SignalConveyingFunction");
         pif.appendChild(scf);
 
-        // ActuatingFunction on the transmitter PIF
-        String afId = uniqueIdentifier("ActuatingFunction", controllerTag, usedIds);
-        Element af = document.createElement("ActuatingFunction");
-        af.setAttribute("ID", afId);
-        af.setAttribute("ComponentClass", "ActuatingFunction");
+        if (hasFinalControlElement) {
+          // ActuatingFunction is emitted only when the model identifies a real manipulated element.
+          String afId = uniqueIdentifier("ActuatingFunction", controllerTag, usedIds);
+          Element af = document.createElement("ActuatingFunction");
+          af.setAttribute("ID", afId);
+          af.setAttribute("ComponentClass", "ActuatingFunction");
 
-        Element afAttrs = document.createElement("GenericAttributes");
-        afAttrs.setAttribute("Set", "DexpiAttributes");
-        appendGenericAttribute(document, afAttrs, "ActuatingFunctionNumberAssignmentClass", controllerTag);
-        af.appendChild(afAttrs);
-        pif.appendChild(af);
+          Element afAttrs = document.createElement("GenericAttributes");
+          afAttrs.setAttribute("Set", "DexpiAttributes");
+          appendGenericAttribute(document, afAttrs, "ActuatingFunctionNumberAssignmentClass", controllerTag);
+          appendGenericAttribute(document, afAttrs, "FinalControlElementID", finalControlElementId);
+          af.appendChild(afAttrs);
+          pif.appendChild(af);
+        }
 
         // Controller bubble (separate ProcessInstrumentationFunction)
         String[] ctrlParsed = parseIsaTag(controllerTag);
@@ -2092,7 +2137,7 @@ public final class DexpiXmlWriter {
         ctrlPif.setAttribute("ID", controllerPifId);
         ctrlPif.setAttribute("ComponentClass", "ProcessInstrumentationFunction");
         ctrlPif.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunction");
-        ctrlPif.setAttribute("ComponentName", DexpiShapeCatalog.INSTRUMENT_BUBBLE_FIELD_SHAPE);
+        ctrlPif.setAttribute("ComponentName", DexpiShapeCatalog.INSTRUMENT_BUBBLE_CENTRAL_SHAPE);
 
         // Position controller bubble to the right of the transmitter bubble
         double ctrlCx = cx + DexpiLayoutEngine.INSTRUMENT_X_SPACING;
@@ -2125,6 +2170,18 @@ public final class DexpiXmlWriter {
             loopNumber);
         appendGenericAttribute(document, ctrlAttrSet, "ProcessInstrumentationFunctionsAssignmentClass", ctrlFunctions);
         appendGenericAttribute(document, ctrlAttrSet, DexpiMetadata.TAG_NAME, controllerTag);
+        appendGenericAttribute(document, ctrlAttrSet, "InstrumentationRole", "CONTROLLER");
+        appendGenericAttribute(document, ctrlAttrSet, "ControllerLocation", "SHARED_CONTROL_SYSTEM");
+        appendGenericAttribute(document, ctrlAttrSet, "InstrumentationSource",
+            synthesizedInstrumentation ? "SYNTHESIZED_PROPOSAL" : "EXPLICIT_MODEL");
+        appendGenericAttribute(document, ctrlAttrSet, "EngineeringStatus",
+            synthesizedInstrumentation ? "PROPOSED" : "MODELLED");
+        appendGenericAttribute(document, ctrlAttrSet, "ControlLoopStatus",
+            hasFinalControlElement ? "CLOSED_MODELLED" : "MEASUREMENT_ONLY_MISSING_FINAL_ELEMENT");
+        if (hasFinalControlElement) {
+          appendGenericAttribute(document, ctrlAttrSet, "FinalControlElementID", finalControlElementId);
+          appendGenericAttribute(document, ctrlAttrSet, "FinalControlElementTag", finalControlElement.getName());
+        }
         ctrlPif.appendChild(ctrlAttrSet);
 
         // PID tuning parameters
@@ -2164,18 +2221,28 @@ public final class DexpiXmlWriter {
               DexpiLayoutEngine.SignalLineKind.ELECTRIC);
           ctrlPif.appendChild(sigFlow);
 
-          // Signal line from controller bubble down to the process line (to the valve)
-          String actuateFlowId = uniqueIdentifier("ActuatingInformationFlow", controllerTag, usedIds);
-          Element actuateFlow = document.createElement("InformationFlow");
-          actuateFlow.setAttribute("ID", actuateFlowId);
-          actuateFlow.setAttribute("ComponentClass", "ActuatingSystemFunction");
-          actuateFlow.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ActuatingSystemFunction");
+          if (hasFinalControlElement) {
+            String actuateFlowId = uniqueIdentifier("ActuatingInformationFlow", controllerTag, usedIds);
+            Element actuateFlow = document.createElement("InformationFlow");
+            actuateFlow.setAttribute("ID", actuateFlowId);
+            actuateFlow.setAttribute("ComponentClass", "ActuatingSystemFunction");
+            actuateFlow.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ActuatingSystemFunction");
 
-          // Command side (controller -> final control element): ISA-5.1 pneumatic signal.
-          DexpiLayoutEngine.appendSignalLine(document, actuateFlow, ctrlCx, ctrlCy, ctrlCx,
-              eqPos != null ? eqPos.y : cy - DexpiLayoutEngine.INSTRUMENT_OFFSET_Y,
-              DexpiLayoutEngine.SignalLineKind.PNEUMATIC);
-          ctrlPif.appendChild(actuateFlow);
+            Element finalElementAssociation = document.createElement("Association");
+            finalElementAssociation.setAttribute("Type", "has logical end");
+            finalElementAssociation.setAttribute("ItemID", finalControlElementId);
+            actuateFlow.appendChild(finalElementAssociation);
+
+            Element finalElementAttrs = document.createElement("GenericAttributes");
+            finalElementAttrs.setAttribute("Set", "InstrumentAttachment");
+            appendGenericAttribute(document, finalElementAttrs, "FinalControlElementID", finalControlElementId);
+            actuateFlow.appendChild(finalElementAttrs);
+
+            // Command side (controller -> final control element): ISA-5.1 pneumatic signal.
+            DexpiLayoutEngine.appendSignalLine(document, actuateFlow, ctrlCx, ctrlCy, finalControlPosition.x,
+                finalControlPosition.y, DexpiLayoutEngine.SignalLineKind.PNEUMATIC);
+            ctrlPif.appendChild(actuateFlow);
+          }
         }
 
         parent.appendChild(ctrlPif);
@@ -2192,6 +2259,14 @@ public final class DexpiXmlWriter {
       Element loopAttrs = document.createElement("GenericAttributes");
       loopAttrs.setAttribute("Set", "DexpiAttributes");
       appendGenericAttribute(document, loopAttrs, DexpiMetadata.LOOP_NUMBER, loopNumber);
+      appendGenericAttribute(document, loopAttrs, "InstrumentationSource",
+          synthesizedInstrumentation ? "SYNTHESIZED_PROPOSAL" : "EXPLICIT_MODEL");
+      appendGenericAttribute(document, loopAttrs, "ControlLoopStatus",
+          matchedController == null ? "MEASUREMENT_ONLY"
+              : hasFinalControlElement ? "CLOSED_MODELLED" : "MEASUREMENT_ONLY_MISSING_FINAL_ELEMENT");
+      if (hasFinalControlElement) {
+        appendGenericAttribute(document, loopAttrs, "FinalControlElementID", finalControlElementId);
+      }
       loop.appendChild(loopAttrs);
 
       Element loopAssoc = document.createElement("Association");
@@ -2415,6 +2490,82 @@ public final class DexpiXmlWriter {
         }
         if (fluidHash > 0 && s.getFluid() != null && System.identityHashCode(s.getFluid()) == fluidHash) {
           return eq.getName();
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Resolves the registered process nozzle measured by a stream-based transmitter.
+   *
+   * @return stable nozzle ID, or {@code null} when the source model does not identify an attachment
+   */
+  private static String findMeasurementTargetNozzle(MeasurementDeviceInterface device, ProcessSystem processSystem,
+      Map<String, String> equipmentInletNozzle, Map<Integer, String> outletStreamToNozzle) {
+    if (!(device instanceof StreamMeasurementDeviceBaseClass) || processSystem == null) {
+      return null;
+    }
+    StreamInterface measuredStream = ((StreamMeasurementDeviceBaseClass) device).getStream();
+    if (measuredStream == null) {
+      return null;
+    }
+    String outletNozzle = outletStreamToNozzle.get(Integer.valueOf(System.identityHashCode(measuredStream)));
+    if (outletNozzle != null) {
+      return outletNozzle;
+    }
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      for (StreamInterface inlet : unit.getInletStreams()) {
+        if (inlet == measuredStream) {
+          return equipmentInletNozzle.get(unit.getName());
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds the equipment function that owns the supplied controller.
+   *
+   * @return manipulated equipment, or {@code null} when the controller is standalone
+   */
+  private static ProcessEquipmentInterface findManipulatedEquipment(ControllerDeviceInterface controller,
+      ProcessSystem processSystem) {
+    if (controller == null || processSystem == null) {
+      return null;
+    }
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      for (ControllerDeviceInterface configured : unit.getControllers()) {
+        if (configured == controller || configured != null && controller.getName().equals(configured.getName())) {
+          return unit;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds an already-emitted equipment or piping-component identity by its tag name.
+   *
+   * @return stable element ID, or {@code null} when the element is not present
+   */
+  private static String findEquipmentElementId(Element parent, String tagName) {
+    if (tagName == null) {
+      return null;
+    }
+    NodeList elements = parent.getElementsByTagName("*");
+    for (int index = 0; index < elements.getLength(); index++) {
+      Element candidate = (Element) elements.item(index);
+      String identity = candidate.getAttribute("ID");
+      if (identity == null || identity.trim().isEmpty()) {
+        continue;
+      }
+      NodeList attributes = candidate.getElementsByTagName("GenericAttribute");
+      for (int attributeIndex = 0; attributeIndex < attributes.getLength(); attributeIndex++) {
+        Element attribute = (Element) attributes.item(attributeIndex);
+        if (DexpiMetadata.TAG_NAME.equals(attribute.getAttribute("Name"))
+            && tagName.equals(attribute.getAttribute("Value"))) {
+          return identity;
         }
       }
     }
