@@ -125,11 +125,11 @@ The API-gravity conversion follows the conventional relation
 
 $$SG_{60/60}=\frac{141.5}{API+131.5}$$
 
-with the existing NeqSim 60 degF water-density reference. Negative API gravities are accepted when physically meaningful; the singular range at and below -131.5 degrees API is rejected.
+and stores the result as dimensionless specific gravity. Negative API gravities are accepted when physically meaningful; the singular range at and below -131.5 degrees API is rejected. This exact dimensionless handling corrects the earlier assay path, which additionally multiplied API-derived specific gravity by the water density and therefore made API- and specific-gravity-origin cuts differ by about 0.0985%.
 
 ### Reconstructed whole-assay density
 
-For a complete cut table, `getBulkSpecificGravity()` reconstructs the ideal additive-volume whole-assay specific gravity without creating pseudo-components or mutating the thermodynamic system. `getBulkApiGravity()` reports the corresponding degrees API. Both mass- and liquid-volume-basis assays use the same resolved relation:
+For a complete cut table, `getBulkSpecificGravity()` reconstructs the ideal additive-volume whole-assay specific gravity without creating pseudo-components or mutating the thermodynamic system. `getBulkApiGravity()` reports the corresponding degrees API. `getBulkDensityKgPerCubicMetreAt60F()` provides physical density at 60 degF by multiplying the dimensionless result by 999.016 kg/m3. Both mass- and liquid-volume-basis assays use the same resolved relation:
 
 $$SG_{bulk}=\left(\sum_i\frac{w_i}{SG_i}\right)^{-1}$$
 

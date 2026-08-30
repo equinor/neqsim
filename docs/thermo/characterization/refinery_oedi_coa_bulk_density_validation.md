@@ -72,3 +72,5 @@ The calculation uses the density reference condition represented by the source t
 The matrix intentionally does not create pseudo-components because the summary categories do not provide finite representative boiling points and molar masses for all terminal categories. This increment adds no production formula, coefficient tuning, terminal-cut extrapolation, TBP/ASTM conversion, column change, JSON/MCP schema, notebook, vacuum model, blending optimizer or conversion-unit model.
 
 Python uses the same authoritative Java methods through the normal NeqSim JVM gateway; no separate Python property equation is maintained.
+
+Physical density at 60 degF is available separately through `getBulkDensityKgPerCubicMetreAt60F()`, using 999.016 kg/m3 for water. API-gravity inputs remain dimensionless SG60/60 values and are not pre-multiplied by water density; this preserves exact API-to-SG round-tripping while keeping physical-density units explicit.

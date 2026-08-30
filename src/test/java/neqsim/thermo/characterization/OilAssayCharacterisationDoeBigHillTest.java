@@ -42,6 +42,16 @@ public class OilAssayCharacterisationDoeBigHillTest {
       double calculatedApi = 141.5 / SPECIFIC_GRAVITY[i] - 131.5;
       assertEquals(API_GRAVITY[i], calculatedApi, 0.05,
           "Published specific-gravity/API pair should agree within reported rounding");
+
+      SystemInterface system = new SystemSrkEos(298.15, 1.01325);
+      OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+      characterisation.clearCuts();
+      characterisation.addCut(new AssayCut("API_" + i).withMassFraction(1.0).withApiGravity(API_GRAVITY[i]));
+      double apiDerivedSpecificGravity = 141.5 / (API_GRAVITY[i] + 131.5);
+      assertEquals(apiDerivedSpecificGravity, characterisation.getBulkSpecificGravity(), 1e-12);
+      assertEquals(API_GRAVITY[i], characterisation.getBulkApiGravity(), 1e-12);
+      assertEquals(apiDerivedSpecificGravity * 999.016, characterisation.getBulkDensityKgPerCubicMetreAt60F(), 1e-9);
+      assertEquals(0, system.getNumberOfComponents());
     }
 
     double wholeCrudeApi = 141.5 / 0.8451 - 131.5;

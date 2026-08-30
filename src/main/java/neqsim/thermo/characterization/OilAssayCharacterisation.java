@@ -41,7 +41,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final double PERCENT_TOLERANCE = 1e-8;
   private static final double KELVIN_OFFSET = 273.15;
   private static final double GRAMS_PER_KILOGRAM = 1000.0;
-  private static final double WATER_DENSITY_60F_G_CC = 0.999016;
+  private static final double WATER_DENSITY_60F_KG_M3 = 999.016;
 
   private transient SystemInterface system;
   private double totalAssayMass = 1.0;
@@ -227,6 +227,22 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    */
   public double getBulkApiGravity() {
     return 141.5 / getBulkSpecificGravity() - 131.5;
+  }
+
+  /**
+   * Reconstruct the bulk assay density at 60 degF from {@link #getBulkSpecificGravity()}.
+   *
+   * <p>
+   * This method keeps dimensionless specific gravity separate from physical density. It uses a water density of 999.016
+   * kg/m3 at 60 degF and inherits the ideal-additive-volume assumptions and validation boundary of
+   * {@link #getBulkSpecificGravity()}.
+   * </p>
+   *
+   * @return reconstructed bulk density at 60 degF in kg/m3
+   * @throws IllegalStateException if bulk specific gravity cannot be reconstructed
+   */
+  public double getBulkDensityKgPerCubicMetreAt60F() {
+    return getBulkSpecificGravity() * WATER_DENSITY_60F_KG_M3;
   }
 
   /**
@@ -790,8 +806,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         return density;
       }
       if (apiGravity != null) {
-        double specificGravity = 141.5 / (apiGravity + 131.5);
-        return specificGravity * WATER_DENSITY_60F_G_CC;
+        return 141.5 / (apiGravity + 131.5);
       }
       throw new IllegalStateException("Density or API gravity required for cut " + name);
     }
