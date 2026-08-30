@@ -3,8 +3,6 @@ title: "Søreide-Whitson Model for Gas Solubility in Brine"
 description: "The Søreide-Whitson model is a modified Peng-Robinson equation of state specifically designed for predicting gas solubility in aqueous systems containing dissolved salts (brine). This model is essent..."
 ---
 
-# Søreide-Whitson Model for Gas Solubility in Brine
-
 ## Overview
 
 The Søreide-Whitson model is a modified Peng-Robinson equation of state specifically designed for predicting gas solubility in aqueous systems containing dissolved salts (brine). This model is essential for accurate prediction of hydrocarbon and acid gas solubility in produced water, formation water, and seawater—applications critical for offshore oil and gas operations, carbon capture and storage (CCS), and environmental emission calculations.

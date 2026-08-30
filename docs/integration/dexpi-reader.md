@@ -93,6 +93,35 @@ if (feedPump.getMappedEquipment() == EquipmentEnum.Pump) {
 }
 ```
 
+### Structured supported-subset diagnostics
+
+Use `readWithDiagnostics(...)` when an import must retain machine-readable evidence for source
+objects that the reader cannot reconstruct. The returned process is built by the same Java parser
+as `read(...)`; the additional report lists skipped objects in deterministic source-document order.
+
+```java
+DexpiXmlReader.ImportResult result =
+    DexpiXmlReader.readWithDiagnostics(xmlFile.toFile(), template);
+ProcessSystem process = result.getProcessSystem();
+
+for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+  System.out.printf("%s %s %s%n",
+      diagnostic.getSeverity(), diagnostic.getCode(), diagnostic.getElementId());
+}
+
+String evidenceJson = result.toJson();
+```
+
+The JSON uses the stable report schema `neqsim_dexpi_proteus_import.v1` and records the exact
+source ID, component class, XML element name, severity, and diagnostic code for every unsupported
+or unclassified equipment or piping-component object. Warnings describe honest supported-subset
+loss; malformed XML and parser failures still raise `DexpiXmlReaderException`. Existing `read(...)`
+and `load(...)` calls keep their previous behavior and logging.
+
+This evidence applies to NeqSim's Proteus-compatible DEXPI Plant/P&ID 4.1.1 supported subset. It is
+not proof of full semantic or graphical round-trip equivalence, native DEXPI 2.0 support, DEXPI
+certification, standards conformance, or engineering approval.
+
 Each imported equipment item is represented as a lightweight `DexpiProcessUnit` that records the
 original DEXPI class, mapped `EquipmentEnum` category, and contextual information (line numbers,
 fluid codes). Piping segments become `DexpiStream` objects that clone pressure, temperature, and

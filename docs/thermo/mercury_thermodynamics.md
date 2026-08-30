@@ -3,8 +3,6 @@ title: "Mercury Thermodynamics in NeqSim"
 description: "How to model elemental mercury (Hg0) in NeqSim using SRK-TwuCoon-Statoil-EOS, configure TPflash workflows, and use thesis-derived binary interaction parameters and correlations."
 ---
 
-# Mercury Thermodynamics in NeqSim
-
 This page describes practical workflows for modeling elemental mercury ($Hg^0$) in hydrocarbon systems with NeqSim.
 
 It is aligned with the PhD reference:

@@ -15,6 +15,11 @@ public final class PitzerCatalogPerformanceBenchmark {
       + "\"temperature_K\":298.15,\"pressure_bara\":1.01325,\"dataset\":\"phreeqc-na-k-cl\","
       + "\"validationTarget\":\"AQUEOUS_ACTIVITY_COEFFICIENTS\","
       + "\"components\":{\"water\":55.508,\"Na+\":0.5,\"K+\":0.5,\"Cl-\":1.0}}";
+  private static final String SCALE_EQUILIBRIUM_REQUEST = "{\"analysis\":\"electrolyteScaleEquilibrium\","
+      + "\"model\":\"pitzer\",\"dataset\":\"phreeqc-ca-mg-cl-so4\","
+      + "\"temperature_K\":298.15,\"pressure_bara\":1.01325,\"mineral\":\"CaSO4_A\","
+      + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,\"Mg++\":0.0,"
+      + "\"Cl-\":1.0,\"SO4--\":0.2}}";
 
   private PitzerCatalogPerformanceBenchmark() {
   }
@@ -68,6 +73,11 @@ public final class PitzerCatalogPerformanceBenchmark {
     }
     System.out.println("pitzerQualificationViewNs="
         + medianBatches(PitzerCatalogPerformanceBenchmark::qualificationViewChecksum, 100));
+    for (int warmup = 0; warmup < 3; warmup++) {
+      sink += scaleEquilibriumViewChecksum();
+    }
+    System.out.println("pitzerScaleEquilibriumViewNs="
+        + medianBatches(PitzerCatalogPerformanceBenchmark::scaleEquilibriumViewChecksum, 5));
 
     SystemPitzer reactivePitzer = createReactiveH2sSystem(298.15);
     ChemicalReaction h2sReaction = reactivePitzer.getChemicalReactionOperations().getReactionList()
@@ -141,6 +151,10 @@ public final class PitzerCatalogPerformanceBenchmark {
 
   private static double qualificationViewChecksum() {
     return ChemistryRunner.run(QUALIFICATION_REQUEST).hashCode();
+  }
+
+  private static double scaleEquilibriumViewChecksum() {
+    return ChemistryRunner.run(SCALE_EQUILIBRIUM_REQUEST).hashCode();
   }
 
   private static double neutralPropertyChecksum(SystemSrkEos system) {

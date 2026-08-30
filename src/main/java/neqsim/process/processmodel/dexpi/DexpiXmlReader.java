@@ -1,13 +1,16 @@
 package neqsim.process.processmodel.dexpi;
 
+import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +52,136 @@ public final class DexpiXmlReader {
 
   private static final Map<String, EquipmentEnum> EQUIPMENT_CLASS_MAP;
   private static final Map<String, EquipmentEnum> PIPING_COMPONENT_MAP;
+
+  /** Severity of one structured import diagnostic. */
+  public enum ImportDiagnosticSeverity {
+    /** Informational evidence that does not describe a loss. */
+    INFO,
+    /** A source object was unsupported or deliberately skipped. */
+    WARNING,
+    /** A condition prevented a reliable supported-subset import. */
+    ERROR
+  }
+
+  /** Immutable evidence for one unsupported or deliberately skipped source object. */
+  public static final class ImportDiagnostic implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final ImportDiagnosticSeverity severity;
+    private final String code;
+    private final String elementId;
+    private final String componentClass;
+    private final String elementName;
+    private final String message;
+
+    private ImportDiagnostic(ImportDiagnosticSeverity severity, String code, String elementId, String componentClass,
+        String elementName, String message) {
+      this.severity = severity;
+      this.code = code;
+      this.elementId = elementId == null ? "" : elementId;
+      this.componentClass = componentClass == null ? "" : componentClass;
+      this.elementName = elementName == null ? "" : elementName;
+      this.message = message;
+    }
+
+    /** @return diagnostic severity */
+    public ImportDiagnosticSeverity getSeverity() {
+      return severity;
+    }
+
+    /** @return stable machine-readable diagnostic code */
+    public String getCode() {
+      return code;
+    }
+
+    /** @return source XML element ID, or an empty string when absent */
+    public String getElementId() {
+      return elementId;
+    }
+
+    /** @return source component class, or an empty string when absent */
+    public String getComponentClass() {
+      return componentClass;
+    }
+
+    /** @return source XML element name */
+    public String getElementName() {
+      return elementName;
+    }
+
+    /** @return human-readable explanation */
+    public String getMessage() {
+      return message;
+    }
+
+    private Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("severity", severity.name());
+      result.put("code", code);
+      result.put("elementId", elementId);
+      result.put("componentClass", componentClass);
+      result.put("elementName", elementName);
+      result.put("message", message);
+      return result;
+    }
+  }
+
+  /** Reconstructed process plus deterministic supported-subset import evidence. */
+  public static final class ImportResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final ProcessSystem processSystem;
+    private final List<ImportDiagnostic> diagnostics;
+
+    private ImportResult(ProcessSystem processSystem, List<ImportDiagnostic> diagnostics) {
+      this.processSystem = processSystem;
+      this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
+    }
+
+    /** @return reconstructed process system using the same behavior as {@link #read(File)} */
+    public ProcessSystem getProcessSystem() {
+      return processSystem;
+    }
+
+    /** @return immutable diagnostics in deterministic source-document order */
+    public List<ImportDiagnostic> getDiagnostics() {
+      return diagnostics;
+    }
+
+    /** @return whether unsupported or deliberately skipped source content was observed */
+    public boolean hasLosses() {
+      return !diagnostics.isEmpty();
+    }
+
+    /** @return whether any import diagnostic has error severity */
+    public boolean hasErrors() {
+      for (ImportDiagnostic diagnostic : diagnostics) {
+        if (diagnostic.getSeverity() == ImportDiagnosticSeverity.ERROR) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /** @return deterministic automation-friendly representation excluding live simulation state */
+    public Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("schemaVersion", "neqsim_dexpi_proteus_import.v1");
+      result.put("profile", "Proteus-compatible DEXPI Plant/P&ID 4.1.1 supported subset");
+      result.put("importedUnitCount", Integer.valueOf(processSystem.getAllUnitNames().size()));
+      result.put("hasLosses", Boolean.valueOf(hasLosses()));
+      result.put("hasErrors", Boolean.valueOf(hasErrors()));
+      List<Map<String, Object>> diagnosticMaps = new ArrayList<Map<String, Object>>();
+      for (ImportDiagnostic diagnostic : diagnostics) {
+        diagnosticMaps.add(diagnostic.toMap());
+      }
+      result.put("diagnostics", diagnosticMaps);
+      return result;
+    }
+
+    /** @return deterministic pretty-printed JSON evidence */
+    public String toJson() {
+      return new GsonBuilder().setPrettyPrinting().create().toJson(toMap());
+    }
+  }
 
   static {
     // Load from properties files; fall back to built-in defaults if load fails
@@ -170,6 +303,66 @@ public final class DexpiXmlReader {
   }
 
   /**
+   * Reads a DEXPI XML file and returns the reconstructed process together with structured evidence for unsupported or
+   * skipped source objects.
+   *
+   * @param file DEXPI XML file
+   * @return reconstructed process and deterministic import diagnostics
+   * @throws IOException if the file cannot be read
+   * @throws DexpiXmlReaderException if the file cannot be parsed
+   */
+  public static ImportResult readWithDiagnostics(File file) throws IOException, DexpiXmlReaderException {
+    return readWithDiagnostics(file, null);
+  }
+
+  /**
+   * Reads a DEXPI XML file with a template stream and returns structured supported-subset evidence.
+   *
+   * @param file DEXPI XML file
+   * @param templateStream optional template for generated piping segments
+   * @return reconstructed process and deterministic import diagnostics
+   * @throws IOException if the file cannot be read
+   * @throws DexpiXmlReaderException if the file cannot be parsed
+   */
+  public static ImportResult readWithDiagnostics(File file, Stream templateStream)
+      throws IOException, DexpiXmlReaderException {
+    Objects.requireNonNull(file, "file");
+    logger.info("Reading DEXPI XML file with diagnostics: {}", file.getAbsolutePath());
+    try (InputStream inputStream = new FileInputStream(file)) {
+      return readWithDiagnostics(inputStream, templateStream);
+    }
+  }
+
+  /**
+   * Reads a DEXPI XML stream and returns structured supported-subset import evidence.
+   *
+   * @param inputStream stream containing DEXPI XML data
+   * @return reconstructed process and deterministic import diagnostics
+   * @throws IOException if the stream cannot be read
+   * @throws DexpiXmlReaderException if the stream cannot be parsed
+   */
+  public static ImportResult readWithDiagnostics(InputStream inputStream) throws IOException, DexpiXmlReaderException {
+    return readWithDiagnostics(inputStream, null);
+  }
+
+  /**
+   * Reads a DEXPI XML stream with a template stream and returns structured supported-subset evidence.
+   *
+   * @param inputStream stream containing DEXPI XML data
+   * @param templateStream optional template for generated piping segments
+   * @return reconstructed process and deterministic import diagnostics
+   * @throws IOException if the stream cannot be read
+   * @throws DexpiXmlReaderException if the stream cannot be parsed
+   */
+  public static ImportResult readWithDiagnostics(InputStream inputStream, Stream templateStream)
+      throws IOException, DexpiXmlReaderException {
+    ProcessSystem processSystem = new ProcessSystem("DEXPI process");
+    List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
+    loadInternal(inputStream, processSystem, templateStream, false, diagnostics);
+    return new ImportResult(processSystem, diagnostics);
+  }
+
+  /**
    * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML file.
    *
    * @param file XML file to parse
@@ -241,6 +434,11 @@ public final class DexpiXmlReader {
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware) throws IOException, DexpiXmlReaderException {
+    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null);
+  }
+
+  private static void loadInternal(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
+      boolean namespaceAware, List<ImportDiagnostic> diagnostics) throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
@@ -251,8 +449,9 @@ public final class DexpiXmlReader {
 
     Stream streamTemplate = templateOrDefault(templateStream);
 
-    addUnits(document, processSystem, "Equipment", EQUIPMENT_CLASS_MAP, DexpiMetadata.TAG_NAME);
-    addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP, "PipingComponentNumberAssignmentClass");
+    addUnits(document, processSystem, "Equipment", EQUIPMENT_CLASS_MAP, DexpiMetadata.TAG_NAME, diagnostics);
+    addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP, "PipingComponentNumberAssignmentClass",
+        diagnostics);
     addPipingSegments(document, processSystem, streamTemplate);
   }
 
@@ -436,7 +635,7 @@ public final class DexpiXmlReader {
   }
 
   private static void addUnits(Document document, ProcessSystem processSystem, String tagName,
-      Map<String, EquipmentEnum> equipmentMap, String nameAttribute) {
+      Map<String, EquipmentEnum> equipmentMap, String nameAttribute, List<ImportDiagnostic> diagnostics) {
     NodeList parentNodes = document.getElementsByTagName(tagName);
     logger.info("Found {} {} parent elements", parentNodes.getLength(), tagName);
 
@@ -460,6 +659,14 @@ public final class DexpiXmlReader {
         EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
         if (equipmentEnum == null) {
           logger.warn("Unsupported component class: {}", componentClass);
+          if (diagnostics != null) {
+            boolean missingClass = isBlank(componentClass);
+            diagnostics.add(new ImportDiagnostic(ImportDiagnosticSeverity.WARNING,
+                missingClass ? "DEXPI_IMPORT_COMPONENT_CLASS_MISSING" : "DEXPI_IMPORT_COMPONENT_UNSUPPORTED",
+                element.getAttribute("ID"), componentClass, element.getTagName(),
+                missingClass ? "Source object was skipped because ComponentClass is missing"
+                    : "Source object was skipped because its ComponentClass is not supported by this reader"));
+          }
           continue;
         }
 

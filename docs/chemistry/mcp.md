@@ -1,6 +1,6 @@
 ---
 title: "MCP Chemistry Tool Reference"
-description: "JSON schema reference for the runChemistry MCP tool exposed by the NeqSim MCP server. Covers Pitzer qualification, electrolyte scale prediction, mechanistic CO2 corrosion, Langmuir inhibitor dosing, and packed-bed H2S scavenger breakthrough."
+description: "JSON schema reference for the runChemistry MCP tool exposed by the NeqSim MCP server. Covers Pitzer qualification, activity-consistent electrolyte scale equilibrium, screening-scale prediction, corrosion, inhibitor dosing, and H2S scavenger breakthrough."
 ---
 
 # `runChemistry` MCP Tool Reference
@@ -87,6 +87,58 @@ The declared evidence envelopes and source/license matrix are recorded in
 [Pitzer parameter provenance](../thermo/pitzer_parameter_provenance.md). In
 particular, the PHREEQC `H2Sg`/`(H2Sg)2` source topology is not aliased to
 NeqSim `H2S`; it remains visibly incomplete.
+
+
+### `electrolyteScaleEquilibrium`
+
+Thin JSON/MCP adapter over the authoritative Java
+`ThermodynamicOperations.precipitateScale(String)` operation. It uses the
+selected Pitzer GE or electrolyte-CPA aqueous activity model, retains their
+distinct parameter semantics, and returns the pure-solid material ledger rather
+than inserting a NeqSim solid phase.
+
+| Field | Unit | Required / values |
+|-------|------|-------------------|
+| `temperature_K` | K | required, finite and positive |
+| `pressure_bara` | bara | required, finite and positive |
+| `components` | mol | required electroneutral object; positive water, finite non-negative amounts |
+| `model` | – | `pitzer` (default) or `electrolyte-cpa` |
+| `dataset` | – | for Pitzer: `phreeqc-ca-mg-cl-so4` (default) or `phreeqc-catalog`; not applicable to electrolyte CPA |
+| `mineral` | – | required pure COMPSALT name, for example `CaSO4_A` |
+
+The response reports precipitated mol and g, initial/final saturation ratio,
+pure-phase complementarity violation, maximum ion-ledger residual, aqueous
+charge/normalization evidence, dataset identity and qualification boundary.
+A successful response requires complementarity at most `1e-6`, ion-ledger
+residual at most `1e-10 mol`, charge residual at most
+`1e-10 mol/kg water`, and a finite, non-negative normalized aqueous phase.
+Inputs that mix a Pitzer dataset selector into electrolyte CPA fail closed.
+
+```json
+{
+  "analysis": "electrolyteScaleEquilibrium",
+  "model": "pitzer",
+  "dataset": "phreeqc-ca-mg-cl-so4",
+  "temperature_K": 298.15,
+  "pressure_bara": 1.01325,
+  "mineral": "CaSO4_A",
+  "components": {
+    "water": 55.508,
+    "Na+": 1.0,
+    "Ca++": 0.2,
+    "Mg++": 0.0,
+    "Cl-": 1.0,
+    "SO4--": 0.2
+  }
+}
+```
+
+The adapter is **design-support**, not a new parameter qualification. It sets
+`publicationReady: false` until an exact mixed-brine mineral evidence envelope
+is registered for the requested state. Pitzer coefficients are never reused as
+reaction constants, mineral log K values, SIT/eNRTL terms, or electrolyte-EOS
+parameters. Multi-mineral competition, solid solutions, kinetics, deposition
+and inhibitor physics remain outside this operation.
 
 ### `electrolyteScale`
 

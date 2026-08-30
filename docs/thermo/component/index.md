@@ -1,6 +1,6 @@
 ---
 title: component
-description: component documentation for NeqSim
+description: NeqSim thermodynamic component model documentation
 ---
 
 {%- include_relative README.md -%}

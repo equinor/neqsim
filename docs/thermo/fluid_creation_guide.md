@@ -4,8 +4,6 @@ description: "This guide provides comprehensive documentation on how to create a
 keywords: "fluid, create fluid, SystemSrkEos, SystemPrEos, SystemSrkCPAstatoil, addComponent, mixing rule, equation of state, EOS, natural gas, oil, water, composition"
 ---
 
-# Creating Fluids in NeqSim
-
 This guide provides comprehensive documentation on how to create and configure thermodynamic fluids in NeqSim, including available equations of state, mixing rules, and best practices.
 
 ## Table of Contents
