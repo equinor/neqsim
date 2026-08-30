@@ -20,6 +20,11 @@ QUALIFICATION = (
     / "src/main/java/neqsim/process/equipment/reactor/"
     / "KineticReactionQualification.java"
 )
+HYDRATION_KINETICS = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousCO2HydrationKinetics.java"
+)
 SYSTEM_INTERFACE = ROOT / "src/main/java/neqsim/thermo/system/SystemInterface.java"
 JAVA_TEST = (
     ROOT
@@ -57,6 +62,7 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
         cls.reference_index = REFERENCE_INDEX.read_text(encoding="utf-8")
         cls.diagnostics = DIAGNOSTICS.read_text(encoding="utf-8")
         cls.qualification = QUALIFICATION.read_text(encoding="utf-8")
+        cls.hydration_kinetics = HYDRATION_KINETICS.read_text(encoding="utf-8")
         cls.system_interface = SYSTEM_INTERFACE.read_text(encoding="utf-8")
         cls.java_test = JAVA_TEST.read_text(encoding="utf-8")
         cls.normalized = " ".join(cls.guide.split())
@@ -71,9 +77,43 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
         self.assertIn(r"\mathrm{Da}", self.guide)
 
         links = re.findall(r"(?<!!)\[[^\]]+\]\(([^)]+)\)", self.guide)
-        self.assertEqual(3, len(links))
+        self.assertEqual(4, len(links))
         for destination in links:
-            self.assertTrue(resolve_internal_target(GUIDE, destination).is_file())
+            if destination.startswith("https://"):
+                self.assertEqual(
+                    "https://doi.org/10.1016/S0304-4203%2802%2900010-5",
+                    destination,
+                )
+            else:
+                self.assertTrue(resolve_internal_target(GUIDE, destination).is_file())
+
+    def test_published_hydration_bridge_matches_source_contract(self):
+        for token in (
+            'SOURCE_IDENTIFIER = "doi:10.1016/S0304-4203(02)00010-5"',
+            "SOURCE_ACCESS_STATUS =",
+            "PUBLISHED_NACL_MOLALITY = 0.65",
+            "MINIMUM_TEMPERATURE_K = 288.15",
+            "MAXIMUM_TEMPERATURE_K = 305.65",
+            "HYDRATION_LOG_PRE_EXPONENTIAL = 22.66",
+            "HYDRATION_INVERSE_TEMPERATURE_K = 7799.0",
+            "DEHYDRATION_LOG_PRE_EXPONENTIAL = 30.15",
+            "DEHYDRATION_INVERSE_TEMPERATURE_K = 8018.0",
+            "public static Result advance(",
+            "totalConcentration - updatedCO2 - updatedCarbonicAcid",
+        ):
+            self.assertIn(token, self.hydration_kinetics)
+
+        for token in (
+            "0.65 molal NaCl",
+            "288.15–305.65 K",
+            "0.0302586 s-1",
+            "25.9844 s-1",
+            "does **not** qualify pressure dependence",
+            "not a new NeqSim calibration",
+            "uncertainty statistics for these two fitted equations",
+            "issue #3144",
+        ):
+            self.assertIn(token, self.guide)
 
     def test_complete_java_helper_uses_logging_and_fail_closed_order(self):
         for token in (
