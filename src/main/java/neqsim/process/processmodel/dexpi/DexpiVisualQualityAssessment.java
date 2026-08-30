@@ -330,8 +330,7 @@ public final class DexpiVisualQualityAssessment {
           continue;
         }
         Element primitive = (Element) child;
-        if ("PolyLine".equals(primitive.getTagName())
-            && "Solid".equalsIgnoreCase(primitive.getAttribute("Filled"))
+        if ("PolyLine".equals(primitive.getTagName()) && "Solid".equalsIgnoreCase(primitive.getAttribute("Filled"))
             && primitive.getElementsByTagName("Coordinate").getLength() >= 4) {
           segmentArrows++;
           sourceArrows++;
