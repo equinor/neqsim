@@ -362,7 +362,7 @@ public final class McpEvidenceInventory {
           "src/test/java/neqsim/mcp/runners/SessionRunnerContractTest.java",
           "neqsim-mcp-server/test_session_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/SESSION_LIFECYCLE_CONTRACT.md" };
-      evidenceBoundary = "Canonical ProcessSystem-backed creation, caller-visible list/state identity, authenticated owner isolation, fail-closed unknown actions, close/invalidation, existing evaluate/read/write routes, bounded process-local storage, and packaged-MCP transport are contract-tested; this does not establish restart durability, distributed coherence, external identity or authorization correctness, numerical accuracy, convergence, component or energy closure, facility fidelity, causal troubleshooting, plant authority, control permission, design certification, or accountable engineering approval";
+      evidenceBoundary = "Lifecycle contract; restart durability, distributed coherence, component or energy closure, and causal troubleshooting remain unqualified";
       break;
     case "listSimulationUnits":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY";

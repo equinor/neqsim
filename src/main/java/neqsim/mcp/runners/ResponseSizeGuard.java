@@ -90,7 +90,6 @@ public final class ResponseSizeGuard {
     if (size <= MAX_BYTES) {
       return false;
     }
-    int originalSize = size;
 
     JsonArray omitted = new JsonArray();
     for (String field : trimCandidates(response, toolName)) {
@@ -123,7 +122,7 @@ public final class ResponseSizeGuard {
     truncation.addProperty("reason",
         "Response exceeded the " + MAX_BYTES + " byte limit. Large payloads exhaust an agent's context "
             + "and can break the stdio transport, so bulk detail was omitted rather than returned.");
-    truncation.addProperty("originalBytes", originalSize);
+    truncation.addProperty("originalBytes", size + estimatedBytes(omitted));
     truncation.addProperty("returnedBytes", size);
     truncation.addProperty("limitBytes", MAX_BYTES);
     truncation.add("omitted", omitted);
@@ -137,33 +136,6 @@ public final class ResponseSizeGuard {
         : new JsonArray();
     warnings.add("Response truncated for tool '" + toolName + "'. See the 'truncation' block.");
     response.add("warnings", warnings);
-
-    // The truncation block and warning have a non-zero footprint. A response that only just fits
-    // after removing one field can therefore exceed the limit again once that required recovery
-    // metadata is attached. Continue trimming ordinary fields until the complete returned envelope
-    // fits, while preserving the protected evidence and recording every additional omission.
-    if (serializedSize(response) > MAX_BYTES) {
-      for (String field : trimCandidates(response, toolName)) {
-        JsonElement removed = response.remove(field);
-        if (removed == null) {
-          continue;
-        }
-        JsonObject entry = new JsonObject();
-        entry.addProperty("field", field);
-        entry.addProperty("approximateBytes", serializedSize(removed));
-        entry.addProperty("summary", describe(removed));
-        omitted.add(entry);
-        if (response.has("data") && response.get("data").isJsonObject()) {
-          response.getAsJsonObject("data").remove(field);
-        }
-        if (serializedSize(response) <= MAX_BYTES) {
-          break;
-        }
-      }
-    }
-
-    int returnedSize = serializedSize(response);
-    truncation.addProperty("returnedBytes", returnedSize);
     return true;
   }
 
@@ -252,6 +224,23 @@ public final class ResponseSizeGuard {
       return "array with " + element.getAsJsonArray().size() + " entries";
     }
     return "scalar value";
+  }
+
+  /**
+   * Sums the approximate byte sizes recorded for omitted entries.
+   *
+   * @param omitted the omitted-entry array
+   * @return total approximate bytes
+   */
+  private static int estimatedBytes(JsonArray omitted) {
+    int total = 0;
+    for (JsonElement element : omitted) {
+      JsonObject entry = element.getAsJsonObject();
+      if (entry.has("approximateBytes")) {
+        total += entry.get("approximateBytes").getAsInt();
+      }
+    }
+    return total;
   }
 
   /**
