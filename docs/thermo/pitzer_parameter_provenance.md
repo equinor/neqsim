@@ -69,7 +69,10 @@ may still use a dataset whose full species/range matrix lacks held-out evidence.
 `SystemPitzer.getPitzerParameterQualification()` completes lazy dataset selection and returns the
 immutable metadata for the exact selected dataset. The opt-in
 `requireCompletePitzerDatasetQualification()` first requires complete active-ion coverage and then
-rejects any named dataset below `VALIDATED_WITHIN_DECLARED_ENVELOPE`.
+rejects any named dataset below `VALIDATED_WITHIN_DECLARED_ENVELOPE`. Because an overall level
+cannot distinguish activity, water-property, reaction, mineral, and VLE evidence, property
+publication should use `requirePitzerDatasetValidationFor(ValidationTarget)` instead. The target
+gate requires complete topology and fails unless that exact observable is independently qualified.
 
 This gate is intentionally stricter than subsystem validation. The broad PHREEQC catalog remains
 `PARTIALLY_EXPERIMENTALLY_VALIDATED`, even when the current topology is one of its independently
@@ -77,7 +80,9 @@ checked binaries; callers that need a complete named-dataset gate must select a 
 subset such as Na-K-Cl. A successful dataset gate does not prove that the current temperature,
 pressure, molality, or composition lies inside its evidence envelope. The applicable
 `isWithin...ValidationRange` helper remains a separate mandatory state check. Diagnostics include
-dataset identity, level, validated systems, and limitations in deterministic order.
+dataset identity, level, validated systems, machine-readable validation targets, and limitations in
+deterministic order. Existing callers of the complete-dataset gate retain source compatibility, but
+must not infer a property target from the overall level.
 
 The accessor and gate are explicit setup/publication operations. They perform no flash, change no
 parameter, and add no work to Pitzer activity/property kernels or neutral PR/SRK/CPA calculations.
@@ -147,10 +152,28 @@ A second outside-range comparison is Zhao et al. (2015),
 at 15 MPa and 323–423 K; it is evidence for later full-VLE work, not grounds to widen this subset's
 accepted range.
 
-The current hybrid EOS-GE flash still fails for some gas-forming CO2/brine inventories before a
-scientific VLE comparison can be made. That is a separate phase-topology dependency coordinated
-with the generic flash campaign; this subset is therefore qualified for aqueous activity and
-water/osmotic use only. It must not be described as independently validated CO2 VLE.
+The hybrid EOS-GE phase-boundary calculation now converges for the selected gas-forming CO2/brine
+states, so VLE accuracy can be assessed independently of flash closure. Six held-out bubble
+pressures from Bermejo et al. (2005),
+[DOI 10.1016/j.fluid.2005.10.006](https://doi.org/10.1016/j.fluid.2005.10.006), were selected from
+NIST ThermoML dataset 2. They cover 307.78–340.10 K, 0.986703–0.996313 mol/kg Na2SO4, liquid CO2
+mole fractions 0.00773–0.01161, and 43.5–118.2 bara. The archived 95% expanded pressure
+uncertainties are 0.5–2.0 bara. The publisher-permitted ThermoML JSON has SHA-256
+`aeeff43c1aa196a749b01dbb31d22bf502fe140a85e4823ecea8544f06dd3897`.
+
+Pressure was converted from kPa to bara. On a one-kilogram-water basis, molecular salt molality was
+mapped to `2 Na+ + SO4--`, and the reported liquid CO2 mole fraction was converted with
+`nCO2=x/(1-x)*(nH2O+nNa2SO4)`. No parameter was fitted. Exact-master calculations predict
+29.306, 43.165, 53.064, 74.040, 45.715, and 58.930 bara: underprediction of 32.6–43.8%, outside
+each experimental uncertainty. Treating the reported fraction with an explicit-ion denominator
+reduces the central-point residual only to 31.5%, so the composition-basis sensitivity does not
+change the rejection. Material-balance residuals are at most order `1e-16`, logarithmic fugacity
+residuals are below `1e-10`, and aqueous charge is zero. The fixture is therefore held-out
+scientific evidence, not a flash convergence failure or a training-data regression.
+
+The subset remains qualified for aqueous activity and water/osmotic targets only.
+`GAS_AQUEOUS_VLE` fails closed through the observable-specific gate. No Pitzer coefficient, Henry
+correlation, Poynting correction, or reaction row is changed to fit these six points.
 
 ### Qualified public-domain Na-K-Cl subset
 
@@ -457,6 +480,7 @@ topology and validation matrix are documented.
 | Harvie, Møller and Weare (1984), [natural-water model](https://doi.org/10.1016/0016-7037(84)90098-X) | Na/K/Mg/Ca/H with Cl/SO4/OH/HCO3/CO3/CO2/H2O; binary and mixed interactions | 25 °C, high ionic strength; molality-scale Pitzer model | Fitted isopiestic, EMF, and solubility data; multicomponent comparisons outside subsystems are reported | Primary Elsevier article; numerical-table redistribution not established here | High-priority scientific comparison. No coefficient copied; full family and electrostatic convention must be mapped together. |
 | Pitzer (1975), [higher-order electrostatic mixing](https://doi.org/10.1007/BF00646562) | Nonsymmetric same-sign electrostatic terms `Etheta` and its ionic-strength derivative for unequal charge pairs; no fitted short-range coefficient is supplied by this term | Molality-scale Pitzer formulation; the term is zero for equal charges and depends on charge tuple, ionic strength, and `Aphi` | Primary equation source; it establishes model structure rather than a parameter fit | Primary Springer article; no numerical table copied | Equation structure accepted in this increment: the public PHREEQC recurrence and its ion/activity/osmotic placement are mapped directly. No fitted coefficient is copied; short-range tuple coverage remains independently fail-closed. |
 | USGS PHRQPITZ (Plummer et al. 1988), [WRIR 88-4153](https://doi.org/10.3133/wri884153), PHREEQC 3.8.6 tag commit [`74cdaf0`](https://github.com/phreeqc-dev/phreeqc3/commit/74cdaf00f90b15b7a5bbc03f405eb2f8129aacf1), and [PHREEQC 3.9.0-17591](https://github.com/phreeqc-dev/phreeqc3/releases/tag/v3.9.0) commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/commit/b0b3be767158ccc3322d2c816625cf470045e67e) | Na/K/Mg/Ca/H plus major anions and extended Fe/Mn/Sr/Ba/Li/Br; `B0`, `B1`, `B2`, `C0`, `theta`, `psi`, `lambda`, `zeta`, and six temperature coefficients. Release 3.9.0 revises Mg/Ba/carbonate/bicarbonate/CO2 species and related HCO3 and neutral-H2 Pitzer interactions. Exact catalog inspection on 2026-08-27 found no `H+|HCO3-` `B0`, `B1`, or `C0` row. | Molality scale; PHREEQC enables nonsymmetric electrostatic mixing by default. Default alpha is charge dependent: `2/12` when a pair contains a monovalent ion, `1.4/12` for 2-2, and `2/50` otherwise. Pressure is absent from these interaction functions. PHREEQC names the proton `H+`; NeqSim's reacting species is `H3O+`, and no standard-state alias is assumed. | Appelo (2015), [DOI 10.1016/j.apgeochem.2014.11.007](https://doi.org/10.1016/j.apgeochem.2014.11.007), documents database principles and calculations from 0–200 °C and 1–1000 atm; applicability remains parameter/system specific. Exact fitted observables, residuals, and uncertainty remain row/source specific. | USGS software and data are public domain. Audited release date: 2026-05-13. Audited blobs: [`pitzer.cpp` `1f32a08`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/src/pitzer.cpp) and [`pitzer.dat` `324f852`](https://github.com/phreeqc-dev/phreeqc3/blob/b0b3be767158ccc3322d2c816625cf470045e67e/database/pitzer.dat). | The exact interaction block is stored as a lazy catalog and selected automatically for complete active topologies. Missing mixed families fail closed rather than receiving zero or legacy coefficients. CO2-Na2SO4, Na-K-Cl, Ca-Mg-Cl-SO4, and SrCl2 have dedicated mappings/evidence. `H3O+|HCO3-` remains unqualified; no value is adopted. |
+| Bermejo et al. (2005), [DOI 10.1016/j.fluid.2005.10.006](https://doi.org/10.1016/j.fluid.2005.10.006), [NIST ThermoML dataset 2](https://trc.nist.gov/ThermoML/10.1016/j.fluid.2005.10.006.html) | CO2 + H2O + Na2SO4 bubble pressure; validation observable only, with no `beta`, `Cphi`, `theta`, `psi`, `lambda`, `zeta`, `mu`, `eta`, alpha, reaction `log K`, or temperature coefficient adopted | Reported solvent Na2SO4 molality, liquid CO2 mole fraction, temperature in K, and pressure in kPa; six selected states span 307.78–340.10 K, 0.986703–0.996313 mol/kg, and 43.5–118.2 bara. The molecular-salt mole-fraction mapping and kPa-to-bara conversion are explicit. | Source contains 112 bubble-pressure points and 95% expanded uncertainties. Six held-out states have 0.5–2.0 bara uncertainty; exact-master residuals are −32.6% to −43.8% without refitting. The experiment is independent of the PHREEQC parameter lineage. | Publisher-permitted NIST ThermoML numerical archive; JSON SHA-256 `aeeff43c1aa196a749b01dbb31d22bf502fe140a85e4823ecea8544f06dd3897`. Six observations and metadata are stored, not an article table. | Reject `GAS_AQUEOUS_VLE` qualification for the existing CO2-Na2SO4 family. Activity and water-property targets remain qualified. The data cannot be used to mix model families or infer a missing pressure correction. |
 | Xia, Maurer and coworkers (2000), [DOI 10.1021/ie990416p](https://doi.org/10.1021/ie990416p), as cited on PHREEQC H2S rows | Neutral `H2Sg` with Na+/Cl-: `lambda(Cl-,H2Sg)=-0.005`, `lambda(H2Sg,Na+)=[0.1047,0,-0.0413]`, and `zeta(H2Sg,Cl-,Na+)=-0.0123`; PHREEQC also defines separate `(H2Sg)2` rows and a dimerization reaction | Molality-scale PHREEQC neutral-ion convention; Xia measurements cover H2S solubility in 4-6 mol/kg NaCl from 313-393 K and total pressures to 10 MPa. Pressure dependence is not encoded in the listed Pitzer functions. | Primary H2S solubility observables; public abstract does not provide row-wise parameter uncertainty. The PHREEQC row is redistributable public-domain data, while the ACS article remains copyright. | No primary table is copied. The exact PHREEQC values and source comment are recorded for comparison. | Rejected for activation in NeqSim: the available family lacks an `H2Sg-H2Sg` self interaction and instead relies on an explicit `(H2Sg)2` species that NeqSim does not model. Partial aliasing would violate fail-closed topology and change the source species model. |
 | Hershey, Pleše and Millero (1988), [DOI 10.1016/0016-7037(88)90183-4](https://doi.org/10.1016/0016-7037(88)90183-4) | First H2S dissociation only; pK1 and HS- interactions with Na+, K+, Mg+2, and Ca+2. It supplies no second-dissociation or neutral-H2S self/dimer family. | Molality scale; NaCl from 0.1 mol/kg to saturation at 5, 25, and 45 °C, KCl at 5 and 25 °C, and selected MgCl2/CaCl2 additions to ionic strength 6 mol/kg. Infinite-dilution `pK1=-98.080+5765.4/T+15.0455 ln(T)`. | EMF measurements; replicate uncertainty is reported in the paper and the infinite-dilution correlation provides an independent check of PHREEQC pK1. | Publisher-controlled primary article; only its published equation, DOI, scope, and residual summary are recorded, not its tables. | Accepted solely as independent validation of the Pitzer reaction-table pK1. No interaction coefficient is adopted or transferred. |
 | Partanen (2013), [traceable SrCl2 values](https://doi.org/10.1021/je400472v), NIST ThermoML MD5 `0f26a7668fdc333b8a9d6f35223d3fbd` | Recommended SrCl2 mean ionic activity coefficients; no Pitzer parameter is supplied or adopted | 283.15-333.15 K, 101 kPa, molality scale; 22 points at 298.15 K from 0.01-3.52 mol/kg and 36 temperature states from 0.01-0.30 mol/kg | Rounded values have 95% expanded uncertainty 0.001; all 58 are checked without refitting; maximum relative residual 3.11%, relative RMSE 1.58% | Primary ACS article; numerical record distributed through the publisher-permitted NIST ThermoML archive and stored with exact archive checksum | Accepted as held-out binary validation of the PHREEQC Sr++/Cl- B0/B1/C0 temperature family and NeqSim equation convention. It does not qualify mixed Sr brines, chloride minerals, or sulfate scale. |
@@ -523,6 +547,15 @@ CO2-Na2SO4 and Na-K-Cl subsets are separately versioned: their complete companio
 equation mappings, range evidence, and independent IPhreeqc gates are recorded above. Conflicting
 NeqSim legacy NaCl/KCl rows remain available only under the unchanged legacy identity; no family is
 silently mixed across formulations.
+
+For the CO2-Na2SO4 VLE qualification increment, no new Kaasa coefficient was found or needed: the
+already audited Appendix F CO2 neutral-family inventory supplies provenance leads, not an
+independent bubble-pressure dataset or a redistributable coefficient family. Consequently there is
+no new Kaasa/PHREEQC numerical agreement or disagreement and no convention mapping beyond the
+previously verified six-term coefficient-order permutation. No coefficient was adopted or rejected
+anew. The next missing neutral interaction remains a complete redistributable H2S family, including
+the self/dimer semantics required by the source model plus all active ion companions; partial
+`H2Sg-Na+`, `H2Sg-Cl-`, and ternary rows remain fail-closed.
 
 ## Unequal-charge electrostatic mixing mapping
 
