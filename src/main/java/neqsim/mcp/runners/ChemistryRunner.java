@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -16,14 +18,22 @@ import neqsim.process.chemistry.scale.ElectrolyteScaleCalculator;
 import neqsim.process.chemistry.scavenger.PackedBedScavengerReactor;
 import neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibrium;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
+import neqsim.thermo.phase.PhasePitzer;
+import neqsim.thermo.phase.PitzerNeutralParameterCoverage;
+import neqsim.thermo.phase.PitzerParameterCoverage;
+import neqsim.thermo.phase.PitzerParameterDatasets;
+import neqsim.thermo.phase.PitzerParameterQualification;
+import neqsim.thermo.phase.PitzerParameterQualification.ValidationTarget;
+import neqsim.thermo.system.SystemPitzer;
 
 /**
  * Stateless chemistry-and-integrity runner for MCP integration.
  *
  * <p>
  * Exposes the open standards-traceable chemistry stack — electrolyte scale prediction, mechanistic corrosion (NORSOK
- * M-506 + Nesic mass transfer + Langmuir inhibitor), Langmuir inhibitor isotherm dosing, and packed-bed H2S scavenger
- * breakthrough — as JSON-driven analyses usable by AI agents over the Model Context Protocol.
+ * M-506 + Nesic mass transfer + Langmuir inhibitor), Langmuir inhibitor isotherm dosing, packed-bed H2S scavenger
+ * breakthrough, and fail-closed Pitzer dataset qualification — as JSON-driven analyses usable by AI agents over the
+ * Model Context Protocol.
  *
  * <p>
  * All analyses follow the same pattern: agents pass an {@code analysis} field naming the routine and a flat object with
@@ -39,7 +49,7 @@ public class ChemistryRunner {
       .serializeSpecialFloatingPointValues().create();
 
   private static final List<String> SUPPORTED_ANALYSES = Collections.unmodifiableList(Arrays.asList("electrolyteScale",
-      "multiMineralScale", "mechanisticCorrosion", "langmuirInhibitor", "packedBedScavenger"));
+      "multiMineralScale", "mechanisticCorrosion", "langmuirInhibitor", "packedBedScavenger", "pitzerQualification"));
 
   /**
    * Private constructor — static utility class.
@@ -101,6 +111,9 @@ public class ChemistryRunner {
         break;
       case "packedBedScavenger":
         data = runPackedBedScavenger(input);
+        break;
+      case "pitzerQualification":
+        data = runPitzerQualification(input);
         break;
       default:
         return errorJson("UNKNOWN_ANALYSIS", "Not implemented: " + analysis, "");
@@ -237,6 +250,271 @@ public class ChemistryRunner {
         .setSimulationTime(d(input, "simTime_s", 3600.0 * 24.0 * 30.0), d(input, "breakthroughFraction", 0.05))
         .evaluate();
     return JsonParser.parseString(bed.toJson()).getAsJsonObject();
+  }
+
+  /**
+   * Reports active-topology coverage and scientific qualification from the authoritative {@link SystemPitzer} APIs.
+   *
+   * <p>
+   * This setup/publication view performs no flash and adopts no parameter. Component amounts are system moles;
+   * temperature is K and pressure is bara. The explicit dataset selector prevents a caller from confusing source
+   * availability with observable-specific qualification.
+   * </p>
+   *
+   * @param input chemistry analysis input
+   * @return deterministic qualification decision and evidence, apart from envelope timing/provenance
+   */
+  private static JsonObject runPitzerQualification(JsonObject input) {
+    double temperature = requiredFinitePositive(input, "temperature_K");
+    double pressure = requiredFinitePositive(input, "pressure_bara");
+    if (!input.has("components") || !input.get("components").isJsonObject()) {
+      throw new IllegalArgumentException("'components' must be a JSON object of component moles");
+    }
+
+    Map<String, Double> components = new TreeMap<String, Double>();
+    for (Map.Entry<String, com.google.gson.JsonElement> entry : input.getAsJsonObject("components").entrySet()) {
+      String name = entry.getKey() == null ? "" : entry.getKey().trim();
+      if (name.isEmpty() || entry.getValue() == null || entry.getValue().isJsonNull()) {
+        throw new IllegalArgumentException("Pitzer component names and amounts must not be empty");
+      }
+      double amount = entry.getValue().getAsDouble();
+      if (!Double.isFinite(amount) || amount < 0.0) {
+        throw new IllegalArgumentException("Component '" + name + "' amount must be finite and non-negative mol");
+      }
+      if (amount > 0.0) {
+        components.put(name, amount);
+      }
+    }
+    if (!hasPositiveWater(components)) {
+      throw new IllegalArgumentException("Pitzer qualification requires a positive water amount in mol");
+    }
+
+    String selector = input.has("dataset") ? input.get("dataset").getAsString().trim().toLowerCase() : "auto";
+    SystemPitzer system = new SystemPitzer(temperature, pressure);
+    for (Map.Entry<String, Double> component : components.entrySet()) {
+      system.addComponent(component.getKey(), component.getValue());
+    }
+    if ("legacy".equals(selector)) {
+      system.useLegacyPitzerParameters();
+    }
+
+    PhasePitzer aqueous = (PhasePitzer) system.getPhase(1);
+    JsonObject inputValidation = validateElectroneutrality(aqueous, components);
+    if (!inputValidation.get("valid").getAsBoolean()) {
+      JsonObject rejected = basePitzerQualificationResult(temperature, pressure, selector, inputValidation);
+      rejected.addProperty("decision", "REJECTED");
+      rejected.addProperty("publicationReady", false);
+      rejected.addProperty("diagnostic", "Input ionic composition is not electroneutral");
+      return rejected;
+    }
+
+    system.init(0);
+    applyPitzerDatasetSelection(system, selector);
+    PitzerParameterQualification qualification = system.getPitzerParameterQualification();
+    PitzerParameterCoverage ionicCoverage = aqueous.getPitzerParameterCoverage();
+    PitzerNeutralParameterCoverage neutralCoverage = aqueous.auditNeutralPitzerParameterCoverage();
+    JsonObject phaseState = validateNormalizedNonNegativePhase(aqueous);
+
+    ValidationTarget target = parseValidationTarget(input);
+    boolean targetQualified = target != null && qualification.isValidatedFor(target);
+    JsonObject stateRange = stateRangeEvidence(temperature, aqueous, qualification.getDatasetId());
+    boolean insideRange = stateRange.get("checked").getAsBoolean() && stateRange.get("withinRange").getAsBoolean();
+    boolean completeTopology = ionicCoverage.isComplete() && neutralCoverage.isComplete();
+    boolean publicationReady = completeTopology && targetQualified && insideRange
+        && phaseState.get("normalizedNonNegative").getAsBoolean();
+
+    JsonObject data = basePitzerQualificationResult(temperature, pressure, selector, inputValidation);
+    data.addProperty("datasetId", qualification.getDatasetId());
+    data.addProperty("qualificationLevel", qualification.getLevel().name());
+    data.add("validatedSystems", GSON.toJsonTree(qualification.getValidatedSystems()));
+    data.add("validatedTargets", validationTargetArray(qualification.getValidatedTargets()));
+    data.add("limitations", GSON.toJsonTree(qualification.getLimitations()));
+    data.addProperty("qualificationDiagnostic", qualification.formatDiagnostic());
+    data.add("ionicCoverage", GSON.toJsonTree(ionicCoverage));
+    data.add("neutralCoverage", GSON.toJsonTree(neutralCoverage));
+    data.addProperty("completeTopology", completeTopology);
+    data.add("aqueousPhaseState", phaseState);
+    if (target == null) {
+      data.add("requestedValidationTarget", null);
+      data.add("targetQualified", null);
+    } else {
+      data.addProperty("requestedValidationTarget", target.name());
+      data.addProperty("targetQualified", targetQualified);
+    }
+    data.add("stateRange", stateRange);
+    data.addProperty("decision", publicationReady ? "ACCEPTED" : "REJECTED");
+    data.addProperty("publicationReady", publicationReady);
+    data.addProperty("diagnostic", publicationDiagnostic(target, completeTopology, targetQualified, stateRange,
+        phaseState.get("normalizedNonNegative").getAsBoolean()));
+    return data;
+  }
+
+  private static JsonObject basePitzerQualificationResult(double temperature, double pressure, String selector,
+      JsonObject inputValidation) {
+    JsonObject data = new JsonObject();
+    data.addProperty("model", "SystemPitzer / PhasePitzer aqueous GE with SRK gas-oil roles");
+    data.addProperty("temperature_K", temperature);
+    data.addProperty("pressure_bara", pressure);
+    data.addProperty("compositionBasis", "component amount in mol; aqueous molality derived from water mass");
+    data.addProperty("datasetSelector", selector);
+    data.add("inputValidation", inputValidation);
+    return data;
+  }
+
+  private static double requiredFinitePositive(JsonObject input, String key) {
+    if (!input.has(key) || input.get(key).isJsonNull()) {
+      throw new IllegalArgumentException("Missing required '" + key + "'");
+    }
+    double value = input.get(key).getAsDouble();
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException("'" + key + "' must be finite and positive");
+    }
+    return value;
+  }
+
+  private static boolean hasPositiveWater(Map<String, Double> components) {
+    for (Map.Entry<String, Double> component : components.entrySet()) {
+      if ("water".equalsIgnoreCase(component.getKey()) && component.getValue() > 0.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static JsonObject validateElectroneutrality(PhasePitzer phase, Map<String, Double> components) {
+    double chargeMoles = 0.0;
+    double absoluteChargeMoles = 0.0;
+    for (Map.Entry<String, Double> component : components.entrySet()) {
+      if (!phase.hasComponent(component.getKey())) {
+        throw new IllegalArgumentException("Unknown Pitzer component '" + component.getKey() + "'");
+      }
+      double chargedMoles = phase.getComponent(component.getKey()).getIonicCharge() * component.getValue();
+      chargeMoles += chargedMoles;
+      absoluteChargeMoles += Math.abs(chargedMoles);
+    }
+    double tolerance = 1.0e-12 * Math.max(1.0, absoluteChargeMoles);
+    JsonObject validation = new JsonObject();
+    validation.addProperty("valid", Math.abs(chargeMoles) <= tolerance);
+    validation.addProperty("chargeResidual_mol", chargeMoles);
+    validation.addProperty("chargeTolerance_mol", tolerance);
+    return validation;
+  }
+
+  private static JsonObject validateNormalizedNonNegativePhase(PhasePitzer phase) {
+    double moleFractionSum = 0.0;
+    boolean finiteNonNegative = true;
+    for (int index = 0; index < phase.getNumberOfComponents(); index++) {
+      double moleFraction = phase.getComponent(index).getx();
+      finiteNonNegative &= Double.isFinite(moleFraction) && moleFraction >= 0.0;
+      moleFractionSum += moleFraction;
+    }
+    JsonObject validation = new JsonObject();
+    validation.addProperty("normalizedNonNegative", finiteNonNegative && Math.abs(moleFractionSum - 1.0) <= 1.0e-12);
+    validation.addProperty("moleFractionSum", moleFractionSum);
+    validation.addProperty("normalizationTolerance", 1.0e-12);
+    return validation;
+  }
+
+  private static void applyPitzerDatasetSelection(SystemPitzer system, String selector) {
+    switch (selector) {
+    case "auto":
+    case "legacy":
+      return;
+    case "phreeqc-na-k-cl":
+      system.applyPhreeqcSodiumPotassiumChlorideParameters();
+      return;
+    case "phreeqc-co2-na2so4":
+      system.applyPhreeqcCo2SodiumSulfateParameters();
+      return;
+    case "phreeqc-catalog":
+      system.applyCompletePhreeqcPitzerCatalogParameters();
+      return;
+    default:
+      throw new IllegalArgumentException("Unknown Pitzer dataset selector '" + selector
+          + "'; use auto, legacy, phreeqc-na-k-cl, phreeqc-co2-na2so4, or phreeqc-catalog");
+    }
+  }
+
+  private static ValidationTarget parseValidationTarget(JsonObject input) {
+    if (!input.has("validationTarget") || input.get("validationTarget").isJsonNull()
+        || input.get("validationTarget").getAsString().trim().isEmpty()) {
+      return null;
+    }
+    String name = input.get("validationTarget").getAsString().trim().toUpperCase();
+    try {
+      return ValidationTarget.valueOf(name);
+    } catch (IllegalArgumentException exception) {
+      throw new IllegalArgumentException(
+          "Unknown Pitzer validationTarget '" + name + "'; use " + Arrays.toString(ValidationTarget.values()));
+    }
+  }
+
+  private static JsonArray validationTargetArray(Set<ValidationTarget> targets) {
+    JsonArray array = new JsonArray();
+    for (ValidationTarget target : ValidationTarget.values()) {
+      if (targets.contains(target)) {
+        array.add(target.name());
+      }
+    }
+    return array;
+  }
+
+  private static JsonObject stateRangeEvidence(double temperature, PhasePitzer phase, String datasetId) {
+    JsonObject evidence = new JsonObject();
+    evidence.addProperty("checked", false);
+    evidence.addProperty("withinRange", false);
+    evidence.addProperty("pressureChecked", false);
+    evidence.addProperty("reason", "No exact declared-envelope helper is registered for this dataset identity");
+    if (PitzerParameterDatasets.PHREEQC_NA_K_CL_ID.equals(datasetId)) {
+      double sodium = molality(phase, "Na+");
+      double potassium = molality(phase, "K+");
+      double chloride = molality(phase, "Cl-");
+      evidence.addProperty("checked", true);
+      evidence.addProperty("withinRange", PitzerParameterDatasets
+          .isWithinSodiumPotassiumChlorideValidationRange(temperature, sodium, potassium, chloride));
+      evidence.addProperty("reason", "298.15-423.15 K and 0.1-3 mol/kg total chloride Na-K-Cl envelope");
+      evidence.addProperty("sodiumMolality_molPerKgWater", sodium);
+      evidence.addProperty("potassiumMolality_molPerKgWater", potassium);
+      evidence.addProperty("chlorideMolality_molPerKgWater", chloride);
+    } else if (PitzerParameterDatasets.PHREEQC_CO2_NA2SO4_ID.equals(datasetId)) {
+      double sulfate = molality(phase, "SO4--");
+      evidence.addProperty("checked", true);
+      evidence.addProperty("withinRange",
+          PitzerParameterDatasets.isWithinCo2SodiumSulfateValidationRange(temperature, sulfate));
+      evidence.addProperty("reason", "303.15-423.15 K and 1-2 mol/kg Na2SO4 activity/water-property envelope");
+      evidence.addProperty("sodiumSulfateMolality_molPerKgWater", sulfate);
+    }
+    return evidence;
+  }
+
+  private static double molality(PhasePitzer phase, String componentName) {
+    if (!phase.hasComponent(componentName)) {
+      return 0.0;
+    }
+    return phase.getComponent(componentName).getMolality(phase);
+  }
+
+  private static String publicationDiagnostic(ValidationTarget target, boolean completeTopology,
+      boolean targetQualified, JsonObject stateRange, boolean normalizedNonNegative) {
+    if (!completeTopology) {
+      return "Rejected: active ionic or neutral Pitzer topology is incomplete";
+    }
+    if (target == null) {
+      return "Rejected: validationTarget is required for an observable-specific publication decision";
+    }
+    if (!targetQualified) {
+      return "Rejected: selected dataset is not independently qualified for " + target;
+    }
+    if (!stateRange.get("checked").getAsBoolean()) {
+      return "Rejected: no exact state-range helper is registered for the selected dataset";
+    }
+    if (!stateRange.get("withinRange").getAsBoolean()) {
+      return "Rejected: current state is outside the declared independent-evidence envelope";
+    }
+    if (!normalizedNonNegative) {
+      return "Rejected: aqueous phase is not finite, non-negative, and normalized";
+    }
+    return "Accepted: complete topology, observable qualification, and declared state envelope all pass";
   }
 
   // ─── Helpers ───────────────────────────────────────────
