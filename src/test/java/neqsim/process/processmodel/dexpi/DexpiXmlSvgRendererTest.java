@@ -48,8 +48,24 @@ class DexpiXmlSvgRendererTest extends NeqSimTest {
     assertTrue(content.contains("data-dexpi-id=\"ID-20-V-101\""));
     assertTrue(content.contains("data-dexpi-id=\"PT-101\""));
     assertTrue(content.contains("<polyline"));
-    assertTrue(content.contains("data-dexpi-filled=\"solid\""));
     assertTrue(content.contains("DEXPI SVG renderer regression"));
+  }
+
+  @Test
+  void rendersSolidPolylineAsFilledFlowArrow() throws Exception {
+    String dexpiContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        + "<PlantModel><Drawing Name=\"Filled flow arrow\"><Extent><Min X=\"0\" Y=\"0\"/>"
+        + "<Max X=\"100\" Y=\"70\"/></Extent><PolyLine Filled=\"Solid\">"
+        + "<Presentation LineType=\"0\" LineWeight=\"0.3\" R=\"0\" G=\"0\" B=\"0\"/>"
+        + "<Coordinate X=\"10\" Y=\"10\"/><Coordinate X=\"20\" Y=\"15\"/>"
+        + "<Coordinate X=\"10\" Y=\"20\"/></PolyLine></Drawing></PlantModel>";
+    Path dexpi = temporaryDirectory.resolve("filled-flow-arrow.xml");
+    java.nio.file.Files.write(dexpi, dexpiContent.getBytes(StandardCharsets.UTF_8));
+
+    String content = DexpiXmlSvgRenderer.render(dexpi.toFile());
+
+    assertTrue(content.contains("fill=\"#000000\""));
+    assertTrue(content.contains("data-dexpi-filled=\"solid\""));
   }
 
   @Test
