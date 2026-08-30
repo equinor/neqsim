@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.18");
+    inventory.addProperty("inventoryVersion", "1.19");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "Five automation advisory contracts are CONTRACT_TESTED from merged source, regression, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.18");
+        "manageModel is CONTRACT_TESTED from merged registry, lifecycle, routing, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.19");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; sixteen bounded discovery, catalog, lookup, progress, trust, governance, validation-profile, runtime API-inspection, and automation advisory contracts are contract-tested without extending numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "Every published tool has an explicit coverage record; seventeen bounded discovery, catalog, lookup, progress, trust, governance, validation-profile, runtime API-inspection, model-registry, and automation advisory contracts are contract-tested without extending numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -346,6 +346,14 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_validation_profile_protocol.py",
           "neqsim-mcp-server/docs/evidence/VALIDATION_PROFILE_CONTRACT.md" };
       evidenceBoundary = "Built-in discovery, structural validation metadata preservation, isolated custom-profile lifecycle and recovery, equipment-standard retrieval, fail-closed mutation errors, and packaged-MCP transport are contract-tested; this does not validate standards currency, legal applicability or licensing, validator scientific correctness, deployment isolation or durability, external authorization, or plant authority";
+      break;
+    case "manageModel":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_MODEL_REGISTRY_LIFECYCLE";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
+          "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
+          "neqsim-mcp-server/test_model_registry_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };
+      evidenceBoundary = "Content-addressed registration, caller-scoped get/list/inspect, canonical process and automation handle routing, stable revisioning, fail-closed invalid or unknown requests, deletion/invalidation, source-level tenant/principal isolation, and packaged-MCP transport are contract-tested; this does not establish persistence across server restarts, distributed cache coherence, external identity or authorization correctness, numerical model accuracy, convergence, mass or energy closure, facility fidelity, plant authority, control permission, design certification, or accountable engineering approval";
       break;
     case "listSimulationUnits":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY";

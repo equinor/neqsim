@@ -354,29 +354,43 @@ def test_delete_invalidates_handle(client, model_id):
     )
 
 
-def test_phase0_classification_remains_a_gap(client):
+def test_phase0_classification_is_promoted_atomically(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
-    require(inventory.get("inventoryVersion") == "1.18", "unexpected evidence inventory version", result)
+    require(inventory.get("inventoryVersion") == "1.19", "unexpected evidence inventory version", result)
     limitations = inventory.get("knownLimitations", {})
     require(
-        limitations.get("contractTestedToolCount") == 16
-        and limitations.get("confirmedGapToolCount") == 35,
-        "qualification PR must not change trust accounting",
+        limitations.get("contractTestedToolCount") == 17
+        and limitations.get("confirmedGapToolCount") == 34,
+        "manageModel promotion did not move trust accounting atomically",
         limitations,
     )
     record = limitations.get("coverageRecords", {}).get("manageModel", {})
     require(
-        record.get("coverageStatus") == "CONFIRMED_GAP",
-        "manageModel must remain a gap until a later atomic promotion",
+        record.get("coverageStatus") == "CONTRACT_TESTED",
+        "manageModel was not promoted with its qualification evidence",
         record,
     )
     require(
-        record.get("toolSpecificTrustAvailable") is False,
-        "qualification evidence was incorrectly presented as promoted trust",
+        record.get("contractTrustAvailable") is True,
+        "manageModel promotion omitted contract-trust marker",
         record,
     )
+    require(
+        record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_MODEL_REGISTRY_LIFECYCLE",
+        "manageModel benchmark-applicability boundary drifted",
+        record,
+    )
+    evidence = json.dumps(record.get("contractEvidenceSources", []))
+    require(record.get("contractEvidenceCount") == 5, "manageModel evidence count drifted", record)
+    require("ModelRegistryTest.java" in evidence, "manageModel omits Java regression evidence", record)
+    require("test_model_registry_protocol.py" in evidence, "manageModel omits focused protocol evidence", record)
+    require("test_mcp_server.py" in evidence, "manageModel omits primary protocol accounting", record)
+    boundary = record.get("evidenceBoundary", "")
+    require("server restarts" in boundary, "manageModel persistence limitation was lost", record)
+    require("numerical model accuracy" in boundary, "manageModel numerical limitation was lost", record)
 
 
 def main():
@@ -390,7 +404,7 @@ def main():
         test_handle_drives_canonical_process_and_read_routes(client, model_id)
         test_revision_is_stable_and_visible(client, model_id, process_definition)
         test_invalid_requests_fail_closed(client)
-        test_phase0_classification_remains_a_gap(client)
+        test_phase0_classification_is_promoted_atomically(client)
         test_delete_invalidates_handle(client, model_id)
         model_id = None
     finally:
