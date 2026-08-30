@@ -118,6 +118,20 @@ or unclassified equipment or piping-component object. Warnings describe honest s
 loss; malformed XML and parser failures still raise `DexpiXmlReaderException`. Existing `read(...)`
 and `load(...)` calls keep their previous behavior and logging.
 
+Piping-network diagnostics also distinguish source-backed values from reconstruction aids. Calling
+`readWithDiagnostics(...)` without a template records `DEXPI_IMPORT_DEFAULT_TEMPLATE_USED`, because
+the compatibility reader supplies a synthetic methane/ethane fluid and operating state. For every
+segment, the report identifies operating values retained from the template, invalid source numbers,
+and source numbers whose units had to use the documented default. Missing identity, component class,
+line number, service/fluid code, nominal-size representation, piping class, and insulation are
+reported separately. In particular, the reader never converts hydraulic bore into DN, NPS, or
+schedule; absent nominal size remains an explicit source-data gap.
+
+`INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
+`ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.
+The report schema is experimental: consumers should key on stable diagnostic codes rather than list
+positions as additional supported-subset checks are added.
+
 This evidence applies to NeqSim's Proteus-compatible DEXPI Plant/P&ID 4.1.1 supported subset. It is
 not proof of full semantic or graphical round-trip equivalence, native DEXPI 2.0 support, DEXPI
 certification, standards conformance, or engineering approval.

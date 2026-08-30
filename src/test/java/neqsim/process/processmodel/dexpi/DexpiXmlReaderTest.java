@@ -159,4 +159,52 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     ProcessSystem legacy = DexpiXmlReader.read(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
     assertEquals(first.getProcessSystem().getAllUnitNames(), legacy.getAllUnitNames());
   }
+
+  @Test
+  public void testReadWithDiagnosticsReportsPipingProvenanceAndMetadataGaps() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel><PipingNetworkSystem>"
+        + "<PipingNetworkSegment ComponentClass=\"PipingNetworkSegment\" ID=\"S-1\">" + "<GenericAttributes>"
+        + "<GenericAttribute Name=\"SegmentNumberAssignmentClass\" Value=\"S-1\"/>"
+        + "<GenericAttribute Name=\"LineNumberAssignmentClass\" Value=\"100-FG-001\"/>"
+        + "<GenericAttribute Name=\"FluidCodeAssignmentClass\" Value=\"FG\"/>"
+        + "<GenericAttribute Name=\"NominalDiameterRepresentationAssignmentClass\" Value=\"DN 100\"/>"
+        + "<GenericAttribute Name=\"PipingClassCodeAssignmentClass\" Value=\"A1\"/>"
+        + "<GenericAttribute Name=\"InsulationTypeAssignmentClass\" Value=\"H\"/>"
+        + "<GenericAttribute Name=\"OperatingPressureValue\" Value=\"not-a-number\"/>"
+        + "<GenericAttribute Name=\"OperatingPressureUnit\" Value=\"bara\"/>"
+        + "<GenericAttribute Name=\"OperatingTemperatureValue\" Value=\"25.0\"/>"
+        + "</GenericAttributes></PipingNetworkSegment>" + "<PipingNetworkSegment/>"
+        + "</PipingNetworkSystem></PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, result.getProcessSystem().getAllUnitNames().size());
+    DexpiStream sourceBacked = (DexpiStream) result.getProcessSystem().getUnit("100-FG-001-S-1");
+    assertNotNull(sourceBacked);
+    assertEquals("DN 100", sourceBacked.getNominalDiameterRepresentation());
+    assertEquals("A1", sourceBacked.getPipingClassCode());
+    assertEquals("H", sourceBacked.getInsulationType());
+    assertEquals(50.0, sourceBacked.getPressure("bara"), 1.0e-12);
+    assertEquals(25.0, sourceBacked.getTemperature("C"), 1.0e-12);
+
+    assertEquals(14, result.getDiagnostics().size());
+    assertEquals("DEXPI_IMPORT_DEFAULT_TEMPLATE_USED", result.getDiagnostics().get(0).getCode());
+    assertEquals("DEXPI_IMPORT_PRESSURE_INVALID", result.getDiagnostics().get(1).getCode());
+    assertEquals("DEXPI_IMPORT_TEMPERATURE_UNIT_DEFAULTED", result.getDiagnostics().get(2).getCode());
+    assertEquals("DEXPI_IMPORT_FLOW_FROM_TEMPLATE", result.getDiagnostics().get(3).getCode());
+    assertEquals(DexpiXmlReader.ImportDiagnosticSeverity.INFO, result.getDiagnostics().get(3).getSeverity());
+    assertEquals("DEXPI_IMPORT_SEGMENT_IDENTITY_MISSING", result.getDiagnostics().get(4).getCode());
+    assertEquals("DEXPI_IMPORT_SEGMENT_CLASS_MISSING", result.getDiagnostics().get(5).getCode());
+    assertEquals("DEXPI_IMPORT_LINE_NUMBER_MISSING", result.getDiagnostics().get(6).getCode());
+    assertEquals("DEXPI_IMPORT_SERVICE_CODE_MISSING", result.getDiagnostics().get(7).getCode());
+    assertEquals("DEXPI_IMPORT_NOMINAL_SIZE_MISSING", result.getDiagnostics().get(8).getCode());
+    assertEquals("DEXPI_IMPORT_PIPING_CLASS_MISSING", result.getDiagnostics().get(9).getCode());
+    assertEquals("DEXPI_IMPORT_INSULATION_UNSPECIFIED", result.getDiagnostics().get(10).getCode());
+    assertEquals("DEXPI_IMPORT_PRESSURE_FROM_TEMPLATE", result.getDiagnostics().get(11).getCode());
+    assertEquals("DEXPI_IMPORT_TEMPERATURE_FROM_TEMPLATE", result.getDiagnostics().get(12).getCode());
+    assertEquals("DEXPI_IMPORT_FLOW_FROM_TEMPLATE", result.getDiagnostics().get(13).getCode());
+    assertTrue(result.hasLosses());
+    assertFalse(result.hasErrors());
+  }
 }
