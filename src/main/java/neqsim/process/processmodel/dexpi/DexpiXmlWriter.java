@@ -38,6 +38,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
@@ -2016,7 +2017,7 @@ public final class DexpiXmlWriter {
       String mlfId = uniqueIdentifier("MeasuringLineFunction", tag, usedIds);
       String psgfId = uniqueIdentifier("ProcessSignalGeneratingFunction", tag, usedIds);
 
-      if (hasPosition) {
+      if (hasPosition && measurementTap != null) {
         Element assocEnd = document.createElement("Association");
         assocEnd.setAttribute("Type", "is logical end of");
         assocEnd.setAttribute("ItemID", mlfId);
@@ -2066,7 +2067,7 @@ public final class DexpiXmlWriter {
       appendGenericAttribute(document, psgfAttrs, "ProcessSignalGeneratingFunctionNumberAssignmentClass", tag);
       psgf.appendChild(psgfAttrs);
 
-      if (hasPosition) {
+      if (hasPosition && measurementTap != null) {
         Element startAssoc = document.createElement("Association");
         startAssoc.setAttribute("Type", "is logical start of");
         startAssoc.setAttribute("ItemID", mlfId);
@@ -2560,12 +2561,24 @@ public final class DexpiXmlWriter {
       if (identity == null || identity.trim().isEmpty()) {
         continue;
       }
-      NodeList attributes = candidate.getElementsByTagName("GenericAttribute");
-      for (int attributeIndex = 0; attributeIndex < attributes.getLength(); attributeIndex++) {
-        Element attribute = (Element) attributes.item(attributeIndex);
-        if (DexpiMetadata.TAG_NAME.equals(attribute.getAttribute("Name"))
-            && tagName.equals(attribute.getAttribute("Value"))) {
-          return identity;
+      NodeList children = candidate.getChildNodes();
+      for (int childIndex = 0; childIndex < children.getLength(); childIndex++) {
+        Node child = children.item(childIndex);
+        if (!(child instanceof Element) || !"GenericAttributes".equals(((Element) child).getTagName())) {
+          continue;
+        }
+        NodeList attributes = ((Element) child).getChildNodes();
+        for (int attributeIndex = 0; attributeIndex < attributes.getLength(); attributeIndex++) {
+          Node attributeNode = attributes.item(attributeIndex);
+          if (!(attributeNode instanceof Element)) {
+            continue;
+          }
+          Element attribute = (Element) attributeNode;
+          if ("GenericAttribute".equals(attribute.getTagName())
+              && DexpiMetadata.TAG_NAME.equals(attribute.getAttribute("Name"))
+              && tagName.equals(attribute.getAttribute("Value"))) {
+            return identity;
+          }
         }
       }
     }
