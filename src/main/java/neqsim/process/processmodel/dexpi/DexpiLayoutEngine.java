@@ -1705,6 +1705,7 @@ final class DexpiLayoutEngine {
 
     Element poly = document.createElement("PolyLine");
     poly.setAttribute("NumPoints", "4");
+    poly.setAttribute("Filled", "Solid");
     Element pres = document.createElement("Presentation");
     pres.setAttribute("LineType", "0");
     pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
