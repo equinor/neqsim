@@ -254,16 +254,15 @@ public final class McpEvidenceInventory {
    */
   private static JsonObject buildContractPromotionCandidates() {
     JsonObject candidates = new JsonObject();
-    candidates.add("searchComponents",
-        contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP",
-            new String[] { "src/main/java/neqsim/mcp/runners/ComponentQuery.java",
-                "src/test/java/neqsim/mcp/runners/ComponentQueryTest.java", "neqsim-mcp-server/test_mcp_server.py" },
-            "Component-name lookup, substring search, empty-query enumeration, typo handling, and no-match behavior are directly tested, including real-protocol retrieval; catalog lookup does not validate thermodynamic calculations or component-property models"));
-    candidates.add("queryDataCatalog",
-        contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY",
-            new String[] { "src/main/java/neqsim/mcp/runners/DataCatalogRunner.java",
-                "src/test/java/neqsim/mcp/runners/DataCatalogRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" },
-            "Read-only catalog dispatch and representative component-family, EOS-model, component-property, and real-protocol catalog retrieval are tested; database contents, standards applicability, EOS accuracy, and material or design decisions are not validated by this evidence"));
+    candidates.add("searchComponents", contractPromotionCandidate(
+        "NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP",
+        new String[] { "src/main/java/neqsim/mcp/runners/ComponentQuery.java",
+            "src/test/java/neqsim/mcp/runners/ComponentQueryTest.java", "neqsim-mcp-server/test_mcp_server.py" },
+        "Component-name lookup, substring search, empty-query enumeration, typo handling, and no-match behavior are directly tested, including real-protocol retrieval; catalog lookup does not validate thermodynamic calculations or component-property models"));
+    candidates.add("queryDataCatalog", contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY",
+        new String[] { "src/main/java/neqsim/mcp/runners/DataCatalogRunner.java",
+            "src/test/java/neqsim/mcp/runners/DataCatalogRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" },
+        "Read-only catalog dispatch and representative component-family, EOS-model, component-property, and real-protocol catalog retrieval are tested; database contents, standards applicability, EOS accuracy, and material or design decisions are not validated by this evidence"));
     return candidates;
   }
 

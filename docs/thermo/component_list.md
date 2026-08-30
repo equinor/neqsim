@@ -142,6 +142,7 @@ The resolver recognises:
 |------------|---------|-------------|
 | Database name, any case | `N-HEPTANE` | `n-heptane` |
 | Reservoir shorthand | `C1`, `nC4`, `iC5`, `H2O` | `methane`, `n-butane`, `i-pentane`, `water` |
+| Normal-chain prefix | `n-decane`, `n-pentylbenzene` | `nC10`, `nC5-Benzene` |
 | Systematic name | `2,2,4-trimethylpentane` | `224-TM-C5` |
 | Trivial name | `isopentane`, `neopentane`, `cyclohexane` | `i-pentane`, `22-dim-C3`, `c-hexane` |
 | Inverted CAS index name | `Cyclohexane, 1,2,4-trimethyl-` | `1.2.4-TMcyC6` |
@@ -156,7 +157,9 @@ ComponentNameResolver.resolve("1,3-dimethylcyclopentane");    // unchanged - cis
 ```
 
 A name the resolver does not know is returned unchanged, so components that exist only in the
-extended database are unaffected.
+extended database are unaffected. The optional `n-` prefix is accepted only for aliases whose
+database target is explicitly a normal-chain `nC...` component. It is not stripped generically:
+`n-water`, `n-acetone`, and `n-isobutane` therefore remain unknown and unchanged.
 
 To inspect or extend the tables:
 

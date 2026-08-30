@@ -47,6 +47,9 @@ public final class ComponentNameResolver {
   private static final Pattern CAS_INVERTED = Pattern
       .compile("^([a-z0-9,\\-\\[\\]]*?(?:ane|ene|yne|ol|thalene|zene|adiene)),(.+)$");
 
+  /** Canonical NeqSim name for a normal-chain component represented with {@code nC}. */
+  private static final Pattern NORMAL_CHAIN_TARGET = Pattern.compile("^nC\\d+(?:$|-.*)");
+
   /** Normalised database name to the exact name stored in the database. */
   private static final Map<String, String> CANONICAL_NAMES;
 
@@ -79,15 +82,6 @@ public final class ComponentNameResolver {
     String hit = lookup(key);
     if (hit != null) {
       return hit;
-    }
-    // 'n-' marks a straight chain and carries no information the database name needs.
-    // It is only stripped after a direct lookup fails, so database names that legitimately
-    // start with it ('n-butane', 'n-heptane') are matched first and untouched.
-    if (key.length() > 2 && key.charAt(0) == 'n' && key.charAt(1) == '-') {
-      hit = lookup(key.substring(2));
-      if (hit != null) {
-        return hit;
-      }
     }
     String deinverted = deinvertCasIndexName(key);
     if (!deinverted.equals(key)) {
@@ -124,9 +118,7 @@ public final class ComponentNameResolver {
       return false;
     }
     String key = normalize(name);
-    return lookup(key) != null
-        || (key.length() > 2 && key.charAt(0) == 'n' && key.charAt(1) == '-' && lookup(key.substring(2)) != null)
-        || lookup(deinvertCasIndexName(key)) != null;
+    return lookup(key) != null || lookup(deinvertCasIndexName(key)) != null;
   }
 
   /**
@@ -242,6 +234,25 @@ public final class ComponentNameResolver {
     String previous = map.put(key, value);
     if (previous != null && !previous.equals(value)) {
       throw new IllegalStateException("duplicate component name key '" + key + "': " + previous + " and " + value);
+    }
+  }
+
+  /**
+   * Add explicit {@code n-} variants for aliases proven to target a normal-chain NeqSim name.
+   *
+   * <p>
+   * Restricting the expansion to canonical targets such as {@code nC10} and {@code nC5-Benzene} prevents arbitrary
+   * inputs such as {@code n-water} or {@code n-isobutane} from becoming valid aliases.
+   * </p>
+   *
+   * @param synonyms synonym map under construction
+   */
+  private static void addNormalChainPrefixAliases(Map<String, String> synonyms) {
+    Map<String, String> existing = new LinkedHashMap<String, String>(synonyms);
+    for (Map.Entry<String, String> entry : existing.entrySet()) {
+      if (!entry.getKey().startsWith("n-") && NORMAL_CHAIN_TARGET.matcher(entry.getValue()).matches()) {
+        put(synonyms, "n-" + entry.getKey(), entry.getValue());
+      }
     }
   }
 
@@ -667,6 +678,7 @@ public final class ComponentNameResolver {
     put(m, "tridecane", "nC13");
     put(m, "triethyleneglycol", "TEG");
     put(m, "undecane", "nC11");
+    addNormalChainPrefixAliases(m);
     return new HashMap<String, String>(m);
   }
 }
