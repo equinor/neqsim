@@ -48,7 +48,7 @@ class DexpiXmlSvgRendererTest extends NeqSimTest {
     assertTrue(content.contains("data-dexpi-id=\"ID-20-V-101\""));
     assertTrue(content.contains("data-dexpi-id=\"PT-101\""));
     assertTrue(content.contains("<polyline"));
-    assertTrue(content.contains("data-dexpi-filled=\\\"solid\\\""));
+    assertTrue(content.contains("data-dexpi-filled=\"solid\""));
     assertTrue(content.contains("DEXPI SVG renderer regression"));
   }
 
