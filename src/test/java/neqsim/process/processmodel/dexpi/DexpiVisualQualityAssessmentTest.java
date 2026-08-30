@@ -78,8 +78,7 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     assertTrue(xml.contains("PC-5001"));
     assertTrue(xml.contains("INSTRUMENTATION_BUBBLE_SHAPE_CENTRAL"),
         "Controller must use the shared-system/panel location convention");
-    assertTrue(xml.contains("MeasurementAttachmentTargetID"),
-        "Transmitter must identify the measured process nozzle");
+    assertTrue(xml.contains("MeasurementAttachmentTargetID"), "Transmitter must identify the measured process nozzle");
     assertFalse(xml.contains("ComponentClass=\"ActuatingSystemFunction\""),
         "A standalone controller must not emit an actuating signal to empty space");
     assertFalse(report.hasErrors(), report.toJson());
@@ -149,8 +148,7 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
         + "<GenericAttribute Name=\"InstrumentationRole\" Value=\"TRANSMITTER\"/>"
         + "<GenericAttribute Name=\"MeasurementAttachmentStatus\" Value=\"MISSING_SOURCE_DATA\"/>"
         + "</GenericAttributes></ProcessInstrumentationFunction>"
-        + "<InformationFlow ID=\"ACT-1\" ComponentClass=\"ActuatingSystemFunction\"/>"
-        + "</PlantModel>";
+        + "<InformationFlow ID=\"ACT-1\" ComponentClass=\"ActuatingSystemFunction\"/>" + "</PlantModel>";
     Path dexpi = temporaryDirectory.resolve("instrument-topology-defect.xml");
     Files.write(dexpi, xml.getBytes(StandardCharsets.UTF_8));
 
