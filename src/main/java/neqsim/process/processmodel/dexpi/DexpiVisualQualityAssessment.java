@@ -212,6 +212,7 @@ public final class DexpiVisualQualityAssessment {
     assessCoordinates(document, extent, findings, metrics);
     assessText(document, findings, metrics);
     assessFlowDirectionArrows(document, svg, findings, metrics);
+    assessInstrumentationTopology(document, findings, metrics);
 
     metrics.put("sourcePolylines", countOutsideCatalogue(document, "PolyLine"));
     metrics.put("sourceCenterLines", countOutsideCatalogue(document, "CenterLine"));
@@ -309,6 +310,113 @@ public final class DexpiVisualQualityAssessment {
     metrics.put("renderedInstances", rendered);
     metrics.put("missingShapeReferences", missingReferences);
     metrics.put("missingInstancePositions", missingPositions);
+  }
+
+  private static void assessInstrumentationTopology(Document document, List<Finding> findings,
+      Map<String, Integer> metrics) {
+    NodeList functions = document.getElementsByTagName("ProcessInstrumentationFunction");
+    int transmitters = 0;
+    int controllers = 0;
+    int attachedMeasurements = 0;
+    int measurementDataGaps = 0;
+    int closedLoops = 0;
+    int incompleteLoops = 0;
+    int synthesizedProposals = 0;
+    for (int index = 0; index < functions.getLength(); index++) {
+      Element function = (Element) functions.item(index);
+      if (inside(function, "ShapeCatalogue")) {
+        continue;
+      }
+      String identity = function.getAttribute("ID").trim();
+      String role = genericAttribute(function, "InstrumentationRole");
+      String source = genericAttribute(function, "InstrumentationSource");
+      String engineeringStatus = genericAttribute(function, "EngineeringStatus");
+      if ("SYNTHESIZED_PROPOSAL".equals(source)) {
+        synthesizedProposals++;
+        if (!"PROPOSED".equals(engineeringStatus)) {
+          add(findings, Severity.ERROR, "SYNTHESIZED_INSTRUMENT_NOT_MARKED_PROPOSED", identity,
+              "Automatically synthesized instrumentation must be identified as a proposal");
+        }
+      }
+      if ("TRANSMITTER".equals(role)) {
+        transmitters++;
+        String status = genericAttribute(function, "MeasurementAttachmentStatus");
+        String target = genericAttribute(function, "MeasurementAttachmentTargetID");
+        if ("ATTACHED_TO_PROCESS_NOZZLE".equals(status)) {
+          attachedMeasurements++;
+          if (target.trim().isEmpty()) {
+            add(findings, Severity.ERROR, "MEASUREMENT_ATTACHMENT_TARGET_MISSING", identity,
+                "Attached measurement does not identify its process nozzle");
+          }
+        } else {
+          measurementDataGaps++;
+          add(findings, Severity.WARNING, "MEASUREMENT_ATTACHMENT_SOURCE_DATA_MISSING", identity,
+              "Source model does not identify an accountable process tap/nozzle for this measurement");
+        }
+      } else if ("CONTROLLER".equals(role)) {
+        controllers++;
+        String status = genericAttribute(function, "ControlLoopStatus");
+        String finalElement = genericAttribute(function, "FinalControlElementID");
+        if ("CLOSED_MODELLED".equals(status)) {
+          closedLoops++;
+          if (finalElement.trim().isEmpty()) {
+            add(findings, Severity.ERROR, "CONTROL_FINAL_ELEMENT_TARGET_MISSING", identity,
+                "Closed loop does not identify its manipulated equipment function");
+          }
+        } else {
+          incompleteLoops++;
+          add(findings, Severity.WARNING, "CONTROL_FINAL_ELEMENT_SOURCE_DATA_MISSING", identity,
+              "Controller is rendered measurement-only because no manipulated equipment function is attached");
+        }
+      }
+    }
+
+    NodeList flows = document.getElementsByTagName("InformationFlow");
+    int measuringLines = 0;
+    int invalidMeasuringLines = 0;
+    int actuatingSignals = 0;
+    int invalidActuatingSignals = 0;
+    for (int index = 0; index < flows.getLength(); index++) {
+      Element flow = (Element) flows.item(index);
+      String componentClass = flow.getAttribute("ComponentClass");
+      if ("MeasuringLineFunction".equals(componentClass)) {
+        measuringLines++;
+        if (genericAttribute(flow, "MeasurementAttachmentTargetID").trim().isEmpty()) {
+          invalidMeasuringLines++;
+          add(findings, Severity.ERROR, "MEASUREMENT_LINE_PROCESS_TARGET_MISSING",
+              flow.getAttribute("ID").trim(), "Measuring line is not attached to an identified process nozzle");
+        }
+      } else if ("ActuatingSystemFunction".equals(componentClass)) {
+        actuatingSignals++;
+        if (genericAttribute(flow, "FinalControlElementID").trim().isEmpty()) {
+          invalidActuatingSignals++;
+          add(findings, Severity.ERROR, "ACTUATING_SIGNAL_FINAL_ELEMENT_MISSING",
+              flow.getAttribute("ID").trim(), "Actuating signal has no identified final control element");
+        }
+      }
+    }
+    metrics.put("sourceTransmitters", transmitters);
+    metrics.put("sourceControllers", controllers);
+    metrics.put("processMeasurementAttachments", attachedMeasurements);
+    metrics.put("measurementAttachmentDataGaps", measurementDataGaps);
+    metrics.put("sourceMeasuringLines", measuringLines);
+    metrics.put("invalidMeasuringLines", invalidMeasuringLines);
+    metrics.put("closedControlLoops", closedLoops);
+    metrics.put("incompleteControlLoops", incompleteLoops);
+    metrics.put("sourceActuatingSignals", actuatingSignals);
+    metrics.put("invalidActuatingSignals", invalidActuatingSignals);
+    metrics.put("synthesizedProposalInstruments", synthesizedProposals);
+  }
+
+  private static String genericAttribute(Element parent, String name) {
+    NodeList attributes = parent.getElementsByTagName("GenericAttribute");
+    for (int index = 0; index < attributes.getLength(); index++) {
+      Element attribute = (Element) attributes.item(index);
+      if (name.equals(attribute.getAttribute("Name"))) {
+        return attribute.getAttribute("Value");
+      }
+    }
+    return "";
   }
 
   private static void assessFlowDirectionArrows(Document document, String svg, List<Finding> findings,
