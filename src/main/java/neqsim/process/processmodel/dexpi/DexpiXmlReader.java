@@ -148,7 +148,12 @@ public final class DexpiXmlReader {
 
     /** @return whether unsupported or deliberately skipped source content was observed */
     public boolean hasLosses() {
-      return !diagnostics.isEmpty();
+      for (ImportDiagnostic diagnostic : diagnostics) {
+        if (diagnostic.getSeverity() != ImportDiagnosticSeverity.INFO) {
+          return true;
+        }
+      }
+      return false;
     }
 
     /** @return whether any import diagnostic has error severity */
@@ -448,11 +453,17 @@ public final class DexpiXmlReader {
     }
 
     Stream streamTemplate = templateOrDefault(templateStream);
+    if (diagnostics != null && templateStream == null
+        && document.getElementsByTagName("PipingNetworkSegment").getLength() > 0) {
+      diagnostics.add(new ImportDiagnostic(ImportDiagnosticSeverity.WARNING, "DEXPI_IMPORT_DEFAULT_TEMPLATE_USED", "",
+          "", "PlantModel",
+          "No template stream was supplied; imported piping segments use the reader's synthetic default fluid and state"));
+    }
 
     addUnits(document, processSystem, "Equipment", EQUIPMENT_CLASS_MAP, DexpiMetadata.TAG_NAME, diagnostics);
     addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP, "PipingComponentNumberAssignmentClass",
         diagnostics);
-    addPipingSegments(document, processSystem, streamTemplate);
+    addPipingSegments(document, processSystem, streamTemplate, diagnostics);
   }
 
   /**
@@ -679,7 +690,8 @@ public final class DexpiXmlReader {
     logger.info("Added {} units from {} elements", totalUnits, tagName);
   }
 
-  private static void addPipingSegments(Document document, ProcessSystem processSystem, Stream templateStream) {
+  private static void addPipingSegments(Document document, ProcessSystem processSystem, Stream templateStream,
+      List<ImportDiagnostic> diagnostics) {
     NodeList segmentNodes = document.getElementsByTagName("PipingNetworkSegment");
     logger.info("Found {} PipingNetworkSegments", segmentNodes.getLength());
     for (int i = 0; i < segmentNodes.getLength(); i++) {
@@ -690,8 +702,89 @@ public final class DexpiXmlReader {
       Element element = (Element) node;
       String baseName = firstNonEmpty(attributeValue(element, DexpiMetadata.SEGMENT_NUMBER),
           element.getAttribute("ID"));
+      addPipingSegmentDiagnostics(element, diagnostics);
       addDexpiStream(processSystem, element, templateStream, baseName);
     }
+  }
+
+  private static void addPipingSegmentDiagnostics(Element element, List<ImportDiagnostic> diagnostics) {
+    if (diagnostics == null) {
+      return;
+    }
+
+    String segmentNumber = attributeValue(element, DexpiMetadata.SEGMENT_NUMBER);
+    if (isBlank(segmentNumber) && isBlank(element.getAttribute("ID"))) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_SEGMENT_IDENTITY_MISSING", "Piping segment has neither an ID nor a segment-number assignment");
+    }
+    if (isBlank(element.getAttribute("ComponentClass"))) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING, "DEXPI_IMPORT_SEGMENT_CLASS_MISSING",
+          "Piping segment ComponentClass is missing");
+    }
+    addMissingPipingMetadataDiagnostic(element, diagnostics, DexpiMetadata.LINE_NUMBER,
+        "DEXPI_IMPORT_LINE_NUMBER_MISSING", "Source line number is missing");
+    addMissingPipingMetadataDiagnostic(element, diagnostics, DexpiMetadata.FLUID_CODE,
+        "DEXPI_IMPORT_SERVICE_CODE_MISSING", "Source service or fluid code is missing");
+    if (isBlank(firstNonEmpty(attributeValue(element, DexpiMetadata.NOMINAL_DIAMETER_REPRESENTATION),
+        attributeValue(element, DexpiMetadata.LINE_SIZE)))) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING, "DEXPI_IMPORT_NOMINAL_SIZE_MISSING",
+          "Source nominal-size representation is missing; no DN, NPS, or schedule is inferred");
+    }
+    if (isBlank(firstNonEmpty(attributeValue(element, DexpiMetadata.PIPING_CLASS_CODE_ASSIGNMENT),
+        attributeValue(element, DexpiMetadata.PIPING_CLASS_CODE)))) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING, "DEXPI_IMPORT_PIPING_CLASS_MISSING",
+          "Source piping-class code is missing");
+    }
+    if (isBlank(firstNonEmpty(attributeValue(element, DexpiMetadata.INSULATION_TYPE_ASSIGNMENT),
+        attributeValue(element, DexpiMetadata.INSULATION_CODE)))) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING, "DEXPI_IMPORT_INSULATION_UNSPECIFIED",
+          "Source insulation is unspecified; absence is not interpreted as uninsulated service");
+    }
+
+    addOperatingValueDiagnostic(element, diagnostics, DexpiMetadata.OPERATING_PRESSURE_VALUE,
+        DexpiMetadata.OPERATING_PRESSURE_UNIT, DexpiMetadata.DEFAULT_PRESSURE_UNIT, "PRESSURE");
+    addOperatingValueDiagnostic(element, diagnostics, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
+        DexpiMetadata.OPERATING_TEMPERATURE_UNIT, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT, "TEMPERATURE");
+    addOperatingValueDiagnostic(element, diagnostics, DexpiMetadata.OPERATING_FLOW_VALUE,
+        DexpiMetadata.OPERATING_FLOW_UNIT, DexpiMetadata.DEFAULT_FLOW_UNIT, "FLOW");
+  }
+
+  private static void addMissingPipingMetadataDiagnostic(Element element, List<ImportDiagnostic> diagnostics,
+      String attributeName, String code, String message) {
+    if (isBlank(attributeValue(element, attributeName))) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING, code, message);
+    }
+  }
+
+  private static void addOperatingValueDiagnostic(Element element, List<ImportDiagnostic> diagnostics,
+      String valueAttribute, String unitAttribute, String defaultUnit, String quantity) {
+    String valueText = firstNonEmpty(getGenericAttribute(element, valueAttribute),
+        findAttributeInAncestors(element, valueAttribute));
+    if (isBlank(valueText)) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.INFO,
+          "DEXPI_IMPORT_" + quantity + "_FROM_TEMPLATE",
+          "Source operating " + quantity.toLowerCase() + " is missing; the template-stream value is retained");
+      return;
+    }
+    if (parseNumeric(valueText) == null) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_" + quantity + "_INVALID",
+          "Source operating " + quantity.toLowerCase() + " value is invalid; the template-stream value is retained");
+      return;
+    }
+    String unit = firstNonEmpty(getGenericAttribute(element, unitAttribute),
+        findAttributeInAncestors(element, unitAttribute));
+    if (isBlank(unit)) {
+      addPipingDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_" + quantity + "_UNIT_DEFAULTED",
+          "Source operating " + quantity.toLowerCase() + " unit is missing; " + defaultUnit + " is used");
+    }
+  }
+
+  private static void addPipingDiagnostic(Element element, List<ImportDiagnostic> diagnostics,
+      ImportDiagnosticSeverity severity, String code, String message) {
+    diagnostics.add(new ImportDiagnostic(severity, code, element.getAttribute("ID"),
+        element.getAttribute("ComponentClass"), element.getTagName(), message));
   }
 
   private static void addDexpiStream(ProcessSystem processSystem, Element element, Stream templateStream,
