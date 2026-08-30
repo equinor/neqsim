@@ -57,6 +57,29 @@ range. `getHenryCoefficientBarAllowExtrapolation` is deliberately named for
 reproducing guideline check values outside that range; GE and Pitzer fugacity
 paths never call it.
 
+### Analytical derivative contract
+
+For the implemented GE reference states,
+
+$\phi_i=\frac{\gamma_i H_i}{P}$
+
+for a Henry solute, or the corresponding solvent vapor-pressure expression.
+NeqSim therefore exposes the constant-composition analytical derivatives
+
+$\left(\frac{\partial\ln\phi_i}{\partial T}\right)_{P,\mathbf{x}}=\frac{\partial\ln\gamma_i}{\partial T}+\frac{\partial\ln H_i}{\partial T}$
+
+and
+
+$\left(\frac{\partial\ln\phi_i}{\partial P}\right)_{T,\mathbf{x}}=\frac{\partial\ln\gamma_i}{\partial P}-\frac{1}{P}$
+
+`SystemInterface.init(2)` and `init(3)` publish these values through
+`getdfugdt()`, `getdfugdp()`, and the Java/JPype
+`getProperty("logfugdT"|"logfugdP", component, phase)` adapter. Pressure is in
+bar, so the pressure derivative is in 1/bar. The `-1/P` term is the derivative
+of the explicit fugacity-coefficient denominator; it is not a Poynting
+correction. The IAPWS reference remains defined at water saturation, and no
+pressure-dependent partial-molar-volume model is implied.
+
 ### Versioned coefficient family
 
 The following values are transcribed from IAPWS G7-04 Tables 2 and 5. `A`, `B`,
@@ -147,7 +170,10 @@ mole-fraction-to-molality mapping, and exercises fail-closed behavior.
 regressions, including the dimensional identity, corrects the historic
 H2/He/Ar solvent classification in aqueous GE phases, and verifies that an
 ionic Pitzer topology without a qualified neutral family remains on one
-deterministic compatibility path even at trace ionic strength. The
+deterministic compatibility path even at trace ionic strength. It also checks
+the system-level `init(2)` derivative dispatch against an IAPWS analytical
+temperature derivative and a centered pressure finite difference, including
+changed-state, return-state, clone, and Java/JPype property access. The
 system-level Pitzer regression verifies the explicit molality conversion,
 including the fixed IAPWS water molar mass. The dimensional identity is
 

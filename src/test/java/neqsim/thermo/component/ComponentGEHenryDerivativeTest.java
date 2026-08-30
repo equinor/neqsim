@@ -7,7 +7,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.system.SystemPitzer;
 
-/** Tests temperature derivatives of aqueous Henry-reference fugacity coefficients. */
+/** Tests temperature and pressure derivatives of aqueous Henry-reference fugacity coefficients. */
 class ComponentGEHenryDerivativeTest {
   private static final double TEMPERATURE = 298.15;
 
@@ -20,8 +20,11 @@ class ComponentGEHenryDerivativeTest {
     double expected = finiteDifferenceLogHenry(component, TEMPERATURE);
 
     assertEquals(expected, component.fugcoefDiffTemp(phase), 1.0e-9);
+    assertEquals(expected, component.logfugcoefdT(phase), 1.0e-9);
     assertEquals(1200.0 / (TEMPERATURE * TEMPERATURE) + 1.5 / TEMPERATURE + 0.002, component.fugcoefDiffTemp(phase),
         1.0e-12);
+    phase.setPressure(10.0);
+    assertEquals(-0.1, component.logfugcoefdP(phase), 1.0e-15);
   }
 
   @Test
@@ -95,6 +98,58 @@ class ComponentGEHenryDerivativeTest {
         carbonDioxide.exposesLnHenryDerivative(unqualifiedBrine), 0.0);
     assertEquals(carbonDioxide.exposesLegacyHenry(TEMPERATURE), carbonDioxide.exposesEffectiveHenry(traceIonTopology),
         0.0);
+  }
+
+  @Test
+  void systemInitializationPublishesAndRefreshesAnalyticalDerivatives() {
+    SystemPitzer system = new SystemPitzer(TEMPERATURE, 10.0);
+    system.addComponent("water", 55.508);
+    system.addComponent("nitrogen", 1.0e-4);
+    system.setMixingRule("classic");
+    system.init(2);
+
+    PhaseInterface aqueous = system.getPhase(1);
+    ComponentInterface nitrogen = aqueous.getComponent("nitrogen");
+    ComponentInterface water = aqueous.getComponent("water");
+    double expectedTemperatureDerivative = IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("N2", TEMPERATURE);
+
+    assertEquals(expectedTemperatureDerivative, nitrogen.getdfugdt(), 1.0e-12);
+    assertEquals(-0.1, nitrogen.getdfugdp(), 1.0e-15);
+    assertEquals(-0.1, water.getdfugdp(), 1.0e-15);
+    assertEquals(nitrogen.getdfugdt(), system.getProperty("logfugdT", "nitrogen", 1), 0.0);
+    assertEquals(nitrogen.getdfugdp(), system.getProperty("logfugdP", "nitrogen", 1), 0.0);
+    assertEquals(nitrogen.getdfugdp(), centeredPressureDerivative((ComponentGE) nitrogen, aqueous), 2.0e-10);
+
+    system.setPressure(25.0);
+    system.setTemperature(318.15);
+    system.init(2);
+    aqueous = system.getPhase(1);
+    nitrogen = aqueous.getComponent("nitrogen");
+    assertEquals(IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative("N2", 318.15), nitrogen.getdfugdt(), 1.0e-12);
+    assertEquals(-0.04, nitrogen.getdfugdp(), 1.0e-15);
+
+    SystemPitzer cloned = system.clone();
+    cloned.init(2);
+    assertEquals(nitrogen.getdfugdt(), cloned.getPhase(1).getComponent("nitrogen").getdfugdt(), 0.0);
+    assertEquals(nitrogen.getdfugdp(), cloned.getPhase(1).getComponent("nitrogen").getdfugdp(), 0.0);
+
+    system.setPressure(10.0);
+    system.setTemperature(TEMPERATURE);
+    system.init(2);
+    assertEquals(expectedTemperatureDerivative, system.getPhase(1).getComponent("nitrogen").getdfugdt(), 1.0e-12);
+    assertEquals(-0.1, system.getPhase(1).getComponent("nitrogen").getdfugdp(), 1.0e-15);
+  }
+
+  private static double centeredPressureDerivative(ComponentGE component, PhaseInterface phase) {
+    double pressure = phase.getPressure();
+    double step = pressure * 1.0e-5;
+    phase.setPressure(pressure + step);
+    double plus = Math.log(component.fugcoef(phase));
+    phase.setPressure(pressure - step);
+    double minus = Math.log(component.fugcoef(phase));
+    phase.setPressure(pressure);
+    component.fugcoef(phase);
+    return (plus - minus) / (2.0 * step);
   }
 
   private static PhasePitzer phaseAt(double temperature) {
