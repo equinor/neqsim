@@ -25,6 +25,7 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.diagram.EngineeringDiagramReferenceFixtures;
@@ -75,7 +76,17 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     assertFalse(xml.contains("90-EMPTY-SPARE"));
     assertTrue(xml.contains("PT-5001"));
     assertTrue(xml.contains("PC-5001"));
+    assertTrue(xml.contains("INSTRUMENTATION_BUBBLE_SHAPE_CENTRAL"),
+        "Controller must use the shared-system/panel location convention");
+    assertTrue(xml.contains("MeasurementAttachmentTargetID"),
+        "Transmitter must identify the measured process nozzle");
+    assertFalse(xml.contains("ComponentClass=\"ActuatingSystemFunction\""),
+        "A standalone controller must not emit an actuating signal to empty space");
     assertFalse(report.hasErrors(), report.toJson());
+    assertEquals(1, report.getMetrics().get("processMeasurementAttachments"), report.toJson());
+    assertEquals(1, report.getMetrics().get("incompleteControlLoops"), report.toJson());
+    assertEquals(0, report.getMetrics().get("sourceActuatingSignals"), report.toJson());
+    assertTrue(hasFinding(report, "CONTROL_FINAL_ELEMENT_SOURCE_DATA_MISSING"), report.toJson());
     assertTrue(report.getMetrics().get("componentInstances") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceTexts") >= 4, report.toJson());
     assertTrue(report.getMetrics().get("sourceCenterLines") > 0, report.toJson());
@@ -88,6 +99,69 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     Document exportedDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpi.toFile());
     assertTrue(hasDirectedEquipmentConnection(exportedDocument, "ID-50-RC-001", "ID-50-MX-001"),
         "The configured recycle outlet must be routed back to the mixer inlet");
+  }
+
+  @Test
+  void connectsControllerOnlyToModelledFinalControlElement() throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("51-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    PressureTransmitter pressure = new PressureTransmitter("PT-5101", feed);
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("PC-5101");
+    controller.setControllerSetPoint(45.0);
+    controller.setControllerParameters(1.0, 30.0, 0.0);
+    controller.setTransmitter(pressure);
+    ThrottlingValve valve = new ThrottlingValve("51-PV-001", feed);
+    valve.setOutletPressure(45.0);
+    valve.setController(controller);
+
+    ProcessSystem process = new ProcessSystem("Modelled final-control-element benchmark");
+    process.add(feed);
+    process.add(valve);
+    process.add(pressure);
+    process.add(controller);
+    process.run();
+
+    Path dexpi = temporaryDirectory.resolve("modelled-final-element.xml");
+    DexpiXmlWriter.writeForPyDexpi(process, dexpi.toFile());
+    String xml = new String(Files.readAllBytes(dexpi), StandardCharsets.UTF_8);
+    DexpiVisualQualityAssessment.Report report = DexpiVisualQualityAssessment.assess(dexpi.toFile());
+
+    assertFalse(report.hasErrors(), report.toJson());
+    assertTrue(xml.contains("ComponentClass=\"ActuatingSystemFunction\""));
+    assertTrue(xml.contains("Name=\"FinalControlElementTag\" Value=\"51-PV-001\""));
+    assertTrue(xml.contains("Name=\"ControlLoopStatus\" Value=\"CLOSED_MODELLED\""));
+    assertEquals(1, report.getMetrics().get("closedControlLoops"), report.toJson());
+    assertEquals(1, report.getMetrics().get("sourceActuatingSignals"), report.toJson());
+    assertEquals(0, report.getMetrics().get("invalidActuatingSignals"), report.toJson());
+  }
+
+  @Test
+  void reportsUnresolvedInstrumentTopologyDeterministically() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        + "<PlantModel><PlantInformation SchemaVersion=\"4.1.1\"/>"
+        + "<Drawing Name=\"Instrument topology defect\"><Extent><Min X=\"0\" Y=\"0\"/>"
+        + "<Max X=\"100\" Y=\"70\"/></Extent></Drawing>"
+        + "<ProcessInstrumentationFunction ID=\"PT-1\"><GenericAttributes>"
+        + "<GenericAttribute Name=\"InstrumentationRole\" Value=\"TRANSMITTER\"/>"
+        + "<GenericAttribute Name=\"MeasurementAttachmentStatus\" Value=\"MISSING_SOURCE_DATA\"/>"
+        + "</GenericAttributes></ProcessInstrumentationFunction>"
+        + "<InformationFlow ID=\"ACT-1\" ComponentClass=\"ActuatingSystemFunction\"/>"
+        + "</PlantModel>";
+    Path dexpi = temporaryDirectory.resolve("instrument-topology-defect.xml");
+    Files.write(dexpi, xml.getBytes(StandardCharsets.UTF_8));
+
+    DexpiVisualQualityAssessment.Report report = DexpiVisualQualityAssessment.assess(dexpi.toFile());
+
+    assertTrue(report.hasErrors(), report.toJson());
+    assertTrue(hasFinding(report, "MEASUREMENT_ATTACHMENT_SOURCE_DATA_MISSING"), report.toJson());
+    assertTrue(hasFinding(report, "ACTUATING_SIGNAL_FINAL_ELEMENT_MISSING"), report.toJson());
+    assertEquals(1, report.getMetrics().get("measurementAttachmentDataGaps"));
+    assertEquals(1, report.getMetrics().get("invalidActuatingSignals"));
+    assertEquals(report.toJson(), DexpiVisualQualityAssessment.assess(dexpi.toFile()).toJson());
   }
 
   @Test
