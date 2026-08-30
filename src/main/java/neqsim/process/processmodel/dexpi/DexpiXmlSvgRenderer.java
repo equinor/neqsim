@@ -363,8 +363,8 @@ public final class DexpiXmlSvgRenderer {
     if (!"Solid".equalsIgnoreCase(element.getAttribute("Filled"))) {
       return renderedStyle;
     }
-    return renderedStyle.replace(" fill=\\\"none\\\"", "") + " fill=\\\"" + color(element)
-        + "\\\" data-dexpi-filled=\\\"solid\\\"";
+    return renderedStyle.replace(" fill=\"none\"", "") + " fill=\"" + color(element)
+        + "\" data-dexpi-filled=\"solid\"";
   }
 
   private static String style(Element element) {
