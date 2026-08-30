@@ -173,9 +173,14 @@ def test_current_phase0_boundary(client):
         record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_NON_NUMERICAL_SESSION_LIFECYCLE"
-        and "SessionRunnerContractTest.java"
-        in record.get("contractEvidenceSources", [])
-        and "test_session_protocol.py" in record.get("contractEvidenceSources", []),
+        and any(
+            source.endswith("SessionRunnerContractTest.java")
+            for source in record.get("contractEvidenceSources", [])
+        )
+        and any(
+            source.endswith("test_session_protocol.py")
+            for source in record.get("contractEvidenceSources", [])
+        ),
         "manageSession promotion evidence drifted",
         record,
     )
