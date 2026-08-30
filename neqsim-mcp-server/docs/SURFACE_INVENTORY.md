@@ -16,7 +16,7 @@ manually maintained Java method list.
 | Tool implementations | 71 bindings / 60 classes | `getCapabilities.implementationInventory` | `McpImplementationInventory` |
 | Factory equipment | 205 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
-| MCP Java test classes | 68 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
+| MCP Java test classes | 69 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
@@ -87,7 +87,7 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 ## Tests, guides, and known limitations
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
-Phase 0 inventory. The exact current source contains 68 JUnit test classes under
+Phase 0 inventory. The exact current source contains 69 JUnit test classes under
 `src/test/java/neqsim/mcp`, 94 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently

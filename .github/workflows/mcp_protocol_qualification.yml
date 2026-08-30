@@ -54,6 +54,9 @@ jobs:
       - name: Run focused model-registry Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ModelRegistryTest test -ntp
 
+      - name: Run focused session-lifecycle Java contracts
+        run: mvn -B -Dtest=neqsim.mcp.runners.SessionRunnerTest,neqsim.mcp.runners.SessionRunnerContractTest test -ntp
+
       - name: Build exact MCP server package
         shell: bash
         run: |
@@ -72,6 +75,9 @@ jobs:
 
       - name: Run focused real-MCP model-registry qualification
         run: cd neqsim-mcp-server && python test_model_registry_protocol.py
+
+      - name: Run focused real-MCP session-lifecycle qualification
+        run: cd neqsim-mcp-server && python test_session_protocol.py
 
       - name: Run comprehensive real-MCP protocol regression
         run: cd neqsim-mcp-server && python test_mcp_server.py
