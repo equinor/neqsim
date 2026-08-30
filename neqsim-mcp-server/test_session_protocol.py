@@ -130,6 +130,19 @@ def payload(response):
     return merged
 
 
+def error_code(response):
+    """Return the canonical code from the standard nested error envelope."""
+    if not isinstance(response, dict):
+        return None
+    code = response.get("code")
+    if isinstance(code, str):
+        return code
+    errors = response.get("errors")
+    if isinstance(errors, list) and errors and isinstance(errors[0], dict):
+        return errors[0].get("code")
+    return None
+
+
 def simple_process(client):
     """Retrieve the canonical catalog fixture instead of duplicating model JSON."""
     example = client.call_tool(
@@ -219,7 +232,7 @@ def test_list_and_state(client, session_id):
 def test_invalid_action_fails_closed(client):
     invalid = payload(client.manage_session({"action": "not-a-session-action"}))
     require(invalid.get("status") == "error", "unknown session action was accepted", invalid)
-    require(invalid.get("code") == "UNKNOWN_ACTION", "unknown-action code drifted", invalid)
+    require(error_code(invalid) == "UNKNOWN_ACTION", "unknown-action code drifted", invalid)
 
 
 def test_close_invalidates_session(client, session_id):
@@ -232,7 +245,7 @@ def test_close_invalidates_session(client, session_id):
         client.manage_session({"action": "getState", "sessionId": session_id})
     )
     require(stale.get("status") == "error", "closed session remained retrievable", stale)
-    require(stale.get("code") == "SESSION_NOT_FOUND", "closed-session code drifted", stale)
+    require(error_code(stale) == "SESSION_NOT_FOUND", "closed-session code drifted", stale)
 
 
 def main():
