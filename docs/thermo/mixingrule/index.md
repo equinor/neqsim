@@ -1,6 +1,6 @@
 ---
 title: mixingrule
-description: mixingrule documentation for NeqSim
+description: NeqSim thermodynamic mixing rule documentation
 ---
 
 {%- include_relative README.md -%}

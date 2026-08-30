@@ -1,6 +1,6 @@
 ---
 title: system
-description: system documentation for NeqSim
+description: NeqSim thermodynamic system model documentation
 ---
 
 {%- include_relative README.md -%}
