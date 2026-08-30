@@ -30,7 +30,11 @@ public final class CoupledPressureMomentumSolver implements Serializable {
   private static final double MIN_SOUND_SPEED = 1.0;
   private static final double MIN_DIAGONAL = 1.0e-24;
 
-  private int maximumIterations = 12;
+  /**
+   * Default nonlinear budget. The former value of 12 stopped before the public Tengesdal coupled case reached the
+   * default volume tolerance.
+   */
+  private int maximumIterations = 24;
   private double relativeVolumeTolerance = 1.0e-7;
   private double pressureRelaxation = 0.7;
   private double maximumRelativePressureCorrection = 0.25;
@@ -403,12 +407,22 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     return result;
   }
 
+  /** @return maximum nonlinear correction iterations */
+  public int getMaximumIterations() {
+    return maximumIterations;
+  }
+
   /** @param maximumIterations maximum nonlinear correction iterations */
   public void setMaximumIterations(int maximumIterations) {
     if (maximumIterations < 1) {
       throw new IllegalArgumentException("maximumIterations must be at least one");
     }
     this.maximumIterations = maximumIterations;
+  }
+
+  /** @return maximum accepted relative cell-volume residual */
+  public double getRelativeVolumeTolerance() {
+    return relativeVolumeTolerance;
   }
 
   /** @param tolerance maximum accepted relative cell-volume residual */

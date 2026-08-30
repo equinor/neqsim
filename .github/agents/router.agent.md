@@ -174,7 +174,7 @@ Some requests need multiple agents in sequence. Detect these patterns:
 > agents across **all** repos (it also shows the skills each agent loads):
 >
 > ```bash
-> python devtools/agent_search.py "<user request>" --top 8
+> <python-executable> devtools/agent_search.py "<user request>" --top 8
 > ```
 >
 > For a task that spans ≥3 disciplines or is a repeatable program, prefer a

@@ -56,6 +56,32 @@
       },
       "description": "The other agents this agent delegates to (horizontal composition / orchestration edges), as opposed to `extends` which is a vertical policy overlay of a single base agent. Declaring delegation here \u2014 rather than only naming agents in AGENT.md prose or an @mention table \u2014 makes the orchestration graph machine-checkable: validators existence-check each id against the catalogs, the orchestration map is generated from it, and an agent whose `agent_type` is a coordinator/orchestrator is expected to declare a non-empty list. Front-door routers and multi-agent coordinators SHOULD populate this."
     },
+    "inbound_handoffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["agent", "schema", "purpose"],
+        "additionalProperties": false,
+        "properties": {
+          "agent": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Agent id that may send this handoff to the receiving agent."
+          },
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$",
+            "description": "Stable schema or contract id carried by the handoff."
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Why the receiving agent accepts this handoff and what ownership or provenance it preserves."
+          }
+        }
+      },
+      "description": "Typed handoffs this agent accepts from upstream agents. This is receiver-declared provenance and input compatibility, not authority to delegate back to the sender. Validators and maps keep these edges separate from `coordinated_agents`; reciprocal-looking handoff/delegation relationships are therefore allowed and are not treated as ownership cycles."
+    },
     "supported_domains": {
       "type": "array",
       "items": { "type": "string" },

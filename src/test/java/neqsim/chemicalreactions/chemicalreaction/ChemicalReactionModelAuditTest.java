@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
@@ -32,8 +33,14 @@ class ChemicalReactionModelAuditTest {
     assertTrue(pitzerAudit.getReactionCount() > 0);
     assertTrue(pitzerAudit.hasValidatedEvidenceForAllActiveReactions());
     assertTrue(pitzerAudit.getReactionsWithoutValidatedEvidence().isEmpty());
+    pitzerAudit.requireValidatedEvidenceForAllActiveReactions();
     assertFalse(cpaAudit.hasValidatedEvidenceForAllActiveReactions());
     assertTrue(cpaAudit.getReactionsWithoutValidatedEvidence().contains("CO2water"));
+    IllegalStateException validationFailure = assertThrows(IllegalStateException.class,
+        cpaAudit::requireValidatedEvidenceForAllActiveReactions);
+    assertTrue(validationFailure.getMessage().contains("source 'standard'"));
+    assertTrue(validationFailure.getMessage().contains("MOLE_FRACTION"));
+    assertTrue(validationFailure.getMessage().contains("CO2water"));
     assertFalse(comparison.hasSameReactionDataSource());
     assertFalse(comparison.hasSameReactionConcentrationBasis());
     assertTrue(comparison.getReactionsOnlyInFirst().isEmpty());
@@ -42,6 +49,11 @@ class ChemicalReactionModelAuditTest {
     assertTrue(comparison.getParameterDifferences().contains("carbonate"));
     assertTrue(comparison.getParameterDifferences().contains("waterreac"));
     assertFalse(comparison.isEquivalent());
+    IllegalStateException comparisonFailure = assertThrows(IllegalStateException.class, comparison::requireEquivalent);
+    assertTrue(comparisonFailure.getMessage().contains("sameReactionDataSource=false"));
+    assertTrue(comparisonFailure.getMessage().contains("sameReactionConcentrationBasis=false"));
+    assertTrue(comparisonFailure.getMessage().contains("CO2water"));
+    ChemicalReactionModelAudit.compare(cpaAudit, cpaAudit).requireEquivalent();
     assertNotNull(findReaction(cpaAudit, "CO2water"));
     assertEquals(ChemicalReactionValidationStatus.VALIDATED,
         findReaction(pitzerAudit, "CO2water").getValidationStatus());
@@ -49,9 +61,9 @@ class ChemicalReactionModelAuditTest {
         findReaction(cpaAudit, "CO2water").getValidationStatus());
   }
 
-  /** Compatibility-copy Pitzer rows remain active but are explicitly reported as unvalidated. */
+  /** Pitzer activates only the independently supported first sulfide dissociation. */
   @Test
-  void pitzerReportsUnvalidatedActiveSulfideReactions() {
+  void pitzerReportsValidatedFirstSulfideDissociationOnly() {
     SystemInterface pitzer = new SystemPitzer(298.15, 1.01325);
     pitzer.addComponent("H2S", 0.01);
     pitzer.addComponent("water", 0.99);
@@ -59,10 +71,11 @@ class ChemicalReactionModelAuditTest {
 
     ChemicalReactionModelAudit.AuditSnapshot audit = ChemicalReactionModelAudit.inspect(pitzer);
 
-    assertFalse(audit.hasValidatedEvidenceForAllActiveReactions());
-    assertTrue(audit.getReactionsWithoutValidatedEvidence().contains("water-H2S"));
-    assertTrue(audit.getReactionsWithoutValidatedEvidence().contains("water-HS"));
-    assertEquals(ChemicalReactionValidationStatus.UNVALIDATED, findReaction(audit, "water-H2S").getValidationStatus());
+    assertTrue(audit.hasValidatedEvidenceForAllActiveReactions());
+    assertTrue(audit.getReactionsWithoutValidatedEvidence().isEmpty());
+    audit.requireValidatedEvidenceForAllActiveReactions();
+    assertEquals(ChemicalReactionValidationStatus.VALIDATED, findReaction(audit, "water-H2S").getValidationStatus());
+    assertNull(findReaction(audit, "water-HS"));
     assertThrows(UnsupportedOperationException.class, () -> audit.getReactionsWithoutValidatedEvidence().clear());
   }
 

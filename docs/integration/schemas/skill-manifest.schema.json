@@ -56,6 +56,11 @@
       "type": "string",
       "enum": ["core", "community", "internal", "private", "experimental"]
     },
+    "calculation_basis": {
+      "type": "string",
+      "enum": ["screening", "neqsim-java", "hybrid", "data-retrieval", "advisory"],
+      "description": "How the skill's numbers are produced, so an agent can weigh rigor programmatically instead of parsing prose. 'screening' = public/educational correlations in pure Python (order-of-magnitude, needs a rigorous follow-up); 'neqsim-java' = drives the NeqSim Java engine (EOS flash, process solve, PVT) and is calculation-grade; 'hybrid' = screening correlations plus at least one NeqSim-backed step; 'data-retrieval' = returns source data/evidence and performs no engineering calculation; 'advisory' = methodology, governance, or reporting guidance with no numeric output."
+    },
     "requires_mcp_tools": {
       "type": "array",
       "items": { "type": "string" }

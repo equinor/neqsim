@@ -37,12 +37,13 @@ NeqSim core → core skills → community skills → (enterprise skills) → age
 
 ## 2. Prerequisites
 
-- **GitHub account** and a **GitHub Copilot** subscription with a modern LLM.
+- **GitHub account** and a **GitHub Copilot** subscription.
 - **[Visual Studio Code](https://code.visualstudio.com/)** with the **GitHub Copilot**
   and **GitHub Copilot Chat** extensions (or use **GitHub Codespaces** in the browser).
 - Local development also needs **[Git](https://git-scm.com/downloads)**,
   **[Python 3.8+](https://www.python.org/downloads/)** (add to PATH),
-  **[Java (JDK)](https://adoptium.net/)**, and **[Maven](https://maven.apache.org/download.cgi)**.
+  and **[Java (JDK)](https://adoptium.net/)**. You do not need to install Maven
+  separately because the repository includes the Maven Wrapper.
 
 > **Tip:** activate a Python virtual environment before installing so the `neqsim`
 > command lands on PATH.
@@ -69,30 +70,38 @@ python3 -m venv .venv && source .venv/bin/activate
 ./install.sh
 ```
 
-**Restart the terminal** (or fully quit and reopen VS Code) so PATH updates apply,
-then verify:
+Keep the virtual environment active and verify in the same terminal:
 
 ```powershell
 neqsim --help
+neqsim doctor
 ```
 
 If `neqsim` is not found, use `python -m neqsim_cli --help` and see
 [devtools/README.md](../../devtools/README.md#troubleshooting-neqsim-not-found).
+If you installed outside a virtual environment, fully quit and reopen VS Code so
+its captured PATH is refreshed.
 
 ---
 
 ## 4. Install the community agents into VS Code
 
-The public catalog is used by default — no login required.
+The public community catalog requires no login. Select it explicitly so any
+previously registered private catalogs cannot affect the public installation.
 
 ```powershell
-neqsim agent install --all --vscode --force
+neqsim agent install --all --source community --vscode --force
+neqsim agent doctor --target vscode --source community
 ```
 
-- `--all` installs all community agents; `--vscode` exports them into GitHub
-  Copilot Chat; `--force` overwrites stale exports (safe to re-run after updates).
+- `--all --source community` installs all public community agents; `--vscode`
+  exports them into GitHub Copilot Chat; `--force` overwrites stale exports
+  (safe to re-run after updates).
 - Installing an agent **automatically installs the skills** it declares in
   `required_skills`.
+- Installation is successful when both commands exit with code `0` and doctor
+  reports `Result: PASS`. Do not verify against a fixed agent count because the
+  catalog changes over time.
 
 Browse or install individually:
 
@@ -102,7 +111,7 @@ neqsim skill list                    # list community skills
 neqsim agent search hydrate          # search by name/tag/skill
 neqsim agent install <name> --vscode # install one agent
 neqsim skill install <name> --vscode # install one skill (standalone)
-neqsim agent doctor --target vscode  # verify exports
+neqsim agent doctor --target vscode --source community # verify community exports
 ```
 
 ---
@@ -110,12 +119,15 @@ neqsim agent doctor --target vscode  # verify exports
 ## 5. Use the agents
 
 Open **Copilot Chat** in VS Code, type `@` to see installed agents, and describe
-your task in plain language. Examples: `@solve.task`, `@thermo.fluid`,
-`@process.model`, `@flow.assurance`, `@pvt.simulation`.
+your task in plain language. Globally exported community examples include
+`@pvt-agent`, `@process-engineer-agent`, `@flow-assurance-engineer-agent`, and
+`@process-safety-agent`.
 
 For agentic task-solving (task folders, notebooks, reports) see
 [AGENTS.md](../../AGENTS.md) and
 [docs/development/TASK_SOLVING_GUIDE.md](../development/TASK_SOLVING_GUIDE.md).
+Workspace-local core agents such as `@solve.task` are available when this NeqSim
+workspace is open; they are distinct from globally exported community agents.
 
 ---
 

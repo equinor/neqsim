@@ -164,7 +164,7 @@ class SalesContractsDocumentationContractTest(unittest.TestCase):
     def test_existing_indexes_discover_the_guide(self):
         standards_index = STANDARDS_INDEX.read_text(encoding="utf-8")
         reference_index = REFERENCE_INDEX.read_text(encoding="utf-8")
-        self.assertIn("[Sales contracts](sales_contracts.md)", standards_index)
+        self.assertIn("[Sales contracts](sales_contracts)", standards_index)
         self.assertIn("standards/sales_contracts.md", reference_index)
 
 

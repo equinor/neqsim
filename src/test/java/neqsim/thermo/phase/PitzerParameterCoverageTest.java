@@ -1,5 +1,6 @@
 package neqsim.thermo.phase;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -7,6 +8,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
@@ -74,6 +80,59 @@ public class PitzerParameterCoverageTest extends neqsim.NeqSimTest {
     assertTrue("test-explicit-mixed-v1".equals(restored.getParameterDatasetId()));
   }
 
+  /** Verify reaction-species coverage follows changed state and clone-owned definitions. */
+  @Test
+  public void testReactionCoverageChangedStateAndCloneIndependence() {
+    PhasePitzer original = createReactionCoveragePhase();
+    PitzerParameterCoverage originalCoverage = original.getPitzerReactionParameterCoverage();
+    assertFalse(originalCoverage.isComplete());
+    assertTrue(originalCoverage.getMissingBinaryPairs().contains("H3O+|HCO3-"));
+
+    PhasePitzer clone = original.clone();
+    int hydronium = clone.getComponent("H3O+").getComponentNumber();
+    int bicarbonate = clone.getComponent("HCO3-").getComponentNumber();
+    clone.setBinaryParameters(hydronium, bicarbonate, 0.0, 0.0, 0.0);
+
+    assertTrue(clone.getPitzerReactionParameterCoverage().isComplete());
+    assertFalse(original.getPitzerReactionParameterCoverage().isComplete());
+
+    original.getComponent("HCO3-").setx(0.0);
+    original.getComponent("HCO3-").setNumberOfMolesInPhase(0.0);
+    PitzerParameterCoverage changedCoverage = original.getPitzerReactionParameterCoverage();
+    assertTrue(changedCoverage.isComplete());
+    assertFalse(changedCoverage.getActiveAnions().contains("HCO3-"));
+  }
+
+  /** Verify serialized state and concurrent read-only calls retain the deterministic reaction diagnostic. */
+  @Test
+  public void testReactionCoverageSerializationAndConcurrentReads() throws Exception {
+    PhasePitzer phase = createReactionCoveragePhase();
+    String expectedDiagnostic = phase.getPitzerReactionParameterCoverage().formatDiagnostic();
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(phase);
+    }
+    PhasePitzer restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restored = (PhasePitzer) input.readObject();
+    }
+    assertEquals(expectedDiagnostic, restored.getPitzerReactionParameterCoverage().formatDiagnostic());
+
+    ExecutorService executor = Executors.newFixedThreadPool(4);
+    try {
+      List<Future<String>> diagnostics = new ArrayList<Future<String>>();
+      for (int call = 0; call < 16; call++) {
+        diagnostics.add(executor.submit(() -> restored.getPitzerReactionParameterCoverage().formatDiagnostic()));
+      }
+      for (Future<String> diagnostic : diagnostics) {
+        assertEquals(expectedDiagnostic, diagnostic.get());
+      }
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
   /** Verify the unequal-charge fast-path cache follows component topology and clone state. */
   @Test
   public void testUnequalChargeTopologyFastPath() {
@@ -89,6 +148,24 @@ public class PitzerParameterCoverageTest extends neqsim.NeqSimTest {
     PhasePitzer unequalChargePhase = (PhasePitzer) unequalChargeSystem.getPhase(1);
     assertTrue(unequalChargePhase.hasUnequalChargeSameSignPair());
     assertTrue(unequalChargePhase.clone().hasUnequalChargeSameSignPair());
+  }
+
+  /**
+   * Creates a water/hydronium/bicarbonate phase for reaction-species coverage tests.
+   *
+   * @return initialized Pitzer phase using the legacy parameter identity
+   */
+  private static PhasePitzer createReactionCoveragePhase() {
+    SystemPitzer system = new SystemPitzer(298.15, 1.01325);
+    system.useLegacyPitzerParameters();
+    system.addComponent("water", 55.508);
+    system.addComponent("H3O+", 1.0e-3);
+    system.addComponent("HCO3-", 1.0e-3);
+    system.setMixingRule("classic");
+    system.init(0);
+    PhasePitzer phase = (PhasePitzer) system.getPhase(1);
+    phase.loadParametersFromDatabase();
+    return phase;
   }
 
   /**
@@ -111,7 +188,8 @@ public class PitzerParameterCoverageTest extends neqsim.NeqSimTest {
    * @return initialized Pitzer system
    */
   private static SystemInterface createMixedSystem(double potassiumMoles) {
-    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    SystemPitzer system = new SystemPitzer(298.15, 1.01325);
+    system.useLegacyPitzerParameters();
     system.addComponent("water", 55.508);
     system.addComponent("Na+", 1.0);
     system.addComponent("K+", potassiumMoles);

@@ -19,6 +19,8 @@ import neqsim.thermo.phase.PhaseInterface;
 public abstract class ComponentGE extends Component implements ComponentGEInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Finite fail-closed Henry coefficient used for unsupported or invalid solutes, in bar. */
+  protected static final double INSOLUBLE_HENRY_COEFFICIENT = 1.0e12;
 
   protected double gamma = 0;
   protected double gammaRefCor = 0;
@@ -46,7 +48,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   @Override
   public double fugcoef(PhaseInterface phase) {
     logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
-    if (referenceStateType.equals("solvent")) {
+    if (referenceStateType.equals("solvent") && !usesIapwsAqueousReference(phase)) {
       fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
       gammaRefCor = gamma;
     } else {
@@ -57,12 +59,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
       } else {
         activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
-      double henryCoef = getHenryCoef(phase.getTemperature());
-      // Handle infinite or very large Henry coefficients (database error or insoluble component)
-      // Use a large but finite value to represent essentially insoluble components
-      if (Double.isInfinite(henryCoef) || henryCoef > 1.0e12 || isIsIon()) {
-        henryCoef = 1.0e12; // Cap at 1e12 bar - effectively insoluble
-      }
+      double henryCoef = getEffectiveHenryCoefficient(phase);
       fugacityCoefficient = activinf * henryCoef / phase.getPressure();
       // gamma* benyttes ikke
       gammaRefCor = activinf;
@@ -72,19 +69,130 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   }
 
   /**
-   * fugcoefDiffPres.
+   * Returns the Henry coefficient used by the aqueous GE reference state.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * <p>
+   * Invalid, non-positive, unsupported ionic, and excessively large correlations fail closed to a finite insoluble
+   * limit. Model-specific GE components may extend the unsupported-species decision.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @return effective Henry coefficient in bar
+   */
+  protected double getEffectiveHenryCoefficient(double temperature) {
+    double henryCoefficient = getHenryCoef(temperature);
+    return isHenryCoefficientCapped(henryCoefficient) ? INSOLUBLE_HENRY_COEFFICIENT : henryCoefficient;
+  }
+
+  /**
+   * Returns the phase-aware Henry coefficient, preferring the qualified IAPWS pure-water reference.
+   *
+   * <p>
+   * The IAPWS value is selected only for a supported neutral solute in a water-containing phase. Temperatures outside
+   * the liquid-water domain fail closed. Species outside the IAPWS table retain the legacy database behavior.
+   * </p>
+   *
+   * @param phase phase containing temperature and solvent topology
+   * @return effective mole-fraction Henry coefficient in bar
+   */
+  protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
+    if (!isIsIon() && IapwsHenryLaw.isSupportedSpecies(getComponentName()) && phase.hasComponent("water")) {
+      if (IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+        return IapwsHenryLaw.getHenryCoefficientBar(getComponentName(), phase.getTemperature());
+      }
+      return INSOLUBLE_HENRY_COEFFICIENT;
+    }
+    return getEffectiveHenryCoefficient(phase.getTemperature());
+  }
+
+  /**
+   * Tests whether a raw Henry correlation must fail closed.
+   *
+   * @param henryCoefficient raw Henry coefficient in bar
+   * @return {@code true} when the effective reference is the finite insoluble limit
+   */
+  protected boolean isHenryCoefficientCapped(double henryCoefficient) {
+    return !Double.isFinite(henryCoefficient) || henryCoefficient <= 0.0
+        || henryCoefficient > INSOLUBLE_HENRY_COEFFICIENT || isIsIon();
+  }
+
+  /**
+   * Returns the logarithmic temperature derivative of the effective Henry reference.
+   *
+   * <p>
+   * Fugacity-coefficient derivatives are derivatives of {@code ln(phi)}. The database API returns {@code dH/dT}, so an
+   * active correlation contributes {@code (dH/dT)/H}. A fail-closed constant contributes zero.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @return {@code d(ln H)/dT} in 1/K
+   */
+  protected double getLnHenryCoefficientTemperatureDerivative(double temperature) {
+    double henryCoefficient = getHenryCoef(temperature);
+    if (isHenryCoefficientCapped(henryCoefficient)) {
+      return 0.0;
+    }
+    return getHenryCoefdT(temperature) / henryCoefficient;
+  }
+
+  /**
+   * Returns the phase-aware logarithmic derivative for the selected Henry reference.
+   *
+   * @param phase phase containing temperature and solvent topology
+   * @return d(ln H)/dT in 1/K
+   */
+  protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
+    if (!isIsIon() && IapwsHenryLaw.isSupportedSpecies(getComponentName()) && phase.hasComponent("water")) {
+      if (IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+        return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
+      }
+      return 0.0;
+    }
+    return getLnHenryCoefficientTemperatureDerivative(phase.getTemperature());
+  }
+
+  /**
+   * Tests whether this component uses a Henry rather than a solvent vapor-pressure reference in a phase.
+   *
+   * @param phase owning GE phase
+   * @return true for a solute Henry reference
+   */
+  protected boolean usesHenryReference(PhaseInterface phase) {
+    return !referenceStateType.equals("solvent") || usesIapwsAqueousReference(phase);
+  }
+
+  /** Tests whether IAPWS overrides a legacy solvent classification in an aqueous phase. */
+  private boolean usesIapwsAqueousReference(PhaseInterface phase) {
+    return !"water".equalsIgnoreCase(getComponentName()) && IapwsHenryLaw.isSupportedSpecies(getComponentName())
+        && phase.hasComponent("water");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double logfugcoefdP(PhaseInterface phase) {
+    return fugcoefDiffPres(phase);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double logfugcoefdT(PhaseInterface phase) {
+    return fugcoefDiffTemp(phase);
+  }
+
+  /**
+   * Calculates the analytical pressure derivative of the logarithmic GE fugacity coefficient.
+   *
+   * <p>
+   * Every GE reference implemented here has {@code phi = gamma * reference / P}. With no Poynting correction in the
+   * model, the pressure derivative is therefore {@code d(ln gamma)/dP - 1/P}. A future pressure-dependent reference
+   * must add its own derivative without removing the explicit denominator term.
+   * </p>
+   *
+   * @param phase phase containing pressure in bar
+   * @return d(ln(phi))/dP in 1/bar
    */
   public double fugcoefDiffPres(PhaseInterface phase) {
-    // double temperature = phase.getTemperature(), pressure = phase.getPressure();
-    // int numberOfComponents = phase.getNumberOfComponents();
-    if (referenceStateType.equals("solvent")) {
-      dfugdp = 0.0; // forelopig uten pointing
-    } else {
-      dfugdp = 0.0; // forelopig uten pointing
-    }
+    dfugdp = dlngammadp - 1.0 / phase.getPressure();
     return dfugdp;
   }
 
@@ -99,11 +207,11 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     // double pressure = phase.getPressure();
     // int numberOfComponents = phase.getNumberOfComponents();
 
-    if (referenceStateType.equals("solvent")) {
+    if (referenceStateType.equals("solvent") && !usesIapwsAqueousReference(phase)) {
       dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
       logger.info("check this dfug dt - antoine");
     } else {
-      dfugdt = dlngammadt + getHenryCoefdT(temperature);
+      dfugdt = dlngammadt + getLnHenryCoefficientTemperatureDerivative(phase);
     }
     return dfugdt;
   }

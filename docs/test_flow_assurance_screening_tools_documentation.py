@@ -89,9 +89,11 @@ class FlowAssuranceScreeningToolsDocumentationTest(unittest.TestCase):
                 if target.startswith(("http://", "https://", "#")):
                     continue
                 path_part = target.split("#", 1)[0]
-                self.assertTrue(path_part.endswith(".md"), target)
-                source_path = (source.parent / path_part).resolve()
-                self.assertTrue(source_path.exists(), target)
+                raw_path = (source.parent / path_part).resolve()
+                source_paths = [raw_path]
+                if not Path(path_part).suffix:
+                    source_paths.append(Path("{}.md".format(raw_path)))
+                self.assertTrue(any(path.exists() for path in source_paths), target)
 
     def test_engineering_boundaries_and_executable_coverage_are_explicit(self):
         required = (
@@ -117,7 +119,7 @@ class FlowAssuranceScreeningToolsDocumentationTest(unittest.TestCase):
 
     def test_landing_points_to_one_canonical_screening_example(self):
         self.assertIn(
-            "[screening-tools guide](flow_assurance_screening_tools.md)", self.landing
+            "[screening-tools guide](flow_assurance_screening_tools)", self.landing
         )
         self.assertIn("FlowAssuranceDocumentationTest", self.landing)
         self.assertNotIn("## Quick start: De Boer", self.landing)

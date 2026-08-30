@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "ProductionOptimizer Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "ProductionOptimizer - Comprehensive Tutorial"
+description: "Notebook for ProductionOptimizer - Comprehensive Tutorial, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# ProductionOptimizer Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ProductionOptimizer_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb).
 
 ---
-
-# ProductionOptimizer - Comprehensive Tutorial
 
 This notebook provides a complete guide to using the `ProductionOptimizer` class from NeqSim for process optimization.
 

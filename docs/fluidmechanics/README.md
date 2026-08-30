@@ -3,8 +3,6 @@ title: Fluid Mechanics Package
 description: The `fluidmechanics` package provides models for pipeline flow, pressure drop calculations, and transient flow simulation with rigorous non-equilibrium thermodynamic calculations for mass and heat tra...
 ---
 
-# Fluid Mechanics Package
-
 The `fluidmechanics` package provides models for pipeline flow, pressure drop calculations, and transient flow simulation with rigorous non-equilibrium thermodynamic calculations for mass and heat transfer.
 
 ## Table of Contents

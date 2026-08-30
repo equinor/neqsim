@@ -45,11 +45,7 @@ public class ComponentGePitzer extends ComponentGE {
     // reference; hydrocarbons have no Pitzer neutral-interaction parameters and are represented as effectively
     // insoluble instead of being evaluated with the water osmotic coefficient.
     if (Math.abs(getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(getComponentName())) {
-      double henryCoefficient = getHenryCoef(phase.getTemperature());
-      if (hasHydrocarbonFormula() || isHydrocarbon() || isIsTBPfraction() || !Double.isFinite(henryCoefficient)
-          || henryCoefficient > 1.0e12) {
-        henryCoefficient = 1.0e12;
-      }
+      double henryCoefficient = getEffectiveHenryCoefficient(phase);
       // Pitzer neutral activities and the database Henry constants are on the molality
       // scale, while the common phase-equilibrium kernel evaluates x_i * phi_i * P.
       // Convert m_i * gamma_i * H_i to that mole-fraction representation explicitly.
@@ -66,11 +62,81 @@ public class ComponentGePitzer extends ComponentGE {
   }
 
   /**
+   * Returns the Pitzer molality-scale Henry reference.
+   *
+   * <p>
+   * IAPWS publishes {@code kH = f/x}. Pitzer neutral activities use molality, so {@code Hm = kH * Mwater}; the existing
+   * {@code m/x} factor in {@link #fugcoef(PhaseInterface)} maps this back to the common mole-fraction fugacity kernel.
+   * The constant conversion does not change the logarithmic temperature derivative. An ionic phase adopts the new
+   * reference only with an explicitly active, coverage-checked neutral interaction family; otherwise this pure-water
+   * batch preserves the pre-existing database/capping result.
+   * </p>
+   *
+   * @param phase aqueous Pitzer phase
+   * @return effective molality-scale Henry coefficient in bar kg/mol
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
+    if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
+      return super.getEffectiveHenryCoefficient(phase);
+    }
+    if (!neutralPitzerInteractionsActive && (phase.hasIons() || requiresReactivePitzerQualification())) {
+      return getEffectiveHenryCoefficient(phase.getTemperature());
+    }
+    if (!IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+      return INSOLUBLE_HENRY_COEFFICIENT;
+    }
+    double coefficient = IapwsHenryLaw.getHenryCoefficientBar(getComponentName(), phase.getTemperature())
+        * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
+    return super.isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
+    if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
+      return super.getLnHenryCoefficientTemperatureDerivative(phase);
+    }
+    if (!neutralPitzerInteractionsActive && (phase.hasIons() || requiresReactivePitzerQualification())) {
+      return getLnHenryCoefficientTemperatureDerivative(phase.getTemperature());
+    }
+    if (!IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+      return 0.0;
+    }
+    return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
+  }
+
+  /**
+   * Tests whether a molecular acid gas needs reaction-compatible neutral Pitzer parameters before changing its
+   * reference state.
+   *
+   * @return {@code true} for CO2 and H2S component aliases
+   */
+  private boolean requiresReactivePitzerQualification() {
+    String name = getComponentName();
+    return "CO2".equalsIgnoreCase(name) || "carbon dioxide".equalsIgnoreCase(name) || "H2S".equalsIgnoreCase(name)
+        || "hydrogen sulfide".equalsIgnoreCase(name);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected boolean isHenryCoefficientCapped(double henryCoefficient) {
+    return super.isHenryCoefficientCapped(henryCoefficient) || isHydrocarbon() || isIsTBPfraction();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHydrocarbon() {
+    return super.isHydrocarbon() || hasHydrocarbonFormula();
+  }
+
+  /**
    * Check the database molecular formula for a pure hydrocarbon.
    *
    * <p>
-   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}, so
-   * {@link #isHydrocarbon()} alone is not a stable aqueous-reference discriminator.
+   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}. The
+   * formula check keeps Pitzer aqueous-reference and parameter-topology decisions independent of that initialization
+   * detail.
    * </p>
    *
    * @return {@code true} when the formula contains carbon and hydrogen only

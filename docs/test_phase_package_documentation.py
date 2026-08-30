@@ -55,11 +55,21 @@ def resolve_internal_target(source_path: Path, destination: str) -> tuple[Path, 
     if not target:
         return source_path, fragment
     target_path = (source_path.parent / target).resolve()
-    if not target_path.is_file():
+    candidates = [target_path]
+    if not Path(target).suffix:
+        candidates.extend(
+            (
+                Path("{}.md".format(target_path)),
+                target_path / "README.md",
+                target_path / "index.md",
+            )
+        )
+    resolved_path = next((path for path in candidates if path.is_file()), None)
+    if resolved_path is None:
         raise AssertionError(
             "Unresolved link from {}: {}".format(source_path, destination)
         )
-    return target_path, fragment
+    return resolved_path, fragment
 
 
 class PhasePackageDocumentationContractTest(unittest.TestCase):
@@ -81,9 +91,7 @@ class PhasePackageDocumentationContractTest(unittest.TestCase):
         for destination in markdown_links.findall(guide):
             if destination.startswith(("http://", "https://", "mailto:")):
                 continue
-            target, _, fragment = destination.partition("#")
-            if target:
-                assert target.endswith(".md")
+            _target, _, fragment = destination.partition("#")
             target_path, resolved_fragment = resolve_internal_target(
                 GUIDE,
                 destination,

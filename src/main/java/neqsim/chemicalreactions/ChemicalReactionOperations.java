@@ -36,6 +36,18 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
 
+  /** Maximum Newton refinements used to certify reaction and charge closure. */
+  private static final int MAXIMUM_EQUILIBRIUM_REFINEMENTS = 2;
+
+  /** Maximum accepted absolute natural-log reaction residual after a refinement. */
+  private static final double REACTION_LOG_RESIDUAL_TOLERANCE = 2.0e-6;
+
+  /** Maximum accepted reactive-phase net charge in moles after a refinement. */
+  private static final double REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES = 1.0e-8;
+
+  /** Maximum accepted absolute element-balance residual after a refinement. */
+  private static final double ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES = 1.0e-8;
+
   SystemInterface system;
   ComponentInterface[] components;
   ChemicalReactionList reactionList = new ChemicalReactionList();
@@ -164,6 +176,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       reactionList.readReactions(system);
       reactionList.removeJunkReactions(componentNames);
       reactionList.removeDependentReactions();
+      reactionList.requireValidatedEvidenceForActiveReactions();
       allComponentNames = reactionList.getAllComponents();
       this.addNewComponents();
       if (system.getPhase(0).getNumberOfComponents() == old) {
@@ -411,17 +424,35 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   /**
    * calcBVector.
    *
-   * @return an array of type double
+   * <p>
+   * Element rows retain the current aqueous element inventory. The final row targets the reactive-species charge that
+   * exactly offsets ions outside the reaction set, so the complete phase is electroneutral. When every ion is reactive,
+   * this target is zero.
+   * </p>
+   *
+   * @return element inventories followed by the reactive charge needed for total electroneutrality
    */
   public double[] calcBVector() {
     Matrix tempA = new Matrix(Amatrix);
     Matrix tempB = new Matrix(nVector, 1);
     Matrix tempN = tempA.times(tempB.transpose()).transpose();
-    // print added by Neeraj
-    // System.out.println("b matrix: ");
-    // tempN.print(10,2);
-
-    return tempN.getArray()[0];
+    double[] conservedQuantities = tempN.getArray()[0];
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0) {
+      reactivePhase = 0;
+    }
+    double totalPhaseChargeMoles = 0.0;
+    PhaseInterface phase = system.getPhase(reactivePhase);
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = phase.getComponent(componentIndex);
+      totalPhaseChargeMoles += component.getIonicCharge() * component.getNumberOfMolesInPhase();
+    }
+    int chargeRow = conservedQuantities.length - 1;
+    double reactiveChargeMoles = conservedQuantities[chargeRow];
+    double inertChargeMoles = totalPhaseChargeMoles - reactiveChargeMoles;
+    double chargeNoiseToleranceMoles = 1.0e-10 * Math.max(1.0, phase.getNumberOfMolesInPhase());
+    conservedQuantities[chargeRow] = Math.abs(inertChargeMoles) <= chargeNoiseToleranceMoles ? 0.0 : -inertChargeMoles;
+    return conservedQuantities;
   }
 
   /**
@@ -613,8 +644,27 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     // Newton solver (ChemicalEquilibrium)
     // We start from the current phase composition (possibly improved by LP initial estimate).
     try {
-      solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
-      return solver.solve();
+      boolean converged = false;
+      for (int refinement = 0; refinement < MAXIMUM_EQUILIBRIUM_REFINEMENTS; refinement++) {
+        solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
+        solver.setUseAdaptiveDerivatives(refinement > 0);
+        converged = solver.solve();
+        if (converged && getMaximumAbsoluteReactionLogResidual() <= REACTION_LOG_RESIDUAL_TOLERANCE
+            && Math.abs(getReactivePhaseChargeMoles()) <= REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES
+            && getMaximumAbsoluteElementBalanceResidual() <= ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES) {
+          if (system.getNumberOfPhases() == 1 && system instanceof neqsim.thermo.system.SystemThermo) {
+            ((neqsim.thermo.system.SystemThermo) system).synchronizeSinglePhaseReactionComposition(components);
+            if (getMaximumAbsoluteReactionLogResidual() > REACTION_LOG_RESIDUAL_TOLERANCE
+                || Math.abs(getReactivePhaseChargeMoles()) > REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES
+                || getMaximumAbsoluteElementBalanceResidual() > ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES) {
+              converged = false;
+              continue;
+            }
+          }
+          return true;
+        }
+      }
+      return false;
     } catch (Exception ex) {
       logger.error("Error in chemical equilibrium solver", ex);
       return false;

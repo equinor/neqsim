@@ -249,7 +249,7 @@ assert python_tag.getTagNumber() == "20-VG-001"
 
 This proxy only demonstrates the JPype boundary. It is not a process unit and cannot be added to a
 `ProcessSystem`. Before using any proxy in production, read the current
-[NamedInterface JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/util/NamedInterface.html)
+[NamedInterface JavaDoc](https://equinor.github.io/neqsim/javadoc/neqsim/util/NamedInterface.html)
 and the accepting Java API, then test callback lifetime, exceptions, Java threads, and repeated
 execution.
 

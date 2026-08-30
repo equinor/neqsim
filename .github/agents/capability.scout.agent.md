@@ -191,7 +191,7 @@ Based on the task requirements, recommend which existing skills should be loaded
 Run the semantic skill retriever to catch task-specific skills not in this list:
 
 ```bash
-python devtools/skill_search.py "<task title>" --top 5
+<python-executable> devtools/skill_search.py "<task title>" --top 5
 ```
 
 ### Step 6b: Discover Agents and Plan the Workflow (MANDATORY)
@@ -201,7 +201,7 @@ specialist agents across all repos (neqsim + community + enterprise) with the
 semantic agent retriever, which also lists the skills each agent loads:
 
 ```bash
-python devtools/agent_search.py "<task title>" --top 8 \
+<python-executable> devtools/agent_search.py "<task title>" --top 8 \
     --json --out step1_scope_and_research/agent_plan.json
 ```
 

@@ -3,8 +3,6 @@ title: "TPflash Algorithm Documentation"
 description: "Temperature-pressure flash algorithm reference for NeqSim, covering VLE, VLLE, LLE, Rachford-Rice, tangent-plane stability analysis, Newton refinement, multiphase flash workflow, performance, and robustness recommendations."
 ---
 
-# TPflash Algorithm Documentation
-
 ## Overview
 
 The Temperature-Pressure (TP) flash calculation is a fundamental operation in chemical engineering thermodynamics. Given a mixture composition, temperature, and pressure, the TP flash determines:
@@ -184,8 +182,8 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │  IF multiPhaseCheck enabled:                                                    │
 │     → Preserve an already balanced neutral two-phase aqueous reference          │
 │     → Delegate to TPmultiflash for stability analysis and phase split           │
-│     → If a rejected third-phase trial leaves an invalid two-phase aqueous       │
-│       endpoint, restore the balanced reference                                  │
+│     → If a rejected third-phase trial leaves the same topology invalid,         │
+│       restore the balanced reference; retain GAS↔OIL root transitions          │
 │     → If cleanup collapses a strong water/non-water K split to one phase, retry │
 │       the ordinary flash and retain it only when balanced and lower in Gibbs    │
 │     → If a neutral three-phase beta solve stalls, test the three two-phase      │
@@ -241,6 +239,11 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Evaluate gas-like and liquid-like roots of the non-aqueous cubic phase     │
 │     → Replace only with a lower-Gibbs root that already satisfies                │
 │       max |Δ ln(fᵢ)| < 1e-8; phase fractions and compositions stay unchanged     │
+│                                                                                 │
+│  IF multiphase, neutral GAS+AQUEOUS has a lower alternate cubic root:            │
+│     → Evaluate one ordinary candidate from the unchanged feed                    │
+│     → Accept exactly one AQUEOUS plus one GAS/OIL/LIQUID phase; the cubic root   │
+│       may change label only when balance, fugacity, and lower-Gibbs gates pass    │
 │                                                                                 │
 │  IF a final neutral two-phase aqueous endpoint with water feed ≥ 0.01 fails:     │
 │     → Audit max |Δzᵢ| and max |Δ ln(fᵢ)| against 1e-8                            │
@@ -298,9 +301,9 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | CPA one-phase aqueous-stability screen | water feed `< 0.01`, one ordinary phase, CPA model, and `f_water / p_water_sat >= 0.8` | Use the fugacity ratio only as a conservative performance gate for the existing aqueous TPD trial. When the trial adds one phase, rebuild the two-phase active set and require beta-solver residual `< 1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. The tighter Gibbs tolerance retains independently converged incipient aqueous fractions without treating the saturation screen itself as a stability criterion. |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Dry cubic-root screen and acceptance | Screen normally ordered GAS+OIL endpoints when `max abs(Delta ln(f_i)) >= 1e-8`; accept below `1e-8` | Evaluate both roots for one phase at a time and retain a lower-Gibbs root seed only when the resulting unchanged composition split restores fugacity equality. Inverted mean-molar-mass order retains the paired-root comparison. |
-| Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
+| Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Ordinary flashes accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality. A multiphase GAS+AQUEOUS endpoint may replay a lower-Gibbs ordinary candidate containing exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, so a valid gas-to-oil root transition is not rejected by its new label. The candidate must additionally retain normalized positive phases, distinct compositions, and component balance below `1e-8`. |
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
-| Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
+| Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the same two-phase topology infeasible; a valid GAS↔OIL root transition, genuine three-phase result, or already feasible endpoint is retained |
 | Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with `max abs(Delta z_i) > 1e-8`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
 | Final neutral gas/oil equilibrium refinement | `1e-8 <= max abs(Delta ln(f_i)) <= 1e-5`; at most 8 SSI updates | Repair only balanced, near-converged vapor-liquid endpoints after post-convergence root handling. Preserve both phase types and roll back unless phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the strict acceptance checks. |
 | Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive systems only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state |
@@ -1802,13 +1805,14 @@ Commercial process simulators do not publish all implementation details, but pub
   Gibbs energy by more than `max(1e-8 J, 1e-12 abs(G))`. Stable polar aqueous endpoints without condensable
   hydrocarbons stay on the ordinary fast path. Chemical, ionic, solid, wax, and explicit-multiphase calculations are
   excluded.
-- The same strict gate is reciprocal for a water-rich multiphase GAS+AQUEOUS endpoint. If phase-appearance cleanup
-  returns that phase set with a non-finite or at-least `1e-8` log-fugacity residual, one cold ordinary candidate is
-  evaluated from the unchanged feed. It replaces the multiphase endpoint only when it is independently feasible and
-  lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))`. The accepted ordinary calculation is repeated on the
-  live system to rebuild the cubic/aqueous storage mapping; a recursion guard prevents fallback ping-pong. Genuine
-  OIL+AQUEOUS liquid-liquid endpoints, already-feasible multiphase states, and dry systems do not run the additional
-  flash.
+- The same strict gate is reciprocal for a water-rich multiphase GAS+AQUEOUS endpoint. If its gas phase has a
+  lower-Gibbs alternate cubic root, one ordinary candidate is evaluated from the unchanged feed. It replaces the
+  multiphase endpoint only when it contains exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, is independently
+  feasible, and lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))`. Allowing the cubic phase identity to
+  change prevents a stable liquid root from being rejected merely because the reference endpoint called the same
+  phase GAS. The accepted ordinary calculation is repeated on the live system to rebuild the cubic/aqueous storage
+  mapping; a recursion guard prevents fallback ping-pong. Genuine three-phase endpoints, chemical/electrolyte systems,
+  solid/wax calculations, and dry systems do not run the additional flash.
 - For a neutral non-CPA water-rich asymmetric feed, ordinary and explicit-multiphase calculations retain the cold
   pre-iteration state instead of relying on a clone of a final endpoint. A post-flash clone can preserve collapsed
   phase-storage and cubic-root history even after beta and compositions are reset, causing it to revisit a rejected
@@ -1849,9 +1853,11 @@ Commercial process simulators do not publish all implementation details, but pub
   normalized endpoints because specialized fluid and solid-phase models retain their existing convergence and
   refinement paths.
 - A neutral, balanced two-phase aqueous state is preserved before multiphase phase-appearance trials. If a trial third
-  phase is subsequently removed but its phase fractions leave the surviving two-phase state outside `1e-8` component
-  material-balance or fugacity tolerances, the pre-trial state is restored. The recovery does not run another flash and
-  is not considered for chemical, ionic, solid, wax, genuine three-phase, or already feasible endpoints.
+  phase is subsequently removed but its phase fractions leave the same surviving two-phase topology outside `1e-8`
+  component material-balance or fugacity tolerances, the pre-trial state is restored. A GAS↔OIL root transition is
+  retained for the later endpoint refinement instead of being overwritten by the saved topology. The recovery does not
+  run another flash and is not considered for chemical, ionic, solid, wax, genuine three-phase, or already feasible
+  endpoints.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
 - Balanced neutral gas/oil endpoints whose terminal fugacity residual is between `1e-8` and `1e-5` receive at most
   eight additional SSI updates. This targets stale, near-converged K-values after root selection without adding work to
@@ -1970,6 +1976,200 @@ blocks of 30 flashes) measured the corrected SRK boundary at about `8.5 ms/flash
 invalid higher-root baseline. The PR boundary and adjacent retained one-phase controls were within run-to-run noise.
 Common flashes return before the hydrogen/high-pressure/incipient-phase screen.
 
+#### 6.4.2 Neutral SRK-CPA MEG Three-Phase Qualification
+
+The neutral associating regression uses `SystemSrkCPAstatoil` with mixing rule 10 at
+298.15 K and 60.0 bara. The synthetic overall inventory is 1 mol nitrogen, 85 mol
+methane, 5 mol ethane, 3 mol propane, 1 mol n-hexane, 1 mol n-decane, 2 mol MEG, and
+5 mol water. It is a numerical qualification of the existing CPA flash path, not an
+independent experimental validation of phase fractions or CPA parameters.
+
+The expected topology is GAS+OIL+AQUEOUS. The focused test now requires every phase
+fraction and composition to be finite, bounded, and normalized within `1e-12`,
+component material balance below `1e-10`, and maximum cross-phase log-fugacity
+residual below `1e-8`. It compares the complete equilibrium by phase type, including
+beta, every component composition, compressibility factor, density, Gibbs energy, and
+enthalpy.
+
+The same matrix covers an exact repeated flash, a deliberately poor initial
+phase-fraction split, a changed state at 300.15 K and 59.5 bara, and a return to the
+original state. Warm and changed-state results must reproduce a fresh cold flash,
+which guards against stale gas-to-oil K-values hiding the water/MEG partitioning into
+the third phase. The thread-local warm-start policy must also be restored after each
+call.
+
+This tranche changes tests and algorithm documentation only; production flash code,
+public APIs, model parameters, tolerances, and runtime paths are unchanged. Therefore
+no production performance change is possible and no speedup is claimed. The added
+focused test performs seven complete neutral CPA flashes so hosted CI records the
+qualification cost without placing a timing threshold on shared runners. Electrolyte
+phase-boundary calculation, ion confinement, and Pitzer parameterization remain
+outside this neutral-fluid matrix.
+
+#### 6.4.3 PR Sour-Gas Three-Phase Qualification
+
+The sour-gas regression uses the classic PR mixing rule with a synthetic overall
+composition of 49.88 mol methane, 9.87 mol CO2, and 40.22 mol H2S, normalized from a
+99.97 mol total. It is a solver qualification of the existing enhanced multiphase
+path, not an experimental validation of the predicted phase boundary or phase
+fractions. Temperature is in kelvin and pressure is absolute bar.
+
+Fresh flashes at 202 K/47 bara, 205 K/50 bara, and 208 K/53 bara must produce one
+GAS phase and two compositionally distinct OIL phases. Each endpoint requires finite,
+bounded phase fractions and compositions, phase and beta normalization within
+`1e-10`, component material balance within `1e-10`, and maximum cross-phase
+log-fugacity residual below `1e-8`. The enhanced three-phase endpoint must also have
+lower Gibbs energy than the ordinary two-phase endpoint at the same state. This last
+comparison documents why `setEnhancedMultiPhaseCheck(true)` is required for this
+qualification instead of silently treating the ordinary converged split as globally
+stable.
+
+At the interior 205 K/50 bara point, the complete three-phase endpoint must be
+recovered from an initial beta of `1e-12`. Moving the same system to 49 bara must
+remove the second liquid while preserving closure; returning to 50 bara must restore
+the cold-flash beta, compressibility factors, compositions, and Gibbs energy. An
+immediate repeated flash must reproduce that result within `1e-10`, guarding both
+phase appearance/disappearance and stale-state behavior.
+
+This deterministic matrix replaces a 25,551-state slow scan that swallowed every
+flash exception and ended with the tautology `threePhaseCount >= 0`. The focused
+six-test sour-gas class completed in 0.694-0.888 s across local runs, including the new
+qualification, while adding enforceable thermodynamic acceptance gates. Production code, public
+APIs, model parameters, and runtime behavior are unchanged, so no production speedup
+is claimed. The scope is limited to PR; SRK and experimental sour-gas tie-line
+validation remain separate model-qualification work.
+
+#### 6.4.4 PR Methane/Heptane Boundary Qualification
+
+The low-temperature binary regression uses 70 mol methane and 30 mol n-heptane with
+the classic Peng-Robinson mixing rule and a methane/heptane binary interaction
+parameter of 0.05. The frozen state is 155.1 K and 84.4 bara, with nearby pressure
+checks at 84.3 and 84.5 bara. This is a deterministic solver qualification of the
+existing model, not experimental validation of the predicted phase boundary or
+phase fractions.
+
+Ordinary, multiphase, and enhanced-multiphase flashes must return the same closed
+methane-rich/n-heptane-rich two-phase equilibrium at the frozen state. The phases
+are matched by n-heptane mole fraction rather than a phase-role enum, because that
+metadata is not part of the thermodynamic equilibrium contract. Every endpoint
+requires compositionally distinct phases, finite and bounded phase fractions and
+compositions, phase and beta normalization within `1e-12`, component material
+balance below `1e-10`, maximum interphase log-fugacity residual below `1e-8`,
+positive compressibility factors, and finite Gibbs energy. The nearby states apply
+the same closure and cross-algorithm gates.
+
+The enhanced path must also recover the reference endpoint from beta `1e-12`.
+Changing a reused state to 84.5 bara, returning it to 84.4 bara, and immediately
+repeating the flash must match fresh-state phase fractions, compositions,
+compressibility factors, topology, and Gibbs energy. These checks guard poor
+initialization, stale state, and nearby-state continuity.
+
+This qualification replaces a JVM `assert` that was disabled in normal JUnit
+execution and removes an unannotated 1,401-state logging scan. Production code,
+public APIs, thermodynamic parameters, defaults, and runtime behavior are unchanged.
+The bounded regression adds no production performance claim.
+
+#### 6.4.5 Water-bearing PR multiphase endpoint qualification
+
+The legacy water-bearing Peng-Robinson regression contains 1 mol nitrogen,
+90 mol methane, 2 mol ethane, 1 mol each of propane, iso-/normal butane,
+iso-/normal pentane, n-hexane and nC10, plus 10 mol water. It uses the classic
+mixing rule without fitted binary interaction parameters. The bounded
+qualification covers 298.15 K near 10 bara and 288.15 K near 500 bara. These
+states are synthetic solver regressions; they are not experimental validation
+of water solubility, phase fractions, or the classic-PR parameterization.
+
+At 10 bara, the multiphase endpoint must retain a closed split, remain within
+`5e-5` relative of the frozen enthalpy reference, and have Gibbs energy no higher
+than the ordinary endpoint. The relative reference tolerance covers the observed
+cross-platform property difference while remaining one hundred times tighter than
+the legacy 0.5 percent enthalpy check. At 500 bara, ordinary and multiphase flashes
+must agree. Nearby checks use 9.9/10.0/10.1 bara and 499/500/501 bara. Both regimes
+require recovery from beta `1e-12`, changed-pressure and return-to-state agreement,
+and deterministic repeat at the low-pressure reference. Equivalent endpoints also
+reproduce enthalpy using the same tight state-comparison tolerance applied to Gibbs
+energy.
+
+Every accepted state requires finite, bounded and normalized beta and
+compositions, beta and phase normalization within `1e-12`, component material
+balance below `1e-10`, maximum interphase log-fugacity residual below `1e-8`
+for components present in both phases, positive compressibility factors, and
+finite Gibbs energy. Phases are paired by water mole fraction, so phase-role
+enum metadata is outside this thermodynamic contract.
+
+This qualification activates two previously unexecuted JUnit methods and adds a
+small fixed flash matrix. Production code, APIs, parameters, defaults and
+runtime behavior are unchanged. No production performance improvement is
+claimed.
+
+#### 6.4.6 High-temperature rich-fluid cubic-EOS qualification
+
+The high-temperature rich-fluid regression uses a synthetic 24-component normal-alkane
+distribution from nitrogen through nC19. The normalized composition contains 30 mol%
+methane, 12 mol% n-heptane, 15 mol% n-octane, successively smaller heavy-normal-alkane
+fractions, 0.163 mol% nitrogen, 0.323 mol% CO2, and zero active H2S. Both SRK and PR use
+the classic mixing rule without fitted binary interaction parameters. Temperature is in
+degrees Celsius and pressure is absolute bar.
+
+At 268 °C and 88 bara, SRK returns a closed two-phase equilibrium while PR returns a
+closed single-phase equilibrium. Ordinary and explicit-multiphase flashes must agree on
+that EOS-specific topology and state. Multiphase comparisons match phases by nC19 mole
+fraction rather than phase-role metadata and require phase fraction, composition, and
+compressibility agreement within `1e-8`. Every accepted endpoint requires finite and
+bounded phase fractions and compositions, phase and beta normalization within `1e-12`,
+component material balance below `1e-10`, maximum interphase log-fugacity residual
+below `1e-8`, positive compressibility factors, and finite Gibbs energy and enthalpy.
+
+The same contracts apply at 267 °C and 269 °C. The 268 °C equilibrium must also be
+recovered from beta `1e-12`, after changing a reused state to 269 °C and returning it
+to 268 °C, and on an immediate repeated flash. These checks cover path agreement, poor
+initialization, nearby-state continuity, stale-state recovery, and deterministic repeat
+for both cubic equations of state.
+
+This bounded JUnit matrix replaces a nine-stage logger-only `main` diagnostic that
+performed no assertions and was not run by the test suite. The two tests execute sixteen
+complete flashes, giving hosted CI a fixed-work performance record without imposing a
+timing threshold on shared runners. Production solver code, public APIs, parameters,
+defaults, and runtime behavior are unchanged, so no production speedup is claimed. The
+synthetic matrix is a numerical solver qualification, not experimental validation of the
+predicted phase fractions or phase boundary.
+
+### 6.4.7 Rich-gas cricondenbar boundary qualification
+
+The established synthetic rich-gas regression contains nitrogen, carbon dioxide, methane,
+ethane, propane, i-butane, n-butane, i-pentane, n-pentane, and n-hexane in the respective
+feed amounts 3.43, 0.34, 62.51, 15.65, 13.22, 1.61, 2.48, 0.35, 0.29, and 0.12. The
+qualification uses SRK and PR with classic mixing rule 2. Temperatures are specified in
+degrees Celsius and pressures as absolute bar. The primary 100 bara matrix covers -8, 0,
+10, and 30 degrees Celsius; a nearby 50 bara point at 0 degrees Celsius exercises the
+pressure direction. This is synthetic regression provenance rather than experimental VLE
+data.
+
+The legacy SRK regression executed the -8 degrees Celsius endpoint without an assertion.
+The replacement requires ordinary and explicit-multiphase paths to agree at every matrix
+point, while independently enforcing phase and beta normalization within `1e-12`,
+component material-balance closure below `1e-10`, and maximum interphase log-fugacity
+residual below `1e-8`. All beta values and compositions must remain finite and bounded,
+compressibility factors must be positive, and Gibbs energy and enthalpy must be finite.
+The established SRK topology anchors remain two phases at 0 and 10 degrees Celsius and
+one phase at 30 degrees Celsius; PR is qualified by equilibrium closure and path agreement
+without inheriting SRK-specific topology.
+
+Additional regressions start the -8 and 0 degrees Celsius states from beta values within
+`1e-12` of a bound, cross the disappearance boundary at 30 degrees Celsius, return through
+-8 degrees Celsius, reappear at 0 degrees Celsius, and repeat the settled state. Phase
+matching is based on n-hexane content so phase-order changes cannot hide a mismatch. This
+covers poor initialization, phase appearance and disappearance, changed-state reuse,
+return-state continuity, stale-state recovery, and deterministic repeats across both cubic
+equations of state.
+
+The two JUnit tests execute 41 complete flashes: 22 SRK and 19 PR. That fixed workload gives
+hosted CI a reproducible performance record without a wall-clock threshold on shared
+runners. Production solver code, public APIs, model parameters, units, defaults, and runtime
+behavior are unchanged, so no speedup is claimed. The matrix qualifies numerical solver
+contracts around the synthetic phase boundary; it does not validate the predicted boundary
+against experimental measurements.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
@@ -2078,44 +2278,57 @@ Neutral EOS flashes do not dispatch to this solver.
 
 ## Usage Example
 
+The constructor below uses temperature in K and absolute pressure in bara. Component additions are
+amounts in mol; these values happen to sum to 1.0 mol. Enabling multiphase checking asks NeqSim to
+test for additional fluid phases. It does not select or validate the thermodynamic model and does
+not guarantee that a gas phase exists at every state.
+
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create system
-SystemSrkEos system = new SystemSrkEos(298.15, 10.0);
-system.addComponent("methane", 0.7);
-system.addComponent("ethane", 0.2);
-system.addComponent("propane", 0.1);
-system.setMixingRule("classic");
+public final class TpFlashExample {
+  private static final Logger logger = LogManager.getLogger(TpFlashExample.class);
 
-// Enable multi-phase check for stability analysis
-system.setMultiPhaseCheck(true);
+  private TpFlashExample() {}
 
-// Perform TP flash
-ThermodynamicOperations ops = new ThermodynamicOperations(system);
-ops.TPflash();
+  public static void main(String[] args) {
+    SystemSrkEos system = new SystemSrkEos(298.15, 10.0);
+    system.addComponent("methane", 0.7);
+    system.addComponent("ethane", 0.2);
+    system.addComponent("propane", 0.1);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
 
-// Results
-System.out.println("Number of phases: " + system.getNumberOfPhases());
-System.out.println("Vapor fraction: " + system.getBeta(0));
-system.display();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+
+    double vaporFraction = 0.0;
+    if (system.hasPhaseType(PhaseType.GAS)) {
+      int gasPhaseNumber = system.getPhaseNumberOfPhase(PhaseType.GAS);
+      vaporFraction = system.getBeta(gasPhaseNumber);
+    }
+
+    logger.info("Number of phases: {}", system.getNumberOfPhases());
+    logger.info("Vapor fraction: {}", vaporFraction);
+  }
+}
 ```
 
-For electrolyte systems:
+Resolve the gas phase by `PhaseType.GAS`; active phase zero is not a universal vapor-phase
+contract after phase addition, removal, and density ordering. The example is a calculation
+workflow, not evidence that the classic SRK parameterization is accurate for a particular fluid or
+operating envelope. Check convergence, material balance, phase stability, and an independent
+benchmark before engineering use.
 
-```java
-import neqsim.thermo.system.SystemElectrolyteCPA;
-
-SystemElectrolyteCPA system = new SystemElectrolyteCPA(298.15, 1.0);
-system.addComponent("CO2", 1.0);
-system.addComponent("water", 100.0);
-system.setMixingRule(10);  // CPA mixing rule with electrolyte support
-system.setMultiPhaseCheck(true);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(system);
-ops.TPflash();  // Automatically solves chemical equilibrium in aqueous phase
-```
+Ordinary `TPflash()` equilibrates the component identities already present in the thermodynamic
+system. It does **not** discover reaction products or by itself establish electrolyte reaction
+equilibrium. For aqueous speciation or simultaneous chemical and phase equilibrium, follow the
+[reactive-flash workflow](../thermo/reactive_flash.md), including its explicit reaction-model,
+standard-state, charge-balance, and validation boundaries.
 
 ### Large-volatility hydrocarbon endpoint refinement
 
@@ -2156,3 +2369,47 @@ probe (20 warmups and five blocks of 60 flashes), the corrected SRK 180 K/50 bar
 a median 14.25 ms/flash for the invalid endpoint to 18.20 ms/flash for the accepted equilibrium.
 The screen-excluded SRK 300 K/100 bar trace-heavy control was 10.98 versus 10.88 ms/flash, within
 run-to-run noise. No speedup is claimed, and common flashes return before the new refinement.
+
+### Near-cricondenbar rich-gas endpoint refinement
+
+An ordinary SRK or PR flash near a rich natural gas's cricondenbar can retain a local cubic root or
+collapse a valid gas/oil split even when the explicit multiphase path finds a conservative,
+fugacity-equal, lower-Gibbs equilibrium. The private performance screen is limited to 50--200 bar,
+neutral water-free feeds containing at least four active hydrocarbons, at least 0.90 total
+hydrocarbon, at least 0.30 methane, at least 0.05 condensable hydrocarbon, no more than 0.05 carbon
+dioxide, and a hydrocarbon critical-temperature span of at least 250 K. Other active components
+must be inert. These conditions select only whether to run the established reciprocal stability
+flash; thermodynamic acceptance remains authoritative.
+
+The qualification fluid contains nitrogen, carbon dioxide, methane through n-hexane and uses the
+classic mixing rule. Deterministic failures included:
+
+| EOS | Temperature (K) | Pressure (bara) | Ordinary result before refinement | Maximum log-fugacity residual before refinement | Lower-Gibbs result (J) |
+| --- | ---: | ---: | --- | ---: | ---: |
+| SRK | 273.15 | 100 | GAS+OIL | 1.30055e-2 | 626518.842 |
+| SRK | 283.15 | 100 | GAS+OIL | 1.51337e-2 | 670464.297 |
+| PR | 268.15 | 95 | GAS+OIL | 8.42662e-2 | 586168.078 |
+| PR | 273.15 | 100 | GAS only; material residual 9.88469e-4 | not applicable | 614120.253 |
+| PR | 278.15 | 100 | GAS+OIL | 5.2598e-3 | 636403.262 |
+| PR | 283.15 | 100 | GAS+OIL | 3.1720e-3 | 657662.282 |
+
+The reciprocal candidate must contain one or two neutral fluid phases, remain bounded and
+normalized, close component material balance below `1e-10`, close maximum log-fugacity residual
+below `1e-8`, and lower Gibbs energy beyond the existing allowance. Complete initialized phase
+objects preserve the accepted cubic roots during transfer. A final maximum of five bounded beta
+updates targets a tighter `1e-10` log-fugacity residual without changing the selected active set;
+failure, Gibbs increase, or lost closure restores the complete accepted candidate. Final one-phase
+states are normalized to beta one and `x = z`.
+
+Focused SRK/PR regressions cover the six states above, poor initial beta values, deterministic
+repeats, changed-temperature and return-to-state execution, gas/oil appearance, single-phase
+disappearance, material balance, fugacity equality, phase normalization, bounded compositions,
+compressibility factor, density, and ordinary/multiphase agreement. The near-critical comparison
+uses `1e-7` for beta and composition because phase fraction is ill-conditioned at the boundary;
+the independent conservation and fugacity gates remain `1e-10` and `1e-8` respectively.
+
+This is a correctness fallback, not a speed optimization. Valid nonqualifying flashes perform no
+additional thermodynamic solve. A qualifying invalid endpoint performs one reciprocal flash and at
+most five beta updates; qualifying endpoints that already meet the equilibrium gate return after
+an allocation-free composition screen and residual audit. No public API, model parameter, unit, or
+default changes.

@@ -82,6 +82,10 @@ public class PhasePitzer extends PhaseGE {
   private transient boolean neutralParameterCoverageValidated;
   /** Whether parameters have been loaded from database. */
   private boolean parametersLoaded = false;
+  /** Prefer the complete bundled PHREEQC catalog when it covers the active topology. */
+  private boolean usePhreeqcCatalogByDefault = true;
+  /** Keep EOS-role hydrocarbons outside only the automatically selected aqueous-neutral topology. */
+  private boolean excludeHydrocarbonsFromNeutralPitzerTopology;
   /** Whether immutable parameter arrays are shared with a clone until the next setter call. */
   private boolean parameterStorageShared;
   /** Stable identity of the selected parameter dataset. */
@@ -625,6 +629,9 @@ public class PhasePitzer extends PhaseGE {
    * </p>
    */
   public void loadParametersFromDatabase() {
+    if (usePhreeqcCatalogByDefault && PitzerParameterDatasets.tryApplyCompletePhreeqcPitzerCatalog(this)) {
+      return;
+    }
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
       while (dataSet.next()) {
@@ -766,6 +773,34 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
+   * Configures automatic use of the bundled PHREEQC catalog.
+   *
+   * <p>
+   * New Pitzer phases prefer the catalog by default. When its explicit rows do not cover the complete active topology,
+   * loading falls back to the legacy binary table; the existing mixed-topology coverage gate still rejects missing
+   * theta or psi terms. Change this policy only before parameters are first evaluated.
+   * </p>
+   *
+   * @param useCatalog {@code true} to prefer the complete PHREEQC topology, {@code false} for legacy loading
+   * @throws IllegalStateException if parameter evaluation already selected a dataset
+   */
+  public void setUsePhreeqcCatalogByDefault(boolean useCatalog) {
+    if (parametersLoaded) {
+      throw new IllegalStateException("Pitzer parameter dataset has already been selected");
+    }
+    usePhreeqcCatalogByDefault = useCatalog;
+  }
+
+  /**
+   * Reports the automatic dataset-selection policy.
+   *
+   * @return {@code true} when the complete PHREEQC catalog is preferred
+   */
+  public boolean isUsePhreeqcCatalogByDefault() {
+    return usePhreeqcCatalogByDefault;
+  }
+
+  /**
    * Gets the stable identity of the selected Pitzer parameter dataset.
    *
    * @return parameter dataset identity
@@ -804,6 +839,27 @@ public class PhasePitzer extends PhaseGE {
    * @return immutable deterministic parameter-coverage diagnostic
    */
   public PitzerParameterCoverage getPitzerParameterCoverage() {
+    return getPitzerParameterCoverage(false);
+  }
+
+  /**
+   * Audits Pitzer interactions for every active ion, including acid-base species created by the reaction solver.
+   *
+   * <p>
+   * Unlike {@link #getPitzerParameterCoverage()}, this explicit diagnostic includes {@code H3O+}, {@code OH-},
+   * {@code HCO3-}, and {@code CO3--}. It is intended for converged reactive states: trial compositions inside the
+   * reaction solver are not a stable parameter topology. The result is deliberately calculated on demand and does not
+   * add work to the Pitzer property kernel or to non-electrolyte models.
+   * </p>
+   *
+   * @return immutable deterministic reaction-species parameter-coverage diagnostic
+   */
+  public PitzerParameterCoverage getPitzerReactionParameterCoverage() {
+    return getPitzerParameterCoverage(true);
+  }
+
+  /** Builds a primary-salt or complete reactive-ion coverage diagnostic. */
+  private PitzerParameterCoverage getPitzerParameterCoverage(boolean includeReactionSpecies) {
     if (definedBinaryPairs == null || definedThetaPairs == null || definedPsiTuples == null) {
       ensureDefinitionSets();
       parametersLoaded = false;
@@ -812,14 +868,17 @@ public class PhasePitzer extends PhaseGE {
       loadParametersFromDatabase();
     }
 
-    long fingerprint = activeTopologyFingerprint();
-    if (cachedCoverage != null && fingerprint == cachedCoverageFingerprint
-        && parameterDefinitionRevision == cachedCoverageRevision) {
-      return cachedCoverage;
+    long fingerprint = 0L;
+    if (!includeReactionSpecies) {
+      fingerprint = activeTopologyFingerprint();
+      if (cachedCoverage != null && fingerprint == cachedCoverageFingerprint
+          && parameterDefinitionRevision == cachedCoverageRevision) {
+        return cachedCoverage;
+      }
     }
 
-    List<Integer> cationIndexes = activeIonIndexes(true);
-    List<Integer> anionIndexes = activeIonIndexes(false);
+    List<Integer> cationIndexes = activeIonIndexes(true, includeReactionSpecies);
+    List<Integer> anionIndexes = activeIonIndexes(false, includeReactionSpecies);
     List<String> activeCations = componentNames(cationIndexes);
     List<String> activeAnions = componentNames(anionIndexes);
     List<String> missingBinary = new ArrayList<String>();
@@ -837,11 +896,14 @@ public class PhasePitzer extends PhaseGE {
     findMissingMixedInteractions(cationIndexes, anionIndexes, missingTheta, missingPsi);
     findMissingMixedInteractions(anionIndexes, cationIndexes, missingTheta, missingPsi);
 
-    cachedCoverage = new PitzerParameterCoverage(parameterDatasetId, activeCations, activeAnions, missingBinary,
-        missingTheta, missingPsi);
-    cachedCoverageFingerprint = fingerprint;
-    cachedCoverageRevision = parameterDefinitionRevision;
-    return cachedCoverage;
+    PitzerParameterCoverage coverage = new PitzerParameterCoverage(parameterDatasetId, activeCations, activeAnions,
+        missingBinary, missingTheta, missingPsi);
+    if (!includeReactionSpecies) {
+      cachedCoverage = coverage;
+      cachedCoverageFingerprint = fingerprint;
+      cachedCoverageRevision = parameterDefinitionRevision;
+    }
+    return coverage;
   }
 
   /**
@@ -851,6 +913,18 @@ public class PhasePitzer extends PhaseGE {
    */
   public void requireCompletePitzerParameterCoverage() {
     PitzerParameterCoverage coverage = getPitzerParameterCoverage();
+    if (!coverage.isComplete()) {
+      throw new IllegalStateException(coverage.formatDiagnostic());
+    }
+  }
+
+  /**
+   * Requires complete Pitzer interaction coverage for every active ion in a converged reactive state.
+   *
+   * @throws IllegalStateException when one or more required reaction-species interactions are absent
+   */
+  public void requireCompletePitzerReactionParameterCoverage() {
+    PitzerParameterCoverage coverage = getPitzerReactionParameterCoverage();
     if (!coverage.isComplete()) {
       throw new IllegalStateException(coverage.formatDiagnostic());
     }
@@ -1528,13 +1602,13 @@ public class PhasePitzer extends PhaseGE {
    * @param positive {@code true} for cations, {@code false} for anions
    * @return component indexes whose molality exceeds the active-ion threshold
    */
-  private List<Integer> activeIonIndexes(boolean positive) {
+  private List<Integer> activeIonIndexes(boolean positive, boolean includeReactionSpecies) {
     List<Integer> indexes = new ArrayList<Integer>();
     double activeMoles = ACTIVE_ION_MOLALITY * getSolventWeight();
     for (int i = 0; i < numberOfComponents; i++) {
       double charge = getComponent(i).getIonicCharge();
       boolean requestedSign = positive ? charge > 0.0 : charge < 0.0;
-      if (requestedSign && isPrimarySaltCoverageSpecies(componentName(i))
+      if (requestedSign && (includeReactionSpecies || isPrimarySaltCoverageSpecies(componentName(i)))
           && getComponent(i).getNumberOfMolesInPhase() > activeMoles) {
         indexes.add(i);
       }
@@ -1831,7 +1905,9 @@ public class PhasePitzer extends PhaseGE {
   }
 
   private boolean isNeutralSolute(int index) {
-    return Math.abs(getComponent(index).getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(componentName(index));
+    return Math.abs(getComponent(index).getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(componentName(index))
+        && (!excludeHydrocarbonsFromNeutralPitzerTopology
+            || !PitzerParameterDatasets.isHydrocarbonForAutomaticCatalog(getComponent(index)));
   }
 
   private void validateNeutralParameterCoverageOncePerState() {
@@ -1853,6 +1929,16 @@ public class PhasePitzer extends PhaseGE {
   void markManualParameterDatasetLoaded() {
     parametersLoaded = true;
     parameterCoverageValidated = false;
+    neutralParameterCoverageValidated = false;
+  }
+
+  /**
+   * Configures whether the automatic catalog selection omits EOS-role hydrocarbons from its neutral topology.
+   *
+   * @param exclude {@code true} for automatic aqueous-role selection, {@code false} for explicit neutral datasets
+   */
+  void setExcludeHydrocarbonsFromNeutralPitzerTopology(boolean exclude) {
+    excludeHydrocarbonsFromNeutralPitzerTopology = exclude;
     neutralParameterCoverageValidated = false;
   }
 

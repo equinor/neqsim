@@ -28,7 +28,7 @@ read_file: .github/skills/neqsim-process-extraction/SKILL.md
 ## Prerequisites
 
 - **Windows OS** with UniSim Design installed
-- **Python**: `pywin32` package (`pip install pywin32`)
+- **Python**: `pywin32` must already be available in the inherited shared environment; report a blocker if it is missing
 - **Module**: `devtools/unisim_reader.py` in the NeqSim repo
 
 ---
@@ -163,25 +163,25 @@ All output modes are also available from the command line:
 
 ```bash
 # Summary only
-python devtools/unisim_reader.py model.usc
+<python-executable> devtools/unisim_reader.py model.usc
 
 # JSON output to stdout
-python devtools/unisim_reader.py model.usc --json
+<python-executable> devtools/unisim_reader.py model.usc --json
 
 # Standalone Python script
-python devtools/unisim_reader.py model.usc --python process.py
+<python-executable> devtools/unisim_reader.py model.usc --python process.py
 
 # Jupyter notebook
-python devtools/unisim_reader.py model.usc --notebook process.ipynb
+<python-executable> devtools/unisim_reader.py model.usc --notebook process.ipynb
 
 # EOT simulator module
-python devtools/unisim_reader.py model.usc --eot my_sim.py --eot-class MySimulator
+<python-executable> devtools/unisim_reader.py model.usc --eot my_sim.py --eot-class MySimulator
 
 # EOT demo notebook
-python devtools/unisim_reader.py model.usc --eot-notebook eot_demo.ipynb
+<python-executable> devtools/unisim_reader.py model.usc --eot-notebook eot_demo.ipynb
 
 # All at once
-python devtools/unisim_reader.py model.usc --python p.py --notebook n.ipynb --eot s.py
+<python-executable> devtools/unisim_reader.py model.usc --python p.py --notebook n.ipynb --eot s.py
 ```
 
 ### Step 5: Build and Run NeqSim Model
@@ -368,7 +368,7 @@ and `note` fields. The strategies are:
 
 When adding support for a new UniSim type, update the registry first, then add
 conversion logic only where the selected strategy needs it. Validate with
-`python devtools/test_unisim_outputs.py` and inspect `_unisim_operation_mapping`
+`<python-executable> devtools/test_unisim_outputs.py` and inspect `_unisim_operation_mapping`
 in generated JSON.
 
 ### Forward Reference Placeholders for Separators and HeatExchangers

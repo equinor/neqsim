@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "oilgas production energy optimization"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Oil & Gas Topside: Production & Energy Optimization"
+description: "Notebook for Oil & Gas Topside: Production & Energy Optimization, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# oilgas production energy optimization
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`oilgas_production_energy_optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/oilgas_production_energy_optimization.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/oilgas_production_energy_optimization.ipynb).
 
 ---
-
-# Oil & Gas Topside: Production & Energy Optimization
 
 This notebook demonstrates NeqSim's **production optimization** and **energy optimization** functionality on the same oil/gas separation + recompression process used in the NeqSim-Colab `comparesimulations.ipynb` example.
 

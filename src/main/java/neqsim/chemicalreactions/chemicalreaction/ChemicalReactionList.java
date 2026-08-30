@@ -139,6 +139,35 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
+   * Enforce the selected source's validation policy on the relevant independent reaction set.
+   *
+   * <p>
+   * The check runs after irrelevant and dependent reactions have been removed and before reaction products are added to
+   * the thermodynamic system. Sources without a strict policy retain their legacy behavior.
+   * </p>
+   *
+   * @throws IllegalStateException when a strict source contains a relevant active row without validated evidence
+   */
+  public void requireValidatedEvidenceForActiveReactions() {
+    ChemicalReactionDataSource source = getReactionDataSource();
+    if (!source.requiresValidatedActiveReactions()) {
+      return;
+    }
+
+    ArrayList<String> unvalidatedReactionNames = new ArrayList<String>();
+    for (ChemicalReaction reaction : chemicalReactionList) {
+      if (reaction.getValidationStatus() != ChemicalReactionValidationStatus.VALIDATED) {
+        unvalidatedReactionNames.add(reaction.getName());
+      }
+    }
+    if (!unvalidatedReactionNames.isEmpty()) {
+      java.util.Collections.sort(unvalidatedReactionNames);
+      throw new IllegalStateException("Chemical-reaction initialization rejected unvalidated active rows for source '"
+          + source.getIdentifier() + "': reactionsWithoutValidatedEvidence=" + unvalidatedReactionNames);
+    }
+  }
+
+  /**
    * getReaction.
    *
    * @param i a int

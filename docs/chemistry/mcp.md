@@ -1,6 +1,6 @@
 ---
 title: "MCP Chemistry Tool Reference"
-description: "JSON schema reference for the runChemistry MCP tool exposed by the NeqSim MCP server. Covers electrolyte scale prediction, mechanistic CO2 corrosion, Langmuir inhibitor dosing, and packed-bed H2S scavenger breakthrough."
+description: "JSON schema reference for the runChemistry MCP tool exposed by the NeqSim MCP server. Covers Pitzer qualification, electrolyte scale prediction, mechanistic CO2 corrosion, Langmuir inhibitor dosing, and packed-bed H2S scavenger breakthrough."
 ---
 
 # `runChemistry` MCP Tool Reference
@@ -27,6 +27,66 @@ All responses follow the standard NeqSim MCP envelope:
 On failure: `{"status":"error","errors":[{"code","message","remediation"}]}`.
 
 ## Analyses
+
+### `pitzerQualification`
+
+Fail-closed setup/publication view over the authoritative Java
+`SystemPitzer`/`PhasePitzer` coverage and qualification APIs. It performs no
+flash and changes no parameter. Amounts are system moles; the aqueous model
+derives molality from the water mass.
+
+| Field | Unit | Required / values |
+|-------|------|-------------------|
+| `temperature_K` | K | required, finite and positive |
+| `pressure_bara` | bara | required, finite and positive |
+| `components` | mol | required object; positive `water` and non-negative finite amounts |
+| `dataset` | – | `auto` (default), `legacy`, `phreeqc-na-k-cl`, `phreeqc-co2-na2so4`, or `phreeqc-catalog` |
+| `validationTarget` | – | optional enum: `AQUEOUS_ACTIVITY_COEFFICIENTS`, `WATER_ACTIVITY_AND_OSMOTIC_COEFFICIENT`, `GAS_AQUEOUS_VLE`, `REACTIVE_SPECIATION`, or `MINERAL_SATURATION_AND_PRECIPITATION` |
+
+The response separates interaction coverage, dataset-level qualification,
+observable qualification, and the exact state-range helper. `publicationReady`
+is true only when those gates and the normalized/non-negative aqueous state
+pass. Missing `validationTarget`, incomplete
+ionic or neutral topology, an unqualified observable, or an out-of-envelope
+state returns `decision: "REJECTED"`; no missing interaction is interpreted as
+zero. A non-electroneutral ionic input is rejected before dataset selection.
+The current PHREEQC interaction functions have no pressure argument, so
+`stateRange.pressureChecked` is explicitly false rather than implying a
+pressure qualification.
+
+```json
+{
+  "analysis": "pitzerQualification",
+  "temperature_K": 298.15,
+  "pressure_bara": 1.01325,
+  "dataset": "phreeqc-na-k-cl",
+  "validationTarget": "AQUEOUS_ACTIVITY_COEFFICIENTS",
+  "components": {
+    "water": 55.508,
+    "Na+": 0.5,
+    "K+": 0.5,
+    "Cl-": 1.0
+  }
+}
+```
+
+Python uses the same Java behavior through JPype; it does not reproduce the
+qualification logic:
+
+```python
+from neqsim import jneqsim
+
+payload = '{"analysis":"pitzerQualification","temperature_K":298.15,' \
+    '"pressure_bara":1.01325,"dataset":"phreeqc-na-k-cl",' \
+    '"validationTarget":"AQUEOUS_ACTIVITY_COEFFICIENTS",' \
+    '"components":{"water":55.508,"Na+":0.5,"K+":0.5,"Cl-":1.0}}'
+result_json = jneqsim.mcp.runners.ChemistryRunner.run(payload)
+```
+
+The declared evidence envelopes and source/license matrix are recorded in
+[Pitzer parameter provenance](../thermo/pitzer_parameter_provenance.md). In
+particular, the PHREEQC `H2Sg`/`(H2Sg)2` source topology is not aliased to
+NeqSim `H2S`; it remains visibly incomplete.
 
 ### `electrolyteScale`
 

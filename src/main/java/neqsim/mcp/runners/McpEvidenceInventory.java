@@ -14,8 +14,9 @@ import com.google.gson.JsonParser;
  */
 public final class McpEvidenceInventory {
 
-  private static final int JAVA_TEST_CLASS_COUNT = 67;
+  private static final int JAVA_TEST_CLASS_COUNT = 69;
   private static final int PROTOCOL_SCENARIO_COUNT = 94;
+  private static final int FOCUSED_API_PROTOCOL_SCENARIO_COUNT = 3;
 
   /** Private constructor for utility class. */
   private McpEvidenceInventory() {
@@ -28,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.9");
+    inventory.addProperty("inventoryVersion", "1.20");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -51,8 +52,10 @@ public final class McpEvidenceInventory {
     tests.addProperty("javaTestRoot", "src/test/java/neqsim/mcp");
     tests.addProperty("protocolScenarioCount", PROTOCOL_SCENARIO_COUNT);
     tests.addProperty("protocolHarness", "neqsim-mcp-server/test_mcp_server.py");
+    tests.addProperty("focusedApiProtocolScenarioCount", FOCUSED_API_PROTOCOL_SCENARIO_COUNT);
+    tests.addProperty("focusedApiProtocolHarness", "neqsim-mcp-server/test_inspect_api_protocol.py");
     tests.addProperty("sourceCountContract",
-        "CapabilitiesRunnerTest and the packaged MCP protocol suite freeze these source inventories");
+        "CapabilitiesRunnerTest, the packaged MCP protocol suite, and focused API protocol qualification freeze these source inventories");
     tests.addProperty("executionBoundary",
         "Inventory presence is not an execution result; use exact-head CI and recorded test output as pass evidence");
     return tests;
@@ -209,9 +212,9 @@ public final class McpEvidenceInventory {
     coverageDefinitions.addProperty("EXPLICIT_TRUST",
         "Tool-specific BenchmarkTrust metadata exists; use its declared maturity, validation cases, accuracy bounds, and limitations");
     coverageDefinitions.addProperty("CONTRACT_TESTED",
-        "Non-numerical MCP contract behavior has direct source, contract-test, and real-protocol evidence; no engineering accuracy benchmark is applicable or implied");
+        "Bounded MCP software-contract behavior has direct source, contract-test, and real-protocol evidence; no engineering accuracy benchmark is implied");
     coverageDefinitions.addProperty("CONFIRMED_GAP",
-        "No tool-specific BenchmarkTrust entry or bounded non-numerical contract evidence closes the gap; generic fallback maturity must not be interpreted as benchmark validation");
+        "No tool-specific BenchmarkTrust entry or bounded software-contract evidence closes the gap; generic fallback maturity must not be interpreted as benchmark validation");
 
     JsonObject promotionCandidates = buildContractPromotionCandidates();
     JsonObject limitations = new JsonObject();
@@ -238,51 +241,22 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "Promotion candidates remain CONFIRMED_GAP until their classification accounting and packaged protocol contract are changed together on one validated exact head");
+        "manageSession is CONTRACT_TESTED from merged canonical-process lifecycle, ownership, invalidation, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.20");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; six non-numerical discovery, catalog, trust, and governance tools are contract-tested without numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "Every published tool has an explicit coverage record; eighteen bounded discovery, catalog, lookup, progress, trust, governance, validation-profile, runtime API-inspection, model-registry, session-lifecycle, and automation advisory contracts are contract-tested without extending numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
     limitations.addProperty("resultBoundary",
-        "Per-result provenance, convergence, warnings, assumptions, and limitations remain authoritative for an executed case");
+        "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
   }
 
-  /**
-   * Builds evidence-qualified candidates for a future atomic contract-status promotion.
-   *
-   * @return candidate records keyed by public MCP tool name
-   */
+  /** Returns evidence-qualified candidates for future atomic contract-status promotion. */
   private static JsonObject buildContractPromotionCandidates() {
-    JsonObject candidates = new JsonObject();
-    candidates.add("searchComponents", contractPromotionCandidate(
-        "NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP",
-        new String[] { "src/main/java/neqsim/mcp/runners/ComponentQuery.java",
-            "src/test/java/neqsim/mcp/runners/ComponentQueryTest.java", "neqsim-mcp-server/test_mcp_server.py" },
-        "Component-name lookup, substring search, empty-query enumeration, typo handling, and no-match behavior are directly tested, including real-protocol retrieval; catalog lookup does not validate thermodynamic calculations or component-property models"));
-    candidates.add("queryDataCatalog", contractPromotionCandidate("NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY",
-        new String[] { "src/main/java/neqsim/mcp/runners/DataCatalogRunner.java",
-            "src/test/java/neqsim/mcp/runners/DataCatalogRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" },
-        "Read-only catalog dispatch and representative component-family, EOS-model, component-property, and real-protocol catalog retrieval are tested; database contents, standards applicability, EOS accuracy, and material or design decisions are not validated by this evidence"));
-    return candidates;
-  }
-
-  /** Builds one bounded contract-promotion candidate. */
-  private static JsonObject contractPromotionCandidate(String benchmarkApplicability, String[] evidenceSources,
-      String evidenceBoundary) {
-    JsonObject candidate = new JsonObject();
-    candidate.addProperty("targetCoverageStatus", "CONTRACT_TESTED");
-    candidate.addProperty("benchmarkApplicability", benchmarkApplicability);
-    candidate.addProperty("contractEvidenceCount", evidenceSources.length);
-    candidate.add("contractEvidenceSources", toJsonArray(java.util.Arrays.asList(evidenceSources)));
-    candidate.addProperty("evidenceBoundary", evidenceBoundary);
-    candidate.addProperty("promotionReady", false);
-    candidate.addProperty("remainingGate",
-        "Update frozen protocol classification accounting atomically and pass exact-head hosted validation before changing coverageStatus");
-    return candidate;
+    return new JsonObject();
   }
 
   /**
-   * Adds bounded contract evidence for a non-numerical MCP tool.
+   * Adds bounded contract evidence for an MCP tool whose qualified scope is software-contract behavior.
    *
    * @param toolName published MCP tool name
    * @param record mutable coverage record
@@ -334,6 +308,106 @@ public final class McpEvidenceInventory {
           "src/test/java/neqsim/mcp/runners/McpPrincipalScopingTest.java",
           "src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java", "neqsim-mcp-server/test_mcp_server.py" };
       evidenceBoundary = "Profile discovery, classification, admin-gated mode changes, and principal-scoped one-shot approvals are contract-tested; deployments still require external identity, policy configuration, and accountable review";
+      break;
+    case "searchComponents":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_COMPONENT_CATALOG_LOOKUP";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ComponentQuery.java",
+          "src/test/java/neqsim/mcp/runners/ComponentQueryTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "Component-name lookup, substring search, empty-query enumeration, typo handling, and no-match behavior are directly tested, including real-protocol retrieval; catalog lookup does not validate thermodynamic calculations or component-property models";
+      break;
+    case "queryDataCatalog":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_DATA_CATALOG_DISCOVERY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/DataCatalogRunner.java",
+          "src/test/java/neqsim/mcp/runners/DataCatalogRunnerTest.java", "neqsim-mcp-server/test_mcp_server.py" };
+      evidenceBoundary = "Read-only catalog dispatch and representative component-family, EOS-model, component-property, and real-protocol catalog retrieval are tested; database contents, standards applicability, EOS accuracy, and material or design decisions are not validated by this evidence";
+      break;
+    case "getProgress":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_PROGRESS_RETRIEVAL";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ProgressTracker.java",
+          "src/test/java/neqsim/mcp/runners/McpEvidenceInventoryFoundationTests.java",
+          "neqsim-mcp-server/test_mcp_server.py", "neqsim-mcp-server/docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md" };
+      evidenceBoundary = "Active-operation discovery, point retrieval, milestone visibility, completion state, missing-operation errors, and real-protocol listActive retrieval are directly tested; this evidence does not validate the underlying calculation, cancellation, durability, deployment isolation, or plant authority";
+      break;
+    case "inspectApi":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_RUNTIME_API_INSPECTION";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ApiKnowledgeRunner.java",
+          "src/test/java/neqsim/mcp/runners/ApiKnowledgeRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_inspect_api_protocol.py",
+          "neqsim-mcp-server/docs/evidence/API_INSPECTION_CONTRACT.md" };
+      evidenceBoundary = "Version-matched reflection is restricted to neqsim.* classes, common NeqSim process aliases, and EquipmentFactory aliases; source-level and packaged-MCP tests prove representative resolution, member filtering, source pointers, and fail-closed non-NeqSim rejection without executing the inspected method or validating engineering calculations";
+      break;
+    case "manageValidationProfile":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ValidationProfileRunner.java",
+          "src/main/java/neqsim/mcp/runners/IndustrialProfile.java",
+          "src/test/java/neqsim/mcp/runners/ValidationProfileRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_validation_profile_protocol.py",
+          "neqsim-mcp-server/docs/evidence/VALIDATION_PROFILE_CONTRACT.md" };
+      evidenceBoundary = "Built-in discovery, structural validation metadata preservation, isolated custom-profile lifecycle and recovery, equipment-standard retrieval, fail-closed mutation errors, and packaged-MCP transport are contract-tested; this does not validate standards currency, legal applicability or licensing, validator scientific correctness, deployment isolation or durability, external authorization, or plant authority";
+      break;
+    case "manageModel":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_MODEL_REGISTRY_LIFECYCLE";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ModelRegistry.java",
+          "src/test/java/neqsim/mcp/runners/ModelRegistryTest.java",
+          "neqsim-mcp-server/test_model_registry_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/MODEL_REGISTRY_CONTRACT.md" };
+      evidenceBoundary = "Content-addressed registration, caller-scoped get/list/inspect, canonical process and automation handle routing, stable revisioning, fail-closed invalid or unknown requests, deletion/invalidation, source-level tenant/principal isolation, and packaged-MCP transport are contract-tested; this does not establish persistence across server restarts, distributed cache coherence, external identity or authorization correctness, numerical model accuracy, convergence, mass or energy closure, facility fidelity, plant authority, control permission, design certification, or accountable engineering approval";
+      break;
+    case "manageSession":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_SESSION_LIFECYCLE";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/SessionRunner.java",
+          "src/test/java/neqsim/mcp/runners/SessionRunnerTest.java",
+          "src/test/java/neqsim/mcp/runners/SessionRunnerContractTest.java",
+          "neqsim-mcp-server/test_session_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/SESSION_LIFECYCLE_CONTRACT.md" };
+      evidenceBoundary = "Lifecycle contract; restart durability, distributed coherence, component or energy closure, and causal troubleshooting remain unqualified";
+      break;
+    case "listSimulationUnits":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/automation/ProcessAutomation.java",
+          "src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java",
+          "neqsim-mcp-server/test_automation_read_protocol.py",
+          "neqsim-mcp-server/docs/evidence/AUTOMATION_READ_CONTRACT.md" };
+      evidenceBoundary = "Canonical solved-ProcessSystem unit discovery, unit identity/type metadata, fail-closed input handling, standard response envelopes, and packaged-MCP transport are contract-tested; this does not establish facility topology completeness, numerical process accuracy, or plant authority";
+      break;
+    case "listUnitVariables":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_VARIABLE_DISCOVERY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/automation/ProcessAutomation.java",
+          "src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java",
+          "neqsim-mcp-server/test_automation_read_protocol.py",
+          "neqsim-mcp-server/docs/evidence/AUTOMATION_READ_CONTRACT.md" };
+      evidenceBoundary = "Canonical unit-variable registry discovery, addresses, types, units, writeability/applicability metadata, fail-closed input handling, and packaged-MCP transport are contract-tested; this does not validate the engineering correctness of exposed variables or facility completeness";
+      break;
+    case "getSimulationVariable":
+      benchmarkApplicability = "NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_READ";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/automation/ProcessAutomation.java",
+          "src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java",
+          "neqsim-mcp-server/test_automation_read_protocol.py",
+          "neqsim-mcp-server/docs/evidence/AUTOMATION_READ_CONTRACT.md" };
+      evidenceBoundary = "Addressed read routing, requested-unit handling, provenance/validation/quality-gate envelope preservation, fail-closed invalid inputs, and packaged-MCP transport are contract-tested; the returned numerical value, model fidelity, convergence adequacy, and engineering applicability are not benchmark-validated by this classification";
+      break;
+    case "diagnoseAutomation":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/automation/AutomationDiagnostics.java",
+          "src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java",
+          "neqsim-mcp-server/test_automation_read_protocol.py",
+          "neqsim-mcp-server/docs/evidence/AUTOMATION_READ_CONTRACT.md" };
+      evidenceBoundary = "Structured UNIT_NOT_FOUND advisory classification, suggestions/remediation shape, process-local learning-report inclusion, fail-closed invalid inputs, and packaged-MCP transport are contract-tested; suggestions are not causal diagnosis, plant measurements, control instructions, or accountable engineering approval";
+      break;
+    case "getAutomationLearningReport":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_LEARNING_REPORT";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/automation/AutomationDiagnostics.java",
+          "src/test/java/neqsim/mcp/runners/AutomationReadContractTest.java",
+          "neqsim-mcp-server/test_automation_read_protocol.py",
+          "neqsim-mcp-server/docs/evidence/AUTOMATION_READ_CONTRACT.md" };
+      evidenceBoundary = "Fresh-process zero-history learning-report structure, error-category/correction/recommendation containers, fail-closed input handling, and packaged-MCP transport are contract-tested; persistence across processes/restarts/tenants and learning quality are not established";
       break;
     default:
       return false;

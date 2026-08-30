@@ -1,6 +1,7 @@
 package neqsim.process.processmodel.dexpi;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -61,7 +62,7 @@ final class DexpiLayoutEngine {
   /** Vertical offset from equipment center to top of bar label. */
   private static final double BAR_OFFSET_Y = 22.0;
   /** Vertical offset from process line to instrument bubble center. */
-  static final double INSTRUMENT_OFFSET_Y = 45.0;
+  static final double INSTRUMENT_OFFSET_Y = 55.0;
   /** Horizontal spacing between instrument bubbles on the same equipment. */
   static final double INSTRUMENT_X_SPACING = 15.0;
   /** Radius of instrument bubble for connection point calculations. */
@@ -192,7 +193,7 @@ final class DexpiLayoutEngine {
 
     // Also register pass-through streams (Stream wrapping separator outlets)
     for (ProcessEquipmentInterface unit : units) {
-      if (unit instanceof Stream && !(unit instanceof DexpiStream)) {
+      if (unit instanceof Stream) {
         Stream stream = (Stream) unit;
         if (stream.getFluid() != null) {
           int fluidHash = System.identityHashCode(stream.getFluid());
@@ -893,6 +894,38 @@ final class DexpiLayoutEngine {
   }
 
   /**
+   * Computes an instrument position above its resolved process sensing point.
+   *
+   * <p>
+   * The bubble group follows the tap rather than the equipment centre. If the tap lies inside the horizontal envelope
+   * of the equipment data bar, the group is shifted beyond the nearest bar edge. Measuring lines can therefore leave a
+   * nozzle along the process lane and rise outside the data table instead of crossing its rows.
+   * </p>
+   *
+   * @param equipmentPos parent equipment position, or null when unavailable
+   * @param tapX process sensing-point X coordinate
+   * @param tapY process sensing-point Y coordinate
+   * @param instrumentIndex zero-based position within instruments sharing the sensing location
+   * @param totalInstruments number of instruments sharing the sensing location
+   * @return the instrument position {x, y}
+   */
+  static double[] computeInstrumentPositionAtSensingPoint(EquipmentPosition equipmentPos, double tapX, double tapY,
+      int instrumentIndex, int totalInstruments) {
+    double totalWidth = Math.max(0, totalInstruments - 1) * INSTRUMENT_X_SPACING;
+    double groupCenterX = tapX;
+    if (equipmentPos != null) {
+      double barHalfWidth = BAR_WIDTH / 2.0;
+      double requiredHalfWidth = totalWidth / 2.0 + INSTRUMENT_BUBBLE_RADIUS + 4.0;
+      if (Math.abs(tapX - equipmentPos.x) < barHalfWidth + requiredHalfWidth) {
+        double direction = tapX < equipmentPos.x ? -1.0 : 1.0;
+        groupCenterX = equipmentPos.x + direction * (barHalfWidth + requiredHalfWidth);
+      }
+    }
+    double startX = groupCenterX - totalWidth / 2.0;
+    return new double[] { startX + instrumentIndex * INSTRUMENT_X_SPACING, tapY + 30.0 };
+  }
+
+  /**
    * Appends a measuring line (CenterLine) connecting an equipment nozzle to an instrument bubble.
    *
    * <p>
@@ -1012,9 +1045,6 @@ final class DexpiLayoutEngine {
       SignalLineKind kind) {
     Element centerLine = document.createElement("CenterLine");
 
-    double departY = fromY - INSTRUMENT_BUBBLE_RADIUS;
-    double arriveY = toY + INSTRUMENT_BUBBLE_RADIUS;
-
     Element presentation = document.createElement("Presentation");
     presentation.setAttribute("LineType", String.valueOf(kind.getLineType()));
     presentation.setAttribute("LineWeight", String.valueOf(SIGNAL_LINE_WEIGHT));
@@ -1022,21 +1052,74 @@ final class DexpiLayoutEngine {
     presentation.setAttribute("G", "0");
     presentation.setAttribute("B", "1");
 
-    if (Math.abs(fromX - toX) < 0.5) {
+    if (Math.abs(fromY - toY) < 0.5) {
+      double direction = toX >= fromX ? 1.0 : -1.0;
       centerLine.setAttribute("NumPoints", "2");
       centerLine.appendChild(presentation);
-      appendCoordinate(document, centerLine, fromX, departY);
-      appendCoordinate(document, centerLine, toX, arriveY);
+      appendCoordinate(document, centerLine, fromX + direction * INSTRUMENT_BUBBLE_RADIUS, fromY);
+      appendCoordinate(document, centerLine, toX - direction * INSTRUMENT_BUBBLE_RADIUS, toY);
+    } else if (Math.abs(fromX - toX) < 0.5) {
+      double direction = toY >= fromY ? 1.0 : -1.0;
+      centerLine.setAttribute("NumPoints", "2");
+      centerLine.appendChild(presentation);
+      appendCoordinate(document, centerLine, fromX, fromY + direction * INSTRUMENT_BUBBLE_RADIUS);
+      appendCoordinate(document, centerLine, toX, toY - direction * INSTRUMENT_BUBBLE_RADIUS);
     } else {
-      double midY = (departY + arriveY) / 2.0;
+      double directionX = toX >= fromX ? 1.0 : -1.0;
+      double directionY = toY >= fromY ? 1.0 : -1.0;
+      double departX = fromX + directionX * INSTRUMENT_BUBBLE_RADIUS;
+      double arriveY = toY - directionY * INSTRUMENT_BUBBLE_RADIUS;
+      double midX = (departX + toX) / 2.0;
       centerLine.setAttribute("NumPoints", "4");
       centerLine.appendChild(presentation);
-      appendCoordinate(document, centerLine, fromX, departY);
-      appendCoordinate(document, centerLine, fromX, midY);
-      appendCoordinate(document, centerLine, toX, midY);
+      appendCoordinate(document, centerLine, departX, fromY);
+      appendCoordinate(document, centerLine, midX, fromY);
+      appendCoordinate(document, centerLine, midX, arriveY);
       appendCoordinate(document, centerLine, toX, arriveY);
     }
 
+    parent.appendChild(centerLine);
+  }
+
+  /**
+   * Appends a signal line from an instrument bubble to an actual equipment or valve point.
+   *
+   * <p>
+   * Only the source is shortened to the bubble edge; the target terminates at the final control element. This overload
+   * prevents command signals from stopping one bubble radius short of a valve or manipulated equipment function.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the InformationFlow element
+   * @param fromX source bubble centre X
+   * @param fromY source bubble centre Y
+   * @param targetX final control element X
+   * @param targetY final control element Y
+   * @param kind the ISA-5.1 signal line kind
+   */
+  static void appendSignalLineToPoint(Document document, Element parent, double fromX, double fromY, double targetX,
+      double targetY, SignalLineKind kind) {
+    Element centerLine = document.createElement("CenterLine");
+    Element presentation = document.createElement("Presentation");
+    presentation.setAttribute("LineType", String.valueOf(kind.getLineType()));
+    presentation.setAttribute("LineWeight", String.valueOf(SIGNAL_LINE_WEIGHT));
+    presentation.setAttribute("R", "0");
+    presentation.setAttribute("G", "0");
+    presentation.setAttribute("B", "1");
+    centerLine.appendChild(presentation);
+
+    double directionY = targetY >= fromY ? 1.0 : -1.0;
+    double startY = fromY + directionY * INSTRUMENT_BUBBLE_RADIUS;
+    if (Math.abs(fromX - targetX) < 0.5) {
+      centerLine.setAttribute("NumPoints", "2");
+      appendCoordinate(document, centerLine, fromX, startY);
+      appendCoordinate(document, centerLine, targetX, targetY);
+    } else {
+      centerLine.setAttribute("NumPoints", "3");
+      appendCoordinate(document, centerLine, fromX, startY);
+      appendCoordinate(document, centerLine, fromX, targetY);
+      appendCoordinate(document, centerLine, targetX, targetY);
+    }
     parent.appendChild(centerLine);
   }
 
@@ -1176,6 +1259,17 @@ final class DexpiLayoutEngine {
    * @return a two-element array {width, height} in mm
    */
   static double[] computeSheetSize(Map<String, EquipmentPosition> positions) {
+    return computeSheetSize(positions, Collections.<double[]>emptyList());
+  }
+
+  /**
+   * Computes drawing dimensions from both equipment and actual instrument/controller positions.
+   *
+   * @param positions the computed equipment layout positions
+   * @param instrumentPositions rendered instrument and controller bubble centres
+   * @return a two-element array {width, height} in mm
+   */
+  static double[] computeSheetSize(Map<String, EquipmentPosition> positions, List<double[]> instrumentPositions) {
     double maxX = 0;
     double maxY = 0;
     for (EquipmentPosition pos : positions.values()) {
@@ -1193,6 +1287,10 @@ final class DexpiLayoutEngine {
       if (topEdge > maxY) {
         maxY = topEdge;
       }
+    }
+    for (double[] instrument : instrumentPositions) {
+      maxX = Math.max(maxX, instrument[0] + INSTRUMENT_BUBBLE_RADIUS + 12.0);
+      maxY = Math.max(maxY, instrument[1] + INSTRUMENT_BUBBLE_RADIUS + 5.0);
     }
     // Add right-side padding for nozzles, arrows, and border margin
     double width = Math.max(MIN_SHEET_WIDTH, maxX + BORDER_MARGIN + 40.0);
@@ -1581,13 +1679,13 @@ final class DexpiLayoutEngine {
     appendTitleCell(document, label, col3, row2Bottom, col4, row2Top, "REV");
     appendTitleCell(document, label, col4, row2Bottom, blockRight, row2Top, revision != null ? revision : "0");
 
-    // Row 3: APPROVED BY | - | STATUS | IFC
+    // Row 3: APPROVED BY | - | STATUS | PROPOSAL
     double row3Bottom = row2Top;
     double row3Top = row3Bottom + TITLE_ROW_HEIGHT;
     appendTitleCell(document, label, blockLeft, row3Bottom, col2, row3Top, "APPROVED BY");
     appendTitleCell(document, label, col2, row3Bottom, col3, row3Top, "-");
     appendTitleCell(document, label, col3, row3Bottom, col4, row3Top, "STATUS");
-    appendTitleCell(document, label, col4, row3Bottom, blockRight, row3Top, "IFC");
+    appendTitleCell(document, label, col4, row3Bottom, blockRight, row3Top, "PROPOSAL");
 
     // Row 4-6: Main title area (Name of drawing, large font)
     double titleBottom = row3Top;
@@ -1705,6 +1803,7 @@ final class DexpiLayoutEngine {
 
     Element poly = document.createElement("PolyLine");
     poly.setAttribute("NumPoints", "4");
+    poly.setAttribute("Filled", "Solid");
     Element pres = document.createElement("Presentation");
     pres.setAttribute("LineType", "0");
     pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
@@ -1929,6 +2028,20 @@ final class DexpiLayoutEngine {
    */
   static void appendBatteryLimitBoundary(Document document, Element parent, Map<String, EquipmentPosition> positions,
       String areaLabel) {
+    appendBatteryLimitBoundary(document, parent, positions, Collections.<double[]>emptyList(), areaLabel);
+  }
+
+  /**
+   * Appends a battery-limit boundary enclosing equipment and actual instrument/controller positions.
+   *
+   * @param document the XML document
+   * @param parent the Drawing or PlantModel element
+   * @param positions all equipment positions
+   * @param instrumentPositions rendered instrument and controller bubble centres
+   * @param areaLabel the battery limit label
+   */
+  static void appendBatteryLimitBoundary(Document document, Element parent, Map<String, EquipmentPosition> positions,
+      List<double[]> instrumentPositions, String areaLabel) {
     if (positions == null || positions.isEmpty()) {
       return;
     }
@@ -1951,10 +2064,21 @@ final class DexpiLayoutEngine {
       }
     }
 
+    for (double[] instrument : instrumentPositions) {
+      minX = Math.min(minX, instrument[0] - INSTRUMENT_BUBBLE_RADIUS - 2.0);
+      maxX = Math.max(maxX, instrument[0] + INSTRUMENT_BUBBLE_RADIUS + 12.0);
+      minY = Math.min(minY, instrument[1] - INSTRUMENT_BUBBLE_RADIUS - 2.0);
+      maxY = Math.max(maxY, instrument[1] + INSTRUMENT_BUBBLE_RADIUS + 5.0);
+    }
+
     double bLeft = minX - BATTERY_LIMIT_PADDING;
     double bRight = maxX + BATTERY_LIMIT_PADDING;
     double bBottom = minY - BATTERY_LIMIT_PADDING;
-    double bTop = maxY + BATTERY_LIMIT_PADDING;
+    // Enclose instrument bubbles and their signal-line endpoints as well as equipment symbols.
+    // The previous equipment-only padding crossed both bubbles and full equipment data bars.
+    double instrumentEnvelope = INSTRUMENT_OFFSET_Y + INSTRUMENT_BUBBLE_RADIUS + 5.0;
+    double bTop = maxY
+        + (instrumentPositions.isEmpty() ? Math.max(BATTERY_LIMIT_PADDING, instrumentEnvelope) : BATTERY_LIMIT_PADDING);
 
     Element label = document.createElement("Label");
     label.setAttribute("ID", "BatteryLimit-1");
@@ -3030,8 +3154,9 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * Appends a prebuilt line-identification label (for example one produced by {@code NorsokLineNumber.build()}) above
-   * the pipe midpoint.
+   * Appends a prebuilt line-identification label (for example one produced by {@code NorsokLineNumber.build()}) below
+   * the pipe midpoint. Stream sequence labels use the lane above the pipe, so keeping the complete line designation
+   * below avoids the two texts being rendered on top of one another.
    *
    * @param document the XML document
    * @param parent the PipingNetworkSegment element
@@ -3048,7 +3173,7 @@ final class DexpiLayoutEngine {
     }
     double midX = (fromX + toX) / 2.0;
     double midY = (fromY + toY) / 2.0;
-    double labelY = midY + 6.0;
+    double labelY = midY - 6.0;
 
     Element text = document.createElement("Text");
     text.setAttribute("String", lineId.trim());
@@ -3079,6 +3204,146 @@ final class DexpiLayoutEngine {
     position.appendChild(ref);
     text.appendChild(position);
     parent.appendChild(text);
+  }
+
+  /**
+   * Appends a source-backed pipe reducer symbol and its size transition label at the routed line midpoint.
+   *
+   * @param document XML document
+   * @param parent PipeReducer element
+   * @param fromX source X coordinate
+   * @param fromY source Y coordinate
+   * @param toX target X coordinate
+   * @param toY target Y coordinate
+   * @param flowInSize upstream size representation
+   * @param flowOutSize downstream size representation
+   */
+  static void appendPipeReducerSymbol(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY, String flowInSize, String flowOutSize) {
+    double[] location = routeMidpointAndDirection(fromX, fromY, toX, toY);
+    double x = location[0];
+    double y = location[1];
+    boolean horizontal = Math.abs(location[2]) >= Math.abs(location[3]);
+
+    Element position = document.createElement("Position");
+    Element point = document.createElement("Location");
+    point.setAttribute("X", String.valueOf(x));
+    point.setAttribute("Y", String.valueOf(y));
+    point.setAttribute("Z", "0");
+    position.appendChild(point);
+    parent.appendChild(position);
+
+    Element reducer = document.createElement("PolyLine");
+    reducer.setAttribute("NumPoints", "5");
+    Element presentation = document.createElement("Presentation");
+    presentation.setAttribute("LineType", "0");
+    presentation.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+    presentation.setAttribute("R", "0");
+    presentation.setAttribute("G", "0");
+    presentation.setAttribute("B", "0");
+    reducer.appendChild(presentation);
+    if (horizontal) {
+      appendCoordinate(document, reducer, x - 4.0, y + 3.0);
+      appendCoordinate(document, reducer, x - 4.0, y - 3.0);
+      appendCoordinate(document, reducer, x + 4.0, y - 1.5);
+      appendCoordinate(document, reducer, x + 4.0, y + 1.5);
+      appendCoordinate(document, reducer, x - 4.0, y + 3.0);
+    } else {
+      appendCoordinate(document, reducer, x - 3.0, y - 4.0);
+      appendCoordinate(document, reducer, x + 3.0, y - 4.0);
+      appendCoordinate(document, reducer, x + 1.5, y + 4.0);
+      appendCoordinate(document, reducer, x - 1.5, y + 4.0);
+      appendCoordinate(document, reducer, x - 3.0, y - 4.0);
+    }
+    parent.appendChild(reducer);
+    // Keep the transition text clear of the stream number (+6 mm) and line
+    // designation (-6 mm) that use the same routed-line midpoint.
+    appendFittingLabel(document, parent, flowInSize + " → " + flowOutSize, x, y - 12.0);
+  }
+
+  /**
+   * Appends the conventional double-slash marker for a piping-class or insulation property break.
+   *
+   * @param document XML document
+   * @param parent PropertyBreak element
+   * @param fromX source X coordinate
+   * @param fromY source Y coordinate
+   * @param toX target X coordinate
+   * @param toY target Y coordinate
+   * @param label changed property description
+   */
+  static void appendPropertyBreakSymbol(Document document, Element parent, double fromX, double fromY, double toX,
+      double toY, String label) {
+    double[] location = routeMidpointAndDirection(fromX, fromY, toX, toY);
+    double x = location[0];
+    double y = location[1];
+    boolean horizontal = Math.abs(location[2]) >= Math.abs(location[3]);
+    for (int offset = -2; offset <= 2; offset += 4) {
+      Element slash = document.createElement("PolyLine");
+      slash.setAttribute("NumPoints", "2");
+      Element presentation = document.createElement("Presentation");
+      presentation.setAttribute("LineType", "0");
+      presentation.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+      presentation.setAttribute("R", "0");
+      presentation.setAttribute("G", "0");
+      presentation.setAttribute("B", "0");
+      slash.appendChild(presentation);
+      if (horizontal) {
+        appendCoordinate(document, slash, x + offset - 1.5, y - 3.0);
+        appendCoordinate(document, slash, x + offset + 1.5, y + 3.0);
+      } else {
+        appendCoordinate(document, slash, x - 3.0, y + offset - 1.5);
+        appendCoordinate(document, slash, x + 3.0, y + offset + 1.5);
+      }
+      parent.appendChild(slash);
+    }
+    appendFittingLabel(document, parent, label, x, y - 12.0);
+  }
+
+  private static void appendFittingLabel(Document document, Element parent, String label, double x, double y) {
+    if (label == null || label.trim().isEmpty()) {
+      return;
+    }
+    Element text = document.createElement("Text");
+    text.setAttribute("String", label.trim());
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterTop");
+    Element presentation = document.createElement("Presentation");
+    presentation.setAttribute("R", "0");
+    presentation.setAttribute("G", "0");
+    presentation.setAttribute("B", "0");
+    text.appendChild(presentation);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x));
+    location.setAttribute("Y", String.valueOf(y));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  private static double[] routeMidpointAndDirection(double fromX, double fromY, double toX, double toY) {
+    double[][] route = routeConnection(fromX, fromY, toX, toY);
+    double totalLength = 0.0;
+    for (int index = 0; index + 1 < route.length; index++) {
+      totalLength += Math.abs(route[index + 1][0] - route[index][0]) + Math.abs(route[index + 1][1] - route[index][1]);
+    }
+    double remaining = totalLength / 2.0;
+    for (int index = 0; index + 1 < route.length; index++) {
+      double deltaX = route[index + 1][0] - route[index][0];
+      double deltaY = route[index + 1][1] - route[index][1];
+      double segmentLength = Math.abs(deltaX) + Math.abs(deltaY);
+      if (remaining <= segmentLength || index + 2 == route.length) {
+        double fraction = segmentLength <= 0.0 ? 0.0 : remaining / segmentLength;
+        return new double[] { route[index][0] + fraction * deltaX, route[index][1] + fraction * deltaY, deltaX,
+            deltaY };
+      }
+      remaining -= segmentLength;
+    }
+    return new double[] { fromX, fromY, toX - fromX, toY - fromY };
   }
 
   // ==== Revision history table (NORSOK Z-003) ====

@@ -102,6 +102,10 @@ public class TPflash extends Flash {
   private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
   /** Maximum multiphase beta updates used to repair an invalid neutral two-phase endpoint. */
   private static final int MAX_FINAL_BETA_REFINEMENT_ITERATIONS = 20;
+  /** Maximum beta updates used for final near-critical rich-gas polishing. */
+  private static final int MAX_NEAR_CRITICAL_BETA_REFINEMENT_ITERATIONS = 5;
+  /** Tight log-fugacity target for final near-critical rich-gas polishing. */
+  private static final double NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE = 1.0e-10;
   /** Maximum beta updates used by the rare large-volatility hydrocarbon root refinement. */
   private static final int MAX_LARGE_VOLATILITY_REFINEMENT_ITERATIONS = 160;
   /** Tight closure target for the rare large-volatility hydrocarbon root refinement. */
@@ -899,7 +903,8 @@ public class TPflash extends Flash {
         normalizeUnchangedStableSinglePhaseEndpoint(stableSinglePhaseType, stableSinglePhaseZ,
             stableSinglePhaseComposition);
         rescueSinglePhaseMultiphaseEndpoint();
-        normalizeSourGasSinglePhaseEndpoint();
+        normalizeQualifiedNeutralSinglePhaseEndpoint();
+        polishNearCriticalNeutralTwoPhaseEndpoint();
         return;
       }
     }
@@ -1126,7 +1131,8 @@ public class TPflash extends Flash {
     rescueSinglePhaseMultiphaseEndpoint();
     restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterRichInput);
     restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterRichInput);
-    normalizeSourGasSinglePhaseEndpoint();
+    normalizeQualifiedNeutralSinglePhaseEndpoint();
+    polishNearCriticalNeutralTwoPhaseEndpoint();
     refineIonicGasAqueousEndpoint();
 
     // TPmultiflash already finalized coupled chemistry on a multiphase configuration. For an
@@ -1476,19 +1482,19 @@ public class TPflash extends Flash {
    * <p>
    * The ordinary two-phase flash can converge to a local gas/liquid or liquid-only stationary point even though
    * Michelsen tangent-plane stability analysis finds a lower-Gibbs two-phase equilibrium. A cheap feed-composition
-   * screen limits the extra stability flash to strongly asymmetric neutral mixtures with substantial non-hydrocarbon
-   * content at temperatures where liquid-liquid instability is plausible.
+   * screen limits the extra stability flash to independently qualified sour-gas and near-cricondenbar rich-gas
+   * families.
    * </p>
    *
    * <p>
    * The accepted candidate must contain exactly two neutral fluid phases, close material balance and fugacity equality,
    * and lower Gibbs energy. Chemical/electrolyte, aqueous, solid, wax, and compositions outside the instability screen
-   * remain on the existing fast path. A screened single-phase sour-gas endpoint is normalized to the feed before its
-   * Gibbs energy is compared, because an incipient phase composition is not a valid one-phase reference state.
+   * remain on the existing fast path. A screened single-phase endpoint is normalized to the feed before its Gibbs
+   * energy is compared, because an incipient phase composition is not a valid one-phase reference state.
    * </p>
    */
   private void rescueLowerGibbsNeutralEndpoint() {
-    if (!isSourGasConsistencyRefinementCase()) {
+    if (!isQualifiedNeutralConsistencyRefinementCase()) {
       return;
     }
     if (system.doMultiPhaseCheck() || system.getNumberOfPhases() < 1 || system.getNumberOfPhases() > 2
@@ -1505,18 +1511,22 @@ public class TPflash extends Flash {
       hasGasPhase |= phaseType == PhaseType.GAS;
     }
     if (system.getNumberOfPhases() == 1) {
-      if (!hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
+      if ((!isNearCriticalRichGasRefinementCase()
+          && !hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN))
           || !hasPotentialMultiphaseEndpoint(system.getPhase(0).getType())) {
         return;
       }
     } else {
+      if (isNearCriticalRichGasRefinementCase() && !isSourGasConsistencyRefinementCase()) {
+        return;
+      }
       if (!hasGasPhase || !hasPotentialLiquidLiquidInstability() || !hasPotentialCompetingNeutralMinimum()) {
         return;
       }
     }
 
     if (system.getNumberOfPhases() == 1) {
-      normalizeSourGasSinglePhaseEndpoint();
+      normalizeQualifiedNeutralSinglePhaseEndpoint();
     } else {
       system.init(1);
     }
@@ -1556,7 +1566,11 @@ public class TPflash extends Flash {
             && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy);
       }
       if (accepted) {
-        copyNeutralFlashStatePreservingRoots(candidate);
+        if (isNearCriticalRichGasRefinementCase()) {
+          copyConvergedNeutralFlashState(candidate);
+        } else {
+          copyNeutralFlashStatePreservingRoots(candidate);
+        }
       }
     } catch (Exception ex) {
       logger.debug("Neutral endpoint stability refinement failed: {}", ex.getMessage());
@@ -2128,12 +2142,12 @@ public class TPflash extends Flash {
    *
    * <p>
    * Post-convergence phase-root selection can leave a gas/oil split with valid material balance but component
-   * fugacities outside the flash tolerance. The refinement is attempted only for a qualified sour-gas endpoint or a
-   * high-pressure hydrogen/hydrocarbon endpoint with an incipient phase, or a high-pressure hydrocarbon endpoint with a
-   * large critical-temperature span. It retains the selected active set and accepts the result only when phase
-   * fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the existing strict checks. A
-   * reciprocal ordinary/multiphase trial can recover a lower cubic root; otherwise the complete two-phase iteration
-   * state is restored.
+   * fugacities outside the flash tolerance. The refinement is attempted only for a qualified sour-gas or
+   * near-cricondenbar rich-gas endpoint, a high-pressure hydrogen/hydrocarbon endpoint with an incipient phase, or a
+   * high-pressure hydrocarbon endpoint with a large critical-temperature span. It retains the selected active set and
+   * accepts the result only when phase fractions, compositions, material balance, fugacity equality, and Gibbs energy
+   * pass the existing strict checks. A reciprocal ordinary/multiphase trial can recover a lower cubic root; otherwise
+   * the complete two-phase iteration state is restored.
    * </p>
    */
   private void refineInvalidNeutralTwoPhaseEndpoint() {
@@ -2150,7 +2164,7 @@ public class TPflash extends Flash {
 
     boolean hydrogenBoundaryCase = isHydrogenHydrocarbonBoundaryRefinementCase();
     boolean largeVolatilityHydrocarbonCase = isLargeVolatilityHydrocarbonRefinementCase();
-    if (!isSourGasConsistencyRefinementCase() && !hydrogenBoundaryCase && !largeVolatilityHydrocarbonCase) {
+    if (!isQualifiedNeutralConsistencyRefinementCase() && !hydrogenBoundaryCase && !largeVolatilityHydrocarbonCase) {
       return;
     }
 
@@ -2217,7 +2231,11 @@ public class TPflash extends Flash {
           && (referenceMaterialBalanceInvalid
               || candidate.getGibbsEnergy() < referenceState.gibbsEnergy - gibbsTolerance
               || replacesInvalidIncipientPhase)) {
-        copyNeutralFlashStatePreservingRoots(candidate);
+        if (isNearCriticalRichGasRefinementCase()) {
+          copyConvergedNeutralFlashState(candidate);
+        } else {
+          copyNeutralFlashStatePreservingRoots(candidate);
+        }
       }
     } catch (Exception ex) {
       logger.debug("Final neutral two-phase cross-algorithm refinement failed: {}", ex.getMessage());
@@ -2323,6 +2341,27 @@ public class TPflash extends Flash {
       system.setPhaseType(phaseIndex, rootTypes[phaseIndex]);
     }
     system.init(1);
+  }
+
+  /**
+   * Copies the active phase objects and fractions of an accepted near-critical neutral endpoint.
+   *
+   * <p>
+   * Reconstructing phases from public labels can select a different cubic root near the cricondenbar. Copying the
+   * complete initialized objects preserves the accepted roots until the guarded final beta polish runs after all other
+   * endpoint processing.
+   * </p>
+   *
+   * @param source accepted near-critical candidate
+   */
+  private void copyConvergedNeutralFlashState(SystemInterface source) {
+    system.setNumberOfPhases(source.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < source.getNumberOfPhases(); phaseIndex++) {
+      system.setPhaseIndex(phaseIndex, phaseIndex);
+      system.setPhase(source.getPhase(phaseIndex).clone(), phaseIndex);
+      system.setPhaseType(phaseIndex, source.getPhase(phaseIndex).getType());
+      system.setBeta(phaseIndex, source.getBeta(phaseIndex));
+    }
   }
 
   /**
@@ -2439,6 +2478,73 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Checks whether the feed is a rich natural-gas mixture near a high-pressure cubic-EOS phase boundary.
+   *
+   * <p>
+   * The screen permits hydrocarbons, inert components, and at most five mole percent carbon dioxide. It requires a
+   * methane-rich feed, at least four active hydrocarbons, a condensable hydrocarbon inventory, and a critical-
+   * temperature span large enough to support a distinct gas/liquid split. The subsequent reciprocal flash still has to
+   * close material balance and fugacity equality and lower Gibbs energy, so this method is only a performance gate.
+   * </p>
+   *
+   * @return true when a guarded ordinary/multiphase consistency refinement is justified
+   */
+  private boolean isNearCriticalRichGasRefinementCase() {
+    if (system.getPressure() < 50.0 || system.getPressure() > 200.0 || system.getNumberOfPhases() < 1
+        || system.getNumberOfPhases() > 2) {
+      return false;
+    }
+    int activeHydrocarbons = 0;
+    double hydrocarbonFraction = 0.0;
+    double methaneFraction = 0.0;
+    double condensableHydrocarbonFraction = 0.0;
+    double carbonDioxideFraction = 0.0;
+    double minimumHydrocarbonCriticalTemperature = Double.POSITIVE_INFINITY;
+    double maximumHydrocarbonCriticalTemperature = Double.NEGATIVE_INFINITY;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (feedFraction <= 1.0e-50) {
+        continue;
+      }
+      String componentName = component.getComponentName();
+      if ("water".equalsIgnoreCase(componentName) || component.getIonicCharge() != 0 || component.isIsIon()) {
+        return false;
+      }
+      if (component.isHydrocarbon()) {
+        activeHydrocarbons++;
+        hydrocarbonFraction += feedFraction;
+        if ("methane".equalsIgnoreCase(componentName)) {
+          methaneFraction += feedFraction;
+        }
+        double criticalTemperature = component.getTC();
+        minimumHydrocarbonCriticalTemperature = Math.min(minimumHydrocarbonCriticalTemperature, criticalTemperature);
+        maximumHydrocarbonCriticalTemperature = Math.max(maximumHydrocarbonCriticalTemperature, criticalTemperature);
+        if (criticalTemperature > system.getTemperature() + MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN) {
+          condensableHydrocarbonFraction += feedFraction;
+        }
+      } else if ("CO2".equalsIgnoreCase(componentName)) {
+        carbonDioxideFraction += feedFraction;
+      } else if (!component.isInert()) {
+        return false;
+      }
+    }
+    return activeHydrocarbons >= 4 && hydrocarbonFraction >= 0.90 && methaneFraction >= 0.30
+        && carbonDioxideFraction <= 0.05 && condensableHydrocarbonFraction >= 0.05
+        && maximumHydrocarbonCriticalTemperature - minimumHydrocarbonCriticalTemperature >= 250.0;
+  }
+
+  /**
+   * Combines the independently qualified neutral endpoint families that use the same strict reciprocal acceptance
+   * gates.
+   *
+   * @return true for a supported sour-gas or near-critical rich-gas endpoint
+   */
+  private boolean isQualifiedNeutralConsistencyRefinementCase() {
+    return isSourGasConsistencyRefinementCase() || isNearCriticalRichGasRefinementCase();
+  }
+
+  /**
    * Screens a high-pressure hydrogen/hydrocarbon endpoint with an incipient second phase.
    *
    * <p>
@@ -2515,7 +2621,7 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Restores exact material closure for a final single-phase sour-gas endpoint.
+   * Restores exact material closure for a final qualified neutral single-phase endpoint.
    *
    * <p>
    * A collapsed trial phase can leave its incipient composition and a beta infinitesimally below unity in the active
@@ -2523,13 +2629,56 @@ public class TPflash extends Flash {
    * allocation-free finalization step and leaves the already-selected cubic root unchanged.
    * </p>
    */
-  private void normalizeSourGasSinglePhaseEndpoint() {
-    if (!isSourGasConsistencyRefinementCase() || system.getNumberOfPhases() != 1) {
+  private void normalizeQualifiedNeutralSinglePhaseEndpoint() {
+    if (!isQualifiedNeutralConsistencyRefinementCase() || system.getNumberOfPhases() != 1) {
       return;
     }
     system.setBeta(0, 1.0);
     resetSinglePhaseCompositionToFeed();
     system.init(1, 0);
+  }
+
+  /**
+   * Applies the tight final beta polish after all ordinary endpoint post-processing.
+   *
+   * <p>
+   * Phase cleanup performed after an accepted reciprocal flash can reopen a small near-critical fugacity residual. This
+   * last bounded update is restricted to the qualified rich-gas family and restores the complete pre-polish state
+   * unless material balance, the selected active set, Gibbs energy, and a {@code 1e-10} log-fugacity target all pass.
+   * </p>
+   */
+  private void polishNearCriticalNeutralTwoPhaseEndpoint() {
+    if (system.doMultiPhaseCheck() || !isNearCriticalRichGasRefinementCase() || system.getNumberOfPhases() != 2) {
+      return;
+    }
+    system.init(1);
+    double initialResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
+    if (!Double.isFinite(initialResidual) || initialResidual < NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE
+        || initialResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return;
+    }
+    BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    try {
+      TPmultiflash endpointSolver = new TPmultiflash(system, false);
+      endpointSolver.setDoubleArrays();
+      for (int refinement = 0; refinement < MAX_NEAR_CRITICAL_BETA_REFINEMENT_ITERATIONS
+          && maximumLogFugacityResidual(system.getPhase(0),
+              system.getPhase(1)) >= NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE; refinement++) {
+        endpointSolver.solveBeta();
+      }
+      system.orderByDensity();
+      system.init(1);
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
+      if (!isBalancedEquilibriumCandidate(system)
+          || maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE
+          || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
+          || system.getGibbsEnergy() > referenceState.gibbsEnergy + gibbsTolerance) {
+        restoreTwoPhaseIterationState(referenceState);
+      }
+    } catch (Exception ex) {
+      restoreTwoPhaseIterationState(referenceState);
+      logger.debug("Final near-critical neutral endpoint polishing failed: {}", ex.getMessage());
+    }
   }
 
   /**
@@ -3174,18 +3323,46 @@ public class TPflash extends Flash {
    * a near-boundary hydrocarbon-liquid trial. If that trial disappears during {@link TPmultiflash} cleanup, the
    * remaining phases can retain phase fractions from the rejected three-phase iterate. Composition normalization alone
    * does not repair the resulting component material-balance or fugacity residuals. The pre-trial state is restored
-   * only when the final endpoint still has exactly two phases including an aqueous phase and fails the same strict
-   * acceptance checks. Genuine three-phase results and feasible multiphase refinements are unchanged.
+   * only when the final endpoint still has the same two phase types and fails the same strict acceptance checks. A
+   * gas-to-oil root transition must remain available to the later endpoint refinement. Genuine three-phase results and
+   * feasible multiphase refinements are unchanged.
    * </p>
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
    */
   private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(BalancedTwoPhaseState balancedReference) {
     if (balancedReference == null || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
-        || isBalancedEquilibriumCandidate(system)) {
+        || !hasSameTwoPhaseTopology(balancedReference) || isBalancedEquilibriumCandidate(system)) {
       return;
     }
     restoreBalancedTwoPhaseState(balancedReference);
+  }
+
+  /**
+   * Checks whether the active two-phase topology matches a saved two-phase state, independent of phase order.
+   *
+   * @param reference saved two-phase state
+   * @return {@code true} when both states contain the same phase types
+   */
+  private boolean hasSameTwoPhaseTopology(BalancedTwoPhaseState reference) {
+    PhaseType firstType = system.getPhase(0).getType();
+    PhaseType secondType = system.getPhase(1).getType();
+    return hasSameTwoPhaseTopology(firstType, secondType, reference.phaseTypes[0], reference.phaseTypes[1]);
+  }
+
+  /**
+   * Checks two unordered pairs of phase types for equality.
+   *
+   * @param firstType first active phase type
+   * @param secondType second active phase type
+   * @param referenceFirstType first saved phase type
+   * @param referenceSecondType second saved phase type
+   * @return {@code true} when both pairs describe the same topology
+   */
+  static boolean hasSameTwoPhaseTopology(PhaseType firstType, PhaseType secondType, PhaseType referenceFirstType,
+      PhaseType referenceSecondType) {
+    return firstType == referenceFirstType && secondType == referenceSecondType
+        || firstType == referenceSecondType && secondType == referenceFirstType;
   }
 
   /**
@@ -3426,10 +3603,11 @@ public class TPflash extends Flash {
    * {@link TPmultiflash} can converge a balanced gas/aqueous split on a higher-Gibbs cubic root while the ordinary
    * two-phase path reaches the lower root and a slightly adjusted equilibrium composition. A cheap alternate-root
    * comparison screens the converged gas phase before any retry. Only a lower root beyond numerical noise starts an
-   * ordinary TP flash on a clone; the candidate is replayed on the live system only when it retains exactly gas and
-   * aqueous phases, passes the existing strict phase-fraction, normalization, material-balance, distinct-composition,
-   * and fugacity checks, and lowers total extensive Gibbs energy beyond the same tolerance. Three-phase results and
-   * chemical, electrolyte, solid, and wax calculations remain on their existing paths.
+   * ordinary TP flash on a clone; the candidate is replayed on the live system only when it retains exactly one aqueous
+   * phase and one cubic fluid phase. The cubic phase may change from gas to oil/liquid when the alternate root is
+   * stable. The candidate must still pass the existing strict phase-fraction, normalization, material-balance,
+   * distinct-composition, and fugacity checks, and lower total extensive Gibbs energy beyond the same tolerance.
+   * Three-phase results and chemical, electrolyte, solid, and wax calculations remain on their existing paths.
    * </p>
    */
   private void rescueLowerGibbsMultiphaseAqueousRoot() {
@@ -3448,10 +3626,7 @@ public class TPflash extends Flash {
       candidate.setMultiPhaseCheck(false);
       new TPflash(candidate, false).run();
       candidate.init(1);
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
-      if (candidate.getNumberOfPhases() == 2 && candidate.hasPhaseType(PhaseType.GAS)
-          && candidate.hasPhaseType(PhaseType.AQUEOUS) && isBalancedEquilibriumCandidate(candidate)
-          && candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance) {
+      if (isLowerGibbsMultiphaseAqueousRootCandidate(candidate, referenceGibbsEnergy)) {
         runAcceptedOrdinaryWaterRichFallback(candidate);
       }
     } catch (Exception ex) {
@@ -3459,6 +3634,34 @@ public class TPflash extends Flash {
     } finally {
       MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
     }
+  }
+
+  /**
+   * Checks an ordinary candidate for the reciprocal multiphase aqueous-root rescue.
+   *
+   * @param candidate ordinary TP flash candidate
+   * @param referenceGibbsEnergy Gibbs energy of the multiphase reference endpoint
+   * @return true when the candidate retains the expected topology, is feasible, and lowers Gibbs energy
+   */
+  boolean isLowerGibbsMultiphaseAqueousRootCandidate(SystemInterface candidate, double referenceGibbsEnergy) {
+    if (candidate.getNumberOfPhases() != 2 || !candidate.hasPhaseType(PhaseType.AQUEOUS)) {
+      return false;
+    }
+    int aqueousPhaseCount = 0;
+    int cubicFluidPhaseCount = 0;
+    for (int phaseIndex = 0; phaseIndex < candidate.getNumberOfPhases(); phaseIndex++) {
+      PhaseType phaseType = candidate.getPhase(phaseIndex).getType();
+      if (phaseType == PhaseType.AQUEOUS) {
+        aqueousPhaseCount++;
+      } else if (phaseType == PhaseType.GAS || phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID) {
+        cubicFluidPhaseCount++;
+      } else {
+        return false;
+      }
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    return aqueousPhaseCount == 1 && cubicFluidPhaseCount == 1 && isBalancedEquilibriumCandidate(candidate)
+        && candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance;
   }
 
   /**

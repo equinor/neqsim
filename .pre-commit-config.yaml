@@ -27,7 +27,7 @@ repos:
         name: Documentation Search Coverage
         entry: python devtools/check_documentation_search.py
         language: system
-        files: ^(docs/|devtools/check_documentation_search\.py|\.github/workflows/documentation-search\.yml|\.pre-commit-config\.yaml)
+        files: ^(docs/|devtools/(check_documentation_search|generate_equipment_documentation_catalog)\.py|src/main/java/neqsim/process/equipment/|\.github/workflows/documentation-search\.yml|\.pre-commit-config\.yaml)
         pass_filenames: false
         stages: [pre-push]
         verbose: true

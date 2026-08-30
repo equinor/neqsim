@@ -68,6 +68,33 @@ public final class PitzerParameterDatasets {
   /** Highest independently checked binary CaCl2 or MgCl2 molality, in mol/kg water. */
   public static final double CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY = 2.0;
 
+  /** Lowest temperature in the independent SrCl2 ThermoML validation matrix, in K. */
+  public static final double SR_CL_BINARY_VALIDATION_MIN_TEMPERATURE_K = 283.15;
+
+  /** Highest temperature in the independent SrCl2 ThermoML validation matrix, in K. */
+  public static final double SR_CL_BINARY_VALIDATION_MAX_TEMPERATURE_K = 333.15;
+
+  /** Lowest SrCl2 molality in the independent ThermoML validation matrix, in mol/kg water. */
+  public static final double SR_CL_BINARY_VALIDATION_MIN_MOLALITY = 0.01;
+
+  /** Highest SrCl2 molality in the independent ThermoML validation matrix, in mol/kg water. */
+  public static final double SR_CL_BINARY_VALIDATION_MAX_MOLALITY = 3.52;
+
+  /** Lowest total formula-unit molality in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MIN_TOTAL_MOLALITY = 0.548;
+
+  /** Highest total formula-unit molality in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MAX_TOTAL_MOLALITY = 2.161;
+
+  /** Lowest CaCl2 fraction of total salt in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MIN_CALCIUM_FRACTION = 0.25;
+
+  /** Highest CaCl2 fraction of total salt in the checked CaCl2-MgCl2 validation matrix. */
+  public static final double CA_MG_CL_MIXTURE_VALIDATION_MAX_CALCIUM_FRACTION = 0.75;
+
+  /** Boundary tolerance for fractions reconstructed from the rounded mixed-chloride fixture. */
+  private static final double CA_MG_CL_MIXTURE_CALCIUM_FRACTION_TOLERANCE = 1.0e-12;
+
   /** Lowest total formula-unit molality in the mixed MgCl2-MgSO4 water-activity evidence. */
   public static final double MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MIN_TOTAL_MOLALITY = 0.35;
 
@@ -165,6 +192,42 @@ public final class PitzerParameterDatasets {
   }
 
   /**
+   * Tries to apply every explicit PHREEQC row required by the active aqueous topology.
+   *
+   * <p>
+   * Validation completes before any phase mutation. Hydrocarbons are excluded because they remain on the EOS gas/oil
+   * role phases; non-hydrocarbon aqueous neutrals still require complete lambda and zeta coverage. A missing source row
+   * returns {@code false}, allowing the caller to retain the legacy single-salt dataset. Mixed legacy topologies still
+   * fail through the ordinary coverage gate rather than receiving silent zero interactions.
+   * </p>
+   *
+   * @param phase Pitzer aqueous role
+   * @return {@code true} when the complete source topology was found and applied
+   */
+  static boolean tryApplyCompletePhreeqcPitzerCatalog(PhasePitzer phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("Pitzer phase must not be null");
+    }
+    PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
+    List<Integer> ions = activeIons(phase);
+    if (ions.isEmpty()) {
+      return false;
+    }
+    List<Integer> neutrals = activeAqueousNeutrals(phase, true);
+    try {
+      validateCatalogTopology(phase, catalog, ions, neutrals);
+    } catch (IllegalArgumentException missingSourceRow) {
+      if (missingSourceRow.getMessage() != null && missingSourceRow.getMessage().contains("no explicit")) {
+        return false;
+      }
+      throw missingSourceRow;
+    }
+    phase.setExcludeHydrocarbonsFromNeutralPitzerTopology(true);
+    applyValidatedCatalog(phase, catalog, ions, neutrals);
+    return true;
+  }
+
+  /**
    * Applies every explicit PHREEQC Pitzer row required by the phase's active species topology.
    *
    * <p>
@@ -183,28 +246,11 @@ public final class PitzerParameterDatasets {
       throw new IllegalArgumentException("Pitzer phase must not be null");
     }
     PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
-    List<Integer> ions = new ArrayList<Integer>();
-    List<Integer> neutrals = new ArrayList<Integer>();
-    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
-      if (phase.getComponent(component).getNumberOfMolesInPhase() <= 1.0e-20) {
-        continue;
-      }
-      double charge = phase.getComponent(component).getIonicCharge();
-      if (Math.abs(charge) >= 0.5) {
-        ions.add(component);
-      } else if (!"water".equalsIgnoreCase(phase.getComponent(component).getComponentName())) {
-        neutrals.add(component);
-      }
-    }
-
+    List<Integer> ions = activeIons(phase);
+    List<Integer> neutrals = activeAqueousNeutrals(phase, false);
+    phase.setExcludeHydrocarbonsFromNeutralPitzerTopology(false);
     validateCatalogTopology(phase, catalog, ions, neutrals);
-    phase.setParameterDatasetId(PHREEQC_PITZER_CATALOG_ID);
-    applyCatalogIonRows(phase, catalog, ions);
-    applyCatalogNeutralRows(phase, catalog, ions, neutrals);
-    phase.enablePhreeqcCommonIonTerms();
-    phase.markManualParameterDatasetLoaded();
-    phase.requireCompletePitzerParameterCoverage();
-    phase.requireCompleteNeutralPitzerParameterCoverage();
+    applyValidatedCatalog(phase, catalog, ions, neutrals);
   }
 
   /**
@@ -226,6 +272,74 @@ public final class PitzerParameterDatasets {
       throw new IllegalArgumentException("PHREEQC Ca-Mg-Cl-SO4 dataset species have incompatible charge roles");
     }
     applyCompletePhreeqcPitzerCatalog(phase);
+  }
+
+  private static List<Integer> activeIons(PhasePitzer phase) {
+    List<Integer> ions = new ArrayList<Integer>();
+    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
+      if (phase.getComponent(component).getNumberOfMolesInPhase() > 1.0e-20
+          && Math.abs(phase.getComponent(component).getIonicCharge()) >= 0.5) {
+        ions.add(component);
+      }
+    }
+    return ions;
+  }
+
+  private static List<Integer> activeAqueousNeutrals(PhasePitzer phase, boolean excludeHydrocarbons) {
+    List<Integer> neutrals = new ArrayList<Integer>();
+    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
+      if (phase.getComponent(component).getNumberOfMolesInPhase() <= 1.0e-20
+          || Math.abs(phase.getComponent(component).getIonicCharge()) >= 0.5
+          || "water".equalsIgnoreCase(phase.getComponent(component).getComponentName())
+          || (excludeHydrocarbons && isHydrocarbonForAutomaticCatalog(phase.getComponent(component)))) {
+        continue;
+      }
+      neutrals.add(component);
+    }
+    return neutrals;
+  }
+
+  /**
+   * Identifies EOS-role hydrocarbons without relying only on the mutable component-type flag.
+   *
+   * <p>
+   * Normal database components such as methane can retain component type {@code normal} in a GE phase. Their molecular
+   * formula remains an unambiguous discriminator: a pure hydrocarbon contains carbon and hydrogen only. Explicit
+   * neutral Pitzer datasets are unaffected; this helper is used only by automatic catalog selection.
+   * </p>
+   */
+  static boolean isHydrocarbonForAutomaticCatalog(neqsim.thermo.component.ComponentInterface component) {
+    if (component.isHydrocarbon() || component.isIsTBPfraction()) {
+      return true;
+    }
+    String formula = component.getFormulae();
+    if (formula == null || formula.isEmpty()) {
+      return false;
+    }
+    boolean carbon = false;
+    boolean hydrogen = false;
+    for (int index = 0; index < formula.length(); index++) {
+      char character = formula.charAt(index);
+      if (character == 'C') {
+        carbon = true;
+      } else if (character == 'H') {
+        hydrogen = true;
+      } else if (!Character.isDigit(character)) {
+        return false;
+      }
+    }
+    return carbon && hydrogen;
+  }
+
+  private static void applyValidatedCatalog(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
+      List<Integer> ions, List<Integer> neutrals) {
+    phase.setParameterDatasetId(PHREEQC_PITZER_CATALOG_ID);
+    applyCatalogIonRows(phase, catalog, ions);
+    applyCatalogNeutralRows(phase, catalog, ions, neutrals);
+    phase.enablePhreeqcCommonIonTerms();
+    phase.markManualParameterDatasetLoaded();
+    phase.requireCompletePitzerParameterCoverage();
+    phase.requireCompleteNeutralPitzerParameterCoverage();
   }
 
   private static void validateCatalogTopology(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
@@ -443,21 +557,28 @@ public final class PitzerParameterDatasets {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE,
           Arrays.asList("CO2-Na2SO4 activity, mean ionic activity, osmotic coefficient, and salting-out trend"),
-          Arrays.asList("303.15-423.15 K; 1-2 mol/kg Na2SO4; no gas-forming VLE qualification"));
+          Arrays.asList("303.15-423.15 K; 1-2 mol/kg Na2SO4 for activity and water-property evidence",
+              "Gas-aqueous VLE is not qualified: six held-out NIST ThermoML bubble pressures are underpredicted by 32.6-43.8%"),
+          Arrays.asList(PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS,
+              PitzerParameterQualification.ValidationTarget.WATER_ACTIVITY_AND_OSMOTIC_COEFFICIENT));
     }
     if (PHREEQC_NA_K_CL_ID.equals(datasetId)) {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.VALIDATED_WITHIN_DECLARED_ENVELOPE,
           Arrays.asList("NaCl and KCl mean activity", "Na-K-Cl activity and water properties versus IPhreeqc"),
-          Arrays.asList("298.15-423.15 K implementation matrix; mixed-salt experimental evidence remains limited"));
+          Arrays.asList("298.15-423.15 K implementation matrix; mixed-salt experimental evidence remains limited"),
+          Arrays.asList(PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS,
+              PitzerParameterQualification.ValidationTarget.WATER_ACTIVITY_AND_OSMOTIC_COEFFICIENT));
     }
     if (PHREEQC_PITZER_CATALOG_ID.equals(datasetId)) {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
           Arrays.asList("CaCl2 mean activity at 298.15 K", "MgCl2 mean activity at 298.15 K",
+              "SrCl2 mean activity at 283.15-333.15 K",
+              "CaCl2-MgCl2 osmotic coefficient and water activity at 298.15 K",
               "MgCl2-MgSO4 water activity at 298.15 K"),
-          Arrays.asList("Other catalog species are source-mapped, not independently qualified",
-              "Ca-bearing mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain unqualified"));
+          Arrays.asList("Other catalog species, including BaCl2, are source-mapped, not independently qualified",
+              "Quaternary Ca-Mg-Cl-SO4 activity and sulfate-mineral thermodynamics remain unqualified"));
     }
     String identity = datasetId == null || datasetId.trim().isEmpty() ? "unknown" : datasetId;
     return new PitzerParameterQualification(identity, PitzerParameterQualification.Level.UNQUALIFIED,
@@ -476,6 +597,60 @@ public final class PitzerParameterDatasets {
         && Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) <= 1.0e-9
         && saltMolality >= CA_MG_CL_SO4_BINARY_VALIDATION_MIN_MOLALITY
         && saltMolality <= CA_MG_CL_SO4_BINARY_VALIDATION_MAX_MOLALITY;
+  }
+
+  /**
+   * Reports whether an SrCl2 state is inside the independent NIST ThermoML validation envelope.
+   *
+   * <p>
+   * The archive contains 22 values at 298.15 K from 0.01 to 3.52 mol/kg and 36 temperature-dependent values from 283.15
+   * to 333.15 K at 0.01 to 0.30 mol/kg. This helper describes the enclosing rectangle; callers needing the exact
+   * measured state set must consult the stored validation fixture.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param strontiumChlorideMolality SrCl2 formula-unit molality in mol/kg water
+   * @return {@code true} for finite states inside the inclusive validation envelope
+   */
+  public static boolean isWithinStrontiumChlorideValidationRange(double temperature, double strontiumChlorideMolality) {
+    return Double.isFinite(temperature) && Double.isFinite(strontiumChlorideMolality)
+        && temperature >= SR_CL_BINARY_VALIDATION_MIN_TEMPERATURE_K
+        && temperature <= SR_CL_BINARY_VALIDATION_MAX_TEMPERATURE_K
+        && strontiumChlorideMolality >= SR_CL_BINARY_VALIDATION_MIN_MOLALITY
+        && strontiumChlorideMolality <= SR_CL_BINARY_VALIDATION_MAX_MOLALITY;
+  }
+
+  /**
+   * Reports whether a mixed CaCl2-MgCl2 state is inside the independently checked isopiestic envelope.
+   *
+   * <p>
+   * The public-domain NBS evidence covers 298.15 K, total formula-unit molality 0.548-2.161 mol/kg water, and CaCl2
+   * fractions 0.25-0.75. This helper describes that rectangular evidence envelope; it does not qualify sulfate-bearing
+   * mixtures or extrapolation beyond the underlying three isopiestic levels.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param calciumChlorideMolality CaCl2 formula-unit molality in mol/kg water
+   * @param magnesiumChlorideMolality MgCl2 formula-unit molality in mol/kg water
+   * @return {@code true} for finite, non-negative inputs inside the checked mixed-chloride envelope
+   */
+  public static boolean isWithinCalciumMagnesiumChlorideMixtureValidationRange(double temperature,
+      double calciumChlorideMolality, double magnesiumChlorideMolality) {
+    if (!Double.isFinite(temperature) || !Double.isFinite(calciumChlorideMolality)
+        || !Double.isFinite(magnesiumChlorideMolality) || calciumChlorideMolality < 0.0
+        || magnesiumChlorideMolality < 0.0 || Math.abs(temperature - PHREEQC_REFERENCE_TEMPERATURE_K) > 1.0e-9) {
+      return false;
+    }
+    double totalMolality = calciumChlorideMolality + magnesiumChlorideMolality;
+    if (totalMolality < CA_MG_CL_MIXTURE_VALIDATION_MIN_TOTAL_MOLALITY
+        || totalMolality > CA_MG_CL_MIXTURE_VALIDATION_MAX_TOTAL_MOLALITY) {
+      return false;
+    }
+    double calciumFraction = calciumChlorideMolality / totalMolality;
+    return calciumFraction >= CA_MG_CL_MIXTURE_VALIDATION_MIN_CALCIUM_FRACTION
+        - CA_MG_CL_MIXTURE_CALCIUM_FRACTION_TOLERANCE
+        && calciumFraction <= CA_MG_CL_MIXTURE_VALIDATION_MAX_CALCIUM_FRACTION
+            + CA_MG_CL_MIXTURE_CALCIUM_FRACTION_TOLERANCE;
   }
 
   /**

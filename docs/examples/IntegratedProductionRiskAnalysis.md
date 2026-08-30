@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "IntegratedProductionRiskAnalysis"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Integrated Production & Risk Analysis"
+description: "Notebook for Integrated Production & Risk Analysis, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# IntegratedProductionRiskAnalysis
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`IntegratedProductionRiskAnalysis.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/IntegratedProductionRiskAnalysis.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/IntegratedProductionRiskAnalysis.ipynb).
 
 ---
-
-# Integrated Production & Risk Analysis
 
 This notebook demonstrates the **complete operational planning workflow** by integrating:
 

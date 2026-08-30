@@ -73,6 +73,7 @@ public class ModelPredictiveController extends NamedBaseClass
   private double[] moveWeightsVector = new double[0];
   private int primaryControlIndex = 0;
   private List<QualityConstraint> qualityConstraints = new ArrayList<>();
+  private List<LinearMoveConstraint> linearMoveConstraints = new ArrayList<>();
   private Map<String, Double> lastFeedComposition = new LinkedHashMap<>();
   private Map<String, Double> pendingFeedComposition = new LinkedHashMap<>();
   private double lastFeedRate = 0.0;
@@ -267,6 +268,93 @@ public class ModelPredictiveController extends NamedBaseClass
         }
         return new QualityConstraint(this);
       }
+    }
+  }
+
+  /**
+   * Linear bound on a weighted combination of multivariable control moves.
+   *
+   * <p>
+   * The constraint is evaluated as {@code minDelta <= coefficients * (u - uPrevious) <= maxDelta}. It can represent a
+   * shared actuator-movement budget by assigning equal coefficients to a group of controls, while zero coefficients
+   * exclude controls from the group.
+   * </p>
+   */
+  public static final class LinearMoveConstraint implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String name;
+    private final double[] coefficients;
+    private final double minDelta;
+    private final double maxDelta;
+
+    /**
+     * Construct a linear move constraint.
+     *
+     * @param name non-empty constraint name
+     * @param coefficients control coefficients in configured control order; at least one must be non-zero
+     * @param minDelta minimum permitted weighted move, or negative infinity for no lower bound
+     * @param maxDelta maximum permitted weighted move, or positive infinity for no upper bound
+     */
+    public LinearMoveConstraint(String name, double[] coefficients, double minDelta, double maxDelta) {
+      if (name == null || name.trim().isEmpty()) {
+        throw new IllegalArgumentException("Constraint name must be provided");
+      }
+      if (coefficients == null || coefficients.length == 0) {
+        throw new IllegalArgumentException("Move constraint coefficients must be provided");
+      }
+      boolean hasNonZeroCoefficient = false;
+      for (double coefficient : coefficients) {
+        if (!Double.isFinite(coefficient)) {
+          throw new IllegalArgumentException("Move constraint coefficients must be finite");
+        }
+        hasNonZeroCoefficient |= Math.abs(coefficient) > 0.0;
+      }
+      if (!hasNonZeroCoefficient) {
+        throw new IllegalArgumentException("At least one move constraint coefficient must be non-zero");
+      }
+      if (Double.isNaN(minDelta) || Double.isNaN(maxDelta) || minDelta > maxDelta) {
+        throw new IllegalArgumentException("Minimum move constraint must not exceed maximum move constraint");
+      }
+      this.name = name;
+      this.coefficients = Arrays.copyOf(coefficients, coefficients.length);
+      this.minDelta = minDelta;
+      this.maxDelta = maxDelta;
+    }
+
+    /**
+     * Get the constraint name.
+     *
+     * @return constraint name
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * Get a copy of the control coefficients.
+     *
+     * @return coefficients in configured control order
+     */
+    public double[] getCoefficients() {
+      return Arrays.copyOf(coefficients, coefficients.length);
+    }
+
+    /**
+     * Get the minimum permitted weighted move.
+     *
+     * @return minimum weighted move
+     */
+    public double getMinDelta() {
+      return minDelta;
+    }
+
+    /**
+     * Get the maximum permitted weighted move.
+     *
+     * @return maximum weighted move
+     */
+    public double getMaxDelta() {
+      return maxDelta;
     }
   }
 
@@ -588,6 +676,9 @@ public class ModelPredictiveController extends NamedBaseClass
     if (qualityConstraints == null) {
       qualityConstraints = new ArrayList<>();
     }
+    if (linearMoveConstraints == null) {
+      linearMoveConstraints = new ArrayList<>();
+    }
   }
 
   /**
@@ -601,6 +692,7 @@ public class ModelPredictiveController extends NamedBaseClass
       throw new IllegalArgumentException("At least one control variable must be specified");
     }
     qualityConstraints.clear();
+    linearMoveConstraints.clear();
     controlNames.clear();
     for (String name : names) {
       if (name == null || name.trim().isEmpty()) {
@@ -836,6 +928,56 @@ public class ModelPredictiveController extends NamedBaseClass
    */
   public double[] getControlVector() {
     return Arrays.copyOf(controlVector, controlVector.length);
+  }
+
+  /**
+   * Synchronize the current and previous control vectors with applied actuator feedback.
+   *
+   * <p>
+   * This method should be called before an optimisation step when measured actuator positions differ from the last
+   * requested controls. Values outside the configured absolute limits are rejected rather than hidden by clamping.
+   * </p>
+   *
+   * @param appliedValues finite applied values in configured control order
+   */
+  public void synchronizeAppliedControlValues(double... appliedValues) {
+    if (appliedValues == null) {
+      throw new IllegalArgumentException("Applied control values must be provided");
+    }
+    ensureControlLength(appliedValues.length);
+    for (int i = 0; i < appliedValues.length; i++) {
+      double value = appliedValues[i];
+      if (!Double.isFinite(value)) {
+        throw new IllegalArgumentException("Applied control value at index " + i + " must be finite");
+      }
+      if (value < minControlVector[i] || value > maxControlVector[i]) {
+        throw new IllegalArgumentException("Applied control value at index " + i + " is outside configured limits");
+      }
+    }
+    System.arraycopy(appliedValues, 0, controlVector, 0, appliedValues.length);
+    System.arraycopy(appliedValues, 0, lastControlVector, 0, appliedValues.length);
+    response = controlVector[Math.min(primaryControlIndex, controlVector.length - 1)];
+    lastAppliedControl = response;
+  }
+
+  /**
+   * Register a weighted aggregate constraint on multivariable control moves.
+   *
+   * @param constraint move constraint whose coefficient count must match the configured controls
+   */
+  public void addLinearMoveConstraint(LinearMoveConstraint constraint) {
+    if (constraint == null) {
+      throw new IllegalArgumentException("Constraint must not be null");
+    }
+    ensureControlLength(constraint.coefficients.length);
+    linearMoveConstraints.add(constraint);
+  }
+
+  /**
+   * Clear all weighted aggregate move constraints.
+   */
+  public void clearLinearMoveConstraints() {
+    linearMoveConstraints.clear();
   }
 
   /**
@@ -1315,7 +1457,7 @@ public class ModelPredictiveController extends NamedBaseClass
     }
     calcIdentifier = id;
     lastSampleTime = dt;
-    if (!qualityConstraints.isEmpty()) {
+    if (!qualityConstraints.isEmpty() || !linearMoveConstraints.isEmpty()) {
       if (!isActive) {
         clampControlVector();
         response = controlVector[Math.min(primaryControlIndex, controlVector.length - 1)];
@@ -1457,6 +1599,25 @@ public class ModelPredictiveController extends NamedBaseClass
       }
       constraintRows.add(row);
       constraintBounds.add(rhs + dotPrev);
+    }
+
+    for (LinearMoveConstraint constraint : linearMoveConstraints) {
+      double weightedPrevious = 0.0;
+      for (int i = 0; i < controlCount; i++) {
+        weightedPrevious += constraint.coefficients[i] * previousControl[i];
+      }
+      if (!Double.isInfinite(constraint.maxDelta)) {
+        constraintRows.add(Arrays.copyOf(constraint.coefficients, controlCount));
+        constraintBounds.add(weightedPrevious + constraint.maxDelta);
+      }
+      if (!Double.isInfinite(constraint.minDelta)) {
+        double[] row = new double[controlCount];
+        for (int i = 0; i < controlCount; i++) {
+          row[i] = -constraint.coefficients[i];
+        }
+        constraintRows.add(row);
+        constraintBounds.add(-(weightedPrevious + constraint.minDelta));
+      }
     }
 
     for (int i = 0; i < controlCount; i++) {
@@ -2158,6 +2319,8 @@ public class ModelPredictiveController extends NamedBaseClass
     for (MpcQualityConstraintState constraintState : state.qualityConstraints) {
       qualityConstraints.add(constraintState.toConstraint());
     }
+    linearMoveConstraints.clear();
+    linearMoveConstraints.addAll(state.linearMoveConstraints);
     lastFeedComposition = new LinkedHashMap<>(state.lastFeedComposition);
     pendingFeedComposition = new LinkedHashMap<>(state.pendingFeedComposition);
     lastFeedRate = state.lastFeedRate;
@@ -2224,6 +2387,7 @@ public class ModelPredictiveController extends NamedBaseClass
     private final double[] moveWeightsVector;
     private final int primaryControlIndex;
     private final List<MpcQualityConstraintState> qualityConstraints;
+    private final List<LinearMoveConstraint> linearMoveConstraints;
     private final Map<String, Double> lastFeedComposition;
     private final Map<String, Double> pendingFeedComposition;
     private final double lastFeedRate;
@@ -2277,6 +2441,7 @@ public class ModelPredictiveController extends NamedBaseClass
       for (QualityConstraint constraint : controller.qualityConstraints) {
         qualityConstraints.add(new MpcQualityConstraintState(constraint));
       }
+      linearMoveConstraints = new ArrayList<>(controller.linearMoveConstraints);
       lastFeedComposition = new LinkedHashMap<>(controller.lastFeedComposition);
       pendingFeedComposition = new LinkedHashMap<>(controller.pendingFeedComposition);
       lastFeedRate = controller.lastFeedRate;

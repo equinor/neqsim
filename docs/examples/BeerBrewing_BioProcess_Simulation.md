@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "BeerBrewing BioProcess Simulation"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Beer Brewing Process Simulation with NeqSim Bio-Processing"
+description: "Notebook for Beer Brewing Process Simulation with NeqSim Bio-Processing, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# BeerBrewing BioProcess Simulation
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`BeerBrewing_BioProcess_Simulation.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb).
 
 ---
-
-# Beer Brewing Process Simulation with NeqSim Bio-Processing
 
 A rigorous, step-by-step thermodynamic and kinetic simulation of the beer brewing process
 using NeqSim's bio-processing equipment and the **CPA equation of state** for accurate
@@ -2398,7 +2394,7 @@ recipe), here's a recap of the NeqSim `ProcessSystem` we built:
 ### Further Reading
 
 - [NeqSim Bio-Processing Documentation](../process/bioprocessing.md)
-- [NeqSim Thermodynamic Models](../thermo/equations-of-state.md)
+- [NeqSim Thermodynamic Models](../thermo/thermodynamic_models.md)
 - [CPA Equation of State](https://en.wikipedia.org/wiki/Cubic-plus-association_equation_of_state)
 
 ## Step 17 — Bridging Brew Day and Thermodynamics: ABV from First Principles

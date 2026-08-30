@@ -229,7 +229,7 @@ The exported file contains:
 - **ProcessInstrumentationFunction** elements for each transmitter (with ISA category, functions, and number)
 - **ProcessSignalGeneratingFunction** elements for sensor elements
 - **ActuatingFunction** elements for controller outputs
-- **SignalConveyingFunction** elements linking instruments to actuators
+- **InformationFlow** elements classified as **SignalLineFunction** linking transmitters, controllers, and actuators
 - **InstrumentationLoopFunction** elements grouping each control loop
 
 ### Importing Instrument Metadata from DEXPI XML

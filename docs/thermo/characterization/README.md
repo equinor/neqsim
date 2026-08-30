@@ -1,307 +1,146 @@
 ---
 title: "Characterization Package"
-description: "Documentation for plus fraction and asphaltene characterization in NeqSim."
+description: "Petroleum TBP, plus-fraction, assay, lumping, asphaltene, and pseudo-component characterization in NeqSim."
 ---
 
 # Characterization Package
 
-Documentation for plus fraction and asphaltene characterization in NeqSim.
+The `neqsim.thermo.characterization` package converts petroleum assay, TBP, and plus-fraction information into pseudo-components suitable for NeqSim equations of state and process calculations.
 
-## Table of Contents
-- [Overview](#overview)
-- [Plus Fraction Methods](#plus-fraction-methods)
-- [Characterization Approaches](#characterization-approaches)
-- [Lumping Configuration](#lumping-configuration)
-- [Asphaltene Characterization](#asphaltene-characterization)
-- [TBP Methods](#tbp-methods)
-- [Examples](#examples)
+## Main workflows
 
----
+| Workflow | Primary API | Use |
+| --- | --- | --- |
+| Pre-binned TBP fractions | `SystemInterface.addTBPfraction(...)` | Add a petroleum cut from moles, molar mass, and specific gravity |
+| Plus fraction | `SystemInterface.addPlusFraction(...)` + `Characterise` | Represent and split a C7+/C20+ heavy end |
+| Refinery assay | `OilAssayCharacterisation` | Convert mass- or volume-basis refinery cuts/TBP boundaries to pseudo-components |
+| TBP property model selection | `Characterise.setTBPModel(...)` | Select Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing, and related models |
+| Lumping | `Characterise.configureLumping()` | Reduce a detailed heavy-end slate while preserving configured grouping rules |
+| Common-slate characterization | `PseudoComponentCombiner` | Align multiple characterized fluids to a shared pseudo-component definition |
+| Wax/asphaltene characterization | wax/asphaltene classes | Specialized heavy-phase workflows |
 
-## Overview
+## Critical unit contract
 
-**Location:** `neqsim.thermo.characterization`
+`addTBPfraction` and `addPlusFraction` use **kg/mol** for molar mass. Petroleum examples therefore use values such as `0.096 kg/mol` for a roughly C7 cut, not `96.0`.
 
-The characterization package handles petroleum plus fraction and asphaltene characterization:
-- Converting C7+ (or other plus fractions) into pseudo-components
-- Estimating critical properties from correlations
-- Splitting heavy ends into discrete pseudo-components
-- Characterizing asphaltene components for precipitation modeling
-
----
-
-## Plus Fraction Methods
-
-### Adding Plus Fractions
+The density argument is the petroleum specific gravity/relative-density numeric value. Current system APIs also accept density values above 1.5 as kg/m3 and normalize them internally, but unit-explicit refinery-assay helpers are preferred when importing assay tables.
 
 ```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-SystemSrkEos fluid = new SystemSrkEos(373.15, 100.0);
-
-// Light components
+SystemInterface fluid = new SystemSrkEos(373.15, 100.0);
 fluid.addComponent("methane", 0.70);
 fluid.addComponent("ethane", 0.10);
 fluid.addComponent("propane", 0.08);
 fluid.addComponent("n-butane", 0.05);
 
-// C7+ as single pseudo-component
-fluid.addTBPfraction("C7+", 0.07, 150.0, 0.78);  // name, moles, MW, SG
+// name, moles, molar mass [kg/mol], specific gravity [-]
+fluid.addTBPfraction("C7", 0.04, 0.096, 0.727);
+fluid.addPlusFraction("C20+", 0.03, 0.400, 0.90);
 ```
 
-### Multiple Plus Fractions
+## Refinery assay characterization
+
+For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually converting every volume cut to moles. The assay API provides:
+
+- one explicit composition basis per assay: mass or liquid volume;
+- volume-to-mass conversion using cut density;
+- kg/mol and g/mol explicit molar-mass helpers;
+- specific-gravity, kg/m3, and API-gravity density inputs;
+- pre-binned cumulative TBP cut-boundary ingestion;
+- preserved lower/upper boiling ranges;
+- closure, duplicate-name, monotonicity, and repeated-application guards.
+
+See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), while the next process-integration gate is documented in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation).
+
+## TBP fraction models
+
+TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS. Available implementations include Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert, Twu, Cavett, and Standing.
 
 ```java
-// Split C7+ into multiple fractions
-fluid.addTBPfraction("C7", 0.02, 96.0, 0.727);
-fluid.addTBPfraction("C8", 0.015, 107.0, 0.749);
-fluid.addTBPfraction("C9", 0.01, 121.0, 0.768);
-fluid.addTBPfraction("C10+", 0.025, 180.0, 0.82);
+SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
+fluid.getCharacterization().setTBPModel("PedersenSRK");
+fluid.addTBPfraction("C7", 0.05, 0.096, 0.727);
+fluid.addTBPfraction("C10", 0.04, 0.134, 0.782);
+fluid.addTBPfraction("C12+", 0.15, 0.250, 0.85);
 ```
 
----
+For equations, model selection boundaries, and references, see:
 
-## Characterization Approaches
+- [TBP Fraction Models](../../wiki/tbp_fraction_models)
+- [Fluid Characterization Mathematical Foundations](../../pvtsimulation/fluid_characterization_mathematics)
+- [PVT Fluid Characterization](../pvt_fluid_characterization)
 
-### Pedersen Method
+## Lumping configuration
 
-```java
-import neqsim.thermo.characterization.PedersenCharacterization;
-
-// Characterize using Pedersen correlations
-PedersenCharacterization charPedersen = new PedersenCharacterization(fluid);
-charPedersen.characterize();
-```
-
-### Whitson Gamma Distribution
+After plus-fraction splitting, lumping can reduce the number of pseudo-components for faster process calculations.
 
 ```java
-import neqsim.thermo.characterization.WhitsonCharacterization;
-
-// Characterize using Whitson gamma distribution
-WhitsonCharacterization charWhitson = new WhitsonCharacterization(fluid);
-charWhitson.setAlpha(1.0);  // Shape parameter
-charWhitson.characterize();
-```
-
----
-
-## TBP Methods
-
-### Adding TBP Fractions
-
-```java
-// addTBPfraction(name, moles, MW, specificGravity)
-fluid.addTBPfraction("C7", moles, 96.0, 0.727);
-
-// addPlusFraction with characterization
-fluid.addPlusFraction("C20+", moles, 400.0, 0.90);
-```
-
-### Property Estimation
-
-For pseudo-components, critical properties are estimated using correlations:
-
-| Correlation | Properties Estimated |
-|-------------|---------------------|
-| Twu | Tc, Pc, omega from MW, SG |
-| Lee-Kesler | Tc, Pc, omega from Tb, SG |
-| Riazi-Daubert | Tb from MW, SG |
-| Pedersen | Tc, Pc, omega for petroleum |
-
----
-
-## Lumping Configuration
-
-After plus fraction splitting, lumping reduces the number of pseudo-components for computational efficiency. NeqSim provides a fluent API for clear, explicit configuration.
-
-### Fluent API (Recommended)
-
-```java
-// PVTlumpingModel: Preserve C6-C9, lump C10+ into 5 groups
+// Preserve lighter TBP fractions and lump the heavier range.
 fluid.getCharacterization().configureLumping()
     .model("PVTlumpingModel")
     .plusFractionGroups(5)
     .build();
 
-// Standard model: Lump all from C6 into 6 pseudo-components
+// Target a total number of pseudo-components.
 fluid.getCharacterization().configureLumping()
     .model("standard")
     .totalPseudoComponents(6)
     .build();
 
-// Custom boundaries to match PVT lab report
+// Match user-defined grouping boundaries.
 fluid.getCharacterization().configureLumping()
-    .customBoundaries(6, 7, 10, 15, 20)  // C6, C7-C9, C10-C14, C15-C19, C20+
+    .customBoundaries(6, 7, 10, 15, 20)
     .build();
 
-// No lumping: keep all SCN components
+// Keep the detailed SCN representation.
 fluid.getCharacterization().configureLumping()
     .noLumping()
     .build();
 ```
 
-### Lumping Models Comparison
+| Model | Behaviour | Typical use |
+| --- | --- | --- |
+| `PVTlumpingModel` | Preserves configured lighter TBP fractions and lumps the plus fraction | PVT/process workflows that retain light-cut detail |
+| `standard` | Lumps the characterized heavy range to a requested total | Smaller simulation slates |
+| custom boundaries | Uses explicit carbon-number/group boundaries | Matching an external/reference characterization |
+| no lumping | Retains the generated detailed representation | Detailed characterization studies |
 
-| Model | Behavior | Use Case |
-|-------|----------|----------|
-| `PVTlumpingModel` | Preserves TBP fractions (C6-C9), lumps only C10+ | Standard PVT matching |
-| `standard` | Lumps all heavy fractions from C6 | Minimal components for fast simulation |
-| `no lumping` | Keeps all individual SCN components | Detailed compositional studies |
+## Common pseudo-component slates
 
-### Quick Reference
+When several reservoir or process fluids need to be mixed consistently, use `PseudoComponentCombiner` rather than assuming independently generated pseudo-components have identical meaning.
 
-| I want to... | Fluent API |
-|--------------|------------|
-| Keep C6-C9 separate, lump C10+ into N groups | `.model("PVTlumpingModel").plusFractionGroups(N)` |
-| Get exactly N total pseudo-components | `.model("standard").totalPseudoComponents(N)` |
-| Match specific PVT lab groupings | `.customBoundaries(6, 10, 20)` |
-| Keep all SCN components | `.noLumping()` |
+See [Fluid Characterization Combining](fluid_characterization_combining) for common-slate and reference-slate workflows.
 
-For complete mathematical details, see [Fluid Characterization Mathematics](../../pvtsimulation/fluid_characterization_mathematics#lumping-methods).
+## Asphaltene and wax workflows
 
----
+NeqSim also contains specialized heavy-phase characterization used by wax and asphaltene calculations. These are separate from the refinery-assay bookkeeping API because they introduce additional phase-model assumptions and validation requirements.
 
-## Asphaltene Characterization
+See:
 
-### Pedersen's Asphaltene Method
+- [Wax Characterization](wax_characterization)
+- [Asphaltene Modeling](../../pvtsimulation/flowassurance/asphaltene_modeling)
 
-The `PedersenAsphalteneCharacterization` class implements Pedersen's approach for treating asphaltene as a heavy liquid pseudo-component. This enables liquid-liquid equilibrium (LLE) calculations for asphaltene precipitation.
+## Validation guidance
 
-```java
-import neqsim.thermo.characterization.PedersenAsphalteneCharacterization;
-import neqsim.thermo.system.SystemSrkEos;
+Characterization validation should distinguish three layers:
 
-// Create fluid system
-SystemInterface fluid = new SystemSrkEos(373.15, 50.0);
-fluid.addComponent("methane", 0.40);
-fluid.addComponent("n-pentane", 0.25);
-fluid.addComponent("n-heptane", 0.20);
-fluid.addComponent("nC10", 0.10);
+1. **Bookkeeping:** units, cut yields, composition/mass closure, component identity, splitting/lumping conservation.
+2. **Property correlations:** boiling point, molecular weight, density, critical properties, acentric factor, and applicability ranges.
+3. **Process behaviour:** flash, phase envelope, distillation/fractionation, and product-yield agreement for representative fluids.
 
-// Create and configure asphaltene characterization
-PedersenAsphalteneCharacterization asphChar = new PedersenAsphalteneCharacterization();
-asphChar.setAsphalteneMW(750.0);     // Molecular weight g/mol
-asphChar.setAsphalteneDensity(1.10); // Density g/cm³
+A bookkeeping regression does not by itself validate a petroleum-property correlation, and a property match does not by itself establish refinery column performance. The refinery campaign in issue #3305 uses these layers as separate quality gates.
 
-// Add asphaltene pseudo-component (BEFORE setting mixing rule)
-asphChar.addAsphalteneToSystem(fluid, 0.05);  // 5 mol% asphaltene
+## Related documentation
 
-// Set mixing rule (AFTER adding all components)
-fluid.setMixingRule("classic");
-
-// Print estimated critical properties
-System.out.println(asphChar.toString());
-```
-
-### Critical Property Correlations
-
-Pedersen's method estimates critical properties from molecular weight (MW) and liquid density (ρ):
-
-| Property | Correlation |
-|----------|-------------|
-| Critical Temperature (Tc) | f(MW, ρ) |
-| Critical Pressure (Pc) | f(MW, ρ) |
-| Acentric Factor (ω) | f(MW, ρ) |
-| Normal Boiling Point (Tb) | f(MW, ρ) |
-
-Typical values for asphaltene (MW=750 g/mol, ρ=1.10 g/cm³):
-
-| Property | Value | Unit |
-|----------|-------|------|
-| Tc | 996 | K |
-| Pc | 16.3 | bar |
-| ω | 0.925 | - |
-| Tb | 838 | K |
-
-### TPflash with Automatic Asphaltene Detection
-
-The class provides static methods for TPflash with automatic detection of asphaltene-rich phases:
-
-```java
-// Static TPflash - marks asphaltene-rich liquid phases as LIQUID_ASPHALTENE
-boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(fluid);
-
-// With explicit T,P specification
-boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(fluid, 373.15, 50.0);
-
-// Check result
-if (hasAsphaltene) {
-    System.out.println("Asphaltene-rich liquid phase detected");
-    fluid.prettyPrint();  // Shows "ASPHALTENE LIQUID" column
-}
-```
-
-### Asphaltene Detection Criteria
-
-A liquid phase is marked as `PhaseType.LIQUID_ASPHALTENE` when:
-- The phase contains an "Asphaltene" component, AND
-- The asphaltene mole fraction in that phase exceeds 0.5 (50%)
-
----
-
-## Examples
-
-### Example 1: Natural Gas with C7+
-
-```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-SystemSrkEos gas = new SystemSrkEos(373.15, 100.0);
-
-// Wellstream composition
-gas.addComponent("nitrogen", 0.015);
-gas.addComponent("CO2", 0.020);
-gas.addComponent("methane", 0.750);
-gas.addComponent("ethane", 0.080);
-gas.addComponent("propane", 0.045);
-gas.addComponent("i-butane", 0.012);
-gas.addComponent("n-butane", 0.020);
-gas.addComponent("i-pentane", 0.008);
-gas.addComponent("n-pentane", 0.010);
-gas.addComponent("n-hexane", 0.015);
-
-// C7+ fraction
-gas.addTBPfraction("C7+", 0.025, 145.0, 0.78);
-
-gas.setMixingRule("classic");
-
-ThermodynamicOperations ops = new ThermodynamicOperations(gas);
-ops.TPflash();
-
-System.out.println("Gas fraction: " + gas.getGasPhase().getBeta());
-System.out.println("C7+ in gas: " + gas.getGasPhase().getComponent("C7+_PC").getx());
-```
-
-### Example 2: Oil Characterization
-
-```java
-// Black oil with detailed C7+ split
-SystemSrkEos oil = new SystemSrkEos(350.0, 50.0);
-
-oil.addComponent("methane", 0.40);
-oil.addComponent("ethane", 0.08);
-oil.addComponent("propane", 0.06);
-oil.addComponent("n-butane", 0.04);
-oil.addComponent("n-pentane", 0.03);
-oil.addComponent("n-hexane", 0.03);
-
-// Detailed C7+ split
-oil.addTBPfraction("C7", 0.05, 96.0, 0.727);
-oil.addTBPfraction("C8", 0.05, 107.0, 0.749);
-oil.addTBPfraction("C9", 0.04, 121.0, 0.768);
-oil.addTBPfraction("C10", 0.04, 134.0, 0.782);
-oil.addTBPfraction("C11", 0.03, 147.0, 0.793);
-oil.addTBPfraction("C12+", 0.15, 250.0, 0.85);
-
-oil.setMixingRule("classic");
-```
-
----
-
-## Related Documentation
-
-- [PVT Fluid Characterization](../pvt_fluid_characterization) - Detailed characterization guide
-- [Fluid Creation Guide](../fluid_creation_guide) - Creating fluids
-- [Thermo Package](../) - Package overview
+- [Refinery Assay and TBP Cut Characterization](refinery_assay)
+- [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
+- [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
+- [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation)
+- [Fluid Characterization Guide](../../wiki/fluid_characterization)
+- [TBP Fraction Models](../../wiki/tbp_fraction_models)
+- [PVT Fluid Characterization](../pvt_fluid_characterization)
+- [Fluid Characterization Mathematical Foundations](../../pvtsimulation/fluid_characterization_mathematics)
+- [Fluid Characterization Combining](fluid_characterization_combining)
+- [Fluid Creation Guide](../fluid_creation_guide)

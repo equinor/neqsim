@@ -54,6 +54,8 @@ import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTempera
 import neqsim.thermodynamicoperations.flashops.saturationops.CricondenbarFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.ElectrolytePhaseBoundaryFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.ElectrolytePhaseBoundaryResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HCdewPointPressureFlash;
@@ -62,7 +64,10 @@ import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationPre
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorConcentrationFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorwtFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitation;
+import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
+import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointEquilibriumLine;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureFlash;
@@ -1204,6 +1209,50 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Brackets an electrolyte VLE or VLLE phase boundary at constant temperature.
+   *
+   * <p>
+   * Every pressure evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
+   * saturation-pressure path when gas, oil and model-specific aqueous roles may coexist. The supplied system is left at
+   * the target-present side of the final bracket.
+   * </p>
+   *
+   * @param targetPhase phase whose appearance or disappearance is bracketed
+   * @param lowerPressureBara lower pressure in bara
+   * @param upperPressureBara upper pressure in bara
+   * @param toleranceBara maximum final bracket width in bara
+   * @param maximumIterations maximum bisection iterations
+   * @return boundary, topology and scientific acceptance diagnostics
+   */
+  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryPressureFlash(PhaseType targetPhase,
+      double lowerPressureBara, double upperPressureBara, double toleranceBara, int maximumIterations) {
+    return new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.PRESSURE, targetPhase,
+        lowerPressureBara, upperPressureBara, toleranceBara, maximumIterations).solve();
+  }
+
+  /**
+   * Brackets an electrolyte VLE or VLLE phase boundary at constant pressure.
+   *
+   * <p>
+   * Every temperature evaluation uses the system's complete TP flash on an isolated clone. This is the preferred
+   * saturation-temperature path when gas, oil and model-specific aqueous roles may coexist. The supplied system is left
+   * at the target-present side of the final bracket.
+   * </p>
+   *
+   * @param targetPhase phase whose appearance or disappearance is bracketed
+   * @param lowerTemperatureK lower temperature in K
+   * @param upperTemperatureK upper temperature in K
+   * @param toleranceK maximum final bracket width in K
+   * @param maximumIterations maximum bisection iterations
+   * @return boundary, topology and scientific acceptance diagnostics
+   */
+  public ElectrolytePhaseBoundaryResult electrolytePhaseBoundaryTemperatureFlash(PhaseType targetPhase,
+      double lowerTemperatureK, double upperTemperatureK, double toleranceK, int maximumIterations) {
+    return new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
+        targetPhase, lowerTemperatureK, upperTemperatureK, toleranceK, maximumIterations).solve();
+  }
+
+  /**
    * waterDewPointTemperatureFlash.
    *
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -1277,6 +1326,48 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       throw new neqsim.util.exception.IsNaNException(this, "calcSaltSaturation",
           "Could not find solution - possible no dew point exists");
     }
+  }
+
+  /**
+   * Precipitates one supersaturated pure salt to aqueous activity equilibrium.
+   *
+   * <p>
+   * The dissolved system is updated and reflashed. The returned immutable result carries the pure-solid amount needed
+   * to close the material ledger; the solid is not inserted as a NeqSim phase.
+   * </p>
+   *
+   * @param saltName salt name from the COMPSALT database, for example {@code "CaSO4_A"}
+   * @return precipitation amount, saturation and material-balance diagnostics
+   */
+  public SaltPrecipitationResult precipitateScale(String saltName) {
+    CalcSaltSatauration saltOperation = new CalcSaltSatauration(system, saltName);
+    operation = saltOperation;
+    return saltOperation.precipitate();
+  }
+
+  /**
+   * Equilibrates several competing pure COMPSALT minerals against the active aqueous model.
+   *
+   * <p>
+   * The dissolved system is updated and reflashed after each active-set adjustment. The immutable result contains the
+   * non-negative pure-solid material ledger; solids are not inserted as NeqSim phases.
+   * </p>
+   *
+   * @param saltNames unique COMPSALT mineral names
+   * @return simultaneous precipitation/dissolution result and convergence diagnostics
+   */
+  public MultiSaltPrecipitationResult precipitateScales(String... saltNames) {
+    return new MultiSaltPrecipitation(system, saltNames).solve();
+  }
+
+  /**
+   * Re-equilibrates an existing pure-mineral ledger after temperature, pressure, or composition changes.
+   *
+   * @param previousResult previous simultaneous-mineral result whose solid inventory accompanies this fluid
+   * @return updated absolute solid ledger and convergence diagnostics
+   */
+  public MultiSaltPrecipitationResult equilibrateScales(MultiSaltPrecipitationResult previousResult) {
+    return new MultiSaltPrecipitation(system, previousResult).solve();
   }
 
   /**

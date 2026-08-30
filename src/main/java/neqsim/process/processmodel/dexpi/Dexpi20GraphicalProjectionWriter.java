@@ -468,7 +468,7 @@ public final class Dexpi20GraphicalProjectionWriter {
     return null;
   }
 
-  private static String digest(String value) {
+  static String digest(String value) {
     try {
       byte[] bytes = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
       StringBuilder result = new StringBuilder();

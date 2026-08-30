@@ -56,6 +56,14 @@ def resolve_internal_target(source_path, destination):
     candidates = [raw_target]
     if target.endswith("/"):
         candidates = [raw_target / "README.md", raw_target / "index.md"]
+    elif not Path(target).suffix:
+        candidates.extend(
+            (
+                Path("{}.md".format(raw_target)),
+                raw_target / "README.md",
+                raw_target / "index.md",
+            )
+        )
 
     for candidate in candidates:
         if candidate.is_file():

@@ -127,7 +127,7 @@ class ReliefValveSizingDocumentationContractTest(unittest.TestCase):
 
     def test_safety_index_discovers_the_guide(self):
         self.assertIn(
-            "[Relief-Valve Sizing Screening](relief_valve_sizing_api.md)",
+            "[Relief-Valve Sizing Screening](relief_valve_sizing_api)",
             self.safety_index,
         )
 

@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "NeqSim Python Optimization"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "NeqSim Process Optimization with Python"
+description: "Notebook for NeqSim Process Optimization with Python, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# NeqSim Python Optimization
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`NeqSim_Python_Optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/NeqSim_Python_Optimization.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/NeqSim_Python_Optimization.ipynb).
 
 ---
-
-# NeqSim Process Optimization with Python
 
 This notebook demonstrates how to use **Python optimization libraries** (SciPy, etc.) with **NeqSim process simulations**. This approach gives you the flexibility of Python's optimization ecosystem while leveraging NeqSim's rigorous thermodynamics and equipment models.
 

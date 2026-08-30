@@ -629,6 +629,34 @@ public class TimeIntegrator implements Serializable {
     return coupledPressureMomentumEnabled;
   }
 
+  /**
+   * Set the nonlinear iteration budget for the coupled pressure-momentum correction.
+   *
+   * @param maximumIterations positive maximum iteration count
+   */
+  public void setCoupledPressureMomentumMaximumIterations(int maximumIterations) {
+    coupledPressureMomentumSolver.setMaximumIterations(maximumIterations);
+  }
+
+  /** @return nonlinear iteration budget for the coupled pressure-momentum correction */
+  public int getCoupledPressureMomentumMaximumIterations() {
+    return coupledPressureMomentumSolver.getMaximumIterations();
+  }
+
+  /**
+   * Set the convergence tolerance for the relative cell-volume residual.
+   *
+   * @param tolerance positive finite relative tolerance
+   */
+  public void setCoupledPressureMomentumRelativeVolumeTolerance(double tolerance) {
+    coupledPressureMomentumSolver.setRelativeVolumeTolerance(tolerance);
+  }
+
+  /** @return convergence tolerance for the relative cell-volume residual */
+  public double getCoupledPressureMomentumRelativeVolumeTolerance() {
+    return coupledPressureMomentumSolver.getRelativeVolumeTolerance();
+  }
+
   private double[][] applyCoupledPressureMomentumCorrection(double[][] state, double dt) {
     if (!coupledPressureMomentumEnabled) {
       return state;
@@ -653,6 +681,11 @@ public class TimeIntegrator implements Serializable {
   /** @return nonlinear iterations used by the latest coupled correction */
   public int getCoupledPressureMomentumIterations() {
     return lastCoupledPressureMomentumResult == null ? 0 : lastCoupledPressureMomentumResult.getIterations();
+  }
+
+  /** @return true when the latest nonlinear solve limited at least one pressure correction */
+  public boolean isCoupledPressureMomentumPressureCorrectionLimited() {
+    return lastCoupledPressureMomentumResult != null && lastCoupledPressureMomentumResult.isPressureCorrectionLimited();
   }
 
   /** @return signed gas, oil, and water outlet mass corrections in kg */

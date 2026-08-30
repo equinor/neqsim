@@ -417,4 +417,4 @@ DNV-ST-F101 and API RP 17A parameters for subsea manifolds.
 
 ## API Reference
 
-See the [JavaDoc API Documentation](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) for class details.
+See the [JavaDoc API Documentation](https://equinor.github.io/neqsim/javadoc/index.html) for class details.

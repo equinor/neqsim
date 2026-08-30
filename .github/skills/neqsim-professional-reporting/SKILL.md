@@ -1,7 +1,7 @@
 ---
 name: neqsim-professional-reporting
 version: "1.0.0"
-description: "Engineering deliverable quality — results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
+description: "Engineering deliverable quality — the nine analytical-depth moves (contributor ranking, adjudicating the source document, quantitative rule-outs, robustness crossover, conservatism direction, discriminating test), results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, a PEPR/M1/root-cause problem-solving report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
 last_verified: "2026-07-09"
 ---
 
@@ -17,6 +17,89 @@ narrative that matches the way senior engineers communicate.
 - Building Jupyter notebook deliverables (study-grade, not exploratory)
 - Producing FEED-quality memos, technical notes, or design basis documents
 - Any output that will be read by a reviewer, client, or auditor
+
+## Principle 0 — Analytical depth (what makes a report worth reading)
+
+Principles 1–10 are **hygiene**: they stop a report being wrong or unreadable.
+They do not make it *useful*. A hygienic report that restates the originating
+memo, lists contributors without ranking them, and ends in "further study is
+recommended" passes every checklist below and tells the reader nothing they did
+not already know.
+
+The depth of a report is set in the **study**, not in the write-up. Plan for
+these moves while the analysis is still running — most of them cannot be added
+afterwards.
+
+### The nine depth moves
+
+Aim for **≥ 6 of 9** on a Standard report and **all 9** on a Comprehensive or
+root-cause/problem-solving report. Record the score in `results.json`
+(`depth_score`) and name the moves that were not achievable and why.
+
+| # | Move | What it looks like | Anti-pattern it replaces |
+|---|------|--------------------|--------------------------|
+| 1 | **Rank the contributors on one common basis** | A single table of every candidate cause with an improvement factor or utilisation number, computed the same way, so they are directly comparable | An unranked bullet list of "contributing factors" |
+| 2 | **Adjudicate the source document's own conclusions** | A verdict table over each recommendation of the originating memo/PEPR/notification: *Supported / Supported with a correction / Challenged*, each with the number that decides it | Silently agreeing with the source, or silently ignoring it |
+| 3 | **Rule things out, quantitatively** | "Thermal cycling does not explain this, by three orders of magnitude" — a competing explanation eliminated with a number and a stated margin | Leaving every hypothesis nominally alive |
+| 4 | **Find what the source document missed** | A contributor, coupling, or second-order consequence absent from the originating document, established from evidence — and stated as such | Answering only the question as posed |
+| 5 | **Test the conclusion's robustness and say where it flips** | A sensitivity table over the one or two genuinely uncertain modelling parameters, plus the explicit crossover point: "the top two swap around a slope of ~0.7, but the headline does not depend on it" | A single-point answer with an unquantified caveat |
+| 6 | **State the direction of every conservatism** | Each screening value, default, and correlation labelled as an upper or lower bound on the reported quantity, so the reader knows which way the number can move | Undirected "this is approximate" |
+| 7 | **Name the cheapest discriminating test** | The single measurement or inspection that would confirm or refute the diagnosis, why it discriminates, and what each outcome would mean | A generic "further investigation is recommended" |
+| 8 | **Report what does not fit** | The observation that disagrees with the model, reported as a disagreement rather than smoothed over or omitted | Presenting only corroborating evidence |
+| 9 | **Convert qualitative asks into specifications** | "Effective oxygen exclusion" → a purity table with the consequence of each grade; "improve filtration" → a micron rating with the mechanism that sets it | Repeating the source's qualitative wording back |
+
+### Two further depth habits
+
+- **Look for the natural experiment in the data.** Near-identical units with
+  different duty, a repaired section that failed again, a period with a barrier
+  out of service — these discriminate between hypotheses far more cheaply than
+  any model. Actively search the fleet/historian/maintenance record for one.
+- **Bound rather than assert.** When a value cannot be measured, compute what it
+  would have to be for the conclusion to change ("the screening factor of 4.0
+  would require a shear ratio of 16; this geometry produces 2.74"). A bounded
+  unknown is a result; an asserted unknown is a gap.
+
+### Numerical results earn their own subsection
+
+Any non-trivial computed result (CFD, FEM, transient, Monte Carlo, optimiser)
+gets: **validation against an analytical or independent value first**, then a
+**convergence/mesh/sample-count check**, then the result, then an explicit
+statement of **what the computation does and does not decide**. A quantity that
+still moves with refinement is an artefact and must be reported as one — report
+the converged averaged measures, not the unconverged point maximum.
+
+### Report skeleton for a problem-solving / root-cause / PEPR report
+
+```
+Executive summary          ranking table + the conclusion that inverts or
+                           confirms the source document + N further findings
+                           (count them; keep the count in sync)
+0. Design/evidence basis   what was retrieved, with document ids and revisions,
+                           and the two or three basis facts that change the reading
+1..n Findings              one section per finding, each: observation (numbers) →
+                           mechanism (physics) → implication (for the decision) →
+                           recommendation (specific action)
+n+1 Robustness             sensitivity table + where the conclusion flips
+n+2 Ruled out              each eliminated hypothesis with its quantitative margin
+n+3 Assessment of the      verdict table over the source document's own
+    source's recommendations recommendations
+n+4 What remains open      per-finding, not one lumped register; each with the
+                           test that would close it and its owner
+```
+
+Every section that reaches a conclusion ends with **"what remains open"** for
+that conclusion specifically. One consolidated gap register at the end of a
+report is where gaps go to be ignored.
+
+### Depth failure modes to check for before sending
+
+| Symptom | What it means |
+|---------|---------------|
+| The report's recommendations are the source document's recommendations | Moves 1–4 were not attempted |
+| Every hypothesis is still "possible" | Move 3 was not attempted |
+| The only number in the executive summary is a restatement of the input | The study produced description, not analysis |
+| "Further study is recommended" with no named test | Move 7 was not attempted |
+| No sentence in the report contradicts anything | Moves 2, 4, and 8 were not attempted — verify this is genuinely the case, not avoidance |
 
 ## Principle 1 — Traceability Chain (MANDATORY)
 
@@ -254,6 +337,13 @@ workflow gaps were found.
   "benchmarks": [ { "what": "PSV area", "reference": "API 520 Ex 5", "delta_pct": 1.2 } ],
   "evidence_matrix": [ { "document": "...", "value": "...", "used_for": "..." } ],
   "assumptions_gaps": [ { "gap": "...", "default_used": "...", "impact": "...", "action": "..." } ],
+  "contributor_ranking": [ { "contributor": "...", "lever": "...", "improvement_factor": 20.0, "basis": "..." } ],
+  "ruled_out": [ { "hypothesis": "...", "margin": "3 orders of magnitude", "basis": "...", "residual_caveat": "..." } ],
+  "source_recommendation_assessment": [ { "recommendation": "...", "verdict": "SUPPORTED|SUPPORTED_WITH_CORRECTION|CHALLENGED", "basis": "..." } ],
+  "robustness": { "parameter": "...", "range": "...", "conclusion_stable": true, "crossover": "..." },
+  "conservatism": [ { "value": "...", "direction": "upper_bound|lower_bound", "effect_on_result": "..." } ],
+  "discriminating_test": { "test": "...", "why_it_discriminates": "...", "outcome_if_positive": "...", "outcome_if_negative": "...", "cost": "..." },
+  "depth_score": { "achieved": 8, "of": 9, "missing": [ { "move": 5, "why": "..." } ] },
   "limitations": ["..."],
   "next_actions": ["..."]
 }
@@ -273,6 +363,20 @@ workflow gaps were found.
 | Discussion that doesn't reference its figures    | Use `[fig_03]` cross-references in prose                            |
 
 ## Validation Checklist (RUN BEFORE FINALIZING)
+
+**Depth (Principle 0) — check these first; they cannot be fixed by editing prose:**
+
+- [ ] `depth_score` recorded, ≥ 6/9 (Standard) or 9/9 (Comprehensive / root-cause)
+- [ ] Contributors ranked on one common basis, not merely listed
+- [ ] Each recommendation of the originating document given an explicit verdict
+- [ ] At least one competing hypothesis ruled out with a stated quantitative margin
+- [ ] Robustness tested, with the crossover point named
+- [ ] Every screening default labelled upper or lower bound
+- [ ] One named discriminating test, not "further study recommended"
+- [ ] Any evidence that does not fit the conclusion is reported
+- [ ] Every conclusion carries its own "what remains open", not one lumped register
+
+**Hygiene:**
 
 - [ ] Executive summary present, 1 page max
 - [ ] Every figure referenced in text and has caption + units

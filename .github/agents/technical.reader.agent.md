@@ -96,7 +96,7 @@ Use the appropriate format handler from the skill:
   visual analysis (`view_image`), then use `pdfplumber` for tables and `extract_text()` for narrative.
   For engineering drawings, P&IDs, and charts, the image-based approach is often more effective:
   ```bash
-  python devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/
+   <python-executable> devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/
   # Then: view_image on each PNG to read diagrams, tables, charts
   ```
 - **Word (.docx)** → `python-docx` for paragraphs and tables
@@ -111,7 +111,7 @@ For documents that are primarily visual (P&IDs, mechanical drawings, vendor
 datasheets rendered as images, performance maps, phase envelopes), use the
 **image analysis workflow** from the skill (Section 3.7):
 
-1. **Convert PDF to images**: `python devtools/pdf_to_figures.py document.pdf --outdir figures/ --dpi 200`
+1. **Convert PDF to images**: `<python-executable> devtools/pdf_to_figures.py document.pdf --outdir figures/ --dpi 200`
 2. **View each page**: Use `view_image` on the extracted PNGs
 3. **Systematic scan**: For each image, scan in order:
    - Title block (document number, revision, title)
@@ -260,7 +260,7 @@ State which downstream use is appropriate and offer to hand off.
 
 ## Python Dependencies
 
-The agent requires these packages (install if not available):
+The shared environment must already provide these packages:
 
 ```
 pdfplumber>=0.9.0       # PDF table extraction
@@ -269,12 +269,8 @@ openpyxl>=3.1.0         # Excel reading
 pandas>=1.5.0           # Tabular data handling
 ```
 
-Install with:
-```python
-import subprocess, sys
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
-    "pdfplumber", "python-docx", "openpyxl", "pandas"])
-```
+If a package is unavailable, report it as a blocker. Do not install, create, or
+reconfigure an environment from this agent.
 
 ---
 
@@ -301,7 +297,7 @@ subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
 **User:** "Read this P&ID PDF for the compressor seal gas system and extract piping data"
 
 **Agent response:**
-1. Runs `python devtools/pdf_to_figures.py seal_gas_pid.pdf --outdir figures/ --dpi 200`
+1. Runs `<python-executable> devtools/pdf_to_figures.py seal_gas_pid.pdf --outdir figures/ --dpi 200`
 2. Views each PNG with `view_image`
 3. Classifies as "engineering_drawing_pid" (P&ID symbols, instrument bubbles, piping annotations)
 4. Systematic scan: title block → equipment tags → instrument tags → valve tags → piping → notes

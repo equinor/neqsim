@@ -70,6 +70,17 @@ mvnw.cmd install                          # Windows
 ./mvnw checkstyle:check spotbugs:check pmd:check  # static analysis
 ```
 
+## Python Environment Reuse
+
+Use the Python interpreter explicitly selected by the user or parent workflow. If
+none was selected, use `C:\appl\neqsim-venv\Scripts\python.exe`. In command examples,
+`<python-executable>` means that selected absolute path. Subagents and child
+processes must reuse it through the same absolute path or `sys.executable`; they
+must not open interpreter selection, invoke bare `python`/`py`/`pip`/`pytest`,
+create or activate separate environments, reinstall or reconfigure the shared
+environment, or silently fall back to another interpreter. If the executable or a
+required package is unavailable, report the blocker before changing runtimes.
+
 ## Solving Engineering Tasks (Primary Workflow)
 
 NeqSim supports an AI-driven task-solving workflow. When asked to solve an

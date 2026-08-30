@@ -60,7 +60,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   }
 
   /**
-   * Tests that the writer produces ActuatingFunction elements when controllers are present.
+   * Tests that the writer produces actuation and signal-flow elements when controllers are present.
    *
    * @throws IOException if file operations fail
    */
@@ -79,8 +79,13 @@ public class DexpiInstrumentTest extends NeqSimTest {
     DexpiXmlWriter.write(process, tempFile, transmitters, controllers);
 
     String xml = new String(Files.readAllBytes(tempFile.toPath()), StandardCharsets.UTF_8);
-    assertTrue(xml.contains("ActuatingFunction"), "XML should contain ActuatingFunction for controllers");
-    assertTrue(xml.contains("SignalConveyingFunction"), "XML should contain SignalConveyingFunction for signal lines");
+    assertTrue(xml.contains("<ActuatingFunction"), "XML should contain ActuatingFunction for controllers");
+    assertTrue(xml.contains("ComponentClass=\"SignalLineFunction\""),
+        "XML should contain SignalLineFunction information flows");
+    assertTrue(xml.contains("Value=\"ElectricalSignalConveying\""),
+        "XML should identify transmitter-to-controller signal flows");
+    assertTrue(xml.contains("Value=\"PneumaticSignalConveying\""),
+        "XML should identify controller-to-valve signal flows");
   }
 
   /**

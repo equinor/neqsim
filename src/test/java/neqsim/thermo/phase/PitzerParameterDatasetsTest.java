@@ -3,6 +3,7 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -330,6 +331,30 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     assertEquals(0.3159, catalog.require(PhreeqcPitzerParameterCatalog.Family.B0, "Ca++", "Cl-")[0], 0.0);
     assertEquals(-1.13, catalog.require(PhreeqcPitzerParameterCatalog.Family.B2, "Ca++", "Cl-")[0], 0.0);
     assertEquals(-0.122, catalog.require(PhreeqcPitzerParameterCatalog.Family.PSI, "Ca++", "Cl-", "SO4--")[0], 0.0);
+    assertNull(catalog.find(PhreeqcPitzerParameterCatalog.Family.B0, "H+", "HCO3-"));
+    assertNull(catalog.find(PhreeqcPitzerParameterCatalog.Family.B1, "H+", "HCO3-"));
+    assertNull(catalog.find(PhreeqcPitzerParameterCatalog.Family.C0, "H+", "HCO3-"));
+  }
+
+  @Test
+  void automaticCatalogIgnoresEosRoleHydrocarbonFormulaAndKeepsLegacyOptOut() {
+    SystemPitzer automatic = createMethaneSodiumChlorideSystem(false);
+    PhasePitzer automaticPhase = (PhasePitzer) automatic.getGeLiquidPhase();
+
+    assertTrue(Double.isFinite(automaticPhase.getOsmoticCoefficientOfWater()));
+    double sodiumLogGamma = componentLogGamma(automaticPhase, "Na+");
+    assertTrue(Double.isFinite(sodiumLogGamma));
+    assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, automaticPhase.getParameterDatasetId());
+    assertTrue(automaticPhase.getPitzerParameterCoverage().isComplete());
+    assertTrue(automaticPhase.auditNeutralPitzerParameterCoverage().isComplete());
+    assertTrue(PitzerParameterDatasets.isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("methane")));
+    assertFalse(PitzerParameterDatasets.isHydrocarbonForAutomaticCatalog(automaticPhase.getComponent("water")));
+
+    SystemPitzer legacy = createMethaneSodiumChlorideSystem(true);
+    PhasePitzer legacyPhase = (PhasePitzer) legacy.getGeLiquidPhase();
+    assertTrue(Double.isFinite(legacyPhase.getOsmoticCoefficientOfWater()));
+    assertTrue(Double.isFinite(componentLogGamma(legacyPhase, "Na+")));
+    assertEquals(PhasePitzer.DEFAULT_PARAMETER_DATASET_ID, legacyPhase.getParameterDatasetId());
   }
 
   @Test
@@ -425,8 +450,9 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     assertEquals(PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED, scaleFamily.getLevel());
     assertFalse(scaleFamily.isValidatedWithinDeclaredEnvelope());
     assertTrue(scaleFamily.getValidatedSystems().toString().contains("MgCl2"));
+    assertTrue(scaleFamily.getValidatedSystems().toString().contains("CaCl2-MgCl2 osmotic coefficient"));
     assertTrue(scaleFamily.getValidatedSystems().toString().contains("MgCl2-MgSO4 water activity"));
-    assertTrue(scaleFamily.getLimitations().toString().contains("Ca-bearing mixed Ca-Mg-Cl-SO4"));
+    assertTrue(scaleFamily.getLimitations().toString().contains("Quaternary Ca-Mg-Cl-SO4"));
     assertThrows(UnsupportedOperationException.class, () -> scaleFamily.getLimitations().add("unsafe"));
 
     PitzerParameterQualification unknown = PitzerParameterDatasets.getQualification("private-project-dataset");
@@ -636,6 +662,20 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     system.addComponent("Mg++", magnesiumMolality);
     system.addComponent("Cl-", chlorideMolality);
     system.addComponent("SO4--", sulfateMolality);
+    system.setMixingRule("classic");
+    system.init(0);
+    return system;
+  }
+
+  private static SystemPitzer createMethaneSodiumChlorideSystem(boolean legacy) {
+    SystemPitzer system = new SystemPitzer(REFERENCE_TEMPERATURE, 100.0);
+    if (legacy) {
+      system.useLegacyPitzerParameters();
+    }
+    system.addComponent("methane", 1.0);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
     system.setMixingRule("classic");
     system.init(0);
     return system;

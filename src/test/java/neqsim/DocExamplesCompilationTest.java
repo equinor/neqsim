@@ -86,6 +86,8 @@ import neqsim.pvtsimulation.flowassurance.ScaleMassCalculator;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 import neqsim.pvtsimulation.flowassurance.WaterCompatibilityScreener;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PitzerParameterDatasets;
+import neqsim.thermo.phase.PitzerParameterQualification;
 import neqsim.thermo.system.FluidBuilder;
 import neqsim.thermo.system.SystemDesmukhMather;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
@@ -122,6 +124,27 @@ public class DocExamplesCompilationTest {
     assertTrue(hasAqueousPhase);
     assertTrue(fluid.hasPhaseType(PhaseType.GAS));
     assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+  }
+
+  /** Pitzer property-specific qualification example from docs/thermo/fluid_creation_guide.md. */
+  @Test
+  public void testPitzerObservableQualificationFluidCreationGuide() {
+    SystemPitzer qualifiedBrine = new SystemPitzer(298.15, 1.01325);
+    qualifiedBrine.addComponent("water", 55.508);
+    qualifiedBrine.addComponent("Na+", 0.5);
+    qualifiedBrine.addComponent("K+", 0.5);
+    qualifiedBrine.addComponent("Cl-", 1.0);
+    qualifiedBrine.init(0);
+    qualifiedBrine.applyPhreeqcSodiumPotassiumChlorideParameters();
+
+    PitzerParameterQualification evidence = qualifiedBrine.getPitzerParameterQualification();
+    qualifiedBrine
+        .requirePitzerDatasetValidationFor(PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS);
+    boolean insideRange = PitzerParameterDatasets
+        .isWithinSodiumPotassiumChlorideValidationRange(qualifiedBrine.getTemperature(), 0.5, 0.5, 1.0);
+
+    assertTrue(evidence.isValidatedFor(PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS));
+    assertTrue(insideRange);
   }
 
   /** Generic SystemEosGE opt-in example from docs/thermo/fluid_creation_guide.md. */

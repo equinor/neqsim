@@ -102,8 +102,10 @@ flow settings from the template stream.
 
 Both the reader and writer share `DexpiMetadata` constants that describe the recommended generic
 attributes for DEXPI exchanges. Equipment exports include tag names, line numbers, and fluid codes.
-Piping segments carry segment numbers and operating pressure/temperature/flow triples with explicit
-unit annotations. Query `DexpiMetadata.recommendedStreamAttributes()` and
+Piping segments carry segment numbers, nominal-diameter representations, piping-class and
+insulation codes, and operating pressure/temperature/flow triples with explicit unit annotations.
+The reader preserves these values on `DexpiStream`; it does not derive them from hydraulic inside
+diameter. Query `DexpiMetadata.recommendedStreamAttributes()` and
 `DexpiMetadata.recommendedEquipmentAttributes()` for the minimal metadata sets guaranteed by NeqSim.
 
 ---
@@ -126,6 +128,56 @@ process.run();
 // Export with auto-layout
 DexpiXmlWriter.write(process, new File("output.xml"));
 ```
+
+### NeqSim-native SVG rendering
+
+`DexpiXmlSvgRenderer` renders the geometry in a Proteus-compatible DEXPI Plant/P&ID exchange
+directly to SVG. It resolves each equipment, valve, nozzle, off-page connector, and instrument
+instance against the document's `ShapeCatalogue`, and preserves process, signal, utility, label,
+stream-table, drawing-border, and title-block primitives. The SVG is therefore a view of the DEXPI
+document rather than a separately reconstructed process diagram.
+
+```java
+File dexpi = new File("plant.xml");
+File svg = new File("plant.svg");
+
+DexpiXmlWriter.write(process, dexpi);
+DexpiXmlSvgRenderer.render(dexpi, svg);
+```
+
+For automated drawing-quality gates, assess the same Proteus-compatible exchange before publishing
+the SVG:
+
+```java
+DexpiVisualQualityAssessment.Report visualReport =
+    DexpiVisualQualityAssessment.assess(dexpi);
+Files.write(
+    new File("plant.visual-quality.json").toPath(),
+    visualReport.toJson().getBytes(StandardCharsets.UTF_8)
+);
+if (visualReport.hasErrors()) {
+  throw new IllegalStateException(visualReport.toJson());
+}
+```
+
+The report records the exact `PlantInformation/@SchemaVersion`, drawing extent, source and SVG
+primitive counts, catalogue-instance coverage, positioned-coordinate bounds, text-height risks,
+duplicate identities, and the deterministic SVG SHA-256. Errors identify geometry that cannot be
+rendered faithfully; warnings identify visible review risks. The assessment is a software quality
+gate, not an ISO-conformance, DEXPI-certification, engineering-approval, or
+fitness-for-construction decision.
+
+The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Generated title
+blocks are marked `PROPOSAL`, and their initial revision is `Engineering Proposal`; a controlled
+owner status and accountable review are required before a drawing can be issued for design or
+construction. Use an independent DEXPI consumer as an interoperability check when qualifying an
+exchange for a project handoff.
+
+An intentionally unconfigured `new Stream("spare")` may remain registered in the `ProcessSystem`.
+Its `run(UUID)` call completes as an inactive topology placeholder without inventing a fluid state,
+and the DEXPI writers and renderer ignore unsupported empty geometry while preserving the connected
+process. Equipment that consumes the placeholder still requires a real thermodynamic inlet before it
+can run.
 
 ### Layout and visualization features
 
@@ -282,7 +334,31 @@ Each piping connection carries operating line data and a NORSOK Z-003 line-ident
 - A `FluidCode` generic attribute (service code: `PG` process gas, `PL` process liquid, `FL` flare,
   `DR` drain, `FG` fuel gas, `UT` utility) derived by `DexpiServiceClassifier`
 - Operating pressure, temperature and flow generic attributes when available on the stream
-- A line-number text label (e.g. `PG-001`) composed by `NorsokLineNumber`
+- A line designation composed by `NorsokLineNumber`, with nominal size, fluid code, sequence,
+  piping class, and insulation code when those values are available
+- A visible `SIZE?` field and `LineSizeStatus=MISSING_SOURCE_DATA` when neither source nominal size
+  nor a model inside diameter is available
+
+Source-backed line data can be supplied by a `DexpiStream`:
+
+```java
+DexpiStream line = new DexpiStream("process-line", fluid, "PipingNetworkSegment", "1001", "PG");
+line.setNominalDiameterRepresentation("DN 150");
+line.setPipingClassCode("A1B");
+line.setInsulationType("H25");
+
+// Optional endpoint values make a real transition explicit.
+line.setFlowInNominalDiameterRepresentation("DN 150");
+line.setFlowOutNominalDiameterRepresentation("DN 100");
+line.setFlowInPipingClassCode("A1B");
+line.setFlowOutPipingClassCode("B2C");
+```
+
+If a NeqSim pipe model supplies only hydraulic diameter, the drawing identifies it explicitly as
+`ID ... mm`; it is never relabelled as DN or NPS. A source-backed endpoint-size change produces a
+`PipeReducer` with distinct flow-in and flow-out sizes and connection points. Explicit piping-class
+or insulation changes produce a `PropertyBreak` marker. The exporter does not guess nominal size,
+schedule, piping class, or insulation.
 
 The writer serializes numeric generic-attribute values with eight significant digits. This
 scale-aware canonical precision suppresses insignificant solver noise so repeated exports remain
@@ -425,12 +501,38 @@ from crossing gas equipment. The engine produces the following visual elements:
 **Instrumentation (per ISA 5.1):**
 - Instrument circles with function letter labels (PT, TT, FT, LT, AT)
 - Proper ISA 5.1 function letter decomposition (first letter = measured variable, subsequent = function)
-- Signal lines from instruments to equipment (dashed lines with signal nodes)
+- Field transmitter bubbles connected by measuring lines to an explicit process-segment or nozzle sensing location
+- Level-transmitter measuring lines terminate at a dedicated tank or separator sensing tap; oil
+  level and water-interface functions use distinct taps and never reuse a process inlet or liquid outlet
+- Central/control-room controller bubbles distinguished from field instruments by their symbol and DEXPI location metadata
 - PID controller parameters displayed (Kp, Ti, Td) when controllers are present
-- Controller signal lines connecting instruments to final control elements
+- Typed signal lines from transmitters to controllers and from controllers to actual final control elements
 - SIL-rated instrument visualization with concentric double-border circles for SIL 2 and above
 - Fail-position markers on control valves: **FC** (red), **FO** (green), **FL** (amber)
 - Solenoid valve symbols with diamond shape and wiring to controllers
+
+When a process contains no explicit measurement devices, the writer may add measurement-only
+engineering proposals. These are marked `[PROP]` on the sheet and carry
+`Origin=SYNTHESIZED_PROPOSAL`, `ApprovalStatus=UNREVIEWED`, and `Scope=MEASUREMENT_ONLY` metadata.
+Compatibility metadata also records `InstrumentationSource=SYNTHESIZED_PROPOSAL` and
+`EngineeringStatus=PROPOSED`. Explicit transmitters expose `MeasurementAttachmentTargetID`; closed
+loops expose both `FinalControlElementID` and `FinalControlElementTag`.
+The writer does not synthesize controllers, manipulated variables, or final control elements. A
+closed loop is drawn only when the model contains an explicit controller attached to a connected
+valve or manipulated equipment item; otherwise the controller is retained as an incomplete-loop
+warning without a command line to empty drawing space.
+
+This representation follows the separation of sensing, signal-conveying, control, and actuation
+functions used by DEXPI and the identification/location conventions used by ISA-5.1. It does not
+imply that the transmitter circle must geometrically overlap the process line: the measuring line
+and its `is located in` association identify the physical sensing point.
+
+The implementation is informed by [ISO 10628-1 diagram rules](https://www.iso.org/standard/51840.html),
+[ISO 10628-2 graphical symbols](https://www.iso.org/standard/51841.html),
+[IEC 62424 PCE representation](https://webstore.iec.ch/en/publication/25442), the
+[ISA-5 series](https://www.isa.org/standards-and-publications/isa-standards/isa-5-standard), and the
+[DEXPI 1.4 model](https://dexpi.org/static/pid_specification_1.4/). These references guide the
+projection; generated sheets still require project-specific engineering and drafting review.
 
 **Safety elements:**
 - PST (Partial Stroke Test) annotation boxes near safety valves
@@ -440,6 +542,8 @@ from crossing gas equipment. The engine produces the following visual elements:
 - Heat trace indication marks (zigzag pattern with ET/ST type labels)
 - Insulation marks on process lines
 - Piping class and line size attribute export
+- Source-backed reducer symbols for line-size transitions
+- Property-break symbols for explicit piping-class or insulation changes
 
 **Annotations:**
 - Equipment weight annotations (dry and operating weight)

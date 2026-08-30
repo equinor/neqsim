@@ -412,10 +412,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
       double pressure);
 
   /**
-   * logfugcoefdT.
+   * Returns the temperature derivative of the logarithmic fugacity coefficient.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @param phase phase at the evaluation state
+   * @return d(ln(phi))/dT in 1/K
    */
   public double logfugcoefdT(PhaseInterface phase);
 
@@ -429,10 +429,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double logfugcoefdNi(PhaseInterface phase, int k);
 
   /**
-   * logfugcoefdP.
+   * Returns the pressure derivative of the logarithmic fugacity coefficient.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @param phase phase at the evaluation state
+   * @return d(ln(phi))/dP in reciprocal pressure units used by the phase, normally 1/bar
    */
   public double logfugcoefdP(PhaseInterface phase);
 
@@ -1647,10 +1647,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getHenryCoef(double temperature);
 
   /**
-   * getHenryCoefdT.
+   * Returns the temperature derivative of the Henry coefficient.
    *
-   * @param temperature a double
-   * @return a double
+   * <p>
+   * This is {@code dH/dT}, not {@code d(ln H)/dT}.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @return Henry-coefficient derivative in bar/K
    */
   public double getHenryCoefdT(double temperature);
 

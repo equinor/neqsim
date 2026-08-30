@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -33,11 +34,16 @@ import neqsim.thermo.system.SystemInterface;
 public class AbsorptionColumn extends DistillationColumn {
   private static final long serialVersionUID = 1000L;
   private static final double MOLE_TOLERANCE = 1.0e-15;
+  private static final double DEFAULT_MAX_ALLOWABLE_FS_FACTOR = 3.0;
+  private static final double DEFAULT_MAX_ALLOWABLE_GAS_LOAD_FACTOR = 0.15;
+  private static final double DEFAULT_LIQUID_DENSITY = 1000.0;
+  private static final double MIN_LIQUID_GAS_DENSITY_DIFFERENCE = 10.0;
 
   private StreamInterface gasInStream;
   private StreamInterface solventInStream;
   private final Map<String, Double> componentMurphreeEfficiencies = new HashMap<>();
   private final Map<Integer, Map<String, Double>> trayComponentMurphreeEfficiencies = new HashMap<>();
+  private double maxAllowableGasLoadFactor = DEFAULT_MAX_ALLOWABLE_GAS_LOAD_FACTOR;
 
   /**
    * Create a counter-current tray absorber without a condenser or reboiler.
@@ -47,6 +53,7 @@ public class AbsorptionColumn extends DistillationColumn {
    */
   public AbsorptionColumn(String name, int numberOfTrays) {
     super(name, requirePositiveTrayCount(numberOfTrays), false, false);
+    setMaxAllowableFsFactor(DEFAULT_MAX_ALLOWABLE_FS_FACTOR);
   }
 
   /**
@@ -97,6 +104,211 @@ public class AbsorptionColumn extends DistillationColumn {
    */
   public StreamInterface getSolventInStream() {
     return solventInStream;
+  }
+
+  /**
+   * Calculates the superficial gas velocity based on the gas outlet stream and the column internal diameter.
+   *
+   * @return superficial gas velocity in m/s, or 0 if the gas outlet stream or internal diameter are not available
+   */
+  public double getGasSuperficialVelocity() {
+    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (intArea <= 0.0) {
+      return 0.0;
+    }
+    return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea;
+  }
+
+  /**
+   * Calculates the Souders-Brown gas load factor (K-factor) for the contactor.
+   *
+   * <p>
+   * The gas load factor is defined as {@code Ks = Vs * sqrt(rho_gas / (rho_liquid - rho_gas))} where {@code Vs} is the
+   * superficial gas velocity (m/s), {@code rho_gas} is the gas outlet density (kg/m3) and {@code rho_liquid} is the
+   * liquid outlet density (kg/m3). This is the standard entrainment/flooding capacity indicator used across NeqSim
+   * separators and scrubbers.
+   * </p>
+   *
+   * @return gas load factor in m/s, or 0 if the gas or liquid outlet streams are not initialized, or if the liquid
+   * density does not exceed the gas density
+   */
+  public double getGasLoadFactor() {
+    double vs = getGasSuperficialVelocity();
+    if (vs <= 0.0 || getLiquidOutStream() == null || getLiquidOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    getGasOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    getLiquidOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    double gasDensity = getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double liquidDensity = resolveLiquidDensityForGasLoad(gasDensity,
+        getLiquidOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+    if (gasDensity <= 0.0 || Double.isNaN(liquidDensity)) {
+      return 0.0;
+    }
+    return vs * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
+  }
+
+  /**
+   * Applies the near-dry density fallback used by the gas-load-factor calculations and returns the liquid density to
+   * use, or {@link Double#NaN} when the (possibly substituted) liquid density does not exceed the gas density, which
+   * would otherwise produce a negative or zero denominator.
+   *
+   * @param gasDensity gas outlet density in kg/m3
+   * @param liquidDensity raw liquid outlet density in kg/m3
+   * @return the liquid density to use in kg/m3, or {@link Double#NaN} if unusable
+   */
+  private static double resolveLiquidDensityForGasLoad(double gasDensity, double liquidDensity) {
+    double effectiveLiquidDensity = liquidDensity;
+    if (effectiveLiquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
+      effectiveLiquidDensity = DEFAULT_LIQUID_DENSITY;
+    }
+    if (effectiveLiquidDensity <= gasDensity) {
+      return Double.NaN;
+    }
+    return effectiveLiquidDensity;
+  }
+
+  /**
+   * Gets the maximum allowable gas load factor (Souders-Brown Ks) used as the design basis for the gas-load-factor
+   * capacity constraint.
+   *
+   * @return maximum allowable gas load factor in m/s
+   */
+  public double getMaxAllowableGasLoadFactor() {
+    return maxAllowableGasLoadFactor;
+  }
+
+  /**
+   * Sets the maximum allowable gas load factor (Souders-Brown Ks) used as the design basis for the gas-load-factor
+   * capacity constraint.
+   *
+   * <p>
+   * Re-initializes the gas-load-factor capacity constraint so the new design value takes effect immediately.
+   * </p>
+   *
+   * @param maxAllowableGasLoadFactor maximum allowable gas load factor in m/s; must be positive
+   * @throws IllegalArgumentException if the value is not positive and finite
+   */
+  public void setMaxAllowableGasLoadFactor(double maxAllowableGasLoadFactor) {
+    if (!Double.isFinite(maxAllowableGasLoadFactor) || maxAllowableGasLoadFactor <= 0.0) {
+      throw new IllegalArgumentException("maxAllowableGasLoadFactor must be positive and finite");
+    }
+    this.maxAllowableGasLoadFactor = maxAllowableGasLoadFactor;
+    reinitializeGasLoadFactorConstraint();
+  }
+
+  /**
+   * Calculates the gas load factor utilization as a fraction of the maximum allowable gas load factor.
+   *
+   * @return utilization ratio (0.0-1.0+); values above 1.0 indicate the design limit is exceeded
+   */
+  public double getGasLoadFactorUtilization() {
+    double maxKs = getMaxAllowableGasLoadFactor();
+    if (maxKs <= 0.0) {
+      return 0.0;
+    }
+    return getGasLoadFactor() / maxKs;
+  }
+
+  /**
+   * Checks whether the current gas load factor is within the design limit.
+   *
+   * @return true if the gas load factor is within the maximum allowable limit
+   */
+  public boolean isGasLoadFactorWithinDesignLimit() {
+    return getGasLoadFactor() <= getMaxAllowableGasLoadFactor();
+  }
+
+  /**
+   * Calculates the minimum vessel internal diameter required to keep the gas load factor at or below the maximum
+   * allowable value for the current gas and liquid outlet conditions.
+   *
+   * <p>
+   * From {@code Ks = Vs * sqrt(rho_gas / (rho_liquid - rho_gas))} and {@code Vs = Q / A}, the minimum diameter is
+   * {@code D_min = sqrt(4 * Q / (pi * Ks_max * sqrt((rho_liquid - rho_gas) / rho_gas)))}.
+   * </p>
+   *
+   * @return minimum internal diameter in metres, or 0 if the gas or liquid outlet streams are not initialized
+   */
+  public double getMinimumDiameterForGasLoadLimit() {
+    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null || getLiquidOutStream() == null
+        || getLiquidOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double maxKs = getMaxAllowableGasLoadFactor();
+    if (maxKs <= 0.0) {
+      return 0.0;
+    }
+    getGasOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    getLiquidOutStream().getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    double gasFlowM3s = getGasOutStream().getThermoSystem().getFlowRate("m3/sec");
+    double gasDensity = getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double liquidDensity = resolveLiquidDensityForGasLoad(gasDensity,
+        getLiquidOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+    if (gasDensity <= 0.0 || Double.isNaN(liquidDensity)) {
+      return 0.0;
+    }
+    double vsMax = maxKs * Math.sqrt((liquidDensity - gasDensity) / gasDensity);
+    if (vsMax <= 0.0) {
+      return 0.0;
+    }
+    return Math.sqrt(4.0 * gasFlowM3s / (Math.PI * vsMax));
+  }
+
+  /**
+   * Calculates the liquid wetting rate on the column cross-section.
+   *
+   * @return wetting rate in m3/hr per m2, or 0 if the liquid outlet stream is not initialized
+   */
+  public double getWettingRate() {
+    if (getLiquidOutStream() == null || getLiquidOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (intArea <= 0.0) {
+      return 0.0;
+    }
+    return getLiquidOutStream().getThermoSystem().getFlowRate("m3/hr") / intArea;
+  }
+
+  /**
+   * Sets up the default capacity constraints for the absorption column.
+   *
+   * <p>
+   * Adds the inherited Fs-factor constraint (see {@link DistillationColumn#initializeDefaultConstraints()}) plus a
+   * gas-load-factor (Souders-Brown Ks) constraint based on {@link #getGasLoadFactor()} and
+   * {@link #getMaxAllowableGasLoadFactor()}.
+   * </p>
+   */
+  @Override
+  protected void initializeDefaultConstraints() {
+    super.initializeDefaultConstraints();
+    neqsim.process.equipment.capacity.CapacityConstraint gasLoadConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+        "gasLoadFactor", "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+    gasLoadConstraint.setDesignValue(maxAllowableGasLoadFactor);
+    gasLoadConstraint.setMaxValue(maxAllowableGasLoadFactor);
+    gasLoadConstraint.setSeverity(neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity.SOFT);
+    gasLoadConstraint.setDescription("Column gas load factor (Souders-Brown Ks) vs maximum allowable");
+    gasLoadConstraint.setDataSource("equipment");
+    gasLoadConstraint.setValueSupplier(this::getGasLoadFactor);
+    addCapacityConstraint(gasLoadConstraint);
+  }
+
+  /**
+   * Rebuilds the gas-load-factor capacity constraint so an updated {@link #maxAllowableGasLoadFactor} design value
+   * takes effect.
+   */
+  private void reinitializeGasLoadFactorConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint existing = getCapacityConstraints().get("gasLoadFactor");
+    if (existing != null) {
+      existing.setDesignValue(maxAllowableGasLoadFactor);
+      existing.setMaxValue(maxAllowableGasLoadFactor);
+    } else {
+      initializeDefaultConstraints();
+    }
   }
 
   /**

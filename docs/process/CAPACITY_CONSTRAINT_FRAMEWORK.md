@@ -67,6 +67,44 @@ Use `registerEquipmentConstraint(...)` to copy identity-relevant metadata from a
 applicability, convergence, margins, and utilization belong in a complete immutable snapshot and
 must be regenerated after every process solve.
 
+## Complete immutable plant utilization snapshots
+
+`PlantUtilizationSnapshot` is the post-solve evidence layer consumed by later plant-wide resource
+and solver increments. It pairs every deterministic registry definition with a callback-free
+`PlantConstraintSample` for one exact `calculationId`. The snapshot does not run equipment, evaluate
+constraints, aggregate shared resources, or mutate process state.
+
+Each row separates evidence coverage from operating status. Disabled definitions remain visible and
+need no runtime sample. Enabled missing, stale, out-of-validity, non-finite, metadata-mismatched,
+calculation-ID-mismatched, exception, and incomplete-convergence rows remain explicit and make the
+snapshot incomplete. Finite available evidence retains:
+
+| Quantity | Unit and sign contract |
+|---|---|
+| Sampled value and applicable limit | Registered physical unit and basis |
+| Normalized utilization | Dimensionless; 1.0 is active |
+| Normalized residual | Dimensionless `utilization - 1`; positive violates |
+| Physical margin | Registered unit; positive is headroom and negative violates |
+| Required relief | Registered unit; non-negative amount required to reach the limit |
+
+`isComplete()` requires valid exact-calculation evidence for every enabled definition.
+`isFeasible()` additionally rejects any hard or critical violation. Soft and advisory violations are
+ranked and reported but do not silently become hard constraints. The immutable bottleneck ladder
+contains all enabled available rows in descending utilization order with stable identity as the tie
+breaker.
+
+Use `PlantConstraintSample.fromInstalledEquipmentEvidence(...)` and
+`fromProcessBoundaryEvidence(...)` to reuse existing immutable #2941 equipment evidence and process-
+boundary evidence. These adapters validate identity, direction, physical unit, and evidence status;
+they do not retain live suppliers or evaluator callbacks. A sample's registered basis is copied from
+the matching plant definition, so an adapter cannot invent a rate- or reference-basis conversion.
+
+This layer is deliberately not operating authority. It does not calculate total power, common-shaft
+driver or torque balance, compressor maps, separator capacity, piping hydraulics, product quality,
+emissions, utility allocation, rollback, caching, dirty scheduling, or solver acceptance. Those
+increments must supply qualified samples after complete convergence, and external optimizer
+proposals must still be replayed and accepted by the full NeqSim model.
+
 ## Important: Constraints Disabled by Default
 
 > **⚠️ Key Behavior**: All separator, valve, pipeline, pump, and manifold constraints are **disabled by default** for backward compatibility. The optimizer checks whether any constraints are enabled before using the `CapacityConstrainedEquipment` interface.

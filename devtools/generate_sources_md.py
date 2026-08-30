@@ -60,7 +60,8 @@ SOURCE_CATALOG = [
     ("servicenow", "ServiceNow", "Referenced records (RITM / INC / CHG / SCTASK)"),
     ("tagreader", "Plant historian", "PI / IP.21 (tagreader) signal exports"),
     ("seeq", "Seeq", "Seeq signal and capsule exports"),
-    ("rigga", "Rigga / PDM", "Measured production volumes"),
+    ("pdm", "PDM", "Production Data Mart allocation and production-accounting evidence"),
+    ("rigga", "Rigga (legacy)", "Legacy PDM Streamer production-volume exports"),
     ("vendor", "Vendor", "Vendor datasheets, manuals, performance maps"),
     ("lab", "Lab / PVT", "Lab, PVT and gas-sample reports"),
     ("literature", "Literature", "Papers, standards, textbooks"),
@@ -118,7 +119,8 @@ def _infer_source_from_name(name: str) -> str:
         ("servicenow", r"\britm\d|\binc\d|\bchg\d|\bsctask\d|servicenow"),
         ("tagreader", r"tagreader|historian|\bpi[_-]|ip21|ip\.21|_trend|timeseries"),
         ("seeq", r"seeq"),
-        ("rigga", r"rigga|pdm|production_volume"),
+        ("pdm", r"\bpdm\b|production_volume"),
+        ("rigga", r"rigga"),
         ("tr2000", r"tr2000|\bpcs[_-]|\bvds[_-]|\bmds[_-]|pipe[_-]?class"),
         ("stid", r"stid|p&id|pid[_-]|_pid|datasheet|drawing|\bds[_-]|\baa[_-]|\bmd[_-]"),
         ("vendor", r"vendor|performance|curve|\bmap\b|manual"),
@@ -304,7 +306,6 @@ def _collect_gaps(task_dir: Path, references_dir: Path) -> list:
     gaps: list = []
     seen = set()
     for path in [
-        references_dir / "collection_manifest.json",
         task_dir / "step1_scope_and_research" / "retrieval_manifest.json",
         task_dir / "step1_scope_and_research" / "document_evidence_manifest.json",
     ]:

@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "GERG2008 NH3 Ammonia Properties"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "GERG-2008-NH3: Ammonia Thermodynamic Properties"
+description: "Notebook for GERG-2008-NH3: Ammonia Thermodynamic Properties, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# GERG2008 NH3 Ammonia Properties
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`GERG2008_NH3_Ammonia_Properties.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb).
 
 ---
-
-# GERG-2008-NH3: Ammonia Thermodynamic Properties
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb)
 

@@ -269,6 +269,59 @@ skills:
         self.assertEqual(["direct"], parsed["skills"][0]["tags"])
 
 
+class FallbackFrontmatterParserTest(unittest.TestCase):
+    """Regression tests for frontmatter parsing without PyYAML."""
+
+    def test_block_sequence_frontmatter_survives_without_pyyaml(self):
+        """Block lists in agent/skill frontmatter must not be dropped.
+
+        The old fallback skipped every indented line and every key with an
+        empty value, so ``required_skills`` written as a block sequence came
+        back missing and required skills were never installed.
+        """
+        flush = """---
+name: pvt-agent
+required_skills:
+- neqsim-fluid-quality-check
+---
+body
+"""
+        indented = """---
+name: tech-agent
+required_skills:
+  - neqsim-document-intelligence-extraction
+  - neqsim-api-patterns
+---
+body
+"""
+
+        with mock.patch.object(install_skill, "yaml", None):
+            flush_meta = install_skill._extract_frontmatter(flush)
+            indented_meta = install_skill._extract_frontmatter(indented)
+
+        self.assertEqual(["neqsim-fluid-quality-check"],
+                         flush_meta["required_skills"])
+        self.assertEqual(
+            ["neqsim-document-intelligence-extraction", "neqsim-api-patterns"],
+            indented_meta["required_skills"])
+
+    def test_fallback_scalars_ignore_trailing_comments(self):
+        """Trailing ``# comment`` text must not leak into scalar values."""
+        content = """---
+name: neqsim-example
+min_neqsim_version: "3.7.0"    # optional
+path: skills/example/SKILL.md  # default
+---
+body
+"""
+
+        with mock.patch.object(install_skill, "yaml", None):
+            metadata = install_skill._extract_frontmatter(content)
+
+        self.assertEqual("3.7.0", metadata["min_neqsim_version"])
+        self.assertEqual("skills/example/SKILL.md", metadata["path"])
+
+
 class SkillVsCodeExportTest(unittest.TestCase):
     """Tests for the --vscode export of installed skills."""
 
@@ -562,15 +615,205 @@ class SkillVsCodeExportTest(unittest.TestCase):
                 b"---\nname: neqsim-git-demo\ndescription: Demo.\n---\n"
                 b"# Demo skill body with enough content.\n")
 
+            def _fake_clone(entry, destination):
+                destination.mkdir(parents=True, exist_ok=True)
+                (destination / "skills" / "demo").mkdir(parents=True, exist_ok=True)
+                (destination / "skills" / "demo" / "SKILL.md").write_bytes(content)
+                return "main"
+
             with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
                     mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
-                    mock.patch.object(install_skill, "_read_git_repository_file", return_value=(content, "main")):
+                    mock.patch.object(install_skill, "_clone_git_repository", side_effect=_fake_clone):
                 install_skill.cmd_install(catalog, args)
 
             manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
             self.assertEqual("git", manifest["neqsim-git-demo"]["source_type"])
             self.assertEqual("git-credential-manager", manifest["neqsim-git-demo"]["auth"])
             self.assertEqual("https://git.internal/skills.git", manifest["neqsim-git-demo"]["url"])
+
+    def test_local_package_skill_copies_whole_folder_and_pip_installs(self):
+        """A skill with a sibling pyproject.toml installs its whole package and pip-installs it."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+
+            package_source = tmp_path / "source-repo" / "demo-package-skill"
+            (package_source / "src" / "demo_package_skill").mkdir(parents=True)
+            skill_file = package_source / "SKILL.md"
+            skill_file.write_text(
+                "---\nname: demo-package-skill\ndescription: Demo.\n---\n"
+                "# Demo package skill body with enough content.\n",
+                encoding="utf-8",
+            )
+            (package_source / "pyproject.toml").write_text(
+                "[project]\nname = \"demo-package-skill\"\nversion = \"0.1.0\"\n",
+                encoding="utf-8",
+            )
+            (package_source / "src" / "demo_package_skill" / "__init__.py").write_text(
+                "", encoding="utf-8")
+
+            catalog = [{
+                "name": "demo-package-skill",
+                "description": "Demo package skill",
+                "source": "local",
+                "path": str(skill_file),
+                "_source": "community",
+            }]
+            args = argparse.Namespace(
+                name="demo-package-skill", force=False, vscode=False, vscode_dir=None)
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_skill.subprocess, "check_output") as mocked_pip:
+                install_skill.cmd_install(catalog, args)
+
+            dest_dir = install_dir / "demo-package-skill"
+            self.assertTrue((dest_dir / "pyproject.toml").exists())
+            self.assertTrue((dest_dir / "src" / "demo_package_skill" / "__init__.py").exists())
+            self.assertTrue(mocked_pip.called)
+            pip_cmd = mocked_pip.call_args[0][0]
+            self.assertEqual(install_skill.sys.executable, pip_cmd[0])
+            self.assertIn("-e", pip_cmd)
+
+            manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+            self.assertEqual(str(dest_dir / "SKILL.md"), manifest["demo-package-skill"]["path"])
+
+    def test_local_markdown_only_skill_still_copies_single_file(self):
+        """A skill with no pyproject.toml keeps the existing single-file install behaviour."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+
+            source_dir = tmp_path / "source-repo" / "demo-md-skill"
+            source_dir.mkdir(parents=True)
+            skill_file = source_dir / "SKILL.md"
+            skill_file.write_text(
+                "---\nname: demo-md-skill\ndescription: Demo.\n---\n"
+                "# Demo markdown-only skill body with enough content.\n",
+                encoding="utf-8",
+            )
+            (source_dir / "README.md").write_text("readme", encoding="utf-8")
+
+            catalog = [{
+                "name": "demo-md-skill",
+                "description": "Demo markdown-only skill",
+                "source": "local",
+                "path": str(skill_file),
+                "_source": "community",
+            }]
+            args = argparse.Namespace(
+                name="demo-md-skill", force=False, vscode=False, vscode_dir=None)
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_skill.subprocess, "check_output") as mocked_pip:
+                install_skill.cmd_install(catalog, args)
+
+            dest_dir = install_dir / "demo-md-skill"
+            self.assertTrue((dest_dir / "SKILL.md").exists())
+            self.assertFalse((dest_dir / "README.md").exists())
+            self.assertFalse(mocked_pip.called)
+
+    def test_pip_install_failure_is_reported_but_not_fatal(self):
+        """A failed pip build should warn but still leave the skill installed."""
+        import argparse
+        import json
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+
+            package_source = tmp_path / "source-repo" / "demo-broken-skill"
+            package_source.mkdir(parents=True)
+            skill_file = package_source / "SKILL.md"
+            skill_file.write_text(
+                "---\nname: demo-broken-skill\ndescription: Demo.\n---\n"
+                "# Demo body with enough content for the check.\n",
+                encoding="utf-8",
+            )
+            (package_source / "pyproject.toml").write_text(
+                "[project]\nname = \"demo-broken-skill\"\nversion = \"0.1.0\"\n",
+                encoding="utf-8",
+            )
+
+            catalog = [{
+                "name": "demo-broken-skill",
+                "description": "Demo broken skill",
+                "source": "local",
+                "path": str(skill_file),
+                "_source": "community",
+            }]
+            args = argparse.Namespace(
+                name="demo-broken-skill", force=False, vscode=False, vscode_dir=None)
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(
+                        install_skill.subprocess, "check_output",
+                        side_effect=subprocess.CalledProcessError(1, "pip")):
+                result = install_skill.cmd_install(catalog, args)
+
+            self.assertIsNone(result)
+            manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+            self.assertIn("demo-broken-skill", manifest)
+
+    def test_min_neqsim_version_mismatch_is_reported(self):
+        """A skill needing a newer NeqSim should warn and record the mismatch."""
+        skill = {"name": "neqsim-needs-new", "min_neqsim_version": "9.9.9"}
+        with mock.patch.object(install_skill, "_installed_neqsim_version",
+                               return_value="3.7.0"):
+            ok = install_skill._check_min_neqsim_version(skill, "neqsim-needs-new")
+        self.assertFalse(ok)
+
+    def test_min_neqsim_version_satisfied(self):
+        """An installed NeqSim at or above the minimum should pass."""
+        skill = {"name": "neqsim-ok", "min_neqsim_version": "3.7.0"}
+        with mock.patch.object(install_skill, "_installed_neqsim_version",
+                               return_value="3.18.0"):
+            ok = install_skill._check_min_neqsim_version(skill, "neqsim-ok")
+        self.assertTrue(ok)
+
+    def test_min_neqsim_version_absent_package_is_reported(self):
+        """No neqsim package at all should be reported for a skill that needs one."""
+        skill = {"name": "neqsim-needs-any", "min_neqsim_version": "3.7.0"}
+        with mock.patch.object(install_skill, "_installed_neqsim_version",
+                               return_value=None):
+            ok = install_skill._check_min_neqsim_version(skill, "neqsim-needs-any")
+        self.assertFalse(ok)
+
+    def test_skill_without_min_version_is_always_compatible(self):
+        """A skill that declares no minimum must never be flagged."""
+        with mock.patch.object(install_skill, "_installed_neqsim_version",
+                               return_value=None) as probe:
+            ok = install_skill._check_min_neqsim_version({"name": "x"}, "x")
+        self.assertTrue(ok)
+        probe.assert_not_called()
+
+    def test_parse_version_handles_suffixes_and_short_versions(self):
+        """Version parsing should tolerate suffixes and missing components."""
+        self.assertEqual((3, 18, 0), install_skill._parse_version("3.18.0"))
+        self.assertEqual((3, 18, 0), install_skill._parse_version("3.18"))
+        self.assertEqual((3, 18, 1), install_skill._parse_version("3.18.1rc2"))
+        self.assertLess(
+            install_skill._parse_version("3.7.0"),
+            install_skill._parse_version("3.18.0"),
+        )
 
     def test_cmd_doctor_reports_sso_brokers_without_secrets(self):
         """Doctor output should mention brokers, not token values."""

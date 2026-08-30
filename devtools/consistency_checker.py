@@ -458,6 +458,11 @@ class ConsistencyChecker:
         print("Checking numerical consistency...")
 
         for concept, values in self.extracted_values.items():
+            # The fallback bucket can contain unrelated engineering quantities
+            # whose surrounding text did not match a known concept alias.
+            if concept == "other":
+                continue
+
             if len(values) < 2:
                 continue
 

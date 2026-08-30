@@ -391,6 +391,8 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 |-------|-------------|-------------|
 | `SystemSpanWagnerEos` | Span-Wagner equation | Pure CO2 |
 | `SystemLeachmanEos` | Leachman equation | Pure hydrogen |
+| `SystemArgonSolidHelmholtzEos` | Maltby-Hammer-Wilhelmsen solid Helmholtz EOS | Pure solid argon; experimental and opt-in |
+| `SystemSolidHelmholtzEos` | Extensible pure-solid Helmholtz system | Custom single-component solid equations |
 | `SystemVegaEos` | Vega equation | Specialized applications |
 | `SystemAmmoniaEos` | Ammonia-specific | Ammonia systems |
 
@@ -827,6 +829,8 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 | `SystemEOSCGEos` | Reference | EOS-CG for CCS |
 | `SystemSpanWagnerEos` | Reference | Span-Wagner for CO2 |
 | `SystemLeachmanEos` | Reference | Leachman for H2 |
+| `SystemArgonSolidHelmholtzEos` | Solid reference | Experimental pure solid argon |
+| `SystemSolidHelmholtzEos` | Solid reference | Extensible pure single-component solid Helmholtz system |
 | `SystemVegaEos` | Reference | Vega equation |
 | `SystemAmmoniaEos` | Reference | Ammonia-specific |
 | `SystemBnsEos` | Reference | BNS equation |
@@ -872,6 +876,7 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 - [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
 - [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
 - [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
+- [Experimental Solid Helmholtz Models](solid_helmholtz_models.md) - Pure solid-state and para-hydrogen freezing-point workflows
 - [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
 - [Søreide-Whitson Model](SoreideWhitsonModel.md) - Gas solubility in brine, produced water emissions
 - [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations

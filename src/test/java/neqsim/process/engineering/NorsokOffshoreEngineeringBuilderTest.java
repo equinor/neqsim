@@ -6,12 +6,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import javax.xml.parsers.DocumentBuilderFactory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import neqsim.NeqSimTest;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter.ExportResult;
@@ -209,6 +216,10 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(xml.contains("UnresolvedBoundary"));
     assertTrue(xml.contains("FLARE_RELIEF_AND_BLOWDOWN"));
     assertTrue(xml.contains("PROCESS_CONTROL_ISOLATION_AND_RECYCLE"));
+    assertMinimumMaterializedSpacing(result.getDexpiFile(), "ProcessInstrumentationFunction", 12.0);
+    assertMinimumMaterializedSpacing(result.getDexpiFile(), "PipingComponent", 14.0);
+    assertMaterializedInstrumentLabelsAreCompact(result.getDexpiFile());
+    assertEngineeringFunctionsWithinBatteryLimit(result.getDexpiFile());
 
     String dexpi20 = new String(Files.readAllBytes(result.getDexpi20File()), StandardCharsets.UTF_8);
     assertTrue(dexpi20.contains("<Model"));
@@ -315,4 +326,130 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     }
     throw new AssertionError("Relief coverage not found for: " + equipmentTag);
   }
+
+  private static void assertEngineeringFunctionsWithinBatteryLimit(Path dexpiFile) throws Exception {
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpiFile.toFile());
+    Element boundary = null;
+    NodeList labels = document.getElementsByTagName("Label");
+    for (int i = 0; i < labels.getLength(); i++) {
+      Element candidate = (Element) labels.item(i);
+      if ("BatteryLimit-1".equals(candidate.getAttribute("ID"))) {
+        boundary = candidate;
+        break;
+      }
+    }
+    assertTrue(boundary != null, "Generated engineering drawing must retain its battery-limit boundary");
+
+    NodeList coordinates = boundary.getElementsByTagName("Coordinate");
+    assertTrue(coordinates.getLength() >= 5, "Battery-limit boundary must remain a closed rectangle");
+    double left = Double.MAX_VALUE;
+    double right = -Double.MAX_VALUE;
+    double bottom = Double.MAX_VALUE;
+    double top = -Double.MAX_VALUE;
+    for (int i = 0; i < coordinates.getLength(); i++) {
+      Element coordinate = (Element) coordinates.item(i);
+      double x = Double.parseDouble(coordinate.getAttribute("X"));
+      double y = Double.parseDouble(coordinate.getAttribute("Y"));
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+      bottom = Math.min(bottom, y);
+      top = Math.max(top, y);
+    }
+
+    String[] elementNames = new String[] { "ProcessInstrumentationFunction", "PipingComponent" };
+    for (String elementName : elementNames) {
+      NodeList elements = document.getElementsByTagName(elementName);
+      for (int i = 0; i < elements.getLength(); i++) {
+        Element element = (Element) elements.item(i);
+        if (genericAttribute(element, "ProtectedEquipmentTag") == null) {
+          continue;
+        }
+        NodeList locations = element.getElementsByTagName("Location");
+        assertTrue(locations.getLength() > 0, "Governed engineering function must have a drawing position");
+        Element location = (Element) locations.item(0);
+        double x = Double.parseDouble(location.getAttribute("X"));
+        double y = Double.parseDouble(location.getAttribute("Y"));
+        assertTrue(x >= left + 9.0 && x <= right - 9.0 && y >= bottom + 9.0 && y <= top - 9.0,
+            elementName + " must remain clear of the battery-limit line: " + element.getAttribute("ID"));
+      }
+    }
+
+    NodeList areaTexts = boundary.getElementsByTagName("Text");
+    assertTrue(areaTexts.getLength() > 0, "Battery-limit boundary must retain its area label");
+    NodeList areaLocations = ((Element) areaTexts.item(0)).getElementsByTagName("Location");
+    assertTrue(areaLocations.getLength() > 0, "Battery-limit area label must have a drawing position");
+    Element areaLocation = (Element) areaLocations.item(0);
+    double labelX = Double.parseDouble(areaLocation.getAttribute("X"));
+    double labelY = Double.parseDouble(areaLocation.getAttribute("Y"));
+    assertTrue(labelX > left && labelX < right && labelY > bottom && labelY < top,
+        "Battery-limit area label must be placed inside the boundary");
+  }
+
+  private static void assertMaterializedInstrumentLabelsAreCompact(Path dexpiFile) throws Exception {
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpiFile.toFile());
+    NodeList instruments = document.getElementsByTagName("ProcessInstrumentationFunction");
+    for (int i = 0; i < instruments.getLength(); i++) {
+      Element instrument = (Element) instruments.item(i);
+      String equipmentTag = genericAttribute(instrument, "ProtectedEquipmentTag");
+      if (equipmentTag == null) {
+        continue;
+      }
+      String fullTag = genericAttribute(instrument, "TagNameAssignmentClass");
+      NodeList labels = instrument.getElementsByTagName("Label");
+      assertTrue(labels.getLength() > 0, "Governed instrument must have a visible compact label");
+      NodeList texts = ((Element) labels.item(0)).getElementsByTagName("Text");
+      assertEquals(2, texts.getLength(), "Governed instrument label must use function and number rows");
+      for (int j = 0; j < texts.getLength(); j++) {
+        assertFalse(fullTag.equals(((Element) texts.item(j)).getAttribute("String")),
+            "Full stable tag must stay in metadata instead of becoming a collision-prone external label");
+      }
+    }
+  }
+
+  private static void assertMinimumMaterializedSpacing(Path dexpiFile, String elementName, double minimumSpacing)
+      throws Exception {
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(dexpiFile.toFile());
+    Map<String, List<double[]>> positionsByEquipment = new LinkedHashMap<String, List<double[]>>();
+    NodeList elements = document.getElementsByTagName(elementName);
+    for (int i = 0; i < elements.getLength(); i++) {
+      Element element = (Element) elements.item(i);
+      String equipmentTag = genericAttribute(element, "ProtectedEquipmentTag");
+      NodeList locations = element.getElementsByTagName("Location");
+      if (equipmentTag == null || locations.getLength() == 0) {
+        continue;
+      }
+      Element location = (Element) locations.item(0);
+      List<double[]> positions = positionsByEquipment.get(equipmentTag);
+      if (positions == null) {
+        positions = new ArrayList<double[]>();
+        positionsByEquipment.put(equipmentTag, positions);
+      }
+      positions.add(new double[] { Double.parseDouble(location.getAttribute("X")),
+          Double.parseDouble(location.getAttribute("Y")) });
+    }
+    for (Map.Entry<String, List<double[]>> entry : positionsByEquipment.entrySet()) {
+      List<double[]> positions = entry.getValue();
+      for (int i = 0; i < positions.size(); i++) {
+        for (int j = i + 1; j < positions.size(); j++) {
+          double dx = positions.get(i)[0] - positions.get(j)[0];
+          double dy = positions.get(i)[1] - positions.get(j)[1];
+          double distance = Math.sqrt(dx * dx + dy * dy);
+          assertTrue(distance >= minimumSpacing,
+              elementName + " annotations overlap on " + entry.getKey() + ": " + distance + " mm");
+        }
+      }
+    }
+  }
+
+  private static String genericAttribute(Element parent, String name) {
+    NodeList attributes = parent.getElementsByTagName("GenericAttribute");
+    for (int i = 0; i < attributes.getLength(); i++) {
+      Element attribute = (Element) attributes.item(i);
+      if (name.equals(attribute.getAttribute("Name"))) {
+        return attribute.getAttribute("Value");
+      }
+    }
+    return null;
+  }
+
 }

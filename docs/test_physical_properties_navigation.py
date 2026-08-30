@@ -45,6 +45,14 @@ def resolve_internal_target(source_path, destination):
         candidates.extend((raw_target / "README.md", raw_target / "index.md"))
     else:
         candidates.append(raw_target)
+        if not Path(target).suffix:
+            candidates.extend(
+                (
+                    Path("{}.md".format(raw_target)),
+                    raw_target / "README.md",
+                    raw_target / "index.md",
+                )
+            )
 
     for candidate in candidates:
         if candidate.is_file():
@@ -148,7 +156,7 @@ class PhysicalPropertiesDocumentationContractTest(unittest.TestCase):
 
         self.assertNotIn("setMixingRule(7)", self.documents[THERMO_OVERVIEW])
         self.assertIn(
-            "../physical_properties/README.md",
+            "../physical_properties/README",
             self.documents[THERMO_INDEX],
         )
 

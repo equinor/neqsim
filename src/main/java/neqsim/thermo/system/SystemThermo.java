@@ -4155,6 +4155,66 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
+  /**
+   * Synchronize reaction-adjusted overall component amounts from a converged single-phase inventory.
+   *
+   * <p>
+   * Chemical reactions conserve elements but can change the total number of species moles. This method updates the
+   * scalar total and every phase object's overall composition without rescaling the converged reactive inventory.
+   * Components outside the reaction set retain their exact overall amount; any single-phase round-off in their phase
+   * amount is corrected before synchronization. Multiphase callers must instead use a coupled
+   * reaction/phase-equilibrium algorithm that preserves feed elements.
+   * </p>
+   *
+   * @param reactiveComponents components whose overall amounts are replaced by the converged reactive-phase inventory
+   */
+  public final void synchronizeSinglePhaseReactionComposition(ComponentInterface[] reactiveComponents) {
+    if (numberOfPhases != 1) {
+      throw new IllegalStateException("Single-phase reaction synchronization requires exactly one active phase");
+    }
+    if (reactiveComponents == null) {
+      throw new IllegalArgumentException("Reactive components cannot be null");
+    }
+    boolean[] reactiveComponentNumbers = new boolean[numberOfComponents];
+    for (ComponentInterface component : reactiveComponents) {
+      if (component == null || component.getComponentNumber() < 0
+          || component.getComponentNumber() >= numberOfComponents) {
+        throw new IllegalArgumentException("Reactive component numbers must identify current system components");
+      }
+      reactiveComponentNumbers[component.getComponentNumber()] = true;
+    }
+    double[] componentMoles = new double[numberOfComponents];
+    double totalMoles = 0.0;
+    PhaseInterface reactivePhase = getPhase(0);
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      ComponentInterface component = reactivePhase.getComponent(componentIndex);
+      if (reactiveComponentNumbers[componentIndex]) {
+        componentMoles[componentIndex] = component.getNumberOfMolesInPhase();
+      } else {
+        componentMoles[componentIndex] = component.getNumberOfmoles();
+        double phaseCorrection = componentMoles[componentIndex] - component.getNumberOfMolesInPhase();
+        reactivePhase.addMolesChemReac(componentIndex, phaseCorrection, 0.0);
+      }
+      totalMoles += componentMoles[componentIndex];
+    }
+    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles)) {
+      throw new IllegalStateException("Reaction-adjusted total moles must be finite and positive");
+    }
+
+    setTotalNumberOfMolesRaw(totalMoles);
+    for (PhaseInterface phase : phaseArray) {
+      if (phase == null) {
+        continue;
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        phase.getComponent(componentIndex).setNumberOfmoles(componentMoles[componentIndex]);
+        phase.getComponent(componentIndex).setz(componentMoles[componentIndex] / totalMoles);
+      }
+    }
+    initBeta();
+    init_x_y();
+  }
+
   /** {@inheritDoc} */
   @Override
   public final boolean isChemicalSystem() {

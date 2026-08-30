@@ -1499,8 +1499,8 @@ def test_capabilities():
     tests = evidence.get("tests", {})
     guides = evidence.get("guides", {})
     limitations = evidence.get("knownLimitations", {})
-    check("evidence inventory freezes 67 Java test classes",
-          tests.get("javaTestClassCount") == 67,
+    check("evidence inventory freezes 69 Java test classes",
+          tests.get("javaTestClassCount") == 69,
           str(tests))
     check("evidence inventory freezes 94 protocol scenarios",
           tests.get("protocolScenarioCount") == 94,
@@ -1554,12 +1554,17 @@ def test_capabilities():
           str(limitations))
     contract_tools = {
         "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
-        "checkToolAccess", "manageIndustrialProfile",
+        "checkToolAccess", "manageIndustrialProfile", "searchComponents",
+        "queryDataCatalog", "getProgress", "inspectApi",
+        "manageValidationProfile", "manageModel", "manageSession", "listSimulationUnits",
+        "listUnitVariables",
+        "getSimulationVariable", "diagnoseAutomation",
+        "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("six non-numerical contracts have bounded evidence",
-          limitations.get("contractTestedToolCount") == 6
-          and limitations.get("confirmedGapToolCount") == 45
+    check("eighteen bounded software contracts have direct evidence",
+          limitations.get("contractTestedToolCount") == 18
+          and limitations.get("confirmedGapToolCount") == 33
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1581,7 +1586,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 45
+          and limitations.get("confirmedGapToolCount") == 33
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

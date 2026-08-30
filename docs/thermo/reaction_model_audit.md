@@ -26,9 +26,19 @@ ChemicalReactionModelAudit.AuditComparison comparison =
 
 The audit reports the selected typed data source, reaction-quotient concentration basis, deterministic active-reaction list, stoichiometry, stored literature/data reference, reference temperature, equilibrium-constant coefficients, and the validation status declared by that model-specific data row. The comparison separates concentration conventions, reactions present in only one model, and common reactions whose stored parameters or validation declarations differ.
 
-Use `audit.getReactionsWithoutValidatedEvidence()` to list active rows that are not marked `VALIDATED`, and `audit.hasValidatedEvidenceForAllActiveReactions()` as a conservative publication gate. Individual reaction snapshots and `ChemicalReaction` objects expose `getValidationStatus()`. The status qualifies only the stored equilibrium-constant correlation for the selected source, standard state, and documented range; it does not prove complete finite-salinity speciation, phase equilibrium, or process performance.
+Use `audit.getReactionsWithoutValidatedEvidence()` to list active rows that are not marked `VALIDATED`, `audit.hasValidatedEvidenceForAllActiveReactions()` for a non-throwing check, and `audit.requireValidatedEvidenceForAllActiveReactions()` for an explicit fail-closed publication gate. Use `comparison.requireEquivalent()` when a workflow requires two initialized systems to have the same source, concentration basis, active reaction set, stoichiometry, and stored parameters; its exception reports every differing category. Individual reaction snapshots and `ChemicalReaction` objects expose `getValidationStatus()`. The status qualifies only the stored equilibrium-constant correlation for the selected source, standard state, and documented range; it does not prove complete finite-salinity speciation, phase equilibrium, or process performance.
 
 The API is deliberately read-only. It requires `chemicalReactionInit()` to have been called and never initializes reactions implicitly, runs a flash, or changes model state. It therefore adds no work to ordinary neutral PR/SRK/CPA calculations and no work to electrolyte calculations unless the audit is explicitly requested.
+
+For the typed `PITZER` source, validation is also an initialization contract. After irrelevant and
+dependent reactions have been removed, `chemicalReactionInit()` rejects every remaining active
+reaction row whose status is not `VALIDATED`, before that row can add its model-specific product
+species. The current `MDEAprot` (`Huttenhuis2005`) and `DEAprot` (`Austgen1989`) compatibility
+rows remain marked `USEREACTION=1` and `UNVALIDATED`; a `SystemPitzer` feed containing the
+corresponding neutral amine therefore fails closed instead of silently using an unqualified
+molality-standard-state correlation. No reaction coefficient or activation flag is changed.
+`STANDARD` and `KENT_EISENBERG` retain their legacy initialization behavior because their
+distinct standard states require separate qualification.
 
 ## Pitzer reaction concentration basis
 
@@ -40,7 +50,21 @@ The three Pitzer correlations reproduce the analytical expressions distributed i
 
 NeqSim fits its existing four-coefficient natural-log form, `ln(K) = K1 + K2/T + K3 ln(T) + K4 T`, to the PHREEQC base-10 analytical expressions. Training temperatures are 0, 10, ..., 90 degC. Held-out validation temperatures are 5, 15, ..., 85 degC. Maximum held-out absolute errors are 0.000471 log10 units for CO2 dissociation, 0.000157 for bicarbonate dissociation, and 0.000192 for water dissociation; RMS errors are 0.000311, 0.000104, and 0.000127 log10 units, respectively. The declared validity range is 0-90 degC at the infinite-dilution thermodynamic standard state; Pitzer activity coefficients provide the finite-ionic-strength correction.
 
-No Pitzer binary interaction parameter was fitted or changed. `REACTIONDATAPITZER.csv` therefore marks only `CO2water`, `carbonate`, and `waterreac` as `VALIDATED`. All other rows are marked `UNVALIDATED` because they are compatibility copies from `REACTIONDATA.csv`; this includes currently active H2S and amine rows. The declaration is diagnostic and does not activate or deactivate a reaction, change a coefficient, or alter a solve path. Independent model-specific evidence must precede any change to those active sets or parameters.
+No Pitzer binary interaction parameter was fitted or changed. `REACTIONDATAPITZER.csv` marks `CO2water`, `carbonate`, `waterreac`, and the first H2S dissociation `water-H2S` as `VALIDATED`. Other compatibility rows remain `UNVALIDATED`; their existing activation flags are unchanged except that unsupported `water-HS` is disabled. The declaration is diagnostic; the `USEREACTION` field separately controls the model-specific active set.
+
+### H2S first-dissociation evidence and active-set boundary
+
+For `SystemPitzer`, `water-H2S` represents `H2S + H2O = HS- + H3O+` on the solute-molality and pure-water activity standard states. Its natural-log correlation is an exact basis conversion of the public-domain PHREEQC 3.9.0-17591 `pitzer.dat` expression at commit [`b0b3be7`](https://github.com/phreeqc-dev/phreeqc3/commit/b0b3be767158ccc3322d2c816625cf470045e67e):
+
+`log10(K1) = 11.17 - 3279/T - 0.02386 T`, with `T` in kelvin.
+
+The stored NeqSim coefficients are `[25.719875488743, -7550.176519927477, 0, -0.054939680319]` in `ln(K) = K1 + K2/T + K3 ln(T) + K4 T`. The mapping is algebraic rather than fitted. It is checked at 5, 15, ..., 85 degC against the PHREEQC expression. Independent validation uses Hershey, Pleše, and Millero (1988), [DOI 10.1016/0016-7037(88)90183-4](https://doi.org/10.1016/0016-7037(88)90183-4), at their experimental temperatures 5, 25, and 45 degC. The maximum absolute difference from their infinite-dilution pK1 correlation is 0.071 pK unit, within a conservative 0.08 gate; no experimental table is copied.
+
+The second dissociation `water-HS` is inactive for Pitzer. The audited PHREEQC dataset defines no `S--`/`S-2` aqueous species or second-dissociation equilibrium, and the first-dissociation paper reports only pK1. Retaining the legacy unvalidated pK2 as active would create unsupported sulfide speciation. Electrolyte-EOS and Kent-Eisenberg tables remain unchanged because their standard states and validation questions are distinct.
+
+This qualification covers only the aqueous first-dissociation constant from 5 to 45 degC at the infinite-dilution standard state, with the PHREEQC curve checked through 85 degC. It does not qualify H2S gas-liquid equilibrium, pressure corrections, neutral-H2S Pitzer interactions, concentrated-brine speciation, oil partitioning, amine absorption, or the second dissociation.
+
+The Newton chemical-equilibrium solver reads the same typed concentration-basis selection as the reaction diagnostics. For `SOLUTE_MOLALITY`, it forms solute chemical potentials from `ln(moles/kg solvent) + ln(gamma)` and retains `ln(x) + ln(gamma)` for solvent activity. Solvent mass is calculated once per iteration, so this branch adds no work to neutral calculations and no inner-loop component scan. Legacy mole-fraction and Deshmukh-Mather paths retain their existing expressions. A focused H2S-water regression requires maximum absolute `ln(Q/K)` below `2e-6`, maximum element residual below `1e-8` mol, absolute charge below `1e-8` mol, normalized charge below `2e-6`, normalized non-negative phase fractions, deterministic repeated execution, and the expected 25-to-45 degC ionization trend.
 
 Legacy `STANDARD` and `KENT_EISENBERG` rows currently return `UNSPECIFIED`. That value means the table has not yet adopted the explicit declaration; it must not be interpreted as evidence that a row is invalid.
 

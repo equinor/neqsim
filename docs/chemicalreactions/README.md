@@ -3,8 +3,6 @@ title: Chemical Reactions Package
 description: The `chemicalreactions` package provides tools for chemical equilibrium calculations and reaction kinetics.
 ---
 
-# Chemical Reactions Package
-
 The `chemicalreactions` package provides tools for chemical equilibrium calculations and reaction kinetics.
 
 ## Table of Contents
@@ -137,8 +135,10 @@ screening trace-reaction trends in CO₂-rich streams. The implementation applie
 stoichiometry, non-negative extent bounds, configurable residence time and material-dependent R8
 kinetics. Its default parameters require calibration before engineering use.
 
-See the [CO₂ impurity kinetics guide](co2_impurity_kinetics_guide.md) for reaction definitions,
-Java usage, numerical safeguards, and model limitations.
+See the [CO₂ impurity kinetics guide](co2_impurity_kinetics_guide) for reaction definitions,
+Java usage, numerical safeguards, and model limitations. Use the
+[CO₂ transport reaction-kinetics guide](co2_transport_reaction_kinetics) to enforce evidence
+ranges and screen a reaction/transport Damköhler number.
 
 
 ---

@@ -24,6 +24,12 @@
  * project review evidence without changing process topology</li>
  * <li><b>Native controlled output</b> - Deterministic vector SVG sheets and multi-page PDF consume the same controlled
  * document model without requiring Graphviz</li>
+ * <li><b>Assessed delivery</b> - One fail-closed facade publishes controlled JSON, DEXPI Process exchange, native
+ * SVG/PDF, hashes, and explicit review-required evidence for ProcessSystem or multi-area ProcessModel inputs</li>
+ * <li><b>Independent delivery intake</b> - Bounded fail-closed verification of transferred manifest fingerprints,
+ * artifact hashes, paths, media types, exact file sets, and review boundaries</li>
+ * <li><b>Delivery comparison</b> - Deterministic artifact-level revision evidence and review scopes from two complete
+ * independent intake assessments, with fail-closed changed-content revision reuse</li>
  * <li><b>Drawing-quality diagnostics</b> - Deterministic collision, clipping, route/object, connection-label,
  * label-overflow, and broken-reference evidence remains structured and fail-visible without silently moving reviewed
  * geometry</li>
@@ -72,6 +78,10 @@
  * sheet proposal adapter</li>
  * <li>{@link neqsim.process.processmodel.diagram.NativeEngineeringDiagramRenderer} - Deterministic native SVG/PDF
  * renderer for controlled drawing sets</li>
+ * <li>{@link neqsim.process.processmodel.diagram.EngineeringDiagramDeliveryAssessment} - Independent integrity
+ * assessment for stored or transferred controlled deliveries</li>
+ * <li>{@link neqsim.process.processmodel.diagram.EngineeringDiagramDeliveryComparison} - Deterministic artifact-level
+ * comparison of complete independently assessed deliveries</li>
  * <li>{@link neqsim.process.engineering.model.EngineeringDiagramLayoutRegister} - Persistent reviewed manual sheet,
  * position, and route intent</li>
  * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramExporter} - Main exporter class</li>

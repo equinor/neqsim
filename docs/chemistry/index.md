@@ -79,7 +79,10 @@ Every analysis is exposed over the NeqSim MCP server:
 
 Send this to the `runChemistry` tool. Supported `analysis` values:
 `electrolyteScale`, `mechanisticCorrosion`, `langmuirInhibitor`,
-`packedBedScavenger`.
+`packedBedScavenger`, and `pitzerQualification`. The last is a setup/publication
+gate over the authoritative Java Pitzer dataset coverage, observable
+qualification, and declared state envelope; it does not perform a flash or
+adopt parameters.
 
 See [MCP chemistry tool reference](mcp.md) for the full schema.
 

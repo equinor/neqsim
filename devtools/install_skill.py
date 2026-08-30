@@ -245,32 +245,136 @@ def _parse_catalog_fallback(text):
     Handles the simple list-of-dicts format used in community-skills.yaml,
     including the top-level ``skills`` and ``repositories`` sections.
     """
-    data = {"skills": [], "repositories": []}
-    section = None
-    current = None
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if line.startswith("#") or not line:
-            continue
-        if not raw_line.startswith((" ", "\t")) and line.endswith(":"):
-            if current and section in data:
-                data[section].append(current)
-            section = line[:-1]
-            current = None
-        elif line.startswith("- "):
-            if current and section in data:
-                data[section].append(current)
-            current = {}
-            remainder = line[2:].strip()
-            if ":" in remainder:
-                key, val = remainder.split(":", 1)
-                current[key.strip()] = _parse_scalar_value(val.strip())
-        elif current and ":" in line:
-            key, val = line.split(":", 1)
-            current[key.strip()] = _parse_scalar_value(val.strip())
-    if current and section in data:
-        data[section].append(current)
+    data = _parse_simple_yaml(text)
+    if not isinstance(data, dict):
+        data = {}
+    for section in ("skills", "repositories"):
+        if not isinstance(data.get(section), list):
+            data[section] = []
     return data
+
+
+def _yaml_fallback_tokens(text):
+    """Return ``(indent, content)`` tokens for the minimal YAML parser."""
+    tokens = []
+    for raw_line in text.splitlines():
+        content = raw_line.strip()
+        if not content or content.startswith("#"):
+            continue
+        tokens.append((len(raw_line) - len(raw_line.lstrip(" \t")), content))
+    return tokens
+
+
+def _is_yaml_sequence_entry(content):
+    """Return true when a token line starts a block sequence entry."""
+    return content == "-" or content.startswith("- ")
+
+
+def _is_yaml_mapping_entry(content):
+    """Return true when a token line looks like ``key: value``."""
+    if content.startswith(("'", '"', "[", "{")):
+        return False
+    key, separator, remainder = content.partition(":")
+    if not separator or not key.strip():
+        return False
+    return not remainder or remainder.startswith(" ")
+
+
+def _parse_simple_yaml(text):
+    """Parse the YAML subset used by NeqSim catalogs and frontmatter.
+
+    Used only when PyYAML is unavailable. Supports nested mappings, block
+    sequences (indented or flush with their key), sequences of mappings,
+    inline ``[a, b]`` lists, quoted scalars and trailing comments.
+
+    @param text the YAML document text
+    @return the parsed mapping or sequence, or an empty dict when empty
+    """
+    tokens = _yaml_fallback_tokens(text)
+    if not tokens:
+        return {}
+    value, _ = _parse_yaml_block(tokens, 0, tokens[0][0])
+    return value
+
+
+def _parse_yaml_block(tokens, index, indent):
+    """Parse a mapping or sequence block starting at the given token index."""
+    if index >= len(tokens):
+        return {}, index
+    if _is_yaml_sequence_entry(tokens[index][1]):
+        return _parse_yaml_sequence(tokens, index, indent)
+    return _parse_yaml_mapping(tokens, index, indent)
+
+
+def _parse_yaml_sequence(tokens, index, indent):
+    """Parse a block sequence of scalars or mappings."""
+    items = []
+    while (index < len(tokens) and tokens[index][0] == indent
+           and _is_yaml_sequence_entry(tokens[index][1])):
+        dash_indent, content = tokens[index]
+        remainder = content[1:].strip()
+        index += 1
+        if not remainder:
+            if index < len(tokens) and tokens[index][0] > dash_indent:
+                child, index = _parse_yaml_block(
+                    tokens, index, tokens[index][0])
+                items.append(child)
+            else:
+                items.append("")
+            continue
+        if _is_yaml_mapping_entry(remainder):
+            # The inline key sits at the column where the dash content starts.
+            child_indent = dash_indent + len(content) - len(remainder)
+            nested = [(child_indent, remainder)]
+            while index < len(tokens) and tokens[index][0] > dash_indent:
+                nested.append(tokens[index])
+                index += 1
+            child, _ = _parse_yaml_block(nested, 0, child_indent)
+            items.append(child)
+        else:
+            items.append(_parse_scalar_value(_strip_yaml_comment(remainder)))
+    return items, index
+
+
+def _parse_yaml_mapping(tokens, index, indent):
+    """Parse a mapping block, recursing into nested mappings and sequences."""
+    mapping = {}
+    while index < len(tokens):
+        line_indent, content = tokens[index]
+        if line_indent != indent or _is_yaml_sequence_entry(content):
+            break
+        if ":" not in content:
+            index += 1
+            continue
+        key, value = content.split(":", 1)
+        key = key.strip()
+        value = _strip_yaml_comment(value.strip())
+        index += 1
+        if value:
+            mapping[key] = _parse_scalar_value(value)
+            continue
+        if index < len(tokens):
+            next_indent, next_content = tokens[index]
+            # A block sequence may be indented under its key or flush with it.
+            if next_indent > indent or (next_indent == indent
+                                        and _is_yaml_sequence_entry(next_content)):
+                child, index = _parse_yaml_block(tokens, index, next_indent)
+                mapping[key] = child
+                continue
+        mapping[key] = ""
+    return mapping, index
+
+
+def _strip_yaml_comment(value):
+    """Remove a trailing ``# comment`` from a scalar value."""
+    if not value:
+        return value
+    quote = value[0]
+    if quote in "\"'":
+        end = value.find(quote, 1)
+        return value[:end + 1] if end != -1 else value
+    marker = value.find(" #")
+    return value[:marker].rstrip() if marker != -1 else value
 
 
 def _parse_scalar_value(value):
@@ -322,18 +426,8 @@ def _extract_frontmatter(content):
     if yaml is not None:
         return yaml.safe_load(frontmatter) or {}
 
-    result = {}
-    for raw_line in frontmatter.splitlines():
-        if raw_line.startswith((" ", "\t")):
-            continue
-        line = raw_line.strip()
-        if not line or line.startswith("#") or ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        value = value.strip()
-        if value:
-            result[key.strip()] = _parse_scalar_value(value)
-    return result
+    parsed = _parse_simple_yaml(frontmatter)
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def _github_request(url, accept="application/vnd.github+json"):
@@ -728,16 +822,6 @@ def _clone_git_repository(entry, destination):
         used_branch = branch or ""
     return used_branch
 
-
-def _read_git_repository_file(entry, path):
-    """Read a file from a git repository through a temporary clone."""
-    with tempfile.TemporaryDirectory() as tmp:
-        repo_dir = Path(tmp) / "repo"
-        used_branch = _clone_git_repository(entry, repo_dir)
-        file_path = repo_dir / path
-        if not file_path.exists() or not file_path.is_file():
-            raise RuntimeError(f"Path not found in git source: {path}")
-        return file_path.read_bytes(), used_branch
 
 
 def _discover_git_repository_skills(repository):
@@ -1279,12 +1363,23 @@ def cmd_info(skills, args):
 
 
 def _install_from_local(skill, dest_file):
-    """Install a skill from a local file path or network share."""
+    """Install a skill from a local file path or network share.
+
+    Copies the whole package folder (source, tests, pyproject.toml) instead of
+    just SKILL.md when the skill ships an installable Python package next to
+    it, so the skill is runnable immediately without a separate manual step.
+    """
     import shutil
     src_path = Path(skill["path"])
     if not src_path.exists():
         print(f"  [!!] Source file not found: {src_path}")
         sys.exit(1)
+    src_dir = src_path.parent
+    if (src_dir / "pyproject.toml").exists():
+        dest_dir = dest_file.parent
+        shutil.copytree(str(src_dir), str(dest_dir), dirs_exist_ok=True)
+        print(f"  [OK] Copied package from: {src_dir}")
+        return
     shutil.copy2(str(src_path), str(dest_file))
     print(f"  [OK] Copied from: {src_path}")
 
@@ -1310,28 +1405,169 @@ def _install_from_url(skill, dest_file):
 
 
 def _install_from_github(skill, dest_file):
-    """Install a skill from a GitHub repo (public or private)."""
+    """Install a skill from a GitHub repo (public or private).
+
+    Downloads just SKILL.md for a markdown-only skill. When SKILL.md ships
+    alongside an installable Python package (a sibling ``pyproject.toml``),
+    downloads the whole package folder (source, tests, examples) instead, so
+    the skill is runnable immediately without a separate manual pip install.
+    """
     repo = skill.get("repo", "")
     path = skill.get("path", "SKILL.md")
     branch = skill.get("branch")
     if not repo:
         print(f"  [!!] No repo specified for '{skill.get('name')}'.")
         sys.exit(1)
+    auth = _github_entry_auth(skill)
+
+    folder = str(Path(path).parent).replace("\\", "/")
+    if folder and folder != ".":
+        try:
+            used_branch, tree_paths = _list_github_tree_paths(repo, branch=branch, auth=auth)
+        except Exception:
+            tree_paths = []
+            used_branch = branch
+        prefix = folder + "/"
+        package_files = [p for p in tree_paths if p.startswith(prefix)]
+        if any(p == prefix + "pyproject.toml" for p in package_files):
+            dest_dir = dest_file.parent
+            for rel_path in package_files:
+                content, _branch, raw_url = _fetch_github_bytes(
+                    repo, rel_path, branch=used_branch, auth=auth)
+                target = dest_dir / Path(rel_path).relative_to(folder)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(content)
+            skill["branch"] = used_branch
+            print(f"  [OK] Downloaded package: https://github.com/{repo}/tree/{used_branch}/{folder}")
+            return
 
     content, used_branch, raw_url = _fetch_github_bytes(
-        repo, path, branch=branch, auth=_github_entry_auth(skill))
+        repo, path, branch=branch, auth=auth)
     print(f"  Downloading: {raw_url}")
     dest_file.write_bytes(content)
     skill["branch"] = used_branch
 
 
 def _install_from_git(skill, dest_file):
-    """Install a skill from a git repository using configured git credentials."""
+    """Install a skill from a git repository using configured git credentials.
+
+    Copies the whole package folder instead of just SKILL.md when the skill
+    ships an installable Python package (a sibling ``pyproject.toml``), so the
+    skill is runnable immediately without a separate manual pip install.
+    """
+    import shutil
     path = skill.get("path", "SKILL.md")
-    content, used_branch = _read_git_repository_file(skill, path)
-    print(f"  Downloading via git: {_git_repository_url(skill)}:{path}")
-    dest_file.write_bytes(content)
-    skill["branch"] = used_branch
+    with tempfile.TemporaryDirectory() as tmp:
+        repo_dir = Path(tmp) / "repo"
+        used_branch = _clone_git_repository(skill, repo_dir)
+        source_file = repo_dir / path
+        if not source_file.exists() or not source_file.is_file():
+            raise RuntimeError(f"Path not found in git source: {path}")
+        source_dir = source_file.parent
+        if (source_dir / "pyproject.toml").exists():
+            dest_dir = dest_file.parent
+            shutil.copytree(str(source_dir), str(dest_dir), dirs_exist_ok=True)
+            print(f"  [OK] Downloaded package via git: {_git_repository_url(skill)}:{path.rsplit('/', 1)[0]}")
+        else:
+            dest_file.write_bytes(source_file.read_bytes())
+            print(f"  Downloading via git: {_git_repository_url(skill)}:{path}")
+        skill["branch"] = used_branch
+
+
+_INSTALLED_NEQSIM_VERSION = []  # single-slot cache; [] = not probed, [None] = absent
+
+
+def _installed_neqsim_version():
+    """Return the installed Python neqsim package version, or None.
+
+    Probed once per process in a subprocess so a broken/absent neqsim install
+    can never take the installer down with it.
+    """
+    if _INSTALLED_NEQSIM_VERSION:
+        return _INSTALLED_NEQSIM_VERSION[0]
+    version = None
+    try:
+        probe = subprocess.run(
+            [sys.executable, "-c",
+             "import importlib.metadata as m; print(m.version('neqsim'))"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if probe.returncode == 0:
+            version = probe.stdout.strip() or None
+    except Exception:
+        version = None
+    _INSTALLED_NEQSIM_VERSION.append(version)
+    return version
+
+
+def _parse_version(text):
+    """Return a comparable tuple for a dotted version, ignoring any suffix."""
+    parts = []
+    for chunk in str(text or "").split("."):
+        digits = ""
+        for ch in chunk:
+            if ch.isdigit():
+                digits += ch
+            else:
+                break
+        parts.append(int(digits) if digits else 0)
+    while len(parts) < 3:
+        parts.append(0)
+    return tuple(parts[:3])
+
+
+def _check_min_neqsim_version(skill, name):
+    """Warn when the installed NeqSim is older than the skill requires.
+
+    ``min_neqsim_version`` was previously recorded in the manifest but never
+    compared against anything, so a skill relying on a newer NeqSim API installed
+    silently and only failed later at run time. This surfaces the mismatch at
+    install time. Advisory: it warns and continues rather than blocking, because
+    a skill may still be usable and the user may upgrade afterwards.
+
+    @param skill the resolved catalog skill mapping
+    @param name the skill name, used in the message
+    @return True when compatible or unknown, False when a mismatch was reported
+    """
+    required = str(skill.get("min_neqsim_version", "") or "").strip()
+    if not required:
+        return True
+    installed = _installed_neqsim_version()
+    if not installed:
+        print(f"  [!!] '{name}' needs NeqSim >= {required}; no neqsim package detected.")
+        print(f"  Install it with: {sys.executable} -m pip install neqsim")
+        return False
+    if _parse_version(installed) < _parse_version(required):
+        print(f"  [!!] '{name}' needs NeqSim >= {required}, but {installed} is installed.")
+        print(f"  Upgrade with: {sys.executable} -m pip install --upgrade neqsim")
+        return False
+    return True
+
+
+def _pip_install_skill_package(dest_dir, name):
+    """Install a downloaded skill's Python package into the running interpreter.
+
+    Uses ``sys.executable`` -- whichever interpreter is running this installer
+    -- so the package lands in the same environment an agent will use. Never
+    fatal: a failed build (e.g. a missing system dependency) is reported with
+    a one-line manual fallback instead of aborting the whole install.
+
+    @param dest_dir the installed skill's local directory (contains pyproject.toml)
+    @param name the skill name, used only for progress/log messages
+    @return True if the package installed successfully, False otherwise
+    """
+    print(f"  Installing '{name}' Python package (pip install -e)...")
+    for target in (f"{dest_dir}[dev]", str(dest_dir)):
+        cmd = [sys.executable, "-m", "pip", "install", "-e", target, "--quiet"]
+        try:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            print(f"  [OK] Installed Python package for '{name}'.")
+            return True
+        except subprocess.CalledProcessError:
+            continue
+    print(f"  [!!] Could not pip install '{name}' automatically.")
+    print(f"  Run manually: {sys.executable} -m pip install -e \"{dest_dir}[dev]\"")
+    return False
 
 
 def cmd_install(skills, args):
@@ -1442,6 +1678,13 @@ def _install_skill_record(skill, args, manifest):
             print(f"  [!!] Downloaded content doesn't look like a SKILL.md file.")
             return False
 
+        # Auto-install the skill's own Python package (if any) so it is usable
+        # immediately, without a separate manual pip install step.
+        if (dest_dir / "pyproject.toml").exists():
+            _pip_install_skill_package(dest_dir, name)
+
+        neqsim_version_ok = _check_min_neqsim_version(skill, name)
+
         manifest[name] = {
             "path": str(dest_file),
             "source": skill.get("_source", "community"),
@@ -1456,6 +1699,7 @@ def _install_skill_record(skill, args, manifest):
             "tags": skill.get("tags", []),
             "author": skill.get("author", ""),
             "min_neqsim_version": skill.get("min_neqsim_version", ""),
+            "neqsim_version_ok": neqsim_version_ok,
             "installed_at": datetime.now(timezone.utc).isoformat(),
             "content_sha256": _sha256_file(dest_file),
         }

@@ -758,3 +758,34 @@ The focused regression compiles this API and verifies deterministic XML, real `R
 references, all four exchange-neutral primitive mappings, loss diagnostics, and rejection of empty
 `RepresentationGroup` placeholders. External DEXPIViewer has not been rerun for this adapter, so
 no clean-validation or interoperability claim is made.
+
+### Inspect supported graphical export equivalence
+
+`Dexpi20GraphicalProjectionAssessment` compares the controlled source projection with the exact
+native DEXPI XML bytes after export. The report records the inspected file's full SHA-256, stable
+primitive identities, represented external keys, mapped geometry and styles, diagram metadata and
+bounds, and explicit deterministic approximations. It fails closed for missing, unexpected,
+duplicate, unresolved, or changed supported content.
+
+```java
+Dexpi20GraphicalProjectionReport exportReport = Dexpi20GraphicalProjectionWriter.write(
+    processSystem,
+    projection,
+    outputFile,
+    Dexpi20PlantExportOptions.builder(metadata).build());
+
+Dexpi20GraphicalProjectionAssessment.Report assessment =
+    Dexpi20GraphicalProjectionAssessment.assess(projection, outputFile.toPath());
+
+if (!exportReport.isComplete() || !assessment.isSupportedProjectionEquivalent()) {
+  throw new IllegalStateException(assessment.toJson());
+}
+```
+
+This assessment verifies only the generic Core mapping that NeqSim supports. Solid polygon fill
+retains its state but not its source colour, numeric dash arrays map to the generic `Dash`
+enumeration, and required missing colours fall back to black; each confirmed approximation remains
+a warning in the machine-readable evidence. The assessment is not a DEXPI reader, profile-symbol
+qualification, external-validator result, ISO 10628 claim, or accountable drawing approval.
+Negative regressions corrupt a stable primitive identity and a `Represents` reference to prove that
+the gate detects semantic damage rather than merely accepting parseable XML.

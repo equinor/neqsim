@@ -144,7 +144,7 @@ Check the Actions tab in GitHub for build logs. Common issues:
 
 Ensure you're using relative paths without the `/docs` prefix:
 - ✅ `[Thermo](thermo/)`
-- ❌ `[Thermo](/docs/thermo/)`
+- ❌ `[Thermo](/docs/thermo/)` — the `/docs` source-directory prefix is not part of the published URL
 
 ### Images Not Loading
 

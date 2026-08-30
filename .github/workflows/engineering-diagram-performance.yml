@@ -1,0 +1,64 @@
+name: Engineering diagram performance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/engineering-diagram-performance.yml"
+      - "devtools/baselines/engineering_diagram_performance.json"
+      - "devtools/validate_engineering_diagram_performance.py"
+      - "devtools/test_validate_engineering_diagram_performance.py"
+      - "src/main/java/neqsim/process/engineering/**"
+      - "src/main/java/neqsim/process/processmodel/**"
+      - "src/test/java/neqsim/process/processmodel/dexpi/**"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Run benchmark
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=EngineeringDiagramPerformanceBenchmarkTest
+          -Dgroups=benchmark
+          -DexcludedTestGroups=
+          -Djacoco.skip=true
+          test
+
+      - name: Validate benchmark evidence
+        run: >-
+          python devtools/validate_engineering_diagram_performance.py
+          --report target/engineering-diagram-performance.json
+          --budget devtools/baselines/engineering_diagram_performance.json
+
+      - name: Test evidence validator
+        run: python -m unittest devtools.test_validate_engineering_diagram_performance
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: engineering-diagram-performance
+          path: target/engineering-diagram-performance.json
+          if-no-files-found: error
+

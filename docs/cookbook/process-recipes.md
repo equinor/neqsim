@@ -424,4 +424,4 @@ print(f"Adjusted feed flow: {feed.getFlowRate('kg/hr'):.2f} kg/hr")
 
 - **[Process Equipment Documentation](../process/equipment/README.md)** - All equipment types
 - **[Optimization Guide](../process/optimization/README.md)** - Process optimization
-- **[JavaDoc: ProcessSystem](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/processmodel/ProcessSystem.html)** - Complete API
+- **[JavaDoc: ProcessSystem](https://equinor.github.io/neqsim/javadoc/neqsim/process/processmodel/ProcessSystem.html)** - Complete API

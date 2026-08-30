@@ -7,7 +7,8 @@ description: Synthetic public simple, branched, and multi-area regression cases 
 
 NeqSim carries three synthetic public reference cases as executable regression evidence for the
 coordinated professional PFD and DEXPI/P&ID campaigns. They establish a reproducible acceptance
-baseline without introducing a new production API or changing the legacy diagram exporters.
+baseline and exercise the additive `EngineeringDiagramDelivery` facade without changing the legacy
+diagram exporters.
 
 | Case | Source object | Topology | Material connections |
 | --- | --- | --- | ---: |
@@ -37,21 +38,96 @@ provenance, expected counts, engineering state, and qualification boundaries.
 - deterministic governed P&ID proposal models whose elements remain `REVIEW_REQUIRED` and whose
   completeness evidence remains not fit for construction.
 
+`EngineeringDiagramDeliveryTest` reuses the same fixtures to check fail-closed single-area and
+multi-area delivery of controlled semantic JSON, assessed DEXPI, native SVG/PDF, content hashes,
+visual fingerprints, and structured projection losses.
+
+`DexpiVisualQualityAssessmentTest` expands the fixed rendering benchmark with the same simple,
+branched, and per-area cases plus a mixer/heater/splitter/recycle/control-loop case and an isolated
+empty topology placeholder. Every sheet is exported only through NeqSim's Proteus-compatible DEXPI
+writer and rendered from its actual graphical primitives. The suite checks:
+
+- exact Proteus `SchemaVersion 4.1.1` reporting without describing the document as native DEXPI
+  XML 2.0;
+- stable catalogue references, component identities, locations, line/curve/text primitives, SVG
+  identity projection, and SHA-256 fingerprints;
+- drawing bounds, duplicate IDs, minimum text-height risks, missing symbols, and empty SVG output;
+- exactly one source-to-destination flow-direction arrow for every routed material segment, with
+  solid fill preserved in the rendered SVG;
+- every measurement function having a resolvable process-segment, nozzle, mount, piping-component,
+  or equipment sensing location;
+- central/control-room symbols and matching location metadata for controller functions, plus a
+  real tagged final element and directed actuating signal before a loop is classified complete;
+- synthesized measurement proposals being both machine-identifiable and visibly marked `[PROP]`,
+  without synthesized controllers or command lines;
+- every level measurement resolving to a dedicated tank/separator sensing tap rather than a process
+  inlet or outlet nozzle;
+- every routed line exposing source-backed nominal size, an explicitly labelled model inside
+  diameter, or a visible `SIZE?` missing-data state;
+- every detected endpoint-size change having a `PipeReducer` with distinct flow-in/out sizes and
+  connection points, and every explicit piping-class or insulation change having a `PropertyBreak`;
+- deterministic report JSON and SVG output across repeated exports; and
+- preservation of an intentionally unconfigured stream through `ProcessSystem.run()` without
+  inventing a fluid state.
+
+The structural gate complements, but does not replace, full-sheet and readable-detail PNG visual
+inspection. It distinguishes renderer/layout defects from missing source-model engineering data.
+
+The flow-arrow regression records routed-segment, source-arrow, and rendered-filled-arrow counts.
+Missing, duplicate, or renderer-dropped arrows produce stable findings instead of relying on visual
+memory. This is a directional-readability gate, not a standards-conformance determination.
+
+The first full-sheet benchmark inspection found that instrument bubbles intersected full equipment
+data bars and sat outside the generated battery limit. The layout now reserves 55 mm above an
+equipment centre for instruments and expands the battery-limit envelope through the highest bubble;
+an exact coordinate regression protects both clearances. Re-rendered simple, branched, and
+recycle/control cases show separated bubbles and data bars inside the boundary.
+
+A subsequent whole-sheet instrumentation review found generic measuring lines terminating at
+equipment centres, controller bubbles using field-location symbols, and synthesized controller
+signals ending in empty process space. Measurements now resolve to process segments or nozzles,
+their bubble groups follow the sensing-point lane outside equipment data bars, controller location
+symbols are explicit, and closed-loop actuation is emitted only for an attached final control
+element. The assessment records measurement, sensing-location, controller, complete-loop,
+incomplete-loop, and synthesized-proposal counts so these defects fail deterministically in future
+diagram work.
+
+The compatibility metrics from the first topology review remain available alongside the stricter
+DEXPI-oriented metrics: transmitter/controller counts, resolved and missing measurement attachments,
+measuring-line validity, closed/incomplete loops, actuating-signal validity, and synthesized proposal
+counts. Missing source data is reported separately from renderer/layout failures; the exporter does
+not invent a nozzle, controller, valve, or operational intent to make a proposal appear complete.
+
+The same fail-closed rule now applies to piping data. Hydraulic inside diameter remains labelled
+`ID ... mm`, never silently converted to DN/NPS. Missing nominal-size source data remains visible as
+`SIZE?`. The assessment records line-size provenance, missing-size states, detected size/property
+changes, reducers, and property breaks. A line-size transition without a fitting, a reducer without
+two distinct endpoint sizes and connection points, or a property change without a break marker is
+an error. Full-sheet inspection additionally checks that stream numbers, line designations, fitting
+labels, and equipment annotations remain legible and non-overlapping.
+
+Recycle connectivity is projected when the recycle block exposes a configured outlet through the
+standard equipment outlet API and a downstream unit consumes that same stream identity. The benchmark
+asserts the directed recycle-to-mixer connection in the Proteus XML before rendering. The writer does
+not infer a return line from convergence state: an unconfigured outlet remains absent, and no fluid
+state or connection is invented.
+
 Run the focused regression with the repository Maven wrapper:
 
 ```bash
-./mvnw -Dtest=EngineeringDiagramReferenceCasesTest test
+./mvnw -Dtest=EngineeringDiagramReferenceCasesTest,EngineeringDiagramDeliveryTest,DexpiVisualQualityAssessmentTest test
 ```
 
 ## Explicit limitations
 
 The cases do not claim ISO 10628 conformance, DEXPI EV certification, or interoperability with a
-named commercial CAE product. Native DEXPI Process export remains `ProcessSystem`-only and reports
-multi-area hierarchy, controlled document/sheet semantics, and drawing graphics as unsupported.
-The native professional SVG/PDF drawing-set renderer is also not yet available.
+named commercial CAE product. Native DEXPI Process export remains area-scoped. The multi-area
+delivery is a deterministic NeqSim package of independently assessed native area files plus explicit
+plant-wide manifest evidence; it is not a native DEXPI whole-plant profile. Controlled document and
+native SVG/PDF projections are delivered beside DEXPI and remain separate semantic and graphical
+views.
 
 The Proteus per-area files are compatibility sheets, not controlled drawings with paired off-page
 references and accountable revision approval. Generated P&ID content is a proposal until piping,
 valve, nozzle, instrument, safeguard, design-data, safety-lifecycle, and discipline reviews are
 completed by accountable engineers.
-

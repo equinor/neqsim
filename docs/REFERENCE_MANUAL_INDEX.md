@@ -154,6 +154,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Document                  | Path                                                               | Description                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | Thermodynamic Models      | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models.md) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage  |
+| Solid Helmholtz Models    | [docs/thermo/solid_helmholtz_models.md](thermo/solid_helmholtz_models.md) | Experimental pure solid argon and para-hydrogen state and freezing-point workflows with validity boundaries |
 | Mercury Thermodynamics    | [docs/thermo/mercury_thermodynamics.md](thermo/mercury_thermodynamics.md) | Mercury-focused SRK-TwuCoon-Statoil-EOS usage, TPflash setup, and thesis-linked BIP/correlation guidance |
 | **Søreide-Whitson Model** | [docs/thermo/SoreideWhitsonModel.md](thermo/SoreideWhitsonModel.md)   | **Gas solubility in brine** - Modified PR EoS with salinity effects, used in NeqSimLive for produced water emissions |
 | GERG-2008                 | [docs/thermo/gerg2008_eoscg.md](thermo/gerg2008_eoscg.md)             | GERG-2008, GERG-2008-H2, GERG-2008-NH3, and EOS-CG equations of state                                               |
@@ -277,12 +278,15 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Streams            | [docs/process/equipment/streams.md](process/equipment/streams.md)                   | Stream models             |
 | Mixers/Splitters   | [docs/process/equipment/mixers_splitters.md](process/equipment/mixers_splitters.md) | Mixer and splitter models |
 | Equipment Overview | [docs/process/equipment/README.md](process/equipment/README.md)                           | Equipment module overview |
+| Complete Equipment Catalog | [docs/process/equipment/equipment_catalog.md](process/equipment/equipment_catalog.md) | Source-generated inventory of every concrete `ProcessEquipmentInterface` class and its maintained guide |
+| Energy Conversion Equipment | [docs/process/equipment/energy_conversion.md](process/equipment/energy_conversion.md) | Motors, generators, converters, typed utility sources and consumers, and energy-network solvers |
 
 ### Chapter 13b: Bio-Processing Unit Operations
 
 | Document             | Path                                                   | Description                                                                                                                                                                                                 |
 | -------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bio-Processing Guide | [docs/process/bioprocessing.md](process/bioprocessing.md) | **Reactors, fermenters, enzyme treatment, solid-liquid separators, liquid-liquid extraction, multi-effect evaporators, dryers, crystallizers — mathematical models, design equations, simulation examples** |
+| Solid Handling Equipment | [docs/process/equipment/solid_handling.md](process/equipment/solid_handling.md) | Feedstock preparation, dewatering, filtration, pressing, drying, evaporation, crystallization, and mass/energy closure |
 
 ### Chapter 14: Separation Equipment
 
@@ -305,6 +309,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes.md)             | Membrane equipment                                                                                                                                                                                                 |
 | Filters            | [docs/process/equipment/filters.md](process/equipment/filters.md)                 | Oil and gas filter types, beta-ratio capture, measured/flow-scaled/Ergun pressure drop, dynamic loading, bypass, sulfur `S8` capture, and mechanical design                                                            |
 | Water Treatment    | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment.md) | **Hydrocyclones (physics-based d50, DSD integration, PDR model, liner sizing, OSPAR compliance, ASME VIII mechanical design), GasFlotationUnit (IGF/DGF, per-stage efficiency, reject flow)**, produced water treatment trains, OIW limits |
+| Black-Oil Separator | [docs/process/equipment/black_oil_separator.md](process/equipment/black_oil_separator.md) | `SystemBlackOil` pressure-temperature separation with oil, free-gas, and water products for `ProcessSystem` |
 
 ### Chapter 15: Rotating Equipment
 
@@ -773,7 +778,7 @@ Comprehensive operational risk simulation framework for equipment failure analys
 | **Reliability Data Guide**     | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE.md)                 | Multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), CSV format  |
 | **Physics-Based Integration**  | [docs/risk/PHYSICS_BASED_RISK_INTEGRATION.md](risk/PHYSICS_BASED_RISK_INTEGRATION.md) | **Integration of physics-based models with risk simulation for dynamic failure analysis** |
 
-### Chapter 35a: Advanced Risk Framework (**NEW**)
+### Chapter 35a: Advanced Risk Framework
 
 Extended risk analysis capabilities implementing P1-P7 priority improvements for oil & gas industry applications.
 
@@ -1023,8 +1028,8 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Document                          | Path                                                                                                                       | Description                                                             |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Field Development Overview        | [docs/fielddevelopment/README.md](fielddevelopment/README.md)                                                                       | Field development module overview                                       |
-| **Digital Field Twin**            | [docs/fielddevelopment/DIGITAL_FIELD_TWIN.md](fielddevelopment/DIGITAL_FIELD_TWIN.md)                                         | **NEW** Comprehensive architecture for lifecycle consistency            |
-| **Mathematical Reference**        | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE.md)                                 | **NEW** Mathematical foundations for all calculations                   |
+| **Digital Field Twin**            | [docs/fielddevelopment/DIGITAL_FIELD_TWIN.md](fielddevelopment/DIGITAL_FIELD_TWIN.md)                                         | Comprehensive architecture for lifecycle consistency            |
+| **Mathematical Reference**        | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE.md)                                 | Mathematical foundations for all calculations                   |
 | Field Development API Guide      | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE.md)                                                           | Current concept inputs, screening KPIs, option ranking, units, and boundaries |
 | **Integrated Framework**          | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) | PVT→Reservoir→Well→Process integration guide                            |
 | **Decision Engine Workflows**      | [docs/fielddevelopment/DECISION_ENGINE_WORKFLOWS.md](fielddevelopment/DECISION_ENGINE_WORKFLOWS.md)                           | Tieback, greenfield, portfolio, process, reservoir, and reporting workflows |
@@ -1115,9 +1120,9 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | **Field Development Decision Engine**     | [examples/notebooks/field_development_decision_engine.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_decision_engine.ipynb) | **Concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables** |
 | **Field Development Process Coupling**    | [examples/notebooks/field_development_process_reservoir_coupling.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_process_reservoir_coupling.ipynb) | **Tieback route networks, gathering allocation, process utility generation, and VFP/schedule export** |
 | **Host Tie-In Capacity and Holdback**     | [examples/notebooks/host_tie_in_capacity_and_holdback.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/host_tie_in_capacity_and_holdback.ipynb) | **Brownfield host capacity, satellite holdback, process-equipment bottlenecks, and debottleneck value** |
-| **Multi-Scenario VFP Tutorial**           | [docs/examples/MultiScenarioVFP_Tutorial.ipynb](examples/MultiScenarioVFP_Tutorial.md)                            | **VFP generation with varying GOR/water cut scenarios**                                                            |
-| **Production System Bottleneck Analysis** | [docs/examples/ProductionSystem_BottleneckAnalysis.ipynb](examples/ProductionSystem_BottleneckAnalysis.md)        | **Multi-well system optimization, bottleneck identification, and well prioritization**                             |
-| **Integrated Production & Risk Analysis** | [docs/examples/IntegratedProductionRiskAnalysis.ipynb](examples/IntegratedProductionRiskAnalysis.md)              | **Complete operational workflow combining bottleneck analysis with risk simulation, Monte Carlo, and risk matrix** |
+| **Multi-Scenario VFP Tutorial**           | [docs/examples/MultiScenarioVFP_Tutorial.md](examples/MultiScenarioVFP_Tutorial.md)                            | **VFP generation with varying GOR/water cut scenarios**                                                            |
+| **Production System Bottleneck Analysis** | [docs/examples/ProductionSystem_BottleneckAnalysis.md](examples/ProductionSystem_BottleneckAnalysis.md)        | **Multi-well system optimization, bottleneck identification, and well prioritization**                             |
+| **Integrated Production & Risk Analysis** | [docs/examples/IntegratedProductionRiskAnalysis.md](examples/IntegratedProductionRiskAnalysis.md)              | **Complete operational workflow combining bottleneck analysis with risk simulation, Monte Carlo, and risk matrix** |
 | **LNG Heat Exchanger Demo**               | [examples/notebooks/LNGHeatExchanger_ComprehensiveDemo.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/LNGHeatExchanger_ComprehensiveDemo.ipynb) | **Comprehensive BAHX demo: composite curves, exergy, adaptive zones, Manglik-Bergles, transient cool-down, core sizing, freeze-out, maldistribution, mechanical design, cost estimation, SMR cycle** |
 | **LNG Ageing Basics**                     | [examples/notebooks/lng_ageing_basics.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/lng_ageing_basics.ipynb)                                   | **Single-tank LNG ageing simulation: composition evolution, BOG, Wobbe index, voyage profiles** |
 | **LNG Ageing Advanced**                   | [examples/notebooks/lng_ageing_advanced.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/lng_ageing_advanced.ipynb)                               | **Advanced LNG ageing: tank geometry, sloshing, methane number, rollover detection, multi-zone heat transfer** |
@@ -1136,7 +1141,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 | Document               | Path                                                                            | Description                                          |
 | ---------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP.md)                                | **NEW** Enable GitHub Pages for hosted documentation |
+| **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP.md)                                | Enable GitHub Pages for hosted documentation |
 | Reference Manual       | [docs/manual/neqsim_reference_manual.html](manual/neqsim_reference_manual.html) | Interactive reference manual                         |
 | Documentation Index    | [docs/index.md](index.md)                                                          | GitHub Pages home page                               |
 
@@ -1149,6 +1154,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Document                   | Path                                                                                                       | Description                                                 |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Chemical Reactions         | [docs/chemicalreactions/README.md](chemicalreactions/README.md)                                                     | Chemical reactions module                                   |
+| CO2 transport reaction kinetics | [docs/chemicalreactions/co2_transport_reaction_kinetics.md](chemicalreactions/co2_transport_reaction_kinetics.md) | Qualified kinetic evidence and Damköhler transport-timescale screening |
 | Sulfur Deposition Analysis | [docs/chemicalreactions/sulfur_deposition_analysis.md](chemicalreactions/sulfur_deposition_analysis.md)       | Sulfur formation, solubility, deposition, and FeS corrosion |
 | Chemistry & Integrity      | [docs/chemistry/index.md](chemistry/index.md)                                                                      | Open standards-traceable chemical integrity stack (scale, corrosion, scavengers, RCA, MCP) |
 | Electrolyte Scale (Davies) | [docs/chemistry/electrolyte_scale.md](chemistry/electrolyte_scale.md)                                         | Davies SI math, ion conventions, North-Sea worked example   |
@@ -1179,28 +1185,34 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | --------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Utilities                   | [docs/util/README.md](util/README.md)                                                 | Utility functions                                                                    |
 | Unit Conversion             | [docs/util/unit_conversion.md](util/unit_conversion.md)                         | Unit conversion guide                                                                |
-| **Unit Conversion Recipes** | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes.md) | **NEW** Quick reference for all supported unit strings                               |
-| **Optimizer Guide**         | [docs/util/optimizer_guide.md](util/optimizer_guide.md)                         | **NEW** Comprehensive optimization framework with BFGS, Pareto, sensitivity analysis |
+| **Unit Conversion Recipes** | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes.md) | Quick reference for all supported unit strings                               |
+| **Optimizer Guide**         | [docs/util/optimizer_guide.md](util/optimizer_guide.md)                         | Comprehensive optimization framework with BFGS, Pareto, sensitivity analysis |
+
+### Appendix E: Wiki Reference
+
+| Document      | Path                         | Description        |
+| ------------- | ---------------------------- | ------------------ |
+| Wiki Overview | [docs/wiki/README.md](wiki/README.md) | Wiki documentation |
 
 ### Appendix F: Process Design Templates
 
 | Document            | Path                                                                     | Description                                                                 |
 | ------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| **Templates Guide** | [docs/process/design/templates_guide.md](process/design/templates_guide.md) | **NEW** Pre-built process templates (compression, dehydration, CO2 capture) |
+| **Templates Guide** | [docs/process/design/templates_guide.md](process/design/templates_guide.md) | Pre-built process templates (compression, dehydration, CO2 capture) |
 
 ### Appendix G: Mechanical Design Standards
 
 | Document                | Path                                                                                                   | Description                                                 |
 | ----------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide.md) | **NEW** TEMA shell and tube heat exchanger design standards |
-| **Thermal-Hydraulic Design** | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design.md) | **NEW** Tube/shell HTC (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops, LMTD correction, vibration screening, rating mode |
-| **Two-Phase Heat Transfer** | [docs/process/mechanical_design/two_phase_heat_transfer.md](process/mechanical_design/two_phase_heat_transfer.md) | **NEW** Shah condensation, Chen/Gungor-Winterton boiling, Friedel/MSH two-phase pressure drop, Ebert-Panchal fouling, incremental zone analysis, tube inserts |
+| **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide.md) | TEMA shell and tube heat exchanger design standards |
+| **Thermal-Hydraulic Design** | [docs/process/mechanical_design/thermal_hydraulic_design.md](process/mechanical_design/thermal_hydraulic_design.md) | Tube/shell HTC (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops, LMTD correction, vibration screening, rating mode |
+| **Two-Phase Heat Transfer** | [docs/process/mechanical_design/two_phase_heat_transfer.md](process/mechanical_design/two_phase_heat_transfer.md) | Shah condensation, Chen/Gungor-Winterton boiling, Friedel/MSH two-phase pressure drop, Ebert-Panchal fouling, incremental zone analysis, tube inserts |
 
 ### Appendix H: Cookbook (Quick Recipes)
 
 | Document               | Path                                                                       | Description                                         |
 | ---------------------- | -------------------------------------------------------------------------- | --------------------------------------------------- |
-| **Cookbook Index**     | [docs/cookbook/index.md](cookbook/index.md)                                   | **NEW** Quick copy-paste recipes for common tasks   |
+| **Cookbook Index**     | [docs/cookbook/index.md](cookbook/index.md)                                   | Quick copy-paste recipes for common tasks   |
 | Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes.md) | Fluids, flash, properties, phase envelopes          |
 | Process Recipes        | [docs/cookbook/process-recipes.md](cookbook/process-recipes.md)               | Separators, compressors, heat exchangers            |
 | Pipeline Recipes       | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes.md)             | Pressure drop, multiphase flow                      |
@@ -1210,41 +1222,16 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 | Document                  | Path                                                   | Description                          |
 | ------------------------- | ------------------------------------------------------ | ------------------------------------ |
-| **Troubleshooting Guide** | [docs/troubleshooting/index.md](troubleshooting/index.md) | **NEW** Solutions to common problems |
+| **Troubleshooting Guide** | [docs/troubleshooting/index.md](troubleshooting/index.md) | Solutions to common problems |
 
-### Appendix E: Wiki Reference
+## Index coverage and maintenance
 
-| Document      | Path                         | Description        |
-| ------------- | ---------------------------- | ------------------ |
-| Wiki Overview | [docs/wiki/README.md](wiki/README.md) | Wiki documentation |
+This page is a curated navigation surface, not a hand-counted inventory. Repository CI builds the
+search index from every publishable documentation source and reports the audited Markdown and
+standalone HTML totals. Use the site search when a topic is not listed here.
 
----
-
-## Document Statistics
-
-| Category               | Count   |
-| ---------------------- | ------- |
-| Wiki/Tutorials         | 60      |
-| Thermodynamics         | 26      |
-| Process Simulation     | 49      |
-| Safety Systems         | 18      |
-| **Risk Simulation**    | **13**  |
-| Field Development      | 11      |
-| Integration/AI         | 12      |
-| Pipeline/Flow          | 17      |
-| PVT/Reservoir          | 15      |
-| Standards              | 6       |
-| Development            | 11      |
-| Statistics             | 4       |
-| Examples               | 19      |
-| **Optimization**       | **5**   |
-| **Templates & Design** | **2**   |
-| **Quickstart Guides**  | **4**   |
-| **Cookbook**           | **6**   |
-| **Tutorials/Learning** | **2**   |
-| **Troubleshooting**    | **1**   |
-| Other                  | 24      |
-| **Total**              | **303** |
+The index is maintained by topic and source path. Entries do not carry date-sensitive "new"
+badges; version history and merge dates remain available in Git.
 
 ---
 
@@ -1261,4 +1248,4 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 ---
 
-*This index was updated after comprehensive documentation review. Last updated: February 2026*
+*Curated index entries are validated against repository source paths by CI.*
