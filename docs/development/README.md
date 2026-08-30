@@ -3,8 +3,6 @@ title: Development Documentation
 description: Guides for developers contributing to NeqSim, extending models, and creating custom components.
 ---
 
-# Development Documentation
-
 Guides for developers contributing to NeqSim, extending the library with new models, and integrating with Python.
 
 ---
