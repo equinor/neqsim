@@ -65,6 +65,29 @@ The flow-arrow regression records routed-segment, source-arrow, and rendered-fil
 Missing, duplicate, or renderer-dropped arrows produce stable findings instead of relying on visual
 memory. This is a directional-readability gate, not a standards-conformance determination.
 
+Instrumentation topology is assessed independently from bubble placement. Stream-based pressure,
+temperature, and flow measurements attach their measuring line to the registered process nozzle for
+the measured stream; a generic line to the equipment centre or data annotation is rejected.
+Controllers use the shared-control-system/panel bubble convention. A command signal and closed-loop
+status are emitted only when the same controller is attached to an actual NeqSim equipment function,
+such as a throttling valve. A standalone controller remains a measurement-only loop and produces the
+structured `CONTROL_FINAL_ELEMENT_SOURCE_DATA_MISSING` proposal diagnostic instead of an actuating
+line to empty space.
+
+The pyDEXPI compatibility exporter retains its existing optional automatic instrumentation synthesis.
+Synthesized bubbles now carry `InstrumentationSource=SYNTHESIZED_PROPOSAL`,
+`EngineeringStatus=PROPOSED`, and a visible `PROP` marker. They do not claim a closed loop when the
+source `ProcessSystem` has no manipulated element. Level taps and other accountable design details
+that cannot be derived from current source identities remain explicit missing-source-data diagnostics;
+the writer does not invent nozzles, valve functions, or operational intent.
+
+The machine-readable assessment records transmitter, controller, process-attachment, missing-source,
+closed/incomplete-loop, actuating-signal, invalid-signal, and synthesized-proposal counts. The fixed
+benchmark covers a nozzle-attached transmitter, an explicit measurement-only controller, a controller
+attached to a real throttling valve, malformed unresolved topology, and automatic proposal provenance.
+These rules are semantic and visual-quality gates for an engineering proposal, not ISA-5.1
+certification or ISO/IEC conformance.
+
 The first full-sheet benchmark inspection found that instrument bubbles intersected full equipment
 data bars and sat outside the generated battery limit. The layout now reserves 55 mm above an
 equipment centre for instruments and expands the battery-limit envelope through the highest bubble;
