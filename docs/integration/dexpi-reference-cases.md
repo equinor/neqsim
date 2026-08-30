@@ -52,12 +52,18 @@ writer and rendered from its actual graphical primitives. The suite checks:
 - stable catalogue references, component identities, locations, line/curve/text primitives, SVG
   identity projection, and SHA-256 fingerprints;
 - drawing bounds, duplicate IDs, minimum text-height risks, missing symbols, and empty SVG output;
+- exactly one source-to-destination flow-direction arrow for every routed material segment, with
+  solid fill preserved in the rendered SVG;
 - deterministic report JSON and SVG output across repeated exports; and
 - preservation of an intentionally unconfigured stream through `ProcessSystem.run()` without
   inventing a fluid state.
 
 The structural gate complements, but does not replace, full-sheet and readable-detail PNG visual
 inspection. It distinguishes renderer/layout defects from missing source-model engineering data.
+
+The flow-arrow regression records routed-segment, source-arrow, and rendered-filled-arrow counts.
+Missing, duplicate, or renderer-dropped arrows produce stable findings instead of relying on visual
+memory. This is a directional-readability gate, not a standards-conformance determination.
 
 The first full-sheet benchmark inspection found that instrument bubbles intersected full equipment
 data bars and sat outside the generated battery limit. The layout now reserves 55 mm above an
