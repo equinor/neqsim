@@ -7,6 +7,7 @@ import unittest
 
 DOCS = Path(__file__).resolve().parent
 PRIMARY_HUB = DOCS / "README.md"
+SITE_HOME = DOCS / "index.md"
 REFERENCE_INDEX = DOCS / "REFERENCE_MANUAL_INDEX.md"
 PACKAGE_LANDING_PAGES = (
     DOCS / "fluidmechanics/README.md",
@@ -47,6 +48,7 @@ class PackageLandingPageDocumentationContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.primary_hub = PRIMARY_HUB.read_text(encoding="utf-8")
+        cls.site_home = SITE_HOME.read_text(encoding="utf-8")
         cls.reference_index = REFERENCE_INDEX.read_text(encoding="utf-8")
 
     def test_package_hubs_have_searchable_front_matter(self):
@@ -68,7 +70,11 @@ class PackageLandingPageDocumentationContractTest(unittest.TestCase):
         for page in PACKAGE_LANDING_PAGES:
             with self.subTest(page=page):
                 package_directory = page.parent.name
-                self.assertIn("({}/)".format(package_directory), self.primary_hub)
+                source_link = "({}/)".format(package_directory)
+                published_link = '"{}/README.html"'.format(package_directory)
+                self.assertTrue(
+                    source_link in self.primary_hub or published_link in self.site_home
+                )
                 self.assertIn("{}/README.md".format(package_directory), self.reference_index)
 
 
