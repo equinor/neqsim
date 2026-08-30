@@ -54,9 +54,9 @@ public class ChemistryRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls()
       .serializeSpecialFloatingPointValues().create();
 
-  private static final List<String> SUPPORTED_ANALYSES = Collections.unmodifiableList(Arrays.asList("electrolyteScale",
-      "multiMineralScale", "mechanisticCorrosion", "langmuirInhibitor", "packedBedScavenger",
-      "electrolyteScaleEquilibrium", "pitzerQualification"));
+  private static final List<String> SUPPORTED_ANALYSES = Collections
+      .unmodifiableList(Arrays.asList("electrolyteScale", "multiMineralScale", "mechanisticCorrosion",
+          "langmuirInhibitor", "packedBedScavenger", "electrolyteScaleEquilibrium", "pitzerQualification"));
 
   /**
    * Private constructor — static utility class.
@@ -262,7 +262,6 @@ public class ChemistryRunner {
     return JsonParser.parseString(bed.toJson()).getAsJsonObject();
   }
 
-
   /**
    * Runs the authoritative single-pure-mineral electrolyte equilibrium operation and reports its scientific gates.
    *
@@ -316,19 +315,16 @@ public class ChemistryRunner {
       electrolyteCpa.setMultiPhaseCheck(true);
       system = electrolyteCpa;
     } else {
-      throw new IllegalArgumentException("Unknown electrolyte model '" + model
-          + "'; use pitzer or electrolyte-cpa");
+      throw new IllegalArgumentException("Unknown electrolyte model '" + model + "'; use pitzer or electrolyte-cpa");
     }
 
     SaltPrecipitationResult solid = new ThermodynamicOperations(system).precipitateScale(mineral);
     JsonObject phaseState = validateAqueousPhaseState(system);
     boolean numericalGatesPass = Double.isFinite(solid.getInitialSaturationRatio())
-        && Double.isFinite(solid.getFinalSaturationRatio())
-        && solid.getFinalSaturationRatio() > 0.0
+        && Double.isFinite(solid.getFinalSaturationRatio()) && solid.getFinalSaturationRatio() > 0.0
         && Double.isFinite(solid.getPrecipitatedMoles()) && solid.getPrecipitatedMoles() >= 0.0
         && Double.isFinite(solid.getPrecipitatedMassGrams()) && solid.getPrecipitatedMassGrams() >= 0.0
-        && solid.getComplementarityViolation() <= 1.0e-6
-        && solid.getMaximumIonBalanceResidualMoles() <= 1.0e-10
+        && solid.getComplementarityViolation() <= 1.0e-6 && solid.getMaximumIonBalanceResidualMoles() <= 1.0e-10
         && phaseState.get("normalizedNonNegative").getAsBoolean()
         && Math.abs(phaseState.get("chargeResidual_molPerKgWater").getAsDouble()) <= 1.0e-10;
     if (!numericalGatesPass) {
@@ -400,9 +396,9 @@ public class ChemistryRunner {
   private static void requireElectroneutralInput(PhaseInterface phase, Map<String, Double> components) {
     JsonObject validation = validateElectroneutrality(phase, components);
     if (!validation.get("valid").getAsBoolean()) {
-      throw new IllegalArgumentException("Electrolyte input is not electroneutral: residual "
-          + validation.get("chargeResidual_mol").getAsDouble() + " mol exceeds tolerance "
-          + validation.get("chargeTolerance_mol").getAsDouble() + " mol");
+      throw new IllegalArgumentException(
+          "Electrolyte input is not electroneutral: residual " + validation.get("chargeResidual_mol").getAsDouble()
+              + " mol exceeds tolerance " + validation.get("chargeTolerance_mol").getAsDouble() + " mol");
     }
   }
 
@@ -412,8 +408,8 @@ public class ChemistryRunner {
     } else if ("phreeqc-catalog".equals(selector)) {
       system.applyCompletePhreeqcPitzerCatalogParameters();
     } else {
-      throw new IllegalArgumentException("Unknown scale Pitzer dataset selector '" + selector
-          + "'; use phreeqc-ca-mg-cl-so4 or phreeqc-catalog");
+      throw new IllegalArgumentException(
+          "Unknown scale Pitzer dataset selector '" + selector + "'; use phreeqc-ca-mg-cl-so4 or phreeqc-catalog");
     }
   }
 
@@ -431,8 +427,7 @@ public class ChemistryRunner {
       chargeResidual += component.getMolality(aqueous) * component.getIonicCharge();
     }
     JsonObject state = new JsonObject();
-    state.addProperty("normalizedNonNegative",
-        finiteNonNegative && Math.abs(moleFractionSum - 1.0) <= 1.0e-12);
+    state.addProperty("normalizedNonNegative", finiteNonNegative && Math.abs(moleFractionSum - 1.0) <= 1.0e-12);
     state.addProperty("moleFractionSum", moleFractionSum);
     state.addProperty("normalizationTolerance", 1.0e-12);
     state.addProperty("chargeResidual_molPerKgWater", chargeResidual);
