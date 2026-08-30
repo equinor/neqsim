@@ -1922,8 +1922,8 @@ public final class DexpiXmlWriter {
         cy = pos[1];
         hasPosition = true;
       }
-      String measurementTargetId =
-          findMeasurementTargetNozzle(device, processSystem, equipmentInletNozzle, outletStreamToNozzle);
+      String measurementTargetId = findMeasurementTargetNozzle(device, processSystem, equipmentInletNozzle,
+          outletStreamToNozzle);
       double[] measurementTap = measurementTargetId == null ? null : nozzlePositions.get(measurementTargetId);
 
       // ProcessInstrumentationFunction (the instrument bubble)
@@ -1953,8 +1953,7 @@ public final class DexpiXmlWriter {
         appendInstrumentLabelText(document, label, loopNumber, cx, cy - 1.2, pifId,
             new String[] { "ProcessInstrumentationFunctionNumber" });
         if (synthesizedInstrumentation) {
-          appendInstrumentLabelText(document, label, "PROP", cx, cy + 6.0, pifId,
-              new String[] { "EngineeringStatus" });
+          appendInstrumentLabelText(document, label, "PROP", cx, cy + 6.0, pifId, new String[] { "EngineeringStatus" });
         }
 
         pif.appendChild(label);
@@ -2097,14 +2096,13 @@ public final class DexpiXmlWriter {
       }
 
       String controllerPifId = null;
-      ProcessEquipmentInterface finalControlElement =
-          matchedController == null ? null : findManipulatedEquipment(matchedController, processSystem);
-      String finalControlElementId =
-          finalControlElement == null ? null : findEquipmentElementId(parent, finalControlElement.getName());
-      DexpiLayoutEngine.EquipmentPosition finalControlPosition =
-          finalControlElement == null ? null : layoutPositions.get(finalControlElement.getName());
-      boolean hasFinalControlElement =
-          finalControlElementId != null && finalControlPosition != null;
+      ProcessEquipmentInterface finalControlElement = matchedController == null ? null
+          : findManipulatedEquipment(matchedController, processSystem);
+      String finalControlElementId = finalControlElement == null ? null
+          : findEquipmentElementId(parent, finalControlElement.getName());
+      DexpiLayoutEngine.EquipmentPosition finalControlPosition = finalControlElement == null ? null
+          : layoutPositions.get(finalControlElement.getName());
+      boolean hasFinalControlElement = finalControlElementId != null && finalControlPosition != null;
       if (matchedController != null) {
         // SignalConveyingFunction on the transmitter PIF
         String scfId = uniqueIdentifier("SignalConveyingFunction", tag, usedIds);
@@ -2262,9 +2260,8 @@ public final class DexpiXmlWriter {
       appendGenericAttribute(document, loopAttrs, DexpiMetadata.LOOP_NUMBER, loopNumber);
       appendGenericAttribute(document, loopAttrs, "InstrumentationSource",
           synthesizedInstrumentation ? "SYNTHESIZED_PROPOSAL" : "EXPLICIT_MODEL");
-      appendGenericAttribute(document, loopAttrs, "ControlLoopStatus",
-          matchedController == null ? "MEASUREMENT_ONLY"
-              : hasFinalControlElement ? "CLOSED_MODELLED" : "MEASUREMENT_ONLY_MISSING_FINAL_ELEMENT");
+      appendGenericAttribute(document, loopAttrs, "ControlLoopStatus", matchedController == null ? "MEASUREMENT_ONLY"
+          : hasFinalControlElement ? "CLOSED_MODELLED" : "MEASUREMENT_ONLY_MISSING_FINAL_ELEMENT");
       if (hasFinalControlElement) {
         appendGenericAttribute(document, loopAttrs, "FinalControlElementID", finalControlElementId);
       }
