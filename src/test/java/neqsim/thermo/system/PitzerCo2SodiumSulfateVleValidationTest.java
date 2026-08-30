@@ -2,6 +2,7 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -55,6 +56,17 @@ class PitzerCo2SodiumSulfateVleValidationTest extends neqsim.NeqSimTest {
     assertTrue(maximumAbsoluteRelativeResidual <= 0.439);
   }
 
+  @Test
+  void malformedReferenceStateReportsPointContext() {
+    String[] fields = { "invalid-point", "not-a-number", "0.01", "323.15", "75.0", "1.0", "50.0" };
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ReferenceState(fields));
+
+    assertTrue(exception.getMessage().contains("invalid-point"));
+    assertTrue(exception.getMessage().contains("not-a-number"));
+    assertTrue(exception.getCause() instanceof NumberFormatException);
+  }
+
   private static ElectrolytePhaseBoundaryResult calculateBubblePressure(ReferenceState state) {
     double saltFormulaMoles = state.saltMolality;
     double carbonDioxideMoles = state.carbonDioxideLiquidMoleFraction / (1.0 - state.carbonDioxideLiquidMoleFraction)
@@ -102,12 +114,17 @@ class PitzerCo2SodiumSulfateVleValidationTest extends neqsim.NeqSimTest {
 
     private ReferenceState(String[] fields) {
       pointId = fields[0];
-      saltMolality = Double.parseDouble(fields[1]);
-      carbonDioxideLiquidMoleFraction = Double.parseDouble(fields[2]);
-      temperatureKelvin = Double.parseDouble(fields[3]);
-      pressureBara = Double.parseDouble(fields[4]);
-      expandedUncertaintyBara = Double.parseDouble(fields[5]);
-      masterCalculatedPressureBara = Double.parseDouble(fields[6]);
+      try {
+        saltMolality = Double.parseDouble(fields[1]);
+        carbonDioxideLiquidMoleFraction = Double.parseDouble(fields[2]);
+        temperatureKelvin = Double.parseDouble(fields[3]);
+        pressureBara = Double.parseDouble(fields[4]);
+        expandedUncertaintyBara = Double.parseDouble(fields[5]);
+        masterCalculatedPressureBara = Double.parseDouble(fields[6]);
+      } catch (NumberFormatException invalidNumber) {
+        throw new IllegalArgumentException(
+            "Invalid numeric value for point " + pointId + ": " + String.join(",", fields), invalidNumber);
+      }
     }
   }
 }
