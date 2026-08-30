@@ -312,7 +312,8 @@ public final class DexpiXmlSvgRenderer {
     int largeArc = delta > 180.0 ? 1 : 0;
     svg.append("      <path d=\"M ").append(number(startX)).append(' ').append(number(startY)).append(" A ")
         .append(number(radius)).append(' ').append(number(radius)).append(" 0 ").append(largeArc).append(" 1 ")
-        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(styleWithFill(curve)).append("/>\n");
+        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(styleWithFill(curve))
+        .append("/>\n");
   }
 
   private static void appendGlobalArc(Element curve, Element circle, double sheetHeight, StringBuilder svg) {
@@ -331,7 +332,8 @@ public final class DexpiXmlSvgRenderer {
     int largeArc = delta > 180.0 ? 1 : 0;
     svg.append("    <path d=\"M ").append(number(startX)).append(' ').append(number(startY)).append(" A ")
         .append(number(radius)).append(' ').append(number(radius)).append(" 0 ").append(largeArc).append(" 0 ")
-        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(styleWithFill(curve)).append("/>\n");
+        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(styleWithFill(curve))
+        .append("/>\n");
   }
 
   private static void renderText(Document document, double sheetHeight, StringBuilder svg) {
@@ -363,8 +365,7 @@ public final class DexpiXmlSvgRenderer {
     if (!"Solid".equalsIgnoreCase(element.getAttribute("Filled"))) {
       return renderedStyle;
     }
-    return renderedStyle.replace(" fill=\"none\"", "") + " fill=\"" + color(element)
-        + "\" data-dexpi-filled=\"solid\"";
+    return renderedStyle.replace(" fill=\"none\"", "") + " fill=\"" + color(element) + "\" data-dexpi-filled=\"solid\"";
   }
 
   private static String style(Element element) {
