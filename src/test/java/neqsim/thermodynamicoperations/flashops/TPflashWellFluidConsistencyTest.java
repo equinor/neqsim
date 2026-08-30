@@ -40,8 +40,7 @@ class TPflashWellFluidConsistencyTest {
     SystemInterface changedState = reference.clone();
     changedState.setPressure(65.5, "bara");
     flash(changedState);
-    assertEquivalentEquilibrium(flashBaseWellFluid(303.15, 65.5, false), changedState,
-        "base changed pressure");
+    assertEquivalentEquilibrium(flashBaseWellFluid(303.15, 65.5, false), changedState, "base changed pressure");
 
     changedState.setPressure(65.0, "bara");
     flash(changedState);
@@ -82,8 +81,7 @@ class TPflashWellFluidConsistencyTest {
     assertEquivalentEquilibrium(repeatedReference, changedState, "water-rich deterministic repeat");
   }
 
-  private SystemInterface flashBaseWellFluid(double temperatureK, double pressureBara,
-      boolean poorGuess) {
+  private SystemInterface flashBaseWellFluid(double temperatureK, double pressureBara, boolean poorGuess) {
     SystemInterface system = createWellFluid();
     system.setTemperature(temperatureK, "K");
     system.setPressure(pressureBara, "bara");
@@ -92,14 +90,11 @@ class TPflashWellFluidConsistencyTest {
     return system;
   }
 
-  private SystemInterface flashWaterRichWellFluid(double temperatureK, double pressureBara,
-      boolean poorGuess) {
+  private SystemInterface flashWaterRichWellFluid(double temperatureK, double pressureBara, boolean poorGuess) {
     SystemInterface system = createWellFluid();
-    system.setMolarComposition(new double[] { 0.0, 4.76579e-6, 1.21459e-5, 1.3409e-3,
-        3.30439e-2, 5.06e-3, 7.34e-3, 1.53e-3, 4.11e-3, 1.58e-3, 2.255e-3,
-        2.8779e-4, 8.58e-4, 8.73e-4, 8.5e-4, 3.88e-3, 7.36e-2, 1.47e-1, 6.176e-2,
-        3.69e-2, 7.735e-3, 1.023e-2, 6.19e-3, 4.3e-3, 1.2e-2, 8.96e-3, 1.539e-3,
-        5.9921e-1 });
+    system.setMolarComposition(new double[] { 0.0, 4.76579e-6, 1.21459e-5, 1.3409e-3, 3.30439e-2, 5.06e-3, 7.34e-3,
+        1.53e-3, 4.11e-3, 1.58e-3, 2.255e-3, 2.8779e-4, 8.58e-4, 8.73e-4, 8.5e-4, 3.88e-3, 7.36e-2, 1.47e-1, 6.176e-2,
+        3.69e-2, 7.735e-3, 1.023e-2, 6.19e-3, 4.3e-3, 1.2e-2, 8.96e-3, 1.539e-3, 5.9921e-1 });
     system.setTemperature(temperatureK, "K");
     system.setPressure(pressureBara, "bara");
     prepareGuess(system, poorGuess);
@@ -161,25 +156,23 @@ class TPflashWellFluidConsistencyTest {
     double betaTotal = 0.0;
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       double beta = system.getBeta(phaseIndex);
-      assertTrue(Double.isFinite(beta) && beta >= 0.0 && beta <= 1.0,
-          label + " phase fraction");
+      assertTrue(Double.isFinite(beta) && beta >= 0.0 && beta <= 1.0, label + " phase fraction");
       betaTotal += beta;
 
       double compositionTotal = 0.0;
-      for (int componentIndex = 0;
-          componentIndex < system.getPhase(phaseIndex).getNumberOfComponents();
-          componentIndex++) {
+      for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
         double composition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
         assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
             label + " phase composition");
         compositionTotal += composition;
       }
-      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE,
-          label + " phase normalization");
-      assertTrue(Double.isFinite(system.getPhase(phaseIndex).getZ())
-          && system.getPhase(phaseIndex).getZ() > 0.0, label + " compressibility");
-      assertTrue(Double.isFinite(system.getPhase(phaseIndex).getDensity())
-          && system.getPhase(phaseIndex).getDensity() > 0.0, label + " density");
+      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE, label + " phase normalization");
+      assertTrue(Double.isFinite(system.getPhase(phaseIndex).getZ()) && system.getPhase(phaseIndex).getZ() > 0.0,
+          label + " compressibility");
+      assertTrue(
+          Double.isFinite(system.getPhase(phaseIndex).getDensity()) && system.getPhase(phaseIndex).getDensity() > 0.0,
+          label + " density");
     }
     assertEquals(1.0, betaTotal, NORMALIZATION_TOLERANCE, label + " beta normalization");
 
@@ -196,8 +189,7 @@ class TPflashWellFluidConsistencyTest {
     assertTrue(Double.isFinite(system.getEnthalpy()), label + " enthalpy");
   }
 
-  private void assertEquivalentEquilibrium(SystemInterface expected, SystemInterface actual,
-      String label) {
+  private void assertEquivalentEquilibrium(SystemInterface expected, SystemInterface actual, String label) {
     assertClosedEquilibrium(expected, label + " expected");
     assertClosedEquilibrium(actual, label + " actual");
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label + " phase count");
@@ -207,20 +199,18 @@ class TPflashWellFluidConsistencyTest {
     for (int orderedPhase = 0; orderedPhase < expectedOrder.length; orderedPhase++) {
       int expectedPhase = expectedOrder[orderedPhase];
       int actualPhase = actualOrder[orderedPhase];
-      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase),
-          EQUIVALENCE_TOLERANCE, label + " phase fraction");
-      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase),
-          EQUIVALENCE_TOLERANCE, label + " compressibility");
-      for (int componentIndex = 0;
-          componentIndex < expected.getPhase(expectedPhase).getNumberOfComponents();
-          componentIndex++) {
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), EQUIVALENCE_TOLERANCE,
+          label + " phase fraction");
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), EQUIVALENCE_TOLERANCE,
+          label + " compressibility");
+      for (int componentIndex = 0; componentIndex < expected.getPhase(expectedPhase)
+          .getNumberOfComponents(); componentIndex++) {
         assertEquals(expected.getPhase(expectedPhase).getComponent(componentIndex).getx(),
-            actual.getPhase(actualPhase).getComponent(componentIndex).getx(),
-            EQUIVALENCE_TOLERANCE, label + " phase composition");
+            actual.getPhase(actualPhase).getComponent(componentIndex).getx(), EQUIVALENCE_TOLERANCE,
+            label + " phase composition");
       }
     }
-    assertExtensiveEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(),
-        label + " Gibbs energy");
+    assertExtensiveEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), label + " Gibbs energy");
     assertExtensiveEquals(expected.getEnthalpy(), actual.getEnthalpy(), label + " enthalpy");
   }
 
@@ -228,27 +218,21 @@ class TPflashWellFluidConsistencyTest {
     Integer[] order = new Integer[system.getNumberOfPhases()];
     Arrays.setAll(order, phaseIndex -> phaseIndex);
     Arrays.sort(order,
-        Comparator.comparingDouble(
-            (Integer phaseIndex) -> system.getPhase(phaseIndex).getComponent("water").getx())
-            .thenComparingDouble(
-                phaseIndex -> system.getPhase(phaseIndex).getDensity()));
+        Comparator.comparingDouble((Integer phaseIndex) -> system.getPhase(phaseIndex).getComponent("water").getx())
+            .thenComparingDouble(phaseIndex -> system.getPhase(phaseIndex).getDensity()));
     return order;
   }
 
   private void assertExtensiveEquals(double expected, double actual, String label) {
-    assertEquals(expected, actual,
-        Math.max(1.0e-6, EQUIVALENCE_TOLERANCE * Math.abs(expected)), label);
+    assertEquals(expected, actual, Math.max(1.0e-6, EQUIVALENCE_TOLERANCE * Math.abs(expected)), label);
   }
 
   private double maximumComponentMaterialBalanceResidual(SystemInterface system) {
     double maximumResidual = 0.0;
-    for (int componentIndex = 0;
-        componentIndex < system.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed += system.getBeta(phaseIndex)
-            * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       maximumResidual = Math.max(maximumResidual,
           Math.abs(system.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
@@ -259,33 +243,24 @@ class TPflashWellFluidConsistencyTest {
   private double maximumComparableLogFugacityResidual(SystemInterface system) {
     double maximumResidual = 0.0;
     int comparisons = 0;
-    for (int componentIndex = 0;
-        componentIndex < system.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       if (system.getPhase(0).getComponent(componentIndex).getz() <= 1.0e-14) {
         continue;
       }
       for (int phaseIndex = 1; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        double referenceComposition =
-            system.getPhase(0).getComponent(componentIndex).getx();
-        double otherComposition =
-            system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        double referenceComposition = system.getPhase(0).getComponent(componentIndex).getx();
+        double otherComposition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
         if (referenceComposition <= 1.0e-20 || otherComposition <= 1.0e-20) {
           continue;
         }
-        double referenceCoefficient =
-            system.getPhase(0).getComponent(componentIndex).getFugacityCoefficient();
-        double otherCoefficient =
-            system.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
+        double referenceCoefficient = system.getPhase(0).getComponent(componentIndex).getFugacityCoefficient();
+        double otherCoefficient = system.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
         assertTrue(Double.isFinite(referenceCoefficient) && referenceCoefficient > 0.0,
             "reference fugacity coefficient");
-        assertTrue(Double.isFinite(otherCoefficient) && otherCoefficient > 0.0,
-            "other-phase fugacity coefficient");
-        double referenceLogFugacity =
-            Math.log(referenceComposition) + Math.log(referenceCoefficient);
+        assertTrue(Double.isFinite(otherCoefficient) && otherCoefficient > 0.0, "other-phase fugacity coefficient");
+        double referenceLogFugacity = Math.log(referenceComposition) + Math.log(referenceCoefficient);
         double otherLogFugacity = Math.log(otherComposition) + Math.log(otherCoefficient);
-        maximumResidual = Math.max(maximumResidual,
-            Math.abs(referenceLogFugacity - otherLogFugacity));
+        maximumResidual = Math.max(maximumResidual, Math.abs(referenceLogFugacity - otherLogFugacity));
         comparisons++;
       }
     }
