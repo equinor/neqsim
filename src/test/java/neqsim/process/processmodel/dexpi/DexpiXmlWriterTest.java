@@ -574,6 +574,14 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     // Cooler should get a temperature loop.
     assertTrue(xml.contains("TT-2023"), "Cooler should get a temperature transmitter");
     assertTrue(xml.contains("TC-2023"), "Cooler should get a temperature controller");
+    assertTrue(xml.contains("Name=\"InstrumentationSource\" Value=\"SYNTHESIZED_PROPOSAL\""),
+        "Automatically synthesized content must carry explicit proposal provenance");
+    assertTrue(xml.contains("String=\"PROP\""),
+        "Automatically synthesized content must be visibly marked on the drawing");
+    assertTrue(xml.contains(DexpiShapeCatalog.INSTRUMENT_BUBBLE_CENTRAL_SHAPE),
+        "Synthesized controllers must use the shared-system location convention");
+    assertFalse(xml.contains("ComponentClass=\"ActuatingSystemFunction\""),
+        "Synthesized controllers without manipulated equipment must not draw false command signals");
   }
 
   /**
