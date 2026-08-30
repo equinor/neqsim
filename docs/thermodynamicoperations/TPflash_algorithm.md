@@ -2134,6 +2134,42 @@ defaults, and runtime behavior are unchanged, so no production speedup is claime
 synthetic matrix is a numerical solver qualification, not experimental validation of the
 predicted phase fractions or phase boundary.
 
+### 6.4.7 Rich-gas cricondenbar boundary qualification
+
+The established synthetic rich-gas regression contains nitrogen, carbon dioxide, methane,
+ethane, propane, i-butane, n-butane, i-pentane, n-pentane, and n-hexane in the respective
+feed amounts 3.43, 0.34, 62.51, 15.65, 13.22, 1.61, 2.48, 0.35, 0.29, and 0.12. The
+qualification uses SRK and PR with classic mixing rule 2. Temperatures are specified in
+degrees Celsius and pressures as absolute bar. The primary 100 bara matrix covers -8, 0,
+10, and 30 degrees Celsius; a nearby 50 bara point at 0 degrees Celsius exercises the
+pressure direction. This is synthetic regression provenance rather than experimental VLE
+data.
+
+The legacy SRK regression executed the -8 degrees Celsius endpoint without an assertion.
+The replacement requires ordinary and explicit-multiphase paths to agree at every matrix
+point, while independently enforcing phase and beta normalization within `1e-12`,
+component material-balance closure below `1e-10`, and maximum interphase log-fugacity
+residual below `1e-8`. All beta values and compositions must remain finite and bounded,
+compressibility factors must be positive, and Gibbs energy and enthalpy must be finite.
+The established SRK topology anchors remain two phases at 0 and 10 degrees Celsius and
+one phase at 30 degrees Celsius; PR is qualified by equilibrium closure and path agreement
+without inheriting SRK-specific topology.
+
+Additional regressions start the -8 and 0 degrees Celsius states from beta values within
+`1e-12` of a bound, cross the disappearance boundary at 30 degrees Celsius, return through
+-8 degrees Celsius, reappear at 0 degrees Celsius, and repeat the settled state. Phase
+matching is based on n-hexane content so phase-order changes cannot hide a mismatch. This
+covers poor initialization, phase appearance and disappearance, changed-state reuse,
+return-state continuity, stale-state recovery, and deterministic repeats across both cubic
+equations of state.
+
+The two JUnit tests execute 41 complete flashes: 22 SRK and 19 PR. That fixed workload gives
+hosted CI a reproducible performance record without a wall-clock threshold on shared
+runners. Production solver code, public APIs, model parameters, units, defaults, and runtime
+behavior are unchanged, so no speedup is claimed. The matrix qualifies numerical solver
+contracts around the synthetic phase boundary; it does not validate the predicted boundary
+against experimental measurements.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
