@@ -127,6 +127,16 @@ $$SG_{60/60}=\frac{141.5}{API+131.5}$$
 
 with the existing NeqSim 60 degF water-density reference. Negative API gravities are accepted when physically meaningful; the singular range at and below -131.5 degrees API is rejected.
 
+### Reconstructed whole-assay density
+
+For a complete cut table, `getBulkSpecificGravity()` reconstructs the ideal additive-volume whole-assay specific gravity without creating pseudo-components or mutating the thermodynamic system. `getBulkApiGravity()` reports the corresponding degrees API. Both mass- and liquid-volume-basis assays use the same resolved relation:
+
+$$SG_{bulk}=\left(\sum_i\frac{w_i}{SG_i}\right)^{-1}$$
+
+where `w_i` is the resolved mass fraction and `SG_i` is the cut specific gravity. For volume-basis inputs this reduces to the volume-fraction-weighted cut density after normalization.
+
+These methods are screening calculations at the density reference condition represented by the inputs. They assume ideal additive liquid volumes and do not apply temperature correction, excess-volume, or blend-contraction models. They are not custody-transfer or certified blend-design calculations. The public validation and numerical error boundary are documented in [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation).
+
 ## Existing petroleum-property correlations
 
 This refinery-assay API deliberately reuses the existing NeqSim TBP/pseudo-component property framework. It does not add or retune critical-property, acentric-factor, or molecular-weight coefficients.
@@ -157,7 +167,10 @@ The regression suite for this API currently verifies:
 - rejection of mixed mass/volume bases and duplicate cuts;
 - TBP boundary monotonicity, complete 0-100% coverage, stored boiling ranges, and generated pseudo-components;
 - repeated-application protection;
-- exact reconstructed assay-mass closure.
+- exact reconstructed assay-mass closure;
+- analytical mass- and volume-basis bulk specific-gravity reconstruction;
+- whole-assay SG/API agreement against one independent public DOE/OEDI crude analysis;
+- input-order independence and no thermodynamic-system mutation for bulk-property queries.
 
 These tests establish software and bookkeeping correctness. They are **not yet an independent refinery-property validation dataset**. Experimental/public-data qualification of pseudo-component properties and atmospheric/vacuum fractionation is a separate campaign gate in issue #3305.
 
@@ -170,7 +183,7 @@ These tests establish software and bookkeeping correctness. They are **not yet a
 | Pre-binned cumulative TBP cut boundaries | `addTBPCutBoundariesCelsius/Kelvin` | Initial implementation in #3305 |
 | TBP pseudo-component properties | Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing and related models | Existing; needs refinery-range independent validation |
 | Plus-fraction splitting/lumping | `Characterise`, plus-fraction and lumping models | Existing; refinery assay integration still to be qualified |
-| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Existing pieces; unified refinery stream-property API remains open |
+| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Experimental whole-assay SG/API reconstruction; broader stream-property API remains open |
 | Rigorous distillation columns | `DistillationColumn`, `SimpleTray`, Naphtali-Sandholm solver, side-draw support | Existing foundation; broad-boiling atmospheric/vacuum refinery benchmark remains open |
 | Crude preheat/fired heater | General heater/heat-exchanger process equipment | Refinery workflow and fuel/emission integration remain open |
 | Product blending/specification optimization | Generic optimization/process facilities | Refinery property/blending framework remains open |
@@ -181,4 +194,4 @@ These tests establish software and bookkeeping correctness. They are **not yet a
 
 ## Next campaign step
 
-The next dependency-ready increment should select an openly reproducible refinery assay/reference case and use it to qualify the pseudo-component property slate and an atmospheric fractionation workflow. That benchmark should establish mass/energy closure, cut yields, product boiling ranges, numerical robustness, and runtime before adding more refinery-specific correlations.
+The next dependency-ready characterization increment should extend the public-data matrix beyond one DOE/OEDI assay and qualify generated pseudo-component properties. The process benchmark should then advance from the bounded DOE atmospheric integration case to a complete crude slate with independent cut-yield and boiling-range evidence before vacuum fractionation.
