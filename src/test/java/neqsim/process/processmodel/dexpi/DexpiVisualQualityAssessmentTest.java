@@ -414,6 +414,11 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     if (locations.getLength() == 0) {
       throw new AssertionError("Missing location for " + element.getAttribute("ID"));
     }
-    return Double.parseDouble(((Element) locations.item(0)).getAttribute("X"));
+    String rawX = ((Element) locations.item(0)).getAttribute("X");
+    try {
+      return Double.parseDouble(rawX);
+    } catch (NumberFormatException exception) {
+      throw new AssertionError("Invalid X position for " + element.getAttribute("ID") + ": " + rawX, exception);
+    }
   }
 }
