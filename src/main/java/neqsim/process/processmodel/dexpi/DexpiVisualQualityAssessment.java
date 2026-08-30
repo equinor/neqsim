@@ -383,15 +383,15 @@ public final class DexpiVisualQualityAssessment {
         measuringLines++;
         if (genericAttribute(flow, "MeasurementAttachmentTargetID").trim().isEmpty()) {
           invalidMeasuringLines++;
-          add(findings, Severity.ERROR, "MEASUREMENT_LINE_PROCESS_TARGET_MISSING",
-              flow.getAttribute("ID").trim(), "Measuring line is not attached to an identified process nozzle");
+          add(findings, Severity.ERROR, "MEASUREMENT_LINE_PROCESS_TARGET_MISSING", flow.getAttribute("ID").trim(),
+              "Measuring line is not attached to an identified process nozzle");
         }
       } else if ("ActuatingSystemFunction".equals(componentClass)) {
         actuatingSignals++;
         if (genericAttribute(flow, "FinalControlElementID").trim().isEmpty()) {
           invalidActuatingSignals++;
-          add(findings, Severity.ERROR, "ACTUATING_SIGNAL_FINAL_ELEMENT_MISSING",
-              flow.getAttribute("ID").trim(), "Actuating signal has no identified final control element");
+          add(findings, Severity.ERROR, "ACTUATING_SIGNAL_FINAL_ELEMENT_MISSING", flow.getAttribute("ID").trim(),
+              "Actuating signal has no identified final control element");
         }
       }
     }
