@@ -212,7 +212,7 @@ public final class DexpiXmlSvgRenderer {
         svg.append(number(attribute(coordinate, "X", 0.0))).append(',')
             .append(number(sheetHeight - attribute(coordinate, "Y", 0.0)));
       }
-      svg.append("\" ").append(style(curve)).append("/>").append('\n');
+      svg.append("\" ").append(styleWithFill(curve)).append("/>").append('\n');
     }
   }
 
@@ -266,7 +266,7 @@ public final class DexpiXmlSvgRenderer {
           svg.append(number(attribute(coordinate, "X", 0.0))).append(',')
               .append(number(attribute(coordinate, "Y", 0.0)));
         }
-        svg.append("\" ").append(style(primitive)).append("/>").append('\n');
+        svg.append("\" ").append(styleWithFill(primitive)).append("/>").append('\n');
       } else if ("Circle".equals(primitive.getTagName())) {
         appendLocalCircle(primitive, primitive, svg);
       } else if ("TrimmedCurve".equals(primitive.getTagName())) {
@@ -312,7 +312,7 @@ public final class DexpiXmlSvgRenderer {
     int largeArc = delta > 180.0 ? 1 : 0;
     svg.append("      <path d=\"M ").append(number(startX)).append(' ').append(number(startY)).append(" A ")
         .append(number(radius)).append(' ').append(number(radius)).append(" 0 ").append(largeArc).append(" 1 ")
-        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(style(curve)).append("/>\n");
+        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(styleWithFill(curve)).append("/>\n");
   }
 
   private static void appendGlobalArc(Element curve, Element circle, double sheetHeight, StringBuilder svg) {
@@ -331,7 +331,7 @@ public final class DexpiXmlSvgRenderer {
     int largeArc = delta > 180.0 ? 1 : 0;
     svg.append("    <path d=\"M ").append(number(startX)).append(' ').append(number(startY)).append(" A ")
         .append(number(radius)).append(' ').append(number(radius)).append(" 0 ").append(largeArc).append(" 0 ")
-        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(style(curve)).append("/>\n");
+        .append(number(endX)).append(' ').append(number(endY)).append("\" ").append(styleWithFill(curve)).append("/>\n");
   }
 
   private static void renderText(Document document, double sheetHeight, StringBuilder svg) {
@@ -356,6 +356,15 @@ public final class DexpiXmlSvgRenderer {
           .append("\" text-anchor=\"").append(anchor).append("\" dominant-baseline=\"").append(baseline)
           .append("\" fill=\"").append(color(text)).append("\">").append(xml(value)).append("</text>\n");
     }
+  }
+
+  private static String styleWithFill(Element element) {
+    String renderedStyle = style(element);
+    if (!"Solid".equalsIgnoreCase(element.getAttribute("Filled"))) {
+      return renderedStyle;
+    }
+    return renderedStyle.replace(" fill=\\\"none\\\"", "") + " fill=\\\"" + color(element)
+        + "\\\" data-dexpi-filled=\\\"solid\\\"";
   }
 
   private static String style(Element element) {
