@@ -4,8 +4,6 @@ description: Comprehensive guide to calculating and reading thermodynamic and ph
 keywords: "fluid properties, density, viscosity, enthalpy, entropy, Cp, thermal conductivity, compressibility, Z factor, molar mass, initProperties, getPhase, getDensity"
 ---
 
-# Reading Fluid Properties in NeqSim
-
 This guide provides comprehensive documentation for calculating and reading thermodynamic and physical properties from fluids, phases, and components in NeqSim.
 
 ## Table of Contents

@@ -3,8 +3,6 @@ title: "Thermo System Package"
 description: "Documentation for fluid system implementations in NeqSim."
 ---
 
-# Thermo System Package
-
 Documentation for fluid system implementations in NeqSim.
 
 ## Table of Contents

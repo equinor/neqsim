@@ -1,6 +1,6 @@
 ---
 title: phase
-description: phase documentation for NeqSim
+description: NeqSim thermodynamic phase model documentation
 ---
 
 {%- include_relative README.md -%}

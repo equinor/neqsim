@@ -4,8 +4,6 @@ description: "Predicting the superheat and pressure-undershoot limit of a rapidl
 keywords: "metastability, superheat limit, depressurisation, rarefaction wave, bubble nucleation, Plesset-Zwick, volume balancing, CO2 blowdown, flashing flow, attainable superheat"
 ---
 
-# Attainable Metastability — Volume Balancing Method
-
 When a liquid is depressurised rapidly — for example the rarefaction wave that
 travels into a pipe after a full-bore rupture — phase change is delayed and the
 liquid becomes **metastable** (superheated) below its saturation pressure. The
