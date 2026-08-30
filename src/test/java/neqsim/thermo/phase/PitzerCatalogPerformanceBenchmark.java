@@ -18,8 +18,7 @@ public final class PitzerCatalogPerformanceBenchmark {
   private static final String SCALE_EQUILIBRIUM_REQUEST = "{\"analysis\":\"electrolyteScaleEquilibrium\","
       + "\"model\":\"pitzer\",\"dataset\":\"phreeqc-ca-mg-cl-so4\","
       + "\"temperature_K\":298.15,\"pressure_bara\":1.01325,\"mineral\":\"CaSO4_A\","
-      + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,\"Mg++\":0.0,"
-      + "\"Cl-\":1.0,\"SO4--\":0.2}}";
+      + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,\"Mg++\":0.0," + "\"Cl-\":1.0,\"SO4--\":0.2}}";
 
   private PitzerCatalogPerformanceBenchmark() {
   }

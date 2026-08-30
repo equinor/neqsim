@@ -63,28 +63,25 @@ class ChemistryRunnerTest {
     assertEquals("error", obj.get("status").getAsString());
   }
 
-
   @Test
   void electrolyteScaleEquilibriumPitzerUsesAuthoritativePrecipitationOperation() {
     String input = "{\"analysis\":\"electrolyteScaleEquilibrium\",\"model\":\"pitzer\","
         + "\"dataset\":\"phreeqc-ca-mg-cl-so4\",\"temperature_K\":298.15,"
         + "\"pressure_bara\":1.01325,\"mineral\":\"CaSO4_A\","
-        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,"
-        + "\"Mg++\":0.0,\"Cl-\":1.0,\"SO4--\":0.2}}";
+        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2," + "\"Mg++\":0.0,\"Cl-\":1.0,\"SO4--\":0.2}}";
 
     JsonObject result = JsonParser.parseString(ChemistryRunner.run(input)).getAsJsonObject();
     JsonObject data = result.getAsJsonObject("data");
 
     assertEquals("success", result.get("status").getAsString());
-    assertEquals("ThermodynamicOperations.precipitateScale",
-        data.get("authoritativeJavaOperation").getAsString());
+    assertEquals("ThermodynamicOperations.precipitateScale", data.get("authoritativeJavaOperation").getAsString());
     assertTrue(data.get("precipitatedSolid").getAsBoolean());
     assertEquals(1.0, data.get("finalSaturationRatio").getAsDouble(), 1.0e-6);
     assertTrue(data.get("complementarityViolation_log10SR").getAsDouble() <= 1.0e-6);
     assertTrue(data.get("maximumIonBalanceResidual_mol").getAsDouble() <= 1.0e-10);
     assertTrue(data.getAsJsonObject("aqueousPhaseState").get("normalizedNonNegative").getAsBoolean());
-    assertEquals(0.0,
-        data.getAsJsonObject("aqueousPhaseState").get("chargeResidual_molPerKgWater").getAsDouble(), 1.0e-10);
+    assertEquals(0.0, data.getAsJsonObject("aqueousPhaseState").get("chargeResidual_molPerKgWater").getAsDouble(),
+        1.0e-10);
     assertTrue(data.get("engineeringGatesPass").getAsBoolean());
     assertFalse(data.get("mineralTargetQualified").getAsBoolean());
     assertFalse(data.get("publicationReady").getAsBoolean());
@@ -94,11 +91,9 @@ class ChemistryRunnerTest {
   void electrolyteScaleEquilibriumElectrolyteCpaUsesItsOwnAqueousModel() {
     String input = "{\"analysis\":\"electrolyteScaleEquilibrium\",\"model\":\"electrolyte-cpa\","
         + "\"temperature_K\":298.15,\"pressure_bara\":1.01325,\"mineral\":\"CaSO4_A\","
-        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,"
-        + "\"Cl-\":1.0,\"SO4--\":0.2}}";
+        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2," + "\"Cl-\":1.0,\"SO4--\":0.2}}";
 
-    JsonObject data = JsonParser.parseString(ChemistryRunner.run(input)).getAsJsonObject()
-        .getAsJsonObject("data");
+    JsonObject data = JsonParser.parseString(ChemistryRunner.run(input)).getAsJsonObject().getAsJsonObject("data");
 
     assertEquals("electrolyte-cpa", data.get("model").getAsString());
     assertTrue(data.get("precipitatedSolid").getAsBoolean());
@@ -114,8 +109,7 @@ class ChemistryRunnerTest {
     String template = "{\"analysis\":\"electrolyteScaleEquilibrium\",\"model\":\"pitzer\","
         + "\"dataset\":\"phreeqc-ca-mg-cl-so4\",\"temperature_K\":298.15,"
         + "\"pressure_bara\":1.01325,\"mineral\":\"CaSO4_A\","
-        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":%s,"
-        + "\"Mg++\":0.0,\"Cl-\":1.0,\"SO4--\":%s}}";
+        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":%s," + "\"Mg++\":0.0,\"Cl-\":1.0,\"SO4--\":%s}}";
     String supersaturated = String.format(template, "0.2", "0.2");
     String undersaturated = String.format(template, "0.0001", "0.0001");
 
