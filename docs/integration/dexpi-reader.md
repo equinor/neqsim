@@ -102,8 +102,10 @@ flow settings from the template stream.
 
 Both the reader and writer share `DexpiMetadata` constants that describe the recommended generic
 attributes for DEXPI exchanges. Equipment exports include tag names, line numbers, and fluid codes.
-Piping segments carry segment numbers and operating pressure/temperature/flow triples with explicit
-unit annotations. Query `DexpiMetadata.recommendedStreamAttributes()` and
+Piping segments carry segment numbers, nominal-diameter representations, piping-class and
+insulation codes, and operating pressure/temperature/flow triples with explicit unit annotations.
+The reader preserves these values on `DexpiStream`; it does not derive them from hydraulic inside
+diameter. Query `DexpiMetadata.recommendedStreamAttributes()` and
 `DexpiMetadata.recommendedEquipmentAttributes()` for the minimal metadata sets guaranteed by NeqSim.
 
 ---
@@ -332,7 +334,31 @@ Each piping connection carries operating line data and a NORSOK Z-003 line-ident
 - A `FluidCode` generic attribute (service code: `PG` process gas, `PL` process liquid, `FL` flare,
   `DR` drain, `FG` fuel gas, `UT` utility) derived by `DexpiServiceClassifier`
 - Operating pressure, temperature and flow generic attributes when available on the stream
-- A line-number text label (e.g. `PG-001`) composed by `NorsokLineNumber`
+- A line designation composed by `NorsokLineNumber`, with nominal size, fluid code, sequence,
+  piping class, and insulation code when those values are available
+- A visible `SIZE?` field and `LineSizeStatus=MISSING_SOURCE_DATA` when neither source nominal size
+  nor a model inside diameter is available
+
+Source-backed line data can be supplied by a `DexpiStream`:
+
+```java
+DexpiStream line = new DexpiStream("process-line", fluid, "PipingNetworkSegment", "1001", "PG");
+line.setNominalDiameterRepresentation("DN 150");
+line.setPipingClassCode("A1B");
+line.setInsulationType("H25");
+
+// Optional endpoint values make a real transition explicit.
+line.setFlowInNominalDiameterRepresentation("DN 150");
+line.setFlowOutNominalDiameterRepresentation("DN 100");
+line.setFlowInPipingClassCode("A1B");
+line.setFlowOutPipingClassCode("B2C");
+```
+
+If a NeqSim pipe model supplies only hydraulic diameter, the drawing identifies it explicitly as
+`ID ... mm`; it is never relabelled as DN or NPS. A source-backed endpoint-size change produces a
+`PipeReducer` with distinct flow-in and flow-out sizes and connection points. Explicit piping-class
+or insulation changes produce a `PropertyBreak` marker. The exporter does not guess nominal size,
+schedule, piping class, or insulation.
 
 The writer serializes numeric generic-attribute values with eight significant digits. This
 scale-aware canonical precision suppresses insignificant solver noise so repeated exports remain
@@ -476,6 +502,8 @@ from crossing gas equipment. The engine produces the following visual elements:
 - Instrument circles with function letter labels (PT, TT, FT, LT, AT)
 - Proper ISA 5.1 function letter decomposition (first letter = measured variable, subsequent = function)
 - Field transmitter bubbles connected by measuring lines to an explicit process-segment or nozzle sensing location
+- Level-transmitter measuring lines terminate at a dedicated tank or separator sensing tap; oil
+  level and water-interface functions use distinct taps and never reuse a process inlet or liquid outlet
 - Central/control-room controller bubbles distinguished from field instruments by their symbol and DEXPI location metadata
 - PID controller parameters displayed (Kp, Ti, Td) when controllers are present
 - Typed signal lines from transmitters to controllers and from controllers to actual final control elements
@@ -499,6 +527,13 @@ functions used by DEXPI and the identification/location conventions used by ISA-
 imply that the transmitter circle must geometrically overlap the process line: the measuring line
 and its `is located in` association identify the physical sensing point.
 
+The implementation is informed by [ISO 10628-1 diagram rules](https://www.iso.org/standard/51840.html),
+[ISO 10628-2 graphical symbols](https://www.iso.org/standard/51841.html),
+[IEC 62424 PCE representation](https://webstore.iec.ch/en/publication/25442), the
+[ISA-5 series](https://www.isa.org/standards-and-publications/isa-standards/isa-5-standard), and the
+[DEXPI 1.4 model](https://dexpi.org/static/pid_specification_1.4/). These references guide the
+projection; generated sheets still require project-specific engineering and drafting review.
+
 **Safety elements:**
 - PST (Partial Stroke Test) annotation boxes near safety valves
 - Relief valve shapes with ISO 10628 spring/bonnet symbol
@@ -507,6 +542,8 @@ and its `is located in` association identify the physical sensing point.
 - Heat trace indication marks (zigzag pattern with ET/ST type labels)
 - Insulation marks on process lines
 - Piping class and line size attribute export
+- Source-backed reducer symbols for line-size transitions
+- Property-break symbols for explicit piping-class or insulation changes
 
 **Annotations:**
 - Equipment weight annotations (dry and operating weight)

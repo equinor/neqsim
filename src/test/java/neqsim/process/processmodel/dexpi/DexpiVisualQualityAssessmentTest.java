@@ -22,6 +22,8 @@ import neqsim.NeqSimTest;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Recycle;
@@ -56,6 +58,54 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
       assertTrue(report.getMetrics().get("svgTexts") > 0, report.toJson());
       assertTrue(report.getSvgSha256().matches("[0-9a-f]{64}"));
     }
+  }
+
+  @Test
+  void capturesVesselLevelTapsAndVisibleLineSizeDataGaps() throws Exception {
+    ProcessSystem process = EngineeringDiagramReferenceFixtures.branchedSeparatorCompressionTrain().getProcessSystem();
+    process.run();
+    Path dexpi = temporaryDirectory.resolve("level-and-line-gaps.xml");
+    DexpiXmlWriter.writeForPyDexpi(process, dexpi.toFile());
+
+    DexpiVisualQualityAssessment.Report report = DexpiVisualQualityAssessment.assess(dexpi.toFile());
+
+    assertFalse(report.hasErrors(), report.toJson());
+    assertTrue(report.getMetrics().get("levelMeasurements") > 0, report.toJson());
+    assertEquals(report.getMetrics().get("levelMeasurements"), report.getMetrics().get("vesselLevelAttachments"),
+        report.toJson());
+    assertTrue(report.getMetrics().get("linesMissingSizeSourceData") > 0, report.toJson());
+    assertTrue(hasFinding(report, "LINE_SIZE_SOURCE_DATA_MISSING"), report.toJson());
+    assertFalse(hasFinding(report, "LINE_SIZE_GAP_NOT_VISIBLE"), report.toJson());
+  }
+
+  @Test
+  void capturesModeledDiameterChangeAndReducer() throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 1.0);
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    AdiabaticPipe upstream = new AdiabaticPipe("upstream", feed);
+    upstream.setDiameter(0.2032);
+    upstream.setLength(100.0);
+    AdiabaticPipe downstream = new AdiabaticPipe("downstream", upstream.getOutletStream());
+    downstream.setDiameter(0.1016);
+    downstream.setLength(100.0);
+    Separator separator = new Separator("separator", downstream.getOutletStream());
+    ProcessSystem process = new ProcessSystem("Reducer benchmark");
+    process.add(feed);
+    process.add(upstream);
+    process.add(downstream);
+    process.add(separator);
+
+    Path dexpi = temporaryDirectory.resolve("reducer.xml");
+    DexpiXmlWriter.write(process, dexpi.toFile());
+    DexpiVisualQualityAssessment.Report report = DexpiVisualQualityAssessment.assess(dexpi.toFile());
+
+    assertFalse(report.hasErrors(), report.toJson());
+    assertEquals(1, report.getMetrics().get("detectedLineSizeChanges"), report.toJson());
+    assertEquals(1, report.getMetrics().get("pipeReducers"), report.toJson());
+    assertFalse(hasFinding(report, "PIPE_REDUCER_MISSING"), report.toJson());
+    assertFalse(hasFinding(report, "PIPE_REDUCER_CONNECTION_POINTS_MISSING"), report.toJson());
   }
 
   @Test

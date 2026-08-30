@@ -212,6 +212,7 @@ public final class DexpiVisualQualityAssessment {
     assessCoordinates(document, extent, findings, metrics);
     assessText(document, findings, metrics);
     assessFlowDirectionArrows(document, svg, findings, metrics);
+    assessPipingLineData(document, findings, metrics);
     assessInstrumentationTopology(document, findings, metrics);
 
     metrics.put("sourcePolylines", countOutsideCatalogue(document, "PolyLine"));
@@ -361,6 +362,8 @@ public final class DexpiVisualQualityAssessment {
     NodeList signalGenerators = document.getElementsByTagName("ProcessSignalGeneratingFunction");
     int measurementFunctions = 0;
     int sensingLocations = 0;
+    int levelMeasurements = 0;
+    int vesselLevelAttachments = 0;
     for (int index = 0; index < signalGenerators.getLength(); index++) {
       Element generator = (Element) signalGenerators.item(index);
       if (inside(generator, "ShapeCatalogue")) {
@@ -379,6 +382,21 @@ public final class DexpiVisualQualityAssessment {
               "Measurement sensing location does not resolve to process equipment, a nozzle, mount, piping component, or process segment");
         } else {
           sensingLocations++;
+          String sensorType = genericAttribute(generator, "SensorTypeAssignmentClass");
+          if (sensorType.contains("Level")) {
+            levelMeasurements++;
+            Element equipment = ancestor(location, "Equipment");
+            String equipmentClass = equipment == null ? "" : equipment.getAttribute("ComponentClass");
+            boolean vesselEquipment = equipmentClass.contains("Separator") || equipmentClass.contains("Tank");
+            if (!"Nozzle".equals(location.getTagName())
+                || !"LEVEL_SENSING_TAP".equals(genericAttribute(location, "PhysicalConnectionRole"))
+                || !vesselEquipment) {
+              add(findings, Severity.ERROR, "LEVEL_MEASUREMENT_NOT_VESSEL_MOUNTED", generator.getAttribute("ID"),
+                  "Level measurement must terminate at a dedicated tank or separator sensing tap, not an outlet line");
+            } else {
+              vesselLevelAttachments++;
+            }
+          }
         }
       }
     }
@@ -464,6 +482,10 @@ public final class DexpiVisualQualityAssessment {
     }
     metrics.put("measurementFunctions", measurementFunctions);
     metrics.put("measurementSensingLocations", sensingLocations);
+    metrics.put("levelMeasurements", levelMeasurements);
+    metrics.put("vesselLevelAttachments", vesselLevelAttachments);
+    metrics.put("vesselLevelMeasurements", levelMeasurements);
+    metrics.put("invalidVesselLevelAttachments", levelMeasurements - vesselLevelAttachments);
     metrics.put("controllerFunctions", controllerFunctions);
     metrics.put("completeControlLoops", completeLoops);
     metrics.put("incompleteControlLoops", incompleteLoops);
@@ -479,6 +501,80 @@ public final class DexpiVisualQualityAssessment {
     metrics.put("sourceActuatingSignals", actuatingSignals);
     metrics.put("invalidActuatingSignals", invalidActuatingSignals);
     metrics.put("synthesizedProposalInstruments", synthesizedProposals);
+  }
+
+  private static void assessPipingLineData(Document document, List<Finding> findings, Map<String, Integer> metrics) {
+    NodeList segments = document.getElementsByTagName("PipingNetworkSegment");
+    int routedLines = 0;
+    int linesWithSourceSize = 0;
+    int linesWithModelInsideDiameter = 0;
+    int linesMissingSize = 0;
+    int sizeChanges = 0;
+    int reducers = 0;
+    int propertyChanges = 0;
+    int propertyBreaks = 0;
+    for (int index = 0; index < segments.getLength(); index++) {
+      Element segment = (Element) segments.item(index);
+      if (firstDirectChild(segment, "Connection") == null || firstDirectChild(segment, "CenterLine") == null) {
+        continue;
+      }
+      routedLines++;
+      String identity = segment.getAttribute("ID");
+      String sizeStatus = genericAttribute(segment, "LineSizeStatus");
+      if ("SOURCE_NOMINAL_DIAMETER".equals(sizeStatus)) {
+        linesWithSourceSize++;
+      } else if ("MODEL_INSIDE_DIAMETER".equals(sizeStatus)) {
+        linesWithModelInsideDiameter++;
+      } else {
+        linesMissingSize++;
+        add(findings, Severity.WARNING, "LINE_SIZE_SOURCE_DATA_MISSING", identity,
+            "Routed process line has no source nominal size or model inside diameter");
+        if (!hasTextContaining(segment, "SIZE?")) {
+          add(findings, Severity.ERROR, "LINE_SIZE_GAP_NOT_VISIBLE", identity,
+              "Missing line-size source data is not visible in the line designation");
+        }
+      }
+
+      if ("TRUE".equals(genericAttribute(segment, "SizeChangeDetected"))) {
+        sizeChanges++;
+        Element reducer = descendantWithComponentClass(segment, "PipingComponent", "PipeReducer");
+        if (reducer == null) {
+          add(findings, Severity.ERROR, "PIPE_REDUCER_MISSING", identity,
+              "A source-backed line-size change is present without a PipeReducer fitting");
+        } else {
+          reducers++;
+          String flowIn = genericAttribute(reducer, "FlowInNominalDiameterRepresentationAssignmentClass");
+          String flowOut = genericAttribute(reducer, "FlowOutNominalDiameterRepresentationAssignmentClass");
+          if (flowIn.isEmpty() || flowOut.isEmpty() || flowIn.equalsIgnoreCase(flowOut)) {
+            add(findings, Severity.ERROR, "PIPE_REDUCER_SIZE_DATA_INVALID", reducer.getAttribute("ID"),
+                "PipeReducer must declare distinct flow-in and flow-out sizes");
+          }
+          if (reducer.getElementsByTagName("Nozzle").getLength() < 2) {
+            add(findings, Severity.ERROR, "PIPE_REDUCER_CONNECTION_POINTS_MISSING", reducer.getAttribute("ID"),
+                "PipeReducer must expose distinct flow-in and flow-out connection points");
+          }
+        }
+      }
+
+      if ("TRUE".equals(genericAttribute(segment, "PipingPropertyChangeDetected"))) {
+        propertyChanges++;
+        Element propertyBreak = firstDescendant(segment, "PropertyBreak");
+        if (propertyBreak == null) {
+          add(findings, Severity.ERROR, "PIPING_PROPERTY_BREAK_MISSING", identity,
+              "A piping-class or insulation change is present without a PropertyBreak marker");
+        } else {
+          propertyBreaks++;
+        }
+      }
+    }
+    metrics.put("routedProcessLines", routedLines);
+    metrics.put("linesWithSourceNominalDiameter", linesWithSourceSize);
+    metrics.put("linesWithModelInsideDiameter", linesWithModelInsideDiameter);
+    metrics.put("linesMissingSizeSourceData", linesMissingSize);
+    metrics.put("detectedLineSizeChanges", sizeChanges);
+    metrics.put("pipeReducers", reducers);
+    metrics.put("detectedPipingPropertyChanges", propertyChanges);
+    metrics.put("propertyBreaks", propertyBreaks);
   }
 
   private static boolean hasActuatingSignal(Element controller) {
@@ -531,6 +627,38 @@ public final class DexpiVisualQualityAssessment {
       }
     }
     return false;
+  }
+
+  private static boolean hasTextContaining(Element parent, String value) {
+    NodeList texts = parent.getElementsByTagName("Text");
+    for (int index = 0; index < texts.getLength(); index++) {
+      if (((Element) texts.item(index)).getAttribute("String").contains(value)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Element descendantWithComponentClass(Element parent, String tagName, String componentClass) {
+    NodeList elements = parent.getElementsByTagName(tagName);
+    for (int index = 0; index < elements.getLength(); index++) {
+      Element element = (Element) elements.item(index);
+      if (componentClass.equals(element.getAttribute("ComponentClass"))) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  private static Element ancestor(Element element, String tagName) {
+    Node current = element.getParentNode();
+    while (current instanceof Element) {
+      if (tagName.equals(((Element) current).getTagName())) {
+        return (Element) current;
+      }
+      current = current.getParentNode();
+    }
+    return null;
   }
 
   private static Element directAssociation(Element parent, String type) {

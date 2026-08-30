@@ -499,6 +499,13 @@ public final class DexpiXmlReader {
 
     DexpiStream stream = new DexpiStream(uniqueName, fluid, element.getAttribute("ComponentClass"), lineNumber,
         fluidCode);
+    stream.setNominalDiameterRepresentation(
+        firstNonEmpty(attributeValue(element, DexpiMetadata.NOMINAL_DIAMETER_REPRESENTATION),
+            attributeValue(element, DexpiMetadata.LINE_SIZE)));
+    stream.setPipingClassCode(firstNonEmpty(attributeValue(element, DexpiMetadata.PIPING_CLASS_CODE_ASSIGNMENT),
+        attributeValue(element, DexpiMetadata.PIPING_CLASS_CODE)));
+    stream.setInsulationType(firstNonEmpty(attributeValue(element, DexpiMetadata.INSULATION_TYPE_ASSIGNMENT),
+        attributeValue(element, DexpiMetadata.INSULATION_CODE)));
     stream.setSpecification(templateStream.getSpecification());
     stream.setPressure(templateStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
         DexpiMetadata.DEFAULT_PRESSURE_UNIT);

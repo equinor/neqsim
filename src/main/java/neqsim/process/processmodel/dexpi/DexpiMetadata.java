@@ -125,6 +125,15 @@ public final class DexpiMetadata {
   /** Generic attribute for pipe/line nominal size (e.g. "6\"", "DN 150"). */
   public static final String LINE_SIZE = "LineSize";
 
+  /** DEXPI 1.4 readable nominal-diameter representation for a piping segment. */
+  public static final String NOMINAL_DIAMETER_REPRESENTATION = "NominalDiameterRepresentationAssignmentClass";
+
+  /** DEXPI 1.4 piping-class code for a piping segment. */
+  public static final String PIPING_CLASS_CODE_ASSIGNMENT = "PipingClassCodeAssignmentClass";
+
+  /** DEXPI 1.4 insulation-type code for a piping segment. */
+  public static final String INSULATION_TYPE_ASSIGNMENT = "InsulationTypeAssignmentClass";
+
   /** Generic attribute for the number of trays in a distillation column. */
   public static final String NUMBER_OF_TRAYS = "NumberOfTrays";
 
@@ -145,15 +154,18 @@ public final class DexpiMetadata {
 
   private static final Set<String> RECOMMENDED_STREAM_ATTRIBUTES = Collections.unmodifiableSet(new LinkedHashSet<>(
       Arrays.asList(LINE_NUMBER, FLUID_CODE, SEGMENT_NUMBER, OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT,
-          OPERATING_TEMPERATURE_VALUE, OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE, OPERATING_FLOW_UNIT)));
+          OPERATING_TEMPERATURE_VALUE, OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE, OPERATING_FLOW_UNIT,
+          NOMINAL_DIAMETER_REPRESENTATION, PIPING_CLASS_CODE_ASSIGNMENT, INSULATION_TYPE_ASSIGNMENT)));
 
   private static final Set<String> RECOMMENDED_EQUIPMENT_ATTRIBUTES = Collections.unmodifiableSet(new LinkedHashSet<>(
       Arrays.asList(TAG_NAME, LINE_NUMBER, FLUID_CODE, INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH,
           DESIGN_PRESSURE, DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT)));
 
-  private static final Set<String> SIZING_ATTRIBUTES = Collections.unmodifiableSet(new LinkedHashSet<>(
-      Arrays.asList(INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE, DESIGN_TEMPERATURE,
-          ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT, PIPING_CLASS_CODE, NUMBER_OF_TRAYS, FEED_TRAY)));
+  private static final Set<String> SIZING_ATTRIBUTES = Collections
+      .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH,
+          DESIGN_PRESSURE, DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT, PIPING_CLASS_CODE,
+          NOMINAL_DIAMETER_REPRESENTATION, PIPING_CLASS_CODE_ASSIGNMENT, INSULATION_TYPE_ASSIGNMENT, LINE_SIZE,
+          INSULATION_CODE, NUMBER_OF_TRAYS, FEED_TRAY)));
 
   /**
    * Returns the recommended generic attributes that should accompany DEXPI piping segments.

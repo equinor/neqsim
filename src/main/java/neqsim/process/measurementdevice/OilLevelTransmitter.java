@@ -65,6 +65,15 @@ public class OilLevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
+   * Returns the three-phase separator whose oil level is measured.
+   *
+   * @return associated separator
+   */
+  public ThreePhaseSeparator getSeparator() {
+    return separator;
+  }
+
+  /**
    * Get the thickness of the oil layer.
    *
    * @return oil layer thickness in meters (oilLevel - waterLevel)

@@ -217,15 +217,24 @@ bindings fail the transaction-coverage preflight until they provide a complete s
 
 ### LevelTransmitter
 
-Monitors liquid level in vessels.
+Monitors the unitless liquid-level fraction reported by a `Separator` or `Tank`. The transmitter
+delegates to the vessel's authoritative Java state; it does not infer instrument technology, nozzle
+design, alarm setpoints, or control intent.
 
 ```java
 import neqsim.process.measurementdevice.LevelTransmitter;
 
-LevelTransmitter lt = new LevelTransmitter(separator);
-lt.setUnit("%");
-double level = lt.getMeasuredValue();
+LevelTransmitter separatorLevel = new LevelTransmitter("LT-2001", separator);
+LevelTransmitter tankLevel = new LevelTransmitter("LT-2002", tank);
+
+double separatorFraction = separatorLevel.getMeasuredValue("");
+double tankFraction = tankLevel.getMeasuredValue("");
 ```
+
+Proteus-compatible P&amp;ID export creates a dedicated sensing tap/nozzle on the owning tank or separator and terminates
+the measuring line there. A vessel's process inlet or phase outlet is never relabelled as the level tap. Automatically
+generated tank or separator measurements remain visibly and machine-readably marked as unreviewed measurement-only
+proposals.
 
 ### VolumeFlowTransmitter
 
