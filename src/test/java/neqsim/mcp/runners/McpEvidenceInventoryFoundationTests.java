@@ -227,10 +227,10 @@ class McpEvidenceInventoryFoundationTests {
         statePersistence.get("benchmarkApplicability").getAsString());
     assertEquals(5, statePersistence.get("contractEvidenceCount").getAsInt());
     assertEquals(5, statePersistence.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(statePersistence.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("StatePersistenceRunnerTest.java"));
-    assertTrue(statePersistence.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_state_persistence_protocol.py"));
+    assertTrue(
+        statePersistence.getAsJsonArray("contractEvidenceSources").toString().contains("StatePersistenceRunnerTest.java"));
+    assertTrue(
+        statePersistence.getAsJsonArray("contractEvidenceSources").toString().contains("test_state_persistence_protocol.py"));
     assertTrue(statePersistence.get("evidenceBoundary").getAsString().contains("persistence lifecycle"));
     assertTrue(statePersistence.get("evidenceBoundary").getAsString().contains("numerical replay"));
 

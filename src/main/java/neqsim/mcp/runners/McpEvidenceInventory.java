@@ -202,7 +202,7 @@ public final class McpEvidenceInventory {
         record.addProperty("validationCaseCount", 0);
         record.addProperty("verifiedValidationCaseCount", 0);
         record.addProperty("gapReason",
-            "No tool-specific BenchmarkTrust entry exists; the generic TESTED fallback is compatibility metadata, not benchmark, accuracy, applicability, or no-limitations evidence");
+            "No tool-specific trust or bounded contract evidence; generic TESTED is compatibility metadata, not validation or an accuracy/applicability claim");
         confirmedGapRecordCount++;
       }
       coverageRecords.add(toolName, record);
