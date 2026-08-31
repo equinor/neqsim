@@ -758,7 +758,6 @@ public final class DexpiXmlReader {
     return connections;
   }
 
-
   private static Element resolveConnectionOwner(Element endpoint) {
     if (endpoint == null) {
       return null;
