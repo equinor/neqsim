@@ -11,14 +11,15 @@ explicit units. The authoritative route is
 
 The capability accepts either an explicit process JSON definition or a reusable
 `ModelRegistry` handle. It returns `schemaVersion`, `count`, and parameter
-records containing `name`, `address`, `unit`, nullable `lowerBound` and
-`upperBound`, `targetUnitName`, `targetProperty`, and `source`.
+records containing `name`, `address`, `unit`, `targetUnitName`,
+`targetProperty`, and `source`. Optional `lowerBound` and `upperBound` values are
+numeric when declared and may be omitted when the registry has no bound.
 
 ## Qualification evidence
 
 `AutomationLoopRunnerTest` verifies the Java contract on a canonical compressor,
 including the stable `Compressor.outletPressure` address, `bara` unit, target
-metadata, provenance, bounds fields, and internally consistent count.
+metadata, provenance, declared bounds, and internally consistent count.
 
 `test_adjustable_parameters_protocol.py` starts the packaged MCP server over
 STDIO and retrieves the canonical `process/compression-with-cooling` catalog
