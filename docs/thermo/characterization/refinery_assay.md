@@ -147,6 +147,12 @@ Here $T_b$ is in K and $SG$ is dimensionless specific gravity. This is equivalen
 
 The public [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation) covers four bounded 375-1050 degF cuts with SG 0.8297-0.9336. The maximum absolute difference from DOE's one-decimal UOP K values is 0.0122. The method is qualified for assay screening inside that matrix; it is not a whole-crude aggregation, ASTM conversion or design-certification method.
 
+## Assay-carried total sulfur
+
+`AssayCut.withSulfurMassFraction(...)` and `withSulfurMassPercent(...)` carry total sulfur explicitly on a mass basis. `getBulkSulfurMassFraction()` and `getBulkSulfurMassPercent()` apply the linear mass-basis rule to the same resolved assay mass fractions used for pseudo-component bookkeeping. Positive-yield cuts without sulfur data fail closed; zero-yield cuts do not contribute.
+
+The public [DOE Big Hill assay sulfur qualification](refinery_big_hill_sulfur_validation) covers a complete non-overlapping crude slate. With the documented zero-sulfur screening assumption for the 1.70 mass% gas cut that lacks a reported value, the reconstructed 0.40867518 mass% agrees with DOE's 0.409 mass% whole-crude result within 0.00032482 mass%. This is linear assay bookkeeping, not sulfur-species thermodynamics, emissions prediction or hydrotreating chemistry.
+
 ## Existing petroleum-property correlations
 
 This refinery-assay API deliberately reuses the existing NeqSim TBP/pseudo-component property framework. It does not add or retune critical-property, acentric-factor, or molecular-weight coefficients.
@@ -181,9 +187,10 @@ The regression suite for this API currently verifies:
 - analytical mass- and volume-basis bulk specific-gravity reconstruction;
 - whole-assay SG/API agreement across all five complete four-category rows in the public DOE/OEDI COA summary workbook;
 - per-cut UOP/Watson factors against four bounded cuts in the public DOE SPR Big Hill Sweet 2021 assay;
+- whole-assay total-sulfur reconstruction against the public DOE Big Hill Sweet 2021 assay;
 - input-order independence and no thermodynamic-system mutation for bulk-property queries.
 
-These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), and qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122). They do **not** qualify temperature correction, contraction, molecular-weight or critical-property correlations, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
+These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122), and qualify linear assay sulfur bookkeeping over one complete DOE crude slate. They do **not** qualify temperature correction, contraction, molecular-weight or critical-property correlations, sulfur species or reactions, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
 
 ## Refinery capability inventory after this increment
 
@@ -193,9 +200,10 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 | Mass- and volume-basis cut yields | Unit/basis-explicit assay API | Foundation hardened in #3305 |
 | Pre-binned cumulative TBP cut boundaries | `addTBPCutBoundariesCelsius/Kelvin` | Initial implementation in #3305 |
 | Per-cut UOP/Watson characterization factor | `AssayCut.getWatsonCharacterizationFactor()` | DOE-qualified for assay screening over 375-1050 degF |
+| Assay-carried total sulfur | `getBulkSulfurMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
 | TBP pseudo-component properties | Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing and related models | Existing; needs refinery-range independent validation |
 | Plus-fraction splitting/lumping | `Characterise`, plus-fraction and lumping models | Existing; refinery assay integration still to be qualified |
-| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API and per-cut Watson screening qualified over frozen public matrices; broader stream properties remain open |
+| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API, per-cut Watson and linear sulfur bookkeeping qualified over frozen public matrices; broader stream properties remain open |
 | Rigorous distillation columns | `DistillationColumn`, `SimpleTray`, Naphtali-Sandholm solver, side-draw support | Existing foundation; broad-boiling atmospheric/vacuum refinery benchmark remains open |
 | Crude preheat/fired heater | General heater/heat-exchanger process equipment | Refinery workflow and fuel/emission integration remain open |
 | Product blending/specification optimization | Generic optimization/process facilities | Refinery property/blending framework remains open |
