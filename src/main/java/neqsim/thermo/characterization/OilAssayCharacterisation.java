@@ -29,8 +29,8 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * Optional total-sulfur and total-nitrogen qualities are stored as mass fractions. Bulk qualities are reconstructed
- * by linear mass-basis mixing rules after the assay basis has been resolved.
+ * Optional total-sulfur and total-nitrogen qualities are stored as mass fractions. Bulk qualities are reconstructed by
+ * linear mass-basis mixing rules after the assay basis has been resolved.
  * </p>
  *
  * <p>
