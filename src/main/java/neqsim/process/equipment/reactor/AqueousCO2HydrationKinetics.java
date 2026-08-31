@@ -42,6 +42,12 @@ public final class AqueousCO2HydrationKinetics implements Serializable {
   /** Maximum published correlation temperature [K]. */
   public static final double MAXIMUM_TEMPERATURE_K = 305.65;
 
+  /** Temperature of the separately reported equilibrium-ratio observation [K]. */
+  public static final double REPORTED_RATIO_TEMPERATURE_K = 298.15;
+
+  /** Separately reported {@code [CO2(aq)] / [H2CO3]} ratio at 25 degrees Celsius. */
+  public static final double REPORTED_CO2_TO_H2CO3_RATIO_AT_25_C = 848.0;
+
   /** Gas constant used by {@link KineticReaction} [J/(mol K)]. */
   private static final double KINETIC_REACTION_GAS_CONSTANT_J_PER_MOL_K = 8.31446;
   private static final double HYDRATION_LOG_PRE_EXPONENTIAL = 22.66;
@@ -84,6 +90,58 @@ public final class AqueousCO2HydrationKinetics implements Serializable {
    */
   public static double carbonicAcidToCO2EquilibriumRatio(double temperatureK) {
     return hydrationRateConstant(temperatureK) / dehydrationRateConstant(temperatureK);
+  }
+
+  /**
+   * Partition a lumped molecular-CO2 concentration into explicit aqueous CO2 and carbonic acid.
+   *
+   * <p>
+   * NeqSim's existing electrolyte reaction sets use a single molecular {@code CO2} inventory for carbonate equilibrium,
+   * while this kinetic model distinguishes {@code CO2(aq)} from {@code H2CO3}. This method provides the
+   * source-consistent equilibrium partition needed for reporting or for initializing the explicit kinetic pair. It does
+   * not add an {@code H2CO3} component to a thermodynamic system or replace the model-specific {@code CO2water}
+   * equilibrium constant.
+   * </p>
+   *
+   * @param totalMolecularCO2Concentration lumped {@code CO2(aq) + H2CO3} concentration [mol/m3]
+   * @param temperatureK aqueous-phase temperature [K]
+   * @return immutable explicit-pair partition
+   * @throws IllegalArgumentException when the concentration is negative or non-finite, or temperature is outside the
+   * published range
+   */
+  public static SpeciationBridgeResult partitionLumpedMolecularCO2(double totalMolecularCO2Concentration,
+      double temperatureK) {
+    requireFiniteNonNegative(totalMolecularCO2Concentration, "total molecular CO2 concentration");
+    double carbonicAcidToCO2Ratio = carbonicAcidToCO2EquilibriumRatio(temperatureK);
+    double carbonicAcidConcentration = totalMolecularCO2Concentration * carbonicAcidToCO2Ratio
+        / (1.0 + carbonicAcidToCO2Ratio);
+    double co2Concentration = totalMolecularCO2Concentration - carbonicAcidConcentration;
+    return new SpeciationBridgeResult(totalMolecularCO2Concentration, co2Concentration, carbonicAcidConcentration,
+        carbonicAcidToCO2Ratio, totalMolecularCO2Concentration - co2Concentration - carbonicAcidConcentration);
+  }
+
+  /**
+   * Collapse an explicit aqueous CO2/carbonic-acid pair to the lumped molecular-CO2 inventory.
+   *
+   * <p>
+   * Use this conservation-only handoff before invoking an electrolyte equilibrium model whose reaction set already
+   * represents carbonate speciation from one molecular {@code CO2} component. The method does not run hydration,
+   * dissociation, charge balance, or phase equilibrium.
+   * </p>
+   *
+   * @param co2Concentration aqueous CO2 concentration [mol/m3]
+   * @param carbonicAcidConcentration carbonic-acid concentration [mol/m3]
+   * @return lumped {@code CO2(aq) + H2CO3} concentration [mol/m3]
+   * @throws IllegalArgumentException when either input or their sum is negative or non-finite
+   */
+  public static double collapseExplicitPairToLumpedCO2(double co2Concentration, double carbonicAcidConcentration) {
+    requireFiniteNonNegative(co2Concentration, "CO2 concentration");
+    requireFiniteNonNegative(carbonicAcidConcentration, "H2CO3 concentration");
+    double totalMolecularCO2Concentration = co2Concentration + carbonicAcidConcentration;
+    if (!Double.isFinite(totalMolecularCO2Concentration)) {
+      throw new IllegalArgumentException("total molecular CO2 concentration must be finite");
+    }
+    return totalMolecularCO2Concentration;
   }
 
   /**
@@ -201,6 +259,56 @@ public final class AqueousCO2HydrationKinetics implements Serializable {
     /** @return dehydration rate constant [1/s]. */
     public double getDehydrationRateConstant() {
       return dehydrationRateConstant;
+    }
+
+    /** @return carbon concentration closure residual [mol/m3]. */
+    public double getCarbonBalanceResidual() {
+      return carbonBalanceResidual;
+    }
+  }
+
+  /** Result of translating a lumped molecular-CO2 inventory to the explicit kinetic pair. */
+  public static final class SpeciationBridgeResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double totalMolecularCO2Concentration;
+    private final double co2Concentration;
+    private final double carbonicAcidConcentration;
+    private final double carbonicAcidToCO2EquilibriumRatio;
+    private final double carbonBalanceResidual;
+
+    private SpeciationBridgeResult(double totalMolecularCO2Concentration, double co2Concentration,
+        double carbonicAcidConcentration, double carbonicAcidToCO2EquilibriumRatio, double carbonBalanceResidual) {
+      this.totalMolecularCO2Concentration = totalMolecularCO2Concentration;
+      this.co2Concentration = co2Concentration;
+      this.carbonicAcidConcentration = carbonicAcidConcentration;
+      this.carbonicAcidToCO2EquilibriumRatio = carbonicAcidToCO2EquilibriumRatio;
+      this.carbonBalanceResidual = carbonBalanceResidual;
+    }
+
+    /** @return lumped {@code CO2(aq) + H2CO3} concentration [mol/m3]. */
+    public double getTotalMolecularCO2Concentration() {
+      return totalMolecularCO2Concentration;
+    }
+
+    /** @return aqueous CO2 concentration [mol/m3]. */
+    public double getCO2Concentration() {
+      return co2Concentration;
+    }
+
+    /** @return carbonic-acid concentration [mol/m3]. */
+    public double getCarbonicAcidConcentration() {
+      return carbonicAcidConcentration;
+    }
+
+    /** @return correlation-derived {@code [H2CO3] / [CO2(aq)]} ratio. */
+    public double getCarbonicAcidToCO2EquilibriumRatio() {
+      return carbonicAcidToCO2EquilibriumRatio;
+    }
+
+    /** @return correlation-derived {@code [CO2(aq)] / [H2CO3]} ratio. */
+    public double getCO2ToCarbonicAcidEquilibriumRatio() {
+      return 1.0 / carbonicAcidToCO2EquilibriumRatio;
     }
 
     /** @return carbon concentration closure residual [mol/m3]. */

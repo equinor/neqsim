@@ -123,8 +123,11 @@ $$
 
 The implementation preserves the source's narrow evidence boundary: 0.65 molal NaCl and
 288.15–305.65 K. At 298.15 K it gives `kH = 0.0302586 s-1`, `kD = 25.9844 s-1`, and
-`[H2CO3]/[CO2(aq)] = kH/kD = 0.00116449`. Calls outside the published temperature range fail
-closed instead of extrapolating.
+`[H2CO3]/[CO2(aq)] = kH/kD = 0.00116449`, or `[CO2(aq)]/[H2CO3] = 858.744`. The paper also
+reports a separately observed 25 °C ratio of 848. The 1.27% difference from the two fitted rate
+equations is a within-source consistency check, not an independent validation dataset. The
+implementation does not tune either correlation to remove the difference. Calls outside the
+published temperature range fail closed instead of extrapolating.
 
 The equations are direct implementations of the primary-source fits, not a new NeqSim calibration
 or an independent validation dataset. Public DOI metadata and the institutional abstract are
@@ -138,12 +141,36 @@ it is the solvent in the published pseudo-first-order model. `advance(...)` prov
 closed-batch update for the CO2/H2CO3 pair. The exact solution is non-negative and conserves that
 pair's carbon without numerical timestep error.
 
+### Explicit/lumped electrolyte-speciation handoff
+
+The finite-rate reaction distinguishes `CO2(aq)` and `H2CO3`, but NeqSim's existing electrolyte
+reaction data does not contain a thermodynamic `H2CO3` component. Its model-specific `CO2water`
+reaction uses one molecular `CO2` inventory together with water, bicarbonate, and hydronium. The
+Pitzer row follows the molality-standard-state carbonate expressions in the public-domain USGS
+PHREEQC 3 database; electrolyte CPA retains its distinct `STANDARD` mole-fraction source.
+
+`collapseExplicitPairToLumpedCO2(...)` therefore performs the conservative handoff
+
+$$
+c_{\mathrm{CO_2^*}} = c_{\mathrm{CO_2(aq)}} + c_{\mathrm{H_2CO_3}},
+$$
+
+before a caller initializes or reruns the selected electrolyte equilibrium model.
+`partitionLumpedMolecularCO2(...)` applies the source rate ratio to split that neutral pool again
+for reporting or to initialize the explicit kinetic pair. Both methods use mol/m3, reject negative
+or non-finite input, and expose a carbon-closure residual. They do not mutate a thermodynamic
+system, run a flash, or alter charge balance.
+
+Do not add an explicit `H2CO3` species beside the current `CO2water` reaction and do not substitute
+the kinetic ratio for the model-specific equilibrium constant. Either action would mix standard
+states and can count hydration twice. A future fully coupled solver needs an explicitly qualified
+thermodynamic `H2CO3` species, true-ionization convention, phase properties, and reaction table.
+
 This bridge does **not** qualify pressure dependence, dense-phase CO2, other salinities, acid
 dissociation, pH, charge balance, or phase transfer. Soli and Byrne did not vary pressure. Do not
-apply the correlation directly at pipeline pressure without separate evidence. A process caller
-must also provide a compatible aqueous thermodynamic system with distinct `CO2`, `water`, and
-`H2CO3` components. Electrolyte speciation and the mapping to the existing bicarbonate reaction set
-remain coordinated with issue #3144.
+apply the correlation directly at pipeline pressure without separate evidence. Electrolyte
+speciation remains owned by issue #3144; pipeline source-term coupling remains owned by issue
+#3318.
 
 ## Intended transport integration
 
