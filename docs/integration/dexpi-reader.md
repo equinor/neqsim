@@ -146,6 +146,12 @@ resolution status. Missing source IDs receive deterministic evidence-only identi
 duplicate, self-referential, or unresolved source references remain explicit diagnostics. This
 inventory does not infer connectivity or rewire the returned `ProcessSystem`.
 
+For resolved nozzle endpoints, the same record exposes only explicit source ownership: the nearest
+ancestor `Equipment` or `PipingComponent` identity and XML element name. Direct equipment or
+piping-component endpoints own themselves. Orphaned nozzles and owner elements without source IDs
+remain deterministic warnings; the reader does not derive ownership from coordinates, tags,
+stream order, or simulation state.
+
 `toJson()` includes `instrumentCount`, `connectionCount`, and the ordered connection inventory
 alongside the process-unit count and findings. Python callers through JPype use the same
 `ImportResult.getInstruments()` and `ImportResult.getConnections()` getters; there is no separate

@@ -297,7 +297,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadWithDiagnosticsPreservesParallelMaterialConnections() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Nozzle ID=\"N-OUT\"/><Nozzle ID=\"N-IN\"/>"
+        + "<Equipment ID=\"E-OUT\"><Nozzle ID=\"N-OUT\"/></Equipment>"
+        + "<Equipment ID=\"E-IN\"><Nozzle ID=\"N-IN\"/></Equipment>"
         + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\">"
         + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-2\" ComponentClass=\"PipingNetworkSegment\">"
@@ -317,7 +318,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("N-IN", firstConnection.getToId());
     assertEquals("Nozzle", firstConnection.getFromElementName());
     assertEquals("Nozzle", firstConnection.getToElementName());
+    assertEquals("E-OUT", firstConnection.getFromOwnerId());
+    assertEquals("E-IN", firstConnection.getToOwnerId());
+    assertEquals("Equipment", firstConnection.getFromOwnerElementName());
+    assertEquals("Equipment", firstConnection.getToOwnerElementName());
     assertTrue(firstConnection.isResolved());
+    assertTrue(firstConnection.isOwnershipResolved());
     assertEquals("S-2/connection-1", first.getConnections().get(1).getId());
     assertEquals(2, countDiagnostics(first, "DEXPI_IMPORT_CONNECTION_ID_SYNTHESIZED"));
     assertTrue(first.toJson().contains("\"connectionCount\": 2"));
@@ -345,6 +351,35 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_ID_DUPLICATE");
     assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SEGMENT_MISSING");
     assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SELF_REFERENCE");
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SOURCE_OWNER_MISSING");
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_TARGET_OWNER_MISSING");
+  }
+
+  @Test
+  public void testReadWithDiagnosticsReportsMissingOwnerIdentity() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Equipment><Nozzle ID=\"N-A\"/></Equipment>"
+        + "<PipingComponent ID=\"PC-1\"><Nozzle ID=\"N-B\"/></PipingComponent>"
+        + "<PipingNetworkSegment ID=\"S-OWNER\" ComponentClass=\"PipingNetworkSegment\">"
+        + "<Connection ID=\"C-OWNER\" FromID=\"N-A\" ToID=\"N-B\"/></PipingNetworkSegment>"
+        + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiConnectionInfo connection = result.getConnections().get(0);
+
+    assertEquals("", connection.getFromOwnerId());
+    assertEquals("Equipment", connection.getFromOwnerElementName());
+    assertEquals("PC-1", connection.getToOwnerId());
+    assertEquals("PipingComponent", connection.getToOwnerElementName());
+    assertFalse(connection.isOwnershipResolved());
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SOURCE_OWNER_ID_MISSING");
+    assertTrue(result.toJson().contains("\"fromOwnerElementName\": \"Equipment\""));
+
+    DexpiConnectionInfo legacy = new DexpiConnectionInfo("C", "C", "S", "A", "B", "Nozzle",
+        "Nozzle", true, true);
+    assertEquals("", legacy.getFromOwnerId());
+    assertEquals("", legacy.getToOwnerId());
   }
 
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {

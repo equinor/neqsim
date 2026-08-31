@@ -722,6 +722,8 @@ public final class DexpiXmlReader {
       String toId = connection.getAttribute("ToID");
       Element fromElement = elementsById.get(fromId);
       Element toElement = elementsById.get(toId);
+      Element fromOwner = resolveConnectionOwner(fromElement);
+      Element toOwner = resolveConnectionOwner(toElement);
       if (isBlank(fromId)) {
         addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
             "DEXPI_IMPORT_CONNECTION_SOURCE_MISSING", "Connection FromID is missing");
@@ -742,13 +744,60 @@ public final class DexpiXmlReader {
         addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
             "DEXPI_IMPORT_CONNECTION_SELF_REFERENCE", "Connection source and target both reference '" + fromId + "'");
       }
+      addConnectionOwnerDiagnostic(connection, fromElement, fromOwner, true, diagnostics);
+      addConnectionOwnerDiagnostic(connection, toElement, toOwner, false, diagnostics);
 
       connections.add(new DexpiConnectionInfo(evidenceId, sourceId, segmentId, fromId, toId,
           fromElement == null ? "" : fromElement.getTagName(), toElement == null ? "" : toElement.getTagName(),
+          fromOwner == null ? "" : fromOwner.getAttribute("ID"),
+          toOwner == null ? "" : toOwner.getAttribute("ID"),
+          fromOwner == null ? "" : fromOwner.getTagName(), toOwner == null ? "" : toOwner.getTagName(),
           fromElement != null, toElement != null));
     }
     logger.info("Parsed {} material connections from DEXPI XML", connections.size());
     return connections;
+  }
+
+
+  private static Element resolveConnectionOwner(Element endpoint) {
+    if (endpoint == null) {
+      return null;
+    }
+    if (isConnectionOwnerElement(endpoint)) {
+      return endpoint;
+    }
+    Node parent = endpoint.getParentNode();
+    while (parent != null) {
+      if (parent.getNodeType() == Node.ELEMENT_NODE) {
+        Element candidate = (Element) parent;
+        if (isConnectionOwnerElement(candidate)) {
+          return candidate;
+        }
+      }
+      parent = parent.getParentNode();
+    }
+    return null;
+  }
+
+  private static boolean isConnectionOwnerElement(Element element) {
+    return "Equipment".equals(element.getTagName()) || "PipingComponent".equals(element.getTagName());
+  }
+
+  private static void addConnectionOwnerDiagnostic(Element connection, Element endpoint, Element owner,
+      boolean source, List<ImportDiagnostic> diagnostics) {
+    if (endpoint == null || !"Nozzle".equals(endpoint.getTagName())) {
+      return;
+    }
+    String direction = source ? "SOURCE" : "TARGET";
+    if (owner == null) {
+      addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_CONNECTION_" + direction + "_OWNER_MISSING",
+          (source ? "Source" : "Target") + " nozzle has no explicit Equipment or PipingComponent owner");
+    } else if (isBlank(owner.getAttribute("ID"))) {
+      addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_CONNECTION_" + direction + "_OWNER_ID_MISSING",
+          (source ? "Source" : "Target") + " nozzle owner has no source identity");
+    }
   }
 
   private static Element findAncestorElement(Node node, String tagName) {
