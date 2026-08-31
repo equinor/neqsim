@@ -25,6 +25,11 @@ HYDRATION_KINETICS = (
     / "src/main/java/neqsim/process/equipment/reactor/"
     / "AqueousCO2HydrationKinetics.java"
 )
+PRESSURE_KINETICS = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousCO2PressureKinetics.java"
+)
 SYSTEM_INTERFACE = ROOT / "src/main/java/neqsim/thermo/system/SystemInterface.java"
 JAVA_TEST = (
     ROOT
@@ -63,6 +68,7 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
         cls.diagnostics = DIAGNOSTICS.read_text(encoding="utf-8")
         cls.qualification = QUALIFICATION.read_text(encoding="utf-8")
         cls.hydration_kinetics = HYDRATION_KINETICS.read_text(encoding="utf-8")
+        cls.pressure_kinetics = PRESSURE_KINETICS.read_text(encoding="utf-8")
         cls.system_interface = SYSTEM_INTERFACE.read_text(encoding="utf-8")
         cls.java_test = JAVA_TEST.read_text(encoding="utf-8")
         cls.normalized = " ".join(cls.guide.split())
@@ -77,12 +83,16 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
         self.assertIn(r"\mathrm{Da}", self.guide)
 
         links = re.findall(r"(?<!!)\[[^\]]+\]\(([^)]+)\)", self.guide)
-        self.assertEqual(4, len(links))
+        self.assertEqual(6, len(links))
         for destination in links:
             if destination.startswith("https://"):
-                self.assertEqual(
-                    "https://doi.org/10.1016/S0304-4203%2802%2900010-5",
+                self.assertIn(
                     destination,
+                    (
+                        "https://doi.org/10.1016/S0304-4203%2802%2900010-5",
+                        "https://doi.org/10.1007/BF00649292",
+                        "https://doi.org/10.1071/CH15271",
+                    ),
                 )
             else:
                 self.assertTrue(resolve_internal_target(GUIDE, destination).is_file())
@@ -122,6 +132,33 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
             "uncertainty statistics for these two fitted equations",
             "issue #3144",
             "#3318",
+        ):
+            self.assertIn(token, self.guide)
+
+    def test_pressure_response_matches_source_contract(self):
+        for token in (
+            'SOURCE_IDENTIFIER = "doi:10.1007/BF00649292"',
+            'CORROBORATING_SOURCE_IDENTIFIER = "doi:10.1071/CH15271"',
+            "PUBLISHED_TEMPERATURE_K = 298.15",
+            "PUBLISHED_IONIC_STRENGTH = 0.5",
+            "MAXIMUM_PRESSURE_BARA = 1000.0",
+            "HYDRATION_ACTIVATION_VOLUME_CM3_PER_MOL = -9.9",
+            "HYDRATION_ACTIVATION_VOLUME_UNCERTAINTY_CM3_PER_MOL = 1.9",
+            "DEHYDRATION_ACTIVATION_VOLUME_CM3_PER_MOL = 6.4",
+            "DEHYDRATION_ACTIVATION_VOLUME_UNCERTAINTY_CM3_PER_MOL = 0.4",
+            "-activationVolumeM3PerMol * pressureDifferencePa",
+            "public static MultiplierRange hydrationMultiplierRange(",
+        ):
+            self.assertIn(token, self.pressure_kinetics)
+
+        for token in (
+            "1.04032877",
+            "0.974764734",
+            "1–1000 bara",
+            "Do **not** automatically",
+            "multiply the Soli–Byrne absolute rates",
+            "separate cross-dataset assumption",
+            "not used as a numerical parameter source",
         ):
             self.assertIn(token, self.guide)
 
