@@ -60,6 +60,9 @@ jobs:
       - name: Run focused persisted-state Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.StatePersistenceRunnerTest test -ntp
 
+      - name: Run focused adjustable-parameter Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.AutomationLoopRunnerTest test -ntp
+
       - name: Build exact MCP server package
         shell: bash
         run: |
@@ -84,6 +87,9 @@ jobs:
 
       - name: Run focused real-MCP persisted-state qualification
         run: cd neqsim-mcp-server && python test_state_persistence_protocol.py
+
+      - name: Run focused real-MCP adjustable-parameter qualification
+        run: cd neqsim-mcp-server && python test_adjustable_parameters_protocol.py
 
       - name: Run comprehensive real-MCP protocol regression
         run: cd neqsim-mcp-server && python test_mcp_server.py
