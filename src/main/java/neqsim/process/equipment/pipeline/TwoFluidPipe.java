@@ -3995,11 +3995,22 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     if (waterCut <= 1.0e-8 || waterCut >= 1.0 - 1.0e-8) {
+      boolean oilContinuousEndpoint = waterCut <= 1.0e-8;
       waterCut = Math.max(0.0, Math.min(1.0, waterCut));
       sec.setWaterCut(waterCut);
       sec.setOilFractionInLiquid(1.0 - waterCut);
       sec.setWaterHoldup(alphaL * waterCut);
       sec.setOilHoldup(alphaL * (1.0 - waterCut));
+      // The steady closure has just updated the bulk-liquid velocity. Keep the
+      // phase-resolved endpoint state on that same transported flux instead of
+      // rebuilding momentum from a stale oil/water velocity.
+      if (oilContinuousEndpoint) {
+        sec.setOilVelocity(sec.getLiquidVelocity());
+        sec.setWaterVelocity(waterCut > 0.0 ? sec.getLiquidVelocity() : 0.0);
+      } else {
+        sec.setOilVelocity(waterCut < 1.0 ? sec.getLiquidVelocity() : 0.0);
+        sec.setWaterVelocity(sec.getLiquidVelocity());
+      }
       sec.updateWaterOilConservativeVariables();
       return;
     }
@@ -6009,6 +6020,29 @@ public class TwoFluidPipe extends Pipeline {
       oilHoldups[i] = sections[i].getOilHoldup();
     }
     return oilHoldups;
+  }
+
+  /**
+   * Get the per-section gas mass flux along the pipeline.
+   *
+   * <p>
+   * Returns {@code rho_g * alpha_g * A * v_g} for each section. In a converged steady state without mass transfer this
+   * profile and the liquid-phase profiles should reproduce the inlet mass flow before transient integration begins.
+   * </p>
+   *
+   * @return gas mass flow at each section (kg/s)
+   */
+  public double[] getGasMassFlowProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double[] flows = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      flows[i] = sec.getGasDensity() * sec.getGasHoldup() * area * sec.getGasVelocity();
+    }
+    return flows;
   }
 
   /**

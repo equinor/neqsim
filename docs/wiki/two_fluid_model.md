@@ -761,6 +761,13 @@ residuals below $10^{-9}$. A coupled call that cannot complete its requested int
 reports accepted/requested time, residual/tolerance, iterations/cap, and whether pressure correction
 was limited; it never returns partial or zero progress silently.
 
+Before time marching, a no-transfer steady case can be checked phase by phase with
+`getGasMassFlowProfile()`, `getOilMassFlowProfile()`, and `getWaterMassFlowProfile()`. The active oil
+or water velocity is synchronized with the final bulk-liquid velocity at exact single-liquid
+endpoints, so a stale inactive-phase split cannot distort the handoff outlet flux. Matching the inlet
+and outlet steady fluxes is necessary but not sufficient: it does not establish a transient
+phase-momentum fixed point or qualify liquid-rich/severe-slugging behavior.
+
 After every evaluated window, inspect the sticky diagnostics, which reset on the next steady
 `run()`:
 
