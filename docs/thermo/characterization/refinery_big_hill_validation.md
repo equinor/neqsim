@@ -7,6 +7,8 @@ description: "Public-data qualification of NeqSim refinery assay volume-to-mass 
 
 Issue #3305 requires refinery characterization to be qualified against public refinery data before atmospheric/vacuum fractionation and conversion-unit models are expanded. This page freezes the first external refinery-assay benchmark used by the campaign.
 
+The later public DOE workbook, reported on 24 September 2021, is treated as a separate frozen source rather than silently replacing this 1998 MLI 009 matrix. Its per-cut UOP K values qualify the [DOE Big Hill Watson-factor calculation](refinery_big_hill_watson_validation).
+
 ## Source and provenance
 
 The benchmark uses the U.S. Department of Energy Strategic Petroleum Reserve (SPR) **Big Hill Sweet**, sample **MLI 009**, assay date **1998-05-04**, published in Exhibit D of the SPR Standard Sales Provisions in the Code of Federal Regulations archive:
