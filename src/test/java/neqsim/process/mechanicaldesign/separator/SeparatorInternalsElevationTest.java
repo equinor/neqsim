@@ -190,14 +190,12 @@ public class SeparatorInternalsElevationTest {
 
     DrainageHeadResult result = design.computeDrainageHead();
 
-    assertEquals(result.getMeshDpPa() + result.getCycloneDpToDrainPa(), result.getTotalDpPa(),
-        1.0e-9);
+    assertEquals(result.getMeshDpPa() + result.getCycloneDpToDrainPa(), result.getTotalDpPa(), 1.0e-9);
     assertEquals(1200.0, result.getAvailableHeadMm(), 1.0e-6);
     assertTrue(result.getRequiredHeadMm() >= 0.0, "required head must not be negative");
-    assertEquals(result.getRequiredHeadMm() / result.getAvailableHeadMm() * 100.0,
-        result.getPercentOfAvailable(), 1.0e-9);
+    assertEquals(result.getRequiredHeadMm() / result.getAvailableHeadMm() * 100.0, result.getPercentOfAvailable(),
+        1.0e-9);
     assertTrue(result.getGasDensityKgM3() > 0.0, "gas density must be positive");
-    assertTrue(result.getLiquidDensityKgM3() > result.getGasDensityKgM3(),
-        "liquid must be denser than gas");
+    assertTrue(result.getLiquidDensityKgM3() > result.getGasDensityKgM3(), "liquid must be denser than gas");
   }
 }

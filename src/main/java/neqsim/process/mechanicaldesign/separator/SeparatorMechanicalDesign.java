@@ -174,9 +174,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Inlet nozzle centreline elevation from BTL [m]. */
   private double inletNozzleElevation = 0.0;
   /**
-   * Inlet device top face elevation from BTL [m]. The free-path height for
-   * carry-over correlations is measured from this surface up to the bottom of the next gas-side
-   * internal (mesh pad / vane pack / cyclone deck).
+   * Inlet device top face elevation from BTL [m]. The free-path height for carry-over correlations is measured from
+   * this surface up to the bottom of the next gas-side internal (mesh pad / vane pack / cyclone deck).
    */
   private double inletDeviceTopElevation = 0.0;
   /** Mesh pad bottom face elevation from BTL [m]. */

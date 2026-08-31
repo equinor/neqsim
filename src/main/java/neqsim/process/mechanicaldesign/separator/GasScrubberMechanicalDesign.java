@@ -518,8 +518,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     double cycDp = 0.0;
     if (hasDemistingCyclones && numberOfDemistingCyclones > 0 && demistingCycloneDiameterM > 0) {
-      double cycArea =
-          numberOfDemistingCyclones * Math.PI * Math.pow(demistingCycloneDiameterM / 2.0, 2);
+      double cycArea = numberOfDemistingCyclones * Math.PI * Math.pow(demistingCycloneDiameterM / 2.0, 2);
       double vCyc = cycArea > 0 ? gasFlowM3s / cycArea : 0.0;
       double momentum = rhoGas * vCyc * vCyc;
       double cycDpTotal = cycloneEulerNumber * momentum;
