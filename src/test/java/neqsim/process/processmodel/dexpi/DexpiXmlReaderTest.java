@@ -294,7 +294,6 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(first.toJson(), second.toJson());
   }
 
-
   @Test
   public void testReadWithDiagnosticsPreservesParallelMaterialConnections() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
@@ -302,8 +301,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\">"
         + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-2\" ComponentClass=\"PipingNetworkSegment\">"
-        + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
-        + "</PlantModel>";
+        + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>" + "</PlantModel>";
 
     DexpiXmlReader.ImportResult first = DexpiXmlReader
         .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
@@ -329,12 +327,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
 
   @Test
   public void testReadWithDiagnosticsReportsMalformedMaterialConnections() throws Exception {
-    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Nozzle ID=\"N-1\"/>"
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "<Nozzle ID=\"N-1\"/>"
         + "<PipingNetworkSegment ID=\"S-BROKEN\" ComponentClass=\"PipingNetworkSegment\">"
         + "<Connection ID=\"C-1\" ToID=\"UNKNOWN\"/></PipingNetworkSegment>"
-        + "<Connection ID=\"C-1\" FromID=\"N-1\" ToID=\"N-1\"/>"
-        + "</PlantModel>";
+        + "<Connection ID=\"C-1\" FromID=\"N-1\" ToID=\"N-1\"/>" + "</PlantModel>";
 
     DexpiXmlReader.ImportResult result = DexpiXmlReader
         .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));

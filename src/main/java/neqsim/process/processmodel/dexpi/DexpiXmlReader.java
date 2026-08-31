@@ -652,9 +652,7 @@ public final class DexpiXmlReader {
     return instruments;
   }
 
-
-  private static List<DexpiConnectionInfo> parseConnections(Document document,
-      List<ImportDiagnostic> diagnostics) {
+  private static List<DexpiConnectionInfo> parseConnections(Document document, List<ImportDiagnostic> diagnostics) {
     List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     NodeList allElements = document.getElementsByTagName("*");
     Map<String, Element> elementsById = new HashMap<String, Element>();
@@ -682,8 +680,7 @@ public final class DexpiXmlReader {
       Element segment = findAncestorElement(connection, "PipingNetworkSegment");
       String segmentId = "";
       if (segment != null) {
-        segmentId = firstNonEmpty(segment.getAttribute("ID"),
-            attributeValue(segment, DexpiMetadata.SEGMENT_NUMBER));
+        segmentId = firstNonEmpty(segment.getAttribute("ID"), attributeValue(segment, DexpiMetadata.SEGMENT_NUMBER));
         if (segmentId == null) {
           segmentId = "";
         }
@@ -715,12 +712,10 @@ public final class DexpiXmlReader {
 
       if (segment == null) {
         addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
-            "DEXPI_IMPORT_CONNECTION_SEGMENT_MISSING",
-            "Connection is not owned by a PipingNetworkSegment");
+            "DEXPI_IMPORT_CONNECTION_SEGMENT_MISSING", "Connection is not owned by a PipingNetworkSegment");
       } else if (isBlank(segmentId)) {
         addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
-            "DEXPI_IMPORT_CONNECTION_SEGMENT_ID_MISSING",
-            "Owning PipingNetworkSegment has no source identity");
+            "DEXPI_IMPORT_CONNECTION_SEGMENT_ID_MISSING", "Owning PipingNetworkSegment has no source identity");
       }
 
       String fromId = connection.getAttribute("FromID");
@@ -745,13 +740,12 @@ public final class DexpiXmlReader {
       }
       if (!isBlank(fromId) && fromId.equals(toId)) {
         addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
-            "DEXPI_IMPORT_CONNECTION_SELF_REFERENCE",
-            "Connection source and target both reference '" + fromId + "'");
+            "DEXPI_IMPORT_CONNECTION_SELF_REFERENCE", "Connection source and target both reference '" + fromId + "'");
       }
 
       connections.add(new DexpiConnectionInfo(evidenceId, sourceId, segmentId, fromId, toId,
-          fromElement == null ? "" : fromElement.getTagName(),
-          toElement == null ? "" : toElement.getTagName(), fromElement != null, toElement != null));
+          fromElement == null ? "" : fromElement.getTagName(), toElement == null ? "" : toElement.getTagName(),
+          fromElement != null, toElement != null));
     }
     logger.info("Parsed {} material connections from DEXPI XML", connections.size());
     return connections;

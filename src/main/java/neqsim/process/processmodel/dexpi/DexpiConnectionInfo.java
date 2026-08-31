@@ -8,8 +8,8 @@ import java.util.Map;
  * Immutable source-evidence record for one Proteus-compatible DEXPI material connection.
  *
  * <p>
- * This record preserves source order, direction, ownership, and endpoint-resolution evidence. It
- * does not reconstruct or imply live {@code ProcessSystem} topology.
+ * This record preserves source order, direction, ownership, and endpoint-resolution evidence. It does not reconstruct
+ * or imply live {@code ProcessSystem} topology.
  * </p>
  *
  * @author NeqSim
@@ -40,9 +40,8 @@ public final class DexpiConnectionInfo implements Serializable {
    * @param fromResolved whether the source endpoint resolves in the source document
    * @param toResolved whether the target endpoint resolves in the source document
    */
-  public DexpiConnectionInfo(String id, String sourceId, String segmentId, String fromId,
-      String toId, String fromElementName, String toElementName, boolean fromResolved,
-      boolean toResolved) {
+  public DexpiConnectionInfo(String id, String sourceId, String segmentId, String fromId, String toId,
+      String fromElementName, String toElementName, boolean fromResolved, boolean toResolved) {
     this.id = normalize(id);
     this.sourceId = normalize(sourceId);
     this.segmentId = normalize(segmentId);
