@@ -1560,3 +1560,71 @@ to NeqSim and extend the converter registry instead:
 Validate registry changes with `python devtools/test_unisim_outputs.py`. The
 suite includes pure-Python checks for output modes, E300 transfer, operation
 handler strategy, and JSON `_unisim_operation_mapping` summaries.
+
+## Reverse direction: NeqSim JSON → UniSim (`devtools/unisim_writer.py`)
+
+`UniSimWriter` builds a wired `.usc` case from the same JSON that
+`ProcessSystem.fromJsonAndRun()` consumes, so one JSON file can drive both
+tools and the results can be compared directly.
+
+```python
+from devtools.unisim_writer import UniSimWriter
+
+writer = UniSimWriter(
+    visible=True,
+    template_path="licensed_case.usc",  # copy first — it is modified
+    clear_template=True,                # empty flowsheet + fluid package
+)
+writer.build_from_json(json_str, save_path="gas_compression.usc")
+writer.close()
+```
+
+### Verified COM rules (UniSim Design R510)
+
+1. **The template must come from a licensed UniSim session.** A `.usc` saved
+   from a case created by `SimulationCases.Add()` inherits restricted write
+   access: reads and `MaterialStreams.Add` succeed, but every
+   `Operations.Add` and `variable.SetValue` fails with E_ACCESSDENIED
+   (`-2147024891`). Symptom: "Operations created: 0" with 10+ access-denied
+   warnings. Fix: point `template_path` at a real saved case.
+2. **Fluid-package edits require a basis change.** Wrap component add/remove in
+   `BasisManager.StartBasisChange()` … `EndBasisChange()` (or the
+   `…Invisibly` variants). Outside a basis change, `Components.Add` returns
+   E_ACCESSDENIED on a live case.
+3. **Collections use `Remove(i)` / `RemoveAll()`, not `Item(i).Delete()`.**
+   This applies to `Flowsheet.Operations`, `MaterialStreams`, `EnergyStreams`
+   and `FluidPackage.Components`.
+4. **Compressor efficiency members are `CompPolytropicEff` and
+   `CompAdiabaticEff`** (percent), not `PolytropicEfficiency`. Related useful
+   members: `ProductPressure`, `ProductTemperature`, `FeedPressure`, `Energy`,
+   `PolytropicHead`, `EfficiencyType`, `UsingCurves`, `Curves`.
+5. **Duty-consuming operations need an attached energy stream.** Without
+   `flowsheet.EnergyStreams.Add(name)` + `op.EnergyStream = …`, a compressor,
+   pump, expander, cooler or heater never closes its energy balance: discharge
+   temperature and power read back as the empty sentinel **`-32767`**. Seeing
+   `-32767` in results is the signature of a missing energy stream, not a
+   convergence failure.
+6. `Pressure.Calculate()` can be denied even when `Pressure.SetValue(v, 'bar')`
+   works — always try `SetValue` first, `Calculate` as fallback.
+
+Discover member names for an unfamiliar operation with early binding
+(`win32com.client.gencache.EnsureDispatch`) in a throwaway process, then keep
+the writer itself on `win32com.client.dynamic.Dispatch`.
+
+### Round-trip accuracy
+
+A three-stage export compression train (25 → 200 bara, SRK, polytropic
+efficiency 0.78, interstage cooling to 35 °C, knock-out scrubbers) built from
+one JSON gave:
+
+| Quantity | NeqSim | UniSim | Deviation |
+|---|---|---|---|
+| Stage 1 shaft power | 4216.4 kW | 4206.4 kW | −0.24 % |
+| Stage 2 shaft power | 3571.7 kW | 3555.1 kW | −0.46 % |
+| Stage 3 shaft power | 2824.0 kW | 2802.7 kW | −0.75 % |
+| Total shaft power | 10 612.1 kW | 10 564.2 kW | −0.45 % |
+| Stage 1 discharge T | 97.56 °C | 97.24 °C | −0.32 °C |
+| Export gas flow | 117 593 kg/h | 117 623 kg/h | +0.03 % |
+
+Sub-1 % agreement on power is the expected level for identical SRK setups; the
+residual comes from small differences in the polytropic path integration.

@@ -1479,8 +1479,8 @@ def test_capabilities():
     check("implementation inventory resolves 60 classes",
           implementation.get("implementationClassCount") == 60,
           str(implementation))
-    check("implementation inventory exposes 205 factory equipment types",
-          implementation.get("equipmentTypeCount") == 205,
+    check("implementation inventory exposes 206 factory equipment types",
+          implementation.get("equipmentTypeCount") == 206,
           str(implementation))
     report_paths = implementation.get("reportPaths", [])
     check("implementation inventory exposes two report paths",
