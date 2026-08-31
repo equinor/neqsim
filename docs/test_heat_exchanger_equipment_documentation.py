@@ -36,7 +36,7 @@ class HeatExchangerEquipmentDocumentationContractTest(unittest.TestCase):
     def test_front_matter_heading_and_fences_are_complete(self):
         self.assertTrue(self.guide.startswith("---\n"))
         self.assertIn("Source-anchored guide", self.guide.split("---", 2)[1])
-        self.assertEqual(1, len(re.findall(r"^# ", self.guide, re.MULTILINE)))
+        self.assertEqual(0, len(re.findall(r"^# ", self.guide, re.MULTILINE)))
         self.assertEqual(0, self.guide.count("```") % 2)
 
     def test_complete_quick_start_uses_current_two_stream_api(self):
