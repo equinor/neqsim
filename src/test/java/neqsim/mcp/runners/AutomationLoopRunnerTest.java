@@ -87,8 +87,25 @@ class AutomationLoopRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", root.get("status").getAsString(), "getAdjustableParameters failed: " + result);
     JsonObject data = root.getAsJsonObject("data");
-    assertTrue(data.has("parameters"), "Should expose a parameters array");
-    assertTrue(data.has("count"));
+    JsonArray parameters = data.getAsJsonArray("parameters");
+    assertEquals(parameters.size(), data.get("count").getAsInt());
+    assertTrue(parameters.size() > 0, "Should expose at least one adjustable parameter");
+
+    JsonObject compressorPressure = null;
+    for (int index = 0; index < parameters.size(); index++) {
+      JsonObject parameter = parameters.get(index).getAsJsonObject();
+      if ("Compressor.outletPressure".equals(parameter.get("address").getAsString())) {
+        compressorPressure = parameter;
+        break;
+      }
+    }
+    assertNotNull(compressorPressure, "Should expose the canonical compressor pressure address");
+    assertEquals("bara", compressorPressure.get("unit").getAsString());
+    assertTrue(compressorPressure.has("lowerBound"));
+    assertTrue(compressorPressure.has("upperBound"));
+    assertEquals("Compressor", compressorPressure.get("targetUnitName").getAsString());
+    assertEquals("outletPressure", compressorPressure.get("targetProperty").getAsString());
+    assertEquals("INPUT_VARIABLE", compressorPressure.get("source").getAsString());
   }
 
   @Test
