@@ -172,6 +172,32 @@ apply the correlation directly at pipeline pressure without separate evidence. E
 speciation remains owned by issue #3144; pipeline source-term coupling remains owned by issue
 #3318.
 
+### Published neutral-pair residence-time screen
+
+`screenResidenceTime(...)` compares a residence time with the exact relaxation time of the
+reversible CO2(aq)/H2CO3 pair:
+
+$$
+\tau = \frac{1}{k_H+k_D}, \qquad
+\mathrm{Da}_{\mathrm{pair}} = \frac{t_{\mathrm{res}}}{\tau}, \qquad
+\frac{\delta(t)}{\delta(0)} = \exp(-\mathrm{Da}_{\mathrm{pair}}).
+$$
+
+Here `delta` is any initial concentration deviation from the pair equilibrium. The result reports
+the remaining deviation, the relaxed fraction, and the same transport-dominated/coupled/
+reaction-dominated thresholds as `KineticReactionDiagnostics`. `timeToRemainingDeviationFraction`
+provides the inverse analytical calculation.
+
+At 298.15 K and 0.65 molal NaCl, the published equations give `tau = 0.0384399 s`. A residence time
+of `0.177022 s` leaves 1% of an initial pair disequilibrium, while 1 s gives
+`Da_pair = 26.0147` and leaves about `5.03e-12`.
+
+This rapid relaxation applies only to the neutral molecular pair and its small H2CO3 equilibrium
+fraction. It is **not** a bicarbonate/carbonate, pH, total dissolved inorganic carbon, gas-to-water
+mass-transfer, water-dropout, or corrosion-equilibration time. It also carries the same
+Soli–Byrne temperature, salinity, and pressure limitations; no van Eldik–Palmer pressure multiplier
+is applied automatically.
+
 ## Published pressure response
 
 `AqueousCO2PressureKinetics` implements the pressure derivative measured by van Eldik and Palmer
