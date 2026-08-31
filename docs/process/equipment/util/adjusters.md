@@ -3,8 +3,6 @@ title: Adjusters
 description: "Documentation for adjuster equipment in NeqSim process simulation. Covers single-variable Adjuster with standard and functional interface modes, and MultiVariableAdjuster for simultaneous multi-variable specification using damped successive substitution."
 ---
 
-# Adjusters
-
 Documentation for adjuster equipment in NeqSim process simulation.
 
 ## Table of Contents

@@ -3,8 +3,6 @@ title: Fuel Gas System
 description: Documentation for fuel gas conditioning systems in NeqSim for gas turbines, fired heaters, and flare pilots.
 ---
 
-# Fuel Gas System
-
 Models fuel gas conditioning for process facilities including gas turbines, fired heaters, and flare pilots.
 
 ## Table of Contents

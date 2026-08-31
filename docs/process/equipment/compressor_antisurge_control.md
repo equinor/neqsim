@@ -3,8 +3,6 @@ title: Compressor Anti-Surge and Coordinated Control
 description: Guide to compressor anti-surge protection, speed/load control, recycle override, coordinated pressure-speed-recycle control, and anti-surge application design examples in NeqSim.
 ---
 
-# Compressor Anti-Surge and Coordinated Control
-
 This guide explains how NeqSim represents compressor operating-envelope protection and coordinated compressor control in the dynamic compressor map example.
 
 The focus is educational and simulation-oriented. The models illustrate common control philosophy patterns used for centrifugal compressors; they are not a replacement for vendor-certified compressor controls, machinery protection systems, or site-specific control narratives.

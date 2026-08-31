@@ -4,8 +4,6 @@ description: Documentation for pipeline equipment in NeqSim.
 keywords: "pipeline, pipe, pipe flow, pressure drop, Beggs and Brill, multiphase flow, elevation, heat transfer, pipe sizing, subsea pipeline, export pipeline, gas pipeline"
 ---
 
-# Pipelines and Pipes
-
 Documentation for pipeline equipment in NeqSim.
 
 > **📘 Comprehensive Documentation Available**

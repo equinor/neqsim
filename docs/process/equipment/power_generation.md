@@ -3,8 +3,6 @@ title: Power Generation Equipment
 description: "Documentation for power generation equipment in NeqSim: gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels."
 ---
 
-# Power Generation Equipment
-
 Documentation for power generation equipment in NeqSim, including gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels.
 
 ## Table of Contents

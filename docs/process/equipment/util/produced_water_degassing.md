@@ -3,8 +3,6 @@ title: Produced Water Degassing System
 description: Documentation for multi-stage produced water degassing with emission calculations per Norwegian regulations.
 ---
 
-# Produced Water Degassing System
-
 High-level model for produced water degassing with greenhouse gas emission calculations.
 
 ## Table of Contents

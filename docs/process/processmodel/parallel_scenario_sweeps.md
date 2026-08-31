@@ -4,8 +4,6 @@ description: How to run process scenario sweeps and Design-of-Experiments (DoE) 
 keywords: "parallel, scenario sweep, DoE, copy, clone, thread safety, ProcessSystem, parameter study, multithread"
 ---
 
-# Parallel Scenario Sweeps with Clone-and-Run
-
 When running a parameter sweep or Design-of-Experiments (DoE) study, you often want to
 evaluate many variations of the same flowsheet — for example, the compressor power at a
 range of discharge pressures. Because each scenario is independent, these runs can be

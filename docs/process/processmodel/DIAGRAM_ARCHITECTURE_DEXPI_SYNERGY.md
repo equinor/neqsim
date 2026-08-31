@@ -3,8 +3,6 @@ title: "PFD Diagram System: Architecture Alignment and DEXPI Synergy"
 description: "How process topology, the canonical engineering graph, PFD rendering, and DEXPI exchange align."
 ---
 
-# PFD Diagram System: Architecture Alignment and DEXPI Synergy
-
 ## 1. Architectural Fit Assessment
 
 ### 1.1 Current NeqSim Process Model Architecture

@@ -3,8 +3,6 @@ title: Umbilicals
 description: Documentation for subsea umbilical equipment in NeqSim.
 ---
 
-# Umbilicals
-
 Documentation for subsea umbilical equipment in NeqSim.
 
 ## Table of Contents

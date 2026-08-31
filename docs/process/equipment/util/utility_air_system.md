@@ -3,8 +3,6 @@ title: Utility Air System
 description: Documentation for utility air systems in NeqSim including instrument air, plant air, and breathing air per ISO 8573-1.
 ---
 
-# Utility Air System
-
 Models utility air systems for offshore and onshore facilities per ISO 8573-1.
 
 ## Table of Contents

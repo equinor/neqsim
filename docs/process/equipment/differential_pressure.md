@@ -3,8 +3,6 @@ title: Differential Pressure Devices
 description: Documentation for differential pressure measurement and flow restriction equipment in NeqSim.
 ---
 
-# Differential Pressure Devices
-
 Documentation for differential pressure measurement and flow restriction equipment in NeqSim.
 
 ## Table of Contents

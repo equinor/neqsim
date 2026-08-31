@@ -3,8 +3,6 @@ title: ProcessModule Class
 description: Documentation for modular process units in NeqSim.
 ---
 
-# ProcessModule Class
-
 Documentation for modular process units in NeqSim.
 
 ## Table of Contents

@@ -3,8 +3,6 @@ title: Water Treatment Equipment
 description: "Documentation for produced water treatment equipment in NeqSim: hydrocyclones with physics-based d50, DSD integration, PDR model, liner sizing, demulsifier dose optimization, OIW analyzer drift, monthly OIW warnings, OSPAR compliance, ASME VIII mechanical design, gas flotation units (IGF/DGF), treatment trains, and regulatory compliance."
 ---
 
-# Water Treatment Equipment
-
 Documentation for produced water treatment equipment in NeqSim.
 
 ## Table of Contents

@@ -3,8 +3,6 @@ title: Flare Systems
 description: Documentation for flare equipment in NeqSim process simulation.
 ---
 
-# Flare Systems
-
 Documentation for flare equipment in NeqSim process simulation.
 
 ## Table of Contents

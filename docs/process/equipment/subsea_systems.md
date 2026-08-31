@@ -3,8 +3,6 @@ title: Subsea Production Systems
 description: Documentation for subsea production equipment in NeqSim.
 ---
 
-# Subsea Production Systems
-
 Documentation for subsea production equipment in NeqSim.
 
 ## Table of Contents

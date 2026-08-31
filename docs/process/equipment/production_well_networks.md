@@ -3,8 +3,6 @@ title: "Production Well Networks"
 description: "Modeling production well networks with IPR, chokes, tubing VLP, and multiphase pipe flow using LoopedPipeNetwork. Covers Newton-Raphson Global Gradient Algorithm with generalized resistance elements for oil and gas gathering systems."
 ---
 
-# Production Well Networks
-
 Model complete production well networks — from reservoir sandface through tubing,
 chokes, flowlines, and manifolds to delivery — using the `LoopedPipeNetwork`
 Newton-Raphson Global Gradient Algorithm (NR-GGA) solver.

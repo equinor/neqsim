@@ -3,8 +3,6 @@ title: Control Valves
 description: Comprehensive documentation for control valves in NeqSim including CheckValve, LevelControlValve, PressureControlValve, and safety valves (ESD, PSD).
 ---
 
-# Control Valves
-
 Comprehensive documentation for control valves in NeqSim process simulation.
 
 ## Table of Contents

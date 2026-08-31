@@ -3,8 +3,6 @@ title: Reactors
 description: "Documentation for chemical reactor equipment in NeqSim: plug flow reactor (PFR), stirred tank reactor (CSTR), Gibbs equilibrium reactor, stoichiometric reactor, sulfur oxidation reactor, sulfur deposition analyser, hydrogen production reformers, ammonia synthesis reactor, and bio-processing reactors."
 ---
 
-# Reactors
-
 NeqSim provides a family of reactor models for gas-phase kinetics, chemical equilibrium,
 stoichiometric conversion, catalytic reactions, and bio-processing. All reactors live in the
 `neqsim.process.equipment.reactor` package and integrate with `ProcessSystem` flowsheets.

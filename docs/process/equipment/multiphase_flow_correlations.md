@@ -3,8 +3,6 @@ title: Multiphase Flow Correlations
 description: "Multiphase pipe flow correlations in NeqSim: Beggs and Brill, Hagedorn-Brown, and Mukherjee-Brill models for pressure drop, liquid holdup, and flow pattern prediction in vertical, horizontal, and inclined pipelines."
 ---
 
-# Multiphase Flow Correlations
-
 NeqSim provides several empirical and mechanistic correlations for multiphase pipe
 flow. This page covers the three main correlations, when to use each, and code examples.
 

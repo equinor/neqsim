@@ -3,8 +3,6 @@ title: "Heat Integration and Pinch Analysis"
 description: "Guide to using PinchAnalysis and HeatStream classes for process heat integration, minimum utility targeting, composite curves, and grand composite curves using the Linnhoff method."
 ---
 
-# Heat Integration and Pinch Analysis
-
 NeqSim provides a classical pinch analysis engine (Linnhoff method) for determining minimum heating and cooling utility requirements for a set of process streams.
 
 ## Classes

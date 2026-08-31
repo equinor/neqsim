@@ -4,8 +4,6 @@ description: Source-anchored guide to heater, cooler, two-stream heat-exchanger,
 keywords: "heat exchanger, heater, cooler, UA, duty, effectiveness, LMTD, dynamic heat exchanger, auto sizing"
 ---
 
-# Heat Exchanger Equipment
-
 NeqSim provides single-stream temperature or duty equipment and a two-stream heat exchanger.
 This guide separates their specifications and result APIs so that a model does not accidentally
 mix heater, exchanger, column-condenser, or mechanical-design semantics.
