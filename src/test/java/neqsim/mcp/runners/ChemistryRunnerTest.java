@@ -141,6 +141,77 @@ class ChemistryRunnerTest {
   }
 
   @Test
+  void electrolyteMultiScaleEquilibriumPitzerExposesCompetingMineralLedger() {
+    String input = "{\"analysis\":\"electrolyteMultiScaleEquilibrium\",\"model\":\"pitzer\","
+        + "\"dataset\":\"phreeqc-catalog\",\"temperature_K\":298.15,\"pressure_bara\":1.01325,"
+        + "\"minerals\":[\"CaSO4_A\",\"CaSO4_G\"],"
+        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,\"Mg++\":0.15,"
+        + "\"Cl-\":1.3,\"SO4--\":0.2}}";
+
+    JsonObject result = JsonParser.parseString(ChemistryRunner.run(input)).getAsJsonObject();
+    JsonObject data = result.getAsJsonObject("data");
+    JsonObject minerals = data.getAsJsonObject("mineralResults");
+
+    assertEquals("success", result.get("status").getAsString());
+    assertEquals("ThermodynamicOperations.precipitateScales",
+        data.get("authoritativeJavaOperation").getAsString());
+    assertEquals(2, data.get("requestedMineralCount").getAsInt());
+    assertEquals(1, data.get("presentSolidCount").getAsInt());
+    assertFalse(minerals.getAsJsonObject("CaSO4_A").get("precipitatedSolid").getAsBoolean());
+    assertTrue(minerals.getAsJsonObject("CaSO4_A").get("finalSaturationRatio").getAsDouble() < 1.0);
+    assertTrue(minerals.getAsJsonObject("CaSO4_G").get("precipitatedSolid").getAsBoolean());
+    assertEquals(1.0, minerals.getAsJsonObject("CaSO4_G").get("finalSaturationRatio").getAsDouble(), 1.0e-6);
+    assertTrue(data.get("maximumComplementarityViolation_log10SR").getAsDouble() <= 1.0e-6);
+    assertTrue(data.get("maximumComponentBalanceResidual_mol").getAsDouble() <= 1.0e-10);
+    assertTrue(data.getAsJsonObject("aqueousPhaseState").get("normalizedNonNegative").getAsBoolean());
+    assertEquals(0.0,
+        data.getAsJsonObject("aqueousPhaseState").get("chargeResidual_molPerKgWater").getAsDouble(), 1.0e-10);
+    assertTrue(data.get("engineeringGatesPass").getAsBoolean());
+    assertFalse(data.get("publicationReady").getAsBoolean());
+  }
+
+  @Test
+  void electrolyteMultiScaleEquilibriumIsOrderIndependentAndDeterministic() {
+    String prefix = "{\"analysis\":\"electrolyteMultiScaleEquilibrium\",\"model\":\"pitzer\","
+        + "\"dataset\":\"phreeqc-catalog\",\"temperature_K\":298.15,\"pressure_bara\":1.01325,";
+    String suffix = ",\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,"
+        + "\"Mg++\":0.15,\"Cl-\":1.3,\"SO4--\":0.2}}";
+    String forward = prefix + "\"minerals\":[\"CaSO4_A\",\"CaSO4_G\"]" + suffix;
+    String reverse = prefix + "\"minerals\":[\"CaSO4_G\",\"CaSO4_A\"]" + suffix;
+
+    JsonObject first = JsonParser.parseString(ChemistryRunner.run(forward)).getAsJsonObject()
+        .getAsJsonObject("data");
+    JsonObject repeated = JsonParser.parseString(ChemistryRunner.run(forward)).getAsJsonObject()
+        .getAsJsonObject("data");
+    JsonObject reordered = JsonParser.parseString(ChemistryRunner.run(reverse)).getAsJsonObject()
+        .getAsJsonObject("data");
+
+    assertEquals(first, repeated);
+    assertEquals(first, reordered);
+  }
+
+  @Test
+  void electrolyteMultiScaleEquilibriumUsesElectrolyteCpaAndRejectsDuplicateMinerals() {
+    String valid = "{\"analysis\":\"electrolyteMultiScaleEquilibrium\","
+        + "\"model\":\"electrolyte-cpa\",\"temperature_K\":298.15,\"pressure_bara\":1.01325,"
+        + "\"minerals\":[\"CaSO4_A\",\"CaSO4_G\"],"
+        + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,"
+        + "\"Cl-\":1.0,\"SO4--\":0.2}}";
+    JsonObject data = JsonParser.parseString(ChemistryRunner.run(valid)).getAsJsonObject()
+        .getAsJsonObject("data");
+
+    assertEquals("electrolyte-cpa", data.get("model").getAsString());
+    assertTrue(data.get("engineeringGatesPass").getAsBoolean());
+    assertTrue(data.get("pitzerQualificationLevel").isJsonNull());
+
+    String duplicate = valid.replace("[\"CaSO4_A\",\"CaSO4_G\"]", "[\"CaSO4_A\",\"CaSO4_A\"]");
+    JsonObject rejected = JsonParser.parseString(ChemistryRunner.run(duplicate)).getAsJsonObject();
+    assertEquals("error", rejected.get("status").getAsString());
+    assertTrue(rejected.getAsJsonArray("errors").get(0).getAsJsonObject().get("message").getAsString()
+        .contains("Duplicate COMPSALT mineral"));
+  }
+
+  @Test
   void qualifiedPitzerTopologyIsAcceptedForItsObservableAndEnvelope() {
     String input = "{\"analysis\":\"pitzerQualification\",\"temperature_K\":298.15,"
         + "\"pressure_bara\":1.01325,\"dataset\":\"phreeqc-na-k-cl\","
