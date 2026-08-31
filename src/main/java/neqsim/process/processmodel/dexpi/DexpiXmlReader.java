@@ -761,11 +761,9 @@ public final class DexpiXmlReader {
   private static void addMeasuringLineDiagnostics(Element element, List<ImportDiagnostic> diagnostics,
       Map<String, Element> elementsById) {
     addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "has logical start",
-        "DEXPI_IMPORT_MEASURING_SOURCE_MISSING", "DEXPI_IMPORT_MEASURING_SOURCE_UNRESOLVED",
-        "Measuring-line source");
+        "DEXPI_IMPORT_MEASURING_SOURCE_MISSING", "DEXPI_IMPORT_MEASURING_SOURCE_UNRESOLVED", "Measuring-line source");
     addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "has logical end",
-        "DEXPI_IMPORT_MEASURING_TARGET_MISSING", "DEXPI_IMPORT_MEASURING_TARGET_UNRESOLVED",
-        "Measuring-line target");
+        "DEXPI_IMPORT_MEASURING_TARGET_MISSING", "DEXPI_IMPORT_MEASURING_TARGET_UNRESOLVED", "Measuring-line target");
     addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "is attached to",
         "DEXPI_IMPORT_MEASURING_ATTACHMENT_MISSING", "DEXPI_IMPORT_MEASURING_ATTACHMENT_UNRESOLVED",
         "Measuring-line process attachment");
@@ -783,8 +781,7 @@ public final class DexpiXmlReader {
           "Final control element '" + finalElementId + "' does not resolve to a source object");
     }
     addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "is located in",
-        "DEXPI_IMPORT_ACTUATION_LOCATION_MISSING", "DEXPI_IMPORT_ACTUATION_LOCATION_UNRESOLVED",
-        "Actuation location");
+        "DEXPI_IMPORT_ACTUATION_LOCATION_MISSING", "DEXPI_IMPORT_ACTUATION_LOCATION_UNRESOLVED", "Actuation location");
   }
 
   private static void addAssociationReferenceDiagnostic(Element element, List<ImportDiagnostic> diagnostics,
