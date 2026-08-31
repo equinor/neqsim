@@ -563,8 +563,10 @@ class UniSimWriter:
                 collection.RemoveAll()
                 removed += count
                 continue
-            except Exception:
-                pass
+            except Exception as e:
+                self._warnings.append(
+                    f"Could not RemoveAll() from {collection_name}; "
+                    f"falling back to iterative removal: {e}")
             # Iterate backwards — the collection re-indexes on remove
             for i in range(count - 1, -1, -1):
                 try:
@@ -1432,8 +1434,9 @@ class UniSimWriter:
                     if dp is not None:
                         try:
                             op.PressureDrop.SetValue(dp, dp_unit)
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            self._warnings.append(
+                                f"Could not set pressure drop for {unit.name}: {e}")
 
             elif type_name == 'Pump':
                 if 'outletPressure' in props:
