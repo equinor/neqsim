@@ -33,7 +33,7 @@ class AgentBenchmarkSuiteTest {
   }
 
   @Test
-  void testStandardSuiteCoversAllCategories() {
+  void testStandardSuiteCoversGeneralCategories() {
     AgentBenchmarkSuite standard = AgentBenchmarkSuite.createStandardSuite();
     boolean hasThermo = false;
     boolean hasFlash = false;
@@ -41,6 +41,7 @@ class AgentBenchmarkSuiteTest {
     boolean hasPipeline = false;
     boolean hasEconomics = false;
     boolean hasSafety = false;
+    boolean hasControl = false;
     for (BenchmarkProblem p : standard.getProblems()) {
       switch (p.getCategory()) {
       case THERMO:
@@ -61,6 +62,9 @@ class AgentBenchmarkSuiteTest {
       case SAFETY:
         hasSafety = true;
         break;
+      case CONTROL:
+        hasControl = true;
+        break;
       }
     }
     assertTrue(hasThermo, "Suite should have THERMO problems");
@@ -69,6 +73,16 @@ class AgentBenchmarkSuiteTest {
     assertTrue(hasPipeline, "Suite should have PIPELINE problems");
     assertTrue(hasEconomics, "Suite should have ECONOMICS problems");
     assertTrue(hasSafety, "Suite should have SAFETY problems");
+    assertFalse(hasControl, "General standard suite keeps the dedicated CONTROL suite separate");
+  }
+
+  @Test
+  void testControlsSuiteHasSixControlProblems() {
+    AgentBenchmarkSuite controls = AgentBenchmarkSuite.createControlsSuite();
+    assertEquals(6, controls.getProblems().size());
+    for (BenchmarkProblem problem : controls.getProblems()) {
+      assertEquals(ProblemCategory.CONTROL, problem.getCategory());
+    }
   }
 
   @Test

@@ -17,6 +17,7 @@ benchmark results so users can assess accuracy for their application.
 | [Hydrate formation](#hydrate-formation-temperature) | 3 | < 1°C | SRK + hydrate model |
 | [Phase envelope](#phase-envelope) | 2 | < 1 bar (cricondenbar) | SRK, GERG-2008 |
 | [Compressor power](#compressor-power) | 2 | < 3% | SRK |
+| [Controller dynamics](controls_benchmark.md) | 6 | Case-specific gates; final error <= 2% | Transparent dynamic surrogates |
 
 ---
 
@@ -94,6 +95,7 @@ Reference: Vendor performance curves and textbook examples.
 | Heavy hydrocarbons (C20+) | Characterization quality affects results | Tune binary parameters against PVT data |
 | Electrolyte systems | Limited to CPA-based models | Use SystemElectrolyteCPAstatoil for brine/MEG |
 | Wax/asphaltene | Correlative models, not first-principles | Cross-check with experimental WAT/AOP data |
+| Controller dynamics | Canonical cases qualify control logic against transparent surrogates, not field equipment | Retune and revalidate against plant or vendor data before engineering use |
 
 ---
 
