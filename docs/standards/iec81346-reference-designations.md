@@ -3,8 +3,6 @@ title: "IEC 81346 Reference Designation Support"
 description: "Guide to using IEC 81346 reference designations in NeqSim for structured equipment identification in process plants. Covers letter codes, automatic generation, DEXPI export, and automation API integration."
 ---
 
-# IEC 81346 Reference Designation Support
-
 NeqSim provides built-in support for **IEC 81346** — the international standard
 for structuring and identifying objects in industrial plants. This integration
 enables consistent, standards-compliant equipment tagging across process

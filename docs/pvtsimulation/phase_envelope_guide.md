@@ -3,8 +3,6 @@ title: Phase Envelope and Critical Points Guide
 description: Guide to calculating phase envelopes in NeqSim including bubble point, dew point curves, cricondenbar, cricondentherm, and quality lines for natural gas and oil systems.
 ---
 
-# Phase Envelope and Critical Points Guide
-
 The phase envelope defines the boundary between single-phase and two-phase regions. This guide explains how to calculate phase envelopes and extract key points like cricondenbar and cricondentherm using NeqSim.
 
 ## Key Concepts

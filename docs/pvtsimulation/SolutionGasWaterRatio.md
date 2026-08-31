@@ -3,8 +3,6 @@ title: Solution Gas-Water Ratio (Rsw) Calculation
 description: The **Solution Gas-Water Ratio (Rsw)** represents the volume of gas dissolved in water at reservoir conditions, expressed as standard cubic meters of gas per standard cubic meter of water (Sm³/Sm³)....
 ---
 
-# Solution Gas-Water Ratio (Rsw) Calculation
-
 ## Overview
 
 The **Solution Gas-Water Ratio (Rsw)** represents the volume of gas dissolved in water at reservoir conditions, expressed as standard cubic meters of gas per standard cubic meter of water (Sm³/Sm³). This property is essential for:
