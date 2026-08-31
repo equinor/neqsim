@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -107,6 +108,42 @@ class MixerTest {
     testMixer.addStream(waterStream);
     testMixer.run();
     assertEquals(testMixer.calcMixStreamEnthalpy(), testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
+  }
+
+  /**
+   * An algebraic mixer must remain usable when a process switches all equipment to dynamic mode.
+   */
+  @Test
+  void testRunTransientAsAlgebraicEquipment() {
+    SystemSrkEos firstFluid = new SystemSrkEos(298.15, 10.0);
+    firstFluid.addComponent("methane", 1.0);
+    firstFluid.setMixingRule(2);
+    Stream first = new Stream("first transient inlet", firstFluid);
+    first.setFlowRate(100.0, "kg/hr");
+
+    SystemSrkEos secondFluid = new SystemSrkEos(303.15, 10.0);
+    secondFluid.addComponent("methane", 1.0);
+    secondFluid.setMixingRule(2);
+    Stream second = new Stream("second transient inlet", secondFluid);
+    second.setFlowRate(50.0, "kg/hr");
+
+    Mixer mixer = new Mixer("transient mixer");
+    mixer.addStream(first);
+    mixer.addStream(second);
+    mixer.setCalculateSteadyState(false);
+
+    ProcessSystem process = new ProcessSystem("mixer transient regression");
+    process.add(first);
+    process.add(second);
+    process.add(mixer);
+
+    UUID stepId = UUID.randomUUID();
+    process.runTransient(2.0, stepId);
+    process.runTransient(2.0, stepId);
+
+    assertEquals(150.0, mixer.getOutletStream().getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(2.0, mixer.getTime(), 0.0,
+        "repeated evaluations with the same identifier must advance the mixer clock once");
   }
 
   /**

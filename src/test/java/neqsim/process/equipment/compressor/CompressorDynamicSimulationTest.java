@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -217,6 +218,17 @@ public class CompressorDynamicSimulationTest {
 
     // Verify history was recorded
     assertTrue(compressor.getOperatingHistory().getPointCount() > 0);
+  }
+
+  @Test
+  public void testTransientBootstrapWithEmptyOutlet() {
+    compressor.getOutletStream().setFlowRate(0.0, "kg/hr");
+    compressor.setCalculateSteadyState(false);
+
+    compressor.runTransient(2.0, UUID.randomUUID());
+
+    assertTrue(compressor.getOutletStream().getFlowRate("kg/hr") > compressor.getMinimumFlow());
+    assertEquals(2.0, compressor.getTime(), 0.0);
   }
 
   @Test
