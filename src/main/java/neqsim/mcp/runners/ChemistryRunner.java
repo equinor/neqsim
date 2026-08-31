@@ -30,6 +30,7 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
 
 /**
@@ -56,7 +57,8 @@ public class ChemistryRunner {
 
   private static final List<String> SUPPORTED_ANALYSES = Collections
       .unmodifiableList(Arrays.asList("electrolyteScale", "multiMineralScale", "mechanisticCorrosion",
-          "langmuirInhibitor", "packedBedScavenger", "electrolyteScaleEquilibrium", "pitzerQualification"));
+          "langmuirInhibitor", "packedBedScavenger", "electrolyteScaleEquilibrium",
+          "electrolyteMultiScaleEquilibrium", "pitzerQualification"));
 
   /**
    * Private constructor — static utility class.
@@ -121,6 +123,9 @@ public class ChemistryRunner {
         break;
       case "electrolyteScaleEquilibrium":
         data = runElectrolyteScaleEquilibrium(input);
+        break;
+      case "electrolyteMultiScaleEquilibrium":
+        data = runElectrolyteMultiScaleEquilibrium(input);
         break;
       case "pitzerQualification":
         data = runPitzerQualification(input);
@@ -366,6 +371,155 @@ public class ChemistryRunner {
         "Numerical engineering gates pass, but no exact mixed-brine mineral evidence envelope is registered for this "
             + "state");
     return data;
+  }
+
+  /**
+   * Runs simultaneous competing pure-mineral equilibrium against the selected electrolyte model.
+   *
+   * <p>
+   * This is a thin JSON/MCP view over {@link ThermodynamicOperations#precipitateScales(String...)}. It is distinct from
+   * the concentration-based {@code multiMineralScale} screening analysis and adds no thermodynamic equation, Ksp, or
+   * interaction parameter.
+   * </p>
+   *
+   * @param input chemistry analysis input
+   * @return deterministic solid ledger, complementarity, aqueous-state, and qualification evidence
+   */
+  private static JsonObject runElectrolyteMultiScaleEquilibrium(JsonObject input) {
+    double temperature = requiredFinitePositive(input, "temperature_K");
+    double pressure = requiredFinitePositive(input, "pressure_bara");
+    Map<String, Double> components = requiredComponentAmounts(input);
+    if (!hasPositiveWater(components)) {
+      throw new IllegalArgumentException("Electrolyte multi-scale equilibrium requires a positive water amount in mol");
+    }
+    String[] mineralNames = requiredMineralNames(input);
+
+    String model = input.has("model") ? input.get("model").getAsString().trim().toLowerCase() : "pitzer";
+    String datasetSelector = input.has("dataset") ? input.get("dataset").getAsString().trim().toLowerCase()
+        : "pitzer".equals(model) ? "phreeqc-catalog" : "not-applicable";
+    SystemInterface system;
+    PitzerParameterQualification pitzerQualification = null;
+
+    if ("pitzer".equals(model)) {
+      SystemPitzer pitzer = new SystemPitzer(temperature, pressure);
+      addComponents(pitzer, components);
+      requireElectroneutralInput(pitzer.getPhase(1), components);
+      pitzer.init(0);
+      applyScalePitzerDataset(pitzer, datasetSelector);
+      pitzer.setMixingRule("classic");
+      pitzer.setMultiPhaseCheck(true);
+      pitzerQualification = pitzer.getPitzerParameterQualification();
+      system = pitzer;
+    } else if ("electrolyte-cpa".equals(model)) {
+      if (input.has("dataset") && !"not-applicable".equals(datasetSelector)) {
+        throw new IllegalArgumentException("Pitzer dataset selectors do not apply to electrolyte-CPA parameters");
+      }
+      SystemElectrolyteCPAstatoil electrolyteCpa = new SystemElectrolyteCPAstatoil(temperature, pressure);
+      addComponents(electrolyteCpa, components);
+      requireElectroneutralInput(electrolyteCpa.getPhase(1), components);
+      electrolyteCpa.chemicalReactionInit();
+      electrolyteCpa.createDatabase(true);
+      electrolyteCpa.setMixingRule(10);
+      electrolyteCpa.setMultiPhaseCheck(true);
+      system = electrolyteCpa;
+    } else {
+      throw new IllegalArgumentException("Unknown electrolyte model '" + model + "'; use pitzer or electrolyte-cpa");
+    }
+
+    MultiSaltPrecipitationResult equilibrium = new ThermodynamicOperations(system).precipitateScales(mineralNames);
+    JsonObject phaseState = validateAqueousPhaseState(system);
+    JsonObject mineralResults = new JsonObject();
+    boolean mineralValuesFinite = true;
+    int presentSolidCount = 0;
+    for (Map.Entry<String, SaltPrecipitationResult> entry : equilibrium.getMineralResults().entrySet()) {
+      SaltPrecipitationResult solid = entry.getValue();
+      mineralValuesFinite &= Double.isFinite(solid.getInitialSaturationRatio())
+          && Double.isFinite(solid.getFinalSaturationRatio()) && solid.getFinalSaturationRatio() > 0.0
+          && Double.isFinite(solid.getPrecipitatedMoles()) && solid.getPrecipitatedMoles() >= 0.0
+          && Double.isFinite(solid.getPrecipitatedMassGrams()) && solid.getPrecipitatedMassGrams() >= 0.0;
+      if (solid.hasPrecipitatedSolid()) {
+        presentSolidCount++;
+      }
+      JsonObject mineral = new JsonObject();
+      mineral.addProperty("precipitatedSolid", solid.hasPrecipitatedSolid());
+      mineral.addProperty("precipitatedMoles_mol", solid.getPrecipitatedMoles());
+      mineral.addProperty("precipitatedMass_g", solid.getPrecipitatedMassGrams());
+      mineral.addProperty("initialSaturationRatio", solid.getInitialSaturationRatio());
+      mineral.addProperty("finalSaturationRatio", solid.getFinalSaturationRatio());
+      mineral.addProperty("complementarityViolation_log10SR", solid.getComplementarityViolation());
+      mineralResults.add(entry.getKey(), mineral);
+    }
+
+    boolean numericalGatesPass = mineralValuesFinite
+        && Double.isFinite(equilibrium.getMaximumComplementarityViolation())
+        && equilibrium.getMaximumComplementarityViolation() <= 1.0e-6
+        && Double.isFinite(equilibrium.getMaximumComponentBalanceResidualMoles())
+        && equilibrium.getMaximumComponentBalanceResidualMoles() <= 1.0e-10
+        && Double.isFinite(equilibrium.getTotalPrecipitatedMassGrams())
+        && equilibrium.getTotalPrecipitatedMassGrams() >= 0.0
+        && phaseState.get("normalizedNonNegative").getAsBoolean()
+        && Math.abs(phaseState.get("chargeResidual_molPerKgWater").getAsDouble()) <= 1.0e-10;
+    if (!numericalGatesPass) {
+      throw new IllegalStateException(
+          "Electrolyte multi-scale equilibrium failed complementarity, balance, or phase-state gates");
+    }
+
+    JsonObject data = new JsonObject();
+    data.addProperty("model", model);
+    data.addProperty("authoritativeJavaOperation", "ThermodynamicOperations.precipitateScales");
+    data.addProperty("temperature_K", temperature);
+    data.addProperty("pressure_bara", pressure);
+    data.addProperty("compositionBasis", "component amount in mol; aqueous molality derived from water mass");
+    data.addProperty("solidLedgerBasis",
+        "pure COMPSALT ion-formula amounts; crystallization water and solid solutions are not represented");
+    data.addProperty("datasetSelector", datasetSelector);
+    data.addProperty("datasetId",
+        pitzerQualification == null ? "not-applicable: electrolyte-EOS parameters are not Pitzer parameters"
+            : pitzerQualification.getDatasetId());
+    data.addProperty("requestedMineralCount", equilibrium.getMineralResults().size());
+    data.addProperty("presentSolidCount", presentSolidCount);
+    data.addProperty("equilibriumUpdates", equilibrium.getEquilibriumUpdates());
+    data.addProperty("maximumComplementarityViolation_log10SR",
+        equilibrium.getMaximumComplementarityViolation());
+    data.addProperty("maximumComponentBalanceResidual_mol",
+        equilibrium.getMaximumComponentBalanceResidualMoles());
+    data.addProperty("totalPrecipitatedMass_g", equilibrium.getTotalPrecipitatedMassGrams());
+    data.add("mineralResults", mineralResults);
+    data.add("aqueousPhaseState", phaseState);
+    data.addProperty("engineeringGatesPass", true);
+    if (pitzerQualification == null) {
+      data.add("pitzerQualificationLevel", null);
+      data.add("mineralTargetQualified", null);
+    } else {
+      data.addProperty("pitzerQualificationLevel", pitzerQualification.getLevel().name());
+      data.addProperty("mineralTargetQualified",
+          pitzerQualification.isValidatedFor(ValidationTarget.MINERAL_SATURATION_AND_PRECIPITATION));
+      data.add("qualificationLimitations", GSON.toJsonTree(pitzerQualification.getLimitations()));
+    }
+    data.addProperty("publicationReady", false);
+    data.addProperty("publicationLimitation",
+        "Numerical engineering gates pass, but no exact competitive mixed-brine mineral evidence envelope is "
+            + "registered for this state");
+    return data;
+  }
+
+  private static String[] requiredMineralNames(JsonObject input) {
+    if (!input.has("minerals") || !input.get("minerals").isJsonArray()
+        || input.getAsJsonArray("minerals").size() == 0) {
+      throw new IllegalArgumentException("'minerals' must be a non-empty JSON array of COMPSALT names");
+    }
+    JsonArray requested = input.getAsJsonArray("minerals");
+    String[] mineralNames = new String[requested.size()];
+    for (int index = 0; index < requested.size(); index++) {
+      if (requested.get(index).isJsonNull()) {
+        throw new IllegalArgumentException("COMPSALT mineral names cannot be null");
+      }
+      mineralNames[index] = requested.get(index).getAsString().trim();
+      if (mineralNames[index].isEmpty()) {
+        throw new IllegalArgumentException("COMPSALT mineral names cannot be blank");
+      }
+    }
+    return mineralNames;
   }
 
   private static Map<String, Double> requiredComponentAmounts(JsonObject input) {
