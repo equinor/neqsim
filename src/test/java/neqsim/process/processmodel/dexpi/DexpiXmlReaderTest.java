@@ -12,6 +12,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.EquipmentEnum;
@@ -378,6 +380,70 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionInfo legacy = new DexpiConnectionInfo("C", "C", "S", "A", "B", "Nozzle", "Nozzle", true, true);
     assertEquals("", legacy.getFromOwnerId());
     assertEquals("", legacy.getToOwnerId());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsSummarizesConnectionEndpointIncidence() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
+        + "<Equipment ID=\"E-B\"><Nozzle ID=\"N-B\"/></Equipment>"
+        + "<PipingComponent ID=\"PC-J\"><Nozzle ID=\"N-J\"/></PipingComponent>"
+        + "<Equipment ID=\"E-C\"><Nozzle ID=\"N-C\"/></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-1\"><Connection ID=\"C-1\" FromID=\"N-A\" ToID=\"N-J\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-2\"><Connection ID=\"C-2\" FromID=\"N-B\" ToID=\"N-J\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-3\"><Connection ID=\"C-3\" FromID=\"N-J\" ToID=\"N-C\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-4\"><Connection ID=\"C-4\" FromID=\"UNKNOWN\"/>"
+        + "</PipingNetworkSegment>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(5, first.getConnectionEndpoints().size());
+    DexpiConnectionEndpointInfo junction = first.getConnectionEndpoints().get(1);
+    assertEquals("N-J", junction.getEndpointId());
+    assertEquals("Nozzle", junction.getElementName());
+    assertEquals("PC-J", junction.getOwnerId());
+    assertTrue(junction.isResolved());
+    assertEquals(2, junction.getIncomingConnectionCount());
+    assertEquals(1, junction.getOutgoingConnectionCount());
+    assertEquals(3, junction.getConnectionCount());
+    assertTrue(junction.isReferencedMultipleTimes());
+    assertEquals(Arrays.asList("C-1", "C-2"), junction.getIncomingConnectionIds());
+    assertEquals(Collections.singletonList("C-3"), junction.getOutgoingConnectionIds());
+
+    DexpiConnectionEndpointInfo unresolved = first.getConnectionEndpoints().get(4);
+    assertEquals("UNKNOWN", unresolved.getEndpointId());
+    assertFalse(unresolved.isResolved());
+    assertEquals(Collections.singletonList("C-4"), unresolved.getOutgoingConnectionIds());
+    assertEquals(0, unresolved.getIncomingConnectionCount());
+    assertThrows(UnsupportedOperationException.class, () -> unresolved.getOutgoingConnectionIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> first.getConnectionEndpoints().clear());
+    assertTrue(first.toJson().contains("\"connectionEndpointCount\": 5"));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
+  public void testConnectionEndpointSummaryPreservesParallelOccurrences() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Nozzle ID=\"N-OUT\"/><Nozzle ID=\"N-IN\"/>"
+        + "<PipingNetworkSegment ID=\"S-1\"><Connection FromID=\"N-OUT\" ToID=\"N-IN\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-2\"><Connection FromID=\"N-OUT\" ToID=\"N-IN\"/>"
+        + "</PipingNetworkSegment>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, result.getConnectionEndpoints().size());
+    assertEquals(Arrays.asList("S-1/connection-1", "S-2/connection-1"),
+        result.getConnectionEndpoints().get(0).getOutgoingConnectionIds());
+    assertEquals(Arrays.asList("S-1/connection-1", "S-2/connection-1"),
+        result.getConnectionEndpoints().get(1).getIncomingConnectionIds());
   }
 
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
