@@ -175,7 +175,14 @@ def assert_registry(result):
         require(isinstance(parameter, dict), "parameter record is not an object", parameter)
         require(required_keys.issubset(parameter), "parameter metadata is incomplete", parameter)
         require(bool(parameter.get("address")), "parameter address is empty", parameter)
-        require(bool(parameter.get("unit")), "parameter unit is empty", parameter)
+        unit = parameter.get("unit")
+        require(isinstance(unit, str), "parameter unit is not a string", parameter)
+        if not unit:
+            require(
+                parameter.get("targetProperty") == "polytropicEfficiency",
+                "empty unit is reserved for qualified dimensionless properties",
+                parameter,
+            )
         for bound_key in ("lowerBound", "upperBound"):
             if bound_key in parameter:
                 bound = parameter[bound_key]
