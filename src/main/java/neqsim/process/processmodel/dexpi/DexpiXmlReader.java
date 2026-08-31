@@ -140,8 +140,8 @@ public final class DexpiXmlReader {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
-      this.connectionEndpoints =
-          Collections.unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(connectionEndpoints));
+      this.connectionEndpoints = Collections
+          .unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(connectionEndpoints));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
@@ -782,10 +782,8 @@ public final class DexpiXmlReader {
     return connections;
   }
 
-  private static List<DexpiConnectionEndpointInfo> summarizeConnectionEndpoints(
-      List<DexpiConnectionInfo> connections) {
-    Map<String, ConnectionEndpointAccumulator> endpoints =
-        new LinkedHashMap<String, ConnectionEndpointAccumulator>();
+  private static List<DexpiConnectionEndpointInfo> summarizeConnectionEndpoints(List<DexpiConnectionInfo> connections) {
+    Map<String, ConnectionEndpointAccumulator> endpoints = new LinkedHashMap<String, ConnectionEndpointAccumulator>();
     for (DexpiConnectionInfo connection : connections) {
       addConnectionEndpointOccurrence(endpoints, connection, true);
       addConnectionEndpointOccurrence(endpoints, connection, false);

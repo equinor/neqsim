@@ -46,10 +46,8 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
     this.ownerId = normalize(ownerId);
     this.ownerElementName = normalize(ownerElementName);
     this.resolved = resolved;
-    this.incomingConnectionIds =
-        Collections.unmodifiableList(new ArrayList<String>(incomingConnectionIds));
-    this.outgoingConnectionIds =
-        Collections.unmodifiableList(new ArrayList<String>(outgoingConnectionIds));
+    this.incomingConnectionIds = Collections.unmodifiableList(new ArrayList<String>(incomingConnectionIds));
+    this.outgoingConnectionIds = Collections.unmodifiableList(new ArrayList<String>(outgoingConnectionIds));
   }
 
   /** @return explicit source endpoint identity */

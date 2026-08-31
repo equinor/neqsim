@@ -394,8 +394,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<PipingNetworkSegment ID=\"S-2\"><Connection ID=\"C-2\" FromID=\"N-B\" ToID=\"N-J\"/>"
         + "</PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-3\"><Connection ID=\"C-3\" FromID=\"N-J\" ToID=\"N-C\"/>"
-        + "</PipingNetworkSegment>"
-        + "<PipingNetworkSegment ID=\"S-4\"><Connection ID=\"C-4\" FromID=\"UNKNOWN\"/>"
+        + "</PipingNetworkSegment>" + "<PipingNetworkSegment ID=\"S-4\"><Connection ID=\"C-4\" FromID=\"UNKNOWN\"/>"
         + "</PipingNetworkSegment>" + "</PlantModel>";
 
     DexpiXmlReader.ImportResult first = DexpiXmlReader
@@ -431,10 +430,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   public void testConnectionEndpointSummaryPreservesParallelOccurrences() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
         + "<Nozzle ID=\"N-OUT\"/><Nozzle ID=\"N-IN\"/>"
-        + "<PipingNetworkSegment ID=\"S-1\"><Connection FromID=\"N-OUT\" ToID=\"N-IN\"/>"
-        + "</PipingNetworkSegment>"
-        + "<PipingNetworkSegment ID=\"S-2\"><Connection FromID=\"N-OUT\" ToID=\"N-IN\"/>"
-        + "</PipingNetworkSegment>" + "</PlantModel>";
+        + "<PipingNetworkSegment ID=\"S-1\"><Connection FromID=\"N-OUT\" ToID=\"N-IN\"/>" + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-2\"><Connection FromID=\"N-OUT\" ToID=\"N-IN\"/>" + "</PipingNetworkSegment>"
+        + "</PlantModel>";
 
     DexpiXmlReader.ImportResult result = DexpiXmlReader
         .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
