@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-08-27"
+last_verified: "2026-08-31"
 ---
 
 # Dynamic Simulation Guidance
@@ -300,6 +300,32 @@ ControllerPerformanceMetrics kpi3 =
   against each other (tighter control costs more valve movement).
 - `resetEventLog()` on the controller before the disturbance so the KPIs cover
   only the window of interest.
+
+### Canonical controls qualification suite
+
+Use `ControlsBenchmarkSuite` when a request needs a deterministic regression
+check across NeqSim's canonical level, pressure, cascade, split-range,
+anti-surge, and compressor speed/recycle control structures:
+
+```java
+import neqsim.process.controllerdevice.ControlsBenchmarkSuite;
+
+ControlsBenchmarkSuite.Report report = ControlsBenchmarkSuite.runCanonicalSuite();
+boolean qualified = report.isPassed();
+```
+
+Inspect `report.getCases()` for the uniform time/PV/SP/output traces,
+`ControllerPerformanceMetrics`, physical acceptance detail, and final errors.
+The report also exposes the dedicated `AgentBenchmarkSuite` verdict through
+`getAgentBenchmarkReport()`. See
+[`docs/benchmarks/controls_benchmark.md`](../../../docs/benchmarks/controls_benchmark.md)
+for equations, declared challenges, numerical gates, and current CI reference
+values.
+
+The suite qualifies deterministic control execution and KPI reporting against
+transparent surrogate plants. It is not a substitute for field tuning, vendor
+compressor data, severe-slugging qualification, a safety-instrumented function,
+or commissioning validation.
 
 ### Anti-Surge Control (dynamic)
 

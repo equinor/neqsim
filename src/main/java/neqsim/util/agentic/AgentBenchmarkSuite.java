@@ -27,6 +27,7 @@ import com.google.gson.GsonBuilder;
  * <li><b>PIPELINE</b> — Multiphase pipe flow and pressure drop</li>
  * <li><b>ECONOMICS</b> — Field development NPV and cost estimation</li>
  * <li><b>SAFETY</b> — Depressurization, relief valve sizing, safety envelopes</li>
+ * <li><b>CONTROL</b> — Closed-loop control, protection, and actuator coordination</li>
  * </ul>
  *
  * <h2>Usage:</h2>
@@ -64,7 +65,9 @@ public class AgentBenchmarkSuite implements Serializable {
     /** Field development NPV and cost estimation. */
     ECONOMICS,
     /** Depressurization, relief valve sizing, safety envelopes. */
-    SAFETY
+    SAFETY,
+    /** Closed-loop process control, protection, and coordinated actuator structures. */
+    CONTROL
   }
 
   /**
@@ -198,13 +201,18 @@ public class AgentBenchmarkSuite implements Serializable {
   }
 
   /**
-   * Creates a standard benchmark suite with representative problems across all categories.
+   * Creates a standard benchmark suite with representative problems across the general engineering categories.
    *
    * <p>
    * Reference data sources: NIST Chemistry WebBook, published experimental data, validated simulation results.
    * </p>
    *
-   * @return a pre-populated benchmark suite
+   * <p>
+   * Control problems remain in {@link #createControlsSuite()} because they require executable dynamic traces and
+   * physical convergence checks in addition to scalar comparisons.
+   * </p>
+   *
+   * @return a pre-populated general benchmark suite
    */
   public static AgentBenchmarkSuite createStandardSuite() {
     AgentBenchmarkSuite suite = new AgentBenchmarkSuite("NeqSim Standard Benchmark v1.0");
@@ -252,6 +260,41 @@ public class AgentBenchmarkSuite implements Serializable {
         "Time to reach 50% of initial pressure during vessel blowdown (100 bar, methane)", "seconds", 30.0, 25.0,
         "Approximate depressurization model"));
 
+    return suite;
+  }
+
+  /**
+   * Creates the canonical NeqSim controls benchmark definition.
+   *
+   * <p>
+   * The executable traces and submitted values are produced by
+   * {@link neqsim.process.controllerdevice.ControlsBenchmarkSuite}. Each problem uses a non-negative acceptance metric.
+   * The expected value is half the maximum accepted value and the tolerance is 100%, so the existing symmetric
+   * benchmark comparison represents the interval from zero through the declared maximum.
+   * </p>
+   *
+   * @return six pre-populated control-loop benchmark problems
+   */
+  public static AgentBenchmarkSuite createControlsSuite() {
+    AgentBenchmarkSuite suite = new AgentBenchmarkSuite("NeqSim Canonical Controls Benchmark v1.0");
+    suite.addProblem(new BenchmarkProblem("control_level_setpoint", ProblemCategory.CONTROL, Difficulty.INTERMEDIATE,
+        "Final relative error for an integrating level-loop set-point and inflow-disturbance case", "%", 0.5, 100.0,
+        "Declared benchmark acceptance envelope: 0-1%"));
+    suite.addProblem(new BenchmarkProblem("control_pressure_disturbance", ProblemCategory.CONTROL,
+        Difficulty.INTERMEDIATE, "Final relative error after a pressure-load disturbance", "%", 0.75, 100.0,
+        "Declared benchmark acceptance envelope: 0-1.5%"));
+    suite.addProblem(new BenchmarkProblem("control_cascade_temperature", ProblemCategory.CONTROL, Difficulty.ADVANCED,
+        "Final relative error for cascade temperature/utility-flow control", "%", 1.0, 100.0,
+        "Declared benchmark acceptance envelope: 0-2%"));
+    suite.addProblem(new BenchmarkProblem("control_split_range", ProblemCategory.CONTROL, Difficulty.INTERMEDIATE,
+        "Final relative error for sequential split-range capacity control", "%", 1.0, 100.0,
+        "Declared benchmark acceptance envelope: 0-2%"));
+    suite.addProblem(new BenchmarkProblem("control_anti_surge", ProblemCategory.CONTROL, Difficulty.ADVANCED,
+        "Shortfall below the required positive anti-surge margin", "% points", 0.5, 100.0,
+        "Declared benchmark acceptance envelope: 0-1 percentage point shortfall"));
+    suite.addProblem(new BenchmarkProblem("control_speed_recycle_coordination", ProblemCategory.CONTROL,
+        Difficulty.ADVANCED, "Final relative pressure error under minimum-speed/recycle coordination", "%", 1.0, 100.0,
+        "Declared benchmark acceptance envelope: 0-2%"));
     return suite;
   }
 
