@@ -159,10 +159,11 @@ occurrence, including parallel connections. Blank endpoint references remain fin
 from this keyed inventory; unresolved non-empty IDs remain visible. These source-incidence records do
 not classify branches or junctions and do not create live process connectivity.
 
-`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`, and the ordered connection inventory
-alongside the process-unit count and findings. Python callers through JPype use the same
-`ImportResult.getInstruments()` and `ImportResult.getConnections()` getters; there is no separate
-Python reconstruction model.
+`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`, and the
+ordered connection and endpoint inventories alongside the process-unit count and findings. Python
+callers through JPype use the same `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
+and `ImportResult.getConnectionEndpoints()` getters; there is no separate Python reconstruction
+model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
 `ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.
