@@ -207,4 +207,115 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(result.hasLosses());
     assertFalse(result.hasErrors());
   }
+
+  @Test
+  public void testReadWithDiagnosticsIncludesValidInstrumentationInventory() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Nozzle ID=\"N-SENSE\"/><Nozzle ID=\"N-ACT\"/><FinalControlElement ID=\"V-100\"/>"
+        + "<ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\" ID=\"PIF-PT-100\">"
+        + instrumentAttributes("PT-100", "P", "T", "100")
+        + "<InformationFlow ComponentClass=\"MeasuringLineFunction\" ID=\"MLF-100\">"
+        + "<Association Type=\"has logical start\" ItemID=\"PSGF-100\"/>"
+        + "<Association Type=\"has logical end\" ItemID=\"PIF-PT-100\"/>"
+        + "<Association Type=\"is attached to\" ItemID=\"N-SENSE\"/>" + "</InformationFlow>"
+        + "<ProcessSignalGeneratingFunction ComponentClass=\"ProcessSignalGeneratingFunction\" ID=\"PSGF-100\"/>"
+        + "</ProcessInstrumentationFunction>"
+        + "<ProcessInstrumentationFunction ComponentClass=\"ProcessControlFunction\" ID=\"PIF-PC-100\">"
+        + instrumentAttributes("PC-100", "P", "C", "100")
+        + signalFlow("SIG-MEASURED", "PIF-PT-100", "PIF-PC-100", "ElectricalSignalConveying")
+        + "<ActuatingFunction ComponentClass=\"ActuatingFunction\" ID=\"AF-100\">"
+        + "<GenericAttributes><GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"PC-100\"/>"
+        + "<GenericAttribute Name=\"FinalControlElementID\" Value=\"V-100\"/>"
+        + "</GenericAttributes><Association Type=\"is located in\" ItemID=\"N-ACT\"/>" + "</ActuatingFunction>"
+        + signalFlow("SIG-ACTUATE", "PIF-PC-100", "AF-100", "PneumaticSignalConveying")
+        + "</ProcessInstrumentationFunction>"
+        + "<InstrumentationLoopFunction ComponentClass=\"InstrumentationLoopFunction\" ID=\"LOOP-100\">"
+        + "<GenericAttributes><GenericAttribute Name=\"InstrumentationLoopFunctionNumberAssignmentClass\" Value=\"100\"/>"
+        + "</GenericAttributes><Association Type=\"is a collection including\" ItemID=\"PIF-PT-100\"/>"
+        + "<Association Type=\"is a collection including\" ItemID=\"PIF-PC-100\"/>"
+        + "</InstrumentationLoopFunction></PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, first.getInstruments().size());
+    assertEquals("PT-100", first.getInstruments().get(0).getTagName());
+    assertEquals("100", first.getInstruments().get(0).getLoopNumber());
+    assertEquals("PC-100", first.getInstruments().get(1).getTagName());
+    assertEquals("PC-100", first.getInstruments().get(1).getActuatingTag());
+    assertTrue(first.getDiagnostics().isEmpty());
+    assertFalse(first.hasLosses());
+    assertTrue(first.toJson().contains("\"instrumentCount\": 2"));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsReportsBrokenInstrumentationTopology() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\">"
+        + "<GenericAttributes><GenericAttribute Name=\"MeasurementAttachmentStatus\" Value=\"MISSING_SOURCE_DATA\"/>"
+        + "</GenericAttributes><InformationFlow ComponentClass=\"MeasuringLineFunction\" ID=\"MLF-BROKEN\">"
+        + "<Association Type=\"has logical end\" ItemID=\"UNKNOWN-INSTRUMENT\"/>" + "</InformationFlow>"
+        + "</ProcessInstrumentationFunction>"
+        + "<InstrumentationLoopFunction ComponentClass=\"InstrumentationLoopFunction\">"
+        + "<Association Type=\"is a collection including\" ItemID=\"UNKNOWN-MEMBER\"/>"
+        + "</InstrumentationLoopFunction>" + "<InformationFlow ComponentClass=\"SignalLineFunction\" ID=\"SIG-BROKEN\">"
+        + "<Association Type=\"has logical start\" ItemID=\"UNKNOWN-SOURCE\"/>" + "</InformationFlow>"
+        + "<ActuatingFunction ComponentClass=\"ActuatingFunction\" ID=\"AF-BROKEN\">"
+        + "<GenericAttributes><GenericAttribute Name=\"FinalControlElementID\" Value=\"UNKNOWN-FINAL\"/>"
+        + "</GenericAttributes></ActuatingFunction>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(1, first.getInstruments().size());
+    assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_ID_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_FUNCTION_METADATA_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_NUMBER_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_TAG_SYNTHESIZED");
+    assertDiagnostic(first, "DEXPI_IMPORT_SENSING_ATTACHMENT_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_MEASURING_SOURCE_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_MEASURING_TARGET_UNRESOLVED");
+    assertDiagnostic(first, "DEXPI_IMPORT_MEASURING_ATTACHMENT_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_LOOP_ID_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_LOOP_NUMBER_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_LOOP_MEMBER_UNRESOLVED");
+    assertDiagnostic(first, "DEXPI_IMPORT_SIGNAL_SOURCE_UNRESOLVED");
+    assertDiagnostic(first, "DEXPI_IMPORT_SIGNAL_TARGET_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_SIGNAL_MEDIUM_MISSING");
+    assertDiagnostic(first, "DEXPI_IMPORT_FINAL_ELEMENT_UNRESOLVED");
+    assertDiagnostic(first, "DEXPI_IMPORT_ACTUATION_LOCATION_MISSING");
+    assertTrue(first.hasLosses());
+    assertFalse(first.hasErrors());
+    assertEquals(first.toJson(), second.toJson());
+  }
+
+  private static String instrumentAttributes(String tag, String category, String functions, String number) {
+    return "<GenericAttributes>" + "<GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"" + tag + "\"/>"
+        + "<GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\" Value=\"" + category
+        + "\"/>" + "<GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\" Value=\"" + functions
+        + "\"/>" + "<GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\" Value=\"" + number
+        + "\"/>" + "</GenericAttributes>";
+  }
+
+  private static String signalFlow(String id, String source, String target, String signalType) {
+    return "<InformationFlow ComponentClass=\"SignalLineFunction\" ID=\"" + id + "\">"
+        + "<Association Type=\"has logical start\" ItemID=\"" + source + "\"/>"
+        + "<Association Type=\"has logical end\" ItemID=\"" + target + "\"/>" + "<GenericAttributes>"
+        + "<GenericAttribute Name=\"SignalConveyingTypeSpecialization\" Value=\"" + signalType + "\"/>"
+        + "</GenericAttributes></InformationFlow>";
+  }
+
+  private static void assertDiagnostic(DexpiXmlReader.ImportResult result, String expectedCode) {
+    for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+      if (expectedCode.equals(diagnostic.getCode())) {
+        return;
+      }
+    }
+    throw new AssertionError("Missing diagnostic " + expectedCode + " in " + result.toJson());
+  }
 }

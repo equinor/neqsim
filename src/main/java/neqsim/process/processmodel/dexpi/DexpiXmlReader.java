@@ -129,16 +129,32 @@ public final class DexpiXmlReader {
   public static final class ImportResult implements Serializable {
     private static final long serialVersionUID = 1000L;
     private final ProcessSystem processSystem;
+    private final List<DexpiInstrumentInfo> instruments;
     private final List<ImportDiagnostic> diagnostics;
 
-    private ImportResult(ProcessSystem processSystem, List<ImportDiagnostic> diagnostics) {
+    private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
+        List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
+      this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
     /** @return reconstructed process system using the same behavior as {@link #read(File)} */
     public ProcessSystem getProcessSystem() {
       return processSystem;
+    }
+
+    /**
+     * Returns the source instrument inventory parsed from the same XML document as the process and diagnostics.
+     *
+     * <p>
+     * These are metadata records only. Import does not construct live transmitters, controllers, or control intent.
+     * </p>
+     *
+     * @return immutable instrument records in source-document order
+     */
+    public List<DexpiInstrumentInfo> getInstruments() {
+      return instruments;
     }
 
     /** @return immutable diagnostics in deterministic source-document order */
@@ -172,6 +188,7 @@ public final class DexpiXmlReader {
       result.put("schemaVersion", "neqsim_dexpi_proteus_import.v1");
       result.put("profile", "Proteus-compatible DEXPI Plant/P&ID 4.1.1 supported subset");
       result.put("importedUnitCount", Integer.valueOf(processSystem.getAllUnitNames().size()));
+      result.put("instrumentCount", Integer.valueOf(instruments.size()));
       result.put("hasLosses", Boolean.valueOf(hasLosses()));
       result.put("hasErrors", Boolean.valueOf(hasErrors()));
       List<Map<String, Object>> diagnosticMaps = new ArrayList<Map<String, Object>>();
@@ -362,9 +379,10 @@ public final class DexpiXmlReader {
   public static ImportResult readWithDiagnostics(InputStream inputStream, Stream templateStream)
       throws IOException, DexpiXmlReaderException {
     ProcessSystem processSystem = new ProcessSystem("DEXPI process");
+    List<DexpiInstrumentInfo> instruments = new ArrayList<DexpiInstrumentInfo>();
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
-    loadInternal(inputStream, processSystem, templateStream, false, diagnostics);
-    return new ImportResult(processSystem, diagnostics);
+    loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments);
+    return new ImportResult(processSystem, instruments, diagnostics);
   }
 
   /**
@@ -439,11 +457,12 @@ public final class DexpiXmlReader {
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware) throws IOException, DexpiXmlReaderException {
-    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null);
+    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null, null);
   }
 
   private static void loadInternal(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
-      boolean namespaceAware, List<ImportDiagnostic> diagnostics) throws IOException, DexpiXmlReaderException {
+      boolean namespaceAware, List<ImportDiagnostic> diagnostics, List<DexpiInstrumentInfo> instruments)
+      throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
@@ -464,6 +483,10 @@ public final class DexpiXmlReader {
     addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP, "PipingComponentNumberAssignmentClass",
         diagnostics);
     addPipingSegments(document, processSystem, streamTemplate, diagnostics);
+    if (instruments != null) {
+      instruments.addAll(parseInstruments(document));
+    }
+    addInstrumentationDiagnostics(document, diagnostics);
   }
 
   /**
@@ -606,6 +629,184 @@ public final class DexpiXmlReader {
 
     logger.info("Parsed {} instruments from DEXPI XML", instruments.size());
     return instruments;
+  }
+
+  private static void addInstrumentationDiagnostics(Document document, List<ImportDiagnostic> diagnostics) {
+    if (diagnostics == null) {
+      return;
+    }
+
+    NodeList allElements = document.getElementsByTagName("*");
+    Map<String, Element> elementsById = new HashMap<String, Element>();
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element element = (Element) node;
+      String id = element.getAttribute("ID");
+      if (!isBlank(id) && !elementsById.containsKey(id)) {
+        elementsById.put(id, element);
+      }
+    }
+
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element element = (Element) node;
+      String elementName = element.getTagName();
+      String componentClass = element.getAttribute("ComponentClass");
+      if ("ProcessInstrumentationFunction".equals(elementName)) {
+        addProcessInstrumentationDiagnostics(element, diagnostics, elementsById);
+      } else if ("InstrumentationLoopFunction".equals(elementName)) {
+        addInstrumentationLoopDiagnostics(element, diagnostics, elementsById);
+      } else if ("InformationFlow".equals(elementName) && "SignalLineFunction".equals(componentClass)) {
+        addSignalFlowDiagnostics(element, diagnostics, elementsById);
+      } else if ("InformationFlow".equals(elementName) && "MeasuringLineFunction".equals(componentClass)) {
+        addMeasuringLineDiagnostics(element, diagnostics, elementsById);
+      } else if ("ActuatingFunction".equals(elementName) || "ActuatingElectricalFunction".equals(elementName)
+          || "ActuatingFunction".equals(componentClass) || "ActuatingElectricalFunction".equals(componentClass)) {
+        addActuatingFunctionDiagnostics(element, diagnostics, elementsById);
+      }
+    }
+  }
+
+  private static void addProcessInstrumentationDiagnostics(Element element, List<ImportDiagnostic> diagnostics,
+      Map<String, Element> elementsById) {
+    if (isBlank(element.getAttribute("ID"))) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_INSTRUMENT_ID_MISSING", "Instrument function has no source ID");
+    }
+
+    String category = getGenericAttribute(element, DexpiMetadata.INSTRUMENTATION_CATEGORY);
+    String functions = getGenericAttribute(element, DexpiMetadata.INSTRUMENTATION_FUNCTIONS);
+    String number = getGenericAttribute(element, DexpiMetadata.INSTRUMENTATION_NUMBER);
+    String tagName = getGenericAttribute(element, DexpiMetadata.TAG_NAME);
+    if (isBlank(category) || isBlank(functions)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_INSTRUMENT_FUNCTION_METADATA_MISSING",
+          "Instrument category or function-letter metadata is missing");
+    }
+    if (isBlank(number)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_INSTRUMENT_NUMBER_MISSING", "Instrument number metadata is missing");
+    }
+    if (isBlank(tagName)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.INFO,
+          "DEXPI_IMPORT_INSTRUMENT_TAG_SYNTHESIZED",
+          "TagName is missing; the metadata view synthesizes a display tag from category, functions, number, and ID");
+    }
+
+    String attachmentStatus = getGenericAttribute(element, "MeasurementAttachmentStatus");
+    if ("MISSING_SOURCE_DATA".equalsIgnoreCase(attachmentStatus)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_SENSING_ATTACHMENT_MISSING",
+          "The source explicitly marks this measurement as missing a process sensing attachment");
+    }
+    String attachmentTarget = getGenericAttribute(element, "MeasurementAttachmentTargetID");
+    if (!isBlank(attachmentTarget) && !elementsById.containsKey(attachmentTarget)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_SENSING_ATTACHMENT_UNRESOLVED",
+          "Measurement attachment target '" + attachmentTarget + "' does not resolve to a source object");
+    }
+  }
+
+  private static void addInstrumentationLoopDiagnostics(Element element, List<ImportDiagnostic> diagnostics,
+      Map<String, Element> elementsById) {
+    if (isBlank(element.getAttribute("ID"))) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_LOOP_ID_MISSING", "Instrumentation loop has no source ID");
+    }
+    if (isBlank(getGenericAttribute(element, DexpiMetadata.LOOP_NUMBER))) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_LOOP_NUMBER_MISSING", "Instrumentation loop number is missing");
+    }
+
+    int memberCount = 0;
+    for (Element association : directChildElements(element, "Association")) {
+      if (!"is a collection including".equals(association.getAttribute("Type"))) {
+        continue;
+      }
+      memberCount++;
+      String memberId = association.getAttribute("ItemID");
+      if (isBlank(memberId)) {
+        addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_LOOP_MEMBER_ID_MISSING", "Instrumentation loop contains a member without an ItemID");
+      } else if (!elementsById.containsKey(memberId)) {
+        addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_LOOP_MEMBER_UNRESOLVED",
+            "Instrumentation loop member '" + memberId + "' does not resolve to a source object");
+      }
+    }
+    if (memberCount == 0) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_LOOP_MEMBER_MISSING", "Instrumentation loop contains no instrument members");
+    }
+  }
+
+  private static void addSignalFlowDiagnostics(Element element, List<ImportDiagnostic> diagnostics,
+      Map<String, Element> elementsById) {
+    addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "has logical start",
+        "DEXPI_IMPORT_SIGNAL_SOURCE_MISSING", "DEXPI_IMPORT_SIGNAL_SOURCE_UNRESOLVED", "Signal source");
+    addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "has logical end",
+        "DEXPI_IMPORT_SIGNAL_TARGET_MISSING", "DEXPI_IMPORT_SIGNAL_TARGET_UNRESOLVED", "Signal target");
+    if (isBlank(getGenericAttribute(element, "SignalConveyingTypeSpecialization"))) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_SIGNAL_MEDIUM_MISSING", "Signal conveying medium or type is missing");
+    }
+  }
+
+  private static void addMeasuringLineDiagnostics(Element element, List<ImportDiagnostic> diagnostics,
+      Map<String, Element> elementsById) {
+    addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "has logical start",
+        "DEXPI_IMPORT_MEASURING_SOURCE_MISSING", "DEXPI_IMPORT_MEASURING_SOURCE_UNRESOLVED", "Measuring-line source");
+    addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "has logical end",
+        "DEXPI_IMPORT_MEASURING_TARGET_MISSING", "DEXPI_IMPORT_MEASURING_TARGET_UNRESOLVED", "Measuring-line target");
+    addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "is attached to",
+        "DEXPI_IMPORT_MEASURING_ATTACHMENT_MISSING", "DEXPI_IMPORT_MEASURING_ATTACHMENT_UNRESOLVED",
+        "Measuring-line process attachment");
+  }
+
+  private static void addActuatingFunctionDiagnostics(Element element, List<ImportDiagnostic> diagnostics,
+      Map<String, Element> elementsById) {
+    String finalElementId = getGenericAttribute(element, "FinalControlElementID");
+    if (isBlank(finalElementId)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_FINAL_ELEMENT_MISSING", "Actuating function does not identify a final control element");
+    } else if (!elementsById.containsKey(finalElementId)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING,
+          "DEXPI_IMPORT_FINAL_ELEMENT_UNRESOLVED",
+          "Final control element '" + finalElementId + "' does not resolve to a source object");
+    }
+    addAssociationReferenceDiagnostic(element, diagnostics, elementsById, "is located in",
+        "DEXPI_IMPORT_ACTUATION_LOCATION_MISSING", "DEXPI_IMPORT_ACTUATION_LOCATION_UNRESOLVED", "Actuation location");
+  }
+
+  private static void addAssociationReferenceDiagnostic(Element element, List<ImportDiagnostic> diagnostics,
+      Map<String, Element> elementsById, String associationType, String missingCode, String unresolvedCode,
+      String referenceDescription) {
+    String itemId = null;
+    for (Element association : directChildElements(element, "Association")) {
+      if (associationType.equals(association.getAttribute("Type"))) {
+        itemId = association.getAttribute("ItemID");
+        break;
+      }
+    }
+    if (isBlank(itemId)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING, missingCode,
+          referenceDescription + " is missing");
+    } else if (!elementsById.containsKey(itemId)) {
+      addInstrumentationDiagnostic(element, diagnostics, ImportDiagnosticSeverity.WARNING, unresolvedCode,
+          referenceDescription + " '" + itemId + "' does not resolve to a source object");
+    }
+  }
+
+  private static void addInstrumentationDiagnostic(Element element, List<ImportDiagnostic> diagnostics,
+      ImportDiagnosticSeverity severity, String code, String message) {
+    diagnostics.add(new ImportDiagnostic(severity, code, element.getAttribute("ID"),
+        element.getAttribute("ComponentClass"), element.getTagName(), message));
   }
 
   private static Document parseDocument(InputStream inputStream, boolean nsAware) throws DexpiXmlReaderException {

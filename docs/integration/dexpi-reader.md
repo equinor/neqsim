@@ -103,6 +103,7 @@ as `read(...)`; the additional report lists skipped objects in deterministic sou
 DexpiXmlReader.ImportResult result =
     DexpiXmlReader.readWithDiagnostics(xmlFile.toFile(), template);
 ProcessSystem process = result.getProcessSystem();
+List<DexpiInstrumentInfo> instruments = result.getInstruments();
 
 for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
   System.out.printf("%s %s %s%n",
@@ -126,6 +127,19 @@ and source numbers whose units had to use the documented default. Missing identi
 line number, service/fluid code, nominal-size representation, piping class, and insulation are
 reported separately. In particular, the reader never converts hydraulic bore into DN, NPS, or
 schedule; absent nominal size remains an explicit source-data gap.
+
+The same import now returns the source instrumentation inventory parsed from that one XML document.
+These `DexpiInstrumentInfo` objects are metadata records, not live controllers or transmitters.
+Instrumentation diagnostics report missing identity and function metadata, explicitly missing or
+unresolved sensing attachments, unresolved loop membership, incomplete measuring-line and signal
+source/target references, missing signal medium, and incomplete final-element or actuation-location
+evidence. Valid source references resolve against the complete non-catalogue document identity set,
+including equipment nozzles and actuating functions. The reader never promotes measurement-only or
+incomplete source content into closed-loop control intent.
+
+`toJson()` includes `instrumentCount` alongside the process-unit count and ordered findings. Python
+callers through JPype use the same `ImportResult.getInstruments()` getter; there is no separate
+Python reconstruction model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
 `ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.
