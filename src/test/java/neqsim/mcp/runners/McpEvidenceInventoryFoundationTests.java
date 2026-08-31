@@ -227,10 +227,10 @@ class McpEvidenceInventoryFoundationTests {
         statePersistence.get("benchmarkApplicability").getAsString());
     assertEquals(5, statePersistence.get("contractEvidenceCount").getAsInt());
     assertEquals(5, statePersistence.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(
-        statePersistence.getAsJsonArray("contractEvidenceSources").toString().contains("StatePersistenceRunnerTest.java"));
-    assertTrue(
-        statePersistence.getAsJsonArray("contractEvidenceSources").toString().contains("test_state_persistence_protocol.py"));
+    assertTrue(statePersistence.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("StatePersistenceRunnerTest.java"));
+    assertTrue(statePersistence.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("test_state_persistence_protocol.py"));
     assertTrue(statePersistence.get("evidenceBoundary").getAsString().contains("persistence lifecycle"));
     assertTrue(statePersistence.get("evidenceBoundary").getAsString().contains("numerical replay"));
 
@@ -401,12 +401,11 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.get("contractTrustAvailable").getAsBoolean());
     assertEquals(5, coverage.get("contractEvidenceCount").getAsInt());
     assertEquals(5, coverage.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("StatePersistenceRunner.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("StatePersistenceRunnerTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_state_persistence_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("StatePersistenceRunner.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("StatePersistenceRunnerTest.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_state_persistence_protocol.py"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("sandbox/path fail-closed"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("distributed durability"));
