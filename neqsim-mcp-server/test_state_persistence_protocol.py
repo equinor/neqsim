@@ -170,18 +170,28 @@ def simple_process(client):
 
 
 def test_current_phase0_boundary(client):
-    """Keep manageState unpromoted until this prerequisite evidence merges."""
+    """Verify the atomic manageState promotion against merged prerequisite evidence."""
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
-    require(inventory.get("inventoryVersion") == "1.20", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.21", "inventory version drifted", inventory)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("manageState", {})
     require(
-        limitations.get("contractTestedToolCount") == 18
-        and limitations.get("confirmedGapToolCount") == 33
-        and record.get("coverageStatus") == "CONFIRMED_GAP",
-        "manageState was promoted before prerequisite evidence merged",
+        limitations.get("contractTestedToolCount") == 19
+        and limitations.get("confirmedGapToolCount") == 32
+        and record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_LOCAL_STATE_PERSISTENCE_LIFECYCLE"
+        and any(
+            source.endswith("StatePersistenceRunnerTest.java")
+            for source in record.get("contractEvidenceSources", [])
+        )
+        and any(
+            source.endswith("test_state_persistence_protocol.py")
+            for source in record.get("contractEvidenceSources", [])
+        ),
+        "manageState promotion accounting or evidence drifted",
         limitations,
     )
 
