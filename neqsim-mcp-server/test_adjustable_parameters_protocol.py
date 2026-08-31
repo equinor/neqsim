@@ -254,18 +254,22 @@ def test_invalid_request_fails_closed(client):
     require(error_code(result) == "INPUT_ERROR", "blank request error code drifted", result)
 
 
-def test_phase0_boundary_remains_unpromoted(client):
+def test_phase0_contract_is_promoted(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
-    require(inventory.get("inventoryVersion") == "1.21", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.22", "inventory version drifted", inventory)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("getAdjustableParameters", {})
     require(
-        limitations.get("contractTestedToolCount") == 19
-        and limitations.get("confirmedGapToolCount") == 32
-        and record.get("coverageStatus") == "CONFIRMED_GAP",
-        "prerequisite evidence prematurely changed trust accounting",
+        limitations.get("contractTestedToolCount") == 20
+        and limitations.get("confirmedGapToolCount") == 31
+        and record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY"
+        and "test_adjustable_parameters_protocol.py"
+        in record.get("contractEvidenceSources", []),
+        "adjustable-parameter promotion drifted",
         limitations,
     )
 
@@ -275,7 +279,7 @@ def main():
     tests = [
         ("direct and handle equivalence", test_direct_and_handle_equivalence),
         ("invalid request fails closed", test_invalid_request_fails_closed),
-        ("Phase 0 boundary remains unpromoted", test_phase0_boundary_remains_unpromoted),
+        ("Phase 0 contract is promoted", test_phase0_contract_is_promoted),
     ]
     try:
         client.start()

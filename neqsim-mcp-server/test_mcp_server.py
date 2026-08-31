@@ -1556,19 +1556,30 @@ def test_capabilities():
         "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
         "checkToolAccess", "manageIndustrialProfile", "searchComponents",
         "queryDataCatalog", "getProgress", "inspectApi",
-        "manageValidationProfile", "manageModel", "manageSession", "manageState", "listSimulationUnits",
+        "manageValidationProfile", "manageModel", "manageSession", "manageState", "getAdjustableParameters", "listSimulationUnits",
         "listUnitVariables",
         "getSimulationVariable", "diagnoseAutomation",
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("nineteen bounded software contracts have direct evidence",
-          limitations.get("contractTestedToolCount") == 19
-          and limitations.get("confirmedGapToolCount") == 32
+    check("twenty bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.22"
+          and limitations.get("contractTestedToolCount") == 20
+          and limitations.get("confirmedGapToolCount") == 31
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
           str(limitations))
+    adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
+    check("adjustable-parameter discovery has bounded contract evidence",
+          adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
+          and adjustable_parameters.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY"
+          and "neqsim-mcp-server/test_adjustable_parameters_protocol.py"
+          in adjustable_parameters.get("contractEvidenceSources", [])
+          and "mass or energy conservation"
+          in adjustable_parameters.get("evidenceBoundary", ""),
+          str(adjustable_parameters))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1586,7 +1597,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 32
+          and limitations.get("confirmedGapToolCount") == 31
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
