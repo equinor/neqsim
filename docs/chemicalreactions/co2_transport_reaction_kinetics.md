@@ -172,6 +172,34 @@ apply the correlation directly at pipeline pressure without separate evidence. E
 speciation remains owned by issue #3144; pipeline source-term coupling remains owned by issue
 #3318.
 
+## Published pressure response
+
+`AqueousCO2PressureKinetics` implements the pressure derivative measured by van Eldik and Palmer
+(1982), [doi:10.1007/BF00649292](https://doi.org/10.1007/BF00649292), for the hydration of aqueous
+CO2 and dehydration of carbonic acid at 298.15 K and ionic strength 0.5:
+
+$$
+\frac{k(P_2)}{k(P_1)} =
+\exp\!\left[-\frac{\Delta V^{\ddagger}(P_2-P_1)}{RT}\right].
+$$
+
+The reported activation volumes are `-9.9 +/- 1.9 cm3/mol` for hydration and
+`+6.4 +/- 0.4 cm3/mol` for dehydration. From 1 to 100 bara at 298.15 K, the implementation gives
+a nominal hydration multiplier of `1.04032877` and a nominal dehydration multiplier of
+`0.974764734`. The corresponding uncertainty intervals are 1.03246477–1.04825267 and
+0.973208843–0.976323112. Calls outside the deliberately narrow 298.15 K and 1–1000 bara gate fail
+closed.
+
+Conway et al. (2016), [doi:10.1071/CH15271](https://doi.org/10.1071/CH15271), independently report
+stopped-flow high-pressure hydration measurements from 400 to 1000 atm. That public abstract is
+retained as corroborating provenance but is not used as a numerical parameter source.
+
+These are dimensionless pressure multipliers, not absolute rate constants. Do **not** automatically
+multiply the Soli–Byrne absolute rates by these factors: the studies used different solution
+compositions, so doing so is a separate cross-dataset assumption requiring its own validation.
+This class does not mutate a fluid, select a phase, calculate speciation, or apply a pipeline source
+term.
+
 ## Intended transport integration
 
 A future control-volume integration should:
