@@ -1141,8 +1141,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the inlet device top face elevation. This is the surface gas leaves through (e.g. top of
-   * an inlet vane), measured from the Bottom Tangent Line.
+   * Sets the inlet device top face elevation. This is the surface gas leaves through (e.g. top of an inlet vane),
+   * measured from the Bottom Tangent Line.
    *
    * @param elevationM top face elevation from BTL [m]
    */
@@ -1161,12 +1161,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Gets the inlet device top face elevation, falling back to a default when not explicitly set.
-   * The default assumes a standard inlet vane that fills the upper half of the nozzle bore: top
-   * elevation = nozzle centreline + nozzle ID / 2.
+   * Gets the inlet device top face elevation, falling back to a default when not explicitly set. The default assumes a
+   * standard inlet vane that fills the upper half of the nozzle bore: top elevation = nozzle centreline + nozzle ID /
+   * 2.
    *
    * @return top face elevation from BTL [m]; explicit value if set, else
-   *         {@code inletNozzleElevation + inletNozzleID / 2.0} when both are positive, else 0.0
+   * {@code inletNozzleElevation + inletNozzleID / 2.0} when both are positive, else 0.0
    */
   public double getInletDeviceTopElevationOrDefault() {
     if (inletDeviceTopElevation > 0.0) {
@@ -1179,8 +1179,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Sets the mesh pad bottom face elevation. This is the surface gas enters through, measured from
-   * the Bottom Tangent Line.
+   * Sets the mesh pad bottom face elevation. This is the surface gas enters through, measured from the Bottom Tangent
+   * Line.
    *
    * @param elevationM bottom face elevation from BTL [m]
    */
@@ -1198,8 +1198,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Gets the mesh pad top face elevation, derived as bottom elevation plus mesh pad thickness
-   * ({@link #getDemisterThickness()}, which is stored in mm).
+   * Gets the mesh pad top face elevation, derived as bottom elevation plus mesh pad thickness (
+   * {@link #getDemisterThickness()} , which is stored in mm).
    *
    * @return top face elevation from BTL [m]; 0.0 if bottom not set
    */
@@ -1211,12 +1211,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Gets the free-path height between the inlet device top face and the mesh pad bottom face. This
-   * is the vertical distance available for primary gravity separation and droplet entrainment /
-   * carry-over correlations.
+   * Gets the free-path height between the inlet device top face and the mesh pad bottom face. This is the vertical
+   * distance available for primary gravity separation and droplet entrainment / carry-over correlations.
    *
-   * @return mesh pad bottom elevation minus inlet device top elevation [m]; 0.0 if either elevation
-   *         is unset or the result is non-positive
+   * @return mesh pad bottom elevation minus inlet device top elevation [m]; 0.0 if either elevation is unset or the
+   * result is non-positive
    */
   public double getFreePathHeightAboveInletDevice() {
     double topInlet = getInletDeviceTopElevationOrDefault();

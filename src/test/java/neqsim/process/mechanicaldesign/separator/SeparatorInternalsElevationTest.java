@@ -10,8 +10,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the internals elevation API on {@link SeparatorMechanicalDesign} and the derived
- * cyclone-top elevation and drainage-head check on {@link GasScrubberMechanicalDesign}.
+ * Tests for the internals elevation API on {@link SeparatorMechanicalDesign} and the derived cyclone-top elevation and
+ * drainage-head check on {@link GasScrubberMechanicalDesign} .
  *
  * <p>
  * All elevations are metres from the vessel Bottom Tangent Line (BTL), positive upward.
@@ -75,8 +75,7 @@ public class SeparatorInternalsElevationTest {
   }
 
   /**
-   * With no explicit inlet device top, the default places it half a nozzle bore above the nozzle
-   * centreline.
+   * With no explicit inlet device top, the default places it half a nozzle bore above the nozzle centreline.
    */
   @Test
   public void testInletDeviceTopElevationFallsBackToHalfNozzleBore() {
@@ -179,8 +178,8 @@ public class SeparatorInternalsElevationTest {
   }
 
   /**
-   * The drainage head result is self-consistent: total dP is the sum of its parts, the available
-   * head follows the deck-to-LA(HH) elevation, and the percentage is required over available.
+   * The drainage head result is self-consistent: total dP is the sum of its parts, the available head follows the
+   * deck-to-LA(HH) elevation, and the percentage is required over available.
    */
   @Test
   public void testDrainageHeadIsSelfConsistent() {

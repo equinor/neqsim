@@ -455,9 +455,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
-   * Gets the elevation of the TOP of the cyclone tubes (gas-outlet face of the demisting cyclones),
-   * measured from the Bottom Tangent Line. This is the derived value
-   * {@code cycloneDeckElevation + cycloneLength}.
+   * Gets the elevation of the TOP of the cyclone tubes (gas-outlet face of the demisting cyclones), measured from the
+   * Bottom Tangent Line. This is the derived value {@code cycloneDeckElevation + cycloneLength} .
    *
    * @return cyclone tube top elevation from BTL [m]; 0.0 if either deck or length is not set
    */
@@ -472,22 +471,19 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    * Computes the drainage head breakdown at the current operating state.
    *
    * <p>
-   * The total pressure drop the liquid film must balance to drain from the cyclone bank back into
-   * the vessel bulk is {@code dP_total = dP_mesh + dP_cyclone_to_drain}, where the mesh pad
-   * pressure drop uses the stored Euler coefficient
-   * ({@code dP_mesh = Eu * 0.5 * rho_g * v_mesh^2}, defaulting to 0.5 for standard knitmesh if
-   * unset) and the cyclone fraction reaching the drain chamber uses {@code cycloneDpToDrainPct}.
-   * The equivalent clear-liquid head accounts for gas column buoyancy:
-   * {@code h_required = dP_total / ((rho_L - rho_G) * g)}.
+   * The total pressure drop the liquid film must balance to drain from the cyclone bank back into the vessel bulk is
+   * {@code dP_total = dP_mesh + dP_cyclone_to_drain} , where the mesh pad pressure drop uses the stored Euler
+   * coefficient ( {@code dP_mesh = Eu * 0.5 * rho_g * v_mesh^2} , defaulting to 0.5 for standard knitmesh if unset) and
+   * the cyclone fraction reaching the drain chamber uses {@code cycloneDpToDrainPct} . The equivalent clear-liquid head
+   * accounts for gas column buoyancy: {@code h_required = dP_total / ((rho_L - rho_G) * g)} .
    * </p>
    *
    * <p>
-   * The available drainage elevation is the geometric distance from the cyclone deck down to
-   * LA(HH).
+   * The available drainage elevation is the geometric distance from the cyclone deck down to LA(HH).
    * </p>
    *
-   * @return a {@link DrainageHeadResult} holding the breakdown, or a result with {@code NaN}
-   *         required head if the fluid state is not available
+   * @return a {@link DrainageHeadResult} holding the breakdown, or a result with {@code NaN} required head if the fluid
+   * state is not available
    */
   public DrainageHeadResult computeDrainageHead() {
     Separator sep = (Separator) getProcessEquipment();
