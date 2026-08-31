@@ -455,6 +455,90 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   }
 
   /**
+   * Gets the elevation of the TOP of the cyclone tubes (gas-outlet face of the demisting cyclones),
+   * measured from the Bottom Tangent Line. This is the derived value
+   * {@code cycloneDeckElevation + cycloneLength}.
+   *
+   * @return cyclone tube top elevation from BTL [m]; 0.0 if either deck or length is not set
+   */
+  public double getCycloneTopElevation() {
+    if (cycloneDeckElevationM <= 0.0 || cycloneLengthM <= 0.0) {
+      return 0.0;
+    }
+    return cycloneDeckElevationM + cycloneLengthM;
+  }
+
+  /**
+   * Computes the drainage head breakdown at the current operating state.
+   *
+   * <p>
+   * The total pressure drop the liquid film must balance to drain from the cyclone bank back into
+   * the vessel bulk is {@code dP_total = dP_mesh + dP_cyclone_to_drain}, where the mesh pad
+   * pressure drop uses the stored Euler coefficient
+   * ({@code dP_mesh = Eu * 0.5 * rho_g * v_mesh^2}, defaulting to 0.5 for standard knitmesh if
+   * unset) and the cyclone fraction reaching the drain chamber uses {@code cycloneDpToDrainPct}.
+   * The equivalent clear-liquid head accounts for gas column buoyancy:
+   * {@code h_required = dP_total / ((rho_L - rho_G) * g)}.
+   * </p>
+   *
+   * <p>
+   * The available drainage elevation is the geometric distance from the cyclone deck down to
+   * LA(HH).
+   * </p>
+   *
+   * @return a {@link DrainageHeadResult} holding the breakdown, or a result with {@code NaN}
+   *         required head if the fluid state is not available
+   */
+  public DrainageHeadResult computeDrainageHead() {
+    Separator sep = (Separator) getProcessEquipment();
+    neqsim.thermo.system.SystemInterface fluid = sep.getThermoSystem();
+    if (fluid == null) {
+      return new DrainageHeadResult(0, 0, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+    }
+    fluid.initPhysicalProperties();
+
+    double rhoGas = fluid.getPhase(0).getPhysicalProperties().getDensity();
+    double gasFlowM3s = fluid.getPhase(0).getFlowRate("m3/sec");
+
+    double rhoLiq = 1000.0;
+    if (fluid.getNumberOfPhases() >= 2) {
+      if (fluid.hasPhaseType("oil")) {
+        rhoLiq = fluid.getPhase("oil").getPhysicalProperties().getDensity();
+      } else if (fluid.hasPhaseType("aqueous")) {
+        rhoLiq = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
+      }
+    }
+    double g = 9.81;
+
+    double meshDp = 0.0;
+    if (hasMeshPad && meshPadAreaM2 > 0) {
+      double vMesh = gasFlowM3s / meshPadAreaM2;
+      double euMesh = getMistEliminatorDpCoeff();
+      if (euMesh <= 0) {
+        euMesh = 0.5; // standard knitmesh
+      }
+      meshDp = euMesh * 0.5 * rhoGas * vMesh * vMesh;
+    }
+
+    double cycDp = 0.0;
+    if (hasDemistingCyclones && numberOfDemistingCyclones > 0 && demistingCycloneDiameterM > 0) {
+      double cycArea =
+          numberOfDemistingCyclones * Math.PI * Math.pow(demistingCycloneDiameterM / 2.0, 2);
+      double vCyc = cycArea > 0 ? gasFlowM3s / cycArea : 0.0;
+      double momentum = rhoGas * vCyc * vCyc;
+      double cycDpTotal = cycloneEulerNumber * momentum;
+      cycDp = cycDpTotal * cycloneDpToDrainPct / 100.0;
+    }
+
+    double totalDp = meshDp + cycDp;
+    double rhoDelta = rhoLiq - rhoGas;
+    double requiredMm = rhoDelta > 0 ? totalDp / (rhoDelta * g) * 1000.0 : Double.NaN;
+    double availableMm = (cycloneDeckElevationM - laHHElevationM) * 1000.0;
+
+    return new DrainageHeadResult(meshDp, cycDp, requiredMm, availableMm, rhoGas, rhoLiq);
+  }
+
+  /**
    * Gets the cyclone Euler number for total pressure drop.
    *
    * @return Euler number (dp vs rho*v^2, not 0.5*rho*v^2)
