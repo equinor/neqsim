@@ -35,7 +35,7 @@ public class OilAssayCharacterisationTest {
     assertEquals(expectedLightMolarMass, lightComponent.getMolarMass(), 1e-8);
     assertEquals(0.4 / expectedLightMolarMass, lightComponent.getNumberOfmoles(), 1e-8);
 
-    double heavyDensity = 141.5 / (25.0 + 131.5) * 0.999016;
+    double heavyDensity = 141.5 / (25.0 + 131.5);
     double heavyBoilingPoint = 350.0 + 273.15;
     double expectedHeavyMolarMass = 5.805e-5 * Math.pow(heavyBoilingPoint, 2.3776) / Math.pow(heavyDensity, 0.9371)
         / 1000.0;
@@ -56,7 +56,7 @@ public class OilAssayCharacterisationTest {
     characterisation.addCut(
         new AssayCut("Heavy").withVolumePercent(60.0).withApiGravity(25.0).withAverageBoilingPointCelsius(350.0));
 
-    double heavyDensity = 141.5 / (25.0 + 131.5) * 0.999016;
+    double heavyDensity = 141.5 / (25.0 + 131.5);
     double totalRelativeMass = 0.4 * 0.75 + 0.6 * heavyDensity;
     double expectedLightMassFraction = 0.4 * 0.75 / totalRelativeMass;
     double expectedHeavyMassFraction = 0.6 * heavyDensity / totalRelativeMass;
@@ -81,6 +81,7 @@ public class OilAssayCharacterisationTest {
     double expectedMassBasisSpecificGravity = 1.0 / (0.25 / 0.80 + 0.75 / 0.90);
     assertEquals(expectedMassBasisSpecificGravity, massAssay.getBulkSpecificGravity(), 1e-12);
     assertEquals(141.5 / expectedMassBasisSpecificGravity - 131.5, massAssay.getBulkApiGravity(), 1e-12);
+    assertEquals(expectedMassBasisSpecificGravity * 999.016, massAssay.getBulkDensityKgPerCubicMetreAt60F(), 1e-9);
     assertEquals(0, massSystem.getNumberOfComponents());
 
     SystemInterface volumeSystem = new SystemSrkEos(298.15, 10.0);
@@ -284,6 +285,23 @@ public class OilAssayCharacterisationTest {
     AssayCut denseCut = new AssayCut("Residue").withMassFraction(1.0).withApiGravity(-5.0)
         .withAverageBoilingPointCelsius(520.0);
     assertTrue(denseCut.resolveDensity() > 1.0);
+  }
+
+  @Test
+  public void testApiGravityResolvesDimensionlessSpecificGravity() {
+    double apiGravity = 34.97;
+    double expectedSpecificGravity = 141.5 / (apiGravity + 131.5);
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    AssayCut cut = new AssayCut("ApiCut").withMassFraction(1.0).withApiGravity(apiGravity);
+    characterisation.addCut(cut);
+
+    assertEquals(expectedSpecificGravity, cut.resolveDensity(), 1e-12);
+    assertEquals(expectedSpecificGravity, characterisation.getBulkSpecificGravity(), 1e-12);
+    assertEquals(apiGravity, characterisation.getBulkApiGravity(), 1e-12);
+    assertEquals(expectedSpecificGravity * 999.016, characterisation.getBulkDensityKgPerCubicMetreAt60F(), 1e-9);
+    assertEquals(0, system.getNumberOfComponents());
   }
 
   @Test

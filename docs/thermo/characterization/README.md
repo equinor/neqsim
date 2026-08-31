@@ -48,6 +48,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - volume-to-mass conversion using cut density;
 - kg/mol and g/mol explicit molar-mass helpers;
 - specific-gravity, kg/m3, and API-gravity density inputs;
+- exact API-gravity/SG60/60 round-tripping and explicit bulk density at 60 degF;
 - pre-binned cumulative TBP cut-boundary ingestion;
 - preserved lower/upper boiling ranges;
 - closure, duplicate-name, monotonicity, and repeated-application guards.

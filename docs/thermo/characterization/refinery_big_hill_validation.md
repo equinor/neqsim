@@ -47,6 +47,8 @@ The same source reports whole-crude specific gravity **0.8451** and API gravity 
    must reproduce the normalized DOE weight-yield shape with maximum absolute deviation below **0.007 mass fraction** (0.7 percentage points).
 3. Supplying the same cuts through the public API-gravity input path must reproduce the mass-fraction shape obtained from the four-decimal specific-gravity values within **5e-5 mass fraction**. This tolerance reflects the DOE table's one-decimal API rounding, not a thermodynamic-model uncertainty.
 
+Each published API input must also round-trip exactly through the conventional dimensionless SG60/60 relation to `1e-12`. Physical density is exposed separately as SG60/60 multiplied by 999.016 kg/m3. This prevents the reference water density from being applied twice when API gravity is used as an assay input.
+
 For the frozen values, the largest pre-CI volume-to-mass deviation is approximately **0.00667 mass fraction**. The largest specific-gravity versus rounded-API mass-shape deviation is approximately **4.27e-5 mass fraction**. These tolerances are therefore data-agreement gates rather than machine-precision tolerances.
 
 The test then applies the normalized slice through `OilAssayCharacterisation`, requires finite positive pseudo-component molar masses and mole amounts, and requires reconstructed assay mass closure to `1e-10`.
