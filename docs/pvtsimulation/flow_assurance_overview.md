@@ -3,8 +3,6 @@ title: Flow Assurance Overview
 description: Evidence-based NeqSim workflow for hydrate, asphaltene, scale, wax, corrosion, and pipeline screening, with explicit engineering boundaries.
 ---
 
-# Flow Assurance Overview
-
 Flow assurance combines fluid characterization, thermodynamics, transport models,
 operating scenarios, and laboratory or field evidence. NeqSim can calculate several
 inputs to that assessment, but no single result establishes that a line is safe,

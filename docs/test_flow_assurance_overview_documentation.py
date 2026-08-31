@@ -55,7 +55,7 @@ class FlowAssuranceOverviewDocumentationContractTest(unittest.TestCase):
 
     def test_structure_math_and_internal_links_are_renderable(self):
         self.assertTrue(self.guide.startswith("---\n"))
-        self.assertEqual(self.guide.count("# Flow Assurance Overview"), 1)
+        self.assertEqual(self.guide.count("# Flow Assurance Overview"), 0)
         self.assertEqual(self.guide.count("```") % 2, 0)
         without_fences = re.sub(
             r"```.*?```",

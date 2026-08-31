@@ -3,8 +3,6 @@ title: "Emulsion Viscosity Calculator"
 description: "Oil-water emulsion viscosity prediction with Einstein, Taylor, Brinkman, Pal-Rhodes, Woelflin, and Richardson models plus phase inversion detection."
 ---
 
-# Emulsion Viscosity Calculator
-
 The `EmulsionViscosityCalculator` predicts the effective viscosity of oil-water emulsions using six established correlations and includes automatic phase inversion detection.
 
 **Class:** `neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculator`

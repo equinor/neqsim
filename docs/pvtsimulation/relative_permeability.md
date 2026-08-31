@@ -3,8 +3,6 @@ title: "Relative Permeability Table Generation"
 description: "Guide to generating Corey and LET relative permeability curves and Eclipse-format tables using NeqSim's RelativePermeabilityGenerator."
 ---
 
-# Relative Permeability Table Generation
-
 NeqSim provides a dedicated module for generating relative permeability tables using industry-standard Corey and LET models. The generated tables can be exported in Eclipse-compatible keyword format (SWOF, SGOF, SOF3, SLGOF).
 
 ## Overview

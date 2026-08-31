@@ -3,8 +3,6 @@ title: CPA-Based Asphaltene Calculations
 description: The **Cubic Plus Association (CPA)** equation of state extends classical cubic equations (SRK or PR) with an association term to handle self-associating and cross-associating compounds. This makes CPA...
 ---
 
-# CPA-Based Asphaltene Calculations
-
 ## Overview
 
 The **Cubic Plus Association (CPA)** equation of state extends classical cubic equations (SRK or PR) with an association term to handle self-associating and cross-associating compounds. This makes CPA particularly suitable for asphaltene modeling, where polar interactions and molecular aggregation are important.

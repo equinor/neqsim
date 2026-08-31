@@ -3,8 +3,6 @@ title: "ISO 6578 - LNG Density Calculation"
 description: "ISO 6578 provides methods for calculating the density of liquefied natural gas (LNG) from composition and temperature."
 ---
 
-# ISO 6578 - LNG Density Calculation
-
 ISO 6578 provides methods for calculating the density of liquefied natural gas (LNG) from composition and temperature.
 
 ## Table of Contents

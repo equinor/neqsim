@@ -3,8 +3,6 @@ title: "High-Salinity Mineral Scale and Production-Chemical Validation"
 description: "Pitzer activity validation, coupled mineral precipitation, pH-stabiliser and H2S-scavenger scenarios, and root-cause-analysis guidance."
 ---
 
-# High-Salinity Mineral Scale and Production-Chemical Validation
-
 This workflow combines five distinct engineering questions. Keeping the layers separate is essential: a scale inhibitor
 changes nucleation and growth, while pH adjustment changes carbonate thermodynamics, and an H2S scavenger consumes a
 reactive contaminant and may create a non-mineral spent product.

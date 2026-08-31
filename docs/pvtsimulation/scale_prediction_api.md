@@ -3,8 +3,6 @@ title: "Scale Prediction API Reference"
 description: "Complete API reference for NeqSim mineral scale prediction classes. Covers ScalePredictionCalculator (empirical), CheckScalePotential (EOS-based), solid solution models, water compatibility, flowline profiles, and mass calculators."
 ---
 
-# Scale Prediction API Reference
-
 NeqSim provides three complementary approaches for mineral scale prediction:
 
 1. **Rigorous EOS-based** (`CheckScalePotential`) — Uses Electrolyte CPA or Pitzer activity coefficients from a full thermodynamic flash. Best accuracy, requires complete fluid definition.
