@@ -17,8 +17,8 @@ public class OilAssayCharacterisationDoeBigHillTerminalBoundaryTest {
 
   @Test
   public void doeResidueRetainsOnlyPublishedLowerBoundary() {
-    AssayCut residue = new AssayCut("DOE_BH_1050F_PLUS").withWeightPercent(11.56)
-        .withSpecificGravity(1.0089).withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F);
+    AssayCut residue = new AssayCut("DOE_BH_1050F_PLUS").withWeightPercent(11.56).withSpecificGravity(1.0089)
+        .withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F);
 
     assertTrue(residue.hasLowerBoilingPoint());
     assertFalse(residue.hasUpperBoilingPoint());
@@ -32,31 +32,24 @@ public class OilAssayCharacterisationDoeBigHillTerminalBoundaryTest {
   public void kelvinCelsiusAndFahrenheitPathsAreEquivalent() {
     AssayCut kelvin = new AssayCut("K").withLowerBoilingPointKelvin(DOE_RESIDUE_LOWER_BOUNDARY_K);
     AssayCut celsius = new AssayCut("C").withLowerBoilingPointCelsius(565.5555555555555);
-    AssayCut fahrenheit =
-        new AssayCut("F").withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F);
+    AssayCut fahrenheit = new AssayCut("F").withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F);
 
     assertEquals(kelvin.getLowerBoilingPointKelvin(), celsius.getLowerBoilingPointKelvin(), 1.0e-12);
-    assertEquals(kelvin.getLowerBoilingPointKelvin(), fahrenheit.getLowerBoilingPointKelvin(),
-        1.0e-12);
+    assertEquals(kelvin.getLowerBoilingPointKelvin(), fahrenheit.getLowerBoilingPointKelvin(), 1.0e-12);
 
     AssayCut upperCelsius = new AssayCut("UpperC").withUpperBoilingPointCelsius(79.44444444444444);
     AssayCut upperFahrenheit = new AssayCut("UpperF").withUpperBoilingPointFahrenheit(175.0);
-    assertEquals(upperCelsius.getUpperBoilingPointKelvin(), upperFahrenheit.getUpperBoilingPointKelvin(),
-        1.0e-12);
+    assertEquals(upperCelsius.getUpperBoilingPointKelvin(), upperFahrenheit.getUpperBoilingPointKelvin(), 1.0e-12);
   }
 
   @Test
   public void contradictoryInputsFailWithoutPartialMutation() {
-    AssayCut lowerFirst =
-        new AssayCut("LowerFirst").withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F);
-    assertThrows(IllegalArgumentException.class,
-        () -> lowerFirst.withAverageBoilingPointFahrenheit(1000.0));
+    AssayCut lowerFirst = new AssayCut("LowerFirst").withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F);
+    assertThrows(IllegalArgumentException.class, () -> lowerFirst.withAverageBoilingPointFahrenheit(1000.0));
     assertThrows(IllegalStateException.class, lowerFirst::resolveAverageBoilingPoint);
 
-    AssayCut representativeFirst =
-        new AssayCut("RepresentativeFirst").withAverageBoilingPointFahrenheit(1100.0);
-    assertThrows(IllegalArgumentException.class,
-        () -> representativeFirst.withLowerBoilingPointFahrenheit(1150.0));
+    AssayCut representativeFirst = new AssayCut("RepresentativeFirst").withAverageBoilingPointFahrenheit(1100.0);
+    assertThrows(IllegalArgumentException.class, () -> representativeFirst.withLowerBoilingPointFahrenheit(1150.0));
     assertFalse(representativeFirst.hasLowerBoilingPoint());
     assertEquals(866.4833333333333, representativeFirst.resolveAverageBoilingPoint(), 1.0e-12);
 
@@ -69,8 +62,8 @@ public class OilAssayCharacterisationDoeBigHillTerminalBoundaryTest {
   public void oneSidedBoundaryDoesNotInventRepresentativeProperties() {
     SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation assay = system.getOilAssayCharacterisation();
-    assay.addCut(new AssayCut("UncharacterizedResidue").withMassFraction(1.0)
-        .withSpecificGravity(1.0089).withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F));
+    assay.addCut(new AssayCut("UncharacterizedResidue").withMassFraction(1.0).withSpecificGravity(1.0089)
+        .withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F));
 
     assertThrows(IllegalStateException.class, assay::apply);
     assertEquals(0, system.getNumberOfComponents(), "Failed preparation must not mutate the system");
@@ -81,9 +74,8 @@ public class OilAssayCharacterisationDoeBigHillTerminalBoundaryTest {
     SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation assay = system.getOilAssayCharacterisation();
     assay.setTotalAssayMass(1.0);
-    assay.addCut(new AssayCut("CharacterizedResidue").withMassFraction(1.0)
-        .withSpecificGravity(1.0089).withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F)
-        .withMolarMassGramPerMol(650.0));
+    assay.addCut(new AssayCut("CharacterizedResidue").withMassFraction(1.0).withSpecificGravity(1.0089)
+        .withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F).withMolarMassGramPerMol(650.0));
 
     SystemInterface clonedSystem = system.clone();
     AssayCut clonedCut = clonedSystem.getOilAssayCharacterisation().getCuts().get(0);
