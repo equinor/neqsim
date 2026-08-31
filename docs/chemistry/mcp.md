@@ -140,6 +140,56 @@ reaction constants, mineral log K values, SIT/eNRTL terms, or electrolyte-EOS
 parameters. Multi-mineral competition, solid solutions, kinetics, deposition
 and inhibitor physics remain outside this operation.
 
+### `electrolyteMultiScaleEquilibrium`
+
+Thin JSON/MCP adapter over the authoritative Java
+`ThermodynamicOperations.precipitateScales(String...)` operation. Unlike
+`multiMineralScale`, this operation solves shared-ion competition using the
+selected Pitzer GE or electrolyte-CPA aqueous activities. Mineral names are
+sorted internally, so caller order does not change the coupled result.
+
+| Field | Unit | Required / values |
+|-------|------|-------------------|
+| `temperature_K` | K | required, finite and positive |
+| `pressure_bara` | bara | required, finite and positive |
+| `components` | mol | required electroneutral object; positive water, finite non-negative amounts |
+| `model` | – | `pitzer` (default) or `electrolyte-cpa` |
+| `dataset` | – | for Pitzer: `phreeqc-catalog` (default) or `phreeqc-ca-mg-cl-so4`; not applicable to electrolyte CPA |
+| `minerals` | – | required non-empty array of unique pure COMPSALT names |
+
+```json
+{
+  "analysis": "electrolyteMultiScaleEquilibrium",
+  "model": "pitzer",
+  "dataset": "phreeqc-catalog",
+  "temperature_K": 298.15,
+  "pressure_bara": 1.01325,
+  "minerals": ["CaSO4_A", "CaSO4_G"],
+  "components": {
+    "water": 55.508,
+    "Na+": 1.0,
+    "Ca++": 0.2,
+    "Mg++": 0.15,
+    "Cl-": 1.3,
+    "SO4--": 0.2
+  }
+}
+```
+
+The response contains a deterministic per-mineral solid ledger, active-set
+update count, total COMPSALT ion-formula mass, maximum complementarity and
+component-ledger residuals, aqueous electroneutrality and phase-state evidence,
+and the model/dataset qualification boundary. Passing numerical gates require
+maximum complementarity at most `1e-6 log10(SR)`, component-ledger residual at
+most `1e-10 mol`, aqueous charge at most `1e-10 mol/kg water`, and a finite,
+non-negative normalized aqueous phase.
+
+The result is **design-support** and reports `publicationReady: false` until an
+independent competitive mixed-brine/mineral validation envelope is registered.
+COMPSALT masses represent ion formula units; crystallization water, solid
+solutions, precipitation kinetics, deposition and inhibitor physics are not
+included.
+
 ### `electrolyteScale`
 
 Davies activity-coefficient saturation indices for CaCO3, BaSO4, CaSO4, SrSO4.
