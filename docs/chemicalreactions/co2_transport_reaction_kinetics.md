@@ -100,6 +100,51 @@ Non-finite rates, invalid phase indexes, and unsupported rate bases fail explici
 These labels do not establish that equilibrium chemistry is valid. They also do not update
 composition, conserve elements over a timestep, reflash the fluid, or solve charge balance.
 
+## Published aqueous CO2 hydration bridge
+
+`AqueousCO2HydrationKinetics` implements the reversible aqueous reaction
+
+$$
+\mathrm{CO_2(aq) + H_2O \rightleftharpoons H_2CO_3}
+$$
+
+using the primary measurements and correlations of Soli and Byrne (2002),
+[doi:10.1016/S0304-4203(02)00010-5](https://doi.org/10.1016/S0304-4203%2802%2900010-5):
+
+$$
+\ln(k_H / \mathrm{s^{-1}}) = 22.66 - \frac{7799}{T}
+$$
+
+and
+
+$$
+\ln(k_D / \mathrm{s^{-1}}) = 30.15 - \frac{8018}{T}.
+$$
+
+The implementation preserves the source's narrow evidence boundary: 0.65 molal NaCl and
+288.15–305.65 K. At 298.15 K it gives `kH = 0.0302586 s-1`, `kD = 25.9844 s-1`, and
+`[H2CO3]/[CO2(aq)] = kH/kD = 0.00116449`. Calls outside the published temperature range fail
+closed instead of extrapolating.
+
+The equations are direct implementations of the primary-source fits, not a new NeqSim calibration
+or an independent validation dataset. Public DOI metadata and the institutional abstract are
+available without redistributing the paper's tabulated data. The public abstract does not report
+uncertainty statistics for these two fitted equations, so exact equation-reproduction tests must not
+be interpreted as experimental prediction uncertainty.
+
+`createReaction()` maps the two correlations exactly onto the generic reversible
+`KineticReaction` contract. Water has stoichiometric coefficient -1 but kinetic order zero because
+it is the solvent in the published pseudo-first-order model. `advance(...)` provides the analytical
+closed-batch update for the CO2/H2CO3 pair. The exact solution is non-negative and conserves that
+pair's carbon without numerical timestep error.
+
+This bridge does **not** qualify pressure dependence, dense-phase CO2, other salinities, acid
+dissociation, pH, charge balance, or phase transfer. Soli and Byrne did not vary pressure. Do not
+apply the correlation directly at pipeline pressure without separate evidence. A process caller
+must also provide a compatible aqueous thermodynamic system with distinct `CO2`, `water`, and
+`H2CO3` components. Electrolyte speciation and the mapping to the existing bicarbonate reaction set
+remain coordinated with issue #3144.
+
 ## Intended transport integration
 
 A future control-volume integration should:
