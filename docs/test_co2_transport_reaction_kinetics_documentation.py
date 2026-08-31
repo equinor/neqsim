@@ -98,7 +98,10 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
             "HYDRATION_INVERSE_TEMPERATURE_K = 7799.0",
             "DEHYDRATION_LOG_PRE_EXPONENTIAL = 30.15",
             "DEHYDRATION_INVERSE_TEMPERATURE_K = 8018.0",
+            "REPORTED_CO2_TO_H2CO3_RATIO_AT_25_C = 848.0",
             "public static Result advance(",
+            "public static SpeciationBridgeResult partitionLumpedMolecularCO2(",
+            "public static double collapseExplicitPairToLumpedCO2(",
             "totalConcentration - updatedCO2 - updatedCarbonicAcid",
         ):
             self.assertIn(token, self.hydration_kinetics)
@@ -108,10 +111,17 @@ class CO2TransportReactionKineticsDocumentationContractTest(unittest.TestCase):
             "288.15–305.65 K",
             "0.0302586 s-1",
             "25.9844 s-1",
+            "858.744",
+            "1.27% difference",
+            "within-source consistency check",
+            "not an independent validation dataset",
+            "collapseExplicitPairToLumpedCO2(...)` therefore performs the conservative handoff",
+            "Do not add an explicit `H2CO3` species",
             "does **not** qualify pressure dependence",
             "not a new NeqSim calibration",
             "uncertainty statistics for these two fitted equations",
             "issue #3144",
+            "#3318",
         ):
             self.assertIn(token, self.guide)
 
