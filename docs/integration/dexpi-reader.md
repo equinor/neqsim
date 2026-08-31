@@ -34,6 +34,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiStream` | Lightweight piping segment with DEXPI class, line number, and fluid code |
 | `DexpiProcessUnit` | Imported equipment with original DEXPI class and mapped `EquipmentEnum` |
 | `DexpiInstrumentInfo` | Instrument metadata (tag, type, function letter) |
+| `DexpiConnectionInfo` | Immutable source-order material-connection evidence and endpoint resolution |
 
 ---
 
@@ -104,6 +105,7 @@ DexpiXmlReader.ImportResult result =
     DexpiXmlReader.readWithDiagnostics(xmlFile.toFile(), template);
 ProcessSystem process = result.getProcessSystem();
 List<DexpiInstrumentInfo> instruments = result.getInstruments();
+List<DexpiConnectionInfo> connections = result.getConnections();
 
 for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
   System.out.printf("%s %s %s%n",
@@ -137,8 +139,16 @@ evidence. Valid source references resolve against the complete non-catalogue doc
 including equipment nozzles and actuating functions. The reader never promotes measurement-only or
 incomplete source content into closed-loop control intent.
 
-`toJson()` includes `instrumentCount` alongside the process-unit count and ordered findings. Python
-callers through JPype use the same `ImportResult.getInstruments()` getter; there is no separate
+The same result also preserves every source `Connection` in document order, including parallel
+connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning
+piping-network segment, `FromID` and `ToID` direction, the resolved endpoint element names, and
+resolution status. Missing source IDs receive deterministic evidence-only identities; missing,
+duplicate, self-referential, or unresolved source references remain explicit diagnostics. This
+inventory does not infer connectivity or rewire the returned `ProcessSystem`.
+
+`toJson()` includes `instrumentCount`, `connectionCount`, and the ordered connection inventory
+alongside the process-unit count and findings. Python callers through JPype use the same
+`ImportResult.getInstruments()` and `ImportResult.getConnections()` getters; there is no separate
 Python reconstruction model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
@@ -662,6 +672,10 @@ projection; generated sheets still require project-specific engineering and draf
 ---
 
 ## Building runnable simulations from DEXPI
+
+The raw connection inventory returned by `DexpiXmlReader.readWithDiagnostics(...)` is loss
+evidence. It deliberately preserves parallel edges and malformed references. The builder path below
+has a different purpose: it resolves a supported subset into runnable equipment-level topology.
 
 The `DexpiSimulationBuilder` provides a high-level API that goes beyond basic import: it resolves
 the P&ID topology (nozzle/connection graph), instantiates real NeqSim equipment (separators,

@@ -294,6 +294,73 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(first.toJson(), second.toJson());
   }
 
+
+  @Test
+  public void testReadWithDiagnosticsPreservesParallelMaterialConnections() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Nozzle ID=\"N-OUT\"/><Nozzle ID=\"N-IN\"/>"
+        + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\">"
+        + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-2\" ComponentClass=\"PipingNetworkSegment\">"
+        + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
+        + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, first.getConnections().size());
+    DexpiConnectionInfo firstConnection = first.getConnections().get(0);
+    assertEquals("S-1/connection-1", firstConnection.getId());
+    assertFalse(firstConnection.hasSourceId());
+    assertEquals("S-1", firstConnection.getSegmentId());
+    assertEquals("N-OUT", firstConnection.getFromId());
+    assertEquals("N-IN", firstConnection.getToId());
+    assertEquals("Nozzle", firstConnection.getFromElementName());
+    assertEquals("Nozzle", firstConnection.getToElementName());
+    assertTrue(firstConnection.isResolved());
+    assertEquals("S-2/connection-1", first.getConnections().get(1).getId());
+    assertEquals(2, countDiagnostics(first, "DEXPI_IMPORT_CONNECTION_ID_SYNTHESIZED"));
+    assertTrue(first.toJson().contains("\"connectionCount\": 2"));
+    assertEquals(first.toJson(), second.toJson());
+    assertThrows(UnsupportedOperationException.class, () -> first.getConnections().clear());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsReportsMalformedMaterialConnections() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Nozzle ID=\"N-1\"/>"
+        + "<PipingNetworkSegment ID=\"S-BROKEN\" ComponentClass=\"PipingNetworkSegment\">"
+        + "<Connection ID=\"C-1\" ToID=\"UNKNOWN\"/></PipingNetworkSegment>"
+        + "<Connection ID=\"C-1\" FromID=\"N-1\" ToID=\"N-1\"/>"
+        + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, result.getConnections().size());
+    assertEquals("C-1", result.getConnections().get(0).getId());
+    assertFalse(result.getConnections().get(0).isResolved());
+    assertEquals("C-1#2", result.getConnections().get(1).getId());
+    assertTrue(result.getConnections().get(1).isSelfReference());
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SOURCE_MISSING");
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_TARGET_UNRESOLVED");
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_ID_DUPLICATE");
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SEGMENT_MISSING");
+    assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SELF_REFERENCE");
+  }
+
+  private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
+    int count = 0;
+    for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+      if (expectedCode.equals(diagnostic.getCode())) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   private static String instrumentAttributes(String tag, String category, String functions, String number) {
     return "<GenericAttributes>" + "<GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"" + tag + "\"/>"
         + "<GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\" Value=\"" + category

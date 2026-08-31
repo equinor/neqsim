@@ -130,12 +130,14 @@ public final class DexpiXmlReader {
     private static final long serialVersionUID = 1000L;
     private final ProcessSystem processSystem;
     private final List<DexpiInstrumentInfo> instruments;
+    private final List<DexpiConnectionInfo> connections;
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
-        List<ImportDiagnostic> diagnostics) {
+        List<DexpiConnectionInfo> connections, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
+      this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
@@ -155,6 +157,15 @@ public final class DexpiXmlReader {
      */
     public List<DexpiInstrumentInfo> getInstruments() {
       return instruments;
+    }
+
+    /**
+     * Returns the source material-connection inventory without reconstructing live process topology.
+     *
+     * @return immutable connection records in source-document order
+     */
+    public List<DexpiConnectionInfo> getConnections() {
+      return connections;
     }
 
     /** @return immutable diagnostics in deterministic source-document order */
@@ -189,6 +200,12 @@ public final class DexpiXmlReader {
       result.put("profile", "Proteus-compatible DEXPI Plant/P&ID 4.1.1 supported subset");
       result.put("importedUnitCount", Integer.valueOf(processSystem.getAllUnitNames().size()));
       result.put("instrumentCount", Integer.valueOf(instruments.size()));
+      result.put("connectionCount", Integer.valueOf(connections.size()));
+      List<Map<String, Object>> connectionMaps = new ArrayList<Map<String, Object>>();
+      for (DexpiConnectionInfo connection : connections) {
+        connectionMaps.add(connection.toMap());
+      }
+      result.put("connections", connectionMaps);
       result.put("hasLosses", Boolean.valueOf(hasLosses()));
       result.put("hasErrors", Boolean.valueOf(hasErrors()));
       List<Map<String, Object>> diagnosticMaps = new ArrayList<Map<String, Object>>();
@@ -380,9 +397,10 @@ public final class DexpiXmlReader {
       throws IOException, DexpiXmlReaderException {
     ProcessSystem processSystem = new ProcessSystem("DEXPI process");
     List<DexpiInstrumentInfo> instruments = new ArrayList<DexpiInstrumentInfo>();
+    List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
-    loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments);
-    return new ImportResult(processSystem, instruments, diagnostics);
+    loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, connections);
+    return new ImportResult(processSystem, instruments, connections, diagnostics);
   }
 
   /**
@@ -457,12 +475,12 @@ public final class DexpiXmlReader {
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware) throws IOException, DexpiXmlReaderException {
-    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null, null);
+    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null, null, null);
   }
 
   private static void loadInternal(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
-      boolean namespaceAware, List<ImportDiagnostic> diagnostics, List<DexpiInstrumentInfo> instruments)
-      throws IOException, DexpiXmlReaderException {
+      boolean namespaceAware, List<ImportDiagnostic> diagnostics, List<DexpiInstrumentInfo> instruments,
+      List<DexpiConnectionInfo> connections) throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
@@ -485,6 +503,9 @@ public final class DexpiXmlReader {
     addPipingSegments(document, processSystem, streamTemplate, diagnostics);
     if (instruments != null) {
       instruments.addAll(parseInstruments(document));
+    }
+    if (connections != null) {
+      connections.addAll(parseConnections(document, diagnostics));
     }
     addInstrumentationDiagnostics(document, diagnostics);
   }
@@ -629,6 +650,131 @@ public final class DexpiXmlReader {
 
     logger.info("Parsed {} instruments from DEXPI XML", instruments.size());
     return instruments;
+  }
+
+
+  private static List<DexpiConnectionInfo> parseConnections(Document document,
+      List<ImportDiagnostic> diagnostics) {
+    List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
+    NodeList allElements = document.getElementsByTagName("*");
+    Map<String, Element> elementsById = new HashMap<String, Element>();
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element element = (Element) node;
+      String id = element.getAttribute("ID");
+      if (!isBlank(id) && !elementsById.containsKey(id)) {
+        elementsById.put(id, element);
+      }
+    }
+
+    Map<String, Integer> segmentOrdinals = new LinkedHashMap<String, Integer>();
+    Map<String, Integer> sourceIdCounts = new LinkedHashMap<String, Integer>();
+    NodeList connectionNodes = document.getElementsByTagName("Connection");
+    for (int i = 0; i < connectionNodes.getLength(); i++) {
+      Node node = connectionNodes.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element connection = (Element) node;
+      Element segment = findAncestorElement(connection, "PipingNetworkSegment");
+      String segmentId = "";
+      if (segment != null) {
+        segmentId = firstNonEmpty(segment.getAttribute("ID"),
+            attributeValue(segment, DexpiMetadata.SEGMENT_NUMBER));
+        if (segmentId == null) {
+          segmentId = "";
+        }
+      }
+
+      String segmentKey = isBlank(segmentId) ? "unscoped" : segmentId;
+      Integer previousOrdinal = segmentOrdinals.get(segmentKey);
+      int ordinal = previousOrdinal == null ? 1 : previousOrdinal.intValue() + 1;
+      segmentOrdinals.put(segmentKey, Integer.valueOf(ordinal));
+
+      String sourceId = connection.getAttribute("ID");
+      String evidenceId;
+      if (isBlank(sourceId)) {
+        evidenceId = segmentKey + "/connection-" + ordinal;
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.INFO,
+            "DEXPI_IMPORT_CONNECTION_ID_SYNTHESIZED",
+            "Connection has no source ID; deterministic evidence ID '" + evidenceId + "' is used");
+      } else {
+        Integer previousCount = sourceIdCounts.get(sourceId);
+        int count = previousCount == null ? 1 : previousCount.intValue() + 1;
+        sourceIdCounts.put(sourceId, Integer.valueOf(count));
+        evidenceId = count == 1 ? sourceId : sourceId + "#" + count;
+        if (count > 1) {
+          addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+              "DEXPI_IMPORT_CONNECTION_ID_DUPLICATE",
+              "Connection ID '" + sourceId + "' is duplicated; evidence ID '" + evidenceId + "' is used");
+        }
+      }
+
+      if (segment == null) {
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_CONNECTION_SEGMENT_MISSING",
+            "Connection is not owned by a PipingNetworkSegment");
+      } else if (isBlank(segmentId)) {
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_CONNECTION_SEGMENT_ID_MISSING",
+            "Owning PipingNetworkSegment has no source identity");
+      }
+
+      String fromId = connection.getAttribute("FromID");
+      String toId = connection.getAttribute("ToID");
+      Element fromElement = elementsById.get(fromId);
+      Element toElement = elementsById.get(toId);
+      if (isBlank(fromId)) {
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_CONNECTION_SOURCE_MISSING", "Connection FromID is missing");
+      } else if (fromElement == null) {
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_CONNECTION_SOURCE_UNRESOLVED",
+            "Connection FromID '" + fromId + "' does not resolve to a source object");
+      }
+      if (isBlank(toId)) {
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_CONNECTION_TARGET_MISSING", "Connection ToID is missing");
+      } else if (toElement == null) {
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_CONNECTION_TARGET_UNRESOLVED",
+            "Connection ToID '" + toId + "' does not resolve to a source object");
+      }
+      if (!isBlank(fromId) && fromId.equals(toId)) {
+        addConnectionDiagnostic(connection, diagnostics, ImportDiagnosticSeverity.WARNING,
+            "DEXPI_IMPORT_CONNECTION_SELF_REFERENCE",
+            "Connection source and target both reference '" + fromId + "'");
+      }
+
+      connections.add(new DexpiConnectionInfo(evidenceId, sourceId, segmentId, fromId, toId,
+          fromElement == null ? "" : fromElement.getTagName(),
+          toElement == null ? "" : toElement.getTagName(), fromElement != null, toElement != null));
+    }
+    logger.info("Parsed {} material connections from DEXPI XML", connections.size());
+    return connections;
+  }
+
+  private static Element findAncestorElement(Node node, String tagName) {
+    Node parent = node.getParentNode();
+    while (parent != null) {
+      if (parent.getNodeType() == Node.ELEMENT_NODE && tagName.equals(((Element) parent).getTagName())) {
+        return (Element) parent;
+      }
+      parent = parent.getParentNode();
+    }
+    return null;
+  }
+
+  private static void addConnectionDiagnostic(Element connection, List<ImportDiagnostic> diagnostics,
+      ImportDiagnosticSeverity severity, String code, String message) {
+    if (diagnostics == null) {
+      return;
+    }
+    diagnostics.add(new ImportDiagnostic(severity, code, connection.getAttribute("ID"),
+        connection.getAttribute("ComponentClass"), connection.getTagName(), message));
   }
 
   private static void addInstrumentationDiagnostics(Document document, List<ImportDiagnostic> diagnostics) {
