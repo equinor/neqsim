@@ -29,6 +29,11 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
+ * Optional total-sulfur qualities are stored as mass fractions. Bulk sulfur is reconstructed by a linear mass-basis
+ * mixing rule after the assay basis has been resolved.
+ * </p>
+ *
+ * <p>
  * The TBP cut-boundary helpers preserve cut yields and boiling ranges, then use the midpoint of each boiling interval
  * as the representative boiling point for the existing NeqSim petroleum correlation. They do not convert ASTM D86/D1160
  * or other laboratory distillation methods to TBP.
@@ -243,6 +248,49 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    */
   public double getBulkDensityKgPerCubicMetreAt60F() {
     return getBulkSpecificGravity() * WATER_DENSITY_60F_KG_M3;
+  }
+
+  /**
+   * Reconstruct the bulk assay total-sulfur mass fraction from assay-cut sulfur data.
+   *
+   * <p>
+   * The calculation is the linear mass-basis mixing rule {@code sum(w_i S_i)}, where {@code w_i} are the resolved assay
+   * mass fractions and {@code S_i} are cut sulfur mass fractions. Volume-basis assays therefore use the same
+   * density-based conversion as {@link #getResolvedMassFractions()}. Every positive-yield cut must define sulfur;
+   * zero-yield cuts do not contribute.
+   * </p>
+   *
+   * @return bulk total-sulfur mass fraction on a 0-1 basis
+   * @throws IllegalStateException if the assay is empty, incomplete, mixed-basis, or lacks sulfur data for a
+   * positive-yield cut
+   */
+  public double getBulkSulfurMassFraction() {
+    if (cuts.isEmpty()) {
+      throw new IllegalStateException("No assay cuts supplied");
+    }
+
+    double[] massFractions = resolveMassFractions();
+    double bulkSulfurMassFraction = 0.0;
+    for (int i = 0; i < cuts.size(); i++) {
+      if (massFractions[i] > 0.0) {
+        bulkSulfurMassFraction += massFractions[i] * cuts.get(i).getSulfurMassFraction();
+      }
+    }
+
+    if (!Double.isFinite(bulkSulfurMassFraction) || bulkSulfurMassFraction < 0.0 || bulkSulfurMassFraction > 1.0) {
+      throw new IllegalStateException("Unable to reconstruct bulk sulfur mass fraction from assay cuts");
+    }
+    return bulkSulfurMassFraction;
+  }
+
+  /**
+   * Reconstruct the bulk assay total sulfur in mass percent.
+   *
+   * @return bulk total sulfur in mass percent
+   * @throws IllegalStateException if bulk sulfur cannot be reconstructed
+   */
+  public double getBulkSulfurMassPercent() {
+    return 100.0 * getBulkSulfurMassFraction();
   }
 
   /**
@@ -466,6 +514,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     private Double lowerBoilingPointKelvin;
     private Double upperBoilingPointKelvin;
     private Double molarMass;
+    private Double sulfurMassFraction;
 
     /**
      * Create an assay cut.
@@ -746,6 +795,28 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Set total sulfur as a mass fraction on a 0-1 basis.
+     *
+     * @param sulfurMassFraction total-sulfur mass fraction from 0 to 1
+     * @return this cut
+     */
+    public AssayCut withSulfurMassFraction(double sulfurMassFraction) {
+      this.sulfurMassFraction = sanitiseFraction(sulfurMassFraction);
+      return this;
+    }
+
+    /**
+     * Set total sulfur in mass percent.
+     *
+     * @param sulfurMassPercent total sulfur in mass percent from 0 to 100
+     * @return this cut
+     */
+    public AssayCut withSulfurMassPercent(double sulfurMassPercent) {
+      this.sulfurMassFraction = sanitisePercent(sulfurMassPercent);
+      return this;
+    }
+
+    /**
      * Return whether this cut uses a mass fraction.
      *
      * @return true when a mass fraction is set
@@ -794,6 +865,28 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      */
     public boolean hasMolarMass() {
       return molarMass != null;
+    }
+
+    /**
+     * Return whether total-sulfur data are available for this cut.
+     *
+     * @return true when a sulfur mass fraction is stored
+     */
+    public boolean hasSulfurMassFraction() {
+      return sulfurMassFraction != null;
+    }
+
+    /**
+     * Return the cut total-sulfur mass fraction.
+     *
+     * @return total-sulfur mass fraction on a 0-1 basis
+     * @throws IllegalStateException if sulfur data are not available
+     */
+    public double getSulfurMassFraction() {
+      if (sulfurMassFraction == null) {
+        throw new IllegalStateException("Sulfur mass fraction not set for cut " + name);
+      }
+      return sulfurMassFraction;
     }
 
     /**
