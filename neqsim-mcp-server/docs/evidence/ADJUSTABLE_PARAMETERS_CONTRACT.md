@@ -13,7 +13,9 @@ The capability accepts either an explicit process JSON definition or a reusable
 `ModelRegistry` handle. It returns `schemaVersion`, `count`, and parameter
 records containing `name`, `address`, `unit`, `targetUnitName`,
 `targetProperty`, and `source`. Optional `lowerBound` and `upperBound` values are
-numeric when declared and may be omitted when the registry has no bound.
+numeric when declared and may be omitted when the registry has no bound. The `unit`
+field is an engineering-unit string; the existing registry uses an empty string for a
+qualified dimensionless property such as `polytropicEfficiency`.
 
 ## Qualification evidence
 
@@ -25,7 +27,8 @@ metadata, provenance, declared bounds, and internally consistent count.
 STDIO and retrieves the canonical `process/compression-with-cooling` catalog
 fixture. It verifies:
 
-- non-empty, unit-bearing parameter records with the documented schema;
+- non-empty parameter records with explicit unit metadata, including the
+  dimensionless empty-string convention;
 - stable compressor pressure addresses;
 - deterministic equivalence between an explicit definition and a reusable
   `manageModel` handle;
