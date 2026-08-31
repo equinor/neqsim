@@ -55,10 +55,9 @@ public class ChemistryRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls()
       .serializeSpecialFloatingPointValues().create();
 
-  private static final List<String> SUPPORTED_ANALYSES = Collections
-      .unmodifiableList(Arrays.asList("electrolyteScale", "multiMineralScale", "mechanisticCorrosion",
-          "langmuirInhibitor", "packedBedScavenger", "electrolyteScaleEquilibrium",
-          "electrolyteMultiScaleEquilibrium", "pitzerQualification"));
+  private static final List<String> SUPPORTED_ANALYSES = Collections.unmodifiableList(Arrays.asList("electrolyteScale",
+      "multiMineralScale", "mechanisticCorrosion", "langmuirInhibitor", "packedBedScavenger",
+      "electrolyteScaleEquilibrium", "electrolyteMultiScaleEquilibrium", "pitzerQualification"));
 
   /**
    * Private constructor — static utility class.
@@ -456,8 +455,7 @@ public class ChemistryRunner {
         && Double.isFinite(equilibrium.getMaximumComponentBalanceResidualMoles())
         && equilibrium.getMaximumComponentBalanceResidualMoles() <= 1.0e-10
         && Double.isFinite(equilibrium.getTotalPrecipitatedMassGrams())
-        && equilibrium.getTotalPrecipitatedMassGrams() >= 0.0
-        && phaseState.get("normalizedNonNegative").getAsBoolean()
+        && equilibrium.getTotalPrecipitatedMassGrams() >= 0.0 && phaseState.get("normalizedNonNegative").getAsBoolean()
         && Math.abs(phaseState.get("chargeResidual_molPerKgWater").getAsDouble()) <= 1.0e-10;
     if (!numericalGatesPass) {
       throw new IllegalStateException(
@@ -479,10 +477,8 @@ public class ChemistryRunner {
     data.addProperty("requestedMineralCount", equilibrium.getMineralResults().size());
     data.addProperty("presentSolidCount", presentSolidCount);
     data.addProperty("equilibriumUpdates", equilibrium.getEquilibriumUpdates());
-    data.addProperty("maximumComplementarityViolation_log10SR",
-        equilibrium.getMaximumComplementarityViolation());
-    data.addProperty("maximumComponentBalanceResidual_mol",
-        equilibrium.getMaximumComponentBalanceResidualMoles());
+    data.addProperty("maximumComplementarityViolation_log10SR", equilibrium.getMaximumComplementarityViolation());
+    data.addProperty("maximumComponentBalanceResidual_mol", equilibrium.getMaximumComponentBalanceResidualMoles());
     data.addProperty("totalPrecipitatedMass_g", equilibrium.getTotalPrecipitatedMassGrams());
     data.add("mineralResults", mineralResults);
     data.add("aqueousPhaseState", phaseState);

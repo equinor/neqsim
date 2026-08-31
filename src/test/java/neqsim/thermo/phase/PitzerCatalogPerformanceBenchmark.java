@@ -23,8 +23,7 @@ public final class PitzerCatalogPerformanceBenchmark {
       + "\"electrolyteMultiScaleEquilibrium\",\"model\":\"pitzer\","
       + "\"dataset\":\"phreeqc-catalog\",\"temperature_K\":298.15,"
       + "\"pressure_bara\":1.01325,\"minerals\":[\"CaSO4_A\",\"CaSO4_G\"],"
-      + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2,"
-      + "\"Mg++\":0.15,\"Cl-\":1.3,\"SO4--\":0.2}}";
+      + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2," + "\"Mg++\":0.15,\"Cl-\":1.3,\"SO4--\":0.2}}";
 
   private PitzerCatalogPerformanceBenchmark() {
   }
