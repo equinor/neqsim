@@ -4,8 +4,6 @@ description: "State-of-the-art integrated production modelling in NeqSim: couple
 keywords: "integrated production modelling, IPM, GAP, PROSPER, MBAL, Pipesim, network solver, deliverability curve, VFP, IPR, VLP, gas lift, well test, jet pump, sucker rod pump, reservoir to market, choke optimization, production network"
 ---
 
-# Integrated Production Modelling (Reservoir to Market)
-
 NeqSim provides an integrated production-modelling (IPM) stack that couples the four classic
 production layers &mdash; **reservoir**, **wells**, **gathering network / flowlines**, and the
 **facilities / market boundary** &mdash; into a single solvable system. It plays the same role as

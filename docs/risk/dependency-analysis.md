@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "System dependency and common cause failure analysis for process plants. Identify cascading failures, shared vulnerabilities, and critical single points of failure."
 ---
 
-# Dependency Analysis
-
 Dependency analysis answers critical operational questions:
 
 - *"If this pump fails, what else is affected?"*

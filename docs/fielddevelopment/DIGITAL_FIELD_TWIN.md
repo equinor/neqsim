@@ -3,8 +3,6 @@ title: NeqSim Digital Field Twin Framework
 description: NeqSim provides a comprehensive **Digital Field Twin** capability that links field development planning to detailed thermodynamic, process, and mechanical calculations. This creates consistency throug...
 ---
 
-# NeqSim Digital Field Twin Framework
-
 ## Overview
 
 NeqSim provides a comprehensive **Digital Field Twin** capability that links field development planning to detailed thermodynamic, process, and mechanical calculations. This creates consistency throughout the field lifecycle—from **exploration** through **development**, **operation**, and **decommissioning**.

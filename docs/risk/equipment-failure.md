@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "Equipment failure modeling using MTBF, MTTR, failure rates, and Weibull distributions. Covers compressors, pumps, heat exchangers, separators, and valves."
 ---
 
-# Equipment Failure Modeling
-
 This document describes how to model equipment failures in NeqSim, including failure types, capacity factors, and reliability data.
 
 ---

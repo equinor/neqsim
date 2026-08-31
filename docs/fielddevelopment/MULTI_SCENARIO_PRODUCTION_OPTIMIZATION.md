@@ -3,8 +3,6 @@ title: Multi-Scenario Production Optimization
 description: VFP table generation with varying GOR and water cut scenarios for reservoir simulation coupling. Enables robust production optimization across changing field conditions.
 ---
 
-# Multi-Scenario Production Optimization
-
 ## Overview
 
 The Multi-Scenario Production Optimization framework generates Vertical Flow Performance (VFP) tables that span different Gas-Oil Ratio (GOR) and Water Cut (WC) conditions. This is essential for reservoir simulation coupling where fluid properties change over time as the field matures.

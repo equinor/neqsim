@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "Production impact analysis from equipment failures. Calculate deferred production, revenue loss, and optimal spare parts strategies using process simulation."
 ---
 
-# Production Impact Analysis
-
 Production Impact Analysis quantifies how equipment failures affect plant output, enabling prioritization of maintenance and investment decisions.
 
 ---

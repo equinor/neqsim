@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "Risk matrix implementation for classifying and evaluating risks. ISO 31000 based 5x5 matrix with customizable likelihood, consequence categories, and ALARP thresholds."
 ---
 
-# Risk Matrix
-
 The Risk Matrix provides a visual representation of equipment risks by combining probability (failure frequency) with consequence (production impact). It follows ISO 31000 and NORSOK Z-013 guidelines.
 
 ---

@@ -3,8 +3,6 @@ title: Field Development API Guide
 description: Source-anchored guide to concept inputs, screening KPIs, option ranking, units, and engineering boundaries.
 ---
 
-# Field Development API Guide
-
 Use the field-development API to define early-phase concepts, run consistent screening, and compare options. The API
 does not replace a reservoir model, a verified `ProcessSystem`, detailed equipment design, a safety study, or an
 accountable economic model.
