@@ -29,8 +29,8 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * Optional total-sulfur qualities are stored as mass fractions. Bulk sulfur is reconstructed by a linear mass-basis
- * mixing rule after the assay basis has been resolved.
+ * Optional total-sulfur and total-nitrogen qualities are stored as mass fractions. Bulk qualities are reconstructed
+ * by linear mass-basis mixing rules after the assay basis has been resolved.
  * </p>
  *
  * <p>
@@ -294,6 +294,50 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   }
 
   /**
+   * Reconstruct the bulk assay total-nitrogen mass fraction from assay-cut nitrogen data.
+   *
+   * <p>
+   * The calculation is the linear mass-basis mixing rule {@code sum(w_i N_i)}, where {@code w_i} are the resolved assay
+   * mass fractions and {@code N_i} are cut nitrogen mass fractions. Volume-basis assays therefore use the same
+   * density-based conversion as {@link #getResolvedMassFractions()}. Every positive-yield cut must define nitrogen;
+   * zero-yield cuts do not contribute.
+   * </p>
+   *
+   * @return bulk total-nitrogen mass fraction on a 0-1 basis
+   * @throws IllegalStateException if the assay is empty, incomplete, mixed-basis, or lacks nitrogen data for a
+   * positive-yield cut
+   */
+  public double getBulkNitrogenMassFraction() {
+    if (cuts.isEmpty()) {
+      throw new IllegalStateException("No assay cuts supplied");
+    }
+
+    double[] massFractions = resolveMassFractions();
+    double bulkNitrogenMassFraction = 0.0;
+    for (int i = 0; i < cuts.size(); i++) {
+      if (massFractions[i] > 0.0) {
+        bulkNitrogenMassFraction += massFractions[i] * cuts.get(i).getNitrogenMassFraction();
+      }
+    }
+
+    if (!Double.isFinite(bulkNitrogenMassFraction) || bulkNitrogenMassFraction < 0.0
+        || bulkNitrogenMassFraction > 1.0) {
+      throw new IllegalStateException("Unable to reconstruct bulk nitrogen mass fraction from assay cuts");
+    }
+    return bulkNitrogenMassFraction;
+  }
+
+  /**
+   * Reconstruct the bulk assay total nitrogen in mass percent.
+   *
+   * @return bulk total nitrogen in mass percent
+   * @throws IllegalStateException if bulk nitrogen cannot be reconstructed
+   */
+  public double getBulkNitrogenMassPercent() {
+    return 100.0 * getBulkNitrogenMassFraction();
+  }
+
+  /**
    * Generate TBP pseudo-components for all configured cuts and add them to the attached system.
    *
    * <p>
@@ -515,6 +559,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     private Double upperBoilingPointKelvin;
     private Double molarMass;
     private Double sulfurMassFraction;
+    private Double nitrogenMassFraction;
 
     /**
      * Create an assay cut.
@@ -817,6 +862,28 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Set total nitrogen as a mass fraction on a 0-1 basis.
+     *
+     * @param nitrogenMassFraction total-nitrogen mass fraction from 0 to 1
+     * @return this cut
+     */
+    public AssayCut withNitrogenMassFraction(double nitrogenMassFraction) {
+      this.nitrogenMassFraction = sanitiseFraction(nitrogenMassFraction);
+      return this;
+    }
+
+    /**
+     * Set total nitrogen in mass percent.
+     *
+     * @param nitrogenMassPercent total nitrogen in mass percent from 0 to 100
+     * @return this cut
+     */
+    public AssayCut withNitrogenMassPercent(double nitrogenMassPercent) {
+      this.nitrogenMassFraction = sanitisePercent(nitrogenMassPercent);
+      return this;
+    }
+
+    /**
      * Return whether this cut uses a mass fraction.
      *
      * @return true when a mass fraction is set
@@ -887,6 +954,28 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         throw new IllegalStateException("Sulfur mass fraction not set for cut " + name);
       }
       return sulfurMassFraction;
+    }
+
+    /**
+     * Return whether total-nitrogen data are available for this cut.
+     *
+     * @return true when a nitrogen mass fraction is stored
+     */
+    public boolean hasNitrogenMassFraction() {
+      return nitrogenMassFraction != null;
+    }
+
+    /**
+     * Return the cut total-nitrogen mass fraction.
+     *
+     * @return total-nitrogen mass fraction on a 0-1 basis
+     * @throws IllegalStateException if nitrogen data are not available
+     */
+    public double getNitrogenMassFraction() {
+      if (nitrogenMassFraction == null) {
+        throw new IllegalStateException("Nitrogen mass fraction not set for cut " + name);
+      }
+      return nitrogenMassFraction;
     }
 
     /**
