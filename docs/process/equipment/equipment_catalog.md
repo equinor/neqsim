@@ -8,7 +8,7 @@ non-abstract class that implements `ProcessEquipmentInterface`, directly or thro
 base class. Helper classes, result records, strategies, enums, and interfaces are intentionally
 excluded from the equipment count.
 
-**Current source inventory:** 234 concrete equipment classes in 33 packages.
+**Current source inventory:** 235 concrete equipment classes in 33 packages.
 
 Regenerate this page after adding or removing equipment:
 
@@ -50,7 +50,7 @@ python devtools/generate_equipment_documentation_catalog.py
 | `stream` | [Streams](streams)<br>Material, equilibrium, virtual, and diagnostic streams | `EquilibriumStream`, `IronIonSaturationStream`, `NeqStream`, `ScalePotentialCheckStream`, `Stream`, `VirtualStream` |
 | `subsea` | [Subsea equipment](subsea_equipment)<br>Trees, manifolds, boosters, jumpers, flowlines, and umbilicals | `FlexiblePipe`, `FloatingSubstructure`, `MooringSystem`, `PLEM`, `PLET`, `SimpleFlowLine`, `SubseaBooster`, `SubseaJumper`, `SubseaManifold`, `SubseaPowerCable`, `SubseaTree`, `SubseaWell`, `Umbilical` |
 | `tank` | [Tanks](tanks)<br>Storage, LNG, and vessel-depressurization equipment | `LNGTank`, `Tank`, `VesselDepressurization` |
-| `util` | [Process utilities](util/)<br>Adjusters, recycles, calculators, fitters, setters, and utility systems | `Adjuster`, `AntiSurgeCalculator`, `Calculator`, `CompressorShaftCalculator`, `FlowRateAdjuster`, `FlowSetter`, `FuelGasSystem`, `GORfitter`, `MPFMfitter`, `MoleFractionControllerUtil`, `MultiVariableAdjuster`, `NeqSimUnit`, `PressureDrop`, `ProductionRateFitter`, `Recycle`, `SetPoint`, `Setter`, `SpreadsheetBlock`, `StreamSaturatorUtil`, `StreamTransition`, `UnisimCalculator`, `UtilityAirSystem` |
+| `util` | [Process utilities](util/)<br>Adjusters, recycles, calculators, fitters, setters, and utility systems | `Adjuster`, `AntiSurgeCalculator`, `Calculator`, `CompressorShaftCalculator`, `FlowRateAdjuster`, `FlowSetter`, `FuelGasSystem`, `GORfitter`, `LubeOilSystem`, `MPFMfitter`, `MoleFractionControllerUtil`, `MultiVariableAdjuster`, `NeqSimUnit`, `PressureDrop`, `ProductionRateFitter`, `Recycle`, `SetPoint`, `Setter`, `SpreadsheetBlock`, `StreamSaturatorUtil`, `StreamTransition`, `UnisimCalculator`, `UtilityAirSystem` |
 | `valve` | [Valves](valves)<br>Control, shutdown, relief, rupture-disk, and throttling valves | `BlowdownValve`, `CheckValve`, `ControlValve`, `ESDValve`, `HIPPSValve`, `LevelControlValve`, `PSDValve`, `PressureControlValve`, `RuptureDisk`, `SafetyReliefValve`, `SafetyValve`, `ThrottlingValve` |
 | `watertreatment` | [Water treatment](water_treatment)<br>Hydrocyclone, flotation, and produced-water treatment trains | `GasFlotationUnit`, `Hydrocyclone`, `ProducedWaterTreatmentTrain` |
 
