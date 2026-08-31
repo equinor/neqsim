@@ -3,8 +3,6 @@ title: "Heat Exchanger Thermal-Hydraulic Design"
 description: "Comprehensive guide to shell-and-tube heat exchanger thermal-hydraulic design in NeqSim. Covers tube-side and shell-side heat transfer coefficients (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops, LMTD correction factors, vibration screening, zone-by-zone analysis, and rating mode."
 ---
 
-# Heat Exchanger Thermal-Hydraulic Design
-
 NeqSim provides a complete thermal-hydraulic design toolkit for shell-and-tube heat
 exchangers. The toolkit connects rigorous thermodynamic property predictions from
 the process simulation to industry-standard heat transfer and pressure drop

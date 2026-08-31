@@ -3,8 +3,6 @@ title: Mechanical Design Framework
 description: NeqSim provides a comprehensive mechanical design framework for sizing and specifying process equipment according to industry standards. This document describes the architecture, usage patterns, and J...
 ---
 
-# Mechanical Design Framework
-
 NeqSim provides a comprehensive mechanical design framework for sizing and specifying process equipment according to industry standards. This document describes the architecture, usage patterns, and JSON export capabilities.
 
 > **📘 Related Documentation**
@@ -1032,6 +1030,6 @@ System.out.println("Driver power: " + compResponse.getDriverPower() + " kW");
 
 ## See Also
 
-- [Process Equipment](./
+- [Process Equipment](README.md)
 - [Pipeline Mechanical Design](pipeline_mechanical_design)
 - [Design Standards](../standards/)

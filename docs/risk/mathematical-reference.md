@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "Mathematical foundations for the NeqSim risk framework. Probability distributions, reliability theory, Monte Carlo methods, Markov chains, and fault tree algebra."
 ---
 
-# Mathematical Reference
-
 This document provides the mathematical foundations for the Risk Simulation Framework, including reliability theory, Monte Carlo methods, and risk calculations.
 
 ---

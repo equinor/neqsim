@@ -94,7 +94,7 @@ class FieldDevelopmentApiGuideDocumentationContractTest(unittest.TestCase):
         self.assertEqual(self.guide.count("```") % 2, 0)
         self.assertEqual(
             len(re.findall(r"^# ", self.guide, flags=re.MULTILINE)),
-            1,
+            0,
         )
         self.assertNotIn("\\[", self.guide)
         self.assertNotIn("\\]", self.guide)

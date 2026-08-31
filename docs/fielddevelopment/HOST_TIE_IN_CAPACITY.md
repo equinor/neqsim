@@ -3,8 +3,6 @@ title: Host Tie-In Capacity and Holdback Planning
 description: Time-series host tie-in capacity planning for brownfield tiebacks, including base-host production, satellite holdback, process equipment bottlenecks, deferred value, and debottleneck decisions.
 ---
 
-# Host Tie-In Capacity and Holdback Planning
-
 Brownfield tieback decisions often fail because a host has spare capacity on paper but not in the year when the satellite peaks. The host may already use most separator, compression, liquid-handling, produced-water, export, or power capacity. The host tie-in capacity planner turns that question into a repeatable time-series calculation:
 
 1. Compare base-host production and satellite production against host nameplate capacities.

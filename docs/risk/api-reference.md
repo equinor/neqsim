@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "Complete API reference for NeqSim risk and reliability classes including RiskMatrix, BowTieModel, EquipmentReliability, MonteCarloReliability, and SIS integration."
 ---
 
-# API Reference
-
 Complete Java API reference for the Risk Simulation Framework.
 
 ---
