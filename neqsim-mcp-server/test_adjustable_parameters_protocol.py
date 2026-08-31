@@ -167,8 +167,6 @@ def assert_registry(result):
         "name",
         "address",
         "unit",
-        "lowerBound",
-        "upperBound",
         "targetUnitName",
         "targetProperty",
         "source",
@@ -178,6 +176,18 @@ def assert_registry(result):
         require(required_keys.issubset(parameter), "parameter metadata is incomplete", parameter)
         require(bool(parameter.get("address")), "parameter address is empty", parameter)
         require(bool(parameter.get("unit")), "parameter unit is empty", parameter)
+        for bound_key in ("lowerBound", "upperBound"):
+            if bound_key in parameter:
+                bound = parameter[bound_key]
+                require(
+                    bound is None
+                    or (
+                        isinstance(bound, (int, float))
+                        and not isinstance(bound, bool)
+                    ),
+                    "parameter bound is not numeric or null",
+                    parameter,
+                )
         require(
             parameter.get("source") in {"INPUT_VARIABLE", "ADJUSTER"},
             "parameter provenance is unsupported",
