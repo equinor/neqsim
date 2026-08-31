@@ -46,8 +46,8 @@ public final class DexpiConnectionInfo implements Serializable {
    */
   public DexpiConnectionInfo(String id, String sourceId, String segmentId, String fromId, String toId,
       String fromElementName, String toElementName, boolean fromResolved, boolean toResolved) {
-    this(id, sourceId, segmentId, fromId, toId, fromElementName, toElementName, "", "", "", "",
-        fromResolved, toResolved);
+    this(id, sourceId, segmentId, fromId, toId, fromElementName, toElementName, "", "", "", "", fromResolved,
+        toResolved);
   }
 
   /**
@@ -68,9 +68,8 @@ public final class DexpiConnectionInfo implements Serializable {
    * @param toResolved whether the target endpoint resolves in the source document
    */
   public DexpiConnectionInfo(String id, String sourceId, String segmentId, String fromId, String toId,
-      String fromElementName, String toElementName, String fromOwnerId, String toOwnerId,
-      String fromOwnerElementName, String toOwnerElementName, boolean fromResolved,
-      boolean toResolved) {
+      String fromElementName, String toElementName, String fromOwnerId, String toOwnerId, String fromOwnerElementName,
+      String toOwnerElementName, boolean fromResolved, boolean toResolved) {
     this.id = normalize(id);
     this.sourceId = normalize(sourceId);
     this.segmentId = normalize(segmentId);

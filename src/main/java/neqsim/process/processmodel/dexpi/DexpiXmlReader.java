@@ -749,8 +749,7 @@ public final class DexpiXmlReader {
 
       connections.add(new DexpiConnectionInfo(evidenceId, sourceId, segmentId, fromId, toId,
           fromElement == null ? "" : fromElement.getTagName(), toElement == null ? "" : toElement.getTagName(),
-          fromOwner == null ? "" : fromOwner.getAttribute("ID"),
-          toOwner == null ? "" : toOwner.getAttribute("ID"),
+          fromOwner == null ? "" : fromOwner.getAttribute("ID"), toOwner == null ? "" : toOwner.getAttribute("ID"),
           fromOwner == null ? "" : fromOwner.getTagName(), toOwner == null ? "" : toOwner.getTagName(),
           fromElement != null, toElement != null));
     }
@@ -782,8 +781,8 @@ public final class DexpiXmlReader {
     return "Equipment".equals(element.getTagName()) || "PipingComponent".equals(element.getTagName());
   }
 
-  private static void addConnectionOwnerDiagnostic(Element connection, Element endpoint, Element owner,
-      boolean source, List<ImportDiagnostic> diagnostics) {
+  private static void addConnectionOwnerDiagnostic(Element connection, Element endpoint, Element owner, boolean source,
+      List<ImportDiagnostic> diagnostics) {
     if (endpoint == null || !"Nozzle".equals(endpoint.getTagName())) {
       return;
     }

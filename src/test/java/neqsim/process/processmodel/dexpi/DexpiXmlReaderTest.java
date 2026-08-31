@@ -361,8 +361,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<Equipment><Nozzle ID=\"N-A\"/></Equipment>"
         + "<PipingComponent ID=\"PC-1\"><Nozzle ID=\"N-B\"/></PipingComponent>"
         + "<PipingNetworkSegment ID=\"S-OWNER\" ComponentClass=\"PipingNetworkSegment\">"
-        + "<Connection ID=\"C-OWNER\" FromID=\"N-A\" ToID=\"N-B\"/></PipingNetworkSegment>"
-        + "</PlantModel>";
+        + "<Connection ID=\"C-OWNER\" FromID=\"N-A\" ToID=\"N-B\"/></PipingNetworkSegment>" + "</PlantModel>";
 
     DexpiXmlReader.ImportResult result = DexpiXmlReader
         .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
@@ -376,8 +375,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SOURCE_OWNER_ID_MISSING");
     assertTrue(result.toJson().contains("\"fromOwnerElementName\": \"Equipment\""));
 
-    DexpiConnectionInfo legacy = new DexpiConnectionInfo("C", "C", "S", "A", "B", "Nozzle",
-        "Nozzle", true, true);
+    DexpiConnectionInfo legacy = new DexpiConnectionInfo("C", "C", "S", "A", "B", "Nozzle", "Nozzle", true, true);
     assertEquals("", legacy.getFromOwnerId());
     assertEquals("", legacy.getToOwnerId());
   }
