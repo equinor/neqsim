@@ -137,6 +137,16 @@ where `w_i` is the resolved mass fraction and `SG_i` is the cut specific gravity
 
 These methods are screening calculations at the density reference condition represented by the inputs. They assume ideal additive liquid volumes and do not apply temperature correction, excess-volume, or blend-contraction models. They are not custody-transfer or certified blend-design calculations. The public validation and numerical error boundary are documented in [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation).
 
+## Per-cut UOP/Watson characterization factor
+
+`AssayCut.getWatsonCharacterizationFactor()` calculates the dimensionless UOP/Watson factor from the same authoritative density and representative-boiling-point inputs used by the assay workflow:
+
+$$K_W=\frac{(1.8T_b)^{1/3}}{SG}$$
+
+Here $T_b$ is in K and $SG$ is dimensionless specific gravity. This is equivalent to using boiling point in degrees Rankine. A finite boiling interval uses its arithmetic midpoint. Kelvin, Celsius and Fahrenheit inputs therefore share one calculation, and exact-equivalent SG/API inputs give the same result. Missing density or boiling-point information fails closed.
+
+The public [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation) covers four bounded 375-1050 degF cuts with SG 0.8297-0.9336. The maximum absolute difference from DOE's one-decimal UOP K values is 0.0122. The method is qualified for assay screening inside that matrix; it is not a whole-crude aggregation, ASTM conversion or design-certification method.
+
 ## Existing petroleum-property correlations
 
 This refinery-assay API deliberately reuses the existing NeqSim TBP/pseudo-component property framework. It does not add or retune critical-property, acentric-factor, or molecular-weight coefficients.
@@ -170,9 +180,10 @@ The regression suite for this API currently verifies:
 - exact reconstructed assay-mass closure;
 - analytical mass- and volume-basis bulk specific-gravity reconstruction;
 - whole-assay SG/API agreement across all five complete four-category rows in the public DOE/OEDI COA summary workbook;
+- per-cut UOP/Watson factors against four bounded cuts in the public DOE SPR Big Hill Sweet 2021 assay;
 - input-order independence and no thermodynamic-system mutation for bulk-property queries.
 
-These tests establish software/bookkeeping correctness and qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765–0.847; maximum observed errors 0.006 SG and 1.5 degrees API). They do **not** qualify temperature correction, contraction, pseudo-component properties, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
+These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), and qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122). They do **not** qualify temperature correction, contraction, molecular-weight or critical-property correlations, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
 
 ## Refinery capability inventory after this increment
 
@@ -181,9 +192,10 @@ These tests establish software/bookkeeping correctness and qualify ideal-additiv
 | Pre-binned crude/petroleum assay cuts | `OilAssayCharacterisation` | Foundation hardened in #3305 |
 | Mass- and volume-basis cut yields | Unit/basis-explicit assay API | Foundation hardened in #3305 |
 | Pre-binned cumulative TBP cut boundaries | `addTBPCutBoundariesCelsius/Kelvin` | Initial implementation in #3305 |
+| Per-cut UOP/Watson characterization factor | `AssayCut.getWatsonCharacterizationFactor()` | DOE-qualified for assay screening over 375-1050 degF |
 | TBP pseudo-component properties | Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing and related models | Existing; needs refinery-range independent validation |
 | Plus-fraction splitting/lumping | `Characterise`, plus-fraction and lumping models | Existing; refinery assay integration still to be qualified |
-| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Experimental whole-assay SG/API reconstruction; broader stream-property API remains open |
+| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API and per-cut Watson screening qualified over frozen public matrices; broader stream properties remain open |
 | Rigorous distillation columns | `DistillationColumn`, `SimpleTray`, Naphtali-Sandholm solver, side-draw support | Existing foundation; broad-boiling atmospheric/vacuum refinery benchmark remains open |
 | Crude preheat/fired heater | General heater/heat-exchanger process equipment | Refinery workflow and fuel/emission integration remain open |
 | Product blending/specification optimization | Generic optimization/process facilities | Refinery property/blending framework remains open |

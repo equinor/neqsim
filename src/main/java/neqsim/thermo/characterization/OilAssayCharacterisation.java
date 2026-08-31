@@ -824,6 +824,27 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Calculate the UOP/Watson characterization factor for this assay cut.
+     *
+     * <p>
+     * The calculation uses {@code K_W = (1.8 T_b)^(1/3) / SG}, where {@code T_b} is the representative normal boiling
+     * point in K and {@code SG} is dimensionless specific gravity. This is equivalent to using the boiling point in
+     * degrees Rankine. A configured boiling interval uses its arithmetic midpoint through
+     * {@link #resolveAverageBoilingPoint()}.
+     * </p>
+     *
+     * @return dimensionless UOP/Watson characterization factor
+     * @throws IllegalStateException if density or representative boiling point is unavailable, or the result is invalid
+     */
+    public double getWatsonCharacterizationFactor() {
+      double factor = Math.cbrt(1.8) * Math.cbrt(resolveAverageBoilingPoint()) / resolveDensity();
+      if (!Double.isFinite(factor) || !(factor > 0.0)) {
+        throw new IllegalStateException("Unable to calculate Watson characterization factor for cut " + name);
+      }
+      return factor;
+    }
+
+    /**
      * Resolve the cut molar mass.
      *
      * <p>
