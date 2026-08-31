@@ -149,7 +149,7 @@ public class SeparatorInternalsElevationTest {
     GasScrubber scrubber = new GasScrubber("scrubber", createWetGasStream());
     scrubber.run();
     scrubber.initMechanicalDesign();
-    return (GasScrubberMechanicalDesign) scrubber.getMechanicalDesign();
+    return scrubber.getMechanicalDesign();
   }
 
   /** Cyclone top is the deck elevation plus the tube length. */
@@ -159,9 +159,7 @@ public class SeparatorInternalsElevationTest {
 
     assertEquals(0.0, design.getCycloneTopElevation(), TOL);
 
-    design.setDemistingCyclones(12, 0.06);
-    design.setCycloneDeckElevationM(2.50);
-    design.setCycloneLengthM(0.80);
+    design.setDemistingCyclones(12, 0.06, 2.50, 0.80);
 
     assertEquals(3.30, design.getCycloneTopElevation(), 1.0e-9);
   }
@@ -171,7 +169,8 @@ public class SeparatorInternalsElevationTest {
   public void testCycloneTopElevationRequiresDeckAndLength() {
     GasScrubberMechanicalDesign design = createScrubberDesign();
 
-    design.setCycloneDeckElevationM(2.50);
+    // Three-arg overload sets the deck but leaves the tube length unset.
+    design.setDemistingCyclones(12, 0.06, 2.50);
     assertEquals(0.0, design.getCycloneTopElevation(), TOL);
 
     design.setCycloneDeckElevationM(0.0);
@@ -186,10 +185,8 @@ public class SeparatorInternalsElevationTest {
   @Test
   public void testDrainageHeadIsSelfConsistent() {
     GasScrubberMechanicalDesign design = createScrubberDesign();
-    design.setMeshPad(true);
-    design.setMeshPadAreaM2(1.20);
-    design.setDemistingCyclones(12, 0.06);
-    design.setCycloneDeckElevationM(2.50);
+    design.setMeshPad(1.20, 150.0);
+    design.setDemistingCyclones(12, 0.06, 2.50, 0.80);
     design.setLaHHElevationM(1.30);
 
     DrainageHeadResult result = design.computeDrainageHead();
