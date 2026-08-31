@@ -3,8 +3,6 @@ title: Low-Flow Section Bypass
 description: Auto-bypass and manual deactivation of low-flow process sections in ProcessSystem and ProcessModel. Covers minimum-flow thresholds, section deactivation, ProcessModel convergence handling, and feed-flow configuration patterns for parallel compressor trains on platform-scale models.
 ---
 
-# Low-Flow Section Bypass
-
 NeqSim can automatically (or manually) bypass parts of a flowsheet that are
 receiving negligible flow, so that turning off a parallel train, a recycle,
 or a seasonal export route does not destabilise the rest of a

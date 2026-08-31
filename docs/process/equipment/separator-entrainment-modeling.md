@@ -3,8 +3,6 @@ title: "Enhanced Separator Entrainment Modeling"
 description: "Physics-based separator performance modeling with droplet size distributions, flow regime prediction, inlet device modeling, grade efficiency curves, vessel geometry, and internals databases. Comparable to commercial tools like MySep and ProSep."
 ---
 
-# Enhanced Separator Entrainment Modeling
-
 Physics-based, inlet-to-outlet separator performance calculation using open-literature
 correlations. This is an optional enhancement to the standard NeqSim separator that
 computes entrainment from first principles rather than user-specified fractions.

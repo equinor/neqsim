@@ -3,8 +3,6 @@ title: Process Flow Diagram (PFD) Export
 description: Export deterministic simulator-style PFD topology and Graphviz diagrams from NeqSim process models.
 ---
 
-# Process Flow Diagram (PFD) Export
-
 NeqSim can export deterministic simulator-style process flow diagrams (PFDs) as Graphviz DOT and,
 when Graphviz is installed, SVG or PDF. These exports help inspect simulation topology; they are not
 qualified engineering drawings and do not claim ISO 10628 conformance.

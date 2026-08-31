@@ -3,8 +3,6 @@ title: Well Production Allocation
 description: Documentation for production allocation in commingled well systems.
 ---
 
-# Well Production Allocation
-
 Documentation for production allocation in commingled well systems.
 
 ## Table of Contents

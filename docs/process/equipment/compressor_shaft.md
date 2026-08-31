@@ -3,8 +3,6 @@ title: "CompressorShaft: Multiple Compressor Bodies on One Shaft"
 description: "Model a multi-body compressor string driven by a single gas turbine or motor at one common speed with CompressorShaft. Covers the degrees-of-freedom rule, iterating the common speed to the final discharge (intermediate pressures float), the process-integrated CompressorShaftCalculator that converges the shaft speed inside process.run(), shared pressure nodes, fixed-speed drivers, single-body use, and coexistence with anti-surge control."
 ---
 
-# CompressorShaft: Multiple Compressor Bodies on One Shaft
-
 `neqsim.process.equipment.compressor.CompressorShaft` groups several
 `Compressor` bodies that sit on **one driver shaft** (a single gas turbine or
 motor, often through a gearbox) so they all turn at the **same speed**. A

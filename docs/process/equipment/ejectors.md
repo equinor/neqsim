@@ -3,8 +3,6 @@ title: Ejector Equipment
 description: "Documentation for ejector equipment in NeqSim process simulation, including Transvac-style vendor parameters (entrainment ratio, compression ratio, critical back pressure, area ratio, Mach numbers)."
 ---
 
-# Ejector Equipment
-
 Documentation for ejector equipment in NeqSim process simulation.
 
 ## Table of Contents

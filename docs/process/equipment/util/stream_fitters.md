@@ -3,8 +3,6 @@ title: "Stream Fitters: GOR and MPFM Data Fitting"
 description: Utilities for adjusting stream compositions based on measured Gas-Oil Ratio (GOR) or Multiphase Flow Meter (MPFM) data.
 ---
 
-# Stream Fitters: GOR and MPFM Data Fitting
-
 Utilities for adjusting stream compositions based on measured Gas-Oil Ratio (GOR) or Multiphase Flow Meter (MPFM) data.
 
 ## Table of Contents

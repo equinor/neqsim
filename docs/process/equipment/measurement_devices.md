@@ -3,8 +3,6 @@ title: Measurement Devices and Analysers
 description: NeqSim provides a comprehensive set of measurement devices and process analysers for monitoring fluid properties, compositions, and process conditions.
 ---
 
-# Measurement Devices and Analysers
-
 NeqSim provides a comprehensive set of measurement devices and process analysers for monitoring fluid properties, compositions, and process conditions.
 
 ## Overview

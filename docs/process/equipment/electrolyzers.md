@@ -3,8 +3,6 @@ title: Electrolyzer Equipment
 description: "Documentation for electrolyzer equipment in NeqSim — water electrolysis (green hydrogen), PEM/Alkaline/SOEC/AEM technologies, I-V polarisation models, power-driven operation, stack sizing, turndown/standby, ramp limits, balance-of-plant losses, thermal and water consumption, delivery pressure, and CO2 electrolysis."
 ---
 
-# Electrolyzer Equipment
-
 Documentation for electrolyzer equipment in NeqSim process simulation.
 
 ## Table of Contents

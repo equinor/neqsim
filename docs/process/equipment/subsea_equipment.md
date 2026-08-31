@@ -3,8 +3,6 @@ title: Subsea Equipment
 description: Documentation for subsea production equipment in NeqSim.
 ---
 
-# Subsea Equipment
-
 Documentation for subsea production equipment in NeqSim.
 
 ## Table of Contents

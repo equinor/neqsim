@@ -3,8 +3,6 @@ title: Recycles
 description: Documentation for recycle handling in NeqSim process simulation.
 ---
 
-# Recycles
-
 Documentation for recycle handling in NeqSim process simulation.
 
 ## Table of Contents

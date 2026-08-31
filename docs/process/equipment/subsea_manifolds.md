@@ -3,8 +3,6 @@ title: Subsea Manifolds
 description: Documentation for subsea production manifold equipment in NeqSim.
 ---
 
-# Subsea Manifolds
-
 Documentation for subsea production manifold equipment in NeqSim.
 
 ## Table of Contents

@@ -3,8 +3,6 @@ title: Looped Pipeline Networks
 description: Documentation for looped pipeline network modeling with Hardy Cross solver in NeqSim.
 ---
 
-# Looped Pipeline Networks
-
 Documentation for looped pipeline network modeling with Hardy Cross solver in NeqSim.
 
 ## Table of Contents

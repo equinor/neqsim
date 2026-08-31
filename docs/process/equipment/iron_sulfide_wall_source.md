@@ -3,8 +3,6 @@ title: Iron-sulfide wall inventory and elemental-sulfur source
 description: "Stateful screening model for FeS formation on carbon-steel walls, oxidation during oxygen ingress, and coupling of generated S8 to condensate transport and compressor deposition."
 ---
 
-# Iron-sulfide wall inventory and elemental-sulfur source
-
 `IronSulfideWallInventory` and `IronSulfideOxidationSource` represent a source that a fluid-only
 equilibrium calculation cannot retain: corrosion product accumulated during an earlier wet or sour
 period. The source can be connected directly to NeqSim's existing S8 solid flash, sulfur filter, and
@@ -28,14 +26,12 @@ all kinetic defaults are zero and an uncalibrated calculation reports low/base/h
 
 The implemented bookkeeping reactions are:
 
-\[
-\begin{aligned}
+$$\begin{aligned}
 \mathrm{Fe + H_2S} &\rightarrow \mathrm{FeS + H_2} \\
 \mathrm{FeCO_3 + H_2S} &\rightarrow \mathrm{FeS + CO_2 + H_2O} \\
 \mathrm{Fe_2O_3 + 3H_2S} &\rightarrow \mathrm{2FeS + S^0 + 3H_2O} \\
 \mathrm{4FeS + 3O_2} &\rightarrow \mathrm{2Fe_2O_3 + 4S^0}
-\end{aligned}
-\]
+\end{aligned}$$
 
 The last equation is the default Fe2O3-equivalent screening branch. The oxygen stoichiometry and
 fraction ending as S0 are configurable because partially oxidised sulfur and iron products are

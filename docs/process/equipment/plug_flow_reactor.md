@@ -3,8 +3,6 @@ title: "Plug Flow Reactor (PFR) Guide"
 description: "Comprehensive guide to the NeqSim Plug Flow Reactor for rigorous kinetic modeling. Covers governing equations, kinetic rate expressions (power-law, LHHW, reversible), catalyst bed modeling, Ergun pressure drop, energy modes, integration methods, axial profiles, and worked examples for ammonia synthesis and steam reforming."
 ---
 
-# Plug Flow Reactor (PFR) Guide
-
 The NeqSim Plug Flow Reactor models chemical transformation along a tubular reactor by solving
 coupled ordinary differential equations for species molar flows, temperature, and pressure as a
 function of axial position. It supports homogeneous gas-phase and heterogeneous catalytic reactions
