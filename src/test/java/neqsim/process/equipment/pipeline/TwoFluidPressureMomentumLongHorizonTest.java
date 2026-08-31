@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,6 +47,15 @@ class TwoFluidPressureMomentumLongHorizonTest {
     pipe.run();
 
     double initialInventory = pipe.getTotalMassInventory();
+    double[] initialGasFlow = pipe.getGasMassFlowProfile();
+    double[] initialOilFlow = pipe.getOilMassFlowProfile();
+    double[] initialWaterFlow = pipe.getWaterMassFlowProfile();
+    double inletMassFlow = feed.getFlowRate("kg/sec");
+    for (int section = 0; section < initialGasFlow.length; section++) {
+      double sectionMassFlow = initialGasFlow[section] + initialOilFlow[section] + initialWaterFlow[section];
+      assertEquals(inletMassFlow, sectionMassFlow, 1.0e-9 * inletMassFlow,
+          "steady-state handoff mass flow at section " + section + " did not match the inlet");
+    }
     double cumulativeAbsoluteLiquidOutletMassKg = 0.0;
     double maximumLiquidHoldup = 0.0;
     for (int interval = 0; interval < 240; interval++) {

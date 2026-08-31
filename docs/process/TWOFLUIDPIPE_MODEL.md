@@ -838,6 +838,23 @@ its inlet flux, but it must not replace the first finite-volume cell's oil or wa
 an unchanged, near-zero-time handoff from producing an inventory or holdup jump that scales with pipe
 volume.
 
+At an exact oil-only or water-only liquid endpoint, the active phase velocity is synchronized with
+the final bulk-liquid velocity before the conservative state is built. Inspect the phase-resolved
+steady fluxes when qualifying a new transient case:
+
+```java
+double[] gasFlow = pipe.getGasMassFlowProfile();
+double[] oilFlow = pipe.getOilMassFlowProfile();
+double[] waterFlow = pipe.getWaterMassFlowProfile();
+int outlet = gasFlow.length - 1;
+double steadyOutletFlow = gasFlow[outlet] + oilFlow[outlet] + waterFlow[outlet];
+```
+
+For a no-transfer steady case, `steadyOutletFlow` should reproduce the inlet mass flow within the
+chosen numerical tolerance. This is a kinematic handoff check only. It does not prove that the
+phase-momentum sources and fixed-pressure outlet form a transient fixed point, and it does not
+qualify the current liquid-rich or severe-slugging trajectories.
+
 For each phase $k$ and for the total domain, validate the discrete balance
 
 $$
