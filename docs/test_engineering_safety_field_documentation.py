@@ -112,7 +112,12 @@ def link_candidates(page, raw_target):
     else:
         candidate = page.parent / target
     if candidate.suffix:
-        return (candidate,)
+        stem = candidate.with_suffix("")
+        return (
+            candidate,
+            stem / "README.md",
+            stem / "index.md",
+        )
     return (
         candidate.with_suffix(".md"),
         candidate / "README.md",
@@ -136,7 +141,7 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
                     page.read_text(encoding="utf-8")
                 )
                 self.assertTrue(title)
-                self.assertGreaterEqual(5, len(description.split()))
+                self.assertGreaterEqual(len(description.split()), 5)
 
     def test_front_matter_title_is_not_repeated_as_h1(self):
         for page in SCOPE_PAGES:
