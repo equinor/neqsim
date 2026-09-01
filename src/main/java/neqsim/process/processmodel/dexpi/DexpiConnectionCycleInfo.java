@@ -8,12 +8,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Immutable evidence for one cyclic strongly connected group of explicit DEXPI material-connection
- * endpoint references.
+ * Immutable evidence for one cyclic strongly connected group of explicit DEXPI material-connection endpoint references.
  *
  * <p>
- * This record describes source-document graph evidence only. It does not establish hydraulic
- * continuity, a physical recycle, process intent, or live {@code ProcessSystem} topology.
+ * This record describes source-document graph evidence only. It does not establish hydraulic continuity, a physical
+ * recycle, process intent, or live {@code ProcessSystem} topology.
  * </p>
  *
  * @author NeqSim
@@ -39,9 +38,8 @@ public final class DexpiConnectionCycleInfo implements Serializable {
    * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
    * @param selfReference whether the group contains an explicit self-reference connection
    */
-  public DexpiConnectionCycleInfo(String id, String connectionComponentId,
-      List<String> endpointIds, List<String> connectionIds, List<String> unresolvedEndpointIds,
-      boolean selfReference) {
+  public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
+      List<String> connectionIds, List<String> unresolvedEndpointIds, boolean selfReference) {
     this.id = normalize(id);
     this.connectionComponentId = normalize(connectionComponentId);
     this.endpointIds = immutableCopy(endpointIds);
