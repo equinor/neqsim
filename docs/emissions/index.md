@@ -6,7 +6,6 @@ nav_order: 8
 has_children: true
 ---
 
-# 🌱 Emissions & Sustainability
 
 NeqSim provides physics-based emission calculations for offshore oil & gas operations, enabling accurate regulatory reporting and decarbonization planning.
 

@@ -1,6 +1,6 @@
 ---
 title: statistics
-description: statistics documentation for NeqSim
+description: Statistical analysis, parameter fitting, and uncertainty documentation for NeqSim.
 ---
 
 {%- include_relative README.md -%}

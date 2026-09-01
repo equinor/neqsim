@@ -3,7 +3,6 @@ title: Integration Guides
 description: Documentation for integrating NeqSim with external systems and platforms.
 ---
 
-# Integration Guides
 
 Documentation for integrating NeqSim with external systems and platforms.
 
