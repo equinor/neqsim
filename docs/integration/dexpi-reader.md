@@ -166,11 +166,22 @@ whether either directed side has multiple occurrences. These values help reviewe
 that needs engineering interpretation. They do not prove hydraulic continuity, identify a physical
 branch or fitting, create live process connectivity, or establish process intent.
 
-`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`, and the
-ordered connection and endpoint inventories, including `incidenceRole` and
-`potentialMultiConnectionNode`, alongside the process-unit count and findings. Python
-callers through JPype use the same `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
-and `ImportResult.getConnectionEndpoints()` getters; there is no separate Python reconstruction
+`ImportResult.getConnectionComponents()` groups non-empty endpoint identities by weak connectivity
+through explicit material-connection references. Components are ordered by their first endpoint;
+their endpoint IDs retain first-reference order and their connection-evidence IDs retain source
+order, including parallel occurrences. Each immutable `DexpiConnectionComponentInfo` also lists
+source, sink, potential multi-connection, and unresolved endpoints from the endpoint evidence.
+A connection with one non-empty endpoint remains visible as a singleton component. A connection
+with two blank endpoint references remains diagnostic evidence and is not assigned invented nodes.
+This grouping is a document-review aid, not proof that the grouped references form a hydraulically
+continuous line or executable process network.
+
+`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
+`connectionComponentCount`, and the ordered connection, endpoint, and component inventories,
+including incidence roles and component review subsets, alongside the process-unit count and
+findings. Python callers through JPype use the same `ImportResult.getInstruments()`,
+`ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`, and
+`ImportResult.getConnectionComponents()` getters; there is no separate Python reconstruction
 model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
