@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.21");
+    inventory.addProperty("inventoryVersion", "1.22");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -202,7 +202,7 @@ public final class McpEvidenceInventory {
         record.addProperty("validationCaseCount", 0);
         record.addProperty("verifiedValidationCaseCount", 0);
         record.addProperty("gapReason",
-            "No tool-specific trust or bounded contract evidence; generic TESTED is compatibility metadata, not validation or an accuracy/applicability claim");
+            "No specific trust/contract evidence; generic TESTED means compatibility, not validation, accuracy, or applicability.");
         confirmedGapRecordCount++;
       }
       coverageRecords.add(toolName, record);
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "manageState is CONTRACT_TESTED from merged canonical-definition persistence, lifecycle, path-safety, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.21");
+        "getAdjustableParameters is CONTRACT_TESTED from merged metadata discovery, definition/handle equivalence, fail-closed inputs, and packaged transport; inventory 1.22 queues no further candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; nineteen bounded discovery, catalog, lookup, progress, trust, governance, validation-profile, runtime API-inspection, model-registry, session-lifecycle, persisted-state, and automation advisory contracts are contract-tested without extending numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "All 71 tools have coverage records: twenty bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -371,6 +371,14 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_state_persistence_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/STATE_PERSISTENCE_CONTRACT.md" };
       evidenceBoundary = "Local canonical-definition persistence lifecycle and sandbox/path fail-closed contract; numerical replay, accuracy, conservation, distributed durability/security, facility fidelity, plant authority, and engineering approval remain unqualified";
+      break;
+    case "getAdjustableParameters":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/test/java/neqsim/mcp/runners/AutomationLoopRunnerTest.java",
+          "neqsim-mcp-server/test_adjustable_parameters_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/ADJUSTABLE_PARAMETERS_CONTRACT.md" };
+      evidenceBoundary = "Canonical adjustable-parameter metadata, units and optional bounds, direct-definition/model-handle equivalence, deterministic discovery, fail-closed inputs, and packaged transport are contract-tested; feasibility, model fidelity, convergence, mass or energy conservation, optimization quality, plant authority, certification, and engineering approval remain unqualified";
       break;
     case "listSimulationUnits":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY";

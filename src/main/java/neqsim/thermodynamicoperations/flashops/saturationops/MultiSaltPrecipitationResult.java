@@ -13,14 +13,17 @@ public final class MultiSaltPrecipitationResult implements Serializable {
   private final int equilibriumUpdates;
   private final double maximumComplementarityViolation;
   private final double maximumComponentBalanceResidualMoles;
+  private final double maximumNormalizedBalanceResidual;
 
   MultiSaltPrecipitationResult(Map<String, SaltPrecipitationResult> mineralResults, int equilibriumUpdates,
-      double maximumComplementarityViolation, double maximumComponentBalanceResidualMoles) {
+      double maximumComplementarityViolation, double maximumComponentBalanceResidualMoles,
+      double maximumNormalizedBalanceResidual) {
     this.mineralResults = Collections
         .unmodifiableMap(new LinkedHashMap<String, SaltPrecipitationResult>(mineralResults));
     this.equilibriumUpdates = equilibriumUpdates;
     this.maximumComplementarityViolation = maximumComplementarityViolation;
     this.maximumComponentBalanceResidualMoles = maximumComponentBalanceResidualMoles;
+    this.maximumNormalizedBalanceResidual = maximumNormalizedBalanceResidual;
   }
 
   /**
@@ -57,17 +60,31 @@ public final class MultiSaltPrecipitationResult implements Serializable {
     return maximumComplementarityViolation;
   }
 
-  /** @return maximum absolute component ledger residual in mol */
+  /** @return maximum absolute component or elemental ledger residual in mol */
   public double getMaximumComponentBalanceResidualMoles() {
     return maximumComponentBalanceResidualMoles;
   }
 
   /**
-   * Returns the total dissolved-ion formula mass represented by the solid ledger.
+   * Returns the maximum balance residual divided by its quantity-specific acceptance tolerance.
    *
    * <p>
-   * COMPSALT rows do not explicitly encode crystallization water. Hydrated-solid mass therefore requires a separately
-   * qualified solid standard-state model and is outside this diagnostic.
+   * Values at or below one pass. Non-reactive component and element ledgers use an absolute {@code 1e-10 mol}
+   * tolerance. Reactive element ledgers additionally allow {@code 1e-8} of the corresponding elemental inventory to
+   * accommodate the chemical-equilibrium solver's numerical closure without weakening trace-element checks.
+   * </p>
+   *
+   * @return maximum dimensionless normalized component or element balance residual
+   */
+  public double getMaximumNormalizedBalanceResidual() {
+    return maximumNormalizedBalanceResidual;
+  }
+
+  /**
+   * Returns the total pure-solid formula mass represented by the solid ledger.
+   *
+   * <p>
+   * The formula mass includes crystallization water when the COMPSALT row explicitly encodes it.
    * </p>
    *
    * @return total COMPSALT ion-formula mass in g

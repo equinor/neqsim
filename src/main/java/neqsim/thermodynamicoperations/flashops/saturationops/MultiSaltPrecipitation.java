@@ -7,6 +7,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -20,7 +22,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public final class MultiSaltPrecipitation {
   private static final double COMPLEMENTARITY_TOLERANCE = 1.0e-6;
-  private static final double BALANCE_TOLERANCE_MOLES = 1.0e-10;
+  private static final double ABSOLUTE_BALANCE_TOLERANCE_MOLES = 1.0e-10;
+  private static final double REACTIVE_ELEMENT_RELATIVE_BALANCE_TOLERANCE = 1.0e-8;
   private static final double SOLID_ZERO_TOLERANCE_MOLES = 1.0e-14;
   private static final int MAXIMUM_UPDATES = 100;
 
@@ -96,7 +99,7 @@ public final class MultiSaltPrecipitation {
    * Solves precipitation/dissolution complementarity for all requested minerals.
    *
    * @return immutable final solid ledger and convergence diagnostics
-   * @throws IllegalStateException if complementarity or the component ledger does not converge
+   * @throws IllegalStateException if complementarity or the component/element ledger does not converge
    */
   public MultiSaltPrecipitationResult solve() {
     Map<String, Double> initialSaturationRatios = new LinkedHashMap<String, Double>();
@@ -110,6 +113,9 @@ public final class MultiSaltPrecipitation {
       rememberInitialComponent(initialComponentMoles, mineralOperation.getIon2Name());
     }
     addStartingSolidsToInitialLedger(initialComponentMoles);
+    Set<String> conservedElementNames = collectConservedElementNames();
+    Map<String, Double> initialElementMoles = calculateSystemElementMoles(conservedElementNames);
+    addStartingSolidsToInitialElementLedger(initialElementMoles);
 
     int updates = 0;
     while (updates < MAXIMUM_UPDATES) {
@@ -142,10 +148,12 @@ public final class MultiSaltPrecipitation {
           + " updates; maximum violation=" + finalViolation.value + " for " + finalViolation.mineralName);
     }
 
-    double balanceResidual = calculateMaximumBalanceResidual(initialComponentMoles, solidMoles);
-    if (balanceResidual > BALANCE_TOLERANCE_MOLES) {
+    BalanceDiagnostics balance = calculateBalanceDiagnostics(initialComponentMoles, initialElementMoles,
+        conservedElementNames, solidMoles);
+    if (balance.maximumNormalizedResidual > 1.0) {
       throw new IllegalStateException(
-          "Pure-mineral component ledger did not close; residual=" + balanceResidual + " mol");
+          "Pure-mineral component/element ledger did not close for " + balance.limitingQuantity + "; residual="
+              + balance.limitingResidualMoles + " mol, tolerance=" + balance.limitingToleranceMoles + " mol");
     }
 
     Map<String, SaltPrecipitationResult> mineralResults = new LinkedHashMap<String, SaltPrecipitationResult>();
@@ -158,9 +166,10 @@ public final class MultiSaltPrecipitation {
       }
       mineralResults.put(name,
           new SaltPrecipitationResult(name, amount, amount * mineralOperation.getSolidMolarMassGrams(),
-              initialSaturationRatios.get(name), finalSaturationRatio, balanceResidual));
+              initialSaturationRatios.get(name), finalSaturationRatio, balance.maximumAbsoluteResidualMoles));
     }
-    return new MultiSaltPrecipitationResult(mineralResults, updates, finalViolation.value, balanceResidual);
+    return new MultiSaltPrecipitationResult(mineralResults, updates, finalViolation.value,
+        balance.maximumAbsoluteResidualMoles, balance.maximumNormalizedResidual);
   }
 
   /** Records the initial dissolved amount for one component exactly once. */
@@ -200,9 +209,9 @@ public final class MultiSaltPrecipitation {
     return largest;
   }
 
-  /** Calculates the maximum component ledger residual across all mineral ions. */
-  private double calculateMaximumBalanceResidual(Map<String, Double> initialComponentMoles,
-      Map<String, Double> solidMoles) {
+  /** Calculates absolute and scale-aware component/element ledger diagnostics. */
+  private BalanceDiagnostics calculateBalanceDiagnostics(Map<String, Double> initialComponentMoles,
+      Map<String, Double> initialElementMoles, Set<String> conservedElementNames, Map<String, Double> solidMoles) {
     Map<String, Double> solidComponentMoles = new LinkedHashMap<String, Double>();
     for (String name : mineralNames) {
       CalcSaltSatauration mineralOperation = operations.get(name);
@@ -212,20 +221,141 @@ public final class MultiSaltPrecipitation {
           mineralOperation.getIon2Stoichiometry() * solidMoles.get(name));
     }
 
-    double maximumResidual = 0.0;
-    for (Map.Entry<String, Double> initial : initialComponentMoles.entrySet()) {
-      double dissolved = system.getComponent(initial.getKey()).getNumberOfmoles();
-      Double solid = solidComponentMoles.get(initial.getKey());
-      double residual = initial.getValue() - dissolved - (solid == null ? 0.0 : solid.doubleValue());
-      maximumResidual = Math.max(maximumResidual, Math.abs(residual));
+    BalanceDiagnostics diagnostics = new BalanceDiagnostics();
+    if (!system.isChemicalSystem()) {
+      for (Map.Entry<String, Double> initial : initialComponentMoles.entrySet()) {
+        double dissolved = system.getComponent(initial.getKey()).getNumberOfmoles();
+        Double solid = solidComponentMoles.get(initial.getKey());
+        double residual = initial.getValue() - dissolved - (solid == null ? 0.0 : solid.doubleValue());
+        diagnostics.record("component " + initial.getKey(), residual, ABSOLUTE_BALANCE_TOLERANCE_MOLES);
+      }
     }
-    return maximumResidual;
+
+    Map<String, Double> finalElementMoles = calculateSystemElementMoles(conservedElementNames);
+    addSolidElementsToLedger(finalElementMoles, solidMoles);
+    for (Map.Entry<String, Double> initial : initialElementMoles.entrySet()) {
+      double finalMoles = finalElementMoles.get(initial.getKey());
+      double residual = initial.getValue() - finalMoles;
+      double tolerance = ABSOLUTE_BALANCE_TOLERANCE_MOLES;
+      if (system.isChemicalSystem()) {
+        double inventoryScale = Math.max(Math.abs(initial.getValue()), Math.abs(finalMoles));
+        tolerance = Math.max(tolerance, REACTIVE_ELEMENT_RELATIVE_BALANCE_TOLERANCE * inventoryScale);
+      }
+      diagnostics.record("element " + initial.getKey(), residual, tolerance);
+    }
+    return diagnostics;
+  }
+
+  /** Collects every conserved element appearing in the requested mineral formulas. */
+  private Set<String> collectConservedElementNames() {
+    Set<String> elementNames = new LinkedHashSet<String>();
+    for (String name : mineralNames) {
+      CalcSaltSatauration mineralOperation = operations.get(name);
+      addComponentElementNames(elementNames, mineralOperation.getIon1Name());
+      addComponentElementNames(elementNames, mineralOperation.getIon2Name());
+      if (mineralOperation.getWaterStoichiometry() > 0.0) {
+        addComponentElementNames(elementNames, "water");
+      }
+    }
+    return elementNames;
+  }
+
+  /** Adds one component's elemental symbols to the conserved set, failing closed when absent. */
+  private void addComponentElementNames(Set<String> elementNames, String componentName) {
+    ComponentInterface component = system.getComponent(componentName);
+    if (component.getElements() == null || component.getElements().getElementNames() == null
+        || component.getElements().getElementNames().length == 0) {
+      throw new IllegalStateException("No elemental composition is available for " + componentName);
+    }
+    Collections.addAll(elementNames, component.getElements().getElementNames());
+  }
+
+  /** Calculates dissolved-system moles for the requested conserved elements. */
+  private Map<String, Double> calculateSystemElementMoles(Set<String> conservedElementNames) {
+    Map<String, Double> elementMoles = new LinkedHashMap<String, Double>();
+    for (String elementName : conservedElementNames) {
+      elementMoles.put(elementName, 0.0);
+    }
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        ComponentInterface component = phase.getComponent(componentIndex);
+        addComponentElements(elementMoles, component, component.getNumberOfMolesInPhase());
+      }
+    }
+    return elementMoles;
+  }
+
+  /** Adds the supplied starting solids to the conserved overall elemental inventory. */
+  private void addStartingSolidsToInitialElementLedger(Map<String, Double> initialElementMoles) {
+    addSolidElementsToLedger(initialElementMoles, startingSolidMoles);
+  }
+
+  /** Adds all requested pure solids to an elemental material ledger. */
+  private void addSolidElementsToLedger(Map<String, Double> elementMoles, Map<String, Double> solidMoles) {
+    for (String name : mineralNames) {
+      CalcSaltSatauration mineralOperation = operations.get(name);
+      double amount = solidMoles.get(name);
+      addComponentElements(elementMoles, system.getComponent(mineralOperation.getIon1Name()),
+          mineralOperation.getIon1Stoichiometry() * amount);
+      addComponentElements(elementMoles, system.getComponent(mineralOperation.getIon2Name()),
+          mineralOperation.getIon2Stoichiometry() * amount);
+      if (mineralOperation.getWaterStoichiometry() > 0.0) {
+        addComponentElements(elementMoles, system.getComponent("water"),
+            mineralOperation.getWaterStoichiometry() * amount);
+      }
+    }
+  }
+
+  /** Adds one component amount to the selected elemental ledger. */
+  private static void addComponentElements(Map<String, Double> elementMoles, ComponentInterface component,
+      double componentMoles) {
+    if (component.getElements() == null) {
+      return;
+    }
+    String[] elementNames = component.getElements().getElementNames();
+    double[] elementCoefficients = component.getElements().getElementCoefs();
+    if (elementNames == null || elementCoefficients == null) {
+      return;
+    }
+    if (elementNames.length != elementCoefficients.length) {
+      throw new IllegalStateException("Inconsistent elemental composition for " + component.getComponentName());
+    }
+    for (int elementIndex = 0; elementIndex < elementNames.length; elementIndex++) {
+      Double previous = elementMoles.get(elementNames[elementIndex]);
+      if (previous != null) {
+        elementMoles.put(elementNames[elementIndex],
+            previous.doubleValue() + elementCoefficients[elementIndex] * componentMoles);
+      }
+    }
   }
 
   /** Adds a component amount to the solid material ledger. */
   private static void addToComponentLedger(Map<String, Double> ledger, String componentName, double amount) {
     Double previous = ledger.get(componentName);
     ledger.put(componentName, (previous == null ? 0.0 : previous.doubleValue()) + amount);
+  }
+
+  /** Internal absolute and normalized balance diagnostics. */
+  private static final class BalanceDiagnostics {
+    private double maximumAbsoluteResidualMoles;
+    private double maximumNormalizedResidual;
+    private String limitingQuantity = "none";
+    private double limitingResidualMoles;
+    private double limitingToleranceMoles = ABSOLUTE_BALANCE_TOLERANCE_MOLES;
+
+    /** Records one residual against its quantity-specific tolerance. */
+    private void record(String quantity, double residualMoles, double toleranceMoles) {
+      double absoluteResidual = Math.abs(residualMoles);
+      maximumAbsoluteResidualMoles = Math.max(maximumAbsoluteResidualMoles, absoluteResidual);
+      double normalizedResidual = absoluteResidual / toleranceMoles;
+      if (normalizedResidual > maximumNormalizedResidual) {
+        maximumNormalizedResidual = normalizedResidual;
+        limitingQuantity = quantity;
+        limitingResidualMoles = residualMoles;
+        limitingToleranceMoles = toleranceMoles;
+      }
+    }
   }
 
   /** One mineral's current complementarity violation. */

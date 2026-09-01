@@ -345,6 +345,8 @@
 					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
 					<argLine>${argLine} -Xmx3g ${jvm.module.opens.argLine}</argLine>
+					<!-- Keep class execution order identical across filesystems and operating systems. -->
+					<runOrder>alphabetical</runOrder>
 					<excludedGroups>${excludedTestGroups}</excludedGroups>
 				</configuration>
 			</plugin>
