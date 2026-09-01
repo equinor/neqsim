@@ -36,7 +36,9 @@ fail before mutating the thermodynamic system unless the caller also supplies ei
 
 The focused generation control uses 650 g/mol only as an explicit engineering input to prove this
 API path and exact mass closure. DOE does not report that value, and this qualification does not
-validate it.
+validate it. A separate [terminal-Watson qualification](refinery_big_hill_watson_terminal_validation)
+uses DOE's reported SG and UOP K values to derive a representative boiling temperature without
+turning the open boundary into a finite interval.
 
 ## Acceptance and maturity
 
