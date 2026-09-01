@@ -393,17 +393,15 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
           validationSystem.addComponent(standardComponentName, 1.0);
           validationComponent = validationSystem.getComponent(standardComponentName);
         } catch (Exception ex) {
-          throw new IllegalStateException(
-              "Unknown or unavailable assay standard component: " + standardComponentName, ex);
+          throw new IllegalStateException("Unknown or unavailable assay standard component: " + standardComponentName,
+              ex);
         }
         if (validationComponent == null) {
-          throw new IllegalStateException(
-              "Unknown or unavailable assay standard component: " + standardComponentName);
+          throw new IllegalStateException("Unknown or unavailable assay standard component: " + standardComponentName);
         }
         double molarMass = validationComponent.getMolarMass();
         if (!Double.isFinite(molarMass) || !(molarMass > 0.0)) {
-          throw new IllegalStateException(
-              "Invalid molar mass for assay standard component: " + standardComponentName);
+          throw new IllegalStateException("Invalid molar mass for assay standard component: " + standardComponentName);
         }
         double moles = totalAssayMass * massFraction / molarMass;
         if (!Double.isFinite(moles) || !(moles > 0.0)) {
@@ -510,8 +508,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     for (AssayCut cut : cuts) {
       if (cut.isStandardComponent()
           && !componentNames.add(cut.getStandardComponentName().toLowerCase(java.util.Locale.ROOT))) {
-        throw new IllegalStateException(
-            "Duplicate assay standard component: " + cut.getStandardComponentName());
+        throw new IllegalStateException("Duplicate assay standard component: " + cut.getStandardComponentName());
       }
     }
   }
