@@ -26,11 +26,10 @@ public final class AqueousCO2HydrationTrajectory implements Serializable {
    * Advance a closed aqueous CO2/H2CO3 pair through piecewise-isothermal segments.
    *
    * <p>
-   * The cumulative relaxation exposure is
-   * {@code sum((kH(T_i) + kD(T_i)) * duration_i)}. It is useful as a dimensionless diagnostic, but a changing
-   * temperature also changes the pair equilibrium target. Consequently the exposure must not be interpreted as one
-   * global remaining-deviation fraction. Final concentrations are obtained from the ordered sequence of exact
-   * analytical updates.
+   * The cumulative relaxation exposure is {@code sum((kH(T_i) + kD(T_i)) * duration_i)}. It is useful as a
+   * dimensionless diagnostic, but a changing temperature also changes the pair equilibrium target. Consequently the
+   * exposure must not be interpreted as one global remaining-deviation fraction. Final concentrations are obtained from
+   * the ordered sequence of exact analytical updates.
    * </p>
    *
    * @param co2Concentration initial aqueous CO2 concentration [mol/m3]
