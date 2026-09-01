@@ -50,7 +50,6 @@ class ControlsBenchmarkSuiteTest {
     assertTrue(coordination.isPassed(), coordination.getAcceptanceDetail());
   }
 
-
   @Test
   void publishedReferenceValuesRemainCurrent() {
     Report report = ControlsBenchmarkSuite.runCanonicalSuite();
@@ -59,8 +58,7 @@ class ControlsBenchmarkSuiteTest {
     assertPublished(report, "control_cascade_temperature", 1.215, 114.233, 50.000, 51.684, 50.000, 82.000);
     assertPublished(report, "control_split_range", 0.952, 147.880, 49.000, 50.000, 50.000, 70.000);
     assertPublished(report, "control_anti_surge", 0.00488, 2.333, 0.0423, 0.300, 0.000, 37.481);
-    assertPublished(report, "control_speed_recycle_coordination", 0.503, 476.566, 79.068, 84.523, 55.364,
-        88.091);
+    assertPublished(report, "control_speed_recycle_coordination", 0.503, 476.566, 79.068, 84.523, 55.364, 88.091);
   }
 
   private static void assertPublished(Report report, String id, double finalError, double iae, double minimumPv,
