@@ -138,8 +138,8 @@ public final class DexpiXmlReader {
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
         List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
-        List<DexpiConnectionComponentInfo> connectionComponents,
-        List<DexpiConnectionCycleInfo> connectionCycles, List<ImportDiagnostic> diagnostics) {
+        List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
+        List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
@@ -147,8 +147,7 @@ public final class DexpiXmlReader {
           .unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(connectionEndpoints));
       this.connectionComponents = Collections
           .unmodifiableList(new ArrayList<DexpiConnectionComponentInfo>(connectionComponents));
-      this.connectionCycles = Collections
-          .unmodifiableList(new ArrayList<DexpiConnectionCycleInfo>(connectionCycles));
+      this.connectionCycles = Collections.unmodifiableList(new ArrayList<DexpiConnectionCycleInfo>(connectionCycles));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
@@ -473,10 +472,10 @@ public final class DexpiXmlReader {
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
     loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, connections);
     List<DexpiConnectionEndpointInfo> connectionEndpoints = summarizeConnectionEndpoints(connections);
-    List<DexpiConnectionComponentInfo> connectionComponents =
-        summarizeConnectionComponents(connections, connectionEndpoints);
-    List<DexpiConnectionCycleInfo> connectionCycles =
-        summarizeConnectionCycles(connections, connectionEndpoints, connectionComponents);
+    List<DexpiConnectionComponentInfo> connectionComponents = summarizeConnectionComponents(connections,
+        connectionEndpoints);
+    List<DexpiConnectionCycleInfo> connectionCycles = summarizeConnectionCycles(connections, connectionEndpoints,
+        connectionComponents);
     return new ImportResult(processSystem, instruments, connections, connectionEndpoints, connectionComponents,
         connectionCycles, diagnostics);
   }
@@ -907,9 +906,8 @@ public final class DexpiXmlReader {
     return result;
   }
 
-  private static List<DexpiConnectionCycleInfo> summarizeConnectionCycles(
-      List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
-      List<DexpiConnectionComponentInfo> connectionComponents) {
+  private static List<DexpiConnectionCycleInfo> summarizeConnectionCycles(List<DexpiConnectionInfo> connections,
+      List<DexpiConnectionEndpointInfo> connectionEndpoints, List<DexpiConnectionComponentInfo> connectionComponents) {
     Map<String, List<String>> outgoingEndpointIds = new LinkedHashMap<String, List<String>>();
     Map<String, List<String>> incomingEndpointIds = new LinkedHashMap<String, List<String>>();
     for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
@@ -1069,8 +1067,8 @@ public final class DexpiXmlReader {
     }
 
     private DexpiConnectionCycleInfo toInfo() {
-      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, connectionIds,
-          unresolvedEndpointIds, selfReference);
+      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, connectionIds, unresolvedEndpointIds,
+          selfReference);
     }
   }
 
