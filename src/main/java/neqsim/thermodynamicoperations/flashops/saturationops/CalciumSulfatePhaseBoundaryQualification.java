@@ -25,8 +25,8 @@ import neqsim.thermo.system.SystemInterface;
 public final class CalciumSulfatePhaseBoundaryQualification implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  /** Atmospheric reference pressure used by the registered evidence. */
-  public static final double REFERENCE_PRESSURE_BARA = 1.01325;
+  /** One-bar reference pressure used by the registered evidence. */
+  public static final double REFERENCE_PRESSURE_BARA = 1.0;
   /** CC BY evidence source DOI. */
   public static final String EVIDENCE_DOI = "10.3389/fnuen.2023.1208582";
   /** Primary experimental lineage DOI. */
@@ -40,7 +40,7 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   private static final double NACL_25_WATER_ACTIVITY_MAXIMUM = 0.8634;
   private static final double NACL_40_WATER_ACTIVITY_MINIMUM = 0.9370;
   private static final double NACL_40_WATER_ACTIVITY_MAXIMUM = 0.9587;
-  private static final double REFERENCE_PRESSURE_TOLERANCE_BARA = 1.0e-6;
+  private static final double REFERENCE_PRESSURE_TOLERANCE_BARA = 0.02;
 
   private final double evaluatedPressureBara;
   private final double predictedPureWaterTransitionCelsius;
@@ -145,7 +145,7 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
     return sodiumChloride40CEnvelopePass;
   }
 
-  /** @return whether the requested use pressure matches the atmospheric evidence pressure */
+  /** @return whether the requested pressure is within 0.02 bara of the one-bar evidence pressure */
   public boolean isReferencePressureEnvelopePass() {
     return referencePressureEnvelopePass;
   }

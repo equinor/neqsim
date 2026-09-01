@@ -171,6 +171,8 @@ class ChemistryRunnerTest {
     assertEquals("ThermodynamicOperations.qualifyCalciumSulfatePhaseBoundary",
         boundary.get("authoritativeJavaOperation").getAsString());
     assertEquals("CC BY 4.0", boundary.get("evidenceLicense").getAsString());
+    assertEquals(1.0, boundary.get("referencePressure_bara").getAsDouble(), 0.0);
+    assertTrue(boundary.get("referencePressureEnvelopePass").getAsBoolean());
     assertEquals(60.445190, boundary.getAsJsonObject("pureWater").get("predictedTransition_C").getAsDouble(), 1.0e-6);
     assertEquals(0.7736299, boundary.getAsJsonObject("sodiumChloride25C").get("requiredWaterActivity").getAsDouble(),
         1.0e-7);

@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -35,6 +36,8 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     assertEquals("10.3389/fnuen.2023.1208582", qualification.getEvidenceDoi());
     assertEquals("10.1139/v61-228", qualification.getPrimaryLineageDoi());
     assertEquals("CC BY 4.0", qualification.getEvidenceLicense());
+    assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.REFERENCE_PRESSURE_BARA, 0.0);
+    assertTrue(qualification.isReferencePressureEnvelopePass());
     assertEquals(originalTemperature, system.getTemperature(), 0.0);
     assertEquals(originalPressure, system.getPressure(), 0.0);
   }
@@ -58,6 +61,15 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
       restored = (CalciumSulfatePhaseBoundaryQualification) input.readObject();
     }
     assertEquals(first.formatDiagnostic(), restored.formatDiagnostic());
+    assertTrue(first.isReferencePressureEnvelopePass());
+
+    CalciumSulfatePhaseBoundaryQualification oneBar = new ThermodynamicOperations(new SystemSrkEos(313.15, 1.0))
+        .qualifyCalciumSulfatePhaseBoundary();
+    assertTrue(oneBar.isReferencePressureEnvelopePass());
+
+    CalciumSulfatePhaseBoundaryQualification outsideAtmosphericEnvelope =
+        new ThermodynamicOperations(new SystemSrkEos(313.15, 1.03)).qualifyCalciumSulfatePhaseBoundary();
+    assertFalse(outsideAtmosphericEnvelope.isReferencePressureEnvelopePass());
 
     CalciumSulfatePhaseBoundaryQualification highPressure = new ThermodynamicOperations(new SystemSrkEos(313.15, 500.0))
         .qualifyCalciumSulfatePhaseBoundary();
