@@ -186,9 +186,18 @@ non-negative normalized aqueous phase.
 
 The result is **design-support** and reports `publicationReady: false` until an
 independent competitive mixed-brine/mineral validation envelope is registered.
-COMPSALT masses represent ion formula units; crystallization water, solid
-solutions, precipitation kinetics, deposition and inhibitor physics are not
-included.
+When both `CaSO4_A` and `CaSO4_G` are requested, the response also contains
+`calciumSulfatePhaseBoundaryQualification`. This nested view reuses
+`ThermodynamicOperations.qualifyCalciumSulfatePhaseBoundary()` and reports the
+CC BY 4.0 Voigt–Freyer pure-water and NaCl/water-activity envelopes, exact
+COMPSALT predictions, source and primary-lineage DOIs, pressure scope,
+limitations, and a deterministic fail-closed publication decision. It does not
+fit or replace any mineral or aqueous-model parameter.
+
+COMPSALT masses represent ion formula units. Encoded crystallization water is
+included: gypsum `CaSO4_G` carries two waters per formula unit in saturation,
+material balance, dissolution, and hydrated mass. Solid solutions,
+precipitation kinetics, deposition and inhibitor physics are not included.
 
 ### `electrolyteScale`
 

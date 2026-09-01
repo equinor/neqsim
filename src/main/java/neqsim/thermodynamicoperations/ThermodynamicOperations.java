@@ -45,6 +45,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.CalciumSulfatePhaseBoundaryQualification;
 import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
 import neqsim.thermodynamicoperations.flashops.saturationops.CapillaryDewPointFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
@@ -1368,6 +1369,21 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public MultiSaltPrecipitationResult equilibrateScales(MultiSaltPrecipitationResult previousResult) {
     return new MultiSaltPrecipitation(system, previousResult).solve();
+  }
+
+  /**
+   * Qualifies the authoritative COMPSALT gypsum/anhydrite phase boundary against independent evidence.
+   *
+   * <p>
+   * This operation evaluates the existing mineral correlations without fitting or changing them. The result separates
+   * mineral-standard-state evidence from Pitzer or electrolyte-EOS aqueous parameter qualification and fails closed
+   * outside the registered atmospheric-pressure envelope.
+   * </p>
+   *
+   * @return immutable source-traceable calcium-sulfate phase-boundary qualification
+   */
+  public CalciumSulfatePhaseBoundaryQualification qualifyCalciumSulfatePhaseBoundary() {
+    return new CalciumSulfatePhaseBoundaryQualification(system);
   }
 
   /**

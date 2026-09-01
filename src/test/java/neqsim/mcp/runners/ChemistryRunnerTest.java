@@ -150,6 +150,7 @@ class ChemistryRunnerTest {
     JsonObject result = JsonParser.parseString(ChemistryRunner.run(input)).getAsJsonObject();
     JsonObject data = result.getAsJsonObject("data");
     JsonObject minerals = data.getAsJsonObject("mineralResults");
+    JsonObject boundary = data.getAsJsonObject("calciumSulfatePhaseBoundaryQualification");
 
     assertEquals("success", result.get("status").getAsString());
     assertEquals("ThermodynamicOperations.precipitateScales", data.get("authoritativeJavaOperation").getAsString());
@@ -167,6 +168,16 @@ class ChemistryRunnerTest {
         1.0e-10);
     assertTrue(data.get("engineeringGatesPass").getAsBoolean());
     assertFalse(data.get("publicationReady").getAsBoolean());
+    assertEquals("ThermodynamicOperations.qualifyCalciumSulfatePhaseBoundary",
+        boundary.get("authoritativeJavaOperation").getAsString());
+    assertEquals("CC BY 4.0", boundary.get("evidenceLicense").getAsString());
+    assertEquals(60.445190, boundary.getAsJsonObject("pureWater").get("predictedTransition_C").getAsDouble(), 1.0e-6);
+    assertEquals(0.7736299, boundary.getAsJsonObject("sodiumChloride25C").get("requiredWaterActivity").getAsDouble(),
+        1.0e-7);
+    assertEquals(0.8437837, boundary.getAsJsonObject("sodiumChloride40C").get("requiredWaterActivity").getAsDouble(),
+        1.0e-7);
+    assertEquals("REJECTED", boundary.get("decision").getAsString());
+    assertFalse(boundary.get("publicationReady").getAsBoolean());
   }
 
   @Test
