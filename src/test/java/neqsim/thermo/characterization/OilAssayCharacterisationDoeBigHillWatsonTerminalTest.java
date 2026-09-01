@@ -49,8 +49,7 @@ public class OilAssayCharacterisationDoeBigHillWatsonTerminalTest {
 
   @Test
   public void invalidMissingAndAmbiguousInputsFailClosed() {
-    assertThrows(IllegalArgumentException.class,
-        () -> new AssayCut("Zero").withWatsonCharacterizationFactor(0.0));
+    assertThrows(IllegalArgumentException.class, () -> new AssayCut("Zero").withWatsonCharacterizationFactor(0.0));
     assertThrows(IllegalArgumentException.class,
         () -> new AssayCut("NaN").withWatsonCharacterizationFactor(Double.NaN));
 
@@ -58,20 +57,16 @@ public class OilAssayCharacterisationDoeBigHillWatsonTerminalTest {
     assertThrows(IllegalArgumentException.class,
         () -> averageFirst.withWatsonCharacterizationFactor(DOE_RESIDUE_WATSON_FACTOR));
 
-    AssayCut factorFirst = new AssayCut("FactorFirst")
-        .withWatsonCharacterizationFactor(DOE_RESIDUE_WATSON_FACTOR);
-    assertThrows(IllegalArgumentException.class,
-        () -> factorFirst.withAverageBoilingPointKelvin(900.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> factorFirst.withBoilingRangeKelvin(850.0, 950.0));
+    AssayCut factorFirst = new AssayCut("FactorFirst").withWatsonCharacterizationFactor(DOE_RESIDUE_WATSON_FACTOR);
+    assertThrows(IllegalArgumentException.class, () -> factorFirst.withAverageBoilingPointKelvin(900.0));
+    assertThrows(IllegalArgumentException.class, () -> factorFirst.withBoilingRangeKelvin(850.0, 950.0));
     assertThrows(IllegalStateException.class, factorFirst::resolveAverageBoilingPoint);
 
     SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation inconsistent = system.getOilAssayCharacterisation();
-    inconsistent.addCut(new AssayCut("Inconsistent").withMassFraction(1.0)
-        .withSpecificGravity(DOE_RESIDUE_SPECIFIC_GRAVITY)
-        .withLowerBoilingPointFahrenheit(1200.0)
-        .withWatsonCharacterizationFactor(DOE_RESIDUE_WATSON_FACTOR));
+    inconsistent
+        .addCut(new AssayCut("Inconsistent").withMassFraction(1.0).withSpecificGravity(DOE_RESIDUE_SPECIFIC_GRAVITY)
+            .withLowerBoilingPointFahrenheit(1200.0).withWatsonCharacterizationFactor(DOE_RESIDUE_WATSON_FACTOR));
     assertThrows(IllegalStateException.class, inconsistent::apply);
     assertEquals(0, system.getNumberOfComponents(), "Failed preparation must not mutate the system");
   }
@@ -81,8 +76,7 @@ public class OilAssayCharacterisationDoeBigHillWatsonTerminalTest {
     SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation assay = system.getOilAssayCharacterisation();
     assay.setTotalAssayMass(1.0);
-    assay.addCut(new AssayCut("DOE_BH_RESIDUE").withMassFraction(1.0)
-        .withSpecificGravity(DOE_RESIDUE_SPECIFIC_GRAVITY)
+    assay.addCut(new AssayCut("DOE_BH_RESIDUE").withMassFraction(1.0).withSpecificGravity(DOE_RESIDUE_SPECIFIC_GRAVITY)
         .withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F)
         .withWatsonCharacterizationFactor(DOE_RESIDUE_WATSON_FACTOR));
 
@@ -103,8 +97,7 @@ public class OilAssayCharacterisationDoeBigHillWatsonTerminalTest {
 
   private static AssayCut doeResidue(String name) {
     return new AssayCut(name).withWeightPercent(DOE_RESIDUE_MASS_PERCENT)
-        .withSpecificGravity(DOE_RESIDUE_SPECIFIC_GRAVITY)
-        .withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F)
+        .withSpecificGravity(DOE_RESIDUE_SPECIFIC_GRAVITY).withLowerBoilingPointFahrenheit(DOE_RESIDUE_LOWER_BOUNDARY_F)
         .withWatsonCharacterizationFactor(DOE_RESIDUE_WATSON_FACTOR);
   }
 

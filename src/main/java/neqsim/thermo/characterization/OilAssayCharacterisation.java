@@ -744,10 +744,9 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Set an explicit UOP/Watson characterization factor for deriving the representative boiling point.
      *
      * <p>
-     * When no representative boiling point is supplied, the cut resolves it from
-     * {@code T_b = (K_W SG)^3 / 1.8}, where {@code T_b} is in K and {@code SG} is the existing
-     * dimensionless specific-gravity view. An explicit representative boiling point and Watson factor are mutually
-     * exclusive so the authoritative source is unambiguous.
+     * When no representative boiling point is supplied, the cut resolves it from {@code T_b = (K_W SG)^3 / 1.8}, where
+     * {@code T_b} is in K and {@code SG} is the existing dimensionless specific-gravity view. An explicit
+     * representative boiling point and Watson factor are mutually exclusive so the authoritative source is unambiguous.
      * </p>
      *
      * @param watsonFactor dimensionless UOP/Watson characterization factor
@@ -1152,18 +1151,17 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
 
       double specificGravity = resolveDensity();
-      double inferredBoilingPointKelvin =
-          Math.pow(watsonCharacterizationFactor * specificGravity, 3.0) / 1.8;
+      double inferredBoilingPointKelvin = Math.pow(watsonCharacterizationFactor * specificGravity, 3.0) / 1.8;
       if (!Double.isFinite(inferredBoilingPointKelvin) || !(inferredBoilingPointKelvin > 0.0)) {
         throw new IllegalStateException("Unable to derive representative boiling point for cut " + name);
       }
       if (lowerBoilingPointKelvin != null && inferredBoilingPointKelvin < lowerBoilingPointKelvin) {
-        throw new IllegalStateException("Watson-derived representative boiling point is below lower boundary for cut "
-            + name);
+        throw new IllegalStateException(
+            "Watson-derived representative boiling point is below lower boundary for cut " + name);
       }
       if (upperBoilingPointKelvin != null && inferredBoilingPointKelvin > upperBoilingPointKelvin) {
-        throw new IllegalStateException("Watson-derived representative boiling point exceeds upper boundary for cut "
-            + name);
+        throw new IllegalStateException(
+            "Watson-derived representative boiling point exceeds upper boundary for cut " + name);
       }
       return inferredBoilingPointKelvin;
     }
