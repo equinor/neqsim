@@ -282,11 +282,15 @@ MultiSaltPrecipitationResult updatedScales =
 ```
 
 The continuation API conserves dissolved plus ledgered formula units and fails closed if the
-bounded active set cannot reach `1e-6` log10-SR complementarity or `1e-10 mol` component balance.
-The result reports the update count, maximum complementarity violation, component-ledger residual,
-per-mineral saturation ratios and non-negative amounts. It is serializable and its mineral map is
-defensively immutable for Java and Python process workflows. A thermodynamic system remains mutable
-and must not be shared between threads. Sequential clones are deterministic, and independently
+bounded active set cannot reach `1e-6` log10-SR complementarity. Non-reactive component and element
+ledgers use a `1e-10 mol` absolute balance tolerance. Reactive element ledgers use the same absolute
+floor plus a `1e-8` relative tolerance on each element inventory, matching the numerical closure of
+the chemical-equilibrium solver without weakening trace-element checks. The result reports both the
+maximum absolute residual and the maximum residual normalized by its quantity-specific tolerance;
+the normalized value must not exceed one. It also reports the update count, maximum complementarity
+violation, per-mineral saturation ratios and non-negative amounts. It is serializable and its mineral
+map is defensively immutable for Java and Python process workflows. A thermodynamic system remains
+mutable and must not be shared between threads. Sequential clones are deterministic, and independently
 constructed systems are covered by a parallel determinism regression. Concurrent use of clones from
 one Pitzer instance is not qualified because current shared Pitzer internals can race; construct each
 parallel system independently until that separate prerequisite is resolved.

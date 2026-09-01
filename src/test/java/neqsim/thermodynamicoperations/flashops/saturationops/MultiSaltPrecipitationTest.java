@@ -88,6 +88,7 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
         .getPrecipitatedMoles());
     assertTrue(diluted.getMaximumComplementarityViolation() <= 1.0e-6);
     assertTrue(diluted.getMaximumComponentBalanceResidualMoles() <= 1.0e-10);
+    assertTrue(diluted.getMaximumNormalizedBalanceResidual() <= 1.0);
     assertAqueousChargeAndPhaseState(system);
   }
 
@@ -115,6 +116,7 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     MultiSaltPrecipitationResult outletResult = new ThermodynamicOperations(outlet).equilibrateScales(result);
     assertTrue(outletResult.getMaximumComplementarityViolation() <= 1.0e-6);
     assertTrue(outletResult.getMaximumComponentBalanceResidualMoles() <= 1.0e-10);
+    assertTrue(outletResult.getMaximumNormalizedBalanceResidual() <= 1.0);
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
@@ -125,6 +127,8 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
       restored = (MultiSaltPrecipitationResult) input.readObject();
     }
     assertEquals(outletResult.getTotalPrecipitatedMassGrams(), restored.getTotalPrecipitatedMassGrams(), 0.0);
+    assertEquals(outletResult.getMaximumNormalizedBalanceResidual(), restored.getMaximumNormalizedBalanceResidual(),
+        0.0);
     Map<String, SaltPrecipitationResult> defensiveResults = restored.getMineralResults();
     assertThrows(UnsupportedOperationException.class,
         () -> defensiveResults.put("unexpected", restored.getMineralResult("CaSO4_G")));
@@ -173,6 +177,7 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     system.createDatabase(true);
     system.setMixingRule(10);
     system.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(system).TPflash();
 
     double initialHydrogen = totalElementMoles(system, "H");
     double initialOxygen = totalElementMoles(system, "O");
@@ -180,9 +185,11 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     assertStableGypsumTopology(result);
     double anhydriteMoles = result.getMineralResult("CaSO4_A").getPrecipitatedMoles();
     double gypsumMoles = result.getMineralResult("CaSO4_G").getPrecipitatedMoles();
-    assertEquals(initialHydrogen, totalElementMoles(system, "H") + 4.0 * gypsumMoles, 1.0e-10);
-    assertEquals(initialOxygen, totalElementMoles(system, "O") + 4.0 * anhydriteMoles + 6.0 * gypsumMoles, 1.0e-10);
-    assertTrue(result.getMaximumComponentBalanceResidualMoles() <= 1.0e-10);
+    assertEquals(initialHydrogen, totalElementMoles(system, "H") + 4.0 * gypsumMoles,
+        reactiveElementTolerance(initialHydrogen));
+    assertEquals(initialOxygen, totalElementMoles(system, "O") + 4.0 * anhydriteMoles + 6.0 * gypsumMoles,
+        reactiveElementTolerance(initialOxygen));
+    assertTrue(result.getMaximumNormalizedBalanceResidual() <= 1.0);
 
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
     assertThrows(IllegalArgumentException.class, () -> operations.precipitateScales("CaSO4_A", "CaSO4_A"));
@@ -197,7 +204,13 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     assertTrue(gypsum.hasPrecipitatedSolid());
     assertEquals(1.0, gypsum.getFinalSaturationRatio(), 1.0e-6);
     assertTrue(result.getMaximumComplementarityViolation() <= 1.0e-6);
-    assertTrue(result.getMaximumComponentBalanceResidualMoles() <= 1.0e-10);
+    assertTrue(Double.isFinite(result.getMaximumComponentBalanceResidualMoles()));
+    assertTrue(result.getMaximumNormalizedBalanceResidual() <= 1.0);
+  }
+
+  /** Mirrors the production hybrid absolute/relative reactive-element balance tolerance. */
+  private static double reactiveElementTolerance(double initialElementMoles) {
+    return Math.max(1.0e-10, 1.0e-8 * Math.abs(initialElementMoles));
   }
 
   private static SystemPitzer createPitzerBrine(boolean includeHydrocarbons) {

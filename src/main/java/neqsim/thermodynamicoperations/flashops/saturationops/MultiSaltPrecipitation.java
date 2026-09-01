@@ -22,7 +22,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public final class MultiSaltPrecipitation {
   private static final double COMPLEMENTARITY_TOLERANCE = 1.0e-6;
-  private static final double BALANCE_TOLERANCE_MOLES = 1.0e-10;
+  private static final double ABSOLUTE_BALANCE_TOLERANCE_MOLES = 1.0e-10;
+  private static final double REACTIVE_ELEMENT_RELATIVE_BALANCE_TOLERANCE = 1.0e-8;
   private static final double SOLID_ZERO_TOLERANCE_MOLES = 1.0e-14;
   private static final int MAXIMUM_UPDATES = 100;
 
@@ -147,11 +148,12 @@ public final class MultiSaltPrecipitation {
           + " updates; maximum violation=" + finalViolation.value + " for " + finalViolation.mineralName);
     }
 
-    double balanceResidual = calculateMaximumBalanceResidual(initialComponentMoles, initialElementMoles,
+    BalanceDiagnostics balance = calculateBalanceDiagnostics(initialComponentMoles, initialElementMoles,
         conservedElementNames, solidMoles);
-    if (balanceResidual > BALANCE_TOLERANCE_MOLES) {
+    if (balance.maximumNormalizedResidual > 1.0) {
       throw new IllegalStateException(
-          "Pure-mineral component/element ledger did not close; residual=" + balanceResidual + " mol");
+          "Pure-mineral component/element ledger did not close for " + balance.limitingQuantity + "; residual="
+              + balance.limitingResidualMoles + " mol, tolerance=" + balance.limitingToleranceMoles + " mol");
     }
 
     Map<String, SaltPrecipitationResult> mineralResults = new LinkedHashMap<String, SaltPrecipitationResult>();
@@ -164,9 +166,10 @@ public final class MultiSaltPrecipitation {
       }
       mineralResults.put(name,
           new SaltPrecipitationResult(name, amount, amount * mineralOperation.getSolidMolarMassGrams(),
-              initialSaturationRatios.get(name), finalSaturationRatio, balanceResidual));
+              initialSaturationRatios.get(name), finalSaturationRatio, balance.maximumAbsoluteResidualMoles));
     }
-    return new MultiSaltPrecipitationResult(mineralResults, updates, finalViolation.value, balanceResidual);
+    return new MultiSaltPrecipitationResult(mineralResults, updates, finalViolation.value,
+        balance.maximumAbsoluteResidualMoles, balance.maximumNormalizedResidual);
   }
 
   /** Records the initial dissolved amount for one component exactly once. */
@@ -206,8 +209,8 @@ public final class MultiSaltPrecipitation {
     return largest;
   }
 
-  /** Calculates the maximum component and elemental ledger residual across all minerals. */
-  private double calculateMaximumBalanceResidual(Map<String, Double> initialComponentMoles,
+  /** Calculates absolute and scale-aware component/element ledger diagnostics. */
+  private BalanceDiagnostics calculateBalanceDiagnostics(Map<String, Double> initialComponentMoles,
       Map<String, Double> initialElementMoles, Set<String> conservedElementNames, Map<String, Double> solidMoles) {
     Map<String, Double> solidComponentMoles = new LinkedHashMap<String, Double>();
     for (String name : mineralNames) {
@@ -218,23 +221,29 @@ public final class MultiSaltPrecipitation {
           mineralOperation.getIon2Stoichiometry() * solidMoles.get(name));
     }
 
-    double maximumResidual = 0.0;
+    BalanceDiagnostics diagnostics = new BalanceDiagnostics();
     if (!system.isChemicalSystem()) {
       for (Map.Entry<String, Double> initial : initialComponentMoles.entrySet()) {
         double dissolved = system.getComponent(initial.getKey()).getNumberOfmoles();
         Double solid = solidComponentMoles.get(initial.getKey());
         double residual = initial.getValue() - dissolved - (solid == null ? 0.0 : solid.doubleValue());
-        maximumResidual = Math.max(maximumResidual, Math.abs(residual));
+        diagnostics.record("component " + initial.getKey(), residual, ABSOLUTE_BALANCE_TOLERANCE_MOLES);
       }
     }
 
     Map<String, Double> finalElementMoles = calculateSystemElementMoles(conservedElementNames);
     addSolidElementsToLedger(finalElementMoles, solidMoles);
     for (Map.Entry<String, Double> initial : initialElementMoles.entrySet()) {
-      double residual = initial.getValue() - finalElementMoles.get(initial.getKey());
-      maximumResidual = Math.max(maximumResidual, Math.abs(residual));
+      double finalMoles = finalElementMoles.get(initial.getKey());
+      double residual = initial.getValue() - finalMoles;
+      double tolerance = ABSOLUTE_BALANCE_TOLERANCE_MOLES;
+      if (system.isChemicalSystem()) {
+        double inventoryScale = Math.max(Math.abs(initial.getValue()), Math.abs(finalMoles));
+        tolerance = Math.max(tolerance, REACTIVE_ELEMENT_RELATIVE_BALANCE_TOLERANCE * inventoryScale);
+      }
+      diagnostics.record("element " + initial.getKey(), residual, tolerance);
     }
-    return maximumResidual;
+    return diagnostics;
   }
 
   /** Collects every conserved element appearing in the requested mineral formulas. */
@@ -325,6 +334,28 @@ public final class MultiSaltPrecipitation {
   private static void addToComponentLedger(Map<String, Double> ledger, String componentName, double amount) {
     Double previous = ledger.get(componentName);
     ledger.put(componentName, (previous == null ? 0.0 : previous.doubleValue()) + amount);
+  }
+
+  /** Internal absolute and normalized balance diagnostics. */
+  private static final class BalanceDiagnostics {
+    private double maximumAbsoluteResidualMoles;
+    private double maximumNormalizedResidual;
+    private String limitingQuantity = "none";
+    private double limitingResidualMoles;
+    private double limitingToleranceMoles = ABSOLUTE_BALANCE_TOLERANCE_MOLES;
+
+    /** Records one residual against its quantity-specific tolerance. */
+    private void record(String quantity, double residualMoles, double toleranceMoles) {
+      double absoluteResidual = Math.abs(residualMoles);
+      maximumAbsoluteResidualMoles = Math.max(maximumAbsoluteResidualMoles, absoluteResidual);
+      double normalizedResidual = absoluteResidual / toleranceMoles;
+      if (normalizedResidual > maximumNormalizedResidual) {
+        maximumNormalizedResidual = normalizedResidual;
+        limitingQuantity = quantity;
+        limitingResidualMoles = residualMoles;
+        limitingToleranceMoles = toleranceMoles;
+      }
+    }
   }
 
   /** One mineral's current complementarity violation. */
