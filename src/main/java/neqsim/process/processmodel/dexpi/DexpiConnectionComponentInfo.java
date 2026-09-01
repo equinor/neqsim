@@ -8,12 +8,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Immutable evidence for one weakly connected group of explicit DEXPI material-connection endpoint
- * references.
+ * Immutable evidence for one weakly connected group of explicit DEXPI material-connection endpoint references.
  *
  * <p>
- * A component groups source reference identities only. It does not establish hydraulic continuity,
- * physical branch or fitting identity, process intent, or live {@code ProcessSystem} topology.
+ * A component groups source reference identities only. It does not establish hydraulic continuity, physical branch or
+ * fitting identity, process intent, or live {@code ProcessSystem} topology.
  * </p>
  *
  * @author NeqSim
@@ -38,20 +37,18 @@ public final class DexpiConnectionComponentInfo implements Serializable {
    * @param connectionIds connection-evidence identities in source order
    * @param sourceEndpointIds endpoints classified as source evidence
    * @param sinkEndpointIds endpoints classified as sink evidence
-   * @param potentialMultiConnectionEndpointIds endpoints with multiple incoming or outgoing
-   *        occurrences
+   * @param potentialMultiConnectionEndpointIds endpoints with multiple incoming or outgoing occurrences
    * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
    */
-  public DexpiConnectionComponentInfo(String id, List<String> endpointIds,
-      List<String> connectionIds, List<String> sourceEndpointIds, List<String> sinkEndpointIds,
-      List<String> potentialMultiConnectionEndpointIds, List<String> unresolvedEndpointIds) {
+  public DexpiConnectionComponentInfo(String id, List<String> endpointIds, List<String> connectionIds,
+      List<String> sourceEndpointIds, List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
+      List<String> unresolvedEndpointIds) {
     this.id = normalize(id);
     this.endpointIds = immutableCopy(endpointIds);
     this.connectionIds = immutableCopy(connectionIds);
     this.sourceEndpointIds = immutableCopy(sourceEndpointIds);
     this.sinkEndpointIds = immutableCopy(sinkEndpointIds);
-    this.potentialMultiConnectionEndpointIds =
-        immutableCopy(potentialMultiConnectionEndpointIds);
+    this.potentialMultiConnectionEndpointIds = immutableCopy(potentialMultiConnectionEndpointIds);
     this.unresolvedEndpointIds = immutableCopy(unresolvedEndpointIds);
   }
 
@@ -120,15 +117,12 @@ public final class DexpiConnectionComponentInfo implements Serializable {
     result.put("endpointCount", Integer.valueOf(getEndpointCount()));
     result.put("connectionCount", Integer.valueOf(getConnectionCount()));
     result.put("hasUnresolvedEndpoints", Boolean.valueOf(hasUnresolvedEndpoints()));
-    result.put(
-        "hasPotentialMultiConnectionNodes",
-        Boolean.valueOf(hasPotentialMultiConnectionNodes()));
+    result.put("hasPotentialMultiConnectionNodes", Boolean.valueOf(hasPotentialMultiConnectionNodes()));
     result.put("endpointIds", endpointIds);
     result.put("connectionIds", connectionIds);
     result.put("sourceEndpointIds", sourceEndpointIds);
     result.put("sinkEndpointIds", sinkEndpointIds);
-    result.put(
-        "potentialMultiConnectionEndpointIds", potentialMultiConnectionEndpointIds);
+    result.put("potentialMultiConnectionEndpointIds", potentialMultiConnectionEndpointIds);
     result.put("unresolvedEndpointIds", unresolvedEndpointIds);
     return result;
   }
