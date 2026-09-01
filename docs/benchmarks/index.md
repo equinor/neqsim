@@ -1,23 +1,25 @@
 ---
 title: "Benchmark Gallery"
-description: "Validation of NeqSim calculations against reference data from NIST, published literature, and industry standards. Demonstrates accuracy and identifies known limitations."
+description: "Independent validation and deterministic regression qualifications for NeqSim calculations, with explicit evidence classes, accuracy bounds, and known limitations."
 ---
 
 
-NeqSim calculations are validated against reference data from NIST, published
-literature, and established commercial simulators. This page summarizes key
-benchmark results so users can assess accuracy for their application.
+This gallery separates independently referenced validation from deterministic
+source-linked regression qualification. Property rows compare NeqSim with NIST,
+published literature, or declared reference calculations. The controller row
+qualifies production control logic against transparent surrogate dynamics; it is
+not external plant or vendor validation.
 
 ## Trust Dashboard
 
-| Category | Benchmarks | Typical Accuracy | EOS Tested |
-|----------|-----------|-----------------|------------|
-| [Pure component density](#pure-component-density) | 5 | < 1% (gas), < 5% (liquid) | SRK, PR, GERG-2008 |
-| [Natural gas dew point](#natural-gas-dew-point) | 3 | < 1°C | SRK, PR |
-| [Hydrate formation](#hydrate-formation-temperature) | 3 | < 1°C | SRK + hydrate model |
-| [Phase envelope](#phase-envelope) | 2 | < 1 bar (cricondenbar) | SRK, GERG-2008 |
-| [Compressor power](#compressor-power) | 2 | < 3% | SRK |
-| [Controller dynamics](controls_benchmark.md) | 6 | Case-specific gates; final error <= 2% | Transparent dynamic surrogates |
+| Category | Cases | Reported bound | Model | Evidence class |
+|----------|------:|----------------|-------|----------------|
+| [Pure component density](#pure-component-density) | 5 | < 1% (gas), < 5% (liquid) | SRK, PR, GERG-2008 | Independent reference comparison |
+| [Natural gas dew point](#natural-gas-dew-point) | 3 | < 1°C | SRK, PR | Published-data comparison |
+| [Hydrate formation](#hydrate-formation-temperature) | 3 | < 1°C | SRK + hydrate model | Published-literature comparison |
+| [Phase envelope](#phase-envelope) | 2 | < 1 bar (cricondenbar) | SRK, GERG-2008 | Declared reference calculation |
+| [Compressor power](#compressor-power) | 2 | < 3% | SRK | Declared vendor/textbook comparison |
+| [Controller dynamics](controls_benchmark.md) | 6 | Case-specific gates; final error <= 2% | Transparent dynamic surrogates | Deterministic source-linked regression |
 
 ---
 
