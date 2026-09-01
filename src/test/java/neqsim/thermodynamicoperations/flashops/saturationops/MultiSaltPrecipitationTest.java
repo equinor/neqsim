@@ -51,10 +51,8 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
             + forward.getMineralResult("CaSO4_A").getPrecipitatedMoles()
             + forward.getMineralResult("CaSO4_G").getPrecipitatedMoles(),
         1.0e-10);
-    assertEquals(initialWater,
-        forwardSystem.getComponent("water").getNumberOfmoles()
-            + 2.0 * forward.getMineralResult("CaSO4_G").getPrecipitatedMoles(),
-        1.0e-10);
+    assertEquals(initialWater, forwardSystem.getComponent("water").getNumberOfmoles()
+        + 2.0 * forward.getMineralResult("CaSO4_G").getPrecipitatedMoles(), 1.0e-10);
     assertEquals(forward.getMineralResult("CaSO4_G").getPrecipitatedMoles() * 172.17,
         forward.getMineralResult("CaSO4_G").getPrecipitatedMassGrams(),
         forward.getMineralResult("CaSO4_G").getPrecipitatedMassGrams() * 2.0e-4);
@@ -176,13 +174,15 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     system.setMixingRule(10);
     system.setMultiPhaseCheck(true);
 
-    double initialWater = system.getComponent("water").getNumberOfmoles();
+    double initialHydrogen = totalElementMoles(system, "H");
+    double initialOxygen = totalElementMoles(system, "O");
     MultiSaltPrecipitationResult result = new ThermodynamicOperations(system).precipitateScales("CaSO4_A", "CaSO4_G");
     assertStableGypsumTopology(result);
-    assertEquals(initialWater,
-        system.getComponent("water").getNumberOfmoles()
-            + 2.0 * result.getMineralResult("CaSO4_G").getPrecipitatedMoles(),
-        1.0e-10);
+    double anhydriteMoles = result.getMineralResult("CaSO4_A").getPrecipitatedMoles();
+    double gypsumMoles = result.getMineralResult("CaSO4_G").getPrecipitatedMoles();
+    assertEquals(initialHydrogen, totalElementMoles(system, "H") + 4.0 * gypsumMoles, 1.0e-10);
+    assertEquals(initialOxygen,
+        totalElementMoles(system, "O") + 4.0 * anhydriteMoles + 6.0 * gypsumMoles, 1.0e-10);
     assertTrue(result.getMaximumComponentBalanceResidualMoles() <= 1.0e-10);
 
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
@@ -220,6 +220,27 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     aqueous.requireCompletePitzerParameterCoverage();
     assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID, aqueous.getParameterDatasetId());
     return system;
+  }
+
+  /** Returns dissolved-system moles of one element across every current component. */
+  private static double totalElementMoles(SystemInterface system, String elementName) {
+    double totalMoles = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = system.getComponent(componentIndex);
+      if (component.getElements() == null || component.getElements().getElementNames() == null
+          || component.getElements().getElementCoefs() == null) {
+        continue;
+      }
+      String[] elementNames = component.getElements().getElementNames();
+      double[] elementCoefficients = component.getElements().getElementCoefs();
+      for (int elementIndex = 0; elementIndex < Math.min(elementNames.length, elementCoefficients.length);
+          elementIndex++) {
+        if (elementName.equals(elementNames[elementIndex])) {
+          totalMoles += component.getNumberOfmoles() * elementCoefficients[elementIndex];
+        }
+      }
+    }
+    return totalMoles;
   }
 
   private static void assertAqueousChargeAndPhaseState(SystemPitzer system) {

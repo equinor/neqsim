@@ -171,8 +171,8 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
             scalePotentialFactor = computeHydromagnesiteSR(x1, x2, compNumb1, compNumb2, waterompNumb, waterDenom,
                 stoc1, stoc2, ksp);
           } else {
-            scalePotentialFactor =
-                computeSRLogSpace(x1, x2, compNumb1, compNumb2, waterompNumb, stoc1, stoc2, waterstoc, ksp);
+            scalePotentialFactor = computeSRLogSpace(x1, x2, compNumb1, compNumb2, waterompNumb, stoc1, stoc2,
+                waterstoc, ksp);
           }
 
           logger.info("mol/kg " + name1 + "=" + x1 + ", " + name2 + "=" + x2);
@@ -233,8 +233,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
     if (waterstoc > 0.0) {
       double waterActivity = system.getPhase(phaseNumber).getComponent(waterCompNumb).getx();
       if (system.getPhase(phaseNumber).getComponent(waterCompNumb).calcActivity()) {
-        waterActivity *=
-            system.getPhase(phaseNumber).getActivityCoefficient(waterCompNumb, waterCompNumb);
+        waterActivity *= system.getPhase(phaseNumber).getActivityCoefficient(waterCompNumb, waterCompNumb);
       }
       if (!(waterActivity > 0.0) || !Double.isFinite(waterActivity)) {
         return 0.0;

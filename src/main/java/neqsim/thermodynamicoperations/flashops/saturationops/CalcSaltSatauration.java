@@ -159,8 +159,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
 
     double initialIon1Moles = system.getComponent(saltData.name1).getNumberOfmoles();
     double initialIon2Moles = system.getComponent(saltData.name2).getNumberOfmoles();
-    double initialWaterMoles =
-        saltData.waterstoc > 0.0 ? system.getComponent("water").getNumberOfmoles() : 0.0;
+    double initialWaterMoles = saltData.waterstoc > 0.0 ? system.getComponent("water").getNumberOfmoles() : 0.0;
     if (initialSaturationRatio <= 1.0) {
       return new SaltPrecipitationResult(saltName, 0.0, 0.0, initialSaturationRatio, initialSaturationRatio, 0.0);
     }
@@ -574,8 +573,8 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       return 0.0;
     }
 
-    double logIonActivityProduct =
-        saltData.stoc1 * Math.log(gamma1 * molality1) + saltData.stoc2 * Math.log(gamma2 * molality2);
+    double logIonActivityProduct = saltData.stoc1 * Math.log(gamma1 * molality1)
+        + saltData.stoc2 * Math.log(gamma2 * molality2);
     if (saltData.waterstoc > 0.0) {
       ComponentInterface water = phase.getComponent(waterComponentNumber);
       double waterActivity = water.getx();
@@ -587,8 +586,8 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       }
       logIonActivityProduct += saltData.waterstoc * Math.log(waterActivity);
     }
-    double logSaturationRatio =
-        logIonActivityProduct - Math.log(calculateKsp(saltData, phase.getTemperature(), phase.getPressure()));
+    double logSaturationRatio = logIonActivityProduct
+        - Math.log(calculateKsp(saltData, phase.getTemperature(), phase.getPressure()));
     if (logSaturationRatio > 700.0) {
       return Math.exp(700.0);
     }
