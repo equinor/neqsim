@@ -132,16 +132,19 @@ public final class DexpiXmlReader {
     private final List<DexpiInstrumentInfo> instruments;
     private final List<DexpiConnectionInfo> connections;
     private final List<DexpiConnectionEndpointInfo> connectionEndpoints;
+    private final List<DexpiConnectionComponentInfo> connectionComponents;
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
         List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
-        List<ImportDiagnostic> diagnostics) {
+        List<DexpiConnectionComponentInfo> connectionComponents, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
       this.connectionEndpoints = Collections
           .unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(connectionEndpoints));
+      this.connectionComponents = Collections
+          .unmodifiableList(new ArrayList<DexpiConnectionComponentInfo>(connectionComponents));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
@@ -184,6 +187,20 @@ public final class DexpiXmlReader {
      */
     public List<DexpiConnectionEndpointInfo> getConnectionEndpoints() {
       return connectionEndpoints;
+    }
+
+    /**
+     * Returns weakly connected groups of explicit non-empty material-connection endpoint references.
+     *
+     * <p>
+     * Components preserve source evidence only. They do not establish hydraulic continuity, fitting identity, process
+     * intent, or live process topology.
+     * </p>
+     *
+     * @return immutable source-reference components in first-endpoint order
+     */
+    public List<DexpiConnectionComponentInfo> getConnectionComponents() {
+      return connectionComponents;
     }
 
     /** @return immutable diagnostics in deterministic source-document order */
@@ -230,6 +247,12 @@ public final class DexpiXmlReader {
         endpointMaps.add(endpoint.toMap());
       }
       result.put("connectionEndpoints", endpointMaps);
+      result.put("connectionComponentCount", Integer.valueOf(connectionComponents.size()));
+      List<Map<String, Object>> componentMaps = new ArrayList<Map<String, Object>>();
+      for (DexpiConnectionComponentInfo component : connectionComponents) {
+        componentMaps.add(component.toMap());
+      }
+      result.put("connectionComponents", componentMaps);
       result.put("hasLosses", Boolean.valueOf(hasLosses()));
       result.put("hasErrors", Boolean.valueOf(hasErrors()));
       List<Map<String, Object>> diagnosticMaps = new ArrayList<Map<String, Object>>();
@@ -424,8 +447,9 @@ public final class DexpiXmlReader {
     List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
     loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, connections);
-    return new ImportResult(processSystem, instruments, connections, summarizeConnectionEndpoints(connections),
-        diagnostics);
+    List<DexpiConnectionEndpointInfo> connectionEndpoints = summarizeConnectionEndpoints(connections);
+    return new ImportResult(processSystem, instruments, connections, connectionEndpoints,
+        summarizeConnectionComponents(connections, connectionEndpoints), diagnostics);
   }
 
   /**
@@ -794,6 +818,107 @@ public final class DexpiXmlReader {
       result.add(endpoint.toInfo());
     }
     return result;
+  }
+
+  private static List<DexpiConnectionComponentInfo> summarizeConnectionComponents(List<DexpiConnectionInfo> connections,
+      List<DexpiConnectionEndpointInfo> connectionEndpoints) {
+    Map<String, List<String>> adjacentEndpointIds = new LinkedHashMap<String, List<String>>();
+    for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+      adjacentEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
+    }
+    for (DexpiConnectionInfo connection : connections) {
+      String fromId = connection.getFromId();
+      String toId = connection.getToId();
+      if (!isBlank(fromId) && !isBlank(toId)) {
+        adjacentEndpointIds.get(fromId).add(toId);
+        adjacentEndpointIds.get(toId).add(fromId);
+      }
+    }
+
+    List<ConnectionComponentAccumulator> components = new ArrayList<ConnectionComponentAccumulator>();
+    Map<String, Integer> componentByEndpointId = new HashMap<String, Integer>();
+    for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+      if (componentByEndpointId.containsKey(endpoint.getEndpointId())) {
+        continue;
+      }
+      int componentIndex = components.size();
+      components.add(new ConnectionComponentAccumulator("component-" + (componentIndex + 1)));
+      List<String> pendingEndpointIds = new ArrayList<String>();
+      pendingEndpointIds.add(endpoint.getEndpointId());
+      componentByEndpointId.put(endpoint.getEndpointId(), Integer.valueOf(componentIndex));
+      for (int pendingIndex = 0; pendingIndex < pendingEndpointIds.size(); pendingIndex++) {
+        String endpointId = pendingEndpointIds.get(pendingIndex);
+        for (String adjacentEndpointId : adjacentEndpointIds.get(endpointId)) {
+          if (!componentByEndpointId.containsKey(adjacentEndpointId)) {
+            componentByEndpointId.put(adjacentEndpointId, Integer.valueOf(componentIndex));
+            pendingEndpointIds.add(adjacentEndpointId);
+          }
+        }
+      }
+    }
+
+    for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+      Integer componentIndex = componentByEndpointId.get(endpoint.getEndpointId());
+      components.get(componentIndex.intValue()).addEndpoint(endpoint);
+    }
+    for (DexpiConnectionInfo connection : connections) {
+      Integer componentIndex = componentByEndpointId.get(connection.getFromId());
+      if (componentIndex == null) {
+        componentIndex = componentByEndpointId.get(connection.getToId());
+      }
+      if (componentIndex != null) {
+        components.get(componentIndex.intValue()).addConnection(connection.getId());
+      }
+    }
+
+    List<DexpiConnectionComponentInfo> result = new ArrayList<DexpiConnectionComponentInfo>();
+    for (ConnectionComponentAccumulator component : components) {
+      result.add(component.toInfo());
+    }
+    return result;
+  }
+
+  private static final class ConnectionComponentAccumulator {
+    private final String id;
+    private final List<DexpiConnectionEndpointInfo> endpoints = new ArrayList<DexpiConnectionEndpointInfo>();
+    private final List<String> connectionIds = new ArrayList<String>();
+
+    private ConnectionComponentAccumulator(String id) {
+      this.id = id;
+    }
+
+    private void addEndpoint(DexpiConnectionEndpointInfo endpoint) {
+      endpoints.add(endpoint);
+    }
+
+    private void addConnection(String connectionId) {
+      connectionIds.add(connectionId);
+    }
+
+    private DexpiConnectionComponentInfo toInfo() {
+      List<String> endpointIds = new ArrayList<String>();
+      List<String> sourceEndpointIds = new ArrayList<String>();
+      List<String> sinkEndpointIds = new ArrayList<String>();
+      List<String> potentialMultiConnectionEndpointIds = new ArrayList<String>();
+      List<String> unresolvedEndpointIds = new ArrayList<String>();
+      for (DexpiConnectionEndpointInfo endpoint : endpoints) {
+        endpointIds.add(endpoint.getEndpointId());
+        if (endpoint.getIncidenceRole() == DexpiConnectionEndpointInfo.IncidenceRole.SOURCE) {
+          sourceEndpointIds.add(endpoint.getEndpointId());
+        }
+        if (endpoint.getIncidenceRole() == DexpiConnectionEndpointInfo.IncidenceRole.SINK) {
+          sinkEndpointIds.add(endpoint.getEndpointId());
+        }
+        if (endpoint.isPotentialMultiConnectionNode()) {
+          potentialMultiConnectionEndpointIds.add(endpoint.getEndpointId());
+        }
+        if (!endpoint.isResolved()) {
+          unresolvedEndpointIds.add(endpoint.getEndpointId());
+        }
+      }
+      return new DexpiConnectionComponentInfo(id, endpointIds, connectionIds, sourceEndpointIds, sinkEndpointIds,
+          potentialMultiConnectionEndpointIds, unresolvedEndpointIds);
+    }
   }
 
   private static void addConnectionEndpointOccurrence(Map<String, ConnectionEndpointAccumulator> endpoints,

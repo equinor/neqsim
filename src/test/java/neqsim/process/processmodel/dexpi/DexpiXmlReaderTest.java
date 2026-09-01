@@ -483,6 +483,67 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(result.getConnectionEndpoints().get(1).isPotentialMultiConnectionNode());
   }
 
+  @Test
+  public void testReadWithDiagnosticsSummarizesConnectionReferenceComponents() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
+        + "<Equipment ID=\"E-J\"><Nozzle ID=\"N-J\"/></Equipment>"
+        + "<Equipment ID=\"E-C\"><Nozzle ID=\"N-C\"/></Equipment>"
+        + "<Equipment ID=\"E-X\"><Nozzle ID=\"N-X\"/></Equipment>"
+        + "<Equipment ID=\"E-Y\"><Nozzle ID=\"N-Y\"/></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-1\"><Connection ID=\"C-1\" FromID=\"N-A\" ToID=\"N-J\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-2\"><Connection ID=\"C-2\" FromID=\"N-J\" ToID=\"N-C\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-3\"><Connection ID=\"C-3\" FromID=\"N-X\" ToID=\"N-Y\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-4\"><Connection ID=\"C-4\" FromID=\"N-X\" ToID=\"N-Y\"/>"
+        + "</PipingNetworkSegment>" + "<PipingNetworkSegment ID=\"S-5\"><Connection ID=\"C-5\" FromID=\"UNKNOWN\"/>"
+        + "</PipingNetworkSegment>" + "<PipingNetworkSegment ID=\"S-6\"><Connection ID=\"C-6\"/>"
+        + "</PipingNetworkSegment>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(6, first.getConnections().size());
+    assertEquals(6, first.getConnectionEndpoints().size());
+    assertEquals(3, first.getConnectionComponents().size());
+
+    DexpiConnectionComponentInfo chain = first.getConnectionComponents().get(0);
+    assertEquals("component-1", chain.getId());
+    assertEquals(Arrays.asList("N-A", "N-J", "N-C"), chain.getEndpointIds());
+    assertEquals(Arrays.asList("C-1", "C-2"), chain.getConnectionIds());
+    assertEquals(Collections.singletonList("N-A"), chain.getSourceEndpointIds());
+    assertEquals(Collections.singletonList("N-C"), chain.getSinkEndpointIds());
+    assertEquals(3, chain.getEndpointCount());
+    assertEquals(2, chain.getConnectionCount());
+    assertFalse(chain.hasUnresolvedEndpoints());
+    assertFalse(chain.hasPotentialMultiConnectionNodes());
+
+    DexpiConnectionComponentInfo parallel = first.getConnectionComponents().get(1);
+    assertEquals("component-2", parallel.getId());
+    assertEquals(Arrays.asList("N-X", "N-Y"), parallel.getEndpointIds());
+    assertEquals(Arrays.asList("C-3", "C-4"), parallel.getConnectionIds());
+    assertEquals(Arrays.asList("N-X", "N-Y"), parallel.getPotentialMultiConnectionEndpointIds());
+    assertTrue(parallel.hasPotentialMultiConnectionNodes());
+
+    DexpiConnectionComponentInfo unresolved = first.getConnectionComponents().get(2);
+    assertEquals("component-3", unresolved.getId());
+    assertEquals(Collections.singletonList("UNKNOWN"), unresolved.getEndpointIds());
+    assertEquals(Collections.singletonList("C-5"), unresolved.getConnectionIds());
+    assertEquals(Collections.singletonList("UNKNOWN"), unresolved.getSourceEndpointIds());
+    assertEquals(Collections.singletonList("UNKNOWN"), unresolved.getUnresolvedEndpointIds());
+    assertTrue(unresolved.hasUnresolvedEndpoints());
+
+    assertThrows(UnsupportedOperationException.class, () -> chain.getEndpointIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> first.getConnectionComponents().clear());
+    assertTrue(first.toJson().contains("\"connectionComponentCount\": 3"));
+    assertTrue(first.toJson().contains("\"hasUnresolvedEndpoints\": true"));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
     int count = 0;
     for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
