@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Public DOE qualification of composition-resolved C2-C4 assay light ends. */
 public class OilAssayCharacterisationDoeBigHillLightEndsTest {
-  private static final String[] COMPONENT_NAMES = {"ethane", "propane", "i-butane", "n-butane"};
-  private static final double[] DOE_DEBUTANIZATION_WEIGHT_PERCENT = {0.09, 10.38, 10.21, 45.95};
+  private static final String[] COMPONENT_NAMES = { "ethane", "propane", "i-butane", "n-butane" };
+  private static final double[] DOE_DEBUTANIZATION_WEIGHT_PERCENT = { 0.09, 10.38, 10.21, 45.95 };
   private static final double DOE_C2_C4_SUBSET_WEIGHT_PERCENT = 66.63;
   private static final double DOE_C2_C4_WHOLE_CRUDE_MASS_PERCENT = 1.70;
 
@@ -30,10 +30,9 @@ public class OilAssayCharacterisationDoeBigHillLightEndsTest {
 
     assertEquals(DOE_C2_C4_SUBSET_WEIGHT_PERCENT, reportedSubset, 1.0e-12);
     assertEquals(1.0, normalizedSubset, 1.0e-12);
-    assertEquals(0.0013507429085997298,
-        DOE_DEBUTANIZATION_WEIGHT_PERCENT[0] / DOE_C2_C4_SUBSET_WEIGHT_PERCENT, 1.0e-15);
-    assertEquals(0.6896292961128622,
-        DOE_DEBUTANIZATION_WEIGHT_PERCENT[3] / DOE_C2_C4_SUBSET_WEIGHT_PERCENT, 1.0e-15);
+    assertEquals(0.0013507429085997298, DOE_DEBUTANIZATION_WEIGHT_PERCENT[0] / DOE_C2_C4_SUBSET_WEIGHT_PERCENT,
+        1.0e-15);
+    assertEquals(0.6896292961128622, DOE_DEBUTANIZATION_WEIGHT_PERCENT[3] / DOE_C2_C4_SUBSET_WEIGHT_PERCENT, 1.0e-15);
   }
 
   @Test
@@ -65,8 +64,7 @@ public class OilAssayCharacterisationDoeBigHillLightEndsTest {
     SystemInterface unknownSystem = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation unknownAssay = unknownSystem.getOilAssayCharacterisation();
     unknownAssay.addCut(new AssayCut("Known").withMassFraction(0.5).withStandardComponent("ethane"));
-    unknownAssay
-        .addCut(new AssayCut("Unknown").withMassFraction(0.5).withStandardComponent("not-a-neqsim-component"));
+    unknownAssay.addCut(new AssayCut("Unknown").withMassFraction(0.5).withStandardComponent("not-a-neqsim-component"));
     assertThrows(IllegalStateException.class, unknownAssay::apply);
     assertEquals(0, unknownSystem.getNumberOfComponents());
 
@@ -79,8 +77,8 @@ public class OilAssayCharacterisationDoeBigHillLightEndsTest {
 
     SystemInterface ambiguousSystem = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation ambiguousAssay = ambiguousSystem.getOilAssayCharacterisation();
-    ambiguousAssay.addCut(new AssayCut("Ambiguous").withMassFraction(1.0).withSpecificGravity(0.6)
-        .withStandardComponent("propane"));
+    ambiguousAssay.addCut(
+        new AssayCut("Ambiguous").withMassFraction(1.0).withSpecificGravity(0.6).withStandardComponent("propane"));
     assertThrows(IllegalStateException.class, ambiguousAssay::apply);
     assertEquals(0, ambiguousSystem.getNumberOfComponents());
   }
@@ -98,8 +96,7 @@ public class OilAssayCharacterisationDoeBigHillLightEndsTest {
 
     SystemInterface volumeSystem = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation volumeAssay = volumeSystem.getOilAssayCharacterisation();
-    volumeAssay
-        .addCut(new AssayCut("VolumeEthane").withVolumeFraction(1.0).withStandardComponent("ethane"));
+    volumeAssay.addCut(new AssayCut("VolumeEthane").withVolumeFraction(1.0).withStandardComponent("ethane"));
     assertThrows(IllegalStateException.class, volumeAssay::apply);
     assertEquals(0, volumeSystem.getNumberOfComponents());
 
@@ -114,10 +111,9 @@ public class OilAssayCharacterisationDoeBigHillLightEndsTest {
     for (int position = 0; position < COMPONENT_NAMES.length; position++) {
       int index = reverseOrder ? COMPONENT_NAMES.length - 1 - position : position;
       String componentName = COMPONENT_NAMES[index];
-      double normalizedMassFraction =
-          DOE_DEBUTANIZATION_WEIGHT_PERCENT[index] / DOE_C2_C4_SUBSET_WEIGHT_PERCENT;
-      assay.addCut(new AssayCut("DOE_BH_" + componentName.toUpperCase())
-          .withMassFraction(normalizedMassFraction).withStandardComponent(componentName));
+      double normalizedMassFraction = DOE_DEBUTANIZATION_WEIGHT_PERCENT[index] / DOE_C2_C4_SUBSET_WEIGHT_PERCENT;
+      assay.addCut(new AssayCut("DOE_BH_" + componentName.toUpperCase()).withMassFraction(normalizedMassFraction)
+          .withStandardComponent(componentName));
     }
 
     assay.apply();
