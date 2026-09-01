@@ -1828,6 +1828,16 @@ public class Compressor extends TwoPortEquipment
 
     runController(dt, id);
 
+    // Dynamic upstream equipment can momentarily hand over an empty stream while its
+    // inventory and controllers are initialized. Specific enthalpy is undefined at zero
+    // mass, so populate the compressor outlet with one algebraic bootstrap evaluation
+    // before entering the compressor-map transient equations.
+    if (inStream.getFlowRate("kg/hr") < getMinimumFlow() || outStream.getFlowRate("kg/hr") < getMinimumFlow()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+
     inStream.getThermoSystem().init(3);
     outStream.getThermoSystem().init(3);
     double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg") - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
