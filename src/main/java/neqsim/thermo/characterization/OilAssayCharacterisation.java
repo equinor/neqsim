@@ -388,13 +388,14 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         if (validationSystem == null) {
           validationSystem = system.clone();
         }
+        ComponentInterface validationComponent;
         try {
           validationSystem.addComponent(standardComponentName, 1.0);
+          validationComponent = validationSystem.getComponent(standardComponentName);
         } catch (Exception ex) {
           throw new IllegalStateException(
               "Unknown or unavailable assay standard component: " + standardComponentName, ex);
         }
-        ComponentInterface validationComponent = validationSystem.getComponent(standardComponentName);
         if (validationComponent == null) {
           throw new IllegalStateException(
               "Unknown or unavailable assay standard component: " + standardComponentName);
@@ -675,15 +676,14 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       return this;
     }
 
-
     /**
      * Mark this mass-basis assay cut as an authoritative NeqSim standard component.
      *
      * <p>
-     * Standard components use the attached thermodynamic system's component database and molar mass. They are added with
-     * {@link SystemInterface#addComponent(String, double)} rather than the petroleum pseudo-component correlation. Density,
-     * boiling-point, Watson-factor, and explicit molar-mass inputs are therefore not applicable and fail during
-     * preflight.
+     * Standard components use the attached thermodynamic system's component database and molar mass. They are added
+     * with {@link SystemInterface#addComponent(String, double)} rather than the petroleum pseudo-component correlation.
+     * Density, boiling-point, Watson-factor, and explicit molar-mass inputs are therefore not applicable and fail
+     * during preflight.
      * </p>
      *
      * @param componentName exact NeqSim standard-component identifier
@@ -1166,7 +1166,6 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     public boolean hasMolarMass() {
       return molarMass != null;
     }
-
 
     /**
      * Return whether this cut maps to a NeqSim standard component.
