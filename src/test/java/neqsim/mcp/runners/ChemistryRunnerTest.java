@@ -161,6 +161,7 @@ class ChemistryRunnerTest {
     assertEquals(1.0, minerals.getAsJsonObject("CaSO4_G").get("finalSaturationRatio").getAsDouble(), 1.0e-6);
     assertTrue(data.get("maximumComplementarityViolation_log10SR").getAsDouble() <= 1.0e-6);
     assertTrue(data.get("maximumComponentBalanceResidual_mol").getAsDouble() <= 1.0e-10);
+    assertTrue(data.get("maximumNormalizedBalanceResidual").getAsDouble() <= 1.0);
     assertTrue(data.getAsJsonObject("aqueousPhaseState").get("normalizedNonNegative").getAsBoolean());
     assertEquals(0.0, data.getAsJsonObject("aqueousPhaseState").get("chargeResidual_molPerKgWater").getAsDouble(),
         1.0e-10);
@@ -197,6 +198,8 @@ class ChemistryRunnerTest {
 
     assertEquals("electrolyte-cpa", data.get("model").getAsString());
     assertTrue(data.get("engineeringGatesPass").getAsBoolean());
+    assertTrue(data.get("maximumNormalizedBalanceResidual").getAsDouble() <= 1.0);
+    assertTrue(data.get("solidLedgerBasis").getAsString().contains("crystallization water is included"));
     assertTrue(data.get("pitzerQualificationLevel").isJsonNull());
 
     String duplicate = valid.replace("[\"CaSO4_A\",\"CaSO4_G\"]", "[\"CaSO4_A\",\"CaSO4_A\"]");
