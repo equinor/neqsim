@@ -70,6 +70,91 @@ public class AqueousCO2HydrationKineticsTest extends NeqSimTest {
   }
 
   @Test
+  void testResidenceTimeScreenMatchesAnalyticalPairRelaxation() {
+    double temperatureK = 298.15;
+    double relaxationTime = AqueousCO2HydrationKinetics.relaxationTimeSeconds(temperatureK);
+    AqueousCO2HydrationKinetics.TimescaleResult screen = AqueousCO2HydrationKinetics.screenResidenceTime(relaxationTime,
+        temperatureK);
+
+    assertEquals(0.038439871369051845, relaxationTime, 1.0e-15);
+    assertEquals(1.0, screen.getDamkohlerNumber(), 1.0e-15);
+    assertEquals(Math.exp(-1.0), screen.getRemainingDeviationFraction(), 1.0e-15);
+    assertEquals(1.0 - Math.exp(-1.0), screen.getRelaxedFraction(), 1.0e-15);
+    assertEquals(1.0, screen.getRemainingDeviationFraction() + screen.getRelaxedFraction(), 1.0e-15);
+    assertEquals(KineticReactionDiagnostics.Regime.COUPLED, screen.getRegime());
+    assertEquals(temperatureK, screen.getTemperatureK(), 0.0);
+    assertEquals(relaxationTime, screen.getResidenceTimeSeconds(), 0.0);
+    assertEquals(screen.getHydrationRateConstant() + screen.getDehydrationRateConstant(),
+        screen.getRelaxationRateConstant(), 0.0);
+
+    double initialCO2 = 1000.0;
+    double initialCarbonicAcid = 50.0;
+    AqueousCO2HydrationKinetics.SpeciationBridgeResult equilibrium = AqueousCO2HydrationKinetics
+        .partitionLumpedMolecularCO2(initialCO2 + initialCarbonicAcid, temperatureK);
+    AqueousCO2HydrationKinetics.Result advanced = AqueousCO2HydrationKinetics.advance(initialCO2, initialCarbonicAcid,
+        relaxationTime, temperatureK);
+    double analyticalRemaining = (advanced.getCarbonicAcidConcentration() - equilibrium.getCarbonicAcidConcentration())
+        / (initialCarbonicAcid - equilibrium.getCarbonicAcidConcentration());
+    assertEquals(screen.getRemainingDeviationFraction(), analyticalRemaining, 1.0e-15);
+  }
+
+  @Test
+  void testResidenceTimeRegimesAndLimitsAreDeterministic() {
+    double temperatureK = 298.15;
+    double relaxationTime = AqueousCO2HydrationKinetics.relaxationTimeSeconds(temperatureK);
+
+    AqueousCO2HydrationKinetics.TimescaleResult zero = AqueousCO2HydrationKinetics.screenResidenceTime(0.0,
+        temperatureK);
+    assertEquals(0.0, zero.getDamkohlerNumber(), 0.0);
+    assertEquals(1.0, zero.getRemainingDeviationFraction(), 0.0);
+    assertEquals(0.0, zero.getRelaxedFraction(), 0.0);
+    assertEquals(KineticReactionDiagnostics.Regime.TRANSPORT_DOMINATED, zero.getRegime());
+
+    assertEquals(KineticReactionDiagnostics.Regime.COUPLED,
+        AqueousCO2HydrationKinetics.screenResidenceTime(0.1 * relaxationTime, temperatureK).getRegime());
+    assertEquals(KineticReactionDiagnostics.Regime.COUPLED,
+        AqueousCO2HydrationKinetics.screenResidenceTime(10.0 * relaxationTime, temperatureK).getRegime());
+    AqueousCO2HydrationKinetics.TimescaleResult longResidence = AqueousCO2HydrationKinetics.screenResidenceTime(1.0,
+        temperatureK);
+    assertEquals(KineticReactionDiagnostics.Regime.REACTION_DOMINATED, longResidence.getRegime());
+    assertEquals(26.01465521045176, longResidence.getDamkohlerNumber(), 1.0e-13);
+    assertEquals(5.034760235515951e-12, longResidence.getRemainingDeviationFraction(), 1.0e-24);
+
+    AqueousCO2HydrationKinetics.TimescaleResult repeated = AqueousCO2HydrationKinetics.screenResidenceTime(1.0,
+        temperatureK);
+    assertEquals(longResidence.getRemainingDeviationFraction(), repeated.getRemainingDeviationFraction(), 0.0);
+    assertTrue(AqueousCO2HydrationKinetics
+        .relaxationTimeSeconds(AqueousCO2HydrationKinetics.MINIMUM_TEMPERATURE_K) > relaxationTime);
+    assertTrue(AqueousCO2HydrationKinetics
+        .relaxationTimeSeconds(AqueousCO2HydrationKinetics.MAXIMUM_TEMPERATURE_K) < relaxationTime);
+  }
+
+  @Test
+  void testTimeToSelectedRemainingDeviationAndInvalidInputs() {
+    double temperatureK = 298.15;
+    double onePercentTime = AqueousCO2HydrationKinetics.timeToRemainingDeviationFraction(0.01, temperatureK);
+    assertEquals(0.17702214958197476, onePercentTime, 1.0e-15);
+    assertEquals(0.01,
+        AqueousCO2HydrationKinetics.screenResidenceTime(onePercentTime, temperatureK).getRemainingDeviationFraction(),
+        1.0e-15);
+    assertEquals(0.0, AqueousCO2HydrationKinetics.timeToRemainingDeviationFraction(1.0, temperatureK), 0.0);
+
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousCO2HydrationKinetics.screenResidenceTime(-1.0, temperatureK));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousCO2HydrationKinetics.screenResidenceTime(Double.NaN, temperatureK));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousCO2HydrationKinetics.screenResidenceTime(Double.MAX_VALUE, temperatureK));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousCO2HydrationKinetics.timeToRemainingDeviationFraction(0.0, temperatureK));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousCO2HydrationKinetics.timeToRemainingDeviationFraction(1.01, temperatureK));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousCO2HydrationKinetics.timeToRemainingDeviationFraction(Double.NaN, temperatureK));
+    assertThrows(IllegalArgumentException.class, () -> AqueousCO2HydrationKinetics.screenResidenceTime(1.0, 305.66));
+  }
+
+  @Test
   void testLumpedSpeciationBridgeConservesCarbonAndRetainsSeparate25CCheck() {
     double totalMolecularCO2 = 1000.0;
     double temperatureK = 298.15;

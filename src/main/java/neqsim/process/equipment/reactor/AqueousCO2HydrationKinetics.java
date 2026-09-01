@@ -208,6 +208,83 @@ public final class AqueousCO2HydrationKinetics implements Serializable {
         totalConcentration - updatedCO2 - updatedCarbonicAcid);
   }
 
+  /**
+   * Calculate the analytical relaxation time of the reversible aqueous CO2/H2CO3 pair.
+   *
+   * <p>
+   * For the two published first-order rates, any initial deviation from the pair equilibrium decays as
+   * {@code exp(-(kH + kD) * t)}. The corresponding relaxation time is {@code 1 / (kH + kD)}. This timescale describes
+   * only the neutral molecular pair; it is not a bicarbonate, carbonate, pH, phase-transfer, or total dissolved
+   * inorganic carbon equilibration time.
+   * </p>
+   *
+   * @param temperatureK aqueous-phase temperature [K]
+   * @return reversible-pair relaxation time [s]
+   * @throws IllegalArgumentException when temperature is outside the published range
+   */
+  public static double relaxationTimeSeconds(double temperatureK) {
+    double hydrationRate = hydrationRateConstant(temperatureK);
+    double dehydrationRate = dehydrationRateConstant(temperatureK);
+    return 1.0 / (hydrationRate + dehydrationRate);
+  }
+
+  /**
+   * Screen the published aqueous CO2/H2CO3 relaxation against a residence time.
+   *
+   * <p>
+   * The Damkohler number is the residence time divided by the exact reversible-pair relaxation time. Regime boundaries
+   * intentionally match {@link KineticReactionDiagnostics}: below 0.1 is transport dominated, above 10 is reaction
+   * dominated, and both boundary values are coupled.
+   * </p>
+   *
+   * @param residenceTimeSeconds local residence or exposure time [s]
+   * @param temperatureK aqueous-phase temperature [K]
+   * @return immutable analytical timescale screen
+   * @throws IllegalArgumentException when residence time is negative or non-finite, its Damkohler number is non-finite,
+   * or temperature is outside the published range
+   */
+  public static TimescaleResult screenResidenceTime(double residenceTimeSeconds, double temperatureK) {
+    requireFiniteNonNegative(residenceTimeSeconds, "residence time");
+    double hydrationRate = hydrationRateConstant(temperatureK);
+    double dehydrationRate = dehydrationRateConstant(temperatureK);
+    double relaxationRate = hydrationRate + dehydrationRate;
+    double relaxationTime = 1.0 / relaxationRate;
+    double damkohler = residenceTimeSeconds / relaxationTime;
+    if (!Double.isFinite(damkohler)) {
+      throw new IllegalArgumentException("residence-time Damkohler number must be finite");
+    }
+
+    double remainingDeviationFraction = Math.exp(-damkohler);
+    double relaxedFraction = Math.max(0.0, Math.min(1.0, -Math.expm1(-damkohler)));
+    KineticReactionDiagnostics.Regime regime;
+    if (damkohler < 0.1) {
+      regime = KineticReactionDiagnostics.Regime.TRANSPORT_DOMINATED;
+    } else if (damkohler > 10.0) {
+      regime = KineticReactionDiagnostics.Regime.REACTION_DOMINATED;
+    } else {
+      regime = KineticReactionDiagnostics.Regime.COUPLED;
+    }
+    return new TimescaleResult(temperatureK, residenceTimeSeconds, hydrationRate, dehydrationRate, relaxationRate,
+        relaxationTime, damkohler, remainingDeviationFraction, relaxedFraction, regime);
+  }
+
+  /**
+   * Calculate the time required to reach a selected remaining pair-disequilibrium fraction.
+   *
+   * @param remainingDeviationFraction desired normalized deviation in the interval {@code (0, 1]}
+   * @param temperatureK aqueous-phase temperature [K]
+   * @return elapsed time required for the deviation to reach the requested fraction [s]
+   * @throws IllegalArgumentException when the fraction is non-finite or outside {@code (0, 1]}, or temperature is
+   * outside the published range
+   */
+  public static double timeToRemainingDeviationFraction(double remainingDeviationFraction, double temperatureK) {
+    if (!Double.isFinite(remainingDeviationFraction) || remainingDeviationFraction <= 0.0
+        || remainingDeviationFraction > 1.0) {
+      throw new IllegalArgumentException("remaining deviation fraction must be finite and within (0, 1]");
+    }
+    return -Math.log(remainingDeviationFraction) * relaxationTimeSeconds(temperatureK);
+  }
+
   private static void requirePublishedTemperature(double temperatureK) {
     if (!Double.isFinite(temperatureK) || temperatureK < MINIMUM_TEMPERATURE_K
         || temperatureK > MAXIMUM_TEMPERATURE_K) {
@@ -264,6 +341,88 @@ public final class AqueousCO2HydrationKinetics implements Serializable {
     /** @return carbon concentration closure residual [mol/m3]. */
     public double getCarbonBalanceResidual() {
       return carbonBalanceResidual;
+    }
+  }
+
+  /** Result of an analytical aqueous CO2/H2CO3 residence-time screen. */
+  public static final class TimescaleResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double temperatureK;
+    private final double residenceTimeSeconds;
+    private final double hydrationRateConstant;
+    private final double dehydrationRateConstant;
+    private final double relaxationRateConstant;
+    private final double relaxationTimeSeconds;
+    private final double damkohlerNumber;
+    private final double remainingDeviationFraction;
+    private final double relaxedFraction;
+    private final KineticReactionDiagnostics.Regime regime;
+
+    private TimescaleResult(double temperatureK, double residenceTimeSeconds, double hydrationRateConstant,
+        double dehydrationRateConstant, double relaxationRateConstant, double relaxationTimeSeconds,
+        double damkohlerNumber, double remainingDeviationFraction, double relaxedFraction,
+        KineticReactionDiagnostics.Regime regime) {
+      this.temperatureK = temperatureK;
+      this.residenceTimeSeconds = residenceTimeSeconds;
+      this.hydrationRateConstant = hydrationRateConstant;
+      this.dehydrationRateConstant = dehydrationRateConstant;
+      this.relaxationRateConstant = relaxationRateConstant;
+      this.relaxationTimeSeconds = relaxationTimeSeconds;
+      this.damkohlerNumber = damkohlerNumber;
+      this.remainingDeviationFraction = remainingDeviationFraction;
+      this.relaxedFraction = relaxedFraction;
+      this.regime = regime;
+    }
+
+    /** @return evaluated temperature [K]. */
+    public double getTemperatureK() {
+      return temperatureK;
+    }
+
+    /** @return evaluated residence time [s]. */
+    public double getResidenceTimeSeconds() {
+      return residenceTimeSeconds;
+    }
+
+    /** @return published hydration rate constant [1/s]. */
+    public double getHydrationRateConstant() {
+      return hydrationRateConstant;
+    }
+
+    /** @return published dehydration rate constant [1/s]. */
+    public double getDehydrationRateConstant() {
+      return dehydrationRateConstant;
+    }
+
+    /** @return total reversible-pair relaxation rate {@code kH + kD} [1/s]. */
+    public double getRelaxationRateConstant() {
+      return relaxationRateConstant;
+    }
+
+    /** @return reversible-pair relaxation time [s]. */
+    public double getRelaxationTimeSeconds() {
+      return relaxationTimeSeconds;
+    }
+
+    /** @return residence time divided by reversible-pair relaxation time. */
+    public double getDamkohlerNumber() {
+      return damkohlerNumber;
+    }
+
+    /** @return normalized deviation from the pair equilibrium after the residence time. */
+    public double getRemainingDeviationFraction() {
+      return remainingDeviationFraction;
+    }
+
+    /** @return fraction of the initial pair disequilibrium relaxed during the residence time. */
+    public double getRelaxedFraction() {
+      return relaxedFraction;
+    }
+
+    /** @return qualitative residence-time regime. */
+    public KineticReactionDiagnostics.Regime getRegime() {
+      return regime;
     }
   }
 
