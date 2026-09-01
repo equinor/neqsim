@@ -20,6 +20,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TPFlashHighTempTest {
   private static final double REFERENCE_TEMPERATURE_C = 268.0;
   private static final double REFERENCE_PRESSURE_BARA = 88.0;
+  private static final double REFERENCE_SRK_GAS_BETA = 0.00698;
+  private static final double REFERENCE_SRK_GAS_BETA_TOLERANCE = 0.001;
 
   /** Qualifies the SRK ordinary and explicit-multiphase paths. */
   @Test
@@ -46,6 +48,10 @@ class TPFlashHighTempTest {
 
     int expectedReferencePhases = pengRobinson ? 1 : 2;
     assertEquals(expectedReferencePhases, reference.getNumberOfPhases(), modelLabel + " reference topology");
+    if (!pengRobinson) {
+      assertEquals(REFERENCE_SRK_GAS_BETA, reference.getPhaseFraction("gas", "mole"),
+          REFERENCE_SRK_GAS_BETA_TOLERANCE, modelLabel + " historical gas beta");
+    }
     assertClosedEquilibrium(ordinary, modelLabel + " ordinary reference");
     assertClosedEquilibrium(reference, modelLabel + " multiphase reference");
     assertEquivalentState(ordinary, reference, 1.0e-8, modelLabel + " ordinary versus multiphase");
