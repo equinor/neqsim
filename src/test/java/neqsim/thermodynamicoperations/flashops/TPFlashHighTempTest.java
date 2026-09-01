@@ -49,8 +49,8 @@ class TPFlashHighTempTest {
     int expectedReferencePhases = pengRobinson ? 1 : 2;
     assertEquals(expectedReferencePhases, reference.getNumberOfPhases(), modelLabel + " reference topology");
     if (!pengRobinson) {
-      assertEquals(REFERENCE_SRK_GAS_BETA, reference.getPhaseFraction("gas", "mole"),
-          REFERENCE_SRK_GAS_BETA_TOLERANCE, modelLabel + " historical gas beta");
+      assertEquals(REFERENCE_SRK_GAS_BETA, reference.getPhaseFraction("gas", "mole"), REFERENCE_SRK_GAS_BETA_TOLERANCE,
+          modelLabel + " historical gas beta");
     }
     assertClosedEquilibrium(ordinary, modelLabel + " ordinary reference");
     assertClosedEquilibrium(reference, modelLabel + " multiphase reference");
