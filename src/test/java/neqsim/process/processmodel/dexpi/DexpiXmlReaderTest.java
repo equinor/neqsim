@@ -614,7 +614,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getUnresolvedEndpointIds());
     assertTrue(unresolved.hasUnresolvedEndpoints());
 
-    assertFalse(first.getConnectionCycles().toString().contains("N-P"));
+    for (DexpiConnectionCycleInfo cycle : first.getConnectionCycles()) {
+      assertFalse(cycle.getEndpointIds().contains("N-P"));
+      assertFalse(cycle.getEndpointIds().contains("N-Q"));
+    }
     assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpointIds().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionCycles().clear());
     assertTrue(first.toJson().contains("\"connectionCycleCount\": 3"));
