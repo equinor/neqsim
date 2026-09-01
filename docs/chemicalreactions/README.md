@@ -141,6 +141,8 @@ Java usage, numerical safeguards, and model limitations. Use the
 ranges and screen a reaction/transport Damköhler number.
 Use the [CO₂ hydration temperature-trajectory guide](co2_hydration_temperature_trajectory) for
 exact, carbon-conserving propagation of the qualified neutral pair through ordered temperature segments.
+Use the [qualified CO₂ impurity execution guide](co2_impurity_qualified_execution) to bind
+public evidence to every experimental R1-R8 parameterization before fail-closed execution.
 
 
 ---
