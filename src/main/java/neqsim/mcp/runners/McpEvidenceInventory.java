@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.22");
+    inventory.addProperty("inventoryVersion", "1.23");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "getAdjustableParameters is CONTRACT_TESTED from merged metadata discovery, definition/handle equivalence, fail-closed inputs, and packaged transport; inventory 1.22 queues no further candidate.");
+        "validateInput is CONTRACT_TESTED from merged deterministic pre-flight classification, model-handle equivalence, fail-closed inputs, remediation, and packaged transport; inventory 1.23 queues no further candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: twenty bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records: twenty-one bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -371,6 +371,14 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_state_persistence_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/STATE_PERSISTENCE_CONTRACT.md" };
       evidenceBoundary = "Local canonical-definition persistence lifecycle and sandbox/path fail-closed contract; numerical replay, accuracy, conservation, distributed durability/security, facility fidelity, plant authority, and engineering approval remain unqualified";
+      break;
+    case "validateInput":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_PREFLIGHT_INPUT_VALIDATION";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/Validator.java",
+          "src/test/java/neqsim/mcp/runners/ValidatorTest.java",
+          "neqsim-mcp-server/test_validate_input_protocol.py",
+          "neqsim-mcp-server/docs/evidence/VALIDATE_INPUT_CONTRACT.md" };
+      evidenceBoundary = "Deterministic syntax, structure, units, ranges, component and equipment recognition, model-handle routing, issue severity/remediation, fail-closed inputs, and packaged transport are contract-tested; this does not execute a model or establish completeness, physical fidelity, convergence, conservation, performance, facility suitability, plant authority, certification, or engineering approval";
       break;
     case "getAdjustableParameters":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY";
