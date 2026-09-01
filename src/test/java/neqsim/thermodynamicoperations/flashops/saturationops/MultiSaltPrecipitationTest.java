@@ -36,6 +36,7 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     double initialMagnesium = forwardSystem.getComponent("Mg++").getNumberOfmoles();
     double initialChloride = forwardSystem.getComponent("Cl-").getNumberOfmoles();
     double initialSulfate = forwardSystem.getComponent("SO4--").getNumberOfmoles();
+    double initialWater = forwardSystem.getComponent("water").getNumberOfmoles();
     MultiSaltPrecipitationResult forward = new ThermodynamicOperations(forwardSystem).precipitateScales("CaSO4_A",
         "CaSO4_G");
 
@@ -50,6 +51,13 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
             + forward.getMineralResult("CaSO4_A").getPrecipitatedMoles()
             + forward.getMineralResult("CaSO4_G").getPrecipitatedMoles(),
         1.0e-10);
+    assertEquals(initialWater,
+        forwardSystem.getComponent("water").getNumberOfmoles()
+            + 2.0 * forward.getMineralResult("CaSO4_G").getPrecipitatedMoles(),
+        1.0e-10);
+    assertEquals(forward.getMineralResult("CaSO4_G").getPrecipitatedMoles() * 172.17,
+        forward.getMineralResult("CaSO4_G").getPrecipitatedMassGrams(),
+        forward.getMineralResult("CaSO4_G").getPrecipitatedMassGrams() * 2.0e-4);
     assertEquals(initialMagnesium, forwardSystem.getComponent("Mg++").getNumberOfmoles(), 1.0e-12);
     assertEquals(initialChloride, forwardSystem.getComponent("Cl-").getNumberOfmoles(), 1.0e-12);
     assertAqueousChargeAndPhaseState(forwardSystem);
@@ -168,8 +176,13 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
     system.setMixingRule(10);
     system.setMultiPhaseCheck(true);
 
+    double initialWater = system.getComponent("water").getNumberOfmoles();
     MultiSaltPrecipitationResult result = new ThermodynamicOperations(system).precipitateScales("CaSO4_A", "CaSO4_G");
     assertStableGypsumTopology(result);
+    assertEquals(initialWater,
+        system.getComponent("water").getNumberOfmoles()
+            + 2.0 * result.getMineralResult("CaSO4_G").getPrecipitatedMoles(),
+        1.0e-10);
     assertTrue(result.getMaximumComponentBalanceResidualMoles() <= 1.0e-10);
 
     ThermodynamicOperations operations = new ThermodynamicOperations(system);

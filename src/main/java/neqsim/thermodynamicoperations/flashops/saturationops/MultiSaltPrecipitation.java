@@ -108,6 +108,9 @@ public final class MultiSaltPrecipitation {
       solidMoles.put(name, startingSolidMoles.get(name));
       rememberInitialComponent(initialComponentMoles, mineralOperation.getIon1Name());
       rememberInitialComponent(initialComponentMoles, mineralOperation.getIon2Name());
+      if (mineralOperation.getWaterStoichiometry() > 0.0) {
+        rememberInitialComponent(initialComponentMoles, "water");
+      }
     }
     addStartingSolidsToInitialLedger(initialComponentMoles);
 
@@ -179,6 +182,10 @@ public final class MultiSaltPrecipitation {
           initialComponentMoles.get(mineralOperation.getIon1Name()) + mineralOperation.getIon1Stoichiometry() * amount);
       initialComponentMoles.put(mineralOperation.getIon2Name(),
           initialComponentMoles.get(mineralOperation.getIon2Name()) + mineralOperation.getIon2Stoichiometry() * amount);
+      if (mineralOperation.getWaterStoichiometry() > 0.0) {
+        initialComponentMoles.put("water",
+            initialComponentMoles.get("water") + mineralOperation.getWaterStoichiometry() * amount);
+      }
     }
   }
 
@@ -210,6 +217,10 @@ public final class MultiSaltPrecipitation {
           mineralOperation.getIon1Stoichiometry() * solidMoles.get(name));
       addToComponentLedger(solidComponentMoles, mineralOperation.getIon2Name(),
           mineralOperation.getIon2Stoichiometry() * solidMoles.get(name));
+      if (mineralOperation.getWaterStoichiometry() > 0.0) {
+        addToComponentLedger(solidComponentMoles, "water",
+            mineralOperation.getWaterStoichiometry() * solidMoles.get(name));
+      }
     }
 
     double maximumResidual = 0.0;
