@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Advanced risk and reliability framework documentation. Equipment reliability, system availability, barrier management, and quantitative risk assessment for oil and gas facilities."
 ---
 
-# NeqSim Advanced Risk Framework
 
 The NeqSim Risk Framework provides comprehensive operational risk analysis capabilities for oil and gas operations. This documentation covers the advanced features implemented across seven priority areas.
 

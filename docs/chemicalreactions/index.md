@@ -1,6 +1,6 @@
 ---
 title: chemicalreactions
-description: chemicalreactions documentation for NeqSim
+description: Chemical-reaction equilibrium, kinetics, and reactor documentation for NeqSim.
 ---
 
 {%- include_relative README.md -%}

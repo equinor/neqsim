@@ -3,7 +3,6 @@ title: "NeqSim Wiki Index"
 description: "Welcome to the NeqSim Wiki - your comprehensive guide to thermodynamic and process simulation."
 ---
 
-# NeqSim Wiki Index
 
 Welcome to the NeqSim Wiki - your comprehensive guide to thermodynamic and process simulation.
 

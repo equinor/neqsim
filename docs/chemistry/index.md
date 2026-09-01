@@ -3,7 +3,6 @@ title: "Chemistry and Integrity Modelling in NeqSim"
 description: "Open standards-traceable framework for chemical integrity management — Davies and Pitzer mineral-scale prediction, production-chemical scenarios, mechanistic CO2 corrosion, H2S scavenger breakthrough, deposition coupling, and explainable root-cause analysis."
 ---
 
-# Chemistry and Integrity Modelling
 
 NeqSim ships an open, standards-traceable chemistry stack for chemical-integrity
 management of oil & gas, CCS and hydrogen systems. Every routine carries an
