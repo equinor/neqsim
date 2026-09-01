@@ -412,6 +412,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(1, junction.getOutgoingConnectionCount());
     assertEquals(3, junction.getConnectionCount());
     assertTrue(junction.isReferencedMultipleTimes());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.MERGE, junction.getIncidenceRole());
+    assertTrue(junction.isPotentialMultiConnectionNode());
     assertEquals(Arrays.asList("C-1", "C-2"), junction.getIncomingConnectionIds());
     assertEquals(Collections.singletonList("C-3"), junction.getOutgoingConnectionIds());
 
@@ -420,10 +422,41 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertFalse(unresolved.isResolved());
     assertEquals(Collections.singletonList("C-4"), unresolved.getOutgoingConnectionIds());
     assertEquals(0, unresolved.getIncomingConnectionCount());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SOURCE, unresolved.getIncidenceRole());
+    assertFalse(unresolved.isPotentialMultiConnectionNode());
     assertThrows(UnsupportedOperationException.class, () -> unresolved.getOutgoingConnectionIds().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionEndpoints().clear());
     assertTrue(first.toJson().contains("\"connectionEndpointCount\": 5"));
+    assertTrue(first.toJson().contains("\"incidenceRole\": \"MERGE\""));
+    assertTrue(first.toJson().contains("\"potentialMultiConnectionNode\": true"));
     assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
+  public void testConnectionEndpointIncidenceRoleClassification() {
+    DexpiConnectionEndpointInfo source = new DexpiConnectionEndpointInfo("SOURCE", "Nozzle", "", "",
+        true, Collections.<String>emptyList(), Collections.singletonList("C-1"));
+    DexpiConnectionEndpointInfo sink = new DexpiConnectionEndpointInfo("SINK", "Nozzle", "", "", true,
+        Collections.singletonList("C-1"), Collections.<String>emptyList());
+    DexpiConnectionEndpointInfo passThrough = new DexpiConnectionEndpointInfo("PASS", "Nozzle", "", "",
+        true, Collections.singletonList("C-1"), Collections.singletonList("C-2"));
+    DexpiConnectionEndpointInfo split = new DexpiConnectionEndpointInfo("SPLIT", "Nozzle", "", "", true,
+        Collections.singletonList("C-1"), Arrays.asList("C-2", "C-3"));
+    DexpiConnectionEndpointInfo merge = new DexpiConnectionEndpointInfo("MERGE", "Nozzle", "", "", true,
+        Arrays.asList("C-1", "C-2"), Collections.singletonList("C-3"));
+    DexpiConnectionEndpointInfo complex = new DexpiConnectionEndpointInfo("COMPLEX", "Nozzle", "", "",
+        true, Arrays.asList("C-1", "C-2"), Arrays.asList("C-3", "C-4"));
+
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SOURCE, source.getIncidenceRole());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SINK, sink.getIncidenceRole());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.PASS_THROUGH, passThrough.getIncidenceRole());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SPLIT, split.getIncidenceRole());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.MERGE, merge.getIncidenceRole());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.COMPLEX, complex.getIncidenceRole());
+    assertFalse(passThrough.isPotentialMultiConnectionNode());
+    assertTrue(split.isPotentialMultiConnectionNode());
+    assertTrue(merge.isPotentialMultiConnectionNode());
+    assertTrue(complex.isPotentialMultiConnectionNode());
   }
 
   @Test
@@ -442,6 +475,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         result.getConnectionEndpoints().get(0).getOutgoingConnectionIds());
     assertEquals(Arrays.asList("S-1/connection-1", "S-2/connection-1"),
         result.getConnectionEndpoints().get(1).getIncomingConnectionIds());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.COMPLEX,
+        result.getConnectionEndpoints().get(0).getIncidenceRole());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.COMPLEX,
+        result.getConnectionEndpoints().get(1).getIncidenceRole());
+    assertTrue(result.getConnectionEndpoints().get(0).isPotentialMultiConnectionNode());
+    assertTrue(result.getConnectionEndpoints().get(1).isPotentialMultiConnectionNode());
   }
 
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
