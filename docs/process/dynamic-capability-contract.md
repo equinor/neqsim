@@ -38,6 +38,7 @@ report.getActivationCounts();
 report.getExecutionIssues();
 report.getBlockingIssues();
 report.getReviewItems();
+report.isFullyAudited();
 report.getUnverifiedActivationElements();
 report.getInactiveAuditedDynamicElements();
 String json = report.toJson();
@@ -257,18 +258,43 @@ the report as a complete nested-unit inventory.
 Identity-based de-duplication prevents the same process element or nested `ProcessSystem` object from being counted
 repeatedly and prevents accidental recursive container cycles from causing unbounded traversal.
 
-## Initial audited mapping
+## Built-in audited mapping
 
-The initial contract intentionally classifies only core implementations whose current source contains clear stored-state
-semantics:
+Every built-in `ProcessElementInterface` class that declares the standard two-argument `runTransient(double, UUID)`
+boundary has an audited state-ownership category:
 
-- algebraic: standard `Stream` execution, composite module containers, `EnergyNetworkSolver`, ISO-5167 `Orifice`, and
-  `WellFlow` IPR pressure-flow relations;
-- lumped: separators, tanks, two-stream heat exchangers, compressors/expanders, pumps, throttling/control valves,
-  `EnergyConverter`-based motors/generators/gearboxes/inverters/transformers, and `BatteryStorage`;
-- distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, and `WaterHammerPipe`;
-- boundary: `SimpleReservoir`;
+- algebraic: standard `Stream` execution, composite module containers, `EnergyNetworkSolver`, ISO-5167 `Orifice`,
+  `WellFlow` IPR pressure-flow relations, `Heater`, `Mixer`, `Splitter`, `MembraneSeparator`, and the quasi-steady
+  `AdiabaticPipe`;
+- lumped: separators, tanks and `VesselDepressurization`, two-stream heat exchangers, compressors/expanders, pumps,
+  throttling/control/safety valves, `EnergyConverter` families, `BatteryStorage`, `Filter`,
+  `CommittedEnergyGenerator`, and `Electrolyzer`;
+- distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, `WaterHammerPipe`, the generic
+  `Pipeline` family (including `MultiphasePipe` and `PipeBeggsAndBrills`), `DistillationColumn`, `AdsorptionBed`,
+  `MercuryRemovalBed`, `PipeFlowNetwork`, and `WellFlowlineNetwork`;
+- boundary: `SimpleReservoir` and `IronSulfideOxidationSource`;
 - control: registered controllers and measurement devices.
+
+`DynamicCapabilityReport.isFullyAudited()` is true when a concrete report contains no
+`UNCLASSIFIED_DYNAMIC` entries. It is intentionally separate from `isStrictPreflightReady()`: a fully classified
+inventory can still have an unsupported runtime request, incomplete activation, unsafe execution mode, or inadequate
+numerical/benchmark evidence.
+
+### Built-in source-inventory CI gate
+
+`DynamicCapabilityBuiltInInventoryTest` scans production process sources for declarations of the standard transient
+boundary. A new built-in `ProcessElementInterface` override fails CI unless its declaring class has an explicit mapping
+in `DynamicCapabilityResolver` or cites an existing repository-relative Markdown ADR in the resolver's exemption
+registry. The WS6 closure has no ADR exemptions. A user or downstream subclass that overrides an audited built-in method
+still resolves fail-closed to `UNCLASSIFIED_DYNAMIC`; a subclass that merely inherits the built-in method inherits its
+audited category.
+
+An audit category states what kind of state the implementation owns. It does **not** establish conservation,
+timestep/mesh independence, transient stability, benchmark parity, restart, rollback, controls, or safety maturity.
+In particular, `PipeBeggsAndBrills` owns spatially distributed transient profile state but has no conservative
+mass-storage/line-pack term. Its distributed category must not be used as evidence for severe slugging, liquid-rich
+transients, line pack, or another storage-driven claim; route those studies to the separately qualified `TwoFluidPipe`
+path and apply the relevant numerical and public-benchmark gates.
 
 The `OnePhasePipeLine` distributed classification is supported by merged ProcessSystem-level quantitative evidence for
 the conservative one-phase, positive-flow finite-volume path: the pipeline owns spatial hydraulic/species state,
@@ -305,9 +331,9 @@ clock contract. `Orifice` is a custom pressure-driven transient relation, but st
 relation is re-evaluated for every requested refinement while its local execution clock and calculation ID follow the
 same A/refine-A/B physical-step contract as other algebraic equipment, including the negligible-flow early return.
 
-Other custom transient implementations remain `UNCLASSIFIED_DYNAMIC` until their state variables, conservation equations,
+Custom transient implementations remain `UNCLASSIFIED_DYNAMIC` until their state variables, conservation equations,
 initialization, timestep constraints, event behaviour, snapshot/restart semantics, and quantitative validation are
-reviewed. The mapping is expected to expand as that audit is completed.
+reviewed. Built-in exceptions require an explicit ADR and are rejected by CI when the cited document is absent.
 
 ## Event-scheduler rollback boundary
 
