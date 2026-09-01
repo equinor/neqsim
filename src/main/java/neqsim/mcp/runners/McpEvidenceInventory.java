@@ -241,7 +241,7 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "validateInput is CONTRACT_TESTED from merged deterministic pre-flight classification, model-handle equivalence, fail-closed inputs, remediation, and packaged transport; inventory 1.23 queues no further candidate.");
+        "validateInput is CONTRACT_TESTED by merged pre-flight Java and packaged-MCP evidence; inventory 1.23 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
         "All 71 tools have coverage records: twenty-one bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
@@ -375,10 +375,9 @@ public final class McpEvidenceInventory {
     case "validateInput":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_PREFLIGHT_INPUT_VALIDATION";
       evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/Validator.java",
-          "src/test/java/neqsim/mcp/runners/ValidatorTest.java",
-          "neqsim-mcp-server/test_validate_input_protocol.py",
+          "src/test/java/neqsim/mcp/runners/ValidatorTest.java", "neqsim-mcp-server/test_validate_input_protocol.py",
           "neqsim-mcp-server/docs/evidence/VALIDATE_INPUT_CONTRACT.md" };
-      evidenceBoundary = "Deterministic syntax, structure, units, ranges, component and equipment recognition, model-handle routing, issue severity/remediation, fail-closed inputs, and packaged transport are contract-tested; this does not execute a model or establish completeness, physical fidelity, convergence, conservation, performance, facility suitability, plant authority, certification, or engineering approval";
+      evidenceBoundary = "Contract-tested: syntax/structure, unit/range and component/equipment checks, model-handle routing, issue severity/remediation, fail-closed inputs and packaged transport; this does not execute a model or establish physical fidelity, convergence, conservation, plant authority or engineering approval.";
       break;
     case "getAdjustableParameters":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY";
