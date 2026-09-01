@@ -20,6 +20,29 @@ import java.util.Map;
  */
 public final class DexpiConnectionEndpointInfo implements Serializable {
   private static final long serialVersionUID = 1000L;
+
+  /**
+   * Directed source-incidence classification for a connection endpoint.
+   *
+   * <p>
+   * Roles describe only explicit connection occurrences in the imported document. They do not
+   * establish hydraulic continuity, fitting type, process intent, or live simulation topology.
+   * </p>
+   */
+  public enum IncidenceRole {
+    /** No incoming and exactly one outgoing occurrence. */
+    SOURCE,
+    /** Exactly one incoming and no outgoing occurrence. */
+    SINK,
+    /** Exactly one incoming and one outgoing occurrence. */
+    PASS_THROUGH,
+    /** Exactly one incoming and more than one outgoing occurrence. */
+    SPLIT,
+    /** More than one incoming and exactly one outgoing occurrence. */
+    MERGE,
+    /** Any remaining non-empty incidence pattern. */
+    COMPLEX
+  }
   private final String endpointId;
   private final String elementName;
   private final String ownerId;
@@ -105,6 +128,45 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
     return getConnectionCount() > 1;
   }
 
+  /**
+   * Classifies the endpoint from explicit incoming and outgoing source occurrences.
+   *
+   * @return evidence-only directed incidence role
+   */
+  public IncidenceRole getIncidenceRole() {
+    int incoming = getIncomingConnectionCount();
+    int outgoing = getOutgoingConnectionCount();
+    if (incoming == 0 && outgoing == 1) {
+      return IncidenceRole.SOURCE;
+    }
+    if (incoming == 1 && outgoing == 0) {
+      return IncidenceRole.SINK;
+    }
+    if (incoming == 1 && outgoing == 1) {
+      return IncidenceRole.PASS_THROUGH;
+    }
+    if (incoming == 1 && outgoing > 1) {
+      return IncidenceRole.SPLIT;
+    }
+    if (incoming > 1 && outgoing == 1) {
+      return IncidenceRole.MERGE;
+    }
+    return IncidenceRole.COMPLEX;
+  }
+
+  /**
+   * Indicates source evidence with more than one incoming or outgoing occurrence.
+   *
+   * <p>
+   * This is a review aid, not a claim that the endpoint is a physical branch or junction.
+   * </p>
+   *
+   * @return whether either directed side contains multiple occurrences
+   */
+  public boolean isPotentialMultiConnectionNode() {
+    return getIncomingConnectionCount() > 1 || getOutgoingConnectionCount() > 1;
+  }
+
   Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("endpointId", endpointId);
@@ -114,6 +176,8 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
     result.put("resolved", Boolean.valueOf(resolved));
     result.put("incomingConnectionCount", Integer.valueOf(getIncomingConnectionCount()));
     result.put("outgoingConnectionCount", Integer.valueOf(getOutgoingConnectionCount()));
+    result.put("incidenceRole", getIncidenceRole().name());
+    result.put("potentialMultiConnectionNode", Boolean.valueOf(isPotentialMultiConnectionNode()));
     result.put("incomingConnectionIds", incomingConnectionIds);
     result.put("outgoingConnectionIds", outgoingConnectionIds);
     return result;
