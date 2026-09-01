@@ -698,6 +698,12 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      */
     public AssayCut withAverageBoilingPointKelvin(double temperatureKelvin) {
       validatePositiveFinite(temperatureKelvin, "Boiling point");
+      if (lowerBoilingPointKelvin != null && temperatureKelvin < lowerBoilingPointKelvin) {
+        throw new IllegalArgumentException("Representative boiling point cannot be below lower boundary");
+      }
+      if (upperBoilingPointKelvin != null && temperatureKelvin > upperBoilingPointKelvin) {
+        throw new IllegalArgumentException("Representative boiling point cannot exceed upper boundary");
+      }
       this.averageBoilingPointKelvin = temperatureKelvin;
       return this;
     }
@@ -727,6 +733,96 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
       double temperatureCelsius = (temperatureFahrenheit - 32.0) * 5.0 / 9.0;
       return withAverageBoilingPointKelvin(temperatureCelsius + KELVIN_OFFSET);
+    }
+
+    /**
+     * Set and preserve a lower boiling limit in K without inventing an upper limit.
+     *
+     * @param temperatureKelvin lower cut boundary in K
+     * @return this cut
+     */
+    public AssayCut withLowerBoilingPointKelvin(double temperatureKelvin) {
+      validatePositiveFinite(temperatureKelvin, "Lower boiling point");
+      if (upperBoilingPointKelvin != null && !(upperBoilingPointKelvin > temperatureKelvin)) {
+        throw new IllegalArgumentException("Upper boiling-point boundary must exceed lower boundary");
+      }
+      if (averageBoilingPointKelvin != null && averageBoilingPointKelvin < temperatureKelvin) {
+        throw new IllegalArgumentException("Representative boiling point cannot be below lower boundary");
+      }
+      this.lowerBoilingPointKelvin = temperatureKelvin;
+      return this;
+    }
+
+    /**
+     * Set and preserve a lower boiling limit in degC without inventing an upper limit.
+     *
+     * @param temperatureCelsius lower cut boundary in degC
+     * @return this cut
+     */
+    public AssayCut withLowerBoilingPointCelsius(double temperatureCelsius) {
+      if (!Double.isFinite(temperatureCelsius)) {
+        throw new IllegalArgumentException("Lower boiling point must be finite");
+      }
+      return withLowerBoilingPointKelvin(temperatureCelsius + KELVIN_OFFSET);
+    }
+
+    /**
+     * Set and preserve a lower boiling limit in degF without inventing an upper limit.
+     *
+     * @param temperatureFahrenheit lower cut boundary in degF
+     * @return this cut
+     */
+    public AssayCut withLowerBoilingPointFahrenheit(double temperatureFahrenheit) {
+      if (!Double.isFinite(temperatureFahrenheit)) {
+        throw new IllegalArgumentException("Lower boiling point must be finite");
+      }
+      double temperatureCelsius = (temperatureFahrenheit - 32.0) * 5.0 / 9.0;
+      return withLowerBoilingPointKelvin(temperatureCelsius + KELVIN_OFFSET);
+    }
+
+    /**
+     * Set and preserve an upper boiling limit in K without inventing a lower limit.
+     *
+     * @param temperatureKelvin upper cut boundary in K
+     * @return this cut
+     */
+    public AssayCut withUpperBoilingPointKelvin(double temperatureKelvin) {
+      validatePositiveFinite(temperatureKelvin, "Upper boiling point");
+      if (lowerBoilingPointKelvin != null && !(temperatureKelvin > lowerBoilingPointKelvin)) {
+        throw new IllegalArgumentException("Upper boiling-point boundary must exceed lower boundary");
+      }
+      if (averageBoilingPointKelvin != null && averageBoilingPointKelvin > temperatureKelvin) {
+        throw new IllegalArgumentException("Representative boiling point cannot exceed upper boundary");
+      }
+      this.upperBoilingPointKelvin = temperatureKelvin;
+      return this;
+    }
+
+    /**
+     * Set and preserve an upper boiling limit in degC without inventing a lower limit.
+     *
+     * @param temperatureCelsius upper cut boundary in degC
+     * @return this cut
+     */
+    public AssayCut withUpperBoilingPointCelsius(double temperatureCelsius) {
+      if (!Double.isFinite(temperatureCelsius)) {
+        throw new IllegalArgumentException("Upper boiling point must be finite");
+      }
+      return withUpperBoilingPointKelvin(temperatureCelsius + KELVIN_OFFSET);
+    }
+
+    /**
+     * Set and preserve an upper boiling limit in degF without inventing a lower limit.
+     *
+     * @param temperatureFahrenheit upper cut boundary in degF
+     * @return this cut
+     */
+    public AssayCut withUpperBoilingPointFahrenheit(double temperatureFahrenheit) {
+      if (!Double.isFinite(temperatureFahrenheit)) {
+        throw new IllegalArgumentException("Upper boiling point must be finite");
+      }
+      double temperatureCelsius = (temperatureFahrenheit - 32.0) * 5.0 / 9.0;
+      return withUpperBoilingPointKelvin(temperatureCelsius + KELVIN_OFFSET);
     }
 
     /**
@@ -774,6 +870,24 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      */
     public boolean hasBoilingRange() {
       return lowerBoilingPointKelvin != null && upperBoilingPointKelvin != null;
+    }
+
+    /**
+     * Return whether a lower cut boiling boundary is available.
+     *
+     * @return true when a lower boundary is stored
+     */
+    public boolean hasLowerBoilingPoint() {
+      return lowerBoilingPointKelvin != null;
+    }
+
+    /**
+     * Return whether an upper cut boiling boundary is available.
+     *
+     * @return true when an upper boundary is stored
+     */
+    public boolean hasUpperBoilingPoint() {
+      return upperBoilingPointKelvin != null;
     }
 
     /**

@@ -147,6 +147,25 @@ Here $T_b$ is in K and $SG$ is dimensionless specific gravity. This is equivalen
 
 The public [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation) covers four bounded 375-1050 degF cuts with SG 0.8297-0.9336. The maximum absolute difference from DOE's one-decimal UOP K values is 0.0122. The method is qualified for assay screening inside that matrix; it is not a whole-crude aggregation, ASTM conversion or design-certification method.
 
+## Open-ended terminal boiling boundaries
+
+Terminal assay cuts often publish only one boiling limit. Use
+`withLowerBoilingPointKelvin/Celsius/Fahrenheit(...)` for a heavy-end “plus” cut and
+`withUpperBoilingPointKelvin/Celsius/Fahrenheit(...)` for a light-end “minus” cut.
+`hasLowerBoilingPoint()` and `hasUpperBoilingPoint()` distinguish one-sided metadata from a
+complete finite interval.
+
+A one-sided limit is provenance, not a representative boiling point. NeqSim never turns it into a
+finite midpoint. Pseudo-component generation therefore still requires either an explicit molar mass
+or an independently supported representative boiling point together with density. Contradictory
+bounds or representative values fail before the cut is changed.
+
+The public [DOE Big Hill terminal-cut qualification](refinery_big_hill_terminal_boundary_validation)
+freezes the workbook's 11.56 mass% 1050 degF+ residue boundary. It verifies exact unit conversion,
+one-sided retention, clone behavior, fail-closed incomplete characterization and exact mass closure
+when an explicit engineering molar mass is supplied. DOE does not publish that molar mass; the test
+does not present its control value as source data.
+
 ## Assay-carried total sulfur
 
 `AssayCut.withSulfurMassFraction(...)` and `withSulfurMassPercent(...)` carry total sulfur explicitly on a mass basis. `getBulkSulfurMassFraction()` and `getBulkSulfurMassPercent()` apply the linear mass-basis rule to the same resolved assay mass fractions used for pseudo-component bookkeeping. Positive-yield cuts without sulfur data fail closed; zero-yield cuts do not contribute.
@@ -187,7 +206,7 @@ The regression suite for this API currently verifies:
 - API-gravity handling, including negative API gravity;
 - rounding-scale closure versus incomplete-assay rejection;
 - rejection of mixed mass/volume bases and duplicate cuts;
-- TBP boundary monotonicity, complete 0-100% coverage, stored boiling ranges, and generated pseudo-components;
+- TBP boundary monotonicity, complete 0-100% coverage, finite and one-sided stored boiling limits, and generated pseudo-components;
 - repeated-application protection;
 - exact reconstructed assay-mass closure;
 - analytical mass- and volume-basis bulk specific-gravity reconstruction;
@@ -206,6 +225,7 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 | Pre-binned crude/petroleum assay cuts | `OilAssayCharacterisation` | Foundation hardened in #3305 |
 | Mass- and volume-basis cut yields | Unit/basis-explicit assay API | Foundation hardened in #3305 |
 | Pre-binned cumulative TBP cut boundaries | `addTBPCutBoundariesCelsius/Kelvin` | Initial implementation in #3305 |
+| Open-ended terminal boiling limits | Unit-explicit one-sided `AssayCut` boundaries | DOE-qualified for metadata and fail-closed preparation |
 | Per-cut UOP/Watson characterization factor | `AssayCut.getWatsonCharacterizationFactor()` | DOE-qualified for assay screening over 375-1050 degF |
 | Assay-carried total sulfur | `getBulkSulfurMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
 | Assay-carried total nitrogen | `getBulkNitrogenMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
@@ -222,4 +242,4 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 
 ## Next campaign step
 
-The next dependency-ready characterization increment should extend the public-data matrix beyond one DOE/OEDI assay and qualify generated pseudo-component properties. The process benchmark should then advance from the bounded DOE atmospheric integration case to a complete crude slate with independent cut-yield and boiling-range evidence before vacuum fractionation.
+The next dependency-ready characterization increment should extend the public-data matrix beyond one DOE/OEDI assay and qualify generated pseudo-component properties. With terminal-bound metadata now explicit, the process benchmark should next supply independently defensible light-end and residue representative properties, then advance from the bounded DOE atmospheric integration case to a complete crude slate with independent cut-yield and boiling-range evidence before vacuum fractionation.

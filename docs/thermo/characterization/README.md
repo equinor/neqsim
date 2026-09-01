@@ -52,10 +52,10 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - per-cut UOP/Watson characterization factors from representative boiling point and specific gravity;
 - per-cut total-sulfur and total-nitrogen inputs with mass-basis whole-assay reconstruction;
 - pre-binned cumulative TBP cut-boundary ingestion;
-- preserved lower/upper boiling ranges;
+- preserved finite and one-sided lower/upper boiling boundaries;
 - closure, duplicate-name, monotonicity, and repeated-application guards.
 
-See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), whole-assay density/API evidence in [DOE/OEDI COA bulk density qualification](refinery_oedi_coa_bulk_density_validation), per-cut characterization evidence in [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation), assay-quality evidence in [DOE Big Hill sulfur qualification](refinery_big_hill_sulfur_validation) and [DOE Big Hill nitrogen qualification](refinery_big_hill_nitrogen_validation), and the process-integration gate in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation).
+See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), whole-assay density/API evidence in [DOE/OEDI COA bulk density qualification](refinery_oedi_coa_bulk_density_validation), per-cut characterization evidence in [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation), assay-quality evidence in [DOE Big Hill sulfur qualification](refinery_big_hill_sulfur_validation) and [DOE Big Hill nitrogen qualification](refinery_big_hill_nitrogen_validation), terminal-boundary evidence in [DOE Big Hill terminal-cut qualification](refinery_big_hill_terminal_boundary_validation), and the process-integration gate in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation).
 
 ## TBP fraction models
 
@@ -142,6 +142,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation)
 - [DOE Big Hill assay sulfur qualification](refinery_big_hill_sulfur_validation)
 - [DOE Big Hill assay nitrogen qualification](refinery_big_hill_nitrogen_validation)
+- [DOE Big Hill terminal-cut boundary qualification](refinery_big_hill_terminal_boundary_validation)
 - [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
 - [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation)
 - [Fluid Characterization Guide](../../wiki/fluid_characterization)
