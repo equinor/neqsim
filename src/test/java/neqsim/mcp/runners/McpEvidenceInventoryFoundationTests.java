@@ -259,8 +259,8 @@ class McpEvidenceInventoryFoundationTests {
         validation.get("benchmarkApplicability").getAsString());
     assertEquals(4, validation.get("contractEvidenceCount").getAsInt());
     assertTrue(validation.getAsJsonArray("contractEvidenceSources").toString().contains("ValidatorTest.java"));
-    assertTrue(validation.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_validate_input_protocol.py"));
+    assertTrue(
+        validation.getAsJsonArray("contractEvidenceSources").toString().contains("test_validate_input_protocol.py"));
     assertTrue(validation.get("evidenceBoundary").getAsString().contains("does not execute a model"));
     assertTrue(validation.get("evidenceBoundary").getAsString().contains("conservation"));
 
@@ -321,8 +321,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(4, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("Validator.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ValidatorTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_validate_input_protocol.py"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_validate_input_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("issue severity/remediation"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("physical fidelity"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("validateInput"));
