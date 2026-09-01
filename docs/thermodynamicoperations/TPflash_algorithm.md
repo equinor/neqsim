@@ -2202,6 +2202,30 @@ runtime behavior are unchanged, so no speedup is claimed. The public repository
 composition is numerical regression provenance, not independent experimental
 validation of the well-fluid characterization or CPA parameters.
 
+### 6.4.9 High-temperature rich-fluid gas-fraction anchor
+
+The established 24-component rich-fluid regression uses classic-mixing SRK and PR at
+88 bara and 267--269 degrees Celsius. Temperature is specified in degrees Celsius and
+pressure as absolute bar. The public synthetic composition spans nitrogen, carbon dioxide,
+hydrogen sulfide, methane through n-nonane, and nC10 through nC19.
+
+The discoverable qualification already requires ordinary and explicit-multiphase path
+agreement, phase and beta normalization within `1e-12`, component material balance below
+`1e-10`, maximum comparable interphase log-fugacity residual below `1e-8`, bounded
+finite compositions and phase fractions, positive compressibility, finite Gibbs energy and
+enthalpy, recovery from beta values within `1e-12` of a bound, nearby-state continuity,
+changed/returned-state agreement, and deterministic repeat.
+
+A historical SRK regression additionally anchors the 268 degrees Celsius, 88 bara gas mole
+fraction at `0.00698 +/- 0.001`. That assertion previously remained in
+`TPFlashTestHighTemp`, whose filename is outside Surefire's default discovery pattern.
+The anchor now executes inside `TPFlashHighTempTest`, and the duplicate undiscovered class
+is removed. The tolerance preserves the established numerical contract; it is not an
+experimental uncertainty or validation of the predicted high-temperature phase split.
+
+The bounded test matrix is performance evidence only. Production solver code, public APIs,
+model parameters, defaults, and runtime behavior are unchanged, so no speedup is claimed.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
