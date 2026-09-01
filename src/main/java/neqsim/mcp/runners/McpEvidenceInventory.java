@@ -202,7 +202,7 @@ public final class McpEvidenceInventory {
         record.addProperty("validationCaseCount", 0);
         record.addProperty("verifiedValidationCaseCount", 0);
         record.addProperty("gapReason",
-            "No tool-specific trust or bounded contract evidence; generic TESTED is compatibility metadata, not validation or an accuracy/applicability claim");
+            "No specific trust/contract evidence; generic TESTED means compatibility, not validation, accuracy, or applicability.");
         confirmedGapRecordCount++;
       }
       coverageRecords.add(toolName, record);
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "getAdjustableParameters is CONTRACT_TESTED from merged canonical-model metadata discovery, direct-definition/model-handle equivalence, fail-closed input, and packaged-protocol evidence; no additional contract-promotion candidate is queued by inventory 1.22");
+        "getAdjustableParameters is CONTRACT_TESTED from merged metadata discovery, definition/handle equivalence, fail-closed inputs, and packaged transport; inventory 1.22 queues no further candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "Every published tool has an explicit coverage record; twenty bounded discovery, catalog, lookup, progress, trust, governance, validation-profile, runtime API-inspection, model-registry, session-lifecycle, persisted-state, adjustable-parameter discovery, and automation advisory contracts are contract-tested without extending numerical benchmark claims, while CONFIRMED_GAP identifies the remaining missing tool-specific trust evidence");
+        "All 71 tools have coverage records: twenty bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -378,7 +378,7 @@ public final class McpEvidenceInventory {
           "src/test/java/neqsim/mcp/runners/AutomationLoopRunnerTest.java",
           "neqsim-mcp-server/test_adjustable_parameters_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/ADJUSTABLE_PARAMETERS_CONTRACT.md" };
-      evidenceBoundary = "Canonical solved-ProcessSystem adjustable-parameter metadata, explicit engineering units and optional bounds, direct-definition/model-handle equivalence, deterministic discovery, fail-closed inputs, and packaged-MCP transport are contract-tested; this does not establish bound feasibility, numerical model fidelity, convergence, mass or energy conservation, optimization quality, plant authority, design certification, or accountable engineering approval";
+      evidenceBoundary = "Canonical adjustable-parameter metadata, units/bounds, definition/handle equivalence, deterministic discovery, fail-closed inputs, and packaged transport are contract-tested; feasibility, model fidelity, convergence, conservation, optimization quality, plant authority, certification, and engineering approval remain unqualified";
       break;
     case "listSimulationUnits":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY";
