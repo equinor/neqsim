@@ -94,7 +94,8 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md)                                 | Development environment setup |
 | Productization Roadmap | docs/development/PRODUCTIZATION_ROADMAP.md *(planned)*                                       | Adoption, trust, contributor scaling plan |
 | Image Tools, Agents, and Skills | [docs/development/image_tools_agents_skills.md](development/image_tools_agents_skills.md)        | Engineering-image workflow for P&IDs, drawings, scanned PDFs, maps, screenshots, and related agents/skills |
-| Benchmark Gallery | [docs/benchmarks/index.md](benchmarks/index.md)                                                    | Validation against NIST and published data |
+| Benchmark Gallery | [docs/benchmarks/index.md](benchmarks/index.md)                                                    | Independent references and explicitly labeled deterministic regression evidence |
+| Canonical Controls Benchmark | [docs/benchmarks/controls_benchmark.md](benchmarks/controls_benchmark.md)                | Six source-linked deterministic controller, protection, and coordination cases |
 | Consolidated Benchmarks | [docs/benchmarks/consolidated_benchmarks.md](benchmarks/consolidated_benchmarks.md)          | All benchmark results from task-solving studies |
 
 ### Chapter 5: Quick Start Examples

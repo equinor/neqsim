@@ -50,6 +50,32 @@ class ControlsBenchmarkSuiteTest {
     assertTrue(coordination.isPassed(), coordination.getAcceptanceDetail());
   }
 
+
+  @Test
+  void publishedReferenceValuesRemainCurrent() {
+    Report report = ControlsBenchmarkSuite.runCanonicalSuite();
+    assertPublished(report, "control_level_setpoint", 0.909, 62.000, 50.000, 55.500, 0.000, 55.000);
+    assertPublished(report, "control_pressure_disturbance", 1.111, 143.093, 49.444, 51.111, 41.111, 54.444);
+    assertPublished(report, "control_cascade_temperature", 1.215, 114.233, 50.000, 51.684, 50.000, 82.000);
+    assertPublished(report, "control_split_range", 0.952, 147.880, 49.000, 50.000, 50.000, 70.000);
+    assertPublished(report, "control_anti_surge", 0.00488, 2.333, 0.0423, 0.300, 0.000, 37.481);
+    assertPublished(report, "control_speed_recycle_coordination", 0.503, 476.566, 79.068, 84.523, 55.364,
+        88.091);
+  }
+
+  private static void assertPublished(Report report, String id, double finalError, double iae, double minimumPv,
+      double maximumPv, double minimumOutput, double maximumOutput) {
+    CaseResult result = report.getCase(id);
+    assertNotNull(result, id);
+    double printedPrecision = 6.0e-4;
+    assertEquals(finalError, result.getFinalRelativeErrorPercent(), printedPrecision, id + " final error");
+    assertEquals(iae, result.getMetrics().getIntegralAbsoluteError(), printedPrecision, id + " IAE");
+    assertEquals(minimumPv, result.getMinimumProcessValue(), printedPrecision, id + " minimum PV");
+    assertEquals(maximumPv, result.getMaximumProcessValue(), printedPrecision, id + " maximum PV");
+    assertEquals(minimumOutput, minimum(result.getControllerOutput()), printedPrecision, id + " minimum output");
+    assertEquals(maximumOutput, maximum(result.getControllerOutput()), printedPrecision, id + " maximum output");
+  }
+
   private static double maximum(double[] values) {
     double maximum = Double.NEGATIVE_INFINITY;
     for (double value : values) {
