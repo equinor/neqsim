@@ -156,11 +156,19 @@ stream order, or simulation state.
 order. Each immutable `DexpiConnectionEndpointInfo` records the resolved element and explicit owner
 evidence plus the incoming and outgoing connection-evidence IDs in source order. Counts retain every
 occurrence, including parallel connections. Blank endpoint references remain findings and are omitted
-from this keyed inventory; unresolved non-empty IDs remain visible. These source-incidence records do
-not classify branches or junctions and do not create live process connectivity.
+from this keyed inventory; unresolved non-empty IDs remain visible.
+
+`getIncidenceRole()` classifies only this directed source evidence: zero incoming and one outgoing
+is `SOURCE`; one incoming and zero outgoing is `SINK`; one of each is `PASS_THROUGH`; one
+incoming and multiple outgoing is `SPLIT`; multiple incoming and one outgoing is `MERGE`; and
+all remaining non-empty patterns are `COMPLEX`. `isPotentialMultiConnectionNode()` reports
+whether either directed side has multiple occurrences. These values help reviewers locate topology
+that needs engineering interpretation. They do not prove hydraulic continuity, identify a physical
+branch or fitting, create live process connectivity, or establish process intent.
 
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`, and the
-ordered connection and endpoint inventories alongside the process-unit count and findings. Python
+ordered connection and endpoint inventories, including `incidenceRole` and
+`potentialMultiConnectionNode`, alongside the process-unit count and findings. Python
 callers through JPype use the same `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
 and `ImportResult.getConnectionEndpoints()` getters; there is no separate Python reconstruction
 model.
