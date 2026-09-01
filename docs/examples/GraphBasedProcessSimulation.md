@@ -20,6 +20,7 @@ First, import NeqSim using jpype for direct Java access.
 ```python
 # Import NeqSim - Direct Java Access via jneqsim
 from neqsim import jneqsim
+import jpype
 
 # Import Java classes through the jneqsim gateway
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
@@ -222,7 +223,7 @@ complex_process.add(preheater)
 
 # Split into two branches
 splitter = Splitter("splitter", preheater.getOutletStream())
-splitter.setSplitFactors(JArray(JDouble)([0.6, 0.4]))
+splitter.setSplitFactors(jpype.JArray(jpype.JDouble)([0.6, 0.4]))
 complex_process.add(splitter)
 
 # Branch 1: Further heating
