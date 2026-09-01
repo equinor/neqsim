@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -146,8 +147,8 @@ public final class MultiSaltPrecipitation {
           + " updates; maximum violation=" + finalViolation.value + " for " + finalViolation.mineralName);
     }
 
-    double balanceResidual =
-        calculateMaximumBalanceResidual(initialComponentMoles, initialElementMoles, conservedElementNames, solidMoles);
+    double balanceResidual = calculateMaximumBalanceResidual(initialComponentMoles, initialElementMoles,
+        conservedElementNames, solidMoles);
     if (balanceResidual > BALANCE_TOLERANCE_MOLES) {
       throw new IllegalStateException(
           "Pure-mineral component/element ledger did not close; residual=" + balanceResidual + " mol");
@@ -266,9 +267,12 @@ public final class MultiSaltPrecipitation {
     for (String elementName : conservedElementNames) {
       elementMoles.put(elementName, 0.0);
     }
-    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
-      ComponentInterface component = system.getComponent(componentIndex);
-      addComponentElements(elementMoles, component, component.getNumberOfmoles());
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        ComponentInterface component = phase.getComponent(componentIndex);
+        addComponentElements(elementMoles, component, component.getNumberOfMolesInPhase());
+      }
     }
     return elementMoles;
   }
