@@ -152,10 +152,18 @@ piping-component endpoints own themselves. Orphaned nozzles and owner elements w
 remain deterministic warnings; the reader does not derive ownership from coordinates, tags,
 stream order, or simulation state.
 
-`toJson()` includes `instrumentCount`, `connectionCount`, and the ordered connection inventory
-alongside the process-unit count and findings. Python callers through JPype use the same
-`ImportResult.getInstruments()` and `ImportResult.getConnections()` getters; there is no separate
-Python reconstruction model.
+`ImportResult.getConnectionEndpoints()` provides a distinct endpoint inventory in first-reference
+order. Each immutable `DexpiConnectionEndpointInfo` records the resolved element and explicit owner
+evidence plus the incoming and outgoing connection-evidence IDs in source order. Counts retain every
+occurrence, including parallel connections. Blank endpoint references remain findings and are omitted
+from this keyed inventory; unresolved non-empty IDs remain visible. These source-incidence records do
+not classify branches or junctions and do not create live process connectivity.
+
+`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`, and the
+ordered connection and endpoint inventories alongside the process-unit count and findings. Python
+callers through JPype use the same `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
+and `ImportResult.getConnectionEndpoints()` getters; there is no separate Python reconstruction
+model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
 `ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.

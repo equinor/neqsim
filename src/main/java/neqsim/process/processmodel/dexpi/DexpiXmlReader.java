@@ -131,13 +131,17 @@ public final class DexpiXmlReader {
     private final ProcessSystem processSystem;
     private final List<DexpiInstrumentInfo> instruments;
     private final List<DexpiConnectionInfo> connections;
+    private final List<DexpiConnectionEndpointInfo> connectionEndpoints;
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
-        List<DexpiConnectionInfo> connections, List<ImportDiagnostic> diagnostics) {
+        List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
+        List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
+      this.connectionEndpoints = Collections
+          .unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(connectionEndpoints));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
@@ -166,6 +170,20 @@ public final class DexpiXmlReader {
      */
     public List<DexpiConnectionInfo> getConnections() {
       return connections;
+    }
+
+    /**
+     * Returns distinct non-empty connection endpoints in first-reference order.
+     *
+     * <p>
+     * Counts and connection IDs preserve every source occurrence, including parallel connections. They are evidence
+     * only and do not classify branches or reconstruct live process topology.
+     * </p>
+     *
+     * @return immutable endpoint-incidence records
+     */
+    public List<DexpiConnectionEndpointInfo> getConnectionEndpoints() {
+      return connectionEndpoints;
     }
 
     /** @return immutable diagnostics in deterministic source-document order */
@@ -206,6 +224,12 @@ public final class DexpiXmlReader {
         connectionMaps.add(connection.toMap());
       }
       result.put("connections", connectionMaps);
+      result.put("connectionEndpointCount", Integer.valueOf(connectionEndpoints.size()));
+      List<Map<String, Object>> endpointMaps = new ArrayList<Map<String, Object>>();
+      for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+        endpointMaps.add(endpoint.toMap());
+      }
+      result.put("connectionEndpoints", endpointMaps);
       result.put("hasLosses", Boolean.valueOf(hasLosses()));
       result.put("hasErrors", Boolean.valueOf(hasErrors()));
       List<Map<String, Object>> diagnosticMaps = new ArrayList<Map<String, Object>>();
@@ -400,7 +424,8 @@ public final class DexpiXmlReader {
     List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
     loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, connections);
-    return new ImportResult(processSystem, instruments, connections, diagnostics);
+    return new ImportResult(processSystem, instruments, connections, summarizeConnectionEndpoints(connections),
+        diagnostics);
   }
 
   /**
@@ -755,6 +780,70 @@ public final class DexpiXmlReader {
     }
     logger.info("Parsed {} material connections from DEXPI XML", connections.size());
     return connections;
+  }
+
+  private static List<DexpiConnectionEndpointInfo> summarizeConnectionEndpoints(List<DexpiConnectionInfo> connections) {
+    Map<String, ConnectionEndpointAccumulator> endpoints = new LinkedHashMap<String, ConnectionEndpointAccumulator>();
+    for (DexpiConnectionInfo connection : connections) {
+      addConnectionEndpointOccurrence(endpoints, connection, true);
+      addConnectionEndpointOccurrence(endpoints, connection, false);
+    }
+
+    List<DexpiConnectionEndpointInfo> result = new ArrayList<DexpiConnectionEndpointInfo>();
+    for (ConnectionEndpointAccumulator endpoint : endpoints.values()) {
+      result.add(endpoint.toInfo());
+    }
+    return result;
+  }
+
+  private static void addConnectionEndpointOccurrence(Map<String, ConnectionEndpointAccumulator> endpoints,
+      DexpiConnectionInfo connection, boolean source) {
+    String endpointId = source ? connection.getFromId() : connection.getToId();
+    if (isBlank(endpointId)) {
+      return;
+    }
+    ConnectionEndpointAccumulator endpoint = endpoints.get(endpointId);
+    if (endpoint == null) {
+      endpoint = new ConnectionEndpointAccumulator(endpointId,
+          source ? connection.getFromElementName() : connection.getToElementName(),
+          source ? connection.getFromOwnerId() : connection.getToOwnerId(),
+          source ? connection.getFromOwnerElementName() : connection.getToOwnerElementName(),
+          source ? connection.isFromResolved() : connection.isToResolved());
+      endpoints.put(endpointId, endpoint);
+    }
+    endpoint.add(connection.getId(), source);
+  }
+
+  private static final class ConnectionEndpointAccumulator {
+    private final String endpointId;
+    private final String elementName;
+    private final String ownerId;
+    private final String ownerElementName;
+    private final boolean resolved;
+    private final List<String> incomingConnectionIds = new ArrayList<String>();
+    private final List<String> outgoingConnectionIds = new ArrayList<String>();
+
+    private ConnectionEndpointAccumulator(String endpointId, String elementName, String ownerId,
+        String ownerElementName, boolean resolved) {
+      this.endpointId = endpointId;
+      this.elementName = elementName;
+      this.ownerId = ownerId;
+      this.ownerElementName = ownerElementName;
+      this.resolved = resolved;
+    }
+
+    private void add(String connectionId, boolean source) {
+      if (source) {
+        outgoingConnectionIds.add(connectionId);
+      } else {
+        incomingConnectionIds.add(connectionId);
+      }
+    }
+
+    private DexpiConnectionEndpointInfo toInfo() {
+      return new DexpiConnectionEndpointInfo(endpointId, elementName, ownerId, ownerElementName, resolved,
+          incomingConnectionIds, outgoingConnectionIds);
+    }
   }
 
   private static Element resolveConnectionOwner(Element endpoint) {
