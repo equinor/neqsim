@@ -101,6 +101,8 @@ public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReacto
    * @return ordered identifiers that cannot be used for qualified execution at the supplied state
    */
   public String[] getUnqualifiedReactionIds(double temperatureK, double pressureBara) {
+    requireFinitePositive(temperatureK, "temperature");
+    requireFinitePositive(pressureBara, "pressure");
     List<String> unqualified = new ArrayList<>();
     for (String reactionId : getRequiredReactionIds()) {
       KineticReactionQualification qualification = qualifications.get(reactionId);
@@ -178,5 +180,11 @@ public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReacto
 
   private String selectedR8Id() {
     return "carbon_steel".equals(getMaterial()) || "magnetite".equals(getMaterial()) ? "R8CS" : "R8SS";
+  }
+
+  private static void requireFinitePositive(double value, String name) {
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException(name + " must be finite and positive");
+    }
   }
 }
