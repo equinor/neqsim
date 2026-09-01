@@ -378,7 +378,7 @@ public final class McpEvidenceInventory {
           "src/test/java/neqsim/mcp/runners/AutomationLoopRunnerTest.java",
           "neqsim-mcp-server/test_adjustable_parameters_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/ADJUSTABLE_PARAMETERS_CONTRACT.md" };
-      evidenceBoundary = "Canonical adjustable-parameter metadata, units/bounds, definition/handle equivalence, deterministic discovery, fail-closed inputs, and packaged transport are contract-tested; feasibility, model fidelity, convergence, mass or energy conservation, optimization quality, plant authority, certification, and engineering approval remain unqualified";
+      evidenceBoundary = "Canonical adjustable-parameter metadata, units and optional bounds, direct-definition/model-handle equivalence, deterministic discovery, fail-closed inputs, and packaged transport are contract-tested; feasibility, model fidelity, convergence, mass or energy conservation, optimization quality, plant authority, certification, and engineering approval remain unqualified";
       break;
     case "listSimulationUnits":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_UNIT_DISCOVERY";
