@@ -1,7 +1,6 @@
 package neqsim.process.dynamics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -37,12 +36,8 @@ public class DynamicCapabilityModuleContainerTest extends neqsim.NeqSimTest {
 
     DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
     assertTrue(report.getEntries().size() > 10);
-    assertTrue(report.getReviewItems().size() > 0,
-        "Unaudited child implementations must remain visible through recursive module audit");
-
-    for (String reviewItem : report.getReviewItems()) {
-      assertFalse(reviewItem.startsWith("separation train has a custom transient implementation"),
-          "The composite module container itself must not create a false strict-preflight review item");
-    }
+    assertTrue(report.getReviewItems().isEmpty());
+    assertTrue(report.isFullyAudited());
+    assertTrue(report.isStrictPreflightReady());
   }
 }
