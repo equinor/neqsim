@@ -3,8 +3,6 @@ title: Selective Logic Execution in ProcessScenarioRunner
 description: The `ProcessScenarioRunner` provides multiple ways to control which logic sequences execute during a scenario.
 ---
 
-# Selective Logic Execution in ProcessScenarioRunner
-
 The `ProcessScenarioRunner` provides multiple ways to control which logic sequences execute during a scenario.
 
 ## Method 1: Add Only What You Need (Simplest)
