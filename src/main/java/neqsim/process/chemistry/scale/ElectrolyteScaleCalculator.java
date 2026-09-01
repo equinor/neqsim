@@ -74,6 +74,8 @@ public class ElectrolyteScaleCalculator implements Serializable {
   private double baso4SaturationIndex = 0.0;
   private double caso4SaturationIndex = 0.0;
   private double srso4SaturationIndex = 0.0;
+  private double bruciteSaturationIndex = 0.0;
+  private double hydroxideActivity = 0.0;
   private boolean evaluated = false;
 
   // Molar masses (g/mol)
@@ -251,6 +253,13 @@ public class ElectrolyteScaleCalculator implements Serializable {
     caso4SaturationIndex = saturationIndex(g2 * Math.max(mCa, 1e-15), g2 * Math.max(mSO4, 1e-15), pKspCaSO4);
     srso4SaturationIndex = saturationIndex(g2 * Math.max(mSr, 1e-15), g2 * Math.max(mSO4, 1e-15), pKspSrSO4);
 
+    // Brucite Mg(OH)2: OH- activity follows from pH via the ion product of water at T.
+    // a(OH-) = Kw(T) / a(H+); the Mg2+ activity uses the same Davies gamma as the other divalents.
+    hydroxideActivity = Math.pow(10.0, -pKw(tK) + pH);
+    double pKspBrucite = ksPBrucite(tK);
+    bruciteSaturationIndex = saturationIndex(g2 * Math.max(mMg, 1e-15), hydroxideActivity * hydroxideActivity,
+        pKspBrucite);
+
     evaluated = true;
     return this;
   }
@@ -309,6 +318,41 @@ public class ElectrolyteScaleCalculator implements Serializable {
   private double ksPSrSO4(double tK) {
     double lnKsp = -10452.9 / tK + 19.790;
     return pKsp(Math.exp(lnKsp), tK, -47.0);
+  }
+
+  /**
+   * Solubility product of brucite, {@code Mg(OH)2(s) = Mg2+ + 2 OH-}.
+   *
+   * <p>
+   * Van't Hoff form anchored on log10 Ksp(25 C) = -11.16 with a standard reaction enthalpy of -113.4 kJ/mol (retrograde
+   * solubility), consistent with the CODATA/Wagman thermodynamic data used for brucite in seawater and
+   * electrochlorination scaling work.
+   * </p>
+   *
+   * @param tK temperature [K]
+   * @return pKsp (i.e. -log10 Ksp) including the pressure correction
+   */
+  private double ksPBrucite(double tK) {
+    double log10Ksp25 = -11.16;
+    double deltaHkJ = -113.4;
+    double gasConstantKJ = 0.0083145;
+    double log10Ksp = log10Ksp25 - (deltaHkJ / (2.302585093 * gasConstantKJ)) * (1.0 / tK - 1.0 / 298.15);
+    return pKsp(Math.pow(10.0, log10Ksp), tK, -20.0);
+  }
+
+  /**
+   * Ion product of water, {@code pKw = -log10 Kw}, as a function of temperature.
+   *
+   * <p>
+   * Marshall-Franck style fit for liquid water at saturation pressure; pKw(25 C) = 14.00, pKw(0 C) = 14.94, pKw(60 C) =
+   * 13.02.
+   * </p>
+   *
+   * @param tK temperature [K]
+   * @return pKw [-]
+   */
+  private double pKw(double tK) {
+    return 4470.99 / tK - 6.0875 + 0.01706 * tK;
   }
 
   // ─── Getters ────────────────────────────────────────────
@@ -377,6 +421,32 @@ public class ElectrolyteScaleCalculator implements Serializable {
   }
 
   /**
+   * Returns the activity-corrected Mg(OH)2 (brucite) saturation index.
+   *
+   * <p>
+   * Brucite is the dominant cathodic deposit in seawater electrolysis (electrochlorination, cathodic protection,
+   * seawater electrolysers), where hydrogen evolution raises the pH inside the cathode boundary layer far above the
+   * bulk seawater value of about 8.1. The index is therefore strongly pH-driven: set the boundary-layer pH with
+   * {@link #setPH(double)} rather than the bulk pH when screening cathodic scaling.
+   * </p>
+   *
+   * @return SI value; positive means supersaturated with respect to brucite
+   */
+  public double getBruciteSaturationIndex() {
+    return bruciteSaturationIndex;
+  }
+
+  /**
+   * Returns the hydroxide-ion activity derived from the specified pH and the temperature-dependent ion product of
+   * water.
+   *
+   * @return a(OH-) [-]
+   */
+  public double getHydroxideActivity() {
+    return hydroxideActivity;
+  }
+
+  /**
    * Returns true once {@link #calculate()} has been invoked.
    *
    * @return true if evaluated
@@ -411,6 +481,8 @@ public class ElectrolyteScaleCalculator implements Serializable {
     map.put("baso4SaturationIndex", baso4SaturationIndex);
     map.put("caso4SaturationIndex", caso4SaturationIndex);
     map.put("srso4SaturationIndex", srso4SaturationIndex);
+    map.put("bruciteSaturationIndex", bruciteSaturationIndex);
+    map.put("hydroxideActivity", hydroxideActivity);
     map.put("standardsApplied", getStandardsApplied());
     return map;
   }
