@@ -626,7 +626,7 @@ the linear recovery-factor proxy (this package) fits.
 fiscal back-allocation across many commingled sources. Refresh the base case
 (re-extract the split factors) whenever the commingled composition or operating
 envelope shifts materially between meter readings — the
-[demonstration notebook](../../examples/notebooks/production_allocation.ipynb)
+[demonstration notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/production_allocation.ipynb)
 includes a sensitivity study showing when cross-well coupling becomes significant.
 For a small number of sources where maximum rigour is mandated, per-source
 component tagging remains the reference. General metering and allocation practice
@@ -734,7 +734,7 @@ that `ALL_IN` lets a low-quality owner benefit from the shared ratio, whereas
 ## Worked notebook
 
 A complete, executed demonstration is provided in
-[`examples/notebooks/production_allocation.ipynb`](../../examples/notebooks/production_allocation.ipynb).
+[`examples/notebooks/production_allocation.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/production_allocation.ipynb).
 It builds a two-well, two-stage separation process, allocates the export gas and
 oil back to each well, reproduces the per-component recovery factor (ORF) curve,
 shows the per-well allocation factors and mass closure, exports the JSON report,
@@ -745,4 +745,4 @@ and runs a Well-B rate sensitivity that illustrates cross-well coupling.
 - [Process Simulation Documentation](README.md)
 - [ProcessSystem and flowsheet management](processmodel/)
 - [Production optimization and bottleneck analysis](optimization/OPTIMIZATION_OVERVIEW.md)
-- [Allocation demonstration notebook](../../examples/notebooks/production_allocation.ipynb)
+- [Allocation demonstration notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/production_allocation.ipynb)

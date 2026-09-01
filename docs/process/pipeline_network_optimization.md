@@ -12,13 +12,92 @@ optimization, sparse linear algebra, and analytical validation benchmarks.
 
 | Feature | Class | Description |
 |---------|-------|-------------|
-| NLP Optimizer | `NetworkOptimizer` | BOBYQA and CMA-ES choke allocation |
-| Multi-Objective | `NetworkOptimizer` | Weighted-sum Pareto front exploration |
+| Generalized NLP | `NetworkOptimizer` | Bounded source, sink, route, valve, compressor, and pump decisions |
+| Typed Constraints | `NetworkConstraint` | Hard rejection and scaled soft-residual penalties |
+| Composable Objectives | `NetworkObjective` | Throughput, power, economics, emissions, and Java callbacks |
+| Automation | `ProcessAutomation` | Discoverable safe network node/edge addresses |
 | Sparse Solver | `NetworkLinearSolver` | Auto-selects Gaussian, Dense EJML, or Sparse CSC |
 | Multiphase Caching | `LoopedPipeNetwork` | Reuses Beggs-Brill models across iterations |
 | Benchmarks | `NetworkValidationBenchmarks` | 6 analytical/published verification cases |
 
-## NLP Choke Optimization
+## Generalized whole-network optimization
+
+Register finite-bounded variables, objective terms, and typed constraints. The
+optimizer evaluates hydraulics and point quality on the same candidate and
+restores all decision state after every evaluation.
+
+```java
+NetworkOptimizer optimizer = new NetworkOptimizer(network);
+optimizer.setAlgorithm(NetworkOptimizer.Algorithm.BOBYQA);
+optimizer.setDeterministicSeed(42L);
+
+optimizer.addDecisionVariable(new NetworkDecisionVariable(
+    "source.field-a.rate",
+    NetworkDecisionVariable.Type.SOURCE_RATE,
+    "field-a", "kg/hr",
+    NetworkDecisionVariable.RateBasis.MASS,
+    10000.0, 200000.0));
+optimizer.addDecisionVariable(new NetworkDecisionVariable(
+    "compressor.export.speed",
+    NetworkDecisionVariable.Type.COMPRESSOR_SPEED,
+    "export compressor", "rpm",
+    NetworkDecisionVariable.RateBasis.NONE,
+    3000.0, 9000.0));
+optimizer.addDecisionVariable(new NetworkDecisionVariable(
+    "route.north.availability",
+    NetworkDecisionVariable.Type.ROUTE_ALLOCATION,
+    "north route", "-",
+    NetworkDecisionVariable.RateBasis.NONE,
+    0.01, 1.0));
+
+optimizer.addObjective(NetworkObjectives.maximizeThroughput(1.0));
+optimizer.addObjective(
+    NetworkObjectives.minimizeCompressorPower(0.02));
+optimizer.addConstraint(NetworkConstraints.convergence());
+optimizer.addConstraint(
+    NetworkConstraints.nodePressure(
+        "delivery", 45.0, 80.0, true));
+optimizer.addConstraint(
+    NetworkConstraints.qualityCompliance(true));
+
+NetworkOptimizer.OptimizationResult result = optimizer.optimize();
+```
+
+`discoverDecisionVariables(...)` registers common source/sink rates, source
+pressures, chokes, regulators, compressor/pump speeds, and edge availability.
+Use explicit registration when bounds or rate basis differ by asset.
+
+Hard constraints make a candidate infeasible. Soft constraints add the square
+of the scaled residual, so a larger physical violation receives a larger
+penalty. `NetworkCandidateEvaluation` reports decisions, rate bases, objective
+terms, feasibility, residuals, active constraints, and solver diagnostics as
+Java objects and JSON.
+
+BOBYQA is a local derivative-free optimizer. CMA-ES is useful for discontinuous
+availability/routing responses but requires more evaluations. Both require
+finite bounds; neither is a proof of global optimality.
+
+### ProcessAutomation addresses
+
+Internal network values are discoverable through `ProcessAutomation`:
+
+```text
+allocation network.node.delivery.pressure
+allocation network.source.field-a.rate
+allocation network.sink.delivery.nomination
+allocation network.edge.export.flowRate
+allocation network.edge.export.availability
+allocation network.choke.well-a.opening
+allocation network.regulator.handover.setPoint
+allocation network.compressor.export.speed
+allocation network.pump.oil booster.speed
+```
+
+Address get/set performs unit conversion and rejects non-writable calculated
+values. This lets generic automation and agentic optimization inspect network
+internals without bypassing the bounded network API.
+
+## Legacy choke optimization
 
 The `NetworkOptimizer` replaces gradient-finite-difference with formal bound-constrained
 optimization from Apache Commons Math:
@@ -57,7 +136,7 @@ System.out.println("Production: " + result.totalProductionKgHr + " kg/hr");
 System.out.println("Converged: " + result.converged);
 ```
 
-### Objective Types
+### Legacy objective types
 
 | Type | Description |
 |------|-------------|
@@ -183,6 +262,15 @@ result = optimizer.optimize()
 print(f"Production: {result.totalProductionKgHr:.0f} kg/hr")
 ```
 
+For generalized problems, construct `NetworkDecisionVariable`,
+`NetworkConstraints`, and `NetworkObjectives` through `jneqsim` exactly as in
+Java. The executed gas and oil notebooks below demonstrate JPype collection,
+enum, and JSON handling.
+
 ## Related Documentation
 
-- [Pipeline Network Optimization Notebook](../../examples/notebooks/pipeline_network_optimization.ipynb)
+- [Pipeline Network Optimization Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/pipeline_network_optimization.ipynb)
+- [Gas Network Operations and Optimization](gas_network_operations)
+- [Oil Pipeline and Terminal Operations](oil_network_operations)
+- [Executed synthetic NCS gas example](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/norwegian_ncs_gas_network_optimization.ipynb)
+- [Executed synthetic NCS oil example](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/norwegian_ncs_oil_network_optimization.ipynb)

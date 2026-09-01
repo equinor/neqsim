@@ -3,8 +3,6 @@ title: Field Development Decision Engine Workflows
 description: Detailed workflow guide for NeqSim field development decision support, covering tieback screening, greenfield templates, portfolio optimization, Norwegian economics, process coupling, reservoir exports, route networks, and report-ready tables.
 ---
 
-# Field Development Decision Engine Workflows
-
 NeqSim's field-development layer now supports an end-to-end teaching and screening workflow for brownfield tiebacks, greenfield concepts, and multi-field portfolio decisions. The decision engine keeps early screening models tied to the same thermodynamic and process-simulation foundation used later in detailed studies.
 
 This page explains how the new APIs fit together and where to find executable notebook examples that import workspace classes through `devtools/neqsim_dev_setup.py`.
@@ -26,9 +24,9 @@ This page explains how the new APIs fit together and where to find executable no
 
 | Notebook | Focus | What it demonstrates |
 |----------|-------|----------------------|
-| [field_development_decision_engine.ipynb](../../examples/notebooks/field_development_decision_engine.ipynb) | Concept comparison, MCDA, portfolio optimization | `GreenfieldConceptFactory`, lifecycle emissions, `FieldDevelopmentReportExporter`, `DevelopmentOptionRanker`, `PortfolioOptimizer` |
-| [field_development_process_reservoir_coupling.ipynb](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, facility generation, reservoir exports | `TiebackRouteNetwork`, `TiebackAnalyzer`, `NetworkSolver`, `ConceptToProcessLinker`, `ReservoirCouplingExporter` |
-| [host_tie_in_capacity_and_holdback.ipynb](../../examples/notebooks/host_tie_in_capacity_and_holdback.ipynb) | Host capacity, holdback, and debottlenecking | `TieInCapacityPlanner`, `ProductionProfileSeries`, `HostTieInPoint`, process-equipment capacity constraints |
+| [field_development_decision_engine.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_decision_engine.ipynb) | Concept comparison, MCDA, portfolio optimization | `GreenfieldConceptFactory`, lifecycle emissions, `FieldDevelopmentReportExporter`, `DevelopmentOptionRanker`, `PortfolioOptimizer` |
+| [field_development_process_reservoir_coupling.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, facility generation, reservoir exports | `TiebackRouteNetwork`, `TiebackAnalyzer`, `NetworkSolver`, `ConceptToProcessLinker`, `ReservoirCouplingExporter` |
+| [host_tie_in_capacity_and_holdback.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/host_tie_in_capacity_and_holdback.ipynb) | Host capacity, holdback, and debottlenecking | `TieInCapacityPlanner`, `ProductionProfileSeries`, `HostTieInPoint`, process-equipment capacity constraints |
 
 Both notebooks are local developer examples. They load Java classes from the workspace through the devtools setup cell so newly added field-development APIs can be exercised before a release package is published.
 

@@ -8,6 +8,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.driver.GasTurbineDriver;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -87,6 +90,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
    */
   public GasTurbineUnit(String name) {
     super(name);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -97,7 +101,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
    * @param spec catalog spec (use {@link GasTurbineCatalog#get(String)})
    */
   public GasTurbineUnit(String name, StreamInterface fuelStream, GasTurbineSpec spec) {
-    super(name, fuelStream);
+    this(name);
+    setInletStream(fuelStream);
     setSpec(spec);
   }
 
@@ -237,6 +242,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
   public void run(UUID id) {
     if (spec == null) {
       logger.warn("GasTurbineUnit {} has no spec — cannot run", getName());
+      getEnergyPort("shaftPower").setDuty(0.0);
       return;
     }
     if (performanceMap == null) {
@@ -292,6 +298,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
       this.co2KgPerS = 0.0;
       this.noxKgPerS = 0.0;
       this.methaneSlipKgPerS = 0.0;
+      getEnergyPort("shaftPower").setDuty(0.0);
       copyInletToOutlet();
       return;
     }
@@ -329,6 +336,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
     this.noxKgPerS = emissions.computeNOxKgPerS(spec.getNoxPpmDLE(), this.exhaustMassFlowKgPerS, 28.7);
     this.methaneSlipKgPerS = emissions.computeMethaneSlipKgPerS(fuel, this.fuelMolarFlowMolPerS);
 
+    getEnergyPort("shaftPower").setDuty(Math.min(this.demandedPowerW, this.availablePowerW));
     copyInletToOutlet();
   }
 

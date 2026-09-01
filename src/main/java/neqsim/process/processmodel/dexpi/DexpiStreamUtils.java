@@ -8,6 +8,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.tank.Tank;
 
 /**
  * Shared utilities for resolving outlet streams from NeqSim process equipment.
@@ -31,7 +32,8 @@ public final class DexpiStreamUtils {
    * <p>
    * For separators, this returns the gas outlet stream. For splitters, it returns the first split stream. For streams,
    * it returns the stream itself. For all other TwoPortEquipment (compressor, pump, valve, heater, cooler, expander,
-   * heat exchanger), it returns the outlet stream directly.
+   * heat exchanger), it returns the outlet stream directly. Equipment such as recycle blocks that expose their primary
+   * outlet only through the standard {@code getOutletStreams()} API use the first declared outlet.
    * </p>
    *
    * @param equipment the process equipment
@@ -53,7 +55,8 @@ public final class DexpiStreamUtils {
     if (equipment instanceof TwoPortEquipment) {
       return ((TwoPortEquipment) equipment).getOutletStream();
     }
-    return null;
+    List<StreamInterface> outlets = equipment.getOutletStreams();
+    return outlets != null && !outlets.isEmpty() ? outlets.get(0) : null;
   }
 
   /**
@@ -69,6 +72,9 @@ public final class DexpiStreamUtils {
     }
     if (equipment instanceof Separator) {
       return ((Separator) equipment).getLiquidOutStream();
+    }
+    if (equipment instanceof Tank) {
+      return ((Tank) equipment).getLiquidOutStream();
     }
     return null;
   }

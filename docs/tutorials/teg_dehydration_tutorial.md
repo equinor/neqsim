@@ -1,419 +1,360 @@
 ---
 title: TEG Gas Dehydration Tutorial
-description: Complete tutorial for modeling triethylene glycol (TEG) gas dehydration systems in NeqSim. Covers contactor design, regeneration, water content specifications, and performance optimization.
+description: Build and validate a mass-conserving NeqSim screening model for water-saturated natural gas contacting lean triethylene glycol.
 ---
 
-# TEG Gas Dehydration Tutorial
+This tutorial builds a conservative equilibrium-contact model for screening
+triethylene glycol (TEG) dehydration. It shows how to saturate a gas with water,
+contact it with lean TEG, split the equilibrium phases, and verify total and
+water-component balances.
 
-This tutorial demonstrates how to model a complete triethylene glycol (TEG) gas dehydration system in NeqSim, including the absorption contactor, flash drum, and regeneration system.
+The example is a thermodynamic screening calculation, not a rated absorber or a
+complete regeneration plant. It does not predict packing height, mass-transfer
+rates, tray efficiency, glycol losses, foaming, corrosion, or regenerator
+performance.
 
-## Overview
+## Learning objectives
 
-TEG dehydration is the most common method for removing water from natural gas to meet pipeline specifications (typically < 7 lb/MMscf or 112 mg/Sm³).
+After completing the tutorial, you can:
 
-### Process Flow
+- construct a CPA fluid for natural gas, water, and TEG;
+- create a reproducible water-saturated gas with `StreamSaturatorUtil`;
+- model one equilibrium contact with `Mixer` and `Separator`;
+- distinguish molar gas water content from glycol mass purity;
+- close total and water-component balances; and
+- identify what must be added for equipment design.
 
+## Model boundary
+
+The calculation represents one ideal equilibrium contact:
+
+```text
+Dry gas basis -> water saturator --\
+                                    mixer -> equilibrium separator -> gas product
+Lean TEG --------------------------/                         \-----> rich TEG
 ```
-Wet Gas → Inlet Separator → TEG Contactor → Dry Gas
-                                ↓
-                           Rich TEG
-                                ↓
-                           Flash Drum → Flash Gas
-                                ↓
-                           Regenerator → Water Vapor
-                                ↓
-                           Lean TEG (recycle)
-```
 
----
+The gas basis is 1.0 MSm³/day at 30 °C and 70 bara. The solvent flow is
+3,000 kg/h and its composition is entered as 99.5 wt% TEG and 0.5 wt% water.
+`addComponent(..., "kg/hr")` establishes the mass basis before the stream is
+scaled to its operating flow.
 
-## Quick Start Example
+`StreamSaturatorUtil` calls the NeqSim water-saturation operation at the feed
+state. Do not label an arbitrary fixed water mole fraction as saturated.
 
-### Java
+## Complete Java example
 
 ```java
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
-// Create wet gas feed
-SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(303.15, 70.0);
-fluid.addComponent("methane", 0.90);
-fluid.addComponent("ethane", 0.05);
-fluid.addComponent("propane", 0.02);
-fluid.addComponent("CO2", 0.02);
-fluid.addComponent("water", 0.01);  // Saturated with water
-fluid.setMixingRule(10);  // CPA mixing rule
-fluid.setMultiPhaseCheck(true);
+public final class TegEquilibriumScreening {
+  private static final Logger logger =
+      LogManager.getLogger(TegEquilibriumScreening.class);
 
-// Create process
-ProcessSystem process = new ProcessSystem();
+  private TegEquilibriumScreening() {}
 
-// Wet gas feed
-Stream wetGas = new Stream("Wet Gas", fluid);
-wetGas.setFlowRate(10.0, "MSm3/day");
-wetGas.setTemperature(30.0, "C");
-wetGas.setPressure(70.0, "bara");
-process.add(wetGas);
+  private static double componentFlow(
+      StreamInterface stream, String componentName) {
+    double flow = 0.0;
+    for (int phaseNumber = 0;
+        phaseNumber < stream.getFluid().getNumberOfPhases();
+        phaseNumber++) {
+      ComponentInterface component = stream.getFluid()
+          .getPhase(phaseNumber).getComponent(componentName);
+      if (component != null) {
+        flow += component.getFlowRate("kg/hr");
+      }
+    }
+    return flow;
+  }
 
-// Lean TEG stream
-SystemSrkCPAstatoil tegFluid = new SystemSrkCPAstatoil(303.15, 70.0);
-tegFluid.addComponent("TEG", 0.99);
-tegFluid.addComponent("water", 0.01);  // 99% lean TEG
-tegFluid.setMixingRule(10);
+  public static void main(String[] args) {
+    SystemSrkCPAstatoil gasFluid =
+        new SystemSrkCPAstatoil(273.15 + 30.0, 70.0);
+    gasFluid.addComponent("methane", 0.90);
+    gasFluid.addComponent("ethane", 0.05);
+    gasFluid.addComponent("propane", 0.02);
+    gasFluid.addComponent("CO2", 0.02);
+    gasFluid.addComponent("nitrogen", 0.01);
+    gasFluid.setMixingRule(10);
 
-Stream leanTEG = new Stream("Lean TEG", tegFluid);
-leanTEG.setFlowRate(3000.0, "kg/hr");  // TEG circulation rate
-leanTEG.setTemperature(35.0, "C");
-leanTEG.setPressure(70.0, "bara");
-process.add(leanTEG);
+    Stream gasFeed = new Stream("dry gas basis", gasFluid);
+    gasFeed.setFlowRate(1.0, "MSm3/day");
+    gasFeed.setTemperature(30.0, "C");
+    gasFeed.setPressure(70.0, "bara");
 
-// TEG Contactor (absorber)
-SimpleTEGAbsorber contactor = new SimpleTEGAbsorber("TEG Contactor");
-contactor.addGasInStream(wetGas);
-contactor.addSolventInStream(leanTEG);
-contactor.setNumberOfStages(6);
-process.add(contactor);
+    StreamSaturatorUtil saturator =
+        new StreamSaturatorUtil("water saturator", gasFeed);
 
-// Run simulation
-process.run();
+    SystemSrkCPAstatoil tegFluid =
+        new SystemSrkCPAstatoil(273.15 + 30.0, 70.0);
+    tegFluid.addComponent("TEG", 99.5, "kg/hr");
+    tegFluid.addComponent("water", 0.5, "kg/hr");
+    tegFluid.setMixingRule(10);
 
-// Get results
-Stream dryGas = contactor.getGasOutStream();
-System.out.println("Dry gas water content: " + 
-    dryGas.getFluid().getComponent("water").getx() * 1e6 + " ppm");
+    Stream leanTeg = new Stream("lean TEG", tegFluid);
+    leanTeg.setFlowRate(3000.0, "kg/hr");
+    leanTeg.setTemperature(30.0, "C");
+    leanTeg.setPressure(70.0, "bara");
+
+    Mixer equilibriumContact = new Mixer("equilibrium contact");
+    equilibriumContact.addStream(saturator.getOutletStream());
+    equilibriumContact.addStream(leanTeg);
+
+    Separator phaseSplitter = new Separator(
+        "gas and rich TEG separator",
+        equilibriumContact.getOutletStream());
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(gasFeed);
+    process.add(saturator);
+    process.add(leanTeg);
+    process.add(equilibriumContact);
+    process.add(phaseSplitter);
+    process.run();
+
+    StreamInterface wetGas = saturator.getOutletStream();
+    StreamInterface productGas = phaseSplitter.getGasOutStream();
+    StreamInterface richTeg = phaseSplitter.getLiquidOutStream();
+
+    double wetWater = wetGas.getFluid().getPhase("gas")
+        .getComponent("water").getx();
+    double productWater = productGas.getFluid().getPhase("gas")
+        .getComponent("water").getx();
+
+    double wetWaterFlow = componentFlow(wetGas, "water");
+    double leanWaterFlow = componentFlow(leanTeg, "water");
+    double productWaterFlow = componentFlow(productGas, "water");
+    double richWaterFlow = componentFlow(richTeg, "water");
+
+    double waterResidual = wetWaterFlow + leanWaterFlow
+        - productWaterFlow - richWaterFlow;
+    double totalMassResidual =
+        wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr")
+        - productGas.getFlowRate("kg/hr")
+        - richTeg.getFlowRate("kg/hr");
+
+    logger.info("Saturated gas water: {} mol-ppm", wetWater * 1.0e6);
+    logger.info("Equilibrium gas water: {} mol-ppm", productWater * 1.0e6);
+    logger.info("Water transferred: {} kg/h",
+        wetWaterFlow - productWaterFlow);
+    logger.info("Water balance residual: {} kg/h", waterResidual);
+    logger.info("Total mass residual: {} kg/h", totalMassResidual);
+  }
+}
 ```
 
-### Python
+## Equivalent Python example
+
+Run this in a clean environment after `pip install neqsim`:
 
 ```python
 from neqsim import jneqsim
 
-# Classes
+
 SystemSrkCPAstatoil = jneqsim.thermo.system.SystemSrkCPAstatoil
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 Stream = jneqsim.process.equipment.stream.Stream
-SimpleTEGAbsorber = jneqsim.process.equipment.absorber.SimpleTEGAbsorber
+StreamSaturatorUtil = jneqsim.process.equipment.util.StreamSaturatorUtil
+Mixer = jneqsim.process.equipment.mixer.Mixer
+Separator = jneqsim.process.equipment.separator.Separator
 
-# Create wet gas
-fluid = SystemSrkCPAstatoil(273.15 + 30.0, 70.0)
-fluid.addComponent("methane", 0.90)
-fluid.addComponent("ethane", 0.05)
-fluid.addComponent("propane", 0.02)
-fluid.addComponent("CO2", 0.02)
-fluid.addComponent("water", 0.01)
-fluid.setMixingRule(10)
-fluid.setMultiPhaseCheck(True)
+gas_fluid = SystemSrkCPAstatoil(273.15 + 30.0, 70.0)
+gas_fluid.addComponent("methane", 0.90)
+gas_fluid.addComponent("ethane", 0.05)
+gas_fluid.addComponent("propane", 0.02)
+gas_fluid.addComponent("CO2", 0.02)
+gas_fluid.addComponent("nitrogen", 0.01)
+gas_fluid.setMixingRule(10)
 
-# Process setup
-process = ProcessSystem()
+gas_feed = Stream("dry gas basis", gas_fluid)
+gas_feed.setFlowRate(1.0, "MSm3/day")
+gas_feed.setTemperature(30.0, "C")
+gas_feed.setPressure(70.0, "bara")
+saturator = StreamSaturatorUtil("water saturator", gas_feed)
 
-wet_gas = Stream("Wet Gas", fluid)
-wet_gas.setFlowRate(10.0, "MSm3/day")
-wet_gas.setTemperature(30.0, "C")
-wet_gas.setPressure(70.0, "bara")
-process.add(wet_gas)
-
-# Lean TEG
-teg_fluid = SystemSrkCPAstatoil(273.15 + 35.0, 70.0)
-teg_fluid.addComponent("TEG", 0.99)
-teg_fluid.addComponent("water", 0.01)
+teg_fluid = SystemSrkCPAstatoil(273.15 + 30.0, 70.0)
+teg_fluid.addComponent("TEG", 99.5, "kg/hr")
+teg_fluid.addComponent("water", 0.5, "kg/hr")
 teg_fluid.setMixingRule(10)
 
-lean_teg = Stream("Lean TEG", teg_fluid)
+lean_teg = Stream("lean TEG", teg_fluid)
 lean_teg.setFlowRate(3000.0, "kg/hr")
-lean_teg.setTemperature(35.0, "C")
+lean_teg.setTemperature(30.0, "C")
 lean_teg.setPressure(70.0, "bara")
+
+equilibrium_contact = Mixer("equilibrium contact")
+equilibrium_contact.addStream(saturator.getOutletStream())
+equilibrium_contact.addStream(lean_teg)
+phase_splitter = Separator(
+    "gas and rich TEG separator",
+    equilibrium_contact.getOutletStream(),
+)
+
+process = ProcessSystem()
+process.add(gas_feed)
+process.add(saturator)
 process.add(lean_teg)
-
-# Contactor
-contactor = SimpleTEGAbsorber("TEG Contactor")
-contactor.addGasInStream(wet_gas)
-contactor.addSolventInStream(lean_teg)
-contactor.setNumberOfStages(6)
-process.add(contactor)
-
-# Run
+process.add(equilibrium_contact)
+process.add(phase_splitter)
 process.run()
 
-# Results
-dry_gas = contactor.getGasOutStream()
-print(f"Dry gas water content: {dry_gas.getFluid().getComponent('water').getx() * 1e6:.1f} ppm")
+wet_gas = saturator.getOutletStream()
+product_gas = phase_splitter.getGasOutStream()
+rich_teg = phase_splitter.getLiquidOutStream()
+
+
+def component_flow(stream, component_name):
+    fluid = stream.getFluid()
+    flow = 0.0
+    for phase_number in range(fluid.getNumberOfPhases()):
+        component = (
+            fluid.getPhase(phase_number).getComponent(component_name)
+        )
+        if component is not None:
+            flow += component.getFlowRate("kg/hr")
+    return flow
+
+
+wet_water = wet_gas.getFluid().getPhase("gas").getComponent("water").getx()
+product_water = (
+    product_gas.getFluid().getPhase("gas").getComponent("water").getx()
+)
+wet_water_flow = component_flow(wet_gas, "water")
+lean_water_flow = component_flow(lean_teg, "water")
+product_water_flow = component_flow(product_gas, "water")
+rich_water_flow = component_flow(rich_teg, "water")
+
+water_residual = (
+    wet_water_flow
+    + lean_water_flow
+    - product_water_flow
+    - rich_water_flow
+)
+total_mass_residual = (
+    wet_gas.getFlowRate("kg/hr")
+    + lean_teg.getFlowRate("kg/hr")
+    - product_gas.getFlowRate("kg/hr")
+    - rich_teg.getFlowRate("kg/hr")
+)
+
+print(f"Saturated gas water: {wet_water * 1.0e6:.3f} mol-ppm")
+print(
+    "Equilibrium gas water: "
+    f"{product_water * 1.0e6:.3f} mol-ppm"
+)
+print(
+    "Water transferred: "
+    f"{wet_water_flow - product_water_flow:.6f} kg/h"
+)
+print(f"Water balance residual: {water_residual:.3e} kg/h")
+print(f"Total mass residual: {total_mass_residual:.3e} kg/h")
 ```
 
----
+## Expected screening results
 
-## Complete TEG Loop with Regeneration
+The clean public-release execution used NeqSim 3.16.0, Python 3.12.13,
+and OpenJDK 17.0.19. The focused Java regression also runs against the current
+repository implementation. Use the narrow engineering envelopes below rather
+than a sub-ppm golden tolerance because compatible solver and runtime changes
+can slightly shift the equilibrium result while preserving the model behavior
+and balances.
 
-For a complete TEG loop including regeneration:
+| Result | Clean 3.16.0 result | Regression envelope |
+| --- | ---: | ---: |
+| Saturated-gas water content | 778.927 mol-ppm | 700--900 mol-ppm |
+| Equilibrium product-gas water content | 46.034 mol-ppm | 40--55 mol-ppm |
+| Water transferred to the liquid phase | 23.286223 kg/h | 22--25 kg/h |
+| Rich-liquid flow | 3,045.903 kg/h | 3,040--3,050 kg/h |
+| Water-component residual | $5.54\times10^{-13}$ kg/h | absolute value below $10^{-8}$ kg/h |
+| Total mass residual | $3.37\times10^{-11}$ kg/h | absolute value below $10^{-8}$ kg/h |
 
-```java
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
-import neqsim.process.equipment.distillation.Reboiler;
-import neqsim.process.equipment.heatexchanger.HeatExchanger;
-import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.pump.Pump;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
+For example, the Java 21 full-suite run on the current repository head produced
+47.685 mol-ppm product-gas water. Both results represent more than 90% removal
+of gas-phase water and satisfy the conservation criteria. The rich-liquid
+increase is larger than the water transfer because the equilibrium liquid also
+absorbs some hydrocarbon and acid gas. Inspect all component balances before
+using the result to size downstream regeneration equipment.
 
-public class TEGDehydrationProcess {
-    public static void main(String[] args) {
-        
-        // === FEED STREAMS ===
-        
-        // Wet natural gas
-        SystemSrkCPAstatoil wetGasFluid = new SystemSrkCPAstatoil(303.15, 70.0);
-        wetGasFluid.addComponent("methane", 0.85);
-        wetGasFluid.addComponent("ethane", 0.06);
-        wetGasFluid.addComponent("propane", 0.03);
-        wetGasFluid.addComponent("i-butane", 0.01);
-        wetGasFluid.addComponent("n-butane", 0.01);
-        wetGasFluid.addComponent("CO2", 0.02);
-        wetGasFluid.addComponent("nitrogen", 0.01);
-        wetGasFluid.addComponent("water", 0.01);  // Water saturated
-        wetGasFluid.setMixingRule(10);
-        wetGasFluid.setMultiPhaseCheck(true);
-        
-        ProcessSystem process = new ProcessSystem();
-        
-        Stream wetGas = new Stream("Wet Gas Feed", wetGasFluid);
-        wetGas.setFlowRate(5.0, "MSm3/day");
-        wetGas.setTemperature(35.0, "C");
-        wetGas.setPressure(70.0, "bara");
-        process.add(wetGas);
-        
-        // Lean TEG makeup (99.5% purity)
-        SystemSrkCPAstatoil leanTEGFluid = new SystemSrkCPAstatoil(303.15, 70.0);
-        leanTEGFluid.addComponent("TEG", 0.995);
-        leanTEGFluid.addComponent("water", 0.005);
-        leanTEGFluid.setMixingRule(10);
-        
-        Stream leanTEG = new Stream("Lean TEG", leanTEGFluid);
-        leanTEG.setFlowRate(2500.0, "kg/hr");
-        leanTEG.setTemperature(40.0, "C");
-        leanTEG.setPressure(70.0, "bara");
-        process.add(leanTEG);
-        
-        // === ABSORPTION SECTION ===
-        
-        // TEG Contactor (6 trays typical)
-        SimpleTEGAbsorber contactor = new SimpleTEGAbsorber("TEG Contactor");
-        contactor.addGasInStream(wetGas);
-        contactor.addSolventInStream(leanTEG);
-        contactor.setNumberOfStages(6);
-        process.add(contactor);
-        
-        // Dry gas product
-        Stream dryGas = contactor.getGasOutStream();
-        dryGas.setName("Dry Gas Product");
-        process.add(dryGas);
-        
-        // Rich TEG to regeneration
-        Stream richTEG = contactor.getLiquidOutStream();
-        richTEG.setName("Rich TEG");
-        process.add(richTEG);
-        
-        // === REGENERATION SECTION ===
-        
-        // Rich TEG pressure letdown
-        ThrottlingValve tegValve = new ThrottlingValve("TEG Letdown Valve", richTEG);
-        tegValve.setOutletPressure(5.0);  // 5 bara flash pressure
-        process.add(tegValve);
-        
-        // Flash drum to remove dissolved gas
-        Separator flashDrum = new Separator("Flash Drum", tegValve.getOutletStream());
-        process.add(flashDrum);
-        
-        Stream flashGas = flashDrum.getGasOutStream();
-        flashGas.setName("Flash Gas");
-        process.add(flashGas);
-        
-        Stream flashedTEG = flashDrum.getLiquidOutStream();
-        flashedTEG.setName("Flashed TEG");
-        process.add(flashedTEG);
-        
-        // Lean/Rich TEG heat exchanger
-        HeatExchanger tegExchanger = new HeatExchanger("Lean/Rich Exchanger");
-        tegExchanger.setFeedStream(0, flashedTEG);
-        // Hot side would be lean TEG from reboiler (simplified here)
-        process.add(tegExchanger);
-        
-        // TEG Regenerator (reboiler)
-        // Temperature: 200-204°C for 99%+ purity
-        // Note: Full regenerator would use DistillationColumn
-        
-        // === RUN SIMULATION ===
-        process.run();
-        
-        // === RESULTS ===
-        System.out.println("=== TEG Dehydration Results ===");
-        System.out.println();
-        
-        // Wet gas water content
-        double wetWaterMoleFrac = wetGas.getFluid().getComponent("water").getx();
-        System.out.printf("Wet gas water content: %.0f ppm (mole)%n", 
-            wetWaterMoleFrac * 1e6);
-        
-        // Dry gas water content
-        double dryWaterMoleFrac = dryGas.getFluid().getComponent("water").getx();
-        System.out.printf("Dry gas water content: %.1f ppm (mole)%n", 
-            dryWaterMoleFrac * 1e6);
-        
-        // Water removal efficiency
-        double efficiency = (1.0 - dryWaterMoleFrac / wetWaterMoleFrac) * 100;
-        System.out.printf("Water removal efficiency: %.2f%%%n", efficiency);
-        
-        // Rich TEG water loading
-        double richWaterMoleFrac = richTEG.getFluid().getComponent("water").getx();
-        System.out.printf("Rich TEG water content: %.2f%% (mole)%n", 
-            richWaterMoleFrac * 100);
-        
-        // Flash gas rate
-        System.out.printf("Flash gas rate: %.2f kg/hr%n", 
-            flashGas.getFlowRate("kg/hr"));
-    }
-}
-```
+## Balance equations
 
----
+The water transferred from gas to liquid is
 
-## Design Parameters
+$$\dot m_{\mathrm{H_2O,transfer}}=\dot m_{\mathrm{H_2O,wet}}-\dot m_{\mathrm{H_2O,product}}$$
 
-### Typical Operating Conditions
+For a conservative contact, the same transfer appears in the solvent:
 
-| Parameter | Typical Range | Notes |
-|-----------|---------------|-------|
-| Contactor pressure | 40-100 bara | Higher pressure improves absorption |
-| Contactor temperature | 25-40°C | Lower temp improves absorption |
-| Number of trays | 4-8 | 6 trays typical |
-| TEG circulation rate | 15-40 L TEG/kg H₂O | Higher rate = drier gas |
-| Lean TEG purity | 99.0-99.9% | 99.5% typical, >99.9% with stripping gas |
-| Regenerator temperature | 200-204°C | Max 204°C to prevent degradation |
-| Regenerator pressure | 0.1-0.5 bara | Atmospheric typical |
+$$\dot m_{\mathrm{H_2O,transfer}}=\dot m_{\mathrm{H_2O,rich}}-\dot m_{\mathrm{H_2O,lean}}$$
 
-### Water Content Specifications
+The water residual used by the example is
 
-| Specification | Limit | Unit |
-|---------------|-------|------|
-| Pipeline spec (typical) | 7 | lb/MMscf |
-| Pipeline spec (SI) | 112 | mg/Sm³ |
-| Cryogenic processing | 1 | ppm |
-| LNG feed | 0.1 | ppm |
+$$r_{\mathrm{H_2O}}=\dot m_{\mathrm{H_2O,wet}}+\dot m_{\mathrm{H_2O,lean}}-\dot m_{\mathrm{H_2O,product}}-\dot m_{\mathrm{H_2O,rich}}$$
 
-### TEG Circulation Rate Calculation
+Require the residual to be negligible relative to the inlet water flow. Also
+close the total mass balance because gas components can dissolve in TEG.
 
-The TEG circulation rate affects dew point depression:
+## Interpretation and limitations
 
-$$
-\text{TEG Rate} = \frac{W_{in} \times Q_{gas}}{W_{cap} \times \rho_{TEG}}
-$$
+The product result is the equilibrium outcome of one ideal contact. It is useful
+for checking model setup, solvent purity sensitivity, temperature sensitivity,
+and the thermodynamic lower bound for a specified contact state.
 
-Where:
-- $W_{in}$ = inlet water content (kg/Sm³)
-- $Q_{gas}$ = gas flow rate (Sm³/hr)
-- $W_{cap}$ = TEG water pickup capacity (kg H₂O/kg TEG)
-- $\rho_{TEG}$ = TEG density (kg/m³)
+It is not a guaranteed outlet specification. A real contactor requires
+rate-based or validated stage-efficiency modeling, packing hydraulics, column
+diameter and height, liquid distribution, mist elimination, glycol entrainment,
+foaming allowance, and an operating envelope. A full regeneration loop also
+requires pressure letdown, flash-gas handling, lean/rich heat exchange,
+reboiling and stripping, cooling, pumping, makeup, and recycle convergence.
 
----
+NeqSim does not currently provide the `GlycolDehydrationModule` API previously
+shown on this page. Do not copy that obsolete example. `SimpleTEGAbsorber` is
+available for stage-efficiency screening and now conserves the complete gas and
+solvent inventories even when the two feeds start with different component
+lists. Its gas and rich-TEG outlets close both the water-component and total
+mass balances; this behavior is protected by the regression for
+[issue #2659](https://github.com/equinor/neqsim/issues/2659).
 
-## Water Dew Point Calculation
+Outlet construction follows the thermodynamic system's logical gas and aqueous
+phase mapping rather than its internal backing-array order. This preserves the
+four-port component inventory if a flash has reordered its internal phase
+slots or a downstream `Stream` wrapper reflashes an outlet. The absorber checks
+the unchanged feed inventory after its TP and PH flashes and after extracting
+both outlets; it reports an invalid state instead of rescaling a converged
+flash result.
 
-To calculate the water dew point of the dry gas:
+The conservative outlet behavior does not turn `SimpleTEGAbsorber` into a
+rate-based equipment model. Continue to apply the packing, hydraulics,
+mass-transfer, regeneration, and operating-envelope limitations described
+above, and verify component and total balances for every engineering case.
 
-```java
-// After running process
-Stream dryGas = contactor.getGasOutStream();
-SystemInterface dryGasFluid = dryGas.getFluid();
+## Sensitivity studies
 
-// Calculate water dew point
-ThermodynamicOperations ops = new ThermodynamicOperations(dryGasFluid);
-try {
-    ops.waterDewPointTemperatureFlash();
-    double waterDewPoint = dryGasFluid.getTemperature("C");
-    System.out.printf("Water dew point: %.1f °C%n", waterDewPoint);
-} catch (Exception e) {
-    System.out.println("No water dew point (too dry)");
-}
-```
+Change one input at a time and rerun the complete process:
 
----
+1. Lean-TEG purity on a mass basis.
+2. TEG circulation rate in kg/h.
+3. Contactor temperature.
+4. Gas pressure.
+5. Feed composition and acid-gas content.
 
-## Stripping Gas for Enhanced Regeneration
+For each case, record gas water content, transferred water, hydrocarbon
+co-absorption, total mass residual, and water residual. A lower equilibrium gas
+water content is not automatically a better plant design if glycol circulation,
+hydrocarbon loss, regeneration duty, or emissions increase.
 
-To achieve >99.5% lean TEG purity, add stripping gas to the regenerator:
+## Related documentation
 
-```java
-// Stripping gas (typically fuel gas or dry product gas)
-SystemSrkCPAstatoil stripGasFluid = new SystemSrkCPAstatoil(473.15, 1.0);
-stripGasFluid.addComponent("methane", 1.0);
-stripGasFluid.setMixingRule(10);
-
-Stream strippingGas = new Stream("Stripping Gas", stripGasFluid);
-strippingGas.setFlowRate(50.0, "kg/hr");  // 2-5% of TEG rate
-strippingGas.setTemperature(200.0, "C");
-strippingGas.setPressure(1.0, "bara");
-```
-
----
-
-## TEG Quality Monitoring
-
-Key parameters to monitor for TEG health:
-
-| Parameter | Normal Range | Problem Indication |
-|-----------|--------------|-------------------|
-| pH | 6.0-8.0 | <6.0 indicates acid contamination |
-| Color | Clear to light yellow | Dark = thermal degradation |
-| Foaming tendency | None | Indicates contamination |
-| Flash point | >177°C | Lower = hydrocarbon contamination |
-| Specific gravity | 1.120-1.125 | Variation indicates water or contamination |
-
----
-
-## Common Issues and Solutions
-
-| Issue | Possible Cause | Solution |
-|-------|----------------|----------|
-| High dry gas water content | Low TEG purity | Increase regenerator temperature |
-| | Low circulation rate | Increase TEG rate |
-| | Too few trays | Add trays or packing |
-| TEG losses | High reboiler temperature | Reduce to ≤204°C |
-| | Carry-over in contactor | Add mist eliminator |
-| Foaming | Hydrocarbon contamination | Carbon filter, skim tank |
-| Corrosion | Acid gases, degradation products | Maintain pH, replace TEG |
-
----
-
-## Using the GlycolDehydrationModule
-
-NeqSim provides a pre-built module for TEG dehydration:
-
-```java
-import neqsim.process.equipment.util.GlycolDehydrationModule;
-
-// Create module
-GlycolDehydrationModule tegModule = new GlycolDehydrationModule("TEG Unit");
-tegModule.setGasInStream(wetGas);
-tegModule.setNumberOfTheoreticalStages(6);
-tegModule.setLeanGlycolPurity(0.995);  // 99.5% TEG
-tegModule.setGlycolCirculationRate(3000.0);  // kg/hr
-
-// Run
-tegModule.run();
-
-// Get dry gas
-Stream dryGas = tegModule.getGasOutStream();
-```
-
----
-
-## See Also
-
-- [Absorber Equipment](../process/equipment/absorbers) - Absorber equipment documentation
-- [Thermodynamics Recipes](../cookbook/thermodynamics-recipes) - Thermodynamic calculations
-- [Process Recipes](../cookbook/process-recipes) - Quick recipes for common operations
-- [Component List](../thermo/component_list) - TEG and glycol properties
+- [Absorbers and strippers](../process/equipment/absorbers.md)
+- [Thermodynamics recipes](../cookbook/thermodynamics-recipes.md)
+- [Process recipes](../cookbook/process-recipes.md)
+- [Component reference list](../thermo/component_list.md)
+- [Troubleshooting guide](../troubleshooting/index.md)

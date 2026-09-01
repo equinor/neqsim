@@ -44,11 +44,23 @@ public class OptimizedVUflash extends Flash {
   private static final int MAX_ITERATIONS = 100;
   private static final double MIN_DAMPING = 0.05;
   private static final double MAX_DAMPING = 0.8;
+  /** Relative volume residual accepted as a converged VU solution. */
+  private static final double SOLUTION_VOLUME_TOL = 1.0e-3;
+  /** Relative energy residual accepted as a converged VU solution. */
+  private static final double SOLUTION_ENERGY_TOL = 1.0e-3;
 
   // Performance tracking - instance-level to avoid cross-contamination between different systems
   private double lastPressure = Double.NaN;
   private double lastTemperature = Double.NaN;
   private boolean isWellBehaved = true;
+  /** Whether the initialization TP flash may reuse the current system's K-values. */
+  private final boolean warmStartInitialization;
+  /** Number of Newton iterations used by the most recent solve. */
+  private int lastIterationCount = 0;
+  /** Whether the most recent solve met both V and U specifications. */
+  private boolean lastRunConverged = false;
+  /** Whether the most recent warm-initialized run required a cold retry. */
+  private boolean coldFallbackUsed = false;
 
   /**
    * Constructor for OptimizedVUflash.
@@ -58,10 +70,29 @@ public class OptimizedVUflash extends Flash {
    * @param Uspec specified internal energy
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec) {
+    this(system, Vspec, Uspec, false);
+  }
+
+  /**
+   * Constructor for an optimized VU flash with an explicit initialization policy.
+   *
+   * <p>
+   * Warm initialization is intended for continuous dynamic calculations where the supplied system is the immediately
+   * preceding converged state. Standalone flashes should retain the cold default so unrelated states cannot seed each
+   * other.
+   * </p>
+   *
+   * @param system thermodynamic system to flash
+   * @param Vspec specified total volume
+   * @param Uspec specified internal energy
+   * @param warmStartInitialization whether the initialization TP flash may reuse current K-values
+   */
+  public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec, boolean warmStartInitialization) {
     this.system = system;
     this.tpFlash = new TPflash(system);
     this.Vspec = Vspec;
     this.Uspec = Uspec;
+    this.warmStartInitialization = warmStartInitialization;
   }
 
   /**
@@ -147,6 +178,8 @@ public class OptimizedVUflash extends Flash {
    * @return converged pressure, or the current system pressure if input validation fails
    */
   public double solveQ() {
+    lastIterationCount = 0;
+    lastRunConverged = false;
     if (!validateInputs()) {
       logger.warn("Invalid inputs for OptimizedVUflash");
       return system.getPressure();
@@ -223,6 +256,7 @@ public class OptimizedVUflash extends Flash {
         // small
         if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
           isWellBehaved = true;
+          lastRunConverged = true;
           break;
         }
 
@@ -245,7 +279,8 @@ public class OptimizedVUflash extends Flash {
       } while (iterations < MAX_ITERATIONS);
 
       // Update performance tracking
-      if (iterations < MAX_ITERATIONS) {
+      lastIterationCount = iterations;
+      if (lastRunConverged) {
         lastPressure = nyPres;
         lastTemperature = nyTemp;
 
@@ -254,10 +289,12 @@ public class OptimizedVUflash extends Flash {
           isWellBehaved = true;
         }
       } else {
-        logger.warn("OptimizedVUflash did not converge after " + MAX_ITERATIONS + " iterations");
+        logger.warn("OptimizedVUflash did not converge after " + iterations + " iterations");
         isWellBehaved = false;
       }
     } catch (Exception e) {
+      lastIterationCount = iterations;
+      lastRunConverged = false;
       logger.warn("Exception in OptimizedVUflash: " + e.getMessage());
       isWellBehaved = false;
     }
@@ -265,21 +302,107 @@ public class OptimizedVUflash extends Flash {
     return nyPres;
   }
 
+  /**
+   * Checks whether the state currently held by the system actually satisfies the volume and internal-energy
+   * specification. {@link #solveQ()} leaves the system at its last iterate even when the Newton iteration diverges, so
+   * the caller must verify the result before accepting it - an unverified iterate becomes the initial state of the next
+   * transient step and can corrupt an entire dynamic run.
+   *
+   * @return true when pressure, temperature, volume and energy are finite and both specifications are met
+   */
+  private boolean isSolutionAcceptable() {
+    try {
+      double pressure = system.getPressure();
+      double temperature = system.getTemperature();
+      if (!Double.isFinite(pressure) || !Double.isFinite(temperature) || pressure <= 0.0 || temperature <= 0.0) {
+        return false;
+      }
+      double volume = system.getVolume();
+      double enthalpy = system.getEnthalpy();
+      if (!Double.isFinite(volume) || !Double.isFinite(enthalpy) || Vspec <= 0.0) {
+        return false;
+      }
+      double volumeError = Math.abs((volume - Vspec) / Vspec);
+      double enthalpyTarget = Uspec + pressure * Vspec;
+      double energyError = Math.abs((enthalpy - enthalpyTarget) / Math.max(Math.abs(enthalpyTarget), 1.0));
+      return volumeError < SOLUTION_VOLUME_TOL && energyError < SOLUTION_ENERGY_TOL;
+    } catch (RuntimeException ex) {
+      logger.warn("Could not evaluate VU flash residuals: " + ex.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Runs the initialization TP flash and Newton iteration with their requested warm-start settings.
+   *
+   * @param warmStartInitialFlash whether the initialization TP flash may reuse current K-values
+   * @param warmStartInnerFlashes whether the inner TP flashes of the Newton iteration may reuse K-values
+   */
+  private void solveFromCurrentState(boolean warmStartInitialFlash, boolean warmStartInnerFlashes) {
+    lastPressure = Double.NaN;
+    lastTemperature = Double.NaN;
+    isWellBehaved = true;
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInitialFlash);
+    tpFlash.run();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInnerFlashes);
+    solveQ();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
-    // warm-start enabled only for subsequent iterations.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    double startPressure = system.getPressure();
+    double startTemperature = system.getTemperature();
+    coldFallbackUsed = false;
     try {
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
-      // Minimal TP flash for initialization
-      tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
-      solveQ();
+      // Every Newton-loop TP flash may reuse K-values. The initialization flash does so only when
+      // the caller identifies the state as the previous point on a continuous dynamic trajectory.
+      solveFromCurrentState(warmStartInitialization, true);
+      boolean solutionAcceptable = isSolutionAcceptable();
+      if (warmStartInitialization && !solutionAcceptable) {
+        // A warm seed is an optimization, never a correctness requirement. Retry once from the
+        // incoming P/T with a cold initialization if the nearby-state assumption was invalid.
+        coldFallbackUsed = true;
+        system.setPressure(startPressure);
+        system.setTemperature(startTemperature);
+        solveFromCurrentState(false, true);
+        solutionAcceptable = isSolutionAcceptable();
+      }
+      lastRunConverged = solutionAcceptable;
+      if (!solutionAcceptable) {
+        logger.warn("OptimizedVUflash did not reach the volume/energy specification");
+      }
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
     }
+  }
+
+  /**
+   * Returns the Newton iteration count from the most recent solve.
+   *
+   * @return last Newton iteration count
+   */
+  public int getLastIterationCount() {
+    return lastIterationCount;
+  }
+
+  /**
+   * Returns whether the most recent solve met the accepted volume and energy residual criteria.
+   *
+   * @return true when the final state satisfied both accepted residual criteria
+   */
+  public boolean isLastRunConverged() {
+    return lastRunConverged;
+  }
+
+  /**
+   * Returns whether a warm-initialized run required the cold safety fallback.
+   *
+   * @return true when the last run retried with cold initialization
+   */
+  public boolean wasColdFallbackUsed() {
+    return coldFallbackUsed;
   }
 
   /** {@inheritDoc} */

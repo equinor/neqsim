@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-07-11"
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F104 CO2-envelope screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+last_verified: "2026-08-27"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -19,6 +19,7 @@ NeqSim code patterns.
 - CO2 and H2S corrosion rate estimation
 - Elemental sulfur (S8) deposition risk at pressure/temperature letdown (compressor inlets, control/letdown valves, dry-gas seals, filters)
 - Pipeline pressure drop and temperature profile
+- DNV-RP-F109 vertical and lateral on-bottom stability screening
 - Water hammer/liquid hammer screening for fast valve closure, pump trip, or check-valve slam
 - Multiphase flow pattern prediction (slug, annular, stratified)
 - Thermal insulation sizing for subsea pipelines
@@ -28,17 +29,26 @@ NeqSim code patterns.
 
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
-| Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
+| Pipeline design | DNV-ST-F101, DNV-RP-F104 for CO2, NORSOK L-001, ASME B31.4/B31.8 | Structural design plus composition-specific CO2 phase/hydraulic and lifecycle basis |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
-| Subsea pipelines | DNV-RP-F109, NORSOK U-001 | On-bottom stability, span assessment |
+| On-bottom stability | DNV-RP-F109 | Vertical stability, absolute lateral stability, displacement acceptance |
+| Free spans | DNV-RP-F105 | Free-span response and fatigue assessment |
+| Global buckling and pipe-soil interaction | DNV-RP-F110, DNV-RP-F114 | Caller-controlled external response and demand-resistance screening |
+| Subsea systems | NORSOK U-001 | Subsea production-system requirements |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
-| Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
+| Pipeline integrity | DNV-RP-F101, DNV-RP-F116, API 1160 | Inspected metal-loss remaining strength and integrity management |
 
 For fast acoustic transients, also load `neqsim-water-hammer`. Use
 `WaterHammerStudy` or MCP `runWaterHammer` with STID route geometry, tagreader
 event windows, and valve/pump event schedules; use this flow-assurance skill for
 the broader operating-envelope and mitigation context.
+
+For on-bottom stability, load `neqsim-subsea-and-wells` and use the typed
+`DnvRpF109OnBottomStabilityKernel`. It provides a transparent absolute-static
+screen and checks externally calculated response displacements. It does not
+contain generalized design tables, produce dynamic response, qualify environmental
+or soil models, or claim DNV conformity. A pass still requires independent review.
 
 ## 1. Hydrate Analysis
 
@@ -221,6 +231,72 @@ double outletT = pipe.getOutletStream().getTemperature() - 273.15;  // C
 double dP = feedStream.getPressure() - outletP;  // pressure drop
 ```
 
+### DNV-RP-F105 free-span routing
+
+When a hydraulics or environment study feeds an explicit current `DNV-RP-F105 2025-12` free-span
+screen, route verified structural and environmental inputs through
+`DnvRpF105FreeSpanScreeningKernel`. Keep steel and hydrodynamic diameters distinct and use velocities
+normal to the span. Effective modal mass, axial force, span geometry, and response-trigger basis are
+external structural inputs, not quantities inferred silently from a hydraulic pipe object.
+
+The kernel is a simply supported first-mode/dimensionless escalation screen. Its Strouhal number,
+frequency-ratio band, and reduced-velocity triggers are project-controlled and cannot be called DNV
+limits. Keep soil/shoulder and multi-span response, VIV amplitudes, direct wave loading, ULS/FLS,
+fatigue, monitoring, and intervention external. Never relabel
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` as F105 evidence.
+
+### DNV-RP-F101 inspected metal-loss routing
+
+When inspection data feeds an explicit current `DNV-RP-F101 2019-09+AMD:2025-09` screen, route one
+verified isolated longitudinal metal-loss defect under internal pressure through
+`DnvRpF101CorrodedPipelineScreeningKernel`. Require the measured depth and axial length,
+assessment wall-thickness definition, inspection/growth allowance, characteristic ultimate
+tensile strength, internal/external absolute pressures, and project-controlled pressure factor.
+
+Do not infer defect geometry from hydraulic corrosion-rate calculations or projected uniform wall
+loss. The typed kernel does not handle defect interaction or complex profiles, longitudinal
+compression, probabilistic assessment, crack-like damage, repair, or fitness-for-service approval.
+It also does not replace DNV-ST-F101 original-design checks.
+
+### DNV-RP-F104 CO2 pipeline routing
+
+When an actual-composition phase-envelope and hydraulic/thermal study feeds a current
+`DNV-RP-F104 2021-02+AMD:2021-09` screen, route the bounded project composition, CO2/water limits,
+ordered profile, absolute MAOP, design temperatures, and a separately verified minimum single-phase
+pressure boundary at each point through `DnvRpF104Co2PipelineEnvelopeScreeningKernel`.
+
+The external thermodynamic basis must establish that pressure above each boundary represents the
+intended single-phase region for the specific composition, temperature, path, EOS, and uncertainty.
+Do not substitute pure-CO2 critical conditions or `CO2FlowCorrections.isDensePhase(...)`. Treat
+composition, phase-boundary, MAOP, and temperature margins as screening findings. Keep transient
+cases, F104 decompression/fracture and crack arrest, materials/corrosion, release consequences,
+construction, operation, requalification, and all DNV-ST-F101 structural checks external.
+
+### DNV-RP-F114 pipe-soil interaction routing
+
+When route, hydraulic/thermal, or installation work feeds a current `DNV-RP-F114 2021-05` screen,
+route named design situations with externally verified vertical, axial, and lateral action and
+resistance magnitudes through `DnvRpF114PipeSoilInteractionScreeningKernel`. Treat margin and
+utilization outputs as caller-controlled screening findings.
+
+Do not convert burial depth, soil thermal resistance, or a generic friction factor into
+geotechnical resistance. Keep site investigation, soil interpretation, penetration/burial and
+load-displacement response, time/cyclic effects, characteristic values, uncertainty, structural
+actions, and F109/F110/F105/ST-F101 acceptance external.
+
+### DNV-RP-F110 global-buckling response routing
+
+When hydraulic/thermal, route, or installation work feeds a current
+`DNV-RP-F110 2019-09+AMD:2021-09` screen, route named external structural-analysis cases through
+`DnvRpF110GlobalBucklingResponseScreeningKernel`. Supply effective force, peak longitudinal strain,
+peak global displacement, and required feed-in length with caller-controlled allowable or available
+values. Treat margins and utilizations as screening findings.
+
+Require external evidence for the effective-force derivation, pipe/as-laid geometry, pipe-soil
+response, imperfections/triggers/strategy, global structural model, load combinations, local
+capacity and strain criteria, uncertainty/sensitivity/buckle sharing, and lifecycle actions. Never
+derive critical buckling, initiation/prevention criteria, structural response, or soil springs from
+NeqSim hydraulic or thermal output. Keep F109/F114/F105 and all ST-F101 acceptance external.
 ### Beggs and Brill Multiphase Correlation
 
 ```java
@@ -298,6 +374,282 @@ for (double qgMSm3d : gasRates) {
 > `SEGREGATED` (stratified/annular — gravity-dominated), `TRANSITION`,
 > `INTERMITTENT` (plug/slug), `DISTRIBUTED` (bubble/mist). "Gravity-dominated /
 > liquid loading" = SEGREGATED (+ low-velocity TRANSITION).
+
+> **GOTCHA — profile index vs `getFlowRegime()`.** `run()` evaluates the
+> correlation once per increment **and then once more at the outlet state**, so
+> every correlation profile (`getLiquidHoldupProfile()`,
+> `getFlowRegimeProfileList()`, …) has `numberOfIncrements + 1` entries and
+> index *i* belongs to `getPressureProfile()[i]`. `getFlowRegime()` returns the
+> **outlet** state. Reading `getFlowRegime()` next to
+> `getSegmentLiquidHoldup(0)` compares two different states and can look like a
+> discontinuity. Always pair `getSegmentFlowRegime(i)` with
+> `getSegmentLiquidHoldup(i)`.
+
+> **VALIDITY — low liquid loading.** On a long wet-gas export line (ID 0.355 m,
+> no-slip liquid fraction λ_L ≈ 0.006), Beggs & Brill over-predicts ΔP well above
+> a single-phase Darcy-Weisbach integration of the same line, and the gap is
+> entirely the two-phase friction multiplier `exp(S)`: removing it brings ΔP
+> within 4% of that analytic integration. `S` is monotonically *increasing*
+> in `y = λ_L / H_L²`, so *less* liquid gives a *larger* multiplier — the
+> opposite of the physical trend — up to a bounded maximum of `exp(S) = 3.19` at
+> `y = 52.1`. B&B is calibrated for λ_L down to roughly 0.01–0.02; below that,
+> use `TwoFluidPipe` or a mechanistic simulator and treat B&B as a conservative
+> upper bound. The published map also has a genuine step where the segregated and
+> distributed correlations meet at `L1` for λ_L < 0.01 (no transition band
+> exists there): hold-up ×0.70 and ΔP ×1.12 across a 1 bara change. That step is
+> in the correlation — do not smooth it.
+
+> **Fixed defects worth knowing (all affected the *inclination* correction).**
+> Older NeqSim builds silently returned the horizontal hold-up on an inclined leg
+> when (a) the pipe angle was converted degrees→radians twice, (b) the
+> Baker-Swerdloff surface tension went negative above 274 bara or for a very
+> light liquid, making the liquid velocity number NaN, or (c) the flow regime was
+> `TRANSITION`, which had no inclination branch at all. All three are fixed and
+> locked by `PipeBeggsAndBrillsCorrelationTest`. If you are on an older build,
+> sanity-check that uphill hold-up clearly exceeds horizontal hold-up before
+> trusting an inclined result.
+
+> **Phase-count code paths.** `PipeBeggsAndBrills` assumes phase 0 is the gas
+> whenever the stream has more than one phase. A **gas-free** stream that splits
+> into oil and water (dead oil with free water at high pressure) used to be
+> modelled as gas–liquid, with the oil phase acting as the gas: fictitious flow
+> regime, hold-up 0.21 instead of 1, and ΔP 44% above the homogeneous liquid
+> value. It is now carried as a homogeneous liquid with a volume-weighted density
+> and viscosity. The three-phase liquid density is also now combined on **volume**
+> fractions (total mass over total volume) rather than mass fractions. Locked by
+> `PipeBeggsAndBrillsPhasePathsTest`.
+
+> **Where the error sits.** On a **single-phase** gas line Beggs & Brill matches a
+> Darcy-Weisbach integration to a few tenths of a per cent on pressure drop and to
+> ~0.15 K on arrival temperature — the friction and energy paths are sound. The
+> over-prediction seen on the *two-phase* version of the same line is therefore
+> entirely the two-phase friction multiplier, not the solver.
+
+> **Comparisons against commercial transient multiphase simulators are not
+> published in this repository.** Their licence terms generally prohibit
+> publishing benchmark results and prohibit using the software to develop
+> competing software, so no NeqSim closure is tuned to such a tool and no measured
+> deviation against one is recorded here. Validate against experimental,
+> laboratory or field data, or against an analytic/first-principles check.
+
+> **`TwoFluidPipe` steady-state usage.** The refinement loop needs a few hundred
+> sweeps to settle the pressure profile against the updated section densities
+> (74 km at 160 sections ≈ 25 s, at 320 sections ≈ 60 s). Always
+> `assert pipe.isSteadyStateConverged()` **and** check
+> `pipe.getSteadyStateIterationsUsed() > 1` — a result reported after one sweep
+> still carries the densities the sections were initialised with and understates
+> the pressure drop of a gas line by roughly ten per cent. Around 160 sections
+> (≈450 m) is the sweet spot on a long transmission line: it converges reliably
+> and is grid-converged to 0.4% against 320 sections. Raise
+> `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
+> if `isSteadyStateWallClockLimited()` is true.
+
+> **MCP `runPipeline` solver and response handoff.** Omit `solver` (or use
+> `beggsBrill`) for the established correlation path. Use `solver: "twoFluid"`
+> when the task needs finite-volume pressure, temperature, holdup, phase-velocity,
+> flow-regime, inventory, erosion-margin, hydrate/wax, or slug profiles. Pass
+> `sectionLengths_m`, `elevationProfile_m`, `heatTransferProfile_W_m2K`, and
+> `surfaceTemperatureProfile_C` or `_K` as equal-length per-section arrays; the
+> lengths must sum to `length_m`. Bound expensive solves with
+> `steadyStateMaxWallClockTime_s`. Request `detailLevel: FULL` for spatial
+> profiles, `SUMMARY` for engineering KPIs without profiles, or `MINIMUM` for
+> the compact core result. The authoritative object is `TwoFluidPipeResponse`
+> (a `BaseResponse`): preserve it through MCP/report handoffs instead of
+> independently reconstructing fields from the equipment. Always propagate its
+> convergence/pressure-floor/wall-clock validation findings and apply the
+> limitations below before quoting a result.
+
+> **Three defects found by auditing the solve against its own governing equations
+> — all fixed, but the symptoms are generic and worth recognising elsewhere.**
+> (1) *A time integrator inside a fixed-point sweep.* The steady solve integrated
+> `LiquidAccumulationTracker` once per iteration with a nominal `dt`; that tracker
+> only ever adds liquid, ratchets its volume up to what the sections already hold,
+> then adds it back on top of that holdup, so it has no fixed point. Valley
+> sections climbed to the 0.85/0.95 cap and the profile never settled.
+> (2) *A correlation overriding a solved momentum balance.* The minimum-slip
+> constraint applied the Beggs and Brill horizontal holdup correlation as a lower
+> bound in every regime. It is fitted to 1–1.5 inch air-water loops at
+> near-atmospheric pressure with λ_L ≥ 0.01; the line runs λ_L ≈ 0.008
+> in a 14-inch pipe at 200 bara, and the floor was binding in EVERY section — so
+> the reported holdup was the correlation, not the solved momentum balance, worth
+> ≈+20% on ΔP through the mixture density. Only the scale-free
+> `lambdaL * minimumSlipFactor` bound remains.
+> (3) *Convergence declared without re-evaluating thermodynamics.* The flash runs
+> every `ssFlashInterval` sweeps but the "flash moved nothing" flag started false,
+> so a non-flash sweep read as settled. The solve could exit after ONE sweep on
+> densities it had never revisited.
+> If you see a steady profile with a section sitting exactly on a cap, or
+> `getSteadyStateIterationsUsed()` returning 1 on a long line, suspect these.
+
+> **Behaviour after those fixes**, on that line at default settings: the rate
+> exponent in ΔP ~ rate^n rises from about 2.1 to about 3.1 across a 3x rate
+> range, i.e. the density feedback along the line is reproduced, not just the
+> level at one rate; 10 MW of DEH raises arrival T by ~17 K and ΔP by ~15%, so the
+> energy equation feeds the momentum balance. Grid-converged (160 vs 320 sections
+> within 0.4%). Terrain response is solved, not tuned: the annular film balance
+> carries `tau_i = tau_wL + rhoL*g*sin(theta)*delta`, so holdup responds to
+> inclination and scales with `sin(theta)`. Still open: **the three-phase
+> free-water case does not converge** — 15 m3/hr of free water on the same line is
+> wall-clock limited after 4078 iterations at a 1200 s budget. ΔP is identical
+> between a 300 s and a 1200 s budget, so the profile is stationary and the
+> criterion is stalling on the three-phase liquid split — but
+> `isSteadyStateConverged()` is false, so the number must not be quoted. ALWAYS
+> check it on a water-bearing line.
+
+> **`TwoFluidPipe` also fails silently when a line has no deliverability.** The
+> marching solver clamps section pressure at a 1 bara floor; that clamp is a
+> fixed point of itself, so the per-section change falls below tolerance and the
+> sweep would report success on a case with no physical solution. Check
+> `pipe.isSteadyStatePressureFloorLimited()` — when it is true,
+> `isSteadyStateConverged()` is withheld and the profile must be discarded, not
+> reported. `PipeBeggsAndBrills` throws `Outlet pressure is negative` on the same
+> condition.
+
+> **`TwoFluidPipe` holdup at low rate is dominated by terrain trap sections.**
+> The MAXIMUM holdup at 4 and 7 MSm3/d sits well above the line mean (a single
+> valley section), so do not
+> quote local `TwoFluidPipe` holdup or valley inventory as a design number. The
+> three-phase bookkeeping is sound — gas/oil/water fractions sum to one and stay in
+> range at every node.
+
+> **The minimum-slip bound applies only level and uphill.** `alphaL >= lambdaL *
+> minimumSlipFactor` (default 2.0) states that the gas outruns the liquid, which is a
+> property of gas-driven transport. On a downhill section gravity moves the liquid and
+> the slip ratio legitimately falls, so the bound is not applied there. It used to be
+> applied everywhere and was binding on 39 of 42 downhill sections of an undulating
+> fixture, replacing the momentum balance with a constant.
+
+> **The horizontal annular criterion is the Taitel-Dukler equilibrium level.**
+> `pipe.setUseEquilibriumLevelAnnularTransition(false)` restores the earlier path, the
+> vertical droplet-entrainment threshold `U_SG > 3.1*(sigma*g*drho/rhoG^2)^0.25`, which is
+> about 0.75 m/s on a 14-inch export line and so classified essentially any horizontal gas
+> pipeline as annular, solving a shallow stratified layer with a thin-film closure. The two
+> agree wherever the Kelvin-Helmholtz margin exceeds one — identical at 10 MSm3/d on the
+> export line — and differ at 4 MSm3/d, where the equilibrium branch reclassifies 272 of 320
+> sections as stratified-wavy.
+
+> **Friction is per-phase wall shear in stratified flow.**
+> `setSeparatedFrictionModel(false)` restores the mixture correlation, which charges the whole
+> perimeter with a holdup-weighted density; on a stratified line at 41% holdup that
+> over-predicts ΔP by ~2.3x, and because it scales as `G^2/rho_mix` it makes extra liquid
+> REDUCE the gradient, inverting the terrain response. The separated form is scoped to
+> stratified flow because its perimeters come from a circular-segment layer; annular flow,
+> whose film wets the whole perimeter, is not that geometry.
+
+> **Measured accuracy on the 73.8 km reference line**, across a threefold rate range:
+> ΔP +1.4 / +1.6 / +0.1 / −2.7 % and maximum holdup −2.4 / −7.1 / −6.6 / +3.5 % at
+> 4 / 7 / 10 / 12 MSm3/d, all converged and grid-converged. The earlier defaults gave
+> ΔP +5.7 / +5.6 / +1.4 / −0.0 % and holdup −25.5 / −18.6 / −6.2 / +3.3 %.
+
+> **Direct electrical heating (DEH)** is available on both models with the same
+> convention — the power set is what reaches the fluid, so cable and coating
+> losses must already be deducted:
+> `pipe.setDirectElectricalHeatingPower(watts)` or
+> `setDirectElectricalHeatingPowerPerMeter(wattsPerMetre)`. In `TwoFluidPipe`
+> steady state each segment decays toward the balance temperature
+> `T_surface + q/(U·π·D)` (exact for a uniform source, cannot overshoot); it also
+> works in transient and with wall heat transfer switched off. A tool with no
+> distributed-heating input can represent the same source through the identity
+> `−UπD(T−T_surf) + q ≡ −UπD(T − [T_surf + q/(UπD)])`, i.e. by raising the ambient
+> temperature by `q/(UπD)`.
+
+> **`TwoFluidPipe` liquid-rich and severe-slugging transients remain
+> unqualified.** The legacy route can still develop phase backflow and clamp the
+> outlet flux at zero while its finite-volume balance closes exactly. Gas-dominated
+> null cases remain usable, but do not promote a liquid-rich or severe-slugging
+> trajectory from either a small residual or a completed time loop alone. Use the
+> analytical `SevereSluggingBenchmarkHarnessTest` screen and the public Tengesdal
+> evidence until the dynamic qualification gates below pass.
+>
+> **The coupled route is an opt-in four-part configuration.** For a pressure
+> outlet that physically permits phase fallback, use
+> `setEnableInterfacialPressure(true)`,
+> `setImplicitInterfacialPressureCoupling(true)`,
+> `setEnableCoupledPressureMomentum(true)`, and
+> `setAllowOutletPhaseBackflow(true)` together. The nonlinear controls are public:
+> `setCoupledPressureMomentumMaximumIterations(int)` and
+> `setCoupledPressureMomentumRelativeVolumeTolerance(double)`, with defaults 24
+> and `1e-7`.
+>
+> **WS3 restores progress, not physical parity.** The 16-section Tengesdal Test 3
+> probe now completes 50/50 calls of 0.1 s; a 24-section refinement completes
+> 100/100 calls of 0.05 s. Neither rejects a nonlinear substep, and gas, oil,
+> water, liquid, and total mass residuals are below `1e-9`. The former
+> 12-iteration cap stopped around `6e-7`, above the `1e-7` gate. The sticky pressure
+> limiter still fires, however, and the liquid outlet spans -18.55 to 6.88 kg/s
+> versus the stored 0.375 to 4.03 kg/s comparison. This is a disclosed boundary/
+> pressure-coupling gap, not a reason to tune a public closure to a commercial
+> trace. Subsequent validation must use the public Tengesdal experiment, nearby
+> operating points, conservation, and mesh/time-step refinement.
+>
+> **What did help: fixing the regime.** The same case classified SLUG rather than
+> ANNULAR (PR #3086, Barnea bridging limit) cuts the 30-minute inventory runaway
+> from **+56.3% to +20.1%** at default settings. Still unusable, still gated by
+> the flag, but the regime branch is a bigger lever on the runaway than the
+> interfacial-pressure term is.
+>
+> **The transient tells you when it has failed — always check every diagnostic.**
+> Read `isTransientOutletBackflowClamped()`,
+> `isTransientCoupledPressureMomentumFailureDetected()`,
+> `isTransientCoupledPressureMomentumCorrectionLimited()`, and
+> `getTransientCoupledPressureMomentumRejectedSubsteps()` after the full window.
+> `isCoupledPressureMomentumPressureCorrectionLimited()` is the non-sticky view
+> of only the latest correction.
+> The flags/counter are sticky and reset on the next steady `run()`. A coupled
+> call that cannot complete its requested interval now throws with accepted time,
+> requested time, residual/tolerance, iterations/cap, and limiter state; never
+> catch it and advance the engineering timeline. The mass-balance report alone
+> cannot qualify the result because a clamped or limited route can still conserve
+> its own discrete fluxes exactly.
+>
+> **Three-phase (gas/oil/water) steady state is fixed.** The oil/water slip
+> ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls
+> off to no slip once the liquid disperses above a liquid Froude number of about
+> 3; the previous form cut off at Fr = 2 and under-predicted water holdup badly.
+> One gap remains open: the pressure drop is over-predicted in this liquid-rich
+> regime, far more than on a gas-dominated line.
+>
+> **Exporting NeqSim to OLGA — the fluid basis is two files, not one.** The
+> `.tab` PVT table fixes the phase behaviour; the **hydrate boundary is separate**
+> and OLGA does not compute it. Without a `HYDRATECURVE` in the case, OLGA falls
+> back to the Hammerschmidt correlation, so a study whose NeqSim half uses CPA
+> hydrate equilibrium and whose OLGA half uses Hammerschmidt disagrees about where
+> hydrates form, invisibly. Export both from the same fluid:
+> `OLGAhydrateCurveGenerator` writes the `HYDRATECURVE LABEL=..., PRESSURE=(...)
+> bara, TEMPERATURE=(...) C` block and returns the matching
+> `HYDRATECHECK HYDRATECURVE="..."` line for the flowpath. OLGA interpolates that
+> curve **linearly**, so span the pressures the case actually visits and use ≥20
+> points when the range reaches below ~50 bara (4 points over 10–200 bara costs
+> 4.1 K of hydrate temperature; 20 points costs 0.48 K). The OLGA output variable
+> is `DTHYD` in °C, and it is `T_hydrate − T_fluid` — **positive means inside the
+> hydrate region**, negative is the safe margin, which is the opposite of the
+> intuitive reading. Full OLGA-side workflow in the community
+> `neqsim-olga-multiphase-simulator` skill.
+>
+> **Never build a volumetric phase fraction from `phase.getVolume()`.** With a
+> Peneloux volume shift active it disagrees with `getDensity()` by the shift —
+> +16.6% for oil and +31.7% for water on a typical SRK three-phase system, while
+> gas matches to 0.25%. Use `getFlowRate("kg/sec")/getDensity("kg/m3")`.
+
+> advection-relaxation transport lag, not a conservation-law solver, and the
+> Beggs & Brill correlation is not even used on that path (friction reverts to
+> single-phase Darcy-Weisbach, viscosity is frozen at the inlet). It **does not
+> store mass**: on a rate step the outlet mass flow equals the inlet at every
+> timestep, so `∫(ṁ_in − ṁ_out)dt = 0` while the inventory implied by its own
+> profile moves 171 t — about 192 t of gas appears from nowhere on a 74 km line.
+> This is not repairable in the class as written: it takes only an inlet boundary
+> condition, so there is nothing to pin the arrival pressure and drive line pack.
+> It also does not exactly preserve its own steady state — with the boundary
+> conditions held **constant** it drifts −6.3 bar on that line (was +30 bar before
+> the cell-density fix), because the transient friction closure differs from the
+> steady one. Note also that `calculateSteadyState` defaults to **true**, so
+> without `setCalculateSteadyState(false)` `runTransient` is only a steady-state
+> solve with the clock advanced; and the time step must be shorter than the
+> *segment* transit time `L/numberOfIncrements/v`, otherwise the relaxation factor
+> saturates at 1 and the whole line responds in a single step. Use it for transport
+> delay in a flowsheet; use `TwoFluidPipe` for line pack, shut-in, ramps and
+> blowdown (0.00 bar drift on the same null test, mass balance closing to the
+> digit), and `WaterHammerPipe` for surge.
 
 ### Gray (1974) Correlation — Gas / Gas-Condensate Vertical Wells
 
@@ -440,6 +792,14 @@ bridge compute it from aqueous Fe++/CO3-- molalities (Sun & Nesic 2009 Ksp):
 model.setFeCO3SaturationRatio(sr);   // >1 = protective; -1 = disabled (default)
 double film = model.calculateFeCO3FilmFactor();  // 1.0 = no credit, <1 = protective
 ```
+
+For an auditable standards calculation, pass the resulting in-situ pH and optional saturation ratio
+to `NorsokM506CorrosionDesignKernel.Input`. The kernel is the preferred public path when the task
+names NORSOK M-506: it enforces the unamended 2017 edition and model envelope, preserves raw inputs
+without setter clamping, and returns `CALCULATED_REVIEW_REQUIRED`. Continue to use the bridge to
+derive chemistry and the legacy model for sweeps, but do not present either route as a conformity
+assessment. The optional saturation-ratio film factor and projected wall loss are NeqSim screening
+extensions, not code acceptance criteria.
 
 **Gotchas (verified):** `SystemInterface.clone()` drops the chemical-reaction setup
 — re-run `chemicalReactionInit()` on the clone before flashing or the CO2-brine pH

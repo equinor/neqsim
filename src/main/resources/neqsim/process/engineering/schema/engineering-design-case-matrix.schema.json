@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-design-case-matrix:v1",
+  "title": "NeqSim engineering design-case matrix",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "cases", "metrics", "executions", "governingValues", "summary"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_design_case_matrix.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-design-case-matrix:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "cases": {"type": "array", "items": {"type": "object"}},
+    "metrics": {"type": "array", "items": {"type": "object"}},
+    "executions": {"type": "array", "items": {"type": "object"}},
+    "governingValues": {"type": "array", "items": {"type": "object"}},
+    "summary": {
+      "type": "object",
+      "required": ["configuredCaseCount", "metricCount", "successfulCaseCount", "partialCaseCount", "failedCaseCount", "skippedCaseCount", "requiredCaseFailureCount", "metricFailureCount", "limitViolationCount"],
+      "properties": {
+        "configuredCaseCount": {"type": "integer", "minimum": 0},
+        "metricCount": {"type": "integer", "minimum": 0},
+        "successfulCaseCount": {"type": "integer", "minimum": 0},
+        "partialCaseCount": {"type": "integer", "minimum": 0},
+        "failedCaseCount": {"type": "integer", "minimum": 0},
+        "skippedCaseCount": {"type": "integer", "minimum": 0},
+        "requiredCaseFailureCount": {"type": "integer", "minimum": 0},
+        "metricFailureCount": {"type": "integer", "minimum": 0},
+        "limitViolationCount": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

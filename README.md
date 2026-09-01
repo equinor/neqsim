@@ -65,7 +65,7 @@ See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.16.0</version>
+  <version>3.18.0</version>
 </dependency>
 ```
 
@@ -332,13 +332,13 @@ See [VISION_AGENTS.md](VISION_AGENTS.md) and the [Where Does This Go? guide](htt
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.16.0</version>
+  <version>3.18.0</version>
 </dependency>
 ```
 
 The Quick Start above shows the core pattern (create a fluid, run a flash, and read properties). For process simulation, add equipment to a `ProcessSystem` and call `run()`; see the [Java Getting Started Guide](docs/java-getting-started.md) for full examples.
 
-**Learn more:** [Java Getting Started Guide](docs/java-getting-started.md) | [JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) | [Wiki](https://github.com/equinor/neqsim/wiki) | [Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL)
+**Learn more:** [Java Getting Started Guide](docs/java-getting-started.md) | [JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html) | [Wiki](https://github.com/equinor/neqsim/wiki) | [Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL)
 
 ---
 
@@ -689,7 +689,7 @@ All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 | **Benchmark gallery** | [docs/benchmarks/](docs/benchmarks/index.md) - validation against NIST, published data |
 | **Reference manual index** | [REFERENCE_MANUAL_INDEX.md](docs/REFERENCE_MANUAL_INDEX.md) (350+ pages) |
 | **MCP tool contract** | [MCP_CONTRACT.md](neqsim-mcp-server/MCP_CONTRACT.md) - stable API for agent builders |
-| **JavaDoc API** | [JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) |
+| **JavaDoc API** | [JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html) |
 | **Jupyter notebooks** | [examples/notebooks/](examples/notebooks/) (30+ examples) |
 | **Discussion forum** | [GitHub Discussions](https://github.com/equinor/neqsim/discussions) |
 | **Releases** | [GitHub Releases](https://github.com/equinor/neqsim/releases) |

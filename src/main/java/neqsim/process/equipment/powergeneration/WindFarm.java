@@ -1,6 +1,9 @@
 package neqsim.process.equipment.powergeneration;
 
 import java.util.UUID;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 
 /**
@@ -116,6 +119,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
    */
   public WindFarm(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -125,7 +129,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
    * @param numberOfTurbines number of wind turbines
    */
   public WindFarm(String name, int numberOfTurbines) {
-    super(name);
+    this(name);
     this.numberOfTurbines = numberOfTurbines;
   }
 
@@ -262,7 +266,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     capacityFactor = totalRated > 0 ? power / totalRated : 0.0;
 
     // Set energy stream (negative = produced/available)
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("electricalPower").setDuty(-power);
     setCalculationIdentifier(id);
   }
 

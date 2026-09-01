@@ -2,9 +2,12 @@ package neqsim.mcp.runners;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -64,6 +67,21 @@ public final class SecurityRunner {
   private static final AtomicLong REQUEST_COUNTER = new AtomicLong(0);
 
   /**
+   * Tools that stay reachable without a credential so an operator can authenticate after security has been enabled.
+   * Without this exemption, enabling enforcement locks every caller out of the server permanently — including the
+   * management tool needed to disable it again.
+   */
+  private static final Set<String> BOOTSTRAP_TOOLS = Collections
+      .unmodifiableSet(new HashSet<String>(Arrays.asList("manageSecurity")));
+
+  /**
+   * Security actions that expose or grant privilege. When enforcement is enabled these require the configured admin
+   * token, otherwise any caller reaching the bootstrap-exempt manageSecurity tool could mint an admin key for itself.
+   */
+  private static final Set<String> PRIVILEGED_ACTIONS = Collections.unmodifiableSet(
+      new HashSet<String>(Arrays.asList("createApiKey", "revokeApiKey", "setConfig", "getAuditLog", "getRateLimits")));
+
+  /**
    * Private constructor — all methods are static.
    */
   private SecurityRunner() {
@@ -79,6 +97,11 @@ public final class SecurityRunner {
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
       String action = input.has("action") ? input.get("action").getAsString() : "";
+
+      String privilegeDenied = checkPrivilegedAction(action, input);
+      if (privilegeDenied != null) {
+        return privilegeDenied;
+      }
 
       switch (action) {
       case "createApiKey":
@@ -108,34 +131,51 @@ public final class SecurityRunner {
    * Checks authentication and rate limiting for an incoming request. Call this at the beginning of any protected tool
    * invocation.
    *
-   * @param apiKey the API key (optional if security is disabled)
+   * <p>
+   * When no explicit key is supplied the credential bound by the transport layer through {@link McpRequestContext} is
+   * used. Credentials are never accepted as MCP tool arguments.
+   * </p>
+   *
+   * @param apiKey the API key, or null to resolve the credential from {@link McpRequestContext}
    * @param tool the tool being invoked
    * @return null if allowed, or an error JSON string if denied
    */
   public static String checkAccess(String apiKey, String tool) {
-    long reqId = REQUEST_COUNTER.incrementAndGet();
+    REQUEST_COUNTER.incrementAndGet();
+
+    McpRequestContext.Principal principal = McpRequestContext.current();
+    String credential = apiKey != null && !apiKey.isEmpty() ? apiKey : principal.getCredential();
+    String subject = principal.getSubject();
 
     if (!enabled) {
       // Log even when not enforcing
-      logAudit("anonymous", tool, "allowed", "Security disabled");
+      logAudit(subject, tool, "allowed", "Security disabled");
       return null;
     }
 
-    // Check API key
-    if (apiKey == null || apiKey.isEmpty()) {
-      logAudit("anonymous", tool, "denied", "Missing API key");
-      return errorJson("AUTH_REQUIRED", "API key required",
-          "Provide 'apiKey' field in request or disable security enforcement");
+    if (BOOTSTRAP_TOOLS.contains(tool)) {
+      // Reachable without a credential so an operator can still authenticate or read status.
+      // Privileged actions inside the tool are separately gated by checkPrivilegedAction.
+      logAudit(subject, tool, "allowed", "Bootstrap tool");
+      return null;
     }
 
-    UserContext user = API_KEYS.get(apiKey);
+    if (credential == null || credential.isEmpty()) {
+      logAudit(subject, tool, "denied", "No authenticated principal");
+      return errorJson("AUTH_REQUIRED", "Authenticated caller required",
+          "Authenticate at the transport layer (API key header or OAuth bearer token). "
+              + "Credentials are not accepted as tool arguments.");
+    }
+
+    UserContext user = API_KEYS.get(credential);
     if (user == null) {
-      logAudit("unknown:" + apiKey.substring(0, Math.min(8, apiKey.length())), tool, "denied", "Invalid API key");
-      return errorJson("AUTH_FAILED", "Invalid API key", "Check your API key");
+      logAudit("unknown:" + credential.substring(0, Math.min(8, credential.length())), tool, "denied",
+          "Invalid credential");
+      return errorJson("AUTH_FAILED", "Invalid credential", "Check the API key or bearer token used by the transport");
     }
 
     // Check rate limit
-    if (!checkRateLimit(apiKey, user.rateLimit)) {
+    if (!checkRateLimit(credential, user.rateLimit)) {
       logAudit(user.userId, tool, "rate_limited", "Exceeded " + user.rateLimit + " requests/minute");
       return errorJson("RATE_LIMITED", "Rate limit exceeded: " + user.rateLimit + " requests/minute",
           "Wait and retry, or request a higher rate limit");
@@ -143,6 +183,47 @@ public final class SecurityRunner {
 
     logAudit(user.userId, tool, "allowed", null);
     return null; // Access granted
+  }
+
+  /**
+   * Resets all global security state. Test-only hook: the key store, audit log, rate-limit counters and the enforcement
+   * flag are process-wide, so tests that enable enforcement must be able to restore a clean state deterministically.
+   */
+  static void resetForTests() {
+    enabled = false;
+    API_KEYS.clear();
+    RATE_LIMITS.clear();
+    AUDIT_LOG.clear();
+  }
+
+  /**
+   * Gates privileged security actions behind the configured admin token while enforcement is on.
+   *
+   * <p>
+   * Enforcement is only applied when {@link #enabled} is true. With security disabled the server is a single-user
+   * desktop tool and the management actions stay open, which preserves local workflows and existing behaviour.
+   * </p>
+   *
+   * @param action the requested security action
+   * @param input the raw request object, which may carry an adminToken field
+   * @return null when the action may proceed, otherwise an error JSON string
+   */
+  private static String checkPrivilegedAction(String action, JsonObject input) {
+    if (!enabled || !PRIVILEGED_ACTIONS.contains(action)) {
+      return null;
+    }
+    if (!IndustrialProfile.isAdminConfigured()) {
+      logAudit(McpRequestContext.currentSubject(), "manageSecurity:" + action, "denied", "No admin token configured");
+      return errorJson("ADMIN_NOT_CONFIGURED", "Security enforcement is enabled but no admin token is configured",
+          "Set NEQSIM_MCP_ADMIN_TOKEN (or -Dneqsim.mcp.adminToken) on the server before enabling security");
+    }
+    String adminToken = input.has("adminToken") ? input.get("adminToken").getAsString() : null;
+    if (!IndustrialProfile.isAdminAuthorized(adminToken)) {
+      logAudit(McpRequestContext.currentSubject(), "manageSecurity:" + action, "denied", "Admin authorization failed");
+      return errorJson("ADMIN_REQUIRED", "Action '" + action + "' requires administrator authorization",
+          "Supply the configured admin token as 'adminToken'");
+    }
+    return null;
   }
 
   /**
@@ -212,6 +293,10 @@ public final class SecurityRunner {
    */
   private static String authenticate(JsonObject input) {
     String apiKey = input.has("apiKey") ? input.get("apiKey").getAsString() : "";
+    if (apiKey.isEmpty()) {
+      String bound = McpRequestContext.currentCredential();
+      apiKey = bound != null ? bound : "";
+    }
 
     if (!enabled) {
       JsonObject response = new JsonObject();
@@ -371,6 +456,7 @@ public final class SecurityRunner {
     AuditEntry entry = new AuditEntry();
     entry.timestamp = Instant.now().toString();
     entry.userId = userId;
+    entry.tenant = McpRequestContext.current().getTenant();
     entry.tool = tool;
     entry.result = result;
     entry.details = details;
@@ -492,6 +578,9 @@ public final class SecurityRunner {
     /** User identifier. */
     String userId = "";
 
+    /** Tenant or project scope the request was made in. */
+    String tenant = "default";
+
     /** Tool invoked. */
     String tool = "";
 
@@ -513,6 +602,7 @@ public final class SecurityRunner {
       JsonObject obj = new JsonObject();
       obj.addProperty("timestamp", timestamp);
       obj.addProperty("userId", userId);
+      obj.addProperty("tenant", tenant);
       obj.addProperty("tool", tool);
       obj.addProperty("result", result);
       if (details != null) {

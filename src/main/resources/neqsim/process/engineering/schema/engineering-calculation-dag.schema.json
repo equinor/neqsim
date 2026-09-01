@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-calculation-dag:v1",
+  "title": "NeqSim standards-aware engineering calculation DAG",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "topologicalOrder", "nodes", "edges", "summary"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_calculation_dag.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-calculation-dag:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "topologicalOrder": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "subjectNodeId", "method", "status", "standardsRequired", "standardsReady", "executionReadiness", "prerequisiteCalculationIds", "standardReferences"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "subjectNodeId": {"type": "string", "minLength": 1},
+          "method": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "minLength": 1},
+          "standardsRequired": {"type": "boolean"},
+          "standardsReady": {"type": "boolean"},
+          "executionReadiness": {"type": "string", "minLength": 1},
+          "prerequisiteCalculationIds": {"type": "array", "items": {"type": "string"}},
+          "standardReferences": {"type": "array", "items": {"type": "object"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sourceCalculationId", "targetCalculationId", "kind"],
+        "properties": {
+          "sourceCalculationId": {"type": "string", "minLength": 1},
+          "targetCalculationId": {"type": "string", "minLength": 1},
+          "kind": {"const": "DEPENDS_ON"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["calculationCount", "dependencyCount", "readinessCounts"],
+      "properties": {
+        "calculationCount": {"type": "integer", "minimum": 0},
+        "dependencyCount": {"type": "integer", "minimum": 0},
+        "readinessCounts": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

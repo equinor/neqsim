@@ -15,7 +15,9 @@ import org.apache.logging.log4j.Logger;
  * @author esol
  * @version $Id: $Id
  */
-public class DoubleCloneable implements Cloneable {
+public class DoubleCloneable implements Cloneable, java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
+
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DoubleCloneable.class);
   double doubleValue;

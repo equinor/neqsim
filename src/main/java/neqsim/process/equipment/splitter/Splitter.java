@@ -4,12 +4,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import com.google.gson.GsonBuilder;
-
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.mixer.Mixer;
@@ -381,16 +378,31 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       }
       totSplit += splitFactor[i];
     }
-    if (Math.abs(totSplit - 1.0) > 1e-10) {
-      logger.debug("total split factor different from 0 in splitter - totsplit = " + totSplit);
-      logger.debug("setting first split to = " + (1.0 - totSplit));
-      splitFactor[0] = 1.0 - totSplit;
+    if (!Double.isFinite(totSplit) || totSplit <= 0.0) {
+      logger.debug("total split factor is not positive and finite in splitter - totsplit = " + totSplit);
+      Arrays.fill(splitFactor, 0.0);
+      splitFactor[0] = 1.0;
+    } else if (Math.abs(totSplit - 1.0) > 1e-10) {
+      logger.debug("total split factor different from 1.0 in splitter - totsplit = " + totSplit);
+      for (int i = 0; i < splitNumber; i++) {
+        splitFactor[i] /= totSplit;
+      }
     }
 
     for (int i = 0; i < splitNumber; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.init(0);
       splitStream[i].setThermoSystem(thermoSystem);
+      if (splitFactor[i] <= 0.0) {
+        // A branch that is switched off carries no inventory. Subtracting every mole would leave
+        // 0/0 mole fractions, and flashing that makes Rachford-Rice diverge, so a consumer of the
+        // branch sees a NaN enthalpy. Scaling the inlet split to zero flow keeps the composition
+        // well defined, so the flash below stays on the inlet solution and every extensive
+        // property comes out at zero.
+        thermoSystem.setTotalFlowRate(0.0, "kg/hr");
+        new ThermodynamicOperations(thermoSystem).TPflash();
+        continue;
+      }
       for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
         int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
         double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();

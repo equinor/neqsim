@@ -1,7 +1,7 @@
 package neqsim.process.equipment.capacity;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -88,13 +88,16 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
   /** {@inheritDoc} */
   @Override
   public double evaluateMaxCapacity(ProcessEquipmentInterface equipment) {
+    if (equipment instanceof Filter) {
+      return ((Filter) equipment).getTerminalDeltaP();
+    }
     return maxDpBar;
   }
 
   /** {@inheritDoc} */
   @Override
   public Map<String, CapacityConstraint> getConstraints(ProcessEquipmentInterface equipment) {
-    Map<String, CapacityConstraint> constraints = new HashMap<String, CapacityConstraint>();
+    Map<String, CapacityConstraint> constraints = new LinkedHashMap<String, CapacityConstraint>();
 
     if (equipment instanceof Filter) {
       addFilterConstraints(constraints, (Filter) equipment);
@@ -113,11 +116,29 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
    */
   private void addFilterConstraints(Map<String, CapacityConstraint> constraints, Filter filter) {
     // Pressure drop constraint
-    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxDpBar)
-        .setMaxValue(maxDpBar * 1.2).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setWarningThreshold(0.8).setDescription("Filter pressure drop vs maximum allowable")
-        .setValueSupplier(() -> Math.abs(filter.getDeltaP()));
+    double terminalDp = filter.getTerminalDeltaP() > 0.0 ? filter.getTerminalDeltaP() : maxDpBar;
+    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(terminalDp)
+        .setMaxValue(filter.getElementCollapsePressure()).setUnit("bar")
+        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.8)
+        .setDescription("Filter pressure drop vs maximum allowable")
+        .setValueSupplier(() -> Math.abs(filter.getUnrestrictedDeltaP()));
     constraints.put("pressureDrop", dpConstraint);
+
+    if (!Double.isInfinite(filter.getLoadingCapacity()) && filter.getLoadingCapacity() > 0.0) {
+      CapacityConstraint loadingConstraint = new CapacityConstraint("dirtLoading")
+          .setDesignValue(filter.getLoadingCapacity()).setMaxValue(filter.getLoadingCapacity()).setUnit("kg")
+          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.8)
+          .setDescription("Captured contaminant loading vs element holding capacity")
+          .setValueSupplier(() -> filter.getSolidsLoading());
+      constraints.put("dirtLoading", loadingConstraint);
+    }
+
+    CapacityConstraint collapseConstraint = new CapacityConstraint("elementCollapsePressure")
+        .setDesignValue(filter.getElementCollapsePressure()).setMaxValue(filter.getElementCollapsePressure())
+        .setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.8)
+        .setDescription("Filter differential pressure vs element collapse/burst rating")
+        .setValueSupplier(() -> Math.abs(filter.getUnrestrictedDeltaP()));
+    constraints.put("elementCollapsePressure", collapseConstraint);
   }
 
   /**

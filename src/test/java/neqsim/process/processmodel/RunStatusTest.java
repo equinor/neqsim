@@ -3,7 +3,9 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
@@ -117,6 +119,55 @@ class RunStatusTest {
     assertFalse(status.isSuccess(), "a failed run must not report success");
     assertEquals("BrokenUnit", status.getFailedUnitName());
     assertNotNull(status.getFailedUnitError());
+  }
+
+  @Test
+  void testSuccessfulUnitStatusesAreReusedUntilMetadataChanges() {
+    ProcessSystem process = buildProcess(50000.0);
+    process.run();
+    UnitRunStatus firstFeedStatus = process.getRunStatus().getUnits().get(0);
+    UnitRunStatus firstSeparatorStatus = process.getRunStatus().getUnits().get(1);
+
+    process.run();
+    assertSame(firstFeedStatus, process.getRunStatus().getUnits().get(0));
+    assertSame(firstSeparatorStatus, process.getRunStatus().getUnits().get(1));
+
+    process.getUnit("HP Sep").setName("Renamed separator");
+    process.run();
+    assertNotSame(firstFeedStatus, process.getRunStatus().getUnits().get(0));
+    assertNotSame(firstSeparatorStatus, process.getRunStatus().getUnits().get(1));
+    assertEquals("Renamed separator", process.getRunStatus().getUnits().get(1).getUnitName());
+  }
+
+  @Test
+  void testSuccessfulUnitStatusCacheTracksStructureChangesAndCopy() {
+    ProcessSystem process = buildProcess(50000.0);
+    process.run();
+    UnitRunStatus originalFeedStatus = process.getRunStatus().getUnits().get(0);
+
+    process.removeUnit("Compressor");
+    process.run();
+    assertEquals(2, process.getRunStatus().getUnits().size());
+    assertNotSame(originalFeedStatus, process.getRunStatus().getUnits().get(0));
+
+    ProcessSystem copy = process.copy();
+    copy.run();
+    assertEquals(process.getRunStatusJson(), copy.getRunStatusJson());
+    assertNotSame(process.getRunStatus().getUnits().get(0), copy.getRunStatus().getUnits().get(0));
+  }
+
+  @Test
+  void testFailureAfterSuccessfulRunDoesNotReuseSuccessRecords() {
+    ProcessSystem process = buildProcess(50000.0);
+    process.run();
+    process.clear();
+    process.add(new FailingUnit("BrokenUnit"));
+
+    assertThrows(RuntimeException.class, process::run);
+
+    assertEquals(1, process.getRunStatus().getUnits().size());
+    assertFalse(process.getRunStatus().getUnits().get(0).isSuccess());
+    assertEquals("BrokenUnit", process.getRunStatus().getFailedUnitName());
   }
 
   @Test

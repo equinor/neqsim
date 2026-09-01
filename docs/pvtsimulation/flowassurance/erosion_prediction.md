@@ -3,8 +3,6 @@ title: "Erosion Prediction Calculator"
 description: "Sand erosion prediction using API RP 14E erosional velocity and DNV RP O501 particle erosion models for pipelines, elbows, tees, chokes, and other geometries."
 ---
 
-# Erosion Prediction Calculator
-
 The `ErosionPredictionCalculator` provides sand erosion assessment for production piping and process equipment using two industry-standard methods.
 
 **Class:** `neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator`

@@ -159,7 +159,7 @@ Riser hybrid = Riser.createHybrid("Deepwater Export", inletStream, 2000.0);
 |----------|---------|-------|
 | **DNV-OS-F201** | 2010 | Dynamic Risers - main design standard |
 | **DNV-RP-F204** | 2010 | Riser Fatigue |
-| **DNV-RP-C203** | 2021 | Fatigue Design of Offshore Structures |
+| **DNV-RP-C203** | 2024-10+AMD:2025-10 | S-N/Miner fatigue screening through the typed kernel; structural analysis remains external |
 | **DNV-RP-C205** | 2021 | Environmental Conditions and Loads |
 | **API RP 2RD** | 2013 | Riser Design for FPS |
 | **API RP 17B** | 2014 | Flexible Pipe |
@@ -329,17 +329,22 @@ double fatigueLife = calc.getRiserFatigueLife();  // years
 double totalDamage = calc.getTotalFatigueDamageRate();  // per year
 ```
 
-### S-N Curve
+### Legacy S-N estimate and the typed C203 path
 
-Fatigue life per DNV-RP-C203:
+The legacy riser calculator evaluates:
 
 $$\log N = \log a - m \cdot \log \Delta\sigma$$
 
 Where:
 - $N$ = cycles to failure
-- $a$ = S-N parameter (10^12.164 for seawater with CP)
+- $a$ = configurable legacy S-N parameter
 - $m$ = slope (3.0)
 - $\Delta\sigma$ = stress range (MPa)
+
+The legacy defaults are not consistent with the separate pipeline shortcut and do not establish an
+edition, curve/detail selection, environmental basis, or verified spectrum. Do not label this result
+as current-edition DNV-RP-C203 evidence. Use `DnvRpC203FatigueDesignKernel` for an explicit C203
+basis, with project-controlled curve parameters and externally verified stress bins and factors.
 
 ---
 
@@ -394,8 +399,8 @@ design.readDesignSpecifications();  // Loads from database
 | Strouhal Number | `setStrouhalNumber()` | DNV-RP-C205 |
 | Drag Coefficient | `setDragCoefficient()` | DNV-RP-C205 |
 | Added Mass | `setAddedMassCoefficient()` | DNV-RP-C205 |
-| S-N Parameter | `setSnParameter()` | DNV-RP-C203 |
-| S-N Slope | `setSnSlope()` | DNV-RP-C203 |
+| Legacy S-N parameter | `setSnParameter()` | Compatibility estimate; not an exact-edition C203 selection |
+| Legacy S-N slope | `setSnSlope()` | Compatibility estimate; not an exact-edition C203 selection |
 | Fatigue Design Factor | `setFatigueDesignFactor()` | DNV-RP-F204 |
 | DAF | `setDynamicAmplificationFactor()` | DNV-OS-F201 |
 | SCF | `setStressConcentrationFactor()` | DNV-RP-F204 |

@@ -3,8 +3,6 @@ title: Black Oil PVT and Reservoir Simulator Export
 description: This document describes NeqSim's black oil implementation and the ability to export PVT data to reservoir simulators like Eclipse and CMG.
 ---
 
-# Black Oil PVT and Reservoir Simulator Export
-
 This document describes NeqSim's black oil implementation and the ability to export PVT data to reservoir simulators like Eclipse and CMG.
 
 ## Overview

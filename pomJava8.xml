@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.16.0</revision>
+		<revision>3.18.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -28,8 +28,9 @@
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
 		<jvm.module.opens.argLine></jvm.module.opens.argLine>
-		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
-		<excludedTestGroups>slow</excludedTestGroups>
+		<!-- Exclude slow and benchmark tests by default. Run with -DexcludedTestGroups= to include all tests.
+		     "benchmark" marks assertion-free profiling classes that only emit reports; they are never run in CI. -->
+		<excludedTestGroups>slow,benchmark</excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>
@@ -50,13 +51,13 @@
 	<repositories>
 		<repository>
 			<id>central</id>
-			<url>https://repo1.maven.org/maven2/</url>
+			<url>https://repo.maven.apache.org/maven2/</url>
 		</repository>
 	</repositories>
 	<pluginRepositories>
 		<pluginRepository>
 			<id>central</id>
-			<url>https://repo1.maven.org/maven2/</url>
+			<url>https://repo.maven.apache.org/maven2/</url>
 		</pluginRepository>
 	</pluginRepositories>
 
@@ -344,6 +345,8 @@
 					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
 					<argLine>${argLine} -Xmx3g ${jvm.module.opens.argLine}</argLine>
+					<!-- Keep class execution order identical across filesystems and operating systems. -->
+					<runOrder>alphabetical</runOrder>
 					<excludedGroups>${excludedTestGroups}</excludedGroups>
 				</configuration>
 			</plugin>

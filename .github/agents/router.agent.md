@@ -22,9 +22,10 @@ Analyze the request and match it to one or more agents:
 | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, slug flow | `@flow.assurance` | `@thermo.fluid` if CPA needed |
 | Water hammer, liquid hammer, hydraulic surge, fast valve closure, pump trip, check-valve slam | `@flow.assurance` | `@plant.data` for tagreader event windows; `@safety.depressuring` if risk register or safety case needed |
 | ISO 6976, Wobbe index, calorific value, gas spec, AGA, H2 blending gas quality | `@gas.quality` | `@process.model` for upstream conditions |
-| Wall thickness, ASME, API, DNV, mechanical sizing, cost | `@mechanical.design` | `@process.model` for operating conditions |
+| Wall thickness, ASME, API, DNV, mechanical sizing, cost | `@mechanical.design` | `@process.model` for operating conditions; current DNV-ST-F101 uses the typed screening kernel, never the legacy DNV-OS calculator |
 | Standards compliance, TR1965, STS0131, TR2237, NORSOK P-002, NORSOK S-001, technical requirements review | `@standards.review` | `@technical.reader` for document extraction; `@process.model` for calculated evidence |
 | Blowdown, depressurization, PSV, relief valve, fire case, source term, HAZOP, SIL | `@safety.depressuring` | `@process.model` for steady-state base |
+| Self-ignition, spontaneous combustion, lagging fire, oil-soaked or glycol-soaked insulation, fire with no ignition source, smouldering, basket/oven test data | `@safety.depressuring` | `@consequence.analysis` once ignition is predicted; `@reaction.engineering` if full oxidation kinetics are needed |
 | Root cause, failure analysis, trip diagnosis, vibration diagnosis, equipment anomaly, RCA | `@root.cause` | `@plant.data` for historian data; `@process.model` for simulation base |
 | Emissions, CO2 tax, flaring, venting, carbon intensity, GHG, EU ETS | `@emissions.environmental` | `@process.model` for process conditions |
 | CO2 capture, CO2 transport, CO2 storage, CCS, injection well, dense phase CO2 | `@ccs.hydrogen` | `@flow.assurance` for pipeline hydraulics |
@@ -173,7 +174,7 @@ Some requests need multiple agents in sequence. Detect these patterns:
 > agents across **all** repos (it also shows the skills each agent loads):
 >
 > ```bash
-> python devtools/agent_search.py "<user request>" --top 8
+> <python-executable> devtools/agent_search.py "<user request>" --top 8
 > ```
 >
 > For a task that spans ≥3 disciplines or is a repeatable program, prefer a

@@ -6,6 +6,11 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -75,6 +80,8 @@ public class StirredTankReactor extends TwoPortEquipment {
    */
   public StirredTankReactor(String name) {
     super(name);
+    registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.BIDIRECTIONAL, EnergyPortMode.CALCULATED);
+    registerEnergyPort("agitatorPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -84,7 +91,33 @@ public class StirredTankReactor extends TwoPortEquipment {
    * @param inletStream inlet feed stream
    */
   public StirredTankReactor(String name, StreamInterface inletStream) {
-    super(name, inletStream);
+    this(name);
+    setInletStream(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.connectEnergyStream("heatDuty", energyStream, EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    if ("heatDuty".equals(portName)) {
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("heatDuty".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+    }
   }
 
   /**
@@ -326,9 +359,14 @@ public class StirredTankReactor extends TwoPortEquipment {
     }
 
     // Flash calculation at outlet conditions
+    EnergyPort heatPort = getEnergyPort("heatDuty");
+    boolean heatSpecified = heatPort.isConnected() && heatPort.getMode() == EnergyPortMode.SPECIFICATION;
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     try {
-      if (isothermal) {
+      if (heatSpecified) {
+        heatDuty = heatPort.getDuty();
+        ops.PHflash(inletEnthalpy + heatDuty, 0);
+      } else if (isothermal) {
         ops.TPflash();
       } else {
         // Adiabatic: use inlet enthalpy
@@ -343,10 +381,17 @@ public class StirredTankReactor extends TwoPortEquipment {
 
     // Calculate heat duty (energy balance)
     double outletEnthalpy = system.getEnthalpy();
-    if (isothermal) {
-      heatDuty = outletEnthalpy - inletEnthalpy;
-    } else {
-      heatDuty = 0.0;
+    if (!heatSpecified) {
+      if (isothermal) {
+        heatDuty = outletEnthalpy - inletEnthalpy;
+      } else {
+        heatDuty = 0.0;
+      }
+      heatPort.setDuty(heatDuty);
+    }
+    EnergyPort agitatorPort = getEnergyPort("agitatorPower");
+    if (agitatorPort.isConnected()) {
+      agitatorPort.setDuty(getAgitatorPower() * 1.0e3);
     }
 
     outStream.setThermoSystem(system);

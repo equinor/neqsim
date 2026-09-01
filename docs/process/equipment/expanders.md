@@ -3,8 +3,6 @@ title: Expanders and Turbines
 description: Documentation for expansion equipment in NeqSim.
 ---
 
-# Expanders and Turbines
-
 Documentation for expansion equipment in NeqSim.
 
 ## Table of Contents

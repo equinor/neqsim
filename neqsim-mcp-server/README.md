@@ -44,12 +44,12 @@ See [MCP_CONTRACT.md](MCP_CONTRACT.md) for the complete stable API contract.
 Each profile defines enforced constraints on tool availability, validation behavior,
 and execution permissions.
 
-| Profile | Tier 1 | Tier 2 | Tier 3 | Approval Gate |
-|---------|--------|--------|--------|---------------|
-| `DESKTOP_ENGINEER` | ✅ | ✅ | ✅ | Off |
-| `STUDY_TEAM` | ✅ | ✅ | ❌ | Off |
-| `DIGITAL_TWIN` | ✅ (ADVISORY+CALC) | ❌ | ❌ | On |
-| `ENTERPRISE` | ✅ | ❌ | ❌ | On |
+| Profile              | Tier 1             | Tier 2 | Tier 3 | Approval Gate |
+| -------------------- | ------------------ | ------ | ------ | ------------- |
+| `DESKTOP_ENGINEER` | ✅                 | ✅     | ✅     | Off           |
+| `STUDY_TEAM`       | ✅                 | ✅     | ❌     | Off           |
+| `DIGITAL_TWIN`     | ✅ (ADVISORY+CALC) | ❌     | ❌     | On            |
+| `ENTERPRISE`       | ✅                 | ❌     | ❌     | On            |
 
 Set the profile on startup with `NEQSIM_MCP_PROFILE` or the Java system property
 `neqsim.mcp.profile`. Runtime profile changes use `manageIndustrialProfile` and
@@ -108,7 +108,6 @@ the Quarkus `enterprise` profile (`-Dquarkus.profile=enterprise` or
 
   In the `enterprise` profile, the `/mcp` and `/mcp/*` paths require an
   authenticated principal. STDIO remains unauthenticated.
-
 - **OpenTelemetry tracing** (`quarkus-opentelemetry`) — distributed traces of
   MCP HTTP tool invocations for governance and observability, exportable to any
   OTLP collector (Jaeger, Tempo, Honeycomb, Azure Monitor). The SDK is disabled
@@ -125,7 +124,7 @@ observability for enterprise deployments.
 
 ---
 
-## Tier 1 — Trusted Core (21 tools)
+## Tier 1 — Trusted Core (24 tools)
 
 Validated against NIST/experimental data. Available in all deployment modes.
 Each tool has documented accuracy bounds and clear error behavior.
@@ -133,29 +132,53 @@ Each tool has documented accuracy bounds and clear error behavior.
 > For the full authoritative contract including version tracking, see
 > [MCP_CONTRACT.md](MCP_CONTRACT.md).
 
-| Tool | Category | Description |
-|------|----------|-------------|
-| `runFlash` | CALCULATION | Phase equilibrium flash (TP, PH, PS, dew/bubble point, hydrate) |
-| `runProcess` | CALCULATION | ProcessSystem or ProcessModel simulation from JSON definition |
-| `calculateStandard` | CALCULATION | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN) |
-| `getPropertyTable` | CALCULATION | Property table across T or P range |
-| `getPhaseEnvelope` | CALCULATION | Full PT phase envelope |
-| `validateInput` | ADVISORY | Pre-flight input validation with typo correction |
-| `validateResults` | ADVISORY | Validate results against engineering design rules |
-| `searchComponents` | ADVISORY | Fuzzy search across 100+ components |
-| `getCapabilities` | ADVISORY | Structured capabilities manifest |
-| `getExample` | ADVISORY | Ready-to-use JSON templates |
-| `getSchema` | ADVISORY | JSON Schema definitions |
-| `getBenchmarkTrust` | ADVISORY | Per-tool validation status and accuracy bounds |
-| `checkToolAccess` | ADVISORY | Pre-flight tool access check |
-| `manageIndustrialProfile` | ADVISORY | Deployment profile management |
-| `listSimulationUnits` | ADVISORY | List addressable units in a process |
-| `listUnitVariables` | ADVISORY | List INPUT/OUTPUT variables for a unit |
-| `getSimulationVariable` | ADVISORY | Read a variable by string address |
-| `compareSimulationStates` | ADVISORY | Diff two process state snapshots |
-| `diagnoseAutomation` | ADVISORY | Self-healing diagnostics for automation addresses |
-| `getAutomationLearningReport` | ADVISORY | Automation correction and failure history |
-| `getProgress` | ADVISORY | Progress query for tracked long-running work |
+| Tool                            | Category    | Description                                                     |
+| ------------------------------- | ----------- | --------------------------------------------------------------- |
+| `runFlash`                    | CALCULATION | Phase equilibrium flash (TP, PH, PS, dew/bubble point, hydrate) |
+| `runProcess`                  | CALCULATION | ProcessSystem or ProcessModel simulation from JSON definition   |
+| `calculateStandard`           | CALCULATION | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN)            |
+| `getPropertyTable`            | CALCULATION | Property table across T or P range                              |
+| `getPhaseEnvelope`            | CALCULATION | Full PT phase envelope                                          |
+| `validateInput`               | ADVISORY    | Pre-flight input validation with typo correction                |
+| `validateResults`             | ADVISORY    | Validate results against engineering design rules               |
+| `searchComponents`            | ADVISORY    | Fuzzy search across 100+ components                             |
+| `getCapabilities`             | ADVISORY    | Structured capabilities manifest                                |
+| `getExample`                  | ADVISORY    | Ready-to-use JSON templates                                     |
+| `getSchema`                   | ADVISORY    | JSON Schema definitions                                         |
+| `getBenchmarkTrust`           | ADVISORY    | Per-tool validation status and accuracy bounds                  |
+| `checkToolAccess`             | ADVISORY    | Pre-flight tool access check                                    |
+| `manageIndustrialProfile`     | ADVISORY    | Deployment profile management                                   |
+| `listSimulationUnits`         | ADVISORY    | List addressable units in a process                             |
+| `listUnitVariables`           | ADVISORY    | List INPUT/OUTPUT variables for a unit                          |
+| `getSimulationVariable`       | ADVISORY    | Read a variable by string address                               |
+| `compareSimulationStates`     | ADVISORY    | Diff two process state snapshots                                |
+| `diagnoseAutomation`          | ADVISORY    | Self-healing diagnostics for automation addresses               |
+| `getAutomationLearningReport` | ADVISORY    | Automation correction and failure history                       |
+| `getProgress`                 | ADVISORY    | Progress query for tracked long-running work                    |
+| `manageModel`                 | EXECUTION   | Register a process model once and reuse it by `modelId`         |
+| `inspectApi`                  | ADVISORY    | Inspect version-matched public Java API signatures              |
+
+### Model handles
+
+Every tool that takes a process definition also accepts a `modelId` in place of the
+full flowsheet JSON. Register the model once, then address it for the rest of the
+conversation:
+
+```jsonc
+// 1. Register — returns modelId "model_a1b2c3d4e5f6a7b8"
+manageModel({ "action": "register", "name": "HP separation", "processJson": { /* ... */ } })
+
+// 2. Use the handle anywhere processJson is expected
+runProcess("model_a1b2c3d4e5f6a7b8")
+listSimulationUnits("model_a1b2c3d4e5f6a7b8")
+getAdjustableParameters("model_a1b2c3d4e5f6a7b8")
+```
+
+This avoids re-sending and re-parsing a multi-kilobyte flowsheet on every question,
+keeps a chat session anchored to one model, and gives results a revision to cite.
+`manageModel(action='revise')` keeps the handle stable and increments the revision.
+Models are scoped to the authenticated caller's tenant. Inline JSON keeps working
+unchanged — a value is treated as a handle only when it starts with `model_`.
 
 ### Auto-Validation
 
@@ -190,64 +213,65 @@ Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
 and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
 code-level `enforceAccess()` — returns structured error JSON, not a silent skip.
 
-| Tool | Description |
-|------|-------------|
-| `runPVT` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
-| `runPipeline` | Multiphase pipeline flow (Beggs & Brill) |
-| `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion |
-| `runChemistry` | Open chemistry and integrity calculations for scale, corrosion, inhibitors, and scavengers |
-| `runWaterHammer` | Water/liquid-hammer screening for valve closure, pump trip, and check-valve scenarios |
-| `runRootCauseAnalysis` | Ranked equipment root-cause hypotheses from reliability, historian, STID, and simulation evidence |
-| `runMaterialsReview` | Process-wide material selection, degradation, CUI, and remaining-life review from process/STID data |
-| `runOpenDrainReview` | NORSOK S-001 open-drain review from normalized STID/P&ID and tag evidence |
-| `runNorsokS001Clause10Review` | NORSOK S-001 process safety system review from C&E, SRS, PSV, and instrument evidence |
-| `crossValidateModels` | Cross-validate process under multiple EOS models |
-| `runParametricStudy` | Multi-variable parametric sweep |
-| `runAgenticEngineering` | Plan engineering workflows, score result evidence, and rank candidate studies |
-| `runBatch` | Multi-point sensitivity sweep |
-| `sizeEquipment` | Quick equipment sizing (separator, compressor) |
-| `designUtilities` | Screening-level utility design (boiler, deaerator, refrigeration, nitrogen, steam network) |
-| `compareProcesses` | Compare process configurations side by side |
-| `generateReport` | Structured engineering report generation |
-| `generateVisualization` | Inline SVG/Mermaid/HTML visualization |
-| `queryDataCatalog` | Browse component, standards, material, and EOS databases |
-| `setSimulationVariable` | Set an input variable and re-run a simulation |
-| `saveSimulationState` | Save process state as a JSON snapshot |
-| `runOperationalStudy` | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, and evidence-package bottleneck reports on a local simulation copy |
-| `runRelief` | PSV sizing per API 520/521 |
-| `runLOPA` | Layer of Protection Analysis per IEC 61511 / CCPS |
-| `runSIL` | SIL verification per IEC 61508 / IEC 61511 |
-| `runRiskMatrix` | 5x5 risk matrix scoring per ISO 31000 / NORSOK Z-013 |
-| `runFlareNetwork` | Flare radiation and safe-distance contours |
-| `runHAZOP` | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios |
-| `runHazopScenario` | Quantify a single HAZOP deviation (node + guide-word/parameter) against a process simulation |
-| `runBarrierRegister` | Evidence-linked PSF/SCE barrier register handoffs |
-| `runSafetySystemPerformance` | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge |
+| Tool                            | Description                                                                                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `runPVT`                      | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR)                                                                                         |
+| `runPipeline`                 | Multiphase pipeline flow (Beggs & Brill)                                                                                                             |
+| `runFlowAssurance`            | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion                                                                                     |
+| `runChemistry`                | Pitzer qualification, activity-consistent single/competing scale equilibrium, screening scale, corrosion, inhibitors, and scavengers        |
+| `runWaterHammer`              | Water/liquid-hammer screening for valve closure, pump trip, and check-valve scenarios                                                                |
+| `runRootCauseAnalysis`        | Ranked equipment root-cause hypotheses from reliability, historian, STID, and simulation evidence                                                    |
+| `runMaterialsReview`          | Process-wide material selection, degradation, CUI, and remaining-life review from process/STID data                                                  |
+| `runOpenDrainReview`          | NORSOK S-001 open-drain review from normalized STID/P&ID and tag evidence                                                                            |
+| `runNorsokS001Clause10Review` | NORSOK S-001 process safety system review from C&E, SRS, PSV, and instrument evidence                                                                |
+| `crossValidateModels`         | Cross-validate process under multiple EOS models                                                                                                     |
+| `runParametricStudy`          | Multi-variable parametric sweep                                                                                                                      |
+| `runAgenticEngineering`       | Plan engineering workflows, score result evidence, and rank candidate studies                                                                        |
+| `runBatch`                    | Multi-point sensitivity sweep                                                                                                                        |
+| `sizeEquipment`               | Quick equipment sizing (separator, compressor)                                                                                                       |
+| `designUtilities`             | Screening-level utility design (boiler, deaerator, refrigeration, nitrogen, steam network)                                                           |
+| `compareProcesses`            | Compare process configurations side by side                                                                                                          |
+| `generateReport`              | Structured engineering report generation                                                                                                             |
+| `generateVisualization`       | Inline SVG/Mermaid/HTML visualization                                                                                                                |
+| `queryDataCatalog`            | Browse component, standards, material, and EOS databases                                                                                             |
+| `setSimulationVariable`       | Set an input variable and re-run a simulation                                                                                                        |
+| `saveSimulationState`         | Save process state as a JSON snapshot                                                                                                                |
+| `runOperationalStudy`         | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, and evidence-package bottleneck reports on a local simulation copy |
+| `runRelief`                   | PSV sizing per API 520/521                                                                                                                           |
+| `runLOPA`                     | Layer of Protection Analysis per IEC 61511 / CCPS                                                                                                    |
+| `runSIL`                      | SIL verification per IEC 61508 / IEC 61511                                                                                                           |
+| `runRiskMatrix`               | 5x5 risk matrix scoring per ISO 31000 / NORSOK Z-013                                                                                                 |
+| `runFlareNetwork`             | Flare radiation and safe-distance contours                                                                                                           |
+| `runHAZOP`                    | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios                                                                            |
+| `runHazopScenario`            | Quantify a single HAZOP deviation (node + guide-word/parameter) against a process simulation                                                         |
+| `runBarrierRegister`          | Evidence-linked PSF/SCE barrier register handoffs                                                                                                    |
+| `runSafetySystemPerformance`  | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge                                                                   |
 
 ---
 
-## Tier 3 — Experimental (14 tools)
+## Tier 3 — Experimental (15 tools)
 
 Functional but limited validation or high-autonomy tools. `DESKTOP_ENGINEER`
 only. Blocked in all other modes by code-level `enforceAccess()`.
 Interfaces may change between minor versions.
 
-| Tool | Description |
-|------|-------------|
-| `runReservoir` | Material balance reservoir simulation |
-| `runFieldEconomics` | NPV/IRR/cash flow with fiscal regimes + decline curves |
-| `runDynamic` | Transient dynamic simulation with auto-instrumented PID controllers |
-| `runBioprocess` | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
-| `solveTask` | Autonomous task solver — results require engineer review |
-| `composeWorkflow` | Chain simulation steps into multi-domain workflows |
-| `bridgeTaskWorkflow` | Convert MCP tool output to task_solve results.json format |
-| `manageSession` | Persistent simulation sessions |
-| `streamSimulation` | Async simulation with incremental polling |
-| `composeMultiServerWorkflow` | Multi-server orchestration |
-| `manageSecurity` | API key management, rate limiting, audit logging |
-| `manageState` | Persist/restore simulation states |
-| `manageValidationProfile` | Jurisdiction-specific validation profiles |
-| `runPlugin` | Run or list registered MCP runner plugins |
+| Tool                           | Description                                                         |
+| ------------------------------ | ------------------------------------------------------------------- |
+| `runReservoir`               | Material balance reservoir simulation                               |
+| `runFieldEconomics`          | NPV/IRR/cash flow with fiscal regimes + decline curves              |
+| `runDynamic`                 | Transient dynamic simulation with auto-instrumented PID controllers |
+| `runBioprocess`              | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis)  |
+| `solveTask`                  | Autonomous task solver — results require engineer review           |
+| `composeWorkflow`            | Chain simulation steps into multi-domain workflows                  |
+| `bridgeTaskWorkflow`         | Convert MCP tool output to task_solve results.json format           |
+| `manageSession`              | Persistent simulation sessions                                      |
+| `streamSimulation`           | Async simulation with incremental polling                           |
+| `composeMultiServerWorkflow` | Multi-server orchestration                                          |
+| `manageSecurity`             | API key management, rate limiting, audit logging                    |
+| `manageState`                | Persist/restore simulation states                                   |
+| `manageValidationProfile`    | Jurisdiction-specific validation profiles                           |
+| `runPlugin`                  | Run or list registered MCP runner plugins                           |
+| `runCapability`              | Discover runtime methods and invoke bounded JSON-safe static calculations |
 
 ### Enforcement Example
 
@@ -269,12 +293,12 @@ When a blocked tool is called, the response is:
 Tool categories reflect increasing levels of operational impact and therefore
 increasing governance requirements.
 
-| Category | Description |
-|----------|-------------|
-| **ADVISORY** | Read-only, always safe — discovery, validation, inspection |
-| **CALCULATION** | Stateless engineering computation |
-| **EXECUTION** | State-modifying — sessions, variable writes, task solving |
-| **PLATFORM** | Infrastructure — security, persistence, multi-server |
+| Category              | Description                                                 |
+| --------------------- | ----------------------------------------------------------- |
+| **ADVISORY**    | Read-only, always safe — discovery, validation, inspection |
+| **CALCULATION** | Stateless engineering computation                           |
+| **EXECUTION**   | State-modifying — sessions, variable writes, task solving  |
+| **PLATFORM**    | Infrastructure — security, persistence, multi-server       |
 
 ---
 
@@ -289,80 +313,57 @@ Pick **jar** or **Docker** — both are first-class paths.
 </tr>
 <tr><td>
 
-**1. Download the jar + checksum**
-
-```bash
-# Replace VERSION with the latest release (e.g. 3.12.1)
-VERSION=3.12.1
-curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
-curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
-```
-
-**2. Verify integrity**
-
-```bash
-sha256sum -c neqsim-mcp-server-${VERSION}-runner.jar.sha256
-```
-
-**3. Connect to your LLM** (see config snippets below)
-
-```
-java -jar neqsim-mcp-server-${VERSION}-runner.jar
-```
-
-</td><td>
-
-**1. Pull the image**
-
-```bash
-docker pull ghcr.io/equinor/neqsim-mcp-server:latest
-# or pin a version:
-docker pull ghcr.io/equinor/neqsim-mcp-server:${VERSION}
-```
-
-**2. Smoke-test**
-
-```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
-  | docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest
-```
-
-**3. Connect to your LLM** (see config snippets below)
-
-```
-docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest
-```
-
-</td></tr>
-</table>
-
 > **Find the latest release:** [github.com/equinor/neqsim/releases](https://github.com/equinor/neqsim/releases)
 > — look for the assets named **`neqsim-mcp-server-*-runner.jar`** and **`neqsim-mcp-server-*-runner.jar.sha256`**.
 
 <details>
 <summary><strong>Install Java 21+ (if using the jar path)</strong></summary>
 
-| OS | Command |
-|----|---------|
-| **macOS** | `brew install openjdk@17` |
-| **Linux (Ubuntu/Debian)** | `sudo apt install openjdk-17-jdk` |
-| **Windows** | `winget install EclipseAdoptium.Temurin.17.JDK` |
+| OS                              | Command                                           |
+| ------------------------------- | ------------------------------------------------- |
+| **macOS**                 | `brew install openjdk@17`                       |
+| **Linux (Ubuntu/Debian)** | `sudo apt install openjdk-17-jdk`               |
+| **Windows**               | `winget install EclipseAdoptium.Temurin.17.JDK` |
 
 Verify: `java -version` should show 17 or higher.
+
 </details>
 
 ---
 
 ## Capabilities Overview
 
-The server exposes 68 tools organized as 22 trusted-core, 32 engineering-advanced,
-and 14 experimental tools, plus 9 guided-workflow prompts and 13 browsable resources.
+The server exposes 71 tools organized as 24 trusted-core, 32 engineering-advanced,
+and 15 experimental tools, plus 9 guided-workflow prompts and 13 browsable resources.
 
-Discovery is intentionally machine-readable. `getCapabilities` describes all 68 tools with schema
+Discovery is intentionally machine-readable. `getCapabilities` describes all 71 tools with schema
 links, examples, setup templates, unit guidance, process JSON contracts, benchmark trust, lifecycle
 metadata, and safety-review policy. High-use tools have detailed schemas and runnable examples; the
 remaining tools have generic contract-level schemas and starter examples so agents can still detect
 and route every advertised capability.
+
+### Runtime Java Capability Discovery
+
+Use `runCapability` when the required calculation is not represented by a curated domain tool.
+Its search action indexes the NeqSim classes present in the running artifact, so discovery stays
+matched to the deployed version. Each result declares one execution route:
+
+- `static-json` — a public static method with JSON-safe parameters and return type; invoke it with
+  `runCapability` using the exact class, method, parameter types, and ordered arguments.
+- `process-json` — stateful process equipment; construct and run it through `runProcess` rather than
+  reflective instantiation.
+- `inspect-only` — discoverable API that is not eligible for generic execution; use `inspectApi` to
+  confirm signatures and then select a curated tool or implement an explicit adapter.
+
+Generic execution is intentionally narrower than discovery. It permits only public static methods
+in approved NeqSim domain packages with scalar, enum, or bounded-array inputs and outputs. MCP
+runners, agentic dispatchers, raw generic containers, unsafe Java/platform types, oversized
+requests, and oversized results are rejected. Argument conversion and result serialization happen
+inside the five-second worker budget. Timeout cancellation uses Java interruption and is therefore
+cooperative; methods that ignore interruption may continue on a daemon thread, so long-running or
+stateful calculations must use a curated runner or `runProcess`. This supports newly added
+thermodynamic correlations without adding one MCP tool per Java method while preserving the safety
+boundary for stateful simulations.
 
 ## Complete Tool Inventory
 
@@ -376,49 +377,49 @@ Read-only tools are classified as **Tier 1** (available in all modes).
 Write operations (`setSimulationVariable`, `saveSimulationState`) are
 **Tier 2** — blocked in `DIGITAL_TWIN` and `ENTERPRISE` modes.
 
-| Tool | Description |
-|------|-------------|
-| `listSimulationUnits` | List all addressable equipment in a process |
-| `listUnitVariables` | List all variables (INPUT/OUTPUT) for a unit |
-| `getSimulationVariable` | Read a variable by dot-notation address |
-| `setSimulationVariable` | Set an INPUT variable and re-run the process |
-| `saveSimulationState` | Save a complete process state as a JSON snapshot |
-| `compareSimulationStates` | Diff two state snapshots to find what changed |
-| `diagnoseAutomation` | Self-healing diagnostics with fuzzy name matching |
+| Tool                            | Description                                                |
+| ------------------------------- | ---------------------------------------------------------- |
+| `listSimulationUnits`         | List all addressable equipment in a process                |
+| `listUnitVariables`           | List all variables (INPUT/OUTPUT) for a unit               |
+| `getSimulationVariable`       | Read a variable by dot-notation address                    |
+| `setSimulationVariable`       | Set an INPUT variable and re-run the process               |
+| `saveSimulationState`         | Save a complete process state as a JSON snapshot           |
+| `compareSimulationStates`     | Diff two state snapshots to find what changed              |
+| `diagnoseAutomation`          | Self-healing diagnostics with fuzzy name matching          |
 | `getAutomationLearningReport` | Operation history, error patterns, and learned corrections |
-| `getProgress` | Check progress of long-running simulations |
+| `getProgress`                 | Check progress of long-running simulations                 |
 
 ### Guided Workflow Prompts (9)
 
-| Prompt | Description |
-|--------|-------------|
-| `design_gas_processing` | Step-by-step gas processing design |
-| `pvt_study` | Complete PVT study workflow |
-| `flow_assurance_screening` | Pipeline flow assurance screening |
-| `field_development_screening` | Field development concept screening |
-| `co2_ccs_chain` | CO2 CCS chain analysis |
-| `teg_dehydration_design` | TEG dehydration unit design |
-| `biorefinery_analysis` | Biorefinery process analysis |
-| `dynamic_simulation` | Dynamic simulation with controller setup |
-| `pipeline_sizing` | Multiphase pipeline sizing |
+| Prompt                          | Description                              |
+| ------------------------------- | ---------------------------------------- |
+| `design_gas_processing`       | Step-by-step gas processing design       |
+| `pvt_study`                   | Complete PVT study workflow              |
+| `flow_assurance_screening`    | Pipeline flow assurance screening        |
+| `field_development_screening` | Field development concept screening      |
+| `co2_ccs_chain`               | CO2 CCS chain analysis                   |
+| `teg_dehydration_design`      | TEG dehydration unit design              |
+| `biorefinery_analysis`        | Biorefinery process analysis             |
+| `dynamic_simulation`          | Dynamic simulation with controller setup |
+| `pipeline_sizing`             | Multiphase pipeline sizing               |
 
 ### Browsable Resources (13)
 
-| URI | Description |
-|-----|-------------|
-| `neqsim://example-catalog` | Full catalog of all examples |
-| `neqsim://schema-catalog` | Full catalog of all JSON schemas |
-| `neqsim://setup-templates` | Major workflow setup templates |
-| `neqsim://examples/{category}/{name}` | Specific example by category and name |
-| `neqsim://schemas/{tool}/{type}` | Specific schema by tool and input/output |
-| `neqsim://setup-templates/{id}` | Specific setup template by id |
-| `neqsim://components` | Component families (hydrocarbons, acid gases, glycols, etc.) |
-| `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW) |
-| `neqsim://standards` | Design standards catalog (ASME, API, DNV, ISO, NORSOK) |
-| `neqsim://standards/{code}` | Parameters for a specific design standard |
-| `neqsim://models` | Equation of state models with recommendations |
-| `neqsim://materials/{type}` | Material grades and properties |
-| `neqsim://data-tables` | All queryable database tables |
+| URI                                     | Description                                                  |
+| --------------------------------------- | ------------------------------------------------------------ |
+| `neqsim://example-catalog`            | Full catalog of all examples                                 |
+| `neqsim://schema-catalog`             | Full catalog of all JSON schemas                             |
+| `neqsim://setup-templates`            | Major workflow setup templates                               |
+| `neqsim://examples/{category}/{name}` | Specific example by category and name                        |
+| `neqsim://schemas/{tool}/{type}`      | Specific schema by tool and input/output                     |
+| `neqsim://setup-templates/{id}`       | Specific setup template by id                                |
+| `neqsim://components`                 | Component families (hydrocarbons, acid gases, glycols, etc.) |
+| `neqsim://components/{name}`          | Full properties for a component (Tc, Pc, omega, MW)          |
+| `neqsim://standards`                  | Design standards catalog (ASME, API, DNV, ISO, NORSOK)       |
+| `neqsim://standards/{code}`           | Parameters for a specific design standard                    |
+| `neqsim://models`                     | Equation of state models with recommendations                |
+| `neqsim://materials/{type}`           | Material grades and properties                               |
+| `neqsim://data-tables`                | All queryable database tables                                |
 
 ---
 
@@ -436,39 +437,6 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
 </tr>
 <tr><td>
 
-```json
-{
-  "mcpServers": {
-    "neqsim": {
-      "command": "java",
-      "args": [
-        "-jar",
-        "/path/to/neqsim-mcp-server-3.12.1-runner.jar"
-      ]
-    }
-  }
-}
-```
-
-</td><td>
-
-```json
-{
-  "mcpServers": {
-    "neqsim": {
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "ghcr.io/equinor/neqsim-mcp-server:latest"
-      ]
-    }
-  }
-}
-```
-
-</td></tr>
-</table>
-
 Restart Claude Desktop.
 
 ### VS Code Copilot
@@ -482,41 +450,6 @@ Add to `.vscode/mcp.json`:
 </tr>
 <tr><td>
 
-```json
-{
-  "servers": {
-    "neqsim": {
-      "type": "stdio",
-      "command": "java",
-      "args": [
-        "-jar",
-        "/path/to/neqsim-mcp-server-3.12.1-runner.jar"
-      ]
-    }
-  }
-}
-```
-
-</td><td>
-
-```json
-{
-  "servers": {
-    "neqsim": {
-      "type": "stdio",
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "ghcr.io/equinor/neqsim-mcp-server:latest"
-      ]
-    }
-  }
-}
-```
-
-</td></tr>
-</table>
-
 Restart VS Code.
 
 ### Cursor / Other MCP Clients
@@ -524,9 +457,18 @@ Restart VS Code.
 Any MCP STDIO client works. Point it at one of:
 
 ```bash
-java -jar /path/to/neqsim-mcp-server-3.12.1-runner.jar         # jar
+java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dquarkus.profile=stdio \
+     -jar /path/to/neqsim-mcp-server-3.12.1-runner.jar          # jar
 docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 ```
+
+> **Launching the jar directly?** Both flags matter. JSON-RPC framing is UTF-8, but
+> `System.out` follows the platform console encoding — on a non-UTF-8 default
+> (Windows cp1252) the server emits bytes that break a conforming client
+> mid-response. `-Dquarkus.profile=stdio` binds an ephemeral HTTP port, so a busy
+> port 8080 (a second editor window, or a stale server) cannot abort startup and
+> take the stdio session with it. The Docker image sets the encoding flags
+> already, and is isolated from host port conflicts.
 
 ### Streamable HTTP Transport
 
@@ -583,10 +525,10 @@ format used by the task-solving workflow. This enables end-to-end integration
 between MCP-based AI assistants and the engineering task-solving pipeline in
 `task_solve/`.
 
-| Action | Description |
-|--------|-------------|
-| `toResultsJson` | Convert an MCP tool response to task_solve `results.json` schema |
-| `getSchema` | Get the full `results.json` schema documentation |
+| Action            | Description                                                       |
+| ----------------- | ----------------------------------------------------------------- |
+| `toResultsJson` | Convert an MCP tool response to task_solve`results.json` schema |
+| `getSchema`     | Get the full`results.json` schema documentation                 |
 
 Example: after running a flash calculation via the MCP server, bridge the result
 into the task-solving format for report generation:
@@ -615,16 +557,16 @@ The `manageSession` tool enables persistent, incremental simulation workflows:
 "Create a session" → "Add a compressor" → "Change the pressure" → "Compare states"
 ```
 
-| Action | Description |
-|--------|-------------|
-| `create` | Start a new session with a fluid and process definition |
-| `addEquipment` | Add equipment to the current process |
-| `modify` | Change a parameter and re-run |
-| `run` | Re-run the current process |
-| `snapshot` | Save the current state with a label |
-| `restore` | Restore a previous snapshot |
-| `status` | Get current session state |
-| `close` | End the session |
+| Action           | Description                                             |
+| ---------------- | ------------------------------------------------------- |
+| `create`       | Start a new session with a fluid and process definition |
+| `addEquipment` | Add equipment to the current process                    |
+| `modify`       | Change a parameter and re-run                           |
+| `run`          | Re-run the current process                              |
+| `snapshot`     | Save the current state with a label                     |
+| `restore`      | Restore a previous snapshot                             |
+| `status`       | Get current session state                               |
+| `close`        | End the session                                         |
 
 ---
 
@@ -632,14 +574,14 @@ The `manageSession` tool enables persistent, incremental simulation workflows:
 
 The `streamSimulation` tool runs long simulations in the background with incremental polling:
 
-| Operation | Description |
-|-----------|-------------|
-| `startSweep` / `startParametricSweep` | Sweep a variable range and poll for results as they complete |
-| `startDynamic` / `startDynamicStreaming` | Run a transient sim and poll for time-step results |
-| `startMonteCarlo` | Run N iterations with random inputs (uncertainty analysis) |
-| `poll` / `pollResults` | Get new results since last check |
-| `cancel` / `cancelOperation` | Cancel a running operation |
-| `list` / `listOperations` | List all active operations |
+| Operation                                    | Description                                                  |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| `startSweep` / `startParametricSweep`    | Sweep a variable range and poll for results as they complete |
+| `startDynamic` / `startDynamicStreaming` | Run a transient sim and poll for time-step results           |
+| `startMonteCarlo`                          | Run N iterations with random inputs (uncertainty analysis)   |
+| `poll` / `pollResults`                   | Get new results since last check                             |
+| `cancel` / `cancelOperation`             | Cancel a running operation                                   |
+| `list` / `listOperations`                | List all active operations                                   |
 
 ---
 
@@ -647,13 +589,13 @@ The `streamSimulation` tool runs long simulations in the background with increme
 
 The `generateVisualization` tool returns inline visual content:
 
-| Type | Format | Description |
-|------|--------|-------------|
-| `phaseEnvelope` | SVG | PT phase envelope with bubble/dew curves, critical point |
-| `flowsheet` | Mermaid | Process flow diagram with equipment-type shapes |
-| `compressorMap` | SVG | Compressor performance map with surge/stonewall lines |
-| `barChart` | SVG | Bar chart from key-value data |
-| `table` | HTML | Styled HTML table with optional highlighting |
+| Type              | Format  | Description                                              |
+| ----------------- | ------- | -------------------------------------------------------- |
+| `phaseEnvelope` | SVG     | PT phase envelope with bubble/dew curves, critical point |
+| `flowsheet`     | Mermaid | Process flow diagram with equipment-type shapes          |
+| `compressorMap` | SVG     | Compressor performance map with surge/stonewall lines    |
+| `barChart`      | SVG     | Bar chart from key-value data                            |
+| `table`         | HTML    | Styled HTML table with optional highlighting             |
 
 ---
 
@@ -661,13 +603,13 @@ The `generateVisualization` tool returns inline visual content:
 
 The `manageValidationProfile` tool applies jurisdiction-specific design rules:
 
-| Profile | Standards | Description |
-|---------|-----------|-------------|
-| `ncs` | NORSOK, PSA, DNV | Norwegian Continental Shelf |
-| `ukcs` | API, HSE, PD 8010 | UK Continental Shelf |
-| `gom` | API, BSEE, 30 CFR 250 | Gulf of Mexico |
-| `brazil` | ANP, Petrobras N-series | Brazil pre-salt |
-| `generic` | ISO, API, ASME | International baseline |
+| Profile     | Standards               | Description                 |
+| ----------- | ----------------------- | --------------------------- |
+| `ncs`     | NORSOK, PSA, DNV        | Norwegian Continental Shelf |
+| `ukcs`    | API, HSE, PD 8010       | UK Continental Shelf        |
+| `gom`     | API, BSEE, 30 CFR 250   | Gulf of Mexico              |
+| `brazil`  | ANP, Petrobras N-series | Brazil pre-salt             |
+| `generic` | ISO, API, ASME          | International baseline      |
 
 Each profile maps equipment types to applicable standards and
 includes specific design factors (e.g., NCS separator design pressure
@@ -679,14 +621,14 @@ factor = 1.1, NCS pipeline design factor = 0.77).
 
 The `manageState` tool saves and restores simulation states across server restarts:
 
-| Action | Description |
-|--------|-------------|
-| `save` | Save current session state to a versioned JSON file |
-| `load` | Load a previously saved state and restore the session |
-| `list` | List all saved simulation files |
-| `compare` | Diff two saved states |
-| `delete` | Remove a saved state file |
-| `export` | Export state in a portable format |
+| Action      | Description                                           |
+| ----------- | ----------------------------------------------------- |
+| `save`    | Save current session state to a versioned JSON file   |
+| `load`    | Load a previously saved state and restore the session |
+| `list`    | List all saved simulation files                       |
+| `compare` | Diff two saved states                                 |
+| `delete`  | Remove a saved state file                             |
+| `export`  | Export state in a portable format                     |
 
 States are stored in `~/.neqsim/saved_simulations/` by default. File names are
 validated and legacy `filePath` loads are accepted only when the target remains
@@ -700,12 +642,12 @@ unless `NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true` or
 
 The `composeMultiServerWorkflow` tool orchestrates across MCP servers:
 
-| Workflow Template | Steps |
-|-------------------|-------|
-| `digital-twin` | NeqSim sim → plant historian comparison → tuning |
-| `feed-study` | Multi-EOS flash → process sim → economics |
-| `vendor-evaluation` | Process spec → vendor matching → cost comparison |
-| `safety-study` | Process sim → hazard identification → consequence analysis |
+| Workflow Template     | Steps                                                        |
+| --------------------- | ------------------------------------------------------------ |
+| `digital-twin`      | NeqSim sim → plant historian comparison → tuning           |
+| `feed-study`        | Multi-EOS flash → process sim → economics                  |
+| `vendor-evaluation` | Process spec → vendor matching → cost comparison           |
+| `safety-study`      | Process sim → hazard identification → consequence analysis |
 
 Pre-registered server types: `cost-estimation`, `plant-historian`, `cad-3d`,
 `document-extraction`, `safety-analysis`.
@@ -716,18 +658,76 @@ Pre-registered server types: `cost-estimation`, `plant-historian`, `cad-3d`,
 
 The `manageSecurity` tool provides API key management and audit logging:
 
-| Action | Description |
-|--------|-------------|
-| `createApiKey` | Generate a new API key with role and rate limits |
-| `revokeApiKey` | Revoke an existing key |
-| `authenticate` | Validate an API key |
-| `getAuditLog` | Query the audit trail |
-| `getRateLimits` | View current rate limit status |
-| `setConfig` | Update security configuration |
+| Action            | Description                                      |
+| ----------------- | ------------------------------------------------ |
+| `createApiKey`  | Generate a new API key with role and rate limits |
+| `revokeApiKey`  | Revoke an existing key                           |
+| `authenticate`  | Validate an API key                              |
+| `getAuditLog`   | Query the audit trail                            |
+| `getRateLimits` | View current rate limit status                   |
+| `setConfig`     | Update security configuration                    |
 
 Profile administration is separate from API-key authentication. Configure
 `NEQSIM_MCP_ADMIN_TOKEN` or `neqsim.mcp.adminToken` before using
 `manageIndustrialProfile.setActive` or `manageIndustrialProfile.approveTool`.
+
+### Caller identity
+
+Credentials are never accepted as tool arguments. The transport resolves the
+caller once per request and binds a principal that governance then evaluates:
+
+| Transport         | Identity source                                      |
+| ----------------- | ---------------------------------------------------- |
+| HTTP (enterprise) | OIDC bearer token — subject, tenant and roles claims  |
+| STDIO             | `NEQSIM_MCP_API_KEY` environment variable            |
+| Local desktop     | Anonymous (security enforcement disabled by default)  |
+
+Server state is scoped to that principal: sessions, streaming operations and
+registered models are visible only to their owner, one-shot approvals are bound
+to the principal they were granted for, and audit entries record subject and
+tenant. When enforcement is enabled, `manageSecurity` stays reachable so an
+operator can recover, but its privileged actions require the admin token.
+
+### Execution limits
+
+Asynchronous work runs on a bounded pool with a wall-clock timeout and a
+per-principal concurrency cap, so one caller cannot starve the server and a
+non-converging run cannot hold a worker indefinitely. Current limits are
+reported by `getCapabilities` under `modelLifecycle.executionPolicy` and by
+`streamSimulation(action='list')`.
+
+| Setting                                | Environment variable                       | Default              |
+| -------------------------------------- | ------------------------------------------ | -------------------- |
+| `neqsim.mcp.workers`                 | `NEQSIM_MCP_WORKERS`                     | CPU count (2..16)    |
+| `neqsim.mcp.operationTimeoutSeconds` | `NEQSIM_MCP_OPERATION_TIMEOUT_SECONDS`   | 900 s                |
+| `neqsim.mcp.maxOperationsPerPrincipal` | `NEQSIM_MCP_MAX_OPERATIONS_PER_PRINCIPAL` | 5                    |
+
+State is in-process and does not survive a restart. For durable multi-instance
+execution, run one server instance per tenant behind the platform ingress.
+
+### Hosting for remote MCP clients
+
+Remote clients such as Microsoft Copilot Studio require a public HTTPS
+Streamable HTTP endpoint with authentication on every connection and strict
+Origin validation. Run with the enterprise Quarkus profile, which binds
+`0.0.0.0`, enables the OIDC tenant, requires an authenticated principal on
+`/mcp`, redirects insecure requests, and restricts CORS to an explicit
+allowlist:
+
+```bash
+QUARKUS_PROFILE=enterprise \
+NEQSIM_MCP_PROFILE=ENTERPRISE \
+NEQSIM_MCP_ADMIN_TOKEN=<secret> \
+NEQSIM_MCP_ALLOWED_ORIGINS=https://copilotstudio.microsoft.com \
+QUARKUS_OIDC_AUTH_SERVER_URL=https://login.microsoftonline.com/<tenant-id>/v2.0 \
+QUARKUS_OIDC_CLIENT_ID=<client-id> \
+java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar
+```
+
+Never widen the CORS allowlist to `*` — it is the Origin gate that prevents
+DNS-rebinding attacks against the Streamable HTTP transport. `NEQSIM_MCP_PROFILE=ENTERPRISE`
+also reduces the exposed surface to the 24 trusted-core tools, which keeps the
+tool list within what a Copilot Studio agent can reason about.
 
 ---
 
@@ -737,11 +737,11 @@ If you want to build from source (for development or to use the latest unrelease
 
 ### Prerequisites
 
-| Requirement | Version | Notes |
-|---|---|---|
-| JDK | 21+ | Quarkus requires 21+. NeqSim core still compiles with Java 8. |
-| Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
-| NeqSim core | 3.12.1 | Must be installed to local Maven repo first (see below) |
+| Requirement | Version | Notes                                                                      |
+| ----------- | ------- | -------------------------------------------------------------------------- |
+| JDK         | 21+     | Quarkus requires 21+. NeqSim core still compiles with Java 8.              |
+| Maven       | 3.9+    | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
+| NeqSim core | 3.12.1  | Must be installed to local Maven repo first (see below)                    |
 
 ### Build steps
 
@@ -783,7 +783,7 @@ This produces: `target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
-  | java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar 2>/dev/null
+  | java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dquarkus.profile=stdio -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar 2>/dev/null
 ```
 
 **4. Run the comprehensive test suite:**
@@ -823,34 +823,33 @@ For detailed parameter documentation, JSON formats, example calls, and
 response schemas for all tools and browsable resources, see
 **[docs/API_REFERENCE.md](docs/API_REFERENCE.md)**.
 
+For the exact protocol-tested inventory of published tools, resources, resource templates, guided
+prompts, deployment profiles, cross-layer capability coverage, test sources, guides, and current
+known-limit/trust gaps, see
+**[docs/SURFACE_INVENTORY.md](docs/SURFACE_INVENTORY.md)**.
+
 ---
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 68 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 71 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
-  `neqsim://components`, `neqsim://models`, and `neqsim://setup-templates` to
-  discover available data and setup patterns.
-
+   `neqsim://components`, `neqsim://models`, and `neqsim://setup-templates` to
+   discover available data and setup patterns.
 2. **Learning the format** — The LLM calls `getExample` or `getSchema`, or fetches
-  `neqsim://setup-templates/{id}`, to see the expected JSON format and workflow setup.
-
+   `neqsim://setup-templates/{id}`, to see the expected JSON format and workflow setup.
 3. **Validation (optional)** — Before running an expensive calculation, the LLM
    calls `validateInput` to catch typos and missing fields.
-
 4. **Computation** — The LLM calls `runFlash`, `runProcess`, `runPVT`,
-  `runFlowAssurance`, `runPipeline`, `runMaterialsReview`, `runFieldEconomics`, or any domain tool
+   `runFlowAssurance`, `runPipeline`, `runMaterialsReview`, `runFieldEconomics`, or any domain tool
    and gets physical results.
-
 5. **Iteration** — Using `manageSession`, the LLM can incrementally build and
    modify processes. Using `streamSimulation`, it can run parametric sweeps and
    poll for results. Using `generateVisualization`, it can produce inline diagrams.
-
 6. **Validation & Reporting** — The LLM calls `validateResults` to check
    against design rules, `manageValidationProfile` for jurisdiction-specific
    standards, and `generateReport` for structured output.
-
 7. **Interpretation** — The LLM reads the JSON response and presents the
    results to the user in natural language, with units and context.
 
@@ -859,6 +858,7 @@ response schemas for all tools and browsable resources, see
 **User:** "What is the density of natural gas (90% methane, 10% ethane) at 80 bara and 35°C?"
 
 **LLM internally calls:**
+
 ```json
 runFlash({
   "components": "{\"methane\": 0.90, \"ethane\": 0.10}",
@@ -880,7 +880,7 @@ neqsim-mcp-server/                        # Separate Maven project (Java 21+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-  ├── NeqSimTools.java                   # 68 @Tool-annotated MCP tools
+  ├── NeqSimTools.java                   # 71 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 7 @Resource + 6 @ResourceTemplate (13 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
@@ -934,7 +934,7 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
     ├── ExampleCatalog.java                # Examples for base categories and all MCP tools
-    └── SchemaCatalog.java                 # JSON Schema definitions for all 68 MCP tools
+    └── SchemaCatalog.java                 # JSON Schema definitions for all 71 MCP tools
 ```
 
 The MCP server is a **thin Quarkus wrapper** around the framework-agnostic
@@ -963,36 +963,36 @@ setup templates, and validation behavior:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 68 tools across all three tiers:
+and validates all 71 tools across all three tiers:
 
-| Category | Checks | Description |
-|---|---|---|
-| Protocol | 9 | Tool/resource/template registration (68 tools, 7 resources, 6 templates) |
-| Component search | 9 | Exact, partial, empty, no-match |
-| Examples & schemas | 10 | Catalog retrieval |
-| Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
-| Dew/bubble point | 6 | All 4 saturation flash types |
-| Process simulation | 13 | Separator, compressor, cooler, heater, valve, multi-unit trains |
-| Validation | 22 | Valid input, unknown components, bad models, missing specs |
-| Error handling | 2 | Graceful failure on bad input |
-| Tier 2 tools | 16 | PVT, pipeline, flow assurance, materials review, standards, reservoir, economics, dynamic, sizing, comparison, operational studies |
-| Tier 3 tools | 17 | Sessions, task solver, workflow, reports, plugins, streaming, visualization, state, security |
-| Governance tools | 6 | Industrial profile, benchmark trust, tool access |
-| Catalog round-trip | 10 | All examples run end-to-end through the server |
+| Category           | Checks | Description                                                                                                                        |
+| ------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Protocol           | 9      | Tool/resource/template registration (71 tools, 7 resources, 7 templates)                                                           |
+| Component search   | 9      | Exact, partial, empty, no-match                                                                                                    |
+| Examples & schemas | 10     | Catalog retrieval                                                                                                                  |
+| Flash calculations | 30     | SRK, PR, CPA; single/two-phase; density, Z, viscosity                                                                              |
+| Dew/bubble point   | 6      | All 4 saturation flash types                                                                                                       |
+| Process simulation | 13     | Separator, compressor, cooler, heater, valve, multi-unit trains                                                                    |
+| Validation         | 22     | Valid input, unknown components, bad models, missing specs                                                                         |
+| Error handling     | 2      | Graceful failure on bad input                                                                                                      |
+| Tier 2 tools       | 16     | PVT, pipeline, flow assurance, materials review, standards, reservoir, economics, dynamic, sizing, comparison, operational studies |
+| Tier 3 tools       | 17     | Sessions, task solver, workflow, reports, plugins, streaming, visualization, state, security                                       |
+| Governance tools   | 6      | Industrial profile, benchmark trust, tool access                                                                                   |
+| Catalog round-trip | 10     | All examples run end-to-end through the server                                                                                     |
 
 ### NIST Benchmark Validation
 
 `BenchmarkValidationTest.java` validates claimed accuracy bounds against reference data:
 
-| Test | Reference | Tolerance |
-|---|---|---|
-| Methane density at 25°C, 100 bara | NIST 66.16 kg/m³ | ±2% |
-| Methane-ethane VLE at 50 bara | Two-phase check | Phase count |
-| Natural gas dew point | Physical range | \[-80, 20\] °C |
-| Separator mass balance | Closure | < 0.1% |
-| ISO 6976 methane GCV | 37.706 MJ/Sm³ | ±0.5% |
-| Trust report completeness | 16 tools | All present |
-| Trust page structure | Required fields | Non-null |
+| Test                               | Reference         | Tolerance       |
+| ---------------------------------- | ----------------- | --------------- |
+| Methane density at 25°C, 100 bara | NIST 66.16 kg/m³ | ±2%            |
+| Methane-ethane VLE at 50 bara      | Two-phase check   | Phase count     |
+| Natural gas dew point              | Physical range    | \[-80, 20\] °C |
+| Separator mass balance             | Closure           | < 0.1%          |
+| ISO 6976 methane GCV               | 37.706 MJ/Sm³    | ±0.5%          |
+| Trust report completeness          | 16 tools          | All present     |
+| Trust page structure               | Required fields   | Non-null        |
 
 ```bash
 cd neqsim-mcp-server
@@ -1022,6 +1022,7 @@ The parent neqsim project compiles with Java 8. Both can coexist — just ensure
 
 The STDIO transport uses stdin/stdout for JSON-RPC. All application logs go to
 stderr. Check that:
+
 - No library is writing directly to `System.out`
 - Logging is set to WARN or higher (default in `application.properties`)
 - You're sending one JSON-RPC message per line
@@ -1029,6 +1030,7 @@ stderr. Check that:
 ### "Unknown component" Errors
 
 Use `searchComponents` to find the exact component name NeqSim expects:
+
 - `n-heptane` (not `nC7`)
 - `i-butane` (not `isobutane`)
 - `CO2` (not `carbon dioxide`)

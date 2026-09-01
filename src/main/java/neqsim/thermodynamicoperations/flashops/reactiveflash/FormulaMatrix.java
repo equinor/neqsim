@@ -174,20 +174,21 @@ public class FormulaMatrix implements java.io.Serializable {
   }
 
   /**
-   * Compute the total element vector b from mole fractions z.
+   * Compute the total element vector from component amounts.
    *
    * <p>
-   * b[k] = sum_i A[k][i] * z[i]
+   * The input may be a mole-fraction vector for a normalized inventory or component moles for an extensive inventory:
+   * {@code b[k] = sum_i A[k][i] * amount[i]}.
    * </p>
    *
-   * @param z mole fractions (length NC)
+   * @param componentAmounts component mole fractions or moles (length NC)
    * @return element vector b (length NE)
    */
-  public double[] computeElementVector(double[] z) {
+  public double[] computeElementVector(double[] componentAmounts) {
     double[] b = new double[numElements];
     for (int k = 0; k < numElements; k++) {
       for (int i = 0; i < numComponents; i++) {
-        b[k] += A[k][i] * z[i];
+        b[k] += A[k][i] * componentAmounts[i];
       }
     }
     return b;

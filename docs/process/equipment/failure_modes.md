@@ -3,8 +3,6 @@ title: Equipment Failure Modes
 description: Documentation for equipment failure mode modeling in NeqSim for reliability and risk analysis.
 ---
 
-# Equipment Failure Modes
-
 Documentation for equipment failure mode modeling in NeqSim for reliability and risk analysis.
 
 ## Table of Contents

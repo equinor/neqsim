@@ -3,8 +3,6 @@ title: "Statistics Package"
 description: "The NeqSim statistics package provides tools for parameter fitting, uncertainty quantification, and data analysis for thermodynamic model development and validation."
 ---
 
-# Statistics Package
-
 The NeqSim statistics package provides tools for parameter fitting, uncertainty quantification, and data analysis for thermodynamic model development and validation.
 
 ## Table of Contents

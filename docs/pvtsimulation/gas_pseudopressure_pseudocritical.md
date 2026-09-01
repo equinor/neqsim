@@ -3,8 +3,6 @@ title: "Gas Pseudopressure and Pseudocritical Properties"
 description: "Guide to calculating gas pseudopressure (real gas potential) and pseudocritical properties for natural gas mixtures in NeqSim."
 ---
 
-# Gas Pseudopressure and Pseudocritical Properties
-
 NeqSim provides utilities for gas reservoir engineering calculations: the real gas pseudopressure integral and pseudocritical property correlations for natural gas mixtures.
 
 ## Gas Pseudopressure

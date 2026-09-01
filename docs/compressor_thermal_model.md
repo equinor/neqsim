@@ -1,3 +1,8 @@
+---
+title: Compressor Thermal Model and Catalog
+description: Reduced-order thermal resistance/capacitance network for estimating compressor metal temperatures (shaft, impeller, casing, dry-gas seal, bearings). Covers the governing lumped-node energy balance, steady-state and transient solvers, the JSON compressor catalog workflow, and condensate/sulfur-deposition screening.
+---
+
 # Compressor thermal model and catalog
 
 `CompressorThermalModel` is a reduced-order thermal resistance/capacitance network for estimating temperatures at locations that are not represented by the process-gas outlet temperature. Standard locations include the inlet shaft, impeller, casing, dry-gas seal, radial bearing and thrust bearing. Fluid boundaries include suction gas, discharge gas, seal gas, lube oil and ambient air.
@@ -6,13 +11,13 @@ The model is intended for screening, sensitivity analysis, transient studies and
 
 ## Governing equation
 
-For every non-boundary node (i), NeqSim solves
+For every non-boundary node $i$, NeqSim solves
 
-\[
-C_i \frac{dT_i}{dt} = Q_i + \sum_j G_{ij}(T_j-T_i)
-\]
+$$
+C_i \frac{dT_i}{dt} = Q_i + \sum_j G_{ij}(T_j - T_i)
+$$
 
-where (C_i) is the lumped heat capacity in J/K, (Q_i) is local heat generation in W, and (G_{ij}) is an effective thermal conductance in W/K. The steady-state solver sets the storage term to zero. The transient solver uses implicit Euler, which remains stable for time steps larger than the shortest thermal time constant, although accuracy still depends on time-step selection.
+where $C_i$ is the lumped heat capacity in J/K, $Q_i$ is local heat generation in W, and $G_{ij}$ is an effective thermal conductance in W/K. The steady-state solver sets the storage term to zero. The transient solver uses implicit Euler, which remains stable for time steps larger than the shortest thermal time constant, although accuracy still depends on time-step selection.
 
 Bearing-loss heat can be supplied by `CompressorMechanicalLosses`. A configurable fraction of gas-compression power can be deposited at the impeller node. That fraction is a fitted parameter, not a universal physical constant.
 

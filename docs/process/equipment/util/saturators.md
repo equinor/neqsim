@@ -3,8 +3,6 @@ title: Stream Saturator Utility
 description: Water saturation utility for simulating reservoir conditions, wet gas systems, and water content analysis in natural gas streams.
 ---
 
-# Stream Saturator Utility
-
 The `StreamSaturatorUtil` is a utility unit operation that saturates a gas or hydrocarbon stream with water at the stream's current temperature and pressure conditions. This is essential for simulating:
 
 - **Reservoir conditions** where gas is in equilibrium with formation water

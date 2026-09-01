@@ -110,6 +110,8 @@ public class SulfurFilter extends Filter {
    */
   public SulfurFilter(String name, StreamInterface inStream) {
     super(name, inStream);
+    setNominalRemovalEfficiency(removalEfficiency);
+    setParticleSize(filtrationRating);
     synchronizeDynamicLoadingCapacity();
   }
 
@@ -117,10 +119,15 @@ public class SulfurFilter extends Filter {
   @Override
   public void run(UUID id) {
     SystemInterface system = inStream.getThermoSystem().clone();
+    system.initProperties();
+    updateHydraulicState(system);
+    updateParticleCapturePerformance();
 
     // Apply pressure drop
-    if (Math.abs(getDeltaP()) > 1e-10) {
-      system.setPressure(inStream.getPressure() - getDeltaP());
+    double inletPressure = inStream.getPressure("bara");
+    double appliedDeltaP = Math.min(Math.max(0.0, getDeltaP()), Math.max(0.0, inletPressure - 1.0e-6));
+    if (appliedDeltaP > 1e-10) {
+      system.setPressure(inletPressure - appliedDeltaP, "bara");
     }
 
     // Run TP flash with solid phase check to detect solid S8
@@ -161,7 +168,7 @@ public class SulfurFilter extends Filter {
       }
 
       // Calculate removal rate: mass flow * solid fraction * efficiency
-      double effectiveRemovalEfficiency = removalEfficiency * (1.0 - getBreakthroughFraction());
+      double effectiveRemovalEfficiency = getCurrentRemovalEfficiency();
       solidSulfurRemovalRate = gasFlowRate * solidS8MassFractionInlet * effectiveRemovalEfficiency;
 
       // Remove solid S8 from outlet: reduce S8 component by removal efficiency
@@ -318,6 +325,7 @@ public class SulfurFilter extends Filter {
    */
   public void setRemovalEfficiency(double efficiency) {
     this.removalEfficiency = Math.max(0.0, Math.min(1.0, efficiency));
+    setNominalRemovalEfficiency(this.removalEfficiency);
   }
 
   /**
@@ -326,6 +334,24 @@ public class SulfurFilter extends Filter {
    * @return removal efficiency (0 to 1)
    */
   public double getRemovalEfficiency() {
+    return removalEfficiency;
+  }
+
+  /**
+   * Returns a configured beta-curve efficiency when present, otherwise the sulfur-specific removal efficiency.
+   *
+   * <p>
+   * The fallback also preserves the efficiency of sulfur filters serialized before the generic filter performance
+   * fields were introduced.
+   * </p>
+   *
+   * @return nominal sulfur-particle removal efficiency
+   */
+  @Override
+  public double getNominalRemovalEfficiency() {
+    if (getPerformanceCurve().size() > 0) {
+      return super.getNominalRemovalEfficiency();
+    }
     return removalEfficiency;
   }
 
@@ -353,6 +379,7 @@ public class SulfurFilter extends Filter {
    *
    * @param count number of filter elements
    */
+  @Override
   public void setNumberOfElements(int count) {
     this.numberOfElements = Math.max(1, count);
     synchronizeDynamicLoadingCapacity();
@@ -376,6 +403,7 @@ public class SulfurFilter extends Filter {
    *
    * @return number of elements
    */
+  @Override
   public int getNumberOfElements() {
     return numberOfElements;
   }
@@ -386,7 +414,16 @@ public class SulfurFilter extends Filter {
    * @param type filter type ("Cartridge", "Coalescing", "Mesh Pad", "Bag")
    */
   public void setFilterType(String type) {
-    this.filterType = type;
+    this.filterType = type == null ? "" : type;
+    if ("coalescing".equalsIgnoreCase(this.filterType) || "coalescer".equalsIgnoreCase(this.filterType)) {
+      setFilterServiceType(FilterType.COALESCER);
+    } else if ("bag".equalsIgnoreCase(this.filterType)) {
+      setFilterServiceType(FilterType.BAG);
+    } else if ("mesh pad".equalsIgnoreCase(this.filterType) || "basket strainer".equalsIgnoreCase(this.filterType)) {
+      setFilterServiceType(FilterType.BASKET_STRAINER);
+    } else {
+      setFilterServiceType(FilterType.CARTRIDGE);
+    }
   }
 
   /**
@@ -405,6 +442,7 @@ public class SulfurFilter extends Filter {
    */
   public void setFiltrationRating(double ratingMicrons) {
     this.filtrationRating = ratingMicrons;
+    setParticleSize(ratingMicrons);
   }
 
   /**
@@ -513,6 +551,10 @@ public class SulfurFilter extends Filter {
   @Override
   public void initMechanicalDesign() {
     sulfurFilterMechanicalDesign = new SulfurFilterMechanicalDesign(this);
+    if (inStream != null) {
+      sulfurFilterMechanicalDesign.setMaxOperationPressure(inStream.getPressure("bara"));
+      sulfurFilterMechanicalDesign.setMaxOperationTemperature(inStream.getTemperature("K"));
+    }
   }
 
   /** {@inheritDoc} */

@@ -184,13 +184,20 @@ def _build_dependency_classpath(root):
     return [entry for entry in text.split(os.pathsep) if entry]
 
 
-def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbose=True):
+def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbose=True,
+                convert_strings=True):
     """
     Start the JVM with the NeqSim project classpath.
 
     If the JVM is already running (from a previous call), it automatically
     recompiles (if requested) and restarts the kernel so fresh classes are
     loaded. On a fresh kernel it just compiles and starts the JVM directly.
+
+    Because this starts the JVM itself, a later ``from neqsim import jneqsim``
+    (the pip wheel) attaches to THIS JVM and therefore resolves classes from
+    ``target/classes`` — no packaged/copied JAR needed. Pass
+    ``convert_strings=False`` for notebooks written against the wheel, whose
+    default JVM uses ``convertStrings=False``.
 
     Parameters
     ----------
@@ -203,6 +210,9 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         latest Java changes are picked up.
     verbose : bool
         Print classpath and JVM info.
+    convert_strings : bool
+        JPype ``convertStrings`` setting. True (default) returns Java strings as
+        Python ``str``; False matches the pip ``neqsim`` wheel.
 
     Returns
     -------
@@ -211,6 +221,9 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
         Pass to ``neqsim_classes(ns)`` to add class imports.
     """
     root = Path(project_root) if project_root else _PROJECT_ROOT
+
+    # The pip wheel checks this before auto-starting its own JVM on import.
+    os.environ["NEQSIM_JVM_AUTOSTART"] = "0"
 
     # Validate the root has a pom.xml
     if not (root / "pom.xml").exists():
@@ -285,7 +298,7 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
             jvm_args.append("--enable-native-access=ALL-UNNAMED")
     except Exception:
         pass
-    jpype.startJVM(*jvm_args, classpath=classpath, convertStrings=True)
+    jpype.startJVM(*jvm_args, classpath=classpath, convertStrings=convert_strings)
     if verbose:
         print(f"\nJVM started: {jpype.getDefaultJVMPath()}")
 
@@ -349,6 +362,25 @@ def neqsim_classes(ns):
         "neqsim.process.equipment.pipeline.AdiabaticPipe")
     ns.PipeBeggsAndBrills = JClass(
         "neqsim.process.equipment.pipeline.PipeBeggsAndBrills"
+    )
+    ns.TwoFluidPipe = JClass("neqsim.process.equipment.pipeline.TwoFluidPipe")
+    ns.TwoFluidComponentConservationReport = JClass(
+        "neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport"
+    )
+    ns.TwoFluidComponentConservationHistory = JClass(
+        "neqsim.process.equipment.pipeline.TwoFluidComponentConservationHistory"
+    )
+    ns.TwoFluidComponentPhase = JClass(
+        "neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport$Phase"
+    )
+    ns.TwoFluidThermalEnergyBalanceReport = JClass(
+        "neqsim.process.equipment.pipeline.TwoFluidThermalEnergyBalanceReport"
+    )
+    ns.TransientCompositionalPipeNetwork = JClass(
+        "neqsim.process.equipment.network.TransientCompositionalPipeNetwork"
+    )
+    ns.TransientGasNetwork = JClass(
+        "neqsim.process.equipment.network.TransientGasNetwork"
     )
     ns.Pump = JClass("neqsim.process.equipment.pump.Pump")
     ns.Manifold = JClass("neqsim.process.equipment.manifold.Manifold")

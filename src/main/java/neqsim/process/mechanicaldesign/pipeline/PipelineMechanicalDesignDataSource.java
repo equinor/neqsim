@@ -361,6 +361,10 @@ public class PipelineMechanicalDesignDataSource {
     if (calculator == null) {
       return;
     }
+    if (normalizeCode(designCode).contains("DNV_ST_F101")) {
+      throw new IllegalArgumentException("DNV-ST-F101 must use DnvStF101PipelineDesignKernel; the legacy calculator "
+          + "is not a current-edition implementation");
+    }
 
     // Load material properties from MaterialPipeProperties table
     Optional<PipeMaterialData> materialOpt = loadMaterialProperties(materialGrade);
@@ -388,7 +392,8 @@ public class PipelineMechanicalDesignDataSource {
     calculator.setFabricationTolerance(factors.fabricationTolerance);
 
     // Map design code string to constant
-    String code = factors.designCode.toUpperCase(Locale.ROOT).replace("-", "_").replace(" ", "_");
+    String selectedCode = designCode == null || designCode.trim().isEmpty() ? factors.designCode : designCode;
+    String code = normalizeCode(selectedCode);
     if (code.contains("B31_8") || code.contains("B31.8")) {
       calculator.setDesignCode(PipeMechanicalDesignCalculator.ASME_B31_8);
       calculator.setLocationClass(factors.locationClass);
@@ -396,7 +401,10 @@ public class PipelineMechanicalDesignDataSource {
       calculator.setDesignCode(PipeMechanicalDesignCalculator.ASME_B31_4);
     } else if (code.contains("B31_3") || code.contains("B31.3")) {
       calculator.setDesignCode(PipeMechanicalDesignCalculator.ASME_B31_3);
-    } else if (code.contains("DNV") || code.contains("F101")) {
+    } else if (code.contains("DNV_ST_F101")) {
+      throw new IllegalArgumentException("DNV-ST-F101 must use DnvStF101PipelineDesignKernel; it cannot be mapped "
+          + "to the legacy DNV-OS-F101 calculator");
+    } else if (code.contains("DNV_OS_F101")) {
       calculator.setDesignCode(PipeMechanicalDesignCalculator.DNV_OS_F101);
     }
   }
@@ -410,5 +418,15 @@ public class PipelineMechanicalDesignDataSource {
     } catch (NumberFormatException e) {
       return Double.NaN;
     }
+  }
+
+  /**
+   * Normalize design-code punctuation for deterministic routing.
+   *
+   * @param code design code, or {@code null}
+   * @return upper-case underscore-separated code
+   */
+  private String normalizeCode(String code) {
+    return code == null ? "" : code.toUpperCase(Locale.ROOT).replace("-", "_").replace(" ", "_");
   }
 }

@@ -433,4 +433,25 @@ public class ReactiveMultiphaseTPflashTest {
       assertTrue(Gfinal <= G0 + 1e-6, "Gibbs energy should decrease: G_initial=" + G0 + ", G_final=" + Gfinal);
     }
   }
+
+  /** Verify that the public convenience API preserves an explicit one-phase limit. */
+  @Test
+  void testConvenienceMethodPreservesSinglePhaseLimit() {
+    SystemInterface system = new SystemSrkEos(700.0, 10.0);
+    system.addComponent("CO", 0.40);
+    system.addComponent("water", 0.40);
+    system.addComponent("CO2", 0.10);
+    system.addComponent("hydrogen", 0.10);
+    system.setMixingRule("classic");
+    system.setMaxNumberOfPhases(1);
+    system.setNumberOfPhases(1);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.reactiveTPflash();
+
+    ReactiveMultiphaseTPflash flash = (ReactiveMultiphaseTPflash) operations.getOperation();
+    assertTrue(flash.isConverged(), "Reactive TP flash should converge");
+    assertEquals(1, system.getNumberOfPhases(), "The explicit one-phase limit must be preserved");
+    assertEquals(1, system.getMaxNumberOfPhases(), "Initialization must not reset the phase limit");
+  }
 }

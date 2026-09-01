@@ -16,6 +16,11 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
@@ -106,6 +111,8 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    */
   public GasTurbine(String name) {
     super(name);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
+    registerEnergyPort("exhaustHeat", EnergyType.HEAT, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
     // needs to be changed to gas tubing mechanical design
     SystemInterface airThermoSystem = new neqsim.thermo.Fluid().create("combustion air");
     airThermoSystem.createDatabase(true);
@@ -125,6 +132,35 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   public GasTurbine(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.connectEnergyStream("shaftPower", energyStream, EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    if ("shaftPower".equals(portName)) {
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("shaftPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+      if (drivenLoads.isEmpty() && auxiliaryPowerW <= 0.0) {
+        requiredPower = 0.0;
+        powerDemandMode = false;
+      }
+    }
   }
 
   /** {@inheritDoc} */
@@ -180,6 +216,11 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    EnergyPort shaftPowerPort = getEnergyPort("shaftPower");
+    if (shaftPowerPort.isConnected() && shaftPowerPort.getMode() == EnergyPortMode.SPECIFICATION) {
+      requiredPower = shaftPowerPort.getPowerMagnitude();
+      powerDemandMode = true;
+    }
     if (powerDemandMode || !drivenLoads.isEmpty() || auxiliaryPowerW > 0.0) {
       runPowerDemand(id);
       return;
@@ -246,6 +287,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
       power = thermalEfficiency * fuelHeat;
       this.heat = fuelHeat - power;
     }
+    publishEnergyPorts();
     setCalculationIdentifier(id);
   }
 
@@ -285,7 +327,20 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     heat = fuelHeat - requiredPower;
     outStream.setThermoSystem(thermoSystem.clone());
     outStream.setCalculationIdentifier(id);
+    publishEnergyPorts();
     setCalculationIdentifier(id);
+  }
+
+  /** Publishes calculated shaft power and recoverable exhaust heat to connected energy ports. */
+  private void publishEnergyPorts() {
+    EnergyPort shaftPowerPort = getEnergyPort("shaftPower");
+    if (shaftPowerPort.isConnected() && shaftPowerPort.getMode() != EnergyPortMode.SPECIFICATION) {
+      shaftPowerPort.setDuty(power);
+    }
+    EnergyPort exhaustHeatPort = getEnergyPort("exhaustHeat");
+    if (exhaustHeatPort.isConnected()) {
+      exhaustHeatPort.setDuty(heat);
+    }
   }
 
   /**

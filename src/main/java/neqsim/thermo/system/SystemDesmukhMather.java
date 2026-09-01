@@ -1,16 +1,22 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseDesmukhMather;
-import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- * This class defines a thermodynamic system using the Desmukh Mather thermodynamic model.
+ * Thermodynamic system using SRK for gas and oil and Desmukh-Mather for the aqueous electrolyte phase.
+ *
+ * <p>
+ * Calling {@code setMultiPhaseCheck(true)} selects the fixed-role hybrid gas-oil-aqueous flash. If
+ * {@code chemicalReactionInit()} has loaded reactions, aqueous chemical equilibrium is coupled to phase equilibrium.
+ * Scale potential can then be evaluated from the Desmukh-Mather ion activities, subject to that model's component and
+ * interaction-parameter coverage.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemDesmukhMather extends SystemEos {
+public class SystemDesmukhMather extends SystemEosGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -43,22 +49,7 @@ public class SystemDesmukhMather extends SystemEos {
     modelName = "Desmukh-Mather-model";
     attractiveTermNumber = 0;
 
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseDesmukhMather(); // new PhaseGENRTLmodifiedWS();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-
-    if (solidPhaseCheck) {
-      setNumberOfPhases(4);
-      phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
-      phaseArray[numberOfPhases - 1].setTemperature(T);
-      phaseArray[numberOfPhases - 1].setPressure(P);
-      phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
-    }
+    configureHybridEosGePhases(T, P, new PhaseSrkEos(), new PhaseDesmukhMather(), new PhaseSrkEos());
   }
 
   /** {@inheritDoc} */

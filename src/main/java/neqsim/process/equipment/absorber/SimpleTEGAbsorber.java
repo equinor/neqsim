@@ -5,6 +5,8 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -14,12 +16,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * SimpleTEGAbsorber class.
+ *
+ * <p>
+ * The gas and solvent feeds may have different component slates. The absorber combines their complete component
+ * inventories before flashing and preserves the transferred water in its phase-specific outlet streams.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,6 +52,127 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   int solventStreamNumber = 0;
   private boolean isSetWaterInDryGas = false;
   private double waterInDryGas = 30e-6;
+  private static final double COMPONENT_INVENTORY_RELATIVE_TOLERANCE = 1.0e-10;
+
+  /** Raised when an absorber operation changes the conserved component inventory. */
+  private static final class ComponentInventoryException extends IllegalStateException {
+    private static final long serialVersionUID = 1000;
+
+    private ComponentInventoryException(String message) {
+      super(message);
+    }
+  }
+
+  /** Immutable component-mole inventory used to guard absorber reinitialization steps. */
+  private static final class ComponentInventory {
+    private final Map<String, Double> componentMoles;
+    private final double totalMoles;
+
+    private ComponentInventory(Map<String, Double> componentMoles, double totalMoles) {
+      this.componentMoles = componentMoles;
+      this.totalMoles = totalMoles;
+    }
+
+    private static ComponentInventory capture(SystemInterface system) {
+      Map<String, Double> componentMoles = new LinkedHashMap<String, Double>();
+      double totalMoles = 0.0;
+      PhaseInterface referencePhase = system.getPhase(0);
+      for (int componentIndex = 0; componentIndex < referencePhase.getNumberOfComponents(); componentIndex++) {
+        ComponentInterface component = referencePhase.getComponent(componentIndex);
+        double moles = component.getNumberOfmoles();
+        componentMoles.put(component.getName(), moles);
+        totalMoles += moles;
+      }
+      return new ComponentInventory(componentMoles, totalMoles);
+    }
+
+    private static ComponentInventory capturePhase(SystemInterface system, int phaseNumber) {
+      Map<String, Double> componentMoles = new LinkedHashMap<String, Double>();
+      double totalMoles = 0.0;
+      PhaseInterface phase = system.getPhase(phaseNumber);
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        ComponentInterface component = phase.getComponent(componentIndex);
+        double moles = component.getNumberOfMolesInPhase();
+        componentMoles.put(component.getName(), moles);
+        totalMoles += moles;
+      }
+      return new ComponentInventory(componentMoles, totalMoles);
+    }
+
+    private void requireUnchanged(SystemInterface system, String step) {
+      PhaseInterface referencePhase = system.getPhase(0);
+      for (Map.Entry<String, Double> entry : componentMoles.entrySet()) {
+        ComponentInterface component = referencePhase.getComponent(entry.getKey());
+        double actual = component == null ? 0.0 : component.getNumberOfmoles();
+        requireClose(entry.getValue(), actual, step, entry.getKey());
+      }
+      requireClose(totalMoles, system.getTotalNumberOfMoles(), step, "total moles");
+    }
+
+    private void requireActivePhaseSum(SystemInterface system, String step) {
+      for (Map.Entry<String, Double> entry : componentMoles.entrySet()) {
+        double actual = 0.0;
+        for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+          ComponentInterface component = system.getPhase(phaseNumber).getComponent(entry.getKey());
+          if (component != null) {
+            actual += component.getNumberOfMolesInPhase();
+          }
+        }
+        requireClose(entry.getValue(), actual, step, entry.getKey());
+      }
+    }
+
+    private void requireCombinedActivePhaseSum(SystemInterface firstSystem, SystemInterface secondSystem, String step) {
+      for (Map.Entry<String, Double> entry : componentMoles.entrySet()) {
+        double actual = activePhaseMoles(firstSystem, entry.getKey()) + activePhaseMoles(secondSystem, entry.getKey());
+        requireClose(entry.getValue(), actual, step, entry.getKey());
+      }
+      requireClose(totalMoles, firstSystem.getTotalNumberOfMoles() + secondSystem.getTotalNumberOfMoles(), step,
+          "total moles");
+    }
+
+    private static double activePhaseMoles(SystemInterface system, String componentName) {
+      double moles = 0.0;
+      for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+        ComponentInterface component = system.getPhase(phaseNumber).getComponent(componentName);
+        if (component != null) {
+          moles += component.getNumberOfMolesInPhase();
+        }
+      }
+      return moles;
+    }
+
+    private static void requireClose(double expected, double actual, String step, String componentName) {
+      double tolerance = COMPONENT_INVENTORY_RELATIVE_TOLERANCE * Math.max(1.0, Math.abs(expected));
+      if (!Double.isFinite(actual) || Math.abs(expected - actual) > tolerance) {
+        throw new ComponentInventoryException("SimpleTEGAbsorber changed " + componentName + " inventory during " + step
+            + ": expected " + expected + " mol, found " + actual + " mol");
+      }
+    }
+  }
+
+  private static void runInventoryCheckedInitialization(SystemInterface system, Runnable initialization, String step) {
+    ComponentInventory inventory = ComponentInventory.capture(system);
+    initialization.run();
+    inventory.requireUnchanged(system, step);
+  }
+
+  /**
+   * Extracts a logical phase while retaining that phase's backing implementation in every system slot.
+   *
+   * <p>
+   * The {@code phaseToSystem(PhaseInterface)} overload mutates its receiver, so perform the extraction on a clone. This
+   * preserves the legacy single-phase system structure without selecting a raw backing-array index.
+   * </p>
+   *
+   * @param system source multiphase system
+   * @param logicalPhaseNumber logical active-phase number to extract
+   * @return independent single-phase system containing the selected logical phase
+   */
+  static SystemInterface extractLogicalPhase(SystemInterface system, int logicalPhaseNumber) {
+    SystemInterface phaseSystem = system.clone();
+    return phaseSystem.phaseToSystem(phaseSystem.getPhase(logicalPhaseNumber));
+  }
 
   /**
    * Constructor for SimpleTEGAbsorber.
@@ -60,8 +190,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     if (numberOfInputStreams == 0) {
       mixedStream = streams.get(0).clone(this.getName() + " mixed stream");
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().init(0);
-      mixedStream.getThermoSystem().init(3);
+      runInventoryCheckedInitialization(mixedStream.getThermoSystem(), () -> mixedStream.getThermoSystem().init(0),
+          "initial mixed-stream init(0)");
+      runInventoryCheckedInitialization(mixedStream.getThermoSystem(), () -> mixedStream.getThermoSystem().init(3),
+          "initial mixed-stream init(3)");
     }
 
     numberOfInputStreams++;
@@ -113,38 +245,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * mixStream.
    */
   public void mixStream() {
-    String compName = new String();
-
     for (int k = 1; k < streams.size(); k++) {
-      for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0].getNumberOfComponents(); i++) {
-        boolean gotComponent = false;
-        String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
-        // System.out.println("adding: " + componentName);
-
-        double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
-        // System.out.println("moles: " + moles + " " +
-        // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
-        for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName().equals(componentName)) {
-            gotComponent = true;
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
-          }
-        }
-
-        if (gotComponent) {
-          // System.out.println("adding moles starting....");
-          mixedStream.getThermoSystem().addComponent(compName, moles);
-          // mixedStream.getThermoSystem().init_x_y();
-          // System.out.println("adding moles finished");
-        } else {
-          // System.out.println("ikke gaa hit");
-          mixedStream.getThermoSystem().addComponent(compName, moles);
-        }
-      }
+      mixedStream.getThermoSystem().addFluid(streams.get(k).getThermoSystem());
     }
-    mixedStream.getThermoSystem().init_x_y();
-    mixedStream.getThermoSystem().initBeta();
-    mixedStream.getThermoSystem().init(2);
+    runInventoryCheckedInitialization(mixedStream.getThermoSystem(), () -> mixedStream.getThermoSystem().init_x_y(),
+        "mixed-stream init_x_y");
+    runInventoryCheckedInitialization(mixedStream.getThermoSystem(), () -> mixedStream.getThermoSystem().initBeta(),
+        "mixed-stream initBeta");
+    runInventoryCheckedInitialization(mixedStream.getThermoSystem(), () -> mixedStream.getThermoSystem().init(2),
+        "mixed-stream init(2)");
   }
 
   /**
@@ -169,7 +278,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   public double calcMixStreamEnthalpy() {
     double enthalpy = 0;
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
+      final SystemInterface streamSystem = streams.get(k).getThermoSystem();
+      runInventoryCheckedInitialization(streamSystem, () -> streamSystem.init(3), "inlet enthalpy init(3)");
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       // System.out.println("total enthalpy k : " + (
       // ((StreamInterface) streams.get(k)).getThermoSystem()).getEnthalpy());
@@ -282,8 +392,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
       mixedStream.getThermoSystem().setNumberOfPhases(2);
-      mixedStream.getThermoSystem().init(0);
+      runInventoryCheckedInitialization(mixedStream.getThermoSystem(), () -> mixedStream.getThermoSystem().init(0),
+          "run mixed-stream init(0)");
       mixStream();
+      ComponentInventory feedInventory = ComponentInventory.capture(mixedStream.getThermoSystem());
       // System.out.println("feed total number of water " +
       // mixedStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
       double enthalpy = calcMixStreamEnthalpy();
@@ -291,10 +403,18 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       mixedStream.getThermoSystem().setTemperature(guessTemperature());
       ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       testOps.TPflash();
+      feedInventory.requireUnchanged(mixedStream.getThermoSystem(), "TP flash");
+      feedInventory.requireActivePhaseSum(mixedStream.getThermoSystem(), "TP flash phase recombination");
       testOps.PHflash(enthalpy, 0);
+      feedInventory.requireUnchanged(mixedStream.getThermoSystem(), "PH flash");
+      feedInventory.requireActivePhaseSum(mixedStream.getThermoSystem(), "PH flash phase recombination");
 
-      kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx()
-          / mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+      double xWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+      if (xWaterLiquid > 1.0e-10) {
+        kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx() / xWaterLiquid;
+      } else {
+        kwater = 1.0e-5;
+      }
 
       calcNumberOfTheoreticalStages();
       // System.out.println("number of theoretical stages " +
@@ -323,24 +443,33 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       StreamInterface newMixedStream = mixedStream.clone();
       newMixedStream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
       newMixedStream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
-      newMixedStream.getThermoSystem().initBeta();
-      newMixedStream.getThermoSystem().init_x_y();
-      newMixedStream.getThermoSystem().init(2);
+      feedInventory.requireUnchanged(newMixedStream.getThermoSystem(), "phase-to-phase water transfer");
+      feedInventory.requireActivePhaseSum(newMixedStream.getThermoSystem(), "phase-to-phase water transfer");
+      runInventoryCheckedInitialization(newMixedStream.getThermoSystem(),
+          () -> newMixedStream.getThermoSystem().initBeta(), "water-transfer initBeta");
+      runInventoryCheckedInitialization(newMixedStream.getThermoSystem(),
+          () -> newMixedStream.getThermoSystem().init_x_y(), "water-transfer init_x_y");
+      runInventoryCheckedInitialization(newMixedStream.getThermoSystem(),
+          () -> newMixedStream.getThermoSystem().init(2), "water-transfer init(2)");
+      feedInventory.requireActivePhaseSum(newMixedStream.getThermoSystem(), "water-transfer reinitialization");
       mixedStream = newMixedStream;
       mixedStream.setCalculationIdentifier(id);
 
       // stream.getThermoSystem().display();
 
-      SystemInterface tempSystem = mixedStream.getThermoSystem().clone();
-      SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);
-      gasTemp.init(2);
+      ComponentInventory gasInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 0);
+      SystemInterface gasTemp = extractLogicalPhase(mixedStream.getThermoSystem(), 0);
+      gasInventory.requireUnchanged(gasTemp, "gas phase extraction");
+      runInventoryCheckedInitialization(gasTemp, () -> gasTemp.init(2), "gas outlet init(2)");
       gasOutStream.setThermoSystem(gasTemp);
       // System.out.println("gas total number of water " +
       // gasOutStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
 
-      tempSystem = mixedStream.getThermoSystem().clone();
-      SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
-      liqTemp.init(2);
+      ComponentInventory liquidInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 1);
+      SystemInterface liqTemp = extractLogicalPhase(mixedStream.getThermoSystem(), 1);
+      liquidInventory.requireUnchanged(liqTemp, "liquid phase extraction");
+      runInventoryCheckedInitialization(liqTemp, () -> liqTemp.init(2), "liquid outlet init(2)");
+      feedInventory.requireCombinedActivePhaseSum(gasTemp, liqTemp, "combined outlet phase extraction");
       solventOutStream.setThermoSystem(liqTemp);
       // System.out.println("solvent total number of water " +
       // solventOutStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
@@ -366,6 +495,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       // .getDensity()/ 3.14 / vtemp);
       // System.out.println("diameter " + d);
       setCalculationIdentifier(id);
+    } catch (ComponentInventoryException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -373,14 +504,27 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     // getSolventOutStream().getFlowRate("kg/hr"));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the Souders-Brown gas load factor (K-factor) for the contactor.
+   *
+   * <p>
+   * The gas load factor is defined as {@code Ks = Vs * sqrt(rho_gas / (rho_liquid - rho_gas))} where {@code Vs} is the
+   * superficial gas velocity (m/s), {@code rho_gas} is the gas outlet density (kg/m3), and {@code rho_liquid} is the
+   * rich TEG outlet density (kg/m3).
+   * </p>
+   *
+   * @return gas load factor in m/s, or 0 if the liquid density does not exceed the gas density
+   */
   @Override
   public double getGasLoadFactor() {
-    double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
     double vs = getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea;
-    return vs / Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity()
-        - getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity())
-        / getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+    double gasDensity = getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double liquidDensity = getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    if (liquidDensity <= gasDensity) {
+      return 0.0;
+    }
+    return vs * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
   }
 
   /** {@inheritDoc} */
@@ -711,5 +855,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     sb.append(String.format("Number of theoretical stages: %.2f\n", getNumberOfTheoreticalStages()));
 
     return sb.toString();
+  }
+
+  public double getKwater() {
+    return kwater;
   }
 }

@@ -22,7 +22,8 @@ package neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall;
  * @author ESOL
  * @version $Id: $Id
  */
-public class MaterialLayer {
+public class MaterialLayer implements java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
 
   /** Layer thickness in meters. */
   private double thickness = 0.01;

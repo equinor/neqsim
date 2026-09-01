@@ -136,6 +136,11 @@ final class ColumnSolverFactory {
           "feasibility pre-screen valid=" + feasibility.isValid() + ", warnings=" + feasibility.hasWarnings());
       appendAutoFeasibilitySummary(summary, feasibility);
 
+      ColumnSolveResult preferredResult = runPreferredReboilerOnlySumRates(column, id, summary, feasibilityReport);
+      if (preferredResult != null) {
+        return preferredResult;
+      }
+
       DistillationColumn candidateSource = createAutoCandidate(column);
       if (candidateSource == null) {
         appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, null,
@@ -449,9 +454,17 @@ final class ColumnSolverFactory {
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
-      DistillationColumn warmStartCandidate = isAutoCandidateProbeMode() ? null : createDampedFallbackCandidate(column);
-      DistillationColumn fallbackCandidate = shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column)
-          : null;
+      // createDampedFallbackCandidate is a full serialization deep copy of every tray fluid. Skip
+      // it when the exact warm-state cache is going to answer this call: the reuse path performs no
+      // solver work, so neither the warm-start validation candidate nor the fallback candidate can
+      // ever be consumed, and copying the column would dominate the cost of the whole invocation.
+      boolean exactReuseExpected = !isAutoCandidateProbeMode() && column.willReuseNaphtaliSandholmWarmState();
+      DistillationColumn warmStartCandidate = isAutoCandidateProbeMode() || exactReuseExpected ? null
+          : createDampedFallbackCandidate(column);
+      // The same untouched copy guards both validation and coordinated fallback. A rejected
+      // simultaneous solve may have mutated live trays and product caches, so starting damped
+      // substitution from the live column can duplicate retained feed inventory.
+      DistillationColumn fallbackCandidate = warmStartCandidate;
       boolean accepted = false;
       boolean fallbackApplied = false;
       try {
@@ -468,12 +481,17 @@ final class ColumnSolverFactory {
             "Naphtali-Sandholm required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !accepted && !isAutoCandidateProbeMode() && !column.solved()) {
+      // Preserve the established no-side-draw direct-acceptance contract unless the applied
+      // products specifically miss the active mass-balance gate.
+      boolean massBalanceGateFailed = !Double.isFinite(column.getLastMassResidual())
+          || column.getLastMassResidual() > column.getMassBalanceTolerance();
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved() && (!accepted || massBalanceGateFailed)) {
         applyDampedFallback(column, fallbackCandidate, id, "Naphtali-Sandholm did not satisfy convergence criteria",
             null);
         fallbackApplied = true;
       }
       if (!fallbackApplied && accepted && !isAutoCandidateProbeMode() && column.getLastIterationCount() <= 0
+          && !column.wasNaphtaliSandholmWarmStateReused() && !column.wasSequentialWarmStateReused()
           && validateNaphtaliWarmStartProductSplit(column, warmStartCandidate, id)) {
         fallbackApplied = true;
       }
@@ -610,6 +628,64 @@ final class ColumnSolverFactory {
     }
     return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
         DistillationColumn.SolverType.DIRECT_SUBSTITUTION };
+  }
+
+  /**
+   * Run native sum-rates before the relaxed damped base for a fixed-specification reboiler-only column.
+   *
+   * <p>
+   * A reboiler-only stripper is the native sum-rates use case. Paying first for a complete damped solve removes most of
+   * the accelerator's cold-run benefit. The terminal product canonicalization in {@link DistillationColumn} gives the
+   * sequential solvers the same trace-phase definition, so a rigorously converged sum-rates candidate can be accepted
+   * directly. Any failure falls through to the unchanged damped/probe ladder.
+   * </p>
+   *
+   * @param column live AUTO column
+   * @param id calculation identifier
+   * @param summary automatic solver summary builder
+   * @param feasibilityReport feasibility report already produced for the live column
+   * @return accepted sum-rates result, or {@code null} when AUTO should use the robust base ladder
+   */
+  private static ColumnSolveResult runPreferredReboilerOnlySumRates(DistillationColumn column, UUID id,
+      StringBuilder summary, String feasibilityReport) {
+    if (!column.hasReboiler || column.hasCondenser || column.isReactive()
+        || hasAdjustableProductSpecification(column)) {
+      return null;
+    }
+
+    DistillationColumn candidate = createAutoCandidate(column);
+    if (candidate == null) {
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.SUM_RATES, null,
+          "preferred candidate copy failed; robust base ladder retained");
+      return null;
+    }
+    candidate.setLastAutoFeasibilityReport(feasibilityReport);
+    if (candidate.tryThermodynamicProfileInitialization(summary)) {
+      column.recordAutoSolverEvent("thermodynamic profile seed applied to preferred sum-rates candidate");
+      column.setLastInitializationReport(candidate.getLastInitializationReport());
+    } else {
+      column.setLastInitializationReport(candidate.getLastInitializationReport());
+    }
+    prepareAutoCandidate(candidate, DistillationColumn.SolverType.SUM_RATES);
+    try {
+      ColumnSolveResult result = runAutoProbeCandidate(candidate, DistillationColumn.SolverType.SUM_RATES, id);
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.SUM_RATES, result,
+          autoProbeNote(DistillationColumn.SolverType.SUM_RATES, candidate, result));
+      if (!isAcceptableAutoCandidate(candidate, result)) {
+        return null;
+      }
+      column.acceptAutoSolverCandidate(candidate, result.getSolverType());
+      column.setLastAutoFeasibilityReport(feasibilityReport);
+      column.setLastAutoSolverSummary(summary.toString());
+      column.recordAutoSolverEvent("selected preferred " + result.getSolverType());
+      return ColumnSolveResult.from(column, result.getSolverType());
+    } catch (RuntimeException exception) {
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.SUM_RATES, null,
+          "preferred candidate failed: " + exception.getMessage());
+      DistillationColumn.logger.debug("Preferred reboiler-only SUM_RATES candidate failed for {}.", column.getName(),
+          exception);
+      return null;
+    }
   }
 
   /**
@@ -838,8 +914,11 @@ final class ColumnSolverFactory {
    * @return finite scalar score where lower is better
    */
   private static double scoreResult(ColumnSolveResult result, DistillationColumn candidate) {
-    double score = residualScore(result.getTemperatureResidual()) + residualScore(result.getMassResidual())
-        + residualScore(result.getEnergyResidual()) + residualScore(result.getProductDrawResidualNorm());
+    // A simultaneous-correction solver reports NaN for the successive-substitution temperature
+    // residual because it never performs a tray sweep. That is a "not applicable", not a diverged
+    // residual, so it must not draw the 1e9 non-finite penalty and rank the candidate last.
+    double score = optionalResidualScore(result.getTemperatureResidual()) + residualScore(result.getMassResidual())
+        + optionalResidualScore(result.getEnergyResidual()) + residualScore(result.getProductDrawResidualNorm());
     if (Double.isFinite(result.getMeshResidualNorm())) {
       score += residualScore(result.getMeshResidualNorm());
     }
@@ -863,6 +942,24 @@ final class ColumnSolverFactory {
       return 1.0e9;
     }
     return Math.abs(residual);
+  }
+
+  /**
+   * Convert a residual that a solver may legitimately not produce into a scoring contribution.
+   *
+   * <p>
+   * {@code Double.NaN} means "this solver has no such residual" and contributes nothing, while an infinite value is a
+   * diverged residual and keeps the full penalty.
+   * </p>
+   *
+   * @param residual candidate residual value, possibly {@code Double.NaN}
+   * @return finite non-negative residual score
+   */
+  private static double optionalResidualScore(double residual) {
+    if (Double.isNaN(residual)) {
+      return 0.0;
+    }
+    return residualScore(residual);
   }
 
   /**

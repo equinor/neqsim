@@ -121,13 +121,27 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
    * runTransient This method calculates thermodynamic and unit operations using difference equations if available and
    * calculateSteadyState is true. Use setCalculateSteadyState to set the parameter. Sets calc identifier UUID.
    *
+   * <p>
+   * Steady-state equipment may be evaluated repeatedly with the same calculation identifier while a transient solver
+   * refines one physical timestep. Every evaluation still calls {@link #run(UUID)}, but the equipment clock advances
+   * only for the first successful evaluation of a non-null identifier. For a null identifier, every successful
+   * evaluation advances the clock. The default transient boundary does not set an identifier in that case, so any
+   * identifier mutation performed by {@code run(null)} is retained.
+   * </p>
+   *
    * @param dt Delta time [s]
    * @param id Calculation identifier
    */
   public default void runTransient(double dt, UUID id) {
     if (getCalculateSteadyState()) {
+      boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
       run(id);
-      increaseTime(dt);
+      if (id != null) {
+        setCalculationIdentifier(id);
+      }
+      if (!alreadyEvaluatedForStep) {
+        increaseTime(dt);
+      }
       return;
     }
 

@@ -3,9 +3,19 @@ title: NeqSim Design Framework
 description: The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage pa...
 ---
 
-# NeqSim Design Framework
-
 The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage patterns.
+
+## Compatibility
+
+The typed process-design additions retain the legacy public source entry points, so callers can
+migrate incrementally. They are not a promise of identical behavior: validation-only optimizer runs
+no longer report false convergence, configured mechanical-design objects are preserved, invalid or
+ambiguous engineering inputs fail earlier, and corrected standard editions/applicability can change
+selection results. Java object deserialization across NeqSim versions is not part of this
+compatibility contract.
+
+See [Migrate process design to typed standard kernels](standard_design_kernel_migration) for the
+complete compatibility boundary and staged migration path.
 
 ## Related Documentation
 
@@ -29,6 +39,45 @@ The design framework consists of several integrated components:
 | `EquipmentConstraintRegistry` | Registry of default constraint templates |
 | `DesignOptimizer` | Integrated design-to-optimization workflow |
 | `DesignResult` | Container for optimization results |
+| `EquipmentDesignKernel` | Readiness-gated, standard-specific calculation adapter |
+
+Standard-specific equipment calculations are registered explicitly. The current registry exposes
+screening kernels for API 617 compressor-casing checks, API 610 pump checks, API 521 relief-scenario
+evaluation, API 526 standard-orifice selection, API 12J separator-performance checks, and NORSOK
+M-506 CO2-corrosion screening, ISO 5167-2 concentric orifice-plate metering, DNV-RP-C203
+S-N/Palmgren-Miner fatigue screening with caller-controlled curve data, DNV-RP-F105 simply
+supported first-mode/dimensionless free-span screening with caller-controlled response triggers,
+DNV-RP-F101 isolated metal-loss/internal-pressure screening with caller-controlled defect
+allowance and pressure factor, and API 2000 fixed-roof tank vent-demand/rated-capacity screening
+with caller-controlled demand and device evidence.
+Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
+All remain preliminary engineering screens and do not claim certification or construction
+readiness.
+
+The executable `StandardDesignKernelVerificationSuite.evaluateRegression()` runs every registered
+kernel against deterministic numeric baselines. It includes SI/customary equivalence at the API 526
+orifice boundary, metre/micrometre equivalence for API 12J, and M-506 rate/inhibitor regression.
+The ISO 5167 case pins liquid-service flow, beta ratio, and the incompressible expansibility
+identity. The C203 case pins per-bin damage, design-fatigue-factor multiplication, and cumulative
+damage utilization without treating the demonstration curve as DNV table data.
+The F105 case pins modal frequency, current/wave reduced velocities, and detailed-response trigger
+behavior without treating project trigger values as DNV acceptance criteria.
+The F101 case pins isolated-defect failure pressure, caller-controlled pressure limit, utilization,
+and within-limit status without treating project factors as DNV acceptance criteria or replacing
+DNV-ST-F101 design checks.
+The API 2000 case pins normal movement/thermal aggregation, total emergency utilization, and tank
+pressure/vacuum constraint status without treating caller inputs as API demand tables or device
+certification.
+Inspect
+`report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
+diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore
+`report.isPassed()` remains false until separately controlled, independently reviewed evidence is
+provided for the exact method versions.
+
+`EquipmentDesignKernelRegistry.getRegisteredStandards()` provides an immutable, deterministic
+registry snapshot for API and serialization regression checks. A registered kernel must identify the
+same standard as its lookup key, support the catalogued default edition, expose a unique
+`method@version`, use a maturity above `CATALOGUED`, and remain serializable.
 
 ## Quick Start
 
@@ -100,14 +149,88 @@ process.run();
 DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis)
     .autoSizeEquipment(1.2)
     .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
 
 DesignResult result = optimizer.optimize();
 
-if (result.isConverged()) {
-    System.out.println(result.getSummary());
+if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
+    logger.info(result.getSummary());
 }
 ```
+
+### Reading the DesignResult
+
+`optimize()` (and `validate()`) return a `DesignResult` you can inspect programmatically —
+convergence status, per-equipment sizes, constraint utilisation, warnings, and hard violations.
+A converged optimization requires an explicit manipulated feed and finite search bounds; without
+`configureFeedRateOptimization(...)`, `optimize()` performs validation and optional auto-sizing only.
+The example bounds bracket its 10,000 kg/hr baseline; use case-specific engineering limits in production studies.
+
+```java
+DesignResult result = DesignOptimizer.forProcess(process)
+    .autoSizeEquipment(1.2)
+    .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 5000.0, 15000.0, "kg/hr")
+    .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION)
+    .optimize();
+
+// Convergence and objective
+boolean ok = result.isConverged();
+double objective = result.getObjectiveValue();
+
+// Sized dimensions for a named unit (e.g. keys "diameter", "length" for a separator)
+java.util.Map<String, Double> sepSize = result.getEquipmentSizes("HP-Separator");
+
+// Constraint utilisation (0-1) per constraint
+for (java.util.Map.Entry<String, DesignResult.ConstraintStatus> e :
+    result.getConstraintStatus().entrySet()) {
+  DesignResult.ConstraintStatus cs = e.getValue();
+  System.out.printf("%s: %.0f%% used, satisfied=%b%n",
+      cs.getName(), 100.0 * cs.getUtilization(), cs.isSatisfied());
+}
+
+// Advisory warnings vs. hard violations
+if (result.hasViolations()) {
+  result.getViolations().forEach(System.out::println);
+}
+```
+
+To validate an existing design without optimising, use `.validate()`:
+
+```java
+DesignResult check = DesignOptimizer.forProcess(process).validate();
+boolean feasible = !check.hasViolations();
+```
+
+### Selecting a mechanical-design standard
+
+Mechanical-design standards are chosen through `StandardRegistry` / `StandardType` and bound to an
+equipment's mechanical-design context. Discover the applicable standards, then create a concrete
+`DesignStandard`:
+
+```java
+import neqsim.process.mechanicaldesign.designstandards.DesignStandard;
+import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
+import neqsim.process.mechanicaldesign.designstandards.StandardType;
+
+Separator sep = (Separator) process.getUnit("HP-Separator");
+
+// Which standards apply to a separator?
+java.util.List<StandardType> applicable =
+    StandardRegistry.getApplicableStandards("Separator");
+
+// Create a concrete standard bound to this separator's mechanical design
+DesignStandard vesselStandard =
+    StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, sep.getMechanicalDesign());
+```
+
+> **Verified examples.** The runnable snippets in this "Quick Start" section are exercised by
+> `neqsim.process.design.DesignFrameworkDocExampleTest`
+> (`src/test/java/neqsim/process/design/DesignFrameworkDocExampleTest.java`). The test uses only
+> classes that exist in the source tree, so if the public design API changes the test fails and this
+> document must be updated in lock-step. Run it with
+> `./mvnw test -Dtest=DesignFrameworkDocExampleTest`.
 
 ## Component Details
 
@@ -260,18 +383,21 @@ DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis);
 optimizer
     .autoSizeEquipment(1.2)       // Auto-size all AutoSizeable equipment
     .applyDefaultConstraints()     // Apply registry constraints
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
 
 // Run
 DesignResult result = optimizer.validate();  // Just validate
-DesignResult result = optimizer.optimize();  // Full optimization
+DesignResult result = optimizer.optimize();  // Bounded search only when explicitly configured
 ```
 
 **ProcessModule Support:**
 - Use `forProcess(ProcessModule)` for modular process structures
 - Check mode with `optimizer.isModuleMode()`
 - Access the module with `optimizer.getModule()`
-- All child ProcessSystems are automatically evaluated for constraints
+- Baseline validation, constraint reporting, and auto-sizing cover all child `ProcessSystem` objects
+- Bounded search through `DesignOptimizer` currently requires one `ProcessSystem`; use the whole-plant
+  `ProductionOptimizer`/`ProcessModelOptimizationView` APIs for multi-system optimization
 
 **Objective Types:**
 - `MAXIMIZE_PRODUCTION` - Maximize total hydrocarbon production
@@ -280,6 +406,11 @@ DesignResult result = optimizer.optimize();  // Full optimization
 - `MINIMIZE_ENERGY` - Minimize energy consumption
 - `CUSTOM` - Custom objective function
 
+Optimization is fail-closed. Without `configureFeedRateOptimization(...)`, `optimize()` runs only the
+baseline, optional auto-sizing, and validation; the result status is `VALIDATED` or `AUTO_SIZED`,
+`isConverged()` is false, and no optimized flow is reported. Oil and gas objectives additionally
+require `setProductStream(...)`. A custom objective requires `setCustomObjective(...)`.
+
 ### DesignResult
 
 Container for design and optimization results.
@@ -287,8 +418,11 @@ Container for design and optimization results.
 ```java
 DesignResult result = optimizer.optimize();
 
-// Check convergence
-if (result.isConverged()) {
+// First distinguish validation/sizing from a real bounded search
+if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
+    // isConverged() means the configured interval search can reach its decision-variable tolerance
+    boolean toleranceReached = result.isConverged();
+
     // Get metrics
     int iterations = result.getIterations();
     double objective = result.getObjectiveValue();
@@ -503,6 +637,7 @@ The design framework integrates with existing NeqSim capabilities:
 DesignOptimizer designOpt = DesignOptimizer.forProcess(process)
     .autoSizeEquipment()
     .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
 
 // The underlying ProductionOptimizer handles the mathematical optimization
@@ -814,5 +949,3 @@ Export Pipeline:
 4. **Optimization** finds the maximum flow rate that respects ALL constraints across ALL equipment
 5. The **Active Constraint** is the specific limit currently preventing higher production
 6. The **Bottleneck** is the equipment where that active constraint exists
-
-

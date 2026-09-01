@@ -84,6 +84,9 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   /** Number of independent reactions found. */
   private int numberOfReactions;
 
+  /** Element inventory frozen before any phase initialization or outer iteration. */
+  private double[] elementBalance;
+
   /** Whether the flash converged. */
   private boolean converged;
 
@@ -171,6 +174,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       // Step 1: Build the formula matrix from component elemental composition
       formulaMatrix = new FormulaMatrix(system);
       numberOfReactions = formulaMatrix.getNumberOfIndependentReactions();
+      elementBalance = formulaMatrix.computeElementVector(getOverallMoles());
 
       logger.debug("ReactiveMultiphaseTPflash: " + formulaMatrix.getNumberOfComponents() + " components, "
           + formulaMatrix.getNumberOfElements() + " elements, " + numberOfReactions + " independent reactions");
@@ -214,8 +218,11 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       // Enforce effectiveMaxPhases: electrolyte CPA init may have created extra phases
       if (effectiveMaxPhases == 1 && system.getNumberOfPhases() > 1) {
         system.setNumberOfPhases(1);
-        system.setMaxNumberOfPhases(1);
         system.init(0);
+        // init(0) may restore the implementation default. Re-apply the user's
+        // one-phase limit after initialization so stability analysis cannot add
+        // a duplicate trial phase.
+        system.setMaxNumberOfPhases(1);
       }
 
       // Step 2.5: Reactive stability analysis
@@ -265,6 +272,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
         logger.debug("Outer iter " + outerIter + " np=" + system.getNumberOfPhases());
         // Step 4a: Solve the multiphase modified RAND system
         ModifiedRANDSolver randSolver = new ModifiedRANDSolver(system, formulaMatrix);
+        randSolver.setElementBalance(elementBalance);
         randSolver.setUseDIIS(this.useDIIS);
         boolean randConverged = randSolver.solve();
         totalIterations += randSolver.getIterationsUsed();
@@ -277,7 +285,8 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
           logger.warn("Modified RAND solver did not converge at outer iteration " + outerIter);
           // Accept near-converged multi-phase solutions to prevent outer loop
           // from restarting and overshooting a good solution
-          if (system.getNumberOfPhases() > 1 && randSolver.getFinalResidual() < 5.0e-3) {
+          if (system.getNumberOfPhases() > 1 && randSolver.getFinalResidual() < 5.0e-3
+              && (!formulaMatrix.hasIonicSpecies() || randSolver.getFinalElementResidual() < 1.0e-8)) {
             converged = true;
             logger.info("Accepted near-converged (residual=" + randSolver.getFinalResidual() + ")");
             break;
@@ -643,6 +652,7 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
     system.init(1);
 
     ModifiedRANDSolver ceSolver = new ModifiedRANDSolver(system, formulaMatrix);
+    ceSolver.setElementBalance(elementBalance);
     ceSolver.setUseDIIS(this.useDIIS);
     converged = ceSolver.solve();
     totalIterations += ceSolver.getIterationsUsed();
@@ -757,6 +767,20 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
   }
 
   /**
+   * Capture the current overall component amounts in component order.
+   *
+   * @return overall component amounts in mol
+   */
+  private double[] getOverallMoles() {
+    int numberOfComponents = system.getPhase(0).getNumberOfComponents();
+    double[] moles = new double[numberOfComponents];
+    for (int component = 0; component < numberOfComponents; component++) {
+      moles[component] = system.getPhase(0).getComponent(component).getNumberOfmoles();
+    }
+    return moles;
+  }
+
+  /**
    * Check if the flash converged.
    *
    * @return true if converged
@@ -804,6 +828,24 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
    */
   public double getEquilibriumTotalMoles() {
     return equilibriumTotalMoles;
+  }
+
+  /**
+   * Get the final combined chemical-potential and element-balance residual.
+   *
+   * @return final normalized residual, or {@link Double#NaN} if no solver ran
+   */
+  public double getFinalResidual() {
+    return solver == null ? Double.NaN : solver.getFinalResidual();
+  }
+
+  /**
+   * Get the final normalized element-balance residual.
+   *
+   * @return final normalized element-balance residual, or {@link Double#NaN} if no solver ran
+   */
+  public double getFinalElementResidual() {
+    return solver == null ? Double.NaN : solver.getFinalElementResidual();
   }
 
   /**

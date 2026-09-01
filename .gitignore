@@ -103,6 +103,9 @@ eclipse_dictionary.txt
 src/main/**/*.png
 src/main/**/*.gif
 
+# Java Flight Recorder profiler dumps
+*.jfr
+
 # Gemini Agent
 .gemini/
 
@@ -136,6 +139,11 @@ neqsim_profile.jfr
 
 # Local agent data (not tracked, as it may contain sensitive information or be large)
 .agents/
+
+# Track only the OpenAI Codex repository-skill discovery link.
+!.agents/
+.agents/*
+!.agents/skills
 
 .release-run-jobs.json
 .release-run-status.json

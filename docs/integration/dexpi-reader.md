@@ -1,10 +1,12 @@
 ---
 title: "DEXPI P&ID Import, Export and Visualization"
-description: "Complete DEXPI integration for NeqSim — import P&ID XML into runnable process models, export professional P&ID drawings with ISO 10628 symbols, auto-layout, instruments, mechanical design data, and configurable visualization."
-keywords: "DEXPI, P&ID, piping and instrumentation diagram, XML import, XML export, ISO 10628, process flow diagram, PFD, visualization"
+description: "Complete DEXPI integration for NeqSim — import P&ID XML, export professional drawings, and preserve supported SIS and HIPPS semantics."
+keywords: "DEXPI, P&ID, piping and instrumentation diagram, XML import, XML export, ISO 10628, process flow diagram, PFD, SIS, HIPPS, safety function, visualization"
 ---
 
-# DEXPI P&ID Import, Export and Visualization
+> New to the available exchange profiles? Start with the
+> [DEXPI Engineering Guide](../engineering/dexpi-guide.md) to choose between Proteus compatibility, pyDEXPI rendering,
+> native DEXPI 2.0 Plant/P&ID, native Process/PFD/BFD, and governed engineering-package workflows.
 
 NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports:
 
@@ -32,6 +34,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiStream` | Lightweight piping segment with DEXPI class, line number, and fluid code |
 | `DexpiProcessUnit` | Imported equipment with original DEXPI class and mapped `EquipmentEnum` |
 | `DexpiInstrumentInfo` | Instrument metadata (tag, type, function letter) |
+| `DexpiConnectionInfo` | Immutable source-order material-connection evidence and endpoint resolution |
 
 ---
 
@@ -91,6 +94,105 @@ if (feedPump.getMappedEquipment() == EquipmentEnum.Pump) {
 }
 ```
 
+### Structured supported-subset diagnostics
+
+Use `readWithDiagnostics(...)` when an import must retain machine-readable evidence for source
+objects that the reader cannot reconstruct. The returned process is built by the same Java parser
+as `read(...)`; the additional report lists skipped objects in deterministic source-document order.
+
+```java
+DexpiXmlReader.ImportResult result =
+    DexpiXmlReader.readWithDiagnostics(xmlFile.toFile(), template);
+ProcessSystem process = result.getProcessSystem();
+List<DexpiInstrumentInfo> instruments = result.getInstruments();
+List<DexpiConnectionInfo> connections = result.getConnections();
+
+for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+  System.out.printf("%s %s %s%n",
+      diagnostic.getSeverity(), diagnostic.getCode(), diagnostic.getElementId());
+}
+
+String evidenceJson = result.toJson();
+```
+
+The JSON uses the stable report schema `neqsim_dexpi_proteus_import.v1` and records the exact
+source ID, component class, XML element name, severity, and diagnostic code for every unsupported
+or unclassified equipment or piping-component object. Warnings describe honest supported-subset
+loss; malformed XML and parser failures still raise `DexpiXmlReaderException`. Existing `read(...)`
+and `load(...)` calls keep their previous behavior and logging.
+
+Piping-network diagnostics also distinguish source-backed values from reconstruction aids. Calling
+`readWithDiagnostics(...)` without a template records `DEXPI_IMPORT_DEFAULT_TEMPLATE_USED`, because
+the compatibility reader supplies a synthetic methane/ethane fluid and operating state. For every
+segment, the report identifies operating values retained from the template, invalid source numbers,
+and source numbers whose units had to use the documented default. Missing identity, component class,
+line number, service/fluid code, nominal-size representation, piping class, and insulation are
+reported separately. In particular, the reader never converts hydraulic bore into DN, NPS, or
+schedule; absent nominal size remains an explicit source-data gap.
+
+The same import now returns the source instrumentation inventory parsed from that one XML document.
+These `DexpiInstrumentInfo` objects are metadata records, not live controllers or transmitters.
+Instrumentation diagnostics report missing identity and function metadata, explicitly missing or
+unresolved sensing attachments, unresolved loop membership, incomplete measuring-line and signal
+source/target references, missing signal medium, and incomplete final-element or actuation-location
+evidence. Valid source references resolve against the complete non-catalogue document identity set,
+including equipment nozzles and actuating functions. The reader never promotes measurement-only or
+incomplete source content into closed-loop control intent.
+
+The same result also preserves every source `Connection` in document order, including parallel
+connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning
+piping-network segment, `FromID` and `ToID` direction, the resolved endpoint element names, and
+resolution status. Missing source IDs receive deterministic evidence-only identities; missing,
+duplicate, self-referential, or unresolved source references remain explicit diagnostics. This
+inventory does not infer connectivity or rewire the returned `ProcessSystem`.
+
+For resolved nozzle endpoints, the same record exposes only explicit source ownership: the nearest
+ancestor `Equipment` or `PipingComponent` identity and XML element name. Direct equipment or
+piping-component endpoints own themselves. Orphaned nozzles and owner elements without source IDs
+remain deterministic warnings; the reader does not derive ownership from coordinates, tags,
+stream order, or simulation state.
+
+`ImportResult.getConnectionEndpoints()` provides a distinct endpoint inventory in first-reference
+order. Each immutable `DexpiConnectionEndpointInfo` records the resolved element and explicit owner
+evidence plus the incoming and outgoing connection-evidence IDs in source order. Counts retain every
+occurrence, including parallel connections. Blank endpoint references remain findings and are omitted
+from this keyed inventory; unresolved non-empty IDs remain visible.
+
+`getIncidenceRole()` classifies only this directed source evidence: zero incoming and one outgoing
+is `SOURCE`; one incoming and zero outgoing is `SINK`; one of each is `PASS_THROUGH`; one
+incoming and multiple outgoing is `SPLIT`; multiple incoming and one outgoing is `MERGE`; and
+all remaining non-empty patterns are `COMPLEX`. `isPotentialMultiConnectionNode()` reports
+whether either directed side has multiple occurrences. These values help reviewers locate topology
+that needs engineering interpretation. They do not prove hydraulic continuity, identify a physical
+branch or fitting, create live process connectivity, or establish process intent.
+
+`ImportResult.getConnectionComponents()` groups non-empty endpoint identities by weak connectivity
+through explicit material-connection references. Components are ordered by their first endpoint;
+their endpoint IDs retain first-reference order and their connection-evidence IDs retain source
+order, including parallel occurrences. Each immutable `DexpiConnectionComponentInfo` also lists
+source, sink, potential multi-connection, and unresolved endpoints from the endpoint evidence.
+A connection with one non-empty endpoint remains visible as a singleton component. A connection
+with two blank endpoint references remains diagnostic evidence and is not assigned invented nodes.
+This grouping is a document-review aid, not proof that the grouped references form a hydraulically
+continuous line or executable process network.
+
+`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
+`connectionComponentCount`, and the ordered connection, endpoint, and component inventories,
+including incidence roles and component review subsets, alongside the process-unit count and
+findings. Python callers through JPype use the same `ImportResult.getInstruments()`,
+`ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`, and
+`ImportResult.getConnectionComponents()` getters; there is no separate Python reconstruction
+model.
+
+`INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
+`ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.
+The report schema is experimental: consumers should key on stable diagnostic codes rather than list
+positions as additional supported-subset checks are added.
+
+This evidence applies to NeqSim's Proteus-compatible DEXPI Plant/P&ID 4.1.1 supported subset. It is
+not proof of full semantic or graphical round-trip equivalence, native DEXPI 2.0 support, DEXPI
+certification, standards conformance, or engineering approval.
+
 Each imported equipment item is represented as a lightweight `DexpiProcessUnit` that records the
 original DEXPI class, mapped `EquipmentEnum` category, and contextual information (line numbers,
 fluid codes). Piping segments become `DexpiStream` objects that clone pressure, temperature, and
@@ -100,8 +202,10 @@ flow settings from the template stream.
 
 Both the reader and writer share `DexpiMetadata` constants that describe the recommended generic
 attributes for DEXPI exchanges. Equipment exports include tag names, line numbers, and fluid codes.
-Piping segments carry segment numbers and operating pressure/temperature/flow triples with explicit
-unit annotations. Query `DexpiMetadata.recommendedStreamAttributes()` and
+Piping segments carry segment numbers, nominal-diameter representations, piping-class and
+insulation codes, and operating pressure/temperature/flow triples with explicit unit annotations.
+The reader preserves these values on `DexpiStream`; it does not derive them from hydraulic inside
+diameter. Query `DexpiMetadata.recommendedStreamAttributes()` and
 `DexpiMetadata.recommendedEquipmentAttributes()` for the minimal metadata sets guaranteed by NeqSim.
 
 ---
@@ -124,6 +228,56 @@ process.run();
 // Export with auto-layout
 DexpiXmlWriter.write(process, new File("output.xml"));
 ```
+
+### NeqSim-native SVG rendering
+
+`DexpiXmlSvgRenderer` renders the geometry in a Proteus-compatible DEXPI Plant/P&ID exchange
+directly to SVG. It resolves each equipment, valve, nozzle, off-page connector, and instrument
+instance against the document's `ShapeCatalogue`, and preserves process, signal, utility, label,
+stream-table, drawing-border, and title-block primitives. The SVG is therefore a view of the DEXPI
+document rather than a separately reconstructed process diagram.
+
+```java
+File dexpi = new File("plant.xml");
+File svg = new File("plant.svg");
+
+DexpiXmlWriter.write(process, dexpi);
+DexpiXmlSvgRenderer.render(dexpi, svg);
+```
+
+For automated drawing-quality gates, assess the same Proteus-compatible exchange before publishing
+the SVG:
+
+```java
+DexpiVisualQualityAssessment.Report visualReport =
+    DexpiVisualQualityAssessment.assess(dexpi);
+Files.write(
+    new File("plant.visual-quality.json").toPath(),
+    visualReport.toJson().getBytes(StandardCharsets.UTF_8)
+);
+if (visualReport.hasErrors()) {
+  throw new IllegalStateException(visualReport.toJson());
+}
+```
+
+The report records the exact `PlantInformation/@SchemaVersion`, drawing extent, source and SVG
+primitive counts, catalogue-instance coverage, positioned-coordinate bounds, text-height risks,
+duplicate identities, and the deterministic SVG SHA-256. Errors identify geometry that cannot be
+rendered faithfully; warnings identify visible review risks. The assessment is a software quality
+gate, not an ISO-conformance, DEXPI-certification, engineering-approval, or
+fitness-for-construction decision.
+
+The renderer is self-contained Java and does not require Graphviz or pyDEXPI. Generated title
+blocks are marked `PROPOSAL`, and their initial revision is `Engineering Proposal`; a controlled
+owner status and accountable review are required before a drawing can be issued for design or
+construction. Use an independent DEXPI consumer as an interoperability check when qualifying an
+exchange for a project handoff.
+
+An intentionally unconfigured `new Stream("spare")` may remain registered in the `ProcessSystem`.
+Its `run(UUID)` call completes as an inactive topology placeholder without inventing a fluid state,
+and the DEXPI writers and renderer ignore unsupported empty geometry while preserving the connected
+process. Equipment that consumes the placeholder still requires a real thermodynamic inlet before it
+can run.
 
 ### Layout and visualization features
 
@@ -187,7 +341,7 @@ display(SVG(filename=str(out_dir / "compact.svg")))
 ```
 
 For a standalone, importable end-to-end pipeline (NeqSim build → DEXPI export → pyDEXPI render),
-see [`examples/neqsim/render_neqsim_dexpi_with_pydexpi.py`](../../examples/neqsim/render_neqsim_dexpi_with_pydexpi.py).
+see [`examples/neqsim/render_neqsim_dexpi_with_pydexpi.py`](https://github.com/equinor/neqsim/blob/master/examples/neqsim/render_neqsim_dexpi_with_pydexpi.py).
 Its `build_process`, `export_dexpi`, and `render` functions can be imported directly into a notebook
 or run as a script via `python render_neqsim_dexpi_with_pydexpi.py`. The example uses
 `writeForPyDexpi`, so it no longer needs a separate namespace-stripping compatibility pass.
@@ -218,40 +372,60 @@ For consumers that require *unqualified* tag look-ups (such as pyDEXPI), use
 `writeForPyDexpi` / `DexpiDiagramBridge.exportForPyDexpi`, which emit the same content with the
 default `xmlns` omitted (see *pyDEXPI-friendly export* above).
 
-### Schema version selection (Proteus 4.1.1 vs DEXPI 2.0)
+### Proteus compatibility and native DEXPI 2.0
 
-By default the writer targets the **Proteus 4.1.1** schema — the serialization that pyDEXPI and the
-broader DEXPI tooling ecosystem currently read. This is the stable, fully supported output and the
-behavior of `write(...)`, `writeForPyDexpi(...)`, and `writeSheets(...)` is unchanged.
+`DexpiXmlWriter.write(...)`, `writeForPyDexpi(...)`, and `writeSheets(...)` retain the established
+Proteus 4.1.1 path for compatible tools. Do not obtain native DEXPI 2.0 by changing only a Proteus
+header: DEXPI 2.0 uses a different object/property/reference serialization with a `Model` root.
 
-The writer also exposes an experimental **DEXPI 2.0** branch. DEXPI 2.0 (release V2.0.0, October
-2025) unifies the P&ID and Process specifications under a new UML-based Information Model and
-introduces a standardized "DEXPI XML" serialization that replaces the Proteus schema. NeqSim's 2.0
-mode currently re-declares the document header (root namespace, `xsi:schemaLocation`, and
-`PlantInformation/@SchemaVersion="2.0"`) over the existing backward-compatible plant-model body. The
-full DEXPI 2.0 Information Model (PFD/BFD constructs, the UML-derived element model) is future work.
+Use the native writers for the official DEXPI 2.0 information models:
 
 ```java
-// Default: Proteus 4.1.1 (SchemaVersion="4.1.1")
-DexpiXmlWriter.write(process, new File("plant.xml"));
+// Plant model: P&ID equipment, piping, instrumentation, safeguards, and diagrams
+Dexpi20ConformanceAssessment.Report plantReport =
+    Dexpi20XmlWriter.writeAndAssess(process, new File("plant.dexpi.xml"));
 
-// Explicit DEXPI 2.0 header (SchemaVersion="2.0")
-DexpiXmlWriter.writeDexpi20(process, new File("plant.dexpi20.xml"));
-
-// Or toggle the thread-local schema version directly
-DexpiXmlWriter.setSchemaVersion(DexpiXmlWriter.DexpiSchemaVersion.DEXPI_2_0);
-try {
-  DexpiXmlWriter.write(process, new File("plant.dexpi20.xml"));
-} finally {
-  DexpiXmlWriter.setSchemaVersion(DexpiXmlWriter.DexpiSchemaVersion.PROTEUS_4_1_1);
-}
+// Process model: PFD/BFD process steps, material ports, streams, and state quantities
+Dexpi20ConformanceAssessment.Report processReport =
+    Dexpi20ProcessModelWriter.writeAndAssess(process, new File("process.dexpi.xml"));
 ```
 
-The `DexpiSchemaVersion` enum carries each version's `SchemaVersion` attribute, root namespace URI,
-and `schemaLocation`. The `DEXPI_2_0` namespace (`http://www.dexpi.org/dexpi`) and XSD location are
-**placeholders** pending the finalized public DEXPI 2.0 schema; verify them against the official
-release before relying on the 2.0 output for downstream validation. `writeDexpi20(...)` saves and
-restores the previous schema version, so the default 4.1.1 output is never affected.
+Both writers emit the official DEXPI XML structure, import the versioned `Core`, `Plant`, or
+`Process` model at `https://data.dexpi.org/models/2.0.0/`, validate against the bundled official
+V2.0.0 XSD, and run reference and supported-profile semantic checks. See
+[DEXPI 2.0 native exchange and conformance](dexpi-20-conformance.md) for exact scope, mappings, and
+qualification requirements.
+
+### SIS and HIPPS semantics in Proteus-compatible exports
+
+The `DexpiXmlWriter` path preserves configured safeguarding semantics in its Proteus-compatible plant-model body:
+
+| Source model or tag | Exported semantics |
+|---|---|
+| `PSHH`, `PAHH`, `LSHH`, `TSHH`, or `FSL` instrument tag | `GenericAttributes Set="SystemAssignment"` containing `ControlSystem=SIS`; an ordinary process transmitter remains DCS |
+| Existing shutdown identifiers such as `XV`, `SD`, `ZS`, `SV`, `ESD`, or `HIPPS` | SIS assignment according to the writer's tag classifier |
+| `HIPPSValve` | `GateValve` final element with closed safe state |
+| Pressure transmitter registered with `HIPPSValve.addPressureTransmitter(...)` | HIPPS sensor role and membership in the same safety function |
+
+For a HIPPS final element and its registered sensors, the writer emits a `SafetyInstrumentedFunction` generic-attribute
+set containing `SafetyFunctionType`, `SafetyFunctionTag`, `FunctionalRole`, `SensorTag`, `SensorTags`,
+`FinalElementTag`, `SafetyIntegrityLevel`, `VotingArchitecture`, `SafeState`, `ProofTestInterval` in hours,
+`ClosureTime` in seconds, and `ControlSystem=SIS`. Diagram SIL markers use the configured HIPPS SIL when the
+instrument has a layout position.
+
+Association is object-based: add the same transmitter objects both to the `HIPPSValve` and the `ProcessSystem`.
+A similar tag that is not registered with the valve may still be classified as SIS by its tag, but it does not receive
+HIPPS membership metadata.
+
+These mappings are implemented by `DexpiXmlWriter.write(...)`, `writeForPyDexpi(...)`, and the related
+Proteus-compatible export variants. They are not currently implemented by `Dexpi20XmlWriter`. Native DEXPI 2.0
+exports therefore require a separate semantic coverage review; do not infer HIPPS preservation from a successful
+schema/profile report. Exported SIL and voting data record configured model values only. They do not verify PFDavg,
+hardware-fault tolerance, independence, proof-test effectiveness, an IEC 61511 safety-requirements specification, or
+project approval.
+
+See [HIPPS implementation](../safety/hipps_implementation.md) and
+[SIS logic implementation](../safety/sis_logic_implementation.md) for the simulation-side models.
 
 ### Line data and NORSOK line numbers
 
@@ -260,7 +434,35 @@ Each piping connection carries operating line data and a NORSOK Z-003 line-ident
 - A `FluidCode` generic attribute (service code: `PG` process gas, `PL` process liquid, `FL` flare,
   `DR` drain, `FG` fuel gas, `UT` utility) derived by `DexpiServiceClassifier`
 - Operating pressure, temperature and flow generic attributes when available on the stream
-- A line-number text label (e.g. `PG-001`) composed by `NorsokLineNumber`
+- A line designation composed by `NorsokLineNumber`, with nominal size, fluid code, sequence,
+  piping class, and insulation code when those values are available
+- A visible `SIZE?` field and `LineSizeStatus=MISSING_SOURCE_DATA` when neither source nominal size
+  nor a model inside diameter is available
+
+Source-backed line data can be supplied by a `DexpiStream`:
+
+```java
+DexpiStream line = new DexpiStream("process-line", fluid, "PipingNetworkSegment", "1001", "PG");
+line.setNominalDiameterRepresentation("DN 150");
+line.setPipingClassCode("A1B");
+line.setInsulationType("H25");
+
+// Optional endpoint values make a real transition explicit.
+line.setFlowInNominalDiameterRepresentation("DN 150");
+line.setFlowOutNominalDiameterRepresentation("DN 100");
+line.setFlowInPipingClassCode("A1B");
+line.setFlowOutPipingClassCode("B2C");
+```
+
+If a NeqSim pipe model supplies only hydraulic diameter, the drawing identifies it explicitly as
+`ID ... mm`; it is never relabelled as DN or NPS. A source-backed endpoint-size change produces a
+`PipeReducer` with distinct flow-in and flow-out sizes and connection points. Explicit piping-class
+or insulation changes produce a `PropertyBreak` marker. The exporter does not guess nominal size,
+schedule, piping class, or insulation.
+
+The writer serializes numeric generic-attribute values with eight significant digits. This
+scale-aware canonical precision suppresses insignificant solver noise so repeated exports remain
+stable without rounding small, non-zero engineering values to zero.
 
 Battery-limit feeds and products that are not wired to another unit on the sheet are marked with
 off-page connector symbols carrying `FEED` / `PRODUCT` cross references, and instrument tags are
@@ -280,6 +482,7 @@ The writer reverse-maps Java classes to DEXPI `ComponentClass` strings:
 | `Cooler` | `AirCoolingSystem` | `RDS327938` |
 | `HeatExchanger` | `ShellAndTubeHeatExchanger` | `RDS327918` |
 | `Heater` | `FiredHeater` | `RDS327914` |
+| `HIPPSValve` | `GateValve` | `RDS415208` |
 | `ThrottlingValve` | `GlobeValve` (tag prefix may map to gate/ball/check/butterfly) | `RDS415212` |
 | `Expander` | `Expander` | `RDS414776` |
 | `Mixer` | `Mixer` | `RDS4149564` |
@@ -398,12 +601,38 @@ from crossing gas equipment. The engine produces the following visual elements:
 **Instrumentation (per ISA 5.1):**
 - Instrument circles with function letter labels (PT, TT, FT, LT, AT)
 - Proper ISA 5.1 function letter decomposition (first letter = measured variable, subsequent = function)
-- Signal lines from instruments to equipment (dashed lines with signal nodes)
+- Field transmitter bubbles connected by measuring lines to an explicit process-segment or nozzle sensing location
+- Level-transmitter measuring lines terminate at a dedicated tank or separator sensing tap; oil
+  level and water-interface functions use distinct taps and never reuse a process inlet or liquid outlet
+- Central/control-room controller bubbles distinguished from field instruments by their symbol and DEXPI location metadata
 - PID controller parameters displayed (Kp, Ti, Td) when controllers are present
-- Controller signal lines connecting instruments to final control elements
+- Typed signal lines from transmitters to controllers and from controllers to actual final control elements
 - SIL-rated instrument visualization with concentric double-border circles for SIL 2 and above
 - Fail-position markers on control valves: **FC** (red), **FO** (green), **FL** (amber)
 - Solenoid valve symbols with diamond shape and wiring to controllers
+
+When a process contains no explicit measurement devices, the writer may add measurement-only
+engineering proposals. These are marked `[PROP]` on the sheet and carry
+`Origin=SYNTHESIZED_PROPOSAL`, `ApprovalStatus=UNREVIEWED`, and `Scope=MEASUREMENT_ONLY` metadata.
+Compatibility metadata also records `InstrumentationSource=SYNTHESIZED_PROPOSAL` and
+`EngineeringStatus=PROPOSED`. Explicit transmitters expose `MeasurementAttachmentTargetID`; closed
+loops expose both `FinalControlElementID` and `FinalControlElementTag`.
+The writer does not synthesize controllers, manipulated variables, or final control elements. A
+closed loop is drawn only when the model contains an explicit controller attached to a connected
+valve or manipulated equipment item; otherwise the controller is retained as an incomplete-loop
+warning without a command line to empty drawing space.
+
+This representation follows the separation of sensing, signal-conveying, control, and actuation
+functions used by DEXPI and the identification/location conventions used by ISA-5.1. It does not
+imply that the transmitter circle must geometrically overlap the process line: the measuring line
+and its `is located in` association identify the physical sensing point.
+
+The implementation is informed by [ISO 10628-1 diagram rules](https://www.iso.org/standard/51840.html),
+[ISO 10628-2 graphical symbols](https://www.iso.org/standard/51841.html),
+[IEC 62424 PCE representation](https://webstore.iec.ch/en/publication/25442), the
+[ISA-5 series](https://www.isa.org/standards-and-publications/isa-standards/isa-5-standard), and the
+[DEXPI 1.4 model](https://dexpi.org/static/pid_specification_1.4/). These references guide the
+projection; generated sheets still require project-specific engineering and drafting review.
 
 **Safety elements:**
 - PST (Partial Stroke Test) annotation boxes near safety valves
@@ -413,6 +642,8 @@ from crossing gas equipment. The engine produces the following visual elements:
 - Heat trace indication marks (zigzag pattern with ET/ST type labels)
 - Insulation marks on process lines
 - Piping class and line size attribute export
+- Source-backed reducer symbols for line-size transitions
+- Property-break symbols for explicit piping-class or insulation changes
 
 **Annotations:**
 - Equipment weight annotations (dry and operating weight)
@@ -474,6 +705,10 @@ from crossing gas equipment. The engine produces the following visual elements:
 ---
 
 ## Building runnable simulations from DEXPI
+
+The raw connection inventory returned by `DexpiXmlReader.readWithDiagnostics(...)` is loss
+evidence. It deliberately preserves parallel edges and malformed references. The builder path below
+has a different purpose: it resolves a supported subset into runnable equipment-level topology.
 
 The `DexpiSimulationBuilder` provides a high-level API that goes beyond basic import: it resolves
 the P&ID topology (nozzle/connection graph), instantiates real NeqSim equipment (separators,

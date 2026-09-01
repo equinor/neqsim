@@ -1,6 +1,6 @@
 ---
 name: review task deliverables
-description: "Reviews a completed task folder under task_solve/ for quality and consistency before PR. Runs the schema validator, the consistency checker, the capability_assessment.md presence check, and audits figure→discussion→linked_results traceability. Returns a graded report (PASS / WARN / FAIL) with concrete fix-ups. Wraps devtools/validate_task_results.py + devtools/consistency_checker.py + devtools/verify_skills_agents.py."
+description: "Reviews a completed task folder under task_solve/ for quality and consistency before PR. Runs the schema validator, the consistency checker, the capability_assessment.md presence check, audits figure→discussion→linked_results traceability, and grades analytical depth (contributor ranking, source-recommendation verdicts, quantitative rule-outs, robustness crossover, discriminating test). Returns a graded report (PASS / WARN / FAIL) with concrete fix-ups. Wraps devtools/validate_task_results.py + devtools/consistency_checker.py + devtools/verify_skills_agents.py."
 argument-hint: "Path to a task folder, e.g. 'task_solve/2026-04-26_co2_pipeline_sizing/' — or 'all' to review every task in task_solve/."
 ---
 
@@ -24,13 +24,13 @@ fix it.
 
 1. **Schema check.**
    ```bash
-   python devtools/validate_task_results.py <task_folder>
+   <python-executable> devtools/validate_task_results.py <task_folder>
    ```
    Report errors as FAIL, warnings as WARN.
 
 2. **Consistency check.**
    ```bash
-   python devtools/consistency_checker.py <task_folder>
+   <python-executable> devtools/consistency_checker.py <task_folder>
    ```
    Report any CRITICAL issues as FAIL; non-critical as WARN.
 
@@ -60,10 +60,42 @@ fix it.
    `uncertainty` percentiles are numeric and ordered
    (`p10 ≤ p50 ≤ p90`) and that any `benchmark_validation` block is
    well-formed — treat those as FAIL if step 1 reported them.
+   Also check the substance, not just the shape: at least three *graded*
+   benchmark comparisons, each against a reference that outranks the model
+   basis; and a converged Monte Carlo (sample count and median drift). The
+   community skills `neqsim-benchmark-reference-data` and
+   `neqsim-uncertainty-quantification` (`equinor/neqsim-community-skills`)
+   expose those checks as `blockers()`; flag a task that hand-rolled the
+   blocks and skipped them.
 
 7. **Repo-memory check.** List any `/memories/repo/*.md` files whose
    filename contains keywords from the task title — flag if none of
    them appear in `notes.md` (the task may be reinventing prior work).
+
+8. **Analytical depth (Principle 0 of `neqsim-professional-reporting`).**
+   Steps 1-7 grade whether the deliverable is well-formed. This step grades
+   whether it is *worth reading* — the failure mode a hygienic report hides.
+   Read `results.json` and the report, and check for:
+
+   | Key / evidence | What it must show |
+   |---|---|
+   | `contributor_ranking` | candidate causes/levers ranked on ONE common basis, not listed |
+   | `source_recommendation_assessment` | each recommendation of the originating memo/action given a `SUPPORTED` / `SUPPORTED_WITH_CORRECTION` / `CHALLENGED` verdict decided by a number |
+   | `ruled_out` | ≥ 1 competing hypothesis eliminated with a stated quantitative margin |
+   | `robustness` | sensitivity over the uncertain parameters **and** the named crossover where the conclusion flips |
+   | `conservatism` | every screening default labelled upper or lower bound |
+   | `discriminating_test` | one named test with the meaning of each outcome, also present in the follow-up actions |
+   | `depth_score` | recorded, ≥ 6/9 (Standard) or 9/9 (Comprehensive / root-cause), with a reason for each missing move |
+
+   Then apply the depth smell tests to the report narrative, and WARN on each:
+   the recommendations are identical to the originating document's; every
+   hypothesis is still "possible"; the executive summary's only numbers restate
+   the input; "further study is recommended" appears without a named test; the
+   report contradicts nothing anywhere; the gaps are one lumped register at the
+   end rather than a "what remains open" per conclusion.
+
+   FAIL a Comprehensive or root-cause task with no `contributor_ranking` or no
+   `ruled_out` — those are descriptions, not analyses.
 
 ## Output Format
 
@@ -78,6 +110,7 @@ Notebooks:     PASS / N unrun
 Traceability:  PASS / N figures missing discussion
 Standards:     PASS / MISSING (n)
 Uncertainty:   PASS / MISSING
+Depth:         n/9  (PASS / WARN / FAIL — missing moves listed below)
 Repo memory:   N relevant files (listed below)
 
 Verdict: READY-TO-MERGE | NEEDS-FIXES | NOT-READY

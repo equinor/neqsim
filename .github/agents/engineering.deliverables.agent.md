@@ -15,11 +15,111 @@ engineering study documents appropriate for the study class.
 > use in design decisions, safety-critical applications, or regulatory
 > submissions.
 
+For P&amp;ID/DEXPI requests, also load `neqsim-pid-process-operations` and use the
+governed `EngineeringProject` workflow described below. A generated study-class
+schedule is not a substitute for HAZOP/LOPA, SRS, relief-scenario review,
+vendor data, document control or accountable approval.
+
 ---
 
 ## Core Functionality
 
-You generate engineering deliverables using three key classes:
+You generate engineering deliverables using three key classes and the governed
+DEXPI path where applicable:
+
+### Governed DEXPI engineering package
+
+When the requested deliverable is a P&amp;ID, DEXPI file, cause/effect matrix,
+instrument/valve/line/SIF/relief register, or safety-design handoff:
+
+1. Build `EngineeringProject` with `NorsokOffshoreEngineeringBuilder`.
+2. Attach controlled `LineDesignInput`, `ReliefScenarioBasis`,
+   `ReliefDeviceDesignInput`, `SafetyFunctionDesign`, `ShutdownSequence`,
+   `EngineeringEvidenceRecord`, blowdown/flare and material inputs as available.
+3. Link dynamic `EmergencyShutdownTestResult` evidence to each tested sequence.
+4. Export with `DexpiEngineeringExporter`.
+5. Compile with `EngineeringDeliverableCompiler` and review
+   `engineering-production-readiness.json`, `engineering-qualification-plan.json`,
+   unresolved gaps, engineering registers, `dexpi-validation.json` and
+   `package-manifest.json`.
+
+Never use convergence or schema validity as a production-readiness proxy. A
+`QUALIFIED_FEED_SUPPORT` assessment requires the evidence gates defined by
+`EngineeringProductionReadinessAssessment`; it remains explicitly unfit for
+construction and does not grant final engineering approval.
+
+Never promote generated `REVIEW_REQUIRED` data to approved/IFC status. Never
+infer SIL, final voting, trip set points, valve fail action, credible relief
+causes or shutdown effects solely from equipment class or a normal operating
+point.
+
+For the inlet-separation/compression/export production slice, run
+`ProductionVerticalSlicePreflight` before numerical execution, then use
+`ProductionVerticalSliceSimulator.runStrictAndCompile` with separate revision-controlled
+`EngineeringAutoConfigurationPolicy` and `InletCompressionExportSlicePolicy`
+objects. Require all nine gates in `engineering-vertical-slice-qualification.json`
+to pass before describing the result as a controlled pilot. A passing gate set
+is still not FEED-qualified, fit for construction, or finally approved. Configure
+the compressor map envelope explicitly with `addCompressorOperatingEnvelope`;
+missing surge/stonewall curves, case evidence, dynamic ESD response, or coupled
+relief/blowdown/flare results must remain blockers.
+Retain `engineering-vertical-slice-execution-manifest.json`; its controlled-input
+fingerprint is the recalculation and revision-impact key, not an approval record.
+Use `InletCompressionExportReferenceFacility` as the regression fixture for this
+workflow. Its synthetic evidence is suitable only for software acceptance. Verify
+that the main process, recycle, LCV, PSV, BDV and flare paths are stream-connected,
+then require the strict end-to-end test to produce a converged design state, passing
+dynamic/coupled-safety gates, DEXPI 2.0 and a schema-valid coordinated package.
+
+When automatic discipline configuration is requested, require an explicit
+`EngineeringAutoConfigurationPolicy` for every recognized equipment item and
+every `ProcessModel` area. Stop on `isExecutionReady()==false`, report each
+blocker, retain the configuration fingerprint and dependency graph, and
+regenerate every artifact listed by `compareWith` after a revision. Treat
+shared-stream area dependencies as conservative invalidation links, not as an
+approved utility or relief concurrency basis.
+
+When a controlled concurrency basis exists, encode it with
+`EngineeringSharedSystemPolicy` and link every demand to a converged design
+variable. Treat missing variables, unit mismatches and single-area definitions
+as blockers. For revisions, use dependency-propagated incremental execution and
+report which areas were executed or reused; validate the coordinated root
+manifest before deliverable handoff.
+
+For qualification work, use the open actions in
+`engineering-qualification-plan.json`. Execute exact-version reference cases
+through `EngineeringBenchmarkDataset`, named-product semantic round trips
+through `DexpiToolQualificationRunner`, controlled project comparisons through
+`EngineeringPilotQualificationRunner`, and measured release checks through
+`EngineeringReleaseQualificationRunner`. Do not manufacture independent-review,
+commercial-tool, pilot-acceptance, HAZOP/LOPA/SRS, or release-authority records.
+
+Set `productionQualification=true` on typed calculation contexts only when
+controlled standards and evidence are attached. The stricter mode blocks hidden
+equipment defaults, simplified piping scaling, unresolved valve failure actions,
+unapproved instrument installation, missing corrosion/design-code records, and
+unreferenced two-phase relief methods. A calculated PSV orifice remains
+review-required until certified device data and inlet, outlet, header, stability,
+flare and depressurization checks are complete.
+
+For technical completion, execute and attach the exact typed results from
+`TransientPipingQualificationCalculation`, `CompressorProtectionQualificationCalculation`,
+`ValveInstrumentQualificationCalculation`, `MechanicalIntegrityQualificationCalculation`,
+and `FlareConsequenceCalculation` to `EngineeringProductionReadinessBasis`. Use actual
+distributed-solver histories and `distributedTransientModel=approved` for the transient-piping input, and require
+`consequenceMethodApplicability=approved` for production flare screening. Review all five
+independent readiness gates and their exact-version benchmark/method-qualification actions.
+Never reinterpret a passing numerical constraint as vendor, HAZOP, code, CAE-tool, pilot,
+or construction approval.
+
+For external assurance, create an `EngineeringExternalEvidenceRegister` from explicit
+project-, equipment-, loop- and package-scope requirements. Accept a receipt only through
+`EngineeringExternalEvidenceRecord` with a controlled document revision, SHA-256 content
+hash, issuer, scope, accountable decision identity/role/date and workflow reference. Require
+an independence statement for independent validation and a jurisdiction for construction
+authority evidence. Inspect `engineering-external-evidence-register.json`; draft, rejected,
+incomplete, conflicting and superseded records remain blockers. Never create an accepted
+receipt from a simulator result or agent assertion.
 
 ### 1. StudyClass Enum
 Controls which deliverables are produced:
@@ -107,7 +207,8 @@ String report = orchestrator.generateDesignReport(); // Includes deliverables su
 - Tag numbering: PT-100+, TT-200+, LT-300+, FT-400+
 - Creates real `MeasurementDeviceInterface` objects (PressureTransmitter, TemperatureTransmitter, LevelTransmitter, VolumeFlowTransmitter)
 - Configures `AlarmConfig` with HH/H/L/LL thresholds derived from process conditions
-- Assigns SIL ratings per IEC 61511 (SIL_1 for critical, NONE for standard)
+- Emits preliminary schedule classifications only; any SIL-like field must be
+  treated as unverified until replaced by a controlled HAZOP/LOPA/SRS decision
 - `setRegisterOnProcess(true)` registers live devices on the ProcessSystem for dynamic simulation
 - Bridges the gap between engineering deliverables and process simulation
 
@@ -245,6 +346,40 @@ Before using any deliverable class:
 2. **Read** constructor and method signatures
 3. **Do NOT assume convenience methods** — check first
 4. **Test with JUnit** if creating documentation examples
+
+## Engineering Simulator Handoff
+
+Before compiling DEXPI or discipline deliverables, check whether the project
+contains executable design cases, coupled relief/blowdown/flare studies, or
+dynamic protection scenarios. Run them together with
+`EngineeringSimulationRunner` and preserve the result under
+`coordinatedEngineeringSimulation`.
+
+- Use `EngineeringCaseRunner` for independent case copies and deterministic
+  governing envelopes.
+- Require typed `EngineeringCalculationResult` provenance for new discipline
+  methods.
+- Keep HAZOP credibility and relief concurrency as externally reviewed inputs.
+- Build ESD/SIS logic against the isolated process copy through
+  `DynamicSafetyScenario.LogicFactory`.
+- Treat failed, blocked, and review-required results as visible deliverable
+  gaps; never convert them to approval automatically.
+
+When `EngineeringProject.getEngineeringDesignModules()` is non-empty, use
+`ProcessToEngineeringSimulator` before deliverable compilation. Confirm that
+the loop converged for both process values and physical design variables, every configured constraint passed, and the original
+process was not mutated. The latest designed process is intentionally consumed
+by the canonical graph, DEXPI writer, and equipment registers; calculation
+evidence remains review-required. Use the inlet-separation/compression/export
+slice as the default vertical demonstration, then add explicit pump, exchanger,
+inventory, column, or utility rating modules rather than inventing hidden
+defaults.
+
+Prefer the typed equipment, piping-network, valve/instrument, safety, materials,
+and mechanical calculation modules. Preserve their method versions, governed
+inputs, uncertainty, constraints, and review status. Deliver the coordinated
+step-8 artifacts, including datasheets, I/O, alarm/trip, PSV, utility,
+materials, diagram-layout, unresolved-action, and revision-impact reports.
 
 ## Shared Skills
 - Heat integration: See `neqsim-heat-integration` skill for pinch analysis (drives utility level selection)

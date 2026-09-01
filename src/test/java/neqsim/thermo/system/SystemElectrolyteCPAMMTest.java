@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1464,41 +1465,23 @@ public class SystemElectrolyteCPAMMTest {
     assertTrue(Double.isFinite(gammaSO4Mix) && gammaSO4Mix > 0,
         "SO4-- activity coefficient should be finite and positive");
 
-    // Now compare with Pitzer for the same mixed water
-    SystemPitzer pitzerMix = new SystemPitzer(298.15, 10.0);
-    pitzerMix.addComponent("methane", 0.01);
-    pitzerMix.addComponent("water", molesWater);
-    pitzerMix.addComponent("Na+", 0.74);
-    pitzerMix.addComponent("Cl-", 0.731);
-    pitzerMix.addComponent("Ba++", 0.0005);
-    pitzerMix.addComponent("SO4--", 0.005);
-    pitzerMix.setMixingRule("classic");
-    pitzerMix.init(0);
-    pitzerMix.init(1);
-    ThermodynamicOperations pitzerMixOps = new ThermodynamicOperations(pitzerMix);
-    pitzerMixOps.TPflash();
+    // A Pitzer comparison for this Na/Ba/Cl/SO4 brine is not qualified until all
+    // same-sign and ternary interactions are supplied from one mapped parameter dataset.
+    SystemPitzer unqualifiedPitzerMix = new SystemPitzer(298.15, 10.0);
+    unqualifiedPitzerMix.addComponent("methane", 0.01);
+    unqualifiedPitzerMix.addComponent("water", molesWater);
+    unqualifiedPitzerMix.addComponent("Na+", 0.74);
+    unqualifiedPitzerMix.addComponent("Cl-", 0.731);
+    unqualifiedPitzerMix.addComponent("Ba++", 0.0005);
+    unqualifiedPitzerMix.addComponent("SO4--", 0.005);
+    unqualifiedPitzerMix.setMixingRule("classic");
 
-    // Aqueous phase is at index 1 for SystemPitzer
-    int baIdxP = pitzerMix.getPhase(1).getComponent("Ba++").getComponentNumber();
-    int so4IdxP = pitzerMix.getPhase(1).getComponent("SO4--").getComponentNumber();
-    int watIdxP = pitzerMix.getPhase(1).getComponent("water").getComponentNumber();
-    double gammaBaP = pitzerMix.getPhase(1).getActivityCoefficient(baIdxP, watIdxP);
-    double gammaSO4P = pitzerMix.getPhase(1).getActivityCoefficient(so4IdxP, watIdxP);
-    double xBaP = pitzerMix.getPhase(1).getComponent("Ba++").getx();
-    double xSO4P = pitzerMix.getPhase(1).getComponent("SO4--").getx();
-    double xWaterP = pitzerMix.getPhase(1).getComponent("water").getx();
-    double mBaP = xBaP / (xWaterP * 0.018015);
-    double mSO4P = xSO4P / (xWaterP * 0.018015);
-    double aBaP = gammaBaP * mBaP;
-    double aSO4P = gammaSO4P * mSO4P;
-    double logIAPp = Math.log10(Math.abs(aBaP * aSO4P) + 1e-30);
-    double siPitzer = logIAPp - logKspBaSO4;
-
-    logger.info("Pitzer model comparison:");
-    logger.info(String.format("  gamma(Ba++) = %.4f (MM: %.4f)", gammaBaP, gammaBaMix));
-    logger.info(String.format("  gamma(SO4--) = %.4f (MM: %.4f)", gammaSO4P, gammaSO4Mix));
-    logger.info(String.format("  SI(Pitzer) = %.2f, SI(MM) = %.2f", siPitzer, sI));
-    logger.info(String.format("  Delta SI = %.2f", sI - siPitzer));
+    unqualifiedPitzerMix.init(0);
+    IllegalStateException missingParameters = assertThrows(IllegalStateException.class,
+        () -> unqualifiedPitzerMix.init(1));
+    assertTrue(missingParameters.getMessage().contains("missingTheta"));
+    assertTrue(missingParameters.getMessage().contains("Ba++|Na+"));
+    assertTrue(missingParameters.getMessage().contains("Cl-|SO4--"));
   }
 
   /**
@@ -1517,8 +1500,8 @@ public class SystemElectrolyteCPAMMTest {
   }
 
   @Test
-  @DisplayName("Pure liquid: MM e-CPA and Pitzer with no gas phase")
-  void testPureLiquidBothModels() {
+  @DisplayName("Liquid properties: MM e-CPA and Pitzer aqueous phases")
+  void testLiquidPropertiesBothModels() {
     // Pure aqueous NaCl 1 molal at 1 bar, 298.15 K — should stay single liquid phase
     double molesWater = 55.508;
     double m = 1.0;
@@ -1544,12 +1527,12 @@ public class SystemElectrolyteCPAMMTest {
     assertTrue(Double.isFinite(gammaMM) && gammaMM > 0,
         "MM gamma± must be finite and positive in pure liquid (got " + gammaMM + ")");
 
-    // ----- Pitzer: pure liquid -----
-    // Architectural note: SystemPitzer uses phase[0]=SRK(gas) and phase[1]=Pitzer(aqueous).
-    // Without a gas component, TPflash stays in the SRK phase, giving gamma±=1.0.
-    // The standard pattern is to add trace methane + moderate pressure to force 2 phases.
+    // ----- Pitzer: explicit aqueous phase -----
+    // SystemPitzer uses phase[0]=SRK(gas) and phase[1]=Pitzer(aqueous). Use a methane inventory
+    // that exceeds the qualified IAPWS pure-water solubility at this state, so the flash retains
+    // an explicit gas plus aqueous topology while the aqueous properties are checked.
     SystemPitzer pitzerSys = new SystemPitzer(298.15, 10.0);
-    pitzerSys.addComponent("methane", 0.01); // trace gas for 2-phase split
+    pitzerSys.addComponent("methane", 5.0);
     pitzerSys.addComponent("water", molesWater);
     pitzerSys.addComponent("Na+", m);
     pitzerSys.addComponent("Cl-", m);
@@ -1574,7 +1557,7 @@ public class SystemElectrolyteCPAMMTest {
     assertTrue(Double.isFinite(gammaPitzer) && gammaPitzer > 0,
         "Pitzer gamma± must be finite and positive in pure liquid (got " + gammaPitzer + ")");
 
-    logger.info("=== Pure Liquid (no gas) ===");
+    logger.info("=== Liquid properties ===");
     logger.info(String.format("  MM e-CPA:  γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaMM, mmVm,
         mmSys.getNumberOfPhases()));
     logger.info(String.format("  Pitzer:    γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaPitzer, pitzerVm,

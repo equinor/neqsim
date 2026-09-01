@@ -3,8 +3,6 @@ title: "Enhanced Separator Entrainment Modeling"
 description: "Physics-based separator performance modeling with droplet size distributions, flow regime prediction, inlet device modeling, grade efficiency curves, vessel geometry, and internals databases. Comparable to commercial tools like MySep and ProSep."
 ---
 
-# Enhanced Separator Entrainment Modeling
-
 Physics-based, inlet-to-outlet separator performance calculation using open-literature
 correlations. This is an optional enhancement to the standard NeqSim separator that
 computes entrainment from first principles rather than user-specified fractions.
@@ -1500,6 +1498,6 @@ Main orchestrator. Call `calculate()` with fluid properties and vessel geometry.
 - [Separator Equipment](separators.md) — Base separator documentation, entrainment specification, design constraints
 - [Dynamic Simulation Guide](../../simulation/dynamic_simulation_guide.md) — Transient simulation, time stepping, control systems
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) — K-value and performance constraints system
-- [Dynamic Entrainment Notebook](../../../examples/notebooks/separator_dynamic_entrainment.ipynb) — Transient separator simulation with enhanced entrainment
-- [Vendor Curves & Calibration Notebook](../../../examples/notebooks/separator_vendor_curves_and_calibration.ipynb) — Internals database, vendor curves, calibration
-- [Steady-State Entrainment Notebook](../../../examples/notebooks/separator_entrainment_modeling.ipynb) — Physics-based entrainment modeling
+- [Dynamic Entrainment Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/separator_dynamic_entrainment.ipynb) — Transient separator simulation with enhanced entrainment
+- [Vendor Curves & Calibration Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/separator_vendor_curves_and_calibration.ipynb) — Internals database, vendor curves, calibration
+- [Steady-State Entrainment Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/separator_entrainment_modeling.ipynb) — Physics-based entrainment modeling

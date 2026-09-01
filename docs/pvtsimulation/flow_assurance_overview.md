@@ -1,511 +1,222 @@
 ---
 title: Flow Assurance Overview
-description: Integrated guide to flow assurance in NeqSim covering hydrate prediction, wax precipitation, asphaltene stability, scale formation, and combined screening workflows.
+description: Evidence-based NeqSim workflow for hydrate, asphaltene, scale, wax, corrosion, and pipeline screening, with explicit engineering boundaries.
 ---
 
-# Flow Assurance Overview
+Flow assurance combines fluid characterization, thermodynamics, transport models,
+operating scenarios, and laboratory or field evidence. NeqSim can calculate several
+inputs to that assessment, but no single result establishes that a line is safe,
+restartable, corrosion resistant, or free from deposition.
 
-Flow assurance ensures reliable hydrocarbon transport from reservoir to processing facility. This guide provides an integrated approach to the main flow assurance challenges using NeqSim.
+Use this page to select a screening calculation. Follow the model-specific guides
+before using a result in design or operations.
 
-## Key Flow Assurance Challenges
+## What NeqSim calculates
 
-| Challenge | Cause | Risk | NeqSim Capability |
-|-----------|-------|------|-------------------|
-| **Hydrates** | Water + gas at low T, high P | Blockage | ✅ Full prediction |
-| **Wax** | Paraffin precipitation at low T | Deposition, restart | ✅ WAT calculation |
-| **Asphaltenes** | Pressure/composition change | Deposition, fouling | ✅ CPA model |
-| **Scale** | Mineral precipitation | Blockage, corrosion | ✅ Saturation Index (CaCO3, BaSO4, SrSO4, CaSO4, FeCO3) |
-| **Slugging** | Multiphase flow instability | Equipment damage | ✅ Transient models |
-| **Corrosion** | CO₂, H₂S, water | Pipe failure | ✅ de Waard-Milliams CO₂ model |
+| Topic | Supported calculation | Result does not establish |
+| --- | --- | --- |
+| Hydrates | Equilibrium formation temperature or pressure for a specified fluid and thermodynamic inhibitor composition | Formation time, plugging probability, transportability, or inhibitor dosage |
+| Wax | Wax appearance and wax-fraction calculations for a characterized fluid | Deposition rate, gel strength, restart pressure, pigging interval, or chemical performance |
+| Asphaltenes | De Boer empirical screening and configured thermodynamic onset or stability models | A universal onset pressure or deposition rate without fluid-specific calibration |
+| Mineral scale | Saturation indices from specified water chemistry and conditions | Precipitation kinetics, deposited mass, adhesion, or treatment dose |
+| Corrosion | Screening correlations and process-coupled corrosion calculations | Materials qualification, sour-service compliance, or remaining life |
+| Pipelines | Selected steady-state, cooldown, transient, erosion, and multiphase calculations | Qualification of every slugging, restart, erosion, or integrity scenario |
 
----
+A capability in this table is a calculation method, not an engineering approval.
+Validate the fluid model and inputs over the pressure, temperature, composition,
+salinity, and phase range of interest.
 
-## Quick Screening Workflow
+## Executable first screen
 
-### Java - Complete Flow Assurance Screen
+The following complete Java 8 program runs three independent screens and reports results through
+the repository's Log4j2 logging contract. It uses:
+
+- a hydrate equilibrium calculation for a specified gas, water, MEG, and salt mixture;
+- the repository's De Boer implementation, using absolute pressure in bar and in-situ
+  oil density in kg/m³;
+- mineral saturation indices from explicit produced-water chemistry in mg/L.
 
 ```java
-import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreening;
+import neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreening.DeBoerRisk;
+import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class FlowAssuranceScreen {
-    public static void main(String[] args) {
+    private static final Logger logger =
+        LogManager.getLogger(FlowAssuranceScreen.class);
 
-        // Create production fluid
-        SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(293.15, 100.0);
+    public static void main(String[] args) throws Exception {
+        SystemInterface hydrateFluid =
+            new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
+        hydrateFluid.addComponent("water", 0.494505);
+        hydrateFluid.addComponent("MEG", 0.164835);
+        hydrateFluid.addComponent("methane", 0.247253);
+        hydrateFluid.addComponent("ethane", 0.0164835);
+        hydrateFluid.addComponent("propane", 0.010989);
+        hydrateFluid.addComponent("i-butane", 0.00549451);
+        hydrateFluid.addComponent("n-butane", 0.00549451);
+        hydrateFluid.addComponent("Na+", 0.0274725);
+        hydrateFluid.addComponent("Cl-", 0.0274725);
+        hydrateFluid.setMixingRule(10);
+        hydrateFluid.setMultiPhaseCheck(true);
+        hydrateFluid.setHydrateCheck(true);
 
-        // Typical Gulf of Mexico fluid
-        fluid.addComponent("nitrogen", 0.005);
-        fluid.addComponent("CO2", 0.02);
-        fluid.addComponent("H2S", 0.001);
-        fluid.addComponent("methane", 0.40);
-        fluid.addComponent("ethane", 0.08);
-        fluid.addComponent("propane", 0.06);
-        fluid.addComponent("i-butane", 0.02);
-        fluid.addComponent("n-butane", 0.03);
-        fluid.addComponent("i-pentane", 0.015);
-        fluid.addComponent("n-pentane", 0.02);
-        fluid.addComponent("n-hexane", 0.025);
-        fluid.addTBPfraction("C7", 0.05, 95.0, 0.72);
-        fluid.addTBPfraction("C10", 0.08, 135.0, 0.78);
-        fluid.addTBPfraction("C20", 0.08, 280.0, 0.85);
-        fluid.addTBPfraction("C30+", 0.06, 450.0, 0.91);
-        fluid.addComponent("water", 0.05);
+        ThermodynamicOperations hydrateOps =
+            new ThermodynamicOperations(hydrateFluid);
+        hydrateOps.hydrateFormationTemperature();
+        double hydrateTemperatureC = hydrateFluid.getTemperature("C");
 
-        fluid.setMixingRule(10);  // CPA mixing rule
-        fluid.setMultiPhaseCheck(true);
+        DeBoerAsphalteneScreening asphalteneScreen =
+            new DeBoerAsphalteneScreening(350.0, 150.0, 750.0);
+        DeBoerRisk asphalteneRisk = asphalteneScreen.evaluateRisk();
+        double asphalteneRiskIndex = asphalteneScreen.calculateRiskIndex();
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        ScalePredictionCalculator scaleScreen =
+            new ScalePredictionCalculator();
+        scaleScreen.setTemperatureCelsius(80.0);
+        scaleScreen.setPressureBara(100.0);
+        scaleScreen.setCalciumConcentration(400.0);
+        scaleScreen.setBariumConcentration(10.0);
+        scaleScreen.setStrontiumConcentration(5.0);
+        scaleScreen.setIronConcentration(2.0);
+        scaleScreen.setMagnesiumConcentration(1300.0);
+        scaleScreen.setSodiumConcentration(11000.0);
+        scaleScreen.setBicarbonateConcentration(150.0);
+        scaleScreen.setSulphateConcentration(10.0);
+        scaleScreen.setTotalDissolvedSolids(35000.0);
+        scaleScreen.setCO2PartialPressure(2.0);
+        scaleScreen.enableAutoPH();
+        scaleScreen.calculate();
 
-        System.out.println("========== FLOW ASSURANCE SCREENING ==========");
-        System.out.println();
-
-        // === 1. HYDRATE SCREENING ===
-        System.out.println("--- HYDRATE RISK ---");
-        try {
-            fluid.setTemperature(280.0);  // 7°C - subsea temperature
-            fluid.setPressure(150.0);     // Pipeline pressure
-            ops.hydrateFormationTemperature();
-            double hydrateT = fluid.getTemperature("C");
-            System.out.printf("Hydrate formation temperature at 150 bara: %.1f °C%n", hydrateT);
-
-            if (hydrateT > 4.0) {
-                System.out.println("⚠️  HIGH HYDRATE RISK - Inhibition required");
-            } else {
-                System.out.println("✅ Low hydrate risk at seabed temperature");
-            }
-        } catch (Exception e) {
-            System.out.println("Could not calculate hydrate temperature");
-        }
-        System.out.println();
-
-        // === 2. WAX SCREENING ===
-        System.out.println("--- WAX RISK ---");
-        try {
-            ops.calcWAT();
-            double waxT = fluid.getWAT("C");
-            System.out.printf("Wax Appearance Temperature (WAT): %.1f °C%n", waxT);
-
-            if (waxT > 20.0) {
-                System.out.println("⚠️  HIGH WAX RISK - Pigging/inhibition needed");
-            } else if (waxT > 4.0) {
-                System.out.println("⚠️  MODERATE WAX RISK - Monitor");
-            } else {
-                System.out.println("✅ Low wax risk");
-            }
-        } catch (Exception e) {
-            System.out.println("WAT calculation not available - check C20+ content");
-        }
-        System.out.println();
-
-        // === 3. ASPHALTENE SCREENING (De Boer) ===
-        System.out.println("--- ASPHALTENE RISK ---");
-        double reservoirP = 350.0;  // bara
-        double bubblePointP = 180.0;  // bara (estimate)
-        double asphalteneContent = 2.5;  // wt%
-        double apiGravity = 32.0;
-
-        // De Boer screening criterion
-        double deltaP = reservoirP - bubblePointP;
-        double deBoerRisk = deltaP * asphalteneContent / 100.0;
-
-        System.out.printf("Reservoir pressure: %.0f bara%n", reservoirP);
-        System.out.printf("Bubble point: %.0f bara%n", bubblePointP);
-        System.out.printf("ΔP (supersaturation): %.0f bar%n", deltaP);
-        System.out.printf("De Boer risk parameter: %.2f%n", deBoerRisk);
-
-        if (apiGravity > 40 && deltaP > 200) {
-            System.out.println("⚠️  HIGH ASPHALTENE RISK - Light oil with high supersaturation");
-        } else if (deBoerRisk > 1.5) {
-            System.out.println("⚠️  MODERATE ASPHALTENE RISK");
-        } else {
-            System.out.println("✅ Low asphaltene risk");
-        }
-        System.out.println();
-
-        // === 4. SCALE SCREENING ===
-        System.out.println("--- SCALE RISK (Qualitative) ---");
-        double co2Content = fluid.getComponent("CO2").getx() * 100;
-        double h2sContent = fluid.getComponent("H2S").getx() * 100;
-        double waterCut = fluid.getComponent("water").getx() * 100;
-
-        System.out.printf("CO2 content: %.2f mol%%%n", co2Content);
-        System.out.printf("H2S content: %.3f mol%%%n", h2sContent);
-        System.out.printf("Water content: %.1f mol%%%n", waterCut);
-
-        if (co2Content > 2.0 && waterCut > 5.0) {
-            System.out.println("⚠️  CARBONATE SCALE RISK - CO2 + water present");
-        }
-        if (h2sContent > 0.01) {
-            System.out.println("⚠️  SULFIDE SCALE RISK - H2S present");
-        }
-        System.out.println();
-
-        // === 5. CORROSION SCREENING ===
-        System.out.println("--- CORROSION RISK ---");
-        if (co2Content > 0.5 && waterCut > 1.0) {
-            System.out.println("⚠️  CO2 CORROSION RISK - Sweet corrosion");
-        }
-        if (h2sContent > 0.001) {
-            System.out.println("⚠️  H2S CORROSION RISK - Sour service materials required");
-        }
-        System.out.println();
-
-        // === 6. pH STABILIZATION CHECK ===
-        System.out.println("--- pH STABILIZATION ---");
-        if (co2Content > 0.5 && waterCut > 1.0) {
-            System.out.println("💡 Consider pH stabilization (NaOH) to form protective FeCO3 layer");
-            System.out.println("   Target pH: 6.0-6.5 for optimal siderite protection");
-            System.out.println("   Use Electrolyte CPA EoS for detailed calculations");
-        }
-        System.out.println();
-
-        // === SUMMARY ===
-        System.out.println("========== SCREENING SUMMARY ==========");
-        System.out.println("Use detailed models for high-risk areas");
-        System.out.println("See individual flow assurance guides for mitigation");
+        logger.info(
+            "Hydrate equilibrium temperature: {} °C",
+            hydrateTemperatureC);
+        logger.info(
+            "De Boer screen: {}; risk index {}",
+            asphalteneRisk,
+            asphalteneRiskIndex);
+        logger.info(
+            "Calcite SI: {}; barite SI: {}; any scale flag: {}",
+            scaleScreen.getCaCO3SaturationIndex(),
+            scaleScreen.getBaSO4SaturationIndex(),
+            scaleScreen.hasScalingRisk());
     }
 }
 ```
 
----
+For the stated De Boer inputs, the current implementation returns
+`MODERATE_PROBLEM` and a risk index of `1.6`. The hydrate and scale results are
+case-specific. Do not transfer them to another fluid or water analysis.
+
+The example intentionally lets calculation errors propagate. A failed equilibrium
+calculation is not evidence that no hydrate or scale risk exists.
+
+## Interpret the three results
+
+### Hydrate equilibrium
+
+For a pipeline point at operating temperature $T_{op}$, define thermodynamic
+subcooling as:
+
+$$\Delta T_{\mathrm{sub}}=T_{\mathrm{eq}}-T_{\mathrm{op}}$$
+
+Here, $T_{\mathrm{eq}}$ is the calculated hydrate-equilibrium temperature and
+$T_{\mathrm{op}}$ is the operating temperature, both expressed on the same K or °C scale.
+The temperature difference has the same numerical increment in K and °C.
+
+A positive value means the operating point is below the calculated hydrate
+equilibrium temperature. It identifies thermodynamic stability, not nucleation time,
+growth rate, plugging probability, or acceptable operating margin. Preserve mass-
+versus-mole-fraction distinctions when preparing inhibitor and salt inputs.
+
+See the [hydrate models guide](../thermo/hydrate_models.md) for model selection and
+the [screening tools](flowassurance/flow_assurance_screening_tools.md) for profile
+calculations.
+
+### De Boer asphaltene screen
+
+`DeBoerAsphalteneScreening` evaluates the repository's implemented boundary
+curves using reservoir pressure, saturation pressure, and in-situ oil density.
+Do not replace it with a pressure-difference times asphaltene-content heuristic.
+Confirm a flagged case with measured onset or precipitation data and a calibrated
+model.
+
+Use the [De Boer guide](flowassurance/asphaltene_deboer_screening.md), then select
+a thermodynamic or empirical method through the
+[asphaltene overview](flowassurance/asphaltene_modeling.md). A phase count greater
+than two does not by itself identify an asphaltene-rich phase; inspect the phase
+type and the configured model.
+
+### Mineral-scale saturation index
+
+The screening calculator reports:
+
+$$SI=\log_{10}\left(\frac{IAP}{K_{sp}}\right)$$
+
+Here, $IAP$ is the dimensionless ion-activity product and $K_{sp}$ is the
+dimensionless thermodynamic solubility product on the same standard-state basis.
+
+Positive SI indicates supersaturation in the calculator. It does not predict how
+quickly a mineral precipitates, how much adheres to equipment, or the required
+chemical dose. Use representative water analyses, mixing ratios, dissolved-gas
+conditions, and uncertainty ranges.
+
+Continue with [mineral-scale formation](mineral_scale_formation.md),
+[scale-prediction API details](scale_prediction_api.md), and
+[mineral-scale treatment validation](mineral_scale_chemical_treatment_validation.md).
+
+## Build a governed flow-assurance study
+
+1. **Define cases.** Include normal operation, turndown, start-up, shutdown,
+   cooldown, depressurization, restart, water breakthrough, composition uncertainty,
+   and credible equipment/control states.
+2. **Characterize fluids and waters.** Record sampling conditions, compositional
+   basis, heavy-end characterization, salinity, ion analyses, inhibitor basis, and
+   data quality.
+3. **Calculate profiles.** Determine pressure, temperature, phase fractions, water
+   availability, velocities, and residence times before applying local screening
+   models.
+4. **Screen each mechanism.** Use the hydrate, wax, asphaltene, scale, corrosion,
+   erosion, emulsion, and transient tools only where their required inputs and
+   applicability are satisfied.
+5. **Validate and quantify margins.** Compare with laboratory measurements, field
+   history, model uncertainty, and sensitivity cases.
+6. **Assess mitigation.** Model the applicable thermodynamic or hydraulic effect;
+   obtain chemical performance, materials, operability, and mechanical evidence
+   from the accountable disciplines.
+7. **Record decisions.** Preserve model versions, assumptions, units, input
+   provenance, convergence status, limitations, and required expert review.
+
+## Model and mitigation boundaries
+
+| Decision | NeqSim contribution | Additional evidence required |
+| --- | --- | --- |
+| MEG or methanol strategy | Hydrate equilibrium with specified composition | Injection basis, partitioning, regeneration, losses, kinetics, operability, and vendor data |
+| Insulation or active heating | Thermal and hydraulic scenarios | Detailed heat-transfer design, installation, degradation, controls, and transient qualification |
+| Wax management | WAT and wax-fraction screening | Deposition/gel testing, restart hydraulics, pigging and chemical qualification |
+| Asphaltene management | Empirical screen or calibrated onset/stability model | Fluid-specific laboratory data, deposition behavior, and chemical qualification |
+| Scale management | Saturation tendency and water-mixing scenarios | Kinetics, precipitation/deposition tests, treatment compatibility, dose and monitoring |
+| Corrosion/materials | Screening rate and process-condition inputs | Applicable standard assessment, wall condition, materials, inspection, and integrity review |
+| Depressurization or restart | Process/pipeline transient scenarios | Safeguarding, flare/blowdown capacity, controls, procedures, and multidisciplinary approval |
+
+Do not infer sour-service requirements from bulk H2S mole fraction alone. Do not
+infer carbonate-scale or corrosion acceptability from bulk CO2 and water fractions.
+Those decisions require phase-specific conditions and the applicable materials,
+chemistry, integrity, and standards workflows.
+
+## Related documentation
+
+- [Flow-assurance landing page](flowassurance/README.md)
+- [pH stabilization and corrosion control](ph_stabilization_corrosion.md)
+- [NORSOK M-506 corrosion calculation](../process/corrosion/norsok_m506_corrosion_rate.md)
+- [NORSOK M-001 material selection](../process/corrosion/norsok_m001_material_selection.md)
+- [Pipeline corrosion integration](../process/corrosion/pipeline_corrosion_integration.md)
+- [Wax characterization](../thermo/characterization/wax_characterization.md)
+- [Pipeline modeling](../process/equipment/pipelines.md)
+- [Pipeline recipes](../cookbook/pipeline-recipes.md)
 
-## Corrosion Control and pH Stabilization
-
-CO2 corrosion (sweet corrosion) is a major flow assurance challenge. NeqSim's **Electrolyte CPA EoS** enables sophisticated corrosion control modeling.
-
-### pH Stabilization Strategy
-
-pH stabilization uses NaOH to:
-
-1. **Raise aqueous pH** above 6.0-6.5
-2. **Promote FeCO3 (siderite)** protective layer on steel
-3. **Reduce corrosion rates** by 1-2 orders of magnitude
-
-The siderite protective layer forms when:
-
-$$\text{Fe}^{2+} + \text{CO}_3^{2-} \rightarrow \text{FeCO}_3 \downarrow$$
-
-### Quick pH Calculation
-
-```java
-import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-// Create electrolyte system
-SystemElectrolyteCPAstatoil fluid = new SystemElectrolyteCPAstatoil(353.15, 50.0);
-
-// Add gas and aqueous components
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("CO2", 0.03);
-fluid.addComponent("water", 0.10);
-fluid.addComponent("Na+", 0.01);    // With NaOH treatment
-fluid.addComponent("OH-", 0.005);   // Hydroxide from NaOH
-fluid.addComponent("Cl-", 0.005);
-fluid.addComponent("Fe++", 0.00002);
-fluid.addComponent("HCO3-", 0.002);
-
-// Initialize and flash
-fluid.chemicalReactionInit();
-fluid.createDatabase(true);
-fluid.setMixingRule(10);  // Electrolyte mixing rule
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.init(3);
-
-// Get pH and check FeCO3 saturation
-int aqPhase = fluid.getPhaseNumberOfPhase("aqueous");
-double pH = fluid.getPhase(aqPhase).getpH();
-System.out.printf("Aqueous pH: %.2f%n", pH);
-
-// Check scale/protective layer potential
-ops.checkScalePotential(aqPhase);
-```
-
-### FeCO3 Protection Criteria
-
-| Factor | Optimal Range | Notes |
-|--------|---------------|-------|
-| **pH** | 6.0-6.5 | Higher promotes carbonate layer |
-| **Temperature** | > 60°C | Faster scale kinetics |
-| **Fe++ concentration** | 1-10 mg/L | Required for layer formation |
-| **FeCO3 saturation ratio** | 1-10 | SR > 1 required for precipitation |
-| **Flow velocity** | < 3 m/s | Avoid erosion of layer |
-
-> **📚 See [pH Stabilization and Corrosion Control](ph_stabilization_corrosion)** for comprehensive documentation including NaOH dosing calculations, combined MEG/pH stabilization for subsea systems, and corrosion rate estimation.
-
-> **📚 See [NORSOK M-506 Corrosion Rate](../process/corrosion/norsok_m506_corrosion_rate)** for the full standard implementation with fugacity-based CO2, wall shear stress correction, and pH model. Combined with **[NORSOK M-001 Material Selection](../process/corrosion/norsok_m001_material_selection)** for automated CRA vs carbon steel decisions. Both integrate with [Pipeline Corrosion Integration](../process/corrosion/pipeline_corrosion_integration).
-
----
-
-## Hydrate Prediction Details
-
-### Hydrate Equilibrium Curve
-
-```java
-import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-// Generate hydrate curve
-SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(273.15, 50.0);
-fluid.addComponent("methane", 0.80);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.addComponent("CO2", 0.03);
-fluid.addComponent("water", 0.02);
-fluid.setMixingRule(10);
-fluid.setHydrateCheck(true);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-System.out.println("Pressure (bara) | Hydrate T (°C)");
-System.out.println("----------------|---------------");
-
-double[] pressures = {10, 20, 50, 100, 150, 200, 300, 400};
-for (double p : pressures) {
-    fluid.setPressure(p);
-    try {
-        ops.hydrateFormationTemperature();
-        double hydrateT = fluid.getTemperature("C");
-        System.out.printf("%15.0f | %13.1f%n", p, hydrateT);
-    } catch (Exception e) {
-        System.out.printf("%15.0f | No hydrate%n", p);
-    }
-}
-```
-
-### With Inhibitor
-
-```java
-// Add MEG inhibitor
-double megConcentration = 0.30;  // 30 wt% in water phase
-fluid.addComponent("MEG", megConcentration * 0.02);  // Adjust water amount
-fluid.setComponent("water", (1 - megConcentration) * 0.02);
-
-// Recalculate - hydrate T will be depressed
-ops.hydrateFormationTemperature();
-double inhibitedT = fluid.getTemperature("C");
-System.out.printf("Hydrate T with 30%% MEG: %.1f °C%n", inhibitedT);
-```
-
----
-
-## Wax Modeling
-
-### Wax Appearance Temperature (WAT)
-
-```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-// Waxy crude - need heavy paraffins
-SystemSrkEos fluid = new SystemSrkEos(323.15, 50.0);
-fluid.addComponent("methane", 0.20);
-fluid.addComponent("n-hexane", 0.10);
-fluid.addComponent("n-heptane", 0.10);
-fluid.addComponent("n-octane", 0.10);
-fluid.addTBPfraction("C10", 0.15, 142.0, 0.78);
-fluid.addTBPfraction("C15", 0.15, 212.0, 0.82);
-fluid.addTBPfraction("C20", 0.10, 282.0, 0.85);
-fluid.addTBPfraction("C25+", 0.10, 350.0, 0.87);
-fluid.setMixingRule("classic");
-
-// Enable wax calculations
-fluid.setSolidPhaseCheck(true);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.calcWAT();
-
-double wat = fluid.getWAT("C");
-System.out.printf("Wax Appearance Temperature: %.1f °C%n", wat);
-
-// Wax content vs temperature
-System.out.println("\nTemperature (°C) | Wax Content (wt%)");
-for (double t = wat; t >= wat - 30; t -= 5) {
-    fluid.setTemperature(t + 273.15);
-    ops.TPSolidflash();
-    double waxWt = fluid.getWaxContent() * 100;
-    System.out.printf("%16.0f | %15.2f%n", t, waxWt);
-}
-```
-
----
-
-## Asphaltene Stability
-
-### CPA-Based Asphaltene Model
-
-```java
-import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-// Configure for asphaltene calculations
-SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(373.15, 300.0);
-
-// Light ends
-fluid.addComponent("methane", 0.35);
-fluid.addComponent("ethane", 0.08);
-fluid.addComponent("propane", 0.05);
-fluid.addComponent("n-butane", 0.03);
-
-// Oil fractions
-fluid.addTBPfraction("C7", 0.10, 95.0, 0.72);
-fluid.addTBPfraction("C15", 0.15, 210.0, 0.82);
-fluid.addTBPfraction("C30", 0.15, 420.0, 0.89);
-
-// Asphaltene pseudo-component (high MW, high density)
-fluid.addTBPfraction("Asphaltene", 0.09, 1000.0, 1.10);
-
-fluid.setMixingRule(10);
-fluid.setMultiPhaseCheck(true);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-// Check stability at different pressures (depletion path)
-System.out.println("Pressure (bara) | Asphaltene Stable?");
-System.out.println("----------------|-------------------");
-
-double[] pressures = {300, 250, 200, 180, 160, 140, 120, 100};
-for (double p : pressures) {
-    fluid.setPressure(p);
-    ops.TPflash();
-
-    // Check if asphaltene-rich phase forms
-    int nPhases = fluid.getNumberOfPhases();
-    String stability = (nPhases > 2) ? "⚠️ UNSTABLE" : "✅ Stable";
-    System.out.printf("%15.0f | %s%n", p, stability);
-}
-```
-
-### Asphaltene Onset Pressure
-
-```java
-// Find pressure where asphaltenes first precipitate
-try {
-    ops.asphalteneOnsetPressure();
-    double aop = fluid.getPressure("bara");
-    System.out.printf("Asphaltene Onset Pressure (AOP): %.1f bara%n", aop);
-} catch (Exception e) {
-    System.out.println("Could not determine AOP");
-}
-```
-
----
-
-## Combined Operating Envelope
-
-Plot the operating envelope showing all constraints:
-
-```java
-import java.util.ArrayList;
-import java.util.List;
-
-// Calculate all constraint curves
-List<double[]> hydratesCurve = new ArrayList<>();
-List<double[]> waxCurve = new ArrayList<>();
-double[] aopLine;
-
-// 1. Hydrate equilibrium curve
-for (double p = 10; p <= 300; p += 10) {
-    fluid.setPressure(p);
-    try {
-        ops.hydrateFormationTemperature();
-        hydratesCurve.add(new double[]{fluid.getTemperature("C"), p});
-    } catch (Exception e) {}
-}
-
-// 2. WAT line (vertical - temperature independent of pressure to first order)
-double wat = 35.0;  // From WAT calculation
-
-// 3. AOP line (horizontal - pressure independent of T to first order)
-double aop = 150.0;  // From AOP calculation
-
-// Print operating envelope
-System.out.println("========== OPERATING ENVELOPE ==========");
-System.out.println();
-System.out.println("Safe operating region:");
-System.out.printf("  - Temperature > %.1f °C (hydrate limit at operating P)%n", 15.0);
-System.out.printf("  - Temperature > %.1f °C (wax limit)%n", wat);
-System.out.printf("  - Pressure > %.0f bara (asphaltene onset)%n", aop);
-System.out.println();
-System.out.println("Or use inhibition/insulation to expand envelope");
-```
-
----
-
-## Mitigation Strategies
-
-### Hydrate Prevention
-
-| Strategy | Description | NeqSim Support |
-|----------|-------------|----------------|
-| **MEG Injection** | Thermodynamic inhibitor | ✅ Full |
-| **Methanol Injection** | Thermodynamic inhibitor | ✅ Full |
-| **Insulation** | Keep T above hydrate curve | Pipeline models |
-| **LDHI** | Low-dosage hydrate inhibitors | ❌ Not modeled |
-| **Depressurization** | Emergency blowdown | ✅ Full |
-
-### Wax Prevention
-
-| Strategy | Description | NeqSim Support |
-|----------|-------------|----------------|
-| **Pigging** | Mechanical removal | ❌ Not modeled |
-| **Hot oil circulation** | Thermal | Pipeline models |
-| **Pour point depressants** | Chemical | ❌ Not modeled |
-| **Insulation** | Keep T above WAT | Pipeline models |
-
-### Asphaltene Prevention
-
-| Strategy | Description | NeqSim Support |
-|----------|-------------|----------------|
-| **Pressure maintenance** | Stay above AOP | ✅ Full |
-| **Chemical dispersants** | Prevent aggregation | ❌ Not modeled |
-| **Blending** | Dilute with light oil | ✅ Mixing |
-
----
-
-## Pipeline Temperature Profile
-
-For realistic screening, calculate temperature along the pipeline:
-
-```java
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
-
-// Create pipeline
-PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("Subsea Pipeline", wellStream);
-pipeline.setLength(50000.0);     // 50 km
-pipeline.setDiameter(0.3048);    // 12 inch
-pipeline.setOuterTemperature(4.0, "C");  // Seabed temp
-pipeline.setRoughness(1.5e-5);
-
-// Get temperature at outlet
-pipeline.run();
-double outletT = pipeline.getOutletStream().getTemperature("C");
-
-// Compare with hydrate temperature at outlet pressure
-double outletP = pipeline.getOutletStream().getPressure("bara");
-fluid.setPressure(outletP);
-ops.hydrateFormationTemperature();
-double hydrateT = fluid.getTemperature("C");
-
-System.out.printf("Pipeline outlet: T=%.1f°C, P=%.1f bara%n", outletT, outletP);
-System.out.printf("Hydrate temperature: %.1f°C%n", hydrateT);
-
-if (outletT < hydrateT) {
-    System.out.println("⚠️ HYDRATE RISK at pipeline outlet!");
-}
-```
-
----
-
-## See Also
-
-- [Mineral Scale Formation](mineral_scale_formation) - Comprehensive scale guide
-- [pH Stabilization and Corrosion Control](ph_stabilization_corrosion) - Electrolyte CPA, FeCO3 protection
-- [Scale Potential Calculations](../physical_properties/scale_potential) - Scale potential API details
-- [Hydrate Models Guide](../thermo/hydrate_models) - Detailed hydrate prediction
-- [Wax Characterization](../thermo/characterization/wax_characterization) - Wax calculations
-- [Asphaltene Modeling](flowassurance/asphaltene_modeling) - Asphaltene stability
-- [Pipeline Modeling](../process/equipment/pipelines) - Multiphase flow
-- [Pipeline Recipes](../cookbook/pipeline-recipes) - Quick code recipes

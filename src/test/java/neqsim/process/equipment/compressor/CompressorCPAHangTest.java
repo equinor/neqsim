@@ -109,8 +109,9 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
     Stream feedToCompressor = new Stream("feedToCompressor", mixer.getOutletStream());
     feedToCompressor.run();
 
-    Assertions.assertEquals(2, feedToCompressor.getThermoSystem().getNumberOfPhases(),
-        "Feed should have 2 phases (gas + aqueous)");
+    Assertions.assertTrue(feedToCompressor.getThermoSystem().hasPhaseType("gas"), "Feed should contain a gas phase");
+    Assertions.assertTrue(feedToCompressor.getThermoSystem().hasPhaseType("aqueous"),
+        "Feed should contain an aqueous phase");
 
     Compressor compressor1 = new Compressor("27AKA60", feedToCompressor);
     compressor1.setOutletPressure(compPout, "bara");

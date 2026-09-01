@@ -131,7 +131,12 @@ public class LNGAgeingTest {
 
     assertNotNull(result);
     assertTrue(result.getTemperature() > 0, "Temperature should be positive");
-    assertTrue(result.getDensity() > 0, "Density should be positive");
+    assertTrue(result.getDensity() > 400.0 && result.getDensity() < 500.0,
+        "Density should remain in the physical LNG range, got " + result.getDensity());
+    assertTrue(result.getGcvVolumetric() > 35.0 && result.getGcvVolumetric() < 50.0,
+        "Volumetric GCV should remain in the LNG range, got " + result.getGcvVolumetric());
+    assertTrue(result.getWobbeIndex() > 45.0 && result.getWobbeIndex() < 65.0,
+        "Wobbe index should remain in the LNG range, got " + result.getWobbeIndex());
     assertTrue(result.getBogMassFlowRate() >= 0, "BOG rate should be non-negative");
 
     assertTrue(model.getTotalLiquidMoles() <= initialMoles, "Moles should not increase after boil-off");

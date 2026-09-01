@@ -3,6 +3,7 @@ package neqsim.thermo.characterization;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
@@ -13,14 +14,14 @@ import neqsim.thermo.system.SystemSrkEos;
 
 public class OilAssayCharacterisationTest {
   @Test
-  public void testAssayApplicationAddsPseudoComponents() {
+  public void testMassBasisAssayApplicationAddsPseudoComponents() {
     SystemInterface system = new SystemSrkEos(298.15, 10.0);
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
     characterisation.clearCuts();
 
-    AssayCut light = new AssayCut("Light").withWeightPercent(40.0).withDensity(0.75)
+    AssayCut light = new AssayCut("Light").withWeightPercent(40.0).withSpecificGravity(0.75)
         .withAverageBoilingPointCelsius(200.0);
-    AssayCut heavy = new AssayCut("Heavy").withVolumePercent(60.0).withApiGravity(25.0)
+    AssayCut heavy = new AssayCut("Heavy").withWeightPercent(60.0).withApiGravity(25.0)
         .withAverageBoilingPointCelsius(350.0);
 
     characterisation.addCut(light);
@@ -28,19 +29,83 @@ public class OilAssayCharacterisationTest {
     characterisation.apply();
 
     double lightBoilingPoint = 200.0 + 273.15;
-    double expectedLightMolarMass = 5.805e-5 * Math.pow(lightBoilingPoint, 2.3776) / Math.pow(0.75, 0.9371);
+    double expectedLightMolarMass = 5.805e-5 * Math.pow(lightBoilingPoint, 2.3776) / Math.pow(0.75, 0.9371) / 1000.0;
     ComponentInterface lightComponent = system.getComponent("Light_PC");
     assertNotNull(lightComponent);
     assertEquals(expectedLightMolarMass, lightComponent.getMolarMass(), 1e-8);
     assertEquals(0.4 / expectedLightMolarMass, lightComponent.getNumberOfmoles(), 1e-8);
 
-    double heavyDensity = 141.5 / (25.0 + 131.5) * 0.999016;
+    double heavyDensity = 141.5 / (25.0 + 131.5);
     double heavyBoilingPoint = 350.0 + 273.15;
-    double expectedHeavyMolarMass = 5.805e-5 * Math.pow(heavyBoilingPoint, 2.3776) / Math.pow(heavyDensity, 0.9371);
+    double expectedHeavyMolarMass = 5.805e-5 * Math.pow(heavyBoilingPoint, 2.3776) / Math.pow(heavyDensity, 0.9371)
+        / 1000.0;
     ComponentInterface heavyComponent = system.getComponent("Heavy_PC");
     assertNotNull(heavyComponent);
     assertEquals(expectedHeavyMolarMass, heavyComponent.getMolarMass(), 1e-8);
     assertEquals(0.6 / expectedHeavyMolarMass, heavyComponent.getNumberOfmoles(), 1e-8);
+  }
+
+  @Test
+  public void testVolumeBasisAssayConvertsToMassFractions() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    characterisation.addCut(
+        new AssayCut("Light").withVolumePercent(40.0).withSpecificGravity(0.75).withAverageBoilingPointCelsius(200.0));
+    characterisation.addCut(
+        new AssayCut("Heavy").withVolumePercent(60.0).withApiGravity(25.0).withAverageBoilingPointCelsius(350.0));
+
+    double heavyDensity = 141.5 / (25.0 + 131.5);
+    double totalRelativeMass = 0.4 * 0.75 + 0.6 * heavyDensity;
+    double expectedLightMassFraction = 0.4 * 0.75 / totalRelativeMass;
+    double expectedHeavyMassFraction = 0.6 * heavyDensity / totalRelativeMass;
+
+    double[] massFractions = characterisation.getResolvedMassFractions();
+    assertEquals(expectedLightMassFraction, massFractions[0], 1e-12);
+    assertEquals(expectedHeavyMassFraction, massFractions[1], 1e-12);
+    assertEquals(1.0, massFractions[0] + massFractions[1], 1e-12);
+
+    characterisation.apply();
+    assertEquals(1.0, reconstructedAssayMass(system, "Light_PC", "Heavy_PC"), 1e-10);
+  }
+
+  @Test
+  public void testBulkSpecificGravityUsesResolvedMassAndVolumeBases() {
+    SystemInterface massSystem = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation massAssay = massSystem.getOilAssayCharacterisation();
+    massAssay.clearCuts();
+    massAssay.addCut(new AssayCut("MassLight").withMassFraction(0.25).withSpecificGravity(0.80));
+    massAssay.addCut(new AssayCut("MassHeavy").withMassFraction(0.75).withSpecificGravity(0.90));
+
+    double expectedMassBasisSpecificGravity = 1.0 / (0.25 / 0.80 + 0.75 / 0.90);
+    assertEquals(expectedMassBasisSpecificGravity, massAssay.getBulkSpecificGravity(), 1e-12);
+    assertEquals(141.5 / expectedMassBasisSpecificGravity - 131.5, massAssay.getBulkApiGravity(), 1e-12);
+    assertEquals(expectedMassBasisSpecificGravity * 999.016, massAssay.getBulkDensityKgPerCubicMetreAt60F(), 1e-9);
+    assertEquals(0, massSystem.getNumberOfComponents());
+
+    SystemInterface volumeSystem = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation volumeAssay = volumeSystem.getOilAssayCharacterisation();
+    volumeAssay.clearCuts();
+    volumeAssay.addCut(new AssayCut("VolumeLight").withVolumeFraction(0.25).withSpecificGravity(0.80));
+    volumeAssay.addCut(new AssayCut("VolumeHeavy").withVolumeFraction(0.75).withSpecificGravity(0.90));
+
+    double expectedVolumeBasisSpecificGravity = 0.25 * 0.80 + 0.75 * 0.90;
+    assertEquals(expectedVolumeBasisSpecificGravity, volumeAssay.getBulkSpecificGravity(), 1e-12);
+    assertEquals(0, volumeSystem.getNumberOfComponents());
+  }
+
+  @Test
+  public void testBulkSpecificGravityRejectsInvalidAssayWithoutMutation() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    assertThrows(IllegalStateException.class, characterisation::getBulkSpecificGravity);
+
+    characterisation.addCut(new AssayCut("MassCut").withMassFraction(0.5).withSpecificGravity(0.80));
+    characterisation.addCut(new AssayCut("VolumeCut").withVolumeFraction(0.5).withSpecificGravity(0.90));
+    assertThrows(IllegalStateException.class, characterisation::getBulkSpecificGravity);
+    assertEquals(0, system.getNumberOfComponents());
   }
 
   @Test
@@ -49,16 +114,20 @@ public class OilAssayCharacterisationTest {
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
     characterisation.clearCuts();
 
-    AssayCut cut = new AssayCut("Assay").withMassFraction(1.0).withDensity(0.82).withAverageBoilingPointCelsius(300.0);
+    AssayCut cut = new AssayCut("Assay").withMassFraction(1.0).withSpecificGravity(0.82)
+        .withAverageBoilingPointCelsius(300.0);
     characterisation.addCut(cut);
     characterisation.setTotalAssayMass(2.0);
     characterisation.apply();
 
     double boilingPoint = 300.0 + 273.15;
-    double expectedMolarMass = 5.805e-5 * Math.pow(boilingPoint, 2.3776) / Math.pow(0.82, 0.9371);
+    double expectedMolarMass = 5.805e-5 * Math.pow(boilingPoint, 2.3776) / Math.pow(0.82, 0.9371) / 1000.0;
     ComponentInterface component = system.getComponent("Assay_PC");
     assertNotNull(component);
+    assertTrue(component.getMolarMass() > 0.05 && component.getMolarMass() < 1.0,
+        "Derived petroleum-cut molar mass should remain on the kg/mol scale");
     assertEquals(2.0 / expectedMolarMass, component.getNumberOfmoles(), 1e-8);
+    assertEquals(2.0, component.getNumberOfmoles() * component.getMolarMass(), 1e-10);
   }
 
   @Test
@@ -66,12 +135,12 @@ public class OilAssayCharacterisationTest {
     SystemInterface system = new SystemSrkEos(298.15, 10.0);
     OilAssayCharacterisation original = system.getOilAssayCharacterisation();
     original.clearCuts();
-    original.addCut(
-        new AssayCut("CloneTest").withMassFraction(1.0).withDensity(0.85).withAverageBoilingPointCelsius(310.0));
+    original.addCut(new AssayCut("CloneTest").withMassFraction(1.0).withSpecificGravity(0.85)
+        .withAverageBoilingPointCelsius(310.0));
 
     SystemInterface cloned = system.clone();
     OilAssayCharacterisation cloneCharacterisation = cloned.getOilAssayCharacterisation();
-    assertTrue(cloneCharacterisation.getCuts().size() == 1);
+    assertEquals(1, cloneCharacterisation.getCuts().size());
     cloneCharacterisation.apply();
 
     assertTrue(Arrays.asList(cloned.getComponentNames()).contains("CloneTest_PC"));
@@ -79,26 +148,33 @@ public class OilAssayCharacterisationTest {
   }
 
   @Test
-  public void testExplicitMolarMassSkipsBoilingPointRequirement() {
+  public void testExplicitMolarMassUsesKgPerMol() {
     SystemInterface system = new SystemSrkEos(298.15, 10.0);
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
     characterisation.clearCuts();
 
-    // Create a cut with explicit molar mass but no boiling point
-    AssayCut cut = new AssayCut("ExplicitMW").withMassFraction(1.0).withDensity(0.8).withMolarMass(150.0); // Explicit
-    // molar
-    // mass,
-    // no
-    // boiling
-    // point
-
+    AssayCut cut = new AssayCut("ExplicitMW").withMassFraction(1.0).withSpecificGravity(0.8)
+        .withMolarMassKgPerMol(0.150);
     characterisation.addCut(cut);
-    characterisation.apply(); // Should not throw exception
+    characterisation.apply();
 
     ComponentInterface component = system.getComponent("ExplicitMW_PC");
     assertNotNull(component);
-    assertEquals(150.0, component.getMolarMass(), 1e-8);
-    assertEquals(1.0 / 150.0, component.getNumberOfmoles(), 1e-8);
+    assertEquals(0.150, component.getMolarMass(), 1e-12);
+    assertEquals(1.0 / 0.150, component.getNumberOfmoles(), 1e-10);
+  }
+
+  @Test
+  public void testGramPerMolHelperConvertsExplicitMolarMass() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    characterisation.addCut(
+        new AssayCut("ExplicitMW").withMassFraction(1.0).withSpecificGravity(0.8).withMolarMassGramPerMol(150.0));
+    characterisation.apply();
+
+    assertEquals(0.150, system.getComponent("ExplicitMW_PC").getMolarMass(), 1e-12);
   }
 
   @Test
@@ -106,20 +182,10 @@ public class OilAssayCharacterisationTest {
     SystemInterface system = new SystemSrkEos(298.15, 10.0);
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
     characterisation.clearCuts();
+    characterisation.addCut(new AssayCut("NoBoilingPoint").withMassFraction(1.0).withSpecificGravity(0.8));
 
-    // Create a cut without explicit molar mass or boiling point - should fail
-    AssayCut cut = new AssayCut("NoBoilingPoint").withMassFraction(1.0).withDensity(0.8);
-    // No molar mass, no boiling point
-
-    characterisation.addCut(cut);
-
-    // This should throw an exception because boiling point is required for molar mass calculation
-    try {
-      characterisation.apply();
-      assertTrue(false, "Expected IllegalStateException for missing boiling point");
-    } catch (IllegalStateException e) {
-      assertTrue(e.getMessage().contains("Average boiling point missing"));
-    }
+    IllegalStateException exception = assertThrows(IllegalStateException.class, characterisation::apply);
+    assertTrue(exception.getMessage().contains("Average boiling point missing"));
   }
 
   @Test
@@ -128,26 +194,234 @@ public class OilAssayCharacterisationTest {
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
     characterisation.clearCuts();
 
-    // Cut with explicit molar mass (no boiling point needed)
-    AssayCut explicitCut = new AssayCut("Explicit").withMassFraction(0.5).withDensity(0.8).withMolarMass(120.0);
-
-    // Cut with calculated molar mass (requires boiling point)
-    AssayCut calculatedCut = new AssayCut("Calculated").withMassFraction(0.5).withDensity(0.85)
+    AssayCut explicitCut = new AssayCut("Explicit").withMassFraction(0.5).withSpecificGravity(0.8)
+        .withMolarMassKgPerMol(0.120);
+    AssayCut calculatedCut = new AssayCut("Calculated").withMassFraction(0.5).withSpecificGravity(0.85)
         .withAverageBoilingPointCelsius(250.0);
 
     characterisation.addCut(explicitCut);
     characterisation.addCut(calculatedCut);
     characterisation.apply();
 
-    // Verify explicit molar mass component
-    ComponentInterface explicitComponent = system.getComponent("Explicit_PC");
-    assertNotNull(explicitComponent);
-    assertEquals(120.0, explicitComponent.getMolarMass(), 1e-8);
+    assertEquals(0.120, system.getComponent("Explicit_PC").getMolarMass(), 1e-12);
+    assertTrue(Math.abs(system.getComponent("Calculated_PC").getMolarMass() - 0.120) > 1e-3);
+    assertEquals(1.0, reconstructedAssayMass(system, "Explicit_PC", "Calculated_PC"), 1e-10);
+  }
 
-    // Verify calculated molar mass component
-    ComponentInterface calculatedComponent = system.getComponent("Calculated_PC");
-    assertNotNull(calculatedComponent);
-    // The calculated molar mass should be different from 120.0
-    assertTrue(Math.abs(calculatedComponent.getMolarMass() - 120.0) > 1.0);
+  @Test
+  public void testMixedMassAndVolumeBasisIsRejected() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    characterisation.addCut(
+        new AssayCut("MassCut").withMassFraction(0.4).withSpecificGravity(0.75).withAverageBoilingPointCelsius(180.0));
+    characterisation.addCut(new AssayCut("VolumeCut").withVolumeFraction(0.6).withSpecificGravity(0.85)
+        .withAverageBoilingPointCelsius(320.0));
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, characterisation::apply);
+    assertTrue(exception.getMessage().contains("cannot mix"));
+    assertFalse(system.hasComponent("MassCut_PC", false));
+    assertFalse(system.hasComponent("VolumeCut_PC", false));
+  }
+
+  @Test
+  public void testCutWithTwoFractionBasesIsRejected() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    characterisation.addCut(new AssayCut("Ambiguous").withMassFraction(1.0).withVolumeFraction(1.0)
+        .withSpecificGravity(0.8).withAverageBoilingPointCelsius(250.0));
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, characterisation::apply);
+    assertTrue(exception.getMessage().contains("exactly one"));
+  }
+
+  @Test
+  public void testIncompleteAssayIsRejectedInsteadOfSilentlyRenormalized() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    characterisation.addCut(
+        new AssayCut("Cut1").withMassFraction(0.4).withSpecificGravity(0.75).withAverageBoilingPointCelsius(180.0));
+    characterisation.addCut(
+        new AssayCut("Cut2").withMassFraction(0.4).withSpecificGravity(0.85).withAverageBoilingPointCelsius(320.0));
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, characterisation::apply);
+    assertTrue(exception.getMessage().contains("sum to 1.0"));
+  }
+
+  @Test
+  public void testRoundingScaleClosureIsNormalized() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    characterisation.addCut(
+        new AssayCut("Cut1").withMassFraction(0.3333).withSpecificGravity(0.75).withAverageBoilingPointCelsius(180.0));
+    characterisation.addCut(
+        new AssayCut("Cut2").withMassFraction(0.3333).withSpecificGravity(0.82).withAverageBoilingPointCelsius(280.0));
+    characterisation.addCut(
+        new AssayCut("Cut3").withMassFraction(0.3333).withSpecificGravity(0.90).withAverageBoilingPointCelsius(420.0));
+
+    double[] massFractions = characterisation.getResolvedMassFractions();
+    assertEquals(1.0, massFractions[0] + massFractions[1] + massFractions[2], 1e-12);
+  }
+
+  @Test
+  public void testDensityKgPerCubicMetreIsNormalizedBeforeCorrelation() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    characterisation.addCut(new AssayCut("DensityUnits").withMassFraction(1.0).withDensityKgPerCubicMetre(850.0)
+        .withAverageBoilingPointCelsius(300.0));
+    characterisation.apply();
+
+    double boilingPoint = 300.0 + 273.15;
+    double expectedMolarMass = 5.805e-5 * Math.pow(boilingPoint, 2.3776) / Math.pow(0.85, 0.9371) / 1000.0;
+    assertEquals(expectedMolarMass, system.getComponent("DensityUnits_PC").getMolarMass(), 1e-10);
+  }
+
+  @Test
+  public void testNegativeApiGravityIsSupportedForDenseCuts() {
+    AssayCut denseCut = new AssayCut("Residue").withMassFraction(1.0).withApiGravity(-5.0)
+        .withAverageBoilingPointCelsius(520.0);
+    assertTrue(denseCut.resolveDensity() > 1.0);
+  }
+
+  @Test
+  public void testApiGravityResolvesDimensionlessSpecificGravity() {
+    double apiGravity = 34.97;
+    double expectedSpecificGravity = 141.5 / (apiGravity + 131.5);
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    AssayCut cut = new AssayCut("ApiCut").withMassFraction(1.0).withApiGravity(apiGravity);
+    characterisation.addCut(cut);
+
+    assertEquals(expectedSpecificGravity, cut.resolveDensity(), 1e-12);
+    assertEquals(expectedSpecificGravity, characterisation.getBulkSpecificGravity(), 1e-12);
+    assertEquals(apiGravity, characterisation.getBulkApiGravity(), 1e-12);
+    assertEquals(expectedSpecificGravity * 999.016, characterisation.getBulkDensityKgPerCubicMetreAt60F(), 1e-9);
+    assertEquals(0, system.getNumberOfComponents());
+  }
+
+  @Test
+  public void testTBPCutBoundariesCreateVolumeBasisAssayAndPreserveRanges() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    double[] cumulativeVolumePercent = { 0.0, 20.0, 55.0, 80.0, 100.0 };
+    double[] boilingPointCelsius = { 90.0, 180.0, 270.0, 380.0, 520.0 };
+    double[] specificGravity = { 0.70, 0.76, 0.84, 0.93 };
+    characterisation.addTBPCutBoundariesCelsius("TBP", cumulativeVolumePercent, boilingPointCelsius, specificGravity);
+
+    assertEquals(4, characterisation.getCuts().size());
+    AssayCut firstCut = characterisation.getCuts().get(0);
+    assertTrue(firstCut.hasBoilingRange());
+    assertEquals(90.0 + 273.15, firstCut.getLowerBoilingPointKelvin(), 1e-12);
+    assertEquals(180.0 + 273.15, firstCut.getUpperBoilingPointKelvin(), 1e-12);
+    assertEquals(135.0 + 273.15, firstCut.resolveAverageBoilingPoint(), 1e-12);
+
+    double[] massFractions = characterisation.getResolvedMassFractions();
+    assertEquals(1.0, massFractions[0] + massFractions[1] + massFractions[2] + massFractions[3], 1e-12);
+
+    characterisation.apply();
+    assertTrue(system.hasComponent("TBP1_PC", false));
+    assertTrue(system.hasComponent("TBP4_PC", false));
+    assertEquals(1.0, reconstructedAssayMass(system, "TBP1_PC", "TBP2_PC", "TBP3_PC", "TBP4_PC"), 1e-10);
+  }
+
+  @Test
+  public void testInvalidTBPCurveIsRejectedBeforeCutsAreAdded() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    assertThrows(IllegalArgumentException.class,
+        () -> characterisation.addTBPCutBoundariesCelsius("TBP", new double[] { 0.0, 60.0, 50.0, 100.0 },
+            new double[] { 90.0, 200.0, 300.0, 500.0 }, new double[] { 0.7, 0.8, 0.9 }));
+    assertTrue(characterisation.getCuts().isEmpty());
+  }
+
+  @Test
+  public void testRepeatedApplyIsRejectedWithoutDoublingAssay() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    characterisation.addCut(
+        new AssayCut("Once").withMassFraction(1.0).withSpecificGravity(0.82).withAverageBoilingPointCelsius(300.0));
+
+    characterisation.apply();
+    double firstMass = reconstructedAssayMass(system, "Once_PC");
+    assertThrows(IllegalStateException.class, characterisation::apply);
+    assertEquals(firstMass, reconstructedAssayMass(system, "Once_PC"), 1e-12);
+  }
+
+  @Test
+  public void testDuplicateCutNamesAreRejectedBeforeMutation() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+    characterisation.addCut(new AssayCut("Duplicate").withMassFraction(0.5).withSpecificGravity(0.75)
+        .withAverageBoilingPointCelsius(180.0));
+    characterisation.addCut(new AssayCut("Duplicate").withMassFraction(0.5).withSpecificGravity(0.85)
+        .withAverageBoilingPointCelsius(320.0));
+
+    assertThrows(IllegalStateException.class, characterisation::apply);
+    assertFalse(system.hasComponent("Duplicate_PC", false));
+  }
+
+  @Test
+  public void testMultipleTraceMassFractionsAreRetainedAndConserveMass() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    double firstTraceFraction = 4.0e-11;
+    double secondTraceFraction = 7.0e-11;
+    characterisation.addCut(new AssayCut("Main").withMassFraction(1.0 - firstTraceFraction - secondTraceFraction)
+        .withSpecificGravity(0.82).withMolarMassKgPerMol(0.200));
+    characterisation.addCut(new AssayCut("Trace1").withMassFraction(firstTraceFraction).withSpecificGravity(0.75)
+        .withMolarMassKgPerMol(0.100));
+    characterisation.addCut(new AssayCut("Trace2").withMassFraction(secondTraceFraction).withSpecificGravity(0.90)
+        .withMolarMassKgPerMol(0.300));
+
+    characterisation.apply();
+
+    assertTrue(system.hasComponent("Main_PC", false));
+    assertTrue(system.hasComponent("Trace1_PC", false));
+    assertTrue(system.hasComponent("Trace2_PC", false));
+    assertEquals(1.0, reconstructedAssayMass(system, "Main_PC", "Trace1_PC", "Trace2_PC"), 1e-12);
+  }
+
+  @Test
+  public void testInvalidTraceCutIsRejectedBeforeAnyAssayMutation() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
+    characterisation.clearCuts();
+
+    double traceFraction = 5.0e-11;
+    characterisation.addCut(new AssayCut("Main").withMassFraction(1.0 - traceFraction).withSpecificGravity(0.82)
+        .withMolarMassKgPerMol(0.200));
+    characterisation.addCut(new AssayCut("InvalidTrace").withMassFraction(traceFraction).withSpecificGravity(0.75));
+
+    assertThrows(IllegalStateException.class, characterisation::apply);
+    assertFalse(system.hasComponent("Main_PC", false));
+    assertFalse(system.hasComponent("InvalidTrace_PC", false));
+  }
+
+  @Test
+  public void testFractionAndPercentInputsAreUnambiguous() {
+    assertThrows(IllegalArgumentException.class, () -> new AssayCut("BadFraction").withMassFraction(40.0));
+    assertThrows(IllegalArgumentException.class, () -> new AssayCut("BadPercent").withWeightPercent(120.0));
+  }
+
+  private static double reconstructedAssayMass(SystemInterface system, String... componentNames) {
+    double mass = 0.0;
+    for (String componentName : componentNames) {
+      ComponentInterface component = system.getComponent(componentName);
+      mass += component.getNumberOfmoles() * component.getMolarMass();
+    }
+    return mass;
   }
 }

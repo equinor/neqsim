@@ -1,5 +1,8 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
+import java.util.UUID;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -15,9 +18,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version 1.0
  */
-public class FlowRatioMeter extends MeasurementDeviceBaseClass {
+public class FlowRatioMeter extends MeasurementDeviceBaseClass
+    implements TransientStateParticipant<FlowRatioMeter.FlowRatioMeterState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /** Basis for ratio computation. */
   public enum FlowBasis {
@@ -128,5 +134,70 @@ public class FlowRatioMeter extends MeasurementDeviceBaseClass {
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     System.out.println(getName() + " [" + flowBasis + "] ratio = " + getMeasuredValue(""));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:flow-ratio:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for the concrete local flow-ratio meter.
+   *
+   * @return blocking diagnostic for descendants or external online-signal operation, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != FlowRatioMeter.class) {
+      return "flow-ratio-meter subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return getMeasurementTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public FlowRatioMeterState captureTransientState() {
+    return new FlowRatioMeterState(getTransientStateIdentity(), numeratorStream, denominatorStream, flowBasis,
+        captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(FlowRatioMeterState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Flow-ratio meter transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Flow-ratio meter snapshot identity does not match " + getTransientStateIdentity());
+    }
+    numeratorStream = snapshot.numeratorStream;
+    denominatorStream = snapshot.denominatorStream;
+    flowBasis = snapshot.flowBasis;
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable flow-ratio-meter rollback point. */
+  public static final class FlowRatioMeterState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final StreamInterface numeratorStream;
+    private final StreamInterface denominatorStream;
+    private final FlowBasis flowBasis;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private FlowRatioMeterState(String stateIdentity, StreamInterface numeratorStream,
+        StreamInterface denominatorStream, FlowBasis flowBasis, MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.numeratorStream = numeratorStream;
+      this.denominatorStream = denominatorStream;
+      this.flowBasis = flowBasis;
+      this.measurementState = measurementState;
+    }
   }
 }

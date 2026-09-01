@@ -4,8 +4,6 @@ description: "Inverse reservoir-surveillance tools in NeqSim: gas and oil materi
 keywords: "material balance, P/Z, OGIP, OOIP, Havlena-Odeh, Cole plot, drive indices, aquifer, Van Everdingen-Hurst, Carter-Tracy, AQUTAB, decline curve, Arps, Duong, EUR, reserves, reservoir surveillance"
 ---
 
-# Reservoir Material Balance, Decline Analysis & Aquifer Influx
-
 This package provides **inverse** reservoir-surveillance tools that regress
 reserves and drive mechanism from a measured pressure-versus-production history.
 They complement the **forward** tank model

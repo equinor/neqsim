@@ -2,6 +2,7 @@ package neqsim.process.equipment.filter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -102,5 +103,115 @@ public class FilterTest {
     assertEquals(0.0, filter.getSolidsLoading(), 1.0e-12);
     assertEquals(0.0, filter.getBreakthroughFraction(), 1.0e-12);
     assertEquals(0.2, filter.getDeltaP(), 1.0e-12);
+  }
+
+  /** Tests beta-ratio capture and the associated contaminant mass balance. */
+  @Test
+  public void testBetaRatioCurveCalculatesParticleCapture() {
+    Stream feed = createFeedStream();
+    FilterPerformanceCurve curve = new FilterPerformanceCurve(new double[] { 5.0, 10.0, 20.0 },
+        new double[] { 2.0, 100.0, 1000.0 });
+    curve.setTestStandard("ISO 16889:2022");
+
+    Filter filter = new Filter("beta rated filter", feed);
+    filter.setPerformanceCurve(curve);
+    filter.setParticleSize(10.0);
+    filter.setInletParticleConcentration(100.0);
+    filter.run();
+
+    assertEquals(0.99, filter.getNominalRemovalEfficiency(), 1.0e-12);
+    assertEquals(1.0, filter.getOutletParticleConcentration(), 1.0e-12);
+    assertEquals(0.099, filter.getCalculatedCapturedRate(), 1.0e-12);
+    assertEquals("ISO 16889:2022", filter.getPerformanceCurve().getTestStandard());
+  }
+
+  /** Tests type-specific reference-flow scaling for an inertial strainer. */
+  @Test
+  public void testFlowScaledPressureDrop() {
+    Stream feed = createFeedStream();
+    double referenceFlow = feed.getFlowRate("m3/hr");
+
+    Filter filter = new Filter("flow scaled strainer", feed);
+    filter.setFilterServiceType(FilterType.Y_STRAINER);
+    filter.setDeltaP(0.10);
+    filter.setReferenceFlowRate(referenceFlow);
+    filter.run();
+    assertEquals(0.10, filter.getDeltaP(), 1.0e-10);
+
+    feed.setFlowRate(2000.0, "kg/hr");
+    feed.run();
+    filter.run();
+
+    assertEquals(0.40, filter.getDeltaP(), 2.0e-3);
+  }
+
+  /** Tests interpolation of a measured pressure-drop versus flow curve. */
+  @Test
+  public void testTabulatedPressureDropCurve() {
+    Stream feed = createFeedStream();
+    double flow = feed.getFlowRate("m3/hr");
+    FilterPressureDropCurve curve = new FilterPressureDropCurve(new double[] { 0.5 * flow, 1.5 * flow },
+        new double[] { 0.10, 0.50 });
+    curve.setTestStandard("ISO 3968:2017");
+
+    Filter filter = new Filter("tested cartridge", feed);
+    filter.setPressureDropCurve(curve);
+    filter.run();
+
+    assertEquals(0.30, filter.getCalculatedCleanDeltaP(), 1.0e-10);
+    assertEquals("ISO 3968:2017", filter.getPressureDropCurve().getTestStandard());
+  }
+
+  /** Tests packed-media Ergun pressure drop and its physically monotonic flow trend. */
+  @Test
+  public void testErgunPressureDropIncreasesWithFlow() {
+    Stream feed = createFeedStream();
+    Filter filter = new Filter("granular guard bed", feed);
+    filter.setFilterServiceType(FilterType.GRANULAR_MEDIA);
+    filter.setMediaGeometry(1.0, 1.5, 0.002, 0.40);
+    filter.run();
+    double lowFlowPressureDrop = filter.getDeltaP();
+
+    feed.setFlowRate(2000.0, "kg/hr");
+    feed.run();
+    filter.run();
+
+    assertTrue(lowFlowPressureDrop > 0.0);
+    assertTrue(filter.getDeltaP() > lowFlowPressureDrop);
+  }
+
+  /** Tests automatic bypass opening when loaded-element differential pressure reaches its setting. */
+  @Test
+  public void testBypassLimitsPressureDropAndReducesCapture() {
+    Stream feed = createFeedStream();
+    Filter filter = new Filter("bypass cartridge", feed);
+    filter.setDeltaP(0.20);
+    filter.setNominalRemovalEfficiency(0.99);
+    filter.setInletParticleConcentration(100.0);
+    filter.setLoadingCapacity(10.0);
+    filter.setSolidsLoading(5.0);
+    filter.setPressureDropIncreaseAtCapacity(3.6);
+    filter.setBypassCrackingDeltaP(0.5);
+    filter.run();
+
+    assertEquals(2.0, filter.getUnrestrictedDeltaP(), 1.0e-12);
+    assertEquals(0.5, filter.getDeltaP(), 1.0e-12);
+    assertEquals(0.5, filter.getBypassFraction(), 1.0e-12);
+    assertEquals(0.495, filter.getCurrentRemovalEfficiency(), 1.0e-12);
+  }
+
+  /** Tests differential-pressure unit conversion and invalid curve input validation. */
+  @Test
+  public void testPressureDropUnitsAndCurveValidation() {
+    Stream feed = createFeedStream();
+    Filter filter = new Filter("unit conversion filter", feed);
+    filter.setDeltaP(50.0, "kPa");
+    filter.run();
+
+    assertEquals(0.5, filter.getDeltaP(), 1.0e-12);
+    assertThrows(IllegalArgumentException.class,
+        () -> new FilterPerformanceCurve(new double[] { 10.0, 5.0 }, new double[] { 100.0, 200.0 }));
+    assertThrows(IllegalArgumentException.class,
+        () -> new FilterPressureDropCurve(new double[] { 1.0 }, new double[] { -0.1 }));
   }
 }

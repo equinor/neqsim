@@ -281,8 +281,27 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <h2>Transient Simulation</h2>
  * <p>
- * The class supports transient (time-dependent) simulation using the {@code runTransient()} method. This solves the
- * time-dependent mass, momentum, and energy conservation equations using an explicit finite difference scheme.
+ * {@code runTransient()} marches the pipe in time, but only after {@code setCalculateSteadyState(false)} - the flag
+ * defaults to true, and while it is set the method simply repeats the steady-state solution and advances the clock.
+ * </p>
+ * <p>
+ * The scheme is an advection-relaxation transport model, not a conservation-law solver. Each segment is relaxed towards
+ * its upstream neighbour over the local fluid transit time, so a change at the inlet reaches the outlet with a
+ * realistic delay and the steady-state pressure drop is recovered once the line has settled. Two consequences follow
+ * and both matter when choosing a model:
+ * </p>
+ * <ul>
+ * <li>The Beggs and Brill correlation itself is not used on this path. Friction reverts to single-phase Darcy-Weisbach
+ * with the Haaland friction factor, so there is no flow regime, no liquid hold-up and no two-phase friction
+ * multiplier.</li>
+ * <li>There is no mass storage term. The class carries an inlet boundary condition only, so there is nothing to drive
+ * line packing: the outlet mass flow follows the inlet rather than lagging it while the inventory changes. Pipeline
+ * transients whose behaviour is dominated by stored inventory - line pack and drainage, shut-in, rate ramps on a long
+ * gas line, blowdown - are outside what this model can represent.</li>
+ * </ul>
+ * <p>
+ * Use it as a transport-delay element in a flowsheet. For inventory-driven transients use {@link TwoFluidPipe}, and for
+ * pressure surge use {@link neqsim.process.equipment.pipeline.WaterHammerPipe}.
  * </p>
  *
  * <h2>Typical Parameter Values</h2>
@@ -434,6 +453,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
   // Unit for maximum flow
   String maxflowunit = "kg/hr";
+
+  /**
+   * Lower bound applied to the Baker-Swerdloff gas-liquid surface tension, in dynes/cm. The correlation is an
+   * extrapolation above roughly 4000 psi and for very light liquids, where it returns zero or negative values that are
+   * not physical.
+   */
+  private static final double MINIMUM_SURFACE_TENSION_DYNE_CM = 1.0;
 
   // Inside diameter of the pipe [m]
   private double insideDiameter = Double.NaN;
@@ -596,6 +622,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // fluid
   private boolean includeFrictionHeating = false;
 
+  /**
+   * Direct electrical heating (DEH) power delivered to the fluid per metre of pipe, in W/m. Zero means no DEH.
+   */
+  private double directElectricalHeatingPowerPerMeter = 0.0;
+
   // Heat transfer parameters
   double Tmi; // medium temperature
   double Tmo; // outlet temperature
@@ -743,7 +774,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Setter for the field <code>pipeWallRoughness</code>.
    *
-   * @param pipeWallRoughness the pipeWallRoughness to set
+   * @param pipeWallRoughness pipe wall roughness in meters
    */
   @Override
   public void setPipeWallRoughness(double pipeWallRoughness) {
@@ -1128,7 +1159,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public FlowRegime calcFlowRegime() {
     // Calc input volume fraction
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
-    if (system.getNumberOfPhases() != 1) {
+    // The gas-liquid correlation assumes phase 0 is the gas. A stream that has more
+    // than one phase but no gas phase at all - a dead oil carrying free water, for
+    // instance - would otherwise have its oil phase used as the gas.
+    boolean gasPresent = system.hasPhaseType("gas");
+    if (system.getNumberOfPhases() != 1 && gasPresent) {
       if (system.getNumberOfPhases() == 3) {
         supLiquidVel = (system.getPhase(1).getFlowRate("ft3/sec") + system.getPhase(2).getFlowRate("ft3/sec")) / area;
       } else {
@@ -1141,14 +1176,20 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       mixtureFroudeNumber = Math.pow(supMixVel, 2) / (32.174 * insideDiameter);
       inputVolumeFractionLiquid = supLiquidVel / supMixVel;
     } else {
-      if (system.hasPhaseType("gas")) {
+      if (gasPresent) {
         supGasVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
         supMixVel = supGasVel;
         inputVolumeFractionLiquid = 0.0;
         regime = FlowRegime.SINGLE_PHASE;
       } else {
-        // Single-phase liquid: only phase is at index 0
-        supLiquidVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
+        // One or several liquid phases and no gas. Liquid-liquid dispersions at
+        // pipeline velocities are treated as a homogeneous liquid, so the superficial
+        // velocity sums every liquid phase.
+        double liquidVolumeFlow = 0.0;
+        for (int i = 0; i < system.getNumberOfPhases(); i++) {
+          liquidVolumeFlow += system.getPhase(i).getFlowRate("ft3/sec");
+        }
+        supLiquidVel = liquidVolumeFlow / area;
         supMixVel = supLiquidVel;
         inputVolumeFractionLiquid = 1.0;
         regime = FlowRegime.SINGLE_PHASE;
@@ -1170,23 +1211,23 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double L3 = 0.1 * Math.pow(inputVolumeFractionLiquid, -1.4516);
     double L4 = 0.5 * Math.pow(inputVolumeFractionLiquid, -6.738);
 
+    // The branches must be evaluated in the order published by Beggs and Brill:
+    // segregated, transition, intermittent, distributed. L1 and L3 cross close to
+    // a no-slip liquid fraction of 0.01, so testing distributed before transition
+    // misclassifies points just above that crossing.
     if (regime != FlowRegime.SINGLE_PHASE) {
       if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1)
           || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
         regime = FlowRegime.SEGREGATED;
-      } else if ((inputVolumeFractionLiquid < 0.4 && inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber <= L1
-          && mixtureFroudeNumber > L3)
-          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4 && mixtureFroudeNumber > L3)) {
+      } else if (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber >= L2 && mixtureFroudeNumber <= L3) {
+        regime = FlowRegime.TRANSITION;
+      } else if ((inputVolumeFractionLiquid >= 0.01 && inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber > L3
+          && mixtureFroudeNumber <= L1)
+          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L3 && mixtureFroudeNumber <= L4)) {
         regime = FlowRegime.INTERMITTENT;
-      } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L4)
+      } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L1)
           || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L4)) {
         regime = FlowRegime.DISTRIBUTED;
-      } else if (mixtureFroudeNumber > L2 && mixtureFroudeNumber < L3) {
-        regime = FlowRegime.TRANSITION;
-      } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
-        regime = FlowRegime.INTERMITTENT;
-      } else if (mixtureFroudeNumber > 110) {
-        regime = FlowRegime.INTERMITTENT;
       } else {
         throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
             "run: calcFlowRegime", "FlowRegime", "Flow regime is not found"));
@@ -1207,43 +1248,39 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public double calcHydrostaticPressureDifference() {
     double B = 1 - A;
 
-    double BThetta;
-
-    if (regime == FlowRegime.SEGREGATED) {
-      El = 0.98 * Math.pow(inputVolumeFractionLiquid, 0.4846) / Math.pow(mixtureFroudeNumber, 0.0868);
-    } else if (regime == FlowRegime.INTERMITTENT) {
-      El = 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351) / (Math.pow(mixtureFroudeNumber, 0.0173));
-    } else if (regime == FlowRegime.DISTRIBUTED) {
-      El = 1.065 * Math.pow(inputVolumeFractionLiquid, 0.5824) / (Math.pow(mixtureFroudeNumber, 0.0609));
-    } else if (regime == FlowRegime.TRANSITION) {
-      El = A * 0.98 * Math.pow(inputVolumeFractionLiquid, 0.4846) / Math.pow(mixtureFroudeNumber, 0.0868)
-          + B * 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351) / (Math.pow(mixtureFroudeNumber, 0.0173));
-    } else if (regime == FlowRegime.SINGLE_PHASE) {
+    if (regime == FlowRegime.SINGLE_PHASE) {
       // For single-phase flow, liquid holdup equals liquid volume fraction
-      // Gas: El = 0, Liquid: El = 1
+      // Gas: El = 0, Liquid: El = 1.
       El = inputVolumeFractionLiquid;
-    }
-
-    if (regime != FlowRegime.SINGLE_PHASE) {
+      mixtureDensity = homogeneousDensity();
+    } else {
       double SG;
+
       if (system.getNumberOfPhases() == 3) {
         mixtureOilMassFraction = system.getPhase(1).getFlowRate("kg/hr")
             / (system.getPhase(1).getFlowRate("kg/hr") + system.getPhase(2).getFlowRate("kg/hr"));
-        mixtureOilVolumeFraction = system.getPhase(1).getVolume()
-            / (system.getPhase(1).getVolume() + system.getPhase(2).getVolume());
+        // The volume fraction has to come from the same volumetric basis as the
+        // densities below, so it is taken from the phase flow rates rather than from
+        // getVolume(), which is not volume-corrected.
+        mixtureOilVolumeFraction = system.getPhase(1).getFlowRate("ft3/sec")
+            / (system.getPhase(1).getFlowRate("ft3/sec") + system.getPhase(2).getFlowRate("ft3/sec"));
 
         mixtureLiquidViscosity = system.getPhase(1).getViscosity("cP") * mixtureOilVolumeFraction
             + (system.getPhase(2).getViscosity("cP")) * (1 - mixtureOilVolumeFraction);
 
-        mixtureLiquidDensity = (system.getPhase(1).getDensity("lb/ft3") * mixtureOilMassFraction
-            + system.getPhase(2).getDensity("lb/ft3") * (1 - mixtureOilMassFraction));
+        // A mixture density is the total mass over the total volume, so the phase
+        // densities combine on VOLUME fractions. Combining them on mass fractions
+        // gives neither that nor the reciprocal mass-weighted form and biases the
+        // liquid density high by several per cent at high water cut.
+        mixtureLiquidDensity = (system.getPhase(1).getDensity("lb/ft3") * mixtureOilVolumeFraction
+            + system.getPhase(2).getDensity("lb/ft3") * (1 - mixtureOilVolumeFraction));
 
         SG = (mixtureLiquidDensity) / (1000 * 0.0624279606);
       } else {
         SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
       }
 
-      double APIgrav = (141.5 / (SG)) - 131.0;
+      double APIgrav = (141.5 / (SG)) - 131.5;
       double sigma68 = 39.0 - 0.2571 * APIgrav;
       double sigma100 = 37.5 - 0.2571 * APIgrav;
       double sigma;
@@ -1258,53 +1295,148 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       }
       double pressureCorrection = 1.0 - 0.024 * Math.pow((system.getPressure("psi")), 0.45);
       sigma = sigma * pressureCorrection;
-      double Nvl = 1.938 * supLiquidVel
-          * Math.pow(system.getPhase(1).getDensity() * 0.0624279606 / (32.2 * sigma), 0.25);
-      double betta = 0;
+      // The Baker-Swerdloff correlation above is only valid up to about 4000 psi and
+      // for moderate API gravity. Beyond that the pressure correction turns negative
+      // (zero crossing at 3971 psi = 274 bara) and a light condensate drives sigma68
+      // negative through the API term, so sigma can leave the physical range entirely.
+      // A negative sigma makes Nvl NaN, the "logArg > 0" tests below then all fail and
+      // the inclination correction is silently dropped - an uphill leg would report the
+      // horizontal hold-up. Clamp to the conventional 1 dyne/cm floor instead.
+      sigma = Double.isNaN(sigma) ? MINIMUM_SURFACE_TENSION_DYNE_CM : Math.max(sigma, MINIMUM_SURFACE_TENSION_DYNE_CM);
+      // Duns and Ros liquid velocity number. The 1.938 prefactor already absorbs
+      // the gravitational acceleration and the field-unit conversion, so density
+      // (lb/ft3) is divided by surface tension (dynes/cm) alone.
+      // The density must be read through getDensity("lb/ft3") so it carries the same
+      // volume correction as the specific gravity used for the surface tension above;
+      // the no-argument getDensity() returns the uncorrected equation-of-state value.
+      double Nvl = 1.938 * supLiquidVel * Math.pow(system.getPhase(1).getDensity("lb/ft3") / sigma, 0.25);
 
-      if (elevation > 0) {
-        if (regime == FlowRegime.SEGREGATED) {
-          double logArg = 0.011 * Math.pow(Nvl, 3.539)
-              / (Math.pow(inputVolumeFractionLiquid, 3.768) * Math.pow(mixtureFroudeNumber, 1.614));
-          if (logArg > 0) {
-            betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
-          }
-        } else if (regime == FlowRegime.INTERMITTENT) {
-          double logArg = 2.96 * Math.pow(inputVolumeFractionLiquid, 0.305) * Math.pow(mixtureFroudeNumber, 0.0978)
-              / (Math.pow(Nvl, 0.4473));
-          if (logArg > 0) {
-            betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
-          }
-        } else if (regime == FlowRegime.DISTRIBUTED) {
-          betta = 0;
-        }
+      // The field angle has already been converted from degrees to radians by
+      // convertSystemUnitToImperial(), so it must not be scaled again here.
+      double sin18Theta = Math.sin(1.8 * angle);
+
+      if (regime == FlowRegime.TRANSITION) {
+        // The transition region interpolates between the segregated and intermittent
+        // correlations. The inclination correction differs between those two regimes,
+        // so the interpolation has to be applied to the corrected hold-ups; blending the
+        // horizontal hold-ups and then leaving the correction out (as an unhandled
+        // regime would) makes the hold-up jump at both transition boundaries.
+        El = A * inclinationCorrectedHoldup(FlowRegime.SEGREGATED, Nvl, sin18Theta)
+            + B * inclinationCorrectedHoldup(FlowRegime.INTERMITTENT, Nvl, sin18Theta);
       } else {
-        double logArg = 4.70 * Math.pow(Nvl, 0.1244)
-            / (Math.pow(inputVolumeFractionLiquid, 0.3692) * Math.pow(mixtureFroudeNumber, 0.5056));
-        if (logArg > 0) {
-          betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
-        }
+        El = inclinationCorrectedHoldup(regime, Nvl, sin18Theta);
       }
-      betta = (betta > 0) ? betta : 0;
-      BThetta = 1 + betta
-          * (Math.sin(1.8 * angle * 0.01745329) - (1.0 / 3.0) * Math.pow(Math.sin(1.8 * angle * 0.01745329), 3.0));
 
-      El = BThetta * El;
+      // Liquid holdup is a physical volume fraction. The empirical correlation and
+      // inclination correction can exceed unity for low-Froude, liquid-rich flow.
+      // Bound the result by the no-slip liquid fraction and one before it is used
+      // in mixture-density and pressure-drop calculations.
+      El = Math.max(inputVolumeFractionLiquid, Math.min(1.0, El));
+
       if (system.getNumberOfPhases() == 3) {
         mixtureDensity = mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       } else {
         mixtureDensity = system.getPhase(1).getDensity("lb/ft3") * El
             + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       }
-    } else {
-      // Single-phase: only phase is at index 0
-      mixtureDensity = system.getPhase(0).getDensity("lb/ft3");
     }
     hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation; // 32.2 - g
 
     liquidHoldupProfile.add(El);
 
     return hydrostaticPressureDrop;
+  }
+
+  /**
+   * Volume-weighted density of every phase present, in lb/ft3.
+   *
+   * <p>
+   * For a genuinely single-phase stream this is just that phase's density. It differs only for a gas-free stream that
+   * has split into two liquid phases, which is carried as a homogeneous liquid.
+   * </p>
+   *
+   * @return mixture density in lb/ft3
+   */
+  private double homogeneousDensity() {
+    int phases = system.getNumberOfPhases();
+    if (phases == 1) {
+      return system.getPhase(0).getDensity("lb/ft3");
+    }
+    double volume = 0.0;
+    double mass = 0.0;
+    for (int i = 0; i < phases; i++) {
+      double flow = system.getPhase(i).getFlowRate("ft3/sec");
+      volume += flow;
+      mass += flow * system.getPhase(i).getDensity("lb/ft3");
+    }
+    return volume > 0.0 ? mass / volume : system.getPhase(0).getDensity("lb/ft3");
+  }
+
+  /**
+   * Volume-weighted viscosity of every phase present, in cP.
+   *
+   * @return mixture viscosity in cP
+   */
+  private double homogeneousViscosity() {
+    int phases = system.getNumberOfPhases();
+    if (phases == 1) {
+      return system.getPhase(0).getViscosity("cP");
+    }
+    double volume = 0.0;
+    double weighted = 0.0;
+    for (int i = 0; i < phases; i++) {
+      double flow = system.getPhase(i).getFlowRate("ft3/sec");
+      volume += flow;
+      weighted += flow * system.getPhase(i).getViscosity("cP");
+    }
+    return volume > 0.0 ? weighted / volume : system.getPhase(0).getViscosity("cP");
+  }
+
+  /**
+   * Beggs and Brill liquid hold-up for one flow regime, including the inclination correction.
+   *
+   * <p>
+   * The horizontal hold-up correlation and the inclination coefficient C both depend on the flow regime, so they are
+   * evaluated together here. Keeping them in one place lets the transition region interpolate between two fully
+   * corrected hold-ups rather than between the horizontal values alone.
+   * </p>
+   *
+   * @param targetRegime regime whose hold-up correlation is evaluated; SEGREGATED, INTERMITTENT or DISTRIBUTED
+   * @param nvl Duns and Ros liquid velocity number
+   * @param sin18Theta sine of 1.8 times the pipe inclination, the inclination already being in radians
+   * @return liquid hold-up corrected for inclination, before it is bounded to a physical range
+   */
+  private double inclinationCorrectedHoldup(FlowRegime targetRegime, double nvl, double sin18Theta) {
+    double horizontalHoldup;
+    if (targetRegime == FlowRegime.SEGREGATED) {
+      horizontalHoldup = 0.98 * Math.pow(inputVolumeFractionLiquid, 0.4846) / Math.pow(mixtureFroudeNumber, 0.0868);
+    } else if (targetRegime == FlowRegime.INTERMITTENT) {
+      horizontalHoldup = 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351) / Math.pow(mixtureFroudeNumber, 0.0173);
+    } else {
+      horizontalHoldup = 1.065 * Math.pow(inputVolumeFractionLiquid, 0.5824) / Math.pow(mixtureFroudeNumber, 0.0609);
+    }
+
+    double logArg;
+    if (elevation > 0.0) {
+      if (targetRegime == FlowRegime.SEGREGATED) {
+        logArg = 0.011 * Math.pow(nvl, 3.539)
+            / (Math.pow(inputVolumeFractionLiquid, 3.768) * Math.pow(mixtureFroudeNumber, 1.614));
+      } else if (targetRegime == FlowRegime.INTERMITTENT) {
+        logArg = 2.96 * Math.pow(inputVolumeFractionLiquid, 0.305) * Math.pow(mixtureFroudeNumber, 0.0978)
+            / Math.pow(nvl, 0.4473);
+      } else {
+        // Distributed uphill: the published inclination coefficient is zero.
+        logArg = Double.NaN;
+      }
+    } else {
+      // Downhill uses a single correlation for all regimes.
+      logArg = 4.70 * Math.pow(nvl, 0.1244)
+          / (Math.pow(inputVolumeFractionLiquid, 0.3692) * Math.pow(mixtureFroudeNumber, 0.5056));
+    }
+
+    double betta = (logArg > 0.0) ? (1 - inputVolumeFractionLiquid) * Math.log(logArg) : 0.0;
+    betta = (betta > 0.0) ? betta : 0.0;
+    return horizontalHoldup * (1 + betta * (sin18Theta - (1.0 / 3.0) * Math.pow(sin18Theta, 3.0)));
   }
 
   /**
@@ -1317,28 +1449,20 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double rhoNoSlip = 0;
     double muNoSlip = 0;
 
-    if (system.getNumberOfPhases() != 1) {
-      if (regime != FlowRegime.SINGLE_PHASE) {
-        double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
-        if (1 < y && y < 1.2) {
-          S = Math.log(2.2 * y - 1.2);
-        } else {
-          S = Math.log(y) / (-0.0523 + 3.18 * Math.log(y) - 0.872 * Math.pow(Math.log(y), 2.0)
-              + 0.01853 * Math.pow(Math.log(y), 4));
-        }
-        if (system.getNumberOfPhases() == 3) {
-          rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
-              + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-          muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
-              + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
-          liquidDensityProfile.add(mixtureLiquidDensity * 16.01846);
-        } else {
-          rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
-              + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
-          muNoSlip = system.getPhase(1).getViscosity("cP") * inputVolumeFractionLiquid
-              + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
-          liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
-        }
+    if (regime != FlowRegime.SINGLE_PHASE) {
+      double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
+      if (1 < y && y < 1.2) {
+        S = Math.log(2.2 * y - 1.2);
+      } else {
+        S = Math.log(y) / (-0.0523 + 3.182 * Math.log(y) - 0.8725 * Math.pow(Math.log(y), 2.0)
+            + 0.01853 * Math.pow(Math.log(y), 4));
+      }
+      if (system.getNumberOfPhases() == 3) {
+        rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
+            + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
+        muNoSlip = mixtureLiquidViscosity * inputVolumeFractionLiquid
+            + (system.getPhase(0).getViscosity("cP")) * (1 - inputVolumeFractionLiquid);
+        liquidDensityProfile.add(mixtureLiquidDensity * 16.01846);
       } else {
         rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3")) * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
@@ -1347,14 +1471,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
         liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
       }
     } else {
-      // Single-phase: only phase is at index 0
-      rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
-      muNoSlip = (system.getPhase(0).getViscosity("cP"));
-      if (system.hasPhaseType("gas")) {
-        liquidDensityProfile.add(0.0);
-      } else {
-        liquidDensityProfile.add(rhoNoSlip * 16.01846);
-      }
+      // Covers a genuinely single-phase stream and a gas-free liquid-liquid stream,
+      // which is carried as a homogeneous liquid.
+      rhoNoSlip = homogeneousDensity();
+      muNoSlip = homogeneousViscosity();
+      liquidDensityProfile.add(system.hasPhaseType("gas") ? 0.0 : rhoNoSlip * 16.01846);
     }
 
     mixtureViscosityProfile.add(muNoSlip);
@@ -1428,8 +1549,62 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
       runWithSpecifiedOutletPressure(id);
     } else {
+      if (applyLowFlowBypass(id)) {
+        return;
+      }
       runWithSpecifiedFlowRate(id);
     }
+  }
+
+  /**
+   * Bypasses the pipeline when the inlet mass flow is below the configured low-flow threshold.
+   *
+   * <p>
+   * A stagnant leg has no friction and no meaningful hold-up, so the inlet state is passed straight through to the
+   * outlet. Crucially the outlet stream IS still written (rather than left untouched as a plain
+   * {@code checkAndHandleLowFlow} early return would do), because downstream units - typically a mixer, a valve or a
+   * separator - need a consistent pressure and composition boundary even at zero flow.
+   * </p>
+   *
+   * <p>
+   * Only applies to the default {@link CalculationMode#CALCULATE_OUTLET_PRESSURE} mode; in
+   * {@link CalculationMode#CALCULATE_FLOW_RATE} mode the flow rate is the unknown being solved for, so a low inlet flow
+   * is an iteration state rather than a bypass condition.
+   * </p>
+   *
+   * <p>
+   * The check is opt-in: it only fires when a threshold above
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#DEFAULT_MINIMUM_FLOW} has been configured, so a pipeline
+   * that is momentarily dry inside a recycle loop is not permanently skipped for the rest of the solve pass.
+   * </p>
+   *
+   * @param id current calculation identifier
+   * @return true when the pipeline was bypassed and {@code run()} should return immediately
+   */
+  private boolean applyLowFlowBypass(UUID id) {
+    double threshold = getMinimumFlow();
+    if (!(threshold > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW) || inStream == null) {
+      return false;
+    }
+    double inletFlow;
+    try {
+      inletFlow = inStream.getFlowRate("kg/hr");
+    } catch (RuntimeException ex) {
+      logger.debug("Could not read inlet flow for low-flow check on '{}'", getName());
+      return false;
+    }
+    if (inletFlow >= threshold) {
+      isActive(true);
+      return false;
+    }
+    isActive(false);
+    pressureDrop = 0.0;
+    totalPressureDrop = 0.0;
+    system = inStream.getThermoSystem().clone();
+    outStream.setThermoSystem(system);
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+    return true;
   }
 
   /**
@@ -1508,6 +1683,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       if (!runIsothermal) {
         double inletTempBeforeHeat = system.getTemperature();
         double analyticalDeltaT = calcTemperatureDifference(system);
+        if (directElectricalHeatingPowerPerMeter != 0.0) {
+          // DEH lifts the increment above the wall-heat-transfer band checked below
+          double mCp = system.getFlowRate("kg/sec") * system.getCp("J/kgK");
+          if (mCp > 0.0) {
+            analyticalDeltaT += directElectricalHeatingPowerPerMeter * length / mCp;
+          }
+        }
         enthalpyInlet = calcHeatBalance(enthalpyInlet, system, testOps);
         // Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
         // or to other unphysical values) on some JVM/locale combinations, e.g. for
@@ -1769,11 +1951,25 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     // Lockhart-Martinelli parameter for turbulent-turbulent flow
     double rhoGas = system.getPhase(0).getDensity("kg/m3");
-    double rhoLiq = mixtureLiquidDensity > 0 ? mixtureLiquidDensity : system.getDensity("kg/m3");
-    double muGas = 0.001 * system.getPhase(0).getViscosity("cP");
-    double muLiq = 0.001 * mixtureLiquidViscosity;
+    // The liquid properties must be read here rather than reused from the pressure
+    // drop fields: those are in field units (lb/ft3, cP), are only assigned for a
+    // three-phase stream, and otherwise retain whatever a previous increment left.
+    double rhoLiq = 0.0;
+    double muLiq = 0.0;
+    double liquidVolume = 0.0;
+    for (int i = 1; i < system.getNumberOfPhases(); i++) {
+      double flow = system.getPhase(i).getFlowRate("m3/sec");
+      liquidVolume += flow;
+      rhoLiq += flow * system.getPhase(i).getDensity("kg/m3");
+      muLiq += flow * system.getPhase(i).getViscosity("kg/msec");
+    }
+    if (liquidVolume > 0.0) {
+      rhoLiq /= liquidVolume;
+      muLiq /= liquidVolume;
+    }
+    double muGas = system.getPhase(0).getViscosity("kg/msec");
 
-    if (muLiq <= 0 || rhoLiq <= 0) {
+    if (muLiq <= 0 || rhoLiq <= 0 || muGas <= 0) {
       // Fallback to simple empirical correlation if properties unavailable
       double enhancement = 1.0 + 2.0 * X * (1.0 - X);
       return singlePhaseHTC * enhancement;
@@ -2091,6 +2287,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       enthalpy = enthalpy + massFlowRate * Cp * calcTemperatureDifference(system);
     }
 
+    // 1b. Direct electrical heating (DEH) - uniform power per metre of pipe.
+    // Applied independently of the wall heat loss, which it counteracts.
+    if (directElectricalHeatingPowerPerMeter != 0.0) {
+      enthalpy = enthalpy + directElectricalHeatingPowerPerMeter * length;
+    }
+
     // 2. Joule-Thomson effect: temperature change due to pressure drop
     // JT coefficient calculated from mixture thermodynamics (mass-weighted average)
     // dH_JT = m_dot * Cp * μ_JT * dP (where dP is pressure drop, positive value)
@@ -2211,6 +2413,64 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     return includeFrictionHeating;
   }
 
+  /**
+   * Sets the direct electrical heating (DEH) power delivered to the fluid, distributed uniformly over the pipe length.
+   *
+   * <p>
+   * DEH passes current through the pipe wall to keep the fluid above the hydrate or wax formation temperature. The
+   * power set here is the electrical power actually reaching the fluid, so any cable and coating losses must already be
+   * deducted. The heat is added to the energy balance independently of the wall heat loss it counteracts, so the fluid
+   * warms whenever the DEH power exceeds the loss to the surroundings.
+   * </p>
+   *
+   * @param power total DEH power delivered to the fluid in W, non-negative
+   * @throws IllegalArgumentException if power is negative or the pipe length has not been set
+   */
+  public void setDirectElectricalHeatingPower(double power) {
+    if (power < 0) {
+      throw new IllegalArgumentException("DEH power must be non-negative, got: " + power);
+    }
+    if (Double.isNaN(totalLength) || totalLength <= 0) {
+      throw new IllegalArgumentException("Pipe length must be set before the total DEH power");
+    }
+    this.directElectricalHeatingPowerPerMeter = power / totalLength;
+  }
+
+  /**
+   * Sets the direct electrical heating (DEH) power per metre of pipe.
+   *
+   * @param powerPerMeter DEH power delivered to the fluid in W/m, non-negative
+   * @throws IllegalArgumentException if powerPerMeter is negative
+   */
+  public void setDirectElectricalHeatingPowerPerMeter(double powerPerMeter) {
+    if (powerPerMeter < 0) {
+      throw new IllegalArgumentException("DEH power per metre must be non-negative, got: " + powerPerMeter);
+    }
+    this.directElectricalHeatingPowerPerMeter = powerPerMeter;
+  }
+
+  /**
+   * Gets the direct electrical heating (DEH) power per metre of pipe.
+   *
+   * @return DEH power delivered to the fluid in W/m, zero when DEH is not used
+   * @see #setDirectElectricalHeatingPower(double)
+   */
+  public double getDirectElectricalHeatingPowerPerMeter() {
+    return directElectricalHeatingPowerPerMeter;
+  }
+
+  /**
+   * Gets the total direct electrical heating (DEH) power over the pipe length.
+   *
+   * @return total DEH power delivered to the fluid in W, zero when DEH is not used or the length is unset
+   */
+  public double getDirectElectricalHeatingPower() {
+    if (Double.isNaN(totalLength)) {
+      return 0.0;
+    }
+    return directElectricalHeatingPowerPerMeter * totalLength;
+  }
+
   private void initializeTransientState(UUID id) {
     run(id);
 
@@ -2258,15 +2518,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       }
     }
 
-    if (mixtureDensityProfile != null && !mixtureDensityProfile.isEmpty()) {
-      for (int i = 0; i < numberOfIncrements; i++) {
-        transientDensityProfile
-            .add(Math.max(MIN_DENSITY, mixtureDensityProfile.get(Math.min(i, mixtureDensityProfile.size() - 1))));
-      }
-    } else {
-      for (int i = 0; i < numberOfIncrements; i++) {
-        transientDensityProfile.add(Math.max(MIN_DENSITY, steadyDensity));
-      }
+    // Seed the cell densities the same way the transient loop evaluates them, so that a
+    // converged steady state carried into runTransient() shows no change in stored mass on
+    // the first step and therefore stays exactly where it is.
+    for (int i = 0; i < numberOfIncrements; i++) {
+      double cellPressure = 0.5 * (transientPressureProfile.get(i) + transientPressureProfile.get(i + 1));
+      double cellTemperature = 0.5 * (transientTemperatureProfile.get(i) + transientTemperatureProfile.get(i + 1));
+      transientDensityProfile.add(transientCellDensity(inlet, cellPressure, cellTemperature, steadyDensity));
     }
 
     transientInitialized = true;
@@ -2346,6 +2604,41 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Result in Pa, convert to bar
     double dpHydroPa = density * 9.81 * elevationChange;
     return dpHydroPa / 1e5; // Convert Pa to bar
+  }
+
+  /**
+   * Mixture density of one transient cell, flashed at that cell's own pressure and temperature.
+   *
+   * <p>
+   * The stored mass of a cell is what makes a pipeline pack and drain, so its density has to follow the cell state
+   * rather than being carried over from the neighbouring cell.
+   * </p>
+   *
+   * @param template a system carrying the feed composition, must not be null
+   * @param pressure cell pressure in bara, must be positive
+   * @param temperature cell temperature in K, must be positive
+   * @param fallback density to return if the flash fails, in kg/m3
+   * @return cell mixture density in kg/m3
+   */
+  private double transientCellDensity(SystemInterface template, double pressure, double temperature, double fallback) {
+    if (pressure <= 0.0 || temperature <= 0.0) {
+      return Math.max(MIN_DENSITY, fallback);
+    }
+    try {
+      SystemInterface cell = template.clone();
+      cell.setPressure(pressure);
+      cell.setTemperature(temperature);
+      new ThermodynamicOperations(cell).TPflash();
+      cell.initProperties();
+      double density = cell.getDensity("kg/m3");
+      if (Double.isNaN(density) || density <= 0.0) {
+        return Math.max(MIN_DENSITY, fallback);
+      }
+      return Math.max(MIN_DENSITY, density);
+    } catch (RuntimeException ex) {
+      logger.debug("Transient cell flash failed at {} bara / {} K on '{}'", pressure, temperature, getName());
+      return Math.max(MIN_DENSITY, fallback);
+    }
   }
 
   /** {@inheritDoc} */
@@ -2434,8 +2727,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       newDownstreamPressure = Math.max(0.1, newDownstreamPressure);
       updatedPressure.set(segment + 1, newDownstreamPressure);
 
-      // Mass flow propagation - with mass conservation enforcement
-      // For incompressible/weakly compressible flow, mass flow should be continuous
+      // Mass flow propagation. With only an inlet boundary condition there is nothing to
+      // drive line packing, so the flow is transported rather than accumulated; see the
+      // class documentation for what this scheme can and cannot represent.
       double newMassFlow = downstreamMassFlow + relaxation * (upstreamMassFlow - downstreamMassFlow);
       updatedMassFlow.set(segment + 1, newMassFlow);
 
@@ -2482,21 +2776,23 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       // Apply relaxation for wave propagation
       updatedTemperature.set(segment + 1,
           downstreamTemperature + relaxation * (advectedTemperature - downstreamTemperature));
+    }
 
-      // Update velocity based on updated mass flow and density
-      double targetVelocity = newMassFlow / (Math.max(MIN_DENSITY, segmentDensity) * crossSectionArea);
-      double relaxedVelocity = segmentVelocity + relaxation * (targetVelocity - segmentVelocity);
-      updatedVelocity.set(segment, Math.max(MIN_TRANSIT_VELOCITY, relaxedVelocity));
+    // ===== Second pass: cell properties from the cell's own state =====
+    // The density of a cell follows from its own pressure and temperature through the
+    // equation of state. Relaxing it towards the upstream density instead drives the
+    // profile towards a uniform value that a real line does not have, and that is what
+    // made a converged steady state drift when it was marched in time with the boundary
+    // conditions held constant.
+    for (int segment = 0; segment < numberOfIncrements; segment++) {
+      double cellPressure = 0.5 * (updatedPressure.get(segment) + updatedPressure.get(segment + 1));
+      double cellTemperature = 0.5 * (updatedTemperature.get(segment) + updatedTemperature.get(segment + 1));
+      double newDensity = transientCellDensity(inletSystem, cellPressure, cellTemperature,
+          transientDensityProfile.get(segment));
+      updatedDensity.set(segment, newDensity);
 
-      // Update density - use already-updated upstream density for consistency
-      double upstreamDensity;
-      if (segment == 0) {
-        upstreamDensity = inletDensityBoundary;
-      } else {
-        upstreamDensity = updatedDensity.get(segment - 1); // Use already-updated value
-      }
-      double relaxedDensity = segmentDensity + relaxation * (upstreamDensity - segmentDensity);
-      updatedDensity.set(segment, Math.max(MIN_DENSITY, relaxedDensity));
+      double velocity = updatedMassFlow.get(segment + 1) / (newDensity * crossSectionArea);
+      updatedVelocity.set(segment, Math.max(MIN_TRANSIT_VELOCITY, velocity));
     }
 
     // Update transient profiles

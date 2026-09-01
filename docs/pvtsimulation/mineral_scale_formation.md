@@ -3,8 +3,6 @@ title: Mineral Scale Formation in Oil and Gas Production
 description: Comprehensive guide to mineral scale prediction and management in oil and gas production using NeqSim. Covers carbonate and sulfate scales, saturation index calculations, seawater mixing, temperature effects, and scale inhibitor strategies.
 ---
 
-# Mineral Scale Formation in Oil and Gas Production
-
 This guide covers mineral scale prediction and control using NeqSim's **Electrolyte CPA equation of state**. Scale formation is a critical flow assurance challenge that can cause blockages, reduced production, and equipment damage.
 
 ## Overview

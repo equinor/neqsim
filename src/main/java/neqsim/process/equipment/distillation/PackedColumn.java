@@ -67,6 +67,9 @@ public class PackedColumn extends DistillationColumn {
   /** Design flood fraction (0-1). Typical 0.65-0.75 for packed columns. */
   private double designFloodFraction = 0.70;
 
+  /** Relative hydraulic capacity factor for the selected packing. */
+  private double packingHydraulicCapacityFactor = 1.0;
+
   /** Column internal diameter [m]. If &lt;= 0, auto-sized from hydraulics. */
   private double columnDiameter = -1.0;
 
@@ -222,6 +225,33 @@ public class PackedColumn extends DistillationColumn {
   }
 
   /**
+   * Set the relative hydraulic capacity factor for the selected packing.
+   *
+   * <p>
+   * The default of 1.0 uses the base packing correlation. A higher value may be used to represent a high-capacity
+   * structured packing only when supported by vendor hydraulic data for the intended service.
+   * </p>
+   *
+   * @param factor positive relative capacity factor
+   * @throws IllegalArgumentException if the factor is not positive and finite
+   */
+  public void setPackingHydraulicCapacityFactor(double factor) {
+    if (!Double.isFinite(factor) || factor <= 0.0) {
+      throw new IllegalArgumentException("packing hydraulic capacity factor must be positive and finite");
+    }
+    this.packingHydraulicCapacityFactor = factor;
+  }
+
+  /**
+   * Get the relative hydraulic capacity factor for the selected packing.
+   *
+   * @return relative hydraulic capacity factor
+   */
+  public double getPackingHydraulicCapacityFactor() {
+    return packingHydraulicCapacityFactor;
+  }
+
+  /**
    * Override column diameter [m]. Set to &lt;= 0 for auto-sizing.
    *
    * @param diameter column diameter
@@ -349,6 +379,7 @@ public class PackedColumn extends DistillationColumn {
     designer.setPackingPreset(packingType);
     designer.setPackedHeight(packedHeight);
     designer.setDesignFloodFraction(designFloodFraction);
+    designer.setPackingHydraulicCapacityFactor(packingHydraulicCapacityFactor);
     if (columnDiameter > 0) {
       designer.setColumnDiameterOverride(columnDiameter);
     }
@@ -391,6 +422,7 @@ public class PackedColumn extends DistillationColumn {
     packing.addProperty("packedHeight_m", packedHeight);
     packing.addProperty("columnDiameter_m", getInternalDiameter());
     packing.addProperty("designFloodFraction", designFloodFraction);
+    packing.addProperty("hydraulicCapacityFactor", packingHydraulicCapacityFactor);
     root.add("packingConfiguration", packing);
 
     // Hydraulic results

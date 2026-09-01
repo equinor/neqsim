@@ -1,6 +1,6 @@
 ---
 title: Process Optimization Framework
-description: Entry point for NeqSim process optimization documentation: optimizer selection, getting started, and verified code patterns.
+description: "Entry point for NeqSim process optimization documentation: optimizer selection, getting started, and verified code patterns."
 ---
 
 # Process Optimization Framework
@@ -18,6 +18,7 @@ This page is the landing page for NeqSim process optimization. Use it to find th
 | [Compressor Optimization Guide](COMPRESSOR_OPTIMIZATION_GUIDE) | Multi-train compressor optimization with VFD, driver curves, and two-stage approach |
 | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) | Equipment capacity strategies, constraint evaluation, throughput optimization, sensitivity analysis, and FlowRateOptimizer integration |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Complete examples for ProductionOptimizer |
+| [Industrial S/M Benchmark Evidence](industrial-sm-benchmark) | Executed small guide and 27-unit multi-train recycle baseline, reproducible five-fork aggregation, raw records, and known instrumentation gaps |
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Core constraint definition and bottleneck detection |
 | [Getting Started](getting-started) | Step-by-step workflow for first optimization run |
 | [Batch Studies](batch-studies) | Sensitivity analysis with parameter sweeps |

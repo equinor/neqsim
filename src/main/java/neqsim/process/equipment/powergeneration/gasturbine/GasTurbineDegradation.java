@@ -101,6 +101,26 @@ public class GasTurbineDegradation implements Serializable {
     this.hoursSinceWash = 0.0;
   }
 
+  /**
+   * Perform an on-line (live) water wash, which removes only part of the accumulated recoverable loss.
+   *
+   * <p>
+   * On-line washing typically recovers 30-50 % of the fouling penalty; the residual is carried forward until an
+   * off-line wash. An effectiveness of 1.0 is equivalent to {@link #offlineWash()}.
+   * </p>
+   *
+   * @param effectiveness fraction of the accumulated recoverable loss removed (0-1, values outside are clamped)
+   */
+  public void onlineWash(double effectiveness) {
+    double e = effectiveness;
+    if (e < 0.0) {
+      e = 0.0;
+    } else if (e > 1.0) {
+      e = 1.0;
+    }
+    this.hoursSinceWash = this.hoursSinceWash * (1.0 - e);
+  }
+
   /** Perform a major / hot-section overhaul — resets both loss counters. */
   public void majorOverhaul() {
     this.hoursSinceWash = 0.0;

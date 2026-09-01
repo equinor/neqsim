@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-connectivity:v1",
+  "title": "NeqSim canonical engineering connectivity",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "graphFingerprint", "summary", "nodes", "edges"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_connectivity.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-connectivity:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "graphFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "summary": {
+      "type": "object",
+      "required": ["nodeCount", "edgeCount", "connectionCount", "unresolvedBoundaryCount"],
+      "properties": {
+        "nodeCount": {"type": "integer", "minimum": 0},
+        "edgeCount": {"type": "integer", "minimum": 0},
+        "connectionCount": {"type": "integer", "minimum": 0},
+        "unresolvedBoundaryCount": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "nodes": {"type": "array", "items": {"type": "object"}},
+    "edges": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": false
+}

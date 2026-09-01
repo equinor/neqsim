@@ -5,7 +5,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * SaturationPressure class.
+ * SaturationTemperature class.
  *
  * @author esol
  * @version $Id: $Id
@@ -23,7 +23,7 @@ public class SaturationTemperature extends BasePVTsimulation {
   private static final int MAXIMUM_BISECTION_ITERATIONS = 500;
 
   /**
-   * Constructor for SaturationPressure.
+   * Constructor for SaturationTemperature.
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -32,7 +32,7 @@ public class SaturationTemperature extends BasePVTsimulation {
   }
 
   /**
-   * calcSaturationPressure.
+   * Calculates the upper saturation temperature.
    *
    * @return a double
    */
@@ -46,26 +46,25 @@ public class SaturationTemperature extends BasePVTsimulation {
     try {
       double twoPhaseTemperature = Double.NaN;
       double singlePhaseTemperature = Double.NaN;
-      double previousTemperature = MINIMUM_SEARCH_TEMPERATURE_K;
-      boolean previousIsTwoPhase = isTwoPhaseAtTemperature(previousTemperature);
+      double higherTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
+      boolean higherIsTwoPhase = isTwoPhaseAtTemperature(higherTemperature);
+      int numberOfSearchSteps = (int) Math
+          .floor((MAXIMUM_SEARCH_TEMPERATURE_K - MINIMUM_SEARCH_TEMPERATURE_K) / SEARCH_TEMPERATURE_STEP_K);
 
-      for (double trialTemperature = previousTemperature
-          + SEARCH_TEMPERATURE_STEP_K; trialTemperature <= MAXIMUM_SEARCH_TEMPERATURE_K; trialTemperature += SEARCH_TEMPERATURE_STEP_K) {
+      // Descending makes the first bracket the uppermost crossing, including for retrograde fluids.
+      for (int stepIndex = numberOfSearchSteps; stepIndex >= 0; stepIndex--) {
+        double trialTemperature = MINIMUM_SEARCH_TEMPERATURE_K + stepIndex * SEARCH_TEMPERATURE_STEP_K;
+        if (trialTemperature >= higherTemperature) {
+          continue;
+        }
         boolean trialIsTwoPhase = isTwoPhaseAtTemperature(trialTemperature);
-        if (previousIsTwoPhase && !trialIsTwoPhase) {
-          twoPhaseTemperature = previousTemperature;
-          singlePhaseTemperature = trialTemperature;
+        if (trialIsTwoPhase && !higherIsTwoPhase) {
+          twoPhaseTemperature = trialTemperature;
+          singlePhaseTemperature = higherTemperature;
+          break;
         }
-        previousTemperature = trialTemperature;
-        previousIsTwoPhase = trialIsTwoPhase;
-      }
-
-      if (previousTemperature < MAXIMUM_SEARCH_TEMPERATURE_K) {
-        boolean trialIsTwoPhase = isTwoPhaseAtTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
-        if (previousIsTwoPhase && !trialIsTwoPhase) {
-          twoPhaseTemperature = previousTemperature;
-          singlePhaseTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
-        }
+        higherTemperature = trialTemperature;
+        higherIsTwoPhase = trialIsTwoPhase;
       }
 
       if (Double.isNaN(twoPhaseTemperature) || Double.isNaN(singlePhaseTemperature)) {

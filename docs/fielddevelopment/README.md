@@ -1,11 +1,11 @@
 ---
 title: Field Development Framework Documentation
-description: This folder contains comprehensive documentation for NeqSim's field development capabilities, enabling the creation of **digital field twins** that provide consistency from exploration through decommi...
+description: Field-development documentation for digital field twins spanning exploration through decommissioning.
 ---
 
-# Field Development Framework Documentation
+This folder documents NeqSim's field-development screening and integration capabilities from concept selection through late life. The APIs combine reservoir assumptions, facility screening, process-model generation, host-capacity checks, economics, emissions, and reservoir-simulator handoffs.
 
-This folder contains comprehensive documentation for NeqSim's field development capabilities, enabling the creation of **digital field twins** that provide consistency from exploration through decommissioning.
+The high-level helpers are screening tools. They do not by themselves provide a calibrated reservoir model, a design-grade well model, or an independently reviewed cost estimate. Preserve the engineering basis, units, fluid characterization, uncertainty, and validation evidence when moving a concept into detailed design.
 
 ---
 
@@ -15,78 +15,29 @@ This folder contains comprehensive documentation for NeqSim's field development 
 |----------|-------------|
 | [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
 | [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE) | Mathematical foundations for all calculations (EoS, economics, flow) |
-| [API_GUIDE.md](API_GUIDE) | Detailed usage examples for every class and method |
+| [API_GUIDE.md](API_GUIDE) | Source-anchored concept, screening-KPI, option-ranking, unit, and engineering-boundary guide |
 | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
 | [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
 | [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |
+| [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) | Time-marching field and area concepts with multi-host routing, facility sizing, product specifications, NPV and break-even |
 
 ---
 
-## The Digital Field Twin Concept
+## Model Continuity and Integration Boundaries
 
-NeqSim's strength is providing **calculation consistency** across the entire field lifecycle:
+NeqSim can preserve thermodynamic consistency across a workflow when the caller explicitly passes or clones the same calibrated `SystemInterface`. The field-development convenience classes do not automatically propagate a tuned fluid through every calculation.
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                      DIGITAL FIELD TWIN LIFECYCLE                        │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  DEVELOPMENT                    OPERATIONS                  LATE-LIFE   │
-│  ───────────                    ──────────                  ─────────   │
-│                                                                          │
-│  ┌─────────┐  ┌─────────┐  ┌───────────┐  ┌────────────┐  ┌──────────┐ │
-│  │ Concept │→ │ Select  │→ │  Design   │→ │  Optimize  │→ │ Decom-   │ │
-│  │Screening│  │& MCDA   │  │& Execute  │  │& Operate   │  │ mission  │ │
-│  └─────────┘  └─────────┘  └───────────┘  └────────────┘  └──────────┘ │
-│       │            │             │              │              │        │
-│       ▼            ▼             ▼              ▼              ▼        │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │                SAME THERMODYNAMIC FOUNDATION                      │  │
-│  │  • Same fluid (SystemInterface) throughout lifecycle             │  │
-│  │  • Same EoS parameters tuned once, used everywhere               │  │
-│  │  • Consistent properties from reservoir to export                │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-│                                                                          │
-└──────────────────────────────────────────────────────────────────────────┘
-```
+### PVT to process
 
----
+Create and calibrate the fluid first, then pass a clone to each inlet `Stream`. A generated model from `ConceptToProcessLinker` instead creates a representative SRK screening fluid from the `FieldConcept` inputs. Replace that generated fluid or build the detailed `ProcessSystem` explicitly when tuned PVT behavior is required.
 
-## Key Integration Points
+### Reservoir to facilities
 
-### 1. PVT ↔ Process Integration
-The same `SystemInterface` fluid flows through wells, separators, compressors, and pipelines:
+`ReservoirCouplingExporter.generateVfpProd(String, SystemInterface, int)` accepts a fluid object and produces Eclipse-style VFP keywords. The current implementation uses a screening hydrostatic/friction correlation; it is not a full wellbore or compositional-flow calculation. Configure the export format with `setFormat(ExportFormat)`, retrieve text with `getEclipseKeywords()`, and write it with `exportToFile(String)`. Validate design work against a qualified well and flowline model.
 
-```java
-// Create fluid once with tuned parameters
-SystemInterface reservoir = new SystemSrkCPAstatoil(95, 320);
-reservoir.addComponent("methane", 0.70);
-// ... configure and tune ...
+### Technical screening to economics
 
-// Same fluid used throughout
-Stream wellStream = new Stream("well", reservoir.clone());
-Separator sep = new ThreePhaseSeparator("sep", wellStream);
-// Properties remain consistent
-```
-
-### 2. Reservoir ↔ Facilities Integration
-VFP tables ensure the same thermodynamics apply in both domains:
-
-```java
-ReservoirCouplingExporter exporter = new ReservoirCouplingExporter(processModel);
-exporter.generateVfpProd(1, "PROD-A1");
-exporter.exportToFile("vfp.inc", ExportFormat.ECLIPSE_100);
-// Reservoir simulator now uses NeqSim-consistent thermodynamics
-```
-
-### 3. Economics ↔ Technical Integration
-Decision support tools use process simulation results directly:
-
-```java
-ConceptEvaluator evaluator = new ConceptEvaluator();
-ConceptKPIs kpis = evaluator.evaluate(concept);
-// Economics (NPV, IRR) derived from technical (production, utilities)
-```
+`ConceptEvaluator.evaluate(FieldConcept)` auto-generates a facility configuration and combines simplified production, flow-assurance, safety, emissions, and economics screeners. Treat the resulting KPIs as comparative concept-screening evidence, not as project sanction or design certification.
 
 ---
 
@@ -108,6 +59,15 @@ neqsim.process.fielddevelopment/
 ├── facility/          # Process generation
 │   ├── ConceptToProcessLinker
 │   └── FacilityBuilder
+├── lifecycle/         # Executable reservoir-to-market lifetime and area concepts
+│   ├── AreaDevelopmentPortfolio
+│   ├── FieldLifecycleSimulator
+│   ├── FieldLifecycleModel (ProcessSystem/ProcessModel + existing SURF)
+│   ├── FacilityLifecycleStrategy
+│   ├── FacilityCapacityAllocator
+│   ├── FacilityModificationPlanner
+│   ├── FieldProductSpecifications
+│   └── NorwegianOilFieldCase (greenfield + multi-host area portfolio)
 ├── network/           # Pipeline network
 │   ├── MultiphaseFlowIntegrator
 │   └── NetworkSolver
@@ -131,116 +91,175 @@ neqsim.process.fielddevelopment/
 
 ---
 
-## Quick Start Examples
+## Executable Screening Workflow
 
-### Evaluate a Field Concept
+The following Java 8 program exercises the current public APIs for concept evaluation, option ranking, host-capacity holdback, process generation, reservoir export, and SURF cost screening. It validates key results before logging them. Replace the illustrative assumptions and screening correlations with project data and independently reviewed models before using the results for an engineering decision.
+
 ```java
-import neqsim.process.fielddevelopment.concept.*;
-import neqsim.process.fielddevelopment.evaluation.*;
-
-FieldConcept concept = FieldConcept.oilDevelopment("My Field", 8, 5000.0, 0.20);
-ConceptEvaluator evaluator = new ConceptEvaluator();
-ConceptKPIs kpis = evaluator.evaluate(concept);
-
-System.out.println("CAPEX: " + kpis.getTotalCapexMUSD() + " MUSD");
-System.out.println("Field life: " + kpis.getFieldLifeYears() + " years");
-System.out.println("Recovery: " + kpis.getEstimatedRecoveryPercent() + "%");
-System.out.println("CO2 Intensity: " + kpis.getCo2IntensityKgPerBoe() + " kg/boe");
-```
-
-### Compare Standard Development Templates
-```java
-import neqsim.process.fielddevelopment.concept.*;
-
-DevelopmentCaseTemplate tieback = GreenfieldConceptFactory.subseaTieback("Book Tieback");
-DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
-
-System.out.println(tieback.getSummary());
-System.out.println(fpso.getSummary());
-System.out.println("Tieback process blocks: " + tieback.getFacilityConfig().getBlocks().size());
-```
-
-### Compare Development Options
-```java
-import neqsim.process.fielddevelopment.evaluation.*;
-
-DevelopmentOptionRanker ranker = new DevelopmentOptionRanker();
-
-DevelopmentOption fpso = ranker.addOption("FPSO");
-fpso.setScore(Criterion.NPV, 1200.0);
-fpso.setScore(Criterion.CO2_INTENSITY, 12.0);
-
-DevelopmentOption tieback = ranker.addOption("Tieback");
-tieback.setScore(Criterion.NPV, 650.0);
-tieback.setScore(Criterion.CO2_INTENSITY, 7.0);
-
-ranker.setWeightProfile("balanced");
-RankingResult result = ranker.rank();
-System.out.println("Recommended: " + result.getRankedOptions().get(0).getName());
-```
-
-### Check Host Tie-In Capacity and Holdback
-```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
+import neqsim.process.fielddevelopment.concept.FieldConcept;
+import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
+import neqsim.process.fielddevelopment.evaluation.ConceptEvaluator;
+import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
+import neqsim.process.fielddevelopment.evaluation.DevelopmentOptionRanker;
+import neqsim.process.fielddevelopment.evaluation.DevelopmentOptionRanker.Criterion;
+import neqsim.process.fielddevelopment.evaluation.DevelopmentOptionRanker.DevelopmentOption;
+import neqsim.process.fielddevelopment.evaluation.DevelopmentOptionRanker.RankingResult;
+import neqsim.process.fielddevelopment.facility.ConceptToProcessLinker;
+import neqsim.process.fielddevelopment.facility.ConceptToProcessLinker.FidelityLevel;
+import neqsim.process.fielddevelopment.reservoir.ReservoirCouplingExporter;
+import neqsim.process.fielddevelopment.reservoir.ReservoirCouplingExporter.ExportFormat;
+import neqsim.process.fielddevelopment.reservoir.ReservoirCouplingExporter.VfpTable;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
-import neqsim.process.fielddevelopment.tieback.capacity.*;
-
-HostFacility host = HostFacility.builder("Brownfield Host")
-    .gasCapacity(10.0)
-    .build();
-
-ProductionProfileSeries base = new ProductionProfileSeries("base")
-    .addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
-ProductionProfileSeries satellite = new ProductionProfileSeries("satellite")
-    .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
-
-TieInCapacityResult capacity = new TieInCapacityPlanner(host)
-    .setHostProductionProfile(base)
-    .setSatelliteProductionProfile(satellite)
-    .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
-    .setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS)
-    .run();
-
-System.out.println(capacity.toMarkdownTable());
-```
-
-### Generate Process Model from Concept
-```java
-import neqsim.process.fielddevelopment.facility.*;
-
-ConceptToProcessLinker linker = new ConceptToProcessLinker();
-ProcessSystem process = linker.generateProcessSystem(concept, FidelityLevel.PRE_FEED);
-process.run();
-
-double powerMW = linker.getTotalPowerMW(process);
-System.out.println("Total Power Required: " + powerMW + " MW");
-```
-
-### Estimate SURF Costs
-```java
+import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
+import neqsim.process.fielddevelopment.tieback.capacity.HoldbackPolicy;
+import neqsim.process.fielddevelopment.tieback.capacity.ProductionProfileSeries;
+import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner;
+import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityResult;
 import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Create estimator with regional factors (Norway, UK, GOM, Brazil, West Africa)
-SubseaCostEstimator estimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
+public final class FieldDevelopmentOverviewExample {
+  private static final Logger logger =
+      LogManager.getLogger(FieldDevelopmentOverviewExample.class);
 
-// Calculate SURF equipment costs
-estimator.calculateTreeCost(10000.0, 7.0, 380.0, true, false);
-System.out.println("Subsea Tree: $" + String.format("%,.0f", estimator.getTotalCost()));
+  private FieldDevelopmentOverviewExample() {}
 
-estimator.calculateManifoldCost(6, 80.0, 380.0, true);
-System.out.println("Manifold: $" + String.format("%,.0f", estimator.getTotalCost()));
+  public static void main(String[] args) throws Exception {
+    FieldConcept concept =
+        FieldConcept.gasTieback("Demo gas tieback", 30.0, 2, 0.8);
+    ConceptKPIs kpis = new ConceptEvaluator().evaluate(concept);
 
-estimator.calculateUmbilicalCost(48.0, 4, 3, 2, 380.0, false);
-System.out.println("Umbilical: $" + String.format("%,.0f", estimator.getTotalCost()));
+    DevelopmentCaseTemplate tieback =
+        GreenfieldConceptFactory.subseaTieback("Book tieback");
+    DevelopmentCaseTemplate fpso =
+        GreenfieldConceptFactory.standaloneFpso("Book FPSO");
 
-estimator.calculateFlexiblePipeCost(1200.0, 8.0, 380.0, true, true);
-System.out.println("Dynamic Riser: $" + String.format("%,.0f", estimator.getTotalCost()));
+    DevelopmentOptionRanker ranker = new DevelopmentOptionRanker();
+    DevelopmentOption fpsoOption = ranker.addOption("FPSO");
+    fpsoOption.setScore(Criterion.NPV, 1200.0);
+    fpsoOption.setScore(Criterion.CO2_INTENSITY, 12.0);
+    DevelopmentOption tiebackOption = ranker.addOption("Tieback");
+    tiebackOption.setScore(Criterion.NPV, 650.0);
+    tiebackOption.setScore(Criterion.CO2_INTENSITY, 7.0);
+    RankingResult ranking = ranker.rank();
+
+    HostFacility host =
+        HostFacility.builder("Brownfield host").gasCapacity(10.0).build();
+    ProductionProfileSeries base =
+        new ProductionProfileSeries("base")
+            .addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite =
+        new ProductionProfileSeries("satellite")
+            .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    TieInCapacityResult capacity =
+        new TieInCapacityPlanner(host)
+            .setHostProductionProfile(base)
+            .setSatelliteProductionProfile(satellite)
+            .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
+            .setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS)
+            .run();
+
+    ConceptToProcessLinker linker = new ConceptToProcessLinker();
+    ProcessSystem process =
+        linker.generateProcessSystem(concept, FidelityLevel.CONCEPT);
+    process.run();
+    double powerMW = linker.getTotalPowerMW(process);
+
+    SystemInterface baseFluid = new SystemSrkEos(358.15, 250.0);
+    baseFluid.addComponent("methane", 0.85);
+    baseFluid.addComponent("ethane", 0.08);
+    baseFluid.addComponent("propane", 0.04);
+    baseFluid.addComponent("n-butane", 0.02);
+    baseFluid.addComponent("CO2", 0.01);
+    baseFluid.setMixingRule("classic");
+
+    ReservoirCouplingExporter exporter =
+        new ReservoirCouplingExporter(process);
+    exporter.setFormat(ExportFormat.ECLIPSE_100);
+    exporter.setPressureRange(40.0, 60.0, 2);
+    exporter.setRateRange(500.0, 1000.0, 2);
+    exporter.setWctRange(0.0, 0.5, 2);
+    exporter.setGorRange(100.0, 300.0, 2);
+    VfpTable vfp = exporter.generateVfpProd("PROD-A1", baseFluid, 1);
+    String eclipseKeywords = exporter.getEclipseKeywords();
+
+    Path output = Files.createTempFile("neqsim-vfp-", ".inc");
+    try {
+      exporter.exportToFile(output.toString());
+
+      SubseaCostEstimator cost =
+          new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
+      cost.calculateTreeCost(10000.0, 7.0, 380.0, true, false);
+      double treeCostUSD = cost.getTotalCost();
+      cost.calculateManifoldCost(6, 80.0, 380.0, true);
+      double manifoldCostUSD = cost.getTotalCost();
+      cost.calculateUmbilicalCost(48.0, 4, 3, 2, 380.0, false);
+      double umbilicalCostUSD = cost.getTotalCost();
+      cost.calculateFlexiblePipeCost(1200.0, 8.0, 380.0, true, true);
+      double riserCostUSD = cost.getTotalCost();
+
+      if (kpis.getTotalCapexMUSD() <= 0.0
+          || tieback.getFacilityConfig() == null
+          || fpso.getFacilityConfig() == null
+          || ranking.getRankedOptions().isEmpty()
+          || !capacity.hasHoldback()
+          || process.size() < 2
+          || powerMW < 0.0
+          || vfp.getBhpValues()[0][0][0][0][0]
+              <= vfp.getThpValues()[0]
+          || !eclipseKeywords.contains("VFPPROD")
+          || Files.size(output) == 0L
+          || treeCostUSD <= 0.0
+          || manifoldCostUSD <= 0.0
+          || umbilicalCostUSD <= 0.0
+          || riserCostUSD <= 0.0) {
+        throw new IllegalStateException(
+            "Field-development screening validation failed");
+      }
+
+      logger.info(
+          "Concept {}: CAPEX {} MUSD, field life {} years, "
+              + "recovery {}%, CO2 intensity {} kg/boe",
+          concept.getName(),
+          kpis.getTotalCapexMUSD(),
+          kpis.getFieldLifeYears(),
+          kpis.getEstimatedRecoveryPercent(),
+          kpis.getCo2IntensityKgPerBoe());
+      logger.info(
+          "Recommended option {}, held-back gas {} MSm3, "
+              + "process power {} MW, VFP file {}",
+          ranking.getBestOption().getName(),
+          capacity.getTotalHeldBackGasMSm3(),
+          powerMW,
+          output);
+      logger.info(
+          "Screening costs (USD): tree {}, manifold {}, "
+              + "umbilical {}, flexible riser {}",
+          treeCostUSD,
+          manifoldCostUSD,
+          umbilicalCostUSD,
+          riserCostUSD);
+    } finally {
+      Files.deleteIfExists(output);
+    }
+  }
+}
 ```
+
+Expected checks are qualitative rather than fixed output snapshots: positive screening CAPEX and costs, populated templates and ranking, detected host holdback, a runnable generated process, a VFP bottom-hole pressure above tubing-head pressure, and a non-empty Eclipse keyword file. Results depend on the assumptions and should be reported with their units and screening limitations.
 
 ---
 
 ## SURF Equipment Classes
 
-NeqSim provides comprehensive SURF (Subsea, Umbilical, Riser, Flowline) modeling in `neqsim.process.equipment.subsea`:
+NeqSim provides screening and mechanical-design helpers for SURF (Subsea, Umbilical, Riser, Flowline) equipment in `neqsim.process.equipment.subsea`:
 
 | Class | Description |
 |-------|-------------|
@@ -253,12 +272,12 @@ NeqSim provides comprehensive SURF (Subsea, Umbilical, Riser, Flowline) modeling
 | `FlexiblePipe` | Dynamic risers and static flowlines |
 | `SubseaBooster` | Multiphase pumps and wet gas compressors |
 
-Each equipment type has a dedicated mechanical design class with:
-- Wall thickness and structural calculations
-- Design standard compliance (DNV, API, NORSOK)
-- Regional cost estimation
-- Bill of materials generation
-- JSON export for reporting
+Depending on the equipment type, the mechanical-design helper can provide:
+
+- screening wall-thickness and structural calculations;
+- standard-oriented checks that still require project verification;
+- regionalized screening-cost estimates;
+- bill-of-material and JSON-report outputs.
 
 See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed documentation.
 
@@ -268,6 +287,7 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed
 
 | Topic | Document |
 |-------|----------|
+| Integrated Field Lifecycle Simulation | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) — detailed wells/SURF/process lifetime, multi-host area routing, product specifications, bottlenecks, NPV and break-even |
 | SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT) |
 | Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
 | Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |
@@ -283,8 +303,8 @@ The following developer notebooks import NeqSim Java classes from the workspace 
 
 | Notebook | Description |
 |----------|-------------|
-| [field_development_decision_engine.ipynb](../../examples/notebooks/field_development_decision_engine.ipynb) | Standardized concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables |
-| [field_development_process_reservoir_coupling.ipynb](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, multi-well gathering allocation, concept-to-process linking, and VFP/schedule export |
+| [field_development_decision_engine.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_decision_engine.ipynb) | Standardized concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables |
+| [field_development_process_reservoir_coupling.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, multi-well gathering allocation, concept-to-process linking, and VFP/schedule export |
 
 ---
 

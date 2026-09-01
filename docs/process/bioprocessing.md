@@ -31,11 +31,14 @@ NeqSim provides a suite of unit operations for modeling bio-processing and biore
 - [Integration with ProcessSystem](#integration-with-processsystem)
 - [Complete Biorefinery Example](#complete-biorefinery-example)
 - [Bioenergy Classes](#bioenergy-classes)
+  - [BioFeedstock](#biofeedstock)
+  - [BioFeedstockPreparation](#biofeedstockpreparation)
   - [AnaerobicDigester](#anaerobicdigester)
   - [BiomassGasifier](#biomassgasifier)
   - [BiogasUpgrader](#biogasupgrader)
   - [FermentationReactor](#fermentationreactor)
   - [SustainabilityMetrics](#sustainabilitymetrics)
+- [Concept Evaluation](#concept-evaluation)
 - [Pre-Built Biorefinery Modules](#pre-built-biorefinery-modules)
   - [BiogasToGridModule](#biogastoGridmodule)
   - [GasificationSynthesisModule](#gasificationsynthesismodule)
@@ -1124,14 +1127,87 @@ NeqSimDataBase.useExtendedComponentDatabase(false);
 
 The bioenergy classes model the full value chain from biomass feedstock to energy product.
 
+### Model fidelity and evidence
+
+Biological-feedstock properties and biological-conversion models carry different uncertainty from thermodynamic
+properties. NeqSim therefore reports a model-fidelity label with digestion results:
+
+| Fidelity | Intended use | Minimum next step |
+|----------|--------------|-------------------|
+| `SCREENING` | Early route and sensitivity screening | Replace default yields and costs with measured values |
+| `ENGINEERING` | Concept studies with residence-time or transport effects | Calibrate kinetic and separation parameters |
+| `CALIBRATED` | A model tied to a named laboratory, pilot, or operating data set | Retain the evidence reference and calibration range |
+
+Mass and carbon closure should remain within the study tolerance independently of fidelity. A precise numerical result
+from a screening model is still a screening result.
+
+### BioFeedstock
+
+**Package:** `neqsim.thermo.characterization`
+
+`BioFeedstock` records as-received total solids, VS/TS, maximum degradability, methane-yield basis, hydrolysis rate,
+dry-gas composition, lignocellulosic and elemental analyses, bulk densities, and an evidence reference. The built-in
+library values are generic screening defaults, not design guarantees.
+
+```java
+BioFeedstock feedstock = BioFeedstock.library("crop_residue");
+feedstock.setEvidenceReference("laboratory composite, campaign 4");
+List<String> characterizationWarnings = feedstock.validate();
+```
+
+Use `copy()` before applying scenario-specific changes so the evidence basis is not accidentally mutated across cases.
+
+### BioFeedstockPreparation
+
+**Package:** `neqsim.process.equipment.solidhandling`
+
+`BioFeedstockPreparation` closes the mass ledger around water removal and dry-solids loss and calculates handling,
+size-reduction, densification, and water-removal energy from explicit intensities.
+
+```java
+BioFeedstockPreparation preparation = new BioFeedstockPreparation("feed preparation");
+preparation.setFeedstock(feedstock, 1000.0); // kg/hr as received
+preparation.setTargetTotalSolidsFraction(0.90);
+preparation.setTargetDensityKgPerM3(650.0);
+preparation.setEnergyIntensities(15.0, 70.0, 0.75);
+preparation.run();
+
+BioFeedstock prepared = preparation.getPreparedFeedstock();
+double preparationPowerKW = preparation.getPowerKW();
+double preparationMassClosure = preparation.getMassClosureFraction();
+```
+
+The energy intensities are scenario inputs. They should be split into electrical and thermal utilities in a detailed
+flowsheet when the utility source affects cost or carbon intensity.
+
 ### AnaerobicDigester
 
 **Package:** `neqsim.process.equipment.reactor`
 **Extends:** `Fermenter`
 
-Models anaerobic digestion of organic waste producing biogas (CH4 + CO2) and digestate.
+Models anaerobic digestion of organic feedstocks producing biogas and digestate. The legacy substrate-family API is
+retained for compatibility, while the evidence-bearing API separates feedstock data from the selected conversion model.
 
-**Substrate types:** FOOD_WASTE, SEWAGE_SLUDGE, MANURE, CROP_RESIDUE, ENERGY_CROPS, INDUSTRIAL_WASTE, MUNICIPAL_SOLID_WASTE — each with default specific methane yield, VS destruction, and VS/TS ratio.
+**Legacy substrate types:** `FOOD_WASTE`, `SEWAGE_SLUDGE`, `MANURE`, `CROP_RESIDUE`, `ENERGY_CROP`, and `CUSTOM`.
+
+Three conversion-model levels are available:
+
+- `EmpiricalYieldDigestionModel` uses prescribed VS destruction and methane yield for screening.
+- `FirstOrderHydrolysisDigestionModel` calculates conversion from maximum degradability, hydrolysis rate, hydraulic
+  retention time, and a bounded temperature correction.
+- `CalibratedFirstOrderHydrolysisDigestionModel` applies fitted kinetic parameters, an evidence reference, and explicit
+  retention-time and temperature validity ranges.
+
+The first-order model uses:
+
+$$X = X_{max}\left(1-e^{-k\theta}\right)f_T$$
+
+Methane production then follows:
+
+$$V_{CH_4}=\dot{m}_{wet}\,TS\,\frac{VS}{TS}\,X\,Y_{CH_4}$$
+
+Hydrogen sulfide is derived from feed sulfur and the configured sulfur-to-gas fraction. It is not generated as a fixed
+fraction of methane. Water in the gas can be saturated at digester temperature and pressure using phase equilibrium.
 
 ```java
 AnaerobicDigester digester = new AnaerobicDigester("AD-1", feedStream);
@@ -1144,6 +1220,48 @@ digester.run();
 StreamInterface biogas = digester.getBiogasOutStream();
 StreamInterface digestate = digester.getDigestateOutStream();
 ```
+
+For concept studies, configure the characterized feed and kinetic model explicitly:
+
+```java
+AnaerobicDigester digester = new AnaerobicDigester("AD-2", feedStream);
+digester.setFeedstock(prepared);
+digester.setFeedRate(preparation.getPreparedFeedRateKgPerHr(), prepared.getTotalSolidsFraction());
+digester.setVesselVolume(5000.0);
+digester.setDigesterTemperature(37.0, "C");
+digester.useFirstOrderHydrolysisModel();
+digester.setSulfurToGasFraction(0.10);
+digester.run();
+
+AnaerobicDigestionResult ledger = digester.getDigestionResult();
+double dryMassClosure = ledger.getMassClosureFraction();
+double carbonClosure = ledger.getCarbonClosureFraction();
+ModelFidelity fidelity = ledger.getFidelity();
+List<String> warnings = ledger.getWarnings();
+```
+
+Fit the first-order model to measured volatile-solids destruction at two or more distinct retention times:
+
+```java
+FirstOrderHydrolysisModelCalibrator calibrator = new FirstOrderHydrolysisModelCalibrator();
+calibrator.addObservation(10.0, 308.15, 0.40); // HRT days, temperature K, measured VS destruction
+calibrator.addObservation(20.0, 308.15, 0.57);
+calibrator.addObservation(30.0, 308.15, 0.64);
+
+CalibrationResult calibration = calibrator.calibrate("pilot campaign A, reconciled VS balance");
+CalibratedFirstOrderHydrolysisDigestionModel calibratedModel = calibration.getModel();
+digester.setDigestionModel(calibratedModel);
+```
+
+The calibrator fits maximum degradability and the first-order hydrolysis rate by deterministic least squares and reports
+RMSE, R-squared, and whether the rate reached a configured search boundary. A calibrated label requires a non-empty
+evidence reference. Calculations outside the observed retention-time or temperature range remain executable but carry
+extrapolation warnings. Use measured, reconciled VS destruction for fitting; fitting methane production alone confounds
+kinetics with methane-yield uncertainty. Temperature-only variation at one retention time does not identify both fitted
+parameters.
+
+The thermodynamic digestate stream represents the aqueous carrier. Nonvolatile residual solids are reported explicitly
+in `AnaerobicDigestionResult.getDigestateSolidsKgPerDay()` because they are not conventional fluid components.
 
 ### BiomassGasifier
 
@@ -1244,6 +1362,36 @@ double eroi = metrics.getEnergyReturnOnInvestment();
 String json = metrics.toJson();
 ```
 
+## Concept Evaluation
+
+`BioprocessConceptEvaluator` compares arbitrary process concepts on a consistent annual basis. It calculates net present
+value, levelized product cost, and carbon intensity, while retaining mass closure, carbon closure, model fidelity, and
+the evidence reference as qualification gates.
+
+```java
+BioprocessConceptEvaluator evaluator = new BioprocessConceptEvaluator();
+evaluator.setEconomicBasis(0.10, 20);
+evaluator.setClosureTolerance(0.001); // absolute fraction; 0.1%
+
+ConceptCase concept = new ConceptCase("base configuration")
+    .setAnnualProduct(4.0e6, "Nm3")
+    .setEnergyMWhPerUnit(0.00997)
+    .setProductPricePerUnit(0.80)
+    .setCosts(12.0e6, 1.8e6)
+    .setAnnualEmissionsTCO2Equivalent(800.0)
+    .setClosure(dryMassClosure, carbonClosure)
+    .setQualification(fidelity, prepared.getEvidenceReference());
+evaluator.addConcept(concept);
+
+List<ConceptResult> ranked =
+    evaluator.getRankedResults(BioprocessConceptEvaluator.RankingMetric.NET_PRESENT_VALUE);
+```
+
+Ranking does not remove unqualified cases. Warnings remain attached to each result so users can see when a concept is
+economically attractive but physically unclosed, screening-only, or unsupported by a recorded data source. Use
+`BiorefineryCostEstimator` and `SustainabilityMetrics` to build the annual cost and emission inputs from the process
+simulation.
+
 ---
 
 ## Pre-Built Biorefinery Modules
@@ -1259,6 +1407,7 @@ Anaerobic digestion + biogas upgrading + compression + cooling for grid injectio
 BiogasToGridModule module = new BiogasToGridModule("BTG-Plant");
 module.setFeedStream(wasteStream);
 module.setSubstrateType(AnaerobicDigester.SubstrateType.FOOD_WASTE);
+module.setTotalSolidsFraction(0.25); // explicit; no hidden solids assumption
 module.setUpgradingTechnology(BiogasUpgrader.UpgradingTechnology.MEMBRANE);
 module.setGridPressureBara(40.0);
 module.setGridTemperatureC(25.0);
@@ -1266,6 +1415,10 @@ module.run();
 
 StreamInterface biomethane = module.getBiomethaneOutStream();
 ```
+
+`setFeedstock(BioFeedstock)` and `setDigestionModel(AnaerobicDigestionModel)` propagate the characterized basis and
+selected fidelity to the internal digester. The module result map includes dry mass closure, carbon closure, and model
+fidelity for use in concept-evaluation tables.
 
 ### GasificationSynthesisModule
 

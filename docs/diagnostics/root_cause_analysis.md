@@ -12,7 +12,8 @@ sources via Bayesian-inspired confidence scoring:
 1. **Reliability Data** — Prior probabilities from public reliability databases (IOGP/SINTEF, CCPS 1989, IEEE 493-2007, Lees 2012, SINTEF PDS) with optional OREDA overlay
 2. **Historian** — Likelihood scoring from time-series trend, threshold, and correlation analysis
 3. **STID** — Cross-reference against design conditions
-4. **Simulation** — Verification scoring from NeqSim process model perturbation
+4. **Autonomous findings** — Hypothesis-specific anomaly and topology evidence
+5. **Simulation** — Coverage-qualified, magnitude-aware verification from NeqSim perturbation
 
 ## Architecture
 
@@ -31,7 +32,8 @@ Symptom (enum)
     │       ├── Rate-of-change step detection (3σ)
     │       └── Pearson correlation (|r| > 0.7)
     │
-    ├── SimulationVerifier    →  Clone ProcessSystem, perturb, compare
+    ├── AnomalyScanner + topology → Add matched autonomous evidence to ranking
+    ├── SimulationVerifier    →  Clone, perturb, compare normalized response magnitude
     │
     └── RootCauseReport       →  Ranked hypotheses with confidence scores
 ```
@@ -54,7 +56,31 @@ $$
 Where:
 - $P_{\text{prior}}$ — Prior probability from reliability data (IOGP/SINTEF, CCPS, IEEE 493, etc.)
 - $L_{\text{historian}}$ — Likelihood score from time-series evidence
-- $V_{\text{simulation}}$ — Verification score from simulation direction-of-change matching
+- $V_{\text{simulation}}$ — Verification score from direction and normalized response-magnitude matching
+
+Likelihood and verification each carry an `EvaluationStatus`: `UNKNOWN`, `EVALUATED`,
+`UNSUPPORTED`, or `FAILED`. Only `EVALUATED` scores participate in the product. An
+evaluated score of exactly zero is contradictory evidence, while a stage that was not
+run or could not run remains explicitly neutral. JSON includes both statuses plus
+simulation KPI coverage and comparison count.
+
+## Reproducible Diagnosis Cases
+
+`DiagnosisCase` records the equipment, historian time window, source provenance,
+process-model identity/revision, operating context, and data-quality metadata. Attach an
+explicit case when source query IDs or model revisions are known; otherwise the analyzer
+derives a minimal case and historian quality counts.
+
+```java
+DiagnosisCase diagnosisCase = new DiagnosisCase("Export Compressor")
+    .setCaseId("trip-2026-07-19")
+    .setTimeWindow(1784480400.0, 1784484000.0)
+    .setProcessModel("export-compression", "model-rev-7")
+    .addDataSource("PI", "compressed-query-id-42")
+    .addOperatingContext("mode", "recycle")
+    .addDataQuality("coverage", "98%");
+rca.setDiagnosisCase(diagnosisCase);
+```
 
 ## Data Sources
 
@@ -111,7 +137,7 @@ rca.setDesignLimit("vibration_mm_s", 0.0, 4.5);
 RootCauseReport report = rca.analyze();
 
 // Output
-System.out.println(report.toTextReport());
+String textReport = report.toTextReport();
 String json = report.toJson();
 ```
 
@@ -143,12 +169,22 @@ The `runRootCauseAnalysis` MCP tool exposes this framework to LLM agents:
     "symptom": "HIGH_VIBRATION",
     "historianCsv": "timestamp,vibration,bearing_temp\n0,2.1,65\n1,2.3,67\n2,2.8,72",
     "designLimits": { "vibration": [0, 4.5] },
-    "simulationEnabled": true
+    "simulationEnabled": true,
+    "diagnosisCase": {
+        "caseId": "trip-2026-07-19",
+        "processModelId": "export-compression",
+        "processModelRevision": "model-rev-7",
+        "dataSources": { "PI": "compressed-query-id-42" },
+        "operatingContext": { "mode": "recycle" },
+        "dataQuality": { "coverage": "98%" }
+    }
 }
 ```
 
 `processJson` is passed as a JSON string to the MCP runner. The schema catalog
 entry `run_root_cause_analysis` shows the exact input fields and output shape.
+The returned `diagnosisCase` object and per-hypothesis evaluation statuses are additive,
+so consumers of the existing report fields continue to work.
 
 ## Custom Hypotheses
 
@@ -179,6 +215,7 @@ rca.setHypothesisGenerator(generator);
 | `Hypothesis` | Ranked failure hypothesis with evidence, confidence, and actions |
 | `HypothesisGenerator` | Registry-based generator with built-in equipment libraries |
 | `EvidenceCollector` | Time-series analysis (trend, threshold, correlation) |
-| `SimulationVerifier` | Process model perturbation and direction-of-change scoring |
+| `DiagnosisCase` | Reproducible window, provenance, model identity, context, and quality metadata |
+| `SimulationVerifier` | Process perturbation with explicit status, KPI coverage, and magnitude-aware scoring |
 | `RootCauseReport` | Ranked report with JSON, text, and results map output |
 | `RootCauseAnalyzer` | Main orchestrator integrating all components |

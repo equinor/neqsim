@@ -151,7 +151,7 @@ neqsim new-task "field development title" --type F --author "Field Development A
 If the user provides reference documents (PVT reports, design basis, field data):
 ```bash
 # Extract figures/pages from reference PDFs for AI analysis
-python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+<python-executable> devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
 ```
 Then use `view_image` on extracted PNGs to read reservoir data, fluid analysis
 results, cost estimates, and infrastructure layouts from the source documents.

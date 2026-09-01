@@ -119,11 +119,22 @@ ScaleControlAssessor assessor = new ScaleControlAssessor(predictor);
 assessor.addInhibitor(ScaleInhibitorPerformance.ScaleType.CACO3, sip);
 assessor.evaluate();
 
-double residualSI = assessor.getResidualSI(ScaleInhibitorPerformance.ScaleType.CACO3);
-boolean controlled = assessor.isControlled(0.5);
+double thermodynamicSI = assessor.getThermodynamicSaturationIndex(
+    ScaleInhibitorPerformance.ScaleType.CACO3);
+double kineticRisk = assessor.getKineticRiskIndex(
+    ScaleInhibitorPerformance.ScaleType.CACO3);
+boolean controlled = assessor.isKineticallyControlled(0.5);
 ```
 
-The residual SI is approximated as $SI_\text{inh} = SI + \log_{10}(1 - \eta)$.
+Threshold inhibition does not change thermodynamic SI. The separate screening index is
+$risk = SI + \log_{10}(1 - \eta)$ and must not be used as an equilibrium SI.
+
+### 3.2 pH stabilisers and H2S scavengers
+
+`ProductionChemicalScaleScenario` evaluates untreated and treated chemistry. It applies pH-adjuster active equivalents
+to a carbonate alkalinity balance, consumes dissolved H2S against scavenger capacity, leaves inhibitor thermodynamics
+unchanged, and produces evidence flags for `RootCauseAnalyser`. See the
+[validation guide](../pvtsimulation/mineral_scale_chemical_treatment_validation.md) for code and assumptions.
 
 ---
 
@@ -309,7 +320,7 @@ If declared but not attached, a data gap is reported:
 ## 10. Worked Example
 
 See the consolidated notebook
-[`chemical_compatibility_and_rca.ipynb`](../../examples/notebooks/chemical_compatibility_and_rca.ipynb)
+[`chemical_compatibility_and_rca.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/chemical_compatibility_and_rca.ipynb)
 for an end-to-end walkthrough covering compatibility screening, scale-control
 assessment, acid treatment sizing, scavenger sizing, and root-cause analysis on
 a representative incident.

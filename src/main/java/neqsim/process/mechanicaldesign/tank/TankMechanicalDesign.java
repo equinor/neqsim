@@ -12,15 +12,20 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Mechanical design calculations for storage tanks per API 650/620.
+ * Preliminary mechanical-design calculations for storage tanks.
  *
  * <p>
- * This class provides sizing and design calculations for storage tanks based on:
+ * This class provides storage-tank screening calculations informed by common API 650 design concepts:
  * </p>
  * <ul>
- * <li>API 650 - Welded Tanks for Oil Storage (atmospheric pressure)</li>
- * <li>API 620 - Design and Construction of Large, Welded, Low-pressure Storage Tanks</li>
+ * <li>shell-course hydrostatic sizing for atmospheric storage;</li>
+ * <li>preliminary bottom, roof, wind, seismic, weight, and foundation estimates.</li>
  * </ul>
+ *
+ * <p>
+ * The class is not an edition-specific API 650 or API 620 implementation and does not establish code conformity,
+ * fabrication readiness, or vendor acceptance. API 620 selections remain catalog-only in the strict standards registry.
+ * </p>
  *
  * <p>
  * Calculations include:

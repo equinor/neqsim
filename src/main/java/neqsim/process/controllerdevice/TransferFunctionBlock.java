@@ -1,8 +1,10 @@
 package neqsim.process.controllerdevice;
 
+import java.io.Serializable;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
@@ -38,7 +40,8 @@ import neqsim.util.NamedBaseClass;
  * @author ESOL
  * @version 1.0
  */
-public class TransferFunctionBlock extends NamedBaseClass implements ControllerDeviceInterface {
+public class TransferFunctionBlock extends NamedBaseClass
+    implements ControllerDeviceInterface, TransientStateParticipant<TransferFunctionBlock.TransferFunctionState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -113,6 +116,9 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
 
   /** UUID from last calculation. */
   protected UUID calcIdentifier;
+
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /**
    * Constructor for TransferFunctionBlock.
@@ -298,6 +304,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
     deadTimeBuffer = null;
     deadTimeWriteIndex = 0;
     output = outputBias;
+    calcIdentifier = null;
   }
 
   /** {@inheritDoc} */
@@ -340,9 +347,21 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
     this.transmitter = device;
   }
 
+  /**
+   * Get the transmitter currently bound to this block.
+   *
+   * @return bound transmitter, or {@code null} when the transient input is supplied directly
+   */
+  public MeasurementDeviceInterface getTransmitter() {
+    return transmitter;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
+    if (hasRunTransient(id)) {
+      return;
+    }
     if (!isActive) {
       output = initResponse;
       calcIdentifier = id;
@@ -386,6 +405,12 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
 
   /** {@inheritDoc} */
   @Override
+  public boolean hasRunTransient(UUID id) {
+    return id != null && id.equals(calcIdentifier);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getResponse() {
     return output;
   }
@@ -425,6 +450,67 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   @Override
   public boolean isActive() {
     return isActive;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "controller:transfer-function:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for this concrete transfer-function implementation.
+   *
+   * @return blocking diagnostic for subclasses, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != TransferFunctionBlock.class) {
+      return "transfer-function subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransferFunctionState captureTransientState() {
+    return new TransferFunctionState(getTransientStateIdentity(), getName(), gain, lagTime, leadTime, lagTime2,
+        deadTime, inputBias, outputBias, state1, state2, deadTimeBuffer == null ? null : deadTimeBuffer.clone(),
+        deadTimeWriteIndex, initialized, output, transmitter, unit, isActive, calcIdentifier);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransferFunctionState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Transfer-function transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Transfer-function snapshot identity does not match " + getTransientStateIdentity());
+    }
+    setName(snapshot.name);
+    gain = snapshot.gain;
+    lagTime = snapshot.lagTime;
+    leadTime = snapshot.leadTime;
+    lagTime2 = snapshot.lagTime2;
+    deadTime = snapshot.deadTime;
+    inputBias = snapshot.inputBias;
+    outputBias = snapshot.outputBias;
+    state1 = snapshot.state1;
+    state2 = snapshot.state2;
+    deadTimeBuffer = snapshot.deadTimeBuffer == null ? null : snapshot.deadTimeBuffer.clone();
+    deadTimeWriteIndex = snapshot.deadTimeWriteIndex;
+    initialized = snapshot.initialized;
+    output = snapshot.output;
+    transmitter = snapshot.transmitter;
+    unit = snapshot.unit;
+    isActive = snapshot.active;
+    calcIdentifier = snapshot.calcIdentifier;
   }
 
   // --- Private computation methods ---
@@ -557,5 +643,55 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
     deadTimeBuffer[deadTimeWriteIndex] = currentValue;
     deadTimeWriteIndex = (deadTimeWriteIndex + 1) % deadTimeBuffer.length;
     return delayedOutput;
+  }
+
+  /** Immutable rollback point for transfer-function configuration, bindings, and dynamic state. */
+  public static final class TransferFunctionState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final String stateIdentity;
+    private final String name;
+    private final double gain;
+    private final double lagTime;
+    private final double leadTime;
+    private final double lagTime2;
+    private final double deadTime;
+    private final double inputBias;
+    private final double outputBias;
+    private final double state1;
+    private final double state2;
+    private final double[] deadTimeBuffer;
+    private final int deadTimeWriteIndex;
+    private final boolean initialized;
+    private final double output;
+    private final MeasurementDeviceInterface transmitter;
+    private final String unit;
+    private final boolean active;
+    private final UUID calcIdentifier;
+
+    private TransferFunctionState(String stateIdentity, String name, double gain, double lagTime, double leadTime,
+        double lagTime2, double deadTime, double inputBias, double outputBias, double state1, double state2,
+        double[] deadTimeBuffer, int deadTimeWriteIndex, boolean initialized, double output,
+        MeasurementDeviceInterface transmitter, String unit, boolean active, UUID calcIdentifier) {
+      this.stateIdentity = stateIdentity;
+      this.name = name;
+      this.gain = gain;
+      this.lagTime = lagTime;
+      this.leadTime = leadTime;
+      this.lagTime2 = lagTime2;
+      this.deadTime = deadTime;
+      this.inputBias = inputBias;
+      this.outputBias = outputBias;
+      this.state1 = state1;
+      this.state2 = state2;
+      this.deadTimeBuffer = deadTimeBuffer;
+      this.deadTimeWriteIndex = deadTimeWriteIndex;
+      this.initialized = initialized;
+      this.output = output;
+      this.transmitter = transmitter;
+      this.unit = unit;
+      this.active = active;
+      this.calcIdentifier = calcIdentifier;
+    }
   }
 }

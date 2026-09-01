@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -97,7 +98,7 @@ public final class IndustrialProfile {
   /** Environment variable containing the admin token for governed runtime changes. */
   private static final String ADMIN_TOKEN_ENV = "NEQSIM_MCP_ADMIN_TOKEN";
 
-  /** One-shot approvals keyed by MCP tool name. */
+  /** One-shot approvals keyed by principal subject and MCP tool name. */
   private static final Set<String> APPROVED_ONCE = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
   /** Active deployment mode. */
@@ -139,7 +140,6 @@ public final class IndustrialProfile {
    * Tool-to-category classification for all MCP tools.
    */
   private static final Map<String, ToolCategory> TOOL_CATEGORIES = buildToolCategories();
-
   /**
    * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds, clear error behavior.
    * This is the smallest credible surface for enterprise adoption.
@@ -149,7 +149,7 @@ public final class IndustrialProfile {
           "calculateStandard", "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
           "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
           "listUnitVariables", "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
-          "getAutomationLearningReport", "getProgress", "getAdjustableParameters")));
+          "getAutomationLearningReport", "getProgress", "getAdjustableParameters", "manageModel", "inspectApi")));
 
   /**
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening studies and
@@ -167,10 +167,26 @@ public final class IndustrialProfile {
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that are difficult to
    * validate for industrial use. Available in DESKTOP_ENGINEER only.
    */
-  private static final Set<String> EXPERIMENTAL_TOOLS = Collections
-      .unmodifiableSet(new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
-          "solveTask", "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
-          "manageSecurity", "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
+  private static final Set<String> EXPERIMENTAL_TOOLS = Collections.unmodifiableSet(
+      new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess", "solveTask",
+          "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow", "manageSecurity",
+          "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow", "runCapability")));
+
+  /** Union of all tier sets — the authoritative published tool surface. */
+  private static final Set<String> ALL_TOOLS = buildAllTools();
+
+  /**
+   * Builds the union of the three trust tiers.
+   *
+   * @return unmodifiable set of every classified tool name
+   */
+  private static Set<String> buildAllTools() {
+    Set<String> all = new LinkedHashSet<String>();
+    all.addAll(INDUSTRIAL_CORE);
+    all.addAll(ENGINEERING_ADVANCED);
+    all.addAll(EXPERIMENTAL_TOOLS);
+    return Collections.unmodifiableSet(all);
+  }
 
   /**
    * Builds the tool-to-category mapping.
@@ -197,6 +213,7 @@ public final class IndustrialProfile {
     map.put("checkToolAccess", ToolCategory.ADVISORY);
     map.put("manageIndustrialProfile", ToolCategory.ADVISORY);
     map.put("queryDataCatalog", ToolCategory.ADVISORY);
+    map.put("inspectApi", ToolCategory.ADVISORY);
     map.put("generateReport", ToolCategory.ADVISORY);
     map.put("bridgeTaskWorkflow", ToolCategory.ADVISORY);
     map.put("getAdjustableParameters", ToolCategory.ADVISORY);
@@ -211,6 +228,7 @@ public final class IndustrialProfile {
     map.put("runFlowAssurance", ToolCategory.CALCULATION);
     map.put("runChemistry", ToolCategory.CALCULATION);
     map.put("calculateStandard", ToolCategory.CALCULATION);
+    map.put("runCapability", ToolCategory.CALCULATION);
     map.put("runPipeline", ToolCategory.CALCULATION);
     map.put("runWaterHammer", ToolCategory.CALCULATION);
     map.put("runRootCauseAnalysis", ToolCategory.CALCULATION);
@@ -243,6 +261,7 @@ public final class IndustrialProfile {
     // Execution tools — modify state, write data
     map.put("setSimulationVariable", ToolCategory.EXECUTION);
     map.put("saveSimulationState", ToolCategory.EXECUTION);
+    map.put("manageModel", ToolCategory.EXECUTION);
     map.put("compareSimulationStates", ToolCategory.EXECUTION);
     map.put("runOperationalStudy", ToolCategory.EXECUTION);
     map.put("manageSession", ToolCategory.EXECUTION);
@@ -341,10 +360,11 @@ public final class IndustrialProfile {
    * @return null if allowed, or a JSON error string if blocked
    */
   public static String enforceAccess(String toolName) {
-    String securityBlocked = SecurityRunner.checkAccess(null, toolName);
+    String securityBlocked = SecurityRunner.checkAccess(McpRequestContext.currentCredential(), toolName);
     if (securityBlocked != null) {
       return policyErrorJson("blocked", toolName, "SECURITY", "Security policy denied access",
-          "Inspect manageSecurity/getStatus and provide valid credentials when security is enabled.");
+          "Authenticate at the transport layer (API key header or OAuth bearer token), "
+              + "then retry. Use manageSecurity/getStatus to inspect enforcement state.");
     }
     if (isToolAllowed(toolName)) {
       if (requiresApproval(toolName) && !consumeApproval(toolName)) {
@@ -382,11 +402,12 @@ public final class IndustrialProfile {
       return policyErrorJson("blocked", toolName, "UNKNOWN_TOOL", "Cannot approve unknown MCP tool '" + toolName + "'.",
           "Use checkToolAccess or getCapabilities to choose a valid tool name.");
     }
-    APPROVED_ONCE.add(toolName);
+    APPROVED_ONCE.add(approvalKey(toolName));
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("tool", toolName);
     response.addProperty("approval", "next_invocation");
+    response.addProperty("approvedFor", McpRequestContext.currentSubject());
     response.addProperty("message", "Next invocation of " + toolName + " is approved once.");
     ApiEnvelope.applyStandardFields(response, "manageIndustrialProfile", null,
         ApiEnvelope.validationStatus(true, "policy", "Approval recorded"),
@@ -429,13 +450,23 @@ public final class IndustrialProfile {
   }
 
   /**
-   * Consumes a pending one-shot approval.
+   * Consumes a pending one-shot approval for the calling principal.
    *
    * @param toolName the tool being invoked
    * @return true if an approval was available and consumed
    */
   private static boolean consumeApproval(String toolName) {
-    return APPROVED_ONCE.remove(toolName);
+    return APPROVED_ONCE.remove(approvalKey(toolName));
+  }
+
+  /**
+   * Builds the approval key binding a tool to the principal it was approved for.
+   *
+   * @param toolName the MCP tool name
+   * @return the approval key
+   */
+  private static String approvalKey(String toolName) {
+    return McpRequestContext.currentSubject() + "::" + toolName;
   }
 
   /**
@@ -520,6 +551,22 @@ public final class IndustrialProfile {
    */
   public static ToolCategory getToolCategory(String toolName) {
     return TOOL_CATEGORIES.get(toolName);
+  }
+
+  /**
+   * Returns every MCP tool name known to the governance layer.
+   *
+   * <p>
+   * This is the single source of truth for the published tool surface: the tier sets below are exhaustive by
+   * construction, and a build-time contract test asserts that this set matches the {@code @Tool}-annotated methods on
+   * the server facade exactly. The capability catalog is derived from it so a newly added tool can no longer be
+   * silently missing from discovery.
+   * </p>
+   *
+   * @return unmodifiable, insertion-ordered set of all classified tool names
+   */
+  public static Set<String> getAllKnownTools() {
+    return ALL_TOOLS;
   }
 
   /**

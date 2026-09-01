@@ -196,6 +196,12 @@ String unit = gorSensor.getUnit();
 double sensitivity = gorSensor.getSensitivity("pressure");
 ```
 
+When a concrete local `SoftSensor` is registered as a process measurement device, transient
+transactions preserve its stream binding, selected property, input map, last estimate and
+sensitivity vector, together with inherited measurement/alarm state. Snapshots use defensive
+copies for mutable collections and arrays, and support Java-serialization restart. This provides
+rollback and replay mechanics; it is not an accuracy or validation claim for any estimate.
+
 **Available Property Types:**
 - `GOR` - Gas-Oil Ratio
 - `WATER_CUT` - Water Cut

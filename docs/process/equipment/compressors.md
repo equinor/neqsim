@@ -4,9 +4,8 @@ description: Documentation for compression equipment in NeqSim process simulatio
 keywords: "compressor, compression, polytropic, isentropic, compressor curve, anti-surge, surge, centrifugal, reciprocating, power, head, efficiency, fouling, washing"
 ---
 
-# Compressor Equipment
-
-Documentation for compression equipment in NeqSim process simulation.
+NeqSim compressor equipment models thermodynamic performance, operating limits, drivers,
+performance maps, and capacity constraints for steady-state and dynamic process simulation.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -14,6 +13,7 @@ Documentation for compression equipment in NeqSim process simulation.
 - [Calculation Methods](#calculation-methods)
 - [Performance Curves](#performance-curves)
 - [Surge and Stone Wall](#surge-and-stone-wall)
+- [Capacity-aware operating-point result](#capacity-aware-operating-point-result)
 - [Compressor Fouling and Washing](#compressor-fouling-and-washing)
 - [Compressor Driver](#compressor-driver) ⭐ NEW
 - [Mechanical Losses and Seal Gas](#mechanical-losses-and-seal-gas)
@@ -21,11 +21,11 @@ Documentation for compression equipment in NeqSim process simulation.
 
 > **📖 Detailed Curve Documentation:** For comprehensive information on compressor curves,
 > including multi-speed vs single-speed handling, surge curves, and stone wall curves,
-> see [Compressor Curves and Performance Maps](compressor_curves).
+> see [Compressor Curves and Performance Maps](compressor_curves.md).
 
 > **📖 Dynamic Anti-Surge and Coordinated Control:** For pressure-speed-recycle control
 > philosophy, predictive anti-surge supervision, and the dynamic compressor map notebook,
-> see [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control).
+> see [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control.md).
 
 ---
 
@@ -37,6 +37,7 @@ Documentation for compression equipment in NeqSim process simulation.
 - `Compressor` - General compressor
 - `CompressorInterface` - Compressor interface
 - `CompressorChartInterface` - Performance map interface
+- `CompressorOperatingPointResult` - Immutable capacity-aware result snapshot
 - `CompressorWashing` - Fouling, washing, and performance recovery model
 
 ---
@@ -118,7 +119,7 @@ Where:
 
 ## Performance Curves
 
-NeqSim supports detailed compressor performance maps with multiple speed curves. For comprehensive documentation, see [Compressor Curves and Performance Maps](compressor_curves).
+NeqSim supports detailed compressor performance maps with multiple speed curves. For comprehensive documentation, see [Compressor Curves and Performance Maps](compressor_curves.md).
 
 ### Setting Compressor Map
 
@@ -189,7 +190,7 @@ double[] stoneWallHead = {112.65};
 compressor.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallFlow, stoneWallHead);
 ```
 
-> **📖 See Also:** [Compressor Curves and Performance Maps](compressor_curves) for detailed
+> **📖 See Also:** [Compressor Curves and Performance Maps](compressor_curves.md) for detailed
 > documentation on curve setup, interpolation methods, and Python examples.
 
 ### Structured Operating Point
@@ -212,7 +213,7 @@ The map / JSON contains the following fields:
 
 | Field | Unit | Description |
 |-------|------|-------------|
-| `schemaVersion` | — | JSON schema version (`"1.0"`) |
+| `schemaVersion` | — | JSON schema version (`"1.1"`) |
 | `name` | — | Compressor name |
 | `flow_m3hr` | m³/hr | Inlet actual volumetric flow rate |
 | `head_kJkg` | kJ/kg | Polytropic fluid head |
@@ -231,6 +232,57 @@ The map / JSON contains the following fields:
 
 When no chart is active, `withinChart` is `true` and `limitingConstraint` is `no_chart`.
 Values that cannot be computed are returned as `NaN`.
+
+### Capacity-aware operating-point result
+
+Use the immutable typed result for optimization, bottleneck analysis, field-life studies, or
+exchange with tools such as eCalc. Obtain it only after the compressor has been configured and
+solved, either directly with `compressor.run()` or as part of a solved `ProcessSystem` with
+`process.run()`. The imports below provide a standalone compilation context; create and solve
+the `compressor` variable as shown in [Basic Usage](#basic-usage).
+
+```java
+import java.util.List;
+import neqsim.process.equipment.compressor.CompressorOperatingPointResult;
+
+CompressorOperatingPointResult result =
+    compressor.getOperatingPointResult(0.02);
+boolean feasible = result.isFeasible();
+String limitingConstraint = result.getLimitingConstraint();
+double recycleLossKW = result.getRecyclePowerLossKW();
+List<CompressorOperatingPointResult.ConstraintSnapshot> constraints =
+    result.getConstraints();
+String resultJson = result.toJson();
+```
+
+The argument `0.02` is a finite, non-negative fraction of requested discharge pressure: here,
+the calculated pressure is on target within 2%. The no-argument overload uses the same 2%
+default. Invalid negative, infinite, or `NaN` tolerances throw `IllegalArgumentException`.
+
+The typed result has schema version `"1.0"`; this is distinct from the legacy
+`getOperatingPointJson()` map schema `"1.1"`. Important unit conventions are:
+
+| Result | Unit or scale |
+|---|---|
+| Flow | Actual inlet m³/hr |
+| Head | kJ/kg |
+| Power and recycle losses | kW; recovered expander power is negative |
+| Pressure | bara |
+| Temperature | °C |
+| `distanceToSurge`, `distanceToStonewall`, recycle | Fractions |
+| Surge/stonewall constraint snapshot values | Percent |
+| Capacity utilization and margin | Fractions; utilization above 1.0 is a violation |
+
+The snapshot also records calculated-versus-requested discharge pressure, pressure-target
+status, anti-surge recycle and cooler losses, maximum capacity utilization, the limiting
+constraint, and detached immutable copies of the compressor constraints.
+
+`ProcessSystem.findBottleneck()` and the typed result evaluate the compressor's universal
+`CapacityConstraint` definitions. `PressureBoundaryOptimizer` reuses enabled constraints
+except `DESIGN` constraints and constraints with `ADVISORY` severity; those remain
+reporting-only. Surge, stonewall, speed, driver power, discharge temperature, and eligible
+custom vendor constraints therefore retain the same limit direction and utilization semantics.
+Explicit optimizer power and speed settings are additional overrides.
 
 ---
 
@@ -419,7 +471,7 @@ comp.run();
 | LNG/refrigeration | `REFRIGERATION` |
 | General purpose | `CENTRIFUGAL_STANDARD` |
 
-> **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves#automatic-curve-generation)
+> **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves.md#automatic-curve-generation)
 > for complete API reference, advanced corrections, and examples.
 
 ---
@@ -894,9 +946,9 @@ print(f"Mechanical efficiency: {comp.getMechanicalEfficiency()*100:.1f}%")
 
 ## Related Documentation
 
-- [Compressor Curves](compressor_curves) - Detailed curve documentation, templates, and MW correction
-- [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control) - Surge protection and coordinated control
-- [CompressorShaft (multiple bodies on one shaft)](compressor_shaft) - Common-speed multi-body strings on a single driver
+- [Compressor Curves](compressor_curves.md) - Detailed curve documentation, templates, and MW correction
+- [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control.md) - Surge protection and coordinated control
+- [CompressorShaft (multiple bodies on one shaft)](compressor_shaft.md) - Common-speed multi-body strings on a single driver
 - [Process Package](../) - Package overview
-- [Expanders](expanders) - Expansion equipment
-- [Pumps](pumps) - Liquid compression
+- [Expanders](expanders.md) - Expansion equipment
+- [Pumps](pumps.md) - Liquid compression

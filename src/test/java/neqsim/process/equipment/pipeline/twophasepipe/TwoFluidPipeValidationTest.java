@@ -13,16 +13,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Validation tests for TwoFluidPipe against published correlations and data.
+ * Correlation comparisons and physical-trend regression tests for TwoFluidPipe.
  *
  * <p>
- * This test class validates the TwoFluidPipe model against:
+ * The cases include a Beggs-Brill comparison and NeqSim scenario checks inspired by public multiphase-flow literature.
+ * Scenario smoke tests are not experimental validation and do not establish equivalence with a commercial simulator.
  * </p>
- * <ul>
- * <li>Beggs and Brill (1973) correlation - SPE-4007-PA</li>
- * <li>Published OLGA validation cases from literature</li>
- * <li>Terrain-induced slugging field data patterns</li>
- * </ul>
  *
  * <p>
  * References:
@@ -247,23 +243,23 @@ class TwoFluidPipeValidationTest {
   }
 
   /**
-   * Tests based on published OLGA validation cases.
+   * Literature-inspired pipeline scenarios with evidence-specific assertions.
    */
   @Nested
-  @DisplayName("OLGA Validation Cases")
-  class OLGAValidationTests {
+  @DisplayName("Reference Pipeline Scenarios")
+  class ReferenceScenarioTests {
 
     /**
-     * Test Case 1: Horizontal gas-condensate flow (OLGA OVIP Case 1 style).
+     * Test Case 1: Horizontal gas-condensate flow.
      *
      * <p>
-     * Based on typical OVIP validation: Horizontal pipe, gas-condensate, moderate flow.
+     * A scenario smoke test for a horizontal pipe with gas condensate at moderate flow.
      * </p>
      */
     @Test
-    @DisplayName("OLGA OVIP-style Case 1: Horizontal gas-condensate")
-    void testOVIPCase1HorizontalGasCondensate() {
-      // Typical OVIP test conditions
+    @DisplayName("Horizontal gas-condensate scenario")
+    void testHorizontalGasCondensateScenario() {
+      // Synthetic scenario conditions
       SystemInterface fluid = new SystemSrkEos(303.15, 40.0);
       fluid.addComponent("methane", 0.85);
       fluid.addComponent("ethane", 0.08);
@@ -289,7 +285,7 @@ class TwoFluidPipeValidationTest {
       double outletP = pipe.getOutletStream().getPressure("bara");
       double avgHoldup = getAverageHoldup(pipe.getLiquidHoldupProfile());
 
-      logger.info("\n=== OVIP Case 1: Horizontal Gas-Condensate ===");
+      logger.info("\n=== Horizontal Gas-Condensate Scenario ===");
       logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet: P=40 bar, T=30°C, m=8 kg/s%n");
       logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: L=2000m, D=6in%n");
       logger.printf(org.apache.logging.log4j.Level.INFO, "Results: Outlet P=%.2f bar, Avg Holdup=%.4f%n", outletP,
@@ -302,15 +298,15 @@ class TwoFluidPipeValidationTest {
     }
 
     /**
-     * Test Case 2: Uphill riser with accumulation (OLGA OVIP Case style).
+     * Test Case 2: Uphill riser with accumulation.
      *
      * <p>
      * Validates liquid accumulation at riser base.
      * </p>
      */
     @Test
-    @DisplayName("OLGA OVIP-style Case 2: Uphill riser accumulation")
-    void testOVIPCase2UphillRiserAccumulation() {
+    @DisplayName("Uphill riser accumulation scenario")
+    void testUphillRiserAccumulationScenario() {
       SystemInterface fluid = new SystemSrkEos(313.15, 80.0);
       fluid.addComponent("methane", 0.75);
       fluid.addComponent("ethane", 0.10);
@@ -342,27 +338,27 @@ class TwoFluidPipeValidationTest {
       double bottomHoldup = holdupProfile[1]; // First section after inlet
       double topHoldup = holdupProfile[holdupProfile.length - 1];
 
-      logger.info("\n=== OVIP Case 2: Uphill Riser ===");
+      logger.info("\n=== Uphill Riser Scenario ===");
       logger.printf(org.apache.logging.log4j.Level.INFO, "Riser: L=500m, D=4in, Vertical%n");
       logger.printf(org.apache.logging.log4j.Level.INFO, "Bottom holdup: %.4f (%.2f%%)%n", bottomHoldup,
           bottomHoldup * 100);
       logger.printf(org.apache.logging.log4j.Level.INFO, "Top holdup: %.4f (%.2f%%)%n", topHoldup, topHoldup * 100);
 
       // Riser base typically shows accumulation (higher holdup)
-      // This test validates the terrain tracking enhancement
+      // This test checks the expected physical trend; it is not experimental validation.
       assertTrue(bottomHoldup > 0, "Bottom holdup should be positive");
       assertTrue(topHoldup > 0, "Top holdup should be positive");
     }
 
     /**
-     * Test Case 3: Low point liquid accumulation (OLGA terrain tracking).
+     * Test Case 3: Low-point liquid accumulation.
      *
      * <p>
      * Validates liquid accumulates in pipeline low points.
      * </p>
      */
     @Test
-    @DisplayName("OLGA terrain tracking: Low point liquid accumulation")
+    @DisplayName("Terrain tracking: Low-point liquid accumulation")
     void testTerrainTrackingLowPointAccumulation() {
       SystemInterface fluid = new SystemSrkEos(303.15, 50.0);
       fluid.addComponent("methane", 0.80);
@@ -419,10 +415,10 @@ class TwoFluidPipeValidationTest {
     }
 
     /**
-     * Test Case 4: High velocity vs low velocity holdup (OLGA velocity effect).
+     * Test Case 4: High-velocity versus low-velocity holdup.
      */
     @Test
-    @DisplayName("OLGA velocity effect: High vs low velocity holdup")
+    @DisplayName("Velocity effect: High vs low velocity holdup")
     void testVelocityEffectOnHoldup() {
       SystemInterface fluid = new SystemSrkEos(303.15, 40.0);
       fluid.addComponent("methane", 0.82);
@@ -488,10 +484,11 @@ class TwoFluidPipeValidationTest {
   class TerrainSlugTests {
 
     /**
-     * Test severe slugging conditions at riser base.
+     * Smoke-test a low-rate flowline-riser state and the explicit system diagnostic.
      *
      * <p>
-     * Reference: Pots et al. (1987) - Severe slugging criterion π_ss > 1
+     * This checks topology extraction and finite solved holdup; it is not a validation of a dynamic severe-slug cycle
+     * or a published transition point.
      * </p>
      */
     @Test
@@ -507,7 +504,7 @@ class TwoFluidPipeValidationTest {
       fluid.setMixingRule("classic");
 
       Stream inlet = new Stream("slug-inlet", fluid);
-      inlet.setFlowRate(2.0, "kg/sec"); // Low flow rate promotes slugging
+      inlet.setFlowRate(0.05, "kg/sec"); // Low rate keeps the feeder stratified
       inlet.setTemperature(10.0, "C");
       inlet.setPressure(30.0, "bara");
       inlet.run();
@@ -518,24 +515,30 @@ class TwoFluidPipeValidationTest {
       flowline.setDiameter(0.1016); // 4 inch
       flowline.setNumberOfSections(30);
 
-      // Profile: Horizontal flowline, then 200m riser
+      // Profile: Horizontal flowline, then 240 m rise over the final 600 m
       double[] elevation = new double[31];
       for (int i = 0; i < 25; i++) {
         elevation[i] = 0; // Horizontal section
       }
       for (int i = 25; i <= 30; i++) {
-        elevation[i] = (i - 24) * 40.0; // 200m riser over last 600m
+        elevation[i] = (i - 24) * 40.0;
       }
       flowline.setElevationProfile(elevation);
       flowline.run();
 
-      // Check conditions at riser base (section 24)
+      int riserBaseSection = 24;
+      SevereSluggingSystemDiagnostic.Result stability = flowline.evaluateSevereSluggingSystem(riserBaseSection);
+      assertTrue(stability.isApplicable(),
+          "Constructed two-phase stratified flowline-riser should be applicable, status=" + stability.getStatus());
+
+      // Check conditions at riser base
       double[] holdupProfile = flowline.getLiquidHoldupProfile();
-      double riserBaseHoldup = holdupProfile[24];
+      double riserBaseHoldup = holdupProfile[riserBaseSection];
       double riserTopHoldup = holdupProfile[holdupProfile.length - 1];
 
       logger.info("\n=== Severe Slugging Test ===");
-      logger.info("Configuration: 2.4km flowline + 200m riser");
+      logger.info("Configuration: 2.4 km flowline + 240 m rise");
+      logger.info("System stability status: {}", stability.getStatus());
       logger.printf(org.apache.logging.log4j.Level.INFO, "Riser base holdup: %.4f (%.2f%%)%n", riserBaseHoldup,
           riserBaseHoldup * 100);
       logger.printf(org.apache.logging.log4j.Level.INFO, "Riser top holdup: %.4f (%.2f%%)%n", riserTopHoldup,
@@ -544,7 +547,7 @@ class TwoFluidPipeValidationTest {
       // Flow regime at various points
       PipeSection.FlowRegime[] regimes = flowline.getFlowRegimeProfile();
       logger.printf(org.apache.logging.log4j.Level.INFO, "Flowline regime: %s%n", regimes[10]);
-      logger.printf(org.apache.logging.log4j.Level.INFO, "Riser base regime: %s%n", regimes[24]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Riser base regime: %s%n", regimes[riserBaseSection]);
       logger.printf(org.apache.logging.log4j.Level.INFO, "Riser top regime: %s%n", regimes[regimes.length - 1]);
 
       // Riser base typically shows higher holdup due to accumulation

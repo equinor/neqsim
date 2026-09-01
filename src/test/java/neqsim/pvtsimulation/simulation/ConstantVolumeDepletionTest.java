@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.PhysicalPropertyType;
@@ -40,7 +41,57 @@ public class ConstantVolumeDepletionTest {
     CVDsim.setTemperaturesAndPressures(new double[] { 313, 313, 313, 313 }, new double[] { 400, 300.0, 200.0, 100.0 });
     double[][] expData = { { 0.95, 0.99, 1.0, 1.1 } };
     CVDsim.setExperimentalData(expData);
-    assertEquals(2.28906918375221, CVDsim.getRelativeVolume()[4], 0.001);
+    assertEquals(1.0, CVDsim.getRelativeVolume()[4], 1.0e-6);
+    assertTrue(CVDsim.validateMaterialBalance(0.02));
+  }
+
+  @Test
+  void testCondensateMaintainsCellVolumeAndMaterialBalance() {
+    SystemInterface condensate = new SystemSrkEos(353.15, 200.0);
+    condensate.addComponent("nitrogen", 0.010);
+    condensate.addComponent("CO2", 0.020);
+    condensate.addComponent("methane", 0.760);
+    condensate.addComponent("ethane", 0.080);
+    condensate.addComponent("propane", 0.050);
+    condensate.addComponent("i-butane", 0.015);
+    condensate.addComponent("n-butane", 0.020);
+    condensate.addComponent("i-pentane", 0.010);
+    condensate.addComponent("n-pentane", 0.010);
+    condensate.addComponent("n-hexane", 0.010);
+    condensate.addComponent("n-heptane", 0.008);
+    condensate.addComponent("n-octane", 0.007);
+    condensate.setMixingRule("classic");
+    condensate.setMultiPhaseCheck(true);
+    condensate.init(0);
+    condensate.init(1);
+
+    SaturationPressure saturationReference = new SaturationPressure(condensate.clone());
+    saturationReference.setTemperature(80.0, "C");
+    saturationReference.run();
+
+    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(condensate);
+    cvd.setTemperature(80.0, "C");
+    cvd.setPressures(new double[] { 120.0, 100.0, 80.0, 60.0, 40.0, 20.0 });
+    cvd.runCalc();
+
+    assertEquals(saturationReference.getSaturationPressure(), cvd.getSaturationPressure(), 0.05);
+
+    double[] depletion = cvd.getCummulativeMolePercDepleted();
+    double[] relativeVolume = cvd.getRelativeVolume();
+    double maximumLiquidDropout = 0.0;
+    for (int i = 0; i < depletion.length; i++) {
+      assertTrue(depletion[i] >= -1.0e-8);
+      assertTrue(depletion[i] < 99.0);
+      if (i > 0) {
+        assertTrue(depletion[i] >= depletion[i - 1] - 1.0e-8);
+      }
+      if (depletion[i] > 1.0e-8) {
+        assertEquals(1.0, relativeVolume[i], 1.0e-6);
+      }
+      maximumLiquidDropout = Math.max(maximumLiquidDropout, cvd.getLiquidRelativeVolume()[i]);
+    }
+    assertTrue(cvd.validateMaterialBalance(0.02));
+    assertTrue(maximumLiquidDropout > 0.5);
   }
 
   @Test

@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.ejector.EjectorMechanicalDesign;
@@ -399,6 +400,9 @@ public class Ejector extends ProcessEquipmentBaseClass
     ThermodynamicOperations diffuserOps = new ThermodynamicOperations(mixedFluid);
     diffuserOps.PHflash(staticEnthalpyBeforeDiffuser, "J/kg");
     mixedFluid.init(3);
+    // Diffuser sizing consumes density at the flashed discharge state. Refresh only
+    // that required property; no other physical property is consumed by this calculation.
+    mixedFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double rhoDiffuser = Math.max(mixedFluid.getDensity("kg/m3"), 1.0e-9);
 
     double localDesignDiffuserOutletVelocity = designDiffuserVelocityOverride ? designDiffuserOutletVelocity
@@ -915,7 +919,7 @@ public class Ejector extends ProcessEquipmentBaseClass
     initializeEjectorCapacityConstraints();
 
     autoSized = true;
-    logger.info("Ejector '{}' auto-sized: design ER={:.2f}, CR={:.2f}", getName(), designEntrainmentRatio,
+    logger.info("Ejector '{}' auto-sized: design ER={}, CR={}", getName(), designEntrainmentRatio,
         designCompressionRatio);
   }
 

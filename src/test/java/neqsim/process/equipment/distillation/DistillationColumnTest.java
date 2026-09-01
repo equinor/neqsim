@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -262,19 +263,24 @@ public class DistillationColumnTest {
     valve.run();
 
     DistillationColumn debutanizer = new DistillationColumn("issue348 debutanizer", 10, true, true);
-    debutanizer.addFeedStream(valve.getOutletStream(), 9);
-    debutanizer.getCondenser().setRefluxRatio(0.1);
-    debutanizer.getCondenser().setTotalCondenser(true);
+    debutanizer.addFeedStream(valve.getOutletStream(), 5);
+    debutanizer.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+    debutanizer.setCondenserRefluxRatio(0.1);
     debutanizer.getReboiler().setOutTemperature(273.15 + 203.0);
     debutanizer.setTopPressure(12.8);
     debutanizer.setBottomPressure(15.0);
-    debutanizer.setMaxNumberOfIterations(120);
+    debutanizer.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+    debutanizer.setMaxNumberOfIterations(80);
+    assertTrue(debutanizer.validateSpecifications().isValid());
     debutanizer.run();
 
     String diagnostics = debutanizer.getConvergenceDiagnostics();
+    assertTrue(debutanizer.solved(), diagnostics);
+    assertTrue(diagnostics.contains("condenser mode: TOTAL, ratio control: true"), diagnostics);
+    assertTrue(diagnostics.contains("reboiler mode: EQUILIBRIUM"), diagnostics);
     assertFalse(debutanizer.wasFullFractionatorFastPathApplied(), diagnostics);
-    assertEquals(9, debutanizer.getFeedTrayNumber(valve.getOutletStream()),
-        "Explicit feed tray assignments must be preserved by default");
+    assertEquals(5, debutanizer.getFeedTrayNumber(valve.getOutletStream()),
+        "Explicit mid-column feed assignment must be preserved");
 
     double feedMass = valve.getOutletStream().getFlowRate("kg/hr");
     assertTrue(feedMass < feed.getFlowRate("kg/hr"), "Debutanizer feed should not exceed the original feed mass");
@@ -289,6 +295,12 @@ public class DistillationColumnTest {
         "Debutanizer public mass-balance API must report a closed balance");
     assertEquals(feedMolarFlow, productMolarFlow, feedMolarFlow * 1.0e-6,
         "Debutanizer external products must match feed molar flow");
+    assertTerminalProductBalances(valve.getOutletStream(), debutanizer);
+
+    debutanizer.run();
+    assertTrue(debutanizer.solved(), debutanizer.getConvergenceDiagnostics());
+    assertTerminalProductBalances(valve.getOutletStream(), debutanizer);
+
   }
 
   /**
@@ -568,6 +580,8 @@ public class DistillationColumnTest {
     double actualFlow = reboiler.getGasOutStream().getFlowRate("kg/hr")
         + reboiler.getLiquidOutStream().getFlowRate("kg/hr");
     assertEquals(expectedFlow, actualFlow, expectedFlow * 1.0e-8);
+    assertEquals(reboiler.getDuty(), reboiler.getEnergyStream().getDuty(), 1.0e-8);
+    assertEquals(EnergyType.HEAT, reboiler.getEnergyStream().getEnergyType());
   }
 
   /**
@@ -1127,4 +1141,42 @@ public class DistillationColumnTest {
           "Iteration " + i + ": caller-held liquid stream must observe the solved flow");
     }
   }
+
+  /**
+   * Verify physical bounds, component and total-material closure, plus the applicable energy diagnostic.
+   *
+   * @param feed column feed
+   * @param column solved column
+   */
+  private void assertTerminalProductBalances(StreamInterface feed, DistillationColumn column) {
+    StreamInterface gas = column.getGasOutStream();
+    StreamInterface liquid = column.getLiquidOutStream();
+    double feedFlow = feed.getFlowRate("mol/hr");
+    double gasFlow = gas.getFlowRate("mol/hr");
+    double liquidFlow = liquid.getFlowRate("mol/hr");
+
+    assertTrue(Double.isFinite(gasFlow) && gasFlow >= 0.0);
+    assertTrue(Double.isFinite(liquidFlow) && liquidFlow >= 0.0);
+    assertTrue(Double.isFinite(gas.getTemperature()) && gas.getTemperature() > 0.0);
+    assertTrue(Double.isFinite(liquid.getTemperature()) && liquid.getTemperature() > 0.0);
+    assertEquals(feedFlow, gasFlow + liquidFlow, Math.max(1.0e-8, 1.0e-6 * feedFlow));
+    double energyBalanceError = column.getEnergyBalanceError();
+    assertTrue(Double.isFinite(energyBalanceError), column.getConvergenceDiagnostics());
+    if (column.isEnforceEnergyBalanceTolerance()) {
+      assertTrue(energyBalanceError <= column.getEnthalpyBalanceTolerance(), column.getConvergenceDiagnostics());
+    }
+
+    double[] feedComposition = feed.getThermoSystem().getMolarComposition();
+    double[] gasComposition = gas.getThermoSystem().getMolarComposition();
+    double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
+      assertTrue(gasComposition[componentIndex] >= 0.0 && gasComposition[componentIndex] <= 1.0);
+      assertTrue(liquidComposition[componentIndex] >= 0.0 && liquidComposition[componentIndex] <= 1.0);
+      double feedComponentFlow = feedFlow * feedComposition[componentIndex];
+      double productComponentFlow = gasFlow * gasComposition[componentIndex]
+          + liquidFlow * liquidComposition[componentIndex];
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-9, 1.0e-5 * Math.abs(feedComponentFlow)));
+    }
+  }
+
 }

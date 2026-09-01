@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import java.util.EnumMap;
+import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
@@ -47,6 +49,112 @@ public class FlowRegimeDetector implements Serializable {
 
   /** Current detection method. */
   private DetectionMethod detectionMethod = DetectionMethod.MECHANISTIC;
+
+  /** Select Taitel-Dukler transition B instead of the vertical droplet criterion in horizontal flow. */
+  private boolean useEquilibriumLevelAnnularTransition = true;
+
+  /** Blend closures across horizontal regime transitions instead of switching at a point. */
+  private boolean blendRegimeTransitions = true;
+
+  /** Half-width of the Kelvin-Helmholtz blending band, as a fraction of the critical gas velocity. */
+  private static final double KH_TRANSITION_BAND = 0.15;
+
+  /** Half-width of the blending band around the bridging limit, as a liquid-fraction difference. */
+  private static final double LEVEL_TRANSITION_BAND = 0.08;
+
+  /** Gas viscosity as a fraction of the liquid viscosity, used only when the section carries none. */
+  private static final double DEGENERATE_GAS_VISCOSITY_FRACTION = 0.01;
+
+  /** Jeffreys sheltering coefficient used by Taitel-Dukler transition D. */
+  private static final double SHELTERING_COEFFICIENT = 0.01;
+
+  /**
+   * Liquid fraction above which the liquid can bridge the bore, so annular flow cannot be sustained.
+   *
+   * <p>
+   * Barnea (1987) blockage criterion. A stable liquid slug needs a liquid fraction of about 0.48 in its body; bridging
+   * becomes possible once the film holds half of that, so annular flow requires an in-situ liquid fraction below 0.24.
+   * </p>
+   */
+  private static final double ANNULAR_BRIDGING_HOLDUP = 0.24;
+
+  /**
+   * Whether the horizontal annular transition uses the equilibrium liquid level.
+   *
+   * @return true when Taitel-Dukler transition B is used
+   */
+  public boolean isUseEquilibriumLevelAnnularTransition() {
+    return useEquilibriumLevelAnnularTransition;
+  }
+
+  /**
+   * Select how the horizontal branch decides annular flow.
+   *
+   * <p>
+   * The default path uses {@code isAnnularFlow}, which is the vertical droplet-entrainment criterion
+   * {@code U_SG > 3.1 * (sigma * g * drho / rhoG^2)^0.25}, and checks it ahead of the stratified/slug transition. In
+   * horizontal flow that threshold is small - about 1.6 m/s for a 200 mm gas line and 0.75 m/s for a 14-inch
+   * high-pressure export line - so it short-circuits the flow map and classifies effectively every gas pipeline as
+   * annular regardless of its liquid level, which then solves it with a thin-film closure.
+   * </p>
+   *
+   * <p>
+   * Enabling this selects the horizontal criterion of Taitel and Dukler (1976): after the Kelvin-Helmholtz instability
+   * has lifted the stratified layer, the branch is set by the equilibrium liquid level, annular below
+   * {@code h_L/D = 0.5} and intermittent above it. Measured against a reference two-fluid simulator on a 73.8 km
+   * gas-condensate export line at 4 MSm3/d, this moves the holdup ratio from 0.84 to 1.02 on the median and from 0.83
+   * to 0.96 on the mean, with pressure drop unchanged, and it correctly keeps the export line annular at 8.5 m/s while
+   * reclassifying a 200 mm line at 1.6 m/s as stratified-wavy and slug.
+   * </p>
+   *
+   * <p>
+   * This is the default. It was held back while the hold-up closures it routes to had no usable inclination response:
+   * on a 5 km 200 mm undulating fixture the equilibrium level itself swings from {@code h_L/D = 0.058} on a 4 degree
+   * downhill section to {@code 0.793} on a 4 degree uphill one, a factor of 47 in liquid area, while the hold-up
+   * returned for those same sections was 0.04303 and 0.04305, identical to five figures. Selecting the transition then
+   * replaced the annular film balance, the only closure carrying a gravity term, by closures that carried none, and the
+   * fixture's maximum-to-minimum hold-up ratio fell from 11.3 to 1.45 with the valley and peak ordering becoming
+   * arbitrary. Once the Taylor bubble film in the slug closure was given the same film balance the annular closure
+   * uses, that ratio returned to 11.6 with the valley above the peak, against 11.3 on the droplet path, so the two
+   * criteria now agree on the terrain response and differ only where they are meant to.
+   * </p>
+   *
+   * <p>
+   * The two paths differ only in the shallow-layer, sub-critical Kelvin-Helmholtz corner. On the export line above they
+   * return identical profiles at 10 MSm3/d, where the margin exceeds one in every section and both branch to annular;
+   * they differ at 4 MSm3/d, where the margin is below one in 85 per cent of sections. Disable this to recover the
+   * droplet-criterion behaviour.
+   * </p>
+   *
+   * @param enable true to use the equilibrium-level transition
+   */
+  public void setUseEquilibriumLevelAnnularTransition(boolean enable) {
+    this.useEquilibriumLevelAnnularTransition = enable;
+  }
+
+  /**
+   * Whether closures are blended across horizontal regime transitions.
+   *
+   * @return true when transition blending is active
+   */
+  public boolean isBlendRegimeTransitions() {
+    return blendRegimeTransitions;
+  }
+
+  /**
+   * Selects blending of the closures across horizontal regime transitions.
+   *
+   * <p>
+   * Switching closure at a point steps hold-up and friction as an operating point drifts across a boundary, which shows
+   * up as a jump in pressure drop for a smooth change in terrain or rate. Blending ramps the weights over a band
+   * instead. Disable only to reproduce the hard-switching behaviour.
+   * </p>
+   *
+   * @param enable true to blend across transitions
+   */
+  public void setBlendRegimeTransitions(boolean enable) {
+    this.blendRegimeTransitions = enable;
+  }
 
   /** Drift flux model for slip calculations. */
   private transient DriftFluxModel driftFluxModel;
@@ -109,9 +217,8 @@ public class FlowRegimeDetector implements Serializable {
    * Detect flow regime for a pipe section.
    *
    * <p>
-   * Uses superficial velocity ratios rather than holdup for single-phase detection. This correctly identifies
-   * gas-dominant flows with low liquid loading as two-phase rather than single-phase gas, ensuring proper slip and
-   * accumulation calculations.
+   * Uses conservative phase holdups for single-phase detection. This keeps any positive phase inventory in the
+   * two-phase regime path even when its superficial velocity is arbitrarily small.
    * </p>
    *
    * @param section The pipe section with current state
@@ -120,26 +227,20 @@ public class FlowRegimeDetector implements Serializable {
   public FlowRegime detectFlowRegime(PipeSection section) {
     double U_SL = section.getSuperficialLiquidVelocity();
     double U_SG = section.getSuperficialGasVelocity();
-    double U_M = U_SL + U_SG;
+    double alphaL = section.getLiquidHoldup();
+    double alphaG = section.getGasHoldup();
 
-    // Single phase checks using superficial velocity ratios (not holdup)
-    // This correctly identifies low liquid loading as two-phase, not single-phase gas
-    // Critical: Using holdup (alpha_L < 0.001) causes premature single-phase classification
-    // for lean gas systems where liquid accumulation detection is needed
-    double liquidFraction = (U_M > 1e-10) ? U_SL / U_M : 0.0;
-    double gasFraction = (U_M > 1e-10) ? U_SG / U_M : 0.0;
-
-    // Only classify as single-phase if truly negligible flow of the other phase
-    // Use 1e-6 m/s threshold (essentially zero flow) instead of 0.1% holdup
-    if (U_SL < 1e-6 && U_SG > 1e-6) {
+    // Conservative phase holdup owns phase presence. A small positive superficial
+    // velocity is not equivalent to an absent phase and must not trigger a regime jump.
+    if (alphaL <= 0.0 && alphaG > 0.0) {
       return FlowRegime.SINGLE_PHASE_GAS;
     }
-    if (U_SG < 1e-6 && U_SL > 1e-6) {
+    if (alphaG <= 0.0 && alphaL > 0.0) {
       return FlowRegime.SINGLE_PHASE_LIQUID;
     }
-    if (U_M < 1e-6) {
-      // No flow - default to single phase liquid (static condition)
-      return FlowRegime.SINGLE_PHASE_LIQUID;
+    if (alphaL <= 0.0 && alphaG <= 0.0) {
+      // Uninitialized state: use exact nonzero flow only as a fallback.
+      return U_SG != 0.0 ? FlowRegime.SINGLE_PHASE_GAS : FlowRegime.SINGLE_PHASE_LIQUID;
     }
 
     // Use minimum slip criterion if selected
@@ -153,14 +254,110 @@ public class FlowRegimeDetector implements Serializable {
     double rho_L = section.getLiquidDensity();
     double rho_G = section.getGasDensity();
     double mu_L = section.getLiquidViscosity();
+    double mu_G = section.getGasViscosity();
     double sigma = section.getSurfaceTension();
 
     // Use Barnea's unified model for inclined pipes
     if (Math.abs(theta) > Math.toRadians(10)) {
-      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, sigma);
+      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
     } else {
-      return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, sigma);
+      return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
     }
+  }
+
+  /**
+   * Classifies a section, recording both the dominant regime and the transition blend.
+   *
+   * <p>
+   * A section sitting on a regime boundary is not wholly one regime or the other. Hard switching there steps hold-up
+   * and friction discontinuously as an operating point drifts across the boundary. This sets the regime and, where the
+   * section is on a horizontal transition, the fractional weights the closures should be blended with.
+   * </p>
+   *
+   * @param section section to classify; its regime and blend weights are updated
+   * @return the dominant flow regime
+   */
+  public FlowRegime classify(PipeSection section) {
+    FlowRegime regime = detectFlowRegime(section);
+    section.setFlowRegime(regime);
+
+    Map<FlowRegime, Double> weights = horizontalRegimeWeights(section, regime);
+    if (weights != null) {
+      section.setRegimeWeights(weights);
+    }
+    return section.getFlowRegime();
+  }
+
+  /**
+   * Fractional regime weights across the horizontal stratified, annular and slug transitions.
+   *
+   * <p>
+   * The stratified share follows the Kelvin-Helmholtz margin and the split of the remainder between annular and slug
+   * follows the equilibrium liquid level, both ramped over a band rather than switched at a point. Returns null when
+   * blending does not apply, in which case the single detected regime stands.
+   * </p>
+   *
+   * @param section section being classified
+   * @param regime the regime already detected for the section
+   * @return weights per regime, or null when a single regime applies
+   */
+  private Map<FlowRegime, Double> horizontalRegimeWeights(PipeSection section, FlowRegime regime) {
+    if (!blendRegimeTransitions || !useEquilibriumLevelAnnularTransition) {
+      return null;
+    }
+    if (detectionMethod != DetectionMethod.MECHANISTIC) {
+      return null;
+    }
+    if (regime == FlowRegime.SINGLE_PHASE_GAS || regime == FlowRegime.SINGLE_PHASE_LIQUID
+        || regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.BUBBLE) {
+      return null;
+    }
+
+    double theta = section.getInclination();
+    if (Math.abs(theta) > Math.toRadians(10)) {
+      return null;
+    }
+
+    double U_SL = section.getSuperficialLiquidVelocity();
+    double U_SG = section.getSuperficialGasVelocity();
+    double D = section.getDiameter();
+    double rho_L = section.getLiquidDensity();
+    double rho_G = section.getGasDensity();
+    double mu_L = section.getLiquidViscosity();
+    double mu_G = section.getGasViscosity();
+
+    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
+    double margin = kelvinHelmholtzMargin(U_SG, h_L, D, rho_L, rho_G);
+    if (margin <= 0.0) {
+      return null;
+    }
+
+    double unstableShare = rampWeight(margin, 1.0, KH_TRANSITION_BAND);
+    double slugShare = rampWeight(liquidAreaFraction(h_L, D), ANNULAR_BRIDGING_HOLDUP, LEVEL_TRANSITION_BAND);
+    FlowRegime stratified = isWavyTransition(U_SL, U_SG, h_L, D, theta, rho_L, rho_G, mu_L) ? FlowRegime.STRATIFIED_WAVY
+        : FlowRegime.STRATIFIED_SMOOTH;
+
+    Map<FlowRegime, Double> weights = new EnumMap<FlowRegime, Double>(FlowRegime.class);
+    weights.put(stratified, 1.0 - unstableShare);
+    weights.put(FlowRegime.ANNULAR, unstableShare * (1.0 - slugShare));
+    weights.put(FlowRegime.SLUG, unstableShare * slugShare);
+    return weights;
+  }
+
+  /**
+   * Linear ramp from zero to one across a band centred on a transition.
+   *
+   * @param value the criterion value
+   * @param centre the transition value
+   * @param halfWidth half the band width, in the same units as the value
+   * @return zero below the band, one above it, linear in between
+   */
+  private static double rampWeight(double value, double centre, double halfWidth) {
+    if (halfWidth <= 0.0) {
+      return value > centre ? 1.0 : 0.0;
+    }
+    double weight = (value - (centre - halfWidth)) / (2.0 * halfWidth);
+    return Math.max(0.0, Math.min(1.0, weight));
   }
 
   /**
@@ -230,11 +427,12 @@ public class FlowRegimeDetector implements Serializable {
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
    * @param mu_L Liquid viscosity (Pa·s)
+   * @param mu_G Gas viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
   private FlowRegime detectHorizontalFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
-      double rho_G, double mu_L, double sigma) {
+      double rho_G, double mu_L, double mu_G, double sigma) {
     double U_M = U_SL + U_SG;
 
     // Dimensionless parameters
@@ -254,21 +452,31 @@ public class FlowRegimeDetector implements Serializable {
       return FlowRegime.DISPERSED_BUBBLE;
     }
 
-    // Check for annular/mist flow (high gas rate)
-    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
-      return FlowRegime.ANNULAR;
-    }
+    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
 
-    // Check for slug vs stratified transition
-    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
-
-    if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
-      // Intermittent (slug) flow
-      return FlowRegime.SLUG;
+    if (useEquilibriumLevelAnnularTransition) {
+      // Taitel-Dukler transition B, with the Barnea (1987) blockage criterion. Once the
+      // Kelvin-Helmholtz instability has lifted the stratified layer the branch is annular only if
+      // the liquid is too thin to bridge the bore; otherwise it forms a slug. The level criterion
+      // alone allows anything below half a diameter, which admits annular flow at liquid fractions
+      // no gas stream could hold as a film.
+      if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
+        return bridgesTheBore(h_L, D) ? FlowRegime.SLUG : FlowRegime.ANNULAR;
+      }
+    } else {
+      // Legacy path: the vertical droplet-entrainment criterion, checked ahead of the
+      // stratified/slug transition. See setUseEquilibriumLevelAnnularTransition for why this
+      // over-calls annular in horizontal flow.
+      if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
+        return FlowRegime.ANNULAR;
+      }
+      if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
+        return FlowRegime.SLUG;
+      }
     }
 
     // Stratified flow - check smooth vs wavy transition
-    if (isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L)) {
+    if (isWavyTransition(U_SL, U_SG, h_L, D, theta, rho_L, rho_G, mu_L)) {
       return FlowRegime.STRATIFIED_WAVY;
     }
 
@@ -289,11 +497,12 @@ public class FlowRegimeDetector implements Serializable {
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
    * @param mu_L Liquid viscosity (Pa·s)
+   * @param mu_G Gas viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
   private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
-      double rho_G, double mu_L, double sigma) {
+      double rho_G, double mu_L, double mu_G, double sigma) {
     boolean isUpward = theta > 0;
 
     // Check for dispersed bubble
@@ -325,13 +534,13 @@ public class FlowRegimeDetector implements Serializable {
 
     } else {
       // Downward flow: stratified, slug, annular
-      double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+      double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
 
       if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
         return FlowRegime.SLUG;
       }
 
-      if (isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L)) {
+      if (isWavyTransition(U_SL, U_SG, h_L, D, theta, rho_L, rho_G, mu_L)) {
         return FlowRegime.STRATIFIED_WAVY;
       }
 
@@ -516,67 +725,114 @@ public class FlowRegimeDetector implements Serializable {
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
    * @param mu_L liquid viscosity [Pa.s]
+   * @param mu_G gas viscosity [Pa.s]
    * @param theta pipe inclination angle [rad]
    * @return estimated liquid level [m]
    */
   private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G,
-      double mu_L, double theta) {
-    // Simplified momentum balance for stratified flow
-    // Iterative solution for liquid level h_L
+      double mu_L, double mu_G, double theta) {
+    double low = 0.01 * D;
+    double high = 0.99 * D;
 
-    double h_L = 0.5 * D; // Initial guess
+    double residLow = stratifiedMomentumResidual(low, U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
+    double residHigh = stratifiedMomentumResidual(high, U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
 
-    for (int iter = 0; iter < 20; iter++) {
-      double h_prev = h_L;
+    if (!isUsableResidual(residLow) || !isUsableResidual(residHigh)) {
+      return 0.5 * D;
+    }
 
-      // Geometric parameters
-      double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
-      double A_L = D * D / 8.0 * (beta - Math.sin(beta));
-      double A_G = PI * D * D / 4.0 - A_L;
-      double S_L = D * beta / 2.0; // Wetted perimeter liquid
-      double S_G = D * (PI - beta / 2.0); // Wetted perimeter gas
-      double S_i = D * Math.sin(beta / 2.0); // Interface width
+    // No sign change means the balance has no interior root; the closer wall is the best estimate.
+    if (residLow * residHigh > 0.0) {
+      return Math.abs(residLow) <= Math.abs(residHigh) ? low : high;
+    }
 
-      if (A_L < 1e-10 || A_G < 1e-10) {
-        break;
+    for (int iter = 0; iter < 60; iter++) {
+      double mid = 0.5 * (low + high);
+      double residMid = stratifiedMomentumResidual(mid, U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
+      if (!isUsableResidual(residMid)) {
+        return mid;
       }
 
-      double U_L = U_SL * PI * D * D / 4.0 / A_L;
-      double U_G = U_SG * PI * D * D / 4.0 / A_G;
+      if (residLow * residMid <= 0.0) {
+        high = mid;
+        residHigh = residMid;
+      } else {
+        low = mid;
+        residLow = residMid;
+      }
 
-      // Friction factors
-      double D_hL = 4.0 * A_L / S_L;
-      double D_hG = 4.0 * A_G / (S_G + S_i);
-
-      double Re_L = rho_L * Math.abs(U_L) * D_hL / mu_L;
-      double Re_G = rho_G * Math.abs(U_G) * D_hG / (mu_L * 0.01);
-
-      double f_L = Re_L > 2000 ? 0.046 * Math.pow(Re_L, -0.2) : 16.0 / Math.max(Re_L, 1);
-      double f_G = Re_G > 2000 ? 0.046 * Math.pow(Re_G, -0.2) : 16.0 / Math.max(Re_G, 1);
-      double f_i = f_G; // Interface friction
-
-      // Shear stresses
-      double tau_wL = f_L * rho_L * U_L * Math.abs(U_L) / 2.0;
-      double tau_wG = f_G * rho_G * U_G * Math.abs(U_G) / 2.0;
-      double tau_i = f_i * rho_G * (U_G - U_L) * Math.abs(U_G - U_L) / 2.0;
-
-      // Combined momentum balance
-      double deltaRho = rho_L - rho_G;
-      double gravity_term = deltaRho * GRAVITY * Math.sin(theta);
-
-      // Residual
-      double resid = (-tau_wL * S_L + tau_i * S_i) / A_L - (-tau_wG * S_G - tau_i * S_i) / A_G - gravity_term;
-
-      // Adjust h_L
-      h_L = h_L - 0.1 * D * Math.signum(resid);
-      h_L = Math.max(0.01 * D, Math.min(0.99 * D, h_L));
-
-      if (Math.abs(h_L - h_prev) < 1e-6 * D) {
+      if (high - low < 1e-9 * D) {
         break;
       }
     }
 
-    return h_L;
+    return 0.5 * (low + high);
+  }
+
+  /**
+   * Whether a residual can be used to bracket a root.
+   *
+   * @param residual the momentum residual
+   * @return true when the value is finite
+   */
+  private static boolean isUsableResidual(double residual) {
+    return !Double.isNaN(residual) && !Double.isInfinite(residual);
+  }
+
+  /**
+   * Combined gas and liquid momentum residual for a stratified layer of a given depth.
+   *
+   * <p>
+   * The equilibrium level is the depth at which this vanishes.
+   * </p>
+   *
+   * @param h_L liquid height, in m
+   * @param U_SL superficial liquid velocity, in m/s
+   * @param U_SG superficial gas velocity, in m/s
+   * @param D pipe diameter, in m
+   * @param rho_L liquid density, in kg/m3
+   * @param rho_G gas density, in kg/m3
+   * @param mu_L liquid viscosity, in Pa.s
+   * @param mu_G gas viscosity, in Pa.s
+   * @param theta inclination, in radians
+   * @return the momentum residual, or NaN when the geometry is degenerate
+   */
+  private double stratifiedMomentumResidual(double h_L, double U_SL, double U_SG, double D, double rho_L, double rho_G,
+      double mu_L, double mu_G, double theta) {
+    double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
+    double A_L = D * D / 8.0 * (beta - Math.sin(beta));
+    double A_G = PI * D * D / 4.0 - A_L;
+    double S_L = D * beta / 2.0; // Wetted perimeter liquid
+    double S_G = D * (PI - beta / 2.0); // Wetted perimeter gas
+    double S_i = D * Math.sin(beta / 2.0); // Interface width
+
+    if (A_L < 1e-10 || A_G < 1e-10) {
+      return Double.NaN;
+    }
+
+    double U_L = U_SL * PI * D * D / 4.0 / A_L;
+    double U_G = U_SG * PI * D * D / 4.0 / A_G;
+
+    double D_hL = 4.0 * A_L / S_L;
+    double D_hG = 4.0 * A_G / (S_G + S_i);
+
+    double Re_L = rho_L * Math.abs(U_L) * D_hL / mu_L;
+    // Only reached when the section carries no gas-viscosity value, as in a hand-built fixture.
+    double gasViscosity = mu_G > 0.0 ? mu_G : mu_L * DEGENERATE_GAS_VISCOSITY_FRACTION;
+    double Re_G = rho_G * Math.abs(U_G) * D_hG / gasViscosity;
+
+    double f_L = Re_L > 2000 ? 0.046 * Math.pow(Re_L, -0.2) : 16.0 / Math.max(Re_L, 1);
+    double f_G = Re_G > 2000 ? 0.046 * Math.pow(Re_G, -0.2) : 16.0 / Math.max(Re_G, 1);
+    double f_i = f_G; // Interface friction
+
+    double tau_wL = f_L * rho_L * U_L * Math.abs(U_L) / 2.0;
+    double tau_wG = f_G * rho_G * U_G * Math.abs(U_G) / 2.0;
+    double tau_i = f_i * rho_G * (U_G - U_L) * Math.abs(U_G - U_L) / 2.0;
+
+    double deltaRho = rho_L - rho_G;
+    double gravity_term = deltaRho * GRAVITY * Math.sin(theta);
+
+    return (-tau_wL * S_L + tau_i * S_i) / A_L - (-tau_wG * S_G - tau_i * S_i) / A_G - gravity_term;
   }
 
   /**
@@ -590,8 +846,27 @@ public class FlowRegimeDetector implements Serializable {
    * @return true if Kelvin-Helmholtz unstable condition exists
    */
   private boolean isKelvinHelmholtzUnstable(double U_SG, double h_L, double D, double rho_L, double rho_G) {
+    return kelvinHelmholtzMargin(U_SG, h_L, D, rho_L, rho_G) > 1.0;
+  }
+
+  /**
+   * Ratio of the actual gas velocity to the Kelvin-Helmholtz critical velocity.
+   *
+   * <p>
+   * The boolean instability test is the sign of this ratio about unity. Returning the ratio itself lets the caller
+   * blend closures across the transition instead of switching at a point.
+   * </p>
+   *
+   * @param U_SG superficial gas velocity, in m/s
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @param rho_L liquid density, in kg/m3
+   * @param rho_G gas density, in kg/m3
+   * @return the velocity ratio, or 0 when the geometry is degenerate
+   */
+  private double kelvinHelmholtzMargin(double U_SG, double h_L, double D, double rho_L, double rho_G) {
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
-      return false;
+      return 0.0;
     }
 
     double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
@@ -599,49 +874,111 @@ public class FlowRegimeDetector implements Serializable {
     double S_i = D * Math.sin(beta / 2.0);
 
     if (A_G < 1e-10) {
-      return false;
+      return 0.0;
     }
 
     double U_G = U_SG * PI * D * D / 4.0 / A_G;
-    double h_G = D - h_L;
 
-    // Kelvin-Helmholtz criterion
+    // Taitel and Dukler (1976) transition A. dA_L/dh_L is the interface width S_i, and C2 accounts
+    // for the gas being accelerated over the wave crest. Note there is no extra length inside the
+    // root: the group under it is a velocity squared.
     double deltaRho = rho_L - rho_G;
-    double U_G_crit = Math.sqrt(deltaRho * GRAVITY * h_G * A_G / (rho_G * S_i));
+    double C2 = 1.0 - h_L / D;
+    double U_G_crit = C2 * Math.sqrt(deltaRho * GRAVITY * A_G / (rho_G * S_i));
+    if (U_G_crit <= 0.0) {
+      return 0.0;
+    }
 
-    return U_G > U_G_crit;
+    return U_G / U_G_crit;
   }
 
   /**
    * Check transition from smooth to wavy stratified.
    *
-   * @param U_SG superficial gas velocity
-   * @param h_L liquid height
-   * @param D pipe diameter
-   * @param rho_L liquid density
-   * @param rho_G gas density
-   * @param mu_L liquid viscosity
+   * <p>
+   * Taitel and Dukler (1976) transition D, from Jeffreys' sheltering theory: waves grow when the gas can feed energy to
+   * the interface faster than viscous dissipation in the liquid removes it,
+   * {@code U_G > sqrt(4 nu_L (rho_L - rho_G) g cos(theta) / (s rho_G U_L))}. The group is a velocity squared only when
+   * the viscosity is kinematic and the divisor carries the liquid velocity; both were wrong here, which put the
+   * threshold near 52 m/s for air and water and left an ordinary wavy line reported as smooth.
+   * </p>
+   *
+   * @param U_SL superficial liquid velocity, in m/s
+   * @param U_SG superficial gas velocity, in m/s
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @param theta inclination, in radians
+   * @param rho_L liquid density, in kg/m3
+   * @param rho_G gas density, in kg/m3
+   * @param mu_L liquid dynamic viscosity, in Pa.s
    * @return true if transition from smooth to wavy stratified occurs
    */
-  private boolean isWavyTransition(double U_SG, double h_L, double D, double rho_L, double rho_G, double mu_L) {
+  private boolean isWavyTransition(double U_SL, double U_SG, double h_L, double D, double theta, double rho_L,
+      double rho_G, double mu_L) {
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
       return false;
     }
 
-    // Jeffreys' sheltering criterion for wave generation
-    double s = 0.01; // Sheltering coefficient
-
     double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
-    double A_G = PI * D * D / 4.0 - D * D / 8.0 * (beta - Math.sin(beta));
-    double U_G = U_SG * PI * D * D / 4.0 / A_G;
+    double A = PI * D * D / 4.0;
+    double A_L = D * D / 8.0 * (beta - Math.sin(beta));
+    double A_G = A - A_L;
+    if (A_L < 1e-12 || A_G < 1e-12) {
+      return false;
+    }
+
+    double U_G = U_SG * A / A_G;
+    double U_L = U_SL * A / A_L;
+    if (U_L <= 0.0) {
+      return false;
+    }
 
     double deltaRho = rho_L - rho_G;
-    double mu_G = mu_L * 0.01;
+    double cosTheta = Math.cos(theta);
+    if (deltaRho <= 0.0 || cosTheta <= 0.0) {
+      return false;
+    }
 
-    // Wave speed and critical velocity
-    double U_G_crit = Math.sqrt(4.0 * mu_L * deltaRho * GRAVITY / (s * rho_G * rho_G));
+    double nu_L = mu_L / rho_L;
+    double U_G_crit = Math.sqrt(4.0 * nu_L * deltaRho * GRAVITY * cosTheta / (SHELTERING_COEFFICIENT * rho_G * U_L));
 
     return U_G > U_G_crit;
+  }
+
+  /**
+   * Whether the liquid at this level can bridge the bore, so annular flow cannot be sustained.
+   *
+   * <p>
+   * Barnea (1987) blockage criterion, evaluated on the same stratified equilibrium level that transition B uses — the
+   * approximation already made there. Annular flow is impossible once the in-situ liquid fraction reaches
+   * {@value #ANNULAR_BRIDGING_HOLDUP}. This is strictly stronger than the {@code h_L/D < 0.5} level test, which
+   * corresponds to a liquid fraction of 0.5.
+   * </p>
+   *
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @return true when the liquid fraction is at or above the bridging limit
+   */
+  private boolean bridgesTheBore(double h_L, double D) {
+    return liquidAreaFraction(h_L, D) >= ANNULAR_BRIDGING_HOLDUP;
+  }
+
+  /**
+   * In-situ liquid area fraction of a circular segment filled to {@code h_L}.
+   *
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @return the liquid area fraction, between 0 and 1
+   */
+  private double liquidAreaFraction(double h_L, double D) {
+    if (h_L <= 0.0 || D <= 0.0) {
+      return 0.0;
+    }
+    if (h_L >= D) {
+      return 1.0;
+    }
+    double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
+    return (beta - Math.sin(beta)) / (2.0 * PI);
   }
 
   /**

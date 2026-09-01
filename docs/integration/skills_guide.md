@@ -11,7 +11,7 @@ description: "Comprehensive guide to skills and agents in NeqSim's agentic engin
 > |------------|---------|
 > | **Use an existing core skill** | Nothing — workspace agents load them automatically from the `.github/skills/` discovery layer |
 > | **Create a new core skill** | `neqsim new-skill "name"` → edit SKILL.md → register in README + copilot-instructions → PR |
-> | **Install a community skill** | `neqsim skill install neqsim-topic` → canonical install in `~/.neqsim/skills` → export with `--target vscode` or `--target generic` |
+> | **Install a community skill** | `neqsim skill install neqsim-topic` → canonical install in `~/.neqsim/skills` → export with `--target vscode` or `--target generic`. If the skill ships a Python package (`pyproject.toml`), the installer downloads it whole and `pip install -e`'s it automatically — no separate manual install step. |
 > | **Install a community agent** | `neqsim agent install agent-name` → canonical install in `~/.neqsim/agents` → export with `--target vscode` or `--target generic` |
 > | **Check PaperLab commands** | `neqsim paperlab` prints help only; this confirms the command exists but does not install anything |
 > | **Use PaperLab in VS Code** | `neqsim paperlab install --vscode` for the `@paperlab` gateway; add `--include-internal` only for direct specialist-agent compatibility |

@@ -1,5 +1,7 @@
 package neqsim.pvtsimulation.flowassurance;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,8 +36,7 @@ import com.google.gson.GsonBuilder;
  * The thermodynamics (solubility products, ion pairing, Debye-Hückel A parameter) are taken directly from a configured
  * {@link ScalePredictionCalculator}, so the starting saturation state is identical to that class. The activity model
  * can optionally be upgraded from the Davies equation (valid to ionic strength I &asymp; 0.5 mol/kg) to an extended
- * Debye-Hückel "B-dot" (Helgeson) model that is usable to I &asymp; 3 mol/kg, which matters for high-salinity formation
- * waters.
+ * Debye-Hückel "B-dot" model or to a published-data-validated binary Pitzer model for NaCl-dominated formation waters.
  * </p>
  *
  * <p>
@@ -76,7 +77,9 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     /** Davies equation (valid to I &asymp; 0.5 mol/kg). */
     DAVIES,
     /** Extended Debye-Hückel "B-dot" (Helgeson) model (usable to I &asymp; 3 mol/kg). */
-    BDOT
+    BDOT,
+    /** Binary Pitzer model with trace-ion mapping for NaCl-dominated high-salinity brines. */
+    PITZER_BINARY
   }
 
   // Ion index layout for the free-concentration vector.
@@ -103,6 +106,9 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   private final ScalePredictionCalculator predictor;
   private ActivityModel activityModel = ActivityModel.DAVIES;
 
+  /** Optional user-supplied Pitzer ionic strength in mol/kg water. */
+  private double pitzerIonicStrengthMolal = Double.NaN;
+
   /** Effective ion-size parameter å (Å) for the B-dot model. */
   private double bdotIonSize = 5.0;
 
@@ -115,9 +121,14 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   private double convergenceThreshold = 1.0e-15;
 
   private boolean solved = false;
+  private int iterationsUsed = 0;
+  private boolean iterationLimitReached = false;
+  private double maximumComplementarityViolation = Double.NaN;
+  private double maximumIonBalanceResidualMolPerL = Double.NaN;
   private double divalentGamma = Double.NaN;
   private final Map<String, MineralResult> results = new LinkedHashMap<String, MineralResult>();
   private final Map<String, Double> residualFreeIons = new LinkedHashMap<String, Double>();
+  private final Map<String, Double> activityCoefficients = new LinkedHashMap<String, Double>();
 
   /**
    * Creates a solver bound to a configured {@link ScalePredictionCalculator}.
@@ -151,6 +162,27 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   public MultiMineralScaleEquilibrium setBdotParameters(double ionSizeAngstrom, double bDot) {
     this.bdotIonSize = ionSizeAngstrom;
     this.bdotB = bDot;
+    this.solved = false;
+    return this;
+  }
+
+  /**
+   * Overrides the ionic strength used by {@link ActivityModel#PITZER_BINARY}.
+   *
+   * <p>
+   * Without an override, the solver uses analytical sodium as the NaCl background, falling back to TDS expressed as
+   * NaCl. Molality and molarity are treated as equal at screening level; supply a density-corrected molality here for
+   * concentrated or compressed brines.
+   * </p>
+   *
+   * @param ionicStrengthMolal ionic strength in mol/kg water
+   * @return this instance for chaining
+   */
+  public MultiMineralScaleEquilibrium setPitzerIonicStrengthMolal(double ionicStrengthMolal) {
+    if (ionicStrengthMolal < 0.0 || Double.isNaN(ionicStrengthMolal)) {
+      throw new IllegalArgumentException("ionicStrengthMolal must be non-negative");
+    }
+    this.pitzerIonicStrengthMolal = ionicStrengthMolal;
     this.solved = false;
     return this;
   }
@@ -192,7 +224,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     if (activityModel == ActivityModel.DAVIES) {
       return predictor.getDivalentActivityCoefficient();
     }
-    // Extended Debye-Hückel "B-dot" (Helgeson): log10 γ = -A z² √I/(1+å B √I) + ḃ I
+    // Extended Debye-Hückel "B-dot" (Helgeson): log10 gamma = -A z² sqrt(I)/(1+a B sqrt(I)) + b-dot I
     double a = predictor.getDebyeHuckelAParameter();
     double sqrtI = Math.sqrt(Math.max(ionicStrength, 0.0));
     double z2 = 4.0;
@@ -209,11 +241,26 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     predictor.calculate();
     results.clear();
     residualFreeIons.clear();
+    activityCoefficients.clear();
+    iterationsUsed = 0;
+    iterationLimitReached = false;
+    maximumComplementarityViolation = Double.NaN;
+    maximumIonBalanceResidualMolPerL = Double.NaN;
 
     double ionicStrength = predictor.getIonicStrengthMolPerL();
-    double gamma2 = divalentActivityCoefficient(ionicStrength);
+    double gamma2 = Double.NaN;
+    PitzerScaleActivityModel pitzer = null;
+    if (activityModel == ActivityModel.PITZER_BINARY) {
+      double pitzerI = estimatePitzerIonicStrengthMolal();
+      pitzer = new PitzerScaleActivityModel(predictor.getTemperatureKelvin(), pitzerI,
+          predictor.getDebyeHuckelAParameter());
+      gamma2 = pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.CALCIUM);
+      putPitzerActivityCoefficients(pitzer);
+    } else {
+      gamma2 = divalentActivityCoefficient(ionicStrength);
+      activityCoefficients.put("divalent", gamma2);
+    }
     divalentGamma = gamma2;
-    double gamma2sq = gamma2 * gamma2;
 
     // Free ion vector (mol/L). Ca, SO4, CO3 use ion-pairing-corrected free values; Ba, Sr, Fe use
     // total analytical values (they are not ion-paired in the predictor).
@@ -224,18 +271,24 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     free[FE] = Math.max(predictor.getTotalIronMolPerL(), 0.0);
     free[SO4] = Math.max(predictor.getFreeSulphateMolPerL(), 0.0);
     free[CO3] = Math.max(predictor.getFreeCarbonateMolPerL(), 0.0);
+    double[] initialFree = free.clone();
 
     // Mineral definitions: {cation index, anion index, Ksp, molar mass, name, formula}.
     List<Mineral> minerals = new ArrayList<Mineral>();
-    addMineral(minerals, BA, SO4, predictor.getKspBarite(), MW_BASO4, "BaSO4", "barite", free);
-    addMineral(minerals, SR, SO4, predictor.getKspCelestite(), MW_SRSO4, "SrSO4", "celestite", free);
-    addMineral(minerals, CA, SO4, predictor.getKspAnhydrite(), MW_CASO4, "CaSO4", "anhydrite", free);
-    addMineral(minerals, CA, CO3, predictor.getKspCalcite(), MW_CACO3, "CaCO3", "calcite", free);
-    addMineral(minerals, FE, CO3, predictor.getKspSiderite(), MW_FECO3, "FeCO3", "siderite", free);
+    addMineral(minerals, BA, SO4, predictor.getKspBarite(), MW_BASO4, "BaSO4", "barite", free,
+        activityProduct(pitzer, PitzerScaleActivityModel.Ion.BARIUM, PitzerScaleActivityModel.Ion.SULPHATE, gamma2));
+    addMineral(minerals, SR, SO4, predictor.getKspCelestite(), MW_SRSO4, "SrSO4", "celestite", free,
+        activityProduct(pitzer, PitzerScaleActivityModel.Ion.STRONTIUM, PitzerScaleActivityModel.Ion.SULPHATE, gamma2));
+    addMineral(minerals, CA, SO4, predictor.getKspAnhydrite(), MW_CASO4, "CaSO4", "anhydrite", free,
+        activityProduct(pitzer, PitzerScaleActivityModel.Ion.CALCIUM, PitzerScaleActivityModel.Ion.SULPHATE, gamma2));
+    addMineral(minerals, CA, CO3, predictor.getKspCalcite(), MW_CACO3, "CaCO3", "calcite", free,
+        activityProduct(pitzer, PitzerScaleActivityModel.Ion.CALCIUM, PitzerScaleActivityModel.Ion.CARBONATE, gamma2));
+    addMineral(minerals, FE, CO3, predictor.getKspSiderite(), MW_FECO3, "FeCO3", "siderite", free,
+        activityProduct(pitzer, PitzerScaleActivityModel.Ion.FERROUS, PitzerScaleActivityModel.Ion.CARBONATE, gamma2));
 
     // Record initial (pre-precipitation) saturation indices.
     for (Mineral m : minerals) {
-      m.initialSI = saturationIndex(free[m.cation], free[m.anion], gamma2sq, m.ksp);
+      m.initialSI = saturationIndex(free[m.cation], free[m.anion], m.activityCoefficientProduct, m.ksp);
     }
 
     // Coupled precipitation / redissolution by greedy coordinate descent: at every iteration the
@@ -245,6 +298,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     // competition (e.g. barite, celestite and anhydrite drawing on one sulphate pool), which a
     // simultaneous Gauss-Seidel sweep can stall on.
     double convThreshold = convergenceThreshold;
+    boolean stoppedBeforeIterationLimit = false;
     for (int iter = 0; iter < maxIterations; iter++) {
       Mineral best = null;
       double bestAbs = 0.0;
@@ -255,7 +309,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
         double an = free[m.anion];
 
         // Equilibrium extent ξ for (cat-ξ)(an-ξ) = Ksp/γ² (signed: ξ<0 means redissolution).
-        double kPrime = m.ksp / gamma2sq;
+        double kPrime = m.ksp / m.activityCoefficientProduct;
         double b = cat + an;
         double c = cat * an - kPrime;
         double disc = b * b - 4.0 * c;
@@ -290,6 +344,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
       }
 
       if (best == null || bestAbs < convThreshold) {
+        stoppedBeforeIterationLimit = true;
         break;
       }
 
@@ -306,12 +361,17 @@ public class MultiMineralScaleEquilibrium implements Serializable {
       if (free[best.anion] < 0.0) {
         free[best.anion] = 0.0;
       }
+      iterationsUsed++;
     }
+    iterationLimitReached = !stoppedBeforeIterationLimit && iterationsUsed >= maxIterations;
 
-    // Store results.
+    // Store results and evaluate the pure-phase complementarity residual. USGS PHREEQC
+    // treats absent equilibrium phases as inequality constraints (SI <= target) and phases
+    // present in the stable assemblage as equality constraints (SI = target).
+    maximumComplementarityViolation = 0.0;
     for (Mineral m : minerals) {
       double massMgL = m.precipitatedMolL * m.molarMass * 1000.0;
-      double finalSI = saturationIndex(free[m.cation], free[m.anion], gamma2sq, m.ksp);
+      double finalSI = saturationIndex(free[m.cation], free[m.anion], m.activityCoefficientProduct, m.ksp);
       MineralResult r = new MineralResult();
       r.name = m.name;
       r.formula = m.formula;
@@ -320,9 +380,27 @@ public class MultiMineralScaleEquilibrium implements Serializable {
       r.precipitatedMassGrams = massMgL / 1000.0 * waterVolumeLitres;
       r.initialSI = m.initialSI;
       r.finalSI = finalSI;
+      r.activityCoefficientProduct = m.activityCoefficientProduct;
       r.limitingIonExhausted = (free[m.cation] <= 10.0 * EPS || free[m.anion] <= 10.0 * EPS)
           && m.precipitatedMolL > EPS;
       results.put(m.name, r);
+
+      double violation = m.precipitatedMolL > EPS ? Math.abs(finalSI) : Math.max(finalSI, 0.0);
+      if (!Double.isFinite(violation)) {
+        violation = Double.POSITIVE_INFINITY;
+      }
+      maximumComplementarityViolation = Math.max(maximumComplementarityViolation, violation);
+    }
+
+    double[] precipitatedByIon = new double[free.length];
+    for (Mineral m : minerals) {
+      precipitatedByIon[m.cation] += m.precipitatedMolL;
+      precipitatedByIon[m.anion] += m.precipitatedMolL;
+    }
+    maximumIonBalanceResidualMolPerL = 0.0;
+    for (int ion = 0; ion < free.length; ion++) {
+      double balanceResidual = initialFree[ion] - free[ion] - precipitatedByIon[ion];
+      maximumIonBalanceResidualMolPerL = Math.max(maximumIonBalanceResidualMolPerL, Math.abs(balanceResidual));
     }
 
     residualFreeIons.put("Ca++", free[CA]);
@@ -349,7 +427,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
    * @param free free-ion vector
    */
   private void addMineral(List<Mineral> minerals, int cation, int anion, double ksp, double molarMass, String name,
-      String formula, double[] free) {
+      String formula, double[] free, double activityCoefficientProduct) {
     if (free[cation] <= EPS || free[anion] <= EPS || !(ksp > 0.0) || Double.isNaN(ksp)) {
       return;
     }
@@ -360,20 +438,52 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     m.molarMass = molarMass;
     m.name = name;
     m.formula = formula;
+    m.activityCoefficientProduct = activityCoefficientProduct;
     minerals.add(m);
   }
 
+  private double activityProduct(PitzerScaleActivityModel pitzer, PitzerScaleActivityModel.Ion cation,
+      PitzerScaleActivityModel.Ion anion, double commonDivalentGamma) {
+    if (pitzer == null) {
+      return commonDivalentGamma * commonDivalentGamma;
+    }
+    return pitzer.getActivityCoefficientProduct(cation, anion);
+  }
+
+  private double estimatePitzerIonicStrengthMolal() {
+    if (!Double.isNaN(pitzerIonicStrengthMolal)) {
+      return pitzerIonicStrengthMolal;
+    }
+    double sodiumMolPerL = predictor.getTotalSodiumMolPerL();
+    if (sodiumMolPerL > 0.0) {
+      return sodiumMolPerL;
+    }
+    return Math.max(0.0, predictor.getTotalDissolvedSolidsMgPerL() / 58440.0);
+  }
+
+  private void putPitzerActivityCoefficients(PitzerScaleActivityModel pitzer) {
+    activityCoefficients.put("Na+", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.SODIUM));
+    activityCoefficients.put("Cl-", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.CHLORIDE));
+    activityCoefficients.put("Ca++", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.CALCIUM));
+    activityCoefficients.put("Ba++", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.BARIUM));
+    activityCoefficients.put("Sr++", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.STRONTIUM));
+    activityCoefficients.put("Fe++", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.FERROUS));
+    activityCoefficients.put("SO4--", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.SULPHATE));
+    activityCoefficients.put("CO3--", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.CARBONATE));
+    activityCoefficients.put("HCO3-", pitzer.getIonActivityCoefficient(PitzerScaleActivityModel.Ion.BICARBONATE));
+  }
+
   /**
-   * Computes the saturation index SI = log10(γ² · cCat · cAn / Ksp).
+   * Computes the saturation index SI = log10(gammaCat gammaAn cCat cAn / Ksp).
    *
    * @param cCat free cation molarity
    * @param cAn free anion molarity
-   * @param gamma2sq squared divalent activity coefficient
+   * @param activityCoefficientProduct cation-anion activity-coefficient product
    * @param ksp solubility product
    * @return saturation index
    */
-  private double saturationIndex(double cCat, double cAn, double gamma2sq, double ksp) {
-    double iap = gamma2sq * Math.max(cCat, EPS) * Math.max(cAn, EPS);
+  private double saturationIndex(double cCat, double cAn, double activityCoefficientProduct, double ksp) {
+    double iap = activityCoefficientProduct * Math.max(cCat, EPS) * Math.max(cAn, EPS);
     if (iap <= 0.0 || ksp <= 0.0) {
       return Double.NaN;
     }
@@ -450,13 +560,106 @@ public class MultiMineralScaleEquilibrium implements Serializable {
   }
 
   /**
-   * Returns the divalent-ion activity coefficient used in the last solve.
+   * Returns the number of coordinate-descent updates used by the last solve.
    *
-   * @return divalent activity coefficient, or NaN if not solved
+   * @return iteration count
+   */
+  public int getIterationCount() {
+    ensureSolved();
+    return iterationsUsed;
+  }
+
+  /**
+   * Returns whether the last solve exhausted the configured iteration limit.
+   *
+   * <p>
+   * This is an algorithmic stop diagnostic. Call {@link #getMaximumComplementarityViolation()} and
+   * {@link #getMaximumIonBalanceResidualMolPerL()} to apply case-specific scientific acceptance tolerances.
+   * </p>
+   *
+   * @return true if the solver stopped at {@code maxIterations}
+   */
+  public boolean hasReachedIterationLimit() {
+    ensureSolved();
+    return iterationLimitReached;
+  }
+
+  /**
+   * Returns the maximum pure-phase complementarity violation in saturation-index units.
+   *
+   * <p>
+   * For a mineral with precipitated solid, the violation is {@code abs(SI)}. For an absent solid, it is
+   * {@code max(SI, 0)}, so undersaturation is admissible.
+   * </p>
+   *
+   * @return maximum complementarity violation in log10 saturation-index units
+   */
+  public double getMaximumComplementarityViolation() {
+    ensureSolved();
+    return maximumComplementarityViolation;
+  }
+
+  /**
+   * Returns the maximum absolute free-ion material-balance residual from precipitation.
+   *
+   * <p>
+   * The residual compares each initial free-ion amount with the final free amount plus all 1:1 mineral extents that
+   * consumed that ion. Ion-pairing and aqueous speciation are frozen by the configured predictor before this standalone
+   * precipitation solve.
+   * </p>
+   *
+   * @return maximum absolute ion-balance residual in mol/L
+   */
+  public double getMaximumIonBalanceResidualMolPerL() {
+    ensureSolved();
+    return maximumIonBalanceResidualMolPerL;
+  }
+
+  /**
+   * Returns the common divalent coefficient used by Davies/B-dot, or the calcium coefficient for binary Pitzer.
+   *
+   * @return common divalent or representative calcium activity coefficient, or NaN if not solved
    */
   public double getDivalentActivityCoefficientUsed() {
     ensureSolved();
     return divalentGamma;
+  }
+
+  /**
+   * Returns the ion activity coefficients used in the last solve.
+   *
+   * <p>
+   * Davies and B-dot return one entry named {@code divalent}; the binary Pitzer model returns coefficients for each
+   * supported ion.
+   * </p>
+   *
+   * @return copy of the activity-coefficient map
+   */
+  public Map<String, Double> getActivityCoefficientsUsed() {
+    ensureSolved();
+    return new LinkedHashMap<String, Double>(activityCoefficients);
+  }
+
+  /**
+   * Invalidates cached equilibrium and diagnostic state after deserialization.
+   *
+   * <p>
+   * Older serialized objects do not contain the diagnostic fields. Requiring a lazy re-solve prevents their
+   * default-zero values from being interpreted as evidence of convergence and also prevents stale cached results after
+   * a version transition.
+   * </p>
+   *
+   * @param stream serialized object input
+   * @throws IOException if the object cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    stream.defaultReadObject();
+    solved = false;
+    iterationsUsed = 0;
+    iterationLimitReached = false;
+    maximumComplementarityViolation = Double.NaN;
+    maximumIonBalanceResidualMolPerL = Double.NaN;
   }
 
   /**
@@ -482,6 +685,13 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     conditions.put("ionicStrength_molL", predictor.getIonicStrengthMolPerL());
     conditions.put("activityModel", activityModel.name());
     conditions.put("divalentActivityCoefficient", divalentGamma);
+    conditions.put("activityCoefficients", activityCoefficients);
+    if (activityModel == ActivityModel.PITZER_BINARY) {
+      conditions.put("pitzerIonicStrength_molKg", estimatePitzerIonicStrengthMolal());
+      conditions.put("representativeCalciumActivityCoefficient", divalentGamma);
+      conditions.put("modelScope",
+          "Binary Pitzer trace-ion mapping for NaCl-dominated brines; not full mixed-ion Pitzer");
+    }
     conditions.put("waterVolume_L", waterVolumeLitres);
     out.put("conditions", conditions);
 
@@ -491,6 +701,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
       e.put("formula", r.formula);
       e.put("initialSI", r.initialSI);
       e.put("finalSI", r.finalSI);
+      e.put("activityCoefficientProduct", r.activityCoefficientProduct);
       e.put("precipitated_molL", r.precipitatedMolPerL);
       e.put("precipitated_mgL", r.precipitatedMassMgPerL);
       e.put("precipitated_g", r.precipitatedMassGrams);
@@ -500,6 +711,13 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     out.put("minerals", mineralMap);
     out.put("totalScaleMass_mgL", getTotalScaleMassMgPerL());
     out.put("residualFreeIons_molL", residualFreeIons);
+
+    Map<String, Object> diagnostics = new LinkedHashMap<String, Object>();
+    diagnostics.put("iterationCount", iterationsUsed);
+    diagnostics.put("iterationLimitReached", iterationLimitReached);
+    diagnostics.put("maximumComplementarityViolation_SI", maximumComplementarityViolation);
+    diagnostics.put("maximumIonBalanceResidual_molL", maximumIonBalanceResidualMolPerL);
+    out.put("diagnostics", diagnostics);
 
     Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(out);
@@ -518,6 +736,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     String formula;
     double precipitatedMolL = 0.0;
     double initialSI = Double.NaN;
+    double activityCoefficientProduct = Double.NaN;
   }
 
   /**
@@ -533,6 +752,7 @@ public class MultiMineralScaleEquilibrium implements Serializable {
     private double precipitatedMassGrams;
     private double initialSI;
     private double finalSI;
+    private double activityCoefficientProduct;
     private boolean limitingIonExhausted;
 
     /**
@@ -597,6 +817,15 @@ public class MultiMineralScaleEquilibrium implements Serializable {
      */
     public double getFinalSI() {
       return finalSI;
+    }
+
+    /**
+     * Returns the cation-anion activity-coefficient product used for this mineral.
+     *
+     * @return activity-coefficient product
+     */
+    public double getActivityCoefficientProduct() {
+      return activityCoefficientProduct;
     }
 
     /**

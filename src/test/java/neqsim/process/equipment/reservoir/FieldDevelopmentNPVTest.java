@@ -125,7 +125,9 @@ public class FieldDevelopmentNPVTest {
 
     // Verify flow is within bounds
     double gasFlow = producedGasStream.getFlowRate("MSm3/day");
-    assertTrue(gasFlow >= 1.0 && gasFlow <= maxGasProduction, "Gas flow should be within adjuster bounds: " + gasFlow);
+    double flowBoundTolerance = 4.0 * Math.ulp(maxGasProduction);
+    assertTrue(gasFlow >= 1.0 - flowBoundTolerance && gasFlow <= maxGasProduction + flowBoundTolerance,
+        "Gas flow should be within adjuster bounds: " + gasFlow);
 
     // At 150 bara reservoir with max 10 MSm3/day, the outlet pressure will be
     // much higher than 30 bara since maximum flow doesn't produce enough pressure

@@ -1,7 +1,10 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -11,9 +14,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author SEROS
  * @version $Id: $Id
  */
-public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
+public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass
+    implements TransientStateParticipant<FlowInducedVibrationAnalyser.FlowInducedVibrationAnalyserState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
 
@@ -28,6 +34,17 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
    */
   public static final String[] VALID_SUPPORT_ARRANGEMENTS = new String[] { "Stiff", "Medium stiff", "Medium",
       "Flexible" };
+
+  /**
+   * Reference viscosity used by the Energy Institute fluid-viscosity factor for GVF &gt; 0.99, in centipoise.
+   *
+   * <p>
+   * The dry-gas branch of F_VF is the square root of the fluid viscosity relative to that of water (1 cP).
+   * {@code PipeBeggsAndBrills.getSegmentMixtureViscosity(int)} already returns cP, so no further unit conversion is
+   * applied.
+   * </p>
+   */
+  public static final double REFERENCE_VISCOSITY_CP = 1.0;
 
   /**
    * Informational support spacing in metres.
@@ -105,7 +122,12 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
       double FVF = 1.0;
       if (GVF > 0.88) {
         if (GVF > 0.99) {
-          FVF = Math.sqrt(pipe.getSegmentMixtureViscosity(segment) / Math.sqrt(0.001));
+          // Essentially dry gas: F_VF is referenced to the viscosity of water. getSegmentMixtureViscosity returns cP,
+          // so dividing by REFERENCE_VISCOSITY_CP (1 cP) makes the ratio dimensionless. A hydrocarbon gas at
+          // ~0.012-0.018 cP therefore gives F_VF ~ 0.11-0.13, continuing the downward trend of the 0.88-0.99 branch
+          // (which reaches 0.268 at GVF = 0.99). Any formulation that returns F_VF > 1 here is wrong: removing the
+          // liquid from a wet-gas line lowers the flow-induced-vibration driver, it does not raise it.
+          FVF = Math.sqrt(pipe.getSegmentMixtureViscosity(segment) / REFERENCE_VISCOSITY_CP);
         } else {
           FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
         }
@@ -253,5 +275,86 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
    */
   public double getSupportDistance() {
     return supportDistance;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:flow-induced-vibration:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for the concrete local analyser.
+   *
+   * @return blocking diagnostic for descendants or external online-signal operation, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != FlowInducedVibrationAnalyser.class) {
+      return "flow-induced-vibration-analyser subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return getMeasurementTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public FlowInducedVibrationAnalyserState captureTransientState() {
+    return new FlowInducedVibrationAnalyserState(getTransientStateIdentity(), supportDistance, calcSupportArrangement,
+        supportArrangement, method, pipe, segmentSet, segment, FRMSConstant, captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(FlowInducedVibrationAnalyserState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Flow-induced-vibration analyser transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Flow-induced-vibration analyser snapshot identity does not match " + getTransientStateIdentity());
+    }
+    supportDistance = snapshot.supportDistance;
+    calcSupportArrangement = snapshot.calcSupportArrangement;
+    supportArrangement = snapshot.supportArrangement;
+    method = snapshot.method;
+    pipe = snapshot.pipe;
+    segmentSet = snapshot.segmentSet;
+    segment = snapshot.segment;
+    FRMSConstant = snapshot.frmsConstant;
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable flow-induced-vibration-analyser rollback point. */
+  public static final class FlowInducedVibrationAnalyserState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final double supportDistance;
+    private final Boolean calcSupportArrangement;
+    private final String supportArrangement;
+    private final String method;
+    private final PipeBeggsAndBrills pipe;
+    private final Boolean segmentSet;
+    private final int segment;
+    private final double frmsConstant;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private FlowInducedVibrationAnalyserState(String stateIdentity, double supportDistance,
+        Boolean calcSupportArrangement, String supportArrangement, String method, PipeBeggsAndBrills pipe,
+        Boolean segmentSet, int segment, double frmsConstant, MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.supportDistance = supportDistance;
+      this.calcSupportArrangement = calcSupportArrangement;
+      this.supportArrangement = supportArrangement;
+      this.method = method;
+      this.pipe = pipe;
+      this.segmentSet = segmentSet;
+      this.segment = segment;
+      this.frmsConstant = frmsConstant;
+      this.measurementState = measurementState;
+    }
   }
 }

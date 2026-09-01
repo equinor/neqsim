@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "Complete API reference for NeqSim risk and reliability classes including RiskMatrix, BowTieModel, EquipmentReliability, MonteCarloReliability, and SIS integration."
 ---
 
-# API Reference
-
 Complete Java API reference for the Risk Simulation Framework.
 
 ---
@@ -555,5 +553,5 @@ DegradedOperationResult optResult = opt.optimizeWithEquipmentDown(failure);
 
 - [Overview](overview)
 - [Mathematical Reference](mathematical-reference)
-- [Advanced Risk Framework Tutorial](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Advanced Risk Framework Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb)
 - [Examples Index](../examples/index)

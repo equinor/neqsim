@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model name="DEXPI_branching_golden_model" uri="urn:neqsim:dexpi:2.0:DEXPI_branching_golden_model">
+    <Import prefix="Core" source="https://data.dexpi.org/models/2.0.0/Core.xml"/>
+    <Import prefix="Plant" source="https://data.dexpi.org/models/2.0.0/Plant.xml"/>
+    <Object type="Core/EngineeringModel">
+        <Components property="ConceptualModel">
+            <Object id="PlantModel1" type="Plant/PlantModel">
+                <Components property="TaggedPlantItems">
+                    <Object id="Equipment1" type="Plant/ProcessEquipment.Separator">
+                        <Data property="TagName">
+                            <String>10-VA-001</String>
+                        </Data>
+                        <Components property="Nozzles">
+                            <Object id="Equipment1Inlet" type="Plant/ProcessEquipment.Nozzle">
+                                <Components property="Nodes">
+                                    <Object id="PipingNode1" type="Plant/Piping.PipingNode"/>
+                                </Components>
+                                <Data property="SubTagName">
+                                    <String>INLET</String>
+                                </Data>
+                            </Object>
+                            <Object id="Equipment1Outlet1" type="Plant/ProcessEquipment.Nozzle">
+                                <Components property="Nodes">
+                                    <Object id="PipingNode2" type="Plant/Piping.PipingNode"/>
+                                </Components>
+                                <Data property="SubTagName">
+                                    <String>OUTLET_1</String>
+                                </Data>
+                            </Object>
+                            <Object id="Equipment1Outlet2" type="Plant/ProcessEquipment.Nozzle">
+                                <Components property="Nodes">
+                                    <Object id="PipingNode3" type="Plant/Piping.PipingNode"/>
+                                </Components>
+                                <Data property="SubTagName">
+                                    <String>OUTLET_2</String>
+                                </Data>
+                            </Object>
+                        </Components>
+                    </Object>
+                    <Object id="Equipment2" type="Plant/ProcessEquipment.CentrifugalCompressor">
+                        <Data property="TagName">
+                            <String>10-KA-001</String>
+                        </Data>
+                        <Components property="Nozzles">
+                            <Object id="Equipment2Inlet" type="Plant/ProcessEquipment.Nozzle">
+                                <Components property="Nodes">
+                                    <Object id="PipingNode4" type="Plant/Piping.PipingNode"/>
+                                </Components>
+                                <Data property="SubTagName">
+                                    <String>INLET</String>
+                                </Data>
+                            </Object>
+                            <Object id="Equipment2Outlet1" type="Plant/ProcessEquipment.Nozzle">
+                                <Components property="Nodes">
+                                    <Object id="PipingNode5" type="Plant/Piping.PipingNode"/>
+                                </Components>
+                                <Data property="SubTagName">
+                                    <String>OUTLET_1</String>
+                                </Data>
+                            </Object>
+                        </Components>
+                    </Object>
+                    <Object id="Equipment3" type="Plant/ProcessEquipment.CentrifugalPump">
+                        <Data property="TagName">
+                            <String>10-PA-001</String>
+                        </Data>
+                        <Components property="Nozzles">
+                            <Object id="Equipment3Inlet" type="Plant/ProcessEquipment.Nozzle">
+                                <Components property="Nodes">
+                                    <Object id="PipingNode6" type="Plant/Piping.PipingNode"/>
+                                </Components>
+                                <Data property="SubTagName">
+                                    <String>INLET</String>
+                                </Data>
+                            </Object>
+                            <Object id="Equipment3Outlet1" type="Plant/ProcessEquipment.Nozzle">
+                                <Components property="Nodes">
+                                    <Object id="PipingNode7" type="Plant/Piping.PipingNode"/>
+                                </Components>
+                                <Data property="SubTagName">
+                                    <String>OUTLET_1</String>
+                                </Data>
+                            </Object>
+                        </Components>
+                    </Object>
+                </Components>
+                <Components property="PipingNetworkSystems">
+                    <Object id="PipingNetworkSystem1" type="Plant/Piping.PipingNetworkSystem">
+                        <Data property="LineNumber">
+                            <String>NeqSimProcessConnections</String>
+                        </Data>
+                        <Components property="Segments">
+                            <Object id="PipingNetworkSegment1" type="Plant/Piping.PipingNetworkSegment">
+                                <Components property="Connections">
+                                    <Object id="Pipe1" type="Plant/Piping.Pipe">
+                                        <References objects="#PipingNode2" property="SourceNode"/>
+                                        <References objects="#PipingNode4" property="TargetNode"/>
+                                    </Object>
+                                </Components>
+                                <References objects="#PipingNode2" property="SourceNode"/>
+                                <References objects="#PipingNode4" property="TargetNode"/>
+                                <Data property="SegmentNumber">
+                                    <String>1</String>
+                                </Data>
+                            </Object>
+                            <Object id="PipingNetworkSegment2" type="Plant/Piping.PipingNetworkSegment">
+                                <Components property="Connections">
+                                    <Object id="Pipe2" type="Plant/Piping.Pipe">
+                                        <References objects="#PipingNode3" property="SourceNode"/>
+                                        <References objects="#PipingNode6" property="TargetNode"/>
+                                    </Object>
+                                </Components>
+                                <References objects="#PipingNode3" property="SourceNode"/>
+                                <References objects="#PipingNode6" property="TargetNode"/>
+                                <Data property="SegmentNumber">
+                                    <String>2</String>
+                                </Data>
+                            </Object>
+                        </Components>
+                    </Object>
+                </Components>
+            </Object>
+        </Components>
+    </Object>
+</Model>

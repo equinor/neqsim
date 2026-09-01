@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -24,8 +25,18 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ASMF
  * @version 1.0
  */
+@Tag("slow")
 public class TwoFluidPipeHoldupProfileTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidPipeHoldupProfileTest.class);
+
+  /**
+   * Wall-clock budget per steady-state solve. The default is 300 s, which combined with the outer pressure-matching
+   * loops below let a single test method run for tens of minutes and time the CI job out.
+   */
+  private static final double SS_WALL_CLOCK_BUDGET_S = 20.0;
+
+  /** Outer pressure-matching iterations. The damped update converges in a handful of steps. */
+  private static final int MAX_PRESSURE_MATCH_ITERATIONS = 8;
 
   /**
    * Test that liquid holdup increases along a horizontal pipeline.
@@ -63,6 +74,7 @@ public class TwoFluidPipeHoldupProfileTest {
     pipe.setDiameter(0.5); // 500 mm
     pipe.setRoughness(15e-6);
     pipe.setNumberOfSections(50);
+    pipe.setSteadyStateMaxWallClockTime(SS_WALL_CLOCK_BUDGET_S);
 
     // Horizontal pipe (zero elevation)
     double[] elevations = new double[50];
@@ -148,7 +160,7 @@ public class TwoFluidPipeHoldupProfileTest {
     double flowRate = 30000.0; // kg/hr
     double pipeLength = 70000.0; // 70 km
     double pipeDiameter = 0.9; // 900 mm
-    int numSections = 100;
+    int numSections = 40;
 
     // === TwoFluidPipe ===
     SystemInterface tfFluid = fluid.clone();
@@ -166,6 +178,7 @@ public class TwoFluidPipeHoldupProfileTest {
     tfPipe.setElevationProfile(new double[numSections]);
     tfPipe.setSurfaceTemperature(5.0, "C");
     tfPipe.setHeatTransferCoefficient(25.0);
+    tfPipe.setSteadyStateMaxWallClockTime(SS_WALL_CLOCK_BUDGET_S);
 
     ProcessSystem tfProcess = new ProcessSystem();
     tfProcess.add(tfInlet);
@@ -174,7 +187,7 @@ public class TwoFluidPipeHoldupProfileTest {
 
     // Iterate to target outlet pressure
     double targetOutletP = 80.0; // bara
-    for (int iter = 0; iter < 20; iter++) {
+    for (int iter = 0; iter < MAX_PRESSURE_MATCH_ITERATIONS; iter++) {
       double outletP = tfPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.5) {
@@ -208,7 +221,7 @@ public class TwoFluidPipeHoldupProfileTest {
     bbProcess.run();
 
     // Iterate to same target outlet pressure
-    for (int iter = 0; iter < 20; iter++) {
+    for (int iter = 0; iter < MAX_PRESSURE_MATCH_ITERATIONS; iter++) {
       double outletP = bbPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.5) {
@@ -284,7 +297,7 @@ public class TwoFluidPipeHoldupProfileTest {
     double pipeLength = 70000.0; // 70 km
     double pipeDiameter = 0.9; // 900 mm
     double pipeRoughness = 10e-6;
-    int numSections = 100;
+    int numSections = 40;
     double flowMSm3d = 30.0; // MSm³/day
     double targetOutletP = 80.0; // bara
     double inletTempC = 40.0;
@@ -342,6 +355,7 @@ public class TwoFluidPipeHoldupProfileTest {
 
     tfPipe.setSurfaceTemperature(seawaterTempC, "C");
     tfPipe.setHeatTransferCoefficient(heatTransferCoeff);
+    tfPipe.setSteadyStateMaxWallClockTime(SS_WALL_CLOCK_BUDGET_S);
 
     ProcessSystem tfProcess = new ProcessSystem();
     tfProcess.add(tfInlet);
@@ -349,7 +363,7 @@ public class TwoFluidPipeHoldupProfileTest {
     tfProcess.run();
 
     // Iterate to target outlet pressure
-    for (int iter = 0; iter < 30; iter++) {
+    for (int iter = 0; iter < MAX_PRESSURE_MATCH_ITERATIONS; iter++) {
       double outletP = tfPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.3) {
@@ -383,7 +397,7 @@ public class TwoFluidPipeHoldupProfileTest {
     bbProcess.run();
 
     // Iterate to target outlet pressure
-    for (int iter = 0; iter < 30; iter++) {
+    for (int iter = 0; iter < MAX_PRESSURE_MATCH_ITERATIONS; iter++) {
       double outletP = bbPipe.getOutletStream().getPressure("bara");
       double error = targetOutletP - outletP;
       if (Math.abs(error) < 0.3) {

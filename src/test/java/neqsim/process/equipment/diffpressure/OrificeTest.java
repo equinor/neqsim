@@ -1,5 +1,6 @@
 package neqsim.process.equipment.diffpressure;
 
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -67,5 +68,63 @@ public class OrificeTest {
     // orifice type ("D").
     double m = Orifice.calculateMassFlowRate(0.07366, 0.05, 200000.0, 183000.0, 999.1, 0.0011, 1.33, "D");
     Assertions.assertEquals(7.702338, m, 1e-6);
+  }
+
+  /** A/refine-A/B recalculates the algebraic restriction but owns only two physical clock advances. */
+  @Test
+  void transientOrificeUsesPhysicalStepIdentifierForClockOwnership() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("transient inlet", fluid);
+    inlet.setFlowRate(1000.0, "kg/hr");
+    inlet.run();
+
+    Orifice orifice = new Orifice("transient orifice", 0.10, 0.05, 50.0, 20.0, 0.61);
+    orifice.setInletStream(inlet);
+
+    UUID stepA = UUID.randomUUID();
+    UUID stepB = UUID.randomUUID();
+
+    orifice.runTransient(2.0, stepA);
+    double firstFlow = inlet.getFlowRate("kg/sec");
+    Assertions.assertTrue(firstFlow > 0.0);
+    Assertions.assertEquals(2.0, orifice.getTime(), 0.0);
+    Assertions.assertEquals(stepA, orifice.getCalculationIdentifier());
+
+    orifice.runTransient(2.0, stepA);
+    Assertions.assertEquals(firstFlow, inlet.getFlowRate("kg/sec"), 1e-12);
+    Assertions.assertEquals(2.0, orifice.getTime(), 0.0);
+    Assertions.assertEquals(stepA, orifice.getCalculationIdentifier());
+
+    orifice.runTransient(2.0, stepB);
+    Assertions.assertEquals(firstFlow, inlet.getFlowRate("kg/sec"), 1e-12);
+    Assertions.assertEquals(4.0, orifice.getTime(), 0.0);
+    Assertions.assertEquals(stepB, orifice.getCalculationIdentifier());
+  }
+
+  /** The low-flow early return follows the same A/refine-A/B physical-step timing contract. */
+  @Test
+  void transientOrificeLowFlowStillRecordsPhysicalStepCompletion() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("zero-flow inlet", fluid);
+    inlet.setFlowRate(0.0, "kg/hr");
+    inlet.run();
+
+    Orifice orifice = new Orifice("zero-flow orifice", 0.10, 0.05, 50.0, 20.0, 0.61);
+    orifice.setInletStream(inlet);
+
+    UUID stepA = UUID.randomUUID();
+    UUID stepB = UUID.randomUUID();
+    orifice.runTransient(2.0, stepA);
+    orifice.runTransient(2.0, stepA);
+    orifice.runTransient(2.0, stepB);
+
+    Assertions.assertEquals(4.0, orifice.getTime(), 0.0);
+    Assertions.assertEquals(stepB, orifice.getCalculationIdentifier());
   }
 }

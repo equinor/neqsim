@@ -1,0 +1,336 @@
+package neqsim.process.engineering.production;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import neqsim.process.engineering.EngineeringProject;
+import neqsim.process.engineering.calculation.EngineeringCalculationResult;
+import neqsim.process.engineering.design.EngineeringDesignIteration;
+import neqsim.process.engineering.design.EngineeringDesignModuleResult;
+import neqsim.process.engineering.instrumentation.ValveInstrumentQualificationCalculation;
+import neqsim.process.engineering.mechanical.MechanicalIntegrityQualificationCalculation;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthReport;
+import neqsim.process.engineering.piping.TransientPipingQualificationCalculation;
+import neqsim.process.engineering.rotating.CompressorProtectionQualificationCalculation;
+import neqsim.process.engineering.safety.FlareConsequenceCalculation;
+import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
+
+/** Aggregates technical and accountable evidence without ever authorizing final or construction design. */
+public final class EngineeringProductionReadinessAssessment {
+  private EngineeringProductionReadinessAssessment() {
+  }
+
+  public enum Level {
+    NOT_READY, EXPERIMENTAL, VALIDATED_PRELIMINARY, QUALIFIED_FEED_SUPPORT
+  }
+
+  public static Result assess(EngineeringProject project, EngineeringProductionReadinessBasis basis) {
+    if (project == null) {
+      throw new IllegalArgumentException("project must not be null");
+    }
+    EngineeringProductionReadinessBasis evidence = basis == null ? new EngineeringProductionReadinessBasis() : basis;
+    Map<String, Gate> gates = new LinkedHashMap<String, Gate>();
+    boolean designLoop = project.getLatestEngineeringDesignLoopResult() != null
+        && project.getLatestEngineeringDesignLoopResult().isConverged();
+    gates.put("CLOSED_ENGINEERING_DESIGN_LOOP",
+        gate(designLoop, "Run all cases to stable process values, physical variables and constraints"));
+
+    EngineeringBenchmarkSuite.Report benchmark = evidence.getBenchmarkReport();
+    Set<String> executedMethods = executedMethods(project);
+    executedMethods.addAll(evidence.getTechnicalMethodKeys());
+    Set<String> unbenchmarkedMethods = new LinkedHashSet<String>(executedMethods);
+    if (benchmark != null) {
+      unbenchmarkedMethods.removeAll(benchmark.getQualifyingMethods());
+    }
+    boolean benchmarkPassed = benchmark != null && benchmark.isPassed() && !executedMethods.isEmpty()
+        && unbenchmarkedMethods.isEmpty();
+    gates.put("INDEPENDENT_VALIDATION_BENCHMARKS",
+        gate(benchmarkPassed,
+            benchmark == null ? "Attach a versioned benchmark report"
+                : "Missing executed method evidence " + unbenchmarkedMethods + "; suite gaps "
+                    + benchmark.getMissingQualifyingMethods()));
+
+    Set<String> qualifiedMethods = new LinkedHashSet<String>();
+    for (EngineeringMethodQualification qualification : evidence.getMethodQualifications()) {
+      if (qualification.isProjectQualified()) {
+        qualifiedMethods.add(qualification.getMethodKey());
+      }
+    }
+    Set<String> missingQualifications = new LinkedHashSet<String>();
+    missingQualifications.addAll(executedMethods);
+    missingQualifications.removeAll(qualifiedMethods);
+    boolean methods = !executedMethods.isEmpty() && missingQualifications.isEmpty();
+    gates.put("PROJECT_QUALIFIED_METHODS", gate(methods,
+        methods ? "All required method versions are project qualified" : missingQualifications.toString()));
+
+    boolean industrialApplicability = true;
+    if (evidence.getMethodQualificationRegistry() != null) {
+      Set<String> serviceQualifiedMethods = new LinkedHashSet<String>();
+      for (EngineeringMethodQualificationRegistry.Result assessment : evidence.getMethodServiceAssessments()) {
+        if (assessment.isQualifiedForService()) {
+          serviceQualifiedMethods.add(assessment.getMethodKey());
+        }
+      }
+      Set<String> missingServiceAssessments = new LinkedHashSet<String>(executedMethods);
+      missingServiceAssessments.removeAll(serviceQualifiedMethods);
+      industrialApplicability = !executedMethods.isEmpty() && missingServiceAssessments.isEmpty();
+      gates.put("INDUSTRIAL_METHOD_APPLICABILITY",
+          gate(industrialApplicability,
+              industrialApplicability ? "Every method is qualified for its supplied service and intended use"
+                  : "Missing qualifying service assessments " + missingServiceAssessments));
+    }
+
+    boolean numericalHealth = true;
+    if (!evidence.getNumericalHealthReports().isEmpty()) {
+      for (EngineeringNumericalHealthReport report : evidence.getNumericalHealthReports()) {
+        numericalHealth &= report.isAcceptableForEngineering();
+      }
+      gates.put("NUMERICAL_HEALTH_AND_ENGINEERING_CLOSURE",
+          gate(numericalHealth, numericalHealth ? "Every attached process state has complete numerical closure"
+              : "Resolve convergence, mass/energy closure, residual, or sensitivity findings"));
+    }
+
+    EngineeringAutoConfigurator.Result automation = evidence.getAutoConfigurationResult();
+    gates.put("EXPLICIT_AUTOMATIC_CONFIGURATION", gate(automation != null && automation.isComplete(),
+        "Attach a complete explicit auto-configuration result with no hidden defaults"));
+
+    boolean dexpi = false;
+    for (DexpiToolQualificationEvidence item : evidence.getDexpiEvidence()) {
+      dexpi |= item.isQualified();
+    }
+    gates.put("NAMED_DEXPI_TOOL_ROUNDTRIP",
+        gate(dexpi, "Record successful named-tool import/export and close every semantic difference"));
+
+    EngineeringExternalEvidenceAssessment.Result external = EngineeringExternalEvidenceAssessment
+        .assess(evidence.getExternalEvidenceRegister());
+    addExternalEvidenceGates(gates, external);
+    EngineeringExternalEvidenceDocumentIntegrity.Result documentIntegrity = EngineeringExternalEvidenceDocumentIntegrity
+        .assess(evidence.getExternalEvidenceRegister(), evidence.getExternalEvidenceDocumentIntegrity());
+    gates.put("EXTERNAL_EVIDENCE_DOCUMENT_INTEGRITY", gate(documentIntegrity.isPassed(),
+        "Supply every accepted controlled document and resolve all SHA-256 mismatches"));
+
+    EngineeringSafetyLifecycleAssessment.Result safety = EngineeringSafetyLifecycleAssessment.assess(project,
+        evidence.getExternalEvidenceRegister());
+    gates.put("SAFETY_LIFECYCLE", gate(safety.isPassed(), "Close HAZOP/LOPA/SRS, SIF and shutdown findings"));
+
+    Set<EngineeringPilotProjectEvidence.Scope> acceptedPilotScopes = EnumSet
+        .noneOf(EngineeringPilotProjectEvidence.Scope.class);
+    for (EngineeringPilotProjectEvidence pilot : evidence.getPilotEvidence()) {
+      if (pilot.isAccepted()) {
+        acceptedPilotScopes.add(pilot.getScope());
+      }
+    }
+    boolean pilots = acceptedPilotScopes.containsAll(EnumSet.allOf(EngineeringPilotProjectEvidence.Scope.class));
+    gates.put("THREE_INDEPENDENT_PILOTS",
+        gate(pilots, "Accept separation/compression, pumping/heat-exchange and relief/blowdown/flare pilots"));
+
+    EngineeringReleaseQualityEvidence release = evidence.getReleaseQualityEvidence();
+    gates.put("RELEASE_QUALITY", gate(release != null && release.isPassed(),
+        release == null ? "Attach release quality evidence" : release.getMissingGates().toString()));
+
+    boolean transientPiping = transientPipingPasses(evidence.getTransientPipingQualification());
+    gates.put("DISTRIBUTED_TRANSIENT_PIPING", gate(transientPiping,
+        "Attach a passing distributed transient profile with line-pack, wave, slug, acoustic and stress checks"));
+    boolean compressorProtection = compressorProtectionPasses(evidence.getCompressorProtectionQualification());
+    gates.put("COMPRESSOR_PROTECTION_AND_MACHINERY", gate(compressorProtection,
+        "Close compressor map, startup, rundown, anti-surge, rotor, settle-out and vendor constraints"));
+    boolean valveInstrument = valveInstrumentPasses(evidence.getValveInstrumentQualification());
+    gates.put("VALVE_AND_INSTRUMENT_QUALIFICATION", gate(valveInstrument,
+        "Close actuator, leakage, response, installation, thermowell, tuning and logic constraints"));
+    boolean mechanicalIntegrity = mechanicalIntegrityPasses(evidence.getMechanicalIntegrityQualification());
+    gates.put("DETAILED_MECHANICAL_INTEGRITY", gate(mechanicalIntegrity,
+        "Close pressure, external load, buckling, fatigue, nozzle, MDMT and fabrication constraints"));
+    boolean flareConsequence = flareConsequencePasses(evidence.getFlareConsequenceQualification());
+    gates.put("FLARE_RADIATION_DISPERSION_AND_NOISE", gate(flareConsequence,
+        "Attach passing project-qualified flare radiation, dispersion, noise and tip-velocity evidence"));
+
+    boolean all = true;
+    for (Gate value : gates.values()) {
+      all &= value.passed;
+    }
+    boolean technicalCompletion = transientPiping && compressorProtection && valveInstrument && mechanicalIntegrity
+        && flareConsequence;
+    boolean externalValidation = external
+        .isTypePassed(EngineeringExternalEvidenceRecord.Type.ACCOUNTABLE_ENGINEERING_APPROVAL)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.HAZOP_DECISION)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.LOPA_DECISION)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION)
+        && documentIntegrity.isPassed();
+    boolean validated = designLoop && benchmarkPassed && methods && industrialApplicability && numericalHealth
+        && automation != null && automation.isComplete() && safety.isPassed() && technicalCompletion
+        && externalValidation;
+    Level level = all ? Level.QUALIFIED_FEED_SUPPORT
+        : validated ? Level.VALIDATED_PRELIMINARY : designLoop ? Level.EXPERIMENTAL : Level.NOT_READY;
+    return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, external, documentIntegrity,
+        evidence, all);
+  }
+
+  private static void addExternalEvidenceGates(Map<String, Gate> gates,
+      EngineeringExternalEvidenceAssessment.Result external) {
+    gates.put("ACCOUNTABLE_ENGINEERING_APPROVALS",
+        gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.ACCOUNTABLE_ENGINEERING_APPROVAL),
+            "Attach complete, immutable approval receipts from accountable engineering authorities"));
+    gates.put("VENDOR_GUARANTEES", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE),
+        "Attach accepted vendor guarantees for every declared equipment and instrument scope"));
+    gates.put("HAZOP_DECISIONS", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.HAZOP_DECISION),
+        "Attach approved HAZOP decisions and evidence of action closure"));
+    gates.put("LOPA_DECISIONS", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.LOPA_DECISION),
+        "Attach approved LOPA decisions and independent-protection-layer basis"));
+    gates.put("SRS_APPROVAL", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL),
+        "Attach the approved safety requirements specification"));
+    gates.put("INDEPENDENT_VALIDATION_ACCEPTANCE",
+        gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION),
+            "Attach complete acceptance from a demonstrably independent validator"));
+    gates.put("CONSTRUCTION_AUTHORITY_EVIDENCE",
+        gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.CONSTRUCTION_AUTHORITY),
+            "Attach the jurisdiction-specific construction authority release for this design revision"));
+  }
+
+  public static Set<String> executedMethods(EngineeringProject project) {
+    Set<String> result = new LinkedHashSet<String>();
+    if (project.getLatestEngineeringDesignLoopResult() == null
+        || project.getLatestEngineeringDesignLoopResult().getIterations().isEmpty()) {
+      return result;
+    }
+    EngineeringDesignIteration iteration = project.getLatestEngineeringDesignLoopResult().getIterations()
+        .get(project.getLatestEngineeringDesignLoopResult().getIterations().size() - 1);
+    for (EngineeringDesignModuleResult module : iteration.getModuleResults()) {
+      result.add(module.getMethod() + "@" + module.getMethodVersion());
+    }
+    return result;
+  }
+
+  private static Gate gate(boolean passed, String action) {
+    return new Gate(passed, action);
+  }
+
+  private static boolean transientPipingPasses(
+      EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean compressorProtectionPasses(
+      EngineeringCalculationResult<CompressorProtectionQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean valveInstrumentPasses(
+      EngineeringCalculationResult<ValveInstrumentQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean mechanicalIntegrityPasses(
+      EngineeringCalculationResult<MechanicalIntegrityQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean flareConsequencePasses(
+      EngineeringCalculationResult<FlareConsequenceCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean calculated(EngineeringCalculationResult<?> value) {
+    return value.getStatus() == EngineeringCalculationResult.Status.CALCULATED
+        || value.getStatus() == EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED;
+  }
+
+  private static final class Gate implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final boolean passed;
+    private final String action;
+
+    Gate(boolean passed, String action) {
+      this.passed = passed;
+      this.action = action;
+    }
+
+    Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("passed", Boolean.valueOf(passed));
+      result.put("requiredAction", passed ? "NONE" : action);
+      return result;
+    }
+  }
+
+  /** Immutable readiness decision and evidence snapshot. */
+  public static final class Result implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String projectId;
+    private final String revision;
+    private final Level level;
+    private final Map<String, Gate> gates;
+    private final EngineeringSafetyLifecycleAssessment.Result safety;
+    private final EngineeringExternalEvidenceAssessment.Result externalEvidence;
+    private final EngineeringExternalEvidenceDocumentIntegrity.Result externalEvidenceDocumentIntegrity;
+    private final EngineeringProductionReadinessBasis basis;
+    private final boolean preliminaryProductionReady;
+
+    Result(String projectId, String revision, Level level, Map<String, Gate> gates,
+        EngineeringSafetyLifecycleAssessment.Result safety,
+        EngineeringExternalEvidenceAssessment.Result externalEvidence,
+        EngineeringExternalEvidenceDocumentIntegrity.Result externalEvidenceDocumentIntegrity,
+        EngineeringProductionReadinessBasis basis, boolean preliminaryProductionReady) {
+      this.projectId = projectId;
+      this.revision = revision;
+      this.level = level;
+      this.gates = new LinkedHashMap<String, Gate>(gates);
+      this.safety = safety;
+      this.externalEvidence = externalEvidence;
+      this.externalEvidenceDocumentIntegrity = externalEvidenceDocumentIntegrity;
+      this.basis = basis;
+      this.preliminaryProductionReady = preliminaryProductionReady;
+    }
+
+    public Level getLevel() {
+      return level;
+    }
+
+    public boolean isPreliminaryProductionReady() {
+      return preliminaryProductionReady;
+    }
+
+    public List<String> getFailedGates() {
+      List<String> result = new ArrayList<String>();
+      for (Map.Entry<String, Gate> item : gates.entrySet()) {
+        if (!item.getValue().passed) {
+          result.add(item.getKey());
+        }
+      }
+      return result;
+    }
+
+    public Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("schemaVersion", EngineeringSchemaCatalog.PRODUCTION_READINESS);
+      result.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.PRODUCTION_READINESS));
+      result.put("projectId", projectId);
+      result.put("revision", revision);
+      result.put("maturityLevel", level.name());
+      Map<String, Object> gateMaps = new LinkedHashMap<String, Object>();
+      for (Map.Entry<String, Gate> gate : gates.entrySet()) {
+        gateMaps.put(gate.getKey(), gate.getValue().toMap());
+      }
+      result.put("gates", gateMaps);
+      result.put("failedGates", getFailedGates());
+      result.put("safetyLifecycle", safety.toMap());
+      result.put("externalEngineeringEvidence", externalEvidence.toMap());
+      result.put("externalEvidenceDocumentIntegrity", externalEvidenceDocumentIntegrity.toMap());
+      result.put("evidenceBasis", basis.toMap());
+      result.put("preliminaryProductionReady", Boolean.valueOf(preliminaryProductionReady));
+      result.put("fitnessForConstruction", Boolean.FALSE);
+      result.put("finalEngineeringApprovalGranted", Boolean.FALSE);
+      result.put("constructionAuthorityEvidenceAccepted", Boolean
+          .valueOf(externalEvidence.isTypePassed(EngineeringExternalEvidenceRecord.Type.CONSTRUCTION_AUTHORITY)));
+      result.put("governance",
+          "NeqSim verifies external evidence receipts but does not issue engineering or construction approval");
+      return result;
+    }
+  }
+}

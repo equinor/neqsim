@@ -1,5 +1,8 @@
 package neqsim.process.equipment.absorber;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -33,5 +36,13 @@ public class SimpleAbsorberTest extends neqsim.NeqSimTest {
      * operations.run();
      */
     // operations.displayResult();
+  }
+
+  @Test
+  void testSetNameBeforeStreamsAreInitialized() {
+    SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("TEG absorber");
+
+    assertDoesNotThrow(() -> absorber.setName("renamed absorber"));
+    assertEquals("renamed absorber", absorber.getName());
   }
 }

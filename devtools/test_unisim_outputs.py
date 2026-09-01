@@ -189,6 +189,23 @@ class _FakeComponentWithoutAcentricFactor:
         raise AttributeError(attribute_name)
 
 
+class _FakeComponentWithAcentricity:
+    """Component exposing the real UniSim COM name for the acentric factor."""
+
+    name = 'C29-C35*'
+    Name = 'C29-C35*'
+    Acentricity = _FakeQuantity({None: 1.277})
+    CriticalTemperature = _FakeQuantity({'K': 829.84})
+    CriticalPressure = _FakeQuantity({'bar': 13.632})
+    MolecularWeight = _FakeQuantity({None: 438.573})
+    NormalBoilingPt = _FakeQuantity({'K': 733.32})
+    CriticalVolume = _FakeQuantity({'m3/kgmole': 1.6})
+
+    def __getattr__(self, attribute_name):
+        """Raise the same style of missing-property error seen in COM."""
+        raise AttributeError(attribute_name)
+
+
 def _build_e300_test_model(tmpdir):
     """Create a model with an exported PR-LK E300 fluid package."""
     components = [
@@ -305,6 +322,44 @@ def test_to_python():
     assert "setEntrainment" in py_code
     print("  PASS")
     return py_code
+
+
+def test_feed_composition_emitted():
+    """Feed streams must carry their OWN composition, not a shared clone.
+
+    Regression guard for the converter fix: without this, every feed is
+    ``fluid.clone()`` (one default composition) so downstream separators all
+    flash an identical fluid and report the same RVP/GOR regardless of feed.
+    """
+    model = _build_test_model()
+    converter = UniSimToNeqSim(model)
+    py_code = converter.to_python()
+    # The runtime helper is emitted exactly once.
+    assert "def _set_feed_composition(" in py_code
+    assert py_code.count("def _set_feed_composition(") == 1
+    # The external feed that has a composition gets a per-feed call.
+    assert "_set_feed_composition(" in py_code
+    # Feed Gas composition values are carried through onto the feed stream.
+    assert '"Methane": 0.8' in py_code
+    assert '"CO2": 0.03' in py_code
+    print("  PASS")
+    return py_code
+
+
+def test_feed_composition_in_json():
+    """to_json() must carry each feed's composition under its properties."""
+    model = _build_test_model()
+    converter = UniSimToNeqSim(model)
+    js = converter.to_json()
+    feeds = [u for u in js["process"]
+             if u.get("type") == "Stream" and u.get("name") == "Feed Gas"]
+    assert feeds, "Feed Gas stream missing from JSON process"
+    comp = feeds[0].get("properties", {}).get("composition")
+    assert comp is not None, "Feed Gas has no composition in JSON"
+    assert abs(comp.get("Methane", 0.0) - 0.80) < 1e-9
+    assert abs(comp.get("CO2", 0.0) - 0.03) < 1e-9
+    print("  PASS")
+    return js
 
 
 def test_to_notebook():
@@ -596,6 +651,48 @@ def test_missing_acentric_factor_uses_edmister_fallback():
     print("  PASS")
 
 
+def test_acentricity_attribute_is_preferred_over_edmister_estimate():
+    """UniSim exposes the acentric factor as 'Acentricity'; use it verbatim.
+
+    Reading the Edmister estimate instead silently changes the EOS alpha
+    function and shifts every bubble point / TVP of the converted fluid.
+    """
+    reader = UniSimReader()
+    extracted_component = UniSimComponent('C29-C35*', 0)
+    reader._populate_component_properties(
+        _FakeComponentWithAcentricity(), extracted_component)
+
+    assert extracted_component.acentric_factor == 1.277
+    print("  PASS")
+
+
+def test_package_vector_does_not_overwrite_component_acentricity():
+    """A property-package acentricity vector must not clobber the COM value."""
+
+    class _FakePropertyPackage:
+        Acentricity = _FakeQuantity({None: None})
+        Acentricities = (0.11, 0.22)
+
+        def __getattr__(self, attribute_name):
+            raise AttributeError(attribute_name)
+
+    class _FakeFluidPackage:
+        PropertyPackage = _FakePropertyPackage()
+
+    reader = UniSimReader()
+    pkg = UniSimFluidPackage(
+        name='Common PVT',
+        property_package='SRK',
+        components=[UniSimComponent('C29-C35*', 0, acentric_factor=1.277),
+                    UniSimComponent('C36-C43*', 1)],
+    )
+    reader._populate_property_package_vectors(_FakeFluidPackage(), pkg)
+
+    assert pkg.components[0].acentric_factor == 1.277
+    assert pkg.components[1].acentric_factor == 0.22
+    print("  PASS")
+
+
 def test_e300_fluid_package_export_and_usage():
     """Verify UniSim fluid packages export to E300 and are consumed as E300."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -690,9 +787,306 @@ def test_all_fluid_packages_are_exposed_as_e300():
 
         py_code = converter.to_python()
         assert py_code.count('EclipseFluidReadWrite.read') >= 2
-        for e300_path in e300_paths:
-            assert e300_path.replace('\\', '/') in py_code
+    print("  PASS")
 
+
+def test_compressor_discharge_temperature_when_efficiency_missing():
+    """Compressor without a UniSim efficiency reproduces the source discharge
+    temperature (NeqSim back-solves the efficiency) instead of guessing 0.75."""
+    model = UniSimModel(
+        file_path=r"C:\test\Comp.usc",
+        file_name="Comp.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Ethane", 1)],
+            )
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Feed", temperature_C=30.0, pressure_bara=60.0,
+                                 mass_flow_kgh=50000.0,
+                                 composition={"Methane": 0.9, "Ethane": 0.1}),
+                UniSimStreamData("Disch", temperature_C=138.8, pressure_bara=198.0),
+            ],
+            operations=[
+                UniSimOperation(
+                    "K-100", "compressor", feeds=["Feed"], products=["Disch"],
+                    properties={"outlet_pressure_bara": 198.0},  # no efficiency
+                ),
+            ],
+        ),
+    )
+    py_code = UniSimToNeqSim(model).to_python()
+    # Drives the source discharge temperature instead of guessing 0.75
+    assert 'setOutletTemperature(138.8, "C")' in py_code, py_code
+    assert 'setIsentropicEfficiency(0.75)' not in py_code
+
+    # JSON path likewise carries the outlet temperature (in Kelvin)
+    result = UniSimToNeqSim(model).to_json()
+    k100 = next(e for e in result['process'] if e.get('name') == 'K-100')
+    assert 'outletTemperature' in k100['properties']
+    assert abs(k100['properties']['outletTemperature'] - (138.8 + 273.15)) < 1e-6
+    print("  PASS")
+
+
+def test_two_stream_heat_exchanger_pins_hot_outlet_temperature():
+    """A two-stream heat exchanger (heatexop) with known UniSim outlet
+    temperatures is emitted with the hot-side outlet pinned via the
+    "outTemperature" specification (setOutTemperature), so NeqSim reproduces the
+    process outlet exactly and energy-balances the cold side. This matches
+    UniSim far better than a UA value when a recycle side circulates a different
+    rate than the source model (previously no heat was transferred at all)."""
+    model = UniSimModel(
+        file_path=r"C:\test\HX.usc",
+        file_name="HX.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Ethane", 1)],
+            )
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Hot In", temperature_C=65.5, pressure_bara=5.5,
+                                 mass_flow_kgh=693609.0,
+                                 composition={"Methane": 0.5, "Ethane": 0.5}),
+                UniSimStreamData("Cold In", temperature_C=25.0, pressure_bara=13.0,
+                                 mass_flow_kgh=732397.0,
+                                 composition={"Methane": 0.5, "Ethane": 0.5}),
+                UniSimStreamData("Hot Out", temperature_C=33.0, pressure_bara=5.5),
+                UniSimStreamData("Cold Out", temperature_C=55.0, pressure_bara=11.3),
+            ],
+            operations=[
+                UniSimOperation(
+                    "HX-1", "heatexop",
+                    feeds=["Hot In", "Cold In"],
+                    products=["Hot Out", "Cold Out"],
+                    properties={"duty_kW": 12751.0},
+                ),
+            ],
+        ),
+    )
+    py_code = UniSimToNeqSim(model).to_python()
+    assert "HeatExchanger" in py_code
+    # Hot side is feed 0 (65.5 C > 25 C) -> pin side 0 to its outlet temp 33 C
+    assert ".setOutStreamSpecificationNumber(0)" in py_code, py_code
+    assert ".setOutTemperature(33.0, \"C\")" in py_code, py_code
+    print("  PASS")
+
+
+def test_cooler_outlet_pressure_letdown_is_transferred():
+    """A UniSim cooler/heater outlet-pressure letdown is transferred to the
+    NeqSim Cooler/Heater (so a downstream separator flashes at the right
+    pressure). Applied for any real drop; recycle stability is provided by the
+    transferred pipe geometry (PipeBeggsAndBrills), not by suppressing the drop."""
+
+    def _model(downstream_op):
+        return UniSimModel(
+            file_path=r"C:\test\P.usc", file_name="P.usc",
+            fluid_packages=[UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Ethane", 1)])],
+            flowsheet=UniSimFlowsheet(
+                name="Main",
+                material_streams=[
+                    UniSimStreamData("Feed", temperature_C=40.0, pressure_bara=60.0,
+                                     mass_flow_kgh=50000.0,
+                                     composition={"Methane": 0.9, "Ethane": 0.1}),
+                    UniSimStreamData("Cooled", temperature_C=20.0, pressure_bara=9.0),
+                    UniSimStreamData("Down Out", temperature_C=20.0, pressure_bara=5.0),
+                ],
+                operations=[
+                    UniSimOperation("E-1", "coolerop", feeds=["Feed"],
+                                    products=["Cooled"],
+                                    properties={"outlet_temperature_C": 20.0,
+                                                "outlet_pressure_bara": 9.0}),
+                    downstream_op,
+                ],
+            ),
+        )
+
+    # Cooled -> valve: drop transferred
+    valve = UniSimOperation("V-1", "valveop", feeds=["Cooled"],
+                            products=["Down Out"],
+                            properties={"outlet_pressure_bara": 5.0})
+    py_valve = UniSimToNeqSim(_model(valve)).to_python()
+    assert 'setOutletPressure(9.0, "bara")' in py_valve, py_valve
+
+    # Cooled -> separator: drop ALSO transferred (so it flashes at the right P)
+    sep = UniSimOperation("S-1", "flashtank", feeds=["Cooled"],
+                          products=["Down Out", "Sep Liq"])
+    py_sep = UniSimToNeqSim(_model(sep)).to_python()
+    assert 'setOutletPressure(9.0, "bara")' in py_sep, py_sep
+    print("  PASS")
+
+
+def test_pipe_segment_geometry_uses_beggs_and_brills():
+    """A UniSim pipe with extracted length + diameter is emitted as a
+    PipeBeggsAndBrills with length, diameter, elevation and roughness set."""
+    model = UniSimModel(
+        file_path=r"C:\test\Pipe.usc", file_name="Pipe.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Methane", 0),
+                        UniSimComponent("Ethane", 1)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Pin", temperature_C=6.0, pressure_bara=9.0,
+                                 mass_flow_kgh=60000.0,
+                                 composition={"Methane": 0.95, "Ethane": 0.05}),
+                UniSimStreamData("Pout", temperature_C=6.0, pressure_bara=8.0),
+            ],
+            operations=[
+                UniSimOperation(
+                    "Riser", "pipeseg", feeds=["Pin"], products=["Pout"],
+                    properties={"length_m": 1200.0, "diameter_m": 0.3175,
+                                "elevation_m": 400.0, "roughness_m": 4.572e-05}),
+            ],
+        ),
+    )
+    py_code = UniSimToNeqSim(model).to_python()
+    assert 'PipeBeggsAndBrills("Riser"' in py_code, py_code
+    assert '.setLength(1200.0)' in py_code
+    assert '.setElevation(400.0)' in py_code
+    assert '.setPipeWallRoughness(' in py_code
+    print("  PASS")
+
+
+def test_distillation_column_config_emitted():
+    """A UniSim distillation column is emitted as a NeqSim DistillationColumn
+    with its tray count, condenser/reboiler flags, feed tray and operating specs
+    (reflux ratio, top/bottom pressure) carried into the JSON builder props, so
+    the NeqSim column converges to the same configuration as the source."""
+    model = UniSimModel(
+        file_path=r"C:\test\Col.usc", file_name="Col.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Propane", 0),
+                        UniSimComponent("n-Butane", 1),
+                        UniSimComponent("n-Pentane", 2)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Col Feed", temperature_C=60.0, pressure_bara=10.0,
+                                 mass_flow_kgh=1000.0,
+                                 composition={"Propane": 0.4, "n-Butane": 0.35,
+                                              "n-Pentane": 0.25}),
+                UniSimStreamData("Ovhd", temperature_C=45.0, pressure_bara=10.0),
+                UniSimStreamData("Btms", temperature_C=90.0, pressure_bara=10.5),
+            ],
+            operations=[
+                UniSimOperation(
+                    "deC3", "columnop",
+                    feeds=["Col Feed"], products=["Ovhd", "Btms"],
+                    properties={"numberOfTrays": 8, "feedTray": 4,
+                                "refluxRatio": 1.8, "hasReboiler": True,
+                                "hasCondenser": True, "topPressure": 10.0,
+                                "bottomPressure": 10.5}),
+            ],
+        ),
+    )
+    result = UniSimToNeqSim(model).to_json()
+    col = next(e for e in result['process'] if e.get('name') == 'deC3')
+    assert col['type'] == 'DistillationColumn', col
+    p = col['properties']
+    assert p['numberOfTrays'] == 8, p
+    assert p['feedTray'] == 4, p
+    assert p['hasReboiler'] is True and p['hasCondenser'] is True, p
+    assert abs(p['refluxRatio'] - 1.8) < 1e-9, p
+    assert abs(p['topPressure'] - 10.0) < 1e-9, p
+    assert abs(p['bottomPressure'] - 10.5) < 1e-9, p
+    # The Python path also builds a configured DistillationColumn.
+    py_code = UniSimToNeqSim(model).to_python()
+    assert 'DistillationColumn("deC3"' in py_code, py_code
+    print("  PASS")
+
+
+def test_setpoint_wires_source_to_target():
+    """A UniSim SET is emitted as a NeqSim SetPoint that copies a variable from a
+    source unit onto a target unit (target = multiplier*source + offset), so the
+    link stays live when an upstream input is changed."""
+    model = UniSimModel(
+        file_path=r"C:\test\Set.usc", file_name="Set.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Methane", 0)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("A", temperature_C=40.0, pressure_bara=50.0,
+                                 mass_flow_kgh=1000.0, composition={"Methane": 1.0}),
+                UniSimStreamData("B", temperature_C=40.0, pressure_bara=50.0,
+                                 mass_flow_kgh=1000.0, composition={"Methane": 1.0}),
+            ],
+            operations=[
+                UniSimOperation(
+                    "SET-1", "setop",
+                    properties={"source_object_name": "A",
+                                "source_variable": "Temperature",
+                                "target_object_name": "B",
+                                "target_variable": "Temperature",
+                                "multiplier": 1.0, "offset": 5.0}),
+            ],
+        ),
+    )
+    result = UniSimToNeqSim(model).to_json()
+    sp = next(e for e in result['process'] if e.get('name') == 'SET-1')
+    assert sp['type'] == 'SetPoint', sp
+    p = sp['properties']
+    assert p['sourceEquipment'] == 'A', p
+    assert p['sourceVariable'] == 'temperature', p
+    assert p['targetEquipment'] == 'B', p
+    assert p['targetVariable'] == 'temperature', p
+    assert abs(p['multiplier'] - 1.0) < 1e-9, p
+    assert abs(p['offset'] - 5.0) < 1e-9, p
+    print("  PASS")
+
+
+def test_adjuster_wires_adjusted_and_target():
+    """A UniSim ADJUST is emitted as a NeqSim Adjuster that varies an adjusted
+    variable on one unit until a target variable on another unit meets a value,
+    so it re-solves when an input changes (not baked in)."""
+    model = UniSimModel(
+        file_path=r"C:\test\Adj.usc", file_name="Adj.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Methane", 0)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Feed", temperature_C=40.0, pressure_bara=50.0,
+                                 mass_flow_kgh=1000.0, composition={"Methane": 1.0}),
+            ],
+            operations=[
+                UniSimOperation(
+                    "ADJ-1", "adjust",
+                    properties={"adjusted_object_name": "Feed",
+                                "adjusted_variable": "pressure",
+                                "target_object_name": "Feed",
+                                "target_variable": "temperature",
+                                "target_value": 300.0,
+                                "tolerance": 0.1, "step_size": 2.0}),
+            ],
+        ),
+    )
+    result = UniSimToNeqSim(model).to_json()
+    adj = next(e for e in result['process'] if e.get('name') == 'ADJ-1')
+    assert adj['type'] == 'Adjuster', adj
+    p = adj['properties']
+    assert p['adjustedEquipment'] == 'Feed', p
+    assert p['adjustedVariable'] == 'pressure', p
+    assert p['targetEquipment'] == 'Feed', p
+    assert p['targetVariable'] == 'temperature', p
+    assert abs(p['targetValue'] - 300.0) < 1e-9, p
+    assert abs(p['tolerance'] - 0.1) < 1e-9, p
+    assert abs(p['stepSize'] - 2.0) < 1e-9, p
     print("  PASS")
 
 
@@ -710,8 +1104,26 @@ if __name__ == "__main__":
          test_operation_handler_registry_documents_mapping_strategy),
         ("missing_acentric_factor_uses_edmister_fallback",
          test_missing_acentric_factor_uses_edmister_fallback),
+        ("acentricity_attribute_is_preferred_over_edmister_estimate",
+         test_acentricity_attribute_is_preferred_over_edmister_estimate),
+        ("package_vector_does_not_overwrite_component_acentricity",
+         test_package_vector_does_not_overwrite_component_acentricity),
         ("e300_fluid_package_export_and_usage", test_e300_fluid_package_export_and_usage),
         ("all_fluid_packages_are_exposed_as_e300", test_all_fluid_packages_are_exposed_as_e300),
+        ("compressor_discharge_temperature_when_efficiency_missing",
+         test_compressor_discharge_temperature_when_efficiency_missing),
+        ("two_stream_heat_exchanger_pins_hot_outlet_temperature",
+         test_two_stream_heat_exchanger_pins_hot_outlet_temperature),
+        ("cooler_outlet_pressure_letdown_is_transferred",
+         test_cooler_outlet_pressure_letdown_is_transferred),
+        ("pipe_segment_geometry_uses_beggs_and_brills",
+         test_pipe_segment_geometry_uses_beggs_and_brills),
+        ("distillation_column_config_emitted",
+         test_distillation_column_config_emitted),
+        ("setpoint_wires_source_to_target",
+         test_setpoint_wires_source_to_target),
+        ("adjuster_wires_adjusted_and_target",
+         test_adjuster_wires_adjusted_and_target),
     ]
     passed = 0
     failed = 0

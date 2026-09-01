@@ -291,7 +291,7 @@ final class DexpiShapeCatalog {
     // Flat-bottom cylindrical storage tank: straight sides, flat base, shallow dished roof
     appendPolyLine(document, shape, new double[][] { { -12.5, 12 }, { -12.5, -12 }, { 12.5, -12 }, { 12.5, 12 } });
     // Shallow curved roof
-    appendTrimmedCurve(document, shape, 20.0, 160.0, 36.55, 0, -22.34);
+    appendTrimmedCurve(document, shape, 54.51065674988614, 125.48934325011386, 21.53125, 0, -5.53125);
     // Liquid level line
     appendPolyLine(document, shape, new double[][] { { -12.5, -2 }, { 12.5, -2 } });
     catalogue.appendChild(shape);

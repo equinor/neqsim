@@ -3,8 +3,6 @@ title: Water Cooler and Reboiler
 description: Documentation for WaterCooler and ReBoiler heat exchanger equipment in NeqSim.
 ---
 
-# Water Cooler and Reboiler
-
 Documentation for specialized heat exchangers: WaterCooler for seawater/cooling water systems and ReBoiler for distillation column reboilers.
 
 ## Table of Contents

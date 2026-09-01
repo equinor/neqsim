@@ -129,7 +129,22 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     double inletFlow = compressor.getInletStream().getFlowRate("m3/hr");
     double surgeFlow = compressor.getSurgeFlowRate();
-    double currentRecycle = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr");
+
+    // The surge curve, and therefore every quantity in the control law below, is
+    // referenced to compressor SUCTION volumetric flow. The anti-surge splitter sits
+    // on the DISCHARGE side, so reading its recycle leg directly in m3/hr mixes two
+    // different sets of conditions: the same mass is a much smaller volume after
+    // compression. Adding a suction-sized step to a discharge-sized volume - and then
+    // writing the result back as a discharge-referenced setpoint - overshoots the
+    // intended recycle by roughly the volume ratio across the machine, which is one
+    // of the drivers of anti-surge hunting on turned-down trains. Convert through
+    // mass instead, using the suction density implied by the compressor inlet stream
+    // itself so the conversion is exactly consistent with inletFlow.
+    double inletMassFlow = compressor.getInletStream().getFlowRate("kg/hr");
+    double suctionDensity = inletFlow > 0.0 ? inletMassFlow / inletFlow : Double.NaN;
+    boolean useMassSetpoint = Double.isFinite(suctionDensity) && suctionDensity > 0.0;
+    double currentRecycle = useMassSetpoint ? antiSurgeSplitter.getSplitStream(1).getFlowRate("kg/hr") / suctionDensity
+        : antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr");
 
     // Guard against a surge flow extrapolated far beyond the surge curve data.
     // The surge curve interpolates flow from the operating head; when the head
@@ -174,43 +189,70 @@ public class Calculator extends ProcessEquipmentBaseClass {
       return;
     }
 
-    // If we are comfortably above the surge line, close the recycle valve to
-    // (effectively) zero. This short-circuit avoids the proportional step
-    // overshooting when the compressor is operating far from surge.
-    if (inletFlow > 1.2 * surgeFlow) {
+    // The control law targets the compressor's anti-surge CONTROL LINE, not the surge
+    // line itself. The margin is a property of the machine and its chart, so it is
+    // read from the compressor (Compressor.setSurgeControlMargin / getControlLineFlow)
+    // rather than duplicated here - the same value already drives
+    // CompressorAntiSurgeApplication, AntiSurgeController and the operating-envelope
+    // design checks, so one setting now governs every consumer.
+    //
+    // With the compressor default of 0.0 the control flow IS the surge flow, which
+    // reproduces the legacy behaviour. Set a margin of 0.05-0.10 on the compressor to
+    // make the converged operating point keep a realistic distance from surge instead
+    // of sitting exactly on the surge line. The locally clamped surgeFlow is used as
+    // the basis (rather than calling getControlLineFlow() directly) so the
+    // gross-extrapolation guard above still applies.
+    double controlMargin = compressor.getSurgeControlMargin();
+    if (!Double.isFinite(controlMargin) || controlMargin < 0.0) {
+      controlMargin = 0.0;
+    }
+    double controlFlow = surgeFlow * (1.0 + controlMargin);
+
+    // If the compressor is comfortably above the control line WITHOUT the help of the
+    // recycle, close the recycle valve to (effectively) zero. This short-circuit
+    // avoids the proportional step overshooting when the machine is operating far
+    // from surge on fresh feed alone.
+    //
+    // The recycle is fed back into the compressor suction, so it is already part of
+    // getInletStream(). Testing the raw inlet flow against the surge line therefore
+    // asks "is the machine safe *because of* the recycle?" and then removes exactly
+    // the flow that made it safe. On a deeply turned-down train that produces a
+    // limit cycle: the recycle slams shut, the next pass finds the machine below
+    // surge and re-opens it to tens of tonnes per hour, and the recycle tear stream
+    // swings between ~0 and its full value forever (Recycle.flowBalanceCheck then
+    // reports a 100 % flow error and the area never reports solved). Subtracting the
+    // current recycle first makes the test physically correct - only fresh feed can
+    // justify closing the recycle - and lets the proportional step below close the
+    // valve gradually when the recycle is what is holding the machine up.
+    double freshFeed = inletFlow - Math.max(currentRecycle, 0.0);
+    if (freshFeed > 1.2 * controlFlow) {
       double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
-      antiSurgeSplitter.setFlowRates(new double[] { -1, minRecycle }, "m3/hr");
-      antiSurgeSplitter.getSplitStream(1).setFlowRate(minRecycle, "m3/hr");
-      antiSurgeSplitter.getSplitStream(1).run();
-      antiSurgeSplitter.setCalculationIdentifier(id);
+      applyRecycleSetpoint(antiSurgeSplitter, minRecycle, suctionDensity, useMassSetpoint, id);
       return;
     }
 
     // Proportional anti-surge step with a per-iteration bound. The step is
-    // proportional to the surge-inlet gap (NOT to (gap - currentRecycle)) so
-    // the fixed point is inletFlow == surgeFlow regardless of the recycle
+    // proportional to the controlFlow-inlet gap (NOT to (gap - currentRecycle)) so
+    // the fixed point is inletFlow == controlFlow regardless of the recycle
     // path topology. This matches the legacy formula exactly while adding a
     // 25%-of-max-flow per-iteration cap to prevent single-step overshoot.
-    double rawStep = antiSurgeProportionalGain * (surgeFlow - inletFlow);
-    double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
+    double rawStep = antiSurgeProportionalGain * (controlFlow - inletFlow);
+    double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, controlFlow));
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
 
     // Absolute upper bound on the recycle setpoint. The recycle required to hold
-    // the compressor on the surge line can never exceed the surge flow itself, so
-    // capping at a generous multiple of the surge flow leaves normal operation
+    // the compressor on the control line can never exceed the control flow itself, so
+    // capping at a generous multiple of the control flow leaves normal operation
     // untouched while breaking the geometric runaway that otherwise inflates the
     // recycle without bound (e.g. an injection-compressor recycle growing to tens
     // of millions of m3/hr) and stops the outer recycle loop from converging.
-    double maxRecycle = ANTI_SURGE_MAX_RECYCLE_FACTOR * surgeFlow;
+    double maxRecycle = ANTI_SURGE_MAX_RECYCLE_FACTOR * controlFlow;
     if (flowAntiSurge > maxRecycle) {
       flowAntiSurge = maxRecycle;
     }
 
-    antiSurgeSplitter.setFlowRates(new double[] { -1, flowAntiSurge }, "m3/hr");
-    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
-    antiSurgeSplitter.getSplitStream(1).run();
-    antiSurgeSplitter.setCalculationIdentifier(id);
+    applyRecycleSetpoint(antiSurgeSplitter, flowAntiSurge, suctionDensity, useMassSetpoint, id);
 
     // Diagnostic: if (inletFlow + flowAntiSurge) is still well below surge
     // after this update, the loop is likely stuck (e.g. recycle path is not
@@ -222,6 +264,42 @@ public class Calculator extends ProcessEquipmentBaseClass {
           + " m3/hr, surge=" + surgeFlow + " m3/hr). Check that the recycle stream feeds back into the compressor "
           + "inlet and that the outer recycle iteration cap is sufficient.");
     }
+  }
+
+  /**
+   * Writes a suction-referenced anti-surge recycle setpoint onto the splitter.
+   *
+   * <p>
+   * The control law works in compressor-suction volumetric flow because that is what the surge curve is referenced to,
+   * but the splitter sits on the discharge side. The setpoint is therefore converted to a mass flow through the suction
+   * density and written in kg/hr, which is condition independent. When the suction density is not usable (no inlet flow
+   * yet) the legacy volumetric setpoint is written instead so a cold-started flowsheet still gets a value.
+   * </p>
+   *
+   * <p>
+   * The recycle leg is written directly instead of by re-running the splitter, and that is deliberate.
+   * {@link Splitter#calcSplitFactors()} scales a requested outlet flow down so it can never exceed the splitter's
+   * present inlet - but on a deeply turned-down train that inlet is itself produced by the recycle. Forcing the
+   * setpoint to fit inside the present inlet therefore removes the only mechanism by which the circulation can grow,
+   * and the loop can then only gain the (tiny) fresh feed on each pass. Letting the setpoint lead makes the fixed-point
+   * iteration converge to {@code inletFlow == surgeFlow}; the lead - and with it the transient splitter mass-balance
+   * offset seen mid-iteration - vanishes once the loop has converged.
+   * </p>
+   *
+   * @param antiSurgeSplitter the anti-surge recycle splitter to configure
+   * @param recycleAtSuction desired recycle flow expressed as compressor-suction volumetric flow in m3/hr
+   * @param suctionDensity compressor suction density in kg/m3
+   * @param useMassSetpoint true when {@code suctionDensity} is finite and positive
+   * @param id current calculation identifier
+   */
+  private void applyRecycleSetpoint(Splitter antiSurgeSplitter, double recycleAtSuction, double suctionDensity,
+      boolean useMassSetpoint, UUID id) {
+    double setpoint = useMassSetpoint ? recycleAtSuction * suctionDensity : recycleAtSuction;
+    String setpointUnit = useMassSetpoint ? "kg/hr" : "m3/hr";
+    antiSurgeSplitter.setFlowRates(new double[] { -1, setpoint }, setpointUnit);
+    antiSurgeSplitter.getSplitStream(1).setFlowRate(setpoint, setpointUnit);
+    antiSurgeSplitter.getSplitStream(1).run();
+    antiSurgeSplitter.setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */

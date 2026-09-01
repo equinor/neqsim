@@ -53,6 +53,7 @@ benchmark trust metadata.
 | `diagnoseAutomation` | ADVISORY | v1.0 | Self-healing diagnostics for failed operations |
 | `getAutomationLearningReport` | ADVISORY | v1.0 | Automation operation history and insights |
 | `getProgress` | ADVISORY | v1.1 | Check progress of long-running simulations |
+| `manageModel` | EXECUTION | v1.8 | Register a process model once and address it by `modelId` |
 
 ## Stable Platform
 
@@ -219,6 +220,14 @@ Schema resource paths use snake_case tool names such as `run_flash`, but respons
 the MCP method names such as `runFlash`. Schema lookups accept only `input` and `output` as schema
 types; any other type is treated as schema-not-found.
 
+Responses larger than 256 KiB are reduced by the shared transport guard unless
+`neqsim.mcp.maxResponseBytes` or `NEQSIM_MCP_MAX_RESPONSE_BYTES` configures another limit. The
+`truncation` block identifies omitted root fields and focused retrieval routes, and the legacy
+top-level and canonical `data` views are reduced together. For `getCapabilities`,
+`phase0EvidenceInventory` is retained because it has no equivalent selective-retrieval route;
+larger catalog sections may be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and
+the MCP catalog resources.
+
 ### Warning taxonomy
 
 Warnings in the root `warnings` array, and any tool-specific warning details, use these standard
@@ -239,6 +248,9 @@ codes where a machine-readable code is available:
 
 - New tools may be added at any time.
 - New optional fields may be added to existing tool inputs and outputs.
+- Accepted input forms may be **widened** (as in v1.8, where every tool taking a
+  process definition also began accepting a `modelId`). Previously valid input
+  stays valid.
 - Warning messages (human-readable text) may be reworded.
 - Experimental tools may be promoted to stable or removed.
 - Default EOS model may change between major versions (currently SRK).
@@ -264,6 +276,8 @@ of the server version.
 | 1.2 | 1.2.0+ | Platform tools, industrial governance, benchmark trust |
 | 1.5 | 1.5.0+ | Operational evidence packages, materials review, and water-hammer screening |
 | 1.6 | 1.6.0+ | Admin-gated profile changes, one-shot approvals, state sandboxing, SQL hardening |
+| 1.7 | 1.7.0+ | Bounded optimization decision space (`getAdjustableParameters`, `runProcessLoop`) |
+| 1.8 | 1.8.0+ | Model handles (`manageModel`), transport-resolved caller identity, principal-scoped state, bounded execution limits |
 
 ---
 
@@ -280,7 +294,7 @@ on tool availability, validation behavior, and execution permissions.
 | `DESKTOP_ENGINEER` | Full access for individual engineering work | Core + Advanced + Experimental (all tiers, labeled) | On by default |
 | `STUDY_TEAM` | Collaborative team environment | Core + Advanced (no PLATFORM) | Enforced |
 | `DIGITAL_TWIN` | Advisory-only for live operations | ADVISORY + CALCULATION only; no plant control, no write-back, no autonomous execution | Enforced |
-| `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (21 tools) | Enforced, approval gates on EXECUTION |
+| `ENTERPRISE` | Restricted to approved industrial core | Industrial core only (24 tools) | Enforced, approval gates on EXECUTION |
 
 **ENTERPRISE** constraints:
 
@@ -349,6 +363,92 @@ loads are allowed only when the target remains inside the configured storage
 directory. External storage directories require explicit opt-in with
 `NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true` or
 `neqsim.mcp.allowExternalStateDir=true`.
+### Model Handles (v1.8)
+
+`manageModel` registers a process definition once and returns a stable
+`modelId`. Any tool that accepts a process definition also accepts that handle,
+so a conversation can anchor on one model instead of re-transmitting and
+re-parsing the flowsheet on every call.
+
+| Action | Input | Result |
+|--------|-------|--------|
+| `register` | `processJson` (JSON string **or** nested JSON object), optional `name`, `version` | `modelId`, `revision` |
+| `revise` | `modelId`, updated `processJson` | same `modelId`, incremented `revision` |
+| `get` | `modelId` | stored definition |
+| `inspect` | `modelId` | equipment and area inventory, without running the model |
+| `list` | — | models visible to the caller |
+| `delete` | `modelId` | handle removed |
+
+Contract rules:
+
+- Handles are **content-addressed** — registering identical content returns the
+  existing handle, so registration is idempotent.
+- `revise` keeps the handle stable and increments `revision`, giving results a
+  revision to cite.
+- A value is treated as a handle only when it starts with `model_`. Inline JSON
+  and file-path inputs are unaffected, so this is a widening, not a breaking
+  change.
+- Handles resolve only within the calling principal's tenant. An unknown or
+  out-of-tenant handle returns an actionable error rather than silently falling
+  through to a parse failure.
+- Storage is in-process. Handles do not survive a server restart.
+
+Tools accepting a handle: `runProcess`, `validateInput`, `listSimulationUnits`,
+`listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`,
+`saveSimulationState`, `diagnoseAutomation`, `getAutomationLearningReport`,
+`getAdjustableParameters`, `runProcessLoop`.
+
+### Caller Identity and State Scoping (v1.8)
+
+Credentials are never accepted as tool arguments. The transport resolves the
+caller once per request and binds a principal (subject, tenant, roles, issuer)
+that the governance layer evaluates.
+
+| Transport | Identity source |
+|-----------|-----------------|
+| HTTP (`enterprise` profile) | OIDC bearer token claims |
+| STDIO | `NEQSIM_MCP_API_KEY` environment variable |
+| Local desktop | Anonymous — enforcement disabled by default |
+
+Server state is scoped to that principal:
+
+- **Sessions** are owned by the authenticated subject. A client-supplied
+  `ownerId` is ignored when authenticated, and listing shows only the caller's
+  own sessions.
+- **Streaming operations** can be polled, cancelled and listed only by their
+  owner.
+- **Registered models** are visible only within their tenant.
+- **One-shot approvals** are bound to the principal they were granted for.
+- **Audit entries** record subject and tenant.
+
+When enforcement is enabled, `manageSecurity` remains reachable so an operator
+can inspect or disable enforcement, but its privileged actions
+(`createApiKey`, `revokeApiKey`, `setConfig`, `getAuditLog`, `getRateLimits`)
+require the configured admin token.
+
+### Execution Limits (v1.8)
+
+Asynchronous work runs on a bounded pool with a wall-clock timeout and a
+per-principal concurrency cap, so one caller cannot starve the server and a
+non-converging run cannot hold a worker indefinitely.
+
+| Setting | Environment variable | Default |
+|---------|----------------------|---------|
+| `neqsim.mcp.workers` | `NEQSIM_MCP_WORKERS` | CPU count, clamped 2..16 |
+| `neqsim.mcp.operationTimeoutSeconds` | `NEQSIM_MCP_OPERATION_TIMEOUT_SECONDS` | 900 |
+| `neqsim.mcp.maxOperationsPerPrincipal` | `NEQSIM_MCP_MAX_OPERATIONS_PER_PRINCIPAL` | 5 |
+
+An operation exceeding its timeout is cancelled and reported with status
+`timed_out`. Exceeding the per-principal cap returns a `CONCURRENCY_LIMIT`
+error rather than queueing. Active limits are reported by `getCapabilities`
+under `modelLifecycle.executionPolicy` and by `streamSimulation(action='list')`.
+
+`runCapability(action='invoke')` has a separate five-second in-process worker budget for bounded
+static calculations. It rejects MCP runners and dispatchers, raw generic containers, requests over
+64 KiB, argument arrays over 4096 elements, and results over 256 KiB. Conversion and serialization
+are included in that budget. Cancellation uses Java interruption and is cooperative, not a hard
+process kill; calculations that may run for a long time or ignore interruption must use a curated
+runner, `runProcess`, or an isolated external execution environment.
 
 ### Transport Security & Observability (opt-in)
 
@@ -367,9 +467,20 @@ These are transport-level concerns and do **not** change the tool contract,
 response envelope, or governance enforcement. They apply only to the HTTP
 transport; the STDIO transport is unaffected.
 
+Hosting the server for a remote MCP client (for example Microsoft Copilot
+Studio) additionally requires, per the MCP Streamable HTTP specification, a
+public HTTPS endpoint, authentication on every connection, and strict `Origin`
+validation. The `enterprise` profile provides these: it binds `0.0.0.0`,
+requires an authenticated principal on `/mcp`, redirects insecure requests, and
+restricts CORS to the explicit allowlist in `NEQSIM_MCP_ALLOWED_ORIGINS`. That
+allowlist is the `Origin` gate against DNS-rebinding and must never be widened
+to `*`. Note that the identity established here is what
+[Caller Identity and State Scoping](#caller-identity-and-state-scoping-v18)
+consumes, so transport configuration does affect which state a caller can reach.
+
 ### Industrial Core Toolset
 
-These 21 tools form the approved industrial subset for governed deployments.
+These 24 tools form the approved industrial subset for governed deployments.
 The industrial core toolset represents tools intended for controlled engineering use.
 These tools vary in validation maturity and should be interpreted according to their
 benchmark trust metadata.
@@ -383,8 +494,8 @@ getPropertyTable, getPhaseEnvelope, validateInput, validateResults,
 searchComponents, getCapabilities, getExample, getSchema,
 getBenchmarkTrust, checkToolAccess, manageIndustrialProfile,
 listSimulationUnits, listUnitVariables, getSimulationVariable,
-compareSimulationStates, diagnoseAutomation, getAutomationLearningReport,
-getProgress
+getAdjustableParameters, compareSimulationStates, diagnoseAutomation,
+getAutomationLearningReport, getProgress, manageModel, inspectApi
 ```
 
 Tools such as `runFlowAssurance`, `runWaterHammer`, `runMaterialsReview`, `crossValidateModels`, `runParametricStudy`,

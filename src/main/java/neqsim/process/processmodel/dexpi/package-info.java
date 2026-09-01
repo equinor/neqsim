@@ -10,10 +10,34 @@
  * <ul>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlReader} - Import DEXPI P&amp;ID XML to ProcessSystem</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlWriter} - Export ProcessSystem to DEXPI XML</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlSvgRenderer} - Render the graphical content and shape catalogue
+ * of a Proteus-compatible DEXPI Plant/P&amp;ID document to SVG</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiVisualQualityAssessment} - Produce deterministic structural
+ * visual-quality diagnostics and SVG fingerprints without making standards-conformance or engineering-approval
+ * claims</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiProcessUnit} - Lightweight placeholder for imported equipment</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiStream} - Runnable stream with DEXPI metadata</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiMetadata} - Shared constants for DEXPI exchanges</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiRoundTripProfile} - Validation for round-trip fidelity</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelWriter} - Native DEXPI 2.0 Process exchange</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessTopologyAssessment} - Canonical material-topology
+ * projection, canonical operating-value provenance, and structured scope evidence for assessed native Process
+ * exchange</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageWriter} - Deterministic multi-area package of
+ * assessed native Process exchanges and explicit plant-wide manifest-only connection evidence</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageAssessment} - Offline, fail-closed package
+ * integrity, engineering-boundary, identity, loss-status, hash, and per-area conformance assessment</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageReader} - Immutable intake snapshot with
+ * defensive exact-area XML and independently assessed connection evidence</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageRevisionImpact} - Deterministic assessed
+ * package, area-document, and material/energy/signal connection revision evidence</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelPackageDocumentImpact} - Fail-closed projection of
+ * assessed package changes onto controlled document, drawing, sheet, designation, layout, table, and study review
+ * scopes</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionWriter} - Opt-in native DEXPI Core graphical
+ * projection</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20GraphicalProjectionAssessment} - Deterministic inspection of
+ * stable represented identities, mapped geometry, styles, bounds, and retained graphical losses</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
@@ -28,6 +52,10 @@
  *
  * // Export back to DEXPI XML
  * DexpiXmlWriter.write(process, new File("export.xml"));
+ *
+ * // Render that DEXPI graphical content without an external drawing tool
+ * DexpiXmlSvgRenderer.render(new File("export.xml"), new File("export.svg"));
+ * DexpiVisualQualityAssessment.Report visualReport = DexpiVisualQualityAssessment.assess(new File("export.xml"));
  * </pre>
  *
  * @author NeqSim

@@ -20,7 +20,7 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
  *
  * <p>
  * The expected CSV columns are: {@code case,time_s,position_m,variable,value,abs_tolerance,rel_tolerance,source}. This
- * intentionally uses a simple numeric export format that can be produced from OLGA, LedaFlow, field historians, or
+ * intentionally uses a simple numeric export format that can be produced from field historians, laboratory rigs, or
  * spreadsheet post-processing.
  * </p>
  */
@@ -78,6 +78,16 @@ public final class TwoFluidBenchmarkHarness {
     variables.put("liquid_velocity_m_s", pipe.getLiquidVelocityProfile());
     variables.put("oil_velocity_m_s", pipe.getOilVelocityProfile());
     variables.put("water_velocity_m_s", pipe.getWaterVelocityProfile());
+    variables.put("entrainment_fraction", pipe.getEntrainmentFractionProfile());
+    variables.put("entrained_droplet_diameter_m", pipe.getEntrainedDropletDiameterProfile());
+    variables.put("inclined_section_gas_carryover_number", pipe.getInclinedSectionGasCarryoverNumberProfile());
+    variables.put("inclined_section_liquid_fallback_flag",
+        toDouble(pipe.getInclinedSectionLiquidFallbackPotentialProfile()));
+    // Deprecated key retained for benchmark-file compatibility.
+    variables.put("severe_slugging_number", pipe.getInclinedSectionGasCarryoverNumberProfile());
+    variables.put("water_wetting_flag", toDouble(pipe.getWaterWettingProfile()));
+    variables.put("water_dropout_risk_flag", toDouble(pipe.getWaterDropoutRiskProfile()));
+    variables.put("severe_slug_potential_flag", toDouble(pipe.getSevereSlugPotentialProfile()));
     return new Snapshot(pipe.getSimulationTime(), pipe.getPositionProfile(), variables);
   }
 
@@ -93,7 +103,13 @@ public final class TwoFluidBenchmarkHarness {
   }
 
   /**
-   * Compare transient snapshots against benchmark points using linear interpolation in time and position.
+   * Compare transient snapshots against benchmark points.
+   *
+   * <p>
+   * Continuous profiles use linear interpolation in time and position. Variables ending in {@code _flag} use
+   * nearest-neighbour sampling so boolean indicators remain binary. Intervals with a non-finite endpoint also use
+   * nearest-neighbour sampling to preserve diagnostic sentinels without producing {@link Double#NaN}.
+   * </p>
    *
    * @param snapshots model snapshots
    * @param referencePoints reference points
@@ -141,7 +157,24 @@ public final class TwoFluidBenchmarkHarness {
 
     double fraction = (point.getTimeSeconds() - lower.getTimeSeconds()) / dt;
     fraction = Math.max(0.0, Math.min(1.0, fraction));
+    return interpolateValues(lowerValue, upperValue, fraction, isDiscreteVariable(point.getVariable()));
+  }
+
+  private static double interpolateValues(double lowerValue, double upperValue, double fraction, boolean discrete) {
+    if (fraction <= 0.0) {
+      return lowerValue;
+    }
+    if (fraction >= 1.0) {
+      return upperValue;
+    }
+    if (discrete || !Double.isFinite(lowerValue) || !Double.isFinite(upperValue)) {
+      return fraction < 0.5 ? lowerValue : upperValue;
+    }
     return lowerValue + fraction * (upperValue - lowerValue);
+  }
+
+  private static boolean isDiscreteVariable(String variable) {
+    return normalize(variable).endsWith("_flag");
   }
 
   private static Map<String, Integer> parseHeader(String line) {
@@ -179,6 +212,14 @@ public final class TwoFluidBenchmarkHarness {
       scaled[i] = values[i] * factor;
     }
     return scaled;
+  }
+
+  private static double[] toDouble(boolean[] values) {
+    double[] numeric = new double[values.length];
+    for (int i = 0; i < values.length; i++) {
+      numeric[i] = values[i] ? 1.0 : 0.0;
+    }
+    return numeric;
   }
 
   /** One reference sample from an external simulator or field data set. */
@@ -271,7 +312,8 @@ public final class TwoFluidBenchmarkHarness {
     }
 
     public double valueAt(String variable, double positionMeters) {
-      double[] values = variables.get(normalize(variable));
+      String normalizedVariable = normalize(variable);
+      double[] values = variables.get(normalizedVariable);
       if (values == null || values.length == 0) {
         throw new IllegalArgumentException("No model profile for variable: " + variable);
       }
@@ -279,10 +321,10 @@ public final class TwoFluidBenchmarkHarness {
         throw new IllegalArgumentException("Position and value profile lengths differ for " + variable + ": "
             + positionsMeters.length + " vs " + values.length);
       }
-      return interpolatePosition(positionMeters, positionsMeters, values);
+      return interpolatePosition(positionMeters, positionsMeters, values, isDiscreteVariable(normalizedVariable));
     }
 
-    private double interpolatePosition(double x, double[] positions, double[] values) {
+    private double interpolatePosition(double x, double[] positions, double[] values, boolean discrete) {
       if (x <= positions[0]) {
         return values[0];
       }
@@ -297,7 +339,7 @@ public final class TwoFluidBenchmarkHarness {
             return values[i];
           }
           double fraction = (x - positions[i]) / dx;
-          return values[i] + fraction * (values[i + 1] - values[i]);
+          return interpolateValues(values[i], values[i + 1], fraction, discrete);
         }
       }
       return values[last];

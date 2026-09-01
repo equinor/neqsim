@@ -1,12 +1,10 @@
 ---
 layout: default
 title: "MPC Integration Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+description: "Notebook for MPC Integration Tutorial, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# MPC Integration Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MPC_Integration_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb).

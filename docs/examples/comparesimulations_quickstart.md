@@ -1,9 +1,9 @@
 ---
 title: Comparing process simulations with NeqSim (Java)
-description: This guide shows how to reproduce the `comparesimulations.ipynb` Colab notebook using
+description: "Java quickstart for translating the comparesimulations Colab workflow into a sequential NeqSim ProcessModel and JSON report."
 ---
 
-# Comparing process simulations with NeqSim (Java)
+For the complete published fluid and flowsheet plus the multi-case equipment, piping, valve, instrument, safety, materials, mechanical, DEXPI and readiness study, use the [complete offshore process engineering study](../integration/complete-offshore-process-engineering-study.md) and its executable notebook. The abbreviated Java fragment below remains only a translation pattern.
 
 This guide shows how to reproduce the `comparesimulations.ipynb` Colab notebook using
 only the Java API. It walks through building the feed, assembling the flowsheet, running
@@ -80,7 +80,9 @@ Tips when translating the notebook to Java:
 - Keep the same feed composition, temperature, and pressure as your reference notebook
   so downstream comparisons stay aligned.
 - Enable sequential execution with `setRunStep(true)` to mirror the order in which the
-  Colab notebook runs each process section.【F:src/test/java/neqsim/process/processmodel/CombinedModelsTest.java†L87-L135】
+  Colab notebook runs each process section.
 - Use `Report.generateJsonReport()` to create the same JSON structure stored on the
   `ProcessModel` (`getReport_json()`), which you can compare directly against the
-  notebook outputs.【F:src/test/java/neqsim/process/processmodel/CombinedModelsTest.java†L135-L136】
+  notebook outputs.
+
+Both calls are exercised by [CombinedModelsTest](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/processmodel/CombinedModelsTest.java).

@@ -251,33 +251,12 @@ def _parse_catalog_text(text):
 
 def _parse_catalog_fallback(text):
     """Fallback parser for the simple agent catalog format."""
-    data = {"agents": [], "repositories": []}
-    section = None
-    current = None
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if line.startswith("#") or not line:
-            continue
-        if not raw_line.startswith((" ", "\t")) and line.endswith(":"):
-            if current and section in data:
-                data[section].append(current)
-            section = line[:-1]
-            current = None
-        elif line.startswith("- "):
-            if current and section in data:
-                data[section].append(current)
-            current = {}
-            remainder = line[2:].strip()
-            if ":" in remainder:
-                key, value = remainder.split(":", 1)
-                current[key.strip()] = install_skill._parse_scalar_value(
-                    value.strip())
-        elif current is not None and ":" in line:
-            key, value = line.split(":", 1)
-            current[key.strip()] = install_skill._parse_scalar_value(
-                value.strip())
-    if current and section in data:
-        data[section].append(current)
+    data = install_skill._parse_simple_yaml(text)
+    if not isinstance(data, dict):
+        data = {}
+    for section in ("agents", "repositories"):
+        if not isinstance(data.get(section), list):
+            data[section] = []
     return data
 
 
@@ -1267,30 +1246,9 @@ def _load_agent_yaml(agent_dir):
 
 
 def _parse_flat_yaml(text):
-    """Parse simple flat YAML key/value and one-level lists without PyYAML."""
-    data = {}
-    current_list_key = None
-    for raw_line in text.splitlines():
-        is_indented = raw_line.startswith((" ", "\t"))
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if is_indented and current_list_key and line.startswith("- "):
-            data.setdefault(current_list_key, []).append(
-                line[2:].strip().strip('"').strip("'"))
-            continue
-        current_list_key = None
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        key = key.strip()
-        value = value.strip()
-        if value:
-            data[key] = install_skill._parse_scalar_value(value)
-        else:
-            data[key] = []
-            current_list_key = key
-    return data
+    """Parse simple YAML key/value pairs and lists without PyYAML."""
+    data = install_skill._parse_simple_yaml(text)
+    return data if isinstance(data, dict) else {}
 
 
 def validate_agent_dir(agent_dir):
@@ -1427,10 +1385,15 @@ def _requested_skill_export_targets(install_args):
 
 
 def _skill_install_args(skill_name, install_args):
-    """Build skill installer args that preserve agent export target options."""
+    """Build skill installer args that preserve agent export target options.
+
+    Propagates ``--force`` from the agent install command so
+    ``neqsim agent install --all --vscode --force`` reinstalls each required
+    skill's content too, not just the agent itself.
+    """
     return argparse.Namespace(
         name=skill_name,
-        force=False,
+        force=getattr(install_args, "force", False),
         vscode=getattr(install_args, "vscode", False),
         target=list(getattr(install_args, "target", []) or []),
         vscode_scope=getattr(install_args, "vscode_scope", "user"),
@@ -1459,7 +1422,7 @@ def _required_skill_export_path(skill_name, skill_info, target, args=None, agent
     if agent_export_path:
         agent_path = Path(agent_export_path)
         agent_dir = agent_path.parent if agent_path.suffix else agent_path
-        if agent_dir.name == "agents" and agent_dir.parent.name == ".github":
+        if agent_dir.name == "agents" and agent_dir.parent.name in (".github", ".copilot"):
             return str(agent_dir.parent / "skills" / skill_name)
         return str(agent_dir / "skills" / skill_name)
 
@@ -1546,11 +1509,20 @@ def _ensure_required_skill_exports(required_skills, install_args):
 
 
 def _print_required_skill_guidance(required_skills, install_missing=False, install_args=None):
-    """Print required skill status and optionally install missing catalog skills."""
+    """Print required skill status and optionally install/reinstall catalog skills.
+
+    When the agent install was run with ``--force``, already-available required
+    skills are re-run through the installer too (not just missing ones), so
+    ``neqsim agent install --all --vscode --force`` refreshes both the agent
+    and its skills, matching the documented "reinstall" behavior.
+    """
     if not required_skills:
         return []
+    force_reinstall = install_missing and bool(getattr(install_args, "force", False))
     missing = _find_missing_required_skills(required_skills)
-    if not missing:
+    to_reinstall = required_skills if force_reinstall else missing
+
+    if not to_reinstall:
         print("  [OK] Required skills available: {skills}".format(
             skills=", ".join(required_skills)
         ))
@@ -1560,8 +1532,9 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
                 skills=", ".join(unresolved_exports)))
         return unresolved_exports
 
-    print("  [!!] Missing required skills: {skills}".format(
-        skills=", ".join(missing)))
+    if missing:
+        print("  [!!] Missing required skills: {skills}".format(
+            skills=", ".join(missing)))
     if not install_missing:
         print("  Install them with: neqsim skill install <skill-name>")
         return missing
@@ -1578,13 +1551,15 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
 
     unresolved = []
     installed_now = []
-    for skill_name in missing:
+    for skill_name in to_reinstall:
         resolved_name = _resolve_skill_name(
             skill_name, set(catalog_by_name.keys()))
         if not resolved_name:
-            unresolved.append(skill_name)
+            if skill_name in missing:
+                unresolved.append(skill_name)
             continue
-        print("  Installing missing skill: {name}".format(name=resolved_name))
+        verb = "Installing missing skill" if skill_name in missing else "Reinstalling required skill"
+        print("  {verb}: {name}".format(verb=verb, name=resolved_name))
         args = _skill_install_args(resolved_name, install_args)
         try:
             install_skill.cmd_install(skill_catalog, args)
@@ -2296,6 +2271,12 @@ def _check_generic_manifest_fresh(kind, root_dir, installed_manifest, failures):
 def _check_export_target(target, args):
     """Check installed agent exports and required skill exports for a target."""
     agent_manifest = load_manifest()
+    source_filter = getattr(args, "source", "all")
+    if source_filter != "all":
+        agent_manifest = {
+            name: info for name, info in agent_manifest.items()
+            if info.get("source", "community") == source_filter
+        }
     try:
         skill_manifest = install_skill.load_manifest()
     except Exception:
@@ -2360,6 +2341,8 @@ def _check_export_target(target, args):
         _check_generic_manifest_fresh("skills", skill_generic_root, skill_manifest, failures)
 
     print("\n  NeqSim agent export doctor ({target})\n".format(target=target))
+    if source_filter != "all":
+        print("  Source: {source}".format(source=source_filter))
     print("  Checked exported agents: {count}".format(count=len(checked_agents)))
     if checked_agents:
         print("  Agents: {names}".format(names=", ".join(checked_agents)))
@@ -2564,6 +2547,7 @@ def main():
         "  neqsim agent schema",
         "  neqsim agent doctor",
         "  neqsim agent doctor --target vscode",
+        "  neqsim agent doctor --target vscode --source community",
         "  neqsim agent remove neqsim-example-agent",
         "  neqsim agent private-init",
         "  neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login  # register a repo + SSO",
@@ -2682,6 +2666,9 @@ def main():
     p_doctor.add_argument(
         "--profile", default=None,
         help="Optional export profile JSON (default: ~/.neqsim/export/export-profile.json if present)")
+    p_doctor.add_argument(
+        "--source", choices=["all", "community", "private"], default="all",
+        help="Check all installed agents, community agents only, or private/enterprise agents only")
 
     p_priv = sub.add_parser(
         "private-init",

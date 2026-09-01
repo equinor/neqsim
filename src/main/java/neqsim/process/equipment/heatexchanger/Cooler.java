@@ -54,15 +54,11 @@ public class Cooler extends Heater {
   public double getEntropyProduction(String unit) {
     UUID id = UUID.randomUUID();
     inStream.run(id);
-    inStream.getFluid().init(3);
+    inStream.getFluid().init(2);
     getOutletStream().run(id);
-    getOutletStream().getFluid().init(3);
+    getOutletStream().getFluid().init(2);
 
-    double heatTransferEntropyProd = coolingMediumTemperature * getDuty();
-    System.out.println("heat entropy " + heatTransferEntropyProd);
-    double entrop = getOutletStream().getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
-
-    return entrop;
+    return getOutletStream().getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
   }
 
   /** {@inheritDoc} */

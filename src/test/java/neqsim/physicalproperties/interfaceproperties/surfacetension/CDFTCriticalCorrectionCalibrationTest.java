@@ -3,6 +3,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -22,6 +23,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Agent
  * @version 1.0
  */
+@Tag("slow")
 class CDFTCriticalCorrectionCalibrationTest {
   private static final Logger logger = LogManager.getLogger(CDFTCriticalCorrectionCalibrationTest.class);
 

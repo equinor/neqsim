@@ -299,6 +299,9 @@ public class LagrangianSlugTracker implements Serializable {
   /** Total mass returned to Eulerian field (kg). */
   private double totalMassReturned = 0;
 
+  /** Total tracked slug mass that exited through the pipe outlet (kg). */
+  private double totalMassExitedAtOutlet = 0;
+
   /** Reference mixture velocity (m/s). */
   private double referenceMixtureVelocity = 1.0;
 
@@ -721,6 +724,7 @@ public class LagrangianSlugTracker implements Serializable {
    * @param dt time step (s)
    */
   private void advanceSlug(SlugBubbleUnit slug, PipeSection[] sections, double dt) {
+    double previousSlugLiquidMass = slug.slugLiquidMass;
     slug.age += dt;
 
     // Find section at slug front
@@ -785,6 +789,7 @@ public class LagrangianSlugTracker implements Serializable {
     // Update mass
     double rhoL = frontSection.getLiquidDensity();
     slug.slugLiquidMass = rhoL * slug.slugLiquidVolume;
+    accountSlugMassChange(previousSlugLiquidMass, slug.slugLiquidMass);
 
     // Determine growth/decay state
     double equilibriumLength = calculateEquilibriumLength(frontSection);
@@ -969,6 +974,27 @@ public class LagrangianSlugTracker implements Serializable {
 
     // Net mass rate
     slug.netMassRate = slug.pickupRate - slug.sheddingRate;
+  }
+
+  /**
+   * Account for the actual liquid-mass change implied by the updated slug geometry.
+   *
+   * <p>
+   * The geometric slug state is authoritative because length, area, holdup, and local liquid density can all change in
+   * one time step. A positive change is liquid borrowed from the Eulerian field; a negative change is liquid returned
+   * to it. The pickup and shedding rates remain diagnostic instantaneous rates.
+   * </p>
+   *
+   * @param previousMass liquid mass before the update (kg)
+   * @param currentMass liquid mass after the update (kg)
+   */
+  private void accountSlugMassChange(double previousMass, double currentMass) {
+    double massChange = currentMass - previousMass;
+    if (massChange > 0.0) {
+      totalMassBorrowed += massChange;
+    } else if (massChange < 0.0) {
+      totalMassReturned -= massChange;
+    }
   }
 
   /**
@@ -1180,7 +1206,7 @@ public class LagrangianSlugTracker implements Serializable {
       if (slug.tailPosition > pipeLength) {
         slug.hasExited = true;
         recordSlugAtOutlet(slug);
-        totalMassReturned += slug.slugLiquidMass;
+        totalMassExitedAtOutlet += slug.slugLiquidMass;
         totalSlugsExited++;
         iter.remove();
         continue;
@@ -1511,6 +1537,20 @@ public class LagrangianSlugTracker implements Serializable {
   }
 
   /**
+   * Set the random seed used by stochastic slug initiation.
+   *
+   * <p>
+   * The default constructor intentionally uses a non-deterministic seed. Set an explicit seed before advancing the
+   * tracker when reproducible validation or regression results are required.
+   * </p>
+   *
+   * @param seed random seed
+   */
+  public void setRandomSeed(long seed) {
+    random.setSeed(seed);
+  }
+
+  /**
    * Set minimum slug length in diameters.
    *
    * @param diameters minimum length (diameters)
@@ -1603,14 +1643,19 @@ public class LagrangianSlugTracker implements Serializable {
   /**
    * Get mass conservation error.
    *
-   * @return error (kg), should be ~0
+   * <p>
+   * The tracker audit is {@code borrowed - returned - exited - active}. It is separate from the conservative
+   * TwoFluidPipe mass-balance report and should remain near zero throughout tracking.
+   * </p>
+   *
+   * @return tracker accounting error (kg), should be near zero
    */
   public double getMassConservationError() {
     double massInActive = 0;
     for (SlugBubbleUnit slug : slugs) {
       massInActive += slug.slugLiquidMass;
     }
-    return totalMassBorrowed - totalMassReturned - massInActive;
+    return totalMassBorrowed - totalMassReturned - totalMassExitedAtOutlet - massInActive;
   }
 
   /**
@@ -1629,6 +1674,15 @@ public class LagrangianSlugTracker implements Serializable {
    */
   public double getTotalMassReturnedToEulerian() {
     return totalMassReturned;
+  }
+
+  /**
+   * Get total tracked slug liquid mass that exited through the pipe outlet.
+   *
+   * @return cumulative outlet mass (kg)
+   */
+  public double getTotalMassExitedAtOutlet() {
+    return totalMassExitedAtOutlet;
   }
 
   /**
@@ -1677,6 +1731,7 @@ public class LagrangianSlugTracker implements Serializable {
     timeSinceLastInletSlug = 0;
     totalMassBorrowed = 0;
     totalMassReturned = 0;
+    totalMassExitedAtOutlet = 0;
     lastOutletArrivalTime = -1;
     outletSlugLengths.clear();
     outletSlugVolumes.clear();
@@ -1705,6 +1760,7 @@ public class LagrangianSlugTracker implements Serializable {
     sb.append(String.format("Max slug volume at outlet: %.4f m³\n", maxSlugVolumeAtOutlet));
     sb.append(String.format("Mass borrowed: %.3f kg\n", totalMassBorrowed));
     sb.append(String.format("Mass returned: %.3f kg\n", totalMassReturned));
+    sb.append(String.format("Mass exited at outlet: %.3f kg\n", totalMassExitedAtOutlet));
     sb.append(String.format("Mass conservation error: %.6f kg\n", getMassConservationError()));
 
     if (!outletSlugLengths.isEmpty()) {
@@ -1735,6 +1791,9 @@ public class LagrangianSlugTracker implements Serializable {
     sb.append(String.format("  \"averageSlugLength\": %.4f,\n", averageSlugLength));
     sb.append(String.format("  \"maxSlugLength\": %.4f,\n", maxObservedSlugLength));
     sb.append(String.format("  \"maxSlugVolumeAtOutlet\": %.6f,\n", maxSlugVolumeAtOutlet));
+    sb.append(String.format("  \"massBorrowed\": %.9f,\n", totalMassBorrowed));
+    sb.append(String.format("  \"massReturned\": %.9f,\n", totalMassReturned));
+    sb.append(String.format("  \"massExitedAtOutlet\": %.9f,\n", totalMassExitedAtOutlet));
     sb.append(String.format("  \"massConservationError\": %.9f,\n", getMassConservationError()));
     sb.append("  \"activeSlugs\": [\n");
 

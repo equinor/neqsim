@@ -1,6 +1,10 @@
 package neqsim.process.equipment.distillation;
 
 import java.util.UUID;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -25,6 +29,36 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
    */
   public Reboiler(String name) {
     super(name);
+    registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
+  }
+
+  /**
+   * Connects an external heat-duty specification using the legacy single-stream API.
+   *
+   * @param energyStream heat-duty stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.connectEnergyStream("heatDuty", energyStream, EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    if ("heatDuty".equals(portName)) {
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("heatDuty".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+    }
   }
 
   /**
@@ -39,9 +73,13 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   /**
    * Setter for the field <code>refluxRatio</code>.
    *
-   * @param refluxRatio the refluxRatio to set
+   * @param refluxRatio finite non-negative vapor boilup-to-bottoms ratio
+   * @throws IllegalArgumentException if the ratio is negative or non-finite
    */
   public void setRefluxRatio(double refluxRatio) {
+    if (!Double.isFinite(refluxRatio) || refluxRatio < 0.0) {
+      throw new IllegalArgumentException("Reboiler vapor boilup ratio must be finite and >= 0");
+    }
     this.refluxRatio = refluxRatio;
     refluxIsSet = true;
   }
@@ -86,6 +124,9 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (refluxIsSet && (!Double.isFinite(refluxRatio) || refluxRatio < 0.0)) {
+      throw new IllegalStateException("Reboiler " + getName() + " has invalid vapor boilup ratio " + refluxRatio);
+    }
     if (!refluxIsSet) {
       UUID oldid = getCalculationIdentifier();
       super.run(id);
@@ -104,6 +145,9 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
 
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
     duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
+    if (!isSetEnergyStream()) {
+      getEnergyPort("heatDuty").setDuty(duty);
+    }
 
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);

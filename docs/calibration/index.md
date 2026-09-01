@@ -3,7 +3,6 @@ title: "Calibration"
 description: "Documentation for data reconciliation and parameter estimation in NeqSim. Covers measurement reconciliation, parameter fitting, and model calibration workflows."
 ---
 
-# Calibration
 
 Guides for calibrating NeqSim process models against plant and laboratory data.
 

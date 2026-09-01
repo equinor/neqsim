@@ -77,10 +77,11 @@ compressor power or a non-finite separator duty downstream.
 | Step | Action | Why It Helps |
 |------|--------|-------------|
 | 1 | Call `fluid.initProperties()` after flash | **Most common cause.** `init(3)` does NOT initialize transport properties. `initProperties()` calls both `init(2)` + `initPhysicalProperties()` |
-| 2 | Check `fluid.getNumberOfPhases()` — property may be for a phase that doesn't exist | Requesting gas-phase viscosity when only liquid exists returns 0 |
-| 3 | Use `fluid.hasPhaseType("gas")` before accessing gas-phase properties | Phase existence varies with conditions |
-| 4 | For viscosity at very low pressures (<1 bara), check if the correlation is valid | Some viscosity models have limited pressure range |
-| 5 | For mixtures with unusual components (mercury, H2S at trace levels), check if physical property parameters exist in the database | Missing Lennard-Jones or critical parameters give zero |
+| 2 | Check `stream.getPropertyInitLevel()` / `process.getPropertyInitLevel()` | **Second most common cause in a flowsheet.** `Stream.PropertyInitLevel.DENSITY_ONLY` deliberately skips viscosity, thermal conductivity and diffusivity — they read back as `0.0`, not as an error. Set the level back to `FULL` (per stream, per `ProcessSystem`, or per `ProcessModel` area) and re-run |
+| 3 | Check `fluid.getNumberOfPhases()` — property may be for a phase that doesn't exist | Requesting gas-phase viscosity when only liquid exists returns 0 |
+| 4 | Use `fluid.hasPhaseType("gas")` before accessing gas-phase properties | Phase existence varies with conditions |
+| 5 | For viscosity at very low pressures (<1 bara), check if the correlation is valid | Some viscosity models have limited pressure range |
+| 6 | For mixtures with unusual components (mercury, H2S at trace levels), check if physical property parameters exist in the database | Missing Lennard-Jones or critical parameters give zero |
 
 ## Wrong JT / Isenthalpic Expansion Temperature
 
@@ -115,11 +116,54 @@ T_jt = float(valve.getOutletStream().getTemperature('C'))  # Correct JT temperat
 | Step | Action | Why It Helps |
 |------|--------|-------------|
 | 1 | Check if `fluid.setMultiPhaseCheck(true)` was called | Without this, solver may miss a phase split |
-| 2 | For CO2-rich systems near critical, check actual density — phase label may be misleading | CO2 near Tc=304K and Pc=74bar has ambiguous phase identity |
-| 3 | Use `fluid.getPhase(0)` / `getPhase(1)` instead of `getPhase("gas")` if labels are unreliable | Phase index is always consistent even if label is wrong |
-| 4 | Run `ops.calcPTphaseEnvelope()` to visualize phase boundaries | Shows whether operating point is in 1-phase or 2-phase region |
-| 5 | For CO2 injection wells, use `CO2FlowCorrections.isDensePhase(system)` to check T/Tc and P/Pc | Distinguishes dense phase from conventional gas/liquid |
-| 6 | For CO2-rich streams, use `CO2FlowCorrections.getReducedTemperature(system)` and `getReducedPressure(system)` | Quantifies proximity to critical point |
+| 2 | **If the fluid uses `addTBPfraction` / `addPlusFraction`, verify molar mass was passed in kg/mol, not g/mol** | See "Silent g/mol TBP unit error" below — the single most common cause of a bogus one-phase result |
+| 3 | For CO2-rich systems near critical, check actual density — phase label may be misleading | CO2 near Tc=304K and Pc=74bar has ambiguous phase identity |
+| 4 | Use `String.valueOf(phase.getType())` (`"GAS"` / `"OIL"` / `"AQUEOUS"`) rather than `getPhaseTypeName()` | `getPhaseTypeName()` can report `"gas"` for a liquid root; `getType()` is the reliable discriminator |
+| 5 | Use `fluid.getPhase(0)` / `getPhase(1)` instead of `getPhase("gas")` if labels are unreliable | Phase index is always consistent even if label is wrong |
+| 6 | Run `ops.calcPTphaseEnvelope()` to visualize phase boundaries | Shows whether operating point is in 1-phase or 2-phase region |
+| 7 | For CO2 injection wells, use `CO2FlowCorrections.isDensePhase(system)` to check T/Tc and P/Pc | Distinguishes dense phase from conventional gas/liquid |
+| 8 | For CO2-rich streams, use `CO2FlowCorrections.getReducedTemperature(system)` and `getReducedPressure(system)` | Quantifies proximity to critical point |
+
+### Silent g/mol TBP unit error
+
+`addTBPfraction(name, moles, molarMass, density)` and `addPlusFraction(...)`
+expect molar mass in **kg/mol**. Passing g/mol throws no exception — the
+characterization silently produces nonsense pseudo-component properties and the
+flash collapses to one phase.
+
+**Diagnostic tell:** `TPflash()` at standard conditions (15 °C, 1.01325 bara)
+returns `getNumberOfPhases() == 1` with `getType() == GAS` but a density of
+700–800 kg/m3. A gas at 1 atm cannot exceed a few kg/m3, so a "gas" phase with
+liquid density means the pseudo-components are broken, not that the fluid is
+single-phase.
+
+**Confirm** by printing the pseudo-component properties — the broken case shows
+`molarMass` ~1000x too large, `Tc` in the thousands of K, and `acentricFactor`
+pinned at -0.99:
+
+```java
+for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+  ComponentInterface c = fluid.getComponent(i);
+  logger.info("{} MW={} g/mol Tc={} K Pc={} bara omega={}", c.getName(),
+      c.getMolarMass() * 1000.0, c.getTC(), c.getPC(), c.getAcentricFactor());
+}
+```
+
+**Fix:** divide by 1000 at the call site —
+`fluid.addTBPfraction("C10-C12", 0.054, 150.0 / 1000.0, 0.790);`
+
+## Pipe Outlet Temperature Equals Ambient
+
+**Symptom:** A `PipeBeggsAndBrills` tubing string or flowline always arrives at the
+ambient / formation temperature, no matter the length, rate or insulation. Hydrate
+margins, cooldown times and arrival temperatures all look pessimistic and insensitive.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Call `pipe.setUseOverallHeatTransferCoefficient(true)` and `pipe.setHeatTransferCoefficient(U)` | Without it the pipe behaves as if `U` were infinite and equilibrates to ambient |
+| 2 | Use screening `U` values: ~15 W/m²K cased/cemented well, ~20 W/m²K uninsulated subsea flowline, ~5 W/m²K wet-insulated | Gives physical wellhead and arrival temperatures |
+| 3 | Do **not** rely on `setAdiabatic(true)` | It currently leaves the outlet temperature unchanged |
+| 4 | Sanity-check the wellhead temperature against expectation before using it downstream | A gas well lifting from 62 °C over 1040 m should arrive near 50 °C, not 5 °C |
 
 ## CO2 Injection Well Issues
 
@@ -145,6 +189,148 @@ T_jt = float(valve.getOutletStream().getTemperature('C'))  # Correct JT temperat
 | 3 | Check feed stage location — feed too high or low destabilizes | Rule of thumb: feed at ~40-60% of total stages from top |
 | 4 | Adjust reflux ratio — start with a high ratio (>2x minimum) and reduce | High reflux is easier to converge |
 | 5 | Check condenser/reboiler configuration matches the separation | Total condenser for liquid products, partial for vapor |
+
+### Column runs hundreds of iterations / dominates ProcessModel runtime
+
+**Symptom:** one column takes tens of seconds per solve and the outer
+`ProcessModel` loop never finishes, even though `setMaxNumberOfIterations(10)`
+was called.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | `column.setMaxNumberOfIterations(n, true)` (or `setHardIterationCap(true)`) | The 1-arg setter is only a SOFT floor: the effective budget is `max(n, 5*trays)` plus overflow expansion. Check with `getEffectiveMaxNumberOfIterations()` |
+| 2 | `column.setRelaxationFactor(0.3)` | The adaptive damping controller clamps at `minSequentialRelaxation` (default 0.5). `setRelaxationFactor` lowers that floor, so damping below 0.5 now actually takes effect and breaks tray-temperature limit cycles. `setMinSequentialRelaxation` / `setMinInsideOutRelaxation` set it explicitly |
+| 3 | `column.setTemperatureToleranceRelative(1e-3)` | The default absolute tolerance (~0.02-0.03 K) can be 10x tighter than the enclosing `ProcessModel` gate (1e-3 relative ≈ 0.27 K), so the column chases a residual the plant already accepts |
+
+### Column reports solved() == true but the answer is wrong
+
+**Symptom:** `solved()` is `true`, the residuals printed by
+`getConvergenceDiagnostics()` look clean, but the product split, reboiler duty or
+tray profile disagrees with every other solver (vapour traffic collapsing
+mid-column is a giveaway).
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Read `per-tray material imbalance` in `getConvergenceDiagnostics()` (or `getLastTrayMaterialBalanceError()`) | Anything above `getTrayMaterialBalanceTolerance()` (default 0.02) means at least one tray does not close its own component balance, so the profile is not a solution even when the overall feed/product balance is closed. Do **not** use the MESH `material:` infinity norm for this — it is dominated by trace components |
+| 2 | Cross-check with a second solver | Run the same feed through `DAMPED_SUBSTITUTION` and a simultaneous solver. Agreement within a few percent is evidence; a 30-50 % difference in product split means one of them is wrong |
+| 3 | Check `getLastSolveStatus()` | `FALLBACK_PRODUCTS` means the products came from an overall feed flash, not the tray solution. `FAILED` means the solver rejected its own result |
+| 4 | Do not loosen `setTemperatureTolerance` to force a pass | A loosened tolerance can be satisfied by the warm start in a single iteration and returns an unconverged profile that *looks* converged |
+
+> `NAPHTALI_SANDHOLM` reports `Double.NaN` as its temperature residual because it
+> has no successive-substitution sweep. That is intentional: for that solver the
+> MESH residual vector is the convergence measure, and `solved()` requires the
+> MESH gate to be active instead.
+
+## ProcessModel Boundary Convergence
+
+**Symptom:** `getConvergenceSummary()` reports a relative error but not where it
+comes from — most confusingly `Flow rate: 1.00e+00`.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | `model.getWorstBoundaryStreamName("flow")` (also `"temperature"`, `"pressure"`) | Names the boundary stream that produced the reported maximum. The summary and `getConvergenceReportJson()` (`errors.flow.worstStream`) now include it |
+| 2 | `model.getNonConvergedBoundaryStreamErrors()` | Every boundary stream outside tolerance, worst first, with `previousFlow` / `currentFlow` |
+| 3 | Check `isFlowCollapsedToZero()` on the offender | A relative flow error of **exactly 1.0** means the stream went from non-zero to zero between outer passes — an upstream unit stopped producing it (failed run, closed splitter, bypassed train). That is an upstream fault, not a slowly converging recycle |
+| 4 | Check `isFlowStartedFromZero()` | Mirror case: a seeded/low-flow stream starting up. Usually harmless, converges on the next pass |
+| 5 | Check `getAbsoluteFlowChange()` on the offender | The decisive test. A large *relative* error on a tiny *absolute* change is numerical noise on a stagnant leg, not a process residual |
+
+### Symptom: a stagnant dead leg dominates the convergence gate
+
+`getConvergenceSummary()` reports e.g. `Flow rate: 6.56e-02 (gas export ht)` and
+the model never converges, while the real residual sits on a large stream. The
+gate is a **max over relative errors**, so `0.007 kg/hr` of wobble on a
+`0.1 kg/hr` branch beats a genuine `443 kg/hr` residual on a `138 t/hr` export
+stream (`3.2e-03`).
+
+```java
+// 1. Do not solve the stagnant section at all (units auto-bypass).
+//    Manifold, ThrottlingValve, PipeBeggsAndBrills and MultiStreamHeatExchanger
+//    honour this too, and still publish their outlet pressure at zero flow.
+plant.get("HT injection process A").setSectionLowFlowThreshold(50.0, "kg/hr");
+
+// 2. Keep the dead leg out of the plant convergence metric.
+plant.setBoundaryFlowFloor(1.0);                      // drop sub-1 kg/hr streams
+
+// 3. Converge on relative OR absolute flow change.
+boolean ok = plant.runUntilConverged(15, 1e-3, 1.0);  // rel 1e-3 OR abs 1 kg/hr
+```
+
+Both filters also apply to `getNonConvergedBoundaryStreamErrors()`, so the
+offender list stops being dominated by noise. `getConvergenceSummary()` prints
+the absolute Δflow next to each relative error and a `Flow filters:` line when a
+filter is active.
+
+> **Prefer the self-configuring form.** `plant.runUntilConverged(maxIterations)`
+> derives all three filters from the plant's own feed rate, so the hand-picked
+> `1.0` / `1.0` / `50 kg/hr` numbers above are only needed when you must override
+> it. See "Model grinds toward the last decade of the residual" below.
+
+### Model grinds toward the last decade of the residual
+
+**Symptom:** `converged=False` after the iteration cap, but the residual is
+*small* — e.g. `Flow rate: 3.19e-03` against a `1e-3` gate, which is 434 kg/hr on
+a 136 t/hr stream. That is **slow convergence, not a limit cycle**, and it is
+usually the gate being tighter than the model is worth.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Re-run with a larger `maxIterations` before touching damping | Confirms slow-but-real convergence. A limit cycle plateaus; slow convergence keeps creeping down |
+| 2 | Do **not** call `setTolerance()` at all | With no explicit tolerance the model uses `DEFAULT_ENGINEERING_TOLERANCE` (1e-3 relative on flow, T and P) instead of the historical 1e-4. 1e-4 is far tighter than plant instrument or EOS uncertainty |
+| 3 | Read `model.getAutoToleranceSummary()` | States the accuracy actually used. If the residual stalls (<10 % improvement over 5 outer passes) while below `getAutoToleranceCeiling()` (1e-2), the model accepts it and says so instead of grinding |
+| 4 | `model.setAutoToleranceCeiling(5e-3)` | Tightens the loosest accuracy the model may settle for |
+| 5 | `model.setAutoTolerance(false)` | Opts out entirely and restores the historical 1e-4 default |
+
+```java
+// Self-configuring: no tolerance, no noise filters, no per-plant numbers.
+boolean ok = plant.runUntilConverged(60);
+System.out.println(plant.getAutoTuningSummary());     // flow-noise filters chosen
+System.out.println(plant.getAutoToleranceSummary());  // accuracy chosen/accepted
+```
+
+> **Gotcha:** any explicit `setTolerance()` / `setFlowTolerance()` /
+> `runUntilConverged(n, tol)` marks the tolerance as user-owned and disables
+> **both** the engineering default and the stall acceptance. If you set `1e-3`
+> "to be helpful" you also switch off the feature that would have accepted a
+> stalled `1.4e-3`.
+
+> **Gotcha:** `setSectionLowFlowThreshold()` deactivates units for the remainder
+> of the solve pass. Do not set it on a section that is legitimately dry only on
+> the first recycle iteration (e.g. a JT valve on a separator liquid outlet) —
+> it will never recover within that pass.
+
+### "Converged: YES" but a unit is out of mass balance
+
+The plant gate says every boundary stream is inside tolerance, yet
+`checkMassBalance()` flags a downstream unit by ~1 %. The two disagree because
+the link between the areas is **invisible to boundary detection**, not because
+the tolerance is too loose.
+
+`ProcessModel` discovers boundary streams through `getInletStreams()` /
+`getOutletStreams()`. Equipment that stores its streams in its own private lists
+and does not override those two methods falls back to the inherited two-port
+`inStream`/`outStream` — often never assigned — and so reports **no**
+connections. Such a link is dropped from both the convergence gate and the
+incremental dirty-area propagation, so the consumer never gets re-run.
+
+Diagnosis — do not start by loosening tolerances:
+
+1. List the units that fail mass balance and trace what feeds them.
+2. If **only** the units fed by one equipment type are unbalanced while every
+   other unit is exactly `0.0000 %`, suspect missing stream introspection on
+   that type.
+3. Confirm with `unit.getInletStreams().size()` / `getOutletStreams().size()` —
+   a multi-port unit reporting 0 or 1 is the bug.
+
+```java
+// Any multi-port equipment MUST expose all ports, or it is invisible to
+// topology walks, DEXPI export, ProcessConnection and boundary detection.
+List<StreamInterface> in = heatEx.getInletStreams();   // expect all feeds
+List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
+```
+
+> Fixed for `MultiStreamHeatExchanger` in PR #2712; the two-stream
+> `HeatExchanger` always overrode both. Apply the same override when adding new
+> multi-port equipment.
 
 ## Process Equipment Errors
 

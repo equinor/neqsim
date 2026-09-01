@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-modeling
 description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation."
-last_verified: "2026-05-31"
+last_verified: "2026-08-29"
 ---
 
 # NeqSim Process Modeling Skill
@@ -92,11 +92,86 @@ index; maps from vendor curve sheets; limits from datasheets + piping class. For
 the governed enterprise checklist and readiness gates use
 `enterprise-process-model-build-verify` (`target_fidelity="optimization_ready"`).
 
+For MCP `runProcess` compressor protection, keep embedded compressor
+`antiSurge` as screening control only. Use root-level `antiSurgeSystems` when
+the model must bind `CompressorAntiSurgeApplication` to explicit named hot/cold
+recycle valves, cooler, suction mixer, and recycle blocks. Multi-area systems
+must include `area`. Follow `neqsim-compressor-antisurge-recycle` for the JSON
+contract, screening-map provenance, commissioning evidence, and the mandatory
+`NOT_CERTIFIED_FOR_PROTECTION` boundary.
+
+## Per-Area Three-Phase Flash Control (Speed-Up)
+
+Switch the multiphase (three-phase) flash off on areas that are known to be
+two-phase only. On a multi-area plant this is usually the cheapest speed-up
+available, because the extra phase-stability analysis otherwise runs on every
+flash of every unit of every recycle iteration.
+
+```java
+plant.setMultiPhaseCheck(true);                    // baseline for all areas
+plant.setMultiPhaseCheck("Export train A", false); // dry gas: no third phase
+compressionTrain.setMultiPhaseCheck(false);        // a single ProcessSystem
+```
+
+- `ProcessSystem.setMultiPhaseCheck(boolean)` returns the number of distinct
+  fluids updated; `getMultiPhaseCheck()` returns `TRUE`/`FALSE`/`null` (unset).
+- `ProcessModel.setMultiPhaseCheck(String areaName, boolean)` returns `-1` for an
+  unknown area name — check it, do not assume the call landed.
+- The setting is re-applied at the start of each run, so a `ThreePhaseSeparator`
+  temporarily enabling the check cannot leak three-phase mode into the area.
+- Default is unset: fluids keep whatever flag they were built with.
+
+**Only disable it where the absence of a third phase is known from the process,
+not assumed.** Free water, an aqueous glycol/MEG phase, or a liquid CO2 phase
+will be silently missed. Keep the check ON for inlet separation, produced-water,
+glycol/MEG, and CO2-rich areas.
+
+## Per-Area Property-Initialization Level (Speed-Up)
+
+Every `Stream.run()` ends with `initProperties()`, which evaluates mass density,
+viscosity, thermal conductivity and diffusivity. Selecting `DENSITY_ONLY` skips
+the transport-property correlations and is roughly an order of magnitude cheaper
+per stream.
+
+```java
+plant.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY); // whole plant
+plant.setPropertyInitLevel("Subsea", Stream.PropertyInitLevel.FULL); // one area
+compressionTrain.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
+feedStream.setPropertyInitLevel(Stream.PropertyInitLevel.FULL);      // one stream
+```
+
+- Same API shape as `setMultiPhaseCheck`: `ProcessSystem.setPropertyInitLevel`
+  returns the number of streams updated, `ProcessModel.setPropertyInitLevel(area,
+  level)` returns `-1` for an unknown area, the setting propagates into nested
+  `ModuleInterface` sub-processes, is applied to units added afterwards, and is
+  re-applied at the start of every run.
+- Default is unset (`null`): each stream keeps `PropertyInitLevel.FULL`.
+
+> **⚠ `DENSITY_ONLY` makes transport properties read back as ZERO, not throw.**
+> `getViscosity()`, `getThermalConductivity()` and the diffusion coefficients
+> return `0.0`. That silently corrupts pipeline pressure drop, heat-exchanger UA,
+> mechanical design, and every flow-assurance calculation. Use it only for
+> mass/energy-balance solves, and set the level back to `FULL` (or call
+> `getFluid().initProperties()` on the stream) before reading transport
+> properties.
+
+Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
+`runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
+`runDataflow(UUID)` and `runTransient(double, UUID)`.
+
 ## Required Checks
 
 - Temperatures and pressures use explicit units in setters.
 - Fluids have a mixing rule before simulation.
 - Branching streams use cloned fluids or well-defined equipment outlet streams.
+- Phase-separating equipment exposes conventional gas/liquid product accessors;
+  domain aliases return those same objects rather than separate streams.
+- `getInletStreams()` and `getOutletStreams()` contain every externally connected,
+  live stream. Their entries remain object-identical across reruns so downstream
+  equipment never retains a stale product reference.
+- After solving a phase separator or column, verify the gas outlet contains a gas
+  phase, the liquid outlet contains an oil/liquid/aqueous phase, and total plus
+  per-component balances close. Getter existence alone is not product validation.
 - Every equipment item has a unique name inside the process.
 - Recycles and adjusters are added after their connected equipment.
 - **Pick the separator class by orientation, or set it explicitly.** Gas-capacity
@@ -125,6 +200,26 @@ the governed enterprise checklist and readiness gates use
   unbalanced model. For multi-area `ProcessModel`s, also confirm `plant.run()` converged.
 - Results include the verified mass balance, expected pressure ordering, and physically
   reasonable phase splits.
+- For industrial engineering use, assess every exact `method@version` with
+  `EngineeringMethodQualificationRegistry`: require an independent benchmark, approved structured applicability
+  envelope, intended use, controlled service inputs, uncertainty basis and explicit extrapolation policy. A converged
+  calculation outside the envelope remains investigation evidence, not a qualified engineering result.
+- Use `EngineeringNumericalHealthAnalyzer` to capture convergence, mass/energy closure, residual, and sensitivity
+  evidence for every process state that governs an engineering decision. Required but absent evidence must remain
+  `INCOMPLETE`; never replace unavailable closure data with zero.
+- Use `Dexpi20XmlWriter` for native Plant/P&ID exchange and `Dexpi20ProcessModelWriter` for native Process/PFD/BFD
+  exchange. A Proteus document with a changed header is not native DEXPI 2.0. Preserve the conformance report and still
+  require a named-CAE round-trip before project qualification.
+- Keep an explicitly registered terminal product as `new Stream(productName, upstreamOutlet)` when the product must
+  remain a named topology node. NeqSim reports the wrapped outlet as that stream's inlet and the DEXPI Process exporter
+  maps the node to a sink. Zero-flow and isolated empty streams must not be deleted merely to avoid invalid empty port
+  collections.
+- An isolated `new Stream(name)` with no fluid runs as an inactive topology placeholder. Do not connect downstream
+  thermodynamic equipment to that placeholder until a real fluid state is assigned.
+- Use `Cfihos20HandoverExporter` only with an exact project-controlled CFIHOS 2.0 Core or Extended RDL delivery.
+  Verify its digest from controlled bytes, map canonical nodes/properties/documents to exact RDL identifiers, record
+  mapping approval, and close the generated gap register. Its CSVs are staging data; Principal transformation,
+  target-system validation, contractual completeness, and information acceptance remain external decisions.
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 

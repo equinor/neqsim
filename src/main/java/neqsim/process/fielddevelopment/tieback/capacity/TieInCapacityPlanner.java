@@ -10,6 +10,7 @@ import java.util.Map;
 import neqsim.process.equipment.capacity.BottleneckResult;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -479,11 +480,18 @@ public class TieInCapacityPlanner implements Serializable {
    * @return process outcome
    */
   private ProcessOutcome evaluateProcessCapacity(ProductionLoad acceptedBase, ProductionLoad acceptedSatellite) {
+    ProcessModel processModel = hostFacility.getProcessModel();
     ProcessSystem processSystem = hostFacility.getProcessSystem();
-    if (processSystem == null || tieInPoint == null) {
+    if ((processModel == null && processSystem == null) || tieInPoint == null) {
       return ProcessOutcome.notUsed();
     }
-    StreamInterface stream = processSystem.resolveStreamReference(tieInPoint.getProcessStreamReference());
+    StreamInterface stream;
+    try {
+      stream = processModel == null ? processSystem.resolveStreamReference(tieInPoint.getProcessStreamReference())
+          : processModel.resolveStreamReference(tieInPoint.getProcessStreamReference());
+    } catch (IllegalArgumentException exception) {
+      return ProcessOutcome.failed(exception.getMessage());
+    }
     if (stream == null) {
       return ProcessOutcome.failed("Missing stream: " + tieInPoint.getProcessStreamReference());
     }
@@ -493,20 +501,58 @@ public class TieInCapacityPlanner implements Serializable {
       originalFlow = stream.getFlowRate(tieInPoint.getProcessRateUnit());
       double targetFlow = calculateTargetProcessRate(originalFlow, acceptedBase, acceptedSatellite);
       stream.setFlowRate(targetFlow, tieInPoint.getProcessRateUnit());
-      processSystem.run();
-      BottleneckResult bottleneck = processSystem.findBottleneck();
-      Map<String, Double> utilizationSummary = processSystem.getCapacityUtilizationSummary();
+      runDetailedModel(processModel, processSystem);
+      BottleneckResult bottleneck = processModel == null ? processSystem.findBottleneck()
+          : processModel.findBottleneck();
+      Map<String, Double> utilizationSummary = processModel == null ? processSystem.getCapacityUtilizationSummary()
+          : processModel.getCapacityUtilizationSummary();
       double utilization = bottleneck.hasBottleneck() ? bottleneck.getUtilization() : 0.0;
-      boolean capacityAvailable = utilization <= processUtilizationLimit && !processSystem.isAnyHardLimitExceeded();
-      return new ProcessOutcome(true, capacityAvailable, bottleneck.getEquipmentName(), utilization,
-          utilizationSummary);
+      boolean hardLimitExceeded = processModel == null ? processSystem.isAnyHardLimitExceeded()
+          : processModel.isAnyHardLimitExceeded();
+      boolean capacityAvailable = utilization <= processUtilizationLimit && !hardLimitExceeded;
+      String bottleneckName = getBottleneckName(processModel, bottleneck);
+      return new ProcessOutcome(true, capacityAvailable, bottleneckName, utilization, utilizationSummary);
     } catch (Exception exception) {
       Map<String, Double> utilizationSummary = new LinkedHashMap<String, Double>();
       return new ProcessOutcome(true, false, "process model error: " + exception.getMessage(), Double.POSITIVE_INFINITY,
           utilizationSummary);
     } finally {
-      restoreProcessStream(processSystem, stream, originalFlow);
+      restoreProcessStream(processModel, processSystem, stream, originalFlow);
     }
+  }
+
+  /**
+   * Runs the attached detailed host simulation.
+   *
+   * @param processModel optional multi-area process model
+   * @param processSystem optional single process system
+   */
+  private void runDetailedModel(ProcessModel processModel, ProcessSystem processSystem) {
+    if (processModel != null) {
+      processModel.run();
+    } else {
+      processSystem.run();
+    }
+  }
+
+  /**
+   * Gets an area-qualified bottleneck name for a multi-area model.
+   *
+   * @param processModel optional multi-area process model
+   * @param bottleneck plant-wide bottleneck result
+   * @return equipment name, area-qualified for a multi-area model
+   */
+  private String getBottleneckName(ProcessModel processModel, BottleneckResult bottleneck) {
+    if (processModel == null || !bottleneck.hasBottleneck()) {
+      return bottleneck.getEquipmentName();
+    }
+    for (String areaName : processModel.getProcessSystemNames()) {
+      ProcessSystem area = processModel.get(areaName);
+      if (area.getUnit(bottleneck.getEquipmentName()) == bottleneck.getEquipment()) {
+        return areaName + "::" + bottleneck.getEquipmentName();
+      }
+    }
+    return bottleneck.getEquipmentName();
   }
 
   /**
@@ -530,17 +576,19 @@ public class TieInCapacityPlanner implements Serializable {
   /**
    * Restores the process stream after a trial process-model run.
    *
-   * @param processSystem process system containing the stream
+   * @param processModel optional multi-area process model containing the stream
+   * @param processSystem optional single process system containing the stream
    * @param stream stream to restore
    * @param originalFlow original flow rate in the tie-in point rate unit
    */
-  private void restoreProcessStream(ProcessSystem processSystem, StreamInterface stream, double originalFlow) {
+  private void restoreProcessStream(ProcessModel processModel, ProcessSystem processSystem, StreamInterface stream,
+      double originalFlow) {
     if (Double.isNaN(originalFlow)) {
       return;
     }
     try {
       stream.setFlowRate(originalFlow, tieInPoint.getProcessRateUnit());
-      processSystem.run();
+      runDetailedModel(processModel, processSystem);
     } catch (Exception exception) {
       // The planner result already records process-model errors from the trial run.
     }

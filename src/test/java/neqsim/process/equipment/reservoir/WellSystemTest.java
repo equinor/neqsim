@@ -1,6 +1,7 @@
 package neqsim.process.equipment.reservoir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +66,55 @@ class WellSystemTest {
 
     assertTrue(flowRate >= 0, "Flow rate should be non-negative");
     assertTrue(bhp >= 0, "BHP should be non-negative");
+  }
+
+  @Test
+  void testCollapsedBracketStoresBhpAtOperatingRate() {
+    double productivityIndex = 1.0e-3;
+    WellSystem well = new WellSystem("collapsed_bracket_well");
+    well.setReservoirStream(reservoirStream);
+    well.setProductionIndex(productivityIndex, "Sm3/day/bar2");
+    well.setIPRModel(WellSystem.IPRModel.PRODUCTION_INDEX);
+    well.setWellheadPressure(50.0, "bara");
+    well.setTubingDiameter(0.1, "m");
+    well.setTubingLength(3000.0, "m");
+
+    well.run();
+
+    double operatingRate = well.getOperatingFlowRate("Sm3/day");
+    double reservoirPressure = well.getReservoirPressure("bara");
+    double expectedBhp = Math.sqrt(reservoirPressure * reservoirPressure - operatingRate / productivityIndex);
+    double vlpBhp = well.generateVLPCurve(new double[] { operatingRate })[1][0];
+
+    assertEquals(expectedBhp, well.getBottomHolePressure("bara"), 1.0e-9,
+        "Stored BHP must be evaluated at the stored operating rate");
+    assertTrue(well.isOperatingPointConverged());
+    assertEquals(expectedBhp - vlpBhp, well.getOperatingPointResidual("bar"), 1.0e-9);
+    assertTrue(Math.abs(well.getOperatingPointResidual("bar")) < 0.1,
+        "Pressure residual must meet the configured convergence tolerance");
+    assertTrue(well.getBottomHolePressure("bara") >= well.getWellheadPressure("bara") - 0.1,
+        "A converged producing-well BHP must not fall materially below its wellhead pressure");
+    assertTrue(well.getOperatingPointIterations() > 0);
+  }
+
+  @Test
+  void testMissingPhysicalCrossingIsReportedAsUnconverged() {
+    SystemInterface depletedFluid = gasFluid.clone();
+    depletedFluid.setPressure(40.0, "bara");
+    Stream depletedStream = new Stream("depleted reservoir", depletedFluid);
+    depletedStream.run();
+
+    WellSystem well = new WellSystem("infeasible_well", depletedStream);
+    well.setProductionIndex(1.0e-3, "Sm3/day/bar2");
+    well.setIPRModel(WellSystem.IPRModel.PRODUCTION_INDEX);
+    well.setWellheadPressure(50.0, "bara");
+
+    well.run();
+
+    assertFalse(well.isOperatingPointConverged());
+    assertEquals(0.0, well.getOperatingFlowRate("Sm3/day"), 0.0);
+    assertEquals(40.0, well.getBottomHolePressure("bara"), 1.0e-9);
+    assertEquals(-10.0, well.getOperatingPointResidual("bar"), 1.0e-9);
   }
 
   @Test
@@ -158,6 +208,10 @@ class WellSystemTest {
     well.setTubingLength(2500.0, "m");
 
     // Default should be SIMPLIFIED
+    assertEquals(WellSystem.VLPSolverMode.SIMPLIFIED, well.getVLPSolverMode());
+
+    // Configuring a correlation alone preserves the default simplified solver.
+    well.setPressureDropCorrelation(TubingPerformance.PressureDropCorrelation.GRAY);
     assertEquals(WellSystem.VLPSolverMode.SIMPLIFIED, well.getVLPSolverMode());
 
     // Test setting to BEGGS_BRILL

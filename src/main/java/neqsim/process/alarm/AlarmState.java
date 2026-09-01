@@ -306,4 +306,44 @@ public class AlarmState implements Serializable {
   public double getShelveExpiry() {
     return shelveExpiry;
   }
+
+  /**
+   * Creates an independent value copy for transient rollback.
+   *
+   * @return copy containing all alarm transition and shelving state
+   */
+  public AlarmState copy() {
+    AlarmState copy = new AlarmState();
+    copy.activeLevel = activeLevel;
+    copy.acknowledged = acknowledged;
+    copy.pendingLevel = pendingLevel;
+    copy.pendingTimer = pendingTimer;
+    copy.lastValue = lastValue;
+    copy.lastUpdateTime = lastUpdateTime;
+    copy.shelved = shelved;
+    copy.shelveExpiry = shelveExpiry;
+    copy.shelveReason = shelveReason;
+    return copy;
+  }
+
+  /**
+   * Restores a previously captured alarm value to this same object instance.
+   *
+   * @param snapshot alarm state returned by {@link #copy()}
+   */
+  public void restore(AlarmState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Alarm state snapshot cannot be null");
+    }
+    activeLevel = snapshot.activeLevel;
+    acknowledged = snapshot.acknowledged;
+    pendingLevel = snapshot.pendingLevel;
+    pendingTimer = snapshot.pendingTimer;
+    lastValue = snapshot.lastValue;
+    lastUpdateTime = snapshot.lastUpdateTime;
+    shelved = snapshot.shelved;
+    shelveExpiry = snapshot.shelveExpiry;
+    shelveReason = snapshot.shelveReason;
+  }
+
 }

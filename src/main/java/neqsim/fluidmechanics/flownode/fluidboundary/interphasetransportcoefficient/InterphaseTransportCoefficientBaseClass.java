@@ -8,7 +8,10 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
  * @author esol
  * @version $Id: $Id
  */
-public class InterphaseTransportCoefficientBaseClass implements InterphaseTransportCoefficientInterface {
+public class InterphaseTransportCoefficientBaseClass
+    implements InterphaseTransportCoefficientInterface, java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
+
   /**
    * Constructor for InterphaseTransportCoefficientBaseClass.
    */

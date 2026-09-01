@@ -90,6 +90,11 @@ pre-commit run --all-files
 4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you
    do not have permission to do that, you may request the second reviewer to merge it for you.
 
+Repository ownership, independent domain-review requirements, and major-design decisions are governed by
+[`GOVERNANCE.md`](GOVERNANCE.md), [`MAINTAINERS.md`](MAINTAINERS.md), and
+[the NeqSim Request for Comments process](docs/development/rfc-process.md). Public contracts follow the
+[API and schema lifecycle policy](docs/development/api-lifecycle.md).
+
 ## AI-Assisted Contributions Welcome
 
 NeqSim embraces AI-assisted development. PRs generated with the help of AI coding agents

@@ -223,10 +223,15 @@ class TemperatureDropComparisonTest {
       assertTrue(temp > 0, "Temperature must be positive (K)");
     }
 
-    // Temperature should be roughly constant (adiabatic)
+    // Adiabatic here means no heat exchange with the surroundings, not isothermal:
+    // the gas still expands against friction and the elevation gain, so Joule-Thomson
+    // cools it. The line must therefore cool slightly and must never warm up.
     double inletTemp = tempProfile[0];
     double outletTemp = tempProfile[tempProfile.length - 1];
-    assertEquals(inletTemp, outletTemp, 1.5, "Uphill adiabatic pipe should have minimal change");
+    double drop = inletTemp - outletTemp;
+    assertTrue(drop > 0.0,
+        "an adiabatic pipe expanding against friction must cool, temperature change was " + (-drop) + " K");
+    assertTrue(drop < 5.0, "Joule-Thomson cooling over 2 km should stay modest, was " + drop + " K");
   }
 
   /**

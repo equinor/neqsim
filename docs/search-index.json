@@ -7,33 +7,41 @@ permalink: /search-index.json
   Build the search corpus from BOTH regular pages (site.pages) AND collection
   documents (site.documents, e.g. the `wiki` collection). Collection docs are
   NOT part of site.pages, so iterating site.pages alone silently dropped every
-  wiki page from search. Concatenate both sources, then filter out assets and
-  non-content files.
+  wiki page from search. Concatenate both sources, then filter out assets,
+  non-content files, and the generated combined manual. The manual is added as
+  a lightweight discoverable entry below because its chapters duplicate the
+  individually indexed source pages.
 {%- endcomment -%}
 {%- assign all_pages = site.pages | concat: site.documents | where_exp: "page", "page.url != '/search-index.json'" -%}
 {%- assign filtered_pages = "" | split: "" -%}
 {%- for page in all_pages -%}
-  {%- unless page.url contains '/assets/' or page.url contains '.xml' or page.url contains '.json' -%}
+  {%- unless page.url contains '/assets/' or page.url contains '.xml' or page.url contains '.json' or page.url == '/manual/neqsim_reference_manual.html' -%}
     {%- assign filtered_pages = filtered_pages | push: page -%}
   {%- endunless -%}
 {%- endfor -%}
 {%- for doc in filtered_pages -%}
-  {%- assign content_text = doc.content | strip_html | normalize_whitespace | truncate: 10000 -%}
+  {%- comment -%}
+    Render Markdown before extracting searchable prose. Stripping HTML directly from
+    doc.content leaves Markdown punctuation in snippets and provides no heading tags
+    for the boosted heading field.
+  {%- endcomment -%}
+  {%- assign rendered_content = doc.content | markdownify -%}
+  {%- assign content_text = rendered_content | strip_html | normalize_whitespace -%}
   {%- assign title = doc.title | default: doc.name | default: doc.url -%}
   {%- assign description = doc.description | default: '' -%}
   {%- assign keywords = doc.keywords | default: '' -%}
+  {%- assign source_path = doc.path | default: doc.url -%}
   {%- comment -%}Auto-extract heading text so every page is searchable by its sections{%- endcomment -%}
   {%- assign headings = '' -%}
-  {%- assign h_parts = doc.content | split: '</h' -%}
+  {%- assign h_parts = rendered_content | split: '</h' -%}
   {%- for part in h_parts -%}
     {%- if part contains '<h' -%}
-      {%- assign after_open = part | split: '>' -%}
-      {%- if after_open.size > 1 -%}
-        {%- assign h_text = after_open | last | strip_html | strip | normalize_whitespace -%}
-        {%- unless h_text == '' -%}
-          {%- assign headings = headings | append: ' ' | append: h_text -%}
-        {%- endunless -%}
-      {%- endif -%}
+      {%- assign heading_markup = part | split: '<h' | last -%}
+      {%- assign opening_tag = heading_markup | split: '>' | first -%}
+      {%- assign h_text = heading_markup | remove_first: opening_tag | remove_first: '>' | strip_html | strip | normalize_whitespace -%}
+      {%- unless h_text == '' -%}
+        {%- assign headings = headings | append: ' ' | append: h_text -%}
+      {%- endunless -%}
     {%- endif -%}
   {%- endfor -%}
   {%- assign headings = headings | strip -%}
@@ -50,7 +58,18 @@ permalink: /search-index.json
     "keywords": {{ keywords | jsonify }},
     "headings": {{ headings | jsonify }},
     "section": {{ section | jsonify }},
+    "path": {{ source_path | jsonify }},
     "content": {{ content_text | jsonify }}
-  }{%- unless forloop.last -%},{%- endunless -%}
+  },
 {%- endfor -%}
+  {
+    "url": {{ '/manual/neqsim_reference_manual.html' | relative_url | jsonify }},
+    "title": "NeqSim Reference Manual",
+    "description": "Combined HTML reference manual for NeqSim thermodynamics, process simulation, engineering, safety, PVT, flow assurance, standards, integration, and development.",
+    "keywords": "NeqSim reference manual complete documentation combined manual API engineering thermodynamics process simulation",
+    "headings": "NeqSim Reference Manual",
+    "section": "manual",
+    "path": "manual/neqsim_reference_manual.html",
+    "content": "Complete combined NeqSim reference manual. Every source chapter is indexed individually with its full content for detailed search results."
+  }
 ]

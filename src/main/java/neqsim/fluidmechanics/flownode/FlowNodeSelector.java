@@ -9,7 +9,9 @@ import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.Stratifi
  * @author asmund
  * @version $Id: $Id
  */
-public class FlowNodeSelector {
+public class FlowNodeSelector implements java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
+
   /**
    * Constructor for FlowNodeSelector.
    */

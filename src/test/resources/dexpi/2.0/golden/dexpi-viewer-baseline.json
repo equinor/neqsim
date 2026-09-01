@@ -1,0 +1,18 @@
+{
+  "profile": "neqsim_dexpi_viewer_baseline.v1",
+  "repository": "https://github.com/ToniaPedersen/DEXPIViewer",
+  "commit": "18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad",
+  "input": "branching-process.dexpi.xml",
+  "inputSha256": "64cdf0ac0e026e3b2cb79feef56a89488f29ecbcba5b1476cc976d82d618839b",
+  "expectedIssueCounts": {
+    "errors": 8,
+    "warnings": 3
+  },
+  "knownFindingClasses": [
+    "required Core/EngineeringModel export provenance",
+    "required Plant/Diagram.PlantMetaData",
+    "missing native equipment representation groups",
+    "unconnected boundary PipingNode objects"
+  ],
+  "approvalStatus": "REVIEWED_BASELINE_NOT_A_CLEAN_VALIDATION"
+}

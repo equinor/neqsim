@@ -38,6 +38,16 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   String targetUnit = "";
   double inputValue = 0.0;
   double oldInputValue = 0.0;
+  /**
+   * Multiplier applied to the source value before it is written to the target. Mirrors the UniSim SET relation
+   * {@code target = multiplier * source + offset}. Default 1.0.
+   */
+  private double multiplier = 1.0;
+  /**
+   * Offset added to the (multiplied) source value before it is written to the target, expressed in the target
+   * variable's own unit. Mirrors the UniSim SET relation {@code target = multiplier * source + offset}. Default 0.0.
+   */
+  private double offset = 0.0;
   private transient Function<ProcessEquipmentInterface, Double> sourceValueCalculator;
 
   /**
@@ -96,6 +106,15 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Returns the equipment whose variable is read by this set-point relation.
+   *
+   * @return source equipment, or {@code null} when it has not been configured
+   */
+  public ProcessEquipmentInterface getSourceEquipment() {
+    return sourceEquipment;
+  }
+
+  /**
    * Setter for the field <code>targetVariable</code>.
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
@@ -129,6 +148,15 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment) {
     this.targetEquipment = targetEquipment;
+  }
+
+  /**
+   * Returns the equipment whose variable is written by this set-point relation.
+   *
+   * @return target equipment, or {@code null} when it has not been configured
+   */
+  public ProcessEquipmentInterface getTargetEquipment() {
+    return targetEquipment;
   }
 
   /**
@@ -182,28 +210,31 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getPressure();
         }
-        targetEquipment.setPressure(val);
+        targetEquipment.setPressure(val * multiplier + offset);
       } else if (targetVariable.equals("temperature")) {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getTemperature();
         }
-        targetEquipment.setTemperature(val);
+        targetEquipment.setTemperature(val * multiplier + offset);
+      } else if (targetVariable.equals("massFlow") || targetVariable.equals("molarFlow")
+          || targetVariable.equals("flow")) {
+        // Wire a flow rate from the source stream onto the target stream. Mirrors a
+        // UniSim SET on a flow spec (target = multiplier * source + offset).
+        String flowUnit = targetVariable.equals("molarFlow") ? "mole/sec" : "kg/hr";
+        if (sourceValueCalculator == null && sourceEquipment instanceof Stream) {
+          val = ((Stream) sourceEquipment).getFlowRate(flowUnit);
+        }
+        ((Stream) targetEquipment).setFlowRate(val * multiplier + offset, flowUnit);
       } else {
-        // Legacy logic for other variables?
-        // The original code had some specific logic here involving inputValue and deviation
-        // which looked like copy-paste from Adjuster?
-        // "inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();"
-        // "double deviation = targetValue - targetValueCurrent;"
-        // This looks suspicious in SetPoint. SetPoint should just set value.
-        // But I will preserve it if possible, or just ignore for now as I am fixing the
-        // structure.
+        logger.warn("SetPoint '{}': set of variable '{}' is not supported for Stream — no action taken.", getName(),
+            targetVariable);
       }
     } else if (targetEquipment instanceof ThrottlingValve) {
       if (targetVariable.equals("pressure")) {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getPressure();
         }
-        ((ThrottlingValve) targetEquipment).setOutletPressure(val);
+        ((ThrottlingValve) targetEquipment).setOutletPressure(val * multiplier + offset);
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for ThrottlingValve.");
       }
@@ -212,7 +243,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getPressure();
         }
-        ((Compressor) targetEquipment).setOutletPressure(val);
+        ((Compressor) targetEquipment).setOutletPressure(val * multiplier + offset);
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for Compressor.");
       }
@@ -221,7 +252,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getPressure();
         }
-        ((Pump) targetEquipment).setOutletPressure(val);
+        ((Pump) targetEquipment).setOutletPressure(val * multiplier + offset);
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for Pump.");
       }
@@ -230,12 +261,12 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getPressure();
         }
-        ((Heater) targetEquipment).setOutletPressure(val);
+        ((Heater) targetEquipment).setOutletPressure(val * multiplier + offset);
       } else if (targetVariable.equals("temperature") || targetVariable.equals("outTemperature")) {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getTemperature();
         }
-        ((Heater) targetEquipment).setOutTemperature(val);
+        ((Heater) targetEquipment).setOutTemperature(val * multiplier + offset);
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
       }
@@ -282,5 +313,43 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    */
   public void setSourceValueCalculator(Function<ProcessEquipmentInterface, Double> sourceValueCalculator) {
     this.sourceValueCalculator = sourceValueCalculator;
+  }
+
+  /**
+   * Setter for the field <code>multiplier</code>. The target is written as
+   * {@code target = multiplier * source + offset} (UniSim SET semantics).
+   *
+   * @param multiplier the multiplier applied to the source value
+   */
+  public void setMultiplier(double multiplier) {
+    this.multiplier = multiplier;
+  }
+
+  /**
+   * Getter for the field <code>multiplier</code>.
+   *
+   * @return the multiplier applied to the source value
+   */
+  public double getMultiplier() {
+    return multiplier;
+  }
+
+  /**
+   * Setter for the field <code>offset</code>. The target is written as {@code target = multiplier * source + offset}
+   * (UniSim SET semantics). The offset is expressed in the target variable's own unit.
+   *
+   * @param offset the offset added to the multiplied source value
+   */
+  public void setOffset(double offset) {
+    this.offset = offset;
+  }
+
+  /**
+   * Getter for the field <code>offset</code>.
+   *
+   * @return the offset added to the multiplied source value
+   */
+  public double getOffset() {
+    return offset;
   }
 }

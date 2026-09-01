@@ -50,26 +50,25 @@ public class SaturationPressure extends BasePVTsimulation {
     try {
       double twoPhasePressure = Double.NaN;
       double singlePhasePressure = Double.NaN;
-      double previousPressure = MINIMUM_SEARCH_PRESSURE_BARA;
-      boolean previousIsTwoPhase = isTwoPhaseAtPressure(previousPressure);
+      double higherPressure = MAXIMUM_SEARCH_PRESSURE_BARA;
+      boolean higherIsTwoPhase = isTwoPhaseAtPressure(higherPressure);
+      int numberOfSearchSteps = (int) Math
+          .floor((MAXIMUM_SEARCH_PRESSURE_BARA - MINIMUM_SEARCH_PRESSURE_BARA) / SEARCH_PRESSURE_STEP_BARA);
 
-      for (double trialPressure = previousPressure
-          + SEARCH_PRESSURE_STEP_BARA; trialPressure <= MAXIMUM_SEARCH_PRESSURE_BARA; trialPressure += SEARCH_PRESSURE_STEP_BARA) {
+      // Descending makes the first bracket the uppermost crossing, including for retrograde fluids.
+      for (int stepIndex = numberOfSearchSteps; stepIndex >= 0; stepIndex--) {
+        double trialPressure = MINIMUM_SEARCH_PRESSURE_BARA + stepIndex * SEARCH_PRESSURE_STEP_BARA;
+        if (trialPressure >= higherPressure) {
+          continue;
+        }
         boolean trialIsTwoPhase = isTwoPhaseAtPressure(trialPressure);
-        if (previousIsTwoPhase && !trialIsTwoPhase) {
-          twoPhasePressure = previousPressure;
-          singlePhasePressure = trialPressure;
+        if (trialIsTwoPhase && !higherIsTwoPhase) {
+          twoPhasePressure = trialPressure;
+          singlePhasePressure = higherPressure;
+          break;
         }
-        previousPressure = trialPressure;
-        previousIsTwoPhase = trialIsTwoPhase;
-      }
-
-      if (previousPressure < MAXIMUM_SEARCH_PRESSURE_BARA) {
-        boolean trialIsTwoPhase = isTwoPhaseAtPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
-        if (previousIsTwoPhase && !trialIsTwoPhase) {
-          twoPhasePressure = previousPressure;
-          singlePhasePressure = MAXIMUM_SEARCH_PRESSURE_BARA;
-        }
+        higherPressure = trialPressure;
+        higherIsTwoPhase = trialIsTwoPhase;
       }
 
       if (Double.isNaN(twoPhasePressure) || Double.isNaN(singlePhasePressure)) {

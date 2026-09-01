@@ -34,6 +34,8 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   double rateFactor = 0;
   double activationEnergy;
   double refT;
+  String reference = "";
+  ChemicalReactionValidationStatus validationStatus = ChemicalReactionValidationStatus.UNSPECIFIED;
   double G = 0;
   double lnK = 0;
   int numberOfReactants = 0;
@@ -51,6 +53,41 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
       double activationEnergy, double refT) {
+    this(name, names, stocCoefs, K, r, activationEnergy, refT, "");
+  }
+
+  /**
+   * Constructor for a chemical reaction with parameter provenance.
+   *
+   * @param name reaction name
+   * @param names component names
+   * @param stocCoefs stoichiometric coefficients
+   * @param K equilibrium-constant correlation coefficients
+   * @param r rate factor
+   * @param activationEnergy activation energy
+   * @param refT reference temperature in kelvin
+   * @param reference literature or data reference stored with the parameters
+   */
+  public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
+      double activationEnergy, double refT, String reference) {
+    this(name, names, stocCoefs, K, r, activationEnergy, refT, reference, ChemicalReactionValidationStatus.UNSPECIFIED);
+  }
+
+  /**
+   * Constructor for a chemical reaction with parameter provenance and validation status.
+   *
+   * @param name reaction name
+   * @param names component names
+   * @param stocCoefs stoichiometric coefficients
+   * @param K equilibrium-constant correlation coefficients
+   * @param r rate factor
+   * @param activationEnergy activation energy
+   * @param refT reference temperature in kelvin
+   * @param reference literature or data reference stored with the parameters
+   * @param validationStatus model-specific validation status of the stored correlation
+   */
+  public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
+      double activationEnergy, double refT, String reference, ChemicalReactionValidationStatus validationStatus) {
     /*
      * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
      */
@@ -62,6 +99,8 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
     this.rateFactor = r;
     this.refT = refT;
     this.activationEnergy = activationEnergy;
+    this.reference = reference == null ? "" : reference;
+    this.validationStatus = validationStatus == null ? ChemicalReactionValidationStatus.UNSPECIFIED : validationStatus;
 
     System.arraycopy(names, 0, this.names, 0, names.length);
     System.arraycopy(stocCoefs, 0, this.stocCoefs, 0, stocCoefs.length);
@@ -90,6 +129,47 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
         productNames[l++] = this.names[i];
       }
     }
+  }
+
+  /**
+   * Get the literature or data reference stored with the equilibrium parameters.
+   *
+   * @return reference identifier, or an empty string when no reference was supplied
+   */
+  public String getReference() {
+    return reference == null ? "" : reference;
+  }
+
+  /**
+   * Get the model-specific validation status declared by the selected reaction-data source.
+   *
+   * @return declared validation status; old serialized objects return
+   * {@link ChemicalReactionValidationStatus#UNSPECIFIED}
+   */
+  public ChemicalReactionValidationStatus getValidationStatus() {
+    return validationStatus == null ? ChemicalReactionValidationStatus.UNSPECIFIED : validationStatus;
+  }
+
+  /**
+   * Get a defensive copy of the equilibrium-constant correlation coefficients.
+   *
+   * <p>
+   * The coefficients are used by {@link #getK(PhaseInterface)} in the order defined by the reaction database.
+   * </p>
+   *
+   * @return copied equilibrium-constant coefficient array
+   */
+  public double[] getEquilibriumConstantCoefficients() {
+    return K.clone();
+  }
+
+  /**
+   * Get the reference temperature stored with the reaction parameters.
+   *
+   * @return reference temperature in kelvin
+   */
+  public double getReferenceTemperature() {
+    return refT;
   }
 
   /**
@@ -158,9 +238,10 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public double calcKx(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
     double kx = 1.0;
+    PhaseInterface phase = system.getPhase(phaseNumb);
     for (int i = 0; i < names.length; i++) {
-      // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
-      kx *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), stocCoefs[i]);
+      ComponentInterface component = phase.getComponent(names[i]);
+      kx *= Math.pow(getReactionConcentration(system, phase, component), stocCoefs[i]);
     }
     return kx;
   }
@@ -186,22 +267,44 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
-   * getSaturationRatio.
+   * Calculate the mineral saturation ratio from reactant activities.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param phaseNumb a int
-   * @return a double
+   * <p>
+   * The ratio is {@code IAP / Ksp}. Reactant activities follow the system-selected concentration convention and include
+   * activity coefficients. Values below one are undersaturated and values above one are supersaturated.
+   * </p>
+   *
+   * @param system thermodynamic system containing the dissolved mineral species
+   * @param phaseNumb aqueous phase in which saturation is evaluated
+   * @return mineral saturation ratio {@code IAP / Ksp}
    */
-  public double getSaturationRatio(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
-    double ksp = 1.0;
-    for (int i = 0; i < names.length; i++) {
-      // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
-      if (stocCoefs[i] < 0) {
-        ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), -stocCoefs[i]);
+  public double getSaturationRatio(SystemInterface system, int phaseNumb) {
+    return Math.exp(calcLogSaturationRatio(system, phaseNumb));
+  }
+
+  /**
+   * Calculate the natural logarithm of the mineral saturation ratio directly in log space.
+   *
+   * <p>
+   * Only negative-stoichiometry reactants contribute to the ion activity product because the mineral product is not a
+   * dissolved phase component. Log-space evaluation retains a finite diagnostic for trace activities when the
+   * corresponding linear saturation ratio underflows.
+   * </p>
+   *
+   * @param system thermodynamic system containing the dissolved mineral species
+   * @param phaseNumb aqueous phase in which saturation is evaluated
+   * @return natural logarithm of {@code IAP / Ksp}
+   */
+  public double calcLogSaturationRatio(SystemInterface system, int phaseNumb) {
+    PhaseInterface phase = system.getPhase(phaseNumb);
+    double logSaturationRatio = -Math.log(getK(phase));
+    for (int componentIndex = 0; componentIndex < names.length; componentIndex++) {
+      if (stocCoefs[componentIndex] < 0.0) {
+        ComponentInterface component = phase.getComponent(names[componentIndex]);
+        logSaturationRatio -= stocCoefs[componentIndex] * getLogReactionActivity(system, phase, component);
       }
     }
-    ksp /= (getK(system.getPhase(phaseNumb)));
-    return ksp;
+    return logSaturationRatio;
   }
 
   /**
@@ -213,6 +316,82 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public double calcK(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
     return calcKx(system, phaseNumb) * calcKgamma(system, phaseNumb);
+  }
+
+  /**
+   * Calculate the natural logarithm of the reaction quotient directly in log space.
+   *
+   * <p>
+   * This method follows the same system-selected concentration/activity convention as
+   * {@link #calcK(SystemInterface, int)}, but avoids overflow and underflow when ionic species are present at trace
+   * concentrations.
+   * </p>
+   *
+   * @param system thermodynamic system containing the reaction species
+   * @param phaseNumb phase in which the reaction quotient is evaluated
+   * @return natural logarithm of the reaction quotient
+   */
+  public double calcLogReactionQuotient(SystemInterface system, int phaseNumb) {
+    PhaseInterface phase = system.getPhase(phaseNumb);
+    double logReactionQuotient = 0.0;
+    for (int componentIndex = 0; componentIndex < names.length; componentIndex++) {
+      double stoichiometricCoefficient = stocCoefs[componentIndex];
+      if (stoichiometricCoefficient == 0.0) {
+        continue;
+      }
+      ComponentInterface component = phase.getComponent(names[componentIndex]);
+      logReactionQuotient += stoichiometricCoefficient * getLogReactionActivity(system, phase, component);
+    }
+    return logReactionQuotient;
+  }
+
+  /**
+   * Calculate the signed logarithmic reaction-equilibrium residual, {@code ln(Q/K)}.
+   *
+   * @param system thermodynamic system containing the reaction species
+   * @param phaseNumb phase in which the reaction residual is evaluated
+   * @return signed residual {@code ln(Q) - ln(K)}
+   */
+  public double calcLogReactionResidual(SystemInterface system, int phaseNumb) {
+    return calcLogReactionQuotient(system, phaseNumb) - Math.log(getK(system.getPhase(phaseNumb)));
+  }
+
+  /**
+   * Get the dimensionless concentration used by the system's reaction-equilibrium convention.
+   *
+   * <p>
+   * Pitzer equilibrium constants use solute molality divided by the standard molality of 1 mol/kg. Solvent activities
+   * remain on the mole-fraction convention. Other models retain the established mole-fraction concentration path.
+   * </p>
+   *
+   * @param system thermodynamic system selecting the reaction convention
+   * @param phase reactive phase
+   * @param component reaction component
+   * @return dimensionless reaction concentration
+   */
+  private double getReactionConcentration(SystemInterface system, PhaseInterface phase, ComponentInterface component) {
+    if (system.getChemicalReactionConcentrationBasis() == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY
+        && !"solvent".equalsIgnoreCase(component.getReferenceStateType())) {
+      return component.getMolality(phase);
+    }
+    return component.getx();
+  }
+
+  /**
+   * Get the logarithm of a reaction activity using the system-selected standard-state convention.
+   *
+   * @param system thermodynamic system selecting the reaction convention
+   * @param phase reactive phase
+   * @param component reaction component
+   * @return logarithm of the dimensionless reaction activity
+   */
+  private double getLogReactionActivity(SystemInterface system, PhaseInterface phase, ComponentInterface component) {
+    double logActivity = Math.log(getReactionConcentration(system, phase, component));
+    if (component.calcActivity()) {
+      int waterComponentNumber = phase.getComponent("water").getComponentNumber();
+      logActivity += phase.getLogActivityCoefficient(component.getComponentNumber(), waterComponentNumber);
+    }
+    return logActivity;
   }
 
   /**

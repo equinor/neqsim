@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "TwoFluidPipe Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "TwoFluidPipe Model Tutorial"
+description: "Notebook for TwoFluidPipe Model Tutorial, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# TwoFluidPipe Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`TwoFluidPipe_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/TwoFluidPipe_Tutorial.ipynb).
@@ -15,7 +13,6 @@ nav_order: 1
 
 ---
 
-# TwoFluidPipe Model Tutorial
 ## Multiphase Pipeline Flow Simulation with NeqSim
 
 This notebook demonstrates the use of NeqSim's `TwoFluidPipe` model for simulating multiphase (gas-liquid) flow in pipelines. The two-fluid model solves separate conservation equations for gas and liquid phases, providing detailed predictions of:

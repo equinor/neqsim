@@ -3,6 +3,9 @@ package neqsim.process.equipment.powergeneration;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 
 /**
@@ -33,6 +36,7 @@ public class SolarPanel extends ProcessEquipmentBaseClass {
    */
   public SolarPanel(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -90,7 +94,7 @@ public class SolarPanel extends ProcessEquipmentBaseClass {
   @Override
   public void run(UUID id) {
     power = irradiance * panelArea * efficiency;
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("electricalPower").setDuty(-power);
     setEnergyStream(true);
     setCalculationIdentifier(id);
   }

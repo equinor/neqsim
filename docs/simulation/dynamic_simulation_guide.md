@@ -288,14 +288,18 @@ comp.runTransient(dt, id);
 
 ```java
 SimpleReservoir reservoir = new SimpleReservoir("Field");
-reservoir.setReservoirFluid(fluid);
-reservoir.setGasVolume(1e9, "Sm3");
+
+// Initial phase volumes are in-situ m³: gas, oil, and water.
+reservoir.setReservoirFluid(fluid, 20.0e6, 0.0, 0.0);
 
 StreamInterface producer = reservoir.addGasProducer("GP-1");
 producer.setFlowRate(5.0, "MSm3/day");
 
-// Run for one day
-reservoir.runTransient(86400, id);
+UUID id = UUID.randomUUID();
+
+// Use the same calculation identifier for initialization and the transient step.
+reservoir.run(id);
+reservoir.runTransient(86400.0, id);
 double remainingGas = reservoir.getGasInPlace("Sm3");
 ```
 
@@ -747,8 +751,8 @@ These Colab notebooks provide hands-on dynamic simulation examples:
 
 ### Local Examples
 - [Transient Slug Separator Control](../examples/transient_slug_separator_control_example)
-- [ESP Pump Tutorial](../examples/ESP_Pump_Tutorial.ipynb)
-- [Dynamic Separator Entrainment](../../examples/notebooks/separator_dynamic_entrainment.ipynb) - Transient entrainment with physics-based model
+- [ESP Pump Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb)
+- [Dynamic Separator Entrainment](https://github.com/equinor/neqsim/blob/master/examples/notebooks/separator_dynamic_entrainment.ipynb) - Transient entrainment with physics-based model
 
 ### Process Logic
 - [Process Logic Framework](process_logic_framework) - runTransient integration

@@ -3,17 +3,67 @@ package neqsim.process.equipment.mixer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * @author ESOL
  */
 class MixerTest {
+  private static class InitTrackingSystemSrkEos extends SystemSrkEos {
+    private static final long serialVersionUID = 1000L;
+    private AtomicInteger levelTwoCalls = new AtomicInteger();
+    private AtomicInteger levelThreeCalls = new AtomicInteger();
+
+    InitTrackingSystemSrkEos(double temperature, double pressure) {
+      super(temperature, pressure);
+    }
+
+    @Override
+    public InitTrackingSystemSrkEos clone() {
+      InitTrackingSystemSrkEos cloned = (InitTrackingSystemSrkEos) super.clone();
+      if (cloned == null) {
+        throw new IllegalStateException("Failed to clone initialization-tracking fluid");
+      }
+      cloned.levelTwoCalls = levelTwoCalls;
+      cloned.levelThreeCalls = levelThreeCalls;
+      return cloned;
+    }
+
+    @Override
+    public void init(int initType) {
+      super.init(initType);
+      if (levelTwoCalls != null && initType == 2) {
+        levelTwoCalls.incrementAndGet();
+      } else if (levelThreeCalls != null && initType == 3) {
+        levelThreeCalls.incrementAndGet();
+      }
+    }
+
+    void resetInitCounts() {
+      levelTwoCalls.set(0);
+      levelThreeCalls.set(0);
+    }
+
+    int getLevelTwoCalls() {
+      return levelTwoCalls.get();
+    }
+
+    int getLevelThreeCalls() {
+      return levelThreeCalls.get();
+    }
+  }
+
   static neqsim.thermo.system.SystemInterface testSystem;
   static neqsim.thermo.system.SystemInterface waterSystem;
   static Stream gasStream;
@@ -57,8 +107,43 @@ class MixerTest {
     testMixer.addStream(gasStream);
     testMixer.addStream(waterStream);
     testMixer.run();
-    // Enthalpy after getMassBalance fix to match calcMixStreamEnthalpy negligible flow filtering
-    assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -105.52297413351504, 1e-1);
+    assertEquals(testMixer.calcMixStreamEnthalpy(), testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
+  }
+
+  /**
+   * An algebraic mixer must remain usable when a process switches all equipment to dynamic mode.
+   */
+  @Test
+  void testRunTransientAsAlgebraicEquipment() {
+    SystemSrkEos firstFluid = new SystemSrkEos(298.15, 10.0);
+    firstFluid.addComponent("methane", 1.0);
+    firstFluid.setMixingRule(2);
+    Stream first = new Stream("first transient inlet", firstFluid);
+    first.setFlowRate(100.0, "kg/hr");
+
+    SystemSrkEos secondFluid = new SystemSrkEos(303.15, 10.0);
+    secondFluid.addComponent("methane", 1.0);
+    secondFluid.setMixingRule(2);
+    Stream second = new Stream("second transient inlet", secondFluid);
+    second.setFlowRate(50.0, "kg/hr");
+
+    Mixer mixer = new Mixer("transient mixer");
+    mixer.addStream(first);
+    mixer.addStream(second);
+    mixer.setCalculateSteadyState(false);
+
+    ProcessSystem process = new ProcessSystem("mixer transient regression");
+    process.add(first);
+    process.add(second);
+    process.add(mixer);
+
+    UUID stepId = UUID.randomUUID();
+    process.runTransient(2.0, stepId);
+    process.runTransient(2.0, stepId);
+
+    assertEquals(150.0, mixer.getOutletStream().getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(2.0, mixer.getTime(), 0.0,
+        "repeated evaluations with the same identifier must advance the mixer clock once");
   }
 
   /**
@@ -158,10 +243,105 @@ class MixerTest {
     testMixer.addStream(gasStream2);
     testMixer.run();
 
-    // After getMassBalance fix, enthalpy values updated to reflect correct negligible flow
-    // filtering
-    assertEquals(-2827531.357618357, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-1);
+    assertEquals(testMixer.calcMixStreamEnthalpy(), testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
     assertEquals(10.0, testMixer.getOutletStream().getPressure("bara"), 1e-1);
+  }
+
+  @Test
+  void testOutletEnthalpyMatchesInletSum() {
+    SystemSrkEos hotFluid = new SystemSrkEos(338.15, 85.0);
+    hotFluid.addComponent("methane", 0.86);
+    hotFluid.addComponent("ethane", 0.14);
+    hotFluid.setMixingRule("classic");
+
+    SystemSrkEos coolFluid = new SystemSrkEos(328.15, 82.0);
+    coolFluid.addComponent("methane", 0.92);
+    coolFluid.addComponent("ethane", 0.08);
+    coolFluid.setMixingRule("classic");
+
+    Stream hotStream = new Stream("hot stream", hotFluid);
+    hotStream.setFlowRate(15000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coolStream = new Stream("cool stream", coolFluid);
+    coolStream.setFlowRate(10000.0, "kg/hr");
+    coolStream.run();
+
+    double inletEnthalpyJ = hotStream.getFluid().getEnthalpy("J") + coolStream.getFluid().getEnthalpy("J");
+
+    Mixer testMixer = new Mixer("enthalpy closure mixer");
+    testMixer.addStream(hotStream);
+    testMixer.addStream(coolStream);
+    testMixer.run();
+
+    assertEquals(inletEnthalpyJ, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-3);
+  }
+
+  /**
+   * Mixer inlet enthalpy requires caloric properties but not level-3 composition derivatives. The optimized path must
+   * match a level-3 reference at the base state and a nearby operating point.
+   */
+  @Test
+  void testMixStreamEnthalpyUsesMinimumThermodynamicInitializationLevel() {
+    InitTrackingSystemSrkEos fluid = new InitTrackingSystemSrkEos(323.15, 70.0);
+    fluid.addComponent("nitrogen", 0.02);
+    fluid.addComponent("CO2", 0.03);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("n-heptane", 0.04);
+    fluid.setMixingRule("classic");
+
+    Stream hotStream = new Stream("tracked hot stream", fluid);
+    hotStream.setFlowRate(15000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coolStream = new Stream("tracked cool stream", fluid.clone());
+    coolStream.setTemperature(313.15, "K");
+    coolStream.setFlowRate(10000.0, "kg/hr");
+    coolStream.run();
+
+    Mixer mixer = new Mixer("tracked enthalpy mixer");
+    mixer.addStream(hotStream);
+    mixer.addStream(coolStream);
+
+    assertMinimumEnthalpyInitialization(fluid, mixer);
+
+    coolStream.setTemperature(318.15, "K");
+    coolStream.run();
+    assertMinimumEnthalpyInitialization(fluid, mixer);
+  }
+
+  private static void assertMinimumEnthalpyInitialization(InitTrackingSystemSrkEos fluid, Mixer mixer) {
+    double expectedEnthalpy = 0.0;
+    for (StreamInterface inlet : mixer.getInletStreams()) {
+      inlet.getThermoSystem().init(3);
+      expectedEnthalpy += inlet.getThermoSystem().getEnthalpy();
+    }
+
+    double[] temperatures = new double[mixer.getInletStreams().size()];
+    double[] pressures = new double[mixer.getInletStreams().size()];
+    double[] flows = new double[mixer.getInletStreams().size()];
+    for (int index = 0; index < mixer.getInletStreams().size(); index++) {
+      StreamInterface inlet = mixer.getInletStreams().get(index);
+      temperatures[index] = inlet.getTemperature("K");
+      pressures[index] = inlet.getPressure("bara");
+      flows[index] = inlet.getFlowRate("kg/hr");
+    }
+
+    fluid.resetInitCounts();
+    double actualEnthalpy = mixer.calcMixStreamEnthalpy();
+
+    assertEquals(expectedEnthalpy, actualEnthalpy, Math.max(1.0e-8, Math.abs(expectedEnthalpy) * 1.0e-12));
+    assertEquals(mixer.getInletStreams().size(), fluid.getLevelTwoCalls(),
+        "Every active inlet still requires caloric initialization");
+    assertEquals(0, fluid.getLevelThreeCalls(), "Mixer enthalpy must not calculate composition derivatives");
+    for (int index = 0; index < mixer.getInletStreams().size(); index++) {
+      StreamInterface inlet = mixer.getInletStreams().get(index);
+      assertEquals(temperatures[index], inlet.getTemperature("K"), 0.0);
+      assertEquals(pressures[index], inlet.getPressure("bara"), 0.0);
+      assertEquals(flows[index], inlet.getFlowRate("kg/hr"), 0.0);
+    }
   }
 
   /**
@@ -206,5 +386,132 @@ class MixerTest {
     double[] molarComposition = testMixer.getThermoSystem().getMolarComposition();
     assertEquals(0.5, molarComposition[0], 1e-6);
     assertEquals(0.5, molarComposition[1], 1e-6);
+  }
+
+  @Test
+  void testInletOrderPermutationsProduceEquivalentMultiphaseState() {
+    List<int[]> permutations = Arrays.asList(new int[] { 0, 1, 2 }, new int[] { 0, 2, 1 }, new int[] { 1, 0, 2 },
+        new int[] { 1, 2, 0 }, new int[] { 2, 0, 1 }, new int[] { 2, 1, 0 });
+    SystemInterface reference = null;
+
+    for (int mixerType = 0; mixerType < 2; mixerType++) {
+      for (int[] permutation : permutations) {
+        Stream[] inlets = createMultiphasePermutationInlets();
+        Mixer mixer = mixerType == 0 ? new Mixer("permuted mixer") : new StaticMixer("permuted static mixer");
+        for (int inletIndex : permutation) {
+          mixer.addStream(inlets[inletIndex]);
+        }
+
+        mixer.run();
+        inlets[1].setFlowRate(0.1, "kg/hr");
+        inlets[1].run();
+        mixer.run();
+
+        SystemInterface actual = mixer.getOutletStream().getFluid();
+        assertTrue(actual.doMultiPhaseCheck(),
+            "the mixed system must retain multiphase checking requested by any active inlet");
+        assertTrue(actual.hasPhaseType("gas"));
+        assertEquals(0.0, mixer.getMassBalance("kg/hr"), 1.0e-6);
+
+        if (reference == null) {
+          reference = actual.clone();
+        } else {
+          assertEquivalentThermodynamicState(reference, actual);
+        }
+      }
+    }
+  }
+
+  @Test
+  void testEqualFlowTemplateTieDoesNotUseInsertionOrder() {
+    SystemSrkEos richFluid = new SystemSrkEos(310.15, 40.0);
+    richFluid.addComponent("methane", 0.7);
+    richFluid.addComponent("ethane", 0.3);
+    richFluid.setMixingRule(1);
+
+    SystemSrkEos leanFluid = new SystemSrkEos(310.15, 40.0);
+    leanFluid.addComponent("methane", 0.9);
+    leanFluid.addComponent("ethane", 0.1);
+    leanFluid.setMixingRule(2);
+
+    Stream rich = new Stream("equal-flow rich gas", richFluid);
+    rich.setFlowRate(100.0, "kg/hr");
+    rich.run();
+    Stream lean = new Stream("equal-flow lean gas", leanFluid);
+    lean.setFlowRate(100.0, "kg/hr");
+    lean.run();
+
+    Mixer forward = new Mixer("forward equal-flow mixer");
+    forward.addStream(rich);
+    forward.addStream(lean);
+    forward.run();
+
+    Mixer reverse = new Mixer("reverse equal-flow mixer");
+    reverse.addStream(lean);
+    reverse.addStream(rich);
+    reverse.run();
+
+    assertEquals(forward.getThermoSystem().getMixingRule(), reverse.getThermoSystem().getMixingRule());
+    assertEquivalentThermodynamicState(forward.getThermoSystem(), reverse.getThermoSystem());
+  }
+
+  private static Stream[] createMultiphasePermutationInlets() {
+    SystemInterface gasFluid = new SystemSrkCPAstatoil(278.45, 37.21325);
+    gasFluid.addComponent("methane", 5.0);
+    gasFluid.addComponent("water", 0.11833608283886514);
+    gasFluid.addComponent("MEG", 0.0);
+    gasFluid.setMixingRule(10);
+    gasFluid.setMultiPhaseCheck(true);
+
+    SystemInterface megFluid = gasFluid.clone();
+    megFluid.setMolarComposition(new double[] { 0.0, 0.1099744114900417, 0.8900255885099583 });
+    megFluid.setMultiPhaseCheck(false);
+
+    SystemInterface waterFluid = gasFluid.clone();
+    waterFluid.setMolarComposition(new double[] { 0.0, 1.0, 0.0 });
+    waterFluid.setMultiPhaseCheck(false);
+
+    Stream gas = new Stream("bulk gas", gasFluid);
+    gas.setFlowRate(168958.0, "Sm3/hr");
+    gas.setTemperature(29.0, "C");
+    gas.setPressure(74.1, "barg");
+    gas.run();
+
+    Stream meg = new Stream("lean MEG", megFluid);
+    meg.setFlowRate(0.01, "kg/hr");
+    meg.setTemperature(29.0, "C");
+    meg.setPressure(74.1, "barg");
+    meg.run();
+
+    Stream water = new Stream("trim water", waterFluid);
+    water.setFlowRate(0.02, "kg/hr");
+    water.setTemperature(29.0, "C");
+    water.setPressure(74.1, "barg");
+    water.run();
+    return new Stream[] { gas, meg, water };
+  }
+
+  private static void assertEquivalentThermodynamicState(SystemInterface expected, SystemInterface actual) {
+    assertEquals(expected.getTemperature("K"), actual.getTemperature("K"), 1.0e-8);
+    assertEquals(expected.getPressure("bara"), actual.getPressure("bara"), 1.0e-10);
+    assertEquals(expected.getFlowRate("kg/hr"), actual.getFlowRate("kg/hr"),
+        Math.abs(expected.getFlowRate("kg/hr")) * 1.0e-10);
+    assertEquals(expected.getTotalNumberOfMoles(), actual.getTotalNumberOfMoles(),
+        Math.abs(expected.getTotalNumberOfMoles()) * 1.0e-10);
+    assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
+    assertEquals(expected.getNumberOfComponents(), actual.getNumberOfComponents());
+    for (int componentIndex = 0; componentIndex < expected.getNumberOfComponents(); componentIndex++) {
+      String componentName = expected.getComponent(componentIndex).getName();
+      assertEquals(expected.getComponent(componentName).getz(), actual.getComponent(componentName).getz(), 1.0e-12,
+          componentName + " overall composition must be inlet-order invariant");
+      assertEquals(expected.getComponent(componentName).getNumberOfmoles(),
+          actual.getComponent(componentName).getNumberOfmoles(),
+          Math.abs(expected.getComponent(componentName).getNumberOfmoles()) * 1.0e-10,
+          componentName + " inventory must be inlet-order invariant");
+    }
+    for (int phaseIndex = 0; phaseIndex < expected.getNumberOfPhases(); phaseIndex++) {
+      assertEquals(expected.getPhase(phaseIndex).getType(), actual.getPhase(phaseIndex).getType());
+      assertEquals(expected.getPhase(phaseIndex).getBeta(), actual.getPhase(phaseIndex).getBeta(), 1.0e-10);
+    }
   }
 }

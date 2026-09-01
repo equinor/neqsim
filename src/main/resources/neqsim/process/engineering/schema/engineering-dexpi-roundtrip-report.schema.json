@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-dexpi-roundtrip-report:v1",
+  "title": "NeqSim DEXPI internal structural round-trip report",
+  "type": "object",
+  "required": ["schemaVersion", "schemaUri", "projectId", "revision", "graphFingerprint", "qualificationScope", "expectedGraphSemanticInventory", "status", "formats", "commercialCaeStatus", "commercialCaeEvidenceRequired"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_dexpi_roundtrip_report.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-dexpi-roundtrip-report:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "graphFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "qualificationScope": {"const": "INTERNAL_IDENTITY_REFERENCE_AND_SEMANTIC_INVENTORY_EXPORT_REIMPORT"},
+    "expectedGraphSemanticInventory": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "status": {"enum": ["INTERNAL_STRUCTURAL_ROUNDTRIP_PASSED", "INTERNAL_STRUCTURAL_ROUNDTRIP_FAILED"]},
+    "formats": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["profile", "file", "expectedEquipmentTags", "reimportedEquipmentTags", "missingEquipmentTags", "additionalEquipmentTags", "objectIdentityCount", "duplicateIdentityCount", "referenceCount", "unresolvedReferences", "expectedGraphSemanticInventory", "reimportedSemanticInventory", "semanticComparisonStatus", "status"],
+        "properties": {
+          "profile": {"type": "string", "minLength": 1},
+          "file": {"type": "string", "minLength": 1},
+          "expectedEquipmentTags": {"type": "array", "items": {"type": "string"}},
+          "reimportedEquipmentTags": {"type": "array", "items": {"type": "string"}},
+          "missingEquipmentTags": {"type": "array", "items": {"type": "string"}},
+          "additionalEquipmentTags": {"type": "array", "items": {"type": "string"}},
+          "objectIdentityCount": {"type": "integer", "minimum": 0},
+          "duplicateIdentityCount": {"type": "integer", "minimum": 0},
+          "referenceCount": {"type": "integer", "minimum": 0},
+          "unresolvedReferences": {"type": "array", "items": {"type": "string"}},
+          "expectedGraphSemanticInventory": {
+            "type": "object",
+            "additionalProperties": {"type": "integer", "minimum": 0}
+          },
+          "reimportedSemanticInventory": {
+            "type": "object",
+            "required": ["EQUIPMENT", "NOZZLE", "CONNECTION", "INSTRUMENTATION"],
+            "additionalProperties": {"type": "integer", "minimum": 0}
+          },
+          "semanticComparisonStatus": {"type": "string", "minLength": 1},
+          "status": {"enum": ["PASSED", "FAILED"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "commercialCaeStatus": {"const": "QUALIFICATION_REQUIRED"},
+    "commercialCaeEvidenceRequired": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

@@ -405,6 +405,74 @@ Agents should call this before building unfamiliar workflows.
 
 ---
 
+### 8. `manageModel` — Reusable Process Models
+
+Registers a process definition once and returns a stable `modelId`. Every tool
+that takes a process definition also accepts that handle, so a conversation can
+stay anchored to one model instead of re-sending the flowsheet with each
+question.
+
+```json
+{
+  "action": "register",
+  "name": "HP separation train",
+  "processJson": { "fluid": { }, "process": [ ] }
+}
+```
+
+| Action | Purpose |
+|--------|---------|
+| `register` | Store a definition, return `modelId` and `revision` |
+| `revise` | Update the definition; handle stays stable, revision increments |
+| `get` | Return the stored definition |
+| `inspect` | List equipment and areas without running the model |
+| `list` | Show models visible to the caller |
+| `delete` | Remove a handle |
+
+Accepting tools: `runProcess`, `validateInput`, `listSimulationUnits`,
+`listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`,
+`saveSimulationState`, `diagnoseAutomation`, `getAutomationLearningReport`,
+`getAdjustableParameters`, `runProcessLoop`.
+
+Registration is content-addressed, so registering the same definition twice
+returns the same handle. Inline JSON keeps working — a value is treated as a
+handle only when it starts with `model_`.
+
+---
+
+## Hosted Deployment: Identity and Limits
+
+For local desktop use (STDIO, security disabled) nothing below applies. When the
+server is hosted for a team or a remote MCP client, three things change.
+
+**Identity is resolved by the transport, never passed as a tool argument.**
+Under the Quarkus `enterprise` profile the OIDC bearer token establishes the
+caller; on STDIO a service credential can be supplied through
+`NEQSIM_MCP_API_KEY`.
+
+**Server state is scoped to that caller.** Sessions, streaming operations and
+registered models are visible only to their owner, one-shot approvals are bound
+to the principal they were granted for, and audit entries record subject and
+tenant.
+
+**Asynchronous work is bounded.** Operations run on a sized worker pool with a
+wall-clock timeout and a per-caller concurrency cap, so a single user cannot
+occupy the server and a non-converging run cannot hold a worker forever:
+
+| Setting | Environment variable | Default |
+|---------|----------------------|---------|
+| `neqsim.mcp.workers` | `NEQSIM_MCP_WORKERS` | CPU count, clamped 2..16 |
+| `neqsim.mcp.operationTimeoutSeconds` | `NEQSIM_MCP_OPERATION_TIMEOUT_SECONDS` | 900 |
+| `neqsim.mcp.maxOperationsPerPrincipal` | `NEQSIM_MCP_MAX_OPERATIONS_PER_PRINCIPAL` | 5 |
+
+Active limits are reported by `getCapabilities` under
+`modelLifecycle.executionPolicy`. For the full configuration, including the
+`Origin` allowlist required by the MCP Streamable HTTP specification, see the
+[MCP server README](../../neqsim-mcp-server/README.md) and
+[MCP_CONTRACT.md](../../neqsim-mcp-server/MCP_CONTRACT.md).
+
+---
+
 ## MCP Resources
 
 The server also exposes static resources and resource templates:

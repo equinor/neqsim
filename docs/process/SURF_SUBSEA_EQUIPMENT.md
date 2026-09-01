@@ -346,7 +346,7 @@ Each subsea equipment type has a corresponding mechanical design class:
 |----------|-------------|-----------|
 | DNV-ST-F101 | Submarine Pipeline Systems | Pipelines, Jumpers, PLETs |
 | DNV-ST-F201 | Dynamic Risers | Flexible Risers |
-| DNV-RP-F109 | On-Bottom Stability | Flowlines |
+| DNV-RP-F109 | Typed, review-gated vertical and lateral on-bottom stability screening | Pipelines, cables, umbilicals |
 | API Spec 17D | Subsea Wellhead and Tree Equipment | Trees |
 | API RP 17A | Design of Subsea Production Systems | General |
 | API RP 17B | Flexible Pipe | Flexible Pipes |
@@ -358,6 +358,12 @@ Each subsea equipment type has a corresponding mechanical design class:
 | API RP 17V | Subsea Boosting | Boosters |
 | ISO 13628 | Subsea Production Systems | All |
 | NORSOK U-001 | Subsea Production Systems | All |
+
+The DNV-RP-F109 entry is an implemented screening kernel rather than a conformity claim. It
+calculates a transparent absolute-static Morison/Coulomb/passive-resistance screen and can check
+displacements supplied by an externally validated generalized or dynamic response model. It does
+not reproduce licensed generalized-design tables or qualify environmental, hydrodynamic, or
+pipe-soil inputs. See [DNV-RP-F109 on-bottom stability screening](dnv_rp_f109_on_bottom_stability).
 
 ### Detailed Mechanical Design Example
 

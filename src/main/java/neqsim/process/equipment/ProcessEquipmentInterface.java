@@ -12,6 +12,7 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.electricaldesign.ElectricalDesign;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.iec81346.ReferenceDesignation;
+import neqsim.process.equipment.stream.EnergyPort;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.mechanicaldesign.DesignConditions;
@@ -205,6 +206,19 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
+   * Returns the named energy ports exposed by this equipment.
+   *
+   * <p>
+   * The default is empty so existing equipment remains source and binary compatible. Equipment backed by
+   * {@link ProcessEquipmentBaseClass} can register typed ports for graph discovery and validation.
+   *
+   * @return unmodifiable map keyed by port name
+   */
+  public default Map<String, EnergyPort> getEnergyPorts() {
+    return Collections.emptyMap();
+  }
+
+  /**
    * getFluid.
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
@@ -300,14 +314,6 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * @return an array of {@link java.lang.String} objects
    */
   public String[][] getResultTable();
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object o);
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode();
 
   /**
    * Serializes the Process Equipment along with its state to a JSON string.

@@ -3,8 +3,6 @@ title: Automatic Scenario Generation
 description: This document describes the automatic safety scenario generation infrastructure added to NeqSim.
 ---
 
-# Automatic Scenario Generation
-
 This document describes the automatic safety scenario generation infrastructure added to NeqSim.
 
 ## Overview

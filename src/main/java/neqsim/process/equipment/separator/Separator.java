@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -755,8 +754,12 @@ public class Separator extends ProcessEquipmentBaseClass
     } else {
       finalizePhaseOutlet(gasOutStream, id);
     }
-    if (thermoSystem2.hasPhaseType("aqueous")
-        || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
+    // Water-bearing liquid outlets still need a stream flash to recover the expected
+    // oil/aqueous split after extracting the bulk separator liquid phases. The no-rerun
+    // safeguard only applies to dry hydrocarbon liquid outlets, where an unnecessary
+    // outlet flash can reclassify a heavy reflux stream.
+    if ((thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil"))
+        && thermoSystem2.getNumberOfComponents() > 1 && (gasInLiquid != 0.0 || thermoSystem2.hasPhaseType("aqueous"))) {
       liquidOutStream.run(id);
     } else {
       finalizePhaseOutlet(liquidOutStream, id);
@@ -976,7 +979,11 @@ public class Separator extends ProcessEquipmentBaseClass
       }
 
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
+      // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
+      // retain the legacy cold initialization and its established trajectory.
+      boolean warmStartInitialization = !neqsim.thermo.ThermodynamicModelSettings
+          .isInnerFlashWarmStartSafe(thermoSystem);
+      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J", warmStartInitialization);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       // Update entrainment fractions from performance calculator during transient
@@ -1647,8 +1654,8 @@ public class Separator extends ProcessEquipmentBaseClass
       // For horizontal, gas flows through upper section above design liquid level
       gasArea = getSepCrossArea() * (1.0 - designLiquidLevelFraction);
     } else {
-      // For vertical separator
-      gasArea = getSepCrossArea() * (1.0 - designLiquidLevelFraction);
+      // For vertical separators, gas flows through the full vessel cross-section.
+      gasArea = getSepCrossArea();
     }
     return maxVelocity * gasArea;
   }
@@ -1698,6 +1705,16 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     return currentGasFlow / maxFlow;
+  }
+
+  /**
+   * Captures a detached, fail-closed gas-capacity assessment for optimization and reporting.
+   *
+   * @param designBasisProvenance non-blank source for geometry and K-factor limits
+   * @return immutable separator capacity evidence
+   */
+  public SeparatorCapacityAssessment getCapacityAssessment(String designBasisProvenance) {
+    return SeparatorCapacityAssessment.from(this, designBasisProvenance);
   }
 
   /**
@@ -1905,9 +1922,8 @@ public class Separator extends ProcessEquipmentBaseClass
     // Required gas area
     double requiredGasArea = gasVolumeFlow / maxVelocity;
 
-    // Calculate diameter (assuming gas area fraction based on orientation)
-    double gasAreaFraction = orientation.equals("horizontal") ? (1.0 - designLiquidLevelFraction)
-        : (1.0 - designLiquidLevelFraction);
+    // Calculate diameter using the orientation-specific gas flow area.
+    double gasAreaFraction = orientation.equals("horizontal") ? (1.0 - designLiquidLevelFraction) : 1.0;
     double requiredTotalArea = requiredGasArea / gasAreaFraction;
     double requiredDiameter = Math.sqrt(4.0 * requiredTotalArea / Math.PI);
 
@@ -2078,8 +2094,9 @@ public class Separator extends ProcessEquipmentBaseClass
 
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+      double gasAreaFraction = orientation.equals("horizontal") ? 1.0 - designLiquidLevelFraction : 1.0;
       double actualVelocity = gasVolumeFlow / 3600.0
-          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * gasAreaFraction);
 
       sb.append("\n--- Operating Conditions ---\n");
       sb.append("Gas Volume Flow: ").append(String.format("%.1f m3/hr", gasVolumeFlow)).append("\n");
@@ -2126,8 +2143,9 @@ public class Separator extends ProcessEquipmentBaseClass
 
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+      double gasAreaFraction = orientation.equals("horizontal") ? 1.0 - designLiquidLevelFraction : 1.0;
       double actualVelocity = gasVolumeFlow / 3600.0
-          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * gasAreaFraction);
 
       report.put("gasVolumeFlow_m3hr", gasVolumeFlow);
       report.put("gasDensity_kgm3", gasDensity);
@@ -2739,7 +2757,8 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getEntropyProduction(String unit) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+      // The method argument is an entropy unit, so use an explicit flow unit for screening.
+      if (inletStreamMixer.getStream(i).getFlowRate("kg/sec") > 1e-10) {
         inletStreamMixer.getStream(i).getFluid().init(3);
         entrop += inletStreamMixer.getStream(i).getFluid().getEntropy();
       }
@@ -2820,59 +2839,6 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     return liquidExergy + gasExergy - exergy;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency, gasCarryunderFraction, gasInLiquid,
-        gasInLiquidSpec, gasOutStream, gasSystem, gasVolume, inletStreamMixer, getInternalDiameter(),
-        liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem, liquidVolume, numberOfInputStreams,
-        oilInGas, oilInGasSpec, orientation, pressureDrop, getSeparatorLength(), separatorSection, specifiedStream,
-        thermoSystem, thermoSystem2, thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!super.equals(obj)) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Separator other = (Separator) obj;
-    return Double.doubleToLongBits(designLiquidLevelFraction) == Double
-        .doubleToLongBits(other.designLiquidLevelFraction)
-        && Double.doubleToLongBits(efficiency) == Double.doubleToLongBits(other.efficiency)
-        && Double.doubleToLongBits(gasCarryunderFraction) == Double.doubleToLongBits(other.gasCarryunderFraction)
-        && Double.doubleToLongBits(gasInLiquid) == Double.doubleToLongBits(other.gasInLiquid)
-        && Objects.equals(gasInLiquidSpec, other.gasInLiquidSpec) && Objects.equals(gasOutStream, other.gasOutStream)
-        && Objects.equals(gasSystem, other.gasSystem)
-        && Double.doubleToLongBits(gasVolume) == Double.doubleToLongBits(other.gasVolume)
-        && Objects.equals(inletStreamMixer, other.inletStreamMixer)
-        && Double.doubleToLongBits(getInternalDiameter()) == Double.doubleToLongBits(other.getInternalDiameter())
-        && Double.doubleToLongBits(liquidCarryoverFraction) == Double.doubleToLongBits(other.liquidCarryoverFraction)
-        && Double.doubleToLongBits(liquidLevel) == Double.doubleToLongBits(other.liquidLevel)
-        && Objects.equals(liquidOutStream, other.liquidOutStream) && Objects.equals(liquidSystem, other.liquidSystem)
-        && Double.doubleToLongBits(liquidVolume) == Double.doubleToLongBits(other.liquidVolume)
-        && numberOfInputStreams == other.numberOfInputStreams
-        && Double.doubleToLongBits(oilInGas) == Double.doubleToLongBits(other.oilInGas)
-        && Objects.equals(oilInGasSpec, other.oilInGasSpec) && Objects.equals(orientation, other.orientation)
-        && Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
-        && Double.doubleToLongBits(getSeparatorLength()) == Double.doubleToLongBits(other.getSeparatorLength())
-        && Objects.equals(separatorSection, other.separatorSection)
-        && Objects.equals(specifiedStream, other.specifiedStream) && Objects.equals(thermoSystem, other.thermoSystem)
-        && Objects.equals(thermoSystem2, other.thermoSystem2)
-        && Objects.equals(thermoSystemCloned, other.thermoSystemCloned)
-        && Double.doubleToLongBits(waterInGas) == Double.doubleToLongBits(other.waterInGas)
-        && Objects.equals(waterInGasSpec, other.waterInGasSpec) && Objects.equals(waterSystem, other.waterSystem);
   }
 
   /**

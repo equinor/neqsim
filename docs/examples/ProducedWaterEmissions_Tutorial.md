@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "ProducedWaterEmissions Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "🌱 Produced Water Emissions Calculation with NeqSim"
+description: "Notebook for 🌱 Produced Water Emissions Calculation with NeqSim, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# ProducedWaterEmissions Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ProducedWaterEmissions_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ProducedWaterEmissions_Tutorial.ipynb).
@@ -15,11 +13,9 @@ nav_order: 1
 
 ---
 
-# 🌱 Produced Water Emissions Calculation with NeqSim
-
 This notebook demonstrates comprehensive greenhouse gas emissions calculation (CO₂, methane, nmVOC) from produced water handling systems using NeqSim.
 
-**Reference:** Based on ["Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator"](../GFMW_2023_Emissions_Paper.txt) (GFMW 2023).
+**Reference:** Based on "Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator" (GFMW 2023).
 
 ---
 
@@ -978,7 +974,7 @@ Annual carbon cost: NOK 26,952,680
 - [Norwegian Methods Comparison](NorwegianEmissionMethods_Comparison.md)
 - [NeqSim Documentation](https://equinor.github.io/neqsim/)
 - [neqsim-python GitHub](https://github.com/equinor/neqsim-python)
-- [GFMW 2023 Paper](../GFMW_2023_Emissions_Paper.txt)
+- GFMW 2023 Paper
 
 ### 📞 Support
 

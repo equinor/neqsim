@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:equipment-register:v1",
+  "title": "NeqSim equipment register",
+  "type": "object",
+  "required": ["schemaVersion", "rowCount", "rows"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_equipment_register.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:equipment-register:v1"},
+    "rowCount": {"type": "integer", "minimum": 0},
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["equipmentTag", "equipmentType", "graphNodeId", "approvalStatus"],
+        "properties": {
+          "equipmentTag": {"type": "string", "minLength": 1},
+          "equipmentType": {"type": "string", "minLength": 1},
+          "graphNodeId": {"type": "string", "minLength": 1},
+          "approvalStatus": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

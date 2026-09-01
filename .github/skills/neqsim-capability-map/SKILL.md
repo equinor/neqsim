@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-07-10"
+last_verified: "2026-08-02"
 ---
 
 # NeqSim Capability Map
@@ -9,7 +9,7 @@ last_verified: "2026-07-10"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-08-02
 
 ---
 
@@ -175,7 +175,7 @@ transport properties (viscosity, thermal conductivity, density).
 | `PipeBeggsAndBrills` | Beggs & Brill correlation (+ formation temperature gradient) | `process.equipment.pipeline` |
 | `PipeGray` | Gray (1974) multiphase vertical flow for gas / gas-condensate wells (Woldesemayat-Ghajar holdup option) | `process.equipment.pipeline` |
 | `VoidFractionCorrelations` | Two-phase void-fraction / gas-holdup correlations (Woldesemayat-Ghajar 2007) | `process.equipment.pipeline` |
-| `TwoFluidPipe` | Transient two-fluid multiphase model (OLGA-like) with 7 conservation equations, AUSM+, boundary conditions | `process.equipment.pipeline` |
+| `TwoFluidPipe` | Transient two-fluid multiphase model with 7 conservation equations, AUSM+, boundary conditions, direct electrical heating (DEH). See `neqsim-flow-assurance` for validity limits | `process.equipment.pipeline` |
 | `CO2InjectionWellAnalyzer` | CO2 injection well safety analysis | `process.equipment.pipeline` |
 | `TransientWellbore` | Shutdown cooling / depressurization transient | `process.equipment.pipeline` |
 | `CO2FlowCorrections` | CO2-specific two-phase flow corrections (static utility) | `process.equipment.pipeline` |
@@ -315,6 +315,8 @@ transport properties (viscosity, thermal conductivity, density).
 | `CO2CorrosionAnalyzer` | de Waard-Milliams from an electrolyte fluid | `pvtsimulation.flowassurance` |
 | `PipeSegmentIntegrity` | Per-segment CO2 corrosion + CaCO3 scale profile along a line (`fromPipe`) | `process.corrosion` |
 | `RobustAqueousPH` | Always-finite, source-tagged in-situ pH with explicit pCO2 basis (rigorous else CO2-water correlation) | `process.corrosion` |
+| `FlowAcceleratedCorrosion` | FAC screening index for closed hot-water/glycol loops: Berger-Hau mass transfer, 150 &deg;C solubility peak, pH, bend/weld geometry, Cr content. **Distinct from erosion-corrosion and from NORSOK M-506 CO2 corrosion** | `process.corrosion` |
+| `AmineBufferedPH` | Converts a laboratory pH measured on a cooled sample into in-situ pH at operating temperature, and reports the alkaline margin above neutrality (neutral is pH 5.85 at 150 &deg;C, not 7) | `process.corrosion` |
 | `Phase.getpH()` | Aqueous in-situ pH; built-in acid-gas fallback (`getpH("acidgas")`) gives CO2/H2S pH without `chemicalReactionInit()` | `thermo.phase` |
 | `ElectrolyteScaleCalculator` | Activity-corrected SI for CaCO3/BaSO4/CaSO4/SrSO4 (Davies + Ksp(T)) from ion mg/L | `process.chemistry.scale` |
 | `ThermodynamicOperations.checkScalePotential(phase)` | Rigorous saturation ratio SR=IAP/Ksp per salt from a speciated brine (needs `chemicalReactionInit()`); read `getResultTable()` | `thermodynamicoperations` |
@@ -370,7 +372,10 @@ transport properties (viscosity, thermal conductivity, density).
 | `InletVane` | Inlet vane device (6000 Pa max momentum, 85% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletVaneWithMeshpad` | Inlet vane + downstream mesh pad (92% + mesh pad capture). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletCyclones` | Inlet cyclone cluster (8000 Pa max momentum, 95% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
-| `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
+| `PipelineMechanicalDesign` | ASME and legacy DNV-OS wall thickness plus access to typed DNV-ST-F101 screening | `process.mechanicaldesign.pipeline` |
+| `DnvStF101PipelineDesignKernel` | Fail-closed 2021 screening: containment, collapse, propagation, load interaction, fatigue, pressure cases, derating, safety class, ovality, fabrication route, installation strain. `SCREENING` only; independent approval required. | `process.engineering.calculation` |
+| `DnvRpF109OnBottomStabilityKernel` | Fail-closed DNV-RP-F109 vertical, absolute-static lateral, and external-displacement screening; always review-required | `process.engineering.calculation` |
+| `DnvRpF109OnBottomStabilityCalculator` | Pure on-bottom load, resistance, required submerged-weight, and utilization calculation | `process.mechanicaldesign.subsea` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |
 | `HeatExchangerMechanicalDesign` | HX mechanical design with auto-selection (min area/weight/dP) | `process.mechanicaldesign.heatexchanger` |
@@ -471,6 +476,11 @@ transport properties (viscosity, thermal conductivity, density).
 | Sulfur reactions | `SulfurDepositionAnalyser` | Claus + corrosion reactions |
 | Ammonia synthesis | `AmmoniaSynthesisReactor` | Haber-Bosch |
 | Chemical equilibrium DB | `GibbsReactDatabase.csv` | Thermodynamic data |
+| Runaway reaction screening | `RunawayReactionAnalyzer` | Lumped **adiabatic**: MTSR, dT_ad, TMR_ad. No spatial conduction |
+| Self-heating criticality | `PorousMediaSelfHeatingAnalyzer` | Frank-Kamenetskii; critical thickness & temperature for lagging fires |
+| Self-heating (surface-cooled) | `SemenovSelfHeatingAnalyzer` | Semenov 1/e criterion for pools and thin films |
+| Time to spontaneous ignition | `SelfHeatingInductionSolver` | Transient 1-D conduction + Arrhenius source |
+| Oxidation kinetics from oven tests | `BasketTestRegression` | Fits E and P from EN 15188 / ASTM E2021 basket data |
 
 ---
 
@@ -527,9 +537,13 @@ transport properties (viscosity, thermal conductivity, density).
 | **Membrane separation** | Basic membrane model | No detailed permeation |
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
-| **Detailed flare modeling** | No radiation / noise model | Source term only |
-| **API 2000 tank venting** | No in-/out-breathing tank vent sizing (thermal + pump-in/out) | Use general relief methods manually; flag as gap in `capability_assessment.md` |
+| **Site-specific flare consequences** | Point-source radiation, neutral Gaussian centerline dispersion, spherical noise, tip-Mach screening and API 537 flame geometry are available | Use validated specialist models for complex terrain/weather, toxic/combustion detail and final siting |
+| **API 2000 detailed vent sizing** | `Api2000TankVentingScreeningKernel` aggregates caller-controlled normal/emergency demand and screens rated capacity/pressure; API demand tables/equations, vent area, device selection, and line losses are not implemented | Use the typed kernel for current-edition screening; retain licensed demand derivation and detailed device/network design externally |
+| **Full DNV-RP-F104 CO2 pipeline lifecycle assessment** | `DnvRpF104Co2PipelineEnvelopeScreeningKernel` screens caller-controlled composition and pressure-temperature margins; a six-capability requirement pack exposes bounded adjacent tools | Retain EOS qualification, DNV-ST-F101 structural design, fracture/decompression/crack arrest, materials/corrosion, construction, operation, safety, requalification, and clause coverage externally |
+| **Full DNV-RP-F110 global-buckling assessment** | `DnvRpF110GlobalBucklingResponseScreeningKernel` compares external-analysis force/strain/displacement/feed-in responses with caller-controlled limits; a four-capability pack exposes bounded operating, route, F114, and mechanical tools | Retain global structural and pipe-soil models, critical buckling, imperfections/triggers, buckle sharing, local capacity, adjacent standards, and conformity externally |
+| **Full DNV-RP-F114 geotechnical pipe-soil assessment** | `DnvRpF114PipeSoilInteractionScreeningKernel` compares caller-controlled vertical/axial/lateral demands and resistances; a four-capability pack exposes bounded route, operating, thermal-burial, and mechanical tools | Retain site investigation, soil interpretation, load-displacement/penetration/burial models, time/cyclic effects, uncertainty, structural actions, adjacent standards, and conformity externally |
 | **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
+| **DNV-RP-F109 generalized/dynamic response** | Transparent absolute-static screen and external-displacement acceptance check only | Supply a validated external response; NeqSim does not reproduce generalized tables, generate dynamic response, or establish conformity |
 
 ### EOS Limitations
 
@@ -580,6 +594,8 @@ transport properties (viscosity, thermal conductivity, density).
 | CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` (screening); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (rigorous, brine-driven) |
 | H2S sour classification? | ✅ | `DeWaardMilliamsCorrosion.isSourService()` |
 | Per-segment corrosion+scale profile? | ✅ | `PipeSegmentIntegrity.fromPipe(...)` |
+| Flow-accelerated corrosion in a closed heating/cooling loop? | ✅ | `FlowAcceleratedCorrosion` (screening index; NORSOK M-506 does **not** apply to a CO2-free loop) |
+| In-situ pH at operating temperature from a laboratory pH? | ✅ | `AmineBufferedPH` (DEA and MDEA buffers) |
 | ISO 6976 calorific value? | ✅ | `Standard_ISO6976` |
 | Pipeline sizing? | ✅ | `PipeBeggsAndBrills` + `PipelineMechanicalDesign` |
 | Compressor power? | ✅ | `Compressor.getPower("kW")` |
@@ -591,7 +607,10 @@ transport properties (viscosity, thermal conductivity, density).
 | Depressurization? | ✅ | `ProcessSystem.runTransient()` |
 | PSV sizing (gas / liquid, fire case)? | ✅ | `ReliefValveSizing` (`neqsim.process.util.fire`) |
 | Two-phase PSV (API 520 omega / HEM)? | ✅ | `ReliefValveSizing.calculateTwoPhaseReliefArea(...)` (Leung omega method) |
-| Tank venting (API 2000)? | ❌ | Not available — genuine gap; write a NIP |
+| Tank venting (API 2000)? | 🔧 | `Api2000TankVentingScreeningKernel` — caller-controlled normal/emergency demand aggregation and rated-capacity/pressure screen; no API table lookup or vent sizing |
+| CO2 pipeline envelope (DNV-RP-F104)? | 🔧 | `DnvRpF104Co2PipelineEnvelopeScreeningKernel` — current-edition caller-controlled composition and operating-envelope margins; requirement pack maps adjacent capabilities but does not establish conformity |
+| Global buckling response (DNV-RP-F110)? | 🔧 | `DnvRpF110GlobalBucklingResponseScreeningKernel` — current-edition caller-controlled external-analysis force/strain/displacement/feed-in margins; no buckling or structural-response model and no conformity decision |
+| Pipe-soil interaction (DNV-RP-F114)? | 🔧 | `DnvRpF114PipeSoilInteractionScreeningKernel` — current-edition caller-controlled vertical/axial/lateral demand-resistance margins; no geotechnical model derivation or conformity decision |
 | Monte Carlo? | ✅ | `MonteCarloSimulator` |
 | Heat integration? | ✅ | `PinchAnalyzer` |
 | Amine sweetening? | ⚠️ Basic | Kent-Eisenberg model |
@@ -660,7 +679,6 @@ capability_readiness: READY | READY_WITH_WORKAROUNDS | NEEDS_NIP | BLOCKED
 `file_search`) before writing a NIP. This map is corrected as capabilities land —
 e.g. two-phase PSV sizing (`ReliefValveSizing.calculateTwoPhaseReliefArea`,
 API 520 omega method) is **already present** and must not be re-flagged as
-missing. Confirmed live gaps (e.g. **API 2000 tank venting**) are recorded in
+missing. Confirmed partial capabilities (e.g. **API 2000 screening without detailed vent sizing**) are recorded in
 section J; add newly confirmed gaps there so the next scout does not repeat the
 search.
-

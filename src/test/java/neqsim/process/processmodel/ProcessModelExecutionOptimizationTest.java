@@ -2,6 +2,8 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.UUID;
@@ -10,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -27,6 +30,64 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class ProcessModelExecutionOptimizationTest {
+
+  /** ProcessSystem test double that can update one boundary stream on demand. */
+  private static final class BoundaryRecordingProcessSystem extends ProcessSystem {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Boundary stream to update when armed, or {@code null} for a stable area. */
+    private final StreamInterface boundaryToUpdate;
+
+    /** Boundary flow to apply on the next run, or NaN when no update is armed. */
+    private double pendingFlow = Double.NaN;
+
+    /** Number of model-requested area runs. */
+    private int runs;
+
+    /**
+     * Creates a stable or boundary-updating area.
+     *
+     * @param name area name
+     * @param boundaryToUpdate boundary stream to update, or {@code null}
+     */
+    private BoundaryRecordingProcessSystem(String name, StreamInterface boundaryToUpdate) {
+      super(name);
+      this.boundaryToUpdate = boundaryToUpdate;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public synchronized void run(UUID id) {
+      runs++;
+      if (boundaryToUpdate != null && Double.isFinite(pendingFlow)) {
+        boundaryToUpdate.setFlowRate(pendingFlow, "kg/hr");
+        pendingFlow = Double.NaN;
+      }
+      setCalculationIdentifier(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean solved() {
+      return true;
+    }
+
+    /** @return number of model-requested area runs */
+    private int getRuns() {
+      return runs;
+    }
+
+    /** Clears the area-run counter. */
+    private void resetRuns() {
+      runs = 0;
+    }
+
+    /** @param flowKgPerHour boundary flow to apply on the next area run */
+    private void updateBoundaryOnNextRun(double flowKgPerHour) {
+      pendingFlow = flowKgPerHour;
+    }
+  }
 
   /**
    * Lightweight ProcessSystem that records which execution path ProcessModel selected.
@@ -170,6 +231,123 @@ class ProcessModelExecutionOptimizationTest {
       assertTrue(observedWarmStart.booleanValue(), "warm-start should be active inside child run");
     }
     assertTrue(model.isModelConverged(), "model should converge");
+  }
+
+  /**
+   * Verifies that an unchanged model uses an empty incremental confirmation pass instead of rerunning every area.
+   */
+  @Test
+  void unchangedBoundaryConfirmationDoesNotRerunAreas() {
+    Stream feed = new Stream("feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater producer = new Heater("producer", feed);
+    producer.setOutTemperature(298.15);
+    StreamInterface boundary = producer.getOutletStream();
+    Separator consumer = new Separator("consumer", boundary);
+
+    BoundaryRecordingProcessSystem upstream = new BoundaryRecordingProcessSystem("upstream", null);
+    upstream.add(feed);
+    upstream.add(producer);
+    BoundaryRecordingProcessSystem downstream = new BoundaryRecordingProcessSystem("downstream", null);
+    downstream.add(consumer);
+
+    ProcessModel model = new ProcessModel();
+    model.add("upstream", upstream);
+    model.add("downstream", downstream);
+    model.run();
+    upstream.resetRuns();
+    downstream.resetRuns();
+    model.run();
+
+    assertEquals(2, model.getLastIterationCount(), "boundary models retain two convergence observations");
+    assertEquals(1, upstream.getRuns(), "stable upstream should run only on the first observation");
+    assertEquals(1, downstream.getRuns(), "stable downstream should run only on the first observation");
+    assertTrue(model.isModelConverged(), "unchanged boundary model should converge");
+  }
+
+  /**
+   * Verifies that pre-run tuning leaves incremental scheduling active for a changed boundary stream.
+   */
+  @Test
+  void changedBoundaryRerunsOnlyDownstreamArea() {
+    Stream feed = new Stream("feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater producer = new Heater("producer", feed);
+    producer.setOutTemperature(298.15);
+    StreamInterface boundary = producer.getOutletStream();
+    Separator consumer = new Separator("consumer", boundary);
+
+    BoundaryRecordingProcessSystem upstream = new BoundaryRecordingProcessSystem("upstream", boundary);
+    upstream.add(feed);
+    upstream.add(producer);
+    BoundaryRecordingProcessSystem downstream = new BoundaryRecordingProcessSystem("downstream", null);
+    downstream.add(consumer);
+
+    ProcessModel model = new ProcessModel();
+    model.setFlowTolerance(1.0e-8);
+    model.add("upstream", upstream);
+    model.add("downstream", downstream);
+    model.run();
+    upstream.resetRuns();
+    downstream.resetRuns();
+    upstream.updateBoundaryOnNextRun(1100.0);
+    model.run();
+
+    assertEquals(2, model.getLastIterationCount(), "changed boundary should be confirmed on a second observation");
+    assertEquals(1, upstream.getRuns(), "clean producer should not rerun");
+    assertEquals(2, downstream.getRuns(), "changed boundary consumer should rerun");
+    assertTrue(model.isModelConverged(), "changed boundary model should converge after downstream confirmation");
+  }
+
+  /**
+   * Verifies that immutable diagnostics are reused only while the exact boundary observation remains unchanged.
+   */
+  @Test
+  void boundaryDiagnosticsReuseExactObservationsAndInvalidateAfterChange() {
+    Stream feed = new Stream("feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater producer = new Heater("producer", feed);
+    producer.setOutTemperature(298.15);
+    StreamInterface boundary = producer.getOutletStream();
+    Separator consumer = new Separator("consumer", boundary);
+
+    BoundaryRecordingProcessSystem upstream = new BoundaryRecordingProcessSystem("upstream", boundary);
+    upstream.add(feed);
+    upstream.add(producer);
+    BoundaryRecordingProcessSystem downstream = new BoundaryRecordingProcessSystem("downstream", null);
+    downstream.add(consumer);
+
+    ProcessModel model = new ProcessModel();
+    model.setFlowTolerance(1.0e-8);
+    model.add("upstream", upstream);
+    model.add("downstream", downstream);
+    model.run();
+    ProcessModel.BoundaryStreamError initial = model.getLastBoundaryStreamErrors().get(0);
+
+    model.run();
+    ProcessModel.BoundaryStreamError unchanged = model.getLastBoundaryStreamErrors().get(0);
+    assertSame(initial, unchanged, "an exact immutable diagnostic should be reused");
+
+    upstream.updateBoundaryOnNextRun(1100.0);
+    model.run();
+    ProcessModel.BoundaryStreamError changed = model.getLastBoundaryStreamErrors().get(0);
+    assertNotSame(unchanged, changed, "a changed flow observation must invalidate the cached diagnostic");
+    assertEquals(1100.0, changed.getPreviousFlow(), 1.0e-9);
+    assertEquals(1100.0, changed.getCurrentFlow(), 1.0e-9);
+
+    model.run();
+    assertSame(changed, model.getLastBoundaryStreamErrors().get(0),
+        "the new exact observation should become reusable after convergence");
+
+    boundary.setName("renamed boundary");
+    model.run();
+    ProcessModel.BoundaryStreamError renamed = model.getLastBoundaryStreamErrors().get(0);
+    assertNotSame(changed, renamed, "a changed stream label must invalidate the cached diagnostic");
+    assertEquals("renamed boundary", renamed.getStreamName());
+
+    model.run();
+    assertSame(renamed, model.getLastBoundaryStreamErrors().get(0),
+        "the renamed exact observation should become reusable after convergence");
   }
 
   /**

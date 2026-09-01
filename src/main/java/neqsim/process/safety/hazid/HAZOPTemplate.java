@@ -64,8 +64,13 @@ public class HAZOPTemplate implements Serializable {
     REACTION
   }
 
+  /** HAZOP node identifier. */
   private final String nodeId;
+  /** Narrative describing normal operation and the node design intent. */
   private final String designIntent;
+  /** Simple process-equipment class or category name, or null for a manual template. */
+  private final String equipmentType;
+  /** Deviation rows stored in worksheet order. */
   private final List<HAZOPDeviation> deviations = new ArrayList<>();
 
   /**
@@ -75,8 +80,24 @@ public class HAZOPTemplate implements Serializable {
    * @param designIntent narrative of the design intent for the node
    */
   public HAZOPTemplate(String nodeId, String designIntent) {
+    this(nodeId, designIntent, null);
+  }
+
+  /**
+   * Construct a HAZOP node template with explicit process-equipment metadata.
+   *
+   * <p>
+   * Equipment metadata enables {@link HazopConsequenceAutoPopulator} to select compatible flow-deviation mappings. Use
+   * the two-argument constructor for an explicitly manual, equipment-neutral template.
+   *
+   * @param nodeId HAZOP node identifier (e.g. "Node-12: Inlet line to V-100")
+   * @param designIntent narrative of the design intent for the node
+   * @param equipmentType process-equipment class or category name; null for a manual equipment-neutral template
+   */
+  public HAZOPTemplate(String nodeId, String designIntent, String equipmentType) {
     this.nodeId = nodeId;
     this.designIntent = designIntent;
+    this.equipmentType = equipmentType;
   }
 
   /**
@@ -131,6 +152,15 @@ public class HAZOPTemplate implements Serializable {
    */
   public String getDesignIntent() {
     return designIntent;
+  }
+
+  /**
+   * Get the process-equipment type associated with this node.
+   *
+   * @return simple equipment class or category name, or null for an equipment-neutral manual template
+   */
+  public String getEquipmentType() {
+    return equipmentType;
   }
 
   /**
@@ -230,7 +260,7 @@ public class HAZOPTemplate implements Serializable {
       String name = unit.getName();
       String type = unit.getClass().getSimpleName();
       String nodeId = String.format(Locale.ROOT, "Node-%02d: %s (%s)", index, name, type);
-      HAZOPTemplate node = new HAZOPTemplate(nodeId, buildDesignIntent(unit, name));
+      HAZOPTemplate node = new HAZOPTemplate(nodeId, buildDesignIntent(unit, name), type);
       seedDeviations(node, type);
       nodes.add(node);
       index++;
@@ -311,6 +341,7 @@ public class HAZOPTemplate implements Serializable {
   private static void seedDeviations(HAZOPTemplate node, String type) {
     String t = type == null ? "" : type.toLowerCase(Locale.ROOT);
     if (t.contains("separator") || t.contains("scrubber")) {
+      addTbd(node, GuideWord.NO, Parameter.FLOW);
       addTbd(node, GuideWord.MORE, Parameter.LEVEL);
       addTbd(node, GuideWord.LESS, Parameter.LEVEL);
       addTbd(node, GuideWord.MORE, Parameter.PRESSURE);

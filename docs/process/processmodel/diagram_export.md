@@ -1,11 +1,97 @@
 ---
 title: Process Flow Diagram (PFD) Export
-description: NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.
+description: Export deterministic simulator-style PFD topology and Graphviz diagrams from NeqSim process models.
 ---
 
-# Process Flow Diagram (PFD) Export
+NeqSim can export deterministic simulator-style process flow diagrams (PFDs) as Graphviz DOT and,
+when Graphviz is installed, SVG or PDF. These exports help inspect simulation topology; they are not
+qualified engineering drawings and do not claim ISO 10628 conformance.
 
-NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.
+For controlled multi-sheet drawing proposals, first create an `EngineeringDiagramDocumentSet` with
+`ProcessDiagramDocumentSetAdapter`, then use `NativeEngineeringDiagramRenderer`. The native renderer
+does not require Graphviz and emits deterministic vector SVG sheets plus one multi-page PDF from the
+same semantic document model. It preserves pinned millimetre positions, protected routes,
+reciprocal off-page references, and title/revision metadata. The result remains an engineering
+proposal and is not a qualified P&amp;ID or standards-conformance claim. See
+[Engineering diagram document and sheet model](../../integration/engineering-diagram-document-model.md).
+
+## Canonical Topology Foundation
+
+Use `ProcessDiagramGraphAdapter` when a downstream renderer or exchange workflow needs a stable,
+format-neutral topology before layout:
+
+```java
+ProcessDiagramGraphAdapter.Result topology =
+    ProcessDiagramGraphAdapter.fromProcessModel(plant, "PLANT-001", "A");
+
+EngineeringGraph graph = topology.getGraph();
+String fingerprint = topology.getFingerprint();
+List<ProcessDiagramGraphAdapter.Diagnostic> diagnostics = topology.getDiagnostics();
+```
+
+The adapter creates one semantic plant graph with explicit area hierarchy, area-qualified equipment
+and line identities, ports or nozzles, and distinct material, energy, and signal connection segments.
+Shared live streams are represented as cross-area connections, and parallel material streams retain
+separate connection identities. Parallel energy and signal declarations are likewise retained when
+they use distinct source and target ports. Repeated declarations with the same connection type and
+the same port endpoints cannot be distinguished by the current `ProcessConnection` contract; the
+adapter retains one connection and emits `DIAGRAM_TOPOLOGY_DUPLICATE_CONNECTION_COLLAPSED` instead
+of silently losing the ambiguity. The result owns a deterministic JSON snapshot and returns a
+defensive graph copy. Consumers should review structured diagnostics before treating an adaptation
+as complete.
+
+### Operating-case enrichment
+
+After a successful simulation, use the opt-in four-argument overload to capture selected current
+stream results in the same canonical plant snapshot:
+
+```java
+process.run();
+ProcessDiagramGraphAdapter.Result operatingSnapshot =
+    ProcessDiagramGraphAdapter.fromProcessSystem(
+        process, "PLANT-001", "A", "NORMAL-001");
+```
+
+The overload works for both `ProcessSystem` and multi-area `ProcessModel`. It creates one stable
+plant-wide operating-case node and, when each result is finite and available, three calculation
+nodes per registered stream:
+
+- thermodynamic temperature in K;
+- absolute pressure in bara; and
+- mass flow in kg/s.
+
+Every value names its unit and quantity basis, references its stream and operating case, and carries
+`SIMULATION_RESULT` provenance with `CALCULATED` engineering state and
+`REVIEW_REQUIRED` approval status. Values are captured only for areas whose latest run completed
+successfully. An unrun or failed area remains in the topology and emits
+`DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL` instead of publishing potentially stale values.
+
+The established three-argument overload remains topology-only, so existing fingerprints and
+consumers do not acquire simulation values silently. The opt-in five-argument
+`Dexpi20ProcessModelWriter.writeAndAssessTopology(...)` overload consumes both the canonical
+material projection and matching calculation nodes for one named operating case. It converts K to
+degree Celsius and kg/s to kg/hour, keeps bara as absolute bar, records the canonical value source,
+and reports omitted values without reading streams as a fallback. Legacy DOT, Graphviz, and DEXPI
+compatibility APIs remain unchanged. This adapter is still a shared semantic contract rather than a
+rendering or standards-conformance claim.
+
+### Topology-equivalence reference cases
+
+`ProcessDiagramTopologyEquivalenceTest` is the executable baseline for comparing the runnable
+`ProcessGraph`, the canonical `EngineeringGraph`, and the current DOT projections. It fixes the
+expected directed connectivity for three deliberately small cases:
+
+- a simple feed, heater, and cooler train;
+- a branched train with two distinct parallel material streams and a recycle loop; and
+- one semantic plant containing upstream and downstream `ProcessSystem` areas joined by a live
+  cross-area stream.
+
+Equivalence is semantic rather than text-identical. In particular, the legacy Graphviz view may
+retain a named stream as an explicit intermediate node while the canonical graph represents the
+same physical connection directly between equipment ports. The reference tests require the same
+directional path and multiplicity, including both parallel branches, without changing the existing
+DOT serialization. These cases are topology fixtures only; they do not qualify layout, symbols,
+drawing metadata, DEXPI round trips, or ISO 10628 conformance.
 
 ## Quick Start
 
@@ -82,7 +168,7 @@ For **three-phase separators** (gas, oil, aqueous), outlets follow gravity:
 
 ### Comprehensive Equipment Support
 
-The diagram system supports all NeqSim equipment types with industry-standard shapes:
+The diagram system maps common NeqSim equipment types to built-in Graphviz shapes:
 
 #### Separators & Vessels
 
@@ -108,8 +194,8 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
-| Compressor | Trapezoid | Standard P&ID trapezoid |
-| CompressorModule | Trapezoid | Standard P&ID trapezoid |
+| Compressor | Trapezoid | Simulator-style trapezoid |
+| CompressorModule | Trapezoid | Simulator-style trapezoid |
 | Expander | Inverted Trapezium | Inverted trapezoid |
 | TurbineExpander | Inverted Trapezium | Inverted trapezoid |
 
@@ -231,7 +317,7 @@ exporter.setShowStreamValues(true)
 ```
 Shows: `Stream Name\n25.0°C, 50.0 bar\n1000 kg/hr`
 
-#### HTML Table Labels (Professional)
+#### HTML Table Labels
 ```java
 exporter.setShowStreamValues(true)
         .setUseStreamTables(true);
@@ -381,7 +467,8 @@ process.createDiagramExporter()
     .exportSVG(Path.of("gas_separation.svg"));
 ```
 
-This generates a professional PFD with:
+This generates a configured simulator-style PFD with:
+
 - Compressor and cooler at top (gas section)
 - Separator in center
 - Pump at bottom (liquid section)
@@ -581,16 +668,17 @@ The diagram export system consists of:
 
 ## Design Philosophy
 
-> Professional PFDs are not drawn — they are computed using rules.
+> NeqSim's simulator-style PFD layout is computed from deterministic rules.
 
-The layout intelligence layer applies engineering conventions:
+The layout intelligence layer applies configured visual conventions:
+
 1. Gravity logic (gas up, liquid down)
 2. Functional zoning (separation center, gas upper, liquid lower)
 3. Equipment semantics (separator outlets positioned correctly)
 4. Stable layout (same model → same diagram)
 
 This approach produces diagrams that are:
+
 - Deterministic (same input → same output)
-- Professional appearance
-- Ready for documentation or AI consumption
-- Comparable to commercial simulators
+- Suitable for simulation-topology review and documentation drafts
+- Available for downstream machine processing as DOT

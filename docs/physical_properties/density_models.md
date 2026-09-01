@@ -4,8 +4,6 @@ description: "Density correction models in NeqSim: COSTALD (Hankinson-Thomson), 
 keywords: "COSTALD, density, liquid density, Hankinson-Thomson, Peneloux, volume translation, Rackett, molar volume, specific gravity, TBP fraction, pseudo-component, aqueous, polar, water density, MEG, TEG, glycol, methanol, ethanol, setLiquidDensityModel, compressed liquid, characteristic volume, V-star"
 ---
 
-# Density Models
-
 This guide documents the density correction models available in NeqSim for improving volumetric predictions.
 
 ## Table of Contents

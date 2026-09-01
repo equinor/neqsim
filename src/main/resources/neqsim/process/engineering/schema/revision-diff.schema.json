@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:revision-diff:v1",
+  "title": "NeqSim engineering revision diff",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "fromRevision", "toRevision", "addedNodeIds", "removedNodeIds", "modifiedNodeIds", "impactedNodeIds"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_revision_diff.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:revision-diff:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "fromRevision": {"type": "string", "minLength": 1},
+    "toRevision": {"type": "string", "minLength": 1},
+    "addedNodeIds": {"type": "array", "items": {"type": "string"}},
+    "removedNodeIds": {"type": "array", "items": {"type": "string"}},
+    "modifiedNodeIds": {"type": "array", "items": {"type": "string"}},
+    "addedEdgeIds": {"type": "array", "items": {"type": "string"}},
+    "removedEdgeIds": {"type": "array", "items": {"type": "string"}},
+    "impactedNodeIds": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

@@ -3,8 +3,6 @@ title: Graph-Based Process Simulation
 description: Documentation for graph-based execution in NeqSim.
 ---
 
-# Graph-Based Process Simulation
-
 Documentation for graph-based execution in NeqSim.
 
 ## Table of Contents
@@ -58,26 +56,35 @@ process.runOptimized(calcId);
 ```
 
 The method inspects the process for:
-- **Recycle units** → Sequential execution for convergence
-- **Multi-input equipment** (Mixer, Manifold, HeatExchanger, etc.) → Sequential for correct mass balance
-- **Adjuster units** → Hybrid execution (parallel feed-forward + iteration)
-- **Feed-forward only** → Full parallel execution for maximum speed
+- **Adjuster units** → Sequential execution for implicit feedback
+- **Recycle units** → Hybrid execution (parallel feed-forward + iterative recycle section)
+- **Wide feed-forward topology** → Dependency-aware dataflow execution
+- **Small or narrow feed-forward topology** → Level-based parallel execution
+
+Mixers, manifolds, heat exchangers, and other multi-input equipment are supported by both feed-forward strategies. The
+graph places each task after all direct predecessors, while equipment sharing a mutable input is grouped into one
+sequential task.
 
 ### Execution Strategy Comparison
 
 | Strategy | Method | Best For | When Used by runOptimized() |
 |----------|--------|----------|----------------------------|
-| Sequential | `run()` or `runSequential()` | Recycles, multi-input equipment | Has Recycle units or Mixer/HeatExchanger/etc. |
+| Sequential | `runSequential()` | Adjusters and legacy insertion-order execution | Has Adjuster or MultiVariableAdjuster units |
 | Graph-based | `setUseGraphBasedExecution(true)` | Complex ordering | Manual configuration only |
-| Parallel | `runParallel()` | Feed-forward (no recycles) | No recycles, no multi-input, no adjusters |
-| Hybrid | `runHybrid()` | Processes with adjusters | Has adjusters but no recycles/multi-input |
+| Parallel | `runParallel()` | Small or narrow feed-forward graphs | Dataflow threshold or useful-width test is not met |
+| Dataflow | `runDataflow()` | Wide or asymmetric feed-forward graphs | At least eight units and independent tasks |
+| Hybrid | `runHybrid()` | Processes with recycles | Has recycle units and no adjusters |
 | **Optimized** | `runOptimized()` | **All processes** | **Auto-selects from above** |
 
-### Sequential Execution (Default)
+### Sequential Execution (Explicit Legacy Mode)
 
-Standard execution in insertion order:
+Explicit insertion-order execution:
 
 ```java
+process.runSequential(UUID.randomUUID());
+
+// Or retain sequential behavior for subsequent process.run() calls
+process.setUseOptimizedExecution(false);
 process.run();
 ```
 
@@ -110,6 +117,22 @@ try {
 3. Runs units at each level in parallel
 4. Waits for level completion before next level
 
+### Dataflow Execution
+
+Executes each unit or shared-input group as soon as its direct predecessors finish:
+
+```java
+try {
+    process.runDataflow();
+} catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+`runOptimized()` selects dataflow only for a feed-forward graph with at least eight units and useful independent tasks.
+Unlike level-based execution, a slow unit on one branch does not hold unrelated downstream work behind a global level
+barrier. Multi-input equipment retains deterministic predecessor ordering and shared-input grouping.
+
 ### Hybrid Execution
 
 Combines parallel and iterative execution for processes with recycles:
@@ -140,10 +163,10 @@ process.runOptimized();
 
 | Condition | Strategy | Reason |
 |-----------|----------|--------|
-| Has `Recycle` units | `runSequential()` | Recycles require full iterative convergence |
-| Has multi-input equipment | `runSequential()` | Mixer, Manifold, etc. need correct stream ordering |
-| Has `Adjuster` units | `runHybrid()` | Adjusters need iteration but feed-forward can parallelize |
-| Feed-forward only | `runParallel()` | Maximum speed with no dependencies |
+| Has `Adjuster`/`MultiVariableAdjuster` units | `runSequential()` | Implicit feedback is not represented by stream dependencies |
+| Has `Recycle` units | `runHybrid()` | Feed-forward levels can run in parallel; the recycle section iterates |
+| Feed-forward, at least eight units, useful independent tasks | `runDataflow()` | Direct predecessor scheduling avoids unnecessary level barriers |
+| Other feed-forward topology | `runParallel()` | Small or serial graphs do not amortize dataflow futures |
 
 **Multi-input equipment includes:**
 - `Mixer`, `Manifold`
@@ -166,7 +189,7 @@ boolean hasRecycles = process.hasRecycles();
 // Check if process has Adjuster units (requires iteration)
 boolean hasAdjusters = process.hasAdjusters();
 
-// Check if process has multi-input equipment (requires sequential)
+// Check if process has multi-input equipment (supported by parallel and dataflow execution)
 // Includes: Mixer, Manifold, HeatExchanger, TurboExpanderCompressor, etc.
 boolean hasMultiInput = process.hasMultiInputEquipment();
 
@@ -181,14 +204,12 @@ System.out.println(process.getExecutionPartitionInfo());
 
 ```java
 // What will runOptimized() do for my process?
-if (process.hasRecycles()) {
-    System.out.println("Will use: runSequential() - Recycle units detected");
-} else if (process.hasMultiInputEquipment()) {
-    System.out.println("Will use: runSequential() - Multi-input equipment detected");
-} else if (process.hasAdjusters()) {
-    System.out.println("Will use: runHybrid() - Adjusters with parallel feed-forward");
+if (process.hasAdjusters()) {
+    System.out.println("Will use: runSequential() - Adjuster feedback detected");
+} else if (process.hasRecycles()) {
+    System.out.println("Will use: runHybrid() - Recycle units detected");
 } else {
-    System.out.println("Will use: runParallel() - Full parallel execution");
+    System.out.println(process.getExecutionStrategyExplanation());
 }
 ```
 

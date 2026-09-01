@@ -175,6 +175,7 @@ public class Standard_AGA3 extends neqsim.standards.Standard {
       stdSystem.init(1);
       ops = new ThermodynamicOperations(stdSystem);
       ops.TPflash();
+      stdSystem.initPhysicalProperties();
       standardDensity = stdSystem.getPhase(0).getDensity("kg/m3");
 
       // Step 1: Initial estimate of discharge coefficient (Cd) using RG equation

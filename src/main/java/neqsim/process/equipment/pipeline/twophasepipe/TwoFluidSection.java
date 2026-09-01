@@ -112,6 +112,16 @@ public class TwoFluidSection extends PipeSection {
   /** Water cut (water fraction of total liquid). */
   private double waterCut = 0.0;
 
+  /**
+   * No-slip water volume fraction of the liquid, q_w / (q_w + q_o).
+   *
+   * <p>
+   * This is the transported (input) fraction set from the local flash, as distinct from {@link #waterCut}, which is the
+   * in-situ holdup fraction after slip. The two are equal only when oil and water travel at the same speed.
+   * </p>
+   */
+  private double inputWaterVolumeFraction = 0.0;
+
   /** Water holdup (fraction of pipe area). α_w */
   private double waterHoldup = 0.0;
 
@@ -182,8 +192,17 @@ public class TwoFluidSection extends PipeSection {
   /** Characteristic entrained droplet diameter (m). */
   private double entrainedDropletDiameter = 0.0;
 
-  /** Severe slugging stability number. Values below 1 indicate elevated risk. */
+  /**
+   * Legacy storage for the local inclined-section gas-carryover number.
+   *
+   * <p>
+   * The field name is retained for serialization compatibility.
+   * </p>
+   */
   private double severeSluggingNumber = Double.POSITIVE_INFINITY;
+
+  /** Local indication that gas velocity may be insufficient to carry liquid uphill. */
+  private boolean inclinedSectionLiquidFallbackPotential = false;
 
   /**
    * Default constructor.
@@ -361,18 +380,15 @@ public class TwoFluidSection extends PipeSection {
 
     // Calculate water cut from mass values BEFORE normalization to preserve ratio
     double calculatedWaterCut = waterCut; // Keep existing as default
-    if (alphaL > 1e-10) {
+    if (alphaL > 0.0) {
       calculatedWaterCut = alphaW / alphaL;
-    } else if (oilMassPerLength + waterMassPerLength > 1e-12) {
-      // Calculate from mass if holdups are too small
-      calculatedWaterCut = waterMassPerLength / (oilMassPerLength + waterMassPerLength);
     }
-    // Clamp water cut to valid range with some margin
-    calculatedWaterCut = Math.max(0.001, Math.min(0.999, calculatedWaterCut));
+    // Preserve exact oil-only and water-only conservative states.
+    calculatedWaterCut = Math.max(0.0, Math.min(1.0, calculatedWaterCut));
 
     // Normalize holdups to sum to 1
     double total = alphaG + alphaL;
-    if (total > 1e-10) {
+    if (total > 0.0) {
       double scale = 1.0 / total;
       alphaG *= scale;
       alphaL *= scale;
@@ -677,18 +693,13 @@ public class TwoFluidSection extends PipeSection {
    * @return Oil-water interfacial shear stress (Pa), positive when oil flows faster than water
    */
   public double calcOilWaterInterfacialShear() {
-    // Only relevant for three-phase flow
-    if (waterHoldup < 0.001 || oilHoldup < 0.001) {
+    // Conservative phase presence owns the endpoint; do not use a finite holdup cutoff.
+    if (waterHoldup <= 0.0 || oilHoldup <= 0.0) {
       return 0.0;
     }
 
     // Relative velocity between oil and water
     double deltaV = oilVelocity - waterVelocity;
-
-    // If no significant slip, no shear
-    if (Math.abs(deltaV) < 0.001) {
-      return 0.0;
-    }
 
     // Regime-dependent friction factor
     double f_ow;
@@ -720,8 +731,12 @@ public class TwoFluidSection extends PipeSection {
     // Average density at interface
     double rhoAvg = 0.5 * (oilDensity + waterDensity);
 
+    // Withdraw the two-liquid closure continuously as either liquid phase disappears.
+    double liquidHoldup = oilHoldup + waterHoldup;
+    double phaseAvailability = 4.0 * oilHoldup * waterHoldup / (liquidHoldup * liquidHoldup);
+
     // Interfacial shear stress (Pa)
-    double tau_ow = f_ow * rhoAvg * Math.abs(deltaV) * deltaV / 2.0;
+    double tau_ow = phaseAvailability * f_ow * rhoAvg * Math.abs(deltaV) * deltaV / 2.0;
 
     return tau_ow;
   }
@@ -823,6 +838,24 @@ public class TwoFluidSection extends PipeSection {
     this.oilFractionInLiquid = 1.0 - waterCut;
   }
 
+  /**
+   * Get the transported (no-slip) water volume fraction of the liquid.
+   *
+   * @return q_w / (q_w + q_o), in [0, 1]
+   */
+  public double getInputWaterVolumeFraction() {
+    return inputWaterVolumeFraction;
+  }
+
+  /**
+   * Set the transported (no-slip) water volume fraction of the liquid.
+   *
+   * @param inputWaterVolumeFraction q_w / (q_w + q_o), clamped to [0, 1]
+   */
+  public void setInputWaterVolumeFraction(double inputWaterVolumeFraction) {
+    this.inputWaterVolumeFraction = Math.max(0.0, Math.min(1.0, inputWaterVolumeFraction));
+  }
+
   public double getOilDensity() {
     return oilDensity;
   }
@@ -886,7 +919,7 @@ public class TwoFluidSection extends PipeSection {
   public double getLiquidHoldup() {
     // Return sum of oil and water if they're being used
     double totalLiq = oilHoldup + waterHoldup;
-    if (totalLiq > 1e-6) {
+    if (totalLiq > 0.0) {
       return totalLiq;
     }
     // Fall back to parent's value
@@ -909,24 +942,24 @@ public class TwoFluidSection extends PipeSection {
     super.setLiquidHoldup(liquidHoldup);
 
     // Update oil and water holdups proportionally
-    if (oldLiquidHoldup > 1e-10 && liquidHoldup > 1e-10) {
+    if (oldLiquidHoldup > 0.0 && liquidHoldup > 0.0) {
       double scaleFactor = liquidHoldup / oldLiquidHoldup;
       oilHoldup = oilHoldup * scaleFactor;
       waterHoldup = waterHoldup * scaleFactor;
 
       // Ensure they don't exceed the new liquid holdup
       double totalLiqHoldup = oilHoldup + waterHoldup;
-      if (totalLiqHoldup > liquidHoldup + 1e-10) {
+      if (totalLiqHoldup > liquidHoldup) {
         double norm = liquidHoldup / totalLiqHoldup;
         oilHoldup *= norm;
         waterHoldup *= norm;
       }
-    } else if (liquidHoldup > 1e-10) {
-      // Old holdup was near zero - use water cut to distribute
+    } else if (liquidHoldup > 0.0) {
+      // Old holdup was exactly zero - use water cut to distribute
       oilHoldup = liquidHoldup * (1.0 - waterCut);
       waterHoldup = liquidHoldup * waterCut;
     } else {
-      // New holdup is near zero
+      // New holdup is exactly zero
       oilHoldup = 0;
       waterHoldup = 0;
     }
@@ -1001,9 +1034,10 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
-   * Check if this section has severe slugging potential (typically riser base).
+   * Check whether the explicit flowline-riser system diagnostic predicts severe slugging at this section. The flag is
+   * not set by local closure relations.
    *
-   * @return true if severe slugging potential exists
+   * @return true if the system-level diagnostic predicts severe slugging
    */
   public boolean isSevereSlugPotential() {
     return severeSlugPotential;
@@ -1138,12 +1172,54 @@ public class TwoFluidSection extends PipeSection {
     this.entrainedDropletDiameter = Math.max(0.0, entrainedDropletDiameter);
   }
 
-  public double getSevereSluggingNumber() {
+  /**
+   * Get the local inclined-section gas-carryover number.
+   *
+   * <p>
+   * This is a local Froude/holdup screen and is not a severe-slugging system stability criterion.
+   * </p>
+   *
+   * @return local gas-carryover number, or positive infinity when not applicable
+   */
+  public double getInclinedSectionGasCarryoverNumber() {
     return severeSluggingNumber;
   }
 
+  /** Set the local inclined-section gas-carryover number. */
+  public void setInclinedSectionGasCarryoverNumber(double number) {
+    severeSluggingNumber = Double.isFinite(number) ? number : Double.POSITIVE_INFINITY;
+  }
+
+  /** Return whether the local carryover screen indicates possible liquid fallback. */
+  public boolean isInclinedSectionLiquidFallbackPotential() {
+    return inclinedSectionLiquidFallbackPotential;
+  }
+
+  /** Set the local inclined-section liquid-fallback flag. */
+  public void setInclinedSectionLiquidFallbackPotential(boolean potential) {
+    inclinedSectionLiquidFallbackPotential = potential;
+  }
+
+  /**
+   * Legacy alias for {@link #getInclinedSectionGasCarryoverNumber()}.
+   *
+   * @return local inclined-section gas-carryover number
+   * @deprecated This value is not a severe-slugging system stability number.
+   */
+  @Deprecated
+  public double getSevereSluggingNumber() {
+    return getInclinedSectionGasCarryoverNumber();
+  }
+
+  /**
+   * Legacy alias for {@link #setInclinedSectionGasCarryoverNumber(double)}.
+   *
+   * @param severeSluggingNumber local inclined-section gas-carryover number
+   * @deprecated This value is not a severe-slugging system stability number.
+   */
+  @Deprecated
   public void setSevereSluggingNumber(double severeSluggingNumber) {
-    this.severeSluggingNumber = Double.isFinite(severeSluggingNumber) ? severeSluggingNumber : Double.POSITIVE_INFINITY;
+    setInclinedSectionGasCarryoverNumber(severeSluggingNumber);
   }
 
   /**

@@ -1,21 +1,17 @@
 ---
 layout: default
-title: "process equipmentutl"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Reservoir-to-Market Optimisation with NeqSim Process Equipment"
+description: "Executed reservoir-to-market process-equipment workflow with field-life depletion, well and flowline hydraulics, export compression, production optimisation, and value-chain economics."
 parent: Examples
 nav_order: 1
 ---
 
-# process equipmentutl
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
-> [`process equipmentutl.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb)
-> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb).
+> [`process equipmentutl.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/process%20equipmentutl.ipynb).
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/process%20equipmentutl.ipynb)
+> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/process%20equipmentutl.ipynb).
 
 ---
-
-# Reservoir-to-Market Optimisation with NeqSim Process Equipment
 
 This notebook builds a **complete reservoir-to-market chain entirely from NeqSim
 process equipment** and solves it with `ProcessSystem` and `ProcessModel`. No

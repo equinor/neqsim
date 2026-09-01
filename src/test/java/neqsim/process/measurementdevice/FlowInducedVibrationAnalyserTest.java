@@ -300,4 +300,92 @@ public class FlowInducedVibrationAnalyserTest {
     analyzer.setSupportDistance(6.0);
     assertEquals(6.0, analyzer.getSupportDistance(), 1.0e-9);
   }
+
+  /**
+   * Builds a wet or dry inlet-gas case at a fixed standard gas rate and pressure and returns the LOF together with the
+   * terms it is built from.
+   *
+   * @param dry true for an essentially dry gas (GVF above 0.99), false for a wet gas carrying condensate and water
+   * @return array of {LOF, mixture density, mixture velocity, GVF, mixture viscosity in cP}
+   */
+  private double[] inletCase(boolean dry) {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 5.0, 48.0);
+    fluid.addComponent("nitrogen", 0.60);
+    fluid.addComponent("CO2", 1.60);
+    fluid.addComponent("methane", 84.0);
+    fluid.addComponent("ethane", 6.30);
+    fluid.addComponent("propane", 2.70);
+    double heavy = dry ? 0.0 : 3.6;
+    fluid.addComponent("n-pentane", 0.35 * heavy + 0.05);
+    fluid.addComponent("n-heptane", 0.35 * heavy + 0.01);
+    fluid.addComponent("nC10", 0.30 * heavy + 0.005);
+    fluid.addComponent("water", dry ? 0.02 : 2.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    Stream stream = new Stream("inlet", fluid);
+    stream.setTemperature(5.0, "C");
+    stream.setPressure(48.0, "bara");
+    stream.setFlowRate(10.5, "MSm3/day");
+
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("inlet pipe", stream);
+    pipe.setDiameter(0.3652);
+    pipe.setThickness(0.0206);
+    pipe.setLength(12.0);
+    pipe.setElevation(0.0);
+    pipe.setNumberOfIncrements(4);
+
+    FlowInducedVibrationAnalyser analyzer = new FlowInducedVibrationAnalyser("LOF", pipe);
+    analyzer.setMethod("LOF");
+    analyzer.setSupportArrangement("Medium stiff");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(stream);
+    process.add(pipe);
+    process.run();
+
+    int segment = pipe.getNumberOfIncrements();
+    double rho = pipe.getSegmentMixtureDensity(segment);
+    double velocity = pipe.getSegmentMixtureSuperficialVelocity(segment);
+    double gvf = pipe.getSegmentGasSuperficialVelocity(segment) / velocity;
+    return new double[] { analyzer.getMeasuredValue(""), rho, velocity, gvf,
+        pipe.getSegmentMixtureViscosity(segment).doubleValue() };
+  }
+
+  @Test
+  @DisplayName("Dry gas gives a lower LOF than wet gas at the same standard rate and pressure")
+  public void testDryGasLofBelowWetGasLof() {
+    double[] wet = inletCase(false);
+    double[] dry = inletCase(true);
+
+    assertTrue(wet[3] < 0.99, "the wet case should sit on the two-phase F_VF branch, GVF was " + wet[3]);
+    assertTrue(dry[3] > 0.99, "the dry case should sit on the viscosity F_VF branch, GVF was " + dry[3]);
+
+    // Removing the liquid lowers the mixture density far more than it raises the velocity, and it drops F_VF from
+    // ~0.35 to ~0.11. A formulation that reports the dry case as the more onerous one is wrong.
+    assertTrue(dry[0] < wet[0], "dry-gas LOF (" + dry[0] + ") must be below wet-gas LOF (" + wet[0] + ")");
+    double ratio = wet[0] / dry[0];
+    assertTrue(ratio > 2.0 && ratio < 6.0, "wet/dry LOF ratio should be around 3-4, was " + ratio);
+  }
+
+  @Test
+  @DisplayName("F_VF above GVF 0.99 is the square root of the viscosity ratio to 1 cP")
+  public void testDryGasFluidViscosityFactorReferencedToOneCentipoise() {
+    double[] dry = inletCase(true);
+    double lof = dry[0];
+    double rhoV2 = dry[1] * dry[2] * dry[2];
+    double expectedFvf = Math.sqrt(dry[4] / FlowInducedVibrationAnalyser.REFERENCE_VISCOSITY_CP);
+
+    // Pipe factor for the "Medium stiff" arrangement, rebuilt from the documented EI coefficients.
+    double externalDiameterMm = (0.3652 + 2 * 0.0206) * 1000.0;
+    double alpha = 283921 + 370 * externalDiameterMm;
+    double beta = 0.1106 * Math.log(externalDiameterMm) - 1.501;
+    double fv = alpha * Math.pow(externalDiameterMm / (1000.0 * 0.0206), beta);
+
+    assertEquals(rhoV2 * expectedFvf / fv, lof, 1.0e-6 * Math.max(1.0, lof));
+    assertTrue(expectedFvf > 0.05 && expectedFvf < 0.2,
+        "a hydrocarbon gas should give F_VF of roughly 0.11, was " + expectedFvf);
+    assertTrue(expectedFvf < 0.268,
+        "F_VF must continue below the 0.268 reached by the two-phase branch at GVF = 0.99, was " + expectedFvf);
+  }
 }

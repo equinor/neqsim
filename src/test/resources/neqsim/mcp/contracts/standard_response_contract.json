@@ -1,6 +1,10 @@
 {
   "contractName": "NeqSim MCP standard response envelope",
   "apiVersion": "1.0",
+  "successStatuses": [
+    "success",
+    "diagnostic"
+  ],
   "requiredFields": [
     "apiVersion",
     "status",

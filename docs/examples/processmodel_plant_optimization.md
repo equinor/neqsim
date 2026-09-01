@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "processmodel plant optimization"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Plant-wide optimization of a multi-area `ProcessModel`"
+description: "Notebook for Plant-wide optimization of a multi-area `ProcessModel`, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# processmodel plant optimization
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`processmodel_plant_optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/processmodel_plant_optimization.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/processmodel_plant_optimization.ipynb).
 
 ---
-
-# Plant-wide optimization of a multi-area `ProcessModel`
 
 This notebook demonstrates the **agentic optimization workflow** on a large multi-area
 NeqSim `ProcessModel` — the same pattern used to optimize real offshore plants such as the

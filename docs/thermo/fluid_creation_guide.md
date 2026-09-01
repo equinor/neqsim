@@ -4,8 +4,6 @@ description: "This guide provides comprehensive documentation on how to create a
 keywords: "fluid, create fluid, SystemSrkEos, SystemPrEos, SystemSrkCPAstatoil, addComponent, mixing rule, equation of state, EOS, natural gas, oil, water, composition"
 ---
 
-# Creating Fluids in NeqSim
-
 This guide provides comprehensive documentation on how to create and configure thermodynamic fluids in NeqSim, including available equations of state, mixing rules, and best practices.
 
 ## Table of Contents
@@ -31,6 +29,7 @@ Creating a fluid in NeqSim follows a consistent pattern:
 ```java
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 // 1. Create the fluid with initial temperature (K) and pressure (bara)
 SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
@@ -43,19 +42,24 @@ fluid.addComponent("propane", 0.05);
 // 3. Set up the mixing rule
 fluid.setMixingRule("classic");
 
-// 4. Initialize the fluid
-fluid.init(0);
+// 4. Calculate equilibrium, then initialize physical properties
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+operations.TPflash();
+fluid.initProperties();
 ```
 
 ### Constructor Parameters
 
-All fluid system classes accept these constructor signatures:
+Most equation-of-state system classes provide a temperature/pressure constructor:
 
 | Constructor | Description |
 |-------------|-------------|
-| `SystemXXX()` | Default: 298.15 K, 1.0 bara |
-| `SystemXXX(T, P)` | Temperature (K), Pressure (bara) |
-| `SystemXXX(T, P, checkForSolids)` | With solid phase checking enabled |
+| `SystemXXX(T, P)` | Temperature in K and absolute pressure in bara |
+| `SystemXXX()` | Model-specific defaults; do not assume one common state |
+| `SystemXXX(T, P, checkForSolids)` | Available on many, but not all, system classes |
+
+Use the explicit `(T, P)` form in reproducible examples. Check the selected
+class's JavaDoc before using a default or solid-checking overload.
 
 ---
 
@@ -221,9 +225,14 @@ $$
 
 ### 5.1 GERG-2008
 
-The ISO 20765-2 standard for natural gas. Highest accuracy for custody transfer and fiscal metering.
+NeqSim includes a GERG-2008 implementation for the ISO 20765-2 natural-gas
+reference equation. The current `SystemGERG2008Eos` source explicitly marks
+parts of the implementation unfinished. Treat it as a calculation and
+validation tool, not as sole evidence for custody-transfer or fiscal acceptance.
 
-**Supported components (21):** Methane, Nitrogen, CO2, Ethane, Propane, n-Butane, i-Butane, n-Pentane, i-Pentane, n-Hexane, n-Heptane, n-Octane, n-Nonane, n-Decane, Hydrogen, Oxygen, CO, Water, Helium, Argon.
+**Mapped GERG-2008 components (21):** Methane, Nitrogen, CO2, Ethane, Propane,
+n-Butane, i-Butane, n-Pentane, i-Pentane, n-Hexane, n-Heptane, n-Octane,
+n-Nonane, n-Decane, Hydrogen, Oxygen, CO, Water, H2S, Helium, Argon.
 
 ```java
 import neqsim.thermo.system.SystemGERG2008Eos;
@@ -235,7 +244,7 @@ fluid.addComponent("propane", 0.03);
 fluid.addComponent("nitrogen", 0.02);
 fluid.createDatabase(true);
 
-// Access GERG-specific properties
+// Access the GERG-specific density for comparison with validated references
 double density = fluid.getPhase(0).getDensity_GERG2008();
 ```
 
@@ -261,7 +270,7 @@ fluid.addComponent("oxygen", 0.02);
 | `SystemSpanWagnerEos` | Span-Wagner equation for CO2 |
 | `SystemLeachmanEos` | Leachman equation for hydrogen |
 | `SystemBWRSEos` | Benedict-Webb-Rubin-Starling |
-| `SystemBnsEos` | BNS equation of state |
+| `SystemBnsEos` | Burgoyne-Nielsen-Stanko Peng-Robinson correlation |
 
 ---
 
@@ -332,19 +341,118 @@ fluid.addComponent("methane", 0.7);
 fluid.addComponent("CO2", 0.15);
 fluid.addComponent("H2S", 0.05);
 fluid.addComponent("water", 0.1);
-fluid.addSalinity(2.0, "mole/sec");  // Add salinity
+fluid.addSalinity(2.0, "mole/sec");  // Salt-equivalent molar flow, not concentration
 fluid.setMixingRule(11);  // Soreide-Whitson mixing rule
+
+// Optional refreshed eight-gas drop-in BIPs; LEGACY remains the default
+fluid.setSoreideWhitsonParameterization("BURGOYNE_NIELSEN_2026");
 ```
+
+The Chabab option is validated against NaCl-brine data at approximately 1-3 mol/kg water, 323-373 K,
+and pressures up to 230 bar. See [Søreide-Whitson Model](SoreideWhitsonModel.md) for the
+correlation, units, comparison example, and extrapolation limits.
+
+The Burgoyne-Nielsen option covers CO₂, H₂S, methane, nitrogen, hydrogen, ethane, propane, and
+n-butane water pairs. It is opt-in because the refreshed BIPs change results and the published
+fit used a specified pure-component property set.
 
 ### 7.3 Pitzer Model
+### 7.3 Electrolyte GE Models and Hybrid VLLE
 
-For concentrated electrolyte solutions.
+For electrolyte solutions, `SystemPitzer`, `SystemDesmukhMather` and `SystemKentEisenberg` provide a fixed-role hybrid
+flash in which gas and hydrocarbon liquid use SRK while the aqueous liquid uses the selected GE model.
 
 ```java
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-SystemInterface fluid = new SystemPitzer(298.15, 1.0);
+SystemPitzer fluid = new SystemPitzer(313.15, 50.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("water", 55.5);
+fluid.addComponent("Na+", 1.0);
+fluid.addComponent("Cl-", 1.0);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+new ThermodynamicOperations(fluid).TPflash();
+
+// Material roles are selected from gas (SRK), oil (SRK), and aqueous (Pitzer).
+boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 ```
+
+The creation-order role objects are stable even when active phases are density-ordered or disappear. A later flash
+reconsiders inactive roles from the current feed and conditions. Neutral non-water species in the Pitzer phase use an
+aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Calling
+`chemicalReactionInit()` couples aqueous reaction equilibrium to the same fixed gas/oil/aqueous roles. This supports
+activity-based scale-potential screening after reactive gas-aqueous or gas-oil-aqueous flashes. The result is a
+saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
+supported by the hybrid strategy.
+
+Neutral-gas dissolution also requires a qualified Henry-law reference and, for brines, separately qualified Pitzer
+neutral-ion interactions. See [Henry-law reference states and aqueous gas-solubility evidence](henry_law_reference.md)
+for the implemented temperature law, derivative contract, current coefficient audit, source matrix and adoption gates.
+
+The solver is not restricted to Pitzer. Desmukh-Mather and Kent-Eisenberg use the same reactive coupling when
+`chemicalReactionInit()` and `setMultiPhaseCheck(true)` are enabled. Other `SystemEosGE` systems can opt in explicitly:
+
+```java
+SystemNRTL fluid = new SystemNRTL(313.15, 50.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("water", 55.5);
+fluid.createDatabase(true);
+fluid.setMixingRule("classic");
+fluid.enableHybridEosGeFlash();
+
+new ThermodynamicOperations(fluid).TPflash();
+```
+
+`enableHybridEosGeFlash()` configures topology, not electrolyte parameters. Scale calculations require a GE phase
+with meaningful activities for all requested aqueous species. Pitzer has the broadest concentrated-brine parameter
+coverage; the amine models retain their narrower component and validity ranges. `SystemDuanSun` remains excluded from
+this topology because its current public API accepts only CO2.
+
+For imported Pitzer datasets, check both interaction coverage and scientific qualification. Coverage answers whether
+the active binary, same-sign, ternary, and neutral topology is explicit; qualification answers which systems and
+observables have independent evidence:
+
+```java
+SystemPitzer qualifiedBrine = new SystemPitzer(298.15, 1.01325);
+qualifiedBrine.addComponent("water", 55.508);
+qualifiedBrine.addComponent("Na+", 0.5);
+qualifiedBrine.addComponent("K+", 0.5);
+qualifiedBrine.addComponent("Cl-", 1.0);
+qualifiedBrine.init(0);
+qualifiedBrine.applyPhreeqcSodiumPotassiumChlorideParameters();
+
+PitzerParameterQualification evidence = qualifiedBrine.getPitzerParameterQualification();
+
+// Property-specific publication gate: complete interaction coverage plus independent
+// evidence for the requested observable. A VLE request would fail for this subset.
+qualifiedBrine.requirePitzerDatasetValidationFor(
+    PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS);
+
+// Dataset qualification does not prove that this exact state is inside its evidence envelope.
+boolean insideRange = PitzerParameterDatasets.isWithinSodiumPotassiumChlorideValidationRange(
+    qualifiedBrine.getTemperature(),
+    0.5,  // Na+ molality, mol/kg water
+    0.5,  // K+ molality, mol/kg water
+    1.0); // Cl- molality, mol/kg water
+```
+
+The accessor completes lazy parameter selection and interaction-coverage auditing but does not run a flash. The target
+gate is opt-in and executes only when called, so neutral models and ordinary Pitzer property calculations do no new
+work. It accepts only a completely qualified named dataset with independent evidence for the requested property;
+callers must still apply the use-case-specific range helper for the current temperature and molality. The legacy
+`requireCompletePitzerDatasetQualification()` gate remains available, but its overall level alone must not be treated
+as VLE, reaction, or mineral evidence.
+
+The complete PHREEQC catalog is intentionally reported as partially validated: CaCl2 and MgCl2 binaries have held-out
+activity evidence, while exact mixed Ca-Mg-Cl-SO4 activity and mineral precipitation remain separate gates. Process
+equipment can carry hybrid EOS-Pitzer states and calculate phase density, enthalpy, and heat capacity, but a finite
+saturation ratio is not yet a mineral-amount or precipitation-complementarity result.
 
 ---
 
@@ -421,7 +529,8 @@ For `addComponent(name, value, unit)`:
 
 ### 9.3 Common Component Names
 
-NeqSim's database includes hundreds of components. Common names:
+NeqSim uses a database-backed component catalog. Verify exact names in the
+[component list](component_list); common examples include:
 
 **Hydrocarbons:**
 `methane`, `ethane`, `propane`, `i-butane`, `n-butane`, `i-pentane`, `n-pentane`, `n-hexane`, `n-heptane`, `n-octane`, `n-nonane`, `n-decane`
@@ -445,13 +554,12 @@ For petroleum fluids, NeqSim supports TBP (True Boiling Point) and plus-fraction
 
 ```java
 SystemInterface oil = new SystemSrkEos(350.0, 100.0);
-oil.createDatabase(true);  // Required before adding TBP fractions
 
-// addTBPfraction(name, moles, molarMass [g/mol], density [g/cm3])
-oil.addTBPfraction("C7", 0.05, 96.0, 0.738);
-oil.addTBPfraction("C8", 0.04, 107.0, 0.765);
-oil.addTBPfraction("C9", 0.03, 121.0, 0.781);
-oil.addTBPfraction("C10", 0.02, 134.0, 0.792);
+// addTBPfraction(name, molarFlow, molarMass [kg/mol], specificGravity)
+oil.addTBPfraction("C7", 0.05, 0.096, 0.738);
+oil.addTBPfraction("C8", 0.04, 0.107, 0.765);
+oil.addTBPfraction("C9", 0.03, 0.121, 0.781);
+oil.addTBPfraction("C10", 0.02, 0.134, 0.792);
 
 oil.setMixingRule("classic");
 ```
@@ -459,8 +567,9 @@ oil.setMixingRule("classic");
 ### 10.2 Plus Fractions
 
 ```java
-// addPlusFraction(name, moles, molarMass [g/mol], density [g/cm3])
-oil.addPlusFraction("C20+", 0.10, 350.0, 0.88);
+// Use a numeric label; NeqSim stores the pseudo-component with a _PC suffix.
+// addPlusFraction(name, molarFlow, molarMass [kg/mol], specificGravity)
+oil.addPlusFraction("C20", 0.10, 0.350, 0.88);
 ```
 
 ### 10.3 TBP Characterization Models
@@ -547,16 +656,16 @@ public class WaterHydrocarbonExample {
 }
 ```
 
-### 11.3 High-Accuracy Fiscal Metering (GERG-2008)
+### 11.3 GERG-2008 Density Comparison
 
 ```java
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class FiscalMeteringExample {
+public class GergDensityComparisonExample {
     public static void main(String[] args) {
-        // GERG-2008 for custody transfer accuracy
+        // Compare NeqSim's GERG-2008 result with an approved reference
         SystemInterface gas = new SystemGERG2008Eos(288.15, 40.0);
 
         gas.addComponent("methane", 0.92);
@@ -587,7 +696,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class OilCharacterizationExample {
     public static void main(String[] args) {
         SystemInterface oil = new SystemPrEos(350.0, 150.0);
-        oil.createDatabase(true);
 
         // Light ends
         oil.addComponent("nitrogen", 0.005);
@@ -601,14 +709,14 @@ public class OilCharacterizationExample {
         oil.addComponent("n-pentane", 0.02);
         oil.addComponent("n-hexane", 0.03);
 
-        // TBP fractions (moles, MW g/mol, density g/cm3)
-        oil.addTBPfraction("C7", 0.05, 96.0, 0.738);
-        oil.addTBPfraction("C8", 0.04, 107.0, 0.765);
-        oil.addTBPfraction("C9", 0.03, 121.0, 0.781);
-        oil.addTBPfraction("C10", 0.02, 134.0, 0.792);
+        // TBP fractions (molar flow, molar mass kg/mol, specific gravity)
+        oil.addTBPfraction("C7", 0.05, 0.096, 0.738);
+        oil.addTBPfraction("C8", 0.04, 0.107, 0.765);
+        oil.addTBPfraction("C9", 0.03, 0.121, 0.781);
+        oil.addTBPfraction("C10", 0.02, 0.134, 0.792);
 
-        // Plus fraction
-        oil.addPlusFraction("C11+", 0.18, 250.0, 0.85);
+        // Use a numeric label; NeqSim stores this as C11_PC.
+        oil.addPlusFraction("C11", 0.18, 0.250, 0.85);
 
         oil.setMixingRule("classic");
 
@@ -635,28 +743,32 @@ public class OilCharacterizationExample {
 | Water-hydrocarbon | `SystemSrkCPAstatoil` | `CLASSIC_TX_CPA` (10) |
 | Glycol dehydration | `SystemSrkCPAstatoil` | `CPA_MIX` (7) |
 | Sour gas / brine | `SystemSoreideWhitson` | `SOREIDE_WHITSON` (11) |
-| Fiscal metering | `SystemGERG2008Eos` | N/A |
+| Natural-gas reference-property comparison | `SystemGERG2008Eos` | N/A |
 | CCS / CO2 transport | `SystemEOSCGEos` | N/A |
 | Electrolyte solutions | `SystemElectrolyteCPAstatoil` | N/A |
 | Polar organics | `SystemUNIFAC` or `SystemNRTL` | N/A |
 
 ### Decision Flow
 
-1. **Is high accuracy required for custody transfer?** → Use GERG-2008
-2. **Does the system contain water, glycols, or alcohols?** → Use CPA models
+1. **Is a validated natural-gas reference calculation required?** → Evaluate
+   GERG-2008 against the applicable composition range and an approved reference
+2. **Does the system contain water, glycols, or alcohols?** → Evaluate CPA models
 3. **Is it a sour gas system with brine?** → Use Søreide-Whitson
 4. **Is it a standard hydrocarbon system?** → Use SRK or PR
 5. **Does it contain electrolytes?** → Use Electrolyte-CPA or Pitzer
 6. **Is it a non-ideal organic mixture?** → Use UNIFAC or NRTL
 
-### Performance vs. Accuracy Trade-offs
+### Model-Coverage Trade-offs
 
-| Model Type | Speed | Accuracy | Best For |
-|------------|-------|----------|----------|
-| Cubic (SRK/PR) | Fast | Good | General process simulation |
-| CPA | Medium | Very Good | Polar/associating systems |
-| GERG-2008 | Slow | Excellent | Fiscal metering, calibration |
-| UNIFAC | Medium | Good | Chemical process design |
+Accuracy depends on composition, state, parameters, and validation data; the
+labels below describe model scope rather than guaranteed error.
+
+| Model Type | Typical Cost | Intended Scope |
+|------------|--------------|----------------|
+| Cubic (SRK/PR) | Low | General hydrocarbon process calculations |
+| CPA | Moderate | Associating mixtures within a validated parameter set |
+| GERG-2008 | Higher | Natural-gas reference-property comparisons |
+| UNIFAC | Moderate | Screening non-ideal liquid mixtures with available groups |
 
 ---
 

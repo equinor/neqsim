@@ -230,10 +230,20 @@ public class StandardsRunner {
     iso.calculate();
 
     JsonObject data = new JsonObject();
-    data.addProperty("superiorCalorificValue_MJ_Sm3", iso.getValue("SuperiorCalorificValue"));
-    data.addProperty("inferiorCalorificValue_MJ_Sm3", iso.getValue("InferiorCalorificValue"));
-    data.addProperty("superiorWobbeIndex", iso.getValue("SuperiorWobbeIndex"));
-    data.addProperty("inferiorWobbeIndex", iso.getValue("InferiorWobbeIndex"));
+    // Standard_ISO6976 returns energy quantities in kJ per reference volume; the *_MJ_Sm3 fields
+    // are published in MJ, so convert rather than relabel.
+    double superiorCalorific = iso.getValue("SuperiorCalorificValue");
+    double inferiorCalorific = iso.getValue("InferiorCalorificValue");
+    double superiorWobbe = iso.getValue("SuperiorWobbeIndex");
+    double inferiorWobbe = iso.getValue("InferiorWobbeIndex");
+    data.addProperty("superiorCalorificValue_MJ_Sm3", superiorCalorific / 1000.0);
+    data.addProperty("inferiorCalorificValue_MJ_Sm3", inferiorCalorific / 1000.0);
+    data.addProperty("superiorCalorificValue_kJ_Sm3", superiorCalorific);
+    data.addProperty("inferiorCalorificValue_kJ_Sm3", inferiorCalorific);
+    data.addProperty("superiorWobbeIndex_MJ_Sm3", superiorWobbe / 1000.0);
+    data.addProperty("inferiorWobbeIndex_MJ_Sm3", inferiorWobbe / 1000.0);
+    data.addProperty("superiorWobbeIndex", superiorWobbe);
+    data.addProperty("inferiorWobbeIndex", inferiorWobbe);
     data.addProperty("relativeDensity", iso.getValue("RelativeDensity"));
     data.addProperty("molarMass_kg_kmol", iso.getValue("MolarMass"));
     data.addProperty("compressionFactor", iso.getValue("CompressionFactor"));

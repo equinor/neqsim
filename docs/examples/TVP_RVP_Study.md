@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "TVP RVP Study"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "True Vapor Pressure (TVP) vs Reid Vapor Pressure (RVP) Study"
+description: "Notebook for True Vapor Pressure (TVP) vs Reid Vapor Pressure (RVP) Study, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# TVP RVP Study
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`TVP_RVP_Study.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb).
@@ -28,8 +26,6 @@ nav_order: 1
 # 4. RVP_ASTM_D6377 = 0.834 × VPCR4
 # 5. Stabilized crude has lower RVP than unstabilized
 ```
-
-# True Vapor Pressure (TVP) vs Reid Vapor Pressure (RVP) Study
 
 ## A Comprehensive Analysis Using NeqSim
 
@@ -1834,7 +1830,7 @@ When fluids have **different pseudo-component characterizations**, use `PseudoCo
 # Method 2: combineReservoirFluids() - for different pseudo-component sets
 # Import the PseudoComponentCombiner using JClass
 import jpype
-PseudoComponentCombiner = JClass('neqsim.thermo.characterization.PseudoComponentCombiner')
+PseudoComponentCombiner = jpype.JClass('neqsim.thermo.characterization.PseudoComponentCombiner')
 
 print("="*70)
 print("METHOD 2: combineReservoirFluids() - Different Pseudo-Components")
@@ -1851,7 +1847,7 @@ print(f"Fluid B components: {fluid_B.getNumberOfComponents()}")
 # The API is: combineReservoirFluids(int numPseudoComponents, SystemInterface[] fluids)
 try:
     # Create Java array of fluids
-    SystemInterface = JClass('neqsim.thermo.system.SystemInterface')
+    SystemInterface = jpype.JClass('neqsim.thermo.system.SystemInterface')
     fluids_array = jpype.JArray(SystemInterface)([fluid_A, fluid_B])
     
     combined_fluid = PseudoComponentCombiner.combineReservoirFluids(

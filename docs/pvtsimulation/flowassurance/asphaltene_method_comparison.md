@@ -3,8 +3,6 @@ title: Asphaltene Method Comparison
 description: "NeqSim provides six complementary approaches for asphaltene stability analysis: De Boer screening, SARA CII, CPA EOS, Flory-Huggins, Pedersen cubic EOS, and Refractive Index."
 ---
 
-# Asphaltene Method Comparison
-
 ## Overview
 
 NeqSim provides six complementary approaches for asphaltene stability analysis:

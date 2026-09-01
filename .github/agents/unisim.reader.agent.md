@@ -28,7 +28,7 @@ read_file: .github/skills/neqsim-process-extraction/SKILL.md
 ## Prerequisites
 
 - **Windows OS** with UniSim Design installed
-- **Python**: `pywin32` package (`pip install pywin32`)
+- **Python**: `pywin32` must already be available in the inherited shared environment; report a blocker if it is missing
 - **Module**: `devtools/unisim_reader.py` in the NeqSim repo
 
 ---
@@ -70,8 +70,9 @@ main flowsheet) become separate `ProcessSystem` areas composed into a
 Tc, Pc, omega, MW, and BIPs from UniSim COM and writes E300 files. Use the
 skill guidance for robust COM extraction: critical temperature and boiling point
 are requested in Celsius and converted to Kelvin, critical pressure is requested
-in kPa and converted to bara, and missing `AcentricFactor` is handled with
-package vectors or Edmister fallback. The generated code loads the fluid via
+in kPa and converted to bara, and the acentric factor is read from the UniSim COM
+attribute `Acentricity` (NOT `AcentricFactor`), with package vectors and an
+Edmister estimate only as fallbacks. The generated code loads the fluid via
 `EclipseFluidReadWrite.read()` for lossless transfer of hypothetical/pseudo
 component properties.
 
@@ -162,25 +163,25 @@ All output modes are also available from the command line:
 
 ```bash
 # Summary only
-python devtools/unisim_reader.py model.usc
+<python-executable> devtools/unisim_reader.py model.usc
 
 # JSON output to stdout
-python devtools/unisim_reader.py model.usc --json
+<python-executable> devtools/unisim_reader.py model.usc --json
 
 # Standalone Python script
-python devtools/unisim_reader.py model.usc --python process.py
+<python-executable> devtools/unisim_reader.py model.usc --python process.py
 
 # Jupyter notebook
-python devtools/unisim_reader.py model.usc --notebook process.ipynb
+<python-executable> devtools/unisim_reader.py model.usc --notebook process.ipynb
 
 # EOT simulator module
-python devtools/unisim_reader.py model.usc --eot my_sim.py --eot-class MySimulator
+<python-executable> devtools/unisim_reader.py model.usc --eot my_sim.py --eot-class MySimulator
 
 # EOT demo notebook
-python devtools/unisim_reader.py model.usc --eot-notebook eot_demo.ipynb
+<python-executable> devtools/unisim_reader.py model.usc --eot-notebook eot_demo.ipynb
 
 # All at once
-python devtools/unisim_reader.py model.usc --python p.py --notebook n.ipynb --eot s.py
+<python-executable> devtools/unisim_reader.py model.usc --python p.py --notebook n.ipynb --eot s.py
 ```
 
 ### Step 5: Build and Run NeqSim Model
@@ -257,7 +258,11 @@ If deviations exceed acceptable ranges, investigate:
 1. Check E300 export/use — were all expected fluid packages exported and loaded
   with `EclipseFluidReadWrite.read(...)`?
 2. Check component/property sanity — methane Tc/Pc and water Tc/Pc should be in
-  expected Kelvin/bara ranges; acentric factors should not be missing.
+  expected Kelvin/bara ranges; acentric factors should not be missing. Compare
+  the exported `ACF` block against `comp.AcentricityValue` from COM: any `0.0`
+  or Edmister-looking value means the acentric factor was estimated rather than
+  transferred, which biases every bubble point / TVP by ~10-15 %. The exporter
+  logs a warning when it has to default an acentric factor to 0.0.
 3. Check component mapping — missing components or wrong fluid package per area?
 4. Check EOS — PR vs SRK differences?
 5. Check equipment specs — efficiency, pressure, temperature set correctly?
@@ -363,7 +368,7 @@ and `note` fields. The strategies are:
 
 When adding support for a new UniSim type, update the registry first, then add
 conversion logic only where the selected strategy needs it. Validate with
-`python devtools/test_unisim_outputs.py` and inspect `_unisim_operation_mapping`
+`<python-executable> devtools/test_unisim_outputs.py` and inspect `_unisim_operation_mapping`
 in generated JSON.
 
 ### Forward Reference Placeholders for Separators and HeatExchangers

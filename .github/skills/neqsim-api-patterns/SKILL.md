@@ -1,12 +1,32 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
-last_verified: "2026-07-10"
+last_verified: "2026-08-22"
 ---
 
 # NeqSim API Patterns
 
 Copy-paste reference for common NeqSim operations. All Java code must be Java 8 compatible.
+
+## MCP Runtime Capability Routing
+
+When a calculation is not exposed by a curated MCP domain tool, use the generic runtime index
+before proposing a new tool:
+
+1. Search with `runCapability({"action":"search","query":"<domain method>"})`.
+2. Inspect the selected class with `inspectApi` to pin the deployed signature.
+3. Follow the returned route:
+     - `static-json`: invoke through `runCapability` with exact `className`, `methodName`,
+         `parameterTypes`, and ordered JSON `arguments`.
+     - `process-json`: build the stateful equipment through `runProcess`.
+     - `inspect-only`: use a curated tool or add an explicit, reviewed adapter.
+
+Discovery is broader than execution by design. `runCapability` only invokes public static methods
+in approved domain packages with scalar, enum, or bounded-array JSON types; MCP runners, raw generic
+containers, oversized payloads, arbitrary objects, and instance methods are excluded. Its timeout
+uses cooperative Java interruption, so route long-running calculations through a curated runner or
+`runProcess`. Treat runtime presence as capability evidence, then check tests, benchmark trust, and
+standards before using the result for engineering decisions.
 
 ## EOS Selection Guide
 
@@ -153,7 +173,61 @@ ops.calcPTphaseEnvelope();              // Phase envelope
 | Flow rate | — | `setFlowRate(50000.0, "kg/hr")` |
 | Getting temp | Returns **Kelvin** | `getTemperature() - 273.15` for °C |
 
+### Non-obvious return units
+
+| Call | Returns | Trap |
+|------|---------|------|
+| `Standard_ISO6976(sys, 15, 15, "volume").getValue("GCV")` | **kJ/Sm³** (~40 000) | Dividing by 1e6 gives a nonsense 0.04 MJ/Sm³ — divide by **1e3** |
+| `Standard_ISO6976(...).getValue("WI")` | **kJ/Sm³** | Same |
+| `SURFCostEstimator.setContingencyPct(x)` | — | Takes a **fraction** (0.35), not a percent, despite the name. Same for `WellCostEstimator` |
+| `Cooler.getDuty()` | **W** | Divide by 1e3 for kW |
+
+### Dense-phase CO₂ needs GERG-2008, not a cubic
+
+Benchmarked against CoolProp (Span-Wagner) — density deviation at 40 °C / 100 bara and
+100 °C / 200 bara:
+
+| System class | Deviation |
+|---|---|
+| `SystemSrkEos` | −14.1 % / −7.3 % |
+| `SystemPrEos`, `SystemPrEos1978`, `SystemUMRPRUMCEos` | −12.4 % / −6.1 % |
+| `SystemSrkCPAstatoil` | −17.5 % / −10.3 % |
+| **`SystemGERG2008Eos`** | **+0.01 % / +0.02 %** |
+
+Use `SystemGERG2008Eos` for any CO₂ compression, injection or transport duty. Cubics are
+acceptable for the gas-phase part of the train but not near or above the critical density.
+
 ## Process Equipment Patterns
+
+### Standard outlet-stream contract
+
+Equipment that produces phase-separated gas and liquid products must expose the
+conventional `getGasOutStream()` and `getLiquidOutStream()` methods. A
+three-phase unit should also expose its conventional water outlet. Domain names
+such as `getOverheadGasStream()`, `getLeanLiquidStream()`, or
+`getBottomsStream()` are useful aliases, but they supplement rather than replace
+the conventional accessors and must return the same stream objects.
+
+Every equipment class must also report all connected streams through
+`getInletStreams()` and `getOutletStreams()`. These topology lists must contain
+the live public stream objects, not clones or solver-internal tray streams. Once
+an outlet has been handed to downstream equipment, preserve its object identity
+across `run(...)` calls by updating its thermodynamic system in place or using
+the established identity-preserving adoption helper.
+
+For phase-separated equipment, add a focused contract test after a successful
+solve that verifies:
+
+- `assertSame` between conventional accessors, domain aliases, and the matching
+    entries in `getOutletStreams()`;
+- the gas product contains a `gas` phase and the liquid product contains an
+    `oil`, `liquid`, or `aqueous` phase;
+- expected product flows are positive and total/per-component balances close;
+- outlet identity remains unchanged after a warm rerun or changed feed.
+
+Do not add a new equipment-wide interface solely for gas/liquid naming. The
+generic topology contract belongs to `ProcessEquipmentInterface`; conventional
+phase-product methods belong on the phase-separating equipment abstraction.
 
 ### Stream
 
@@ -1055,6 +1129,27 @@ pipe.setFormationTemperatureGradient(4.0, -0.03, "C"); // 4°C top, -30°C/km (i
 pipe.run();
 ```
 
+#### CRITICAL: set the overall heat-transfer coefficient explicitly
+
+Without `setUseOverallHeatTransferCoefficient(true)` the pipe behaves as if `U` were
+infinite: the outlet equilibrates to the ambient / formation temperature regardless of
+length, rate or insulation. On a 1040 m gas tubing string this puts the **wellhead at
+seabed temperature** (5 °C instead of ~51 °C), which silently destroys any hydrate,
+cooldown or arrival-temperature screening built on top of it.
+
+```java
+pipe.setUseOverallHeatTransferCoefficient(true);
+pipe.setHeatTransferCoefficient(15.0);   // W/m2K
+```
+
+Screening values: cased and cemented well in formation ~15 W/m²K; uninsulated subsea
+carbon-steel flowline ~20 W/m²K; wet-insulated flowline ~5 W/m²K. Measured effect on a
+10 km, 0.30 m line with a 40 °C inlet and 6 °C seabed at 4 MSm³/d: default 5.7 °C outlet,
+`U = 20` gives 7.6 °C, `U = 5` gives 21.7 °C.
+
+`setAdiabatic(true)` is **not** a substitute — it currently has no effect on the outlet
+temperature.
+
 ### CO2FlowCorrections (Static Utility)
 
 ```java
@@ -1145,6 +1240,27 @@ double[] cricondenBar = envelope.getCricondenBar();    // [T_K, P_bara, 0]
 double[] cricondenTherm = envelope.getCricondenTherm(); // [T_K, P_bara, 0]
 double critT = envelope.getCriticalTemperature();       // Kelvin
 double critP = envelope.getCriticalPressure();          // bara
+```
+
+### CRITICAL: `dewPointPressureFlash()` finds the wrong branch for a gas condensate
+
+For a lean gas condensate `ops.dewPointPressureFlash()` converges on the **lower**
+(normal) dew point — often a fraction of a bar — not the retrograde upper dew point that
+matters for reservoir and flowline work. To get the retrograde branch, walk the pressure
+down from above the cricondenbar until a second phase appears, then bisect:
+
+```java
+// pseudo: n_phases(p) = TPflash at (t, p) then getNumberOfPhases()
+double pHi = 900.0, pLo = Double.NaN;
+for (double p = 900.0; p > 50.0; p -= 10.0) {
+  if (nPhases(fluid, tC, p) > 1) { pLo = p; break; }
+  pHi = p;
+}
+while (pHi - pLo > 0.05) {                      // bisect
+  double mid = 0.5 * (pHi + pLo);
+  if (nPhases(fluid, tC, mid) > 1) { pLo = mid; } else { pHi = mid; }
+}
+double retrogradeDewPointBara = 0.5 * (pHi + pLo);
 ```
 
 ### CRITICAL: Branch Classification Bug with bubblePointFirst=true

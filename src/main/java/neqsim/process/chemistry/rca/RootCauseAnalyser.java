@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import neqsim.process.chemistry.ChemicalCompatibilityAssessor;
 import neqsim.process.chemistry.ProductionChemical;
+import neqsim.process.corrosion.FlowAcceleratedCorrosion;
 
 /**
  * Root cause analyser for chemical-related incidents in well, flow assurance and process systems.
@@ -49,6 +50,7 @@ public class RootCauseAnalyser implements Serializable {
   private final List<Symptom> symptoms = new ArrayList<Symptom>();
   private final List<ProductionChemical> chemicals = new ArrayList<ProductionChemical>();
   private ChemicalCompatibilityAssessor compatibilityAssessor;
+  private neqsim.process.chemistry.scale.ProductionChemicalScaleScenario chemicalTreatmentScenario;
   private transient neqsim.process.chemistry.scale.ScaleRemediationAdvisor remediationAdvisor;
   private double temperatureC = 60.0;
   private double pressureBara = 50.0;
@@ -106,6 +108,15 @@ public class RootCauseAnalyser implements Serializable {
    */
   public void setCompatibilityAssessor(ChemicalCompatibilityAssessor assessor) {
     this.compatibilityAssessor = assessor;
+  }
+
+  /**
+   * Sets a treatment-aware scale scenario whose before/after results are used as RCA evidence.
+   *
+   * @param scenario configured production-chemical scale scenario
+   */
+  public void setChemicalTreatmentScenario(neqsim.process.chemistry.scale.ProductionChemicalScaleScenario scenario) {
+    this.chemicalTreatmentScenario = scenario;
   }
 
   /**
@@ -345,7 +356,10 @@ public class RootCauseAnalyser implements Serializable {
           "Multiple chemicals declared but no ChemicalCompatibilityAssessor configured — compatibility not verified");
     }
 
-    // Pass 3: deduplicate by code (keep highest score)
+    // Pass 3: treatment-aware thermodynamic and stoichiometric evidence.
+    analyseChemicalTreatmentScenario();
+
+    // Pass 4: deduplicate by code (keep highest score)
     Map<String, RootCauseCandidate> dedup = new LinkedHashMap<String, RootCauseCandidate>();
     for (RootCauseCandidate c : candidates) {
       RootCauseCandidate prev = dedup.get(c.getCode());
@@ -380,6 +394,50 @@ public class RootCauseAnalyser implements Serializable {
     }
 
     evaluated = true;
+  }
+
+  private void analyseChemicalTreatmentScenario() {
+    if (chemicalTreatmentScenario == null) {
+      return;
+    }
+    if (!chemicalTreatmentScenario.isEvaluated()) {
+      chemicalTreatmentScenario.evaluate();
+    }
+    Map<String, String> treatmentWarnings = chemicalTreatmentScenario.getWarnings();
+    if (treatmentWarnings.containsKey("chemical_induced_calcite_risk")) {
+      double delta = chemicalTreatmentScenario.getSaturationIndexChange("CaCO3");
+      candidates.add(new RootCauseCandidate("CHEMICAL_INDUCED_CARBONATE_SCALE",
+          "pH-control chemical increased carbonate-scale supersaturation", 0.82,
+          "Treatment scenario increases calcite SI by " + String.format(java.util.Locale.ROOT, "%.2f", delta)
+              + " and predicts treated pH "
+              + String.format(java.util.Locale.ROOT, "%.2f", chemicalTreatmentScenario.getTreatedPH()),
+          "Review base-equivalent dose and injection point; confirm treated pH/alkalinity and deposit mineralogy"));
+    }
+    if (treatmentWarnings.containsKey("h2s_scavenger_under_capacity")) {
+      candidates.add(new RootCauseCandidate("H2S_SCAVENGER_UNDER_CAPACITY",
+          "Injected H2S scavenger has insufficient stoichiometric capacity", 0.80,
+          "Treatment scenario leaves "
+              + String.format(java.util.Locale.ROOT, "%.1f", chemicalTreatmentScenario.getResidualDissolvedH2SMgL())
+              + " mg/L dissolved H2S after consuming active capacity",
+          "Verify active concentration, actual H2S load, residence time and mass-transfer efficiency; increase "
+              + "capacity"));
+    }
+    if (treatmentWarnings.containsKey("triazine_spent_product") && hasSymptom(Symptom.Category.DEPOSIT)) {
+      candidates.add(new RootCauseCandidate("SCAVENGER_SPENT_PRODUCT_DEPOSIT",
+          "H2S-scavenger reaction product contributed to the deposit", 0.62,
+          "Triazine is present in the treatment scenario and a deposit symptom was reported",
+          "Analyse deposit for dithiazine/amorphous organics; review scavenger dose, contact time and injection "
+              + "location" + remediationHint("dithiazine")));
+    }
+  }
+
+  private boolean hasSymptom(Symptom.Category category) {
+    for (Symptom symptom : symptoms) {
+      if (symptom.getCategory() == category) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // ─── Symptom analysers ──────────────────────────────────
@@ -558,6 +616,7 @@ public class RootCauseAnalyser implements Serializable {
           "Wall shear = " + wallShearStressPa + " Pa above 150 Pa threshold",
           "Reduce velocity; verify CI persistency under shear; consider CRA"));
     }
+    addFlowAcceleratedCorrosionCandidate(cr, fastCr);
     if (chemicals.size() > 0) {
       // chemical-induced corrosion check
       for (ProductionChemical c : chemicals) {
@@ -568,6 +627,59 @@ public class RootCauseAnalyser implements Serializable {
         }
       }
     }
+  }
+
+  /**
+   * Adds a flow-accelerated corrosion candidate when the conditions match the FAC signature.
+   *
+   * <p>
+   * FAC is dissolution of the protective magnetite film under mass-transfer control, and is distinct from
+   * erosion-corrosion, which needs mechanical damage by particles or cavitation. The two occur at the same locations —
+   * bends, welds and restrictions — so both may be raised, but they call for different mitigation. FAC is addressed by
+   * chemistry, temperature and alloying; erosion-corrosion by removing the particles or the impingement.
+   * </p>
+   *
+   * <p>
+   * The signature is hot single-phase aqueous service on carbon or low-alloy steel, near the magnetite solubility peak
+   * around 150 &deg;C, with the acid gases too dilute to explain the attack and oxygen too low for oxygen pitting.
+   * </p>
+   *
+   * @param corrosionRate measured corrosion rate [mm/yr], NaN when not supplied
+   * @param fastCorrosion true when the measured corrosion rate is elevated
+   */
+  private void addFlowAcceleratedCorrosionCandidate(double corrosionRate, boolean fastCorrosion) {
+    String lowerMaterial = material.toLowerCase();
+    boolean susceptibleMaterial = lowerMaterial.contains("carbon") || lowerMaterial.contains("low_alloy")
+        || lowerMaterial.contains("low alloy") || lowerMaterial.contains("a106") || lowerMaterial.contains("a333");
+    boolean inFacTemperatureWindow = temperatureC >= 90.0 && temperatureC <= 250.0;
+    boolean acidGasesTooDiluteToExplain = co2PartialPressureBar < 0.5 && h2sPartialPressureBar < 0.05;
+    boolean essentiallyDeaerated = oxygenPpb < 50.0;
+
+    if (!susceptibleMaterial || !inFacTemperatureWindow || !acidGasesTooDiluteToExplain || !essentiallyDeaerated) {
+      return;
+    }
+
+    double score = 0.45;
+    // The solubility peak near 150 C is where FAC is most severe.
+    score += 0.20 * FlowAcceleratedCorrosion.temperatureFactor(temperatureC);
+    if (wallShearStressPa > 50.0) {
+      score += 0.10;
+    }
+    if (pH < 9.0) {
+      score += 0.10;
+    }
+    if (fastCorrosion) {
+      score += 0.10;
+    }
+
+    candidates.add(new RootCauseCandidate("FLOW_ACCELERATED_CORROSION",
+        "Flow-accelerated corrosion (magnetite dissolution under mass-transfer control)", Math.min(0.95, score),
+        "Carbon or low-alloy steel at " + temperatureC + " C near the magnetite solubility peak, pH " + pH
+            + ", wall shear " + wallShearStressPa + " Pa, with CO2, H2S and O2 all too low to explain the attack"
+            + (fastCorrosion ? ", measured CR " + corrosionRate + " mm/yr" : ""),
+        "Run FlowAcceleratedCorrosion to rank the controlling factor; convert the laboratory pH to in-situ pH with "
+            + "AmineBufferedPH before judging alkalinity; inspect bends, welds and restrictions preferentially; "
+            + "consider a low-alloy Cr-Mo steel such as ASTM A335 P11"));
   }
 
   /**
@@ -730,6 +842,9 @@ public class RootCauseAnalyser implements Serializable {
     map.put("candidates", cList);
     map.put("primary", getPrimary() != null ? getPrimary().toMap() : null);
     map.put("dataGaps", dataGaps);
+    if (chemicalTreatmentScenario != null) {
+      map.put("chemicalTreatmentScenario", chemicalTreatmentScenario.toMap());
+    }
     if (!bayesianPosteriors.isEmpty()) {
       map.put("bayesianPosteriors", new LinkedHashMap<String, Double>(bayesianPosteriors));
     }

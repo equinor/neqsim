@@ -1,0 +1,101 @@
+name: MCP protocol qualification
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-protocol-qualification-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'pom*.xml'
+      - 'src/main/java/neqsim/mcp/**'
+      - 'src/test/java/neqsim/mcp/**'
+      - 'neqsim-mcp-server/**'
+      - '.github/workflows/mcp_protocol_qualification.yml'
+  push:
+    branches:
+      - master
+    paths:
+      - 'pom*.xml'
+      - 'src/main/java/neqsim/mcp/**'
+      - 'src/test/java/neqsim/mcp/**'
+      - 'neqsim-mcp-server/**'
+      - '.github/workflows/mcp_protocol_qualification.yml'
+
+jobs:
+  phase0_contracts:
+    name: Qualify MCP contracts over packaged MCP
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21 environment
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install exact NeqSim core without tests
+        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
+
+      - name: Run focused model-registry Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.ModelRegistryTest test -ntp
+
+      - name: Run focused session-lifecycle Java contracts
+        run: mvn -B -Dtest=neqsim.mcp.runners.SessionRunnerTest,neqsim.mcp.runners.SessionRunnerContractTest test -ntp
+
+      - name: Run focused persisted-state Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.StatePersistenceRunnerTest test -ntp
+
+      - name: Run focused adjustable-parameter Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.AutomationLoopRunnerTest test -ntp
+
+      - name: Run focused pre-flight validator Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
+
+      - name: Build exact MCP server package
+        shell: bash
+        run: |
+          NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          cd neqsim-mcp-server
+          mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true -ntp
+
+      - name: Run focused real-MCP API-inspection qualification
+        run: cd neqsim-mcp-server && python test_inspect_api_protocol.py
+
+      - name: Run focused real-MCP validation-profile qualification
+        run: cd neqsim-mcp-server && python test_validation_profile_protocol.py
+
+      - name: Run focused real-MCP automation-read qualification
+        run: cd neqsim-mcp-server && python test_automation_read_protocol.py
+
+      - name: Run focused real-MCP model-registry qualification
+        run: cd neqsim-mcp-server && python test_model_registry_protocol.py
+
+      - name: Run focused real-MCP session-lifecycle qualification
+        run: cd neqsim-mcp-server && python test_session_protocol.py
+
+      - name: Run focused real-MCP persisted-state qualification
+        run: cd neqsim-mcp-server && python test_state_persistence_protocol.py
+
+      - name: Run focused real-MCP adjustable-parameter qualification
+        run: cd neqsim-mcp-server && python test_adjustable_parameters_protocol.py
+
+      - name: Run focused real-MCP pre-flight validation qualification
+        run: cd neqsim-mcp-server && python test_validate_input_protocol.py
+
+      - name: Run comprehensive real-MCP protocol regression
+        run: cd neqsim-mcp-server && python test_mcp_server.py

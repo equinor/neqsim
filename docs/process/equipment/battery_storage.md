@@ -3,8 +3,6 @@ title: Battery Storage
 description: Documentation for battery storage equipment in NeqSim for energy storage and power management applications.
 ---
 
-# Battery Storage
-
 Documentation for battery storage equipment in NeqSim for energy storage and power management applications.
 
 ## Table of Contents

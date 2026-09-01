@@ -905,6 +905,24 @@ public class ScalePredictionCalculator implements Serializable {
     return ironMgL / 55845.0;
   }
 
+  /**
+   * Returns the analytical sodium concentration in mol/L.
+   *
+   * @return sodium concentration in mol/L
+   */
+  public double getTotalSodiumMolPerL() {
+    return sodiumMgL / 22989.77;
+  }
+
+  /**
+   * Returns the configured total dissolved solids concentration.
+   *
+   * @return total dissolved solids in mg/L
+   */
+  public double getTotalDissolvedSolidsMgPerL() {
+    return tdsMgL;
+  }
+
   // --- Getters ---
 
   /**

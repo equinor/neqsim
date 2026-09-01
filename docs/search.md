@@ -1,6 +1,6 @@
 ---
 title: Search Documentation
-description: Search across all NeqSim documentation — thermodynamics, process simulation, PVT, standards, safety, field development, and more.
+description: Search across all NeqSim documentation — thermodynamics, process simulation, engineering, PVT, standards, safety, field development, and more.
 permalink: /search/
 ---
 
@@ -34,10 +34,25 @@ permalink: /search/
             <span class="sp-topic-label">Thermodynamics</span>
             <span class="sp-topic-desc">EOS, flash, fluids, properties</span>
           </a>
+          <a href="{{ '/physical_properties/' | relative_url }}" class="sp-topic-card">
+            <span class="sp-topic-icon" style="background:#607D8B;">P</span>
+            <span class="sp-topic-label">Physical Properties</span>
+            <span class="sp-topic-desc">Viscosity, conductivity, diffusivity</span>
+          </a>
           <a href="{{ '/process/' | relative_url }}" class="sp-topic-card">
             <span class="sp-topic-icon" style="background:#4CAF50;">P</span>
             <span class="sp-topic-label">Process Simulation</span>
             <span class="sp-topic-desc">Equipment, flowsheets, dynamic</span>
+          </a>
+          <a href="{{ '/fluidmechanics/' | relative_url }}" class="sp-topic-card">
+            <span class="sp-topic-icon" style="background:#03A9F4;">F</span>
+            <span class="sp-topic-label">Fluid Mechanics</span>
+            <span class="sp-topic-desc">Pipelines, pressure drop, multiphase flow</span>
+          </a>
+          <a href="{{ '/engineering/' | relative_url }}" class="sp-topic-card">
+            <span class="sp-topic-icon" style="background:#FF9800;">E</span>
+            <span class="sp-topic-label">Engineering</span>
+            <span class="sp-topic-desc">Design cases, sizing, safety, handover</span>
           </a>
           <a href="{{ '/pvtsimulation/' | relative_url }}" class="sp-topic-card">
             <span class="sp-topic-icon" style="background:#9C27B0;">V</span>
@@ -75,6 +90,7 @@ permalink: /search/
       <div class="sp-tips">
         <h4>Search tips</h4>
         <ul>
+          <li><strong>Complete coverage:</strong> titles, descriptions, keywords, headings, source paths, and full page content are indexed</li>
           <li><strong>Single words</strong> work best: <code>separator</code>, <code>hydrate</code>, <code>compressor</code></li>
           <li><strong>Synonyms are expanded</strong> automatically: searching <em>unisim</em> also finds <em>hysys</em> and <em>converter</em></li>
           <li><strong>Filter by section</strong> using the category buttons that appear above results</li>

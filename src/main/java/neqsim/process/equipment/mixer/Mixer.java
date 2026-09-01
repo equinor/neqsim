@@ -6,8 +6,8 @@ import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -60,6 +60,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private int numberOfInputStreams = 0;
   protected StreamInterface mixedStream;
+  /** Inlet cloned as the thermodynamic template for the current run. */
+  private int templateStreamIndex = 0;
   private boolean isSetOutTemperature = false;
   private double outTemperature = Double.NaN;
   double lowestPressure = Double.NEGATIVE_INFINITY;
@@ -223,9 +225,13 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       }
     }
 
-    // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
-    // but ensure first stream's components are also explicitly added if needed
-    for (int k = 1; k < streams.size(); k++) {
+    // The selected thermodynamic template is already cloned into mixedStream. Add every
+    // other active inlet in canonical order so permuting addStream calls cannot change the
+    // inventory accumulation order.
+    for (int k : getCanonicalStreamIndices(true)) {
+      if (k == templateStreamIndex) {
+        continue;
+      }
       // Skip streams with negligible flow to avoid mixing in zero/negative moles
       if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
         continue;
@@ -297,6 +303,86 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
+   * Return inlet indices in a deterministic thermodynamic order.
+   *
+   * <p>
+   * The active inlet with the largest mass flow is ranked first because it normally provides the most representative
+   * thermodynamic model and component slate for the mixture. Equal-flow candidates are ranked by a stable fingerprint
+   * of their thermodynamic configuration and stream name instead of their insertion position.
+   * </p>
+   *
+   * @param activeOnly whether to exclude streams at or below the minimum flow threshold
+   * @return canonically ordered inlet indices
+   */
+  private List<Integer> getCanonicalStreamIndices(boolean activeOnly) {
+    List<Integer> indices = new ArrayList<Integer>();
+    for (int streamIndex = 0; streamIndex < streams.size(); streamIndex++) {
+      if (!activeOnly || streams.get(streamIndex).getFlowRate("kg/hr") > getMinimumFlow()) {
+        indices.add(streamIndex);
+      }
+    }
+    Collections.sort(indices, new Comparator<Integer>() {
+      @Override
+      public int compare(Integer firstIndex, Integer secondIndex) {
+        return compareTemplateCandidates(secondIndex, firstIndex);
+      }
+    });
+    return indices;
+  }
+
+  /**
+   * Compare two candidate thermodynamic templates without using inlet position.
+   *
+   * @param firstIndex first inlet index
+   * @param secondIndex second inlet index
+   * @return positive when the first candidate is preferred
+   */
+  private int compareTemplateCandidates(int firstIndex, int secondIndex) {
+    StreamInterface firstStream = streams.get(firstIndex);
+    StreamInterface secondStream = streams.get(secondIndex);
+    int comparison = Double.compare(firstStream.getFlowRate("kg/hr"), secondStream.getFlowRate("kg/hr"));
+    if (comparison != 0) {
+      return comparison;
+    }
+
+    SystemInterface firstSystem = firstStream.getThermoSystem();
+    SystemInterface secondSystem = secondStream.getThermoSystem();
+    comparison = Integer.compare(firstSystem.getNumberOfComponents(), secondSystem.getNumberOfComponents());
+    if (comparison != 0) {
+      return comparison;
+    }
+    return getTemplateFingerprint(firstStream).compareTo(getTemplateFingerprint(secondStream));
+  }
+
+  /**
+   * Build a stable tie-break fingerprint for otherwise equally ranked inlet templates.
+   *
+   * @param stream inlet stream
+   * @return fingerprint based on public thermodynamic configuration and state
+   */
+  private String getTemplateFingerprint(StreamInterface stream) {
+    SystemInterface system = stream.getThermoSystem();
+    StringBuilder fingerprint = new StringBuilder();
+    fingerprint.append(system.getClass().getName()).append('|');
+    fingerprint.append(system.getModelName()).append('|');
+    fingerprint.append(system.getMixingRule()).append('|');
+    fingerprint.append(system.doMultiPhaseCheck()).append('|');
+    fingerprint.append(system.getTemperature()).append('|');
+    fingerprint.append(system.getPressure()).append('|');
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      fingerprint.append(component.getName()).append(':');
+      fingerprint.append(component.getz()).append(':');
+      fingerprint.append(component.getMolarMass()).append(':');
+      fingerprint.append(component.getNormalLiquidDensity()).append(':');
+      fingerprint.append(component.isIsTBPfraction()).append(':');
+      fingerprint.append(component.isIsPlusFraction()).append('|');
+    }
+    fingerprint.append(stream.getName());
+    return fingerprint.toString();
+  }
+
+  /**
    * Whether the last mix collapsed active inlets of materially different pressure to the lowest one. Correct physics,
    * but usually a sign that an upstream unit (e.g. a compressor) did not reach its target discharge pressure.
    *
@@ -362,7 +448,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
    */
   public double guessTemperature() {
     double gtemp = 0;
-    for (int k = 0; k < streams.size(); k++) {
+    for (int k : getCanonicalStreamIndices(true)) {
       gtemp += streams.get(k).getThermoSystem().getTemperature() * streams.get(k).getThermoSystem().getNumberOfMoles()
           / mixedStream.getThermoSystem().getNumberOfMoles();
     }
@@ -376,11 +462,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
    */
   public double calcMixStreamEnthalpy() {
     double enthalpy = 0;
-    for (int k = 0; k < streams.size(); k++) {
-      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        streams.get(k).getThermoSystem().init(3);
-        enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-      }
+    for (int k : getCanonicalStreamIndices(true)) {
+      streams.get(k).getThermoSystem().init(2);
+      enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
     }
     return enthalpy;
   }
@@ -484,17 +568,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     // ((Stream) streams.get(0)).getThermoSystem().display();
 
     // Check if all streams have zero/negligible flow
-    boolean hasFlow = false;
-    for (int k = 0; k < streams.size(); k++) {
-      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        hasFlow = true;
-        break;
-      }
-    }
+    List<Integer> activeStreamIndices = getCanonicalStreamIndices(true);
+    boolean hasFlow = !activeStreamIndices.isEmpty();
 
     if (!hasFlow) {
-      // All streams have zero flow - set mixer inactive and use first stream as template
-      SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
+      // All streams have zero flow. Use the same deterministic template ranking as an active
+      // mix so inlet insertion order does not leak into the inactive outlet state.
+      List<Integer> allStreamIndices = getCanonicalStreamIndices(false);
+      templateStreamIndex = allStreamIndices.get(0);
+      SystemInterface thermoSystem2 = streams.get(templateStreamIndex).getThermoSystem().clone();
       // Set all component moles to zero to reflect no flow
       for (int i = 0; i < thermoSystem2.getPhase(0).getNumberOfComponents(); i++) {
         thermoSystem2.getPhase(0).getComponent(i).setNumberOfmoles(0.0);
@@ -505,17 +587,18 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       return;
     }
 
-    boolean inletMultiPhaseCheck = streams.get(0).getThermoSystem().doMultiPhaseCheck();
-    SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-    if (!doMultiPhaseCheck) {
-      thermoSystem2.setMultiPhaseCheck(false);
+    templateStreamIndex = activeStreamIndices.get(0);
+    boolean inletMultiPhaseCheck = false;
+    for (int streamIndex : activeStreamIndices) {
+      inletMultiPhaseCheck |= streams.get(streamIndex).getThermoSystem().doMultiPhaseCheck();
     }
+    SystemInterface thermoSystem2 = streams.get(templateStreamIndex).getThermoSystem().clone();
+    thermoSystem2.setMultiPhaseCheck(doMultiPhaseCheck && inletMultiPhaseCheck);
     isActive(true);
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
     mixedStream.setThermoSystem(thermoSystem2);
     // thermoSystem2.display();
-    ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() >= 2) {
       mixStream();
       if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
@@ -532,6 +615,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
         }
         mixedStream.run();
+        ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
@@ -565,11 +649,29 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       }
     }
 
-    if (inletMultiPhaseCheck) {
-      mixedStream.getThermoSystem().setMultiPhaseCheck(true);
-    }
-
     finishRun(id);
+  }
+
+  /**
+   * Advances an algebraic mixer during a transient process calculation.
+   *
+   * <p>
+   * A mixer has no independent material or energy inventory, so its transient behavior is the instantaneous
+   * steady-state material and energy balance evaluated from the current inlet streams. The calculation identifier guard
+   * prevents the equipment clock from advancing more than once when a transient integration method evaluates the
+   * flowsheet repeatedly within one physical timestep.
+   * </p>
+   *
+   * @param dt timestep in seconds
+   * @param id calculation identifier shared by the timestep
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
+    run(id);
+    if (!alreadyEvaluatedForStep) {
+      increaseTime(dt);
+    }
   }
 
   /** {@inheritDoc} */
@@ -780,35 +882,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       }
     }
     return getOutletStream().getFlowRate(unit) - inletFlow;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result
-        + Objects.hash(isSetOutTemperature, mixedStream, numberOfInputStreams, outTemperature, streams);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!super.equals(obj)) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Mixer other = (Mixer) obj;
-    return isSetOutTemperature == other.isSetOutTemperature && Objects.equals(mixedStream, other.mixedStream)
-        && numberOfInputStreams == other.numberOfInputStreams
-        && Double.doubleToLongBits(outTemperature) == Double.doubleToLongBits(other.outTemperature)
-        && Objects.equals(streams, other.streams);
   }
 
   /**

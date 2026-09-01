@@ -3,8 +3,6 @@ title: Reservoir Modeling
 description: Documentation for reservoir modeling equipment in NeqSim, enabling coupled reservoir-process simulations.
 ---
 
-# Reservoir Modeling
-
 Documentation for reservoir modeling equipment in NeqSim, enabling coupled reservoir-process simulations.
 
 ## Table of Contents

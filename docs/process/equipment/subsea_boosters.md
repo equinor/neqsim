@@ -3,8 +3,6 @@ title: Subsea Boosters
 description: Documentation for subsea booster pump and compressor equipment in NeqSim.
 ---
 
-# Subsea Boosters
-
 Documentation for subsea booster pump and compressor equipment in NeqSim.
 
 ## Table of Contents

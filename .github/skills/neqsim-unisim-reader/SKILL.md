@@ -235,8 +235,9 @@ for i in range(n):
     pc = comp.CriticalPressure.GetValue("kPa") * 0.01      # bara
     nbp = comp.NormalBoilingPt.GetValue("C") + 273.15      # K
     vc = comp.CriticalVolume.GetValue("m3/kgmole") # m3/kmol
-    # Acentric factor — not directly available via .AcentricFactor
-    # Use Edmister correlation: w = (3/7) * log10(Pc/1.01325) / (Tc/Tbp - 1) - 1
+    # Acentric factor: the UniSim COM attribute is `Acentricity` (NOT
+    # `AcentricFactor`). Only fall back to Edmister if it is absent.
+    omega = comp.AcentricityValue
 ```
 
 **Notes:**
@@ -247,13 +248,57 @@ for i in range(n):
    `NormalBoilingPoint` in `C` first and convert to K; request `CriticalPressure`
    in `kPa` first and convert to bara. Sanity-check known components after export:
    methane Tc ≈ 190.7 K and Pc ≈ 46.4 bara; water Tc ≈ 647.3 K and Pc ≈ 221 bara.
-- Acentric factor is NOT directly accessible via COM for all property packages.
-   `comp.AcentricFactor` may not exist. Try property-package vectors
-   (`AcentricFactor`, `AcentricFactors`, `Omega`, `ACF`) first, then use the
-   Edmister correlation as fallback when Tc, Pc, and normal boiling point exist.
+- **Acentric factor: read `comp.Acentricity` / `comp.AcentricityValue`.** This is
+   the attribute UniSim actually exposes; `AcentricFactor` / `Omega` do NOT exist on
+   the component COM surface. Reading the Edmister estimate instead silently changes
+   the EOS alpha function and shifts every bubble point / TVP of the converted fluid
+   (measured: 12–15 % low on a 23-component SRK-Peneloux oil, and `0.0` for the
+   heaviest pseudos where the Edmister value exceeded the `omega > 2` sanity guard).
+   With `Acentricity` read correctly, a NeqSim E300 round-trip reproduces UniSim
+   bubble points to < 0.5 %. Keep the property-package vectors
+   (`Acentricity`, `AcentricFactor`, `Omega`, `ACF`) and Edmister only as fallbacks.
 - Parachor can sometimes be read via `pp.Parachor.Values` (same pattern as Kij).
 - Volume shift: `pp.VolumShift.Values` (note the UniSim spelling: "VolumShift",
   not "VolumeShift").
+
+### 1.2.1 Reading TVP / RVP (Cold Properties) off a stream
+
+Vapour-pressure results live on the **material stream**, in **kPa** (temperatures
+in **°C**). Missing values return the sentinel `-32767`.
+
+```python
+s = case.Flowsheet.MaterialStreams.Item(0)
+s.TrueVPValue                 # TVP, evaluated at 37.8 C
+s.RVP_37_8_DegCValue          # Reid VP at 37.8 C
+s.RVPASTM_D323_73_79Value     # ASTM / API RVP correlations
+s.RVPAPI_5B_1_1Value, s.RVPAPI_5B_1_2Value
+cp = s.ColdProperty           # Cold Properties utility
+cp.TrueVapourPressureValue, cp.ReidVapourPressureValue
+cp.FlashPointValue, cp.PourPointValue, cp.D86CurveValue
+```
+
+For TVP at **any other temperature** (e.g. a 30 °C export spec), flash a duplicate —
+this never touches the case:
+
+```python
+f = s.DuplicateFluid()
+f.TVFlash(30.0, 0.0)          # (T [C], vapour fraction) -> bubble point
+tvp_bara = f.PressureValue * 0.01
+```
+
+Water-free basis: assign a renormalised `f.MolarFractionsValue` with H2O zeroed
+*before* the flash (the setter works); `f.MassFractionsValue` gives water wt%
+directly. Free water only adds its own saturation pressure (~0.04 bara at 30 °C).
+
+> **NeqSim comparison gotcha:** `bubblePointPressureFlash` is not three-phase aware.
+> With free water in the feed it returns a grossly inflated TVP (measured 5–6.5 bara
+> instead of 2.2) because water is treated as dissolved in the oil, and
+> `getPhase("oil")` then returns the aqueous phase. Strip water first, or use
+> `Standard_ASTM_D6377`'s `VPCR4_no_water` / `RVP_ASTM_D323_73_79` variants.
+>
+> A TVP/RVP ratio far above ~1.3 is usually **physical**, not an error: a bubble
+> point is hypersensitive to trace dissolved light ends (N2/C1/CO2) while the
+> V/L = 4, 80 vol %-vaporised RVP test is not. It signals incompletely stabilised oil.
 
 ### 1.3 Generating E300 Fluid Files from UniSim Data
 
@@ -635,8 +680,53 @@ All four output methods (`to_json()`, `build_and_run()`, `to_python()`,
 3. **E300 fluid loading**: When the `UniSimReader.read(export_e300=True)`
    option was used (default), the converter uses `EclipseFluidReadWrite.read()`
    to load the fluid with exact Tc, Pc, ω, MW, and BIPs from UniSim.
-4. **Recycle tolerance**: All auto-generated Recycle objects have
-   `setTolerance(1e6)` to prevent convergence blocking during initial runs.
+4. **Recycle convergence**: Auto-generated `Recycle` objects (in `to_python()` /
+   `to_notebook()`) get a **real tolerance (`recycle_tolerance`, default `1e-2`)
+   plus Wegstein acceleration (`recycle_acceleration`, default `"WEGSTEIN"`)**,
+   and the generated run tail **iterates** (`setRunStep(True)` loop, then a final
+   run) so the tear streams actually converge. A very large tolerance (the old
+   `1e6`) accepted the seeded tear on the first pass, so recycle-fed streams
+   never updated and deviated strongly from UniSim. Tune via:
+
+   ```python
+   converter = UniSimToNeqSim(model)
+   converter.recycle_tolerance = 1e-3        # tighter tear
+   converter.recycle_acceleration = "WEGSTEIN"  # or None to disable
+   python_code = converter.to_python()
+   ```
+5. **Unfed columns/absorbers are skipped**: A `DistillationColumn`/`Absorber`
+   whose feed stream could not be extracted from UniSim (UniSim `fractop`/
+   `absorber` COM connectivity is not always resolvable) is **omitted** rather
+   than emitted as a bare, feed-less column. A feed-less column **throws on
+   `run()` and aborts the whole `process.run()`**, so every downstream unit
+   stops executing and stays at its seed value — this was the single biggest
+   cause of a "runs but nothing matches" result. The skipped column is reported
+   in `converter.warnings`; reconnect its feed manually to include it.
+
+> **Verification vehicle — `to_python()` is still the most faithful path, but
+> the JSON/MCP path now iterates recycles.** The JSON path (`build_and_run()` /
+> `ProcessSystem.fromJsonAndRun` / MCP `runProcess`) emits recycles with only an
+> `inlet` and relies on `JsonProcessBuilder`'s Pass-2 iterative wiring to close
+> forward-referenced tears. Since the multi-pass auto-run fix, when the built
+> process `hasRecycles()` the builder loops `process.run()` up to
+> `MAX_AUTORUN_PASSES` (15), **guarding each pass** (a unit throwing on an early
+> pass no longer aborts the whole auto-run) and stopping early on
+> `process.solved()` — so nested/forward-referenced recycle loops seeded at ~0
+> flow now get the outer passes they need to converge on the JSON/MCP path too.
+> The **generated Python** (`to_python()`) additionally seeds forward-reference
+> placeholders + auto-`Recycle`, so it remains the most robust vehicle for a
+> recycle-heavy plant; compare with `UniSimComparator(model, process)` after
+> `exec()`-ing the generated script.
+>
+> **Residual JSON-path failures are model-specific topology gaps, not recycle
+> convergence.** If the full plant still stops (e.g. a pipe `Failed to run … —
+> Total mass cannot be zero`), trace the dead branch: the cause is usually a
+> genuinely external UniSim stream with no producer (a `Valve leak`-type feed),
+> or a zero-feed pipe/riser fed by a scrubber whose own inlet mixer is only
+> partially wired (`Mixer … wired with N of M inlets`). These need the missing
+> inlet wired manually — no number of recycle passes fixes a stream that no unit
+> produces. `ProcessSystem.run()` still aborts a pass at the first throwing
+> unit, so a single unfeedable unit blocks everything downstream in that pass.
 
 To disable full mode and get only the main flowsheet operations:
 
@@ -846,6 +936,10 @@ comparator.print_report(comparisons)
    +70% water flow error at secondary stages is structurally expected if recycles are missing.
 5. **Hypothetical components**: Pseudo-component property estimation differs between simulators.
    Critical properties and acentric factor estimation methods vary.
+   **First check the acentric factor was transferred, not estimated** — compare the exported
+   `ACF` block against `comp.AcentricityValue`. Estimated (or `0.0`) values biased a
+   23-component SRK-Peneloux oil's bubble point / TVP by 12–15 %; reading `Acentricity`
+   brought it to < 0.5 % (Section 1.2).
 6. **Compressor efficiency**: UniSim COM sometimes returns `None` for `AdiabaticEfficiency`.
    Always check extracted efficiency values; default to 75% isentropic with a warning.
 7. **Mixing rules**: UniSim may use advanced mixing rules not available in NeqSim.
@@ -1466,3 +1560,71 @@ to NeqSim and extend the converter registry instead:
 Validate registry changes with `python devtools/test_unisim_outputs.py`. The
 suite includes pure-Python checks for output modes, E300 transfer, operation
 handler strategy, and JSON `_unisim_operation_mapping` summaries.
+
+## Reverse direction: NeqSim JSON → UniSim (`devtools/unisim_writer.py`)
+
+`UniSimWriter` builds a wired `.usc` case from the same JSON that
+`ProcessSystem.fromJsonAndRun()` consumes, so one JSON file can drive both
+tools and the results can be compared directly.
+
+```python
+from devtools.unisim_writer import UniSimWriter
+
+writer = UniSimWriter(
+    visible=True,
+    template_path="licensed_case.usc",  # copy first — it is modified
+    clear_template=True,                # empty flowsheet + fluid package
+)
+writer.build_from_json(json_str, save_path="gas_compression.usc")
+writer.close()
+```
+
+### Verified COM rules (UniSim Design R510)
+
+1. **The template must come from a licensed UniSim session.** A `.usc` saved
+   from a case created by `SimulationCases.Add()` inherits restricted write
+   access: reads and `MaterialStreams.Add` succeed, but every
+   `Operations.Add` and `variable.SetValue` fails with E_ACCESSDENIED
+   (`-2147024891`). Symptom: "Operations created: 0" with 10+ access-denied
+   warnings. Fix: point `template_path` at a real saved case.
+2. **Fluid-package edits require a basis change.** Wrap component add/remove in
+   `BasisManager.StartBasisChange()` … `EndBasisChange()` (or the
+   `…Invisibly` variants). Outside a basis change, `Components.Add` returns
+   E_ACCESSDENIED on a live case.
+3. **Collections use `Remove(i)` / `RemoveAll()`, not `Item(i).Delete()`.**
+   This applies to `Flowsheet.Operations`, `MaterialStreams`, `EnergyStreams`
+   and `FluidPackage.Components`.
+4. **Compressor efficiency members are `CompPolytropicEff` and
+   `CompAdiabaticEff`** (percent), not `PolytropicEfficiency`. Related useful
+   members: `ProductPressure`, `ProductTemperature`, `FeedPressure`, `Energy`,
+   `PolytropicHead`, `EfficiencyType`, `UsingCurves`, `Curves`.
+5. **Duty-consuming operations need an attached energy stream.** Without
+   `flowsheet.EnergyStreams.Add(name)` + `op.EnergyStream = …`, a compressor,
+   pump, expander, cooler or heater never closes its energy balance: discharge
+   temperature and power read back as the empty sentinel **`-32767`**. Seeing
+   `-32767` in results is the signature of a missing energy stream, not a
+   convergence failure.
+6. `Pressure.Calculate()` can be denied even when `Pressure.SetValue(v, 'bar')`
+   works — always try `SetValue` first, `Calculate` as fallback.
+
+Discover member names for an unfamiliar operation with early binding
+(`win32com.client.gencache.EnsureDispatch`) in a throwaway process, then keep
+the writer itself on `win32com.client.dynamic.Dispatch`.
+
+### Round-trip accuracy
+
+A three-stage export compression train (25 → 200 bara, SRK, polytropic
+efficiency 0.78, interstage cooling to 35 °C, knock-out scrubbers) built from
+one JSON gave:
+
+| Quantity | NeqSim | UniSim | Deviation |
+|---|---|---|---|
+| Stage 1 shaft power | 4216.4 kW | 4206.4 kW | −0.24 % |
+| Stage 2 shaft power | 3571.7 kW | 3555.1 kW | −0.46 % |
+| Stage 3 shaft power | 2824.0 kW | 2802.7 kW | −0.75 % |
+| Total shaft power | 10 612.1 kW | 10 564.2 kW | −0.45 % |
+| Stage 1 discharge T | 97.56 °C | 97.24 °C | −0.32 °C |
+| Export gas flow | 117 593 kg/h | 117 623 kg/h | +0.03 % |
+
+Sub-1 % agreement on power is the expected level for identical SRK setups; the
+residual comes from small differences in the polytropic path integration.

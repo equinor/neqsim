@@ -17,6 +17,11 @@ import neqsim.process.design.AutoSizeable;
 import neqsim.process.electricaldesign.heatexchanger.HeatExchangerElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.heatexchanger.HeatExchangerInstrumentDesign;
@@ -92,6 +97,7 @@ public class Heater extends TwoPortEquipment
    */
   public Heater(String name) {
     super(name);
+    registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.BIDIRECTIONAL, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -101,10 +107,39 @@ public class Heater extends TwoPortEquipment
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Heater(String name, StreamInterface inStream) {
-    super(name);
+    this(name);
     this.inStream = inStream;
     system = inStream.getThermoSystem().clone();
     outStream = new Stream("outStream", system);
+  }
+
+  /**
+   * Connects an external heat-duty specification using the legacy single-stream API.
+   *
+   * @param energyStream heat-duty stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.connectEnergyStream("heatDuty", energyStream, EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    if ("heatDuty".equals(portName)) {
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("heatDuty".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+    }
   }
 
   /** {@inheritDoc} */
@@ -387,7 +422,11 @@ public class Heater extends TwoPortEquipment
     system.init(2);
     double oldH = system.getEnthalpy();
     if (isSetEnergyStream()) {
-      energyInput = -energyStream.getDuty();
+      if (getEnergyPort("heatDuty").getEnergyStream() instanceof EnergyBus) {
+        energyInput = getEnergyPort("heatDuty").getPowerMagnitude();
+      } else {
+        energyInput = -getEnergyPort("heatDuty").getDuty();
+      }
     }
     double newEnthalpy = energyInput + oldH;
     system.setPressure(system.getPressure() - pressureDrop, pressureUnit);
@@ -411,17 +450,14 @@ public class Heater extends TwoPortEquipment
       testOps.TPflash();
     }
 
-    // system.setTemperature(temperatureOut);
-    system.init(3);
+    // Physical properties initialize thermodynamic properties at level 2, which is sufficient
+    // for enthalpy. Do this before reading newH to avoid a redundant level-3 derivative pass.
+    system.initProperties();
     double newH = system.getEnthalpy();
     energyInput = newH - oldH;
-    if (!isSetEnergyStream()) {
-      getEnergyStream().setDuty(energyInput);
+    if (!isSetEnergyStream() || getEnergyPort("heatDuty").getEnergyStream() instanceof EnergyBus) {
+      getEnergyPort("heatDuty").setDuty(energyInput);
     }
-    // system.setTemperature(temperatureOut);
-    // testOps.TPflash();
-    // system.setTemperature(temperatureOut);
-    system.initProperties();
     getOutletStream().setThermoSystem(system);
     lastTemperature = inStream.getFluid().getTemperature();
     lastPressure = inStream.getFluid().getPressure();
@@ -747,9 +783,9 @@ public class Heater extends TwoPortEquipment
   public double getEntropyProduction(String unit) {
     UUID id = UUID.randomUUID();
     inStream.run(id);
-    inStream.getFluid().init(3);
+    inStream.getFluid().init(2);
     outStream.run(id);
-    outStream.getFluid().init(3);
+    outStream.getFluid().init(2);
 
     double entrop = outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 

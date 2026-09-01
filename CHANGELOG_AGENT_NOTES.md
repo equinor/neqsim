@@ -9,6 +9,1878 @@
 
 ---
 
+## 2026-08-24 — Component name resolution, parameterised component lookup, COMP_EXT superset fix
+
+Three related changes around how a component name reaches the component database.
+
+**1. New `neqsim.thermo.component.ComponentNameResolver`.**
+`addComponent(...)` previously mapped names through an 18-entry hardcoded map of reservoir
+shorthand (`C1`, `nC4`, `H2O`), matched case-sensitively. Nothing else was recognised, so a
+systematic or trivial name from a laboratory report failed with "not found in database" even when
+the component was present under the in-house shorthand.
+
+The resolver now recognises, in this order: any database name regardless of letter case; the
+reservoir shorthand as before; a 148-entry synonym table covering systematic names
+(`2,2,4-trimethylpentane` → `224-TM-C5`) and trivial names (`isopentane` → `i-pentane`,
+`cyclohexane` → `c-hexane`); and inverted CAS index names as printed by chromatography software
+(`Cyclohexane, 1,2,4-trimethyl-` → `1.2.4-TMcyC6`). A `.` between two digits is accepted wherever
+the database writes a locant separator, so `1,2,3-TM-Benzene` and `1.2.3-TM-Benzene` both work.
+
+Stereochemistry is never guessed. Where the database holds both partners of a cis/trans pair
+(the 1,2- and 1,3-dimethylcyclopentanes, the 1,2- and 1,4-dimethylcyclohexanes, 2-butene), the
+unqualified parent name is deliberately absent from the synonym table and is passed through
+unchanged rather than silently resolved to one of the two.
+
+- **No migration needed.** `ComponentInterface.getComponentNameFromAlias(String)` keeps its
+  signature and delegates to the resolver, so all ~28 existing call sites gain the new behaviour.
+  Every previously accepted name still resolves to the same component.
+- `ComponentInterface.getComponentNameMap()` is **deprecated**; use
+  `ComponentNameResolver.getSynonyms()`.
+- Unknown names are still returned unchanged, so components that exist only in the extended
+  database are unaffected.
+
+**2. `NeqSimDataBase.hasComponent` / `hasTempComponent` now use a prepared statement.**
+The query was assembled as `"... WHERE NAME='" + name + "'"`. A name containing an apostrophe
+produced invalid SQL — 2,061 names in the extended database contain one, for example
+`4'-hydroxyacetophenone`, so those components could never be looked up. Both methods now bind the
+name as a parameter and return `false` for `null` instead of reaching the database.
+
+**3. `COMP_EXT.csv` is now genuinely a superset of `COMP.csv`.**
+The documentation stated that the extended database contains every standard component; eleven were
+missing (`NO2-`, `H2O2`, `NaNO2`, `NH2SO3H`, `NH2SO3-`, `NaHSO4`, `N2O4`, `N2O4-`, `asphaltene`,
+`MEA+`, `MEACOO-`). Because `useExtendedComponentDatabase(true)` replaces the `COMP` table, calling
+it silently removed those components from any fluid built afterwards. The rows are copied verbatim
+from `COMP.csv`, and the relationship is now enforced by a test.
+
+**Documentation:** `docs/thermo/component_list.md` gains a "Component Name Resolution" section,
+corrects the component counts (257 standard, 76,704 extended — it claimed "~250" and "50,000+"),
+and records that the provenance of the extended database is undocumented and its parameters are
+unvalidated against a primary source.
+
+**Tests:** `ComponentNameResolverTest` (14 tests, including a check that every database name
+resolves to itself and that every synonym target exists) and
+`NeqSimDataBaseComponentLookupTest` (4 tests).
+
+---
+
+## 2026-08-15 — Beggs and Brill correlation corrected in `PipeBeggsAndBrills`
+## 2026-08-20 — Gas-turbine water-wash planning: `GasTurbineWashPlanner` + partial on-line wash
+
+`GasTurbineDegradation` could only model a wash as `offlineWash()`, a full reset of the recoverable
+penalty, and nothing turned a *measured* corrected-efficiency trend into a wash decision. Both gaps
+are now closed in `neqsim.process.equipment.powergeneration.gasturbine`.
+
+**New: `GasTurbineWashPlanner`.** Screening-level planner for compressor water-wash programmes.
+
+- Steady-state sawtooth with **partial** recovery: a wash removing a fraction `e` of the accumulated
+  loss leaves a residual `L0 = (1-e)*r*T/e` at the start of every cycle, so an imperfect on-line wash
+  never returns the machine to clean.
+- The extra-fuel fraction `1/(1-L) - 1` is **integrated over the cycle**, not evaluated at the mean
+  loss.
+- `evaluate(intervalHours)` returns a `WashPlan` with washes/year, mean efficiency loss, extra fuel
+  (Sm3/yr), extra CO2 (t/yr), and the fuel / CO2 / wash / outage cost split.
+- `optimize(min, max, step)` scans for the lowest total annual cost;
+  `paybackYears(capex, reference, withPermanentSystem)` gives the payback of a permanent
+  installation (`POSITIVE_INFINITY` when it does not save money).
+- `lossRateFromCorrectedEfficiencyTrend(ppPer1000FiredHours, cleanEfficiencyPercent)` converts the
+  "corrected turbine efficiency" KPI that energy-management systems trend into the fractional loss
+  rate the planner needs — the bridge from plant data to the model.
+
+**Extended: `GasTurbineDegradation.onlineWash(double effectiveness)`** — partial recovery of the
+recoverable penalty (clamped to 0–1; 1.0 is equivalent to `offlineWash()`).
+
+Tests: `GasTurbineWashPlannerTest` (9 tests). Skill updated: `neqsim-power-generation` gained a
+"Water-wash interval and permanent-wash business case" section with the usage pattern and the
+gotchas (deferment cost dominates an off-line case; an off-line optimum at the scan bound means
+annual crank washing is already right and on-line washing is the lever).
+
+
+
+Four defects in the Beggs and Brill (1973) implementation, found by auditing the correlation term
+by term against a clean-room reimplementation of the published equations and cross-checking a 74 km
+gas-export line against a single-phase Darcy-Weisbach integration. All four now have regression
+tests in `PipeBeggsAndBrillsCorrelationTest`.
+
+**1. The pipe angle was converted from degrees to radians twice.**
+`convertSystemUnitToImperial()` already converts `angle` to radians, but the inclination
+correction then evaluated `Math.sin(1.8 * angle * 0.01745329)`. The correction was suppressed by
+roughly a factor of 57, so liquid holdup barely responded to inclination — the correction factor
+came out as 1.011 where the published correlation gives 2.00 at +4 degrees.
+
+- **Impact:** every inclined two-phase result. Holdup, mixture density and the hydrostatic term
+  were all wrong on any non-horizontal segment, and elevation profiles were effectively ignored.
+  Horizontal lines were unaffected. Re-run any inclined or undulating pipeline case.
+
+**2. The distributed-regime boundary tested `L4` instead of `L1`.**
+For a no-slip liquid fraction below 0.4 the published map gives distributed flow when
+`Fr >= L1`. Testing `L4` — which is astronomically large at low liquid fraction — made the branch
+unreachable, and such points fell through to a `Fr > 110` catch-all and were reported as
+intermittent. The branch order is now segregated, transition, intermittent, distributed, because
+`L1` and `L3` cross near a liquid fraction of 0.01; the two ad-hoc catch-alls that were masking the
+gap have been removed.
+
+- **Impact:** flow regime, holdup and the two-phase friction multiplier for high-Froude flow at
+  liquid fractions below 0.4. `BeggsAndBrillsPipeTest.testPipeLineBeggsAndBrills2` now reports
+  `DISTRIBUTED` at the outlet instead of `INTERMITTENT`.
+
+**3. The liquid velocity number counted gravity twice.**
+`N_LV = 1.938 * vsl * (rho_L / sigma)^0.25`; the 1.938 prefactor already absorbs the gravitational
+acceleration and the field-unit conversion. The code divided by a further 32.2.
+
+**4. A volume-corrected density was mixed with an uncorrected one in the same formula.**
+The specific gravity feeding the surface-tension correlation used
+`getPhase(1).getDensity("lb/ft3")`, but the liquid velocity number used the no-argument
+`getPhase(1).getDensity()`. **These are not the same number when volume correction is on** — 558.0
+against 675.4 kg/m3 for a lean methane/n-decane liquid, a 21 % difference. Both now use the
+explicit-unit accessor.
+
+- **General rule for agents:** treat `phase.getDensity()` and `phase.getDensity("kg/m3")` as
+  different quantities and never mix them inside one calculation.
+
+Minor: the API gravity constant was `141.5/SG - 131.0`, corrected to the standard `- 131.5`, and
+the two-phase friction `S` coefficients `3.18` / `0.872` are now the published `3.182` / `0.8725`.
+
+**Still not modelled:** the Payne et al. (1979) holdup correction is not applied. Note, however, that
+it would *not* have explained the residual difference against a transient two-fluid code on a large-bore
+gas line: the Beggs and Brill `S` factor is monotonically increasing in `y = lambda_L / H_L^2` over that
+range, so lowering the holdup *raises* the friction multiplier. On a 74 km 14-inch line at a mean
+no-slip liquid fraction of 0.009 the multiplier was 1.42 and accounted for the entire gap; removing it
+brought the correlation from 124 bar to 87 bar against 78 bar from OLGA and 84 bar from a single-phase
+Darcy check. Beggs and Brill is calibrated for no-slip liquid fractions down to roughly 0.01-0.02, so
+below that the two-phase friction multiplier is an extrapolation. State this as a correlation
+applicability limit when reporting.
+
+---
+
+## 2026-08-14 — Component clone keeps its attractive term, and E300 export keeps the volume shift
+
+Two defects that together made EOS regression results disagree with the Eclipse file they were
+exported to. Both surfaced while characterising a gas condensate and both now have regression tests.
+
+**1. `ComponentEos.clone()` left the cloned attractive term bound to the original component.**
+The alpha function reads `Tc`, `Pc` and the acentric factor live from `getComponent()`, so the
+usual regression pattern — clone a base fluid, then adjust critical properties on the clone — only
+changed the `a` parameter while `alpha(T)` kept evaluating against the untuned critical temperature.
+The tuning was silently half-applied.
+
+- `AttractiveTermInterface.setComponent(ComponentEosInterface)` is now public, and
+  `ComponentEos.clone()` re-points the cloned term at the cloned component.
+- **Impact:** any tuning applied to a *clone* via `setTC` / `setPC` / `setAcentricFactor` was
+  partly ignored. Tuning applied to a freshly built fluid was always correct. Re-run regressions
+  that used the clone-then-tune pattern.
+- Regression test: `ComponentEosCloneAttractiveTermTest`.
+
+**2. `EclipseFluidReadWrite.write` wrote `SSHIFT`/`SSHIFTS` as zero for characterised fractions.**
+It emitted `getVolumeCorrectionConst()`, which is only populated when a shift is set explicitly.
+TBP and plus fractions derive their Péneloux translation from the Rackett compressibility instead,
+so the translation was dropped on export — condensate liquid density came back ~14 % too high, both
+on NeqSim read-back and in Eclipse.
+
+- Now writes the effective dimensionless shift `getVolumeCorrection() / getb()`, matching the
+  Eclipse convention `v = v_EOS − s·b`. The reader reproduces the original molar volume exactly.
+- **Impact:** E300 files written before this change carry `SSHIFT = 0` for pseudo-components and
+  will give untranslated PR liquid densities. Re-export them.
+- Regression test: `EclipseFluidReadWriteVolumeShiftTest`.
+
+**Agent-facing notes** (also added to the `neqsim-eos-regression` skill):
+
+- Apply per-component tuning by iterating `fluid.getPhases()` (skipping nulls), **not**
+  `getPhase(i)` — the latter resolves through the phase-index map and can return the same phase
+  object several times while leaving other phase objects untuned.
+- `dewPointPressureFlash()` / `dewPointPressureFlashHC()` can return the initial guess on
+  near-critical fluids. Verify against a pressure scan or `calcPTphaseEnvelope` before using them
+  as a regression target.
+
+---
+
+## 2026-08-13 — FIV fluid-viscosity factor corrected, and dead-leg pulsation screening added
+
+**Breaking behaviour change.** `FlowInducedVibrationAnalyser` evaluated the Energy Institute
+fluid-viscosity factor for void fraction above 0.99 as `sqrt(mu / sqrt(0.001))` while
+`PipeBeggsAndBrills.getSegmentMixtureViscosity(int)` already returns **centipoise**. The extra
+square root combined with a Pa·s / cP unit mismatch inflated the dry-gas `F_VF` by a factor 5.6
+and produced an *upward* jump across the GVF = 0.99 boundary, so removing liquid from a wet-gas
+line appeared to *raise* the vibration driver. The governing form is `FVF = sqrt(mu_gas / 1e-3)`
+with the viscosity in Pa·s, i.e. `sqrt(mu_cP / 1 cP)`.
+
+- Corrected to `Math.sqrt(viscosity_cP / REFERENCE_VISCOSITY_CP)`, with
+  `FlowInducedVibrationAnalyser.REFERENCE_VISCOSITY_CP = 1.0` exposed as a public constant.
+- **Impact:** any single-phase-gas LOF computed before this change is a factor 5.6 too high.
+  Two-phase results (GVF ≤ 0.99) and liquid results are unaffected. Re-run gas-dominated cases.
+- Sanity rule for agents: `F_VF` must *fall* as the void fraction goes to 1. The wet-gas branch
+  reaches 0.268 at GVF = 0.99, so a single-phase gas must come out below that (~0.11 for a
+  hydrocarbon gas). At equal standard rate and pressure the wet-over-dry driver ratio is ~3–4.
+- Regression tests: `FlowInducedVibrationAnalyserTest#testDryGasLofBelowWetGasLof` and
+  `#testDryGasFluidViscosityFactorReferencedToOneCentipoise`.
+
+**New capability.** `neqsim.process.safety.vibration.FlowInducedPulsationScreening` and
+`FlowInducedPulsationResult` screen closed side branches (dead legs) for acoustic lock-in — the
+tonal mechanism that governs when a wet-gas line is converted to dry-gas service and that
+main-line FIV screening does not cover.
+
+- Acoustic length runs to the *first acoustic boundary*; **no end correction** is applied.
+- Modes: `f_n = (2n+1)c/(4L)` for `AcousticTermination.CLOSED`, `(n+1)c/(2L)` for `OPEN`, n from 0.
+- Shedding: `f_s = Sr·U0/W_eff` with `W_eff = pi·d_s/4 + r_eff` (the effective mouth width, **not**
+  the branch diameter); `DEFAULT_STROUHAL_MODE_A = 0.37`, `DEFAULT_STROUHAL_MODE_C = 0.20`.
+- Resonance when `0.8 f_n <= f_s <= 1.2 f_n` (`LOCK_IN_ENVELOPE_FRACTION = 0.20`).
+- Helpers `effectiveWidth(...)` and `eigenFrequency(...)` allow length or velocity windows to be
+  built without a full screening.
+- Verified against a published worked example: 3 m closed branch at c = 400 m/s gives
+  33.3 / 100 / 166.7 Hz.
+- Docs: `docs/safety/mah_bowtie_fiv_screening.md`; examples executed by
+  `MahBowTieFivScreeningDocExamplesTest`.
+
+## 2026-08-13 — Independent stagnant inner HTC for TwoFluidPipe cooldown
+
+- `TwoFluidPipe.setStagnantInnerHeatTransferCoefficient(...)` and its getter now own the zero-local-throughput
+  fluid-to-wall coefficient used by the multi-layer transient model. The documented default is 50 W/(m²·K).
+- `setHeatTransferCoefficient(...)` remains the simple-model or configuration-level overall U-value and no longer
+  becomes the closed-flow inner film coefficient. Multi-layer shutdown results are therefore independent of whether
+  that overall coefficient is set before or after radial-layer configuration.
+- Migration: replace post-configuration `setHeatTransferCoefficient(value)` workarounds that intended to set the
+  stagnant fluid film with `setStagnantInnerHeatTransferCoefficient(value)`.
+
+## 2026-08-12 — Reversible ProcessModel operating actions
+
+- `ProcessModelOperatingAction` adds immutable, serializable action identity, area-qualified
+  automation address, unit, provenance, and strict continuous or enumerated-discrete semantics.
+- `inspectCapability`, `capture`, `apply`, and `restore` provide explicit diagnostics,
+  write/read-back verification and identity-bound restoration without running the process model.
+- `registerWith(ProcessModelSimulationEvaluator)` exposes bounded continuous actions and exact
+  discrete-value discovery to Java and JPype/Python optimizers. Intermediate discrete values fail
+  closed and evaluator callbacks must be re-registered after deserialization.
+- The API does not mutate topology, solve mixed-integer decisions, infer feasibility, rank actions,
+  or approve an operating change. Candidate process runs and all engineering constraints remain
+  explicit.
+
+## 2026-08-12 — Explicit constraint scaling and candidate-active diagnostics
+
+- `ConstraintActivityAnalyzer` consumes an immutable `SensitivityQualityResult` and performs no
+  process evaluations. It reports dimensionless base margins, normalized constraint-margin
+  derivatives, violations and conservative candidate-active/inactive classifications.
+- Every `ConstraintScale` is positive, uses the constraint's declared unit, records provenance and
+  is bound to exact immutable identity: index, name, type, bounds/tolerance, hard/soft semantics,
+  penalty and capacity origin. Missing, duplicate, unitless or stale scales fail closed.
+- `ActivityPolicy` retains the dimensionless activity tolerance, local sensitivity qualification
+  policy and soft-constraint choice. Assessments and policies are immutable and serializable for
+  Java and JPype/Python workflows.
+- A scaled derivative remains linked to its complete raw evidence and must pass `isUsable()` before
+  consumption. `CANDIDATE_ACTIVE` is only a feasible near-boundary diagnostic—not cross-unit
+  ranking, optimizer active-set proof, a KKT multiplier, economic shadow price or engineering
+  approval.
+
+## 2026-08-11 — Evidence-qualified local ProcessModel constraint sensitivities
+
+- `SensitivityQualityResult.assessConstraintSensitivities(policy)` now binds each constraint row
+  and parameter column to pair-specific numerical evidence, immutable engineering identity, raw
+  and minimizer objective derivatives, the constraint-margin derivative, declared derivative
+  units, and actionable diagnostics without rerunning the process model.
+- `SensitivityQualificationPolicy` explicitly controls relative-disagreement tolerance, base and
+  perturbation feasibility requirements, and acceptance of one-sided stencils. Convergence
+  failures, evaluation errors, non-finite derivatives, unstable refinement, and fixed parameters
+  always reject a pair.
+- `getEvidenceFlags()` retains cautions even when a policy permits them;
+  `getRejectionReasons()` explains why a pair is refused. The accepted-only convenience getter
+  must not replace archiving the complete assessment when auditability matters.
+- The API deliberately performs no cross-unit ranking, scaling, active-set inference, KKT
+  multiplier calculation, shadow-price claim, or engineering approval.
+
+## 2026-08-11 — Self-describing ProcessModel sensitivity snapshots
+
+- `SensitivityQualityResult` now includes immutable parameter, selected-objective, and constraint
+  snapshots that bind derivative columns and rows to their engineering identity.
+- Parameter snapshots retain index, name, automation address, unit, bounds, and bounded base
+  value. The objective snapshot retains direction, unit, weight, raw and minimizer base values,
+  and its gradient. Constraint snapshots retain type, unit, hard/soft semantics, penalty, bounds,
+  equality tolerance, capacity area/equipment origin, base value, base margin, and the matching
+  Jacobian row.
+- The snapshots are serializable, defensively copy derivative arrays, and remain unchanged after
+  evaluator definitions mutate or another process point runs. Existing matrix getters and
+  sensitivity evaluation cost are unchanged.
+- Agents must preserve these records when archiving or explaining sensitivities and must not rank
+  unlike raw margins or derivatives without explicit engineering scaling.
+
+---
+
+## 2026-08-10 — ProcessModel sensitivity-quality evidence
+
+- `ProcessModelSimulationEvaluator.estimateSensitivitiesWithQuality(...)` now evaluates one coarse
+  and one halved finite-difference step, reusing each process run for the selected objective and
+  every constraint-margin derivative.
+- The immutable result returns the fine-step gradient/Jacobian and records each parameter's actual
+  bounded stencil, requested/coarse/fine steps, scale-independent coarse/fine disagreement, and
+  every perturbation's parameter value, convergence, hard-constraint feasibility, and error.
+- `isNumericallyStable(tolerance)` is deliberately a numerical consistency check. Agents must
+  inspect feasibility and active equipment/control regimes separately and must not label the
+  derivative a shadow price without optimizer-specific KKT evidence.
+- Existing gradient/Jacobian methods and their lower evaluation cost remain unchanged.
+
+---
+
+## 2026-08-09 — Bound-aware ProcessModel finite-difference sensitivities
+
+- `ProcessModelSimulationEvaluator` objective gradients and constraint Jacobians now divide by the
+  actual perturbation available inside each parameter's bounds. Narrow ranges and active bounds no
+  longer silently understate derivatives after parameter clamping.
+- `FiniteDifferenceMethod.CENTRAL` adds a symmetric second-order interior stencil with a one-sided
+  boundary fallback. `FORWARD` remains the default and retains one perturbed simulation per
+  non-fixed parameter.
+- Non-positive or non-finite finite-difference steps and a null method now fail before simulation.
+  Fixed parameters report zero derivative because no feasible perturbation direction exists.
+- Treat the outputs as local sensitivities. Check step-size stability and active-set consistency
+  before using them as debottlenecking or shadow-value evidence.
+
+---
+
+## 2026-08-09 — ProcessModel bottleneck snapshots retain area identity
+
+`ProcessModel.getUtilizationSnapshotJson()` now adds `area` and `qualifiedName` to a
+non-null plant-wide `bottleneck`. The existing `name`, utilization, constraint, ranking,
+tie behavior, and schema version remain unchanged. Python and AI consumers should use
+`qualifiedName` (`area::unit`) when joining or archiving bottlenecks because different
+process areas may legitimately reuse the same unit name.
+
+---
+## 2026-08-09 — Expose Naphtali-Sandholm tray K-value convergence work
+
+- Naphtali-Sandholm diagnostics now report forced-root K-value sweep count, the number of tray
+  evaluations still above the `1e-8` log-K update criterion after two sweeps, and the maximum final
+  update.
+- The two-sweep numerical path, MESH equations, acceptance gates, and fallback behavior are
+  unchanged. The telemetry establishes the baseline needed for a later bounded convergence method.
+
+## 2026-08-09 — Correct Naphtali-Sandholm Jacobian work classification
+
+- Naphtali-Sandholm diagnostics now count each numerically perturbed Jacobian column only as
+  finite-difference work; the analytic-column counter reports zero for the current implementation.
+- Both public telemetry getters remain available. Solver equations, Jacobian values, convergence,
+  and fallback behavior are unchanged.
+
+## 2026-08-07 — Flow-accelerated corrosion + in-situ pH at temperature (new classes) + DEA protonation enabled
+
+**New in `neqsim.process.corrosion`** — for closed heating- and cooling-medium loops,
+boiler feedwater and WHRU / economiser tubes, where the damage mechanism is magnetite
+dissolution rather than acid-gas corrosion.
+
+- `AmineBufferedPH` — converts a laboratory pH measured on a **cooled sample** into the
+  **in-situ pH at operating temperature**, and reports the **alkaline margin** above
+  neutrality. Critical point for agents: neutral water is pH 7.00 at 25 °C but about
+  **pH 5.85 at 150 °C**, so a hot-system pH cannot be judged against pH 7. For a buffered
+  fluid the pH shift equals the pKa shift exactly. Supports `BufferAmine.DEA` and
+  `BufferAmine.MDEA`; verdicts `ROBUST` / `ADEQUATE` / `MARGINAL` / `INSUFFICIENT`.
+- `FlowAcceleratedCorrosion` + `FacGeometry` — FAC screening index built from a
+  Berger-Hau mass-transfer coefficient and factors for temperature (bell peaking at
+  150 °C), in-situ pH, local geometry (bend / weld / weld-at-bend / orifice) and chromium
+  content. `getDominantFactor()` names the controlling lever; `ratioTo(other)` quantifies
+  a proposed change.
+
+**Agent guidance — pick the right corrosion model:**
+
+- `NorsokM506CorrosionRate` is **CO2 corrosion**. It does not apply to a CO2-free closed
+  loop; using it there is a misapplication.
+- FAC is **not** erosion-corrosion. FAC is electrochemical dissolution under mass-transfer
+  control; erosion-corrosion needs mechanical particle impingement or cavitation. They
+  occur at the same locations but need different mitigation. `RootCauseAnalyser` now
+  raises `FLOW_ACCELERATED_CORROSION` separately from `EROSION_CORROSION`.
+- Always feed `FlowAcceleratedCorrosion.setInSituPH(...)` a value from `AmineBufferedPH`,
+  never a raw laboratory pH.
+- The FAC index is **comparison-only**. Ratios between cases are meaningful; the absolute
+  value is not a wall-loss rate.
+- Wall shear scales as roughly `v^1.75`, so a 3 % velocity exceedance is a ~13 % shear
+  exceedance. Report shear, not just velocity.
+
+**Data fix — DEA protonation was disabled.** The `DEAprot` reaction
+(`DEA+ + H2O <-> DEA + H3O+`, index 52, Austgen 1989) had complete stoichiometry in
+`STOCCOEFDATA.csv` and complete constants in `REACTIONDATA.csv`, but `USEREACTION = 0`,
+so any DEA-buffered electrolyte system silently returned no acid-base equilibrium. Now
+enabled; a half-neutralised DEA buffer in `SystemFurstElectrolyteEos` returns pH 8.98 at
+25 °C against a literature pKa of 8.88-8.92. The CPA electrolyte path
+(`SystemElectrolyteCPAstatoil`) remains unreliable for amine buffers — pre-existing, and
+affects MDEA equally.
+
+**New skill:** `neqsim-flow-accelerated-corrosion`. Loaded by `@flow.assurance` and
+`@root.cause`.
+
+---
+
+## 2026-08-07 — Self-heating / spontaneous-ignition criticality (new package) + glycol formation-property fix
+
+**New package `neqsim.process.safety.selfheating`** — screening for low-temperature
+self-heating leading to spontaneous ignition ("lagging fires", where a combustible
+liquid soaks into porous thermal insulation and ignites with no external ignition
+source).
+
+- `PorousMediaSelfHeatingAnalyzer` — Frank-Kamenetskii steady-state criticality.
+  Returns the dimensionless parameter `delta` against its shape-dependent critical
+  value, plus the two engineering answers: **critical surface temperature** for a
+  given layer thickness and **critical thickness** at a given temperature.
+  `forPipeInsulation(...)` configures the conservative bounding case for lagging on
+  a hot line and records the assumption in `getWarnings()`.
+- `SemenovSelfHeatingAnalyzer` — Semenov `1/e` criterion for the surface-cooling
+  limit (drained pools, thin films, small samples).
+- `SelfHeatingInductionSolver` — transient 1-D conduction with an Arrhenius source,
+  giving the **induction time** to ignition (hours to days, not seconds).
+- `BasketTestRegression` — fits activation energy and volumetric heat-release
+  pre-factor from hot-storage (basket) test data per EN 15188 / ASTM E2021, and
+  `createAnalyzer(...)` carries the fit straight to a plant-scale screening.
+- `SelfHeatingGeometry` carries the published critical values (slab 0.878,
+  infinite cylinder 2.00, sphere 3.32, cube 2.52, equicylinder 2.76).
+
+**Agent guidance — do not substitute the wrong model:**
+
+- `neqsim.process.safety.reaction.RunawayReactionAnalyzer` is **lumped adiabatic**
+  (MTSR / dT_ad / TMR_ad). It has no spatial conduction, therefore no concept of a
+  critical thickness or critical ambient temperature, and **cannot** assess
+  spontaneous ignition in insulation. Use `selfheating` instead.
+- `GibbsReactor` will report complete oxidation of any hydrocarbon at ambient
+  temperature. Equilibrium gives the fuel, not the hazard — ignition is always a
+  kinetic question.
+- Activation energy and pre-factor are **measured**, never derived from
+  thermodynamics. Flag them as assumptions in `results.json` when not from testing.
+
+**Data fix — TEG and DEG formation properties were placeholders.** Both carried
+water's enthalpy of formation (`-242000 J/mol`) and CO2's Gibbs energy of formation
+(`-394370 J/mol`) in `COMP.csv` and `COMP_EXT.csv`. Corrected to literature
+ideal-gas values: TEG `-726500 / -474700 J/mol`, DEG `-571200 / -402900 J/mol`.
+Any previous Gibbs-minimisation, reactive-flash or heat-of-reaction result
+involving a glycol was wrong (TEG heat of combustion was ~25.4 MJ/kg, now
+~22.2 MJ/kg). Normal enthalpy calculations were unaffected, because the formation
+term is multiplied by zero in that path.
+
+**New skill:** `neqsim-self-heating-ignition`. Loaded by `@safety.depressuring` and
+`@reaction.engineering`; routed from `@router` on "self-ignition, spontaneous
+combustion, lagging fire, fire with no ignition source".
+
+---
+
+## 2026-08-07 — Coupled transient gas-network hydraulics and source schedules
+
+- Added `TransientGasNetwork` for bounded, positive-flow, one-phase isothermal
+  gathering trees. It simultaneously solves source and junction pressures,
+  Darcy edge flow, compressible linepack, and conservative named-component
+  transport for scheduled source rates/compositions and one fixed-pressure
+  sink.
+- `TransientGasNetworkHistory` provides time-aligned node pressure/composition,
+  edge inlet/average/outlet flow, edge linepack, and immutable hydraulic,
+  junction, and component-conservation reports. The history and reports have a
+  stable JSON path for Python/JPype.
+- Source pressure is an emergent feasibility result, not a prescribed boundary
+  or a deliverability controller. Pressure bounds and edge velocity limits fail
+  explicitly; reverse flow, phase appearance, thermal transport, recirculation,
+  and branching splits remain outside the initial API.
+- Added a 700 km synthetic Åsgard/Kristin-to-Kårstø rate-event regression with
+  the sink fixed at 110 bara, comparison to the 200/207 bara quasi-steady
+  anchors, deterministic repeat, linepack response, component/junction/total
+  balance gates, unsupported-state diagnostics, and joint grid/timestep
+  refinement.
+## 2026-08-06 — Per-case ranked capacity snapshots
+
+- `ProcessModelSimulationEvaluator.EvaluationResult.getRankedCapacityConstraints()` retains the
+  immutable full-model capacity ranking produced after that exact simulation point.
+- The legacy active bottleneck is selected from the same ranking, while undefined-utilization
+  constraints remain visible at the end for diagnosis.
+- `ThroughputCaseRow.getRankedCapacityConstraints()` preserves emerging and switching constraints
+  for every scalar-throughput case. JSON exports include the complete ranked list and its evidence
+  applicability; CSV remains the flat leading-limit summary.
+- Use these case-owned snapshots for debottleneck histories and AI/tool output. Do not rescan the
+  live model after a later evaluation and attribute that state to an earlier case.
+
+---
+## 2026-08-06 — Artificial-lift screening rejects non-physical calculated results
+
+- `ArtificialLiftScreener.screen()` now rejects a calculated method result before ranking when its
+  production rate is non-finite or non-positive, or when its power consumption is non-finite or
+  negative.
+- Rejected results have zero reported rate and power, negative-infinite NPV, rank zero, and an
+  explicit infeasibility reason. A method reported as feasible therefore always has a finite,
+  positive rate and finite, non-negative power.
+- The field-development API example now uses the current `ArtificialLiftScreener` method names,
+  units, and `ScreeningResult` return type.
+
+## 2026-08-06 — Evidence-aware full-model capacity ranking
+
+- `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)` returns every enabled
+  `CapacityConstraint` as an immutable list ordered by descending utilization. Stable ties retain
+  process-model registration order, and each dynamic value supplier is sampled once per call.
+- `BottleneckStatus.getEvidenceApplicability()` reports `WITHIN_VALIDITY_RANGE`,
+  `OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED` for the snapshotted operating point.
+- Evidence confidence and applicability remain diagnostics only. They do not change utilization,
+  feasibility, or ranking and must not be interpreted as probabilities of safe operation.
+- `findActiveBottleneck(model)` remains available when only the leading constraint is required.
+
+---
+
+## 2026-08-06 — Side-draw flow targets reject invalid inner column states
+
+- A column with one independent side-draw flow specification now evaluates trial split fractions
+  on cold copied column states and accepts only rigorous or reconciled inner solves.
+- Failed and fallback-product trials no longer update the side-draw controller or replace the last
+  accepted public column state. The safeguarded search uses only accepted flow observations for
+  interpolation and bounded exploration.
+- When a cold trial is rejected after an accepted state exists, the same fraction is retried once
+  from the nearest accepted solved profile. This continuation path removes Java-runtime-dependent
+  cold-start failures without reusing a failed or fallback-product state.
+- `DistillationColumn` now reports rejected candidates, state rollbacks, accumulated inner-solver
+  work, and the candidate history through its column-tear diagnostics. These values are transient
+  and reset on copied or deserialized columns.
+
+---
+
+## 2026-08-05 — Lossless external-to-internal constraint conversion
+
+- `ProcessSimulationEvaluator.ConstraintDefinition.toOptimizationConstraints()` now converts
+  lower/upper bounds to one immutable-list element and range/equality definitions to explicit
+  `_lower` and `_upper` internal constraints.
+- Both generated sides retain the source evaluator, severity, and penalty weight, preventing
+  operating envelopes and tolerance bands from silently losing their lower bound.
+- The singular `toOptimizationConstraint()` API is unchanged for compatibility and remains lossy
+  for range and equality definitions. New integrations must use the plural method.
+- Interpret sensitivities and shadow values for the generated lower and upper constraints
+  separately.
+
+---
+
+## 2026-08-05 — Column pumparound returns remain internal recycles
+
+- `DistillationColumn` no longer captures a named pumparound return stream as a legacy direct
+  external tray feed during iterative solves.
+- `getInletStreams()`, feed fingerprints, and feed/product balance diagnostics therefore retain
+  only caller-supplied feeds; configured pumparound returns remain internal recycles.
+
+---
+
+## 2026-08-05 — Conservative transient gas-network species transport
+
+- Added `TransientCompositionalPipeNetwork` for prescribed positive-flow,
+  one-phase, isothermal gathering networks. Source composition and mass-flow
+  schedules propagate through finite-volume edge inventories and conservative
+  component-name junction mixing without an instantaneous manual handoff.
+- `TransientCompositionalPipeNetworkHistory` exposes defensive, time-aligned
+  node mass fractions plus immutable edge, junction, and cumulative network
+  conservation reports. The history and reports provide JSON capture for
+  Python/JPype.
+- The first validated scope is a directed acyclic network with at most one
+  outgoing edge per node. Reverse flow, branching splits, recirculation,
+  hydraulic/thermal coupling, dispersion, and phase appearance fail explicitly
+  or remain outside this API.
+- Added a two-source finite-CO2-pulse regression with deterministic repeat,
+  component-order independence, balance/boundedness gates, linepack delay and
+  broadening, unsupported-state diagnostics, and joint grid/timestep
+  refinement.
+
+---
+
+## 2026-08-05 — Conservative TwoFluidPipe component transport
+
+### Added
+- Opt-in per-cell, per-phase named-component inventories in `TwoFluidPipe`, advected with the accepted gas/oil/water face fluxes.
+- Equal-and-opposite component mapping for gas/oil/water flash transfer, fail-loud thermodynamic synchronization, bounded profiles, immutable reports, JSON diagnostics, and report history.
+- Composition-dependent interphase latent heat in the transient temperature equation and thermal-energy ledger.
+- Java and JPype/Python access to gas, oil, and water component profiles and outlet mass fractions.
+
+### Compatibility and scope
+- Backward compatible: component transport is disabled by default and must be enabled before `run()`.
+- The initial validated scope requires a fixed named component slate, known inlet composition, gas/oil/aqueous phase identities, and no reverse inflow through the outlet boundary.
+- Internal signed phase-flow reversals are handled with phase-consistent upwinding; unsupported phase transitions and non-closing component/phase ledgers throw.
+
+---
+
+## 2026-08-05 — External process evaluators sample result callbacks once
+
+- `ProcessSimulationEvaluator.evaluate(...)` and `ProcessModelSimulationEvaluator.evaluate(...)`
+  now invoke each registered objective and constraint callback exactly once per completed
+  simulation point.
+- Raw and minimizer-sign objectives reuse one scalar. Constraint value, margin, feasibility, and
+  penalty likewise reuse one scalar, avoiding repeated report or serialization work and preventing
+  internally inconsistent results from mutable diagnostics.
+- Direct calls to objective and constraint definition methods retain their existing behavior and
+  public signatures.
+
+---
+
+## 2026-08-05 — TwoFluidPipe transient thermal-energy closure
+
+- The multilayer cooldown path now removes fluid energy with the same instantaneous fluid-to-first-layer flux that
+  advances the radial wall state. It no longer mixes that transient flux with a separate steady overall-U heat-loss
+  estimate.
+- `MultilayerThermalCalculator` exposes the fluid-side and ambient-side heat rates used by its most recent transient
+  update through `getLastFluidHeatTransferPerLength()` and `getLastAmbientHeatTransferPerLength()`.
+- `TwoFluidPipe.getLastThermalEnergyBalanceReport()` now reports time-integrated fluid and wall energy changes,
+  conservative-face sensible advection, Joule-Thomson energy, ambient heat loss, and absolute/relative residuals for
+  the most recent thermal transient call.
+- Added simple/multilayer, Euler/IMEX, mesh/time-step refinement, disabled-heat-transfer, serialized-copy, and closed
+  SRK-CPA water-dew-point appearance/disappearance regressions. The phase-transition case checks gas, oil, water, and
+  total mass closure without a seeded liquid phase.
+
+---
+
+## 2026-08-05 — Column exact reuse honors active convergence gates
+
+### Corrected
+
+Naphtali-Sandholm exact unchanged-input reuse now requires the active convergence-gate
+configuration to match the snapshot recorded after the accepted public solve. Changing an enforced
+tolerance no longer returns the previous state with zero iterations under a different convergence
+contract. Disabled energy and MESH tolerances, plus outer tear tolerances when no tear variable is
+configured, are excluded from the cache key so irrelevant setting changes retain zero-iteration
+reuse.
+
+## 2026-08-05 — ProcessModel unit-level mass closure is reported again
+
+### Added
+
+`ProcessModel` now reports a second mass-closure figure covering the units the recycle-tear gate
+does not own. `getLastUnitMassClosureError()` and `getUnitMassClosureOffenders()` expose the mass
+created or destroyed by non-recycle unit operations as a fraction of plant feed, the
+`getMassClosureSummary()` text states it alongside the recycle-tear result, and the `massClosure`
+JSON block gained `unitRelativeError`, `unitWorstUnits`, and `unitGateEnabled`. Bypassed and
+low-flow units are excluded (`ProcessSystem.getFailedMassBalance`), and recycles are skipped so
+they are not counted twice.
+
+The figure is **report-only by default**: a non-recycle unit that does not conserve mass is an
+equipment defect rather than something the outer solver can close, so gating on it would iterate
+to the cap and bury the real diagnosis. Opt in with `setUnitMassClosureGate(true)` to make it
+block a converged verdict as well.
+
+The closure is now also evaluated once after a run that never reached the acceptance test, so a
+model that stops on the iteration cap still reports what it is failing to conserve instead of
+leaving `relativeError` null behind a max-iterations warning.
+
+### Compatibility and validation
+
+No default, gate outcome, or existing JSON field changed; the recycle-tear gate and its
+`relativeError`/`worstUnits` fields behave exactly as before. Callers that only read the recycle
+figures are unaffected.
+
+---
+## 2026-08-05 — Optional Chabab 2019 Søreide-Whitson CO2-brine parameterization
+
+### Added
+
+`SystemSoreideWhitson` now exposes `setAqueousCO2Parameterization(...)` with enum and string
+overloads. `LEGACY` remains the default and preserves existing results. Select `CHABAB_2019`
+(aliases `M_SW` or `m-sw`) to use the Chabab et al. (2019) aqueous CO2-water binary-interaction
+correlation for NaCl brine. The salt basis used by the correlation is equivalent NaCl molality in
+mol/kg water; the published measured range is approximately 1-3 mol/kg, 323-373 K, and up to 230 bar.
+
+The selector is directly accessible through Java and Python/JPype, survives system cloning, and
+does not change other gas-water or non-aqueous interaction parameters.
+
+## 2026-08-04 — Fixed-reflux fallback product inventory
+
+### Corrected
+
+When a fixed-liquid-reflux column rejects its tray state and installs guarded full-feed fallback
+products, the condenser's separate liquid product is now cleared. The fallback gas and bottom
+streams already contain the complete feed inventory; retaining the rejected liquid product beside
+them previously exposed more material than entered the column. Fixed-reflux availability,
+delivery, and residual diagnostics are invalidated because they no longer describe the exposed
+fallback products.
+
+The solve status remains `FALLBACK_PRODUCTS`, `solved()` remains false, and no tray equation,
+tolerance, flash, or iteration rule changed. Callers must continue to inspect the solve status
+before treating column products as a rigorous fixed-reflux solution.
+
+## 2026-08-04 — TwoFluidPipe closed thermal boundary consistency
+
+- Transient temperature advection now consumes the conservative solver's retained phase-resolved face mass fluxes,
+  combined with the configured integrator's stage weights and one pre-update temperature snapshot; it no longer
+  recomputes AUSM+ fluxes after acceptance or reads already-updated upstream cells.
+- CLOSED external faces contribute exactly zero advective transport while internal phase convection remains active.
+- Simple and multilayer radial heat transfer now visit section zero and use local conservative fluid inventory for
+  thermal inertia. Stateful multilayer wall temperatures are retained independently for every cell and advanced once
+  per accepted thermal time step.
+- The post-step temperature model is the single owner of ambient heat exchange, preventing the duplicate equation-level
+  wall source from applying the same loss twice.
+- Added deterministic regressions for disconnected inlet-rate invariance, uniform closed adiabatic behavior, all-cell
+  cooldown without ambient undershoot, independent multilayer cell state, and zero closed external face flux.
+## 2026-08-04 — ProcessModel recycle mass-closure reporting
+
+### Corrected
+
+The automatic model-level mass-closure convergence gate now evaluates active `Recycle` tear
+imbalances only. Unit-level mass-balance diagnostics remain available through `ProcessSystem` but
+no longer masquerade as open recycle tears or block an otherwise converged multi-area model.
+
+The `massClosure` JSON block reports `enabled: true` only when automatic convergence tuning and
+the closure gate are both active. An unevaluated `relativeError` is emitted as JSON `null` rather
+than the non-standard numeric literal `NaN`.
+
+### Compatibility and validation
+
+No public method or default is removed. Existing callers should treat `relativeError: null` as
+"not evaluated" and inspect unit-level mass-balance reports separately from the recycle-tear
+convergence gate.
+## 2026-08-04 — Capacity evidence in bottleneck and throughput results
+
+### Added
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now snapshot the
+active constraint's confidence presence/value, scalar validity-range presence/bounds, and whether
+the evaluated current value lies inside the inclusive range. The metadata is available through
+Java getters and is retained by throughput JSON and CSV exports.
+
+### Compatibility and reporting
+
+Existing constructors remain available and represent evidence metadata as unset. Manually constructed
+snapshots normalize inconsistent enabled metadata (non-finite/out-of-range confidence or
+non-finite/reversed bounds) to the same unset state, and derive applicability from the current value
+and retained bounds. Bottleneck scans read dynamic constraint suppliers once per candidate and use
+that scalar for both utilization and applicability. JSON includes presence flags and uses `null` for
+unset confidence, bounds, and applicability. CSV includes the same flags and uses blank cells for
+unset values. Utilization, constraint direction, margins, feasibility, thermodynamics, hydraulics,
+and throughput search are unchanged.
+
+---
+
+## 2026-08-04 — ConeFlowMeter rejects non-physical geometry (Copilot review round 11)
+
+### Fixed
+
+- `ConeFlowMeter.setGeometry(double, double, String)` now validates `coneDiameter &lt; pipeDiameter` (both positive)
+  instead of silently clamping the beta formula's `sqrt` argument to 0 with `Math.max(0.0, ...)`. Invalid geometry
+  (cone diameter &gt;= pipe diameter, or either non-positive) now logs a warning and stores a `NaN` throat diameter,
+  consistent with `WedgeFlowMeter`'s invalid-geometry handling, instead of silently producing beta = 0.
+- `ConeFlowMeter.getConeDiameter(String)` now returns `NaN` for a non-physical beta (NaN, &lt;= 0, or &gt; 1) instead
+  of clamping to a misleading 0 diameter.
+
+---
+
+## 2026-08-04 — Reject non-physical discharge coefficients in the Reynolds iteration (Copilot review round 10)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()`'s Reynolds-number iteration only checked
+  `Double.isFinite(updatedFlow)`, so a Reynolds-independent device whose `calcDischargeCoefficient(...)` returns a
+  non-physical value (`C &lt;= 0`) could silently converge to a negative (but finite) mass flow and Reynolds number on
+  the very first pass. The initial guess and every iteration now also reject `flow &lt;= 0.0`, returning `NaN` (with a
+  warning identifying the offending Re,D) instead of a silently wrong negative flow.
+
+---
+
+## 2026-08-04 — Test doc/privacy wording fixes (Copilot review round 9)
+
+### Fixed
+
+- `OrificeFlowMeterTest.buildWetGasMeter(double)` JavaDoc claimed `p1 = 60 bara`, but the meter uses the shared
+  `stream` fixture from `setUp()`, which is 20 bara. Reworded to describe the actual upstream pressure source.
+- Redacted equipment tag identifiers (`27A-KA01A` / `27A-KA60`) from a `VenturiFlowMeterTest` JavaDoc comment, per the
+  repository's privacy rule against including equipment tag numbers in public/reusable content.
+- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` no longer hard-asserts an exact phase count of 2 (brittle
+  if NeqSim ever adds another phase type); it now asserts the intended `gas` and `oil` phases are both present via
+  `hasPhaseType(...)`.
+
+---
+
+## 2026-08-04 — Volume-unit conversion gaps fixed (Copilot review round 8)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.volumeFlowConversionToM3PerSecond(String)` now supports every unit string that
+  `isActualVolumeUnit(String)`/`isStandardVolumeUnit(String)` classify as valid: `Sm^3/sec`, `kSm3/sec`, `MSm3/sec`,
+  `m^3/min`, `Sm^3/min`, `kSm3/min`, `MSm3/min`, and `m^3/day` were previously missing, so `getVolumeFlowRate(unit)` /
+  `getStandardVolumeFlowRate(unit)` threw `RuntimeException` for those (previously "valid-looking") unit strings.
+
+### Verified as a false positive (no change made)
+
+- A review also claimed `OrificeFlowMeter`/`VenturiFlowMeter`'s `buildWetGasSignature()` cache never hits because
+  `Arrays.equals(double[], double[])` treats `NaN != NaN`. This is incorrect: per the method's own Javadoc contract
+  (and confirmed with a standalone JVM check), `Arrays.equals(double[], double[])` compares `Double.doubleToLongBits`
+  values and explicitly treats two `NaN`s as equal. Added a one-line note to `buildWetGasSignature()` in both classes
+  documenting this so future reviews don't re-flag it.
+
+---
+
+## 2026-08-04 — Reynolds-cache staleness and nozzle math-domain fixes (Copilot review round 7)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets `lastReynoldsNumberPipe` to `NaN` on every
+  invalid-input/invalid-expansibility early return, not just when `dp &lt;= 0`, so `getReynoldsNumberPipe()` never
+  reports a stale value from a previous successful solve after a failed one.
+- The Reynolds-number iteration now checks `Double.isFinite(updatedFlow)` each pass and fails fast (NaN + a logged
+  warning identifying the offending Re,D) instead of running all `MAX_ITERATIONS` passes and logging a misleading
+  "did not converge" warning when a device-specific discharge-coefficient correlation produces NaN/Infinity.
+- `NozzleFlowMeter.calcThroatTappedDischargeCoefficient(double)` now explicitly returns `NaN` for
+  `reynoldsThroat &lt; 400000`, instead of relying on `Math.pow(negative, 0.8)` (a non-integer power of a negative
+  base) to produce `NaN` indirectly once `1 - 400000 / Re,d` goes negative.
+
+---
+
+## 2026-08-04 — Doc/test wording fixes and CONE beta validation (Copilot review round 6)
+
+### Fixed
+
+- `ExpansibilityModel.CONE.calculate(...)` now validates `0 < beta < 1` like `ORIFICE` and `ISENTROPIC`, instead of
+  silently returning a finite value for non-physical geometry.
+- Corrected the low-dP limit comment on `ExpansibilityModel.ISENTROPIC`: the indeterminate
+  `(1 - tau^((kappa-1)/kappa)) / (1 - tau)` term itself tends to `(kappa-1)/kappa`, not `1`; it is the overall
+  expansibility factor that tends to `1.0`.
+- `WedgeFlowMeter.setWedgeRatio(double)` JavaDoc no longer claims the pipe diameter is "required" to already be set
+  (it isn't enforced); it now documents the actual behavior, including the base class's 0.2 m default.
+- Renamed the misleading "dry-gas example" JavaDoc on `testVenturiFlowMeterDoc()`/`testOrificeFlowMeterDoc()` in
+  `DocExamplesCompilationTest`, which actually exercise the two-phase `buildDocExampleWetGasStream()` helper with
+  `WetGasCorrelation.NONE` (the liquid load is simply ignored in that mode, not absent from the stream).
+- Removed the remaining `System.out.println` calls from `docs/process/equipment/measurement_devices.md` code
+  snippets (CO2 emissions, NMVOC, HC/water dew point, cricondenbar, FIV LOF/F-RMS, molar mass, water content, pH).
+
+---
+
+## 2026-08-04 — Wet-gas getter caching for OrificeFlowMeter and VenturiFlowMeter
+
+### Changed
+
+- `OrificeFlowMeter` and `VenturiFlowMeter` no longer re-run the full iterative wet-gas solve on every getter call
+  (`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`, etc., plus
+  `getMassFlowRatePerSecond()`). Each now caches the last `WetGasResult` behind a cheap input fingerprint
+  (`buildWetGasSignature()`: differential pressure, upstream pressure, beta, gas density, viscosity/discharge
+  coefficient, liquid load configuration, and wet-gas correlation settings). Reading multiple derived quantities within
+  the same timestep now reuses one solve instead of re-solving per getter, and all getters are guaranteed to reflect
+  the same solved state. The cache is not manually invalidated by setters; it is recomputed automatically whenever the
+  fingerprint changes (e.g. after `process.run()` advances the stream, or after any wet-gas setter call).
+- Documentation code snippets no longer use `System.out.println` (project convention: avoid it in examples that may be
+  copied into production code).
+- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` now asserts the built stream is two-phase, instead of
+  assuming it silently.
+
+---
+
+## 2026-08-04 — DP flow-meter Copilot review fixes (Reynolds cache, volume-unit dispatch, near-zero-dP expansibility)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets the cached
+  `lastReynoldsNumberPipe` to `NaN` when the differential pressure is not positive, instead of
+  leaving it at the previous solve's converged value. `getReynoldsNumberPipe()`,
+  `getReynoldsNumberThroat()`, and `getValidityViolations()` no longer report stale Reynolds-number
+  information after `dp` drops to zero (or negative).
+- `DifferentialPressureFlowMeter.getVolumeFlowRate(String unit)` now delegates to
+  `getStandardVolumeFlowRate(unit)` when `unit` is a standard-volume unit (`Sm3/...`, `kSm3/...`,
+  `MSm3/...`). Previously it always divided by the flowing (actual) gas density, so
+  `getVolumeFlowRate("Sm3/hr")` silently returned a dimensionally-wrong value instead of the correct
+  standard-condition flow.
+- `ExpansibilityModel.ISENTROPIC.calculate(...)` now returns `1.0` instead of `NaN` when `tau` is
+  within `1e-12` of `1.0` (the low-differential-pressure limit). The `(1 - tau^((kappa-1)/kappa)) /
+  (1 - tau)` term is a removable 0/0 indeterminate form whose limit is `(kappa-1)/kappa`, which makes
+  the overall expansibility factor tend to `1.0` — i.e. no expansion for a negligible pressure drop,
+  matching physical expectation instead of propagating `NaN` into the flow calculation.
+- Documentation code snippets in `docs/process/equipment/measurement_devices.md` that reference
+  `List<String> issues = meter.getValidityViolations();` now include `import java.util.List;` so
+  they compile standalone if copied into a small program.
+
+---
+
+## 2026-08-04 — ISO/TR 11583 Clause 7 wet-gas correction added to OrificeFlowMeter
+
+### Added
+
+`OrificeFlowMeter.setWetGasCorrelation(WetGasCorrelation.ISO_TR_11583)` switches the meter to the
+ISO/TR 11583 Clause 7 wet-gas orifice method. The liquid load is supplied via
+`setLiquidFromStream(true)` (reads the connected stream's own phase split), `setLiquidToGasMassRatio(x)`,
+`setLiquidMassFlowRate(v, unit)`, or (when 0.5 <= beta <= 0.68 and no explicit liquid rate/ratio is
+given) the 7.5.5 permanent pressure-loss route via `setPressureLoss(v, unit)`. New getters:
+`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`,
+`getChisholmCoefficient()`, `getChisholmExponent()`. `getValidityViolations()` now reports the Clause 7
+limits of use (0.24 <= beta <= 0.73, 0 < X <= 0.3, Fr,gas >= 0.2, rho,gas/rho,liquid > 0.014, D >= 50 mm,
+plus the additional 7.5.5 bounds when the pressure-loss route is used) instead of the dry-gas ISO 5167-2
+limits when the correlation is active.
+
+**Key difference from `VenturiFlowMeter`'s Clause 6 wet-gas method**: the orifice discharge coefficient
+is **never replaced** (Clause 7.5.2) — it stays the plain Reader-Harris/Gallagher equation evaluated at
+the gas-only Reynolds number, so there is no `useWetGasDischargeCoefficient`-style guard. The Chisholm
+exponent also has no diameter-ratio term (unlike Venturi's beta-reduced exponent):
+`n = 0.214` for `Fr,gas < 1.5`, `n = (1/sqrt(2) - 0.3/sqrt(Fr,gas))^2` for `Fr,gas > 1.5`.
+
+`DifferentialPressureFlowMeter` gained a protected `setReynoldsNumberPipe(double)` so a wet-gas subclass
+can record its own converged Reynolds number on the base class; without it, `getReynoldsNumberPipe()`
+stayed pinned at the dry-gas seed value from the initial solve.
+
+### Compatibility
+
+All 8 pre-existing `OrificeFlowMeterTest` cases pass unchanged (default correlation is `NONE`). 9 new
+wet-gas tests added (17 total). No other DP flow meter class is affected.
+
+## 2026-08-04 — ISO 5167 differential-pressure flow meters: shared base class + orifice/nozzle/cone/wedge
+
+### Added
+
+`DifferentialPressureFlowMeter` (abstract, `neqsim.process.measurementdevice`) is the new shared base
+for ISO 5167-1 general-principles physics: geometry (`setGeometry`/`setPipeDiameter`/`setThroatDiameter`,
+diameter ratio always `beta = d/D` recomputed on demand), differential pressure (explicit or via
+`DifferentialPressureTransmitter`), gas density/isentropic exponent/dynamic viscosity readers (each
+overridable), a Reynolds-number fixed-point iteration for devices whose discharge coefficient depends on
+`Re,D`, and the mass/actual-volume/standard-volume/`getMeasuredValue` accessors. `ExpansibilityModel`
+(enum: `ORIFICE`, `ISENTROPIC`, `CONE`) holds the three expansibility-factor families shared across ISO
+5167-2/-3/-4/-5/-6.
+
+Four new concrete devices, each implementing only its own discharge coefficient and expansibility model:
+
+- `OrificeFlowMeter` (ISO 5167-2) — Reader-Harris/Gallagher (1998) discharge coefficient,
+  `TappingArrangement` (`CORNER`, `D_AND_D_HALF`, `FLANGE`).
+- `NozzleFlowMeter` (ISO 5167-3) — `NozzleType` (`ISA_1932`, `LONG_RADIUS`, `THROAT_TAPPED`,
+  `VENTURI_NOZZLE`); the first three depend on the Reynolds number, the Venturi nozzle does not.
+- `ConeFlowMeter` (ISO 5167-5) — constant C = 0.82; no physical throat, `beta = sqrt(1 - dc^2/D^2)`
+  derived from the cone diameter via `setGeometry(D, dc, unit)`.
+- `WedgeFlowMeter` (ISO 5167-6) — C = 0.77 - 0.09 beta; no physical throat, beta derived from the wedge
+  gap height (`setGeometry(D, h, unit)`) or wedge ratio (`setWedgeRatio(h/D)`) via ISO 5167-6 Formula (3).
+
+### Compatibility and migration
+
+`VenturiFlowMeter` (ISO 5167-4) is re-parented onto `DifferentialPressureFlowMeter` with **no public API
+change** — same constructors, same method signatures, same wet-gas (ISO/TR 11583, de Leeuw) behavior. All
+20 pre-existing `VenturiFlowMeterTest` cases pass unchanged. Wet-gas over-reading correction (liquid load,
+Lockhart-Martinelli, Froude number, Chisholm form) remains Venturi-specific; it has not been generalized to
+the other four devices in this change.
+
+### Not in scope (raise separately if needed)
+
+`neqsim.standards.gasquality.Standard_AGA3`'s own Reader-Harris/Gallagher implementation has known
+transcription bugs (missing terms, wrong Reynolds-number basis) found while verifying `OrificeFlowMeter`
+against the same ISO 5167-2:2022 Formula (4); it was deliberately left untouched pending maintainer review.
+
+## 2026-08-03 — Capacity constraint confidence and validity metadata
+
+### Added
+
+`CapacityConstraint` now records an optional evidence-quality confidence score in `[0, 1]` and an
+optional inclusive scalar validity range in the constraint's own unit. Fluent setters validate all
+values, explicit `hasConfidence()` and `hasValidityRange()` methods preserve unset semantics, and
+`isCurrentValueWithinValidityRange()` checks the live constraint value against the stated range.
+
+### Compatibility and behavior
+
+Existing constructors and serialized constraints remain compatible. Unset and legacy metadata is
+reported as absent and numeric getters return `NaN`. The metadata does not alter utilization,
+constraint direction, margins, violation status, feasibility, or optimizer search. Confidence is
+an evidence-quality score, not a probability of safety or constraint satisfaction. This release
+propagates confidence and validity into throughput case rows as of 2026-08-04, but does not
+implement a multidimensional operating envelope.
+## 2026-08-03 — TwoFluidPipe phase-resolved flash transfer
+
+### Corrected
+
+`ThermodynamicCoupling` now identifies phases by `PhaseType`, aggregates all hydrocarbon and
+aqueous liquid contributions, and returns immutable `PhaseMassTransfer` gas/oil/water sources.
+Condensation follows equilibrium liquid mass contributions. Evaporation follows and is limited by
+the actual conservative oil and water inventories. Transfer momentum uses donor velocity and is
+conservative across all three phases.
+
+`FlashTable` now stores the aggregate liquid fraction, oil/aqueous mass split, and gas/liquid molar
+masses. Existing serialized tables without these arrays return a rebuild diagnostic instead of
+silently reconstructing ambiguous liquid identity.
+
+### Compatibility and validation
+
+`calcMassTransferRatePerLength(...)` and the internal two-element gas/liquid adapter remain
+available. Code needing phase identity should call `calcPhaseMassTransferRatePerLength(...)` and
+read the SI-unit gas, oil, and water sources. Validate each phase with `TwoFluidMassBalanceReport`;
+total-mass closure alone does not prove correct liquid identity.
+
+## 2026-08-03 — Capacity provenance in process-model throughput results
+
+### Added
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now preserve the
+underlying `CapacityConstraint.dataSource`. Java getters, JSON case rows, and CSV throughput traces
+therefore retain whether a limiting value came from sources such as mechanical design, an installed
+data sheet, or an operating envelope. Untagged and legacy constructor paths use `not_set`.
+
+### Compatibility and reporting
+
+Existing constructors remain available and retain their previous behavior. JSON adds `dataSource`;
+the CSV column is inserted after `minimumConstraint`. No thermodynamic, hydraulic, utilization,
+feasibility, equipment-design, or throughput-search calculation changed.
+
+## 2026-08-02 — Directed capacity margins in process-model throughput results
+
+### Corrected
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now preserve whether an
+equipment bottleneck is minimum-directed. Minimum-only constraints report their finite
+`getDisplayDesignValue()` limit instead of the internal unset `Double.MAX_VALUE` design sentinel.
+Engineering-unit `capacityMargin` is `current - minimum` for lower limits and remains
+`limit - current` for upper limits, so non-negative consistently means feasible.
+
+### Compatibility and reporting
+
+Existing constructors remain available and default to maximum-directed behavior. JSON case rows
+and CSV throughput traces add `minimumConstraint`; the CSV column is inserted after `designValue`.
+No thermodynamic, hydraulic, utilization, feasibility, or optimizer search calculation changed.
+
+## 2026-08-02 — DNV-RP-F101 isolated metal-loss pressure screening added
+
+### Added
+
+`DnvRpF101CorrodedPipelineScreeningKernel` implements a fail-closed calculation for the current
+`DNV-RP-F101 2019-09+AMD:2025-09` basis. Its narrow scope is one isolated longitudinal metal-loss
+defect under internal pressure. It reports assessment depth, remaining wall, length correction,
+uncorroded and defect failure pressures, a caller-controlled pressure limit, utilization, margin,
+and within-limit status.
+
+### Required evidence and migration
+
+Measured defect geometry, depth allowance, assessment wall thickness, characteristic ultimate
+tensile strength, internal/external pressures, caller-controlled pressure factor, applicability,
+and verification attestations are explicit inputs. Interacting or complex defects, combined
+compression, probabilistic assessment, inspection-uncertainty derivation, corrosion growth,
+crack-like damage, repair, and fitness-for-service approval remain external.
+
+Agents must not convert a NORSOK M-506 corrosion rate or projected uniform loss into inspected
+RP-F101 defect geometry. The RP-F101 kernel is also separate from and does not replace DNV-ST-F101
+pressure containment, collapse, propagation/local buckling, load interaction, fatigue,
+incidental/test pressure, de-rating, safety class, ovality, fabrication route, or installation
+strain.
+
+## 2026-08-02 — DNV-RP-F105 added as a first-mode free-span screening kernel
+
+### Added
+
+`DnvRpF105FreeSpanScreeningKernel` implements an edition-aware, fail-closed screen for
+`DNV-RP-F105 2025-12`. It calculates a simply supported Euler-Bernoulli first-mode frequency with
+externally derived effective mass and axial force, then reports current/wave frequency ratios,
+reduced velocities, and Keulegan-Carpenter number. Steel and hydrodynamic diameters are distinct.
+
+### Required evidence and migration
+
+Geometry, structural-model, environmental, and project-trigger verification are mandatory caller
+attestations. Strouhal number, frequency-ratio band, and reduced-velocity triggers are
+project-controlled evidence; they are not embedded DNV criteria or acceptance decisions. Soil and
+span-shoulder stiffness, interacting spans, response amplitudes, direct wave loading, ULS/FLS,
+fatigue, monitoring, intervention, and conformity remain external.
+
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` remains compatible but is a
+legacy fixed-assumption estimate with fallback/cap behavior. Agents must not relabel it as F105 and
+must route an explicit current-edition basis through the typed kernel.
+
+The standards resource index now records the current F105 edition/applicability. Unverified legacy
+CSV values labelled as F105 safety factors, fatigue factors, allowable stress, and maximum span were
+removed rather than relabelled as current. The generic transient-pipe surge allowance is now
+identified as project basis, not F105.
+
+---
+
+## 2026-08-02 — DNV-RP-C203 added as a controlled-curve fatigue kernel
+
+### Added
+
+`DnvRpC203FatigueDesignKernel` implements the S-N and Palmgren-Miner arithmetic for the current
+`2024-10+AMD:2025-10` basis. It accepts immutable spectrum bins, stress-range factors, a design
+fatigue factor, damage limit, and a caller-supplied single-slope or continuous bi-linear curve.
+`DnvRpC203FatigueAssessment` reports per-bin cycles to failure and damage, cumulative raw and design
+damage, utilization, governing bin, and linear-extrapolated life.
+
+### Required evidence and migration
+
+NeqSim deliberately does not embed or select licensed DNV S-N tables. Curve and spectrum
+verification flags are attestations and both are required before calculation. Curve/detail
+selection, structural stress derivation, environment/thickness factors, SCFs, rainflow counting,
+load combination, inspection planning, and conformity remain external.
+
+Existing pipeline and riser fatigue methods remain compatible but use inconsistent embedded
+parameters. Agents must call them legacy estimates and must route an explicit current-edition C203
+basis through the typed kernel with a controlled project curve.
+
+---
+
+## 2026-08-02 — ISO 5167-1/-2 added to the edition-aware standards pipeline
+
+### Added
+
+`ISO-5167-1 2022` and `ISO-5167-2 2022` are catalogued separately with ISO publisher lifecycle
+sources. Part 1 records the companion general-principles basis; Part 2 registers the new
+`Iso5167OrificeMeteringKernel` for `Orifice` equipment.
+
+The kernel reuses the existing `Orifice` Reader-Harris/Gallagher and pressure-loss equations through
+an immutable, unit-explicit contract. Liquid service uses an explicit expansibility factor of one,
+while gas/vapour service requires kappa and applies the existing compressible correction. The typed
+result records beta ratio, differential and pressure ratios, discharge and expansibility factors,
+mass and actual-volume flow, pipe Reynolds number, permanent pressure loss, and iteration count.
+
+### Applicability and boundary
+
+The adapter fails closed for unsupported editions or amendments, non-`Orifice` equipment,
+multiphase/part-full/pulsating/non-subsonic flow, pipe diameter outside 50 mm to 1,000 mm, beta ratio
+outside the implemented 0.10 to 0.75 screen, Reynolds number below 5,000, invalid absolute
+pressures/properties, and missing external geometry/installation verification. That verification is
+a caller attestation; NeqSim does not inspect the installed meter.
+
+The method remains `SCREENING`. It does not replace purchased ISO 5167-1/-2 documents, uncertainty
+analysis, calibration, plate and tapping inspection, straight-length verification, pulsation or
+two-phase analysis, custody-transfer acceptance, or accountable engineering approval. Existing
+`Orifice`, `Standard_AGA3`, and `GpsaOrificeCalculator` entry points remain available under their
+respective process-simulation and AGA/API/GPSA bases.
+
+### Documentation and example
+
+Added `docs/process/measurement/iso_5167_orifice_metering.md` and an executed
+`examples/notebooks/iso_5167_orifice_metering_kernel.ipynb`. The common regression suite, support
+matrix, migration/program/design-framework guides, standards lookup skill, standards reviewer, and
+gas-quality agent now cover the exact ISO path and its exclusions.
+
+## 2026-08-02 — NORSOK M-506 added to the edition-aware standards kernel registry
+
+### Summary
+
+The existing mutable `NorsokM506CorrosionRate` calculation now has a strict common-kernel adapter.
+`NORSOK-M-506 2017` is catalogued with publisher lifecycle evidence, exact-edition support, equipment
+applicability, readiness blockers, immutable inputs and outputs, and regression coverage.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `NorsokM506CorrosionDesignKernel` | Runs the existing simplified calculation only after edition, applicability, range, and input-quality checks pass |
+| `NorsokM506CorrosionDesignKernel.Input.builder(...)` | Retains unit-explicit raw inputs without the legacy setters' silent clamping |
+| `NorsokM506CorrosionAssessment` | Reports rate, pH, fugacity, correction factors, wall shear, and projected uniform wall loss as an immutable review-gated snapshot |
+
+### Migration
+
+Use the kernel for new auditable studies. Keep `NorsokM506CorrosionRate` for legacy mutable workflows
+and sweeps, and use `NorsokM506ElectrolyteBridge` when an electrolyte-model pH or FeCO3 saturation
+ratio is required. The projected wall loss is not a code corrosion allowance or acceptance decision.
+
+### Agent and skill behavior
+
+Standards and flow-assurance guidance now route explicit M-506 compliance work through the common
+kernel and require the screening boundary, purchased-standard review, and NeqSim FeCO3 extension to
+remain visible.
+
+---
+
+## 2026-08-02 — Pump NPSH capacity constraint direction corrected
+
+### Summary
+
+`PumpCapacityStrategy` now represents NPSH headroom (`NPSHA - NPSHR`, metres) as a true minimum
+HARD constraint. The previous strategy set the minimum headroom as both a design value and a
+minimum, which selected `current/design` utilization and therefore classified a pump with abundant
+NPSH headroom as overloaded. Utilization is now `minimumHeadroom/currentHeadroom`: values below
+1.0 are feasible, exactly 1.0 is at the limit, and values above 1.0 violate the minimum.
+
+### Compatibility and engineering basis
+
+No public API or pump thermodynamic calculation changed. The strategy default remains a screening
+value; installed studies should use service- and vendor-specific NPSH margin requirements. This
+follows the Hydraulic Institute convention that adequate NPSH is a minimum-availability condition.
+
+### Tests
+
+`PumpCapacityStrategyTest` covers safe, exact-limit, and violated operating points using an executed
+water-pump process case and checks normalized utilization plus HARD-limit behavior.
+
+---
+
+## 2026-08-02 — Typed DNV-RP-F109 on-bottom stability screening
+
+### Summary
+
+NeqSim now exposes a fail-closed `SCREENING` kernel for DNV-RP-F109 edition
+`2021-05+AMD 2025-09`. It covers vertical equilibrium, a transparent
+absolute-static lateral screen, and acceptance checks for displacement supplied by
+an externally validated generalized or dynamic response model. Every calculated
+result remains `CALCULATED_REVIEW_REQUIRED`.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `DnvRpF109OnBottomStabilityInput` | Carries explicit asset, geometry, environmental, hydrodynamic, soil, factor, and response-model inputs without numerical project defaults |
+| `DnvRpF109OnBottomStabilityCalculator` | Calculates normal Morison loads, lift, vertical equilibrium, friction/passive lateral resistance, required submerged weight, and specific gravity |
+| `DnvRpF109OnBottomStabilityAssessment` | Returns immutable load-case intermediates, limit-state checks, governing utilization, and approval-required state |
+| `DnvRpF109OnBottomStabilityKernel` | Enforces edition, equipment applicability, complete inputs, unique cases, and external-response evidence before calculation |
+| `StandardType.DNV_RP_F109` | Adds current publisher-sourced standard discovery for pipelines, flexible pipes, cables, and umbilicals |
+
+### Boundary and migration
+
+No existing API changes. The kernel does not reproduce generalized design tables,
+generate dynamic response, derive environmental statistics, qualify pipe-soil
+models, or claim DNV conformity. Use the licensed current RP and independent
+engineering review for design approval. The `neqsim-subsea-and-wells`,
+`neqsim-flow-assurance`, and `neqsim-standards-lookup` skills now route on-bottom
+stability work to the typed kernel; the previous incorrect association of
+DNV-RP-F109 with cooldown/no-touch time has been removed. Two unreferenced legacy
+CSV rows that presented 1.1 lateral and vertical factors as generic standard
+defaults were also removed; factors must now be traceable project inputs.
+
+### Tests and example
+
+`DnvRpF109OnBottomStabilityKernelTest` checks fail-closed readiness, static and
+external-response routes, directional loading, hydrodynamic and soil monotonicity,
+displacement limits, registry discovery, and the audit boundary. The executed
+`dnv_rp_f109_on_bottom_stability.ipynb` notebook demonstrates load-case results,
+velocity sensitivity, and the submerged-weight/friction design space.
+
+---
+
+## 2026-08-02 — Typed DNV-ST-F101 pipeline screening kernel
+
+### New API
+
+- `DnvStF101PipelineDesignInput` keeps the standard edition, safety class, fabrication route,
+  geometry, ovality, material de-rating, operating/incidental/test pressures, combined loads,
+  fatigue spectrum, and installation strain explicit.
+- `DnvStF101PipelineDesignKernel` is registered for `StandardType.DNV_ST_F101` with
+  `SCREENING` maturity and always returns a review-required calculated result.
+- `DnvStF101PipelineAssessment` reports separate utilization checks for pressure containment,
+  collapse, propagation buckling, local-buckling load interaction, fatigue, ovality, and
+  installation strain.
+- `PipelineMechanicalDesign.assessDnvStF101(input, context)` exposes the kernel from the pipeline
+  mechanical-design object without mutating the process model.
+
+### Migration and governance
+
+- Do not use `PipeMechanicalDesignCalculator.DNV_OS_F101` for current DNV-ST-F101 work.
+- `PipelineMechanicalDesign.calcDesign()` now fails closed for the `DNV-ST-F101` string code;
+  it no longer silently selects ASME B31.8.
+- Passing checks are option-screening evidence only. The licensed standard, project amendments,
+  detailed load cases, installation analysis, fabrication records, and independent engineering
+  verification remain required.
+
+---
+
+## 2026-07-30 — TwoFluidPipe closure diagnostics exposed as profiles
+
+### Summary
+
+`TwoFluidPipe` now exposes the closure diagnostics already calculated for each
+`TwoFluidSection`. The steady-state and transient report CSVs include the new profiles, and the
+benchmark harness captures their numeric values and risk flags for comparison with public
+simulator exports or field data.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `getOilWaterFlowRegimeProfile()` | Reports the oil-water flow configuration by section |
+| `getWaterWettingProfile()` | Reports water-wetting flags for corrosion screening |
+| `getWaterDropoutRiskProfile()` | Reports water dropout or accumulation flags |
+| `getEntrainmentFractionProfile()` | Reports estimated liquid entrainment fractions |
+| `getEntrainedDropletDiameterProfile()` | Reports characteristic entrained droplet diameters |
+| `getSevereSluggingNumberProfile()` | Reports the riser-base severe-slugging stability number |
+| `getSevereSlugPotentialProfile()` | Reports severe-slugging risk flags |
+
+### Reporting and validation
+
+`TwoFluidPipeReport` appends the closure profiles to its steady-state and transient CSV exports.
+`TwoFluidBenchmarkHarness` adds `entrainment_fraction`, `entrained_droplet_diameter_m`,
+`severe_slugging_number`, `water_wetting_flag`, `water_dropout_risk_flag`, and
+`severe_slug_potential_flag`.
+
+Continuous benchmark profiles use linear interpolation. Variables ending in `_flag` and intervals
+with non-finite diagnostic sentinels use nearest-neighbour sampling, preserving binary flags and
+avoiding interpolation-generated `NaN` values.
+
+### Tests
+
+`TwoFluidPipeReportTest` verifies profile shape, physical bounds, and report columns.
+`TwoFluidBenchmarkHarnessTest` verifies capture, continuous interpolation, discrete flag sampling,
+non-finite sentinel handling, and comparison of the new benchmark variables.
+
+---
+
+## 2026-07-30 — Boundary-flow convergence filters and wider low-flow bypass coverage
+
+### Summary
+
+Multi-area plant convergence used a pure **maximum-of-relative-errors** gate with a hard-coded
+`1e-9 kg/hr` exclusion floor. A stagnant dead leg carrying `0.1 kg/hr` could wobble by
+`0.007 kg/hr` — a `6.6e-02` relative error — and dominate the gate, masking a real `443 kg/hr`
+residual on a `138 t/hr` export stream (`3.2e-03`). The floor is now configurable and an absolute
+flow criterion has been added. The low-flow section bypass has also been extended to the equipment
+that previously ignored it, and now always publishes the bypassed unit's outlet state so downstream
+units keep a valid pressure boundary.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `ProcessModel.setBoundaryFlowFloor(kgPerHour)` / `getBoundaryFlowFloor()` | Boundary streams below this flow are excluded from the convergence metric and from `getNonConvergedBoundaryStreamErrors()`. Default `ProcessModel.DEFAULT_BOUNDARY_FLOW_FLOOR` = `1e-9` |
+| `ProcessModel.runUntilConverged(maxIter, relTol, absFlowTolKgPerHr)` | A stream is flow-converged when relative error &lt; `relTol` **OR** absolute change &lt; `absFlowTol` |
+| `ProcessModel.setAbsoluteFlowTolerance(kgPerHour)` / `getAbsoluteFlowTolerance()` | Same criterion, set independently of the run call. Default `0.0` = legacy relative-only |
+| `ProcessModel.BoundaryStreamError.getAbsoluteFlowChange()` | Absolute Δflow (kg/hr) for a boundary stream — tells noise from residual at a glance |
+| `ProcessEquipmentBaseClass.setMinimumFlow(value, unit)` / `getMinimumFlow(unit)` | Unit-aware low-flow threshold (`kg/hr`, `kg/sec`, `kg/min`, `kg/day`, `tonne/hr`, `tonne/day`, `lb/hr`) |
+| `ProcessEquipmentBaseClass.massFlowConversionToKgPerHour(unit)` | Static conversion helper used by the above |
+| `ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW` | `1e-20` sentinel meaning "no explicit threshold configured" |
+| `ProcessSystem.setSectionLowFlowThreshold(value, unit)` | Unit-aware section threshold |
+
+### Behaviour changes
+
+- **`Manifold` bug fix.** `setMinimumFlow()` / `setSectionLowFlowThreshold()` on a `Manifold` was a
+  silent no-op because `run()` delegates to an internal mixer and splitter that never received the
+  threshold. It is now propagated, and the manifold reports `isActive()` from its splitter.
+- **`Pump` unit fix.** `Pump.run()` compared `minimumFlow` against **kg/sec** while every other
+  equipment and `ProcessSystem.setSectionLowFlowThreshold()` use **kg/hr**, so a plant-wide
+  threshold of 50 kg/hr silently meant 50 kg/sec (180 000 kg/hr) for pumps and bypassed them at any
+  normal flow. `minimumFlow` is now kg/hr everywhere. `PumpCapacityStrategy` likewise changed its
+  `flowRate` constraint from `m3/hr` to `kg/hr`.
+- **New bypass coverage (opt-in).** `ThrottlingValve`, `PipeBeggsAndBrills` and
+  `MultiStreamHeatExchanger` now honour the threshold. They fire **only** when a threshold above
+  `DEFAULT_MINIMUM_FLOW` is configured, because deactivating on the default would permanently skip a
+  unit that is momentarily dry inside a recycle loop (the scheduler skips inactive units for the
+  rest of the solve pass). `MultiStreamHeatExchanger` bypasses only when *all* sides are stagnant.
+- **Downstream-safe bypass.** The three new bypasses still write their outlet streams: the valve
+  publishes its specified let-down pressure with zero moles, the pipe and exchanger pass the inlet
+  state through. `Mixer.mixStream()` already ignores inlets at or below its own `minimumFlow` when
+  choosing the outlet pressure, so a dead branch cannot drag the live train down.
+- **`getConvergenceSummary()`** now prints the absolute Δflow next to each relative error and adds a
+  `Flow filters:` line when a non-default floor or absolute tolerance is active.
+
+### Migration
+
+No action required — all defaults reproduce the previous behaviour. For plants with stagnant legs:
+
+```java
+plant.setBoundaryFlowFloor(1.0);                       // drop sub-1 kg/hr boundary streams
+boolean ok = plant.runUntilConverged(15, 1e-3, 1.0);   // rel 1e-3 OR abs 1 kg/hr
+```
+
+If you previously called `pump.setMinimumFlow(x)` intending kg/sec, multiply by 3600.
+
+### Tests
+
+`ProcessModelConvergenceFilterTest`, `LowFlowBypassDownstreamEffectTest`, `ManifoldLowFlowTest`,
+`PumpLowFlowThresholdTest`.
+
+### Docs / skills to update
+
+`docs/process/processmodel/low_flow_bypass.md` (updated), `neqsim-troubleshooting`,
+`neqsim-platform-modeling`, `neqsim-agentic-process-optimization`.
+
+---
+
+## 2026-07-28 — Dynamic VU flashes preserve nearby CPA state
+
+### Summary
+
+Continuous separator and tank calculations with associating fluids now initialize each VU flash
+from the immediately preceding converged thermodynamic state. This preserves CPA association and
+phase-equilibrium work between nearby time steps. Cubic-EOS dynamics and standalone VU flashes keep
+their previous cold-start behavior, and a dynamic warm initialization retries once from the
+incoming pressure and temperature if it does not satisfy the volume and internal-energy residuals.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `ThermodynamicOperations.VUflash(Vspec, Uspec, warmStartInitialization)` | Explicitly selects warm or cold initialization for a VU flash |
+| `ThermodynamicOperations.VUflash(volume, energy, volumeUnit, energyUnit, warmStartInitialization)` | Unit-aware version of the same option |
+| `OptimizedVUflash.getLastIterationCount()` | Reports the Newton iterations used by the last solve |
+| `OptimizedVUflash.isLastRunConverged()` | Reports whether the final state met the accepted V/U residual criteria |
+| `OptimizedVUflash.wasColdFallbackUsed()` | Reports whether a requested warm initialization needed the cold retry |
+
+### Dynamic behavior
+
+`Separator.runTransient`, `ThreePhaseSeparator.runTransient`, and `Tank.runTransient` opt in to
+warm initialization for associating fluids. Cubic-EOS dynamics, existing VU-flash overloads, and
+steady-state calls remain cold by default.
+
+### Test
+
+`VUFlashTest.testDynamicCpaVUflashUsesBoundedWarmStarts` covers repeated, nearby three-phase
+SRK-CPA VU flashes and verifies bounded convergence without a cold fallback.
+`DynamicCompressorNotebookRegressionTest` protects the established cubic-EOS dynamic trajectory.
+
+---
+
+## 2026-07-27 — Capacity-aware compressor operating points and optimizer alignment
+
+### Summary
+
+Compressor reporting, bottleneck detection, and pressure-boundary optimization now use the same
+capacity-constraint semantics. A typed immutable result provides a stable handoff to field-life,
+energy, emissions, and external calculation tools without replacing the existing map/JSON API.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `Compressor.getOperatingPointResult()` | Returns physical performance, map status, recycle losses, pressure-target status, limiting constraint, and detached capacity snapshots |
+| `Compressor.getOperatingPointResult(tolerance)` | Uses a caller-defined relative discharge-pressure tolerance |
+| `CompressorOperatingPointResult.toJson()` | Exports the typed result as schema-versioned JSON |
+
+### Capacity and optimization behavior
+
+- Surge and stonewall are now true minimum-good constraints: their current values are physical
+  margin percentages, and configured minima are 10 % and 5 % by default.
+- Hard minimum constraints now report `isHardLimitExceeded() == true` below their minimum.
+- `PressureBoundaryOptimizer` consumes every enabled, non-design, non-advisory compressor
+  `CapacityConstraint`. Custom power and speed settings remain explicit additional overrides.
+
+> **Behavior change:** a compressor below its required surge or stonewall margin is now infeasible
+> to bottleneck and optimization APIs. Previously the already-normalized margin supplier prevented
+> the minimum value from becoming a violation.
+
+### Tests
+
+`CompressorOperatingPointResultTest`, `CapacityConstraintMinimumLimitTest`, and
+`PressureBoundaryCapacityIntegrationTest`.
+
+## 2026-07-27 — Column convergence gate corrected, solver runtime knobs reachable, ProcessModel per-boundary-stream diagnostics
+
+### Summary
+
+`DistillationColumn.solved()` could return `true` for a tray profile that violated the MESH component
+material balance by 79 %, because two of the three residual gates were fed fabricated zeros and the
+third had a tolerance no bounded residual can exceed. Separately, three configuration knobs were
+silently ignored or unreachable, so a column inside a `ProcessModel` could burn hundreds of
+iterations per solve with no way to stop it, and `ProcessModel` reported convergence-error magnitudes
+without naming the stream that produced them.
+
+### `DistillationColumn` — convergence gate (correctness)
+
+| Problem | Fix |
+|---|---|
+| `NaphtaliSandholmSolver.getLastTemperatureResidual()` and `getLastEnergyResidual()` were `return 0.0;` stubs. The column stored those zeros, so the temperature gate passed unconditionally and the energy gate reported a perfect balance for any solution | The temperature getter returns `Double.NaN` (this solver has no successive-substitution sweep, so it genuinely has no such residual) and the energy getter returns the real `computeMaxRelativeEnergyError()` of the accepted state. `solved()` treats a `NaN` temperature residual by requiring the MESH residual gate to be active instead — the actual convergence measure of a simultaneous-correction solver |
+| The MESH gate could not reject a broken component material balance. The `MATERIAL` residual entries scale each component by its **own** throughput, so a trace component moving from 1e-25 to 1.2e-25 mol/hr produces the same 0.17 residual as a 17 % imbalance on the key component — and they were compared against `meshResidualTolerance = 1.0`, which a residual bounded by 1 can never exceed | New throughput-weighted per-tray measure `getLastTrayMaterialBalanceError()` (summed absolute tray imbalance / tray molar throughput, trace-insensitive) gated by `getTrayMaterialBalanceTolerance()` / `setTrayMaterialBalanceTolerance(t)`, default `2.0e-2` |
+| `finalizeNaphtaliSolve()` never recomputed `lastInternalTrafficRatio`, so a stale ratio from a previously used solver leaked into the gate, and it reported `RECONCILED_PRODUCTS` even when the solver had rejected its own result | The mass residual and internal traffic ratio are recomputed from the applied tray state, and a rejected solve is reported as `SolveStatus.FAILED` |
+| `lastSolveStatus` is `transient`, so a column restored from a serialized model returned `null` from `getLastSolveStatus()` | Both `getLastSolveStatus()` and `getLastSolveStatusReason()` are now null-safe (`NOT_RUN` / `""`) |
+
+`getConvergenceDiagnostics()` prints the per-tray material imbalance next to its tolerance and adds a
+recommendation when it is exceeded.
+
+> **Behavior change:** a solve whose tray profile does not close the per-tray component material
+> balance now reports `solved() == false` where it previously reported `true`. The products are
+> unchanged — only the verdict is. Callers that gate on `solved()` will start seeing failures they
+> were previously blind to.
+
+### `DistillationColumn` — runtime knobs
+
+| Problem | Fix |
+|---|---|
+| `setMaxNumberOfIterations(n)` is only a **soft floor** — the effective budget is `max(n, 5 × trays)` plus the overflow expansion, so `setMaxNumberOfIterations(10)` on an 11-tray column still ran ~187 iterations | Now logs a warning when the request is below the tray-based floor. New `getMaxNumberOfIterations()` (configured) and `getEffectiveMaxNumberOfIterations()` (what the solver will use). Use the existing `setMaxNumberOfIterations(n, true)` / `setHardIterationCap(true)` for a hard cap |
+| `minSequentialRelaxation = 0.5` was private with no setter and clamped `setRelaxationFactor` from below, so damping below 0.5 was impossible | `setRelaxationFactor(f)` now also lowers the sequential and inside-out relaxation floors, and validates that `f` is finite and positive. New `setMinSequentialRelaxation` / `getMinSequentialRelaxation`, `setMinInsideOutRelaxation` / `getMinInsideOutRelaxation`, `getRelaxationFactor` |
+| The default absolute temperature tolerance (~0.02–0.03 K) can be ~10× tighter than the enclosing `ProcessModel` boundary gate (1e-3 relative ≈ 0.27 K) | New `setTemperatureToleranceRelative(rel)` (returns the resulting absolute K value) and `getReferenceTemperature()` (average tray temperature, else average external feed temperature, else 300 K) |
+
+```java
+column.setMaxNumberOfIterations(20, true);       // HARD cap, not a floor
+column.setRelaxationFactor(0.3);                 // now actually damps below 0.5
+column.setTemperatureToleranceRelative(1.0e-3);  // match the plant-level gate
+```
+
+> **Behavior change:** `setRelaxationFactor(0.0)` (or a non-finite value) now throws
+> `IllegalArgumentException` instead of disabling the update. `DistillationColumn.Builder`
+> only forwards a relaxation factor that is strictly positive.
+
+### `ProcessModel`
+
+`getConvergenceSummary()` and `getConvergenceReportJson()` now name the offending boundary stream:
+
+| API | What it does |
+|---|---|
+| `getLastBoundaryStreamErrors()` | Per-stream flow/temperature/pressure errors from the last outer iteration, worst first |
+| `getNonConvergedBoundaryStreamErrors()` | Same list filtered to streams outside tolerance |
+| `getWorstBoundaryStreamName(variable)` / `getWorstBoundaryStreamError(variable)` | Worst offender for `"flow"`, `"temperature"` or `"pressure"` |
+| `BoundaryStreamError.isFlowCollapsedToZero()` / `isFlowStartedFromZero()` | Explains a relative flow error of **exactly 1.0** — the stream stopped (or started) flowing between outer passes, i.e. an upstream fault rather than a slow recycle |
+
+JSON report gains `errors.{flow,temperature,pressure}.worstStream` and a top-level
+`boundaryStreamErrors` array (`name`, `flowError`, `temperatureError`, `pressureError`,
+`previousFlowKgPerHr`, `currentFlowKgPerHr`, `flowCollapsedToZero`, `flowStartedFromZero`).
+
+### Agents / skills updated
+
+- `neqsim-distillation-design` — new "Runtime control: iteration budget, damping and tolerance" section.
+- `neqsim-troubleshooting` — new "Column runs hundreds of iterations" and "ProcessModel Boundary Convergence" playbooks.
+
+### Tests
+
+`DistillationColumnConvergenceGateTest`, `DistillationColumnSolverTuningTest`,
+`ProcessModelBoundaryStreamDiagnosticsTest`.
+
+---
+
+## 2026-07-27 — Flowsheet performance switches, shared CPA warm-start policy, identity-equality follow-ups
+
+### Summary
+
+Follow-up pass over the process/flash performance work merged the same day. It documents three
+public APIs that shipped undocumented, makes two closely related flowsheet-wide switches behave
+the same way, extends the CPA warm-start policy from two flash routines to all of them, and
+corrects documentation that contradicted the identity-equality change.
+
+### New public API (previously undocumented)
+
+| API | What it does |
+|---|---|
+| `Stream.PropertyInitLevel` (`FULL`, `DENSITY_ONLY`) | Selects how much of `initProperties()` runs after each stream flash. |
+| `Stream.setPropertyInitLevel(level)` / `getPropertyInitLevel()` | Per-stream control. |
+| `ProcessSystem.setPropertyInitLevel(level)` → `int` | Flowsheet-wide control; returns the number of streams updated. |
+| `ProcessModel.setPropertyInitLevel(level)` / `setPropertyInitLevel(area, level)` | Plant-wide and per-area control (new in this pass). |
+| `EclipseFluidReadWrite.setUseCache` / `isUseCache` / `clearCache` | Enables and clears the parsed-E300 fluid cache. |
+| `EclipseFluidReadWrite.setMaxCacheSize` / `getMaxCacheSize` / `DEFAULT_MAX_CACHE_SIZE` | Bounds that cache (new in this pass). |
+
+> **⚠ `PropertyInitLevel.DENSITY_ONLY` reads transport properties back as zero.**
+> It skips the viscosity, thermal-conductivity and diffusivity correlations. Those getters do
+> **not** throw afterwards — `getViscosity()`, `getThermalConductivity()` and the diffusion
+> coefficients simply return `0.0`. Only use it for flowsheets that need mass and energy
+> balances; switch back to `PropertyInitLevel.FULL` before any pipeline, heat-exchanger,
+> mechanical-design or flow-assurance calculation that reads transport properties.
+
+```java
+// Fast material-balance solve of a big plant, full properties in the flow-assurance area only.
+plant.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
+plant.setPropertyInitLevel("subsea", Stream.PropertyInitLevel.FULL);
+plant.run();
+```
+
+### `setPropertyInitLevel` and `setMultiPhaseCheck` now behave the same
+
+`ProcessSystem.setPropertyInitLevel` previously returned `void`, was not propagated into nested
+`ModuleInterface` sub-processes, had no `ProcessModel` delegation, and was not re-applied when the
+model ran. It now matches `setMultiPhaseCheck` on all four points.
+
+**Migration:** `setPropertyInitLevel` returns `int` instead of `void`. Existing call sites compile
+unchanged; only a caller that assigned the result of a `void` method (not possible) would break.
+
+Both settings are now re-applied at the start of **every** execution entry point — `run(UUID)`,
+`run_step(UUID)`, `runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
+`runDataflow(UUID)` and `runTransient(double, UUID)`. Previously only `run`, `run_step` and
+`runParallel` re-applied `setMultiPhaseCheck`, so a `ThreePhaseSeparator` that turned the
+multiphase check back on leaked it into the rest of the area under the other four entry points.
+
+### CPA K-value warm starts: one policy, all iterative flashes
+
+New shared predicate:
+
+```java
+neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(SystemInterface system)
+```
+
+Returns `false` for CPA models (by model name, plus a `PhaseCPAInterface` check), `true` for cubic
+EOS. `PHflash.isInnerTpFlashWarmStartSafe()` and `PSFlash.isInnerTpFlashWarmStartSafe()` — which
+carried byte-identical copies of this logic — now delegate to it.
+
+The policy is applied to the remaining iterative flashes from issue #2110, which all enabled
+K-value reuse unconditionally: `THflash`, `TSFlash`, `TUflash`, `TVflash`, `TVfractionFlash`,
+`VSflash`, `VHflashQfunc`, `VUflashQfunc`, `ImprovedVUflashQfunc`, `OptimizedVUflash`,
+`PHsolidFlash`, `PUflash`, `PVFflash`, `PVflash`, `PVrefluxflash`, `QfuncFlash`.
+
+`TPflash`'s multiphase-rescue path deliberately keeps an unconditional warm start for every model:
+it continues from a seed flash at a nearby temperature, and carrying the seed K-values over is the
+mechanism that finds the extra phase.
+
+**Impact:** CPA flowsheets (TEG/MEG/glycol, water-bearing) avoid the documented CPA runtime
+regression in these flashes. Cubic EOS behaviour is unchanged. No tolerance, convergence-acceptance
+or flash-equation change.
+
+### `EnergyStream` now uses identity equality
+
+`EnergyStream.hashCode()` returned `Objects.hashCode(duty)` and `equals()` compared duty only, but
+`duty` is rewritten by `setDuty()` on every run — the same mutable-hash defect that motivated
+removing `equals`/`hashCode` from `ProcessSystem` and the process-equipment classes. Two distinct
+energy streams also compared equal whenever their duties matched.
+
+**Migration:** `energyStreamA.equals(energyStreamB)` is now `true` only for the same instance.
+Compare `getDuty()` explicitly when a value comparison is intended.
+
+### `EclipseFluidReadWrite` cache is bounded
+
+The parsed-fluid cache was an unbounded `ConcurrentHashMap`, so a long-running service reading many
+distinct E300 files (or the same file repeatedly after edits, since the key includes the
+last-modified timestamp) grew without limit. It is now an LRU map capped at
+`DEFAULT_MAX_CACHE_SIZE = 64`, adjustable with `setMaxCacheSize(int)`. The mutable
+`public static pseudoName` is also snapshotted once per read, so a concurrent change of that field
+can no longer mismatch a cached entry with the prefix it was parsed under.
+
+### Documentation corrections
+
+The identity-equality change removed `equals`/`hashCode` from `ProcessSystem`,
+`ProcessEquipmentBaseClass`, `Compressor`, `Mixer` and `Separator`. Javadoc added afterwards still
+described those hashes as "value based and mutable", and had been attached to `getReport_json()`
+and `toJson()` — both `String`-returning methods that then carried a wrong
+`@return content-based hash …` tag. Those blocks are removed and a correct identity-equality note
+now sits in the class Javadoc of `ProcessSystem`, `ProcessEquipmentBaseClass` and `EnergyStream`.
+The `PFDLayoutPolicy` cache comments and the `ProcessObjectIdentityKeyTest` class Javadoc were
+corrected the same way.
+
+`Expander.DEFAULT_EXPANDER_CALC_STEPS` (5, down from a hard-coded 40) claimed "the same result …
+to within numerical noise". Measured on a 90 → 30 bara rich-gas expansion the difference is about
+**0.06 K** outlet temperature out of a 51 K drop and under 0.5 % shaft power — now stated
+quantitatively and locked in by `ExpanderPolytropicStepsTest`.
+
+### Agents and skills to update
+
+- `neqsim-process-modeling`, `neqsim-platform-modeling` — the two flowsheet-wide performance
+  switches and the `DENSITY_ONLY` transport-property warning.
+- `neqsim-api-patterns` — `EclipseFluidReadWrite` cache controls.
+- `neqsim-troubleshooting` — "viscosity/thermal conductivity is zero" now has a second cause:
+  a stream running at `PropertyInitLevel.DENSITY_ONLY`.
+
+---
+
+## 2026-07-27 — Fix: `DistillationColumn.solved()` no longer contradicts the reported solve status
+
+### Summary
+
+`DistillationColumn.solved()` could return `false` for a column whose
+`getLastSolveStatus()` was `RIGOROUS_CONVERGED` and whose residuals — as reported by
+`getLastTemperatureResidual()` and `getConvergenceDiagnostics()` — were all inside their
+tolerances. Observed on a TEG regeneration column: reported temperature residual
+`0.0168 K` against a `0.05 K` tolerance, while the internal gate saw `0.270`.
+
+Cause: the convergence gate tested the private working field `err` instead of
+`lastTemperatureResidual`. `err` is the live iteration variable of every inner solver loop —
+reset to `1e10` or `0.0` on solver entry and accumulated tray by tray — so any solver pass
+that exits before `finalizeSolve()` leaves it holding a partial value.
+
+Impact: enclosing `Recycle`, `ProcessSystem`, and `ProcessModel` loops never saw the column
+as converged and kept iterating until an iteration cap or wall-clock timeout, then returned a
+partially converged state. Downstream consumers saw very long run times and results that
+drifted between runs.
+
+### What changed
+
+- `residualConvergenceSatisfied()` now gates on `lastTemperatureResidual`, the same value
+  reported by `getLastTemperatureResidual()` and `getConvergenceDiagnostics()`. Both it and
+  `lastSolveStatus` are written by `finalizeSolve()` and cleared by `resetLastSolveMetrics()`,
+  so they stay consistent.
+- `internalTrafficSatisfied()` now compares against `MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO`
+  (100) instead of the relaxed-update limit `MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO` (1e5).
+- Guarded fallback products now log a warning. When the tray solution is rejected,
+  `updateProductsFromOverallFeedFlash()` replaces the public products with a **single
+  equilibrium flash of the mixed feeds**. The residual getters are computed against those
+  fallback products and therefore look converged. Check `getLastSolveStatus()` —
+  `FALLBACK_PRODUCTS` means product flows and duties are not a rigorous column result.
+- A non-finite reboiler or condenser duty after a solve is now logged instead of being
+  silently returned by `getDuty()`.
+- `massBalanceCheck()` and `componentMassBalanceCheck()` use `logger.debug` instead of
+  `System.out.println`.
+
+### Migration
+
+No API change. Callers that worked around the old behaviour by ignoring `solved()` can now
+rely on it. When reading column results programmatically, always check
+`getLastSolveStatus()` in addition to the residual getters.
+
+Regression test: `src/test/java/neqsim/process/equipment/distillation/DistillationColumnSolvedConsistencyTest.java`.
+
+---
+
+## 2026-05-14 — Breaking: `Condenser.setRefluxRatio()` now means L/D, not a split fraction
+
+### Summary
+
+Before PR #2156 the value passed to `Condenser.setRefluxRatio(r)` was used directly as the
+split fraction of the condensed liquid returned as reflux:
+
+```java
+mixedStreamSplitter.setSplitFactors(new double[] {r, 1.0 - r});
+```
+
+It is now interpreted as a true reflux ratio `R = L/D` and converted internally:
+
+```java
+double refluxFraction = r <= 0.0 ? 0.0 : r / (1.0 + r);
+mixedStreamSplitter.setSplitFactors(new double[] {refluxFraction, 1.0 - refluxFraction});
+## 2026-07-27 — Fix: never use `ProcessSystem` or process equipment as a hash-map key
+
+### Summary
+
+`ProcessSystem.hashCode()` and `ProcessEquipmentBaseClass.hashCode()` are **value based over
+mutable state**. `ProcessSystem` hashes `time`, `timeStepNumber`, the measurement history and
+every unit operation; equipment hashes `report`, `properties`, `conditionAnalysisMessage` and
+the attached controllers. All of those are rewritten by `run()`, so the hash of a process or a
+unit changes as the model solves.
+
+Using such an object as a `HashMap` key or `HashSet` element violates the `Map` contract: after
+a run the entry sits in the wrong bucket, so lookups miss. It never returns a *wrong* value —
+`equals()` still guards — which is why the failure is silent: caches degrade to permanent
+misses, registries lose entries and re-register duplicates, and stale entries are never
+collected.
+
+### What changed
+
+- `PFDLayoutPolicy.roleCache` / `phaseCache` — were `HashMap` keyed on equipment and streams.
+  These are long-lived caches, so they were guaranteed to stop resolving after the first
+  `run()`. Now `IdentityHashMap`.
+- `ProcessSystem.buildHybridPlan()` — the `iterativeSet` membership set is now identity based.
+- `ProcessSystem.deactivateSection(String)` / `activateSection(String)` — the `visited`
+  traversal sets are now identity based. Besides the mutable-hash issue, an equals-based set
+  could mark a *different* unit as already visited when two units share a name, which happens
+  across the areas of a `ProcessModel`.
+- Both `hashCode()` methods now carry an explicit JavaDoc warning.
+
+This aligns the remaining call sites with the pattern already used by `ProcessModel`,
+`JsonProcessExporter`, `KValueProcessSimulator`, the DEXPI writers and the Graphviz exporters.
+
+### Migration
+
+No API change. **Agents and downstream code:** never key a map or set on `ProcessSystem`,
+`ProcessEquipmentInterface` or `StreamInterface`. Use:
+
+```java
+Map<StreamInterface, Foo> byStream = new IdentityHashMap<StreamInterface, Foo>();
+Set<ProcessEquipmentInterface> seen =
+    Collections.newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
+```
+
+**Caveat — persisted fields.** Use these for locals and `transient` fields only. XStream has no
+converter for `IdentityHashMap` or `Collections.newSetFromMap(...)` and falls back to reflecting
+into `java.util`, which the JDK module system blocks. Maven Surefire passes
+`--add-opens java.base/java.util=ALL-UNNAMED` so Java tests never see it, but embedded hosts such
+as neqsim-python do not, and `save_neqsim` then fails with "No converter available" and writes a
+truncated file. For a non-transient field, store the identity set as a `List` scanned with `==`
+(see `RecycleController.acceptedRecycleSeeds`).
+`ProcessSystemXStreamPortabilityTest` walks a run `ProcessSystem` and fails on any such field.
+
+To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` rather
+than `equals()`.
+
+---
+
+## 2026-07-27 — New: per-area three-phase flash control (`setMultiPhaseCheck`)
+
+### Summary
+
+The multiphase (three-phase) flash can now be switched on or off for a whole
+`ProcessSystem`, and per area on a `ProcessModel`. On a large multi-area plant the
+separation trains keep the check (free water, glycol, MEG), while areas that are known to be
+two-phase only — recompression, export compression, fuel gas — skip the extra
+phase-stability analysis on every flash of every recycle iteration.
+
+### What changed
+
+- `ProcessSystem.setMultiPhaseCheck(boolean)` — applies the setting to every fluid held by
+  the unit operations and their inlet/outlet streams, propagates into nested
+  `ModuleInterface` sub-processes, and returns the number of distinct fluids updated
+  (identity-based, so a shared fluid counts once).
+- `ProcessSystem.getMultiPhaseCheck()` — returns `TRUE`, `FALSE`, or `null` when the method
+  has never been called.
+- The setting is **re-applied at the start of every run** (`run(UUID)`, `runParallel(UUID)`,
+  `run_step(UUID)`), so equipment that temporarily enables the check —
+  `ThreePhaseSeparator` does this for its own flash — cannot leak three-phase mode into the
+  rest of the area across recycle iterations.
+- `ProcessModel.setMultiPhaseCheck(boolean)` — all areas; returns the total fluids updated.
+- `ProcessModel.setMultiPhaseCheck(String areaName, boolean)` — one area; returns `-1` if the
+  area name is unknown.
+
+```java
+plant.setMultiPhaseCheck(true);                    // baseline for all areas
+plant.setMultiPhaseCheck("Export train A", false); // dry gas only
+compressionTrain.setMultiPhaseCheck(false);        // single ProcessSystem
+```
+
+### Migration
+
+Any model calibrated against the old meaning runs at a different reflux and must be re-tuned.
+To reproduce the old split fraction `f`, pass `R = f / (1 - f)`.
+
+Affected: TEG regeneration and other columns that call `getCondenser().setRefluxRatio(...)`.
+None. The default is unset (`getMultiPhaseCheck()` returns `null`), which leaves the
+multiphase flag of each fluid exactly as the fluid was built, so existing models are
+unaffected until the method is called.
+
+**Correctness warning for agents:** only disable the check where the absence of a third
+phase is known from the process, not assumed. Turning it off on an area where free water, an
+aqueous glycol/MEG phase, or a liquid CO2 phase can form silently produces a two-phase
+answer.
+
+Docs: [`docs/process/processmodel/process_system.md`](docs/process/processmodel/process_system.md),
+[`docs/process/processmodel/process_model.md`](docs/process/processmodel/process_model.md).
+Test: `src/test/java/neqsim/process/processmodel/ProcessSystemMultiPhaseCheckTest.java`.
+
+---
+
+## 2026-07-27 — Change: `Expander` polytropic path defaults to 5 pressure steps
+
+### Summary
+
+`Expander.run()` integrated the polytropic expansion over a hard-coded 40 pressure steps,
+i.e. 40 flashes per expander per iteration. The step count is now taken from the inherited
+`Compressor.getNumberOfCompressorCalcSteps()` and the `Expander` constructor seeds it with
+`Expander.DEFAULT_EXPANDER_CALC_STEPS = 5`. Five steps reproduce the 40-step result to within
+numerical noise at a fraction of the flash cost, which matters in recycle loops where the
+expander is re-run every iteration.
+
+### Migration
+
+None required. To restore the previous resolution — or to raise it for a strongly
+non-ideal fluid — call `expander.setNumberOfCompressorCalcSteps(40)`. Results may move in
+the last significant digits; re-baseline any test that asserted expander outlet enthalpy or
+temperature to a tolerance tighter than the integration error.
+## 2026-07-27 — Breaking: `ProcessSystem` and process equipment use identity equality
+
+### Summary
+
+`ProcessSystem`, `ProcessEquipmentBaseClass`, `Compressor`, `Mixer` and `Separator` implemented
+value-based `equals()`/`hashCode()` over **mutable** state. `ProcessSystem` hashed `time`,
+`timeStepNumber`, the measurement history and every unit operation; the equipment classes hashed
+`report`, `properties`, the attached controllers and their thermodynamic systems. All of that is
+rewritten by `run()`.
+
+A hash that changes while the object is a key breaks the `Map` contract: after a run the entry sits
+in the wrong bucket, so lookups miss. It never returned a *wrong* value — `equals()` still guarded —
+which is why the failure was silent: caches degraded to permanent misses, registries lost entries
+and re-registered duplicates, and stale entries were never collected. The overrides were also
+expensive (`Arrays.deepHashCode(report)` plus a recursive hash over every unit operation) and
+semantically ambiguous — "is this the same flowsheet" is a different question from "is this the
+same object".
+
+These types now inherit identity semantics from `Object`, so the hash is stable for the lifetime of
+the instance.
+
+### What changed
+
+Removed `equals()` and `hashCode()` from:
+
+- `ProcessSystem` (and its private `MeasurementHistory` helper, which only existed to serve them)
+- `ProcessEquipmentBaseClass`
+- `Compressor`, `Mixer`, `Separator` — these called `super.equals()`/`super.hashCode()`, so they
+  had to go with the base class to keep the hierarchy consistent
+
+The redundant `equals`/`hashCode` re-declarations in `ProcessEquipmentInterface` and
+`StreamInterface` were removed as well; they only restated `Object` methods and now implied an
+override that no longer exists.
+
+Genuine immutable value objects are **unchanged** — `ProcessConnection`, `ProcessNode`,
+`ProcessEdge`, `CompressorChart`, `CompressorCurve`, `BoundaryCurve`, `FunctionalLocation`,
+`ReferenceDesignation`, `EnergyStream`, the design-standard and cost classes all keep their
+value semantics.
+
+### Migration
+
+- `processA.equals(processB)` and `compressorA.equals(compressorB)` now return `true` only for the
+  same instance. Two independently built but identically configured objects no longer compare equal.
+- To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` (or
+  `ProcessSystemState`), which reports modified parameters and added/removed equipment.
+- `ProcessSystem.getUnitOperations().contains(unit)` and similar list lookups are now identity
+  checks. This is the intended meaning and fixes the case where two distinct units compared equal
+  because they shared a name — which happens across the areas of a `ProcessModel`.
+- Hash-based collections keyed on a process or a unit now work as expected. `IdentityHashMap` is
+  still the more explicit choice and remains correct.
+
+Regression test: `src/test/java/neqsim/process/processmodel/ProcessEqualityIdentityTest.java`.
+
+---
+
+## 2026-07-25 — New: Energy Networks v3
+
+### Summary
+
+Typed energy streams now support deterministic multi-party dispatch rather than relying only on sequential net-duty
+updates. The implementation adds explicit requests, allocations, priorities, balancing, shortages, curtailment,
+persistent participant IDs, energy-quality metadata, conversion equipment, utility levels, fuel-energy reporting, transient storage/shaft
+behavior, and auditable cost/emissions reporting.
+
+### New capability
+
+- `EnergyBus.solveBalance()` and `EnergyNetworkSolver`: priority/proportional dispatch with real `BALANCE` mode.
+- `EnergyNetworkReport`: supply, demand, unmet load, curtailment, balancing, loss, efficiency, cost, and CO2.
+- `EnergyQuality` and `UtilityLevel`: voltage/frequency, thermal grade, pressure, temperature, and shaft speed.
+- `ElectricMotor`, `Generator`, `Gearbox`, `Inverter`, `Transformer`, and `PrimeMover`: explicit conversion and heat loss.
+- `MotorDriveTrain` and `MotorAssistedDriveTrain`: pump/compressor electrical drives and expander motor assist.
+- `UtilityEnergyBus`, `ThermalUtilitySource`, and `ThermalUtilityConsumer`: typed steam, hot-oil, water, and
+  refrigeration networks.
+- `MechanicalShaft.advanceTransient(dt)` and dynamic `BatteryStorage`: inertia/SOC, ramp limits, and trips.
+- Two-stream, multi-stream, and LNG heat exchangers publish calculated recoverable heat.
+
+### Compatibility
+
+Legacy sequential buses and owner-name/port-name contribution lookup remain supported. Internal network bookkeeping
+uses stable serialized participant IDs, so equipment renaming no longer changes allocation identity.
+
+---
+
+
 ---
 
 ## 2026-07-15 — New: `CompressorChartIGV` (vendor IGV-position chart family, Phase 2)

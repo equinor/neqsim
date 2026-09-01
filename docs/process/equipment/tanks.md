@@ -3,8 +3,6 @@ title: Storage Tanks
 description: Documentation for liquid storage tanks in NeqSim.
 ---
 
-# Storage Tanks
-
 Documentation for liquid storage tanks in NeqSim.
 
 ## Table of Contents

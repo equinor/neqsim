@@ -63,9 +63,14 @@ public class PipelineDesignStandard extends DesignStandard {
   public double calcPipelineWallThickness() {
     if (standardName.equals("StatoilTR")) {
       return 0.11 * safetyFactor;
-    } else {
-      return 0.01;
     }
+    StandardType selectedStandard = cataloguedPipelineStandard();
+    if (selectedStandard != null) {
+      throw new UnsupportedOperationException("No edition-specific wall-thickness calculation is implemented for "
+          + selectedStandard.getCode() + "; use a typed design kernel or requirement pack");
+    }
+    logger.warn("Using legacy 0.01 m pipeline wall-thickness fallback for unrecognised standard {}", standardName);
+    return 0.01;
   }
 
   /**
@@ -83,5 +88,15 @@ public class PipelineDesignStandard extends DesignStandard {
       return standardName;
     }
     return identifier;
+  }
+
+  private StandardType cataloguedPipelineStandard() {
+    for (StandardType standardType : StandardType.values()) {
+      if ("pipeline design codes".equals(standardType.getDesignStandardCategory())
+          && standardName.startsWith(standardType.getCode())) {
+        return standardType;
+      }
+    }
+    return null;
   }
 }

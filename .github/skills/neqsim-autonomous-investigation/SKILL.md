@@ -1,8 +1,8 @@
 ---
 name: neqsim-autonomous-investigation
-version: "1.0.0"
+version: "1.1.0"
 description: "Autonomous investigation loop for operational and engineering anomalies — turns an agent from 'told what to look for' into 'discovers relationships and hypotheses on its own'. USE WHEN: solving a PEPR action, root-cause, or operational study where the symptom, driver, or important relationships are NOT given up front. Runs an observe -> hypothesize -> predict -> test -> discriminate loop, using neqsim.process.diagnostics.RelationshipGraph for unsupervised lead-lag relationship discovery across historian tags, then hands the discovered relationships to neqsim-root-cause-analysis. Anchors on neqsim.process.diagnostics classes."
-last_verified: "2026-07-11"
+last_verified: "2026-07-19"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.automation]
 ---
@@ -74,7 +74,7 @@ graph.setTimestamps(timestamps);      // optional: enables lag in seconds
 graph.setMaxLagSamples(10);           // search +/- 10 samples
 graph.setMinAbsCorrelation(0.5);      // only report |r| >= 0.5
 List<RelationshipGraph.Relationship> edges = graph.analyze(historianData);
-System.out.println(graph.toTextReport(edges));
+String relationshipReport = graph.toTextReport(edges);
 
 for (RelationshipGraph.Relationship r : edges) {
   // r.getSource() leads r.getTarget() (candidate cause -> candidate effect)
@@ -145,8 +145,9 @@ List<CausalTopologyModel.CausalEdge> edges = model.classify(relationships);
 
 The three steps above plus the Bayesian scoring are chained in a single entry
 point. **No symptom is required** — the analyzer scans anomalies, infers the
-symptom, discovers relationships, and (with a tag-to-equipment map) classifies
-them against topology, then runs the standard analysis.
+symptom, discovers relationships, and classifies them against topology, then converts
+hypothesis-matched anomaly and physically consistent topology findings into weighted
+evidence used in ranking.
 
 ```java
 RootCauseAnalyzer rca = new RootCauseAnalyzer(processSystem, "Compressor-1");
@@ -162,6 +163,11 @@ rca.getLastAnomalies();     // what looked abnormal
 rca.getLastRelationships(); // who leads whom
 rca.getLastCausalEdges();   // causal candidate vs common-cause/artifact
 ```
+
+Only `LOCAL` and `CAUSAL_CANDIDATE` edges matching a hypothesis fingerprint affect
+ranking. `COUNTER_FLOW`, `COMMON_CAUSE_OR_ARTIFACT`, and `UNKNOWN` findings remain
+reportable but are not treated as causal support. This conservative admission rule
+prevents correlation alone from inflating confidence.
 
 Python: get the classes with `ns.JClass("neqsim.process.diagnostics.AnomalyScanner")`,
 `...RelationshipGraph`, `...CausalTopologyModel`, `...RootCauseAnalyzer`.

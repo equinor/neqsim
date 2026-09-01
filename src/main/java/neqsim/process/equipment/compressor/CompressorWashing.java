@@ -360,7 +360,7 @@ public class CompressorWashing implements Serializable {
     hoursSinceLastWash = 0.0;
     lastWashMethod = method;
 
-    logger.info("Compressor wash performed: {} - Recovery: {:.1f}%", method.getDisplayName(), recovery * 100);
+    logger.info("Compressor wash performed: {} - Recovery: {}%", method.getDisplayName(), recovery * 100);
 
     return recovery;
   }
@@ -744,10 +744,10 @@ public class CompressorWashing implements Serializable {
    */
   public void printSummary() {
     logger.info("=== Compressor Washing Status ===");
-    logger.info("Current Fouling: {:.1f}%", currentFoulingFactor * 100);
-    logger.info("Head Loss: {:.2f}%", getHeadLossFactor() * 100);
-    logger.info("Efficiency Loss: {:.2f}%", getEfficiencyDegradation() * 100);
-    logger.info("Hours Since Wash: {:.0f}", hoursSinceLastWash);
+    logger.info("Current Fouling: {}%", currentFoulingFactor * 100);
+    logger.info("Head Loss: {}%", getHeadLossFactor() * 100);
+    logger.info("Efficiency Loss: {}%", getEfficiencyDegradation() * 100);
+    logger.info("Hours Since Wash: {}", hoursSinceLastWash);
     logger.info("Washing Recommended: {}", isWashingRecommended() ? "YES" : "No");
     logger.info("Washing Critical: {}", isWashingCritical() ? "YES" : "No");
     logger.info("Dominant Fouling: {}", dominantFoulingType.getDescription());

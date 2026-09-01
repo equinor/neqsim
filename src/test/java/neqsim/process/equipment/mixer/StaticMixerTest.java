@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 class StaticMixerTest {
@@ -44,6 +45,44 @@ class StaticMixerTest {
     double outletFlow = mixer.getOutletStream().getThermoSystem().getFlowRate("MSm3/day");
     // Sum of two 5 MSm3/day streams should be ~10
     assertEquals(10.0, outletFlow, 0.5);
+  }
+
+  @Test
+  void testReusedMixerRetainsGasPhaseAfterChangingInhibitorFlow() {
+    neqsim.thermo.system.SystemInterface gasFluid = new SystemSrkCPAstatoil(278.45, 37.21325);
+    gasFluid.addComponent("methane", 5.0);
+    gasFluid.addComponent("water", 0.11833608283886514);
+    gasFluid.addComponent("MEG", 0.0);
+    gasFluid.setMixingRule(10);
+    gasFluid.setMultiPhaseCheck(true);
+
+    neqsim.thermo.system.SystemInterface megFluid = gasFluid.clone();
+    megFluid.setMolarComposition(new double[] { 0.0, 0.1099744114900417, 0.8900255885099583 });
+
+    Stream gasStream = new Stream("gas", gasFluid);
+    gasStream.setFlowRate(168958.0, "Sm3/hr");
+    gasStream.setTemperature(29.0, "C");
+    gasStream.setPressure(74.1, "barg");
+
+    Stream megStream = new Stream("MEG", megFluid);
+    megStream.setFlowRate(0.01, "kg/hr");
+    megStream.setTemperature(29.0, "C");
+    megStream.setPressure(74.1, "barg");
+
+    StaticMixer mixer = new StaticMixer("reused multiphase mixer");
+    mixer.addStream(megStream);
+    mixer.addStream(gasStream);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(gasStream);
+    process.add(megStream);
+    process.add(mixer);
+    process.run();
+
+    megStream.setFlowRate(0.1, "kg/hr");
+    process.run();
+
+    assertTrue(mixer.getOutletStream().getFluid().hasPhaseType("gas"));
   }
 
   @Test

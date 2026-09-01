@@ -3,8 +3,6 @@ title: "How to Solve an Engineering Task with NeqSim"
 description: "Complete hands-on guide to solving engineering tasks using the AI-assisted 3-step workflow. Covers setup, scope definition, simulation, validation, report generation, and contributing results back. Works with VS Code Copilot, OpenAI Codex, Claude Code, or manually."
 ---
 
-# How to Solve an Engineering Task with NeqSim
-
 This guide walks you through solving a real engineering task — from a blank
 screen to a validated Word/HTML report — using NeqSim's AI-assisted workflow.
 

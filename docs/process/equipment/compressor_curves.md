@@ -3,8 +3,6 @@ title: Compressor Curves and Performance Maps
 description: Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
 ---
 
-# Compressor Curves and Performance Maps
-
 Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
 
 ## Table of Contents
@@ -1202,7 +1200,7 @@ if comp.isHigherThanMaxSpeed():
 For a dynamic example that combines explicit compressor maps, pressure-driven speed control,
 anti-surge recycle, predictive margin supervision, and coordinated pressure-speed-recycle
 override behavior, see [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control)
-and the [dynamic compressor good maps notebook](../../../examples/notebooks/process/dynamic_compressor_good_maps.ipynb).
+and the [dynamic compressor good maps notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/dynamic_compressor_good_maps.ipynb).
 
 ### Surge Control Factor
 

@@ -4,6 +4,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -123,6 +127,8 @@ public class BioProcessingReactorTest {
     reactor.setVesselVolume(50.0);
     reactor.setResidenceTime(24.0, "hr");
     reactor.setAgitatorPowerPerVolume(1.5);
+    EnergyBus electricalBus = new EnergyBus("electrical bus", EnergyType.ELECTRICAL);
+    reactor.connectEnergyStream("agitatorPower", electricalBus, EnergyPortMode.CALCULATED);
     reactor.run();
 
     // Verify outlet stream exists and has expected properties
@@ -135,6 +141,35 @@ public class BioProcessingReactorTest {
 
     // Check agitator power
     Assertions.assertEquals(75.0, reactor.getAgitatorPower(), 1e-6, "Agitator power should be 1.5 * 50 = 75 kW");
+    Assertions.assertEquals(-75.0, electricalBus.getNetPower("kW"), 1e-6,
+        "Agitator should withdraw electrical power from the bus");
+  }
+
+  /**
+   * Test a StirredTankReactor driven by an external heat-duty stream.
+   */
+  @Test
+  public void testStirredTankReactorEnergySpecification() {
+    SystemInterface system = new SystemSrkEos(303.15, 1.01325);
+    system.addComponent("water", 1.0);
+    system.setMixingRule("classic");
+
+    Stream feed = new Stream("heated feed", system);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+    feed.getFluid().init(3);
+    double inletEnthalpy = feed.getFluid().getEnthalpy();
+
+    EnergyStream heat = new EnergyStream("reactor heat", EnergyType.HEAT);
+    heat.setDuty(5.0, "kW");
+    StirredTankReactor reactor = new StirredTankReactor("heated CSTR", feed);
+    reactor.setEnergyStream(heat);
+    reactor.run();
+
+    reactor.getOutletStream().getFluid().init(3);
+    Assertions.assertEquals(5.0, reactor.getHeatDuty("kW"), 1e-9);
+    Assertions.assertEquals(inletEnthalpy + 5.0e3, reactor.getOutletStream().getFluid().getEnthalpy(), 1e-3);
+    Assertions.assertEquals(EnergyPortMode.SPECIFICATION, reactor.getEnergyPort("heatDuty").getMode());
   }
 
   /**

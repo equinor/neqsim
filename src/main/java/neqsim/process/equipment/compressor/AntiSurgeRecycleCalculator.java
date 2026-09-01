@@ -69,10 +69,13 @@ public class AntiSurgeRecycleCalculator implements Serializable {
   private final StreamInterface suctionStream;
 
   /**
-   * Surge-control margin as a fraction of the surge flow. The control line is {@code surgeFlow * (1 + margin)}. Default
-   * 0.05 = 5%.
+   * Surge-control margin as a fraction of the surge flow. The control line is {@code surgeFlow * (1 + margin)}. Only
+   * used as a fallback when neither this calculator nor the compressor has an explicit margin. Default 0.05 = 5%.
    */
   private double surgeControlMargin = 0.05;
+
+  /** True once {@link #setSurgeControlMargin(double)} has been called on this calculator. */
+  private boolean surgeControlMarginSet = false;
 
   /** Recycle cooler outlet temperature value. */
   private double recycleCoolerTemperature = 40.0;
@@ -120,9 +123,10 @@ public class AntiSurgeRecycleCalculator implements Serializable {
   public Result solve() {
     compressor.run();
 
+    double margin = getSurgeControlMargin();
     double surgeFlow = compressor.getSurgeFlowRate();
     double inletVol = compressor.getInletStream().getFlowRate("m3/hr");
-    double controlFlow = surgeFlow * (1.0 + surgeControlMargin);
+    double controlFlow = surgeFlow * (1.0 + margin);
     boolean active = inletVol < controlFlow;
 
     if (!active) {
@@ -157,7 +161,7 @@ public class AntiSurgeRecycleCalculator implements Serializable {
 
       inletVol = compressor.getInletStream().getFlowRate("m3/hr");
       surgeFlow = compressor.getSurgeFlowRate();
-      controlFlow = surgeFlow * (1.0 + surgeControlMargin);
+      controlFlow = surgeFlow * (1.0 + margin);
       double error = controlFlow - inletVol;
       if (Math.abs(error) < tolerance * controlFlow) {
         converged = true;
@@ -179,21 +183,35 @@ public class AntiSurgeRecycleCalculator implements Serializable {
   }
 
   /**
-   * Get the surge-control margin.
+   * Get the surge-control margin actually used by {@link #solve()}.
+   *
+   * <p>
+   * Resolution order: an explicit margin set on this calculator wins; otherwise the compressor's margin is used when
+   * {@link Compressor#setSurgeControlMargin(double)} has been called on it; otherwise the fallback default of 0.05.
+   * This keeps the compressor the single place to configure the control line for a machine.
+   * </p>
    *
    * @return the margin as a fraction of the surge flow
    */
   public double getSurgeControlMargin() {
+    if (surgeControlMarginSet) {
+      return surgeControlMargin;
+    }
+    if (compressor != null && compressor.isSurgeControlMarginSet()) {
+      return compressor.getSurgeControlMargin();
+    }
     return surgeControlMargin;
   }
 
   /**
-   * Set the surge-control margin. The inlet is held at {@code surgeFlow * (1 + margin)}.
+   * Set the surge-control margin, overriding any margin configured on the compressor. The inlet is held at
+   * {@code surgeFlow * (1 + margin)}.
    *
    * @param surgeControlMargin the margin as a fraction of the surge flow (e.g. 0.05 for 5%)
    */
   public void setSurgeControlMargin(double surgeControlMargin) {
     this.surgeControlMargin = surgeControlMargin;
+    this.surgeControlMarginSet = true;
   }
 
   /**

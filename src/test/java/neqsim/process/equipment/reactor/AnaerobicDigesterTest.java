@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.reactor.digestion.ModelFidelity;
+import neqsim.thermo.characterization.BioFeedstock;
 
 /**
  * Tests for {@link AnaerobicDigester}.
@@ -199,5 +201,24 @@ class AnaerobicDigesterTest {
       assertTrue(digester.getMethaneProductionNm3PerDay() > 0.0,
           "CH4 production should be positive for " + type.name());
     }
+  }
+
+  @Test
+  void testCharacterizedFeedstockAndFirstOrderModelExposeQualificationAndClosure() {
+    AnaerobicDigester digester = new AnaerobicDigester("AD-characterized");
+    digester.setFeedstock(BioFeedstock.library("crop_residue"));
+    digester.setFeedRate(1000.0, 0.50);
+    digester.setVesselVolume(600.0);
+    digester.setDigesterTemperature(37.0, "C");
+    digester.setSaturateBiogasWithWater(false);
+    digester.useFirstOrderHydrolysisModel();
+    digester.run();
+
+    assertNotNull(digester.getDigestionResult());
+    assertEquals(ModelFidelity.ENGINEERING, digester.getDigestionResult().getFidelity());
+    assertEquals(1.0, digester.getDigestionResult().getMassClosureFraction(), 1.0e-12);
+    assertEquals(1.0, digester.getDigestionResult().getCarbonClosureFraction(), 1.0e-12);
+    assertEquals(0.50, digester.getTotalSolidsFraction(), 1.0e-12);
+    assertTrue(digester.getResults().containsKey("calculationWarnings"));
   }
 }

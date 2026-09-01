@@ -535,7 +535,7 @@ public class FloryHugginsAsphalteneModel {
     // Validate: onset must be above approximate bubble point.
     // If onset is found near the minimum search pressure, it's likely a numerical artifact.
     if (!Double.isNaN(onsetP) && onsetP < minP + 2 * pressureSearchStep) {
-      logger.info("FH onset at {:.1f} bar is near minimum search pressure - treating as no onset", onsetP);
+      logger.info("FH onset at {} bar is near minimum search pressure - treating as no onset", onsetP);
       return Double.NaN;
     }
 

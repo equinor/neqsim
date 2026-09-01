@@ -3,8 +3,6 @@ title: "Utilities Package"
 description: "The `util` package provides common utilities for database access, unit conversion, serialization, exceptions, and threading."
 ---
 
-# Utilities Package
-
 The `util` package provides common utilities for database access, unit conversion, serialization, exceptions, and threading.
 
 ## Table of Contents
@@ -155,6 +153,9 @@ fluid.setPressure(50.0, "bara");
 
 double flow = stream.getFlowRate("kg/hr");
 stream.setFlowRate(1000.0, "kg/hr");
+
+// Specific enthalpy
+double enthalpyKjPerKg = fluid.getEnthalpy("kJ/kg");
 ```
 
 ### Supported Units
@@ -169,10 +170,6 @@ stream.setFlowRate(1000.0, "kg/hr");
 | Viscosity | Pa.s, cP, mPa.s |
 | Energy | J, kJ, MJ, cal, BTU |
 | Power | W, kW, MW, hp |
-
-// Enthalpy
-double H_kJ = fluid.getEnthalpy("kJ/kg");
-```
 
 ---
 

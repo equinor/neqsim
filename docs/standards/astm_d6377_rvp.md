@@ -1,369 +1,154 @@
 ---
-title: "ASTM D6377 - Reid Vapor Pressure"
-description: "ASTM D6377 provides methods for determining vapor pressure of crude oil and petroleum products."
+title: "ASTM D6377 Vapor-Pressure Screening"
+description: "Source-accurate NeqSim workflow for VPCR4, RVP-equivalent correlations, water-free variants, and EOS bubble-point pressure."
 ---
 
-# ASTM D6377 - Reid Vapor Pressure
+NeqSim's `Standard_ASTM_D6377` provides an equation-of-state screening calculation for
+vapor-pressure quantities associated with crude oil and condensate. The class name and method
+labels follow ASTM D6377 and historical ASTM D323 terminology, but the implementation is not the
+prescribed laboratory apparatus or compliance evidence. Use a qualified laboratory result and the
+applicable contract, regulation, and current controlled standard for custody transfer or product
+acceptance.
 
-ASTM D6377 provides methods for determining vapor pressure of crude oil and petroleum products.
+## Quantities and Method Boundaries
 
-## Table of Contents
-- [Overview](#overview)
-- [Vapor Pressure Definitions](#vapor-pressure-definitions)
-- [Implementation](#implementation)
-- [Usage Examples](#usage-examples)
-- [Method Selection](#method-selection)
-- [Correlations](#correlations)
+The class calculates several distinct quantities at one configured reference temperature.
 
----
+| NeqSim result | Current calculation | Interpretation |
+|---|---|---|
+| `TVP` | EOS bubble-point pressure | Thermodynamic screening value for the supplied fluid model |
+| `VPCR4` | Pressure from `TVfractionFlash(0.8)` after the bubble-point solve | NeqSim vapor/liquid-volume-ratio screening result |
+| `RVP_ASTM_D6377` | `0.834 * VPCR4` | NeqSim D6377-labelled RVP-equivalent correlation |
+| `RVP_ASTM_D323_82` | `(0.752 * (100 * VPCR4) + 6.07) / 100` | NeqSim historical D323-labelled correlation |
+| `VPCR4_no_water` | VPCR4 calculation on a clone with water removed | Water-free comparison, calculated lazily |
+| `RVP_ASTM_D323_73_79` | Water-free VPCR4 result | NeqSim historical dry-method label |
 
-## Overview
+These are model outputs, not interchangeable measurements. Report the selected method, reference
+temperature, pressure unit, fluid characterization, equation of state, and mixing rule with every
+result.
 
-**Standard:** ASTM D6377 - Standard Test Method for Determination of Vapor Pressure of Crude Oil: VPCRx (Expansion Method)
+The default method is `VPCR4`. Select a method with the type-safe
+`Standard_ASTM_D6377.RvpMethod` enum and read it through `getRvpResult()`. The structured result
+contains the value in bara, method label, reference temperature in degrees Celsius, and a validity
+flag. Use `getValue("RVP", unit)` only for the currently selected method and
+`getValue("TVP", unit)` for the EOS bubble-point result. Do not call
+`getValue("VPCR4", unit)`; that return-parameter name is not supported by the unit-aware legacy
+getter.
 
-**Purpose:** Determine the vapor pressure of crude oil and condensates for:
-- Safety in storage and transport
-- Product specifications
-- Blending calculations
-- Regulatory compliance
+## State Ownership and Model Selection
 
-**Class:** `Standard_ASTM_D6377`
+`calculate()` sets temperature and pressure and performs flashes on the `SystemInterface`
+supplied to the constructor. Pass a clone when the caller must preserve the original fluid state.
 
----
+The standard does not force SRK or any other equation of state. It uses the supplied system's
+thermodynamic model, composition, characterization, and mixing rule. Vapor-pressure predictions
+can be sensitive to light-end loss, heavy-end characterization, water handling, and binary
+interaction parameters. Validate the chosen fluid model against representative laboratory data.
 
-## Vapor Pressure Definitions
+The default reference temperature is 37.8 degrees Celsius. Changing it is supported by the API,
+but the result must then be reported at that configured temperature rather than presented as a
+37.8 degrees Celsius standard result. The current `isOnSpec()` implementation always returns
+`true`; apply project or contract limits explicitly instead of using it as a compliance check.
 
-### True Vapor Pressure (TVP)
+## Executable Java 8 Workflow
 
-The equilibrium pressure of vapor above a liquid at a specified temperature when vapor/liquid ratio approaches zero.
-
-$$TVP = P_{bubble}(T)$$
-
-### Reid Vapor Pressure (RVP)
-
-The vapor pressure measured at 100°F (37.8°C) in a standardized apparatus with vapor/liquid volume ratio of 4:1.
-
-### VPCR4 (Vapor Pressure at V/L = 4)
-
-The pressure at which 80% by volume is vapor at 37.8°C (100°F).
-
-### VPCR Relationship
-
-Different VPCR ratios are used in various standards:
-- VPCR4: 80% vapor (ASTM D6377)
-- VPCR1: 50% vapor
-- VPCR0.02: ~2% vapor (approximates TVP)
-
----
-
-## Implementation
-
-### Constructor
+The program below preserves the source fluid, selects the D6377-labelled correlation, checks the
+structured result, reads the EOS bubble-point pressure, compares VPCR4 and its water-free variant,
+and converts the selected RVP value to kPa.
 
 ```java
-import neqsim.standards.oilquality.Standard_ASTM_D6377;
-
-// Create standard from fluid
-Standard_ASTM_D6377 rvpStandard = new Standard_ASTM_D6377(thermoSystem);
-```
-
-### Available Methods
-
-| Method Name | Description |
-|-------------|-------------|
-| `VPCR4` | Vapor pressure at V/L = 4 (default) |
-| `VPCR4_no_water` | VPCR4 excluding water |
-| `RVP_ASTM_D6377` | RVP correlation from D6377 |
-| `RVP_ASTM_D323_73_79` | RVP per D323 (1973/1979) |
-| `RVP_ASTM_D323_82` | RVP per D323 (1982) |
-
-### Key Methods
-
-| Method | Description |
-|--------|-------------|
-| `calculate()` | Perform vapor pressure calculations |
-| `getValue("RVP", "bara")` | Get Reid vapor pressure |
-| `getValue("TVP", "bara")` | Get true vapor pressure |
-| `getValue("VPCR4", "bara")` | Get VPCR4 |
-| `setMethodRVP(method)` | Select RVP calculation method |
-| `getMethodRVP()` | Get current method |
-
-### Type-Safe Method Selection and Structured Result
-
-In addition to the legacy string-based API, an `RvpMethod` enum and an immutable `RvpResult`
-are available for type-safe selection and robust result handling. The enum and the string
-labels are interchangeable — each constant carries its legacy label.
-
-```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpMethod;
 import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpResult;
-
-Standard_ASTM_D6377 rvp = new Standard_ASTM_D6377(crude);
-
-// Type-safe method selection (equivalent to setMethodRVP("VPCR4"))
-rvp.setMethodRVP(RvpMethod.VPCR4);
-rvp.calculate();
-
-// Structured result for the current method
-RvpResult result = rvp.getRvpResult();
-if (result.isValid()) {
-  System.out.printf("RVP = %.4f bara (%s)%n",
-      result.getValue(), result.getMethod().getLabel());
-}
-
-// Or request a specific method directly
-RvpResult d6377 = rvp.getRvpResult(RvpMethod.RVP_ASTM_D6377);
-```
-
-#### RvpMethod constants
-
-| Constant | Legacy label | Description |
-|----------|--------------|-------------|
-| `RVP_ASTM_D6377` | `RVP_ASTM_D6377` | ASTM D6377 RVPE (RVP equivalent), derived from VPCR4 |
-| `RVP_ASTM_D323_73_79` | `RVP_ASTM_D323_73_79` | ASTM D323-73/79 dry method (water removed before flash) |
-| `RVP_ASTM_D323_82` | `RVP_ASTM_D323_82` | ASTM D323-82 correlation |
-| `VPCR4` | `VPCR4` | Vapor pressure at V/L = 4 (default) |
-| `VPCR4_NO_WATER` | `VPCR4_no_water` | VPCR4 with water removed |
-
-`RvpMethod.fromLabel(label)` resolves a constant from either its legacy string label or its
-enum name, throwing `IllegalArgumentException` for an unknown label.
-
-#### RvpResult fields
-
-`RvpResult` bundles the computed value with its context so callers — especially agentic
-workflows — can detect a failed calculation instead of silently receiving `0` or `NaN`.
-A result is **valid** only when its value is a finite positive number.
-
-| Method | Description |
-|--------|-------------|
-| `getValue()` | Computed RVP value in bara |
-| `getMethod()` | The `RvpMethod` used |
-| `getReferenceTemperatureC()` | Reference temperature in °C |
-| `isValid()` | True if the value is finite and positive |
-| `toJson()` | JSON representation (`value`, `unit`, `method`, `referenceTemperatureC`, `valid`) |
-
-```json
-{
-  "value": 0.4521,
-  "unit": "bara",
-  "method": "VPCR4",
-  "referenceTemperatureC": 37.8,
-  "valid": true
-}
-```
-
----
-
-## Usage Examples
-
-### Basic RVP Calculation
-
-```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.standards.oilquality.Standard_ASTM_D6377;
 
-// Create condensate/crude composition
-SystemInterface crude = new SystemSrkEos(273.15 + 15, 1.01325);
-crude.addComponent("methane", 0.01);
-crude.addComponent("ethane", 0.02);
-crude.addComponent("propane", 0.04);
-crude.addComponent("n-butane", 0.06);
-crude.addComponent("i-butane", 0.03);
-crude.addComponent("n-pentane", 0.08);
-crude.addComponent("i-pentane", 0.05);
-crude.addComponent("n-hexane", 0.10);
-crude.addTBPfraction("C7", 0.15, 100.0/1000.0, 0.72);
-crude.addTBPfraction("C10", 0.20, 142.0/1000.0, 0.78);
-crude.addTBPfraction("C20", 0.26, 282.0/1000.0, 0.85);
-crude.setMixingRule("classic");
+public final class AstmD6377Example {
+  private static final Logger logger = LogManager.getLogger(AstmD6377Example.class);
 
-// Calculate RVP
-Standard_ASTM_D6377 rvpStandard = new Standard_ASTM_D6377(crude);
-rvpStandard.setMethodRVP("VPCR4");
-rvpStandard.calculate();
+  private AstmD6377Example() {}
 
-// Get results
-double tvp = rvpStandard.getValue("TVP", "bara");
-double rvp = rvpStandard.getValue("RVP", "bara");
-double vpcr4 = rvpStandard.getValue("VPCR4", "bara");
+  public static void main(String[] args) {
+    SystemInterface sourceOil = new SystemSrkEos(275.15, 1.0);
+    sourceOil.addComponent("methane", 0.0006538);
+    sourceOil.addComponent("ethane", 0.006538);
+    sourceOil.addComponent("propane", 0.065380);
+    sourceOil.addComponent("n-pentane", 0.154500);
+    sourceOil.addComponent("nC10", 0.545000);
+    sourceOil.setMixingRule(2);
+    sourceOil.init(0);
 
-System.out.println("=== Vapor Pressure Results ===");
-System.out.printf("True Vapor Pressure (TVP) = %.4f bara%n", tvp);
-System.out.printf("Reid Vapor Pressure (RVP) = %.4f bara%n", rvp);
-System.out.printf("VPCR4 = %.4f bara%n", vpcr4);
-```
+    SystemInterface workingFluid = sourceOil.clone();
+    Standard_ASTM_D6377 vaporPressure = new Standard_ASTM_D6377(workingFluid);
+    vaporPressure.setReferenceTemperature(37.8, "C");
+    vaporPressure.setMethodRVP(RvpMethod.RVP_ASTM_D6377);
+    vaporPressure.calculate();
 
-### Comparing Different RVP Methods
+    RvpResult selected = vaporPressure.getRvpResult();
+    RvpResult vpcr4 = vaporPressure.getRvpResult(RvpMethod.VPCR4);
+    RvpResult dryVpcr4 = vaporPressure.getRvpResult(RvpMethod.VPCR4_NO_WATER);
+    double tvpBara = vaporPressure.getValue("TVP", "bara");
+    double selectedRvpKPa = vaporPressure.getValue("RVP", "kPa");
 
-```java
-// Calculate using all available methods
-String[] methods = {"VPCR4", "RVP_ASTM_D6377", "RVP_ASTM_D323_73_79", "RVP_ASTM_D323_82"};
+    requireFinitePositive("selected RVP", selected.getValue());
+    requireFinitePositive("VPCR4", vpcr4.getValue());
+    requireFinitePositive("water-free VPCR4", dryVpcr4.getValue());
+    requireFinitePositive("TVP", tvpBara);
+    requireFinitePositive("selected RVP", selectedRvpKPa);
 
-System.out.println("Method                | RVP (bara)");
-System.out.println("----------------------|----------");
+    logger.info("Selected result {}", selected.toJson());
+    logger.info("TVP {} bara; VPCR4 {} bara; dry VPCR4 {} bara",
+        tvpBara, vpcr4.getValue(), dryVpcr4.getValue());
+    logger.info("Source state remains {} K and {} bara",
+        sourceOil.getTemperature(), sourceOil.getPressure());
+  }
 
-for (String method : methods) {
-    Standard_ASTM_D6377 std = new Standard_ASTM_D6377(crude);
-    std.setMethodRVP(method);
-    std.calculate();
-    double rvp = std.getValue("RVP", "bara");
-    System.out.printf("%-21s | %.4f%n", method, rvp);
+  private static void requireFinitePositive(String name, double value) {
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalStateException(name + " calculation failed: " + value);
+    }
+  }
 }
 ```
 
-### Effect of Light Ends on RVP
+For a fluid without water, `VPCR4` and `VPCR4_NO_WATER` should agree within numerical
+tolerance. For a water-bearing fluid, the difference is a model sensitivity; it is not permission
+to discard measured water or emulsion effects.
 
-```java
-// Analyze RVP sensitivity to light ends
-double[] methaneContent = {0.0, 0.005, 0.01, 0.02, 0.05};
+## API Contract
 
-System.out.println("Methane (mol%) | RVP (bara)");
-System.out.println("---------------|----------");
+| Operation | Supported use |
+|---|---|
+| `setReferenceTemperature(value, unit)` | Converts the supplied temperature to the internal Celsius reference |
+| `setMethodRVP(RvpMethod)` | Selects the result returned as `RVP` |
+| `calculate()` | Populates TVP, VPCR4, and the two direct correlations |
+| `getRvpResult()` | Returns the selected structured result |
+| `getRvpResult(method)` | Returns a named structured result; water-free variants are evaluated lazily |
+| `getValue("RVP", pressureUnit)` | Converts the selected method result from bara |
+| `getValue("TVP", pressureUnit)` | Converts the EOS bubble-point result from bara |
+| `getMethodRVP()` | Returns the selected legacy method label |
 
-for (double ch4 : methaneContent) {
-    SystemInterface fluid = new SystemSrkEos(273.15 + 15, 1.0);
-    fluid.addComponent("methane", ch4);
-    fluid.addComponent("ethane", 0.02);
-    fluid.addComponent("propane", 0.04);
-    fluid.addComponent("n-butane", 0.08);
-    fluid.addComponent("n-pentane", 0.10);
-    fluid.addTBPfraction("C7", 0.20, 100/1000.0, 0.72);
-    fluid.addTBPfraction("C15", 0.56 - ch4, 200/1000.0, 0.80);
-    fluid.setMixingRule("classic");
-    
-    Standard_ASTM_D6377 std = new Standard_ASTM_D6377(fluid);
-    std.calculate();
-    double rvp = std.getValue("RVP", "bara");
-    
-    System.out.printf("%14.1f | %.4f%n", ch4 * 100, rvp);
-}
-```
+The legacy string setter remains available, but the enum rejects unknown methods before a
+calculation is interpreted. A structured result is valid only when its value is finite and
+positive. It does not establish laboratory repeatability, regulatory acceptance, or fitness for a
+specific product specification.
 
-### Wet vs Dry RVP
+## Engineering Validation Checklist
 
-```java
-// Calculate with and without water
-SystemInterface wetCrude = crude.clone();
-wetCrude.addComponent("water", 0.01);  // 1% water
+Before using a calculated vapor pressure:
 
-Standard_ASTM_D6377 wetStd = new Standard_ASTM_D6377(wetCrude);
-wetStd.calculate();
+1. Preserve a characterized source fluid and run the standard on a clone.
+2. Confirm light ends were not lost during sampling or fluid preparation.
+3. Document heavy-end characterization, equation of state, mixing rule, and water treatment.
+4. Record the exact method label, reference temperature, and absolute pressure unit.
+5. Compare against representative laboratory vapor-pressure data over the operating envelope.
+6. Apply the actual product or custody-transfer limit outside `isOnSpec()`.
+7. Treat discrepancies as model or characterization evidence, not as a reason to tune silently.
 
-double vpcr4Wet = wetStd.getValue("VPCR4", "bara");
-double vpcr4Dry = wetStd.getValue("VPCR4_no_water", "bara");
+## Related Documentation
 
-System.out.printf("VPCR4 (with water) = %.4f bara%n", vpcr4Wet);
-System.out.printf("VPCR4 (dry basis) = %.4f bara%n", vpcr4Dry);
-```
-
----
-
-## Method Selection
-
-### VPCR4 (Default)
-
-Best for:
-- General crude oil characterization
-- Comparison with standard lab measurements
-- Regulatory compliance
-
-### RVP_ASTM_D6377
-
-Correlation from ASTM D6377:
-$$RVP = 0.834 \times VPCR4$$
-
-### RVP_ASTM_D323_82
-
-Correlation from ASTM D323 (1982 edition):
-$$RVP = \frac{0.752 \times (100 \times VPCR4) + 6.07}{100}$$
-
-### RVP_ASTM_D323_73_79
-
-For comparison with historical data using D323 (1973/1979 editions).
-Uses VPCR4 without water contribution.
-
----
-
-## Correlations
-
-### TVP to RVP
-
-Approximate relationship:
-$$RVP \approx 0.75 \times TVP + constant$$
-
-The constant depends on crude composition.
-
-### Temperature Dependence
-
-For estimation at temperatures other than 37.8°C:
-
-$$\log_{10}(P_{vap}) = A - \frac{B}{T + C}$$
-
-Antoine-type equation where A, B, C are crude-specific.
-
-### RVP Specifications
-
-| Product | Typical RVP Limit |
-|---------|-------------------|
-| Crude oil (export) | < 0.7 bara (10 psia) |
-| Stabilized condensate | < 0.5 bara (7 psia) |
-| Gasoline (summer) | < 0.62 bara (9 psi) |
-| Gasoline (winter) | < 0.90 bara (13 psi) |
-
----
-
-## Technical Details
-
-### Calculation Procedure
-
-1. Set temperature to 37.8°C (100°F)
-2. Perform bubble point flash to get TVP
-3. Perform flash at vapor/liquid volume ratio = 4
-4. Apply correlation for RVP estimation
-
-### Reference Conditions
-
-| Parameter | Value |
-|-----------|-------|
-| Temperature | 37.8°C (100°F) |
-| V/L ratio | 4:1 (80% vapor by volume) |
-| Pressure | Equilibrium |
-
-### Equation of State
-
-Uses SRK-EoS for phase equilibrium calculations.
-
----
-
-## Accuracy Considerations
-
-### Factors Affecting Accuracy
-
-1. **Light end characterization** - Accurate C1-C4 composition critical
-2. **Heavy end representation** - TBP fractions affect liquid volume
-3. **Water content** - Can significantly affect measured RVP
-4. **Sample handling** - Light end loss during sampling
-
-### Typical Uncertainty
-
-| Method | Uncertainty |
-|--------|-------------|
-| VPCR4 calculation | ±0.02 bara |
-| RVP correlation | ±0.03-0.05 bara |
-
-### Recommendations
-
-1. Ensure accurate light ends (C1-C5) analysis
-2. Use consistent method for comparison
-3. Report method used with results
-4. Consider water content effects
-
----
-
-## References
-
-1. ASTM D6377 - Standard Test Method for Determination of Vapor Pressure of Crude Oil: VPCRx (Expansion Method)
-2. ASTM D323 - Standard Test Method for Vapor Pressure of Petroleum Products (Reid Method)
-3. ASTM D5191 - Standard Test Method for Vapor Pressure of Petroleum Products and Liquid Fuels (Mini Method)
-4. API MPMS Chapter 8 - Sampling
+- [Oil quality standards overview](oil_quality_standards.md)
+- [Standards package overview](README.md)
+- [TVP and RVP study](../examples/TVP_RVP_Study.md)

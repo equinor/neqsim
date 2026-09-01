@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "SeparatorEfficiency GasScrubber ThreePhase"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Separator & Gas Scrubber Separation Efficiency"
+description: "Notebook for Separator & Gas Scrubber Separation Efficiency, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# SeparatorEfficiency GasScrubber ThreePhase
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`SeparatorEfficiency_GasScrubber_ThreePhase.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb).
 
 ---
-
-# Separator & Gas Scrubber Separation Efficiency
 
 This notebook demonstrates the **separation-efficiency report** for a
 **two-phase gas scrubber** and a **three-phase separator** in NeqSim.

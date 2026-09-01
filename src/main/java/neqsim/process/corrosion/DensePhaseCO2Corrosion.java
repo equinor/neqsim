@@ -18,7 +18,14 @@ import neqsim.thermo.system.SystemInterface;
  * formation from impurity interactions can cause severe attack.
  * </p>
  *
- * <h2>Standards</h2>
+ * <h2>Related publications and implementation boundary</h2>
+ *
+ * <p>
+ * This legacy heuristic embeds illustrative impurity thresholds and a pure-CO2 phase-state approximation. It is not an
+ * exact-edition implementation of any publication in the table and must not be used as DNV-RP-F104 conformity evidence.
+ * Project criteria, composition-specific thermodynamics, materials/corrosion qualification, and approval remain
+ * external.
+ * </p>
  *
  * <table>
  * <caption>Standards for dense-phase CO2 corrosion</caption>
@@ -36,7 +43,7 @@ import neqsim.thermo.system.SystemInterface;
  * </tr>
  * <tr>
  * <td>DNV-RP-F104</td>
- * <td>Design of carbon steel pipelines for CCS</td>
+ * <td>Current CO2-pipeline framework; use the typed caller-controlled F104 envelope kernel for NeqSim screening</td>
  * </tr>
  * <tr>
  * <td>ASME B31.4</td>
@@ -533,7 +540,7 @@ public class DensePhaseCO2Corrosion implements Serializable {
    */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
-    map.put("standard", "DNV-RP-J202 / ISO 27913");
+    map.put("standard", "Legacy dense-CO2 heuristic; project criteria required");
     map.put("temperature_C", temperatureC);
     map.put("pressure_bara", pressureBara);
     map.put("co2Purity_molPct", co2PurityMolPct);

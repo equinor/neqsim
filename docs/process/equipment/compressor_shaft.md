@@ -3,8 +3,6 @@ title: "CompressorShaft: Multiple Compressor Bodies on One Shaft"
 description: "Model a multi-body compressor string driven by a single gas turbine or motor at one common speed with CompressorShaft. Covers the degrees-of-freedom rule, iterating the common speed to the final discharge (intermediate pressures float), the process-integrated CompressorShaftCalculator that converges the shaft speed inside process.run(), shared pressure nodes, fixed-speed drivers, single-body use, and coexistence with anti-surge control."
 ---
 
-# CompressorShaft: Multiple Compressor Bodies on One Shaft
-
 `neqsim.process.equipment.compressor.CompressorShaft` groups several
 `Compressor` bodies that sit on **one driver shaft** (a single gas turbine or
 motor, often through a gearbox) so they all turn at the **same speed**. A
@@ -256,6 +254,75 @@ as the downstream companion to the shaft feasibility check above: the shaft flag
 tells you the machine could not make the pressure, and the mixer flag tells you
 where that shortfall silently propagated into the flowsheet.
 
+## Driver Power Limit and Shaft Utilization
+
+A common shaft has **one** driver, so the installed power limit belongs to the
+shaft, not to any single body. Set it in either of two ways.
+
+**1. Explicit max power** (simplest — no driver model needed):
+
+```java
+shaft.setMaxShaftPower(24.0, "MW");   // "W", "kW" or "MW"
+shaft.setMechanicalEfficiency(0.97);  // gearbox / coupling losses (optional)
+
+double required = shaft.getRequiredDriverPower("kW"); // sum of body power / mech. efficiency
+double available = shaft.getAvailableShaftPower("kW");
+double util = shaft.getPowerUtilization();            // 1.0 = at the limit
+boolean over = shaft.isOverPower();
+```
+
+**2. From a driver model.** Attach a `GasTurbine` — every body on the shaft is
+registered as a *driven load* of the turbine, so the turbine's fuel gas and its
+own power utilization track the string duty, and its rated power becomes the
+shaft limit:
+
+```java
+GasTurbine gt = new GasTurbine("GT-1", fuelGas);
+gt.setRatedPower(24.0, "MW");
+gt.setThermalEfficiency(0.36);
+shaft.setTurbineDriver(gt); // bodies become gt driven loads (no double counting)
+```
+
+Or attach a `CompressorDriver` when you have a speed-dependent, ambient-derated
+power curve — it is evaluated at the **solved common speed**:
+
+```java
+CompressorDriver driver = new CompressorDriver(DriverType.GAS_TURBINE);
+driver.setRatedPower(24000.0); // kW
+driver.setMaxPowerSpeedCurve(speeds, powers, "kW");
+driver.setAmbientTemperature(30.0);
+shaft.setDriver(driver);
+```
+
+Resolution order for the limit: explicit `setMaxShaftPower` → `CompressorDriver`
+curve at the current speed → `GasTurbine` rated power. With no limit configured
+`getPowerUtilization()` returns `0.0` rather than a fabricated number.
+
+`solveSpeed` returns `SolveStatus.OVER_POWER` when the string draws more than the
+driver can deliver at the solved speed.
+
+### Utilization snapshot
+
+`CompressorShaftCalculator` carries the limit as a `shaftPower` capacity
+constraint, so once a power limit is set the shaft appears as an ordinary unit in
+`getUtilizationSnapshotJson()` and can bind as the plant bottleneck:
+
+```java
+CompressorShaftCalculator shaftCalc =
+    new CompressorShaftCalculator("23-KA shaft", shaft, rc3, 49.0, "bara");
+shaftCalc.setMaxShaftPower(24.0, "MW"); // or shaftCalc.setTurbineDriver(gt)
+process.add(shaftCalc);
+process.run();
+
+double util = shaftCalc.getShaftPowerUtilization();
+String snapshot = process.getUtilizationSnapshotJson(); // includes "shaftPower"
+```
+
+This is the shaft-level counterpart to the per-body
+`compressor.getMechanicalDesign().setMaxDesignPower(kW)` limit: keep the per-body
+limit for a body's own casing/rotor rating, and use the shaft limit for the
+installed driver.
+
 ## Fixed-/Single-Speed Drivers
 
 If the driver is a constant-speed motor (line frequency, no variable-speed
@@ -310,7 +377,12 @@ and [Compressor Performance Curves](compressor_curves.md).
 <tr><td><code>setMaxIterations(n)</code> / <code>setPressureTolerance(bar)</code></td><td>Root-finder budget and convergence tolerance.</td></tr>
 <tr><td><code>getLastSolveResult()</code> / <code>isFeasible()</code></td><td>Feasibility result of the last <code>solveSpeed</code> (status, achieved / min- / max-achievable pressure, speed).</td></tr>
 <tr><td><code>setPressureControl(PressureControl)</code> / <code>getPressureControl()</code></td><td>Shed surplus head for a target below min-speed capability (NONE / DOWNSTREAM_CHOKE / UPSTREAM_CHOKE / ASV_RECYCLE).</td></tr>
-<tr><td><code>getTotalPower()</code></td><td>Sum of the body shaft powers (W).</td></tr>
+<tr><td><code>getTotalPower()</code> / <code>getTotalPower(unit)</code></td><td>Sum of the body shaft powers (W, or "W"/"kW"/"MW").</td></tr>
+<tr><td><code>setMaxShaftPower(p, unit)</code> / <code>getMaxShaftPower(unit)</code></td><td>Explicit installed driver power limit for the whole string.</td></tr>
+<tr><td><code>setTurbineDriver(GasTurbine)</code> / <code>setDriver(CompressorDriver)</code></td><td>Take the limit from a driver model; the turbine also picks up the bodies as driven loads.</td></tr>
+<tr><td><code>setMechanicalEfficiency(eta)</code></td><td>Gearbox / coupling losses between driver output and bodies.</td></tr>
+<tr><td><code>getRequiredDriverPower(unit)</code> / <code>getAvailableShaftPower(unit)</code></td><td>Power demanded by the string / deliverable by the driver at the current speed.</td></tr>
+<tr><td><code>getPowerUtilization()</code> / <code>isOverPower()</code></td><td>Shaft utilization (1.0 = at the limit) and the over-power flag.</td></tr>
 <tr><td><code>getCompressors()</code> / <code>getName()</code></td><td>Members / shaft name.</td></tr>
 </table>
 
@@ -323,6 +395,8 @@ and [Compressor Performance Curves](compressor_curves.md).
 <tr><td><code>getSpeed()</code></td><td>Read the converged common shaft speed (rpm).</td></tr>
 <tr><td><code>getLastSolveResult()</code> / <code>isFeasible()</code></td><td>Feasibility result of the last pass (same <code>SolveResult</code> type as <code>CompressorShaft</code>).</td></tr>
 <tr><td><code>setPressureControl(...)</code> / <code>setPressureTolerance(bar)</code></td><td>Pressure-control action and the tolerance used to classify feasible / saturated.</td></tr>
+<tr><td><code>setMaxShaftPower(p, unit)</code> / <code>setTurbineDriver(GasTurbine)</code></td><td>Set the shaft power limit; registers a <code>shaftPower</code> capacity constraint so the shaft appears in the utilization snapshot.</td></tr>
+<tr><td><code>getShaftPowerUtilization()</code> / <code>getTotalPower(unit)</code></td><td>Shaft utilization and total string power.</td></tr>
 <tr><td><code>process.add(shaftCalc)</code></td><td>Register so it steps the speed on every <code>run()</code> pass (add after the bodies/anti-surge).</td></tr>
 </table>
 

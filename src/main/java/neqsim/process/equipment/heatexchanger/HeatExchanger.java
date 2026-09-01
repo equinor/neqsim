@@ -57,6 +57,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   SystemInterface system;
   double NTU;
   protected double temperatureOut = 0;
+  protected String temperatureOutUnit = "K";
 
   protected double dT = 0.0;
 
@@ -298,6 +299,31 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   @Override
   public void setOutTemperature(double temperature) {
     this.temperatureOut = temperature;
+    this.temperatureOutUnit = "K";
+  }
+
+  /**
+   * Set a fixed outlet temperature for one side of the exchanger and use the {@code "outTemperature"} specification.
+   * The specified side (see {@link #setOutStreamSpecificationNumber(int)}, default 0) is pinned to this temperature at
+   * its inlet pressure and the opposite side is energy-balanced against it. This lets a caller reproduce a known
+   * process-side outlet temperature exactly, independent of the flows.
+   *
+   * @param temperature outlet temperature value
+   * @param unit temperature unit (e.g. "K" or "C")
+   */
+  public void setOutTemperature(double temperature, String unit) {
+    this.temperatureOut = temperature;
+    this.temperatureOutUnit = unit;
+    setSpecification("outTemperature");
+  }
+
+  /**
+   * Set which side (0 or 1) is pinned when using the {@code "out stream"} or {@code "outTemperature"} specification.
+   *
+   * @param streamNumber index of the specified outlet side (0 or 1)
+   */
+  public void setOutStreamSpecificationNumber(int streamNumber) {
+    this.outStreamSpecificationNumber = streamNumber;
   }
 
   /**
@@ -353,6 +379,21 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       temperatureOut = outStream[outStreamSpecificationNumber].getTemperature();
       // system =
       // outStream[outStreamSpecificationNumber].getThermoSystem().clone();
+    } else if (getSpecification().equals("outTemperature")) {
+      // Pin the specified side to a fixed outlet temperature at its inlet
+      // pressure, re-evaluated every iteration so the outlet pressure tracks the
+      // live inlet and only the temperature is held constant.
+      SystemInterface specifiedOut = inStream[outStreamSpecificationNumber].getThermoSystem().clone();
+      specifiedOut.setTemperature(temperatureOut, temperatureOutUnit);
+      ThermodynamicOperations specOps = new ThermodynamicOperations(specifiedOut);
+      specOps.TPflash();
+      outStream[outStreamSpecificationNumber]
+          .setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
+      outStream[outStreamSpecificationNumber].setThermoSystem(specifiedOut);
+      // Do NOT overwrite temperatureOut here: it is the user-specified pin, held
+      // constant every iteration. Reading specifiedOut.getTemperature() returns
+      // Kelvin and would corrupt the "C"-based pin, escalating on each recycle
+      // pass.
     }
 
     double deltaEnthalpy = outStream[outStreamSpecificationNumber].getFluid().getEnthalpy()
@@ -361,7 +402,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(systemOut0);
     testOps.PHflash(enthalpyOutRef);
-    System.out.println("out temperature " + systemOut0.getTemperature("C"));
     outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
   }
 
@@ -371,7 +411,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * @param id UUID of run
    */
   public void runDeltaT(UUID id) {
-    if (getSpecification().equals("out stream")) {
+    if (getSpecification().equals("out stream") || getSpecification().equals("outTemperature")) {
       runSpecifiedStream(id);
     } else if (firstTime) {
       firstTime = false;
@@ -524,10 +564,11 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   public void run(UUID id) {
     if (useDeltaT) {
       runDeltaT(id);
+      publishHeatDuty();
       updateLastState();
       return;
     }
-    if (getSpecification().equals("out stream")) {
+    if (getSpecification().equals("out stream") || getSpecification().equals("outTemperature")) {
       runSpecifiedStream(id);
     } else if (firstTime) {
       firstTime = false;
@@ -645,8 +686,19 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
        */
     }
 
+    publishHeatDuty();
     updateLastState();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Publishes recoverable exchanger duty to the inherited calculated heat port.
+   */
+  private void publishHeatDuty() {
+    if (getEnergyPort("heatDuty").isConnected()
+        && getEnergyPort("heatDuty").getMode() == neqsim.process.equipment.stream.EnergyPortMode.CALCULATED) {
+      getEnergyPort("heatDuty").setDuty(Math.abs(duty));
+    }
   }
 
   /** {@inheritDoc} */
@@ -719,9 +771,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     for (int i = 0; i < 2; i++) {
       UUID id = UUID.randomUUID();
       inStream[i].run(id);
-      inStream[i].getFluid().init(3);
+      inStream[i].getFluid().init(2);
       outStream[i].run(id);
-      outStream[i].getFluid().init(3);
+      outStream[i].getFluid().init(2);
       entrop += outStream[i].getThermoSystem().getEntropy(unit) - inStream[i].getThermoSystem().getEntropy(unit);
     }
 
@@ -981,6 +1033,299 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
     } else {
       return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
+    }
+  }
+
+  /**
+   * Convert a temperature from Kelvin to the requested unit.
+   *
+   * @param tK temperature in Kelvin
+   * @param unit target unit, one of "K", "C", "F" or "R" (case-insensitive)
+   * @return the temperature expressed in {@code unit}
+   * @throws IllegalArgumentException if {@code unit} is not a supported temperature unit
+   */
+  private static double convertFromKelvin(double tK, String unit) {
+    String u = unit.trim();
+    if (u.equalsIgnoreCase("K")) {
+      return tK;
+    } else if (u.equalsIgnoreCase("C")) {
+      return tK - 273.15;
+    } else if (u.equalsIgnoreCase("F")) {
+      return (tK - 273.15) * 9.0 / 5.0 + 32.0;
+    } else if (u.equalsIgnoreCase("R")) {
+      return tK * 1.8;
+    }
+    throw new IllegalArgumentException("Unsupported temperature unit: " + unit + " (use K, C, F or R).");
+  }
+
+  /**
+   * Run an effectiveness-NTU fouling / UA-degradation screening sweep for the two connected inlet streams.
+   *
+   * <p>
+   * For each supplied UA fraction the operating UA is taken as {@code cleanUA * fraction} (a fraction of 1.0 is the
+   * clean exchanger; 0.75 represents a 25&#37; UA loss). The classic effectiveness-NTU method with constant
+   * heat-capacity rates is applied: the hot and cold heat-capacity rates are estimated from the inlet streams, NTU = UA
+   * / Cmin, the effectiveness follows the exchanger's {@link #getFlowArrangement() flow arrangement} via
+   * {@link #calcThermalEffectivenes(double, double)}, and the cold- and hot-side outlet temperatures follow from an
+   * energy balance. This is a side-effect-free screening call: the exchanger's own inlet/outlet streams and UA value
+   * are not modified. It is intended for quick cooling-medium / seawater fouling studies where the cold-outlet (e.g.
+   * cooling-medium supply) temperature as a function of UA loss is required.
+   * </p>
+   *
+   * @param cleanUA the clean (unfouled) overall UA value in W/K
+   * @param uaFractions the UA fractions to evaluate (each &ge; 0; 1.0 = clean); must be non-empty
+   * @param temperatureUnit the unit for the reported temperatures ("K", "C", "F" or "R"); defaults to "K" when null or
+   * blank
+   * @return a {@link FoulingScreeningResult} with, per UA fraction, the cold- and hot-side outlet temperatures, the
+   * thermal effectiveness, NTU and duty (W)
+   * @throws IllegalStateException if both inlet streams have not been connected
+   * @throws IllegalArgumentException if {@code uaFractions} is null or empty
+   */
+  public FoulingScreeningResult foulingScreening(double cleanUA, double[] uaFractions, String temperatureUnit) {
+    if (inStream[0] == null || inStream[1] == null) {
+      throw new IllegalStateException("HeatExchanger.foulingScreening requires both inlet streams "
+          + "to be connected (use setFeedStream/setInStream).");
+    }
+    if (uaFractions == null || uaFractions.length == 0) {
+      throw new IllegalArgumentException("HeatExchanger.foulingScreening requires at least one UA fraction.");
+    }
+    String unit = (temperatureUnit == null || temperatureUnit.trim().isEmpty()) ? "K" : temperatureUnit;
+
+    inStream[0].run();
+    inStream[1].run();
+    SystemInterface sysA = inStream[0].getThermoSystem();
+    SystemInterface sysB = inStream[1].getThermoSystem();
+
+    SystemInterface hotSys;
+    SystemInterface coldSys;
+    if (sysA.getTemperature() >= sysB.getTemperature()) {
+      hotSys = sysA;
+      coldSys = sysB;
+    } else {
+      hotSys = sysB;
+      coldSys = sysA;
+    }
+    double tHotInK = hotSys.getTemperature();
+    double tColdInK = coldSys.getTemperature();
+    double hHotIn = hotSys.getEnthalpy();
+    double hColdIn = coldSys.getEnthalpy();
+    double dTspan = Math.abs(tHotInK - tColdInK);
+
+    // Full driving-temperature-difference enthalpy changes (signed) via TPflash on clones, so
+    // latent heat (e.g. condensation of a cooled hydrocarbon) is captured. The heat-capacity rate
+    // is the secant |dH|/dTspan, matching the definition used in HeatExchanger.run().
+    SystemInterface hotAtColdIn = hotSys.clone();
+    hotAtColdIn.setTemperature(tColdInK);
+    new ThermodynamicOperations(hotAtColdIn).TPflash();
+    double dHhotFull = hotAtColdIn.getEnthalpy() - hHotIn;
+
+    SystemInterface coldAtHotIn = coldSys.clone();
+    coldAtHotIn.setTemperature(tHotInK);
+    new ThermodynamicOperations(coldAtHotIn).TPflash();
+    double dHcoldFull = coldAtHotIn.getEnthalpy() - hColdIn;
+
+    double cHot = (dTspan > 0.0) ? Math.abs(dHhotFull) / dTspan : 0.0;
+    double cCold = (dTspan > 0.0) ? Math.abs(dHcoldFull) / dTspan : 0.0;
+    double cMin = Math.min(cHot, cCold);
+    double cMax = Math.max(cHot, cCold);
+    double cr = (cMax > 0.0) ? cMin / cMax : 0.0;
+
+    // The stream with the smaller enthalpy change (Cmin) is the "set" stream in the
+    // effectiveness-NTU balance; the other is solved by PHflash, mirroring HeatExchanger.run().
+    boolean setIsHot = cHot <= cCold;
+    double dHset = setIsHot ? dHhotFull : dHcoldFull;
+    SystemInterface sysSet = setIsHot ? hotSys : coldSys;
+    SystemInterface sysCalc = setIsHot ? coldSys : hotSys;
+    double hSetIn = setIsHot ? hHotIn : hColdIn;
+    double hCalcIn = setIsHot ? hColdIn : hHotIn;
+
+    FoulingScreeningResult result = new FoulingScreeningResult(uaFractions.length, unit);
+    for (int i = 0; i < uaFractions.length; i++) {
+      double frac = uaFractions[i];
+      double ua = cleanUA * frac;
+      double ntu = (cMin > 0.0) ? ua / cMin : 0.0;
+      double eff = calcThermalEffectivenes(ntu, cr);
+      double dE = eff * dHset;
+
+      SystemInterface calcOut = sysCalc.clone();
+      new ThermodynamicOperations(calcOut).PHflash(hCalcIn - dE, 0);
+      SystemInterface setOut = sysSet.clone();
+      new ThermodynamicOperations(setOut).PHflash(hSetIn + dE, 0);
+
+      double tHotOutK = setIsHot ? setOut.getTemperature() : calcOut.getTemperature();
+      double tColdOutK = setIsHot ? calcOut.getTemperature() : setOut.getTemperature();
+      result.set(i, frac, convertFromKelvin(tColdOutK, unit), convertFromKelvin(tHotOutK, unit), eff, ntu,
+          Math.abs(dE));
+    }
+    return result;
+  }
+
+  /**
+   * Convenience overload of {@link #foulingScreening(double, double[], String)} that uses the exchanger's current
+   * {@link #getUAvalue() UA value} as the clean UA and reports temperatures in degrees Celsius.
+   *
+   * @param uaFractions the UA fractions to evaluate (each &ge; 0; 1.0 = clean); must be non-empty
+   * @return a {@link FoulingScreeningResult} with temperatures in &#176;C
+   */
+  public FoulingScreeningResult foulingScreening(double[] uaFractions) {
+    return foulingScreening(getUAvalue(), uaFractions, "C");
+  }
+
+  /**
+   * Convenience overload of {@link #foulingScreening(double, double[], String)} that builds an evenly spaced sweep of
+   * UA fractions between {@code minFraction} and {@code maxFraction}.
+   *
+   * @param cleanUA the clean (unfouled) overall UA value in W/K
+   * @param steps the number of UA fractions to generate (&ge; 2)
+   * @param minFraction the smallest UA fraction (e.g. 0.5 for 50&#37; UA loss)
+   * @param maxFraction the largest UA fraction (e.g. 1.0 for the clean exchanger)
+   * @param temperatureUnit the unit for the reported temperatures ("K", "C", "F" or "R")
+   * @return a {@link FoulingScreeningResult} for the generated sweep
+   * @throws IllegalArgumentException if {@code steps} is less than 2
+   */
+  public FoulingScreeningResult foulingScreening(double cleanUA, int steps, double minFraction, double maxFraction,
+      String temperatureUnit) {
+    if (steps < 2) {
+      throw new IllegalArgumentException("HeatExchanger.foulingScreening requires at least 2 steps to build a sweep.");
+    }
+    double[] fractions = new double[steps];
+    for (int i = 0; i < steps; i++) {
+      fractions[i] = minFraction + (maxFraction - minFraction) * i / (steps - 1);
+    }
+    return foulingScreening(cleanUA, fractions, temperatureUnit);
+  }
+
+  /**
+   * Result of an effectiveness-NTU fouling / UA-degradation screening sweep.
+   *
+   * <p>
+   * Holds, per evaluated UA fraction, the cold- and hot-side outlet temperatures (in the requested unit), the thermal
+   * effectiveness, the NTU and the duty in watts. Produced by
+   * {@link HeatExchanger#foulingScreening(double, double[], String)}.
+   * </p>
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static class FoulingScreeningResult implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    private final double[] uaFraction;
+    private final double[] coldOutletTemperature;
+    private final double[] hotOutletTemperature;
+    private final double[] effectiveness;
+    private final double[] ntu;
+    private final double[] duty;
+    private final String temperatureUnit;
+
+    /**
+     * Constructor.
+     *
+     * @param size the number of UA fractions in the sweep
+     * @param temperatureUnit the unit of the reported temperatures
+     */
+    FoulingScreeningResult(int size, String temperatureUnit) {
+      this.uaFraction = new double[size];
+      this.coldOutletTemperature = new double[size];
+      this.hotOutletTemperature = new double[size];
+      this.effectiveness = new double[size];
+      this.ntu = new double[size];
+      this.duty = new double[size];
+      this.temperatureUnit = temperatureUnit;
+    }
+
+    /**
+     * Store one evaluated point of the sweep.
+     *
+     * @param i the point index
+     * @param uaFraction the UA fraction (1.0 = clean)
+     * @param coldOutletTemperature the cold-side outlet temperature in {@link #getTemperatureUnit()}
+     * @param hotOutletTemperature the hot-side outlet temperature in {@link #getTemperatureUnit()}
+     * @param effectiveness the thermal effectiveness (0-1)
+     * @param ntu the number of transfer units
+     * @param duty the exchanger duty in W
+     */
+    void set(int i, double uaFraction, double coldOutletTemperature, double hotOutletTemperature, double effectiveness,
+        double ntu, double duty) {
+      this.uaFraction[i] = uaFraction;
+      this.coldOutletTemperature[i] = coldOutletTemperature;
+      this.hotOutletTemperature[i] = hotOutletTemperature;
+      this.effectiveness[i] = effectiveness;
+      this.ntu[i] = ntu;
+      this.duty[i] = duty;
+    }
+
+    /**
+     * Getter for the evaluated UA fractions.
+     *
+     * @return the UA fractions (1.0 = clean exchanger)
+     */
+    public double[] getUaFraction() {
+      return uaFraction.clone();
+    }
+
+    /**
+     * Getter for the cold-side outlet temperatures.
+     *
+     * @return the cold-side outlet temperatures in {@link #getTemperatureUnit()}
+     */
+    public double[] getColdOutletTemperature() {
+      return coldOutletTemperature.clone();
+    }
+
+    /**
+     * Getter for the hot-side outlet temperatures.
+     *
+     * @return the hot-side outlet temperatures in {@link #getTemperatureUnit()}
+     */
+    public double[] getHotOutletTemperature() {
+      return hotOutletTemperature.clone();
+    }
+
+    /**
+     * Getter for the thermal effectiveness values.
+     *
+     * @return the thermal effectiveness (0-1) for each UA fraction
+     */
+    public double[] getEffectiveness() {
+      return effectiveness.clone();
+    }
+
+    /**
+     * Getter for the NTU values.
+     *
+     * @return the number of transfer units for each UA fraction
+     */
+    public double[] getNtu() {
+      return ntu.clone();
+    }
+
+    /**
+     * Getter for the duty values.
+     *
+     * @return the exchanger duty in W for each UA fraction
+     */
+    public double[] getDuty() {
+      return duty.clone();
+    }
+
+    /**
+     * Getter for the temperature unit of the reported temperatures.
+     *
+     * @return the temperature unit ("K", "C", "F" or "R")
+     */
+    public String getTemperatureUnit() {
+      return temperatureUnit;
+    }
+
+    /**
+     * Serialize the screening result to JSON.
+     *
+     * @return a JSON representation of the sweep
+     */
+    public String toJson() {
+      return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
   }
 

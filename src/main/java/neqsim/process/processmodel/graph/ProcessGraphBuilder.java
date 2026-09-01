@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortInterface;
 import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 import neqsim.process.equipment.flare.FlareStack;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
@@ -24,9 +25,14 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.reactor.FurnaceBurner;
 import neqsim.process.equipment.splitter.SplitterInterface;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -304,6 +310,19 @@ public final class ProcessGraphBuilder {
       }
     }
 
+    // A Calculator may own a standalone output Stream without that Stream being
+    // registered as a unit operation. Register that relationship after all
+    // physical producers have had first refusal, so downstream consumers still
+    // depend on the Calculator and recycle SCC detection can see the feedback.
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof Calculator) {
+        ProcessEquipmentInterface output = ((Calculator) unit).getOutputVariable();
+        if (output instanceof StreamInterface) {
+          streamToProducer.putIfAbsent(output, unit);
+        }
+      }
+    }
+
     // Pass 1b: Stream units default to producing themselves, but only if no
     // real producer has already claimed them (e.g., a Recycle's outlet).
     for (ProcessEquipmentInterface unit : units) {
@@ -515,7 +534,99 @@ public final class ProcessGraphBuilder {
       }
     }
 
-    // Third pass: add signal edges for Calculator and Adjuster units.
+    // Third pass: add typed energy dependencies. Calculation mode, rather than
+    // physical direction, determines scheduling order. A point-to-point
+    // EnergyStream permits one producer and one consumer; EnergyBus supports
+    // multi-party generation, demand, and balancing.
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToProducers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToConsumers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, EnergyNetworkSolver> energyToSolver = new IdentityHashMap<EnergyStream, EnergyNetworkSolver>();
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof EnergyNetworkSolver) {
+        EnergyNetworkSolver solver = (EnergyNetworkSolver) unit;
+        for (EnergyBus bus : solver.getEnergyBuses()) {
+          EnergyNetworkSolver previous = energyToSolver.put(bus, solver);
+          if (previous != null && previous != solver) {
+            throw new IllegalStateException("Energy bus " + bus.getName() + " is assigned to multiple solvers: "
+                + previous.getName() + " and " + solver.getName());
+          }
+        }
+      }
+      for (EnergyPort port : unit.getEnergyPorts().values()) {
+        if (!port.isConnected()) {
+          continue;
+        }
+        EnergyStream stream = port.getEnergyStream();
+        Map<EnergyStream, List<ProcessEquipmentInterface>> targetMap = null;
+        String role = null;
+        if (port.getMode() == EnergyPortMode.CALCULATED) {
+          targetMap = energyToProducers;
+          role = "calculation producers";
+        } else if (port.getMode() == EnergyPortMode.SPECIFICATION || port.getMode() == EnergyPortMode.BALANCE) {
+          targetMap = energyToConsumers;
+          role = "specification or balance consumers";
+        }
+        if (targetMap == null) {
+          continue;
+        }
+
+        List<ProcessEquipmentInterface> connectedUnits = targetMap.get(stream);
+        if (connectedUnits == null) {
+          connectedUnits = new ArrayList<ProcessEquipmentInterface>();
+          targetMap.put(stream, connectedUnits);
+        }
+        if (!(stream instanceof EnergyBus) && !connectedUnits.isEmpty() && connectedUnits.get(0) != unit) {
+          throw new IllegalStateException("Point-to-point energy stream " + stream.getName() + " has multiple " + role
+              + ": " + connectedUnits.get(0).getName() + " and " + unit.getName()
+              + ". Use EnergyBus for multi-party distribution.");
+        }
+        addByIdentityIfAbsent(connectedUnits, unit);
+      }
+    }
+
+    for (Map.Entry<EnergyStream, List<ProcessEquipmentInterface>> entry : energyToProducers.entrySet()) {
+      List<ProcessEquipmentInterface> consumers = energyToConsumers.get(entry.getKey());
+      EnergyNetworkSolver solver = energyToSolver.get(entry.getKey());
+      if (solver != null) {
+        for (ProcessEquipmentInterface producer : entry.getValue()) {
+          if (producer != solver) {
+            addEnergyEdgeIfAbsent(graph, producer, solver, entry.getKey());
+          }
+        }
+        if (consumers != null) {
+          for (ProcessEquipmentInterface consumer : consumers) {
+            if (consumer != solver) {
+              addEnergyEdgeIfAbsent(graph, solver, consumer, entry.getKey());
+            }
+          }
+        }
+      } else if (consumers != null) {
+        for (ProcessEquipmentInterface producer : entry.getValue()) {
+          for (ProcessEquipmentInterface consumer : consumers) {
+            if (producer != consumer) {
+              addEnergyEdgeIfAbsent(graph, producer, consumer, entry.getKey());
+            }
+          }
+        }
+      }
+    }
+
+    // A bus can contain only specification/balance participants and a solver
+    // (for example a grid connection or pre-populated external contribution).
+    for (Map.Entry<EnergyStream, List<ProcessEquipmentInterface>> entry : energyToConsumers.entrySet()) {
+      EnergyNetworkSolver solver = energyToSolver.get(entry.getKey());
+      if (solver == null || energyToProducers.containsKey(entry.getKey())) {
+        continue;
+      }
+      for (ProcessEquipmentInterface consumer : entry.getValue()) {
+        if (consumer != solver) {
+          addEnergyEdgeIfAbsent(graph, solver, consumer, entry.getKey());
+        }
+      }
+    }
+
+    // Fourth pass: add signal edges for Calculator and Adjuster units.
     // These units represent calculation/control dependencies, not physical
     // material streams. Signal edges keep calculation order correct and allow
     // diagram exporters to render dashed signal lines instead of solid piping.
@@ -529,7 +640,11 @@ public final class ProcessGraphBuilder {
 
         // Signal edges: each input variable equipment -> Calculator
         for (ProcessEquipmentInterface inputEquip : calc.getInputVariable()) {
-          addSignalEdgeIfAbsent(graph, inputEquip, calc, "signal:" + safeName(inputEquip) + "->" + calc.getName());
+          ProcessEquipmentInterface signalSource = inputEquip;
+          if (graph.getNode(signalSource) == null && inputEquip instanceof StreamInterface) {
+            signalSource = streamToProducer.get(inputEquip);
+          }
+          addSignalEdgeIfAbsent(graph, signalSource, calc, "signal:" + safeName(inputEquip) + "->" + calc.getName());
         }
 
         // Signal edge: Calculator -> output variable equipment
@@ -543,6 +658,14 @@ public final class ProcessGraphBuilder {
             "signal:" + safeName(adjuster.getTargetEquipment()) + "->" + adjuster.getName());
         addSignalEdgeIfAbsent(graph, adjuster, adjuster.getAdjustedEquipment(),
             "signal:" + adjuster.getName() + "->" + safeName(adjuster.getAdjustedEquipment()));
+      }
+
+      if (unit instanceof SetPoint) {
+        SetPoint setPoint = (SetPoint) unit;
+        addSignalEdgeIfAbsent(graph, setPoint.getSourceEquipment(), setPoint,
+            "signal:" + safeName(setPoint.getSourceEquipment()) + "->" + setPoint.getName());
+        addSignalEdgeIfAbsent(graph, setPoint, setPoint.getTargetEquipment(),
+            "signal:" + setPoint.getName() + "->" + safeName(setPoint.getTargetEquipment()));
       }
     }
 
@@ -962,24 +1085,72 @@ public final class ProcessGraphBuilder {
   private static void createEdgeFromProducer(ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Object stream, ProcessEquipmentInterface consumer) {
     ProcessEquipmentInterface producer = streamToProducer.get(stream);
+    // A registered stream is a mutable-state barrier between its equipment producer and consumers.
+    if (stream instanceof ProcessEquipmentInterface && stream != consumer
+        && graph.getNode((ProcessEquipmentInterface) stream) != null) {
+      producer = (ProcessEquipmentInterface) stream;
+    }
     if (producer != null && producer != consumer) {
       ProcessNode sourceNode = graph.getNode(producer);
       ProcessNode targetNode = graph.getNode(consumer);
       if (sourceNode != null && targetNode != null) {
-        // Avoid duplicate edges
+        StreamInterface streamIface = stream instanceof StreamInterface ? (StreamInterface) stream : null;
+
+        // The same stream may be discovered through both equipment-specific and
+        // uniform inlet APIs. Deduplicate that discovery by stream identity, but
+        // preserve distinct parallel streams between the same equipment pair.
         boolean edgeExists = false;
         for (ProcessEdge edge : sourceNode.getOutgoingEdges()) {
-          if (edge.getTarget() == targetNode) {
+          if (edge.getTarget() == targetNode && edge.getStream() == streamIface) {
             edgeExists = true;
             break;
           }
         }
         if (!edgeExists) {
-          StreamInterface streamIface = stream instanceof StreamInterface ? (StreamInterface) stream : null;
           graph.addEdge(sourceNode, targetNode, streamIface);
         }
       }
     }
+  }
+
+  /**
+   * Adds equipment to a list unless the identical object is already present.
+   *
+   * @param units equipment list
+   * @param candidate candidate equipment
+   */
+  private static void addByIdentityIfAbsent(List<ProcessEquipmentInterface> units,
+      ProcessEquipmentInterface candidate) {
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == candidate) {
+        return;
+      }
+    }
+    units.add(candidate);
+  }
+
+  /**
+   * Adds a typed energy dependency when the same stream edge does not already exist.
+   *
+   * @param graph process graph
+   * @param sourceEquipment equipment calculating the energy duty
+   * @param targetEquipment equipment reading the energy duty as a specification
+   * @param stream connected energy stream
+   */
+  private static void addEnergyEdgeIfAbsent(ProcessGraph graph, ProcessEquipmentInterface sourceEquipment,
+      ProcessEquipmentInterface targetEquipment, EnergyStream stream) {
+    ProcessNode sourceNode = graph.getNode(sourceEquipment);
+    ProcessNode targetNode = graph.getNode(targetEquipment);
+    if (sourceNode == null || targetNode == null) {
+      return;
+    }
+    for (ProcessEdge edge : sourceNode.getOutgoingEdges()) {
+      if (edge.getTarget() == targetNode && edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY
+          && edge.getEnergyStream() == stream) {
+        return;
+      }
+    }
+    graph.addEnergyEdge(sourceNode, targetNode, stream);
   }
 
   /**

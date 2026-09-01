@@ -1,11 +1,11 @@
 ---
 title: Physical Properties Package
-description: This documentation covers NeqSim's physical properties calculation system, including transport properties (viscosity, thermal conductivity, diffusivity), interfacial properties (surface tension), and ...
+description: Calculate density, viscosity, thermal conductivity, diffusivity, and interfacial properties with NeqSim.
 ---
 
-# Physical Properties Package
-
-This documentation covers NeqSim's physical properties calculation system, including transport properties (viscosity, thermal conductivity, diffusivity), interfacial properties (surface tension), and density correlations.
+NeqSim calculates phase-specific physical properties after a thermodynamic state has been
+established. This package provides model sets for common fluids, individual transport-property
+models, and interfacial-property calculations.
 
 ## Contents
 
@@ -16,345 +16,224 @@ This documentation covers NeqSim's physical properties calculation system, inclu
 - [Interfacial Properties](interfacial_properties) - Surface tension and related calculations
 - [Density Models](density_models) - Liquid density correlations
 
----
+## Calculation workflow
 
-## Package Architecture
+Use the physical-property API in this order:
 
-The physical properties package follows a modular design with clear separation between:
+1. Define the fluid and thermodynamic model.
+2. Establish the phase equilibrium with a flash calculation.
+3. Select a physical-property model set or override an individual phase model.
+4. Initialize the affected physical properties.
+5. Read properties from a named phase.
 
-1. **Property Handlers** - Manage which models to use for each phase type
-2. **Physical Properties System** - Phase-specific property containers
-3. **Methods** - Individual calculation models (viscosity, conductivity, etc.)
-4. **Mixing Rules** - Combine pure component properties into mixture properties
-5. **Interface Properties** - Surface/interfacial tension calculations
-
-```
-physicalproperties/
-├── PhysicalPropertyHandler.java    # Main entry point
-├── PhysicalPropertyType.java       # Property type enum
-├── system/
-│   ├── PhysicalProperties.java     # Abstract base class
-│   ├── PhysicalPropertyModel.java  # Model selection enum
-│   ├── gasphysicalproperties/      # Gas phase implementations
-│   ├── liquidphysicalproperties/   # Liquid phase implementations
-│   └── solidphysicalproperties/    # Solid phase implementations
-├── methods/
-│   ├── gasphysicalproperties/
-│   │   ├── viscosity/
-│   │   ├── conductivity/
-│   │   └── diffusivity/
-│   ├── liquidphysicalproperties/
-│   │   ├── viscosity/
-│   │   ├── conductivity/
-│   │   ├── diffusivity/
-│   │   └── density/
-│   └── commonphasephysicalproperties/
-│       ├── viscosity/              # Models valid for all phases
-│       ├── conductivity/
-│       └── diffusivity/
-├── mixingrule/
-│   └── PhysicalPropertyMixingRule.java
-└── interfaceproperties/
-    ├── InterfaceProperties.java
-    └── surfacetension/
-```
-
----
-
-## Basic Usage
-
-### Initializing Physical Properties
-
-Physical properties are calculated after thermodynamic equilibrium has been established:
+The following complete example calculates gas density, dynamic viscosity, kinematic viscosity,
+and thermal conductivity. Temperature is in kelvin and pressure is absolute in bara.
 
 ```java
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create fluid and run flash
-SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.1);
-fluid.setMixingRule("classic");
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-
-// Initialize physical properties
-fluid.initPhysicalProperties();
-
-// Access properties
-double gasViscosity = fluid.getPhase("gas").getViscosity("kg/msec");
-double gasConductivity = fluid.getPhase("gas").getThermalConductivity("W/mK");
-double gasDensity = fluid.getPhase("gas").getDensity("kg/m3");
-```
-
-### Physical Property Models
-
-NeqSim provides several pre-configured physical property model sets:
-
-| Model | Description | Best For |
-|-------|-------------|----------|
-| `DEFAULT` | Standard models for oil/gas | General hydrocarbon systems |
-| `WATER` | Water-specific correlations | Aqueous systems |
-| `SALT_WATER` | Salt water correlations | Brine systems |
-| `GLYCOL` | Glycol-specific models | Glycol dehydration |
-| `AMINE` | Amine solution models | Gas sweetening |
-| `CO2WATER` | CO₂-water system models | CCS applications |
-| `BASIC` | Minimal calculations | Fast approximations |
-
-```java
-// Set physical property model
-fluid.initPhysicalProperties("GLYCOL");
-
-// Or use the enum directly
-import neqsim.physicalproperties.system.PhysicalPropertyModel;
-fluid.initPhysicalProperties(PhysicalPropertyModel.AMINE);
-```
-
----
-
-## Selecting Individual Models
-
-You can override specific property models while keeping others at defaults:
-
-### Viscosity Model Selection
-
-```java
-fluid.initPhysicalProperties();
-
-// Set viscosity model for a specific phase
-fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("friction theory");
-fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
-```
-
-Available viscosity models:
-- `"polynom"` - Polynomial correlation
-- `"friction theory"` - Quiñones-Cisneros friction theory
-- `"LBC"` - Lohrenz-Bray-Clark (tunable)
-- `"PFCT"` - Pedersen corresponding states
-- `"CSP"` - Alias for PFCT/Pedersen corresponding states
-- `"PFCT-Heavy-Oil"` - Pedersen for heavy oils
-- `"KTA"` - KTA method
-- `"Muzny"` - Muzny (for hydrogen)
-- `"CO2Model"` - CO₂ reference
-- `"MethaneModel"` - Methane reference
-
-The PFCT/CSP viscosity model supports four tunable CSP viscosity parameters through
-`setCspViscosityParameters`, `setCspViscosityParameter`, and the matching
-`getCspViscosityParameters` accessors on `PhysicalProperties`.
-
-### Thermal Conductivity Model Selection
-
-```java
-fluid.getPhase("gas").getPhysicalProperties().setConductivityModel("Chung");
-fluid.getPhase("oil").getPhysicalProperties().setConductivityModel("PFCT");
-```
-
-Available conductivity models:
-- `"Chung"` - Chung method (gases)
-- `"PFCT"` - Pedersen corresponding states
-- `"polynom"` - Polynomial correlation
-- `"CO2Model"` - CO₂ reference
-
-### Diffusivity Model Selection
-
-```java
-fluid.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Wilke Lee");
-fluid.getPhase("oil").getPhysicalProperties().setDiffusionCoefficientModel("Siddiqi Lucas");
-```
-
-Available diffusivity models:
-- `"Wilke Lee"` - Wilke-Lee (gases)
-- `"Siddiqi Lucas"` - Siddiqi-Lucas (liquids)
-- `"CSP"` - Corresponding states
-- `"Alkanol amine"` - Amine solutions
-
-### Density Model Selection (Liquids)
-
-```java
-fluid.getPhase("oil").getPhysicalProperties().setDensityModel("Costald");
-```
-
-Available density models:
-- `"Peneloux volume shift"` - EoS with volume translation
-- `"Costald"` - COSTALD correlation
-
----
-
-## Model Tuning
-
-Several models support parameter tuning for better match with experimental data:
-
-### LBC Viscosity Tuning
-
-The LBC model has 5 tunable parameters for the dense-fluid contribution:
-
-```java
-// Set all parameters at once
-double[] lbcParams = {0.1023, 0.023364, 0.058533, -0.040758, 0.0093324};
-fluid.getPhase("oil").getPhysicalProperties().setLbcParameters(lbcParams);
-
-// Or set individual parameters
-fluid.getPhase("oil").getPhysicalProperties().setLbcParameter(0, 0.105);
-```
-
-### Friction Theory Constants
-
-For non-SRK/PR equations of state:
-
-```java
-FrictionTheoryViscosityMethod viscModel =
-    (FrictionTheoryViscosityMethod) fluid.getPhase("oil")
-        .getPhysicalProperties().getViscosityModel();
-
-viscModel.setFrictionTheoryConstants(
-    kapac,    // Attractive constant
-    kaprc,    // Repulsive constant
-    kaprrc,   // Repulsive-repulsive constant
-    kapa,     // Attractive matrix (3x3)
-    kapr,     // Repulsive matrix (3x3)
-    kaprr     // Repulsive-repulsive constant
-);
-```
-
----
-
-## Accessing Calculated Properties
-
-After initialization, properties are available through the phase interface:
-
-### Per-Phase Properties
-
-```java
-// Viscosity
-double viscosity = fluid.getPhase("gas").getViscosity();           // Pa·s
-double viscosity_cP = fluid.getPhase("gas").getViscosity("cP");    // cP
-
-// Thermal conductivity
-double k = fluid.getPhase("gas").getThermalConductivity();         // W/(m·K)
-double k_alt = fluid.getPhase("gas").getThermalConductivity("W/mK");
-
-// Density
-double rho = fluid.getPhase("gas").getDensity();                   // kg/m³
-double rho_alt = fluid.getPhase("gas").getDensity("kg/m3");
-
-// Kinematic viscosity
-double nu = fluid.getPhase("gas").getKinematicViscosity();         // m²/s
-
-// Binary diffusion coefficients
-double[][] Dij = fluid.getPhase("gas").getPhysicalProperties()
-    .getDiffusivityCalc().getBinaryDiffusionCoefficients();        // m²/s
-```
-
-### Pure Component Properties
-
-```java
-// Pure component viscosity (for mixing rule debugging)
-double pureVisc = fluid.getPhase("gas").getPhysicalProperties()
-    .getPureComponentViscosity(0);
-```
-
-### Interfacial Properties
-
-```java
-// Surface tension between phases
-fluid.initPhysicalProperties();
-double sigma = fluid.getInterphaseProperties().getSurfaceTension(0, 1);  // N/m
-```
-
----
-
-## Adding New Models
-
-To add a custom physical property model:
-
-### 1. Create the Model Class
-
-```java
-package neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity;
-
-import neqsim.physicalproperties.system.PhysicalProperties;
-
-public class MyCustomViscosityModel extends Viscosity {
-
-    public MyCustomViscosityModel(PhysicalProperties phase) {
-        super(phase);
-    }
-
-    @Override
-    public double calcViscosity() {
-        // Your implementation here
-        double viscosity = 0.0;
-
-        // Access phase properties
-        double T = phase.getPhase().getTemperature();  // K
-        double P = phase.getPhase().getPressure();     // bar
-        double rho = phase.getPhase().getDensity();    // kg/m³
-
-        // Access component properties
-        for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-            double x = phase.getPhase().getComponent(i).getx();
-            double Tc = phase.getPhase().getComponent(i).getTC();
-            // ... calculate contribution
-        }
-
-        return viscosity;  // Pa·s
-    }
-
-    @Override
-    public double getPureComponentViscosity(int i) {
-        // Return pure component viscosity for component i
-        return 0.0;
-    }
-}
-```
-
-### 2. Register in PhysicalProperties
-
-Add to `setViscosityModel()` in `PhysicalProperties.java`:
-
-```java
-public void setViscosityModel(String model) {
-    // ... existing models ...
-    else if ("MyCustomModel".equals(model)) {
-        viscosityCalc = new MyCustomViscosityModel(this);
-    }
-}
-```
-
-### 3. Use the Model
-
-```java
-fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("MyCustomModel");
-```
-
----
-
-## Performance Considerations
-
-1. **Lazy Initialization**: Properties are only calculated when `initPhysicalProperties()` is called
-2. **Selective Updates**: Use `init(phase, PropertyType)` to update only specific properties
-3. **Reuse Systems**: Clone fluids rather than recreating for sensitivity studies
-
-```java
-// Efficient property sweep
-SystemInterface baseFluid = createFluid();
-baseFluid.initPhysicalProperties();
-
-for (double T : temperatures) {
-    SystemInterface fluid = baseFluid.clone();
-    fluid.setTemperature(T, "K");
-    ops.TPflash();
+public class PhysicalPropertiesOverview {
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.DEFAULT);
     fluid.initPhysicalProperties();
-    // ... use properties
+
+    double viscosityPas = fluid.getPhase("gas").getViscosity("kg/msec");
+    double conductivityWPerMeterK =
+        fluid.getPhase("gas").getThermalConductivity("W/mK");
+    double densityKgPerM3 = fluid.getPhase("gas").getDensity("kg/m3");
+    double kinematicViscosityM2PerS =
+        fluid.getPhase("gas").getPhysicalProperties().getKinematicViscosity();
+
+    if (viscosityPas <= 0.0
+        || conductivityWPerMeterK <= 0.0
+        || densityKgPerM3 <= 0.0
+        || kinematicViscosityM2PerS <= 0.0) {
+      throw new IllegalStateException("Expected positive gas physical properties");
+    }
+  }
 }
 ```
 
----
+`initPhysicalProperties()` is separate from thermodynamic initialization. Re-run it after a
+material change in temperature, pressure, composition, phase equilibrium, or selected
+physical-property model.
 
-## See Also
+## Preconfigured model sets
+
+`PhysicalPropertyModel` selects a consistent set of phase-specific implementations:
+
+| Model | Intended use |
+|---|---|
+| `DEFAULT` | General hydrocarbon systems |
+| `WATER` | Aqueous systems |
+| `SALT_WATER` | Brines |
+| `GLYCOL` | Glycol dehydration systems |
+| `AMINE` | Amine gas-treating systems |
+| `CO2WATER` | CO₂-water systems |
+| `BASIC` | Minimal property calculations |
+
+Select the model set before initializing the properties. For example, call
+`fluid.setPhysicalPropertyModel(PhysicalPropertyModel.GLYCOL)` and then
+`fluid.initPhysicalProperties()`.
+
+The string overload of `initPhysicalProperties` selects a
+`PhysicalPropertyType` such as `DYNAMIC_VISCOSITY`; it does not select a
+`PhysicalPropertyModel`. Therefore, `initPhysicalProperties("GLYCOL")` is not a model-set
+selection call. For compatibility, the legacy keys `DENSITY`, `VISCOSITY`, and `CONDUCTIVITY`
+map to `MASS_DENSITY`, `DYNAMIC_VISCOSITY`, and `THERMAL_CONDUCTIVITY`, respectively.
+
+## Overriding individual phase models
+
+Individual models are selected on a phase's `PhysicalProperties` object. Model keys are
+case-sensitive. Reinitialize each changed phase after selecting a model.
+
+```java
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+public class PhaseSpecificPhysicalProperties {
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(280.0, 30.0);
+    fluid.addComponent("methane", 0.50);
+    fluid.addComponent("n-pentane", 0.50);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
+
+    if (!fluid.hasPhaseType("gas") || !fluid.hasPhaseType("oil")) {
+      throw new IllegalStateException("Expected gas and oil phases");
+    }
+
+    fluid.getPhase("gas").getPhysicalProperties()
+        .setViscosityModel("friction theory");
+    fluid.getPhase("gas").getPhysicalProperties()
+        .setConductivityModel("Chung");
+    fluid.getPhase("oil").getPhysicalProperties()
+        .setViscosityModel("LBC");
+    fluid.getPhase("oil").getPhysicalProperties()
+        .setConductivityModel("PFCT");
+
+    fluid.getPhase("gas").initPhysicalProperties();
+    fluid.getPhase("oil").initPhysicalProperties();
+
+    double gasViscosityCp = fluid.getPhase("gas").getViscosity("cP");
+    double oilViscosityCp = fluid.getPhase("oil").getViscosity("cP");
+    if (gasViscosityCp <= 0.0 || oilViscosityCp <= 0.0) {
+      throw new IllegalStateException("Expected positive phase viscosities");
+    }
+  }
+}
+```
+
+The dedicated model pages list the implemented keys, applicability, equations, and tuning
+interfaces. Unsupported keys do not have one uniform fallback policy across all property types,
+so validate model selection and results in application tests.
+
+## Accessing calculated properties
+
+After initialization, the most common phase accessors are:
+
+| Property | Accessor | Default unit |
+|---|---|---|
+| Dynamic viscosity | `getViscosity()` | Pa·s |
+| Dynamic viscosity with unit | `getViscosity("cP")` | requested unit |
+| Thermal conductivity | `getThermalConductivity()` | W/(m·K) |
+| Thermal conductivity with unit | `getThermalConductivity("W/mK")` | requested unit |
+| Mass density | `getDensity()` | kg/m³ |
+| Mass density with unit | `getDensity("kg/m3")` | requested unit |
+| Kinematic viscosity | `getPhysicalProperties().getKinematicViscosity()` | m²/s |
+
+Diffusion coefficients are available from the phase's `PhysicalProperties` object. Use
+`getDiffusionCoefficient(i, j)` or `getDiffusionCoefficient(component1, component2)` for a
+Maxwell-Stefan binary coefficient. Call `calcEffectiveDiffusionCoefficients()` before reading an
+effective coefficient with `getEffectiveDiffusionCoefficient(...)`. See the
+[diffusivity guide](diffusivity_models) for model selection, Fick coefficients, and complete
+access patterns.
+
+Surface tension requires two existing phases and an initialized interfacial model. Use phase
+guards and follow the complete examples in the
+[interfacial-properties guide](interfacial_properties); do not assume that phase indexes 0 and
+1 identify a valid interface.
+
+## Model tuning
+
+Viscosity tuning parameters are model-specific. The LBC, PFCT/CSP, and advanced friction-theory
+interfaces are documented and tested in the [viscosity guide](viscosity_models). Use parameter
+sets from independent measurements or validated literature, preserve their units and validity
+range, and reinitialize the affected phase after changing them.
+
+## Sensitivity calculations
+
+Create a `ThermodynamicOperations` instance for the fluid that is actually being flashed. This is
+especially important when cloning a base fluid:
+
+```java
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+public class PhysicalPropertyTemperatureSweep {
+  public static void main(String[] args) {
+    SystemInterface baseFluid = new SystemSrkEos(298.15, 50.0);
+    baseFluid.addComponent("methane", 0.90);
+    baseFluid.addComponent("ethane", 0.10);
+    baseFluid.setMixingRule("classic");
+
+    double[] temperaturesK = {280.0, 300.0, 320.0};
+    for (double temperatureK : temperaturesK) {
+      SystemInterface fluid = baseFluid.clone();
+      fluid.setTemperature(temperatureK, "K");
+
+      new ThermodynamicOperations(fluid).TPflash();
+      fluid.initPhysicalProperties();
+
+      double viscosityPas = fluid.getPhase("gas").getViscosity("kg/msec");
+      if (viscosityPas <= 0.0 || !Double.isFinite(viscosityPas)) {
+        throw new IllegalStateException("Invalid gas viscosity");
+      }
+    }
+  }
+}
+```
+
+## Extending the package
+
+A new physical-property model should:
+
+1. Extend the property-method base class for the correct phase family.
+2. Document equations, units, parameter provenance, and validity limits.
+3. Register a stable, case-sensitive key in the relevant setter.
+4. Add focused tests for selection, calculation, bounds, and unsupported inputs.
+5. Add an executable documentation example and update the applicable model guide.
+
+Avoid placeholder implementations that return zero: they can appear numerically valid while
+silently corrupting transport or equipment calculations.
+
+## Package architecture
+
+The package separates these responsibilities:
+
+1. `PhysicalPropertyHandler` maps phase types and model sets to property containers.
+2. `PhysicalProperties` stores the selected density, viscosity, conductivity, and diffusivity
+   methods for one phase.
+3. Method packages implement individual correlations and corresponding-states models.
+4. Physical-property mixing rules combine component contributions.
+5. Interfacial-property classes calculate surface tension and adsorption behavior.
+
+## See also
 
 - [Fluid Creation Guide](../thermo/fluid_creation_guide) - Creating thermodynamic systems
-- [Flash Calculations Guide](../thermo/flash_calculations_guide) - Phase equilibrium calculations
-- [Thermodynamic Operations](../thermo/thermodynamic_operations) - Property calculation workflow
+- [Flash Calculations Guide](../thermo/flash_calculations_guide) - Phase-equilibrium calculations
+- [Thermodynamic Operations](../thermo/thermodynamic_operations) - Thermodynamic calculation workflow

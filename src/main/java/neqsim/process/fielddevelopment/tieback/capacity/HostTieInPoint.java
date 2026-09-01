@@ -18,7 +18,7 @@ public final class HostTieInPoint implements Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
 
-  /** Process stream reference, for example "Host Feed" or "HP Sep.gasOut". */
+  /** Process stream reference, for example "Host Feed", "HP Sep.gasOut", or "gathering::Host Feed". */
   private final String processStreamReference;
 
   /** Flow unit used when setting the process stream rate. */
@@ -42,7 +42,8 @@ public final class HostTieInPoint implements Serializable {
   /**
    * Creates a tie-in point for a process stream.
    *
-   * @param processStreamReference stream reference resolved by {@code ProcessSystem}
+   * @param processStreamReference stream reference resolved by {@code ProcessSystem}, or an
+   * {@code area::streamReference} resolved by {@code ProcessModel}
    * @param processRateUnit flow unit used by the target stream
    */
   public HostTieInPoint(String processStreamReference, String processRateUnit) {

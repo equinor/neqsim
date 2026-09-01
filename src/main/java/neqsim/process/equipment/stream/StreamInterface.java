@@ -80,9 +80,10 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   /**
    * getFlowRate. Wrapper for SystemInterface.getFlowRate().
    *
-   * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr, Sm3/sec, Sm3/hr, Sm3/day,
-   * MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min,
-   * kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
+   * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, Am3/hr,
+   * m3/day, Am3/day, idSm3/sec, idSm3/min, idSm3/hr, idSm3/day, Sm3/sec, Sm3/min, Sm3/hr, Sm3/day, MSm3/day, MSm3/hr,
+   * mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
+   * kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day, gallons/min
    * @return flow rate in specified unit
    */
   public default double getFlowRate(String unit) {
@@ -244,14 +245,6 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * @return a double
    */
   public double LCV();
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object o);
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode();
 
   /**
    * Calculates the hydrocarbon dew point of the stream.

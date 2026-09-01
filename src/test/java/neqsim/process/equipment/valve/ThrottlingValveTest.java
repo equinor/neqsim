@@ -3,14 +3,60 @@ package neqsim.process.equipment.valve;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534;
 import neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 
 public class ThrottlingValveTest {
+  private static class InitTrackingSystemSrkEos extends SystemSrkEos {
+    private static final long serialVersionUID = 1000L;
+    private AtomicInteger levelTwoCalls = new AtomicInteger();
+    private AtomicInteger levelThreeCalls = new AtomicInteger();
+
+    InitTrackingSystemSrkEos(double temperature, double pressure) {
+      super(temperature, pressure);
+    }
+
+    @Override
+    public InitTrackingSystemSrkEos clone() {
+      InitTrackingSystemSrkEos cloned = (InitTrackingSystemSrkEos) super.clone();
+      if (cloned == null) {
+        throw new IllegalStateException("Failed to clone initialization-tracking fluid");
+      }
+      cloned.levelTwoCalls = levelTwoCalls;
+      cloned.levelThreeCalls = levelThreeCalls;
+      return cloned;
+    }
+
+    @Override
+    public void init(int initType) {
+      super.init(initType);
+      if (levelTwoCalls != null && initType == 2) {
+        levelTwoCalls.incrementAndGet();
+      } else if (levelThreeCalls != null && initType == 3) {
+        levelThreeCalls.incrementAndGet();
+      }
+    }
+
+    void resetInitCounts() {
+      levelTwoCalls.set(0);
+      levelThreeCalls.set(0);
+    }
+
+    int getLevelTwoCalls() {
+      return levelTwoCalls.get();
+    }
+
+    int getLevelThreeCalls() {
+      return levelThreeCalls.get();
+    }
+  }
+
   /**
    * Test method for calculating the flow coefficient (Cv) of a gas through a throttling valve.
    * <p>
@@ -567,5 +613,103 @@ public class ThrottlingValveTest {
 
     // Both should give the same result
     assertEquals(cv, cv2, 1.0, "Cv from standalone run and ProcessSystem run should match");
+  }
+
+  /**
+   * Valve entropy requires caloric properties but not level-3 composition derivatives. The diagnostic must preserve the
+   * level-3 reference result and surrounding stream state at the base condition and a nearby operating point.
+   */
+  @Test
+  void testEntropyProductionUsesMinimumThermodynamicInitializationLevel() {
+    InitTrackingSystemSrkEos fluid = new InitTrackingSystemSrkEos(363.15, 80.0);
+    fluid.addComponent("nitrogen", 0.02);
+    fluid.addComponent("CO2", 0.03);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("n-heptane", 0.04);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("tracked valve inlet", fluid);
+    inlet.setFlowRate(50000.0, "kg/hr");
+    inlet.run();
+
+    ThrottlingValve valve = new ThrottlingValve("tracked entropy valve", inlet);
+    valve.setOutletPressure(40.0, "bara");
+    valve.run();
+
+    assertMinimumEntropyInitialization(fluid, valve);
+
+    inlet.setTemperature(368.15, "K");
+    inlet.run();
+    valve.run();
+    assertMinimumEntropyInitialization(fluid, valve);
+  }
+
+  private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid, ThrottlingValve valve) {
+    valve.getInletStream().getFluid().init(3);
+    valve.getOutletStream().getFluid().init(3);
+    double expectedEntropy = valve.getOutletStream().getFluid().getEntropy("J/K")
+        - valve.getInletStream().getFluid().getEntropy("J/K");
+
+    double inletTemperature = valve.getInletStream().getTemperature("K");
+    double outletTemperature = valve.getOutletStream().getTemperature("K");
+    double inletPressure = valve.getInletStream().getPressure("bara");
+    double outletPressure = valve.getOutletStream().getPressure("bara");
+    double massFlow = valve.getOutletStream().getFlowRate("kg/hr");
+    double inletEnthalpy = valve.getInletStream().getFluid().getEnthalpy("J");
+    double outletEnthalpy = valve.getOutletStream().getFluid().getEnthalpy("J");
+    int inletPhases = valve.getInletStream().getFluid().getNumberOfPhases();
+    int outletPhases = valve.getOutletStream().getFluid().getNumberOfPhases();
+
+    fluid.resetInitCounts();
+    double actualEntropy = valve.getEntropyProduction("J/K");
+
+    assertEquals(expectedEntropy, actualEntropy, Math.max(1.0e-9, Math.abs(expectedEntropy) * 1.0e-12));
+    assertEquals(2, fluid.getLevelTwoCalls(), "Inlet and outlet still require caloric initialization");
+    assertEquals(0, fluid.getLevelThreeCalls(), "Valve entropy must not calculate composition derivatives");
+    assertEquals(inletTemperature, valve.getInletStream().getTemperature("K"), 0.0);
+    assertEquals(outletTemperature, valve.getOutletStream().getTemperature("K"), 0.0);
+    assertEquals(inletPressure, valve.getInletStream().getPressure("bara"), 0.0);
+    assertEquals(outletPressure, valve.getOutletStream().getPressure("bara"), 0.0);
+    assertEquals(massFlow, valve.getOutletStream().getFlowRate("kg/hr"), 0.0);
+    assertEquals(inletEnthalpy, valve.getInletStream().getFluid().getEnthalpy("J"), 0.0);
+    assertEquals(outletEnthalpy, valve.getOutletStream().getFluid().getEnthalpy("J"), 0.0);
+    assertEquals(inletPhases, valve.getInletStream().getFluid().getNumberOfPhases());
+    assertEquals(outletPhases, valve.getOutletStream().getFluid().getNumberOfPhases());
+    assertEquals(actualEntropy, valve.getEntropyProduction("J/K"), 0.0,
+        "Repeated diagnostic calls must remain bit-identical");
+  }
+
+  @Test
+  void testAcceptNegativeDPFlagLogic() {
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem);
+    stream1.setPressure(10.0, "bara");
+    stream1.run();
+
+    ThrottlingValve defaultValve = new ThrottlingValve("default valve", stream1);
+    assertTrue(defaultValve.isAcceptNegativeDP(), "Requested higher outlet pressure is accepted by default");
+    defaultValve.setOutletPressure(15.0, "bara");
+    defaultValve.run();
+    assertEquals(15.0, defaultValve.getOutletStream().getPressure("bara"), 1e-4,
+        "The default retains the requested outlet thermodynamic pressure state");
+
+    ThrottlingValve clampingValve = new ThrottlingValve("clamping valve", stream1);
+    clampingValve.setOutletPressure(15.0, "bara");
+    clampingValve.setAcceptNegativeDP(false);
+    clampingValve.run();
+    assertEquals(10.0, clampingValve.getOutletStream().getPressure("bara"), 1e-4,
+        "Disabling acceptance clamps the outlet thermodynamic pressure to the inlet");
+
+    ThrottlingValve acceptingValve = new ThrottlingValve("accepting valve", stream1);
+    acceptingValve.setOutletPressure(15.0, "bara");
+    acceptingValve.setAcceptNegativeDP(true);
+    acceptingValve.run();
+    assertEquals(15.0, acceptingValve.getOutletStream().getPressure("bara"), 1e-4,
+        "Enabling acceptance retains the requested outlet thermodynamic pressure state");
   }
 }

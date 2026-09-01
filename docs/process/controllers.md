@@ -15,6 +15,7 @@ Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
 - [Setters](#setters)
 - [Calculators](#calculators)
 - [PID Controllers](#pid-controllers)
+- [Native Dynamic Control Blocks](#native-dynamic-control-blocks)
 - [Process Logic](#process-logic)
 
 ---
@@ -85,6 +86,37 @@ process.runTransient(1.0, calcId);
 ```
 
 This is in addition to controllers embedded on individual equipment, which continue to work as before.
+
+## Native Dynamic Control Blocks
+
+`TransferFunctionBlock` supplies first-order lag, lead-lag, dead-time, and second-order signal dynamics.
+`LogicBlock` evaluates threshold, fixed, or chained Boolean inputs. Register either block as a system-level
+controller so it is evaluated in the controller phase of each transient step.
+
+```java
+TransferFunctionBlock pressureLag = new TransferFunctionBlock(
+    "PT-filter", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+pressureLag.setTransmitter(pressureTransmitter);
+pressureLag.setLagTime(5.0);
+pressureLag.setDeadTime(2.0);
+process.add(pressureLag);
+
+LogicBlock tripVote = new LogicBlock("PAHH", LogicBlock.Operator.AND);
+tripVote.addInput(pressureTransmitter, 120.0, LogicBlock.Comparator.GREATER_EQUAL);
+process.add(tripVote);
+```
+
+Both concrete block classes participate in `ProcessSystem` and multi-area `ProcessModel` transient-step
+transactions. A rejected step restores their dynamic states, delay buffer, output, calculation identity,
+configuration, and original transmitter/input bindings. Replaying the same physical-step identifier after rollback
+therefore produces the same deterministic control-block continuation. Repeated evaluation with an already accepted
+physical-step identifier is ignored; use one UUID per physical timestep and reuse it only for refinements inside that
+step. `TransferFunctionBlock.reset()` also clears the remembered step identifier so a deterministic run can restart
+from the block's initial state.
+
+Subclass instances fail transaction coverage until the subclass supplies a snapshot for its own mutable state. The
+transaction contract is an in-memory rollback mechanism: it does not validate tuning, prove safety integrity, or defer
+external side effects produced by callbacks.
 
 ---
 

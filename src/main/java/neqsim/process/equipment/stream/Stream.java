@@ -6,12 +6,17 @@
 
 package neqsim.process.equipment.stream;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.measurementdevice.HydrocarbonDewPointAnalyser;
 import neqsim.process.util.monitor.StreamResponse;
@@ -19,6 +24,9 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -30,11 +38,31 @@ import neqsim.util.exception.InvalidInputException;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
+public class Stream extends ProcessEquipmentBaseClass
+    implements StreamInterface, Cloneable, TransientStateParticipant<Stream.TransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Stream.class);
+  /**
+   * Tolerance used when testing whether a cricondenpoint merely echoes the source fluid state. Applied in Kelvin to the
+   * temperature and in bara to the pressure.
+   */
+  private static final double CRICONDEN_ECHO_TOLERANCE = 1.0e-6;
+  /** Initial value for the deterministic criconden-envelope input fingerprint. */
+  private static final long CRICONDEN_SIGNATURE_SEED = 1125899906842597L;
+
+  /** Stable transaction identity retained by Java serialization. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
+
+  /** Fingerprint of the fluid state used for the cached criconden envelope. */
+  private transient long cachedCricondenInputSignature = Long.MIN_VALUE;
+  /** Whether both cached cricondenpoints were resolved successfully. */
+  private transient boolean hasCachedCricondenEnvelope = false;
+  /** Cached cricondentherm as temperature in Kelvin and pressure in bara. */
+  private transient double[] cachedCricondenTherm = null;
+  /** Cached cricondenbar as temperature in Kelvin and pressure in bara. */
+  private transient double[] cachedCricondenBar = null;
 
   protected SystemInterface thermoSystem;
 
@@ -54,6 +82,45 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double[] lastComposition = null;
   /** Cached specification for skip-if-unchanged check in {@link #run(UUID)}. */
   protected String lastSpecification = null;
+
+  /**
+   * Level of physical-property initialization performed at the end of {@link Stream#run(java.util.UUID)}.
+   *
+   * <p>
+   * {@link #FULL} evaluates every physical property (mass density, viscosity, thermal conductivity and diffusivity),
+   * which is what a stream needs when transport properties are read downstream (pipelines, heat exchangers, mechanical
+   * design). {@link #DENSITY_ONLY} evaluates the mass density alone and skips the transport-property correlations,
+   * which is roughly an order of magnitude cheaper and sufficient for pure material-balance flowsheets.
+   * </p>
+   *
+   * <p>
+   * <b>Warning.</b> Under {@link #DENSITY_ONLY} the skipped properties are not flagged as unavailable - they read back
+   * as {@code 0.0}. See {@link Stream#setPropertyInitLevel(PropertyInitLevel)}.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public enum PropertyInitLevel {
+    /** init(2) followed by all physical properties - the historical (default) behaviour. */
+    FULL,
+    /** init(2) followed by mass density only - skips viscosity, conductivity and diffusivity. */
+    DENSITY_ONLY
+  }
+
+  /** Property-initialization level applied after the flash in {@link #run(java.util.UUID)}. */
+  private PropertyInitLevel propertyInitLevel = PropertyInitLevel.FULL;
+
+  /** Cached vapor-pressure standard, reused while the fluid composition and reference temperature are unchanged. */
+  private transient Standard_ASTM_D6377 cachedRvpStandard = null;
+  /** Fluid instance the cached vapor-pressure standard was evaluated for. */
+  private transient SystemInterface cachedRvpFluid = null;
+  /** Molar composition the cached vapor-pressure standard was evaluated for. */
+  private transient double[] cachedRvpComposition = null;
+  /** Reference temperature the cached vapor-pressure standard was evaluated for. */
+  private transient double cachedRvpReferenceTemperature = Double.NaN;
+  /** Reference-temperature unit the cached vapor-pressure standard was evaluated for. */
+  private transient String cachedRvpReferenceTemperatureUnit = null;
 
   /**
    * Constructor for Stream.
@@ -117,6 +184,54 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     this.gasQuality = gasQuality;
   }
 
+  /**
+   * Getter for the field <code>propertyInitLevel</code>.
+   *
+   * @return the physical-property initialization level used by {@link #run(java.util.UUID)}; never null
+   */
+  public PropertyInitLevel getPropertyInitLevel() {
+    return propertyInitLevel;
+  }
+
+  /**
+   * Setter for the field <code>propertyInitLevel</code>.
+   *
+   * <p>
+   * Use {@link PropertyInitLevel#DENSITY_ONLY} to skip the viscosity, thermal-conductivity and diffusivity correlations
+   * when the flowsheet only needs mass balances and densities. This makes {@link #run(java.util.UUID)} substantially
+   * cheaper on large flowsheets.
+   * </p>
+   *
+   * <p>
+   * <b>Warning - transport properties read back as zero.</b> {@link PropertyInitLevel#DENSITY_ONLY} does not throw when
+   * a transport property is requested afterwards: {@code getViscosity()}, {@code getThermalConductivity()} and the
+   * diffusion coefficients simply return {@code 0.0}. Set the level back to {@link PropertyInitLevel#FULL} (or call
+   * {@code getFluid().initProperties()} explicitly) before any pipeline, heat-exchanger, mechanical-design or
+   * flow-assurance calculation that reads transport properties from this stream.
+   * </p>
+   *
+   * @param propertyInitLevel the level to use; null is treated as {@link PropertyInitLevel#FULL}
+   */
+  public void setPropertyInitLevel(PropertyInitLevel propertyInitLevel) {
+    this.propertyInitLevel = propertyInitLevel == null ? PropertyInitLevel.FULL : propertyInitLevel;
+  }
+
+  /**
+   * Initializes the physical properties of the internal fluid at the configured {@link PropertyInitLevel}.
+   *
+   * <p>
+   * Called at the end of {@link #run(java.util.UUID)} after the flash has converged.
+   * </p>
+   */
+  protected void initStreamProperties() {
+    if (propertyInitLevel == PropertyInitLevel.DENSITY_ONLY) {
+      thermoSystem.init(2);
+      thermoSystem.initPhysicalProperties(neqsim.physicalproperties.PhysicalPropertyType.MASS_DENSITY);
+    } else {
+      thermoSystem.initProperties();
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getHydrateEquilibriumTemperature() {
@@ -166,11 +281,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public Stream clone() {
-    Stream clonedSystem = null;
+    Stream clonedSystem;
     try {
       clonedSystem = (Stream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error("Failed to clone stream {}", getName(), ex);
+      throw new IllegalStateException("Unable to clone stream '" + getName() + "'", ex);
     }
     if (stream != null) {
       clonedSystem.setStream(stream.clone());
@@ -178,8 +294,114 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (thermoSystem != null) {
       clonedSystem.thermoSystem = thermoSystem.clone();
     }
+    clonedSystem.transientStateIdentity = UUID.randomUUID().toString();
+    clonedSystem.lastComposition = lastComposition == null ? null : lastComposition.clone();
+    clonedSystem.invalidateDerivedTransientCaches();
 
     return clonedSystem;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:stream:" + transientStateIdentity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != Stream.class) {
+      return "stream subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
+    String baseIssue = getBaseTransientStateCoverageIssue();
+    if (baseIssue != null) {
+      return baseIssue;
+    }
+    if (stream != null) {
+      return "wrapper streams delegate mutations to another stream and require coordinated state ownership";
+    }
+    if (thermoSystem == null) {
+      return "stream has no thermodynamic system to capture";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture stream '" + getName() + "': " + coverageIssue);
+    }
+    return new TransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransientState snapshot) {
+    Objects.requireNonNull(snapshot, "stream transient snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Transient snapshot belongs to another stream");
+    }
+
+    restoreBaseTransientState(snapshot.baseState);
+    thermoSystem = snapshot.thermoSystem.clone();
+    stream = null;
+    streamNumber = snapshot.streamNumber;
+    gasQuality = snapshot.gasQuality;
+    lastTemperature = snapshot.lastTemperature;
+    lastPressure = snapshot.lastPressure;
+    lastFlowRate = snapshot.lastFlowRate;
+    lastComposition = snapshot.lastComposition == null ? null : snapshot.lastComposition.clone();
+    lastSpecification = snapshot.lastSpecification;
+    propertyInitLevel = snapshot.propertyInitLevel;
+    invalidateDerivedTransientCaches();
+  }
+
+  /** Clears derived property caches so rejected trials cannot leak cached results. */
+  private void invalidateDerivedTransientCaches() {
+    cachedCricondenInputSignature = Long.MIN_VALUE;
+    hasCachedCricondenEnvelope = false;
+    cachedCricondenTherm = null;
+    cachedCricondenBar = null;
+    cachedRvpStandard = null;
+    cachedRvpFluid = null;
+    cachedRvpComposition = null;
+    cachedRvpReferenceTemperature = Double.NaN;
+    cachedRvpReferenceTemperatureUnit = null;
+  }
+
+  /** Immutable serializable checkpoint for a concrete local stream. */
+  public static final class TransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ProcessEquipmentTransientState baseState;
+    private final SystemInterface thermoSystem;
+    private final int streamNumber;
+    private final double gasQuality;
+    private final double lastTemperature;
+    private final double lastPressure;
+    private final double lastFlowRate;
+    private final double[] lastComposition;
+    private final String lastSpecification;
+    private final PropertyInitLevel propertyInitLevel;
+
+    private TransientState(Stream source) {
+      stateIdentity = source.getTransientStateIdentity();
+      baseState = source.captureBaseTransientState();
+      thermoSystem = source.thermoSystem.clone();
+      streamNumber = source.streamNumber;
+      gasQuality = source.gasQuality;
+      lastTemperature = source.lastTemperature;
+      lastPressure = source.lastPressure;
+      lastFlowRate = source.lastFlowRate;
+      lastComposition = source.lastComposition == null ? null : source.lastComposition.clone();
+      lastSpecification = source.lastSpecification;
+      propertyInitLevel = source.propertyInitLevel;
+    }
   }
 
   /** {@inheritDoc} */
@@ -348,10 +570,24 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (!getFluid().isInitialized()) {
-      getFluid().init(0);
+    SystemInterface fluid = getFluid();
+    if (fluid == null) {
+      // A named but unconfigured stream is a valid inactive topology placeholder. Treat it as
+      // solved for this pass so ProcessSystem execution, diagram generation, and exchange export
+      // can retain the placeholder without inventing a thermodynamic state.
+      isActive(false);
+      lastFlowRate = 0.0;
+      lastTemperature = Double.NaN;
+      lastPressure = Double.NaN;
+      lastComposition = null;
+      lastSpecification = getSpecification();
+      setCalculationIdentifier(id);
+      return;
     }
-    thermoSystem = getFluid().clone();
+    if (!fluid.isInitialized()) {
+      fluid.init(0);
+    }
+    thermoSystem = fluid.clone();
 
     if (getFlowRate("kg/hr") < getMinimumFlow()) {
       isActive(false);
@@ -425,7 +661,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       thermoOps.TPflash();
     }
 
-    thermoSystem.initProperties();
+    initStreamProperties();
 
     lastFlowRate = thermoSystem.getFlowRate("kg/hr");
     lastTemperature = thermoSystem.getTemperature();
@@ -502,46 +738,225 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     // ops.getJfreeChart();
   }
 
+  /**
+   * Compute a cricondenpoint of the stream fluid from its PT phase envelope.
+   *
+   * <p>
+   * The envelope is traced with the two-argument {@code calcPTphaseEnvelope(true, 1.0)} overload because the
+   * no-argument overload fails to trace some fluids - notably lean export gases that carry heavy pseudo-components at
+   * (near) zero moles.
+   * </p>
+   *
+   * <p>
+   * A single envelope contains both cricondenpoints. The result is therefore cached against a deterministic fingerprint
+   * of the complete EOS input used by the trace, so repeated {@link #CCT(String)} and {@link #CCB(String)} calls do not
+   * repeat the expensive envelope calculation. Temperature and pressure are part of the fingerprint because they seed
+   * the numerical trace. Composition, pseudo-component properties and EOS binary-interaction parameters are included to
+   * prevent stale reuse after direct mutation of the stream fluid.
+   * </p>
+   *
+   * <p>
+   * When the trace fails, {@code PTphaseEnvelope} falls back to reporting the source fluid's own temperature and
+   * pressure. That fallback is indistinguishable from a real result to the caller, so it is detected here and reported
+   * as unresolved rather than returned as a value. A genuine cricondenpoint that coincides with the stream temperature
+   * <em>and</em> the stream pressure to within {@value #CRICONDEN_ECHO_TOLERANCE} is treated as unresolved as well; a
+   * stream sitting exactly on its own cricondenpoint is not distinguishable from the fallback and is vanishingly rare
+   * in practice.
+   * </p>
+   *
+   * @param pointName envelope point to read, either {@code "cricondentherm"} or {@code "cricondenbar"}
+   * @return a two-element array holding the temperature in Kelvin at index 0 and the pressure in bara at index 1, or
+   * {@code null} when the point could not be resolved
+   */
+  private synchronized double[] calcCricondenPoint(String pointName) {
+    SystemInterface sourceSystem = getFluid();
+    long inputSignature = calculateCricondenInputSignature(sourceSystem);
+    if (!hasCachedCricondenEnvelope || inputSignature != cachedCricondenInputSignature) {
+      SystemInterface localSyst = sourceSystem.clone();
+      // Captured before the trace runs, because tracing mutates the cloned system's state.
+      double sourceTemperatureK = localSyst.getTemperature();
+      double sourcePressureBara = localSyst.getPressure();
+
+      ThermodynamicOperations ops = createCricondenOperations(localSyst);
+      ops.setRunAsThread(true);
+      ops.calcPTphaseEnvelope(true, 1.0);
+      ops.waitAndCheckForFinishedCalculation(10000);
+
+      cachedCricondenTherm = validateCricondenPoint(ops.get("cricondentherm"), "cricondentherm", sourceTemperatureK,
+          sourcePressureBara);
+      cachedCricondenBar = validateCricondenPoint(ops.get("cricondenbar"), "cricondenbar", sourceTemperatureK,
+          sourcePressureBara);
+      cachedCricondenInputSignature = inputSignature;
+      hasCachedCricondenEnvelope = cachedCricondenTherm != null && cachedCricondenBar != null;
+    }
+
+    if ("cricondentherm".equals(pointName)) {
+      return cachedCricondenTherm;
+    }
+    return cachedCricondenBar;
+  }
+
+  /**
+   * Create the operations object used to trace a criconden envelope.
+   *
+   * <p>
+   * Package access keeps the production API unchanged while allowing the cache behavior to be counted in a focused
+   * regression test.
+   * </p>
+   *
+   * @param system cloned thermodynamic system to trace
+   * @return operations object for the supplied system
+   */
+  ThermodynamicOperations createCricondenOperations(SystemInterface system) {
+    return new ThermodynamicOperations(system);
+  }
+
+  /**
+   * Validate an envelope point and copy the two values retained by the stream cache.
+   *
+   * @param point raw point returned by the envelope operation
+   * @param pointName name used in diagnostics
+   * @param sourceTemperatureK source-stream temperature in Kelvin
+   * @param sourcePressureBara source-stream pressure in bara
+   * @return copied temperature-pressure pair, or {@code null} when unresolved
+   */
+  private double[] validateCricondenPoint(double[] point, String pointName, double sourceTemperatureK,
+      double sourcePressureBara) {
+    if (point == null || point.length < 2 || !Double.isFinite(point[0]) || !Double.isFinite(point[1])) {
+      logger.error("{}: phase envelope did not resolve {} for stream {}", getClass().getSimpleName(), pointName,
+          getName());
+      return null;
+    }
+
+    boolean echoesSourceState = Math.abs(point[0] - sourceTemperatureK) <= CRICONDEN_ECHO_TOLERANCE
+        && Math.abs(point[1] - sourcePressureBara) <= CRICONDEN_ECHO_TOLERANCE;
+    if (echoesSourceState) {
+      logger.error(
+          "{}: phase envelope failed to trace for stream {}; {} returned the stream's own state "
+              + "({} K, {} bara) and is reported as unresolved",
+          getClass().getSimpleName(), getName(), pointName, sourceTemperatureK, sourcePressureBara);
+      return null;
+    }
+    return new double[] { point[0], point[1] };
+  }
+
+  /**
+   * Calculate a deterministic fingerprint of every EOS input that can affect the traced envelope.
+   *
+   * @param system stream fluid to fingerprint
+   * @return exact criconden-envelope input fingerprint
+   */
+  private long calculateCricondenInputSignature(SystemInterface system) {
+    long signature = CRICONDEN_SIGNATURE_SEED;
+    signature = updateCricondenInputSignature(signature, system.getClass().getName());
+    signature = updateCricondenInputSignature(signature, system.getModelName());
+    signature = updateCricondenInputSignature(signature, system.getMixingRuleName());
+    signature = updateCricondenInputSignature(signature, system.getTemperature());
+    signature = updateCricondenInputSignature(signature, system.getPressure());
+
+    int componentCount = system.getNumberOfComponents();
+    signature = updateCricondenInputSignature(signature, componentCount);
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      signature = updateCricondenInputSignature(signature, component.getComponentName());
+      signature = updateCricondenInputSignature(signature, component.getz());
+      signature = updateCricondenInputSignature(signature, component.getMolarMass());
+      signature = updateCricondenInputSignature(signature, component.getNormalLiquidDensity());
+      signature = updateCricondenInputSignature(signature, component.getTC());
+      signature = updateCricondenInputSignature(signature, component.getPC());
+      signature = updateCricondenInputSignature(signature, component.getAcentricFactor());
+    }
+
+    if (system.getPhase(0) instanceof PhaseEosInterface) {
+      EosMixingRulesInterface mixingRule = ((PhaseEosInterface) system.getPhase(0)).getEosMixingRule();
+      if (mixingRule != null) {
+        signature = updateCricondenInputSignature(signature, ((long) componentCount) * componentCount);
+        for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+          for (int otherComponentIndex = 0; otherComponentIndex < componentCount; otherComponentIndex++) {
+            signature = updateCricondenInputSignature(signature,
+                mixingRule.getBinaryInteractionParameter(componentIndex, otherComponentIndex));
+            signature = updateCricondenInputSignature(signature,
+                mixingRule.getBinaryInteractionParameterT1(componentIndex, otherComponentIndex));
+          }
+        }
+      }
+    }
+    return signature;
+  }
+
+  /**
+   * Add one numeric input to a criconden-envelope fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value numeric input value
+   * @return updated fingerprint
+   */
+  private long updateCricondenInputSignature(long signature, double value) {
+    return updateCricondenInputSignature(signature, Double.doubleToLongBits(value));
+  }
+
+  /**
+   * Add one integral input to a criconden-envelope fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value integral input value
+   * @return updated fingerprint
+   */
+  private long updateCricondenInputSignature(long signature, long value) {
+    return 31L * signature + value;
+  }
+
+  /**
+   * Add complete text content to a criconden-envelope fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value text input, which may be null
+   * @return updated fingerprint
+   */
+  private long updateCricondenInputSignature(long signature, String value) {
+    if (value == null) {
+      return updateCricondenInputSignature(signature, -1L);
+    }
+    long updatedSignature = updateCricondenInputSignature(signature, value.length());
+    for (int index = 0; index < value.length(); index++) {
+      updatedSignature ^= value.charAt(index);
+      updatedSignature *= 0x100000001b3L;
+    }
+    return updatedSignature;
+  }
+
+  /**
+   * Convert a cricondenpoint to the requested unit.
+   *
+   * @param point envelope point as returned by {@link #calcCricondenPoint(String)}, holding the temperature in Kelvin
+   * at index 0 and the pressure in bara at index 1, or {@code null} when unresolved
+   * @param unit {@code "bara"} or {@code "bar"} for the pressure in bara, {@code "C"} for the temperature in degrees
+   * Celsius, anything else for the temperature in Kelvin
+   * @return the requested value, or {@link Double#NaN} when {@code point} is {@code null}
+   */
+  private double convertCricondenPoint(double[] point, String unit) {
+    if (point == null) {
+      return Double.NaN;
+    }
+    if (unit.equals("bara") || unit.equals("bar")) {
+      return point[1];
+    }
+    if (unit.equals("C")) {
+      return point[0] - 273.15;
+    }
+    return point[0];
+  }
+
   /** {@inheritDoc} */
   @Override
   public double CCB(String unit) {
-    SystemInterface localSyst = getFluid().clone();
-    ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
-    ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope();
-    ops.waitAndCheckForFinishedCalculation(10000);
-    if (unit.equals("bara") || unit.equals("bar")) {
-      return ops.get("cricondenbar")[1];
-    } else {
-      if (unit.equals("C")) {
-        return ops.get("cricondenbar")[0] - 273.15;
-      } else {
-        return ops.get("cricondenbar")[0];
-      }
-    }
-    // return ops.get
-    // ops.getJfreeChart();
+    return convertCricondenPoint(calcCricondenPoint("cricondenbar"), unit);
   }
 
   /** {@inheritDoc} */
   @Override
   public double CCT(String unit) {
-    SystemInterface localSyst = getFluid().clone();
-    ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
-    ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope();
-    ops.waitAndCheckForFinishedCalculation(10000);
-    if (unit.equals("bara") || unit.equals("bar")) {
-      return ops.get("cricondentherm")[1];
-    } else {
-      if (unit.equals("C")) {
-        return ops.get("cricondentherm")[0] - 273.15;
-      } else {
-        return ops.get("cricondentherm")[0];
-      }
-    }
-    // return ops.get
-    // ops.getJfreeChart();
+    return convertCricondenPoint(calcCricondenPoint("cricondentherm"), unit);
   }
 
   /** {@inheritDoc} */
@@ -574,34 +989,69 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     return localSyst.getPressure(returnUnit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getRVP(double referenceTemperature, String unit, String returnUnit) {
-    SystemInterface localSyst = getFluid().clone();
+  /**
+   * Returns a {@link Standard_ASTM_D6377} evaluated for the current fluid at the given reference temperature.
+   *
+   * <p>
+   * A single {@code calculate()} populates every RVP variant, and the result depends only on the fluid and the
+   * reference temperature (the standard overrides temperature and pressure itself). The evaluated standard is therefore
+   * cached and reused until the fluid instance, its composition or the reference temperature changes, which removes the
+   * repeated bubble-point and vapor-fraction flashes when several RVP variants are read from the same stream.
+   * </p>
+   *
+   * @param referenceTemperature the reference temperature, e.g. 37.8
+   * @param unit the reference-temperature unit, e.g. "C"
+   * @return the evaluated standard, or null if the calculation failed
+   */
+  private Standard_ASTM_D6377 getVapourPressureStandard(double referenceTemperature, String unit) {
+    SystemInterface fluid = getFluid();
+    double[] composition = fluid.getMolarComposition();
+    if (cachedRvpStandard != null && cachedRvpFluid == fluid && cachedRvpReferenceTemperature == referenceTemperature
+        && (unit == null ? cachedRvpReferenceTemperatureUnit == null : unit.equals(cachedRvpReferenceTemperatureUnit))
+        && java.util.Arrays.equals(cachedRvpComposition, composition)) {
+      return cachedRvpStandard;
+    }
+    SystemInterface localSyst = fluid.clone();
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
     standard.setReferenceTemperature(referenceTemperature, unit);
     try {
       standard.calculate();
     } catch (Exception ex) {
       logger.debug("RVP calculation failed: {}", ex.getMessage());
+      cachedRvpStandard = null;
+      cachedRvpFluid = null;
+      cachedRvpComposition = null;
+      cachedRvpReferenceTemperature = Double.NaN;
+      cachedRvpReferenceTemperatureUnit = null;
+      return null;
+    }
+    cachedRvpStandard = standard;
+    cachedRvpFluid = fluid;
+    cachedRvpComposition = composition;
+    cachedRvpReferenceTemperature = referenceTemperature;
+    cachedRvpReferenceTemperatureUnit = unit;
+    return standard;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getRVP(double referenceTemperature, String unit, String returnUnit) {
+    Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);
+    if (standard == null) {
       return 0.0;
     }
+    standard.setMethodRVP(Standard_ASTM_D6377.RvpMethod.VPCR4);
     return standard.getValue("RVP", returnUnit);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getRVP(double referenceTemperature, String unit, String returnUnit, String rvpMethod) {
-    SystemInterface localSyst = getFluid().clone();
-    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
-    standard.setReferenceTemperature(referenceTemperature, unit);
-    standard.setMethodRVP(rvpMethod);
-    try {
-      standard.calculate();
-    } catch (Exception ex) {
-      logger.debug("RVP calculation failed: {}", ex.getMessage());
+    Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);
+    if (standard == null) {
       return 0.0;
     }
+    standard.setMethodRVP(rvpMethod);
     return standard.getValue("RVP", returnUnit);
   }
 
@@ -698,6 +1148,23 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    */
   public void setInletStream(StreamInterface stream) {
     this.setStream(stream);
+  }
+
+  /**
+   * Returns the stream wrapped by this stream unit, when present.
+   *
+   * <p>
+   * A stream constructed from another stream is a topology node as well as a fluid-state view. Reporting that wrapped
+   * stream as its inlet lets graph, exchange, and diagram APIs retain explicit terminal product streams. A standalone
+   * feed or empty stream has no inlet.
+   * </p>
+   *
+   * @return an immutable singleton containing the wrapped stream, or an empty list
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    return stream == null || stream == this ? Collections.<StreamInterface>emptyList()
+        : Collections.singletonList(stream);
   }
 
   /**

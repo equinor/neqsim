@@ -366,18 +366,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @return True if component is found.
    */
   public static boolean hasComponent(String name) {
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("select count(*) from comp WHERE NAME='" + name + "'")) {
-      dataSet.next();
-      int size = dataSet.getInt(1);
-      if (size == 0) {
-        return false;
-      } else {
-        return true;
-      }
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
+    return countRowsByName("comp", name) > 0;
   }
 
   /**
@@ -387,14 +376,33 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @return True if component is found.
    */
   public static boolean hasTempComponent(String name) {
+    return countRowsByName("comptemp", name) > 0;
+  }
+
+  /**
+   * Count the rows of a table whose NAME column equals the given value.
+   *
+   * <p>
+   * The name is bound as a parameter rather than concatenated into the SQL text. Component names legitimately contain
+   * apostrophes (the extended database has more than two thousand, such as {@code 4'-hydroxyacetophenone}), which
+   * produced invalid SQL when concatenated.
+   * </p>
+   *
+   * @param tableName Name of the table to query; must be a literal known to this class.
+   * @param name Value to match against the NAME column.
+   * @return Number of matching rows.
+   */
+  private static int countRowsByName(String tableName, String name) {
+    if (name == null) {
+      return 0;
+    }
+    String sql = "select count(*) from " + tableName + " WHERE NAME=?";
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("select count(*) from comptemp WHERE NAME='" + name + "'")) {
-      dataSet.next();
-      int size = dataSet.getInt(1);
-      if (size == 0) {
-        return false;
-      } else {
-        return true;
+        java.sql.PreparedStatement statement = database.getConnection().prepareStatement(sql)) {
+      statement.setString(1, name);
+      try (java.sql.ResultSet dataSet = statement.executeQuery()) {
+        dataSet.next();
+        return dataSet.getInt(1);
       }
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -515,6 +523,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       updateTable("ISO6976constants2016");
       updateTable("STOCCOEFDATA");
       updateTable("REACTIONDATA");
+      updateTable("REACTIONDATAPITZER");
       // Table ReactionKSPdata is not in use anywhere
       updateTable("ReactionKSPdata");
       updateTable("AdsorptionParameters");

@@ -20,6 +20,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private double averageDropletDiameter = 100.0e-6;
+  private double specifiedDispersedPhaseRelativeVelocity = Double.NaN;
 
   /**
    * Constructor for DropletFlowNode.
@@ -111,7 +112,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     double surfaceAreaOfDroplet = 4.0 * Math.PI * Math.pow(averageDropletDiameter / 2.0, 2.0);
 
     double numbDropletsPerTime = getBulkSystem().getPhase(1).getVolume("m3") / volumeOfDroplet;
-    interphaseContactLength[0] = numbDropletsPerTime * surfaceAreaOfDroplet / velocity[0];
+    interphaseContactLength[0] = numbDropletsPerTime * surfaceAreaOfDroplet / Math.max(1.0e-12, Math.abs(velocity[1]));
     interphaseContactLength[1] = interphaseContactLength[0];
 
     return wallContactLength[0];
@@ -351,5 +352,27 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    */
   public void setAverageDropletDiameter(double averageDropletDiameter) {
     this.averageDropletDiameter = averageDropletDiameter;
+  }
+
+  /**
+   * Set a particle-relative speed for heat and mass transfer without changing axial phase velocities.
+   *
+   * @param relativeVelocity non-negative relative speed in m/s, or NaN to use the axial velocity difference
+   */
+  public void setSpecifiedDispersedPhaseRelativeVelocity(double relativeVelocity) {
+    if (!Double.isNaN(relativeVelocity) && (!Double.isFinite(relativeVelocity) || relativeVelocity < 0.0)) {
+      throw new IllegalArgumentException("relative velocity must be finite and non-negative, or NaN");
+    }
+    specifiedDispersedPhaseRelativeVelocity = relativeVelocity;
+  }
+
+  /**
+   * Get the relative speed used by dispersed-particle transfer correlations.
+   *
+   * @return specified speed, or the absolute axial gas-liquid velocity difference in m/s
+   */
+  public double getDispersedPhaseRelativeVelocity() {
+    return Double.isFinite(specifiedDispersedPhaseRelativeVelocity) ? specifiedDispersedPhaseRelativeVelocity
+        : Math.abs(getVelocity(0) - getVelocity(1));
   }
 }

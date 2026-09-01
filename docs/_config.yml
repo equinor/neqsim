@@ -59,6 +59,8 @@ nav:
     url: /thermo/
   - title: Process Simulation
     url: /process/
+  - title: Engineering
+    url: /engineering/
   - title: Examples
     url: /examples/
   - title: Reference Manual
@@ -93,6 +95,10 @@ defaults:
       layout: "default"
   - scope:
       path: "process"
+    values:
+      layout: "default"
+  - scope:
+      path: "engineering"
     values:
       layout: "default"
   - scope:

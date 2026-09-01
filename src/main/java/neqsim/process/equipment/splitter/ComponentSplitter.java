@@ -34,6 +34,13 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   StreamInterface[] splitStream;
   protected int splitNumber = 1;
   double[] splitFactor = new double[1];
+  /**
+   * Basis on which {@link #splitFactor} is interpreted: {@code "molar"} (default) or {@code "mass"}. Mirrors the
+   * UniSim/HYSYS Component Splitter "Split Basis". For a per-component "fraction of feed to overhead" specification the
+   * molar and mass bases yield the same mole split (a single component's mass fraction equals its mole fraction), but
+   * the basis is retained for API fidelity and correct handling if a mass-basis specification is supplied.
+   */
+  protected String splitBasis = "molar";
 
   /**
    * Constructor for Splitter.
@@ -71,6 +78,39 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    */
   public void setSplitFactors(double[] factors) {
     splitFactor = factors;
+  }
+
+  /**
+   * Set the per-component split factors together with the basis on which they are expressed.
+   *
+   * @param factors fraction of each component's feed routed to the first (overhead) split stream
+   * @param basis {@code "molar"} or {@code "mass"} (case-insensitive); any other value defaults to molar
+   */
+  public void setSplitFactors(double[] factors, String basis) {
+    splitFactor = factors;
+    setSplitBasis(basis);
+  }
+
+  /**
+   * Setter for the field <code>splitBasis</code>.
+   *
+   * @param basis {@code "molar"} or {@code "mass"} (case-insensitive); any other value defaults to molar
+   */
+  public void setSplitBasis(String basis) {
+    if (basis != null && "mass".equalsIgnoreCase(basis.trim())) {
+      this.splitBasis = "mass";
+    } else {
+      this.splitBasis = "molar";
+    }
+  }
+
+  /**
+   * Getter for the field <code>splitBasis</code>.
+   *
+   * @return the split basis, {@code "molar"} or {@code "mass"}
+   */
+  public String getSplitBasis() {
+    return splitBasis;
   }
 
   /**
@@ -140,22 +180,33 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    boolean massBasis = "mass".equalsIgnoreCase(splitBasis);
     for (int i = 0; i < 2; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.setEmptyFluid();
       double totalMoles = 0.0;
-      if (i == 0) {
-        for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
-          double moles = inletStream.getThermoSystem().getComponent(k).getNumberOfmoles() * splitFactor[k];
-          thermoSystem.addComponent(k, moles);
-          totalMoles += moles;
+      for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
+        double feedMoles = inletStream.getThermoSystem().getComponent(k).getNumberOfmoles();
+        // Fraction of this component's feed routed to split stream 0 (overhead);
+        // stream 1 (bottoms) receives the remainder.
+        double fractionToOverhead = splitFactor[k];
+        double fraction = (i == 0) ? fractionToOverhead : (1.0 - fractionToOverhead);
+        double moles;
+        if (massBasis) {
+          // Mass basis: the split factor is the fraction of this component's
+          // MASS routed to the stream. For a single component the mole split
+          // equals the mass split (mass = moles * molarMass, and molarMass
+          // cancels), so the result matches the molar basis while honouring a
+          // mass-basis specification.
+          double molarMass = inletStream.getThermoSystem().getComponent(k).getMolarMass();
+          double feedMass = feedMoles * molarMass;
+          double massToStream = feedMass * fraction;
+          moles = (molarMass > 0.0) ? massToStream / molarMass : feedMoles * fraction;
+        } else {
+          moles = feedMoles * fraction;
         }
-      } else {
-        for (int k = 0; k < thermoSystem.getNumberOfComponents(); k++) {
-          double moles = inletStream.getThermoSystem().getComponent(k).getNumberOfmoles() * (1.0 - splitFactor[k]);
-          thermoSystem.addComponent(k, moles);
-          totalMoles += moles;
-        }
+        thermoSystem.addComponent(k, moles);
+        totalMoles += moles;
       }
 
       if (totalMoles > 0.0) {

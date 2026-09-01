@@ -99,7 +99,8 @@ public interface EquipmentCapacityStrategy {
    *
    * <p>
    * Returns a map of constraint name to constraint object. The constraints include both the current value and the
-   * design/limit values.
+   * design/limit values. Implementations must preserve constraint registration order in the map's iteration order so
+   * diagnostic consumers can retain stable ordering for equal-utilization constraints.
    * </p>
    *
    * @param equipment the equipment to get constraints for

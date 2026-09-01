@@ -168,10 +168,19 @@ public class WellFlow extends TwoPortEquipment {
     /** Backpressure equation with optional non-Darcy term. */
     BACKPRESSURE,
     /** Table-driven inflow curve (flow vs. bottom-hole pressure). */
-    TABLE
+    TABLE,
+    /**
+     * Liquid inflow relationship supplied as an {@link InflowPerformance} object: linear, Vogel, composite or Joshi
+     * horizontal, in Sm3/day against a drawdown in bar rather than against a difference of squared pressures.
+     */
+    LIQUID_INFLOW
   }
 
   InflowPerformanceModel inflowModel = InflowPerformanceModel.PRODUCTION_INDEX;
+  /** Liquid inflow relationship, used when the model is {@link InflowPerformanceModel#LIQUID_INFLOW}. */
+  private InflowPerformance inflowPerformance = null;
+  /** Stock-tank liquid rate for the liquid inflow model, Sm3/day. */
+  private double liquidRateSm3PerDay = 0.0;
   // Vogel parameters
   double vogelQmax = 0.0;
   double vogelRefPres = 0.0;
@@ -598,6 +607,18 @@ public class WellFlow extends TwoPortEquipment {
         outStream.setFlowRate(interpolateFlowForPressure(pwf), "MSm3/day");
       }
       break;
+    case LIQUID_INFLOW:
+      if (inflowPerformance == null) {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run",
+            "inflowPerformance", "- a liquid inflow relationship must be set first"));
+      }
+      inflowPerformance.setReservoirPressure(presRes);
+      if (calcpressure) {
+        outStream.setPressure(inflowPerformance.bottomHolePressure(liquidRateSm3PerDay), "bara");
+      } else {
+        liquidRateSm3PerDay = inflowPerformance.rate(thermoSystem.getPressure("bara"));
+      }
+      break;
     case PRODUCTION_INDEX:
     default:
       if (useWellProductionIndex) {
@@ -990,6 +1011,62 @@ public class WellFlow extends TwoPortEquipment {
     this.backpressureA = a;
     this.backpressureB = b;
     this.vogelRefPres = reservoirPressure;
+  }
+
+  /**
+   * Set a liquid inflow performance relationship and switch the well to {@link InflowPerformanceModel#LIQUID_INFLOW}.
+   *
+   * <p>
+   * The other inflow models on this class all work in squared pressures and MSm3/day, which suits a gas well and
+   * misrepresents an oil well. This one takes the rate as a stock-tank liquid volume in Sm3/day and the drawdown in
+   * bar. Supply the rate with {@link #setLiquidRate(double)}; the well then solves for the bottom-hole flowing
+   * pressure. The stream flow rate is not modified, because the inflow relationship determines the pressure and not the
+   * composition.
+   * </p>
+   *
+   * @param inflowPerformance the liquid inflow relationship, must not be null
+   * @throws RuntimeException if the inflow relationship is null
+   */
+  public void setInflowPerformance(InflowPerformance inflowPerformance) {
+    if (inflowPerformance == null) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "setInflowPerformance",
+          "inflowPerformance", "- must not be null"));
+    }
+    this.inflowPerformance = inflowPerformance;
+    this.inflowModel = InflowPerformanceModel.LIQUID_INFLOW;
+    this.useWellProductionIndex = false;
+  }
+
+  /**
+   * Get the liquid inflow performance relationship.
+   *
+   * @return the inflow relationship, or null when no liquid model has been set
+   */
+  public InflowPerformance getInflowPerformance() {
+    return inflowPerformance;
+  }
+
+  /**
+   * Set the stock-tank liquid rate used by the liquid inflow model.
+   *
+   * @param liquidRateSm3PerDay stock-tank liquid rate in Sm3/day, zero or greater
+   */
+  public void setLiquidRate(double liquidRateSm3PerDay) {
+    this.liquidRateSm3PerDay = liquidRateSm3PerDay;
+  }
+
+  /**
+   * Get the stock-tank liquid rate of the liquid inflow model.
+   *
+   * <p>
+   * When the well was run in the reverse direction, with {@link #solveFlowFromOutletPressure(boolean)}, this is the
+   * rate the inflow relationship delivered at the specified bottom-hole pressure.
+   * </p>
+   *
+   * @return stock-tank liquid rate in Sm3/day
+   */
+  public double getLiquidRate() {
+    return liquidRateSm3PerDay;
   }
 
   /**

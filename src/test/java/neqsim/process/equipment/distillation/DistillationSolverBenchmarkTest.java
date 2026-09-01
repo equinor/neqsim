@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -19,6 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * Comprehensive benchmark tests comparing built-in solver types on standard distillation problems. These tests validate
  * the improvements described in the distillation column paper.
  */
+@Tag("slow")
 public class DistillationSolverBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(DistillationSolverBenchmarkTest.class);
 
@@ -246,12 +248,12 @@ public class DistillationSolverBenchmarkTest {
       statuses[i] = col.getLastSolveStatus();
       solversUsed[i] = col.getLastSolverTypeUsed();
       if (solvers[i] == DistillationColumn.SolverType.SUM_RATES) {
-        assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
-            "SUM_RATES should guard condenser/reboiler columns with damped substitution");
+        assertEquals(DistillationColumn.SolverType.SUM_RATES, solversUsed[i],
+            "SUM_RATES should remain native for the reboiler-only deethanizer");
       }
       if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
-        assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, solversUsed[i],
-            "Naphtali-Sandholm should keep its accepted warm-start when its candidate is rejected");
+        assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
+            "Naphtali-Sandholm should reject its leaky candidate on this case and fall back to damped substitution");
       }
 
       // Mass balance closure: within 0.5%
@@ -270,11 +272,11 @@ public class DistillationSolverBenchmarkTest {
           statuses[i] == null ? "null" : statuses[i].name(), solversUsed[i] == null ? "null" : solversUsed[i].name());
     }
 
-    // All solvers should agree on product splits within 2%
+    // All solvers should agree on product splits within 2%.
     double refGas = gasFlows[0]; // DIRECT_SUBSTITUTION as reference
+    double relativeTolerance = 0.02;
+    double tolerance = Math.max(0.01, refGas * relativeTolerance);
     for (int i = 1; i < solvers.length; i++) {
-      double relativeTolerance = 0.02;
-      double tolerance = Math.max(0.01, refGas * relativeTolerance);
       assertEquals(refGas, gasFlows[i], tolerance,
           solvers[i].name() + " gas flow should match direct substitution within engineering tolerance");
     }
@@ -290,6 +292,16 @@ public class DistillationSolverBenchmarkTest {
 
     assertTrue(direct.solved(), "Direct substitution should converge");
     assertTrue(wegstein.solved(), "Wegstein should converge: " + wegstein.getConvergenceDiagnostics());
+    assertEquals(0, direct.getLastAcceleratedFullTraySweepCount(),
+        "Direct substitution should not report accelerated full-tray sweep work");
+    assertEquals(0, direct.getLastAcceleratedInternalStreamTransferCount(),
+        "Direct substitution should not report accelerated internal stream transfers");
+    assertEquals(DistillationColumn.SolverType.DIRECT_SUBSTITUTION, wegstein.getLastSolverTypeUsed(),
+        "Guarded Wegstein should report the direct-substitution route that produced the accepted state");
+    assertEquals(0, wegstein.getLastAcceleratedFullTraySweepCount(),
+        "Guarded Wegstein should not report a full-tray sweep that was never attempted");
+    assertEquals(0, wegstein.getLastAcceleratedInternalStreamTransferCount(),
+        "Guarded Wegstein should not report internal transfers that were never attempted");
 
     // Wegstein should use at most the same number of iterations (typically fewer)
     assertTrue(wegstein.getLastIterationCount() <= direct.getLastIterationCount() * 1.2 + 2,
@@ -357,8 +369,20 @@ public class DistillationSolverBenchmarkTest {
         "Large columns should attempt the matrix warm-start stage");
     assertTrue(column.wasMatrixInsideOutWarmStartUsed(),
         "Regression case should accept the matrix warm start before polishing");
+    double matrixTemperatureTolerance = Math.max(column.getTemperatureTolerance(), 5.0e-2);
+    assertTrue(column.getLastMatrixInsideOutTemperatureResidual() <= matrixTemperatureTolerance,
+        "Matrix warm start should meet its configured temperature tolerance before rigorous polishing");
+    int matrixIterationLimit = Math.max(2,
+        Math.min(Math.max(4, column.getNumberOfTrays()), Math.max(2, column.getMaxNumberOfIterations() / 4)));
+    assertTrue(column.getLastMatrixInsideOutIterationCount() < matrixIterationLimit,
+        "Matrix warm start should converge before its configured iteration cap");
     assertTrue(column.getLastIterationCount() > column.getLastMatrixInsideOutIterationCount(),
         "Rigorous polish iterations must be included after matrix warm-start iterations");
+    double outletFlow = column.getGasOutStream().getFlowRate("kg/hr")
+        + column.getLiquidOutStream().getFlowRate("kg/hr");
+    double feedFlow = feed.getFlowRate("kg/hr");
+    assertEquals(feedFlow, outletFlow, feedFlow * 1.0e-6,
+        "Polished products should close the total mass balance within one part per million");
   }
 
   /**
@@ -642,7 +666,7 @@ public class DistillationSolverBenchmarkTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column = new DistillationColumn("mesh_spec_column", 5, true, false);
+    DistillationColumn column = new DistillationColumn("mesh_spec_column", 5, true, true);
     column.addFeedStream(feed, 5);
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 5);
@@ -676,22 +700,41 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
-   * Test that the Naphtali-Sandholm solver runs and records full MESH residual diagnostics.
+   * Test that the Naphtali-Sandholm solver rejects a profile that does not close the per-component tray balance.
+   *
+   * <p>
+   * The solver used to accept this case at zero Newton iterations because every early-exit branch gated only on the
+   * overall column closure {@code V[N-1] + L[0] = feed} and the energy balance. Both are satisfied by a profile that
+   * leaks a species from one tray into another, so it returned a product split ~21 % away from every substitution
+   * solver while reporting success. The early exits now also require {@code computeMaxComponentImbalance()} to be
+   * within tolerance, so the leaky candidate is refused and the column falls back to a solver that converges.
+   * </p>
    */
   @Test
-  public void naphtaliSandholmSolverRunsOnDeethanizer() {
+  public void naphtaliSandholmRejectsLeakyProfileAndFallsBack() {
     DistillationColumn column = runProfiledDeethanizer(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
 
-    assertTrue(column.solved(), "Naphtali-Sandholm solver should converge: " + column.getConvergenceDiagnostics());
-    assertNotNull(column.getLastMeshResidual(), "Naphtali-Sandholm solver should record MESH diagnostics");
-    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()),
-        "Naphtali-Sandholm solver should report a finite residual norm");
-    assertTrue(column.getLastIterationCount() > 0, "Naphtali-Sandholm solver should report iteration metrics");
+    assertNotNull(column.getLastMeshResidual(), "the column should record MESH diagnostics");
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()), "the column should report a finite residual norm");
+
+    assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, column.getLastSolverTypeUsed(),
+        "the leaky Naphtali-Sandholm candidate should be rejected and fall back to damped substitution");
+    assertTrue(column.solved(), "the fallback solve should converge: " + column.getConvergenceDiagnostics());
+    assertTrue(column.getLastIterationCount() > 0,
+        "accepted iteration count should describe the damped fallback rather than the rejected candidate");
+    assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0,
+        "fallback adoption must retain thermodynamic work from the rejected Naphtali-Sandholm attempt");
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
+        "each uncached tray thermodynamic evaluation should perform at least one K-value sweep");
+    assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian:"),
+        "combined diagnostics should expose rejected simultaneous-solver work beside accepted fallback residuals");
+    assertTrue(column.getLastSolveStatusReason().contains("Naphtali-Sandholm"),
+        "fallback status should retain the rejected solver provenance");
 
     double massBalance = Math
         .abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr") - column.getLiquidOutStream().getFlowRate("kg/hr"))
         / 100.0 * 100.0;
-    assertEquals(0.0, massBalance, 0.5, "Naphtali-Sandholm mass balance should close within 0.5%");
+    assertEquals(0.0, massBalance, 0.5, "mass balance should close within 0.5%");
   }
 
   /**
@@ -1262,7 +1305,42 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
-   * Newton solver on a 10-tray column — verify it converges and produces good mass balance.
+   * Assert accelerated full-tray sweep telemetry follows the single-clone transfer contract.
+   *
+   * @param column accelerated column result
+   * @param firstFeedTrayNumber lowest feed tray index used by the full sweep
+   * @param message assertion message prefix
+   */
+  private void assertSingleCloneAcceleratedSweepWork(DistillationColumn column, int firstFeedTrayNumber,
+      String message) {
+    int sweepCount = column.getLastAcceleratedFullTraySweepCount();
+    int transfersPerSweep = firstFeedTrayNumber + column.getNumberOfTrays() - 1;
+    assertTrue(sweepCount > 0, message + " should report at least one full-tray sweep");
+    assertEquals(sweepCount * transfersPerSweep, column.getLastAcceleratedInternalStreamTransferCount(),
+        message + " should retain one owned stream clone for every internal transfer");
+    assertTrue(column.getConvergenceDiagnostics().contains("Accelerated full-tray sweep work:"),
+        message + " should be visible in combined diagnostics");
+  }
+
+  /**
+   * The Newton line search must choose the lowest finite residual even when none of the evaluated trials is a descent
+   * step.
+   */
+  @Test
+  public void newtonLineSearchSelectsLowestFiniteTrial() {
+    double[] nonDescentResiduals = { 5.0, Double.NaN, 3.5, 4.0 };
+    assertEquals(2, DistillationColumn.selectLowestFiniteResidualIndex(nonDescentResiduals, 4),
+        "the lowest finite non-descent trial should be retained");
+    assertEquals(-1,
+        DistillationColumn.selectLowestFiniteResidualIndex(new double[] { Double.NaN, Double.POSITIVE_INFINITY }, 2),
+        "an all-non-finite trial set should request restoration");
+    assertEquals(0, DistillationColumn.selectLowestFiniteResidualIndex(new double[] { 1.0, 1.0 }, 2),
+        "equal residuals should retain the first evaluated trial deterministically");
+  }
+
+  /**
+   * Newton solver on a 10-tray column — verify convergence, balances, selected-trial diagnostics, and unchanged-input
+   * repeatability.
    */
   @Test
   public void newtonOnLargerColumn() {
@@ -1282,9 +1360,43 @@ public class DistillationSolverBenchmarkTest {
 
     assertTrue(column.solved(), "Newton should converge on 10-tray column");
 
-    double massbalance = Math
-        .abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr") - column.getLiquidOutStream().getFlowRate("kg/hr"));
+    double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    double massbalance = Math.abs(100.0 - gasFlow - liquidFlow);
     assertTrue(massbalance < 1.5, "Newton mass balance error=" + massbalance + " kg/hr");
+    int lineSearchTrialCount = column.getLastNewtonLineSearchTrialCount();
+    assertTrue(lineSearchTrialCount >= 0 && lineSearchTrialCount <= 4,
+        "Newton diagnostics should report a bounded evaluated trial set");
+    if (lineSearchTrialCount > 0) {
+      assertTrue(
+          column.getLastNewtonLineSearchStepLength() >= 0.125 && column.getLastNewtonLineSearchStepLength() <= 1.0,
+          "Newton should retain one evaluated bounded step");
+      assertTrue(Double.isFinite(column.getLastNewtonLineSearchResidual()),
+          "Newton should report the finite residual belonging to the retained step");
+      assertTrue(column.getConvergenceDiagnostics().contains("Newton line search:"),
+          "combined diagnostics should expose the retained step and trial count");
+    } else {
+      assertTrue(Double.isNaN(column.getLastNewtonLineSearchStepLength()),
+          "a solve that converges before line search should not report an unevaluated step");
+      assertTrue(Double.isNaN(column.getLastNewtonLineSearchResidual()),
+          "a solve that converges before line search should not report an unevaluated residual");
+    }
+    assertSingleCloneAcceleratedSweepWork(column, 5, "Newton solve");
+
+    column.run();
+
+    assertTrue(column.solved(), "Repeated unchanged NEWTON solve should converge");
+    assertSingleCloneAcceleratedSweepWork(column, 5, "Repeated unchanged Newton solve");
+    double productRepeatabilityTolerance = 1.5e-2;
+    assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"),
+        Math.max(0.01, gasFlow * productRepeatabilityTolerance),
+        "Repeated unchanged NEWTON solve should preserve gas production");
+    assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"),
+        Math.max(0.01, liquidFlow * productRepeatabilityTolerance),
+        "Repeated unchanged NEWTON solve should preserve liquid production");
+    double repeatedMassBalance = Math
+        .abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr") - column.getLiquidOutStream().getFlowRate("kg/hr"));
+    assertTrue(repeatedMassBalance < 1.5, "Repeated Newton mass balance error=" + repeatedMassBalance + " kg/hr");
   }
 
   /**

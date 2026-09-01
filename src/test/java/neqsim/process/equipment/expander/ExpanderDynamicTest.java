@@ -3,6 +3,7 @@ package neqsim.process.equipment.expander;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -60,9 +61,7 @@ public class ExpanderDynamicTest {
     return expander;
   }
 
-  /**
-   * Verifies that transient execution ramps nozzle opening, recovered power and shaft speed.
-   */
+  /** Verifies that transient execution ramps nozzle opening, recovered power and shaft speed. */
   @Test
   void testDynamicNozzlePowerAndSpeedRamp() {
     Expander expander = buildDynamicExpander();
@@ -75,9 +74,38 @@ public class ExpanderDynamicTest {
     Assertions.assertTrue(expander.getPower("kW") < 0.0, "Expander should still report recovered steady power");
   }
 
-  /**
-   * Verifies that an external shaft load decelerates the expander shaft when it exceeds recovered power.
-   */
+  /** Same-ID refinement must not integrate nozzle, power ramp, rotor speed or clock twice. */
+  @Test
+  void testRepeatedPhysicalStepEvaluationRestoresDynamicStepStartState() {
+    Expander expander = buildDynamicExpander();
+    UUID physicalStepA = TransientStepIdentifier.deterministicPhysicalStep("expander-refinement", 0L);
+    UUID physicalStepB = TransientStepIdentifier.deterministicPhysicalStep("expander-refinement", 1L);
+
+    expander.runTransient(1.0, physicalStepA);
+    double nozzleAfterA = expander.getNozzleOpening();
+    double powerAfterA = expander.getDynamicRecoveredPower("kW");
+    double speedAfterA = expander.getSpeed();
+
+    Assertions.assertEquals(0.30, nozzleAfterA, 1.0e-10);
+    Assertions.assertEquals(250.0, powerAfterA, 1.0e-8);
+    Assertions.assertEquals(1.0, expander.getTime(), 0.0);
+
+    expander.runTransient(1.0, physicalStepA);
+    Assertions.assertEquals(nozzleAfterA, expander.getNozzleOpening(), 1.0e-10);
+    Assertions.assertEquals(powerAfterA, expander.getDynamicRecoveredPower("kW"), 1.0e-8);
+    Assertions.assertEquals(speedAfterA, expander.getSpeed(), 1.0e-8);
+    Assertions.assertEquals(1.0, expander.getTime(), 0.0);
+
+    expander.runTransient(1.0, physicalStepB);
+    Assertions.assertEquals(0.40, expander.getNozzleOpening(), 1.0e-10);
+    Assertions.assertEquals(500.0, expander.getDynamicRecoveredPower("kW"), 1.0e-8);
+    Assertions.assertTrue(expander.getSpeed() > speedAfterA,
+        "The next physical step should continue rotor acceleration");
+    Assertions.assertEquals(2.0, expander.getTime(), 0.0);
+    Assertions.assertEquals(physicalStepB, expander.getCalculationIdentifier());
+  }
+
+  /** Verifies that an external shaft load decelerates the expander shaft when it exceeds recovered power. */
   @Test
   void testExternalLoadDeceleratesShaft() {
     Expander expander = buildDynamicExpander();
@@ -88,9 +116,7 @@ public class ExpanderDynamicTest {
     Assertions.assertTrue(expander.getSpeed() < 3000.0, "External load should decelerate the shaft");
   }
 
-  /**
-   * Verifies that the expander propagates shaft speed to a coupled compressor load.
-   */
+  /** Verifies that the expander propagates shaft speed to a coupled compressor load. */
   @Test
   void testCoupledCompressorReceivesShaftSpeed() {
     Expander expander = buildDynamicExpander();
@@ -105,9 +131,7 @@ public class ExpanderDynamicTest {
     Assertions.assertTrue(load.getPower("kW") > 0.0, "Coupled compressor should run as a positive shaft load");
   }
 
-  /**
-   * Verifies process-level transient execution reaches the expander dynamic branch.
-   */
+  /** Verifies process-level transient execution reaches the expander dynamic branch. */
   @Test
   void testProcessSystemRunTransientExecutesDynamicExpander() {
     Stream feed = buildFeedStream();

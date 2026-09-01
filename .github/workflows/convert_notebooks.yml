@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -31,6 +31,33 @@ jobs:
         run: |
           cd docs
           python convert_notebooks.py
+
+      - name: Normalize notebook links for GitHub Pages
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          from urllib.parse import quote
+
+          base = "https://github.com/equinor/neqsim/blob/master/docs/examples/"
+          pattern = re.compile(
+              r"(\[[^\]]+\])\((?!https?://)([^()/]+\.ipynb)(#[^)]*)?\)"
+          )
+
+          for markdown_path in Path("docs/examples").glob("*.md"):
+              content = markdown_path.read_text(encoding="utf-8")
+
+              def replace_notebook_link(match):
+                  label, notebook, fragment = match.groups()
+                  return (
+                      f"{label}({base}{quote(notebook, safe='')}"
+                      f"{fragment or ''})"
+                  )
+
+              normalized = pattern.sub(replace_notebook_link, content)
+              if normalized != content:
+                  markdown_path.write_text(normalized, encoding="utf-8")
+          PY
 
       - name: Check for changes
         id: git-check

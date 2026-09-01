@@ -458,6 +458,11 @@ class ConsistencyChecker:
         print("Checking numerical consistency...")
 
         for concept, values in self.extracted_values.items():
+            # The fallback bucket can contain unrelated engineering quantities
+            # whose surrounding text did not match a known concept alias.
+            if concept == "other":
+                continue
+
             if len(values) < 2:
                 continue
 
@@ -521,9 +526,12 @@ class ConsistencyChecker:
     def _normalize_concept(self, key: str) -> str:
         """Normalize a key name to a concept."""
         key_lower = key.lower().replace('_', ' ')
+        generic_aliases = {'deviation', 'difference', 'discrepancy', 'factor'}
 
         for concept, aliases in self.CONCEPT_ALIASES.items():
             for alias in aliases:
+                if alias in generic_aliases and key_lower.strip() != alias:
+                    continue
                 if alias in key_lower:
                     return concept
 

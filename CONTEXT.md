@@ -26,7 +26,7 @@ runs the full workflow including PR creation.
 
 Java library for thermodynamic fluid properties and process simulation.
 Developed at NTNU, maintained by Equinor. Apache-2.0 license.
-`com.equinor.neqsim:neqsim` version 3.16.0 — **must compile with Java 8**.
+`com.equinor.neqsim:neqsim` version 3.18.0 — **must compile with Java 8**.
 
 ## Repo Map
 
@@ -38,6 +38,10 @@ src/main/java/neqsim/
   physicalproperties/    Density, viscosity, conductivity, surface tension
   process/equipment/     33 equipment packages:
     stream/ separator/ compressor/ pump/ valve/ heatexchanger/
+    energy/              EnergyNetworkSolver, EnergyConverter, motors/generators,
+                         gearboxes/inverters/transformers, typed utility buses
+    stream/               EnergyBus deterministic allocation, EnergyQuality,
+                         EnergyNetworkReport, transient MechanicalShaft
     pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
     pipeline/routing/     PipingRouteBuilder — STID/E3D line-list route
                           hydraulics to serial PipeBeggsAndBrills models
@@ -127,7 +131,7 @@ devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task
 
 # Package JAR + copy to Python
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.16.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\ -Force
+Copy-Item target\neqsim-3.18.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\ -Force
 ```
 
 ## Code Patterns — Copy-Paste Starters

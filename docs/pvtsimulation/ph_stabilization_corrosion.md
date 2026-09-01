@@ -3,8 +3,6 @@ title: pH Stabilization and Corrosion Control
 description: Guide to pH stabilization for corrosion control in oil and gas pipelines using NeqSim's Electrolyte CPA equation of state. Covers FeCO3 protective layer formation, hydrate inhibition with pH control, and scale/corrosion thermodynamics.
 ---
 
-# pH Stabilization and Corrosion Control
-
 This guide covers the use of NeqSim's **Electrolyte CPA equation of state** (Statoil model) for modeling pH stabilization, CO2 corrosion control, and protective FeCO3 (siderite) layer formation in oil and gas production systems.
 
 ## Overview

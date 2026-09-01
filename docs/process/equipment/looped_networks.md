@@ -3,8 +3,6 @@ title: Looped Pipeline Networks
 description: Documentation for looped pipeline network modeling with Hardy Cross solver in NeqSim.
 ---
 
-# Looped Pipeline Networks
-
 Documentation for looped pipeline network modeling with Hardy Cross solver in NeqSim.
 
 ## Table of Contents
@@ -480,6 +478,8 @@ String json = network.toJson();
 ## Related Documentation
 
 - [Production Well Networks](production_well_networks) - IPR, choke, tubing, and multiphase elements in production networks
+- [Gas Network Operations](../gas_network_operations) - conservative mixing, quality, allocation, and linepack
+- [Oil Network Operations](../oil_network_operations) - pump edges, terminal tanks, parcels, and cargo scheduling
 - [Pipeline Networks (Basic)](networks) - Non-looped networks
 - [Pipelines](pipelines) - Individual pipeline modeling
 - [Process Systems](../processmodel/) - System integration

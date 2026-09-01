@@ -22,6 +22,7 @@ public class PhaseAmmoniaViscosityTest {
     phase.setPressure(10.0);
     phase.setType(PhaseType.LIQUID);
     double visc = phase.getViscosity();
-    assertEquals(6.5474e-5, visc, 2e-7);
+    // Gao et al. EOS transport reference through CoolProp 8.0.0; correlation target is within 1%.
+    assertEquals(1.3860846498812973e-4, visc, 1.0e-6);
   }
 }

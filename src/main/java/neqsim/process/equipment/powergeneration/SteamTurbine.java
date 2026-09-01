@@ -10,6 +10,9 @@ import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -65,6 +68,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
    */
   public SteamTurbine(String name) {
     super(name);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -74,7 +78,8 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
    * @param inletStream inlet steam stream
    */
   public SteamTurbine(String name, StreamInterface inletStream) {
-    super(name, inletStream);
+    this(name);
+    setInletStream(inletStream);
   }
 
   /** {@inheritDoc} */
@@ -121,7 +126,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
     }
 
     this.power = actualWork; // Watts (positive = power produced)
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("shaftPower").setDuty(-power);
 
     outStream.setThermoSystem(outletFluid);
     outStream.setCalculationIdentifier(id);

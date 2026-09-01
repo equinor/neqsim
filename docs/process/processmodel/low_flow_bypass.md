@@ -3,8 +3,6 @@ title: Low-Flow Section Bypass
 description: Auto-bypass and manual deactivation of low-flow process sections in ProcessSystem and ProcessModel. Covers minimum-flow thresholds, section deactivation, ProcessModel convergence handling, and feed-flow configuration patterns for parallel compressor trains on platform-scale models.
 ---
 
-# Low-Flow Section Bypass
-
 NeqSim can automatically (or manually) bypass parts of a flowsheet that are
 receiving negligible flow, so that turning off a parallel train, a recycle,
 or a seasonal export route does not destabilise the rest of a
@@ -57,7 +55,33 @@ Currently wired with inline auto-bypass:
 | `Separator` | Both gas and liquid outlets forced to `0 kg/hr`. |
 | `Heater` (cooler / electric heater) | Outlet inherits inlet at the set pressure with `Q = 0`. |
 | `Compressor` | Outlet inherits inlet at the set pressure with `power = 0`. |
+| `Pump` | Outlet inherits inlet at the set pressure with `power = 0`. |
+| `Manifold` | Threshold is forwarded to the internal mixer and splitter; all branch outlets forced to `0 kg/hr`. |
+| `ThrottlingValve` | Outlet published at the **valve outlet pressure** with zero moles. |
+| `PipeBeggsAndBrills` | Inlet state passed straight through (no friction, `dP = 0`). |
+| `MultiStreamHeatExchanger` | Bypassed only when **all** sides are stagnant; each outlet is a clone of its inlet. |
 | `Mixer` | Handles zero-flow inlets natively (no explicit guard needed). |
+
+> **Downstream effect matters.** `ThrottlingValve`, `PipeBeggsAndBrills` and
+> `MultiStreamHeatExchanger` still **write their outlet streams** when bypassed,
+> rather than returning without touching them. A valve in particular publishes
+> its specified let-down pressure at zero flow, so a downstream mixer,
+> separator or pipeline sees a consistent pressure boundary instead of a stale
+> one. `Mixer.mixStream()` independently ignores inlets at or below its own
+> `minimumFlow` when picking the outlet pressure, so a dead branch can never
+> drag the live train down to its pressure.
+
+> **Opt-in.** The bypasses on `ThrottlingValve`, `PipeBeggsAndBrills` and
+> `MultiStreamHeatExchanger` fire only when a threshold **above** the default
+> sentinel `ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW` (`1e-20 kg/hr`) has
+> been configured. Deactivating on the default would permanently skip a unit
+> that is merely momentarily dry inside a recycle loop — for example a JT valve
+> on a separator liquid outlet before any liquid has formed — because the
+> scheduler skips inactive units for the remainder of the solve pass.
+
+> **Units.** `minimumFlow` is **kg/hr for every equipment type**. Use
+> `setMinimumFlow(value, unit)` / `getMinimumFlow(unit)` to avoid hand-conversion
+> (`kg/hr`, `kg/sec`, `kg/min`, `kg/day`, `tonne/hr`, `tonne/day`, `lb/hr`).
 
 ### 2. `ProcessSystem.setSectionLowFlowThreshold(threshold)`
 
@@ -71,6 +95,12 @@ htTrain.setSectionLowFlowThreshold(1.0); // bypass entire train when feed < 1 kg
 
 The full plant can also be set in one call via
 `ProcessModel.setSectionLowFlowThreshold(threshold)`.
+
+Both accept a unit string:
+
+```java
+htTrain.setSectionLowFlowThreshold(1.2, "tonne/day"); // == 50 kg/hr
+```
 
 ### 3. Manual lock: `setLockedInactive(true)` / `deactivateSection(...)`
 
@@ -181,9 +211,80 @@ them again.
 
 ## ProcessModel convergence
 
-`ProcessModel.calculateConvergenceErrors` skips any boundary stream whose
-magnitude is below `1e-9 kg/hr` before computing relative error, so a
-bypassed section does **not** prevent the active areas from converging.
+The plant-level convergence gate is a **maximum over relative** boundary-stream
+errors, which is pathological for a stagnant leg: `0.007 kg/hr` of wobble on a
+`0.1 kg/hr` dead branch is a `6.6e-02` relative error and buries a real
+`443 kg/hr` residual on a `138 t/hr` export stream (`3.2e-03`). Two filters make
+the gate report the residual that actually matters.
+
+### Boundary flow floor
+
+`ProcessModel.calculateConvergenceErrors` drops any boundary stream whose
+magnitude is below `getBoundaryFlowFloor()` before computing relative error, so
+a bypassed section does **not** prevent the active areas from converging. The
+default `ProcessModel.DEFAULT_BOUNDARY_FLOW_FLOOR` (`1e-9 kg/hr`) excludes only
+numerically-zero streams; raise it to exclude physically negligible legs too:
+
+```java
+plant.setBoundaryFlowFloor(1.0); // ignore boundary streams below 1 kg/hr
+```
+
+### Absolute flow tolerance
+
+A stream is flow-converged when **either** its relative error is below the
+relative tolerance **or** its absolute flow change is below the absolute
+tolerance (kg/hr) — the standard industrial form of the criterion:
+
+```java
+boolean ok = plant.runUntilConverged(15, 1e-3, 1.0); // rel 1e-3 OR abs 1 kg/hr
+```
+
+The default (`0.0`) preserves the historical relative-only behaviour. Both
+filters also apply to `getNonConvergedBoundaryStreamErrors()`, so the offender
+list names only streams that matter, and `getConvergenceSummary()` prints the
+absolute delta next to each relative error plus a `Flow filters:` line when
+either filter is active.
+
+`BoundaryStreamError.getAbsoluteFlowChange()` exposes the same delta
+programmatically.
+
+## Automatic convergence tuning
+
+For large `ProcessModel` flowsheets, the no-tolerance overload derives the flow
+filters from the total feed-boundary mass flow and then performs a full
+validation sweep with the new settings:
+
+```java
+boolean converged = plant.runUntilConverged(40);
+System.out.println(plant.getAutoTuningSummary());
+```
+
+The default noise-floor fraction is `1e-6`. It drives the boundary-flow floor,
+the absolute flow-change tolerance, recycle tolerance, and (when enabled)
+per-equipment low-flow thresholds. Auto-tuned runs may also enable adaptive
+Wegstein acceleration on stalled recycles unless the caller explicitly opted
+out. Ordinary `ProcessSystem.run()` retains legacy direct substitution. The feed
+boundary is used deliberately: internal recycles and not-yet-solved streams
+cannot inflate the reference scale.
+
+Automatic low-flow ownership is conservative:
+
+- A non-default value set with `unit.setMinimumFlow(...)` is caller-owned and is
+  never overwritten or cleared by the tuner.
+- Caller ownership still wins if the explicit value happens to equal the last
+  automatically assigned value.
+- Automatic ownership survives `ProcessSystem.copy()`, and
+  `resetAutoTuning()` / `resetAutoLowFlowThreshold()` only clear values that
+  remain auto-owned.
+- A changed threshold forces one real equipment evaluation before convergence
+  can be reported, so low-flow outlet handling is executed rather than leaving
+  stale state behind.
+
+Small streams can still be physically important (for example chemical or
+inhibitor injection). Protect those units with an explicit threshold, change
+the scale with `setAutoTuningFlowFraction(...)`, disable only automatic bypass
+with `setAutoLowFlowBypass(false)`, or disable all automatic convergence tuning
+with `setAutoConvergenceTuning(false)`.
 
 ## Feed-flow configuration patterns
 

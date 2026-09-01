@@ -150,7 +150,7 @@ The `BatchParameterEstimator` uses reflection-based property paths to access equ
 
 ## Python Usage
 
-See the example notebook: [data_reconciliation_parameter_estimation.ipynb](../../examples/notebooks/data_reconciliation_parameter_estimation.ipynb)
+See the example notebook: [data_reconciliation_parameter_estimation.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/data_reconciliation_parameter_estimation.ipynb)
 
 ```python
 from neqsim_dev_setup import neqsim_init

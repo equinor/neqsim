@@ -254,11 +254,13 @@ public final class BenchmarkTrust {
     // Validation cases
     JsonArray cases = new JsonArray();
     cases.add(validationCase("Methane density at 25C, 100 bara", "SRK", "Density within 15% of NIST reference",
-        "NIST Chemistry WebBook"));
+        "NIST Chemistry WebBook", "neqsim.mcp.runners.BenchmarkValidationTest#testMethaneDensity_vsNIST"));
     cases.add(validationCase("Methane-ethane VLE at 50 bara", "SRK",
-        "Phase compositions within 1 mol% of Wichterle et al.", "Wichterle et al. (1972)"));
-    cases.add(validationCase("Natural gas dew point at 50 bara", "SRK", "Dew point T within 1K of experimental data",
-        "NeqSim JUnit test suite"));
+        "Two-phase split reproduced; phase compositions expected within 1-2 mol% of Wichterle et al.",
+        "Wichterle et al. (1972)", "neqsim.mcp.runners.BenchmarkValidationTest#testMethaneEthaneVLE"));
+    cases.add(validationCase("Natural gas dew point at 50 bara", "SRK",
+        "Dew point temperature in the physically expected range for lean gas", "NeqSim JUnit test suite",
+        "neqsim.mcp.runners.BenchmarkValidationTest#testNaturalGasDewPoint"));
     cases.add(validationCase("CO2-methane binary at 230K", "SRK", "Dew/bubble pressure within 3% of Davalos et al.",
         "Davalos et al. (1976)"));
     cases.add(validationCase("Water-methane hydrate equilibrium", "CPA", "Hydrate T within 1K of Sloan & Koh data",
@@ -267,7 +269,9 @@ public final class BenchmarkTrust {
 
     // Accuracy bounds
     JsonObject accuracy = new JsonObject();
-    accuracy.addProperty("lightHydrocarbons", "Density ±2%, VLE compositions ±1 mol%, dew/bubble point ±1K");
+    accuracy.addProperty("lightHydrocarbons",
+        "Dense-phase density within 15% (SRK without volume translation, CI-verified); "
+            + "±2-3% with Peneloux volume shift. VLE compositions ±1-2 mol%, dew/bubble point ±1K.");
     accuracy.addProperty("heavyHydrocarbons",
         "Liquid density ±3-5% (SRK without Peneloux), improve with volume translation");
     accuracy.addProperty("CO2Systems", "Dense phase density ±2-3% (SRK/PR), ±1% with GERG-2008 for pipeline-grade CO2");
@@ -296,6 +300,9 @@ public final class BenchmarkTrust {
         + "Validated against commercial simulators for standard equipment.");
 
     JsonArray cases = new JsonArray();
+    cases.add(validationCase("Separator mass balance closure", "SRK",
+        "Inlet mass flow equals the sum of outlet mass flows within 0.01%", "Conservation of mass",
+        "neqsim.mcp.runners.BenchmarkValidationTest#testSeparatorMassBalance"));
     cases.add(validationCase("HP/LP separation train", "SRK", "Stream compositions within 1% of UniSim reference",
         "UniSim TUTOR1 comparison"));
     cases.add(validationCase("3-stage compression with intercooling", "SRK",
@@ -305,7 +312,7 @@ public final class BenchmarkTrust {
     trust.add("validationCases", cases);
 
     JsonObject accuracy = new JsonObject();
-    accuracy.addProperty("separators", "Mass balance closure <0.01%");
+    accuracy.addProperty("separators", "Mass balance closure <0.01% (CI-verified)");
     accuracy.addProperty("compressors", "Power ±3% (polytropic efficiency model vs vendor curves)");
     accuracy.addProperty("heatExchangers", "Duty ±1-2% vs energy balance check");
     accuracy.addProperty("distillation", "Converged column: compositions ±1-2% vs rigorous INSIDE-OUT solver");
@@ -431,8 +438,9 @@ public final class BenchmarkTrust {
         + "ISO 6976 implementation validated against published reference values.");
 
     JsonArray cases = new JsonArray();
-    cases.add(validationCase("ISO 6976 heating value for pure methane", "SRK",
-        "Within 0.1% of published reference value", "ISO 6976:2016"));
+    cases.add(validationCase("ISO 6976 gross calorific value for pure methane", "SRK",
+        "Superior calorific value within 0.5% of the ISO 6976:2016 Table B.1 reference (37.706 MJ/Sm3)",
+        "ISO 6976:2016 Table B.1", "neqsim.mcp.runners.BenchmarkValidationTest#testISO6976_methaneGCV"));
     cases.add(validationCase("Wobbe index for typical natural gas", "SRK", "Within 0.5% of custody transfer reference",
         "ISO 6976:2016 worked examples"));
     trust.add("validationCases", cases);
@@ -450,13 +458,19 @@ public final class BenchmarkTrust {
     JsonObject trust = new JsonObject();
     trust.addProperty("maturityLevel", "TESTED");
     trust.addProperty("description",
-        "Multiphase pipeline flow using Beggs & Brill correlation. " + "Validated for vertical and horizontal flow.");
+        "Multiphase pipeline flow using Beggs & Brill (default) or the finite-volume two-fluid solver. "
+            + "Both expose engineering summaries; twoFluid additionally returns section profiles.");
 
     JsonArray cases = new JsonArray();
     cases.add(validationCase("Single-phase gas pipeline", "SRK", "Pressure drop within 5% of analytical Darcy-Weisbach",
         "Standard pipe flow textbooks"));
     cases.add(validationCase("Multiphase flow in vertical well", "SRK", "Pressure profile within 10% of field data",
         "Beggs & Brill (1973) correlation basis"));
+    cases.add(validationCase("Two-fluid single-phase gas cross-check", "SRK",
+        "Pressure drop ratio between 0.5 and 2.0 relative to Beggs & Brill", "NeqSim JUnit comparison test"));
+    cases.add(validationCase("Two-fluid wet-gas and three-phase physical checks", "SRK",
+        "Positive pressure drop, bounded holdup/water cut, and conserved outlet mass flow",
+        "NeqSim JUnit physical-range tests"));
     trust.add("validationCases", cases);
 
     JsonArray limitations = new JsonArray();
@@ -464,6 +478,10 @@ public final class BenchmarkTrust {
     limitations.add("Slug flow prediction is approximate");
     limitations.add("Not suitable for very high GVF (>0.99) or very low GVF (<0.01)");
     limitations.add("Does not model terrain effects (slug catcher sizing)");
+    limitations
+        .add("The finite-volume two-fluid solver is sensitive to mesh, closure correlations, and convergence settings");
+    limitations.add(
+        "Two-fluid slug and flow-assurance indicators are screening outputs, not final slug-catcher design inputs");
     trust.add("knownLimitations", limitations);
 
     return trust;
@@ -720,11 +738,36 @@ public final class BenchmarkTrust {
    */
   private static JsonObject validationCase(String description, String model, String expectedResult,
       String referenceSource) {
+    return validationCase(description, model, expectedResult, referenceSource, null);
+  }
+
+  /**
+   * Builds a validation case entry that names the CI test proving the claim.
+   *
+   * <p>
+   * A claim without a {@code verifiedBy} entry is aspirational, not demonstrated. Callers can filter on this field to
+   * distinguish measured accuracy from expected accuracy.
+   * </p>
+   *
+   * @param description case description
+   * @param model EOS model used
+   * @param expectedResult accuracy expectation
+   * @param referenceSource published reference
+   * @param verifiedBy fully qualified JUnit test method that asserts the claim, or null when the claim is not yet
+   * covered by an executed test
+   * @return JSON object for the validation case
+   */
+  private static JsonObject validationCase(String description, String model, String expectedResult,
+      String referenceSource, String verifiedBy) {
     JsonObject vc = new JsonObject();
     vc.addProperty("description", description);
     vc.addProperty("model", model);
     vc.addProperty("expectedResult", expectedResult);
     vc.addProperty("referenceSource", referenceSource);
+    vc.addProperty("verificationStatus", verifiedBy != null ? "verified_by_test" : "expected_not_yet_verified");
+    if (verifiedBy != null) {
+      vc.addProperty("verifiedBy", verifiedBy);
+    }
     return vc;
   }
 }

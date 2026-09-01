@@ -69,6 +69,12 @@ public class MultilayerThermalCalculator implements Serializable {
   /** Flag indicating if U-value needs recalculation. */
   private boolean uValueDirty = true;
 
+  /** Fluid-to-first-layer heat transfer from the most recent transient update [W/m]. */
+  private double lastFluidHeatTransferPerLength = 0.0;
+
+  /** Last-layer-to-ambient heat transfer from the most recent transient update [W/m]. */
+  private double lastAmbientHeatTransferPerLength = 0.0;
+
   /**
    * Default constructor.
    */
@@ -417,7 +423,12 @@ public class MultilayerThermalCalculator implements Serializable {
    * @param dt Time step in seconds
    */
   public void updateTransient(double dt) {
+    lastFluidHeatTransferPerLength = 0.0;
+    lastAmbientHeatTransferPerLength = 0.0;
     if (!enableThermalMass || layers.isEmpty()) {
+      double steadyHeatTransferPerLength = calculateHeatLossPerLength();
+      lastFluidHeatTransferPerLength = steadyHeatTransferPerLength;
+      lastAmbientHeatTransferPerLength = steadyHeatTransferPerLength;
       return;
     }
 
@@ -435,6 +446,7 @@ public class MultilayerThermalCalculator implements Serializable {
         // From fluid to first layer
         double ri = layer.getInnerRadius();
         Q_in = innerHTC * 2.0 * Math.PI * ri * (fluidTemperature - Ti);
+        lastFluidHeatTransferPerLength = Q_in;
       } else {
         // From previous layer
         RadialThermalLayer prevLayer = layers.get(i - 1);
@@ -457,6 +469,7 @@ public class MultilayerThermalCalculator implements Serializable {
         // From last layer to ambient
         double ro = layer.getOuterRadius();
         Q_out = outerHTC * 2.0 * Math.PI * ro * (Ti - ambientTemperature);
+        lastAmbientHeatTransferPerLength = Q_out;
       } else {
         // To next layer
         RadialThermalLayer nextLayer = layers.get(i + 1);
@@ -480,6 +493,36 @@ public class MultilayerThermalCalculator implements Serializable {
     for (int i = 0; i < n; i++) {
       layers.get(i).setTemperature(newTemperatures[i]);
     }
+  }
+
+  /**
+   * Get the fluid-to-first-layer heat transfer used by the most recent transient update.
+   *
+   * <p>
+   * The sign is positive when energy leaves the fluid. With thermal mass and radial layers enabled, this is the
+   * instantaneous explicit flux evaluated from the pre-update temperatures. When thermal mass is disabled or no layers
+   * are configured, it is the steady overall-U heat loss.
+   * </p>
+   *
+   * @return fluid-to-wall heat transfer in W/m
+   */
+  public double getLastFluidHeatTransferPerLength() {
+    return lastFluidHeatTransferPerLength;
+  }
+
+  /**
+   * Get the last-layer-to-ambient heat transfer used by the most recent transient update.
+   *
+   * <p>
+   * The sign is positive when energy leaves the radial layers for the ambient. With thermal mass and radial layers
+   * enabled, this is the instantaneous explicit outer-layer flux. When thermal mass is disabled or no layers are
+   * configured, it is the steady overall-U heat loss.
+   * </p>
+   *
+   * @return wall-to-ambient heat transfer in W/m
+   */
+  public double getLastAmbientHeatTransferPerLength() {
+    return lastAmbientHeatTransferPerLength;
   }
 
   /**

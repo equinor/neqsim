@@ -3121,13 +3121,13 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMolesInPhase * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("m3/sec")) {
+    } else if (flowunit.equals("m3/sec") || flowunit.equals("Am3/sec")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3");
-    } else if (flowunit.equals("m3/min")) {
+    } else if (flowunit.equals("m3/min") || flowunit.equals("Am3/min")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * 60.0;
-    } else if (flowunit.equals("m3/hr")) {
+    } else if (flowunit.equals("m3/hr") || flowunit.equals("Am3/hr")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return numberOfMolesInPhase * getMolarMass() / getDensity("kg/m3") * 3600.0;
     } else if (flowunit.equals("ft3/sec")) {
@@ -3167,7 +3167,7 @@ public abstract class Phase implements PhaseInterface {
       return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
-          + "kg/hr, m3/sec, m3/min, m3/hr, ft3/sec, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, "
+          + "kg/hr, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, Am3/hr, ft3/sec, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, "
           + "mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, "
           + "kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, "
           + "lbmol/hr, lb/hr, barrel/day, bbl/day");

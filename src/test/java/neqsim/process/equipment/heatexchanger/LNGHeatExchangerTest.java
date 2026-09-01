@@ -182,8 +182,10 @@ class LNGHeatExchangerTest {
     hx.setAdaptiveRefinement(true);
     hx.setMaxAdaptiveZones(50);
     hx.setAdaptiveThresholdFactor(1.5);
+    hx.setReuseZoneFlashState(true);
 
     assertTrue(hx.getAdaptiveRefinement());
+    assertTrue(hx.getReuseZoneFlashState());
     assertEquals(50, hx.getMaxAdaptiveZones());
     assertEquals(1.5, hx.getAdaptiveThresholdFactor(), 1e-10);
 

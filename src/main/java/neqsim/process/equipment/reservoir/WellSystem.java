@@ -289,6 +289,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   private double tolerance = 0.1; // bara
   private int maxIterations = 50;
   private VLPSolverMode vlpSolverMode = VLPSolverMode.SIMPLIFIED;
+  private boolean operatingPointConverged = false;
+  private double operatingPointResidual = Double.NaN; // IPR BHP minus VLP BHP, bara
+  private int operatingPointIterations = 0;
 
   /**
    * Constructor for WellSystem.
@@ -491,6 +494,12 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Set pressure-drop correlation for VLP.
    *
+   * <p>
+   * This configures the correlation used by a full {@link TubingPerformance} solve but does not change
+   * {@link #getVLPSolverMode()}. The default {@link VLPSolverMode#SIMPLIFIED} mode does not use this setting. Call
+   * {@link #setVLPSolverMode(VLPSolverMode)} with the matching full solver mode to activate the correlation.
+   * </p>
+   *
    * @param correlation pressure-drop correlation
    */
   public void setPressureDropCorrelation(TubingPerformance.PressureDropCorrelation correlation) {
@@ -668,63 +677,95 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     reservoirPressure = reservoirStream.getPressure("bara");
 
     // Use bisection method for robust convergence
-    double qLow = 10.0; // Minimum flow rate Sm3/day
-    double qHigh = estimateMaxFlowRate(); // Maximum feasible flow rate
+    double qLow = 0.0; // Shut-in boundary, Sm3/day
+    double qHigh = Math.max(0.0, estimateMaxFlowRate()); // Maximum feasible flow rate
     double flowGuess = estimateInitialFlowRate();
 
     // Clamp initial guess
     flowGuess = Math.max(qLow, Math.min(flowGuess, qHigh));
 
-    double bhpFromIPR = 0.0;
-    double bhpFromVLP = 0.0;
-    boolean converged = false;
+    operatingPointConverged = false;
+    operatingPointResidual = Double.NaN;
+    operatingPointIterations = 0;
 
     // Calculate error function: f(q) = BHP_IPR(q) - BHP_VLP(q)
     // At operating point, f(q) = 0
-    double errorLow = calculateIPR_BHP(qLow) - calculateVLP_BHP(qLow);
-    double errorHigh = calculateIPR_BHP(qHigh) - calculateVLP_BHP(qHigh);
+    double bhpIprLow = calculateIPR_BHP(qLow);
+    double bhpVlpLow = calculateVLP_BHP(qLow);
+    double errorLow = bhpIprLow - bhpVlpLow;
+    double bhpIprHigh = calculateIPR_BHP(qHigh);
+    double bhpVlpHigh = calculateVLP_BHP(qHigh);
+    double errorHigh = bhpIprHigh - bhpVlpHigh;
 
-    // Iterative solution using bisection with secant acceleration
-    for (int iter = 0; iter < maxIterations; iter++) {
-      bhpFromIPR = calculateIPR_BHP(flowGuess);
-      bhpFromVLP = calculateVLP_BHP(flowGuess);
-      double error = bhpFromIPR - bhpFromVLP;
-
-      // Check convergence
-      if (Math.abs(error) < tolerance) {
-        operatingFlowRate = flowGuess;
-        operatingBHP = bhpFromIPR;
-        converged = true;
-        break;
-      }
-
-      // Update bounds for bisection
-      if (error * errorLow < 0) {
-        qHigh = flowGuess;
-        errorHigh = error;
+    if (!Double.isFinite(errorLow) || !Double.isFinite(errorHigh)) {
+      operatingFlowRate = qLow;
+      operatingBHP = bhpIprLow;
+      operatingPointResidual = errorLow;
+    } else if (Math.abs(errorLow) < tolerance) {
+      operatingFlowRate = qLow;
+      operatingBHP = bhpIprLow;
+      operatingPointResidual = errorLow;
+      operatingPointConverged = true;
+    } else if (Math.abs(errorHigh) < tolerance) {
+      operatingFlowRate = qHigh;
+      operatingBHP = bhpIprHigh;
+      operatingPointResidual = errorHigh;
+      operatingPointConverged = true;
+    } else if (errorLow * errorHigh > 0.0 || qHigh <= qLow) {
+      // No physical IPR/VLP crossing exists inside the feasible rate interval.
+      if (Math.abs(errorLow) <= Math.abs(errorHigh)) {
+        operatingFlowRate = qLow;
+        operatingBHP = bhpIprLow;
+        operatingPointResidual = errorLow;
       } else {
-        qLow = flowGuess;
-        errorLow = error;
+        operatingFlowRate = qHigh;
+        operatingBHP = bhpIprHigh;
+        operatingPointResidual = errorHigh;
       }
+    } else {
+      // Iterative solution using pressure residual as the only convergence criterion.
+      for (int iter = 0; iter < maxIterations; iter++) {
+        double bhpFromIPR = calculateIPR_BHP(flowGuess);
+        double bhpFromVLP = calculateVLP_BHP(flowGuess);
+        double error = bhpFromIPR - bhpFromVLP;
 
-      // Use bisection step (very robust)
-      flowGuess = (qLow + qHigh) / 2.0;
-
-      // Check if bounds have collapsed
-      if (qHigh - qLow < 1.0) {
+        // Store only values evaluated at this exact rate.
         operatingFlowRate = flowGuess;
         operatingBHP = bhpFromIPR;
-        converged = true;
-        break;
+        operatingPointResidual = error;
+        operatingPointIterations = iter + 1;
+
+        if (!Double.isFinite(error)) {
+          break;
+        }
+
+        // A narrow rate bracket alone is not evidence of pressure convergence.
+        if (Math.abs(error) < tolerance) {
+          operatingPointConverged = true;
+          break;
+        }
+
+        if (error * errorLow < 0.0) {
+          qHigh = flowGuess;
+        } else {
+          qLow = flowGuess;
+          errorLow = error;
+        }
+
+        double nextFlowGuess = (qLow + qHigh) / 2.0;
+        if (nextFlowGuess == qLow || nextFlowGuess == qHigh) {
+          // Floating-point resolution has collapsed the bracket. The stored point remains
+          // unconverged unless its pressure residual already met the configured tolerance.
+          break;
+        }
+        flowGuess = nextFlowGuess;
       }
     }
 
-    // If not converged, use the last calculated values
-    if (!converged) {
-      operatingFlowRate = Math.max(0.0, flowGuess);
-      operatingBHP = bhpFromIPR > 0 ? bhpFromIPR : bhpFromVLP;
-      logger.warn("WellSystem {} did not converge after {} iterations. Using last values: Q={} Sm3/day, BHP={} bara",
-          getName(), maxIterations, operatingFlowRate, operatingBHP);
+    if (!operatingPointConverged) {
+      logger.warn(
+          "WellSystem {} did not find a converged IPR/VLP operating point. Q={} Sm3/day, BHP={} bara, residual={} bar, iterations={}",
+          getName(), operatingFlowRate, operatingBHP, operatingPointResidual, operatingPointIterations);
     }
 
     // Create output stream at wellhead conditions
@@ -774,6 +815,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     commonBHP *= 0.7; // Start at 70% of weighted average Pr
 
     double totalRate;
+    operatingPointConverged = false;
+    operatingPointResidual = Double.NaN;
+    operatingPointIterations = 0;
 
     // Iterate to find common BHP that satisfies VLP
     for (int iter = 0; iter < maxIterations; iter++) {
@@ -792,14 +836,23 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
       // Check convergence
       double error = commonBHP - vlpBHP;
+      operatingFlowRate = totalRate;
+      operatingBHP = commonBHP;
+      operatingPointResidual = error;
+      operatingPointIterations = iter + 1;
       if (Math.abs(error) < tolerance) {
-        operatingFlowRate = totalRate;
-        operatingBHP = commonBHP;
+        operatingPointConverged = true;
         break;
       }
 
       // Adjust common BHP
       commonBHP = (commonBHP + vlpBHP) / 2.0;
+    }
+
+    if (!operatingPointConverged) {
+      logger.warn(
+          "WellSystem {} did not find a converged commingled operating point. Q={} Sm3/day, BHP={} bara, residual={} bar, iterations={}",
+          getName(), operatingFlowRate, operatingBHP, operatingPointResidual, operatingPointIterations);
     }
 
     // Create blended output stream
@@ -1269,6 +1322,41 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     default:
       return sm3day;
     }
+  }
+
+  /**
+   * Check whether the latest IPR/VLP operating-point solve met the pressure tolerance.
+   *
+   * @return {@code true} when the latest solve converged
+   */
+  public boolean isOperatingPointConverged() {
+    return operatingPointConverged;
+  }
+
+  /**
+   * Get the signed pressure residual from the latest operating-point solve.
+   *
+   * <p>
+   * The residual is {@code BHP_IPR - BHP_VLP} at the stored operating flow rate.
+   * </p>
+   *
+   * @param unit pressure-difference unit ("bar" or "psi")
+   * @return signed operating-point pressure residual
+   */
+  public double getOperatingPointResidual(String unit) {
+    if (unit.equalsIgnoreCase("psi")) {
+      return operatingPointResidual * 14.5038;
+    }
+    return operatingPointResidual;
+  }
+
+  /**
+   * Get the number of iterations used by the latest operating-point solve.
+   *
+   * @return operating-point solver iterations
+   */
+  public int getOperatingPointIterations() {
+    return operatingPointIterations;
   }
 
   /**

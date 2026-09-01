@@ -352,6 +352,20 @@ pipe.setRoughness(4.5e-5);       // wall roughness (m)
 // Steady-state initialization
 pipe.run();
 
+// run() does not throw when the solve fails - always check the outcome
+if (!pipe.isSteadyStateConverged()) {
+  if (pipe.isSteadyStatePressureFloorLimited()) {
+    // sections rest on the internal 1 bara floor: the line cannot deliver
+    // this rate at this inlet pressure, so there is no solution to report
+    throw new IllegalStateException("Line has no deliverability at this rate");
+  }
+  throw new IllegalStateException("Steady state did not converge");
+}
+
+// Optional: uniform direct electrical heating (power delivered to the fluid)
+pipe.setDirectElectricalHeatingPower(2.0e6);        // W over the whole length
+// pipe.setDirectElectricalHeatingPowerPerMeter(400.0); // or W/m directly
+
 // Transient simulation
 UUID simId = UUID.randomUUID();
 for (int step = 0; step < 600; step++) {
@@ -363,6 +377,11 @@ double[] pressures = pipe.getPressureProfile();
 double[] holdups = pipe.getLiquidHoldupProfile();
 double inventory = pipe.getLiquidInventory("m3");
 ```
+
+> `TwoFluidPipe` reproduces the rate exponent in pressure drop across a 3x rate range on a long
+> gas-condensate line, but local liquid holdup at low rate is still dominated by terrain trap
+> sections. See [Known limitations](../wiki/two_fluid_model#known-limitations) before quoting valley
+> inventory quantitatively.
 
 ### Two-Fluid Pipe Benchmark (Cross-Validate vs Beggs & Brill)
 
@@ -387,7 +406,7 @@ double ratio = dpTF / dpBB;
 ### Two-Fluid Pipe with Virtual Mass Force
 
 ```java
-// Enable virtual mass force for improved slug dynamics and pressure surge prediction
+// Enable optional gas-liquid added-inertia coupling
 TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
 pipe.setLength(5000);
 pipe.setDiameter(0.3);
@@ -395,11 +414,14 @@ pipe.setNumberOfSections(100);
 
 // Enable virtual mass force (Drew & Lahey 1987)
 pipe.getEquations().setEnableVirtualMassForce(true);
-pipe.getEquations().setVirtualMassCoefficient(0.5);  // Default for spheres
-pipe.getEquations().setTimestep(0.1);  // Required for dv/dt calculation
+pipe.getEquations().setVirtualMassCoefficient(0.5);  // Spherical-bubble value
 
 pipe.run();
 ```
+
+The coupling is algebraic and stage-pure: it uses the complete current RHS and retains no previous
+velocity or integration-stage history. Treat `0.5` as a closure assumption, not a general accuracy
+claim, and validate it for the intended flow regime and transient.
 
 ### Two-Fluid Pipe with Junction/Bend Losses
 

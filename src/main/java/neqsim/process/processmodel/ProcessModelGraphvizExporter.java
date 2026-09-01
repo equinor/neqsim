@@ -110,8 +110,9 @@ public class ProcessModelGraphvizExporter implements Serializable {
     Map<String, Map<String, UnitNode>> areaNodeByName = new LinkedHashMap<String, Map<String, UnitNode>>();
     Map<StreamInterface, List<UnitNode>> producers = new IdentityHashMap<StreamInterface, List<UnitNode>>();
     Map<StreamInterface, List<UnitNode>> consumers = new IdentityHashMap<StreamInterface, List<UnitNode>>();
+    List<StreamInterface> streamOrder = new ArrayList<StreamInterface>();
 
-    collectNodesAndStreams(areaNodes, areaNodeByName, producers, consumers);
+    collectNodesAndStreams(areaNodes, areaNodeByName, producers, consumers, streamOrder);
 
     StringBuilder builder = new StringBuilder();
     builder.append("digraph \"").append(escapeDot(title)).append("\" {\n");
@@ -121,7 +122,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
     builder.append("  edge [fontname=\"Arial\", fontsize=10];\n\n");
 
     appendAreaClusters(builder, areaNodes);
-    appendStreamEdges(builder, producers, consumers);
+    appendStreamEdges(builder, producers, consumers, streamOrder);
     appendExplicitConnections(builder, areaNodeByName);
 
     builder.append("}\n");
@@ -193,10 +194,11 @@ public class ProcessModelGraphvizExporter implements Serializable {
    * @param areaNodeByName map to populate with node lookup by area and unit name
    * @param producers map to populate with producer nodes by stream identity
    * @param consumers map to populate with consumer nodes by stream identity
+   * @param streamOrder stream identities in deterministic model traversal order
    */
   private void collectNodesAndStreams(Map<String, List<UnitNode>> areaNodes,
       Map<String, Map<String, UnitNode>> areaNodeByName, Map<StreamInterface, List<UnitNode>> producers,
-      Map<StreamInterface, List<UnitNode>> consumers) {
+      Map<StreamInterface, List<UnitNode>> consumers, List<StreamInterface> streamOrder) {
     for (String areaName : model.getProcessSystemNames()) {
       ProcessSystem process = model.get(areaName);
       if (process == null) {
@@ -213,7 +215,7 @@ public class ProcessModelGraphvizExporter implements Serializable {
       areaNodeByName.put(areaName, nodesByName);
 
       for (UnitNode node : nodes) {
-        collectStreamEndpoints(node, producers, consumers);
+        collectStreamEndpoints(node, producers, consumers, streamOrder);
       }
     }
   }
@@ -224,17 +226,18 @@ public class ProcessModelGraphvizExporter implements Serializable {
    * @param node unit node to inspect
    * @param producers stream producer map to populate
    * @param consumers stream consumer map to populate
+   * @param streamOrder stream identities in deterministic model traversal order
    */
   private void collectStreamEndpoints(UnitNode node, Map<StreamInterface, List<UnitNode>> producers,
-      Map<StreamInterface, List<UnitNode>> consumers) {
+      Map<StreamInterface, List<UnitNode>> consumers, List<StreamInterface> streamOrder) {
     if (node.unit instanceof StreamInterface) {
-      addEndpoint(producers, (StreamInterface) node.unit, node);
+      addEndpoint(producers, (StreamInterface) node.unit, node, streamOrder);
     }
     for (StreamInterface stream : safeGetOutletStreams(node.unit)) {
-      addEndpoint(producers, stream, node);
+      addEndpoint(producers, stream, node, streamOrder);
     }
     for (StreamInterface stream : safeGetInletStreams(node.unit)) {
-      addEndpoint(consumers, stream, node);
+      addEndpoint(consumers, stream, node, null);
     }
   }
 
@@ -244,8 +247,10 @@ public class ProcessModelGraphvizExporter implements Serializable {
    * @param endpoints endpoint map to update
    * @param stream stream identity key
    * @param node unit node endpoint
+   * @param insertionOrder optional list that records newly observed identities
    */
-  private void addEndpoint(Map<StreamInterface, List<UnitNode>> endpoints, StreamInterface stream, UnitNode node) {
+  private void addEndpoint(Map<StreamInterface, List<UnitNode>> endpoints, StreamInterface stream, UnitNode node,
+      List<StreamInterface> insertionOrder) {
     if (stream == null || node == null) {
       return;
     }
@@ -253,6 +258,9 @@ public class ProcessModelGraphvizExporter implements Serializable {
     if (nodes == null) {
       nodes = new ArrayList<UnitNode>();
       endpoints.put(stream, nodes);
+      if (insertionOrder != null) {
+        insertionOrder.add(stream);
+      }
     }
     if (!nodes.contains(node)) {
       nodes.add(node);
@@ -318,13 +326,13 @@ public class ProcessModelGraphvizExporter implements Serializable {
    * @param builder DOT builder to append to
    * @param producers producer nodes by stream identity
    * @param consumers consumer nodes by stream identity
+   * @param streamOrder stream identities in deterministic model traversal order
    */
   private void appendStreamEdges(StringBuilder builder, Map<StreamInterface, List<UnitNode>> producers,
-      Map<StreamInterface, List<UnitNode>> consumers) {
+      Map<StreamInterface, List<UnitNode>> consumers, List<StreamInterface> streamOrder) {
     Set<String> edgeLines = new LinkedHashSet<String>();
-    for (Map.Entry<StreamInterface, List<UnitNode>> entry : producers.entrySet()) {
-      StreamInterface stream = entry.getKey();
-      List<UnitNode> sourceNodes = selectEffectiveSources(entry.getValue());
+    for (StreamInterface stream : streamOrder) {
+      List<UnitNode> sourceNodes = selectEffectiveSources(producers.get(stream));
       List<UnitNode> sinkNodes = consumers.get(stream);
       if (sinkNodes == null || sinkNodes.isEmpty()) {
         continue;

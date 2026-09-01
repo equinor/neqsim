@@ -1,40 +1,126 @@
 ---
 title: "Thermodynamic Operations"
-description: "Thermodynamic operations execute equilibrium and property tasks using a configured fluid. Most workflows create a `ThermodynamicOperations` object once and reuse it for multiple calls."
+description: "Run NeqSim flash calculations safely, initialize thermodynamic and transport properties, and select the dedicated workflow for phase envelopes, hydrates, solids, electrolytes, and reactive systems."
+keywords: "NeqSim, ThermodynamicOperations, TPflash, PHflash, PSflash, phase equilibrium, flash calculation, thermodynamic properties"
 ---
 
-# Thermodynamic Operations
+`ThermodynamicOperations` solves equilibrium and state-function specifications for a configured
+`SystemInterface`. A reliable workflow is:
 
-Thermodynamic operations execute equilibrium and property tasks using a configured fluid. Most workflows create a `ThermodynamicOperations` object once and reuse it for multiple calls.
+1. define the fluid and mixing rule;
+2. set the known state variables;
+3. run the appropriate flash;
+4. call `initProperties()` before reading density or transport properties; and
+5. check that the resulting phases and engineering values are physical.
 
-## Flash Calculations
-- **`TPflash()`**: Calculates phase split at specified temperature and pressure. Run `initProperties()` afterward for density/viscosity.
-- **`PHflash(H)` and `PSflash(S)`**: Solve for temperature/phase split given enthalpy or entropy targets—useful for compressors and turbines. Set the pressure on the fluid with `setPressure()` before calling these.
-- **`TVflash(V)`**: Volume-constrained flash—finds pressure at fixed temperature and total volume.
-- **`VUflash(V, U)`**: Volume- and internal-energy-constrained flash for transient simulations.
+## Complete Java quick start
+
+This Java 8 program performs a TP flash at 25 °C and 50 bara, initializes properties, and then
+calculates the state after an isenthalpic pressure reduction to 30 bara.
 
 ```java
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-double vaporFraction = fluid.getBeta();
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+public final class ThermodynamicOperationsQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(ThermodynamicOperationsQuickStart.class);
+
+  private ThermodynamicOperationsQuickStart() {}
+
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    if (!fluid.hasPhaseType("gas")) {
+      throw new IllegalStateException("Expected a gas phase after the TP flash");
+    }
+    double vaporFraction = fluid.getPhaseFraction("gas", "mole");
+    double inletDensity = fluid.getDensity("kg/m3");
+    double inletEnthalpy = fluid.getEnthalpy();
+
+    fluid.setPressure(30.0, "bara");
+    operations.PHflash(inletEnthalpy);
+    fluid.initProperties();
+
+    logger.info("Inlet gas fraction: {} mol/mol", vaporFraction);
+    logger.info("Inlet density: {} kg/m3", inletDensity);
+    logger.info("Outlet temperature: {} C", fluid.getTemperature("C"));
+    logger.info("Enthalpy residual: {} J", fluid.getEnthalpy() - inletEnthalpy);
+  }
+}
 ```
 
-## Phase Envelopes
-- **PT envelope**: `ops.calcPTphaseEnvelope()` fills critical point, cricondenbar, cricondentherm, and two-phase boundary.
-- **Hydrate curves**: Enable `hydrateCheck(true)` before calling `ops.hydrateFormationTemperature(pressure)`.
-- **Wax/solid envelopes**: Use a solid-enabled system and call `ops.calcSolidFormationTemperature()`.
+For this lean-gas case, the focused documentation regression requires a gas fraction above
+0.999 mol/mol, an inlet density between 35 and 50 kg/m³, a finite outlet temperature, and
+isenthalpic closure within 0.001 J. These are deliberately bounded engineering checks rather than
+portable exact output values.
 
-## Property Routines
-After flashes, properties are available on each phase:
-- `getDensity()` or `getNumberOfMoles()` for molar/volume properties.
-- `getEnthalpy()`, `getEntropy()`, and `getCp()` for energy balances.
-- `getViscosity()`, `getThermalConductivity()`, and `getInterfacialTension()` for transport analyses.
+## Choose the flash from the specification
 
-## Electrolytes and Reactions
-- **Electrolytes**: Build systems such as `SystemFurstElectrolyteEos` or `SystemElectrolyteCPAstatoil`, add salts/acids, and enable charge balance. Use `ops.electrolyteFlash()` for salt precipitation studies.
-- **Chemical reactions**: Define reactions with stoichiometry and equilibrium constants, then call `ops.calcChemicalEquilibrium()` to couple them into flashes.
+| Operation | Known state | Solved state | Typical use |
+|---|---|---|---|
+| `TPflash()` | temperature and pressure | phase amounts and compositions | separator or pipeline state |
+| `PHflash(H)` | pressure and total enthalpy | temperature and phase equilibrium | valve, heater, or heat exchanger |
+| `PSflash(S)` | pressure and total entropy | temperature and phase equilibrium | ideal compressor or expander reference |
+| `TVflash(V, "m3")` | temperature and total volume | pressure and phase equilibrium | fixed-volume screening |
+| `VUflash(V, u, "m3", "J/kg")` | total volume and specific internal energy | temperature, pressure, and phases | dynamic vessel calculations |
 
-## Best Practices
-- Always reinitialize (`fluid.init(3)`) after changing temperature, pressure, or composition significantly.
-- Reuse the same `ThermodynamicOperations` instance when sweeping conditions to avoid rebuilding internal caches.
-- For performance-sensitive loops, pre-allocate fluids and avoid repeated parsing of the component database.
+The no-unit `PHflash` and `PSflash` overloads use total system enthalpy and entropy in NeqSim's
+internal SI representation. Prefer supported explicit unit strings when values originate outside
+NeqSim. A total-volume specification belongs to the fluid inventory from which it was calculated,
+so preserve the system's material amount when copying it between states.
+
+## Property initialization boundary
+
+A flash establishes the equilibrium state. It does not guarantee that all transport-property
+models have been evaluated. Call `initProperties()` after the flash before retrieving density,
+viscosity, thermal conductivity, or interfacial tension.
+
+Use bulk getters such as `fluid.getDensity("kg/m3")` only when a bulk value is meaningful. For
+multiphase systems, check phase existence and retrieve a named phase explicitly, for example
+`fluid.getPhase("gas").getDensity("kg/m3")`.
+
+Do not use `init(3)` as a replacement for a flash after changing temperature, pressure, or
+composition. The flash operation establishes the new equilibrium; `initProperties()` then
+initializes thermodynamic and physical properties for the accepted state.
+
+## Specialized equilibrium workflows
+
+The compact quick start above covers state flashes. Use the dedicated guides for operations that
+need additional phase configuration, model selection, or result extraction:
+
+- [Flash calculations](flash_calculations_guide.md) — saturation, phase-envelope, critical-point,
+  hydrate, and solid operations;
+- [Reactive flash](reactive_flash.md) — simultaneous chemical and phase equilibrium;
+- [Electrolyte CPA](ElectrolyteCPAModel.md) — electrolyte-system construction and applicability;
+- [Hydrate models](hydrate_models.md) — hydrate structures, inhibitors, and formation conditions;
+- [Physical properties](physical_properties.md) — density and transport-property models.
+
+There is no generic `electrolyteFlash()`, `calcChemicalEquilibrium()`, or
+`calcSolidFormationTemperature()` method on `ThermodynamicOperations`. Select the documented
+operation for the physical problem instead of relying on those legacy names.
+
+## Reuse and independent calculations
+
+Reuse one `ThermodynamicOperations` instance while changing the state of the same fluid. Clone the
+fluid and construct a separate operations object when two calculations must remain independent.
+Always validate phase existence, conservation, units, and convergence before using a result in an
+engineering decision.
+
+## Related documentation
+
+- [Fluid creation](fluid_creation_guide.md)
+- [Mixing rules](mixing_rules_guide.md)
+- [Thermodynamic workflows](thermodynamic_workflows.md)
+- [Thermodynamic models](thermodynamic_models.md)

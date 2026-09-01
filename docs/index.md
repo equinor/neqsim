@@ -4,21 +4,21 @@ title: NeqSim Documentation
 description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engineering Task Solving in Industry."
 ---
 
-# NeqSim Documentation
 
 **Industrial Agentic Engineering with NeqSim** — AI Agents for Engineering Task Solving in Industry. NeqSim (Non-Equilibrium Simulator) is a comprehensive Java library developed at [NTNU](https://www.ntnu.edu/).
 
 <div class="hero-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
   <a href="https://github.com/equinor/neqsim/actions"><img src="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg" alt="Java CI"></a>
-  <a href="https://search.maven.org/search?q=g:%22com.equinor.neqsim%22%20AND%20a:%22neqsim%22"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
+  <a href="https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
 </div>
 
 <div class="cta-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0;">
   <a href="wiki/getting_started.html" class="cta-button primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #159957; color: white;">🚀 Get Started</a>
+  <a href="search/" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">🔎 Search Documentation</a>
   <a href="https://github.com/equinor/neqsim" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">⭐ Star on GitHub</a>
-  <a href="manual/neqsim_reference_manual.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual</a>
-  <a href="https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
+  <a href="REFERENCE_MANUAL_INDEX.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual Index</a>
+  <a href="https://equinor.github.io/neqsim/javadoc/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
 </div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
@@ -34,7 +34,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="java-getting-started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Getting Started with Java</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Install, first calculations, developer setup</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="docker-getting-started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Build &amp; Run with Docker</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Build the container; use NeqSim from Java and Python</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="modules.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Modules Overview</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Architecture and package structure</span></li>
-<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Complete API documentation</span></li>
+<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual Index</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Topic index for guides, workflows, and examples</span></li>
 </ul>
 </div>
 
@@ -43,7 +43,8 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <ul style="list-style: none; padding: 0; margin: 0;">
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermo/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermo Package</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Equations of state, mixing rules, fluids</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermodynamicoperations/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermodynamic Operations</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Flash calculations, phase envelopes</span></li>
-<li style="padding: 0.5rem 0;"><a href="physical_properties/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Physical Properties</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Viscosity, conductivity, diffusivity</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="physical_properties/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Physical Properties</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Viscosity, conductivity, diffusivity</span></li>
+<li style="padding: 0.5rem 0;"><a href="chemicalreactions/co2_impurity_kinetics_guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Experimental CO₂ Impurity Kinetic Reactor</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Balanced trace-reaction network, reactor usage, safeguards, and limitations</span></li>
 </ul>
 </div>
 
@@ -53,6 +54,16 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="process/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Process Equipment</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Separators, compressors, heat exchangers</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="fluidmechanics/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Fluid Mechanics</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Pipeline flow, pressure drop</span></li>
 <li style="padding: 0.5rem 0;"><a href="safety/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Safety Systems</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Relief valves, flare systems</span></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🏗️ Engineering</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Hub</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Design cases, discipline calculations, safety, and handover</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From a converged process model to review-ready deliverables</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/current-capabilities.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Current Capabilities</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Implemented APIs, discipline coverage, readiness, and boundaries</span></li>
+<li style="padding: 0.5rem 0;"><a href="engineering/dexpi-guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>DEXPI Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Plant, Process, Proteus, pyDEXPI, validation, and qualification</span></li>
 </ul>
 </div>
 
@@ -107,30 +118,39 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 ## ⚡ Quick Start Example
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create a natural gas fluid
-SystemInterface gas = new SystemSrkEos(298.15, 50.0);
-gas.addComponent("methane", 0.90);
-gas.addComponent("ethane", 0.05);
-gas.addComponent("propane", 0.03);
-gas.addComponent("CO2", 0.02);
-gas.setMixingRule("classic");
+public final class NeqSimQuickStart {
+  private static final Logger logger = LogManager.getLogger(NeqSimQuickStart.class);
 
-// Perform flash calculation
-ThermodynamicOperations ops = new ThermodynamicOperations(gas);
-ops.TPflash();
-gas.initProperties();
+  private NeqSimQuickStart() {}
 
-// Get properties
-System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m³");
-System.out.println("Compressibility: " + gas.getZ());
+  public static void main(String[] args) {
+    SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.05);
+    gas.addComponent("propane", 0.03);
+    gas.addComponent("CO2", 0.02);
+    gas.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(gas);
+    operations.TPflash();
+    gas.initProperties();
+
+    logger.info("Density: {} kg/m3", gas.getDensity("kg/m3"));
+    logger.info("Compressibility: {}", gas.getZ());
+  }
+}
 ```
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## � New: Quickstart & Learning Resources
+## 🆕 Quickstart & Learning Resources
 
 <div class="nav-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
 
@@ -159,9 +179,9 @@ System.out.println("Compressibility: " + gas.getZ());
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🎓 Learning Paths</h3>
 <p style="color: #6a737d; margin-bottom: 1rem;">Structured tracks by role</p>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-track" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-track" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-track" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-path" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-path" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-path" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
 </ul>
 </div>
 
@@ -169,9 +189,9 @@ System.out.println("Compressibility: " + gas.getZ());
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f44336; color: #24292e; font-size: 1.25rem;">🔧 Troubleshooting</h3>
 <p style="color: #6a737d; margin-bottom: 1rem;">Solutions to common problems</p>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-issues" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-issues" style="color: #155799; text-decoration: none;">Density Issues</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-integration-issues" style="color: #155799; text-decoration: none;">Python Integration</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-and-unexpected-phases" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-and-physical-properties" style="color: #155799; text-decoration: none;">Density Issues</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-gateway-and-overload-errors" style="color: #155799; text-decoration: none;">Python Integration</a></li>
 </ul>
 </div>
 
@@ -179,7 +199,7 @@ System.out.println("Compressibility: " + gas.getZ());
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## �📖 Documentation Sections
+## 📖 Documentation Sections
 
 <div style="overflow-x: auto; margin: 1.5rem 0;">
 <table style="width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
@@ -192,6 +212,7 @@ System.out.println("Compressibility: " + gas.getZ());
 <tbody>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="thermo/README.html">🧪 Thermodynamics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Equations of state, phase behavior, component properties</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="process/README.html">⚙️ Process Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Unit operations, process systems, controllers</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="engineering/index.html">🏗️ Engineering</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Design cases, equipment sizing, safety verification, deliverables, and lifecycle evidence</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="simulation/dynamic_simulation_guide.html">🔄 Dynamic Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Transient simulation, time-stepping, depressurization</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="physical_properties/README.html">📊 Physical Properties</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Transport properties, interfacial tension</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="pvtsimulation/README.html">🛢️ PVT Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Reservoir fluid characterization, tuning</td></tr>
@@ -210,15 +231,15 @@ System.out.println("Compressibility: " + gas.getZ());
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## 📚 Interactive Reference Manual
+## 📚 Reference Manual Index
 
 <div style="background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%); border: 1px solid #c8e1ff; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
-<p style="margin: 0 0 1rem 0;">The <a href="manual/neqsim_reference_manual.html"><strong>Interactive Reference Manual</strong></a> provides a searchable, navigable guide to all NeqSim packages:</p>
+<p style="margin: 0 0 1rem 0;">The <a href="REFERENCE_MANUAL_INDEX.html"><strong>Reference Manual Index</strong></a> organizes the documentation collection by topic and links to current guides, examples, and package references:</p>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Complete package hierarchy</div>
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Class and interface listings</div>
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Usage examples and snippets</div>
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Cross-referenced links</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Topic-based navigation</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Setup, thermodynamics, process, and engineering guides</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Usage guides and verified examples</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Cross-referenced documentation</div>
 </div>
 </div>
 
@@ -229,16 +250,16 @@ System.out.println("Compressibility: " + gas.getZ());
 NeqSim is also available for Python through [**neqsim-python**](https://github.com/equinor/neqsim-python):
 
 ```python
-from neqsim.thermo import TPflash, fluid
+from neqsim import jneqsim
 
 # Create and flash a natural gas
-gas = fluid("srk")
+gas = jneqsim.thermo.system.SystemSrkEos(298.15, 50.0)
 gas.addComponent("methane", 0.9)
 gas.addComponent("ethane", 0.1)
-gas.setTemperature(298.15, "K")
-gas.setPressure(50.0, "bara")
+gas.setMixingRule("classic")
 
-TPflash(gas)
+operations = jneqsim.thermodynamicoperations.ThermodynamicOperations(gas)
+operations.TPflash()
 gas.initProperties()
 print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 ```
@@ -252,7 +273,7 @@ print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 <span style="font-size: 1.5rem;">📦</span>
 <span><strong>GitHub Repository</strong><br><small style="color: #6a737d;">Source code & issues</small></span>
 </a>
-<a href="https://search.maven.org/artifact/com.equinor.neqsim/neqsim" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; text-decoration: none; color: #24292e; transition: all 0.2s ease;">
+<a href="https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; text-decoration: none; color: #24292e; transition: all 0.2s ease;">
 <span style="font-size: 1.5rem;">☕</span>
 <span><strong>Maven Central</strong><br><small style="color: #6a737d;">Latest releases</small></span>
 </a>

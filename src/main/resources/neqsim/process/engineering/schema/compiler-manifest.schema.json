@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:compiler-manifest:v1",
+  "title": "NeqSim engineering compiler manifest",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "graphFingerprint", "artifacts", "schemas"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_compiler_manifest.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:compiler-manifest:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "projectName": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "graphFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "designEnvelopeStatus": {"type": "string"},
+    "revisionDiffStatus": {"type": "string"},
+    "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "schemas": {"type": "array", "items": {"type": "object"}},
+    "governance": {"type": "string"}
+  },
+  "additionalProperties": false
+}

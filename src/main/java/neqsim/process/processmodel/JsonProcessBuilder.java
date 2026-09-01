@@ -2,6 +2,7 @@ package neqsim.process.processmodel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.SetPoint;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemGERG2008Eos;
@@ -69,11 +71,32 @@ public class JsonProcessBuilder {
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(JsonProcessBuilder.class);
 
+  /**
+   * Maximum number of outer {@code process.run()} passes performed when a JSON-built flowsheet with recycles is
+   * auto-run. Nested / forward-referenced recycle loops seeded at near-zero flow need a few outer passes to propagate
+   * real flow and converge; the loop stops early as soon as {@code solved()}.
+   */
+  private static final int MAX_AUTORUN_PASSES = 15;
+
   /** Registry of named fluids created during build. */
   private final Map<String, SystemInterface> namedFluids = new LinkedHashMap<>();
 
   /** Registry of named equipment created during build. */
   private final Map<String, ProcessEquipmentInterface> namedEquipment = new LinkedHashMap<>();
+
+  /**
+   * Inlet references that were dropped when a Mixer/Manifold was partial-wired to break a build-time cycle. Keyed by
+   * unit name; the value lists the still-unresolved inlet references. A completion pass at the end of the build
+   * re-attaches any of these that resolve once every unit exists, so a forward material stream (carrying
+   * mass/components) is never silently lost.
+   */
+  private final Map<String, List<String>> partialMixerDroppedInlets = new LinkedHashMap<>();
+
+  /**
+   * Feed-tray number per DistillationColumn name, captured from the column JSON so the feed can be wired onto the
+   * correct stage (UniSim feed stage) instead of the column's default middle tray.
+   */
+  private final Map<String, Integer> columnFeedTrays = new LinkedHashMap<>();
 
   /** Errors accumulated during build. */
   private final List<SimulationResult.ErrorDetail> errors = new ArrayList<>();
@@ -199,6 +222,9 @@ public class JsonProcessBuilder {
           if (eq instanceof Adjuster && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
             wireAdjuster((Adjuster) eq, props);
           }
+          if (eq instanceof SetPoint && (props.has("sourceEquipment") || props.has("targetEquipment"))) {
+            wireSetPoint((SetPoint) eq, props);
+          }
           if (eq instanceof Calculator && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
             wireCalculator((Calculator) eq, props);
           }
@@ -207,18 +233,47 @@ public class JsonProcessBuilder {
       }
     }
 
-    int maxIterations = unwired.size() + 1;
-    for (int iter = 0; iter < maxIterations && !unwired.isEmpty(); iter++) {
-      java.util.Set<String> wiredThisRound = new java.util.LinkedHashSet<>();
-      for (String name : unwired) {
-        JsonObject unitDef = unitDefMap.get(name);
-        if (unitDef != null && tryWireUnit(name, unitDef)) {
-          wiredThisRound.add(name);
+    // Iterative wiring with cycle-breaking. First try to wire every unit
+    // strictly (all inlets must resolve) so forward-referenced inlets get a
+    // chance to resolve on later iterations. When strict wiring stalls with
+    // units still unwired, partial-wire ONE stalled Mixer/Manifold (wiring
+    // whatever inlets are available). That creates its outlet stream, which
+    // typically unblocks the downstream chain; then resume strict iteration.
+    // This breaks the large recycle/cross-connected loops emitted by flowsheet
+    // exporters while dropping as few inlets as possible.
+    boolean outerProgress = true;
+    while (!unwired.isEmpty() && outerProgress) {
+      outerProgress = false;
+
+      // Inner strict pass: repeat until no more units can be fully wired.
+      boolean strictProgress = true;
+      while (strictProgress && !unwired.isEmpty()) {
+        strictProgress = false;
+        java.util.Set<String> wiredThisRound = new java.util.LinkedHashSet<>();
+        for (String name : unwired) {
+          JsonObject unitDef = unitDefMap.get(name);
+          if (unitDef != null && tryWireUnit(name, unitDef, false)) {
+            wiredThisRound.add(name);
+          }
+        }
+        if (!wiredThisRound.isEmpty()) {
+          unwired.removeAll(wiredThisRound);
+          strictProgress = true;
+          outerProgress = true;
         }
       }
-      unwired.removeAll(wiredThisRound);
-      if (wiredThisRound.isEmpty()) {
-        break; // No progress — remaining refs cannot be resolved
+
+      // Unblock: partial-wire the first stalled Mixer/Manifold, then re-iterate.
+      if (!unwired.isEmpty()) {
+        for (String name : unwired) {
+          JsonObject unitDef = unitDefMap.get(name);
+          ProcessEquipmentInterface eq = namedEquipment.get(name);
+          if (unitDef != null && (eq instanceof Mixer || eq instanceof Manifold) && tryWireUnit(name, unitDef, true)) {
+            unwired.remove(name);
+            outerProgress = true;
+            break; // Re-run strict iteration now that a new outlet exists
+          }
+        }
       }
     }
 
@@ -230,10 +285,45 @@ public class JsonProcessBuilder {
     for (String name : unwired) {
       JsonObject unitDef = unitDefMap.get(name);
       if (unitDef != null) {
+        // Final fallback: wire whatever inlets resolve (partial) so a Mixer with
+        // a genuinely missing inlet is kept and can still run, rather than being
+        // dropped from the flowsheet. If nothing resolves, report and remove.
+        if (tryWireUnit(name, unitDef, true)) {
+          continue;
+        }
         reportUnwiredUnit(name, unitDef);
         // Remove the unit from the process so it doesn't crash during run()
         process.removeUnit(name);
         namedEquipment.remove(name);
+      }
+    }
+
+    // Completion pass: re-attach inlets that were dropped when a Mixer/Manifold
+    // was partial-wired to break a build-time cycle. By now every unit exists,
+    // so a forward material inlet (e.g. a valve outlet that was not yet wired
+    // when the mixer was unblocked) now resolves. Re-attaching it prevents the
+    // silent loss of that stream's mass and components (which would otherwise
+    // over-stabilize downstream oil / distort compositions). Any inlet still
+    // unresolved is a genuine gap and is reported as a warning.
+    for (Map.Entry<String, List<String>> entry : partialMixerDroppedInlets.entrySet()) {
+      ProcessEquipmentInterface eq = namedEquipment.get(entry.getKey());
+      if (eq == null) {
+        continue;
+      }
+      Iterator<String> it = entry.getValue().iterator();
+      while (it.hasNext()) {
+        String ref = it.next();
+        StreamInterface stream = resolveStreamReference(ref);
+        if (stream != null) {
+          wireInletStream(eq, stream);
+          it.remove();
+        }
+      }
+    }
+    for (Map.Entry<String, List<String>> entry : partialMixerDroppedInlets.entrySet()) {
+      if (!entry.getValue().isEmpty()) {
+        warnings.add("Mixer/manifold '" + entry.getKey() + "' missing " + entry.getValue().size()
+            + " inlet(s) not found: " + entry.getValue());
       }
     }
 
@@ -311,10 +401,40 @@ public class JsonProcessBuilder {
     // Step 4: Optionally run
     boolean autoRun = root.has("autoRun") && root.get("autoRun").getAsBoolean();
     if (autoRun) {
-      try {
-        process.run();
-      } catch (Exception e) {
-        warnings.add("process.run() threw: " + e.getMessage() + " — partial results may still be available");
+      // A single process.run() iterates the internal recycle controller once.
+      // For flowsheets whose recycle tear streams are forward references
+      // (a recycle inlet produced by a downstream unit, wired in Pass 2),
+      // nested loops seeded at ~zero flow need several outer passes before
+      // they propagate real flow and converge — the same reason the reference
+      // notebooks loop run() when composing multi-area plants. Iterate a
+      // bounded number of outer passes and stop as soon as the process
+      // reports solved(). Each pass is guarded independently: a single unit
+      // that throws on an early pass (e.g. a loop-fed branch still seeded at
+      // zero flow) must not abort the whole run, otherwise later passes never
+      // get the chance to propagate flow into that branch and converge.
+      if (process.hasRecycles()) {
+        String lastRunError = null;
+        for (int pass = 0; pass < MAX_AUTORUN_PASSES; pass++) {
+          try {
+            process.run();
+            lastRunError = null;
+          } catch (Exception e) {
+            lastRunError = e.getMessage();
+          }
+          if (process.solved()) {
+            break;
+          }
+        }
+        if (lastRunError != null) {
+          warnings.add(
+              "process.run() threw on the final pass: " + lastRunError + " — partial results may still be available");
+        }
+      } else {
+        try {
+          process.run();
+        } catch (Exception e) {
+          warnings.add("process.run() threw: " + e.getMessage() + " — partial results may still be available");
+        }
       }
       // Report generation can also fail if some units have corrupted state
       String report = null;
@@ -1063,9 +1183,18 @@ public class JsonProcessBuilder {
         }
 
         // Special handling for Recycle: create a guess stream so downstream
-        // units can reference RCY.outlet before the Recycle is wired
+        // units can reference RCY.outlet before the Recycle is wired. Seed it at
+        // a near-zero flow so recycle loops build up from ~0 and converge on the
+        // outer auto-run passes instead of starting at the full default-fluid
+        // flow, which can make cross-connected loops diverge (runaway flow).
         if (equipment instanceof Recycle && defaultFluid != null) {
-          StreamInterface guessStream = new Stream(name + "_guess", defaultFluid.clone());
+          SystemInterface guessFluid = defaultFluid.clone();
+          StreamInterface guessStream = new Stream(name + "_guess", guessFluid);
+          try {
+            guessStream.setFlowRate(1.0e-6, "kg/hr");
+          } catch (Exception ignore) {
+            // If flow cannot be set (e.g. empty fluid), leave the clone as-is.
+          }
           ((Recycle) equipment).setOutletStream(guessStream);
         }
 
@@ -1099,8 +1228,8 @@ public class JsonProcessBuilder {
     boolean hasReboiler = true;
     boolean hasCondenser = true;
 
-    if (unitDef.has("properties")) {
-      JsonObject props = unitDef.getAsJsonObject("properties");
+    JsonObject props = unitDef.has("properties") ? unitDef.getAsJsonObject("properties") : null;
+    if (props != null) {
       if (props.has("numberOfTrays")) {
         numberOfTrays = props.get("numberOfTrays").getAsInt();
       }
@@ -1112,7 +1241,57 @@ public class JsonProcessBuilder {
       }
     }
 
-    return new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
+    DistillationColumn column = new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
+    if (props != null) {
+      configureDistillationColumn(column, name, props, hasCondenser, hasReboiler);
+    }
+    return column;
+  }
+
+  /**
+   * Applies column-specific specifications (feed tray, operating pressures, and condenser/reboiler reflux or duty) from
+   * the column JSON. These specs cannot be set by the generic reflection-based {@link #applyProperties} because the
+   * reflux ratio and duties live on the nested condenser/reboiler trays; they are therefore handled explicitly here and
+   * skipped in {@link #applyProperties}.
+   *
+   * @param column the distillation column to configure
+   * @param name the column name (used to store the feed-tray for later wiring)
+   * @param props the column properties JSON object
+   * @param hasCondenser whether the column has a condenser
+   * @param hasReboiler whether the column has a reboiler
+   */
+  private void configureDistillationColumn(DistillationColumn column, String name, JsonObject props,
+      boolean hasCondenser, boolean hasReboiler) {
+    if (props.has("feedTray")) {
+      columnFeedTrays.put(name, props.get("feedTray").getAsInt());
+    }
+    if (props.has("topPressure")) {
+      column.setTopPressure(props.get("topPressure").getAsDouble());
+    }
+    if (props.has("bottomPressure")) {
+      column.setBottomPressure(props.get("bottomPressure").getAsDouble());
+    }
+    if (hasCondenser && props.has("refluxRatio")) {
+      try {
+        column.getCondenser().setRefluxRatio(props.get("refluxRatio").getAsDouble());
+      } catch (RuntimeException ex) {
+        warnings.add("Could not set reflux ratio on column " + name + ": " + ex.getMessage());
+      }
+    }
+    if (hasCondenser && props.has("condenserDuty")) {
+      try {
+        column.getCondenser().setHeatInput(props.get("condenserDuty").getAsDouble());
+      } catch (RuntimeException ex) {
+        warnings.add("Could not set condenser duty on column " + name + ": " + ex.getMessage());
+      }
+    }
+    if (hasReboiler && props.has("reboilerDuty")) {
+      try {
+        column.getReboiler().setHeatInput(props.get("reboilerDuty").getAsDouble());
+      } catch (RuntimeException ex) {
+        warnings.add("Could not set reboiler duty on column " + name + ": " + ex.getMessage());
+      }
+    }
   }
 
   /**
@@ -1207,6 +1386,28 @@ public class JsonProcessBuilder {
    * @return true if all inlet references resolved and were wired
    */
   private boolean tryWireUnit(String name, JsonObject unitDef) {
+    return tryWireUnit(name, unitDef, false);
+  }
+
+  /**
+   * Attempts to wire all inlet references for a unit. Returns true only if the unit's inlets could be wired, allowing
+   * downstream units to use this unit's outlets. Does not add error details on failure (those are added by the fallback
+   * wireUnit call).
+   *
+   * <p>
+   * During the iterative wiring pass {@code allowPartial} is {@code false}, so a Mixer/Manifold with a not-yet-resolved
+   * inlet (a forward reference to a unit that has not been wired) returns {@code false} and is retried on the next
+   * iteration. This is essential for recycle loops and forward-referenced inlets. Only after the iterative pass has
+   * exhausted progress is a final call made with {@code allowPartial=true}, which wires whatever inlets are available
+   * (emitting a warning) so a Mixer with a genuinely missing inlet is kept rather than dropped.
+   * </p>
+   *
+   * @param name the unit name
+   * @param unitDef the JSON definition
+   * @param allowPartial when true, a Mixer/Manifold is wired with whatever inlets resolve even if some are missing
+   * @return true if the unit was wired (fully, or partially when {@code allowPartial} is true)
+   */
+  private boolean tryWireUnit(String name, JsonObject unitDef, boolean allowPartial) {
     ProcessEquipmentInterface equipment = namedEquipment.get(name);
     if (equipment == null) {
       return false;
@@ -1224,15 +1425,34 @@ public class JsonProcessBuilder {
           resolved.add(stream);
         }
       }
-      // For Mixer/Manifold: wire whatever inlets we have (partial is OK)
-      // For HeatExchanger: need both sides
-      if ((equipment instanceof Mixer || equipment instanceof Manifold) && !resolved.isEmpty()) {
-        for (StreamInterface stream : resolved) {
-          wireInletStream(equipment, stream);
-        }
-        if (!allResolved) {
-          warnings.add("Mixer/manifold '" + name + "' wired with " + resolved.size() + " of " + inletsArr.size()
-              + " inlets (some not found)");
+      // For Mixer/Manifold: require ALL inlets to resolve during the iterative
+      // pass (allowPartial=false) so forward-referenced / recycle inlets are
+      // retried on later iterations. Only wire a partial set as a final
+      // fallback (allowPartial=true) to keep the unit rather than drop it.
+      // For HeatExchanger: need both sides.
+      if (equipment instanceof Mixer || equipment instanceof Manifold) {
+        if (allResolved) {
+          for (StreamInterface stream : resolved) {
+            wireInletStream(equipment, stream);
+          }
+        } else if (allowPartial && !resolved.isEmpty()) {
+          List<String> dropped = new ArrayList<>();
+          for (JsonElement inletElem : inletsArr) {
+            String ref = inletElem.getAsString();
+            StreamInterface stream = resolveStreamReference(ref);
+            if (stream != null) {
+              wireInletStream(equipment, stream);
+            } else {
+              dropped.add(ref);
+            }
+          }
+          // Record the dropped references; a completion pass re-attaches any
+          // that resolve once every unit has been created (a dropped forward
+          // material stream would otherwise silently remove its mass and
+          // components from the flowsheet).
+          partialMixerDroppedInlets.put(name, dropped);
+        } else {
+          return false; // Retry on next iteration (forward/recycle reference)
         }
       } else if (equipment instanceof HeatExchanger && resolved.size() == 2) {
         ((HeatExchanger) equipment).setFeedStream(0, resolved.get(0));
@@ -1278,7 +1498,11 @@ public class JsonProcessBuilder {
         for (int i = 0; i < factors.size(); i++) {
           splitFact[i] = factors.get(i).getAsDouble();
         }
-        ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+        if (props.has("splitBasis")) {
+          ((ComponentSplitter) equipment).setSplitFactors(splitFact, props.get("splitBasis").getAsString());
+        } else {
+          ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+        }
       }
       if (equipment instanceof Manifold && props.has("splitFactors")) {
         JsonArray factors = props.getAsJsonArray("splitFactors");
@@ -1292,10 +1516,34 @@ public class JsonProcessBuilder {
       if (equipment instanceof Adjuster && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
         wireAdjuster((Adjuster) equipment, props);
       }
+      // Handle SetPoint: wire source/target variables by equipment reference
+      if (equipment instanceof SetPoint && (props.has("sourceEquipment") || props.has("targetEquipment"))) {
+        wireSetPoint((SetPoint) equipment, props);
+      }
       if (equipment instanceof Calculator && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
         wireCalculator((Calculator) equipment, props);
       }
       applyProperties(equipment, props);
+    }
+
+    // If a Splitter was configured with only a splitNumber (no explicit split
+    // factors or per-outlet flow rates), default to an EQUAL split across all
+    // outlets. setSplitNumber alone leaves the factors as [1, 0, ...], sending
+    // 100% of the flow to the first outlet and starving the other branches —
+    // which starves recycle-tear streams and makes cross-connected loops
+    // diverge (runaway flow). An equal split conserves mass and keeps every
+    // branch alive. Applied after applyProperties so it is not overwritten by
+    // the generic reflection handling of the "splitNumber" property.
+    if (equipment instanceof Splitter && unitDef.has("properties")) {
+      JsonObject sp = unitDef.getAsJsonObject("properties");
+      if (sp.has("splitNumber") && !sp.has("splitFactors") && !sp.has("flowRates")) {
+        int nSplits = sp.get("splitNumber").getAsInt();
+        if (nSplits > 0) {
+          double[] equalFactors = new double[nSplits];
+          java.util.Arrays.fill(equalFactors, 1.0 / nSplits);
+          ((Splitter) equipment).setSplitFactors(equalFactors);
+        }
+      }
     }
 
     return true;
@@ -1399,9 +1647,133 @@ public class JsonProcessBuilder {
 
     // Clone fluid so each stream gets its own instance
     SystemInterface streamFluid = fluid.clone();
+
+    // Apply a per-stream molar composition when provided so each feed can carry
+    // its own composition instead of sharing the default fluid's composition.
+    // Accepts either a top-level "composition" object or one nested under
+    // "properties", e.g. { "composition": { "methane": 0.8, "ethane": 0.2 } }.
+    JsonObject compositionObj = null;
+    if (unitDef.has("composition") && unitDef.get("composition").isJsonObject()) {
+      compositionObj = unitDef.getAsJsonObject("composition");
+    } else if (unitDef.has("properties") && unitDef.get("properties").isJsonObject()) {
+      JsonObject props = unitDef.getAsJsonObject("properties");
+      if (props.has("composition") && props.get("composition").isJsonObject()) {
+        compositionObj = props.getAsJsonObject("composition");
+      }
+    }
+    if (compositionObj != null) {
+      applyStreamComposition(streamFluid, compositionObj, name);
+    }
+
     Stream stream = new Stream(name, streamFluid);
 
     return stream;
+  }
+
+  /**
+   * Applies a per-stream molar composition to a stream fluid.
+   *
+   * <p>
+   * Component names in the JSON composition object are matched to the fluid's components tolerantly. Matching is tried
+   * in order: (1) exact case-insensitive, then (2) a normalised form that removes a trailing {@code "_PC"} suffix
+   * (appended by {@link neqsim.thermo.system.SystemInterface#addTBPfraction}) and any {@code '*'} characters. This lets
+   * a stream composition that names a pseudo-component {@code "WC6*"} match the fluid component {@code "WC6_PC"} that
+   * {@code addTBPfraction("WC6", ...)} produced, and {@code "22-Mpropane"} match {@code "22-Mpropane_PC"}. Normalised
+   * matching is only used when the normalised fluid name is unambiguous (no two fluid components share it). Unmatched
+   * names and non-positive values are ignored (a warning is recorded). The resulting mole-fraction vector is applied
+   * with {@link neqsim.thermo.system.SystemInterface#setMolarComposition(double[])}, which normalises internally, so
+   * the values need not sum to 1.
+   * </p>
+   *
+   * @param streamFluid the cloned stream fluid to update (not null)
+   * @param compositionObj the JSON object mapping component name to mole fraction (not null)
+   * @param streamName the stream name, used only for warning messages
+   */
+  private void applyStreamComposition(SystemInterface streamFluid, JsonObject compositionObj, String streamName) {
+    int n = streamFluid.getNumberOfComponents();
+    Map<String, Integer> index = new HashMap<>();
+    // Normalised index: pseudo-component tolerant lookup (strip "_PC"/"*"). A normalised key that maps to more than
+    // one component is marked ambiguous (-1) so it is never used, to avoid silently mixing distinct pseudo-components.
+    Map<String, Integer> normIndex = new HashMap<>();
+    for (int i = 0; i < n; i++) {
+      String rawName = streamFluid.getComponent(i).getName();
+      String lower = rawName.toLowerCase(java.util.Locale.ROOT);
+      index.put(lower, i);
+      // Water alias: NeqSim's E300 reader (EclipseFluidReadWrite) maps the CNAMES entry
+      // "H2O"/"WATER" to the canonical component name "water". Exporters (e.g. UniSim) name
+      // water "H2O" in stream compositions, so register the reciprocal alias here to keep a
+      // "H2O" composition entry matching the fluid's "water" component (and vice versa).
+      // Without it the dominant water fraction is silently dropped, collapsing a water stream
+      // to trace light ends (wrong MW/density) and destabilising downstream convergence.
+      if ("water".equals(lower)) {
+        index.put("h2o", i);
+      } else if ("h2o".equals(lower)) {
+        index.put("water", i);
+      }
+      String norm = normalizeComponentName(rawName);
+      if (normIndex.containsKey(norm)) {
+        normIndex.put(norm, -1);
+      } else {
+        normIndex.put(norm, i);
+      }
+    }
+    double[] z = new double[n];
+    double total = 0.0;
+    List<String> unmatched = new ArrayList<>();
+    for (Map.Entry<String, JsonElement> entry : compositionObj.entrySet()) {
+      String key = entry.getKey();
+      double val;
+      try {
+        val = entry.getValue().getAsDouble();
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (val <= 0.0) {
+        continue;
+      }
+      Integer idx = index.get(key.toLowerCase(java.util.Locale.ROOT));
+      if (idx == null) {
+        Integer normIdx = normIndex.get(normalizeComponentName(key));
+        if (normIdx != null && normIdx.intValue() >= 0) {
+          idx = normIdx;
+        }
+      }
+      if (idx == null) {
+        unmatched.add(key);
+        continue;
+      }
+      z[idx] += val;
+      total += val;
+    }
+    if (total <= 0.0) {
+      warnings.add("Stream '" + streamName + "' composition ignored — no components matched the fluid");
+      return;
+    }
+    streamFluid.setMolarComposition(z);
+    if (!unmatched.isEmpty()) {
+      warnings.add("Stream '" + streamName + "' composition: unmatched components ignored: " + unmatched);
+    }
+  }
+
+  /**
+   * Normalises a component name for tolerant pseudo-component matching.
+   *
+   * <p>
+   * Lower-cases the name (root locale), removes a trailing {@code "_pc"} suffix (appended by
+   * {@link neqsim.thermo.system.SystemInterface#addTBPfraction}), and removes any {@code '*'} characters (used by some
+   * exporters to mark hypothetical/pseudo components). Hyphens and other characters are preserved so distinct lumps
+   * such as {@code "WC11-C12"} and {@code "WC13-C14"} remain distinguishable.
+   * </p>
+   *
+   * @param name the raw component name (not null)
+   * @return the normalised name used for tolerant matching
+   */
+  private static String normalizeComponentName(String name) {
+    String s = name.toLowerCase(java.util.Locale.ROOT).replace("*", "");
+    if (s.endsWith("_pc")) {
+      s = s.substring(0, s.length() - 3);
+    }
+    return s;
   }
 
   /**
@@ -1543,10 +1915,17 @@ public class JsonProcessBuilder {
    */
   private void wireInletStream(ProcessEquipmentInterface equipment, StreamInterface stream) {
     // Special handling for DistillationColumn — uses addFeedStream, not
-    // setInletStream
+    // setInletStream. Wire the feed onto the captured feed tray when known so
+    // the feed enters the correct stage (UniSim feed stage); otherwise the
+    // column places it on its default middle tray.
     if (equipment instanceof DistillationColumn) {
       DistillationColumn column = (DistillationColumn) equipment;
-      column.addFeedStream(stream);
+      Integer feedTray = columnFeedTrays.get(column.getName());
+      if (feedTray != null) {
+        column.addFeedStream(stream, feedTray);
+      } else {
+        column.addFeedStream(stream);
+      }
       return;
     }
 
@@ -1584,7 +1963,14 @@ public class JsonProcessBuilder {
     java.util.Set<String> handledProps = new java.util.HashSet<>(
         java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit", "adjustedEquipment", "adjustedVariable",
             "targetEquipment", "targetVariable", "targetValue", "stepSize", "compressorChart", "antiSurge", "driver",
-            "calculatorInputs", "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty"));
+            "calculatorInputs", "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty",
+            // SetPoint links are applied by wireSetPoint (source/target equipment references).
+            "sourceEquipment", "sourceVariable", "multiplier", "offset", "targetUnit",
+            // DistillationColumn specs are applied by configureDistillationColumn
+            // at construction (nested condenser/reboiler setters), not by generic
+            // reflection.
+            "numberOfTrays", "hasReboiler", "hasCondenser", "feedTray", "refluxRatio", "condenserDuty", "reboilerDuty",
+            "topPressure", "bottomPressure"));
     if (equipment instanceof Recycle) {
       applyRecycleProperties((Recycle) equipment, properties);
     }
@@ -2111,6 +2497,72 @@ public class JsonProcessBuilder {
   }
 
   /**
+   * Wires a SetPoint's source and target variables from JSON properties.
+   *
+   * <p>
+   * A SetPoint copies a variable from one unit (source) onto another unit (target), mirroring the UniSim SET relation
+   * {@code target = multiplier * source + offset}. JSON format:
+   * </p>
+   *
+   * <pre>
+   * "properties": {
+   *   "sourceEquipment": "Stream-A",
+   *   "sourceVariable": "temperature",
+   *   "targetEquipment": "Stream-B",
+   *   "targetVariable": "temperature",
+   *   "multiplier": 1.0,
+   *   "offset": 0.0,
+   *   "targetUnit": "C"
+   * }
+   * </pre>
+   *
+   * @param setPoint the set point to configure
+   * @param props the properties JSON object
+   */
+  private void wireSetPoint(SetPoint setPoint, JsonObject props) {
+    // Wire source variable (the variable being read)
+    if (props.has("sourceEquipment")) {
+      String srcEquipName = props.get("sourceEquipment").getAsString();
+      ProcessEquipmentInterface srcEquip = namedEquipment.get(srcEquipName);
+      if (srcEquip != null) {
+        if (props.has("sourceVariable")) {
+          setPoint.setSourceVariable(srcEquip, props.get("sourceVariable").getAsString());
+        } else {
+          setPoint.setSourceVariable(srcEquip);
+        }
+      } else {
+        warnings.add("SetPoint '" + setPoint.getName() + "' — source equipment '" + srcEquipName + "' not found");
+      }
+    }
+
+    // Wire target variable (the variable being written)
+    if (props.has("targetEquipment")) {
+      String tgtEquipName = props.get("targetEquipment").getAsString();
+      ProcessEquipmentInterface tgtEquip = namedEquipment.get(tgtEquipName);
+      if (tgtEquip != null) {
+        String tgtVar = props.has("targetVariable") ? props.get("targetVariable").getAsString() : "";
+        double tgtVal = props.has("targetValue") ? props.get("targetValue").getAsDouble() : 0.0;
+        String tgtUnit = props.has("targetUnit") ? props.get("targetUnit").getAsString() : "";
+        if (!tgtVar.isEmpty()) {
+          setPoint.setTargetVariable(tgtEquip, tgtVar, tgtVal, tgtUnit);
+        } else {
+          setPoint.setTargetVariable(tgtEquip);
+        }
+      } else {
+        warnings.add("SetPoint '" + setPoint.getName() + "' — target equipment '" + tgtEquipName + "' not found");
+      }
+    }
+
+    // Apply the UniSim SET relation target = multiplier * source + offset
+    if (props.has("multiplier")) {
+      setPoint.setMultiplier(props.get("multiplier").getAsDouble());
+    }
+    if (props.has("offset")) {
+      setPoint.setOffset(props.get("offset").getAsDouble());
+    }
+  }
+
+  /**
    * Applies entrainment specifications to a separator from a JSON array.
    *
    * <p>
@@ -2161,9 +2613,16 @@ public class JsonProcessBuilder {
 
     try {
       if (value.isJsonArray()) {
-        // Array format: [value, "unit"] — e.g., [50000, "kg/hr"]
         JsonArray arr = value.getAsJsonArray();
-        if (arr.size() >= 2) {
+        if (isNumericArray(arr)) {
+          double[] values = new double[arr.size()];
+          for (int i = 0; i < arr.size(); i++) {
+            values[i] = arr.get(i).getAsDouble();
+          }
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, double[].class);
+          method.invoke(target, new Object[] { values });
+        } else if (arr.size() >= 2) {
+          // Unit-bearing array format: [value, "unit"] — e.g., [50000, "kg/hr"]
           double numValue = arr.get(0).getAsDouble();
           String unit = arr.get(1).getAsString();
           java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class, String.class);
@@ -2193,6 +2652,24 @@ public class JsonProcessBuilder {
     } catch (Exception e) {
       warnings.add("Error setting '" + propName + "' on " + targetName + ": " + e.getMessage());
     }
+  }
+
+  /**
+   * Reports whether every element in a JSON array is numeric.
+   *
+   * @param array array to inspect
+   * @return {@code true} when the array is non-empty and contains only numeric primitives
+   */
+  private boolean isNumericArray(JsonArray array) {
+    if (array.size() == 0) {
+      return false;
+    }
+    for (JsonElement element : array) {
+      if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void invokeNoArg(Object target, String targetName, String methodName) {

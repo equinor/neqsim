@@ -1,4 +1,154 @@
 {
+  "flow accelerated corrosion": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-root-cause-analysis",
+    "neqsim-flow-assurance"
+  ],
+  "wall thinning at welds and bends": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-root-cause-analysis",
+    "neqsim-standards-lookup"
+  ],
+  "heating medium loop corrosion": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-flow-assurance",
+    "neqsim-root-cause-analysis"
+  ],
+  "waste heat recovery unit tube leak": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-root-cause-analysis",
+    "neqsim-power-generation"
+  ],
+  "in situ pH at operating temperature": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-electrolyte-systems",
+    "neqsim-flow-assurance"
+  ],
+  "magnetite film stability": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup"
+  ],
+  "amine buffer alkalinity control": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-electrolyte-systems",
+    "neqsim-reaction-engineering"
+  ],
+  "glycol water closed loop chemistry": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-electrolyte-systems",
+    "neqsim-flow-assurance"
+  ],
+  "self heating": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-reaction-engineering"
+  ],
+  "spontaneous ignition": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-consequence-analysis"
+  ],
+  "lagging fire": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-consequence-analysis"
+  ],
+  "oil soaked insulation": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-standards-lookup"
+  ],
+  "glycol leak onto insulation": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-flow-assurance"
+  ],
+  "fire with no ignition source": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-hazid-fmea-eta-fta"
+  ],
+  "critical insulation thickness": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-utilities-specification"
+  ],
+  "basket test oven test kinetics": [
+    "neqsim-self-heating-ignition",
+    "neqsim-reaction-engineering",
+    "neqsim-eos-regression"
+  ],
+  "frank kamenetskii semenov criticality": [
+    "neqsim-self-heating-ignition",
+    "neqsim-reaction-engineering",
+    "neqsim-process-safety"
+  ],
+  "induction time to ignition": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-consequence-analysis"
+  ],
+  "dnv rp f104": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "co2 pipeline envelope screening": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup"
+  ],
+  "co2 pipeline design and operation": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "dnv rp f110": [
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance",
+    "neqsim-capability-map"
+  ],
+  "global buckling screening": [
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup",
+    "neqsim-capability-map"
+  ],
+  "pipeline buckling response envelope": [
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup",
+    "neqsim-capability-map"
+  ],
+  "dnv rp f101": [
+    "neqsim-standards-lookup",
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance"
+  ],
+  "corroded pipeline screening": [
+    "neqsim-subsea-and-wells",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "pipeline metal loss assessment": [
+    "neqsim-standards-lookup",
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance"
+  ],
+  "dnv rp f105": [
+    "neqsim-standards-lookup",
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance"
+  ],
+  "free span screening": [
+    "neqsim-subsea-and-wells",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "pipeline viv screening": [
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup"
+  ],
   "literature search": [
     "neqsim-literature-search",
     "neqsim-stid-retriever",
@@ -1087,5 +1237,8 @@
   "vision extraction": ["neqsim-document-intelligence-extraction"],
   "evidence package": ["neqsim-document-intelligence-extraction"],
   "source traceability extraction": ["neqsim-document-intelligence-extraction"],
-  "conflicting sources": ["neqsim-document-intelligence-extraction"]
+  "conflicting sources": ["neqsim-document-intelligence-extraction"],
+  "dnv rp f114": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
+  "pipe soil interaction": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
+  "submarine pipeline geotechnics": ["neqsim-standards-lookup", "neqsim-flow-assurance"]
 }

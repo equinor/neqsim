@@ -74,6 +74,11 @@ public class FlashTable implements Serializable {
   private double[][] liquidSoundSpeed;
   private double[][] surfaceTension;
   private double[][] gasVaporFraction;
+  private double[][] liquidFraction;
+  private double[][] oilMassFractionOfLiquid;
+  private double[][] aqueousMassFractionOfLiquid;
+  private double[][] gasMolarMass;
+  private double[][] liquidMolarMass;
   private double[][] gasCp;
   private double[][] liquidCp;
   private double[][] gasCompressibility;
@@ -134,6 +139,11 @@ public class FlashTable implements Serializable {
     liquidSoundSpeed = new double[nP][nT];
     surfaceTension = new double[nP][nT];
     gasVaporFraction = new double[nP][nT];
+    liquidFraction = new double[nP][nT];
+    oilMassFractionOfLiquid = new double[nP][nT];
+    aqueousMassFractionOfLiquid = new double[nP][nT];
+    gasMolarMass = new double[nP][nT];
+    liquidMolarMass = new double[nP][nT];
     gasCp = new double[nP][nT];
     liquidCp = new double[nP][nT];
     gasCompressibility = new double[nP][nT];
@@ -157,6 +167,11 @@ public class FlashTable implements Serializable {
         liquidSoundSpeed[i][j] = props.liquidSoundSpeed;
         surfaceTension[i][j] = props.surfaceTension;
         gasVaporFraction[i][j] = props.gasVaporFraction;
+        liquidFraction[i][j] = props.liquidFraction;
+        oilMassFractionOfLiquid[i][j] = props.oilMassFractionOfLiquid;
+        aqueousMassFractionOfLiquid[i][j] = props.aqueousMassFractionOfLiquid;
+        gasMolarMass[i][j] = props.gasMolarMass;
+        liquidMolarMass[i][j] = props.liquidMolarMass;
         gasCp[i][j] = props.gasCp;
         liquidCp[i][j] = props.liquidCp;
         gasCompressibility[i][j] = props.gasCompressibility;
@@ -180,6 +195,12 @@ public class FlashTable implements Serializable {
     if (!isBuilt) {
       props.converged = false;
       props.errorMessage = "Flash table not built";
+      return props;
+    }
+    if (liquidFraction == null || oilMassFractionOfLiquid == null || aqueousMassFractionOfLiquid == null
+        || gasMolarMass == null || liquidMolarMass == null) {
+      props.converged = false;
+      props.errorMessage = "Flash table predates phase-resolved properties and must be rebuilt";
       return props;
     }
 
@@ -214,12 +235,30 @@ public class FlashTable implements Serializable {
     props.liquidSoundSpeed = bilinearInterp(liquidSoundSpeed, iP, iT, wP, wT);
     props.surfaceTension = bilinearInterp(surfaceTension, iP, iT, wP, wT);
     props.gasVaporFraction = bilinearInterp(gasVaporFraction, iP, iT, wP, wT);
+    props.liquidFraction = bilinearInterp(liquidFraction, iP, iT, wP, wT);
+    props.oilMassFractionOfLiquid = bilinearInterp(oilMassFractionOfLiquid, iP, iT, wP, wT);
+    props.aqueousMassFractionOfLiquid = bilinearInterp(aqueousMassFractionOfLiquid, iP, iT, wP, wT);
+    props.gasMolarMass = bilinearInterp(gasMolarMass, iP, iT, wP, wT);
+    props.liquidMolarMass = bilinearInterp(liquidMolarMass, iP, iT, wP, wT);
     props.gasCp = bilinearInterp(gasCp, iP, iT, wP, wT);
     props.liquidCp = bilinearInterp(liquidCp, iP, iT, wP, wT);
     props.gasCompressibility = bilinearInterp(gasCompressibility, iP, iT, wP, wT);
     props.liquidCompressibility = bilinearInterp(liquidCompressibility, iP, iT, wP, wT);
 
-    props.liquidFraction = 1.0 - props.gasVaporFraction;
+    double fluidFractionSum = Math.max(0.0, props.gasVaporFraction) + Math.max(0.0, props.liquidFraction);
+    if (fluidFractionSum > 0.0) {
+      props.gasVaporFraction = Math.max(0.0, props.gasVaporFraction) / fluidFractionSum;
+      props.liquidFraction = 1.0 - props.gasVaporFraction;
+    }
+    double liquidMassFractionSum = Math.max(0.0, props.oilMassFractionOfLiquid)
+        + Math.max(0.0, props.aqueousMassFractionOfLiquid);
+    if (props.liquidFraction > 0.0 && liquidMassFractionSum > 0.0) {
+      props.oilMassFractionOfLiquid = Math.max(0.0, props.oilMassFractionOfLiquid) / liquidMassFractionSum;
+      props.aqueousMassFractionOfLiquid = 1.0 - props.oilMassFractionOfLiquid;
+    } else {
+      props.oilMassFractionOfLiquid = 0.0;
+      props.aqueousMassFractionOfLiquid = 0.0;
+    }
     props.converged = true;
 
     return props;
@@ -279,6 +318,12 @@ public class FlashTable implements Serializable {
       return props.surfaceTension;
     case "gasvaporfraction":
       return props.gasVaporFraction;
+    case "liquidfraction":
+      return props.liquidFraction;
+    case "oilmassfractionofliquid":
+      return props.oilMassFractionOfLiquid;
+    case "aqueousmassfractionofliquid":
+      return props.aqueousMassFractionOfLiquid;
     default:
       return Double.NaN;
     }
@@ -380,8 +425,8 @@ public class FlashTable implements Serializable {
    * @return Approximate memory usage in bytes
    */
   public long estimateMemoryUsage() {
-    // 14 property tables * nP * nT * 8 bytes per double
-    return 14L * nP * nT * 8;
+    // 19 property tables * nP * nT * 8 bytes per double
+    return 19L * nP * nT * 8;
   }
 
   /**
@@ -400,6 +445,11 @@ public class FlashTable implements Serializable {
     liquidSoundSpeed = null;
     surfaceTension = null;
     gasVaporFraction = null;
+    liquidFraction = null;
+    oilMassFractionOfLiquid = null;
+    aqueousMassFractionOfLiquid = null;
+    gasMolarMass = null;
+    liquidMolarMass = null;
     gasCp = null;
     liquidCp = null;
     gasCompressibility = null;

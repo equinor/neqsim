@@ -3,8 +3,6 @@ title: Compressor Anti-Surge and Coordinated Control
 description: Guide to compressor anti-surge protection, speed/load control, recycle override, coordinated pressure-speed-recycle control, and anti-surge application design examples in NeqSim.
 ---
 
-# Compressor Anti-Surge and Coordinated Control
-
 This guide explains how NeqSim represents compressor operating-envelope protection and coordinated compressor control in the dynamic compressor map example.
 
 The focus is educational and simulation-oriented. The models illustrate common control philosophy patterns used for centrifugal compressors; they are not a replacement for vendor-certified compressor controls, machinery protection systems, or site-specific control narratives.
@@ -103,7 +101,7 @@ The coordinated case is the closest representation of plant control philosophy i
 
 The executable example is:
 
-- [Dynamic compressor good maps notebook](../../../examples/notebooks/process/dynamic_compressor_good_maps.ipynb)
+- [Dynamic compressor good maps notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/dynamic_compressor_good_maps.ipynb)
 
 The notebook demonstrates:
 
@@ -248,6 +246,24 @@ When `scanInput` is `null`, the stage reads the bound compressor margin and inle
 The application layer does not replace `AntiSurgeController` in every transient process model. For simple dynamic examples, `AntiSurgeController` can still be attached directly to the recycle valve. For studies that need stage coordination, startup states, hot/cold recycle split, diagnostics, speed runback, direct topology writeback, or commissioning evidence, the application layer provides the extra supervisory context.
 
 Certification remains outside the open simulation model. `CompressorAntiSurgeApplication.getCertificationStatus()` returns `NOT_CERTIFIED_FOR_PROTECTION`; `runCommissioningChecks()` creates evidence useful for review and testing, but it does not certify the logic as a safety instrumented function or machinery protection package.
+
+## Transactional Trial Steps
+
+A concrete `AntiSurgeController` can participate in
+`ProcessSystem.beginTransientStepTransaction()` and `ProcessModel.beginTransientStepTransaction()`.
+Rollback restores the controller's PI integral, predictive margin-rate filter, actuator state, physical-step
+identifier, configuration and equipment bindings. It also restores both the actual and target opening of the bound
+recycle valve, so a rejected controller trial does not leave an actuator command behind.
+
+Use one non-null physical-step identifier for every evaluation of the same physical step. Repeating that identifier is
+idempotent; after rollback, replaying it from the restored inputs produces the same controller and valve outputs.
+Register every other mutable process element separately: this controller snapshot owns only the anti-surge controller
+and the two valve-command values it writes. It does not make the compressor, valve flow solution, streams, recycles,
+event callbacks or external control-system I/O transactional.
+
+This coverage supports numerical trial/rejection mechanics. It is not evidence of vendor-certified anti-surge
+protection, machinery safety approval, scan-cycle fidelity, valve-stroke qualification, deterministic external I/O or
+operator-training-system readiness.
 
 ## Practical Modeling Notes
 

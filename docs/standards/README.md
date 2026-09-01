@@ -1,402 +1,183 @@
 ---
 title: "Standards Package"
-description: "The NeqSim standards package implements international standards for gas and oil quality calculations, enabling compliance verification and sales contract management."
+description: "Use NeqSim implementations of ISO gas-quality, LNG-density, dew-point, and ASTM oil-quality calculation methods with explicit reference conditions and engineering boundaries."
 ---
 
-# Standards Package
+The `neqsim.standards` package calculates gas- and oil-quality properties from a
+NeqSim fluid. These calculations support engineering screening and contract
+workflows; they do not replace representative sampling, validated composition
+analysis, a certified laboratory method, or the governing contract.
 
-The NeqSim standards package implements international standards for gas and oil quality calculations, enabling compliance verification and sales contract management.
+## Choose a calculation
 
-## Table of Contents
-- [Overview](#overview)
-- [Package Structure](#package-structure)
-- [Sub-Documentation](#sub-documentation)
-- [Core Concepts](#core-concepts)
-- [Quick Start](#quick-start)
-- [Sales Contracts](#sales-contracts)
+| Need | NeqSim class | Guide |
+| --- | --- | --- |
+| Calorific value, relative density, and Wobbe index | `Standard_ISO6976` or `Standard_ISO6976_2016` | [ISO 6976](iso6976_calorific_values) |
+| LNG density from composition | `Standard_ISO6578` | [ISO 6578](iso6578_lng_density) |
+| Water or hydrocarbon dew point | `Draft_ISO18453` or `BestPracticeHydrocarbonDewPoint` | [Dew-point methods](dew_point_standards) |
+| CNG methane number and motor octane number | `Standard_ISO15403` | [ISO 15403](iso15403_cng_quality) |
+| Simulated crude-oil vapour pressure | `Standard_ASTM_D6377` | [ASTM D6377](astm_d6377_rvp) |
+| Other simulated oil-quality properties | Classes in `neqsim.standards.oilquality` | [Oil-quality methods](oil_quality_standards) |
+| Delivery-point specification checks | `BaseContract` and `ContractSpecification` | [Sales contracts](sales_contracts) |
 
----
+Use the edition and reference conditions named by the applicable contract or
+regulation. A class name identifies the implemented calculation route; it is not
+by itself evidence that the complete measurement system is compliant.
 
-## Overview
+## ISO 6976 gas-quality quick start
 
-**Location:** `neqsim.standards`
-
-The standards package provides implementations of:
-
-1. **Gas Quality Standards** - ISO 6976, ISO 6974, ISO 6578, ISO 15403, ISO 18453
-2. **Oil Quality Standards** - ASTM D86 (distillation), D445 (viscosity), D4052 (density/API gravity), D4294 (sulfur), D2500 (cloud point), D97 (pour point), D6377 (RVP), TVP (true vapor pressure), D4737 (cetane index), D611 (aniline point), D1322 (smoke point), EN 116 (CFPP), D3230 (salt content), BS&W
-3. **Sales Contracts** - Specification verification against contractual limits
-
-**Key Applications:**
-- Calculating calorific values (GCV/LCV) and Wobbe index per ISO 6976
-- LNG density calculations per ISO 6578
-- Water and hydrocarbon dew point determination
-- Reid vapor pressure (RVP) calculations
-- Contractual compliance checking
-
----
-
-## Package Structure
-
-```
-standards/
-├── Standard.java                    # Abstract base class
-├── StandardInterface.java           # Interface definition
-│
-├── gasquality/                      # Gas quality standards
-│   ├── Standard_ISO6976.java        # Calorific values & Wobbe index
-│   ├── Standard_ISO6976_2016.java   # ISO 6976:2016 edition
-│   ├── Standard_ISO6974.java        # Gas chromatography composition
-│   ├── Standard_ISO6578.java        # LNG density calculation
-│   ├── Standard_ISO15403.java       # CNG fuel quality (MON, methane number)
-│   ├── Draft_ISO18453.java          # Water dew point (GERG-water)
-│   ├── Draft_GERG2004.java          # GERG-2004 EoS properties
-│   ├── BestPracticeHydrocarbonDewPoint.java  # HC dew point
-│   ├── GasChromotograpyhBase.java   # Gas composition base class
-│   ├── SulfurSpecificationMethod.java  # H2S and sulfur content
-│   └── UKspecifications_ICF_SI.java # UK ICF/SI specifications
-│
-├── oilquality/                      # Oil quality standards
-│   ├── Standard_ASTM_D6377.java     # Reid vapor pressure (RVP)
-│   ├── Standard_ASTM_D86.java       # Atmospheric distillation curve
-│   ├── Standard_ASTM_D445.java      # Kinematic viscosity & VI
-│   ├── Standard_ASTM_D4052.java     # Density, SG, API gravity
-│   ├── Standard_ASTM_D4294.java     # Total sulfur content
-│   ├── Standard_TVP.java            # True vapor pressure (API MPMS 19)
-│   ├── Standard_ASTM_D4737.java     # Calculated cetane index
-│   ├── Standard_ASTM_D611.java      # Aniline point (estimate)
-│   ├── Standard_ASTM_D1322.java     # Smoke point (estimate)
-│   ├── Standard_EN116.java          # Cold filter plugging point (estimate)
-│   ├── Standard_ASTM_D3230.java     # Salt content (input-driven)
-│   ├── Standard_ASTM_D2500.java     # Cloud point (WAT)
-│   ├── Standard_ASTM_D97.java       # Pour point
-│   └── Standard_BSW.java            # Basic sediment & water
-│
-└── salescontract/                   # Contract management
-    ├── BaseContract.java            # Contract implementation
-    ├── ContractInterface.java       # Contract interface
-    └── ContractSpecification.java   # Individual specifications
-```
-
----
-
-## Sub-Documentation
-
-Detailed guides for each major standard:
-
-| Guide | Description |
-|-------|-------------|
-| [ISO 6976 - Calorific Values](iso6976_calorific_values) | GCV, LCV, Wobbe index, density from composition |
-| [ISO 6578 - LNG Density](iso6578_lng_density) | LNG density calculation method |
-| [ISO 15403 - CNG Quality](iso15403_cng_quality) | Methane number and MON for vehicle fuel |
-| [Dew Point Standards](dew_point_standards) | Water and hydrocarbon dew point methods |
-| [ASTM D6377 - RVP](astm_d6377_rvp) | Reid vapor pressure for crude and condensate |
-| [Oil Quality Standards](oil_quality_standards) | ASTM D86, D445, D4052, D4294, D6377, TVP, D4737, D611, D1322, EN 116, D3230, D2500, D97, BS&W |
-| [Sales Contracts](sales_contracts) | Contract specification and compliance checking |
-
----
-
-## Core Concepts
-
-### StandardInterface
-
-All standards implement `StandardInterface`:
+The example reports superior calorific value and superior Wobbe index on a real-gas
+volumetric basis. Volume reference temperature is 0°C and combustion-energy
+reference temperature is 15.55°C (60°F).
 
 ```java
-public interface StandardInterface {
-    void calculate();                              // Run calculation
-    double getValue(String parameter);             // Get result
-    double getValue(String parameter, String unit); // Get result with unit
-    String getUnit(String parameter);              // Get unit string
-    boolean isOnSpec();                            // Check compliance
-
-    ContractInterface getSalesContract();          // Get attached contract
-    void setSalesContract(ContractInterface contract);
-    SystemInterface getThermoSystem();             // Get fluid
-}
-```
-
-### Standard Base Class
-
-Standards extend `Standard`:
-
-```java
-public abstract class Standard extends NamedBaseClass implements StandardInterface {
-    protected SystemInterface thermoSystem;
-    protected ThermodynamicOperations thermoOps;
-    protected ContractInterface salesContract;
-    protected String standardDescription;
-    private String referenceState = "real";  // or "ideal"
-    private double referencePressure = 70.0;
-}
-```
-
-### Reference States
-
-Most gas quality standards support:
-- **Real gas** - Accounts for compressibility
-- **Ideal gas** - Assumes Z = 1
-
-```java
-standard.setReferenceState("real");   // Default
-standard.setReferenceState("ideal");  // Ideal gas assumption
-```
-
----
-
-## Quick Start
-
-### ISO 6976 - Calorific Values
-
-```java
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.standards.gasquality.Standard_ISO6976;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create gas composition
-SystemInterface gas = new SystemSrkEos(273.15 + 15, 1.01325);
-gas.addComponent("methane", 0.90);
-gas.addComponent("ethane", 0.05);
-gas.addComponent("propane", 0.02);
-gas.addComponent("nitrogen", 0.02);
-gas.addComponent("CO2", 0.01);
+SystemInterface gas = new SystemSrkEos(293.15, 1.0);
+gas.addComponent("methane", 0.931819);
+gas.addComponent("ethane", 0.025618);
+gas.addComponent("nitrogen", 0.010335);
+gas.addComponent("CO2", 0.015391);
 gas.setMixingRule("classic");
+new ThermodynamicOperations(gas).TPflash();
 
-// Create standard
-// Parameters: system, volumeRefT(°C), energyRefT(°C), referenceType
-Standard_ISO6976 iso6976 = new Standard_ISO6976(gas, 15, 15, "volume");
+Standard_ISO6976 iso6976 =
+    new Standard_ISO6976(gas, 0.0, 15.55, "volume");
 iso6976.setReferenceState("real");
-
-// Calculate
 iso6976.calculate();
 
-// Get results
-double gcv = iso6976.getValue("GCV");           // Gross calorific value [kJ/m³]
-double lcv = iso6976.getValue("LCV");           // Net calorific value [kJ/m³]
-double wobbe = iso6976.getValue("SuperiorWobbeIndex");  // Wobbe index [kJ/m³]
-double relDens = iso6976.getValue("RelativeDensity");   // Relative density [-]
-double Z = iso6976.getValue("CompressionFactor");       // Compressibility [-]
-double molarMass = iso6976.getValue("MolarMass");       // g/mol
-
-System.out.printf("GCV = %.2f kJ/m³%n", gcv);
-System.out.printf("Wobbe Index = %.2f kJ/m³%n", wobbe);
-System.out.printf("Relative Density = %.4f%n", relDens);
+double gcvMJPerNm3 = iso6976.getValue("GCV") / 1000.0;
+double wobbeMJPerNm3 =
+    iso6976.getValue("SuperiorWobbeIndex") / 1000.0;
+double relativeDensity = iso6976.getValue("RelativeDensity");
 ```
 
-### LNG Density (ISO 6578)
+Expected values for this fixture are approximately 39.615 MJ/Nm³,
+51.701 MJ/Nm³, and 0.5871. Report both reference temperatures, reference state,
+and basis with every result. Supported combustion-energy reference temperatures
+are 0, 15, 15.55, 20, and 25°C. Although `checkReferenceCondition()` currently
+accepts 25°C as a volume reference temperature, volume-dependent corrections
+are implemented only for 0, 15, 15.55, and 20°C; use one of those four values.
+
+`GCV` and `LCV` are aliases for `SuperiorCalorificValue` and
+`InferiorCalorificValue`. `WI` and `WobbeIndex` are aliases for
+`SuperiorWobbeIndex`. `StandardInterface` declares the generic
+`getValue(...)` methods, but each concrete standard defines which parameter
+names and units it supports.
+
+## ISO 6578 LNG-density quick start
+
+ISO 6578 uses the liquid temperature and molar composition. The supported
+component set and temperature range are method limits, so screen the input before
+using the result.
 
 ```java
 import neqsim.standards.gasquality.Standard_ISO6578;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// LNG composition
-SystemInterface lng = new SystemSrkEos(110, 1.01325);  // -163°C
-lng.addComponent("methane", 0.92);
-lng.addComponent("ethane", 0.05);
-lng.addComponent("propane", 0.02);
-lng.addComponent("nitrogen", 0.01);
+SystemInterface lng = new SystemSrkEos(113.15, 1.0);
+lng.addComponent("nitrogen", 0.006538);
+lng.addComponent("methane", 0.918630);
+lng.addComponent("ethane", 0.058382);
+lng.addComponent("propane", 0.011993);
+lng.addComponent("n-butane", 0.003255);
+lng.addComponent("i-pentane", 0.000657);
+lng.addComponent("n-pentane", 0.000545);
 lng.setMixingRule("classic");
+lng.init(0);
 
-// Calculate density
 Standard_ISO6578 iso6578 = new Standard_ISO6578(lng);
 iso6578.calculate();
-
-double density = iso6578.getValue("density", "kg/m3");
-System.out.printf("LNG Density = %.2f kg/m³%n", density);
+double densityKgPerM3 = iso6578.getValue("density");
 ```
 
-### Water Dew Point (ISO 18453)
+The calculation is composition-based. Confirm that the sample is a single,
+representative LNG liquid and disclose uncertainty from composition,
+temperature, and sampling.
 
-```java
-import neqsim.standards.gasquality.Draft_ISO18453;
+## ASTM D6377 simulation quick start
 
-// Natural gas with water
-SystemInterface wetGas = new SystemSrkCPA(273.15 + 20, 70.0);
-wetGas.addComponent("methane", 0.95);
-wetGas.addComponent("water", 50e-6);  // 50 ppm water
-wetGas.setMixingRule("CPA-EoS");
-
-// Calculate water dew point
-Draft_ISO18453 waterDewPoint = new Draft_ISO18453(wetGas);
-waterDewPoint.calculate();
-
-double wdp = waterDewPoint.getValue("dewPointTemperature");
-System.out.printf("Water Dew Point = %.1f °C%n", wdp);
-```
-
-### Reid Vapor Pressure (ASTM D6377)
+Use the type-safe `RvpMethod` enum so that the selected calculation route is
+explicit. The result is a thermodynamic simulation of the NeqSim fluid, not a
+claim that a laboratory apparatus or sampling procedure conforms to ASTM D6377.
 
 ```java
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Crude oil / condensate
-SystemInterface crude = new SystemSrkEos(273.15 + 15, 1.0);
-crude.addComponent("methane", 0.02);
-crude.addComponent("ethane", 0.03);
-crude.addComponent("propane", 0.05);
-crude.addComponent("n-butane", 0.08);
-crude.addComponent("n-pentane", 0.10);
-crude.addTBPfraction("C6", 0.15, 86/1000.0, 0.66);
-crude.addTBPfraction("C10", 0.30, 142/1000.0, 0.78);
-crude.addTBPfraction("C20", 0.27, 282/1000.0, 0.85);
-crude.setMixingRule("classic");
+SystemInterface oil = new SystemSrkEos(275.15, 1.0);
+oil.addComponent("methane", 0.0006538);
+oil.addComponent("ethane", 0.006538);
+oil.addComponent("propane", 0.065380);
+oil.addComponent("n-pentane", 0.154500);
+oil.addComponent("nC10", 0.545000);
+oil.setMixingRule(2);
+oil.init(0);
 
-// Calculate RVP
-Standard_ASTM_D6377 rvpStandard = new Standard_ASTM_D6377(crude);
-rvpStandard.setMethodRVP("VPCR4");  // Options: VPCR4, RVP_ASTM_D6377, RVP_ASTM_D323_82
-rvpStandard.calculate();
+Standard_ASTM_D6377 vapourPressure = new Standard_ASTM_D6377(oil);
+vapourPressure.setReferenceTemperature(37.8, "C");
+vapourPressure.setMethodRVP(
+    Standard_ASTM_D6377.RvpMethod.RVP_ASTM_D6377);
+vapourPressure.calculate();
 
-double rvp = rvpStandard.getValue("RVP", "bara");
-double tvp = rvpStandard.getValue("TVP", "bara");
-System.out.printf("RVP = %.3f bara%n", rvp);
-System.out.printf("TVP = %.3f bara%n", tvp);
+double rvpBara = vapourPressure.getValue("RVP", "bara");
+double tvpBara = vapourPressure.getValue("TVP", "bara");
 ```
 
----
+For this fixture, `RVP_ASTM_D6377` gives approximately 0.965 bara simulated
+RVP and 1.666 bara TVP. The alternative `VPCR4` route gives approximately
+1.157 bara for the same fluid; always report the selected route with the result.
+Preserve light ends when constructing the fluid; flashing or stabilizing the
+sample before this calculation changes the vapour pressure.
 
-## Sales Contracts
+## Contracts and `isOnSpec()`
 
-### Creating a Contract
+`BaseContract(system, terminal, country)` loads specifications from the
+`gascontractspecifications` data set. A terminal name is therefore data-dependent,
+not a portable built-in guarantee. `BaseContract.display()` opens a Swing window
+and should not be used in headless services; use `runCheck()` and
+`getResultTable()` for programmatic reporting.
 
-```java
-import neqsim.standards.salescontract.BaseContract;
-import neqsim.standards.salescontract.ContractInterface;
+Do not treat `isOnSpec()` as a universal compliance engine. In the current
+implementation, calculation-only classes such as `Standard_ISO6976` and
+`Standard_ISO6578` return `true` unconditionally. Standards with implemented
+contract logic, such as `Draft_ISO18453`, compare against their attached
+contract. For auditable checks, evaluate each calculated value against an
+explicit, version-controlled `ContractSpecification` and record its basis,
+limits, units, reference conditions, and uncertainty.
 
-// Create contract from database
-ContractInterface contract = new BaseContract(gas, "Kaarstoe", "Norway");
+## Input and reporting checks
 
-// Run compliance check
-contract.runCheck();
+Before calculation:
 
-// Get results
-String[][] results = contract.getResultTable();
-int numSpecs = contract.getSpecificationsNumber();
+1. Confirm the governing standard edition and contractual reference conditions.
+2. Use molar composition and preserve trace components relevant to the property.
+3. Normalize or otherwise document the composition basis.
+4. Check that every component and temperature lies within the method's coverage.
+5. Characterize heavy ends before hydrocarbon-dew-point or oil-volatility work.
 
-// Display results
-contract.display();
-```
+After calculation:
 
-### Attaching Contract to Standard
-
-```java
-Standard_ISO6976 standard = new Standard_ISO6976(gas);
-standard.setSalesContract(contract);
-standard.calculate();
-
-// Check if on specification
-boolean onSpec = standard.isOnSpec();
-```
-
-### Custom Contract Specifications
-
-```java
-import neqsim.standards.salescontract.ContractSpecification;
-
-// Create custom specification
-ContractSpecification spec = new ContractSpecification(
-    "Water Dew Point",           // Name
-    "Maximum water dew point",   // Description
-    "Norway",                    // Country
-    "Kaarstoe",                  // Terminal
-    waterDewPointStandard,       // Standard method
-    -20.0,                       // Min value
-    -8.0,                        // Max value
-    "°C",                        // Unit
-    15.0,                        // Reference T measurement
-    15.0,                        // Reference T combustion
-    70.0,                        // Reference pressure
-    "At 70 bar"                  // Comments
-);
-```
-
----
-
-## Available Return Parameters
-
-### ISO 6976
-
-| Parameter | Description | Unit |
-|-----------|-------------|------|
-| `GCV` / `SuperiorCalorificValue` | Gross calorific value | kJ/m³ |
-| `LCV` / `InferiorCalorificValue` | Net calorific value | kJ/m³ |
-| `SuperiorWobbeIndex` | Superior Wobbe index | kJ/m³ |
-| `InferiorWobbeIndex` | Inferior Wobbe index | kJ/m³ |
-| `WI` | Wobbe index (alias) | kJ/m³ |
-| `RelativeDensity` | Relative density (air=1) | - |
-| `CompressionFactor` | Compressibility factor Z | - |
-| `MolarMass` | Average molar mass | g/mol |
-| `DensityIdeal` | Ideal gas density | kg/m³ |
-| `DensityReal` | Real gas density | kg/m³ |
-
-### ISO 6578
-
-| Parameter | Description | Unit |
-|-----------|-------------|------|
-| `density` | LNG density | kg/m³ |
-
-### ASTM D6377
-
-| Parameter | Description | Unit |
-|-----------|-------------|------|
-| `RVP` | Reid vapor pressure | bara |
-| `TVP` | True vapor pressure | bara |
-| `VPCR4` | Vapor pressure at V/L=4 | bara |
-
----
-
-## Reference Conditions
-
-### Standard Temperature/Pressure
-
-| Standard | Volume Ref T | Energy Ref T | Pressure |
-|----------|-------------|--------------|----------|
-| ISO 6976 | 0, 15, 20°C | 0, 15, 20, 25°C, 60°F | 1.01325 bar |
-| ISO 6578 | -160 to -140°C | - | 1.01325 bar |
-| ASTM D6377 | 37.8°C (100°F) | - | - |
-
-### Setting Reference Conditions
-
-```java
-// ISO 6976 with specific reference conditions
-Standard_ISO6976 standard = new Standard_ISO6976(
-    gas,
-    15.0,      // Volume reference temperature (°C)
-    25.0,      // Energy reference temperature (°C)
-    "volume"   // Reference type: "volume", "mass", or "molar"
-);
-
-// Modify reference conditions after creation
-standard.setVolRefT(0.0);      // Volume at 0°C
-standard.setEnergyRefT(15.0);  // Combustion at 15°C
-```
-
----
-
-## Best Practices
-
-### Composition Normalization
-- Ensure compositions sum to 1.0 before calculation
-- Standards internally use mole fractions
-
-### Component Coverage
-- ISO 6976 has data for common natural gas components
-- Unknown components are approximated (HC → n-heptane, alcohols → methanol)
-- Check `componentsNotDefinedByStandard` for warnings
-
-### Reference State Selection
-- Use "real" for custody transfer calculations
-- Use "ideal" for simplified comparisons
-- Document the reference state used
-
-### Contract Database
-- Contract specifications are stored in database table `gascontractspecifications`
-- Query by terminal and country
-
----
+1. Record the NeqSim version, class, edition, method, and reference conditions.
+2. State whether the result is molar, mass-based, ideal-volume, or real-volume.
+3. Review `getComponentsNotDefinedByStandard()` for ISO 6976. The implementation
+   substitutes generic component data for unsupported species, so the result is
+   not equivalent to explicit coverage by the standard.
+4. Compare important results with certified measurements or another validated
+   method before fiscal, contractual, or design use.
 
 ## References
 
-1. ISO 6976:2016 - Natural gas — Calculation of calorific values, density, relative density and Wobbe indices from composition
-2. ISO 6578:2017 - Refrigerated hydrocarbon liquids — Static measurement — Calculation procedure
-3. ISO 15403-1:2006 - Natural gas — Natural gas for use as a compressed fuel for vehicles
-4. ISO 18453:2004 - Natural gas — Correlation between water content and water dew point
-5. ASTM D6377 - Standard Test Method for Determination of Vapor Pressure of Crude Oil
-6. GERG-2004 - The GERG-2004 Wide-Range Equation of State for Natural Gases and Other Mixtures
+- ISO 6976:2016, *Natural gas — Calculation of calorific values, density,
+  relative density and Wobbe indices from composition*.
+- ISO 6578:2017, *Refrigerated hydrocarbon liquids — Static measurement —
+  Calculation procedure*.
+- ISO 18453:2004, *Natural gas — Correlation between water content and water
+  dew point*.
+- ASTM D6377, *Standard Test Method for Determination of Vapor Pressure of
+  Crude Oil*.

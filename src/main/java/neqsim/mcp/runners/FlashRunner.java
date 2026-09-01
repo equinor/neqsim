@@ -305,7 +305,7 @@ public class FlashRunner {
 
       // Fluid data
       JsonObject fluidObj = JsonParser.parseString(fluidJson).getAsJsonObject();
-      addCompatibilityFields(fluidObj);
+      addCompatibilityFields(fluidObj, fluid);
       result.add("fluid", fluidObj);
 
       // Provenance (trust metadata)
@@ -392,25 +392,18 @@ public class FlashRunner {
    * Adds backward-compatible flattened fields used by older clients and tests.
    *
    * @param fluidObj fluid response JSON object
+   * @param fluid flashed fluid used to populate fields with fixed units
    */
-  private static void addCompatibilityFields(JsonObject fluidObj) {
+  private static void addCompatibilityFields(JsonObject fluidObj, SystemInterface fluid) {
     if (fluidObj == null) {
       return;
     }
 
     if (fluidObj.has("properties") && fluidObj.get("properties").isJsonObject()) {
       JsonObject properties = fluidObj.getAsJsonObject("properties");
-      if (properties.has("overall") && properties.get("overall").isJsonObject()) {
-        JsonObject overall = properties.getAsJsonObject("overall");
-        if (overall.has("density") && overall.get("density").isJsonObject()) {
-          JsonObject density = overall.getAsJsonObject("density");
-          if (density.has("value")) {
-            try {
-              properties.addProperty("density_kgm3", density.get("value").getAsDouble());
-            } catch (Exception ignored) {
-            }
-          }
-        }
+      try {
+        properties.addProperty("density_kgm3", fluid.getDensity("kg/m3"));
+      } catch (Exception ignored) {
       }
     }
 

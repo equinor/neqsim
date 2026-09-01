@@ -1,0 +1,11 @@
+{
+  "equipmentTypes": {
+    "10-VA-001": "Plant/ProcessEquipment.Separator",
+    "10-KA-001": "Plant/ProcessEquipment.CentrifugalCompressor",
+    "10-PA-001": "Plant/ProcessEquipment.CentrifugalPump"
+  },
+  "pipingConnectionCount": 2,
+  "instrumentationFunctionCount": 0,
+  "offPageConnectorCount": 0,
+  "representationGroupCount": 0
+}

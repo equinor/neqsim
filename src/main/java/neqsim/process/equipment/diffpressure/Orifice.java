@@ -295,16 +295,22 @@ public class Orifice extends TwoPortEquipment {
    * <p>
    * <b>Important:</b> In dynamic simulations, the orifice DETERMINES the flow rate based on available ΔP. This is
    * different from steady-state mode where flow may be specified upstream. The calculated flow is set on both the
-   * thermoSystem and inStream to ensure consistency in the process network.
+   * thermoSystem and inStream to ensure consistency in the process network. The orifice owns no accumulation or stored
+   * physical state; it is a quasi-steady algebraic relation evaluated at each physical timestep.
    * </p>
    *
-   * @param dt Time step in seconds (not used for orifice as it has no accumulation/storage)
-   * @param id Unique identifier for this simulation run
+   * <p>
+   * Repeated nonlinear/refinement evaluations with the same non-null calculation identifier still recompute the
+   * pressure-flow relation, but advance this equipment clock only once for that physical timestep. A new non-null ID
+   * advances the next physical step. A null ID preserves legacy uncoalesced timing.
+   * </p>
+   *
+   * @param dt Time step in seconds (used only for the algebraic equipment execution clock)
+   * @param id Physical-step calculation identifier, or null for legacy uncoalesced timing
    */
   @Override
   public void runTransient(double dt, UUID id) {
-    // For orifice, transient behavior is quasi-steady (no accumulation)
-    // Just run steady-state calculation
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
     SystemInterface thermoSystem = inStream.getThermoSystem().clone();
 
     // Handle zero or very low flow cases
@@ -312,6 +318,12 @@ public class Orifice extends TwoPortEquipment {
     if (flowRate < 1e-10) {
       // For negligible flow, just set outlet to inlet conditions
       outStream.setFluid(thermoSystem);
+      if (id != null) {
+        setCalculationIdentifier(id);
+      }
+      if (!alreadyEvaluatedForStep) {
+        increaseTime(dt);
+      }
       return;
     }
 
@@ -358,5 +370,11 @@ public class Orifice extends TwoPortEquipment {
     thermoSystem.setPressure(P2, "bara");
     outStream.setFluid(thermoSystem);
     inStream.run();
+    if (id != null) {
+      setCalculationIdentifier(id);
+    }
+    if (!alreadyEvaluatedForStep) {
+      increaseTime(dt);
+    }
   }
 }

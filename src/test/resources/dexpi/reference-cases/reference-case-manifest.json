@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "neqsim_engineering_diagram_reference_cases.v1",
+  "provenance": "SYNTHETIC_PUBLIC_DATA",
+  "thermodynamicModel": "SRK",
+  "mixingRule": "classic",
+  "flowUnit": "kg/hr",
+  "pressureUnit": "bara",
+  "temperatureUnit": "degree Celsius",
+  "engineeringState": "REVIEW_REQUIRED",
+  "fitnessForConstruction": false,
+  "cases": [
+    {
+      "caseId": "DEXPI-REF-SIMPLE",
+      "sourceType": "ProcessSystem",
+      "scope": "feed, valve, separator, compressor, cooler and product boundaries",
+      "areaCodes": ["10"],
+      "expectedMaterialConnectionCount": 4
+    },
+    {
+      "caseId": "DEXPI-REF-BRANCHED",
+      "sourceType": "ProcessSystem",
+      "scope": "separator gas compression and liquid pumping branches",
+      "areaCodes": ["20"],
+      "expectedMaterialConnectionCount": 5
+    },
+    {
+      "caseId": "DEXPI-REF-MULTI-AREA",
+      "sourceType": "ProcessModel",
+      "scope": "inlet, compression, export and flare boundary areas",
+      "areaCodes": ["30", "31", "32", "40"],
+      "expectedMaterialConnectionCount": 7
+    }
+  ],
+  "validatedOutputs": [
+    "CANONICAL_ENGINEERING_GRAPH",
+    "LEGACY_DOT_GRAPHVIZ",
+    "DEXPI_2_0_PROCESS",
+    "DEXPI_2_0_PLANT",
+    "PROTEUS_COMPATIBILITY",
+    "PID_PROPOSAL_MODEL"
+  ],
+  "knownLimitations": [
+    "DEXPI_PROCESS_MULTI_AREA_UNSUPPORTED",
+    "DEXPI_PROCESS_DOCUMENT_SEMANTICS_UNSUPPORTED",
+    "DEXPI_PROCESS_GRAPHICS_UNSUPPORTED",
+    "NATIVE_PROFESSIONAL_SVG_PDF_NOT_AVAILABLE",
+    "NAMED_CAE_QUALIFICATION_REQUIRED",
+    "ACCOUNTABLE_ENGINEERING_APPROVAL_REQUIRED"
+  ]
+}

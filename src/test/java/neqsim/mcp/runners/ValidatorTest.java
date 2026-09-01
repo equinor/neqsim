@@ -176,6 +176,43 @@ class ValidatorTest {
   }
 
   @Test
+  void testProcessFluidWithE300FilePath_valid() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"PR\"," + "  \"e300FilePath\": \"C:/fluids/case2.e300\"" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertTrue(root.get("valid").getAsBoolean());
+    assertFalse(hasIssueCode(root, "MISSING_COMPONENTS"));
+  }
+
+  @Test
+  void testProcessFluidWithCharacterizedComponents_valid() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"PR\","
+        + "  \"characterizedComponents\": [{\"name\": \"PC1\", \"moleFraction\": 1.0,"
+        + "  \"molarMass\": 0.1, \"density\": 800.0}]" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertFalse(hasIssueCode(root, "MISSING_COMPONENTS"));
+  }
+
+  @Test
+  void testProcessFluidWithNoComponentsAndNoRef_missing() {
+    String json = "{" + "\"fluid\": {\"model\": \"PR\"}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertFalse(root.get("valid").getAsBoolean());
+    assertTrue(hasIssueCode(root, "MISSING_COMPONENTS"));
+  }
+
+  @Test
   void testProcessMissingFluid() {
     String json = "{" + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
 
@@ -210,6 +247,19 @@ class ValidatorTest {
     // Warning only — partial success allowed
     assertTrue(root.get("valid").getAsBoolean());
     assertTrue(hasIssueCode(root, "UNKNOWN_EQUIPMENT_TYPE"));
+  }
+
+  @Test
+  void testProcessFactoryDiscoveredEquipmentType() {
+    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
+        + "  {\"type\": \"AirCooler\", \"name\": \"cooler1\"},"
+        + "  {\"type\": \"ElectricMotor\", \"name\": \"motor1\"}" + "]" + "}";
+
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertTrue(root.get("valid").getAsBoolean());
+    assertFalse(hasIssueCode(root, "UNKNOWN_EQUIPMENT_TYPE"));
   }
 
   @Test

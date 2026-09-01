@@ -7,6 +7,11 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
+import neqsim.process.equipment.stream.MechanicalShaft;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -34,7 +39,13 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     GasTurbine gasturb = new GasTurbine("turbine");
     gasturb.setInletStream(gasStream);
 
-    Assertions.assertEquals(new GasTurbine("turbine", gasStream), gasturb);
+    // GasTurbine uses identity equality (see ProcessEqualityIdentityTest), so the setter is
+    // verified on the resulting state rather than by comparing against a second instance.
+    GasTurbine reference = new GasTurbine("turbine", gasStream);
+    Assertions.assertSame(gasStream, gasturb.getInletStream());
+    Assertions.assertSame(reference.getInletStream(), gasturb.getInletStream());
+    assertNotNull(gasturb.airStream);
+    assertNotNull(gasturb.airCompressor);
   }
 
   @Test
@@ -106,11 +117,17 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
 
     GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
     gasturb.setThermalEfficiency(0.35);
+    MechanicalShaft shaft = new MechanicalShaft("GT shaft");
+    EnergyBus heatBus = new EnergyBus("exhaust heat bus", EnergyType.HEAT);
+    gasturb.connectEnergyStream("shaftPower", shaft, EnergyPortMode.CALCULATED);
+    gasturb.connectEnergyStream("exhaustHeat", heatBus, EnergyPortMode.CALCULATED);
     gasturb.run();
 
     // Net shaft power must equal efficiency x fuel LHV, and exhaust heat the remainder.
     assertEquals(0.35 * fuelHeat, gasturb.getPower(), Math.abs(0.35 * fuelHeat) * 1e-6);
     assertEquals(fuelHeat - gasturb.getPower(), gasturb.getHeat(), Math.abs(fuelHeat) * 1e-6);
+    assertEquals(gasturb.getPower(), shaft.getNetPower(), Math.abs(gasturb.getPower()) * 1e-9);
+    assertEquals(gasturb.getHeat(), heatBus.getNetPower(), Math.abs(gasturb.getHeat()) * 1e-9);
     // Realistic simple-cycle efficiency, unlike the very low detailed-cycle default at 2.5 bara.
     Assertions.assertTrue(gasturb.getPower() / fuelHeat > 0.30, "simple-cycle efficiency must be realistic");
   }
@@ -165,6 +182,25 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     gasturb.setRequiredPower(60.0, "MW");
     gasturb.run();
     assertEquals(2.0 * fuelAt30, gasturb.getFuelFlowRate("Sm3/sec"), 2.0 * fuelAt30 * 1e-3);
+  }
+
+  @Test
+  void testShaftEnergyStreamSetsPowerDemand() {
+    SystemSrkEos fuel = new SystemSrkEos(298.15, 20.0);
+    fuel.addComponent("methane", 1.0);
+    fuel.setMixingRule("classic");
+    Stream fuelStream = new Stream("fuel", fuel);
+    fuelStream.setFlowRate(1000.0, "kg/hr");
+    fuelStream.run();
+
+    EnergyStream requestedPower = new EnergyStream("shaft demand", EnergyType.SHAFT_WORK);
+    requestedPower.setDuty(20.0, "MW");
+    GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
+    gasturb.setThermalEfficiency(0.35);
+    gasturb.setEnergyStream(requestedPower);
+    gasturb.run();
+
+    assertEquals(20.0, gasturb.getPower() / 1.0e6, 1e-9);
   }
 
   @Test

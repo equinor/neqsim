@@ -1,9 +1,7 @@
 ---
 title: "Transient Multiphase Pipe Model"
-description: "The `TransientPipe` class provides a 1D transient multiphase (gas-liquid) flow simulator for pipelines. It uses the drift-flux formulation combined with mechanistic flow regime detection to model comp..."
+description: "Configure and validate NeqSim's drift-flux transient pipeline model, including pressure boundaries, terrain effects, liquid accumulation, and profile results."
 ---
-
-# Transient Multiphase Pipe Model
 
 ## Overview
 
@@ -28,9 +26,9 @@ The model supports:
 
 The core model uses the Zuber-Findlay drift-flux formulation:
 
-```
-v_G = C₀ · v_m + v_d
-```
+$$
+v_G = C_0 v_m + v_d
+$$
 
 Where:
 - `v_G` = gas velocity (m/s)
@@ -49,14 +47,21 @@ The distribution coefficient `C₀` and drift velocity `v_d` depend on the flow 
 
 ### Three-Phase Flow Handling
 
-When both oil and aqueous (water) liquid phases are present, the model calculates volume-weighted average liquid properties:
+When both oil and aqueous (water) liquid phases are present, the model calculates
+volume-weighted average liquid properties:
 
-```
-ρ_L,avg = (V_oil / V_total) × ρ_oil + (V_water / V_total) × ρ_water
-μ_L,avg = (V_oil / V_total) × μ_oil + (V_water / V_total) × μ_water
-H_L,avg = (V_oil / V_total) × H_oil + (V_water / V_total) × H_water
-c_L,avg = (V_oil / V_total) × c_oil + (V_water / V_total) × c_water
-```
+$$
+\begin{aligned}
+\rho_{L,\mathrm{avg}} &= \frac{V_{\mathrm{oil}}}{V_{\mathrm{total}}}\rho_{\mathrm{oil}}
++ \frac{V_{\mathrm{water}}}{V_{\mathrm{total}}}\rho_{\mathrm{water}}, \\
+\mu_{L,\mathrm{avg}} &= \frac{V_{\mathrm{oil}}}{V_{\mathrm{total}}}\mu_{\mathrm{oil}}
++ \frac{V_{\mathrm{water}}}{V_{\mathrm{total}}}\mu_{\mathrm{water}}, \\
+H_{L,\mathrm{avg}} &= \frac{V_{\mathrm{oil}}}{V_{\mathrm{total}}}H_{\mathrm{oil}}
++ \frac{V_{\mathrm{water}}}{V_{\mathrm{total}}}H_{\mathrm{water}}, \\
+c_{L,\mathrm{avg}} &= \frac{V_{\mathrm{oil}}}{V_{\mathrm{total}}}c_{\mathrm{oil}}
++ \frac{V_{\mathrm{water}}}{V_{\mathrm{total}}}c_{\mathrm{water}}.
+\end{aligned}
+$$
 
 Where:
 - `V_oil`, `V_water` = volume of oil and water phases from thermodynamic flash
@@ -123,9 +128,17 @@ U = [ρ_G·α_G, ρ_L·α_L, ρ_m·u, ρ_m·e]
 ### Basic Horizontal Pipeline
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+
+// Define this as a class field in the enclosing example class.
+private static final Logger logger =
+    LogManager.getLogger("TransientPipeExample");
 
 // Create two-phase fluid
 SystemInterface fluid = new SystemSrkEos(300, 50); // 300 K, 50 bar
@@ -185,10 +198,11 @@ pipe.setElevationProfile(elevations);
 pipe.run();
 
 // Check for liquid accumulation
-AccumulationTracker accumTracker = pipe.getAccumulationTracker();
-for (AccumulationZone zone : accumTracker.getAccumulationZones()) {
-    System.out.println("Accumulation at position: " + zone.getPosition());
-    System.out.println("Accumulated volume: " + zone.getAccumulatedVolume() + " m³");
+LiquidAccumulationTracker accumulationTracker = pipe.getAccumulationTracker();
+for (LiquidAccumulationTracker.AccumulationZone zone
+        : accumulationTracker.getAccumulationZones()) {
+    logger.info("Zone starts at: {} m", zone.startPosition);
+    logger.info("Accumulated volume: {} m³", zone.liquidVolume);
 }
 ```
 
@@ -238,9 +252,10 @@ pipe.setNumberOfSections(50);
 pipe.run();
 
 // The model automatically uses volume-weighted averaging for liquid properties
-// when both oil and aqueous phases are present
-double deltaP = P[0] - P[39];
-System.out.println("Riser pressure drop: " + deltaP/1e5 + " bar");
+// when both oil and aqueous phases are present.
+double[] pressure = pipe.getPressureProfile(); // Pa
+double deltaPBar = (pressure[0] - pressure[pressure.length - 1]) / 1.0e5;
+logger.info("Pipeline pressure drop: {} bar", deltaPBar);
 ```
 
 ## Configuration Options
@@ -267,15 +282,39 @@ System.out.println("Riser pressure drop: " + deltaP/1e5 + " bar");
 
 ### Boundary Conditions
 
-```java
-// Available boundary condition types
-pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
-pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
+The default inlet boundary is `CONSTANT_FLOW`, and the default outlet boundary is
+`CONSTANT_PRESSURE`. The connected inlet stream supplies the mass flow during
+initialization and is re-read by each `runTransient()` call, so set the initial
+flow with `inlet.setFlowRate(...)` as shown in the quick start. Set a receiving
+pressure explicitly before the first `run()` or `runTransient()` call when the
+downstream pressure is known:
 
-// Set boundary values
-pipe.setInletMassFlow(5.0);           // kg/s
-pipe.setOutletPressure(30.0);         // bara
+```java
+import java.util.UUID;
+import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe.BoundaryCondition;
+
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
+
+pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
+double specifiedOutletPressure = 30.0; // bara
+pipe.setOutletPressure(specifiedOutletPressure);
+
+// A zero-duration first call initializes the profiles without advancing time.
+pipe.runTransient(0.0, UUID.randomUUID());
+double[] initialPressure = pipe.getPressureProfile(); // Pa
+double initializedOutletPressure =
+    initialPressure[initialPressure.length - 1] / 1.0e5;
+if (Math.abs(initializedOutletPressure - specifiedOutletPressure) > 1.0e-6) {
+    throw new IllegalStateException("Outlet pressure boundary was not preserved");
+}
 ```
+
+`setOutletPressure(double)` accepts absolute pressure in bara. An explicit value
+is retained while the pipe is initialized and is imposed at the final
+computational section for a `CONSTANT_PRESSURE` outlet. If the setter is not
+called, initialization estimates the outlet pressure from inlet pressure,
+elevation, and friction and applies a lower bound of 1 bara. This estimate is an
+initial condition, not a substitute for a known receiving-system pressure.
 
 | Type | Description |
 |------|-------------|
@@ -317,21 +356,23 @@ double frequency = slugTracker.getSlugFrequency();
 
 // Detailed statistics
 String stats = slugTracker.getStatisticsString();
-System.out.println(stats);
+logger.info("{}", stats);
 ```
 
-**Note:** Both `TransientPipe` (drift-flux) and `TwoFluidPipe` (two-fluid) use the same `SlugTracker` and `LiquidAccumulationTracker` components, but may predict different slug frequencies due to their underlying holdup models. See the [Two-Fluid Model documentation](two_fluid_model#comparison-with-drift-flux-model-transientpipe) for a detailed comparison.
+**Note:** Both `TransientPipe` (drift-flux) and `TwoFluidPipe` (two-fluid) use the same `SlugTracker` and `LiquidAccumulationTracker` components, but may predict different slug frequencies due to their underlying holdup models. See the [Two-Fluid Model documentation](two_fluid_model.md#comparison-with-drift-flux-model-transientpipe) for a detailed comparison.
 
 ### Accumulation Zones
 
 ```java
 LiquidAccumulationTracker tracker = pipe.getAccumulationTracker();
 
-for (AccumulationZone zone : tracker.getAccumulationZones()) {
-    System.out.println("Zone position: " + zone.getPosition() + " m");
-    System.out.println("Accumulated volume: " + zone.getAccumulatedVolume() + " m³");
-    System.out.println("Current holdup: " + zone.getCurrentHoldup());
-    System.out.println("Is overflowing: " + zone.isOverflowing());
+for (LiquidAccumulationTracker.AccumulationZone zone
+        : tracker.getAccumulationZones()) {
+    logger.info("Zone start: {} m", zone.startPosition);
+    logger.info("Zone end: {} m", zone.endPosition);
+    logger.info("Accumulated volume: {} m³", zone.liquidVolume);
+    logger.info("Maximum volume: {} m³", zone.maxVolume);
+    logger.info("Is overflowing: {}", zone.isOverflowing);
 }
 ```
 
@@ -345,8 +386,7 @@ FlowRegimeDetector detector = new FlowRegimeDetector();
 
 for (PipeSection section : sections) {
     FlowRegime regime = detector.detectFlowRegime(section);
-    System.out.println("Position " + section.getPosition() + 
-                       ": " + regime);
+    logger.info("Position {}: {}", section.getPosition(), regime);
 }
 ```
 
@@ -358,10 +398,10 @@ DriftFluxModel model = new DriftFluxModel();
 for (PipeSection section : sections) {
     DriftFluxParameters params = model.calculateDriftFlux(section);
     
-    System.out.println("C0 = " + params.C0);
-    System.out.println("Drift velocity = " + params.driftVelocity + " m/s");
-    System.out.println("Void fraction = " + params.voidFraction);
-    System.out.println("Slip ratio = " + params.slipRatio);
+    logger.info("C0 = {}", params.C0);
+    logger.info("Drift velocity = {} m/s", params.driftVelocity);
+    logger.info("Void fraction = {}", params.voidFraction);
+    logger.info("Slip ratio = {}", params.slipRatio);
 }
 ```
 
@@ -373,14 +413,14 @@ PipeSection[] sections = pipe.getSections();
 for (int i = 0; i < sections.length; i++) {
     PipeSection s = sections[i];
     
-    System.out.printf("Section %d (x=%.1f m):%n", i, s.getPosition());
-    System.out.printf("  Pressure: %.2f bar%n", s.getPressure()/1e5);
-    System.out.printf("  Temperature: %.1f K%n", s.getTemperature());
-    System.out.printf("  Liquid holdup: %.3f%n", s.getLiquidHoldup());
-    System.out.printf("  Gas velocity: %.2f m/s%n", s.getGasVelocity());
-    System.out.printf("  Liquid velocity: %.2f m/s%n", s.getLiquidVelocity());
-    System.out.printf("  Flow regime: %s%n", s.getFlowRegime());
-    System.out.printf("  Is low point: %b%n", s.isLowPoint());
+    logger.info("Section {} (x={} m)", i, s.getPosition());
+    logger.info("Pressure: {} bar", s.getPressure() / 1.0e5);
+    logger.info("Temperature: {} K", s.getTemperature());
+    logger.info("Liquid holdup: {}", s.getLiquidHoldup());
+    logger.info("Gas velocity: {} m/s", s.getGasVelocity());
+    logger.info("Liquid velocity: {} m/s", s.getLiquidVelocity());
+    logger.info("Flow regime: {}", s.getFlowRegime());
+    logger.info("Is low point: {}", s.isLowPoint());
 }
 ```
 
@@ -502,15 +542,13 @@ The `TransientPipe` model uses a different approach than empirical correlations 
 
 ### Expected Differences
 
-Comparison tests show significant differences between the models, which is expected given their fundamentally different approaches:
-
-| Flow Condition | Typical Difference | Explanation |
-|----------------|-------------------|-------------|
-| Single-phase gas, horizontal | 50-80% | Different friction correlations |
-| Multiphase horizontal | 100-300% | Different holdup/slip models |
-| Uphill flow (+10°) | 40-60% | Hydrostatic term treatment |
-| Downhill flow (-10°) | 40-60% | Liquid drainage models differ |
-| High velocity gas | 50-100% | Compressibility effects |
+The models can differ materially because they use different conservation,
+holdup, slip, and flow-regime treatments. Do not use a fixed percentage as an
+acceptance tolerance: the difference depends on fluid, geometry, boundary
+conditions, discretization, and whether the transient solution has reached the
+intended comparison state. Compare like-for-like pressure, temperature, flow,
+and elevation boundaries and report the complete configuration with each
+benchmark result.
 
 ### When to Use Each Model
 
@@ -533,7 +571,7 @@ For critical applications, it is recommended to:
 
 1. **Benchmark both models** against field data or detailed CFD simulations
 2. **Understand model assumptions** - TransientPipe uses mechanistic closure relations that may need tuning for specific fluids
-3. **Consider uncertainty bands** - differences of 50-100% between models indicate the inherent uncertainty in multiphase flow predictions
+3. **Quantify uncertainty for the case** - derive uncertainty from relevant measurements, parameter sensitivity, and model-form comparisons rather than a generic percentage
 4. **Use multiple models** - consensus from different approaches increases confidence
 
 ### Comparison Test Examples
@@ -574,8 +612,8 @@ tp.run();
 double[] pressures = tp.getPressureProfile();
 double dpTransient = (pressures[0] - pressures[pressures.length - 1]) / 1e5;
 
-System.out.println("Beggs & Brill: " + dpBeggsBrill + " bar");
-System.out.println("TransientPipe: " + dpTransient + " bar");
+logger.info("Beggs & Brill: {} bar", dpBeggsBrill);
+logger.info("TransientPipe: {} bar", dpTransient);
 ```
 
 ### References for Model Comparison
@@ -586,6 +624,6 @@ System.out.println("TransientPipe: " + dpTransient + " bar");
 
 ## See Also
 
-- [Pipeline Flow Equations](pipeline_flow_equations)
-- [Pipeline Model Recommendations](pipeline_model_recommendations)
-- [Process Simulation](advanced_process_simulation)
+- [Pipeline Flow Equations](pipeline_flow_equations.md)
+- [Pipeline Model Recommendations](pipeline_model_recommendations.md)
+- [Process Simulation](advanced_process_simulation.md)

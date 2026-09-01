@@ -1,6 +1,8 @@
 package neqsim.thermo.system;
 
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterphasePropertiesInterface;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -389,12 +391,69 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void calc_x_y_nonorm();
 
   /**
-   * calcHenrysConstant.
+   * Calculate the Henry's law constant of a component as fugacity over liquid mole fraction.
    *
-   * @param component a {@link java.lang.String} object
-   * @return a double
+   * <p>
+   * The returned value is {@code H_x = f_i / x_i} in <b>bar per mole fraction</b>, evaluated between the first and the
+   * second phase of the flashed system. Two phases must be present. For a concentration-based constant, which is what a
+   * solubility calculation normally needs, use {@link #calcHenrysConstant(String, String)} rather than converting by
+   * hand.
+   * </p>
+   *
+   * @param component name of the component
+   * @return Henry's law constant in bar per mole fraction
+   * @throws java.lang.IllegalStateException if the system does not have exactly two phases
    */
   public double calcHenrysConstant(String component);
+
+  /**
+   * Calculate the Henry's law constant of a component in a requested unit.
+   *
+   * <p>
+   * Supported units:
+   * </p>
+   *
+   * <table>
+   * <caption>Henry's law constant units</caption>
+   * <tr>
+   * <th>Unit string</th>
+   * <th>Meaning</th>
+   * </tr>
+   * <tr>
+   * <td>{@code bar}</td>
+   * <td>{@code f_i / x_i}, bar per liquid mole fraction</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mol/m3/bar}</td>
+   * <td>dissolved concentration per bar of fugacity</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mmol/L/bar}</td>
+   * <td>numerically identical to {@code mol/m3/bar}</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mol/L/bar}</td>
+   * <td>dissolved concentration per bar, molar basis</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mg/L/bar}</td>
+   * <td>dissolved mass concentration per bar</td>
+   * </tr>
+   * </table>
+   *
+   * <p>
+   * Note that one mol/m3 is identical to one mmol/L, so a constant in mol/(m3 bar) is also the dissolved concentration
+   * in mmol/L per bar. Both spellings are accepted so that a caller does not have to convert, which is where unit
+   * errors are normally introduced.
+   * </p>
+   *
+   * @param component name of the component
+   * @param unit requested unit; null or empty is treated as {@code bar}
+   * @return Henry's law constant in the requested unit
+   * @throws java.lang.IllegalStateException if the system does not have exactly two phases
+   * @throws java.lang.IllegalArgumentException if the unit is not supported
+   */
+  public double calcHenrysConstant(String component, String unit);
 
   /**
    * calcInterfaceProperties.
@@ -440,7 +499,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void checkStability(boolean val);
 
   /**
-   * chemicalReactionInit.
+   * Initialize chemical-reaction topology for the current component identities.
+   *
+   * <p>
+   * Adding, removing, or renaming a component after this call makes the reaction state stale. Before the next reactive
+   * calculation, call this method again, repopulate the component database, and reapply the mixing rule.
+   * </p>
    */
   public void chemicalReactionInit();
 
@@ -450,7 +514,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void clearAll();
 
   /**
-   * clone.
+   * Creates an independently mutable copy of this thermodynamic system.
+   *
+   * <p>
+   * Phase, component, and initialized chemical-reaction state in the returned system are owned by the copy. Changing or
+   * solving a reactive clone must therefore not mutate the source system.
+   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -583,6 +652,29 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a {@link neqsim.chemicalreactions.ChemicalReactionOperations} object
    */
   public ChemicalReactionOperations getChemicalReactionOperations();
+
+  /**
+   * Get the reaction-data source appropriate for this thermodynamic model.
+   *
+   * <p>
+   * The default source is shared by electrolyte EOS and electrolyte GE systems. Models with a dedicated
+   * parameterization override this method explicitly.
+   * </p>
+   *
+   * @return reaction-data source used by {@link #chemicalReactionInit()}
+   */
+  public default ChemicalReactionDataSource getChemicalReactionDataSource() {
+    return ChemicalReactionDataSource.STANDARD;
+  }
+
+  /**
+   * Get the concentration basis used to evaluate chemical-reaction quotients.
+   *
+   * @return reaction concentration basis used by chemical equilibrium
+   */
+  public default ChemicalReactionConcentrationBasis getChemicalReactionConcentrationBasis() {
+    return ChemicalReactionConcentrationBasis.MOLE_FRACTION;
+  }
 
   /**
    * getCompFormulaes.
@@ -807,9 +899,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to return flow rate of fluid.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr, idSm3/hr, Sm3/sec,
-   * Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec,
-   * kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
+   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, Am3/hr,
+   * m3/day, Am3/day, idSm3/sec, idSm3/min, idSm3/hr, idSm3/day, Sm3/sec, Sm3/min, Sm3/hr, Sm3/day, MSm3/day, MSm3/hr,
+   * mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
+   * kmole/day, kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -2587,7 +2680,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setTotalFlowRate(double flowRate, String flowunit);
 
   /**
-   * Setter for property <code>totalNumberOfMoles</code>.
+   * Setter for property <code>totalNumberOfMoles</code>. The per-component mole numbers are rescaled by the same factor
+   * so the composition is preserved and the sum of the component moles stays equal to the total.
    *
    * @param totalNumberOfMoles Total molar flow rate of fluid in unit mol/sec
    */

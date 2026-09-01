@@ -11,6 +11,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
+import neqsim.process.mechanicaldesign.valve.ValveTrimSizingResult;
 import neqsim.process.util.monitor.ValveResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -354,10 +355,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     }
 
     double inletMolarFlow = getInletStream().getThermoSystem().getFlowRate("mole/sec");
+    if (isBelowLowFlowThreshold()) {
+      isActive(false);
+      applyZeroFlowState(id);
+      return;
+    }
     if (isNegligibleFlow(inletMolarFlow)) {
       applyZeroFlowState(id);
       return;
     }
+    isActive(true);
 
     thermoSystem.init(2);
 
@@ -400,9 +407,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       setOutletPressure(thermoSystem.getPressure());
     }
 
-    if ((thermoSystem.getPressure(pressureUnit) - pressure) < 0) {
+    if ((inStream.getPressure(pressureUnit) - pressure) < 0) {
       if (isAcceptNegativeDP()) {
         thermoSystem.setPressure(pressure, pressureUnit);
+      } else {
+        thermoSystem.setPressure(inStream.getPressure(pressureUnit), pressureUnit);
       }
     } else {
       thermoSystem.setPressure(pressure, pressureUnit);
@@ -495,10 +504,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     thermoSystem = inStream.getThermoSystem().clone();
 
     double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
+    if (isBelowLowFlowThreshold()) {
+      isActive(false);
+      applyZeroFlowState(id);
+      return;
+    }
     if (isNegligibleFlow(inletMolarFlow)) {
       applyZeroFlowState(id);
       return;
     }
+    isActive(true);
 
     thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
@@ -585,6 +600,56 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     return !Double.isFinite(flow) || Math.abs(flow) <= minimumMolarFlow;
   }
 
+  /**
+   * Checks whether the inlet mass flow is below the configured low-flow bypass threshold.
+   *
+   * <p>
+   * A valve does not "skip its run" the way most equipment does, because downstream units (typically a mixer or a
+   * separator) still need a correctly specified outlet pressure even at zero flow. The valve therefore routes to
+   * {@link #applyZeroFlowState(UUID)}, which publishes the outlet pressure with zero moles instead of returning without
+   * touching the outlet stream.
+   * </p>
+   *
+   * <p>
+   * The check is opt-in: it only fires when a threshold above
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#DEFAULT_MINIMUM_FLOW} has been configured. Deactivating
+   * on the default sentinel would permanently skip a valve that is merely momentarily dry inside a recycle loop (e.g. a
+   * JT valve on a separator liquid outlet before liquid has formed), because {@code ProcessSystem} skips inactive units
+   * for the remainder of the solve pass.
+   * </p>
+   *
+   * @return true when an explicit threshold is configured and the inlet mass flow is below it
+   */
+  private boolean isBelowLowFlowThreshold() {
+    double threshold = getMinimumFlow();
+    if (!(threshold > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW)) {
+      return false;
+    }
+    try {
+      return getInletStream().getFlowRate("kg/hr") < threshold;
+    } catch (RuntimeException ex) {
+      logger.debug("Could not read inlet flow for low-flow check on '{}'", getName());
+      return false;
+    }
+  }
+
+  /**
+   * Publishes a zero-flow outlet state that still carries the valve outlet pressure.
+   *
+   * <p>
+   * This is what makes a bypassed valve safe for downstream units: the outlet stream keeps the inlet composition and is
+   * set to the valve outlet pressure with zero moles, so a downstream mixer, separator or pipeline sees a consistent
+   * pressure boundary rather than a stale or unset one.
+   * </p>
+   *
+   * <p>
+   * Note that this method deliberately does NOT deactivate the valve. A momentarily dry valve inside a recycle loop
+   * must keep being re-run so it can recover when flow returns; only the explicit low-flow threshold path marks the
+   * valve inactive.
+   * </p>
+   *
+   * @param id current calculation identifier
+   */
   private void applyZeroFlowState(UUID id) {
     molarFlow = 0.0;
     double targetPressure = pressure;
@@ -1054,8 +1119,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    outStream.getThermoSystem().init(3);
-    inStream.getThermoSystem().init(3);
+    outStream.getThermoSystem().init(2);
+    inStream.getThermoSystem().init(2);
     return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
   }
 
@@ -1069,18 +1134,30 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * isAcceptNegativeDP.
+   * Returns whether a requested outlet pressure above the inlet is retained.
    *
-   * @return a boolean
+   * <p>
+   * The default is {@code true}. This flag controls the outlet thermodynamic pressure state; it does not enable reverse
+   * flow, compressor work, or a bidirectional network calculation.
+   *
+   * @return {@code true} when a requested outlet pressure above the inlet is retained, or {@code false} when it is
+   * clamped to the inlet pressure
    */
   public boolean isAcceptNegativeDP() {
     return acceptNegativeDP;
   }
 
   /**
-   * Setter for the field <code>acceptNegativeDP</code>.
+   * Sets whether a requested outlet pressure above the inlet is retained.
    *
-   * @param acceptNegativeDP a boolean
+   * <p>
+   * Set to {@code false} for a one-way pressure-letdown model that must clamp the outlet thermodynamic pressure to the
+   * inlet pressure. When {@code true}, the requested outlet pressure is retained, while the valve hydraulic driving
+   * differential is limited to zero. This setting does not calculate reverse flow, compressor work, or a bidirectional
+   * network.
+   *
+   * @param acceptNegativeDP {@code true} to retain the requested outlet pressure, or {@code false} to clamp it to the
+   * inlet pressure
    */
   public void setAcceptNegativeDP(boolean acceptNegativeDP) {
     this.acceptNegativeDP = acceptNegativeDP;
@@ -1556,8 +1633,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     // Set the Cv on the valve (this is what controls valve sizing)
     setCv(designCv);
 
-    // Also set maxDesignCv for capacity constraint tracking
-    getMechanicalDesign().setMaxDesignCv(designCv);
+    // Assess any explicit vendor trim catalog against the final design Cv.
+    ValveTrimSizingResult trimResult = getMechanicalDesign().assessTrimOptionsForRequiredCv(designCv);
+    if (!trimResult.isEvaluated()) {
+      // Preserve legacy behavior when no explicit trim catalog is configured.
+      getMechanicalDesign().setMaxDesignCv(designCv);
+    }
 
     // Set the valve opening to the design point for meaningful utilization
     if (hasFlow) {

@@ -1,0 +1,147 @@
+name: Execute Energy Network Notebooks
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'examples/notebooks/energy_networks/**'
+      - '.github/workflows/energy-notebook-execution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execute-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out integrated branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build workspace classes
+        run: ./mvnw -q -DskipTests package
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install notebook runtime
+        run: python -m pip install --upgrade pip nbformat nbconvert jupyter pandas matplotlib numpy jpype1
+
+      - name: Normalize notebook sources
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import nbformat
+
+          workspace_setup = '''get_ipython().run_line_magic("matplotlib", "inline")
+          import os
+          import sys
+          from pathlib import Path
+
+          import jpype
+
+          PROJECT_ROOT = Path(os.environ["NEQSIM_PROJECT_ROOT"]).resolve()
+          sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+          from neqsim_dev_setup import neqsim_init
+
+          neqsim_init(
+              project_root=PROJECT_ROOT,
+              recompile=False,
+              verbose=True,
+          )
+          jneqsim = jpype.JPackage("neqsim")
+          JClass = jpype.JClass
+          print("NeqSim workspace classes loaded")'''
+
+          for path in sorted(Path('examples/notebooks/energy_networks').glob('*.ipynb')):
+              notebook = nbformat.read(path, as_version=4)
+              first_code_cell = next(
+                  cell for cell in notebook.cells if cell.cell_type == 'code'
+              )
+              first_code_cell.source = workspace_setup
+
+              nbformat.write(notebook, path)
+              print(f'Normalized {path}')
+          PY
+
+      - name: Execute notebooks through devtools workspace classes
+        env:
+          NEQSIM_PROJECT_ROOT: ${{ github.workspace }}
+          MPLBACKEND: Agg
+        shell: bash
+        run: |
+          set -u
+          mkdir -p notebook-execution-logs
+          failed=0
+          for notebook in examples/notebooks/energy_networks/*.ipynb; do
+            name="$(basename "$notebook" .ipynb)"
+            if python -m jupyter nbconvert --to notebook --execute --inplace \
+              --ExecutePreprocessor.timeout=1200 \
+              --ExecutePreprocessor.kernel_name=python3 \
+              "$notebook" >"notebook-execution-logs/${name}.log" 2>&1; then
+              echo "PASS $notebook" | tee -a notebook-execution-logs/summary.txt
+            else
+              echo "FAIL $notebook" | tee -a notebook-execution-logs/summary.txt
+              failed=1
+            fi
+          done
+          echo "$failed" > notebook-execution-logs/failed-count.txt
+
+      - name: Upload notebook diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: energy-network-notebook-diagnostics
+          path: |
+            examples/notebooks/energy_networks/*.ipynb
+            notebook-execution-logs/**
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Validate executed notebooks
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import nbformat
+
+          notebooks = sorted(Path('examples/notebooks/energy_networks').glob('*.ipynb'))
+          assert len(notebooks) == 4, notebooks
+          failed_count = int(Path('notebook-execution-logs/failed-count.txt').read_text().strip())
+          assert failed_count == 0, Path('notebook-execution-logs/summary.txt').read_text()
+          for path in notebooks:
+              notebook = nbformat.read(path, as_version=4)
+              code_cells = [cell for cell in notebook.cells if cell.cell_type == 'code']
+              assert code_cells, path
+              assert all(cell.execution_count is not None for cell in code_cells), path
+              errors = [output for cell in code_cells for output in cell.get('outputs', [])
+                        if output.get('output_type') == 'error']
+              assert not errors, (path, errors)
+              figures = [output for cell in code_cells for output in cell.get('outputs', [])
+                         if 'image/png' in output.get('data', {})]
+              assert len(figures) >= 3, (path, len(figures))
+              print(f'{path}: {len(code_cells)} code cells, {len(figures)} figures')
+          PY
+
+      - name: Upload executed notebooks
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: executed-energy-network-notebooks
+          path: examples/notebooks/energy_networks/*.ipynb
+          if-no-files-found: error
+          retention-days: 14

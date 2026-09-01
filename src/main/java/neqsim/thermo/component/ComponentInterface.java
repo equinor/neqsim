@@ -412,10 +412,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
       double pressure);
 
   /**
-   * logfugcoefdT.
+   * Returns the temperature derivative of the logarithmic fugacity coefficient.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @param phase phase at the evaluation state
+   * @return d(ln(phi))/dT in 1/K
    */
   public double logfugcoefdT(PhaseInterface phase);
 
@@ -429,10 +429,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double logfugcoefdNi(PhaseInterface phase, int k);
 
   /**
-   * logfugcoefdP.
+   * Returns the pressure derivative of the logarithmic fugacity coefficient.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @param phase phase at the evaluation state
+   * @return d(ln(phi))/dP in reciprocal pressure units used by the phase, normally 1/bar
    */
   public double logfugcoefdP(PhaseInterface phase);
 
@@ -1647,10 +1647,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getHenryCoef(double temperature);
 
   /**
-   * getHenryCoefdT.
+   * Returns the temperature derivative of the Henry coefficient.
    *
-   * @param temperature a double
-   * @return a double
+   * <p>
+   * This is {@code dH/dT}, not {@code d(ln H)/dT}.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @return Henry-coefficient derivative in bar/K
    */
   public double getHenryCoefdT(double temperature);
 
@@ -1955,23 +1959,27 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * getComponentNameFromAlias. Used to look up normal component name aliases.
    *
+   * <p>
+   * Delegates to {@link ComponentNameResolver#resolve(String)}, which additionally understands case differences,
+   * systematic and trivial names, and inverted CAS index names. The reservoir shorthand handled by the previous
+   * implementation ({@code C1}, {@code nC4}, {@code H2O}) is still recognised.
+   * </p>
+   *
    * @param name Component name or alias of component name.
    * @return Component name as used in database.
    */
   public static String getComponentNameFromAlias(String name) {
-    LinkedHashMap<String, String> c = getComponentNameMap();
-    if (c.containsKey(name)) {
-      return c.get(name);
-    } else {
-      return name;
-    }
+    return ComponentNameResolver.resolve(name);
   }
 
   /**
    * Get lookup map for component name alias.
    *
    * @return a {@link java.util.LinkedHashMap} Map with component alias name as key and component name as value.
+   * @deprecated Use {@link ComponentNameResolver#getSynonyms()}, which also covers systematic names, trivial names and
+   * case differences.
    */
+  @Deprecated
   public static LinkedHashMap<String, String> getComponentNameMap() {
     LinkedHashMap<String, String> c = new LinkedHashMap<>();
     c.put("H2O", "water");

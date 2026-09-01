@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "MultiphaseFlowPipelineRiser Interactive"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "🌊 Interactive Multiphase Pipeline & S-Riser Simulation"
+description: "Notebook for 🌊 Interactive Multiphase Pipeline & S-Riser Simulation, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# MultiphaseFlowPipelineRiser Interactive
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MultiphaseFlowPipelineRiser_Interactive.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MultiphaseFlowPipelineRiser_Interactive.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MultiphaseFlowPipelineRiser_Interactive.ipynb).
 
 ---
-
-# 🌊 Interactive Multiphase Pipeline & S-Riser Simulation
 
 **Understanding Gas-Oil-Water Flow Dynamics using the OLGA Two-Fluid Model**
 

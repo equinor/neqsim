@@ -2,6 +2,8 @@ package neqsim.process.equipment.expander;
 
 import java.util.Arrays;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -25,6 +27,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class TurboExpanderCompressor extends Expander {
   private static final long serialVersionUID = 1001;
+
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(TurboExpanderCompressor.class);
 
   /** Coupled mechanical design for the combined expander-compressor unit. */
   private TurboExpanderCompressorMechanicalDesign tecMechanicalDesign;
@@ -211,23 +216,32 @@ public class TurboExpanderCompressor extends Expander {
     if (useOutTemperatureSpec) {
       eta_s_required = calcRequiredExpanderEfficiencyForOutletT(expanderOutTemperatureSpec);
     }
+
+    // --- Loop-invariant expander thermodynamics (evaluated once) ---
+    // The isentropic enthalpy drop h_s, the spouting velocity C and the expander/compressor
+    // flow rates depend only on the feed streams and the fixed expander outlet pressure - not
+    // on the shaft speed N that the Newton loop below solves for. Cloning and re-flashing the
+    // feed on every iteration was therefore pure repeated work and dominated the run time of
+    // this unit. Hoisting it out is mathematically identical.
+    SystemInterface fluid2 = expanderFeedStream.getThermoSystem().clone();
+    fluid2.initThermoProperties();
+    double s1 = fluid2.getEntropy("kJ/kgK");
+    double h_in = fluid2.getEnthalpy("kJ/kg");
+    fluid2.setPressure(expanderOutPressure, "bara");
+    ThermodynamicOperations flash = new ThermodynamicOperations(fluid2);
+    flash.PSflash(s1, "kJ/kgK");
+    fluid2.init(3);
+    double h_out = fluid2.getEnthalpy("kJ/kg");
+    h_s = (h_in - h_out) * 1000; // J/kg
+    final double C = Math.sqrt(2.0 * h_s);
+    Q_exp = expanderFeedStream.getFluid().getFlowRate("m3/sec");
+    m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
+    Q_comp = compressorFeedStream.getFluid().getFlowRate("m3/sec");
+
     do {
-      double outPress = expanderOutPressure;
-      SystemInterface fluid2 = expanderFeedStream.getThermoSystem().clone();
-      fluid2.initThermoProperties();
-      double s1 = fluid2.getEntropy("kJ/kgK");
-      double h_in = fluid2.getEnthalpy("kJ/kg");
-      fluid2.setPressure(outPress, "bara");
-      ThermodynamicOperations flash = new ThermodynamicOperations(fluid2);
-      flash.PSflash(s1, "kJ/kgK");
-      fluid2.init(3);
-      double h_out = fluid2.getEnthalpy("kJ/kg");
-      h_s = (h_in - h_out) * 1000; // J/kg
       double U = Math.PI * D * N / 60.0;
-      double C = Math.sqrt(2.0 * h_s);
       uc = U / C / designUC;
       double ucRaw = U / C;
-      Q_exp = expanderFeedStream.getFluid().getFlowRate("m3/sec");
       double CF_qn_exp = 1.0;
       if (applyExpanderQnCorrection && designQnExp > 0.0 && N > 0.0) {
         qn_ratio_exp = (Q_exp * 60.0 / N) / designQnExp;
@@ -248,8 +262,6 @@ public class TurboExpanderCompressor extends Expander {
         eta_s = eta_s_required;
       }
       W_expander = m1 * h_s * eta_s;
-      m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
-      Q_comp = compressorFeedStream.getFluid().getFlowRate("m3/sec");
       qn_ratio = (Q_comp * 60.0 / N) / designQn;
       CF_eff_comp = getEfficiencyFromQN(qn_ratio);
       CF_eff_comp = Math.max(CF_eff_comp, 1e-6);
@@ -308,7 +320,7 @@ public class TurboExpanderCompressor extends Expander {
       iter++;
     } while (Math.abs(W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter || iter < minIter);
     if (iter >= maxIter) {
-      System.out.println("Warning: TurboExpanderCompressor did not converge.");
+      logger.warn("TurboExpanderCompressor {} did not converge in {} speed-matching iterations.", getName(), maxIter);
     }
     // System.out.println("speed: " + N + " iter: " + iter);
     expanderIsentropicEfficiency = eta_s;
@@ -337,7 +349,11 @@ public class TurboExpanderCompressor extends Expander {
 
     Expander expander = new Expander("tempExpander", expanderFeedStream);
     expander.setOutletPressure(getExpanderOutPressure());
-    expander.setIsentropicEfficiency(eta_s);
+    // The coupled turbo-expander model may require an actual stage efficiency above 1.0 to
+    // reproduce a requested outlet temperature after the map-correction back-calculation.
+    // Replay that internal efficiency directly on the temporary expander instead of using the
+    // compressor-bound setter, which clamps at 1.0 for compressor robustness.
+    expander.isentropicEfficiency = eta_s;
     expander.run();
     expanderOutletStream.setFluid(expander.getOutletStream().getFluid());
 

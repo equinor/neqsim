@@ -96,6 +96,11 @@ class UniSimComponent:
     zcrit: Optional[float] = None
     # Volume shift at surface conditions (SSHIFTS)
     sshifts: Optional[float] = None
+    # UniSim ideal-gas enthalpy polynomial coefficients (a0..a5), mass basis
+    # kJ/kg, H(T[K]) = sum_i a_i * T**i. Cp0 = dH/dT. Used to transfer the
+    # ideal-gas heat capacity of pseudo/hypothetical components to NeqSim so
+    # enthalpy / Joule-Thomson behaviour matches UniSim (E300 does not carry Cp).
+    ideal_h_coeffs: Optional[tuple] = None
 
 
 @dataclass
@@ -258,7 +263,16 @@ class UniSimFluidPackage:
         _write_section(lines, 'PCRIT', pc_vals, '   {:.4f}', 'Pc (Bar)')
         lines.append('')
 
-        # ACF (acentric factor)
+        # ACF (acentric factor). A silent 0.0 here changes the EOS alpha
+        # function and shifts every bubble point of the exported fluid, so a
+        # missing value is reported instead of being quietly defaulted.
+        missing_acf = [c.name for c in self.components
+                       if c.acentric_factor is None]
+        if missing_acf:
+            logger.warning(
+                "E300 export of fluid package '%s': acentric factor missing for "
+                "%s - writing 0.0, which will bias VLE. Check the UniSim COM "
+                "attribute 'Acentricity'.", self.name, ', '.join(missing_acf))
         acf_vals = [c.acentric_factor if c.acentric_factor is not None else 0.0
                     for c in self.components]
         _write_section(lines, 'ACF', acf_vals, '   {:.6f}', 'Omega')
@@ -580,7 +594,7 @@ class UniSimReader:
         'adjust': 'Adjuster',
         'setop': 'SetPoint',
         'pipeseg': 'AdiabaticPipe',
-        'fractop': 'DistillationColumn',
+        'fractop': 'ComponentSplitter',
         'saturateop': 'StreamSaturatorUtil',
         'spreadsheetop': 'SpreadsheetBlock',
         'templateop': 'SubFlowsheet',
@@ -1082,8 +1096,11 @@ class UniSimReader:
         extracted_component.pc_bara = self._extract_quantity(
             comp, ['CriticalPressure'], [('kPa', 0.01, 0.0), ('bar', 1.0, 0.0),
                                         ('bara', 1.0, 0.0), (None, 0.01, 0.0)])
+        # 'Acentricity' is the attribute UniSim actually exposes; the other
+        # aliases are kept for other UniSim/HYSYS builds.
         extracted_component.acentric_factor = self._extract_quantity(
-            comp, ['AcentricFactor', 'AcentricityFactor', 'Omega'], [(None, 1.0, 0.0)])
+            comp, ['Acentricity', 'AcentricFactor', 'AcentricityFactor', 'Omega'],
+            [(None, 1.0, 0.0)])
         extracted_component.mw = self._extract_quantity(
             comp, ['MolecularWeight'], [(None, 1.0, 0.0), ('kg/kmol', 1.0, 0.0)])
         extracted_component.tboil_K = self._extract_quantity(
@@ -1095,6 +1112,7 @@ class UniSimReader:
             comp, ['Parachor'], [(None, 1.0, 0.0)])
         extracted_component.zcrit = self._extract_quantity(
             comp, ['CriticalZFactor', 'CriticalCompressibility'], [(None, 1.0, 0.0)])
+        extracted_component.ideal_h_coeffs = self._extract_ideal_h_coeffs(comp)
         self._apply_component_property_fallbacks(extracted_component)
 
     def _apply_component_property_fallbacks(self, component: UniSimComponent):
@@ -1127,6 +1145,95 @@ class UniSimReader:
             return None
         return omega
 
+    @staticmethod
+    def _extract_ideal_h_coeffs(comp) -> Optional[tuple]:
+        """Read the UniSim ideal-gas enthalpy polynomial coefficients.
+
+        UniSim exposes ``IdealHCoeffsValue`` = (a0, a1, a2, a3, a4, a5, ...)
+        where the ideal-gas enthalpy is H(T) = sum_i a_i * T**i on a **mass
+        basis** (kJ/kg) with T in Kelvin (verified: dH/dT reproduces the
+        component ideal-gas Cp). The trailing sentinel values ``-32767`` mark
+        unused slots and are dropped. Returns the first 6 real coefficients, or
+        ``None`` if the property is absent / all-sentinel.
+
+        :param comp: the UniSim COM component object
+        :return: tuple of up to 6 floats (a0..a5), or None
+        """
+        raw = None
+        for attr in ('IdealHCoeffsValue', 'IdealHCoeffs'):
+            if hasattr(comp, attr):
+                try:
+                    candidate = getattr(comp, attr)
+                    if hasattr(candidate, 'GetValues'):
+                        candidate = candidate.GetValues()
+                    raw = tuple(candidate)
+                    break
+                except Exception:
+                    continue
+        if raw is None:
+            return None
+        coeffs = []
+        for value in raw[:6]:
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                return None
+            if number <= -32000.0:  # UniSim sentinel for "unused"
+                break
+            coeffs.append(number)
+        if len(coeffs) < 2:
+            return None
+        return tuple(coeffs)
+
+    @staticmethod
+    def neqsim_cp_coeffs_from_ideal_h(ideal_h_coeffs, mw):
+        """Convert UniSim ideal-gas enthalpy coeffs to NeqSim Cp0 coefficients.
+
+        NeqSim's molar ideal-gas heat capacity is
+        Cp0(T) = CpA + CpB*T + CpC*T**2 + CpD*T**3 + CpE*T**4  [J/(mol*K)].
+        UniSim stores the mass-basis ideal-gas enthalpy H(T) = sum a_i * T**i
+        [kJ/kg]; the mass Cp is dH/dT = a1 + 2 a2 T + 3 a3 T**2 + 4 a4 T**3 +
+        5 a5 T**4 [kJ/(kg*K)] = [J/(g*K)]. Multiplying by MW [g/mol] gives the
+        molar Cp in J/(mol*K), so:
+
+            CpA = MW * a1, CpB = MW * 2 a2, CpC = MW * 3 a3,
+            CpD = MW * 4 a4, CpE = MW * 5 a5
+
+        (a0 is an enthalpy reference offset and does not affect Cp.) Validated
+        against i-Butane -> Cp(300 K) ~ 97.9 J/(mol*K).
+
+        :param ideal_h_coeffs: sequence (a0, a1, ..) from _extract_ideal_h_coeffs
+        :param mw: molecular weight in g/mol (== kg/kmol)
+        :return: 5-tuple (CpA, CpB, CpC, CpD, CpE) or None if inputs invalid
+        """
+        if not ideal_h_coeffs or mw is None:
+            return None
+        try:
+            mw_value = float(mw)
+        except (TypeError, ValueError):
+            return None
+        if not math.isfinite(mw_value) or mw_value <= 0.0:
+            return None
+        a = [0.0] * 6
+        for i, value in enumerate(ideal_h_coeffs[:6]):
+            a[i] = float(value)
+        cp_a = mw_value * a[1]
+        cp_b = mw_value * 2.0 * a[2]
+        cp_c = mw_value * 3.0 * a[3]
+        cp_d = mw_value * 4.0 * a[4]
+        cp_e = mw_value * 5.0 * a[5]
+        coeffs = (cp_a, cp_b, cp_c, cp_d, cp_e)
+        if not all(math.isfinite(v) for v in coeffs):
+            return None
+        # Sanity gate: Cp0 at 300 K should be physically plausible
+        # (a few J/mol/K up to ~ several thousand for very heavy pseudos).
+        temperature = 300.0
+        cp300 = (cp_a + cp_b * temperature + cp_c * temperature ** 2
+                 + cp_d * temperature ** 3 + cp_e * temperature ** 4)
+        if not math.isfinite(cp300) or cp300 <= 0.0 or cp300 > 1.0e5:
+            return None
+        return coeffs
+
     def _populate_property_package_vectors(self, fp, pkg: UniSimFluidPackage):
         """Populate component vectors exposed by the UniSim property package."""
         try:
@@ -1134,7 +1241,8 @@ class UniSimReader:
         except Exception:
             return
         vector_specs = [
-            ('acentric_factor', ['AcentricFactor', 'AcentricFactors',
+            ('acentric_factor', ['Acentricity', 'Acentricities',
+                                 'AcentricFactor', 'AcentricFactors',
                                  'AcentricityFactor', 'AcentricityFactors',
                                  'Omega', 'Omegas', 'ACF']),
             ('volume_shift', ['VolumShift', 'VolumeShift', 'VolumeShifts', 'SSHIFT']),
@@ -1143,14 +1251,22 @@ class UniSimReader:
             ('omegab', ['OmegaB', 'OMEGAB']),
             ('sshifts', ['VolumShiftSurface', 'VolumeShiftSurface', 'SSHIFTS']),
         ]
+        # The per-component `Acentricity` read is authoritative; the package
+        # vector (often an estimate) must not overwrite it.
+        gap_fill_only = {'acentric_factor'}
         for attribute_name, candidate_names in vector_specs:
             values = self._extract_package_vector(property_package, candidate_names,
                                                   len(pkg.components))
             if values is None:
                 continue
             for component_index, value in enumerate(values):
-                if value is not None:
-                    setattr(pkg.components[component_index], attribute_name, value)
+                if value is None:
+                    continue
+                if (attribute_name in gap_fill_only
+                        and getattr(pkg.components[component_index],
+                                    attribute_name) is not None):
+                    continue
+                setattr(pkg.components[component_index], attribute_name, value)
         for component_index, extracted_component in enumerate(pkg.components):
             if extracted_component.volume_shift is not None:
                 continue
@@ -1300,12 +1416,20 @@ class UniSimReader:
             name=self._safe_get(fs, 'name', 'Main'),
         )
 
+        # Component order for THIS flowsheet's own fluid package. Sub-flowsheets
+        # (e.g. a produced-water template) can carry a different component order
+        # than the main package, and a stream's ComponentMolarFraction.Values are
+        # ordered by the stream's own package. Zipping them against another
+        # package's names silently mislabels fractions (e.g. water's 1.0 landing
+        # on 'WC13-C14'). Derive the local order and fall back to the parent's.
+        local_comp_names = self._owner_component_names(fs, comp_names)
+
         # Material streams
         if extract_streams:
             try:
                 for i in range(fs.MaterialStreams.Count):
                     ms = fs.MaterialStreams.Item(i)
-                    sd = self._extract_stream(ms, comp_names)
+                    sd = self._extract_stream(ms, local_comp_names)
                     flowsheet.material_streams.append(sd)
             except Exception as e:
                 logger.warning(f"Error reading streams in '{flowsheet.name}': {e}")
@@ -1339,12 +1463,76 @@ class UniSimReader:
             if hasattr(fs, 'Flowsheets') and fs.Flowsheets.Count > 0:
                 for i in range(fs.Flowsheets.Count):
                     sub = fs.Flowsheets.Item(i)
-                    sub_fs = self._extract_flowsheet(sub, comp_names, extract_streams)
+                    sub_fs = self._extract_flowsheet(sub, local_comp_names, extract_streams)
                     flowsheet.sub_flowsheets.append(sub_fs)
         except Exception:
             pass
 
         return flowsheet
+
+    def _owner_component_names(self, owner, fallback: List[str]) -> List[str]:
+        """Return the component names of an object's own fluid package.
+
+        Works for any UniSim COM object exposing a ``FluidPackage`` (a flowsheet
+        or a material stream). A stream's ``ComponentMolarFraction.Values`` are
+        ordered by that stream's fluid package, so reading names from the same
+        package keeps composition labels aligned even when the enumerated
+        package order differs (e.g. a produced-water stream whose 1.0 water
+        fraction would otherwise be mislabeled as 'WC13-C14'). Results are cached
+        by package name to avoid repeated COM enumeration.
+
+        Args:
+            owner: UniSim flowsheet or material-stream COM object.
+            fallback: Component-name order to use when the fluid package cannot
+                be read.
+
+        Returns:
+            List of component names for the owner's fluid package, or
+            ``fallback`` when unavailable.
+        """
+        if not hasattr(self, '_comp_name_cache'):
+            self._comp_name_cache = {}
+        try:
+            # NOTE: do NOT use _safe_get here. A COM FluidPackage Dispatch object
+            # is itself callable, and _safe_get would invoke it (val()) — which
+            # fails — and return the default, silently forcing the fallback
+            # (parent) component order. That mislabels streams whose own fluid
+            # package differs from the parent (e.g. a Basis-1 produced-water
+            # stream getting Basis-2 names, landing water's 1.0 on 'WC13-C14*').
+            # Access the property directly instead.
+            try:
+                fp = getattr(owner, 'FluidPackage', None)
+            except Exception:
+                fp = None
+            if fp is None:
+                return fallback
+            try:
+                key = str(getattr(fp, 'name', None) or getattr(fp, 'Name', ''))
+            except Exception:
+                key = ''
+            if key and key in self._comp_name_cache:
+                return self._comp_name_cache[key]
+            collection = fp.Components
+            names = []
+            for component_index in range(collection.Count):
+                try:
+                    comp = collection.Item(component_index)
+                except Exception:
+                    try:
+                        comp = collection.Item(component_index + 1)
+                    except Exception:
+                        continue
+                name = self._safe_get(comp, 'name',
+                                      self._safe_get(comp, 'Name', None))
+                if name is not None:
+                    names.append(str(name))
+            if not names:
+                return fallback
+            if key:
+                self._comp_name_cache[key] = names
+            return names
+        except Exception:
+            return fallback
 
     def _extract_stream(self, ms, comp_names: List[str]) -> UniSimStreamData:
         """Extract all available data from a material stream."""
@@ -1376,9 +1564,15 @@ class UniSimReader:
         # Composition
         try:
             fracs = ms.ComponentMolarFraction.Values
-            if fracs and comp_names:
+            # Prefer the component order of the stream's OWN fluid package; the
+            # fractions are ordered by that package. Fall back to the flowsheet
+            # order passed in. This prevents mislabeling when the enumerated
+            # package order differs from the stream's (e.g. a produced-water
+            # stream whose 1.0 water fraction would otherwise land on 'WC13-C14').
+            names = self._owner_component_names(ms, comp_names)
+            if fracs and names:
                 sd.composition = {}
-                for k, name in enumerate(comp_names):
+                for k, name in enumerate(names):
                     if k < len(fracs) and fracs[k] is not None:
                         val = float(fracs[k])
                         if val > 1e-10:
@@ -1536,6 +1730,12 @@ class UniSimReader:
                 props['outlet_pressure_bara'] = self._safe_getval(prod_stream.Pressure, 'bar')
             except Exception:
                 pass
+            # A UniSim cooler/heater may be specified by a fixed pressure DROP
+            # instead of a fixed outlet pressure. Capture it so the converter can
+            # emit whichever the unit actually uses (drop vs outlet pressure).
+            props['pressure_drop_kPa'] = (
+                self._safe_getval(op.PressureDrop, 'kPa')
+                if hasattr(op, 'PressureDrop') else None)
 
         elif 'pump' in type_name:
             props['duty_kW'] = self._safe_getval(op.DutyValue, 'kW') if hasattr(op, 'DutyValue') else None
@@ -1555,11 +1755,99 @@ class UniSimReader:
             except Exception:
                 pass
 
+        elif 'tee' in type_name:
+            # A UniSim Tee's 'Flow Ratios' ARE the split fractions: the fraction
+            # of the feed sent to each product. A Tee gives every product an
+            # identical composition, so the flow ratio equals the mass-flow
+            # fraction and the mole-flow fraction alike — exactly what a NeqSim
+            # Splitter's split factors represent. Read them directly (in product
+            # order) so the split is reproduced authoritatively, including for
+            # recycle-tear tees whose product flows are only the recycle guess.
+            # The generator falls back to deriving factors from the product mass
+            # flows when this spec is unavailable.
+            try:
+                holder = getattr(op, 'FlowRatios', None)
+                raw = self._safe_get(holder, 'Values', holder) if holder is not None else None
+                vals = [self._clean_scalar_value(v) for v in list(raw)] if raw is not None else []
+                vals = [v for v in vals if v is not None]
+                n_prod = len(op_data.products)
+                if n_prod >= 2 and len(vals) >= n_prod and sum(vals[:n_prod]) > 0.0:
+                    total = sum(vals[:n_prod])
+                    props['split_factors'] = [v / total for v in vals[:n_prod]]
+            except Exception:
+                pass
+
+        elif 'fract' in type_name:
+            # UniSim Component Splitter: connectivity is exposed via
+            # AttachedFeeds / AttachedProducts (NOT the generic Feeds/Products),
+            # and the per-component split is in OverheadSplits (fraction of each
+            # component's feed routed to the FIRST/overhead product). Maps to a
+            # NeqSim ComponentSplitter (split0 = overhead, split1 = bottoms).
+            for coll_attr, mat_list, en_list in (
+                    ('AttachedFeeds', op_data.feeds, op_data.energy_feeds),
+                    ('AttachedProducts', op_data.products, op_data.energy_products)):
+                try:
+                    coll = getattr(op, coll_attr)
+                    for i in range(coll.Count):
+                        item = coll.Item(i)
+                        nm = self._safe_get(item, 'name', None)
+                        if not nm:
+                            continue
+                        tn = str(self._safe_get(item, 'TypeName', '')).lower()
+                        if ('energy' in tn or nm.upper().startswith('Q-')
+                                or nm.upper().startswith('Q ')):
+                            en_list.append(nm)
+                        else:
+                            mat_list.append(nm)
+                except Exception:
+                    pass
+            # Per-component fraction routed to the overhead (first) product.
+            try:
+                raw = op.OverheadSplits.Values
+                facs = []
+                for v in list(raw):
+                    val = v[0] if isinstance(v, (tuple, list)) else v
+                    facs.append(self._clean_scalar_value(val))
+                facs = [f for f in facs if f is not None]
+                if facs:
+                    props['split_factors'] = facs
+            except Exception:
+                pass
+            # Component names in the splitter's own package order (matches the
+            # OverheadSplits order) so the generator can map factors onto the
+            # global component order by name.
+            try:
+                comps = op.FluidPackage.Components
+                names = []
+                for i in range(comps.Count):
+                    names.append(self._safe_get(comps.Item(i), 'name', None))
+                names = [n for n in names if n]
+                if names:
+                    props['split_component_names'] = names
+            except Exception:
+                pass
+            # Split basis (per-component Molar/Mass in UniSim). Molar and mass
+            # give the same per-component mole split, so default molar.
+            props['split_basis'] = 'molar'
+
+        elif ('distillation' in type_name or 'columnop' in type_name
+              or 'reboiledabsorber' in type_name or 'absorber' in type_name):
+            # Distillation / absorber columns: capture the operating
+            # specifications (reflux ratio, top/bottom pressure, number of
+            # stages) from the UniSim column so the NeqSim DistillationColumn
+            # converges to the same solution. Best-effort and fully defensive.
+            self._extract_column_specs(op, props)
+
         elif 'pipeseg' in type_name:
             # Try to get pipe length, diameter
             try:
                 props['length_m'] = self._safe_getval(op.Length, 'm') if hasattr(op, 'Length') else None
                 props['diameter_m'] = self._safe_getval(op.Diameter, 'm') if hasattr(op, 'Diameter') else None
+            except Exception:
+                pass
+            # Detailed multi-segment geometry (length/elevation/diameter/roughness)
+            try:
+                self._extract_pipe_geometry(op, props)
             except Exception:
                 pass
 
@@ -1753,6 +2041,17 @@ class UniSimReader:
                 props['target_variable'] = str(op.TargetVariable.GetValue()) if hasattr(op, 'TargetVariable') else None
             except Exception:
                 pass
+            # UniSim SET relation: target = multiplier * source + offset
+            try:
+                props['multiplier'] = float(op.Multiplier.GetValue()) if hasattr(op, 'Multiplier') else None
+            except Exception:
+                # Multiplier can be unavailable or unreadable for some SET operations; keep parsing other fields.
+                pass
+            try:
+                props['offset'] = float(op.Offset.GetValue()) if hasattr(op, 'Offset') else None
+            except Exception:
+                # Offset may be unavailable or non-numeric for some COM objects; keep best-effort extraction.
+                pass
 
         elif type_name == 'pidfbcontrolop':
             # PID controller: extract tuning parameters
@@ -1832,6 +2131,63 @@ class UniSimReader:
                 pass
 
         return op_data
+
+    def _extract_column_specs(self, op, props):
+        """Best-effort extraction of UniSim distillation-column specifications.
+
+        Reads the reflux ratio, operating (condenser/reboiler) pressures and the
+        number of stages from a UniSim column operation via its COM
+        ``ColumnFlowsheet`` / ``Specifications``. Every read is fully defensive:
+        a missing or unreadable attribute simply leaves the corresponding NeqSim
+        spec unset, so the column falls back to its default configuration. The
+        emitted keys (``refluxRatio``, ``topPressure``, ``bottomPressure``,
+        ``numberOfTrays``) are consumed by the NeqSim JSON builder's
+        ``configureDistillationColumn``. Requires a live UniSim column case to
+        fully validate the COM attribute names.
+
+        :param op: the UniSim column COM operation object
+        :param props: the operation properties dict to populate
+        """
+        # Number of stages / trays (column flowsheet stage count).
+        try:
+            n = self._safe_get(op, 'NumberOfStages', None)
+            n = self._clean_scalar_value(n)
+            if n and n > 1:
+                props['numberOfTrays'] = int(n)
+        except Exception:
+            pass
+        # Column-flowsheet specifications (reflux ratio and similar).
+        try:
+            cfs = getattr(op, 'ColumnFlowsheet', None)
+            specs = getattr(cfs, 'Specifications', None) if cfs is not None else None
+            if specs is not None:
+                for i in range(specs.Count):
+                    spec = specs.Item(i)
+                    sname = str(self._safe_get(spec, 'name', '') or '').lower()
+                    val = self._clean_scalar_value(
+                        self._safe_get(spec, 'GoalValue',
+                                       self._safe_get(spec, 'Value', None)))
+                    if val is None:
+                        continue
+                    if 'reflux' in sname and 'ratio' in sname:
+                        props['refluxRatio'] = val
+        except Exception:
+            pass
+        # Operating pressures: condenser = top, reboiler = bottom.
+        try:
+            if hasattr(op, 'CondenserPressure'):
+                cond_p = self._safe_getval(op.CondenserPressure, 'bar')
+                if cond_p is not None:
+                    props['topPressure'] = cond_p
+        except Exception:
+            pass
+        try:
+            if hasattr(op, 'ReboilerPressure'):
+                reb_p = self._safe_getval(op.ReboilerPressure, 'bar')
+                if reb_p is not None:
+                    props['bottomPressure'] = reb_p
+        except Exception:
+            pass
 
     def _extract_heatexchanger(self, op, op_data: UniSimOperation):
         """Extract HeatExchanger-specific connections and properties.
@@ -1942,6 +2298,44 @@ class UniSimReader:
             return None
         return cleaned
 
+    @staticmethod
+    def _extract_pipe_geometry(op, props):
+        """Extract UniSim multi-segment pipe geometry and aggregate it.
+
+        UniSim PipeSegment pipes are defined by per-segment arrays (segment
+        length, elevation change, inner diameter, roughness). This reads those
+        arrays, drops empty (-32767) sentinels, and stores an aggregated
+        single-pipe description usable by a NeqSim PipeBeggsAndBrills:
+        total length, net elevation change, representative inner diameter and
+        wall roughness. Values are in SI (m) as stored by UniSim internally.
+
+        @param op the UniSim pipe COM object
+        @param props the property dict to populate
+        """
+        def _arr(name):
+            v = getattr(op, name, None)
+            if v is None:
+                return []
+            try:
+                vals = [float(x) for x in tuple(v)]
+            except Exception:
+                return []
+            return [x for x in vals if x > -30000.0]
+
+        lengths = _arr('SegmentLengthValue')
+        elevations = _arr('SegmentElevationChangeValue')
+        diameters = _arr('SegmentInnerDiamValue')
+        roughnesses = _arr('RoughnessValue')
+        if lengths:
+            props['length_m'] = sum(lengths)
+            props['segment_count'] = len(lengths)
+        if elevations:
+            props['elevation_m'] = sum(elevations)
+        if diameters:
+            props['diameter_m'] = diameters[0]
+        if roughnesses:
+            props['roughness_m'] = roughnesses[0]
+
 
 # ---------------------------------------------------------------------------
 # UniSim → NeqSim Converter
@@ -1963,6 +2357,18 @@ class UniSimToNeqSim:
         self.model = model
         self._warnings = []
         self._assumptions = []
+        # Recycle convergence settings for generated models. A real tolerance
+        # plus Wegstein acceleration lets the auto-generated recycle tear
+        # streams actually converge (the previous 1e6 tolerance accepted the
+        # seeded tear on the first pass, so recycle-fed streams never updated
+        # and deviated strongly from UniSim). Override before to_python()/
+        # to_json() if a looser/tighter tear is needed.
+        self.recycle_tolerance = 1e-2
+        self.recycle_acceleration = "WEGSTEIN"  # or None to disable
+        # Component names (E300/NeqSim order) of the global system fluid, set
+        # when the fluid section is built. Used to map per-component data such
+        # as ComponentSplitter split factors onto the global component order.
+        self._global_component_names: List[str] = []
 
     @property
     def warnings(self) -> List[str]:
@@ -2150,6 +2556,18 @@ class UniSimToNeqSim:
                     del neqsim_json['fluid']['componentCount']
                 if 'componentNames' in neqsim_json.get('fluid', {}):
                     del neqsim_json['fluid']['componentNames']
+
+                # Apply transferred UniSim pseudo-component ideal-gas Cp to the
+                # loaded fluid (E300 does not carry Cp), then strip from JSON.
+                cp_coeffs = neqsim_json.get('fluid', {}).get('cpCoeffs')
+                if cp_coeffs:
+                    try:
+                        self._apply_cp_coeffs_to_fluid(fluid, cp_coeffs)
+                    except Exception as cp_exc:
+                        logger.warning(
+                            "Could not apply UniSim Cp coefficients: %s", cp_exc)
+                if 'cpCoeffs' in neqsim_json.get('fluid', {}):
+                    del neqsim_json['fluid']['cpCoeffs']
 
                 json_str = json.dumps(neqsim_json, indent=2)
                 result = ProcessSystem.fromJsonAndRun(json_str, fluid)
@@ -2372,6 +2790,82 @@ class UniSimToNeqSim:
             sections.append((fluid_ref, self._build_fluid_section(index)))
         return sections
 
+    def _build_cp_coeffs_map(self, fp) -> Dict[str, list]:
+        """Build a {E300-name: [CpA..CpE]} map for pseudo/hypothetical comps.
+
+        Transfers the UniSim ideal-gas heat capacity of hypothetical (``*``)
+        pseudo-components to NeqSim. The E300 interchange file carries Tc, Pc,
+        omega, MW, volume shift and kij but NOT the ideal-gas Cp, so NeqSim
+        otherwise estimates its own Cp for the pseudos. That estimate diverges
+        from UniSim and shifts enthalpy / Joule-Thomson behaviour (observed as
+        an ~11 C valve-outlet temperature gap in the low-pressure recompression
+        loop, which over-drops liquid and inflates recycle bleeds). Only
+        hypothetical components are overridden; NeqSim's library-component Cp
+        (methane, water, ...) is already accurate and reference-consistent.
+
+        :param fp: a UniSimFluidPackage
+        :return: dict mapping the E300 component name to a 5-list of Cp coeffs
+        """
+        cp_map: Dict[str, list] = {}
+        for component in getattr(fp, 'components', []):
+            if not getattr(component, 'is_hypothetical', False):
+                continue
+            coeffs = UniSimReader.neqsim_cp_coeffs_from_ideal_h(
+                getattr(component, 'ideal_h_coeffs', None),
+                getattr(component, 'mw', None))
+            if coeffs is None:
+                continue
+            e300_name = fp._e300_component_name(component.name)
+            cp_map[e300_name] = [float(v) for v in coeffs]
+        return cp_map
+
+    @staticmethod
+    def _apply_cp_coeffs_to_fluid(fluid, cp_map):
+        """Apply a {name: [CpA..CpE]} map to a live NeqSim fluid (jpype).
+
+        Sets the ideal-gas Cp polynomial coefficients on every phase copy of
+        each matched component so all phase enthalpies use the transferred Cp.
+        Matches names case-insensitively with an H2O/water alias; unmatched
+        names are skipped. Used by the JSON ``build_and_run`` route (the
+        ``to_python`` route emits the equivalent ``_apply_unisim_cp_coeffs``
+        helper into the generated script).
+
+        :param fluid: a NeqSim SystemInterface (Java object via jpype)
+        :param cp_map: dict of component name -> [CpA, CpB, CpC, CpD, CpE]
+        """
+        if not cp_map:
+            return
+        n = int(fluid.getNumberOfComponents())
+        idx = {}
+        for i in range(n):
+            idx[str(fluid.getComponent(i).getName()).lower()] = i
+        alias = {'h2o': 'water', 'water': 'h2o'}
+        try:
+            n_phase = int(fluid.getMaxNumberOfPhases())
+        except Exception:
+            n_phase = 1
+        for name, coeffs in cp_map.items():
+            key = str(name).lower()
+            j = idx.get(key)
+            if j is None:
+                j = idx.get(alias.get(key, ''))
+            if j is None:
+                continue
+            c = list(coeffs) + [0.0, 0.0, 0.0, 0.0, 0.0]
+            for ph in range(n_phase):
+                try:
+                    comp = fluid.getPhase(ph).getComponent(j)
+                except Exception:
+                    continue
+                comp.setCpA(float(c[0]))
+                comp.setCpB(float(c[1]))
+                comp.setCpC(float(c[2]))
+                comp.setCpD(float(c[3]))
+                try:
+                    comp.setCpE(float(c[4]))
+                except Exception:
+                    pass
+
     def _map_property_package_to_eos(self, property_package: str) -> str:
         """Map a UniSim property package name to the closest NeqSim EOS."""
         eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(property_package)
@@ -2416,6 +2910,9 @@ class UniSimToNeqSim:
             if eos == 'SRK' and 'peng' in fp.property_package.lower():
                 eos = 'PR'
             ref_temp_K, ref_P_bara = self._reference_conditions()
+            e300_component_names = [fp._e300_component_name(c.name) for c in fp.components]
+            if package_index == 0:
+                self._global_component_names = e300_component_names
             return {
                 'model': eos,
                 'temperature': ref_temp_K,
@@ -2423,9 +2920,9 @@ class UniSimToNeqSim:
                 'e300FilePath': fp.e300_file_path,
                 'fluidPackageName': fp.name,
                 'componentCount': len(fp.components),
-                'componentNames': [fp._e300_component_name(c.name) for c in fp.components],
+                'componentNames': e300_component_names,
+                'cpCoeffs': self._build_cp_coeffs_map(fp),
             }
-
         # --- Fallback: manual component mapping ---
         eos = self._map_property_package_to_eos(fp.property_package)
         if eos == 'SRK' and fp.property_package not in ('SRK', 'Soave-Redlich-Kwong'):
@@ -2529,6 +3026,21 @@ class UniSimToNeqSim:
                     props['temperature'] = stream_data.temperature_C + 273.15
                 if stream_data.pressure_bara is not None:
                     props['pressure'] = stream_data.pressure_bara
+                # Per-stream composition so each feed carries its own fluid
+                # (applied by JsonProcessBuilder via setMolarComposition, matched
+                # to the fluid components case-insensitively) instead of sharing
+                # the single default fluid passed to fromJsonAndRun.
+                comp = getattr(stream_data, 'composition', None)
+                if comp:
+                    comp_nz = {k: float(v) for k, v in comp.items()
+                               if v is not None and float(v) > 1e-9}
+                    if comp_nz:
+                        # Remap secondary-package (e.g. Basis-1) heavy pseudo
+                        # components that are absent from the global fluid to
+                        # their nearest-molecular-weight global component, so
+                        # oil mass is preserved and the flowsheet converges.
+                        props['composition'] = \
+                            self._remap_composition_to_global(comp_nz)
                 if props:
                     entry['properties'] = props
             process.append(entry)
@@ -2543,6 +3055,52 @@ class UniSimToNeqSim:
                 process.append(entry)
 
         return process
+
+    def _remap_composition_to_global(self, comp: Dict[str, float]) -> Dict[str, float]:
+        """Remap a stream composition onto the global fluid's component set.
+
+        A UniSim case can carry several thermodynamic bases (fluid packages).
+        The global NeqSim fluid is built from the primary package (index 0),
+        so heavy pseudo-components that only exist in a secondary package
+        (e.g. Basis-1 oil lumps ``C7C9*``, ``C36+H*``) have no matching
+        component in the built fluid and their mass is silently dropped by the
+        builder. To preserve oil mass and keep the flowsheet converging, each
+        such component is re-assigned to the nearest-molecular-weight component
+        of the global package (its fraction accumulated there). Light and water
+        components (shared across packages) and components already present in
+        the global package are passed through unchanged.
+
+        :param comp: mapping of raw UniSim component name to molar fraction
+        :return: mapping with secondary-package heavies remapped to the nearest
+            global component by molecular weight
+        """
+        fps = getattr(self.model, 'fluid_packages', None)
+        if not fps:
+            return dict(comp)
+        global_fp = fps[0]
+        global_names = {c.name for c in global_fp.components}
+        # nearest-MW candidates from the global package (heavy pseudo lumps)
+        global_mw_pairs = [(c.name, c.mw) for c in global_fp.components
+                           if c.mw is not None]
+        # molecular-weight lookup by raw name across every package
+        mw_by_name = {}
+        for fp in fps:
+            for c in fp.components:
+                if c.mw is not None and c.name not in mw_by_name:
+                    mw_by_name[c.name] = c.mw
+
+        out = {}
+        for raw, frac in comp.items():
+            keep = raw
+            # Only pseudo-components (``*`` suffix) that are absent from the
+            # global package need remapping; everything else matches directly.
+            if (raw not in global_names and raw.endswith('*')
+                    and global_mw_pairs and raw in mw_by_name):
+                target_mw = mw_by_name[raw]
+                keep = min(global_mw_pairs,
+                           key=lambda p: abs(p[1] - target_mw))[0]
+            out[keep] = out.get(keep, 0.0) + frac
+        return out
 
     def _convert_operation(self, op: UniSimOperation,
                            stream_producer: Dict,
@@ -2561,6 +3119,18 @@ class UniSimToNeqSim:
         if neqsim_type in self.SKIPPED_NEQSIM_TYPES or neqsim_type in ('PIDController', 'LogicalOp'):
             self._warnings.append(
                 f"Skipped non-physical operation '{op.name}' ({neqsim_type})")
+            return None
+
+        # Columns/absorbers with no extracted feed cannot run and abort the
+        # whole process.run() (a bare DistillationColumn with 0 feeds throws),
+        # which stops every downstream unit from executing. Skip them so the
+        # rest of the flowsheet still runs and can be compared; the feed must
+        # be reconnected manually to include the column.
+        if neqsim_type in ('DistillationColumn', 'Absorber') and not op.feeds:
+            self._warnings.append(
+                f"Skipped column '{op.name}' ({neqsim_type}) - no feed stream "
+                f"extracted from UniSim; reconnect its feed manually to "
+                f"include it (kept out so process.run() completes).")
             return None
 
         entry = {
@@ -2607,14 +3177,34 @@ class UniSimToNeqSim:
             if poly_eff and 0 < poly_eff <= 1:
                 props['polytropicEfficiency'] = poly_eff
                 props['usePolytropicCalc'] = True
+            if not (eff and 0 < eff <= 1) and not (poly_eff and 0 < poly_eff <= 1):
+                # No efficiency available: reproduce the source discharge
+                # temperature so the compressor back-solves its efficiency
+                # (matches to_python path; avoids a guessed fixed efficiency).
+                out_s = _get_outlet_stream_data()
+                if out_s and out_s.temperature_C is not None:
+                    props['outletTemperature'] = out_s.temperature_C + 273.15
 
         elif neqsim_type == 'ThrottlingValve':
-            if op.properties.get('outlet_pressure_bara'):
-                props['outletPressure'] = op.properties['outlet_pressure_bara']
-            else:
+            # UniSim valves carry either a fixed outlet pressure OR a fixed
+            # pressure DROP (the 'DP*' line-loss valves specify a small dP, e.g.
+            # 5-50 kPa). For a small-dP valve, emit deltaPressure so the neqsim
+            # ThrottlingValve reproduces UniSim's pressure-DROP behaviour
+            # (outlet = inlet - dP) and tracks the inlet pressure, instead of
+            # pinning a fixed outlet that would diverge if the upstream shifts.
+            # Large letdown/control valves keep their outlet-pressure spec.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
+            out_p = op.properties.get('outlet_pressure_bara')
+            if out_p is None:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.pressure_bara:
-                    props['outletPressure'] = out_s.pressure_bara
+                    out_p = out_s.pressure_bara
+            if dp_kpa is not None and 0 < dp_kpa <= 100.0:
+                # Emit in bara (kPa/100): ThrottlingValve.setDeltaPressure in kPa
+                # currently mis-scales, whereas bara is applied correctly.
+                props['deltaPressure'] = [dp_kpa / 100.0, 'bara']
+            elif out_p is not None:
+                props['outletPressure'] = out_p
 
         elif neqsim_type in ('Cooler', 'Heater'):
             if op.properties.get('outlet_temperature_C') is not None:
@@ -2623,6 +3213,21 @@ class UniSimToNeqSim:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.temperature_C is not None:
                     props['outTemperature'] = out_s.temperature_C + 273.15
+            # Transfer the UniSim cooler/heater pressure spec. NeqSim Cooler/
+            # Heater keep the inlet pressure otherwise, so a downstream
+            # separator/valve would flash at the wrong (too-high) pressure.
+            # Emit whichever the UniSim unit actually uses: a fixed pressure
+            # DROP -> pressureDrop (bara, tracks the inlet); otherwise the fixed
+            # outlet pressure -> outletPressure.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
+            p_out = op.properties.get('outlet_pressure_bara')
+            in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                    if op.feeds else None)
+            p_in = in_s.pressure_bara if in_s else None
+            if dp_kpa is not None and dp_kpa > 0.0:
+                props['pressureDrop'] = round(dp_kpa / 100.0, 6)
+            elif p_out is not None and p_in and (p_in - p_out) > 0.001:
+                props['outletPressure'] = p_out
 
         elif neqsim_type == 'Pump':
             if op.properties.get('outlet_pressure_bara'):
@@ -2653,11 +3258,32 @@ class UniSimToNeqSim:
                 props['diameter'] = op.properties['diameter_m']
 
         elif neqsim_type == 'Splitter':
-            if op.products:
-                props['splitNumber'] = len(op.products)
+            # Reproduce the UniSim tee split. Prefer explicit split_factors;
+            # otherwise derive them from the UniSim product mass flows so the
+            # splitter matches the converged UniSim division instead of the
+            # builder's equal-division (1/N) default. When factors are known,
+            # emit ONLY splitFactors (it also fixes the outlet count) and drop
+            # splitNumber, because splitNumber would otherwise reset the factors
+            # to [1, 0, ...] via the builder's generic property reflection.
             split_factors = op.properties.get('split_factors')
+            if not split_factors:
+                topo = {'stream_by_name':
+                        {s.name: s for s in flowsheet.material_streams}}
+                split_factors = self._split_factors_from_flows(op, topo)
             if split_factors:
                 props['splitFactors'] = split_factors
+            elif op.products:
+                props['splitNumber'] = len(op.products)
+
+        elif neqsim_type == 'ComponentSplitter':
+            # UniSim Component Splitter -> NeqSim ComponentSplitter. Map the
+            # per-component overhead split fractions onto the global component
+            # order (by name) and pass the split basis (molar/mass).
+            facs, basis = self._component_split_factors_global(op, flowsheet)
+            if facs:
+                props['splitFactors'] = facs
+                if basis:
+                    props['splitBasis'] = basis
 
         elif neqsim_type in ('Separator', 'GasScrubber',
                              'ThreePhaseSeparator'):
@@ -2666,6 +3292,13 @@ class UniSimToNeqSim:
                 props['entrainment'] = entrainment_specs
             if op.properties.get('diameter_m'):
                 props['diameter'] = op.properties['diameter_m']
+            # Transfer the UniSim vessel pressure DROP (feed -> vapour outlet).
+            # NeqSim separators keep the feed pressure otherwise, so a downstream
+            # valve/exchanger would see too-high a pressure. Cap at 1 bara to
+            # ignore snapshot stream-mapping artefacts (a real vessel dP is small).
+            dp = self._unit_pressure_drop_bara(op, flowsheet)
+            if dp is not None and 0.001 < dp <= 1.0:
+                props['pressureDrop'] = round(dp, 6)
 
         elif neqsim_type == 'Recycle':
             tol = op.properties.get('tolerance')
@@ -2675,6 +3308,32 @@ class UniSimToNeqSim:
         elif neqsim_type == 'UnisimCalculator':
             props['sourceOperationType'] = op.type_name
             props['calculationMode'] = 'passThrough'
+
+        elif neqsim_type == 'DistillationColumn':
+            # Column configuration for the NeqSim DistillationColumn builder:
+            # number of trays + condenser/reboiler presence from the column's
+            # internal sub-flowsheet, the feed tray, and any operating specs
+            # (reflux ratio, top/bottom pressure, condenser/reboiler duty)
+            # captured from the UniSim column. The builder applies the reflux /
+            # duty specs onto the nested condenser/reboiler; without a spec the
+            # column runs on its default configuration.
+            has_condenser, has_reboiler, n_trays = self._detect_column_config(
+                op, {'flowsheet': self.model.flowsheet})
+            n_trays = int(op.properties.get('numberOfTrays', n_trays) or n_trays)
+            props['numberOfTrays'] = n_trays
+            props['hasReboiler'] = bool(
+                op.properties.get('hasReboiler', has_reboiler))
+            props['hasCondenser'] = bool(
+                op.properties.get('hasCondenser', has_condenser))
+            feed_tray = op.properties.get('feedTray')
+            if feed_tray is None:
+                feed_tray = max(1, n_trays // 2)
+            props['feedTray'] = int(feed_tray)
+            for spec_key in ('refluxRatio', 'topPressure', 'bottomPressure',
+                             'condenserDuty', 'reboilerDuty'):
+                val = op.properties.get(spec_key)
+                if val is not None:
+                    props[spec_key] = val
 
         elif neqsim_type == 'Absorber':
             # Detect glycol/TEG contactor → emit as ComponentSplitter
@@ -2727,6 +3386,42 @@ class UniSimToNeqSim:
             if step_size is not None:
                 props['stepSize'] = step_size
 
+        elif neqsim_type == 'SetPoint':
+            # SetPoint wires a variable from a source unit onto a target unit,
+            # mirroring the UniSim SET relation target = multiplier*source + offset.
+            def _norm_setvar(raw):
+                if not raw:
+                    return None
+                key = str(raw).strip().lower()
+                mapping = {
+                    'temperature': 'temperature', 't': 'temperature',
+                    'pressure': 'pressure', 'p': 'pressure',
+                    'massflow': 'massFlow', 'mass flow': 'massFlow',
+                    'molarflow': 'molarFlow', 'molar flow': 'molarFlow',
+                    'molarflowrate': 'molarFlow',
+                    'flow': 'flow', 'flowrate': 'flow',
+                }
+                return mapping.get(key, str(raw))
+
+            src_obj = op.properties.get('source_object_name')
+            src_var = _norm_setvar(op.properties.get('source_variable'))
+            if src_obj:
+                props['sourceEquipment'] = src_obj
+            if src_var:
+                props['sourceVariable'] = src_var
+            set_tgt_obj = op.properties.get('target_object_name')
+            set_tgt_var = _norm_setvar(op.properties.get('target_variable'))
+            if set_tgt_obj:
+                props['targetEquipment'] = set_tgt_obj
+            if set_tgt_var:
+                props['targetVariable'] = set_tgt_var
+            mult = op.properties.get('multiplier')
+            if mult is not None:
+                props['multiplier'] = mult
+            offset = op.properties.get('offset')
+            if offset is not None:
+                props['offset'] = offset
+
         if props:
             entry['properties'] = props
 
@@ -2754,6 +3449,13 @@ class UniSimToNeqSim:
                             return f"{producer_name}.{port_name}"
                     elif neqsim_type == 'Splitter':
                         # Splitter uses indexed split ports: split0, split1, ...
+                        if len(op.products) > 0 and stream_name in op.products:
+                            idx = op.products.index(stream_name)
+                            return f"{producer_name}.split{idx}"
+                        return f"{producer_name}.split0"
+                    elif neqsim_type == 'ComponentSplitter':
+                        # ComponentSplitter has two split ports: split0 =
+                        # overhead (first product), split1 = bottoms (second).
                         if len(op.products) > 0 and stream_name in op.products:
                             idx = op.products.index(stream_name)
                             return f"{producer_name}.split{idx}"
@@ -2845,10 +3547,29 @@ class UniSimToNeqSim:
                     if in_degree[name] == 0:
                         queue.append(name)
 
-        # Add any remaining (cycles — recycles)
-        for op in operations:
-            if op.name not in sorted_names:
-                sorted_names.append(op.name)
+        # Remaining nodes form dependency cycles (recycle loops). Order them
+        # greedily so that, wherever possible, a producer still precedes its
+        # consumer: repeatedly emit the remaining node with the fewest
+        # still-unemitted in-graph dependencies (0 when its producers are
+        # already sorted), breaking ties by original operation order. This keeps
+        # a newly-inserted in-loop unit (e.g. a ComponentSplitter feeding a
+        # downstream tee) ahead of its consumer, so the first recycle pass does
+        # not starve the consumer with a stale/empty stream.
+        emitted = set(sorted_names)
+        remaining = [op.name for op in operations if op.name not in emitted]
+        while remaining:
+            best = None
+            best_unmet = None
+            for name in remaining:
+                unmet = sum(1 for d in graph[name] if d not in emitted)
+                if best is None or unmet < best_unmet:
+                    best = name
+                    best_unmet = unmet
+                    if unmet == 0:
+                        break
+            remaining.remove(best)
+            sorted_names.append(best)
+            emitted.add(best)
 
         return [op_by_name[n] for n in sorted_names if n in op_by_name]
 
@@ -2955,6 +3676,78 @@ class UniSimToNeqSim:
         for s in flowsheet.material_streams:
             if s.name == name:
                 return s
+        return None
+
+    def _component_split_factors_global(self, op: UniSimOperation,
+                                        flowsheet: UniSimFlowsheet):
+        """Map a Component Splitter's overhead split factors onto the global order.
+
+        The UniSim OverheadSplits give, per component (in the splitter package's
+        order), the fraction of that component's feed routed to the overhead
+        (first) product. NeqSim's ComponentSplitter indexes its split factors by
+        the global system-fluid component order, so this remaps the factors by
+        (E300-normalised) component name. Components not present in the splitter
+        package default to 1.0 (routed to the overhead); they are zero-flow in
+        this feed, so the value is immaterial. The key transferred behaviour
+        (e.g. water routed to the bottoms) is preserved because shared real
+        components map identically under the E300 name transform.
+
+        Args:
+            op: the Component Splitter operation (neqsim_type 'ComponentSplitter').
+            flowsheet: the flowsheet (used to fall back to the feed composition).
+
+        Returns:
+            (factors_list, basis) aligned to the global component order, or
+            (None, None) when the split cannot be resolved.
+        """
+        facs = op.properties.get('split_factors')
+        if not facs:
+            return None, None
+        names = op.properties.get('split_component_names')
+        if not names:
+            # The OverheadSplits are in the splitter's own fluid-package order.
+            # In a multi-package model the feed stream's stored composition can
+            # be in a different package's order (and may be mislabelled), so
+            # identify the splitter package by matching its component COUNT to
+            # a model fluid package and use that package's component names.
+            for fp in self.model.fluid_packages:
+                if len(fp.components) == len(facs):
+                    names = [c.name for c in fp.components]
+                    break
+        if not names:
+            feed_stream = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                           if op.feeds else None)
+            if feed_stream and getattr(feed_stream, 'composition', None):
+                names = list(feed_stream.composition.keys())
+        if not names or len(names) < len(facs):
+            return None, None
+        global_names = self._global_component_names
+        if not global_names:
+            return None, None
+        name_to_fac = {}
+        for nm, fc in zip(names, facs):
+            name_to_fac[UniSimFluidPackage._e300_component_name(nm)] = fc
+        out = [name_to_fac.get(gn, 1.0) for gn in global_names]
+        basis = op.properties.get('split_basis', 'molar')
+        return out, basis
+
+    def _unit_pressure_drop_bara(self, op: UniSimOperation,
+                                 flowsheet: UniSimFlowsheet) -> Optional[float]:
+        """Inlet -> first-outlet pressure drop (bara) for a unit, or None.
+
+        Used to transfer a UniSim vessel/exchanger pressure drop to NeqSim when
+        the unit is not specified by an explicit outlet pressure. Returns the
+        feed[0] pressure minus the products[0] pressure, or None if either
+        stream or its pressure is unavailable.
+        """
+        if not op.feeds or not op.products:
+            return None
+        in_s = self._find_stream_by_name(flowsheet, op.feeds[0])
+        out_s = self._find_stream_by_name(flowsheet, op.products[0])
+        if (in_s is not None and out_s is not None
+                and in_s.pressure_bara is not None
+                and out_s.pressure_bara is not None):
+            return in_s.pressure_bara - out_s.pressure_bara
         return None
 
     def _map_component_name(self, unisim_name: str) -> Optional[str]:
@@ -3204,6 +3997,19 @@ class UniSimToNeqSim:
                         fwd_ref_placeholders.add(producer_name)
             defined_ops.add(op.name)
 
+        # --- mark forward-ref producers whose loop is ALREADY closed by a
+        # UniSim recycle (RCY) op. A forward-ref placeholder is the converter's
+        # loop tear point and is seeded with the UniSim stream value. If that
+        # producer lies on a cycle that also contains a UniSim recycle op, the
+        # loop is already closed on its back-edge by that RCY; adding a second
+        # (forward) closing Recycle over-constrains the loop and — because the
+        # anti-surge/recompression control is not reproduced — inflates the
+        # circulating flow (observed ~2x). For those placeholders we leave the
+        # seeded tear OPEN. Only forward-refs on a cycle with NO recycle op get
+        # a closing tear (see to_python).
+        fwd_ref_recycle_closed = self._recycle_closed_placeholders(
+            _all_ops_flat, stream_producer, fwd_ref_placeholders)
+
         return dict(
             fluid=fluid, eos_class=eos_class, flowsheet=flowsheet,
             all_ops=all_operations, all_streams=all_streams,
@@ -3211,10 +4017,113 @@ class UniSimToNeqSim:
             stream_by_name=stream_by_name, sorted_ops=sorted_ops,
             var_names={}, used_vars=set(),
             fwd_ref_placeholders=fwd_ref_placeholders,
+            fwd_ref_recycle_closed=fwd_ref_recycle_closed,
             fwd_ref_vars={},
             sf_mapping=None,  # populated lazily by _build_sf_mapping
             included_sf_names=include_names,  # which sub-flowsheets pass filter
         )
+
+    def _recycle_closed_placeholders(self, all_ops_flat, stream_producer,
+                                     fwd_ref_placeholders):
+        """Return the subset of *fwd_ref_placeholders* whose op lies on a cycle
+        that already contains a UniSim recycle (RCY) op.
+
+        Builds the material-stream op dependency graph (producer op -> consumer
+        op), then for each recycle op R computes the set of nodes on a cycle
+        through R as ``reachable_from(R) & can_reach(R)``. A forward-ref
+        producer in that set already has its loop closed by R, so it must NOT
+        receive an additional closing tear recycle.
+
+        Args:
+            all_ops_flat: all operations (main + sub-flowsheet).
+            stream_producer: dict mapping stream -> (producer_op_name, port).
+            fwd_ref_placeholders: set of forward-reference producer names.
+
+        Returns:
+            Set of producer names whose loop is already recycle-closed.
+        """
+        op_by_name = {}
+        for op in all_ops_flat:
+            op_type = getattr(op, 'type_name', '') or ''
+            if UniSimReader.is_material_stream_operation(op_type):
+                op_by_name[op.name] = op
+        # forward adjacency: producer op -> consumer op
+        adj = {name: set() for name in op_by_name}
+        radj = {name: set() for name in op_by_name}
+        for op in op_by_name.values():
+            for s in (op.feeds or []):
+                prod = stream_producer.get(s)
+                if prod and prod[0] in op_by_name and prod[0] != op.name:
+                    adj[prod[0]].add(op.name)
+                    radj[op.name].add(prod[0])
+
+        def _reach(start, graph):
+            seen = set([start])
+            stack = [start]
+            while stack:
+                u = stack.pop()
+                for v in graph.get(u, ()):
+                    if v not in seen:
+                        seen.add(v)
+                        stack.append(v)
+            return seen
+
+        recycle_ops = set()
+        for name, op in op_by_name.items():
+            if self.resolve_neqsim_type(op) == 'Recycle':
+                recycle_ops.add(name)
+
+        recycle_loop_members = set()
+        for r in recycle_ops:
+            fwd = _reach(r, adj)
+            bwd = _reach(r, radj)
+            recycle_loop_members |= (fwd & bwd)
+
+        return set(p for p in fwd_ref_placeholders
+                   if p in recycle_loop_members)
+
+    @staticmethod
+    def _split_factors_from_flows(op, topo):
+        """Compute NeqSim Splitter split factors from UniSim product mass flows.
+
+        Returns a list of fractions (summing to 1, in ``op.products`` order) so
+        the tee reproduces the converged UniSim split, or ``None`` when the
+        split cannot be determined (fewer than 2 products, or no positive
+        product flow is known — in which case the caller leaves the splitter at
+        its default equal division).
+
+        Zero / unknown branches are clamped to a tiny epsilon so no split
+        stream is exactly empty (which can upset a downstream flash), then the
+        vector is renormalised to sum to 1.
+
+        Args:
+            op: the UniSim splitter (teeop) operation.
+            topo: the topology dict (provides ``stream_by_name``).
+
+        Returns:
+            List[float] of split factors, or None.
+        """
+        products = op.products or []
+        if len(products) < 2:
+            return None
+        stream_by_name = topo.get('stream_by_name', {})
+        flows = []
+        for pname in products:
+            sd = stream_by_name.get(pname)
+            f = sd.mass_flow_kgh if sd is not None else None
+            flows.append(f)
+        known_total = sum(f for f in flows if f is not None and f > 0.0)
+        if known_total <= 0.0:
+            return None  # nothing to base a split on -> keep equal division
+        eps = 1e-6
+        facs = []
+        for f in flows:
+            if f is None or f <= 0.0:
+                facs.append(eps)
+            else:
+                facs.append(f / known_total)
+        total = sum(facs)
+        return [x / total for x in facs]
 
     # ---- variable-name helpers (static, used by all code-gen paths) ----
 
@@ -3344,12 +4253,14 @@ class UniSimToNeqSim:
         'Pump = jneqsim.process.equipment.pump.Pump',
         'Expander = jneqsim.process.equipment.expander.Expander',
         'Recycle = jneqsim.process.equipment.util.Recycle',
+        'AccelerationMethod = jneqsim.process.equipment.util.AccelerationMethod',
         'Adjuster = jneqsim.process.equipment.util.Adjuster',
         'SetPoint = jneqsim.process.equipment.util.SetPoint',
         'StreamSaturatorUtil = jneqsim.process.equipment.util.StreamSaturatorUtil',
         'SpreadsheetBlock = jneqsim.process.equipment.util.SpreadsheetBlock',
         'UnisimCalculator = jneqsim.process.equipment.util.UnisimCalculator',
         'AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe',
+        'PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills',
         'DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn',
         'SimpleAbsorber = jneqsim.process.equipment.absorber.SimpleAbsorber',
         'ComponentSplitter = jneqsim.process.equipment.splitter.ComponentSplitter',
@@ -3373,6 +4284,9 @@ class UniSimToNeqSim:
             ]
             if not e300_sections:
                 e300_sections = [('default', fluid)]
+            # Runtime helper to transfer UniSim pseudo-component ideal-gas Cp.
+            if any(section.get('cpCoeffs') for _ref, section in e300_sections):
+                lines.extend(self._cp_helper_lines())
             lines.append('fluid_packages = {}')
             for fluid_ref, section in e300_sections:
                 escaped_path = section['e300FilePath'].replace('\\', '/')
@@ -3385,6 +4299,26 @@ class UniSimToNeqSim:
                 lines.append(
                     f'fluid_packages["{fluid_ref}"].setPressure('
                     f'{section.get("pressure", 1.0)}, "bara")')
+                # Enable the aqueous/multiphase flash so ThreePhaseSeparators
+                # can drop out free water. Verified: with multiphase check the
+                # E300 water (NeqSim normalises H2O -> water) forms a genuine
+                # aqueous phase, so produced water is modelled physically
+                # instead of staying dissolved in the oil.
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"].setMultiPhaseCheck(True)')
+                cp_coeffs = section.get('cpCoeffs') or {}
+                if cp_coeffs:
+                    # Round for a compact, readable literal.
+                    compact = {
+                        name: [round(v, 10) for v in coeffs]
+                        for name, coeffs in cp_coeffs.items()
+                    }
+                    lines.append(
+                        f'_apply_unisim_cp_coeffs('
+                        f'fluid_packages["{fluid_ref}"], {compact!r})')
+                    lines.append(
+                        f'#   ^ transferred UniSim ideal-gas Cp for '
+                        f'{len(compact)} pseudo component(s)')
                 pkg_name = section.get('fluidPackageName', fluid_ref)
                 n_comp = section.get('componentCount', '?')
                 lines.append(
@@ -3404,16 +4338,39 @@ class UniSimToNeqSim:
         return lines
 
     def _gen_feed_lines(self, topo: dict) -> List[str]:
-        """Return code lines that create external feed streams."""
+        """Return code lines that create external feed streams.
+
+        Each feed stream is given its OWN molar composition extracted from the
+        UniSim snapshot (mapped onto the fluid component order by name,
+        case-insensitively) instead of a single shared ``fluid.clone()``
+        default.  Without this every feed carries the same default composition,
+        so downstream separators all flash an identical fluid and report the
+        same RVP/GOR regardless of which stream feeds them.
+        """
         lines = []
         var_names = topo['var_names']
         used_vars = topo['used_vars']
         stream_by_name = topo['stream_by_name']
+        # Emit the composition helper once, before the feed streams.
+        lines.extend(self._composition_helper_lines())
         for feed_name in sorted(topo['external_feeds']):
             sd = stream_by_name.get(feed_name)
             v = self._unique_var(feed_name, var_names, used_vars)
             lines.append(f'{v} = Stream("{feed_name}", fluid.clone())')
             if sd:
+                # UniSim models produced/injected water as a heavy-HC pseudo
+                # and the COM read mislabels it (a water stream comes back as
+                # ~100% WC13-C14* yet its molecular weight is ~18 g/mol). The
+                # E300 fluid has a real H2O component, so recompose such feeds
+                # as pure H2O; the aqueous phase then separates in the 3-phase
+                # separators (physically correct) instead of the phantom heavy
+                # oil flooding the downstream water/recycle trains.
+                if self._is_water_feed(feed_name, sd):
+                    comp_literal = '{"H2O": 1.0}'
+                else:
+                    comp_literal = self._composition_literal(sd)
+                if comp_literal:
+                    lines.append(f'_set_feed_composition({v}, {comp_literal})')
                 if sd.mass_flow_kgh is not None and sd.mass_flow_kgh > 0:
                     lines.append(f'{v}.setFlowRate({sd.mass_flow_kgh}, "kg/hr")')
                 if sd.temperature_C is not None:
@@ -3423,6 +4380,180 @@ class UniSimToNeqSim:
             lines.append(f'process.add({v})')
             lines.append('')
         return lines
+
+    @staticmethod
+    def _composition_helper_lines() -> List[str]:
+        """Lines defining the runtime feed-composition helper (emitted once).
+
+        The helper maps a UniSim ``{componentName: moleFraction}`` dict onto the
+        NeqSim fluid's component order by a case-insensitive name match (the
+        only difference between the two naming schemes is capitalisation, e.g.
+        ``Nitrogen`` vs ``nitrogen``; pseudo names such as ``WC6*`` and
+        ``22-Mpropane`` are identical), then applies it with
+        ``setMolarComposition``.  Unmatched names are skipped, and the vector is
+        left un-normalised for NeqSim to normalise internally.
+        """
+        return [
+            '# Feed composition helper: give each feed stream its own composition',
+            '# (mapped by name, case-insensitively) instead of one shared default.',
+            'def _set_feed_composition(stream, comp):',
+            '    import jpype',
+            '    sysf = stream.getFluid()',
+            '    n = int(sysf.getNumberOfComponents())',
+            '    names = [str(sysf.getComponent(i).getName()) for i in range(n)]',
+            '    idx = {nm.lower(): i for i, nm in enumerate(names)}',
+            '    # NeqSim normalises the E300 "H2O" component to "water"; alias',
+            '    # the two so a {"H2O": ...} literal still matches, and vice versa.',
+            '    _alias = {"h2o": "water", "water": "h2o"}',
+            '    z = [0.0] * n',
+            '    total = 0.0',
+            '    for key, val in comp.items():',
+            '        if val is None:',
+            '            continue',
+            '        k = str(key).lower()',
+            '        j = idx.get(k)',
+            '        if j is None:',
+            '            j = idx.get(_alias.get(k, ""))',
+            '        if j is None:',
+            '            continue',
+            '        z[j] += float(val)',
+            '        total += float(val)',
+            '    if total <= 0.0:',
+            '        return',
+            '    sysf.setMolarComposition(jpype.JArray(jpype.JDouble)(z))',
+            '',
+        ]
+
+    @staticmethod
+    def _cp_helper_lines() -> List[str]:
+        """Lines defining the runtime pseudo-component Cp override helper.
+
+        Applies a ``{componentName: [CpA, CpB, CpC, CpD, CpE]}`` map onto a
+        NeqSim fluid, matching component names case-insensitively (with an
+        H2O/water alias). These are the ideal-gas heat-capacity coefficients
+        transferred from UniSim for hypothetical pseudo-components, so NeqSim's
+        enthalpy / Joule-Thomson behaviour matches UniSim (the E300 file does
+        not carry Cp). Unknown / non-pseudo names are simply skipped.
+        """
+        return [
+            '# Pseudo-component ideal-gas Cp transfer from UniSim (E300 lacks Cp).',
+            '# NeqSim Cp0(T)=CpA+CpB*T+CpC*T^2+CpD*T^3+CpE*T^4 [J/(mol*K)].',
+            'def _apply_unisim_cp_coeffs(sysf, cp_map):',
+            '    if not cp_map:',
+            '        return',
+            '    n = int(sysf.getNumberOfComponents())',
+            '    idx = {}',
+            '    for i in range(n):',
+            '        nm = str(sysf.getComponent(i).getName()).lower()',
+            '        idx[nm] = i',
+            '    _alias = {"h2o": "water", "water": "h2o"}',
+            '    for name, coeffs in cp_map.items():',
+            '        k = str(name).lower()',
+            '        j = idx.get(k)',
+            '        if j is None:',
+            '            j = idx.get(_alias.get(k, ""))',
+            '        if j is None:',
+            '            continue',
+            '        c = list(coeffs) + [0.0, 0.0, 0.0, 0.0, 0.0]',
+            '        # Apply to every phase copy of the component so all',
+            '        # phase enthalpies use the transferred Cp.',
+            '        try:',
+            '            npha = int(sysf.getMaxNumberOfPhases())',
+            '        except Exception:',
+            '            npha = 1',
+            '        for ph in range(npha):',
+            '            try:',
+            '                comp = sysf.getPhase(ph).getComponent(j)',
+            '            except Exception:',
+            '                continue',
+            '            comp.setCpA(float(c[0]))',
+            '            comp.setCpB(float(c[1]))',
+            '            comp.setCpC(float(c[2]))',
+            '            comp.setCpD(float(c[3]))',
+            '            try:',
+            '                comp.setCpE(float(c[4]))',
+            '            except Exception:',
+            '                pass',
+            '',
+        ]
+
+    #: Light real components that can dominate a ~18 g/mol stream legitimately
+    #: (methane-rich gas averages to ~17-18 g/mol). Used to distinguish a real
+    #: light-gas feed from a mislabeled produced-water stream, whose dominant
+    #: "component" is a heavy pseudo (real MW ~180) inconsistent with MW ~18.
+    _NON_WATER_DOMINANT = frozenset((
+        'methane', 'ethane', 'propane', 'i-butane', 'n-butane', 'isobutane',
+        'i-pentane', 'n-pentane', '22-mpropane', 'nitrogen', 'co2',
+        'carbon dioxide', 'hydrogen', 'h2s', 'oxygen', 'argon', 'helium'))
+
+    @staticmethod
+    def _is_water_feed(feed_name, sd=None):
+        """Return True when a feed stream is (produced/injected) water.
+
+        UniSim models water in this fluid as a heavy-HC pseudo, and the COM
+        composition read mislabels the water fraction (e.g. a stream comes back
+        as ~100% ``WC13-C14*`` yet its stream molecular weight is ~18 g/mol,
+        inconsistent with that pseudo's real ~180 g/mol). A stream is treated
+        as water when its name contains ``water`` OR its molecular weight is
+        ~18 g/mol, one component dominates (>90%), and that dominant component
+        is NOT a light real gas/NGL (which is how a genuine methane-rich gas
+        stream — also ~17-18 g/mol — is excluded).
+
+        @param feed_name the UniSim stream name
+        @param sd optional stream data (for the molecular-weight test)
+        @return True if the stream should be composed as pure H2O
+        """
+        if 'water' in (feed_name or '').lower():
+            return True
+        if sd is None:
+            return False
+        mw = getattr(sd, 'molecular_weight', None)
+        if mw is None or not (16.5 < float(mw) < 19.5):
+            return False
+        comp = getattr(sd, 'composition', None) or {}
+        items = [(k, float(v)) for k, v in comp.items() if v is not None]
+        if not items:
+            return False
+        dom_name, dom_frac = max(items, key=lambda kv: kv[1])
+        if dom_frac <= 0.9:
+            return False
+        # A MW~18 stream dominated by a light real component is genuine gas/NGL;
+        # only a heavy-pseudo (or water) dominant at MW~18 is mislabeled water.
+        return str(dom_name).lower() not in UniSimToNeqSim._NON_WATER_DOMINANT
+
+    @staticmethod
+    def _feed_comp_literal(name, sd):
+        """Composition dict literal for a feed or forward-ref placeholder.
+
+        Returns pure H2O for produced-water streams (see ``_is_water_feed``),
+        otherwise the stream's own non-zero composition, or ``None`` when no
+        usable composition is available.
+
+        @param name the UniSim stream name (for the water-name test)
+        @param sd the stream data
+        @return a ``{"name": frac, ...}`` literal or None
+        """
+        if UniSimToNeqSim._is_water_feed(name, sd):
+            return '{"H2O": 1.0}'
+        return UniSimToNeqSim._composition_literal(sd)
+
+    @staticmethod
+    def _composition_literal(sd: 'UniSimStreamData') -> Optional[str]:
+        """Return a Python dict literal of the stream's non-zero composition.
+
+        @param sd the stream data whose ``composition`` dict is serialised
+        @return a ``{"name": frac, ...}`` literal, or ``None`` when no usable
+                composition is available
+        """
+        comp = getattr(sd, 'composition', None)
+        if not comp:
+            return None
+        items = [(k, float(v)) for k, v in comp.items()
+                 if v is not None and float(v) > 1e-9]
+        if not items:
+            return None
+        inner = ', '.join('"%s": %r' % (k, v) for k, v in items)
+        return '{' + inner + '}'
 
     def _gen_equipment_lines(self, op: 'UniSimOperation', topo: dict) -> Optional[List[str]]:
         """Return code lines for one equipment unit, or None if skipped."""
@@ -3462,8 +4593,30 @@ class UniSimToNeqSim:
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
             n_splits = len(op.products) if op.products else 2
             lines.append(f'{v} = Splitter("{op.name}", {ref_expr}, {n_splits})')
+            # Set split factors from the UniSim product mass flows so the tee
+            # reproduces the UniSim split instead of an equal (1/N) division.
+            # Split index == position in op.products (see _resolve_inlet_ref),
+            # so factors are emitted in op.products order. Zero/unknown
+            # branches are clamped to a tiny epsilon (kept non-zero so a
+            # downstream flash never sees an exactly-empty stream) and the
+            # vector is renormalised to sum to 1.
+            split_facs = self._split_factors_from_flows(op, topo)
+            if split_facs is not None:
+                fac_str = ', '.join(f'{x:.10g}' for x in split_facs)
+                lines.append(f'{v}.setSplitFactors([{fac_str}])')
 
         elif neqsim_type == 'DistillationColumn':
+            # A DistillationColumn with no feed stream throws on run() and
+            # aborts the whole process. Skip it (do not add to the process) so
+            # the rest of the flowsheet still runs; the feed must be
+            # reconnected manually to include the column.
+            if not inlet_refs:
+                self._warnings.append(
+                    f"Skipped column '{op.name}' - no feed stream extracted "
+                    f"from UniSim; reconnect its feed manually.")
+                return [f'# SKIPPED (unfed column): "{op.name}" - no feed '
+                        f'stream extracted; reconnect manually. '
+                        f'feeds={op.feeds}']
             # Detect column internals from sub-flowsheet to determine
             # whether it has a condenser and/or reboiler
             has_condenser, has_reboiler, n_trays = self._detect_column_config(
@@ -3472,16 +4625,11 @@ class UniSimToNeqSim:
             lines.append(
                 f'{v} = DistillationColumn("{op.name}", {n_trays}, '
                 f'{has_reboiler}, {has_condenser})')
-            if inlet_refs:
-                feed_tray = max(1, n_trays // 2)
-                lines.append(
-                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, {feed_tray})')
-                for extra in inlet_refs[1:]:
-                    lines.append(f'{v}.addFeedStream({_ref(extra)}, 1)')
-            else:
-                lines.append(
-                    f'# TODO: connect feed stream(s) to {op.name} — '
-                    f'feeds: {op.feeds}')
+            feed_tray = max(1, n_trays // 2)
+            lines.append(
+                f'{v}.addFeedStream({_ref(inlet_refs[0])}, {feed_tray})')
+            for extra in inlet_refs[1:]:
+                lines.append(f'{v}.addFeedStream({_ref(extra)}, 1)')
 
         elif neqsim_type == 'Absorber':
             # Detect glycol/TEG contactor by name — use ComponentSplitter
@@ -3522,14 +4670,14 @@ class UniSimToNeqSim:
                     f'# TODO: absorber needs a second feed stream '
                     f'(solvent) — feeds: {op.feeds}')
             else:
-                n_stages = op.properties.get('numberOfStages',
-                                             op.properties.get('numberOfTrays', 5))
-                lines.append(
-                    f'{v} = DistillationColumn("{op.name}", {n_stages}, '
-                    f'False, False)')
-                lines.append(
-                    f'# TODO: connect feed streams to absorber — '
-                    f'feeds: {op.feeds}')
+                # Absorber with no feed cannot run; skip it so the rest of the
+                # flowsheet still executes (reconnect feeds manually to keep).
+                self._warnings.append(
+                    f"Skipped absorber '{op.name}' - no feed stream extracted "
+                    f"from UniSim; reconnect its feeds manually.")
+                return [f'# SKIPPED (unfed absorber): "{op.name}" - no feed '
+                        f'stream extracted; reconnect manually. '
+                        f'feeds={op.feeds}']
 
         elif neqsim_type == 'GibbsReactor':
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
@@ -3671,9 +4819,15 @@ class UniSimToNeqSim:
                 lines.append(
                     f'{v}.setOutletStream('
                     f'{inlet_ref}.clone("{op.name} outlet"))')
-            # Set very large tolerance so recycle "converges" in 2 iterations
-            # (essentially a single-pass with UniSim-initialised tear streams)
-            lines.append(f'{v}.setTolerance(1e6)')
+            # Real tolerance + Wegstein acceleration so the tear stream
+            # actually converges (a very large tolerance would accept the
+            # seeded tear on the first pass, leaving recycle-fed streams at
+            # their initial values).
+            lines.append(f'{v}.setTolerance({self.recycle_tolerance})')
+            if self.recycle_acceleration:
+                lines.append(
+                    f'{v}.setAccelerationMethod('
+                    f'AccelerationMethod.{self.recycle_acceleration})')
             # Wire outlet to the forward-reference placeholder if one exists
             fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
             if op.name in fwd_ref_vars_map:
@@ -3823,6 +4977,18 @@ class UniSimToNeqSim:
                 f'# LogicalOp "{op.name}" — logic operations are not '
                 f'directly modeled in NeqSim; implement via Python logic')
 
+        elif neqsim_type == 'AdiabaticPipe':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            # When detailed geometry (length + inner diameter, and possibly
+            # elevation change) was extracted from the UniSim pipe segments, use
+            # PipeBeggsAndBrills, which models both friction and hydrostatic
+            # (elevation) pressure drop. Otherwise fall back to AdiabaticPipe.
+            if op.properties.get('length_m') and op.properties.get('diameter_m'):
+                lines.append(
+                    f'{v} = PipeBeggsAndBrills("{op.name}", {ref_expr})')
+            else:
+                lines.append(f'{v} = AdiabaticPipe("{op.name}", {ref_expr})')
+
         else:
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
             lines.append(f'{v} = {neqsim_type}("{op.name}", {ref_expr})')
@@ -3866,7 +5032,12 @@ class UniSimToNeqSim:
                         f'{rcy_var}.addStream({v}.{port_method})')
                     lines.append(
                         f'{rcy_var}.setOutletStream({port_pv})')
-                    lines.append(f'{rcy_var}.setTolerance(1e6)')
+                    lines.append(
+                        f'{rcy_var}.setTolerance({self.recycle_tolerance})')
+                    if self.recycle_acceleration:
+                        lines.append(
+                            f'{rcy_var}.setAccelerationMethod('
+                            f'AccelerationMethod.{self.recycle_acceleration})')
                     lines.append(f'process.add({rcy_var})')
 
         return lines
@@ -4634,6 +5805,10 @@ class UniSimToNeqSim:
                            f'"{prod_name}" {port}')
                         _a(f'{port_pv} = Stream("{prod_name} {port} '
                            f'(placeholder)", fluid.clone())')
+                        _pc = self._feed_comp_literal(
+                            sd.name if sd else '', sd)
+                        if _pc:
+                            _a(f'_set_feed_composition({port_pv}, {_pc})')
                         if sd and sd.temperature_C is not None:
                             _a(f'{port_pv}.setTemperature('
                                f'{sd.temperature_C}, "C")')
@@ -4656,6 +5831,9 @@ class UniSimToNeqSim:
                    f'(in a recycle loop)')
                 _a(f'{placeholder_var} = Stream("{prod_name} (placeholder)",'
                    f' fluid.clone())')
+                _pc = self._feed_comp_literal(sd.name if sd else '', sd)
+                if _pc:
+                    _a(f'_set_feed_composition({placeholder_var}, {_pc})')
                 if sd and sd.temperature_C is not None:
                     _a(f'{placeholder_var}.setTemperature('
                        f'{sd.temperature_C}, "C")')
@@ -4688,6 +5866,66 @@ class UniSimToNeqSim:
             if neqsim_type == 'SubFlowsheet':
                 v = topo['var_names'].get(op.name, self._to_pyvar(op.name))
                 sub_flowsheet_vars.append((op.name, v))
+
+        # --- close remaining forward-reference tears with recycles ---
+        # Every consumed ``_fwd_<producer>`` placeholder for a single-outlet
+        # producing unit (mixer, valve, cooler, heater, pump, compressor,
+        # splitter/tee) is tied back to the real producer outlet via a
+        # closing Recycle so fluid propagates along the same path as in
+        # UniSim (instead of the placeholder holding a static seed).
+        # Separators / heat exchangers close their PORT placeholders inside
+        # _gen_equipment_lines; recycle ops close their own placeholder;
+        # both are skipped here to avoid double-closing.
+        fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
+        var_names_map = topo['var_names']
+        op_by_name_tear = {op.name: op for op in topo['sorted_ops']}
+        recycle_closed = topo.get('fwd_ref_recycle_closed', set())
+        _skip_tear_types = (
+            'Separator', 'GasScrubber', 'ThreePhaseSeparator',
+            'HeatExchanger', 'Recycle', 'SubFlowsheet',
+            'PIDController', 'LogicalOp')
+        tear_lines = []
+        for prod_name in sorted(topo.get('fwd_ref_placeholders', set())):
+            whole_pv = fwd_ref_vars_map.get(prod_name)
+            if not whole_pv:
+                continue
+            # Skip placeholders whose loop is ALREADY closed by a UniSim
+            # recycle (RCY) op — the seeded forward-ref tear must stay open,
+            # otherwise the loop is over-constrained and the (uncontrolled)
+            # recompression/anti-surge recycle inflates the circulating flow.
+            if prod_name in recycle_closed:
+                continue
+            prod_op = op_by_name_tear.get(prod_name)
+            if prod_op is None:
+                continue
+            prod_type = self.resolve_neqsim_type(prod_op)
+            if prod_type is None or prod_type in _skip_tear_types:
+                continue
+            prod_var = var_names_map.get(prod_name)
+            if not prod_var:
+                continue
+            outlet_method = (
+                'getSplitStream(int(0))'
+                if prod_type == 'Splitter'
+                else 'getOutletStream()')
+            rcy_var = f'_rcy_tear_{whole_pv}'
+            tear_lines.append(
+                f'# Close forward-reference tear: wire {prod_name} outlet '
+                f'back to its placeholder')
+            tear_lines.append(f'{rcy_var} = Recycle("{prod_name}_tear")')
+            tear_lines.append(f'{rcy_var}.addStream({prod_var}.{outlet_method})')
+            tear_lines.append(f'{rcy_var}.setOutletStream({whole_pv})')
+            tear_lines.append(f'{rcy_var}.setTolerance({self.recycle_tolerance})')
+            if self.recycle_acceleration:
+                tear_lines.append(
+                    f'{rcy_var}.setAccelerationMethod('
+                    f'AccelerationMethod.{self.recycle_acceleration})')
+            tear_lines.append(f'process.add({rcy_var})')
+        if tear_lines:
+            _a('# --- Close remaining forward-reference tears (recycles) ---')
+            for _tl in tear_lines:
+                _a(_tl)
+            _a('')
 
         # --- compose with ProcessModel if sub-flowsheets exist ---
         has_sub_flowsheets = bool(sub_flowsheet_vars)
@@ -4726,7 +5964,19 @@ class UniSimToNeqSim:
             _a('        except Exception:')
             _a('            pass')
         else:
-            _a('process.run()')
+            _a('# Iterate so the recycle tear streams converge, then a final')
+            _a('# full run. Guarded so a single failing unit does not abort.')
+            _a('process.setRunStep(True)')
+            _a('for _it in range(int(20)):')
+            _a('    try:')
+            _a('        process.run()')
+            _a('    except Exception as _exc:')
+            _a('        print(f"  run-step {_it} warning: {_exc}")')
+            _a('process.setRunStep(False)')
+            _a('try:')
+            _a('    process.run()')
+            _a('except Exception as _exc:')
+            _a('    print(f"  final run warning: {_exc}")')
             _a('')
             _a('# Print key stream results')
             _a('for i in range(int(process.getUnitOperations().size())):')
@@ -5599,18 +6849,37 @@ class UniSimToNeqSim:
                 lines.append(f'{var}.setPolytropicEfficiency({poly})')
                 lines.append(f'{var}.setUsePolytropicCalc(True)')
             else:
-                # No efficiency extracted — use engineering default
-                lines.append(f'{var}.setIsentropicEfficiency(0.75)')
-                lines.append(f'# WARNING: compressor efficiency not available '
-                             f'from source model — using 75% default')
+                # No efficiency extracted. If the UniSim discharge temperature is
+                # known, drive NeqSim to reproduce it: Compressor.setOutletTemperature
+                # sets useOutTemperature and back-solves the isentropic efficiency
+                # (solveEfficiency) to hit that outlet T. This matches the source
+                # discharge temperature instead of guessing a fixed efficiency
+                # (verified first-error: 23KA003 was -6.5 C on a matching inlet with
+                # the 0.75 default).
+                out_s = _get_outlet_stream_data()
+                t_out_c = out_s.temperature_C if out_s else None
+                if t_out_c is not None:
+                    lines.append(f'{var}.setOutletTemperature({t_out_c}, "C")')
+                    lines.append(f'# discharge T taken from source model; efficiency '
+                                 f'back-solved (UniSim efficiency unavailable)')
+                else:
+                    lines.append(f'{var}.setIsentropicEfficiency(0.75)')
+                    lines.append(f'# WARNING: compressor efficiency not available '
+                                 f'from source model — using 75% default')
 
         elif neqsim_type == 'ThrottlingValve':
+            # Small-dP 'DP*' line-loss valves: reproduce UniSim's fixed pressure
+            # DROP (outlet = inlet - dP) via setDeltaPressure so the pressure
+            # tracks the inlet. Large letdown/control valves keep outlet-pressure.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
             p_out = op.properties.get('outlet_pressure_bara')
             if not p_out:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.pressure_bara:
                     p_out = out_s.pressure_bara
-            if p_out:
+            if dp_kpa is not None and 0 < dp_kpa <= 100.0:
+                lines.append(f'{var}.setDeltaPressure({dp_kpa / 100.0}, "bara")')
+            elif p_out:
                 lines.append(f'{var}.setOutletPressure({p_out})')
 
         elif neqsim_type in ('Cooler', 'Heater'):
@@ -5621,6 +6890,75 @@ class UniSimToNeqSim:
                     t_out = out_s.temperature_C
             if t_out is not None:
                 lines.append(f'{var}.setOutTemperature({t_out + 273.15})')
+            # Transfer the UniSim cooler/heater pressure spec. NeqSim Cooler/
+            # Heater keep inlet pressure otherwise, so a downstream separator
+            # would flash at the wrong pressure. Emit whichever the UniSim unit
+            # uses: a fixed pressure DROP -> setPressureDrop (bara, tracks the
+            # live inlet each iteration); otherwise the fixed outlet pressure ->
+            # setOutletPressure.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
+            p_out = op.properties.get('outlet_pressure_bara')
+            in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                    if op.feeds else None)
+            p_in = in_s.pressure_bara if in_s else None
+            if dp_kpa is not None and dp_kpa > 0.0:
+                lines.append(f'{var}.setPressureDrop({round(dp_kpa / 100.0, 6)})')
+            elif p_out and p_in and (p_in - p_out) > 0.001:
+                lines.append(f'{var}.setOutletPressure({p_out}, "bara")')
+
+        elif neqsim_type == 'HeatExchanger':
+            # Two-stream (process-to-process) heat exchanger. The converter set
+            # no UA/duty/temperature, so NeqSim transferred no heat (both outlets
+            # stayed at the hot inlet temperature). Reproduce the UniSim result by
+            # pinning the HOT-side outlet to its known UniSim outlet temperature
+            # via the "outTemperature" specification; NeqSim then energy-balances
+            # the cold side. This reproduces the process (hot) outlet exactly and
+            # drives the cold outlet to the correct duty, which matches UniSim far
+            # better than a UA value when the two flows differ from the source
+            # model (e.g. a recycle side that circulates a different rate). The
+            # pin tracks the live inlet pressure each iteration, so no spurious
+            # pressure drop is introduced. Falls back to a UA value (UA = duty /
+            # LMTD) only if the outlet temperatures are unavailable.
+            duty = op.properties.get('duty_kW')
+            feeds = op.feeds or []
+            prods = op.products or []
+            if len(feeds) >= 2 and len(prods) >= 2:
+                h_in = self._find_stream_by_name(flowsheet, feeds[0])
+                c_in = self._find_stream_by_name(flowsheet, feeds[1])
+                h_out = self._find_stream_by_name(flowsheet, prods[0])
+                c_out = self._find_stream_by_name(flowsheet, prods[1])
+                streams = [h_in, c_in, h_out, c_out]
+                if all(s is not None and s.temperature_C is not None
+                       for s in streams):
+                    th_in, tc_in = h_in.temperature_C, c_in.temperature_C
+                    th_out, tc_out = h_out.temperature_C, c_out.temperature_C
+                    # Pin the outlet on the hot side (the stream being cooled).
+                    if th_in >= tc_in:
+                        spec_side, spec_out_t = 0, th_out
+                    else:
+                        spec_side, spec_out_t = 1, tc_out
+                    lines.append(
+                        f'{var}.setOutStreamSpecificationNumber({spec_side})')
+                    lines.append(
+                        f'{var}.setOutTemperature({spec_out_t}, "C")')
+                elif duty:
+                    # Fallback: UA from duty and LMTD (needs all four temps for
+                    # LMTD, so only reached if some outlet temp is missing).
+                    valid = [s for s in streams
+                             if s is not None and s.temperature_C is not None]
+                    if len(valid) == 4:
+                        th_in, tc_in = h_in.temperature_C, c_in.temperature_C
+                        th_out, tc_out = h_out.temperature_C, c_out.temperature_C
+                        dt1 = th_in - tc_out
+                        dt2 = th_out - tc_in
+                        if dt1 > 1e-6 and dt2 > 1e-6 and abs(dt1 - dt2) > 1e-6:
+                            lmtd = (dt1 - dt2) / math.log(dt1 / dt2)
+                        else:
+                            lmtd = max((dt1 + dt2) / 2.0, 1.0)
+                        ua_w_per_k = abs(duty) * 1000.0 / lmtd  # kW -> W
+                        lines.append(
+                            f'{var}.setGuessOutTemperature({th_out + 273.15})')
+                        lines.append(f'{var}.setUAvalue({ua_w_per_k:.1f})')
 
         elif neqsim_type == 'Pump':
             p_out = op.properties.get('outlet_pressure_bara')
@@ -5644,10 +6982,24 @@ class UniSimToNeqSim:
                 lines.append(f'{var}.setOutletPressure({p_out})')
 
         elif neqsim_type == 'AdiabaticPipe':
-            if op.properties.get('length_m'):
-                lines.append(f'{var}.setLength({op.properties["length_m"]})')
-            if op.properties.get('diameter_m'):
-                lines.append(f'{var}.setDiameter({op.properties["diameter_m"]})')
+            length = op.properties.get('length_m')
+            diameter = op.properties.get('diameter_m')
+            if length:
+                lines.append(f'{var}.setLength({length})')
+            if diameter:
+                lines.append(f'{var}.setDiameter({diameter})')
+            # Full geometry (elevation, roughness, increments) is only set when
+            # length + diameter are present — i.e. when the unit was emitted as a
+            # PipeBeggsAndBrills (which supports these setters). A bare
+            # AdiabaticPipe (no geometry) receives neither.
+            if length and diameter:
+                elevation = op.properties.get('elevation_m')
+                if elevation is not None:
+                    lines.append(f'{var}.setElevation({elevation})')
+                roughness = op.properties.get('roughness_m')
+                if roughness:
+                    lines.append(f'{var}.setPipeWallRoughness({roughness})')
+                lines.append(f'{var}.setNumberOfIncrements(20)')
 
         elif neqsim_type in ('Separator', 'GasScrubber',
                              'ThreePhaseSeparator'):

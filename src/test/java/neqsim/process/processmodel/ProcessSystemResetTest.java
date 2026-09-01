@@ -1,8 +1,12 @@
 package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 
 /** Tests for the ProcessSystem history buffer and reset behaviour. */
 public class ProcessSystemResetTest extends neqsim.NeqSimTest {
@@ -44,5 +48,56 @@ public class ProcessSystemResetTest extends neqsim.NeqSimTest {
   public void resetWithoutStoredStateThrows() {
     ProcessSystem process = new ProcessSystem();
     assertThrows(IllegalStateException.class, process::reset);
+  }
+
+  @Test
+  public void historyRecordingCanBeDisabledWithoutSkippingMeasurements() {
+    ProcessSystem process = new ProcessSystem();
+    AtomicInteger measurements = new AtomicInteger();
+    process.add(new CountingMeasurement(measurements));
+
+    assertTrue(process.isMeasurementHistoryRecordingEnabled());
+    process.setMeasurementHistoryRecordingEnabled(false);
+    process.runTransient();
+    process.runTransient();
+
+    assertFalse(process.isMeasurementHistoryRecordingEnabled());
+    assertEquals(0, process.getHistorySize());
+    assertEquals(2, measurements.get());
+
+    process.setMeasurementHistoryRecordingEnabled(true);
+    process.runTransient();
+    assertEquals(1, process.getHistorySize());
+    assertEquals(3, measurements.get());
+  }
+
+  @Test
+  public void resetRestoresHistoryRecordingSetting() {
+    ProcessSystem process = new ProcessSystem();
+    process.setMeasurementHistoryRecordingEnabled(false);
+    process.storeInitialState();
+
+    process.setMeasurementHistoryRecordingEnabled(true);
+    process.runTransient();
+    process.reset();
+
+    assertFalse(process.isMeasurementHistoryRecordingEnabled());
+    assertEquals(0, process.getHistorySize());
+  }
+
+  private static final class CountingMeasurement extends MeasurementDeviceBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final AtomicInteger measurements;
+
+    private CountingMeasurement(AtomicInteger measurements) {
+      super("counter", "-");
+      this.measurements = measurements;
+    }
+
+    @Override
+    public double getMeasuredValue(String unit) {
+      measurements.incrementAndGet();
+      return 1.0;
+    }
   }
 }

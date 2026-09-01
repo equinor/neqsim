@@ -222,7 +222,7 @@ public class VesselFillingSimulator implements Serializable {
     double mass = density * vesselVolume;
 
     // Align the fluid mole basis with the physical vessel inventory (see DepressurizationSimulator
-    // for the rationale; setTotalNumberOfMoles must not be used).
+    // for the rationale).
     double currentMoles = fluid.getNumberOfMoles();
     double molarMass = fluid.getMolarMass();
     if (molarMass > 0.0 && currentMoles > 0.0) {

@@ -8,9 +8,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -19,6 +22,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.ProcessElementInterface;
@@ -29,6 +42,9 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.ExplicitEulerIntegrator;
 import neqsim.process.dynamics.IntegratorStrategy;
+import neqsim.process.dynamics.TransientStateParticipant;
+import neqsim.process.dynamics.TransientStepTransaction;
+import neqsim.process.dynamics.TransientTransactionCoverage;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -46,6 +62,7 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reactor.FurnaceBurner;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
@@ -69,6 +86,15 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Represents a process system containing unit operations.
  *
+ * <p>
+ * <b>Identity equality.</b> {@code ProcessSystem} does not override {@link Object#equals(Object)} or
+ * {@link Object#hashCode()}, so two process systems are equal only when they are the same instance. The previous
+ * value-based implementation hashed mutable state ({@code time}, {@code timeStepNumber}, the measurement history and
+ * every unit operation), all of which is rewritten by {@link #run()}; an entry stored in a {@link java.util.HashMap}
+ * before a run therefore became unreachable afterwards. To compare two models by value use
+ * {@link neqsim.process.processmodel.lifecycle.ProcessModelState#compare}.
+ * </p>
+ *
  * @author esol
  */
 public class ProcessSystem extends SimulationBaseClass {
@@ -84,6 +110,11 @@ public class ProcessSystem extends SimulationBaseClass {
 
   transient Thread thisThread;
   private MeasurementHistory measurementHistory = new MeasurementHistory();
+  /**
+   * Whether transient steps append measurement rows to {@link #measurementHistory}. A boxed value preserves the
+   * historical enabled default when deserializing process models written before this setting existed.
+   */
+  private volatile Boolean recordMeasurementHistory = Boolean.TRUE;
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   /**
@@ -102,8 +133,19 @@ public class ProcessSystem extends SimulationBaseClass {
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
   private transient ProcessSystem initialStateSnapshot;
+  /**
+   * Multiphase (three-phase) flash setting applied to every fluid in this process system. {@code null} means the
+   * multiphase check of each fluid is left untouched. See {@link #setMultiPhaseCheck(boolean)}.
+   */
+  private Boolean multiPhaseCheck = null;
   private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
   private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
+
+  /** Whether {@link #runUntilConverged(int)} derives its low-flow bypass threshold from the process flow scale. */
+  private boolean autoConvergenceTuning = true;
+
+  /** Noise-floor fraction of the total process feed flow used by {@link #runUntilConverged(int)}. */
+  private double autoTuningFlowFraction = 1.0e-6;
 
   // Transient simulation settings
   private int maxTransientIterations = 3; // Number of iterations within each time step
@@ -145,6 +187,15 @@ public class ProcessSystem extends SimulationBaseClass {
   private boolean parallelTransientEnabled = false;
   /** Thread pool size for parallel transient execution. */
   private int transientThreadPoolSize = Runtime.getRuntime().availableProcessors();
+  /**
+   * Reusable worker pool for parallel transient execution. The executor is transient because threads and executor
+   * services are runtime resources rather than process-model state.
+   */
+  private transient ExecutorService parallelTransientExecutor;
+  /** Worker count used to create {@link #parallelTransientExecutor}. */
+  private transient int parallelTransientExecutorSize;
+  /** Counter used to give reusable transient workers stable diagnostic names. */
+  private static final AtomicInteger TRANSIENT_WORKER_COUNTER = new AtomicInteger();
 
   /**
    * Pluggable integration strategy advertised to equipment during {@code runTransient}. Defaults to
@@ -168,6 +219,9 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private transient EventScheduler eventScheduler = null;
 
+  /** Active identity-preserving transient transaction, or {@code null} outside a trial step. */
+  private transient ProcessSystemStepTransaction activeTransientStepTransaction = null;
+
   // Graph-based execution fields
   /** Cached process graph for topology analysis. */
   private transient ProcessGraph cachedGraph = null;
@@ -187,6 +241,10 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient Boolean cachedHasAdjusters = null;
   /** Cached result of hasRecycles() - null means not yet computed. */
   private transient Boolean cachedHasRecycles = null;
+  /** Topology-derived units eligible for automatic low-flow tuning. */
+  private transient volatile List<ProcessEquipmentBaseClass> cachedAutoLowFlowUnits = null;
+  /** Topology-derived recycle subset shared by automatic recycle tuning passes. */
+  private transient volatile List<Recycle> cachedAutoTuningRecycles = null;
   /** Cached result of hasCalculators() - null means not yet computed. */
   private transient Boolean cachedHasCalculators = null;
   /** Cached result of hasMultiInputEquipment() - null means not yet computed. */
@@ -203,8 +261,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Whether to use optimized execution (parallel/hybrid) by default when run() is called. When true, run() delegates to
    * runOptimized() which automatically selects the best strategy. When false, run() uses sequential execution in
    * insertion order (legacy behavior). Default is true for optimal performance - runOptimized() automatically falls
-   * back to sequential execution for processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve
-   * correct mass balance.
+   * back to level-based execution when a feed-forward topology is too small or too narrow to amortize dataflow
+   * scheduling.
    */
   private boolean useOptimizedExecution = true;
 
@@ -212,10 +270,13 @@ public class ProcessSystem extends SimulationBaseClass {
   private static final class DataflowExecutionPlan {
     private final List<List<ProcessNode>> tasks;
     private final List<java.util.Set<Integer>> taskPredecessors;
+    private final boolean hasParallelTasks;
 
-    private DataflowExecutionPlan(List<List<ProcessNode>> tasks, List<java.util.Set<Integer>> taskPredecessors) {
+    private DataflowExecutionPlan(List<List<ProcessNode>> tasks, List<java.util.Set<Integer>> taskPredecessors,
+        boolean hasParallelTasks) {
       this.tasks = tasks;
       this.taskPredecessors = taskPredecessors;
+      this.hasParallelTasks = hasParallelTasks;
     }
   }
 
@@ -241,7 +302,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * When true, lifecycle events are published to the ProcessEventBus singleton during simulation. Default is false for
    * zero overhead when not needed. Enable via setPublishEvents(true).
    */
-  private boolean publishEvents = false;
+  private volatile boolean publishEvents = false;
 
   /**
    * When true, validateSetup() is auto-invoked on each equipment unit before the first iteration. Validation warnings
@@ -259,6 +320,18 @@ public class ProcessSystem extends SimulationBaseClass {
    * wall-time reduction on flowsheets that re-flash near-identical conditions.
    */
   private boolean useFlashWarmStart = false;
+
+  /**
+   * Flowsheet-wide physical-property initialization level applied to every {@link Stream} in this process system.
+   *
+   * <p>
+   * {@code null} (default) means each stream keeps its own setting, i.e. the historical
+   * {@link Stream.PropertyInitLevel#FULL} behaviour. Setting it to {@link Stream.PropertyInitLevel#DENSITY_ONLY} via
+   * {@link #setPropertyInitLevel(Stream.PropertyInitLevel)} skips the viscosity, thermal-conductivity and diffusivity
+   * correlations after every stream flash, which is roughly an order of magnitude cheaper.
+   * </p>
+   */
+  private Stream.PropertyInitLevel propertyInitLevel = null;
 
   /**
    * When true, per-unit execution timing is recorded during simulation. After run() completes, call
@@ -283,6 +356,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * {@link #getRunStatus()} and {@link #getRunStatusJson()}.
    */
   private transient RunStatus lastRunStatus = new RunStatus();
+
+  /**
+   * Immutable success records reused while the unit structure, names and types remain unchanged.
+   */
+  private transient List<UnitRunStatus> cachedSuccessfulRunStatuses = null;
 
   /**
    * Interface for monitoring simulation progress during execution. Implementations receive callbacks after each unit
@@ -428,9 +506,126 @@ public class ProcessSystem extends SimulationBaseClass {
 
     getUnitOperations().add(position, operation);
     invalidateStructureCaches();
+    if (propertyInitLevel != null) {
+      applyPropertyInitLevel(operation, propertyInitLevel,
+          Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>()));
+    }
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
+  }
+
+  /**
+   * Applies a physical-property initialization level to a single unit operation.
+   *
+   * <p>
+   * The level is applied to the unit itself when it is a {@link Stream}, and to every inlet and outlet stream it
+   * exposes through {@link ProcessEquipmentInterface#getInletStreams()} and
+   * {@link ProcessEquipmentInterface#getOutletStreams()}, so streams that are owned by a separator, mixer or splitter
+   * (and therefore never registered directly in the process system) are covered as well.
+   * </p>
+   *
+   * @param operation the unit operation to configure; ignored when null
+   * @param level the property-initialization level to apply; must not be null
+   * @param visited identity set of streams already updated, used to avoid double counting shared streams
+   * @return the number of distinct streams updated
+   */
+  private int applyPropertyInitLevel(ProcessEquipmentInterface operation, Stream.PropertyInitLevel level,
+      java.util.Set<StreamInterface> visited) {
+    if (operation == null) {
+      return 0;
+    }
+    int count = 0;
+    if (operation instanceof ModuleInterface) {
+      ProcessSystem subProcess = ((ModuleInterface) operation).getOperations();
+      if (subProcess != null && subProcess != this) {
+        return subProcess.setPropertyInitLevel(level);
+      }
+      return 0;
+    }
+    if (operation instanceof Stream && visited.add((StreamInterface) operation)) {
+      ((Stream) operation).setPropertyInitLevel(level);
+      count++;
+    }
+    try {
+      List<StreamInterface> connected = new ArrayList<StreamInterface>();
+      if (operation.getInletStreams() != null) {
+        connected.addAll(operation.getInletStreams());
+      }
+      if (operation.getOutletStreams() != null) {
+        connected.addAll(operation.getOutletStreams());
+      }
+      for (StreamInterface connectedStream : connected) {
+        if (connectedStream instanceof Stream && visited.add(connectedStream)) {
+          ((Stream) connectedStream).setPropertyInitLevel(level);
+          count++;
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("could not propagate property init level to streams of " + operation.getName(), ex);
+    }
+    return count;
+  }
+
+  /**
+   * Applies the configured property-initialization level to every stream in this process system. Does nothing when
+   * {@link #setPropertyInitLevel(Stream.PropertyInitLevel)} has not been called.
+   *
+   * @return the number of distinct streams updated
+   */
+  private int applyPropertyInitLevel() {
+    if (propertyInitLevel == null) {
+      return 0;
+    }
+    java.util.Set<StreamInterface> visited = Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
+    int count = 0;
+    for (ProcessEquipmentInterface operation : getUnitOperations()) {
+      count += applyPropertyInitLevel(operation, propertyInitLevel, visited);
+    }
+    return count;
+  }
+
+  /**
+   * Sets the physical-property initialization level used by every {@link Stream} in this process system.
+   *
+   * <p>
+   * By default each stream runs {@code initProperties()} after its flash, which evaluates mass density, viscosity,
+   * thermal conductivity and diffusivity. Selecting {@link Stream.PropertyInitLevel#DENSITY_ONLY} evaluates the mass
+   * density only and skips the transport-property correlations, which measures roughly an order of magnitude faster per
+   * stream and typically removes a significant share of the wall time of a large flowsheet.
+   * </p>
+   *
+   * <p>
+   * <b>Warning - transport properties read back as zero.</b> {@link Stream.PropertyInitLevel#DENSITY_ONLY} does not
+   * throw when a transport property is requested afterwards; {@code getViscosity()}, {@code getThermalConductivity()}
+   * and the diffusion coefficients simply return {@code 0.0}. Only use it for flowsheets that need mass and energy
+   * balances, and switch back to {@link Stream.PropertyInitLevel#FULL} before any pipeline, heat-exchanger,
+   * mechanical-design or flow-assurance calculation that reads transport properties.
+   * </p>
+   *
+   * <p>
+   * The setting is applied immediately to all streams currently held by the unit operations, is propagated to nested
+   * {@link ModuleInterface} sub-processes, is applied to any unit added afterwards, and is re-applied at the start of
+   * every execution entry point ({@link #run(UUID)}, {@link #run_step(UUID)}, {@link #runSequential(UUID)},
+   * {@link #runParallel(UUID)}, {@link #runHybrid(UUID)}, {@link #runDataflow(UUID)} and
+   * {@link #runTransient(double, UUID)}).
+   * </p>
+   *
+   * @param level the level to apply; null restores per-stream control without changing already applied settings
+   * @return the number of distinct streams updated
+   */
+  public int setPropertyInitLevel(Stream.PropertyInitLevel level) {
+    this.propertyInitLevel = level;
+    return applyPropertyInitLevel();
+  }
+
+  /**
+   * Gets the flowsheet-wide physical-property initialization level.
+   *
+   * @return the configured level, or null when each stream controls its own level
+   */
+  public Stream.PropertyInitLevel getPropertyInitLevel() {
+    return propertyInitLevel;
   }
 
   /**
@@ -448,7 +643,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Add a standalone controller device to the process system. Controllers added here participate in the explicit
-   * controller scan during {@code runTransient}.
+   * controller scan during {@code runTransient}. Each controller identity is scheduled at most once in that scan. A
+   * controller that already reports the current timestep calculation identifier, for example after equipment-owned
+   * execution, is not advanced again. Merely attaching a controller to equipment that does not execute it does not
+   * suppress its standalone update.
    *
    * @param controllerDevice a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
@@ -857,6 +1055,127 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Enables or disables the multiphase (three-phase) flash on every fluid in this process system.
+   *
+   * <p>
+   * Turning the multiphase check off on a process area that is known to be two-phase only (for example a dry-gas
+   * compression train) avoids the extra phase-stability work in every flash and can speed up the solve considerably.
+   * The setting is applied immediately to all fluids currently held by the unit operations and their inlet/outlet
+   * streams, is propagated to nested {@link ModuleInterface} sub-processes, and is re-applied at the start of every
+   * execution entry point ({@link #run(UUID)}, {@link #run_step(UUID)}, {@link #runSequential(UUID)},
+   * {@link #runParallel(UUID)}, {@link #runHybrid(UUID)}, {@link #runDataflow(UUID)} and
+   * {@link #runTransient(double, UUID)}) so equipment that temporarily enables the check (for example
+   * {@link neqsim.process.equipment.separator.ThreePhaseSeparator}) cannot leak the setting into the rest of the area.
+   * </p>
+   *
+   * <p>
+   * If this method is never called the multiphase check of each fluid is left untouched.
+   * </p>
+   *
+   * @param enabled true to enable the multiphase flash, false to turn it off for this process system
+   * @return the number of distinct fluids updated
+   */
+  public int setMultiPhaseCheck(boolean enabled) {
+    this.multiPhaseCheck = Boolean.valueOf(enabled);
+    return applyMultiPhaseCheck();
+  }
+
+  /**
+   * Returns the multiphase-check setting configured for this process system.
+   *
+   * @return {@link Boolean#TRUE} or {@link Boolean#FALSE} if {@link #setMultiPhaseCheck(boolean)} has been called, or
+   * null when the multiphase check of each fluid is left untouched
+   */
+  public Boolean getMultiPhaseCheck() {
+    return multiPhaseCheck;
+  }
+
+  /**
+   * Applies the configured multiphase-check setting to every fluid in this process system. Does nothing when
+   * {@link #setMultiPhaseCheck(boolean)} has not been called.
+   *
+   * @return the number of distinct fluids updated
+   */
+  private int applyMultiPhaseCheck() {
+    if (multiPhaseCheck == null) {
+      return 0;
+    }
+    boolean enabled = multiPhaseCheck.booleanValue();
+    java.util.Set<SystemInterface> visited = Collections.newSetFromMap(new IdentityHashMap<SystemInterface, Boolean>());
+    int count = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit == null) {
+        continue;
+      }
+      if (unit instanceof ModuleInterface) {
+        ProcessSystem subProcess = ((ModuleInterface) unit).getOperations();
+        if (subProcess != null && subProcess != this) {
+          count += subProcess.setMultiPhaseCheck(enabled);
+        }
+        continue;
+      }
+      count += applyMultiPhaseCheck(unit.getThermoSystem(), enabled, visited);
+      count += applyMultiPhaseCheck(unit.getInletStreams(), enabled, visited);
+      count += applyMultiPhaseCheck(unit.getOutletStreams(), enabled, visited);
+    }
+    return count;
+  }
+
+  /**
+   * Applies the multiphase-check setting to the fluids of a list of streams.
+   *
+   * @param streams the streams to update; may be null
+   * @param enabled true to enable the multiphase flash, false to turn it off
+   * @param visited identity set of fluids already updated, used to avoid double counting shared fluids
+   * @return the number of distinct fluids updated
+   */
+  private int applyMultiPhaseCheck(List<StreamInterface> streams, boolean enabled,
+      java.util.Set<SystemInterface> visited) {
+    if (streams == null) {
+      return 0;
+    }
+    int count = 0;
+    for (StreamInterface stream : streams) {
+      if (stream != null) {
+        count += applyMultiPhaseCheck(stream.getThermoSystem(), enabled, visited);
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Applies the multiphase-check setting to a single fluid.
+   *
+   * @param fluid the fluid to update; may be null
+   * @param enabled true to enable the multiphase flash, false to turn it off
+   * @param visited identity set of fluids already updated, used to avoid double counting shared fluids
+   * @return 1 if the fluid was updated, otherwise 0
+   */
+  private int applyMultiPhaseCheck(SystemInterface fluid, boolean enabled, java.util.Set<SystemInterface> visited) {
+    if (fluid == null || !visited.add(fluid)) {
+      return 0;
+    }
+    fluid.setMultiPhaseCheck(enabled);
+    return 1;
+  }
+
+  /**
+   * Re-applies every flowsheet-wide fluid and stream setting configured on this process system.
+   *
+   * <p>
+   * Called at the start of each execution entry point ({@link #run(UUID)}, {@link #run_step(UUID)},
+   * {@link #runSequential(UUID)}, {@link #runParallel(UUID)}, {@link #runHybrid(UUID)}, {@link #runDataflow(UUID)} and
+   * {@link #runTransient(double, UUID)}) so that equipment which temporarily changes a setting - for example
+   * {@link neqsim.process.equipment.separator.ThreePhaseSeparator} enabling the multiphase check - cannot leak it into
+   * the rest of the area, and so that streams created after the setting was configured are covered as well.
+   * </p>
+   */
+  private void applyFlowsheetWideSettings() {
+    applyMultiPhaseCheck();
+    applyPropertyInitLevel();
+  }
+
+  /**
    * Validates the process system setup before execution.
    *
    * <p>
@@ -1168,10 +1487,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * <ul>
    * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and read downstream
    * targets, creating implicit feedback loops)</li>
-   * <li>For processes with recycles (no adjusters): sequential execution for full convergence</li>
-   * <li>For processes with multi-input equipment (Mixer, Manifold, HeatExchanger, etc.): sequential execution to ensure
-   * correct mass balance</li>
-   * <li>For simple feed-forward processes: parallel execution for maximum speed</li>
+   * <li>For processes with recycles (no adjusters): hybrid feed-forward parallelism and iterative convergence</li>
+   * <li>For feed-forward processes, including multi-input equipment: dependency-aware dataflow for sufficiently wide
+   * topologies, otherwise level-based parallel execution</li>
    * </ul>
    *
    * @param id calculation identifier for tracking
@@ -1179,7 +1497,10 @@ public class ProcessSystem extends SimulationBaseClass {
   public void runOptimized(UUID id) {
     enterRunScope();
     try {
-      resetActiveStates();
+      // The concrete method selected below applies flowsheet-wide settings and
+      // performs the active-state reset when runOptimized() is called directly.
+      // When run() delegates here, its outer run scope already performed the
+      // active-state reset, so repeating preparation in this dispatcher is wasteful.
       if (hasAdjusters()) {
         // Adjusters create implicit feedback loops via signal connections and
         // iterate on a target variable. The graph partitioner cannot represent
@@ -1199,26 +1520,15 @@ public class ProcessSystem extends SimulationBaseClass {
           logger.warn("Hybrid execution interrupted, falling back to sequential");
           runSequential(id);
         }
-      } else if (hasMultiInputEquipment()) {
-        // Process has multi-input equipment (Mixer, HeatExchanger, etc.) but no
-        // recycles or adjusters. The graph correctly places multi-input equipment
-        // at levels after all their input producers, so parallel execution of
-        // independent units at earlier levels is safe. Use runParallel which
-        // respects the topological order and Union-Find grouping.
-        try {
-          runParallel(id);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("Parallel execution interrupted, falling back to sequential");
-          runSequential(id);
-        }
       } else {
-        // Feed-forward process with single-input equipment only. For larger
-        // flowsheets use dataflow scheduling (no level barriers, units fire as
-        // soon as predecessors complete); for small trees the CompletableFuture
-        // overhead outweighs the straggler benefit, so stay on runParallel.
+        // Feed-forward process. For larger, genuinely wide flowsheets use dataflow
+        // scheduling (no level barriers, units fire as soon as predecessors
+        // complete). Multi-input equipment is safe because the dataflow plan uses
+        // the same predecessor graph and shared-input grouping as runParallel().
+        // Serial plans cannot benefit from futures, and small trees do not
+        // amortize their overhead.
         try {
-          if (unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD) {
+          if (shouldUseDataflowExecution()) {
             runDataflow(id);
           } else {
             runParallel(id);
@@ -1232,6 +1542,15 @@ public class ProcessSystem extends SimulationBaseClass {
     } finally {
       exitRunScope();
     }
+  }
+
+  /**
+   * Returns whether this feed-forward process is wide enough to amortize dataflow scheduling.
+   *
+   * @return true when the cached plan contains useful parallel tasks and meets the size threshold
+   */
+  private boolean shouldUseDataflowExecution() {
+    return unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD && getCachedDataflowPlan().hasParallelTasks;
   }
 
   /**
@@ -1345,8 +1664,8 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Multi-input equipment (Mixer, Manifold, TurboExpanderCompressor, Ejector, HeatExchanger, MultiStreamHeatExchanger)
-   * require sequential execution to ensure correct mass balance. Parallel execution can change the order in which input
-   * streams are processed, leading to incorrect results.
+   * requires dependency-aware execution to ensure correct mass balance. Parallel and dataflow execution preserve inlet
+   * ordering and serialize consumers that share the same mutable stream object.
    * </p>
    *
    * @return true if there are multi-input equipment units in the process
@@ -1403,41 +1722,6 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Returns true if the given graph node represents multi-input equipment. Used by
-   * {@link #groupNodesBySharedInputStreams(List)} to decide whether shared-stream consumers need to be serialised
-   * within a group.
-   *
-   * @param node the graph node
-   * @return {@code true} if the underlying equipment has 2+ inlet streams or is one of the class-based multi-input
-   * types
-   */
-  private boolean isMultiInputNode(ProcessNode node) {
-    ProcessEquipmentInterface unit = node.getEquipment();
-    if (unit == null) {
-      return false;
-    }
-    if (unit instanceof MixerInterface || unit instanceof Manifold || unit instanceof TurboExpanderCompressor
-        || unit instanceof Ejector || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
-        || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
-      return true;
-    }
-    if (unit instanceof neqsim.process.equipment.separator.Separator) {
-      if (((neqsim.process.equipment.separator.Separator) unit).numberOfInputStreams > 1) {
-        return true;
-      }
-    }
-    try {
-      java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets = unit.getInletStreams();
-      if (inlets != null && inlets.size() > 1) {
-        return true;
-      }
-    } catch (Exception e) {
-      // Fall through - conservative default is false
-    }
-    return false;
-  }
-
-  /**
    * Returns the cached grouped level plan used by parallel and dataflow execution.
    *
    * @return grouped process-node levels
@@ -1453,7 +1737,14 @@ public class ProcessSystem extends SimulationBaseClass {
           singleGroup.add(level);
           plan.add(singleGroup);
         } else {
-          plan.add(groupNodesBySharedInputStreams(level));
+          List<List<ProcessNode>> groups = groupNodesBySharedInputStreams(level);
+          Collections.sort(groups, new Comparator<List<ProcessNode>>() {
+            @Override
+            public int compare(List<ProcessNode> left, List<ProcessNode> right) {
+              return Integer.compare(left.get(0).getIndex(), right.get(0).getIndex());
+            }
+          });
+          plan.add(groups);
         }
       }
       cachedParallelPlan = plan;
@@ -1472,7 +1763,11 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     List<List<ProcessNode>> tasks = new ArrayList<>();
+    boolean hasParallelTasks = false;
     for (List<List<ProcessNode>> level : getCachedParallelPlan()) {
+      if (level.size() > 1) {
+        hasParallelTasks = true;
+      }
       tasks.addAll(level);
     }
 
@@ -1500,7 +1795,7 @@ public class ProcessSystem extends SimulationBaseClass {
       taskPredecessors.add(predSet);
     }
 
-    cachedDataflowPlan = new DataflowExecutionPlan(tasks, taskPredecessors);
+    cachedDataflowPlan = new DataflowExecutionPlan(tasks, taskPredecessors, hasParallelTasks);
     return cachedDataflowPlan;
   }
 
@@ -1562,7 +1857,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
     List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
     if (firstIterativeLevel >= 0) {
-      java.util.Set<ProcessEquipmentInterface> iterativeSet = new java.util.HashSet<>();
+      // Identity based: the traversal must treat each unit as a distinct node regardless of any
+      // future equality semantics, so membership is decided by object identity only.
+      java.util.Set<ProcessEquipmentInterface> iterativeSet = java.util.Collections
+          .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
       for (int levelIdx = firstIterativeLevel; levelIdx < levels.size(); levelIdx++) {
         for (ProcessNode node : levels.get(levelIdx)) {
           iterativeSet.add(node.getEquipment());
@@ -1632,13 +1930,27 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns whether a unit is dirty, including a low-flow threshold that has not yet been evaluated.
+   *
+   * @param unit unit to inspect
+   * @return true when the unit must run
+   */
+  private boolean needsRecalculation(ProcessEquipmentInterface unit) {
+    if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass
+        && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).isMinimumFlowRecalculationPending()) {
+      return true;
+    }
+    return unit.needRecalculation();
+  }
+
+  /**
    * Checks whether any non-setter unit needs recalculation after setters have been applied.
    *
    * @return true if any regular unit reports dirty state
    */
   private boolean hasUnitsNeedingRecalculation() {
     for (ProcessEquipmentInterface unit : unitOperations) {
-      if (!(unit instanceof Setter) && unit.needRecalculation()) {
+      if (!(unit instanceof Setter) && needsRecalculation(unit)) {
         return true;
       }
     }
@@ -1658,6 +1970,51 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns whether a recycle needs the legacy second observation before its state can be accepted.
+   *
+   * <p>
+   * A recycle with fewer than two completed observations cannot safely call {@link Recycle#solved()}, because an
+   * unconfigured recycle may not have an outlet stream yet. Previously accepted recycles are inspected before their
+   * per-run iteration counters are reset so an unchanged process can reuse that accepted state.
+   * </p>
+   *
+   * @return true when at least one recycle does not have a previously accepted state
+   */
+  private boolean requiresRecycleConfirmation() {
+    boolean hasRecycle = false;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle) {
+        hasRecycle = true;
+        Recycle recycle = (Recycle) unit;
+        if (recycle.getIterations() <= 1 || !recycle.solved()) {
+          return true;
+        }
+      }
+    }
+    return !hasRecycle;
+  }
+
+  /**
+   * Returns whether a recycle auto-deactivated during the current physical pass.
+   *
+   * <p>
+   * A recycle that collapses below its low-flow threshold reports itself solved and clears its residuals. When the run
+   * started from an accepted active recycle state, one additional process pass is still required to clear the prior
+   * loop inventory from upstream equipment.
+   * </p>
+   *
+   * @return true when at least one recycle is auto-deactivated but not explicitly locked inactive
+   */
+  private boolean hasAutoDeactivatedRecycle() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle && !unit.isLockedInactive() && !unit.isActive()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Runs the process using hybrid execution strategy.
    *
    * <p>
@@ -1672,7 +2029,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if thread is interrupted during parallel execution
    */
   public synchronized void runHybrid(UUID id) throws InterruptedException {
+    boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     resetActiveStates();
+    applyFlowsheetWideSettings();
     HybridExecutionPlan plan = getCachedHybridPlan();
 
     // Run setters first (sequential, they set conditions)
@@ -1712,7 +2071,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           if (!(unit instanceof Recycle)) {
             try {
-              if (iter == 1 || unit.needRecalculation()) {
+              if (iter == 1 || needsRecalculation(unit)) {
                 runUnitProfiled(unit, id);
               }
             } catch (Exception ex) {
@@ -1787,7 +2146,8 @@ public class ProcessSystem extends SimulationBaseClass {
         } else {
           recycleNoProgress = 0;
         }
-      } while ((!isConverged || (iter < 2)) && iter < 100 && !Thread.currentThread().isInterrupted());
+      } while ((!isConverged || (iter < 2 && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100
+          && !Thread.currentThread().isInterrupted());
     }
 
     // Update calculation identifiers
@@ -1838,12 +2198,15 @@ public class ProcessSystem extends SimulationBaseClass {
     } else if (!recycles.isEmpty()) {
       strategy = "hybrid (parallel feed-forward then iterative recycle section)";
       reason = "process contains Recycle units - iterative convergence required";
-    } else if (!multiInput.isEmpty()) {
-      strategy = "parallel (topological levels with union-find grouping)";
-      reason = "process contains multi-input equipment - level-based parallelism applied";
+    } else if (shouldUseDataflowExecution()) {
+      strategy = "dataflow (dependency-aware parallel tasks)";
+      reason = multiInput.isEmpty()
+          ? "wide feed-forward process has independent tasks that can run without level barriers"
+          : "wide feed-forward process includes multi-input equipment protected by predecessor dependencies and "
+              + "shared-input grouping";
     } else {
-      strategy = "parallel (fully data-parallel)";
-      reason = "feed-forward process with single-input equipment only";
+      strategy = "parallel (topological levels with union-find grouping)";
+      reason = "feed-forward plan is too small or too narrow to amortize dataflow scheduling";
     }
     sb.append("Strategy: ").append(strategy).append("\n");
     sb.append("Reason: ").append(reason).append("\n");
@@ -2056,9 +2419,12 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
     resetActiveStates();
+    applyFlowsheetWideSettings();
     // Publish simulation start event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
-        "Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
+          "Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
+    }
 
     // Auto-validate equipment setup before first run
     if (autoValidate) {
@@ -2073,8 +2439,10 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     if (!hasUnitsNeedingRecalculation()) {
       updateCalculationIdentifiers(id);
-      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-          "Parallel simulation completed with no dirty units", ProcessEvent.Severity.INFO));
+      if (publishEvents) {
+        publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+            "Parallel simulation completed with no dirty units", ProcessEvent.Severity.INFO));
+      }
       return;
     }
 
@@ -2083,7 +2451,7 @@ public class ProcessSystem extends SimulationBaseClass {
       if (levelGroups.size() == 1 && levelGroups.get(0).size() == 1) {
         // Single unit at this level - run directly (no thread pool overhead)
         ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
-        if (!(unit instanceof Setter) && unit.needRecalculation()) {
+        if (!(unit instanceof Setter) && needsRecalculation(unit)) {
           try {
             runUnitProfiled(unit, id);
           } catch (Exception ex) {
@@ -2094,7 +2462,7 @@ public class ProcessSystem extends SimulationBaseClass {
         // Single group with multiple units sharing input streams - run sequentially
         for (ProcessNode node : levelGroups.get(0)) {
           ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter) && unit.needRecalculation()) {
+          if (!(unit instanceof Setter) && needsRecalculation(unit)) {
             try {
               runUnitProfiled(unit, id);
             } catch (Exception ex) {
@@ -2108,7 +2476,7 @@ public class ProcessSystem extends SimulationBaseClass {
         for (List<ProcessNode> group : levelGroups) {
           if (group.size() == 1) {
             final ProcessEquipmentInterface unitToRun = group.get(0).getEquipment();
-            if (!(unitToRun instanceof Setter) && unitToRun.needRecalculation()) {
+            if (!(unitToRun instanceof Setter) && needsRecalculation(unitToRun)) {
               final UUID calcId = id;
               futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
                 try {
@@ -2124,7 +2492,7 @@ public class ProcessSystem extends SimulationBaseClass {
             futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
               for (ProcessNode node : groupToRun) {
                 ProcessEquipmentInterface unit = node.getEquipment();
-                if (!(unit instanceof Setter) && unit.needRecalculation()) {
+                if (!(unit instanceof Setter) && needsRecalculation(unit)) {
                   try {
                     runUnitProfiled(unit, calcId);
                   } catch (Exception ex) {
@@ -2153,8 +2521,10 @@ public class ProcessSystem extends SimulationBaseClass {
     setCalculationIdentifier(id);
 
     // Publish simulation complete event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-        "Parallel simulation completed", ProcessEvent.Severity.INFO));
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+          "Parallel simulation completed", ProcessEvent.Severity.INFO));
+    }
   }
 
   /**
@@ -2181,6 +2551,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runDataflow(UUID id) throws InterruptedException {
     resetActiveStates();
+    applyFlowsheetWideSettings();
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
         "Dataflow simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
 
@@ -2213,7 +2584,7 @@ public class ProcessSystem extends SimulationBaseClass {
       Runnable body = () -> {
         for (ProcessNode node : taskNodes) {
           ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter) && unit.needRecalculation()) {
+          if (!(unit instanceof Setter) && needsRecalculation(unit)) {
             try {
               runUnitProfiled(unit, calcId);
             } catch (Exception ex) {
@@ -2309,27 +2680,13 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
 
-    // Union nodes that share the same input stream.
-    //
-    // Optimisation: only union when at least one of the nodes sharing the
-    // stream is multi-input equipment (Mixer, HeatExchanger, Separator with
-    // >1 inlets, etc.). Two single-input consumers reading the same upstream
-    // stream can run in parallel safely because the thermo clone() path is
-    // thread-safe for concurrent reads (shared read-only invariant on
-    // mixing-rule matrices). Forcing them into the same group was a legacy
-    // over-conservative grouping that limits parallelism unnecessarily.
+    // Union every pair of consumers that shares the same mutable stream object.
+    // Equipment commonly clones its inlet before calculating, but SystemInterface
+    // clone and initialization can touch shared thermodynamic helper state. Treating
+    // single-input consumers as read-only therefore permits platform-dependent races.
+    // Consumers of distinct stream objects remain in independent parallel groups.
     for (List<ProcessNode> nodesWithSameStream : streamToNodes.values()) {
       if (nodesWithSameStream.size() > 1) {
-        boolean anyMultiInput = false;
-        for (ProcessNode n : nodesWithSameStream) {
-          if (isMultiInputNode(n)) {
-            anyMultiInput = true;
-            break;
-          }
-        }
-        if (!anyMultiInput) {
-          continue; // Pure single-input readers - safe to run in parallel.
-        }
         ProcessNode first = nodesWithSameStream.get(0);
         for (int i = 1; i < nodesWithSameStream.size(); i++) {
           union.accept(first, nodesWithSameStream.get(i));
@@ -2473,7 +2830,12 @@ public class ProcessSystem extends SimulationBaseClass {
     boolean runThrew = false;
     try {
       resetExecutionProfile();
-      resetActiveStates();
+      // runOptimized() establishes an inner run scope before selecting a concrete
+      // execution method. Reset active states here while this scope is outermost;
+      // the legacy sequential path performs its own reset at the same run depth.
+      if (useOptimizedExecution) {
+        resetActiveStates();
+      }
       long wallStart = System.nanoTime();
       boolean prevWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
       if (useFlashWarmStart) {
@@ -2514,22 +2876,54 @@ public class ProcessSystem extends SimulationBaseClass {
       return;
     }
     if (!runThrew) {
-      java.util.Set<String> failedNames = new java.util.HashSet<String>();
-      for (UnitRunStatus u : lastRunStatus.getUnits()) {
-        if (!u.isSuccess()) {
-          failedNames.add(u.getUnitName());
-        }
-      }
-      for (ProcessEquipmentInterface unit : unitOperations) {
-        if (unit == null) {
-          continue;
-        }
-        if (!failedNames.contains(unit.getName())) {
-          lastRunStatus.recordSuccess(unit.getName(), unit.getClass().getSimpleName());
-        }
+      List<UnitRunStatus> successfulStatuses = getSuccessfulRunStatuses();
+      for (UnitRunStatus status : successfulStatuses) {
+        lastRunStatus.recordSuccess(status);
       }
     }
     lastRunStatus.markComplete(!runThrew);
+  }
+
+  /**
+   * Returns cached immutable success records, rebuilding them if a unit was renamed or replaced without changing the
+   * structure version.
+   *
+   * @return success records in process execution order
+   */
+  private List<UnitRunStatus> getSuccessfulRunStatuses() {
+    int nonNullUnitCount = 0;
+    List<UnitRunStatus> cachedStatuses = cachedSuccessfulRunStatuses;
+    boolean cacheMatches = cachedStatuses != null;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit == null) {
+        continue;
+      }
+      if (cacheMatches && cachedStatuses != null) {
+        if (nonNullUnitCount >= cachedStatuses.size()) {
+          cacheMatches = false;
+        } else {
+          UnitRunStatus cached = cachedStatuses.get(nonNullUnitCount);
+          String unitType = unit.getClass().getSimpleName();
+          if (!java.util.Objects.equals(cached.getUnitName(), unit.getName())
+              || !java.util.Objects.equals(cached.getUnitType(), unitType)) {
+            cacheMatches = false;
+          }
+        }
+      }
+      nonNullUnitCount++;
+    }
+    if (cacheMatches && cachedStatuses != null && nonNullUnitCount == cachedStatuses.size()) {
+      return cachedStatuses;
+    }
+
+    List<UnitRunStatus> rebuilt = new ArrayList<UnitRunStatus>(nonNullUnitCount);
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit != null) {
+        rebuilt.add(new UnitRunStatus(unit.getName(), unit.getClass().getSimpleName(), true, null, null));
+      }
+    }
+    cachedSuccessfulRunStatuses = rebuilt;
+    return rebuilt;
   }
 
   /**
@@ -2571,7 +2965,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    */
   public synchronized void runSequential(UUID id) {
+    boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     resetActiveStates();
+    applyFlowsheetWideSettings();
     // Determine execution order: use graph-based if enabled, otherwise use
     // insertion order
     List<ProcessEquipmentInterface> executionOrder;
@@ -2625,7 +3021,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
+            if (iter == 1 || needsRecalculation(unit)) {
               runUnitProfiled(unit, id);
             }
           } catch (Exception ex) {
@@ -2670,8 +3066,8 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       }
-    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
+        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
 
     // Publish simulation complete event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
@@ -2688,6 +3084,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {
+    applyFlowsheetWideSettings();
     for (int i = 0; i < unitOperations.size(); i++) {
       try {
         if (Thread.currentThread().isInterrupted()) {
@@ -2936,6 +3333,9 @@ public class ProcessSystem extends SimulationBaseClass {
     } else {
       unit.run(id);
     }
+    if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass) {
+      ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).clearMinimumFlowRecalculationPending();
+    }
   }
 
   /**
@@ -2950,6 +3350,13 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id the calculation identifier for this timestep
    */
   private void runUnitTransientSkippingInactive(ProcessEquipmentInterface unit, double dt, UUID id) {
+    // Setters are a dedicated pre-step specification phase. They have already
+    // received one runTransient(dt, id) call, including their single clock
+    // advance, and must not be integrated again in explicit, semi-implicit, or
+    // parallel equipment passes.
+    if (unit instanceof Setter) {
+      return;
+    }
     // Honor only the explicit user lock during dynamic stepping. Units that were
     // auto-bypassed by the low-flow heuristic on a previous (possibly steady-state)
     // pass must be given a chance to re-evaluate each timestep: they may hold dynamic
@@ -2988,11 +3395,14 @@ public class ProcessSystem extends SimulationBaseClass {
     // unchanged feed, the unit would be skipped by needRecalculation() and would not get a
     // chance to re-bypass itself, so we must leave its sticky bypass state alone.
     boolean outermost = getRunDepth().get().intValue() <= 1;
+    if (!outermost) {
+      return;
+    }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit.isLockedInactive()) {
         // Manually locked-off equipment must stay inactive across runs.
         unit.isActive(false);
-      } else if (outermost && unit.needRecalculation()) {
+      } else if (needsRecalculation(unit)) {
         // Fresh user-invoked solve AND inputs have changed: give the unit a chance to
         // re-evaluate its low-flow status. Its run() will be invoked and any auto-bypass
         // unit (Splitter/Separator/Heater/Compressor) will re-check flow via
@@ -3069,6 +3479,19 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Sets the low-flow bypass threshold on every unit operation in this process, expressed in a chosen mass-flow unit.
+   *
+   * @param threshold low-flow cutoff expressed in {@code unit} (must be &gt;= 0)
+   * @param unit mass-flow unit; see
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setMinimumFlow(double, String)}
+   * @throws IllegalArgumentException if the threshold is negative or the unit is not a recognised mass-flow unit
+   */
+  public void setSectionLowFlowThreshold(double threshold, String unit) {
+    setSectionLowFlowThreshold(
+        threshold * neqsim.process.equipment.ProcessEquipmentBaseClass.massFlowConversionToKgPerHour(unit));
+  }
+
+  /**
    * Sets the low-flow bypass threshold ({@code minimumFlow}, kg/hr) on a single named unit operation. Useful for tuning
    * per-unit cutoffs (e.g., a higher threshold on a small recycle pump than on the main feed train).
    *
@@ -3142,6 +3565,439 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Largest mass flow found on any unit inlet or outlet stream in this process.
+   *
+   * <p>
+   * Streams that cannot be read - typically because the unit has not been solved yet - are skipped.
+   * </p>
+   *
+   * @return the largest mass flow in kg/hr, or 0.0 when no stream could be read
+   */
+  public double getMaxStreamFlowRate() {
+    double largest = 0.0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      largest = Math.max(largest, largestFlowIn(unit.getInletStreams()));
+      largest = Math.max(largest, largestFlowIn(unit.getOutletStreams()));
+    }
+    return largest;
+  }
+
+  /**
+   * Streams that enter this process from outside it: inlet streams of some unit that no unit in this process produces.
+   *
+   * <p>
+   * This is the process mass-balance boundary on the feed side, and it is what {@link #getTotalFeedFlowRate()} sums.
+   * Recycle loops are excluded automatically because a recycle's target stream is an outlet of the
+   * {@link neqsim.process.equipment.util.Recycle} unit.
+   * </p>
+   *
+   * @return identity-distinct list of feed streams (may be empty)
+   */
+  public java.util.List<neqsim.process.equipment.stream.StreamInterface> getFeedStreams() {
+    java.util.Set<neqsim.process.equipment.stream.StreamInterface> produced = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<neqsim.process.equipment.stream.StreamInterface, Boolean>());
+    collectProducedStreams(produced);
+    java.util.Set<neqsim.process.equipment.stream.StreamInterface> inlets = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<neqsim.process.equipment.stream.StreamInterface, Boolean>());
+    collectInletStreams(inlets);
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> feeds = new java.util.ArrayList<neqsim.process.equipment.stream.StreamInterface>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : inlets) {
+      if (!produced.contains(stream)) {
+        feeds.add(stream);
+      }
+    }
+    return feeds;
+  }
+
+  /**
+   * Total mass flow entering this process across its feed boundary.
+   *
+   * <p>
+   * This is the physical throughput of the flowsheet and the reference scale used by automatic convergence tuning. It
+   * is deliberately a sum over the feed boundary rather than a maximum over all streams: an internal recycle or a
+   * not-yet-solved stream can carry an arbitrarily large flow and would otherwise set a meaningless scale.
+   * </p>
+   *
+   * @return total feed mass flow in kg/hr, or 0.0 when no feed stream could be read
+   */
+  public double getTotalFeedFlowRate() {
+    double total = 0.0;
+    for (neqsim.process.equipment.stream.StreamInterface stream : getFeedStreams()) {
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0.0) {
+          total += flow;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read feed flow rate while detecting the process flow scale", ex);
+      }
+    }
+    return total;
+  }
+
+  /**
+   * Adds every stream produced by a unit in this process to the supplied identity set.
+   *
+   * @param produced set to add to
+   */
+  void collectProducedStreams(java.util.Set<neqsim.process.equipment.stream.StreamInterface> produced) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      java.util.List<neqsim.process.equipment.stream.StreamInterface> outlets;
+      try {
+        outlets = unit.getOutletStreams();
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (outlets == null) {
+        continue;
+      }
+      for (neqsim.process.equipment.stream.StreamInterface stream : outlets) {
+        if (stream != null && stream != unit) {
+          produced.add(stream);
+        }
+      }
+    }
+  }
+
+  /**
+   * Adds every stream consumed by a unit in this process to the supplied identity set.
+   *
+   * @param inlets set to add to
+   */
+  void collectInletStreams(java.util.Set<neqsim.process.equipment.stream.StreamInterface> inlets) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      java.util.List<neqsim.process.equipment.stream.StreamInterface> streams;
+      try {
+        streams = unit.getInletStreams();
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (streams == null) {
+        continue;
+      }
+      for (neqsim.process.equipment.stream.StreamInterface stream : streams) {
+        if (stream != null && stream != unit) {
+          inlets.add(stream);
+        }
+      }
+    }
+  }
+
+  /**
+   * Largest readable mass flow in a list of streams.
+   *
+   * @param streams streams to inspect; may be null or contain nulls
+   * @return the largest mass flow in kg/hr, or 0.0 when none could be read
+   */
+  private double largestFlowIn(java.util.List<neqsim.process.equipment.stream.StreamInterface> streams) {
+    if (streams == null) {
+      return 0.0;
+    }
+    double largest = 0.0;
+    for (neqsim.process.equipment.stream.StreamInterface stream : streams) {
+      if (stream == null) {
+        continue;
+      }
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow)) {
+          largest = Math.max(largest, Math.abs(flow));
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read flow rate while detecting the process flow scale", ex);
+      }
+    }
+    return largest;
+  }
+
+  /**
+   * Applies an automatically derived low-flow bypass threshold to every unit that has no caller-supplied threshold.
+   *
+   * <p>
+   * Unlike {@link #setSectionLowFlowThreshold(double)} this never overwrites a threshold the caller configured, and it
+   * remembers which units it manages so {@link #resetAutoLowFlowThreshold()} can undo it. Units whose inlet flow falls
+   * below the threshold auto-bypass on their next run and reactivate automatically if flow returns.
+   * </p>
+   *
+   * @param thresholdKgPerHour low-flow bypass threshold in kg/hr; must be &gt;= 0
+   * @return the number of units now managed by the automatic threshold
+   * @throws IllegalArgumentException if the threshold is negative or not finite
+   */
+  public int applyAutoLowFlowThreshold(double thresholdKgPerHour) {
+    if (Double.isNaN(thresholdKgPerHour) || Double.isInfinite(thresholdKgPerHour) || thresholdKgPerHour < 0.0) {
+      throw new IllegalArgumentException(
+          "Low-flow threshold must be a finite non-negative number, was " + thresholdKgPerHour);
+    }
+    int managed = 0;
+    for (ProcessEquipmentBaseClass unit : getAutoLowFlowUnits()) {
+      if (unit.applyAutoMinimumFlow(thresholdKgPerHour)) {
+        managed++;
+      }
+    }
+    return managed;
+  }
+
+  /**
+   * Gives every recycle without an explicit absolute flow tolerance the supplied flow noise floor.
+   *
+   * <p>
+   * A tear stream otherwise converges on {@link neqsim.process.equipment.util.Recycle#flowBalanceCheck()}, which is an
+   * absolute kg/sec residual on small loops but a percentage on large ones. Handing it the same kg/hr noise floor the
+   * plant-wide gate uses makes the two criteria agree, so a loop cannot report itself solved on a looser basis than the
+   * model demands, nor keep iterating on a residual the model already accepts.
+   * </p>
+   *
+   * @param thresholdKgPerHour absolute flow tolerance in kg/hr; must be &gt;= 0
+   * @return the number of recycles the tolerance was applied to
+   * @throws IllegalArgumentException if the threshold is negative or not finite
+   */
+  public int applyAutoRecycleFlowTolerance(double thresholdKgPerHour) {
+    if (Double.isNaN(thresholdKgPerHour) || Double.isInfinite(thresholdKgPerHour) || thresholdKgPerHour < 0.0) {
+      throw new IllegalArgumentException(
+          "Recycle flow tolerance must be a finite non-negative number, was " + thresholdKgPerHour);
+    }
+    int applied = 0;
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.applyAutoAbsoluteFlowTolerance(thresholdKgPerHour)) {
+        applied++;
+      }
+    }
+    return applied;
+  }
+
+  /**
+   * Clears automatically assigned recycle tolerances before measuring a fresh process scenario.
+   *
+   * @return the number of recycle tolerances cleared
+   */
+  int resetAutoRecycleFlowTolerance() {
+    int cleared = 0;
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.resetAutoAbsoluteFlowTolerance()) {
+        cleared++;
+      }
+    }
+    return cleared;
+  }
+
+  /**
+   * Enables adaptive acceleration on recycles whose caller has not explicitly enabled or disabled it.
+   *
+   * @return the number of recycles managed by automatic convergence tuning
+   */
+  int applyAutoRecycleAdaptiveAcceleration() {
+    int managed = 0;
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.applyAutoAdaptiveAcceleration()) {
+        managed++;
+      }
+    }
+    return managed;
+  }
+
+  /**
+   * Clears adaptive acceleration previously enabled by automatic convergence tuning.
+   *
+   * @return the number of automatically managed recycle settings cleared
+   */
+  int resetAutoRecycleAdaptiveAcceleration() {
+    int cleared = 0;
+    for (Recycle recycle : getAutoTuningRecycles()) {
+      if (recycle.resetAutoAdaptiveAcceleration()) {
+        cleared++;
+      }
+    }
+    return cleared;
+  }
+
+  /**
+   * Mass flow that decides whether a unit is stagnant: its primary inlet stream, or - for source units such as a feed
+   * {@link neqsim.process.equipment.stream.Stream} - its own outlet.
+   *
+   * @param unit unit operation to inspect
+   * @return the deciding mass flow in kg/hr, or {@code Double.NaN} when it cannot be read
+   */
+  private double primaryFlowOf(ProcessEquipmentInterface unit) {
+    double flow = firstReadableFlow(unit.getInletStreams());
+    if (Double.isNaN(flow)) {
+      flow = firstReadableFlow(unit.getOutletStreams());
+    }
+    return flow;
+  }
+
+  /**
+   * Mass flow of the first stream in a list that can be read.
+   *
+   * @param streams streams to inspect; may be null or contain nulls
+   * @return the mass flow in kg/hr, or {@code Double.NaN} when none could be read
+   */
+  private double firstReadableFlow(java.util.List<neqsim.process.equipment.stream.StreamInterface> streams) {
+    if (streams == null) {
+      return Double.NaN;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface stream : streams) {
+      if (stream == null) {
+        continue;
+      }
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow)) {
+          return flow;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read flow rate while applying the automatic low-flow threshold", ex);
+      }
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Clears every low-flow bypass threshold written by {@link #applyAutoLowFlowThreshold(double)} and reactivates the
+   * affected units. Thresholds the caller configured are left untouched.
+   *
+   * @return the number of units whose automatic threshold was cleared
+   */
+  public int resetAutoLowFlowThreshold() {
+    int cleared = 0;
+    for (ProcessEquipmentBaseClass unit : getAutoLowFlowUnits()) {
+      if (unit.resetAutoMinimumFlow()) {
+        cleared++;
+        if (!unit.isLockedInactive()) {
+          unit.isActive(true);
+        }
+      }
+    }
+    return cleared;
+  }
+
+  /** Returns the topology-stable set of units eligible for automatic low-flow tuning. */
+  private List<ProcessEquipmentBaseClass> getAutoLowFlowUnits() {
+    List<ProcessEquipmentBaseClass> cached = cachedAutoLowFlowUnits;
+    if (cached == null) {
+      cached = new ArrayList<ProcessEquipmentBaseClass>();
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (!(unit instanceof Setter) && unit instanceof ProcessEquipmentBaseClass) {
+          cached.add((ProcessEquipmentBaseClass) unit);
+        }
+      }
+      cachedAutoLowFlowUnits = cached;
+    }
+    return cached;
+  }
+
+  /** Returns the topology-stable recycle subset used by automatic recycle tuning. */
+  private List<Recycle> getAutoTuningRecycles() {
+    List<Recycle> cached = cachedAutoTuningRecycles;
+    if (cached == null) {
+      cached = new ArrayList<Recycle>();
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (unit instanceof Recycle) {
+          cached.add((Recycle) unit);
+        }
+      }
+      cachedAutoTuningRecycles = cached;
+    }
+    return cached;
+  }
+
+  /**
+   * Runs this process until it is solved, letting NeqSim work out its own low-flow filtering.
+   *
+   * <p>
+   * {@link #run()} already iterates the internal recycles to convergence, so a single pass is normally enough. This
+   * wrapper adds two things a large flowsheet needs and that otherwise have to be hand-configured per model: after the
+   * first pass the total feed flow entering the process is measured and every unit without an explicit threshold gets a
+   * low-flow bypass cutoff of {@link #getAutoTuningFlowFraction()} times that scale, so stagnant legs stop being
+   * solved. Recycles without an explicit adaptive-acceleration setting may upgrade a stalled direct-substitution loop
+   * to Wegstein during this auto-tuned run. The process is then re-run until {@link #solved()} or the pass budget is
+   * spent.
+   * </p>
+   *
+   * @param maxIterations maximum number of full process passes to attempt; must be at least 1
+   * @return true if the process solved within the pass budget
+   * @throws IllegalArgumentException if maxIterations is less than 1
+   */
+  public boolean runUntilConverged(int maxIterations) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (autoConvergenceTuning) {
+      resetAutoLowFlowThreshold();
+      resetAutoRecycleFlowTolerance();
+      resetAutoRecycleAdaptiveAcceleration();
+      applyAutoRecycleAdaptiveAcceleration();
+    }
+    run();
+    boolean tuned = false;
+    if (autoConvergenceTuning) {
+      double scale = getTotalFeedFlowRate();
+      if (scale > 0.0 && !Double.isInfinite(scale)) {
+        double noiseFloor = scale * autoTuningFlowFraction;
+        applyAutoRecycleFlowTolerance(noiseFloor);
+        tuned = applyAutoLowFlowThreshold(noiseFloor) > 0;
+      }
+    }
+    int passes = 1;
+    while (passes < maxIterations && (tuned || !solved())) {
+      run();
+      passes++;
+      tuned = false;
+    }
+    return solved();
+  }
+
+  /**
+   * Runs this process until it is solved, using a default budget of 10 passes.
+   *
+   * @return true if the process solved within the pass budget
+   */
+  public boolean runUntilConverged() {
+    return runUntilConverged(10);
+  }
+
+  /**
+   * Whether {@link #runUntilConverged(int)} derives its low-flow bypass threshold from the process flow scale.
+   *
+   * @return true if automatic convergence tuning is enabled (default)
+   */
+  public boolean isAutoConvergenceTuning() {
+    return autoConvergenceTuning;
+  }
+
+  /**
+   * Enables or disables automatic convergence tuning for {@link #runUntilConverged(int)}.
+   *
+   * @param autoConvergenceTuning true to let the process tune its own low-flow bypass threshold
+   */
+  public void setAutoConvergenceTuning(boolean autoConvergenceTuning) {
+    this.autoConvergenceTuning = autoConvergenceTuning;
+  }
+
+  /**
+   * Noise-floor fraction of the total process feed flow used by {@link #runUntilConverged(int)}.
+   *
+   * @return the fraction (default 1e-6)
+   */
+  public double getAutoTuningFlowFraction() {
+    return autoTuningFlowFraction;
+  }
+
+  /**
+   * Sets the noise-floor fraction of the total process feed flow used by {@link #runUntilConverged(int)}.
+   *
+   * @param autoTuningFlowFraction fraction of the total feed flow; must be finite and in [0, 1)
+   * @throws IllegalArgumentException if the value is not finite or outside [0, 1)
+   */
+  public void setAutoTuningFlowFraction(double autoTuningFlowFraction) {
+    if (Double.isNaN(autoTuningFlowFraction) || Double.isInfinite(autoTuningFlowFraction)
+        || autoTuningFlowFraction < 0.0 || autoTuningFlowFraction >= 1.0) {
+      throw new IllegalArgumentException(
+          "autoTuningFlowFraction must be a finite value in [0, 1), was " + autoTuningFlowFraction);
+    }
+    this.autoTuningFlowFraction = autoTuningFlowFraction;
+  }
+
+  /**
    * Manually deactivates a section of the flowsheet by locking the named starting unit and every downstream unit
    * reachable via {@link ProcessConnection.ConnectionType#MATERIAL} edges in {@link #getConnections()}. Traversal stops
    * at any {@link neqsim.process.equipment.mixer.Mixer} whose other inlet streams are still served by active equipment,
@@ -3156,7 +4012,10 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    // Identity based: the traversal must visit each unit exactly once as a distinct node,
+    // regardless of any future equality semantics.
+    java.util.Set<ProcessEquipmentInterface> visited = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
@@ -3333,7 +4192,9 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    // Identity based: see deactivateSection(String).
+    java.util.Set<ProcessEquipmentInterface> visited = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
@@ -3440,6 +4301,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    */
   public void runWithProgress(UUID id) {
+    boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     // Determine execution order
     List<ProcessEquipmentInterface> executionOrder;
     if (useGraphBasedExecution) {
@@ -3504,9 +4366,9 @@ public class ProcessSystem extends SimulationBaseClass {
 
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
+            if (iter == 1 || needsRecalculation(unit)) {
               notifyBeforeUnit(unit, i, totalUnits, iter);
-              unit.run(id);
+              runUnitProfiled(unit, id);
             }
             notifyUnitComplete(unit, i, totalUnits, iter);
           } catch (Exception ex) {
@@ -3523,7 +4385,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
             notifyBeforeUnit(unit, i, totalUnits, iter);
-            unit.run(id);
+            runUnitProfiled(unit, id);
             notifyUnitComplete(unit, i, totalUnits, iter);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -3565,8 +4427,8 @@ public class ProcessSystem extends SimulationBaseClass {
       double recycleError = recycleController.getMaxResidualError();
       notifyIterationComplete(iter, isConverged, recycleError);
 
-    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
+        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
 
     // Notify simulation complete
     notifySimulationComplete(iter, isConverged);
@@ -3745,27 +4607,56 @@ public class ProcessSystem extends SimulationBaseClass {
    */
 
   /**
+   * Validates a requested transient timestep before any process state is changed.
+   *
+   * @param dt timestep in seconds
+   * @throws IllegalArgumentException if {@code dt} is non-finite or not greater than zero
+   */
+  static void validateTransientTimestep(double dt) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Transient timestep must be finite and greater than zero: " + dt);
+    }
+  }
+
+  /**
    * runTransient.
    */
   public void runTransient() {
     runTransient(getTimeStep(), UUID.randomUUID());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Advances one transient process timestep.
+   *
+   * <p>
+   * Setter units execute once as a dedicated pre-step specification phase through their transient contract. They are
+   * excluded from subsequent equipment integration passes so explicit, semi-implicit, and parallel stepping apply each
+   * setter once and advance its clock by exactly {@code dt}.
+   * </p>
+   *
+   * @param dt timestep in seconds
+   * @param id calculation identifier shared by the timestep
+   * @throws IllegalArgumentException if {@code dt} is non-finite or not greater than zero
+   */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
+    validateTransientTimestep(dt);
     ensureInitialStateSnapshot();
+    applyFlowsheetWideSettings();
 
-    // Publish pre-timestep event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
-        "Transient timestep " + timeStepNumber + " starting at t=" + String.format("%.3f", time) + " s, dt="
-            + String.format("%.4f", dt) + " s",
-        ProcessEvent.Severity.DEBUG));
+    // Construct transient events lazily: publishing is disabled by default, and building
+    // descriptions, IDs, timestamps, and property maps is otherwise pure overhead.
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+          "Transient timestep " + timeStepNumber + " starting at t=" + String.format("%.3f", time) + " s, dt="
+              + String.format("%.4f", dt) + " s",
+          ProcessEvent.Severity.DEBUG));
+    }
 
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
       if (unit instanceof Setter) {
-        unit.run(id);
+        unit.runTransient(dt, id);
       }
     }
 
@@ -3804,7 +4695,9 @@ public class ProcessSystem extends SimulationBaseClass {
     // by low-flow bypass keeps its current state during the timestep — same skip gate as
     // the steady run() path (runUnitProfiled). See docs/process/processmodel/low_flow_bypass.md.
     if (parallelTransientEnabled && unitOperations.size() > 1) {
-      runEquipmentTransientParallel(dt, id);
+      if (!runEquipmentTransientParallel(dt, id)) {
+        return;
+      }
     } else {
       for (int i = 0; i < unitOperations.size(); i++) {
         runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
@@ -3814,7 +4707,9 @@ public class ProcessSystem extends SimulationBaseClass {
     // Semi-implicit: run a second pass for improved stability
     if (integrationMethod == IntegrationMethod.SEMI_IMPLICIT) {
       if (parallelTransientEnabled && unitOperations.size() > 1) {
-        runEquipmentTransientParallel(dt, id);
+        if (!runEquipmentTransientParallel(dt, id)) {
+          return;
+        }
       } else {
         for (int i = 0; i < unitOperations.size(); i++) {
           runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
@@ -3823,71 +4718,160 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     // Explicit controller scan phase: run standalone controllers registered via
-    // add(ControllerDeviceInterface). Equipment-embedded controllers already ran
-    // above
-    // inside each equipment's runTransient() for backward compatibility.
+    // add(ControllerDeviceInterface). Identity coalescing prevents repeated standalone
+    // registration from integrating mutable state more than once. The calculation
+    // identifier distinguishes a controller actually executed inside equipment from one
+    // merely attached to equipment for association or discovery.
+    java.util.Set<ControllerDeviceInterface> scheduledControllers = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ControllerDeviceInterface, Boolean>());
     for (int i = 0; i < controllerDevices.size(); i++) {
       ControllerDeviceInterface ctrl = controllerDevices.get(i);
-      if (ctrl.isActive()) {
+      if (scheduledControllers.add(ctrl) && ctrl.isActive() && !ctrl.hasRunTransient(id)) {
         ctrl.runTransient(ctrl.getResponse(), dt, id);
       }
     }
 
     // Publish post-controller, pre-measurement event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
-        "Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+          "Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
+    }
 
     timeStepNumber++;
-    String[] row = new String[1 + 3 * measurementDevices.size()];
-    if (row.length > 0) {
+    String[] row = null;
+    if (isMeasurementHistoryRecordingEnabled()) {
+      row = new String[1 + 3 * measurementDevices.size()];
       row[0] = Double.toString(time);
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
       MeasurementDeviceInterface device = measurementDevices.get(i);
       double measuredValue = device.getMeasuredValue();
-      row[3 * i + 1] = device.getName();
-      row[3 * i + 2] = Double.toString(measuredValue);
-      row[3 * i + 3] = device.getUnit();
+      if (row != null) {
+        row[3 * i + 1] = device.getName();
+        row[3 * i + 2] = Double.toString(measuredValue);
+        row[3 * i + 3] = device.getUnit();
+      }
       alarmManager.evaluateMeasurement(device, measuredValue, dt, time);
     }
-    if (measurementDevices.isEmpty()) {
-      row[0] = Double.toString(time);
+    if (row != null) {
+      measurementHistory.add(row);
     }
-    measurementHistory.add(row);
     setCalculationIdentifier(id);
   }
 
   /**
-   * Runs all equipment transient calculations in parallel using an ExecutorService. Each equipment unit is submitted as
-   * an independent task. This is suitable when equipment units are loosely coupled (no data dependencies within a
-   * single timestep).
+   * Runs transient calculations in dependency order using the cached process-graph levels. Independent groups within a
+   * level execute in parallel; a downstream level is not submitted until every upstream group has completed. Worker
+   * exceptions propagate fail-loudly to the caller, stop later groups and dependency levels, and prevent controller,
+   * measurement-history, alarm, timestep-counter, and calculation-identifier commit for the failed step. If the caller
+   * is interrupted while waiting, its interrupt status is restored and the wait loop stops. Each dependency level
+   * checks that status before submitting work, so an interrupt at a level boundary does not enqueue downstream
+   * equipment. Already submitted equipment that is queued is cancelled without interrupting tasks already updating
+   * state.
+   *
+   * <p>
+   * This boundary is not a whole-step transaction: the process clock, due-event effects, and state already mutated by
+   * equipment (including same-level siblings) are not rolled back.
+   * </p>
    *
    * @param dt time step in seconds
    * @param id calculation identifier
+   * @return {@code true} if the equipment pass completed, or {@code false} if the caller was interrupted
    */
-  private void runEquipmentTransientParallel(double dt, UUID id) {
-    java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors
-        .newFixedThreadPool(transientThreadPoolSize);
-    List<java.util.concurrent.Future<?>> futures = new ArrayList<java.util.concurrent.Future<?>>(unitOperations.size());
-    for (int i = 0; i < unitOperations.size(); i++) {
-      final ProcessEquipmentInterface unit = unitOperations.get(i);
-      final double stepSize = dt;
-      final UUID calcId = id;
-      futures.add(executor.submit(new Runnable() {
-        @Override
-        public void run() {
-          runUnitTransientSkippingInactive(unit, stepSize, calcId);
-        }
-      }));
+  private boolean runEquipmentTransientParallel(double dt, UUID id) {
+    if (Thread.currentThread().isInterrupted()) {
+      logger.warn("Parallel transient execution skipped because the caller is interrupted");
+      return false;
     }
-    for (java.util.concurrent.Future<?> f : futures) {
-      try {
-        f.get();
-      } catch (Exception ex) {
-        logger.error("Parallel transient execution failed: " + ex.getMessage(), ex);
+    ExecutorService executor = getParallelTransientExecutor();
+    final AtomicBoolean stopRequested = new AtomicBoolean(false);
+    for (List<List<ProcessNode>> levelGroups : getCachedParallelPlan()) {
+      if (Thread.currentThread().isInterrupted()) {
+        stopRequested.set(true);
+        logger.warn("Parallel transient execution stopped before submitting the next dependency level");
+        return false;
+      }
+      List<Future<?>> futures = new ArrayList<Future<?>>(levelGroups.size());
+      for (List<ProcessNode> group : levelGroups) {
+        final List<ProcessNode> groupToRun = group;
+        final double stepSize = dt;
+        final UUID calcId = id;
+        futures.add(executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (ProcessNode node : groupToRun) {
+              if (stopRequested.get()) {
+                return;
+              }
+              runUnitTransientSkippingInactive(node.getEquipment(), stepSize, calcId);
+            }
+          }
+        }));
+      }
+      for (int i = 0; i < futures.size(); i++) {
+        Future<?> f = futures.get(i);
+        try {
+          f.get();
+        } catch (InterruptedException ex) {
+          stopRequested.set(true);
+          Thread.currentThread().interrupt();
+          for (int pendingIndex = i; pendingIndex < futures.size(); pendingIndex++) {
+            futures.get(pendingIndex).cancel(false);
+          }
+          logger.warn("Parallel transient execution interrupted; caller interrupt status restored");
+          return false;
+        } catch (ExecutionException ex) {
+          stopRequested.set(true);
+          for (int pendingIndex = i + 1; pendingIndex < futures.size(); pendingIndex++) {
+            futures.get(pendingIndex).cancel(false);
+          }
+          throw createWorkerExecutionException("Parallel transient", ex);
+        }
       }
     }
-    executor.shutdown();
+    return true;
+  }
+
+  /**
+   * Returns the reusable executor for parallel transient steps, creating it lazily for the configured worker count.
+   * Core workers are allowed to time out after one minute of inactivity so discarded process models do not retain idle
+   * threads indefinitely.
+   *
+   * @return reusable executor sized by {@link #getTransientThreadPoolSize()}
+   */
+  private synchronized ExecutorService getParallelTransientExecutor() {
+    if (parallelTransientExecutor != null && !parallelTransientExecutor.isShutdown()
+        && parallelTransientExecutorSize == transientThreadPoolSize) {
+      return parallelTransientExecutor;
+    }
+    shutdownParallelTransientExecutor();
+    final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+    ThreadFactory daemonFactory = new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable task) {
+        Thread worker = defaultFactory.newThread(task);
+        worker.setDaemon(true);
+        worker.setName("NeqSim-Transient-Worker-" + TRANSIENT_WORKER_COUNTER.getAndIncrement());
+        return worker;
+      }
+    };
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(transientThreadPoolSize, transientThreadPoolSize, 60L,
+        TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), daemonFactory);
+    executor.allowCoreThreadTimeOut(true);
+    parallelTransientExecutor = executor;
+    parallelTransientExecutorSize = transientThreadPoolSize;
+    return parallelTransientExecutor;
+  }
+
+  /**
+   * Retires the reusable parallel transient executor, if one has been created.
+   */
+  private synchronized void shutdownParallelTransientExecutor() {
+    if (parallelTransientExecutor != null) {
+      parallelTransientExecutor.shutdown();
+      parallelTransientExecutor = null;
+      parallelTransientExecutorSize = 0;
+    }
   }
 
   /**
@@ -3901,8 +4885,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param dt the requested timestep in seconds
    * @param id calculation identifier
    * @return the actual timestep used (may differ from dt)
+   * @throws IllegalArgumentException if {@code dt} is non-finite or not greater than zero
    */
   public double runTransientAdaptive(double dt, UUID id) {
+    validateTransientTimestep(dt);
     if (!adaptiveTimestepEnabled) {
       runTransient(dt, id);
       return dt;
@@ -3954,16 +4940,29 @@ public class ProcessSystem extends SimulationBaseClass {
     return currentDt;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Units that are bypassed - either locked inactive by the user or auto-bypassed because their inlet flow fell below
+   * the configured low-flow threshold (see {@link #setSectionLowFlowThreshold(double)}) - are excluded from the check.
+   * A bypassed unit never executes, so its {@code solved()} flag carries no information and would otherwise make an
+   * otherwise fully converged area report NOT SOLVED.
+   * </p>
+   */
   @Override
   public boolean solved() {
     /* */
     if (recycleController.solvedAll()) {
       for (int i = 0; i < unitOperations.size(); i++) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("unit " + unitOperations.get(i).getName() + " solved: " + unitOperations.get(i).solved());
+        ProcessEquipmentInterface unit = unitOperations.get(i);
+        if (unit.isLockedInactive() || !unit.isActive()) {
+          continue;
         }
-        if (!unitOperations.get(i).solved()) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("unit " + unit.getName() + " solved: " + unit.solved());
+        }
+        if (!unit.solved()) {
           return false;
         }
       }
@@ -4188,6 +5187,567 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Audits whether every mutable process element can participate in an identity-preserving transient step transaction.
+   *
+   * <p>
+   * Duplicate registrations of the same Java object are counted once. State identities must be non-empty and unique
+   * among the participating objects. Shared {@link RecycleController} orchestration is captured separately and is not
+   * included in the process-element or participant counts; each recycle unit must still provide its own state contract.
+   * </p>
+   *
+   * @return immutable quantitative coverage report
+   */
+  public TransientTransactionCoverage getTransientTransactionCoverage() {
+    return getTransientTransactionCoverage(Collections.<String>emptySet());
+  }
+
+  /**
+   * Audits local transaction coverage while accepting event targets owned by a coordinating multi-area model.
+   *
+   * @param additionalEventStateIdentities completely covered participant identities owned by sibling process areas
+   * @return immutable quantitative local coverage report
+   */
+  TransientTransactionCoverage getTransientTransactionCoverage(Collection<String> additionalEventStateIdentities) {
+    List<ProcessElementInterface> elements = getUniqueTransientElements();
+    List<String> blockingIssues = new ArrayList<String>();
+    Map<String, ProcessElementInterface> identities = new HashMap<String, ProcessElementInterface>();
+    int participantCount = 0;
+
+    for (ProcessElementInterface element : elements) {
+      if (!(element instanceof TransientStateParticipant<?>)) {
+        blockingIssues.add(
+            "process element " + describeTransientElement(element) + " does not implement TransientStateParticipant");
+        continue;
+      }
+      participantCount++;
+      TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
+      String coverageIssue;
+      try {
+        coverageIssue = normalizeTransientStateIdentity(participant.getTransientStateCoverageIssue());
+      } catch (RuntimeException ex) {
+        blockingIssues.add("process element " + describeTransientElement(element)
+            + " failed to report transient state coverage: " + ex.getMessage());
+        continue;
+      }
+      if (coverageIssue != null) {
+        blockingIssues.add("process element " + describeTransientElement(element)
+            + " has incomplete transient state coverage: " + coverageIssue);
+        continue;
+      }
+      String stateIdentity;
+      try {
+        stateIdentity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
+      } catch (RuntimeException ex) {
+        blockingIssues.add("process element " + describeTransientElement(element)
+            + " failed to provide a transient state identity: " + ex.getMessage());
+        continue;
+      }
+      if (stateIdentity == null) {
+        blockingIssues.add(
+            "process element " + describeTransientElement(element) + " has a null or empty transient state identity");
+        continue;
+      }
+      ProcessElementInterface previous = identities.put(stateIdentity, element);
+      if (previous != null && previous != element) {
+        blockingIssues.add("transient state identity '" + stateIdentity + "' is shared by "
+            + describeTransientElement(previous) + " and " + describeTransientElement(element));
+      }
+    }
+
+    if (parallelTransientEnabled) {
+      blockingIssues.add("parallel transient execution may leave same-level workers running after one worker fails; "
+          + "rollback cannot start until worker quiescence is guaranteed");
+    }
+    if (publishEvents) {
+      blockingIssues
+          .add("ProcessEventBus publishing is externally visible and has no rejected-step commit/defer contract");
+    }
+    if (alarmManager != null && !alarmManager.getActionHandlers().isEmpty()) {
+      blockingIssues.add("alarm action handlers may produce external side effects and have no rejected-step "
+          + "commit/defer contract");
+    }
+    if (eventScheduler != null) {
+      java.util.Set<String> eventStateIdentities = new java.util.HashSet<String>(identities.keySet());
+      eventStateIdentities.addAll(additionalEventStateIdentities);
+      addEventTransactionCoverageIssues(blockingIssues, eventScheduler.getPendingEvents(), eventStateIdentities,
+          "pending event");
+    }
+    return new TransientTransactionCoverage(elements.size(), participantCount, blockingIssues);
+  }
+
+  /**
+   * Adds deterministic blockers for scheduler actions that cannot be covered by participant snapshots.
+   *
+   * @param blockingIssues destination for coverage diagnostics
+   * @param events events to validate
+   * @param participantStateIdentities covered participants keyed by stable state identity
+   * @param eventKind diagnostic description such as {@code pending event}
+   */
+  private static void addEventTransactionCoverageIssues(List<String> blockingIssues,
+      List<EventScheduler.ScheduledEvent> events, java.util.Set<String> participantStateIdentities, String eventKind) {
+    for (EventScheduler.ScheduledEvent event : events) {
+      String eventDescription = eventKind + " '" + event.getLabel() + "' at t=" + event.getTime() + " s";
+      if (!event.hasDeclaredTransientStateScope()) {
+        blockingIssues.add(eventDescription
+            + " uses an unscoped Runnable; use scheduleTransactionalEvent and declare every mutated participant");
+        continue;
+      }
+      for (String stateIdentity : event.getTransientStateIdentities()) {
+        if (!participantStateIdentities.contains(stateIdentity)) {
+          blockingIssues.add(eventDescription + " declares transient state identity '" + stateIdentity
+              + "' that is not a completely covered participant in this process system");
+        }
+      }
+    }
+  }
+
+  /**
+   * Captures an identity-preserving rollback point for one physical transient step.
+   *
+   * <p>
+   * The method completes coverage validation and captures every participant before returning. It therefore fails before
+   * trial mutation when coverage is incomplete or snapshot capture fails. Only one transaction may be open for a
+   * process system at a time.
+   * </p>
+   *
+   * @return open single-use transaction
+   * @throws IllegalStateException if coverage is incomplete, a snapshot is invalid, or another transaction is open
+   */
+  public synchronized TransientStepTransaction beginTransientStepTransaction() {
+    return beginTransientStepTransaction(Collections.<String>emptySet());
+  }
+
+  /**
+   * Captures a rollback point with model-level event targets included in scheduler coverage.
+   *
+   * @param additionalEventStateIdentities completely covered participant identities owned by sibling process areas
+   * @return open single-use transaction
+   */
+  synchronized TransientStepTransaction beginTransientStepTransaction(
+      Collection<String> additionalEventStateIdentities) {
+    if (activeTransientStepTransaction != null && activeTransientStepTransaction.isOpen()) {
+      throw new IllegalStateException(
+          "A transient step transaction is already open for process system '" + getName() + "'");
+    }
+
+    TransientTransactionCoverage coverage = getTransientTransactionCoverage(additionalEventStateIdentities);
+    coverage.assertComplete();
+    List<ProcessElementInterface> elements = getUniqueTransientElements();
+    List<TransientParticipantCheckpoint> participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(
+        elements.size());
+    for (ProcessElementInterface element : elements) {
+      TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
+      Serializable snapshot = captureParticipantSnapshot(participant);
+      String stateIdentity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
+      if (stateIdentity == null) {
+        throw new IllegalStateException(
+            "Transient state identity changed to null or empty while capturing " + describeTransientElement(element));
+      }
+      participantCheckpoints.add(new TransientParticipantCheckpoint(participant, stateIdentity, snapshot));
+    }
+
+    RecycleController capturedRecycleController = recycleController;
+    RecycleController.Snapshot recycleControllerSnapshot = capturedRecycleController == null ? null
+        : capturedRecycleController.captureTransientState();
+    ProcessSystemStepTransaction transaction = new ProcessSystemStepTransaction(elements, participantCheckpoints,
+        capturedRecycleController, recycleControllerSnapshot, eventScheduler,
+        eventScheduler == null ? null : eventScheduler.snapshot(), new ArrayList<>(alarmManager.getHistory()),
+        additionalEventStateIdentities);
+    activeTransientStepTransaction = transaction;
+    return transaction;
+  }
+
+  /**
+   * Advances one transient step and commits it only if the complete step succeeds.
+   *
+   * <p>
+   * Any runtime exception or error from event, equipment, controller, measurement, or alarm execution closes the
+   * transaction and restores all captured state in place. This method is intentionally separate from legacy
+   * {@link #runTransient(double, UUID)} so existing simulations are not silently rejected while built-in equipment
+   * families adopt the participant contract.
+   * </p>
+   *
+   * @param dt timestep in seconds
+   * @param id physical-step calculation identifier
+   * @throws IllegalStateException if transaction coverage is incomplete
+   */
+  public void runTransientTransactional(double dt, UUID id) {
+    try (TransientStepTransaction transaction = beginTransientStepTransaction()) {
+      runTransient(dt, id);
+      transaction.commit();
+    }
+  }
+
+  /**
+   * Returns unique registered process elements in deterministic registration order.
+   *
+   * @return identity-de-duplicated process elements
+   */
+  private List<ProcessElementInterface> getUniqueTransientElements() {
+    List<ProcessElementInterface> unique = new ArrayList<ProcessElementInterface>();
+    java.util.Set<ProcessElementInterface> seen = Collections
+        .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
+    for (ProcessElementInterface element : getAllElements()) {
+      if (element == null) {
+        throw new IllegalStateException("Process system '" + getName() + "' contains a null process element");
+      }
+      if (seen.add(element)) {
+        unique.add(element);
+      }
+    }
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      Collection<ControllerDeviceInterface> attachedControllers = unit.getControllers();
+      if (attachedControllers == null) {
+        throw new IllegalStateException(
+            "Process equipment " + describeTransientElement(unit) + " returned a null controller collection");
+      }
+      for (ControllerDeviceInterface controller : attachedControllers) {
+        if (controller == null) {
+          throw new IllegalStateException(
+              "Process equipment " + describeTransientElement(unit) + " contains a null attached controller");
+        }
+        if (seen.add(controller)) {
+          unique.add(controller);
+        }
+      }
+    }
+    return unique;
+  }
+
+  /**
+   * Returns every locally complete participant identity for multi-area event-scope validation.
+   *
+   * @return deterministic set of complete local participant identities
+   */
+  java.util.Set<String> getCompleteTransientStateIdentities() {
+    java.util.Set<String> identities = new java.util.LinkedHashSet<String>();
+    for (ProcessElementInterface element : getUniqueTransientElements()) {
+      if (element instanceof TransientStateParticipant<?>) {
+        TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
+        try {
+          String coverageIssue = normalizeTransientStateIdentity(participant.getTransientStateCoverageIssue());
+          String identity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
+          if (coverageIssue == null && identity != null) {
+            identities.add(identity);
+          }
+        } catch (RuntimeException ex) {
+          // The area coverage audit below owns the deterministic diagnostic for this participant.
+        }
+      }
+    }
+    return identities;
+  }
+
+  /**
+   * Returns a deterministic diagnostic label for a process element.
+   *
+   * @param element process element
+   * @return diagnostic label
+   */
+  private static String describeTransientElement(ProcessElementInterface element) {
+    String name = element.getName();
+    return "'" + (name == null ? "" : name) + "' (" + element.getClass().getName() + ")";
+  }
+
+  /**
+   * Normalizes a state identity without manufacturing a fallback identity.
+   *
+   * @param identity participant-provided identity
+   * @return trimmed identity, or {@code null} when absent
+   */
+  private static String normalizeTransientStateIdentity(String identity) {
+    if (identity == null || identity.trim().isEmpty()) {
+      return null;
+    }
+    return identity.trim();
+  }
+
+  /**
+   * Captures a typed participant snapshot through a wildcard-safe helper.
+   *
+   * @param participant state participant
+   * @return non-null serializable snapshot
+   */
+  private static <S extends Serializable> Serializable captureParticipantSnapshot(
+      TransientStateParticipant<S> participant) {
+    S snapshot = participant.captureTransientState();
+    if (snapshot == null) {
+      throw new IllegalStateException(
+          "Transient state participant '" + participant.getTransientStateIdentity() + "' returned a null snapshot");
+    }
+    return snapshot;
+  }
+
+  /**
+   * Restores a typed participant snapshot through one checked cast boundary.
+   *
+   * @param participant participant to restore
+   * @param snapshot captured snapshot
+   * @param <S> participant snapshot type
+   */
+  @SuppressWarnings("unchecked")
+  private static <S extends Serializable> void restoreParticipantSnapshot(TransientStateParticipant<S> participant,
+      Serializable snapshot) {
+    participant.restoreTransientState((S) snapshot);
+  }
+
+  /** Captured state for one participant, keyed by object identity. */
+  private static final class TransientParticipantCheckpoint {
+    private final TransientStateParticipant<?> participant;
+    private final String stateIdentity;
+    private final Serializable snapshot;
+
+    private TransientParticipantCheckpoint(TransientStateParticipant<?> participant, String stateIdentity,
+        Serializable snapshot) {
+      this.participant = participant;
+      this.stateIdentity = stateIdentity;
+      this.snapshot = snapshot;
+    }
+  }
+
+  /** Process-system transaction implementation. */
+  private final class ProcessSystemStepTransaction implements TransientStepTransaction {
+    private final List<ProcessElementInterface> elementIdentities;
+    private final List<TransientParticipantCheckpoint> participantCheckpoints;
+    private final double capturedTime = time;
+    private final double capturedTimeStep = timeStep;
+    private final int capturedTimeStepNumber = timeStepNumber;
+    private final UUID capturedCalculationIdentifier = getCalculationIdentifier();
+    private final MeasurementHistory capturedMeasurementHistory = measurementHistory.copy();
+    private final Boolean capturedRecordMeasurementHistory = recordMeasurementHistory;
+    private final double capturedPreviousTotalMass = previousTotalMass;
+    private final double capturedMassBalanceError = massBalanceError;
+    private final ProcessSystem capturedInitialStateSnapshot = initialStateSnapshot;
+    private final RecycleController capturedRecycleController;
+    private final RecycleController.Snapshot capturedRecycleControllerSnapshot;
+    private final EventScheduler capturedEventScheduler;
+    private final EventScheduler.Snapshot capturedEventSchedulerSnapshot;
+    private final List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory;
+    private final java.util.Set<String> allowedEventStateIdentities;
+    private Status status = Status.OPEN;
+
+    private ProcessSystemStepTransaction(List<ProcessElementInterface> elementIdentities,
+        List<TransientParticipantCheckpoint> participantCheckpoints, RecycleController capturedRecycleController,
+        RecycleController.Snapshot capturedRecycleControllerSnapshot, EventScheduler capturedEventScheduler,
+        EventScheduler.Snapshot capturedEventSchedulerSnapshot,
+        List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory, Collection<String> additionalEventStateIdentities) {
+      this.elementIdentities = new ArrayList<ProcessElementInterface>(elementIdentities);
+      this.participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(participantCheckpoints);
+      this.capturedRecycleController = capturedRecycleController;
+      this.capturedRecycleControllerSnapshot = capturedRecycleControllerSnapshot;
+      this.capturedEventScheduler = capturedEventScheduler;
+      this.capturedEventSchedulerSnapshot = capturedEventSchedulerSnapshot;
+      this.capturedAlarmHistory = new ArrayList<neqsim.process.alarm.AlarmEvent>(capturedAlarmHistory);
+      this.allowedEventStateIdentities = new java.util.HashSet<String>(additionalEventStateIdentities);
+      for (TransientParticipantCheckpoint checkpoint : participantCheckpoints) {
+        this.allowedEventStateIdentities.add(checkpoint.stateIdentity);
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void prepareCommit() {
+      synchronized (ProcessSystem.this) {
+        requireOpen("prepare commit");
+        RuntimeException validationFailure = validateIdentityContract();
+        if (validationFailure != null) {
+          throw validationFailure;
+        }
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void commit() {
+      synchronized (ProcessSystem.this) {
+        try {
+          prepareCommit();
+        } catch (RuntimeException validationFailure) {
+          try {
+            rollback();
+          } catch (RuntimeException rollbackFailure) {
+            validationFailure.addSuppressed(rollbackFailure);
+          }
+          throw validationFailure;
+        }
+        status = Status.COMMITTED;
+        activeTransientStepTransaction = null;
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void rollback() {
+      synchronized (ProcessSystem.this) {
+        if (status == Status.ROLLED_BACK) {
+          return;
+        }
+        requireOpen("rollback");
+        RuntimeException failure = validateIdentityContract();
+
+        for (int i = participantCheckpoints.size() - 1; i >= 0; i--) {
+          TransientParticipantCheckpoint checkpoint = participantCheckpoints.get(i);
+          try {
+            restoreCapturedParticipant(checkpoint);
+          } catch (RuntimeException ex) {
+            failure = accumulateTransactionFailure(failure,
+                "Failed to restore transient state participant '" + checkpoint.stateIdentity + "'", ex);
+          }
+        }
+
+        try {
+          if (recycleController != capturedRecycleController) {
+            failure = accumulateTransactionFailure(failure,
+                "RecycleController identity changed during transient transaction",
+                new IllegalStateException("Expected the captured RecycleController instance"));
+            recycleController = capturedRecycleController;
+          }
+          if (capturedRecycleController != null) {
+            capturedRecycleController.restoreTransientState(capturedRecycleControllerSnapshot);
+          }
+        } catch (RuntimeException ex) {
+          failure = accumulateTransactionFailure(failure, "Failed to restore RecycleController state", ex);
+        }
+
+        try {
+          time = capturedTime;
+          timeStep = capturedTimeStep;
+          timeStepNumber = capturedTimeStepNumber;
+          setCalculationIdentifier(capturedCalculationIdentifier);
+          measurementHistory = capturedMeasurementHistory.copy();
+          recordMeasurementHistory = capturedRecordMeasurementHistory;
+          previousTotalMass = capturedPreviousTotalMass;
+          massBalanceError = capturedMassBalanceError;
+          initialStateSnapshot = capturedInitialStateSnapshot;
+          eventScheduler = capturedEventScheduler;
+          if (capturedEventScheduler != null) {
+            capturedEventScheduler.restore(capturedEventSchedulerSnapshot);
+          }
+          alarmManager.restoreHistory(capturedAlarmHistory);
+        } catch (RuntimeException ex) {
+          failure = accumulateTransactionFailure(failure, "Failed to restore ProcessSystem orchestration state", ex);
+        } finally {
+          status = Status.ROLLED_BACK;
+          activeTransientStepTransaction = null;
+        }
+
+        if (failure != null) {
+          throw failure;
+        }
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Status getStatus() {
+      return status;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void close() {
+      if (isOpen()) {
+        rollback();
+      }
+    }
+
+    /**
+     * Restores one captured participant.
+     *
+     * @param checkpoint participant snapshot
+     */
+    private void restoreCapturedParticipant(TransientParticipantCheckpoint checkpoint) {
+      restoreParticipantSnapshot(checkpoint.participant, checkpoint.snapshot);
+    }
+
+    /**
+     * Validates object, registration-order, and stable-state identities.
+     *
+     * @return failure diagnostic, or {@code null}
+     */
+    private RuntimeException validateIdentityContract() {
+      List<ProcessElementInterface> currentElements;
+      try {
+        currentElements = getUniqueTransientElements();
+      } catch (RuntimeException ex) {
+        return new IllegalStateException("Could not inspect process elements while finalizing transient transaction",
+            ex);
+      }
+      if (currentElements.size() != elementIdentities.size()) {
+        return new IllegalStateException("Process structure changed during transient transaction: captured "
+            + elementIdentities.size() + " unique elements but found " + currentElements.size());
+      }
+      for (int i = 0; i < elementIdentities.size(); i++) {
+        if (currentElements.get(i) != elementIdentities.get(i)) {
+          return new IllegalStateException(
+              "Process element identity or registration order changed during transient transaction at index " + i);
+        }
+      }
+      for (TransientParticipantCheckpoint checkpoint : participantCheckpoints) {
+        String currentIdentity = normalizeTransientStateIdentity(checkpoint.participant.getTransientStateIdentity());
+        if (!checkpoint.stateIdentity.equals(currentIdentity)) {
+          return new IllegalStateException("Transient state identity changed during transaction from '"
+              + checkpoint.stateIdentity + "' to '" + currentIdentity + "'");
+        }
+      }
+      if (recycleController != capturedRecycleController) {
+        return new IllegalStateException("RecycleController identity changed during transient transaction");
+      }
+      if (eventScheduler != capturedEventScheduler) {
+        return new IllegalStateException("EventScheduler identity changed during transient transaction");
+      }
+      if (capturedEventScheduler != null) {
+        List<String> eventCoverageIssues = new ArrayList<String>();
+        addEventTransactionCoverageIssues(eventCoverageIssues, capturedEventScheduler.getPendingEvents(),
+            allowedEventStateIdentities, "pending event");
+        List<EventScheduler.ScheduledEvent> firedEvents = capturedEventScheduler.getFiredEvents();
+        int capturedFiredEventCount = capturedEventSchedulerSnapshot.getFiredEventCount();
+        if (firedEvents.size() < capturedFiredEventCount) {
+          eventCoverageIssues.add("event scheduler fired-event history shrank during transient transaction");
+        } else if (firedEvents.size() > capturedFiredEventCount) {
+          addEventTransactionCoverageIssues(eventCoverageIssues,
+              firedEvents.subList(capturedFiredEventCount, firedEvents.size()), allowedEventStateIdentities,
+              "event fired during transaction");
+        }
+        if (!eventCoverageIssues.isEmpty()) {
+          return new IllegalStateException(
+              "EventScheduler transaction coverage became incomplete: " + eventCoverageIssues);
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Enforces single-use transaction semantics.
+     *
+     * @param operation requested lifecycle operation
+     */
+    private void requireOpen(String operation) {
+      if (status != Status.OPEN) {
+        throw new IllegalStateException("Cannot " + operation + " transient transaction in state " + status);
+      }
+    }
+  }
+
+  /**
+   * Accumulates rollback failures while allowing later participants and orchestration state to restore.
+   *
+   * @param existing first failure, or {@code null}
+   * @param message diagnostic context
+   * @param cause new failure
+   * @return first failure with later failures suppressed
+   */
+  private static RuntimeException accumulateTransactionFailure(RuntimeException existing, String message,
+      RuntimeException cause) {
+    RuntimeException wrapped = new IllegalStateException(message, cause);
+    if (existing == null) {
+      return wrapped;
+    }
+    existing.addSuppressed(wrapped);
+    return existing;
+  }
+
+  /**
    * Enables or disables adaptive timestep control. When enabled, the timestep is adjusted based on local error
    * estimates by comparing a full step with two half-steps.
    *
@@ -4261,12 +5821,18 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables multi-threaded equipment execution during transient steps.
+   * Enables or disables multi-threaded equipment execution during transient steps. Stream dependencies are respected
+   * through process-graph level barriers, while independent groups in the same level may execute concurrently. Recycle
+   * and other iterative transient couplings still require separate convergence semantics. Disabling the feature retires
+   * any reusable transient worker pool owned by this process system.
    *
    * @param enabled true to enable parallel execution
    */
-  public void setParallelTransientEnabled(boolean enabled) {
+  public synchronized void setParallelTransientEnabled(boolean enabled) {
     this.parallelTransientEnabled = enabled;
+    if (!enabled) {
+      shutdownParallelTransientExecutor();
+    }
   }
 
   /**
@@ -4279,12 +5845,17 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the thread pool size for parallel transient execution.
+   * Sets the thread pool size for parallel transient execution. Changing the size retires the existing reusable worker
+   * pool; a replacement is created lazily on the next parallel transient step.
    *
    * @param poolSize number of threads
    */
-  public void setTransientThreadPoolSize(int poolSize) {
-    this.transientThreadPoolSize = Math.max(1, poolSize);
+  public synchronized void setTransientThreadPoolSize(int poolSize) {
+    int normalizedPoolSize = Math.max(1, poolSize);
+    if (normalizedPoolSize != transientThreadPoolSize) {
+      transientThreadPoolSize = normalizedPoolSize;
+      shutdownParallelTransientExecutor();
+    }
   }
 
   /**
@@ -4636,6 +6207,27 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Enables or disables appending measurement-history rows during transient execution. Measurement devices and alarms
+   * continue to be evaluated when recording is disabled. Recording is enabled by default for compatibility. Disabling
+   * it avoids row allocation and retained history growth in long-running simulations that use an external historian or
+   * do not consume {@link #getHistorySnapshot()}.
+   *
+   * @param enabled {@code true} to append a row after each transient step
+   */
+  public void setMeasurementHistoryRecordingEnabled(boolean enabled) {
+    recordMeasurementHistory = Boolean.valueOf(enabled);
+  }
+
+  /**
+   * Returns whether transient steps append rows to the measurement history.
+   *
+   * @return {@code true} when measurement history recording is enabled
+   */
+  public boolean isMeasurementHistoryRecordingEnabled() {
+    return recordMeasurementHistory == null || recordMeasurementHistory.booleanValue();
+  }
+
+  /**
    * Sets the maximum number of entries retained in the measurement history. A value less than or equal to zero disables
    * truncation (unbounded history).
    *
@@ -4720,6 +6312,7 @@ public class ProcessSystem extends SimulationBaseClass {
     equipmentCounter.putAll(source.equipmentCounter);
     lastAddedUnit = source.lastAddedUnit;
     measurementHistory = source.measurementHistory.copy();
+    recordMeasurementHistory = source.recordMeasurementHistory;
     thisThread = null;
     setCalculationIdentifier(source.getCalculationIdentifier());
   }
@@ -5080,20 +6673,27 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Check mass balance of all unit operations in the process system.
    *
+   * <p>
+   * Bypassed units (locked inactive or auto-bypassed on low flow) are still reported, but are tagged via
+   * {@link MassBalanceResult#isBypassed()} so callers can exclude them: a unit that never executed has no meaningful
+   * inlet/outlet balance, and on a near-zero dead leg the percentage error degenerates towards 100 %.
+   * </p>
+   *
    * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @return a map with unit operation name as key and mass balance result as value
    */
   public Map<String, MassBalanceResult> checkMassBalance(String unit) {
     Map<String, MassBalanceResult> massBalanceResults = new HashMap<>();
     for (ProcessEquipmentInterface unitOp : unitOperations) {
+      boolean bypassed = unitOp.isLockedInactive() || !unitOp.isActive();
       try {
         double massBalanceError = unitOp.getMassBalance(unit);
         double inletFlow = calculateInletFlow(unitOp, unit);
         double percentError = calculatePercentError(massBalanceError, inletFlow);
-        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(massBalanceError, percentError, unit));
+        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(massBalanceError, percentError, unit, bypassed));
       } catch (Exception e) {
         logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
-        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(Double.NaN, Double.NaN, unit));
+        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(Double.NaN, Double.NaN, unit, bypassed));
       }
     }
     return massBalanceResults;
@@ -5111,36 +6711,76 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Get unit operations that failed mass balance check based on percentage error threshold.
    *
+   * <p>
+   * Bypassed units and units whose inlet flow is below their own low-flow cutoff
+   * ({@link neqsim.process.equipment.ProcessEquipmentInterface#getMinimumFlow()}) are skipped: a leg that has been
+   * declared negligible cannot produce a meaningful percentage balance, and a near-zero stream trivially reports ~100 %
+   * error.
+   * </p>
+   *
    * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold (default: 0.1%)
    * @return a map with failed unit operation names and their mass balance results
    */
   public Map<String, MassBalanceResult> getFailedMassBalance(String unit, double percentThreshold) {
-    Map<String, MassBalanceResult> allResults = checkMassBalance(unit);
     Map<String, MassBalanceResult> failedUnits = new HashMap<>();
 
     // Convert minimum flow threshold to the requested unit
     double minimumFlowInUnit = minimumFlowForMassBalanceError;
+    // Conversion of a unit's own low-flow cutoff (always kg/hr) into the requested
+    // reporting unit. NaN means "no meaningful conversion", so the per-unit cutoff
+    // filter is skipped for that reporting unit.
+    double kgPerHourToUnit = Double.NaN;
     if (unit.equals("kg/hr")) {
       minimumFlowInUnit *= 3600.0; // kg/sec to kg/hr
+      kgPerHourToUnit = 1.0;
+    } else if (unit.equals("kg/sec")) {
+      kgPerHourToUnit = 1.0 / 3600.0;
     } else if (unit.equals("mole/sec")) {
       // For mole/sec, we use the kg/sec threshold as approximation
       // since we don't have molecular weight info here
       minimumFlowInUnit = minimumFlowForMassBalanceError;
     }
 
-    for (Map.Entry<String, MassBalanceResult> entry : allResults.entrySet()) {
-      MassBalanceResult result = entry.getValue();
-      ProcessEquipmentInterface unitOp = getUnit(entry.getKey());
-      double inletFlow = calculateInletFlow(unitOp, unit);
+    // Evaluate and filter in one pass. Calling checkMassBalance() here materialized a
+    // result for every unit and then read every active unit's inlet flow a second time.
+    for (ProcessEquipmentInterface unitOp : unitOperations) {
+      boolean bypassed = unitOp.isLockedInactive() || !unitOp.isActive();
+      double massBalanceError;
+      double inletFlow;
+      double percentError;
+      try {
+        massBalanceError = unitOp.getMassBalance(unit);
+        inletFlow = calculateInletFlow(unitOp, unit);
+        percentError = calculatePercentError(massBalanceError, inletFlow);
+      } catch (Exception e) {
+        logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
+        massBalanceError = Double.NaN;
+        percentError = Double.NaN;
+        inletFlow = calculateInletFlow(unitOp, unit);
+      }
+
+      if (bypassed) {
+        continue;
+      }
 
       // Skip units with insignificant inlet flow
       if (Math.abs(inletFlow) < minimumFlowInUnit) {
         continue;
       }
 
-      if (Double.isNaN(result.getPercentError()) || Math.abs(result.getPercentError()) > percentThreshold) {
-        failedUnits.put(entry.getKey(), result);
+      // Skip units whose inlet flow is below their own configured low-flow cutoff: the
+      // leg has explicitly been declared negligible, so a percentage balance on it is
+      // numerical noise rather than a mass-conservation defect.
+      if (unitOp != null && !Double.isNaN(kgPerHourToUnit)) {
+        double unitCutoff = unitOp.getMinimumFlow() * kgPerHourToUnit;
+        if (unitCutoff > 0.0 && Math.abs(inletFlow) < unitCutoff) {
+          continue;
+        }
+      }
+
+      if (Double.isNaN(percentError) || Math.abs(percentError) > percentThreshold) {
+        failedUnits.put(unitOp.getName(), new MassBalanceResult(massBalanceError, percentError, unit, bypassed));
       }
     }
     return failedUnits;
@@ -5427,6 +7067,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private final double absoluteError;
     private final double percentError;
     private final String unit;
+    private final boolean bypassed;
 
     /**
      * Constructor for MassBalanceResult.
@@ -5436,9 +7077,23 @@ public class ProcessSystem extends SimulationBaseClass {
      * @param unit unit of measurement
      */
     public MassBalanceResult(double absoluteError, double percentError, String unit) {
+      this(absoluteError, percentError, unit, false);
+    }
+
+    /**
+     * Constructor for MassBalanceResult.
+     *
+     * @param absoluteError absolute mass balance error (outlet - inlet)
+     * @param percentError percentage error
+     * @param unit unit of measurement
+     * @param bypassed true when the unit was bypassed (locked inactive or auto-bypassed on low flow) and the balance
+     * therefore carries no information
+     */
+    public MassBalanceResult(double absoluteError, double percentError, String unit, boolean bypassed) {
       this.absoluteError = absoluteError;
       this.percentError = percentError;
       this.unit = unit;
+      this.bypassed = bypassed;
     }
 
     /**
@@ -5468,43 +7123,24 @@ public class ProcessSystem extends SimulationBaseClass {
       return unit;
     }
 
+    /**
+     * Reports whether the unit was bypassed when the balance was taken.
+     *
+     * <p>
+     * A bypassed unit never executed, so its inlet/outlet balance is not a mass-conservation result. Callers should
+     * exclude these from pass/fail reporting; {@link ProcessSystem#getFailedMassBalance(String, double)} already does.
+     * </p>
+     *
+     * @return true when the unit was locked inactive or auto-bypassed on low flow
+     */
+    public boolean isBypassed() {
+      return bypassed;
+    }
+
     @Override
     public String toString() {
-      return String.format("%.6f %s (%.4f%%)", absoluteError, unit, percentError);
+      return String.format("%.6f %s (%.4f%%)%s", absoluteError, unit, percentError, bypassed ? " [bypassed]" : "");
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + Objects.hash(alarmManager, measurementDevices, measurementHistory, name,
-        recycleController, surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    ProcessSystem other = (ProcessSystem) obj;
-    return Objects.equals(alarmManager, other.alarmManager)
-        && Objects.equals(measurementDevices, other.measurementDevices) && Objects.equals(name, other.name)
-        && Objects.equals(recycleController, other.recycleController)
-        && Objects.equals(measurementHistory, other.measurementHistory)
-        && Double.doubleToLongBits(surroundingTemperature) == Double.doubleToLongBits(other.surroundingTemperature)
-        && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
-        && Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
-        && timeStepNumber == other.timeStepNumber && Objects.equals(unitOperations, other.unitOperations);
   }
 
   /** {@inheritDoc} */
@@ -5721,27 +7357,6 @@ public class ProcessSystem extends SimulationBaseClass {
         array[index++] = Arrays.copyOf(entry, entry.length);
       }
       return array;
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + maxSize;
-      result = prime * result + Arrays.deepHashCode(toArray());
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-      MeasurementHistory other = (MeasurementHistory) obj;
-      return maxSize == other.maxSize && Arrays.deepEquals(toArray(), other.toArray());
     }
   }
 
@@ -6152,6 +7767,8 @@ public class ProcessSystem extends SimulationBaseClass {
     cachedHybridPlan = null;
     cachedHasAdjusters = null;
     cachedHasRecycles = null;
+    cachedAutoLowFlowUnits = null;
+    cachedAutoTuningRecycles = null;
     cachedHasCalculators = null;
     cachedHasMultiInput = null;
   }
@@ -6163,6 +7780,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * clear it at one of the mutation sites.
    */
   private void invalidateStructureCaches() {
+    cachedSuccessfulRunStatuses = null;
     invalidateGraph();
   }
 
@@ -7536,16 +9154,24 @@ public class ProcessSystem extends SimulationBaseClass {
         equipReport.addProperty("type", equipment.getClass().getSimpleName());
         equipReport.addProperty("autoSized", sizeable.isAutoSized());
 
-        // Get JSON sizing report if available
-        String jsonReport = sizeable.getSizingReportJson();
-        if (jsonReport != null && !jsonReport.equals("{}")) {
-          try {
-            com.google.gson.JsonObject sizingData = com.google.gson.JsonParser.parseString(jsonReport)
-                .getAsJsonObject();
-            equipReport.add("sizingData", sizingData);
-          } catch (Exception e) {
-            equipReport.addProperty("sizingData", jsonReport);
+        // Get JSON sizing report if available. Some equipment cannot calculate a sizing
+        // report before its first process run; keep the process-level report usable and
+        // make that state explicit instead of aborting the complete capacity report.
+        equipReport.addProperty("sizingDataAvailable", false);
+        try {
+          String jsonReport = sizeable.getSizingReportJson();
+          if (jsonReport != null && !jsonReport.equals("{}")) {
+            try {
+              com.google.gson.JsonObject sizingData = com.google.gson.JsonParser.parseString(jsonReport)
+                  .getAsJsonObject();
+              equipReport.add("sizingData", sizingData);
+            } catch (Exception e) {
+              equipReport.addProperty("sizingData", jsonReport);
+            }
+            equipReport.addProperty("sizingDataAvailable", true);
           }
+        } catch (RuntimeException ex) {
+          equipReport.addProperty("sizingDataError", ex.getClass().getSimpleName());
         }
 
         // Add capacity constraints if equipment is capacity-constrained
@@ -7939,8 +9565,8 @@ public class ProcessSystem extends SimulationBaseClass {
   // Mechanical Design and Cost Estimation API
   // ============================================================================
 
-  /** System-level mechanical design (lazy initialized). */
-  private transient neqsim.process.mechanicaldesign.SystemMechanicalDesign systemMechanicalDesign;
+  /** System-level mechanical design (lazy initialized and persisted with the process). */
+  private neqsim.process.mechanicaldesign.SystemMechanicalDesign systemMechanicalDesign;
 
   /** Process-level cost estimate (lazy initialized). */
   private transient neqsim.process.costestimation.ProcessCostEstimate processCostEstimate;
@@ -7949,8 +9575,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Initialize mechanical design for all equipment in the process.
    *
    * <p>
-   * This method calls initMechanicalDesign() on each equipment item, preparing them for mechanical design calculations.
-   * Should be called after process simulation has run.
+   * This method initializes equipment that does not yet have a mechanical design. Existing design objects are retained
+   * so configured standards, limits, and sizing inputs remain part of the process design state. It should be called
+   * after process simulation has run.
    * </p>
    *
    * <p>
@@ -7960,7 +9587,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public void initAllMechanicalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        equipment.initMechanicalDesign();
+        getOrInitializeMechanicalDesign(equipment);
       }
     }
   }
@@ -7980,14 +9607,28 @@ public class ProcessSystem extends SimulationBaseClass {
   public void runAllMechanicalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        // Ensure mechanical design is initialized
-        equipment.initMechanicalDesign();
-        neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+        neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = getOrInitializeMechanicalDesign(equipment);
         if (mecDesign != null) {
           mecDesign.calcDesign();
         }
       }
     }
+  }
+
+  /**
+   * Return the current mechanical design, initializing it only when it is absent.
+   *
+   * @param equipment process equipment
+   * @return persistent mechanical design, or {@code null} when the equipment provides none
+   */
+  private neqsim.process.mechanicaldesign.MechanicalDesign getOrInitializeMechanicalDesign(
+      ProcessEquipmentInterface equipment) {
+    neqsim.process.mechanicaldesign.MechanicalDesign mechanicalDesign = equipment.getMechanicalDesign();
+    if (mechanicalDesign == null) {
+      equipment.initMechanicalDesign();
+      mechanicalDesign = equipment.getMechanicalDesign();
+    }
+    return mechanicalDesign;
   }
 
   /**
@@ -8193,8 +9834,7 @@ public class ProcessSystem extends SimulationBaseClass {
     if (equipment == null) {
       return null;
     }
-    equipment.initMechanicalDesign();
-    neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+    neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = getOrInitializeMechanicalDesign(equipment);
     if (mecDesign != null) {
       mecDesign.calcDesign();
     }

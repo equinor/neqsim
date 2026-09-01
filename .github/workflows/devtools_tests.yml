@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -36,6 +36,8 @@ jobs:
         run: |
           python -m pytest -q \
             devtools/test_agent_search.py \
+            devtools/test_check_documentation_search.py \
+            devtools/test_industrial_sm_benchmark.py \
             devtools/test_skill_search.py \
             devtools/test_verify_agent_skill_refs.py \
             devtools/test_report_workflow.py \

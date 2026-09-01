@@ -141,6 +141,59 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     return outStreams.get(i);
   }
 
+  /**
+   * Returns all inlet streams of the multi-stream heat exchanger.
+   *
+   * <p>
+   * Without this override the inherited two-port implementation reports the (unset) single {@code inStream}, so a
+   * multi-stream exchanger looks unconnected to topology walks, DEXPI export and the {@code ProcessModel} boundary
+   * stream detection - the latter would then silently drop a cross-area link and report convergence while a downstream
+   * consumer is still out of balance.
+   * </p>
+   *
+   * @return a list containing the non-null inlet streams, in feed order
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    List<StreamInterface> inlets = new ArrayList<StreamInterface>();
+    for (StreamInterface stream : inStreams) {
+      if (stream != null) {
+        inlets.add(stream);
+      }
+    }
+    return inlets;
+  }
+
+  /**
+   * Returns all outlet streams of the multi-stream heat exchanger.
+   *
+   * @return a list containing the non-null outlet streams, in feed order
+   */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<StreamInterface>();
+    for (StreamInterface stream : outStreams) {
+      if (stream != null) {
+        outlets.add(stream);
+      }
+    }
+    return outlets;
+  }
+
+  /**
+   * Returns the first outlet stream of the multi-stream heat exchanger.
+   *
+   * <p>
+   * Use {@link #getOutStream(int)} to address a specific side.
+   * </p>
+   *
+   * @return the outlet stream for feed side 0, or null when no feed has been added
+   */
+  @Override
+  public StreamInterface getOutletStream() {
+    return outStreams.isEmpty() ? null : outStreams.get(0);
+  }
+
   /** {@inheritDoc} */
   @Override
   public StreamInterface getInStream(int i) {
@@ -232,9 +285,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     for (int i = 0; i < inStreams.size(); i++) {
       UUID id = UUID.randomUUID();
       inStreams.get(i).run(id);
-      inStreams.get(i).getFluid().init(3);
+      inStreams.get(i).getFluid().init(2);
       outStreams.get(i).run(id);
-      outStreams.get(i).getFluid().init(3);
+      outStreams.get(i).getFluid().init(2);
       entropyProduction += outStreams.get(i).getThermoSystem().getEntropy(unit)
           - inStreams.get(i).getThermoSystem().getEntropy(unit);
     }
@@ -427,6 +480,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (applyLowFlowBypass(id)) {
+      return;
+    }
     if (firstTime) {
       firstTime = false;
 
@@ -676,8 +732,72 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       logger.info("iterations: " + iterations);
       iterations = 0;
     }
+    publishHeatDuty();
     setCalculationIdentifier(id);
     firstTime = true;
+  }
+
+  /**
+   * Bypasses the exchanger when every inlet stream is below the configured low-flow threshold.
+   *
+   * <p>
+   * A multi-stream exchanger is only bypassed when ALL of its sides are stagnant - a single dead side is a legitimate
+   * operating case that the normal enthalpy balance already handles by contributing zero duty.
+   * </p>
+   *
+   * <p>
+   * When bypassed, each outlet stream is written as a clone of its inlet (same temperature, pressure and composition)
+   * rather than left untouched, so downstream units - typically a valve, mixer or separator - still see a consistent
+   * pressure and composition boundary at zero flow.
+   * </p>
+   *
+   * <p>
+   * The check is opt-in: it only fires when a threshold above
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#DEFAULT_MINIMUM_FLOW} has been configured, so an
+   * exchanger whose sides are momentarily empty inside a recycle loop is not permanently skipped for the rest of the
+   * solve pass.
+   * </p>
+   *
+   * @param id current calculation identifier
+   * @return true when the exchanger was bypassed and {@code run()} should return immediately
+   */
+  private boolean applyLowFlowBypass(UUID id) {
+    double threshold = getMinimumFlow();
+    if (!(threshold > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW) || inStreams.isEmpty()
+        || inStreams.size() != outStreams.size()) {
+      return false;
+    }
+    for (StreamInterface inStream : inStreams) {
+      try {
+        if (inStream.getFlowRate("kg/hr") >= threshold) {
+          isActive(true);
+          return false;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read inlet flow for low-flow check on '{}'", getName());
+        isActive(true);
+        return false;
+      }
+    }
+    isActive(false);
+    duty = 0.0;
+    for (int i = 0; i < outStreams.size(); i++) {
+      StreamInterface outStream = outStreams.get(i);
+      outStream.setThermoSystem(inStreams.get(i).getThermoSystem().clone());
+      outStream.setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+    return true;
+  }
+
+  /**
+   * Publishes recoverable exchanger duty to the inherited calculated heat port.
+   */
+  private void publishHeatDuty() {
+    if (getEnergyPort("heatDuty").isConnected()
+        && getEnergyPort("heatDuty").getMode() == neqsim.process.equipment.stream.EnergyPortMode.CALCULATED) {
+      getEnergyPort("heatDuty").setDuty(Math.abs(duty));
+    }
   }
 
   /**

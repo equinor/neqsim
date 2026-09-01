@@ -1445,8 +1445,8 @@ public class FlowRateOptimizer implements Serializable {
 
         boolean feasible = point.isFeasible() && utilizationOk && pressureOk && compressorsFeasible;
 
-        logger.debug("Iter {}: flow={:.0f}, Pout={:.2f} (target={:.2f}), util={:.1f}%, feasible={}", iter, midRate,
-            outletPressure, targetOutletPressure, util * 100, feasible);
+        logger.debug("Iter {}: flow={}, Pout={} (target={}), util={}%, feasible={}", iter, midRate, outletPressure,
+            targetOutletPressure, util * 100, feasible);
 
         if (feasible) {
           // This flow rate works - try higher

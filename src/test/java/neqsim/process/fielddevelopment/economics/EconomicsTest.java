@@ -181,6 +181,25 @@ class EconomicsTest {
   }
 
   @Test
+  void testCommodityFeesAreSeparateFromTransportTariffs() {
+    engine.setCapex(0.0, 2025);
+    engine.setGasPrice(1.0);
+    engine.setGasTariff(0.02);
+    engine.setOilTariff(0.0);
+    engine.setOpexPercentOfCapex(0.0);
+    engine.setCommodityFeeSchedule(CommodityFeeSchedule.builder().gasProcessingFee(0.03).annualFixedFee(2.0).build());
+    engine.addAnnualProduction(2025, 0.0, 100.0e6, 0.0);
+
+    CashFlowResult result = engine.calculate(0.0);
+    CashFlowEngine.AnnualCashFlow annual = result.getAnnualCashFlows().get(0);
+
+    assertEquals(2.0, annual.getTariff(), 1.0e-12);
+    assertEquals(5.0, annual.getProcessingFee(), 1.0e-12);
+    assertEquals(93.0, annual.getNetRevenue(), 1.0e-12);
+    assertEquals(0.03, engine.copy().getCommodityFeeSchedule().getGasProcessingFeeUsdPerSm3(), 1.0e-12);
+  }
+
+  @Test
   void testBreakevenGasPrice() {
     // Set up a marginal project
     engine.setCapex(500.0, 2025);
@@ -273,6 +292,22 @@ class EconomicsTest {
 
     assertEquals(800.0, result.getTotalCapex(), 0.1);
     assertTrue(result.getAnnualCashFlows().size() > 10);
+  }
+
+  @Test
+  void testFixedOpexCanStartAtFirstProduction() {
+    engine.addCapex(300.0, 2024);
+    engine.addCapex(500.0, 2025);
+    engine.setOpexPercentOfCapex(0.0);
+    engine.setFixedOpexPerYear(50.0);
+    engine.setFixedOpexStartYear(2026);
+    engine.addAnnualProduction(2026, 1.0e6, 0.0, 0.0);
+
+    CashFlowResult result = engine.calculate(0.08);
+
+    assertEquals(0.0, result.getAnnualCashFlows().get(0).getOpex(), 1.0e-12);
+    assertEquals(0.0, result.getAnnualCashFlows().get(1).getOpex(), 1.0e-12);
+    assertEquals(50.0, result.getAnnualCashFlows().get(2).getOpex(), 1.0e-12);
   }
 
   @Test

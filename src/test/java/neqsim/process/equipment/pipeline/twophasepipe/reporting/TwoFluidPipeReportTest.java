@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
@@ -16,6 +17,9 @@ import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchma
 import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchmarkHarness.BenchmarkPoint;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.monitor.TwoFluidPipeResponse;
+import neqsim.process.util.report.ReportConfig;
+import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -28,7 +32,23 @@ class TwoFluidPipeReportTest {
     String steadyCsv = TwoFluidPipeReport.toSteadyStateProfileCsv(pipe);
     assertTrue(steadyCsv.startsWith("position_m,pressure_bara,temperature_C"));
     assertTrue(steadyCsv.contains("flow_regime"));
+    assertTrue(steadyCsv.contains("entrainment_fraction"));
+    assertTrue(steadyCsv.contains("inclined_section_gas_carryover_number"));
+    assertTrue(steadyCsv.contains("inclined_section_liquid_fallback_potential"));
+    assertTrue(steadyCsv.contains("severe_slugging_number"));
     assertEquals(pipe.getPositionProfile().length + 1, steadyCsv.split("\\R").length);
+
+    int sectionCount = pipe.getPositionProfile().length;
+    assertEquals(sectionCount, pipe.getOilWaterFlowRegimeProfile().length);
+    assertEquals(sectionCount, pipe.getWaterWettingProfile().length);
+    assertEquals(sectionCount, pipe.getWaterDropoutRiskProfile().length);
+    assertEquals(sectionCount, pipe.getEntrainmentFractionProfile().length);
+    assertEquals(sectionCount, pipe.getEntrainedDropletDiameterProfile().length);
+    assertEquals(sectionCount, pipe.getInclinedSectionGasCarryoverNumberProfile().length);
+    assertEquals(sectionCount, pipe.getInclinedSectionLiquidFallbackPotentialProfile().length);
+    assertEquals(sectionCount, pipe.getSevereSlugPotentialProfile().length);
+    assertTrue(Arrays.stream(pipe.getEntrainmentFractionProfile()).allMatch(value -> value >= 0.0 && value <= 1.0));
+    assertTrue(Arrays.stream(pipe.getEntrainedDropletDiameterProfile()).allMatch(value -> value >= 0.0));
 
     List<TwoFluidPipeReport.ProfileSnapshot> snapshots = TwoFluidPipeReport.newSnapshotList();
     snapshots.add(TwoFluidPipeReport.capture(pipe));
@@ -43,7 +63,19 @@ class TwoFluidPipeReportTest {
     assertTrue(summary.contains("Average liquid holdup"));
 
     String json = TwoFluidPipeReport.toSummaryJson(pipe);
-    assertTrue(JsonParser.parseString(json).getAsJsonObject().has("outletPressureBara"));
+    JsonObject summaryJson = JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(summaryJson.has("outletPressureBara"));
+    assertTrue(summaryJson.has("averageLiquidHoldup"));
+    assertFalse(summaryJson.has("profile"));
+
+    JsonObject fullJson = JsonParser.parseString(pipe.toJson()).getAsJsonObject();
+    assertEquals(pipe.getName(), fullJson.get("name").getAsString());
+    assertEquals(pipe.getPositionProfile().length,
+        fullJson.getAsJsonObject("profile").getAsJsonArray("positionM").size());
+    assertEquals(pipe.getPressureProfile().length,
+        fullJson.getAsJsonObject("profile").getAsJsonArray("pressureBara").size());
+    assertEquals(pipe.getFlowRegimeProfile().length,
+        fullJson.getAsJsonObject("profile").getAsJsonArray("flowRegime").size());
 
     String events = TwoFluidPipeReport.toSlugAndFlowAssuranceCsv(pipe);
     assertTrue(events.startsWith("event_type,position_m,value,unit,description"));
@@ -64,6 +96,15 @@ class TwoFluidPipeReportTest {
     TwoFluidPipeReport.writeSummaryJson(pipe, summaryPath);
     assertTrue(readUtf8(profilePath).startsWith("position_m,pressure_bara"));
     assertTrue(JsonParser.parseString(readUtf8(summaryPath)).getAsJsonObject().has("averageLiquidHoldup"));
+  }
+
+  @Test
+  void testHideDetailOmitsTwoFluidResponse() {
+    TwoFluidPipe pipe = runTwoFluidPipe("hidden", methaneFluid(50.0, 298.15), 25000.0, 1000.0, 0.2, 5);
+    TwoFluidPipeResponse response = new TwoFluidPipeResponse(pipe);
+    response.applyConfig(new ReportConfig(DetailLevel.HIDE));
+
+    assertEquals("{}", new com.google.gson.Gson().toJson(response));
   }
 
   @Test

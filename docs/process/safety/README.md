@@ -1,224 +1,196 @@
 ---
 title: Safety Systems Package
-description: Documentation for safety systems modeling in NeqSim.
+description: Current NeqSim safety-equipment, ESD, HIPPS, relief, and transient-simulation API boundaries.
 ---
 
-# Safety Systems Package
+NeqSim provides stream-connected safety equipment, sequenced process logic, scenario runners,
+and screening utilities. These layers serve different purposes and should not be presented as
+one universal safety-design API.
 
-Documentation for safety systems modeling in NeqSim.
+Safety calculations are engineering evidence, not an approval. A project must still establish
+credible scenarios, design conditions, standards editions, safeguard independence, uncertainty,
+acceptance criteria, and accountable review.
 
-## Table of Contents
-- [Overview](#overview)
-- [Safety Equipment](#safety-equipment)
-- [Emergency Shutdown (ESD)](#emergency-shutdown-esd)
-- [Blowdown Systems](#blowdown-systems)
-- [Pressure Safety Valves](#pressure-safety-valves)
-- [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md)
-- [CFD Source-Term Handoff](release-dispersion-scenarios.md#cfd-source-term-handoff)
-- [Open Drain Review](../../safety/open_drain_review.md)
-- [HIPPS](#hipps)
+## Choose the correct layer
 
----
+| Need | Current API | Boundary |
+| --- | --- | --- |
+| Model pressure-responsive or fail-safe equipment | `SafetyValve`, `RuptureDisk`, `ESDValve`, `BlowdownValve` | Constructors accept a `StreamInterface`, not a vessel object |
+| Sequence shutdown actions | `ESDLogic` with `TripValveAction`, `ActivateBlowdownAction`, and related actions | Call `activate()` and advance both logic and equipment with the same time-step basis |
+| Model HIPPS voting and final action | `HIPPSLogic`, `Detector`, and `VotingLogic` | Sensor quality, bypasses, proof testing, SIL claims, and independence require separate evidence |
+| Produce structured transient evidence | `EmergencyShutdownTestRunner`, `DynamicSafetyScenarioRunner`, and `ClosedLoopSafetyFunction` | Define monitored tags, criteria, calculation identity, and result retention explicitly |
+| Screen relief load and area | `ReliefValveSizing` and the scenario definitions on `SafetyValve` | Static sizing is separate from the valve's dynamic opening and reseating behavior |
+| Hand off consequence inputs | Release, dispersion, open-drain, flare, and CFD source-term utilities | Layout, weather, leak frequency, escalation, and QRA conclusions remain external qualification tasks |
 
-## Overview
+## Units and state ownership
 
-**Location:** `neqsim.process.equipment.safety`, `neqsim.process.safety`
+| API | Input meaning |
+| --- | --- |
+| `SafetyValve.setPressureSpec(double)` | Absolute set pressure in bara |
+| `SafetyValve.setFullOpenPressure(double)` | Absolute fully-open pressure in bara |
+| `SafetyValve.setBlowdown(double)` | Reseating margin as percent below set pressure |
+| `RuptureDisk.setBurstPressure(double)` | Absolute burst pressure in bara |
+| `RuptureDisk.setFullOpenPressure(double)` | Absolute fully-open pressure in bara |
+| `ESDValve.setStrokeTime(double)` | Closure time in seconds |
+| `BlowdownValve.setOpeningTime(double)` | Opening time in seconds |
+| `runTransient(double, UUID)` | Time increment in seconds plus a stable calculation identity |
 
-NeqSim provides equipment and logic for modeling process safety systems:
-- Pressure Safety Valves (PSV)
-- Relief valves
-- Emergency Shutdown (ESD) systems
-- Blowdown and depressuring systems
-- High Integrity Pressure Protection Systems (HIPPS)
-- NORSOK S-001 Clause 9 open-drain review from NeqSim-calculated liquid and hydraulic evidence
-- Automatic release source terms and gas dispersion screening from process streams
-- Formal CFD source-term JSON handoff cases for OpenFOAM, FLACS, KFX, PHAST, and Safeti workflows
+The valve classes inherit unit-aware outlet-pressure methods from `ThrottlingValve`, for example
+`setOutletPressure(1.5, "bara")`. The device-specific set, burst, and full-open setters above do
+not accept a unit string. Convert project gauge-pressure values to absolute pressure before using
+those setters.
 
-The release, dispersion, and CFD handoff workflow is intended for screening, case generation,
-and auditable source-term transfer. Final facility layout, regulatory QRA, and CFD conclusions
-still require project-specific validation, site geometry, leak-frequency data, and approved
-consequence-analysis methods.
+`RuptureDisk.reset()` exists to reset a simulation case. It does not imply that a ruptured physical
+disk can reseat or be returned to service.
 
----
+## Executable Java 8 quick start
 
-## Safety Equipment
-
-### Pressure Safety Valve (PSV)
+This example configures pressure-protection devices and executes a fail-close/fail-open ESD
+sequence. It demonstrates API behavior; it does not size a relief device or validate a safety
+function.
 
 ```java
-import neqsim.process.equipment.valve.SafetyValve;
-
-SafetyValve psv = new SafetyValve("PSV-100", vessel);
-psv.setOpeningPressure(95.0, "barg");  // Set pressure
-psv.setFullOpenPressure(100.0, "barg"); // Overpressure
-psv.setBlowdownPressure(85.0, "barg");  // Reseating pressure
-```
-
-### Rupture Disk
-
-```java
-import neqsim.process.equipment.valve.RuptureDisk;
-
-RuptureDisk disk = new RuptureDisk("RD-100", vessel);
-disk.setBurstPressure(110.0, "barg");
-disk.setDiameter(150.0, "mm");
-```
-
----
-
-## Emergency Shutdown (ESD)
-
-### ESD Logic and Dynamic Evidence
-
-```java
-ESDValve inletValve = new ESDValve("ESD Inlet Isolation", feed);
-inletValve.setStrokeTime(4.0);
-inletValve.setCv(500.0);
-
-ESDLogic esdLogic = new ESDLogic("ESD Level 1");
-esdLogic.addAction(new TripValveAction(inletValve), 0.0);
-```
-
-Use `neqsim.process.safety.esd.EmergencyShutdownTestRunner` when the ESD sequence needs a
-structured dynamic evidence report with monitored time series, tagreader comparisons, standards
-references, and acceptance criteria.
-
-### ESD Levels
-
-| Level | Description | Actions |
-|-------|-------------|---------|
-| ESD-0 | Total shutdown | Full plant shutdown |
-| ESD-1 | Process shutdown | Process area isolation |
-| ESD-2 | Unit shutdown | Single unit isolation |
-| ESD-3 | Equipment shutdown | Single equipment stop |
-
----
-
-## Blowdown Systems
-
-### Depressuring Calculation
-
-```java
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.BlowdownValve;
+import neqsim.process.equipment.valve.ESDValve;
+import neqsim.process.equipment.valve.RuptureDisk;
+import neqsim.process.equipment.valve.SafetyValve;
+import neqsim.process.logic.action.ActivateBlowdownAction;
+import neqsim.process.logic.action.TripValveAction;
+import neqsim.process.logic.esd.ESDLogic;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-BlowdownValve blowdown = new BlowdownValve("BDV-100", vessel);
-blowdown.setDownstreamPressure(1.0, "barg");  // Flare pressure
-blowdown.setOrificeSize(100.0, "mm");
+public final class ProcessSafetyOverviewQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(ProcessSafetyOverviewQuickStart.class);
 
-// Run depressuring transient
-for (double t = 0; t < 900; t += 1.0) {
-    blowdown.runTransient();
+  private ProcessSafetyOverviewQuickStart() {}
 
-    double P = vessel.getPressure("barg");
-    double T = vessel.getTemperature("C");
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 80.0);
+    fluid.addComponent("methane", 0.95);
+    fluid.addComponent("ethane", 0.05);
+    fluid.setMixingRule("classic");
 
-    if (P < 7.0) {  // 15 minute rule target
-        System.out.println("Reached target at " + t + " seconds");
-        break;
+    Stream feed = new Stream("safety feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+
+    SafetyValve safetyValve = new SafetyValve("PSV-100", feed);
+    safetyValve.setPressureSpec(75.0);
+    safetyValve.setFullOpenPressure(82.5);
+    safetyValve.setBlowdown(7.0);
+    safetyValve.setOutletPressure(1.5, "bara");
+
+    RuptureDisk ruptureDisk = new RuptureDisk("RD-100", feed);
+    ruptureDisk.setBurstPressure(85.0);
+    ruptureDisk.setFullOpenPressure(89.25);
+    ruptureDisk.setOutletPressure(1.5, "bara");
+
+    ESDValve inletIsolation = new ESDValve("ESD-XV-100", feed);
+    inletIsolation.setStrokeTime(2.0);
+    inletIsolation.setCv(500.0);
+    inletIsolation.setOutletPressure(75.0, "bara");
+    inletIsolation.setCalculateSteadyState(false);
+    inletIsolation.energize();
+
+    BlowdownValve blowdownValve = new BlowdownValve("BDV-100", feed);
+    blowdownValve.setOpeningTime(2.0);
+    blowdownValve.setCv(100.0);
+    blowdownValve.setOutletPressure(1.5, "bara");
+    blowdownValve.setCalculateSteadyState(false);
+
+    ESDLogic esdLogic = new ESDLogic("ESD level 1");
+    esdLogic.addAction(new TripValveAction(inletIsolation), 0.0);
+    esdLogic.addAction(new ActivateBlowdownAction(blowdownValve), 0.0);
+    esdLogic.activate();
+
+    UUID calculationId = UUID.randomUUID();
+    double timeStepSeconds = 0.5;
+    for (int step = 0; step < 20 && !esdLogic.isComplete(); step++) {
+      esdLogic.execute(timeStepSeconds);
+      inletIsolation.runTransient(timeStepSeconds, calculationId);
+      blowdownValve.runTransient(timeStepSeconds, calculationId);
     }
+
+    if (!esdLogic.isComplete()
+        || inletIsolation.getPercentValveOpening() > 1.0
+        || blowdownValve.getPercentValveOpening() < 90.0
+        || Math.abs(safetyValve.getBlowdownPressure() - 69.75) > 1.0e-9
+        || ruptureDisk.getBurstPressure() != 85.0) {
+      throw new IllegalStateException("Safety-equipment sequence did not complete");
+    }
+
+    logger.info(
+        "ESD complete: inlet opening {}%, blowdown opening {}%",
+        inletIsolation.getPercentValveOpening(),
+        blowdownValve.getPercentValveOpening());
+  }
 }
 ```
 
-### Fire Case Calculation
+The regression test
+`src/test/java/neqsim/process/safety/ProcessSafetyOverviewDocumentationTest.java` executes this
+sequence and protects the documented constructors, units, state transitions, and completion
+criteria.
 
-```java
-// Calculate heat input from fire
-double wettedArea = 50.0;  // m²
-double Q = 43200 * Math.pow(wettedArea, 0.82);  // API 521 formula
+## Transient execution contract
 
-vessel.setHeatInput(Q, "W");
-```
+1. Initialize and run the upstream thermodynamic stream or steady-state process.
+2. Set stateful safety equipment to transient mode where its automatic travel logic is required.
+3. Activate the ESD or HIPPS logic explicitly; construction alone does not trigger it.
+4. Advance logic and equipment using a justified time step and a stable `UUID` for the calculation.
+5. Capture pressure, temperature, inventory, valve position, relief flow, flare load, MDMT or
+   hydrate margin, and acceptance-criterion results in structured evidence.
+6. Check conservation, numerical convergence, event ordering, time-step sensitivity, and the
+   final safe state before interpreting the scenario.
 
----
+A valve connected to a stream is not a complete depressuring model. The protected inventory,
+equipment holdup, heat transfer, flare-header backpressure, downstream equipment, control logic,
+and scenario boundary conditions must also be represented.
 
-## Pressure Safety Valves
+## Relief and fire screening boundary
 
-### PSV Sizing
+Use [Relief-Valve Sizing Screening](../../safety/relief_valve_sizing_api) for the maintained
+gas, liquid, two-phase, and wetted-fire sizing interfaces. Do not attach an undocumented heat
+input to an arbitrary vessel or infer an API 526 letter from `SafetyValve`; the dynamic equipment
+class does not expose those sizing methods.
 
-```java
-// Calculate required relief rate
-double reliefRate = psv.getReliefRate("kg/hr");
+Use [Integrated Facility Safety Response](integrated-facility-safety-response) when relief,
+blowdown, flare, compressor trip, process limits, MDMT, and hydrate margin must be reviewed as one
+scenario. Static relief sizing and dynamic transient response answer different questions and
+should both retain method, unit, input-basis, and qualification metadata.
 
-// API 520 sizing
-double area = psv.getRequiredOrificeArea("mm2");
-String orifice = psv.getAPIOrificeLetter();
+## Safety lifecycle boundary
 
-System.out.println("Required area: " + area + " mm²");
-System.out.println("API orifice: " + orifice);
-```
+NeqSim can calculate and retain evidence, but it does not:
 
-### Multiple Relief Scenarios
+- decide which initiating events or safeguards are credible;
+- certify IEC 61511 independence, SIL capability, proof-test coverage, or bypass policy;
+- replace API, ISO, NORSOK, company, vendor, or authority requirements;
+- approve relief loads, flare-network capacity, depressuring time, MDMT, hazardous-area extent,
+  fire protection, QRA, HAZOP, LOPA, or an SRS; or
+- make a model fit for design or operation without project-specific verification and accountable
+  review.
 
-| Scenario | Description |
-|----------|-------------|
-| Blocked outlet | Outlet valve closed |
-| Fire case | External fire exposure |
-| Tube rupture | Heat exchanger tube failure |
-| Power failure | Loss of cooling/control |
-| Thermal relief | Liquid expansion |
+Avoid fixed ESD-level meanings or universal depressuring-time targets. Define them in the project
+basis and trace each acceptance criterion to the applicable controlled source.
 
----
+## Related documentation
 
-## HIPPS
-
-High Integrity Pressure Protection System.
-
-```java
-import neqsim.process.safety.HIPPS;
-
-HIPPS hipps = new HIPPS("HIPPS-1");
-
-// Add sensors (2oo3 voting)
-hipps.addPressureSensor(pt1);
-hipps.addPressureSensor(pt2);
-hipps.addPressureSensor(pt3);
-
-// Set trip point
-hipps.setTripPressure(95.0, "barg");
-
-// Add final elements
-hipps.addIsolationValve(sdv1);
-hipps.addIsolationValve(sdv2);
-
-// Set voting logic
-hipps.setVotingLogic("2oo3");  // 2 out of 3
-```
-
----
-
-## Example: ESD Dynamic Test Evidence
-
-```java
-OperationalTagMap tagMap = new OperationalTagMap()
-    .addBinding(OperationalTagBinding.builder("xv_opening")
-        .automationAddress("ESD Inlet Isolation.percentValveOpening")
-        .unit("%")
-        .role(InstrumentTagRole.BENCHMARK)
-        .build());
-
-EmergencyShutdownTestPlan plan = EmergencyShutdownTestPlan.builder("ESD1 isolation closure")
-    .duration(8.0)
-    .timeStep(1.0)
-    .tagMap(tagMap)
-    .enableLogic("ESD Level 1")
-    .triggerLogic("ESD Level 1")
-    .criterion(EmergencyShutdownTestCriterion.finalAtMost(
-        "ESD-XV-CLOSED", "xv_opening", 5.0, "%"))
-    .criterion(EmergencyShutdownTestCriterion.logicCompleted(
-        "ESD-LOGIC-COMPLETE", "ESD Level 1"))
-    .build();
-
-EmergencyShutdownTestResult report = EmergencyShutdownTestRunner.run(process, plan, esdLogic);
-```
-
----
-
-## Related Documentation
-
-- [Process Package](../) - Process simulation overview
-- [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md) - Automatic source-term and cloud endpoint screening from ProcessSystem streams
-- [Open Drain Review](../../safety/open_drain_review.md) - NORSOK S-001 Clause 9 review with NeqSim stream evidence and normalized STID/tagreader inputs
-- [ESD Dynamic Testing Workflow](../../safety/esd_testing_workflow.md) - ESD transient testing with process logic, tagreader evidence, and criteria reports
-- [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM) - Detailed ESD guide
-- [HIPPS Summary](../../safety/HIPPS_SUMMARY) - HIPPS overview
-- [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example) - PSV sizing example
+- [Safety documentation index](../../safety/README)
+- [Relief-Valve Sizing Screening](../../safety/relief_valve_sizing_api)
+- [ESD Dynamic Testing Workflow](../../safety/esd_testing_workflow)
+- [HIPPS overview](../../safety/HIPPS_SUMMARY)
+- [Closed-loop SIF verification](closed-loop-sif-verification)
+- [SIF reliability and degraded modes](sif-reliability-and-degraded-modes)
+- [HAZOP/LOPA to draft SRS handoff](hazop-lopa-srs-handoff)
+- [Integrated facility safety response](integrated-facility-safety-response)
+- [Safety change revalidation and benchmarks](safety-change-revalidation-and-benchmarks)
+- [Release and dispersion scenarios](release-dispersion-scenarios)
+- [Valve equipment guide](../equipment/valves)
+- [Process package overview](../README)

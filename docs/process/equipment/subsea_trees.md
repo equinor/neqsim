@@ -3,8 +3,6 @@ title: Subsea Trees
 description: Documentation for subsea Christmas tree equipment in NeqSim for subsea production modeling.
 ---
 
-# Subsea Trees
-
 Documentation for subsea Christmas tree equipment in NeqSim for subsea production modeling.
 
 ## Table of Contents

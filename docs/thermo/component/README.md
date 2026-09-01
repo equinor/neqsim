@@ -3,8 +3,6 @@ title: "Component Package"
 description: "Documentation for component modeling in NeqSim."
 ---
 
-# Component Package
-
 Documentation for component modeling in NeqSim.
 
 ## Table of Contents

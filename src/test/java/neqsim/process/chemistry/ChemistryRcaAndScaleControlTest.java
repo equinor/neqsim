@@ -51,10 +51,13 @@ public class ChemistryRcaAndScaleControlTest {
     assessor.addInhibitor(ScaleInhibitorPerformance.ScaleType.CACO3, inhibitor);
     assessor.evaluate();
 
-    double residual = assessor.getResidualSI(ScaleInhibitorPerformance.ScaleType.CACO3);
-    assertTrue(residual < siCaCO3Uninhibited, "Residual SI should be lower than uninhibited baseline");
+    double residual = assessor.getKineticRiskIndex(ScaleInhibitorPerformance.ScaleType.CACO3);
+    assertTrue(residual < siCaCO3Uninhibited, "Kinetic risk index should be lower than the thermodynamic SI");
+    assertEquals(siCaCO3Uninhibited,
+        assessor.getThermodynamicSaturationIndex(ScaleInhibitorPerformance.ScaleType.CACO3), 1.0e-12,
+        "Threshold inhibitor must not change thermodynamic SI");
     assertTrue(assessor.isEvaluated());
-    assertNotNull(assessor.toMap().get("uninhibitedSI"));
+    assertNotNull(assessor.toMap().get("thermodynamicSI"));
   }
 
   /**

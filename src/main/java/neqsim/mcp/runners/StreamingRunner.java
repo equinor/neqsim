@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -37,7 +36,7 @@ public final class StreamingRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Background thread pool for async simulations. */
-  private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(4);
+  private static final ExecutorService EXECUTOR = McpExecutionPolicy.workerPool();
 
   /** Active streaming operations. */
   private static final ConcurrentHashMap<String, StreamingOperation> OPERATIONS = new ConcurrentHashMap<String, StreamingOperation>();
@@ -127,7 +126,10 @@ public final class StreamingRunner {
     String fixedPressureUnit = input.has("fixedPressureUnit") ? input.get("fixedPressureUnit").getAsString() : "bara";
 
     op.totalSteps = points;
-    OPERATIONS.put(opId, op);
+    String limited = registerOperation(op);
+    if (limited != null) {
+      return limited;
+    }
 
     // Run in background
     EXECUTOR.submit(() -> {
@@ -215,7 +217,10 @@ public final class StreamingRunner {
 
     int steps = (int) (totalTime / timeStep);
     op.totalSteps = steps;
-    OPERATIONS.put(opId, op);
+    String limited = registerOperation(op);
+    if (limited != null) {
+      return limited;
+    }
 
     EXECUTOR.submit(() -> {
       try {
@@ -288,7 +293,10 @@ public final class StreamingRunner {
     double presStd = input.has("pressureStd") ? input.get("pressureStd").getAsDouble() : 10.0;
 
     op.totalSteps = iterations;
-    OPERATIONS.put(opId, op);
+    String limited = registerOperation(op);
+    if (limited != null) {
+      return limited;
+    }
 
     EXECUTOR.submit(() -> {
       try {
@@ -375,7 +383,7 @@ public final class StreamingRunner {
    */
   private static String pollResults(JsonObject input) {
     String opId = input.has("operationId") ? input.get("operationId").getAsString() : "";
-    StreamingOperation op = OPERATIONS.get(opId);
+    StreamingOperation op = ownedOperation(opId);
 
     if (op == null) {
       return errorJson("NOT_FOUND", "Operation not found: " + opId, "Use action 'list' to see active operations");
@@ -418,7 +426,7 @@ public final class StreamingRunner {
    */
   private static String cancelOperation(JsonObject input) {
     String opId = input.has("operationId") ? input.get("operationId").getAsString() : "";
-    StreamingOperation op = OPERATIONS.get(opId);
+    StreamingOperation op = ownedOperation(opId);
 
     JsonObject response = new JsonObject();
     if (op != null) {
@@ -441,12 +449,15 @@ public final class StreamingRunner {
    */
   private static String listOperations() {
     cleanupOperations();
+    String owner = McpRequestContext.currentSubject();
     JsonObject response = new JsonObject();
-    response.addProperty("count", OPERATIONS.size());
 
     JsonArray ops = new JsonArray();
     for (Map.Entry<String, StreamingOperation> entry : OPERATIONS.entrySet()) {
       StreamingOperation op = entry.getValue();
+      if (!owner.equals(op.owner)) {
+        continue;
+      }
       JsonObject info = new JsonObject();
       info.addProperty("operationId", op.operationId);
       info.addProperty("type", op.type);
@@ -458,8 +469,42 @@ public final class StreamingRunner {
       info.addProperty("lastUpdatedSecondsAgo", (System.currentTimeMillis() - op.lastUpdatedAt) / 1000);
       ops.add(info);
     }
+    response.addProperty("count", ops.size());
     response.add("operations", ops);
+    response.add("executionPolicy", McpExecutionPolicy.describe());
+    response.addProperty("activeForCaller", McpExecutionPolicy.activeOperations(owner));
     return GSON.toJson(response);
+  }
+
+  /**
+   * Resolves an operation only when it belongs to the current caller.
+   *
+   * @param operationId the operation identifier
+   * @return the operation, or null when unknown or owned by another principal
+   */
+  private static StreamingOperation ownedOperation(String operationId) {
+    StreamingOperation op = OPERATIONS.get(operationId);
+    if (op == null || !McpRequestContext.currentSubject().equals(op.owner)) {
+      return null;
+    }
+    return op;
+  }
+
+  /**
+   * Registers a new operation, enforcing the per-principal concurrency limit and arming its timeout.
+   *
+   * @param op the operation to register
+   * @return null when registration succeeded, otherwise an error response
+   */
+  private static String registerOperation(StreamingOperation op) {
+    if (!McpExecutionPolicy.tryAcquireSlot()) {
+      return errorJson("CONCURRENCY_LIMIT",
+          "This caller already has " + McpExecutionPolicy.getMaxOperationsPerPrincipal() + " operations running",
+          "Wait for one to finish, or cancel it with action 'cancel'");
+    }
+    OPERATIONS.put(op.operationId, op);
+    op.armTimeout();
+    return null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -626,13 +671,16 @@ public final class StreamingRunner {
     /** Operation type. */
     final String type;
 
+    /** Principal subject that started the operation. */
+    final String owner;
+
     /** Creation timestamp. */
     final long createdAt = System.currentTimeMillis();
 
     /** Last update or poll timestamp. */
     volatile long lastUpdatedAt = System.currentTimeMillis();
 
-    /** Current status: pending, running, completed, failed, cancelled. */
+    /** Current status: pending, running, completed, failed, cancelled, timed_out. */
     volatile String status = "pending";
 
     /** Number of completed steps. */
@@ -647,11 +695,18 @@ public final class StreamingRunner {
     /** Error message if failed. */
     volatile String errorMessage;
 
+    /** Pending timeout watchdog, cancelled when the operation finishes normally. */
+    private volatile java.util.concurrent.ScheduledFuture<?> timeoutHandle;
+
+    /** Guards against releasing the concurrency slot more than once. */
+    private final java.util.concurrent.atomic.AtomicBoolean finished = new java.util.concurrent.atomic.AtomicBoolean(
+        false);
+
     /** Incremental results. */
     private final List<JsonObject> results = java.util.Collections.synchronizedList(new ArrayList<JsonObject>());
 
     /**
-     * Creates a new streaming operation.
+     * Creates a new streaming operation owned by the current principal.
      *
      * @param operationId the operation ID
      * @param type the operation type
@@ -659,6 +714,24 @@ public final class StreamingRunner {
     StreamingOperation(String operationId, String type) {
       this.operationId = operationId;
       this.type = type;
+      this.owner = McpRequestContext.currentSubject();
+    }
+
+    /**
+     * Arms the wall-clock watchdog that cancels a run-away operation.
+     */
+    void armTimeout() {
+      timeoutHandle = McpExecutionPolicy.scheduleTimeout(new Runnable() {
+        @Override
+        public void run() {
+          if (!isTerminal()) {
+            cancelled = true;
+            errorMessage = "Operation exceeded the " + McpExecutionPolicy.getOperationTimeoutSeconds()
+                + " s execution timeout and was cancelled";
+            markFinished("timed_out");
+          }
+        }
+      });
     }
 
     /**
@@ -686,6 +759,13 @@ public final class StreamingRunner {
     void markFinished(String finalStatus) {
       status = finalStatus;
       touch();
+      if (finished.compareAndSet(false, true)) {
+        java.util.concurrent.ScheduledFuture<?> handle = timeoutHandle;
+        if (handle != null) {
+          handle.cancel(false);
+        }
+        McpExecutionPolicy.releaseSlot(owner);
+      }
     }
 
     /**
@@ -694,7 +774,8 @@ public final class StreamingRunner {
      * @return true for completed, failed, or cancelled operations
      */
     boolean isTerminal() {
-      return "completed".equals(status) || "failed".equals(status) || "cancelled".equals(status);
+      return "completed".equals(status) || "failed".equals(status) || "cancelled".equals(status)
+          || "timed_out".equals(status);
     }
 
     /**

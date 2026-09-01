@@ -181,6 +181,51 @@ injWater.addComponent("SO4--", 0.01);   // High sulfate
 injWater.setMixingRule(10);
 ```
 
+## Cathodic (high-pH) scaling in seawater electrochemical devices
+
+Electrochlorination cells, seawater electrolysers and impressed-current cathodic protection all
+evolve hydrogen at the cathode, which lifts the boundary-layer pH far above the bulk seawater
+value of ≈ 8.1. The deposit there is **brucite Mg(OH)₂ together with CaCO₃**, not the sulphate
+minerals produced-water work usually screens for. Set the **boundary-layer** pH, not the bulk pH:
+
+```java
+ElectrolyteScaleCalculator calc = new ElectrolyteScaleCalculator()
+    .setTemperatureCelsius(8.0).setPressureBara(1.013)
+    .setPH(10.5)                       // cathode boundary layer, NOT the bulk 8.1
+    .setCations(412.0, 0.02, 7.9, 1290.0, 10780.0, 399.0, 0.002)  // S = 35 seawater, mg/L
+    .setAnions(19350.0, 2710.0, 142.0, 0.0);
+calc.calculate();
+double siBrucite = calc.getBruciteSaturationIndex();   // Mg(OH)2 - two decades per pH unit
+double siCalcite = calc.getCaCO3SaturationIndex();
+double aOH = calc.getHydroxideActivity();
+```
+
+Bulk S = 35 seawater at 8 °C is already supersaturated in calcite (SI ≈ +0.58, Ω ≈ 3.8) but
+strongly undersaturated in brucite (SI ≈ −4.8); brucite crosses SI = 0 near pH 10.5 at 8 °C and
+near pH 10.1 at 14 °C (retrograde solubility, so it is *worse* in warm water).
+
+`getpH()` on a loaded `SystemElectrolyteCPAstatoil` can return a flat 7.0 without an explicit
+reaction/ion setup — for boundary-layer work set the pH explicitly on the scale calculator instead
+of reading it back from a flash.
+
+**Cell voltage is an electrolyte-transport question.** For a current-controlled device the applied
+voltage floats with seawater resistivity, so a fixed voltage limit (vendor maximum, Ex/ATEX
+certification) has a *temperature-dependent* margin. Use
+`neqsim.process.chemistry.electrochlorination.SeawaterElectrolyteConductivity`
+(UNESCO/PSS-78) for conductivity, resistivity and the ohmic voltage:
+
+```java
+SeawaterElectrolyteConductivity sw = new SeawaterElectrolyteConductivity()
+    .setSalinityPsu(35.0).setTemperatureCelsius(8.0);
+sw.calculate();
+double kappa = sw.getConductivitySPerM();                       // ≈ 3.62 S/m
+double ratio = sw.ohmicVoltageRatioVersusTemperature(15.0);     // ≈ 1.19 vs a 15 °C design basis
+```
+
+Chain: this skill → `neqsim-flow-assurance` (scale kinetics, remediation) for deposition rate and
+dissolver selection; → `neqsim-standards-lookup` for NORSOK S-001 / ISO 13702 when the consequence
+is firewater or seawater-system availability.
+
 ## MEG Injection Calculations
 
 ```java

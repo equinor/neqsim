@@ -599,18 +599,24 @@ public final class SessionRunner {
   }
 
   /**
-   * Lists all active sessions.
+   * Lists sessions visible to the caller.
    *
-   * @param input JSON request object; optional {@code ownerId} filters by owner
+   * <p>
+   * An authenticated caller sees only its own sessions; the optional {@code ownerId} filter applies to unauthenticated
+   * local use only.
+   * </p>
+   *
+   * @param input JSON request object; optional {@code ownerId} filters by owner when unauthenticated
    * @return JSON with session summaries
    */
   private static String listSessions(JsonObject input) {
     evictExpiredSessions();
-    String ownerId = input.has("ownerId") ? input.get("ownerId").getAsString() : "";
+    McpRequestContext.Principal principal = McpRequestContext.current();
+    String ownerId = principal.isAuthenticated() ? principal.getSubject()
+        : (input.has("ownerId") ? input.get("ownerId").getAsString() : "");
 
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
-    response.addProperty("count", SESSIONS.size());
     response.addProperty("maxSessions", MAX_SESSIONS);
 
     JsonArray sessions = new JsonArray();
@@ -628,6 +634,7 @@ public final class SessionRunner {
       info.addProperty("ageSeconds", (System.currentTimeMillis() - s.createdAt) / 1000);
       sessions.add(info);
     }
+    response.addProperty("count", sessions.size());
     response.add("sessions", sessions);
     return GSON.toJson(response);
   }
@@ -719,7 +726,7 @@ public final class SessionRunner {
       SESSIONS.remove(sessionId);
       return null;
     }
-    String requestedOwner = input.has("ownerId") ? input.get("ownerId").getAsString() : "";
+    String requestedOwner = getOwnerId(input);
     if (!ANONYMOUS_OWNER.equals(state.ownerId) && !state.ownerId.equals(requestedOwner)) {
       return null;
     }
@@ -738,12 +745,22 @@ public final class SessionRunner {
   }
 
   /**
-   * Reads the optional owner ID from an input request.
+   * Reads the owner ID for a request.
+   *
+   * <p>
+   * When the transport authenticated the caller, ownership is derived from the principal and a client-supplied
+   * {@code ownerId} is ignored — otherwise any caller could claim another user's sessions simply by naming them.
+   * Unauthenticated desktop use keeps the previous behaviour.
+   * </p>
    *
    * @param input JSON request
-   * @return normalized owner ID, or anonymous for backwards compatibility
+   * @return normalized owner ID, or anonymous for unauthenticated local use
    */
   private static String getOwnerId(JsonObject input) {
+    McpRequestContext.Principal principal = McpRequestContext.current();
+    if (principal.isAuthenticated()) {
+      return principal.getSubject();
+    }
     if (!input.has("ownerId")) {
       return ANONYMOUS_OWNER;
     }

@@ -36,6 +36,13 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   private double RVP_ASTM_D323_82 = 0.0;
 
   /**
+   * True once the water-free variants ({@code VPCR4_no_water} and {@code RVP_ASTM_D323_73_79}) have been evaluated for
+   * the current {@link #calculate()} result. They require an extra fluid clone and two extra flashes, so they are
+   * computed lazily on first request instead of on every {@link #calculate()}.
+   */
+  private boolean noWaterVariantsCalculated = false;
+
+  /**
    * Enumeration of the supported Reid Vapor Pressure (RVP) / vapor-pressure correlation methods.
    *
    * <p>
@@ -252,10 +259,12 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     case RVP_ASTM_D6377:
       return RVP_ASTM_D6377;
     case RVP_ASTM_D323_73_79:
+      calculateNoWaterVariants();
       return RVP_ASTM_D323_73_79;
     case RVP_ASTM_D323_82:
       return RVP_ASTM_D323_82;
     case VPCR4_NO_WATER:
+      calculateNoWaterVariants();
       return VPCR4_no_water;
     case VPCR4:
     default:
@@ -309,6 +318,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public void calculate() {
+    noWaterVariantsCalculated = false;
+    VPCR4_no_water = 0.0;
+    RVP_ASTM_D323_73_79 = 0.0;
     this.thermoSystem.setTemperature(referenceTemperature, "C");
     this.thermoSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
     this.thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -334,7 +346,23 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     VPCR4 = this.thermoSystem.getPressure();
     RVP_ASTM_D6377 = 0.834 * VPCR4;
     RVP_ASTM_D323_82 = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
+  }
 
+  /**
+   * Evaluates the water-free vapor-pressure variants {@code VPCR4_no_water} and {@code RVP_ASTM_D323_73_79}.
+   *
+   * <p>
+   * This requires a clone of the fluid with water removed plus a bubble-point flash and a 80% vapor-fraction flash,
+   * which roughly doubles the cost of {@link #calculate()}. Because most callers only read {@code VPCR4} or
+   * {@code RVP_ASTM_D6377}, the work is deferred until one of the water-free values is actually requested and is then
+   * cached until the next {@link #calculate()} call.
+   * </p>
+   */
+  private void calculateNoWaterVariants() {
+    if (noWaterVariantsCalculated) {
+      return;
+    }
+    noWaterVariantsCalculated = true;
     SystemInterface fluid1 = this.thermoSystem.clone();
     if (fluid1.hasComponent("water")) {
       fluid1.removeComponent("water");
@@ -396,12 +424,14 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       case "RVP_ASTM_D6377":
         return RVP_ASTM_D6377;
       case "RVP_ASTM_D323_73_79":
+        calculateNoWaterVariants();
         return RVP_ASTM_D323_73_79;
       case "VPCR4":
         return VPCR4;
       case "RVP_ASTM_D323_82":
         return RVP_ASTM_D323_82;
       case "VPCR4_no_water":
+        calculateNoWaterVariants();
         return VPCR4_no_water;
       default:
         return VPCR4;

@@ -6,6 +6,8 @@
 
 package neqsim.process.controllerdevice;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -13,6 +15,7 @@ import java.util.UUID;
 import java.util.function.ToDoubleFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
@@ -29,7 +32,8 @@ import neqsim.util.NamedBaseClass;
  * @author ESOL
  * @version $Id: $Id
  */
-public class ControllerDeviceBaseClass extends NamedBaseClass implements ControllerDeviceInterface {
+public class ControllerDeviceBaseClass extends NamedBaseClass implements ControllerDeviceInterface,
+    TransientStateParticipant<ControllerDeviceBaseClass.ControllerTransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -76,6 +80,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double setpointWeight = 1.0;
   private double deadBand = 0.0;
   private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation = new neqsim.process.equipment.iec81346.ReferenceDesignation();
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /**
    * Constructor for ControllerDeviceBaseClass.
@@ -136,6 +142,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
+    if (hasRunTransient(id)) {
+      return;
+    }
     if (!isActive) {
       totalTime += dt;
       response = initResponse;
@@ -264,6 +273,12 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
     eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
     calcIdentifier = id;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasRunTransient(UUID id) {
+    return id != null && id.equals(calcIdentifier);
   }
 
   /** {@inheritDoc} */
@@ -766,4 +781,266 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
     return actualCount > 0 ? sum / actualCount : 0.0;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "controller:" + transientStateParticipantId;
+  }
+
+  /**
+   * The base snapshot is complete only when the concrete controller explicitly qualifies all subclass-owned state.
+   *
+   * @return blocking diagnostic for an unqualified subclass, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (!hasCompleteControllerTransientStateCoverage()) {
+      return "controller subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /**
+   * Reports whether this concrete controller extends the base snapshot for all subclass-owned mutable state.
+   *
+   * <p>
+   * Subclasses remain fail-closed unless they override this method together with
+   * {@link #captureControllerSubclassTransientState()} and
+   * {@link #restoreControllerSubclassTransientState(Serializable)}.
+   * </p>
+   *
+   * @return {@code true} only when the concrete class has complete transaction coverage
+   */
+  protected boolean hasCompleteControllerTransientStateCoverage() {
+    return getClass() == ControllerDeviceBaseClass.class;
+  }
+
+  /**
+   * Captures controller-specific state appended to the base PID snapshot.
+   *
+   * @return serializable subclass state, or {@code null} for the concrete base controller
+   */
+  protected Serializable captureControllerSubclassTransientState() {
+    return null;
+  }
+
+  /**
+   * Restores controller-specific state after the base PID fields have been restored.
+   *
+   * @param state captured subclass state
+   */
+  protected void restoreControllerSubclassTransientState(Serializable state) {
+    if (state != null) {
+      throw new IllegalArgumentException("Concrete base controller cannot restore non-null subclass transient state");
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ControllerTransientState captureTransientState() {
+    return new ControllerTransientState(getTransientStateIdentity(), getName(), calcIdentifier, unit, transmitter,
+        controllerSetPoint, oldError, oldoldError, error, response, propConstant, reverseActing, Kp, Ti, Td,
+        stepResponseTuningMethod, TintValue, derivativeState, oldMeasurement, oldControllerSetPoint,
+        derivativeFilterTime, minResponse, maxResponse, isActive, mode, manualOutput, bumplessTransferPending,
+        copyGainSchedule(gainSchedule), new ArrayList<ControllerEvent>(eventLog), totalTime, integralAbsoluteError,
+        lastTimeOutsideBand, settlingTolerance, setpointWeight, deadBand, referenceDesignation,
+        copyReferenceDesignation(referenceDesignation), captureControllerSubclassTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(ControllerTransientState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Controller transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Controller transient snapshot identity does not match " + getTransientStateIdentity());
+    }
+    setName(snapshot.name);
+    calcIdentifier = snapshot.calcIdentifier;
+    unit = snapshot.unit;
+    transmitter = snapshot.transmitter;
+    controllerSetPoint = snapshot.controllerSetPoint;
+    oldError = snapshot.oldError;
+    oldoldError = snapshot.oldoldError;
+    error = snapshot.error;
+    response = snapshot.response;
+    propConstant = snapshot.propConstant;
+    reverseActing = snapshot.reverseActing;
+    Kp = snapshot.kp;
+    Ti = snapshot.ti;
+    Td = snapshot.td;
+    stepResponseTuningMethod = snapshot.stepResponseTuningMethod;
+    TintValue = snapshot.tintValue;
+    derivativeState = snapshot.derivativeState;
+    oldMeasurement = snapshot.oldMeasurement;
+    oldControllerSetPoint = snapshot.oldControllerSetPoint;
+    derivativeFilterTime = snapshot.derivativeFilterTime;
+    minResponse = snapshot.minResponse;
+    maxResponse = snapshot.maxResponse;
+    isActive = snapshot.active;
+    mode = snapshot.mode;
+    manualOutput = snapshot.manualOutput;
+    bumplessTransferPending = snapshot.bumplessTransferPending;
+    gainSchedule = copyGainSchedule(snapshot.gainSchedule);
+    eventLog = new ArrayList<ControllerEvent>(snapshot.eventLog);
+    totalTime = snapshot.totalTime;
+    integralAbsoluteError = snapshot.integralAbsoluteError;
+    lastTimeOutsideBand = snapshot.lastTimeOutsideBand;
+    settlingTolerance = snapshot.settlingTolerance;
+    setpointWeight = snapshot.setpointWeight;
+    deadBand = snapshot.deadBand;
+    referenceDesignation = snapshot.referenceDesignation;
+    restoreReferenceDesignation(referenceDesignation, snapshot.referenceDesignationState);
+    restoreControllerSubclassTransientState(snapshot.subclassState);
+  }
+
+  /**
+   * Copies gain-schedule arrays so later tuning changes cannot mutate a captured rollback point.
+   *
+   * @param source source schedule
+   * @return independent schedule copy
+   */
+  private static NavigableMap<Double, double[]> copyGainSchedule(NavigableMap<Double, double[]> source) {
+    NavigableMap<Double, double[]> copy = new TreeMap<Double, double[]>();
+    for (Map.Entry<Double, double[]> entry : source.entrySet()) {
+      copy.put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().clone());
+    }
+    return copy;
+  }
+
+  /**
+   * Copies the mutable IEC 81346 designation value while keeping its original binding separately.
+   *
+   * @param source designation to copy
+   * @return independent value copy, or {@code null}
+   */
+  private static neqsim.process.equipment.iec81346.ReferenceDesignation copyReferenceDesignation(
+      neqsim.process.equipment.iec81346.ReferenceDesignation source) {
+    if (source == null) {
+      return null;
+    }
+    return new neqsim.process.equipment.iec81346.ReferenceDesignation(source.getFunctionDesignation(),
+        source.getProductDesignation(), source.getLocationDesignation(), source.getLetterCode(),
+        source.getSequenceNumber());
+  }
+
+  /**
+   * Restores a designation in place so rollback retains the pre-trial binding identity.
+   *
+   * @param target original bound designation
+   * @param state captured designation value
+   */
+  private static void restoreReferenceDesignation(neqsim.process.equipment.iec81346.ReferenceDesignation target,
+      neqsim.process.equipment.iec81346.ReferenceDesignation state) {
+    if (target == null || state == null) {
+      return;
+    }
+    target.setFunctionDesignation(state.getFunctionDesignation());
+    target.setProductDesignation(state.getProductDesignation());
+    target.setLocationDesignation(state.getLocationDesignation());
+    target.setLetterCode(state.getLetterCode());
+    target.setSequenceNumber(state.getSequenceNumber());
+  }
+
+  /** Immutable snapshot of every base PID field mutated by stepping or supported operational setters. */
+  public static final class ControllerTransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final String stateIdentity;
+    private final String name;
+    private final UUID calcIdentifier;
+    private final String unit;
+    private final MeasurementDeviceInterface transmitter;
+    private final double controllerSetPoint;
+    private final double oldError;
+    private final double oldoldError;
+    private final double error;
+    private final double response;
+    private final int propConstant;
+    private final boolean reverseActing;
+    private final double kp;
+    private final double ti;
+    private final double td;
+    private final StepResponseTuningMethod stepResponseTuningMethod;
+    private final double tintValue;
+    private final double derivativeState;
+    private final double oldMeasurement;
+    private final double oldControllerSetPoint;
+    private final double derivativeFilterTime;
+    private final double minResponse;
+    private final double maxResponse;
+    private final boolean active;
+    private final ControllerMode mode;
+    private final double manualOutput;
+    private final boolean bumplessTransferPending;
+    private final NavigableMap<Double, double[]> gainSchedule;
+    private final java.util.List<ControllerEvent> eventLog;
+    private final double totalTime;
+    private final double integralAbsoluteError;
+    private final double lastTimeOutsideBand;
+    private final double settlingTolerance;
+    private final double setpointWeight;
+    private final double deadBand;
+    private final neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation;
+    private final neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState;
+    private final Serializable subclassState;
+
+    private ControllerTransientState(String stateIdentity, String name, UUID calcIdentifier, String unit,
+        MeasurementDeviceInterface transmitter, double controllerSetPoint, double oldError, double oldoldError,
+        double error, double response, int propConstant, boolean reverseActing, double kp, double ti, double td,
+        StepResponseTuningMethod stepResponseTuningMethod, double tintValue, double derivativeState,
+        double oldMeasurement, double oldControllerSetPoint, double derivativeFilterTime, double minResponse,
+        double maxResponse, boolean active, ControllerMode mode, double manualOutput, boolean bumplessTransferPending,
+        NavigableMap<Double, double[]> gainSchedule, java.util.List<ControllerEvent> eventLog, double totalTime,
+        double integralAbsoluteError, double lastTimeOutsideBand, double settlingTolerance, double setpointWeight,
+        double deadBand, neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation,
+        neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState, Serializable subclassState) {
+      this.stateIdentity = stateIdentity;
+      this.name = name;
+      this.calcIdentifier = calcIdentifier;
+      this.unit = unit;
+      this.transmitter = transmitter;
+      this.controllerSetPoint = controllerSetPoint;
+      this.oldError = oldError;
+      this.oldoldError = oldoldError;
+      this.error = error;
+      this.response = response;
+      this.propConstant = propConstant;
+      this.reverseActing = reverseActing;
+      this.kp = kp;
+      this.ti = ti;
+      this.td = td;
+      this.stepResponseTuningMethod = stepResponseTuningMethod;
+      this.tintValue = tintValue;
+      this.derivativeState = derivativeState;
+      this.oldMeasurement = oldMeasurement;
+      this.oldControllerSetPoint = oldControllerSetPoint;
+      this.derivativeFilterTime = derivativeFilterTime;
+      this.minResponse = minResponse;
+      this.maxResponse = maxResponse;
+      this.active = active;
+      this.mode = mode;
+      this.manualOutput = manualOutput;
+      this.bumplessTransferPending = bumplessTransferPending;
+      this.gainSchedule = gainSchedule;
+      this.eventLog = eventLog;
+      this.totalTime = totalTime;
+      this.integralAbsoluteError = integralAbsoluteError;
+      this.lastTimeOutsideBand = lastTimeOutsideBand;
+      this.settlingTolerance = settlingTolerance;
+      this.setpointWeight = setpointWeight;
+      this.deadBand = deadBand;
+      this.referenceDesignation = referenceDesignation;
+      this.referenceDesignationState = referenceDesignationState;
+      this.subclassState = subclassState;
+    }
+  }
+
 }

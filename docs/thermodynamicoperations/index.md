@@ -1,6 +1,6 @@
 ---
 title: thermodynamicoperations
-description: thermodynamicoperations documentation for NeqSim
+description: NeqSim thermodynamic operations API documentation
 ---
 
 {%- include_relative README.md -%}

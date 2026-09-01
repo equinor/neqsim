@@ -533,7 +533,8 @@ public class DistillationColumnMatrixSolver {
     }
     system.setTotalNumberOfMoles(Math.max(0.0, totalFlow));
     try {
-      system.init(0);
+      // init(1) updates phase state and fugacity coefficients without resetting the
+      // phase mapping and beta values that the cached K-value model is advancing.
       system.init(1);
     } catch (RuntimeException exception) {
       logger.debug("Matrix inside-out tray system init failed on tray {}", trayIndex, exception);

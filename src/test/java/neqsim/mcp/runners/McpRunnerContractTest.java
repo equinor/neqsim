@@ -38,8 +38,10 @@ class McpRunnerContractTest {
       String responseJson = runTool(toolName);
       JsonObject response = JsonParser.parseString(responseJson).getAsJsonObject();
 
-      assertTrue(!"error".equals(response.get("status").getAsString()),
-          toolName + " returned an error response: " + responseJson);
+      String status = response.get("status").getAsString();
+      assertTrue(contains(contract.getAsJsonArray("successStatuses"), status),
+          toolName + " returned status '" + status + "', which is outside the declared success vocabulary "
+              + contract.getAsJsonArray("successStatuses") + ": " + responseJson);
       assertEquals(contract.get("apiVersion").getAsString(), response.get("apiVersion").getAsString(),
           toolName + " apiVersion mismatch");
       assertEquals(toolName, response.get("tool").getAsString(), toolName + " tool mismatch");
@@ -150,5 +152,21 @@ class McpRunnerContractTest {
       String fieldName = fieldElement.getAsString();
       assertTrue(response.has(fieldName), label + " missing required field " + fieldName);
     }
+  }
+
+  /**
+   * Checks whether a JSON string array contains a value.
+   *
+   * @param values the array to search
+   * @param value the value to look for
+   * @return true when the value is present
+   */
+  private static boolean contains(JsonArray values, String value) {
+    for (JsonElement element : values) {
+      if (element.getAsString().equals(value)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -4,8 +4,6 @@ description: How to detect whether a ProcessSystem or ProcessModel run succeeded
 keywords: "RunStatus, UnitRunStatus, getRunStatus, run failure, failed unit, ProcessSystem, ProcessModel, diagnostics, agent"
 ---
 
-# Run Status — Detecting and Diagnosing Failed Runs
-
 When a process run fails, the failure surfaces as a `RuntimeException`. For interactive use
 that is fine, but agents, optimizers, and batch drivers usually want a structured answer to
 the question *"did the last run succeed, and if not, which unit failed and why?"* without

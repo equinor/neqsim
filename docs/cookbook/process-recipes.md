@@ -3,9 +3,9 @@ title: Process Recipes
 description: Quick recipes for process simulation in NeqSim - separators, compressors, heat exchangers, flowsheets, and more.
 ---
 
-# Process Recipes
-
-Copy-paste solutions for common process simulation tasks.
+Copy-paste solutions for common process simulation tasks. Run the first recipe to create the
+shared `feed` stream and `process` model used by the focused snippets that follow. Recipes that
+need additional streams state those prerequisites explicitly.
 
 ## Table of Contents
 
@@ -21,38 +21,42 @@ Copy-paste solutions for common process simulation tasks.
 
 ## Streams
 
-### Create a Feed Stream
+### Create a Feed Stream and Process
 
 ```python
 from neqsim import jneqsim
 
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+
 # Create fluid
-fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 30, 50.0)
+fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 30.0, 50.0)
 fluid.addComponent("methane", 0.85)
 fluid.addComponent("ethane", 0.10)
 fluid.addComponent("propane", 0.05)
 fluid.setMixingRule("classic")
 
-# Create stream
-stream = jneqsim.process.equipment.stream.Stream("Feed", fluid)
-stream.setFlowRate(10000, "kg/hr")  # Mass flow
-# Or: stream.setFlowRate(500, "MSm3/day")  # Standard volume flow
+# Create the shared feed and process model
+feed = Stream("Feed", fluid)
+feed.setFlowRate(10000.0, "kg/hr")
+process = ProcessSystem()
+process.add(feed)
 
-stream.run()
-print(f"Molar flow: {stream.getFlowRate('mol/hr'):.0f} mol/hr")
+process.run()
+print(f"Molar flow: {feed.getFlowRate('mol/hr'):.0f} mol/hr")
 ```
 
 ### Set Stream Conditions
 
 ```python
-stream.setTemperature(30.0, "C")    # Celsius
-stream.setPressure(50.0, "bara")   # bara
-stream.setFlowRate(5000, "kg/hr")  # Mass flow
+feed.setTemperature(30.0, "C")
+feed.setPressure(50.0, "bara")
+feed.setFlowRate(5000.0, "kg/hr")
 
 # Alternative units
-stream.setTemperature(86.0, "F")   # Fahrenheit
-stream.setPressure(725, "psia")    # psia
-stream.setFlowRate(10, "MSm3/day") # Standard m³/day
+feed.setTemperature(86.0, "F")
+feed.setPressure(725.0, "psia")
+feed.setFlowRate(10.0, "MSm3/day")
 ```
 
 ---
@@ -62,27 +66,15 @@ stream.setFlowRate(10, "MSm3/day") # Standard m³/day
 ### Two-Phase Separator
 
 ```python
-from neqsim import jneqsim
-
-ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-Stream = jneqsim.process.equipment.stream.Stream
 Separator = jneqsim.process.equipment.separator.Separator
 
-# Setup (assume feed stream exists)
-process = ProcessSystem()
-process.add(feed)
-
-# Add separator
 separator = Separator("HP Separator", feed)
-separator.setInternalDiameter(2.0)  # meters (optional)
+separator.setInternalDiameter(2.0)  # m, optional
 process.add(separator)
-
 process.run()
 
-# Get outlet streams
 gas_out = separator.getGasOutStream()
 liquid_out = separator.getLiquidOutStream()
-
 print(f"Gas: {gas_out.getFlowRate('kg/hr'):.0f} kg/hr")
 print(f"Liquid: {liquid_out.getFlowRate('kg/hr'):.0f} kg/hr")
 ```
@@ -110,16 +102,24 @@ water_out = separator.getWaterOutStream()
 ```python
 Compressor = jneqsim.process.equipment.compressor.Compressor
 
-compressor = Compressor("K-100", gas_stream)
-compressor.setOutletPressure(100.0)  # bara
-compressor.setIsentropicEfficiency(0.75)  # 75%
-compressor.setPolytropicEfficiency(0.80)  # Alternative: polytropic
+compressor = Compressor("K-100", feed)
+compressor.setOutletPressure(100.0, "bara")
+compressor.setIsentropicEfficiency(0.75)
 process.add(compressor)
-
 process.run()
 
 print(f"Power: {compressor.getPower('kW'):.1f} kW")
-print(f"Outlet T: {compressor.getOutletStream().getTemperature() - 273.15:.1f} °C")
+print(f"Outlet T: {compressor.getOutletStream().getTemperature('C'):.1f} °C")
+```
+
+The preceding example uses an isentropic efficiency. To use a polytropic efficiency instead,
+enable the polytropic calculation explicitly before running the process:
+
+```python
+compressor.setUsePolytropicCalc(True)
+compressor.setPolytropicEfficiency(0.80)
+process.run()
+
 print(f"Head: {compressor.getPolytropicHead('kJ/kg'):.1f} kJ/kg")
 ```
 
@@ -129,25 +129,21 @@ print(f"Head: {compressor.getPolytropicHead('kJ/kg'):.1f} kJ/kg")
 Compressor = jneqsim.process.equipment.compressor.Compressor
 Cooler = jneqsim.process.equipment.heatexchanger.Cooler
 
-# Stage 1
-comp1 = Compressor("K-100A", gas_stream)
-comp1.setOutletPressure(30.0)
+comp1 = Compressor("K-100A", feed)
+comp1.setOutletPressure(70.0, "bara")
 comp1.setIsentropicEfficiency(0.75)
 process.add(comp1)
 
-# Intercooler
 cooler1 = Cooler("E-100", comp1.getOutletStream())
-cooler1.setOutTemperature(273.15 + 40)  # 40°C
+cooler1.setOutletTemperature(40.0, "C")
 process.add(cooler1)
 
-# Stage 2
 comp2 = Compressor("K-100B", cooler1.getOutletStream())
-comp2.setOutletPressure(100.0)
+comp2.setOutletPressure(100.0, "bara")
 comp2.setIsentropicEfficiency(0.75)
 process.add(comp2)
 
 process.run()
-
 total_power = comp1.getPower("kW") + comp2.getPower("kW")
 print(f"Total power: {total_power:.1f} kW")
 ```
@@ -157,15 +153,14 @@ print(f"Total power: {total_power:.1f} kW")
 ```python
 Expander = jneqsim.process.equipment.expander.Expander
 
-expander = Expander("Turbo-Expander", high_pressure_stream)
-expander.setOutletPressure(20.0)  # bara
+expander = Expander("Turbo-Expander", feed)
+expander.setOutletPressure(20.0, "bara")
 expander.setIsentropicEfficiency(0.85)
 process.add(expander)
-
 process.run()
 
 print(f"Power generated: {-expander.getPower('kW'):.1f} kW")
-print(f"Outlet T: {expander.getOutletStream().getTemperature() - 273.15:.1f} °C")
+print(f"Outlet T: {expander.getOutletStream().getTemperature('C'):.1f} °C")
 ```
 
 ---
@@ -177,13 +172,12 @@ print(f"Outlet T: {expander.getOutletStream().getTemperature() - 273.15:.1f} °C
 ```python
 Heater = jneqsim.process.equipment.heatexchanger.Heater
 
-heater = Heater("E-100", inlet_stream)
-heater.setOutTemperature(273.15 + 80)  # 80°C
+heater = Heater("E-100", feed)
+heater.setOutletTemperature(80.0, "C")
 process.add(heater)
-
 process.run()
 
-print(f"Duty: {heater.getDuty() / 1000:.1f} kW")
+print(f"Duty: {heater.getDuty() / 1000.0:.1f} kW")
 ```
 
 ### Cooler (Specified Outlet Temperature)
@@ -191,29 +185,36 @@ print(f"Duty: {heater.getDuty() / 1000:.1f} kW")
 ```python
 Cooler = jneqsim.process.equipment.heatexchanger.Cooler
 
-cooler = Cooler("E-101", inlet_stream)
-cooler.setOutTemperature(273.15 + 30)  # 30°C
+cooler = Cooler("E-101", feed)
+cooler.setOutletTemperature(30.0, "C")
 process.add(cooler)
-
 process.run()
 
-print(f"Cooling duty: {cooler.getDuty() / 1000:.1f} kW")
+print(f"Cooling duty: {cooler.getDuty() / 1000.0:.1f} kW")
 ```
 
-### Shell-and-Tube Heat Exchanger
+### Two-Stream Heat Exchanger
+
+This example creates both required inlet streams from the shared feed.
 
 ```python
 HeatExchanger = jneqsim.process.equipment.heatexchanger.HeatExchanger
 
-hx = HeatExchanger("E-102", hot_stream, cold_stream)
-hx.setUAvalue(5000)  # W/K
-process.add(hx)
+hot_stream = feed.clone("Hot feed")
+hot_stream.setTemperature(120.0, "C")
+cold_stream = feed.clone("Cold feed")
+cold_stream.setTemperature(20.0, "C")
 
+hx = HeatExchanger("E-102", hot_stream, cold_stream)
+hx.setUAvalue(5000.0)  # W/K
+process.add(hot_stream)
+process.add(cold_stream)
+process.add(hx)
 process.run()
 
-print(f"Duty: {hx.getDuty() / 1000:.1f} kW")
-print(f"Hot out T: {hx.getOutStream(0).getTemperature() - 273.15:.1f} °C")
-print(f"Cold out T: {hx.getOutStream(1).getTemperature() - 273.15:.1f} °C")
+print(f"Duty: {hx.getDuty() / 1000.0:.1f} kW")
+print(f"Hot out T: {hx.getOutStream(0).getTemperature('C'):.1f} °C")
+print(f"Cold out T: {hx.getOutStream(1).getTemperature('C'):.1f} °C")
 ```
 
 ---
@@ -225,104 +226,98 @@ print(f"Cold out T: {hx.getOutStream(1).getTemperature() - 273.15:.1f} °C")
 ```python
 ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
 
-valve = ThrottlingValve("VLV-100", inlet_stream)
-valve.setOutletPressure(20.0)  # bara
+valve = ThrottlingValve("VLV-100", feed)
+valve.setOutletPressure(20.0, "bara")
 process.add(valve)
-
 process.run()
 
-# JT cooling
-delta_T = valve.getOutletStream().getTemperature() - inlet_stream.getTemperature()
-print(f"Temperature change: {delta_T:.1f} K")
+delta_temperature = valve.getOutletStream().getTemperature("K") - feed.getTemperature("K")
+print(f"Temperature change: {delta_temperature:.1f} K")
 ```
 
 ### Control Valve with Cv
 
 ```python
-valve = ThrottlingValve("CV-100", inlet_stream)
-valve.setOutletPressure(30.0)
-valve.setCv(100.0)  # Valve Cv
-valve.setPercentValveOpening(50.0)  # % open
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
+
+valve = ThrottlingValve("CV-100", feed)
+valve.setOutletPressure(30.0, "bara")
+valve.setCv(100.0)
+valve.setPercentValveOpening(50.0)
 process.add(valve)
+process.run()
 ```
 
-### Valve Sizing (Cv Calculation)
+### Valve Sizing (Cv/Kv Calculation)
 
-Calculate the required Cv/Kv for a gas control valve:
+Calculate the required Cv/Kv for a control valve:
 
 ```python
-valve = ThrottlingValve("PCV-100", inlet_stream)
-valve.setOutletPressure(25.0)
-valve.setPercentValveOpening(100)
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
 
-# Select sizing standard: "default", "IEC 60534", "IEC 60534 full", "prod choke"
+valve = ThrottlingValve("PCV-100", feed)
+valve.setOutletPressure(25.0, "bara")
+valve.setPercentValveOpening(100.0)
+
+# Supported standards/correlations: "default", "IEC 60534", "IEC 60534 full",
+# "prod choke", "Sachdeva", "Gilbert", "Baxendell", "Ros", and "Achong".
 mech_design = valve.getMechanicalDesign()
 mech_design.setValveSizingStandard("IEC 60534")
-
-# Configure valve-specific parameters
-mech_design.getValveSizingMethod().setxT(0.75)  # Pressure drop ratio factor
+mech_design.getValveSizingMethod().setxT(0.75)
 
 process.add(valve)
 process.run()
-
 valve.calcKv()
 print(f"Cv = {valve.getCv():.2f}")
 print(f"Kv = {valve.getKv():.2f}")
 ```
 
-See [Valve Mechanical Design](../process/ValveMechanicalDesign.md) for full details
-on available sizing standards, parameters, and formulas.
+See [Valve Mechanical Design](../process/ValveMechanicalDesign.md) for full details on the
+available sizing standards, parameters, and formulas.
 
 ### Choke Collapse Diagnostic
 
-Detect loss of critical (sonic) flow across a throttling valve or choke and flag
-flashing / cavitation in liquid service. See
-[Choke Collapse Analysis](../process/choke-collapse.md) for the full theory.
+Detect loss of critical (sonic) flow across a throttling valve or choke and flag flashing or
+cavitation in liquid service. See [Choke Collapse Analysis](../process/choke-collapse.md) for the
+full theory.
 
 ```python
 ChokeCollapseAnalyzer = jneqsim.process.equipment.valve.ChokeCollapseAnalyzer
 
-# After valve.run():
+# Run this after the valve recipe above.
 result = valve.analyseChokeCollapse()
-print("Flow regime :", result.getFlowRegime())          # CRITICAL / SUBCRITICAL / TRANSITION / REVERSE
-print("Collapse    :", result.getCollapseMode())        # NONE / NEAR_COLLAPSE / COLLAPSED / FLASHING / CAVITATION
-print("r           :", result.getPressureRatio())
-print("r_c         :", result.getCriticalPressureRatio())
-print("margin      :", result.getMarginToCollapse())
-for rec in result.getRecommendations():
-    print(" -", rec)
+print("Flow regime:", result.getFlowRegime())
+print("Collapse:", result.getCollapseMode())
+print("Pressure ratio:", result.getPressureRatio())
+print("Critical ratio:", result.getCriticalPressureRatio())
+print("Margin:", result.getMarginToCollapse())
 
-# What-if: vary downstream pressure without changing the model
 analyzer = ChokeCollapseAnalyzer(valve)
-analyzer.setCriticalMarginThreshold(0.05)   # 5% transition band
+analyzer.setCriticalMarginThreshold(0.05)
 analyzer.setDownstreamPressure(80.0, "bara")
 print(analyzer.analyze().toJson())
 ```
 
 ### Inadvertent Valve Operation (IVO) Screening
 
-Screen credible inadvertent open / close / stuck scenarios per API 521 §4.4.13
-and NORSOK P-002 §5.5. See
-[Inadvertent Valve Operation](../process/inadvertent-valve-operation.md) for
-the full scenario taxonomy and severity rules.
+Screen credible inadvertent open, close, or stuck scenarios per API 521 section 4.4.13 and
+NORSOK P-002 section 5.5. See
+[Inadvertent Valve Operation](../process/inadvertent-valve-operation.md) for the full scenario
+taxonomy and severity rules.
 
 ```python
 IvoResult = jneqsim.process.equipment.valve.InadvertentValveOperationResult
 
-# After valve.run():
+# Run this after the valve recipe above.
 result = valve.analyseInadvertentOperation(
-    IvoResult.ValveRole.BLOCK,            # BLOCK / CONTROL / BYPASS / CHECK / PSV_ISOLATION / ESD / BLOWDOWN
-    IvoResult.IvoMode.SPURIOUS_CLOSE,     # SPURIOUS_OPEN / SPURIOUS_CLOSE / STUCK_OPEN / STUCK_CLOSED / PARTIAL_STROKE
-    100.0,                                # downstream segment design pressure [bara]
+    IvoResult.ValveRole.BLOCK,
+    IvoResult.IvoMode.SPURIOUS_CLOSE,
+    100.0,  # Downstream segment design pressure, bara
 )
-print("Severity        :", result.getSeverity())     # NONE / MINOR / MAJOR / SAFETY_CRITICAL
-print("Overpressure x  :", result.getOverpressureFactor())
-print("Blocked outlet  :", result.isBlockedOutlet())
-print("Reverse flow    :", result.isReverseFlowRisk())
-print("Loss of relief  :", result.isLossOfReliefPath())
-print("Fails to isolate:", result.isFailureToIsolateOnDemand())
-for rec in result.getRecommendations():
-    print(" -", rec)
+print("Severity:", result.getSeverity())
+print("Overpressure factor:", result.getOverpressureFactor())
+print("Blocked outlet:", result.isBlockedOutlet())
+print("Reverse-flow risk:", result.isReverseFlowRisk())
 ```
 
 ---
@@ -334,7 +329,6 @@ for rec in result.getRecommendations():
 ```python
 from neqsim import jneqsim
 
-# Imports
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 Stream = jneqsim.process.equipment.stream.Stream
@@ -342,8 +336,7 @@ Separator = jneqsim.process.equipment.separator.Separator
 Compressor = jneqsim.process.equipment.compressor.Compressor
 Cooler = jneqsim.process.equipment.heatexchanger.Cooler
 
-# 1. Create fluid
-fluid = SystemSrkEos(273.15 + 50, 30.0)
+fluid = SystemSrkEos(273.15 + 50.0, 30.0)
 fluid.addComponent("methane", 0.70)
 fluid.addComponent("ethane", 0.10)
 fluid.addComponent("propane", 0.10)
@@ -351,39 +344,29 @@ fluid.addComponent("n-butane", 0.05)
 fluid.addComponent("n-pentane", 0.05)
 fluid.setMixingRule("classic")
 
-# 2. Build process
 process = ProcessSystem()
-
-# Feed
 feed = Stream("Feed", fluid)
-feed.setFlowRate(50000, "kg/hr")
+feed.setFlowRate(50000.0, "kg/hr")
 process.add(feed)
 
-# HP Separator
-hp_sep = Separator("HP Sep", feed)
-process.add(hp_sep)
+hp_separator = Separator("HP Sep", feed)
+process.add(hp_separator)
 
-# Gas compression
-comp = Compressor("Compressor", hp_sep.getGasOutStream())
-comp.setOutletPressure(80.0)
-comp.setIsentropicEfficiency(0.75)
-process.add(comp)
+compressor = Compressor("Compressor", hp_separator.getGasOutStream())
+compressor.setOutletPressure(80.0, "bara")
+compressor.setIsentropicEfficiency(0.75)
+process.add(compressor)
 
-# Aftercooler
-cooler = Cooler("Aftercooler", comp.getOutletStream())
-cooler.setOutTemperature(273.15 + 40)
+cooler = Cooler("Aftercooler", compressor.getOutletStream())
+cooler.setOutletTemperature(40.0, "C")
 process.add(cooler)
 
-# 3. Run
 process.run()
-
-# 4. Results
-print("=== PROCESS RESULTS ===")
 print(f"Feed: {feed.getFlowRate('kg/hr'):.0f} kg/hr")
-print(f"Gas: {hp_sep.getGasOutStream().getFlowRate('kg/hr'):.0f} kg/hr")
-print(f"Liquid: {hp_sep.getLiquidOutStream().getFlowRate('kg/hr'):.0f} kg/hr")
-print(f"Compressor power: {comp.getPower('kW'):.1f} kW")
-print(f"Cooler duty: {cooler.getDuty()/1000:.1f} kW")
+print(f"Gas: {hp_separator.getGasOutStream().getFlowRate('kg/hr'):.0f} kg/hr")
+print(f"Liquid: {hp_separator.getLiquidOutStream().getFlowRate('kg/hr'):.0f} kg/hr")
+print(f"Compressor power: {compressor.getPower('kW'):.1f} kW")
+print(f"Cooler duty: {cooler.getDuty() / 1000.0:.1f} kW")
 ```
 
 ---
@@ -392,41 +375,53 @@ print(f"Cooler duty: {cooler.getDuty()/1000:.1f} kW")
 
 ### Recycle Stream
 
+`Recycle.setOutletStream(...)` defines the tear-stream result. Connect that outlet to the
+downstream mixer or equipment that closes the loop; it is not itself the destination mixer.
+The following fragment assumes that the two named streams already exist in a larger flowsheet.
+
 ```python
 Recycle = jneqsim.process.equipment.util.Recycle
 
-# After building main process...
-# Create recycle (connects outlet back to inlet)
 recycle = Recycle("Recycle")
-recycle.addStream(recycle_outlet_stream)
-recycle.setOutletStream(mixer_inlet)  # Where it goes back
-recycle.setTolerance(1e-6)
+recycle.addStream(recycle_source_stream)
+recycle.setOutletStream(recycle_tear_stream)
+recycle.setTolerance(1.0e-6)
 process.add(recycle)
 
-# Run with recycle convergence
+# A downstream mixer should consume recycle.getOutletStream() to close the loop.
 process.run()
 ```
 
 ### Adjuster (Spec Controller)
 
+The generic `Adjuster` changes a stream property. This example varies the shared feed mass flow
+to meet an actual gas-volume-flow target at a cooler outlet. Use the functional getter/setter
+overloads when the manipulated variable must call an equipment-specific setter.
+
 ```python
 Adjuster = jneqsim.process.equipment.util.Adjuster
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
 
-# Adjust compressor outlet pressure to achieve target gas volume flow
-adjuster = Adjuster("Adjust-1")
-adjuster.setAdjustedVariable(compressor, "pressure", "bara")
-adjuster.setTargetVariable(outlet_stream, "gasVolumeFlow", 5000.0, "Am3/hr")
-adjuster.setTolerance(1e-4)
+cooler = Cooler("Adjuster target cooler", feed)
+cooler.setOutletTemperature(30.0, "C")
+process.add(cooler)
+
+adjuster = Adjuster("Adjust feed flow")
+adjuster.setAdjustedVariable(feed, "flow", "kg/hr")
+adjuster.setTargetVariable(cooler.getOutletStream(), "gasVolumeFlow", 5000.0, "Am3/hr")
+adjuster.setMinAdjustedValue(1.0)
+adjuster.setMaxAdjustedValue(100000.0)
+adjuster.setTolerance(1.0e-4)
 process.add(adjuster)
 
 process.run()
-print(f"Adjusted pressure: {compressor.getOutletPressure():.2f} bara")
+print(f"Adjusted feed flow: {feed.getFlowRate('kg/hr'):.2f} kg/hr")
 ```
 
 ---
 
 ## See Also
 
-- **[Process Equipment Documentation](../process/equipment/)** - All equipment types
-- **[Optimization Guide](../process/optimization/)** - Process optimization
-- **[JavaDoc: ProcessSystem](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/processmodel/ProcessSystem.html)** - Complete API
+- **[Process Equipment Documentation](../process/equipment/README.md)** - All equipment types
+- **[Optimization Guide](../process/optimization/README.md)** - Process optimization
+- **[JavaDoc: ProcessSystem](https://equinor.github.io/neqsim/javadoc/neqsim/process/processmodel/ProcessSystem.html)** - Complete API

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-qualification-plan:v1",
+  "title": "NeqSim engineering production-qualification action plan",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "projectId",
+    "revision",
+    "executedMethods",
+    "methodQualificationMatrix",
+    "actions",
+    "openActionCount",
+    "readinessLevel",
+    "preliminaryProductionReady",
+    "fitnessForConstruction",
+    "externalEvidenceMayNotBeGeneratedBySimulator"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_qualification_plan.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-qualification-plan:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "executedMethods": {"type": "array", "items": {"type": "string"}},
+    "methodQualificationMatrix": {"type": "array", "items": {"type": "object"}},
+    "actions": {"type": "array", "items": {"type": "object"}},
+    "openActionCount": {"type": "integer", "minimum": 0},
+    "readinessLevel": {
+      "enum": ["NOT_READY", "EXPERIMENTAL", "VALIDATED_PRELIMINARY", "QUALIFIED_FEED_SUPPORT"]
+    },
+    "preliminaryProductionReady": {"type": "boolean"},
+    "fitnessForConstruction": {"const": false},
+    "externalEvidenceMayNotBeGeneratedBySimulator": {"const": true}
+  },
+  "additionalProperties": false
+}

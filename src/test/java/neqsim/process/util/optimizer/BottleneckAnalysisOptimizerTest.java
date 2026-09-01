@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
@@ -55,6 +56,7 @@ import neqsim.thermo.system.SystemPrEos;
  * @author NeqSim
  * @version 1.0
  */
+@Tag("slow")
 public class BottleneckAnalysisOptimizerTest {
   private static final Logger logger = LogManager.getLogger(BottleneckAnalysisOptimizerTest.class);
 

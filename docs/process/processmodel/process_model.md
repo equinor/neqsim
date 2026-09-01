@@ -3,8 +3,6 @@ title: ProcessModel Class
 description: Documentation for the ProcessModel class in NeqSim.
 ---
 
-# ProcessModel Class
-
 Documentation for the ProcessModel class in NeqSim.
 
 ## Table of Contents
@@ -151,6 +149,76 @@ Future<?> task = model.runAsTask();
 task.get();
 ```
 
+### Multiphase (Three-Phase) Flash Control
+
+The three-phase flash can be switched on or off per process area. On a large
+multi-area plant this is usually the cheapest available speed-up: the separation
+trains keep the check (free water, glycol, MEG), while the recompression,
+export-compression and fuel-gas areas — which are known to be two-phase only —
+skip the extra phase-stability analysis on every flash of every recycle
+iteration.
+
+```java
+// All areas at once
+int fluidsUpdated = model.setMultiPhaseCheck(true);
+
+// ...then turn it off only where a third phase cannot form.
+// Returns the number of fluids updated, or -1 if the area name is unknown.
+model.setMultiPhaseCheck("Export train A", false);
+model.setMultiPhaseCheck("Export train B", false);
+model.setMultiPhaseCheck("TEX process A", false);
+```
+
+Python:
+
+```python
+plant.setMultiPhaseCheck(True)                       # baseline for all areas
+plant.setMultiPhaseCheck("Export train A", False)    # dry gas only
+plant.setMultiPhaseCheck("Export train B", False)
+
+if plant.setMultiPhaseCheck("typo in area name", False) == -1:
+    raise KeyError("no such process area")
+```
+
+The per-area setting is stored on the child `ProcessSystem` and re-applied at the
+start of each of its runs, so it survives the repeated area passes of
+`run()` / `runUntilConverged(...)` / step mode. See
+[ProcessSystem](process_system.md#multiphase-three-phase-flash-control) for the
+full semantics and the correctness warning.
+
+### Physical-Property Initialization Level
+
+`setPropertyInitLevel` follows exactly the same plant-wide / per-area pattern and
+controls how much of `initProperties()` runs after each stream flash. Selecting
+`DENSITY_ONLY` skips the viscosity, thermal-conductivity and diffusivity
+correlations.
+
+```java
+// Mass balances only across the plant...
+int streamsUpdated = model.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
+
+// ...but full properties where transport properties are actually read.
+// Returns the number of streams updated, or -1 if the area name is unknown.
+model.setPropertyInitLevel("Subsea", Stream.PropertyInitLevel.FULL);
+model.setPropertyInitLevel("Cooling water", Stream.PropertyInitLevel.FULL);
+```
+
+Python:
+
+```python
+PropertyInitLevel = jneqsim.process.equipment.stream.Stream.PropertyInitLevel
+
+plant.setPropertyInitLevel(PropertyInitLevel.DENSITY_ONLY)
+plant.setPropertyInitLevel("Subsea", PropertyInitLevel.FULL)
+
+if plant.setPropertyInitLevel("typo in area name", PropertyInitLevel.FULL) == -1:
+    raise KeyError("no such process area")
+```
+
+> **Warning:** under `DENSITY_ONLY` the skipped properties read back as `0.0`
+> rather than raising. See
+> [ProcessSystem](process_system.md#physical-property-initialization-level).
+
 ---
 
 ## Convergence Tracking
@@ -190,10 +258,26 @@ System.out.println(model.getConvergenceSummary());
 
 ### Run Until Converged (Agent-Friendly)
 
-`runUntilConverged(maxIterations, tolerance)` is an explicit wrapper around `run()` that
-guarantees iterating (multi-area) mode and applies the iteration limit and tolerance in one
-call — so you do not need to manually configure `setRunStep(false)`, `setMaxIterations(...)`,
-`setTolerance(...)` and write your own outer loop.
+For a large multi-area model, `runUntilConverged(maxIterations)` enables the
+automatic convergence tuner. It measures total feed-boundary mass flow (not the
+largest internal or recycle stream), derives consistent absolute and low-flow
+thresholds, and requires a full validation sweep after applying them.
+
+```java
+boolean converged = model.runUntilConverged(100);
+System.out.println(model.getAutoTuningSummary());
+```
+
+Caller settings always take precedence. Explicit
+`setBoundaryFlowFloor(...)`, `setAbsoluteFlowTolerance(...)`, and per-equipment
+`setMinimumFlow(...)` values are not overwritten. During an auto-tuned run,
+recycles without a caller-owned setting may also enable adaptive Wegstein
+acceleration if direct substitution stalls. Ordinary `ProcessSystem.run()`
+retains legacy direct substitution; call `recycle.setAdaptiveAcceleration(true)`
+to opt in there, or `setAdaptiveAcceleration(false)` to pin an opt-out. Automatic
+ownership survives `ProcessSystem.copy()` and reset operations.
+
+Use the two-argument overload when you also want to set the relative tolerance:
 
 ```java
 boolean converged = model.runUntilConverged(100, 1e-5);
@@ -202,8 +286,11 @@ if (!converged) {
 }
 ```
 
-It throws `IllegalArgumentException` if `maxIterations < 1` or `tolerance` is not a finite
-positive number.
+For physically significant small streams, set an explicit unit threshold or
+disable automatic low-flow bypass with `setAutoLowFlowBypass(false)`. Disable
+all automatic tuning with `setAutoConvergenceTuning(false)`. Invalid iteration
+budgets or non-positive/non-finite relative tolerances throw
+`IllegalArgumentException`.
 
 ### Structured Convergence Report (JSON)
 

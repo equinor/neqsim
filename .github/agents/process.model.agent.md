@@ -22,6 +22,35 @@ Represent reusable Java action sequences with `OperationalScenario` and
 `OperationalScenarioRunner`; for MCP clients, route the same study through
 `runOperationalStudy`.
 
+For NeqSim-to-P&ID or "complete DEXPI engineering model" requests, use the
+governed engineering path from `neqsim-pid-process-operations`:
+
+1. Run the `ProcessSystem` or all areas of the `ProcessModel`.
+2. Declare known `DesignConditions` and compressor maps on modeled equipment.
+3. Build with `NorsokOffshoreEngineeringBuilder`; use `fromProcessModel(...)`
+   for one project per area.
+4. Attach project-defined `OverpressureProtectionStudy` and
+   `DynamicBlowdownFlareStudyDataSource` inputs when their evidence is available.
+5. Attach controlled `LineDesignInput`, `ReliefScenarioBasis`,
+   `ReliefDeviceDesignInput`, `SafetyFunctionDesign`, `ShutdownSequence`, and
+   `EngineeringEvidenceRecord` inputs when line-list, relief, HAZOP/LOPA/SRS,
+   vendor and cause/effect evidence exists.
+6. Run `EmergencyShutdownTestRunner` where dynamic isolation or depressurization
+   response matters, then link the result to its sequence.
+7. Export with `DexpiEngineeringExporter`; inspect the calculations,
+   per-object coverage matrix, registers, DEXPI validation, SHA-256 package
+   manifest and every unresolved data gap. Treat
+   `plant.dexpi.xml` as the schema-validated native DEXPI 2.0 semantic model and
+   `plant-proteus.xml` as the backward-compatible graphical P&ID; do not conflate
+   the two serializations.
+   Use `plant-pydexpi.xml` for pyDEXPI compatibility and keep
+   `interoperability-report.json` at `QUALIFICATION_REQUIRED` until a named CAE
+   product/version has passed import and reviewed round-trip comparison.
+
+Do not assign SIL, voting, final set points, failure actions, materials or final
+shutdown actions from generic equipment rules. Preserve `REVIEW_REQUIRED` until
+controlled HAZOP/LOPA, SRS, vendor and discipline approval records are supplied.
+
 ## Applicable Standards (MANDATORY)
 
 After building any process simulation, identify and check applicable design standards.

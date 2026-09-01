@@ -1,8 +1,8 @@
 ---
 name: neqsim-root-cause-analysis
-version: "1.1.0"
+version: "1.2.0"
 description: "Root cause analysis (RCA) framework for process equipment — Bayesian-inspired diagnosis integrating multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA) as prior, plant historian evidence (likelihood), and NeqSim simulation verification. USE WHEN: diagnosing compressor trips, high vibration, efficiency loss, separator carryover, heat exchanger fouling, or any operational anomaly. Anchors on neqsim.process.diagnostics classes."
-last_verified: "2026-05-10"
+last_verified: "2026-07-19"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.equipment.failure, neqsim.process.automation]
 ---
@@ -52,7 +52,8 @@ No commercial license is required for the default data.
 | `Hypothesis` | Candidate root cause with expected signal fingerprints, evidence, prior/likelihood/verification scores |
 | `HypothesisGenerator` | Generates candidate hypotheses from built-in libraries and reliability-data-adjusted priors per equipment type |
 | `EvidenceCollector` | Analyzes historian/STID data and attaches only hypothesis-relevant supporting or contradictory evidence |
-| `SimulationVerifier` | Clones process, applies physical perturbation, compares simulated vs observed KPI directions |
+| `DiagnosisCase` | Captures equipment, window, provenance, process-model identity, context, and data quality |
+| `SimulationVerifier` | Clones process and reports explicit status, KPI coverage, and magnitude-aware comparison |
 | `RootCauseReport` | Ranked output with JSON and text report generation |
 
 ### Package Location
@@ -91,7 +92,7 @@ rca.setStidData(stidData);
 RootCauseReport report = rca.analyze();
 
 // 7. Get results
-System.out.println(report.toTextReport());
+String textReport = report.toTextReport();
 String json = report.toJson();
 Hypothesis topCause = report.getTopHypothesis();
 ```
@@ -209,12 +210,14 @@ Compares current (latest) values to STID design values.
 ## Simulation Verification
 
 The verifier clones the process system, applies a perturbation matching each
-hypothesis, runs the modified process, and compares the direction of KPI changes
-to the historian data pattern.
+hypothesis, runs the modified process, and compares both direction and normalized
+response magnitude to the historian data pattern where a defensible KPI match exists.
 
-Unsupported hypotheses or equipment types return a neutral verification score
-(`0.5`) with an explicit simulation limitation. Treat this as "not verified by
-the current process model", not as evidence for or against the hypothesis.
+Every likelihood and verification stage has an explicit `EvaluationStatus`:
+`UNKNOWN`, `EVALUATED`, `UNSUPPORTED`, or `FAILED`. Unknown, unsupported, and failed
+stages are neutral in confidence multiplication. An `EVALUATED` zero correctly drives
+the raw hypothesis score to zero. Reports also expose verification coverage and
+comparison count; do not present low-coverage verification as conclusive.
 
 ### Perturbation Examples
 
@@ -228,10 +231,13 @@ the current process model", not as evidence for or against the hypothesis.
 
 ### Verification Score
 
-The score (0-1) is based on direction matching:
-- Count how many KPIs changed in the same direction (sim vs historian)
-- Score = matching directions / total comparisons
-- 1.0 = perfect match, 0.5 = neutral, 0.0 = opposite
+The score (0-1) combines direction and the ratio of normalized simulated/observed
+response magnitudes, then qualifies it by comparable-KPI coverage. Opposite directions
+score zero. No defensible comparison yields `UNKNOWN`, not an invented midpoint score.
+
+For operational decisions, attach a `DiagnosisCase` with the historian query/reference,
+process-model ID and revision, operating mode, and known quality qualifications. It is
+emitted in `RootCauseReport.toJson()` and MCP JSON.
 
 ## Integration with Other Skills
 
@@ -252,7 +258,9 @@ hands the candidate causes here for Bayesian scoring + simulation verification.
 The one-call path is `RootCauseAnalyzer.analyzeAutonomous()` (or
 `analyzeAutonomous(tagToEquipment)` to also classify relationships against the
 flowsheet topology) — it infers the symptom with `AnomalyScanner`, discovers
-relationships with `RelationshipGraph`, then runs the standard analysis.
+relationships with `RelationshipGraph`, classifies them with `CausalTopologyModel`, and
+adds matched anomaly/topology findings to hypothesis evidence before ranking. Ambiguous,
+counter-flow, and common-cause edges remain visible but do not silently boost scores.
 
 ## MCP Tool
 
@@ -267,7 +275,13 @@ Use `runRootCauseAnalysis` MCP tool for programmatic access:
     "symptom": "HIGH_VIBRATION",
     "historianCsv": "timestamp,vibration,temperature\n0,3.5,150\n3600,3.8,152\n...",
     "designLimits": {"vibration": [null, 7.1], "temperature": [null, 180]},
-    "simulationEnabled": true
+    "simulationEnabled": true,
+    "diagnosisCase": {
+      "caseId": "trip-2026-07-19",
+      "processModelId": "export-compression",
+      "processModelRevision": "model-rev-7",
+      "dataSources": {"PI": "query-id-42"}
+    }
   }
 }
 ```
@@ -284,6 +298,12 @@ Use `runRootCauseAnalysis` MCP tool for programmatic access:
   "timestamp": "2026-06-15T10:30:00",
   "dataPointsAnalyzed": 2400,
   "parametersAnalyzed": 8,
+  "diagnosisCase": {
+    "caseId": "trip-2026-07-19",
+    "equipmentName": "Compressor-1",
+    "processModelId": "export-compression",
+    "processModelRevision": "model-rev-7"
+  },
   "summary": "Most likely root cause: Bearing wear (72.3% confidence)...",
   "hypotheses": [
     {
@@ -295,6 +315,10 @@ Use `runRootCauseAnalysis` MCP tool for programmatic access:
       "priorProbability": 0.3000,
       "likelihoodScore": 0.8500,
       "verificationScore": 0.8500,
+      "likelihoodStatus": "EVALUATED",
+      "verificationStatus": "EVALUATED",
+      "verificationCoverage": 0.75,
+      "verificationComparisonCount": 3,
       "evidence": [
         {
           "parameter": "vibration_mm_s",
@@ -478,13 +502,13 @@ List<TripEvent> trips = detector.check(simulationTime);
 // ── Step 2: Trace propagation ──
 FailurePropagationTracer tracer = new FailurePropagationTracer(processSystem);
 FailurePropagationTracer.PropagationResult propagation = tracer.trace(trips.get(0));
-System.out.println(propagation.toTextSummary());
+String propagationSummary = propagation.toTextSummary();
 
 // ── Step 3: Generate restart plan ──
 RestartSequenceGenerator generator = new RestartSequenceGenerator(processSystem);
 generator.setCustomRampUpTime("Compressor-1", 300.0);  // 5 min ramp-up
 RestartSequenceGenerator.RestartPlan plan = generator.generate(propagation);
-System.out.println(plan.toTextReport());
+String restartPlanReport = plan.toTextReport();
 String json = plan.toJson();
 ```
 
@@ -534,4 +558,3 @@ print(str(plan.toTextReport()))
 - **Equipment-specific actions**: auto-selects restart actions by equipment type (compressor, separator, pump, HX, valve, column, pipe)
 - **Output**: `RestartPlan` with `toJson()`, `toTextReport()`
 - **Plan structure**: Safety check → Root cause verification → Utilities → Equipment (upstream-first) → System verification
-

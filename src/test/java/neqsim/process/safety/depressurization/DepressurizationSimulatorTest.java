@@ -12,8 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * These tests guard the mole-basis scaling fix: the simulator must align the fluid mole inventory with the physical
- * vessel volume by scaling the per-component moles (preserving composition), not via {@code setTotalNumberOfMoles},
- * which only sets the scalar total and corrupts the average molar mass. A correct basis yields a physical cold
+ * vessel volume by scaling the per-component moles, preserving composition. A correct basis yields a physical cold
  * (no-fire) blowdown: monotonic pressure decay, Joule-Thomson cooling, and a self-consistent mass inventory.
  * </p>
  *

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:model-change-event:v1",
+  "title": "NeqSim governed model change event",
+  "type": "object",
+  "required": [
+    "schemaVersion", "schemaUri", "eventId", "idempotencyKey", "eventType", "occurredAt",
+    "sourceSystem", "actor", "correlationId", "assetId", "modelId", "baseRevision",
+    "targetRevision", "reason", "subjects", "impactHintNodeIds", "evidenceReferences",
+    "governance", "payloadFingerprint"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_model_change_event.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:model-change-event:v1"},
+    "eventId": {"type": "string", "minLength": 1},
+    "idempotencyKey": {"type": "string", "minLength": 1},
+    "eventType": {
+      "enum": ["MODEL_CREATED", "MODEL_REVISED", "DEPENDENCY_CHANGED", "QUALIFICATION_CHANGED", "MODEL_ARCHIVED"]
+    },
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "sourceSystem": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "correlationId": {"type": "string"},
+    "assetId": {"type": "string", "minLength": 1},
+    "modelId": {"type": "string", "minLength": 1},
+    "baseRevision": {"type": "string"},
+    "targetRevision": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "subjects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["subjectId", "subjectType", "objectKind", "changeKind", "changedProperties"],
+        "properties": {
+          "subjectId": {"type": "string", "minLength": 1},
+          "subjectType": {"enum": ["ENGINEERING_NODE", "ENGINEERING_EDGE"]},
+          "objectKind": {"type": "string", "minLength": 1},
+          "changeKind": {"enum": ["ADDED", "MODIFIED", "REMOVED"]},
+          "changedProperties": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "impactHintNodeIds": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "evidenceReferences": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "governance": {"type": "string", "minLength": 1},
+    "payloadFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "additionalProperties": false
+}

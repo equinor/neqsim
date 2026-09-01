@@ -12,10 +12,15 @@ Requirements:
 
 Known Limitations (UniSim COM):
     - New cases created via SimulationCases.Add() have restricted COM write
-      access.  The writer prefers to open an existing .usc *template* file
-      (any licensed-saved UniSim file works) and build the process inside it.
-      Set ``template_path`` in the constructor to enable this mode.
+      access, and **a .usc saved from such a case inherits that restriction**.
+      ``Operations.Add`` and every ``variable.SetValue`` then fail with
+      E_ACCESSDENIED (0x80070005) even though reads and ``MaterialStreams.Add``
+      succeed.  Always point ``template_path`` at a .usc that was saved from a
+      normal licensed UniSim session; pass ``clear_template=True`` to empty it
+      before building.
     - Solver pause (solver.CanSolve = False) is unreliable on blank cases.
+    - Components can only be added to a fluid package while the solver is
+      paused; on a live case ``Components.Add`` returns E_ACCESSDENIED.
     - Temperature.SetValue() works on new streams, but Pressure and MassFlow
       require the ``Calculate()`` fallback (sets value in internal units:
       kPa for pressure, kg/s for mass flow, °C for temperature).
@@ -386,6 +391,9 @@ class NeqSimJsonParser:
 
         for unit in ps.units:
             t = unit.type_name
+            # Bare unit name (no port) resolves to the first product stream.
+            if unit.product_stream_names:
+                ref_to_stream[unit.name] = unit.product_stream_names[0]
             if t == 'ThreePhaseSeparator':
                 ref_to_stream[f"{unit.name}.gasOut"] = unit.product_stream_names[0]
                 ref_to_stream[f"{unit.name}.oilOut"] = unit.product_stream_names[1]
@@ -443,24 +451,29 @@ class UniSimWriter:
     RETRY_DELAY = 1.0
 
     def __init__(self, visible: bool = True,
-                 template_path: Optional[str] = None):
+                 template_path: Optional[str] = None,
+                 clear_template: bool = False):
         """Initialize the writer.
 
         Args:
             visible: If True, show the UniSim GUI window (recommended for
                      debugging). If False, run headless.
             template_path: Optional path to a licensed .usc file to use as
-                           a starting template.  Using a template provides
-                           reliable COM write access (solver pause, property
-                           setting).  The template's fluid package and
-                           equipment will be replaced.  If None, a new
-                           blank case is created via ``SimulationCases.Add()``
-                           (write access may be limited).
+                           a starting template.  The file must have been saved
+                           from a normal licensed UniSim session — a .usc
+                           produced by ``SimulationCases.Add()`` inherits that
+                           case's restricted COM write access and every
+                           ``Operations.Add`` / ``SetValue`` will fail with
+                           E_ACCESSDENIED.  If None, a new blank case is
+                           created (write access may be limited).
+            clear_template: If True, delete all existing operations and
+                            streams from the template before building.
         """
         self._app = None
         self._case = None
         self._visible = visible
         self._template_path = template_path
+        self._clear_template = clear_template
         self._warnings: List[str] = []
         # Track created COM objects by name for wiring
         self._stream_objects: Dict[str, Any] = {}
@@ -524,6 +537,47 @@ class UniSimWriter:
             case = self._app.SimulationCases.Add("")
         time.sleep(self.COM_DELAY_LONG + 2)
         return case
+
+    def _clear_flowsheet(self):
+        """Delete every operation and stream from the opened template.
+
+        Operations are removed before streams so that stream deletion is not
+        blocked by a live connection.
+        """
+        try:
+            flowsheet = self._case.Flowsheet
+        except Exception as e:
+            self._warnings.append(f"Could not access flowsheet to clear: {e}")
+            return
+
+        removed = 0
+        for collection_name in ('Operations', 'MaterialStreams', 'EnergyStreams'):
+            try:
+                collection = getattr(flowsheet, collection_name)
+                count = collection.Count
+            except Exception:
+                continue
+            if count == 0:
+                continue
+            try:
+                collection.RemoveAll()
+                removed += count
+                continue
+            except Exception as e:
+                self._warnings.append(
+                    f"Could not RemoveAll() from {collection_name}; "
+                    f"falling back to iterative removal: {e}")
+            # Iterate backwards — the collection re-indexes on remove
+            for i in range(count - 1, -1, -1):
+                try:
+                    collection.Remove(i)
+                    removed += 1
+                except Exception as e:
+                    self._warnings.append(
+                        f"Could not remove {collection_name}[{i}] "
+                        f"from template: {e}")
+        time.sleep(self.COM_DELAY_MEDIUM)
+        logger.info("Cleared template: removed %d existing objects", removed)
 
     def _pause_solver(self):
         """Attempt to pause the UniSim solver.
@@ -605,6 +659,82 @@ class UniSimWriter:
         return None  # unknown unit — skip Calculate fallback
 
     @staticmethod
+    def _value_and_unit(prop, default_unit: str) -> Tuple[Optional[float], str]:
+        """Normalize a JSON property into ``(value, unit)``.
+
+        The NeqSim JSON builder accepts both a bare number and a
+        ``[value, "unit"]`` pair, so the writer must handle both.
+
+        Args:
+            prop: Bare number or ``[value, unit]`` list from the JSON.
+            default_unit: Unit assumed when the JSON carries only a number.
+
+        Returns:
+            Tuple of (value, unit); value is None if *prop* is not numeric.
+        """
+        value, unit_str = None, default_unit
+        if isinstance(prop, (list, tuple)) and prop:
+            value = prop[0]
+            if len(prop) > 1 and isinstance(prop[1], str):
+                unit_str = prop[1]
+        elif isinstance(prop, (int, float)):
+            value = prop
+        if not isinstance(value, (int, float)):
+            return None, unit_str
+        # UniSim SetValue expects 'bar', not 'bara'
+        if unit_str.lower() in ('bara', 'barg', 'bar'):
+            unit_str = 'bar'
+        return float(value), unit_str
+
+    def _set_product_pressure(self, op, prop, name_hint: str):
+        """Set the discharge pressure of an operation via its product stream.
+
+        Args:
+            op: COM operation object.
+            prop: JSON ``outletPressure`` value (number or ``[value, unit]``).
+            name_hint: For logging only.
+        """
+        value, unit_str = self._value_and_unit(prop, 'bara')
+        if value is None:
+            return
+        try:
+            product = op.ProductStream
+        except Exception:
+            return
+        if product is None:
+            return
+        if not self._set_variable(product.Pressure, value, unit_str, name_hint):
+            self._warnings.append(f"Could not set pressure on '{name_hint}'")
+
+    @staticmethod
+    def _set_efficiency(op, attribute: str, percent: float) -> bool:
+        """Set a dimensionless UniSim efficiency in percent.
+
+        Args:
+            op: COM operation object.
+            attribute: Variable name, e.g. ``CompPolytropicEff``.
+            percent: Efficiency in percent (0-100).
+
+        Returns:
+            True if the value was accepted.
+        """
+        try:
+            setattr(op, attribute + 'Value', percent)
+            return True
+        except Exception:
+            pass
+        try:
+            getattr(op, attribute).SetValue(percent)
+            return True
+        except Exception:
+            pass
+        try:
+            getattr(op, attribute).Calculate(percent)
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
     def _estimate_molar_mass(fluid: 'ParsedFluid') -> Optional[float]:
         """Estimate mixture molar mass (g/mol) from composition.
 
@@ -659,6 +789,9 @@ class UniSimWriter:
 
         # Create or open a simulation case
         self._case = self._open_or_create_case()
+
+        if self._clear_template:
+            self._clear_flowsheet()
 
         # Pause the solver while we build the flowsheet
         solver = self._pause_solver()
@@ -826,6 +959,9 @@ class UniSimWriter:
         pp_name = NEQSIM_TO_UNISIM_PROPERTY_PACKAGE.get(
             fluid.model, 'SRK')
 
+        # Fluid-package edits are only permitted inside a basis change.
+        in_basis_change = self._start_basis_change(basis_manager)
+
         # Get or create a fluid package.
         fp = None
         try:
@@ -844,6 +980,8 @@ class UniSimWriter:
             except Exception as e:
                 self._warnings.append(
                     f"Could not create fluid package: {e}")
+                if in_basis_change:
+                    self._end_basis_change(basis_manager)
                 return
 
         # Set property package (skip if already correct or fails)
@@ -856,6 +994,17 @@ class UniSimWriter:
             logger.debug(
                 f"Property package set skipped (may already be '{pp_name}'): {e}")
 
+        # Drop the template's own components so the package holds only the
+        # NeqSim model's components.
+        if self._clear_template and count > 0:
+            try:
+                fp.Components.RemoveAll()
+                time.sleep(self.COM_DELAY_MEDIUM)
+                logger.info("Cleared template fluid-package components")
+            except Exception as e:
+                self._warnings.append(
+                    f"Could not clear template components: {e}")
+
         # Catalogue existing components so we don't re-add them
         existing_components = set()
         try:
@@ -866,25 +1015,27 @@ class UniSimWriter:
         logger.debug("Existing components in fluid package: %d",
                       len(existing_components))
 
-        # Add components (skip those already present)
+        wanted = []
         for neqsim_name in fluid.components:
             unisim_name = NEQSIM_TO_UNISIM_COMPONENT.get(neqsim_name)
             if unisim_name is None:
                 self._warnings.append(
                     f"Component '{neqsim_name}' has no UniSim mapping — skipped")
                 continue
-            if unisim_name in existing_components:
-                logger.debug(f"Component already present: {unisim_name}")
-                continue
+            if unisim_name not in existing_components:
+                wanted.append(unisim_name)
+
+        for unisim_name in wanted:
             try:
                 fp.Components.Add(unisim_name)
                 time.sleep(self.COM_DELAY_SHORT)
                 existing_components.add(unisim_name)
                 logger.debug(f"Added component: {unisim_name}")
             except Exception as e:
-                # May fail if already present under a variant name
-                logger.debug(
+                self._warnings.append(
                     f"Could not add component '{unisim_name}': {e}")
+        if in_basis_change:
+            self._end_basis_change(basis_manager)
 
         # Store component name list for composition mapping
         time.sleep(self.COM_DELAY_MEDIUM)  # let solver settle
@@ -897,6 +1048,40 @@ class UniSimWriter:
             logger.warning("Could not enumerate components: %s", e)
         logger.info("Fluid package components: %d",
                      len(self._fp_component_names))
+
+    def _start_basis_change(self, basis_manager) -> bool:
+        """Enter the UniSim basis environment so components can be edited.
+
+        Args:
+            basis_manager: COM ``BasisManager`` object.
+
+        Returns:
+            True if a basis change was started and must be ended.
+        """
+        for method in ('StartBasisChangeInvisibly', 'StartBasisChange'):
+            try:
+                getattr(basis_manager, method)()
+                time.sleep(self.COM_DELAY_MEDIUM)
+                logger.debug("Basis change started via %s", method)
+                return True
+            except Exception:
+                continue
+        self._warnings.append(
+            "Could not start a basis change — components may not be added")
+        return False
+
+    def _end_basis_change(self, basis_manager):
+        """Leave the UniSim basis environment and return to the flowsheet."""
+        for method in ('EndBasisChangeInvisibly', 'EndBasisChange'):
+            try:
+                getattr(basis_manager, method)()
+                time.sleep(self.COM_DELAY_LONG)
+                logger.debug("Basis change ended via %s", method)
+                return
+            except Exception:
+                continue
+        self._warnings.append(
+            "Could not end the basis change — flowsheet writes may be denied")
 
     # -----------------------------------------------------------------
     # Material streams
@@ -1043,6 +1228,9 @@ class UniSimWriter:
         # Wire products (create output streams)
         self._wire_products(flowsheet, op, unit)
 
+        # Attach an energy stream so the duty balance can close
+        self._wire_energy_stream(flowsheet, op, unit)
+
         # Set equipment-specific properties
         self._set_operation_properties(op, unit)
 
@@ -1153,6 +1341,36 @@ class UniSimWriter:
                     f"Could not wire product '{prod_name}' from "
                     f"'{unit.name}': {e}")
 
+    # Equipment that needs an attached energy stream before UniSim can close
+    # its duty balance (without one, discharge temperature and power stay
+    # unsolved and read back as the -32767 empty sentinel).
+    ENERGY_STREAM_TYPES = ('Compressor', 'Pump', 'Expander', 'Cooler', 'Heater')
+
+    def _wire_energy_stream(self, flowsheet, op, unit: ParsedUnit):
+        """Create and attach an energy stream to a duty-consuming operation."""
+        if unit.type_name not in self.ENERGY_STREAM_TYPES:
+            return
+
+        stream_name = f"{unit.name}_duty"
+        try:
+            energy_stream = flowsheet.EnergyStreams.Add(stream_name)
+            time.sleep(self.COM_DELAY_SHORT)
+        except Exception as e:
+            self._warnings.append(
+                f"Could not create energy stream '{stream_name}': {e}")
+            return
+
+        for value in (energy_stream, stream_name):
+            for attribute in ('EnergyStream', 'Energy'):
+                try:
+                    setattr(op, attribute, value)
+                    time.sleep(self.COM_DELAY_SHORT)
+                    return
+                except Exception:
+                    continue
+        self._warnings.append(
+            f"Could not attach energy stream to '{unit.name}'")
+
     def _set_operation_properties(self, op, unit: ParsedUnit):
         """Set equipment-specific properties on a UniSim operation."""
         props = unit.properties
@@ -1162,38 +1380,30 @@ class UniSimWriter:
             if type_name == 'Compressor':
                 # Outlet pressure via product stream
                 if 'outletPressure' in props:
-                    try:
-                        ps = op.ProductStream
-                        if ps is not None:
-                            self._set_variable(
-                                ps.Pressure, props['outletPressure'],
-                                'bar', f"{unit.name}.Pout")
-                    except Exception:
-                        pass
-                # Efficiency
-                if 'polytropicEfficiency' in props:
-                    try:
-                        op.PolytropicEfficiency.SetValue(
-                            props['polytropicEfficiency'])
-                    except Exception:
-                        pass
-                elif 'isentropicEfficiency' in props:
-                    try:
-                        op.AdiabaticEfficiency.SetValue(
-                            props['isentropicEfficiency'])
-                    except Exception:
-                        pass
+                    self._set_product_pressure(
+                        op, props['outletPressure'], f"{unit.name}.Pout")
+                # Efficiency — UniSim wants percent, NeqSim JSON uses either
+                # a fraction (0.78) or percent (78.0)
+                eff_key = ('polytropicEfficiency'
+                           if 'polytropicEfficiency' in props
+                           else 'isentropicEfficiency')
+                eff, _ = self._value_and_unit(props.get(eff_key), '-')
+                if eff is not None:
+                    if eff <= 1.0:
+                        eff *= 100.0
+                    # UniSim CompressOp names: CompPolytropicEff /
+                    # CompAdiabaticEff (NOT PolytropicEfficiency)
+                    target = ('CompPolytropicEff'
+                              if eff_key == 'polytropicEfficiency'
+                              else 'CompAdiabaticEff')
+                    if not self._set_efficiency(op, target, eff):
+                        self._warnings.append(
+                            f"Could not set {target} on '{unit.name}'")
 
             elif type_name == 'ThrottlingValve':
                 if 'outletPressure' in props:
-                    try:
-                        ps = op.ProductStream
-                        if ps is not None:
-                            self._set_variable(
-                                ps.Pressure, props['outletPressure'],
-                                'bar', f"{unit.name}.Pout")
-                    except Exception:
-                        pass
+                    self._set_product_pressure(
+                        op, props['outletPressure'], f"{unit.name}.Pout")
 
             elif type_name in ('Cooler', 'Heater'):
                 # Outlet temperature
@@ -1214,24 +1424,24 @@ class UniSimWriter:
                                 f"{unit.name}.Tout")
                     except Exception:
                         pass
+                # Outlet pressure (equivalent to a fixed pressure drop)
+                if 'outletPressure' in props:
+                    self._set_product_pressure(
+                        op, props['outletPressure'], f"{unit.name}.Pout")
                 # Pressure drop
                 if 'pressureDrop' in props:
-                    try:
-                        op.PressureDrop.SetValue(
-                            props['pressureDrop'], 'bar')
-                    except Exception:
-                        pass
+                    dp, dp_unit = self._value_and_unit(props['pressureDrop'], 'bar')
+                    if dp is not None:
+                        try:
+                            op.PressureDrop.SetValue(dp, dp_unit)
+                        except Exception as e:
+                            self._warnings.append(
+                                f"Could not set pressure drop for {unit.name}: {e}")
 
             elif type_name == 'Pump':
                 if 'outletPressure' in props:
-                    try:
-                        ps = op.ProductStream
-                        if ps is not None:
-                            self._set_variable(
-                                ps.Pressure, props['outletPressure'],
-                                'bar', f"{unit.name}.Pout")
-                    except Exception:
-                        pass
+                    self._set_product_pressure(
+                        op, props['outletPressure'], f"{unit.name}.Pout")
                 if 'isentropicEfficiency' in props:
                     try:
                         op.AdiabaticEfficiency.SetValue(
@@ -1241,14 +1451,8 @@ class UniSimWriter:
 
             elif type_name == 'Expander':
                 if 'outletPressure' in props:
-                    try:
-                        ps = op.ProductStream
-                        if ps is not None:
-                            self._set_variable(
-                                ps.Pressure, props['outletPressure'],
-                                'bar', f"{unit.name}.Pout")
-                    except Exception:
-                        pass
+                    self._set_product_pressure(
+                        op, props['outletPressure'], f"{unit.name}.Pout")
                 if 'isentropicEfficiency' in props:
                     try:
                         op.AdiabaticEfficiency.SetValue(

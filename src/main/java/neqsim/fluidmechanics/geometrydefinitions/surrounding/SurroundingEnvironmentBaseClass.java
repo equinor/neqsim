@@ -6,7 +6,9 @@ package neqsim.fluidmechanics.geometrydefinitions.surrounding;
  * @author ESOL
  * @version $Id: $Id
  */
-public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment {
+public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment, java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
+
   private double heatTransferCoefficient = 20.0;
   private double temperature = 298.15;
 

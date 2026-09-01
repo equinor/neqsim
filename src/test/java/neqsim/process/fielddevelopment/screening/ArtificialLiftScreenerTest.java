@@ -139,6 +139,44 @@ class ArtificialLiftScreenerTest {
   }
 
   @Test
+  @DisplayName("Test calculated results must be physically valid before ranking")
+  void testCalculatedResultsMustBePhysicalBeforeRanking() {
+    screener.setReservoirPressure(245.0, "bara");
+    screener.setReservoirTemperature(82.0, "C");
+    screener.setWellheadPressure(18.0, "bara");
+    screener.setWellDepth(2738.0, "m");
+    screener.setProductivityIndex(10.0);
+    screener.setOilGravity(33.0, "API");
+    screener.setWaterCut(0.48);
+    screener.setFormationGOR(135.0);
+    screener.setOilViscosity(4.0, "cP");
+    screener.setGasLiftAvailable(true);
+    screener.setElectricityAvailable(true);
+
+    ScreeningResult result = screener.screen();
+    MethodResult rodPump = null;
+    for (MethodResult method : result.getAllMethods()) {
+      if (method.feasible) {
+        assertTrue(Double.isFinite(method.productionRate) && method.productionRate > 0.0,
+            method.getMethodName() + " must have a finite positive production rate when feasible");
+        assertTrue(Double.isFinite(method.powerConsumption) && method.powerConsumption >= 0.0,
+            method.getMethodName() + " must have finite non-negative power when feasible");
+      }
+      if (method.method == LiftMethod.ROD_PUMP) {
+        rodPump = method;
+      }
+    }
+
+    assertNotNull(rodPump);
+    assertFalse(rodPump.feasible);
+    assertEquals(0.0, rodPump.productionRate, 0.0);
+    assertEquals(0.0, rodPump.powerConsumption, 0.0);
+    assertEquals(0, rodPump.rank);
+    assertEquals(Double.NEGATIVE_INFINITY, rodPump.npv);
+    assertTrue(rodPump.infeasibilityReason.contains("production rate"));
+  }
+
+  @Test
   @DisplayName("Test PCP good for high viscosity")
   void testPCPHighViscosity() {
     screener.setWellDepth(2000.0, "m"); // Within PCP range

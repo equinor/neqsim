@@ -1,5 +1,7 @@
 package neqsim.mcp.runners;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
@@ -30,6 +32,8 @@ class CapabilitiesRunnerTest {
     assertTrue(obj.has("processSimulation"));
     assertTrue(obj.has("calculationModes"));
     assertTrue(obj.has("toolCapabilities"));
+    assertTrue(obj.has("implementationInventory"));
+    assertTrue(obj.has("phase0EvidenceInventory"));
     assertTrue(obj.has("setupTemplates"));
     assertTrue(obj.has("processJsonContract"));
     assertTrue(obj.has("capabilityGraph"));
@@ -75,6 +79,15 @@ class CapabilitiesRunnerTest {
     assertTrue(flashDescriptor.has("schemas"));
     assertTrue(flashDescriptor.has("examples"));
     assertTrue(flashDescriptor.has("setupTemplates"));
+    JsonObject pipelineDescriptor = toolCapabilities.getAsJsonObject("runPipeline");
+    assertTrue(pipelineDescriptor.get("purpose").getAsString().contains("two-fluid"));
+    assertTrue(pipelineDescriptor.getAsJsonArray("optionalFields").toString().contains("sectionLengths_m"));
+    assertTrue(pipelineDescriptor.getAsJsonArray("knownLimitations").toString().contains("mesh"));
+
+    JsonObject pipelineTrust = JsonParser.parseString(BenchmarkTrust.getToolTrust("runPipeline")).getAsJsonObject()
+        .getAsJsonObject("trust");
+    assertTrue(pipelineTrust.get("description").getAsString().contains("two-fluid"));
+    assertTrue(pipelineTrust.getAsJsonArray("knownLimitations").toString().contains("closure correlations"));
 
     // Trust model should describe provenance
     JsonObject trust = obj.getAsJsonObject("trustModel");
@@ -82,8 +95,17 @@ class CapabilitiesRunnerTest {
 
     JsonObject processContract = obj.getAsJsonObject("processJsonContract");
     assertTrue(processContract.has("supportedEquipmentTypes"));
+    assertTrue(processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("ElectricMotor"));
+    assertTrue(
+        processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("ClausCatalyticConverter"));
+    assertFalse(processContract.getAsJsonArray("supportedEquipmentTypes").toString().contains("Ejector"));
+    assertTrue(processContract.has("equipmentTypeDiscovery"));
+    assertTrue(processContract.has("equipmentSupportScope"));
     assertTrue(processContract.has("commonPropertiesByEquipment"));
     assertTrue(processContract.has("units"));
+    assertTrue(processContract.getAsJsonArray("rootFields").toString().contains("interAreaLinks"));
+    assertTrue(processContract.getAsJsonArray("streamReferencePorts").toString().contains("splitStream_0"));
+    assertTrue(processContract.has("recommendedWorkflow"));
 
     JsonObject graph = obj.getAsJsonObject("capabilityGraph");
     assertTrue(graph.get("nodeCount").getAsInt() > 50);
@@ -91,6 +113,75 @@ class CapabilitiesRunnerTest {
 
     JsonObject safetyGate = obj.getAsJsonObject("safetyGatePolicy");
     assertTrue(safetyGate.get("engineeringReviewRequired").getAsBoolean());
+  }
+
+  @Test
+  void testImplementationInventoryIsCompleteAndResolvable() throws ClassNotFoundException {
+    JsonObject root = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject inventory = root.getAsJsonObject("implementationInventory");
+    JsonObject bindings = inventory.getAsJsonObject("toolImplementationBindings");
+
+    assertTrue(inventory.get("complete").getAsBoolean());
+    assertEquals(71, inventory.get("toolBindingCount").getAsInt());
+    assertEquals(60, inventory.get("implementationClassCount").getAsInt());
+    assertEquals(71, bindings.size());
+    assertEquals(IndustrialProfile.getAllKnownTools(), McpImplementationInventory.getToolImplementations().keySet());
+    assertEquals(0, inventory.getAsJsonArray("missingToolBindings").size());
+    assertEquals(0, inventory.getAsJsonArray("mismatchedCapabilityBindings").size());
+    assertEquals(0, inventory.getAsJsonArray("undeclaredToolBindings").size());
+
+    JsonObject toolCapabilities = root.getAsJsonObject("toolCapabilities");
+    for (Map.Entry<String, JsonElement> entry : bindings.entrySet()) {
+      String toolName = entry.getKey();
+      String implementationClass = entry.getValue().getAsString();
+      assertEquals(implementationClass,
+          toolCapabilities.getAsJsonObject(toolName).get("implementationClass").getAsString());
+      assertNotNull(Class.forName(implementationClass), "Implementation class does not resolve for " + toolName);
+    }
+
+    JsonArray equipmentTypes = inventory.getAsJsonArray("supportedEquipmentTypes");
+    JsonArray contractEquipment = root.getAsJsonObject("processJsonContract").getAsJsonArray("supportedEquipmentTypes");
+    assertEquals(206, inventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(contractEquipment, equipmentTypes);
+    assertTrue(equipmentTypes.toString().contains("Compressor"));
+    assertTrue(equipmentTypes.toString().contains("ThreePhaseSeparator"));
+    assertTrue(equipmentTypes.toString().contains("ThrottlingValve"));
+
+    JsonArray reportPaths = inventory.getAsJsonArray("reportPaths");
+    assertEquals(2, inventory.get("reportPathCount").getAsInt());
+    assertEquals("generateReport", reportPaths.get(0).getAsJsonObject().get("tool").getAsString());
+    assertEquals("neqsim.mcp.runners.ReportRunner",
+        reportPaths.get(0).getAsJsonObject().get("implementationClass").getAsString());
+    assertEquals("bridgeTaskWorkflow", reportPaths.get(1).getAsJsonObject().get("tool").getAsString());
+    assertEquals("neqsim.mcp.runners.TaskWorkflowBridge",
+        reportPaths.get(1).getAsJsonObject().get("implementationClass").getAsString());
+  }
+
+  @Test
+  void testPhase0EvidenceInventoryMakesTrustGapsExplicit() {
+    JsonObject root = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject inventory = root.getAsJsonObject("phase0EvidenceInventory");
+
+    JsonObject tests = inventory.getAsJsonObject("tests");
+    assertEquals(69, tests.get("javaTestClassCount").getAsInt());
+    assertEquals(94, tests.get("protocolScenarioCount").getAsInt());
+
+    JsonObject guides = inventory.getAsJsonObject("guides");
+    assertEquals(8, guides.get("guideCount").getAsInt());
+    assertEquals(8, guides.getAsJsonArray("entries").size());
+
+    JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
+    assertEquals(71, limitations.get("publishedToolCount").getAsInt());
+    assertEquals(20, limitations.get("explicitTrustToolCount").getAsInt());
+    assertEquals(51, limitations.get("genericTrustToolCount").getAsInt());
+    assertEquals(64, limitations.get("knownLimitationCount").getAsInt());
+    assertEquals(0, limitations.get("unsupportedConditionCount").getAsInt());
+    assertEquals(30, limitations.get("validationCaseCount").getAsInt());
+    assertEquals(5, limitations.get("verifiedValidationCaseCount").getAsInt());
+    assertEquals(20, limitations.getAsJsonArray("explicitTrustTools").size());
+    assertEquals(51, limitations.getAsJsonArray("genericTrustTools").size());
+    assertFalse(limitations.get("complete").getAsBoolean());
+    assertFalse(inventory.get("complete").getAsBoolean());
   }
 
   @Test

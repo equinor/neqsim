@@ -397,11 +397,12 @@ public class MaterialsReviewEngine {
     dense.evaluate();
     String severity = normalizeSeverity(dense.getRiskLevel());
     String status = dense.isMeetsImpuritySpecs() && !dense.isFreeWaterRisk() ? "PASS" : "WARNING";
-    result.addAssessment(new DamageMechanismAssessment("Dense CO2 corrosion", "DNV-RP-F104 / ISO 27913", status,
-        severity, "Dense CO2 risk is " + dense.getRiskLevel() + ", phase state " + dense.getCo2PhaseState() + ".",
-        dense.getRecommendation()).addDetail("wetCorrosionRate_mm_per_year", dense.getWetCorrosionRateMmYr())
-        .addDetail("freeWaterRisk", Boolean.valueOf(dense.isFreeWaterRisk()))
-        .addDetail("waterMargin_ppmv", dense.getWaterMarginPpmv()));
+    result.addAssessment(
+        new DamageMechanismAssessment("Dense CO2 corrosion", "Legacy heuristic; project criteria", status, severity,
+            "Dense CO2 risk is " + dense.getRiskLevel() + ", phase state " + dense.getCo2PhaseState() + ".",
+            dense.getRecommendation()).addDetail("wetCorrosionRate_mm_per_year", dense.getWetCorrosionRateMmYr())
+            .addDetail("freeWaterRisk", Boolean.valueOf(dense.isFreeWaterRisk()))
+            .addDetail("waterMargin_ppmv", dense.getWaterMarginPpmv()));
   }
 
   /**

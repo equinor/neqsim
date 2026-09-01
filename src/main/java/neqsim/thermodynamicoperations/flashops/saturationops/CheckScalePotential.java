@@ -53,6 +53,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
     int numb = 0;
     double stoc1 = 1.0;
     double stoc2 = 1.0;
+    double waterstoc = 0.0;
 
     double numberOfMolesMEG = 0.0;
 
@@ -77,6 +78,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
 
         stoc1 = Double.parseDouble(dataSet.getString("stoc1"));
         stoc2 = Double.parseDouble(dataSet.getString("stoc2"));
+        waterstoc = Double.parseDouble(dataSet.getString("waterstoc"));
         // Temperature in Kelvin from system
         double temperatureK = system.getPhase(phaseNumber).getTemperature();
         // Ksp correlation: lnKsp = A/T + B + C*ln(T) + D*T + E/T² (T in Kelvin)
@@ -169,7 +171,8 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
             scalePotentialFactor = computeHydromagnesiteSR(x1, x2, compNumb1, compNumb2, waterompNumb, waterDenom,
                 stoc1, stoc2, ksp);
           } else {
-            scalePotentialFactor = computeSRLogSpace(x1, x2, compNumb1, compNumb2, waterompNumb, stoc1, stoc2, ksp);
+            scalePotentialFactor = computeSRLogSpace(x1, x2, compNumb1, compNumb2, waterompNumb, stoc1, stoc2,
+                waterstoc, ksp);
           }
 
           logger.info("mol/kg " + name1 + "=" + x1 + ", " + name2 + "=" + x2);
@@ -206,11 +209,12 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
    * @param waterCompNumb component number of water
    * @param stoc1 stoichiometric coefficient of ion 1
    * @param stoc2 stoichiometric coefficient of ion 2
+   * @param waterstoc crystallization-water stoichiometry per mineral formula unit
    * @param ksp solubility product constant
    * @return saturation ratio (SR), clamped to [0, exp(LN_SR_CLAMP)]
    */
   private double computeSRLogSpace(double m1, double m2, int compNumb1, int compNumb2, int waterCompNumb, double stoc1,
-      double stoc2, double ksp) {
+      double stoc2, double waterstoc, double ksp) {
     if (m1 < MIN_MOLALITY || m2 < MIN_MOLALITY) {
       return 0.0;
     }
@@ -226,6 +230,16 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
 
     // Compute ln(IAP) = stoc1*ln(gamma1*m1) + stoc2*ln(gamma2*m2)
     double lnIAP = stoc1 * Math.log(gamma1 * m1) + stoc2 * Math.log(gamma2 * m2);
+    if (waterstoc > 0.0) {
+      double waterActivity = system.getPhase(phaseNumber).getComponent(waterCompNumb).getx();
+      if (system.getPhase(phaseNumber).getComponent(waterCompNumb).calcActivity()) {
+        waterActivity *= system.getPhase(phaseNumber).getActivityCoefficient(waterCompNumb, waterCompNumb);
+      }
+      if (!(waterActivity > 0.0) || !Double.isFinite(waterActivity)) {
+        return 0.0;
+      }
+      lnIAP += waterstoc * Math.log(waterActivity);
+    }
     double lnKsp = Math.log(ksp);
     double lnSR = lnIAP - lnKsp;
 

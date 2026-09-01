@@ -83,6 +83,61 @@ agents:
         self.assertEqual(["neqsim-api-patterns"],
                          parsed["agents"][0]["required_skills"])
 
+    def test_fallback_parser_reads_block_sequence_catalog_entries(self):
+        """Block-style ``required_skills`` lists must survive the no-PyYAML path.
+
+        The published community catalog writes lists as indented ``- item``
+        blocks. The old fallback split every one of those lines into a new
+        agent, so required skills silently vanished on installs where PyYAML
+        was missing.
+        """
+        catalog = """
+catalog_version: "1.0"
+agents:
+  - name: first-agent
+    description: "First agent"
+    required_skills:
+      - neqsim-api-patterns
+      - neqsim-standards-lookup
+    supported_domains:
+      - process
+  - name: second-agent
+    description: "Second agent"
+    required_skills:
+      - neqsim-flow-assurance
+"""
+
+        parsed = install_agent._parse_catalog_fallback(catalog)
+
+        self.assertEqual(["first-agent", "second-agent"],
+                         [agent["name"] for agent in parsed["agents"]])
+        self.assertEqual(["neqsim-api-patterns", "neqsim-standards-lookup"],
+                         parsed["agents"][0]["required_skills"])
+        self.assertEqual(["process"], parsed["agents"][0]["supported_domains"])
+        self.assertEqual(["neqsim-flow-assurance"],
+                         parsed["agents"][1]["required_skills"])
+
+    def test_fallback_agent_yaml_parser_reads_flush_block_lists(self):
+        """``agent.yaml`` writes lists flush with the key, not indented."""
+        agent_yaml = """
+name: artificial-lift-agent
+description: Screens gas-lift versus ESP feasibility.
+required_skills:
+- neqsim-artificial-lift-screening
+inputs:
+- reservoir_pressure_pi
+- target_production_rate
+human_review_required: true
+"""
+
+        parsed = install_agent._parse_flat_yaml(agent_yaml)
+
+        self.assertEqual(["neqsim-artificial-lift-screening"],
+                         parsed["required_skills"])
+        self.assertEqual(["reservoir_pressure_pi", "target_production_rate"],
+                         parsed["inputs"])
+        self.assertEqual("true", parsed["human_review_required"])
+
     def test_repository_discovery_falls_back_to_scanning_agent_files(self):
         """If no remote catalog is present, .agent.md frontmatter is enough."""
         agent_md = """---
@@ -465,6 +520,67 @@ trust_level: private
         self.assertEqual("neqsim-core-demo", mocked_export.call_args[0][0])
         self.assertEqual(skill_dir, mocked_export.call_args[0][1])
         self.assertEqual(str(skill_file), mocked_export.call_args[0][3]["neqsim-core-demo"]["path"])
+
+    def test_force_reinstalls_already_available_required_skill(self):
+        """--force on agent install should reinstall required skills too, not just export them."""
+        catalog = [{
+            "name": "neqsim-demo",
+            "description": "Force reinstall test",
+            "source": "local",
+            "path": "/tmp/neqsim-demo/SKILL.md",
+        }]
+        install_args = argparse.Namespace(
+            vscode=True,
+            target=[],
+            vscode_dir=None,
+            vscode_skills_dir=None,
+            export_dir=None,
+            force=True,
+        )
+
+        with mock.patch.object(install_agent, "_find_missing_required_skills",
+                               return_value=[]), \
+                mock.patch.object(install_agent.install_skill, "load_catalog",
+                                  return_value=catalog), \
+                mock.patch.object(install_agent, "_ensure_required_skill_exports",
+                                  return_value=[]), \
+                mock.patch.object(install_agent.install_skill, "cmd_install") as mocked_install:
+            unresolved = install_agent._print_required_skill_guidance(
+                ["neqsim-demo"],
+                install_missing=True,
+                install_args=install_args,
+            )
+
+        self.assertEqual([], unresolved)
+        mocked_install.assert_called_once()
+        args_obj = mocked_install.call_args[0][1]
+        self.assertEqual("neqsim-demo", args_obj.name)
+        self.assertTrue(args_obj.force)
+
+    def test_no_force_does_not_reinstall_already_available_required_skill(self):
+        """Without --force, an already-available required skill is only exported, not reinstalled."""
+        install_args = argparse.Namespace(
+            vscode=True,
+            target=[],
+            vscode_dir=None,
+            vscode_skills_dir=None,
+            export_dir=None,
+            force=False,
+        )
+
+        with mock.patch.object(install_agent, "_find_missing_required_skills",
+                               return_value=[]), \
+                mock.patch.object(install_agent.install_skill, "cmd_install") as mocked_install, \
+                mock.patch.object(install_agent, "_ensure_required_skill_exports",
+                                  return_value=[]):
+            unresolved = install_agent._print_required_skill_guidance(
+                ["neqsim-demo"],
+                install_missing=True,
+                install_args=install_args,
+            )
+
+        self.assertEqual([], unresolved)
+        mocked_install.assert_not_called()
 
     def test_local_file_install_writes_manifest(self):
         """Installing a local .agent.md file should copy it and register metadata."""
@@ -1318,6 +1434,72 @@ class AgentVsCodeExportTest(unittest.TestCase):
             text = output.getvalue()
             self.assertIn("Result: PASS", text)
             self.assertNotIn(str(stale_workspace_export), text)
+
+    def test_cmd_doctor_vscode_uses_copilot_user_skill_folder(self):
+        """VS Code doctor should find user skills beside the Copilot agents folder."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            copilot_dir = tmp_path / ".copilot"
+            agent_export = copilot_dir / "agents" / "local-test-agent.agent.md"
+            skill_export = copilot_dir / "skills" / "neqsim-demo"
+            agent_export.parent.mkdir(parents=True)
+            skill_export.mkdir(parents=True)
+            agent_export.write_text("Agent body.\n", encoding="utf-8")
+            (skill_export / "SKILL.md").write_text("# Skill body.\n", encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"vscode": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                }
+            }
+            args = argparse.Namespace(target="vscode", export_dir=None)
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("Result: PASS", output.getvalue())
+
+    def test_cmd_doctor_vscode_can_check_community_exports_only(self):
+        """VS Code doctor should exclude stale private exports when scoped to community."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            community_export = tmp_path / "agents" / "community-agent.agent.md"
+            community_export.parent.mkdir(parents=True)
+            community_export.write_text("Agent body.\n", encoding="utf-8")
+            agent_manifest = {
+                "community-agent": {
+                    "source": "community",
+                    "exports": {"vscode": str(community_export)},
+                    "required_skills": [],
+                },
+                "private-agent": {
+                    "source": "private",
+                    "exports": {"vscode": str(tmp_path / "agents" / "missing.agent.md")},
+                    "required_skills": [],
+                },
+            }
+            args = argparse.Namespace(
+                target="vscode", export_dir=None, source="community")
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest", return_value={}):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            text = output.getvalue()
+            self.assertIn("Source: community", text)
+            self.assertIn("Checked exported agents: 1", text)
+            self.assertIn("Result: PASS", text)
+            self.assertNotIn("private-agent", text)
 
     def test_cmd_doctor_vscode_accepts_core_workspace_skill(self):
         """VS Code doctor should accept skills discoverable from core .github/skills."""

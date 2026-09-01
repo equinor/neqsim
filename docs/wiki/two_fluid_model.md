@@ -7,7 +7,9 @@ description: "This document describes the two-fluid model implementation in NeqS
 
 This document describes the two-fluid model implementation in NeqSim for transient multiphase pipeline simulation.
 
-For practical result extraction, long-flowline reporting, and comparison with OLGA/LedaFlow or
+The selectable closure sets are literature-inspired NeqSim implementations. Historical API names containing `OLGA` are retained for compatibility and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
+
+For practical result extraction, long-flowline reporting, and comparison with measured
 field data, see [TwoFluidPipe Reporting and Validation](two_fluid_reporting_and_validation).
 
 ## Overview
@@ -210,7 +212,7 @@ double[] tempF = pipe.getTemperatureProfile("F");   // Fahrenheit
 
 ### Minimum Holdup Constraints
 
-The model applies a minimum liquid holdup constraint to prevent unrealistically low values in gas-dominant systems. This is based on OLGA's observation that even at high velocities, a thin liquid film remains on the pipe wall.
+The default adaptive minimum is a closure relation, not a phase-presence threshold. It tends continuously to zero with the no-slip liquid fraction. Exact phase presence comes from conservative gas, oil, and water masses, so an absent phase has zero mass, holdup, and velocity.
 
 **Default behavior (adaptive minimum):**
 
@@ -223,7 +225,7 @@ pipe.setUseAdaptiveMinimumOnly(true);   // Default
 pipe.setMinimumSlipFactor(2.0);         // Default multiplier
 ```
 
-**For more conservative OLGA-style behavior:**
+**For an explicit calibrated wetting-film floor:**
 
 ```java
 // Apply absolute floor in addition to correlation
@@ -231,14 +233,39 @@ pipe.setUseAdaptiveMinimumOnly(false);
 pipe.setMinimumLiquidHoldup(0.01);  // 1% absolute minimum
 ```
 
+Fixed-floor mode is opt-in and should be supported by fluid, wall-wetting, and flow-regime data. It is never applied to an exactly absent phase, and `setMinimumLiquidHoldup(0.0)` disables the absolute floor.
+
 ### Configuration Options
 
 | Method | Default | Description |
 |--------|---------|-------------|
 | `setUseAdaptiveMinimumOnly(boolean)` | `true` | Use correlation-only minimum (no absolute floor) |
 | `setMinimumLiquidHoldup(double)` | 0.001 | Absolute minimum holdup floor (when adaptive-only is false) |
-| `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup in adaptive mode |
+| `setMinimumSlipFactor(double)` | 2.0 | Minimum ratio of gas to liquid velocity in adaptive mode |
 | `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum slip constraint entirely |
+| `setUseEquilibriumLevelAnnularTransition(boolean)` | `true` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
+| `setSeparatedFrictionModel(boolean)` | `true` | Charge each phase its own wall shear where the phases are separated |
+
+The minimum slip constraint states that the gas outruns the liquid by at least the given factor, which is a property of
+gas-driven transport, so it is applied only on level and uphill sections. On a downhill section gravity moves the
+liquid and the slip ratio legitimately falls; applying the bound there overwrote the momentum balance with a constant,
+and it was binding on 39 of 42 downhill sections of an undulating fixture while binding on none of the uphill ones.
+
+The bound is inverted from the slip ratio itself, `alphaL >= X / (1 + X)` with `X = slipFactor * vsL / vsG`, which is
+below one at every liquid loading. The earlier form `alphaL >= lambdaL * slipFactor` is the same statement only in the
+lean-gas limit; past `lambdaL > 1 / slipFactor` it exceeds one as a hold-up and degenerates into the clamp it was
+truncated to, which is how the Tengesdal severe-slugging facility came to be held liquid-full at a constant 0.9 in
+every section.
+
+The horizontal annular criterion follows the equilibrium liquid level of Taitel and Dukler (1976). Disabling it
+restores the vertical droplet-entrainment threshold, which classified effectively any horizontal gas pipeline as
+annular. The two differ only below the Kelvin-Helmholtz threshold, which on a 73.8 km export line means they agree at
+10 MSm3/d and differ at 4 MSm3/d, where the equilibrium branch moves the maximum holdup error from -25.5 to -2.4
+per cent.
+
+The friction gradient uses per-phase wall shear in stratified flow and the mixture correlation elsewhere. On the same
+export line the pressure drop error across a threefold rate range is +1.4, +1.6, +0.1 and -2.7 per cent, against +5.7,
++5.6, +1.4 and -0.0 per cent for the earlier mixture-only default.
 
 ### Example: Lean Gas vs Rich Condensate
 
@@ -261,13 +288,15 @@ The adaptive minimum uses Beggs-Brill type correlations:
 
 - **Stratified flow:** `αL = 0.98 × λL^0.4846 / Fr^0.0868`
 - **Slug/Churn flow:** `αL = 0.845 × λL^0.5351 / Fr^0.0173`
-- **Annular flow:** Film model with minimum thickness + correlation
+- **Annular flow:** Film model + correlation; a nonzero minimum film is used only in explicit fixed-floor mode
 
 Where:
 - `λL` = No-slip liquid holdup (input liquid volume fraction)
 - `Fr` = Froude number = v²/(g×D)
 
 For lean gas systems with λL = 0.003, the stratified correlation gives αL ≈ 0.007 (0.7%), which is more realistic than a fixed 1% floor.
+
+Numerical closure protection is separate from state: `1e-14` is used only in denominators, the stratified closure switches continuously to its trace-liquid asymptote at λL `1e-6`, and the drift-flux correction is withdrawn with `λL / (λL + 1e-3)`. These constants do not create phase inventory. The closure sets are literature-inspired NeqSim implementations and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
 
 ## Closure Relations
 
@@ -400,9 +429,9 @@ f_i = f_G × enhancement
 For drag on individual bubbles in liquid continuum:
 
 ```java
-// Bubble diameter (Hinze correlation)
-d_b = 2 × (0.725 × σ / ((ρ_L - ρ_G) × g))^0.5
-d_b = min(d_b, D/5)
+// Configurable algebraic bubble diameter
+d_b = 2 × (0.725 × σ_b / (|ρ_L - ρ_G| × g))^0.5
+d_b = min(d_b, f_D × D)
 
 // Bubble Reynolds number
 Re_b = ρ_L × |v_slip| × d_b / μ_L
@@ -415,9 +444,46 @@ else if (Re_b < 1000):
 else:
     C_D = 0.44          // Newton regime
 
-// Friction factor
-f_i = C_D × d_b / (4 × D)
+// Corrected dispersed-bubble friction factor
+f_i = C_D / 4
 ```
+
+With interfacial area concentration `a_i = 6 × α_G / d_b`, the corresponding force per pipe length
+is
+
+$$
+F_i=\frac{3}{4}C_D\rho_L\alpha_G\frac{A}{d_b}
+(v_G-v_L)|v_G-v_L|.
+$$
+
+The corrected force uses liquid-continuum density and is selected together with a local implicit
+source solve by calling `TwoFluidPipe.setEnableStiffBubbleDrag(true)`. The local backward-Euler
+operator is split into half-steps around transport, conserves active gas-oil-water momentum to
+roundoff, cannot increase kinetic energy, and introduces no phase-mass floor. Oil and water receive
+the liquid impulse in proportion to active mass, preserving their relative velocity. Bubble and
+dispersed-bubble classifications use the same source treatment; neighboring regimes retain their
+existing closures.
+
+The defaults `σ_b = 0.02 N/m` and `f_D = 0.20` preserve the historical calculation. The
+configuration is exposed on the public pipe API:
+
+```java
+pipe.setBubbleSurfaceTension(0.025);
+pipe.setMaximumBubbleDiameterFraction(0.15);
+pipe.setUseLocalBubbleSurfaceTension(true);
+```
+
+The opt-in local mode uses the thermodynamic phase-property surface tension already stored for each
+section; fixed mode remains the default. This is a single algebraic size scale. It does not represent
+a bubble-size distribution, deformation, coalescence, breakup, or turbulent-dissipation dependence.
+
+The stiff corrected mode is opt-in. Existing simulations retain the legacy `C_D × d_b/(4D)` scaling
+unless enabled, because the corrected mode is not yet quantitatively validated by the public
+Tengesdal severe-slugging benchmark. That comparison was made when the benchmark still asserted a
+riser-head-scaled pressure swing, which has since been shown to come from a saturated minimum-slip
+bound rather than the momentum balance, so the recorded pass counts predate the rebased acceptance
+bounds and the comparison has to be repeated before it means anything. This is a documented
+physical closure/regime-transition limitation, not evidence of numerical source instability.
 
 #### Hart et al. (1989) Correlation
 
@@ -499,21 +565,28 @@ f_i = 0.01 × (1 + 10 × Fr²)    // capped at 0.1
 
 ## Virtual Mass Force
 
-The virtual mass (added mass) force accounts for the inertia of the displaced phase during rapid accelerations. This is important for slug flow dynamics, pressure surges, and transient simulations with fast-changing velocities.
+The virtual mass (added mass) force accounts for the inertia of displaced liquid during gas-liquid acceleration. It is an optional local momentum coupling for transient simulations.
 
 ### Physical Basis
 
-When a gas bubble accelerates through liquid, it must also accelerate a portion of the surrounding liquid. This "added mass" effect creates an additional force proportional to the relative acceleration:
+When gas accelerates through liquid, it must also accelerate a portion of the surrounding liquid. After the complete uncoupled finite-volume right-hand side is assembled, NeqSim solves the local added-inertia relation algebraically:
 
 $$
-F_{vm} = C_{vm} \cdot \alpha_G \cdot \rho_L \cdot \left(\frac{dv_G}{dt} - \frac{dv_L}{dt}\right)
+K=C_{vm}\alpha_G\rho_LA,
+\qquad
+F_{vm,G}=\frac{-K(a_{G,0}-a_{L,0})}{1+K(1/m_G+1/m_L)},
+\qquad F_{vm,L}=-F_{vm,G}
 $$
 
 Where:
 - `C_vm` = virtual mass coefficient (0.5 for spheres, default)
 - `α_G` = gas holdup
 - `ρ_L` = liquid density
-- `dv_G/dt - dv_L/dt` = relative acceleration between phases
+- `A` = pipe cross-sectional area
+- `m_G`, `m_L` = conservative gas and combined-liquid masses per length
+- `a_k,0 = (d(m_k v_k)/dt - v_k dm_k/dt) / m_k` = uncoupled stage acceleration
+
+The calculation uses only the supplied integration-stage state and its complete uncoupled rate; it does not retain velocities from previous RHS calls. In gas-oil-water flow, the liquid correction is divided between oil and water by their conservative masses. The gas and combined-liquid forces are equal and opposite, and coupling tends continuously to zero when either phase is absent.
 
 ### Enabling Virtual Mass Force
 
@@ -523,8 +596,8 @@ pipe.setLength(5000);
 pipe.setDiameter(0.3);
 pipe.setNumberOfSections(100);
 
-// Note: Virtual mass force is handled internally by the two-fluid solver.
-// The solver uses C_vm = 0.5 (spherical bubble coefficient) by default.
+pipe.getEquations().setEnableVirtualMassForce(true);
+pipe.getEquations().setVirtualMassCoefficient(0.5); // Spherical-bubble value
 
 pipe.run();
 ```
@@ -536,10 +609,7 @@ The virtual mass force appears as source terms in the phase momentum equations:
 - **Gas momentum:** `+F_vm` (accelerates gas when liquid decelerates)
 - **Liquid momentum:** `-F_vm` (decelerates liquid when gas accelerates)
 
-This coupling improves:
-- Pressure surge prediction during slug passage (±10-20% more accurate)
-- Transient response during flow rate changes
-- Wave speed calculation for fast transients
+The spherical-bubble coefficient is not a universal slug, churn, or annular-flow calibration. The implementation does not by itself establish improved field accuracy or parity with a commercial simulator. Validate the coefficient, discretization, and complete opt-in transient against data applicable to the intended operating envelope.
 
 ### Reference
 
@@ -666,6 +736,52 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - RK2 (Heun's method)
 - RK4 (Classical 4th order)
 - SSPRK3 (Strong stability preserving)
+- IMEX pressure correction
+
+### Coupled Pressure-Momentum Correction
+
+The opt-in coupled route corrects phase masses, phase momenta, compressible densities, and pressure
+inside the same accepted substep. For a liquid-rich pressure outlet that physically permits phase
+fallback, configure all four coupled options and make the nonlinear gate explicit:
+
+```java
+pipe.setEnableInterfacialPressure(true);
+pipe.setImplicitInterfacialPressureCoupling(true);
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.setAllowOutletPhaseBackflow(true);
+pipe.setCoupledPressureMomentumMaximumIterations(24); // default
+pipe.setCoupledPressureMomentumRelativeVolumeTolerance(1.0e-7); // default
+```
+
+The former 12-iteration default stopped the public Tengesdal progress probe near a
+$6\times10^{-7}$ relative cell-volume residual. With 24 iterations, the 16-section Test 3 setup
+completes 50/50 calls of 0.1 s; a 24-section refinement completes 100/100 calls of 0.05 s. Neither
+rejects a nonlinear substep, and both keep gas, oil, water, liquid, and total discrete mass
+residuals below $10^{-9}$. A coupled call that cannot complete its requested interval now throws and
+reports accepted/requested time, residual/tolerance, iterations/cap, and whether pressure correction
+was limited; it never returns partial or zero progress silently.
+
+Before time marching, a no-transfer steady case can be checked phase by phase with
+`getGasMassFlowProfile()`, `getOilMassFlowProfile()`, and `getWaterMassFlowProfile()`. The active oil
+or water velocity is synchronized with the final bulk-liquid velocity at exact single-liquid
+endpoints, so a stale inactive-phase split cannot distort the handoff outlet flux. Matching the inlet
+and outlet steady fluxes is necessary but not sufficient: it does not establish a transient
+phase-momentum fixed point or qualify liquid-rich/severe-slugging behavior.
+
+After every evaluated window, inspect the sticky diagnostics, which reset on the next steady
+`run()`:
+
+```java
+boolean failed = pipe.isTransientCoupledPressureMomentumFailureDetected();
+boolean limited = pipe.isTransientCoupledPressureMomentumCorrectionLimited();
+int rejected = pipe.getTransientCoupledPressureMomentumRejectedSubsteps();
+boolean latestLimited = pipe.isCoupledPressureMomentumPressureCorrectionLimited();
+```
+
+This progress result is not a severe-slugging qualification. The pressure limiter still fires and
+the 50-step liquid-outlet range is -18.55 to 6.88 kg/s versus the stored 0.375 to 4.03 kg/s
+comparison. Do not tune public closures to that commercial trace; use the public Tengesdal
+experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 
 ### Higher-Order Reconstruction
 
@@ -712,6 +828,17 @@ For gas-oil-water systems, `ThreeFluidSection` and `ThreeFluidConservationEquati
         └─────────────────┘
 ```
 
+`ThreeFluidSection` obtains the water and combined-liquid levels by inverting the
+circular-segment area:
+
+$$A(h)=\frac{r^2}{2}\left(\theta-\sin\theta\right),\qquad\theta=2\cos^{-1}\left(1-\frac{2h}{D}\right)$$
+
+The Newton iteration uses the exact derivative
+$$\frac{\mathrm{d}A}{\mathrm{d}h}=2\sqrt{h(D-h)}$$
+so the recovered levels, wetted perimeters, and interfacial widths remain geometrically
+similar across pipe diameters. The regression test checks both the water layer and the
+combined oil-water layer from 0.05 m to 2.0 m diameter.
+
 ## Simulation Modes: Steady-State vs Transient
 
 The `TwoFluidPipe` supports two simulation modes: steady-state initialization via `run()` and incremental transient simulation via `runTransient()`.
@@ -735,7 +862,7 @@ The `run()` method performs a complete steady-state initialization of the pipeli
 │    └─ Identify liquid accumulation zones                     │
 │                                                              │
 │ 2. runSteadyState()                                          │
-│    ├─ Iterative solver (max 100 iterations)                  │
+│    ├─ Iterative solver (max(100, 20 x sections) iterations)  │
 │    │   ├─ Update flow regimes for all sections               │
 │    │   ├─ Calculate pressure gradient (momentum balance)     │
 │    │   ├─ Update local holdups using drift-flux model        │
@@ -757,6 +884,7 @@ The `run()` method performs a complete steady-state initialization of the pipeli
 - **Iterative convergence:** Pressure and holdup profiles converge simultaneously
 - **Terrain-aware holdups:** Liquid accumulates at low points
 - **Single call:** Establishes initial state for subsequent transient runs
+- **Does not throw on failure:** the outcome must be read back (see below)
 
 **Example:**
 ```java
@@ -766,9 +894,47 @@ pipe.setDiameter(0.3);
 pipe.setNumberOfSections(100);
 pipe.run();  // Steady-state initialization
 
+if (!pipe.isSteadyStateConverged()) {
+  if (pipe.isSteadyStatePressureFloorLimited()) {
+    throw new IllegalStateException(
+        "Line cannot deliver this rate at this inlet pressure");
+  }
+  throw new IllegalStateException("Steady state did not converge");
+}
+
 double[] pressures = pipe.getPressureProfile();
 double[] holdups = pipe.getLiquidHoldupProfile();
 ```
+
+**Checking the outcome.** Three flags describe how the sweep ended, and a profile is only
+trustworthy when the first is true:
+
+| Query | Meaning when true |
+|-------|-------------------|
+| `isSteadyStateConverged()` | The sweep met the 1e-4 tolerance and the profile is a solution |
+| `isSteadyStateWallClockLimited()` | The wall-clock guard (default 300 s) stopped it early |
+| `isSteadyStatePressureFloorLimited()` | One or more sections rest on the internal 1 bara pressure floor |
+
+The marching solver clamps section pressure at 1 bara so it stays numerically alive on a line with
+no deliverability. That clamp is a fixed point of itself: the per-section change falls below
+tolerance and the sweep would otherwise report success on a case that has no physical solution.
+When the floor is touched, `isSteadyStateConverged()` is withheld and
+`isSteadyStatePressureFloorLimited()` is set. `PipeBeggsAndBrills` throws
+`Outlet pressure is negative` on the same condition.
+
+**Direct electrical heating.** A uniform electrical heat input can be added in both steady-state
+and transient runs, and works with wall heat transfer switched off:
+
+```java
+pipe.setDirectElectricalHeatingPower(10.0e6);        // W over the whole length
+pipe.setDirectElectricalHeatingPowerPerMeter(135.4); // or W/m directly
+```
+
+The value is the power delivered *to the fluid*, so cable and coating losses must already be
+deducted. In steady state each segment decays toward the balance temperature
+`T_surface + q / (U * pi * D)` rather than toward the surface temperature, which is exact for a
+uniform source and cannot overshoot. `PipeBeggsAndBrills.setDirectElectricalHeatingPower(double)`
+uses the same convention, so the two models can be compared like for like.
 
 ### Transient Simulation: `runTransient(dt, id)`
 
@@ -842,7 +1008,6 @@ The `runTransient()` method advances the simulation by a specified time step. It
 pipe.run();
 
 // Transient simulation loop
-UUID simId = UUID.randomUUID();
 for (int step = 0; step < 1000; step++) {
     // Change boundary conditions if needed
     if (step == 100) {
@@ -850,7 +1015,7 @@ for (int step = 0; step < 1000; step++) {
         inletStream.run();
     }
 
-    pipe.runTransient(0.1, simId);  // Advance 0.1 seconds
+    pipe.runTransient(0.1, UUID.randomUUID()); // one UUID per physical step
 
     // Monitor results
     double outletFlow = pipe.getOutletStream().getFlowRate("kg/sec");
@@ -1356,6 +1521,37 @@ For applications where empirical accuracy is preferred over mechanistic modeling
 | Heat transfer | Configurable | Built-in |
 | Terrain effects | Elevation profile | Single angle |
 | Best for | Transient, complex terrain | Quick steady-state |
+
+### Known limitations
+
+Commercial transient multiphase simulators are not used as a reference: their licence terms
+generally prohibit publishing benchmark comparisons and prohibit using the software to develop
+similar software, so no closure here is tuned to one. The observations below are model-internal,
+measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
+[TwoFluidPipe detailed review](two_fluid_model_review)):
+
+- **Pressure drop** reproduces the rate exponent across 4 to 12 MSm3/d, rising from about 2.1 at
+  low rate to about 3.1 at high rate. Beggs–Brill sits far above `TwoFluidPipe` on the same cases,
+  because its two-phase friction multiplier is an extrapolation at this liquid loading.
+- **Arrival temperature** responds correctly to heating: 10 MW of DEH raises it 17.4 K while the
+  pressure drop rises 15.0%.
+- **Terrain response comes from the momentum balance, not a multiplier.** The annular film closure
+  now carries the gravity term, so holdup responds to inclination as `sin(theta)`. At 4 MSm3/d the
+  maximum holdup fell from 0.222 to 0.022 when the empirical multiplier was removed.
+- **The three-phase free-water case does not converge.** With 15 m3/hr of free water the solve is
+  wall-clock limited after 4078 iterations at a 1200 s budget.
+  The pressure drop does not move between a 300 s and a 1200 s budget, so the criterion is stalling
+  on the three-phase liquid split rather than the solution diverging. Always check
+  `isSteadyStateConverged()` on a water-bearing line.
+- **Pressure drop does not always respond to a temperature change.** In an earlier revision, adding
+  10 MW of heating raised the arrival temperature 22 K but left the computed pressure drop
+  unchanged; warmer gas at fixed mass rate is less dense and ΔP ~ G²/ρ must rise. Treat pressure
+  drop from a case whose temperature field changes as indicative.
+- **Terrain-slug holdup is clamped** at 0.85–0.90 in accumulation zones, so valley inventory is
+  bounded by construction rather than by the momentum balance.
+- The steady-state solve is an under-relaxed fixed-point sweep and can fail to settle on long
+  transmission lines; always check `isSteadyStateConverged()`. The transient solve is a genuine
+  conservative scheme (null-test drift 0.00 bar, closing mass balance).
 
 ## References
 

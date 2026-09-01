@@ -1,7 +1,23 @@
 package neqsim.process.equipment;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.net.JarURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.absorber.SimpleAbsorber;
@@ -78,26 +94,17 @@ public final class EquipmentFactory {
   /** Logger instance for the factory. */
   private static final Logger logger = LogManager.getLogger(EquipmentFactory.class);
 
+  /** Root Java package containing process equipment implementations. */
+  private static final String EQUIPMENT_PACKAGE = "neqsim.process.equipment";
+
+  /** Classpath form of {@link #EQUIPMENT_PACKAGE}. */
+  private static final String EQUIPMENT_PACKAGE_PATH = EQUIPMENT_PACKAGE.replace('.', '/');
+
   /**
-   * Equipment sub-packages probed by the reflection fallback when an equipment type is not handled by the curated
-   * {@link EquipmentEnum} switch. Searching these packages lets every concrete process equipment class that exposes a
-   * {@code (String name)} constructor be created by its class name, so all current and future equipment is reachable by
-   * name and through {@code JsonProcessBuilder} without a dedicated enum entry.
+   * Concrete equipment classes with a public {@code (String name)} constructor, discovered recursively from the
+   * classpath. The normalized simple class name is the key.
    */
-  private static final String[] EQUIPMENT_PACKAGES = new String[] { "neqsim.process.equipment.absorber",
-      "neqsim.process.equipment.adsorber", "neqsim.process.equipment.battery", "neqsim.process.equipment.blackoil",
-      "neqsim.process.equipment.compressor", "neqsim.process.equipment.diffpressure",
-      "neqsim.process.equipment.distillation", "neqsim.process.equipment.ejector",
-      "neqsim.process.equipment.electrolyzer", "neqsim.process.equipment.expander", "neqsim.process.equipment.filter",
-      "neqsim.process.equipment.flare", "neqsim.process.equipment.heatexchanger", "neqsim.process.equipment.lng",
-      "neqsim.process.equipment.manifold", "neqsim.process.equipment.membrane", "neqsim.process.equipment.mixer",
-      "neqsim.process.equipment.network", "neqsim.process.equipment.pipeline",
-      "neqsim.process.equipment.pipeline.twophasepipe", "neqsim.process.equipment.powergeneration",
-      "neqsim.process.equipment.powergeneration.gasturbine", "neqsim.process.equipment.pump",
-      "neqsim.process.equipment.reactor", "neqsim.process.equipment.reservoir", "neqsim.process.equipment.separator",
-      "neqsim.process.equipment.splitter", "neqsim.process.equipment.stream", "neqsim.process.equipment.subsea",
-      "neqsim.process.equipment.tank", "neqsim.process.equipment.util", "neqsim.process.equipment.valve",
-      "neqsim.process.equipment.watertreatment", "neqsim.process.equipment.well" };
+  private static final Map<String, Class<? extends ProcessEquipmentInterface>> DISCOVERED_EQUIPMENT = discoverEquipmentClasses();
 
   private EquipmentFactory() {
   }
@@ -230,6 +237,85 @@ public final class EquipmentFactory {
         return reflected;
       }
       throw new IllegalArgumentException("Unknown equipment type: " + equipmentType);
+    }
+  }
+
+  /**
+   * Reports whether a type name is recognized by this factory without constructing equipment.
+   *
+   * @param equipmentType equipment type or alias to inspect
+   * @return {@code true} when the type is an alias, enum value, or discovered concrete class with a public
+   * {@code (String name)} constructor
+   */
+  public static boolean supportsEquipmentType(String equipmentType) {
+    if (equipmentType == null || equipmentType.trim().isEmpty()) {
+      return false;
+    }
+    EquipmentEnum enumType = resolveEquipmentEnum(equipmentType);
+    return isEquipmentAlias(equipmentType.trim().toLowerCase(Locale.ROOT))
+        || enumType != null && isNameOnlyConstructible(enumType) || findEquipmentClass(equipmentType) != null;
+  }
+
+  /**
+   * Lists concrete equipment class names that can be constructed through the generic {@code (String name)} factory
+   * path.
+   *
+   * <p>
+   * The list is discovered recursively from the runtime classpath, so newly added equipment is included without
+   * changing this factory. Specialized aliases and enum-only factory entries are not included because they do not
+   * identify additional concrete classes.
+   * </p>
+   *
+   * @return immutable alphabetically sorted list of constructible simple class names
+   */
+  public static List<String> getConstructibleEquipmentTypes() {
+    List<String> types = new ArrayList<String>();
+    for (Class<? extends ProcessEquipmentInterface> equipmentClass : DISCOVERED_EQUIPMENT.values()) {
+      types.add(equipmentClass.getSimpleName());
+    }
+    Collections.sort(types);
+    return Collections.unmodifiableList(types);
+  }
+
+  /**
+   * Lists canonical equipment type names supported by {@link #createEquipment(String, String)} without additional
+   * constructor context.
+   *
+   * <p>
+   * This combines recursively discovered classes with enum-backed types such as {@link DistillationColumn} that use
+   * specialized construction. Context-dependent equipment, such as an {@link Ejector} requiring two inlet streams, is
+   * excluded.
+   * </p>
+   *
+   * @return immutable alphabetically sorted list of name-only factory-supported types
+   */
+  public static List<String> getSupportedEquipmentTypes() {
+    List<String> types = new ArrayList<String>(getConstructibleEquipmentTypes());
+    for (EquipmentEnum equipmentType : EquipmentEnum.values()) {
+      if (isNameOnlyConstructible(equipmentType) && !types.contains(equipmentType.name())) {
+        types.add(equipmentType.name());
+      }
+    }
+    Collections.sort(types);
+    return Collections.unmodifiableList(types);
+  }
+
+  /**
+   * Checks whether an enum-backed type can be constructed from only a name.
+   *
+   * @param equipmentType enum type to inspect
+   * @return {@code false} when extra streams or a reservoir fluid are required
+   */
+  private static boolean isNameOnlyConstructible(EquipmentEnum equipmentType) {
+    switch (equipmentType) {
+    case Ejector:
+    case GORfitter:
+    case ReservoirCVDsim:
+    case ReservoirDiffLibsim:
+    case ReservoirTPsim:
+      return false;
+    default:
+      return true;
     }
   }
 
@@ -402,6 +488,69 @@ public final class EquipmentFactory {
   }
 
   /**
+   * Checks names handled as aliases by {@link #createEquipment(String, String)}.
+   *
+   * @param normalizedType trimmed lowercase equipment type
+   * @return {@code true} when the type is a factory alias
+   */
+  private static boolean isEquipmentAlias(String normalizedType) {
+    switch (normalizedType) {
+    case "valve":
+    case "separator_3phase":
+    case "separator3phase":
+    case "threephaseseparator":
+    case "gasscrubber":
+    case "gas_scrubber":
+    case "scrubber":
+    case "threephasegasscrubber":
+    case "threephasescrubber":
+    case "threephase_scrubber":
+    case "gasscrubber_3phase":
+    case "co₂electrolyzer":
+    case "co2electrolyser":
+    case "co2electrolyzer":
+    case "haberbosch":
+    case "equilibriumreactor":
+    case "reactor":
+    case "pfr":
+    case "tubereformer":
+    case "smrtubereformer":
+    case "smrfurnace":
+    case "firedreformer":
+    case "poxburnerzone":
+    case "atrburnerzone":
+    case "atr":
+    case "pox":
+    case "syngasquench":
+    case "watergasshift":
+    case "wgsreactor":
+    case "wgs":
+    case "componentcapture":
+    case "co2capture":
+    case "h2dryer":
+    case "cstr":
+    case "powercable":
+    case "pipe":
+    case "pipeline":
+    case "beggsandbrills":
+    case "waterhammer":
+    case "liquidhammer":
+    case "hydraulictransientpipe":
+    case "saturator":
+    case "spreadsheet":
+    case "unisim_calculator":
+    case "unisimcalculatorblock":
+    case "virtualstreamop":
+    case "balanceop":
+    case "subflowsheet":
+    case "column":
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  /**
    * Reflection fallback that creates any concrete process equipment class exposing a {@code (String name)} constructor,
    * located by its class name within the known equipment sub-packages. This guarantees that every current and future
    * equipment class is constructible by name (and therefore through {@code JsonProcessBuilder}) without an explicit
@@ -413,47 +562,151 @@ public final class EquipmentFactory {
    * @return the created equipment, or {@code null} if no matching class with a {@code (String)} constructor was found
    */
   private static ProcessEquipmentInterface createByClassName(String name, String equipmentType) {
-    String trimmed = equipmentType.trim();
-    String sanitized = trimmed.replaceAll("[\\s_-]", "");
-    for (String pkg : EQUIPMENT_PACKAGES) {
-      ProcessEquipmentInterface eq = tryInstantiate(pkg + "." + trimmed, name);
-      if (eq != null) {
-        return eq;
-      }
-      if (!sanitized.equals(trimmed)) {
-        eq = tryInstantiate(pkg + "." + sanitized, name);
-        if (eq != null) {
-          return eq;
-        }
-      }
+    Class<? extends ProcessEquipmentInterface> equipmentClass = findEquipmentClass(equipmentType);
+    if (equipmentClass == null) {
+      return null;
     }
-    return null;
+    return tryInstantiate(equipmentClass, name);
   }
 
   /**
-   * Attempts to instantiate the named class through its {@code (String name)} constructor, provided it is a concrete
-   * {@link ProcessEquipmentInterface} implementation.
+   * Finds a discovered equipment class by normalized simple name.
    *
-   * @param className the fully qualified class name to instantiate
-   * @param name the name to pass to the {@code (String)} constructor
-   * @return the created equipment, or {@code null} if the class does not exist, is abstract, lacks a {@code (String)}
-   * constructor, or is not a {@link ProcessEquipmentInterface}
+   * @param equipmentType simple equipment class name or separator-insensitive spelling
+   * @return matching class, or {@code null} when none is registered
    */
-  private static ProcessEquipmentInterface tryInstantiate(String className, String name) {
+  private static Class<? extends ProcessEquipmentInterface> findEquipmentClass(String equipmentType) {
+    return DISCOVERED_EQUIPMENT.get(normalizeEquipmentClassName(equipmentType));
+  }
+
+  /**
+   * Attempts to instantiate a discovered class through its public {@code (String name)} constructor.
+   *
+   * @param equipmentClass concrete equipment class to instantiate
+   * @param name name to pass to the constructor
+   * @return created equipment, or {@code null} when reflective construction fails
+   */
+  private static ProcessEquipmentInterface tryInstantiate(Class<? extends ProcessEquipmentInterface> equipmentClass,
+      String name) {
     try {
-      Class<?> clazz = Class.forName(className);
-      if (!ProcessEquipmentInterface.class.isAssignableFrom(clazz)
-          || java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-        return null;
-      }
-      Constructor<?> constructor = clazz.getConstructor(String.class);
+      Constructor<? extends ProcessEquipmentInterface> constructor = equipmentClass.getConstructor(String.class);
       return (ProcessEquipmentInterface) constructor.newInstance(name);
-    } catch (ClassNotFoundException | NoSuchMethodException e) {
-      return null;
     } catch (ReflectiveOperationException e) {
-      logger.debug("Reflection instantiation failed for {}: {}", className, e.getMessage());
+      logger.debug("Reflection instantiation failed for {}: {}", equipmentClass.getName(), e.getMessage());
       return null;
     }
+  }
+
+  /**
+   * Discovers all eligible equipment classes recursively below {@link #EQUIPMENT_PACKAGE} in class directories and JAR
+   * files.
+   *
+   * @return immutable registry keyed by normalized simple class name
+   */
+  private static Map<String, Class<? extends ProcessEquipmentInterface>> discoverEquipmentClasses() {
+    Map<String, Class<? extends ProcessEquipmentInterface>> classes = new LinkedHashMap<String, Class<? extends ProcessEquipmentInterface>>();
+    List<String> classNames = new ArrayList<String>();
+    ClassLoader classLoader = EquipmentFactory.class.getClassLoader();
+    try {
+      Enumeration<URL> resources = classLoader.getResources(EQUIPMENT_PACKAGE_PATH);
+      while (resources.hasMoreElements()) {
+        URL resource = resources.nextElement();
+        if ("file".equals(resource.getProtocol())) {
+          collectDirectoryClassNames(new File(new URI(resource.toString())), EQUIPMENT_PACKAGE, classNames);
+        } else if ("jar".equals(resource.getProtocol())) {
+          collectJarClassNames(resource, classNames);
+        }
+      }
+    } catch (IOException | URISyntaxException e) {
+      logger.warn("Could not scan process equipment classes: {}", e.getMessage());
+    }
+
+    Collections.sort(classNames);
+    for (String className : classNames) {
+      registerEquipmentClass(classLoader, className, classes);
+    }
+    return Collections.unmodifiableMap(classes);
+  }
+
+  /**
+   * Collects class names recursively from an exploded class directory.
+   *
+   * @param directory current package directory
+   * @param packageName Java package represented by the directory
+   * @param classNames destination list
+   */
+  private static void collectDirectoryClassNames(File directory, String packageName, List<String> classNames) {
+    File[] files = directory.listFiles();
+    if (files == null) {
+      return;
+    }
+    for (File file : files) {
+      if (file.isDirectory()) {
+        collectDirectoryClassNames(file, packageName + "." + file.getName(), classNames);
+      } else if (file.getName().endsWith(".class") && file.getName().indexOf('$') < 0) {
+        classNames.add(packageName + "." + file.getName().substring(0, file.getName().length() - 6));
+      }
+    }
+  }
+
+  /**
+   * Collects class names recursively from a JAR classpath resource.
+   *
+   * @param resource equipment package resource in a JAR
+   * @param classNames destination list
+   * @throws IOException if the JAR cannot be opened or read
+   */
+  private static void collectJarClassNames(URL resource, List<String> classNames) throws IOException {
+    JarURLConnection connection = (JarURLConnection) resource.openConnection();
+    JarFile jarFile = connection.getJarFile();
+    Enumeration<JarEntry> entries = jarFile.entries();
+    while (entries.hasMoreElements()) {
+      String entryName = entries.nextElement().getName();
+      if (entryName.startsWith(EQUIPMENT_PACKAGE_PATH + "/") && entryName.endsWith(".class")
+          && entryName.indexOf('$') < 0) {
+        classNames.add(entryName.substring(0, entryName.length() - 6).replace('/', '.'));
+      }
+    }
+  }
+
+  /**
+   * Registers a class when it is concrete process equipment with a public {@code (String name)} constructor.
+   *
+   * @param classLoader loader used for non-initializing class resolution
+   * @param className fully qualified candidate class name
+   * @param classes destination registry
+   */
+  @SuppressWarnings("unchecked")
+  private static void registerEquipmentClass(ClassLoader classLoader, String className,
+      Map<String, Class<? extends ProcessEquipmentInterface>> classes) {
+    try {
+      Class<?> candidate = Class.forName(className, false, classLoader);
+      if (!ProcessEquipmentInterface.class.isAssignableFrom(candidate) || candidate.isInterface()
+          || Modifier.isAbstract(candidate.getModifiers())) {
+        return;
+      }
+      candidate.getConstructor(String.class);
+      Class<? extends ProcessEquipmentInterface> equipmentClass = (Class<? extends ProcessEquipmentInterface>) candidate;
+      String key = normalizeEquipmentClassName(candidate.getSimpleName());
+      if (!classes.containsKey(key)) {
+        classes.put(key, equipmentClass);
+      } else {
+        logger.warn("Duplicate process equipment simple name {}: keeping {}, ignoring {}", candidate.getSimpleName(),
+            classes.get(key).getName(), className);
+      }
+    } catch (ClassNotFoundException | NoSuchMethodException | LinkageError | SecurityException e) {
+      logger.debug("Skipping process equipment class {}: {}", className, e.getMessage());
+    }
+  }
+
+  /**
+   * Normalizes a class-style equipment type for case- and separator-insensitive lookup.
+   *
+   * @param equipmentType equipment type spelling
+   * @return lowercase type without whitespace, underscores, or dashes
+   */
+  private static String normalizeEquipmentClassName(String equipmentType) {
+    return equipmentType.trim().replaceAll("[\\s_-]", "").toLowerCase(Locale.ROOT);
   }
 
   public static Ejector createEjector(String name, StreamInterface motiveStream, StreamInterface suctionStream) {

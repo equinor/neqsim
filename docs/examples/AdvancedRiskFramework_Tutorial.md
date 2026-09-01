@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "AdvancedRiskFramework Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "NeqSim Advanced Risk Framework Tutorial"
+description: "Notebook for NeqSim Advanced Risk Framework Tutorial, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# AdvancedRiskFramework Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`AdvancedRiskFramework_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb).
 
 ---
-
-# NeqSim Advanced Risk Framework Tutorial
 
 This notebook demonstrates the advanced risk analysis capabilities of NeqSim, including:
 

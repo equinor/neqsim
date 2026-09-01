@@ -6,19 +6,23 @@ permissions:
 on:
   pull_request:
     paths:
+      - ".agents/**"
       - ".github/skills/**"
       - ".github/agents/**"
       - "devtools/verify_skills_agents.py"
       - "devtools/generate_agent_skill_map.py"
       - "devtools/verify_skill_mirror.py"
+      - "devtools/verify_mcp_tool_references.py"
       - "devtools/agent_search.py"
       - "devtools/skill_search.py"
       - "devtools/test_agent_search.py"
       - "devtools/test_skill_search.py"
+      - "src/main/java/neqsim/mcp/runners/IndustrialProfile.java"
       - ".github/workflows/skills_agents_lint.yml"
   push:
     branches: [master]
     paths:
+      - ".agents/**"
       - ".github/skills/**"
       - ".github/agents/**"
 
@@ -29,12 +33,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
       - name: Verify front-matter and skill-index references
         run: python devtools/verify_skills_agents.py
+
+      - name: Verify referenced MCP tool names exist
+        run: python devtools/verify_mcp_tool_references.py
 
       - name: Test agent/skill discovery tools
         run: |

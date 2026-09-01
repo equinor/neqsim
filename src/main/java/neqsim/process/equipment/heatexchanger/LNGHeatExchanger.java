@@ -340,6 +340,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   /** Enthalpy gradient threshold for adaptive refinement (P4). */
   private double adaptiveThresholdFactor = 2.0;
 
+  /** Whether one thermodynamic state is reused while scanning each stream's zones. */
+  private boolean reuseZoneFlashState = true;
+
   /** Flow maldistribution factor applied to MITA (P10). 1.0 = ideal. */
   private double flowMaldistributionFactor = 1.0;
 
@@ -674,6 +677,30 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    */
   public double getAdaptiveThresholdFactor() {
     return adaptiveThresholdFactor;
+  }
+
+  /**
+   * Configure reuse of the thermodynamic state between adjacent zone flashes.
+   *
+   * <p>
+   * Reuse is enabled by default. It avoids a fluid clone and a {@link ThermodynamicOperations} allocation at every zone
+   * boundary and also supplies the previous zone solution as the initial state for the next TP flash. Disable it for
+   * regression comparisons with the independent-zone implementation.
+   * </p>
+   *
+   * @param enabled true to reuse one flash state per stream
+   */
+  public void setReuseZoneFlashState(boolean enabled) {
+    this.reuseZoneFlashState = enabled;
+  }
+
+  /**
+   * Get whether adjacent zone flashes reuse a thermodynamic state.
+   *
+   * @return true when one flash state is reused per stream
+   */
+  public boolean getReuseZoneFlashState() {
+    return reuseZoneFlashState;
   }
 
   /**
@@ -1149,6 +1176,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       massFlowKgS[i] = inStr.getFlowRate("kg/sec");
 
       SystemInterface baseFluid = inStr.getFluid().clone();
+      SystemInterface reusableZoneFluid = reuseZoneFlashState ? baseFluid.clone() : null;
+      ThermodynamicOperations reusableOperations = reuseZoneFlashState ? new ThermodynamicOperations(reusableZoneFluid)
+          : null;
 
       for (int z = 0; z < nPoints; z++) {
         double frac = zoneFractions.get(z);
@@ -1158,11 +1188,11 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
           pres = 0.01;
         }
 
-        SystemInterface zoneFluid = baseFluid.clone();
+        SystemInterface zoneFluid = reuseZoneFlashState ? reusableZoneFluid : baseFluid.clone();
+        ThermodynamicOperations ops = reuseZoneFlashState ? reusableOperations : new ThermodynamicOperations(zoneFluid);
         zoneFluid.setTemperature(temp, "C");
         zoneFluid.setPressure(pres, "bara");
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(zoneFluid);
         ops.TPflash();
         zoneFluid.initThermoProperties();
 
@@ -1362,9 +1392,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Refine zone fractions near phase boundaries where enthalpy gradient is steep (P4).
    *
    * <p>
-   * Uses a first-pass enthalpy scan on the first stream to detect zones where |dH/dT| exceeds
-   * {@link #adaptiveThresholdFactor} times the average gradient. Such zones are bisected to improve resolution near
-   * phase transitions.
+   * Uses a first-pass enthalpy scan on every registered stream to detect zones where |dH/dT| exceeds
+   * {@link #adaptiveThresholdFactor} times that stream's average gradient. Such zones are bisected to improve
+   * resolution near phase transitions on either the process or refrigerant side.
    * </p>
    *
    * @param uniformFracs initial uniform fraction list
@@ -1375,49 +1405,61 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       return uniformFracs;
     }
 
-    // Quick enthalpy scan on first stream
-    StreamInterface refStream = getInStream(0);
-    double tIn = getInTemperature(0);
-    double tOut = getOutTemperature(0);
-    double pIn = refStream.getPressure("bara");
-    double dp = (streamPressureDrops.size() > 0) ? streamPressureDrops.get(0) : 0.0;
-    SystemInterface baseFluid = refStream.getFluid().clone();
+    int numberOfPoints = uniformFracs.size();
+    int numberOfIntervals = numberOfPoints - 1;
+    boolean[] refineInterval = new boolean[numberOfIntervals];
 
-    int nUniform = uniformFracs.size();
-    double[] hScan = new double[nUniform];
-    for (int z = 0; z < nUniform; z++) {
-      double frac = uniformFracs.get(z);
-      double temp = tIn + frac * (tOut - tIn);
-      double pres = pIn - frac * dp;
-      if (pres < 0.01) {
-        pres = 0.01;
+    // Scan every registered stream so refrigerant phase transitions can trigger refinement.
+    for (int i = 0; i < streamCount; i++) {
+      StreamInterface stream = getInStream(i);
+      double inletTemperature = getInTemperature(i);
+      double outletTemperature = getOutTemperature(i);
+      double inletPressure = stream.getPressure("bara");
+      double pressureDrop = i < streamPressureDrops.size() ? streamPressureDrops.get(i) : 0.0;
+      SystemInterface baseFluid = stream.getFluid().clone();
+      SystemInterface reusableFluid = reuseZoneFlashState ? baseFluid.clone() : null;
+      ThermodynamicOperations reusableOperations = reuseZoneFlashState ? new ThermodynamicOperations(reusableFluid)
+          : null;
+
+      double[] enthalpy = new double[numberOfPoints];
+      for (int z = 0; z < numberOfPoints; z++) {
+        double fraction = uniformFracs.get(z);
+        double temperature = inletTemperature + fraction * (outletTemperature - inletTemperature);
+        double pressure = Math.max(0.01, inletPressure - fraction * pressureDrop);
+        SystemInterface zoneFluid = reuseZoneFlashState ? reusableFluid : baseFluid.clone();
+        ThermodynamicOperations operations = reuseZoneFlashState ? reusableOperations
+            : new ThermodynamicOperations(zoneFluid);
+        zoneFluid.setTemperature(temperature, "C");
+        zoneFluid.setPressure(pressure, "bara");
+        operations.TPflash();
+        zoneFluid.initThermoProperties();
+        enthalpy[z] = zoneFluid.getEnthalpy("kJ/kg");
       }
-      SystemInterface zf = baseFluid.clone();
-      zf.setTemperature(temp, "C");
-      zf.setPressure(pres, "bara");
-      ThermodynamicOperations ops = new ThermodynamicOperations(zf);
-      ops.TPflash();
-      zf.initThermoProperties();
-      hScan[z] = zf.getEnthalpy("kJ/kg");
+
+      double[] gradients = new double[numberOfIntervals];
+      double averageGradient = 0.0;
+      for (int z = 0; z < numberOfIntervals; z++) {
+        gradients[z] = Math.abs(enthalpy[z + 1] - enthalpy[z]);
+        averageGradient += gradients[z];
+      }
+      averageGradient /= numberOfIntervals;
+      if (averageGradient <= 1.0e-12) {
+        continue;
+      }
+
+      for (int z = 0; z < numberOfIntervals; z++) {
+        if (gradients[z] > adaptiveThresholdFactor * averageGradient) {
+          refineInterval[z] = true;
+        }
+      }
     }
 
-    // Compute gradients
-    double[] gradients = new double[nUniform - 1];
-    double avgGradient = 0.0;
-    for (int z = 0; z < nUniform - 1; z++) {
-      gradients[z] = Math.abs(hScan[z + 1] - hScan[z]);
-      avgGradient += gradients[z];
-    }
-    avgGradient /= (nUniform - 1);
-
-    // Build refined fraction list by bisecting steep zones
     List<Double> refined = new ArrayList<>();
     refined.add(uniformFracs.get(0));
-    for (int z = 0; z < nUniform - 1; z++) {
-      if (gradients[z] > adaptiveThresholdFactor * avgGradient && refined.size() + (nUniform - z) < maxAdaptiveZones) {
-        // Insert midpoint
-        double mid = (uniformFracs.get(z) + uniformFracs.get(z + 1)) / 2.0;
-        refined.add(mid);
+    for (int z = 0; z < numberOfIntervals; z++) {
+      int requiredPointCount = refined.size() + numberOfPoints - z;
+      if (refineInterval[z] && requiredPointCount <= maxAdaptiveZones + 1) {
+        refined.add((uniformFracs.get(z) + uniformFracs.get(z + 1)) / 2.0);
       }
       refined.add(uniformFracs.get(z + 1));
     }

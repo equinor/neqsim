@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
 import neqsim.process.equipment.stream.Stream;
@@ -15,6 +16,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Tests for {@link PipeFlowNetwork} - pipeline networks with compositional PipeFlowSystem.
  */
+@Tag("slow")
 class PipeFlowNetworkTest {
   /**
    * Create a natural gas test fluid.

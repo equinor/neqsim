@@ -3,12 +3,16 @@ package neqsim.mcp.runners;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
+import neqsim.process.equipment.EquipmentFactory;
 
 /**
  * Capabilities discovery runner for MCP integration.
@@ -150,7 +154,7 @@ public class CapabilitiesRunner {
         "runOpenDrainReview — NORSOK S-001 Clause 9 open-drain review from normalized STID/P&ID and optional tagreader evidence",
         "runNorsokS001Clause10Review — NORSOK S-001 Clause 10 process safety system review from normalized C&E, SRS, PSV, instrument, tagreader, and optional dynamic simulation evidence",
         "calculateStandard — Gas/oil quality per 22 industry standards (ISO, AGA, GPA, EN, ASTM)",
-        "runPipeline — Multiphase pipeline flow simulation (Beggs & Brill)",
+        "runPipeline — Multiphase pipeline flow (Beggs & Brill or finite-volume two-fluid solver)",
         "runWaterHammer — Liquid-hammer screening for valve closure, pump trip, and check-valve scenarios",
         "runReservoir — Material balance reservoir simulation (tank model, depletion)",
         "runFieldEconomics — NPV/IRR with fiscal regimes (Norwegian NCS, UK, Brazil, US-GOM) + decline curves",
@@ -171,7 +175,11 @@ public class CapabilitiesRunner {
         "Use runProcess for multi-equipment flowsheet simulation. " + "Returns complete stream and equipment results.");
     root.add("calculationModes", modes);
 
-    root.add("toolCapabilities", buildToolCapabilities());
+    JsonObject toolCapabilities = buildToolCapabilities();
+    root.add("toolCapabilities", toolCapabilities);
+    root.add("toolCatalogCoverage", buildToolCatalogCoverage(toolCapabilities));
+    root.add("implementationInventory", McpImplementationInventory.build(toolCapabilities));
+    root.add("phase0EvidenceInventory", McpEvidenceInventory.build());
     root.add("setupTemplates", buildSetupTemplates());
     root.add("processJsonContract", buildProcessJsonContract());
     root.add("capabilityGraph", buildCapabilityGraph());
@@ -318,9 +326,14 @@ public class CapabilitiesRunner {
         Arrays.asList("standardConfig", "model"), Arrays.asList("SRK", "PR", "GERG2008"), thermoUnits(),
         "standards-calculation", Arrays.asList("Custody-transfer use requires standard-specific input verification"));
     addToolCapability(tools, "runPipeline", "run_pipeline", "PipelineRunner", "pipeline",
-        "Beggs and Brill multiphase pipeline simulation", Arrays.asList("components", "pipe"),
-        Arrays.asList("flowRate", "model", "temperature_C", "pressure_bara"), eosModels(), processUnits(),
-        "pipeline-flow", Arrays.asList("Correlation validity depends on flow regime and inclination"));
+        "Multiphase pipeline simulation using Beggs and Brill (default) or a finite-volume two-fluid solver",
+        Arrays.asList("components", "pipe"),
+        Arrays.asList("solver", "flowRate", "model", "temperature_C", "pressure_bara", "detailLevel",
+            "pipe.sectionLengths_m", "pipe.elevationProfile_m", "pipe.heatTransferProfile_W_m2K",
+            "pipe.surfaceTemperatureProfile_C"),
+        eosModels(), processUnits(), "pipeline-flow",
+        Arrays.asList("Beggs and Brill correlation validity depends on flow regime and inclination",
+            "Two-fluid predictions require mesh, closure-model, convergence, and timestep review"));
     addToolCapability(tools, "runReservoir", "run_reservoir", "ReservoirRunner", "reservoir",
         "Material-balance reservoir simulation", Arrays.asList("components"),
         Arrays.asList("gasVolume_Sm3", "oilVolume_Sm3", "producers", "simulationYears"), Arrays.asList("SRK", "PR"),
@@ -374,7 +387,91 @@ public class CapabilitiesRunner {
         Collections.<String>emptyList(), Arrays.asList("seconds", "PFDavg", "SIL"), "safety-analysis",
         Arrays.asList("Safety performance findings require independent review"));
     addAdditionalMcpToolCapabilities(tools);
+    completeToolCapabilityCoverage(tools);
     return tools;
+  }
+
+  /**
+   * Adds a fallback descriptor for every published tool that has no hand-written descriptor.
+   *
+   * <p>
+   * {@link IndustrialProfile#getAllKnownTools()} is the authoritative published surface, and a build-time contract test
+   * asserts it matches the {@code @Tool} methods on the server facade. Deriving coverage from it means a newly added
+   * tool degrades to a generic descriptor instead of disappearing from discovery, which is how {@code designUtilities}
+   * and {@code runHazopScenario} previously went missing.
+   * </p>
+   *
+   * @param tools mutable tool capability map
+   */
+  private static void completeToolCapabilityCoverage(JsonObject tools) {
+    for (String toolName : IndustrialProfile.getAllKnownTools()) {
+      if (tools.has(toolName)) {
+        continue;
+      }
+      String schemaToolName = toSchemaToolName(toolName);
+      addGenericToolCapability(tools, toolName, schemaToolName, categoryForSchemaTool(schemaToolName),
+          "Published MCP tool without a hand-written capability descriptor", "capability-discovery");
+      tools.getAsJsonObject(toolName).addProperty("descriptorSource", "auto-generated");
+    }
+  }
+
+  /**
+   * Converts a camelCase MCP tool name to its snake_case schema catalog name.
+   *
+   * @param mcpToolName the MCP tool method name
+   * @return the conventional schema catalog tool name
+   */
+  private static String toSchemaToolName(String mcpToolName) {
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < mcpToolName.length(); i++) {
+      char c = mcpToolName.charAt(i);
+      if (Character.isUpperCase(c)) {
+        if (i > 0) {
+          builder.append('_');
+        }
+        builder.append(Character.toLowerCase(c));
+      } else {
+        builder.append(c);
+      }
+    }
+    return builder.toString();
+  }
+
+  /**
+   * Builds a coverage report proving the catalog describes every published tool.
+   *
+   * @param tools the assembled tool capability map
+   * @return coverage report object
+   */
+  private static JsonObject buildToolCatalogCoverage(JsonObject tools) {
+    JsonObject coverage = new JsonObject();
+    Set<String> published = IndustrialProfile.getAllKnownTools();
+    JsonArray missing = new JsonArray();
+    for (String toolName : published) {
+      if (!tools.has(toolName)) {
+        missing.add(toolName);
+      }
+    }
+    JsonArray autoGenerated = new JsonArray();
+    JsonArray undeclared = new JsonArray();
+    for (Map.Entry<String, JsonElement> entry : tools.entrySet()) {
+      JsonObject descriptor = entry.getValue().getAsJsonObject();
+      if (descriptor.has("descriptorSource")
+          && "auto-generated".equals(descriptor.get("descriptorSource").getAsString())) {
+        autoGenerated.add(entry.getKey());
+      }
+      if (!published.contains(entry.getKey())) {
+        undeclared.add(entry.getKey());
+      }
+    }
+    coverage.addProperty("publishedToolCount", published.size());
+    coverage.addProperty("describedToolCount", tools.size());
+    coverage.addProperty("complete", missing.size() == 0 && undeclared.size() == 0);
+    coverage.add("missingDescriptors", missing);
+    coverage.add("autoGeneratedDescriptors", autoGenerated);
+    coverage.add("undeclaredDescriptors", undeclared);
+    coverage.addProperty("source", "neqsim.mcp.runners.IndustrialProfile.getAllKnownTools");
+    return coverage;
   }
 
   /**
@@ -449,6 +546,11 @@ public class CapabilitiesRunner {
         "Configure jurisdiction-specific validation profiles", "safety-governance");
     addGenericToolCapability(tools, "queryDataCatalog", "query_data_catalog", "data",
         "Browse components, standards, materials, and EOS model data", "data-catalog");
+    addGenericToolCapability(tools, "inspectApi", "inspect_api", "knowledge",
+        "Inspect version-matched public Java constructors and methods with source and documentation pointers",
+        "capability-discovery");
+    addGenericToolCapability(tools, "runCapability", "run_capability", "knowledge",
+        "Search runtime NeqSim functionality and invoke bounded JSON-safe static calculations", "capability-discovery");
     addGenericToolCapability(tools, "runRelief", "run_relief", "safety",
         "Size relief devices and API 521 fire input cases", "safety-governance");
     addGenericToolCapability(tools, "runLOPA", "run_lopa", "safety",
@@ -518,8 +620,14 @@ public class CapabilitiesRunner {
     descriptor.addProperty("schemaToolName", schemaToolName);
     descriptor.addProperty("runnerClass",
         runnerClass.indexOf('.') >= 0 ? runnerClass : "neqsim.mcp.runners." + runnerClass);
+    descriptor.addProperty("implementationClass", McpImplementationInventory.getImplementationClass(mcpToolName));
     descriptor.addProperty("workflowCategory", workflowCategory);
     descriptor.addProperty("maturityLevel", BenchmarkTrust.getMaturityLevel(mcpToolName));
+    IndustrialProfile.ToolTier tier = IndustrialProfile.getToolTier(mcpToolName);
+    descriptor.addProperty("trustTier", tier != null ? tier.name() : "UNCLASSIFIED");
+    IndustrialProfile.ToolCategory category = IndustrialProfile.getToolCategory(mcpToolName);
+    descriptor.addProperty("riskCategory", category != null ? category.name() : "UNCLASSIFIED");
+    descriptor.addProperty("allowedInActiveProfile", IndustrialProfile.isToolAllowed(mcpToolName));
     descriptor.add("requiredFields", toJsonArray(requiredFields));
     descriptor.add("optionalFields", toJsonArray(optionalFields));
     descriptor.add("supportedModels", toJsonArray(supportedModels));
@@ -780,22 +888,24 @@ public class CapabilitiesRunner {
    */
   private static JsonObject buildProcessJsonContract() {
     JsonObject contract = new JsonObject();
-    contract.add("rootFields",
-        toJsonArray(Arrays.asList("name", "fluid", "fluids", "process", "connections", "areas", "autoRun")));
+    contract.add("rootFields", toJsonArray(Arrays.asList("name", "fluid", "fluids", "process", "connections", "areas",
+        "interAreaLinks", "autoRun", "maxIterations", "flowTolerance", "temperatureTolerance", "pressureTolerance")));
     contract.add("fluidFields", toJsonArray(Arrays.asList("model", "temperature", "pressure", "mixingRule",
         "components", "characterizedComponents", "e300FilePath", "binaryInteractionParameters", "multiPhaseCheck")));
     contract.add("unitFields", toJsonArray(Arrays.asList("type", "name", "inlet", "inlets", "fluidRef", "properties")));
     contract.add("connectionFields", toJsonArray(Arrays.asList("from", "sourcePort", "to", "targetPort", "type")));
-    contract.add("supportedEquipmentTypes",
-        toJsonArray(Arrays.asList("Stream", "Separator", "ThreePhaseSeparator", "GasScrubber", "Compressor", "Pump",
-            "Expander", "Heater", "Cooler", "HeatExchanger", "ThrottlingValve", "Mixer", "Splitter",
-            "ComponentSplitter", "DistillationColumn", "Recycle", "Adjuster", "SetPoint", "Calculator", "Tank",
-            "AdiabaticPipe", "PipeBeggsAndBrills", "SimpleReservoir", "Manifold", "Flare", "FlareStack", "GibbsReactor",
-            "PlugFlowReactor", "StirredTankReactor", "SimpleTEGAbsorber", "Electrolyzer", "CO2Electrolyzer", "FuelCell",
-            "WindTurbine", "BatteryStorage", "SolarPanel", "WindFarm", "OffshoreEnergySystem", "SubseaPowerCable",
-            "StreamSaturatorUtil")));
-    contract.add("streamReferencePorts", toJsonArray(Arrays.asList("outlet", "gasOut", "gas", "liquidOut", "liquid",
-        "oilOut", "oil", "waterOut", "water", "split0", "split1", "hx0", "hx1")));
+    contract.add("supportedEquipmentTypes", toJsonArray(EquipmentFactory.getSupportedEquipmentTypes()));
+    contract.addProperty("equipmentTypeDiscovery",
+        "Recursive runtime discovery plus specialized EquipmentFactory enum construction");
+    contract.addProperty("equipmentSupportScope",
+        "Types are constructible from type and name; wiring, properties, required ports, and runnable state depend on the equipment API");
+    contract.add("streamReferencePorts",
+        toJsonArray(Arrays.asList("out", "outlet", "gasOut", "gas", "liquidOut", "liquid", "oilOut", "oil", "waterOut",
+            "water", "split0", "split1", "splitStream_0", "splitStream_1", "hx0", "hx1")));
+    contract.add("recommendedWorkflow",
+        toJsonArray(Arrays.asList("getCapabilities", "getSchema(run_process,input)",
+            "getExample(process,mixer-splitter-recycle)", "validateInput", "runProcess",
+            "inspect convergence, warnings, and mass/energy balance evidence")));
 
     JsonObject commonProperties = new JsonObject();
     commonProperties.add("Stream", toJsonArray(Arrays.asList("flowRate", "temperature", "pressure")));
@@ -1011,16 +1121,37 @@ public class CapabilitiesRunner {
    */
   private static JsonObject buildModelLifecycle() {
     JsonObject lifecycle = new JsonObject();
-    lifecycle.add("tools", toJsonArray(Arrays.asList("manageSession", "saveSimulationState", "compareSimulationStates",
-        "manageState", "listSimulationUnits", "listUnitVariables", "getSimulationVariable", "setSimulationVariable")));
+    lifecycle.add("tools",
+        toJsonArray(Arrays.asList("manageModel", "manageSession", "saveSimulationState", "compareSimulationStates",
+            "manageState", "listSimulationUnits", "listUnitVariables", "getSimulationVariable",
+            "setSimulationVariable")));
     lifecycle.add("stateOperations",
         toJsonArray(Arrays.asList("create", "load", "snapshot", "restore", "diff", "modify", "rerun", "export")));
-    lifecycle.add("auditFields", toJsonArray(Arrays.asList("sessionId", "modelVersion", "timestamp", "changedVariables",
-        "validation", "qualityGate", "provenance")));
+
+    JsonObject handles = new JsonObject();
+    handles.addProperty("registerWith", "manageModel(action='register')");
+    handles.addProperty("handlePrefix", ModelRegistry.MODEL_ID_PREFIX);
+    handles.addProperty("usage",
+        "Pass the returned modelId wherever a tool expects processJson. Inline JSON still works; "
+            + "a value is treated as a handle only when it starts with the handle prefix.");
+    handles.addProperty("scope", "Handles are visible only within the authenticated caller's tenant");
+    handles.add("acceptedBy",
+        toJsonArray(Arrays.asList("runProcess", "validateInput", "listSimulationUnits", "listUnitVariables",
+            "getSimulationVariable", "setSimulationVariable", "saveSimulationState", "diagnoseAutomation",
+            "getAutomationLearningReport", "getAdjustableParameters", "runProcessLoop")));
+    handles.addProperty("benefit",
+        "Avoids resending and re-parsing a large flowsheet on every call, anchors a conversation to "
+            + "one model, and gives every result a model revision to cite");
+    lifecycle.add("modelHandles", handles);
+
+    lifecycle.add("auditFields", toJsonArray(Arrays.asList("sessionId", "modelId", "revision", "modelVersion",
+        "timestamp", "changedVariables", "validation", "qualityGate", "provenance")));
     lifecycle.add("guardrails",
-        toJsonArray(Arrays.asList("Snapshot before mutating a process", "Compare snapshots after agent changes",
+        toJsonArray(Arrays.asList("Register a model once and reuse the handle instead of resending JSON",
+            "Snapshot before mutating a process", "Compare snapshots after agent changes",
             "Preserve unit annotations for every modified input",
             "Do not persist plant states when governance blocks write operations")));
+    lifecycle.add("executionPolicy", McpExecutionPolicy.describe());
     return lifecycle;
   }
 

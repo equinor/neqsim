@@ -8,6 +8,10 @@ Checks performed:
   4. The TF-IDF retriever (``skill_search.py``) can parse every SKILL.md
      and returns at least one match for each skill's own description.
   5. The flat keyword index in ``skill-index.json`` is valid JSON.
+  6. OpenAI Codex discovers the canonical skills through the
+     ``.agents/skills`` symbolic link without maintaining a second copy.
+  7. Agent instructions do not launch bare Python tools, select/create/activate
+      interpreter environments, or direct fallback to another interpreter.
 
 Exit code is 1 if any structural error is found; warnings are printed but
 do not fail the run unless ``--strict`` is set.
@@ -18,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -25,10 +30,27 @@ from typing import Dict, List, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / ".github" / "skills"
+CODEX_SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
 AGENTS_DIR = REPO_ROOT / ".github" / "agents"
 INDEX_PATH = SKILLS_DIR / "skill-index.json"
 
 FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+BARE_PYTHON_LAUNCH_RE = re.compile(
+    r"(?<![A-Za-z0-9_./\\-])(?:(python(?:\.exe)?|py)\s+"
+    r"(?:-m\s+|-[A-Za-z]|[^\s`]+\.py\b|devtools[\\/]|<)|"
+    r"(pip)\s+(?:install|uninstall|list|show|check|freeze)\b|"
+    r"(pytest)\s+)"
+)
+PYTHON_ENV_CONFLICT_RE = re.compile(
+    r"(?:select (?:a |another |the )?(?:python )?interpreter|"
+    r"(?:create|activate) (?:a |the )?(?:new |per-agent )?"
+    r"(?:virtual environment|venv)|"
+    r"fall back to (?:the )?(?:system|another|different) (?:python|interpreter))",
+    re.IGNORECASE,
+)
+NEGATED_RUNTIME_DIRECTIVE_RE = re.compile(
+    r"\b(?:do not|don't|never|must not|without|no)\b", re.IGNORECASE
+)
 
 
 def parse_front_matter(text: str) -> Dict[str, str]:
@@ -109,7 +131,36 @@ def check_agents() -> Tuple[List[str], List[str]]:
             errors.append(f"{agent_md.name}: front-matter missing 'description'")
         elif len(fm["description"]) < 40:
             warnings.append(f"{agent_md.name}: description is very short")
+        for runtime_error in check_python_runtime_instructions(agent_md):
+            errors.append(f"{agent_md.name}: {runtime_error}")
     return errors, warnings
+
+
+def check_python_runtime_instructions(agent_md: Path) -> List[str]:
+    """Return conflicts with the inherited shared Python runtime policy."""
+    errors: List[str] = []
+    try:
+        lines = agent_md.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return errors
+    for line_number, line in enumerate(lines, start=1):
+        context = " ".join(lines[max(0, line_number - 4) : line_number])
+        if NEGATED_RUNTIME_DIRECTIVE_RE.search(context):
+            continue
+        bare_match = BARE_PYTHON_LAUNCH_RE.search(line)
+        conflict_match = PYTHON_ENV_CONFLICT_RE.search(line)
+        if bare_match:
+            launcher = next(group for group in bare_match.groups() if group)
+            errors.append(
+                f"line {line_number} uses bare '{launcher}' launcher; use the "
+                "parent-selected absolute executable or sys.executable"
+            )
+        elif conflict_match:
+            errors.append(
+                f"line {line_number} conflicts with the shared Python runtime "
+                f"policy: '{conflict_match.group(0)}'"
+            )
+    return errors
 
 
 def check_skill_index() -> Tuple[List[str], List[str]]:
@@ -144,6 +195,41 @@ def check_skill_index() -> Tuple[List[str], List[str]]:
     return errors, warnings
 
 
+def check_codex_skill_discovery() -> Tuple[List[str], List[str]]:
+    """Verify that Codex discovers the canonical skill directory via symlink."""
+    errors: List[str] = []
+    warnings: List[str] = []
+    expected_target = "../.github/skills"
+
+    if not CODEX_SKILLS_DIR.is_symlink():
+        errors.append(
+            ".agents/skills must be a symbolic link to ../.github/skills; "
+            "do not maintain a copied skill tree"
+        )
+        return errors, warnings
+
+    actual_target = os.readlink(str(CODEX_SKILLS_DIR))
+    if actual_target != expected_target:
+        errors.append(
+            ".agents/skills points to {!r}; expected {!r}".format(
+                actual_target, expected_target
+            )
+        )
+        return errors, warnings
+
+    try:
+        if not CODEX_SKILLS_DIR.resolve(strict=True).samefile(
+            SKILLS_DIR.resolve(strict=True)
+        ):
+            errors.append(
+                ".agents/skills does not resolve to the canonical .github/skills directory"
+            )
+    except OSError as error:
+        errors.append(".agents/skills cannot be resolved: {}".format(error))
+
+    return errors, warnings
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -154,14 +240,18 @@ def main() -> int:
     args = parser.parse_args()
 
     print(f"Skills dir: {SKILLS_DIR}")
+    print(f"Codex skills link: {CODEX_SKILLS_DIR}")
     print(f"Agents dir: {AGENTS_DIR}")
 
     skill_errors, skill_warnings = check_skills()
     agent_errors, agent_warnings = check_agents()
     index_errors, index_warnings = check_skill_index()
+    codex_errors, codex_warnings = check_codex_skill_discovery()
 
-    all_errors = skill_errors + agent_errors + index_errors
-    all_warnings = skill_warnings + agent_warnings + index_warnings
+    all_errors = skill_errors + agent_errors + index_errors + codex_errors
+    all_warnings = (
+        skill_warnings + agent_warnings + index_warnings + codex_warnings
+    )
 
     if all_errors:
         print("\n=== ERRORS ===")

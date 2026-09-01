@@ -3,8 +3,6 @@ title: Multi-Stream Heat Exchanger
 description: Comprehensive guide to multi-stream heat exchanger modeling in NeqSim, including mathematical foundations, composite curves, and practical examples for LNG, cryogenic, and refinery applications.
 ---
 
-# Multi-Stream Heat Exchanger
-
 The `MultiStreamHeatExchanger2` class models heat exchangers with multiple hot and cold streams exchanging heat simultaneously. This is essential for:
 
 - **LNG/Cryogenic Plants**: Main cryogenic heat exchangers (MCHE)

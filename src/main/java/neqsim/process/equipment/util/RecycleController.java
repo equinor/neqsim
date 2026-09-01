@@ -1,10 +1,14 @@
 package neqsim.process.equipment.util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.process.util.uncertainty.SensitivityMatrix;
 
 /**
@@ -21,11 +25,14 @@ import neqsim.process.util.uncertainty.SensitivityMatrix;
  * @author asmund
  * @version $Id: $Id
  */
-public class RecycleController implements java.io.Serializable {
+public class RecycleController implements Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(RecycleController.class);
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Fraction of each configured tolerance accepted for reusing a prior recycle state. */
+  private static final double ACCEPTED_STATE_TOLERANCE_FRACTION = 1.0e-6;
 
   ArrayList<Recycle> recycleArray = new ArrayList<Recycle>();
   ArrayList<Integer> priorityArray = new ArrayList<Integer>();
@@ -34,10 +41,20 @@ public class RecycleController implements java.io.Serializable {
   private int maximumPriorityLevel = 100;
 
   /** Coordinated Broyden accelerator for multi-recycle systems. */
-  private transient BroydenAccelerator coordinatedAccelerator = null;
+  private BroydenAccelerator coordinatedAccelerator = null;
 
   /** Whether to use coordinated acceleration across all recycles at current priority. */
   private boolean useCoordinatedAcceleration = false;
+
+  /**
+   * Recycles whose previously accepted state can seed the first observation of this solve. Held as a list scanned by
+   * identity rather than an {@link java.util.IdentityHashMap} because XStream has no converter for that type and cannot
+   * reflect into {@code java.util} on JDK 9+, which breaks saving a process from an embedded host.
+   */
+  private List<Recycle> acceptedRecycleSeeds = new ArrayList<Recycle>();
+
+  /** Stable provenance identity for this controller's transaction state. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
 
   /**
    * Constructor for RecycleController.
@@ -51,8 +68,13 @@ public class RecycleController implements java.io.Serializable {
   public void init() {
     minimumPriorityLevel = 100;
     maximumPriorityLevel = 100;
+    acceptedRecycleSeeds().clear();
     for (Recycle recyc : recycleArray) {
+      boolean hadAcceptedState = hasReusableAcceptedState(recyc);
       recyc.resetIterations();
+      if (hadAcceptedState) {
+        acceptedRecycleSeeds().add(recyc);
+      }
       if (recyc.getPriority() < minimumPriorityLevel) {
         minimumPriorityLevel = recyc.getPriority();
       }
@@ -94,6 +116,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean doSolveRecycle(Recycle recycle) {
     if (recycle.getPriority() == getCurrentPriorityLevel()) {
+      if (recycle.iterations == 0 && containsIdentity(acceptedRecycleSeeds(), recycle)) {
+        recycle.iterations = 1;
+      }
       return true;
     } else {
       return false;
@@ -121,6 +146,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean solvedCurrentPriorityLevel() {
     for (Recycle recyc : recycleArray) {
+      if (isDeactivated(recyc)) {
+        continue;
+      }
       if (recyc.getPriority() == currentPriorityLevel) {
         if (!recyc.solved()) {
           return false;
@@ -128,6 +156,22 @@ public class RecycleController implements java.io.Serializable {
       }
     }
     return true;
+  }
+
+  /**
+   * Reports whether a recycle is currently bypassed and must therefore be excluded from the convergence gates.
+   *
+   * <p>
+   * A recycle is bypassed either because the user locked it inactive or because its loop flow fell below the configured
+   * low-flow cutoff. Such a recycle never executes its balance equations, so requiring it to converge would keep the
+   * whole flowsheet iterating on a dead leg.
+   * </p>
+   *
+   * @param recycle recycle to test
+   * @return true when the recycle is locked inactive or has been auto-deactivated on low flow
+   */
+  private static boolean isDeactivated(Recycle recycle) {
+    return recycle.isLockedInactive() || !recycle.isActive();
   }
 
   /**
@@ -170,6 +214,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
+      if (isDeactivated(recyc)) {
+        continue;
+      }
       if (logger.isDebugEnabled()) {
         logger.debug(recyc.getName() + " solved " + recyc.solved());
       }
@@ -177,7 +224,83 @@ public class RecycleController implements java.io.Serializable {
         return false;
       }
     }
+    normalizeAcceptedRecycleSeeds();
     return true;
+  }
+
+  /**
+   * Removes the internal accepted-state seed after a successful solve while retaining the legacy externally reported
+   * minimum of two recycle observations.
+   */
+  private void normalizeAcceptedRecycleSeeds() {
+    List<Recycle> seeds = acceptedRecycleSeeds();
+    for (Recycle recycle : seeds) {
+      if (recycle.iterations > 0) {
+        recycle.iterations = Math.max(2, recycle.iterations - 1);
+      }
+    }
+    seeds.clear();
+  }
+
+  /**
+   * Returns the accepted-seed list, recreating it after deserialization of an older model.
+   *
+   * @return accepted recycle seeds for the active solve
+   */
+  private List<Recycle> acceptedRecycleSeeds() {
+    if (acceptedRecycleSeeds == null) {
+      acceptedRecycleSeeds = new ArrayList<Recycle>();
+    }
+    return acceptedRecycleSeeds;
+  }
+
+  /**
+   * Tests membership by reference, because {@link Recycle} inherits value-based equality.
+   *
+   * @param seeds list to scan
+   * @param recycle recycle to look for
+   * @return true when the exact instance is present
+   */
+  private static boolean containsIdentity(List<Recycle> seeds, Recycle recycle) {
+    for (int i = 0; i < seeds.size(); i++) {
+      if (seeds.get(i) == recycle) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether a previously converged recycle is close enough to its fixed point to reuse its accepted state.
+   *
+   * <p>
+   * Merely satisfying the user-configured convergence tolerance is not sufficient: a second observation can still move
+   * process results measurably. Reuse is therefore limited to finite residuals within one millionth of every configured
+   * tolerance (with a numerical floor), which preserves the legacy confirmation pass for ordinary tolerance-level
+   * convergence.
+   * </p>
+   *
+   * @param recycle recycle to inspect before its iteration counter is reset
+   * @return true when its accepted state is effectively unchanged
+   */
+  private static boolean hasReusableAcceptedState(Recycle recycle) {
+    return recycle.getIterations() > 1 && recycle.solved()
+        && isWithinReuseTolerance(recycle.getErrorFlow(), recycle.getFlowTolerance())
+        && isWithinReuseTolerance(recycle.getErrorComposition(), recycle.getCompositionTolerance())
+        && isWithinReuseTolerance(recycle.getErrorTemperature(), recycle.getTemperatureTolerance())
+        && isWithinReuseTolerance(recycle.getErrorPressure(), recycle.getPressureTolerance());
+  }
+
+  /**
+   * Tests one stored residual against the conservative reuse threshold.
+   *
+   * @param error stored absolute residual
+   * @param tolerance configured convergence tolerance
+   * @return true when the residual is finite and effectively zero
+   */
+  private static boolean isWithinReuseTolerance(double error, double tolerance) {
+    double reuseTolerance = Math.max(1.0e-12, Math.abs(tolerance) * ACCEPTED_STATE_TOLERANCE_FRACTION);
+    return Double.isFinite(error) && Math.abs(error) <= reuseTolerance;
   }
 
   /**
@@ -191,6 +314,9 @@ public class RecycleController implements java.io.Serializable {
   public double getMaxNormalizedError() {
     double maxNorm = 0.0;
     for (Recycle recyc : recycleArray) {
+      if (isDeactivated(recyc)) {
+        continue;
+      }
       maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorFlow(), recyc.getFlowTolerance()));
       maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorComposition(), recyc.getCompositionTolerance()));
       maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorTemperature(), recyc.getTemperatureTolerance()));
@@ -217,6 +343,7 @@ public class RecycleController implements java.io.Serializable {
    */
   public void clear() {
     recycleArray.clear();
+    acceptedRecycleSeeds().clear();
     priorityArray.clear();
     minimumPriorityLevel = 100;
     maximumPriorityLevel = 100;
@@ -694,5 +821,111 @@ public class RecycleController implements java.io.Serializable {
   public boolean hasSensitivityData() {
     return coordinatedAccelerator != null && coordinatedAccelerator.getInverseJacobian() != null
         && coordinatedAccelerator.getIterationCount() > 2;
+  }
+
+  /**
+   * Returns the stable identity used to reject snapshots captured from another controller.
+   *
+   * @return non-empty identity preserved by Java serialization
+   */
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return transientStateIdentity;
+  }
+
+  /**
+   * Captures controller-owned recycle orchestration and coordinated solver state.
+   *
+   * <p>
+   * Recycle equipment state is intentionally not captured here. Every registered recycle remains responsible for its
+   * own future {@code TransientStateParticipant} contract.
+   * </p>
+   *
+   * @return immutable serializable controller snapshot
+   */
+  public Snapshot captureTransientState() {
+    ArrayList<Integer> acceptedSeedIndexes = new ArrayList<Integer>();
+    List<Recycle> seeds = acceptedRecycleSeeds();
+    for (int i = 0; i < recycleArray.size(); i++) {
+      if (containsIdentity(seeds, recycleArray.get(i))) {
+        acceptedSeedIndexes.add(i);
+      }
+    }
+    return new Snapshot(getTransientStateIdentity(), new ArrayList<Recycle>(recycleArray),
+        new ArrayList<Integer>(priorityArray), currentPriorityLevel, minimumPriorityLevel, maximumPriorityLevel,
+        useCoordinatedAcceleration, coordinatedAccelerator == null ? null : coordinatedAccelerator.captureState(),
+        acceptedSeedIndexes);
+  }
+
+  /**
+   * Restores a captured controller snapshot without replacing this controller instance.
+   *
+   * @param snapshot snapshot returned by {@link #captureTransientState()}
+   * @throws NullPointerException if {@code snapshot} is null
+   * @throws IllegalArgumentException if the snapshot belongs to another controller
+   */
+  public void restoreTransientState(Snapshot snapshot) {
+    Objects.requireNonNull(snapshot, "snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Snapshot belongs to another RecycleController");
+    }
+
+    recycleArray.clear();
+    recycleArray.addAll(snapshot.recycles);
+    priorityArray.clear();
+    priorityArray.addAll(snapshot.priorities);
+    currentPriorityLevel = snapshot.currentPriorityLevel;
+    minimumPriorityLevel = snapshot.minimumPriorityLevel;
+    maximumPriorityLevel = snapshot.maximumPriorityLevel;
+    useCoordinatedAcceleration = snapshot.useCoordinatedAcceleration;
+
+    if (snapshot.coordinatedAcceleratorState == null) {
+      coordinatedAccelerator = null;
+    } else {
+      if (coordinatedAccelerator == null) {
+        coordinatedAccelerator = new BroydenAccelerator();
+      }
+      coordinatedAccelerator.restoreState(snapshot.coordinatedAcceleratorState);
+    }
+
+    List<Recycle> seeds = acceptedRecycleSeeds();
+    seeds.clear();
+    for (int index : snapshot.acceptedSeedIndexes) {
+      if (index < 0 || index >= recycleArray.size()) {
+        throw new IllegalArgumentException("Snapshot contains an invalid accepted-recycle index " + index);
+      }
+      seeds.add(recycleArray.get(index));
+    }
+  }
+
+  /** Immutable serializable state owned by one recycle controller. */
+  public static final class Snapshot implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ArrayList<Recycle> recycles;
+    private final ArrayList<Integer> priorities;
+    private final int currentPriorityLevel;
+    private final int minimumPriorityLevel;
+    private final int maximumPriorityLevel;
+    private final boolean useCoordinatedAcceleration;
+    private final BroydenAccelerator.Snapshot coordinatedAcceleratorState;
+    private final ArrayList<Integer> acceptedSeedIndexes;
+
+    private Snapshot(String stateIdentity, ArrayList<Recycle> recycles, ArrayList<Integer> priorities,
+        int currentPriorityLevel, int minimumPriorityLevel, int maximumPriorityLevel,
+        boolean useCoordinatedAcceleration, BroydenAccelerator.Snapshot coordinatedAcceleratorState,
+        ArrayList<Integer> acceptedSeedIndexes) {
+      this.stateIdentity = stateIdentity;
+      this.recycles = recycles;
+      this.priorities = priorities;
+      this.currentPriorityLevel = currentPriorityLevel;
+      this.minimumPriorityLevel = minimumPriorityLevel;
+      this.maximumPriorityLevel = maximumPriorityLevel;
+      this.useCoordinatedAcceleration = useCoordinatedAcceleration;
+      this.coordinatedAcceleratorState = coordinatedAcceleratorState;
+      this.acceptedSeedIndexes = acceptedSeedIndexes;
+    }
   }
 }

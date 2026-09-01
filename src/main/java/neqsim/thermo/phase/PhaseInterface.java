@@ -330,9 +330,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * method to return flow rate of a phase.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, m3/sec, m3/min, m3/hr, ft3/sec, Sm3/sec, Sm3/hr,
-   * Sm3/day, MSm3/day, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min,
-   * kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lb/hr, barrel/day
+   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, Am3/hr,
+   * ft3/sec, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec,
+   * kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day,
+   * bbl/day
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);

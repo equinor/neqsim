@@ -3,8 +3,6 @@ title: "Hydrate Flash Operations in NeqSim"
 description: "This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim."
 ---
 
-# Hydrate Flash Operations in NeqSim
-
 This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim.
 
 ## Table of Contents

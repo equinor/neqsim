@@ -1,6 +1,12 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
 import java.util.UUID;
+import neqsim.fluidmechanics.flowsolver.AxialDispersionModel;
+import neqsim.fluidmechanics.flowsolver.NoAxialDispersion;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.onephaseflowvisualization.pipeflowvisualization.PipeFlowVisualization;
 import neqsim.thermo.system.SystemInterface;
 
@@ -13,11 +19,201 @@ import neqsim.thermo.system.SystemInterface;
 public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflowsystem.OnePhaseFlowSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  private boolean failOnNonConvergence;
+  private boolean conservativeSpeciesTransportEnabled;
+  /** Selected finite-volume method for conservative component transport. */
+  private SpeciesAdvectionScheme speciesAdvectionScheme = SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT;
+  /** Optional physical axial dispersion, disabled by default. */
+  private AxialDispersionModel axialDispersionModel = NoAxialDispersion.INSTANCE;
+  private boolean storeSpeciesConservationHistory;
+  private OnePhaseSpeciesConservationHistory speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
+  private OnePhaseSpeciesConservationHistory.Builder speciesConservationHistoryBuilder;
 
   /**
    * Constructor for PipeFlowSystem.
    */
   public PipeFlowSystem() {
+  }
+
+  /**
+   * Get nonlinear convergence and total-mass diagnostics from the latest pipe solve.
+   *
+   * <p>
+   * The returned report is immutable. Before the first solve it has reason
+   * {@link OnePhaseFlowConvergenceReport.ConvergenceReason#NOT_RUN}.
+   * </p>
+   *
+   * @return latest one-phase convergence report
+   */
+  public OnePhaseFlowConvergenceReport getConvergenceReport() {
+    if (flowSolver instanceof OnePhaseFixedStaggeredGrid) {
+      return ((OnePhaseFixedStaggeredGrid) flowSolver).getLastConvergenceReport();
+    }
+    return OnePhaseFlowConvergenceReport.notRun();
+  }
+
+  /**
+   * Get component inventories, boundary masses, residuals, and boundedness diagnostics.
+   *
+   * @return latest conservative species report, or a not-run report before opt-in transport
+   */
+  public OnePhaseSpeciesConservationReport getSpeciesConservationReport() {
+    if (flowSolver instanceof OnePhaseFixedStaggeredGrid) {
+      return ((OnePhaseFixedStaggeredGrid) flowSolver).getLastSpeciesConservationReport();
+    }
+    return OnePhaseSpeciesConservationReport.notRun();
+  }
+
+  /**
+   * Get time-aligned diagnostics for every accepted conservative step in the latest transient solve.
+   *
+   * <p>
+   * The immutable history is reset at the start of each {@link #solveTransient(int, UUID)} call. It contains only steps
+   * that completed successfully, so a fail-loud solve retains diagnostics for any previously accepted steps. Each
+   * report contains component profiles, inventories, boundary masses, residuals, boundedness, and EOS-coupling
+   * diagnostics. {@link OnePhaseSpeciesConservationHistory#toJson()} provides a stable Python capture path.
+   * </p>
+   *
+   * @return immutable accepted-step history, empty before a conservative transient solve
+   */
+  public OnePhaseSpeciesConservationHistory getSpeciesConservationHistory() {
+    return speciesConservationHistoryBuilder == null ? speciesConservationHistory
+        : speciesConservationHistoryBuilder.build();
+  }
+
+  /**
+   * Configure storage of full per-step conservative species diagnostics.
+   *
+   * <p>
+   * Storage is off by default to avoid retaining every component-by-cell profile in long simulations. Enabling it does
+   * not alter the conservative solve, finite-volume state, or convergence criteria.
+   * </p>
+   *
+   * @param store true to retain one immutable report for every accepted conservative step
+   */
+  public void setStoreSpeciesConservationHistory(boolean store) {
+    storeSpeciesConservationHistory = store;
+  }
+
+  /**
+   * Check whether full accepted-step species diagnostics are retained.
+   *
+   * @return true when per-step report storage is enabled
+   */
+  public boolean isSpeciesConservationHistoryStorageEnabled() {
+    return storeSpeciesConservationHistory;
+  }
+
+  /**
+   * Enable conservative n-1 species transport for transient solver type 1.
+   *
+   * <p>
+   * The path is currently isothermal and requires strictly positive flow. Unsupported flow and any failed
+   * hydraulic/species criterion throw so that a failed conservative state cannot advance to the next timestep.
+   * </p>
+   *
+   * @param enabled true to couple conservative component inventories to hydraulics and EOS
+   */
+  public void setConservativeSpeciesTransport(boolean enabled) {
+    conservativeSpeciesTransportEnabled = enabled;
+    configureConvergencePolicy();
+  }
+
+  /**
+   * Check whether conservative species transport is enabled.
+   *
+   * @return true when the opt-in component path is active
+   */
+  public boolean isConservativeSpeciesTransportEnabled() {
+    return conservativeSpeciesTransportEnabled;
+  }
+
+  /**
+   * Select the finite-volume advection method used by conservative species transport.
+   *
+   * <p>
+   * The default remains {@link SpeciesAdvectionScheme#FIRST_ORDER_IMPLICIT}. The selected method has no effect unless
+   * {@link #setConservativeSpeciesTransport(boolean)} is enabled.
+   * </p>
+   *
+   * @param scheme non-null conservative species advection scheme
+   * @throws IllegalArgumentException if {@code scheme} is null
+   */
+  public void setSpeciesAdvectionScheme(SpeciesAdvectionScheme scheme) {
+    if (scheme == null) {
+      throw new IllegalArgumentException("Conservative species advection scheme cannot be null.");
+    }
+    speciesAdvectionScheme = scheme;
+    configureConvergencePolicy();
+  }
+
+  /**
+   * Get the selected conservative species advection method.
+   *
+   * @return non-null typed scheme; first-order implicit by default
+   */
+  public SpeciesAdvectionScheme getSpeciesAdvectionScheme() {
+    return speciesAdvectionScheme;
+  }
+
+  /**
+   * Select a physical axial-dispersion model for conservative component transport.
+   *
+   * <p>
+   * Physical dispersion is independent of the selected numerical advection scheme. Use {@link NoAxialDispersion} to
+   * retain pure advection. The validated boundary conditions are a prescribed inlet composition and zero physical
+   * diffusive flux at the outlet.
+   * </p>
+   *
+   * @param model non-null physical axial-dispersion model
+   * @throws IllegalArgumentException if {@code model} is null
+   */
+  public void setAxialDispersionModel(AxialDispersionModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException(
+          "Physical axial-dispersion model cannot be null; use NoAxialDispersion for pure advection.");
+    }
+    axialDispersionModel = model;
+    configureConvergencePolicy();
+  }
+
+  /** @return selected non-null physical axial-dispersion model */
+  public AxialDispersionModel getAxialDispersionModel() {
+    return axialDispersionModel;
+  }
+
+  /**
+   * Configure whether a transient solve throws when its convergence report fails.
+   *
+   * <p>
+   * The default is false for source and behavioral compatibility. Failed convergence is still recorded by
+   * {@link #getConvergenceReport()} and logged as a warning.
+   * </p>
+   *
+   * @param failOnNonConvergence true to throw after recording a failed report
+   */
+  public void setFailOnNonConvergence(boolean failOnNonConvergence) {
+    this.failOnNonConvergence = failOnNonConvergence;
+    configureConvergencePolicy();
+  }
+
+  /**
+   * Check whether failed transient convergence throws.
+   *
+   * @return true when strict fail-loud mode is enabled
+   */
+  public boolean isFailOnNonConvergence() {
+    return failOnNonConvergence;
+  }
+
+  private void configureConvergencePolicy() {
+    if (flowSolver instanceof OnePhaseFixedStaggeredGrid) {
+      OnePhaseFixedStaggeredGrid onePhaseSolver = (OnePhaseFixedStaggeredGrid) flowSolver;
+      onePhaseSolver.setFailOnNonConvergence(failOnNonConvergence);
+      onePhaseSolver.setConservativeSpeciesTransportEnabled(conservativeSpeciesTransportEnabled);
+      onePhaseSolver.setSpeciesAdvectionScheme(speciesAdvectionScheme);
+      onePhaseSolver.setAxialDispersionModel(axialDispersionModel);
+    }
   }
 
   /** {@inheritDoc} */
@@ -69,6 +265,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
     // getTotalNumberOfNodes());
     flowSolver = new neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid(
         this, getSystemLength(), getTotalNumberOfNodes(), false);
+    configureConvergencePolicy();
     flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     getTimeSeries().init(this);
@@ -81,24 +278,65 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   public void solveTransient(int type, UUID id) {
     getTimeSeries().init(this);
     display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
+    speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
+    speciesConservationHistoryBuilder = conservativeSpeciesTransportEnabled && storeSpeciesConservationHistory
+        ? OnePhaseSpeciesConservationHistory.builder()
+        : null;
     flowSolver.setDynamic(true);
+    configureConvergencePolicy();
     flowSolver.setSolverType(type);
 
     int outletNodeIndex = getTotalNumberOfNodes() - 1;
 
     for (int i = 0; i < this.getTimeSeries().getTime().length; i++) {
       // Apply inlet boundary conditions
-      getNode(0).setBulkSystem(this.getTimeSeries().getThermoSystem()[i]);
+      SystemInterface scheduledInletSystem = this.getTimeSeries().getThermoSystem()[i];
+      double scheduledInletMassFlowKgPerSecond = conservativeSpeciesTransportEnabled
+          ? scheduledInletSystem.getFlowRate("kg/sec")
+          : Double.NaN;
+      getNode(0).setBulkSystem(scheduledInletSystem);
+      if (conservativeSpeciesTransportEnabled) {
+        getNode(0).getBulkSystem().setTotalFlowRate(scheduledInletMassFlowKgPerSecond, "kg/sec");
+      }
       getNode(0).initFlowCalc();
-      getNode(0).setVelocityIn(getNode(0).getVelocity());
-      flowNode[0].setVelocityOut(this.flowNode[0].getVelocity());
+      if (conservativeSpeciesTransportEnabled) {
+        double inletDensity = getNode(0).getBulkSystem().getPhase(0).getDensity();
+        double inletArea = getNode(0).getGeometry().getArea();
+        if (!Double.isFinite(inletDensity) || inletDensity <= 0.0 || !Double.isFinite(inletArea) || inletArea <= 0.0) {
+          throw new IllegalStateException("Cannot impose conservative inlet mass flow with density " + inletDensity
+              + " kg/m3 and area " + inletArea + " m2.");
+        }
+        double inletVelocity = scheduledInletMassFlowKgPerSecond / (inletArea * inletDensity);
+        getNode(0).setVelocity(inletVelocity);
+        getNode(0).setVelocityIn(inletVelocity);
+        flowNode[0].setVelocityOut(inletVelocity);
+        if (getTotalNumberOfNodes() > 1) {
+          getNode(1).setVelocityIn(inletVelocity);
+        }
+      } else {
+        getNode(0).setVelocityIn(getNode(0).getVelocity());
+        flowNode[0].setVelocityOut(this.flowNode[0].getVelocity());
+      }
 
       // Apply outlet boundary conditions based on type
       applyOutletBoundaryCondition(i, outletNodeIndex);
 
       getSolver().setTimeStep(this.getTimeSeries().getTimeStep()[i]);
-      flowSolver.solveTDMA();
+      try {
+        flowSolver.solveTDMA();
+      } finally {
+        if (conservativeSpeciesTransportEnabled) {
+          scheduledInletSystem.setTotalFlowRate(scheduledInletMassFlowKgPerSecond, "kg/sec");
+        }
+      }
+      if (speciesConservationHistoryBuilder != null) {
+        speciesConservationHistoryBuilder.append(getTimeSeries().getTime(i), getSpeciesConservationReport());
+      }
       display.setNextData(this, this.getTimeSeries().getTime(i));
+    }
+    if (speciesConservationHistoryBuilder != null) {
+      speciesConservationHistory = speciesConservationHistoryBuilder.build();
+      speciesConservationHistoryBuilder = null;
     }
     calcIdentifier = id;
   }

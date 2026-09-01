@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:instrument-register:v1",
+  "title": "NeqSim instrument register",
+  "type": "object",
+  "required": ["schemaVersion", "rowCount", "rows"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_instrument_register.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:instrument-register:v1"},
+    "rowCount": {"type": "integer", "minimum": 0},
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["instrumentTag", "source", "approvalStatus"],
+        "properties": {
+          "instrumentTag": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "approvalStatus": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

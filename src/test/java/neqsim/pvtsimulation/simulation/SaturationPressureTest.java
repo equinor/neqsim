@@ -1,10 +1,12 @@
 package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class SaturationPressureTest extends neqsim.NeqSimTest {
   @BeforeAll
@@ -29,9 +31,16 @@ class SaturationPressureTest extends neqsim.NeqSimTest {
     tempSystem.addTBPfraction("C9", 0.014, 129.5 / 1000.0, 0.7454);
     tempSystem.addTBPfraction("C10", 0.0078, 135.3 / 1000.0, 0.7864);
     tempSystem.setMixingRule(2);
-    SimulationInterface satPresSim = new SaturationPressure(tempSystem);
-    satPresSim.run();
-    assertEquals(satPresSim.getThermoSystem().getPressure(), 126.195102691, 0.1);
+    SaturationPressure saturationPressure = new SaturationPressure(tempSystem);
+    CountingThermodynamicOperations countingOperations = new CountingThermodynamicOperations(tempSystem);
+    saturationPressure.thermoOps = countingOperations;
+
+    double result = saturationPressure.calcSaturationPressure();
+
+    assertEquals(126.195102691, result, 0.1);
+    assertTrue(countingOperations.getFlashCount() < 115, "upper-bound search should stop after bracketing saturation");
+    assertTrue(countingOperations.getMinimumPressure() > 100.0,
+        "search should not continue below the upper saturation boundary");
   }
 
   /**
@@ -82,5 +91,29 @@ class SaturationPressureTest extends neqsim.NeqSimTest {
 
     // Correct upper dew point ~106.2 bara; the trivial-split regression returned ~109 bara.
     assertEquals(106.2, satPresSim.getSaturationPressure(), 1.0);
+  }
+
+  private static final class CountingThermodynamicOperations extends ThermodynamicOperations {
+    private int flashCount;
+    private double minimumPressure = Double.POSITIVE_INFINITY;
+
+    private CountingThermodynamicOperations(SystemInterface system) {
+      super(system);
+    }
+
+    @Override
+    public void TPflash() {
+      flashCount++;
+      minimumPressure = Math.min(minimumPressure, getSystem().getPressure());
+      super.TPflash();
+    }
+
+    private int getFlashCount() {
+      return flashCount;
+    }
+
+    private double getMinimumPressure() {
+      return minimumPressure;
+    }
   }
 }

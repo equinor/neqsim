@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.util.unit.Units;
 
 /**
  * Tests for {@link FlashRunner}.
@@ -121,6 +122,29 @@ class FlashRunnerTest {
       }
     }
     assertTrue(hasViscosity, "Expected transport properties in phase data");
+  }
+
+  @Test
+  void testTPFlash_compatibilityDensityUsesKgPerCubicMeter() {
+    String json = "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+        + "\"pressure\": {\"value\": 100.0, \"unit\": \"bara\"}," + "\"components\": {\"methane\": 1.0}" + "}";
+
+    Units.activateFieldUnits();
+    try {
+      String result = FlashRunner.run(json);
+      JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+      assertEquals("success", root.get("status").getAsString());
+      JsonObject properties = root.getAsJsonObject("fluid").getAsJsonObject("properties");
+      JsonObject reportedDensity = properties.getAsJsonObject("overall").getAsJsonObject("density");
+      assertEquals("lb/ft3", reportedDensity.get("unit").getAsString());
+
+      double densityLbPerFt3 = reportedDensity.get("value").getAsDouble();
+      double densityKgPerM3 = properties.get("density_kgm3").getAsDouble();
+      assertEquals(densityLbPerFt3 * 16.01846337396, densityKgPerM3, 1.0e-6);
+    } finally {
+      Units.activateDefaultUnits();
+    }
   }
 
   // --- PH flash tests ---

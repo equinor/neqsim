@@ -1,236 +1,226 @@
 ---
 layout: default
-title: "MercuryRemoval LNG Pretreatment"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Mercury Removal in LNG Pre-Treatment"
+description: "Executable NeqSim mercury-removal screening with transient loading, preliminary design and cost boundaries, and internal verification"
 parent: Examples
 nav_order: 1
 ---
 
-# MercuryRemoval LNG Pretreatment
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MercuryRemoval_LNG_Pretreatment.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb)
-> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
+> or [open it in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
 
 ---
 
-# Mercury Removal in LNG Pre-Treatment — NeqSim Tutorial
+## Purpose and engineering boundary
 
-## Introduction
+This notebook demonstrates the public `MercuryRemovalBed` API with a synthetic gas case. It
+separates configured inputs from calculated results and checks internal model behaviour. It is an
+educational screening workflow, not a vendor guarantee, a plant-performance prediction, or an
+approved pressure-vessel or cost estimate.
 
-Mercury (Hg) is a critical contaminant in natural gas processing and LNG production. Even at trace concentrations (typically 1–200 µg/Nm³ in raw gas), mercury poses severe threats:
+The model represents irreversible fixed-bed chemisorption of elemental mercury. A simplified
+reaction concept is:
 
-| Concern | Impact |
-|---------|--------|
-| **Aluminium embrittlement** | Catastrophic failure of brazed aluminium heat exchangers (BAHX) in cryogenic LNG service |
-| **Catalyst poisoning** | Deactivation of Pd/Pt catalysts in downstream processing |
-| **Environmental** | Strict emission regulations (e.g., 0.01 µg/Nm³ for LNG product) |
-| **Health & safety** | Exposure limits (TLV-TWA: 0.025 mg/m³ for elemental Hg) |
+$$\mathrm{Hg^0 + CuS \rightarrow HgS + Cu}$$
 
-### Mercury Removal Technology
+Actual sorbent selection, capacity, kinetics, replacement utilisation, vessel design, and cost
+basis require supplier data and accountable engineering review for the project conditions.
 
-The industry-standard approach uses **fixed-bed chemisorption** with metal sulphide sorbents:
+### Workflow
 
-| Sorbent | Active Phase | Mechanism | Capacity |
-|---------|-------------|-----------|----------|
-| **PuraSpec** | CuS on alumina | Hg⁰ + CuS → HgS + Cu | 10–25 wt% Hg |
-| **MRU-CuS** | CuS/ZnS blend | Irreversible sulphide exchange | 8–15 wt% Hg |
-| **Johnson Matthey** | CuS on support | Chemisorption | 10–20 wt% Hg |
+1. create a synthetic trace-mercury feed and document the normal-volume basis;
+2. calculate steady removal, pressure drop, inventory, and capacity-based lifetime;
+3. run an accelerated transient example and inspect loading profiles;
+4. explore configured degradation and pre-loading scenarios;
+5. inspect serializable JSON outputs;
+6. run preliminary mechanical and cost screening;
+7. verify boundedness, monotonic trends, and configuration diagnostics.
 
-The key reaction is irreversible:
+## Setup and imports
 
-$$\text{Hg}^0 + \text{CuS} \rightarrow \text{HgS} + \text{Cu}$$
-
-This makes the process non-regenerable — the bed is replaced when spent.
-
-### What This Notebook Demonstrates
-
-1. **Steady-state** mercury removal calculation
-2. **Transient simulation** — tracking bed loading and mercury breakthrough over time
-3. **Effect of degraded internals** — channelling, fouling
-4. **Breakthrough curve analysis** — when to replace the bed
-5. **Mechanical design** — vessel sizing, wall thickness, weights
-6. **Cost estimation** — CAPEX and sorbent replacement OPEX
-
-### NeqSim Module
-
-The `MercuryRemovalBed` class in `neqsim.process.equipment.adsorber` implements the chemisorption model based on the existing `AdsorptionBed` architecture.
-
-## Setup and Imports
+The setup cell installs the released public-PyPI package only when `neqsim` is absent, so it works
+in a clean Google Colab runtime while remaining quiet in an already prepared environment. The
+saved execution below used NeqSim 3.17.0; reruns report the actual Python, Java, and package
+versions.
 
 ```python
-# Import NeqSim - Direct Java Access via jneqsim
-from neqsim import jneqsim
-import numpy as np
-import matplotlib.pyplot as plt
-import json
-import jpype
+import importlib.util
 
-# Import Java classes
+if importlib.util.find_spec("neqsim") is None:
+    %pip install -q "neqsim==3.17.0"
+
+import importlib.metadata
+import json
+import platform
+
+import matplotlib.pyplot as plt
+import numpy as np
+from neqsim import jneqsim
+from jpype import JClass
+
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 Stream = jneqsim.process.equipment.stream.Stream
 MercuryRemovalBed = jneqsim.process.equipment.adsorber.MercuryRemovalBed
-MercuryRemovalMechanicalDesign = jneqsim.process.mechanicaldesign.adsorber.MercuryRemovalMechanicalDesign
-MercuryRemovalCostEstimate = jneqsim.process.costestimation.adsorber.MercuryRemovalCostEstimate
-UUID = jpype.JClass('java.util.UUID')
+UUID = JClass("java.util.UUID")
+JavaSystem = JClass("java.lang.System")
 
-print("NeqSim loaded successfully — Mercury Removal Module ready")
+neqsim_version = importlib.metadata.version("neqsim")
+java_version = str(JavaSystem.getProperty("java.version"))
+
+print(f"Python: {platform.python_version()}")
+print(f"Java: {java_version}")
+print(f"NeqSim: {neqsim_version}")
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-NeqSim loaded successfully — Mercury Removal Module ready
+Python: 3.12.13
+Java: 17.0.19
+NeqSim: 3.17.0
 ```
 
 </details>
 
-## Part 1: Create a Feed Gas with Trace Mercury
+## Part 1: Create a synthetic feed with trace mercury
 
-We model a typical natural gas feed to an LNG plant with trace-level elemental mercury. Typical inlet mercury concentrations in raw gas range from 1 to 300 ug/Nm3 depending on the field (Wilhelm and Bloom, 2000). SE Asian LNG plants commonly see 50-200 ug/Nm3. We use ~180 ug/Nm3 here, representative of the Australian NWS or Malaysian LNG trains.
+The component amounts below define a reproducible teaching case, not a named field or LNG train.
+NeqSim normalizes them to mole fractions. Mercury concentration is reported on a stated normal
+basis of 0 °C and 1.01325 bar, using 44.615 mol/Nm³ and a mercury molar mass of 200.59 g/mol:
+
+$$c_{\mathrm{Hg},N}=x_{\mathrm{Hg}}\rho_{N,\mathrm{mol}}M_{\mathrm{Hg}}10^6$$
+
+Here $c_{\mathrm{Hg},N}$ is in µg/Nm³, $x_{\mathrm{Hg}}$ is mole fraction,
+$\rho_{N,\mathrm{mol}}$ is mol/Nm³, and $M_{\mathrm{Hg}}$ is g/mol. This explicit conversion avoids
+mixing process-volume and normal-volume concentration bases.
 
 ```python
-# Create a typical LNG feed gas at 30 degC, 60 bara with trace mercury
-# Mercury at 2e-8 mol fraction ~ 180 ug/Nm3 — typical SE Asian / Australian LNG feed
-feed_gas = SystemSrkEos(273.15 + 30.0, 60.0)
+# Synthetic gas at 30 °C and 60 bara
+feed_gas = SystemSrkEos(303.15, 60.0)
 feed_gas.addComponent("methane", 0.85)
 feed_gas.addComponent("ethane", 0.07)
 feed_gas.addComponent("propane", 0.03)
 feed_gas.addComponent("nitrogen", 0.04)
 feed_gas.addComponent("CO2", 0.005)
-feed_gas.addComponent("mercury", 2.0e-8)  # ~180 ug/Nm3 — typical LNG feed
+feed_gas.addComponent("mercury", 2.0e-8)
 feed_gas.createDatabase(True)
 feed_gas.setMixingRule(2)
 feed_gas.init(0)
 
-# Create the feed stream
 feed = Stream("LNG Feed", feed_gas)
-feed.setFlowRate(100000.0, "kg/hr")  # 100 t/hr — typical LNG train feed
+feed.setFlowRate(100000.0, "kg/hr")
 feed.run()
 
-# Display feed conditions
-xHg = float(feed_gas.getPhase(0).getComponent('mercury').getx())
-gas_density_mol = float(feed_gas.getPhase(0).getDensity('mol/m3'))
-cHg_NTP = xHg * 44.615 * 200.59 * 1e6  # ug/Nm3
+normal_molar_density = 44.615
+mercury_molar_mass = 200.59
+x_hg = float(feed_gas.getPhase(0).getComponent("mercury").getx())
+c_hg_ntp = x_hg * normal_molar_density * mercury_molar_mass * 1.0e6
 
-print("=== Feed Gas Conditions ===")
-print(f"Temperature:  {feed.getTemperature() - 273.15:.1f} degC")
-print(f"Pressure:     {feed.getPressure():.1f} bara")
-print(f"Flow rate:    {feed.getFlowRate('kg/hr'):.0f} kg/hr")
-print(f"Density:      {feed.getThermoSystem().getPhase(0).getDensity('kg/m3'):.2f} kg/m3")
-print(f"\nMercury mole fraction: {xHg:.3e}")
-print(f"Mercury concentration: {cHg_NTP:.1f} ug/Nm3")
+print("=== Synthetic feed conditions ===")
+print(f"Temperature: {feed.getTemperature() - 273.15:.1f} °C")
+print(f"Pressure: {feed.getPressure():.1f} bara")
+print(f"Mass flow: {feed.getFlowRate('kg/hr'):.0f} kg/h")
+print(f"Gas density: {feed.getThermoSystem().getPhase(0).getDensity('kg/m3'):.2f} kg/m³")
+print(f"Mercury mole fraction: {x_hg:.6e}")
+print(f"Mercury concentration at 0 °C, 1.01325 bar: {c_hg_ntp:.2f} µg/Nm³")
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-=== Feed Gas Conditions ===
-Temperature:  30.0 °C
-Pressure:     60.0 bara
-Flow rate:    100000 kg/hr
-Density:      49.63 kg/m³
-
-Mercury mole fraction: 1.005e-09
+=== Synthetic feed conditions ===
+Temperature: 30.0 °C
+Pressure: 60.0 bara
+Mass flow: 100000 kg/h
+Gas density: 49.63 kg/m³
+Mercury mole fraction: 2.010050e-08
+Mercury concentration at 0 °C, 1.01325 bar: 179.89 µg/Nm³
 ```
 
 </details>
 
-## Part 2: Configure and Run Steady-State Mercury Removal
+## Part 2: Configure and run steady-state mercury removal
 
-The `MercuryRemovalBed` uses an NTU-based efficiency in steady-state mode. The key parameters are:
-
-- **Bed geometry**: diameter, length, void fraction
-- **Sorbent properties**: type, bulk density, particle size, maximum Hg capacity
-- **Kinetics**: reaction rate constant, activation energy
-- **Degradation**: models for fouled or damaged column internals
+Geometry, sorbent properties, kinetics, degradation, and replacement utilisation are user inputs.
+They are not inferred or validated against a vendor product by this example. The steady calculation
+uses the current NeqSim NTU/kinetic model and Ergun pressure-drop implementation.
 
 ```python
-# Create and configure the mercury removal bed
 hg_bed = MercuryRemovalBed("Mercury Guard Bed", feed)
 
-# --- Bed Geometry ---
-hg_bed.setBedDiameter(2.0)       # 2.0 m internal diameter
-hg_bed.setBedLength(5.0)         # 5.0 m packed height
-hg_bed.setVoidFraction(0.40)     # 40% void fraction (typical for pellets)
-hg_bed.setParticleDiameter(0.004)  # 4 mm sorbent pellets
+# Configured geometry
+hg_bed.setBedDiameter(2.0)
+hg_bed.setBedLength(5.0)
+hg_bed.setVoidFraction(0.40)
+hg_bed.setParticleDiameter(0.004)
 
-# --- Sorbent Properties ---
+# Configured sorbent and kinetic screening inputs
 hg_bed.setSorbentType("PuraSpec")
-hg_bed.setSorbentBulkDensity(1100.0)    # 1100 kg/m3 bulk density
-hg_bed.setMaxMercuryCapacity(100000.0)  # 10 wt% = 100,000 mg Hg per kg sorbent
-
-# --- Kinetics ---
-hg_bed.setReactionRateConstant(0.5)     # Effective rate constant (1/s) for PuraSpec
-hg_bed.setActivationEnergy(25000.0)     # J/mol
-hg_bed.setReferenceTemperature(298.15)  # 25 degC reference
-
-# --- Fresh bed (no degradation) ---
+hg_bed.setSorbentBulkDensity(1100.0)
+hg_bed.setMaxMercuryCapacity(100000.0)
+hg_bed.setReactionRateConstant(0.5)
+hg_bed.setActivationEnergy(25000.0)
+hg_bed.setReferenceTemperature(298.15)
 hg_bed.setDegradationFactor(1.0)
 hg_bed.setBypassFraction(0.0)
-
-# --- Practical replacement utilisation (50% for single bed) ---
 hg_bed.setReplacementUtilisation(0.50)
 
-# Run steady-state
-calc_id = UUID.randomUUID()
-hg_bed.run(calc_id)
+hg_bed.run(UUID.randomUUID())
 
-# Results
-print("=== Steady-State Mercury Removal ===")
-print(f"Removal efficiency: {hg_bed.getRemovalEfficiency() * 100:.2f}%")
-print(f"Pressure drop:      {hg_bed.getPressureDrop('bar'):.4f} bar")
-print(f"Sorbent mass:       {hg_bed.getSorbentMass():.0f} kg")
-print(f"Bed volume:         {hg_bed.getBedVolume():.2f} m3")
-print(f"Estimated lifetime: {hg_bed.estimateBedLifetime():.0f} hours")
-print(f"                    ({hg_bed.estimateBedLifetime() / 8760:.1f} years)")
-print(f"  (at {hg_bed.getReplacementUtilisation()*100:.0f}% replacement utilisation)")
+removal_efficiency = float(hg_bed.getRemovalEfficiency())
+pressure_drop_bar = float(hg_bed.getPressureDrop("bar"))
+estimated_lifetime_hours = float(hg_bed.estimateBedLifetime())
+estimated_lifetime_years = estimated_lifetime_hours / 8760.0
 
-# Outlet conditions
+print("=== Steady-state screening results ===")
+print(f"Removal efficiency: {removal_efficiency * 100:.2f} %")
+print(f"Pressure drop: {pressure_drop_bar:.4f} bar")
+print(f"Sorbent mass: {hg_bed.getSorbentMass():.0f} kg")
+print(f"Bed volume: {hg_bed.getBedVolume():.2f} m³")
+print(f"Capacity-based lifetime: {estimated_lifetime_hours:.0f} h")
+print(f"Capacity-based lifetime: {estimated_lifetime_years:.2f} years")
+print(f"Replacement utilisation input: {hg_bed.getReplacementUtilisation():.2f}")
+
 outlet = hg_bed.getOutletStream()
-print(f"\nOutlet temperature: {outlet.getTemperature() - 273.15:.1f} degC")
-print(f"Outlet pressure:    {outlet.getPressure():.2f} bara")
+print(f"Outlet temperature: {outlet.getTemperature() - 273.15:.1f} °C")
+print(f"Outlet pressure: {outlet.getPressure():.2f} bara")
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-=== Steady-State Mercury Removal ===
-Removal efficiency: 99.87%
-Pressure drop:      0.3292 bar
-Sorbent mass:       10367 kg
-Bed volume:         15.71 m³
-Estimated lifetime: 15821 hours
-                    (1.8 years)
-
+=== Steady-state screening results ===
+Removal efficiency: 99.87 %
+Pressure drop: 0.3292 bar
+Sorbent mass: 10367 kg
+Bed volume: 15.71 m³
+Capacity-based lifetime: 23781 h
+Capacity-based lifetime: 2.71 years
+Replacement utilisation input: 0.50
 Outlet temperature: 30.0 °C
-Outlet pressure:    59.67 bara
+Outlet pressure: 59.67 bara
 ```
 
 </details>
 
-## Part 3: Transient Simulation — Bed Loading Over Time
+## Part 3: Accelerated transient loading example
 
-The real power of this model is the **transient mode**, which tracks the mercury loading front as it moves through the bed over time. The bed is discretised into axial cells, each tracking:
+Transient mode tracks local sorbent loading and gas-phase mercury concentration in axial cells.
+The internal rate form is represented conceptually by:
 
-- Local sorbent loading (mg Hg / kg sorbent)
-- Local gas-phase Hg concentration (µg/Nm³)
+$$r=k_{\mathrm{eff}}C_{\mathrm{Hg}}(1-\theta)$$
 
-The irreversible chemisorption kinetics follow:
-
-$$r = k_{eff} \cdot C_{Hg} \cdot (1 - \theta)$$
-
-where $\theta = q / q_{max}$ is the fractional saturation of the sorbent.
-
-> **Note:** To visualise bed loading dynamics within a reasonable notebook runtime, we use an **elevated mercury concentration** ($10^{-6}$ mole fraction) for this transient demo. Real natural gas typically contains $10^{-9}$ to $10^{-8}$ mercury, leading to bed lifetimes of 5–10+ years. The model handles both regimes identically.
+where $\theta=q/q_{\max}$ is fractional loading. To make the state evolution visible in a short
+notebook run, this section deliberately uses a higher mercury amount than Part 1. Its time scale is
+therefore a numerical demonstration and must not be interpreted as service life for a real bed.
 
 ```python
-# Elevated-Hg feed for transient demonstration (1e-6 mole fraction)
-# This accelerates loading dynamics so breakthrough is visible within ~1000 hours.
+# Deliberately elevated mercury amount for an accelerated numerical demonstration
 high_hg_gas = SystemSrkEos(273.15 + 30.0, 60.0)
 high_hg_gas.addComponent("methane", 0.85)
 high_hg_gas.addComponent("ethane", 0.07)
@@ -371,9 +361,11 @@ Plot saved to mercury_bed_loading.png
 
 </details>
 
-## Part 4: Axial Loading Profile Along the Bed
+## Part 4: Axial loading profile
 
-The loading profile shows how mercury accumulates from the inlet (cell 0) to the outlet end. As the bed operates, a mass-transfer zone (MTZ) forms — the region where active chemisorption takes place. The MTZ moves through the bed over time until it reaches the outlet, at which point breakthrough occurs.
+The profiles expose the state of each discretized axial cell. They are model outputs for the
+accelerated case. A real mass-transfer-zone length requires calibrated kinetics, dispersion,
+sorbent data, and representative inlet conditions.
 
 ```python
 # Get the loading and concentration profiles
@@ -424,19 +416,16 @@ Bed length: 5.0 m
 
 </details>
 
-## Part 5: Effect of Degraded Column Internals
+## Part 5: Configured degradation sensitivity
 
-Over time, fixed-bed vessels can suffer from:
-- **Sorbent fouling** — liquid carry-over, particulate deposition
-- **Channelling** — gas bypasses the sorbent through cracks, voids, or degraded bed support grids
-- **Reduced capacity** — chemical contamination of active sites
+`degradationFactor` and `bypassFraction` are scenario controls, not condition-monitoring estimates.
+The comparison below verifies the direction of the configured model response. It does not predict
+damage probability, diagnose internals, or replace inspection data.
 
-The `MercuryRemovalBed` models this through two parameters:
-
-| Parameter | Range | Effect |
-|-----------|-------|--------|
-| `degradationFactor` | 0.0 – 1.0 | Reduces effective capacity and rate (1.0 = new) |
-| `bypassFraction` | 0.0 – 1.0 | Fraction of gas that skips the sorbent |
+| Input | Model role |
+|---|---|
+| `degradationFactor` | scales effective capacity and kinetic rate |
+| `bypassFraction` | sends a configured fraction around the sorbent response |
 
 ```python
 # Compare fresh vs degraded bed performance
@@ -465,6 +454,7 @@ for sc in scenarios:
     bed.setReactionRateConstant(0.5)
     bed.setDegradationFactor(float(sc["degradation"]))
     bed.setBypassFraction(float(sc["bypass"]))
+    bed.setReplacementUtilisation(0.50)
     bed.run(UUID.randomUUID())
 
     eff = bed.getRemovalEfficiency() * 100
@@ -500,17 +490,19 @@ plt.show()
 ```
 Scenario                  | Efficiency (%)  | ΔP (mbar)    | Lifetime (yr) 
 ------------------------------------------------------------------------
-Fresh bed                 | 99.87           | 329.2        | 1.8           
-Mild fouling              | 94.53           | 329.2        | 1.4           
-Moderate degradation      | 88.31           | 329.2        | 1.1           
-Severe channelling        | 74.36           | 329.2        | 0.7           
+Fresh bed                 | 99.87           | 329.2        | 2.7           
+Mild fouling              | 94.53           | 329.2        | 2.2           
+Moderate degradation      | 88.31           | 329.2        | 1.6           
+Severe channelling        | 74.36           | 329.2        | 1.1           
 ```
 
 </details>
 
-## Part 6: Bed Pre-Loading — Simulating a Partially Spent Bed
+## Part 6: Bed pre-loading
 
-It is common to need to evaluate the remaining capacity of an in-service bed. The `preloadBed()` method sets a uniform initial loading to simulate a bed that has already been in use. Here we pre-load 80% and use the elevated-mercury feed to show rapid approach to saturation.
+`preloadBed()` initializes a uniform spent fraction for restart and sensitivity studies. It does
+not reconstruct a measured loading profile. The accelerated feed is retained so the remaining
+capacity evolves within the notebook runtime.
 
 ```python
 # Simulate a bed already 80% spent, using the elevated-Hg feed
@@ -574,9 +566,11 @@ Breakthrough occurred: True
 
 </details>
 
-## Part 7: JSON Reporting
+## Part 7: JSON reporting
 
-The `MercuryRemovalBed` generates a comprehensive JSON report covering all operating parameters, which can be used for digital twin integration or data logging.
+The equipment JSON retains stable names, explicit field units, configured inputs, and calculated
+state for logging or downstream serialization. It does not add measurement provenance or approve
+the values for a digital-twin acceptance workflow.
 
 ```python
 # Get JSON report from the steady-state bed
@@ -615,29 +609,32 @@ print(json.dumps(report, indent=2))
   },
   "degradation": {
     "degradationFactor": 1.0,
-    "bypassFraction": 0.0
+    "bypassFraction": 0.0,
+    "replacementUtilisation": 0.5
   },
   "operating": {
     "elapsedTime_hours": 0.0,
-    "pressureDrop_Pa": 32916.08377725836,
+    "pressureDrop_Pa": 32916.077346093254,
     "averageLoading_mg_per_kg": 0.0,
     "bedUtilisation": 0.0,
     "breakthroughOccurred": false,
-    "estimatedLifetime_hours": 15821.218658429028
+    "estimatedLifetime_hours": 23780.95436405089
   }
 }
 ```
 
 </details>
 
-## Part 8: Mechanical Design
+## Part 8: Preliminary mechanical screening
 
-The `MercuryRemovalMechanicalDesign` class sizes the pressure vessel for the guard bed including:
+`MercuryRemovalMechanicalDesign` applies a simplified hoop-stress fallback and empirical weight
+factors. The reported standard-code string and material label are metadata; this calculation does
+not demonstrate ASME Section VIII compliance. It omits, among other requirements, a governed
+material-temperature basis, corrosion allowance, external pressure, nozzle and local loads,
+fatigue, supports, fabrication details, inspection, testing, and accountable code review.
 
-- Wall thickness calculation (Barlow/hoop stress for ASME VIII Div 1)
-- Weight breakdown (shell, internals, sorbent charge, nozzles, piping, structural, electrical)
-- Module footprint estimation
-- Bill of materials (BOM) generation
+Use these outputs only for early screening. A project vessel must be designed and verified under
+the applicable code and jurisdiction by qualified engineers.
 
 ```python
 # Create mechanical design from the steady-state bed
@@ -649,7 +646,7 @@ mech_design.setMaxOperationTemperature(273.15 + 80.0)  # 80°C
 mech_design.calcDesign()
 
 # Print results
-print("=== Mechanical Design Results ===")
+print("=== Preliminary mechanical-screening results ===")
 print(f"Inner diameter:      {mech_design.innerDiameter:.2f} m")
 print(f"Outer diameter:      {mech_design.getOuterDiameter():.4f} m")
 print(f"Wall thickness:      {mech_design.getWallThickness():.1f} mm")
@@ -674,8 +671,7 @@ print(f"Height: {mech_design.getModuleHeight():.1f} m")
 <summary>Output</summary>
 
 ```
-using default mechanical design standards...no design standard default
-=== Mechanical Design Results ===
+=== Preliminary mechanical-screening results ===
 Inner diameter:      2.00 m
 Outer diameter:      2.1159 m
 Wall thickness:      57.9 mm
@@ -793,70 +789,69 @@ print(json.dumps(mech_json, indent=2))
 
 </details>
 
-## Part 9: Cost Estimation
+## Part 9: Preliminary cost-factor screening
 
-The `MercuryRemovalCostEstimate` class provides CAPEX and OPEX estimates:
+The cost class combines weight-based steel, sorbent price, module factors, and maintenance factors.
+The numerical results are unindexed nominal USD from editable class defaults. No cost year,
+location, currency date, estimate class, escalation, contingency basis, uncertainty range, vendor
+quotation, installation scope, taxes, or project schedule is represented.
 
-| Cost Element | Method |
-|-------------|--------|
-| **Vessel + internals** | Weight-based steel cost |
-| **Sorbent charge** | Volume × unit price |
-| **Installation** | Factor method on purchased equipment cost |
-| **Sorbent replacement** | Periodic change-out with labour |
-| **Maintenance** | Fraction of CAPEX per year |
+`calcAnnualOperatingCost()` currently uses 3% of total module cost plus a fixed five-year sorbent
+replacement basis; its utility-price arguments do not affect this equipment implementation. The
+separate model-lifetime annualization below is shown explicitly to avoid conflating the two bases.
 
 ```python
-# Cost estimation
 cost_est = mech_design.getCostEstimate()
 cost_est.calculateCostEstimate()
 
-print("=== Cost Estimation ===")
-print(f"\n--- CAPEX ---")
-print(f"Purchased equipment cost:  ${cost_est.getPurchasedEquipmentCost():>12,.0f}")
-print(f"Bare module cost:          ${cost_est.getBareModuleCost():>12,.0f}")
-print(f"Total module cost:         ${cost_est.getTotalModuleCost():>12,.0f}")
-print(f"Grassroots cost:           ${cost_est.getGrassRootsCost():>12,.0f}")
+model_lifetime_annual_sorbent = cost_est.getAnnualSorbentCost(estimated_lifetime_years)
+class_annual_opex = cost_est.calcAnnualOperatingCost(0.0, 0.0, 0.0, 8000)
 
-print(f"\n--- OPEX ---")
-print(f"Sorbent replacement cost:  ${cost_est.getSorbentReplacementCost():>12,.0f}")
-print(f"Annual sorbent (5yr life): ${cost_est.getAnnualSorbentCost(5.0):>12,.0f}/yr")
+print("=== Unindexed nominal-USD screening ===")
+print(f"Purchased equipment cost: ${cost_est.getPurchasedEquipmentCost():,.0f}")
+print(f"Bare module cost: ${cost_est.getBareModuleCost():,.0f}")
+print(f"Total module cost: ${cost_est.getTotalModuleCost():,.0f}")
+print(f"Grassroots cost: ${cost_est.getGrassRootsCost():,.0f}")
+print(f"Sorbent replacement per change-out: ${cost_est.getSorbentReplacementCost():,.0f}")
+print(
+    "Annualized sorbent cost on model lifetime "
+    f"({estimated_lifetime_years:.2f} years): ${model_lifetime_annual_sorbent:,.0f}/year"
+)
+print(
+    "Class annual OPEX (3% maintenance plus fixed five-year sorbent basis): "
+    f"${class_annual_opex:,.0f}/year"
+)
 
-# Annual operating cost
-annual_opex = cost_est.calcAnnualOperatingCost(0.10, 30.0, 0.5, 8000)
-print(f"Annual OPEX (total):       ${annual_opex:>12,.0f}/yr")
-
-# Adjust sorbent price and recalculate
-print(f"\n--- Cost Sensitivity: Sorbent Price ---")
+print("\nSorbent-price sensitivity; all other class defaults held constant")
 for price in [15.0, 20.0, 25.0, 30.0]:
     cost_est.setSorbentUnitPrice(float(price))
     cost_est.calculateCostEstimate()
-    pec = cost_est.getPurchasedEquipmentCost()
-    repl = cost_est.getSorbentReplacementCost()
-    print(f"  Sorbent @ ${price:.0f}/kg:  PEC = ${pec:,.0f}  |  Replacement = ${repl:,.0f}")
+    purchased_cost = cost_est.getPurchasedEquipmentCost()
+    replacement_cost = cost_est.getSorbentReplacementCost()
+    print(
+        f"USD {price:.0f}/kg: purchased USD {purchased_cost:,.0f}; "
+        f"replacement USD {replacement_cost:,.0f}"
+    )
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-=== Cost Estimation ===
+=== Unindexed nominal-USD screening ===
+Purchased equipment cost: $482,560
+Bare module cost: $1,889,224
+Total module cost: $2,361,530
+Grassroots cost: $3,542,294
+Sorbent replacement per change-out: $323,977
+Annualized sorbent cost on model lifetime (2.71 years): $119,341/year
+Class annual OPEX (3% maintenance plus fixed five-year sorbent basis): $135,641/year
 
---- CAPEX ---
-Purchased equipment cost:  $     482,560
-Bare module cost:          $   1,889,224
-Total module cost:         $   2,361,530
-Grassroots cost:           $   3,542,294
-
---- OPEX ---
-Sorbent replacement cost:  $     323,977
-Annual sorbent (5yr life): $      64,795/yr
-Annual OPEX (total):       $     135,641/yr
-
---- Cost Sensitivity: Sorbent Price ---
-  Sorbent @ $15/kg:  PEC = $378,888  |  Replacement = $194,386
-  Sorbent @ $20/kg:  PEC = $430,724  |  Replacement = $259,181
-  Sorbent @ $25/kg:  PEC = $482,560  |  Replacement = $323,977
-  Sorbent @ $30/kg:  PEC = $534,397  |  Replacement = $388,772
+Sorbent-price sensitivity; all other class defaults held constant
+USD 15/kg: purchased USD 378,888; replacement USD 194,386
+USD 20/kg: purchased USD 430,724; replacement USD 259,181
+USD 25/kg: purchased USD 482,560; replacement USD 323,977
+USD 30/kg: purchased USD 534,397; replacement USD 388,772
 ```
 
 </details>
@@ -901,9 +896,10 @@ print(json.dumps(cost_json, indent=2))
 
 </details>
 
-## Part 10: Validation and Best Practices
+## Part 10: Configuration diagnostics
 
-The `MercuryRemovalBed` includes a `validateSetup()` method that checks for common configuration errors before running a simulation.
+`validateSetup()` checks selected configuration bounds. Passing it means only that those checks
+found no error; it is not model calibration, equipment qualification, or design approval.
 
 ```python
 # Example: Validate a correctly configured bed
@@ -944,260 +940,167 @@ Number of errors: 3
 
 </details>
 
-## Part 10: Comparison with Open Literature Data
+## Part 11: Model verification and evidence boundaries
 
-The following table benchmarks the NeqSim simulation results against published data for CuS-based fixed-bed mercury guard beds in LNG pretreatment service.
+The verification below distinguishes inputs from calculations and checks internal invariants rather
+than counting configured values as agreement with literature.
 
-### Literature Sources
+| Quantity | Evidence class |
+|---|---|
+| diameter, length, void fraction, particle size | configured input |
+| bulk density, capacity, kinetic constants | configured input requiring supplier calibration |
+| removal efficiency and pressure drop | calculated by current NeqSim implementation |
+| sorbent mass and lifetime | algebraic consequences of geometry, capacity, flow, and utilisation |
+| transient loading profiles | calculated response of the discretized demonstration model |
+| wall thickness, weights, cost | preliminary screening correlations and factors |
 
-| # | Reference | Key Data |
-|---|-----------|----------|
-| 1 | Carnell (2007). Mercury removal from natural gas and liquid streams. JM Technology Review | PuraSpec capacity 10-20 wt% Hg; MBCT 5-15 s for more than 99% removal |
-| 2 | Wilhelm and Bloom (2000). Mercury in petroleum. Fuel Proc. Tech. 63, 1-27 | Hg in natural gas 1-300 ug/Nm3; some SE Asian fields up to 5000 ug/Nm3 |
-| 3 | Eckersley (2010). Advanced mercury removal technologies. Hydrocarbon Proc. 89(1) | Industrial CuS beds achieve more than 99.9% removal; bed life 3-7 years |
-| 4 | GPSA Engineering Data Book, Section 21 | Design: velocity 0.1-0.3 m/s, GHSV 2000-8000 /h, outlet less than 0.01 ug/Nm3 |
-| 5 | Nelson (2007). Mercury Removal in Natural Gas Processing. GPA Convention | Vessel sizing and bed life correlations for LNG-scale guard beds |
-| 6 | Johnson Matthey PuraSpec 1140 Data Sheet | Bulk density 1000-1200 kg/m3; 1.5-6 mm pellets; 10 wt% theoretical capacity |
-| 7 | Mokhatab et al. (2019). Handbook of Natural Gas Transmission and Processing, 4th ed. | Mercury removal unit design guidelines: lead-lag beds, ASME VIII vessels |
-| 8 | Granite et al. (2000). Novel sorbents for mercury removal. Ind. Eng. Chem. Res. 39(4) | CuS among highest-capacity sorbents; capacity and kinetics data |
+The sensitivity checks prove finite/bounded results and expected directionality for this exact case;
+they do not establish predictive accuracy. Public context sources are provided at the end of the
+notebook. No proprietary product data or uncited plant case is used as a benchmark.
 
 ```python
-import numpy as np
+def lifetime_case(name, replacement_utilisation=0.50, capacity_mg_per_kg=100000.0):
+    bed = MercuryRemovalBed(name, feed)
+    bed.setBedDiameter(2.0)
+    bed.setBedLength(5.0)
+    bed.setVoidFraction(0.40)
+    bed.setParticleDiameter(0.004)
+    bed.setSorbentType("PuraSpec")
+    bed.setSorbentBulkDensity(1100.0)
+    bed.setMaxMercuryCapacity(float(capacity_mg_per_kg))
+    bed.setReactionRateConstant(0.5)
+    bed.setActivationEnergy(25000.0)
+    bed.setReferenceTemperature(298.15)
+    bed.setReplacementUtilisation(float(replacement_utilisation))
+    bed.run(UUID.randomUUID())
+    return float(bed.estimateBedLifetime()) / 8760.0
 
-# ============================================================
-# Literature data for CuS-based mercury guard beds
-# Sources: Carnell (2007), Eckersley (2010), GPSA, JM datasheet,
-#          Wilhelm & Bloom (2000), Mokhatab et al. (2019)
-# ============================================================
-literature = {
-    "Removal efficiency (%)":       {"lit_min": 99.5,  "lit_max": 99.99, "lit_typ": 99.9},
-    "Superficial velocity (m/s)":   {"lit_min": 0.10,  "lit_max": 0.30,  "lit_typ": 0.18},
-    "Pressure drop per m (mbar/m)": {"lit_min": 30,    "lit_max": 120,   "lit_typ": 65},
-    "Sorbent bulk density (kg/m3)": {"lit_min": 900,   "lit_max": 1200,  "lit_typ": 1100},
-    "Max Hg capacity (wt%)":        {"lit_min": 5,     "lit_max": 20,    "lit_typ": 10},
-    "Gas residence time (s)":       {"lit_min": 5,     "lit_max": 30,    "lit_typ": 12},
-    "Particle diameter (mm)":       {"lit_min": 1.5,   "lit_max": 6.0,   "lit_typ": 4.0},
-    "Void fraction (-)":            {"lit_min": 0.35,  "lit_max": 0.45,  "lit_typ": 0.40},
-    "Bed life (yr)":                {"lit_min": 3,     "lit_max": 10,    "lit_typ": 5},
-    "Vessel wall thick. (mm)":      {"lit_min": 30,    "lit_max": 80,    "lit_typ": 55},
+
+utilisation_cases = np.array([0.25, 0.50, 0.75])
+utilisation_lifetimes = np.array(
+    [lifetime_case(f"utilisation-{value}", replacement_utilisation=value)
+     for value in utilisation_cases]
+)
+
+capacity_cases = np.array([50000.0, 100000.0, 150000.0])
+capacity_lifetimes = np.array(
+    [lifetime_case(f"capacity-{value}", capacity_mg_per_kg=value)
+     for value in capacity_cases]
+)
+
+verification_checks = {
+    "steady removal is bounded": 0.0 <= removal_efficiency <= 1.0,
+    "pressure drop is finite and non-negative": (
+        np.isfinite(pressure_drop_bar) and pressure_drop_bar >= 0.0
+    ),
+    "transient time is strictly increasing": bool(np.all(np.diff(times) > 0.0)),
+    "transient utilisation is non-decreasing": bool(np.all(np.diff(utilisations) >= -1.0e-12)),
+    "degradation scenarios do not increase removal": bool(
+        np.all(np.diff(efficiencies) <= 1.0e-10)
+    ),
+    "lifetime increases with replacement utilisation": bool(
+        np.all(np.diff(utilisation_lifetimes) > 0.0)
+    ),
+    "lifetime increases with configured capacity": bool(
+        np.all(np.diff(capacity_lifetimes) > 0.0)
+    ),
+    "normal-basis mercury conversion is reproducible": bool(
+        np.isclose(
+            c_hg_ntp,
+            x_hg * normal_molar_density * mercury_molar_mass * 1.0e6,
+            rtol=1.0e-12,
+        )
+    ),
 }
 
-# ============================================================
-# NeqSim simulation results (from cells above)
-# ============================================================
-flow_m3_hr = float(feed.getFlowRate("m3/hr"))
-area = 3.14159 * (2.0 ** 2) / 4.0
-v_sup = flow_m3_hr / 3600.0 / area
-dp_per_m = float(hg_bed.getPressureDrop("bar")) * 1000 / 5.0  # mbar/m
-tau = 5.0 * 0.40 / v_sup  # void residence time
+print("=== Internal verification checks ===")
+for check_name, passed in verification_checks.items():
+    print(f"{'PASS' if passed else 'FAIL'}: {check_name}")
 
-neqsim_vals = {
-    "Removal efficiency (%)":       float(hg_bed.getRemovalEfficiency()) * 100,
-    "Superficial velocity (m/s)":   v_sup,
-    "Pressure drop per m (mbar/m)": dp_per_m,
-    "Sorbent bulk density (kg/m3)": 1100.0,
-    "Max Hg capacity (wt%)":        10.0,
-    "Gas residence time (s)":       tau,
-    "Particle diameter (mm)":       4.0,
-    "Void fraction (-)":            0.40,
-    "Bed life (yr)":                float(hg_bed.estimateBedLifetime()) / 8760,
-    "Vessel wall thick. (mm)":      float(mech_json["geometry"]["wallThickness_mm"]),
-}
-
-# ============================================================
-# Print comparison table
-# ============================================================
-print(f"{'Parameter':<35} | {'NeqSim':>10} | {'Lit. Range':>15} | {'Lit. Typical':>12} | {'Status':>8}")
-print("=" * 95)
-
-for param in literature:
-    lit = literature[param]
-    sim = neqsim_vals[param]
-    lo, hi, typ = lit["lit_min"], lit["lit_max"], lit["lit_typ"]
-
-    # Determine if within range (with 10% tolerance)
-    margin = 0.10 * (hi - lo) if hi > lo else 0.10 * abs(typ)
-    if lo - margin <= sim <= hi + margin:
-        status = "OK"
-    elif sim < lo:
-        status = "LOW"
-    else:
-        status = "HIGH"
-
-    print(f"{param:<35} | {sim:>10.2f} | {lo:>6.1f} - {hi:<6.1f} | {typ:>12.1f} | {status:>8}")
-
-# ============================================================
-# Count results
-# ============================================================
-statuses = []
-for param in literature:
-    lit = literature[param]
-    sim = neqsim_vals[param]
-    lo, hi = lit["lit_min"], lit["lit_max"]
-    margin = 0.10 * (hi - lo) if hi > lo else 0.10 * abs(lit["lit_typ"])
-    statuses.append("OK" if lo - margin <= sim <= hi + margin else "DEVIATION")
-
-n_ok = statuses.count("OK")
-print(f"\n{n_ok}/{len(statuses)} parameters within published ranges.")
+assert all(verification_checks.values())
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-Parameter                           |     NeqSim |      Lit. Range | Lit. Typical |   Status
-===============================================================================================
-Removal efficiency (%)              |      99.87 |   99.5 - 100.0  |         99.9 |       OK
-Superficial velocity (m/s)          |       0.18 |    0.1 - 0.3    |          0.2 |       OK
-Pressure drop per m (mbar/m)        |      65.83 |   30.0 - 120.0  |         65.0 |       OK
-Sorbent bulk density (kg/m3)        |    1100.00 |  900.0 - 1200.0 |       1100.0 |       OK
-Max Hg capacity (wt%)               |      10.00 |    5.0 - 20.0   |         10.0 |       OK
-Gas residence time (s)              |      11.23 |    5.0 - 30.0   |         12.0 |       OK
-Particle diameter (mm)              |       4.00 |    1.5 - 6.0    |          4.0 |       OK
-Void fraction (-)                   |       0.40 |    0.3 - 0.5    |          0.4 |       OK
-Bed life at ~1 ppb Hg (yr)          |       1.81 |    3.0 - 10.0   |          5.0 |      LOW
-Vessel wall thick. (mm)             |      57.94 |   30.0 - 80.0   |         55.0 |       OK
-
-9/10 parameters within published ranges.
+=== Internal verification checks ===
+PASS: steady removal is bounded
+PASS: pressure drop is finite and non-negative
+PASS: transient time is strictly increasing
+PASS: transient utilisation is non-decreasing
+PASS: degradation scenarios do not increase removal
+PASS: lifetime increases with replacement utilisation
+PASS: lifetime increases with configured capacity
+PASS: normal-basis mercury conversion is reproducible
 ```
 
 </details>
 
 ```python
-# ============================================================
-# Visual comparison: NeqSim vs Literature (bar chart)
-# ============================================================
-fig, axes = plt.subplots(2, 3, figsize=(16, 10))
-axes = axes.flatten()
+fig, axes = plt.subplots(1, 2, figsize=(13, 4.8))
 
-# Select key parameters for visual comparison
-viz_params = [
-    ("Removal efficiency (%)", "%"),
-    ("Superficial velocity (m/s)", "m/s"),
-    ("Pressure drop per m (mbar/m)", "mbar/m"),
-    ("Gas residence time (s)", "s"),
-    ("Bed life (yr)", "years"),
-    ("Vessel wall thick. (mm)", "mm"),
-]
+axes[0].plot(utilisation_cases, utilisation_lifetimes, "o-", linewidth=2)
+axes[0].set_xlabel("Configured replacement utilisation (-)")
+axes[0].set_ylabel("Capacity-based lifetime (years)")
+axes[0].set_title("Lifetime response to utilisation input")
+axes[0].grid(True, alpha=0.3)
 
-for idx, (param, unit) in enumerate(viz_params):
-    ax = axes[idx]
-    lit = literature[param]
-    sim = neqsim_vals[param]
+axes[1].plot(capacity_cases / 1000.0, capacity_lifetimes, "o-", linewidth=2)
+axes[1].set_xlabel("Configured capacity (thousand mg Hg/kg sorbent)")
+axes[1].set_ylabel("Capacity-based lifetime (years)")
+axes[1].set_title("Lifetime response to capacity input")
+axes[1].grid(True, alpha=0.3)
 
-    # Plot literature range as shaded band
-    ax.barh(["Literature\n(typical)"], [lit["lit_typ"]],
-            color='#3498db', alpha=0.7, height=0.4, label='Literature typical')
-    ax.barh(["NeqSim"], [sim],
-            color='#e74c3c', alpha=0.8, height=0.4, label='NeqSim model')
-
-    # Show literature range as error bar on the literature bar
-    ax.errorbar(lit["lit_typ"], 0, xerr=[[lit["lit_typ"] - lit["lit_min"]],
-                [lit["lit_max"] - lit["lit_typ"]]],
-                fmt='none', color='black', capsize=8, capthick=2, linewidth=2)
-
-    ax.set_xlabel(unit, fontsize=11)
-    ax.set_title(param, fontsize=11, fontweight='bold')
-    ax.legend(fontsize=8, loc='lower right')
-    ax.grid(True, alpha=0.3, axis='x')
-
-    # Annotate values
-    ax.text(sim, 1, f'  {sim:.2f}', va='center', fontsize=9, fontweight='bold', color='#c0392b')
-    ax.text(lit["lit_typ"], 0, f'  {lit["lit_typ"]:.1f}', va='center', fontsize=9, color='#2980b9')
-
-fig.suptitle('NeqSim Mercury Removal Model vs Published Literature Data', fontsize=14, fontweight='bold')
+fig.suptitle("Internal model-sensitivity checks; not external validation")
 plt.tight_layout()
-plt.savefig('mercury_literature_comparison.png', dpi=150, bbox_inches='tight')
+plt.savefig("mercury_internal_sensitivity.png", dpi=150, bbox_inches="tight")
 plt.show()
-
-print("\nKey observations:")
-print("  - Removal efficiency matches industrial PuraSpec performance (>99.5%)")
-print("  - Superficial velocity within GPSA design range (0.10-0.30 m/s)")
-print("  - Pressure drop consistent with Ergun correlation for 4mm pellets")
-print("  - Gas residence time within Carnell (2007) MBCT guideline (5-15 s)")
-print("  - Bed lifetime matches Eckersley (2010) at ~180 ug/Nm3 Hg with 50% utilisation")
-print("  - Vessel wall thickness matches ASME VIII Div.1 for 60 bar service")
 ```
 
-<details>
-<summary>Output</summary>
+### Interpretation limits
 
-```
+- The feed and equipment dimensions are synthetic.
+- The normal-volume conversion is explicit; process-volume density is not substituted for it.
+- Capacity, kinetics, degradation, bypass, and replacement utilisation must be calibrated from
+  appropriate supplier or test data before project use.
+- The transient example uses an intentionally elevated mercury amount and coarse time steps.
+- The mechanical and cost classes provide screening outputs only.
+- No regulatory limit, occupational exposure limit, named-plant performance, or code-conformance
+  claim is made.
 
-Key observations:
-  - Removal efficiency matches industrial PuraSpec performance (>99.5%)
-  - Superficial velocity within GPSA design range (0.10-0.30 m/s)
-  - Pressure drop consistent with Ergun correlation for 4mm pellets
-  - Gas residence time within Carnell (2007) MBCT guideline (5-15 s)
-  - Bed lifetime consistent with Eckersley (2010) at trace Hg levels
-  - Vessel wall thickness matches ASME VIII Div.1 for 60 bar service
-```
+### Traceable public context
 
-</details>
-
-### Published Case Studies vs NeqSim
-
-The table below compares the NeqSim model against specific published plant data and design cases.
-
-| Parameter | NWS LNG (Australia) | Malaysia LNG | Groningen (NL) | NeqSim Model |
-|-----------|:-------------------:|:------------:|:--------------:|:------------:|
-| **Source** | Eckersley (2010) | Nelson (2007) | Wilhelm (2000) | This work |
-| Feed Hg (ug/Nm3) | 70-180 | 100-300 | 1-10 | ~180 |
-| Outlet Hg (ug/Nm3) | less than 0.01 | less than 0.01 | less than 0.01 | ~0.23 |
-| Removal (%) | more than 99.99 | more than 99.99 | more than 99.9 | 99.87 |
-| Sorbent type | CuS (PuraSpec) | CuS | CuS | PuraSpec (CuS) |
-| Bed config | 2x lead-lag | 2x lead-lag | Single | Single |
-| Bed life (yr) | 3-5 | 2-4 | 5-10 | ~5 |
-| DP (mbar) | 200-400 | 250-500 | 100-200 | 329 |
-| Vessel pressure (bar) | 40-65 | 50-70 | 30-50 | 60 |
-| Wall thickness (mm) | 40-70 | 50-80 | 25-45 | 57.9 |
-
-**Note on bed life:** The model uses a **replacement utilisation** of 50%, meaning the bed is changed out when half the theoretical capacity is consumed. This accounts for the mass-transfer zone and safety margins. At 180 ug/Nm3 feed Hg, the estimated bed life of ~5 years matches the NWS Australia and Malaysia LNG operating experience.
-
-### Kinetics Validation
-
-The effective rate constant k = 0.5 /s corresponds to a minimum bed contact time (MBCT) of:
-
-$$\text{MBCT} = -\frac{1}{k} \ln(1 - \eta) \approx -\frac{1}{0.5} \ln(0.001) = 13.8 \text{ s}$$
-
-for 99.9% removal. Carnell (2007) reports MBCT of **5-15 seconds** for PuraSpec to achieve more than 95% removal, confirming that k = 0.5 /s is within the expected range for CuS chemisorption kinetics.
+- [Johnson Matthey mercury-removal absorbents](https://matthey.com/products-and-markets/chemicals/mercury-removal-absorbents)
+  describes commercial mercury-removal applications and explicitly directs users to supplier
+  consultation for product and duty selection. It is not used here as quantitative validation.
+- Granite, Pennline, and Hargis, *Industrial & Engineering Chemistry Research* 39 (2000),
+  1020–1029, [doi:10.1021/ie990758v](https://doi.org/10.1021/ie990758v), reports laboratory
+  packed-bed sorbent screening in carrier gases. Its flue-gas experiments are context, not an LNG
+  natural-gas benchmark for this synthetic case.
+- The exact implementation is the current
+  [`MercuryRemovalBed.java`](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/adsorber/MercuryRemovalBed.java),
+  with screening design and cost logic in the adjacent mechanical-design and cost-estimation
+  classes.
 
 ## Summary
 
-This notebook demonstrated the complete mercury removal workflow in NeqSim:
+This notebook cleanly executes the complete public workflow:
 
-| Feature | API |
-|---------|-----|
-| **Steady-state removal** | `MercuryRemovalBed.run()` |
-| **Transient bed loading** | `MercuryRemovalBed.runTransient(dt, id)` |
-| **Loading/concentration profiles** | `getLoadingProfile()`, `getConcentrationProfile()` |
-| **Breakthrough detection** | `isBreakthroughOccurred()`, `getBreakthroughTimeHours()` |
-| **Degradation effects** | `setDegradationFactor()`, `setBypassFraction()` |
-| **Bed pre-loading** | `preloadBed(fraction)` |
-| **Lifetime estimation** | `estimateBedLifetime()` |
-| **Bed reset** | `resetBed()` |
-| **Mechanical design** | `getMechanicalDesign()` → `calcDesign()` |
-| **Cost estimation** | `getCostEstimate()` → `calculateCostEstimate()` |
-| **JSON reporting** | `toJson()` on all classes |
-| **Validation** | `validateSetup()` |
+| Capability | API or evidence |
+|---|---|
+| steady calculation | `MercuryRemovalBed.run()` |
+| transient loading | `runTransient(dt, id)` with stored tables and plots |
+| axial state | `getLoadingProfile()` and `getConcentrationProfile()` |
+| breakthrough diagnostics | `isBreakthroughOccurred()` and `getBreakthroughTimeHours()` |
+| scenario controls | degradation, bypass, pre-loading, utilisation, and capacity inputs |
+| serialization | `toJson()` outputs with explicit field units |
+| mechanical screening | `getMechanicalDesign().calcDesign()` |
+| cost-factor screening | `getCostEstimate().calculateCostEstimate()` |
+| configuration checks | `validateSetup()` |
+| verification | boundedness and monotonic sensitivity assertions |
 
-### Key Design Parameters
-
-| Parameter | Typical Range | Unit |
-|-----------|---------------|------|
-| Bed diameter | 1.0 – 3.5 | m |
-| Bed length | 3.0 – 8.0 | m |
-| Void fraction | 0.35 – 0.45 | — |
-| Particle diameter | 2 – 6 | mm |
-| Sorbent bulk density | 900 – 1400 | kg/m³ |
-| Max Hg capacity | 50,000 – 250,000 | mg/kg |
-| PuraSpec sorbent price | 15 – 30 | USD/kg |
-| Typical bed life | 3 – 7 | years |
-
-### References
-
-1. Wilhelm, S.M. (2001). "Mercury in Petroleum and Natural Gas: Estimation of Emissions from Production, Processing, and Combustion." EPA-600/R-01-066
-2. Granite, E.J. et al. (2000). "Novel sorbents for mercury removal from flue gas." Ind. Eng. Chem. Res., 39(4), 1020–1029
-3. Johnson Matthey, "PuraSpec Mercury Removal Technology" — Product technical literature
-4. GPSA Engineering Data Book, Section 21 — "Mercury Removal"
+The saved values belong to one top-to-bottom execution. They show how the current NeqSim model
+responds to the declared synthetic inputs. They do not establish vendor performance, field life,
+pressure-vessel compliance, cost accuracy, or operating approval.
 

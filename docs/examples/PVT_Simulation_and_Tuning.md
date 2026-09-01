@@ -1,12 +1,10 @@
 ---
 layout: default
 title: "PVT Simulation and Tuning"
-description: "Jupyter notebook tutorial for NeqSim"
+description: "Notebook for PVT Simulation and Tuning, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# PVT Simulation and Tuning
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`PVT_Simulation_and_Tuning.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb).
@@ -753,5 +751,5 @@ print("="*60)
 
 3. Whitson, C.H., Brulé, M.R. (2000). "Phase Behavior." SPE Monograph Series, Vol. 20.
 
-4. NeqSim Documentation: [docs/fluid_characterization_mathematics.md](../fluid_characterization_mathematics.md)
+4. NeqSim Documentation: [docs/pvtsimulation/fluid_characterization_mathematics.md](../pvtsimulation/fluid_characterization_mathematics.md)
 

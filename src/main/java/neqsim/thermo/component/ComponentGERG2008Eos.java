@@ -73,11 +73,6 @@ public class ComponentGERG2008Eos extends ComponentEos {
   public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles, double beta,
       int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
-
-    if (initType == 3) {
-      double phi = fugcoef(phase);
-      phase.getComponent(getComponentNumber()).setFugacityCoefficient(phi);
-    }
   }
 
   /** {@inheritDoc} */
@@ -114,10 +109,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
-    double logXi = Math.log(getx());
-    double ideal = ph.getAlpha0() != null ? ph.getAlpha0()[0].val : 0.0;
-    double residual = ph.getAlphaRes() != null ? ph.getAlphaRes()[0][0].val : 0.0;
-    return logXi + ideal + residual;
+    return ph.getResidualChemicalPotential(getComponentNumber());
   }
 
   /** {@inheritDoc} */
@@ -162,7 +154,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
     double pressure = phase.getPressure();
     double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
         - Math.log(phase.getZ());
-    double fugacityCoefficient = Math.exp(logFugacityCoefficient);
+    fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
 

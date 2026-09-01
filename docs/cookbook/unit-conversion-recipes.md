@@ -1,266 +1,163 @@
 ---
-title: Unit Conversion Recipes
-description: Working with units in NeqSim - all supported unit strings for input and output methods.
+title: "Unit Conversion Recipes"
+description: "Use NeqSim's unit-bearing setters, getters, and conversion classes without mixing physical-property, flow-basis, or report-unit semantics."
 ---
 
-# Unit Conversion Recipes
+NeqSim unit strings belong to the API that consumes them. There is no single registry that
+proves a string is valid for every setter, getter, property, or equipment model. Unit strings are
+case-sensitive: for example, `PowerUnit` accepts `"hp"`, not `"HP"`.
 
-NeqSim supports various units for input and output. This guide lists all supported unit strings.
+## Prefer unit-bearing setters and getters
 
-## Quick Reference
-
-### Temperature Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"K"` | Kelvin (default internal) |
-| `"C"` | Celsius |
-| `"F"` | Fahrenheit |
-| `"R"` | Rankine |
-
-```python
-# Setting temperature
-stream.setTemperature(25.0, "C")      # Celsius
-stream.setTemperature(298.15, "K")    # Kelvin
-stream.setTemperature(77.0, "F")      # Fahrenheit
-
-# Getting temperature (always returns Kelvin by default)
-T_kelvin = fluid.getTemperature()
-T_celsius = fluid.getTemperature() - 273.15  # Manual conversion
-```
-
-### Pressure Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"bara"` | Bar absolute |
-| `"barg"` | Bar gauge |
-| `"Pa"` | Pascal |
-| `"MPa"` | Megapascal |
-| `"psia"` | PSI absolute |
-| `"psig"` | PSI gauge |
-| `"atm"` | Atmosphere |
-
-```python
-# Setting pressure
-stream.setPressure(50.0, "bara")
-stream.setPressure(725.0, "psia")
-stream.setPressure(5.0, "MPa")
-
-# Getting pressure (returns bara by default)
-P_bara = fluid.getPressure()
-P_psia = fluid.getPressure() * 14.504  # Manual conversion
-```
-
-### Flow Rate Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"kg/sec"` | Kilogram per second |
-| `"kg/min"` | Kilogram per minute |
-| `"kg/hr"` | Kilogram per hour |
-| `"kg/day"` | Kilogram per day |
-| `"mole/sec"` or `"mol/sec"` | Mole per second |
-| `"mole/min"` or `"mol/min"` | Mole per minute |
-| `"mole/hr"` or `"mol/hr"` | Mole per hour |
-| `"kmole/sec"` or `"kmol/sec"` | Kilomole per second |
-| `"kmole/min"` or `"kmol/min"` | Kilomole per minute |
-| `"kmole/hr"` or `"kmol/hr"` | Kilomole per hour |
-| `"kmole/day"` or `"kmol/day"` | Kilomole per day |
-| `"m3/hr"` or `"Am3/hr"` | Actual m³/hr |
-| `"Sm3/hr"` | Standard m³/hr |
-| `"Sm3/day"` | Standard m³/day |
-| `"MSm3/day"` | Million Sm³/day |
-| `"MSm3/hr"` | Million Sm³/hr |
-| `"idSm3/hr"` | Ideal liquid Sm³/hr |
-| `"gallons/min"` | US gallons per minute |
-| `"barrel/day"` | Barrels per day |
-| `"lb/hr"` | Pounds per hour |
-| `"lbmole/hr"` | Pound-moles per hour |
-
-```python
-# Setting flow
-stream.setFlowRate(10000, "kg/hr")
-stream.setFlowRate(5.0, "MSm3/day")  # 5 million Sm³/day
-stream.setFlowRate(45.36, "kmole/hr")  # Kilomoles per hour
-fluid.setTotalFlowRate(45.36, "mole/hr")  # Moles per hour
-
-# Getting flow
-mass_flow = stream.getFlowRate("kg/hr")
-vol_flow = stream.getFlowRate("Sm3/day")
-molar_flow = stream.getFlowRate("mol/hr")
-kmolar_flow = stream.getFlowRate("kmole/hr")
-```
-
-### Density Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"kg/m3"` | Kilogram per cubic meter |
-| `"mol/m3"` | Mole per cubic meter |
-| `"lb/ft3"` | Pound per cubic foot |
-
-```python
-# IMPORTANT: Always specify unit to get Peneloux-corrected density
-density = fluid.getDensity("kg/m3")  # With volume correction
-molar_density = fluid.getDensity("mol/m3")
-
-# WITHOUT unit - returns EoS density (no Peneloux correction)
-density_uncorrected = fluid.getDensity()  # Avoid this!
-```
-
-### Energy/Enthalpy Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"J"` | Joule (total) |
-| `"J/mol"` | Joule per mole |
-| `"kJ/kg"` | Kilojoule per kilogram |
-| `"kJ/kmol"` | Kilojoule per kmol |
-| `"BTU/lb"` | BTU per pound |
-
-```python
-# Enthalpy
-H_total = fluid.getEnthalpy("J")
-H_molar = fluid.getEnthalpy("J/mol")
-H_mass = fluid.getEnthalpy("kJ/kg")
-```
-
-### Entropy Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"J/K"` | Joule per Kelvin (total) |
-| `"J/molK"` | Joule per mole-Kelvin |
-| `"J/kgK"` | Joule per kg-Kelvin |
-| `"kJ/kgK"` | Kilojoule per kg-Kelvin |
-
-```python
-S_molar = fluid.getEntropy("J/molK")
-S_mass = fluid.getEntropy("kJ/kgK")
-```
-
-### Heat Capacity Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"J/molK"` | Joule per mole-Kelvin |
-| `"J/kgK"` | Joule per kg-Kelvin |
-| `"kJ/kgK"` | Kilojoule per kg-Kelvin |
-| `"kJ/kmolK"` | Kilojoule per kmol-Kelvin |
-
-```python
-Cp = fluid.getCp("kJ/kgK")
-Cv = fluid.getCv("kJ/kgK")
-gamma = Cp / Cv  # Or fluid.getGamma()
-```
-
-### Viscosity Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"kg/msec"` | Pa·s (default) |
-| `"Pas"` | Pascal-second |
-| `"cP"` | Centipoise |
-
-```python
-viscosity = fluid.getViscosity("cP")
-# Or for phase
-gas_visc = fluid.getPhase("gas").getViscosity("cP")
-```
-
-### Thermal Conductivity Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"W/mK"` | Watt per meter-Kelvin |
-| `"W/cmK"` | Watt per cm-Kelvin |
-
-```python
-k = fluid.getThermalConductivity("W/mK")
-```
-
-### Molar Mass Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"kg/mol"` | Kilogram per mole (default) |
-| `"gr/mol"` | Gram per mole |
-| `"lbm/lbmol"` | Pound per lb-mole |
-
-```python
-MW = fluid.getMolarMass("gr/mol")  # Returns g/mol
-# Note: getMolarMass("kg/mol") * 1000 = g/mol
-```
-
-### Power Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"W"` | Watt |
-| `"kW"` | Kilowatt |
-| `"MW"` | Megawatt |
-| `"HP"` | Horsepower |
-
-```python
-power = compressor.getPower("kW")
-power_hp = compressor.getPower("HP")
-```
-
-### Length Units
-
-| Unit String | Description |
-|-------------|-------------|
-| `"m"` | Meter |
-| `"km"` | Kilometer |
-| `"ft"` | Foot |
-| `"inch"` | Inch |
-| `"mm"` | Millimeter |
-
-```python
-pipe.setLength(10000)  # Default is meters
-pipe.setDiameter(0.3)  # Default is meters
-```
-
----
-
-## Unit System Setting
-
-NeqSim supports global unit system settings:
+Thermodynamic systems and streams expose unit-bearing overloads for temperature and pressure.
+Use them instead of maintaining conversion constants in application code:
 
 ```python
 from neqsim import jneqsim
 
-Units = jneqsim.util.unit.Units
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 
-# Set system-wide units
-Units.activateFieldUnits()   # Field units (psia, °F, etc.)
-Units.activateSIUnits()      # SI units
-Units.activateMetricUnits()  # Metric (default)
+fluid = SystemSrkEos(298.15, 1.01325)
+fluid.setTemperature(77.0, "F")
+fluid.setPressure(5.0, "MPa")
 
-# After setting, display methods use these units
-fluid.display()
+temperature_c = fluid.getTemperature("C")
+pressure_psia = fluid.getPressure("psia")
+
+assert abs(temperature_c - 25.0) < 1.0e-10
+assert abs(pressure_psia - 725.1887) < 1.0e-3
 ```
 
----
+The no-argument system getters return the internal defaults: kelvin for temperature and absolute
+bar for pressure. Gauge inputs (`"barg"` and `"psig"`) are converted using NeqSim's reference
+pressure; keep the absolute/gauge basis explicit in stored results.
 
-## Common Conversions
+Supported `TemperatureUnit` strings are `"K"`, `"C"`, `"F"`, and `"R"`.
+`PressureUnit` accepts `"bara"`, `"bar"`, `"barg"`, `"psi"`, `"psia"`, `"psig"`,
+`"Pa"`, `"kPa"`, `"MPa"`, and `"atm"`.
 
-| From | To | Multiply by |
-|------|-----|-------------|
-| bara | psia | 14.5038 |
-| °C | K | +273.15 |
-| °C | °F | ×1.8 + 32 |
-| kg/m³ | lb/ft³ | 0.06243 |
-| cP | Pa·s | 0.001 |
-| kJ/kg | BTU/lb | 0.4299 |
-| m | ft | 3.2808 |
-| m³ | bbl | 6.2898 |
+## Keep flow basis explicit
 
----
+Use stream or system flow methods when converting a real fluid. Mass and molar conversions use
+the fluid molar mass. Actual-volume, standard-volume, and ideal-liquid-volume rates are different
+bases and must not be relabelled as one another.
 
-## See Also
+```python
+from neqsim import jneqsim
 
-- **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Complete property guide
-- **[Unit Conversion Documentation](../util/unit_conversion)** - Detailed unit handling
-- **[JavaDoc: Units](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/util/unit/Units.html)** - Unit API
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+Stream = jneqsim.process.equipment.stream.Stream
+
+fluid = SystemSrkEos(298.15, 10.0)
+fluid.addComponent("methane", 1.0)
+
+stream = Stream("unit conversion feed", fluid)
+stream.setFlowRate(3_600.0, "kg/hr")
+
+mass_flow_kg_s = stream.getFlowRate("kg/sec")
+molar_flow_kmol_h = stream.getFlowRate("kmol/hr")
+
+assert abs(mass_flow_kg_s - 1.0) < 1.0e-12
+assert molar_flow_kmol_h > 0.0
+```
+
+Common supported families in `RateUnit` include:
+
+- mass: `"kg/sec"`, `"kg/min"`, `"kg/hr"`, `"kg/day"`, and `"lb/hr"`;
+- molar: `"mol/sec"`, `"mol/min"`, `"mol/hr"`, `"kmol/sec"`, `"kmol/min"`,
+  `"kmol/hr"`, `"kmol/day"`, `"lbmol/hr"`, and their `mole`/`kmole` aliases;
+- actual volume: `"m3/sec"`, `"m3/min"`, `"m3/hr"`, `"m3/day"` and `Am3` aliases;
+- standard volume: `"Sm3/sec"`, `"Sm3/min"`, `"Sm3/hr"`, `"Sm3/day"`,
+  `"MSm3/hr"`, and `"MSm3/day"`; and
+- liquid/other bases: `idSm3` time-rate variants, `"Nlitre/sec"`, `"Nlitre/min"`,
+  `"gallons/min"`, `"barrel/day"`, and `"bbl/day"`.
+
+Standard-volume conversion uses NeqSim's standard-state temperature and pressure. Actual-volume
+and ideal-liquid conversions additionally depend on fluid properties. Record the basis and the
+fluid state or reference condition with every reported volumetric rate.
+
+## Use focused converters for scalar values
+
+The conversion classes make the owning unit family explicit:
+
+```python
+from neqsim import jneqsim
+
+LengthUnit = jneqsim.util.unit.LengthUnit
+PowerUnit = jneqsim.util.unit.PowerUnit
+
+length_ft = LengthUnit(1.0, "m").getValue("ft")
+power_kw = PowerUnit(1.0, "hp").getValue("kW")
+
+assert abs(length_ft - 3.280839895) < 1.0e-9
+assert abs(power_kw - 0.745699872) < 1.0e-12
+```
+
+`LengthUnit` accepts `"m"`, `"meter"`, `"metre"`, `"cm"`, `"mm"`, `"km"`,
+`"in"`, `"inch"`, `"ft"`, and `"feet"`. `PowerUnit` accepts `"W"`, `"kW"`,
+`"MW"`, `"hp"`, and `"BTU/hr"`. `EnergyUnit` is a scalar energy converter with its own
+strings (`"J"`, `"kJ"`, `"MJ"`, `"Wh"`, `"kWh"`, `"MWh"`, `"BTU"`, and
+`"kcal"`); it is not the unit contract for every enthalpy getter.
+
+## Initialize and label physical properties
+
+After a flash, initialize physical properties before reading unit-aware density, viscosity, or
+thermal conductivity:
+
+```python
+operations = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+operations.TPflash()
+fluid.initProperties()
+
+density_kg_m3 = fluid.getDensity("kg/m3")
+assert density_kg_m3 > 0.0
+```
+
+`fluid.getDensity()` and `fluid.getDensity("kg/m3")` follow different documented paths. The
+unit-bearing getter uses initialized physical properties; it does not itself enable a particular
+volume-translation model. Record the thermodynamic model, initialization sequence, requested unit,
+and phase or bulk basis with each property result. See
+[Reading fluid properties](../thermo/reading_fluid_properties.md) for property-specific units and
+initialization requirements.
+
+## Global report-unit profiles
+
+`Units.activateSIUnits()`, `Units.activateMetricUnits()`, `Units.activateFieldUnits()`, and
+`Units.activateDefaultUnits()` replace a process-wide static symbol map used by reporting code.
+They do not change the internal thermodynamic state and do not make arbitrary getter unit strings
+valid. Because the map is global mutable state, restore it after a bounded reporting operation:
+
+```python
+Units = jneqsim.util.unit.Units
+
+try:
+    Units.activateFieldUnits()
+    assert str(Units.getSymbol("pressure")) == "psia"
+    assert str(Units.getSymbol("power")) == "hp"
+finally:
+    Units.activateDefaultUnits()
+```
+
+Pass explicit units at calculation boundaries. Reserve global profiles for controlled report or
+display formatting, especially in concurrent applications and reusable libraries.
+
+## Diagnostic checklist
+
+When a conversion fails or looks implausible:
+
+1. Check the exact owner method or conversion class; do not infer support from another unit family.
+2. Preserve spelling and case exactly (`"MPa"`, `"kW"`, and `"hp"`).
+3. Distinguish absolute from gauge pressure and actual from standard volume.
+4. Flash and initialize the fluid before reading physical properties.
+5. Check whether a conversion depends on composition, molar mass, density, or standard conditions.
+6. Store each value with its unit, basis, reference condition, model, and provenance.
+
+For errors involving overload selection, stale properties, or phase availability, see the
+[troubleshooting guide](../troubleshooting/index.md). For API signatures, use the
+[current JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html).
+
+## Engineering boundary
+
+Unit conversion does not establish that an input basis is physically appropriate. Standard
+conditions, gauge reference pressure, heating-value basis, petroleum volume basis, and contractual
+reporting conventions must be agreed and recorded by the accountable engineering workflow.

@@ -1,9 +1,7 @@
 ---
 title: "PFD Diagram System: Architecture Alignment and DEXPI Synergy"
-description: "The PFD diagram system integrates cleanly at three architectural levels."
+description: "How process topology, the canonical engineering graph, PFD rendering, and DEXPI exchange align."
 ---
-
-# PFD Diagram System: Architecture Alignment and DEXPI Synergy
 
 ## 1. Architectural Fit Assessment
 
@@ -22,6 +20,7 @@ neqsim.process
 │   │   ├── ProcessEdge        # Stream edges
 │   │   └── ProcessGraphBuilder
 │   ├── diagram/         # PFD visualization layer
+│   │   ├── ProcessDiagramGraphAdapter
 │   │   ├── ProcessDiagramExporter
 │   │   ├── PFDLayoutPolicy
 │   │   ├── EquipmentRole
@@ -35,25 +34,31 @@ neqsim.process
 │   │   ├── DexpiMetadata
 │   │   └── DexpiRoundTripProfile
 │   └── lifecycle/       # Phase/state management
+├── engineering/model/   # Exchange-neutral engineering topology
+│   ├── EngineeringGraph
+│   ├── EngineeringNode
+│   └── EngineeringEdge
 └── thermo/              # Thermodynamic models
 ```
 
 ### 1.2 Diagram System Integration Points
 
-The PFD diagram system integrates cleanly at three architectural levels:
+The PFD diagram system integrates at four architectural levels:
 
 | Layer | Integration Point | Relationship |
 |-------|-------------------|--------------|
 | **ProcessSystem** | `toDOT()`, `createDiagramExporter()` | Facade methods for convenience |
-| **ProcessGraph** | `ProcessGraphBuilder.build()` | Diagram uses graph for topology |
+| **ProcessGraph** | `ProcessGraphBuilder.buildGraph()` | Diagram uses graph for topology |
+| **EngineeringGraph** | `ProcessDiagramGraphAdapter` | Stable plant, area, endpoint, and connection contract |
 | **Equipment** | `ProcessEquipmentInterface` | Visual styles keyed by class name |
 
 **Key Design Decisions:**
 
-1. **Graph-based rendering** - Diagram exports use `ProcessGraph`, not raw equipment lists
-2. **Separation of concerns** - Layout policy separate from rendering
-3. **Deterministic output** - Same process → same diagram (no random placement)
-4. **Serializable** - All diagram classes implement `Serializable`
+1. **Shared canonical topology** - `EngineeringGraph` is the exchange-independent foundation for PFD and DEXPI evolution
+2. **Execution topology reuse** - `ProcessDiagramGraphAdapter` derives local connections from `ProcessGraphBuilder`
+3. **Separation of concerns** - Canonical topology, layout, rendering, and exchange stay distinct
+4. **Deterministic output** - The same model and revision produce the same topology fingerprint
+5. **Honest qualification boundary** - Current Graphviz exports are simulator-style views, not ISO-qualified drawings
 
 ### 1.3 Alignment with NeqSim Principles
 
@@ -223,12 +228,16 @@ EquipmentVisualStyle style = EquipmentVisualStyle.getStyle(unit.getMappedEquipme
 
 ## 3. Architectural Recommendations
 
-### 3.1 Keep Current Structure
+### 3.1 Adopt the Shared Canonical Topology
 
-The `diagram/` package is correctly positioned:
-- Under `processmodel/` (not `equipment/`)
-- Parallel to `graph/` (uses graph, doesn't extend it)
-- Separate from DEXPI (clean boundaries)
+`EngineeringGraph` is the common semantic foundation. `ProcessDiagramGraphAdapter` maps one
+`ProcessSystem` or all areas in a `ProcessModel` into that graph with stable identifiers, explicit
+ports, connection segments, and structured diagnostics. Renderers and DEXPI materializers can evolve
+independently while sharing the same topology contract.
+
+The adapter intentionally does not render, assign document numbers, or assert standards compliance.
+The existing exporters remain in place until they are migrated and compared against representative
+fixtures.
 
 ### 3.2 Create Shared Equipment Type Service
 
@@ -295,13 +304,14 @@ public class DexpiDiagramBridge {
 
 ## 4. Summary
 
-### Architectural Fit: ✅ Excellent
+### Architectural Fit
 
-The PFD diagram system integrates cleanly:
-- Uses `ProcessGraph` for topology (not parallel implementation)
-- Respects package boundaries (`processmodel.diagram`)
-- Follows NeqSim patterns (Serializable, Java 8 compatible)
-- Provides convenience methods on `ProcessSystem` (facade pattern)
+The canonical foundation is now explicit:
+
+- `ProcessGraph` remains the runnable local-topology source
+- `EngineeringGraph` provides exchange-neutral engineering identities and relationships
+- `ProcessDiagramGraphAdapter` bridges single- and multi-area process models into one plant graph
+- DOT rendering and DEXPI exchange remain separate consumers pending migration
 
 ### DEXPI Synergy: ✅ Implemented
 

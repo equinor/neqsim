@@ -3,8 +3,6 @@ title: Hydrogen Production with NeqSim
 description: Modeling guide for hydrogen production routes — SMR fired reformers, ATR and POX syngas generators, blue-H2 WGS/capture/compression chains, pressure-swing adsorption (PSA), and water electrolysis. Covers ReformerFurnace, CatalyticTubeReformer, WaterGasShiftReactor, AutothermalReformer, PartialOxidationReactor, PSACascade, BlueHydrogenPlantBuilder, Electrolyzer, CAPEX estimation, para/ortho hydrogen corrections, and catalyst deactivation screening.
 ---
 
-# Hydrogen Production with NeqSim
-
 NeqSim covers thermochemical and electrochemical hydrogen production routes natively:
 
 1. **Grey / blue H₂** — steam methane reforming (SMR), autothermal reforming
@@ -70,6 +68,51 @@ capture, or vendor reactor design data.
 | Steam methane reforming (SMR) | `ReformerFurnace` + `CatalyticTubeReformer` + `FurnaceBurner` | 4/5 | Detailed radiant-box view factors, burner CFD, tube metallurgy/vendor rating |
 | Autothermal reforming (ATR) | `AutothermalReformer` with `SyngasBurnerZone` + catalytic `GibbsReactor` | 4/5 | Burner aerodynamics, oxygen-mixing CFD, rate-based catalyst bed calibration |
 | Partial oxidation (POX) | `PartialOxidationReactor` + `SyngasBurnerZone` + `QuenchSection` | 3/5 | Fast-quench kinetics, refractory thermal model, soot/coke kinetics |
+
+### Direct catalytic tube reformer
+
+Use `CatalyticTubeReformer` when the tube-side methane/steam feed already exists
+as a NeqSim stream and a fired-furnace heat balance is not required. Temperatures
+are Kelvin, pressures are absolute bar, and `setPressureDrop()` takes bar.
+
+```java
+import neqsim.process.equipment.reactor.CatalyticTubeReformer;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemInterface feedFluid = new SystemSrkEos(650.0, 25.0);
+feedFluid.addComponent("methane", 1.0);
+feedFluid.addComponent("water", 3.0);
+feedFluid.setMixingRule("classic");
+
+Stream feed = new Stream("reformer feed", feedFluid);
+feed.setFlowRate(100.0, "kmol/hr");
+feed.run();
+
+CatalyticTubeReformer reformer =
+    new CatalyticTubeReformer("primary reformer", feed);
+reformer.setReformingTemperature(1123.15, "K");
+reformer.setPressureDrop(2.0);
+reformer.run();
+
+double methaneConversion = reformer.getMethaneConversion();
+double heatDutyKW = reformer.getHeatDuty("kW");
+double steamToCarbon = reformer.getSteamToCarbonRatio();
+double outletPressureBara = reformer.getOutletStream().getPressure("bara");
+boolean tubeWallAcceptable = reformer.isTubeWallTemperatureAcceptable();
+```
+
+For this 3:1 steam-to-methane feed, the current SRK equilibrium calculation
+converges to about 81% methane conversion. The regression requires conversion
+between 75% and 90%, positive heat duty, a steam-to-carbon ratio of 3.0, and an
+outlet pressure of 23 bara. The duty includes feed heating from 650 K to the
+specified reforming temperature as well as the equilibrium reaction enthalpy.
+
+The class is a screening equilibrium model. It does not represent reaction-rate
+limits, axial profiles, burner CFD, detailed radiation, catalyst-pellet transport,
+or vendor tube metallurgy. Use `ReformerFurnace` when fuel, air, flue gas, and
+available radiant heat must be included in the process heat balance.
 
 ### SMR fired reformer builder
 
@@ -233,6 +276,10 @@ H2 product rate, and carbon-intensity metrics remain in physically credible
 screening ranges. These tests are deliberately range-based so improved EOS or
 reactor solvers can move the answer without breaking validation, while large
 model regressions are still caught.
+
+`CatalyticTubeReformerTest` separately locks the direct SMR quick start at
+1123.15 K and 23 bara. It checks conversion, heat duty, steam-to-carbon ratio,
+outlet pressure, syngas-product creation, and the tube-wall screening result.
 
 ## Green H₂ — water electrolysis
 
@@ -421,6 +468,7 @@ the result for guaranteed catalyst run length.
 
 | Test class | Coverage |
 |---|---|
+| `CatalyticTubeReformerTest` | Direct SMR quick start, conversion, duty, S/C ratio, pressure drop, product species, and tube-wall screening |
 | `PressureSwingAdsorptionBedTest` | Defaults, recovery cap, mass balance, composition, sorbent switch |
 | `ElectrolyzerTechnologyTest` | Per-tech default consistency |
 | `ElectrolyzerIVCharacteristicTest` | $E_{rev}$ vs $T$, Tafel monotonicity, technology ordering |

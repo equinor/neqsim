@@ -58,6 +58,38 @@ if thread.isAlive():
 ```
 Best for: models with few recycles where NeqSim's internal solver handles convergence.
 
+**Strategy C — `ProcessModel.runUntilConverged` with flow filters (recommended
+for multi-area plants with stagnant legs):**
+```python
+plant = ProcessModel()
+plant.add("sep train A", sep_a)
+# ... add all areas ...
+
+# Stagnant sections (e.g. an HT injection train at zero rate) are not solved at
+# all. Manifold, ThrottlingValve, PipeBeggsAndBrills and MultiStreamHeatExchanger
+# all honour this and still publish their outlet pressure at zero flow, so a
+# downstream mixer keeps a valid pressure boundary.
+if inp.injection_gas_rate_ht <= 0.0:
+    for area in ("HT injection process A", "HT injection process B"):
+        plant.get(area).setSectionLowFlowThreshold(50.0, "kg/hr")
+
+# The plant gate is a MAX over RELATIVE boundary-stream errors, which a dead leg
+# dominates (0.007 kg/hr on 0.1 kg/hr = 6.6e-02, vs a real 443 kg/hr on
+# 138 t/hr = 3.2e-03). Filter it at the source:
+plant.setBoundaryFlowFloor(1.0)                     # drop sub-1 kg/hr streams
+converged = plant.runUntilConverged(15, 1e-3, 1.0)  # rel 1e-3 OR abs 1 kg/hr
+
+print(plant.getConvergenceSummary())                # prints absolute Δflow too
+for e in plant.getNonConvergedBoundaryStreamErrors():
+    print(e.getStreamName(), e.getFlowError(), e.getAbsoluteFlowChange())
+```
+Best for: full-platform `ProcessModel`s where some trains are seasonally or
+scenario-wise inactive.
+
+> **Gotcha:** `setSectionLowFlowThreshold()` deactivates units for the rest of
+> the solve pass. Never apply it to a section that is only dry on the first
+> recycle iteration (e.g. a JT valve on a separator liquid outlet).
+
 ---
 
 ## 2. Fluid Creation

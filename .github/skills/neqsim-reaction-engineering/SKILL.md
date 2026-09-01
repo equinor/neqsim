@@ -293,3 +293,24 @@ metrics.calculate();
 // getFossilFuelDisplacementTCO2PerYear(), getNetCarbonBalanceTCO2PerYear()
 // getEnergyReturnOnInvestment(), getRenewableEnergyFraction()
 ```
+
+## Uncontrolled and self-sustaining reactions
+
+Two distinct escalation questions sit outside the reactor classes above, and the
+choice between them depends on whether heat loss is spatially resolved:
+
+| Question | Model | Class |
+|---|---|---|
+| A charged batch reacts adiabatically — how hot does it get, and how long until maximum rate? | Lumped adiabatic (MTSR, dT_ad, TMR_ad) | `neqsim.process.safety.reaction.RunawayReactionAnalyzer` |
+| A material generates heat throughout its volume and conducts it to a boundary — will it self-ignite, at what size and after how long? | Frank-Kamenetskii / Semenov criticality | `neqsim.process.safety.selfheating` |
+
+`RunawayReactionAnalyzer` assumes a well-stirred mass with **no spatial
+conduction**, so it has no concept of a critical thickness or a critical ambient
+temperature. Do not use it to assess spontaneous ignition of a combustible liquid
+absorbed into porous insulation (a lagging fire) — see
+[`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md).
+
+Note also that `KineticReaction` and `GibbsReactor` are complementary but not
+interchangeable for ignition questions: equilibrium will report complete oxidation
+of any hydrocarbon at ambient temperature, which says nothing about whether the
+reaction proceeds at a measurable rate. Ignition is always a kinetic question.

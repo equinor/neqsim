@@ -3,8 +3,6 @@ title: Diffusivity Models
 description: "Diffusion coefficient calculation methods in NeqSim: Chapman-Enskog, Wilke-Lee, Fuller-Schettler-Giddings for gases; Siddiqi-Lucas, Wilke-Chang, Tyn-Calus, Hayduk-Minhas for liquids. Includes validation against experimental data."
 ---
 
-# Diffusivity Models
-
 This guide documents the diffusion coefficient calculation methods available in NeqSim for gas and liquid systems.
 
 ## Table of Contents
@@ -59,10 +57,17 @@ Diffusion coefficients describe the rate of molecular transport due to concentra
 | `"Alkanol amine"` | Aqueous | `AmineDiffusivity` |
 
 **Setting a diffusivity model:**
+
+Select the model on an existing phase, then reinitialize that phase before reading a coefficient:
+
 ```java
-fluid.initPhysicalProperties();
-fluid.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
-fluid.getPhase("oil").getPhysicalProperties().setDiffusionCoefficientModel("Siddiqi Lucas");
+fluid.getPhase("gas").getPhysicalProperties()
+    .setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
+fluid.getPhase("gas").initPhysicalProperties();
+
+fluid.getPhase("oil").getPhysicalProperties()
+    .setDiffusionCoefficientModel("Siddiqi Lucas");
+fluid.getPhase("oil").initPhysicalProperties();
 ```
 
 ---
@@ -445,116 +450,118 @@ All models pass the following consistency checks:
 
 ## Usage Examples
 
-### Accessing Binary Diffusion Coefficients
+### Binary gas diffusion coefficient
+
+This complete example uses the public `PhysicalProperties` API. The returned Maxwell-Stefan
+coefficient is in m²/s.
 
 ```java
+import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create and flash fluid
-SystemInterface fluid = new SystemSrkEos(300.0, 10.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.05);
-fluid.addComponent("CO2", 0.05);
-fluid.setMixingRule("classic");
+public final class GasDiffusivityExample {
+  private GasDiffusivityExample() {}
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 1.01325);
+    fluid.addComponent("methane", 0.50);
+    fluid.addComponent("nitrogen", 0.50);
+    fluid.setMixingRule("classic");
 
-// Initialize physical properties
-fluid.initPhysicalProperties();
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
 
-// Get binary diffusion coefficients
-double[][] Dij = fluid.getPhase("gas").getPhysicalProperties()
-    .getDiffusivityCalc().getBinaryDiffusionCoefficients();
+    PhysicalProperties properties =
+        fluid.getPhase("gas").getPhysicalProperties();
+    properties.setDiffusionCoefficientModel(
+        "Fuller-Schettler-Giddings");
+    fluid.getPhase("gas").initPhysicalProperties();
 
-// Print diffusion matrix
-int n = fluid.getPhase("gas").getNumberOfComponents();
-for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-        System.out.println("D[" + i + "][" + j + "] = " + Dij[i][j] + " m2/s");
+    double diffusivityM2PerS =
+        properties.getDiffusionCoefficient("methane", "nitrogen");
+    if (!(diffusivityM2PerS > 0.0)
+        || !Double.isFinite(diffusivityM2PerS)) {
+      throw new IllegalStateException("Invalid binary diffusivity");
     }
+  }
 }
 ```
 
-### Switching Between Gas Models
+Use component indexes with `getDiffusionCoefficient(i, j)` when the caller already owns a
+validated component ordering. The name overload is clearer in user-facing workflows.
+
+### Comparing models
+
+A model setter changes the calculator but does not refresh the stored coefficients. Reinitialize
+the phase after every model change:
 
 ```java
-SystemInterface fluid = new SystemSrkEos(298.15, 1.01325);
-fluid.addComponent("methane", 0.5);
-fluid.addComponent("nitrogen", 0.5);
-fluid.setMixingRule("classic");
+String[] models = {
+  "Chapman-Enskog",
+  "Wilke Lee",
+  "Fuller-Schettler-Giddings"
+};
+for (String model : models) {
+  properties.setDiffusionCoefficientModel(model);
+  fluid.getPhase("gas").initPhysicalProperties();
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+  double diffusivityM2PerS =
+      properties.getDiffusionCoefficient("methane", "nitrogen");
+  if (!(diffusivityM2PerS > 0.0)
+      || !Double.isFinite(diffusivityM2PerS)) {
+    throw new IllegalStateException("Invalid diffusivity for " + model);
+  }
+}
+```
+
+Apply the same sequence to an aqueous or oil phase, using a model key implemented for that phase.
+Do not read the public mutable `diffusivityCalc` field; use the `PhysicalProperties` accessors so
+the example remains on the supported API boundary.
+
+### Effective diffusivity
+
+Effective coefficients are a separate multicomponent calculation. Calculate them before reading
+a component result:
+
+```java
+properties.calcEffectiveDiffusionCoefficients();
+
+int componentCount = fluid.getPhase("gas").getNumberOfComponents();
+for (int component = 0; component < componentCount; component++) {
+  double effectiveDiffusivityM2PerS =
+      properties.getEffectiveDiffusionCoefficient(component);
+  if (!(effectiveDiffusivityM2PerS > 0.0)
+      || !Double.isFinite(effectiveDiffusivityM2PerS)) {
+    throw new IllegalStateException("Invalid effective diffusivity");
+  }
+}
+```
+
+### Amine model set
+
+`initPhysicalProperties(String)` selects a `PhysicalPropertyType` such as `VISCOSITY`; it does
+not select a model set. Configure amine service through `PhysicalPropertyModel.AMINE` before
+initialization:
+
+```java
+import neqsim.physicalproperties.system.PhysicalPropertyModel;
+
+fluid.setPhysicalPropertyModel(PhysicalPropertyModel.AMINE);
 fluid.initPhysicalProperties();
 
-// Compare gas models
-String[] models = {"Chapman-Enskog", "Wilke Lee", "Fuller-Schettler-Giddings"};
-for (String model : models) {
-    fluid.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel(model);
-    double D = fluid.getPhase("gas").getPhysicalProperties()
-        .diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1, 0);
-    System.out.println(model + ": D(CH4-N2) = " + D + " m2/s");
-}
+PhysicalProperties aqueousProperties =
+    fluid.getPhase("aqueous").getPhysicalProperties();
+aqueousProperties.setDiffusionCoefficientModel("Alkanol amine");
+fluid.getPhase("aqueous").initPhysicalProperties();
+
+double co2AmineDiffusivityM2PerS =
+    aqueousProperties.getDiffusionCoefficient(0, 1);
 ```
 
-### Liquid-Phase Diffusion in Water
-
-```java
-SystemInterface fluid = new SystemSrkEos(298.15, 1.01325);
-fluid.addComponent("CO2", 0.01);
-fluid.addComponent("water", 0.99);
-fluid.createDatabase(true);
-fluid.setMixingRule(2);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
-
-// Compare liquid models
-String[] models = {"Siddiqi Lucas", "Wilke-Chang", "Hayduk-Minhas", "Tyn-Calus"};
-for (String model : models) {
-    fluid.getPhase("aqueous").getPhysicalProperties().setDiffusionCoefficientModel(model);
-    double D = fluid.getPhase("aqueous").getPhysicalProperties()
-        .diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1, 0);
-    System.out.println(model + ": D(CO2-water) = " + D + " m2/s");
-}
-```
-
-### Effective Diffusivity
-
-```java
-// Get effective diffusion coefficient
-double[] Deff = fluid.getPhase("gas").getPhysicalProperties()
-    .getDiffusivityCalc().getEffectiveDiffusionCoefficient();
-
-for (int i = 0; i < n; i++) {
-    String name = fluid.getPhase("gas").getComponent(i).getName();
-    System.out.println("D_eff[" + name + "] = " + Deff[i] + " m2/s");
-}
-```
-
-### Diffusivity in Amine Solutions
-
-```java
-SystemInterface fluid = new SystemSrkCPAstatoil(313.15, 1.0);
-fluid.addComponent("CO2", 0.1);
-fluid.addComponent("water", 0.7);
-fluid.addComponent("MDEA", 0.2);
-fluid.setMixingRule(10);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-
-// Use amine-specific diffusivity model
-fluid.initPhysicalProperties("AMINE");
-
-double[][] D = fluid.getPhase("aqueous").getPhysicalProperties()
-    .getDiffusivityCalc().getBinaryDiffusionCoefficients();
-
-System.out.println("D_CO2 in amine: " + D[0][1] + " m2/s");
-```
+Confirm the component ordering before using integer indexes. For named components, prefer
+`getDiffusionCoefficient(component1, component2)`.
 
 ---
 

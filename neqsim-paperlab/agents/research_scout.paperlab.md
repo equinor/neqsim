@@ -290,7 +290,7 @@ publication potential:
   → *Fluid Phase Equilibria*
 
 - **TwoFluidPipe Transient Model** — 7-equation AUSM+ scheme with 7
-  interfacial friction closures. Benchmark against OLGA / experimental data.
+  interfacial friction closures. Benchmark against public experimental data.
   → *International Journal of Multiphase Flow*
 
 ### Tier 3: High Impact, High Effort (12+ weeks each)

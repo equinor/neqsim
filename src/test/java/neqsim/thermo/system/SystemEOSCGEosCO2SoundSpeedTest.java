@@ -18,12 +18,6 @@ public class SystemEOSCGEosCO2SoundSpeedTest extends neqsim.NeqSimTest {
 
     SystemInterface system = new SystemEOSCGEos(temperature, pressure);
     system.addComponent("CO2", 1.0);
-    system.setMixingRule("classic"); // EOS-CG might have its own mixing rule handling, but setting
-    // classic is often safe or ignored if not relevant.
-    // Actually EOS-CG is a specific model, maybe I shouldn't set mixing rule if it defaults
-    // correctly.
-    // Let's check SystemEOSCGEos constructor or init.
-    // The existing test SystemEOSCGEosThermodynamicConsistencyTest doesn't set mixing rule.
 
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     ops.TPflash();

@@ -11,13 +11,12 @@ import neqsim.process.processmodel.dexpi.DexpiProcessUnit;
  * Defines visual styling for process equipment in PFD diagrams.
  *
  * <p>
- * This class provides Graphviz-compatible visual attributes for each equipment type following oil &amp; gas industry
- * conventions:
+ * This class provides Graphviz-compatible visual attributes for each equipment type using simulator-style conventions:
  * </p>
  * <ul>
  * <li>Shapes that resemble P&amp;ID symbols</li>
  * <li>Colors that indicate function</li>
- * <li>Consistent sizing for professional appearance</li>
+ * <li>Consistent sizing for readable output</li>
  * </ul>
  *
  * @author NeqSim

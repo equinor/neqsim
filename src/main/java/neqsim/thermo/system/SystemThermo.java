@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -45,6 +46,73 @@ import neqsim.util.unit.Units;
 public abstract class SystemThermo implements SystemInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /**
+   * Restores the serialized fields and reconciles a stale scalar total with the duplicated overall-component inventory.
+   *
+   * <p>
+   * A separated phase may be serialized after its component inventory has changed while the scalar total still
+   * describes the upstream system. Overall mole fractions are derived by dividing component inventories by that scalar,
+   * so the mismatch must be repaired before the first initialization or flash. The reconciliation is deliberately
+   * limited to deserialization and to phase slots that agree on the overall inventory.
+   * </p>
+   *
+   * @param input serialized object input
+   * @throws IOException if the serialized object cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    reconcileTotalMolesWithComponentInventory();
+  }
+
+  /**
+   * Reconciles the scalar total with a finite, positive overall-component inventory.
+   *
+   * <p>
+   * Every active phase slot normally carries the same overall component amounts while storing its phase-specific
+   * amounts separately. Reconciliation is skipped when those duplicated inventories disagree, because that state cannot
+   * safely identify one authoritative total.
+   * </p>
+   */
+  private void reconcileTotalMolesWithComponentInventory() {
+    if (phaseArray == null || numberOfComponents == 0 || phaseArray[phaseIndex[0]] == null) {
+      return;
+    }
+
+    double inventory = 0.0;
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      double componentMoles = getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      if (!Double.isFinite(componentMoles) || componentMoles < 0.0) {
+        return;
+      }
+      inventory += componentMoles;
+    }
+    if (!Double.isFinite(inventory) || inventory <= 0.0) {
+      return;
+    }
+
+    for (int phase = 1; phase < numberOfPhases; phase++) {
+      if (getPhase(phase) == null || getPhase(phase).getNumberOfComponents() != numberOfComponents) {
+        return;
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        double referenceMoles = getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+        double phaseMoles = getPhase(phase).getComponent(componentIndex).getNumberOfmoles();
+        double tolerance = 1.0e-12 * Math.max(1.0, Math.abs(referenceMoles));
+        if (!Double.isFinite(phaseMoles) || Math.abs(phaseMoles - referenceMoles) > tolerance) {
+          return;
+        }
+      }
+    }
+
+    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
+    if (!Double.isFinite(totalNumberOfMoles) || Math.abs(totalNumberOfMoles - inventory) > tolerance) {
+      setTotalNumberOfMolesRaw(inventory);
+      isInitialized = false;
+    }
+  }
+
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SystemThermo.class);
 
@@ -78,6 +146,7 @@ public abstract class SystemThermo implements SystemInterface {
   protected boolean checkStability = true;
   protected ChemicalReactionOperations chemicalReactionOperations = null;
   protected boolean chemicalSystem = false;
+  private boolean chemicalReactionStateStale = false;
   private ArrayList<String> componentNames = new ArrayList<String>();
 
   // TODO: componentNameTag is not working yet, a kind of alias-postfix for
@@ -252,7 +321,7 @@ public abstract class SystemThermo implements SystemInterface {
         tmpPhase.addMolesChemReac(index, moles, moles);
       }
     }
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
     // TODO: isInitialized = false;
   }
 
@@ -274,7 +343,7 @@ public abstract class SystemThermo implements SystemInterface {
       phaseArray[phaseIndex[i]].addMolesChemReac(index, moles * k, moles);
     }
 
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
     // TODO: isInitialized = false;
   }
 
@@ -310,6 +379,7 @@ public abstract class SystemThermo implements SystemInterface {
         getPhase(i).setAttractiveTerm(attractiveTermNumber);
       }
       numberOfComponents++;
+      markChemicalReactionStateStale();
     } else {
       for (PhaseInterface tmpPhase : phaseArray) {
         if (tmpPhase != null && (tmpPhase.getComponent(componentName).getNumberOfMolesInPhase() + moles) < 0.0) {
@@ -326,7 +396,7 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     }
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
     // TODO: isInitialized = false;
   }
 
@@ -385,7 +455,7 @@ public abstract class SystemThermo implements SystemInterface {
 
     componentNames.add(componentName);
     double k = 1.0;
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
 
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (phaseNumber == i) {
@@ -397,6 +467,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
     }
     numberOfComponents++;
+    markChemicalReactionStateStale();
     // TODO: isInitialized = false;
   }
 
@@ -1308,14 +1379,41 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double calcHenrysConstant(String component) {
     if (numberOfPhases != 2) {
-      logger.error("Can't calculate Henrys constant - two phases must be present.");
-      return 0;
-    } else {
-      int compNumb = getPhase(getPhaseIndex(0)).getComponent(component).getComponentNumber();
-      double hc = getPhase(getPhaseIndex(0)).getFugacity(compNumb)
-          / getPhase(getPhaseIndex(1)).getComponent(component).getx();
-      return hc;
+      throw new IllegalStateException("calcHenrysConstant: Henry's constant cannot be calculated with " + numberOfPhases
+          + " phase(s); exactly two phases must be present. "
+          + "Run a flash that produces a gas and a liquid phase before calling this method.");
     }
+    int compNumb = getPhase(getPhaseIndex(0)).getComponent(component).getComponentNumber();
+    double hc = getPhase(getPhaseIndex(0)).getFugacity(compNumb)
+        / getPhase(getPhaseIndex(1)).getComponent(component).getx();
+    return hc;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcHenrysConstant(String component, String unit) {
+    double henryBarPerMoleFraction = calcHenrysConstant(component);
+    String key = unit == null ? "" : unit.trim().toLowerCase().replace(" ", "");
+    if (key.length() == 0 || key.equals("bar")) {
+      return henryBarPerMoleFraction;
+    }
+
+    PhaseInterface liquidPhase = getPhase(getPhaseIndex(1));
+    // Liquid molar volume in m3/mol; getMolarMass returns kg/mol and getDensity kg/m3.
+    double molarVolume = liquidPhase.getMolarMass() / liquidPhase.getDensity("kg/m3");
+    double concentrationPerBar = 1.0 / (molarVolume * henryBarPerMoleFraction);
+
+    if (key.equals("mol/m3/bar") || key.equals("mmol/l/bar")) {
+      return concentrationPerBar;
+    }
+    if (key.equals("mol/l/bar")) {
+      return concentrationPerBar / 1000.0;
+    }
+    if (key.equals("mg/l/bar")) {
+      return concentrationPerBar * liquidPhase.getComponent(component).getMolarMass() * 1000.0;
+    }
+    throw new IllegalArgumentException("calcHenrysConstant: unit '" + unit
+        + "' is not supported; use bar, mol/m3/bar, mmol/L/bar, " + "mol/L/bar or mg/L/bar");
   }
 
   /** {@inheritDoc} */
@@ -1336,6 +1434,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void changeComponentName(String name, String newName) {
+    markChemicalReactionStateStale();
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentNames.get(i).equals(name)) {
         componentNames.set(i, newName);
@@ -1359,9 +1458,28 @@ public abstract class SystemThermo implements SystemInterface {
     checkStability = val;
   }
 
+  /** Mark initialized chemical-reaction topology stale after a component identity change. */
+  private void markChemicalReactionStateStale() {
+    if (chemicalReactionOperations != null) {
+      chemicalReactionStateStale = true;
+    }
+  }
+
+  /** Reject use of chemical-reaction state built for a different component set. */
+  private void requireCurrentChemicalReactionState() {
+    if (chemicalReactionStateStale) {
+      throw new IllegalStateException(
+          "Chemical-reaction state is stale because component identities changed after chemicalReactionInit(). "
+              + "Re-run chemicalReactionInit(), createDatabase(true), and setMixingRule(...) before the next reactive calculation.");
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void chemicalReactionInit() {
+    chemicalReactionOperations = null;
+    chemicalSystem = false;
+    chemicalReactionStateStale = false;
     chemicalReactionOperations = new ChemicalReactionOperations(this);
     chemicalSystem = chemicalReactionOperations.hasReactions();
   }
@@ -1369,7 +1487,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void clearAll() {
-    setTotalNumberOfMoles(0);
+    setTotalNumberOfMolesRaw(0);
     phaseType[0] = PhaseType.GAS;
     phaseType[1] = PhaseType.LIQUID;
     numberOfComponents = 0;
@@ -1381,6 +1499,8 @@ public abstract class SystemThermo implements SystemInterface {
     beta[4] = 1.0;
     beta[5] = 1.0;
     chemicalSystem = false;
+    chemicalReactionOperations = null;
+    chemicalReactionStateStale = false;
 
     double oldTemp = phaseArray[0].getTemperature();
     double oldPres = phaseArray[0].getPressure();
@@ -1402,8 +1522,6 @@ public abstract class SystemThermo implements SystemInterface {
     SystemThermo clonedSystem = null;
     try {
       clonedSystem = (SystemThermo) super.clone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
     } catch (CloneNotSupportedException ex) {
       throw new AssertionError("Clone failed for SystemThermo", ex);
     }
@@ -1436,6 +1554,10 @@ public abstract class SystemThermo implements SystemInterface {
     clonedSystem.phaseArray = phaseArray.clone();
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       clonedSystem.phaseArray[i] = phaseArray[i].clone();
+    }
+
+    if (chemicalReactionOperations != null) {
+      clonedSystem.chemicalReactionInit();
     }
 
     return clonedSystem;
@@ -1932,6 +2054,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public ChemicalReactionOperations getChemicalReactionOperations() {
+    requireCurrentChemicalReactionState();
     return chemicalReactionOperations;
   }
 
@@ -2266,7 +2389,7 @@ public abstract class SystemThermo implements SystemInterface {
       totalMolesInSystem = 1.0e-50;
     }
 
-    newSystem.setTotalNumberOfMoles(totalMolesInSystem);
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(totalMolesInSystem);
     ((SystemThermo) newSystem).isInitialized = false;
 
     newSystem.init(0);
@@ -2469,25 +2592,37 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * getMolarMass() * 3600.0;
     } else if (flowunit.equals("kg/day")) {
       return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0;
-    } else if (flowunit.equals("m3/sec")) {
+    } else if (flowunit.equals("m3/sec") || flowunit.equals("Am3/sec")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() / getDensity("kg/m3");
       // return getVolume() / 1.0e5;
-    } else if (flowunit.equals("m3/min")) {
+    } else if (flowunit.equals("m3/min") || flowunit.equals("Am3/min")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3");
       // return getVolume() / 1.0e5 * 60.0;
-    } else if (flowunit.equals("m3/hr")) {
+    } else if (flowunit.equals("m3/hr") || flowunit.equals("Am3/hr")) {
       // return getVolume() / 1.0e5 * 3600.0;
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
+    } else if (flowunit.equals("m3/day") || flowunit.equals("Am3/day")) {
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 / getDensity("kg/m3");
+    } else if (flowunit.equals("idSm3/sec")) {
+      return totalNumberOfMoles * getMolarMass() / getIdealLiquidDensity("kg/m3");
+    } else if (flowunit.equals("idSm3/min")) {
+      return totalNumberOfMoles * getMolarMass() * 60.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("idSm3/hr")) {
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getIdealLiquidDensity("kg/m3");
+    } else if (flowunit.equals("idSm3/day")) {
+      return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("gallons/min")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3") * 1000 / 3.78541178;
     } else if (flowunit.equals("Sm3/sec")) {
       return totalNumberOfMoles * ThermodynamicConstantsInterface.R
+          * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
+    } else if (flowunit.equals("Sm3/min")) {
+      return totalNumberOfMoles * 60.0 * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/hr")) {
       return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
@@ -2523,7 +2658,8 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
-          + "kg/hr, kg/day, m3/sec, m3/min, m3/hr, idSm3/hr, gallons/min, Sm3/sec, Sm3/hr, "
+          + "kg/hr, kg/day, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, Am3/hr, m3/day, Am3/day, "
+          + "idSm3/sec, idSm3/min, idSm3/hr, idSm3/day, gallons/min, Sm3/sec, Sm3/min, Sm3/hr, "
           + "Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, "
           + "mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
           + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
@@ -4010,7 +4146,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void initTotalNumberOfMoles(double change) {
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + change);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + change);
     // System.out.println("total moles: " + totalNumberOfMoles);
     for (int j = 0; j < numberOfPhases; j++) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -4019,9 +4155,70 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
+  /**
+   * Synchronize reaction-adjusted overall component amounts from a converged single-phase inventory.
+   *
+   * <p>
+   * Chemical reactions conserve elements but can change the total number of species moles. This method updates the
+   * scalar total and every phase object's overall composition without rescaling the converged reactive inventory.
+   * Components outside the reaction set retain their exact overall amount; any single-phase round-off in their phase
+   * amount is corrected before synchronization. Multiphase callers must instead use a coupled
+   * reaction/phase-equilibrium algorithm that preserves feed elements.
+   * </p>
+   *
+   * @param reactiveComponents components whose overall amounts are replaced by the converged reactive-phase inventory
+   */
+  public final void synchronizeSinglePhaseReactionComposition(ComponentInterface[] reactiveComponents) {
+    if (numberOfPhases != 1) {
+      throw new IllegalStateException("Single-phase reaction synchronization requires exactly one active phase");
+    }
+    if (reactiveComponents == null) {
+      throw new IllegalArgumentException("Reactive components cannot be null");
+    }
+    boolean[] reactiveComponentNumbers = new boolean[numberOfComponents];
+    for (ComponentInterface component : reactiveComponents) {
+      if (component == null || component.getComponentNumber() < 0
+          || component.getComponentNumber() >= numberOfComponents) {
+        throw new IllegalArgumentException("Reactive component numbers must identify current system components");
+      }
+      reactiveComponentNumbers[component.getComponentNumber()] = true;
+    }
+    double[] componentMoles = new double[numberOfComponents];
+    double totalMoles = 0.0;
+    PhaseInterface reactivePhase = getPhase(0);
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      ComponentInterface component = reactivePhase.getComponent(componentIndex);
+      if (reactiveComponentNumbers[componentIndex]) {
+        componentMoles[componentIndex] = component.getNumberOfMolesInPhase();
+      } else {
+        componentMoles[componentIndex] = component.getNumberOfmoles();
+        double phaseCorrection = componentMoles[componentIndex] - component.getNumberOfMolesInPhase();
+        reactivePhase.addMolesChemReac(componentIndex, phaseCorrection, 0.0);
+      }
+      totalMoles += componentMoles[componentIndex];
+    }
+    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles)) {
+      throw new IllegalStateException("Reaction-adjusted total moles must be finite and positive");
+    }
+
+    setTotalNumberOfMolesRaw(totalMoles);
+    for (PhaseInterface phase : phaseArray) {
+      if (phase == null) {
+        continue;
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        phase.getComponent(componentIndex).setNumberOfmoles(componentMoles[componentIndex]);
+        phase.getComponent(componentIndex).setz(componentMoles[componentIndex] / totalMoles);
+      }
+    }
+    initBeta();
+    init_x_y();
+  }
+
   /** {@inheritDoc} */
   @Override
   public final boolean isChemicalSystem() {
+    requireCurrentChemicalReactionState();
     return chemicalSystem;
   }
 
@@ -4179,7 +4376,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    newSystem.setTotalNumberOfMoles(getPhase(phaseNumber).getNumberOfMolesInPhase());
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(getPhase(phaseNumber).getNumberOfMolesInPhase());
 
     newSystem.init(0);
     newSystem.setNumberOfPhases(1);
@@ -4204,7 +4401,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    newSystem.setTotalNumberOfMoles(
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(
         getPhase(phaseNumber1).getNumberOfMolesInPhase() + getPhase(phaseNumber2).getNumberOfMolesInPhase());
 
     newSystem.init(0);
@@ -4228,7 +4425,7 @@ public abstract class SystemThermo implements SystemInterface {
       phaseArray[i] = newPhase.clone();
     }
 
-    setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
+    setTotalNumberOfMolesRaw(newPhase.getNumberOfMolesInPhase());
     this.init(0);
     setNumberOfPhases(1);
     setPhaseType(0, newPhase.getType());
@@ -4370,8 +4567,9 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void removeComponent(String name) {
     name = ComponentInterface.getComponentNameFromAlias(name);
+    markChemicalReactionStateStale();
 
-    setTotalNumberOfMoles(getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).removeComponent(name, getTotalNumberOfMoles(),
           getPhase(i).getComponent(name).getNumberOfMolesInPhase());
@@ -4384,7 +4582,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void removePhase(int specPhase) {
-    setTotalNumberOfMoles(getTotalNumberOfMoles() - getPhase(specPhase).getNumberOfMolesInPhase());
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() - getPhase(specPhase).getNumberOfMolesInPhase());
 
     for (int j = 0; j < numberOfPhases; j++) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -4447,7 +4645,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < 2; i++) {
       phaseArray[i] = newPhase.clone();
     }
-    setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
+    setTotalNumberOfMolesRaw(newPhase.getNumberOfMolesInPhase());
   }
 
   /** {@inheritDoc} */
@@ -5480,14 +5678,14 @@ public abstract class SystemThermo implements SystemInterface {
     }
     double density = 0.0;
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
-        || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr") || flowunit.equals("m3/min")
-        || flowunit.equals("m3/sec") || flowunit.equals("m3/day")) {
+        || flowunit.equals("Am3/sec") || flowunit.equals("Am3/day") || flowunit.equals("m3/hr")
+        || flowunit.equals("m3/min") || flowunit.equals("m3/sec") || flowunit.equals("m3/day")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     }
 
     density = getPhase(0).getDensity("kg/m3");
     if (flowunit.equals("idSm3/hr") || flowunit.equals("idSm3/min") || flowunit.equals("idSm3/sec")
-        || flowunit.equals("gallons/min")) {
+        || flowunit.equals("idSm3/day") || flowunit.equals("gallons/min")) {
       density = getIdealLiquidDensity("kg/m3");
     }
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), density, 0);
@@ -5519,7 +5717,76 @@ public abstract class SystemThermo implements SystemInterface {
        */
       totalNumberOfMoles = 0;
     }
+    rescaleComponentMoles(totalNumberOfMoles);
     this.totalNumberOfMoles = totalNumberOfMoles;
+  }
+
+  /**
+   * Sets the scalar total-moles field only, leaving the per-component mole numbers untouched. For internal bookkeeping
+   * where the caller has already updated the component moles.
+   *
+   * @param totalNumberOfMoles new total number of moles, negative values are clipped to zero
+   */
+  protected final void setTotalNumberOfMolesRaw(double totalNumberOfMoles) {
+    this.totalNumberOfMoles = totalNumberOfMoles < 0 ? 0.0 : totalNumberOfMoles;
+  }
+
+  /**
+   * Scales every component's mole numbers so they sum to {@code target}, keeping the composition unchanged. Component
+   * moles are what {@code init(0)} divides by the total to get the overall mole fractions, so a total that disagrees
+   * with the component moles makes z sum to something other than one and corrupts the next flash.
+   *
+   * @param target the new total number of moles
+   */
+  private void rescaleComponentMoles(double target) {
+    if (phaseArray == null || numberOfComponents == 0 || phaseArray[phaseIndex[0]] == null) {
+      return;
+    }
+    double current = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      current += getPhase(0).getComponent(i).getNumberOfmoles();
+    }
+    if (Math.abs(target - current) <= 1.0e-12 * Math.max(1.0, Math.abs(current))) {
+      return;
+    }
+
+    double[] change = new double[numberOfComponents];
+    if (current > 1.0e-100) {
+      double factor = target / current;
+      for (int i = 0; i < numberOfComponents; i++) {
+        change[i] = factor - 1.0;
+      }
+      for (PhaseInterface tmpPhase : phaseArray) {
+        if (tmpPhase == null) {
+          continue;
+        }
+        for (int i = 0; i < numberOfComponents && i < tmpPhase.getNumberOfComponents(); i++) {
+          ComponentInterface comp = tmpPhase.getComponent(i);
+          tmpPhase.addMolesChemReac(i, comp.getNumberOfMolesInPhase() * change[i], comp.getNumberOfmoles() * change[i]);
+        }
+      }
+      return;
+    }
+
+    // Empty fluid: distribute on the stored overall mole fractions, as init(initType > 0) does.
+    double sumz = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      sumz += getPhase(0).getComponent(i).getz();
+    }
+    if (sumz <= 0.0) {
+      return;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      change[i] = target * getPhase(0).getComponent(i).getz() / sumz;
+    }
+    for (PhaseInterface tmpPhase : phaseArray) {
+      if (tmpPhase == null) {
+        continue;
+      }
+      for (int i = 0; i < numberOfComponents && i < tmpPhase.getNumberOfComponents(); i++) {
+        tmpPhase.addMolesChemReac(i, change[i], change[i]);
+      }
+    }
   }
 
   /** {@inheritDoc} */

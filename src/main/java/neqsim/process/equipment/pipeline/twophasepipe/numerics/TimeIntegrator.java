@@ -112,20 +112,35 @@ public class TimeIntegrator implements Serializable {
    * @return Updated state at t + dt
    */
   public double[][] step(double[][] U, RHSFunction rhs, double dt) {
+    double[][] advancedState;
     switch (method) {
     case EULER:
-      return stepEuler(U, rhs, dt);
+      advancedState = stepEuler(U, rhs, dt);
+      break;
     case RK2:
-      return stepRK2(U, rhs, dt);
+      advancedState = stepRK2(U, rhs, dt);
+      break;
     case RK4:
-      return stepRK4(U, rhs, dt);
+      advancedState = stepRK4(U, rhs, dt);
+      break;
     case SSP_RK3:
-      return stepSSPRK3(U, rhs, dt);
+      advancedState = stepSSPRK3(U, rhs, dt);
+      break;
     case IMEX_PRESSURE_CORRECTION:
-      return stepIMEXPressureCorrection(U, rhs, dt);
+      if (coupledPressureMomentumEnabled) {
+        // The coupled solver supplies the acoustic correction and must not be
+        // stacked on the legacy sequential IMEX pressure correction.
+        advancedState = stepEuler(U, rhs, dt);
+      } else {
+        return stepIMEXPressureCorrection(U, rhs, dt);
+      }
+      break;
     default:
-      return stepRK4(U, rhs, dt);
+      advancedState = stepRK4(U, rhs, dt);
+      break;
     }
+    advancedState = applyCoupledPressureMomentumCorrection(advancedState, dt);
+    return applyImplicitVoidWaveCorrection(advancedState, dt);
   }
 
   /**
@@ -448,6 +463,41 @@ public class TimeIntegrator implements Serializable {
   private double[] cellOilDensities;
   private double[] cellWaterDensities;
 
+  /** Void-wave speeds for the implicit interfacial-pressure correction. */
+  private double[] cellVoidWaveSpeeds;
+
+  /** Drift-flux slip coefficients of the interfacial-pressure closure (m2/s2). */
+  private double[] cellVoidWaveSlipCoefficients;
+
+  /** Minimum gas-liquid holdup product that admits a drift-flux correction. */
+  private static final double MIN_VOID_WAVE_PHASE_PRODUCT = 1.0e-3;
+
+  /** Largest slip change the implicit correction may impose in one step (m/s). */
+  private static final double MAX_VOID_WAVE_SLIP_CHANGE = 5.0;
+
+  /** Whether to apply the implicit interfacial-pressure correction after the explicit transport step. */
+  private boolean implicitVoidWaveEnabled;
+
+  /** Coupled compressible pressure-momentum correction. */
+  private final CoupledPressureMomentumSolver coupledPressureMomentumSolver = new CoupledPressureMomentumSolver();
+
+  /** Whether pressure and phase momenta are corrected in the same accepted step. */
+  private boolean coupledPressureMomentumEnabled;
+
+  /** Cell pressure supplied to the coupled correction in Pa. */
+  private double[] coupledCellPressure;
+
+  /** Cell lengths supplied to the coupled correction in m. */
+  private double[] coupledCellLengths;
+
+  /** Phase sound speeds supplied to the coupled correction in m/s. */
+  private double[] coupledGasSoundSpeeds;
+  private double[] coupledOilSoundSpeeds;
+  private double[] coupledWaterSoundSpeeds;
+
+  /** Most recent coupled pressure-momentum result. */
+  private CoupledPressureMomentumSolver.Result lastCoupledPressureMomentumResult;
+
   /** Cell size for IMEX pressure solve (m). Set by caller before step. */
   private double imexDx = 1.0;
 
@@ -503,6 +553,168 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
+   * Configure the implicit void-wave correction used by the interfacial-pressure closure.
+   *
+   * @param voidWaveSpeeds Bestion void-wave speed per cell in m/s
+   * @param slipCoefficients drift-flux slip coefficient per cell in m2/s2
+   * @param areas pipe cross-sectional area per cell in m2
+   * @param gasDensities gas density per cell in kg/m3
+   * @param oilDensities oil density per cell in kg/m3
+   * @param waterDensities water density per cell in kg/m3
+   * @param dx cell size in m
+   * @param enabled true to apply the implicit correction
+   */
+  public void setImplicitVoidWaveProperties(double[] voidWaveSpeeds, double[] slipCoefficients, double[] areas,
+      double[] gasDensities, double[] oilDensities, double[] waterDensities, double dx, boolean enabled) {
+    this.cellVoidWaveSpeeds = voidWaveSpeeds;
+    this.cellVoidWaveSlipCoefficients = slipCoefficients;
+    this.cellAreas = areas;
+    this.cellGasDensities = gasDensities;
+    this.cellOilDensities = oilDensities;
+    this.cellWaterDensities = waterDensities;
+    this.imexDx = dx;
+    this.implicitVoidWaveEnabled = enabled;
+  }
+
+  /**
+   * Configure the coupled pressure-momentum correction.
+   *
+   * @param pressure cell pressure in Pa
+   * @param areas cell cross-sectional areas in m2
+   * @param lengths cell axial lengths in m
+   * @param gasDensities gas density in kg/m3
+   * @param oilDensities oil density in kg/m3
+   * @param waterDensities water density in kg/m3
+   * @param gasSoundSpeeds gas sound speed in m/s
+   * @param oilSoundSpeeds oil sound speed in m/s
+   * @param waterSoundSpeeds water sound speed in m/s
+   * @param outletPressure fixed outlet pressure in Pa
+   * @param outletFixed true when the outlet pressure is a Dirichlet boundary
+   * @param enabled true to apply the coupled correction
+   */
+  public void setCoupledPressureMomentumProperties(double[] pressure, double[] areas, double[] lengths,
+      double[] gasDensities, double[] oilDensities, double[] waterDensities, double[] gasSoundSpeeds,
+      double[] oilSoundSpeeds, double[] waterSoundSpeeds, double outletPressure, boolean outletFixed, boolean enabled) {
+    this.coupledCellPressure = pressure == null ? null : pressure.clone();
+    this.cellAreas = areas == null ? null : areas.clone();
+    this.coupledCellLengths = lengths == null ? null : lengths.clone();
+    this.cellGasDensities = gasDensities == null ? null : gasDensities.clone();
+    this.cellOilDensities = oilDensities == null ? null : oilDensities.clone();
+    this.cellWaterDensities = waterDensities == null ? null : waterDensities.clone();
+    this.coupledGasSoundSpeeds = gasSoundSpeeds == null ? null : gasSoundSpeeds.clone();
+    this.coupledOilSoundSpeeds = oilSoundSpeeds == null ? null : oilSoundSpeeds.clone();
+    this.coupledWaterSoundSpeeds = waterSoundSpeeds == null ? null : waterSoundSpeeds.clone();
+    this.imexOutletPressure = outletPressure;
+    this.imexOutletPressureFixed = outletFixed;
+    this.coupledPressureMomentumEnabled = enabled;
+    if (!enabled) {
+      lastCoupledPressureMomentumResult = null;
+    }
+  }
+
+  /**
+   * Enable or disable the coupled pressure-momentum correction.
+   *
+   * @param enabled true to apply the configured correction
+   */
+  public void setCoupledPressureMomentumEnabled(boolean enabled) {
+    coupledPressureMomentumEnabled = enabled;
+    if (!enabled) {
+      lastCoupledPressureMomentumResult = null;
+    }
+  }
+
+  /** @return true when the coupled pressure-momentum correction is enabled */
+  public boolean isCoupledPressureMomentumEnabled() {
+    return coupledPressureMomentumEnabled;
+  }
+
+  /**
+   * Set the nonlinear iteration budget for the coupled pressure-momentum correction.
+   *
+   * @param maximumIterations positive maximum iteration count
+   */
+  public void setCoupledPressureMomentumMaximumIterations(int maximumIterations) {
+    coupledPressureMomentumSolver.setMaximumIterations(maximumIterations);
+  }
+
+  /** @return nonlinear iteration budget for the coupled pressure-momentum correction */
+  public int getCoupledPressureMomentumMaximumIterations() {
+    return coupledPressureMomentumSolver.getMaximumIterations();
+  }
+
+  /**
+   * Set the convergence tolerance for the relative cell-volume residual.
+   *
+   * @param tolerance positive finite relative tolerance
+   */
+  public void setCoupledPressureMomentumRelativeVolumeTolerance(double tolerance) {
+    coupledPressureMomentumSolver.setRelativeVolumeTolerance(tolerance);
+  }
+
+  /** @return convergence tolerance for the relative cell-volume residual */
+  public double getCoupledPressureMomentumRelativeVolumeTolerance() {
+    return coupledPressureMomentumSolver.getRelativeVolumeTolerance();
+  }
+
+  private double[][] applyCoupledPressureMomentumCorrection(double[][] state, double dt) {
+    if (!coupledPressureMomentumEnabled) {
+      return state;
+    }
+    lastCoupledPressureMomentumResult = coupledPressureMomentumSolver.correct(state, dt, coupledCellPressure, cellAreas,
+        coupledCellLengths, cellGasDensities, cellOilDensities, cellWaterDensities, coupledGasSoundSpeeds,
+        coupledOilSoundSpeeds, coupledWaterSoundSpeeds, imexOutletPressure, imexOutletPressureFixed);
+    return lastCoupledPressureMomentumResult.getState();
+  }
+
+  /** @return true when the most recent coupled correction converged */
+  public boolean isCoupledPressureMomentumConverged() {
+    return lastCoupledPressureMomentumResult != null && lastCoupledPressureMomentumResult.isConverged();
+  }
+
+  /** @return maximum relative cell-volume residual from the latest correction */
+  public double getCoupledPressureMomentumVolumeResidual() {
+    return lastCoupledPressureMomentumResult == null ? Double.NaN
+        : lastCoupledPressureMomentumResult.getMaximumRelativeVolumeResidual();
+  }
+
+  /** @return nonlinear iterations used by the latest coupled correction */
+  public int getCoupledPressureMomentumIterations() {
+    return lastCoupledPressureMomentumResult == null ? 0 : lastCoupledPressureMomentumResult.getIterations();
+  }
+
+  /** @return true when the latest nonlinear solve limited at least one pressure correction */
+  public boolean isCoupledPressureMomentumPressureCorrectionLimited() {
+    return lastCoupledPressureMomentumResult != null && lastCoupledPressureMomentumResult.isPressureCorrectionLimited();
+  }
+
+  /** @return signed gas, oil, and water outlet mass corrections in kg */
+  public double[] getCoupledPressureMomentumOutletMassCorrectionKg() {
+    return lastCoupledPressureMomentumResult == null ? new double[3]
+        : lastCoupledPressureMomentumResult.getOutletBoundaryMassCorrectionKg();
+  }
+
+  /** @return corrected pressure from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumPressure() {
+    return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getPressure();
+  }
+
+  /** @return corrected gas density from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumGasDensity() {
+    return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getGasDensity();
+  }
+
+  /** @return corrected oil density from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumOilDensity() {
+    return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getOilDensity();
+  }
+
+  /** @return corrected water density from the latest coupled correction, or null */
+  public double[] getCoupledPressureMomentumWaterDensity() {
+    return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getWaterDensity();
+  }
+
+  /**
    * IMEX (Implicit-Explicit) pressure correction step.
    *
    * <p>
@@ -511,10 +723,10 @@ public class TimeIntegrator implements Serializable {
    * <ol>
    * <li><b>Predictor (explicit):</b> Advance mass and momentum using the explicit RHS (advection + source terms) to
    * obtain intermediate values U*.</li>
-   * <li><b>Pressure correction (implicit):</b> Solve a tridiagonal Helmholtz equation for the pressure correction dp
-   * that enforces mass conservation implicitly. The pressure wave equation dp - (c*dt/dx)^2 * d^2(dp)/dx^2 = RHS
-   * removes the acoustic CFL constraint.</li>
-   * <li><b>Corrector:</b> Update momenta using the pressure correction gradient.</li>
+   * <li><b>Pressure correction (implicit):</b> Solve a tridiagonal Helmholtz equation for the pressure correction dp.
+   * The pressure wave equation dp - (c*dt/dx)^2 * d^2(dp)/dx^2 = RHS removes the acoustic CFL constraint.</li>
+   * <li><b>Corrector:</b> Update phase momenta using the pressure correction gradient while leaving the phase masses
+   * from the conservative predictor unchanged.</li>
    * </ol>
    *
    * <p>
@@ -634,22 +846,15 @@ public class TimeIntegrator implements Serializable {
         dpdx = (dp[i + 1] - dp[i - 1]) / (2.0 * imexDx);
       }
 
-      // Correct mass equations with implicit pressure contribution.
-      double c = Math.max(cellSoundSpeeds[i], 1.0);
       double area = getCellArea(i);
-      double massCorrectionTotal = area * dp[i] / (c * c);
 
-      // Distribute mass correction proportionally to existing phase masses
+      // Phase masses remain exactly as advanced by the conservative explicit
+      // predictor. Pressure correction acts on momenta; directly adding area*dp/c^2
+      // to cell mass would be an unbalanced volume source.
       double totalMass = 0;
       int nMassEq = Math.min(3, nVars);
       for (int k = 0; k < nMassEq; k++) {
         totalMass += Math.max(Ustar[i][k], 0);
-      }
-      if (totalMass > 1e-12) {
-        for (int k = 0; k < nMassEq; k++) {
-          double fraction = Math.max(Ustar[i][k], 0) / totalMass;
-          Unew[i][k] = Ustar[i][k] + fraction * massCorrectionTotal;
-        }
       }
 
       // Correct momentum equations using the two-fluid pressure source:
@@ -682,7 +887,106 @@ public class TimeIntegrator implements Serializable {
       }
     }
 
-    return Unew;
+    return applyImplicitVoidWaveCorrection(Unew, dt);
+  }
+
+  /**
+   * Advance the linearized void-fraction/slip subsystem with backward Euler.
+   *
+   * <p>
+   * The transported variable is the drift flux {@code q = alphaG * alphaL * (vG - vL)}. Eliminating the implicit
+   * void-fraction update gives a Helmholtz equation for {@code q}. Mapping the corrected slip back to gas and liquid
+   * momenta leaves every phase mass and the cell total momentum unchanged.
+   * </p>
+   *
+   * @param state state after explicit transport and pressure correction
+   * @param dt time step in s
+   * @return state with the implicit void-wave momentum correction
+   */
+  private double[][] applyImplicitVoidWaveCorrection(double[][] state, double dt) {
+    int nCells = state.length;
+    if (!implicitVoidWaveEnabled || cellVoidWaveSpeeds == null || cellVoidWaveSpeeds.length != nCells || nCells < 2) {
+      return state;
+    }
+
+    double[] alphaGas = new double[nCells];
+    double[] driftFlux = new double[nCells];
+    double[] lower = new double[nCells];
+    double[] diagonal = new double[nCells];
+    double[] upper = new double[nCells];
+    double[] rightHandSide = new double[nCells];
+
+    for (int i = 0; i < nCells; i++) {
+      double area = getCellArea(i);
+      double gasArea = getPhaseArea(i, state[i][0], cellGasDensities, 0.0);
+      double oilArea = getPhaseArea(i, state[i][1], cellOilDensities, 0.0);
+      double waterArea = getPhaseArea(i, state[i][2], cellWaterDensities, 0.0);
+      double liquidArea = Math.max(0.0, Math.min(area, oilArea + waterArea));
+      alphaGas[i] = Math.max(0.0, Math.min(1.0, gasArea / area));
+      double alphaLiquid = Math.max(0.0, Math.min(1.0, liquidArea / area));
+      double gasVelocity = state[i][0] > 1.0e-12 ? state[i][3] / state[i][0] : 0.0;
+      double liquidMass = state[i][1] + state[i][2];
+      double liquidMomentum = state[i][4] + state[i][5];
+      double liquidVelocity = liquidMass > 1.0e-12 ? liquidMomentum / liquidMass : 0.0;
+      driftFlux[i] = alphaGas[i] * alphaLiquid * (gasVelocity - liquidVelocity);
+    }
+
+    for (int i = 0; i < nCells; i++) {
+      double waveSpeed = Math.max(0.0, cellVoidWaveSpeeds[i]);
+      double sigma = waveSpeed * waveSpeed * dt * dt / (imexDx * imexDx);
+      lower[i] = -sigma;
+      diagonal[i] = 1.0 + 2.0 * sigma;
+      upper[i] = -sigma;
+
+      double alphaGradient;
+      if (i == 0) {
+        alphaGradient = (alphaGas[1] - alphaGas[0]) / imexDx;
+      } else if (i == nCells - 1) {
+        alphaGradient = (alphaGas[i] - alphaGas[i - 1]) / imexDx;
+      } else {
+        alphaGradient = (alphaGas[i + 1] - alphaGas[i - 1]) / (2.0 * imexDx);
+      }
+      double slipCoefficient = (cellVoidWaveSlipCoefficients != null && i < cellVoidWaveSlipCoefficients.length)
+          ? Math.max(0.0, cellVoidWaveSlipCoefficients[i])
+          : 0.0;
+      rightHandSide[i] = driftFlux[i] - dt * slipCoefficient * alphaGradient;
+    }
+
+    diagonal[0] += lower[0];
+    lower[0] = 0.0;
+    diagonal[nCells - 1] += upper[nCells - 1];
+    upper[nCells - 1] = 0.0;
+    double[] correctedDriftFlux = solveTridiagonal(lower, diagonal, upper, rightHandSide);
+
+    for (int i = 0; i < nCells; i++) {
+      double gasMass = state[i][0];
+      double liquidMass = state[i][1] + state[i][2];
+      double totalMass = gasMass + liquidMass;
+      double area = getCellArea(i);
+      double gasArea = getPhaseArea(i, gasMass, cellGasDensities, 0.0);
+      double liquidArea = getPhaseArea(i, state[i][1], cellOilDensities, 0.0)
+          + getPhaseArea(i, state[i][2], cellWaterDensities, 0.0);
+      double alphaProduct = gasArea / area * Math.max(0.0, Math.min(1.0, liquidArea / area));
+      if (gasMass <= 1.0e-12 || liquidMass <= 1.0e-12 || totalMass <= 1.0e-12
+          || alphaProduct <= MIN_VOID_WAVE_PHASE_PRODUCT) {
+        continue;
+      }
+
+      double oldGasVelocity = state[i][3] / gasMass;
+      double oldLiquidVelocity = (state[i][4] + state[i][5]) / liquidMass;
+      double correctedSlip = correctedDriftFlux[i] / alphaProduct;
+      double slipChange = correctedSlip - (oldGasVelocity - oldLiquidVelocity);
+      if (!Double.isFinite(slipChange)) {
+        continue;
+      }
+      slipChange = Math.max(-MAX_VOID_WAVE_SLIP_CHANGE, Math.min(MAX_VOID_WAVE_SLIP_CHANGE, slipChange));
+      double gasVelocityChange = liquidMass / totalMass * slipChange;
+      double liquidVelocityChange = -gasMass / totalMass * slipChange;
+      state[i][3] += gasMass * gasVelocityChange;
+      state[i][4] += state[i][1] * liquidVelocityChange;
+      state[i][5] += state[i][2] * liquidVelocityChange;
+    }
+    return state;
   }
 
   /**

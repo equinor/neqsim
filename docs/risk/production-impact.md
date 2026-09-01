@@ -5,8 +5,6 @@ parent: Risk Framework
 description: "Production impact analysis from equipment failures. Calculate deferred production, revenue loss, and optimal spare parts strategies using process simulation."
 ---
 
-# Production Impact Analysis
-
 Production Impact Analysis quantifies how equipment failures affect plant output, enabling prioritization of maintenance and investment decisions.
 
 ---
@@ -20,7 +18,10 @@ When equipment fails, production is affected in several ways:
 3. **Bottleneck shifts** - Different equipment becomes limiting
 4. **Quality changes** - Product specifications may change
 
-The `ProductionImpactAnalyzer` uses NeqSim simulation to calculate these effects accurately.
+The `ProductionImpactAnalyzer` uses NeqSim simulation to calculate these effects. A rate-only
+simulation cannot by itself prove that flow through an inactive or bypassed unit remains saleable.
+For complete trips, unchanged nominal product flow is therefore reported as unresolved unless a
+configured product specification or a topology-aware model resolves the consequence.
 
 ---
 
@@ -53,17 +54,27 @@ ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(processSystem);
 // Configure streams
 analyzer.setFeedStreamName("Well Feed");
 analyzer.setProductStreamName("Export Gas");
-analyzer.setProductPrice(500.0, "USD/tonne");
+analyzer.setProductPricePerKg(0.50);
+
+// Optional: only count product delivered at or above the contractual pressure.
+analyzer.setMinimumProductPressure(90.0, "bara");
 
 // Analyze a specific failure
 EquipmentFailureMode compressorTrip = EquipmentFailureMode.trip("HP Compressor");
-ProductionImpactResult result = analyzer.analyzeFailureImpact(compressorTrip);
+ProductionImpactResult result = analyzer.analyzeFailureImpact("HP Compressor", compressorTrip);
 
 // Get results
-System.out.println("Production loss: " + result.getPercentLoss() + "%");
-System.out.println("Revenue impact: $" + result.getRevenueImpact() + "/hour");
-System.out.println("Affected equipment: " + result.getAffectedEquipment());
+double productionLossPercent = result.getPercentLoss();
+double economicLossPerHour = result.getEconomicLossPerHour();
+List<String> affectedEquipment = result.getAffectedEquipment();
+boolean consequenceResolved = result.isConverged();
 ```
+
+When the failed product pressure is below the configured minimum, the analyzer reports zero
+saleable production even if nominal mass flow remains unchanged. Without a product specification,
+a complete trip that leaves nominal product flow unchanged returns `converged=false`,
+`RecommendedAction.MANUAL_REVIEW`, and an explanatory `analysisNotes` value. This fail-closed state
+prevents a rate-only result from being ranked as a confirmed 0% production loss.
 
 ### Analyzing All Equipment
 
@@ -99,25 +110,26 @@ The result object contains comprehensive impact data:
 ```java
 public class ProductionImpactResult {
     // Production metrics
-    double getNormalProduction();      // kg/hr before failure
-    double getDegradedProduction();    // kg/hr after failure
-    double getProductionLoss();        // kg/hr lost
-    double getPercentLoss();           // 0-100%
+    double getBaselineProductionRate(); // kg/hr before failure
+    double getProductionWithFailure();  // saleable kg/hr after failure
+    double getAbsoluteLoss();           // kg/hr lost
+    double getPercentLoss();            // 0-100%
 
     // Economic metrics
-    double getRevenueImpact();         // $/hr
-    double getEstimatedDailyCost();    // $/day
+    double getEconomicLossPerHour();    // $/hr
+    double getEconomicLossPerDay();     // $/day
 
     // Affected equipment
     List<String> getAffectedEquipment();
-    List<String> getCascadeEffects();
-
-    // Quality impacts (if applicable)
-    Map<String, Double> getQualityChanges();
 
     // Bottleneck analysis
     String getNewBottleneck();
-    double getBottleneckCapacity();
+    double getNewBottleneckUtilization();
+
+    // Resolution diagnostics
+    boolean isConverged();
+    String getAnalysisNotes();
+    RecommendedAction getRecommendedAction();
 }
 ```
 

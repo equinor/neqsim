@@ -1,9 +1,11 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,13 +15,19 @@ import com.google.gson.JsonObject;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.energy.ElectricMotor;
+import neqsim.process.equipment.heatexchanger.AirCooler;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.util.SpreadsheetBlock;
 import neqsim.process.equipment.util.UnisimCalculator;
+import neqsim.process.equipment.valve.SafetyReliefValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -44,6 +52,118 @@ class JsonProcessBuilderTest {
   }
 
   @Test
+  void testPerStreamComposition() {
+    // Two streams share the same default fluid but override composition per
+    // stream (one under properties, one at top level). They must end up with
+    // distinct compositions/molar masses instead of the shared default.
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.5, \"ethane\": 0.3, \"propane\": 0.2}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"gasy\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"],"
+        + "     \"composition\": {\"Methane\": 0.95, \"Ethane\": 0.05}}},"
+        + "  {\"type\": \"Stream\", \"name\": \"heavy\"," + "   \"composition\": {\"propane\": 0.9, \"ethane\": 0.1},"
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+
+    StreamInterface gasy = (StreamInterface) process.getUnit("gasy");
+    StreamInterface heavy = (StreamInterface) process.getUnit("heavy");
+    assertNotNull(gasy);
+    assertNotNull(heavy);
+
+    // Case-insensitive names ("Methane") applied to the SRK fluid.
+    assertEquals(0.95, gasy.getFluid().getComponent("methane").getz(), 1e-9);
+    assertEquals(0.9, heavy.getFluid().getComponent("propane").getz(), 1e-9);
+
+    // Distinct compositions => distinct molar masses (were identical before fix).
+    double mwGasy = gasy.getFluid().getMolarMass();
+    double mwHeavy = heavy.getFluid().getMolarMass();
+    assertTrue(mwHeavy > mwGasy + 0.01,
+        "Heavy stream should have a higher molar mass: gasy=" + mwGasy + " heavy=" + mwHeavy);
+  }
+
+  @Test
+  void testStreamCompositionH2OAliasesWater() {
+    // A stream composition that names water "H2O" (as UniSim and other exporters do) must match
+    // the fluid's canonical "water" component. NeqSim's E300 reader maps CNAMES "H2O" -> "water",
+    // so without the alias the dominant water fraction is silently dropped and the stream collapses
+    // to trace light ends (wrong molar mass / density).
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.5, \"water\": 0.5}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"wet\"," + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"],"
+        + "     \"composition\": {\"Methane\": 0.0002, \"H2O\": 0.9998}}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    StreamInterface wet = (StreamInterface) result.getProcessSystem().getUnit("wet");
+    assertNotNull(wet);
+
+    // The "H2O" key must have landed on the "water" component (mole fraction ~0.9998), not dropped.
+    assertEquals(0.9998, wet.getFluid().getComponent("water").getz(), 1e-6);
+    // A nearly-pure water stream must have a molar mass close to 18 g/mol (0.018 kg/mol), proving
+    // the water fraction was applied rather than dropped (which would leave ~methane, ~16 g/mol).
+    assertEquals(0.018, wet.getFluid().getMolarMass(), 5e-4,
+        "Nearly-pure H2O stream should have molar mass ~0.018 kg/mol");
+  }
+
+  @Test
+  void testDistillationColumnConfigFromJson() {
+    // A DistillationColumn defined in JSON must pick up its tray count, feed tray, operating
+    // pressures and reflux ratio. The reflux ratio and duties live on the nested condenser/reboiler
+    // trays and cannot be set by the generic reflection-based property applier, so they are applied
+    // explicitly by configureDistillationColumn at construction.
+    String json = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 300.0, \"pressure\": 10.0,"
+        + "  \"components\": {\"propane\": 0.4, \"n-butane\": 0.35, \"n-pentane\": 0.25}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"], \"temperature\": [60.0, \"C\"],"
+        + "     \"pressure\": [10.0, \"bara\"]}},"
+        + "  {\"type\": \"DistillationColumn\", \"name\": \"deC3\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"numberOfTrays\": 6, \"hasReboiler\": true, \"hasCondenser\": true,"
+        + "     \"feedTray\": 3, \"refluxRatio\": 1.5, \"topPressure\": 10.0, \"bottomPressure\": 10.5}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    DistillationColumn col = (DistillationColumn) result.getProcessSystem().getUnit("deC3");
+    assertNotNull(col, "DistillationColumn should be built from JSON");
+    // The reflux-ratio spec (nested on the condenser) must have been applied — this is the spec the
+    // generic property applier cannot reach and the new configureDistillationColumn handles.
+    assertEquals(1.5, col.getCondenser().getRefluxRatio(), 1e-9,
+        "Reflux-ratio spec from JSON must be applied to the column condenser");
+  }
+
+  @Test
+  void testSetPointWiresSourceToTargetAndStaysLive() {
+    // A SetPoint copies temperature from stream A onto stream B as
+    // target = multiplier*source + offset (offset in Kelvin). The link must stay
+    // live: changing A's temperature and re-running must move B accordingly,
+    // mirroring the UniSim SET behaviour.
+    String json = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 300.0, \"pressure\": 50.0,"
+        + "  \"components\": {\"methane\": 1.0}}," + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"A\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"], \"temperature\": [40.0, \"C\"],"
+        + "     \"pressure\": [50.0, \"bara\"]}}," + "  {\"type\": \"Stream\", \"name\": \"B\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"], \"temperature\": [20.0, \"C\"],"
+        + "     \"pressure\": [50.0, \"bara\"]}}," + "  {\"type\": \"SetPoint\", \"name\": \"SET-1\","
+        + "   \"properties\": {\"sourceEquipment\": \"A\", \"sourceVariable\": \"temperature\","
+        + "     \"targetEquipment\": \"B\", \"targetVariable\": \"temperature\","
+        + "     \"multiplier\": 1.0, \"offset\": 5.0}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    SetPoint set = (SetPoint) process.getUnit("SET-1");
+    assertNotNull(set, "SetPoint should be built and wired from JSON");
+    process.run();
+    Stream b = (Stream) process.getUnit("B");
+    // B = A + 5 K = 40 C + 5 K = 45 C
+    assertEquals(45.0, b.getTemperature("C"), 1e-6, "SetPoint must copy A's temperature (+5 K) onto B");
+    // Change the input and re-run — the link must follow.
+    ((Stream) process.getUnit("A")).setTemperature(60.0, "C");
+    process.run();
+    assertEquals(65.0, b.getTemperature("C"), 1e-6, "SetPoint link must stay live when A changes");
+  }
+
+  @Test
   void testBuildStreamAndSeparator() {
     String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
         + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "},"
@@ -56,6 +176,45 @@ class JsonProcessBuilderTest {
     ProcessSystem process = result.getProcessSystem();
     assertNotNull(process.getUnit("feed"));
     assertNotNull(process.getUnit("HP Sep"));
+  }
+
+  @Test
+  void testAutomaticallyDiscoveredEquipmentBuildsWiresAndConfiguresFromJson() {
+    String json = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 298.15, \"pressure\": 50.0,"
+        + "  \"components\": {\"methane\": 1.0}}," + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"AirCooler\", \"name\": \"new cooler\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"outTemperature\": [30.0, \"C\"]}},"
+        + "  {\"type\": \"ElectricMotor\", \"name\": \"new motor\"," + "   \"properties\": {\"efficiency\": 0.93}}"
+        + "], \"autoRun\": false}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+
+    assertTrue(result.isSuccess(), "Discovered equipment JSON should build: " + result.toJson());
+    AirCooler cooler = (AirCooler) result.getProcessSystem().getUnit("new cooler");
+    assertNotNull(cooler);
+    assertEquals("feed", cooler.getInletStream().getName());
+    cooler.run();
+    assertEquals(30.0, cooler.getOutletStream().getTemperature("C"), 1.0e-8);
+    ElectricMotor motor = (ElectricMotor) result.getProcessSystem().getUnit("new motor");
+    assertNotNull(motor);
+    assertEquals(0.93, motor.getEfficiency(), 1.0e-12);
+  }
+
+  @Test
+  void testSafetyReliefValveBuildsAndWiresFromJson() {
+    String json = "{\"fluid\":{\"model\":\"SRK\",\"temperature\":300.0,\"pressure\":20.0,"
+        + "\"components\":{\"methane\":1.0}},\"autoRun\":false,\"process\":["
+        + "{\"type\":\"Stream\",\"name\":\"feed\"},"
+        + "{\"type\":\"SafetyReliefValve\",\"name\":\"PSV-1\",\"inlet\":\"feed\","
+        + "\"properties\":{\"setPressureBar\":18.0}}]}";
+
+    SimulationResult result = ProcessSystem.fromJson(json);
+
+    assertTrue(result.isSuccess(), result.getErrors().toString());
+    SafetyReliefValve valve = (SafetyReliefValve) result.getProcessSystem().getUnit("PSV-1");
+    assertSame(result.getProcessSystem().getUnit("feed"), valve.getInletStream());
+    assertEquals(18.0, valve.getSetPressureBar(), 1.0e-12);
   }
 
   @Test
@@ -498,6 +657,26 @@ class JsonProcessBuilderTest {
   }
 
   @Test
+  void testBuildWithTwoFluidPipeProfiles() {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.9, \"n-heptane\": 0.1}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"TwoFluidPipe\", \"name\": \"multiphase pipe\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {\"length\": 1000.0, \"diameter\": 0.3, \"numberOfSections\": 4,"
+        + "    \"elevationProfile\": [0.0, -5.0, -5.0, 10.0]," + "    \"heatTransferProfile\": [4.0, 4.0, 8.0, 8.0]}}"
+        + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    TwoFluidPipe pipe = (TwoFluidPipe) result.getProcessSystem().getUnit("multiphase pipe");
+    assertNotNull(pipe);
+    assertEquals(1000.0, pipe.getLength(), 1.0e-12);
+    assertEquals(0.3, pipe.getDiameter(), 1.0e-12);
+    assertEquals(4, pipe.getNumberOfSections());
+    assertArrayEquals(new double[] { 4.0, 4.0, 8.0, 8.0 }, pipe.getHeatTransferProfile(), 1.0e-12);
+  }
+
+  @Test
   void testBuildWithPropertyUnitArray() {
     String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
         + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}," + "\"process\": ["
@@ -738,6 +917,67 @@ class JsonProcessBuilderTest {
         .getMechanicalDesign();
     assertEquals(0.107, design.getGasLoadFactor(), 1e-12);
     assertEquals(120.0, design.getRetentionTime(), 1e-12);
+  }
+
+  @Test
+  void testSplitterSplitNumberDefaultsToEqualSplit() {
+    // A Splitter configured with only a "splitNumber" (no explicit split
+    // factors or per-outlet flow rates) must default to an EQUAL split across
+    // all outlets. Without this, setSplitNumber leaves the factors as
+    // [1, 0, ...], sending 100% of the flow to the first outlet and starving
+    // the other branches (which starves recycle-tear streams and makes
+    // cross-connected loops diverge).
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [30000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Splitter\", \"name\": \"tee\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {\"splitNumber\": 3}}" + "]," + "\"autoRun\": true" + "}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertFalse(result.isError(), "Build+run should not error: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    neqsim.process.equipment.splitter.Splitter tee = (neqsim.process.equipment.splitter.Splitter) process
+        .getUnit("tee");
+    assertNotNull(tee, "Splitter should exist");
+    // Each of the three outlet streams should carry ~1/3 of the feed flow.
+    double feedFlow = ((Stream) process.getUnit("feed")).getFlowRate("kg/hr");
+    for (int i = 0; i < 3; i++) {
+      StreamInterface branch = tee.getSplitStream(i);
+      assertEquals(feedFlow / 3.0, branch.getFlowRate("kg/hr"), feedFlow * 1e-3,
+          "Outlet " + i + " should carry one third of the feed flow");
+    }
+  }
+
+  @Test
+  void testPartialMixerForwardInletReattachedByCompletionPass() {
+    // A Mixer whose inlet list includes a FORWARD stream reference ("branch.outlet")
+    // that only resolves after a build-time cycle is broken. The mixer is
+    // force-partial-wired (dropping the not-yet-resolvable forward inlet) to break
+    // the cycle; the completion pass must re-attach that inlet once every unit
+    // exists, so no material stream (and its mass/components) is silently lost.
+    // Regression guard for the over-stabilized-oil bug where a dropped forward
+    // inlet carried all the light ends.
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Mixer\", \"name\": \"mix\","
+        + "   \"inlets\": [\"feed\", \"rcy.outlet\", \"branch.outlet\"]},"
+        + "  {\"type\": \"Separator\", \"name\": \"flash\"," + "   \"inlet\": \"mix.outlet\"},"
+        + "  {\"type\": \"ThrottlingValve\", \"name\": \"branch\"," + "   \"inlet\": \"flash.gasOut\","
+        + "   \"properties\": {\"outletPressure\": 40.0}}," + "  {\"type\": \"Recycle\", \"name\": \"rcy\","
+        + "   \"inlet\": \"flash.liquidOut\"}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    neqsim.process.equipment.mixer.Mixer mix = (neqsim.process.equipment.mixer.Mixer) process.getUnit("mix");
+    assertNotNull(mix, "Mixer should exist");
+    // All THREE inlets must be attached (feed + rcy.outlet + branch.outlet) — the
+    // forward 'branch.outlet' inlet must be restored by the completion pass.
+    assertEquals(3, mix.getInletStreams().size(),
+        "Completion pass must re-attach the dropped forward inlet (no stream lost)");
   }
 
 }

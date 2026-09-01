@@ -12,6 +12,7 @@ import com.google.gson.JsonParser;
 import neqsim.mcp.runners.FlashRunner;
 import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
 import neqsim.mcp.runners.OpenDrainReviewRunner;
+import neqsim.mcp.runners.PipelineRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.Validator;
@@ -86,6 +87,28 @@ class ExampleCatalogTest {
   }
 
   @Test
+  void testProcessMixerSplitterRecycle_runsSuccessfully() {
+    String result = ProcessRunner.run(ExampleCatalog.processMixerSplitterRecycle());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString(), result);
+  }
+
+  @Test
+  void testPipelineMultiphaseUsesTwoFluidProfilesAndRunsSuccessfully() {
+    String example = ExampleCatalog.pipelineMultiphase();
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    JsonObject pipe = input.getAsJsonObject("pipe");
+
+    assertEquals("twoFluid", input.get("solver").getAsString());
+    assertEquals(pipe.getAsJsonArray("sectionLengths_m").size(), pipe.getAsJsonArray("elevationProfile_m").size());
+    assertEquals(pipe.getAsJsonArray("sectionLengths_m").size(),
+        pipe.getAsJsonArray("heatTransferProfile_W_m2K").size());
+    assertEquals("success",
+        JsonParser.parseString(PipelineRunner.run(example)).getAsJsonObject().get("status").getAsString());
+  }
+
+  @Test
   void testValidationErrorFlash_hasErrors() {
     String result = Validator.validate(ExampleCatalog.validationErrorFlash());
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -118,7 +141,8 @@ class ExampleCatalogTest {
     assertTrue(flashExamples.contains("tp-simple-gas"));
 
     List<String> processExamples = ExampleCatalog.getExampleNames("process");
-    assertEquals(2, processExamples.size());
+    assertEquals(3, processExamples.size());
+    assertTrue(processExamples.contains("mixer-splitter-recycle"));
     assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
     assertTrue(ExampleCatalog.getExampleNames("open-drain-review").contains("norsok-s001-stid"));
     assertTrue(ExampleCatalog.getExampleNames("process-safety-review").contains("norsok-s001-clause10"));

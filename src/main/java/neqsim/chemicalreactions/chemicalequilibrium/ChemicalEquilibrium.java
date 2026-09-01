@@ -3,6 +3,7 @@ package neqsim.chemicalreactions.chemicalequilibrium;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseDesmukhMather;
@@ -30,6 +31,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
   /** Counter for consecutive non-improving iterations to detect stagnation. */
   private static final int STAGNATION_LIMIT = 10;
+
+  /** Relative conservation residual above which a single-phase Newton step restores the constraint manifold. */
+  private static final double CONSERVATION_CORRECTION_TOLERANCE = 1e-8;
 
   /**
    * Iteration threshold to switch from simple to derivative-based iterations. First iterations use simple M_matrix
@@ -90,6 +94,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   Matrix x_solve;
   double y_solve;
   double n_t = 0.0;
+  double solventWeight = MIN_MOLES;
   double agemo = 0;
   double kronDelt = 0;
 
@@ -192,6 +197,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   public void chemSolve() {
     // Protect against n_t = 0 which would cause division by zero in chem_pot calculation
     n_t = Math.max(MIN_MOLES, system.getPhase(phasenumb).getNumberOfMolesInPhase());
+    solventWeight = calculateSolventWeight(system.getPhase(phasenumb));
 
     // If using fugacity derivatives, need init(3) for derivative calculations
     if (useFugacityDerivatives) {
@@ -299,24 +305,28 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     AMU_matrix = A_Jama_matrix.times(M_inv_mu);
     Matrix nmol = new Matrix(n_mol, 1);
     nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
-    // AMA_matrix.pr
-    // Added by Neeraj
-    // Matrix bm_matrix = (A_Jama_matrix.times(nmol.transpose()).transpose());
-    // ((b_matrix.minus(bm_matrix)).times(R*system.getTemperature()).transpose()).print(10,10);
-    // AMU_matrix.print(20,20);
-
+    Matrix couplingQuantities = b_matrix;
+    Matrix conservationCorrection = new Matrix(NELE, 1);
+    if (system.getNumberOfPhases() == 1) {
+      Matrix currentConservedQuantities = A_Jama_matrix.times(nmol.transpose()).transpose();
+      for (int elementIndex = 0; elementIndex < NELE; elementIndex++) {
+        double target = b_matrix.get(0, elementIndex);
+        double current = currentConservedQuantities.get(0, elementIndex);
+        if (Math.abs(target - current) > CONSERVATION_CORRECTION_TOLERANCE * Math.max(1.0, Math.abs(target))) {
+          couplingQuantities = currentConservedQuantities;
+          conservationCorrection = b_matrix.minus(currentConservedQuantities).transpose();
+          break;
+        }
+      }
+    }
     A_solve.setMatrix(0, NELE - 1, 0, NELE - 1, AMA_matrix);
-    A_solve.setMatrix(0, NELE - 1, NELE, NELE, b_matrix.transpose());
-    A_solve.setMatrix(NELE, NELE, 0, NELE - 1, b_matrix);
+    A_solve.setMatrix(0, NELE - 1, NELE, NELE, couplingQuantities.transpose());
+    A_solve.setMatrix(NELE, NELE, 0, NELE - 1, couplingQuantities);
     A_solve.set(NELE, NELE, 0.0);
 
     // A_solve.print(10,20);
     // System.out.println("Rank of A_solve "+A_solve.rank());
-    // Term subtracted from AMU_matrix -- Neeraj
-    // b_solve.setMatrix(0,NELE-1,0,0,
-    // AMU_matrix.minus((b_matrix.minus(bm_matrix)).times(R*system.getTemperature()).transpose()));
-    // Commented out by Neeraj
-    b_solve.setMatrix(0, NELE - 1, 0, 0, AMU_matrix);
+    b_solve.setMatrix(0, NELE - 1, 0, 0, AMU_matrix.plus(conservationCorrection));
     b_solve.setMatrix(NELE, NELE, 0, 0, nmu);
     // b_solve.print(10,5);
     // System.out.println("det "+A_solve.det());
@@ -383,9 +393,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * Calculates the logarithm of the activity term used by the chemical-equilibrium solver.
    *
    * <p>
-   * The generic historical solver uses a mole-fraction standard state. Deshmukh-Mather amine reaction constants are
-   * apparent aqueous constants and must instead use a molality/concentration-like standard state for non-water reactive
-   * species.
+   * The generic historical solver uses a mole-fraction standard state. Models selecting
+   * {@link ChemicalReactionConcentrationBasis#SOLUTE_MOLALITY} use solute molality and retain solvent mole-fraction
+   * activity. Deshmukh-Mather amine reaction constants use their existing apparent aqueous activity conversion.
    * </p>
    *
    * @param componentIndex index in the reactive component array
@@ -395,10 +405,33 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   private double getLogReactionActivity(int componentIndex, double molesInPhase) {
     PhaseInterface reactivePhase = system.getPhase(phasenumb);
     ComponentInterface component = components[componentIndex];
+    if (system.getChemicalReactionConcentrationBasis() == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY) {
+      if ("solvent".equalsIgnoreCase(component.getReferenceStateType())) {
+        return Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[componentIndex];
+      }
+      return Math.log(molesInPhase) - Math.log(solventWeight) + logactivityVec[componentIndex];
+    }
     if (reactivePhase instanceof PhaseDesmukhMather) {
       return getLogDesmukhMatherReactionActivity((PhaseDesmukhMather) reactivePhase, component);
     }
     return Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[componentIndex];
+  }
+
+  /**
+   * Calculate solvent mass for a solute-molality reaction standard state.
+   *
+   * @param phase reactive phase
+   * @return solvent mass in kilograms, lower bounded for logarithmic evaluation
+   */
+  private double calculateSolventWeight(PhaseInterface phase) {
+    double weight = 0.0;
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = phase.getComponent(componentIndex);
+      if ("solvent".equalsIgnoreCase(component.getReferenceStateType())) {
+        weight += component.getNumberOfMolesInPhase() * component.getMolarMass();
+      }
+    }
+    return Math.max(MIN_MOLES, weight);
   }
 
   /**
@@ -983,8 +1016,13 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
         // / chem_pot_pure[i]));
 
-        if (system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getReferenceStateType()
-            .equals("solvent")) {
+        if (system.getChemicalReactionConcentrationBasis() == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY) {
+          double molesInPhase = Math.max(MIN_MOLES,
+              system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
+          chem_pot[i] = R * system.getPhase(phasenumb).getTemperature()
+              * (chem_ref[i] + getLogReactionActivity(i, molesInPhase));
+        } else if (system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+            .getReferenceStateType().equals("solvent")) {
           // Protect against log(0) with MIN_MOLES
           double molesInPhase = Math.max(MIN_MOLES,
               system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
@@ -1007,8 +1045,13 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
         // Protect n_omega against log(0) with MIN_MOLES
         double n_omega_safe = Math.max(MIN_MOLES, n_omega[i]);
-        chem_pot_omega[i] = R * system.getPhase(phasenumb).getTemperature()
-            * (chem_ref[i] + Math.log(n_omega_safe) - Math.log(n_t) + logactivityVec[i]);
+        if (system.getChemicalReactionConcentrationBasis() == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY) {
+          chem_pot_omega[i] = R * system.getPhase(phasenumb).getTemperature()
+              * (chem_ref[i] + getLogReactionActivity(i, n_omega_safe));
+        } else {
+          chem_pot_omega[i] = R * system.getPhase(phasenumb).getTemperature()
+              * (chem_ref[i] + Math.log(n_omega_safe) - Math.log(n_t) + logactivityVec[i]);
+        }
       }
     }
     // Added by Neeraj

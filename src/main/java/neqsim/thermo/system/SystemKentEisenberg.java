@@ -1,16 +1,23 @@
 package neqsim.thermo.system;
 
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.thermo.phase.PhaseKentEisenberg;
-import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- * This class defines a thermodynamic system using the Kent Eisenberg model.
+ * Thermodynamic system using SRK for gas and oil and Kent-Eisenberg for the aqueous electrolyte phase.
+ *
+ * <p>
+ * Calling {@code setMultiPhaseCheck(true)} selects the fixed-role hybrid gas-oil-aqueous flash. If
+ * {@code chemicalReactionInit()} has loaded reactions, aqueous chemical equilibrium is coupled to phase equilibrium.
+ * Scale-potential results use the Kent-Eisenberg phase activity coefficients and are limited by that screening model's
+ * component and parameter coverage.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemKentEisenberg extends SystemEos {
+public class SystemKentEisenberg extends SystemEosGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -43,22 +50,13 @@ public class SystemKentEisenberg extends SystemEos {
     modelName = "Kent Eisenberg-model";
     attractiveTermNumber = 0;
 
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseKentEisenberg(); // new PhaseGENRTLmodifiedWS();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
+    configureHybridEosGePhases(T, P, new PhaseSrkEos(), new PhaseKentEisenberg(), new PhaseSrkEos());
+  }
 
-    if (solidPhaseCheck) {
-      setNumberOfPhases(4);
-      phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
-      phaseArray[numberOfPhases - 1].setTemperature(T);
-      phaseArray[numberOfPhases - 1].setPressure(P);
-      phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
-    }
+  /** {@inheritDoc} */
+  @Override
+  public ChemicalReactionDataSource getChemicalReactionDataSource() {
+    return ChemicalReactionDataSource.KENT_EISENBERG;
   }
 
   /** {@inheritDoc} */

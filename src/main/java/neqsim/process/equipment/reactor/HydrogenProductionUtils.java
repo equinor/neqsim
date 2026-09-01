@@ -30,6 +30,12 @@ final class HydrogenProductionUtils {
   /** Small positive mole amount used to seed products for Gibbs calculations. */
   private static final double TRACE_MOLES = 1.0e-20;
 
+  /** Composition damping used by syngas Gibbs screening reactors. */
+  private static final double SYNGAS_GIBBS_DAMPING = 1.0e-2;
+
+  /** Convergence tolerance used by syngas Gibbs screening reactors. */
+  private static final double SYNGAS_GIBBS_TOLERANCE = 1.0e-5;
+
   /** Common syngas species required by the equilibrium and reporting models. */
   private static final String[] SYNGAS_COMPONENTS = { "methane", "water", "oxygen", "hydrogen", "CO", "CO2",
       "nitrogen" };
@@ -78,9 +84,9 @@ final class HydrogenProductionUtils {
       GibbsReactor.EnergyMode energyMode) {
     GibbsReactor reactor = new GibbsReactor(name, inletStream);
     reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(1.0e-4);
+    reactor.setDampingComposition(SYNGAS_GIBBS_DAMPING);
     reactor.setMaxIterations(6000);
-    reactor.setConvergenceTolerance(1.0e-6);
+    reactor.setConvergenceTolerance(SYNGAS_GIBBS_TOLERANCE);
     reactor.setEnergyMode(energyMode);
     if (inletStream.getThermoSystem().hasComponent("nitrogen")) {
       reactor.setComponentAsInert("nitrogen");

@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PitzerElectrostaticMixing;
 
 /**
  * Component class for the Pitzer model.
@@ -12,6 +13,17 @@ import neqsim.thermo.phase.PhaseType;
 public class ComponentGePitzer extends ComponentGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Setup-time mirror of the phase's sparse neutral-interaction gate. */
+  private boolean neutralPitzerInteractionsActive;
+
+  /**
+   * Updates the setup-time fast gate for neutral Pitzer interactions.
+   *
+   * @param active whether the owning Pitzer phase has any neutral interactions
+   */
+  public void setNeutralPitzerInteractionsActive(boolean active) {
+    neutralPitzerInteractionsActive = active;
+  }
 
   /**
    * Constructor for ComponentGePitzer.
@@ -29,7 +41,124 @@ public class ComponentGePitzer extends ComponentGE {
   @Override
   public double fugcoef(PhaseInterface phase) {
     getGamma(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure(), phase.getType());
+    // Pitzer's implemented solvent activity is water-specific. Other database solvents need an aqueous Henry
+    // reference; hydrocarbons have no Pitzer neutral-interaction parameters and are represented as effectively
+    // insoluble instead of being evaluated with the water osmotic coefficient.
+    if (Math.abs(getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(getComponentName())) {
+      double henryCoefficient = getEffectiveHenryCoefficient(phase);
+      // Pitzer neutral activities and the database Henry constants are on the molality
+      // scale, while the common phase-equilibrium kernel evaluates x_i * phi_i * P.
+      // Convert m_i * gamma_i * H_i to that mole-fraction representation explicitly.
+      double moleFraction = getx();
+      double molalityPerMoleFraction = moleFraction > 0.0 ? getMolality(phase) / moleFraction : Double.NaN;
+      if (!(molalityPerMoleFraction > 0.0) || !Double.isFinite(molalityPerMoleFraction)) {
+        molalityPerMoleFraction = 1.0;
+      }
+      fugacityCoefficient = gamma * henryCoefficient * molalityPerMoleFraction / phase.getPressure();
+      gammaRefCor = gamma;
+      return fugacityCoefficient;
+    }
     return super.fugcoef(phase);
+  }
+
+  /**
+   * Returns the Pitzer molality-scale Henry reference.
+   *
+   * <p>
+   * IAPWS publishes {@code kH = f/x}. Pitzer neutral activities use molality, so {@code Hm = kH * Mwater}; the existing
+   * {@code m/x} factor in {@link #fugcoef(PhaseInterface)} maps this back to the common mole-fraction fugacity kernel.
+   * The constant conversion does not change the logarithmic temperature derivative. An ionic phase adopts the new
+   * reference only with an explicitly active, coverage-checked neutral interaction family; otherwise this pure-water
+   * batch preserves the pre-existing database/capping result.
+   * </p>
+   *
+   * @param phase aqueous Pitzer phase
+   * @return effective molality-scale Henry coefficient in bar kg/mol
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
+    if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
+      return super.getEffectiveHenryCoefficient(phase);
+    }
+    if (!neutralPitzerInteractionsActive && (phase.hasIons() || requiresReactivePitzerQualification())) {
+      return getEffectiveHenryCoefficient(phase.getTemperature());
+    }
+    if (!IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+      return INSOLUBLE_HENRY_COEFFICIENT;
+    }
+    double coefficient = IapwsHenryLaw.getHenryCoefficientBar(getComponentName(), phase.getTemperature())
+        * IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
+    return super.isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
+    if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
+      return super.getLnHenryCoefficientTemperatureDerivative(phase);
+    }
+    if (!neutralPitzerInteractionsActive && (phase.hasIons() || requiresReactivePitzerQualification())) {
+      return getLnHenryCoefficientTemperatureDerivative(phase.getTemperature());
+    }
+    if (!IapwsHenryLaw.isUsable(getComponentName(), phase.getTemperature())) {
+      return 0.0;
+    }
+    return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
+  }
+
+  /**
+   * Tests whether a molecular acid gas needs reaction-compatible neutral Pitzer parameters before changing its
+   * reference state.
+   *
+   * @return {@code true} for CO2 and H2S component aliases
+   */
+  private boolean requiresReactivePitzerQualification() {
+    String name = getComponentName();
+    return "CO2".equalsIgnoreCase(name) || "carbon dioxide".equalsIgnoreCase(name) || "H2S".equalsIgnoreCase(name)
+        || "hydrogen sulfide".equalsIgnoreCase(name);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected boolean isHenryCoefficientCapped(double henryCoefficient) {
+    return super.isHenryCoefficientCapped(henryCoefficient) || isHydrocarbon() || isIsTBPfraction();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHydrocarbon() {
+    return super.isHydrocarbon() || hasHydrocarbonFormula();
+  }
+
+  /**
+   * Check the database molecular formula for a pure hydrocarbon.
+   *
+   * <p>
+   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}. The
+   * formula check keeps Pitzer aqueous-reference and parameter-topology decisions independent of that initialization
+   * detail.
+   * </p>
+   *
+   * @return {@code true} when the formula contains carbon and hydrogen only
+   */
+  private boolean hasHydrocarbonFormula() {
+    String formula = getFormulae();
+    if (formula == null || formula.isEmpty()) {
+      return false;
+    }
+    boolean carbon = false;
+    boolean hydrogen = false;
+    for (int index = 0; index < formula.length(); index++) {
+      char character = formula.charAt(index);
+      if (character == 'C') {
+        carbon = true;
+      } else if (character == 'H') {
+        hydrogen = true;
+      } else if (!Character.isDigit(character)) {
+        return false;
+      }
+    }
+    return carbon && hydrogen;
   }
 
   /** {@inheritDoc} */
@@ -46,7 +175,8 @@ public class ComponentGePitzer extends ComponentGE {
    * For ions (charge != 0): computes the single-ion activity coefficient from the Pitzer Debye-Huckel term and binary
    * cation-anion interaction parameters. For the solvent (water, referenceStateType = "solvent"): computes the activity
    * coefficient from the Pitzer osmotic coefficient using the Harvie and Weare (1980) mixed-electrolyte framework. For
-   * other neutral species (dissolved gases): returns gamma = 1.0 (no lambda/mu parameters available).
+   * other neutral species (dissolved gases): applies the explicitly configured lambda, zeta, mu, and eta families, with
+   * an exact gamma = 1.0 legacy fallback when that sparse layer is empty.
    * </p>
    *
    * @param phase phase object
@@ -59,25 +189,28 @@ public class ComponentGePitzer extends ComponentGE {
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
     double charge = getIonicCharge();
+    PhasePitzer pitz = (PhasePitzer) phase;
 
     // Solvent (water): compute gamma from Pitzer osmotic coefficient
-    if (Math.abs(charge) < 0.5 && "solvent".equals(referenceStateType)) {
+    if (Math.abs(charge) < 0.5 && "water".equalsIgnoreCase(getComponentName())
+        && "solvent".equals(referenceStateType)) {
       return getWaterGamma(phase, numberOfComponents, temperature);
     }
 
-    // Non-ionic, non-solvent species (dissolved gases): no Pitzer interaction parameters
+    // Non-ionic, non-solvent species use the sparse neutral Pitzer layer when configured.
     if (Math.abs(charge) < 0.5) {
-      gamma = 1.0;
-      lngamma = 0.0;
+      lngamma = neutralPitzerInteractionsActive
+          ? pitz.getNeutralPitzerLogGammaContribution(componentNumber, temperature)
+          : 0.0;
+      gamma = Math.exp(lngamma);
       return gamma;
     }
 
     // --- Ion activity coefficient (extended Pitzer formulation) ---
     // Pitzer (1991) Eq. 8-3-2: ln(gamma_M) = z_M^2 * F + sum_a m_a*(2*B_Ma + Z*C_Ma)
     // F = -Aphi*[sqrtI/(1+b*sqrtI) + (2/b)*ln(1+b*sqrtI)] + sum_c sum_a m_c*m_a*B'_ca
-    // Handles 1-1, 1-2, 2-1 electrolytes (alpha=2.0) and 2-2 electrolytes
-    // (alpha1=1.4, alpha2=12.0 with beta2 parameter per Harvie & Weare 1984).
-    PhasePitzer pitz = (PhasePitzer) phase;
+    // Handles PHREEQC's charge-dependent alpha defaults, including beta2 for both
+    // 2-1 CaCl2 and 2-2 electrolytes.
     double I = pitz.getIonicStrength();
     double sqrtI = Math.sqrt(I);
     // debyeHuckelAphi() returns Agamma = 3*Aphi; convert to Aphi for Pitzer formula
@@ -98,6 +231,10 @@ public class ComponentGePitzer extends ComponentGE {
     // B' contribution to F: sum_c sum_a m_c * m_a * B'_ca
     double fBprime = 0.0;
     double sum = 0.0;
+    boolean phreeqcCommonIonTerms = pitz.isPhreeqcCommonIonTermsActive();
+    double phreeqcCommonIonContribution = phreeqcCommonIonTerms
+        ? phreeqcCommonIonContribution(phase, pitz, numberOfComponents, temperature, I, sqrtI, charge)
+        : 0.0;
     for (int j = 0; j < numberOfComponents; j++) {
       if (j == componentNumber) {
         continue;
@@ -111,17 +248,8 @@ public class ComponentGePitzer extends ComponentGE {
       double beta1 = pitz.getBeta1ij(componentNumber, j, temperature);
       double CphiVal = pitz.getCphiij(componentNumber, j, temperature);
 
-      // Determine alpha values based on electrolyte type
-      double alpha1;
-      double alpha2;
-      boolean is22 = (Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5);
-      if (is22) {
-        alpha1 = 1.4;
-        alpha2 = 12.0;
-      } else {
-        alpha1 = 2.0;
-        alpha2 = 0.0;
-      }
+      double alpha1 = Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5 ? 1.4 : 2.0;
+      boolean isTwoTwo = Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5;
 
       double x1 = alpha1 * sqrtI;
       double g1 = 0.0;
@@ -134,11 +262,10 @@ public class ComponentGePitzer extends ComponentGE {
       // B'(I) = dB/dI for the F-term (Pitzer 1991 Eq. 8-2-8)
       double Bprime = (I > 1e-12) ? beta1 * gp1 / I : 0.0;
 
-      // Add beta2 contribution for 2-2 electrolytes
-      if (is22) {
-        double beta2val = pitz.getBeta2ij(componentNumber, j);
+      if (isTwoTwo || pitz.isNonTwoTwoBeta2Active()) {
+        double beta2val = pitz.getBeta2ij(componentNumber, j, temperature);
         if (Math.abs(beta2val) > 1e-20) {
-          double x2 = alpha2 * sqrtI;
+          double x2 = pitz.getPitzerAlpha2(componentNumber, j) * sqrtI;
           double g2 = 0.0;
           double gp2 = 0.0;
           if (x2 > 1e-12) {
@@ -160,10 +287,36 @@ public class ComponentGePitzer extends ComponentGE {
       // B' contribution to F: accumulate m_i * m_j * B'_ij
       // (only count each pair once — this ion paired with opposite-sign ion j)
       double m_this = getMolality(phase);
-      fBprime += m_this * m_j * Bprime;
+      if (!phreeqcCommonIonTerms) {
+        fBprime += m_this * m_j * Bprime;
+      }
     }
 
     // Theta and psi mixing terms for same-sign ion interactions
+    double fEthetaPrime = 0.0;
+    double[] electrostaticMixing = null;
+    boolean hasElectrostaticMixing = pitz.hasUnequalChargeSameSignPair();
+    if (hasElectrostaticMixing) {
+      for (int i = 0; i < numberOfComponents; i++) {
+        double chargei = phase.getComponent(i).getIonicCharge();
+        if (Math.abs(chargei) < 0.5) {
+          continue;
+        }
+        double m_i = phase.getComponent(i).getMolality(phase);
+        for (int j = i + 1; j < numberOfComponents; j++) {
+          double chargej = phase.getComponent(j).getIonicCharge();
+          if (chargei * chargej <= 0 || Math.abs(chargei - chargej) < 1.0e-12) {
+            continue;
+          }
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(chargei, chargej, I, Aphi, electrostaticMixing);
+          fEthetaPrime += m_i * phase.getComponent(j).getMolality(phase) * electrostaticMixing[1];
+        }
+      }
+    }
+
     for (int j = 0; j < numberOfComponents; j++) {
       if (j == componentNumber) {
         continue;
@@ -174,8 +327,16 @@ public class ComponentGePitzer extends ComponentGE {
         continue;
       }
       double m_j = phase.getComponent(j).getMolality(phase);
-      double thetaij = pitz.getThetaij(componentNumber, j);
-      sum += m_j * 2.0 * thetaij;
+      double thetaij = pitz.getThetaij(componentNumber, j, temperature);
+      double eTheta = 0.0;
+      if (hasElectrostaticMixing && Math.abs(charge - chargej) >= 1.0e-12) {
+        if (electrostaticMixing == null) {
+          electrostaticMixing = new double[2];
+        }
+        PitzerElectrostaticMixing.calculate(charge, chargej, I, Aphi, electrostaticMixing);
+        eTheta = electrostaticMixing[0];
+      }
+      sum += m_j * 2.0 * (thetaij + eTheta);
 
       // Psi ternary terms: sum over opposite-sign ions
       for (int k = 0; k < numberOfComponents; k++) {
@@ -184,16 +345,64 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double m_k = phase.getComponent(k).getMolality(phase);
-        double psiijk = pitz.getPsiijk(componentNumber, j, k);
+        double psiijk = pitz.getPsiijk(componentNumber, j, k, temperature);
         sum += m_j * m_k * psiijk;
       }
     }
 
     // ln(gamma_M) = z_M^2 * F + binary/mixing terms
-    double F = fDH + fBprime;
-    lngamma = charge * charge * F + sum;
+    double F = fDH + fBprime + fEthetaPrime;
+    lngamma = charge * charge * F + sum + phreeqcCommonIonContribution;
+    if (neutralPitzerInteractionsActive) {
+      lngamma += pitz.getNeutralPitzerLogGammaContribution(componentNumber, temperature);
+    }
     gamma = Math.exp(lngamma);
     return gamma;
+  }
+
+  /** Calculates PHREEQC's common B-prime and C0 contributions to one ion's ln(gamma). */
+  private static double phreeqcCommonIonContribution(PhaseInterface phase, PhasePitzer pitz, int numberOfComponents,
+      double temperature, double ionicStrength, double squareRootIonicStrength, double targetCharge) {
+    double fBprime = 0.0;
+    double cphiCommonSum = 0.0;
+    for (int cation = 0; cation < numberOfComponents; cation++) {
+      double cationCharge = phase.getComponent(cation).getIonicCharge();
+      if (cationCharge <= 0.0) {
+        continue;
+      }
+      double cationMolality = phase.getComponent(cation).getMolality(phase);
+      for (int anion = 0; anion < numberOfComponents; anion++) {
+        double anionCharge = phase.getComponent(anion).getIonicCharge();
+        if (anionCharge >= 0.0) {
+          continue;
+        }
+        double anionMolality = phase.getComponent(anion).getMolality(phase);
+        fBprime += cationMolality * anionMolality * phreeqcBinaryBprime(pitz, cation, anion, temperature, ionicStrength,
+            squareRootIonicStrength, cationCharge, anionCharge);
+        cphiCommonSum += cationMolality * anionMolality * pitz.getCphiij(cation, anion, temperature)
+            / (2.0 * Math.sqrt(Math.abs(cationCharge * anionCharge)));
+      }
+    }
+    return targetCharge * targetCharge * fBprime + Math.abs(targetCharge) * cphiCommonSum;
+  }
+
+  /** Calculates one binary pair's contribution to PHREEQC's common B-prime term. */
+  private static double phreeqcBinaryBprime(PhasePitzer phase, int first, int second, double temperature,
+      double ionicStrength, double squareRootIonicStrength, double firstCharge, double secondCharge) {
+    double alpha1 = Math.abs(firstCharge) >= 1.5 && Math.abs(secondCharge) >= 1.5 ? 1.4 : 2.0;
+    double x1 = alpha1 * squareRootIonicStrength;
+    double derivative = 0.0;
+    if (x1 > 1.0e-12 && ionicStrength > 1.0e-12) {
+      double gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
+      derivative = phase.getBeta1ij(first, second, temperature) * gp1 / ionicStrength;
+    }
+    double beta2Value = phase.getBeta2ij(first, second, temperature);
+    double x2 = phase.getPitzerAlpha2(first, second) * squareRootIonicStrength;
+    if (Math.abs(beta2Value) > 1.0e-20 && x2 > 1.0e-12 && ionicStrength > 1.0e-12) {
+      double gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
+      derivative += beta2Value * gp2 / ionicStrength;
+    }
+    return derivative;
   }
 
   /**
@@ -229,10 +438,11 @@ public class ComponentGePitzer extends ComponentGE {
     double Aphi = debyeHuckelAphi(TK) / 3.0;
     double b = 1.2;
 
-    // Sum of all ion molalities
+    // Preserve the legacy ion-only denominator until a neutral Pitzer dataset is explicitly active.
     double sumMolalities = 0.0;
     for (int k = 0; k < numberOfComponents; k++) {
-      if (phase.getComponent(k).getIonicCharge() != 0) {
+      boolean isWater = "water".equalsIgnoreCase(phase.getComponent(k).getComponentName());
+      if (phase.getComponent(k).getIonicCharge() != 0 || (neutralPitzerInteractionsActive && !isWater)) {
         sumMolalities += phase.getComponent(k).getMolality(phase);
       }
     }
@@ -272,19 +482,16 @@ public class ComponentGePitzer extends ComponentGE {
         double beta1 = pitz.getBeta1ij(ic, ia, TK);
         double Cphi = pitz.getCphiij(ic, ia, TK);
 
-        // Determine alpha values based on electrolyte type
-        boolean is22 = (Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5);
-        double alpha1 = is22 ? 1.4 : 2.0;
+        double alpha1 = Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5 ? 1.4 : 2.0;
 
         // B^phi_ca = beta0 + beta1 * exp(-alpha1 * sqrt(I))
         double BphiCA = beta0 + beta1 * Math.exp(-alpha1 * sqrtI);
 
-        // Add beta2 contribution for 2-2 electrolytes
-        if (is22) {
-          double beta2val = pitz.getBeta2ij(ic, ia);
+        boolean isTwoTwo = Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5;
+        if (isTwoTwo || pitz.isNonTwoTwoBeta2Active()) {
+          double beta2val = pitz.getBeta2ij(ic, ia, TK);
           if (Math.abs(beta2val) > 1e-20) {
-            double alpha2 = 12.0;
-            BphiCA += beta2val * Math.exp(-alpha2 * sqrtI);
+            BphiCA += beta2val * Math.exp(-pitz.getPitzerAlpha2(ic, ia) * sqrtI);
           }
         }
 
@@ -298,6 +505,8 @@ public class ComponentGePitzer extends ComponentGE {
 
     // Theta and psi contributions to osmotic coefficient
     double thetaPsiSum = 0.0;
+    double[] electrostaticMixing = null;
+    boolean hasElectrostaticMixing = pitz.hasUnequalChargeSameSignPair();
     // Cation-cation theta + psi
     for (int ic1 = 0; ic1 < numberOfComponents; ic1++) {
       double zc1 = phase.getComponent(ic1).getIonicCharge();
@@ -311,8 +520,16 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double mc2 = phase.getComponent(ic2).getMolality(phase);
-        double thetaCC = pitz.getThetaij(ic1, ic2);
-        thetaPsiSum += mc1 * mc2 * thetaCC;
+        double thetaCC = pitz.getThetaij(ic1, ic2, TK);
+        double electrostaticPhi = 0.0;
+        if (hasElectrostaticMixing && Math.abs(zc1 - zc2) >= 1.0e-12) {
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(zc1, zc2, I, Aphi, electrostaticMixing);
+          electrostaticPhi = electrostaticMixing[0] + I * electrostaticMixing[1];
+        }
+        thetaPsiSum += mc1 * mc2 * (thetaCC + electrostaticPhi);
         // Psi cation-cation-anion
         for (int ia = 0; ia < numberOfComponents; ia++) {
           double za = phase.getComponent(ia).getIonicCharge();
@@ -320,7 +537,7 @@ public class ComponentGePitzer extends ComponentGE {
             continue;
           }
           double ma = phase.getComponent(ia).getMolality(phase);
-          thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia);
+          thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia, TK);
         }
       }
     }
@@ -337,8 +554,16 @@ public class ComponentGePitzer extends ComponentGE {
           continue;
         }
         double ma2 = phase.getComponent(ia2).getMolality(phase);
-        double thetaAA = pitz.getThetaij(ia1, ia2);
-        thetaPsiSum += ma1 * ma2 * thetaAA;
+        double thetaAA = pitz.getThetaij(ia1, ia2, TK);
+        double electrostaticPhi = 0.0;
+        if (hasElectrostaticMixing && Math.abs(za1 - za2) >= 1.0e-12) {
+          if (electrostaticMixing == null) {
+            electrostaticMixing = new double[2];
+          }
+          PitzerElectrostaticMixing.calculate(za1, za2, I, Aphi, electrostaticMixing);
+          electrostaticPhi = electrostaticMixing[0] + I * electrostaticMixing[1];
+        }
+        thetaPsiSum += ma1 * ma2 * (thetaAA + electrostaticPhi);
         // Psi anion-anion-cation
         for (int ic = 0; ic < numberOfComponents; ic++) {
           double zc = phase.getComponent(ic).getIonicCharge();
@@ -346,13 +571,14 @@ public class ComponentGePitzer extends ComponentGE {
             continue;
           }
           double mc = phase.getComponent(ic).getMolality(phase);
-          thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic);
+          thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic, TK);
         }
       }
     }
 
-    // Osmotic coefficient: phi - 1 = (2/sumM) * (fPhi + binarySum + thetaPsiSum)
-    double phi = 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum);
+    double neutralSum = neutralPitzerInteractionsActive ? pitz.getNeutralPitzerOsmoticContribution(TK) : 0.0;
+    // Osmotic coefficient: phi - 1 = (2/sumM) * interaction sum
+    double phi = 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum + neutralSum);
 
     // Water activity: ln(a_w) = -phi * M_w * sumM / 1000
     double Mw = 18.015; // molar mass of water in g/mol

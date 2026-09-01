@@ -3,6 +3,10 @@ package neqsim.pvtsimulation.flowassurance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +50,13 @@ public class MultiMineralScaleEquilibriumTest {
   void testEquilibriumSaturationIndexZero() {
     MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine());
     eq.solve();
+
+    assertFalse(eq.hasReachedIterationLimit(), "Reference brine should converge before the iteration limit");
+    assertTrue(eq.getIterationCount() > 0, "Supersaturated reference brine should require an equilibrium update");
+    assertTrue(eq.getMaximumComplementarityViolation() <= 1.0e-3,
+        "Converged reference brine should satisfy the frozen complementarity tolerance");
+    assertEquals(0.0, eq.getMaximumIonBalanceResidualMolPerL(), 1.0e-12,
+        "Precipitation extents must close every tracked free-ion balance");
 
     for (MultiMineralScaleEquilibrium.MineralResult r : eq.getResults().values()) {
       if (r.getPrecipitatedMolPerL() > 1.0e-12) {
@@ -232,12 +243,67 @@ public class MultiMineralScaleEquilibriumTest {
   }
 
   @Test
+  @DisplayName("Diagnostics expose deterministic iteration-limited mineral states")
+  void testIterationLimitDiagnostics() {
+    MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine()).setSolverControls(1, 0.5,
+        1.0e-30);
+    eq.solve();
+
+    assertTrue(eq.hasReachedIterationLimit(), "One coordinate update must expose the configured stop boundary");
+    assertEquals(1, eq.getIterationCount(), "Exactly one coordinate update was allowed");
+    assertTrue(eq.getMaximumComplementarityViolation() > 1.0e-3,
+        "The deliberately truncated solve must not be reported as satisfying complementarity");
+    assertEquals(0.0, eq.getMaximumIonBalanceResidualMolPerL(), 1.0e-12,
+        "Even a truncated solve must conserve tracked ions");
+
+    double firstComplementarity = eq.getMaximumComplementarityViolation();
+    double firstBalance = eq.getMaximumIonBalanceResidualMolPerL();
+    eq.solve();
+    assertEquals(firstComplementarity, eq.getMaximumComplementarityViolation(), 0.0,
+        "Repeated execution must reproduce the complementarity residual exactly");
+    assertEquals(firstBalance, eq.getMaximumIonBalanceResidualMolPerL(), 0.0,
+        "Repeated execution must reproduce the ion-balance residual exactly");
+  }
+
+  @Test
+  @DisplayName("Serialization invalidates cached diagnostics and recomputes deterministically")
+  void testSerializationInvalidatesCachedDiagnostics() throws Exception {
+    MultiMineralScaleEquilibrium original = new MultiMineralScaleEquilibrium(sulphateLimitedBrine());
+    original.solve();
+    double expectedComplementarity = original.getMaximumComplementarityViolation();
+    double expectedBalance = original.getMaximumIonBalanceResidualMolPerL();
+
+    byte[] serialized;
+    try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(original);
+      output.flush();
+      serialized = bytes.toByteArray();
+    }
+
+    MultiMineralScaleEquilibrium restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(serialized))) {
+      restored = (MultiMineralScaleEquilibrium) input.readObject();
+    }
+
+    assertFalse(restored.isSolved(), "Deserialization must invalidate cached solve and diagnostic state");
+    assertEquals(expectedComplementarity, restored.getMaximumComplementarityViolation(), 0.0,
+        "Lazy post-deserialization solve must reproduce complementarity exactly");
+    assertEquals(expectedBalance, restored.getMaximumIonBalanceResidualMolPerL(), 0.0,
+        "Lazy post-deserialization solve must reproduce ion balance exactly");
+    assertTrue(restored.isSolved(), "Reading a diagnostic should complete the lazy re-solve");
+  }
+
+  @Test
   @DisplayName("JSON report is produced and contains total scale mass")
   void testJsonReport() {
     MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(sulphateLimitedBrine());
     String json = eq.toJson();
     assertTrue(json.contains("totalScaleMass_mgL"), "JSON must report total scale mass");
     assertTrue(json.contains("residualFreeIons_molL"), "JSON must report residual free ions");
+    assertTrue(json.contains("maximumComplementarityViolation_SI"),
+        "JSON must report the complementarity acceptance diagnostic");
+    assertTrue(json.contains("maximumIonBalanceResidual_molL"), "JSON must report the ion-balance diagnostic");
   }
 
   /**

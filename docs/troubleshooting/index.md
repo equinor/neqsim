@@ -1,392 +1,262 @@
 ---
-title: NeqSim Troubleshooting Guide
-description: Solutions to common NeqSim problems - convergence issues, density problems, Python integration errors, and more.
+title: "NeqSim Troubleshooting Guide"
+description: "Diagnose NeqSim flash, density, Python, process, recycle, and phase-envelope problems."
 ---
 
-# NeqSim Troubleshooting Guide
+Use this page to reduce a failing case to a small, reproducible calculation before
+changing models or numerical settings. Record the NeqSim version, fluid
+composition, equation of state, mixing rule, temperature in K or °C, absolute
+pressure in bara, and the complete exception.
 
-Quick solutions to common problems when using NeqSim.
+## Start from a known-good diagnostic case
 
-## Error Categories
-
-| Category | Common Problems |
-|----------|-----------------|
-| [Flash Convergence](#flash-convergence-issues) | Flash fails, wrong phases, oscillation |
-| [Density Issues](#density-issues) | Wrong density values, unit confusion |
-| [Python Integration](#python-integration-issues) | Import errors, JVM problems, type errors |
-| [Process Simulation](#process-simulation-issues) | Equipment failures, recycle divergence |
-| [Phase Envelope](#phase-envelope-issues) | Envelope calculation fails |
-
----
-
-## Flash Convergence Issues
-
-### Problem: Flash calculation fails or doesn't converge
-
-**Symptoms:**
-- Exception during TPflash
-- `getNumberOfPhases()` returns unexpected value
-- Properties look unrealistic
-
-**Solutions:**
-
-1. **Check temperature and pressure ranges**
-   ```python
-   # Ensure T and P are within reasonable bounds
-   # T should be in Kelvin (not Celsius!)
-   fluid = SystemSrkEos(273.15 + 25, 50.0)  # 25°C, 50 bara
-   # NOT: SystemSrkEos(25, 50)  # This is -248°C!
-   ```
-
-2. **Enable multiphase check**
-   ```python
-   fluid.setMultiPhaseCheck(True)
-   ```
-
-3. **Try different initial estimates**
-   ```python
-   ops = ThermodynamicOperations(fluid)
-   ops.TPflash()
-   
-   # If that fails, try:
-   fluid.init(0)  # Reset to composition only
-   fluid.setTemperature(273.15 + 30)  # Slightly different T
-   ops.TPflash()
-   ```
-
-4. **Check composition normalization**
-   ```python
-   # Components should sum to 1.0 (or close)
-   total = sum([fluid.getComponent(i).getz() for i in range(fluid.getNumberOfComponents())])
-   print(f"Total composition: {total}")  # Should be ~1.0
-   ```
-
-5. **Use appropriate EoS for the fluid**
-   ```python
-   # For CO2/water, use CPA not SRK
-   fluid = SystemSrkCPAstatoil(T, P)  # Not SystemSrkEos
-   ```
-
-### Problem: Wrong number of phases detected
-
-**Solutions:**
-
-1. **Enable stability analysis**
-   ```python
-   fluid.setMultiPhaseCheck(True)
-   ops.TPflash()
-   ```
-
-2. **Check if near critical point**
-   ```python
-   # Near critical point, phase detection is difficult
-   # Try slightly different conditions
-   ```
-
-3. **Verify mixing rule is set**
-   ```python
-   fluid.setMixingRule("classic")  # REQUIRED!
-   ```
-
----
-
-## Density Issues
-
-### Problem: Density value seems wrong
-
-**Root Cause:** Most common issue - using `getDensity()` without a unit string.
-
-**Wrong:**
-```python
-density = fluid.getDensity()  # Returns EoS density WITHOUT Peneloux correction
-```
-
-**Correct:**
-```python
-density = fluid.getDensity("kg/m3")  # Returns density WITH volume correction
-```
-
-### Problem: Gas density too low / liquid density too high
-
-1. **Ensure properties are initialized**
-   ```python
-   fluid.initProperties()  # Call AFTER flash
-   density = fluid.getDensity("kg/m3")
-   ```
-
-2. **Check if Peneloux is enabled**
-   ```python
-   # Peneloux correction should be automatic with getDensity("kg/m3")
-   # But verify you're reading the right phase:
-   gas_density = fluid.getPhase("gas").getDensity("kg/m3")
-   ```
-
-3. **For phase-specific density**
-   ```python
-   if fluid.hasPhaseType("gas"):
-       gas_density = fluid.getPhase("gas").getDensity("kg/m3")
-   if fluid.hasPhaseType("oil"):
-       oil_density = fluid.getPhase("oil").getDensity("kg/m3")
-   ```
-
-### Problem: Density changes unexpectedly after operations
-
-**Cause:** Flash changes phase fractions. Re-read phase-specific properties.
+This complete Python example verifies the gateway, composition, flash, and
+physical-property initialization:
 
 ```python
-# After any operation that changes state:
-fluid.initProperties()  # Re-initialize
-density = fluid.getDensity("kg/m3")
-```
-
----
-
-## Python Integration Issues
-
-### Problem: `ModuleNotFoundError: No module named 'neqsim'`
-
-**Solution:** Install neqsim-python:
-```bash
-pip install neqsim
-```
-
-### Problem: `AttributeError: 'NoneType' object has no attribute...`
-
-**Cause:** JVM not started properly.
-
-**Solution:** Use the correct import pattern:
-```python
-# CORRECT - auto-starts JVM
 from neqsim import jneqsim
 
-# Create fluid through jneqsim gateway
-fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25, 50.0)
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ThermodynamicOperations = (
+    jneqsim.thermodynamicoperations.ThermodynamicOperations
+)
+
+fluid = SystemSrkEos(298.15, 50.0)
+fluid.addComponent("methane", 0.90)
+fluid.addComponent("ethane", 0.06)
+fluid.addComponent("propane", 0.03)
+fluid.addComponent("CO2", 0.01)
+fluid.setMixingRule("classic")
+fluid.setMultiPhaseCheck(True)
+
+operations = ThermodynamicOperations(fluid)
+operations.TPflash()
+fluid.initProperties()
+
+overall_total = sum(
+    fluid.getPhase(0).getComponent(i).getz()
+    for i in range(fluid.getPhase(0).getNumberOfComponents())
+)
+bulk_density = fluid.getDensity("kg/m3")
+
+assert abs(overall_total - 1.0) < 1.0e-12
+assert bulk_density > 0.0
+print(f"Composition total: {overall_total:.12f}")
+print(f"Bulk density: {bulk_density:.3f} kg/m³")
 ```
 
-### Problem: `TypeError: No matching overloads found`
+With NeqSim 3.16.0, this fixture reports a composition total of `1.000000000000`
+and a bulk density of approximately `40.636 kg/m³`.
 
-**Cause:** Wrong parameter types passed to Java methods.
+## Flash convergence and unexpected phases
 
-**Solutions:**
+Check these causes in order:
 
-1. **Explicitly cast numbers to float**
-   ```python
-   # If value might be int:
-   stream.setFlowRate(float(10000), "kg/hr")
-   ```
+1. Confirm constructor temperature is in kelvin and pressure is absolute in
+   bara. For example, `SystemSrkEos(298.15, 50.0)` is 25°C and 50 bara.
+2. Confirm every component name exists and the overall composition is positive
+   and normalized. Inspect overall mole fractions with
+   `fluid.getPhase(0).getComponent(i).getz()`.
+3. Set the mixing rule before the flash. Use `"classic"` for a basic SRK or PR
+   hydrocarbon case.
+4. Enable `setMultiPhaseCheck(True)` when an additional stable phase is
+   physically possible. This changes the phase-stability search; it is not a
+   generic convergence switch.
+5. Reproduce the problem on a clone or freshly constructed fluid. A failed
+   operation may leave an object unsuitable for a diagnostic retry.
+6. Check whether the selected model represents the fluid chemistry. CPA or an
+   electrolyte model may be appropriate for associating or ionic systems, but
+   changing the equation of state is a physical-model decision rather than a
+   numerical workaround.
 
-2. **Convert Python strings properly**
-   ```python
-   # Java String to Python string for formatting:
-   name = str(component.getComponentName())
-   print(f"Component: {name}")
-   ```
+Do not silently perturb composition, add an inert component, or change operating
+conditions merely to make a flash converge. Such changes define a different
+engineering case.
 
-### Problem: `RuntimeError: JVM cannot be restarted`
+## Density and physical properties
 
-**Cause:** JVM was already started and stopped in this Python session.
+NeqSim exposes two distinct density paths:
 
-**Solution:** Restart the Python kernel/process. JVM can only be started once per process.
+- `fluid.getDensity()` derives an equation-of-state density from molar volume.
+- `fluid.getDensity("kg/m3")` returns the initialized physical-property density
+  in the requested supported unit.
 
-### Problem: Java String in Python f-string fails
+After a flash, call `fluid.initProperties()` before reading density, viscosity,
+thermal conductivity, or other physical properties. Then use
+`fluid.getDensity("kg/m3")` for the bulk value and, after checking
+`fluid.hasPhaseType("gas")`, use
+`fluid.getPhase("gas").getDensity("kg/m3")` for the gas phase.
 
-**Symptom:** `TypeError` when using format specifiers with Java strings.
+The unit-aware getter uses the initialized physical-property path; it does not
+select a volume-translation model. Any volume translation is determined by the
+configured thermodynamic system and its component parameters. Report the model
+and property path with density results.
+
+Reflash and reinitialize properties after changing temperature, pressure, or
+composition. For two-phase systems, also inspect phase-specific densities and
+phase fractions; a bulk value can be correct while being misinterpreted as a
+single-phase property.
+
+## Python gateway and overload errors
+
+For `TypeError: No matching overloads found`, compare the call with the current
+Java signature. Use the supported `from neqsim import jneqsim` gateway, preserve
+floating-point values and unit strings when the method expects them, and convert
+returned Java strings with `str(...)` before applying Python formatting.
+
+A JVM cannot be restarted in the same Python process. Restart the kernel or use
+a new process after stopping it. Do not suppress the original Java exception;
+retain the full traceback and the minimal input case.
+
+## Process equipment produces zero or implausible results
+
+Create all connections, add every unit to one `ProcessSystem`, run the system,
+and only then read results:
 
 ```python
-# WRONG - Java String doesn't support Python format specs
-comp = fluid.getComponent(0)
-print(f"Name: {comp.getComponentName()}")  # May fail with :.4f etc.
+from neqsim import jneqsim
 
-# CORRECT - Convert to Python string first
-name = str(comp.getComponentName())
-print(f"Name: {name}")
-```
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Separator = jneqsim.process.equipment.separator.Separator
+Compressor = jneqsim.process.equipment.compressor.Compressor
 
----
+feed_fluid = SystemSrkEos(298.15, 50.0)
+feed_fluid.addComponent("methane", 0.90)
+feed_fluid.addComponent("ethane", 0.06)
+feed_fluid.addComponent("propane", 0.03)
+feed_fluid.addComponent("CO2", 0.01)
+feed_fluid.setMixingRule("classic")
 
-## Process Simulation Issues
+feed = Stream("feed", feed_fluid)
+feed.setFlowRate(10_000.0, "kg/hr")
+separator = Separator("separator", feed)
+compressor = Compressor("compressor", separator.getGasOutStream())
+compressor.setOutletPressure(80.0, "bara")
+compressor.setIsentropicEfficiency(0.75)
 
-### Problem: Equipment doesn't run / stream properties are zero
-
-**Causes:**
-1. Stream not added to ProcessSystem
-2. Equipment not connected properly
-3. ProcessSystem not run
-
-**Solution:**
-```python
-# CORRECT pattern
 process = ProcessSystem()
-
-# Add ALL equipment
 process.add(feed)
 process.add(separator)
 process.add(compressor)
-
-# Run the entire system
 process.run()
 
-# NOW check results
-print(separator.getGasOutStream().getFlowRate("kg/hr"))
+gas_flow = separator.getGasOutStream().getFlowRate("kg/hr")
+compressor_power = compressor.getPower("kW")
+
+assert gas_flow > 0.0
+assert compressor_power > 0.0
 ```
 
-### Problem: Recycle doesn't converge
+NeqSim 3.16.0 gives `10,000 kg/h` gas and approximately `228.434 kW` for this
+single-phase fixture. If a result differs, inspect the stream states directly
+before changing equipment parameters.
 
-**Solutions:**
+Compressor efficiency is a fraction, not percent. Very high pressure ratios may
+require staging and intercooling, but no universal pressure-ratio limit proves
+that a compressor is feasible. Use a valid compressor chart, operating envelope,
+and mechanical-design basis for equipment conclusions.
 
-1. **Improve initial guess**
-   ```python
-   # Set reasonable initial flow in recycle stream
-   recycle_stream.setFlowRate(estimated_flow, "kg/hr")
-   ```
+## Recycle convergence
 
-2. **Loosen tolerance**
-   ```python
-   recycle.setTolerance(1e-4)  # Less strict
-   ```
+Use the current `Recycle` API. `setMaximumIterations(...)` and
+`setDampingFactor(...)` are not `Recycle` methods:
 
-3. **Increase iterations**
-   ```python
-   recycle.setMaximumIterations(100)
-   ```
+```python
+from neqsim import jneqsim
 
-4. **Add damping**
-   ```python
-   recycle.setDampingFactor(0.5)  # Slower but more stable
-   ```
+Recycle = jneqsim.process.equipment.util.Recycle
+AccelerationMethod = jneqsim.process.equipment.util.AccelerationMethod
 
-### Problem: Compressor power is unrealistic
+recycle = Recycle("recycle")
+recycle.setTolerance(1.0e-4)
+recycle.setMaxIterations(50)
+recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN)
 
-**Check:**
-1. Efficiency is set (default may be 100%)
-   ```python
-   compressor.setIsentropicEfficiency(0.75)  # Typical: 70-85%
-   ```
+assert recycle.getMaxIterations() == 50
+assert recycle.getAccelerationMethod() == AccelerationMethod.WEGSTEIN
+```
 
-2. Pressure ratio is reasonable
-   ```python
-   # Very high ratios need multiple stages
-   ratio = outlet_P / inlet_P
-   if ratio > 3.5:
-       print("Consider multi-stage compression")
-   ```
+`setTolerance(...)` applies the same threshold to flow, temperature,
+composition, and pressure. Use `setFlowTolerance(...)`,
+`setTemperatureTolerance(...)`, `setCompositionTolerance(...)`, and
+`setPressureTolerance(...)` when the quantities need different thresholds.
+These internal convergence errors are not all expressed in the same physical
+unit, so record each threshold rather than describing one as a universal
+temperature or pressure tolerance.
 
----
+Before using acceleration, first verify that the loop is correctly connected and
+that the tear-stream initial estimate is physically plausible. See
+[Recycle acceleration](../simulation/recycle_acceleration_guide.md) for the
+supported direct-substitution, Wegstein, and Broyden options.
 
-## Phase Envelope Issues
+## Phase-envelope failures
 
-### Problem: Phase envelope calculation fails
+Start with a multicomponent hydrocarbon fluid, a cubic equation of state, and a
+positive composition:
 
-**Solutions:**
+```python
+from neqsim import jneqsim
 
-1. **Ensure composition is valid**
-   ```python
-   # No zero or negative mole fractions
-   fluid.addComponent("methane", 0.85)  # Not 0.0!
-   ```
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ThermodynamicOperations = (
+    jneqsim.thermodynamicoperations.ThermodynamicOperations
+)
 
-2. **Use appropriate EoS**
-   ```python
-   # Phase envelope works best with cubic EoS
-   fluid = SystemSrkEos(T, P)  # or SystemPrEos
-   ```
+fluid = SystemSrkEos(283.15, 10.0)
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.08)
+fluid.addComponent("propane", 0.04)
+fluid.addComponent("n-butane", 0.03)
+fluid.setMixingRule("classic")
 
-3. **Try different starting point**
-   ```python
-   # Start at lower pressure
-   fluid = SystemSrkEos(273.15 + 20, 10.0)  # Lower P
-   ops.calcPTphaseEnvelope()
-   ```
+operations = ThermodynamicOperations(fluid)
+operations.calcPTphaseEnvelope()
+dew_temperatures = operations.get("dewT")
+bubble_temperatures = operations.get("bubT")
 
-### Problem: Incomplete phase envelope
+assert len(dew_temperatures) > 2
+assert len(bubble_temperatures) > 2
+```
 
-**Cause:** Calculation stopped at convergence issue.
+If the default trace fails, rebuild the same case on a fresh fluid and use a
+supported overload to control the starting branch and low-pressure point, such
+as `calcPTphaseEnvelope(True, 1.0)`. The old
+`calcPTphaseEnvelopeSpecificPoint(...)` remedy does not exist. Do not add a
+component only to force numerical completion; that changes the phase envelope.
 
-**Solutions:**
+## Performance without stale properties
 
-1. **Increase points**
-   ```python
-   # More points may trace envelope better
-   ops.calcPTphaseEnvelopeSpecificPoint(specific_T, specific_P)
-   ```
+- Avoid physical-property initialization when only equilibrium phase amounts or
+  compositions are needed.
+- When transport properties are needed at every state in a sweep, call
+  `initProperties()` after every flash. Calling it only after the loop leaves
+  earlier results unavailable or stale.
+- Reuse a fluid only when state mutation is intentional. Use `clone()` to isolate
+  cases and improve reproducibility, not as a claimed universal speed-up.
+- Reduce pseudo-components or pipeline increments only after confirming that the
+  reduced resolution does not change the engineering conclusion.
+- Profile the minimal reproducible case before changing tolerances or models.
 
-2. **Check for near-critical behavior**
-   ```python
-   # Near critical, envelope is sensitive
-   # Try adding trace of inert component
-   fluid.addComponent("nitrogen", 0.001)  # May help convergence
-   ```
+## Common exception triage
 
----
+| Symptom | First check |
+| --- | --- |
+| `NullPointerException` | Missing object, connection, component, or initialization |
+| `IndexOutOfBoundsException` | Phase/component existence before indexed access |
+| `No matching overloads` | Exact Java parameter types and unit-bearing overload |
+| `JVM cannot be restarted` | Use a fresh Python process or kernel |
+| Flash or equipment exception | Full nested cause, state, model, composition, and units |
 
-## Performance Issues
+## Related documentation
 
-### Problem: Simulation is very slow
+- [Thermodynamics cookbook](../cookbook/thermodynamics-recipes.md)
+- [Process cookbook](../cookbook/process-recipes.md)
+- [Pipeline cookbook](../cookbook/pipeline-recipes.md)
+- [Recycle acceleration](../simulation/recycle_acceleration_guide.md)
+- [Reference Manual Index](../REFERENCE_MANUAL_INDEX.md)
 
-**Solutions:**
-
-1. **Reduce flash iterations**
-   ```python
-   # For quick estimates
-   fluid.init(1)  # Basic properties only
-   ```
-
-2. **Avoid repeated initialization**
-   ```python
-   # DON'T call initProperties() in loops
-   for T in temperatures:
-       fluid.setTemperature(T)
-       ops.TPflash()
-   # THEN call initProperties() once
-   fluid.initProperties()
-   ```
-
-3. **Clone instead of recreating**
-   ```python
-   # Faster than creating new fluid
-   fluid2 = fluid.clone()
-   fluid2.setTemperature(new_T)
-   ```
-
----
-
-## Common Error Messages
-
-| Error Message | Likely Cause | Fix |
-|---------------|--------------|-----|
-| `NullPointerException` | Uninitialized object or missing component | Check all objects are created and added |
-| `IndexOutOfBoundsException` | Accessing non-existent phase/component | Check `getNumberOfPhases()` first |
-| `No matching overloads` | Wrong parameter type | Cast to float/str explicitly |
-| `JVM cannot be restarted` | JVM already started | Restart Python kernel |
-| `Flash did not converge` | Bad initial guess or impossible state | Check T, P, composition |
-
----
-
-## Quick Fix Recipes
-
-For copy-paste solutions to common tasks, see the **[Cookbook](../cookbook/index)**:
-
-| Problem | Recipe |
-|---------|--------|
-| Get density correctly | [thermodynamics-recipes.md#get-density-correctly](../cookbook/thermodynamics-recipes#get-density-correctly) |
-| Which EoS to use? | [thermodynamics-recipes.md#which-eos-should-i-use](../cookbook/thermodynamics-recipes#which-eos-should-i-use) |
-| Set up recycle | [process-recipes.md#recycle-stream](../cookbook/process-recipes#recycle-stream) |
-| Pipeline pressure drop | [pipeline-recipes.md#simple-pressure-drop](../cookbook/pipeline-recipes#simple-pressure-drop) |
-
----
-
-## Getting Help
-
-1. **Check the JavaDoc API**: [https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)
-
-2. **Search GitHub Issues**: [https://github.com/equinor/neqsim/issues](https://github.com/equinor/neqsim/issues)
-
-3. **Check documentation**: [Reference Manual](../REFERENCE_MANUAL_INDEX)
-
-4. **Browse the Cookbook**: [Quick recipes](../cookbook/index) for common tasks
-
-5. **Open a new issue** with:
-   - NeqSim version
-   - Python version (if using Python)
-   - Minimal code to reproduce
-   - Full error message/traceback
+When opening a GitHub issue, include the NeqSim, Java, and Python versions; a
+minimal executable example; exact inputs and units; expected and actual
+behavior; and the complete exception with nested causes.

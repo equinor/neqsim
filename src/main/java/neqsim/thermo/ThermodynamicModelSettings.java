@@ -59,4 +59,42 @@ public interface ThermodynamicModelSettings extends java.io.Serializable {
   static void setUseWarmStartKValues(boolean enabled) {
     Flags.useWarmStartKValues.set(enabled);
   }
+
+  /**
+   * Decides whether the inner TP flashes of an iterative outer flash (PH, PS, PV, TV, PU, VU, ...) may reuse K-values
+   * from the previous inner solve.
+   *
+   * <p>
+   * Association-site fractions of a CPA fluid change strongly with temperature, so a K vector carried over from a
+   * previous inner flash can be a worse seed than a cold Wilson initialization. Reusing it adds inner-flash work and
+   * can destabilize the outer iteration - the CPA regression documented in issue #2110, where a TEG-regeneration case
+   * went from 55.9 s to 104.8 s while the equivalent cubic SRK case improved. Cubic EOS models keep the established
+   * warm-start acceleration.
+   * </p>
+   *
+   * <p>
+   * The first inner TP flash of an outer flash must always run cold regardless of this predicate, so that stale
+   * K-values from an unrelated flash at a different P/T cannot bias the solution.
+   * </p>
+   *
+   * @param system the fluid being flashed; {@code null} is treated as warm-start safe
+   * @return {@code true} when inner TP flashes may reuse K-values, {@code false} for associating (CPA) models
+   */
+  static boolean isInnerFlashWarmStartSafe(neqsim.thermo.system.SystemInterface system) {
+    if (system == null) {
+      return true;
+    }
+    String modelName = system.getModelName() == null ? "" : system.getModelName();
+    if (modelName.toUpperCase(java.util.Locale.ROOT).contains("CPA")) {
+      return false;
+    }
+    try {
+      if (system.getPhase(0) instanceof neqsim.thermo.phase.PhaseCPAInterface) {
+        return false;
+      }
+    } catch (RuntimeException ex) {
+      // Phases are not initialized yet - fall back to the model-name decision above.
+    }
+    return true;
+  }
 }

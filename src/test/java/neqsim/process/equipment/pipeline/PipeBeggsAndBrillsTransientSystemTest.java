@@ -36,7 +36,11 @@ public class PipeBeggsAndBrillsTransientSystemTest {
   private static final double INITIAL_VALVE_OPENING = 40.0;
   private static final double FINAL_VALVE_OPENING = 80.0;
   private static final double VALVE_OUTLET_PRESSURE = 65.0;
-  private static final double TIME_STEP_SECONDS = 20.0;
+  // The transient scheme relaxes each segment over its own fluid transit time, so a step
+  // longer than that transit time reaches the new state in a single step and there is no
+  // delay left to observe. A 100 m line in 10 segments is 10 m per segment, which the
+  // liquid crosses in a few seconds.
+  private static final double TIME_STEP_SECONDS = 1.0;
   private static final int MAX_TRANSIENT_STEPS = 400;
   private static final int TARGET_CONVERGENCE_STEPS = 2000;
   private static final double TARGET_RELATIVE_TOLERANCE = 1.0e-3;

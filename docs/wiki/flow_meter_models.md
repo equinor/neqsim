@@ -9,6 +9,11 @@ This page documents the equations implemented in the `Orifice` equipment for
 computing flow through differential pressure meters. All variables are in SI
 units.
 
+For an explicit, edition-aware ISO 5167-2:2022 calculation with applicability and readiness gates,
+use the [typed orifice-metering kernel](../process/measurement/iso_5167_orifice_metering). The
+equipment methods documented here remain useful for process simulation but do not by themselves
+establish an ISO conformity or custody-transfer result.
+
 ## Orifice plate
 
 The discharge coefficient $C$ is calculated with the Reader&ndash;Harris/Gallagher

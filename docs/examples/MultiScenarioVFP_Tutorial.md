@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "MultiScenarioVFP Tutorial"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Multi-Scenario VFP Generation with NeqSim"
+description: "Notebook for Multi-Scenario VFP Generation with NeqSim, including NeqSim Python examples and workflow context."
 parent: Examples
 nav_order: 1
 ---
-
-# MultiScenarioVFP Tutorial
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MultiScenarioVFP_Tutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MultiScenarioVFP_Tutorial.ipynb).
@@ -14,8 +12,6 @@ nav_order: 1
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MultiScenarioVFP_Tutorial.ipynb).
 
 ---
-
-# Multi-Scenario VFP Generation with NeqSim
 
 This notebook demonstrates how to generate VFP (Vertical Flow Performance) tables that account for varying Gas-Oil Ratio (GOR) and Water Cut (WC) conditions. This is essential for reservoir simulation coupling where fluid properties change over the field life.
 

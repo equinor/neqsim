@@ -1,6 +1,6 @@
 ---
 title: mathlib
-description: mathlib documentation for NeqSim
+description: Mathematical solvers and numerical utility documentation for NeqSim.
 ---
 
 {%- include_relative README.md -%}

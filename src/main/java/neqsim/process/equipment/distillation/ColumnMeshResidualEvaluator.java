@@ -39,6 +39,46 @@ final class ColumnMeshResidualEvaluator {
   }
 
   /**
+   * Evaluate the largest per-tray component material imbalance relative to that tray's total throughput.
+   *
+   * <p>
+   * This is deliberately not the infinity norm of {@link ColumnMeshEquationType#MATERIAL}. Those entries scale each
+   * component by its own throughput, so a trace component moving from 1e-25 to 1.2e-25 mol/hr produces the same 0.17
+   * residual as a 17 % imbalance on the key component. Weighting the summed absolute imbalance of a tray by the tray's
+   * total molar throughput gives a physically meaningful, trace-insensitive measure of whether the tray closes.
+   * </p>
+   *
+   * @param column column to evaluate
+   * @return maximum per-tray relative material imbalance in the range [0, 1], or zero when no tray carries flow
+   */
+  static double evaluateMaxTrayMaterialImbalance(DistillationColumn column) {
+    ColumnMeshState state = ColumnMeshState.from(column);
+    double worstImbalance = 0.0;
+    for (int tray = 0; tray < state.getTrayCount(); tray++) {
+      double imbalance = 0.0;
+      double throughput = 0.0;
+      for (int comp = 0; comp < state.getComponentCount(); comp++) {
+        double vaporIn = tray > 0 ? state.getVaporComponentFlow(tray - 1, comp) : 0.0;
+        double liquidIn = tray < state.getTrayCount() - 1 ? state.getLiquidComponentFlow(tray + 1, comp) : 0.0;
+        double feedIn = state.getFeedComponentFlow(tray, comp);
+        double vaporOut = state.getVaporComponentFlow(tray, comp);
+        double liquidOut = state.getLiquidComponentFlow(tray, comp);
+        double inlet = vaporIn + liquidIn + feedIn;
+        double outlet = vaporOut + liquidOut;
+        imbalance += Math.abs(outlet - inlet);
+        throughput += Math.abs(inlet) + Math.abs(outlet);
+      }
+      if (throughput > ColumnMeshState.getMinimumScale()) {
+        double relative = imbalance / throughput;
+        if (Double.isFinite(relative)) {
+          worstImbalance = Math.max(worstImbalance, relative);
+        }
+      }
+    }
+    return worstImbalance;
+  }
+
+  /**
    * Add tray component material residuals.
    *
    * @param state column state snapshot

@@ -37,6 +37,7 @@ Your default output is code and tests. Avoid stopping at design notes unless the
 
 - Preserve the existing steady-state `run(id)` behavior.
 - Do not change public APIs unrelated to the target equipment unless required by the dynamic model.
+- Preserve the standard stream contract: all live external streams appear in `getInletStreams()` / `getOutletStreams()`, phase-separated products retain conventional gas/liquid accessors, domain aliases return the same objects, and outlet identity survives steady and transient updates.
 - Add direct, documented dynamic-configuration setters when the transient model needs volume, residence time, metal mass, stroke time, inertia, or similar capacity data.
 - Keep all Java Java 8 compatible.
 - Use Log4j2 for Java logging; never add `System.out.println` or `System.err.println`.
@@ -50,6 +51,8 @@ Each implementation must include a test that proves the real dynamic branch runs
 Prefer assertions on:
 
 - time advancement
+- object identity between conventional outlet accessors, domain aliases, and `getOutletStreams()` before and after transient steps
+- expected phase type in each phase-separated product (`gas` versus oil/liquid/aqueous)
 - finite non-negative inventory
 - mass balance across a timestep
 - pressure, level, temperature, flow, speed, or valve-opening movement in the expected direction

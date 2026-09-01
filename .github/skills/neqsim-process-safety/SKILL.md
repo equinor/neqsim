@@ -1,8 +1,8 @@
 ---
 name: neqsim-process-safety
-version: "1.0.0"
-description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
-last_verified: "2026-06-27"
+version: "1.5.0"
+description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, integrated facility safety response, safety change revalidation, independent benchmarks, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, integrated ESD/compressor-trip/blowdown/relief/flare evidence, safety-study revalidation after change, independent method benchmarks, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
+last_verified: "2026-07-18"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
@@ -20,6 +20,7 @@ sizing (`neqsim-relief-flare-network`).
 - Barrier management for PSFs/SCEs with document evidence and performance standards
 - LOPA for a specific scenario — calculate residual frequency and required RRF
 - SIL determination for an SIF — IEC 61508 / IEC 61511 verification
+- Closed-loop SIF execution from live process signal through MooN voting and final element
 - Bow-tie analysis (top event with threats + barriers + consequences)
 - ALARP / risk-matrix scoring (5×5)
 - Trapped-liquid fire rupture screening for blocked-in liquid-filled segments,
@@ -27,8 +28,15 @@ sizing (`neqsim-relief-flare-network`).
 - Overpressure-protection study for a protected item — enumerate credible relief
   contingencies, select the governing case, size the PSV, and check TR3001 / API
   521 compliance
+- Fixed-roof tank normal/emergency vent-demand and rated-capacity screening using externally
+  verified API 2000 demand and device evidence
 
-Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **API 520**, **TR3001**, **ASME VIII Div 1 (UG-125)**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **API 520**, **API 2000**, **TR3001**, **ASME VIII Div 1 (UG-125)**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+
+For API 2000, route to `Api2000TankVentingScreeningKernel`. Require caller-controlled licensed
+demand factors/cases, externally rated capacities, consistent gas reference conditions, tank
+pressure/vacuum limits, and evidence attestations. Do not relabel `FireProtectionDesign`, generic
+PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 
 ## Method 0b — Trapped-Liquid Fire Rupture Screening
 
@@ -115,6 +123,39 @@ PRESSURE deviations can be screened with
 `neqsim.process.safety.depressurization.BlockedOutletOverpressureAnalyzer`. See
 `docs/safety/ai_hazop_input_format.md` for the full input-data format.
 
+### Method 1b — Quantify the governing deviations of a separator node
+
+A guide-word grid on its own is not decision-grade. For a separation node, four
+deviations carry the risk; each maps to a class that turns the qualitative row
+into a number against a data-sheet limit:
+
+| Guideword / parameter | Class | Standard |
+| --- | --- | --- |
+| MORE FLOW / MORE LEVEL (carryover) | Souders-Brown `K = v_gas / sqrt((rho_l-rho_g)/rho_g)` from the run `ProcessSystem`; `SeparatorMechanicalDesign.setFromExistingDesign(id, lTanTan, wallThickness)` to pin the as-built geometry | NORSOK P-002, GPSA |
+| MORE PRESSURE (fire) | `neqsim.process.safety.overpressure.FireCaseRelief` | API 521 §4.3 |
+| MORE PRESSURE (blocked outlet) | `neqsim.process.util.fire.ReliefValveSizing.calculateRequiredArea` on the **full inlet gas rate**; `BlockedOutletOverpressureAnalyzer` for the transient | API 520 Part I, API 521 §4.4.2 |
+| LESS LEVEL (gas blow-by) | `neqsim.process.safety.blowby.GasBlowbyAnalyzer` | API 521 §4.4.7 |
+| LESS TEMPERATURE (MDMT) | `neqsim.process.safety.depressurization.DepressurizationSimulator` + `result.meetsMDMT(mdmtK)` | API 521 §5.20, ASME VIII UCS-66 |
+
+Three heuristics that repeatedly decide the outcome:
+
+- **Fire is rarely the governing relief case for a high-throughput separator.**
+  The fire case only vents vapour generated from the wetted area, while a blocked
+  gas outlet must vent the whole inlet gas rate. Always size both and state which
+  governs — a 10× difference in required orifice area is normal.
+- **Blow-by on LESS LEVEL is choked in nearly every HP→LP pair**, so the rate is
+  set purely by the open area of the level-control valve, not by downstream
+  pressure. When the valve Cv is unknown, present a 2″–8″ equivalent-diameter
+  sensitivity rather than picking one number.
+- **A thick-walled vessel does not reach MDMT during blowdown.** Model the wall
+  (`setWall(mass, area, cp, htc)`); several hundred tonnes of steel keeps the
+  metal near ambient. The cold spot is the BDV/PSV tail pipe — check it with an
+  isenthalpic `PHflash` of the gas down to flare pressure, not with the vessel
+  temperature.
+
+Carryover margin scales as `1/(1-level)`, so report the utilisation as a level
+sensitivity — it converts "verify the HH trip" into a numeric trip setpoint.
+
 ## Method 2 — LOPA Worksheet
 
 Use [`LOPAResult`](../../../src/main/java/neqsim/process/safety/risk/sis/LOPAResult.java) to compute residual frequency:
@@ -142,6 +183,23 @@ System.out.println("Required additional SIL: " + lopa.getRequiredAdditionalSIL()
 - Specific (one task, one mode)
 - Auditable (testable, with proof-test interval)
 - BPCS counts as one IPL only (typically PFD = 0.1)
+
+### Method 2b — Traceable HAZOP/LOPA to draft SRS
+
+Use `LopaScenarioDefinition`, `ProtectionLayerDefinition`, and `HazopLopaSrsWorkflow` when an
+approved HAZOP row and user-supplied risk basis need a machine-readable handoff into SRS drafting.
+The workflow credits a layer only when independence from the initiating event and other layers,
+specificity, auditability, proof-test/inspection interval, and a controlled evidence reference are
+all declared. Ineligible safeguards remain visible but receive no frequency reduction.
+
+If a risk gap remains, the result creates a `SafetyRequirementSpecificationDraft` carrying the
+HAZOP node/deviation, LOPA reference, SIF tag, trip, safe state, response time, voting, proof-test,
+reset, and bypass requirements. The draft is always `REVIEW_REQUIRED` and never fit for construction.
+No draft is created when credited existing layers meet the supplied target.
+
+After accountable HAZOP, LOPA, and SRS approval, hand the approved inputs to
+`SafetyFunctionDesign`, reliability/degraded-mode assessment, and closed-loop transient
+verification. See `docs/process/safety/hazop-lopa-srs-handoff.md`.
 
 ## Method 3 — SIL Determination
 
@@ -226,6 +284,87 @@ boolean within = res.isWithinBudget();        // true
 ```
 
 Verified by `EsdResponseTimeSimulatorTest`.
+
+### Method 3d — Closed-loop SIF transient verification
+
+Use `ClosedLoopSafetyFunction` inside a `DynamicSafetyScenario` when a response-time budget must
+be demonstrated against the process model rather than summed from prepared durations. Bind every
+`SafetyFunctionChannel` to the isolated process copy, select the SRS voting pattern, then pass an
+existing `ESDLogic`, `HIPPSLogic`, or other `ProcessLogic` as the final-element sequence.
+
+Recommended sequence:
+
+1. Configure and solve the normal process case.
+2. Apply one controlled initiating event on the scenario copy.
+3. Bind sensor channels to live process properties, including response delay and an explicit
+   `FaultMode` for degraded cases.
+4. Use the SRS MooN `VotingPattern` and logic-solver delay.
+5. Define dynamic criteria for the actual safe state and deadline, such as ESD valve opening,
+   protected pressure, compressor state, or depressuring pressure.
+6. Review `DynamicSafetyScenarioResult.getLogicEvidence()` for readings, bypass/fault state, vote
+   time, final-element actuation, and trace; do not approve from the boolean verdict alone.
+
+See `docs/process/safety/closed-loop-sif-verification.md`. This simulation evidence does not infer
+SIL or approve the SRS; hand the result to the SIL/LOPA and engineering-approval workflow.
+
+### Method 3e — Reliability uncertainty and degraded/maintenance modes
+
+After the deterministic `SafetyFunctionDesign` screen, use `SafetyFunctionReliabilityStudy` to
+propagate evidence-based failure-rate, diagnostic-coverage, proof-test, repair-time, beta, and bypass
+uncertainty. Always provide a fixed seed and retain P10/P50/P90 PFDavg/PFH, target-met probability,
+iteration count, distributions, and their data sources in the verification package.
+
+Use `SafetyFunctionOperatingMode` plus `SafetyFunctionDegradedModeAssessment` before evaluating a
+bypass or maintenance state. Record every unavailable, forced-trip, or under-repair channel, actual
+proof-test age, authorization reference, compensating measure, elapsed duration, and maximum duration.
+The effective architecture (for example 2oo3 to 2oo2) is a demand-capability screen, not permission to
+preserve the SIL claim or continue operation.
+
+Handoff the assessed mode back to the closed-loop scenario workflow to verify the physical safe state.
+See `docs/process/safety/sif-reliability-and-degraded-modes.md`.
+
+### Method 3f — Integrated facility safety response
+
+Use `FacilitySafetyResponseStudy` after the individual engines have executed when one review package
+must join closed-loop ESD/HIPPS evidence, compressor anti-surge trip demand and observed response,
+PSV/concurrency results, transient blowdown/flare results, and controlled process limits such as MDMT
+or hydrate margin. Supply the actual `DynamicSafetyScenarioResult` and
+`CoupledReliefBlowdownFlareResult`; the facility study embeds their maps and must not duplicate their
+physics.
+
+Capture compressor response with `CompressorTripResponse.capture(...)`. `AntiSurge.shouldTrip()` is
+the demand signal; separately record whether the trip was observed, its response time, allowable
+deadline, and evidence reference. Add each minimum or maximum with `ProcessSafetyConstraint` and a
+controlled source reference.
+
+Treat `isTechnicallyAcceptable()`, `isEvidenceComplete()`, and `isReadyForEngineeringReview()` as
+review gates, never approval. Inspect `getFindings()` and embedded engine results, then obtain the
+accountable process-safety, rotating-equipment, flare, piping, and mechanical approvals. See
+`docs/process/safety/integrated-facility-safety-response.md`.
+
+### Method 3g — Safety change impact and revalidation
+
+Use `SafetyStudyRevalidationPlanner` with the canonical `EngineeringGraph` and a controlled
+`ModelChangeEvent`. Tag safety lifecycle nodes with the `safetyStudyType` property and an accepted
+type: `HAZOP`, `LOPA`, `SRS`, `SIF_RELIABILITY`, `SIF_DYNAMIC_VERIFICATION`,
+`RELIEF_BLOWDOWN_FLARE`, or `FACILITY_RESPONSE`. Express dependencies with normal graph edges; do not
+create a separate safety dependency register.
+
+The planner delegates propagation to `GeneralizedImpactAnalyzer`, then adds type-specific work,
+propagation paths, reason edges, stale approvals, unresolved subjects, and cycle findings. Every task
+starts incomplete. Close it and restore approval through project MOC/document control.
+
+### Method 3h — Independent safety verification benchmarks
+
+Use `SafetyVerificationBenchmarkSuite` to qualify the versioned SIF PFDavg, LOPA residual-frequency,
+and dynamic-response methods against externally supplied values. Declare the source class, controlled
+reference, dataset revision, tolerances, and independent-review record. A
+`REGRESSION_BASELINE` is useful but deliberately cannot qualify as independent evidence.
+
+Do not call an expected value independent merely because it was entered by a different user. Verify
+the calculation or published/vendor/CAE source, assumptions, units, method version, and review record
+outside the code. A passing suite qualifies the controlled implementation/case set, not the project
+design or SIL target. See `docs/process/safety/safety-change-revalidation-and-benchmarks.md`.
 
 ## Method 4 — Bow-Tie Analysis
 
@@ -423,5 +562,6 @@ disposal.getGoverningContributor();
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
+- [`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md) — spontaneous ignition of combustible liquid absorbed into porous insulation (lagging fires); use for any fire with no identified ignition source
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization & blowdown
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — IEC 61508/61511, NORSOK Z-013, API 754

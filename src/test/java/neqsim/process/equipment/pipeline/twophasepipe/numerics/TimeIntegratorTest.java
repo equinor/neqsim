@@ -176,4 +176,34 @@ public class TimeIntegratorTest {
     // Should be around 0.5 * 50 / 365 ≈ 0.068 seconds
     assertTrue(dt > 0.01 && dt < 0.2, "Time step " + dt + " should be reasonable for pipeline");
   }
+
+  @Test
+  void testImplicitVoidWavePreservesMassAndTotalMomentum() {
+    TimeIntegrator voidWaveIntegrator = new TimeIntegrator(TimeIntegrator.Method.EULER);
+    double[] soundSpeeds = { 100.0, 100.0, 100.0 };
+    double[] mixtureDensities = { 800.0, 500.0, 200.0 };
+    double[] areas = { 1.0, 1.0, 1.0 };
+    double[] gasDensities = { 1.0, 1.0, 1.0 };
+    double[] liquidDensities = { 1000.0, 1000.0, 1000.0 };
+    double[] voidWaveSpeeds = { 5.0, 5.0, 5.0 };
+    double[] slipCoefficients = { 25.0, 25.0, 25.0 };
+    voidWaveIntegrator.setIMEXProperties(soundSpeeds, mixtureDensities, areas, gasDensities, liquidDensities,
+        liquidDensities, 1.0, 1.0e5, false);
+    voidWaveIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, slipCoefficients, areas, gasDensities,
+        liquidDensities, liquidDensities, 1.0, true);
+
+    double[][] initial = { { 0.2, 800.0, 0.0, 0.4, 0.0, 0.0, 0.0 }, { 0.5, 500.0, 0.0, 1.0, 0.0, 0.0, 0.0 },
+        { 0.8, 200.0, 0.0, 1.6, 0.0, 0.0, 0.0 } };
+    TimeIntegrator.RHSFunction zeroRhs = (state, time) -> new double[state.length][state[0].length];
+    double[][] corrected = voidWaveIntegrator.step(initial, zeroRhs, 0.1);
+
+    for (int i = 0; i < initial.length; i++) {
+      assertEquals(initial[i][0], corrected[i][0], 0.0, "gas mass must be unchanged");
+      assertEquals(initial[i][1], corrected[i][1], 0.0, "liquid mass must be unchanged");
+      assertEquals(initial[i][3] + initial[i][4] + initial[i][5], corrected[i][3] + corrected[i][4] + corrected[i][5],
+          1.0e-12, "void-wave correction must preserve total momentum");
+    }
+    assertTrue(Math.abs(corrected[1][3] - initial[1][3]) > 1.0e-8,
+        "a void-fraction gradient must change relative momentum");
+  }
 }

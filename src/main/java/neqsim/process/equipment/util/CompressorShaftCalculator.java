@@ -3,8 +3,11 @@ package neqsim.process.equipment.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorShaft;
+import neqsim.process.equipment.powergeneration.GasTurbine;
 
 /**
  * Process-integrated common-speed controller for a {@link CompressorShaft}.
@@ -27,17 +30,27 @@ import neqsim.process.equipment.compressor.CompressorShaft;
  * shaft.addCompressor(rc2);
  * shaft.addCompressor(rc3); // reference (last body)
  * CompressorShaftCalculator shaftCalc = new CompressorShaftCalculator("23-KA shaft speed", shaft, rc3, 49.0, "bara");
+ * shaftCalc.setMaxShaftPower(24.0, "MW"); // or shaftCalc.setTurbineDriver(gasTurbine)
  * process.add(shaftCalc);
  * process.run(); // shaft speed converges with the recycles
  * double rpm = shaftCalc.getSpeed();
+ * double util = shaftCalc.getShaftPowerUtilization(); // whole-string power vs the driver limit
  * }</pre>
+ *
+ * <p>
+ * When a power limit is configured the calculator carries a {@code shaftPower} capacity constraint, so the shaft shows
+ * up as an ordinary unit in {@code getUtilizationSnapshotJson()} and can bind as the plant bottleneck.
+ * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0
  */
-public class CompressorShaftCalculator extends Calculator {
+public class CompressorShaftCalculator extends Calculator implements CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1L;
+
+  /** The shaft whose bodies share a common speed and a common driver. */
+  private CompressorShaft shaft;
 
   /** Compressor bodies on the shaft (in flow order). */
   private final List<Compressor> bodies = new ArrayList<Compressor>();
@@ -100,6 +113,7 @@ public class CompressorShaftCalculator extends Calculator {
   public CompressorShaftCalculator(String name, CompressorShaft shaft, Compressor reference, double targetPressure,
       String unit) {
     super(name);
+    this.shaft = shaft;
     for (Compressor compressor : shaft.getCompressors()) {
       bodies.add(compressor);
       addInputVariable(compressor);
@@ -112,6 +126,90 @@ public class CompressorShaftCalculator extends Calculator {
     this.targetPressure = targetPressure;
     this.pressureUnit = unit;
     this.speed = shaft.getSpeed();
+    ensureShaftPowerConstraint();
+  }
+
+  /**
+   * Get the shaft this calculator controls.
+   *
+   * @return the shaft, or {@code null} if the calculator was built with the name-only constructor
+   */
+  public CompressorShaft getShaft() {
+    return shaft;
+  }
+
+  /**
+   * Set an explicit installed shaft power limit for the whole string. This alone gives a shaft utilization; no driver
+   * model is required.
+   *
+   * @param maxPower the installed shaft power limit
+   * @param unit power unit: "W", "kW" or "MW"
+   */
+  public void setMaxShaftPower(double maxPower, String unit) {
+    if (shaft != null) {
+      shaft.setMaxShaftPower(maxPower, unit);
+      ensureShaftPowerConstraint();
+    }
+  }
+
+  /**
+   * Attach a {@link GasTurbine} as the driver of this shaft: the bodies become driven loads of the turbine (so its fuel
+   * gas tracks the string duty) and its rated power limits the shaft.
+   *
+   * @param turbine the driving gas turbine
+   */
+  public void setTurbineDriver(GasTurbine turbine) {
+    if (shaft != null) {
+      shaft.setTurbineDriver(turbine);
+      ensureShaftPowerConstraint();
+    }
+  }
+
+  /**
+   * Set the gearbox / coupling efficiency between the driver output and the compressor bodies.
+   *
+   * @param efficiency the mechanical efficiency in the range (0, 1]
+   */
+  public void setMechanicalEfficiency(double efficiency) {
+    if (shaft != null) {
+      shaft.setMechanicalEfficiency(efficiency);
+    }
+  }
+
+  /**
+   * Get the shaft power utilization: the whole-string power (plus gearbox losses) divided by the driver power available
+   * at the current speed.
+   *
+   * @return the utilization as a fraction (1.0 = at the limit), or 0 when no power limit is configured
+   */
+  public double getShaftPowerUtilization() {
+    return shaft == null ? 0.0 : shaft.getPowerUtilization();
+  }
+
+  /**
+   * Get the total power drawn by the bodies on this shaft.
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the total shaft power in the requested unit
+   */
+  public double getTotalPower(String unit) {
+    return shaft == null ? 0.0 : shaft.getTotalPower(unit);
+  }
+
+  /**
+   * Register the {@code shaftPower} capacity constraint once a power limit is available, so the shaft participates in
+   * bottleneck detection and the utilization snapshot. The constraint tracks utilization in percent, matching how the
+   * compressor power constraint is reported.
+   */
+  private void ensureShaftPowerConstraint() {
+    if (shaft == null || getCapacityConstraints().containsKey("shaftPower")
+        || shaft.getAvailableShaftPower("W") <= 0.0) {
+      return;
+    }
+    addCapacityConstraint(new CapacityConstraint("shaftPower", "%", CapacityConstraint.ConstraintType.HARD)
+        .setDesignValue(100.0).setMaxValue(110.0).setWarningThreshold(0.9).setDataSource("equipment")
+        .setDescription("Common-shaft power vs installed driver power")
+        .setValueSupplier(() -> shaft.getPowerUtilization() * 100.0));
   }
 
   /**
@@ -213,6 +311,7 @@ public class CompressorShaftCalculator extends Calculator {
     if (bodies.isEmpty() || reference == null) {
       return;
     }
+    ensureShaftPowerConstraint();
     double pout = reference.getOutletStream().getPressure(pressureUnit);
     double error = pout - targetPressure; // drive to zero
     double newSpeed;
@@ -282,6 +381,11 @@ public class CompressorShaftCalculator extends Calculator {
       boolean reached = Math.abs(error) < pressureTolerance;
       lastResult = new CompressorShaft.SolveResult(true, CompressorShaft.SolveStatus.FEASIBLE, targetPressure, pout,
           Double.NaN, Double.NaN, speed, pressureUnit, reached ? "target reached" : "converging toward target");
+    }
+    if (shaft != null && shaft.isOverPower()) {
+      lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.OVER_POWER, targetPressure, pout,
+          Double.NaN, Double.NaN, speed, pressureUnit, String.format("shaft draws %.0f kW of %.0f kW installed",
+              shaft.getRequiredDriverPower("kW"), shaft.getAvailableShaftPower("kW")));
     }
   }
 }

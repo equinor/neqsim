@@ -3,8 +3,6 @@ title: De Boer Asphaltene Screening
 description: The **De Boer correlation** is an empirical screening method developed from field observations of asphaltene problems in producing oil fields. It provides a quick, conservative assessment of asphalten...
 ---
 
-# De Boer Asphaltene Screening
-
 ## Overview
 
 The **De Boer correlation** is an empirical screening method developed from field observations of asphaltene problems in producing oil fields. It provides a quick, conservative assessment of asphaltene precipitation risk without requiring detailed thermodynamic modeling.

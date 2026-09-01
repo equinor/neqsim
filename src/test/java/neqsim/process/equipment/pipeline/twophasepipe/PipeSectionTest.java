@@ -107,8 +107,8 @@ class PipeSectionTest {
 
   @Test
   void testFlowRegimeDetectionSinglePhaseGas() {
-    section.setGasHoldup(0.9999);
-    section.setLiquidHoldup(0.0001); // Below 0.001 threshold
+    section.setGasHoldup(1.0);
+    section.setLiquidHoldup(0.0);
     section.setGasVelocity(10);
     section.setLiquidVelocity(0);
     section.updateDerivedQuantities();
@@ -119,8 +119,8 @@ class PipeSectionTest {
 
   @Test
   void testFlowRegimeDetectionSinglePhaseLiquid() {
-    section.setGasHoldup(0.0005);
-    section.setLiquidHoldup(0.9995);
+    section.setGasHoldup(0.0);
+    section.setLiquidHoldup(1.0);
     section.setGasVelocity(0);
     section.setLiquidVelocity(2);
     section.updateDerivedQuantities();

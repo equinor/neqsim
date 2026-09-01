@@ -152,6 +152,35 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Distance from inlet to gas demister [m]. */
   private double inletToGasDemister = 0.0;
 
+  // ============================================================================
+  // Internals elevations.
+  //
+  // Reference frame: all elevations are in metres from the Bottom Tangent Line
+  // (BTL) of the vessel, positive upward.
+  //
+  // For each internal we store the elevation of the GAS-FACING SURFACE that is
+  // most relevant to free-path / vertical-distance calculations:
+  // - Inlet nozzle: centreline elevation
+  // - Inlet device: TOP face of the device (the surface gas leaves through)
+  // - Mesh pad / vane pack: BOTTOM face (the surface gas enters through);
+  // the corresponding TOP elevation is derived = bottom + thickness.
+  // - Cyclones (in GasScrubberMechanicalDesign):
+  // cycloneDeckElevation = BOTTOM of the cyclone tubes (= top face of the
+  // deck plate, i.e. the gas-inlet face of the cyclones);
+  // cycloneTopElevation = deck + cycloneLength.
+  //
+  // Defaults are 0.0, which means "not set" - callers must check before use.
+  // ============================================================================
+  /** Inlet nozzle centreline elevation from BTL [m]. */
+  private double inletNozzleElevation = 0.0;
+  /**
+   * Inlet device top face elevation from BTL [m]. The free-path height for carry-over correlations is measured from
+   * this surface up to the bottom of the next gas-side internal (mesh pad / vane pack / cyclone deck).
+   */
+  private double inletDeviceTopElevation = 0.0;
+  /** Mesh pad bottom face elevation from BTL [m]. */
+  private double meshPadBottomElevation = 0.0;
+
   // Nozzle sizes
   /** Inlet nozzle internal diameter [m]. */
   private double inletNozzleID = 0.0;
@@ -206,6 +235,23 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
     costEstimate = new SeparatorCostEstimate(this);
+  }
+
+  /**
+   * Returns the separator gas-outlet volumetric flow used by the generic mechanical-design capacity bridge.
+   *
+   * @return actual gas volumetric flow in cubic metres per hour, or {@link Double#NaN} when unavailable
+   */
+  @Override
+  protected double getOperatingGasVolumeFlow() {
+    if (!(getProcessEquipment() instanceof Separator)) {
+      return Double.NaN;
+    }
+    try {
+      return ((Separator) getProcessEquipment()).getGasOutStream().getFlowRate("m3/hr");
+    } catch (RuntimeException ex) {
+      return Double.NaN;
+    }
   }
 
   /** {@inheritDoc} */
@@ -307,7 +353,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     Separator separator = (Separator) getProcessEquipment();
     separator.getThermoSystem().initPhysicalProperties();
-    separator.setDesignLiquidLevelFraction(Fg);
+    separator.setDesignLiquidLevelFraction(1.0 - Fg);
 
     double emptyVesselWeight = 0.0;
     double internalsWeight = 0.0;
@@ -338,15 +384,17 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+    double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
+    double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
     outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
-    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * Fg * 3600.0; // m³/hr
+    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
 
     // tantanLength = innerDiameter * 5.0;
     retentionTime = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
@@ -354,7 +402,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     tantanLength = Math
         .sqrt(4.0 * retentionTime * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getLiquidVolume()
-            / 1e5 / (Math.PI * innerDiameter * innerDiameter * (1 - Fg)));
+            / 1e5 / (Math.PI * innerDiameter * innerDiameter * liquidAreaFraction));
     double sepratorLength = tantanLength + innerDiameter;
 
     if (sepratorLength / innerDiameter > 6 || sepratorLength / innerDiameter < 3) {
@@ -477,22 +525,24 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     // Souders-Brown equation for max gas velocity
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+    double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
+    double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
-    // Calculate diameter based on gas area (Fg is gas fraction = 1 - liquid level)
+    // Calculate diameter based on the orientation-specific gas area.
     innerDiameter = Math.sqrt(4.0 * (maxDesignVolumeFlow / 3600.0)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
     outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
-    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * Fg * 3600.0; // m³/hr
+    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
 
     // Calculate length based on liquid retention time
     double liquidVolume = separator.getThermoSystem().getLiquidVolume() / 1e5;
     if (liquidVolume > 1e-10) {
       tantanLength = Math.sqrt(4.0 * retentionTime * liquidVolume * volumeSafetyFactor
-          / (Math.PI * innerDiameter * innerDiameter * (1 - Fg)));
+          / (Math.PI * innerDiameter * innerDiameter * liquidAreaFraction));
     } else {
       // No liquid - use L/D ratio of 4
       tantanLength = innerDiameter * 4.0;
@@ -1064,6 +1114,115 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   public void setInletNozzleID(double id) {
     this.inletNozzleID = id;
+  }
+
+  // ============================================================================
+  // Internals elevation accessors (see field block above for reference frame).
+  // All values are metres from the Bottom Tangent Line (BTL), positive upward.
+  // ============================================================================
+
+  /**
+   * Sets the inlet nozzle centreline elevation.
+   *
+   * @param elevationM centreline elevation from BTL [m]
+   */
+  public void setInletNozzleElevation(double elevationM) {
+    this.inletNozzleElevation = elevationM;
+  }
+
+  /**
+   * Gets the inlet nozzle centreline elevation.
+   *
+   * @return centreline elevation from BTL [m]; 0.0 if not set
+   */
+  public double getInletNozzleElevation() {
+    return inletNozzleElevation;
+  }
+
+  /**
+   * Sets the inlet device top face elevation. This is the surface gas leaves through (e.g. top of an inlet vane),
+   * measured from the Bottom Tangent Line.
+   *
+   * @param elevationM top face elevation from BTL [m]
+   */
+  public void setInletDeviceTopElevation(double elevationM) {
+    this.inletDeviceTopElevation = elevationM;
+  }
+
+  /**
+   * Gets the inlet device top face elevation as explicitly stored. Returns 0.0 when not set; use
+   * {@link #getInletDeviceTopElevationOrDefault()} to get the default-derived value.
+   *
+   * @return top face elevation from BTL [m]; 0.0 if not set
+   */
+  public double getInletDeviceTopElevation() {
+    return inletDeviceTopElevation;
+  }
+
+  /**
+   * Gets the inlet device top face elevation, falling back to a default when not explicitly set. The default assumes a
+   * standard inlet vane that fills the upper half of the nozzle bore: top elevation = nozzle centreline + nozzle ID /
+   * 2.
+   *
+   * @return top face elevation from BTL [m]; explicit value if set, else
+   * {@code inletNozzleElevation + inletNozzleID / 2.0} when both are positive, else 0.0
+   */
+  public double getInletDeviceTopElevationOrDefault() {
+    if (inletDeviceTopElevation > 0.0) {
+      return inletDeviceTopElevation;
+    }
+    if (inletNozzleElevation > 0.0 && inletNozzleID > 0.0) {
+      return inletNozzleElevation + inletNozzleID / 2.0;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the mesh pad bottom face elevation. This is the surface gas enters through, measured from the Bottom Tangent
+   * Line.
+   *
+   * @param elevationM bottom face elevation from BTL [m]
+   */
+  public void setMeshPadBottomElevation(double elevationM) {
+    this.meshPadBottomElevation = elevationM;
+  }
+
+  /**
+   * Gets the mesh pad bottom face elevation.
+   *
+   * @return bottom face elevation from BTL [m]; 0.0 if not set
+   */
+  public double getMeshPadBottomElevation() {
+    return meshPadBottomElevation;
+  }
+
+  /**
+   * Gets the mesh pad top face elevation, derived as bottom elevation plus mesh pad thickness (
+   * {@link #getDemisterThickness()} , which is stored in mm).
+   *
+   * @return top face elevation from BTL [m]; 0.0 if bottom not set
+   */
+  public double getMeshPadTopElevation() {
+    if (meshPadBottomElevation <= 0.0) {
+      return 0.0;
+    }
+    return meshPadBottomElevation + getDemisterThickness() / 1000.0;
+  }
+
+  /**
+   * Gets the free-path height between the inlet device top face and the mesh pad bottom face. This is the vertical
+   * distance available for primary gravity separation and droplet entrainment / carry-over correlations.
+   *
+   * @return mesh pad bottom elevation minus inlet device top elevation [m]; 0.0 if either elevation is unset or the
+   * result is non-positive
+   */
+  public double getFreePathHeightAboveInletDevice() {
+    double topInlet = getInletDeviceTopElevationOrDefault();
+    if (topInlet <= 0.0 || meshPadBottomElevation <= 0.0) {
+      return 0.0;
+    }
+    double h = meshPadBottomElevation - topInlet;
+    return h > 0.0 ? h : 0.0;
   }
 
   /**

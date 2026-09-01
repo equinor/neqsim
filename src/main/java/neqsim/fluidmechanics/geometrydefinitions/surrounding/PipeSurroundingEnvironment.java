@@ -32,6 +32,7 @@ import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeMater
  * @version $Id: $Id
  */
 public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass {
+  private static final long serialVersionUID = 1000L;
 
   /**
    * Environment types for pipe surroundings.

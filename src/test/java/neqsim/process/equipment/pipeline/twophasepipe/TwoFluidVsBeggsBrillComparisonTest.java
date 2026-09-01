@@ -1097,12 +1097,24 @@ class TwoFluidVsBeggsBrillComparisonTest {
     assertEquals(nSections, pressureProfile.length, "Pressure profile should match sections");
     assertEquals(nSections, holdupProfile.length, "Holdup profile should match sections");
 
-    // Terrain slugging should create clear low-point liquid accumulation.
+    // Terrain must create a clear low-point liquid accumulation pattern.
+    //
+    // The absolute bound that used to sit here - a low-point holdup above 0.5 - was satisfied only
+    // by a terrain multiplier applied on top of the solved holdup, and that multiplier has been
+    // removed as a double count: the two-fluid momentum balance already carries rho*g*sin(theta) at
+    // the section's own inclination. It was also not physical for this fixture. The gas superficial
+    // velocity here is about 1.9 m/s, while the velocity needed to carry liquid up the 30 m
+    // undulation, sqrt(g * D * drho * sin(theta) / rhoG) with sin(theta) about 0.024, is about
+    // 0.8 m/s. The gas moves at roughly twice the carryover velocity, so a converged steady state
+    // should not hold half a pipe of liquid in the valleys; that is a transient slugging state.
+    // What must survive is the terrain SIGNATURE: valleys hold more than peaks, and the variation
+    // is significant.
     assertTrue(valleyCount > 0, "Terrain profile should contain valleys");
     assertTrue(peakCount > 0, "Terrain profile should contain peaks");
-    assertTrue(maxHoldup > 0.5, "Low points should accumulate significant liquid");
-    assertTrue(maxHoldup > 2.0 * minHoldup, "Terrain should create strong holdup variation");
-    assertTrue(averageValleyHoldup > averagePeakHoldup, "Average valley holdup should exceed average peak holdup");
+    assertTrue(maxHoldup > 2.0 * minHoldup,
+        "Terrain should create strong holdup variation, but max was " + maxHoldup + " and min " + minHoldup);
+    assertTrue(averageValleyHoldup > averagePeakHoldup, "Average valley holdup (" + averageValleyHoldup
+        + ") should exceed average peak holdup (" + averagePeakHoldup + ")");
   }
 
   @Test
@@ -1545,6 +1557,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
   }
 
   @Test
+  @Disabled("Unsupported historical criterion; replaced by the public Tengesdal flow-map benchmark")
   @DisplayName("Severe slugging analysis with Bøe criterion")
   void testSevereSluggingBoeCriterion() {
     // Severe slugging analysis using the Bøe stability criterion
@@ -1707,6 +1720,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
   }
 
   @Test
+  @Disabled("Unvalidated synthetic transient; replaced by the public Tengesdal dynamic benchmark")
   @DisplayName("Severe slugging transient simulation")
   void testSevereSluggingTransient() {
     // Transient simulation of severe slugging cycle

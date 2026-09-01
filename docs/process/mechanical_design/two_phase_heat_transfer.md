@@ -3,8 +3,6 @@ title: "Two-Phase Heat Transfer and Advanced Correlations"
 description: "Guide to two-phase (condensation, boiling) heat transfer correlations, two-phase pressure drop methods, dynamic fouling models, incremental zone analysis, and tube insert enhancement models in NeqSim. Covers Shah, Chen, Gungor-Winterton, Friedel, Muller-Steinhagen-Heck, Ebert-Panchal, Kern-Seaton, and Manglik-Bergles correlations."
 ---
 
-# Two-Phase Heat Transfer and Advanced Correlations
-
 NeqSim provides a suite of advanced correlations for heat exchanger services that
 go beyond single-phase convection. These cover condensation, boiling, two-phase
 pressure drop, dynamic fouling prediction, HTRI-style incremental zone analysis,

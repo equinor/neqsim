@@ -499,6 +499,15 @@ public class AntiSurge implements java.io.Serializable {
   }
 
   /**
+   * Get the configured number of surge cycles that demands a compressor trip.
+   *
+   * @return maximum allowed surge cycles before trip
+   */
+  public int getMaxSurgeCyclesBeforeTrip() {
+    return maxSurgeCyclesBeforeTrip;
+  }
+
+  /**
    * Reset the surge cycle counter.
    */
   public void resetSurgeCycleCount() {
@@ -568,6 +577,9 @@ public class AntiSurge implements java.io.Serializable {
    * @param maxCycles maximum cycles
    */
   public void setMaxSurgeCyclesBeforeTrip(int maxCycles) {
+    if (maxCycles <= 0) {
+      throw new IllegalArgumentException("maxCycles must be positive");
+    }
     this.maxSurgeCyclesBeforeTrip = maxCycles;
   }
 

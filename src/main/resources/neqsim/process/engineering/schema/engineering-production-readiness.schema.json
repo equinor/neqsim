@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-production-readiness:v1",
+  "title": "NeqSim engineering production-readiness evidence gate report",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "projectId",
+    "revision",
+    "maturityLevel",
+    "gates",
+    "failedGates",
+    "safetyLifecycle",
+    "externalEngineeringEvidence",
+    "externalEvidenceDocumentIntegrity",
+    "evidenceBasis",
+    "preliminaryProductionReady",
+    "fitnessForConstruction",
+    "finalEngineeringApprovalGranted",
+    "constructionAuthorityEvidenceAccepted",
+    "governance"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_production_readiness.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-production-readiness:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "maturityLevel": {
+      "enum": ["NOT_READY", "EXPERIMENTAL", "VALIDATED_PRELIMINARY", "QUALIFIED_FEED_SUPPORT"]
+    },
+    "gates": {
+      "type": "object",
+      "minProperties": 8,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["passed", "requiredAction"],
+        "properties": {
+          "passed": {"type": "boolean"},
+          "requiredAction": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "failedGates": {"type": "array", "items": {"type": "string"}},
+    "safetyLifecycle": {"type": "object"},
+    "externalEngineeringEvidence": {"type": "object"},
+    "externalEvidenceDocumentIntegrity": {
+      "type": "object",
+      "required": ["passed", "verifiedRecordIds", "documents", "findings", "approvalGrantedBySimulator"],
+      "properties": {
+        "passed": {"type": "boolean"},
+        "verifiedRecordIds": {"type": "array", "items": {"type": "string"}},
+        "documents": {"type": "array", "items": {"type": "object"}},
+        "findings": {"type": "array", "items": {"type": "object"}},
+        "approvalGrantedBySimulator": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "evidenceBasis": {"type": "object"},
+    "preliminaryProductionReady": {"type": "boolean"},
+    "fitnessForConstruction": {"const": false},
+    "finalEngineeringApprovalGranted": {"const": false},
+    "constructionAuthorityEvidenceAccepted": {"type": "boolean"},
+    "governance": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

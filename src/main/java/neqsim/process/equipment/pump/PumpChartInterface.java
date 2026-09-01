@@ -120,6 +120,21 @@ public interface PumpChartInterface extends Cloneable {
   public double getBestEfficiencyFlowRate();
 
   /**
+   * Get the flow rate at best efficiency point (BEP) at a specified speed.
+   *
+   * <p>
+   * Implementations with reduced performance curves should scale BEP flow with speed according to the affinity laws.
+   * The default preserves compatibility with chart implementations that only expose a reference-speed BEP.
+   * </p>
+   *
+   * @param speed pump speed in rpm
+   * @return flow rate at BEP in m3/hr at the specified speed
+   */
+  public default double getBestEfficiencyFlowRate(double speed) {
+    return getBestEfficiencyFlowRate();
+  }
+
+  /**
    * Calculate pump specific speed at BEP.
    *
    * @return specific speed (dimensionless)

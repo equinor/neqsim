@@ -40,7 +40,7 @@
 41,"MultiphasePipe","usageFactor",0.830000000,0.830000000,"-","Equinor","DNV-ST-F101","Usage factor for medium safety class"
 42,"MultiphasePipe","corrosionAllowance",6.000000000,6.000000000,"mm","Equinor","DNV-ST-F101","Corrosion allowance for sour service"
 43,"TransientPipe","designFactor",0.720000000,0.720000000,"-","Equinor","DNV-ST-F101","Design factor for transient analysis"
-44,"TransientPipe","surgeAllowance",1.100000000,1.100000000,"-","Equinor","DNV-RP-F105","Surge pressure allowance"
+44,"TransientPipe","surgeAllowance",1.100000000,1.100000000,"-","Equinor","PROJECT-BASIS","Project-controlled surge pressure allowance; not a DNV-RP-F105 criterion"
 45,"Gas scrubber","GasLoadFactor",0.110000000,0.110000000,"-","Equinor","NORSOK-P-001","K-factor for scrubber per NORSOK"
 46,"Separator","GasLoadFactor",0.120000000,0.150000000,"m/s","Equinor","NORSOK-P-001","K-factor per NORSOK P-001"
 47,"Separator","LiquidRetentionTime",2.000000000,5.000000000,"min","Equinor","NORSOK-P-001","Liquid retention time"
