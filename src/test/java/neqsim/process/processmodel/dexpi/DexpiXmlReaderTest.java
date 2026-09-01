@@ -498,10 +498,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<PipingNetworkSegment ID=\"S-3\"><Connection ID=\"C-3\" FromID=\"N-X\" ToID=\"N-Y\"/>"
         + "</PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-4\"><Connection ID=\"C-4\" FromID=\"N-X\" ToID=\"N-Y\"/>"
-        + "</PipingNetworkSegment>"
-        + "<PipingNetworkSegment ID=\"S-5\"><Connection ID=\"C-5\" FromID=\"UNKNOWN\"/>"
-        + "</PipingNetworkSegment>"
-        + "<PipingNetworkSegment ID=\"S-6\"><Connection ID=\"C-6\"/>"
+        + "</PipingNetworkSegment>" + "<PipingNetworkSegment ID=\"S-5\"><Connection ID=\"C-5\" FromID=\"UNKNOWN\"/>"
+        + "</PipingNetworkSegment>" + "<PipingNetworkSegment ID=\"S-6\"><Connection ID=\"C-6\"/>"
         + "</PipingNetworkSegment>" + "</PlantModel>";
 
     DexpiXmlReader.ImportResult first = DexpiXmlReader
@@ -528,8 +526,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("component-2", parallel.getId());
     assertEquals(Arrays.asList("N-X", "N-Y"), parallel.getEndpointIds());
     assertEquals(Arrays.asList("C-3", "C-4"), parallel.getConnectionIds());
-    assertEquals(Arrays.asList("N-X", "N-Y"),
-        parallel.getPotentialMultiConnectionEndpointIds());
+    assertEquals(Arrays.asList("N-X", "N-Y"), parallel.getPotentialMultiConnectionEndpointIds());
     assertTrue(parallel.hasPotentialMultiConnectionNodes());
 
     DexpiConnectionComponentInfo unresolved = first.getConnectionComponents().get(2);
