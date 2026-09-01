@@ -137,8 +137,7 @@ public final class DexpiXmlReader {
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
         List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
-        List<DexpiConnectionComponentInfo> connectionComponents,
-        List<ImportDiagnostic> diagnostics) {
+        List<DexpiConnectionComponentInfo> connectionComponents, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
@@ -194,8 +193,8 @@ public final class DexpiXmlReader {
      * Returns weakly connected groups of explicit non-empty material-connection endpoint references.
      *
      * <p>
-     * Components preserve source evidence only. They do not establish hydraulic continuity, fitting
-     * identity, process intent, or live process topology.
+     * Components preserve source evidence only. They do not establish hydraulic continuity, fitting identity, process
+     * intent, or live process topology.
      * </p>
      *
      * @return immutable source-reference components in first-endpoint order
@@ -821,11 +820,9 @@ public final class DexpiXmlReader {
     return result;
   }
 
-  private static List<DexpiConnectionComponentInfo> summarizeConnectionComponents(
-      List<DexpiConnectionInfo> connections,
+  private static List<DexpiConnectionComponentInfo> summarizeConnectionComponents(List<DexpiConnectionInfo> connections,
       List<DexpiConnectionEndpointInfo> connectionEndpoints) {
-    Map<String, List<String>> adjacentEndpointIds =
-        new LinkedHashMap<String, List<String>>();
+    Map<String, List<String>> adjacentEndpointIds = new LinkedHashMap<String, List<String>>();
     for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
       adjacentEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
     }
@@ -838,8 +835,7 @@ public final class DexpiXmlReader {
       }
     }
 
-    List<ConnectionComponentAccumulator> components =
-        new ArrayList<ConnectionComponentAccumulator>();
+    List<ConnectionComponentAccumulator> components = new ArrayList<ConnectionComponentAccumulator>();
     Map<String, Integer> componentByEndpointId = new HashMap<String, Integer>();
     for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
       if (componentByEndpointId.containsKey(endpoint.getEndpointId())) {
@@ -875,8 +871,7 @@ public final class DexpiXmlReader {
       }
     }
 
-    List<DexpiConnectionComponentInfo> result =
-        new ArrayList<DexpiConnectionComponentInfo>();
+    List<DexpiConnectionComponentInfo> result = new ArrayList<DexpiConnectionComponentInfo>();
     for (ConnectionComponentAccumulator component : components) {
       result.add(component.toInfo());
     }
@@ -885,8 +880,7 @@ public final class DexpiXmlReader {
 
   private static final class ConnectionComponentAccumulator {
     private final String id;
-    private final List<DexpiConnectionEndpointInfo> endpoints =
-        new ArrayList<DexpiConnectionEndpointInfo>();
+    private final List<DexpiConnectionEndpointInfo> endpoints = new ArrayList<DexpiConnectionEndpointInfo>();
     private final List<String> connectionIds = new ArrayList<String>();
 
     private ConnectionComponentAccumulator(String id) {
@@ -922,8 +916,8 @@ public final class DexpiXmlReader {
           unresolvedEndpointIds.add(endpoint.getEndpointId());
         }
       }
-      return new DexpiConnectionComponentInfo(id, endpointIds, connectionIds, sourceEndpointIds,
-          sinkEndpointIds, potentialMultiConnectionEndpointIds, unresolvedEndpointIds);
+      return new DexpiConnectionComponentInfo(id, endpointIds, connectionIds, sourceEndpointIds, sinkEndpointIds,
+          potentialMultiConnectionEndpointIds, unresolvedEndpointIds);
     }
   }
 
