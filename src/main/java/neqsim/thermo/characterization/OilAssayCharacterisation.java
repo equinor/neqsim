@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -355,14 +356,61 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     validateUniqueCutNames();
+    validateUniqueStandardComponentNames();
     double[] massFractions = resolveMassFractions();
     List<ResolvedCut> resolvedCuts = new ArrayList<ResolvedCut>();
     double reconstructedMass = 0.0;
+    SystemInterface validationSystem = null;
 
     for (int i = 0; i < cuts.size(); i++) {
       AssayCut cut = cuts.get(i);
       double massFraction = massFractions[i];
       if (!(massFraction > 0.0)) {
+        continue;
+      }
+
+      if (cut.isStandardComponent()) {
+        if (cut.hasVolumeFraction()) {
+          throw new IllegalStateException(
+              "Standard components require a mass-basis assay fraction for cut " + cut.getName());
+        }
+        if (cut.hasPetroleumPseudoComponentDefinition()) {
+          throw new IllegalStateException(
+              "Standard component cut cannot also define petroleum pseudo-component properties: " + cut.getName());
+        }
+
+        String standardComponentName = cut.getStandardComponentName();
+        if (system.hasComponent(standardComponentName, false)) {
+          throw new IllegalStateException(
+              "Assay standard component already exists in system: " + standardComponentName);
+        }
+
+        if (validationSystem == null) {
+          validationSystem = system.clone();
+        }
+        ComponentInterface validationComponent;
+        try {
+          validationSystem.addComponent(standardComponentName, 1.0);
+          validationComponent = validationSystem.getComponent(standardComponentName);
+        } catch (Exception ex) {
+          throw new IllegalStateException("Unknown or unavailable assay standard component: " + standardComponentName,
+              ex);
+        }
+        if (validationComponent == null) {
+          throw new IllegalStateException("Unknown or unavailable assay standard component: " + standardComponentName);
+        }
+        double molarMass = validationComponent.getMolarMass();
+        if (!Double.isFinite(molarMass) || !(molarMass > 0.0)) {
+          throw new IllegalStateException("Invalid molar mass for assay standard component: " + standardComponentName);
+        }
+        double moles = totalAssayMass * massFraction / molarMass;
+        if (!Double.isFinite(moles) || !(moles > 0.0)) {
+          throw new IllegalStateException(
+              "Calculated mole amount for assay cut " + cut.getName() + " is not finite and positive");
+        }
+
+        resolvedCuts.add(new ResolvedCut(cut, standardComponentName, Double.NaN, molarMass, moles));
+        reconstructedMass += moles * molarMass;
         continue;
       }
 
@@ -386,7 +434,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
             "Calculated mole amount for assay cut " + cut.getName() + " is not finite and positive");
       }
 
-      resolvedCuts.add(new ResolvedCut(cut, density, molarMass, moles));
+      resolvedCuts.add(new ResolvedCut(cut, null, density, molarMass, moles));
       reconstructedMass += moles * molarMass;
     }
 
@@ -397,7 +445,11 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     for (ResolvedCut resolvedCut : resolvedCuts) {
-      system.addTBPfraction(resolvedCut.cut.getName(), resolvedCut.moles, resolvedCut.molarMass, resolvedCut.density);
+      if (resolvedCut.standardComponentName != null) {
+        system.addComponent(resolvedCut.standardComponentName, resolvedCut.moles);
+      } else {
+        system.addTBPfraction(resolvedCut.cut.getName(), resolvedCut.moles, resolvedCut.molarMass, resolvedCut.density);
+      }
     }
   }
 
@@ -447,6 +499,16 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     for (AssayCut cut : cuts) {
       if (!names.add(cut.getName())) {
         throw new IllegalStateException("Duplicate assay cut name: " + cut.getName());
+      }
+    }
+  }
+
+  private void validateUniqueStandardComponentNames() {
+    Set<String> componentNames = new HashSet<String>();
+    for (AssayCut cut : cuts) {
+      if (cut.isStandardComponent()
+          && !componentNames.add(cut.getStandardComponentName().toLowerCase(java.util.Locale.ROOT))) {
+        throw new IllegalStateException("Duplicate assay standard component: " + cut.getStandardComponentName());
       }
     }
   }
@@ -534,12 +596,14 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
   private static final class ResolvedCut {
     private final AssayCut cut;
+    private final String standardComponentName;
     private final double density;
     private final double molarMass;
     private final double moles;
 
-    private ResolvedCut(AssayCut cut, double density, double molarMass, double moles) {
+    private ResolvedCut(AssayCut cut, String standardComponentName, double density, double molarMass, double moles) {
       this.cut = cut;
+      this.standardComponentName = standardComponentName;
       this.density = density;
       this.molarMass = molarMass;
       this.moles = moles;
@@ -561,6 +625,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     private Double sulfurMassFraction;
     private Double nitrogenMassFraction;
     private Double watsonCharacterizationFactor;
+    private String standardComponentName;
 
     /**
      * Create an assay cut.
@@ -605,6 +670,27 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      */
     public AssayCut withWeightPercent(double weightPercent) {
       this.massFraction = sanitisePercent(weightPercent);
+      return this;
+    }
+
+    /**
+     * Mark this mass-basis assay cut as an authoritative NeqSim standard component.
+     *
+     * <p>
+     * Standard components use the attached thermodynamic system's component database and molar mass. They are added
+     * with {@link SystemInterface#addComponent(String, double)} rather than the petroleum pseudo-component correlation.
+     * Density, boiling-point, Watson-factor, and explicit molar-mass inputs are therefore not applicable and fail
+     * during preflight.
+     * </p>
+     *
+     * @param componentName exact NeqSim standard-component identifier
+     * @return this cut
+     */
+    public AssayCut withStandardComponent(String componentName) {
+      if (componentName == null || componentName.trim().isEmpty()) {
+        throw new IllegalArgumentException("Standard component name cannot be empty");
+      }
+      this.standardComponentName = componentName.trim();
       return this;
     }
 
@@ -1076,6 +1162,34 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      */
     public boolean hasMolarMass() {
       return molarMass != null;
+    }
+
+    /**
+     * Return whether this cut maps to a NeqSim standard component.
+     *
+     * @return true when a standard-component identifier is stored
+     */
+    public boolean isStandardComponent() {
+      return standardComponentName != null;
+    }
+
+    /**
+     * Return the configured NeqSim standard-component identifier.
+     *
+     * @return standard-component identifier
+     * @throws IllegalStateException if this cut is a petroleum pseudo-component
+     */
+    public String getStandardComponentName() {
+      if (standardComponentName == null) {
+        throw new IllegalStateException("Standard component name not set for cut " + name);
+      }
+      return standardComponentName;
+    }
+
+    private boolean hasPetroleumPseudoComponentDefinition() {
+      return density != null || apiGravity != null || averageBoilingPointKelvin != null
+          || lowerBoilingPointKelvin != null || upperBoilingPointKelvin != null || molarMass != null
+          || watsonCharacterizationFactor != null;
     }
 
     /**

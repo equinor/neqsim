@@ -166,6 +166,20 @@ uses the reported 1050 degF+ residue values SG60/60 = 1.0089 and UOP K = 11.7. T
 source-derived representative temperature for the existing pseudo-component path; it does not
 independently validate the molecular weight or downstream properties produced by that path.
 
+## Composition-resolved standard light ends
+
+When an assay source reports known light molecules, mark each mass-basis cut with
+`withStandardComponent(componentName)`. NeqSim then uses the attached Java thermodynamic system's
+standard-component database and authoritative molar mass instead of creating a petroleum `_PC`
+component. Preparation is performed on a clone so unknown or inconsistent inputs fail before the
+original system is mutated.
+
+The [DOE Big Hill composition-resolved light-end qualification](refinery_big_hill_light_ends_validation)
+normalizes DOE's reported ethane, propane, i-butane, and n-butane debutanization weights over the
+reported C2-C4 subset and applies the independently reported 1.70 mass% whole-crude gas yield. It
+qualifies standard-component identity plus exact mass/mole bookkeeping. It does not qualify VLE,
+flash recovery, or C5-175 degF properties.
+
 ## Open-ended terminal boiling boundaries
 
 Terminal assay cuts often publish only one boiling limit. Use
@@ -232,11 +246,12 @@ The regression suite for this API currently verifies:
 - whole-assay SG/API agreement across all five complete four-category rows in the public DOE/OEDI COA summary workbook;
 - per-cut UOP/Watson factors against four bounded cuts in the public DOE SPR Big Hill Sweet 2021 assay;
 - Watson-derived representative boiling point for the DOE Big Hill 1050 degF+ terminal residue;
+- composition-resolved standard-component ingestion for the DOE Big Hill C2-C4 light ends;
 - whole-assay total-sulfur reconstruction against the public DOE Big Hill Sweet 2021 assay;
 - whole-assay total-nitrogen reconstruction against the public DOE Big Hill Sweet 2021 assay;
 - input-order independence and no thermodynamic-system mutation for bulk-property queries.
 
-These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122), qualify the DOE residue's Watson-derived representative temperature, and qualify linear assay sulfur and nitrogen bookkeeping over one complete DOE crude slate. They do **not** qualify temperature correction, contraction, molecular-weight or critical-property correlations, sulfur/nitrogen species or reactions, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
+These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122), qualify the DOE residue's Watson-derived representative temperature, qualify the DOE C2-C4 standard-component split, and qualify linear assay sulfur and nitrogen bookkeeping over one complete DOE crude slate. They do **not** qualify temperature correction, contraction, molecular-weight or critical-property correlations, sulfur/nitrogen species or reactions, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
 
 ## Refinery capability inventory after this increment
 
@@ -247,6 +262,7 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 | Pre-binned cumulative TBP cut boundaries | `addTBPCutBoundariesCelsius/Kelvin` | Initial implementation in #3305 |
 | Open-ended terminal boiling limits | Unit-explicit one-sided `AssayCut` boundaries | DOE-qualified for metadata and fail-closed preparation |
 | Watson-derived terminal representative point | `withWatsonCharacterizationFactor(...)` | DOE-qualified for the Big Hill 1050 degF+ residue |
+| Composition-resolved standard light ends | `AssayCut.withStandardComponent(...)` | DOE-qualified for the Big Hill C2-C4 composition and mass/mole bookkeeping |
 | Per-cut UOP/Watson characterization factor | `AssayCut.getWatsonCharacterizationFactor()` | DOE-qualified for assay screening over 375-1050 degF |
 | Assay-carried total sulfur | `getBulkSulfurMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
 | Assay-carried total nitrogen | `getBulkNitrogenMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
@@ -263,4 +279,4 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 
 ## Next campaign step
 
-The next dependency-ready characterization increment should establish a defensible C2-C4 composition and C5-175 degF representative property treatment from public evidence. With the residue's terminal boundary and representative temperature explicit, the process benchmark can then advance from the bounded DOE atmospheric integration case to a complete crude slate with independent cut-yield and boiling-range evidence before vacuum fractionation.
+The next dependency-ready characterization increment should establish a defensible C5-175 degF representative property treatment from public evidence. With the C2-C4 composition and residue terminal treatment now explicit, the process benchmark can then advance from the bounded DOE atmospheric integration case to a complete crude slate with independent cut-yield and boiling-range evidence before vacuum fractionation.
