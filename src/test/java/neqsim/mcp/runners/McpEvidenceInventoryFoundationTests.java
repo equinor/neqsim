@@ -310,8 +310,7 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(5, coverage.get("contractEvidenceCount").getAsInt());
     assertEquals(5, coverage.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationRunner.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationLoopRunnerTest.java"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationLoopRunnerTest.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
         .contains("test_adjustable_parameters_protocol.py"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));

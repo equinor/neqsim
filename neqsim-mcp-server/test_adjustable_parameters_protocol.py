@@ -267,7 +267,7 @@ def test_phase0_contract_is_promoted(client):
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY"
-        and "test_adjustable_parameters_protocol.py"
+        and "neqsim-mcp-server/test_adjustable_parameters_protocol.py"
         in record.get("contractEvidenceSources", []),
         "adjustable-parameter promotion drifted",
         limitations,
