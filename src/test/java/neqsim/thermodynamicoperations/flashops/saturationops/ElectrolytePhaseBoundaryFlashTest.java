@@ -20,7 +20,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /** Scientific and compatibility tests for bracketed electrolyte VLE/VLLE boundaries. */
 class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   private static final double LOWER_TEMPERATURE_K = 313.15;
-  private static final double UPPER_TEMPERATURE_K = 700.0;
+  // Keep the endpoint phase-stable across the Java 8 and current-JDK numerical stacks.
+  private static final double ELECTROLYTE_CPA_UPPER_TEMPERATURE_K = 1000.0;
+  private static final double UNBRACKETED_PITZER_UPPER_TEMPERATURE_K = 700.0;
   private static final double BOUNDARY_TOLERANCE_K = 0.5;
   private static final double LOWER_PRESSURE_BARA = 200.0;
   private static final double UPPER_PRESSURE_BARA = 400.0;
@@ -68,7 +70,7 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     ElectrolytePhaseBoundaryResult result = solveTemperatureBoundary(system, PhaseType.AQUEOUS);
 
     assertBoundaryContract(result, system, PhaseType.AQUEOUS, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
-        LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K);
+        LOWER_TEMPERATURE_K, ELECTROLYTE_CPA_UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K);
     double scalePotential = new ThermodynamicOperations(system).getRelativeScalePotential("NaCl");
     assertTrue(Double.isFinite(scalePotential) && scalePotential > 0.0);
   }
@@ -103,7 +105,8 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
 
     IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
         () -> new ElectrolytePhaseBoundaryFlash(system, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
-            PhaseType.AQUEOUS, LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20).solve());
+            PhaseType.AQUEOUS, LOWER_TEMPERATURE_K, UNBRACKETED_PITZER_UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20)
+            .solve());
     assertTrue(error.getMessage().contains("do not bracket"));
     assertEquals(initialTemperature, system.getTemperature(), 0.0);
 
@@ -117,7 +120,7 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   private static ElectrolytePhaseBoundaryResult solveTemperatureBoundary(SystemInterface system,
       PhaseType targetPhase) {
     return new ThermodynamicOperations(system).electrolytePhaseBoundaryTemperatureFlash(targetPhase,
-        LOWER_TEMPERATURE_K, UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20);
+        LOWER_TEMPERATURE_K, ELECTROLYTE_CPA_UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20);
   }
 
   private static void assertBoundaryContract(ElectrolytePhaseBoundaryResult result, SystemInterface system,
