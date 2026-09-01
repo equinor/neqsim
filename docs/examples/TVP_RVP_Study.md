@@ -1830,7 +1830,7 @@ When fluids have **different pseudo-component characterizations**, use `PseudoCo
 # Method 2: combineReservoirFluids() - for different pseudo-component sets
 # Import the PseudoComponentCombiner using JClass
 import jpype
-PseudoComponentCombiner = JClass('neqsim.thermo.characterization.PseudoComponentCombiner')
+PseudoComponentCombiner = jpype.JClass('neqsim.thermo.characterization.PseudoComponentCombiner')
 
 print("="*70)
 print("METHOD 2: combineReservoirFluids() - Different Pseudo-Components")
@@ -1847,7 +1847,7 @@ print(f"Fluid B components: {fluid_B.getNumberOfComponents()}")
 # The API is: combineReservoirFluids(int numPseudoComponents, SystemInterface[] fluids)
 try:
     # Create Java array of fluids
-    SystemInterface = JClass('neqsim.thermo.system.SystemInterface')
+    SystemInterface = jpype.JClass('neqsim.thermo.system.SystemInterface')
     fluids_array = jpype.JArray(SystemInterface)([fluid_A, fluid_B])
     
     combined_fluid = PseudoComponentCombiner.combineReservoirFluids(
