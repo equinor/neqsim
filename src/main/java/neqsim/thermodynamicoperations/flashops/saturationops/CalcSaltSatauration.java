@@ -159,11 +159,15 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
 
     double initialIon1Moles = system.getComponent(saltData.name1).getNumberOfmoles();
     double initialIon2Moles = system.getComponent(saltData.name2).getNumberOfmoles();
+    double initialWaterMoles = saltData.waterstoc > 0.0 ? system.getComponent("water").getNumberOfmoles() : 0.0;
     if (initialSaturationRatio <= 1.0) {
       return new SaltPrecipitationResult(saltName, 0.0, 0.0, initialSaturationRatio, initialSaturationRatio, 0.0);
     }
 
     double maximumExtent = Math.min(initialIon1Moles / saltData.stoc1, initialIon2Moles / saltData.stoc2);
+    if (saltData.waterstoc > 0.0) {
+      maximumExtent = Math.min(maximumExtent, initialWaterMoles / saltData.waterstoc);
+    }
     if (!(maximumExtent > 0.0) || !Double.isFinite(maximumExtent)) {
       throw new IllegalStateException("No finite positive precipitation extent is available for " + saltName);
     }
@@ -200,9 +204,14 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         - saltData.stoc1 * acceptedExtent;
     double ion2BalanceResidual = initialIon2Moles - system.getComponent(saltData.name2).getNumberOfmoles()
         - saltData.stoc2 * acceptedExtent;
-    double maximumBalanceResidual = Math.max(Math.abs(ion1BalanceResidual), Math.abs(ion2BalanceResidual));
+    double waterBalanceResidual = saltData.waterstoc > 0.0
+        ? initialWaterMoles - system.getComponent("water").getNumberOfmoles() - saltData.waterstoc * acceptedExtent
+        : 0.0;
+    double maximumBalanceResidual = Math.max(Math.max(Math.abs(ion1BalanceResidual), Math.abs(ion2BalanceResidual)),
+        Math.abs(waterBalanceResidual));
     double solidMolarMassGrams = 1000.0 * (saltData.stoc1 * system.getComponent(saltData.name1).getMolarMass()
-        + saltData.stoc2 * system.getComponent(saltData.name2).getMolarMass());
+        + saltData.stoc2 * system.getComponent(saltData.name2).getMolarMass()
+        + saltData.waterstoc * system.getComponent("water").getMolarMass());
     return new SaltPrecipitationResult(saltName, acceptedExtent, acceptedExtent * solidMolarMassGrams,
         initialSaturationRatio, finalSaturationRatio, maximumBalanceResidual);
   }
@@ -291,12 +300,18 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     return readSaltData().stoc2;
   }
 
+  /** @return crystallization-water stoichiometry per formula unit */
+  double getWaterStoichiometry() {
+    return readSaltData().waterstoc;
+  }
+
   /** @return pure-solid molar mass in grams per mole of formula units */
   double getSolidMolarMassGrams() {
     SaltData saltData = readSaltData();
     ensureSaltIonsPresent(saltData);
     return 1000.0 * (saltData.stoc1 * system.getComponent(saltData.name1).getMolarMass()
-        + saltData.stoc2 * system.getComponent(saltData.name2).getMolarMass());
+        + saltData.stoc2 * system.getComponent(saltData.name2).getMolarMass()
+        + saltData.waterstoc * system.getComponent("water").getMolarMass());
   }
 
   private double calculateSaturationRatioForRemoval(SystemInterface baseSystem, SaltData saltData, double saltAmount) {
@@ -371,6 +386,10 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       data.kspwater4 = Double.parseDouble(dataSet.getString("Kspwater4"));
       data.kspwater5 = Double.parseDouble(dataSet.getString("Kspwater5"));
       data.vdelta = Double.parseDouble(dataSet.getString("Vdelta"));
+      data.waterstoc = Double.parseDouble(dataSet.getString("waterstoc"));
+      if (data.waterstoc < 0.0 || !Double.isFinite(data.waterstoc)) {
+        throw new IllegalStateException("Invalid crystallization-water stoichiometry for " + saltName);
+      }
       saltDataCache = data;
       return data;
     } catch (RuntimeException ex) {
@@ -506,6 +525,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   private void addSaltAmount(SaltData saltData, double saltAmount) {
     system.addComponent(saltData.name1, saltData.stoc1 * saltAmount);
     system.addComponent(saltData.name2, saltData.stoc2 * saltAmount);
+    if (saltData.waterstoc > 0.0) {
+      system.addComponent("water", saltData.waterstoc * saltAmount);
+    }
   }
 
   /**
@@ -551,9 +573,28 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       return 0.0;
     }
 
-    double ionActivityProduct = Math.pow(gamma1 * molality1, saltData.stoc1)
-        * Math.pow(gamma2 * molality2, saltData.stoc2);
-    return ionActivityProduct / calculateKsp(saltData, phase.getTemperature(), phase.getPressure());
+    double logIonActivityProduct = saltData.stoc1 * Math.log(gamma1 * molality1)
+        + saltData.stoc2 * Math.log(gamma2 * molality2);
+    if (saltData.waterstoc > 0.0) {
+      ComponentInterface water = phase.getComponent(waterComponentNumber);
+      double waterActivity = water.getx();
+      if (water.calcActivity()) {
+        waterActivity *= phase.getActivityCoefficient(waterComponentNumber, waterComponentNumber);
+      }
+      if (!(waterActivity > 0.0) || !Double.isFinite(waterActivity)) {
+        return 0.0;
+      }
+      logIonActivityProduct += saltData.waterstoc * Math.log(waterActivity);
+    }
+    double logSaturationRatio = logIonActivityProduct
+        - Math.log(calculateKsp(saltData, phase.getTemperature(), phase.getPressure()));
+    if (logSaturationRatio > 700.0) {
+      return Math.exp(700.0);
+    }
+    if (logSaturationRatio < -745.0) {
+      return 0.0;
+    }
+    return Math.exp(logSaturationRatio);
   }
 
   /**
@@ -608,5 +649,6 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     private double kspwater4;
     private double kspwater5;
     private double vdelta;
+    private double waterstoc;
   }
 }

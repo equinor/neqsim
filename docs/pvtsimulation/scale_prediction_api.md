@@ -282,22 +282,33 @@ MultiSaltPrecipitationResult updatedScales =
 ```
 
 The continuation API conserves dissolved plus ledgered formula units and fails closed if the
-bounded active set cannot reach `1e-6` log10-SR complementarity or `1e-10 mol` component balance.
-The result reports the update count, maximum complementarity violation, component-ledger residual,
-per-mineral saturation ratios and non-negative amounts. It is serializable and its mineral map is
-defensively immutable for Java and Python process workflows. A thermodynamic system remains mutable
-and must not be shared between threads. Sequential clones are deterministic, and independently
+bounded active set cannot reach `1e-6` log10-SR complementarity. Non-reactive component and element
+ledgers use a `1e-10 mol` absolute balance tolerance. Reactive element ledgers use the same absolute
+floor plus a `1e-8` relative tolerance on each element inventory, matching the numerical closure of
+the chemical-equilibrium solver without weakening trace-element checks. The result reports both the
+maximum absolute residual and the maximum residual normalized by its quantity-specific tolerance;
+the normalized value must not exceed one. It also reports the update count, maximum complementarity
+violation, per-mineral saturation ratios and non-negative amounts. It is serializable and its mineral
+map is defensively immutable for Java and Python process workflows. A thermodynamic system remains
+mutable and must not be shared between threads. Sequential clones are deterministic, and independently
 constructed systems are covered by a parallel determinism regression. Concurrent use of clones from
 one Pitzer instance is not qualified because current shared Pitzer internals can race; construct each
 parallel system independently until that separate prerequisite is resolved.
 
-The deterministic regression uses the two existing calcium-sulfate COMPSALT correlations because
-they share the same dissolved ions: the lower-Ksp `CaSO4_G` correlation must displace
-`CaSO4_A`, independent of caller order. A separate dilution continuation proves that an existing
-solid can redissolve without stale-state carryover. This proves the active-set algorithm; it is not
-independent validation of gypsum hydration thermodynamics. COMPSALT represents
-the aqueous ion reaction and does not explicitly include crystallization-water activity or mass,
-so hydrated-mineral standard-state treatment remains outside this API's qualified scope.
+The calcium-sulfate COMPSALT rows distinguish anhydrite `CaSO4_A` from gypsum
+`CaSO4_G`. Gypsum explicitly carries two waters per formula unit: its saturation ratio includes
+the active aqueous model's solvent activity squared, precipitation removes two moles of water into
+each mole of solid, dissolution returns them, and the solid ledger reports the hydrated molar mass.
+Anhydrite remains the water-free `CaSO4` reaction. The implementation follows the PHREEQC 3.9.0
+reactions `CaSO4 = Ca+2 + SO4-2` and
+`CaSO4:2H2O = Ca+2 + SO4-2 + 2 H2O` from the USGS public-domain
+`pitzer.dat` catalog at commit `b0b3be767158ccc3322d2c816625cf470045e67e`.
+
+A separate dilution continuation proves that an existing solid can redissolve without stale-state
+carryover. These regressions establish standard-state and material-ledger semantics; they do not
+independently validate the COMPSALT temperature/pressure correlations. In particular, the current
+COMPSALT pressure-volume coefficients differ from PHREEQC mineral molar volumes, so quantitative
+high-pressure gypsum/anhydrite phase-boundary use remains outside the qualified scope.
 
 The process-system test carries the solid ledger beside the residual fluid through a
 `Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Its

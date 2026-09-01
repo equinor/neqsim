@@ -652,6 +652,28 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     finishRun(id);
   }
 
+  /**
+   * Advances an algebraic mixer during a transient process calculation.
+   *
+   * <p>
+   * A mixer has no independent material or energy inventory, so its transient behavior is the instantaneous
+   * steady-state material and energy balance evaluated from the current inlet streams. The calculation identifier guard
+   * prevents the equipment clock from advancing more than once when a transient integration method evaluates the
+   * flowsheet repeatedly within one physical timestep.
+   * </p>
+   *
+   * @param dt timestep in seconds
+   * @param id calculation identifier shared by the timestep
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
+    run(id);
+    if (!alreadyEvaluatedForStep) {
+      increaseTime(dt);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport

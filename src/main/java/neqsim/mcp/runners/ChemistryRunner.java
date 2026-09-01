@@ -453,7 +453,8 @@ public class ChemistryRunner {
         && Double.isFinite(equilibrium.getMaximumComplementarityViolation())
         && equilibrium.getMaximumComplementarityViolation() <= 1.0e-6
         && Double.isFinite(equilibrium.getMaximumComponentBalanceResidualMoles())
-        && equilibrium.getMaximumComponentBalanceResidualMoles() <= 1.0e-10
+        && Double.isFinite(equilibrium.getMaximumNormalizedBalanceResidual())
+        && equilibrium.getMaximumNormalizedBalanceResidual() <= 1.0
         && Double.isFinite(equilibrium.getTotalPrecipitatedMassGrams())
         && equilibrium.getTotalPrecipitatedMassGrams() >= 0.0 && phaseState.get("normalizedNonNegative").getAsBoolean()
         && Math.abs(phaseState.get("chargeResidual_molPerKgWater").getAsDouble()) <= 1.0e-10;
@@ -469,7 +470,7 @@ public class ChemistryRunner {
     data.addProperty("pressure_bara", pressure);
     data.addProperty("compositionBasis", "component amount in mol; aqueous molality derived from water mass");
     data.addProperty("solidLedgerBasis",
-        "pure COMPSALT ion-formula amounts; crystallization water and solid solutions are not represented");
+        "pure COMPSALT formula amounts; encoded crystallization water is included, solid solutions are not represented");
     data.addProperty("datasetSelector", datasetSelector);
     data.addProperty("datasetId",
         pitzerQualification == null ? "not-applicable: electrolyte-EOS parameters are not Pitzer parameters"
@@ -479,6 +480,7 @@ public class ChemistryRunner {
     data.addProperty("equilibriumUpdates", equilibrium.getEquilibriumUpdates());
     data.addProperty("maximumComplementarityViolation_log10SR", equilibrium.getMaximumComplementarityViolation());
     data.addProperty("maximumComponentBalanceResidual_mol", equilibrium.getMaximumComponentBalanceResidualMoles());
+    data.addProperty("maximumNormalizedBalanceResidual", equilibrium.getMaximumNormalizedBalanceResidual());
     data.addProperty("totalPrecipitatedMass_g", equilibrium.getTotalPrecipitatedMassGrams());
     data.add("mineralResults", mineralResults);
     data.add("aqueousPhaseState", phaseState);

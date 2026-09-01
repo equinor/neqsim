@@ -136,6 +136,39 @@ class SaltPrecipitationTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void gypsumUsesSolventActivityAndConservesCrystallizationWater() throws Exception {
+    SystemPitzer system = createCalciumSulphateBrine(false, 2.0e-1);
+    CalcSaltSatauration gypsum = new CalcSaltSatauration(system, "CaSO4_G");
+    double initialSaturationRatio = gypsum.getCurrentSaturationRatio();
+
+    int aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
+    PhaseInterface aqueous = system.getPhase(aqueousPhaseNumber >= 0 ? aqueousPhaseNumber : 1);
+    int waterComponentNumber = aqueous.getComponent("water").getComponentNumber();
+    double waterDenominator = aqueous.getComponent("water").getx() * aqueous.getComponent("water").getMolarMass();
+    double calciumActivity = aqueous.getActivityCoefficient(aqueous.getComponent("Ca++").getComponentNumber(),
+        waterComponentNumber) * aqueous.getComponent("Ca++").getx() / waterDenominator;
+    double sulphateActivity = aqueous.getActivityCoefficient(aqueous.getComponent("SO4--").getComponentNumber(),
+        waterComponentNumber) * aqueous.getComponent("SO4--").getx() / waterDenominator;
+    double waterActivity = aqueous.getComponent("water").getx()
+        * aqueous.getActivityCoefficient(waterComponentNumber, waterComponentNumber);
+    double temperatureK = aqueous.getTemperature();
+    double lnKsp = -26309.9 / temperatureK + 815.978 - 138.361 * Math.log(temperatureK) + 0.167863 * temperatureK
+        + 18.6143 / (temperatureK * temperatureK);
+    double expectedSaturationRatio = calciumActivity * sulphateActivity * waterActivity * waterActivity
+        / Math.exp(lnKsp);
+    assertEquals(expectedSaturationRatio, initialSaturationRatio, Math.abs(expectedSaturationRatio) * 1.0e-10);
+
+    double initialWaterMoles = system.getComponent("water").getNumberOfmoles();
+    SaltPrecipitationResult result = gypsum.precipitate();
+    assertTrue(result.hasPrecipitatedSolid());
+    assertEquals(initialWaterMoles,
+        system.getComponent("water").getNumberOfmoles() + 2.0 * result.getPrecipitatedMoles(), 1.0e-10);
+    assertEquals(result.getPrecipitatedMoles() * 172.17, result.getPrecipitatedMassGrams(),
+        result.getPrecipitatedMassGrams() * 2.0e-4);
+    assertTrue(result.getMaximumIonBalanceResidualMoles() <= 1.0e-10);
+  }
+
+  @Test
   void sulfateMineralKspCorrelationsAgreeWithPhreeqc390AtReferenceTemperature() throws Exception {
     assertSaturationLogKMatchesPhreeqc("BaSO4", -9.97, 0.04);
     assertSaturationLogKMatchesPhreeqc("SrSO4", -6.63, 0.01);
@@ -188,7 +221,12 @@ class SaltPrecipitationTest extends neqsim.NeqSimTest {
         * aqueous.getComponent(cation).getx() / waterDenominator;
     double sulphateActivity = aqueous.getActivityCoefficient(aqueous.getComponent("SO4--").getComponentNumber(), water)
         * aqueous.getComponent("SO4--").getx() / waterDenominator;
-    assertEquals(phreeqcLogK, Math.log10(cationActivity * sulphateActivity), toleranceLogUnits);
+    double waterActivity = aqueous.getComponent("water").getx() * aqueous.getActivityCoefficient(water, water);
+    double activityProduct = cationActivity * sulphateActivity;
+    if ("CaSO4_G".equals(saltName)) {
+      activityProduct *= waterActivity * waterActivity;
+    }
+    assertEquals(phreeqcLogK, Math.log10(activityProduct), toleranceLogUnits);
   }
 
   private static void assertAqueousChargeAndPhaseState(SystemPitzer system) {

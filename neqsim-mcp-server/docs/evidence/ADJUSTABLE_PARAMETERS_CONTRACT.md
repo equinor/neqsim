@@ -33,7 +33,7 @@ fixture. It verifies:
 - deterministic equivalence between an explicit definition and a reusable
   `manageModel` handle;
 - fail-closed behavior for a blank request; and
-- unchanged Phase 0 trust accounting while this evidence is a prerequisite.
+- the promoted Phase 0 trust classification and its bounded evidence sources.
 
 The focused Java and packaged-MCP checks run in
 `.github/workflows/mcp_protocol_qualification.yml` before the comprehensive MCP
@@ -48,8 +48,9 @@ establish physical feasibility, model fidelity, convergence quality, mass or
 energy conservation, a globally optimal operating point, design certification,
 or accountable engineering approval.
 
-Phase 0 inventory deliberately remains version `1.21` with 20
-`EXPLICIT_TRUST`, 19 `CONTRACT_TESTED`, and 32 `CONFIRMED_GAP` tools.
-`getAdjustableParameters` remains a confirmed gap until this prerequisite is
-merged and a separate atomic promotion updates machine-readable inventory,
-primary protocol accounting, and documentation together.
+Phase 0 inventory version `1.22` atomically promotes
+`getAdjustableParameters` to `CONTRACT_TESTED`, moving the accounting from
+20/19/32 to 20/20/31. This is a bounded software-contract classification, not
+an engineering calculation qualification. The machine-readable inventory,
+focused packaged-MCP assertion, primary protocol accounting, Java regression,
+and documentation move together from the merged #3365 evidence.
