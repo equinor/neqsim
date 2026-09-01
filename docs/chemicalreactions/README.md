@@ -139,6 +139,8 @@ See the [CO₂ impurity kinetics guide](co2_impurity_kinetics_guide) for reactio
 Java usage, numerical safeguards, and model limitations. Use the
 [CO₂ transport reaction-kinetics guide](co2_transport_reaction_kinetics) to enforce evidence
 ranges and screen a reaction/transport Damköhler number.
+Use the [CO₂ hydration temperature-trajectory guide](co2_hydration_temperature_trajectory) for
+exact, carbon-conserving propagation of the qualified neutral pair through ordered temperature segments.
 
 
 ---
