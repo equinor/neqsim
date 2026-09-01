@@ -560,6 +560,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     private Double molarMass;
     private Double sulfurMassFraction;
     private Double nitrogenMassFraction;
+    private Double watsonCharacterizationFactor;
 
     /**
      * Create an assay cut.
@@ -698,6 +699,10 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      */
     public AssayCut withAverageBoilingPointKelvin(double temperatureKelvin) {
       validatePositiveFinite(temperatureKelvin, "Boiling point");
+      if (watsonCharacterizationFactor != null) {
+        throw new IllegalArgumentException(
+            "Representative boiling point cannot be combined with an explicit Watson factor");
+      }
       if (lowerBoilingPointKelvin != null && temperatureKelvin < lowerBoilingPointKelvin) {
         throw new IllegalArgumentException("Representative boiling point cannot be below lower boundary");
       }
@@ -733,6 +738,29 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
       double temperatureCelsius = (temperatureFahrenheit - 32.0) * 5.0 / 9.0;
       return withAverageBoilingPointKelvin(temperatureCelsius + KELVIN_OFFSET);
+    }
+
+    /**
+     * Set an explicit UOP/Watson characterization factor for deriving the representative boiling point.
+     *
+     * <p>
+     * When no representative boiling point is supplied, the cut resolves it from
+     * {@code T_b = (K_W SG)^3 / 1.8}, where {@code T_b} is in K and {@code SG} is the existing
+     * dimensionless specific-gravity view. An explicit representative boiling point and Watson factor are mutually
+     * exclusive so the authoritative source is unambiguous.
+     * </p>
+     *
+     * @param watsonFactor dimensionless UOP/Watson characterization factor
+     * @return this cut
+     */
+    public AssayCut withWatsonCharacterizationFactor(double watsonFactor) {
+      validatePositiveFinite(watsonFactor, "Watson characterization factor");
+      if (averageBoilingPointKelvin != null) {
+        throw new IllegalArgumentException(
+            "Explicit Watson factor cannot be combined with a representative boiling point");
+      }
+      this.watsonCharacterizationFactor = watsonFactor;
+      return this;
     }
 
     /**
@@ -842,6 +870,9 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       validatePositiveFinite(upperTemperatureKelvin, "Upper boiling point");
       if (!(upperTemperatureKelvin > lowerTemperatureKelvin)) {
         throw new IllegalArgumentException("Upper boiling-point boundary must exceed lower boundary");
+      }
+      if (watsonCharacterizationFactor != null) {
+        throw new IllegalArgumentException("Boiling range cannot be combined with an explicit Watson factor");
       }
       this.lowerBoilingPointKelvin = lowerTemperatureKelvin;
       this.upperBoilingPointKelvin = upperTemperatureKelvin;
@@ -1113,14 +1144,41 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * @return boiling point in K
      */
     public double resolveAverageBoilingPoint() {
-      if (averageBoilingPointKelvin == null) {
+      if (averageBoilingPointKelvin != null) {
+        return averageBoilingPointKelvin;
+      }
+      if (watsonCharacterizationFactor == null) {
         throw new IllegalStateException("Average boiling point missing for cut " + name);
       }
-      return averageBoilingPointKelvin;
+
+      double specificGravity = resolveDensity();
+      double inferredBoilingPointKelvin =
+          Math.pow(watsonCharacterizationFactor * specificGravity, 3.0) / 1.8;
+      if (!Double.isFinite(inferredBoilingPointKelvin) || !(inferredBoilingPointKelvin > 0.0)) {
+        throw new IllegalStateException("Unable to derive representative boiling point for cut " + name);
+      }
+      if (lowerBoilingPointKelvin != null && inferredBoilingPointKelvin < lowerBoilingPointKelvin) {
+        throw new IllegalStateException("Watson-derived representative boiling point is below lower boundary for cut "
+            + name);
+      }
+      if (upperBoilingPointKelvin != null && inferredBoilingPointKelvin > upperBoilingPointKelvin) {
+        throw new IllegalStateException("Watson-derived representative boiling point exceeds upper boundary for cut "
+            + name);
+      }
+      return inferredBoilingPointKelvin;
     }
 
     /**
-     * Calculate the UOP/Watson characterization factor for this assay cut.
+     * Return whether an explicit UOP/Watson characterization factor is available.
+     *
+     * @return true when a factor is stored
+     */
+    public boolean hasWatsonCharacterizationFactor() {
+      return watsonCharacterizationFactor != null;
+    }
+
+    /**
+     * Calculate or return the UOP/Watson characterization factor for this assay cut.
      *
      * <p>
      * The calculation uses {@code K_W = (1.8 T_b)^(1/3) / SG}, where {@code T_b} is the representative normal boiling
@@ -1133,6 +1191,9 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * @throws IllegalStateException if density or representative boiling point is unavailable, or the result is invalid
      */
     public double getWatsonCharacterizationFactor() {
+      if (watsonCharacterizationFactor != null) {
+        return watsonCharacterizationFactor;
+      }
       double factor = Math.cbrt(1.8) * Math.cbrt(resolveAverageBoilingPoint()) / resolveDensity();
       if (!Double.isFinite(factor) || !(factor > 0.0)) {
         throw new IllegalStateException("Unable to calculate Watson characterization factor for cut " + name);
