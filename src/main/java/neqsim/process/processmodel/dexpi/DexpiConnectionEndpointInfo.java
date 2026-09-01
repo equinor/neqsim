@@ -25,8 +25,8 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
    * Directed source-incidence classification for a connection endpoint.
    *
    * <p>
-   * Roles describe only explicit connection occurrences in the imported document. They do not
-   * establish hydraulic continuity, fitting type, process intent, or live simulation topology.
+   * Roles describe only explicit connection occurrences in the imported document. They do not establish hydraulic
+   * continuity, fitting type, process intent, or live simulation topology.
    * </p>
    */
   public enum IncidenceRole {
@@ -43,6 +43,7 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
     /** Any remaining non-empty incidence pattern. */
     COMPLEX
   }
+
   private final String endpointId;
   private final String elementName;
   private final String ownerId;

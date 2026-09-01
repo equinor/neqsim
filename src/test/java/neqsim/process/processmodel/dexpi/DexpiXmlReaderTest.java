@@ -434,18 +434,18 @@ public class DexpiXmlReaderTest extends NeqSimTest {
 
   @Test
   public void testConnectionEndpointIncidenceRoleClassification() {
-    DexpiConnectionEndpointInfo source = new DexpiConnectionEndpointInfo("SOURCE", "Nozzle", "", "",
-        true, Collections.<String>emptyList(), Collections.singletonList("C-1"));
+    DexpiConnectionEndpointInfo source = new DexpiConnectionEndpointInfo("SOURCE", "Nozzle", "", "", true,
+        Collections.<String>emptyList(), Collections.singletonList("C-1"));
     DexpiConnectionEndpointInfo sink = new DexpiConnectionEndpointInfo("SINK", "Nozzle", "", "", true,
         Collections.singletonList("C-1"), Collections.<String>emptyList());
-    DexpiConnectionEndpointInfo passThrough = new DexpiConnectionEndpointInfo("PASS", "Nozzle", "", "",
-        true, Collections.singletonList("C-1"), Collections.singletonList("C-2"));
+    DexpiConnectionEndpointInfo passThrough = new DexpiConnectionEndpointInfo("PASS", "Nozzle", "", "", true,
+        Collections.singletonList("C-1"), Collections.singletonList("C-2"));
     DexpiConnectionEndpointInfo split = new DexpiConnectionEndpointInfo("SPLIT", "Nozzle", "", "", true,
         Collections.singletonList("C-1"), Arrays.asList("C-2", "C-3"));
     DexpiConnectionEndpointInfo merge = new DexpiConnectionEndpointInfo("MERGE", "Nozzle", "", "", true,
         Arrays.asList("C-1", "C-2"), Collections.singletonList("C-3"));
-    DexpiConnectionEndpointInfo complex = new DexpiConnectionEndpointInfo("COMPLEX", "Nozzle", "", "",
-        true, Arrays.asList("C-1", "C-2"), Arrays.asList("C-3", "C-4"));
+    DexpiConnectionEndpointInfo complex = new DexpiConnectionEndpointInfo("COMPLEX", "Nozzle", "", "", true,
+        Arrays.asList("C-1", "C-2"), Arrays.asList("C-3", "C-4"));
 
     assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SOURCE, source.getIncidenceRole());
     assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SINK, sink.getIncidenceRole());
