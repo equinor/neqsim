@@ -40,6 +40,8 @@ public class OilAssayCharacterisationDoeBigHillLightEndsTest {
   public void standardComponentsUseAuthoritativeMolarMassAndCloseGasSlice() {
     SystemInterface forward = buildGasSlice(false);
     SystemInterface reverse = buildGasSlice(true);
+    assertEquals(COMPONENT_NAMES.length, forward.getNumberOfComponents());
+    assertEquals(COMPONENT_NAMES.length, reverse.getNumberOfComponents());
 
     double expectedMassKg = DOE_C2_C4_WHOLE_CRUDE_MASS_PERCENT / 100.0;
     double reconstructedMassKg = 0.0;
