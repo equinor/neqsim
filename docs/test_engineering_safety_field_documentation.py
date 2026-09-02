@@ -3,6 +3,7 @@
 from pathlib import Path
 import re
 import unittest
+from urllib.parse import unquote, urlsplit
 
 
 DOCS = Path(__file__).resolve().parent
@@ -86,43 +87,52 @@ def parse_front_matter(source):
 
 
 def remove_fenced_code(source):
-    """Remove backtick and tilde code fences before inspecting rendered Markdown."""
+    """Remove fenced examples and reject unmatched backtick or tilde fences."""
     rendered = []
-    marker = None
+    fence_character = None
     for line in source.splitlines():
-        stripped = line.lstrip()
-        if marker is None and (
-            stripped.startswith(("\x60\x60\x60", "~~~"))
-        ):
-            marker = stripped[:3]
-            continue
+        marker = re.match(r"^\s*(\x60{3,}|~{3,})", line)
         if marker is not None:
-            if stripped.startswith(marker):
-                marker = None
+            character = marker.group(1)[0]
+            if fence_character is None:
+                fence_character = character
+            elif character == fence_character:
+                fence_character = None
             continue
-        rendered.append(line)
+        if fence_character is None:
+            rendered.append(line)
+
+    if fence_character is not None:
+        raise AssertionError("Unclosed fenced code block")
     return "\n".join(rendered)
 
 
-def link_candidates(page, raw_target):
-    """Return repository-source candidates for one relative documentation link."""
-    target = raw_target.split("#", 1)[0].split("?", 1)[0].strip().strip("<>")
-    if target.startswith("/"):
-        candidate = DOCS / target.lstrip("/")
+def target_candidates(source, target):
+    """Return repository-source candidates for one documentation target."""
+    parsed = urlsplit(target.strip().strip("<>"))
+    if parsed.scheme or parsed.netloc or target.startswith("#"):
+        return ()
+
+    relative = unquote(parsed.path)
+    if not relative:
+        return ()
+    if relative.startswith("/"):
+        destination = (DOCS / relative.lstrip("/")).resolve()
     else:
-        candidate = page.parent / target
-    if candidate.suffix:
-        stem = candidate.with_suffix("")
-        return (
-            candidate,
-            stem / "README.md",
-            stem / "index.md",
+        destination = (source.parent / relative).resolve()
+
+    candidates = [destination]
+    if destination.suffix == ".html":
+        candidates.append(destination.with_suffix(".md"))
+    if relative.endswith("/") or not destination.suffix:
+        candidates.extend(
+            (
+                destination / "index.md",
+                destination / "README.md",
+                destination.with_suffix(".md"),
+            )
         )
-    return (
-        candidate.with_suffix(".md"),
-        candidate / "README.md",
-        candidate / "index.md",
-    )
+    return tuple(candidates)
 
 
 class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
@@ -146,12 +156,20 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
     def test_front_matter_title_is_not_repeated_as_h1(self):
         for page in SCOPE_PAGES:
             with self.subTest(page=page):
-                title, _description, body = parse_front_matter(
+                _title, _description, body = parse_front_matter(
                     page.read_text(encoding="utf-8")
                 )
                 rendered = remove_fenced_code(body)
                 headings = re.findall(r"^#\s+(.+?)\s*$", rendered, re.MULTILINE)
-                self.assertNotIn(title, headings)
+                self.assertEqual([], headings)
+
+    def test_pages_have_balanced_fenced_code(self):
+        for page in SCOPE_PAGES:
+            with self.subTest(page=page):
+                _title, _description, body = parse_front_matter(
+                    page.read_text(encoding="utf-8")
+                )
+                remove_fenced_code(body)
 
     def test_pages_use_supported_math_delimiters(self):
         unsupported = re.compile(r"\\\[|\\\]|\\\(|\\\)")
@@ -163,22 +181,23 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
                 self.assertIsNone(unsupported.search(remove_fenced_code(body)))
 
     def test_relative_source_links_resolve(self):
-        link_pattern = re.compile(r"(?<!!)\[[^\]\n]+\]\(([^)\n]+)\)")
-        scheme = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)
+        markdown_link = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+        html_link = re.compile(r"""href=["']([^"']+)["']""")
         for page in SCOPE_PAGES:
-            rendered = remove_fenced_code(page.read_text(encoding="utf-8"))
-            with self.subTest(page=page, check="single-line destinations"):
-                self.assertNotRegex(rendered, r"\]\([^\n)]*\n")
-            for match in link_pattern.finditer(rendered):
-                raw_target = match.group(1).strip().split()[0]
-                if raw_target.startswith("#") or scheme.match(raw_target):
+            _title, _description, body = parse_front_matter(
+                page.read_text(encoding="utf-8")
+            )
+            rendered = remove_fenced_code(body)
+            targets = markdown_link.findall(rendered)
+            targets.extend(html_link.findall(rendered))
+            for target in targets:
+                candidates = target_candidates(page, target)
+                if not candidates:
                     continue
-                candidates = link_candidates(page, raw_target)
-                with self.subTest(page=page, target=raw_target):
+                with self.subTest(page=page, target=target):
                     self.assertTrue(
-                        any(candidate.is_file() for candidate in candidates),
-                        msg="Missing target; tried: "
-                        + ", ".join(str(candidate) for candidate in candidates),
+                        any(candidate.exists() for candidate in candidates),
+                        "Unresolved repository-relative target",
                     )
 
 

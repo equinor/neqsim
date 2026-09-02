@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Process topology analysis for risk assessment. Map equipment connections, identify critical paths, single points of failure, and system-level dependencies from NeqSim process models."
 ---
 
-# Process Topology Analysis
 
 Process topology analysis extracts the graph structure from a NeqSim ProcessSystem, enabling understanding of equipment relationships, dependencies, and parallel configurations.
 

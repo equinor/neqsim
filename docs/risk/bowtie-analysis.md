@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Bow-tie risk analysis for process plants using NeqSim. Model threats, barriers, consequences, and top events with BowTieModel class."
 ---
 
-# P4: Bow-Tie Diagram Analysis
 
 ## Overview
 

@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Dynamic simulation integration with risk analysis. Time-dependent reliability modeling, transient response to failures, and real-time risk monitoring."
 ---
 
-# P1: Dynamic Simulation Integration
 
 ## Overview
 
