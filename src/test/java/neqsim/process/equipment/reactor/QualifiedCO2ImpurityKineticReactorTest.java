@@ -17,7 +17,7 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
   void testEmptyRegistryFailsClosedWithAllRequiredIds() {
     QualifiedCO2ImpurityKineticReactor reactor = new QualifiedCO2ImpurityKineticReactor("qualified");
 
-    assertArrayEquals(new String[] {"R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8CS"},
+    assertArrayEquals(new String[] { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8CS" },
         reactor.getRequiredReactionIds());
     assertArrayEquals(reactor.getRequiredReactionIds(),
         reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
@@ -40,7 +40,7 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
     QualifiedCO2ImpurityKineticReactor reactor = qualifiedReactor();
     reactor.setReactionQualification("R2", qualification("R2", ChemicalReactionValidationStatus.UNVALIDATED));
 
-    assertArrayEquals(new String[] {"R2"}, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
+    assertArrayEquals(new String[] { "R2" }, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
     assertThrows(IllegalStateException.class,
         () -> reactor.requireValidatedKineticsAt(TEMPERATURE_K, PRESSURE_BARA));
     assertThrows(IllegalArgumentException.class,
@@ -67,14 +67,14 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
     QualifiedCO2ImpurityKineticReactor reactor = qualifiedReactor();
     reactor.setMaterial("stainless_steel");
 
-    assertArrayEquals(new String[] {"R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8SS"},
+    assertArrayEquals(new String[] { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8SS" },
         reactor.getRequiredReactionIds());
-    assertArrayEquals(new String[] {"R8SS"}, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
+    assertArrayEquals(new String[] { "R8SS" }, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
 
     reactor.setReactionQualification("R8", qualification("R8SS", ChemicalReactionValidationStatus.VALIDATED));
     reactor.requireValidatedKineticsAt(TEMPERATURE_K, PRESSURE_BARA);
     reactor.setReactionConstants("R8", 3.0, 40.0);
-    assertArrayEquals(new String[] {"R8SS"}, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
+    assertArrayEquals(new String[] { "R8SS" }, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
   }
 
   @Test
