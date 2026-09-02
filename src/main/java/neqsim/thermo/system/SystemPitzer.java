@@ -86,6 +86,25 @@ public class SystemPitzer extends SystemEosGE {
   }
 
   /**
+   * Refreshes catalog-first parameter selection after the active aqueous topology changes.
+   *
+   * <p>
+   * Component identities can be added after an earlier property evaluation selected the legacy fallback for a
+   * water-only topology. This method re-runs the complete catalog audit for the now-active species without changing an
+   * explicit {@link #useLegacyPitzerParameters()} selection. Missing catalog rows leave the existing coherent fallback
+   * untouched.
+   * </p>
+   *
+   * @return {@code true} when the complete PHREEQC catalog was applied to the active topology
+   */
+  public boolean refreshDefaultPitzerParameterSelection() {
+    if (!isUsingPhreeqcPitzerParametersByDefault()) {
+      return false;
+    }
+    return PitzerParameterDatasets.tryApplyCompletePhreeqcPitzerCatalog((PhasePitzer) phaseArray[1]);
+  }
+
+  /**
    * Returns scientific qualification metadata for the selected Pitzer parameter dataset.
    *
    * <p>
