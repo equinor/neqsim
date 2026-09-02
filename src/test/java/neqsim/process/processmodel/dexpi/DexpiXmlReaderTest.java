@@ -680,10 +680,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
       assertFalse(cycle.getEndpointIds().contains("N-P"));
       assertFalse(cycle.getEndpointIds().contains("N-Q"));
     }
-    assertThrows(UnsupportedOperationException.class,
-        () -> connectedCycle.getIncomingBoundaryConnectionIds().clear());
-    assertThrows(UnsupportedOperationException.class,
-        () -> connectedCycle.getOutgoingBoundaryConnectionIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getIncomingBoundaryConnectionIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getOutgoingBoundaryConnectionIds().clear());
     assertTrue(first.toJson().contains("\"incomingBoundaryConnectionCount\": 2"));
     assertTrue(first.toJson().contains("\"outgoingBoundaryConnectionIds\": ["));
     assertEquals(first.toJson(), second.toJson());
