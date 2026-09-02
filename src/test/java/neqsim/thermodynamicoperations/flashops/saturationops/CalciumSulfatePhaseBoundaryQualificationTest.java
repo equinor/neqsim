@@ -67,8 +67,8 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
         .qualifyCalciumSulfatePhaseBoundary();
     assertTrue(oneBar.isReferencePressureEnvelopePass());
 
-    CalciumSulfatePhaseBoundaryQualification outsideAtmosphericEnvelope =
-        new ThermodynamicOperations(new SystemSrkEos(313.15, 1.03)).qualifyCalciumSulfatePhaseBoundary();
+    CalciumSulfatePhaseBoundaryQualification outsideAtmosphericEnvelope = new ThermodynamicOperations(
+        new SystemSrkEos(313.15, 1.03)).qualifyCalciumSulfatePhaseBoundary();
     assertFalse(outsideAtmosphericEnvelope.isReferencePressureEnvelopePass());
 
     CalciumSulfatePhaseBoundaryQualification highPressure = new ThermodynamicOperations(new SystemSrkEos(313.15, 500.0))
