@@ -50,7 +50,7 @@ def remove_fenced_code(source):
     visible = []
     fence_character = None
     for line in source.splitlines():
-        marker = re.match(r"^\\s*(\x60{3,}|~{3,})", line)
+        marker = re.match(r"^\s*(\x60{3,}|~{3,})", line)
         if marker is not None:
             character = marker.group(1)[0]
             if fence_character is None:
@@ -63,7 +63,7 @@ def remove_fenced_code(source):
 
     if fence_character is not None:
         raise AssertionError("Unclosed fenced code block")
-    return "\\n".join(visible)
+    return "\n".join(visible)
 
 
 def target_candidates(source, target):
@@ -111,7 +111,9 @@ class ThermodynamicDocumentationRenderingContractTest(unittest.TestCase):
     def test_front_matter_title_is_not_repeated_as_h1(self):
         for page in self.pages:
             with self.subTest(page=page):
-                _title, _description, body = parse_front_matter(\n                    page.read_text(encoding="utf-8")\n                )
+                _title, _description, body = parse_front_matter(
+                    page.read_text(encoding="utf-8")
+                )
                 rendered_markdown = remove_fenced_code(body)
                 headings = re.findall(r"^#\s+(.+?)\s*$", rendered_markdown, re.MULTILINE)
                 self.assertEqual([], headings)
@@ -125,7 +127,7 @@ class ThermodynamicDocumentationRenderingContractTest(unittest.TestCase):
                 remove_fenced_code(body)
 
     def test_repository_relative_targets_resolve(self):
-        markdown_link = re.compile(r"\\[[^\\]]*\\]\\(([^)\\s]+)\\)")
+        markdown_link = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
         html_link = re.compile(r"""href=["']([^"']+)["']""")
         for page in self.pages:
             _title, _description, body = parse_front_matter(
