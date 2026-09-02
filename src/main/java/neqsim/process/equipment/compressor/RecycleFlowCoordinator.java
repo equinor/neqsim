@@ -13,7 +13,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * Dynamic process systems execute equipment sequentially, so the recycle valve can calculate a requested flow after its
  * discharge splitter has already run. This coordinator writes the accepted, bounded flow back to both branches and
  * updates the splitter specification for the next step. The current accepted state is therefore mass conserving while
- * retaining an explicit transport delay when used with {@link neqsim.process.equipment.util.TransientRecycle}.
+ * retaining the ordered transient dependency break provided by {@link neqsim.process.equipment.util.Recycle}.
  */
 public class RecycleFlowCoordinator extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */

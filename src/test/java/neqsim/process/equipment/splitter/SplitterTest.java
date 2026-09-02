@@ -162,6 +162,7 @@ class SplitterTest {
     Splitter splitter = new Splitter("dynamic splitter", inletStream, 2);
     splitter.setFlowRates(new double[] { Splitter.REMAINDER, 0.25 * inletKgHr }, "kg/hr");
     splitter.setCalculateSteadyState(false);
+    splitter.setTransientSplitMode(Splitter.TransientSplitMode.PRESCRIBED_SPLIT);
     splitter.runTransient(1.0, UUID.randomUUID());
 
     double mainFlow = splitter.getSplitStream(0).getFlowRate("kg/hr");

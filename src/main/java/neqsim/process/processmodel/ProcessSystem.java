@@ -50,6 +50,7 @@ import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.RecycleFlowCoordinator;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
@@ -70,7 +71,6 @@ import neqsim.process.equipment.util.MultiVariableAdjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
 import neqsim.process.equipment.util.Setter;
-import neqsim.process.equipment.util.TransientRecycle;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.graph.ProcessEdge;
 import neqsim.process.processmodel.graph.ProcessGraph;
@@ -1508,10 +1508,10 @@ public class ProcessSystem extends SimulationBaseClass {
         // that iterative coupling, so adjuster-containing systems must run
         // sequentially to ensure correct evaluation order.
         runSequential(id);
-      } else if (hasTransientRecycles()) {
-        // A transport-delay recycle intentionally breaks the same-step dependency
-        // around a dynamic loop. Preserve insertion order and execute it once; it is
-        // neither a feed-forward graph nor a steady tear stream to iterate.
+      } else if (hasRecycleFlowCoordinators()) {
+        // A recycle flow coordinator reads a valve result and writes the associated
+        // splitter specification. That signal dependency is not represented by stream
+        // connectivity, so preserving flowsheet insertion order is required.
         runSequential(id);
       } else if (hasRecycles()) {
         // Process has Recycle units. runHybrid() parallelises feed-forward levels
@@ -1666,17 +1666,13 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Checks whether the process contains one-pass transport-delay recycles.
+   * Checks whether the process contains recycle flow coordinators that require insertion-order execution.
    *
-   * <p>
-   * Unlike {@link Recycle}, these units must not enter a steady convergence loop. Their presence nevertheless makes
-   * same-step graph scheduling invalid, so steady and transient process execution preserve equipment insertion order.
-   *
-   * @return true if at least one {@link TransientRecycle} is present
+   * @return true if at least one {@link RecycleFlowCoordinator} is present
    */
-  public boolean hasTransientRecycles() {
+  public boolean hasRecycleFlowCoordinators() {
     for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof TransientRecycle) {
+      if (unit instanceof RecycleFlowCoordinator) {
         return true;
       }
     }
@@ -2197,7 +2193,7 @@ public class ProcessSystem extends SimulationBaseClass {
     sb.append("=== Execution Strategy Explanation ===\n");
     List<String> adjusters = new ArrayList<>();
     List<String> recycles = new ArrayList<>();
-    List<String> transientRecycles = new ArrayList<>();
+    List<String> recycleFlowCoordinators = new ArrayList<>();
     List<String> calculators = new ArrayList<>();
     List<String> multiInput = new ArrayList<>();
     for (ProcessEquipmentInterface unit : unitOperations) {
@@ -2207,8 +2203,8 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unit instanceof Recycle) {
         recycles.add(unit.getName());
       }
-      if (unit instanceof TransientRecycle) {
-        transientRecycles.add(unit.getName());
+      if (unit instanceof RecycleFlowCoordinator) {
+        recycleFlowCoordinators.add(unit.getName());
       }
       if (unit instanceof Calculator) {
         calculators.add(unit.getName());
@@ -2223,9 +2219,10 @@ public class ProcessSystem extends SimulationBaseClass {
       strategy = "sequential";
       reason = "process contains Adjuster/MultiVariableAdjuster units which require "
           + "iterative feedback and cannot be represented in the graph partitioner";
-    } else if (!transientRecycles.isEmpty()) {
-      strategy = "sequential (transport-delay recycle)";
-      reason = "process contains TransientRecycle units whose delayed dependency must follow insertion order";
+    } else if (!recycleFlowCoordinators.isEmpty()) {
+      strategy = "sequential (recycle flow coordination)";
+      reason = "process contains recycle flow coordinators whose valve-to-splitter signal dependency requires "
+          + "insertion-order execution";
     } else if (!recycles.isEmpty()) {
       strategy = "hybrid (parallel feed-forward then iterative recycle section)";
       reason = "process contains Recycle units - iterative convergence required";
@@ -2244,10 +2241,10 @@ public class ProcessSystem extends SimulationBaseClass {
     sb.append("\nBlocking/controlling units:\n");
     appendUnitList(sb, "  Adjusters", adjusters);
     appendUnitList(sb, "  Recycles", recycles);
-    appendUnitList(sb, "  Transient recycles", transientRecycles);
+    appendUnitList(sb, "  Recycle flow coordinators", recycleFlowCoordinators);
     appendUnitList(sb, "  Calculators", calculators);
     appendUnitList(sb, "  Multi-input equipment", multiInput);
-    if (adjusters.isEmpty() && recycles.isEmpty() && transientRecycles.isEmpty() && calculators.isEmpty()
+    if (adjusters.isEmpty() && recycles.isEmpty() && recycleFlowCoordinators.isEmpty() && calculators.isEmpty()
         && multiInput.isEmpty()) {
       sb.append("  (none - all units are single-input feed-forward)\n");
     }
@@ -4727,7 +4724,7 @@ public class ProcessSystem extends SimulationBaseClass {
     // Equipment that is manually locked inactive (setLockedInactive) or auto-deactivated
     // by low-flow bypass keeps its current state during the timestep — same skip gate as
     // the steady run() path (runUnitProfiled). See docs/process/processmodel/low_flow_bypass.md.
-    if (parallelTransientEnabled && unitOperations.size() > 1 && !hasTransientRecycles()) {
+    if (parallelTransientEnabled && unitOperations.size() > 1 && !hasRecycles() && !hasRecycleFlowCoordinators()) {
       if (!runEquipmentTransientParallel(dt, id)) {
         return;
       }
@@ -4739,7 +4736,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
     // Semi-implicit: run a second pass for improved stability
     if (integrationMethod == IntegrationMethod.SEMI_IMPLICIT) {
-      if (parallelTransientEnabled && unitOperations.size() > 1 && !hasTransientRecycles()) {
+      if (parallelTransientEnabled && unitOperations.size() > 1 && !hasRecycles() && !hasRecycleFlowCoordinators()) {
         if (!runEquipmentTransientParallel(dt, id)) {
           return;
         }
