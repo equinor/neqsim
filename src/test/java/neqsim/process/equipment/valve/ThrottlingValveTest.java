@@ -3,6 +3,7 @@ package neqsim.process.equipment.valve;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -11,6 +12,7 @@ import neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemInterface;
 
 public class ThrottlingValveTest {
   private static class InitTrackingSystemSrkEos extends SystemSrkEos {
@@ -55,6 +57,53 @@ public class ThrottlingValveTest {
     int getLevelThreeCalls() {
       return levelThreeCalls.get();
     }
+  }
+
+  @Test
+  void testAutoSizeAtPartialOpeningReproducesDesignFlowInTransientMode() {
+    SystemSrkEos fluid = new SystemSrkEos(273.15 + 25.0, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule(2);
+
+    Stream feed = new Stream("auto-size feed", fluid);
+    feed.setFlowRate(5000.0, "kg/hr");
+    feed.setPressure(20.0, "bara");
+    feed.setTemperature(25.0, "C");
+    feed.run();
+
+    ThrottlingValve valve = new ThrottlingValve("auto-sized valve", feed);
+    valve.setOutletPressure(10.0, "bara");
+    valve.setPercentValveOpening(70.0);
+    valve.autoSize(1.0, 70.0);
+    valve.setCalculateSteadyState(false);
+    valve.runTransient(0.1);
+
+    assertEquals(5000.0, valve.getOutletStream().getFlowRate("kg/hr"), 50.0);
+  }
+
+  @Test
+  void testAutoSizePreservesNewDesignFlowWhenExistingCvIsStale() {
+    SystemInterface gas = new SystemSrkEos(293.15, 20.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule("classic");
+
+    Stream inlet = new Stream("inlet", gas);
+    inlet.setFlowRate(1000.0, "kg/hr");
+    inlet.run();
+
+    ThrottlingValve valve = new ThrottlingValve("valve", inlet);
+    valve.setOutletPressure(10.0, "bara");
+    valve.setPercentValveOpening(70.0);
+    valve.run();
+
+    inlet.setFlowRate(5000.0, "kg/hr");
+    valve.autoSize(1.0, 70.0);
+
+    assertEquals(5000.0, inlet.getFlowRate("kg/hr"), 1.0e-6);
+    valve.setCalculateSteadyState(false);
+    valve.runTransient(1.0, UUID.randomUUID());
+
+    assertEquals(5000.0, valve.getOutletStream().getFlowRate("kg/hr"), 50.0);
   }
 
   /**

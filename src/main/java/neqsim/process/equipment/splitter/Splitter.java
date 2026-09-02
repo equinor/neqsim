@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
-import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -426,39 +425,17 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
-    if (getCalculateSteadyState()) {
-      run(id);
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
+
+    // A splitter has no material or energy inventory of its own. It is therefore an
+    // algebraic unit in both steady and transient simulations: each accepted step must
+    // recalculate its outlet streams from the current inlet and configured split. The
+    // previous dynamic implementation mixed the outlet streams back into the inlet and
+    // normalized an uninitialized zero array, which produced NaN split factors and
+    // reversed the physical direction of information flow.
+    run(id);
+    if (!alreadyEvaluatedForStep) {
       increaseTime(dt);
-    } else {
-      increaseTime(dt);
-      Mixer mixer = new Mixer("tmpMixer");
-      for (int i = 0; i < splitStream.length; i++) {
-        splitStream[i].setPressure(inletStream.getPressure());
-        splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
-        splitStream[i].run();
-        mixer.addStream(splitStream[i]);
-      }
-      mixer.run();
-
-      inletStream.setThermoSystem(mixer.getThermoSystem());
-      inletStream.run();
-
-      lastFlowRate = thermoSystem.getFlowRate("kg/hr");
-      lastTemperature = thermoSystem.getTemperature();
-      lastPressure = thermoSystem.getPressure();
-      lastComposition = thermoSystem.getMolarComposition();
-      double[] splits = new double[splitFactor.length];
-      double totalFlow = 0.0;
-      for (int i = 0; i < splitFactor.length; i++) {
-        totalFlow += splits[i];
-      }
-      for (int i = 0; i < splitFactor.length; i++) {
-        splits[i] = splitFactor[i] / totalFlow;
-      }
-      splitFactor = splits;
-
-      oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
-      setCalculationIdentifier(id);
     }
   }
 

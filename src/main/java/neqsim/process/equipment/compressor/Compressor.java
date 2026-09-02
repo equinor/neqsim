@@ -56,6 +56,16 @@ public class Compressor extends TwoPortEquipment
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Compressor.class);
 
+  /**
+   * Calculation strategy used when the compressor participates in a dynamic process.
+   */
+  public enum TransientCalculationMode {
+    /** Preserve the historical behavior where the compressor map solves the upstream flow. */
+    MAP_FLOW_SOLVER,
+    /** Preserve the upstream flow and evaluate the compressor map algebraically at each time step. */
+    QUASI_STEADY
+  }
+
   /** Minimum total entropy residual accepted by compressor PS fallback calculations. */
   private static final double MIN_ENTROPY_FLASH_TOLERANCE = 1.0e-4;
 
@@ -165,6 +175,8 @@ public class Compressor extends TwoPortEquipment
   private double maxDecelerationRate = 200.0; // RPM/s maximum deceleration
   private double targetSpeed = 0.0; // Target speed for dynamic control
   private boolean autoSpeedMode = false; // Automatically calculate speed from operating point
+  private TransientCalculationMode transientCalculationMode = TransientCalculationMode.MAP_FLOW_SOLVER;
+  private boolean controllerSpeedRateLimitEnabled = false;
 
   // Performance degradation modeling
   private double degradationFactor = 1.0; // 1.0 = new, <1.0 = degraded
@@ -1815,9 +1827,12 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
     if (getCalculateSteadyState()) {
       run(id);
-      increaseTime(dt);
+      if (!alreadyEvaluatedForStep) {
+        increaseTime(dt);
+      }
       return;
     }
 
@@ -1828,13 +1843,27 @@ public class Compressor extends TwoPortEquipment
 
     runController(dt, id);
 
+    if (transientCalculationMode == TransientCalculationMode.QUASI_STEADY) {
+      // A compressor has negligible process inventory compared with separators and
+      // piping. In a pressure-driven dynamic network it therefore acts as an
+      // algebraic map element: upstream equipment owns the flow, while speed and the
+      // map determine discharge pressure, head and power for the current step.
+      run(id);
+      if (!alreadyEvaluatedForStep) {
+        increaseTime(dt);
+      }
+      return;
+    }
+
     // Dynamic upstream equipment can momentarily hand over an empty stream while its
     // inventory and controllers are initialized. Specific enthalpy is undefined at zero
     // mass, so populate the compressor outlet with one algebraic bootstrap evaluation
     // before entering the compressor-map transient equations.
     if (inStream.getFlowRate("kg/hr") < getMinimumFlow() || outStream.getFlowRate("kg/hr") < getMinimumFlow()) {
       run(id);
-      increaseTime(dt);
+      if (!alreadyEvaluatedForStep) {
+        increaseTime(dt);
+      }
       return;
     }
 
@@ -1883,6 +1912,9 @@ public class Compressor extends TwoPortEquipment
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
     setCalculationIdentifier(id);
+    if (!alreadyEvaluatedForStep) {
+      increaseTime(dt);
+    }
   }
 
   /**
@@ -3684,15 +3716,20 @@ public class Compressor extends TwoPortEquipment
    */
   public void runController(double dt, UUID id) {
     if (hasController && getController().isActive()) {
+      double initialSpeed = this.speed;
       getController().runTransient(this.speed, dt, id);
-      this.speed = getController().getResponse();
-      if (this.speed > maxspeed) {
-        this.speed = maxspeed;
+      double requestedSpeed = getController().getResponse();
+      if (requestedSpeed > maxspeed) {
+        requestedSpeed = maxspeed;
       }
-      if (this.speed < minspeed) {
-        this.speed = minspeed;
+      if (requestedSpeed < minspeed) {
+        requestedSpeed = minspeed;
       }
-      // System.out.println("valve opening " + this.percentValveOpening + " %");
+      if (controllerSpeedRateLimitEnabled) {
+        requestedSpeed = Math.min(requestedSpeed, initialSpeed + maxAccelerationRate * dt);
+        requestedSpeed = Math.max(requestedSpeed, initialSpeed - maxDecelerationRate * dt);
+      }
+      this.speed = requestedSpeed;
     }
     setCalculationIdentifier(id);
   }
@@ -4496,6 +4533,50 @@ public class Compressor extends TwoPortEquipment
    */
   public void setMaxDecelerationRate(double rate) {
     this.maxDecelerationRate = rate;
+  }
+
+  /**
+   * Get the transient compressor calculation strategy.
+   *
+   * @return configured transient calculation mode
+   */
+  public TransientCalculationMode getTransientCalculationMode() {
+    return transientCalculationMode;
+  }
+
+  /**
+   * Select how the compressor participates in a dynamic process network.
+   *
+   * <p>
+   * {@link TransientCalculationMode#QUASI_STEADY} is intended for pressure-driven process simulations where vessels,
+   * valves and piping own the dynamic inventory and flow calculation. It prevents the compressor map from overwriting
+   * the flow supplied by upstream equipment.
+   *
+   * @param mode transient calculation mode
+   */
+  public void setTransientCalculationMode(TransientCalculationMode mode) {
+    if (mode == null) {
+      throw new IllegalArgumentException("Transient calculation mode cannot be null");
+    }
+    this.transientCalculationMode = mode;
+  }
+
+  /**
+   * Check whether a controller response is constrained by the configured acceleration rates.
+   *
+   * @return true when controller speed rate limiting is enabled
+   */
+  public boolean isControllerSpeedRateLimitEnabled() {
+    return controllerSpeedRateLimitEnabled;
+  }
+
+  /**
+   * Enable or disable acceleration and deceleration limits for controller speed commands.
+   *
+   * @param enabled true to constrain controller speed commands
+   */
+  public void setControllerSpeedRateLimitEnabled(boolean enabled) {
+    this.controllerSpeedRateLimitEnabled = enabled;
   }
 
   /**

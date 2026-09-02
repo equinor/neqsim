@@ -176,6 +176,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     applyGainSchedule(measurement);
     oldoldError = oldError;
     oldError = error;
+    double bumplessOffset = 0.0;
 
     // Perform bumpless transfer back-calculation when switching from MANUAL to AUTO
     if (bumplessTransferPending) {
@@ -184,8 +185,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       oldoldError = error;
       derivativeState = 0.0;
       if (propConstant != 0) {
-        TintValue = (manualOutput - initResponse) / propConstant;
+        bumplessOffset = (manualOutput - initResponse) / propConstant;
       }
+      TintValue = 0.0;
       bumplessTransferPending = false;
     }
 
@@ -250,7 +252,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           derivativeState = 0.0;
         }
 
-        delta = Kp * propStep + TintValue + Kp * Td * derivativeState;
+        // Velocity-form PI/PID adds only this step's integral increment to the
+        // previous manipulated output. Adding the accumulated integral state here
+        // integrates the error twice and causes accelerating drift.
+        delta = bumplessOffset + Kp * propStep + TintIncrement + Kp * Td * derivativeState;
 
         response = initResponse + propConstant * delta;
 
