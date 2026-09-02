@@ -27,6 +27,7 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   private final List<String> connectionIds;
   private final List<String> incomingBoundaryConnectionIds;
   private final List<String> outgoingBoundaryConnectionIds;
+  private final List<DexpiConnectionCycleBoundaryInfo> boundaryConnections;
   private final List<String> unresolvedEndpointIds;
   private final boolean selfReference;
 
@@ -45,12 +46,36 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
       List<String> connectionIds, List<String> incomingBoundaryConnectionIds,
       List<String> outgoingBoundaryConnectionIds, List<String> unresolvedEndpointIds, boolean selfReference) {
+    this(id, connectionComponentId, endpointIds, connectionIds, incomingBoundaryConnectionIds,
+        outgoingBoundaryConnectionIds, Collections.<DexpiConnectionCycleBoundaryInfo>emptyList(), unresolvedEndpointIds,
+        selfReference);
+  }
+
+  /**
+   * Creates immutable directed-cycle source-reference evidence with explicit boundary occurrences.
+   *
+   * @param id deterministic cycle-group evidence identity
+   * @param connectionComponentId owning weak connection-component evidence identity
+   * @param endpointIds endpoint identities in first-reference order
+   * @param connectionIds internal connection-evidence identities in source order
+   * @param incomingBoundaryConnectionIds connection-evidence identities entering the cyclic group in source order
+   * @param outgoingBoundaryConnectionIds connection-evidence identities leaving the cyclic group in source order
+   * @param boundaryConnections boundary occurrences in overall source-document order
+   * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
+   * @param selfReference whether the group contains an explicit self-reference connection
+   */
+  public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
+      List<String> connectionIds, List<String> incomingBoundaryConnectionIds,
+      List<String> outgoingBoundaryConnectionIds, List<DexpiConnectionCycleBoundaryInfo> boundaryConnections,
+      List<String> unresolvedEndpointIds, boolean selfReference) {
     this.id = normalize(id);
     this.connectionComponentId = normalize(connectionComponentId);
     this.endpointIds = immutableCopy(endpointIds);
     this.connectionIds = immutableCopy(connectionIds);
     this.incomingBoundaryConnectionIds = immutableCopy(incomingBoundaryConnectionIds);
     this.outgoingBoundaryConnectionIds = immutableCopy(outgoingBoundaryConnectionIds);
+    this.boundaryConnections = Collections
+        .unmodifiableList(new ArrayList<DexpiConnectionCycleBoundaryInfo>(boundaryConnections));
     this.unresolvedEndpointIds = immutableCopy(unresolvedEndpointIds);
     this.selfReference = selfReference;
   }
@@ -85,6 +110,11 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     return outgoingBoundaryConnectionIds;
   }
 
+  /** @return immutable boundary occurrences in overall source-document order */
+  public List<DexpiConnectionCycleBoundaryInfo> getBoundaryConnections() {
+    return boundaryConnections;
+  }
+
   /** @return immutable unresolved endpoint identities */
   public List<String> getUnresolvedEndpointIds() {
     return unresolvedEndpointIds;
@@ -110,6 +140,11 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     return outgoingBoundaryConnectionIds.size();
   }
 
+  /** @return number of source connection occurrences crossing this cyclic-group boundary */
+  public int getBoundaryConnectionCount() {
+    return boundaryConnections.size();
+  }
+
   /** @return whether the group contains an explicit self-reference connection */
   public boolean hasSelfReference() {
     return selfReference;
@@ -128,12 +163,18 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     result.put("connectionCount", Integer.valueOf(getConnectionCount()));
     result.put("incomingBoundaryConnectionCount", Integer.valueOf(getIncomingBoundaryConnectionCount()));
     result.put("outgoingBoundaryConnectionCount", Integer.valueOf(getOutgoingBoundaryConnectionCount()));
+    result.put("boundaryConnectionCount", Integer.valueOf(getBoundaryConnectionCount()));
     result.put("selfReference", Boolean.valueOf(selfReference));
     result.put("hasUnresolvedEndpoints", Boolean.valueOf(hasUnresolvedEndpoints()));
     result.put("endpointIds", endpointIds);
     result.put("connectionIds", connectionIds);
     result.put("incomingBoundaryConnectionIds", incomingBoundaryConnectionIds);
     result.put("outgoingBoundaryConnectionIds", outgoingBoundaryConnectionIds);
+    List<Map<String, Object>> boundaryMaps = new ArrayList<Map<String, Object>>();
+    for (DexpiConnectionCycleBoundaryInfo boundary : boundaryConnections) {
+      boundaryMaps.add(boundary.toMap());
+    }
+    result.put("boundaryConnections", boundaryMaps);
     result.put("unresolvedEndpointIds", unresolvedEndpointIds);
     return result;
   }

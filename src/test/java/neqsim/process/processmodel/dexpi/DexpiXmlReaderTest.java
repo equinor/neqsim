@@ -14,6 +14,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.EquipmentEnum;
@@ -638,13 +639,13 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<Equipment ID=\"E-Q\"><Nozzle ID=\"N-Q\"/></Equipment>"
         + "<PipingNetworkSegment ID=\"S-IN-1\"><Connection ID=\"C-IN-1\" FromID=\"N-A\" ToID=\"N-X\"/>"
         + "</PipingNetworkSegment>"
-        + "<PipingNetworkSegment ID=\"S-IN-2\"><Connection ID=\"C-IN-2\" FromID=\"UNKNOWN-U\" ToID=\"N-X\"/>"
-        + "</PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-XY\"><Connection ID=\"C-XY\" FromID=\"N-X\" ToID=\"N-Y\"/>"
         + "</PipingNetworkSegment>"
-        + "<PipingNetworkSegment ID=\"S-YX\"><Connection ID=\"C-YX\" FromID=\"N-Y\" ToID=\"N-X\"/>"
-        + "</PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-OUT-1\"><Connection ID=\"C-OUT-1\" FromID=\"N-Y\" ToID=\"N-B\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-IN-2\"><Connection ID=\"C-IN-2\" FromID=\"UNKNOWN-U\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-YX\"><Connection ID=\"C-YX\" FromID=\"N-Y\" ToID=\"N-X\"/>"
         + "</PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-OUT-2\"><Connection ID=\"C-OUT-2\" FromID=\"N-Y\" ToID=\"N-B\"/>"
         + "</PipingNetworkSegment>"
@@ -669,12 +670,32 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(Arrays.asList("C-OUT-1", "C-OUT-2"), connectedCycle.getOutgoingBoundaryConnectionIds());
     assertEquals(2, connectedCycle.getIncomingBoundaryConnectionCount());
     assertEquals(2, connectedCycle.getOutgoingBoundaryConnectionCount());
+    assertEquals(4, connectedCycle.getBoundaryConnectionCount());
+
+    List<DexpiConnectionCycleBoundaryInfo> boundaries = connectedCycle.getBoundaryConnections();
+    assertEquals(Arrays.asList("C-IN-1", "C-OUT-1", "C-IN-2", "C-OUT-2"),
+        Arrays.asList(boundaries.get(0).getConnectionId(), boundaries.get(1).getConnectionId(),
+            boundaries.get(2).getConnectionId(), boundaries.get(3).getConnectionId()));
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, boundaries.get(0).getDirection());
+    assertEquals("N-X", boundaries.get(0).getInternalEndpointId());
+    assertEquals("N-A", boundaries.get(0).getExternalEndpointId());
+    assertTrue(boundaries.get(0).isInternalEndpointResolved());
+    assertTrue(boundaries.get(0).isExternalEndpointResolved());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, boundaries.get(1).getDirection());
+    assertEquals("N-Y", boundaries.get(1).getInternalEndpointId());
+    assertEquals("N-B", boundaries.get(1).getExternalEndpointId());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, boundaries.get(2).getDirection());
+    assertEquals("N-X", boundaries.get(2).getInternalEndpointId());
+    assertEquals("UNKNOWN-U", boundaries.get(2).getExternalEndpointId());
+    assertTrue(boundaries.get(2).isInternalEndpointResolved());
+    assertFalse(boundaries.get(2).isExternalEndpointResolved());
 
     DexpiConnectionCycleInfo closedSelfReference = first.getConnectionCycles().get(1);
     assertEquals("cycle-2", closedSelfReference.getId());
     assertEquals(Collections.singletonList("C-SELF"), closedSelfReference.getConnectionIds());
     assertTrue(closedSelfReference.getIncomingBoundaryConnectionIds().isEmpty());
     assertTrue(closedSelfReference.getOutgoingBoundaryConnectionIds().isEmpty());
+    assertTrue(closedSelfReference.getBoundaryConnections().isEmpty());
 
     for (DexpiConnectionCycleInfo cycle : first.getConnectionCycles()) {
       assertFalse(cycle.getEndpointIds().contains("N-P"));
@@ -682,7 +703,15 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     }
     assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getIncomingBoundaryConnectionIds().clear());
     assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getOutgoingBoundaryConnectionIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getBoundaryConnections().clear());
+    DexpiConnectionCycleInfo legacy = new DexpiConnectionCycleInfo("legacy", "component-legacy",
+        Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
+        Collections.<String>emptyList(), Collections.<String>emptyList(), false);
+    assertTrue(legacy.getBoundaryConnections().isEmpty());
     assertTrue(first.toJson().contains("\"incomingBoundaryConnectionCount\": 2"));
+    assertTrue(first.toJson().contains("\"boundaryConnectionCount\": 4"));
+    assertTrue(first.toJson().contains("\"direction\": \"INCOMING\""));
+    assertTrue(first.toJson().contains("\"externalEndpointId\": \"UNKNOWN-U\""));
     assertTrue(first.toJson().contains("\"outgoingBoundaryConnectionIds\": ["));
     assertEquals(first.toJson(), second.toJson());
   }
