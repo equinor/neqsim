@@ -910,8 +910,7 @@ public final class DexpiXmlReader {
       List<DexpiConnectionEndpointInfo> connectionEndpoints, List<DexpiConnectionComponentInfo> connectionComponents) {
     Map<String, List<String>> outgoingEndpointIds = new LinkedHashMap<String, List<String>>();
     Map<String, List<String>> incomingEndpointIds = new LinkedHashMap<String, List<String>>();
-    Map<String, DexpiConnectionEndpointInfo> endpointById =
-        new LinkedHashMap<String, DexpiConnectionEndpointInfo>();
+    Map<String, DexpiConnectionEndpointInfo> endpointById = new LinkedHashMap<String, DexpiConnectionEndpointInfo>();
     for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
       outgoingEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
       incomingEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
@@ -1101,11 +1100,11 @@ public final class DexpiXmlReader {
     private void addBoundaryConnection(DexpiConnectionInfo connection,
         DexpiConnectionCycleBoundaryInfo.Direction direction, DexpiConnectionEndpointInfo internalEndpoint,
         DexpiConnectionEndpointInfo externalEndpoint) {
-      boundaryConnections.add(new DexpiConnectionCycleBoundaryInfo(connection.getId(), direction,
-          internalEndpoint.getEndpointId(), internalEndpoint.getElementName(), internalEndpoint.getOwnerId(),
-          internalEndpoint.getOwnerElementName(), externalEndpoint.getEndpointId(), externalEndpoint.getElementName(),
-          externalEndpoint.getOwnerId(), externalEndpoint.getOwnerElementName(), internalEndpoint.isResolved(),
-          externalEndpoint.isResolved()));
+      boundaryConnections
+          .add(new DexpiConnectionCycleBoundaryInfo(connection.getId(), direction, internalEndpoint.getEndpointId(),
+              internalEndpoint.getElementName(), internalEndpoint.getOwnerId(), internalEndpoint.getOwnerElementName(),
+              externalEndpoint.getEndpointId(), externalEndpoint.getElementName(), externalEndpoint.getOwnerId(),
+              externalEndpoint.getOwnerElementName(), internalEndpoint.isResolved(), externalEndpoint.isResolved()));
     }
 
     private DexpiConnectionCycleInfo toInfo() {
