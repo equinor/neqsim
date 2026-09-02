@@ -66,8 +66,8 @@ public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReacto
     }
     String normalizedId = normalizeReactionId(reactionId);
     if (!normalizedId.equals(qualification.getReactionName().trim().toUpperCase(Locale.ROOT))) {
-      throw new IllegalArgumentException("qualification reaction name must equal resolved reaction identifier "
-          + normalizedId);
+      throw new IllegalArgumentException(
+          "qualification reaction name must equal resolved reaction identifier " + normalizedId);
     }
     qualifications.put(normalizedId, qualification);
   }
@@ -106,8 +106,7 @@ public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReacto
     List<String> unqualified = new ArrayList<>();
     for (String reactionId : getRequiredReactionIds()) {
       KineticReactionQualification qualification = qualifications.get(reactionId);
-      if (qualification == null
-          || qualification.getValidationStatus() != ChemicalReactionValidationStatus.VALIDATED
+      if (qualification == null || qualification.getValidationStatus() != ChemicalReactionValidationStatus.VALIDATED
           || !qualification.isWithinRange(temperatureK, pressureBara)) {
         unqualified.add(reactionId);
       }
