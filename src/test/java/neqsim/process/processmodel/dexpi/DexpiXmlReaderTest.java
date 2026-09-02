@@ -681,14 +681,25 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("N-A", boundaries.get(0).getExternalEndpointId());
     assertTrue(boundaries.get(0).isInternalEndpointResolved());
     assertTrue(boundaries.get(0).isExternalEndpointResolved());
+    assertEquals("Nozzle", boundaries.get(0).getInternalEndpointElementName());
+    assertEquals("E-X", boundaries.get(0).getInternalOwnerId());
+    assertEquals("Equipment", boundaries.get(0).getInternalOwnerElementName());
+    assertEquals("Nozzle", boundaries.get(0).getExternalEndpointElementName());
+    assertEquals("E-A", boundaries.get(0).getExternalOwnerId());
+    assertEquals("Equipment", boundaries.get(0).getExternalOwnerElementName());
     assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, boundaries.get(1).getDirection());
     assertEquals("N-Y", boundaries.get(1).getInternalEndpointId());
     assertEquals("N-B", boundaries.get(1).getExternalEndpointId());
+    assertEquals("E-Y", boundaries.get(1).getInternalOwnerId());
+    assertEquals("E-B", boundaries.get(1).getExternalOwnerId());
     assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, boundaries.get(2).getDirection());
     assertEquals("N-X", boundaries.get(2).getInternalEndpointId());
     assertEquals("UNKNOWN-U", boundaries.get(2).getExternalEndpointId());
     assertTrue(boundaries.get(2).isInternalEndpointResolved());
     assertFalse(boundaries.get(2).isExternalEndpointResolved());
+    assertEquals("", boundaries.get(2).getExternalEndpointElementName());
+    assertEquals("", boundaries.get(2).getExternalOwnerId());
+    assertEquals("", boundaries.get(2).getExternalOwnerElementName());
 
     DexpiConnectionCycleInfo closedSelfReference = first.getConnectionCycles().get(1);
     assertEquals("cycle-2", closedSelfReference.getId());
@@ -708,10 +719,18 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
         Collections.<String>emptyList(), Collections.<String>emptyList(), false);
     assertTrue(legacy.getBoundaryConnections().isEmpty());
+    DexpiConnectionCycleBoundaryInfo legacyBoundary = new DexpiConnectionCycleBoundaryInfo("legacy-boundary",
+        DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, "N-INTERNAL", "N-EXTERNAL", true, false);
+    assertEquals("", legacyBoundary.getInternalEndpointElementName());
+    assertEquals("", legacyBoundary.getInternalOwnerId());
+    assertEquals("", legacyBoundary.getExternalEndpointElementName());
+    assertEquals("", legacyBoundary.getExternalOwnerId());
     assertTrue(first.toJson().contains("\"incomingBoundaryConnectionCount\": 2"));
     assertTrue(first.toJson().contains("\"boundaryConnectionCount\": 4"));
     assertTrue(first.toJson().contains("\"direction\": \"INCOMING\""));
     assertTrue(first.toJson().contains("\"externalEndpointId\": \"UNKNOWN-U\""));
+    assertTrue(first.toJson().contains("\"internalOwnerId\": \"E-X\""));
+    assertTrue(first.toJson().contains("\"externalOwnerElementName\": \"Equipment\""));
     assertTrue(first.toJson().contains("\"outgoingBoundaryConnectionIds\": ["));
     assertEquals(first.toJson(), second.toJson());
   }
