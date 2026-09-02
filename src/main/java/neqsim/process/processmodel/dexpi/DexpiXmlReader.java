@@ -1025,10 +1025,20 @@ public final class DexpiXmlReader {
     }
 
     for (DexpiConnectionInfo connection : connections) {
+      if (isBlank(connection.getFromId()) || isBlank(connection.getToId())) {
+        continue;
+      }
       Integer fromCycleIndex = cycleByEndpointId.get(connection.getFromId());
       Integer toCycleIndex = cycleByEndpointId.get(connection.getToId());
       if (fromCycleIndex != null && fromCycleIndex.equals(toCycleIndex)) {
         cycles.get(fromCycleIndex.intValue()).addConnection(connection);
+      } else {
+        if (toCycleIndex != null) {
+          cycles.get(toCycleIndex.intValue()).addIncomingBoundaryConnection(connection);
+        }
+        if (fromCycleIndex != null) {
+          cycles.get(fromCycleIndex.intValue()).addOutgoingBoundaryConnection(connection);
+        }
       }
     }
 
@@ -1044,6 +1054,8 @@ public final class DexpiXmlReader {
     private final String connectionComponentId;
     private final List<String> endpointIds = new ArrayList<String>();
     private final List<String> connectionIds = new ArrayList<String>();
+    private final List<String> incomingBoundaryConnectionIds = new ArrayList<String>();
+    private final List<String> outgoingBoundaryConnectionIds = new ArrayList<String>();
     private final List<String> unresolvedEndpointIds = new ArrayList<String>();
     private boolean selfReference;
 
@@ -1066,9 +1078,17 @@ public final class DexpiXmlReader {
       }
     }
 
+    private void addIncomingBoundaryConnection(DexpiConnectionInfo connection) {
+      incomingBoundaryConnectionIds.add(connection.getId());
+    }
+
+    private void addOutgoingBoundaryConnection(DexpiConnectionInfo connection) {
+      outgoingBoundaryConnectionIds.add(connection.getId());
+    }
+
     private DexpiConnectionCycleInfo toInfo() {
-      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, connectionIds, unresolvedEndpointIds,
-          selfReference);
+      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, connectionIds,
+          incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, unresolvedEndpointIds, selfReference);
     }
   }
 

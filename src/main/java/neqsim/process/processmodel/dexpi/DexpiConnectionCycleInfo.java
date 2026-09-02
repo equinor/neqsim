@@ -25,6 +25,8 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   private final String connectionComponentId;
   private final List<String> endpointIds;
   private final List<String> connectionIds;
+  private final List<String> incomingBoundaryConnectionIds;
+  private final List<String> outgoingBoundaryConnectionIds;
   private final List<String> unresolvedEndpointIds;
   private final boolean selfReference;
 
@@ -35,15 +37,20 @@ public final class DexpiConnectionCycleInfo implements Serializable {
    * @param connectionComponentId owning weak connection-component evidence identity
    * @param endpointIds endpoint identities in first-reference order
    * @param connectionIds internal connection-evidence identities in source order
+   * @param incomingBoundaryConnectionIds connection-evidence identities entering the cyclic group in source order
+   * @param outgoingBoundaryConnectionIds connection-evidence identities leaving the cyclic group in source order
    * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
    * @param selfReference whether the group contains an explicit self-reference connection
    */
   public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
-      List<String> connectionIds, List<String> unresolvedEndpointIds, boolean selfReference) {
+      List<String> connectionIds, List<String> incomingBoundaryConnectionIds,
+      List<String> outgoingBoundaryConnectionIds, List<String> unresolvedEndpointIds, boolean selfReference) {
     this.id = normalize(id);
     this.connectionComponentId = normalize(connectionComponentId);
     this.endpointIds = immutableCopy(endpointIds);
     this.connectionIds = immutableCopy(connectionIds);
+    this.incomingBoundaryConnectionIds = immutableCopy(incomingBoundaryConnectionIds);
+    this.outgoingBoundaryConnectionIds = immutableCopy(outgoingBoundaryConnectionIds);
     this.unresolvedEndpointIds = immutableCopy(unresolvedEndpointIds);
     this.selfReference = selfReference;
   }
@@ -68,6 +75,16 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     return connectionIds;
   }
 
+  /** @return immutable connection-evidence identities entering this cyclic group in source order */
+  public List<String> getIncomingBoundaryConnectionIds() {
+    return incomingBoundaryConnectionIds;
+  }
+
+  /** @return immutable connection-evidence identities leaving this cyclic group in source order */
+  public List<String> getOutgoingBoundaryConnectionIds() {
+    return outgoingBoundaryConnectionIds;
+  }
+
   /** @return immutable unresolved endpoint identities */
   public List<String> getUnresolvedEndpointIds() {
     return unresolvedEndpointIds;
@@ -81,6 +98,16 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   /** @return number of internal source connection occurrences */
   public int getConnectionCount() {
     return connectionIds.size();
+  }
+
+  /** @return number of source connection occurrences entering this cyclic group */
+  public int getIncomingBoundaryConnectionCount() {
+    return incomingBoundaryConnectionIds.size();
+  }
+
+  /** @return number of source connection occurrences leaving this cyclic group */
+  public int getOutgoingBoundaryConnectionCount() {
+    return outgoingBoundaryConnectionIds.size();
   }
 
   /** @return whether the group contains an explicit self-reference connection */
@@ -99,10 +126,14 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     result.put("connectionComponentId", connectionComponentId);
     result.put("endpointCount", Integer.valueOf(getEndpointCount()));
     result.put("connectionCount", Integer.valueOf(getConnectionCount()));
+    result.put("incomingBoundaryConnectionCount", Integer.valueOf(getIncomingBoundaryConnectionCount()));
+    result.put("outgoingBoundaryConnectionCount", Integer.valueOf(getOutgoingBoundaryConnectionCount()));
     result.put("selfReference", Boolean.valueOf(selfReference));
     result.put("hasUnresolvedEndpoints", Boolean.valueOf(hasUnresolvedEndpoints()));
     result.put("endpointIds", endpointIds);
     result.put("connectionIds", connectionIds);
+    result.put("incomingBoundaryConnectionIds", incomingBoundaryConnectionIds);
+    result.put("outgoingBoundaryConnectionIds", outgoingBoundaryConnectionIds);
     result.put("unresolvedEndpointIds", unresolvedEndpointIds);
     return result;
   }

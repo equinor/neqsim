@@ -181,10 +181,12 @@ of explicit non-empty material-connection endpoint references. A group is report
 than one endpoint, or when a singleton endpoint has an explicit self-reference. Cycle groups are
 ordered by their first endpoint; endpoint IDs retain first-reference order and internal connection
 IDs retain source order, including parallel occurrences. Each immutable
-`DexpiConnectionCycleInfo` links to its owning weak connection component and keeps unresolved
-endpoint IDs visible. This is graph-source evidence only: it does not identify a hydraulic recycle,
-enumerate elementary paths, assert convergence behavior, repair or rewire topology, or establish
-process intent.
+`DexpiConnectionCycleInfo` links to its owning weak connection component, keeps unresolved endpoint
+IDs visible, and separately lists source-ordered connection occurrences entering and leaving the
+cyclic group. Boundary lists preserve parallel references and exclude connections whose source or
+target identity is blank. This is graph-source evidence only: it does not identify a hydraulic
+recycle, enumerate elementary paths, assert convergence behavior, repair or rewire topology, or
+establish process intent.
 
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
 `connectionComponentCount`, `connectionCycleCount`, and the ordered connection, endpoint,
