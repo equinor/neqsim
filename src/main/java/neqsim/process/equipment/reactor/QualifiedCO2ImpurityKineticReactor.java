@@ -25,7 +25,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  */
 public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReactor implements Serializable {
   private static final long serialVersionUID = 1000L;
-  private static final String[] HOMOGENEOUS_REACTION_IDS = {"R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7"};
+  private static final String[] HOMOGENEOUS_REACTION_IDS = { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7" };
 
   private final Map<String, KineticReactionQualification> qualifications = new LinkedHashMap<>();
 
