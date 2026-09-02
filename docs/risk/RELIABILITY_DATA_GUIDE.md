@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Guide to reliability data sources and usage in NeqSim. Covers OREDA, PDS handbook, OGP data, failure rate databases, and data quality assessment for risk analysis."
 ---
 
-# Equipment Reliability Data Guide
 
 ## Overview
 

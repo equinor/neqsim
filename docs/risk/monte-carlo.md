@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Monte Carlo reliability simulation for process systems. Run stochastic failure/repair simulations to estimate availability, production loss, and maintenance costs."
 ---
 
-# Monte Carlo Risk Simulation
 
 Monte Carlo simulation provides probabilistic production forecasts by randomly sampling equipment failure events over a time horizon.
 
