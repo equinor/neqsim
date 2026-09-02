@@ -3,7 +3,6 @@ title: "Adsorption Bed - Transient Simulation and Cyclic Processes"
 description: "Complete mathematical and engineering reference for the AdsorptionBed unit operation in NeqSim. Covers fixed-bed dynamics, axial discretization, LDF mass transfer, Ergun pressure drop, breakthrough prediction, mass transfer zones, and PSA/TSA/VSA cycle control."
 ---
 
-# Adsorption Bed — Transient Simulation and Cyclic Processes
 
 The `AdsorptionBed` class is a process equipment unit operation for simulating fixed-bed adsorption columns. It supports both steady-state and transient simulation with axial discretization, mass transfer zones, breakthrough detection, and full PSA/TSA/VSA cycle control.
 

@@ -9,7 +9,7 @@ or a seasonal export route does not destabilise the rest of a
 `ProcessSystem` or multi-area `ProcessModel`.
 
 This is essential for full-platform models such as
-[`task_solve/.../process_model.ipynb`](../../../task_solve/) where a duty
+models created with the [task-solving agent](../../../.github/agents/solve.task.agent.md), where a duty
 compressor train (for example `ht_injection_compressors`) is sometimes
 inactive while export and recompression continue at full rate.
 
