@@ -194,6 +194,18 @@ reported 5.22 mass% yield, SG60/60 = 0.6731, and one-sided 175 degF upper bounda
 reproducible explicit-molar-mass cut without inventing a lower or representative boiling point. It
 does not resolve isomers or validate critical properties, VLE, or fractionation yields.
 
+## Complete public reference slate
+
+`DoeBigHillSweetAssay.create(system, totalMassKg)` composes the qualified DOE Big Hill inputs into a
+complete source-specific mass-basis assay. It configures four standard C2-C4 components plus eight
+petroleum cuts without automatically mutating the thermodynamic component list. The caller inspects
+the returned `OilAssayCharacterisation` and invokes `apply()` explicitly.
+
+The [complete modeled-slate contract and provenance](refinery_big_hill_complete_slate) document the
+2021 workbook values, the normalized C2-C4 allocation assumption, the blank sulfur/nitrogen screening
+assumptions, exact mass closure, and the boundary between reproducibility and property/process
+validation.
+
 ## Open-ended terminal boiling boundaries
 
 Terminal assay cuts often publish only one boiling limit. Use
@@ -263,6 +275,8 @@ The regression suite for this API currently verifies:
 - composition-resolved standard-component ingestion for the DOE Big Hill C2-C4 light ends;
 - whole-assay total-sulfur reconstruction against the public DOE Big Hill Sweet 2021 assay;
 - whole-assay total-nitrogen reconstruction against the public DOE Big Hill Sweet 2021 assay;
+- deterministic complete-slate construction with four standard light molecules, eight petroleum
+  pseudo-components, exact assay-mass closure, and preserved terminal evidence boundaries;
 - input-order independence and no thermodynamic-system mutation for bulk-property queries.
 
 These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122), qualify the DOE residue's Watson-derived representative temperature, qualify the DOE C2-C4 standard-component split, qualify the DOE C5-175 degF PIANO aggregate molar mass, and qualify linear assay sulfur and nitrogen bookkeeping over one complete DOE crude slate. They do **not** qualify temperature correction, contraction, generic molecular-weight or critical-property correlations, sulfur/nitrogen species or reactions, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
@@ -281,6 +295,7 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 | Per-cut UOP/Watson characterization factor | `AssayCut.getWatsonCharacterizationFactor()` | DOE-qualified for assay screening over 375-1050 degF |
 | Assay-carried total sulfur | `getBulkSulfurMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
 | Assay-carried total nitrogen | `getBulkNitrogenMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
+| Complete public reference slate | `DoeBigHillSweetAssay` | Reproducible modeled 2021 DOE composition; property and process validation remain separate gates |
 | TBP pseudo-component properties | Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing and related models | Existing; needs refinery-range independent validation |
 | Plus-fraction splitting/lumping | `Characterise`, plus-fraction and lumping models | Existing; refinery assay integration still to be qualified |
 | Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API, per-cut Watson and linear sulfur/nitrogen bookkeeping qualified over frozen public matrices; broader stream properties remain open |
@@ -294,4 +309,6 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 
 ## Next campaign step
 
-The next dependency-ready characterization increment should assemble the qualified C2-C4, C5-175 degF, bounded distillate, and terminal-residue treatments into a complete reproducible crude slate. The process benchmark can then advance from the bounded DOE atmospheric integration case to independent cut-yield and boiling-range evidence before vacuum fractionation.
+The next dependency-ready process increment should advance the bounded DOE atmospheric integration
+case to this complete modeled slate and compare product yields and boiling ranges against independent
+public evidence before vacuum fractionation.
