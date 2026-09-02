@@ -626,6 +626,69 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(first.toJson(), second.toJson());
   }
 
+  @Test
+  public void testReadWithDiagnosticsSummarizesDirectedCycleBoundaries() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
+        + "<Equipment ID=\"E-X\"><Nozzle ID=\"N-X\"/></Equipment>"
+        + "<Equipment ID=\"E-Y\"><Nozzle ID=\"N-Y\"/></Equipment>"
+        + "<Equipment ID=\"E-B\"><Nozzle ID=\"N-B\"/></Equipment>"
+        + "<Equipment ID=\"E-S\"><Nozzle ID=\"N-S\"/></Equipment>"
+        + "<Equipment ID=\"E-P\"><Nozzle ID=\"N-P\"/></Equipment>"
+        + "<Equipment ID=\"E-Q\"><Nozzle ID=\"N-Q\"/></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-IN-1\"><Connection ID=\"C-IN-1\" FromID=\"N-A\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-IN-2\"><Connection ID=\"C-IN-2\" FromID=\"UNKNOWN-U\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-XY\"><Connection ID=\"C-XY\" FromID=\"N-X\" ToID=\"N-Y\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-YX\"><Connection ID=\"C-YX\" FromID=\"N-Y\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-OUT-1\"><Connection ID=\"C-OUT-1\" FromID=\"N-Y\" ToID=\"N-B\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-OUT-2\"><Connection ID=\"C-OUT-2\" FromID=\"N-Y\" ToID=\"N-B\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-SELF\"><Connection ID=\"C-SELF\" FromID=\"N-S\" ToID=\"N-S\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-PQ\"><Connection ID=\"C-PQ\" FromID=\"N-P\" ToID=\"N-Q\"/>"
+        + "</PipingNetworkSegment>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, first.getConnectionCycles().size());
+
+    DexpiConnectionCycleInfo connectedCycle = first.getConnectionCycles().get(0);
+    assertEquals("cycle-1", connectedCycle.getId());
+    assertEquals("component-1", connectedCycle.getConnectionComponentId());
+    assertEquals(Arrays.asList("N-X", "N-Y"), connectedCycle.getEndpointIds());
+    assertEquals(Arrays.asList("C-XY", "C-YX"), connectedCycle.getConnectionIds());
+    assertEquals(Arrays.asList("C-IN-1", "C-IN-2"), connectedCycle.getIncomingBoundaryConnectionIds());
+    assertEquals(Arrays.asList("C-OUT-1", "C-OUT-2"), connectedCycle.getOutgoingBoundaryConnectionIds());
+    assertEquals(2, connectedCycle.getIncomingBoundaryConnectionCount());
+    assertEquals(2, connectedCycle.getOutgoingBoundaryConnectionCount());
+
+    DexpiConnectionCycleInfo closedSelfReference = first.getConnectionCycles().get(1);
+    assertEquals("cycle-2", closedSelfReference.getId());
+    assertEquals(Collections.singletonList("C-SELF"), closedSelfReference.getConnectionIds());
+    assertTrue(closedSelfReference.getIncomingBoundaryConnectionIds().isEmpty());
+    assertTrue(closedSelfReference.getOutgoingBoundaryConnectionIds().isEmpty());
+
+    for (DexpiConnectionCycleInfo cycle : first.getConnectionCycles()) {
+      assertFalse(cycle.getEndpointIds().contains("N-P"));
+      assertFalse(cycle.getEndpointIds().contains("N-Q"));
+    }
+    assertThrows(UnsupportedOperationException.class,
+        () -> connectedCycle.getIncomingBoundaryConnectionIds().clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> connectedCycle.getOutgoingBoundaryConnectionIds().clear());
+    assertTrue(first.toJson().contains("\"incomingBoundaryConnectionCount\": 2"));
+    assertTrue(first.toJson().contains("\"outgoingBoundaryConnectionIds\": ["));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
     int count = 0;
     for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
