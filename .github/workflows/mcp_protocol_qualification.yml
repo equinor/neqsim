@@ -66,6 +66,9 @@ jobs:
       - name: Run focused pre-flight validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
 
+      - name: Run focused result-validator Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.EngineeringValidatorTest test -ntp
+
       - name: Build exact MCP server package
         shell: bash
         run: |
@@ -96,6 +99,9 @@ jobs:
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py
+
+      - name: Run focused real-MCP result-validation qualification
+        run: cd neqsim-mcp-server && python test_validate_results_protocol.py
 
       - name: Run comprehensive real-MCP protocol regression
         run: cd neqsim-mcp-server && python test_mcp_server.py
