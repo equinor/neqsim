@@ -244,19 +244,23 @@ def test_warning_does_not_invalidate(client):
     require(issue is not None and issue.get("severity") == "warning", "warning drifted", result)
 
 
-def test_phase0_gap_is_preserved(client):
+def test_phase0_contract_is_promoted(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
-    require(inventory.get("inventoryVersion") == "1.22", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.23", "inventory version drifted", inventory)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("validateInput", {})
     require(
-        limitations.get("contractTestedToolCount") == 20
-        and limitations.get("confirmedGapToolCount") == 31
+        limitations.get("contractTestedToolCount") == 21
+        and limitations.get("confirmedGapToolCount") == 30
         and limitations.get("contractPromotionCandidateCount") == 0
-        and record.get("coverageStatus") == "CONFIRMED_GAP",
-        "validateInput was promoted before prerequisite evidence merged",
+        and record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_PREFLIGHT_INPUT_VALIDATION"
+        and "neqsim-mcp-server/test_validate_input_protocol.py"
+        in record.get("contractEvidenceSources", []),
+        "validateInput contract evidence was not promoted atomically",
         limitations,
     )
 
@@ -269,7 +273,7 @@ def main():
         ("malformed input fails closed", test_malformed_input_fails_closed),
         ("component typo has remediation", test_component_typo_has_remediation),
         ("warning does not invalidate", test_warning_does_not_invalidate),
-        ("Phase 0 gap is preserved", test_phase0_gap_is_preserved),
+        ("Phase 0 contract is promoted", test_phase0_contract_is_promoted),
     ]
     try:
         client.start()
