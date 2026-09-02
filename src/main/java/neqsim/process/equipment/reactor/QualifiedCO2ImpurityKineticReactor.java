@@ -94,15 +94,13 @@ public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReacto
   }
 
   /**
-   * Evaluate every required parameterization and explain why qualified execution is allowed or
-   * blocked.
+   * Evaluate every required parameterization and explain why qualified execution is allowed or blocked.
    *
    * @param temperatureK temperature [K]
    * @param pressureBara absolute pressure [bara]
    * @return immutable source-ordered qualification report
    */
-  public CO2ImpurityKineticsQualificationReport getQualificationReport(double temperatureK,
-      double pressureBara) {
+  public CO2ImpurityKineticsQualificationReport getQualificationReport(double temperatureK, double pressureBara) {
     requireFinitePositive(temperatureK, "temperature");
     requireFinitePositive(pressureBara, "pressure");
     List<CO2ImpurityKineticsQualificationReport.Entry> entries = new ArrayList<>();

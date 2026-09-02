@@ -80,8 +80,7 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
     reactor.setReactionQualification("R2", qualification("R2", ChemicalReactionValidationStatus.UNVALIDATED));
     reactor.setReactionConstants("R3A", 2.0, 30.0);
 
-    CO2ImpurityKineticsQualificationReport report =
-        reactor.getQualificationReport(312.0, PRESSURE_BARA);
+    CO2ImpurityKineticsQualificationReport report = reactor.getQualificationReport(312.0, PRESSURE_BARA);
 
     assertEquals(312.0, report.getTemperatureK());
     assertEquals(PRESSURE_BARA, report.getPressureBara());
@@ -94,8 +93,7 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
     assertEquals(CO2ImpurityKineticsQualificationReport.QualificationState.MISSING,
         report.getEntries().get(2).getState());
     assertEquals("R8CS", report.getEntries().get(8).getReactionId());
-    assertArrayEquals(reactor.getUnqualifiedReactionIds(312.0, PRESSURE_BARA),
-        report.getBlockedReactionIds());
+    assertArrayEquals(reactor.getUnqualifiedReactionIds(312.0, PRESSURE_BARA), report.getBlockedReactionIds());
     assertThrows(UnsupportedOperationException.class, () -> report.getEntries().add(null));
 
     String[] blocked = report.getBlockedReactionIds();

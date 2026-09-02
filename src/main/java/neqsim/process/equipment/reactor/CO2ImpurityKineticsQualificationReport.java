@@ -9,8 +9,8 @@ import java.util.List;
  * Immutable result of evaluating the evidence registered for a CO2 impurity reactor.
  *
  * <p>
- * The report explains whether every material-selected R1-R8 parameterization is qualified at one
- * temperature and pressure. It contains no kinetic parameters and does not execute chemistry.
+ * The report explains whether every material-selected R1-R8 parameterization is qualified at one temperature and
+ * pressure. It contains no kinetic parameters and does not execute chemistry.
  * </p>
  *
  * @author NeqSim Team
