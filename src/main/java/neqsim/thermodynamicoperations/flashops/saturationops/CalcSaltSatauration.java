@@ -598,6 +598,28 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   }
 
   /**
+   * Returns the authoritative COMPSALT solubility product at a specified state.
+   *
+   * <p>
+   * This package-level view lets scientific qualification code reuse the exact mineral correlation and pressure
+   * correction used by precipitation calculations. It does not initialise or mutate the thermodynamic system.
+   * </p>
+   *
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara absolute pressure in bara
+   * @return solubility product on the COMPSALT standard state
+   */
+  double getSolubilityProduct(double temperatureK, double pressureBara) {
+    if (!(temperatureK > 0.0) || !Double.isFinite(temperatureK)) {
+      throw new IllegalArgumentException("Temperature must be finite and positive");
+    }
+    if (!(pressureBara > 0.0) || !Double.isFinite(pressureBara)) {
+      throw new IllegalArgumentException("Pressure must be finite and positive");
+    }
+    return calculateKsp(readSaltData(), temperatureK, pressureBara);
+  }
+
+  /**
    * Calculates Ksp from the same COMPSALT correlations used by scale-potential calculations.
    *
    * @param saltData salt data from COMPSALT
