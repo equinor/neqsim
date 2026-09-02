@@ -94,6 +94,36 @@ public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReacto
   }
 
   /**
+   * Evaluate every required parameterization and explain why qualified execution is allowed or
+   * blocked.
+   *
+   * @param temperatureK temperature [K]
+   * @param pressureBara absolute pressure [bara]
+   * @return immutable source-ordered qualification report
+   */
+  public CO2ImpurityKineticsQualificationReport getQualificationReport(double temperatureK,
+      double pressureBara) {
+    requireFinitePositive(temperatureK, "temperature");
+    requireFinitePositive(pressureBara, "pressure");
+    List<CO2ImpurityKineticsQualificationReport.Entry> entries = new ArrayList<>();
+    for (String reactionId : getRequiredReactionIds()) {
+      KineticReactionQualification qualification = qualifications.get(reactionId);
+      CO2ImpurityKineticsQualificationReport.QualificationState state;
+      if (qualification == null) {
+        state = CO2ImpurityKineticsQualificationReport.QualificationState.MISSING;
+      } else if (qualification.getValidationStatus() != ChemicalReactionValidationStatus.VALIDATED) {
+        state = CO2ImpurityKineticsQualificationReport.QualificationState.NOT_VALIDATED;
+      } else if (!qualification.isWithinRange(temperatureK, pressureBara)) {
+        state = CO2ImpurityKineticsQualificationReport.QualificationState.OUT_OF_RANGE;
+      } else {
+        state = CO2ImpurityKineticsQualificationReport.QualificationState.QUALIFIED;
+      }
+      entries.add(new CO2ImpurityKineticsQualificationReport.Entry(reactionId, state));
+    }
+    return new CO2ImpurityKineticsQualificationReport(temperatureK, pressureBara, getMaterial(), entries);
+  }
+
+  /**
    * Identify missing, unvalidated, or out-of-range reaction parameterizations.
    *
    * @param temperatureK temperature [K]
@@ -101,17 +131,7 @@ public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReacto
    * @return ordered identifiers that cannot be used for qualified execution at the supplied state
    */
   public String[] getUnqualifiedReactionIds(double temperatureK, double pressureBara) {
-    requireFinitePositive(temperatureK, "temperature");
-    requireFinitePositive(pressureBara, "pressure");
-    List<String> unqualified = new ArrayList<>();
-    for (String reactionId : getRequiredReactionIds()) {
-      KineticReactionQualification qualification = qualifications.get(reactionId);
-      if (qualification == null || qualification.getValidationStatus() != ChemicalReactionValidationStatus.VALIDATED
-          || !qualification.isWithinRange(temperatureK, pressureBara)) {
-        unqualified.add(reactionId);
-      }
-    }
-    return unqualified.toArray(new String[unqualified.size()]);
+    return getQualificationReport(temperatureK, pressureBara).getBlockedReactionIds();
   }
 
   /**
