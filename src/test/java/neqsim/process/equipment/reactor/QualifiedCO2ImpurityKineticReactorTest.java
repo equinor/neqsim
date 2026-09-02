@@ -21,8 +21,7 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
         reactor.getRequiredReactionIds());
     assertArrayEquals(reactor.getRequiredReactionIds(),
         reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
-    assertThrows(IllegalStateException.class,
-        () -> reactor.requireValidatedKineticsAt(TEMPERATURE_K, PRESSURE_BARA));
+    assertThrows(IllegalStateException.class, () -> reactor.requireValidatedKineticsAt(TEMPERATURE_K, PRESSURE_BARA));
   }
 
   @Test
@@ -41,14 +40,11 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
     reactor.setReactionQualification("R2", qualification("R2", ChemicalReactionValidationStatus.UNVALIDATED));
 
     assertArrayEquals(new String[] { "R2" }, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
-    assertThrows(IllegalStateException.class,
-        () -> reactor.requireValidatedKineticsAt(TEMPERATURE_K, PRESSURE_BARA));
-    assertThrows(IllegalArgumentException.class,
-        () -> reactor.setReactionQualification("R3A",
-            qualification("R3B", ChemicalReactionValidationStatus.VALIDATED)));
+    assertThrows(IllegalStateException.class, () -> reactor.requireValidatedKineticsAt(TEMPERATURE_K, PRESSURE_BARA));
+    assertThrows(IllegalArgumentException.class, () -> reactor.setReactionQualification("R3A",
+        qualification("R3B", ChemicalReactionValidationStatus.VALIDATED)));
     assertArrayEquals(reactor.getRequiredReactionIds(), reactor.getUnqualifiedReactionIds(280.0, PRESSURE_BARA));
-    assertThrows(IllegalArgumentException.class,
-        () -> reactor.getUnqualifiedReactionIds(Double.NaN, PRESSURE_BARA));
+    assertThrows(IllegalArgumentException.class, () -> reactor.getUnqualifiedReactionIds(Double.NaN, PRESSURE_BARA));
   }
 
   @Test
@@ -58,8 +54,7 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
     reactor.setReactionConstants("R3A", 2.0, 30.0);
 
     assertNull(reactor.getReactionQualification("R3A"));
-    assertArrayEquals(new String[] {"R3A"},
-        reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
+    assertArrayEquals(new String[] { "R3A" }, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
   }
 
   @Test
@@ -81,8 +76,8 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
   void testRegistryInputValidation() {
     QualifiedCO2ImpurityKineticReactor reactor = new QualifiedCO2ImpurityKineticReactor("qualified");
 
-    assertThrows(IllegalArgumentException.class, () -> reactor.setReactionQualification(null,
-        qualification("R1", ChemicalReactionValidationStatus.VALIDATED)));
+    assertThrows(IllegalArgumentException.class,
+        () -> reactor.setReactionQualification(null, qualification("R1", ChemicalReactionValidationStatus.VALIDATED)));
     assertThrows(IllegalArgumentException.class, () -> reactor.setReactionQualification("R1", null));
     assertThrows(IllegalArgumentException.class, () -> reactor.getReactionQualification("R9"));
   }
