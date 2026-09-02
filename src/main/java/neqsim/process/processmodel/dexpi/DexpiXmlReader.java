@@ -910,9 +910,12 @@ public final class DexpiXmlReader {
       List<DexpiConnectionEndpointInfo> connectionEndpoints, List<DexpiConnectionComponentInfo> connectionComponents) {
     Map<String, List<String>> outgoingEndpointIds = new LinkedHashMap<String, List<String>>();
     Map<String, List<String>> incomingEndpointIds = new LinkedHashMap<String, List<String>>();
+    Map<String, DexpiConnectionEndpointInfo> endpointById =
+        new LinkedHashMap<String, DexpiConnectionEndpointInfo>();
     for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
       outgoingEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
       incomingEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
+      endpointById.put(endpoint.getEndpointId(), endpoint);
     }
     for (DexpiConnectionInfo connection : connections) {
       String fromId = connection.getFromId();
@@ -1034,10 +1037,12 @@ public final class DexpiXmlReader {
         cycles.get(fromCycleIndex.intValue()).addConnection(connection);
       } else {
         if (toCycleIndex != null) {
-          cycles.get(toCycleIndex.intValue()).addIncomingBoundaryConnection(connection);
+          cycles.get(toCycleIndex.intValue()).addIncomingBoundaryConnection(connection,
+              endpointById.get(connection.getToId()), endpointById.get(connection.getFromId()));
         }
         if (fromCycleIndex != null) {
-          cycles.get(fromCycleIndex.intValue()).addOutgoingBoundaryConnection(connection);
+          cycles.get(fromCycleIndex.intValue()).addOutgoingBoundaryConnection(connection,
+              endpointById.get(connection.getFromId()), endpointById.get(connection.getToId()));
         }
       }
     }
@@ -1079,18 +1084,28 @@ public final class DexpiXmlReader {
       }
     }
 
-    private void addIncomingBoundaryConnection(DexpiConnectionInfo connection) {
+    private void addIncomingBoundaryConnection(DexpiConnectionInfo connection,
+        DexpiConnectionEndpointInfo internalEndpoint, DexpiConnectionEndpointInfo externalEndpoint) {
       incomingBoundaryConnectionIds.add(connection.getId());
-      boundaryConnections.add(
-          new DexpiConnectionCycleBoundaryInfo(connection.getId(), DexpiConnectionCycleBoundaryInfo.Direction.INCOMING,
-              connection.getToId(), connection.getFromId(), connection.isToResolved(), connection.isFromResolved()));
+      addBoundaryConnection(connection, DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, internalEndpoint,
+          externalEndpoint);
     }
 
-    private void addOutgoingBoundaryConnection(DexpiConnectionInfo connection) {
+    private void addOutgoingBoundaryConnection(DexpiConnectionInfo connection,
+        DexpiConnectionEndpointInfo internalEndpoint, DexpiConnectionEndpointInfo externalEndpoint) {
       outgoingBoundaryConnectionIds.add(connection.getId());
-      boundaryConnections.add(
-          new DexpiConnectionCycleBoundaryInfo(connection.getId(), DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING,
-              connection.getFromId(), connection.getToId(), connection.isFromResolved(), connection.isToResolved()));
+      addBoundaryConnection(connection, DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, internalEndpoint,
+          externalEndpoint);
+    }
+
+    private void addBoundaryConnection(DexpiConnectionInfo connection,
+        DexpiConnectionCycleBoundaryInfo.Direction direction, DexpiConnectionEndpointInfo internalEndpoint,
+        DexpiConnectionEndpointInfo externalEndpoint) {
+      boundaryConnections.add(new DexpiConnectionCycleBoundaryInfo(connection.getId(), direction,
+          internalEndpoint.getEndpointId(), internalEndpoint.getElementName(), internalEndpoint.getOwnerId(),
+          internalEndpoint.getOwnerElementName(), externalEndpoint.getEndpointId(), externalEndpoint.getElementName(),
+          externalEndpoint.getOwnerId(), externalEndpoint.getOwnerElementName(), internalEndpoint.isResolved(),
+          externalEndpoint.isResolved()));
     }
 
     private DexpiConnectionCycleInfo toInfo() {
