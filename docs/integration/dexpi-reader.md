@@ -176,13 +176,25 @@ with two blank endpoint references remains diagnostic evidence and is not assign
 This grouping is a document-review aid, not proof that the grouped references form a hydraulically
 continuous line or executable process network.
 
+`ImportResult.getConnectionCycles()` exposes cyclic strongly connected groups in the directed graph
+of explicit non-empty material-connection endpoint references. A group is reported when it has more
+than one endpoint, or when a singleton endpoint has an explicit self-reference. Cycle groups are
+ordered by their first endpoint; endpoint IDs retain first-reference order and internal connection
+IDs retain source order, including parallel occurrences. Each immutable
+`DexpiConnectionCycleInfo` links to its owning weak connection component, keeps unresolved endpoint
+IDs visible, and separately lists source-ordered connection occurrences entering and leaving the
+cyclic group. Boundary lists preserve parallel references and exclude connections whose source or
+target identity is blank. This is graph-source evidence only: it does not identify a hydraulic
+recycle, enumerate elementary paths, assert convergence behavior, repair or rewire topology, or
+establish process intent.
+
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
-`connectionComponentCount`, and the ordered connection, endpoint, and component inventories,
-including incidence roles and component review subsets, alongside the process-unit count and
-findings. Python callers through JPype use the same `ImportResult.getInstruments()`,
-`ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`, and
-`ImportResult.getConnectionComponents()` getters; there is no separate Python reconstruction
-model.
+`connectionComponentCount`, `connectionCycleCount`, and the ordered connection, endpoint,
+component, and directed-cycle inventories, including incidence roles and review subsets, alongside
+the process-unit count and findings. Python callers through JPype use the same
+`ImportResult.getInstruments()`, `ImportResult.getConnections()`,
+`ImportResult.getConnectionEndpoints()`, `ImportResult.getConnectionComponents()`, and
+`ImportResult.getConnectionCycles()` getters; there is no separate Python reconstruction model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
 `ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.

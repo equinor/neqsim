@@ -1556,16 +1556,17 @@ def test_capabilities():
         "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
         "checkToolAccess", "manageIndustrialProfile", "searchComponents",
         "queryDataCatalog", "getProgress", "inspectApi",
-        "manageValidationProfile", "manageModel", "manageSession", "manageState", "getAdjustableParameters", "listSimulationUnits",
+        "manageValidationProfile", "manageModel", "manageSession", "manageState",
+        "getAdjustableParameters", "validateInput", "listSimulationUnits",
         "listUnitVariables",
         "getSimulationVariable", "diagnoseAutomation",
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("twenty bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.22"
-          and limitations.get("contractTestedToolCount") == 20
-          and limitations.get("confirmedGapToolCount") == 31
+    check("twenty-one bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.23"
+          and limitations.get("contractTestedToolCount") == 21
+          and limitations.get("confirmedGapToolCount") == 30
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1580,6 +1581,16 @@ def test_capabilities():
           and "mass or energy conservation"
           in adjustable_parameters.get("evidenceBoundary", ""),
           str(adjustable_parameters))
+    input_validation = coverage_records.get("validateInput", {})
+    check("pre-flight input validation has bounded contract evidence",
+          input_validation.get("coverageStatus") == "CONTRACT_TESTED"
+          and input_validation.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_PREFLIGHT_INPUT_VALIDATION"
+          and "neqsim-mcp-server/test_validate_input_protocol.py"
+          in input_validation.get("contractEvidenceSources", [])
+          and "does not execute a model"
+          in input_validation.get("evidenceBoundary", ""),
+          str(input_validation))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1597,7 +1608,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 31
+          and limitations.get("confirmedGapToolCount") == 30
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

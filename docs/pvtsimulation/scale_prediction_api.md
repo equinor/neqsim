@@ -310,6 +310,37 @@ independently validate the COMPSALT temperature/pressure correlations. In partic
 COMPSALT pressure-volume coefficients differ from PHREEQC mineral molar volumes, so quantitative
 high-pressure gypsum/anhydrite phase-boundary use remains outside the qualified scope.
 
+#### Calcium-sulfate phase-boundary evidence
+
+Use `ThermodynamicOperations.qualifyCalciumSulfatePhaseBoundary()` to inspect the mineral-standard-state evidence
+separately from Pitzer or electrolyte-CPA aqueous parameter qualification:
+
+```java
+CalciumSulfatePhaseBoundaryQualification evidence =
+    operations.qualifyCalciumSulfatePhaseBoundary();
+
+double transitionC = evidence.getPredictedPureWaterTransitionCelsius();
+double requiredWaterActivity25C = evidence.getRequiredWaterActivityAt25Celsius();
+boolean publicationReady = evidence.isPublicationReady();
+```
+
+The immutable Java result is available through JPype and uses the exact COMPSALT solubility-product calculation used
+by precipitation. For simultaneous anhydrite and gypsum equilibrium, the ion activities cancel and the required water
+activity is $a_{\mathrm{w}}=\sqrt{K_{sp,\mathrm{G}}/K_{sp,\mathrm{A}}}$. The registered independent evidence is Voigt
+and Freyer (2023), [DOI 10.3389/fnuen.2023.1208582](https://doi.org/10.3389/fnuen.2023.1208582), CC BY 4.0:
+
+| Observable | Independent envelope | Current COMPSALT result |
+|------------|----------------------|-------------------------|
+| Pure-water transition | 42 ± 1 °C | 60.445190 °C |
+| NaCl crossing at 25 °C | $a_{\mathrm{w}}=0.8551$–$0.8634$ | $a_{\mathrm{w}}=0.7736299$ |
+| NaCl crossing at 40 °C | $a_{\mathrm{w}}=0.9370$–$0.9587$ | $a_{\mathrm{w}}=0.8437837$ |
+
+The NaCl intervals retain Bock (1961), [DOI 10.1139/v61-228](https://doi.org/10.1139/v61-228), as their primary
+experimental lineage without redistributing the copyrighted primary table. The current correlations fail all three
+registered envelopes, so the result deliberately reports `REJECTED` and `publicationReady=false`; it does not tune a
+coefficient toward the evidence. Absolute-solubility residuals, primary-row uncertainty, mixed-brine qualification and
+the high-pressure reaction-volume convention remain explicit follow-on boundaries.
+
 The process-system test carries the solid ledger beside the residual fluid through a
 `Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Its
 charge-balanced feed contains nonzero Ca++, Mg++, Cl-, and SO4--; Ca/SO4 close against the solid

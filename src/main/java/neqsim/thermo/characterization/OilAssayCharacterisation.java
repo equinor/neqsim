@@ -48,6 +48,9 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final double KELVIN_OFFSET = 273.15;
   private static final double GRAMS_PER_KILOGRAM = 1000.0;
   private static final double WATER_DENSITY_60F_KG_M3 = 999.016;
+  private static final double CARBON_ATOMIC_WEIGHT_GRAM_PER_MOL = 12.011;
+  private static final double HYDROGEN_ATOMIC_WEIGHT_GRAM_PER_MOL = 1.008;
+  private static final double PIANO_PERCENT_CLOSURE_TOLERANCE = 0.1;
 
   private transient SystemInterface system;
   private double totalAssayMass = 1.0;
@@ -69,6 +72,97 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    */
   public void setThermoSystem(SystemInterface system) {
     this.system = Objects.requireNonNull(system, "system");
+  }
+
+  /** Hydrocarbon families reported by a PIANO refinery-assay analysis. */
+  public enum PianoHydrocarbonFamily {
+    PARAFFIN, ISO_PARAFFIN, AROMATIC, NAPHTHENE
+  }
+
+  /**
+   * Calculate the number-average molar mass represented by PIANO mass-percent lumps.
+   *
+   * <p>
+   * Each entry is defined by a hydrocarbon family, carbon number, and mass percentage. Ideal family formulas are used:
+   * paraffins and iso-paraffins are CnH(2n+2), naphthenes are CnH(2n), and aromatics are CnH(2n-6). The calculation
+   * uses conventional atomic weights C = 12.011 g/mol and H = 1.008 g/mol and returns the mixture number-average molar
+   * mass from the reciprocal mass-weighted sum. Percentages may differ from 100 by at most 0.1 percentage point to
+   * accommodate source-table rounding and are normalized by their actual sum.
+   * </p>
+   *
+   * @param families PIANO hydrocarbon family for each lump
+   * @param carbonNumbers carbon number for each lump
+   * @param massPercent mass percentage for each lump
+   * @return number-average molar mass in kg/mol
+   */
+  public static double calculatePianoMolarMassKgPerMol(PianoHydrocarbonFamily[] families, int[] carbonNumbers,
+      double[] massPercent) {
+    if (families == null || carbonNumbers == null || massPercent == null) {
+      throw new IllegalArgumentException("PIANO family, carbon-number, and mass-percent arrays cannot be null");
+    }
+    if (families.length == 0 || families.length != carbonNumbers.length || families.length != massPercent.length) {
+      throw new IllegalArgumentException("PIANO arrays must be non-empty and have equal length");
+    }
+
+    double totalMassPercent = 0.0;
+    double molesPerHundredGram = 0.0;
+    for (int i = 0; i < families.length; i++) {
+      PianoHydrocarbonFamily family = families[i];
+      if (family == null) {
+        throw new IllegalArgumentException("PIANO hydrocarbon family cannot be null");
+      }
+      int carbonNumber = carbonNumbers[i];
+      int hydrogenNumber = resolvePianoHydrogenNumber(family, carbonNumber);
+      double entryMassPercent = massPercent[i];
+      if (!Double.isFinite(entryMassPercent) || entryMassPercent < 0.0 || entryMassPercent > 100.0) {
+        throw new IllegalArgumentException("PIANO mass percentages must be finite and between 0 and 100");
+      }
+
+      double componentMolarMassGramPerMol = carbonNumber * CARBON_ATOMIC_WEIGHT_GRAM_PER_MOL
+          + hydrogenNumber * HYDROGEN_ATOMIC_WEIGHT_GRAM_PER_MOL;
+      totalMassPercent += entryMassPercent;
+      molesPerHundredGram += entryMassPercent / componentMolarMassGramPerMol;
+    }
+
+    if (!Double.isFinite(totalMassPercent) || Math.abs(totalMassPercent - 100.0) > PIANO_PERCENT_CLOSURE_TOLERANCE) {
+      throw new IllegalArgumentException("PIANO mass percentages must close to 100 within 0.1 percentage point");
+    }
+    if (!Double.isFinite(molesPerHundredGram) || !(molesPerHundredGram > 0.0)) {
+      throw new IllegalArgumentException("PIANO composition must contain positive mass");
+    }
+
+    double molarMassKgPerMol = totalMassPercent / molesPerHundredGram / GRAMS_PER_KILOGRAM;
+    if (!Double.isFinite(molarMassKgPerMol) || !(molarMassKgPerMol > 0.0)) {
+      throw new IllegalStateException("Unable to calculate a finite positive PIANO molar mass");
+    }
+    return molarMassKgPerMol;
+  }
+
+  private static int resolvePianoHydrogenNumber(PianoHydrocarbonFamily family, int carbonNumber) {
+    switch (family) {
+    case PARAFFIN:
+      if (carbonNumber < 1) {
+        throw new IllegalArgumentException("Paraffin carbon number must be at least 1");
+      }
+      return 2 * carbonNumber + 2;
+    case ISO_PARAFFIN:
+      if (carbonNumber < 4) {
+        throw new IllegalArgumentException("Iso-paraffin carbon number must be at least 4");
+      }
+      return 2 * carbonNumber + 2;
+    case NAPHTHENE:
+      if (carbonNumber < 3) {
+        throw new IllegalArgumentException("Naphthene carbon number must be at least 3");
+      }
+      return 2 * carbonNumber;
+    case AROMATIC:
+      if (carbonNumber < 6) {
+        throw new IllegalArgumentException("Aromatic carbon number must be at least 6");
+      }
+      return 2 * carbonNumber - 6;
+    default:
+      throw new IllegalArgumentException("Unsupported PIANO hydrocarbon family");
+    }
   }
 
   /**

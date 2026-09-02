@@ -4,7 +4,6 @@ description: "IAPWS pure-water Henry correlations, GE/Pitzer standard-state mapp
 keywords: "Henry law, gas solubility, electrolyte, Pitzer, activity coefficient, aqueous phase, provenance"
 ---
 
-# Henry-law reference states and aqueous gas-solubility evidence
 
 NeqSim uses Henry-law reference states for neutral solutes in aqueous
 excess-Gibbs models. This page records the implemented convention, source

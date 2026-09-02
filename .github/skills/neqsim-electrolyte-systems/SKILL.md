@@ -1,7 +1,7 @@
 ---
 name: neqsim-electrolyte-systems
 description: "Electrolyte and brine chemistry guidance for NeqSim. USE WHEN: modeling produced water, scale prediction, CO2/H2S in aqueous systems, MEG/DEG injection, hydrate inhibitor dosing, or any system with ions, salts, or electrolytes. Covers SystemElectrolyteCPAstatoil setup, ion components, scale risk assessment, and brine handling patterns."
-last_verified: "2026-07-04"
+last_verified: "2026-09-01"
 ---
 
 # Electrolyte Systems Guide
@@ -121,6 +121,26 @@ Before hand-rolling the flash, note these ready-made helpers (see the
   `system.chemicalReactionInit()` before `createDatabase(true)`/`setMixingRule(10)`
   and flash first (otherwise carbonate/bicarbonate/pH speciation is missing and
   the SR is wrong).
+
+### Activity-consistent calcium-sulfate equilibrium
+
+Use the pure-mineral operation when the engineering question is gypsum/anhydrite equilibrium rather than screening
+SI:
+
+```java
+MultiSaltPrecipitationResult solids =
+    new ThermodynamicOperations(brine).precipitateScales("CaSO4_A", "CaSO4_G");
+
+CalciumSulfatePhaseBoundaryQualification evidence =
+    new ThermodynamicOperations(brine).qualifyCalciumSulfatePhaseBoundary();
+```
+
+`CaSO4_G` is hydrated gypsum: the authoritative operation includes $a_{\mathrm{w}}^2$, removes or returns two water
+moles per formula unit, and reports hydrated mass. `CaSO4_A` remains water-free anhydrite. The qualification object
+separates this mineral-standard-state evidence from the Pitzer or electrolyte-CPA aqueous activity model. It is
+currently fail-closed against the CC BY 4.0 Voigt–Freyer pure-water and NaCl crossing envelopes and does not qualify
+high-pressure use; do not fit or reinterpret Pitzer interactions to hide a mineral-correlation mismatch. See
+`docs/pvtsimulation/scale_prediction_api.md` for the source matrix, numerical residuals, and limits.
 
 ### CaCO3 (Calcite) Scaling
 

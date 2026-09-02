@@ -3,7 +3,6 @@ title: "Phase Envelope Algorithm: Michelsen's Continuation Method"
 description: "Detailed mathematical and algorithmic documentation for the PT phase envelope tracer in NeqSim. Covers the Newton-Raphson continuation method, variable system, critical point detection, quality line tracing, and step size control."
 ---
 
-# Phase Envelope Algorithm
 
 NeqSim traces the PT phase envelope using Michelsen's continuation method (Michelsen & Mollerup, *Thermodynamic Models: Fundamentals & Computational Aspects*, 2nd ed., 2007). This document describes the mathematical formulation, the Newton-Raphson solver, critical point detection, quality line tracing, and the adaptive step-size control implemented in `PTPhaseEnvelopeMichelsen` and `SysNewtonRhapsonPhaseEnvelope`.
 

@@ -86,6 +86,7 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
 
     DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
     assertTrue(report.isStrictPreflightReady());
+    assertTrue(report.isFullyAudited());
     assertTrue(report.getReviewItems().isEmpty());
     assertTrue(report.getExecutionIssues().isEmpty());
     assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.ALGEBRAIC).intValue());
@@ -146,6 +147,7 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
 
     assertFalse(report.hasBlockingIssues());
     assertEquals(1, report.getReviewItems().size());
+    assertFalse(report.isFullyAudited());
     assertTrue(report.getReviewItems().get(0).contains("custom"));
     assertFalse(report.isStrictPreflightReady());
     assertEquals(1, report.getStrictPreflightIssues().size());
@@ -153,14 +155,14 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertTrue(exception.getMessage().contains("custom"));
   }
 
-  /** Audited battery state no longer hides the still-unaudited adsorption model in the capability inventory. */
+  /** Adsorption and battery state both remain visible after their built-in capability audits. */
   @Test
-  public void auditedBatteryDoesNotMaskUnauditedAdsorption() {
+  public void adsorptionAndBatteryAreFullyAudited() {
     Stream feed = createFeed("adsorption feed");
     AdsorptionBed bed = new AdsorptionBed("adsorption bed", feed);
     BatteryStorage battery = new BatteryStorage("battery", 1000.0);
 
-    assertEquals(DynamicCapability.UNCLASSIFIED_DYNAMIC, bed.getDynamicCapability());
+    assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, bed.getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_LUMPED, battery.getDynamicCapability());
 
     ProcessSystem process = new ProcessSystem("treatment and power");
@@ -170,12 +172,12 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
 
     DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
 
-    assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue());
+    assertEquals(0, report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue());
+    assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_DISTRIBUTED).intValue());
     assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_LUMPED).intValue());
-    assertEquals(1, report.getReviewItems().size());
-    assertFalse(report.isStrictPreflightReady());
-    assertTrue(containsDiagnostic(report.getReviewItems(), "adsorption bed"));
-    assertFalse(containsDiagnostic(report.getReviewItems(), "battery"));
+    assertTrue(report.getReviewItems().isEmpty());
+    assertTrue(report.isFullyAudited());
+    assertTrue(report.isStrictPreflightReady());
   }
 
   /** Runtime activation is a separate audited dimension from state ownership and requested dynamic mode. */
@@ -295,9 +297,9 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertTrue(hasQualifiedEntry(report, "separation train::Inlet separator"));
     assertTrue(hasQualifiedEntry(report, "separation train::HP gas scrubber"));
     assertTrue(report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_LUMPED).intValue() > 0);
-    assertTrue(report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue() > 0);
-    assertFalse(report.isStrictPreflightReady());
-    assertTrue(report.getStrictPreflightIssues().get(0).contains("separation train"));
+    assertEquals(0, report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue());
+    assertTrue(report.isFullyAudited());
+    assertTrue(report.isStrictPreflightReady());
   }
 
   /** Nested module paths remain area-qualified in multi-area ProcessModel reports. */

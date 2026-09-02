@@ -396,6 +396,21 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
+   * Whether every element in this report has an audited capability category.
+   *
+   * <p>
+   * This predicate is deliberately narrower than {@link #isStrictPreflightReady()}. A fully audited report can still
+   * contain a runtime configuration, activation, or process-execution issue. It is an inventory-completion signal, not
+   * a numerical-validation, engineering-readiness, or safety certificate.
+   * </p>
+   *
+   * @return true when no entry is classified {@link DynamicCapability#UNCLASSIFIED_DYNAMIC}
+   */
+  public boolean isFullyAudited() {
+    return getReviewItems().isEmpty();
+  }
+
+  /**
    * Returns elements with explicit dynamic capability whose type-specific runtime activation is still unaudited.
    *
    * <p>

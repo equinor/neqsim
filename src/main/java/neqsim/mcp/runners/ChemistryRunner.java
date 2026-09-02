@@ -30,6 +30,7 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.saturationops.CalciumSulfatePhaseBoundaryQualification;
 import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
 
@@ -494,10 +495,61 @@ public class ChemistryRunner {
           pitzerQualification.isValidatedFor(ValidationTarget.MINERAL_SATURATION_AND_PRECIPITATION));
       data.add("qualificationLimitations", GSON.toJsonTree(pitzerQualification.getLimitations()));
     }
+    if (containsCalciumSulfatePolymorphPair(equilibrium.getMineralResults().keySet())) {
+      CalciumSulfatePhaseBoundaryQualification qualification = new ThermodynamicOperations(system)
+          .qualifyCalciumSulfatePhaseBoundary();
+      data.add("calciumSulfatePhaseBoundaryQualification", calciumSulfateBoundaryEvidence(qualification));
+    }
     data.addProperty("publicationReady", false);
     data.addProperty("publicationLimitation",
-        "Numerical engineering gates pass, but no exact competitive mixed-brine mineral evidence envelope is "
-            + "registered for this state");
+        "Numerical engineering gates pass, but competitive mixed-brine absolute-solubility and high-pressure "
+            + "mineral evidence remain unqualified");
+    return data;
+  }
+
+  private static boolean containsCalciumSulfatePolymorphPair(Set<String> mineralNames) {
+    return mineralNames.contains("CaSO4_A") && mineralNames.contains("CaSO4_G");
+  }
+
+  private static JsonObject calciumSulfateBoundaryEvidence(CalciumSulfatePhaseBoundaryQualification qualification) {
+    JsonObject data = new JsonObject();
+    data.addProperty("authoritativeJavaOperation", "ThermodynamicOperations.qualifyCalciumSulfatePhaseBoundary");
+    data.addProperty("evidenceDoi", qualification.getEvidenceDoi());
+    data.addProperty("primaryLineageDoi", qualification.getPrimaryLineageDoi());
+    data.addProperty("evidenceLicense", qualification.getEvidenceLicense());
+    data.addProperty("referencePressure_bara", CalciumSulfatePhaseBoundaryQualification.REFERENCE_PRESSURE_BARA);
+    data.addProperty("evaluatedPressure_bara", qualification.getEvaluatedPressureBara());
+    data.addProperty("referencePressureEnvelopePass", qualification.isReferencePressureEnvelopePass());
+
+    JsonObject pureWater = new JsonObject();
+    pureWater.addProperty("predictedTransition_C", qualification.getPredictedPureWaterTransitionCelsius());
+    pureWater.addProperty("evidenceMinimum_C", qualification.getPureWaterEvidenceMinimumCelsius());
+    pureWater.addProperty("evidenceMaximum_C", qualification.getPureWaterEvidenceMaximumCelsius());
+    pureWater.addProperty("envelopePass", qualification.isPureWaterEnvelopePass());
+    data.add("pureWater", pureWater);
+
+    JsonObject sodiumChloride25C = new JsonObject();
+    sodiumChloride25C.addProperty("requiredWaterActivity", qualification.getRequiredWaterActivityAt25Celsius());
+    sodiumChloride25C.addProperty("evidenceMinimumWaterActivity",
+        qualification.getSodiumChloride25CWaterActivityMinimum());
+    sodiumChloride25C.addProperty("evidenceMaximumWaterActivity",
+        qualification.getSodiumChloride25CWaterActivityMaximum());
+    sodiumChloride25C.addProperty("envelopePass", qualification.isSodiumChloride25CEnvelopePass());
+    data.add("sodiumChloride25C", sodiumChloride25C);
+
+    JsonObject sodiumChloride40C = new JsonObject();
+    sodiumChloride40C.addProperty("requiredWaterActivity", qualification.getRequiredWaterActivityAt40Celsius());
+    sodiumChloride40C.addProperty("evidenceMinimumWaterActivity",
+        qualification.getSodiumChloride40CWaterActivityMinimum());
+    sodiumChloride40C.addProperty("evidenceMaximumWaterActivity",
+        qualification.getSodiumChloride40CWaterActivityMaximum());
+    sodiumChloride40C.addProperty("envelopePass", qualification.isSodiumChloride40CEnvelopePass());
+    data.add("sodiumChloride40C", sodiumChloride40C);
+
+    data.addProperty("decision", qualification.getDecision());
+    data.addProperty("publicationReady", qualification.isPublicationReady());
+    data.addProperty("diagnostic", qualification.formatDiagnostic());
+    data.add("limitations", GSON.toJsonTree(qualification.getLimitations()));
     return data;
   }
 

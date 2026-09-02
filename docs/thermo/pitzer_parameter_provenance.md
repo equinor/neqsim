@@ -4,7 +4,6 @@ description: "Dataset identity, equation conventions, licensing, and fail-closed
 keywords: "Pitzer, electrolyte, activity coefficient, osmotic coefficient, theta, psi, provenance, brine"
 ---
 
-# Pitzer parameter provenance and coverage
 
 `SystemPitzer` is an electrolyte-GE model. Its interaction coefficients must not be placed in
 reaction-equilibrium, mineral-solubility, SIT, eNRTL, Extended-UNIQUAC, or electrolyte-EOS tables.
