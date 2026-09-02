@@ -42,6 +42,18 @@ range. Qualified execution requires corresponding metadata for every required id
 `getUnqualifiedReactionIds(T, P)` reports missing, unvalidated, and out-of-range entries.
 `requireValidatedKineticsAt(T, P)` applies the same gate without running the reactor.
 
+## Structured preflight report
+
+`getQualificationReport(T, P)` returns an immutable, source-ordered entry for every required
+reaction identifier. Each entry is classified as `QUALIFIED`, `MISSING`, `NOT_VALIDATED`, or
+`OUT_OF_RANGE`. Missing metadata takes precedence over validation and range checks; an explicitly
+non-validated entry takes precedence over its range. The report records the evaluated temperature,
+absolute pressure, and material selection so the selected R8 family remains auditable.
+
+`getUnqualifiedReactionIds(T, P)` delegates to the same report and therefore preserves the existing
+fail-closed result and identifier ordering. The report is diagnostic evidence only: it neither
+executes chemistry nor supplies citations, parameter values, validation status, or validity ranges.
+
 ## Parameter binding and execution
 
 Calling `setReactionConstants(...)` replaces an Arrhenius parameter pair and automatically removes
