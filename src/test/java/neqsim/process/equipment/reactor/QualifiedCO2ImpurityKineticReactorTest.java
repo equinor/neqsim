@@ -2,7 +2,9 @@ package neqsim.process.equipment.reactor;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
@@ -70,6 +72,36 @@ public class QualifiedCO2ImpurityKineticReactorTest extends NeqSimTest {
     reactor.requireValidatedKineticsAt(TEMPERATURE_K, PRESSURE_BARA);
     reactor.setReactionConstants("R8", 3.0, 40.0);
     assertArrayEquals(new String[] { "R8SS" }, reactor.getUnqualifiedReactionIds(TEMPERATURE_K, PRESSURE_BARA));
+  }
+
+  @Test
+  void testQualificationReportExplainsFailureReasonsAndPreservesLegacyOrder() {
+    QualifiedCO2ImpurityKineticReactor reactor = qualifiedReactor();
+    reactor.setReactionQualification("R2", qualification("R2", ChemicalReactionValidationStatus.UNVALIDATED));
+    reactor.setReactionConstants("R3A", 2.0, 30.0);
+
+    CO2ImpurityKineticsQualificationReport report =
+        reactor.getQualificationReport(312.0, PRESSURE_BARA);
+
+    assertEquals(312.0, report.getTemperatureK());
+    assertEquals(PRESSURE_BARA, report.getPressureBara());
+    assertEquals("carbon_steel", report.getMaterial());
+    assertFalse(report.isQualified());
+    assertEquals(CO2ImpurityKineticsQualificationReport.QualificationState.OUT_OF_RANGE,
+        report.getEntries().get(0).getState());
+    assertEquals(CO2ImpurityKineticsQualificationReport.QualificationState.NOT_VALIDATED,
+        report.getEntries().get(1).getState());
+    assertEquals(CO2ImpurityKineticsQualificationReport.QualificationState.MISSING,
+        report.getEntries().get(2).getState());
+    assertEquals("R8CS", report.getEntries().get(8).getReactionId());
+    assertArrayEquals(reactor.getUnqualifiedReactionIds(312.0, PRESSURE_BARA),
+        report.getBlockedReactionIds());
+    assertThrows(UnsupportedOperationException.class, () -> report.getEntries().add(null));
+
+    String[] blocked = report.getBlockedReactionIds();
+    blocked[0] = "changed";
+    assertEquals("R1", report.getBlockedReactionIds()[0]);
+    assertTrue(qualifiedReactor().getQualificationReport(TEMPERATURE_K, PRESSURE_BARA).isQualified());
   }
 
   @Test
