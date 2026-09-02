@@ -142,14 +142,23 @@ def finding_codes(result):
     }
 
 
+def finding_warning_count(result):
+    """Count engineering warnings without confusing the MCP envelope warning array."""
+    return sum(
+        1
+        for item in result.get("findings", [])
+        if isinstance(item, dict) and item.get("severity") == "WARNING"
+    )
+
+
 def assert_report(response, context):
     """Verify the stable advisory response shape."""
     result = payload(response)
     require(result.get("status") == "success", "validation transport failed", response)
     require(result.get("validationContext") == context, "context was not preserved", result)
     require(isinstance(result.get("passed"), bool), "passed flag is absent", result)
-    for field in ("totalFindings", "errors", "warnings", "infos"):
-        require(isinstance(result.get(field), int), field + " count is absent", result)
+    for field in ("totalFindings", "errors", "infos"):
+        require(type(result.get(field)) is int, field + " count is absent", result)
     require(isinstance(result.get("verdict"), str), "verdict is absent", result)
     require(isinstance(result.get("findings"), list), "findings array is absent", result)
     for finding in result["findings"]:
@@ -163,6 +172,21 @@ def assert_report(response, context):
             "finding severity drifted",
             finding,
         )
+    warning_count = finding_warning_count(result)
+    envelope_warnings = result.get("warnings")
+    require(
+        isinstance(envelope_warnings, (int, list)),
+        "standard warnings field is absent",
+        result,
+    )
+    if type(envelope_warnings) is int:
+        require(envelope_warnings == warning_count, "warning count drifted", result)
+    require(
+        result["totalFindings"]
+        == result["errors"] + warning_count + result["infos"],
+        "finding counts do not close",
+        result,
+    )
     return result
 
 
@@ -191,7 +215,11 @@ def test_warning_remains_non_blocking(client):
         "compressor",
     )
     require(result.get("passed") is True, "warning blocked the result", result)
-    require(result.get("errors") == 0 and result.get("warnings") == 1, "warning counts drifted", result)
+    require(
+        result.get("errors") == 0 and finding_warning_count(result) == 1,
+        "warning counts drifted",
+        result,
+    )
     require("LOW_EFFICIENCY" in finding_codes(result), "efficiency warning is absent", result)
     require(
         result.get("verdict", "").startswith("PASS_WITH_WARNINGS"),
