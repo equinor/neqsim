@@ -3,6 +3,7 @@
 from pathlib import Path
 import re
 import unittest
+from urllib.parse import unquote, urlsplit
 
 
 DOCS = Path(__file__).resolve().parent
@@ -45,9 +46,49 @@ def parse_front_matter(source):
 
 
 def remove_fenced_code(source):
-    """Remove fenced examples before inspecting rendered Markdown."""
-    fence_pattern = chr(96) * 3 + r"[^\n]*\n.*?" + chr(96) * 3
-    return re.sub(fence_pattern, "", source, flags=re.DOTALL)
+    """Remove fenced examples and reject unmatched backtick or tilde fences."""
+    visible = []
+    fence_character = None
+    for line in source.splitlines():
+        marker = re.match(r"^\\s*(\x60{3,}|~{3,})", line)
+        if marker is not None:
+            character = marker.group(1)[0]
+            if fence_character is None:
+                fence_character = character
+            elif character == fence_character:
+                fence_character = None
+            continue
+        if fence_character is None:
+            visible.append(line)
+
+    if fence_character is not None:
+        raise AssertionError("Unclosed fenced code block")
+    return "\\n".join(visible)
+
+
+def target_candidates(source, target):
+    """Return repository-relative file candidates for one Markdown target."""
+    parsed = urlsplit(target.strip().strip("<>"))
+    if parsed.scheme or parsed.netloc or target.startswith("#"):
+        return ()
+
+    relative = unquote(parsed.path)
+    if not relative or relative.startswith("/"):
+        return ()
+
+    destination = (source.parent / relative).resolve()
+    candidates = [destination]
+    if destination.suffix == ".html":
+        candidates.append(destination.with_suffix(".md"))
+    if relative.endswith("/") or not destination.suffix:
+        candidates.extend(
+            (
+                destination / "index.md",
+                destination / "README.md",
+                destination.with_suffix(".md"),
+            )
+        )
+    return tuple(candidates)
 
 
 class ThermodynamicDocumentationRenderingContractTest(unittest.TestCase):
@@ -70,10 +111,38 @@ class ThermodynamicDocumentationRenderingContractTest(unittest.TestCase):
     def test_front_matter_title_is_not_repeated_as_h1(self):
         for page in self.pages:
             with self.subTest(page=page):
-                title, _description, body = parse_front_matter(page.read_text(encoding="utf-8"))
+                _title, _description, body = parse_front_matter(\n                    page.read_text(encoding="utf-8")\n                )
                 rendered_markdown = remove_fenced_code(body)
                 headings = re.findall(r"^#\s+(.+?)\s*$", rendered_markdown, re.MULTILINE)
-                self.assertNotIn(title, headings)
+                self.assertEqual([], headings)
+
+    def test_pages_have_balanced_fenced_code(self):
+        for page in self.pages:
+            with self.subTest(page=page):
+                _title, _description, body = parse_front_matter(
+                    page.read_text(encoding="utf-8")
+                )
+                remove_fenced_code(body)
+
+    def test_repository_relative_targets_resolve(self):
+        markdown_link = re.compile(r"\\[[^\\]]*\\]\\(([^)\\s]+)\\)")
+        html_link = re.compile(r"""href=["']([^"']+)["']""")
+        for page in self.pages:
+            _title, _description, body = parse_front_matter(
+                page.read_text(encoding="utf-8")
+            )
+            rendered_markdown = remove_fenced_code(body)
+            targets = markdown_link.findall(rendered_markdown)
+            targets.extend(html_link.findall(rendered_markdown))
+            for target in targets:
+                candidates = target_candidates(page, target)
+                if not candidates:
+                    continue
+                with self.subTest(page=page, target=target):
+                    self.assertTrue(
+                        any(candidate.exists() for candidate in candidates),
+                        "Unresolved repository-relative target",
+                    )
 
     def test_pages_use_supported_math_delimiters(self):
         unsupported = re.compile(r"\\\[|\\\]|\\\(|\\\)")

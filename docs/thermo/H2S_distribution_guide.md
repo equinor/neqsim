@@ -3,7 +3,6 @@ title: H2S Distribution Between Gas, Oil, and Water
 description: Comprehensive guide to modeling hydrogen sulfide (H2S) phase distribution in NeqSim using SRK, PR, CPA, and Electrolyte-CPA equations of state. Covers acid-base chemistry, pH effects, salinity impacts, and model selection guidance.
 ---
 
-# H2S Distribution Between Gas, Oil, and Water Phases
 
 > **Related Resources:**
 > - For a more detailed treatment with Java examples, see [H2S Distribution Modeling (detailed)](H2S_DISTRIBUTION_MODELING)
