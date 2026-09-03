@@ -15,6 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PitzerParameterDatasets;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.saturationops.SaltSaturationResult;
 
 /**
  * Consolidated regression tests for the Pitzer activity model in thermodynamic systems.
@@ -274,6 +275,46 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(1.0, earlyIonOperations.getRelativeScalePotential("CaSO4_A"), 1.0e-3);
     assertEquals(earlyIonSystem.getComponent("Ca++").getNumberOfmoles(),
         lateIonSystem.getComponent("Ca++").getNumberOfmoles(), 1.0e-8);
+  }
+
+  /**
+   * Verifies that dissolved-salt saturation diagnostics report the existing Pitzer solve deterministically.
+   */
+  @Test
+  public void testCalcSaltSaturationDiagnosticsAreDeterministic() throws Exception {
+    SystemPitzer firstSystem = new SystemPitzer(404.15, 995.0);
+    firstSystem.addComponent("water", 55.508);
+    firstSystem.setMixingRule("classic");
+
+    SystemPitzer secondSystem = new SystemPitzer(404.15, 995.0);
+    secondSystem.addComponent("water", 55.508);
+    secondSystem.setMixingRule("classic");
+
+    SaltSaturationResult firstResult = new ThermodynamicOperations(firstSystem)
+        .calcSaltSaturationWithDiagnostics("CaSO4_A");
+    SaltSaturationResult secondResult = new ThermodynamicOperations(secondSystem)
+        .calcSaltSaturationWithDiagnostics("CaSO4_A");
+
+    assertEquals("CaSO4_A", firstResult.getSaltName());
+    assertTrue(firstResult.getInitialSaturationRatio() >= 0.0);
+    assertTrue(firstResult.getInitialSaturationRatio() < 1.0);
+    assertEquals(1.0, firstResult.getFinalSaturationRatio(), 1.0e-3);
+    assertTrue(firstResult.getAddedSaltMoles() > 0.0);
+    assertTrue(firstResult.getBracketIterations() > 0);
+    assertTrue(firstResult.getSolveIterations() > 0);
+    assertEquals(firstResult.getBracketIterations() + firstResult.getSolveIterations() + 2,
+        firstResult.getThermodynamicInitializationCount());
+    assertFalse(firstResult.isAlreadySaturated());
+    assertTrue(firstResult.isConverged());
+    assertFalse(firstResult.isIterationLimitReached());
+    assertEquals(Math.abs(firstResult.getFinalSaturationRatio() - 1.0),
+        firstResult.getAbsoluteSaturationRatioResidual(), 0.0);
+
+    assertEquals(firstResult.getAddedSaltMoles(), secondResult.getAddedSaltMoles(), 1.0e-10);
+    assertEquals(firstResult.getFinalSaturationRatio(), secondResult.getFinalSaturationRatio(), 1.0e-12);
+    assertEquals(firstResult.getBracketIterations(), secondResult.getBracketIterations());
+    assertEquals(firstResult.getSolveIterations(), secondResult.getSolveIterations());
+    assertEquals(firstResult.getThermodynamicInitializationCount(), secondResult.getThermodynamicInitializationCount());
   }
 
   /** Verifies that salt saturation preserves the explicit legacy compatibility selection. */

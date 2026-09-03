@@ -211,6 +211,35 @@ for i in range(1, len(table)):
 - MEG-aware (temporarily replaces MEG with water for calculation)
 - Returns **saturation ratio** (SR = IAP/Ksp), where SR > 1 = supersaturated
 
+### Dissolved-salt saturation diagnostics
+
+`calcSaltSaturation(String)` adds dissociated salt formula units until the aqueous ion activity
+product reaches the COMPSALT solubility product. Use
+`calcSaltSaturationWithDiagnostics(String)` for the same system mutation plus immutable convergence
+and work diagnostics:
+
+```java
+SystemPitzer fluid = new SystemPitzer(404.15, 995.0);
+fluid.addComponent("water", 55.508);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+SaltSaturationResult result =
+    operations.calcSaltSaturationWithDiagnostics("CaSO4_A");
+
+double initialSaturationRatio = result.getInitialSaturationRatio();
+double finalSaturationRatio = result.getFinalSaturationRatio();
+double addedFormulaUnitsMol = result.getAddedSaltMoles();
+int fullThermodynamicInitializations = result.getThermodynamicInitializationCount();
+boolean converged = result.isConverged();
+```
+
+The result also reports bracket and bisection evaluation counts, whether the input was already
+saturated, whether the solve reached its iteration limit, and the absolute residual from unit
+saturation. These diagnostics expose the existing calculation's work without adding flashes or
+changing its `1e-6` saturation-ratio tolerance. They do not create a solid phase, describe
+precipitated mass, or qualify the COMPSALT, Ksp, reaction-volume, or activity-model parameters.
+
 ### Activity-consistent pure-mineral precipitation
 
 `ThermodynamicOperations.precipitateScale(String)` removes one named COMPSALT mineral
