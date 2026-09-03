@@ -15,6 +15,7 @@ import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.monitor.RecycleResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -511,6 +512,46 @@ public class Recycle extends ProcessEquipmentBaseClass
     // logger.info("beta " + mixedStream.getThermoSystem().getBeta());
     // outStream.setThermoSystem(mixedStream.getThermoSystem());
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Advances this recycle by one transient process evaluation.
+   *
+   * <p>
+   * The same recycle object is used in both simulation modes. A steady-state {@link ProcessSystem} may call
+   * {@link #run(UUID)} repeatedly until the tear stream converges. A transient process calls this method once in
+   * flowsheet order for each evaluation of an accepted physical timestep, so the previously accepted outlet state is
+   * consumed upstream before the current inlet state is published for the following evaluation. This breaks the
+   * algebraic loop without requiring the flowsheet to replace its steady-state recycle with a separate dynamic unit.
+   * </p>
+   *
+   * <p>
+   * Steady-state Wegstein or Broyden acceleration is temporarily disabled during the transient evaluation. Applying
+   * convergence acceleration between physical timesteps would introduce a non-physical state correction. The configured
+   * acceleration method is restored unchanged for the next steady-state solve. This method deliberately works
+   * regardless of {@link #getCalculateSteadyState()}, because a recycle has no independent differential inventory and
+   * its transient role is an ordered algebraic transport evaluation.
+   * </p>
+   *
+   * @param dt timestep in seconds
+   * @param id calculation identifier shared by the physical timestep
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
+    AccelerationMethod configuredAccelerationMethod = accelerationMethod;
+    boolean configuredAdaptiveAcceleration = adaptiveAcceleration;
+    try {
+      accelerationMethod = AccelerationMethod.DIRECT_SUBSTITUTION;
+      adaptiveAcceleration = false;
+      run(id);
+    } finally {
+      accelerationMethod = configuredAccelerationMethod;
+      adaptiveAcceleration = configuredAdaptiveAcceleration;
+    }
+    if (!alreadyEvaluatedForStep) {
+      increaseTime(dt);
+    }
   }
 
   /**

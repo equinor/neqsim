@@ -133,11 +133,13 @@ public final class DexpiXmlReader {
     private final List<DexpiConnectionInfo> connections;
     private final List<DexpiConnectionEndpointInfo> connectionEndpoints;
     private final List<DexpiConnectionComponentInfo> connectionComponents;
+    private final List<DexpiConnectionCycleInfo> connectionCycles;
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
         List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
-        List<DexpiConnectionComponentInfo> connectionComponents, List<ImportDiagnostic> diagnostics) {
+        List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
+        List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
@@ -145,6 +147,7 @@ public final class DexpiXmlReader {
           .unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(connectionEndpoints));
       this.connectionComponents = Collections
           .unmodifiableList(new ArrayList<DexpiConnectionComponentInfo>(connectionComponents));
+      this.connectionCycles = Collections.unmodifiableList(new ArrayList<DexpiConnectionCycleInfo>(connectionCycles));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
@@ -203,6 +206,21 @@ public final class DexpiXmlReader {
       return connectionComponents;
     }
 
+    /**
+     * Returns directed strongly connected groups from explicit non-empty material-connection references.
+     *
+     * <p>
+     * A group is included when it contains more than one endpoint, or when a single endpoint has an explicit
+     * self-reference. This is source evidence only and does not establish a hydraulic recycle, process intent,
+     * convergence behavior, or live process topology.
+     * </p>
+     *
+     * @return immutable directed-cycle evidence in first-endpoint order
+     */
+    public List<DexpiConnectionCycleInfo> getConnectionCycles() {
+      return connectionCycles;
+    }
+
     /** @return immutable diagnostics in deterministic source-document order */
     public List<ImportDiagnostic> getDiagnostics() {
       return diagnostics;
@@ -253,6 +271,12 @@ public final class DexpiXmlReader {
         componentMaps.add(component.toMap());
       }
       result.put("connectionComponents", componentMaps);
+      result.put("connectionCycleCount", Integer.valueOf(connectionCycles.size()));
+      List<Map<String, Object>> cycleMaps = new ArrayList<Map<String, Object>>();
+      for (DexpiConnectionCycleInfo cycle : connectionCycles) {
+        cycleMaps.add(cycle.toMap());
+      }
+      result.put("connectionCycles", cycleMaps);
       result.put("hasLosses", Boolean.valueOf(hasLosses()));
       result.put("hasErrors", Boolean.valueOf(hasErrors()));
       List<Map<String, Object>> diagnosticMaps = new ArrayList<Map<String, Object>>();
@@ -448,8 +472,12 @@ public final class DexpiXmlReader {
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
     loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, connections);
     List<DexpiConnectionEndpointInfo> connectionEndpoints = summarizeConnectionEndpoints(connections);
-    return new ImportResult(processSystem, instruments, connections, connectionEndpoints,
-        summarizeConnectionComponents(connections, connectionEndpoints), diagnostics);
+    List<DexpiConnectionComponentInfo> connectionComponents = summarizeConnectionComponents(connections,
+        connectionEndpoints);
+    List<DexpiConnectionCycleInfo> connectionCycles = summarizeConnectionCycles(connections, connectionEndpoints,
+        connectionComponents);
+    return new ImportResult(processSystem, instruments, connections, connectionEndpoints, connectionComponents,
+        connectionCycles, diagnostics);
   }
 
   /**
@@ -876,6 +904,192 @@ public final class DexpiXmlReader {
       result.add(component.toInfo());
     }
     return result;
+  }
+
+  private static List<DexpiConnectionCycleInfo> summarizeConnectionCycles(List<DexpiConnectionInfo> connections,
+      List<DexpiConnectionEndpointInfo> connectionEndpoints, List<DexpiConnectionComponentInfo> connectionComponents) {
+    Map<String, List<String>> outgoingEndpointIds = new LinkedHashMap<String, List<String>>();
+    Map<String, List<String>> incomingEndpointIds = new LinkedHashMap<String, List<String>>();
+    for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+      outgoingEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
+      incomingEndpointIds.put(endpoint.getEndpointId(), new ArrayList<String>());
+    }
+    for (DexpiConnectionInfo connection : connections) {
+      String fromId = connection.getFromId();
+      String toId = connection.getToId();
+      if (!isBlank(fromId) && !isBlank(toId)) {
+        outgoingEndpointIds.get(fromId).add(toId);
+        incomingEndpointIds.get(toId).add(fromId);
+      }
+    }
+
+    Set<String> visitedEndpointIds = new HashSet<String>();
+    List<String> finishOrder = new ArrayList<String>();
+    for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+      String startId = endpoint.getEndpointId();
+      if (visitedEndpointIds.contains(startId)) {
+        continue;
+      }
+      List<String> endpointStack = new ArrayList<String>();
+      List<Integer> nextAdjacentIndexStack = new ArrayList<Integer>();
+      endpointStack.add(startId);
+      nextAdjacentIndexStack.add(Integer.valueOf(0));
+      visitedEndpointIds.add(startId);
+      while (!endpointStack.isEmpty()) {
+        int stackIndex = endpointStack.size() - 1;
+        String endpointId = endpointStack.get(stackIndex);
+        int nextAdjacentIndex = nextAdjacentIndexStack.get(stackIndex).intValue();
+        List<String> adjacentEndpointIds = outgoingEndpointIds.get(endpointId);
+        if (nextAdjacentIndex < adjacentEndpointIds.size()) {
+          String adjacentEndpointId = adjacentEndpointIds.get(nextAdjacentIndex);
+          nextAdjacentIndexStack.set(stackIndex, Integer.valueOf(nextAdjacentIndex + 1));
+          if (!visitedEndpointIds.contains(adjacentEndpointId)) {
+            visitedEndpointIds.add(adjacentEndpointId);
+            endpointStack.add(adjacentEndpointId);
+            nextAdjacentIndexStack.add(Integer.valueOf(0));
+          }
+        } else {
+          endpointStack.remove(stackIndex);
+          nextAdjacentIndexStack.remove(stackIndex);
+          finishOrder.add(endpointId);
+        }
+      }
+    }
+
+    visitedEndpointIds.clear();
+    List<Set<String>> cyclicStrongComponents = new ArrayList<Set<String>>();
+    Map<String, Integer> cyclicComponentByEndpointId = new HashMap<String, Integer>();
+    for (int finishIndex = finishOrder.size() - 1; finishIndex >= 0; finishIndex--) {
+      String startId = finishOrder.get(finishIndex);
+      if (visitedEndpointIds.contains(startId)) {
+        continue;
+      }
+      Set<String> strongComponentEndpointIds = new HashSet<String>();
+      List<String> pendingEndpointIds = new ArrayList<String>();
+      pendingEndpointIds.add(startId);
+      visitedEndpointIds.add(startId);
+      for (int pendingIndex = 0; pendingIndex < pendingEndpointIds.size(); pendingIndex++) {
+        String endpointId = pendingEndpointIds.get(pendingIndex);
+        strongComponentEndpointIds.add(endpointId);
+        for (String adjacentEndpointId : incomingEndpointIds.get(endpointId)) {
+          if (!visitedEndpointIds.contains(adjacentEndpointId)) {
+            visitedEndpointIds.add(adjacentEndpointId);
+            pendingEndpointIds.add(adjacentEndpointId);
+          }
+        }
+      }
+
+      boolean cyclic = strongComponentEndpointIds.size() > 1;
+      if (!cyclic) {
+        String endpointId = strongComponentEndpointIds.iterator().next();
+        for (String adjacentEndpointId : outgoingEndpointIds.get(endpointId)) {
+          if (endpointId.equals(adjacentEndpointId)) {
+            cyclic = true;
+            break;
+          }
+        }
+      }
+      if (cyclic) {
+        int cyclicComponentIndex = cyclicStrongComponents.size();
+        cyclicStrongComponents.add(strongComponentEndpointIds);
+        for (String endpointId : strongComponentEndpointIds) {
+          cyclicComponentByEndpointId.put(endpointId, Integer.valueOf(cyclicComponentIndex));
+        }
+      }
+    }
+
+    Map<String, String> connectionComponentByEndpointId = new HashMap<String, String>();
+    for (DexpiConnectionComponentInfo component : connectionComponents) {
+      for (String endpointId : component.getEndpointIds()) {
+        connectionComponentByEndpointId.put(endpointId, component.getId());
+      }
+    }
+
+    List<ConnectionCycleAccumulator> cycles = new ArrayList<ConnectionCycleAccumulator>();
+    Map<Integer, Integer> cycleByStrongComponent = new HashMap<Integer, Integer>();
+    Map<String, Integer> cycleByEndpointId = new HashMap<String, Integer>();
+    for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+      Integer strongComponentIndex = cyclicComponentByEndpointId.get(endpoint.getEndpointId());
+      if (strongComponentIndex == null) {
+        continue;
+      }
+      Integer cycleIndex = cycleByStrongComponent.get(strongComponentIndex);
+      if (cycleIndex == null) {
+        cycleIndex = Integer.valueOf(cycles.size());
+        cycleByStrongComponent.put(strongComponentIndex, cycleIndex);
+        cycles.add(new ConnectionCycleAccumulator("cycle-" + (cycleIndex.intValue() + 1),
+            connectionComponentByEndpointId.get(endpoint.getEndpointId())));
+      }
+      cycles.get(cycleIndex.intValue()).addEndpoint(endpoint);
+      cycleByEndpointId.put(endpoint.getEndpointId(), cycleIndex);
+    }
+
+    for (DexpiConnectionInfo connection : connections) {
+      if (isBlank(connection.getFromId()) || isBlank(connection.getToId())) {
+        continue;
+      }
+      Integer fromCycleIndex = cycleByEndpointId.get(connection.getFromId());
+      Integer toCycleIndex = cycleByEndpointId.get(connection.getToId());
+      if (fromCycleIndex != null && fromCycleIndex.equals(toCycleIndex)) {
+        cycles.get(fromCycleIndex.intValue()).addConnection(connection);
+      } else {
+        if (toCycleIndex != null) {
+          cycles.get(toCycleIndex.intValue()).addIncomingBoundaryConnection(connection);
+        }
+        if (fromCycleIndex != null) {
+          cycles.get(fromCycleIndex.intValue()).addOutgoingBoundaryConnection(connection);
+        }
+      }
+    }
+
+    List<DexpiConnectionCycleInfo> result = new ArrayList<DexpiConnectionCycleInfo>();
+    for (ConnectionCycleAccumulator cycle : cycles) {
+      result.add(cycle.toInfo());
+    }
+    return result;
+  }
+
+  private static final class ConnectionCycleAccumulator {
+    private final String id;
+    private final String connectionComponentId;
+    private final List<String> endpointIds = new ArrayList<String>();
+    private final List<String> connectionIds = new ArrayList<String>();
+    private final List<String> incomingBoundaryConnectionIds = new ArrayList<String>();
+    private final List<String> outgoingBoundaryConnectionIds = new ArrayList<String>();
+    private final List<String> unresolvedEndpointIds = new ArrayList<String>();
+    private boolean selfReference;
+
+    private ConnectionCycleAccumulator(String id, String connectionComponentId) {
+      this.id = id;
+      this.connectionComponentId = connectionComponentId;
+    }
+
+    private void addEndpoint(DexpiConnectionEndpointInfo endpoint) {
+      endpointIds.add(endpoint.getEndpointId());
+      if (!endpoint.isResolved()) {
+        unresolvedEndpointIds.add(endpoint.getEndpointId());
+      }
+    }
+
+    private void addConnection(DexpiConnectionInfo connection) {
+      connectionIds.add(connection.getId());
+      if (connection.getFromId().equals(connection.getToId())) {
+        selfReference = true;
+      }
+    }
+
+    private void addIncomingBoundaryConnection(DexpiConnectionInfo connection) {
+      incomingBoundaryConnectionIds.add(connection.getId());
+    }
+
+    private void addOutgoingBoundaryConnection(DexpiConnectionInfo connection) {
+      outgoingBoundaryConnectionIds.add(connection.getId());
+    }
+
+    private DexpiConnectionCycleInfo toInfo() {
+      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, connectionIds,
+          incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, unresolvedEndpointIds, selfReference);
+    }
   }
 
   private static final class ConnectionComponentAccumulator {

@@ -1585,11 +1585,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       throw new IllegalStateException("Cannot auto-size valve without inlet stream");
     }
 
-    // Run the valve first to establish operating conditions
+    // Preserve the process design flow before evaluating the valve. A previous run may
+    // have established a Cv at a different operating point; running with that stale Cv
+    // must not overwrite the new design flow before it is captured for sizing.
+    double designFlowRate = getInletStream().getFlowRate("kg/hr");
+    double outletFlowRate = getOutletStream().getFlowRate("kg/hr");
+
+    // Run the valve first to establish phase type and thermodynamic conditions.
     run();
 
+    getInletStream().setFlowRate(designFlowRate, "kg/hr");
+    getOutletStream().setFlowRate(outletFlowRate, "kg/hr");
+
     // Check if we have meaningful flow
-    double flowRate = getInletStream().getFlowRate("kg/hr");
+    double flowRate = designFlowRate;
     boolean hasFlow = flowRate > 1e-6; // More than 1 mg/hr
 
     double designCv;
@@ -1604,17 +1613,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
         calculatedCv = estimateCvFromFlow(flowRate);
       }
 
-      // The calculated Cv is for 100% opening
-      // To have the valve at designOpeningPercent at current flow,
-      // we need to size the valve Cv larger
-      // For equal-percentage characteristic: Cv_actual = Cv_100 * R^((opening-1))
-      // Simplified: Cv needed at 100% ≈ Cv at design opening / opening factor
-      double openingFactor = getMechanicalDesign().getValveCharacterizationMethod()
-          .getOpeningFactor(designOpeningPercent);
-
-      // designCv is the Cv at 100% opening such that at current flow,
-      // the valve operates at designOpeningPercent
-      designCv = calculatedCv / openingFactor;
+      // calcDesign() sizes at the valve's current opening and already converts the
+      // required effective Cv to the corresponding full-open Cv. Applying the
+      // opening factor again here over-sizes every partially open valve and causes a
+      // discontinuous flow increase when switching from steady-state to transient
+      // flow calculation.
+      designCv = calculatedCv;
 
       // Apply safety factor
       designCv = designCv * safetyFactor;

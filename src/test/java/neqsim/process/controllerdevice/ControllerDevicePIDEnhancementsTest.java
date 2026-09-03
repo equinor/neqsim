@@ -49,6 +49,22 @@ class ControllerDevicePIDEnhancementsTest {
   }
 
   @Test
+  void testEngineeringUnitVelocityPiDoesNotDoubleIntegrateSustainedError() {
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("velocity-pi");
+    DummyTransmitter transmitter = new DummyTransmitter("trans", "%");
+    transmitter.setValue(60.0);
+    controller.setTransmitter(transmitter);
+    controller.setControllerSetPoint(50.0, "%");
+    controller.setControllerParameters(2.0, 10.0, 0.0);
+
+    controller.runTransient(100.0, 1.0, UUID.randomUUID());
+    Assertions.assertEquals(102.0, controller.getResponse(), 1.0e-12);
+    controller.runTransient(controller.getResponse(), 1.0, UUID.randomUUID());
+
+    Assertions.assertEquals(104.0, controller.getResponse(), 1.0e-12);
+  }
+
+  @Test
   void testDerivativeFiltering() {
     DummyTransmitter trans1 = new DummyTransmitter("t1", "%");
     trans1.setMinimumValue(0.0);

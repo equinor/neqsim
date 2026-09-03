@@ -544,6 +544,149 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(first.toJson(), second.toJson());
   }
 
+  @Test
+  public void testReadWithDiagnosticsSummarizesDirectedConnectionCycles() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
+        + "<Equipment ID=\"E-B\"><Nozzle ID=\"N-B\"/></Equipment>"
+        + "<Equipment ID=\"E-C\"><Nozzle ID=\"N-C\"/></Equipment>"
+        + "<Equipment ID=\"E-X\"><Nozzle ID=\"N-X\"/></Equipment>"
+        + "<Equipment ID=\"E-Y\"><Nozzle ID=\"N-Y\"/></Equipment>"
+        + "<Equipment ID=\"E-Z\"><Nozzle ID=\"N-Z\"/></Equipment>"
+        + "<Equipment ID=\"E-P\"><Nozzle ID=\"N-P\"/></Equipment>"
+        + "<Equipment ID=\"E-Q\"><Nozzle ID=\"N-Q\"/></Equipment>"
+        + "<Equipment ID=\"E-S\"><Nozzle ID=\"N-S\"/></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-1\"><Connection ID=\"C-1\" FromID=\"N-A\" ToID=\"N-B\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-2\"><Connection ID=\"C-2\" FromID=\"N-B\" ToID=\"N-C\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-3\"><Connection ID=\"C-3\" FromID=\"N-X\" ToID=\"N-Y\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-3P\"><Connection ID=\"C-3P\" FromID=\"N-X\" ToID=\"N-Y\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-4\"><Connection ID=\"C-4\" FromID=\"N-Y\" ToID=\"N-Z\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-5\"><Connection ID=\"C-5\" FromID=\"N-Z\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-6\"><Connection ID=\"C-6\" FromID=\"N-P\" ToID=\"N-Q\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-7\"><Connection ID=\"C-7\" FromID=\"N-P\" ToID=\"N-Q\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-8\"><Connection ID=\"C-8\" FromID=\"N-S\" ToID=\"N-S\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-9\"><Connection ID=\"C-9\" FromID=\"UNKNOWN-1\" ToID=\"UNKNOWN-2\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-10\"><Connection ID=\"C-10\" FromID=\"UNKNOWN-2\" ToID=\"UNKNOWN-1\"/>"
+        + "</PipingNetworkSegment>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(11, first.getConnections().size());
+    assertEquals(11, first.getConnectionEndpoints().size());
+    assertEquals(5, first.getConnectionComponents().size());
+    assertEquals(3, first.getConnectionCycles().size());
+
+    DexpiConnectionCycleInfo threeEndpointCycle = first.getConnectionCycles().get(0);
+    assertEquals("cycle-1", threeEndpointCycle.getId());
+    assertEquals("component-2", threeEndpointCycle.getConnectionComponentId());
+    assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getEndpointIds());
+    assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), threeEndpointCycle.getConnectionIds());
+    assertEquals(3, threeEndpointCycle.getEndpointCount());
+    assertEquals(4, threeEndpointCycle.getConnectionCount());
+    assertFalse(threeEndpointCycle.hasSelfReference());
+    assertFalse(threeEndpointCycle.hasUnresolvedEndpoints());
+
+    DexpiConnectionCycleInfo selfReference = first.getConnectionCycles().get(1);
+    assertEquals("cycle-2", selfReference.getId());
+    assertEquals("component-4", selfReference.getConnectionComponentId());
+    assertEquals(Collections.singletonList("N-S"), selfReference.getEndpointIds());
+    assertEquals(Collections.singletonList("C-8"), selfReference.getConnectionIds());
+    assertTrue(selfReference.hasSelfReference());
+
+    DexpiConnectionCycleInfo unresolved = first.getConnectionCycles().get(2);
+    assertEquals("cycle-3", unresolved.getId());
+    assertEquals("component-5", unresolved.getConnectionComponentId());
+    assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getEndpointIds());
+    assertEquals(Arrays.asList("C-9", "C-10"), unresolved.getConnectionIds());
+    assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getUnresolvedEndpointIds());
+    assertTrue(unresolved.hasUnresolvedEndpoints());
+
+    for (DexpiConnectionCycleInfo cycle : first.getConnectionCycles()) {
+      assertFalse(cycle.getEndpointIds().contains("N-P"));
+      assertFalse(cycle.getEndpointIds().contains("N-Q"));
+    }
+    assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpointIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> first.getConnectionCycles().clear());
+    assertTrue(first.toJson().contains("\"connectionCycleCount\": 3"));
+    assertTrue(first.toJson().contains("\"connectionComponentId\": \"component-4\""));
+    assertTrue(first.toJson().contains("\"selfReference\": true"));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsSummarizesDirectedCycleBoundaries() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
+        + "<Equipment ID=\"E-X\"><Nozzle ID=\"N-X\"/></Equipment>"
+        + "<Equipment ID=\"E-Y\"><Nozzle ID=\"N-Y\"/></Equipment>"
+        + "<Equipment ID=\"E-B\"><Nozzle ID=\"N-B\"/></Equipment>"
+        + "<Equipment ID=\"E-S\"><Nozzle ID=\"N-S\"/></Equipment>"
+        + "<Equipment ID=\"E-P\"><Nozzle ID=\"N-P\"/></Equipment>"
+        + "<Equipment ID=\"E-Q\"><Nozzle ID=\"N-Q\"/></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-IN-1\"><Connection ID=\"C-IN-1\" FromID=\"N-A\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-IN-2\"><Connection ID=\"C-IN-2\" FromID=\"UNKNOWN-U\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-XY\"><Connection ID=\"C-XY\" FromID=\"N-X\" ToID=\"N-Y\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-YX\"><Connection ID=\"C-YX\" FromID=\"N-Y\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-OUT-1\"><Connection ID=\"C-OUT-1\" FromID=\"N-Y\" ToID=\"N-B\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-OUT-2\"><Connection ID=\"C-OUT-2\" FromID=\"N-Y\" ToID=\"N-B\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-SELF\"><Connection ID=\"C-SELF\" FromID=\"N-S\" ToID=\"N-S\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-PQ\"><Connection ID=\"C-PQ\" FromID=\"N-P\" ToID=\"N-Q\"/>"
+        + "</PipingNetworkSegment>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, first.getConnectionCycles().size());
+
+    DexpiConnectionCycleInfo connectedCycle = first.getConnectionCycles().get(0);
+    assertEquals("cycle-1", connectedCycle.getId());
+    assertEquals("component-1", connectedCycle.getConnectionComponentId());
+    assertEquals(Arrays.asList("N-X", "N-Y"), connectedCycle.getEndpointIds());
+    assertEquals(Arrays.asList("C-XY", "C-YX"), connectedCycle.getConnectionIds());
+    assertEquals(Arrays.asList("C-IN-1", "C-IN-2"), connectedCycle.getIncomingBoundaryConnectionIds());
+    assertEquals(Arrays.asList("C-OUT-1", "C-OUT-2"), connectedCycle.getOutgoingBoundaryConnectionIds());
+    assertEquals(2, connectedCycle.getIncomingBoundaryConnectionCount());
+    assertEquals(2, connectedCycle.getOutgoingBoundaryConnectionCount());
+
+    DexpiConnectionCycleInfo closedSelfReference = first.getConnectionCycles().get(1);
+    assertEquals("cycle-2", closedSelfReference.getId());
+    assertEquals(Collections.singletonList("C-SELF"), closedSelfReference.getConnectionIds());
+    assertTrue(closedSelfReference.getIncomingBoundaryConnectionIds().isEmpty());
+    assertTrue(closedSelfReference.getOutgoingBoundaryConnectionIds().isEmpty());
+
+    for (DexpiConnectionCycleInfo cycle : first.getConnectionCycles()) {
+      assertFalse(cycle.getEndpointIds().contains("N-P"));
+      assertFalse(cycle.getEndpointIds().contains("N-Q"));
+    }
+    assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getIncomingBoundaryConnectionIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getOutgoingBoundaryConnectionIds().clear());
+    assertTrue(first.toJson().contains("\"incomingBoundaryConnectionCount\": 2"));
+    assertTrue(first.toJson().contains("\"outgoingBoundaryConnectionIds\": ["));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
     int count = 0;
     for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {

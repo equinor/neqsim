@@ -34,8 +34,8 @@ and verifies six cross-layer scenarios:
   remediation;
 - warning-only composition-sum behavior that does not incorrectly mark the
   input invalid; and
-- preservation of inventory `1.22 / 20+20+31` with `validateInput` remaining a
-  `CONFIRMED_GAP` until this prerequisite evidence merges.
+- atomic inventory `1.23 / 20+21+30` promotion with `validateInput` classified
+  as `CONTRACT_TESTED` from the merged prerequisite evidence.
 
 The focused Java and packaged-MCP checks run in
 `.github/workflows/mcp_protocol_qualification.yml` before the comprehensive MCP
@@ -50,7 +50,7 @@ it does not guarantee that the model is complete, physically representative,
 numerically convergent, conservative, performant, suitable for a facility, or
 approved for an engineering decision.
 
-Phase 0 inventory remains version `1.22`: 20 tools have explicit trust, 20 have
-bounded contract evidence, and 31 remain confirmed gaps. This qualification PR
-does not promote `validateInput`; a later atomic promotion may proceed only
-after this evidence is merged and current `master` is re-audited.
+Phase 0 inventory version `1.23` retains 20 tools with explicit trust, promotes
+`validateInput` as the twenty-first bounded contract, and leaves 30 confirmed
+gaps. The classification is software-contract evidence only and adds no
+simulation-execution or scientific-validation claim.

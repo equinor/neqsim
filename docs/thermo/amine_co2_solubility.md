@@ -4,7 +4,6 @@ description: "Screening-level CO2 vapor-liquid equilibrium for aqueous alkanolam
 keywords: "amine, CO2 solubility, Kent-Eisenberg, MEA, DEA, MDEA, aMDEA, acid gas, absorption, loading, partial pressure, gas sweetening, carbon capture"
 ---
 
-# Amine CO2 Solubility — Kent-Eisenberg Model
 
 NeqSim provides a fast, screening-level model for the solubility of carbon dioxide
 in aqueous alkanolamine solvents. It implements the classic

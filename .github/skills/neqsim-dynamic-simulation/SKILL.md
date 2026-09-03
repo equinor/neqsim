@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-08-31"
+last_verified: "2026-09-01"
 ---
 
 # Dynamic Simulation Guidance
@@ -619,6 +619,26 @@ TransferFunctionBlock leadLag = new TransferFunctionBlock();
 ```
 
 ## Common Pitfalls
+
+Before relying on a mixed transient flowsheet, inspect its state-ownership inventory separately from runtime activation
+and physics qualification:
+
+```java
+neqsim.process.dynamics.DynamicCapabilityReport report =
+    neqsim.process.dynamics.DynamicCapabilityReport.from(process);
+if (!report.isFullyAudited()) {
+  throw new IllegalStateException(report.getReviewItems().toString());
+}
+report.assertStrictTransientReady();
+```
+
+All built-in process-element declarations of `runTransient(double, UUID)` are mapped, and CI rejects a new built-in
+override unless it is classified or cites an explicit repository ADR. Custom/downstream overrides remain
+`UNCLASSIFIED_DYNAMIC` until reviewed. `isFullyAudited()` is an inventory signal only: it does not certify numerical
+stability, conservation, benchmark parity, controls performance, or safety suitability. In particular,
+`PipeBeggsAndBrills` has distributed profile state but no conservative line-pack/storage term; do not use its capability
+label to claim severe-slugging or liquid-rich transient validity. Route those studies to the qualified `TwoFluidPipe`
+path and apply the relevant numerical and public-benchmark gates.
 
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)

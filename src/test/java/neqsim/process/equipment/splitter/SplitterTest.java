@@ -4,10 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -150,6 +149,28 @@ class SplitterTest {
     assertEquals(0.5, splitter.getSplitFactor(0), 0.01);
     assertEquals(0.3, splitter.getSplitFactor(1), 0.01);
     assertEquals(0.2, splitter.getSplitFactor(2), 0.01);
+  }
+
+  @Test
+  void testTransientRunIsAlgebraicAndMassConserving() {
+    double inletKgHr = inletStream.getFlowRate("kg/hr");
+    double inletTemperature = inletStream.getTemperature("C");
+
+    Splitter splitter = new Splitter("dynamic splitter", inletStream, 2);
+    splitter.setFlowRates(new double[] { Splitter.REMAINDER, 0.25 * inletKgHr }, "kg/hr");
+    splitter.setCalculateSteadyState(false);
+    splitter.setTransientSplitMode(Splitter.TransientSplitMode.PRESCRIBED_SPLIT);
+    splitter.runTransient(1.0, UUID.randomUUID());
+
+    double mainFlow = splitter.getSplitStream(0).getFlowRate("kg/hr");
+    double branchFlow = splitter.getSplitStream(1).getFlowRate("kg/hr");
+    assertEquals(inletKgHr, mainFlow + branchFlow, inletKgHr * 1.0e-6);
+    assertEquals(0.75 * inletKgHr, mainFlow, inletKgHr * 1.0e-4);
+    assertEquals(0.25 * inletKgHr, branchFlow, inletKgHr * 1.0e-4);
+    assertEquals(inletTemperature, inletStream.getTemperature("C"), 1.0e-12,
+        "A transient splitter must not back-mix its outlets into the inlet");
+    assertTrue(Double.isFinite(splitter.getSplitFactor(0)));
+    assertTrue(Double.isFinite(splitter.getSplitFactor(1)));
   }
 
   @Test

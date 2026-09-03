@@ -39,6 +39,17 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    */
   public static final double REMAINDER = -1.0;
 
+  /** Direction of information flow used when the splitter participates in a dynamic process. */
+  public enum TransientSplitMode {
+    /**
+     * Pressure-driven network: downstream equipment (valves) owns the branch flows and the splitter aggregates their
+     * demand onto the inlet stream.
+     */
+    DOWNSTREAM_DEMAND,
+    /** Prescribed split: the configured split factors or flow rates distribute the current inlet flow. */
+    PRESCRIBED_SPLIT
+  }
+
   /** Mechanical design for the splitter. */
   private SplitterMechanicalDesign mechanicalDesign;
 
@@ -53,6 +64,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /** Maximum design velocity [m/s]. */
   private double maxDesignVelocity = 30.0;
+
+  /** Direction of information flow in transient evaluations. */
+  private TransientSplitMode transientSplitMode = TransientSplitMode.DOWNSTREAM_DEMAND;
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -426,40 +440,85 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
-    if (getCalculateSteadyState()) {
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
+
+    if (getCalculateSteadyState() || transientSplitMode == TransientSplitMode.PRESCRIBED_SPLIT) {
+      // A splitter has no material or energy inventory of its own, so a prescribed split is an
+      // algebraic evaluation: each accepted step recalculates the outlet streams from the current
+      // inlet and the configured split.
       run(id);
-      increaseTime(dt);
-    } else {
-      increaseTime(dt);
-      Mixer mixer = new Mixer("tmpMixer");
-      for (int i = 0; i < splitStream.length; i++) {
-        splitStream[i].setPressure(inletStream.getPressure());
-        splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
-        splitStream[i].run();
-        mixer.addStream(splitStream[i]);
+      if (!alreadyEvaluatedForStep) {
+        increaseTime(dt);
       }
-      mixer.run();
+      return;
+    }
 
-      inletStream.setThermoSystem(mixer.getThermoSystem());
-      inletStream.run();
+    // Pressure-driven network: the downstream valves have already calculated their own branch
+    // flows from Cv and pressure difference, so the splitter aggregates that demand onto the
+    // inlet stream and reports the resulting split fractions.
+    if (!alreadyEvaluatedForStep) {
+      increaseTime(dt);
+    }
+    Mixer mixer = new Mixer("tmpMixer");
+    for (int i = 0; i < splitStream.length; i++) {
+      splitStream[i].setPressure(inletStream.getPressure());
+      splitStream[i].setTemperature(inletStream.getTemperature("C"), "C");
+      splitStream[i].run();
+      mixer.addStream(splitStream[i]);
+    }
+    mixer.run();
 
-      lastFlowRate = thermoSystem.getFlowRate("kg/hr");
-      lastTemperature = thermoSystem.getTemperature();
-      lastPressure = thermoSystem.getPressure();
-      lastComposition = thermoSystem.getMolarComposition();
+    inletStream.setThermoSystem(mixer.getThermoSystem());
+    inletStream.run();
+
+    lastFlowRate = inletStream.getFluid().getFlowRate("kg/hr");
+    lastTemperature = inletStream.getFluid().getTemperature();
+    lastPressure = inletStream.getFluid().getPressure();
+    lastComposition = inletStream.getFluid().getMolarComposition().clone();
+
+    double[] branchFlows = new double[splitStream.length];
+    double totalFlow = 0.0;
+    for (int i = 0; i < splitStream.length; i++) {
+      branchFlows[i] = splitStream[i].getFlowRate("kg/hr");
+      totalFlow += branchFlows[i];
+    }
+    if (totalFlow > 0.0) {
       double[] splits = new double[splitFactor.length];
-      double totalFlow = 0.0;
       for (int i = 0; i < splitFactor.length; i++) {
-        totalFlow += splits[i];
-      }
-      for (int i = 0; i < splitFactor.length; i++) {
-        splits[i] = splitFactor[i] / totalFlow;
+        splits[i] = branchFlows[i] / totalFlow;
       }
       splitFactor = splits;
-
-      oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
-      setCalculationIdentifier(id);
     }
+
+    oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Get the direction of information flow used in transient evaluations.
+   *
+   * @return configured transient split mode
+   */
+  public TransientSplitMode getTransientSplitMode() {
+    return transientSplitMode;
+  }
+
+  /**
+   * Select how the splitter participates in a dynamic process network.
+   *
+   * <p>
+   * {@link TransientSplitMode#DOWNSTREAM_DEMAND} keeps the pressure-driven behaviour where downstream valves calculate
+   * the branch flows. {@link TransientSplitMode#PRESCRIBED_SPLIT} distributes the current inlet flow according to the
+   * configured split factors or flow rates, which is required when an upstream unit owns the flow.
+   * </p>
+   *
+   * @param mode transient split mode; must not be null
+   */
+  public void setTransientSplitMode(TransientSplitMode mode) {
+    if (mode == null) {
+      throw new IllegalArgumentException("Transient split mode cannot be null");
+    }
+    this.transientSplitMode = mode;
   }
 
   /**
