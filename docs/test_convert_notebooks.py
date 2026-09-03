@@ -222,7 +222,6 @@ class ConvertNotebooksTest(unittest.TestCase):
                 )
                 self.assertNotRegex(body_without_fences, r"(?m)^# ")
 
-
     def test_converter_repairs_unambiguous_local_heading_links(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             examples_dir = Path(temp_dir)
