@@ -126,9 +126,33 @@ The recommended sequence is:
 2. Run the flowsheet with `process.run()` to converge pressures, flows, recycle state, and the compressor operating point.
 3. Record or check the initial point with `getDistanceToSurge()`, compressor inlet flow, head, speed, recycle valve opening, and discharge pressure.
 4. Set the dynamic timestep with `process.setTimeStep(...)`.
-5. Switch supported dynamic equipment to `setCalculateSteadyState(false)`. Typical candidates are valves, separators or volumes, compressor, cooler, and splitter.
-6. Keep algebraic convergence helpers such as `Recycle` in steady-state mode unless the specific class has transient state support. The recycle block should settle the loop at each timestep; the valve and equipment holdups carry the dynamics.
-7. Attach the anti-surge controller to the recycle valve and run with `process.runTransient()`.
+5. Switch supported dynamic equipment to `setCalculateSteadyState(false)`. Typical candidates are valves, separators or volumes, compressor, cooler, splitter, and the standard `Recycle`.
+6. Select `Compressor.TransientCalculationMode.QUASI_STEADY` when upstream dynamic equipment owns flow. The historical `MAP_FLOW_SOLVER` remains the default when the compressor map must solve upstream flow.
+7. Select `Splitter.TransientSplitMode.PRESCRIBED_SPLIT` when the upstream train owns total flow, or retain the default `DOWNSTREAM_DEMAND` for pressure-driven branches.
+8. Keep the same `Recycle` object that converged the steady-state tear stream. During `runTransient(...)` it performs one ordered direct-substitution transport update, then restores its configured steady-state acceleration method.
+9. Attach the anti-surge controller to the recycle valve and run with `process.runTransient()`.
+
+When the recycle valve calculates a pressure-driven request after the discharge
+splitter has run, place a `RecycleFlowCoordinator` after the valve in flowsheet
+order. It bounds recycle demand, preserves the main-plus-recycle mass balance,
+and supplies the accepted branch specification for the next evaluation:
+
+```java
+compressor.setTransientCalculationMode(
+    Compressor.TransientCalculationMode.QUASI_STEADY);
+compressor.setControllerSpeedRateLimitEnabled(true);
+splitter.setTransientSplitMode(Splitter.TransientSplitMode.PRESCRIBED_SPLIT);
+
+RecycleFlowCoordinator coordinator = new RecycleFlowCoordinator(
+    "anti-surge flow coordinator", compressor.getOutletStream(), splitter, recycleValve);
+coordinator.setMaximumRecycleFraction(0.85);
+process.add(coordinator); // after the recycle valve
+```
+
+`ProcessSystem` automatically uses sequential transient execution when it
+contains a `Recycle` or `RecycleFlowCoordinator`, even if parallel transient
+execution was requested. This protects the insertion-order dependency rather
+than silently running the recycle loop concurrently.
 
 This distinction is important because steady-state anti-surge and dynamic anti-surge are different problems. `AntiSurgeRecycleCalculator` is the preferred steady-state helper for a charted compressor when you want a cooled recycle stream mixed back into suction and solved to a configured surge-control margin. The older `AntiSurgeCalculator` is an algebraic splitter-based helper that adjusts recycle split flow during `process.run()`. `AntiSurgeController` is a transient controller that changes the recycle valve opening during `runTransient()` based on the compressor surge margin, optional prediction, and actuator dynamics.
 
@@ -241,7 +265,7 @@ application.setRunningMode();
 application.runDynamicStep(null, 0.25);
 ```
 
-When `scanInput` is `null`, the stage reads the bound compressor margin and inlet flow where available, falls back to the stage design basis where needed, writes the hot/cold recycle valve openings, applies the optional compressor speed command, and then `runDynamicStep(...)` advances the bound process with `process.runTransient()`. Keep algebraic `Recycle` blocks as recycle convergence helpers; the valve, compressor, cooler, mixer, and any volume-capable equipment carry the dynamic response.
+When `scanInput` is `null`, the stage reads the bound compressor margin and inlet flow where available, falls back to the stage design basis where needed, writes the hot/cold recycle valve openings, applies the optional compressor speed command, and then `runDynamicStep(...)` advances the bound process with `process.runTransient()`. The same `Recycle` objects used for steady-state convergence provide ordered direct-substitution transport between physical timesteps; the valve, compressor, cooler, mixer, and any volume-capable equipment carry the dynamic response.
 
 The application layer does not replace `AntiSurgeController` in every transient process model. For simple dynamic examples, `AntiSurgeController` can still be attached directly to the recycle valve. For studies that need stage coordination, startup states, hot/cold recycle split, diagnostics, speed runback, direct topology writeback, or commissioning evidence, the application layer provides the extra supervisory context.
 

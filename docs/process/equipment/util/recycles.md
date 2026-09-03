@@ -8,6 +8,7 @@ Documentation for recycle handling in NeqSim process simulation.
 ## Table of Contents
 - [Overview](#overview)
 - [Recycle Class](#recycle-class)
+- [Steady-to-Dynamic Handoff](#steady-to-dynamic-handoff)
 - [Convergence](#convergence)
 - [Acceleration Methods](#acceleration-methods)
 - [Usage Examples](#usage-examples)
@@ -61,6 +62,40 @@ process.run();
 2. **Calculate Downstream**: Equipment processes the estimate
 3. **Update Recycle**: New recycle stream values are calculated
 4. **Iterate**: Repeat until convergence
+
+---
+
+## Steady-to-Dynamic Handoff
+
+Use the same `Recycle` object for the converged steady state and the following
+transient. In steady state, `ProcessSystem` iterates the tear stream with the
+configured direct-substitution, Wegstein, or Broyden method. In transient mode,
+the previously accepted recycle outlet is consumed upstream before the current
+recycle inlet is published for the next flowsheet evaluation. This ordered
+dependency break avoids introducing a separate transient recycle class.
+
+```java
+process.run();
+
+if (!recycle.solved()) {
+    throw new IllegalStateException("Initial recycle did not converge");
+}
+
+recycle.setCalculateSteadyState(false);
+process.runTransient(0.25, UUID.randomUUID());
+```
+
+The transient update temporarily uses direct substitution and restores the
+configured steady-state acceleration method afterward. It does not iterate the
+recycle loop to steady convergence inside each physical timestep and does not
+add independent material inventory. Equipment such as separators, piping, and
+volumes owns the differential state.
+
+`ProcessSystem` detects `Recycle` and `RecycleFlowCoordinator` units and falls
+back to insertion-order sequential transient execution when required, even if
+parallel transient execution is enabled. A pressure-driven anti-surge topology
+can use `RecycleFlowCoordinator` to reconcile a valve-requested recycle flow
+with its discharge splitter while preserving mass balance.
 
 ---
 
