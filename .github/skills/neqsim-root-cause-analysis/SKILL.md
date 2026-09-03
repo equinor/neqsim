@@ -22,6 +22,38 @@ multi-source reliability data, plant historian time-series, and STID design cond
 - Valve erosion or malfunction
 - Any operational anomaly requiring structured root cause identification
 
+## Rapid Triage Mode (live disturbance)
+
+A full RCA is a study. When the plant is **still down** and a response team needs a
+direction within minutes, run the same framework in a reduced, explicitly labelled
+mode rather than a different method:
+
+| | Full RCA | Rapid triage |
+|---|---|---|
+| Prior | Multi-source reliability data | Reliability prior only, no source reconciliation |
+| Likelihood | Full historian window, quality-screened | Last stable period to now, unscreened |
+| Verification | NeqSim simulation of each hypothesis | Skipped; verification is deferred |
+| Output | Ranked hypotheses with confidence | Top 3 candidates, confidence capped at `MODERATE` |
+| Cause claim | Established when evidence supports it | `NOT_DETERMINED` unless a single candidate dominates |
+
+Rules that make the reduced mode safe to act on:
+
+1. **Label the mode in the output.** A triage result must never be presented, or
+   later quoted, as a completed RCA.
+2. **Cap the confidence.** Without simulation verification the confidence ceiling is
+   `MODERATE`, regardless of how strongly the historian agrees.
+3. **Time-box it.** State the box up front. When it expires, report the ranking as it
+   stands plus what is still unknown — restoration decisions do not wait for cause.
+4. **Report single-source dependence.** If every piece of evidence for the leading
+   candidate comes from one instrument or one system, say so; that is the most common
+   way a triage conclusion turns out wrong.
+5. **Promote, do not restart.** When the plant is stable, re-run the same hypotheses
+   in full mode with simulation verification; the triage ranking becomes the prior.
+
+Rapid triage is the diagnose step of a live-disturbance response loop. The incident
+coordination, phase gating, and restoration-option evaluation around it live in the
+operations agents that call this skill.
+
 ## Architecture Overview
 
 The RCA framework uses a Bayesian-inspired three-stage methodology:
