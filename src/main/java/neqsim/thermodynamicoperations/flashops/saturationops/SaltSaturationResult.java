@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Immutable diagnostics from adding a dissolved salt to activity saturation.
  *
  * <p>
- * The added amount is expressed as salt formula units. The result describes the existing
- * {@link CalcSaltSatauration} bracket and bisection calculation; it does not represent a solid phase or qualify the
- * underlying COMPSALT or activity-model parameters.
+ * The added amount is expressed as salt formula units. The result describes the existing {@link CalcSaltSatauration}
+ * bracket and bisection calculation; it does not represent a solid phase or qualify the underlying COMPSALT or
+ * activity-model parameters.
  * </p>
  *
  * @author Even Solbraa

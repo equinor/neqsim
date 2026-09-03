@@ -149,8 +149,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     boolean converged = Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE;
     boolean iterationLimitReached = !converged && solveIterations >= MAX_SATURATION_ITERATIONS;
     result = new SaltSaturationResult(saltName, initialSaturationRatio, saturationRatio, acceptedAddition,
-        bracketIterations, solveIterations, thermodynamicInitializationCount, false, converged,
-        iterationLimitReached);
+        bracketIterations, solveIterations, thermodynamicInitializationCount, false, converged, iterationLimitReached);
 
     logger.info("solution found for {} in calcSaltSatauration(), SR={}", saltName, saturationRatio);
   }

@@ -290,10 +290,10 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     secondSystem.addComponent("water", 55.508);
     secondSystem.setMixingRule("classic");
 
-    SaltSaturationResult firstResult =
-        new ThermodynamicOperations(firstSystem).calcSaltSaturationWithDiagnostics("CaSO4_A");
-    SaltSaturationResult secondResult =
-        new ThermodynamicOperations(secondSystem).calcSaltSaturationWithDiagnostics("CaSO4_A");
+    SaltSaturationResult firstResult = new ThermodynamicOperations(firstSystem)
+        .calcSaltSaturationWithDiagnostics("CaSO4_A");
+    SaltSaturationResult secondResult = new ThermodynamicOperations(secondSystem)
+        .calcSaltSaturationWithDiagnostics("CaSO4_A");
 
     assertEquals("CaSO4_A", firstResult.getSaltName());
     assertTrue(firstResult.getInitialSaturationRatio() >= 0.0);
@@ -314,8 +314,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(firstResult.getFinalSaturationRatio(), secondResult.getFinalSaturationRatio(), 1.0e-12);
     assertEquals(firstResult.getBracketIterations(), secondResult.getBracketIterations());
     assertEquals(firstResult.getSolveIterations(), secondResult.getSolveIterations());
-    assertEquals(firstResult.getThermodynamicInitializationCount(),
-        secondResult.getThermodynamicInitializationCount());
+    assertEquals(firstResult.getThermodynamicInitializationCount(), secondResult.getThermodynamicInitializationCount());
   }
 
   /** Verifies that salt saturation preserves the explicit legacy compatibility selection. */
