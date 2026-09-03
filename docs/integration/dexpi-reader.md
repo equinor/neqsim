@@ -180,8 +180,12 @@ continuous line or executable process network.
 of explicit non-empty material-connection endpoint references. A group is reported when it has more
 than one endpoint, or when a singleton endpoint has an explicit self-reference. Cycle groups are
 ordered by their first endpoint; endpoint IDs retain first-reference order and internal connection
-IDs retain source order, including parallel occurrences. `getConnections()` exposes the corresponding
-immutable `DexpiConnectionInfo` records in the same order, including source connection and owning
+IDs retain source order, including parallel occurrences. `getEndpoints()` exposes the corresponding
+immutable `DexpiConnectionEndpointInfo` records in first-reference order, including incidence role,
+resolution state, resolved XML element name, and Equipment/PipingComponent ownership. This lets Java
+and JPype reviewers inspect complete cycle-local endpoint evidence without joining against the global
+endpoint inventory. `getConnections()` exposes the corresponding immutable
+`DexpiConnectionInfo` records in the same order, including source connection and owning
 `PipingNetworkSegment` identities, endpoint resolution, resolved element names, and explicit
 Equipment/PipingComponent ownership. Each immutable `DexpiConnectionCycleInfo` links to its owning
 weak connection component, keeps unresolved endpoint IDs visible, and separately lists source-ordered
@@ -201,7 +205,8 @@ repair or rewire topology, or establish process intent.
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
 `connectionComponentCount`, `connectionCycleCount`, and the ordered connection, endpoint,
 component, and directed-cycle inventories, including incidence roles, review subsets, complete
-internal connection occurrences, and explicit cycle-boundary occurrences, alongside the process-unit
+cycle-local endpoint and internal connection occurrences, and explicit cycle-boundary occurrences,
+alongside the process-unit
 count and findings. Python callers through
 JPype use the same
 `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
