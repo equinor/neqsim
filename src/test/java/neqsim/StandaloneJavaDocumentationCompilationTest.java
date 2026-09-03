@@ -34,67 +34,41 @@ import org.junit.jupiter.api.io.TempDir;
 public class StandaloneJavaDocumentationCompilationTest {
   private static final int EXPECTED_EXAMPLE_COUNT = 14;
 
-  @TempDir Path compilationOutput;
+  @TempDir
+  Path compilationOutput;
 
   /** Verifies that the complete standalone documentation-example corpus matches the current API. */
   @Test
   void testStandaloneDocumentationExamplesCompile() throws IOException {
-    Path examplesDirectory =
-        Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
+    Path examplesDirectory = Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
     List<File> sourceFiles;
     try (Stream<Path> paths = Files.list(examplesDirectory)) {
-      sourceFiles =
-          paths
-              .filter(path -> path.getFileName().toString().endsWith(".java"))
-              .sorted()
-              .map(Path::toFile)
-              .collect(Collectors.toList());
+      sourceFiles = paths.filter(path -> path.getFileName().toString().endsWith(".java")).sorted().map(Path::toFile)
+          .collect(Collectors.toList());
     }
 
-    assertEquals(
-        EXPECTED_EXAMPLE_COUNT,
-        sourceFiles.size(),
+    assertEquals(EXPECTED_EXAMPLE_COUNT, sourceFiles.size(),
         "The compilation contract must track every catalogued standalone Java example");
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A full JDK is required to verify documentation examples");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 
-    try (StandardJavaFileManager fileManager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Iterable<? extends JavaFileObject> compilationUnits =
-          fileManager.getJavaFileObjectsFromFiles(sourceFiles);
-      List<String> options =
-          Arrays.asList(
-              "-classpath",
-              System.getProperty("java.class.path"),
-              "-d",
-              compilationOutput.toString(),
-              "-encoding",
-              StandardCharsets.UTF_8.name(),
-              "-proc:none");
+    try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null,
+        StandardCharsets.UTF_8)) {
+      Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFiles);
+      List<String> options = Arrays.asList("-classpath", System.getProperty("java.class.path"), "-d",
+          compilationOutput.toString(), "-encoding", StandardCharsets.UTF_8.name(), "-proc:none");
 
-      Boolean compiled =
-          compiler
-              .getTask(null, fileManager, diagnostics, options, null, compilationUnits)
-              .call();
+      Boolean compiled = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits).call();
       assertTrue(Boolean.TRUE.equals(compiled), formatDiagnostics(diagnostics));
     }
   }
 
   private static String formatDiagnostics(DiagnosticCollector<JavaFileObject> diagnostics) {
     return diagnostics.getDiagnostics().stream()
-        .map(
-            diagnostic ->
-                (diagnostic.getSource() == null
-                        ? "<compiler>"
-                        : diagnostic.getSource().getName())
-                    + ":"
-                    + diagnostic.getLineNumber()
-                    + ": "
-                    + diagnostic.getKind()
-                    + ": "
-                    + diagnostic.getMessage(null))
+        .map(diagnostic -> (diagnostic.getSource() == null ? "<compiler>" : diagnostic.getSource().getName()) + ":"
+            + diagnostic.getLineNumber() + ": " + diagnostic.getKind() + ": " + diagnostic.getMessage(null))
         .collect(Collectors.joining(System.lineSeparator()));
   }
 }
