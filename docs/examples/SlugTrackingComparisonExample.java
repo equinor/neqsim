@@ -2,6 +2,8 @@ package examples;
 
 import java.util.UUID;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker.AccumulationZone;
+import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker.SlugUnit;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -185,7 +187,7 @@ public class SlugTrackingComparisonExample {
     int tf_outletSlugs = twoFluidPipe.getOutletSlugCount();
     double tf_maxLength = twoFluidPipe.getSlugTracker().getMaxSlugLength();
     double tf_maxVolume = 0;
-    for (var slug : twoFluidPipe.getSlugTracker().getSlugs()) {
+    for (SlugUnit slug : twoFluidPipe.getSlugTracker().getSlugs()) {
       tf_maxVolume = Math.max(tf_maxVolume, slug.liquidVolume);
     }
     int tf_accumZones = twoFluidPipe.getAccumulationTracker().getAccumulationZones().size();
@@ -231,14 +233,14 @@ public class SlugTrackingComparisonExample {
     // TransientPipe doesn't track outlet slugs separately, estimate from slugs past last section
     int df_outletSlugs = 0;
     double pipeLength = length;
-    for (var slug : driftFluxPipe.getSlugTracker().getSlugs()) {
+    for (SlugUnit slug : driftFluxPipe.getSlugTracker().getSlugs()) {
       if (slug.frontPosition >= pipeLength * 0.95) {
         df_outletSlugs++;
       }
     }
     double df_maxLength = driftFluxPipe.getSlugTracker().getMaxSlugLength();
     double df_maxVolume = 0;
-    for (var slug : driftFluxPipe.getSlugTracker().getSlugs()) {
+    for (SlugUnit slug : driftFluxPipe.getSlugTracker().getSlugs()) {
       df_maxVolume = Math.max(df_maxVolume, slug.liquidVolume);
     }
     int df_accumZones = driftFluxPipe.getAccumulationTracker().getAccumulationZones().size();
@@ -350,14 +352,14 @@ public class SlugTrackingComparisonExample {
     System.out.println("Accumulation Zone Details:");
     System.out.println();
     System.out.println("Two-Fluid Model Zones:");
-    for (var zone : twoFluidPipe.getAccumulationTracker().getAccumulationZones()) {
+    for (AccumulationZone zone : twoFluidPipe.getAccumulationTracker().getAccumulationZones()) {
       int startSec = zone.sectionIndices.isEmpty() ? -1 : zone.sectionIndices.get(0);
       System.out.printf("  Zone at section %d: volume=%.2f m³, fill=%.1f%%%n", startSec,
           zone.liquidVolume, 100.0 * zone.liquidVolume / zone.maxVolume);
     }
     System.out.println();
     System.out.println("Drift-Flux Model Zones:");
-    for (var zone : driftFluxPipe.getAccumulationTracker().getAccumulationZones()) {
+    for (AccumulationZone zone : driftFluxPipe.getAccumulationTracker().getAccumulationZones()) {
       int startSec = zone.sectionIndices.isEmpty() ? -1 : zone.sectionIndices.get(0);
       System.out.printf("  Zone at section %d: volume=%.2f m³, fill=%.1f%%%n", startSec,
           zone.liquidVolume, 100.0 * zone.liquidVolume / zone.maxVolume);
