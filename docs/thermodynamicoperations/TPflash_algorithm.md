@@ -2252,6 +2252,36 @@ qualification; no wall-clock threshold or production speedup is claimed. Product
 parameters/defaults, electrolyte and reactive paths, solids/wax, saturation search, Column Solver, Process Performance,
 and Huldra are outside this tranche.
 
+### 6.4.11 Water-rich SRK-CPA three-phase lifecycle qualification
+
+The associating-fluid qualification uses `SystemSrkCPAstatoil` with mixing rule 10 at 313.15 K and 20.0 bara. The dry
+inventory contains 25 mol methane, 5 mol ethane, 5 mol propane, 4 mol n-butane, 4 mol n-pentane, 6 mol n-hexane, 8 mol
+n-heptane, 8 mol n-octane, 15 mol of a C10 TBP fraction with molar mass 0.142 kg/mol and density 0.78 kg/L, and 20 mol
+of a C20 TBP fraction with molar mass 0.282 kg/mol and density 0.88 kg/L. Water is added from the requested mass
+fraction $w$ as $n_{water}=(11.29556/0.01801528)w/(1-w)$ mol. The constants use kilograms and kilograms per mole, so
+the resulting amount is in moles.
+
+Water mass fractions from 0.40 through 0.80 must retain GAS+OIL+AQUEOUS equilibrium. The established gas-beta anchors
+decrease continuously from `0.0441902453511` at 0.40 water mass fraction to `0.00844359351489` at 0.80. Nearby states
+at 312.65 K/19.5 bara, 313.15 K/20.0 bara, and 313.65 K/20.5 bara must recover the same topology from an initial beta
+of `1e-10`.
+
+Every qualified state requires finite bounded phase fractions and compositions, beta and phase normalization within
+`1e-12`, component material balance below `1e-10`, and maximum comparable interphase log-fugacity residual below
+`1e-8`. Each phase must also have positive finite compressibility and density, while total Gibbs energy and enthalpy
+must remain finite. Phases are matched by `PhaseType`, so phase-array reordering cannot hide a lifecycle mismatch.
+
+A reused reference system is moved from 20.0 to 20.5 bara, compared with a fresh calculation, returned to 20.0 bara,
+and flashed again. The changed state, returned state, and immediate repeat must reproduce the corresponding fresh or
+retained equilibria within the frozen per-property tolerances. The existing `ThreePhaseSeparator` sweep remains a
+process-composability check without changing process-equipment production code.
+
+The focused class performs 22 explicit complete TP flashes plus four bounded separator cases. This fixed workload is
+performance evidence only; no wall-clock threshold or production speedup is claimed. The composition is synthetic
+numerical evidence, not experimental validation of CPA parameters or the predicted phase fractions. Production solver
+code, public APIs, association parameters, mixing-rule defaults, electrolyte/reaction models, saturation search,
+Column Solver, generic Process Performance, proprietary data, and Huldra are outside this tranche.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
