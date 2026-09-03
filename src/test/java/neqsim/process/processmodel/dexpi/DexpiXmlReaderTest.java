@@ -595,6 +595,18 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("component-2", threeEndpointCycle.getConnectionComponentId());
     assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getEndpointIds());
     assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), threeEndpointCycle.getConnectionIds());
+    List<DexpiConnectionInfo> internalConnections = threeEndpointCycle.getConnections();
+    assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"),
+        Arrays.asList(internalConnections.get(0).getId(), internalConnections.get(1).getId(),
+            internalConnections.get(2).getId(), internalConnections.get(3).getId()));
+    assertEquals("C-3", internalConnections.get(0).getSourceId());
+    assertEquals("S-3", internalConnections.get(0).getSegmentId());
+    assertEquals("N-X", internalConnections.get(0).getFromId());
+    assertEquals("N-Y", internalConnections.get(0).getToId());
+    assertEquals("E-X", internalConnections.get(0).getFromOwnerId());
+    assertEquals("E-Y", internalConnections.get(0).getToOwnerId());
+    assertTrue(internalConnections.get(0).isResolved());
+    assertEquals("S-3P", internalConnections.get(1).getSegmentId());
     assertEquals(3, threeEndpointCycle.getEndpointCount());
     assertEquals(4, threeEndpointCycle.getConnectionCount());
     assertFalse(threeEndpointCycle.hasSelfReference());
@@ -605,6 +617,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("component-4", selfReference.getConnectionComponentId());
     assertEquals(Collections.singletonList("N-S"), selfReference.getEndpointIds());
     assertEquals(Collections.singletonList("C-8"), selfReference.getConnectionIds());
+    assertEquals("C-8", selfReference.getConnections().get(0).getSourceId());
+    assertEquals("S-8", selfReference.getConnections().get(0).getSegmentId());
+    assertTrue(selfReference.getConnections().get(0).isSelfReference());
     assertTrue(selfReference.hasSelfReference());
 
     DexpiConnectionCycleInfo unresolved = first.getConnectionCycles().get(2);
@@ -612,6 +627,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("component-5", unresolved.getConnectionComponentId());
     assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getEndpointIds());
     assertEquals(Arrays.asList("C-9", "C-10"), unresolved.getConnectionIds());
+    assertEquals(2, unresolved.getConnections().size());
+    assertEquals("S-9", unresolved.getConnections().get(0).getSegmentId());
+    assertFalse(unresolved.getConnections().get(0).isResolved());
     assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getUnresolvedEndpointIds());
     assertTrue(unresolved.hasUnresolvedEndpoints());
 
@@ -620,8 +638,11 @@ public class DexpiXmlReaderTest extends NeqSimTest {
       assertFalse(cycle.getEndpointIds().contains("N-Q"));
     }
     assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpointIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getConnections().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionCycles().clear());
     assertTrue(first.toJson().contains("\"connectionCycleCount\": 3"));
+    assertTrue(first.toJson().contains("\"connections\": ["));
+    assertTrue(first.toJson().contains("\"segmentId\": \"S-3\""));
     assertTrue(first.toJson().contains("\"connectionComponentId\": \"component-4\""));
     assertTrue(first.toJson().contains("\"selfReference\": true"));
     assertEquals(first.toJson(), second.toJson());
@@ -723,6 +744,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleInfo legacy = new DexpiConnectionCycleInfo("legacy", "component-legacy",
         Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
         Collections.<String>emptyList(), Collections.<String>emptyList(), false);
+    assertTrue(legacy.getConnections().isEmpty());
     assertTrue(legacy.getBoundaryConnections().isEmpty());
     DexpiConnectionCycleBoundaryInfo legacyBoundary = new DexpiConnectionCycleBoundaryInfo("legacy-boundary",
         DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, "N-INTERNAL", "N-EXTERNAL", true, false);
