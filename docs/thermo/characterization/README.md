@@ -62,6 +62,13 @@ See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the comple
 The qualified inputs are assembled into one reusable reference composition by
 [DOE Big Hill Sweet complete modeled assay slate](refinery_big_hill_complete_slate).
 
+A second public operating case is retained by
+[Al-Diwiniya atmospheric operating reference](refinery_al_diwiniya_atmospheric_reference).
+Its 2-60 liquid-vol% partial TBP curve, plant configuration, product rates, and draw
+temperatures remain explicitly separate from the complete DOE modeled slate. The
+source fixed its HYSYS product rates, so those values are operating specifications
+rather than independent yield-validation evidence.
+
 ## TBP fraction models
 
 TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS. Available implementations include Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert, Twu, Cavett, and Standing.
@@ -153,6 +160,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [DOE Big Hill assay nitrogen qualification](refinery_big_hill_nitrogen_validation)
 - [DOE Big Hill terminal-cut boundary qualification](refinery_big_hill_terminal_boundary_validation)
 - [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
+- [Al-Diwiniya atmospheric operating reference](refinery_al_diwiniya_atmospheric_reference)
 - [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation)
 - [Fluid Characterization Guide](../../wiki/fluid_characterization)
 - [TBP Fraction Models](../../wiki/tbp_fraction_models)
