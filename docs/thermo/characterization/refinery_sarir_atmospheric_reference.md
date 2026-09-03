@@ -61,6 +61,38 @@ double errorPercent = diesel.getAbsoluteRelativeErrorPercent();
 
 Static methods are directly accessible through JPype. Arrays are defensive copies, and unknown product labels or invalid error inputs fail closed.
 
+## Constrained pseudo-component input
+
+`SarirAtmosphericAssay` converts the published cumulative TBP coordinates into 18 liquid-volume
+cuts: a 7.44 vol% `70 degC-` cut, 16 bounded intervals, and the 16.30 vol% `550 degC+`
+residue. The first and last cuts remain one-sided; the factory does not invent a numeric
+initial boiling point, residue endpoint, light-end composition, or per-cut property.
+
+The article reports only whole-crude density and average molar mass. Callers must therefore
+supply 18 cut specific gravities and 18 cut molar masses. Before changing the attached assay,
+the factory requires the volume-weighted density profile to reproduce 841.5 kg/m3 within
+1.0 kg/m3 and the mass-weighted number-average molar mass to reproduce 0.2447 kg/mol within
+0.001 kg/mol. These tolerances are deterministic model-consistency gates, not estimates of
+experimental uncertainty.
+
+```java
+double[] cutSpecificGravity = engineeringDensityProfile;
+double[] cutMolarMassKgPerMol = engineeringMolarMassProfile;
+
+OilAssayCharacterisation assay = SarirAtmosphericAssay.create(
+    system, 1000.0, cutSpecificGravity, cutMolarMassKgPerMol);
+assay.apply();
+```
+
+`calculateBulkSpecificGravity(...)`, `calculateBulkMolarMassKgPerMol(...)`, and
+`getCutVolumePercent()` are available to Java and Python/JPype callers for preflight and
+traceability. Profile validation completes before existing assay data or thermodynamic
+components are modified.
+
 ## Scientific boundary
 
-This increment qualifies source transcription, units, open-ended TBP treatment, and evidence classification. It does not yet construct a Sarir pseudo-component slate or claim that NeqSim reproduces the plant yields. A follow-on process-model comparison must keep the plant rates as untouched acceptance targets, document the missing light-end allocation, and avoid tuning draw rates to the published products.
+The source-derived volumes and boiling boundaries are reproducible, while every supplied cut
+density and molar mass remains an explicit engineering input. The factory does not resolve the
+missing light-end composition, distribute the published whole-crude sulfur among cuts, or claim
+that NeqSim reproduces the plant yields. A follow-on 34-tray comparison must preserve the plant
+rates as untouched acceptance targets and avoid tuning draw rates to the published products.

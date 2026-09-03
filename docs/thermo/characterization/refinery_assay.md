@@ -206,6 +206,19 @@ The [complete modeled-slate contract and provenance](refinery_big_hill_complete_
 assumptions, exact mass closure, and the boundary between reproducibility and property/process
 validation.
 
+## Constrained Sarir pseudo-component input
+
+`SarirAtmosphericAssay.create(...)` converts the public Sarir cumulative TBP evidence into 18
+volume-basis cuts while preserving the `70 degC-` and `550 degC+` terminal intervals as one-sided.
+The source does not publish cut density or molar-mass profiles, so both are required caller inputs.
+The factory accepts a profile only when it reconciles the reported 841.5 kg/m3 whole-crude density
+within 1.0 kg/m3 and the reported 0.2447 kg/mol average molar mass within 0.001 kg/mol.
+
+This capability makes the missing-property boundary executable instead of silently filling it.
+It does not resolve Sarir light-end composition, distribute whole-crude sulfur, or qualify
+fractionation yields. The [Sarir reference and input contract](refinery_sarir_atmospheric_reference)
+provide provenance, Java/JPype usage, and the process-validation stop boundary.
+
 ## Open-ended terminal boiling boundaries
 
 Terminal assay cuts often publish only one boiling limit. Use
