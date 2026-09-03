@@ -40,6 +40,9 @@ public final class DexpiConnectionCycleBoundaryInfo implements Serializable {
   private final String externalOwnerElementName;
   private final boolean internalEndpointResolved;
   private final boolean externalEndpointResolved;
+  private final DexpiConnectionInfo connection;
+  private final DexpiConnectionEndpointInfo internalEndpoint;
+  private final DexpiConnectionEndpointInfo externalEndpoint;
 
   /**
    * Creates immutable cycle-boundary source-reference evidence.
@@ -105,6 +108,34 @@ public final class DexpiConnectionCycleBoundaryInfo implements Serializable {
       String internalOwnerElementName, String externalEndpointId, String externalEndpointElementName,
       String externalOwnerId, String externalOwnerElementName, boolean internalEndpointResolved,
       boolean externalEndpointResolved) {
+    this(connectionId, sourceId, segmentId, direction, internalEndpointId, internalEndpointElementName, internalOwnerId,
+        internalOwnerElementName, externalEndpointId, externalEndpointElementName, externalOwnerId,
+        externalOwnerElementName, internalEndpointResolved, externalEndpointResolved, null, null, null);
+  }
+
+  /**
+   * Creates complete immutable evidence for one cycle-boundary connection occurrence.
+   *
+   * @param connection complete source connection occurrence
+   * @param direction connection direction relative to the cyclic group
+   * @param internalEndpoint complete endpoint evidence inside the cyclic group
+   * @param externalEndpoint complete endpoint evidence outside the cyclic group
+   */
+  public DexpiConnectionCycleBoundaryInfo(DexpiConnectionInfo connection, Direction direction,
+      DexpiConnectionEndpointInfo internalEndpoint, DexpiConnectionEndpointInfo externalEndpoint) {
+    this(connection.getId(), connection.getSourceId(), connection.getSegmentId(), direction,
+        internalEndpoint.getEndpointId(), internalEndpoint.getElementName(), internalEndpoint.getOwnerId(),
+        internalEndpoint.getOwnerElementName(), externalEndpoint.getEndpointId(), externalEndpoint.getElementName(),
+        externalEndpoint.getOwnerId(), externalEndpoint.getOwnerElementName(), internalEndpoint.isResolved(),
+        externalEndpoint.isResolved(), connection, internalEndpoint, externalEndpoint);
+  }
+
+  private DexpiConnectionCycleBoundaryInfo(String connectionId, String sourceId, String segmentId, Direction direction,
+      String internalEndpointId, String internalEndpointElementName, String internalOwnerId,
+      String internalOwnerElementName, String externalEndpointId, String externalEndpointElementName,
+      String externalOwnerId, String externalOwnerElementName, boolean internalEndpointResolved,
+      boolean externalEndpointResolved, DexpiConnectionInfo connection, DexpiConnectionEndpointInfo internalEndpoint,
+      DexpiConnectionEndpointInfo externalEndpoint) {
     this.connectionId = normalize(connectionId);
     this.sourceId = normalize(sourceId);
     this.segmentId = normalize(segmentId);
@@ -119,6 +150,9 @@ public final class DexpiConnectionCycleBoundaryInfo implements Serializable {
     this.externalOwnerElementName = normalize(externalOwnerElementName);
     this.internalEndpointResolved = internalEndpointResolved;
     this.externalEndpointResolved = externalEndpointResolved;
+    this.connection = connection;
+    this.internalEndpoint = internalEndpoint;
+    this.externalEndpoint = externalEndpoint;
   }
 
   /** @return connection-evidence identity */
@@ -196,6 +230,41 @@ public final class DexpiConnectionCycleBoundaryInfo implements Serializable {
     return externalEndpointResolved;
   }
 
+  /** @return whether complete source connection evidence is available */
+  public boolean hasConnectionEvidence() {
+    return connection != null;
+  }
+
+  /** @return complete source connection evidence, or null for legacy-constructed values */
+  public DexpiConnectionInfo getConnection() {
+    return connection;
+  }
+
+  /** @return whether complete internal endpoint evidence is available */
+  public boolean hasInternalEndpointEvidence() {
+    return internalEndpoint != null;
+  }
+
+  /** @return complete internal endpoint evidence, or null for legacy-constructed values */
+  public DexpiConnectionEndpointInfo getInternalEndpoint() {
+    return internalEndpoint;
+  }
+
+  /** @return whether complete external endpoint evidence is available */
+  public boolean hasExternalEndpointEvidence() {
+    return externalEndpoint != null;
+  }
+
+  /** @return complete external endpoint evidence, or null for legacy-constructed values */
+  public DexpiConnectionEndpointInfo getExternalEndpoint() {
+    return externalEndpoint;
+  }
+
+  /** @return whether the connection and both complete endpoint records are available */
+  public boolean hasCompleteEvidence() {
+    return connection != null && internalEndpoint != null && externalEndpoint != null;
+  }
+
   Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("connectionId", connectionId);
@@ -212,6 +281,13 @@ public final class DexpiConnectionCycleBoundaryInfo implements Serializable {
     result.put("externalOwnerElementName", externalOwnerElementName);
     result.put("internalEndpointResolved", Boolean.valueOf(internalEndpointResolved));
     result.put("externalEndpointResolved", Boolean.valueOf(externalEndpointResolved));
+    result.put("completeEvidence", Boolean.valueOf(hasCompleteEvidence()));
+    result.put("connection",
+        connection == null ? new LinkedHashMap<String, Object>() : connection.toMap());
+    result.put("internalEndpoint",
+        internalEndpoint == null ? new LinkedHashMap<String, Object>() : internalEndpoint.toMap());
+    result.put("externalEndpoint",
+        externalEndpoint == null ? new LinkedHashMap<String, Object>() : externalEndpoint.toMap());
     return result;
   }
 
