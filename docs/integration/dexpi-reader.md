@@ -184,14 +184,21 @@ IDs retain source order, including parallel occurrences. Each immutable
 `DexpiConnectionCycleInfo` links to its owning weak connection component, keeps unresolved endpoint
 IDs visible, and separately lists source-ordered connection occurrences entering and leaving the
 cyclic group. Boundary lists preserve parallel references and exclude connections whose source or
-target identity is blank. This is graph-source evidence only: it does not identify a hydraulic
-recycle, enumerate elementary paths, assert convergence behavior, repair or rewire topology, or
-establish process intent.
+target identity is blank. `getBoundaryConnections()` additionally preserves the overall source order
+across incoming and outgoing occurrences. Each immutable `DexpiConnectionCycleBoundaryInfo` records
+the connection ID, direction relative to the cyclic group, explicit internal and external endpoint
+identities, whether each endpoint resolves, and the resolved endpoint element and Equipment/PipingComponent owner
+identities already present in the endpoint inventory. Missing or unresolved owner evidence remains an empty field.
+This avoids inferring boundary orientation or ownership by joining separate inventories while retaining parallel and
+unresolved source evidence.
+It does not identify a hydraulic recycle, enumerate elementary paths, assert convergence behavior,
+repair or rewire topology, or establish process intent.
 
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
 `connectionComponentCount`, `connectionCycleCount`, and the ordered connection, endpoint,
-component, and directed-cycle inventories, including incidence roles and review subsets, alongside
-the process-unit count and findings. Python callers through JPype use the same
+component, and directed-cycle inventories, including incidence roles, review subsets, and explicit
+cycle-boundary occurrences, alongside the process-unit count and findings. Python callers through
+JPype use the same
 `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
 `ImportResult.getConnectionEndpoints()`, `ImportResult.getConnectionComponents()`, and
 `ImportResult.getConnectionCycles()` getters; there is no separate Python reconstruction model.

@@ -1,11 +1,11 @@
 ---
 title: "DOE Big Hill atmospheric fractionation qualification"
-description: "Rigorous-column integration benchmark for the bounded DOE Big Hill Sweet refinery-assay slice."
+description: "Rigorous-column integration benchmarks for bounded and complete modeled DOE Big Hill Sweet assay slates."
 ---
 
 # DOE Big Hill atmospheric fractionation qualification
 
-Issue #3305 separates refinery validation into explicit quality gates. The first DOE Big Hill increment qualified refinery-assay bookkeeping. This benchmark advances the next gate by sending the same public assay basis through NeqSim's rigorous `DistillationColumn` and checking process-level conservation, boiling-order separation, and repeatability.
+Issue #3305 separates refinery validation into explicit quality gates. The first DOE Big Hill increment qualified refinery-assay bookkeeping. These benchmarks advance the next gate by sending public assay representations through NeqSim's rigorous `DistillationColumn` and checking process-level conservation, boiling-order separation, and repeatability.
 
 ## Public source and evidence boundary
 
@@ -29,7 +29,7 @@ This benchmark uses the **measured mass-yield basis** for the five intervals tha
 
 The five bounded cuts are normalized on their own basis. The C5-/175 degF light tail and 1050 degF+ vacuum residuum are **not** included because assigning finite boiling limits to those open-ended fractions would invent data that the published table does not provide.
 
-Accordingly, this is an **integration and numerical-robustness qualification**, not an independent validation of full crude-column product yields. It does not claim that the normalized five-cut slate represents the complete Big Hill crude.
+Accordingly, this first tier is an **integration and numerical-robustness qualification**, not an independent validation of full crude-column product yields. It does not claim that the normalized five-cut slate represents the complete Big Hill crude.
 
 ## Column benchmark
 
@@ -82,19 +82,52 @@ The regression requires all of the following on each accepted solve:
 
 The 5% process-balance gates are screening tolerances for this first broad-boiling integration case. They are intentionally much looser than the `1e-10` pseudo-component creation mass-closure gate because the column itself is an iterative process solver. Tighter refinery-specific balance gates should be introduced only after this public heavy-slate case establishes a stable baseline.
 
+## Complete modeled slate benchmark
+
+`DoeBigHillCompleteAtmosphericFractionationTest` adds a second integration tier using the reusable `DoeBigHillSweetAssay` factory. Its primary sources are the official DOE SPR [Big Hill Sweet comprehensive assay](https://www.spr.doe.gov/reports/Assays/2024/BigHillSwAssay.xlsx), reported 24 September 2021, and companion [PIANO workbook](https://www.spr.doe.gov/reports/Assays/2021/BigHillSwPIANO.xlsx).
+
+The complete modeled feed contains all 12 components qualified by the characterization campaign:
+
+- ethane, propane, i-butane, and n-butane allocated across the 1.70 mass% gas slice by normalizing DOE's reported C2-C4 PIANO subset;
+- the C5-175 degF cut with its PIANO-derived number-average molar mass and published upper boundary;
+- six bounded 175-1050 degF petroleum cuts;
+- the 1050 degF+ residue with its published lower boundary, specific gravity, and Watson factor.
+
+The light-end allocation and zero sulfur or nitrogen values used where DOE leaves a cell blank remain explicit modeling assumptions. They are not additional measurements.
+
+The complete-slate screening point deliberately reuses the proven bounded-column topology:
+
+| Quantity | Complete-slate benchmark value |
+| --- | ---: |
+| Feed flow | 5000 kg/h |
+| Feed temperature | 550 K |
+| Feed pressure | 1.5 bara |
+| Internal trays | 8 |
+| Feed tray | 4, bottom-up |
+| Top pressure | 1.2 bara |
+| Bottom pressure | 1.5 bara |
+| Condenser mode | Partial |
+| Reboiler temperature | 650 K |
+| Condenser reflux ratio | 1.0 |
+| Liquid side draw | 10% of tray-4 liquid traffic |
+
+The test requires all 12 components to reach the column, a non-fallback `MESH_RESIDUAL` solution, positive overhead/side-draw/bottoms products, external mass closure, enforced energy closure, internal tray material closure, and per-component molar conservation. It also requires C2-C4 enrichment toward the overhead, 1050 degF+ enrichment toward the bottoms, composition-weighted normal-boiling-point ordering of **overhead < side draw < bottoms**, and 1% repeated-solve agreement for product flows and boiling descriptors. A 120 s timeout fails closed on a solver stall.
+
+The complete-slate case is still an integration qualification. The DOE workbooks do not publish a matching atmospheric-column tray count, feed condition, pressure profile, furnace duty, stripping steam, reflux, pump-around duties, or product specifications. Therefore agreement with the DOE assay cut table would not by itself validate simulated plant product yields.
+
 ## What this benchmark advances
 
 This increment exercises, in one regression:
 
-`DOE assay facts -> OilAssayCharacterisation -> TBP pseudo-components -> Stream -> rigorous DistillationColumn -> three refinery-style product draws`
+`DOE assay facts -> reusable complete modeled slate -> standard and TBP components -> Stream -> rigorous DistillationColumn -> three refinery-style product draws`
 
 That closes an important integration gap between the characterization foundation and the refinery fractionation workstream. It also protects against future changes that would make heavy pseudo-components impossible to use in a near-atmospheric column even when assay bookkeeping still passes.
 
 ## Remaining scientific gaps
 
-This benchmark does **not** validate:
+These benchmarks do **not** validate:
 
-- the omitted light-end and 1050 degF+ tails;
+- the normalized C2-C4 allocation as a complete measured gas analysis;
 - generated pseudo-component molecular weights, critical properties, or acentric factors against independent laboratory property data;
 - full-crude atmospheric product yields or cut-point recovery;
 - pump-around heat duties, side strippers, or a refinery preheat/furnace train;
@@ -102,4 +135,4 @@ This benchmark does **not** validate:
 - ASTM D86/D1160-to-TBP conversions;
 - refinery conversion units.
 
-The next dependency-ready refinery increment should ingest a complete openly reproducible assay representation with defensible light/residue treatment and compare atmospheric product yields/boiling ranges against independent public evidence. Only after that gate should #3305 advance to vacuum fractionation or conversion-unit models.
+The next scientific gate should use a public atmospheric operating case that includes enough column design and operating information to compare product yields and boiling ranges without tuning to an under-specified target. Only after that gate should #3305 advance to vacuum fractionation or conversion-unit models.

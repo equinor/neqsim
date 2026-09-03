@@ -984,7 +984,6 @@ print(f"Total SURF CAPEX: ${total:,.0f}")
 for item, cost in costs.items():
     print(f"  {item}: ${cost:,.0f} ({100*cost/total:.1f}%)")
 ```
-```
 
 ---
 

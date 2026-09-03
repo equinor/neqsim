@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Degraded operation analysis for process plants. Model partial equipment failures, reduced capacity scenarios, and production impact using NeqSim simulations."
 ---
 
-# Degraded Operation Optimization
 
 When equipment fails, plants often continue operating at reduced capacity. The `DegradedOperationOptimizer` finds the best operating strategy during equipment outages.
 

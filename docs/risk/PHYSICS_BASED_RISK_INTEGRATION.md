@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Integration of physics-based process simulation with probabilistic risk analysis. Combines NeqSim thermodynamic and process models with reliability and consequence modeling."
 ---
 
-# Physics-Based Risk Integration in NeqSim
 
 This document describes how the risk framework integrates with NeqSim's physics-based process simulation capabilities.
 

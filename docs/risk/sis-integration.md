@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Safety Instrumented System (SIS) integration with NeqSim process simulation. SIL verification, proof test intervals, common cause failures, and IEC 61508/61511 compliance."
 ---
 
-# P2: Safety Instrumented System (SIS) Integration
 
 ## Overview
 

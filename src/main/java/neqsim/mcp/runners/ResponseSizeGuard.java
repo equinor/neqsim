@@ -86,12 +86,13 @@ public final class ResponseSizeGuard {
     if (response == null || MAX_BYTES <= 0) {
       return false;
     }
-    int size = serializedSize(response);
-    if (size <= MAX_BYTES) {
+    int originalBytes = serializedSize(response);
+    if (originalBytes <= MAX_BYTES) {
       return false;
     }
 
     JsonArray omitted = new JsonArray();
+    JsonObject truncation = null;
     for (String field : trimCandidates(response, toolName)) {
       JsonElement removed = response.remove(field);
       if (removed == null) {
@@ -107,8 +108,11 @@ public final class ResponseSizeGuard {
       if (response.has("data") && response.get("data").isJsonObject()) {
         response.getAsJsonObject("data").remove(field);
       }
-      size = serializedSize(response);
-      if (size <= MAX_BYTES) {
+
+      if (truncation == null) {
+        truncation = addTruncationMetadata(response, toolName, originalBytes, omitted);
+      }
+      if (updateReturnedBytes(response, truncation) <= MAX_BYTES) {
         break;
       }
     }
@@ -117,13 +121,27 @@ public final class ResponseSizeGuard {
       return false;
     }
 
+    updateReturnedBytes(response, truncation);
+    return true;
+  }
+
+  /**
+   * Adds the truncation description and warning before the final response size is evaluated.
+   *
+   * @param response response being trimmed
+   * @param toolName MCP tool that produced the response
+   * @param originalBytes serialized size before trimming
+   * @param omitted live array describing removed fields
+   * @return the added truncation block
+   */
+  private static JsonObject addTruncationMetadata(JsonObject response, String toolName, int originalBytes,
+      JsonArray omitted) {
     JsonObject truncation = new JsonObject();
     truncation.addProperty("truncated", true);
     truncation.addProperty("reason",
         "Response exceeded the " + MAX_BYTES + " byte limit. Large payloads exhaust an agent's context "
             + "and can break the stdio transport, so bulk detail was omitted rather than returned.");
-    truncation.addProperty("originalBytes", size + estimatedBytes(omitted));
-    truncation.addProperty("returnedBytes", size);
+    truncation.addProperty("originalBytes", originalBytes);
     truncation.addProperty("limitBytes", MAX_BYTES);
     truncation.add("omitted", omitted);
     truncation.addProperty("howToRetrieve", recoveryGuidance(toolName));
@@ -136,7 +154,25 @@ public final class ResponseSizeGuard {
         : new JsonArray();
     warnings.add("Response truncated for tool '" + toolName + "'. See the 'truncation' block.");
     response.add("warnings", warnings);
-    return true;
+    return truncation;
+  }
+
+  /**
+   * Records and returns the exact serialized response size, including the size field itself.
+   *
+   * @param response response containing the truncation block
+   * @param truncation truncation block to update
+   * @return exact serialized size in bytes
+   */
+  private static int updateReturnedBytes(JsonObject response, JsonObject truncation) {
+    int previousSize = -1;
+    int size = serializedSize(response);
+    while (size != previousSize) {
+      previousSize = size;
+      truncation.addProperty("returnedBytes", size);
+      size = serializedSize(response);
+    }
+    return size;
   }
 
   /**
@@ -224,23 +260,6 @@ public final class ResponseSizeGuard {
       return "array with " + element.getAsJsonArray().size() + " entries";
     }
     return "scalar value";
-  }
-
-  /**
-   * Sums the approximate byte sizes recorded for omitted entries.
-   *
-   * @param omitted the omitted-entry array
-   * @return total approximate bytes
-   */
-  private static int estimatedBytes(JsonArray omitted) {
-    int total = 0;
-    for (JsonElement element : omitted) {
-      JsonObject entry = element.getAsJsonObject();
-      if (entry.has("approximateBytes")) {
-        total += entry.get("approximateBytes").getAsInt();
-      }
-    }
-    return total;
   }
 
   /**

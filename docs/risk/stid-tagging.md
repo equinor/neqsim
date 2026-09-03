@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "STID tagging and equipment identification for NeqSim process systems. Standard tag numbering, equipment classification, and integration with risk and reliability tracking."
 ---
 
-# STID & Functional Location Tagging
 
 STID (Standard Tag Identification) provides a standardized way to identify equipment across offshore installations, following ISO 14224 conventions used on the Norwegian Continental Shelf.
 

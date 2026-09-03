@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Overview of the NeqSim risk and reliability framework. Architecture, capabilities, supported analysis types, and integration with process simulation."
 ---
 
-# Risk Simulation Framework Overview
 
 ## Introduction
 

@@ -13,6 +13,7 @@ import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBa
 import neqsim.thermo.component.IapwsHenryLaw;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
+import neqsim.thermo.phase.PitzerParameterDatasets;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -242,6 +243,74 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double naclKsp = 92.78 - 0.407 * 298.15 + 0.000747 * 298.15 * 298.15;
 
     assertEquals(1.0, gammaNa * naMolality * gammaCl * clMolality / naclKsp, 1.0e-3);
+  }
+
+  /**
+   * Verifies that adding saturation ions after water-only initialization refreshes the default catalog and is
+   * independent of component initialization order.
+   */
+  @Test
+  public void testCalcSaltSaturationRefreshesCatalogAfterWaterOnlyInitialization() throws Exception {
+    SystemPitzer lateIonSystem = new SystemPitzer(404.15, 995.0);
+    lateIonSystem.addComponent("water", 55.508);
+    lateIonSystem.setMixingRule("classic");
+
+    SystemPitzer earlyIonSystem = new SystemPitzer(404.15, 995.0);
+    earlyIonSystem.addComponent("water", 55.508);
+    earlyIonSystem.addComponent("Ca++", 1.0e-12);
+    earlyIonSystem.addComponent("SO4--", 1.0e-12);
+    earlyIonSystem.setMixingRule("classic");
+
+    ThermodynamicOperations lateIonOperations = new ThermodynamicOperations(lateIonSystem);
+    ThermodynamicOperations earlyIonOperations = new ThermodynamicOperations(earlyIonSystem);
+    lateIonOperations.calcSaltSaturation("CaSO4_A");
+    earlyIonOperations.calcSaltSaturation("CaSO4_A");
+
+    assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID,
+        lateIonSystem.getPitzerParameterQualification().getDatasetId());
+    assertEquals(PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID,
+        earlyIonSystem.getPitzerParameterQualification().getDatasetId());
+    assertEquals(1.0, lateIonOperations.getRelativeScalePotential("CaSO4_A"), 1.0e-3);
+    assertEquals(1.0, earlyIonOperations.getRelativeScalePotential("CaSO4_A"), 1.0e-3);
+    assertEquals(earlyIonSystem.getComponent("Ca++").getNumberOfmoles(),
+        lateIonSystem.getComponent("Ca++").getNumberOfmoles(), 1.0e-8);
+  }
+
+  /** Verifies that salt saturation preserves the explicit legacy compatibility selection. */
+  @Test
+  public void testCalcSaltSaturationPreservesExplicitLegacyParameters() throws Exception {
+    SystemPitzer system = new SystemPitzer(298.15, 1.01325);
+    system.useLegacyPitzerParameters();
+    system.addComponent("water", 55.508);
+    system.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.calcSaltSaturation("NaCl");
+
+    assertEquals(PhasePitzer.DEFAULT_PARAMETER_DATASET_ID, system.getPitzerParameterQualification().getDatasetId());
+    assertEquals(1.0, operations.getRelativeScalePotential("NaCl"), 1.0e-3);
+  }
+
+  /** Verifies that adding a saturation ion preserves an already initialized reactive Pitzer topology. */
+  @Test
+  public void testCalcSaltSaturationPreservesReactivePitzerTopology() throws Exception {
+    SystemPitzer system = new SystemPitzer(298.15, 10.0);
+    system.addComponent("CO2", 0.01);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0e-3);
+    system.addComponent("Cl-", 1.0e-3);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> operations.calcSaltSaturation("CaCO3"));
+
+    assertTrue(system.isChemicalSystem());
+    assertTrue(exception.getMessage().contains("Failed running TPflash"));
+    assertTrue(exception.getCause().getMessage().contains("Pitzer parameter coverage incomplete"));
+    assertFalse(exception.getCause().getMessage().contains("reaction state is stale"));
   }
 
   /** Pitzer reaction quotients use solute molality with solvent mole-fraction activity. */

@@ -59,6 +59,9 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 
 See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), whole-assay density/API evidence in [DOE/OEDI COA bulk density qualification](refinery_oedi_coa_bulk_density_validation), per-cut characterization evidence in [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation), terminal representative-temperature evidence in [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation), composition-resolved light-end evidence in [DOE Big Hill light-end qualification](refinery_big_hill_light_ends_validation), PIANO aggregate molar-mass evidence in [DOE Big Hill C5-175 degF qualification](refinery_big_hill_piano_molar_mass_validation), assay-quality evidence in [DOE Big Hill sulfur qualification](refinery_big_hill_sulfur_validation) and [DOE Big Hill nitrogen qualification](refinery_big_hill_nitrogen_validation), terminal-boundary evidence in [DOE Big Hill terminal-cut qualification](refinery_big_hill_terminal_boundary_validation), and the process-integration gate in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation).
 
+The qualified inputs are assembled into one reusable reference composition by
+[DOE Big Hill Sweet complete modeled assay slate](refinery_big_hill_complete_slate).
+
 ## TBP fraction models
 
 TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS. Available implementations include Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert, Twu, Cavett, and Standing.
@@ -145,6 +148,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation)
 - [DOE Big Hill composition-resolved light-end qualification](refinery_big_hill_light_ends_validation)
 - [DOE Big Hill C5-175 degF PIANO molar-mass qualification](refinery_big_hill_piano_molar_mass_validation)
+- [DOE Big Hill Sweet complete modeled assay slate](refinery_big_hill_complete_slate)
 - [DOE Big Hill assay sulfur qualification](refinery_big_hill_sulfur_validation)
 - [DOE Big Hill assay nitrogen qualification](refinery_big_hill_nitrogen_validation)
 - [DOE Big Hill terminal-cut boundary qualification](refinery_big_hill_terminal_boundary_validation)

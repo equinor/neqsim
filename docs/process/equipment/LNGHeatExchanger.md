@@ -3,7 +3,6 @@ title: "LNG Cryogenic Multi-Stream Heat Exchanger (LNGHeatExchanger)"
 description: "Comprehensive guide to the LNGHeatExchanger class for modeling brazed aluminium heat exchangers (BAHX) in LNG service. Covers rigorous H-T curves, pressure drop, exergy analysis, core sizing, freeze-out detection, thermal stress, mercury risk, mechanical design, cost estimation, and vendor matching."
 ---
 
-# LNG Cryogenic Multi-Stream Heat Exchanger
 
 ## Overview
 

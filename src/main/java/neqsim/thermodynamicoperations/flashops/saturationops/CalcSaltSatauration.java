@@ -405,6 +405,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    * @param saltData salt data from COMPSALT
    */
   private void ensureSaltIonsPresent(SaltData saltData) {
+    boolean hadChemicalReactionOperations = system.getChemicalReactionOperations() != null;
     boolean addedComponent = false;
     if (!hasComponent(saltData.name1)) {
       system.addComponent(saltData.name1, 1.0e-20);
@@ -415,10 +416,14 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       addedComponent = true;
     }
     if (addedComponent) {
-      try {
-        system.chemicalReactionInit();
-      } catch (Exception ex) {
-        throw new IllegalStateException("Failed initializing chemical reactions for " + saltName, ex);
+      boolean preserveNonreactivePitzerTopology = system instanceof neqsim.thermo.system.SystemPitzer
+          && !hadChemicalReactionOperations;
+      if (!preserveNonreactivePitzerTopology) {
+        try {
+          system.chemicalReactionInit();
+        } catch (Exception ex) {
+          throw new IllegalStateException("Failed initializing chemical reactions for " + saltName, ex);
+        }
       }
       system.createDatabase(true);
       if (system instanceof neqsim.thermo.system.SystemPitzer) {
@@ -474,10 +479,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    */
   private void initialiseSystem() {
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      neqsim.thermo.system.SystemPitzer pitzerSystem = (neqsim.thermo.system.SystemPitzer) system;
       system.init(0);
-      system.init(1);
-      system.initPhysicalProperties();
-      return;
+      pitzerSystem.refreshDefaultPitzerParameterSelection();
     }
     try {
       new TPflash(system).run();

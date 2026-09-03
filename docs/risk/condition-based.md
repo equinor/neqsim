@@ -5,7 +5,6 @@ parent: Risk Framework
 description: "Condition-based reliability monitoring and predictive maintenance using NeqSim process simulation data. Weibull degradation models, condition indicators, and inspection planning."
 ---
 
-# P6: Condition-Based Reliability
 
 ## Overview
 
