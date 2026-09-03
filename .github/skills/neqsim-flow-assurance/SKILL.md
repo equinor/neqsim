@@ -864,6 +864,93 @@ List<String> violations = net.getSandViolations();
 Erosion per DNV RP O501: E = K * Csand * v^2.6 * dp^0.2.
 Deposition flagged when v < 1 m/s.
 
+### Sand TRANSPORT is a different question from sand EROSION
+
+Erosion asks "is the fluid too fast?"; transport asks "is the fluid fast enough
+to keep the sand moving?". They pull in **opposite directions**, so a line can
+be comfortably inside its erosional limit and still be laying down a sand bed.
+NeqSim currently models erosion only (`ErosionPredictionCalculator`,
+`LoopedPipeNetwork.calculateSandTransport()`), and the network deposition rule
+above is a hard-coded `v < 1 m/s`, not a transport criterion. Compute the
+transport check explicitly.
+
+**Evaluate transport on the in-situ LIQUID velocity, never on the mixture
+velocity.** Sand is carried by the liquid, and because of slip
+
+```
+u_L = v_sl / H_L          (in-situ liquid velocity)
+u_G = v_sg / (1 - H_L)    (in-situ gas velocity)
+```
+
+`H_L > lambda_L` whenever there is slip, so `u_L < v_m`. On a measured mature-well
+case (6" line, 52% water cut, ~45 bara) `v_m` was 0.888 m/s but `u_L` only
+0.691 m/s — using `v_m` would have overstated the transport margin by 1.29x.
+
+Two criteria, both public and cheap:
+
+- **Oroskar & Turian (1980)** critical (deposition) velocity —
+  `v_c = 1.85 C^0.1536 (1-C)^0.3564 (D/d_p)^0.378 Re_p^0.09 x^0.30 sqrt(g d_p (s-1))`
+  with `Re_p = D sqrt(g d_p (s-1)) rho_L / mu_L` and `x ~ 0.95`. Report `u_L / v_c`.
+- **Shields (1936)** incipient motion of a settled bed — compare the liquid wall
+  shear `tau_w = (f/8) rho_L u_L^2` to `tau_c = theta_c (rho_s - rho_L) g d_p`
+  with `theta_c ~ 0.045`.
+
+**Sand deposition is a TURNDOWN failure mode.** As rate falls, hold-up *rises* and
+the slip ratio grows, so `u_L` collapses faster than `v_m`. Always run a rate
+sweep and report the rate at which `u_L` crosses `v_c` — that threshold, not the
+present-day margin, is the number operations needs. Do not use erosion headroom
+as a reason to choke a well back without checking it.
+
+### Get the operating basis right before computing any velocity
+
+A wrong pressure invalidates every velocity, hold-up and transport number
+downstream of it, and no amount of model sophistication recovers it.
+
+**A well flowline runs DOWNSTREAM of the choke.** Its pressure is the receiving
+manifold/separator pressure, *not* the wellhead pressure that PDM and the
+historian report as "wellhead pressure" / "brønnhodetrykk". On a real case the
+wellhead read 45.5 bara while the line ran at 17.0 bara: gas density 63% lower,
+mixture velocity 2.1x higher, no-slip hold-up 59% lower, and the sand-transport
+margin moved from 1.38 to 1.8-2.3. Take the flowline condition from the
+**after-choke transmitter** (Norwegian tag descriptions: "Etter Strupeventil").
+
+**Confirm which route is actually in use, not just which routes exist.** Match
+the measured after-choke pressure against the separator pressures; the receiving
+vessel is the one a small dP away, and the others are typically tens of bar off.
+Check the trend as well as the snapshot — a well swaps onto the test separator
+during a well test, which is usually a *higher* pressure and therefore the
+**binding case for sand deposition**, while normal production is comfortable.
+
+**Derive the line temperature by an isenthalpic flash across the choke** when
+there is no after-choke temperature transmitter (`ops.PHflash(h_wellhead)`). With
+a high water cut the JT cooling is small (~1 K at 83 mol% water) because water
+dominates the heat capacity — do not assume a large drop.
+
+### Choosing the multiphase model for a transport check
+
+Verified on a 6" water-continuous line (17 bara, 83 mol% water) against
+OLGA 2025.1.0 on an identical fluid, geometry and mass flow:
+
+| model | H_L | u_L [m/s] | slip |
+|---|---|---|---|
+| `PipeBeggsAndBrills` | 0.325 | 1.141 | 2.28 |
+| `TwoFluidPipe` | 0.407 | 0.913 | 3.24 |
+| OLGA 2025.1.0 | 0.407 | 0.916 | 3.32 |
+
+- `TwoFluidPipe` reproduced OLGA to **0.2% on both hold-up and liquid velocity**.
+- **Beggs & Brill is non-conservative for sand transport**: it under-predicts
+  hold-up ~20%, so it over-predicts the sand-carrying `u_L` ~25% and inflates the
+  margin. Prefer `TwoFluidPipe` (or OLGA) for water-continuous transport checks;
+  use B&B for a quick pressure-drop screen only.
+- **Gate on convergence.** `TwoFluidPipe` converged in 6 iterations at the above
+  duty but failed (399 iterations) at a slower, more liquid-loaded slug condition.
+  Always assert `isSteadyStateConverged()` and exclude the result if it is False —
+  never quote an unconverged two-fluid number.
+- Do not over-constrain `setOutletPressure` with a measured dP the modelled
+  geometry cannot produce; that alone can break convergence. If the measured drop
+  is much larger than the predicted pipe friction, the difference is manifold
+  valves and fittings, not the line.
+
 ### Mineral Scale (thermodynamics + kinetics + brine mixing)
 
 NeqSim offers **two routes** to mineral scale. Pick by how much you know about

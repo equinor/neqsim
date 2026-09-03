@@ -1090,6 +1090,380 @@ def test_adjuster_wires_adjusted_and_target():
     print("  PASS")
 
 
+def test_main_flowsheet_producer_wins_for_duplicate_stream_tag():
+    """A template must not capture a main-flowsheet stream tag.
+
+    UniSim templates reuse plain numeric stream names, so both the main
+    flowsheet and a template can produce a stream called "13".  With a
+    flowsheet-blind producer map the template's block won, and the main
+    flowsheet consumer was wired to it.  On Gullfaks C this connected the main
+    mixer MIX-111 to the Tordis MIX-100, feeding it a 1.5e6 kg/hr stream instead
+    of a 16 000 kg/hr one and making the recompression recycle diverge.
+    """
+    model = UniSimModel(
+        file_path=r"C:\test\Dup2.usc",
+        file_name="Dup2.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0)])
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Main feed", temperature_C=30.0,
+                                 pressure_bara=60.0, mass_flow_kgh=1000.0,
+                                 composition={"Methane": 1.0}),
+                UniSimStreamData("13", temperature_C=30.0, pressure_bara=60.0,
+                                 mass_flow_kgh=1000.0),
+                UniSimStreamData("Main out", temperature_C=30.0,
+                                 pressure_bara=60.0),
+                UniSimStreamData("Sub feed", temperature_C=30.0,
+                                 pressure_bara=60.0, mass_flow_kgh=9.0e6,
+                                 composition={"Methane": 1.0}),
+                UniSimStreamData("Sub out", temperature_C=30.0, pressure_bara=60.0),
+            ],
+            operations=[
+                # main-flowsheet producer of "13"
+                UniSimOperation("MAIN-PROD", "mixerop", feeds=["Main feed"],
+                                products=["13"]),
+                # main-flowsheet consumer of "13"
+                UniSimOperation("MAIN-CONS", "mixerop", feeds=["13"],
+                                products=["Main out"]),
+                UniSimOperation("TPL1", "templateop", feeds=["Sub feed"],
+                                products=["Sub out"]),
+            ],
+            sub_flowsheets=[
+                UniSimFlowsheet(
+                    name="TPL1",
+                    material_streams=[],
+                    # template ALSO produces a stream called "13"
+                    operations=[UniSimOperation("TPL-PROD", "mixerop",
+                                                feeds=["Sub feed"],
+                                                products=["13", "Sub out"])],
+                )
+            ],
+        ),
+    )
+
+    code = UniSimToNeqSim(model).to_python()
+    cons_line = next(ln for ln in code.splitlines()
+                     if "MAIN_CONS.addStream(" in ln)
+    assert "MAIN_PROD" in cons_line, cons_line
+    assert "TPL_PROD" not in cons_line, cons_line
+    print("  PASS")
+
+
+def test_component_splitter_always_gets_sized_split_factors():
+    """A ComponentSplitter must never run with the default length-1 factor array.
+
+    NeqSim indexes one split factor per component, so an unset ComponentSplitter
+    throws "Index 1 out of bounds for length 1" inside run().  ProcessSystem.run()
+    aborts the pass at the first throwing unit, so every downstream unit keeps its
+    seeded inlet clone.  Regression for Gullfaks C, where the glycol contactors
+    24-VB01 / 24-VB02 / GFB_dehyd silently stopped the whole main train.
+    """
+    model = UniSimModel(
+        file_path=r"C:\test\Frac.usc",
+        file_name="Frac.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("H2O", 1)])
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Wet gas", temperature_C=30.0,
+                                 pressure_bara=60.0, mass_flow_kgh=1000.0,
+                                 composition={"Methane": 0.99, "H2O": 0.01}),
+                UniSimStreamData("Dry gas", temperature_C=30.0, pressure_bara=60.0),
+                UniSimStreamData("Water out", temperature_C=30.0, pressure_bara=60.0),
+            ],
+            operations=[
+                # No split_factors extracted -> must still be sized, not left
+                # at the default length-1 array.
+                UniSimOperation("24-VB02", "fractop", feeds=["Wet gas"],
+                                products=["Dry gas", "Water out"],
+                                properties={}),
+            ],
+        ),
+    )
+
+    code = UniSimToNeqSim(model).to_python()
+    assert 'ComponentSplitter("24-VB02"' in code, code
+    assert "setSplitFactors" in code, code
+    print("  PASS")
+
+
+def test_unwirable_adjuster_is_skipped():
+    """An ADJUST whose target UniSim COM hides must not be emitted.
+
+    UniSim COM exposes an ADJUST's adjusted object but usually not its target
+    object, so the converted Adjuster gets neither an adjusted nor a target
+    variable.  Such a unit can never converge, keeps the ProcessSystem reporting
+    NOT SOLVED and burns the outer iteration budget.  Its effect is already in
+    the converged feed values the snapshot carries.  Gullfaks C has 42 of them.
+    """
+    def _model(with_target):
+        props = {
+            "adjusted_object_name": "Feed",
+            "adjusted_variable": "massflow",
+            "target_variable": "temperature",
+            "target_value": 300.0,
+            "tolerance": 0.01,
+            "step_size": 1.0,
+        }
+        if with_target:
+            props["target_object_name"] = "Product"
+        return UniSimModel(
+            file_path=r"C:\test\Adj.usc",
+            file_name="Adj.usc",
+            fluid_packages=[
+                UniSimFluidPackage(
+                    name="Basis-1", property_package="Peng-Robinson",
+                    components=[UniSimComponent("Methane", 0)])
+            ],
+            flowsheet=UniSimFlowsheet(
+                name="Main",
+                material_streams=[
+                    UniSimStreamData("Feed", temperature_C=30.0,
+                                     pressure_bara=60.0, mass_flow_kgh=1000.0,
+                                     composition={"Methane": 1.0}),
+                    UniSimStreamData("Product", temperature_C=25.0,
+                                     pressure_bara=30.0),
+                ],
+                operations=[
+                    UniSimOperation("V-1", "valveop", feeds=["Feed"],
+                                    products=["Product"],
+                                    properties={"outlet_pressure_bara": 30.0}),
+                    UniSimOperation("ADJ-1", "adjust", properties=props),
+                ],
+            ),
+        )
+
+    unwirable = UniSimToNeqSim(_model(with_target=False))
+    code = unwirable.to_python()
+    assert 'Adjuster("ADJ-1")' not in code, code
+    assert 'SKIPPED (Adjuster): "ADJ-1"' in code, code
+    names = {e.get("name") for e in unwirable.to_json()["process"]}
+    assert "ADJ-1" not in names, names
+
+    wirable = UniSimToNeqSim(_model(with_target=True))
+    code2 = wirable.to_python()
+    assert 'Adjuster("ADJ-1")' in code2, code2
+    names2 = {e.get("name") for e in wirable.to_json()["process"]}
+    assert "ADJ-1" in names2, names2
+    print("  PASS")
+
+
+def test_separator_flash_pressure_drop_transferred():
+    """A UniSim flash vessel's own operating pressure must reach NeqSim.
+
+    UniSim stock-tank chains drop pressure inside the flash block (65 -> 19 -> 2
+    -> 1.013 bara).  A NeqSim Separator inherits the inlet pressure and only
+    phase-splits, so without transferring the drop every staged flash happens at
+    feed pressure.  Regression for Gullfaks C, whose four templates each carry a
+    Flash1..Flash4 stock-tank chain.
+    """
+    model = UniSimModel(
+        file_path=r"C:\test\Flash.usc",
+        file_name="Flash.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1",
+                property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Propane", 1)],
+            )
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Feed", temperature_C=60.0, pressure_bara=65.0,
+                                 mass_flow_kgh=1000.0,
+                                 composition={"Methane": 0.5, "Propane": 0.5}),
+                UniSimStreamData("F2 gas", temperature_C=55.0, pressure_bara=19.0),
+                UniSimStreamData("F2 liq", temperature_C=55.0, pressure_bara=19.0),
+                UniSimStreamData("Iso gas", temperature_C=55.0, pressure_bara=19.0),
+                UniSimStreamData("Iso liq", temperature_C=55.0, pressure_bara=19.0),
+            ],
+            operations=[
+                UniSimOperation("Flash2", "flashtank", feeds=["Feed"],
+                                products=["F2 gas", "F2 liq"],
+                                properties={"has_water_product": False}),
+                # Same inlet and outlet pressure -> nothing to transfer.
+                UniSimOperation("Isobaric", "flashtank", feeds=["F2 gas"],
+                                products=["Iso gas", "Iso liq"],
+                                properties={"has_water_product": False}),
+            ],
+        ),
+    )
+
+    conv = UniSimToNeqSim(model)
+    py_code = conv.to_python()
+    assert "Flash2" in py_code, py_code
+    assert "setPressureDrop(46.0)" in py_code, py_code
+
+    entries = {e.get("name"): e for e in conv.to_json()["process"]}
+    assert abs(entries["Flash2"]["properties"]["pressureDrop"] - 46.0) < 1e-9, entries
+    assert "pressureDrop" not in (entries["Isobaric"].get("properties") or {}), entries
+    print("  PASS")
+
+
+def test_mixer_outlet_pressure_transferred_when_header_is_held():
+    """A held header pressure must survive a standard-condition make-up inlet.
+
+    UniSim frequently holds a header at process pressure while a water/make-up
+    stream defined at 1.013 bara joins it (the boost pump is not drawn).  A
+    NeqSim Mixer takes the LOWEST active inlet pressure, so without transferring
+    the UniSim outlet pressure the 1 bara inlet collapses the whole downstream
+    train.  Regression for Gullfaks C, where eight 1.013 bara water feeds fed
+    57.5 bara headers.
+    """
+    def _model(header_out_p):
+        return UniSimModel(
+            file_path=r"C:\test\Mix.usc",
+            file_name="Mix.usc",
+            fluid_packages=[
+                UniSimFluidPackage(
+                    name="Basis-1",
+                    property_package="Peng-Robinson",
+                    components=[UniSimComponent("Methane", 0),
+                                UniSimComponent("H2O", 1)],
+                )
+            ],
+            flowsheet=UniSimFlowsheet(
+                name="Main",
+                material_streams=[
+                    UniSimStreamData("Header in", temperature_C=60.0,
+                                     pressure_bara=57.5, mass_flow_kgh=1000.0,
+                                     composition={"Methane": 1.0}),
+                    UniSimStreamData("Water", temperature_C=15.0,
+                                     pressure_bara=1.0132, mass_flow_kgh=500.0,
+                                     composition={"H2O": 1.0}),
+                    UniSimStreamData("Header out", temperature_C=55.0,
+                                     pressure_bara=header_out_p,
+                                     mass_flow_kgh=1500.0),
+                ],
+                operations=[
+                    UniSimOperation("MIX-104", "mixerop",
+                                    feeds=["Header in", "Water"],
+                                    products=["Header out"]),
+                ],
+            ),
+        )
+
+    # Header held at 57.5 bara -> the specification must be transferred.
+    held = UniSimToNeqSim(_model(57.5))
+    py_code = held.to_python()
+    assert 'Mixer("MIX-104")' in py_code, py_code
+    assert 'setOutletPressure(57.5, "bara")' in py_code, py_code
+
+    entry = next(e for e in held.to_json()['process']
+                 if e.get('name') == 'MIX-104')
+    assert abs(entry['properties']['outletPressure'] - 57.5) < 1e-9, entry
+
+    # Ordinary mixing (outlet == lowest inlet) must keep NeqSim's default rule.
+    plain = UniSimToNeqSim(_model(1.0132))
+    plain_code = plain.to_python()
+    assert 'setOutletPressure' not in plain_code, plain_code
+    plain_entry = next(e for e in plain.to_json()['process']
+                       if e.get('name') == 'MIX-104')
+    assert 'outletPressure' not in (plain_entry.get('properties') or {}), plain_entry
+    print("  PASS")
+
+
+def test_duplicate_operation_name_across_subflowsheet_does_not_steal_ref():
+    """A same-named block in a sub-flowsheet must not capture parent refs.
+
+    UniSim allows the same operation name in the main flowsheet and in every
+    template.  Regression for Gullfaks C (GFC_2013.USC), which has four
+    ``TEE-101`` tees: the main-flowsheet one has 4 outlets, the template ones
+    have 2.  With a shared name map the last-registered (2-outlet) tee won, so a
+    main-flowsheet consumer of outlet 3 was emitted against the wrong splitter
+    and threw ArrayIndexOutOfBoundsException at run time.
+    """
+    model = UniSimModel(
+        file_path=r"C:\test\Dup.usc",
+        file_name="Dup.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1",
+                property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Ethane", 1)],
+            )
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Feed", temperature_C=30.0,
+                                 pressure_bara=60.0, mass_flow_kgh=1000.0,
+                                 composition={"Methane": 0.9, "Ethane": 0.1}),
+                UniSimStreamData("T0", temperature_C=30.0, pressure_bara=60.0),
+                UniSimStreamData("T1", temperature_C=30.0, pressure_bara=60.0),
+                UniSimStreamData("T2", temperature_C=30.0, pressure_bara=60.0),
+                UniSimStreamData("T3", temperature_C=30.0, pressure_bara=60.0),
+                UniSimStreamData("T3 out", temperature_C=20.0,
+                                 pressure_bara=30.0),
+                UniSimStreamData("SubFeed", temperature_C=30.0,
+                                 pressure_bara=60.0, mass_flow_kgh=500.0,
+                                 composition={"Methane": 0.9, "Ethane": 0.1}),
+                UniSimStreamData("S0", temperature_C=30.0, pressure_bara=60.0),
+                UniSimStreamData("S1", temperature_C=30.0, pressure_bara=60.0),
+            ],
+            operations=[
+                # main-flowsheet TEE-101 with FOUR outlets
+                UniSimOperation("TEE-101", "teeop", feeds=["Feed"],
+                                products=["T0", "T1", "T2", "T3"]),
+                # main-flowsheet consumer of the FOURTH outlet
+                UniSimOperation("V-3", "valveop", feeds=["T3"],
+                                products=["T3 out"],
+                                properties={"outlet_pressure_bara": 30.0}),
+                UniSimOperation("TPL1", "templateop", feeds=["SubFeed"],
+                                products=["S0", "S1"]),
+            ],
+            sub_flowsheets=[
+                UniSimFlowsheet(
+                    name="TPL1",
+                    material_streams=[],
+                    # same name, only TWO outlets
+                    operations=[UniSimOperation("TEE-101", "teeop",
+                                                feeds=["SubFeed"],
+                                                products=["S0", "S1"])],
+                )
+            ],
+        ),
+    )
+
+    py_code = UniSimToNeqSim(model).to_python()
+
+    four_outlet_var = None
+    two_outlet_var = None
+    for line in py_code.splitlines():
+        stripped = line.strip()
+        if 'Splitter("TEE-101"' not in stripped:
+            continue
+        var = stripped.split('=')[0].strip()
+        if stripped.rstrip().endswith(', 4)'):
+            four_outlet_var = var
+        elif stripped.rstrip().endswith(', 2)'):
+            two_outlet_var = var
+
+    assert four_outlet_var, py_code
+    assert two_outlet_var, py_code
+    assert four_outlet_var != two_outlet_var, py_code
+
+    valve_line = next(ln for ln in py_code.splitlines()
+                      if 'ThrottlingValve("V-3"' in ln)
+    # The main-flowsheet valve must take outlet 3 of the FOUR-outlet tee.
+    assert f'{four_outlet_var}.getSplitStream(int(3))' in valve_line, valve_line
+    assert two_outlet_var not in valve_line, valve_line
+    print("  PASS")
+
+
 if __name__ == "__main__":
     tests = [
         ("to_python", test_to_python),

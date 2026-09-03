@@ -45,6 +45,8 @@ public class TPmultiflash extends TPflash {
   boolean checkOneRemove = false;
   boolean secondTime = false;
   boolean aqueousPhaseSeedAttempted = false;
+  /** Guards the water-rich vapour-appearance seed so it is attempted at most once per flash. */
+  private boolean vapourPhaseSeedAttempted = false;
   boolean postFlashStabilityChecked = false;
   boolean enhancedStabilityChecked = false;
   /** True when the beta loop exited above its own tolerance, i.e. the three-phase solve really stalled. */
@@ -56,6 +58,18 @@ public class TPmultiflash extends TPflash {
   private transient double[] reactiveOverallFractions;
   /** Positive floor for reaction products introduced at trace level. */
   private static final double MINIMUM_REACTIVE_COMPONENT_MOLES = 1.0e-45;
+  /** Margin by which both Rachford-Rice sums must exceed unity before a vapour phase is sought. */
+  private static final double WILSON_TWO_PHASE_SCREEN_TOLERANCE = 1.0e-3;
+  /**
+   * Blocks nested vapour-appearance restarts. The restart runs a new {@link TPmultiflash} instance, whose own one-shot
+   * flag starts unset, so without a guard shared across instances the restart could recurse indefinitely.
+   */
+  private static final ThreadLocal<Boolean> VAPOUR_RESTART_ACTIVE = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
 
   double[] multTerm;
   double[] multTerm2;
@@ -2331,6 +2345,252 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
+   * Evaluates the Wilson correlation for the vapour-liquid distribution coefficient of one component.
+   *
+   * @param component component whose critical constants are used
+   * @param temperature system temperature in K, must be positive
+   * @param pressure system pressure in bara, must be positive
+   * @return Wilson K-value, or {@code 1.0} when the critical constants are unusable
+   */
+  private static double wilsonKValue(ComponentInterface component, double temperature, double pressure) {
+    double criticalTemperature = component.getTC();
+    double criticalPressure = component.getPC();
+    if (criticalTemperature <= 0.0 || criticalPressure <= 0.0 || temperature <= 0.0 || pressure <= 0.0) {
+      return 1.0;
+    }
+    double acentricFactor = component.getAcentricFactor();
+    double kValue = (criticalPressure / pressure)
+        * Math.exp(5.373 * (1.0 + acentricFactor) * (1.0 - criticalTemperature / temperature));
+    return Math.max(kValue, 1.0e-20);
+  }
+
+  /**
+   * Decides whether a component belongs to the volatile sub-mixture used by the vapour-appearance screen.
+   *
+   * <p>
+   * Water, ions, glycols and alcohols are excluded so that the screen sees the hydrocarbon and inert-gas fraction that
+   * actually decides whether a vapour phase can form. Carbon dioxide, nitrogen and hydrogen sulphide are retained
+   * because they are genuine light constituents of the volatile sub-mixture.
+   * </p>
+   *
+   * @param component component to classify
+   * @return {@code true} when the component takes part in the volatile screen
+   */
+  private static boolean isVolatileScreeningComponent(ComponentInterface component) {
+    if (component.getIonicCharge() != 0 || component.isIsIon()) {
+      return false;
+    }
+    String name = component.getComponentName().toLowerCase();
+    return !("water".equals(name) || "meg".equals(name) || "deg".equals(name) || "teg".equals(name)
+        || "methanol".equals(name) || "ethanol".equals(name));
+  }
+
+  /**
+   * Seeds a hydrocarbon vapour phase when a water-rich feed has converged to a liquid-only split.
+   *
+   * <p>
+   * This is the vapour-side counterpart of {@link #seedHydrocarbonLiquidFromFeed()}. When the ordinary two-phase flash
+   * has already converged to OIL + AQUEOUS, the multiphase stability analysis starts from that endpoint and builds its
+   * Wilson trial compositions from the overall feed. For a water-dominated feed the hydrocarbons are a small minority
+   * of that feed, the vapour-like stationary point is missed, and the flash returns OIL + AQUEOUS even though the
+   * water-free hydrocarbon sub-mixture is unambiguously two-phase at the flash temperature and pressure. The reported
+   * endpoint then has a higher extensive Gibbs energy than the correct GAS + OIL + AQUEOUS split, and the gas phase
+   * disappears from an otherwise ordinary wellstream once the water cut becomes high enough.
+   * </p>
+   *
+   * <p>
+   * The trigger is a Rachford-Rice bracketing screen evaluated on the water-free, ion-free sub-composition instead of
+   * on the overall feed: {@code sum(K_i z_i) > 1} together with {@code sum(z_i / K_i) > 1} places the volatile
+   * sub-mixture between its bubble and dew point, so a vapour phase must coexist with the aqueous phase. Applying the
+   * same screen to the overall feed fails, because dilution by water drives {@code sum(K_i z_i)} below unity. The
+   * screen is pure arithmetic on critical constants and adds no equation-of-state evaluation. When it fires, a
+   * vapour-like trial phase is seeded from the Wilson K-values and the subsequent phase-fraction solve decides its
+   * fate: a spurious seed collapses below {@link #phaseFractionMinimumLimit} and is removed by the existing cleanup,
+   * exactly as for the liquid seeder.
+   * </p>
+   *
+   * @return {@code true} when a gas phase was seeded, otherwise {@code false}
+   */
+  /**
+   * Screens whether a converged OIL + AQUEOUS endpoint is missing a hydrocarbon vapour phase.
+   *
+   * <p>
+   * The multiphase stability analysis builds its trial compositions from the overall feed. When the feed is
+   * water-dominated the hydrocarbons are a small minority of that feed, the vapour stationary point is missed, and the
+   * hydrocarbon-liquid trial that is found instead is later merged away as a duplicate liquid root. The flash then
+   * returns OIL + AQUEOUS even though the water-free hydrocarbon sub-mixture is unambiguously two-phase at the flash
+   * temperature and pressure, and that endpoint has a higher extensive Gibbs energy than the correct GAS + OIL +
+   * AQUEOUS split. In practice the gas phase disappears from an ordinary wellstream once the water cut becomes high
+   * enough.
+   * </p>
+   *
+   * <p>
+   * The screen is a Rachford-Rice bracketing test evaluated on the water-free, ion-free sub-composition rather than on
+   * the overall feed: {@code sum(K_i z_i) > 1} together with {@code sum(z_i / K_i) > 1} places the volatile sub-mixture
+   * between its bubble and dew point, so a vapour phase must coexist with the aqueous phase. Applying the same test to
+   * the overall feed fails, because dilution by water drives {@code sum(K_i z_i)} below unity. Only Wilson K-values are
+   * used, so no equation-of-state evaluation is added. The guards are ordered cheapest-first: two field reads reject
+   * every single-phase and three-phase result and the aqueous test rejects every dry system, so the component loops are
+   * reached only for the rare water-rich liquid-only endpoint this repairs.
+   * </p>
+   *
+   * @return {@code true} when a vapour phase must exist alongside the converged liquid phases
+   */
+  private boolean hydrocarbonVapourShouldAppear() {
+    // Cheapest-first: two field reads reject every single-phase and three-phase result, and the
+    // aqueous test rejects every dry system, before any phase type or component loop is entered.
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.OIL) || system.isChemicalSystem()) {
+      return false;
+    }
+
+    int numberOfComponents = system.getPhase(0).getNumberOfComponents();
+    double temperature = system.getTemperature();
+    double pressure = system.getPressure();
+    double volatileTotal = 0.0;
+    for (int comp = 0; comp < numberOfComponents; comp++) {
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
+      if (isVolatileScreeningComponent(component)) {
+        volatileTotal += Math.max(component.getz(), 0.0);
+      }
+    }
+    if (volatileTotal < 1.0e-6) {
+      return false;
+    }
+
+    double vapourSum = 0.0;
+    double liquidSum = 0.0;
+    for (int comp = 0; comp < numberOfComponents; comp++) {
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
+      if (!isVolatileScreeningComponent(component)) {
+        continue;
+      }
+      double kValue = wilsonKValue(component, temperature, pressure);
+      double scaledZ = Math.max(component.getz(), 0.0) / volatileTotal;
+      vapourSum += scaledZ * kValue;
+      liquidSum += scaledZ / kValue;
+    }
+    return vapourSum > 1.0 + WILSON_TWO_PHASE_SCREEN_TOLERANCE && liquidSum > 1.0 + WILSON_TWO_PHASE_SCREEN_TOLERANCE;
+  }
+
+  /** Converged phase split retained so an unsuccessful multiphase restart can be undone. */
+  private static final class PhaseSplitSnapshot {
+    private final int numberOfPhases;
+    private final PhaseType[] phaseTypes;
+    private final double[] betas;
+    private final double[][] compositions;
+    private final double[] kValues;
+
+    private PhaseSplitSnapshot(SystemInterface source) {
+      numberOfPhases = source.getNumberOfPhases();
+      int numberOfComponents = source.getPhase(0).getNumberOfComponents();
+      phaseTypes = new PhaseType[numberOfPhases];
+      betas = new double[numberOfPhases];
+      compositions = new double[numberOfPhases][numberOfComponents];
+      kValues = new double[numberOfComponents];
+      for (int phase = 0; phase < numberOfPhases; phase++) {
+        phaseTypes[phase] = source.getPhase(phase).getType();
+        betas[phase] = source.getBeta(phase);
+        for (int comp = 0; comp < numberOfComponents; comp++) {
+          compositions[phase][comp] = source.getPhase(phase).getComponent(comp).getx();
+        }
+      }
+      for (int comp = 0; comp < numberOfComponents; comp++) {
+        kValues[comp] = source.getPhase(0).getComponent(comp).getK();
+      }
+    }
+  }
+
+  /**
+   * Reinstates a retained phase split after a rejected multiphase restart.
+   *
+   * @param snapshot converged split captured before the restart
+   */
+  private void restorePhaseSplit(PhaseSplitSnapshot snapshot) {
+    system.setNumberOfPhases(snapshot.numberOfPhases);
+    for (int phase = 0; phase < snapshot.numberOfPhases; phase++) {
+      system.setPhaseIndex(phase, phase);
+      system.setPhaseType(phase, snapshot.phaseTypes[phase]);
+      system.setBeta(phase, snapshot.betas[phase]);
+      for (int comp = 0; comp < snapshot.compositions[phase].length; comp++) {
+        system.getPhase(phase).getComponent(comp).setx(snapshot.compositions[phase][comp]);
+        system.getPhase(phase).getComponent(comp).setK(snapshot.kValues[comp]);
+      }
+    }
+    system.normalizeBeta();
+    system.init(1);
+  }
+
+  /**
+   * Repeats the multiphase calculation from a fresh initial estimate and keeps the better endpoint.
+   *
+   * <p>
+   * The stability analysis is started from whatever split the ordinary two-phase flash converged to, and its trial
+   * compositions are built from the overall feed. For a water-rich feed that combination is what loses the vapour
+   * phase, so the repair is to discard the biased starting point rather than to inject a phase into it: seeding cannot
+   * be relied upon here because {@link SystemInterface#addPhase()} only exposes a stale phase slot and the requested
+   * phase type is not guaranteed to survive initialization. Recomputing the initial estimate with {@code init(0)}
+   * restores the unbiased Wilson start that finds the correct three-phase split.
+   * </p>
+   *
+   * <p>
+   * The restart is accepted only when it keeps every phase type the converged endpoint already had, adds a gas phase,
+   * and lowers the extensive Gibbs energy; otherwise the retained split is reinstated. The repair can therefore only
+   * ever add the missing vapour, never trade an existing liquid phase for it, and the endpoint can never become worse
+   * than the one already converged. Recursion is blocked on two levels: the caller sets the one-shot
+   * {@code vapourPhaseSeedAttempted} flag before entry, and {@link #VAPOUR_RESTART_ACTIVE} stops the nested
+   * {@link TPmultiflash} instance created below from starting a restart of its own.
+   * </p>
+   */
+  private void restartMultiphaseFromFreshEstimate() {
+    double referenceGibbs;
+    PhaseSplitSnapshot snapshot;
+    try {
+      referenceGibbs = system.getGibbsEnergy();
+      snapshot = new PhaseSplitSnapshot(system);
+    } catch (Exception ex) {
+      logger.debug("Vapour-appearance restart snapshot failed: {}", ex.getMessage());
+      return;
+    }
+    try {
+      SystemInterface trial = system.clone();
+      trial.setNumberOfPhases(2);
+      trial.setPhaseIndex(0, 0);
+      trial.setPhaseIndex(1, 1);
+      trial.setPhaseType(0, PhaseType.GAS);
+      trial.setPhaseType(1, snapshot.phaseTypes[snapshot.numberOfPhases - 1]);
+      trial.init(0);
+      trial.init(1);
+      VAPOUR_RESTART_ACTIVE.set(Boolean.TRUE);
+      try {
+        new TPmultiflash(trial, solidCheck).run();
+      } finally {
+        VAPOUR_RESTART_ACTIVE.set(Boolean.FALSE);
+      }
+      trial.init(1);
+      boolean retainsOriginalPhases = true;
+      for (int phase = 0; phase < snapshot.numberOfPhases; phase++) {
+        if (!trial.hasPhaseType(snapshot.phaseTypes[phase])) {
+          retainsOriginalPhases = false;
+          break;
+        }
+      }
+      if (retainsOriginalPhases && trial.hasPhaseType(PhaseType.GAS) && trial.getGibbsEnergy() < referenceGibbs
+          && trial.getNumberOfPhases() <= system.getMaxNumberOfPhases()) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Vapour-appearance restart recovered a gas phase: G {} -> {} J", referenceGibbs,
+              trial.getGibbsEnergy());
+        }
+        restorePhaseSplit(new PhaseSplitSnapshot(trial));
+        return;
+      }
+    } catch (Exception ex) {
+      logger.debug("Vapour-appearance restart failed: {}", ex.getMessage());
+    }
+    restorePhaseSplit(snapshot);
+  }
+
+  /**
    * Restores ions after phase stability has been evaluated on the ion-free molecular fluid.
    *
    * <p>
@@ -3293,6 +3553,14 @@ public class TPmultiflash extends TPflash {
         secondTime = true;
         stabilityAnalysis3();
         requestBoundedRerun();
+      }
+
+      // A water-rich feed can settle on OIL+AQUEOUS even though the hydrocarbon sub-mixture is
+      // two-phase: the stability trials are built from a water-dominated overall composition, so
+      // the vapour stationary point is missed and the duplicate-liquid trial is merged away above.
+      if (!vapourPhaseSeedAttempted && hydrocarbonVapourShouldAppear() && !VAPOUR_RESTART_ACTIVE.get().booleanValue()) {
+        vapourPhaseSeedAttempted = true;
+        restartMultiphaseFromFreshEstimate();
       }
 
       /*

@@ -80,6 +80,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   /** Tolerance on the active inlet pressure spread before {@link #pressureMismatch} is raised, in bar. */
   private double pressureMismatchToleranceBar = 0.5;
 
+  /**
+   * Optional specified outlet pressure in bara, or {@link Double#NaN} when the outlet pressure is determined by the
+   * lowest active inlet (the default).
+   */
+  private double specifiedOutletPressure = Double.NaN;
+
   private boolean doMultiPhaseCheck = true;
   private double[] lastInletTemperatures = null;
   private double[] lastInletPressures = null;
@@ -90,6 +96,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   private boolean lastIsSetOutTemperature = false;
   private boolean lastDoMultiPhaseCheck = true;
   private double lastOutTemperature = Double.NaN;
+  private double lastSpecifiedOutletPressure = Double.NaN;
 
   /**
    * Setter for the field <code>doMultiPhaseCheck</code>.
@@ -208,6 +215,16 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       highestInletPressure = lowestPressure;
     }
 
+    // An explicitly specified outlet pressure overrides the lowest-inlet rule. This represents a
+    // header whose pressure is held by other equipment (a pump or compressor on the make-up line,
+    // or a pressure controller), which is how a low-pressure water/make-up stream can legitimately
+    // enter a high-pressure header. Without it the outlet would collapse to the make-up stream's
+    // pressure and take the whole downstream train with it.
+    boolean outletPressureSpecified = !Double.isNaN(specifiedOutletPressure);
+    if (outletPressureSpecified) {
+      lowestPressure = specifiedOutletPressure;
+    }
+
     // Raise a flag when active inlets arrive at materially different pressures. The mixer outlet
     // (correctly) collapses to the lowest inlet pressure, so any higher inlet is being throttled
     // down to it — frequently the signature of an upstream unit (e.g. a compressor that could not
@@ -215,7 +232,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     // behaviour is left unchanged; only a flag + warning are added so the caller is not left
     // silently losing pressure downstream.
     pressureMismatch = false;
-    if (!Double.isInfinite(highestInletPressure) && !Double.isNaN(highestInletPressure)) {
+    if (!outletPressureSpecified && !Double.isInfinite(highestInletPressure) && !Double.isNaN(highestInletPressure)) {
       double spread = highestInletPressure - lowestPressure;
       if (spread > pressureMismatchToleranceBar) {
         pressureMismatch = true;
@@ -433,6 +450,63 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   }
 
   /**
+   * Specify the mixer outlet pressure explicitly, overriding the default lowest-active-inlet rule.
+   *
+   * <p>
+   * By default a mixer outlet takes the lowest active inlet pressure, which is the correct physics for a passive tee.
+   * It is not correct for a header whose pressure is held by other equipment — for example a low-pressure water or
+   * make-up stream boosted into a high-pressure production header, where the outlet stays at header pressure rather
+   * than collapsing to the make-up pressure. Use this method for that case; clear it with
+   * {@link #clearOutletPressureSpecification()} to return to the default behaviour.
+   * </p>
+   *
+   * @param pressure the specified outlet pressure in bara (must be positive)
+   */
+  public void setOutletPressure(double pressure) {
+    if (pressure <= 0.0 || Double.isNaN(pressure)) {
+      throw new IllegalArgumentException("Mixer outlet pressure must be a positive number, got " + pressure);
+    }
+    this.specifiedOutletPressure = pressure;
+  }
+
+  /**
+   * Specify the mixer outlet pressure explicitly in a given unit.
+   *
+   * @param pressure the specified outlet pressure (must be positive)
+   * @param unit the pressure unit, e.g. "bara", "barg", "Pa" or "psia"
+   */
+  public void setOutletPressure(double pressure, String unit) {
+    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(pressure, unit);
+    setOutletPressure(presConversion.getValue("bara"));
+  }
+
+  /**
+   * Getter for the specified outlet pressure.
+   *
+   * @return the specified outlet pressure in bara, or {@link Double#NaN} when none is specified
+   */
+  public double getOutletPressure() {
+    return specifiedOutletPressure;
+  }
+
+  /**
+   * Whether an explicit outlet pressure has been specified.
+   *
+   * @return true when {@link #setOutletPressure(double)} has been called and not cleared
+   */
+  public boolean hasOutletPressureSpecification() {
+    return !Double.isNaN(specifiedOutletPressure);
+  }
+
+  /**
+   * Remove an explicit outlet pressure specification and return to the default behaviour of taking the lowest active
+   * inlet pressure.
+   */
+  public void clearOutletPressureSpecification() {
+    this.specifiedOutletPressure = Double.NaN;
+  }
+
+  /**
    * Get the tolerance on the active inlet pressure spread before {@link #isPressureMismatch()} is raised.
    *
    * @return the tolerance in bar
@@ -496,7 +570,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     if (streams.isEmpty() || mixedStream == null || lastInletCompositions == null
         || streams.size() != lastNumberOfInputStreams || streams.size() != lastInletFlowRates.length
         || isSetOutTemperature != lastIsSetOutTemperature || doMultiPhaseCheck != lastDoMultiPhaseCheck
-        || outTemperature != lastOutTemperature) {
+        || outTemperature != lastOutTemperature
+        || Double.compare(specifiedOutletPressure, lastSpecifiedOutletPressure) != 0) {
       return true;
     }
     for (int streamIndex = 0; streamIndex < streams.size(); streamIndex++) {
@@ -553,6 +628,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     lastIsSetOutTemperature = isSetOutTemperature;
     lastDoMultiPhaseCheck = doMultiPhaseCheck;
     lastOutTemperature = outTemperature;
+    lastSpecifiedOutletPressure = specifiedOutletPressure;
   }
 
   private void finishRun(UUID id) {

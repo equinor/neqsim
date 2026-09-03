@@ -2987,10 +2987,22 @@ class UniSimToNeqSim:
             all_operations.extend(sf.operations)
             all_streams.extend(sf.material_streams)
 
-        # Build stream→operation connectivity map across all flowsheets
+        # Build stream→operation connectivity map across all flowsheets.
+        # Stream tags repeat across flowsheets (templates reuse plain numeric
+        # names), so register sub-flowsheet producers first and the MAIN
+        # flowsheet last: a main-flowsheet consumer must resolve to the
+        # main-flowsheet producer, not to a same-named template block.
         stream_producer = {}  # stream_name → (operation_name, port)
         stream_consumer = {}  # stream_name → [(operation_name, port)]
-        for op in all_operations:
+        _main_ids = {id(op) for op in flowsheet.operations}
+        _template_ops = [op for op in flowsheet.operations
+                         if UniSimToNeqSim.resolve_neqsim_type(op) == 'SubFlowsheet']
+        _template_ids = {id(op) for op in _template_ops}
+        _ordered_ops = list(_template_ops)
+        _ordered_ops.extend(op for op in all_operations if id(op) not in _main_ids)
+        _ordered_ops.extend(op for op in flowsheet.operations
+                            if id(op) not in _template_ids)
+        for op in _ordered_ops:
             op_type = getattr(op, 'type_name', '') or ''
             if not UniSimReader.is_material_stream_operation(op_type):
                 continue  # skip non-physical operations
@@ -3011,8 +3023,16 @@ class UniSimToNeqSim:
         # Build the process array
         process = []
 
-        # Helper: find stream data by name across all flowsheets
+        # Helper: find stream data by name across all flowsheets.
+        # Stream tags repeat across flowsheets (UniSim templates reuse plain
+        # numeric names like "1", "4", "7"), so build the lookup with the MAIN
+        # flowsheet LAST: its own streams must win, sub-flowsheet entries are only
+        # a fallback. The reverse order let a template stream shadow a
+        # main-flowsheet one of the same name and silently transferred the wrong
+        # pressure / temperature / composition to main-flowsheet equipment.
         stream_by_name = {s.name: s for s in all_streams}
+        for s in self.model.flowsheet.material_streams:
+            stream_by_name[s.name] = s
 
         # Add external feed streams first
         for feed_name in sorted(external_feeds):
@@ -3133,6 +3153,17 @@ class UniSimToNeqSim:
                 f"include it (kept out so process.run() completes).")
             return None
 
+        # An ADJUST whose target object UniSim COM does not expose cannot be
+        # wired; an unconfigured Adjuster never converges and keeps the whole
+        # ProcessSystem NOT SOLVED. Its effect is already contained in the
+        # converged feed values imported from the snapshot.
+        if neqsim_type == 'Adjuster' and not self._adjuster_is_wirable(op):
+            self._warnings.append(
+                f"Skipped adjuster '{op.name}' - UniSim COM does not expose its "
+                f"target object. Its effect is already in the converged feed "
+                f"values; an unconfigured Adjuster would never converge.")
+            return None
+
         entry = {
             'type': neqsim_type,
             'name': op.name,
@@ -3184,6 +3215,17 @@ class UniSimToNeqSim:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.temperature_C is not None:
                     props['outletTemperature'] = out_s.temperature_C + 273.15
+
+        elif neqsim_type == 'Mixer':
+            # A NeqSim Mixer outlet takes the lowest active inlet pressure. When
+            # UniSim holds the header above its lowest inlet (a make-up stream
+            # defined at standard conditions joining a pressurised header), that
+            # outlet pressure is a real specification and must be transferred,
+            # otherwise the single low-pressure inlet collapses the whole train.
+            held_p = self._mixer_held_outlet_pressure(
+                op, lambda n: self._find_stream_by_name(flowsheet, n))
+            if held_p is not None:
+                props['outletPressure'] = held_p
 
         elif neqsim_type == 'ThrottlingValve':
             # UniSim valves carry either a fixed outlet pressure OR a fixed
@@ -3294,10 +3336,14 @@ class UniSimToNeqSim:
                 props['diameter'] = op.properties['diameter_m']
             # Transfer the UniSim vessel pressure DROP (feed -> vapour outlet).
             # NeqSim separators keep the feed pressure otherwise, so a downstream
-            # valve/exchanger would see too-high a pressure. Cap at 1 bara to
-            # ignore snapshot stream-mapping artefacts (a real vessel dP is small).
+            # valve/exchanger would see too-high a pressure. This is NOT limited to
+            # a small mechanical vessel dP: UniSim staged stock-tank chains flash
+            # inside the block (65 -> 19 -> 2 -> 1.013 bara), and that specified
+            # pressure is the whole point of the block. (An earlier 1 bara cap
+            # guarded against snapshot stream-mapping artefacts; those came from a
+            # flowsheet-blind stream lookup that is now scoped per flowsheet.)
             dp = self._unit_pressure_drop_bara(op, flowsheet)
-            if dp is not None and 0.001 < dp <= 1.0:
+            if dp is not None and dp > self.SEPARATOR_MIN_PRESSURE_DROP_BAR:
                 props['pressureDrop'] = round(dp, 6)
 
         elif neqsim_type == 'Recycle':
@@ -3949,7 +3995,38 @@ class UniSimToNeqSim:
         _all_ops_flat = list(flowsheet.operations)
         for sf in flowsheet.sub_flowsheets:
             _all_ops_flat.extend(sf.operations)
-        for op in _all_ops_flat:
+        # Stream tags repeat across flowsheets (templates reuse plain numeric
+        # names like "13"), so register sub-flowsheet producers FIRST and the
+        # main flowsheet LAST: a main-flowsheet consumer must resolve to the
+        # main-flowsheet producer. With the reverse order a template block
+        # silently captured the edge — e.g. Gullfaks C wired the main mixer
+        # MIX-111 to the Tordis MIX-100 instead of the main MIX-110, feeding it
+        # a 1.5e6 kg/hr stream in place of a 16 000 kg/hr one and making the
+        # recompression recycle diverge. Each sub-flowsheet re-overlays its own
+        # producers in _build_sub_topo, so template-internal edges still resolve
+        # locally.
+        # Stream tags repeat across flowsheets (templates reuse plain numeric
+        # names like "13"), so producers are registered in increasing priority:
+        #   1. templateop wrappers  - a SubFlowsheet becomes a ProcessSystem and
+        #      has no outlet stream, so it must never win over the block inside
+        #      the template that actually produces the stream;
+        #   2. sub-flowsheet blocks - correct for template-internal edges;
+        #   3. main-flowsheet blocks - a main consumer must resolve to the main
+        #      producer.  With the reverse order a template block silently
+        #      captured the edge: Gullfaks C wired the main mixer MIX-111 to the
+        #      Tordis MIX-100, feeding it 1.5e6 kg/hr instead of 16 000 kg/hr and
+        #      making the recompression recycle diverge.
+        # Each sub-flowsheet re-overlays its own producers in _build_sub_topo, so
+        # template-internal edges still resolve locally.
+        _main_ids = {id(op) for op in flowsheet.operations}
+        _template_ops = [op for op in flowsheet.operations
+                         if UniSimToNeqSim.resolve_neqsim_type(op) == 'SubFlowsheet']
+        _template_ids = {id(op) for op in _template_ops}
+        _producer_ops = list(_template_ops)
+        _producer_ops.extend(op for op in _all_ops_flat if id(op) not in _main_ids)
+        _producer_ops.extend(op for op in flowsheet.operations
+                             if id(op) not in _template_ids)
+        for op in _producer_ops:
             op_type = getattr(op, 'type_name', '') or ''
             if not UniSimReader.is_material_stream_operation(op_type):
                 continue
@@ -3965,9 +4042,15 @@ class UniSimToNeqSim:
                 if s not in stream_producer:
                     external_feeds.add(s)
 
+        # Stream tags repeat across flowsheets (UniSim templates reuse plain
+        # numeric names like "1", "4", "7"). Build the MAIN flowsheet's lookup so
+        # its own streams win; each sub-flowsheet re-overlays its own streams in
+        # _build_sub_topo. Doing it the other way round let a template stream
+        # shadow a main-flowsheet one of the same name.
         stream_by_name = {s.name: s for s in all_streams}
+        for s in flowsheet.material_streams:
+            stream_by_name[s.name] = s
 
-        # --- Compute cross-flowsheet dependencies for templateops ---
         # When a sub-flowsheet operation consumes a stream produced by a
         # main-flowsheet operation, the corresponding templateop must be
         # placed after that main-flowsheet producer in topological order.
@@ -3983,19 +4066,8 @@ class UniSimToNeqSim:
             all_operations, stream_producer, extra_deps)
 
         # --- detect forward references (cycles in recycle loops) ---
-        defined_ops: set = set(external_feeds)  # feeds are "defined" before equipment
-        fwd_ref_placeholders: set = set()
-        for op in sorted_ops:
-            n_type = self.resolve_neqsim_type(op)
-            if n_type is None or n_type in self.SKIPPED_NEQSIM_TYPES:
-                defined_ops.add(op.name)
-                continue
-            for feed_stream in (op.feeds or []):
-                if feed_stream in stream_producer:
-                    producer_name, _ = stream_producer[feed_stream]
-                    if producer_name not in defined_ops:
-                        fwd_ref_placeholders.add(producer_name)
-            defined_ops.add(op.name)
+        fwd_ref_placeholders = self._detect_forward_refs(
+            sorted_ops, stream_producer, external_feeds)
 
         # --- mark forward-ref producers whose loop is ALREADY closed by a
         # UniSim recycle (RCY) op. A forward-ref placeholder is the converter's
@@ -4010,7 +4082,7 @@ class UniSimToNeqSim:
         fwd_ref_recycle_closed = self._recycle_closed_placeholders(
             _all_ops_flat, stream_producer, fwd_ref_placeholders)
 
-        return dict(
+        topo = dict(
             fluid=fluid, eos_class=eos_class, flowsheet=flowsheet,
             all_ops=all_operations, all_streams=all_streams,
             stream_producer=stream_producer, external_feeds=external_feeds,
@@ -4022,6 +4094,67 @@ class UniSimToNeqSim:
             sf_mapping=None,  # populated lazily by _build_sf_mapping
             included_sf_names=include_names,  # which sub-flowsheets pass filter
         )
+        self._augment_subflowsheet_forward_refs(topo)
+        return topo
+
+    def _detect_forward_refs(self, sorted_ops, stream_producer,
+                             external_feeds, predefined=None) -> set:
+        """Return producer names referenced before they are emitted.
+
+        A forward reference becomes a ``_fwd_*`` placeholder Stream (the
+        converter's loop tear point).  *predefined* names are treated as already
+        emitted, which lets a sub-flowsheet scan ignore producers that live in
+        another flowsheet.
+        """
+        defined_ops: set = set(external_feeds)
+        if predefined:
+            defined_ops |= set(predefined)
+        placeholders: set = set()
+        for op in sorted_ops:
+            n_type = self.resolve_neqsim_type(op)
+            if n_type is None or n_type in self.SKIPPED_NEQSIM_TYPES:
+                defined_ops.add(op.name)
+                continue
+            for feed_stream in (op.feeds or []):
+                if feed_stream in stream_producer:
+                    producer_name, _ = stream_producer[feed_stream]
+                    if producer_name not in defined_ops:
+                        placeholders.add(producer_name)
+            defined_ops.add(op.name)
+        return placeholders
+
+    def _augment_subflowsheet_forward_refs(self, topo: dict) -> None:
+        """Add forward references that occur INSIDE a sub-flowsheet.
+
+        ``_build_topology`` only topologically sorts the main flowsheet; each
+        sub-flowsheet is sorted separately in :meth:`_build_sub_topo`.  A cycle
+        broken inside a sub-flowsheet therefore produced a reference to a block
+        emitted later in that same sub-flowsheet, and — because no placeholder
+        was registered for it — the generated code contained a bare undefined
+        variable (NameError at run time).  Registering those producers here, on
+        the main topology, makes ``to_python`` emit their ``_fwd_*`` placeholder
+        Streams up front, exactly as it does for the main flowsheet.
+        """
+        flowsheet = topo.get('flowsheet')
+        if not flowsheet or not flowsheet.sub_flowsheets:
+            return
+        included = topo.get('included_sf_names')
+        main_op_names = {op.name for op in flowsheet.operations}
+        for sf in flowsheet.sub_flowsheets:
+            if included is not None and sf.name not in included:
+                continue
+            if not sf.operations:
+                continue
+            sf_topo = self._build_sub_topo(sf, topo)
+            # Producers outside this sub-flowsheet are handled by the main
+            # scan / cross-flowsheet dependency machinery.
+            outside = main_op_names | {
+                op.name for other in flowsheet.sub_flowsheets
+                if other is not sf for op in other.operations
+            }
+            topo['fwd_ref_placeholders'] |= self._detect_forward_refs(
+                sf_topo['sorted_ops'], sf_topo['stream_producer'],
+                sf_topo['external_feeds'], predefined=outside)
 
     def _recycle_closed_placeholders(self, all_ops_flat, stream_producer,
                                      fwd_ref_placeholders):
@@ -4151,6 +4284,100 @@ class UniSimToNeqSim:
         var_names[name] = v
         return v
 
+    # Relative tolerance on the mixer outlet-vs-lowest-inlet pressure comparison.
+    MIXER_HELD_PRESSURE_TOLERANCE = 0.02
+
+    # Below this the separator feed-to-outlet pressure difference is treated as
+    # numerical noise rather than a deliberate flash pressure.
+    SEPARATOR_MIN_PRESSURE_DROP_BAR = 0.01
+
+    @staticmethod
+    def _mixer_held_outlet_pressure(op: 'UniSimOperation', resolve_stream):
+        """Return the mixer outlet pressure when UniSim is holding it, else ``None``.
+
+        A NeqSim ``Mixer`` outlet takes the lowest active inlet pressure, which is
+        right for a passive tee.  UniSim models often hold a header at a fixed
+        pressure while a make-up stream defined at standard conditions (e.g. a
+        1.013 bara produced-water or seawater stream) joins it — the boost pump
+        or pressure controller is not drawn.  Converted naively, that single
+        1 bara inlet collapses the whole downstream train.
+
+        When the UniSim outlet stream sits materially ABOVE the lowest inlet, the
+        header pressure is being held externally, so the outlet pressure is a real
+        specification that must be transferred.  When the outlet equals the lowest
+        inlet (ordinary mixing, including a legitimately throttled high-pressure
+        inlet) ``None`` is returned and NeqSim's default behaviour is kept.
+
+        Args:
+            op: the UniSim mixer operation.
+            resolve_stream: callable mapping a stream name to its stream data
+                (or ``None`` when the stream is unknown).
+
+        Returns:
+            The outlet pressure in bara to specify, or ``None``.
+        """
+        products = op.products or []
+        if not products:
+            return None
+        out_sd = resolve_stream(products[0])
+        out_p = getattr(out_sd, 'pressure_bara', None) if out_sd else None
+        if out_p is None or out_p <= 0:
+            return None
+
+        inlet_pressures = []
+        for f in op.feeds or []:
+            sd = resolve_stream(f)
+            p = getattr(sd, 'pressure_bara', None) if sd else None
+            if p is not None and p > 0:
+                inlet_pressures.append(p)
+        if not inlet_pressures:
+            return None
+
+        lowest = min(inlet_pressures)
+        if out_p > lowest * (1.0 + UniSimToNeqSim.MIXER_HELD_PRESSURE_TOLERANCE):
+            return out_p
+        return None
+
+    @staticmethod
+    def _adjuster_is_wirable(op: 'UniSimOperation') -> bool:
+        """Whether a UniSim adjust/balance block can be reproduced as an Adjuster.
+
+        The UniSim COM API exposes an ADJUST's adjusted object but frequently not
+        its TARGET object, so the converted ``Adjuster`` ends up with no adjusted
+        variable and no target variable. Such an adjuster can never converge: it
+        keeps the whole ``ProcessSystem`` reporting NOT SOLVED, burns the outer
+        iteration budget, and (once wired) would drag feed variables away from the
+        converged values the snapshot already carries.
+
+        Skipping it loses nothing. A UniSim ADJUST manipulates a feed rate or
+        temperature until a downstream specification is met, and the snapshot the
+        converter imports is the CONVERGED case — the adjuster's answer is already
+        in the feed values.
+        """
+        props = op.properties or {}
+        has_adjusted = bool(props.get('adjusted_object_name')
+                            and props.get('adjusted_variable'))
+        has_target = bool(props.get('target_object_name')
+                          and props.get('target_variable'))
+        return has_adjusted and has_target
+
+    @staticmethod
+    def _op_lookup(topo: dict) -> dict:
+        """Return ``name -> operation`` for the main flowsheet AND its templates.
+
+        Forward-reference placeholders may stand for a block that lives inside a
+        sub-flowsheet, so any lookup that decides a placeholder's outlet ports
+        must see those operations too — otherwise a template separator gets no
+        gasOut/liquidOut placeholder and the generated code references an
+        undefined variable.
+        """
+        ops = list(topo.get('sorted_ops', []))
+        fs = topo.get('flowsheet')
+        if fs:
+            for sf in getattr(fs, 'sub_flowsheets', None) or []:
+                ops.extend(sf.operations or [])
+        return {op.name: op for op in ops}
+
     @staticmethod
     def _register_fwd_placeholders(topo: dict) -> None:
         """Populate ``topo['fwd_ref_vars']`` from ``topo['fwd_ref_placeholders']``.
@@ -4164,8 +4391,7 @@ class UniSimToNeqSim:
         """
         used_vars = topo['used_vars']
         fwd_ref_vars = topo['fwd_ref_vars']
-        sorted_ops = topo.get('sorted_ops', [])
-        op_by_name = {op.name: op for op in sorted_ops}
+        op_by_name = UniSimToNeqSim._op_lookup(topo)
         for prod_name in sorted(topo['fwd_ref_placeholders']):
             if prod_name in fwd_ref_vars:
                 continue  # already registered
@@ -4562,6 +4788,12 @@ class UniSimToNeqSim:
             return [f'# SKIPPED: unsupported type "{op.type_name}": "{op.name}"']
         if neqsim_type in self.SKIPPED_NEQSIM_TYPES:
             return [f'# SKIPPED ({neqsim_type}): "{op.name}"']
+        if neqsim_type == 'Adjuster' and not self._adjuster_is_wirable(op):
+            return [
+                f'# SKIPPED (Adjuster): "{op.name}" — UniSim COM does not expose '
+                f'its target object, so it cannot be wired. Its effect is already '
+                f'contained in the converged feed values imported from the '
+                f'snapshot; an unconfigured Adjuster would never converge.']
 
         var_names = topo['var_names']
         used_vars = topo['used_vars']
@@ -4583,6 +4815,13 @@ class UniSimToNeqSim:
             lines.append(f'{v} = Mixer("{op.name}")')
             for ref in inlet_refs:
                 lines.append(f'{v}.addStream({_ref(ref)})')
+            held_p = self._mixer_held_outlet_pressure(
+                op, lambda n: topo.get('stream_by_name', {}).get(n))
+            if held_p is not None:
+                lines.append(
+                    f'# UniSim holds this header at {held_p:.4g} bara even though an '
+                    f'inlet arrives lower (boosted make-up / pressure-controlled header).')
+                lines.append(f'{v}.setOutletPressure({held_p!r}, "bara")')
 
         elif neqsim_type == 'HeatExchanger' and len(inlet_refs) >= 2:
             lines.append(f'{v} = HeatExchanger("{op.name}")')
@@ -4898,6 +5137,7 @@ class UniSimToNeqSim:
                                                f'{v}.add('))
                             else:
                                 lines.append(sl)
+                self._merge_sub_var_names(sf_topo, topo)
             else:
                 lines.append(f'{v} = ProcessSystem("{op.name}")')
                 if sf_data and not sf_included:
@@ -5168,8 +5408,15 @@ class UniSimToNeqSim:
                         parent_topo: dict) -> dict:
         """Build a mini-topology dict for a sub-flowsheet.
 
-        Reuses the parent topology's fluid, var_names, and used_vars so
-        that variable names don't collide between parent and child.
+        ``used_vars`` is SHARED with the parent so emitted Python variable names
+        stay globally unique.  ``var_names`` (UniSim name -> Python variable) is
+        a per-flowsheet COPY: UniSim allows the same operation name in several
+        flowsheets (e.g. a ``TEE-101`` in the main flowsheet and one in every
+        template), and a shared map would let the last-registered one win for
+        every consumer, wiring a unit to a same-named block in another
+        flowsheet.  Names created inside the sub-flowsheet are merged back into
+        the parent only when the parent does not already define them (see
+        :meth:`_merge_sub_var_names`), which preserves cross-flowsheet refs.
         """
         stream_producer: dict = {}
         for op in sf.operations:
@@ -5208,9 +5455,28 @@ class UniSimToNeqSim:
             external_feeds=external_feeds,
             stream_by_name=stream_by_name,
             sorted_ops=sorted_ops,
-            var_names=parent_topo['var_names'],
+            var_names=dict(parent_topo['var_names']),
             used_vars=parent_topo['used_vars'],
+            # forward-reference state is SHARED: the placeholder Streams are
+            # emitted once, up front, from the main topology.
+            fwd_ref_placeholders=parent_topo.get('fwd_ref_placeholders', set()),
+            fwd_ref_recycle_closed=parent_topo.get('fwd_ref_recycle_closed',
+                                                   set()),
+            fwd_ref_vars=parent_topo.get('fwd_ref_vars', {}),
+            included_sf_names=parent_topo.get('included_sf_names'),
         )
+
+    @staticmethod
+    def _merge_sub_var_names(sf_topo: dict, parent_topo: dict) -> None:
+        """Merge names created in a sub-flowsheet back into the parent map.
+
+        Only names the parent does not already bind are copied up, so a
+        sub-flowsheet block never steals a name owned by the parent flowsheet
+        while genuine cross-flowsheet references still resolve.
+        """
+        parent_names = parent_topo['var_names']
+        for name, var in sf_topo['var_names'].items():
+            parent_names.setdefault(name, var)
 
     def _detect_column_config(self, op: 'UniSimOperation',
                               topo: dict) -> tuple:
@@ -5474,6 +5740,7 @@ class UniSimToNeqSim:
                         f'water by gravity and residence time.')
             return (f'**{op.name}** separates the inlet into gas, oil, '
                     f'and water phases.')
+
 
         elif neqsim_type == 'Compressor':
             eff = props.get('adiabatic_efficiency')
@@ -5773,13 +6040,10 @@ class UniSimToNeqSim:
             self._register_fwd_placeholders(topo)
             stream_by_name = topo.get('stream_by_name', {})
             fwd_ref_vars = topo['fwd_ref_vars']
+            _op_by_name = self._op_lookup(topo)
             for prod_name in sorted(fwd_ref_placeholders):
                 placeholder_var = fwd_ref_vars[prod_name]
-                op_ = None
-                for o_ in topo['sorted_ops']:
-                    if o_.name == prod_name:
-                        op_ = o_
-                        break
+                op_ = _op_by_name.get(prod_name)
                 n_type = self.resolve_neqsim_type(op_) if op_ else None
                 # Determine port-specific placeholders for multi-outlet equipment
                 if (n_type in ('Separator', 'GasScrubber')
@@ -6867,6 +7131,29 @@ class UniSimToNeqSim:
                     lines.append(f'# WARNING: compressor efficiency not available '
                                  f'from source model — using 75% default')
 
+        elif neqsim_type == 'ComponentSplitter':
+            # NeqSim's ComponentSplitter indexes one split factor PER COMPONENT
+            # and defaults to a length-1 array, so running it without factors
+            # throws "Index 1 out of bounds for length 1". ProcessSystem.run()
+            # aborts the pass at the first throwing unit, so every downstream unit
+            # then keeps its seeded inlet clone (the tell-tale is a splitter or
+            # separator whose outlets all carry the full inlet flow). Always emit
+            # factors: the mapped UniSim overhead splits when they resolve,
+            # otherwise a correctly sized pass-through so the unit still runs.
+            facs, basis = self._component_split_factors_global(op, flowsheet)
+            if facs:
+                if basis:
+                    lines.append(f'{var}.setSplitFactors({facs!r}, "{basis}")')
+                else:
+                    lines.append(f'{var}.setSplitFactors({facs!r})')
+            else:
+                lines.append(
+                    '# UniSim overhead splits could not be mapped onto the '
+                    'global component order — sized pass-through so the unit runs.')
+                lines.append(
+                    f'{var}.setSplitFactors([1.0] * int({var}.getInletStream()'
+                    f'.getFluid().getNumberOfComponents()))')
+
         elif neqsim_type == 'ThrottlingValve':
             # Small-dP 'DP*' line-loss valves: reproduce UniSim's fixed pressure
             # DROP (outlet = inlet - dP) via setDeltaPressure so the pressure
@@ -7003,6 +7290,24 @@ class UniSimToNeqSim:
 
         elif neqsim_type in ('Separator', 'GasScrubber',
                              'ThreePhaseSeparator'):
+            # A UniSim flash/separator vessel carries its own operating pressure:
+            # the staged stock-tank chains (Flash1..Flash4 at 65 / 19 / 2 / 1.013
+            # bara) drop pressure inside the block. A NeqSim Separator inherits the
+            # inlet pressure and only phase-splits, so without this transfer every
+            # staged flash happens at feed pressure and the whole chain is wrong.
+            # Separator.setPressureDrop is in bar and is applied to the outlet.
+            in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                    if op.feeds else None)
+            out_s = _get_outlet_stream_data()
+            p_in = getattr(in_s, 'pressure_bara', None) if in_s else None
+            p_out = getattr(out_s, 'pressure_bara', None) if out_s else None
+            if (p_in and p_out and p_out < p_in
+                    and (p_in - p_out) > self.SEPARATOR_MIN_PRESSURE_DROP_BAR):
+                lines.append(
+                    f'# UniSim flashes this vessel at {p_out:.4g} bara '
+                    f'(feed {p_in:.4g} bara).')
+                lines.append(f'{var}.setPressureDrop({p_in - p_out!r})')
+
             # Entrainment specs extracted from UniSim
             entrainment_specs = op.properties.get('entrainment', [])
             for ent in entrainment_specs:

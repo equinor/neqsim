@@ -203,6 +203,53 @@ class MixerTest {
   }
 
   /**
+   * An explicitly specified outlet pressure must override the lowest-active-inlet rule, so a low-pressure make-up
+   * stream cannot drag a high-pressure header down to its own pressure.
+   */
+  @Test
+  void testSpecifiedOutletPressureOverridesLowestInlet() {
+    Stream header = new Stream("header", testSystem.clone());
+    header.setFlowRate(1.0, "MSm3/day");
+    header.setTemperature(60.0, "C");
+    header.setPressure(57.5, "bara");
+    header.run();
+
+    Stream makeUp = new Stream("make-up", testSystem.clone());
+    makeUp.setFlowRate(0.01, "MSm3/day");
+    makeUp.setTemperature(15.0, "C");
+    makeUp.setPressure(1.013, "bara"); // defined at standard conditions, boosted into the header
+    makeUp.run();
+
+    Mixer defaultMixer = new Mixer("default mixer");
+    defaultMixer.addStream(header);
+    defaultMixer.addStream(makeUp);
+    defaultMixer.run();
+    assertEquals(1.013, defaultMixer.getOutletStream().getPressure("bara"), 1e-6,
+        "default behaviour must still collapse to the lowest active inlet");
+
+    Mixer specifiedMixer = new Mixer("specified mixer");
+    specifiedMixer.addStream(header);
+    specifiedMixer.addStream(makeUp);
+    assertFalse(specifiedMixer.hasOutletPressureSpecification());
+    specifiedMixer.setOutletPressure(57.5, "bara");
+    assertTrue(specifiedMixer.hasOutletPressureSpecification());
+    assertEquals(57.5, specifiedMixer.getOutletPressure(), 1e-9);
+    specifiedMixer.run();
+
+    assertEquals(57.5, specifiedMixer.getOutletStream().getPressure("bara"), 1e-6,
+        "specified outlet pressure must override the lowest inlet");
+    assertFalse(specifiedMixer.isPressureMismatch(),
+        "a specified outlet pressure is deliberate, not an upstream shortfall");
+
+    specifiedMixer.clearOutletPressureSpecification();
+    assertFalse(specifiedMixer.hasOutletPressureSpecification());
+    assertTrue(specifiedMixer.needRecalculation(), "clearing the specification must invalidate the cached mix");
+    specifiedMixer.run();
+    assertEquals(1.013, specifiedMixer.getOutletStream().getPressure("bara"), 1e-6,
+        "clearing the specification must restore the lowest-inlet behaviour");
+  }
+
+  /**
    * Test method for {@link neqsim.process.equipment.mixer.Mixer#run()}.
    */
   @Test
