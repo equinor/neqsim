@@ -2493,7 +2493,19 @@ public abstract class Phase implements PhaseInterface {
         return componentArray[i];
       }
     }
-    logger.error("could not find component " + name + " in fluid, returning null");
+    // Only consult the synonym table once an exact database name has failed, so an exact name
+    // never pays for the lookup and can never be redirected. A name the resolver considers
+    // ambiguous resolves to itself and therefore still fails rather than picking a near match.
+    String resolved = ComponentInterface.getComponentNameFromAlias(name);
+    if (!resolved.equals(name)) {
+      for (int i = 0; i < numberOfComponents; i++) {
+        if (componentArray[i].getName().equals(resolved)) {
+          return componentArray[i];
+        }
+      }
+    }
+    logger.error("could not find component {} in fluid, and it is not a known synonym of any "
+        + "component present, returning null", name);
     return null;
   }
 
