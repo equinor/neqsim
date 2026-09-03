@@ -186,12 +186,13 @@ IDs visible, and separately lists source-ordered connection occurrences entering
 cyclic group. Boundary lists preserve parallel references and exclude connections whose source or
 target identity is blank. `getBoundaryConnections()` additionally preserves the overall source order
 across incoming and outgoing occurrences. Each immutable `DexpiConnectionCycleBoundaryInfo` records
-the connection ID, direction relative to the cyclic group, explicit internal and external endpoint
-identities, whether each endpoint resolves, and the resolved endpoint element and Equipment/PipingComponent owner
-identities already present in the endpoint inventory. Missing or unresolved owner evidence remains an empty field.
-This avoids inferring boundary orientation or ownership by joining separate inventories while retaining parallel and
-unresolved source evidence.
-It does not identify a hydraulic recycle, enumerate elementary paths, assert convergence behavior,
+the connection evidence ID, original source connection ID, owning `PipingNetworkSegment` ID,
+direction relative to the cyclic group, explicit internal and external endpoint identities, whether
+each endpoint resolves, and the resolved endpoint element and Equipment/PipingComponent owner
+identities already present in the endpoint inventory. Missing source, segment, endpoint, or owner
+evidence remains an empty field. This avoids inferring boundary orientation, provenance, or ownership
+by joining separate inventories while retaining parallel and unresolved source evidence. It does not
+identify a hydraulic recycle, enumerate elementary paths, assert convergence behavior,
 repair or rewire topology, or establish process intent.
 
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
