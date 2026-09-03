@@ -1505,46 +1505,48 @@ The complete workflow in `TPmultiflash.run()` is:
 
 Beyond stability analysis, NeqSim uses heuristic phase seeding to improve convergence:
 
-#### 3.5.1 Vapor-like Gas Phase Seeding
+#### 3.5.1 Water-rich Hydrocarbon Vapour Appearance
 
-When an aqueous phase and material hydrocarbon feed exist without a gas phase, the fallback creates a vapor-like trial
-instead of copying the water-dominated feed composition. The initial trial is
+A neutral OIL+AQUEOUS endpoint can still be unstable to a hydrocarbon vapour phase when water dominates the overall
+composition. The ordinary stability trials use that overall composition, so dilution can hide the vapour stationary
+point even though the water-free hydrocarbon sub-mixture remains between its bubble and dew points.
 
-$$x_i^{trial}=\frac{z_iK_i^{Wilson}}{\sum_j z_jK_j^{Wilson}}$$
+The fallback first applies a cheap Rachford-Rice bracketing screen to the normalized, ion-free volatile
+sub-composition. With Wilson K-values, both
 
-with
+$$\sum_i \hat z_i K_i > 1 + 10^{-3}$$
 
-$$\ln K_i^{Wilson}=\ln\left(\frac{P_{c,i}}{P}\right)+5.373(1+\omega_i)\left(1-\frac{T_{c,i}}{T}\right)$$
+and
 
-The calculation is performed in log space and bounds $\ln K_i$ to $[-50,50]$ to remain finite for large volatility
-contrasts. This is an initialization strategy only: the multiphase beta solve, component material balance, composition
-normalization, fugacity equality, phase-stability logic, and Gibbs-energy comparisons still determine whether the gas
-phase is retained.
+$$\sum_i \frac{\hat z_i}{K_i} > 1 + 10^{-3}$$
+
+must hold. The screen is considered only when multiphase checking is enabled, the converged endpoint has exactly OIL
+and AQUEOUS phases but no GAS phase, the system is non-reactive, and at least `1e-6` of the overall feed is represented
+by volatile screening components.
+
+Directly appending a gas phase is not used because `SystemInterface.addPhase()` can expose a stale phase slot whose
+requested type need not survive initialization. Instead, the algorithm snapshots the converged endpoint, clones it,
+resets the clone to a fresh two-phase GAS/liquid estimate, calls `init(0)` and `init(1)`, and runs one nested
+`TPmultiflash`. A thread-local guard and a per-operation one-shot flag prevent reciprocal recursion.
+
+The trial replaces the retained endpoint only if it preserves every original phase role, adds GAS, stays within the
+configured phase-count limit, and lowers extensive Gibbs energy. An exception, missing phase, non-improving Gibbs
+energy, or rejected trial leaves the snapshot in place; beta, phase compositions, K-values, and initialized properties
+are restored. Thus the Wilson screen triggers an equilibrium calculation but does not itself decide phase stability.
 
 ```java
-private boolean seedAdditionalPhaseFromFeed() {
-    // Only if multiphase check enabled and < 3 phases
-    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() >= 3)
-        return false;
+if (oilAndAqueousWithoutGas && neutral && wilsonSubmixtureBracketsTwoPhases) {
+    PhaseSplitSnapshot retained = snapshot(system);
+    SystemInterface trial = freshGasLiquidEstimate(system);
+    new TPmultiflash(trial, solidCheck).run();
 
-    // Need aqueous phase but no gas phase
-    boolean hasAqueous = false, hasGas = false;
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        if (type == PhaseType.GAS) hasGas = true;
-        if (type == PhaseType.AQUEOUS) hasAqueous = true;
+    if (retainsOriginalPhaseRoles(trial)
+            && trial.hasPhaseType(PhaseType.GAS)
+            && trial.getGibbsEnergy() < retainedGibbs) {
+        restorePhaseSplit(snapshot(trial));
+    } else {
+        restorePhaseSplit(retained);
     }
-    if (!hasAqueous || hasGas) return false;
-
-    // Seed a vapor-like trial in bounded log space
-    system.addPhase();
-    system.setPhaseType(phaseIndex, PhaseType.GAS);
-    for (int comp = 0; comp < ncomp; comp++) {
-        logTrial[comp] = log(z[comp]) + clamp(log(KWilson[comp]), -50, 50);
-        xTrial[comp] = exp(logTrial[comp] - max(logTrial));
-    }
-    normalize(xTrial);
-    system.setBeta(phaseIndex, 1e-3);
-    return true;
 }
 ```
 
@@ -2225,6 +2227,30 @@ experimental uncertainty or validation of the predicted high-temperature phase s
 
 The bounded test matrix is performance evidence only. Production solver code, public APIs,
 model parameters, defaults, and runtime behavior are unchanged, so no speedup is claimed.
+
+### 6.4.10 Water-rich cubic-EOS vapour-appearance qualification
+
+The synthetic qualification uses classic-mixing `SystemSrkEos` and `SystemPrEos` at 30.8 °C and 45.62 bara. The
+water-free hydrocarbon inventory is 0.55 methane, 0.08 ethane, 0.05 propane, 0.03 n-butane, 0.02 n-pentane, 0.02
+n-hexane, 0.10 n-heptane, and 0.15 n-octane on a mole-fraction basis. Water then dilutes that normalized inventory.
+This is deterministic solver evidence, not an experimental validation of the predicted phase fractions or boundary.
+
+The historical SRK water-cut range from 0.50 through 0.95 must retain GAS+OIL+AQUEOUS equilibrium. SRK and PR are both
+qualified at a water mole fraction of 0.83 and 44.62, 45.62, and 46.62 bara. Every active phase and beta must be finite,
+bounded, and normalized within `1e-12`; maximum component material-balance residual must be below `1e-10`; maximum
+comparable interphase log-fugacity residual must be below `1e-8`; compressibility must be positive; and Gibbs energy
+and enthalpy must be finite.
+
+At the reference state, both equations of state must recover the fresh public `TPflash` endpoint from beta values
+within `1e-12` of a bound and from an ordinary two-phase endpoint passed directly to `TPmultiflash`. Reused systems
+must agree with fresh calculations after a nearby pressure change, after return to the reference pressure, and on an
+immediate deterministic repeat. A water-free GAS+OIL control verifies that the aqueous-only guard does not broaden the
+restart to dry flashes.
+
+The focused class executes 34 complete flashes. That bounded count is the performance evidence for this test-only
+qualification; no wall-clock threshold or production speedup is claimed. Production solver code, public APIs, model
+parameters/defaults, electrolyte and reactive paths, solids/wax, saturation search, Column Solver, Process Performance,
+and Huldra are outside this tranche.
 
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
