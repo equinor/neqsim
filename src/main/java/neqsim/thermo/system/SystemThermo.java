@@ -1802,6 +1802,15 @@ public abstract class SystemThermo implements SystemInterface {
     return table;
   }
 
+  /**
+   * Riazi-Daubert (1980) coefficient a in M = a * Tb^b * SG^c, with Tb in degrees Rankine and M in g/mol.
+   */
+  private static final double RD1980_A = 4.5673e-5;
+  /** Riazi-Daubert (1980) boiling point exponent b. */
+  private static final double RD1980_B = 2.1962;
+  /** Riazi-Daubert (1980) specific gravity exponent c. */
+  private static final double RD1980_C = -1.0164;
+
   /** {@inheritDoc} */
   @Override
   public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass, double boilingPoint) {
@@ -1814,59 +1823,70 @@ public abstract class SystemThermo implements SystemInterface {
           new neqsim.util.exception.InvalidInputException(this, "addTBPfraction2", "molarMass", "must be positive."));
     }
 
-    // Calculate density from boiling point and molar mass using inverse Søreide
-    // correlation
     double density = calculateDensityFromBoilingPoint(molarMass, boilingPoint);
 
-    // Call the existing addTBPfraction method with the calculated density
-    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    // Pin the boiling point so Tb-based TBP models (Lee-Kesler, Twu, Cavett) use the
+    // requested value for Tc/Pc rather than back-correlating it from molar mass.
+    characterization.getTBPModel().setBoilingPoint(boilingPoint);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint) {
-    double TB = boilingPoint;
-
-    double lower = 0.5;
-    double upper = 1.5;
-    double tolerance = 1e-5;
-    int maxIterations = 1000;
-    double density = 0.8;
-    double calculated_density = 0.0;
-    double fmidOLD = 9999.0;
-    double f_mid;
-    double calculated_TB;
-    double lowerOLD = 0.1;
-    double upperOLD = 1.5;
-
-    for (int i = 0; i < maxIterations; i++) {
-      density = 0.5 * (lower + upper);
-      calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
-      f_mid = calculated_TB - TB;
-
-      if (Math.abs(f_mid) < tolerance) {
-        return calculated_density;
-      }
-
-      if (Math.abs(lower - upper) < tolerance) {
-        return calculated_density; // Return the midpoint as density
-      }
-
-      if (f_mid < 0) {
-        lowerOLD = lower;
-        lower = density;
-      } else {
-        upperOLD = upper;
-        upper = density;
-      }
-
-      if ((Math.abs(f_mid) < Math.abs(fmidOLD))) {
-        fmidOLD = f_mid;
-        calculated_density = density;
-      }
+    if (molarMass <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPoint", "molarMass", "must be positive."));
     }
-    return calculated_density;
-    // Return the midpoint as density
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPoint", "boilingPoint", "must be positive."));
+    }
+
+    // Riazi-Daubert (1980) M = a*Tb^c*SG^c inverted analytically for SG. The TBP model's own
+    // calcTB cannot be used here: for the Pedersen models it carries no density dependence below
+    // 540 g/mol, so the inverse problem has no solution (see PedersenTBPModelSRK.calcTB).
+    double molarMassGmol = molarMass * 1000.0;
+    double boilingPointRankine = boilingPoint * 1.8;
+    double density = Math.pow(RD1980_A * Math.pow(boilingPointRankine, RD1980_B) / molarMassGmol, -1.0 / RD1980_C);
+
+    if (boilingPoint < 300.0 || boilingPoint > 620.0 || molarMassGmol < 70.0 || molarMassGmol > 300.0) {
+      logger.warn("calculateDensityFromBoilingPoint: molar mass {} g/mol and boiling point {} K fall outside the "
+          + "Riazi-Daubert (1980) validated range (70-300 g/mol, 300-620 K). Specific gravity {} is an "
+          + "extrapolation.", molarMassGmol, boilingPoint, density);
+    }
+    if (density < 0.5 || density > 1.3) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "calculateDensityFromBoilingPoint", "boilingPoint",
+              "molar mass " + molarMassGmol + " g/mol combined with boiling point " + boilingPoint
+                  + " K gives a non-physical specific gravity of " + density
+                  + ". Expected 0.5-1.3. Check that the boiling point is in K and the molar mass in kg/mol."));
+    }
+    return density;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateDensityFromBoilingPointAndWatsonK(double boilingPoint, double watsonK) {
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPointAndWatsonK", "boilingPoint", "must be positive."));
+    }
+    if (watsonK <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPointAndWatsonK", "watsonK", "must be positive."));
+    }
+    double density = Math.pow(1.8 * boilingPoint, 1.0 / 3.0) / watsonK;
+    if (density < 0.5 || density > 1.3) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPointAndWatsonK", "watsonK", "boiling point " + boilingPoint + " K with Watson K "
+              + watsonK + " gives a non-physical specific gravity of " + density + ". Expected 0.5-1.3."));
+    }
+    return density;
   }
 
   /**
@@ -1886,7 +1906,12 @@ public abstract class SystemThermo implements SystemInterface {
           new neqsim.util.exception.InvalidInputException(this, "addTBPfraction3", "density", "must be positive."));
     }
     double molarMass = calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
-    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    characterization.getTBPModel().setBoilingPoint(boilingPoint);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
   }
 
   /**
@@ -1897,43 +1922,45 @@ public abstract class SystemThermo implements SystemInterface {
    */
   @Override
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint) {
-    double TB = boilingPoint;
+    if (density <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateMolarMassFromDensityAndBoilingPoint", "density", "must be positive."));
+    }
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateMolarMassFromDensityAndBoilingPoint", "boilingPoint", "must be positive."));
+    }
 
     double lower = 0.01;
     double upper = 0.5;
-    double tolerance = 1e-5;
-    int maxIterations = 1000;
-    double molarMass = 0.8;
-    double calculatedMolarMass = 0.0;
-    double fmidOLD = 9999.0;
-    double f_mid;
-    double calculated_TB;
+    double fLower = characterization.getTBPModel().calcTB(lower * 1000.0, density) - boilingPoint;
+    double fUpper = characterization.getTBPModel().calcTB(upper * 1000.0, density) - boilingPoint;
 
-    for (int i = 0; i < maxIterations; i++) {
+    if (fLower * fUpper > 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateMolarMassFromDensityAndBoilingPoint", "boilingPoint",
+          "boiling point " + boilingPoint + " K is not attainable with TBP model '"
+              + characterization.getTBPModel().getName() + "' at specific gravity " + density + ". Attainable range is "
+              + (fLower + boilingPoint) + " to " + (fUpper + boilingPoint) + " K for molar mass 10-500 g/mol."));
+    }
+
+    double tolerance = 1e-8;
+    double molarMass = 0.5 * (lower + upper);
+    for (int i = 0; i < 200 && (upper - lower) > tolerance; i++) {
       molarMass = 0.5 * (lower + upper);
-      calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
-      f_mid = calculated_TB - TB;
-
-      if (Math.abs(f_mid) < tolerance) {
-        return calculatedMolarMass;
+      double fMid = characterization.getTBPModel().calcTB(molarMass * 1000.0, density) - boilingPoint;
+      if (fMid == 0.0) {
+        return molarMass;
       }
-
-      if (Math.abs(lower - upper) < tolerance) {
-        return calculatedMolarMass; // Return the midpoint as density
-      }
-
-      if (f_mid < 0) {
-        lower = molarMass;
-      } else {
+      if (fLower * fMid < 0.0) {
         upper = molarMass;
-      }
-
-      if ((Math.abs(f_mid) < Math.abs(fmidOLD))) {
-        fmidOLD = f_mid;
-        calculatedMolarMass = molarMass;
+        fUpper = fMid;
+      } else {
+        lower = molarMass;
+        fLower = fMid;
       }
     }
-    return calculatedMolarMass;
+    return 0.5 * (lower + upper);
   }
 
   /**
@@ -1946,7 +1973,13 @@ public abstract class SystemThermo implements SystemInterface {
   public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass, double density,
       double boilingPoint) {
     characterization.getTBPModel().setBoilingPoint(boilingPoint);
-    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      // Without this the boiling point stays on the shared TBP model and overrides calcTB for
+      // every fraction added afterwards.
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
   }
 
   /** {@inheritDoc} */

@@ -8,16 +8,16 @@ Accurate phase behavior predictions start with a realistic fluid description. Ne
 ## Building Compositions
 1. **Known components**: Add pure components directly using critical-property data from the internal database.
 2. **Plus fractions (C7+)**: Use `addPlusFraction(name, moles, molarMass, density)` when only overall heavy fraction data are available.
-3. **TBP/assay data**: Use `addTBPfraction(name, moles, density, molarMass)` to preserve multiple heavy cuts with their own boiling ranges.
+3. **TBP/assay data**: Use `addTBPfraction(name, moles, molarMass, density)` to preserve multiple heavy cuts with their own boiling ranges. Molar mass is in kg/mol and density is the specific gravity in g/cm3.
 
 ```java
 SystemInterface oil = new SystemSrkEos(323.15, 150.0);
 oil.createDatabase(true);
 oil.addComponent("nitrogen", 0.01);
 oil.addComponent("methane", 0.60);
-oil.addTBPfraction("C7", 0.08, 0.73, 7.5);
-oil.addTBPfraction("C10", 0.10, 0.80, 10.5);
-oil.addPlusFraction("C20+", 0.21, 0.92, 22.0);
+oil.addTBPfraction("C7", 0.08, 0.096, 0.738);
+oil.addTBPfraction("C10", 0.10, 0.134, 0.792);
+oil.addPlusFraction("C20", 0.21, 0.275, 0.870);
 oil.setMixingRule(2);
 ```
 
