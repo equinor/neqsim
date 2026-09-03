@@ -605,8 +605,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("N-Y", cycleEndpoints.get(1).getEndpointId());
     assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.MERGE, cycleEndpoints.get(1).getIncidenceRole());
     assertEquals("N-Z", cycleEndpoints.get(2).getEndpointId());
-    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.PASS_THROUGH,
-        cycleEndpoints.get(2).getIncidenceRole());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.PASS_THROUGH, cycleEndpoints.get(2).getIncidenceRole());
     assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), threeEndpointCycle.getConnectionIds());
     List<DexpiConnectionInfo> internalConnections = threeEndpointCycle.getConnections();
     assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), Arrays.asList(internalConnections.get(0).getId(),
