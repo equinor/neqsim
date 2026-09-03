@@ -130,8 +130,8 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
     requireFinitePositive(airSaturatedOxygenMolality, "air-saturated oxygen molality");
     double rate = secondOrderRateConstant(temperatureK, pH, ionicStrengthMolPerKgWater)
         * airSaturatedOxygenMolality;
-    if (!Double.isFinite(rate)) {
-      throw new IllegalArgumentException("pseudo-first-order rate must be finite");
+    if (!Double.isFinite(rate) || rate <= 0.0) {
+      throw new IllegalArgumentException("pseudo-first-order rate must be finite and positive");
     }
     return rate;
   }
