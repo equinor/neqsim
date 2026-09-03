@@ -213,7 +213,7 @@ structural preservation of validation metadata, isolated custom-profile create/a
 lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation
 errors. The focused protocol harness verifies the promoted coverage state through
 `getCapabilities`, while the primary `test_mcp_server.py` now includes
-`manageValidationProfile` in its twenty-two bounded software contracts and requires 30 confirmed
+`manageValidationProfile` in its twenty-two bounded software contracts and requires 29 confirmed
 gaps.
 
 This is software/governance evidence only. The named standards and design factors are not asserted
@@ -394,7 +394,7 @@ baseline harness, campaign traceability/maturity matrix, and explicit trust-cove
 every published tool. Twenty-one bounded discovery, catalog, lookup, progress, trust-retrieval,
 governance, validation-profile, API-inspection, model-registry, session-lifecycle, persisted-state,
 adjustable-parameter discovery, pre-flight validation, and automation advisory contracts are
-contract-tested, leaving 30 confirmed trust gaps and no queued promotion candidate.
+contract-tested, leaving 29 confirmed trust gaps and no queued promotion candidate.
 
 Follow-up work should continue auditing remaining confirmed gaps and promote only when concrete
 source/test/public-benchmark evidence or a clearly bounded software contract supports a precise

@@ -55,7 +55,7 @@ Inventory version `1.24` atomically promotes `validateResults` after merged #340
 
 ## Remaining Phase 0 work
 
-The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 30 published tools still lack a defensible tool-specific or bounded software-contract trust classification.
+The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 29 published tools still lack a defensible tool-specific or bounded software-contract trust classification.
 
 The next dependency is to continue auditing the remaining trust gaps against current source, starting only where concrete tests, public benchmark evidence, authoritative data, or a clearly bounded software contract supports a precise classification. Do not manufacture accuracy bounds for discovery/catalog/governance tools and do not reconstruct a second MCP-side conservation model when canonical NeqSim does not expose independent evidence.
 
