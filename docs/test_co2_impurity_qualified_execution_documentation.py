@@ -12,6 +12,11 @@ IMPLEMENTATION = (
     / "src/main/java/neqsim/process/equipment/reactor/"
     / "QualifiedCO2ImpurityKineticReactor.java"
 )
+REPORT = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "CO2ImpurityKineticsQualificationReport.java"
+)
 JAVA_TEST = (
     ROOT
     / "src/test/java/neqsim/process/equipment/reactor/"
@@ -27,6 +32,7 @@ class QualifiedCO2ImpurityExecutionDocumentationTest(unittest.TestCase):
         cls.guide = GUIDE.read_text(encoding="utf-8")
         cls.package_index = PACKAGE_INDEX.read_text(encoding="utf-8")
         cls.implementation = IMPLEMENTATION.read_text(encoding="utf-8")
+        cls.report = REPORT.read_text(encoding="utf-8")
         cls.java_test = JAVA_TEST.read_text(encoding="utf-8")
         cls.normalized = " ".join(cls.guide.split())
 
@@ -82,6 +88,39 @@ class QualifiedCO2ImpurityExecutionDocumentationTest(unittest.TestCase):
             "testMaterialSelectionUsesOnlySelectedR8Family",
         ):
             self.assertIn(token, self.java_test)
+
+    def test_structured_report_contract_is_documented_and_executable(self):
+        for token in (
+            "Structured preflight report",
+            "`getQualificationReport(T, P)`",
+            "`QUALIFIED`",
+            "`MISSING`",
+            "`NOT_VALIDATED`",
+            "`OUT_OF_RANGE`",
+            "diagnostic evidence only",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public CO2ImpurityKineticsQualificationReport getQualificationReport(",
+            "QualificationState.MISSING",
+            "QualificationState.NOT_VALIDATED",
+            "QualificationState.OUT_OF_RANGE",
+            "getQualificationReport(temperatureK, pressureBara).getBlockedReactionIds()",
+        ):
+            self.assertIn(token, self.implementation)
+
+        for token in (
+            "public enum QualificationState",
+            "Collections.unmodifiableList",
+            "public String[] getBlockedReactionIds()",
+        ):
+            self.assertIn(token, self.report)
+
+        self.assertIn(
+            "testQualificationReportExplainsFailureReasonsAndPreservesLegacyOrder",
+            self.java_test,
+        )
 
     def test_guide_is_discoverable(self):
         self.assertIn("co2_impurity_qualified_execution", self.package_index)
