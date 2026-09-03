@@ -677,6 +677,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         Arrays.asList(boundaries.get(0).getConnectionId(), boundaries.get(1).getConnectionId(),
             boundaries.get(2).getConnectionId(), boundaries.get(3).getConnectionId()));
     assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, boundaries.get(0).getDirection());
+    assertEquals("C-IN-1", boundaries.get(0).getSourceId());
+    assertTrue(boundaries.get(0).hasSourceId());
+    assertEquals("S-IN-1", boundaries.get(0).getSegmentId());
     assertEquals("N-X", boundaries.get(0).getInternalEndpointId());
     assertEquals("N-A", boundaries.get(0).getExternalEndpointId());
     assertTrue(boundaries.get(0).isInternalEndpointResolved());
@@ -688,6 +691,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("E-A", boundaries.get(0).getExternalOwnerId());
     assertEquals("Equipment", boundaries.get(0).getExternalOwnerElementName());
     assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, boundaries.get(1).getDirection());
+    assertEquals("C-OUT-1", boundaries.get(1).getSourceId());
+    assertEquals("S-OUT-1", boundaries.get(1).getSegmentId());
     assertEquals("N-Y", boundaries.get(1).getInternalEndpointId());
     assertEquals("N-B", boundaries.get(1).getExternalEndpointId());
     assertEquals("E-Y", boundaries.get(1).getInternalOwnerId());
@@ -721,6 +726,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(legacy.getBoundaryConnections().isEmpty());
     DexpiConnectionCycleBoundaryInfo legacyBoundary = new DexpiConnectionCycleBoundaryInfo("legacy-boundary",
         DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, "N-INTERNAL", "N-EXTERNAL", true, false);
+    assertEquals("", legacyBoundary.getSourceId());
+    assertFalse(legacyBoundary.hasSourceId());
+    assertEquals("", legacyBoundary.getSegmentId());
     assertEquals("", legacyBoundary.getInternalEndpointElementName());
     assertEquals("", legacyBoundary.getInternalOwnerId());
     assertEquals("", legacyBoundary.getExternalEndpointElementName());
@@ -729,6 +737,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"boundaryConnectionCount\": 4"));
     assertTrue(first.toJson().contains("\"direction\": \"INCOMING\""));
     assertTrue(first.toJson().contains("\"externalEndpointId\": \"UNKNOWN-U\""));
+    assertTrue(first.toJson().contains("\"sourceId\": \"C-IN-1\""));
+    assertTrue(first.toJson().contains("\"segmentId\": \"S-IN-1\""));
     assertTrue(first.toJson().contains("\"internalOwnerId\": \"E-X\""));
     assertTrue(first.toJson().contains("\"externalOwnerElementName\": \"Equipment\""));
     assertTrue(first.toJson().contains("\"outgoingBoundaryConnectionIds\": ["));
