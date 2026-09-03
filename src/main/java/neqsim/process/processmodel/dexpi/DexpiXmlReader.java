@@ -1058,6 +1058,7 @@ public final class DexpiXmlReader {
     private final String connectionComponentId;
     private final List<String> endpointIds = new ArrayList<String>();
     private final List<String> connectionIds = new ArrayList<String>();
+    private final List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     private final List<String> incomingBoundaryConnectionIds = new ArrayList<String>();
     private final List<String> outgoingBoundaryConnectionIds = new ArrayList<String>();
     private final List<DexpiConnectionCycleBoundaryInfo> boundaryConnections = new ArrayList<DexpiConnectionCycleBoundaryInfo>();
@@ -1078,6 +1079,7 @@ public final class DexpiXmlReader {
 
     private void addConnection(DexpiConnectionInfo connection) {
       connectionIds.add(connection.getId());
+      connections.add(connection);
       if (connection.getFromId().equals(connection.getToId())) {
         selfReference = true;
       }
@@ -1108,7 +1110,7 @@ public final class DexpiXmlReader {
     }
 
     private DexpiConnectionCycleInfo toInfo() {
-      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, connectionIds,
+      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, connectionIds, connections,
           incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections, unresolvedEndpointIds,
           selfReference);
     }
