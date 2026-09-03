@@ -96,3 +96,28 @@ density and molar mass remains an explicit engineering input. The factory does n
 missing light-end composition, distribute the published whole-crude sulfur among cuts, or claim
 that NeqSim reproduces the plant yields. A follow-on 34-tray comparison must preserve the plant
 rates as untouched acceptance targets and avoid tuning draw rates to the published products.
+
+## 34-tray property-profile sensitivity gate
+
+`SarirAtmosphericFractionationSensitivityTest` carries the constrained assay through 34 NeqSim
+simple trays, matching the published valve-tray count. The source feed location, tray 31 counted
+from the top, maps to NeqSim internal index 4 because NeqSim numbers simple trays from the bottom
+and reserves index 0 for the reboiler. The test also uses the published feed rate, temperature, and
+pressure.
+
+Two separate cut-density and molar-mass profiles are exercised. Both profiles are engineering
+inputs because the article does not publish cut properties, and both independently reproduce the
+published 841.5 kg/m3 bulk density and 0.2447 kg/mol average molar mass before the assay is applied.
+The bounded perturbation demonstrates that the unreported profile changes the calculated split or
+product boiling metrics rather than being numerically inert.
+
+The top pressure, condenser/reboiler settings, reflux ratio, side-draw trays, and side-draw
+fractions are fixed engineering test controls. They are not values reported by the article. The
+qualification requires rigorous convergence without fallback, external and per-component
+conservation, energy and per-tray material closure, positive product rates, and increasing mean
+normal boiling point from overhead through the two side-draw screens to bottoms.
+
+The published plant rates remain untouched read-only evidence. They are not used as product-flow
+specifications, tuning targets, or numerical acceptance thresholds. This sensitivity gate does not
+qualify plant-yield or D86 reproduction and does not model the published steam, pump-around,
+side-stripper, tray-hydraulic, or efficiency details.
