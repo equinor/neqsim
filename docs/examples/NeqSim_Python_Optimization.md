@@ -25,7 +25,7 @@ This notebook demonstrates how to use **Python optimization libraries** (SciPy, 
 6. [Equipment Constraints](#6-equipment-constraints)
    - 6.2 [Compressor Curves and Surge/Choke Constraints](#62-compressor-curves-and-surgechoke-constraints)
    - 6.2.1 [Optimization with Compressor Curve Constraints](#621-optimization-with-compressor-curve-constraints)
-   - 6.2.2 [Using CompressorChartGenerator](#622-using-compressorchart-generator-automatic-curves)
+   - 6.2.2 [Using CompressorChartGenerator](#622-using-compressorchartgenerator-automatic-curves)
    - 6.2.3 [Multi-Map MW Interpolation](#623-multi-map-mw-interpolation-for-varying-gas-composition)
 7. [Multi-Objective with Pareto](#7-multi-objective-with-pareto)
 8. [Global Optimization](#8-global-optimization)
