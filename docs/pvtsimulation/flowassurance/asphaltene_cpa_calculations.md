@@ -301,7 +301,6 @@ When asphaltene precipitates, it forms a distinct phase with `PhaseType.ASPHALTE
 | Thermal Conductivity | 0.20 | W/mK | Typical for organic solids |
 | Viscosity | ~10,000 | Pa·s | Arrhenius correlation at 350K |
 | Speed of Sound | ~1745 | m/s | EOS-based calculation |
-```
 
 ## Tuning to Experimental Data
 
