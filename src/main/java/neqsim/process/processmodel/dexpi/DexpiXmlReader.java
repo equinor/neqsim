@@ -1101,10 +1101,11 @@ public final class DexpiXmlReader {
         DexpiConnectionCycleBoundaryInfo.Direction direction, DexpiConnectionEndpointInfo internalEndpoint,
         DexpiConnectionEndpointInfo externalEndpoint) {
       boundaryConnections
-          .add(new DexpiConnectionCycleBoundaryInfo(connection.getId(), direction, internalEndpoint.getEndpointId(),
-              internalEndpoint.getElementName(), internalEndpoint.getOwnerId(), internalEndpoint.getOwnerElementName(),
-              externalEndpoint.getEndpointId(), externalEndpoint.getElementName(), externalEndpoint.getOwnerId(),
-              externalEndpoint.getOwnerElementName(), internalEndpoint.isResolved(), externalEndpoint.isResolved()));
+          .add(new DexpiConnectionCycleBoundaryInfo(connection.getId(), connection.getSourceId(),
+              connection.getSegmentId(), direction, internalEndpoint.getEndpointId(), internalEndpoint.getElementName(),
+              internalEndpoint.getOwnerId(), internalEndpoint.getOwnerElementName(), externalEndpoint.getEndpointId(),
+              externalEndpoint.getElementName(), externalEndpoint.getOwnerId(), externalEndpoint.getOwnerElementName(),
+              internalEndpoint.isResolved(), externalEndpoint.isResolved()));
     }
 
     private DexpiConnectionCycleInfo toInfo() {
