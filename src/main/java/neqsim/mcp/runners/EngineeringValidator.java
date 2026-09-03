@@ -59,7 +59,7 @@ public final class EngineeringValidator {
       checkConvergence(results, findings);
 
     } catch (Exception e) {
-      findings.add(new ValidationFinding("PARSE_ERROR", Severity.WARNING,
+      findings.add(new ValidationFinding("PARSE_ERROR", Severity.ERROR,
           "Could not parse results for validation: " + e.getMessage(), "Ensure results JSON is well-formed"));
     }
 
