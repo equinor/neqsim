@@ -357,12 +357,10 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("NOT_APPLICABLE_NON_NUMERICAL_RESULT_VALIDATION_ADVISORY",
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(4, coverage.get("contractEvidenceCount").getAsInt());
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("EngineeringValidator.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("EngineeringValidatorTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_validate_results_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("EngineeringValidator.java"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("EngineeringValidatorTest.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_validate_results_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("stable severity/remediation"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("plant authority"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("validateResults"));
