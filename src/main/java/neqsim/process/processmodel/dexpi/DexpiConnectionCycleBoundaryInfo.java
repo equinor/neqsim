@@ -282,8 +282,7 @@ public final class DexpiConnectionCycleBoundaryInfo implements Serializable {
     result.put("internalEndpointResolved", Boolean.valueOf(internalEndpointResolved));
     result.put("externalEndpointResolved", Boolean.valueOf(externalEndpointResolved));
     result.put("completeEvidence", Boolean.valueOf(hasCompleteEvidence()));
-    result.put("connection",
-        connection == null ? new LinkedHashMap<String, Object>() : connection.toMap());
+    result.put("connection", connection == null ? new LinkedHashMap<String, Object>() : connection.toMap());
     result.put("internalEndpoint",
         internalEndpoint == null ? new LinkedHashMap<String, Object>() : internalEndpoint.toMap());
     result.put("externalEndpoint",
