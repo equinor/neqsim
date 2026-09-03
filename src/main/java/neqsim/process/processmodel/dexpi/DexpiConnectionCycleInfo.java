@@ -47,8 +47,8 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
       List<String> connectionIds, List<String> incomingBoundaryConnectionIds,
       List<String> outgoingBoundaryConnectionIds, List<String> unresolvedEndpointIds, boolean selfReference) {
-    this(id, connectionComponentId, endpointIds, connectionIds,
-        Collections.<DexpiConnectionInfo>emptyList(), incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds,
+    this(id, connectionComponentId, endpointIds, connectionIds, Collections.<DexpiConnectionInfo>emptyList(),
+        incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds,
         Collections.<DexpiConnectionCycleBoundaryInfo>emptyList(), unresolvedEndpointIds, selfReference);
   }
 
@@ -69,9 +69,9 @@ public final class DexpiConnectionCycleInfo implements Serializable {
       List<String> connectionIds, List<String> incomingBoundaryConnectionIds,
       List<String> outgoingBoundaryConnectionIds, List<DexpiConnectionCycleBoundaryInfo> boundaryConnections,
       List<String> unresolvedEndpointIds, boolean selfReference) {
-    this(id, connectionComponentId, endpointIds, connectionIds,
-        Collections.<DexpiConnectionInfo>emptyList(), incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds,
-        boundaryConnections, unresolvedEndpointIds, selfReference);
+    this(id, connectionComponentId, endpointIds, connectionIds, Collections.<DexpiConnectionInfo>emptyList(),
+        incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections, unresolvedEndpointIds,
+        selfReference);
   }
 
   /**
@@ -89,10 +89,9 @@ public final class DexpiConnectionCycleInfo implements Serializable {
    * @param selfReference whether the group contains an explicit self-reference connection
    */
   public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
-      List<String> connectionIds, List<DexpiConnectionInfo> connections,
-      List<String> incomingBoundaryConnectionIds, List<String> outgoingBoundaryConnectionIds,
-      List<DexpiConnectionCycleBoundaryInfo> boundaryConnections, List<String> unresolvedEndpointIds,
-      boolean selfReference) {
+      List<String> connectionIds, List<DexpiConnectionInfo> connections, List<String> incomingBoundaryConnectionIds,
+      List<String> outgoingBoundaryConnectionIds, List<DexpiConnectionCycleBoundaryInfo> boundaryConnections,
+      List<String> unresolvedEndpointIds, boolean selfReference) {
     this.id = normalize(id);
     this.connectionComponentId = normalize(connectionComponentId);
     this.endpointIds = immutableCopy(endpointIds);
