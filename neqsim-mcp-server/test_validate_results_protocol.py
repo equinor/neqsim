@@ -272,18 +272,23 @@ def test_malformed_json_fails_closed(client):
     require("PARSE_ERROR" in finding_codes(result), "parse finding is absent", result)
 
 
-def test_phase0_inventory_remains_conservative(client):
+def test_phase0_inventory_promotes_contract_atomically(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("validateResults", {})
-    require(inventory.get("inventoryVersion") == "1.23", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.24", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 21
-        and limitations.get("confirmedGapToolCount") == 30
-        and record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification prematurely promoted validateResults",
+        limitations.get("contractTestedToolCount") == 22
+        and limitations.get("confirmedGapToolCount") == 29
+        and record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_RESULT_VALIDATION_ADVISORY"
+        and "neqsim-mcp-server/test_validate_results_protocol.py"
+        in record.get("contractEvidenceSources", [])
+        and "facility-wide conservation" in record.get("evidenceBoundary", ""),
+        "validateResults promotion is not synchronized",
         limitations,
     )
 
@@ -296,7 +301,7 @@ def main():
         ("blocking findings fail", test_blocking_findings_fail),
         ("nested fields are discovered", test_nested_fields_are_discovered),
         ("malformed JSON fails closed", test_malformed_json_fails_closed),
-        ("Phase 0 inventory remains conservative", test_phase0_inventory_remains_conservative),
+        ("Phase 0 inventory promotes contract atomically", test_phase0_inventory_promotes_contract_atomically),
     ]
     try:
         client.start()

@@ -1557,16 +1557,17 @@ def test_capabilities():
         "checkToolAccess", "manageIndustrialProfile", "searchComponents",
         "queryDataCatalog", "getProgress", "inspectApi",
         "manageValidationProfile", "manageModel", "manageSession", "manageState",
-        "getAdjustableParameters", "validateInput", "listSimulationUnits",
+        "getAdjustableParameters", "validateInput", "validateResults",
+        "listSimulationUnits",
         "listUnitVariables",
         "getSimulationVariable", "diagnoseAutomation",
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("twenty-one bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.23"
-          and limitations.get("contractTestedToolCount") == 21
-          and limitations.get("confirmedGapToolCount") == 30
+    check("twenty-two bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.24"
+          and limitations.get("contractTestedToolCount") == 22
+          and limitations.get("confirmedGapToolCount") == 29
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1591,6 +1592,16 @@ def test_capabilities():
           and "does not execute a model"
           in input_validation.get("evidenceBoundary", ""),
           str(input_validation))
+    result_validation = coverage_records.get("validateResults", {})
+    check("post-calculation result validation has bounded contract evidence",
+          result_validation.get("coverageStatus") == "CONTRACT_TESTED"
+          and result_validation.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_RESULT_VALIDATION_ADVISORY"
+          and "neqsim-mcp-server/test_validate_results_protocol.py"
+          in result_validation.get("contractEvidenceSources", [])
+          and "facility-wide conservation"
+          in result_validation.get("evidenceBoundary", ""),
+          str(result_validation))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1608,7 +1619,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 30
+          and limitations.get("confirmedGapToolCount") == 29
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
