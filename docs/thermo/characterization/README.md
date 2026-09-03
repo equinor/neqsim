@@ -69,6 +69,11 @@ temperatures remain explicitly separate from the complete DOE modeled slate. The
 source fixed its HYSYS product rates, so those values are operating specifications
 rather than independent yield-validation evidence.
 
+[Sarir atmospheric validation reference](refinery_sarir_atmospheric_reference)
+adds a CC BY 4.0, complete-range TBP case with 34-tray operating data, numeric
+product ASTM D86 endpoints, and plant product rates that remain independent
+validation targets.
+
 ## TBP fraction models
 
 TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS. Available implementations include Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert, Twu, Cavett, and Standing.
@@ -161,6 +166,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [DOE Big Hill terminal-cut boundary qualification](refinery_big_hill_terminal_boundary_validation)
 - [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
 - [Al-Diwiniya atmospheric operating reference](refinery_al_diwiniya_atmospheric_reference)
+- [Sarir atmospheric validation reference](refinery_sarir_atmospheric_reference)
 - [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation)
 - [Fluid Characterization Guide](../../wiki/fluid_characterization)
 - [TBP Fraction Models](../../wiki/tbp_fraction_models)
