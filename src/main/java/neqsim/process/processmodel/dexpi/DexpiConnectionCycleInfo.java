@@ -24,6 +24,7 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   private final String id;
   private final String connectionComponentId;
   private final List<String> endpointIds;
+  private final List<DexpiConnectionEndpointInfo> endpoints;
   private final List<String> connectionIds;
   private final List<DexpiConnectionInfo> connections;
   private final List<String> incomingBoundaryConnectionIds;
@@ -92,9 +93,36 @@ public final class DexpiConnectionCycleInfo implements Serializable {
       List<String> connectionIds, List<DexpiConnectionInfo> connections, List<String> incomingBoundaryConnectionIds,
       List<String> outgoingBoundaryConnectionIds, List<DexpiConnectionCycleBoundaryInfo> boundaryConnections,
       List<String> unresolvedEndpointIds, boolean selfReference) {
+    this(id, connectionComponentId, endpointIds, Collections.<DexpiConnectionEndpointInfo>emptyList(), connectionIds,
+        connections, incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections,
+        unresolvedEndpointIds, selfReference);
+  }
+
+  /**
+   * Creates immutable directed-cycle source-reference evidence with complete endpoint, internal, and boundary
+   * occurrences.
+   *
+   * @param id deterministic cycle-group evidence identity
+   * @param connectionComponentId owning weak connection-component evidence identity
+   * @param endpointIds endpoint identities in first-reference order
+   * @param endpoints endpoint evidence records in first-reference order
+   * @param connectionIds internal connection-evidence identities in source order
+   * @param connections internal connection occurrences in source order
+   * @param incomingBoundaryConnectionIds connection-evidence identities entering the cyclic group in source order
+   * @param outgoingBoundaryConnectionIds connection-evidence identities leaving the cyclic group in source order
+   * @param boundaryConnections boundary occurrences in overall source-document order
+   * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
+   * @param selfReference whether the group contains an explicit self-reference connection
+   */
+  public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
+      List<DexpiConnectionEndpointInfo> endpoints, List<String> connectionIds, List<DexpiConnectionInfo> connections,
+      List<String> incomingBoundaryConnectionIds, List<String> outgoingBoundaryConnectionIds,
+      List<DexpiConnectionCycleBoundaryInfo> boundaryConnections, List<String> unresolvedEndpointIds,
+      boolean selfReference) {
     this.id = normalize(id);
     this.connectionComponentId = normalize(connectionComponentId);
     this.endpointIds = immutableCopy(endpointIds);
+    this.endpoints = Collections.unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(endpoints));
     this.connectionIds = immutableCopy(connectionIds);
     this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
     this.incomingBoundaryConnectionIds = immutableCopy(incomingBoundaryConnectionIds);
@@ -118,6 +146,11 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   /** @return immutable endpoint identities in first-reference order */
   public List<String> getEndpointIds() {
     return endpointIds;
+  }
+
+  /** @return immutable endpoint evidence records in first-reference order */
+  public List<DexpiConnectionEndpointInfo> getEndpoints() {
+    return endpoints;
   }
 
   /** @return immutable internal connection-evidence identities in source order */
@@ -197,6 +230,11 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     result.put("selfReference", Boolean.valueOf(selfReference));
     result.put("hasUnresolvedEndpoints", Boolean.valueOf(hasUnresolvedEndpoints()));
     result.put("endpointIds", endpointIds);
+    List<Map<String, Object>> endpointMaps = new ArrayList<Map<String, Object>>();
+    for (DexpiConnectionEndpointInfo endpoint : endpoints) {
+      endpointMaps.add(endpoint.toMap());
+    }
+    result.put("endpoints", endpointMaps);
     result.put("connectionIds", connectionIds);
     List<Map<String, Object>> connectionMaps = new ArrayList<Map<String, Object>>();
     for (DexpiConnectionInfo connection : connections) {
