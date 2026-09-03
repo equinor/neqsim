@@ -32,9 +32,9 @@ public class SarirAtmosphericFractionationSensitivityTest {
       0.741826000, 0.761826000, 0.781826000, 0.801826000, 0.821826000, 0.841826000, 0.861826000, 0.881826000,
       0.901826000, 0.921826000, 0.941826000, 0.961826000, 0.981826000, 1.021826000 };
   private static final double[] BASE_MOLAR_MASS_KG_PER_MOL = { 0.092957679997, 0.105352037330, 0.117746394663,
-      0.136337930662, 0.161126645328, 0.179718181327, 0.204506895993, 0.223098431993, 0.241689967992,
-      0.272675861324, 0.303661754657, 0.334647647989, 0.384225077321, 0.421408149319, 0.458591221318,
-      0.495774293317, 0.545351722649, 0.743661439976 };
+      0.136337930662, 0.161126645328, 0.179718181327, 0.204506895993, 0.223098431993, 0.241689967992, 0.272675861324,
+      0.303661754657, 0.334647647989, 0.384225077321, 0.421408149319, 0.458591221318, 0.495774293317, 0.545351722649,
+      0.743661439976 };
 
   private static final int SIMPLE_TRAY_COUNT = 34;
   private static final int FEED_INTERNAL_INDEX = 4;
@@ -74,8 +74,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
     assertTrue(column.getLastIterationCount() <= 600, diagnostics);
 
     StreamInterface overhead = column.getGasOutStream();
-    StreamInterface kerosene =
-        column.getSideDrawStream(KEROSENE_SCREEN_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
+    StreamInterface kerosene = column.getSideDrawStream(KEROSENE_SCREEN_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
     StreamInterface diesel = column.getSideDrawStream(DIESEL_SCREEN_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
     StreamInterface bottoms = column.getLiquidOutStream();
 
@@ -89,18 +88,16 @@ public class SarirAtmosphericFractionationSensitivityTest {
     assertTrue(dieselBoilingPoint < bottomsBoilingPoint);
 
     double feedMassFlow = feed.getFlowRate("kg/hr");
-    return new ColumnResult(overhead.getFlowRate("kg/hr") / feedMassFlow,
-        kerosene.getFlowRate("kg/hr") / feedMassFlow, diesel.getFlowRate("kg/hr") / feedMassFlow,
-        bottoms.getFlowRate("kg/hr") / feedMassFlow, overheadBoilingPoint, keroseneBoilingPoint, dieselBoilingPoint,
-        bottomsBoilingPoint);
+    return new ColumnResult(overhead.getFlowRate("kg/hr") / feedMassFlow, kerosene.getFlowRate("kg/hr") / feedMassFlow,
+        diesel.getFlowRate("kg/hr") / feedMassFlow, bottoms.getFlowRate("kg/hr") / feedMassFlow, overheadBoilingPoint,
+        keroseneBoilingPoint, dieselBoilingPoint, bottomsBoilingPoint);
   }
 
   private static Stream createFeed(String label, double[] specificGravity, double[] molarMassKgPerMol) {
     double feedTemperatureKelvin = SarirAtmosphericReference.getColumnFeedTemperatureCelsius() + 273.15;
     double feedPressureBara = SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0;
     SystemInterface crude = new SystemSrkEos(feedTemperatureKelvin, feedPressureBara);
-    OilAssayCharacterisation assay =
-        SarirAtmosphericAssay.create(crude, specificGravity, molarMassKgPerMol);
+    OilAssayCharacterisation assay = SarirAtmosphericAssay.create(crude, specificGravity, molarMassKgPerMol);
     assay.apply();
     crude.setMixingRule("classic");
 
@@ -114,8 +111,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
 
   private static DistillationColumn createColumn(String label, Stream feed) {
     assertEquals(SIMPLE_TRAY_COUNT, SarirAtmosphericReference.getColumnTrayCount());
-    assertEquals(FEED_INTERNAL_INDEX,
-        SIMPLE_TRAY_COUNT - SarirAtmosphericReference.getFeedTrayFromTop() + 1);
+    assertEquals(FEED_INTERNAL_INDEX, SIMPLE_TRAY_COUNT - SarirAtmosphericReference.getFeedTrayFromTop() + 1);
 
     DistillationColumn column = new DistillationColumn("Sarir 34-tray " + label, SIMPLE_TRAY_COUNT, true, true);
     column.addFeedStream(feed, FEED_INTERNAL_INDEX);
