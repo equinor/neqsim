@@ -101,12 +101,12 @@ class ResponseSizeGuardTest {
   }
 
   /**
-   * The Phase 0 evidence inventory has no separate selective-retrieval route, so it must remain discoverable when the
-   * larger capability catalog is trimmed.
+   * The implementation and Phase 0 evidence inventories have no separate selective-retrieval route, so they must remain
+   * discoverable when the larger capability catalog is trimmed.
    */
   @Test
-  @DisplayName("Capability trimming preserves the Phase 0 evidence contract")
-  void testCapabilitiesPreservePhase0EvidenceWhenTrimmed() {
+  @DisplayName("Capability trimming preserves implementation and Phase 0 evidence contracts")
+  void testCapabilitiesPreserveInventoriesWhenTrimmed() {
     JsonObject response = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
     int originalBytes = GSON.toJson(response).getBytes(StandardCharsets.UTF_8).length;
     assertTrue(originalBytes > ResponseSizeGuard.getMaxBytes(),
@@ -121,11 +121,24 @@ class ResponseSizeGuardTest {
         "The non-retrievable Phase 0 evidence contract must survive trimming");
     assertTrue(response.getAsJsonObject("data").has("phase0EvidenceInventory"),
         "The canonical data view must retain the same evidence contract");
+    assertTrue(response.has("implementationInventory"),
+        "The non-retrievable implementation inventory must survive trimming");
+    assertTrue(response.getAsJsonObject("data").has("implementationInventory"),
+        "The canonical data view must retain the same implementation inventory");
+    JsonObject implementationInventory = response.getAsJsonObject("implementationInventory");
+    assertTrue(implementationInventory.get("complete").getAsBoolean());
+    assertEquals(71, implementationInventory.get("toolBindingCount").getAsInt());
+    assertEquals(60, implementationInventory.get("implementationClassCount").getAsInt());
+    assertEquals(207, implementationInventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(2, implementationInventory.get("reportPathCount").getAsInt());
+    assertEquals("neqsim.mcp.runners.ProcessRunner",
+        implementationInventory.getAsJsonObject("toolImplementationBindings").get("runProcess").getAsString());
     assertTrue(response.getAsJsonObject("phase0EvidenceInventory").has("tests"));
     assertTrue(response.getAsJsonObject("phase0EvidenceInventory").has("knownLimitations"));
     JsonObject truncation = response.getAsJsonObject("truncation");
     assertEquals(originalBytes, truncation.get("originalBytes").getAsInt());
     assertEquals(trimmedBytes, truncation.get("returnedBytes").getAsInt());
+    assertFalse(truncation.getAsJsonArray("omitted").toString().contains("implementationInventory"));
     assertFalse(truncation.getAsJsonArray("omitted").toString().contains("phase0EvidenceInventory"));
     assertTrue(truncation.get("howToRetrieve").getAsString().contains("getSchema"),
         "Discovery truncation must point to focused capability retrieval");

@@ -29,8 +29,8 @@ import com.google.gson.JsonObject;
  * </p>
  *
  * <p>
- * The {@code getCapabilities} manifest uses discovery-specific recovery guidance and retains its Phase 0 evidence
- * inventory because that contract has no separate selective-retrieval route.
+ * The {@code getCapabilities} manifest uses discovery-specific recovery guidance and retains its implementation and
+ * Phase 0 evidence inventories because those contracts have no separate selective-retrieval route.
  * </p>
  *
  * <p>
@@ -58,7 +58,7 @@ public final class ResponseSizeGuard {
 
   /** Discovery members that have no equivalent selective-retrieval route. */
   private static final List<String> PROTECTED_CAPABILITY_FIELDS = Collections
-      .unmodifiableList(java.util.Arrays.asList("phase0EvidenceInventory"));
+      .unmodifiableList(java.util.Arrays.asList("implementationInventory", "phase0EvidenceInventory"));
 
   /**
    * Private constructor — utility class.
@@ -226,7 +226,7 @@ public final class ResponseSizeGuard {
     if ("getCapabilities".equals(toolName)) {
       return "Use getSchema and getExample for focused tool contracts, getBenchmarkTrust for "
           + "tool-specific trust evidence, and MCP catalog resources for selective discovery. "
-          + "The Phase 0 evidence inventory is retained in this response.";
+          + "The implementation and Phase 0 evidence inventories are retained in this response.";
     }
     return "Register the model with manageModel(action='register'), then read only what you need via "
         + "listSimulationUnits, listUnitVariables and getSimulationVariable on the returned modelId.";

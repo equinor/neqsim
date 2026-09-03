@@ -235,8 +235,9 @@ guide paths, acceptance fixtures and their bounded baseline contract, the campai
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false while 51 published
 tools have explicit `CONFIRMED_GAP` coverage records instead of tool-specific trust pages. Test
 presence is not test execution, and generic `TESTED` maturity is not a benchmark, accuracy,
-applicability, or no-limitations claim. The transport response-size guard retains this inventory
-when larger capability-catalog sections must be omitted.
+applicability, or no-limitations claim. The transport response-size guard retains both
+`implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
+must be omitted.
 
 ---
 
