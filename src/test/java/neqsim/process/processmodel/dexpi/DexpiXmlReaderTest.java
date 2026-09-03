@@ -594,6 +594,19 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("cycle-1", threeEndpointCycle.getId());
     assertEquals("component-2", threeEndpointCycle.getConnectionComponentId());
     assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getEndpointIds());
+    List<DexpiConnectionEndpointInfo> cycleEndpoints = threeEndpointCycle.getEndpoints();
+    assertEquals(3, cycleEndpoints.size());
+    assertEquals("N-X", cycleEndpoints.get(0).getEndpointId());
+    assertEquals("Nozzle", cycleEndpoints.get(0).getElementName());
+    assertEquals("E-X", cycleEndpoints.get(0).getOwnerId());
+    assertEquals("Equipment", cycleEndpoints.get(0).getOwnerElementName());
+    assertTrue(cycleEndpoints.get(0).isResolved());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SPLIT, cycleEndpoints.get(0).getIncidenceRole());
+    assertEquals("N-Y", cycleEndpoints.get(1).getEndpointId());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.MERGE, cycleEndpoints.get(1).getIncidenceRole());
+    assertEquals("N-Z", cycleEndpoints.get(2).getEndpointId());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.PASS_THROUGH,
+        cycleEndpoints.get(2).getIncidenceRole());
     assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), threeEndpointCycle.getConnectionIds());
     List<DexpiConnectionInfo> internalConnections = threeEndpointCycle.getConnections();
     assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), Arrays.asList(internalConnections.get(0).getId(),
@@ -629,6 +642,11 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(2, unresolved.getConnections().size());
     assertEquals("S-9", unresolved.getConnections().get(0).getSegmentId());
     assertFalse(unresolved.getConnections().get(0).isResolved());
+    assertEquals(2, unresolved.getEndpoints().size());
+    assertEquals("UNKNOWN-1", unresolved.getEndpoints().get(0).getEndpointId());
+    assertFalse(unresolved.getEndpoints().get(0).isResolved());
+    assertEquals("", unresolved.getEndpoints().get(0).getElementName());
+    assertEquals("", unresolved.getEndpoints().get(0).getOwnerId());
     assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getUnresolvedEndpointIds());
     assertTrue(unresolved.hasUnresolvedEndpoints());
 
@@ -637,9 +655,11 @@ public class DexpiXmlReaderTest extends NeqSimTest {
       assertFalse(cycle.getEndpointIds().contains("N-Q"));
     }
     assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpointIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpoints().clear());
     assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getConnections().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionCycles().clear());
     assertTrue(first.toJson().contains("\"connectionCycleCount\": 3"));
+    assertTrue(first.toJson().contains("\"endpoints\": ["));
     assertTrue(first.toJson().contains("\"connections\": ["));
     assertTrue(first.toJson().contains("\"segmentId\": \"S-3\""));
     assertTrue(first.toJson().contains("\"connectionComponentId\": \"component-4\""));
@@ -743,6 +763,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleInfo legacy = new DexpiConnectionCycleInfo("legacy", "component-legacy",
         Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
         Collections.<String>emptyList(), Collections.<String>emptyList(), false);
+    assertTrue(legacy.getEndpoints().isEmpty());
     assertTrue(legacy.getConnections().isEmpty());
     assertTrue(legacy.getBoundaryConnections().isEmpty());
     DexpiConnectionCycleBoundaryInfo legacyBoundary = new DexpiConnectionCycleBoundaryInfo("legacy-boundary",
