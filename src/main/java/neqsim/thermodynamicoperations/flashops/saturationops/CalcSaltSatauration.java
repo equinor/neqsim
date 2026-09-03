@@ -18,6 +18,8 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
   private static final int MAX_SATURATION_ITERATIONS = 80;
   private static final double SATURATION_RATIO_TOLERANCE = 1.0e-6;
+  static final double PRESSURE_CORRECTION_REFERENCE_BARA = 1.01325;
+  private static final double GAS_CONSTANT_CM3_BAR_PER_MOL_K = 83.1446;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CalcSaltSatauration.class);
 
@@ -658,6 +660,37 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   }
 
   /**
+   * Returns the lumped constant reaction-volume coefficient used by the COMPSALT pressure correction.
+   *
+   * <p>
+   * This is a reaction-volume parameter, not a pure-mineral molar volume. The current correlation does not separately
+   * resolve aqueous-species partial or apparent molar volumes.
+   * </p>
+   *
+   * @return COMPSALT {@code Vdelta} in cm3/mol
+   */
+  double getLumpedReactionVolumeCm3PerMol() {
+    return readSaltData().vdelta;
+  }
+
+  /**
+   * Returns the exact logarithmic pressure correction applied by the COMPSALT Ksp path.
+   *
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara absolute pressure in bara
+   * @return {@code ln(Ksp(T,P)/Ksp(T,P0))}
+   */
+  double getLogPressureCorrection(double temperatureK, double pressureBara) {
+    if (!(temperatureK > 0.0) || !Double.isFinite(temperatureK)) {
+      throw new IllegalArgumentException("Temperature must be finite and positive");
+    }
+    if (!(pressureBara > 0.0) || !Double.isFinite(pressureBara)) {
+      throw new IllegalArgumentException("Pressure must be finite and positive");
+    }
+    return calculateLogPressureCorrection(readSaltData().vdelta, temperatureK, pressureBara);
+  }
+
+  /**
    * Calculates Ksp from the same COMPSALT correlations used by scale-potential calculations.
    *
    * @param saltData salt data from COMPSALT
@@ -681,18 +714,24 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
           + temperatureK * saltData.kspwater4 + saltData.kspwater5 / (temperatureK * temperatureK);
       ksp = Math.exp(lnKsp);
     }
-    if (Math.abs(saltData.vdelta) > 1.0e-10 && pressureBara > 1.013) {
-      double gasConstantCm3Bar = 83.1446;
-      double deltaPbar = pressureBara - 1.01325;
-      double lnCorrection = -saltData.vdelta * deltaPbar / (gasConstantCm3Bar * temperatureK);
-      if (lnCorrection > 50.0) {
-        lnCorrection = 50.0;
-      } else if (lnCorrection < -50.0) {
-        lnCorrection = -50.0;
-      }
-      ksp *= Math.exp(lnCorrection);
-    }
+    ksp *= Math.exp(calculateLogPressureCorrection(saltData.vdelta, temperatureK, pressureBara));
     return ksp;
+  }
+
+  private static double calculateLogPressureCorrection(double reactionVolumeCm3PerMol, double temperatureK,
+      double pressureBara) {
+    if (Math.abs(reactionVolumeCm3PerMol) <= 1.0e-10 || pressureBara <= 1.013) {
+      return 0.0;
+    }
+    double deltaPbar = pressureBara - PRESSURE_CORRECTION_REFERENCE_BARA;
+    double lnCorrection = -reactionVolumeCm3PerMol * deltaPbar / (GAS_CONSTANT_CM3_BAR_PER_MOL_K * temperatureK);
+    if (lnCorrection > 50.0) {
+      return 50.0;
+    }
+    if (lnCorrection < -50.0) {
+      return -50.0;
+    }
+    return lnCorrection;
   }
 
   /**
