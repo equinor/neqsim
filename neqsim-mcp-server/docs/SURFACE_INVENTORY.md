@@ -14,7 +14,7 @@ manually maintained Java method list.
 | Schema entries | 71 tools / 142 documents | `resources/read` | `SchemaCatalog` |
 | Example entries | 24 categories / 114 documents | `resources/read` | `ExampleCatalog` |
 | Tool implementations | 71 bindings / 60 classes | `getCapabilities.implementationInventory` | `McpImplementationInventory` |
-| Factory equipment | 205 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
+| Factory equipment | 207 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 69 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
@@ -69,7 +69,7 @@ tool and load every named class from the running NeqSim version. This supplement
 
 Process construction continues through the canonical
 `neqsim.process.equipment.EquipmentFactory` and
-`neqsim.process.processmodel.JsonProcessBuilder`. The inventory exposes the same 205 name-only
+`neqsim.process.processmodel.JsonProcessBuilder`. The inventory exposes the same 207 name-only
 factory-supported equipment types as `processJsonContract.supportedEquipmentTypes`; it does not
 claim that every type has the same input grammar, validation maturity, or multi-port construction
 support. Equipment requiring additional constructor context remains outside this name-only list.
@@ -111,10 +111,10 @@ The eight MCP guides have distinct roles:
 | `neqsim-mcp-server/docs/CAMPAIGN_MATRIX.md` | All 66 campaign criteria and discipline-level trust maturity with explicit gaps |
 
 The default response-size guard may omit large capability-catalog sections when the full manifest
-exceeds 256 KiB. It retains `phase0EvidenceInventory` because that evidence contract has no
-equivalent selective-retrieval route. Omitted catalog detail remains identified in `truncation` and
-can be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and the MCP catalog
-resources.
+exceeds 256 KiB. It retains `implementationInventory` and `phase0EvidenceInventory` because those
+contracts have no equivalent selective-retrieval routes. Omitted catalog detail remains identified
+in `truncation` and can be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and the
+MCP catalog resources.
 
 `BenchmarkTrust` currently contains 20 tool-specific numerical/engineering trust pages with 64
 known-limit entries and 30 validation cases, of which 5 name a concrete `verifiedBy` test. The

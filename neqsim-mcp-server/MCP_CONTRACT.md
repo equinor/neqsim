@@ -224,9 +224,9 @@ Responses larger than 256 KiB are reduced by the shared transport guard unless
 `neqsim.mcp.maxResponseBytes` or `NEQSIM_MCP_MAX_RESPONSE_BYTES` configures another limit. The
 `truncation` block identifies omitted root fields and focused retrieval routes, and the legacy
 top-level and canonical `data` views are reduced together. For `getCapabilities`,
-`phase0EvidenceInventory` is retained because it has no equivalent selective-retrieval route;
-larger catalog sections may be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and
-the MCP catalog resources.
+`implementationInventory` and `phase0EvidenceInventory` are retained because neither has an
+equivalent selective-retrieval route; larger catalog sections may be queried through `getSchema`,
+`getExample`, `getBenchmarkTrust`, and the MCP catalog resources.
 
 ### Warning taxonomy
 
