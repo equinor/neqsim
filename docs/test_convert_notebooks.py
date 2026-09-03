@@ -419,7 +419,11 @@ class ConvertNotebooksTest(unittest.TestCase):
             )
             self.assertNotIn("See notebook for details", generated_content)
             self.assertIn(
-                "[Example](Example.java) | **Source only** |",
+                "[Example](Example.java) | **Build-verified source** |",
+                generated_content,
+            )
+            self.assertIn(
+                "build verification only, not runtime",
                 generated_content,
             )
             self.assertNotIn("no installation needed", generated_content.lower())

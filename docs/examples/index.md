@@ -74,28 +74,29 @@ reading aid, not execution evidence.
 
 ## Standalone Java source examples
 
-These files are outside Maven's compiled source tree. They are retained as source-only
-references and are not catalogued as build-verified or policy-compliant examples.
-They currently contain legacy console output; review and port the required calls into a
-tested `src/test/java` example before reuse. For a supported starting point, use the
+These files are outside Maven's main source tree. The
+`StandaloneJavaDocumentationCompilationTest` compiles the exact catalog against the
+current NeqSim API. This is build verification only, not runtime or engineering-result
+validation. The files retain legacy console output; inspect assumptions and execute the
+required workflow before engineering reuse. For a supported starting point, use the
 [Java getting-started guide](../java-getting-started.md).
 
-| Example | Stored status | Capability |
+| Example | Build status | Capability |
 |---------|---------------|------------|
-| [EclipseE300ExportImportExample](EclipseE300ExportImportExample.java) | **Source only** | Eclipse E300 fluid export and import workflow |
-| [FlowRegimeDebug](FlowRegimeDebug.java) | **Source only** | Flow-regime diagnostic calculations |
-| [FlowRegimeDetectionExample](FlowRegimeDetectionExample.java) | **Source only** | Flow-regime detection across operating cases |
-| [MultiScenarioVFPExample](MultiScenarioVFPExample.java) | **Source only** | Multi-scenario vertical-flow-performance comparison |
-| [MultiphaseModelPressureDropComparison](MultiphaseModelPressureDropComparison.java) | **Source only** | Multiphase pressure-drop model comparison |
-| [OffshoreEmissionReportingExample](OffshoreEmissionReportingExample.java) | **Source only** | Offshore emissions accounting workflow |
-| [RealTimeIntegrationExample](RealTimeIntegrationExample.java) | **Source only** | Real-time process-data integration pattern |
-| [SlugTrackingComparisonExample](SlugTrackingComparisonExample.java) | **Source only** | Slug-tracking model comparison |
-| [TransientPipelineLiquidAccumulationExample](TransientPipelineLiquidAccumulationExample.java) | **Source only** | Transient pipeline liquid-accumulation study |
-| [TwoFluidPipeExample](TwoFluidPipeExample.java) | **Source only** | Two-fluid pipe setup and reporting |
-| [TwoFluidPipeSlugTrackingExample](TwoFluidPipeSlugTrackingExample.java) | **Source only** | Two-fluid slug-tracking workflow |
-| [TwoFluidPipelineLiquidAccumulationExample](TwoFluidPipelineLiquidAccumulationExample.java) | **Source only** | Two-fluid pipeline accumulation study |
-| [TwoFluidVsDriftFluxComparisonExample](TwoFluidVsDriftFluxComparisonExample.java) | **Source only** | Two-fluid and drift-flux comparison |
-| [WellToOilStabilizationExample](WellToOilStabilizationExample.java) | **Source only** | Well-to-oil-stabilization process workflow |
+| [EclipseE300ExportImportExample](EclipseE300ExportImportExample.java) | **Build-verified source** | Eclipse E300 fluid export and import workflow |
+| [FlowRegimeDebug](FlowRegimeDebug.java) | **Build-verified source** | Flow-regime diagnostic calculations |
+| [FlowRegimeDetectionExample](FlowRegimeDetectionExample.java) | **Build-verified source** | Flow-regime detection across operating cases |
+| [MultiScenarioVFPExample](MultiScenarioVFPExample.java) | **Build-verified source** | Multi-scenario vertical-flow-performance comparison |
+| [MultiphaseModelPressureDropComparison](MultiphaseModelPressureDropComparison.java) | **Build-verified source** | Multiphase pressure-drop model comparison |
+| [OffshoreEmissionReportingExample](OffshoreEmissionReportingExample.java) | **Build-verified source** | Offshore emissions accounting workflow |
+| [RealTimeIntegrationExample](RealTimeIntegrationExample.java) | **Build-verified source** | Real-time process-data integration pattern |
+| [SlugTrackingComparisonExample](SlugTrackingComparisonExample.java) | **Build-verified source** | Slug-tracking model comparison |
+| [TransientPipelineLiquidAccumulationExample](TransientPipelineLiquidAccumulationExample.java) | **Build-verified source** | Transient pipeline liquid-accumulation study |
+| [TwoFluidPipeExample](TwoFluidPipeExample.java) | **Build-verified source** | Two-fluid pipe setup and reporting |
+| [TwoFluidPipeSlugTrackingExample](TwoFluidPipeSlugTrackingExample.java) | **Build-verified source** | Two-fluid slug-tracking workflow |
+| [TwoFluidPipelineLiquidAccumulationExample](TwoFluidPipelineLiquidAccumulationExample.java) | **Build-verified source** | Two-fluid pipeline accumulation study |
+| [TwoFluidVsDriftFluxComparisonExample](TwoFluidVsDriftFluxComparisonExample.java) | **Build-verified source** | Two-fluid and drift-flux comparison |
+| [WellToOilStabilizationExample](WellToOilStabilizationExample.java) | **Build-verified source** | Well-to-oil-stabilization process workflow |
 
 ## Other Tutorials
 
