@@ -255,6 +255,8 @@ public class TBPfractionModel implements java.io.Serializable {
       this.boilingPoint = boilingPoint;
     }
 
+    /** {@inheritDoc} */
+    @Override
     public double getBoilingPoint() {
       return boilingPoint;
     }

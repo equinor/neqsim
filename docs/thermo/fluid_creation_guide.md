@@ -564,6 +564,45 @@ oil.addTBPfraction("C10", 0.02, 0.134, 0.792);
 oil.setMixingRule("classic");
 ```
 
+### 10.1.1 Defining a Cut by Boiling Point
+
+A gas chromatograph reports a retention time, so a boiling point is often better known than a density. Two
+alternatives take a boiling point instead of the missing property:
+
+```java
+// molar mass known, specific gravity unknown
+oil.addTBPfraction2("C10", 0.02, 0.142, 447.3);   // name, moles, molarMass [kg/mol], Tb [K]
+
+// specific gravity known, molar mass unknown
+oil.addTBPfraction3("C10", 0.02, 0.734, 447.3);   // name, moles, specificGravity [-], Tb [K]
+```
+
+`addTBPfraction2` obtains the specific gravity from the Riazi-Daubert (1980) correlation
+$M = 4.5673\times10^{-5}\,T_b^{2.1962}\,SG^{-1.0164}$ (with $T_b$ in degrees Rankine and $M$ in g/mol) inverted
+analytically for $SG$. `addTBPfraction3` inverts the selected TBP model for molar mass, which is the better
+conditioned direction. In both cases the supplied boiling point is then used by the TBP model itself, so it reaches
+the critical properties for the boiling-point based models (Lee-Kesler, Twu, Cavett).
+
+**Molar mass and boiling point are not independent.** In the correlation, a relative error in molar mass carries
+almost one-for-one into specific gravity, and a relative error in boiling point is amplified by about 2.2. A pair
+that implies a specific gravity outside 0.5 to 1.3 is rejected rather than silently accepted:
+
+```java
+oil.addTBPfraction2("C10", 0.02, 0.129, 560.0);  // throws: a 129 g/mol cut cannot boil at 560 K
+```
+
+If the paraffin, naphthene and aromatic character of the cut is known, the Watson characterization factor is a
+markedly more accurate route to the density, because $K_w$ encodes exactly that character:
+
+```java
+double sg = oil.calculateDensityFromBoilingPointAndWatsonK(447.3, 12.66);  // Tb [K], Kw [-]
+oil.addTBPfraction("C10", 0.02, 0.142, sg);
+```
+
+Indicative values are about 12.7 for paraffinic cuts, 11.0 for naphthenic and 10.0 for aromatic. Against pure
+components this route reproduces the specific gravity to better than 1 %, where the molar-mass route is typically
+5 % out for paraffins.
+
 ### 10.2 Plus Fractions
 
 ```java

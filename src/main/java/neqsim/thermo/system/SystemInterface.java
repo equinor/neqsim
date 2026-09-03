@@ -322,21 +322,48 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param density specific gravity (relative density), i.e. density in g/cm3. Typical range: 0.65 to 1.1. Values above
    * 1.5 are auto-converted from kg/m3.
    * @param criticalTemperature critical temperature in K
-   * @param criticalPressure critical pressure in Pa
-   * @param acentricFactor acentric factor (dimensionless)
+   * @param criticalPressure critical pressure in bara
+   * @param acentricFactor acentric factor (dimensionless). Note that for TBP models which correlate the EOS m parameter
+   * (the Pedersen models), this value is currently overwritten by the value back-calculated from m.
    */
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density,
       double criticalTemperature, double criticalPressure, double acentricFactor);
 
   /**
-   * addTBPfraction2.
+   * Add a true boiling point (TBP) fraction defined by molar mass and normal boiling point.
    *
-   * @param componentName a {@link java.lang.String} object
-   * @param numberOfMoles a double
-   * @param molarMass a double
-   * @param boilingPoint a double
+   * <p>
+   * The specific gravity is obtained from the Riazi-Daubert (1980) correlation
+   * <code>M = 4.5673e-5 * Tb^2.1962 * SG^-1.0164</code> (Tb in degrees Rankine, M in g/mol) inverted analytically for
+   * SG, and the supplied boiling point is then used directly by the selected TBP model. Note that molar mass and
+   * boiling point are not independent in this correlation, so the resulting specific gravity carries roughly the same
+   * relative error as the supplied molar mass. If the pseudo-component's PNA character is known, prefer
+   * {@link #calculateDensityFromBoilingPointAndWatsonK(double, double)} followed by
+   * {@link #addTBPfraction(String, double, double, double)}, which is considerably more accurate.
+   * </p>
+   *
+   * @param componentName selected name of the component to be added
+   * @param numberOfMoles number of moles to be added
+   * @param molarMass molar mass in kg/mol. Correlation validated for 0.070 to 0.300 kg/mol.
+   * @param boilingPoint normal boiling point in K. Correlation validated for 300 to 620 K.
    */
   public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass, double boilingPoint);
+
+  /**
+   * Calculate specific gravity from a normal boiling point and a Watson characterization factor.
+   *
+   * <p>
+   * Inverts the definition <code>Kw = (1.8 * Tb)^(1/3) / SG</code>. Because the Watson factor encodes the paraffinic /
+   * naphthenic / aromatic character of the cut directly, this route is typically accurate to better than 1 % when the
+   * PNA split is known, against roughly 5 % for a molar-mass-based correlation. Indicative values: about 12.7 for
+   * paraffinic cuts, 11.0 for naphthenic and 10.0 for aromatic.
+   * </p>
+   *
+   * @param boilingPoint normal boiling point in K
+   * @param watsonK Watson characterization factor, dimensionless. Typical range 9.5 to 13.5.
+   * @return specific gravity (relative density), i.e. density in g/cm3
+   */
+  public double calculateDensityFromBoilingPointAndWatsonK(double boilingPoint, double watsonK);
 
   /**
    * Calculate density from boiling point and molar mass using TBP correlation.
@@ -2778,23 +2805,36 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMolarCompositionOfNamedComponents(String nameDef, double[] molarComposition);
 
   /**
-   * Adds a TBP fraction to the system.
+   * Adds a TBP fraction to the system, defined by specific gravity and normal boiling point.
+   *
+   * <p>
+   * The molar mass is found by inverting the selected TBP model's own <code>calcTB</code> against molar mass, which is
+   * a well-conditioned inversion. Throws if the requested boiling point is not attainable with the selected model at
+   * the given specific gravity.
+   * </p>
    *
    * @param componentName the name of the component
    * @param numberOfMoles number of moles
-   * @param density density of the component
-   * @param boilingPoint boiling point
+   * @param density specific gravity (relative density), i.e. density in g/cm3
+   * @param boilingPoint normal boiling point in K
    */
   public void addTBPfraction3(String componentName, double numberOfMoles, double density, double boilingPoint);
 
   /**
-   * Adds a TBP fraction to the system.
+   * Adds a TBP fraction to the system, with molar mass, specific gravity and normal boiling point all supplied.
+   *
+   * <p>
+   * The boiling point is applied to the selected TBP model for the duration of the call only. It reaches the critical
+   * properties only for boiling-point-based models (Lee-Kesler, Twu, Cavett); for the Pedersen models Tc and Pc are
+   * functions of molar mass and specific gravity alone, and the boiling point then affects only the stored normal
+   * boiling point and the ideal gas heat capacity.
+   * </p>
    *
    * @param componentName the name of the component
    * @param numberOfMoles number of moles
-   * @param molarMass molar mass
-   * @param density density of the component
-   * @param boilingPoint boiling point
+   * @param molarMass molar mass in kg/mol
+   * @param density specific gravity (relative density), i.e. density in g/cm3
+   * @param boilingPoint normal boiling point in K
    */
   public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass, double density,
       double boilingPoint);
