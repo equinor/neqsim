@@ -25,6 +25,7 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   private final String connectionComponentId;
   private final List<String> endpointIds;
   private final List<String> connectionIds;
+  private final List<DexpiConnectionInfo> connections;
   private final List<String> incomingBoundaryConnectionIds;
   private final List<String> outgoingBoundaryConnectionIds;
   private final List<DexpiConnectionCycleBoundaryInfo> boundaryConnections;
@@ -46,9 +47,9 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
       List<String> connectionIds, List<String> incomingBoundaryConnectionIds,
       List<String> outgoingBoundaryConnectionIds, List<String> unresolvedEndpointIds, boolean selfReference) {
-    this(id, connectionComponentId, endpointIds, connectionIds, incomingBoundaryConnectionIds,
-        outgoingBoundaryConnectionIds, Collections.<DexpiConnectionCycleBoundaryInfo>emptyList(), unresolvedEndpointIds,
-        selfReference);
+    this(id, connectionComponentId, endpointIds, connectionIds, Collections.<DexpiConnectionInfo>emptyList(),
+        incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds,
+        Collections.<DexpiConnectionCycleBoundaryInfo>emptyList(), unresolvedEndpointIds, selfReference);
   }
 
   /**
@@ -68,10 +69,34 @@ public final class DexpiConnectionCycleInfo implements Serializable {
       List<String> connectionIds, List<String> incomingBoundaryConnectionIds,
       List<String> outgoingBoundaryConnectionIds, List<DexpiConnectionCycleBoundaryInfo> boundaryConnections,
       List<String> unresolvedEndpointIds, boolean selfReference) {
+    this(id, connectionComponentId, endpointIds, connectionIds, Collections.<DexpiConnectionInfo>emptyList(),
+        incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections, unresolvedEndpointIds,
+        selfReference);
+  }
+
+  /**
+   * Creates immutable directed-cycle source-reference evidence with complete internal and boundary occurrences.
+   *
+   * @param id deterministic cycle-group evidence identity
+   * @param connectionComponentId owning weak connection-component evidence identity
+   * @param endpointIds endpoint identities in first-reference order
+   * @param connectionIds internal connection-evidence identities in source order
+   * @param connections internal connection occurrences in source order
+   * @param incomingBoundaryConnectionIds connection-evidence identities entering the cyclic group in source order
+   * @param outgoingBoundaryConnectionIds connection-evidence identities leaving the cyclic group in source order
+   * @param boundaryConnections boundary occurrences in overall source-document order
+   * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
+   * @param selfReference whether the group contains an explicit self-reference connection
+   */
+  public DexpiConnectionCycleInfo(String id, String connectionComponentId, List<String> endpointIds,
+      List<String> connectionIds, List<DexpiConnectionInfo> connections, List<String> incomingBoundaryConnectionIds,
+      List<String> outgoingBoundaryConnectionIds, List<DexpiConnectionCycleBoundaryInfo> boundaryConnections,
+      List<String> unresolvedEndpointIds, boolean selfReference) {
     this.id = normalize(id);
     this.connectionComponentId = normalize(connectionComponentId);
     this.endpointIds = immutableCopy(endpointIds);
     this.connectionIds = immutableCopy(connectionIds);
+    this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
     this.incomingBoundaryConnectionIds = immutableCopy(incomingBoundaryConnectionIds);
     this.outgoingBoundaryConnectionIds = immutableCopy(outgoingBoundaryConnectionIds);
     this.boundaryConnections = Collections
@@ -98,6 +123,11 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   /** @return immutable internal connection-evidence identities in source order */
   public List<String> getConnectionIds() {
     return connectionIds;
+  }
+
+  /** @return immutable internal connection occurrences in source order */
+  public List<DexpiConnectionInfo> getConnections() {
+    return connections;
   }
 
   /** @return immutable connection-evidence identities entering this cyclic group in source order */
@@ -168,6 +198,11 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     result.put("hasUnresolvedEndpoints", Boolean.valueOf(hasUnresolvedEndpoints()));
     result.put("endpointIds", endpointIds);
     result.put("connectionIds", connectionIds);
+    List<Map<String, Object>> connectionMaps = new ArrayList<Map<String, Object>>();
+    for (DexpiConnectionInfo connection : connections) {
+      connectionMaps.add(connection.toMap());
+    }
+    result.put("connections", connectionMaps);
     result.put("incomingBoundaryConnectionIds", incomingBoundaryConnectionIds);
     result.put("outgoingBoundaryConnectionIds", outgoingBoundaryConnectionIds);
     List<Map<String, Object>> boundaryMaps = new ArrayList<Map<String, Object>>();
