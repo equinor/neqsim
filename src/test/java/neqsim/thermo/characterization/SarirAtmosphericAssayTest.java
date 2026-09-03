@@ -19,14 +19,14 @@ public class SarirAtmosphericAssayTest {
       0.761826000, 0.781826000, 0.801826000, 0.821826000, 0.841826000, 0.861826000, 0.881826000, 0.901826000,
       0.921826000, 0.941826000, 0.961826000, 0.981826000, 1.021826000 };
   private static final double[] MOLAR_MASS_KG_PER_MOL = { 0.092957679997, 0.105352037330, 0.117746394663,
-      0.136337930662, 0.161126645328, 0.179718181327, 0.204506895993, 0.223098431993, 0.241689967992,
-      0.272675861324, 0.303661754657, 0.334647647989, 0.384225077321, 0.421408149319, 0.458591221318,
-      0.495774293317, 0.545351722649, 0.743661439976 };
+      0.136337930662, 0.161126645328, 0.179718181327, 0.204506895993, 0.223098431993, 0.241689967992, 0.272675861324,
+      0.303661754657, 0.334647647989, 0.384225077321, 0.421408149319, 0.458591221318, 0.495774293317, 0.545351722649,
+      0.743661439976 };
 
   @Test
   public void sourceDerivedCutYieldsCloseAndCannotBeMutated() {
-    double[] expected = { 7.44, 3.03, 3.36, 7.33, 7.36, 3.02, 6.49, 3.73, 2.92, 7.29, 7.22, 4.31, 9.02, 3.09,
-        3.05, 2.39, 2.65, 16.30 };
+    double[] expected = { 7.44, 3.03, 3.36, 7.33, 7.36, 3.02, 6.49, 3.73, 2.92, 7.29, 7.22, 4.31, 9.02, 3.09, 3.05,
+        2.39, 2.65, 16.30 };
     assertArrayEquals(expected, SarirAtmosphericAssay.getCutVolumePercent(), 0.0);
     assertEquals(100.0, sum(expected), 1.0e-12);
 
@@ -38,15 +38,14 @@ public class SarirAtmosphericAssayTest {
   @Test
   public void suppliedProfilesReconcilePublishedWholeCrudeProperties() {
     assertEquals(0.8415, SarirAtmosphericAssay.calculateBulkSpecificGravity(SPECIFIC_GRAVITY), 1.0e-12);
-    assertEquals(0.2447,
-        SarirAtmosphericAssay.calculateBulkMolarMassKgPerMol(SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL), 1.0e-12);
+    assertEquals(0.2447, SarirAtmosphericAssay.calculateBulkMolarMassKgPerMol(SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL),
+        1.0e-12);
   }
 
   @Test
   public void completeVolumeSlatePreservesTerminalEvidenceAndAppliedMass() {
     SystemInterface system = new SystemSrkEos(298.15, 1.01325);
-    OilAssayCharacterisation assay =
-        SarirAtmosphericAssay.create(system, 2.5, SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL);
+    OilAssayCharacterisation assay = SarirAtmosphericAssay.create(system, 2.5, SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL);
 
     assertEquals(0, system.getNumberOfComponents());
     assertEquals(SarirAtmosphericAssay.CUT_COUNT, assay.getCuts().size());
