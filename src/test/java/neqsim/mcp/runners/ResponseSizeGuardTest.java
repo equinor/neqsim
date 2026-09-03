@@ -1,5 +1,6 @@
 package neqsim.mcp.runners;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
@@ -91,6 +92,8 @@ class ResponseSizeGuardTest {
 
     JsonObject truncation = response.getAsJsonObject("truncation");
     assertTrue(truncation.get("truncated").getAsBoolean());
+    assertEquals(originalBytes, truncation.get("originalBytes").getAsInt());
+    assertEquals(trimmedBytes, truncation.get("returnedBytes").getAsInt());
     assertTrue(truncation.getAsJsonArray("omitted").size() > 0, "Omitted members must be listed");
     assertTrue(truncation.get("howToRetrieve").getAsString().contains("manageModel"),
         "Guidance must point at the model-handle drill-down path");
@@ -121,6 +124,8 @@ class ResponseSizeGuardTest {
     assertTrue(response.getAsJsonObject("phase0EvidenceInventory").has("tests"));
     assertTrue(response.getAsJsonObject("phase0EvidenceInventory").has("knownLimitations"));
     JsonObject truncation = response.getAsJsonObject("truncation");
+    assertEquals(originalBytes, truncation.get("originalBytes").getAsInt());
+    assertEquals(trimmedBytes, truncation.get("returnedBytes").getAsInt());
     assertFalse(truncation.getAsJsonArray("omitted").toString().contains("phase0EvidenceInventory"));
     assertTrue(truncation.get("howToRetrieve").getAsString().contains("getSchema"),
         "Discovery truncation must point to focused capability retrieval");
