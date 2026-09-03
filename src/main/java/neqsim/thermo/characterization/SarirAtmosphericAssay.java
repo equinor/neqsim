@@ -32,13 +32,12 @@ public final class SarirAtmosphericAssay {
   public static final double BULK_MOLAR_MASS_TOLERANCE_KG_PER_MOL = 0.001;
 
   private static final double KILOGRAM_PER_CUBIC_METRE_PER_SPECIFIC_GRAVITY = 1000.0;
-  private static final double[] CUT_VOLUME_PERCENT = { 7.44, 3.03, 3.36, 7.33, 7.36, 3.02, 6.49, 3.73, 2.92, 7.29,
-      7.22, 4.31, 9.02, 3.09, 3.05, 2.39, 2.65, 16.30 };
+  private static final double[] CUT_VOLUME_PERCENT = { 7.44, 3.03, 3.36, 7.33, 7.36, 3.02, 6.49, 3.73, 2.92, 7.29, 7.22,
+      4.31, 9.02, 3.09, 3.05, 2.39, 2.65, 16.30 };
   private static final String[] CUT_NAMES = { "SARIR_TBP_70_MINUS", "SARIR_TBP_70_90", "SARIR_TBP_90_110",
-      "SARIR_TBP_110_150", "SARIR_TBP_150_195", "SARIR_TBP_195_215", "SARIR_TBP_215_255",
-      "SARIR_TBP_255_275", "SARIR_TBP_275_295", "SARIR_TBP_295_335", "SARIR_TBP_335_370",
-      "SARIR_TBP_370_400", "SARIR_TBP_400_460", "SARIR_TBP_460_480", "SARIR_TBP_480_500",
-      "SARIR_TBP_500_520", "SARIR_TBP_520_550", "SARIR_TBP_550_PLUS" };
+      "SARIR_TBP_110_150", "SARIR_TBP_150_195", "SARIR_TBP_195_215", "SARIR_TBP_215_255", "SARIR_TBP_255_275",
+      "SARIR_TBP_275_295", "SARIR_TBP_295_335", "SARIR_TBP_335_370", "SARIR_TBP_370_400", "SARIR_TBP_400_460",
+      "SARIR_TBP_460_480", "SARIR_TBP_480_500", "SARIR_TBP_500_520", "SARIR_TBP_520_550", "SARIR_TBP_550_PLUS" };
 
   private SarirAtmosphericAssay() {
   }
@@ -119,8 +118,8 @@ public final class SarirAtmosphericAssay {
    * Configure a constrained Sarir assay.
    *
    * <p>
-   * Validation completes before the attached assay is cleared, so invalid profiles do not modify existing assay data
-   * or the thermodynamic component list.
+   * Validation completes before the attached assay is cleared, so invalid profiles do not modify existing assay data or
+   * the thermodynamic component list.
    * </p>
    *
    * @param system empty or caller-owned thermodynamic system
@@ -137,19 +136,16 @@ public final class SarirAtmosphericAssay {
     }
 
     double bulkSpecificGravity = calculateBulkSpecificGravity(cutSpecificGravity);
-    double bulkDensityKgPerCubicMetre =
-        bulkSpecificGravity * KILOGRAM_PER_CUBIC_METRE_PER_SPECIFIC_GRAVITY;
+    double bulkDensityKgPerCubicMetre = bulkSpecificGravity * KILOGRAM_PER_CUBIC_METRE_PER_SPECIFIC_GRAVITY;
     double sourceDensityKgPerCubicMetre = SarirAtmosphericReference.getCrudeDensityAt15CKgPerCubicMetre();
-    if (Math.abs(bulkDensityKgPerCubicMetre - sourceDensityKgPerCubicMetre)
-        > BULK_DENSITY_TOLERANCE_KG_PER_CUBIC_METRE) {
+    if (Math
+        .abs(bulkDensityKgPerCubicMetre - sourceDensityKgPerCubicMetre) > BULK_DENSITY_TOLERANCE_KG_PER_CUBIC_METRE) {
       throw new IllegalArgumentException("Cut density profile does not reproduce the reported Sarir bulk density");
     }
 
-    double bulkMolarMassKgPerMol =
-        calculateBulkMolarMassKgPerMol(cutSpecificGravity, cutMolarMassKgPerMol);
+    double bulkMolarMassKgPerMol = calculateBulkMolarMassKgPerMol(cutSpecificGravity, cutMolarMassKgPerMol);
     double sourceMolarMassKgPerMol = SarirAtmosphericReference.getCrudeAverageMolarMassKgPerMol();
-    if (Math.abs(bulkMolarMassKgPerMol - sourceMolarMassKgPerMol)
-        > BULK_MOLAR_MASS_TOLERANCE_KG_PER_MOL) {
+    if (Math.abs(bulkMolarMassKgPerMol - sourceMolarMassKgPerMol) > BULK_MOLAR_MASS_TOLERANCE_KG_PER_MOL) {
       throw new IllegalArgumentException(
           "Cut molar-mass profile does not reproduce the reported Sarir average molar mass");
     }
@@ -165,8 +161,7 @@ public final class SarirAtmosphericAssay {
       if (i == 0) {
         cut.withUpperBoilingPointCelsius(tbpTemperatureCelsius[0]);
       } else if (i == CUT_COUNT - 1) {
-        cut.withLowerBoilingPointCelsius(
-            SarirAtmosphericReference.getTerminalResidueLowerBoundaryCelsius());
+        cut.withLowerBoilingPointCelsius(SarirAtmosphericReference.getTerminalResidueLowerBoundaryCelsius());
       } else {
         cut.withBoilingRangeCelsius(tbpTemperatureCelsius[i - 1], tbpTemperatureCelsius[i]);
       }
