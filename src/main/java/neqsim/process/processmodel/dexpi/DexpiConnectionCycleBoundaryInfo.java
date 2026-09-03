@@ -100,8 +100,8 @@ public final class DexpiConnectionCycleBoundaryInfo implements Serializable {
    * @param internalEndpointResolved whether the internal endpoint resolves in the source document
    * @param externalEndpointResolved whether the external endpoint resolves in the source document
    */
-  public DexpiConnectionCycleBoundaryInfo(String connectionId, String sourceId, String segmentId,
-      Direction direction, String internalEndpointId, String internalEndpointElementName, String internalOwnerId,
+  public DexpiConnectionCycleBoundaryInfo(String connectionId, String sourceId, String segmentId, Direction direction,
+      String internalEndpointId, String internalEndpointElementName, String internalOwnerId,
       String internalOwnerElementName, String externalEndpointId, String externalEndpointElementName,
       String externalOwnerId, String externalOwnerElementName, boolean internalEndpointResolved,
       boolean externalEndpointResolved) {
