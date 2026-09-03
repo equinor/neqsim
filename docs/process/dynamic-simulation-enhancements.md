@@ -1,6 +1,6 @@
 ---
 title: "Dynamic Process Simulation Enhancements"
-description: "Reference guide for advanced dynamic simulation features in NeqSim: controller modes, SFC sequencing, valve nonlinearities, sensor faults, transmitter filtering, alarm shelving, separator internals, heat exchanger thermal dynamics, distillation MESH energy, adaptive time stepping, and parallel transient execution."
+description: "Reference guide for advanced dynamic simulation features in NeqSim: controller modes, SFC sequencing, valve nonlinearities, sensor faults, transmitter filtering, alarm shelving, equipment and recycle dynamics, adaptive time stepping, and parallel transient execution."
 ---
 
 # Dynamic Process Simulation Enhancements
@@ -34,7 +34,8 @@ For the base dynamic simulation setup and `DynamicProcessHelper`, see
 - [5. Numerical Infrastructure](#5-numerical-infrastructure)
   - [5.1 Adaptive Time Stepping](#51-adaptive-time-stepping)
   - [5.2 Parallel Transient Execution](#52-parallel-transient-execution)
-  - [5.3 Integration Methods](#53-integration-methods)
+  - [5.3 Steady-to-Dynamic Recycle Networks](#53-steady-to-dynamic-recycle-networks)
+  - [5.4 Integration Methods](#54-integration-methods)
 - [6. Test Coverage](#6-test-coverage)
 - [7. Related Documentation](#7-related-documentation)
 
@@ -602,13 +603,64 @@ event-publication phases for that timestep. Callers should still treat an
 interrupted timestep as incomplete rather than as an atomic rollback.
 
 **Note:** Parallel execution is beneficial for flowsheets with many independent
-branches. Topological ordering covers feed-forward stream dependencies, but it
-does not define iteration or rollback for recycle loops and other implicit
-couplings. Keep the option disabled for those cases until their transient
-convergence contract is explicitly supported. For small flowsheets, the
-scheduling overhead may also outweigh the benefit.
+branches. Topological ordering covers feed-forward stream dependencies. When a
+flowsheet contains `Recycle` or `RecycleFlowCoordinator`, `ProcessSystem`
+automatically falls back to insertion-order sequential transient execution even
+if parallel transient execution is enabled. This preserves the ordered recycle
+dependency; it does not iterate the loop to steady convergence inside a physical
+timestep. For small flowsheets, scheduling overhead may also outweigh the
+benefit.
 
-### 5.3 Integration Methods
+### 5.3 Steady-to-Dynamic Recycle Networks
+
+A converged steady-state flowsheet can enter transient mode without replacing
+its recycle objects. The standard `Recycle` uses the accepted outlet state as the
+upstream state for the current evaluation, then publishes its current inlet for
+the next evaluation. Wegstein or Broyden acceleration is disabled during that
+transport update and restored for the next steady-state solve; convergence
+acceleration is not applied between physical timesteps.
+
+The transient network modes make ownership of flow and pressure explicit:
+
+| Equipment | Mode | Use |
+|-----------|------|-----|
+| `Compressor` | `MAP_FLOW_SOLVER` (default) | The compressor map solves the upstream flow, preserving historical behavior. |
+| `Compressor` | `QUASI_STEADY` | Upstream dynamic equipment owns flow; the map evaluates discharge pressure, head, and power algebraically. |
+| `Splitter` | `DOWNSTREAM_DEMAND` (default) | Pressure-driven downstream branches calculate flow and the splitter aggregates their demand. |
+| `Splitter` | `PRESCRIBED_SPLIT` | The current inlet flow is distributed from configured split factors or branch flow rates. |
+| `Cooler` | dynamic temperature control disabled (default) | Historical specified-temperature behavior is retained. |
+| `Cooler` | configured dynamic temperature control | A bounded utility-valve/NTU model applies actuator and process thermal lags. |
+
+Example handoff after the steady-state recycle has converged:
+
+```java
+process.run();
+
+compressor.setTransientCalculationMode(
+    Compressor.TransientCalculationMode.QUASI_STEADY);
+compressor.setControllerSpeedRateLimitEnabled(true);
+compressor.setCalculateSteadyState(false);
+
+splitter.setTransientSplitMode(Splitter.TransientSplitMode.PRESCRIBED_SPLIT);
+splitter.setCalculateSteadyState(false);
+
+cooler.setDynamicDesignValveOpening(50.0);
+cooler.configureDynamicTemperatureControl(
+    designMassFlowKgPerHour, 80.0, 35.0, 20.0, "C");
+cooler.setDynamicTimeConstants(5.0, 20.0);
+cooler.setCalculateSteadyState(false);
+
+recycle.setCalculateSteadyState(false);
+process.runTransient(0.25, UUID.randomUUID());
+```
+
+For a pressure-driven anti-surge branch, add a
+`RecycleFlowCoordinator` after the recycle valve in flowsheet order. It bounds
+the valve-requested recycle flow, writes a mass-conserving main/recycle split,
+and seeds the next splitter evaluation. Its signal dependency is not visible in
+stream topology, so its presence also selects sequential execution.
+
+### 5.4 Integration Methods
 
 The `ProcessSystem` supports selectable integration methods:
 

@@ -8,7 +8,7 @@ non-abstract class that implements `ProcessEquipmentInterface`, directly or thro
 base class. Helper classes, result records, strategies, enums, and interfaces are intentionally
 excluded from the equipment count.
 
-**Current source inventory:** 236 concrete equipment classes in 33 packages.
+**Current source inventory:** 237 concrete equipment classes in 33 packages.
 
 Regenerate this page after adding or removing equipment:
 
@@ -24,7 +24,7 @@ python devtools/generate_equipment_documentation_catalog.py
 | `adsorber` | [Adsorbers](adsorbers) and [adsorption beds](adsorption_bed)<br>Adsorption beds, mercury removal, and PSA equipment | `AdsorptionBed`, `MercuryRemovalBed`, `PSACascade`, `PressureSwingAdsorptionBed`, `SimpleAdsorber` |
 | `battery` | [Battery storage](battery_storage)<br>Electrical energy storage and balancing | `BatteryStorage` |
 | `blackoil` | [Black-oil separation](black_oil_separator)<br>Black-oil PVT separation in ProcessSystem | `BlackOilSeparator` |
-| `compressor` | [Compressors](compressors)<br>Compressors, trains, drivers, maps, and anti-surge models | `Compressor`, `CompressorTrain` |
+| `compressor` | [Compressors](compressors)<br>Compressors, trains, drivers, maps, and anti-surge models | `Compressor`, `CompressorTrain`, `RecycleFlowCoordinator` |
 | `diffpressure` | [Differential-pressure equipment](differential_pressure)<br>Orifice and differential-pressure flow equipment | `Orifice` |
 | `distillation` | [Distillation](distillation)<br>Tray, packed, reactive, and shortcut columns | `Condenser`, `DistillationColumn`, `PackedColumn`, `RateBasedPackedColumn`, `ReactiveTray`, `Reboiler`, `ScrubColumn`, `ShortcutDistillationColumn`, `SimpleTray`, `VLSolidTray` |
 | `ejector` | [Ejectors](ejectors)<br>Motive/suction ejector equipment | `Ejector` |

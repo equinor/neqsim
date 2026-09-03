@@ -7,7 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.process.controllerdevice.ControllerDeviceInterface.ControllerMode;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -229,6 +232,43 @@ public class CompressorDynamicSimulationTest {
 
     assertTrue(compressor.getOutletStream().getFlowRate("kg/hr") > compressor.getMinimumFlow());
     assertEquals(2.0, compressor.getTime(), 0.0);
+  }
+
+  @Test
+  public void testQuasiSteadyTransientPreservesUpstreamFlow() {
+    double designFlow = compressor.getInletStream().getFlowRate("m3/hr");
+    double designHead = compressor.getPolytropicFluidHead();
+    compressor.generateCompressorChartFromDesignPoint(10000.0, designFlow, designHead, 0.78, 5);
+    compressor.setTransientCalculationMode(Compressor.TransientCalculationMode.QUASI_STEADY);
+    compressor.setCalculateSteadyState(false);
+
+    double inletMassFlow = compressor.getInletStream().getFlowRate("kg/hr");
+    compressor.runTransient(1.0, UUID.randomUUID());
+
+    assertEquals(inletMassFlow, compressor.getInletStream().getFlowRate("kg/hr"), inletMassFlow * 1.0e-10);
+    assertEquals(inletMassFlow, compressor.getOutletStream().getFlowRate("kg/hr"), inletMassFlow * 1.0e-10);
+    assertTrue(compressor.getOutletPressure() > compressor.getInletPressure());
+    assertEquals(1.0, compressor.getTime(), 0.0);
+  }
+
+  @Test
+  public void testControllerSpeedCommandCanBeRateLimited() {
+    PressureTransmitter pressureTransmitter = new PressureTransmitter("PT-K-100", compressor.getOutletStream());
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("PIC-K-100");
+    controller.setTransmitter(pressureTransmitter);
+    controller.setMode(ControllerMode.MANUAL);
+    controller.setManualOutput(12000.0);
+    compressor.setController(controller);
+    compressor.setControllerSpeedRateLimitEnabled(true);
+    compressor.setMaxAccelerationRate(100.0);
+    compressor.setMaxDecelerationRate(200.0);
+
+    compressor.runController(1.0, UUID.randomUUID());
+    assertEquals(10100.0, compressor.getSpeed(), 1.0e-12);
+
+    controller.setManualOutput(8000.0);
+    compressor.runController(1.0, UUID.randomUUID());
+    assertEquals(9900.0, compressor.getSpeed(), 1.0e-12);
   }
 
   @Test

@@ -11,6 +11,7 @@ import neqsim.process.equipment.adsorber.AdsorptionBed;
 import neqsim.process.equipment.adsorber.MercuryRemovalBed;
 import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.RecycleFlowCoordinator;
 import neqsim.process.equipment.diffpressure.Orifice;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.electrolyzer.Electrolyzer;
@@ -20,6 +21,7 @@ import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.energy.Inverter;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.filter.Filter;
+import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.membrane.MembraneSeparator;
@@ -44,6 +46,7 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.tank.VesselDepressurization;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.BlowdownValve;
 import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.equipment.valve.HIPPSValve;
@@ -144,14 +147,15 @@ public final class DynamicCapabilityResolver {
     }
 
     if (isOneOf(type, EnergyNetworkSolver.class, Orifice.class, WellFlow.class, Stream.class, Heater.class, Mixer.class,
-        Splitter.class, MembraneSeparator.class, AdiabaticPipe.class)) {
+        Splitter.class, MembraneSeparator.class, AdiabaticPipe.class, Recycle.class, RecycleFlowCoordinator.class)) {
       return DynamicCapability.ALGEBRAIC;
     }
 
     if (isOneOf(type, Separator.class, ThreePhaseSeparator.class, Tank.class, VesselDepressurization.class,
-        HeatExchanger.class, Compressor.class, Expander.class, Pump.class, ThrottlingValve.class, BlowdownValve.class,
-        ESDValve.class, HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class, EnergyConverter.class,
-        Inverter.class, BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class, Electrolyzer.class)) {
+        HeatExchanger.class, Cooler.class, Compressor.class, Expander.class, Pump.class, ThrottlingValve.class,
+        BlowdownValve.class, ESDValve.class, HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class,
+        EnergyConverter.class, Inverter.class, BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class,
+        Electrolyzer.class)) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
 

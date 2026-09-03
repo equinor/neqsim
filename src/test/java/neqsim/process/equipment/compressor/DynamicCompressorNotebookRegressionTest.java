@@ -68,8 +68,10 @@ class DynamicCompressorNotebookRegressionTest {
   void pressureControllerReachesDischargePressureSetpoint() {
     // A discharge-pressure set point below the current operating pressure: the reverse-acting controller reduces
     // compressor speed toward its low limit until the measured pressure settles at the (reachable) set point.
+    // The achievable discharge pressure of this compact model spans roughly 9.8 bara at the minimum speed to about
+    // 12 bara at the maximum speed, so the set point must lie inside that band to exercise the speed response.
     DynamicCompressorProcess low = createNotebookStyleProcess(true);
-    double reachableSetpoint = 11.0;
+    double reachableSetpoint = 10.2;
     addDischargePressureController(low, reachableSetpoint);
     runTransientSteps(low.process, 160);
     double controlledPressure = low.dischargeSeparator.getGasOutStream().getPressure("bara");

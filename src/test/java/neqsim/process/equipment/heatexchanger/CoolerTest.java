@@ -8,7 +8,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -165,6 +167,37 @@ class CoolerTest {
 
     cooler.setOutTemperature(273.15 + 20.0);
     assertTrue(cooler.needRecalculation());
+  }
+
+  @Test
+  void testDynamicTemperatureControllerDrivesCoolingValve() {
+    Cooler cooler = new Cooler("controlled dynamic cooler", inletStream);
+    cooler.setOutTemperature(35.0, "C");
+    process.add(cooler);
+    process.run();
+
+    cooler.configureDynamicTemperatureControl(inletStream.getFlowRate("kg/hr"), 80.0, 35.0, 20.0, "C");
+    cooler.setDynamicTimeConstants(5.0, 10.0);
+    TemperatureTransmitter transmitter = new TemperatureTransmitter("cooler outlet temperature",
+        cooler.getOutletStream());
+    transmitter.setUnit("C");
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("cooler temperature controller");
+    controller.setTransmitter(transmitter);
+    controller.setControllerSetPoint(35.0, "C");
+    controller.setControllerParameters(4.0, 30.0, 0.0);
+    controller.setOutputLimits(0.0, 100.0);
+    cooler.setController(controller);
+    cooler.setCalculateSteadyState(false);
+
+    inletStream.setTemperature(100.0, "C");
+    for (int step = 0; step < 120; step++) {
+      process.runTransient(1.0, UUID.randomUUID());
+    }
+
+    assertTrue(cooler.getCoolingValveOpening() > 50.0,
+        "High outlet temperature must make the direct-acting controller open the cooling valve");
+    assertTrue(cooler.getOutletStream().getTemperature("C") >= 20.0);
+    assertTrue(cooler.getOutletStream().getTemperature("C") < inletStream.getTemperature("C"));
   }
 
   /**
