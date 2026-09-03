@@ -1501,9 +1501,9 @@ The complete workflow in `TPmultiflash.run()` is:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.5 Phase Seeding Strategies
+### 3.5 Phase Seeding and Restart Strategies
 
-Beyond stability analysis, NeqSim uses heuristic phase seeding to improve convergence:
+Beyond stability analysis, NeqSim uses heuristic phase seeding and guarded restarts to improve convergence:
 
 #### 3.5.1 Water-rich Hydrocarbon Vapour Appearance
 
