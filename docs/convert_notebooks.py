@@ -656,7 +656,7 @@ reading aid, not execution evidence.
         content += """
 ## Standalone Java source examples
 
-These files are outside Maven's main source tree. The
+These files are outside Maven's compiled source tree. The
 `StandaloneJavaDocumentationCompilationTest` compiles the exact catalog against the
 current NeqSim API. This is build verification only, not runtime or engineering-result
 validation. The files retain legacy console output; inspect assumptions and execute the
