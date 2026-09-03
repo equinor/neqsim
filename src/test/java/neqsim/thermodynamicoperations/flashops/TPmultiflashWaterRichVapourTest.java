@@ -132,7 +132,8 @@ class TPmultiflashWaterRichVapourTest {
 
   private SystemInterface buildFluid(boolean pengRobinson, double waterFraction, double temperature, double pressure,
       boolean multiphaseCheck) {
-    SystemInterface fluid = pengRobinson ? new SystemPrEos(temperature, pressure) : new SystemSrkEos(temperature, pressure);
+    SystemInterface fluid = pengRobinson ? new SystemPrEos(temperature, pressure)
+        : new SystemSrkEos(temperature, pressure);
     for (int component = 0; component < HYDROCARBON_NAMES.length; component++) {
       fluid.addComponent(HYDROCARBON_NAMES[component], HYDROCARBON_FRACTIONS[component] * (1.0 - waterFraction));
     }
@@ -179,8 +180,7 @@ class TPmultiflashWaterRichVapourTest {
     assertEquals(1.0, betaTotal, NORMALIZATION_TOLERANCE, label + " beta normalization");
 
     double materialResidual = maximumComponentMaterialBalanceResidual(fluid);
-    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE,
-        label + " material-balance residual " + materialResidual);
+    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE, label + " material-balance residual " + materialResidual);
 
     double fugacityResidual = maximumComparableLogFugacityResidual(fluid);
     assertTrue(fugacityResidual < FUGACITY_TOLERANCE, label + " fugacity residual " + fugacityResidual);
@@ -196,7 +196,8 @@ class TPmultiflashWaterRichVapourTest {
     for (int expectedPhase = 0; expectedPhase < expected.getNumberOfPhases(); expectedPhase++) {
       PhaseType phaseType = expected.getPhase(expectedPhase).getType();
       int actualPhase = findPhase(actual, phaseType);
-      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label + " beta " + phaseType);
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance,
+          label + " beta " + phaseType);
       assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance,
           label + " compressibility " + phaseType);
       for (int component = 0; component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
