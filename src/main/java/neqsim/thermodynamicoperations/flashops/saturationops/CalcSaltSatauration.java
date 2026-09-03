@@ -16,11 +16,15 @@ import neqsim.thermodynamicoperations.flashops.TPflash;
 public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  private static final int MAX_SATURATION_ITERATIONS = 80;
+  private static final double SATURATION_RATIO_TOLERANCE = 1.0e-6;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CalcSaltSatauration.class);
 
   String saltName;
   private transient SaltData saltDataCache;
+  private transient SaltSaturationResult result;
+  private transient int thermodynamicInitializationCount;
 
   /**
    * Constructor for calcSaltSatauration.
@@ -37,6 +41,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    result = null;
+    thermodynamicInitializationCount = 0;
+
     SaltData saltData = readSaltData();
     ensureSaltIonsPresent(saltData);
 
@@ -44,7 +51,11 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     int aqueousPhaseNumber = getAqueousPhaseNumber();
 
     double saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+    double initialSaturationRatio = saturationRatio;
     if (saturationRatio >= 1.0) {
+      boolean converged = Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE;
+      result = new SaltSaturationResult(saltName, initialSaturationRatio, saturationRatio, 0.0, 0, 0,
+          thermodynamicInitializationCount, true, converged, false);
       logger.info("{} is already saturated, SR={}", saltName, saturationRatio);
       return;
     }
@@ -52,12 +63,14 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     double lowerAddition = 0.0;
     double upperAddition = 1.0e-6;
     double upperSaturationRatio = saturationRatio;
+    double acceptedAddition = 0.0;
     int bracketIterations = 0;
+    int solveIterations = 0;
 
     SystemInterface baseSystem = system.clone();
 
     if (system instanceof neqsim.thermo.system.SystemPitzer || "FeCO3".equals(saltName)) {
-      while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
+      while (upperSaturationRatio < 1.0 && bracketIterations < MAX_SATURATION_ITERATIONS) {
         upperSaturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, upperAddition);
         if (upperSaturationRatio < 1.0) {
           lowerAddition = upperAddition;
@@ -70,11 +83,12 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         throw new IllegalStateException("Could not bracket salt saturation for " + saltName);
       }
 
-      for (int i = 0; i < 80; i++) {
+      for (int i = 0; i < MAX_SATURATION_ITERATIONS; i++) {
         double trialAddition = 0.5 * (lowerAddition + upperAddition);
         saturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, trialAddition);
+        solveIterations++;
 
-        if (Math.abs(saturationRatio - 1.0) < 1.0e-6) {
+        if (Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE) {
           lowerAddition = trialAddition;
           upperAddition = trialAddition;
           break;
@@ -86,13 +100,13 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         }
       }
 
-      double finalAddition = 0.5 * (lowerAddition + upperAddition);
-      addSaltAmount(saltData, finalAddition);
+      acceptedAddition = 0.5 * (lowerAddition + upperAddition);
+      addSaltAmount(saltData, acceptedAddition);
       initialiseSystem();
     } else {
       double currentAddition = 0.0;
 
-      while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
+      while (upperSaturationRatio < 1.0 && bracketIterations < MAX_SATURATION_ITERATIONS) {
         lowerAddition = currentAddition;
         addSaltAmount(saltData, upperAddition - currentAddition);
         currentAddition = upperAddition;
@@ -109,15 +123,16 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         throw new IllegalStateException("Could not bracket salt saturation for " + saltName);
       }
 
-      for (int i = 0; i < 80; i++) {
+      for (int i = 0; i < MAX_SATURATION_ITERATIONS; i++) {
         double trialAddition = 0.5 * (lowerAddition + upperAddition);
         addSaltAmount(saltData, trialAddition - currentAddition);
         currentAddition = trialAddition;
         initialiseSystem();
         aqueousPhaseNumber = getAqueousPhaseNumber();
         saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+        solveIterations++;
 
-        if (Math.abs(saturationRatio - 1.0) < 1.0e-6) {
+        if (Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE) {
           break;
         }
         if (saturationRatio < 1.0) {
@@ -126,12 +141,31 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
           upperAddition = trialAddition;
         }
       }
+      acceptedAddition = currentAddition;
     }
 
     aqueousPhaseNumber = getAqueousPhaseNumber();
     saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+    boolean converged = Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE;
+    boolean iterationLimitReached = !converged && solveIterations >= MAX_SATURATION_ITERATIONS;
+    result = new SaltSaturationResult(saltName, initialSaturationRatio, saturationRatio, acceptedAddition,
+        bracketIterations, solveIterations, thermodynamicInitializationCount, false, converged,
+        iterationLimitReached);
 
     logger.info("solution found for {} in calcSaltSatauration(), SR={}", saltName, saturationRatio);
+  }
+
+  /**
+   * Returns diagnostics for the completed dissolved-salt saturation calculation.
+   *
+   * @return immutable convergence and work diagnostics
+   * @throws java.lang.IllegalStateException if {@link #run()} has not completed successfully
+   */
+  public SaltSaturationResult getResult() {
+    if (result == null) {
+      throw new IllegalStateException("Salt saturation has not completed for " + saltName);
+    }
+    return result;
   }
 
   /**
@@ -478,6 +512,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    * Initialises thermodynamic and physical properties for the current system state.
    */
   private void initialiseSystem() {
+    thermodynamicInitializationCount++;
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
       neqsim.thermo.system.SystemPitzer pitzerSystem = (neqsim.thermo.system.SystemPitzer) system;
       system.init(0);

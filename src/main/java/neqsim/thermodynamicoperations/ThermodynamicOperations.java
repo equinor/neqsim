@@ -69,6 +69,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitat
 import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
+import neqsim.thermodynamicoperations.flashops.saturationops.SaltSaturationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointEquilibriumLine;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureFlash;
@@ -1315,18 +1316,37 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * calcSaltSaturation.
+   * Adds a dissolved salt to activity saturation.
    *
-   * @param saltName a {@link java.lang.String} object
-   * @throws neqsim.util.exception.IsNaNException if any.
+   * @param saltName salt name from the COMPSALT database
+   * @throws neqsim.util.exception.IsNaNException if the calculation returns an invalid state
    */
   public void calcSaltSaturation(String saltName) throws IsNaNException {
-    operation = new CalcSaltSatauration(system, saltName);
-    getOperation().run();
+    calcSaltSaturationWithDiagnostics(saltName);
+  }
+
+  /**
+   * Adds a dissolved salt to activity saturation and returns convergence diagnostics.
+   *
+   * <p>
+   * This method uses the same calculation and mutates the system in the same way as
+   * {@link #calcSaltSaturation(String)}. The result reports the existing solver's work and does not represent a solid
+   * phase or qualify the underlying thermodynamic parameters.
+   * </p>
+   *
+   * @param saltName salt name from the COMPSALT database
+   * @return immutable saturation-ratio, added-amount and convergence diagnostics
+   * @throws neqsim.util.exception.IsNaNException if the calculation returns an invalid state
+   */
+  public SaltSaturationResult calcSaltSaturationWithDiagnostics(String saltName) throws IsNaNException {
+    CalcSaltSatauration saltOperation = new CalcSaltSatauration(system, saltName);
+    operation = saltOperation;
+    saltOperation.run();
     if (Double.isNaN(system.getTemperature())) {
-      throw new neqsim.util.exception.IsNaNException(this, "calcSaltSaturation",
+      throw new neqsim.util.exception.IsNaNException(this, "calcSaltSaturationWithDiagnostics",
           "Could not find solution - possible no dew point exists");
     }
+    return saltOperation.getResult();
   }
 
   /**
