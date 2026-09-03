@@ -1112,9 +1112,9 @@ public final class DexpiXmlReader {
     }
 
     private DexpiConnectionCycleInfo toInfo() {
-      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, endpoints, connectionIds,
-          connections, incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections,
-          unresolvedEndpointIds, selfReference);
+      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, endpoints, connectionIds, connections,
+          incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections, unresolvedEndpointIds,
+          selfReference);
     }
   }
 
