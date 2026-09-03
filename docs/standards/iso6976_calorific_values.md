@@ -3,8 +3,6 @@ title: "ISO 6976 - Calorific Values, Density, Relative Density and Wobbe Indices
 description: "Comprehensive guide to ISO 6976 in NeqSim: calculating calorific values (GCV/LCV), density, relative density, Wobbe indices and compressibility factor from natural gas composition. Covers both the 1995 and 2016 editions, mathematical derivations, and usage from fluids, streams, and Python."
 ---
 
-# ISO 6976 - Calorific Values from Composition
-
 ISO 6976 provides standardised methods for calculating calorific values, density,
 relative density and Wobbe indices of natural gas mixtures from their molar
 composition, without direct calorimetric measurement. It is the primary standard
