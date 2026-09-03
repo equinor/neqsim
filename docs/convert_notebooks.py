@@ -128,6 +128,95 @@ def escape_liquid_tags(content):
     return content
 
 
+def markdown_heading_anchor(heading):
+    """Return the GitHub/Jekyll fragment generated for one Markdown heading."""
+
+    heading = re.sub(r"<[^>]+>", "", heading)
+    heading = re.sub(r"[\x60*_~]", "", heading)
+    heading = re.sub(r"[^\w\- ]", "", heading.lower())
+    return re.sub(r"\s+", "-", heading.strip())
+
+
+def anchor_comparison_key(anchor):
+    """Return punctuation-insensitive text for matching a legacy fragment."""
+
+    return "".join(
+        character for character in anchor.lower() if character.isalnum()
+    )
+
+
+def repair_local_heading_links(content):
+    """Repair unambiguous local heading links without touching code fences."""
+
+    lines = content.splitlines(keepends=True)
+    headings = []
+    occurrences = {}
+    fence_marker = None
+
+    for line in lines:
+        fence = re.match(r"^\s*(?P<fence>[\x60~]{3,})", line)
+        if fence:
+            marker = fence.group("fence")[0]
+            if fence_marker is None:
+                fence_marker = marker
+            elif marker == fence_marker:
+                fence_marker = None
+            continue
+        if fence_marker is not None:
+            continue
+
+        heading = re.match(r"^#{1,6}\s+(.+?)\s*$", line)
+        if not heading:
+            continue
+        anchor = markdown_heading_anchor(heading.group(1))
+        duplicate = occurrences.get(anchor, 0)
+        occurrences[anchor] = duplicate + 1
+        headings.append(anchor if duplicate == 0 else f"{anchor}-{duplicate}")
+
+    heading_set = set(headings)
+    local_link = re.compile(
+        r"(?P<prefix>\[[^\]\n]+\]\(#)(?P<target>[^)\s]+)(?P<suffix>\))"
+    )
+    repaired = []
+    fence_marker = None
+
+    def replace_link(match):
+        target = match.group("target")
+        if target.lower() in heading_set:
+            return match.group(0)
+
+        target_key = anchor_comparison_key(target)
+        candidates = [
+            heading
+            for heading in headings
+            if anchor_comparison_key(heading).startswith(target_key)
+        ]
+        if not target_key or len(candidates) != 1:
+            return match.group(0)
+        return (
+            match.group("prefix")
+            + candidates[0]
+            + match.group("suffix")
+        )
+
+    for line in lines:
+        fence = re.match(r"^\s*(?P<fence>[\x60~]{3,})", line)
+        if fence:
+            marker = fence.group("fence")[0]
+            if fence_marker is None:
+                fence_marker = marker
+            elif marker == fence_marker:
+                fence_marker = None
+            repaired.append(line)
+            continue
+        if fence_marker is not None:
+            repaired.append(line)
+        else:
+            repaired.append(local_link.sub(replace_link, line))
+
+    return "".join(repaired)
+
+
 def notebook_to_markdown(notebook_path):
     """
     Convert a Jupyter notebook to Markdown format suitable for Jekyll.
@@ -262,6 +351,7 @@ nav_order: 1
                     markdown_content.append('</details>\n\n')
 
     full_content = front_matter + ''.join(markdown_content)
+    full_content = repair_local_heading_links(full_content)
 
     # Escape Liquid tags
     full_content = escape_liquid_tags(full_content)

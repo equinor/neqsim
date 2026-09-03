@@ -36,18 +36,18 @@ AI-based production optimization platforms typically require:
 
 ## Table of Contents
 
-1. [Setup and Installation](#1.-Setup-and-Installation)
-2. [Direct Java Access Setup](#2.-Direct-Java-Access-Setup)
-3. [Creating a Production System](#3.-Creating-a-Production-System)
-4. [Real-Time Data Streaming](#4.-Real-Time-Data-Streaming)
-5. [Virtual Flow Meters](#5.-Virtual-Flow-Meters)
-6. [Soft Sensors](#6.-Soft-Sensors)
-7. [Uncertainty Quantification](#7.-Uncertainty-Quantification)
-8. [Online Calibration](#8.-Online-Calibration)
-9. [Well Production Allocation](#9.-Well-Production-Allocation)
-10. [Event System](#10.-Event-System)
-11. [Data Export for ML Training](#11.-Data-Export-for-ML-Training)
-12. [Complete Integration Example](#12.-Complete-Integration-Example)
+1. [Setup and Installation](#1-setup-and-installation)
+2. [Direct Java Access Setup](#2-direct-java-access-setup)
+3. [Creating a Production System](#3-creating-a-production-system)
+4. [Real-Time Data Streaming](#4-real-time-data-streaming)
+5. [Virtual Flow Meters](#5-virtual-flow-meters-vfm)
+6. [Soft Sensors](#6-soft-sensors)
+7. [Uncertainty Quantification](#7-uncertainty-quantification)
+8. [Online Calibration](#8-online-calibration)
+9. [Well Production Allocation](#9-well-production-allocation)
+10. [Event System](#10-event-system)
+11. [Data Export for ML Training](#11-data-export-for-ml-training)
+12. [Complete Integration Example](#12-complete-integration-example)
 
 ## 1. Setup and Installation
 

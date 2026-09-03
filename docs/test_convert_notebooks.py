@@ -9,6 +9,7 @@ from convert_notebooks import (
     CURATED_NOTEBOOKS,
     convert_all_notebooks,
     create_examples_index,
+    markdown_heading_anchor,
 )
 
 
@@ -220,6 +221,103 @@ class ConvertNotebooksTest(unittest.TestCase):
                     flags=re.DOTALL,
                 )
                 self.assertNotRegex(body_without_fences, r"(?m)^# ")
+
+
+    def test_converter_repairs_unambiguous_local_heading_links(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            examples_dir = Path(temp_dir)
+            notebook_path = examples_dir / "Navigation.ipynb"
+            notebook = {
+                "cells": [
+                    {
+                        "cell_type": "markdown",
+                        "metadata": {},
+                        "source": [
+                            "# Navigation example\n\n",
+                            "[Setup](#1.-Setup-and-Installation)\n",
+                            "[Chart](#622-using-compressorchart-generator-",
+                            "automatic-curves)\n\n",
+                            "## 1. Setup and Installation\n\n",
+                            "### 6.2.2 Using CompressorChartGenerator ",
+                            "(Automatic Curves)\n\n",
+                            "```text\n",
+                            "[Literal](#1.-Setup-and-Installation)\n",
+                            "```\n",
+                        ],
+                    }
+                ],
+                "metadata": {"language_info": {"name": "python"}},
+                "nbformat": 4,
+                "nbformat_minor": 5,
+            }
+            notebook_path.write_text(
+                json.dumps(notebook),
+                encoding="utf-8",
+            )
+
+            convert_all_notebooks(examples_dir)
+
+            generated_content = (
+                examples_dir / "Navigation.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn(
+                "[Setup](#1-setup-and-installation)",
+                generated_content,
+            )
+            self.assertIn(
+                "[Chart](#622-using-compressorchartgenerator-"
+                "automatic-curves)",
+                generated_content,
+            )
+            self.assertIn(
+                "[Literal](#1.-Setup-and-Installation)",
+                generated_content,
+            )
+            self.assertNotIn(
+                "#622-using-compressorchart-generator",
+                generated_content,
+            )
+
+    def test_committed_generated_pages_resolve_local_heading_links(self):
+        docs_dir = Path(__file__).resolve().parent
+        examples_dir = docs_dir / "examples"
+        generated_pages = [
+            notebook_path.with_suffix(".md")
+            for notebook_path in sorted(examples_dir.glob("*.ipynb"))
+            if notebook_path.with_suffix(".md").exists()
+        ]
+
+        self.assertEqual(30, len(generated_pages))
+        for markdown_path in generated_pages:
+            content = markdown_path.read_text(encoding="utf-8")
+            visible_content = re.sub(
+                r"[\x60]{3}.*?[\x60]{3}|~~~.*?~~~",
+                "",
+                content,
+                flags=re.DOTALL,
+            )
+            headings = {
+                markdown_heading_anchor(heading)
+                for heading in re.findall(
+                    r"(?m)^#{1,6}\s+(.+?)\s*$",
+                    visible_content,
+                )
+            }
+            targets = {
+                target.lower()
+                for target in re.findall(
+                    r"\[[^\]\n]+\]\(#([^)]+)\)",
+                    visible_content,
+                )
+            }
+            with self.subTest(path=markdown_path.name):
+                self.assertFalse(
+                    targets - headings,
+                    msg=(
+                        "Unresolved local heading links: "
+                        + ", ".join(sorted(targets - headings))
+                    ),
+                )
 
     def test_index_preserves_curated_notebooks(self):
         with tempfile.TemporaryDirectory() as temp_dir:
