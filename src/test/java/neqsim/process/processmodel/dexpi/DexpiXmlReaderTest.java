@@ -596,9 +596,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getEndpointIds());
     assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), threeEndpointCycle.getConnectionIds());
     List<DexpiConnectionInfo> internalConnections = threeEndpointCycle.getConnections();
-    assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"),
-        Arrays.asList(internalConnections.get(0).getId(), internalConnections.get(1).getId(),
-            internalConnections.get(2).getId(), internalConnections.get(3).getId()));
+    assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), Arrays.asList(internalConnections.get(0).getId(),
+        internalConnections.get(1).getId(), internalConnections.get(2).getId(), internalConnections.get(3).getId()));
     assertEquals("C-3", internalConnections.get(0).getSourceId());
     assertEquals("S-3", internalConnections.get(0).getSegmentId());
     assertEquals("N-X", internalConnections.get(0).getFromId());
