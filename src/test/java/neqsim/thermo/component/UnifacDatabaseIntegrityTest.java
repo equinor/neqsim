@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -64,6 +65,23 @@ public class UnifacDatabaseIntegrityTest {
 
   /** Tolerance on the molar mass implied by a group assignment, in g/mol. */
   private static final double MASS_TOLERANCE = 0.05;
+
+  /** Aliphatic subgroups CH3, CH2, CH and C. */
+  private static final List<String> ALIPHATIC_SUBGROUPS = Collections
+      .unmodifiableList(Arrays.asList("1", "2", "3", "4"));
+
+  /** UMR-PRU cyclic subgroups cCH2, cCH and cC. */
+  private static final List<String> CYCLIC_SUBGROUPS = Collections.unmodifiableList(Arrays.asList("136", "137", "138"));
+
+  /** Main group 4 subgroups ACCH3, ACCH2 and ACCH, the aromatic carbon-alkane groups. */
+  private static final List<String> AROMATIC_ALKANE_SUBGROUPS = Collections
+      .unmodifiableList(Arrays.asList("11", "12", "13"));
+
+  /** Bare aromatic carbon AC, reserved for non-alkane ring substituents. */
+  private static final String BARE_AROMATIC_CARBON = "10";
+
+  /** Table in which the UMR-PRU cyclic groups are expected to be used. */
+  private static final String UMRPRU_TABLE = "UNIFACcompUMRPRU";
 
   /**
    * DDBST published original UNIFAC subgroups, encoded as "secondary;name;maingroup;volumeR;surfaceQ".
@@ -214,8 +232,56 @@ public class UnifacDatabaseIntegrityTest {
           findings.add("molar_mass_mismatch\t" + table + "/" + name);
         }
       }
+
+      for (Map<String, String> row : rows) {
+        String name = row.get("Name").trim();
+        Map<String, Integer> groups = assignmentOf(row);
+        boolean bareAromatic = count(groups, BARE_AROMATIC_CARBON) > 0;
+        boolean aromaticAlkane = false;
+        for (String subgroup : AROMATIC_ALKANE_SUBGROUPS) {
+          aromaticAlkane = aromaticAlkane || count(groups, subgroup) > 0;
+        }
+        boolean aliphatic = false;
+        for (String subgroup : ALIPHATIC_SUBGROUPS) {
+          aliphatic = aliphatic || count(groups, subgroup) > 0;
+        }
+        boolean cyclic = false;
+        for (String subgroup : CYCLIC_SUBGROUPS) {
+          cyclic = cyclic || count(groups, subgroup) > 0;
+        }
+        if (bareAromatic && aliphatic && !aromaticAlkane) {
+          findings.add("aromatic_group_convention\t" + table + "/" + name);
+        }
+        if (UMRPRU_TABLE.equals(table) && looksLikeRing(name) && aliphatic && !cyclic) {
+          findings.add("ring_group_convention\t" + table + "/" + name);
+        }
+      }
     }
     return findings;
+  }
+
+  /**
+   * Returns how many times a subgroup occurs in an assignment.
+   *
+   * @param groups assignment to inspect
+   * @param subgroup subgroup number to count
+   * @return the occurrence count, zero when absent
+   */
+  private int count(Map<String, Integer> groups, String subgroup) {
+    Integer value = groups.get(subgroup);
+    return value == null ? 0 : value.intValue();
+  }
+
+  /**
+   * Returns whether a component name marks it as a naphthene in this database.
+   *
+   * @param name component name from a UNIFAC table
+   * @return true when the name carries a ring marker
+   */
+  private boolean looksLikeRing(String name) {
+    String lowered = name.toLowerCase(Locale.ROOT);
+    return lowered.startsWith("c-c") || lowered.startsWith("cy-c") || lowered.contains("cy-c")
+        || lowered.contains("cyc") || lowered.contains("chexane");
   }
 
   /**

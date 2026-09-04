@@ -28,8 +28,12 @@ GROUP_PARAM_FIXES = [
     ("44", "VolumeR", "2.256400000", "1.465400000", "CH2Cl R; had CH2Cl2's 2.2564, DDBST 1.4654"),
     ("45", "VolumeR", "2.060600000", "1.238000000", "CHCl R; had CHCl2's 2.0606, DDBST 1.2380"),
     ("58", "VolumeR", "2.507000000", "2.057000000", "CS2 R; digit transposition, DDBST 2.0570"),
-    ("61", "SurfAreaQ", "1.650000000", "2.484000000", "Furfural Q; had CS2's 1.6500, DDBST 2.4840"),
 ]
+
+# MEG, DEG and TEG are deliberately left byte identical to master. sub61
+# (Furfural) is referenced by exactly one component in the database, MEG, so
+# correcting its Q would in practice be a MEG change. That correction, the stray
+# Furfural group on MEG and the duplicate TEG row are recorded in the baseline.
 
 # (file, component name, subgroup column, justification) - stray group to clear
 STRAY_GROUPS = [
@@ -37,7 +41,6 @@ STRAY_GROUPS = [
     ("UNIFACcompUMRPRU.csv", "trans-12-DM-cy-C6", "sub16", "water group in a C8H16 naphthene"),
     ("UNIFACcomp.csv", "cis-12-DM-cy-C6", "sub16", "water group in a C8H16 naphthene"),
     ("UNIFACcomp.csv", "trans-12-DM-cy-C6", "sub16", "water group in a C8H16 naphthene"),
-    ("UNIFACcomp.csv", "MEG", "sub61", "Furfural group in ethylene glycol"),
 ]
 
 # (file, component name, subgroup column, expected current value, new value, justification)
@@ -56,7 +59,6 @@ SET_GROUPS = [
 DROP_ROWS = [
     ("UNIFACcomp.csv", "c-C7", "133", "exact duplicate of CompNumber 69"),
     ("UNIFACcomp.csv", "c-C8", "132", "exact duplicate of CompNumber 73"),
-    ("UNIFACcomp.csv", "TEG", "120", "CH2x6+OHx2 = 118.17 g/mol; TEG is 150.17 (CompNumber 61 is correct)"),
     ("UNIFACcompUMRPRU.csv", "c-C7", "133", "exact duplicate of CompNumber 72"),
     (
         "UNIFACcompUMRPRU.csv",
@@ -66,6 +68,27 @@ DROP_ROWS = [
     ),
 ]
 
+
+# Alkylbenzene rows that put an alkyl-substituted aromatic carbon in the bare AC
+# group. Hansen et al. (1991) name main group 4 "aromatic carbon-alkane" and give
+# ethylbenzene as 5*ACH + 1*ACCH2 + 1*CH3; AC is reserved for a ring carbon whose
+# substituent is not an alkane group (styrene, naphthalene fusion). Converting
+# AC + CH2 into ACCH2 preserves molar mass exactly.
+ALKYLBENZENE_FIXES = [
+    ("nC5-Benzene", 4),
+    ("nC6-Benzene", 5),
+    ("nC7-Benzene", 6),
+    ("nC8-Benzene", 7),
+    ("nC9-Benzene", 8),
+    ("nC10-Benzene", 9),
+]
+
+# 1,2,3-trimethylbenzene has the same defect in the ACCH3 form: three methyls
+# attached through bare AC. m-Xylene in the same table is already ACH x4 +
+# ACCH3 x2. Converting CH3 + AC into ACCH3 preserves molar mass exactly.
+METHYLBENZENE_FIXES = [
+    ("1.2.3-TM-Benzene", 3),
+]
 
 # Component names that use commas where COMP.csv uses dots. The lookup is
 # "WHERE Name = '<COMP.csv name>'", so these rows are unreachable and the
@@ -192,6 +215,48 @@ def fix_component_table(filename):
             break
 
     lines = [line for index, line in enumerate(lines) if index not in drop]
+
+    ch2_at = header_index(lines[0], "sub2")
+    ac_at = header_index(lines[0], "sub10")
+    acch2_at = header_index(lines[0], "sub12")
+    for name, ch2_count in ALKYLBENZENE_FIXES:
+        for index, line in enumerate(lines[1:], start=1):
+            fields = line.split(",")
+            if fields[name_at].strip().strip('"') != name:
+                continue
+            if fields[ac_at].strip() != "1" or fields[ch2_at].strip() != str(ch2_count):
+                print("  SKIP %-20s expected AC=1 CH2=%d, found AC=%s CH2=%s"
+                      % (name, ch2_count, fields[ac_at].strip(), fields[ch2_at].strip()))
+                break
+            fields[ac_at] = "0"
+            fields[acch2_at] = "1"
+            fields[ch2_at] = str(ch2_count - 1)
+            lines[index] = ",".join(fields)
+            print("  %-20s AC x1 + CH2 x%d  ->  ACCH2 x1 + CH2 x%d   (main group 4 is aromatic carbon-alkane)"
+                  % (name, ch2_count, ch2_count - 1))
+            changed += 1
+            break
+
+    ch3_at = header_index(lines[0], "sub1")
+    acch3_at = header_index(lines[0], "sub11")
+    for name, methyl_count in METHYLBENZENE_FIXES:
+        for index, line in enumerate(lines[1:], start=1):
+            fields = line.split(",")
+            if fields[name_at].strip().strip('"') != name:
+                continue
+            expected = str(methyl_count)
+            if fields[ac_at].strip() != expected or fields[ch3_at].strip() != expected:
+                print("  SKIP %-20s expected AC=CH3=%d, found AC=%s CH3=%s"
+                      % (name, methyl_count, fields[ac_at].strip(), fields[ch3_at].strip()))
+                break
+            fields[ac_at] = "0"
+            fields[ch3_at] = "0"
+            fields[acch3_at] = expected
+            lines[index] = ",".join(fields)
+            print("  %-20s AC x%d + CH3 x%d  ->  ACCH3 x%d   (main group 4 is aromatic carbon-alkane)"
+                  % (name, methyl_count, methyl_count, methyl_count))
+            changed += 1
+            break
 
     for old_name in RENAMES:
         new_name = old_name.replace(",", ".")

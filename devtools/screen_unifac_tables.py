@@ -16,8 +16,21 @@ component_no_groups   a component row exists but assigns no groups at all, which
                       yields R = Q = 0 and NaN activity coefficients.
 molar_mass_mismatch   the molar mass summed from the assigned groups disagrees
                       with COMP.csv MOLARMASS.
-not_in_comp           a UNIFAC row whose name has no COMP.csv component, so it
+not_in_comp          a UNIFAC row whose name has no COMP.csv component, so it
                       can never be reached from addComponent.
+aromatic_group_convention
+                      an alkyl chain is attached to the ring through the bare AC
+                      group. Hansen et al. (1991) name main group 4 "aromatic
+                      carbon-alkane" and reserve AC for a ring carbon whose
+                      substituent is not an alkane group.
+ring_group_convention
+                      a ring component uses the aliphatic CH2/CH/C groups rather
+                      than the UMR-PRU cyclic cCH2/cCH/cC groups. Only applies to
+                      UNIFACcompUMRPRU.csv; original UNIFAC has no cyclic groups,
+                      so UNIFACcomp.csv is correct to use the aliphatic ones.
+                      Recorded, not fixed: the two differ only against water,
+                      CO2, CH4, N2, H2S, C2H6, Hg and TEG, and no citable source
+                      states which applies to every naphthene.
 """
 
 import collections
@@ -83,6 +96,13 @@ SUBGROUP_MASS = {
 }
 
 
+ALIPHATIC_SUBGROUPS = ("1", "2", "3", "4")
+CYCLIC_SUBGROUPS = ("136", "137", "138")
+AROMATIC_ALKANE_SUBGROUPS = ("11", "12", "13")
+BARE_AROMATIC_CARBON = "10"
+RING_NAME_MARKERS = ("cy-c", "cyc", "cychexane", "-cy", "c-c")
+
+
 def read_table(filename):
     """Return the rows of a NeqSim data table as dictionaries."""
     with (DATA / filename).open(encoding="utf-8", newline="") as handle:
@@ -96,6 +116,14 @@ def assignment_of(row):
         if column and column.startswith("sub") and value and value.strip() not in ("", "0"):
             groups[column[3:]] = int(value)
     return groups
+
+
+def looks_like_ring(name):
+    """Return True when the component name marks it as a naphthene in this database."""
+    lowered = name.lower()
+    if lowered.startswith("c-c") or lowered.startswith("cy-c"):
+        return True
+    return any(marker in lowered for marker in ("cy-c", "cyc", "chexane"))
 
 
 def screen():
@@ -144,6 +172,19 @@ def screen():
             implied = sum(SUBGROUP_MASS[sub] * n for sub, n in groups.items())
             if abs(implied - float(record["MOLARMASS"])) > MASS_TOLERANCE:
                 findings.append(("molar_mass_mismatch", "%s/%s" % (table, name)))
+
+        for row in rows:
+            name = row["Name"].strip()
+            groups = assignment_of(row)
+            has_bare_aromatic = groups.get(BARE_AROMATIC_CARBON, 0) > 0
+            has_aromatic_alkane = any(groups.get(sub, 0) > 0 for sub in AROMATIC_ALKANE_SUBGROUPS)
+            has_aliphatic = any(groups.get(sub, 0) > 0 for sub in ALIPHATIC_SUBGROUPS)
+            if has_bare_aromatic and has_aliphatic and not has_aromatic_alkane:
+                findings.append(("aromatic_group_convention", "%s/%s" % (table, name)))
+            if looks_like_ring(name) and has_aliphatic and table == "UNIFACcompUMRPRU" and not any(
+                groups.get(sub, 0) > 0 for sub in CYCLIC_SUBGROUPS
+            ):
+                findings.append(("ring_group_convention", "%s/%s" % (table, name)))
 
     return sorted(set(findings))
 

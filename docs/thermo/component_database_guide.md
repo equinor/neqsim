@@ -431,11 +431,96 @@ The COMP table works with several related tables:
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
 | `INTER` | Binary interaction parameters (kij) | comp1, comp2, kij, model |
-| `UNIFACcomp` | UNIFAC group assignments | compname, group, count |
-| `UNIFACGroupParam` | UNIFAC group parameters | groupid, R, Q |
-| `UNIFACInterParam*` | UNIFAC group interaction parameters | group1, group2, aij |
+| `UNIFACcomp` | UNIFAC group assignments (original UNIFAC) | `Name`, `sub1`…`sub138` |
+| `UNIFACcompUMRPRU` | UNIFAC group assignments (UMR-PRU) | `Name`, `sub1`…`sub138` |
+| `UNIFACGroupParam` | UNIFAC subgroup parameters | `Secondary`, `Main`, `VolumeR`, `SurfAreaQ` |
+| `UNIFACInterParam*` | UNIFAC group interaction parameters | MainGroup, n1…n70 |
 | `MBWR32param` | MBWR equation parameters | comp, coefficients |
 | `AdsorptionParameters` | Adsorption isotherm parameters | comp, adsorbent, params |
+
+The `subN` columns are indexed by the **standard UNIFAC secondary subgroup
+number**, so `sub12` is ACCH2. A component row is found by exact match on
+`Name` against the COMP.csv `NAME`, which means a name mismatch between the two
+files silently leaves the component with no groups.
+
+---
+
+## UNIFAC Group Assignment Conventions
+
+`UNIFACGroupParam.csv` carries a `Reference` column identifying where each
+subgroup comes from:
+
+| Reference | Subgroups | Source |
+|-----------|-----------|--------|
+| `Hansen1991` | 1–64, 70 | Published original UNIFAC (DDBST) |
+| `Holderbaum1991`, `Fisher1995` | 120–128, 134 | PSRK gas groups |
+| `Voutsas2017`, `Voutsas`, `NTUA`, `Mentzelos` | 135–140 | UMR-PRU extensions |
+
+### Aromatics
+
+Main group 4 is **"aromatic carbon-alkane"**. When a ring carbon carries an
+alkane substituent, the ring carbon and its attached carbon form a single
+ACCH3 / ACCH2 / ACCH group:
+
+```
+toluene         5*ACH + 1*ACCH3
+ethylbenzene    5*ACH + 1*ACCH2 + 1*CH3
+pentylbenzene   5*ACH + 1*ACCH2 + 3*CH2 + 1*CH3
+```
+
+The bare `AC` group is reserved for a ring carbon whose substituent is **not**
+an alkane group, for example styrene (`1*CH2=CH + 5*ACH + 1*AC`), a naphthalene
+ring fusion, or one of the dedicated ACOH / ACCl / ACNO2 / ACNH2 groups.
+
+### Rings
+
+The UMR-PRU set adds cyclic clones `cCH2` (136), `cCH` (137) and `cC` (138).
+They carry the **same R and Q** as CH2 / CH / C and sit in their own main groups
+66–68 so that ring-specific interaction parameters can be regressed. All cross
+terms between main group 1 and main groups 66–68 are zero in the A, B and C
+matrices, so the two choices differ **only** against water, CO2, CH4, N2, H2S,
+C2H6, Hg and TEG.
+
+Original UNIFAC has no cyclic groups, so `UNIFACcomp.csv` correctly uses the
+aliphatic groups for rings. In `UNIFACcompUMRPRU.csv` the usage is currently
+mixed; the rows still using aliphatic groups are recorded in the integrity
+baseline rather than migrated, because no citable source states that every
+naphthene must use the cyclic groups.
+
+### Missing groups fail loudly
+
+A component with no group assignment gives R = Q = 0, which makes the
+combinatorial term evaluate to NaN rather than raising an error.
+`ComponentGEUnifac` and `ComponentGEUnifacUMRPRU` therefore throw when a
+component ends up with no groups.
+
+---
+
+## Data Integrity Gates
+
+Two JUnit tests guard these tables. Both compare the current findings against a
+baseline of accepted, pre-existing issues, and both fail if a baseline entry has
+been fixed, so the baselines can only shrink.
+
+| Test | Guards | Baseline |
+|------|--------|----------|
+| `ComponentDatabaseIntegrityTest` | COMP.csv | `src/test/resources/data/comp_known_issues.tsv` |
+| `UnifacDatabaseIntegrityTest` | UNIFAC tables | `src/test/resources/data/unifac_known_issues.tsv` |
+
+`UnifacDatabaseIntegrityTest` checks subgroup R, Q and main group against the
+DDBST published values, duplicate component names, subgroups with no parameter
+row, components with no groups, molar mass implied by the assigned groups
+against COMP.csv, and the aromatic and ring conventions above.
+
+Regenerate a baseline after an intentional data change:
+
+```bash
+python devtools/screen_unifac_tables.py --tsv > src/test/resources/data/unifac_known_issues.tsv
+python devtools/screen_component_database.py --tsv > src/test/resources/data/comp_known_issues.tsv
+```
+
+Write these files as UTF-8 without a byte order mark. On Windows use Python
+rather than PowerShell redirection, which adds a BOM.
 
 ---
 
@@ -453,3 +538,6 @@ The COMP table works with several related tables:
 2. Peng, D. Y., & Robinson, D. B. (1976). A new two-constant equation of state. Industrial & Engineering Chemistry Fundamentals, 15(1), 59-64.
 3. Kontogeorgis, G. M., et al. (1999). An equation of state for associating fluids. Industrial & Engineering Chemistry Research, 38(10), 4073-4082.
 4. Gross, J., & Sadowski, G. (2001). Perturbed-chain SAFT: An equation of state based on a perturbation theory for chain molecules. Industrial & Engineering Chemistry Research, 40(4), 1244-1260.
+5. Hansen, H. K., Rasmussen, P., Fredenslund, A., Schiller, M., & Gmehling, J. (1991). Vapor-liquid equilibria by UNIFAC group contribution. 5. Revision and extension. Industrial & Engineering Chemistry Research, 30(10), 2352-2355.
+6. Holderbaum, T., & Gmehling, J. (1991). PSRK: A group contribution equation of state based on UNIFAC. Fluid Phase Equilibria, 70(2-3), 251-265.
+7. DDBST GmbH. Published parameters for original UNIFAC. https://www.ddbst.com/published-parameters-unifac.html
