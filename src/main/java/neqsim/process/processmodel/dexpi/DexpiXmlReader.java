@@ -141,10 +141,10 @@ public final class DexpiXmlReader {
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
-        List<DexpiInstrumentationLoopInfo> instrumentationLoops,
-        List<DexpiActuatingFunctionInfo> actuatingFunctions, List<DexpiInformationFlowInfo> informationFlows,
-        List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
-        List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
+        List<DexpiInstrumentationLoopInfo> instrumentationLoops, List<DexpiActuatingFunctionInfo> actuatingFunctions,
+        List<DexpiInformationFlowInfo> informationFlows, List<DexpiConnectionInfo> connections,
+        List<DexpiConnectionEndpointInfo> connectionEndpoints, List<DexpiConnectionComponentInfo> connectionComponents,
+        List<DexpiConnectionCycleInfo> connectionCycles,
         List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
@@ -903,8 +903,7 @@ public final class DexpiXmlReader {
       String elementName = element.getTagName();
       String componentClass = element.getAttribute("ComponentClass");
       DexpiActuatingFunctionInfo.Kind kind;
-      if ("ActuatingElectricalFunction".equals(elementName)
-          || "ActuatingElectricalFunction".equals(componentClass)) {
+      if ("ActuatingElectricalFunction".equals(elementName) || "ActuatingElectricalFunction".equals(componentClass)) {
         kind = DexpiActuatingFunctionInfo.Kind.ACTUATING_ELECTRICAL_FUNCTION;
       } else if ("ActuatingFunction".equals(elementName) || "ActuatingFunction".equals(componentClass)) {
         kind = DexpiActuatingFunctionInfo.Kind.ACTUATING_FUNCTION;
@@ -913,8 +912,8 @@ public final class DexpiXmlReader {
       }
 
       Element instrumentationFunction = findAncestorElement(element, "ProcessInstrumentationFunction");
-      String instrumentationFunctionId =
-          instrumentationFunction == null ? "" : instrumentationFunction.getAttribute("ID");
+      String instrumentationFunctionId = instrumentationFunction == null ? ""
+          : instrumentationFunction.getAttribute("ID");
       boolean instrumentationFunctionResolved = !isBlank(instrumentationFunctionId)
           && elementsById.get(instrumentationFunctionId) == instrumentationFunction;
       String finalControlElementId = getGenericAttribute(element, "FinalControlElementID");
