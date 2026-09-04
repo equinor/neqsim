@@ -53,8 +53,8 @@ public class EmpiricalCarryOverConstraintTest {
         return driver[0];
       }
     };
-    return EmpiricalCarryOverConstraint.fromObservations("carryOver", "kg/h", supplier, X_POINTS,
-        Y_POINTS, MAX_ALLOWABLE);
+    return EmpiricalCarryOverConstraint.fromObservations("carryOver", "kg/h", supplier, X_POINTS, Y_POINTS,
+        MAX_ALLOWABLE);
   }
 
   /** A driver at or below the first calibration point returns the first observation. */
@@ -191,27 +191,24 @@ public class EmpiricalCarryOverConstraintTest {
       }
     };
 
-    assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint
-        .fromObservations("co", "kg/h", supplier, null, Y_POINTS, MAX_ALLOWABLE));
-
-    assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint
-        .fromObservations("co", "kg/h", supplier, X_POINTS, null, MAX_ALLOWABLE));
-
-    assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint
-        .fromObservations("co", "kg/h", supplier, new double[0], new double[0], MAX_ALLOWABLE));
+    assertThrows(IllegalArgumentException.class,
+        () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h", supplier, null, Y_POINTS, MAX_ALLOWABLE));
 
     assertThrows(IllegalArgumentException.class,
-        () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h", supplier,
-            new double[] { 2.0, 3.0 }, new double[] { 0.0, 0.5, 3.0 }, MAX_ALLOWABLE));
+        () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h", supplier, X_POINTS, null, MAX_ALLOWABLE));
+
+    assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
+        supplier, new double[0], new double[0], MAX_ALLOWABLE));
+
+    assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
+        supplier, new double[] { 2.0, 3.0 }, new double[] { 0.0, 0.5, 3.0 }, MAX_ALLOWABLE));
 
     // Not strictly ascending.
-    assertThrows(IllegalArgumentException.class,
-        () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h", supplier,
-            new double[] { 2.0, 3.0, 3.0 }, new double[] { 0.0, 0.5, 3.0 }, MAX_ALLOWABLE));
+    assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
+        supplier, new double[] { 2.0, 3.0, 3.0 }, new double[] { 0.0, 0.5, 3.0 }, MAX_ALLOWABLE));
 
-    assertThrows(IllegalArgumentException.class,
-        () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h", supplier,
-            new double[] { 4.0, 3.0 }, new double[] { 0.0, 0.5 }, MAX_ALLOWABLE));
+    assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
+        supplier, new double[] { 4.0, 3.0 }, new double[] { 0.0, 0.5 }, MAX_ALLOWABLE));
   }
 
   /** A single calibration point degenerates to a constant rather than dividing by zero. */
