@@ -51,7 +51,8 @@ public class SpecCarryOverProvider implements EnhancedEntrainmentProvider {
   private double carryOverLitrePerMSm3 = DEFAULT_CARRY_OVER_LITRE_PER_MSM3;
 
   /** Public no-args constructor required by {@link java.util.ServiceLoader}. */
-  public SpecCarryOverProvider() {}
+  public SpecCarryOverProvider() {
+  }
 
   /** {@inheritDoc} */
   @Override

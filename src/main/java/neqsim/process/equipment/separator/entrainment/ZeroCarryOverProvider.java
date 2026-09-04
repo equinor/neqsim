@@ -28,7 +28,8 @@ public class ZeroCarryOverProvider implements EnhancedEntrainmentProvider {
   public static final String VERSION = "1.0.0";
 
   /** Public no-args constructor required by {@link java.util.ServiceLoader}. */
-  public ZeroCarryOverProvider() {}
+  public ZeroCarryOverProvider() {
+  }
 
   /** {@inheritDoc} */
   @Override

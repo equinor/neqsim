@@ -37,7 +37,8 @@ public final class EntrainmentProviderRegistry {
   /**
    * Private constructor — this is a static utility class.
    */
-  private EntrainmentProviderRegistry() {}
+  private EntrainmentProviderRegistry() {
+  }
 
   /**
    * Looks up a registered provider by id.
@@ -52,16 +53,14 @@ public final class EntrainmentProviderRegistry {
     if (id == null) {
       throw new IllegalArgumentException("provider id must not be null");
     }
-    ServiceLoader<EnhancedEntrainmentProvider> loader =
-        ServiceLoader.load(EnhancedEntrainmentProvider.class);
+    ServiceLoader<EnhancedEntrainmentProvider> loader = ServiceLoader.load(EnhancedEntrainmentProvider.class);
     StringBuilder available = new StringBuilder();
     for (Iterator<EnhancedEntrainmentProvider> it = loader.iterator(); it.hasNext();) {
       EnhancedEntrainmentProvider p = it.next();
       if (id.equals(p.getId())) {
         if (p.getApiVersion() > CURRENT_API_VERSION) {
-          throw new IllegalStateException("Entrainment provider '" + id
-              + "' requires SPI api version " + p.getApiVersion()
-              + " but this build of NeqSim supports up to " + CURRENT_API_VERSION
+          throw new IllegalStateException("Entrainment provider '" + id + "' requires SPI api version "
+              + p.getApiVersion() + " but this build of NeqSim supports up to " + CURRENT_API_VERSION
               + ". Upgrade NeqSim core or use an older plug-in build.");
         }
         return p;
@@ -71,8 +70,7 @@ public final class EntrainmentProviderRegistry {
       }
       available.append(p.getId());
     }
-    throw new IllegalStateException("Entrainment provider '" + id
-        + "' is not on the classpath. Available providers: ["
+    throw new IllegalStateException("Entrainment provider '" + id + "' is not on the classpath. Available providers: ["
         + (available.length() == 0 ? "<none>" : available.toString()) + "]. "
         + "If you expect a private plug-in such as 'eqn-pi-v1', make sure its "
         + "JAR is on the classpath.");

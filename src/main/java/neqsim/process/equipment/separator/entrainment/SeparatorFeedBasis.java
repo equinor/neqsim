@@ -19,7 +19,8 @@ import neqsim.thermo.system.SystemInterface;
 final class SeparatorFeedBasis {
 
   /** Static utility class. */
-  private SeparatorFeedBasis() {}
+  private SeparatorFeedBasis() {
+  }
 
   /**
    * Returns the feed fluid of a separator.
