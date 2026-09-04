@@ -248,9 +248,50 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("100", first.getInstruments().get(0).getLoopNumber());
     assertEquals("PC-100", first.getInstruments().get(1).getTagName());
     assertEquals("PC-100", first.getInstruments().get(1).getActuatingTag());
+
+    List<DexpiInformationFlowInfo> informationFlows = first.getInformationFlows();
+    assertEquals(3, informationFlows.size());
+    DexpiInformationFlowInfo measuring = informationFlows.get(0);
+    assertEquals("MLF-100", measuring.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.MEASURING_LINE, measuring.getKind());
+    assertEquals("PSGF-100", measuring.getSourceId());
+    assertTrue(measuring.isSourceResolved());
+    assertEquals("ProcessSignalGeneratingFunction", measuring.getSourceElementName());
+    assertEquals("PIF-PT-100", measuring.getTargetId());
+    assertTrue(measuring.isTargetResolved());
+    assertEquals("ProcessInstrumentationFunction", measuring.getTargetElementName());
+    assertTrue(measuring.hasAttachment());
+    assertEquals("N-SENSE", measuring.getAttachmentId());
+    assertTrue(measuring.isAttachmentResolved());
+    assertEquals("Nozzle", measuring.getAttachmentElementName());
+    assertEquals("", measuring.getSignalConveyingType());
+
+    DexpiInformationFlowInfo measuredSignal = informationFlows.get(1);
+    assertEquals("SIG-MEASURED", measuredSignal.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.SIGNAL_LINE, measuredSignal.getKind());
+    assertEquals("PIF-PT-100", measuredSignal.getSourceId());
+    assertTrue(measuredSignal.isSourceResolved());
+    assertEquals("ProcessInstrumentationFunction", measuredSignal.getSourceElementName());
+    assertEquals("PIF-PC-100", measuredSignal.getTargetId());
+    assertTrue(measuredSignal.isTargetResolved());
+    assertEquals("ProcessInstrumentationFunction", measuredSignal.getTargetElementName());
+    assertFalse(measuredSignal.hasAttachment());
+    assertEquals("ElectricalSignalConveying", measuredSignal.getSignalConveyingType());
+
+    DexpiInformationFlowInfo actuatingSignal = informationFlows.get(2);
+    assertEquals("SIG-ACTUATE", actuatingSignal.getId());
+    assertEquals("AF-100", actuatingSignal.getTargetId());
+    assertTrue(actuatingSignal.isTargetResolved());
+    assertEquals("ActuatingFunction", actuatingSignal.getTargetElementName());
+    assertEquals("PneumaticSignalConveying", actuatingSignal.getSignalConveyingType());
+    assertThrows(UnsupportedOperationException.class, () -> informationFlows.clear());
+
     assertTrue(first.getDiagnostics().isEmpty());
     assertFalse(first.hasLosses());
     assertTrue(first.toJson().contains("\"instrumentCount\": 2"));
+    assertTrue(first.toJson().contains("\"informationFlowCount\": 3"));
+    assertTrue(first.toJson().contains("\"kind\": \"MEASURING_LINE\""));
+    assertTrue(first.toJson().contains("\"signalConveyingType\": \"ElectricalSignalConveying\""));
     assertEquals(first.toJson(), second.toJson());
   }
 
@@ -292,8 +333,31 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertDiagnostic(first, "DEXPI_IMPORT_SIGNAL_MEDIUM_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_FINAL_ELEMENT_UNRESOLVED");
     assertDiagnostic(first, "DEXPI_IMPORT_ACTUATION_LOCATION_MISSING");
+
+    List<DexpiInformationFlowInfo> informationFlows = first.getInformationFlows();
+    assertEquals(2, informationFlows.size());
+    DexpiInformationFlowInfo measuring = informationFlows.get(0);
+    assertEquals("MLF-BROKEN", measuring.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.MEASURING_LINE, measuring.getKind());
+    assertEquals("", measuring.getSourceId());
+    assertFalse(measuring.isSourceResolved());
+    assertEquals("UNKNOWN-INSTRUMENT", measuring.getTargetId());
+    assertFalse(measuring.isTargetResolved());
+    assertFalse(measuring.hasAttachment());
+    assertFalse(measuring.isAttachmentResolved());
+
+    DexpiInformationFlowInfo signal = informationFlows.get(1);
+    assertEquals("SIG-BROKEN", signal.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.SIGNAL_LINE, signal.getKind());
+    assertEquals("UNKNOWN-SOURCE", signal.getSourceId());
+    assertFalse(signal.isSourceResolved());
+    assertEquals("", signal.getTargetId());
+    assertFalse(signal.isTargetResolved());
+    assertEquals("", signal.getSignalConveyingType());
+
     assertTrue(first.hasLosses());
     assertFalse(first.hasErrors());
+    assertTrue(first.toJson().contains("\"informationFlowCount\": 2"));
     assertEquals(first.toJson(), second.toJson());
   }
 
