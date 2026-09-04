@@ -208,16 +208,28 @@ retaining parallel and unresolved source evidence. It does not identify a hydrau
 enumerate elementary paths, assert convergence behavior, repair or rewire topology, or establish
 process intent.
 
+`ImportResult.getConnectionCycleTransitions()` provides a global source-ordered inventory of
+connection occurrences crossing directed-cycle boundaries. Each immutable
+`DexpiConnectionCycleTransitionInfo` contains the complete `DexpiConnectionInfo`, complete
+from/to `DexpiConnectionEndpointInfo` records, optional from/to cycle IDs, and an `ENTERING`,
+`LEAVING`, or `BETWEEN_CYCLES` classification. A connection from one cyclic strongly connected
+group to another appears once with both cycle IDs; callers do not need to reconcile the outgoing
+boundary projection of one cycle with the incoming projection of the other. Parallel occurrences
+remain distinct, unresolved non-empty endpoints remain visible, and connections with a blank endpoint
+stay in the global connection and diagnostic evidence because a transition cannot assign them to a
+cycle. This exact-once inventory remains source-reference evidence only; it does not prove hydraulic
+continuity, identify a physical recycle, enumerate paths, or alter simulation topology.
+
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
-`connectionComponentCount`, `connectionCycleCount`, and the ordered connection, endpoint,
-component, and directed-cycle inventories, including incidence roles, review subsets, complete
-cycle-local endpoint and internal connection occurrences, and explicit cycle-boundary occurrences with
-nested connection and endpoint evidence, alongside the process-unit
-count and findings. Python callers through
-JPype use the same
-`ImportResult.getInstruments()`, `ImportResult.getConnections()`,
-`ImportResult.getConnectionEndpoints()`, `ImportResult.getConnectionComponents()`, and
-`ImportResult.getConnectionCycles()` getters; there is no separate Python reconstruction model.
+`connectionComponentCount`, `connectionCycleCount`, `connectionCycleTransitionCount`, and
+the ordered connection, endpoint, component, directed-cycle, and cycle-transition inventories,
+including incidence roles, review subsets, complete cycle-local endpoint and internal connection
+occurrences, explicit cycle-boundary occurrences, and exact-once transitions with nested connection
+and endpoint evidence, alongside the process-unit count and findings. Python callers through JPype
+use the same `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
+`ImportResult.getConnectionEndpoints()`, `ImportResult.getConnectionComponents()`,
+`ImportResult.getConnectionCycles()`, and `ImportResult.getConnectionCycleTransitions()`
+getters; there is no separate Python reconstruction model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
 `ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.
