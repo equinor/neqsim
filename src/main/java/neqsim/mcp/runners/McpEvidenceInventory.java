@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.24");
+    inventory.addProperty("inventoryVersion", "1.25");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "validateResults is CONTRACT_TESTED by merged advisory-result Java and packaged-MCP evidence; inventory 1.24 has no candidate.");
+        "generateReport and bridgeTaskWorkflow are CONTRACT_TESTED by merged reporting-handoff Java and packaged-MCP evidence; inventory 1.25 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: twenty-two bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records: twenty-four bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -386,6 +386,22 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_validate_results_protocol.py",
           "neqsim-mcp-server/docs/evidence/VALIDATE_RESULTS_CONTRACT.md" };
       evidenceBoundary = "Contract-tested: deterministic engineering-rule findings, stable severity/remediation, fail-closed malformed inputs and packaged transport; this advisory validation does not execute or independently verify a model, recompute component or facility-wide conservation, establish numerical fidelity or convergence, grant plant authority, or replace accountable engineering approval.";
+      break;
+    case "generateReport":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ReportRunner.java",
+          "src/test/java/neqsim/mcp/runners/ReportRunnerTest.java",
+          "neqsim-mcp-server/test_reporting_protocol.py",
+          "neqsim-mcp-server/docs/evidence/REPORTING_CONTRACT.md" };
+      evidenceBoundary = "Contract-tested: requested metadata, transient Markdown, bounded numeric tables, optional chart-ready arrays, optional embedded advisory validation, shallow counts, fail-closed malformed input, standard response guarding and packaged transport; this does not execute a simulation, validate physical fidelity, convergence or conservation, establish report completeness, create or approve a persisted artifact, grant plant authority, or replace accountable engineering approval.";
+      break;
+    case "bridgeTaskWorkflow":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_TASK_WORKFLOW_HANDOFF";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/TaskWorkflowBridge.java",
+          "src/test/java/neqsim/mcp/runners/ReportRunnerTest.java",
+          "neqsim-mcp-server/test_reporting_protocol.py",
+          "neqsim-mcp-server/docs/evidence/REPORTING_CONTRACT.md" };
+      evidenceBoundary = "Contract-tested: results.json schema, supported-runner key-result mapping, status-derived validation, approach, conclusion, provenance and placeholder handoff, fail-closed invalid input and packaged transport; this does not execute or recompute a simulation, independently validate units, results or conservation, prove workflow completeness, persist an artifact, grant plant authority, or replace accountable engineering approval.";
       break;
     case "getAdjustableParameters":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY";

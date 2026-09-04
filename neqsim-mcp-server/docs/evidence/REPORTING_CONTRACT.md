@@ -6,9 +6,9 @@ Can the paired MCP reporting surfaces preserve structured, machine-readable simu
 Markdown and plotting inputs, and reject invalid requests without claiming that they produced an approved engineering
 deliverable?
 
-This increment qualifies the existing `generateReport` and `bridgeTaskWorkflow` software contracts. It deliberately
-leaves Phase 0 inventory at **1.24 / 20 explicit + 22 contract-tested + 29 confirmed gaps**. Promotion is a separate,
-atomic increment after this evidence has merged and passed the complete exact-head gate set.
+Merged #3440 qualifies the existing `generateReport` and `bridgeTaskWorkflow` software contracts. Inventory version
+**1.25** atomically promotes both surfaces to `CONTRACT_TESTED`, moving Phase 0 accounting from **20/22/29** to
+**20 explicit + 24 contract-tested + 27 confirmed gaps** without changing production behavior or schemas.
 
 ## Authoritative behavior
 
@@ -52,14 +52,21 @@ not an exact value. JSON object insertion order controls table row order.
 
 - `ReportRunnerTest` covers structured report metadata, inferred-unit table rows, chart extraction, request flags,
   summary counts, report failures, bridge extraction, schema shape, provenance and bridge failures.
-- `test_reporting_protocol.py` repeats those boundaries through the real packaged STDIO server and proves inventory 1.24
-  remains qualification-only for both tools.
+- `test_reporting_protocol.py` repeats those boundaries through the real packaged STDIO server and proves inventory 1.25
+  promotes both tools atomically with complete evidence records and zero pending candidates.
 - `test_mcp_server.py` retains the broad real-protocol calls and the 71-tool registration/accounting checks.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP reporting contracts before the comprehensive
   protocol regression.
 
 Java and JSON/MCP views are applicable. A separate Python calculation, notebook, rendered document and whole-sheet
 visual gate are not applicable because this increment qualifies a Java-backed transient transport/software contract.
+
+## Promoted classification boundary
+
+`generateReport` is classified as `NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION`;
+`bridgeTaskWorkflow` is classified as `NOT_APPLICABLE_NON_NUMERICAL_TASK_WORKFLOW_HANDOFF`. These are bounded
+software-contract classifications, not scientific benchmark or report-approval claims. The underlying
+`BenchmarkTrust` registry remains unchanged.
 
 ## Explicit limitations and stop boundary
 

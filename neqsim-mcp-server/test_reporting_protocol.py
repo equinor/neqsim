@@ -293,25 +293,47 @@ def test_bridge_fail_closed_input(client):
         require(isinstance(result.get("message"), str), "bridge error message is absent", result)
 
 
-def test_phase0_inventory_remains_qualification_only(client):
+def test_phase0_inventory_promotes_reporting_contracts(client):
     result = payload(client.call_no_arg_tool("getCapabilities"))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
     limitations = inventory.get("knownLimitations", {})
     records = limitations.get("coverageRecords", {})
-    require(inventory.get("inventoryVersion") == "1.24", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.25", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 22
-        and limitations.get("confirmedGapToolCount") == 29,
-        "qualification changed inventory counts prematurely",
+        limitations.get("contractTestedToolCount") == 24
+        and limitations.get("confirmedGapToolCount") == 27
+        and limitations.get("contractPromotionCandidateCount") == 0,
+        "reporting promotion accounting drifted",
         limitations,
     )
-    for tool in ("generateReport", "bridgeTaskWorkflow"):
+    expected = {
+        "generateReport": "NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION",
+        "bridgeTaskWorkflow": "NOT_APPLICABLE_NON_NUMERICAL_TASK_WORKFLOW_HANDOFF",
+    }
+    for tool, applicability in expected.items():
+        record = records.get(tool, {})
         require(
-            records.get(tool, {}).get("coverageStatus") == "CONFIRMED_GAP",
-            tool + " was promoted before qualification merged",
-            records.get(tool),
+            record.get("coverageStatus") == "CONTRACT_TESTED"
+            and record.get("benchmarkApplicability") == applicability
+            and "neqsim-mcp-server/test_reporting_protocol.py"
+            in record.get("contractEvidenceSources", [])
+            and record.get("contractEvidenceCount")
+            == len(record.get("contractEvidenceSources", [])),
+            tool + " promotion evidence drifted",
+            record,
         )
+    require(
+        "report completeness" in records["generateReport"].get("evidenceBoundary", ""),
+        "report-generation stop boundary drifted",
+        records["generateReport"],
+    )
+    require(
+        "does not execute or recompute a simulation"
+        in records["bridgeTaskWorkflow"].get("evidenceBoundary", ""),
+        "workflow-handoff stop boundary drifted",
+        records["bridgeTaskWorkflow"],
+    )
 
 
 def main():
@@ -322,7 +344,7 @@ def main():
         ("results.json bridge", test_bridge_results_json),
         ("bridge schema", test_bridge_schema),
         ("bridge fail-closed input", test_bridge_fail_closed_input),
-        ("Phase 0 remains qualification-only", test_phase0_inventory_remains_qualification_only),
+        ("Phase 0 reporting promotion", test_phase0_inventory_promotes_reporting_contracts),
     ]
     try:
         client.start()
