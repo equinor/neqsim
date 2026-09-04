@@ -141,9 +141,8 @@ public final class DexpiXmlReader {
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
         List<DexpiInstrumentationLoopInfo> instrumentationLoops, List<DexpiInformationFlowInfo> informationFlows,
-        List<DexpiConnectionInfo> connections,
-        List<DexpiConnectionEndpointInfo> connectionEndpoints, List<DexpiConnectionComponentInfo> connectionComponents,
-        List<DexpiConnectionCycleInfo> connectionCycles,
+        List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
+        List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
         List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
@@ -183,8 +182,8 @@ public final class DexpiXmlReader {
      * Returns instrumentation-loop grouping evidence in source-document order.
      *
      * <p>
-     * Membership occurrences retain only explicit source references and resolution evidence. They do not construct
-     * live control topology, infer control intent, verify loop function, or classify safeguards.
+     * Membership occurrences retain only explicit source references and resolution evidence. They do not construct live
+     * control topology, infer control intent, verify loop function, or classify safeguards.
      * </p>
      *
      * @return immutable instrumentation-loop records
@@ -552,8 +551,7 @@ public final class DexpiXmlReader {
     List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions = summarizeConnectionCycleTransitions(
         connections, connectionEndpoints, connectionCycles);
     return new ImportResult(processSystem, instruments, instrumentationLoops, informationFlows, connections,
-        connectionEndpoints,
-        connectionComponents, connectionCycles, connectionCycleTransitions, diagnostics);
+        connectionEndpoints, connectionComponents, connectionCycles, connectionCycleTransitions, diagnostics);
   }
 
   /**
@@ -634,8 +632,7 @@ public final class DexpiXmlReader {
   private static void loadInternal(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware, List<ImportDiagnostic> diagnostics, List<DexpiInstrumentInfo> instruments,
       List<DexpiInstrumentationLoopInfo> instrumentationLoops, List<DexpiInformationFlowInfo> informationFlows,
-      List<DexpiConnectionInfo> connections)
-      throws IOException, DexpiXmlReaderException {
+      List<DexpiConnectionInfo> connections) throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
@@ -836,8 +833,7 @@ public final class DexpiXmlReader {
         continue;
       }
       Element loop = (Element) node;
-      List<DexpiInstrumentationLoopInfo.Member> members =
-          new ArrayList<DexpiInstrumentationLoopInfo.Member>();
+      List<DexpiInstrumentationLoopInfo.Member> members = new ArrayList<DexpiInstrumentationLoopInfo.Member>();
       for (Element association : directChildElements(loop, "Association")) {
         if (!"is a collection including".equals(association.getAttribute("Type"))) {
           continue;
