@@ -86,6 +86,9 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "public static double secondOrderRateConstant(",
             "public static RateConstantRange secondOrderRateConstantRange(",
             "public static ScreeningResult screenAirSaturatedExposure(",
+            "public static ResidenceTimeRangeResult screenResidenceTimeRange(",
+            "public static final class ResidenceTimeRangeResult",
+            "finiteProduct(",
             "Math.expm1(-exposure)",
         ):
             self.assertIn(token, self.implementation)
@@ -97,9 +100,27 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "testRateIsMonotonicWithinThePublishedCorrelation",
             "testReportedLogRateScatterIsAppliedMultiplicatively",
             "testConstantOxygenExposureUsesExactPseudoFirstOrderSolution",
+            "testResidenceTimeRangePropagatesPublishedFitScatter",
+            "testResidenceTimeRangeIsMonotonicDeterministicAndExactAtZero",
+            "testResidenceTimeRangeFailsClosedOnInvalidOrOverflowingInputs",
             "testLongExposureRemainsBoundedAndInputValidationFailsClosed",
         ):
             self.assertIn(token, self.java_test)
+
+    def test_residence_time_range_contract_is_documented(self):
+        for token in (
+            "Residence-time range",
+            "`screenResidenceTimeRange(...)`",
+            r"\mathrm{Da} = \frac{t_{\mathrm{res}}}{\tau}",
+            r"k[\mathrm{O_2}]t_{\mathrm{res}}",
+            "lower, nominal, and upper pseudo-first-order rates",
+            "nominal Damkohler number is `ln(2)`",
+            "nominal remaining fraction is exactly `0.5`",
+            "continuous Damkohler evidence",
+            "does not add categorical reaction/transport thresholds",
+            "does not constitute a pipeline source-term coupling",
+        ):
+            self.assertIn(token, self.normalized)
 
     def test_piecewise_trajectory_contract_is_documented_and_executable(self):
         for token in (
