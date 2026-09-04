@@ -77,6 +77,9 @@ import neqsim.process.util.optimizer.DebottleneckAnalyzer;
 import neqsim.process.util.optimizer.MonteCarloSimulator;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator;
 import neqsim.process.util.optimizer.SensitivityAnalysis;
+import neqsim.process.util.reconciliation.DataReconciliationEngine;
+import neqsim.process.util.reconciliation.ReconciliationResult;
+import neqsim.process.util.reconciliation.ReconciliationVariable;
 import neqsim.process.util.report.HeatMaterialBalance;
 import neqsim.process.util.report.ProcessValidator;
 import neqsim.pvtsimulation.flowassurance.BariteCelestiteSolidSolution;
@@ -2215,6 +2218,32 @@ public class DocExamplesCompilationTest {
 
     assertTrue(massFlow > 0.0);
     assertEquals(0.4, wedgeRatio, 1.0e-9);
+  }
+
+  /**
+   * Data reconciliation example from docs/calibration/data_reconciliation_parameter_estimation.md.
+   */
+  @Test
+  public void testDataReconciliationDocumentationExample() {
+    DataReconciliationEngine recon = new DataReconciliationEngine();
+    recon.addVariable(new ReconciliationVariable("flow_in1", 5000.0, 100.0).setUnit("kg/hr"));
+    recon.addVariable(new ReconciliationVariable("flow_in2", 5100.0, 100.0).setUnit("kg/hr"));
+    recon.addVariable(new ReconciliationVariable("flow_out", 10200.0, 150.0).setUnit("kg/hr"));
+    recon.addConstraint(new double[] { 1.0, 1.0, -1.0 });
+
+    ReconciliationResult result = recon.reconcile();
+
+    assertTrue(result.isConverged());
+    assertTrue(result.getChiSquareStatistic() >= 0.0);
+    assertEquals(0.0, result.getConstraintResidualsAfter()[0], 1.0e-8);
+    assertEquals("flow_in1", recon.getVariable("flow_in1").getName());
+    assertEquals(3, recon.getVariables().size());
+    for (ReconciliationVariable variable : recon.getVariables()) {
+      assertTrue(Double.isFinite(variable.getReconciledValue()));
+    }
+
+    ReconciliationResult grossErrorResult = recon.reconcileWithGrossErrorElimination(1);
+    assertTrue(grossErrorResult.isConverged());
   }
 
 }
