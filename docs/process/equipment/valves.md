@@ -130,7 +130,20 @@ Setting an outlet pressure and calling `run()` performs a specified-pressure
 letdown. To solve outlet pressure from the inlet flow, coefficient, and opening,
 set the Cv/Kv and call `setIsCalcOutPressure(true)` before running the valve.
 The result depends on the selected gas/liquid sizing behavior and valid inlet
-physical properties.
+physical properties. The legacy `default` sizing strategy leaves choked-flow
+capacity limiting disabled, which keeps the forward flow and reverse pressure
+calculations continuous and mutually invertible. The named `IEC 60534`,
+`IEC 60534 full`, and `prod choke` strategies enable the limit by default. Set
+the intended behavior explicitly after selecting the sizing strategy when the
+service and configured $x_T$ require it:
+
+```java
+valve.setAllowChoked(true);
+```
+
+When capacity limiting is enabled and the requested flow reaches the choked
+limit, downstream pressure is no longer uniquely determined by flow and Kv
+alone.
 
 ## Valve characteristic and mechanical design
 
