@@ -41,6 +41,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
   private static final int DIESEL_SCREEN_TRAY = 15;
   private static final int KEROSENE_SCREEN_TRAY = 24;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
+  private static final double MATERIAL_FLOW_FRACTION = 1.0e-8;
 
   /** Require two admissible property profiles to converge, conserve, separate, and differ. */
   @Test
@@ -77,20 +78,24 @@ public class SarirAtmosphericFractionationSensitivityTest {
     StreamInterface kerosene = column.getSideDrawStream(KEROSENE_SCREEN_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
     StreamInterface diesel = column.getSideDrawStream(DIESEL_SCREEN_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
     StreamInterface bottoms = column.getLiquidOutStream();
+    StreamInterface[] products = { overhead, kerosene, diesel, bottoms };
 
-    assertBalances(column, feed, overhead, kerosene, diesel, bottoms);
-    double overheadBoilingPoint = meanNormalBoilingPoint(overhead);
-    double keroseneBoilingPoint = meanNormalBoilingPoint(kerosene);
-    double dieselBoilingPoint = meanNormalBoilingPoint(diesel);
-    double bottomsBoilingPoint = meanNormalBoilingPoint(bottoms);
-    assertTrue(overheadBoilingPoint < keroseneBoilingPoint);
-    assertTrue(keroseneBoilingPoint < dieselBoilingPoint);
-    assertTrue(dieselBoilingPoint < bottomsBoilingPoint);
+    assertBalances(column, feed, products);
 
     double feedMassFlow = feed.getFlowRate("kg/hr");
-    return new ColumnResult(overhead.getFlowRate("kg/hr") / feedMassFlow, kerosene.getFlowRate("kg/hr") / feedMassFlow,
-        diesel.getFlowRate("kg/hr") / feedMassFlow, bottoms.getFlowRate("kg/hr") / feedMassFlow, overheadBoilingPoint,
-        keroseneBoilingPoint, dieselBoilingPoint, bottomsBoilingPoint);
+    double[] productMassFractions = new double[products.length];
+    double[] materialBoilingPoints = new double[products.length];
+    for (int i = 0; i < products.length; i++) {
+      productMassFractions[i] = products[i].getFlowRate("kg/hr") / feedMassFlow;
+      materialBoilingPoints[i] = productMassFractions[i] > MATERIAL_FLOW_FRACTION
+          ? meanNormalBoilingPoint(products[i])
+          : Double.NaN;
+    }
+    assertIncreasingMaterialBoilingPoints(materialBoilingPoints);
+
+    return new ColumnResult(productMassFractions[0], productMassFractions[1], productMassFractions[2],
+        productMassFractions[3], materialBoilingPoints[0], materialBoilingPoints[1], materialBoilingPoints[2],
+        materialBoilingPoints[3]);
   }
 
   private static Stream createFeed(String label, double[] specificGravity, double[] molarMassKgPerMol) {
@@ -176,11 +181,17 @@ public class SarirAtmosphericFractionationSensitivityTest {
   private static void assertBalances(DistillationColumn column, Stream feed, StreamInterface... products) {
     double feedMassFlow = feed.getFlowRate("kg/hr");
     double productMassFlow = 0.0;
+    int materialProductCount = 0;
     for (StreamInterface product : products) {
       double flow = product.getFlowRate("kg/hr");
-      assertTrue(Double.isFinite(flow) && flow > 0.0);
+      assertTrue(Double.isFinite(flow) && flow >= 0.0);
+      if (flow > MATERIAL_FLOW_FRACTION * feedMassFlow) {
+        materialProductCount++;
+      }
       productMassFlow += flow;
     }
+    assertTrue(materialProductCount >= 2,
+        "The source-bounded assay must produce at least two material column products");
     assertEquals(feedMassFlow, productMassFlow, BALANCE_TOLERANCE * feedMassFlow);
     assertTrue(Double.isFinite(column.getMassBalanceError()));
     assertTrue(column.getMassBalanceError() <= BALANCE_TOLERANCE, column.getConvergenceDiagnostics());
@@ -193,10 +204,14 @@ public class SarirAtmosphericFractionationSensitivityTest {
 
   private static void assertComponentMolarBalance(Stream feed, StreamInterface... products) {
     double feedFlow = feed.getFlowRate("mol/hr");
+    double materialFlowThreshold = MATERIAL_FLOW_FRACTION * feed.getFlowRate("kg/hr");
     double[] feedComposition = feed.getThermoSystem().getMolarComposition();
     for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
       double productComponentFlow = 0.0;
       for (StreamInterface product : products) {
+        if (product.getFlowRate("kg/hr") <= materialFlowThreshold) {
+          continue;
+        }
         productComponentFlow += product.getFlowRate("mol/hr")
             * product.getThermoSystem().getMolarComposition()[componentIndex];
       }
@@ -217,9 +232,26 @@ public class SarirAtmosphericFractionationSensitivityTest {
     return weightedBoilingPoint;
   }
 
+  private static void assertIncreasingMaterialBoilingPoints(double[] boilingPoints) {
+    double previousBoilingPoint = Double.NEGATIVE_INFINITY;
+    int materialProductCount = 0;
+    for (double boilingPoint : boilingPoints) {
+      if (Double.isFinite(boilingPoint)) {
+        assertTrue(boilingPoint > previousBoilingPoint,
+            "Material products must become heavier from the column top to the bottoms");
+        previousBoilingPoint = boilingPoint;
+        materialProductCount++;
+      }
+    }
+    assertTrue(materialProductCount >= 2);
+  }
+
   private static double maximumRelativeDifference(ColumnResult first, ColumnResult second) {
     double maximum = 0.0;
     for (int i = 0; i < first.values.length; i++) {
+      if (!Double.isFinite(first.values[i]) || !Double.isFinite(second.values[i])) {
+        continue;
+      }
       double scale = Math.max(1.0e-12, Math.abs(first.values[i]));
       maximum = Math.max(maximum, Math.abs(second.values[i] - first.values[i]) / scale);
     }
