@@ -78,6 +78,12 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
+    if (unifacGroups.isEmpty()) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "ComponentGEUnifac", "name",
+          "component '" + name + "' has no UNIFAC group assignment in UNIFACcomp.csv. "
+              + "Without groups R and Q are zero, which makes the activity coefficient NaN. "
+              + "Add a row for this component or use a model that does not need UNIFAC groups."));
+    }
   }
 
   /**
