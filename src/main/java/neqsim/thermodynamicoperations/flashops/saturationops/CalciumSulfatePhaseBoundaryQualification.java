@@ -41,10 +41,10 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   public static final String GYPSUM_CRYSTALLOGRAPHY_DOI = "10.1154/1.1725254";
   /** Liquid-water density reference-correlation DOI. */
   public static final String WATER_DENSITY_REFERENCE_DOI = "10.1063/1.3043575";
-  /** Temperature of the ambient crystallographic reaction-volume diagnostic. */
-  public static final double CRYSTALLOGRAPHIC_REFERENCE_TEMPERATURE_K = 298.15;
-  /** Pressure of the ambient crystallographic reaction-volume diagnostic. */
-  public static final double CRYSTALLOGRAPHIC_REFERENCE_PRESSURE_BARA = 1.0;
+  /** Temperature of the liquid-water density reference. */
+  public static final double WATER_DENSITY_REFERENCE_TEMPERATURE_K = 298.15;
+  /** Pressure of the liquid-water density reference. */
+  public static final double WATER_DENSITY_REFERENCE_PRESSURE_BARA = 1.0;
   /** Reference pressure of the COMPSALT constant-volume correction. */
   public static final double COMPSALT_PRESSURE_CORRECTION_REFERENCE_BARA = CalcSaltSatauration.PRESSURE_CORRECTION_REFERENCE_BARA;
 
