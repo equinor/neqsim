@@ -16,8 +16,8 @@ import neqsim.process.equipment.separator.Separator;
  * Unit tests for {@link EmpiricalCarryOverConstraint}.
  *
  * <p>
- * The calibration used throughout is (gas rate [Am3/s], carry-over [kg/h]) = (2.0, 0.0), (3.0, 0.5), (4.5, 3.0),
- * (5.5, 12.0) with a maximum allowable carry-over of 5.0 kg/h. Expected values below are computed by hand from the
+ * The calibration used throughout is (gas rate [Am3/s], carry-over [kg/h]) = (2.0, 0.0), (3.0, 0.5), (4.5, 3.0), (5.5,
+ * 12.0) with a maximum allowable carry-over of 5.0 kg/h. Expected values below are computed by hand from the
  * piecewise-linear definition so that a change in the interpolation logic is detected rather than accommodated.
  * </p>
  *
@@ -119,8 +119,8 @@ public class EmpiricalCarryOverConstraintTest {
   }
 
   /**
-   * Exceeding the allowable carry-over registers both as a violation and as a hard-limit exceedance, so the
-   * constraint participates in the plant-wide feasibility gate.
+   * Exceeding the allowable carry-over registers both as a violation and as a hard-limit exceedance, so the constraint
+   * participates in the plant-wide feasibility gate.
    */
   @Test
   public void exceedingAllowableCarryOverTripsHardLimit() {

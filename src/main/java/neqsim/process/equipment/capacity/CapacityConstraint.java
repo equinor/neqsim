@@ -100,9 +100,9 @@ public class CapacityConstraint implements Serializable {
    * Enum describing the provenance of a constraint limit - the kind of authority that backs the number.
    *
    * <p>
-   * This is a separate axis from {@link ConstraintSeverity}: severity says <em>how a violation is handled</em>,
-   * whereas the source says <em>why the limit exists and who stands behind it</em>. A vendor surge limit and a
-   * company standard may both be HARD, but they are not renegotiable on the same terms.
+   * This is a separate axis from {@link ConstraintSeverity}: severity says <em>how a violation is handled</em>, whereas
+   * the source says <em>why the limit exists and who stands behind it</em>. A vendor surge limit and a company standard
+   * may both be HARD, but they are not renegotiable on the same terms.
    * </p>
    *
    * <p>
@@ -127,9 +127,8 @@ public class CapacityConstraint implements Serializable {
    */
   public enum ConstraintSource {
     /**
-     * Limit comes from an industry or company standard (API 12J, NORSOK P-002, ISO, ASME, DNV, or a company
-     * technical requirement). The specific document is recorded in
-     * {@link CapacityConstraint#getSourceReference()}.
+     * Limit comes from an industry or company standard (API 12J, NORSOK P-002, ISO, ASME, DNV, or a company technical
+     * requirement). The specific document is recorded in {@link CapacityConstraint#getSourceReference()}.
      */
     CONFORMITY_STANDARD,
 
@@ -141,14 +140,14 @@ public class CapacityConstraint implements Serializable {
 
     /**
      * Limit derived from empirical observation of plant behaviour. Typically a correlation between an operating
-     * variable (rate, pressure) and a downstream consequence (carry-over, fouling, scaling) fitted to historian
-     * data. See {@link EmpiricalCarryOverConstraint}.
+     * variable (rate, pressure) and a downstream consequence (carry-over, fouling, scaling) fitted to historian data.
+     * See {@link EmpiricalCarryOverConstraint}.
      */
     PROCESS_EMPIRICAL,
 
     /**
-     * Limit taken from a vendor or OEM datasheet - compressor surge curve, valve trim Cv, mechanical overspeed,
-     * sealing pressure.
+     * Limit taken from a vendor or OEM datasheet - compressor surge curve, valve trim Cv, mechanical overspeed, sealing
+     * pressure.
      */
     VENDOR_DATASHEET,
 
@@ -182,8 +181,8 @@ public class CapacityConstraint implements Serializable {
   private ConstraintSource source = ConstraintSource.DEFAULT;
 
   /**
-   * Free-text reference identifying the source: the standard number ("API 12J"), the team that imposed the rule, or
-   * the historian tag set used to fit an empirical correlation. Optional.
+   * Free-text reference identifying the source: the standard number ("API 12J"), the team that imposed the rule, or the
+   * historian tag set used to fit an empirical correlation. Optional.
    */
   private String sourceReference = "";
 
@@ -370,8 +369,7 @@ public class CapacityConstraint implements Serializable {
   /**
    * Sets the provenance of this constraint.
    *
-   * @param source the kind of authority backing the limit; {@code null} is treated as
-   *        {@link ConstraintSource#DEFAULT}
+   * @param source the kind of authority backing the limit; {@code null} is treated as {@link ConstraintSource#DEFAULT}
    * @return this constraint for method chaining
    */
   public CapacityConstraint setSource(ConstraintSource source) {
@@ -382,10 +380,9 @@ public class CapacityConstraint implements Serializable {
   /**
    * Sets the provenance together with a free-text reference identifying the specific source.
    *
-   * @param source the kind of authority backing the limit; {@code null} is treated as
-   *        {@link ConstraintSource#DEFAULT}
+   * @param source the kind of authority backing the limit; {@code null} is treated as {@link ConstraintSource#DEFAULT}
    * @param sourceReference free-text identifier such as a standard number, an owning team, or the historian tag set
-   *        used to fit the limit; {@code null} is stored as an empty string
+   * used to fit the limit; {@code null} is stored as an empty string
    * @return this constraint for method chaining
    */
   public CapacityConstraint setSource(ConstraintSource source, String sourceReference) {
@@ -399,7 +396,7 @@ public class CapacityConstraint implements Serializable {
    * subclasses that already declare their own source in the constructor.
    *
    * @param sourceReference free-text identifier such as a standard number, an owning team, or the historian tag set
-   *        used to fit the limit; {@code null} is stored as an empty string
+   * used to fit the limit; {@code null} is stored as an empty string
    * @return this constraint for method chaining
    */
   public CapacityConstraint setSourceReference(String sourceReference) {
