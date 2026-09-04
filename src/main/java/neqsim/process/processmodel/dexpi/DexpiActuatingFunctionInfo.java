@@ -68,8 +68,8 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
       String instrumentationFunctionElementName, String finalControlElementId, boolean finalControlElementResolved,
       String finalControlElementName, String locationId, boolean locationResolved, String locationElementName) {
     this(id, kind, componentClass, functionNumber, instrumentationFunctionId, instrumentationFunctionResolved,
-        instrumentationFunctionElementName, finalControlElementId, finalControlElementResolved,
-        finalControlElementName, "", "", "", locationId, locationResolved, locationElementName, "", "", "");
+        instrumentationFunctionElementName, finalControlElementId, finalControlElementResolved, finalControlElementName,
+        "", "", "", locationId, locationResolved, locationElementName, "", "", "");
   }
 
   /**
@@ -98,10 +98,9 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
   public DexpiActuatingFunctionInfo(String id, Kind kind, String componentClass, String functionNumber,
       String instrumentationFunctionId, boolean instrumentationFunctionResolved,
       String instrumentationFunctionElementName, String finalControlElementId, boolean finalControlElementResolved,
-      String finalControlElementName, String finalControlElementComponentClass,
-      String finalControlElementComponentName, String finalControlElementTagName, String locationId,
-      boolean locationResolved, String locationElementName, String locationComponentClass,
-      String locationComponentName, String locationTagName) {
+      String finalControlElementName, String finalControlElementComponentClass, String finalControlElementComponentName,
+      String finalControlElementTagName, String locationId, boolean locationResolved, String locationElementName,
+      String locationComponentClass, String locationComponentName, String locationTagName) {
     this.id = normalize(id);
     this.kind = kind;
     this.componentClass = normalize(componentClass);
