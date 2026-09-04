@@ -656,13 +656,14 @@ reading aid, not execution evidence.
         content += """
 ## Standalone Java source examples
 
-These files are outside Maven's compiled source tree. They are retained as source-only
-references and are not catalogued as build-verified or policy-compliant examples.
-They currently contain legacy console output; review and port the required calls into a
-tested `src/test/java` example before reuse. For a supported starting point, use the
+These files are outside Maven's compiled source tree. The
+`StandaloneJavaDocumentationCompilationTest` compiles the exact catalog against the
+current NeqSim API. This is build verification only, not runtime or engineering-result
+validation. The files retain legacy console output; inspect assumptions and execute the
+required workflow before engineering reuse. For a supported starting point, use the
 [Java getting-started guide](../java-getting-started.md).
 
-| Example | Stored status | Capability |
+| Example | Build status | Capability |
 |---------|---------------|------------|
 """
         for java_file in java_files:
@@ -671,7 +672,7 @@ tested `src/test/java` example before reuse. For a supported starting point, use
             encoded_name = quote(java_file.name, safe='')
             description = JAVA_EXAMPLE_DESCRIPTIONS.get(name, 'Java example')
             content += (
-                f"| [{title}]({encoded_name}) | **Source only** | "
+                f"| [{title}]({encoded_name}) | **Build-verified source** | "
                 f"{description} |\n"
             )
 
