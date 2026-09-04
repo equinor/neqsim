@@ -9,9 +9,9 @@ import java.util.Objects;
  * Immutable source evidence for one connection occurrence crossing directed-cycle boundaries.
  *
  * <p>
- * A transition is retained once in source order even when it leaves one cyclic strongly connected
- * group and enters another. This record does not establish hydraulic continuity, a physical
- * recycle, process intent, or live {@code ProcessSystem} topology.
+ * A transition is retained once in source order even when it leaves one cyclic strongly connected group and enters
+ * another. This record does not establish hydraulic continuity, a physical recycle, process intent, or live
+ * {@code ProcessSystem} topology.
  * </p>
  *
  * @author NeqSim
@@ -48,9 +48,8 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
    * @throws NullPointerException if connection or endpoint evidence is null
    * @throws IllegalArgumentException if neither endpoint belongs to a cycle, or both identify the same cycle
    */
-  public DexpiConnectionCycleTransitionInfo(DexpiConnectionInfo connection,
-      DexpiConnectionEndpointInfo fromEndpoint, DexpiConnectionEndpointInfo toEndpoint,
-      String fromCycleId, String toCycleId) {
+  public DexpiConnectionCycleTransitionInfo(DexpiConnectionInfo connection, DexpiConnectionEndpointInfo fromEndpoint,
+      DexpiConnectionEndpointInfo toEndpoint, String fromCycleId, String toCycleId) {
     this.connection = Objects.requireNonNull(connection, "connection");
     this.fromEndpoint = Objects.requireNonNull(fromEndpoint, "fromEndpoint");
     this.toEndpoint = Objects.requireNonNull(toEndpoint, "toEndpoint");
