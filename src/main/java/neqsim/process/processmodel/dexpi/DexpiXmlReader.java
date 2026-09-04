@@ -134,12 +134,13 @@ public final class DexpiXmlReader {
     private final List<DexpiConnectionEndpointInfo> connectionEndpoints;
     private final List<DexpiConnectionComponentInfo> connectionComponents;
     private final List<DexpiConnectionCycleInfo> connectionCycles;
+    private final List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions;
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
         List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
         List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
-        List<ImportDiagnostic> diagnostics) {
+        List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
@@ -148,6 +149,8 @@ public final class DexpiXmlReader {
       this.connectionComponents = Collections
           .unmodifiableList(new ArrayList<DexpiConnectionComponentInfo>(connectionComponents));
       this.connectionCycles = Collections.unmodifiableList(new ArrayList<DexpiConnectionCycleInfo>(connectionCycles));
+      this.connectionCycleTransitions = Collections
+          .unmodifiableList(new ArrayList<DexpiConnectionCycleTransitionInfo>(connectionCycleTransitions));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<ImportDiagnostic>(diagnostics));
     }
 
@@ -221,6 +224,20 @@ public final class DexpiXmlReader {
       return connectionCycles;
     }
 
+    /**
+     * Returns source-ordered connection occurrences crossing directed-cycle boundaries.
+     *
+     * <p>
+     * Each occurrence appears once even when it leaves one cyclic group and enters another. These records preserve
+     * source evidence only; they do not establish hydraulic continuity, a physical recycle, or live process topology.
+     * </p>
+     *
+     * @return immutable cycle-transition evidence in source-document order
+     */
+    public List<DexpiConnectionCycleTransitionInfo> getConnectionCycleTransitions() {
+      return connectionCycleTransitions;
+    }
+
     /** @return immutable diagnostics in deterministic source-document order */
     public List<ImportDiagnostic> getDiagnostics() {
       return diagnostics;
@@ -277,6 +294,12 @@ public final class DexpiXmlReader {
         cycleMaps.add(cycle.toMap());
       }
       result.put("connectionCycles", cycleMaps);
+      result.put("connectionCycleTransitionCount", Integer.valueOf(connectionCycleTransitions.size()));
+      List<Map<String, Object>> transitionMaps = new ArrayList<Map<String, Object>>();
+      for (DexpiConnectionCycleTransitionInfo transition : connectionCycleTransitions) {
+        transitionMaps.add(transition.toMap());
+      }
+      result.put("connectionCycleTransitions", transitionMaps);
       result.put("hasLosses", Boolean.valueOf(hasLosses()));
       result.put("hasErrors", Boolean.valueOf(hasErrors()));
       List<Map<String, Object>> diagnosticMaps = new ArrayList<Map<String, Object>>();
@@ -476,8 +499,10 @@ public final class DexpiXmlReader {
         connectionEndpoints);
     List<DexpiConnectionCycleInfo> connectionCycles = summarizeConnectionCycles(connections, connectionEndpoints,
         connectionComponents);
+    List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions = summarizeConnectionCycleTransitions(
+        connections, connectionEndpoints, connectionCycles);
     return new ImportResult(processSystem, instruments, connections, connectionEndpoints, connectionComponents,
-        connectionCycles, diagnostics);
+        connectionCycles, connectionCycleTransitions, diagnostics);
   }
 
   /**
@@ -1049,6 +1074,40 @@ public final class DexpiXmlReader {
     List<DexpiConnectionCycleInfo> result = new ArrayList<DexpiConnectionCycleInfo>();
     for (ConnectionCycleAccumulator cycle : cycles) {
       result.add(cycle.toInfo());
+    }
+    return result;
+  }
+
+  private static List<DexpiConnectionCycleTransitionInfo> summarizeConnectionCycleTransitions(
+      List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
+      List<DexpiConnectionCycleInfo> connectionCycles) {
+    Map<String, DexpiConnectionEndpointInfo> endpointById = new HashMap<String, DexpiConnectionEndpointInfo>();
+    for (DexpiConnectionEndpointInfo endpoint : connectionEndpoints) {
+      endpointById.put(endpoint.getEndpointId(), endpoint);
+    }
+
+    Map<String, String> cycleByEndpointId = new HashMap<String, String>();
+    for (DexpiConnectionCycleInfo cycle : connectionCycles) {
+      for (String endpointId : cycle.getEndpointIds()) {
+        cycleByEndpointId.put(endpointId, cycle.getId());
+      }
+    }
+
+    List<DexpiConnectionCycleTransitionInfo> result = new ArrayList<DexpiConnectionCycleTransitionInfo>();
+    for (DexpiConnectionInfo connection : connections) {
+      if (isBlank(connection.getFromId()) || isBlank(connection.getToId())) {
+        continue;
+      }
+      String fromCycleId = cycleByEndpointId.get(connection.getFromId());
+      String toCycleId = cycleByEndpointId.get(connection.getToId());
+      if (fromCycleId == null && toCycleId == null) {
+        continue;
+      }
+      if (fromCycleId != null && fromCycleId.equals(toCycleId)) {
+        continue;
+      }
+      result.add(new DexpiConnectionCycleTransitionInfo(connection, endpointById.get(connection.getFromId()),
+          endpointById.get(connection.getToId()), fromCycleId, toCycleId));
     }
     return result;
   }
