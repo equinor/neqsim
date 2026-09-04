@@ -187,25 +187,24 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   }
 
   /**
-   * Returns the nominal ambient crystallographic reaction volume for gypsum transforming to
-   * anhydrite plus two liquid-water molecules.
+   * Returns the nominal ambient crystallographic reaction volume for gypsum transforming to anhydrite plus two
+   * liquid-water molecules.
    *
    * <p>
-   * This is a measurement-derived structural diagnostic, not a fitted COMPSALT parameter or a
-   * high-pressure qualification.
+   * This is a measurement-derived structural diagnostic, not a fitted COMPSALT parameter or a high-pressure
+   * qualification.
    * </p>
    *
    * @return nominal reaction volume in cm3/mol
    */
   public double getCrystallographicTransitionReactionVolumeCm3PerMol() {
-    return getAnhydriteCrystallographicMolarVolumeCm3PerMol()
-        + 2.0 * getLiquidWaterReferenceMolarVolumeCm3PerMol()
+    return getAnhydriteCrystallographicMolarVolumeCm3PerMol() + 2.0 * getLiquidWaterReferenceMolarVolumeCm3PerMol()
         - getGypsumCrystallographicMolarVolumeCm3PerMol();
   }
 
   /**
-   * Returns the transition reaction volume implied by the difference between the existing lumped
-   * COMPSALT gypsum and anhydrite coefficients.
+   * Returns the transition reaction volume implied by the difference between the existing lumped COMPSALT gypsum and
+   * anhydrite coefficients.
    *
    * @return COMPSALT transition reaction volume in cm3/mol
    */
@@ -215,14 +214,12 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
 
   /** @return COMPSALT minus crystallographic transition reaction volume in cm3/mol */
   public double getTransitionReactionVolumeDifferenceCm3PerMol() {
-    return getCompsaltTransitionReactionVolumeCm3PerMol()
-        - getCrystallographicTransitionReactionVolumeCm3PerMol();
+    return getCompsaltTransitionReactionVolumeCm3PerMol() - getCrystallographicTransitionReactionVolumeCm3PerMol();
   }
 
   /** @return ratio of COMPSALT to crystallographic transition reaction volume */
   public double getTransitionReactionVolumeRatio() {
-    return getCompsaltTransitionReactionVolumeCm3PerMol()
-        / getCrystallographicTransitionReactionVolumeCm3PerMol();
+    return getCompsaltTransitionReactionVolumeCm3PerMol() / getCrystallographicTransitionReactionVolumeCm3PerMol();
   }
 
   /** @return primary anhydrite synchrotron crystallography DOI */
@@ -384,9 +381,9 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
         + ", compsaltTransitionV_cm3_per_mol=" + getCompsaltTransitionReactionVolumeCm3PerMol()
         + ", transitionVdifference_cm3_per_mol=" + getTransitionReactionVolumeDifferenceCm3PerMol()
         + ", transitionVratio=" + getTransitionReactionVolumeRatio() + ", aqueousSpeciesVolumeResolved="
-        + isAqueousSpeciesVolumeResolved() + ", highPressureQualified="
-        + isHighPressureQualified() + ", referencePressurePass=" + referencePressureEnvelopePass + ", evidenceDoi="
-        + EVIDENCE_DOI + ", license=" + EVIDENCE_LICENSE;
+        + isAqueousSpeciesVolumeResolved() + ", highPressureQualified=" + isHighPressureQualified()
+        + ", referencePressurePass=" + referencePressureEnvelopePass + ", evidenceDoi=" + EVIDENCE_DOI + ", license="
+        + EVIDENCE_LICENSE;
   }
 
   private static double solvePureWaterTransitionCelsius(CalcSaltSatauration anhydrite, CalcSaltSatauration gypsum,
