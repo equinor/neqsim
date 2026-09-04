@@ -31,11 +31,11 @@ import java.util.function.DoubleSupplier;
  * DoubleSupplier rate = () -&gt; scrubber.getThermoSystem().getPhase(0).getFlowRate("m3/sec");
  *
  * // Calibration points (gas rate Am3/s, observed carry-over kg/h)
- * double[] x = {2.0, 3.0, 4.5, 5.5};
- * double[] y = {0.0, 0.5, 3.0, 12.0};
+ * double[] x = { 2.0, 3.0, 4.5, 5.5 };
+ * double[] y = { 0.0, 0.5, 3.0, 12.0 };
  *
- * EmpiricalCarryOverConstraint co =
- *     EmpiricalCarryOverConstraint.fromObservations("carryOver", "kg/h", rate, x, y, 5.0);
+ * EmpiricalCarryOverConstraint co = EmpiricalCarryOverConstraint.fromObservations("carryOver", "kg/h", rate, x, y,
+ *     5.0);
  * co.setSourceReference("Suction drum LT-2103, May-Aug 2025");
  * separator.addCapacityConstraint(co);
  * </pre>
@@ -76,13 +76,11 @@ public class EmpiricalCarryOverConstraint extends CapacityConstraint {
    * @throws IllegalArgumentException if the arrays are null, empty, of unequal length, or if {@code xPoints} is not
    * strictly ascending
    */
-  public EmpiricalCarryOverConstraint(String name, String unit, DoubleSupplier driverSupplier,
-      double[] xPoints, double[] yPoints, double maxAllowable) {
+  public EmpiricalCarryOverConstraint(String name, String unit, DoubleSupplier driverSupplier, double[] xPoints,
+      double[] yPoints, double maxAllowable) {
     super(name, unit, ConstraintType.HARD);
-    if (xPoints == null || yPoints == null || xPoints.length == 0
-        || xPoints.length != yPoints.length) {
-      throw new IllegalArgumentException(
-          "xPoints and yPoints must be non-null, equal-length, non-empty arrays");
+    if (xPoints == null || yPoints == null || xPoints.length == 0 || xPoints.length != yPoints.length) {
+      throw new IllegalArgumentException("xPoints and yPoints must be non-null, equal-length, non-empty arrays");
     }
     for (int i = 1; i < xPoints.length; i++) {
       if (xPoints[i] <= xPoints[i - 1]) {
@@ -114,10 +112,9 @@ public class EmpiricalCarryOverConstraint extends CapacityConstraint {
    * @throws IllegalArgumentException if the arrays are null, empty, of unequal length, or if {@code xPoints} is not
    * strictly ascending
    */
-  public static EmpiricalCarryOverConstraint fromObservations(String name, String unit,
-      DoubleSupplier driverSupplier, double[] xPoints, double[] yPoints, double maxAllowable) {
-    return new EmpiricalCarryOverConstraint(name, unit, driverSupplier, xPoints, yPoints,
-        maxAllowable);
+  public static EmpiricalCarryOverConstraint fromObservations(String name, String unit, DoubleSupplier driverSupplier,
+      double[] xPoints, double[] yPoints, double maxAllowable) {
+    return new EmpiricalCarryOverConstraint(name, unit, driverSupplier, xPoints, yPoints, maxAllowable);
   }
 
   /**
