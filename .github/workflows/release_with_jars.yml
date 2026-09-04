@@ -4,6 +4,12 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      update_published:
+        description: Rebuild and update an existing published release from the selected tag
+        required: true
+        default: false
+        type: boolean
   push:
     branches:
       - master
@@ -11,7 +17,6 @@ on:
       - release/*
     paths:
       - 'pom*.xml'
-      - '.github/release-trigger'
 
 jobs:
   get_versions:
@@ -154,8 +159,9 @@ jobs:
         env:
           RELEASE_EVENT: ${{ github.event_name }}
           RELEASE_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          UPDATE_PUBLISHED: ${{ inputs.update_published }}
         run: |
-          if [[ "$RELEASE_EVENT" == "push" && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]]; then
+          if [[ "$RELEASE_EVENT" == "push" && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]] || [[ "$UPDATE_PUBLISHED" == "true" ]]; then
             echo "draft=false" >> "$GITHUB_OUTPUT"
           else
             echo "draft=true" >> "$GITHUB_OUTPUT"
@@ -243,7 +249,8 @@ jobs:
         if: steps.publication.outputs.draft == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.get_versions.outputs.version }}
         run: |
           # workflow_dispatch is allowed to start workflows created with GITHUB_TOKEN.
-          gh workflow run publish_to_maven_central.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
-          gh workflow run mcp_server_release.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+          gh workflow run publish_to_maven_central.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
+          gh workflow run mcp_server_release.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
