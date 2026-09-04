@@ -44,6 +44,10 @@ public final class SarirAtmosphericReference {
       new ProductYieldReference("Total Naphtha", 208.95, 208.2), new ProductYieldReference("Kerosene", 22.85, 20.0),
       new ProductYieldReference("Diesel", 425.018, 393.0), new ProductYieldReference("Residual", 646.5, 706.1) };
 
+  private static final PumparoundReference[] PUMPAROUNDS = {
+      new PumparoundReference("Top pump around (TPA)", 3, 1, 29777.64, 143.9, 80.99),
+      new PumparoundReference("Bottom pump around (BPA)", 22, 19, 60423.66, 232.4, 173.99) };
+
   private SarirAtmosphericReference() {
   }
 
@@ -202,14 +206,114 @@ public final class SarirAtmosphericReference {
     return 226.8;
   }
 
+  /**
+   * Return the source pump-around table in source order.
+   *
+   * @return defensive copy of the two immutable pump-around rows
+   */
+  public static PumparoundReference[] getPumparounds() {
+    return PUMPAROUNDS.clone();
+  }
+
+  /**
+   * Find one pump-around row by its exact source-table label.
+   *
+   * @param name exact source-table label
+   * @return immutable pump-around reference
+   * @throws IllegalArgumentException if the label is null or unknown
+   */
+  public static PumparoundReference getPumparound(String name) {
+    if (name == null) {
+      throw new IllegalArgumentException("Pump-around name cannot be null");
+    }
+    for (PumparoundReference pumparound : PUMPAROUNDS) {
+      if (pumparound.getName().equals(name)) {
+        return pumparound;
+      }
+    }
+    throw new IllegalArgumentException("Unknown Sarir pump-around: " + name);
+  }
+
+  /**
+   * Report whether Table 4 explicitly defines the direction used for its tray numbers.
+   *
+   * @return always false; the raw source labels must not be mapped to NeqSim tray indices without another authority
+   */
+  public static boolean hasExplicitPumparoundTrayNumberingBasis() {
+    return false;
+  }
+
   /** @return top pump-around flow rate in kg/h */
   public static double getTopPumpAroundRateKgPerHour() {
-    return 29777.64;
+    return PUMPAROUNDS[0].getMassFlowRateKgPerHour();
   }
 
   /** @return bottom pump-around flow rate in kg/h */
   public static double getBottomPumpAroundRateKgPerHour() {
-    return 60423.66;
+    return PUMPAROUNDS[1].getMassFlowRateKgPerHour();
+  }
+
+  /**
+   * Immutable source-table pump-around row.
+   *
+   * <p>
+   * Tray numbers are retained exactly as printed in Table 4. The table does not explicitly state whether they are
+   * counted from the top or bottom, so callers must not treat them as NeqSim tray indices without additional evidence.
+   * </p>
+   */
+  public static final class PumparoundReference implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String name;
+    private final int sourceDrawTrayNumber;
+    private final int sourceReturnTrayNumber;
+    private final double massFlowRateKgPerHour;
+    private final double drawTemperatureCelsius;
+    private final double returnTemperatureCelsius;
+
+    private PumparoundReference(String name, int sourceDrawTrayNumber, int sourceReturnTrayNumber,
+        double massFlowRateKgPerHour, double drawTemperatureCelsius, double returnTemperatureCelsius) {
+      this.name = name;
+      this.sourceDrawTrayNumber = sourceDrawTrayNumber;
+      this.sourceReturnTrayNumber = sourceReturnTrayNumber;
+      this.massFlowRateKgPerHour = massFlowRateKgPerHour;
+      this.drawTemperatureCelsius = drawTemperatureCelsius;
+      this.returnTemperatureCelsius = returnTemperatureCelsius;
+    }
+
+    /** @return exact source-table label */
+    public String getName() {
+      return name;
+    }
+
+    /** @return raw draw-tray number printed in the source table */
+    public int getSourceDrawTrayNumber() {
+      return sourceDrawTrayNumber;
+    }
+
+    /** @return raw return-tray number printed in the source table */
+    public int getSourceReturnTrayNumber() {
+      return sourceReturnTrayNumber;
+    }
+
+    /** @return source pump-around mass flow rate in kg/h */
+    public double getMassFlowRateKgPerHour() {
+      return massFlowRateKgPerHour;
+    }
+
+    /** @return source draw temperature in degrees Celsius */
+    public double getDrawTemperatureCelsius() {
+      return drawTemperatureCelsius;
+    }
+
+    /** @return source return temperature in degrees Celsius */
+    public double getReturnTemperatureCelsius() {
+      return returnTemperatureCelsius;
+    }
+
+    /** @return draw temperature minus return temperature, in kelvin */
+    public double getTemperatureDropKelvin() {
+      return drawTemperatureCelsius - returnTemperatureCelsius;
+    }
   }
 
   /** Immutable numeric ASTM D86 comparison row. */
