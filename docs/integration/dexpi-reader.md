@@ -34,6 +34,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiStream` | Lightweight piping segment with DEXPI class, line number, and fluid code |
 | `DexpiProcessUnit` | Imported equipment with original DEXPI class and mapped `EquipmentEnum` |
 | `DexpiInstrumentInfo` | Instrument metadata (tag, type, function letter) |
+| `DexpiActuatingFunctionInfo` | Immutable source-order actuating-function identity and reference evidence |
 | `DexpiConnectionInfo` | Immutable source-order material-connection evidence and endpoint resolution |
 
 ---
@@ -106,6 +107,7 @@ DexpiXmlReader.ImportResult result =
 ProcessSystem process = result.getProcessSystem();
 List<DexpiInstrumentInfo> instruments = result.getInstruments();
 List<DexpiInstrumentationLoopInfo> instrumentationLoops = result.getInstrumentationLoops();
+List<DexpiActuatingFunctionInfo> actuatingFunctions = result.getActuatingFunctions();
 List<DexpiInformationFlowInfo> informationFlows = result.getInformationFlows();
 List<DexpiConnectionInfo> connections = result.getConnections();
 
@@ -140,6 +142,14 @@ source/target references, missing signal medium, and incomplete final-element or
 evidence. Valid source references resolve against the complete non-catalogue document identity set,
 including equipment nozzles and actuating functions. The reader never promotes measurement-only or
 incomplete source content into closed-loop control intent.
+
+`ImportResult.getActuatingFunctions()` exposes source-ordered `ActuatingFunction` and
+`ActuatingElectricalFunction` occurrences as immutable `DexpiActuatingFunctionInfo` records. Each
+record retains the explicit source kind, ID, component class, function number, enclosing
+`ProcessInstrumentationFunction` identity, `FinalControlElementID`, and `is located in` identity,
+together with resolution flags and resolved XML element names. Missing and unresolved references
+remain visible. The API does not classify final-element type, infer control intent, identify a
+safeguard or SIS function, or alter live simulation topology.
 
 `ImportResult.getInformationFlows()` exposes the corresponding source-ordered
 `MeasuringLineFunction` and `SignalLineFunction` evidence as immutable
@@ -241,15 +251,16 @@ cycle. This exact-once inventory remains source-reference evidence only; it does
 continuity, identify a physical recycle, enumerate paths, or alter simulation topology.
 
 `toJson()` includes `instrumentCount`, `instrumentationLoopCount`,
-`informationFlowCount`, `connectionCount`,
+`actuatingFunctionCount`, `informationFlowCount`, `connectionCount`,
 `connectionEndpointCount`, `connectionComponentCount`, `connectionCycleCount`,
-`connectionCycleTransitionCount`, and the ordered instrumentation-loop, information-flow, connection, endpoint, component,
-directed-cycle, and cycle-transition inventories, including reference resolution,
+`connectionCycleTransitionCount`, and the ordered instrumentation-loop, actuating-function, information-flow, connection, endpoint,
+component, directed-cycle, and cycle-transition inventories, including reference resolution,
 incidence roles, review subsets, complete cycle-local endpoint and internal connection occurrences,
 explicit cycle-boundary occurrences, and exact-once transitions with nested connection and endpoint
 evidence, alongside the process-unit count and findings. Python callers through JPype use the same
 `ImportResult.getInstruments()`, `ImportResult.getInstrumentationLoops()`,
-`ImportResult.getInformationFlows()`, `ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`,
+`ImportResult.getActuatingFunctions()`, `ImportResult.getInformationFlows()`,
+`ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`,
 `ImportResult.getConnectionComponents()`, `ImportResult.getConnectionCycles()`, and
 `ImportResult.getConnectionCycleTransitions()` getters; there is no separate Python reconstruction
 model.
