@@ -923,10 +923,27 @@ public final class DexpiXmlReader {
       result.add(new DexpiActuatingFunctionInfo(element.getAttribute("ID"), kind, componentClass,
           getGenericAttribute(element, DexpiMetadata.ACTUATING_FUNCTION_NUMBER), instrumentationFunctionId,
           instrumentationFunctionResolved, elementName(instrumentationFunction), finalControlElementId,
-          finalControlElement != null, elementName(finalControlElement), locationId, location != null,
-          elementName(location)));
+          finalControlElement != null, elementName(finalControlElement),
+          explicitAttribute(finalControlElement, "ComponentClass"),
+          explicitAttribute(finalControlElement, "ComponentName"),
+          explicitGenericAttribute(finalControlElement, DexpiMetadata.TAG_NAME), locationId, location != null,
+          elementName(location), explicitAttribute(location, "ComponentClass"),
+          explicitAttribute(location, "ComponentName"),
+          explicitGenericAttribute(location, DexpiMetadata.TAG_NAME)));
     }
     return result;
+  }
+
+  private static String explicitAttribute(Element element, String attributeName) {
+    return element == null ? "" : element.getAttribute(attributeName);
+  }
+
+  private static String explicitGenericAttribute(Element element, String attributeName) {
+    if (element == null) {
+      return "";
+    }
+    String value = getGenericAttribute(element, attributeName);
+    return value == null ? "" : value;
   }
 
   private static List<DexpiInformationFlowInfo> parseInformationFlows(Document document) {
