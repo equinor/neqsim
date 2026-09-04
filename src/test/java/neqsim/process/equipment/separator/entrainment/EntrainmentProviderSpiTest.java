@@ -95,8 +95,7 @@ public class EntrainmentProviderSpiTest {
     double oilDensity = separator.getFeedStream().getFluid().getPhase("oil").getDensity("kg/m3");
     double waterDensity = separator.getFeedStream().getFluid().getPhase("aqueous").getDensity("kg/m3");
 
-    double carriedVolumeM3PerHr =
-        r.getOilInGasKgPerHr() / oilDensity + r.getWaterInGasKgPerHr() / waterDensity;
+    double carriedVolumeM3PerHr = r.getOilInGasKgPerHr() / oilDensity + r.getWaterInGasKgPerHr() / waterDensity;
     double expectedVolumeM3PerHr = SpecCarryOverProvider.DEFAULT_CARRY_OVER_LITRE_PER_MSM3 * 1.0e-3 * gasMSm3PerHr;
 
     assertTrue(gasMSm3PerHr > 0.0, "test fluid produced no gas");
@@ -179,8 +178,7 @@ public class EntrainmentProviderSpiTest {
     separator.run();
 
     assertEquals(gasBefore, separator.getGasOutStream().getFlowRate("kg/hr"), Math.abs(gasBefore) * 1.0e-9);
-    assertEquals(liquidBefore, separator.getLiquidOutStream().getFlowRate("kg/hr"),
-        Math.abs(liquidBefore) * 1.0e-9);
+    assertEquals(liquidBefore, separator.getLiquidOutStream().getFlowRate("kg/hr"), Math.abs(liquidBefore) * 1.0e-9);
   }
 
   /** A provider declaring a future SPI revision is refused rather than used. */
