@@ -59,20 +59,38 @@ This guide describes the complete workflow for tuning a NeqSim process model to 
 
 ### 1. Data Reconciliation
 
+For a measurement vector $\mathbf{y}$, diagonal covariance matrix
+$\mathbf{V}=\mathrm{diag}(\sigma_i^2)$, and linear constraints
+$\mathbf{A}\hat{\mathbf{x}}=0$, the engine uses the weighted least-squares
+solution:
+
+$$\hat{\mathbf{x}}=\mathbf{y}-\mathbf{V}\mathbf{A}^{T}(\mathbf{A}\mathbf{V}\mathbf{A}^{T})^{-1}\mathbf{A}\mathbf{y}$$
+
+Each `ReconciliationVariable` stores one measured value and its positive
+standard uncertainty $\sigma_i$ in the same engineering unit.
+
 ```java
 DataReconciliationEngine recon = new DataReconciliationEngine();
 
-// Add measured variables: name, value, uncertainty
-recon.addVariable("flow_in1", 5000.0, 100.0);
-recon.addVariable("flow_in2", 5100.0, 100.0);
-recon.addVariable("flow_out", 10200.0, 150.0);
+// Add measured variables: name, value, standard uncertainty
+recon.addVariable(new ReconciliationVariable("flow_in1", 5000.0, 100.0).setUnit("kg/hr"));
+recon.addVariable(new ReconciliationVariable("flow_in2", 5100.0, 100.0).setUnit("kg/hr"));
+recon.addVariable(new ReconciliationVariable("flow_out", 10200.0, 150.0).setUnit("kg/hr"));
 
 // Mass balance: flow_in1 + flow_in2 - flow_out = 0
 recon.addConstraint(new double[]{1.0, 1.0, -1.0});
 
 ReconciliationResult result = recon.reconcile();
-// Or with automatic gross error elimination:
-// ReconciliationResult result = recon.reconcileWithGrossErrorElimination();
+double chiSquare = result.getChiSquareStatistic();
+
+// Iterate over all variables, or retrieve one by its unique name.
+for (ReconciliationVariable variable : recon.getVariables()) {
+    double reconciledValue = variable.getReconciledValue();
+}
+ReconciliationVariable inlet = recon.getVariable("flow_in1");
+
+// Alternatively, allow the engine to eliminate at most one gross error.
+ReconciliationResult grossErrorResult = recon.reconcileWithGrossErrorElimination(1);
 ```
 
 ### 2. Batch Parameter Estimation
@@ -153,12 +171,67 @@ The `BatchParameterEstimator` uses reflection-based property paths to access equ
 See the example notebook: [data_reconciliation_parameter_estimation.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/data_reconciliation_parameter_estimation.ipynb)
 
 ```python
-from neqsim_dev_setup import neqsim_init
-ns = neqsim_init(project_root="path/to/neqsim2")
+import os
+import sys
+from pathlib import Path
 
 import jpype
-BatchParameterEstimator = jpype.JClass("neqsim.process.calibration.BatchParameterEstimator")
-HashMap = jpype.JClass("java.util.HashMap")
+
+
+def find_neqsim_project_root():
+    configured_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+    candidates = []
+    if configured_root:
+        candidates.append(Path(configured_root).resolve())
+
+    current_directory = Path.cwd().resolve()
+    candidates.extend([current_directory, *current_directory.parents])
+
+    for candidate in candidates:
+        has_project_file = (candidate / "pom.xml").exists()
+        has_devtools = (
+            candidate / "devtools" / "neqsim_dev_setup.py"
+        ).exists()
+        if has_project_file and has_devtools:
+            return candidate
+
+    raise RuntimeError(
+        "Could not find the NeqSim project root. Set NEQSIM_PROJECT_ROOT."
+    )
+
+
+PROJECT_ROOT = find_neqsim_project_root()
+sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+
+from neqsim_dev_setup import neqsim_classes, neqsim_init
+
+ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=False)
+ns = neqsim_classes(ns)
+
+DataReconciliationEngine = ns.JClass(
+    "neqsim.process.util.reconciliation.DataReconciliationEngine"
+)
+ReconciliationVariable = ns.JClass(
+    "neqsim.process.util.reconciliation.ReconciliationVariable"
+)
+BatchParameterEstimator = ns.JClass(
+    "neqsim.process.calibration.BatchParameterEstimator"
+)
+HashMap = ns.JClass("java.util.HashMap")
+
+recon = DataReconciliationEngine()
+recon.addVariable(ReconciliationVariable("feed", 1000.0, 20.0))
+recon.addVariable(ReconciliationVariable("gas", 600.0, 15.0))
+recon.addVariable(ReconciliationVariable("liquid", 390.0, 10.0))
+recon.addConstraint([1.0, -1.0, -1.0])
+reconciliation_result = recon.reconcile()
+
+assert reconciliation_result.isConverged()
+assert reconciliation_result.getChiSquareStatistic() >= 0.0
+assert recon.getVariable("feed").getName() == "feed"
+
+for variable in recon.getVariables():
+    print(variable.getName(), variable.getReconciledValue())
 
 estimator = BatchParameterEstimator(process)
 estimator.addTunableParameter("comp.polytropicEfficiency", "", 0.50, 0.95, 0.65)
