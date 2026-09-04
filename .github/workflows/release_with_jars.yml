@@ -4,6 +4,12 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      update_published:
+        description: Rebuild and update an existing published release from the selected tag
+        required: true
+        default: false
+        type: boolean
   push:
     branches:
       - master
@@ -11,7 +17,6 @@ on:
       - release/*
     paths:
       - 'pom*.xml'
-      - '.github/release-trigger'
 
 jobs:
   get_versions:
@@ -21,7 +26,6 @@ jobs:
     outputs:
       version_8: ${{ steps.java-8-fix.outputs.version }}
       version: ${{ steps.java.outputs.version }}
-      source_ref: ${{ steps.source-ref.outputs.ref }}
 
     steps:
     - name: Check out neqsim java project
@@ -39,18 +43,6 @@ jobs:
     - name: Fix java 8 version number
       id: java-8-fix
       run: echo "version=$(echo ${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")" >> $GITHUB_OUTPUT
-    - name: Select source revision for release artifacts
-      id: source-ref
-      env:
-        RELEASE_EVENT: ${{ github.event_name }}
-        RELEASE_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        RELEASE_VERSION: ${{ steps.java.outputs.version }}
-      run: |
-        if [[ "$RELEASE_EVENT" == "push" && "$RELEASE_COMMIT_MESSAGE" == *"[restore-release]"* ]]; then
-          echo "ref=v${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
-        else
-          echo "ref=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-        fi
 
   compile_java_8:
     name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} for java 8
@@ -62,8 +54,6 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.get_versions.outputs.source_ref }}
       - name: Set up Java 21 environment
         uses: actions/setup-java@v6
         with:
@@ -89,8 +79,6 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.get_versions.outputs.source_ref }}
       - name: Set up Java 21 environment
         uses: actions/setup-java@v6
         with:
@@ -116,8 +104,6 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.get_versions.outputs.source_ref }}
       - name: Set up Java 21 environment
         uses: actions/setup-java@v6
         with:
@@ -173,8 +159,9 @@ jobs:
         env:
           RELEASE_EVENT: ${{ github.event_name }}
           RELEASE_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          UPDATE_PUBLISHED: ${{ inputs.update_published }}
         run: |
-          if [[ "$RELEASE_EVENT" == "push" && ( "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* || "$RELEASE_COMMIT_MESSAGE" == *"[restore-release]"* ) ]]; then
+          if [[ "$RELEASE_EVENT" == "push" && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]] || [[ "$UPDATE_PUBLISHED" == "true" ]]; then
             echo "draft=false" >> "$GITHUB_OUTPUT"
           else
             echo "draft=true" >> "$GITHUB_OUTPUT"
@@ -262,7 +249,8 @@ jobs:
         if: steps.publication.outputs.draft == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.get_versions.outputs.version }}
         run: |
           # workflow_dispatch is allowed to start workflows created with GITHUB_TOKEN.
-          gh workflow run publish_to_maven_central.yml --repo "$GITHUB_REPOSITORY" --ref "v${{ needs.get_versions.outputs.version }}"
-          gh workflow run mcp_server_release.yml --repo "$GITHUB_REPOSITORY" --ref "v${{ needs.get_versions.outputs.version }}"
+          gh workflow run publish_to_maven_central.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
+          gh workflow run mcp_server_release.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
