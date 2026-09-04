@@ -54,7 +54,7 @@ ComponentInterface fromPhase =
 Both lookups return the component stored under its canonical database name, `224-TM-C5`.
 `hasComponent(String)` follows the same normalized-name contract. Unknown, ambiguous, and
 near-miss inputs are not guessed, and `getComponent(String)` returns `null` when no exact or
-recognized alias is present. See the [component reference list](../component_list.md#component-name-resolution)
+recognized alias is present. See the [component reference list](../component_list#component-name-resolution)
 for the supported naming conventions and mutation/removal APIs.
 
 ### Common Methods
