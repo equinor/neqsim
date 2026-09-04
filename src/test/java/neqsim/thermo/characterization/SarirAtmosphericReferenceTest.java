@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.characterization.SarirAtmosphericReference.ProductQualityReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.ProductYieldReference;
+import neqsim.thermo.characterization.SarirAtmosphericReference.PumparoundReference;
 
 /** Tests the public Sarir atmospheric assay and validation reference. */
 public class SarirAtmosphericReferenceTest {
@@ -44,6 +45,10 @@ public class SarirAtmosphericReferenceTest {
     ProductYieldReference[] yields = SarirAtmosphericReference.getProductYields();
     yields[0] = null;
     assertEquals("Total Naphtha", SarirAtmosphericReference.getProductYields()[0].getName());
+
+    PumparoundReference[] pumparounds = SarirAtmosphericReference.getPumparounds();
+    pumparounds[0] = null;
+    assertEquals("Top pump around (TPA)", SarirAtmosphericReference.getPumparounds()[0].getName());
   }
 
   @Test
@@ -88,15 +93,39 @@ public class SarirAtmosphericReferenceTest {
   }
 
   @Test
+  public void pumparoundRowsPreservePublishedTableWithoutInferringTrayBasis() {
+    PumparoundReference[] pumparounds = SarirAtmosphericReference.getPumparounds();
+    assertEquals(2, pumparounds.length);
+    assertPumparound(pumparounds[0], "Top pump around (TPA)", 3, 1, 29777.64, 143.9, 80.99, 62.91);
+    assertPumparound(pumparounds[1], "Bottom pump around (BPA)", 22, 19, 60423.66, 232.4, 173.99, 58.41);
+    assertFalse(SarirAtmosphericReference.hasExplicitPumparoundTrayNumberingBasis());
+    assertEquals(pumparounds[0], SarirAtmosphericReference.getPumparound("Top pump around (TPA)"));
+    assertEquals(pumparounds[1], SarirAtmosphericReference.getPumparound("Bottom pump around (BPA)"));
+  }
+
+  @Test
   public void invalidQueriesAndErrorInputsFailClosed() {
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getProductYield(null));
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getProductYield("Naphtha"));
+    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getPumparound(null));
+    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getPumparound("TPA"));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(0.0, 1.0));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(Double.NaN, 1.0));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(1.0, Double.POSITIVE_INFINITY));
+  }
+
+  private static void assertPumparound(PumparoundReference pumparound, String name, int drawTray, int returnTray,
+      double massFlowRate, double drawTemperature, double returnTemperature, double temperatureDrop) {
+    assertEquals(name, pumparound.getName());
+    assertEquals(drawTray, pumparound.getSourceDrawTrayNumber());
+    assertEquals(returnTray, pumparound.getSourceReturnTrayNumber());
+    assertEquals(massFlowRate, pumparound.getMassFlowRateKgPerHour(), 0.0);
+    assertEquals(drawTemperature, pumparound.getDrawTemperatureCelsius(), 0.0);
+    assertEquals(returnTemperature, pumparound.getReturnTemperatureCelsius(), 0.0);
+    assertEquals(temperatureDrop, pumparound.getTemperatureDropKelvin(), 1.0e-12);
   }
 
   private static void assertQuality(ProductQualityReference quality, String name, double labFive, double labNinetyFive,
