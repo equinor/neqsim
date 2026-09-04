@@ -38,6 +38,25 @@ ComponentInterface comp = fluid.getComponent(0);
 ComponentInterface methaneInGas = fluid.getGasPhase().getComponent("methane");
 ```
 
+Recognized aliases, systematic names, and case variants use the same resolver for addition and
+retrieval. The name accepted by `addComponent` can therefore be reused through the system or a
+specific phase:
+
+```java
+fluid.addComponent("2,2,4-trimethylpentane", 1.0);
+
+ComponentInterface fromSystem =
+    fluid.getComponent("isooctane");
+ComponentInterface fromPhase =
+    fluid.getPhase(0).getComponent("ISOOCTANE");
+```
+
+Both lookups return the component stored under its canonical database name, `224-TM-C5`.
+`hasComponent(String)` follows the same normalized-name contract. Unknown, ambiguous, and
+near-miss inputs are not guessed, and `getComponent(String)` returns `null` when no exact or
+recognized alias is present. See the [component reference list](../component_list#component-name-resolution)
+for the supported naming conventions and mutation/removal APIs.
+
 ### Common Methods
 
 ```java

@@ -3,7 +3,7 @@ title: NeqSim Component Reference List
 description: Complete list of all components available in NeqSim including hydrocarbons, gases, water, glycols, amines, and plus fractions. Includes component names, CAS numbers, and EoS availability.
 ---
 
-This document provides a comprehensive list of all components available in NeqSim. Use the exact component name (case-insensitive) when adding components to your fluid.
+This document provides a comprehensive list of all components available in NeqSim. Use a canonical database name or a recognized alias when adding or retrieving components; name matching is case-insensitive but never fuzzy.
 
 ## Quick Reference
 
@@ -133,6 +133,28 @@ fluid.addComponent("2,2,4-trimethylpentane", 1.0);  // systematic name
 fluid.addComponent("isooctane", 1.0);               // trivial name
 fluid.addComponent("ISOOCTANE", 1.0);               // any letter case
 ```
+
+Name resolution is symmetric across the name-taking fluid APIs. A recognized name accepted by
+`addComponent` can be reused with `hasComponent`, `getComponent`, phase-level
+`getComponent`, `setComponentCriticalParameters`, `setBinaryInteractionParameter`, and
+`removeComponent`:
+
+```java
+ComponentInterface component = fluid.getComponent("2,2,4-trimethylpentane");
+ComponentInterface phaseComponent =
+    fluid.getPhase(0).getComponent("isooctane");
+
+if (fluid.hasComponent("ISOOCTANE")) {
+    // Both lookups return the component stored under the canonical name 224-TM-C5.
+    String canonicalName = component.getComponentName();
+}
+```
+
+Exact canonical names are checked first. Only after an exact lookup fails does `getComponent`
+consult the alias table. Unknown, ambiguous, and near-miss names are not guessed:
+`getComponent("methan")` returns `null`. Check user-supplied names with `hasComponent` before
+dereferencing the result. The executable
+`ComponentAliasApiSymmetryTest` protects the same lookup, mutation, and removal contract.
 
 The resolver recognises:
 
