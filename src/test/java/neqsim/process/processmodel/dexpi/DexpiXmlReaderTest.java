@@ -871,8 +871,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertFalse(entering.getFromEndpoint().isResolved());
     assertEquals("N-A", entering.getToEndpoint().getEndpointId());
     assertEquals("E-A", entering.getToEndpoint().getOwnerId());
-    assertEquals(Arrays.asList("C-IN-1", "C-IN-2", "C-BA"),
-        entering.getToEndpoint().getIncomingConnectionIds());
+    assertEquals(Arrays.asList("C-IN-1", "C-IN-2", "C-BA"), entering.getToEndpoint().getIncomingConnectionIds());
     assertEquals(Collections.singletonList("C-AB"), entering.getToEndpoint().getOutgoingConnectionIds());
 
     DexpiConnectionCycleTransitionInfo parallelEntering = transitions.get(1);
@@ -898,13 +897,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("E-V", leaving.getToEndpoint().getOwnerId());
 
     assertThrows(UnsupportedOperationException.class, () -> transitions.clear());
-    assertThrows(UnsupportedOperationException.class, () -> entering.getToEndpoint().getIncomingConnectionIds().clear());
-    assertThrows(IllegalArgumentException.class,
-        () -> new DexpiConnectionCycleTransitionInfo(entering.getConnection(), entering.getFromEndpoint(),
-            entering.getToEndpoint(), "", ""));
-    assertThrows(IllegalArgumentException.class,
-        () -> new DexpiConnectionCycleTransitionInfo(between.getConnection(), between.getFromEndpoint(),
-            between.getToEndpoint(), "cycle-1", "cycle-1"));
+    assertThrows(UnsupportedOperationException.class,
+        () -> entering.getToEndpoint().getIncomingConnectionIds().clear());
+    assertThrows(IllegalArgumentException.class, () -> new DexpiConnectionCycleTransitionInfo(entering.getConnection(),
+        entering.getFromEndpoint(), entering.getToEndpoint(), "", ""));
+    assertThrows(IllegalArgumentException.class, () -> new DexpiConnectionCycleTransitionInfo(between.getConnection(),
+        between.getFromEndpoint(), between.getToEndpoint(), "cycle-1", "cycle-1"));
     assertTrue(first.toJson().contains("\"connectionCycleTransitionCount\": 4"));
     assertTrue(first.toJson().contains("\"kind\": \"BETWEEN_CYCLES\""));
     assertTrue(first.toJson().contains("\"fromCycleId\": \"cycle-1\""));
