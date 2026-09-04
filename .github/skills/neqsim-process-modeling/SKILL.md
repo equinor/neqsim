@@ -223,6 +223,54 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 
+## Process Safety Is Part of a Capacity or Tie-in Study
+
+A capacity, debottlenecking or tie-in study that reports only throughput is
+incomplete, and in an oil-and-gas setting it will not pass review. **More flow
+through a plant changes its relief demand, its blowdown inventory and its
+overpressure exposure.** Run these checks in the same study, not as a follow-on:
+
+1. **Overpressure protection per vessel.** For every vessel whose duty changes,
+   tabulate design pressure, PSV set pressure and the measured operating
+   pressure. Flag a set point above design (accumulation beyond the ASME VIII
+   110 % single-device allowance) and a set point far below design (it probably
+   protects a lower-rated downstream section — confirm which). Allow a rounding
+   tolerance of about 1 % before calling a set point above design a
+   non-conformance: design pressure and set pressure usually come from different
+   documents.
+2. **Relief adequacy against the governing case.** Size the relief with
+   `neqsim-relief-flare-network` (API 520 Part I critical gas flow) and compare
+   with the installed orifice. A PSV sized at a few percent of normal flow is
+   normal for a thermal or blocked-outlet case — it means the protection against
+   sustained gas blowby rests on the **shutdown system**, not the valve. Say so
+   explicitly rather than implying the PSV covers full flow.
+3. **Inflow bounding.** The maximum flow into each pressure step is set by the
+   upstream chokes and control valves. Without a choke `Cv` the blowby and
+   overpressure cases cannot be closed from first principles — record that as a
+   gap rather than assuming a number.
+4. **Blowdown.** Restriction-orifice sizes give the depressurisation time
+   (`neqsim-depressurization-mdmt`); without them, state that time-to-blowdown is
+   unknown.
+5. **The safety meaning of an over-capacity vessel.** A separator or scrubber
+   above its Souders-Brown gas-load limit carries liquid over into downstream
+   equipment. That is a **safety** finding, not only a production one: liquid to
+   a compressor, liquid to a dehydration bed, liquid to the flare KO drum. If a
+   capacity calculation shows an exceedance, follow the carry-over path and say
+   what it reaches.
+
+**Ordering rule.** Establish the capacity answer first, then the safety
+consequence of it — the safety question depends on which unit is loaded and by
+how much. Reporting capacity without step 5 is the most common way a
+throughput-increase study is quietly wrong.
+
+**Data-retrieval expectations** (verified on an NCS platform): design pressure
+and relief-device orifice/rated capacity are typically **not** tag attributes in
+an engineering register — they live in the mechanical and relief data sheets and
+often need OCR. Budget for that. Vessel *geometry* on a tag record may be an
+L×W×H envelope rather than an internal diameter; **where a data sheet exists it
+governs the tag field**, and the difference can move a utilisation result by tens
+of percent.
+
 ## Related Skills
 
 - `neqsim-api-patterns` — fluid setup, equipment APIs, and result extraction.
@@ -230,3 +278,7 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 - `neqsim-troubleshooting` — flash and process convergence recovery.
 - `neqsim-process-extraction` — JSON builder and route extraction from documents.
 - `neqsim-notebook-patterns` — executable notebook structure and devtools setup.
+- `neqsim-process-safety` — barrier, HAZOP, LOPA and SIL framing for the safety
+  step above.
+- `neqsim-relief-flare-network` — PSV sizing per API 520/521 and flare loads.
+- `neqsim-depressurization-mdmt` — blowdown time and low-temperature screening.

@@ -1049,8 +1049,7 @@ SYNC_REQUEST_TIMEOUT_MS = 120_000  # ms timeout for blocking run
 When building a new platform model from design documents:
 
 - [ ] **Identify separation stages**: HP, MP, LP pressures and temperatures
-- [ ] **Identify compression trains**: recompression (LP→HP), export, injection, booster
-- [ ] **Map out all recycle loops**: scrubber liquids, export liquids, anti-surge valves
+- [ ] **Identify compression trains**: recompression (LP→HP), export, injection, booster- [ ] **Map out all recycle loops**: scrubber liquids, export liquids, anti-surge valves
 - [ ] **Pre-create all StaticMixers** before building equipment
 - [ ] **Pre-create all recycle seed streams** (cloned, small flow rate, correct T/P)
 - [ ] **Use Heater as T/P setter** before scrubbers and at recycle return points
@@ -1063,6 +1062,20 @@ When building a new platform model from design documents:
 - [ ] **Oil TV P measurement**: `stream.TVP(20.0, "C")` for true vapor pressure at 20°C
 - [ ] **Run iterations**: 25 `run_step()` calls or single threaded `runAsThread()` with timeout
 - [ ] **Extract results**: structured response helpers for every equipment type
+- [ ] **Process safety pass (MANDATORY for a capacity, debottlenecking or
+      tie-in study)**: per vessel whose duty changes, tabulate design pressure,
+      PSV set pressure and measured operating pressure; check relief adequacy
+      against the governing case; bound the inflow with the choke Cv; and follow
+      the carry-over path of any vessel above its gas-load limit. A separator
+      over capacity sends liquid to the compressor, the dehydration bed or the
+      flare KO drum — that is a safety finding, not just a production one. See
+      
+eqsim-process-modeling and 
+eqsim-relief-flare-network.
+- [ ] **State the fluid characterization tier per feed**: measured PVT,
+      inherited from an old design case, assumed, or absent. A tie-in study is
+      only as good as its weakest feed, and an assumed CO2 will silently decide
+      an export-specification verdict.
 - [ ] **Validate mass balance FIRST (acceptance gate)**: sum feed `kg/hr` vs all
       product/export `kg/hr`; closure error must be `< 0.1 %` before accepting the
       solution (see Section 8.3). An imbalance means a dropped stream, non-converged
