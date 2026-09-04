@@ -11,6 +11,7 @@ on:
       - release/*
     paths:
       - 'pom*.xml'
+      - '.github/release-trigger'
 
 jobs:
   get_versions:
@@ -130,6 +131,7 @@ jobs:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
     needs: [get_versions, compile_java, compile_java_8, compile_mcp_server]
 
@@ -167,7 +169,7 @@ jobs:
           draft: ${{ steps.publication.outputs.draft }}
           generateReleaseNotes: true
           allowUpdates: true
-          updateOnlyUnreleased: true
+          updateOnlyUnreleased: ${{ steps.publication.outputs.draft == 'true' }}
           artifacts: "*.jar,*.sha256"
           artifactContentType: application/java-archive
           body: |
@@ -236,3 +238,12 @@ jobs:
             ## Release notes
 
             GitHub-generated release notes are included with this release and list the commits and pull requests since the previous version.
+
+      - name: Trigger downstream release workflows
+        if: steps.publication.outputs.draft == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # workflow_dispatch is allowed to start workflows created with GITHUB_TOKEN.
+          gh workflow run publish_to_maven_central.yml --ref "$GITHUB_REF_NAME"
+          gh workflow run mcp_server_release.yml --ref "$GITHUB_REF_NAME"
