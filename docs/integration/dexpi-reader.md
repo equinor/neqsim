@@ -105,6 +105,7 @@ DexpiXmlReader.ImportResult result =
     DexpiXmlReader.readWithDiagnostics(xmlFile.toFile(), template);
 ProcessSystem process = result.getProcessSystem();
 List<DexpiInstrumentInfo> instruments = result.getInstruments();
+List<DexpiInstrumentationLoopInfo> instrumentationLoops = result.getInstrumentationLoops();
 List<DexpiInformationFlowInfo> informationFlows = result.getInformationFlows();
 List<DexpiConnectionInfo> connections = result.getConnections();
 
@@ -149,6 +150,14 @@ lines additionally retain explicit attachment identity and resolution; signal li
 diagnostics, so Java and JPype callers do not need to reparse XML or invent endpoints. These records
 do not create live transmitters or controllers, infer control-loop intent, verify a loop, or classify
 safety-instrumented or safeguard functions.
+
+`ImportResult.getInstrumentationLoops()` exposes each source
+`InstrumentationLoopFunction` as an immutable, source-ordered
+`DexpiInstrumentationLoopInfo`. The record retains the loop ID, component class, explicit loop
+number, and every direct `is a collection including` occurrence in source order. Membership
+evidence preserves duplicate, blank, and unresolved references together with resolution status and
+the resolved XML element name. It does not infer control intent, verify functional completeness,
+construct executable control topology, or classify SIS or safeguard functions.
 
 The same result also preserves every source `Connection` in document order, including parallel
 connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning
@@ -231,15 +240,16 @@ stay in the global connection and diagnostic evidence because a transition canno
 cycle. This exact-once inventory remains source-reference evidence only; it does not prove hydraulic
 continuity, identify a physical recycle, enumerate paths, or alter simulation topology.
 
-`toJson()` includes `instrumentCount`, `informationFlowCount`, `connectionCount`,
+`toJson()` includes `instrumentCount`, `instrumentationLoopCount`,
+`informationFlowCount`, `connectionCount`,
 `connectionEndpointCount`, `connectionComponentCount`, `connectionCycleCount`,
-`connectionCycleTransitionCount`, and the ordered information-flow, connection, endpoint,
-component, directed-cycle, and cycle-transition inventories, including reference resolution,
+`connectionCycleTransitionCount`, and the ordered instrumentation-loop, information-flow, connection, endpoint, component,
+directed-cycle, and cycle-transition inventories, including reference resolution,
 incidence roles, review subsets, complete cycle-local endpoint and internal connection occurrences,
 explicit cycle-boundary occurrences, and exact-once transitions with nested connection and endpoint
 evidence, alongside the process-unit count and findings. Python callers through JPype use the same
-`ImportResult.getInstruments()`, `ImportResult.getInformationFlows()`,
-`ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`,
+`ImportResult.getInstruments()`, `ImportResult.getInstrumentationLoops()`,
+`ImportResult.getInformationFlows()`, `ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`,
 `ImportResult.getConnectionComponents()`, `ImportResult.getConnectionCycles()`, and
 `ImportResult.getConnectionCycleTransitions()` getters; there is no separate Python reconstruction
 model.
