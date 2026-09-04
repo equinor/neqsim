@@ -6,20 +6,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Exact piecewise-constant exposure trajectory for the published aqueous total-sulfide/O2
- * screening correlation.
+ * Exact piecewise-constant exposure trajectory for the published aqueous total-sulfide/O2 screening correlation.
  *
  * <p>
- * Each segment delegates its rate calculation to
- * {@link AqueousHydrogenSulfideOxidationKinetics}. The total-sulfide fraction therefore follows
- * {@code exp(-sum(k_i [O2]_i dt_i))} without numerical timestep error. The reported
- * one-standard-deviation log-rate scatter is propagated as one common multiplicative correlation
- * envelope.
+ * Each segment delegates its rate calculation to {@link AqueousHydrogenSulfideOxidationKinetics}. The total-sulfide
+ * fraction therefore follows {@code exp(-sum(k_i [O2]_i dt_i))} without numerical timestep error. The reported
+ * one-standard-deviation log-rate scatter is propagated as one common multiplicative correlation envelope.
  * </p>
  *
  * <p>
- * This class neither consumes oxygen nor assigns sulfur products. It does not accept pressure and
- * does not qualify a dense-phase CO2 or pipeline calculation.
+ * This class neither consumes oxygen nor assigns sulfur products. It does not accept pressure and does not qualify a
+ * dense-phase CO2 or pipeline calculation.
  * </p>
  *
  * @author NeqSim Team
@@ -29,14 +26,12 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
   private static final long serialVersionUID = 1000L;
 
   /** Minimum initial total-sulfide molality covered by the source experiment [mol/kg water]. */
-  public static final double MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY =
-      AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_MOLALITY
-          - AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_SPREAD;
+  public static final double MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY = AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_MOLALITY
+      - AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_SPREAD;
 
   /** Maximum initial total-sulfide molality covered by the source experiment [mol/kg water]. */
-  public static final double MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY =
-      AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_MOLALITY
-          + AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_SPREAD;
+  public static final double MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY = AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_MOLALITY
+      + AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_SPREAD;
 
   private AqueousHydrogenSulfideOxidationTrajectory() {
   }
@@ -47,9 +42,8 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
    * @param initialTotalSulfideMolality initial total-sulfide molality [mol/kg water]
    * @param segments non-empty ordered exposure segments
    * @return immutable trajectory result with per-segment evidence
-   * @throws IllegalArgumentException when the initial molality is outside the source experiment,
-   *         the segment list is null or empty, a segment is null, or an accumulated value is not
-   *         finite
+   * @throws IllegalArgumentException when the initial molality is outside the source experiment, the segment list is
+   * null or empty, a segment is null, or an accumulated value is not finite
    */
   public static Result advance(double initialTotalSulfideMolality, List<Segment> segments) {
     requireInitialTotalSulfide(initialTotalSulfideMolality);
@@ -69,77 +63,55 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
         throw new IllegalArgumentException("exposure segment " + index + " cannot be null");
       }
 
-      AqueousHydrogenSulfideOxidationKinetics.RateConstantRange rateRange =
-          AqueousHydrogenSulfideOxidationKinetics.secondOrderRateConstantRange(
-              segment.getTemperatureK(), segment.getPH(),
+      AqueousHydrogenSulfideOxidationKinetics.RateConstantRange rateRange = AqueousHydrogenSulfideOxidationKinetics
+          .secondOrderRateConstantRange(segment.getTemperatureK(), segment.getPH(),
               segment.getIonicStrengthMolPerKgWater());
-      double nominalPseudoFirstOrderRate =
-          AqueousHydrogenSulfideOxidationKinetics.pseudoFirstOrderRateConstant(
-              segment.getAirSaturatedOxygenMolality(), segment.getTemperatureK(),
-              segment.getPH(), segment.getIonicStrengthMolPerKgWater());
-      double lowerPseudoFirstOrderRate =
-          rateRange.getLower() * segment.getAirSaturatedOxygenMolality();
-      double upperPseudoFirstOrderRate =
-          rateRange.getUpper() * segment.getAirSaturatedOxygenMolality();
+      double nominalPseudoFirstOrderRate = AqueousHydrogenSulfideOxidationKinetics.pseudoFirstOrderRateConstant(
+          segment.getAirSaturatedOxygenMolality(), segment.getTemperatureK(), segment.getPH(),
+          segment.getIonicStrengthMolPerKgWater());
+      double lowerPseudoFirstOrderRate = rateRange.getLower() * segment.getAirSaturatedOxygenMolality();
+      double upperPseudoFirstOrderRate = rateRange.getUpper() * segment.getAirSaturatedOxygenMolality();
       requireFinitePositive(lowerPseudoFirstOrderRate, "lower pseudo-first-order rate");
       requireFinitePositive(upperPseudoFirstOrderRate, "upper pseudo-first-order rate");
 
-      double segmentNominalExposure =
-          nominalPseudoFirstOrderRate * segment.getDurationHours();
-      double segmentLowerRateExposure =
-          lowerPseudoFirstOrderRate * segment.getDurationHours();
-      double segmentUpperRateExposure =
-          upperPseudoFirstOrderRate * segment.getDurationHours();
+      double segmentNominalExposure = nominalPseudoFirstOrderRate * segment.getDurationHours();
+      double segmentLowerRateExposure = lowerPseudoFirstOrderRate * segment.getDurationHours();
+      double segmentUpperRateExposure = upperPseudoFirstOrderRate * segment.getDurationHours();
       requireFiniteNonNegative(segmentNominalExposure, "segment nominal exposure");
       requireFiniteNonNegative(segmentLowerRateExposure, "segment lower-rate exposure");
       requireFiniteNonNegative(segmentUpperRateExposure, "segment upper-rate exposure");
 
       totalTimeHours = finiteSum(totalTimeHours, segment.getDurationHours(), "total time");
-      nominalExposure =
-          finiteSum(nominalExposure, segmentNominalExposure, "nominal cumulative exposure");
-      lowerRateExposure =
-          finiteSum(lowerRateExposure, segmentLowerRateExposure,
-              "lower-rate cumulative exposure");
-      upperRateExposure =
-          finiteSum(upperRateExposure, segmentUpperRateExposure,
-              "upper-rate cumulative exposure");
+      nominalExposure = finiteSum(nominalExposure, segmentNominalExposure, "nominal cumulative exposure");
+      lowerRateExposure = finiteSum(lowerRateExposure, segmentLowerRateExposure, "lower-rate cumulative exposure");
+      upperRateExposure = finiteSum(upperRateExposure, segmentUpperRateExposure, "upper-rate cumulative exposure");
 
-      segmentResults.add(new SegmentResult(index, segment, rateRange.getLower(),
-          rateRange.getNominal(), rateRange.getUpper(), lowerPseudoFirstOrderRate,
-          nominalPseudoFirstOrderRate, upperPseudoFirstOrderRate,
-          segmentLowerRateExposure, segmentNominalExposure, segmentUpperRateExposure,
-          lowerRateExposure, nominalExposure, upperRateExposure));
+      segmentResults.add(new SegmentResult(index, segment, rateRange.getLower(), rateRange.getNominal(),
+          rateRange.getUpper(), lowerPseudoFirstOrderRate, nominalPseudoFirstOrderRate, upperPseudoFirstOrderRate,
+          segmentLowerRateExposure, segmentNominalExposure, segmentUpperRateExposure, lowerRateExposure,
+          nominalExposure, upperRateExposure));
     }
 
     double nominalRemainingFraction = Math.exp(-nominalExposure);
     double lowerRateRemainingFraction = Math.exp(-lowerRateExposure);
     double upperRateRemainingFraction = Math.exp(-upperRateExposure);
-    double finalTotalSulfideMolality =
-        initialTotalSulfideMolality * nominalRemainingFraction;
-    double finalAtLowerRate =
-        initialTotalSulfideMolality * lowerRateRemainingFraction;
-    double finalAtUpperRate =
-        initialTotalSulfideMolality * upperRateRemainingFraction;
-    double reactedTotalSulfideMolality =
-        initialTotalSulfideMolality - finalTotalSulfideMolality;
-    double closureResidual = initialTotalSulfideMolality - finalTotalSulfideMolality
-        - reactedTotalSulfideMolality;
+    double finalTotalSulfideMolality = initialTotalSulfideMolality * nominalRemainingFraction;
+    double finalAtLowerRate = initialTotalSulfideMolality * lowerRateRemainingFraction;
+    double finalAtUpperRate = initialTotalSulfideMolality * upperRateRemainingFraction;
+    double reactedTotalSulfideMolality = initialTotalSulfideMolality - finalTotalSulfideMolality;
+    double closureResidual = initialTotalSulfideMolality - finalTotalSulfideMolality - reactedTotalSulfideMolality;
 
-    return new Result(initialTotalSulfideMolality, finalTotalSulfideMolality,
-        reactedTotalSulfideMolality, finalAtLowerRate, finalAtUpperRate, totalTimeHours,
-        nominalExposure, lowerRateExposure, upperRateExposure, nominalRemainingFraction,
-        lowerRateRemainingFraction, upperRateRemainingFraction, closureResidual,
+    return new Result(initialTotalSulfideMolality, finalTotalSulfideMolality, reactedTotalSulfideMolality,
+        finalAtLowerRate, finalAtUpperRate, totalTimeHours, nominalExposure, lowerRateExposure, upperRateExposure,
+        nominalRemainingFraction, lowerRateRemainingFraction, upperRateRemainingFraction, closureResidual,
         segmentResults);
   }
 
   private static void requireInitialTotalSulfide(double molality) {
-    if (!Double.isFinite(molality)
-        || molality < MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY
+    if (!Double.isFinite(molality) || molality < MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY
         || molality > MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY) {
-      throw new IllegalArgumentException(
-          "initial total-sulfide molality must be within the source experiment range of "
-              + MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY + " to "
-              + MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY + " mol/kg water");
+      throw new IllegalArgumentException("initial total-sulfide molality must be within the source experiment range of "
+          + MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY + " to " + MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY + " mol/kg water");
     }
   }
 
@@ -180,16 +152,16 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
      * @param temperatureK aqueous temperature [K]
      * @param pH aqueous pH on the source-compatible scale
      * @param ionicStrengthMolPerKgWater ionic strength [mol/kg water]
-     * @param airSaturatedOxygenMolality independently established air-saturated dissolved
-     *        oxygen molality [mol/kg water]
-     * @throws IllegalArgumentException when duration is negative or non-finite, oxygen is not
-     *         finite and positive, or the thermochemical state is outside the source range
+     * @param airSaturatedOxygenMolality independently established air-saturated dissolved oxygen molality [mol/kg
+     * water]
+     * @throws IllegalArgumentException when duration is negative or non-finite, oxygen is not finite and positive, or
+     * the thermochemical state is outside the source range
      */
-    public Segment(double durationHours, double temperatureK, double pH,
-        double ionicStrengthMolPerKgWater, double airSaturatedOxygenMolality) {
+    public Segment(double durationHours, double temperatureK, double pH, double ionicStrengthMolPerKgWater,
+        double airSaturatedOxygenMolality) {
       requireFiniteNonNegative(durationHours, "segment duration");
-      AqueousHydrogenSulfideOxidationKinetics.pseudoFirstOrderRateConstant(
-          airSaturatedOxygenMolality, temperatureK, pH, ionicStrengthMolPerKgWater);
+      AqueousHydrogenSulfideOxidationKinetics.pseudoFirstOrderRateConstant(airSaturatedOxygenMolality, temperatureK, pH,
+          ionicStrengthMolPerKgWater);
       this.durationHours = durationHours;
       this.temperatureK = temperatureK;
       this.pH = pH;
@@ -242,13 +214,10 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
     private final double cumulativeNominalExposure;
     private final double cumulativeUpperRateExposure;
 
-    private SegmentResult(int index, Segment segment, double lowerSecondOrderRate,
-        double nominalSecondOrderRate, double upperSecondOrderRate,
-        double lowerPseudoFirstOrderRate, double nominalPseudoFirstOrderRate,
-        double upperPseudoFirstOrderRate, double lowerRateExposure,
-        double nominalExposure, double upperRateExposure,
-        double cumulativeLowerRateExposure, double cumulativeNominalExposure,
-        double cumulativeUpperRateExposure) {
+    private SegmentResult(int index, Segment segment, double lowerSecondOrderRate, double nominalSecondOrderRate,
+        double upperSecondOrderRate, double lowerPseudoFirstOrderRate, double nominalPseudoFirstOrderRate,
+        double upperPseudoFirstOrderRate, double lowerRateExposure, double nominalExposure, double upperRateExposure,
+        double cumulativeLowerRateExposure, double cumulativeNominalExposure, double cumulativeUpperRateExposure) {
       this.index = index;
       this.segment = segment;
       this.lowerSecondOrderRate = lowerSecondOrderRate;
@@ -357,18 +326,15 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
 
     private Result(double initialTotalSulfideMolality, double finalTotalSulfideMolality,
         double reactedTotalSulfideMolality, double finalTotalSulfideMolalityAtLowerRate,
-        double finalTotalSulfideMolalityAtUpperRate, double totalTimeHours,
-        double nominalExposure, double lowerRateExposure, double upperRateExposure,
-        double nominalRemainingFraction, double lowerRateRemainingFraction,
-        double upperRateRemainingFraction, double totalSulfideClosureResidual,
+        double finalTotalSulfideMolalityAtUpperRate, double totalTimeHours, double nominalExposure,
+        double lowerRateExposure, double upperRateExposure, double nominalRemainingFraction,
+        double lowerRateRemainingFraction, double upperRateRemainingFraction, double totalSulfideClosureResidual,
         List<SegmentResult> segmentResults) {
       this.initialTotalSulfideMolality = initialTotalSulfideMolality;
       this.finalTotalSulfideMolality = finalTotalSulfideMolality;
       this.reactedTotalSulfideMolality = reactedTotalSulfideMolality;
-      this.finalTotalSulfideMolalityAtLowerRate =
-          finalTotalSulfideMolalityAtLowerRate;
-      this.finalTotalSulfideMolalityAtUpperRate =
-          finalTotalSulfideMolalityAtUpperRate;
+      this.finalTotalSulfideMolalityAtLowerRate = finalTotalSulfideMolalityAtLowerRate;
+      this.finalTotalSulfideMolalityAtUpperRate = finalTotalSulfideMolalityAtUpperRate;
       this.totalTimeHours = totalTimeHours;
       this.nominalExposure = nominalExposure;
       this.lowerRateExposure = lowerRateExposure;
@@ -377,8 +343,7 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
       this.lowerRateRemainingFraction = lowerRateRemainingFraction;
       this.upperRateRemainingFraction = upperRateRemainingFraction;
       this.totalSulfideClosureResidual = totalSulfideClosureResidual;
-      this.segmentResults =
-          Collections.unmodifiableList(new ArrayList<SegmentResult>(segmentResults));
+      this.segmentResults = Collections.unmodifiableList(new ArrayList<SegmentResult>(segmentResults));
     }
 
     /** @return initial total-sulfide molality [mol/kg water]. */
