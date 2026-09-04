@@ -29,6 +29,18 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     assertEquals(60.445190, qualification.getPredictedPureWaterTransitionAtEvaluatedPressureCelsius(), 1.0e-6);
     assertEquals(-52.4, qualification.getAnhydriteLumpedReactionVolumeCm3PerMol(), 0.0);
     assertEquals(-33.0, qualification.getGypsumLumpedReactionVolumeCm3PerMol(), 0.0);
+    assertEquals(45.992142858753, qualification.getAnhydriteCrystallographicMolarVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(74.454135072184, qualification.getGypsumCrystallographicMolarVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(18.068636448540, qualification.getLiquidWaterReferenceMolarVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(7.675280683650, qualification.getCrystallographicTransitionReactionVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(19.4, qualification.getCompsaltTransitionReactionVolumeCm3PerMol(), 0.0);
+    assertEquals(11.724719316350, qualification.getTransitionReactionVolumeDifferenceCm3PerMol(), 1.0e-12);
+    assertEquals(2.527594859342, qualification.getTransitionReactionVolumeRatio(), 1.0e-12);
+    assertEquals("10.1154/1.3659285", qualification.getAnhydriteCrystallographyDoi());
+    assertEquals("10.1154/1.1725254", qualification.getGypsumCrystallographyDoi());
+    assertEquals("10.1063/1.3043575", qualification.getWaterDensityReferenceDoi());
+    assertEquals(298.15, CalciumSulfatePhaseBoundaryQualification.WATER_DENSITY_REFERENCE_TEMPERATURE_K, 0.0);
+    assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.WATER_DENSITY_REFERENCE_PRESSURE_BARA, 0.0);
     assertEquals(0.0, qualification.getAnhydriteLogKspPressureCorrection(), 0.0);
     assertEquals(0.0, qualification.getGypsumLogKspPressureCorrection(), 0.0);
     assertFalse(qualification.isAqueousSpeciesVolumeResolved());
@@ -58,6 +70,8 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     CalciumSulfatePhaseBoundaryQualification repeated = new ThermodynamicOperations(new SystemSrkEos(313.15, 1.01325))
         .qualifyCalciumSulfatePhaseBoundary();
     assertEquals(first.formatDiagnostic(), repeated.formatDiagnostic());
+    assertTrue(first.formatDiagnostic().contains("crystallographicTransitionV_cm3_per_mol=7.675280683649"));
+    assertTrue(first.formatDiagnostic().contains("compsaltTransitionV_cm3_per_mol=19.4"));
     assertFalse(first.getLimitations().isEmpty());
     assertThrows(UnsupportedOperationException.class, () -> first.getLimitations().add("unexpected"));
 

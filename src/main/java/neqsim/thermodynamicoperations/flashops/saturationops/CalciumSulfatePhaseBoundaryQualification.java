@@ -35,6 +35,16 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   public static final String HIGH_PRESSURE_LINEAGE_DOI = "10.2475/ajs.261.1.61";
   /** License of the registered numerical evidence. */
   public static final String EVIDENCE_LICENSE = "CC BY 4.0";
+  /** Primary anhydrite synchrotron crystallography DOI. */
+  public static final String ANHYDRITE_CRYSTALLOGRAPHY_DOI = "10.1154/1.3659285";
+  /** Primary gypsum synchrotron crystallography DOI. */
+  public static final String GYPSUM_CRYSTALLOGRAPHY_DOI = "10.1154/1.1725254";
+  /** Liquid-water density reference-correlation DOI. */
+  public static final String WATER_DENSITY_REFERENCE_DOI = "10.1063/1.3043575";
+  /** Temperature of the liquid-water density reference. */
+  public static final double WATER_DENSITY_REFERENCE_TEMPERATURE_K = 298.15;
+  /** Pressure of the liquid-water density reference. */
+  public static final double WATER_DENSITY_REFERENCE_PRESSURE_BARA = 1.0;
   /** Reference pressure of the COMPSALT constant-volume correction. */
   public static final double COMPSALT_PRESSURE_CORRECTION_REFERENCE_BARA = CalcSaltSatauration.PRESSURE_CORRECTION_REFERENCE_BARA;
 
@@ -45,6 +55,12 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   private static final double NACL_40_WATER_ACTIVITY_MINIMUM = 0.9370;
   private static final double NACL_40_WATER_ACTIVITY_MAXIMUM = 0.9587;
   private static final double REFERENCE_PRESSURE_TOLERANCE_BARA = 0.02;
+  private static final double AVOGADRO_ANGSTROM3_TO_CM3_PER_MOL = 0.602214076;
+  private static final double ANHYDRITE_CELL_VOLUME_ANGSTROM3 = 305.487;
+  private static final double GYPSUM_CELL_VOLUME_ANGSTROM3 = 494.536;
+  private static final double FORMULA_UNITS_PER_CELL = 4.0;
+  private static final double WATER_MOLAR_MASS_G_PER_MOL = 18.01528;
+  private static final double WATER_DENSITY_KG_PER_M3 = 997.047013;
 
   private final double evaluatedPressureBara;
   private final double evaluatedTemperatureKelvin;
@@ -141,6 +157,84 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   /** @return COMPSALT gypsum lumped reaction-volume coefficient in cm3/mol */
   public double getGypsumLumpedReactionVolumeCm3PerMol() {
     return gypsumLumpedReactionVolumeCm3PerMol;
+  }
+
+  /**
+   * Returns the nominal ambient molar volume derived from the published anhydrite unit cell.
+   *
+   * @return anhydrite molar volume in cm3/mol
+   */
+  public double getAnhydriteCrystallographicMolarVolumeCm3PerMol() {
+    return ANHYDRITE_CELL_VOLUME_ANGSTROM3 * AVOGADRO_ANGSTROM3_TO_CM3_PER_MOL / FORMULA_UNITS_PER_CELL;
+  }
+
+  /**
+   * Returns the nominal ambient molar volume derived from the published gypsum unit cell.
+   *
+   * @return gypsum molar volume in cm3/mol
+   */
+  public double getGypsumCrystallographicMolarVolumeCm3PerMol() {
+    return GYPSUM_CELL_VOLUME_ANGSTROM3 * AVOGADRO_ANGSTROM3_TO_CM3_PER_MOL / FORMULA_UNITS_PER_CELL;
+  }
+
+  /**
+   * Returns the liquid-water molar volume from the 298.15 K, 0.1 MPa reference density.
+   *
+   * @return liquid-water molar volume in cm3/mol
+   */
+  public double getLiquidWaterReferenceMolarVolumeCm3PerMol() {
+    return WATER_MOLAR_MASS_G_PER_MOL / (WATER_DENSITY_KG_PER_M3 / 1000.0);
+  }
+
+  /**
+   * Returns the nominal ambient crystallographic reaction volume for gypsum transforming to anhydrite plus two
+   * liquid-water molecules.
+   *
+   * <p>
+   * This is a measurement-derived structural diagnostic, not a fitted COMPSALT parameter or a high-pressure
+   * qualification.
+   * </p>
+   *
+   * @return nominal reaction volume in cm3/mol
+   */
+  public double getCrystallographicTransitionReactionVolumeCm3PerMol() {
+    return getAnhydriteCrystallographicMolarVolumeCm3PerMol() + 2.0 * getLiquidWaterReferenceMolarVolumeCm3PerMol()
+        - getGypsumCrystallographicMolarVolumeCm3PerMol();
+  }
+
+  /**
+   * Returns the transition reaction volume implied by the difference between the existing lumped COMPSALT gypsum and
+   * anhydrite coefficients.
+   *
+   * @return COMPSALT transition reaction volume in cm3/mol
+   */
+  public double getCompsaltTransitionReactionVolumeCm3PerMol() {
+    return gypsumLumpedReactionVolumeCm3PerMol - anhydriteLumpedReactionVolumeCm3PerMol;
+  }
+
+  /** @return COMPSALT minus crystallographic transition reaction volume in cm3/mol */
+  public double getTransitionReactionVolumeDifferenceCm3PerMol() {
+    return getCompsaltTransitionReactionVolumeCm3PerMol() - getCrystallographicTransitionReactionVolumeCm3PerMol();
+  }
+
+  /** @return ratio of COMPSALT to crystallographic transition reaction volume */
+  public double getTransitionReactionVolumeRatio() {
+    return getCompsaltTransitionReactionVolumeCm3PerMol() / getCrystallographicTransitionReactionVolumeCm3PerMol();
+  }
+
+  /** @return primary anhydrite synchrotron crystallography DOI */
+  public String getAnhydriteCrystallographyDoi() {
+    return ANHYDRITE_CRYSTALLOGRAPHY_DOI;
+  }
+
+  /** @return primary gypsum synchrotron crystallography DOI */
+  public String getGypsumCrystallographyDoi() {
+    return GYPSUM_CRYSTALLOGRAPHY_DOI;
+  }
+
+  /** @return liquid-water density reference-correlation DOI */
+  public String getWaterDensityReferenceDoi() {
+    return WATER_DENSITY_REFERENCE_DOI;
   }
 
   /** @return logarithmic anhydrite Ksp pressure correction at the evaluated state */
@@ -264,6 +358,8 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
         "Bock primary-table transcription, preprocessing uncertainty, and absolute-solubility "
             + "residuals remain unqualified",
         "COMPSALT Vdelta is a constant lumped reaction-volume coefficient, not a pure-mineral molar volume",
+        "The ambient crystallographic reaction-volume cycle is a diagnostic only; its reported cell errors do not "
+            + "bound thermal expansion, compressibility, sample, or other systematic effects",
         "High-pressure use requires a verified reaction-volume convention that separately resolves aqueous partial "
             + "or apparent molar volumes",
         "The registered evidence covers pure-water and NaCl phase crossings, not general "
@@ -281,9 +377,13 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
         + evaluatedPressureBara + ", evaluatedPressureTransition_C="
         + predictedPureWaterTransitionAtEvaluatedPressureCelsius + ", anhydriteVdelta_cm3_per_mol="
         + anhydriteLumpedReactionVolumeCm3PerMol + ", gypsumVdelta_cm3_per_mol=" + gypsumLumpedReactionVolumeCm3PerMol
-        + ", aqueousSpeciesVolumeResolved=" + isAqueousSpeciesVolumeResolved() + ", highPressureQualified="
-        + isHighPressureQualified() + ", referencePressurePass=" + referencePressureEnvelopePass + ", evidenceDoi="
-        + EVIDENCE_DOI + ", license=" + EVIDENCE_LICENSE;
+        + ", crystallographicTransitionV_cm3_per_mol=" + getCrystallographicTransitionReactionVolumeCm3PerMol()
+        + ", compsaltTransitionV_cm3_per_mol=" + getCompsaltTransitionReactionVolumeCm3PerMol()
+        + ", transitionVdifference_cm3_per_mol=" + getTransitionReactionVolumeDifferenceCm3PerMol()
+        + ", transitionVratio=" + getTransitionReactionVolumeRatio() + ", aqueousSpeciesVolumeResolved="
+        + isAqueousSpeciesVolumeResolved() + ", highPressureQualified=" + isHighPressureQualified()
+        + ", referencePressurePass=" + referencePressureEnvelopePass + ", evidenceDoi=" + EVIDENCE_DOI + ", license="
+        + EVIDENCE_LICENSE;
   }
 
   private static double solvePureWaterTransitionCelsius(CalcSaltSatauration anhydrite, CalcSaltSatauration gypsum,
