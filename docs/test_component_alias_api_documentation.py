@@ -64,7 +64,7 @@ class ComponentAliasApiDocumentationContractTest(unittest.TestCase):
             'fluid.getPhase(0).getComponent("ISOOCTANE")',
             "`hasComponent(String)`",
             "near-miss inputs are not guessed",
-            "../component_list.md#component-name-resolution",
+            "../component_list#component-name-resolution",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, self.component_package)
