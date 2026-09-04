@@ -153,22 +153,22 @@ def payload(response):
 
 
 def test_structured_report(client):
-    result = payload(
-        client.report(
-            {
-                "reportType": "custom",
-                "title": "Compression review",
-                "author": "Packaged MCP contract",
-                "includeValidation": False,
-                "data": {
-                    "temperature_C": 25.0,
-                    "pressure_bar": 50.0,
-                    "curve": [1.0, 2.0, 3.0],
-                    "conclusions": "Synthetic evidence only.",
-                },
-            }
-        )
+    response = client.report(
+        {
+            "reportType": "custom",
+            "title": "Compression review",
+            "author": "Packaged MCP contract",
+            "includeValidation": False,
+            "data": {
+                "temperature_C": 25.0,
+                "pressure_bar": 50.0,
+                "curve": [1.0, 2.0, 3.0],
+                "conclusions": "Synthetic evidence only.",
+            },
+        }
     )
+    report = response.get("data", response)
+    result = payload(response)
     require(result.get("status") == "success", "report transport failed", result)
     require(result.get("title") == "Compression review", "report title drifted", result)
     require(result.get("author") == "Packaged MCP contract", "report author drifted", result)
@@ -179,7 +179,12 @@ def test_structured_report(client):
     require(len(result.get("tables", [])) == 1, "structured table is absent", result)
     require(len(result.get("chartData", [])) == 1, "chart-ready array is absent", result)
     require(result["chartData"][0].get("name") == "curve", "chart source drifted", result)
-    require("validation" not in result, "disabled validation was emitted", result)
+    require("validation" not in report, "disabled report validation was emitted", report)
+    require(
+        response.get("validation", {}).get("valid") is True,
+        "standard MCP envelope validation is absent",
+        response,
+    )
     require(
         result.get("summary")
         == {"numericFields": 2, "objectFields": 0, "arrayFields": 1, "totalFields": 4},
@@ -192,14 +197,14 @@ def test_structured_report(client):
 
 
 def test_report_switches_and_fail_closed_input(client):
-    result = payload(
-        client.report(
-            {"includeChartData": False, "includeValidation": False, "data": {}}
-        )
+    response = client.report(
+        {"includeChartData": False, "includeValidation": False, "data": {}}
     )
+    report = response.get("data", response)
+    result = payload(response)
     require(result.get("status") == "success", "minimal report failed", result)
-    require("chartData" not in result, "disabled chart data was emitted", result)
-    require("validation" not in result, "disabled validation was emitted", result)
+    require("chartData" not in report, "disabled chart data was emitted", report)
+    require("validation" not in report, "disabled report validation was emitted", report)
     require(isinstance(result.get("tables"), list), "tables field is absent", result)
 
     for malformed in ("{bad json}", "[]"):

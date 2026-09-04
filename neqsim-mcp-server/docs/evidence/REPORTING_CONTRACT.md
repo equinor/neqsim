@@ -18,7 +18,8 @@ and response-size guard. A successful response preserves the requested title, au
 - transient Markdown containing input, result and conclusion sections;
 - a structured summary table of recursively discovered numeric fields, capped at 100 rows;
 - optional chart-ready records for numeric arrays, capped at 20 records;
-- optional advisory `EngineeringValidator` output; and
+- optional embedded advisory `EngineeringValidator` output (separate from the always-present standard MCP envelope
+  validation); and
 - shallow top-level numeric, object, array and total-field counts.
 
 `NeqSimTools.bridgeTaskWorkflow` delegates to `TaskWorkflowBridge.run(bridgeJson)` and applies the same transport guard.
