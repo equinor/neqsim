@@ -893,6 +893,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         "valve_1", stream1);
     valve1.setOutletPressure(5.0);
     valve1.setPercentValveOpening(30.0);
+    // Keep this established dynamic reference case on the explicitly choked sizing path.
+    valve1.setAllowChoked(true);
     valve1.setCalculateSteadyState(false);
 
     neqsim.process.equipment.separator.Separator separator1 = new neqsim.process.equipment.separator.Separator(
@@ -913,6 +915,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
         "valve_3", separator1.getGasOutStream());
     valve3.setOutletPressure(1.0);
     valve3.setPercentValveOpening(30.0);
+    valve3.setAllowChoked(true);
     valve3.setCalculateSteadyState(false);
 
     neqsim.process.measurementdevice.VolumeFlowTransmitter flowTransmitter = new neqsim.process.measurementdevice.VolumeFlowTransmitter(
