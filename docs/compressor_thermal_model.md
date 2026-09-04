@@ -3,7 +3,6 @@ title: Compressor Thermal Model and Catalog
 description: Reduced-order thermal resistance/capacitance network for estimating compressor metal temperatures (shaft, impeller, casing, dry-gas seal, bearings). Covers the governing lumped-node energy balance, steady-state and transient solvers, the JSON compressor catalog workflow, and condensate/sulfur-deposition screening.
 ---
 
-# Compressor thermal model and catalog
 
 `CompressorThermalModel` is a reduced-order thermal resistance/capacitance network for estimating temperatures at locations that are not represented by the process-gas outlet temperature. Standard locations include the inlet shaft, impeller, casing, dry-gas seal, radial bearing and thrust bearing. Fluid boundaries include suction gas, discharge gas, seal gas, lube oil and ambient air.
 
