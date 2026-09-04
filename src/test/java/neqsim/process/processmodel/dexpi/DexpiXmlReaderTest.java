@@ -431,8 +431,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
         + "<Nozzle ID=\"N-ELECTRICAL\"/><FinalControlElement ID=\"M-200\"/>"
         + "<ActuatingElectricalFunction ComponentClass=\"ActuatingElectricalFunction\" ID=\"AEF-200\">"
-        + "<GenericAttributes>"
-        + "<GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"YC-200\"/>"
+        + "<GenericAttributes>" + "<GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"YC-200\"/>"
         + "<GenericAttribute Name=\"FinalControlElementID\" Value=\"M-200\"/>"
         + "</GenericAttributes><Association Type=\"is located in\" ItemID=\"N-ELECTRICAL\"/>"
         + "</ActuatingElectricalFunction></PlantModel>";
