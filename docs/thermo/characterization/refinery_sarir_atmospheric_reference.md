@@ -25,6 +25,15 @@ The source then reports a `550 degC+` terminal residue reaching 100 volume%. Neq
 
 The published HYSYS case uses 34 valve trays, feeds 54,420 kg/h of crude at 350 degC and 233 kPa to tray 31 counted from the top, and includes main-column, kerosene-stripper, and diesel-stripper steam rates of 340.2, 68.04, and 226.8 kg/h. Top and bottom pump-around rates are 29,777.64 and 60,423.66 kg/h.
 
+Table 4 gives the complete numeric pump-around rows:
+
+| Source label | Draw tray | Return tray | Flow (kg/h) | Draw temperature (degC) | Return temperature (degC) | Derived drop (K) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top pump around (TPA) | 3 | 1 | 29,777.64 | 143.9 | 80.99 | 62.91 |
+| Bottom pump around (BPA) | 22 | 19 | 60,423.66 | 232.4 | 173.99 | 58.41 |
+
+The temperature drops are direct differences of the published draw and return temperatures. Table 4 does not explicitly state whether its tray labels are counted from the top or bottom. The Java API therefore exposes them as raw source tray numbers and reports the numbering basis as unresolved. They are not automatically converted to NeqSim's bottom-up indices or used to configure a column.
+
 Four products have numeric laboratory and simulated ASTM D86 T5/T95 evidence:
 
 | Product | Lab T5 (degC) | Lab T95 (degC) | HYSYS T5 (degC) | HYSYS T95 (degC) |
@@ -57,6 +66,13 @@ SarirAtmosphericReference.ProductYieldReference diesel =
     SarirAtmosphericReference.getProductYield("Diesel");
 double plantRate = diesel.getPlantMetricTonPerDay();
 double errorPercent = diesel.getAbsoluteRelativeErrorPercent();
+
+SarirAtmosphericReference.PumparoundReference topPumparound =
+    SarirAtmosphericReference.getPumparound("Top pump around (TPA)");
+double sourceFlowKgPerHour = topPumparound.getMassFlowRateKgPerHour();
+int rawSourceDrawTray = topPumparound.getSourceDrawTrayNumber();
+boolean trayBasisIsExplicit =
+    SarirAtmosphericReference.hasExplicitPumparoundTrayNumberingBasis();
 ```
 
 Static methods are directly accessible through JPype. Arrays are defensive copies, and unknown product labels or invalid error inputs fail closed.
@@ -124,4 +140,5 @@ inventory merely to force every screen stream positive.
 The published plant rates remain untouched read-only evidence. They are not used as product-flow
 specifications, tuning targets, or numerical acceptance thresholds. This sensitivity gate does not
 qualify plant-yield or D86 reproduction and does not model the published steam, pump-around,
-side-stripper, tray-hydraulic, or efficiency details.
+side-stripper, tray-hydraulic, or efficiency details. The separate pump-around reference rows are
+source evidence only; unresolved tray-numbering direction prevents direct model configuration.
