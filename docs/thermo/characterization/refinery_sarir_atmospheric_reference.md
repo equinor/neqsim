@@ -25,6 +25,20 @@ The source then reports a `550 degC+` terminal residue reaching 100 volume%. Neq
 
 The published HYSYS case uses 34 valve trays, feeds 54,420 kg/h of crude at 350 degC and 233 kPa to tray 31 counted from the top, and includes main-column, kerosene-stripper, and diesel-stripper steam rates of 340.2, 68.04, and 226.8 kg/h. Top and bottom pump-around rates are 29,777.64 and 60,423.66 kg/h.
 
+The complete source-identified steam set is:
+
+| Source label | Service | Steam flow (kg/h) |
+| --- | --- | ---: |
+| Main atmospheric column | Main atmospheric column | 340.2 |
+| Kerosene side stripper | Kerosene side stripper | 68.04 |
+| Diesel side stripper | Diesel side stripper | 226.8 |
+| **Total** | Derived sum | **635.04** |
+
+The total is a direct sum of the three published rates. The article does not report the injection
+tray locations or the steam temperature, pressure, quality, or enthalpy. The API therefore exposes
+the rows as source evidence and reports both the location and thermodynamic state as unresolved. It
+does not create executable water streams or side-stripper topology.
+
 Table 4 gives the complete numeric pump-around rows:
 
 | Source label | Draw tray | Return tray | Flow (kg/h) | Draw temperature (degC) | Return temperature (degC) | Derived drop (K) |
@@ -73,6 +87,13 @@ double sourceFlowKgPerHour = topPumparound.getMassFlowRateKgPerHour();
 int rawSourceDrawTray = topPumparound.getSourceDrawTrayNumber();
 boolean trayBasisIsExplicit =
     SarirAtmosphericReference.hasExplicitPumparoundTrayNumberingBasis();
+
+SarirAtmosphericReference.SteamInjectionReference keroseneSteam =
+    SarirAtmosphericReference.getSteamInjection("Kerosene side stripper");
+double steamRateKgPerHour = keroseneSteam.getMassFlowRateKgPerHour();
+double totalSteamRateKgPerHour = SarirAtmosphericReference.getTotalSteamRateKgPerHour();
+boolean steamStateIsExplicit =
+    SarirAtmosphericReference.hasExplicitSteamThermodynamicState();
 ```
 
 Static methods are directly accessible through JPype. Arrays are defensive copies, and unknown product labels or invalid error inputs fail closed.
@@ -142,3 +163,5 @@ specifications, tuning targets, or numerical acceptance thresholds. This sensiti
 qualify plant-yield or D86 reproduction and does not model the published steam, pump-around,
 side-stripper, tray-hydraulic, or efficiency details. The separate pump-around reference rows are
 source evidence only; unresolved tray-numbering direction prevents direct model configuration.
+Likewise, the steam rows retain the published service allocation and rates but do not configure
+water, injection locations, steam state, side-stripper topology, or heat duties.
