@@ -107,8 +107,7 @@ public class SarirAtmosphericReferenceTest {
     assertEquals(3, injections.length);
     assertSteamInjection(injections[0], "Main atmospheric column", SteamInjectionService.MAIN_ATMOSPHERIC_COLUMN,
         340.2);
-    assertSteamInjection(injections[1], "Kerosene side stripper", SteamInjectionService.KEROSENE_SIDE_STRIPPER,
-        68.04);
+    assertSteamInjection(injections[1], "Kerosene side stripper", SteamInjectionService.KEROSENE_SIDE_STRIPPER, 68.04);
     assertSteamInjection(injections[2], "Diesel side stripper", SteamInjectionService.DIESEL_SIDE_STRIPPER, 226.8);
     assertEquals(injections[0], SarirAtmosphericReference.getSteamInjection("Main atmospheric column"));
     assertEquals(injections[1], SarirAtmosphericReference.getSteamInjection("Kerosene side stripper"));
