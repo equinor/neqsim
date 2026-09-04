@@ -69,7 +69,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
 
     String diagnostics = column.getConvergenceDiagnostics();
     assertTrue(column.solved(), diagnostics);
-    assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, column.getLastSolverTypeUsed(), diagnostics);
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), diagnostics);
     assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(), diagnostics);
     assertNotEquals(DistillationColumn.SolveStatus.FAILED, column.getLastSolveStatus(), diagnostics);
     assertTrue(column.getLastIterationCount() <= 600, diagnostics);
@@ -131,10 +131,10 @@ public class SarirAtmosphericFractionationSensitivityTest {
     column.setLiquidSideDrawFraction(KEROSENE_SCREEN_TRAY, 0.08);
     column.setLiquidSideDrawFraction(DIESEL_SCREEN_TRAY, 0.15);
 
-    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
     column.setRelaxationFactor(0.30);
     column.setMaxNumberOfIterations(600, true);
-    column.setTemperatureTolerance(0.50);
+    column.setTemperatureTolerance(0.20);
     column.setMassBalanceTolerance(BALANCE_TOLERANCE);
     column.setEnthalpyBalanceTolerance(BALANCE_TOLERANCE);
     column.setEnforceEnergyBalanceTolerance(true);
