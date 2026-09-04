@@ -58,6 +58,7 @@ public class ThreePhaseSeparator extends Separator {
   private double lastEnthalpy;
   private double lastFlowRate;
   private double lastPressure;
+  private double lastPressureDrop;
 
   /**
    * Water level height in meters (bottom of separator to water-oil interface).
@@ -475,13 +476,14 @@ public class ThreePhaseSeparator extends Separator {
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();
     if (Math.abs((lastEnthalpy - enthalpy) / enthalpy) < 1e-6 && Math.abs((lastFlowRate - flow) / flow) < 1e-6
-        && Math.abs((lastPressure - pres) / pres) < 1e-6) {
+        && Math.abs((lastPressure - pres) / pres) < 1e-6 && lastPressureDrop == getPressureDrop()) {
       setCalculationIdentifier(id);
       return;
     }
     lastEnthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     lastFlowRate = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     lastPressure = inletStreamMixer.getOutletStream().getPressure();
+    lastPressureDrop = getPressureDrop();
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
     // Apply the vessel pressure drop before flashing so all three product phases
