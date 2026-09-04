@@ -928,8 +928,7 @@ public final class DexpiXmlReader {
           explicitAttribute(finalControlElement, "ComponentName"),
           explicitGenericAttribute(finalControlElement, DexpiMetadata.TAG_NAME), locationId, location != null,
           elementName(location), explicitAttribute(location, "ComponentClass"),
-          explicitAttribute(location, "ComponentName"),
-          explicitGenericAttribute(location, DexpiMetadata.TAG_NAME)));
+          explicitAttribute(location, "ComponentName"), explicitGenericAttribute(location, DexpiMetadata.TAG_NAME)));
     }
     return result;
   }
