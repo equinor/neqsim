@@ -6,7 +6,6 @@ critical_below_boiling	S
 critical_below_boiling	S-
 critical_below_boiling	nC5-Benzene
 duplicate_property_triplet	100.204|58.05|0.667
-duplicate_property_triplet	106.168|58.05|0.871
 duplicate_property_triplet	114.231|58.05|0.667
 duplicate_property_triplet	119.1632|140.0|1.038
 duplicate_property_triplet	150.175|278.3|1.127
@@ -37,7 +36,6 @@ formula_mass_mismatch	2.3-DM-C6
 formula_mass_mismatch	2.6-DM-C7
 formula_mass_mismatch	3-M-4.4-DE-heptane
 formula_mass_mismatch	3-M-C7
-formula_mass_mismatch	3-M-C8
 formula_mass_mismatch	4-M-C8
 formula_mass_mismatch	C2H4-
 formula_mass_mismatch	C2H4O-
@@ -66,7 +64,6 @@ formula_mass_mismatch	cis-14-DM-cy-C6
 formula_mass_mismatch	cy-C9
 formula_mass_mismatch	ethanol
 formula_mass_mismatch	ethylbenzene
-formula_mass_mismatch	ethylcyclohexane
 formula_mass_mismatch	i-propanol
 formula_mass_mismatch	m-Xylene
 formula_mass_mismatch	nC12-cy-C5
@@ -76,7 +73,6 @@ formula_mass_mismatch	nC27
 formula_mass_mismatch	o-Xylene
 formula_mass_mismatch	p-Xylene
 formula_mass_mismatch	propane
-formula_mass_mismatch	propylbenzene
 formula_mass_mismatch	trans-12-DM-cy-C5
 formula_mass_mismatch	trans-12-DM-cy-C6
 formula_mass_mismatch	trans-13-DM-cy-C5
@@ -146,5 +142,3 @@ shared_cas_number	7732-18-5
 shared_cas_number	7803-49-8
 substituent_count_mismatch	11-DM-cy-C5
 substituent_count_mismatch	113-TM-cy-C5
-substituent_count_mismatch	2-M-C8
-substituent_count_mismatch	3-M-C8
