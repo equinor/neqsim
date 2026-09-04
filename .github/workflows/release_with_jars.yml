@@ -166,7 +166,8 @@ jobs:
           tag: v${{ needs.get_versions.outputs.version_8 }}
           draft: ${{ steps.publication.outputs.draft }}
           generateReleaseNotes: true
-          skipIfReleaseExists: true
+          allowUpdates: true
+          updateOnlyUnreleased: true
           artifacts: "*.jar,*.sha256"
           artifactContentType: application/java-archive
           body: |
