@@ -17,6 +17,16 @@ JAVA_TEST = (
     / "src/test/java/neqsim/process/equipment/reactor/"
     / "AqueousHydrogenSulfideOxidationKineticsTest.java"
 )
+TRAJECTORY = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationTrajectory.java"
+)
+TRAJECTORY_TEST = (
+    ROOT
+    / "src/test/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationTrajectoryTest.java"
+)
 
 
 class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
@@ -28,6 +38,8 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         cls.package_index = PACKAGE_INDEX.read_text(encoding="utf-8")
         cls.implementation = IMPLEMENTATION.read_text(encoding="utf-8")
         cls.java_test = JAVA_TEST.read_text(encoding="utf-8")
+        cls.trajectory = TRAJECTORY.read_text(encoding="utf-8")
+        cls.trajectory_test = TRAJECTORY_TEST.read_text(encoding="utf-8")
         cls.normalized = " ".join(cls.guide.split())
 
     def test_source_equation_and_units_are_explicit(self):
@@ -88,6 +100,47 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "testLongExposureRemainsBoundedAndInputValidationFailsClosed",
         ):
             self.assertIn(token, self.java_test)
+
+    def test_piecewise_trajectory_contract_is_documented_and_executable(self):
+        for token in (
+            "Piecewise exposure trajectory",
+            "`AqueousHydrogenSulfideOxidationTrajectory.advance(...)`",
+            r"E_i = k_i[\mathrm{O_2}]_i\Delta t_i",
+            r"\exp\left(-\sum_{i=1}^{n}E_i\right)",
+            "20–30 micromol/kg water",
+            "A pressure value is deliberately not part",
+            "one common multiplicative correlation envelope",
+            "no numerical timestep error",
+            "Segment splitting",
+            "total-sulfide inventory closure",
+            "only cumulative exposure controls the final fraction",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static Result advance(",
+            "MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY",
+            "MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY",
+            "Collections.unmodifiableList",
+            "finiteSum(",
+            "public static final class Segment",
+            "public static final class SegmentResult",
+            "public static final class Result",
+            "Math.exp(-nominalExposure)",
+            "getTotalSulfideClosureResidual()",
+        ):
+            self.assertIn(token, self.trajectory)
+
+        for token in (
+            "testTwoHalfLivesGiveExactInventoryAndClosure",
+            "testSegmentSplittingIsInvariant",
+            "testVaryingSegmentsReuseAuthoritativeSingleStateRates",
+            "testFitScatterEnvelopeHasCorrectPhysicalOrdering",
+            "testZeroDurationAndDeterministicRepeat",
+            "testResultsAreDefensiveAndSourceOrdered",
+            "testEvidenceAndNumericalInputsFailClosed",
+        ):
+            self.assertIn(token, self.trajectory_test)
 
     def test_stop_boundary_prevents_pipeline_overclaim(self):
         for token in (
