@@ -1410,7 +1410,86 @@ class UniSimModel:
 
 ---
 
-## 12. Troubleshooting
+## 12. Driving the native UniSim case instead of converting it
+
+Conversion is not always the right answer. If the converted NeqSim flowsheet
+does not close its recycles, any capacity or tie-in conclusion drawn from it is
+unsafe. For **capacity studies, tie-back evaluations and bottleneck ranking on a
+large as-built case**, drive the original `.usc` through COM and read the
+results back. This keeps the fluid package, every adjust and every recycle
+exactly as built. Verified on a 151-component, 366-stream, 8-recycle,
+42-adjust platform case.
+
+### Operation TypeName values — a wrong filter fails silently
+
+`compressor` (**not** `compressop`), `expandop`, `pumpop`, `coolerop`,
+`heaterop`, `mixerop`, `teeop`, `valveop`, `flashtank`, `sep3op`, `fractop`,
+`recycle`, `adjust`, `spreadsheetop`, `templateop`.
+
+Filtering rotating equipment on `compressop` returns **zero** compressors and
+the duty table silently comes back exchangers-only. Always enumerate first:
+
+```python
+from collections import Counter
+Counter(str(sheet.Operations.Item(i).TypeName)
+        for i in range(sheet.Operations.Count))
+```
+
+### Component properties: use the `*Value` float accessors
+
+| Use | Not |
+|-----|-----|
+| `comp.MolecularWeightValue` | `comp.MolecularWeight` (returns `RealVariable`) |
+| `comp.StdLiquidDensityValue` | `IdealLiqDensityValue`, `MassDensityValue` (both `None` for pseudo components) |
+| `comp.AcentricityValue`, `comp.NormalBoilingPointValue` (°C) | — |
+
+`float(comp.MolecularWeight)` raises, and a `try/except → None` around it
+silently drops the entire pseudo-component slate. If a composition mapping
+reports the C7+ fractions as unmapped, this is the cause.
+
+### Topology can be modified, not just specifications
+
+On a licensed case retrieved from a document system these all succeed:
+
+```python
+sheet.MaterialStreams.Add("NewFeed")            # create a stream
+feed.Temperature.SetValue(35.1, "C")
+feed.Pressure.SetValue(70.3, "bar")
+feed.MassFlow.SetValue(58080.0, "kg/h")
+feed.ComponentMolarFraction.SetValues(fractions, "")  # ordered by FluidPackage.Components
+mixer.Feeds.Add(feed)                            # connect it
+solver.CanSolve = True                           # re-solve, typically < 1 s
+```
+
+`E_ACCESSDENIED` on a write means the variable is **calculated**, not that the
+licence blocks writing. Probe `variable.CanModify` before concluding otherwise.
+
+### Process lifetime and reproducibility
+
+When the Python process exits, the COM server closes the case; a follow-up
+script doing `SimulationCases.Item(i)` gets `IndexError`. Every script must
+`app.SimulationCases.Open(path)` itself. Start each run by closing any open work
+case and `shutil.copy2`-ing a fresh copy from the source, otherwise repeated
+runs stack duplicate feeds onto the same mixer.
+
+### Interpreting a tie-in result
+
+- **Rank every stream by relative change**, not just the ones you expected to
+  move. A gas-rich tie-back loads the gas path far harder than the bulk mass
+  suggests — one verified case added 6.6% to plant feed but 80.9% to
+  first-stage flash gas.
+- **Compute actual volumetric rate** (`mass / MassDensity`) for gas outlets.
+  Separator and gas-train capacity scales with actual m³/h, not kg/h.
+- **Fixed pressure ratios are not a capacity check.** The model specifies
+  compressor pressure ratios and solves for power, with no performance maps and
+  no driver ratings. The output is the *duty required*, not whether the machine
+  can deliver it. Say so explicitly in any capacity report.
+- Check the product mass balance closes against the added feed increment before
+  trusting the deltas.
+
+---
+
+## 13. Troubleshooting
 
 | Issue | Cause | Fix |
 |-------|-------|-----|
@@ -1432,7 +1511,7 @@ class UniSimModel:
 
 ---
 
-## 13. Verified Reference Cases
+## 14. Verified Reference Cases
 
 | Case | File | Components | Operations | Converged | Notes |
 |------|------|-----------|------------|-----------|-------|

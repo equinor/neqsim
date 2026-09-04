@@ -11,6 +11,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Converter from a compositional (EOS) NeqSim fluid to a Black-Oil PVT table + stream.
  *
+ * <p>
+ * Units follow {@link neqsim.blackoil.BlackOilPVTTable}: pressure in bar, Rs in Sm3/Sm3, Rv in Sm3/Sm3, formation
+ * volume factors in rm3/Sm3 and <b>viscosities in Pa.s</b>. Multiply viscosity by 1000 when writing a reservoir
+ * simulator deck, which expects cP.
+ *
  * @author esol
  */
 public class BlackOilConverter {
@@ -24,7 +29,34 @@ public class BlackOilConverter {
     public double rho_o_sc;
     public double rho_g_sc;
     public double rho_w_sc;
+
+    /**
+     * Highest pressure in the grid at which free gas is present.
+     *
+     * <p>
+     * This is the bubble point for an oil. For a retrograde gas condensate free gas is present at every pressure, so
+     * this degenerates to the top of the pressure grid and carries no meaning; use {@link #saturationPressure} instead.
+     */
     public double bubblePoint;
+
+    /**
+     * Highest pressure at which two hydrocarbon phases coexist.
+     *
+     * <p>
+     * This is the bubble point of an oil and the dew point of a gas condensate, so it is the quantity to use when the
+     * fluid type is not known in advance. NaN when the fluid is single-phase over the whole grid.
+     */
+    public double saturationPressure;
+
+    /**
+     * True when the fluid is single-phase gas at the top of the pressure grid and drops out liquid below the saturation
+     * pressure, i.e. a retrograde gas condensate.
+     *
+     * <p>
+     * A retrograde fluid needs a vaporised-oil (PVTG) treatment; a standard black-oil PVTO/PVDG table cannot represent
+     * its liquid dropout.
+     */
+    public boolean retrogradeCondensate;
   }
 
   /**
@@ -47,6 +79,7 @@ public class BlackOilConverter {
     StdTotals stdTotals = computeStdTotalsFromWhole(eosFluid, Pstd, Tstd);
 
     List<BlackOilPVTTable.Record> recs = new ArrayList<>();
+    List<PerPressureProps> propsByPressure = new ArrayList<>();
     double bubblePoint = Double.NaN;
 
     double rho_o_sc = Double.NaN;
@@ -56,6 +89,7 @@ public class BlackOilConverter {
 
     for (double p : P) {
       PerPressureProps props = evalAtPressure(eosFluid, Tref, p, Pstd, Tstd);
+      propsByPressure.add(props);
       if (!Double.isNaN(props.rho_o_sc)) {
         rho_o_sc = props.rho_o_sc;
       }
@@ -72,9 +106,9 @@ public class BlackOilConverter {
       }
     }
 
+    // Reuse the flashes already done above rather than repeating them per pressure.
     for (int i = P.length - 1; i >= 0; i--) {
-      PerPressureProps props = evalAtPressure(eosFluid, Tref, P[i], Pstd, Tstd);
-      if (props.hasFreeGas) {
+      if (propsByPressure.get(i).hasFreeGas) {
         bubblePoint = P[i];
         break;
       }
@@ -82,6 +116,17 @@ public class BlackOilConverter {
     if (Double.isNaN(bubblePoint)) {
       bubblePoint = P[0];
     }
+
+    double saturationPressure = Double.NaN;
+    for (int i = P.length - 1; i >= 0; i--) {
+      PerPressureProps props = propsByPressure.get(i);
+      if (props.hasFreeGas && props.hasFreeOil) {
+        saturationPressure = P[i];
+        break;
+      }
+    }
+    PerPressureProps atTop = propsByPressure.get(P.length - 1);
+    boolean retrograde = !Double.isNaN(saturationPressure) && atTop.hasFreeGas && !atTop.hasFreeOil;
 
     double rsAtPb = interpolateRsAt(recs, bubblePoint);
     for (int i = 0; i < recs.size(); i++) {
@@ -128,6 +173,8 @@ public class BlackOilConverter {
     out.rho_g_sc = rho_g_sc;
     out.rho_w_sc = rho_w_sc;
     out.bubblePoint = bubblePoint;
+    out.saturationPressure = saturationPressure;
+    out.retrogradeCondensate = retrograde;
     return out;
   }
 
@@ -185,6 +232,7 @@ public class BlackOilConverter {
     double Bw = Double.NaN;
     double mu_w = Double.NaN;
     boolean hasFreeGas = false;
+    boolean hasFreeOil = false;
     double rho_o_sc = Double.NaN;
     double rho_g_sc = Double.NaN;
     double rho_w_sc = Double.NaN;
@@ -206,6 +254,7 @@ public class BlackOilConverter {
       PhaseInterface wat = findWaterPhase(f);
 
       if (oil != null) {
+        out.hasFreeOil = true;
         SystemInterface oilComp = phaseAsStandaloneSystem(base, oil, Tref, p);
         ThermodynamicOperations oilResOps = new ThermodynamicOperations(oilComp);
         oilResOps.TPflash();
