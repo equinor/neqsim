@@ -105,6 +105,7 @@ DexpiXmlReader.ImportResult result =
     DexpiXmlReader.readWithDiagnostics(xmlFile.toFile(), template);
 ProcessSystem process = result.getProcessSystem();
 List<DexpiInstrumentInfo> instruments = result.getInstruments();
+List<DexpiInformationFlowInfo> informationFlows = result.getInformationFlows();
 List<DexpiConnectionInfo> connections = result.getConnections();
 
 for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
@@ -138,6 +139,16 @@ source/target references, missing signal medium, and incomplete final-element or
 evidence. Valid source references resolve against the complete non-catalogue document identity set,
 including equipment nozzles and actuating functions. The reader never promotes measurement-only or
 incomplete source content into closed-loop control intent.
+
+`ImportResult.getInformationFlows()` exposes the corresponding source-ordered
+`MeasuringLineFunction` and `SignalLineFunction` evidence as immutable
+`DexpiInformationFlowInfo` records. Each record retains its source ID and component class, logical
+start and end IDs, whether those references resolve, and their resolved XML element names. Measuring
+lines additionally retain explicit attachment identity and resolution; signal lines retain the source
+`SignalConveyingTypeSpecialization`. Missing and unresolved references remain present beside the
+diagnostics, so Java and JPype callers do not need to reparse XML or invent endpoints. These records
+do not create live transmitters or controllers, infer control-loop intent, verify a loop, or classify
+safety-instrumented or safeguard functions.
 
 The same result also preserves every source `Connection` in document order, including parallel
 connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning
@@ -220,16 +231,18 @@ stay in the global connection and diagnostic evidence because a transition canno
 cycle. This exact-once inventory remains source-reference evidence only; it does not prove hydraulic
 continuity, identify a physical recycle, enumerate paths, or alter simulation topology.
 
-`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
-`connectionComponentCount`, `connectionCycleCount`, `connectionCycleTransitionCount`, and
-the ordered connection, endpoint, component, directed-cycle, and cycle-transition inventories,
-including incidence roles, review subsets, complete cycle-local endpoint and internal connection
-occurrences, explicit cycle-boundary occurrences, and exact-once transitions with nested connection
-and endpoint evidence, alongside the process-unit count and findings. Python callers through JPype
-use the same `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
-`ImportResult.getConnectionEndpoints()`, `ImportResult.getConnectionComponents()`,
-`ImportResult.getConnectionCycles()`, and `ImportResult.getConnectionCycleTransitions()`
-getters; there is no separate Python reconstruction model.
+`toJson()` includes `instrumentCount`, `informationFlowCount`, `connectionCount`,
+`connectionEndpointCount`, `connectionComponentCount`, `connectionCycleCount`,
+`connectionCycleTransitionCount`, and the ordered information-flow, connection, endpoint,
+component, directed-cycle, and cycle-transition inventories, including reference resolution,
+incidence roles, review subsets, complete cycle-local endpoint and internal connection occurrences,
+explicit cycle-boundary occurrences, and exact-once transitions with nested connection and endpoint
+evidence, alongside the process-unit count and findings. Python callers through JPype use the same
+`ImportResult.getInstruments()`, `ImportResult.getInformationFlows()`,
+`ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`,
+`ImportResult.getConnectionComponents()`, `ImportResult.getConnectionCycles()`, and
+`ImportResult.getConnectionCycleTransitions()` getters; there is no separate Python reconstruction
+model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
 `ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.
