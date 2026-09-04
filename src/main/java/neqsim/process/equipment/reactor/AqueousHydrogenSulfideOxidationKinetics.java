@@ -186,9 +186,9 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
    * Screen a residence time against the published correlation and its reported fit scatter.
    *
    * <p>
-   * The dimensionless Damkohler exposure is {@code Da = k[O2]t = t/tau}, where
-   * {@code tau = 1/(k[O2])}. Lower, nominal, and upper results use the source's one-standard-deviation
-   * {@code log10(k)} interval. No categorical regime threshold is imposed.
+   * The dimensionless Damkohler exposure is {@code Da = k[O2]t = t/tau}, where {@code tau = 1/(k[O2])}. Lower, nominal,
+   * and upper results use the source's one-standard-deviation {@code log10(k)} interval. No categorical regime
+   * threshold is imposed.
    * </p>
    *
    * @param airSaturatedOxygenMolality dissolved oxygen molality for an independently established air-saturated aqueous
@@ -204,8 +204,7 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
   public static ResidenceTimeRangeResult screenResidenceTimeRange(double airSaturatedOxygenMolality,
       double residenceTimeHours, double temperatureK, double pH, double ionicStrengthMolPerKgWater) {
     requireFiniteNonNegative(residenceTimeHours, "residence time");
-    RateConstantRange secondOrderRates = secondOrderRateConstantRange(temperatureK, pH,
-        ionicStrengthMolPerKgWater);
+    RateConstantRange secondOrderRates = secondOrderRateConstantRange(temperatureK, pH, ionicStrengthMolPerKgWater);
     double nominalRate = pseudoFirstOrderRateConstant(airSaturatedOxygenMolality, temperatureK, pH,
         ionicStrengthMolPerKgWater);
     double lowerRate = secondOrderRates.getLower() * airSaturatedOxygenMolality;
@@ -220,9 +219,9 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
     double nominalDamkohler = finiteProduct(nominalRate, residenceTimeHours, "nominal Damkohler number");
     double upperDamkohler = finiteProduct(upperRate, residenceTimeHours, "upper-rate Damkohler number");
 
-    return new ResidenceTimeRangeResult(lowerRate, nominalRate, upperRate, lowerChemicalTime,
-        nominalChemicalTime, upperChemicalTime, lowerDamkohler, nominalDamkohler, upperDamkohler,
-        Math.exp(-lowerDamkohler), Math.exp(-nominalDamkohler), Math.exp(-upperDamkohler));
+    return new ResidenceTimeRangeResult(lowerRate, nominalRate, upperRate, lowerChemicalTime, nominalChemicalTime,
+        upperChemicalTime, lowerDamkohler, nominalDamkohler, upperDamkohler, Math.exp(-lowerDamkohler),
+        Math.exp(-nominalDamkohler), Math.exp(-upperDamkohler));
   }
 
   private static void requirePublishedState(double temperatureK, double pH, double ionicStrengthMolPerKgWater) {
