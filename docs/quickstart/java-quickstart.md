@@ -6,7 +6,7 @@ description: Get started with NeqSim in Java. Maven setup, first flash calculati
 # Java Quickstart
 
 Get NeqSim running in a Java project with one thermodynamic calculation and one composable
-process simulation. The examples use NeqSim 3.18.0; check
+process simulation. The examples use NeqSim 3.19.0; check
 [Maven Central](https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim) for a newer
 published version before starting a new project.
 
@@ -18,7 +18,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.18.0</version>
+  <version>3.19.0</version>
 </dependency>
 ```
 
@@ -40,7 +40,7 @@ already configure it:
 With Gradle:
 
 ```groovy
-implementation 'com.equinor.neqsim:neqsim:3.18.0'
+implementation 'com.equinor.neqsim:neqsim:3.19.0'
 ```
 
 ## Step 2: first flash calculation

@@ -321,11 +321,11 @@ Pick **jar** or **Docker** — both are first-class paths.
 
 | OS                              | Command                                           |
 | ------------------------------- | ------------------------------------------------- |
-| **macOS**                 | `brew install openjdk@17`                       |
-| **Linux (Ubuntu/Debian)** | `sudo apt install openjdk-17-jdk`               |
-| **Windows**               | `winget install EclipseAdoptium.Temurin.17.JDK` |
+| **macOS**                 | `brew install openjdk@21`                       |
+| **Linux (Ubuntu/Debian)** | `sudo apt install openjdk-21-jdk`               |
+| **Windows**               | `winget install EclipseAdoptium.Temurin.21.JDK` |
 
-Verify: `java -version` should show 17 or higher.
+Verify: `java -version` should show 21 or higher.
 
 </details>
 
@@ -1012,11 +1012,11 @@ cd ..  # go to parent neqsim directory
 ./mvnw install -DskipTests -Dmaven.javadoc.skip=true
 ```
 
-### Build Fails — "No matching toolchain found for JDK 17+"
+### Build Fails — "No matching toolchain found for JDK 21+"
 
-This project requires JDK 17+. Check with `java -version`.
+This project requires JDK 21+. Check with `java -version`.
 The parent neqsim project compiles with Java 8. Both can coexist — just ensure
-`JAVA_HOME` points to JDK 17+ when building this project.
+`JAVA_HOME` points to JDK 21+ when building this project.
 
 ### Server Hangs or Returns Garbled Output
 

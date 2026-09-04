@@ -796,9 +796,9 @@ cd ..  # parent neqsim directory
 ./mvnw install -DskipTests -Dmaven.javadoc.skip=true
 ```
 
-### "No matching toolchain found for JDK 17+"
+### "No matching toolchain found for JDK 21+"
 
-The MCP server requires JDK 17+. Check with `java -version`. The parent neqsim
+The MCP server requires JDK 21+. Check with `java -version`. The parent neqsim
 project compiles with Java 8 — both can coexist.
 
 ### Server Hangs or Returns Garbled Output
