@@ -143,6 +143,8 @@ Use the [CO₂ hydration temperature-trajectory guide](co2_hydration_temperature
 exact, carbon-conserving propagation of the qualified neutral pair through ordered temperature segments.
 Use the [qualified CO₂ impurity execution guide](co2_impurity_qualified_execution) to bind
 public evidence to every experimental R1-R8 parameterization before fail-closed execution.
+Use the [aqueous H2S/O2 kinetics guide](h2s_oxygen_kinetics) for the primary-source,
+atmospheric-pressure total-sulfide oxidation screening correlation and its fail-closed limits.
 
 
 ---
