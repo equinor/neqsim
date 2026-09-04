@@ -131,6 +131,7 @@ public final class DexpiXmlReader {
     private final ProcessSystem processSystem;
     private final List<DexpiInstrumentInfo> instruments;
     private final List<DexpiInstrumentationLoopInfo> instrumentationLoops;
+    private final List<DexpiActuatingFunctionInfo> actuatingFunctions;
     private final List<DexpiInformationFlowInfo> informationFlows;
     private final List<DexpiConnectionInfo> connections;
     private final List<DexpiConnectionEndpointInfo> connectionEndpoints;
@@ -140,7 +141,8 @@ public final class DexpiXmlReader {
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
-        List<DexpiInstrumentationLoopInfo> instrumentationLoops, List<DexpiInformationFlowInfo> informationFlows,
+        List<DexpiInstrumentationLoopInfo> instrumentationLoops,
+        List<DexpiActuatingFunctionInfo> actuatingFunctions, List<DexpiInformationFlowInfo> informationFlows,
         List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
         List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
         List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions, List<ImportDiagnostic> diagnostics) {
@@ -148,6 +150,8 @@ public final class DexpiXmlReader {
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
       this.instrumentationLoops = Collections
           .unmodifiableList(new ArrayList<DexpiInstrumentationLoopInfo>(instrumentationLoops));
+      this.actuatingFunctions = Collections
+          .unmodifiableList(new ArrayList<DexpiActuatingFunctionInfo>(actuatingFunctions));
       this.informationFlows = Collections.unmodifiableList(new ArrayList<DexpiInformationFlowInfo>(informationFlows));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
       this.connectionEndpoints = Collections
@@ -190,6 +194,20 @@ public final class DexpiXmlReader {
      */
     public List<DexpiInstrumentationLoopInfo> getInstrumentationLoops() {
       return instrumentationLoops;
+    }
+
+    /**
+     * Returns explicit actuating-function occurrences in source-document order.
+     *
+     * <p>
+     * These records retain only source identity, enclosing instrumentation-function provenance, final-element
+     * references, and location references. They do not infer control intent, final-element type, or safeguards.
+     * </p>
+     *
+     * @return immutable actuating-function evidence
+     */
+    public List<DexpiActuatingFunctionInfo> getActuatingFunctions() {
+      return actuatingFunctions;
     }
 
     /**
@@ -310,6 +328,12 @@ public final class DexpiXmlReader {
         instrumentationLoopMaps.add(instrumentationLoop.toMap());
       }
       result.put("instrumentationLoops", instrumentationLoopMaps);
+      result.put("actuatingFunctionCount", Integer.valueOf(actuatingFunctions.size()));
+      List<Map<String, Object>> actuatingFunctionMaps = new ArrayList<Map<String, Object>>();
+      for (DexpiActuatingFunctionInfo actuatingFunction : actuatingFunctions) {
+        actuatingFunctionMaps.add(actuatingFunction.toMap());
+      }
+      result.put("actuatingFunctions", actuatingFunctionMaps);
       result.put("informationFlowCount", Integer.valueOf(informationFlows.size()));
       List<Map<String, Object>> informationFlowMaps = new ArrayList<Map<String, Object>>();
       for (DexpiInformationFlowInfo informationFlow : informationFlows) {
@@ -538,11 +562,12 @@ public final class DexpiXmlReader {
     ProcessSystem processSystem = new ProcessSystem("DEXPI process");
     List<DexpiInstrumentInfo> instruments = new ArrayList<DexpiInstrumentInfo>();
     List<DexpiInstrumentationLoopInfo> instrumentationLoops = new ArrayList<DexpiInstrumentationLoopInfo>();
+    List<DexpiActuatingFunctionInfo> actuatingFunctions = new ArrayList<DexpiActuatingFunctionInfo>();
     List<DexpiInformationFlowInfo> informationFlows = new ArrayList<DexpiInformationFlowInfo>();
     List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
     loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, instrumentationLoops,
-        informationFlows, connections);
+        actuatingFunctions, informationFlows, connections);
     List<DexpiConnectionEndpointInfo> connectionEndpoints = summarizeConnectionEndpoints(connections);
     List<DexpiConnectionComponentInfo> connectionComponents = summarizeConnectionComponents(connections,
         connectionEndpoints);
@@ -550,8 +575,9 @@ public final class DexpiXmlReader {
         connectionComponents);
     List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions = summarizeConnectionCycleTransitions(
         connections, connectionEndpoints, connectionCycles);
-    return new ImportResult(processSystem, instruments, instrumentationLoops, informationFlows, connections,
-        connectionEndpoints, connectionComponents, connectionCycles, connectionCycleTransitions, diagnostics);
+    return new ImportResult(processSystem, instruments, instrumentationLoops, actuatingFunctions, informationFlows,
+        connections, connectionEndpoints, connectionComponents, connectionCycles, connectionCycleTransitions,
+        diagnostics);
   }
 
   /**
@@ -626,13 +652,14 @@ public final class DexpiXmlReader {
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware) throws IOException, DexpiXmlReaderException {
-    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null, null, null, null, null);
+    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null, null, null, null, null, null);
   }
 
   private static void loadInternal(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware, List<ImportDiagnostic> diagnostics, List<DexpiInstrumentInfo> instruments,
-      List<DexpiInstrumentationLoopInfo> instrumentationLoops, List<DexpiInformationFlowInfo> informationFlows,
-      List<DexpiConnectionInfo> connections) throws IOException, DexpiXmlReaderException {
+      List<DexpiInstrumentationLoopInfo> instrumentationLoops, List<DexpiActuatingFunctionInfo> actuatingFunctions,
+      List<DexpiInformationFlowInfo> informationFlows, List<DexpiConnectionInfo> connections)
+      throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
@@ -658,6 +685,9 @@ public final class DexpiXmlReader {
     }
     if (instrumentationLoops != null) {
       instrumentationLoops.addAll(parseInstrumentationLoops(document));
+    }
+    if (actuatingFunctions != null) {
+      actuatingFunctions.addAll(parseActuatingFunctions(document));
     }
     if (informationFlows != null) {
       informationFlows.addAll(parseInformationFlows(document));
@@ -844,6 +874,58 @@ public final class DexpiXmlReader {
       }
       result.add(new DexpiInstrumentationLoopInfo(loop.getAttribute("ID"), loop.getAttribute("ComponentClass"),
           getGenericAttribute(loop, DexpiMetadata.LOOP_NUMBER), members));
+    }
+    return result;
+  }
+
+  private static List<DexpiActuatingFunctionInfo> parseActuatingFunctions(Document document) {
+    List<DexpiActuatingFunctionInfo> result = new ArrayList<DexpiActuatingFunctionInfo>();
+    Map<String, Element> elementsById = new HashMap<String, Element>();
+    NodeList allElements = document.getElementsByTagName("*");
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element element = (Element) node;
+      String id = element.getAttribute("ID");
+      if (!isBlank(id) && !elementsById.containsKey(id)) {
+        elementsById.put(id, element);
+      }
+    }
+
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element element = (Element) node;
+      String elementName = element.getTagName();
+      String componentClass = element.getAttribute("ComponentClass");
+      DexpiActuatingFunctionInfo.Kind kind;
+      if ("ActuatingElectricalFunction".equals(elementName)
+          || "ActuatingElectricalFunction".equals(componentClass)) {
+        kind = DexpiActuatingFunctionInfo.Kind.ACTUATING_ELECTRICAL_FUNCTION;
+      } else if ("ActuatingFunction".equals(elementName) || "ActuatingFunction".equals(componentClass)) {
+        kind = DexpiActuatingFunctionInfo.Kind.ACTUATING_FUNCTION;
+      } else {
+        continue;
+      }
+
+      Element instrumentationFunction = findAncestorElement(element, "ProcessInstrumentationFunction");
+      String instrumentationFunctionId =
+          instrumentationFunction == null ? "" : instrumentationFunction.getAttribute("ID");
+      boolean instrumentationFunctionResolved = !isBlank(instrumentationFunctionId)
+          && elementsById.get(instrumentationFunctionId) == instrumentationFunction;
+      String finalControlElementId = getGenericAttribute(element, "FinalControlElementID");
+      String locationId = associationItemId(element, "is located in");
+      Element finalControlElement = elementsById.get(finalControlElementId);
+      Element location = elementsById.get(locationId);
+      result.add(new DexpiActuatingFunctionInfo(element.getAttribute("ID"), kind, componentClass,
+          getGenericAttribute(element, DexpiMetadata.ACTUATING_FUNCTION_NUMBER), instrumentationFunctionId,
+          instrumentationFunctionResolved, elementName(instrumentationFunction), finalControlElementId,
+          finalControlElement != null, elementName(finalControlElement), locationId, location != null,
+          elementName(location)));
     }
     return result;
   }
