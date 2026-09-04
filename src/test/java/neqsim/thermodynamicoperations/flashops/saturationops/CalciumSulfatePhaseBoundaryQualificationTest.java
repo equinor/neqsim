@@ -39,8 +39,8 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     assertEquals("10.1154/1.3659285", qualification.getAnhydriteCrystallographyDoi());
     assertEquals("10.1154/1.1725254", qualification.getGypsumCrystallographyDoi());
     assertEquals("10.1063/1.3043575", qualification.getWaterDensityReferenceDoi());
-    assertEquals(298.15, CalciumSulfatePhaseBoundaryQualification.CRYSTALLOGRAPHIC_REFERENCE_TEMPERATURE_K, 0.0);
-    assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.CRYSTALLOGRAPHIC_REFERENCE_PRESSURE_BARA, 0.0);
+    assertEquals(298.15, CalciumSulfatePhaseBoundaryQualification.WATER_DENSITY_REFERENCE_TEMPERATURE_K, 0.0);
+    assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.WATER_DENSITY_REFERENCE_PRESSURE_BARA, 0.0);
     assertEquals(0.0, qualification.getAnhydriteLogKspPressureCorrection(), 0.0);
     assertEquals(0.0, qualification.getGypsumLogKspPressureCorrection(), 0.0);
     assertFalse(qualification.isAqueousSpeciesVolumeResolved());
