@@ -140,8 +140,8 @@ public final class DexpiXmlReader {
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
         List<DexpiInformationFlowInfo> informationFlows, List<DexpiConnectionInfo> connections,
-        List<DexpiConnectionEndpointInfo> connectionEndpoints,
-        List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
+        List<DexpiConnectionEndpointInfo> connectionEndpoints, List<DexpiConnectionComponentInfo> connectionComponents,
+        List<DexpiConnectionCycleInfo> connectionCycles,
         List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
