@@ -378,12 +378,14 @@ sizing method object:
 | $x_T$ | `setxT(double)` | 0.137 | Pressure drop ratio factor at choked flow. Typical values: globe valve 0.69-0.80, butterfly 0.25-0.50, ball 0.15-0.25 |
 | $F_L$ | `setFL(double)` | 1.0 | Liquid pressure recovery factor |
 | $F_D$ | `setFD(double)` | 1.0 | Valve style modifier |
+| Choked-flow capacity limit | `setAllowChoked(boolean)` | `true` | Caps gas flow at the configured $F_\gamma x_T$ limit; the legacy `default` sizing strategy instead defaults to `false` |
 
 ```java
 // Access the sizing method and configure parameters
 mechDesign.setValveSizingStandard("IEC 60534");
 mechDesign.getValveSizingMethod().setxT(0.75);  // Globe valve typical value
 mechDesign.getValveSizingMethod().setFL(0.90);   // Liquid recovery factor
+valve.setAllowChoked(true);                      // Set explicitly for this service
 ```
 
 ### Computing and Retrieving Cv/Kv

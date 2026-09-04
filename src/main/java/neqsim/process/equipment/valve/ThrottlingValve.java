@@ -79,7 +79,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   private double deltaPressure = 0.0;
   private boolean allowChoked = false;
   private boolean allowLaminar = true;
-  private double xt = 0.6; // critical pressure drop ratio for choked flow
   private double lastInletTemperature = Double.NaN;
   private double lastInletPressure = Double.NaN;
   private double lastInletFlowRate = Double.NaN;
@@ -243,10 +242,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     if (inThermo.getTemperature() != lastInletTemperature || inThermo.getPressure() != lastInletPressure
         || pressure != lastOutletPressure || Kv != lastKv || percentValveOpening != lastPercentValveOpening
         || requestedValveOpening != lastRequestedValveOpening || deltaPressure != lastDeltaPressure || Fp != lastFp
-        || foulingFraction != lastFoulingFraction || xt != lastXt || valveKvSet != lastValveKvSet
-        || isoThermal != lastIsoThermal || acceptNegativeDP != lastAcceptNegativeDP
-        || isCalcPressure != lastIsCalcPressure || allowChoked != lastAllowChoked || allowLaminar != lastAllowLaminar
-        || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
+        || foulingFraction != lastFoulingFraction || getMechanicalDesign().getValveSizingMethod().getxT() != lastXt
+        || valveKvSet != lastValveKvSet || isoThermal != lastIsoThermal || acceptNegativeDP != lastAcceptNegativeDP
+        || isCalcPressure != lastIsCalcPressure
+        || getMechanicalDesign().getValveSizingMethod().isAllowChoked() != lastAllowChoked
+        || allowLaminar != lastAllowLaminar || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
         || !java.util.Objects.equals(getSpecification(), lastSpecification)) {
       return true;
     }
@@ -284,14 +284,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     lastDeltaPressure = deltaPressure;
     lastFp = Fp;
     lastFoulingFraction = foulingFraction;
-    lastXt = xt;
+    lastXt = getMechanicalDesign().getValveSizingMethod().getxT();
     lastPressureUnit = pressureUnit;
     lastSpecification = getSpecification();
     lastValveKvSet = valveKvSet;
     lastIsoThermal = isoThermal;
     lastAcceptNegativeDP = acceptNegativeDP;
     lastIsCalcPressure = isCalcPressure;
-    lastAllowChoked = allowChoked;
+    lastAllowChoked = getMechanicalDesign().getValveSizingMethod().isAllowChoked();
     lastAllowLaminar = allowLaminar;
   }
 
@@ -1258,21 +1258,27 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * isAllowChoked.
+   * Returns whether the active valve-sizing method applies its choked-flow capacity limit.
    *
-   * @return a boolean
+   * @return {@code true} when choked-flow capacity limiting is enabled
    */
   public boolean isAllowChoked() {
+    if (getMechanicalDesign() != null && getMechanicalDesign().getValveSizingMethod() != null) {
+      return getMechanicalDesign().getValveSizingMethod().isAllowChoked();
+    }
     return allowChoked;
   }
 
   /**
-   * Setter for the field <code>allowChoked</code>.
+   * Sets whether the active valve-sizing method applies its choked-flow capacity limit.
    *
-   * @param allowChoked a boolean
+   * @param allowChoked {@code true} to cap flow at the choked-flow limit
    */
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
+    if (getMechanicalDesign() != null && getMechanicalDesign().getValveSizingMethod() != null) {
+      getMechanicalDesign().getValveSizingMethod().setAllowChoked(allowChoked);
+    }
   }
 
   /**

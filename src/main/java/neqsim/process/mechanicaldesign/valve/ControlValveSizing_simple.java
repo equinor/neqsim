@@ -38,6 +38,7 @@ public class ControlValveSizing_simple extends ControlValveSizing {
    * Constructor for ControlValveSizing_simple.
    */
   public ControlValveSizing_simple() {
+    setAllowChoked(true);
   }
 
   /**
@@ -47,6 +48,7 @@ public class ControlValveSizing_simple extends ControlValveSizing {
    */
   public ControlValveSizing_simple(ValveMechanicalDesign valveMechanicalDesign) {
     super(valveMechanicalDesign);
+    setAllowChoked(true);
   }
 
   /**

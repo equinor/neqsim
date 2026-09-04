@@ -36,7 +36,8 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   static final double P_STD_KPA = 101.325;
 
   double xT = 0.137;
-  boolean allowChoked = true;
+  /** Whether the sizing equations cap flow at the choked-flow limit. */
+  boolean allowChoked = false;
 
   /**
    * Constructor for ControlValveSizing.

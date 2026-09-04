@@ -1,6 +1,7 @@
 package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import java.util.UUID;
@@ -56,6 +57,58 @@ public class ThrottlingValveTest {
 
     int getLevelThreeCalls() {
       return levelThreeCalls.get();
+    }
+  }
+
+  /** Regression test for GitHub issue #3446. */
+  @Test
+  void testCalculatedOutletPressureInvertsGasValveSizingIssue3446() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 1.9);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("ethane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("inlet", fluid);
+    inlet.setFlowRate(28500.0, "kg/hr");
+    inlet.setPressure(1.9, "bara");
+    inlet.setTemperature(25.0, "C");
+
+    ThrottlingValve valve = new ThrottlingValve("valve", inlet);
+    valve.setGasValve(true);
+    valve.setPercentValveOpening(100.0);
+    valve.setOutletPressure(1.484, "bara");
+    assertFalse(valve.isAllowChoked(), "Single-phase valve flow is not capacity-limited unless enabled explicitly");
+
+    valve.setAllowChoked(true);
+    assertTrue(valve.getMechanicalDesign().getValveSizingMethod().isAllowChoked(),
+        "The valve-level choked-flow setting must reach the active sizing method");
+    valve.setAllowChoked(false);
+
+    ProcessSystem process = new ProcessSystem("gas valve pressure inversion");
+    process.add(inlet);
+    process.add(valve);
+    process.run();
+
+    double sizedKv = valve.getKv();
+    valve.setIsCalcOutPressure(true);
+    process.run();
+
+    assertEquals(sizedKv, valve.getKv(), 0.0, "Reverse mode must retain the sized valve coefficient");
+    assertEquals(1.484, valve.getOutletStream().getPressure("bara"), 1.0e-4,
+        "Fixed-Kv pressure mode must invert the forward sizing point");
+
+    double previousPressureDrop = 0.0;
+    double[] flowRates = { 24000.0, 26500.0, 27500.0, 28000.0, 28500.0, 29000.0, 30000.0 };
+    for (double flowRate : flowRates) {
+      inlet.setFlowRate(flowRate, "kg/hr");
+      process.run();
+      double pressureDrop = inlet.getPressure("bara") - valve.getOutletStream().getPressure("bara");
+
+      assertTrue(Double.isFinite(pressureDrop), "Calculated pressure drop must remain finite");
+      assertTrue(pressureDrop > previousPressureDrop, "Pressure drop must increase smoothly with gas flow");
+      assertTrue(valve.getOutletStream().getPressure("bara") > 0.1,
+          "A nearby flow increase must not pin the outlet pressure to the solver floor");
+      previousPressureDrop = pressureDrop;
     }
   }
 
