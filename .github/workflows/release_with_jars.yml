@@ -1,20 +1,23 @@
-name: Create release (draft)
+name: Create release after merge
 permissions:
   contents: read
 
 on:
   workflow_dispatch:
   push:
+    # Release branches are intentionally excluded. A version PR must be merged
+    # before an automatic release can be created or published.
     branches:
       - master
       - main
-      - release/*
     paths:
       - 'pom*.xml'
 
 jobs:
   get_versions:
     name: Get version numbers from pom-files
+    # Also protect manual runs: release artifacts must come from a default-branch commit.
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
 
     outputs:
@@ -128,6 +131,7 @@ jobs:
 
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -151,9 +155,10 @@ jobs:
         id: publication
         env:
           RELEASE_EVENT: ${{ github.event_name }}
+          RELEASE_REF: ${{ github.ref }}
           RELEASE_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          if [[ "$RELEASE_EVENT" == "push" && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]]; then
+          if [[ "$RELEASE_EVENT" == "push" && ( "$RELEASE_REF" == "refs/heads/master" || "$RELEASE_REF" == "refs/heads/main" ) && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]]; then
             echo "draft=false" >> "$GITHUB_OUTPUT"
           else
             echo "draft=true" >> "$GITHUB_OUTPUT"
@@ -164,6 +169,7 @@ jobs:
         with:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }}
+          commit: ${{ github.sha }}
           draft: ${{ steps.publication.outputs.draft }}
           generateReleaseNotes: true
           allowUpdates: true
