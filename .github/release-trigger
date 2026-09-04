@@ -1,3 +1,4 @@
 # Update this version only to retry a release publication. The merge commit title
 # must include [publish-release] to publish and dispatch downstream workflows.
 3.19.0
+# downstream-dispatch-attempt: 2
