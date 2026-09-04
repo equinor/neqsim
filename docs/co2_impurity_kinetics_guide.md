@@ -3,11 +3,10 @@ title: Legacy CO2 Impurity Kinetics Experiment Guide
 description: Experimental Python tutorial material for CO2 impurity kinetics and its relationship to the maintained Java reactor.
 ---
 
-# Legacy CO2 impurity kinetics experiments
 
 This page describes the experimental Python tutorials in `docs/tutorials`. For the maintained
 Java equipment model, use the
-[experimental CO2 impurity kinetic reactor guide](chemicalreactions/co2_impurity_kinetics_guide.md).
+[experimental CO2 impurity kinetic reactor guide](chemicalreactions/co2_impurity_kinetics_guide).
 
 > **Model status:** experimental. The bundled kinetic parameters and screening correlations are
 > illustrative, not calibrated design correlations. Validate the reaction network and parameters
