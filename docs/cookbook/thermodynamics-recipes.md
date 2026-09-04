@@ -67,6 +67,24 @@ by `characterisePlusFraction()` when a residual fraction is to be split and lump
 characterization parser does not safely parse that name. Use a numeric terminal carbon label such
 as `C7` when calling `characterisePlusFraction()`.
 
+#### Choosing an `addTBPfraction` overload
+
+| Overload | Supply | Derived from correlations |
+|----------|--------|---------------------------|
+| `addTBPfraction(name, moles, molarMass, density)` | molar mass, density | TC, PC, acentric factor, boiling point |
+| `addTBPfraction(name, moles, molarMass, density, TC, PC, acentricFactor)` | molar mass, density, TC, PC, acentric factor | boiling point |
+| `addTBPfraction2(name, moles, molarMass, boilingPoint)` | molar mass, boiling point | density, TC, PC, acentric factor |
+| `addTBPfraction3(name, moles, density, boilingPoint)` | density, boiling point | molar mass, TC, PC, acentric factor |
+
+Units: `molarMass` in kg/mol, `density` as relative density (g/cm3), `TC` in K, `PC` in bara,
+`boilingPoint` in K, `acentricFactor` dimensionless.
+
+The seven argument overload exists so that measured or externally regressed values can be used
+instead of correlations. The values passed for `TC`, `PC` and `acentricFactor` are stored as
+given; the attractive term derives its `m` parameter from the supplied acentric factor rather
+than from the `calcm` correlation. Use the four argument overload when correlated values are
+wanted.
+
 ### Create a CO₂-Water Fluid with CPA
 
 ```python
