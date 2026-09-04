@@ -381,8 +381,7 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("1.25", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
     assertEquals("CONTRACT_TESTED", report.get("coverageStatus").getAsString());
-    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION",
-        report.get("benchmarkApplicability").getAsString());
+    assertEquals("NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION", report.get("benchmarkApplicability").getAsString());
     assertEquals(4, report.get("contractEvidenceCount").getAsInt());
     assertTrue(report.getAsJsonArray("contractEvidenceSources").toString().contains("ReportRunner.java"));
     assertTrue(report.getAsJsonArray("contractEvidenceSources").toString().contains("ReportRunnerTest.java"));

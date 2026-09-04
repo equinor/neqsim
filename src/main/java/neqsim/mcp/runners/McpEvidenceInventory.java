@@ -390,16 +390,14 @@ public final class McpEvidenceInventory {
     case "generateReport":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION";
       evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ReportRunner.java",
-          "src/test/java/neqsim/mcp/runners/ReportRunnerTest.java",
-          "neqsim-mcp-server/test_reporting_protocol.py",
+          "src/test/java/neqsim/mcp/runners/ReportRunnerTest.java", "neqsim-mcp-server/test_reporting_protocol.py",
           "neqsim-mcp-server/docs/evidence/REPORTING_CONTRACT.md" };
       evidenceBoundary = "Contract-tested: requested metadata, transient Markdown, bounded numeric tables, optional chart-ready arrays, optional embedded advisory validation, shallow counts, fail-closed malformed input, standard response guarding and packaged transport; this does not execute a simulation, validate physical fidelity, convergence or conservation, establish report completeness, create or approve a persisted artifact, grant plant authority, or replace accountable engineering approval.";
       break;
     case "bridgeTaskWorkflow":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_TASK_WORKFLOW_HANDOFF";
       evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/TaskWorkflowBridge.java",
-          "src/test/java/neqsim/mcp/runners/ReportRunnerTest.java",
-          "neqsim-mcp-server/test_reporting_protocol.py",
+          "src/test/java/neqsim/mcp/runners/ReportRunnerTest.java", "neqsim-mcp-server/test_reporting_protocol.py",
           "neqsim-mcp-server/docs/evidence/REPORTING_CONTRACT.md" };
       evidenceBoundary = "Contract-tested: results.json schema, supported-runner key-result mapping, status-derived validation, approach, conclusion, provenance and placeholder handoff, fail-closed invalid input and packaged transport; this does not execute or recompute a simulation, independently validate units, results or conservation, prove workflow completeness, persist an artifact, grant plant authority, or replace accountable engineering approval.";
       break;
