@@ -1,6 +1,6 @@
 ---
 title: "Pure Component Parameters Database (COMP)"
-description: "This guide provides detailed documentation of the COMP database, which stores pure component parameters used by NeqSim's thermodynamic models. Understanding these parameters is essential for model sel..."
+description: "Reference to NeqSim's COMP database of pure-component parameters for thermodynamic model selection, diagnostics, and component extension."
 ---
 
 This guide provides detailed documentation of the COMP database, which stores pure component parameters used by NeqSim's thermodynamic models. Understanding these parameters is essential for model selection, debugging, and extending NeqSim with new components.
