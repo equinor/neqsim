@@ -31,8 +31,12 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   public static final String EVIDENCE_DOI = "10.3389/fnuen.2023.1208582";
   /** Primary experimental lineage DOI. */
   public static final String PRIMARY_LINEAGE_DOI = "10.1139/v61-228";
+  /** Primary high-pressure anhydrite-solubility lineage DOI. */
+  public static final String HIGH_PRESSURE_LINEAGE_DOI = "10.2475/ajs.261.1.61";
   /** License of the registered numerical evidence. */
   public static final String EVIDENCE_LICENSE = "CC BY 4.0";
+  /** Reference pressure of the COMPSALT constant-volume correction. */
+  public static final double COMPSALT_PRESSURE_CORRECTION_REFERENCE_BARA = CalcSaltSatauration.PRESSURE_CORRECTION_REFERENCE_BARA;
 
   private static final double PURE_WATER_MINIMUM_C = 41.0;
   private static final double PURE_WATER_MAXIMUM_C = 43.0;
@@ -43,9 +47,15 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   private static final double REFERENCE_PRESSURE_TOLERANCE_BARA = 0.02;
 
   private final double evaluatedPressureBara;
+  private final double evaluatedTemperatureKelvin;
   private final double predictedPureWaterTransitionCelsius;
+  private final double predictedPureWaterTransitionAtEvaluatedPressureCelsius;
   private final double requiredWaterActivityAt25Celsius;
   private final double requiredWaterActivityAt40Celsius;
+  private final double anhydriteLumpedReactionVolumeCm3PerMol;
+  private final double gypsumLumpedReactionVolumeCm3PerMol;
+  private final double anhydriteLogKspPressureCorrection;
+  private final double gypsumLogKspPressureCorrection;
   private final boolean pureWaterEnvelopePass;
   private final boolean sodiumChloride25CEnvelopePass;
   private final boolean sodiumChloride40CEnvelopePass;
@@ -61,15 +71,29 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
       throw new IllegalArgumentException("Thermodynamic system must not be null");
     }
     evaluatedPressureBara = system.getPressure();
+    evaluatedTemperatureKelvin = system.getTemperature();
     if (!(evaluatedPressureBara > 0.0) || !Double.isFinite(evaluatedPressureBara)) {
       throw new IllegalArgumentException("System pressure must be finite and positive");
+    }
+    if (!(evaluatedTemperatureKelvin > 0.0) || !Double.isFinite(evaluatedTemperatureKelvin)) {
+      throw new IllegalArgumentException("System temperature must be finite and positive");
     }
 
     CalcSaltSatauration anhydrite = new CalcSaltSatauration(system, "CaSO4_A");
     CalcSaltSatauration gypsum = new CalcSaltSatauration(system, "CaSO4_G");
-    predictedPureWaterTransitionCelsius = solvePureWaterTransitionCelsius(anhydrite, gypsum);
+    predictedPureWaterTransitionCelsius = solvePureWaterTransitionCelsius(anhydrite, gypsum, REFERENCE_PRESSURE_BARA);
+    boolean pressureCorrectionIsZero = evaluatedPressureBara <= 1.013
+        || evaluatedPressureBara == COMPSALT_PRESSURE_CORRECTION_REFERENCE_BARA;
+    predictedPureWaterTransitionAtEvaluatedPressureCelsius = pressureCorrectionIsZero
+        ? predictedPureWaterTransitionCelsius
+        : solvePureWaterTransitionCelsius(anhydrite, gypsum, evaluatedPressureBara);
     requiredWaterActivityAt25Celsius = requiredWaterActivity(anhydrite, gypsum, 298.15);
     requiredWaterActivityAt40Celsius = requiredWaterActivity(anhydrite, gypsum, 313.15);
+    anhydriteLumpedReactionVolumeCm3PerMol = anhydrite.getLumpedReactionVolumeCm3PerMol();
+    gypsumLumpedReactionVolumeCm3PerMol = gypsum.getLumpedReactionVolumeCm3PerMol();
+    anhydriteLogKspPressureCorrection = anhydrite.getLogPressureCorrection(evaluatedTemperatureKelvin,
+        evaluatedPressureBara);
+    gypsumLogKspPressureCorrection = gypsum.getLogPressureCorrection(evaluatedTemperatureKelvin, evaluatedPressureBara);
 
     pureWaterEnvelopePass = within(predictedPureWaterTransitionCelsius, PURE_WATER_MINIMUM_C, PURE_WATER_MAXIMUM_C);
     sodiumChloride25CEnvelopePass = within(requiredWaterActivityAt25Celsius, NACL_25_WATER_ACTIVITY_MINIMUM,
@@ -85,9 +109,63 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
     return evaluatedPressureBara;
   }
 
+  /** @return temperature of the requested use state in Kelvin */
+  public double getEvaluatedTemperatureKelvin() {
+    return evaluatedTemperatureKelvin;
+  }
+
   /** @return predicted atmospheric pure-water transition temperature in degrees Celsius */
   public double getPredictedPureWaterTransitionCelsius() {
     return predictedPureWaterTransitionCelsius;
+  }
+
+  /**
+   * Returns the COMPSALT pure-water transition prediction at the requested pressure.
+   *
+   * <p>
+   * This is a reproducibility diagnostic only. It is not high-pressure qualification because the constant lumped
+   * reaction-volume convention does not separately resolve aqueous-species volumes.
+   * </p>
+   *
+   * @return predicted transition temperature in degrees Celsius at the evaluated pressure
+   */
+  public double getPredictedPureWaterTransitionAtEvaluatedPressureCelsius() {
+    return predictedPureWaterTransitionAtEvaluatedPressureCelsius;
+  }
+
+  /** @return COMPSALT anhydrite lumped reaction-volume coefficient in cm3/mol */
+  public double getAnhydriteLumpedReactionVolumeCm3PerMol() {
+    return anhydriteLumpedReactionVolumeCm3PerMol;
+  }
+
+  /** @return COMPSALT gypsum lumped reaction-volume coefficient in cm3/mol */
+  public double getGypsumLumpedReactionVolumeCm3PerMol() {
+    return gypsumLumpedReactionVolumeCm3PerMol;
+  }
+
+  /** @return logarithmic anhydrite Ksp pressure correction at the evaluated state */
+  public double getAnhydriteLogKspPressureCorrection() {
+    return anhydriteLogKspPressureCorrection;
+  }
+
+  /** @return logarithmic gypsum Ksp pressure correction at the evaluated state */
+  public double getGypsumLogKspPressureCorrection() {
+    return gypsumLogKspPressureCorrection;
+  }
+
+  /** @return {@code false}; aqueous-species volume contributions are not separately resolved */
+  public boolean isAqueousSpeciesVolumeResolved() {
+    return false;
+  }
+
+  /** @return {@code false}; the high-pressure reaction-volume convention remains unqualified */
+  public boolean isHighPressureQualified() {
+    return false;
+  }
+
+  /** @return primary high-pressure anhydrite-solubility lineage DOI */
+  public String getHighPressureLineageDoi() {
+    return HIGH_PRESSURE_LINEAGE_DOI;
   }
 
   /** @return lower independent pure-water transition limit in degrees Celsius */
@@ -185,7 +263,8 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
     return Collections.unmodifiableList(Arrays.asList(
         "Bock primary-table transcription, preprocessing uncertainty, and absolute-solubility "
             + "residuals remain unqualified",
-        "High-pressure use requires a verified reaction-volume convention with aqueous partial "
+        "COMPSALT Vdelta is a constant lumped reaction-volume coefficient, not a pure-mineral molar volume",
+        "High-pressure use requires a verified reaction-volume convention that separately resolves aqueous partial "
             + "or apparent molar volumes",
         "The registered evidence covers pure-water and NaCl phase crossings, not general "
             + "mixed-brine mineral equilibrium"));
@@ -199,15 +278,20 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
         + ", evidence25C=[" + NACL_25_WATER_ACTIVITY_MINIMUM + ", " + NACL_25_WATER_ACTIVITY_MAXIMUM + "]"
         + ", requiredWaterActivity40C=" + requiredWaterActivityAt40Celsius + ", evidence40C=["
         + NACL_40_WATER_ACTIVITY_MINIMUM + ", " + NACL_40_WATER_ACTIVITY_MAXIMUM + "]" + ", evaluatedPressure_bara="
-        + evaluatedPressureBara + ", referencePressurePass=" + referencePressureEnvelopePass + ", evidenceDoi="
+        + evaluatedPressureBara + ", evaluatedPressureTransition_C="
+        + predictedPureWaterTransitionAtEvaluatedPressureCelsius + ", anhydriteVdelta_cm3_per_mol="
+        + anhydriteLumpedReactionVolumeCm3PerMol + ", gypsumVdelta_cm3_per_mol=" + gypsumLumpedReactionVolumeCm3PerMol
+        + ", aqueousSpeciesVolumeResolved=" + isAqueousSpeciesVolumeResolved() + ", highPressureQualified="
+        + isHighPressureQualified() + ", referencePressurePass=" + referencePressureEnvelopePass + ", evidenceDoi="
         + EVIDENCE_DOI + ", license=" + EVIDENCE_LICENSE;
   }
 
-  private static double solvePureWaterTransitionCelsius(CalcSaltSatauration anhydrite, CalcSaltSatauration gypsum) {
+  private static double solvePureWaterTransitionCelsius(CalcSaltSatauration anhydrite, CalcSaltSatauration gypsum,
+      double pressureBara) {
     double lowerTemperatureK = 273.15;
     double upperTemperatureK = 373.15;
-    double lowerResidual = logKspDifference(anhydrite, gypsum, lowerTemperatureK);
-    double upperResidual = logKspDifference(anhydrite, gypsum, upperTemperatureK);
+    double lowerResidual = logKspDifference(anhydrite, gypsum, lowerTemperatureK, pressureBara);
+    double upperResidual = logKspDifference(anhydrite, gypsum, upperTemperatureK, pressureBara);
     if (lowerResidual == 0.0) {
       return lowerTemperatureK - 273.15;
     }
@@ -220,7 +304,7 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
     }
     for (int iteration = 0; iteration < 100; iteration++) {
       double trialTemperatureK = 0.5 * (lowerTemperatureK + upperTemperatureK);
-      double trialResidual = logKspDifference(anhydrite, gypsum, trialTemperatureK);
+      double trialResidual = logKspDifference(anhydrite, gypsum, trialTemperatureK, pressureBara);
       if (Math.abs(trialResidual) <= 1.0e-12) {
         return trialTemperatureK - 273.15;
       }
@@ -236,13 +320,13 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
 
   private static double requiredWaterActivity(CalcSaltSatauration anhydrite, CalcSaltSatauration gypsum,
       double temperatureK) {
-    return Math.exp(0.5 * logKspDifference(anhydrite, gypsum, temperatureK));
+    return Math.exp(0.5 * logKspDifference(anhydrite, gypsum, temperatureK, REFERENCE_PRESSURE_BARA));
   }
 
-  private static double logKspDifference(CalcSaltSatauration anhydrite, CalcSaltSatauration gypsum,
-      double temperatureK) {
-    return Math.log(gypsum.getSolubilityProduct(temperatureK, REFERENCE_PRESSURE_BARA))
-        - Math.log(anhydrite.getSolubilityProduct(temperatureK, REFERENCE_PRESSURE_BARA));
+  private static double logKspDifference(CalcSaltSatauration anhydrite, CalcSaltSatauration gypsum, double temperatureK,
+      double pressureBara) {
+    return Math.log(gypsum.getSolubilityProduct(temperatureK, pressureBara))
+        - Math.log(anhydrite.getSolubilityProduct(temperatureK, pressureBara));
   }
 
   private static boolean within(double value, double minimum, double maximum) {

@@ -349,6 +349,8 @@ CalciumSulfatePhaseBoundaryQualification evidence =
     operations.qualifyCalciumSulfatePhaseBoundary();
 
 double transitionC = evidence.getPredictedPureWaterTransitionCelsius();
+double transitionAtPressureC = evidence.getPredictedPureWaterTransitionAtEvaluatedPressureCelsius();
+double anhydriteVdelta = evidence.getAnhydriteLumpedReactionVolumeCm3PerMol();
 double requiredWaterActivity25C = evidence.getRequiredWaterActivityAt25Celsius();
 boolean publicationReady = evidence.isPublicationReady();
 ```
@@ -369,6 +371,16 @@ experimental lineage without redistributing the copyrighted primary table. The c
 registered envelopes, so the result deliberately reports `REJECTED` and `publicationReady=false`; it does not tune a
 coefficient toward the evidence. Absolute-solubility residuals, primary-row uncertainty, mixed-brine qualification and
 the high-pressure reaction-volume convention remain explicit follow-on boundaries.
+
+The pressure diagnostic reproduces the exact constant-volume correction used by the authoritative COMPSALT Ksp path,
+with a 1.01325 bara correlation reference. It reports `Vdelta=-52.4 cm3/mol` for anhydrite and
+`Vdelta=-33.0 cm3/mol` for gypsum, their separate logarithmic Ksp corrections at the evaluated state, and the resulting
+pure-water transition prediction. These are lumped reaction-volume coefficients—not pure-mineral molar volumes. The
+diagnostic therefore always reports `aqueousSpeciesVolumeResolved=false` and `highPressureQualified=false`. The primary
+high-pressure anhydrite-solubility lineage is Dickson, Blount and Tunell (1963),
+[DOI 10.2475/ajs.261.1.61](https://doi.org/10.2475/ajs.261.1.61); no copyrighted table rows or fitted coefficients are
+redistributed. Quantitative adoption still requires a complete primary-row audit, aqueous-species volume mapping, and
+an uncertainty-aware held-out acceptance criterion.
 
 The process-system test carries the solid ledger beside the residual fluid through a
 `Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Its
