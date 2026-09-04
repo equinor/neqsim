@@ -4,7 +4,6 @@ description: "Generate a traceable, review-required P&ID proposal, completeness 
 keywords: "P&ID synthesis, DEXPI, HAZOP preparation, safeguarding, control instrumentation, NORSOK"
 ---
 
-# Governed P&ID design synthesis
 
 For the relationship between P&ID proposal synthesis, native DEXPI 2.0 Plant exchange, Proteus/pyDEXPI compatibility,
 validation, and named-tool qualification, see the [DEXPI Engineering Guide](engineering/dexpi-guide).
