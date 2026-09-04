@@ -61,8 +61,8 @@ public class EntrainmentProviderSpiTest {
   /** An unknown id fails loudly and names what is available. */
   @Test
   public void unknownProviderIdFailsLoudly() {
-    IllegalStateException ex =
-        assertThrows(IllegalStateException.class, () -> EntrainmentProviderRegistry.find("no-such-model"));
+    IllegalStateException ex = assertThrows(IllegalStateException.class,
+        () -> EntrainmentProviderRegistry.find("no-such-model"));
     assertTrue(ex.getMessage().contains("no-such-model"));
     assertTrue(ex.getMessage().contains("Available providers"));
   }

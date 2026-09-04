@@ -72,8 +72,7 @@ public final class EntrainmentProviderRegistry {
     }
     throw new IllegalStateException("Entrainment provider '" + id + "' is not on the classpath. Available providers: ["
         + (available.length() == 0 ? "<none>" : available.toString()) + "]. "
-        + "If you expect a private plug-in such as 'eqn-pi-v1', make sure its "
-        + "JAR is on the classpath.");
+        + "If you expect a private plug-in such as 'eqn-pi-v1', make sure its " + "JAR is on the classpath.");
   }
 
   /**

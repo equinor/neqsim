@@ -52,9 +52,8 @@ public final class EntrainmentResult implements Serializable {
    * @param confidenceBandKgPerHr one-sigma uncertainty estimate on the carry-over [kg/h], or {@link Double#NaN} if the
    * provider cannot supply one
    */
-  public EntrainmentResult(String providerId, String providerVersion, double oilInGasKgPerHr,
-      double waterInGasKgPerHr, double gasInLiquidKgPerHr,
-      double confidenceBandKgPerHr) {
+  public EntrainmentResult(String providerId, String providerVersion, double oilInGasKgPerHr, double waterInGasKgPerHr,
+      double gasInLiquidKgPerHr, double confidenceBandKgPerHr) {
     if (providerId == null) {
       throw new IllegalArgumentException("providerId must not be null");
     }
@@ -126,9 +125,8 @@ public final class EntrainmentResult implements Serializable {
 
   @Override
   public String toString() {
-    return "EntrainmentResult{" + "provider=" + providerId + "@" + providerVersion
-        + ", oilInGas=" + oilInGasKgPerHr + " kg/h" + ", waterInGas=" + waterInGasKgPerHr
-        + " kg/h" + ", gasInLiquid=" + gasInLiquidKgPerHr + " kg/h" + ", confidence="
-        + confidenceBandKgPerHr + " kg/h" + "}";
+    return "EntrainmentResult{" + "provider=" + providerId + "@" + providerVersion + ", oilInGas=" + oilInGasKgPerHr
+        + " kg/h" + ", waterInGas=" + waterInGasKgPerHr + " kg/h" + ", gasInLiquid=" + gasInLiquidKgPerHr + " kg/h"
+        + ", confidence=" + confidenceBandKgPerHr + " kg/h" + "}";
   }
 }
