@@ -214,7 +214,11 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadWithDiagnosticsIncludesValidInstrumentationInventory() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Nozzle ID=\"N-SENSE\"/><Nozzle ID=\"N-ACT\"/><FinalControlElement ID=\"V-100\"/>"
+        + "<Nozzle ID=\"N-SENSE\"/><Nozzle ID=\"N-ACT\" ComponentClass=\"Nozzle\" ComponentName=\"NozzleShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"NZ-100\"/></GenericAttributes></Nozzle>"
+        + "<FinalControlElement ID=\"V-100\" ComponentClass=\"GateValve\" ComponentName=\"GateValveShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"XV-100\"/></GenericAttributes>"
+        + "</FinalControlElement>"
         + "<ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\" ID=\"PIF-PT-100\">"
         + instrumentAttributes("PT-100", "P", "T", "100")
         + "<InformationFlow ComponentClass=\"MeasuringLineFunction\" ID=\"MLF-100\">"
@@ -278,9 +282,15 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("V-100", actuatingFunction.getFinalControlElementId());
     assertTrue(actuatingFunction.isFinalControlElementResolved());
     assertEquals("FinalControlElement", actuatingFunction.getFinalControlElementName());
+    assertEquals("GateValve", actuatingFunction.getFinalControlElementComponentClass());
+    assertEquals("GateValveShape", actuatingFunction.getFinalControlElementComponentName());
+    assertEquals("XV-100", actuatingFunction.getFinalControlElementTagName());
     assertEquals("N-ACT", actuatingFunction.getLocationId());
     assertTrue(actuatingFunction.isLocationResolved());
     assertEquals("Nozzle", actuatingFunction.getLocationElementName());
+    assertEquals("Nozzle", actuatingFunction.getLocationComponentClass());
+    assertEquals("NozzleShape", actuatingFunction.getLocationComponentName());
+    assertEquals("NZ-100", actuatingFunction.getLocationTagName());
     assertThrows(UnsupportedOperationException.class, () -> actuatingFunctions.clear());
 
     List<DexpiInformationFlowInfo> informationFlows = first.getInformationFlows();
@@ -327,6 +337,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"memberCount\": 3"));
     assertTrue(first.toJson().contains("\"actuatingFunctionCount\": 1"));
     assertTrue(first.toJson().contains("\"finalControlElementResolved\": true"));
+    assertTrue(first.toJson().contains("\"finalControlElementTagName\": \"XV-100\""));
+    assertTrue(first.toJson().contains("\"locationTagName\": \"NZ-100\""));
     assertTrue(first.toJson().contains("\"informationFlowCount\": 3"));
     assertTrue(first.toJson().contains("\"kind\": \"MEASURING_LINE\""));
     assertTrue(first.toJson().contains("\"signalConveyingType\": \"ElectricalSignalConveying\""));
@@ -376,9 +388,15 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("UNKNOWN-FINAL", actuatingFunction.getFinalControlElementId());
     assertFalse(actuatingFunction.isFinalControlElementResolved());
     assertEquals("", actuatingFunction.getFinalControlElementName());
+    assertEquals("", actuatingFunction.getFinalControlElementComponentClass());
+    assertEquals("", actuatingFunction.getFinalControlElementComponentName());
+    assertEquals("", actuatingFunction.getFinalControlElementTagName());
     assertEquals("", actuatingFunction.getLocationId());
     assertFalse(actuatingFunction.isLocationResolved());
     assertEquals("", actuatingFunction.getLocationElementName());
+    assertEquals("", actuatingFunction.getLocationComponentClass());
+    assertEquals("", actuatingFunction.getLocationComponentName());
+    assertEquals("", actuatingFunction.getLocationTagName());
 
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_ID_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_FUNCTION_METADATA_MISSING");
@@ -429,7 +447,11 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadWithDiagnosticsPreservesActuatingElectricalFunctionKind() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Nozzle ID=\"N-ELECTRICAL\"/><FinalControlElement ID=\"M-200\"/>"
+        + "<Nozzle ID=\"N-ELECTRICAL\" ComponentClass=\"Nozzle\" ComponentName=\"MotorNozzle\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"NZ-200\"/></GenericAttributes></Nozzle>"
+        + "<FinalControlElement ID=\"M-200\" ComponentClass=\"ElectricMotor\" ComponentName=\"MotorShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"M-200\"/></GenericAttributes>"
+        + "</FinalControlElement>"
         + "<ActuatingElectricalFunction ComponentClass=\"ActuatingElectricalFunction\" ID=\"AEF-200\">"
         + "<GenericAttributes>" + "<GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"YC-200\"/>"
         + "<GenericAttribute Name=\"FinalControlElementID\" Value=\"M-200\"/>"
@@ -447,8 +469,14 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("M-200", function.getFinalControlElementId());
     assertTrue(function.isFinalControlElementResolved());
     assertEquals("FinalControlElement", function.getFinalControlElementName());
+    assertEquals("ElectricMotor", function.getFinalControlElementComponentClass());
+    assertEquals("MotorShape", function.getFinalControlElementComponentName());
+    assertEquals("M-200", function.getFinalControlElementTagName());
     assertEquals("N-ELECTRICAL", function.getLocationId());
     assertTrue(function.isLocationResolved());
+    assertEquals("Nozzle", function.getLocationComponentClass());
+    assertEquals("MotorNozzle", function.getLocationComponentName());
+    assertEquals("NZ-200", function.getLocationTagName());
     assertTrue(result.getDiagnostics().isEmpty());
   }
 
