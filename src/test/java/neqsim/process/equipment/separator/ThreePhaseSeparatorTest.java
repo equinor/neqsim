@@ -1309,5 +1309,15 @@ class ThreePhaseSeparatorTest {
         "oil outlet should be inlet - pressureDrop");
     Assertions.assertEquals(9.8, sep.getWaterOutStream().getPressure("bara"), 1e-6,
         "water outlet should be inlet - pressureDrop");
+
+    sep.setPressureDrop(0.5);
+    sep.run();
+
+    Assertions.assertEquals(9.5, sep.getGasOutStream().getPressure("bara"), 1e-6,
+        "gas outlet should reflect a changed pressureDrop with an unchanged inlet");
+    Assertions.assertEquals(9.5, sep.getOilOutStream().getPressure("bara"), 1e-6,
+        "oil outlet should reflect a changed pressureDrop with an unchanged inlet");
+    Assertions.assertEquals(9.5, sep.getWaterOutStream().getPressure("bara"), 1e-6,
+        "water outlet should reflect a changed pressureDrop with an unchanged inlet");
   }
 }

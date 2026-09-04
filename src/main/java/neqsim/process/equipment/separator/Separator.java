@@ -248,6 +248,7 @@ public class Separator extends ProcessEquipmentBaseClass
   private double lastEnthalpy;
   private double lastFlowRate;
   private double lastPressure;
+  private double lastPressureDrop;
 
   // Heat input capabilities
   private boolean setHeatInput = false;
@@ -675,13 +676,14 @@ public class Separator extends ProcessEquipmentBaseClass
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();
     if (Math.abs((lastEnthalpy - enthalpy) / enthalpy) < 1e-6 && Math.abs((lastFlowRate - flow) / flow) < 1e-6
-        && Math.abs((lastPressure - pres) / pres) < 1e-6) {
+        && Math.abs((lastPressure - pres) / pres) < 1e-6 && lastPressureDrop == pressureDrop) {
       setCalculationIdentifier(id);
       return;
     }
     lastEnthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     lastFlowRate = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     lastPressure = inletStreamMixer.getOutletStream().getPressure();
+    lastPressureDrop = pressureDrop;
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
 

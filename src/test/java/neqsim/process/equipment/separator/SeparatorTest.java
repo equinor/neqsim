@@ -58,6 +58,33 @@ class SeparatorTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(lt.getMeasuredValue() * 100, lt.getMeasuredPercentValue(), 1e-12);
   }
 
+  /** Regression test for GitHub issue #3445. */
+  @Test
+  void testPressureDropChangeRecalculatesUnchangedInlet() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 1.9);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("ethane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(15000.0, "kg/hr");
+    feed.setPressure(1.9, "bara");
+    feed.setTemperature(25.0, "C");
+
+    Separator separator = new Separator("separator", feed);
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(separator);
+
+    separator.setPressureDrop(0.3);
+    process.run();
+    Assertions.assertEquals(1.6, separator.getGasOutStream().getPressure("bara"), 1.0e-10);
+
+    separator.setPressureDrop(0.8);
+    process.run();
+    Assertions.assertEquals(1.1, separator.getGasOutStream().getPressure("bara"), 1.0e-10);
+  }
+
   @Test
   void testEntropyProductionUsesEntropyUnitOnlyForResult() {
     ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(1.0, "MSm3/day");
