@@ -114,8 +114,11 @@ product boiling metrics rather than being numerically inert.
 The top pressure, condenser/reboiler settings, reflux ratio, side-draw trays, and side-draw
 fractions are fixed engineering test controls. They are not values reported by the article. The
 qualification requires rigorous convergence without fallback, external and per-component
-conservation, energy and per-tray material closure, positive product rates, and increasing mean
-normal boiling point from overhead through the two side-draw screens to bottoms.
+conservation, energy and per-tray material closure, finite non-negative candidate-stream rates, at
+least two material products, and increasing mean normal boiling point across material products in
+column order. A zero-flow candidate is permitted and excluded from composition and boiling-order
+evaluation because the source reports light ends as not determined; the test does not synthesize
+inventory merely to force every screen stream positive.
 
 The published plant rates remain untouched read-only evidence. They are not used as product-flow
 specifications, tuning targets, or numerical acceptance thresholds. This sensitivity gate does not
