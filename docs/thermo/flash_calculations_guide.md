@@ -1,6 +1,6 @@
 ---
 title: "Flash Calculations Guide"
-description: "This guide provides comprehensive documentation of flash calculations available in NeqSim via the `ThermodynamicOperations` class. Flash calculations determine the equilibrium state of a thermodynamic..."
+description: "Guide to equilibrium flash calculations available through ThermodynamicOperations, including constraints, phase behavior, units, and validation boundaries."
 keywords: "flash, TPflash, PHflash, PSflash, TVflash, dew point, bubble point, phase envelope, cricondenbar, cricondentherm, VLE, phase equilibrium, ThermodynamicOperations"
 ---
 
