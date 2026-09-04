@@ -1,6 +1,6 @@
 ---
 title: Fluid Mechanics Package
-description: The `fluidmechanics` package provides models for pipeline flow, pressure drop calculations, and transient flow simulation with rigorous non-equilibrium thermodynamic calculations for mass and heat tra...
+description: "Guide to NeqSim fluid-mechanics models for pipeline flow, pressure drop, transient simulation, and non-equilibrium heat and mass transfer."
 ---
 
 The `fluidmechanics` package provides models for pipeline flow, pressure drop calculations, and transient flow simulation with rigorous non-equilibrium thermodynamic calculations for mass and heat transfer.
