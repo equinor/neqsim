@@ -214,8 +214,8 @@ public class EmpiricalCarryOverConstraintTest {
   /** A single calibration point degenerates to a constant rather than dividing by zero. */
   @Test
   public void singleCalibrationPointBehavesAsConstant() {
-    EmpiricalCarryOverConstraint constraint = EmpiricalCarryOverConstraint.fromObservations("co",
-        "kg/h", new DoubleSupplier() {
+    EmpiricalCarryOverConstraint constraint = EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
+        new DoubleSupplier() {
           @Override
           public double getAsDouble() {
             return driver[0];
