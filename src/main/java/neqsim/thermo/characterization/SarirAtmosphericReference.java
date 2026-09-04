@@ -315,8 +315,8 @@ public final class SarirAtmosphericReference {
    * Immutable source steam-injection row.
    *
    * <p>
-   * The source identifies the receiving service and mass-flow rate, but not an injection tray or
-   * thermodynamic steam state. This evidence must not be treated as an executable stream specification.
+   * The source identifies the receiving service and mass-flow rate, but not an injection tray or thermodynamic steam
+   * state. This evidence must not be treated as an executable stream specification.
    * </p>
    */
   public static final class SteamInjectionReference implements Serializable {
