@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -437,9 +438,117 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /** Erosional velocity constant (API RP 14E). */
   private double erosionalConstant = 122.0;
 
+  /** Hydraulic model used for the pipeline traverse. */
+  private HydraulicModel hydraulicModel = HydraulicModel.TWO_FLUID;
+
+  /**
+   * Pipeline hydraulic model.
+   *
+   * <p>
+   * The Beggs and Brill two-phase friction multiplier and hold-up correlation were fitted on small-diameter air-water
+   * laboratory loops at liquid fractions around 1 to 2 percent and above. A wet-gas tie-back runs well below that,
+   * where the correlation is extrapolated and over-predicts the pressure drop substantially. The mechanistic two-fluid
+   * model resolves the phases separately and does not rely on that extrapolation, so it is the default for wellstream
+   * pipeline calculations.
+   * </p>
+   */
+  public enum HydraulicModel {
+    /**
+     * Mechanistic two-fluid model, {@link TwoFluidPipe}. Default. Preferred for wellstream and wet-gas lines.
+     */
+    TWO_FLUID,
+    /**
+     * Beggs and Brill correlation, {@link PipeBeggsAndBrills}. Faster, and adequate for liquid-dominated lines inside
+     * the correlation's calibration range.
+     */
+    BEGGS_BRILL
+  }
+
   // ============================================================================
   // CONSTRUCTORS
   // ============================================================================
+
+  /**
+   * Runs the pipeline traverse with the mechanistic two-fluid model.
+   *
+   * @param pipeInlet the pipeline inlet stream
+   * @param result the result object, annotated with the solver diagnostics
+   * @return the pipeline outlet stream
+   */
+  private StreamInterface runTwoFluid(Stream pipeInlet, PipelineResult result) {
+    TwoFluidPipe pipe = new TwoFluidPipe("Flowline", pipeInlet);
+    pipe.setDiameter(pipelineDiameterM);
+    pipe.setRoughness(pipelineRoughnessM);
+    pipe.setNumberOfSections(numberOfSegments);
+    double totalLength = pipelineLengthKm * 1000.0;
+    double[] lengths = new double[numberOfSegments];
+    double[] elevations = new double[numberOfSegments + 1];
+    for (int i = 0; i < numberOfSegments; i++) {
+      lengths[i] = totalLength / numberOfSegments;
+      elevations[i] = elevationChangeM * i / numberOfSegments;
+    }
+    elevations[numberOfSegments] = elevationChangeM;
+    pipe.setSectionLengths(lengths);
+    pipe.setElevationProfile(elevations);
+    pipe.setSurfaceTemperature(seabedTemperatureC, "C");
+    if (overallHtcWm2K > 0.0) {
+      pipe.setHeatTransferCoefficient(overallHtcWm2K);
+    }
+    pipe.setEnableJouleThomson(true);
+    pipe.run();
+
+    // A single-iteration exit means the pressure profile was frozen on the inlet densities.
+    if (!pipe.isSteadyStateConverged() || pipe.getSteadyStateIterationsUsed() <= 1) {
+      logger.warn(
+          "TwoFluidPipe steady state did not converge properly for the {} km flowline "
+              + "(converged={}, iterations={}); treat the pressure drop as unreliable",
+          Double.valueOf(pipelineLengthKm), Boolean.valueOf(pipe.isSteadyStateConverged()),
+          Integer.valueOf(pipe.getSteadyStateIterationsUsed()));
+    }
+    return pipe.getOutletStream();
+  }
+
+  /**
+   * Runs the pipeline traverse with the Beggs and Brill correlation.
+   *
+   * @param pipeInlet the pipeline inlet stream
+   * @param result the result object
+   * @return the pipeline outlet stream
+   */
+  private StreamInterface runBeggsAndBrill(Stream pipeInlet, PipelineResult result) {
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Flowline", pipeInlet);
+    pipe.setPipeWallRoughness(pipelineRoughnessM);
+    pipe.setLength(pipelineLengthKm * 1000);
+    pipe.setDiameter(pipelineDiameterM);
+    pipe.setAngle(Math.atan(elevationChangeM / (pipelineLengthKm * 1000)) * 180 / Math.PI);
+    pipe.setNumberOfIncrements(numberOfSegments);
+    pipe.setConstantSurfaceTemperature(seabedTemperatureC, "C");
+    if (overallHtcWm2K > 0.0) {
+      pipe.setHeatTransferCoefficient(overallHtcWm2K);
+    } else {
+      pipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
+    }
+    pipe.run();
+    return pipe.getOutletStream();
+  }
+
+  /**
+   * Sets the pipeline hydraulic model.
+   *
+   * @param model {@link HydraulicModel#TWO_FLUID} (default) or {@link HydraulicModel#BEGGS_BRILL}
+   */
+  public void setHydraulicModel(HydraulicModel model) {
+    this.hydraulicModel = model;
+  }
+
+  /**
+   * Returns the pipeline hydraulic model in use.
+   *
+   * @return the selected hydraulic model
+   */
+  public HydraulicModel getHydraulicModel() {
+    return hydraulicModel;
+  }
 
   /**
    * Creates a new integrator with default parameters.
@@ -473,25 +582,13 @@ public class MultiphaseFlowIntegrator implements Serializable {
     result.setInletTemperatureC(pipeInlet.getTemperature("C"));
 
     try {
-      // Create Beggs and Brill pipe
-      PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Flowline", pipeInlet);
-      pipe.setPipeWallRoughness(pipelineRoughnessM);
-      pipe.setLength(pipelineLengthKm * 1000); // Convert to m
-      pipe.setDiameter(pipelineDiameterM);
-      pipe.setAngle(Math.atan(elevationChangeM / (pipelineLengthKm * 1000)) * 180 / Math.PI);
-      pipe.setNumberOfIncrements(numberOfSegments);
-      pipe.setConstantSurfaceTemperature(seabedTemperatureC, "C");
-      if (overallHtcWm2K > 0.0) {
-        pipe.setHeatTransferCoefficient(overallHtcWm2K);
+      StreamInterface outlet;
+      if (hydraulicModel == HydraulicModel.TWO_FLUID) {
+        outlet = runTwoFluid(pipeInlet, result);
       } else {
-        pipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
+        outlet = runBeggsAndBrill(pipeInlet, result);
       }
 
-      // Run calculation
-      pipe.run();
-
-      // Extract results
-      StreamInterface outlet = pipe.getOutletStream();
       result.setArrivalPressureBar(outlet.getPressure("bara"));
       result.setArrivalTemperatureC(outlet.getTemperature("C"));
       result.setPressureDropBar(result.getInletPressureBar() - result.getArrivalPressureBar());
