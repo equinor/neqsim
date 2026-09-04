@@ -1342,6 +1342,99 @@ per train — matching the format of the standard Sulzer
 
 ---
 
+## Constraint provenance: where a limit comes from
+
+Every `CapacityConstraint` carries two independent descriptors, and it is worth
+keeping them apart when reading a capacity report:
+
+| Descriptor | Question it answers | Type |
+|------------|---------------------|------|
+| `ConstraintSeverity` | How is a violation handled? | `CRITICAL`, `HARD`, `SOFT`, `ADVISORY` |
+| `ConstraintSource`   | What authority backs the number? | `CONFORMITY_STANDARD`, `VENDOR_DATASHEET`, `PROCESS_EMPIRICAL`, `USER_RULE`, `AUTO_SIZE`, `DEFAULT` |
+
+A vendor surge limit and a company K-factor may both be `HARD`, but they are not
+renegotiable on the same terms — the first is a machine limit, the second is a
+policy choice. Recording the source lets a report say *why* a limit binds.
+
+```java
+constraint.setSource(CapacityConstraint.ConstraintSource.CONFORMITY_STANDARD, "API 12J");
+constraint.getSource();           // CONFORMITY_STANDARD
+constraint.getSourceReference();  // "API 12J"
+```
+
+`ConstraintSource` is distinct from the free-text `dataSource`. The data source
+records *which part of the model* supplied the number (`"equipment"`,
+`"mechanicalDesign"`, `"installed_capacity_table"`); the constraint source
+classifies the underlying authority. Both are emitted per constraint in the
+`getUtilizationSnapshot()` JSON.
+
+### Hard, binding constraints from empirical observations
+
+The constraint that actually limits production on many field cases is not a
+standard's K-factor; it is an empirical relationship between an operating
+variable (gas rate, suction pressure) and a downstream consequence — typically
+liquid carry-over from the last scrubber accumulating in the suction drum of a
+compressor or expander downstream.
+
+`EmpiricalCarryOverConstraint` packages this pattern as a piecewise-linear
+correlation calibrated against measured points, for example suction-drum level
+instrumentation:
+
+```java
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.EmpiricalCarryOverConstraint;
+
+double[] gasRate   = {2.0, 3.0, 4.5, 5.5};   // Am3/s at the scrubber gas outlet
+double[] carryOver = {0.0, 0.5, 3.0, 12.0};  // kg/h observed downstream
+double maxCarry = 5.0;                       // kg/h, the binding limit
+
+EmpiricalCarryOverConstraint co = EmpiricalCarryOverConstraint.fromObservations(
+    "carryOver", "kg/h",
+    () -> scrubber.getThermoSystem().getPhase(0).getFlowRate("m3/sec"),
+    gasRate, carryOver, maxCarry);
+co.setSourceReference("Suction drum level instrument, May-Aug 2025");
+scrubber.addCapacityConstraint(co);
+```
+
+The `xPoints` and `yPoints` arrays carry no implied units. The driver supplier
+must return the operating variable in the unit of `xPoints`, and `yPoints` and
+`maxAllowable` must share the unit passed as the constraint unit.
+
+Behaviour:
+
+- Created as a `HARD` constraint with severity `HARD` and source
+  `PROCESS_EMPIRICAL`, so exceeding the allowable carry-over shows up both in
+  `isViolated()` and in `isHardLimitExceeded()`, and therefore in the plant-wide
+  `anyHardLimitExceeded` feasibility gate.
+- Below the lowest calibration point the value clamps to the first observation.
+  Above the highest, the slope of the last segment is extrapolated, which keeps
+  the correlation conservative outside the calibrated envelope.
+- It is an ordinary `CapacityConstraint`, so it participates in bottleneck
+  detection, the utilization snapshot, and the production optimiser.
+
+Because it extrapolates, a value far above the calibration range is an
+engineering judgement, not a measurement. Keep the calibration envelope in
+`getSourceReference()` so a reader can see where the data ends.
+
+### Choosing what is binding
+
+A reasonable default for a gas-export train:
+
+| Layer | Source | Severity | Effect on optimiser |
+|-------|--------|----------|---------------------|
+| Standard K-factor  | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block |
+| Standard inlet ρv² | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block |
+| Drainage head %    | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block |
+| Carry-over kg/h    | `PROCESS_EMPIRICAL`   | `HARD`     | **Binds capacity** |
+| Compressor surge   | `VENDOR_DATASHEET`    | `CRITICAL` | Stops optimisation immediately |
+
+This separation lets you produce a single capacity report that shows both *what
+limits production today* — the empirical and vendor constraints — and *what
+would limit production if conformity were enforced* — the standards-driven
+constraints.
+
+---
+
 ## Related Documentation
 
 - [Process Package](../) - Package overview

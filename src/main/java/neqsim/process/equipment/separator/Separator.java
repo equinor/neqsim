@@ -67,8 +67,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li><b>Design gas load factor (K-factor)</b> — {@link #setDesignGasLoadFactor(double)} [m/s]. Default: 0.11 m/s. This
  * is the design K-factor from the Souders-Brown equation. Typical range: 0.07–0.15 m/s for horizontal separators,
  * 0.04–0.10 m/s for vertical scrubbers.</li>
- * <li><b>Design liquid level fraction</b> (vertical only) — {@link #setDesignLiquidLevelFraction(double)}. Default:
- * 0.8. The fraction of cross-sectional area occupied by liquid at design conditions.</li>
+ * <li><b>Design liquid level fraction</b> (horizontal only) — {@link #setDesignLiquidLevelFraction(double)}. Default:
+ * 0.8. The fraction of cross-sectional area occupied by liquid at design conditions. A vertical separator uses the
+ * full cross-section for gas flow, so this value does not affect it.</li>
  * </ol>
  *
  * <p>
@@ -1678,7 +1679,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * <li>{@link #setSeparatorLength(double)} — separator length [m]</li>
    * <li>{@link #setDesignGasLoadFactor(double)} — design K-factor [m/s]</li>
    * <li>{@link #setOrientation(String)} — "horizontal" or "vertical"</li>
-   * <li>{@link #setDesignLiquidLevelFraction(double)} — for vertical separators</li>
+   * <li>{@link #setDesignLiquidLevelFraction(double)} — for horizontal separators</li>
    * </ul>
    *
    * @return capacity utilization fraction (0.0 to 1.0+ if overloaded), or 0.0 if liquid-only (no gas separation
@@ -2731,7 +2732,13 @@ public class Separator extends ProcessEquipmentBaseClass
   /**
    * Getter for the field <code>designLiquidLevelFraction</code>.
    *
-   * @return the designGasLevelFraction
+   * <p>
+   * The fraction of the vessel cross-sectional area occupied by liquid at design conditions. It derates the gas
+   * area for a horizontal separator; a vertical separator uses the full cross-section for gas flow and is therefore
+   * unaffected.
+   * </p>
+   *
+   * @return the design liquid level fraction (0.0 to 1.0)
    */
   public double getDesignLiquidLevelFraction() {
     return designLiquidLevelFraction;
@@ -2740,7 +2747,13 @@ public class Separator extends ProcessEquipmentBaseClass
   /**
    * Setter for the field <code>designLiquidLevelFraction</code>.
    *
-   * @param designLiquidLevelFraction a double
+   * <p>
+   * Only affects horizontal separators, where the gas area is derated by
+   * {@code (1 - designLiquidLevelFraction)}. A vertical separator uses the full cross-section for gas flow.
+   * </p>
+   *
+   * @param designLiquidLevelFraction fraction of the cross-sectional area occupied by liquid at design conditions,
+   *        in the range 0.0 to 1.0
    */
   public void setDesignLiquidLevelFraction(double designLiquidLevelFraction) {
     this.designLiquidLevelFraction = designLiquidLevelFraction;

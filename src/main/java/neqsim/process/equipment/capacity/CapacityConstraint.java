@@ -96,6 +96,73 @@ public class CapacityConstraint implements Serializable {
     ADVISORY
   }
 
+  /**
+   * Enum describing the provenance of a constraint limit - the kind of authority that backs the number.
+   *
+   * <p>
+   * This is a separate axis from {@link ConstraintSeverity}: severity says <em>how a violation is handled</em>,
+   * whereas the source says <em>why the limit exists and who stands behind it</em>. A vendor surge limit and a
+   * company standard may both be HARD, but they are not renegotiable on the same terms.
+   * </p>
+   *
+   * <p>
+   * It is also distinct from {@link CapacityConstraint#getDataSource()}. The data source is a free-text label
+   * identifying which part of the model supplied the number ("equipment", "mechanicalDesign",
+   * "installed_capacity_table"); the constraint source classifies the underlying authority. A limit with
+   * {@code dataSource = "mechanicalDesign"} may have a source of {@link #CONFORMITY_STANDARD} or
+   * {@link #VENDOR_DATASHEET} depending on how the design was set.
+   * </p>
+   *
+   * <p>
+   * Recommended pairings with severity:
+   * </p>
+   * <ul>
+   * <li>{@link #CONFORMITY_STANDARD} - typically SOFT or ADVISORY, unless company policy makes it binding</li>
+   * <li>{@link #USER_RULE} - severity chosen by operations</li>
+   * <li>{@link #PROCESS_EMPIRICAL} - typically HARD, calibrated against observed plant behaviour</li>
+   * <li>{@link #VENDOR_DATASHEET} - typically HARD or CRITICAL for mechanical and surge limits</li>
+   * <li>{@link #AUTO_SIZE} - design point produced by sizing code; usually SOFT</li>
+   * <li>{@link #DEFAULT} - built-in constraint with no declared provenance</li>
+   * </ul>
+   */
+  public enum ConstraintSource {
+    /**
+     * Limit comes from an industry or company standard (API 12J, NORSOK P-002, ISO, ASME, DNV, or a company
+     * technical requirement). The specific document is recorded in
+     * {@link CapacityConstraint#getSourceReference()}.
+     */
+    CONFORMITY_STANDARD,
+
+    /**
+     * Limit defined by the user, operations, or the asset team. Examples: a maximum compressor speed imposed for
+     * vibration management, or a separator load factor derived from operating experience.
+     */
+    USER_RULE,
+
+    /**
+     * Limit derived from empirical observation of plant behaviour. Typically a correlation between an operating
+     * variable (rate, pressure) and a downstream consequence (carry-over, fouling, scaling) fitted to historian
+     * data. See {@link EmpiricalCarryOverConstraint}.
+     */
+    PROCESS_EMPIRICAL,
+
+    /**
+     * Limit taken from a vendor or OEM datasheet - compressor surge curve, valve trim Cv, mechanical overspeed,
+     * sealing pressure.
+     */
+    VENDOR_DATASHEET,
+
+    /**
+     * Limit generated automatically by equipment sizing code, such as an {@code autoSize()} call.
+     */
+    AUTO_SIZE,
+
+    /**
+     * Default fallback, used by built-in constraints where no provenance has been declared.
+     */
+    DEFAULT
+  }
+
   /** Name of the constraint (e.g., "speed", "gasLoadFactor"). */
   private final String name;
 
@@ -110,6 +177,15 @@ public class CapacityConstraint implements Serializable {
 
   /** Severity level for optimization (CRITICAL, HARD, SOFT, ADVISORY). */
   private ConstraintSeverity severity = ConstraintSeverity.HARD;
+
+  /** Provenance of the limit - the kind of authority that backs it. */
+  private ConstraintSource source = ConstraintSource.DEFAULT;
+
+  /**
+   * Free-text reference identifying the source: the standard number ("API 12J"), the team that imposed the rule, or
+   * the historian tag set used to fit an empirical correlation. Optional.
+   */
+  private String sourceReference = "";
 
   /** Design/rated value for this constraint. */
   private double designValue = Double.MAX_VALUE;
@@ -289,6 +365,64 @@ public class CapacityConstraint implements Serializable {
    */
   public ConstraintSeverity getSeverity() {
     return severity;
+  }
+
+  /**
+   * Sets the provenance of this constraint.
+   *
+   * @param source the kind of authority backing the limit; {@code null} is treated as
+   *        {@link ConstraintSource#DEFAULT}
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSource(ConstraintSource source) {
+    this.source = source == null ? ConstraintSource.DEFAULT : source;
+    return this;
+  }
+
+  /**
+   * Sets the provenance together with a free-text reference identifying the specific source.
+   *
+   * @param source the kind of authority backing the limit; {@code null} is treated as
+   *        {@link ConstraintSource#DEFAULT}
+   * @param sourceReference free-text identifier such as a standard number, an owning team, or the historian tag set
+   *        used to fit the limit; {@code null} is stored as an empty string
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSource(ConstraintSource source, String sourceReference) {
+    this.source = source == null ? ConstraintSource.DEFAULT : source;
+    this.sourceReference = sourceReference == null ? "" : sourceReference;
+    return this;
+  }
+
+  /**
+   * Sets only the free-text source reference, leaving the {@link ConstraintSource} unchanged. Useful for constraint
+   * subclasses that already declare their own source in the constructor.
+   *
+   * @param sourceReference free-text identifier such as a standard number, an owning team, or the historian tag set
+   *        used to fit the limit; {@code null} is stored as an empty string
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSourceReference(String sourceReference) {
+    this.sourceReference = sourceReference == null ? "" : sourceReference;
+    return this;
+  }
+
+  /**
+   * Gets the provenance of this constraint.
+   *
+   * @return the source, never {@code null}; defaults to {@link ConstraintSource#DEFAULT}
+   */
+  public ConstraintSource getSource() {
+    return source;
+  }
+
+  /**
+   * Gets the free-text source reference, such as a standard number, owning team, or historian tag set.
+   *
+   * @return the reference string, empty if none has been set
+   */
+  public String getSourceReference() {
+    return sourceReference;
   }
 
   /**
