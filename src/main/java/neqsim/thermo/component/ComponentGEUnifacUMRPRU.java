@@ -85,6 +85,13 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
+    if (unifacGroups.isEmpty()) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "ComponentGEUnifacUMRPRU", "name",
+              "component '" + name + "' has no UNIFAC group assignment in UNIFACcompUMRPRU.csv. "
+                  + "Without groups R and Q are zero, which makes the activity coefficient NaN. "
+                  + "Add a row for this component or use a model that does not need UNIFAC groups."));
+    }
     unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
       getUnifacGroup(i).calcXComp(this);
