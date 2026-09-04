@@ -3,7 +3,6 @@ title: Getting Started with NeqSim in Java
 description: Complete guide to using and developing with NeqSim in Java — prerequisites, installation, first calculations, process simulation, and developer setup.
 ---
 
-# Getting Started with NeqSim in Java
 
 This guide covers everything you need to start using NeqSim as a Java library — from installing prerequisites to running your first thermodynamic calculation and building a process simulation.
 
@@ -256,7 +255,7 @@ code .   # VS Code will prompt to reopen in container
 
 ### Docker container
 
-To build NeqSim in a self-contained Docker image and use it from both Java and Python (jpype) without a local toolchain, see [Building and Running NeqSim with Docker](docker-getting-started.md).
+To build NeqSim in a self-contained Docker image and use it from both Java and Python (jpype) without a local toolchain, see [Building and Running NeqSim with Docker](docker-getting-started).
 
 ### IntelliJ IDEA
 
