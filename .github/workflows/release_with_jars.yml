@@ -245,5 +245,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # workflow_dispatch is allowed to start workflows created with GITHUB_TOKEN.
-          gh workflow run publish_to_maven_central.yml --ref "$GITHUB_REF_NAME"
-          gh workflow run mcp_server_release.yml --ref "$GITHUB_REF_NAME"
+          gh workflow run publish_to_maven_central.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+          gh workflow run mcp_server_release.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
