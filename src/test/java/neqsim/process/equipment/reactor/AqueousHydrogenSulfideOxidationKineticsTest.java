@@ -117,14 +117,11 @@ public class AqueousHydrogenSulfideOxidationKineticsTest extends NeqSimTest {
     AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult zero = AqueousHydrogenSulfideOxidationKinetics
         .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.0, TEMPERATURE_K, PH, IONIC_STRENGTH);
     AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult shortResidence = AqueousHydrogenSulfideOxidationKinetics
-        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5 * halfLife, TEMPERATURE_K, PH,
-            IONIC_STRENGTH);
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5 * halfLife, TEMPERATURE_K, PH, IONIC_STRENGTH);
     AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult longResidence = AqueousHydrogenSulfideOxidationKinetics
-        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 2.0 * halfLife, TEMPERATURE_K, PH,
-            IONIC_STRENGTH);
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 2.0 * halfLife, TEMPERATURE_K, PH, IONIC_STRENGTH);
     AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult repeated = AqueousHydrogenSulfideOxidationKinetics
-        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 2.0 * halfLife, TEMPERATURE_K, PH,
-            IONIC_STRENGTH);
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 2.0 * halfLife, TEMPERATURE_K, PH, IONIC_STRENGTH);
 
     assertEquals(0.0, zero.getLowerRateDamkohlerNumber(), 0.0);
     assertEquals(0.0, zero.getNominalDamkohlerNumber(), 0.0);
@@ -143,14 +140,13 @@ public class AqueousHydrogenSulfideOxidationKineticsTest extends NeqSimTest {
   void testResidenceTimeRangeFailsClosedOnInvalidOrOverflowingInputs() {
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
         .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, -1.0, TEMPERATURE_K, PH, IONIC_STRENGTH));
-    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
-        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, Double.POSITIVE_INFINITY, TEMPERATURE_K, PH,
-            IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationKinetics.screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY,
+            Double.POSITIVE_INFINITY, TEMPERATURE_K, PH, IONIC_STRENGTH));
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
         .screenResidenceTimeRange(Double.MIN_VALUE, 1.0, TEMPERATURE_K, PH, IONIC_STRENGTH));
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
-        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, Double.MAX_VALUE, TEMPERATURE_K, PH,
-            IONIC_STRENGTH));
+        .screenResidenceTimeRange(1.0, Double.MAX_VALUE, TEMPERATURE_K, PH, IONIC_STRENGTH));
   }
 
   @Test
