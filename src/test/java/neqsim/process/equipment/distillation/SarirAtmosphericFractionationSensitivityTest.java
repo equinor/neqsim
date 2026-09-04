@@ -87,8 +87,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
     double[] materialBoilingPoints = new double[products.length];
     for (int i = 0; i < products.length; i++) {
       productMassFractions[i] = products[i].getFlowRate("kg/hr") / feedMassFlow;
-      materialBoilingPoints[i] = productMassFractions[i] > MATERIAL_FLOW_FRACTION
-          ? meanNormalBoilingPoint(products[i])
+      materialBoilingPoints[i] = productMassFractions[i] > MATERIAL_FLOW_FRACTION ? meanNormalBoilingPoint(products[i])
           : Double.NaN;
     }
     assertIncreasingMaterialBoilingPoints(materialBoilingPoints);
