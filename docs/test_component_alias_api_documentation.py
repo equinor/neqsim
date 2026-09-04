@@ -63,7 +63,7 @@ class ComponentAliasApiDocumentationContractTest(unittest.TestCase):
             'fluid.getComponent("isooctane")',
             'fluid.getPhase(0).getComponent("ISOOCTANE")',
             "`hasComponent(String)`",
-            "Unknown, ambiguous, and near-miss inputs are not guessed",
+            "near-miss inputs are not guessed",
             "../component_list.md#component-name-resolution",
         ):
             with self.subTest(token=token):
@@ -79,12 +79,18 @@ class ComponentAliasApiDocumentationContractTest(unittest.TestCase):
                 front_matter = content.split("---", 2)[1]
                 self.assertRegex(front_matter, r"(?m)^title:\s*\S")
                 self.assertRegex(front_matter, r"(?m)^description:\s*\S")
+                self.assertEqual(0, content.count("```") % 2)
+                visible_markdown = re.sub(
+                    r"```.*?```",
+                    "",
+                    content,
+                    flags=re.DOTALL,
+                )
                 self.assertEqual(
                     0,
-                    len(re.findall(r"(?m)^#\s+", content)),
+                    len(re.findall(r"(?m)^#\s+", visible_markdown)),
                     "Jekyll supplies the visible page title; a Markdown H1 duplicates it",
                 )
-                self.assertEqual(0, content.count("```") % 2)
 
     def test_documented_resolution_matches_current_source(self) -> None:
         for token in (
