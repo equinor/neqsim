@@ -196,17 +196,23 @@ across incoming and outgoing occurrences. Each immutable `DexpiConnectionCycleBo
 the connection evidence ID, original source connection ID, owning `PipingNetworkSegment` ID,
 direction relative to the cyclic group, explicit internal and external endpoint identities, whether
 each endpoint resolves, and the resolved endpoint element and Equipment/PipingComponent owner
-identities already present in the endpoint inventory. Missing source, segment, endpoint, or owner
-evidence remains an empty field. This avoids inferring boundary orientation, provenance, or ownership
-by joining separate inventories while retaining parallel and unresolved source evidence. It does not
-identify a hydraulic recycle, enumerate elementary paths, assert convergence behavior,
-repair or rewire topology, or establish process intent.
+identities already present in the endpoint inventory. Reader-produced records also expose the
+complete immutable source objects through `getConnection()`, `getInternalEndpoint()`, and
+`getExternalEndpoint()`. Java and JPype callers can therefore inspect connection direction,
+endpoint resolution and ownership, full source-ordered incidence lists, and incidence roles locally;
+`hasCompleteEvidence()` distinguishes that projection from legacy values built with the older
+constructors. Legacy object getters return `null` while their existing scalar evidence remains
+unchanged. Missing source, segment, endpoint, or owner evidence remains an empty field. This avoids
+joining separate inventories or inferring boundary orientation, provenance, or ownership while
+retaining parallel and unresolved source evidence. It does not identify a hydraulic recycle,
+enumerate elementary paths, assert convergence behavior, repair or rewire topology, or establish
+process intent.
 
 `toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
 `connectionComponentCount`, `connectionCycleCount`, and the ordered connection, endpoint,
 component, and directed-cycle inventories, including incidence roles, review subsets, complete
-cycle-local endpoint and internal connection occurrences, and explicit cycle-boundary occurrences,
-alongside the process-unit
+cycle-local endpoint and internal connection occurrences, and explicit cycle-boundary occurrences with
+nested connection and endpoint evidence, alongside the process-unit
 count and findings. Python callers through
 JPype use the same
 `ImportResult.getInstruments()`, `ImportResult.getConnections()`,
