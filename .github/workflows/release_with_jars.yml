@@ -89,7 +89,7 @@ jobs:
           path: staging
 
   compile_mcp_server:
-    name: Build MCP Server (Java 17)
+    name: Build MCP Server (Java 21)
     needs: get_versions
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
@@ -147,12 +147,24 @@ jobs:
         with:
           name: jarfiles-mcp-server
 
+      - name: Determine release publication mode
+        id: publication
+        env:
+          RELEASE_EVENT: ${{ github.event_name }}
+          RELEASE_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          if [[ "$RELEASE_EVENT" == "push" && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]]; then
+            echo "draft=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "draft=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create release v${{ needs.get_versions.outputs.version_8 }}
         uses: ncipollo/release-action@v1.21.0
         with:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }}
-          draft: true
+          draft: ${{ steps.publication.outputs.draft }}
           generateReleaseNotes: true
           skipIfReleaseExists: true
           artifacts: "*.jar,*.sha256"

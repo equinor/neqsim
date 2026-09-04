@@ -53,13 +53,13 @@ NeqSim requires Java 8 or higher. Java 11+ is recommended for best performance.
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.18.0</version>
+    <version>3.19.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```groovy
-implementation 'com.equinor.neqsim:neqsim:3.18.0'
+implementation 'com.equinor.neqsim:neqsim:3.19.0'
 ```
 
 **Direct Download:**
