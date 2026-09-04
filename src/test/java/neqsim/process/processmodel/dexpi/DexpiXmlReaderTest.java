@@ -236,6 +236,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<GenericAttributes><GenericAttribute Name=\"InstrumentationLoopFunctionNumberAssignmentClass\" Value=\"100\"/>"
         + "</GenericAttributes><Association Type=\"is a collection including\" ItemID=\"PIF-PT-100\"/>"
         + "<Association Type=\"is a collection including\" ItemID=\"PIF-PC-100\"/>"
+        + "<Association Type=\"is a collection including\" ItemID=\"PIF-PC-100\"/>"
         + "</InstrumentationLoopFunction></PlantModel>";
 
     DexpiXmlReader.ImportResult first = DexpiXmlReader
@@ -248,6 +249,21 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("100", first.getInstruments().get(0).getLoopNumber());
     assertEquals("PC-100", first.getInstruments().get(1).getTagName());
     assertEquals("PC-100", first.getInstruments().get(1).getActuatingTag());
+
+    List<DexpiInstrumentationLoopInfo> instrumentationLoops = first.getInstrumentationLoops();
+    assertEquals(1, instrumentationLoops.size());
+    DexpiInstrumentationLoopInfo loop = instrumentationLoops.get(0);
+    assertEquals("LOOP-100", loop.getId());
+    assertEquals("InstrumentationLoopFunction", loop.getComponentClass());
+    assertEquals("100", loop.getLoopNumber());
+    assertEquals(3, loop.getMembers().size());
+    assertEquals("PIF-PT-100", loop.getMembers().get(0).getMemberId());
+    assertTrue(loop.getMembers().get(0).isResolved());
+    assertEquals("ProcessInstrumentationFunction", loop.getMembers().get(0).getElementName());
+    assertEquals("PIF-PC-100", loop.getMembers().get(1).getMemberId());
+    assertEquals("PIF-PC-100", loop.getMembers().get(2).getMemberId());
+    assertThrows(UnsupportedOperationException.class, () -> instrumentationLoops.clear());
+    assertThrows(UnsupportedOperationException.class, () -> loop.getMembers().clear());
 
     List<DexpiInformationFlowInfo> informationFlows = first.getInformationFlows();
     assertEquals(3, informationFlows.size());
@@ -289,6 +305,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.getDiagnostics().isEmpty());
     assertFalse(first.hasLosses());
     assertTrue(first.toJson().contains("\"instrumentCount\": 2"));
+    assertTrue(first.toJson().contains("\"instrumentationLoopCount\": 1"));
+    assertTrue(first.toJson().contains("\"memberCount\": 3"));
     assertTrue(first.toJson().contains("\"informationFlowCount\": 3"));
     assertTrue(first.toJson().contains("\"kind\": \"MEASURING_LINE\""));
     assertTrue(first.toJson().contains("\"signalConveyingType\": \"ElectricalSignalConveying\""));
@@ -317,6 +335,15 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
 
     assertEquals(1, first.getInstruments().size());
+    assertEquals(1, first.getInstrumentationLoops().size());
+    DexpiInstrumentationLoopInfo loop = first.getInstrumentationLoops().get(0);
+    assertEquals("", loop.getId());
+    assertEquals("InstrumentationLoopFunction", loop.getComponentClass());
+    assertEquals("", loop.getLoopNumber());
+    assertEquals(1, loop.getMembers().size());
+    assertEquals("UNKNOWN-MEMBER", loop.getMembers().get(0).getMemberId());
+    assertFalse(loop.getMembers().get(0).isResolved());
+    assertEquals("", loop.getMembers().get(0).getElementName());
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_ID_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_FUNCTION_METADATA_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_NUMBER_MISSING");
