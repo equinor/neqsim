@@ -130,6 +130,7 @@ public final class DexpiXmlReader {
     private static final long serialVersionUID = 1000L;
     private final ProcessSystem processSystem;
     private final List<DexpiInstrumentInfo> instruments;
+    private final List<DexpiInformationFlowInfo> informationFlows;
     private final List<DexpiConnectionInfo> connections;
     private final List<DexpiConnectionEndpointInfo> connectionEndpoints;
     private final List<DexpiConnectionComponentInfo> connectionComponents;
@@ -138,11 +139,13 @@ public final class DexpiXmlReader {
     private final List<ImportDiagnostic> diagnostics;
 
     private ImportResult(ProcessSystem processSystem, List<DexpiInstrumentInfo> instruments,
-        List<DexpiConnectionInfo> connections, List<DexpiConnectionEndpointInfo> connectionEndpoints,
+        List<DexpiInformationFlowInfo> informationFlows, List<DexpiConnectionInfo> connections,
+        List<DexpiConnectionEndpointInfo> connectionEndpoints,
         List<DexpiConnectionComponentInfo> connectionComponents, List<DexpiConnectionCycleInfo> connectionCycles,
         List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions, List<ImportDiagnostic> diagnostics) {
       this.processSystem = processSystem;
       this.instruments = Collections.unmodifiableList(new ArrayList<DexpiInstrumentInfo>(instruments));
+      this.informationFlows = Collections.unmodifiableList(new ArrayList<DexpiInformationFlowInfo>(informationFlows));
       this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
       this.connectionEndpoints = Collections
           .unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(connectionEndpoints));
@@ -170,6 +173,20 @@ public final class DexpiXmlReader {
      */
     public List<DexpiInstrumentInfo> getInstruments() {
       return instruments;
+    }
+
+    /**
+     * Returns supported instrumentation information-flow occurrences in source-document order.
+     *
+     * <p>
+     * These records retain logical references and resolution evidence only. They do not construct live control
+     * topology, infer control intent, or verify loop function.
+     * </p>
+     *
+     * @return immutable signal-line and measuring-line evidence
+     */
+    public List<DexpiInformationFlowInfo> getInformationFlows() {
+      return informationFlows;
     }
 
     /**
@@ -270,6 +287,12 @@ public final class DexpiXmlReader {
       result.put("profile", "Proteus-compatible DEXPI Plant/P&ID 4.1.1 supported subset");
       result.put("importedUnitCount", Integer.valueOf(processSystem.getAllUnitNames().size()));
       result.put("instrumentCount", Integer.valueOf(instruments.size()));
+      result.put("informationFlowCount", Integer.valueOf(informationFlows.size()));
+      List<Map<String, Object>> informationFlowMaps = new ArrayList<Map<String, Object>>();
+      for (DexpiInformationFlowInfo informationFlow : informationFlows) {
+        informationFlowMaps.add(informationFlow.toMap());
+      }
+      result.put("informationFlows", informationFlowMaps);
       result.put("connectionCount", Integer.valueOf(connections.size()));
       List<Map<String, Object>> connectionMaps = new ArrayList<Map<String, Object>>();
       for (DexpiConnectionInfo connection : connections) {
@@ -491,9 +514,11 @@ public final class DexpiXmlReader {
       throws IOException, DexpiXmlReaderException {
     ProcessSystem processSystem = new ProcessSystem("DEXPI process");
     List<DexpiInstrumentInfo> instruments = new ArrayList<DexpiInstrumentInfo>();
+    List<DexpiInformationFlowInfo> informationFlows = new ArrayList<DexpiInformationFlowInfo>();
     List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     List<ImportDiagnostic> diagnostics = new ArrayList<ImportDiagnostic>();
-    loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, connections);
+    loadInternal(inputStream, processSystem, templateStream, false, diagnostics, instruments, informationFlows,
+        connections);
     List<DexpiConnectionEndpointInfo> connectionEndpoints = summarizeConnectionEndpoints(connections);
     List<DexpiConnectionComponentInfo> connectionComponents = summarizeConnectionComponents(connections,
         connectionEndpoints);
@@ -501,8 +526,8 @@ public final class DexpiXmlReader {
         connectionComponents);
     List<DexpiConnectionCycleTransitionInfo> connectionCycleTransitions = summarizeConnectionCycleTransitions(
         connections, connectionEndpoints, connectionCycles);
-    return new ImportResult(processSystem, instruments, connections, connectionEndpoints, connectionComponents,
-        connectionCycles, connectionCycleTransitions, diagnostics);
+    return new ImportResult(processSystem, instruments, informationFlows, connections, connectionEndpoints,
+        connectionComponents, connectionCycles, connectionCycleTransitions, diagnostics);
   }
 
   /**
@@ -577,12 +602,13 @@ public final class DexpiXmlReader {
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware) throws IOException, DexpiXmlReaderException {
-    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null, null, null);
+    loadInternal(inputStream, processSystem, templateStream, namespaceAware, null, null, null, null);
   }
 
   private static void loadInternal(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
       boolean namespaceAware, List<ImportDiagnostic> diagnostics, List<DexpiInstrumentInfo> instruments,
-      List<DexpiConnectionInfo> connections) throws IOException, DexpiXmlReaderException {
+      List<DexpiInformationFlowInfo> informationFlows, List<DexpiConnectionInfo> connections)
+      throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
@@ -605,6 +631,9 @@ public final class DexpiXmlReader {
     addPipingSegments(document, processSystem, streamTemplate, diagnostics);
     if (instruments != null) {
       instruments.addAll(parseInstruments(document));
+    }
+    if (informationFlows != null) {
+      informationFlows.addAll(parseInformationFlows(document));
     }
     if (connections != null) {
       connections.addAll(parseConnections(document, diagnostics));
@@ -752,6 +781,66 @@ public final class DexpiXmlReader {
 
     logger.info("Parsed {} instruments from DEXPI XML", instruments.size());
     return instruments;
+  }
+
+  private static List<DexpiInformationFlowInfo> parseInformationFlows(Document document) {
+    List<DexpiInformationFlowInfo> result = new ArrayList<DexpiInformationFlowInfo>();
+    Map<String, Element> elementsById = new HashMap<String, Element>();
+    NodeList allElements = document.getElementsByTagName("*");
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element element = (Element) node;
+      String id = element.getAttribute("ID");
+      if (!isBlank(id) && !elementsById.containsKey(id)) {
+        elementsById.put(id, element);
+      }
+    }
+
+    NodeList informationFlowNodes = document.getElementsByTagName("InformationFlow");
+    for (int i = 0; i < informationFlowNodes.getLength(); i++) {
+      Node node = informationFlowNodes.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE || isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element element = (Element) node;
+      String componentClass = element.getAttribute("ComponentClass");
+      DexpiInformationFlowInfo.Kind kind;
+      if ("SignalLineFunction".equals(componentClass)) {
+        kind = DexpiInformationFlowInfo.Kind.SIGNAL_LINE;
+      } else if ("MeasuringLineFunction".equals(componentClass)) {
+        kind = DexpiInformationFlowInfo.Kind.MEASURING_LINE;
+      } else {
+        continue;
+      }
+
+      String sourceId = associationItemId(element, "has logical start");
+      String targetId = associationItemId(element, "has logical end");
+      String attachmentId = associationItemId(element, "is attached to");
+      Element sourceElement = elementsById.get(sourceId);
+      Element targetElement = elementsById.get(targetId);
+      Element attachmentElement = elementsById.get(attachmentId);
+      result.add(new DexpiInformationFlowInfo(element.getAttribute("ID"), kind, componentClass, sourceId,
+          sourceElement != null, elementName(sourceElement), targetId, targetElement != null,
+          elementName(targetElement), attachmentId, attachmentElement != null, elementName(attachmentElement),
+          getGenericAttribute(element, "SignalConveyingTypeSpecialization")));
+    }
+    return result;
+  }
+
+  private static String associationItemId(Element element, String associationType) {
+    for (Element association : directChildElements(element, "Association")) {
+      if (associationType.equals(association.getAttribute("Type"))) {
+        return association.getAttribute("ItemID");
+      }
+    }
+    return "";
+  }
+
+  private static String elementName(Element element) {
+    return element == null ? "" : element.getTagName();
   }
 
   private static List<DexpiConnectionInfo> parseConnections(Document document, List<ImportDiagnostic> diagnostics) {
