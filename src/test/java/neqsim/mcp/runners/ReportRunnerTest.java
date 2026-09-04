@@ -75,8 +75,7 @@ class ReportRunnerTest {
         + "\"approach\":\"Synthetic SRK handoff\",\"conclusions\":\"Contract shape only\","
         + "\"toolOutput\":{\"status\":\"success\",\"fluid\":{"
         + "\"conditions\":{\"temperature_K\":300.0,\"pressure_bara\":42.0},"
-        + "\"properties\":{\"density_kgm3\":10.5,\"molarMass_kgmol\":0.020}},"
-        + "\"flash\":{\"numberOfPhases\":2}}}";
+        + "\"properties\":{\"density_kgm3\":10.5,\"molarMass_kgmol\":0.020}}," + "\"flash\":{\"numberOfPhases\":2}}}";
 
     JsonObject response = JsonParser.parseString(TaskWorkflowBridge.run(request)).getAsJsonObject();
 
@@ -103,8 +102,7 @@ class ReportRunnerTest {
 
   @Test
   void taskWorkflowBridgePublishesSchemaAndRejectsInvalidRequests() {
-    JsonObject schema = JsonParser.parseString(TaskWorkflowBridge.run("{\"action\":\"getSchema\"}"))
-        .getAsJsonObject();
+    JsonObject schema = JsonParser.parseString(TaskWorkflowBridge.run("{\"action\":\"getSchema\"}")).getAsJsonObject();
     assertEquals("success", schema.get("status").getAsString());
     for (String field : new String[] { "key_results", "validation", "approach", "conclusions", "uncertainty",
         "risk_evaluation", "benchmark_validation" }) {
@@ -121,8 +119,7 @@ class ReportRunnerTest {
     assertNotNull(result);
     JsonObject error = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("error", error.get("status").getAsString());
-    assertEquals("REPORT_ERROR",
-        error.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("REPORT_ERROR", error.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   private static void assertBridgeError(String result) {
