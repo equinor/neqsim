@@ -10,8 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-/** Regression coverage for gas-phase persistence in water-dominated CPA flashes. */
+/** Qualification coverage for gas-phase persistence in water-dominated CPA flashes. */
 class TPmultiflashHighWaterGasSeedTest {
+  private static final double REFERENCE_TEMPERATURE_K = 313.15;
+  private static final double REFERENCE_PRESSURE_BARA = 20.0;
+  private static final double NORMALIZATION_TOLERANCE = 1.0e-12;
+  private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
+  private static final double FUGACITY_TOLERANCE = 1.0e-8;
+  private static final double STATE_TOLERANCE = 1.0e-8;
   private static final double[] WATER_MASS_FRACTIONS = { 0.40, 0.45, 0.50, 0.55, 0.60, 0.70, 0.80 };
   private static final double[] EXPECTED_GAS_BETAS = { 0.0441902453511, 0.0372773421590, 0.0313666680101,
       0.0262550011428, 0.0217905845743, 0.0143670367332, 0.00844359351489 };
@@ -22,7 +28,7 @@ class TPmultiflashHighWaterGasSeedTest {
     for (int point = 0; point < WATER_MASS_FRACTIONS.length; point++) {
       double waterMassFraction = WATER_MASS_FRACTIONS[point];
       SystemInterface system = createFluid(waterMassFraction);
-      new ThermodynamicOperations(system).TPflash();
+      flash(system);
 
       assertEquals(3, system.getNumberOfPhases(), "Expected gas-oil-aqueous equilibrium at " + waterMassFraction);
       assertTrue(system.hasPhaseType(PhaseType.GAS),
@@ -40,7 +46,7 @@ class TPmultiflashHighWaterGasSeedTest {
       previousGasMoles = gasMoles;
       assertFlashClosure(system);
 
-      new ThermodynamicOperations(system).TPflash();
+      flash(system);
       assertEquals(3, system.getNumberOfPhases(), "Repeated flash phase count at " + waterMassFraction);
       assertEquals(EXPECTED_GAS_BETAS[point], system.getBeta(system.getPhaseNumberOfPhase("gas")), 1.0e-8,
           "Repeated flash gas fraction at " + waterMassFraction);
@@ -59,12 +65,34 @@ class TPmultiflashHighWaterGasSeedTest {
       system.setBeta(0, 1.0e-10);
       system.setBeta(1, 1.0 - 1.0e-10);
 
-      new ThermodynamicOperations(system).TPflash();
+      flash(system);
 
       assertEquals(3, system.getNumberOfPhases(),
           "Expected gas-oil-aqueous equilibrium at T=" + condition[0] + " K, P=" + condition[1] + " bara");
       assertFlashClosure(system);
     }
+  }
+
+  @Test
+  void changedReturnedAndRepeatedPressureStatesMatchFreshEquilibrium() {
+    SystemInterface reference = createFluid(0.55);
+    flash(reference);
+    SystemInterface reused = reference.clone();
+
+    reused.setPressure(20.5, "bara");
+    flash(reused);
+    SystemInterface freshChanged = createFluid(0.55);
+    freshChanged.setPressure(20.5, "bara");
+    flash(freshChanged);
+    assertEquivalentEquilibrium(freshChanged, reused, STATE_TOLERANCE, "changed pressure");
+
+    reused.setPressure(REFERENCE_PRESSURE_BARA, "bara");
+    flash(reused);
+    assertEquivalentEquilibrium(reference, reused, STATE_TOLERANCE, "returned pressure");
+
+    SystemInterface repeatedReference = reused.clone();
+    flash(reused);
+    assertEquivalentEquilibrium(repeatedReference, reused, 1.0e-10, "deterministic repeat");
   }
 
   @Test
@@ -100,32 +128,96 @@ class TPmultiflashHighWaterGasSeedTest {
             "Phase composition must be finite and bounded");
         compositionSum += composition;
       }
-      assertEquals(1.0, compositionSum, 1.0e-8, "Phase composition must be normalized");
+      assertEquals(1.0, compositionSum, NORMALIZATION_TOLERANCE, "Phase composition must be normalized");
+      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
+          "Compressibility factor must be finite and positive");
+      assertTrue(Double.isFinite(system.getPhase(phase).getDensity()) && system.getPhase(phase).getDensity() > 0.0,
+          "Density must be finite and positive");
     }
-    assertEquals(1.0, betaSum, 1.0e-8, "Phase fractions must be normalized");
+    assertEquals(1.0, betaSum, NORMALIZATION_TOLERANCE, "Phase fractions must be normalized");
 
+    double maximumMaterialResidual = 0.0;
+    double maximumFugacityResidual = 0.0;
+    int fugacityComparisons = 0;
     for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
       double recoveredComposition = 0.0;
-      double referenceLogFugacity = Double.NaN;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
         recoveredComposition += system.getBeta(phase) * composition;
-        double logFugacity = Math.log(Math.max(composition, Double.MIN_NORMAL))
-            + Math.log(system.getPhase(phase).getComponent(component).getFugacityCoefficient());
-        assertTrue(Double.isFinite(logFugacity), "Component log fugacity must be finite");
-        if (phase == 0) {
-          referenceLogFugacity = logFugacity;
-        } else {
-          assertEquals(referenceLogFugacity, logFugacity, 2.0e-8, "Component fugacity must be equal across phases");
+      }
+      maximumMaterialResidual = Math.max(maximumMaterialResidual,
+          Math.abs(system.getPhase(0).getComponent(component).getz() - recoveredComposition));
+
+      for (int firstPhase = 0; firstPhase < system.getNumberOfPhases(); firstPhase++) {
+        for (int secondPhase = firstPhase + 1; secondPhase < system.getNumberOfPhases(); secondPhase++) {
+          double firstComposition = system.getPhase(firstPhase).getComponent(component).getx();
+          double secondComposition = system.getPhase(secondPhase).getComponent(component).getx();
+          double firstCoefficient = system.getPhase(firstPhase).getComponent(component).getFugacityCoefficient();
+          double secondCoefficient = system.getPhase(secondPhase).getComponent(component).getFugacityCoefficient();
+          if (firstComposition > 1.0e-20 && secondComposition > 1.0e-20 && Double.isFinite(firstCoefficient)
+              && firstCoefficient > 0.0 && Double.isFinite(secondCoefficient) && secondCoefficient > 0.0) {
+            double firstLogFugacity = Math.log(firstComposition * firstCoefficient);
+            double secondLogFugacity = Math.log(secondComposition * secondCoefficient);
+            maximumFugacityResidual = Math.max(maximumFugacityResidual, Math.abs(firstLogFugacity - secondLogFugacity));
+            fugacityComparisons++;
+          }
         }
       }
-      assertEquals(system.getPhase(0).getComponent(component).getz(), recoveredComposition, 2.0e-8,
-          "Component material balance must close");
     }
+    assertTrue(maximumMaterialResidual < MATERIAL_BALANCE_TOLERANCE,
+        "Component material balance must close, residual=" + maximumMaterialResidual);
+    assertTrue(fugacityComparisons > 0, "Expected comparable cross-phase fugacities");
+    assertTrue(maximumFugacityResidual < FUGACITY_TOLERANCE,
+        "Component fugacity must be equal across phases, residual=" + maximumFugacityResidual);
+    assertTrue(Double.isFinite(system.getGibbsEnergy()), "Gibbs energy must be finite");
+    assertTrue(Double.isFinite(system.getEnthalpy()), "Enthalpy must be finite");
+  }
+
+  private void assertEquivalentEquilibrium(SystemInterface expected, SystemInterface actual, double tolerance,
+      String label) {
+    assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label + " phase count");
+    assertFlashClosure(expected);
+    assertFlashClosure(actual);
+    for (int expectedPhase = 0; expectedPhase < expected.getNumberOfPhases(); expectedPhase++) {
+      PhaseType phaseType = expected.getPhase(expectedPhase).getType();
+      int actualPhase = findPhase(actual, phaseType);
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance,
+          label + " beta " + phaseType);
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance,
+          label + " compressibility " + phaseType);
+      assertEquals(expected.getPhase(expectedPhase).getDensity(), actual.getPhase(actualPhase).getDensity(),
+          Math.max(1.0e-8, tolerance * Math.abs(expected.getPhase(expectedPhase).getDensity())),
+          label + " density " + phaseType);
+      for (int component = 0; component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
+        assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
+            actual.getPhase(actualPhase).getComponent(component).getx(), tolerance,
+            label + " composition " + phaseType + "/" + component);
+      }
+    }
+    assertExtensiveEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), tolerance, label + " Gibbs energy");
+    assertExtensiveEquals(expected.getEnthalpy(), actual.getEnthalpy(), tolerance, label + " enthalpy");
+  }
+
+  private void assertExtensiveEquals(double expected, double actual, double relativeTolerance, String label) {
+    assertEquals(expected, actual, Math.max(1.0e-8, relativeTolerance * Math.abs(expected)), label);
+  }
+
+  private int findPhase(SystemInterface system, PhaseType phaseType) {
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (system.getPhase(phase).getType() == phaseType) {
+        return phase;
+      }
+    }
+    throw new AssertionError("Missing phase " + phaseType);
+  }
+
+  private void flash(SystemInterface system) {
+    new ThermodynamicOperations(system).TPflash();
+    system.initProperties();
   }
 
   private SystemInterface createFluid(double waterMassFraction) {
-    SystemInterface system = new SystemSrkCPAstatoil(313.15, 20.0);
+    SystemInterface system = new SystemSrkCPAstatoil(REFERENCE_TEMPERATURE_K, REFERENCE_PRESSURE_BARA);
     system.addComponent("methane", 25.0);
     system.addComponent("ethane", 5.0);
     system.addComponent("propane", 5.0);
