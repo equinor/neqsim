@@ -58,10 +58,9 @@ public final class DexpiInformationFlowInfo implements Serializable {
    * @param attachmentElementName resolved attachment XML element name, or an empty string
    * @param signalConveyingType signal medium/type, or an empty string when absent or not applicable
    */
-  public DexpiInformationFlowInfo(String id, Kind kind, String componentClass, String sourceId,
-      boolean sourceResolved, String sourceElementName, String targetId, boolean targetResolved,
-      String targetElementName, String attachmentId, boolean attachmentResolved, String attachmentElementName,
-      String signalConveyingType) {
+  public DexpiInformationFlowInfo(String id, Kind kind, String componentClass, String sourceId, boolean sourceResolved,
+      String sourceElementName, String targetId, boolean targetResolved, String targetElementName, String attachmentId,
+      boolean attachmentResolved, String attachmentElementName, String signalConveyingType) {
     this.id = normalize(id);
     this.kind = Objects.requireNonNull(kind, "kind");
     this.componentClass = normalize(componentClass);
