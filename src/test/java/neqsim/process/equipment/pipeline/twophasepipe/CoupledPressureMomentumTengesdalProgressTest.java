@@ -135,7 +135,8 @@ class CoupledPressureMomentumTengesdalProgressTest {
           "refined coupled correction failed at interval " + (step + 1));
       for (Phase phase : Phase.values()) {
         assertTrue(balance.getRelativeResidual(phase) < 1.0e-9,
-            phase + " refined-mesh mass residual exceeded tolerance at interval " + (step + 1));
+            phase + " refined-mesh mass residual exceeded tolerance at interval " + (step + 1) + ": "
+                + balance.getRelativeResidual(phase));
       }
     }
 
