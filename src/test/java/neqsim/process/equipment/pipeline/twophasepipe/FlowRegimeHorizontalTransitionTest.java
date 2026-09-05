@@ -252,7 +252,7 @@ class FlowRegimeHorizontalTransitionTest {
       TwoFluidSection upstream = transientSection(0.0, superficialGas);
       TwoFluidSection downstream = transientSection(100.0, superficialGas);
 
-      equations.calcRHS(new TwoFluidSection[] {upstream, downstream}, 100.0);
+      equations.calcRHS(new TwoFluidSection[] { upstream, downstream }, 100.0);
       Map<FlowRegime, Double> weights = upstream.getRegimeWeights();
       if (weights == null || weights.size() < 2) {
         continue;
