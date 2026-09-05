@@ -325,6 +325,20 @@ detector.setUseMinimumSlipCriterion(true);
 
 The **minimum slip criterion** selects the flow regime that gives the minimum slip ratio (closest to 1.0), based on the principle that the system tends toward the flow pattern with minimum phase velocity difference.
 
+### Continuous Transient Source Evaluation
+
+The dynamic conservation equations consume the detector's existing dimensionless, normalized
+transition weights. Wall shear, interfacial shear and area, and entrainment are evaluated with
+each active regime's authoritative closure and then combined by those weights. Stratified
+geometry stays active whenever its weight is non-zero. This removes a second, hard
+`STRATIFIED_WAVY`/ `SLUG` source switch while preserving the original closure at every
+pure-regime endpoint.
+
+No flow-map threshold, transition-band width, hold-up closure, or regime-specific friction
+correlation is changed. Treat this continuation as experimental until conservation, nonlinear
+robustness, Tengesdal, liquid-rich 1,800 s inventory, nearby operating point, and mesh/time-step
+refinement qualification has passed.
+
 ### Wall Friction
 
 `WallFriction` calculates wall shear using:
