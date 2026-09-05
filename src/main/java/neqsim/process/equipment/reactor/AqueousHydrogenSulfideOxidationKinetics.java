@@ -224,6 +224,51 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
         Math.exp(-nominalDamkohler), Math.exp(-upperDamkohler));
   }
 
+  /**
+   * Calculate the time required to reach a target remaining-total-sulfide fraction.
+   *
+   * <p>
+   * The required dimensionless exposure is {@code -ln(fRemaining)}. The shortest, nominal, and longest times use the
+   * upper, nominal, and lower pseudo-first-order rates from the source's one-standard-deviation {@code log10(k)}
+   * interval. A target of one requires exactly zero time; zero is rejected because finite first-order time cannot reach
+   * an exactly zero remaining fraction.
+   * </p>
+   *
+   * @param airSaturatedOxygenMolality dissolved oxygen molality for an independently established air-saturated aqueous
+   * state [mol/kg water]
+   * @param targetRemainingFraction target total-sulfide fraction in the interval (0, 1]
+   * @param temperatureK aqueous temperature [K]
+   * @param pH aqueous pH on the source-compatible scale
+   * @param ionicStrengthMolPerKgWater ionic strength [mol/kg water]
+   * @return immutable target-time range
+   * @throws IllegalArgumentException when the target is not finite and in (0, 1], oxygen is not finite and positive,
+   * the state is outside the published range, or a calculated time is not finite
+   */
+  public static TargetTimeRangeResult timeToRemainingFractionRange(double airSaturatedOxygenMolality,
+      double targetRemainingFraction, double temperatureK, double pH, double ionicStrengthMolPerKgWater) {
+    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0
+        || targetRemainingFraction > 1.0) {
+      throw new IllegalArgumentException("target remaining fraction must be finite and in the interval (0, 1]");
+    }
+
+    RateConstantRange secondOrderRates = secondOrderRateConstantRange(temperatureK, pH, ionicStrengthMolPerKgWater);
+    double nominalRate = pseudoFirstOrderRateConstant(airSaturatedOxygenMolality, temperatureK, pH,
+        ionicStrengthMolPerKgWater);
+    double lowerRate = secondOrderRates.getLower() * airSaturatedOxygenMolality;
+    double upperRate = secondOrderRates.getUpper() * airSaturatedOxygenMolality;
+    requireFinitePositive(lowerRate, "lower pseudo-first-order rate");
+    requireFinitePositive(upperRate, "upper pseudo-first-order rate");
+
+    double requiredExposure = targetRemainingFraction == 1.0 ? 0.0 : -Math.log(targetRemainingFraction);
+    requireFiniteNonNegative(requiredExposure, "required exposure");
+    double shortestTime = finiteQuotient(requiredExposure, upperRate, "shortest required time");
+    double nominalTime = finiteQuotient(requiredExposure, nominalRate, "nominal required time");
+    double longestTime = finiteQuotient(requiredExposure, lowerRate, "longest required time");
+
+    return new TargetTimeRangeResult(targetRemainingFraction, requiredExposure, lowerRate, nominalRate, upperRate,
+        shortestTime, nominalTime, longestTime);
+  }
+
   private static void requirePublishedState(double temperatureK, double pH, double ionicStrengthMolPerKgWater) {
     requireRange(temperatureK, MINIMUM_TEMPERATURE_K, MAXIMUM_TEMPERATURE_K, "temperature");
     requireRange(pH, MINIMUM_PH, MAXIMUM_PH, "pH");
@@ -261,6 +306,12 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
     return product;
   }
 
+  private static double finiteQuotient(double numerator, double denominator, String name) {
+    double quotient = numerator / denominator;
+    requireFiniteNonNegative(quotient, name);
+    return quotient;
+  }
+
   /** Immutable second-order rate-constant interval. */
   public static final class RateConstantRange implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -288,6 +339,73 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
     /** @return upper one-standard-deviation rate [kg water/(mol h)]. */
     public double getUpper() {
       return upper;
+    }
+  }
+
+  /** Immutable inverse target-time result for the published fit-scatter range. */
+  public static final class TargetTimeRangeResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double targetRemainingFraction;
+    private final double requiredExposure;
+    private final double lowerPseudoFirstOrderRate;
+    private final double nominalPseudoFirstOrderRate;
+    private final double upperPseudoFirstOrderRate;
+    private final double shortestRequiredTimeHours;
+    private final double nominalRequiredTimeHours;
+    private final double longestRequiredTimeHours;
+
+    private TargetTimeRangeResult(double targetRemainingFraction, double requiredExposure,
+        double lowerPseudoFirstOrderRate, double nominalPseudoFirstOrderRate, double upperPseudoFirstOrderRate,
+        double shortestRequiredTimeHours, double nominalRequiredTimeHours, double longestRequiredTimeHours) {
+      this.targetRemainingFraction = targetRemainingFraction;
+      this.requiredExposure = requiredExposure;
+      this.lowerPseudoFirstOrderRate = lowerPseudoFirstOrderRate;
+      this.nominalPseudoFirstOrderRate = nominalPseudoFirstOrderRate;
+      this.upperPseudoFirstOrderRate = upperPseudoFirstOrderRate;
+      this.shortestRequiredTimeHours = shortestRequiredTimeHours;
+      this.nominalRequiredTimeHours = nominalRequiredTimeHours;
+      this.longestRequiredTimeHours = longestRequiredTimeHours;
+    }
+
+    /** @return requested remaining total-sulfide fraction. */
+    public double getTargetRemainingFraction() {
+      return targetRemainingFraction;
+    }
+
+    /** @return dimensionless exposure required to reach the target. */
+    public double getRequiredExposure() {
+      return requiredExposure;
+    }
+
+    /** @return lower pseudo-first-order rate [1/h]. */
+    public double getLowerPseudoFirstOrderRate() {
+      return lowerPseudoFirstOrderRate;
+    }
+
+    /** @return nominal pseudo-first-order rate [1/h]. */
+    public double getNominalPseudoFirstOrderRate() {
+      return nominalPseudoFirstOrderRate;
+    }
+
+    /** @return upper pseudo-first-order rate [1/h]. */
+    public double getUpperPseudoFirstOrderRate() {
+      return upperPseudoFirstOrderRate;
+    }
+
+    /** @return shortest required time, obtained with the upper fit-scatter rate [h]. */
+    public double getShortestRequiredTimeHours() {
+      return shortestRequiredTimeHours;
+    }
+
+    /** @return nominal required time [h]. */
+    public double getNominalRequiredTimeHours() {
+      return nominalRequiredTimeHours;
+    }
+
+    /** @return longest required time, obtained with the lower fit-scatter rate [h]. */
+    public double getLongestRequiredTimeHours() {
+      return longestRequiredTimeHours;
     }
   }
 
