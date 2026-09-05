@@ -72,6 +72,9 @@ jobs:
       - name: Run focused reporting Java contracts
         run: mvn -B -Dtest=neqsim.mcp.runners.ReportRunnerTest test -ntp
 
+      - name: Run focused security-management Java contracts
+        run: mvn -B -Dtest=neqsim.mcp.runners.SecurityRunnerTest,neqsim.mcp.runners.McpSecurityEnforcementTest test -ntp
+
       - name: Build exact MCP server package
         shell: bash
         run: |
@@ -108,6 +111,9 @@ jobs:
 
       - name: Run focused real-MCP reporting qualification
         run: cd neqsim-mcp-server && python test_reporting_protocol.py
+
+      - name: Run focused real-MCP security-management qualification
+        run: cd neqsim-mcp-server && python test_security_protocol.py
 
       - name: Run comprehensive real-MCP protocol regression
         run: cd neqsim-mcp-server && python test_mcp_server.py
