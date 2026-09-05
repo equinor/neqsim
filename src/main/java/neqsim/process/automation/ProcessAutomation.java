@@ -380,6 +380,17 @@ public class ProcessAutomation {
    * @return true when the address resolves to a known INPUT variable, false otherwise (unknown or OUTPUT)
    */
   public boolean isWritableAddress(String address) {
+    return isAddressType(address, VariableType.INPUT);
+  }
+
+  /**
+   * Checks whether an exact address is declared with the requested variable type.
+   *
+   * @param address the dot-notation address, optionally area-qualified
+   * @param type the declared variable type to match
+   * @return true when the exact address is present with {@code type}
+   */
+  private boolean isAddressType(String address, VariableType type) {
     if (address == null || address.trim().isEmpty()) {
       return false;
     }
@@ -397,7 +408,7 @@ public class ProcessAutomation {
     }
     unitName = prefix + local.substring(0, dotIdx);
     try {
-      for (SimulationVariable v : getVariableList(unitName, VariableType.INPUT)) {
+      for (SimulationVariable v : getVariableList(unitName, type)) {
         if (address.equals(v.getAddress())) {
           return true;
         }
@@ -616,6 +627,9 @@ public class ProcessAutomation {
   public void setVariableValue(String address, double value, String unitOfMeasure) {
     if (address == null || address.trim().isEmpty()) {
       throw new IllegalArgumentException("Address must not be null or empty");
+    }
+    if (!isWritableAddress(address) && isAddressType(address, VariableType.OUTPUT)) {
+      throw new IllegalArgumentException("Variable is read-only: " + address);
     }
 
     // Separate area prefix if present
@@ -930,7 +944,7 @@ public class ProcessAutomation {
           "Compressor outlet pressure"));
       vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.INPUT,
           "", "Polytropic efficiency (fraction)"));
-      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.OUTPUT,
+      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.INPUT,
           "", "Isentropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
           "Compressor power consumption"));

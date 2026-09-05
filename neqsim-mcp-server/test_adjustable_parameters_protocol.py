@@ -179,7 +179,8 @@ def assert_registry(result):
         require(isinstance(unit, str), "parameter unit is not a string", parameter)
         if not unit:
             require(
-                parameter.get("targetProperty") == "polytropicEfficiency",
+                parameter.get("targetProperty")
+                in {"polytropicEfficiency", "isentropicEfficiency"},
                 "empty unit is reserved for qualified dimensionless properties",
                 parameter,
             )
