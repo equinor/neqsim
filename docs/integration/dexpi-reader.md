@@ -156,8 +156,11 @@ infer control intent, identify a safeguard or SIS function, or alter live simula
 `ImportResult.getInformationFlows()` exposes the corresponding source-ordered
 `MeasuringLineFunction` and `SignalLineFunction` evidence as immutable
 `DexpiInformationFlowInfo` records. Each record retains its source ID and component class, logical
-start and end IDs, whether those references resolve, and their resolved XML element names. Measuring
-lines additionally retain explicit attachment identity and resolution; signal lines retain the source
+start and end IDs, whether those references resolve, and their resolved XML element names. For each
+resolved logical source, logical target, and process attachment, the record also preserves the source
+object's explicit `ComponentClass`, `ComponentName`, and `TagName`; absent source metadata and
+unresolved references remain empty strings without invented values. Measuring lines additionally
+retain explicit attachment identity and resolution; signal lines retain the source
 `SignalConveyingTypeSpecialization`. Missing and unresolved references remain present beside the
 diagnostics, so Java and JPype callers do not need to reparse XML or invent endpoints. These records
 do not create live transmitters or controllers, infer control-loop intent, verify a loop, or classify
