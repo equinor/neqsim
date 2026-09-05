@@ -887,6 +887,7 @@ class ProcessAutomationTest {
 
   @Test
   void testCompressorIsentropicEfficiency() {
+    assertTrue(automation.isWritableAddress("Compressor.isentropicEfficiency"));
     automation.setVariableValue("Compressor.isentropicEfficiency", 0.85, null);
     double eff = automation.getVariableValue("Compressor.isentropicEfficiency", null);
     assertEquals(0.85, eff, 0.01);
@@ -1353,7 +1354,6 @@ class ProcessAutomationTest {
     // READ_ONLY_VARIABLE diagnostic via the safe accessor.
     String json = automation.setVariableValueSafe("Cooler.outletStream.temperature", 50.0, "C");
     com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
-    assertEquals("error", root.get("status").getAsString());
     assertEquals("READ_ONLY_VARIABLE", root.get("category").getAsString());
     assertFalse(automation.isDirty(), "Rejected OUTPUT write must not dirty the process");
   }

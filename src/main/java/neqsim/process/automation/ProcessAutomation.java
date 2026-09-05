@@ -944,7 +944,7 @@ public class ProcessAutomation {
           "Compressor outlet pressure"));
       vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.INPUT,
           "", "Polytropic efficiency (fraction)"));
-      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.OUTPUT,
+      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.INPUT,
           "", "Isentropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
           "Compressor power consumption"));

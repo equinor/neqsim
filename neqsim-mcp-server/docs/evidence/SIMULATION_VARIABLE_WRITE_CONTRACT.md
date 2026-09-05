@@ -21,6 +21,9 @@ rejects an exact address declared as an OUTPUT before mutation, writes only an i
 and returns the post-run report through the standard MCP response envelope. Unknown addresses retain the existing
 diagnostic and fuzzy-correction path rather than being misclassified as read-only.
 
+Compressor `isentropicEfficiency` is declared as an INPUT, consistent with its existing setter and the corresponding
+pump and expander efficiency controls. This prevents the exact OUTPUT guard from rejecting a supported compressor input.
+
 The qualification uses the catalogued `simple-separation` process and the writable `feed.temperature` address. A 35 °C
 setpoint is represented as the explicit pair `35.0` and `C`. The test checks the returned address, value, unit, solver
 report object, validation state, and quality-gate verdict. It compares only contract fields between inline and registered
