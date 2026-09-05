@@ -74,51 +74,60 @@ LNGHeatExchanger (process equipment)
 
 ### Java
 
+The complete Java 8 example below is exercised by `LNGHeatExchangerQuickStartTest`. Its MITA and
+second-law-efficiency values are simulation diagnostics, not vendor design guarantees.
+
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-// 1. Create fluids
-SystemInterface hotFluid = new SystemSrkEos(273.15 + 30.0, 50.0);
-hotFluid.addComponent("methane", 0.90);
-hotFluid.addComponent("ethane", 0.05);
-hotFluid.addComponent("propane", 0.03);
-hotFluid.addComponent("nitrogen", 0.02);
-hotFluid.setMixingRule("classic");
+public final class LNGHeatExchangerQuickStart {
+  private static final Logger logger = LogManager.getLogger(LNGHeatExchangerQuickStart.class);
 
-SystemInterface coldFluid = new SystemSrkEos(273.15 - 33.0, 3.0);
-coldFluid.addComponent("methane", 0.40);
-coldFluid.addComponent("ethane", 0.30);
-coldFluid.addComponent("propane", 0.30);
-coldFluid.setMixingRule("classic");
+  private LNGHeatExchangerQuickStart() {}
 
-// 2. Create streams
-Stream hotStream = new Stream("NG Feed", hotFluid);
-hotStream.setFlowRate(100000.0, "kg/hr");
+  public static void main(String[] args) {
+    SystemInterface hotFluid = new SystemSrkEos(273.15 + 30.0, 50.0);
+    hotFluid.addComponent("methane", 0.90);
+    hotFluid.addComponent("ethane", 0.05);
+    hotFluid.addComponent("propane", 0.03);
+    hotFluid.addComponent("nitrogen", 0.02);
+    hotFluid.setMixingRule("classic");
 
-Stream coldStream = new Stream("MR Return", coldFluid);
-coldStream.setFlowRate(150000.0, "kg/hr");
+    SystemInterface coldFluid = new SystemSrkEos(273.15 - 33.0, 3.0);
+    coldFluid.addComponent("methane", 0.40);
+    coldFluid.addComponent("ethane", 0.30);
+    coldFluid.addComponent("propane", 0.30);
+    coldFluid.setMixingRule("classic");
 
-// 3. Configure BAHX
-LNGHeatExchanger mche = new LNGHeatExchanger("MCHE");
-mche.addInStream(hotStream);
-mche.addInStream(coldStream);
-mche.setNumberOfZones(15);
-mche.setStreamPressureDrop(0, 1.5);  // 1.5 bar on hot side
-mche.setStreamPressureDrop(1, 0.3);  // 0.3 bar on cold side
+    Stream hotStream = new Stream("NG Feed", hotFluid);
+    hotStream.setFlowRate(100000.0, "kg/hr");
 
-// 4. Run in process system
-ProcessSystem process = new ProcessSystem();
-process.add(hotStream);
-process.add(coldStream);
-process.add(mche);
-process.run();
+    Stream coldStream = new Stream("MR Return", coldFluid);
+    coldStream.setFlowRate(150000.0, "kg/hr");
 
-// 5. Read results
-System.out.println("MITA: " + mche.getMITA() + " °C");
-System.out.println("η_II: " + mche.getSecondLawEfficiency() * 100 + " %");
+    LNGHeatExchanger mche = new LNGHeatExchanger("MCHE");
+    mche.addInStream(hotStream);
+    mche.addInStream(coldStream);
+    mche.setNumberOfZones(15);
+    mche.setStreamPressureDrop(0, 1.5);
+    mche.setStreamPressureDrop(1, 0.3);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(hotStream);
+    process.add(coldStream);
+    process.add(mche);
+    process.run();
+
+    logger.info("MITA: {} degC", mche.getMITA());
+    logger.info("Second-law efficiency: {} %", mche.getSecondLawEfficiency() * 100.0);
+  }
+}
 ```
 
 ### Python (Jupyter)

@@ -235,5 +235,49 @@ class ProcessDocumentationRenderingContractTest(unittest.TestCase):
                 self.assertIsNone(unsupported.search(rendered_markdown))
 
 
+    def test_lng_quickstart_is_complete_and_executable(self):
+        page = DOCS / "process/equipment/LNGHeatExchanger.md"
+        _title, _description, body = parse_front_matter(
+            page.read_text(encoding="utf-8")
+        )
+        match = re.search(
+            r"### Java.*?```java\n(?P<source>.*?)\n```",
+            body,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        source = match.group("source")
+        for token in (
+            "import org.apache.logging.log4j.LogManager;",
+            "import org.apache.logging.log4j.Logger;",
+            "import neqsim.thermo.system.SystemInterface;",
+            "public final class LNGHeatExchangerQuickStart",
+            "public static void main(String[] args)",
+            "mche.setStreamPressureDrop(0, 1.5);",
+            "mche.setStreamPressureDrop(1, 0.3);",
+            'logger.info("MITA: {} degC", mche.getMITA());',
+            "mche.getSecondLawEfficiency()",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, source)
+        self.assertNotIn("System.out", source)
+        self.assertNotIn("System.err", source)
+
+        regression = (
+            DOCS.parent
+            / "src/test/java/neqsim/documentation/LNGHeatExchangerQuickStartTest.java"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "testDocumentedQuickStartRunsAndReturnsBoundedDiagnostics",
+            "assertTrue(Double.isFinite(mitaC));",
+            "assertTrue(mitaC >= 0.0);",
+            "assertTrue(Double.isFinite(secondLawEfficiency));",
+            "assertTrue(secondLawEfficiency > 0.0);",
+            "assertTrue(secondLawEfficiency <= 1.0);",
+        ):
+            with self.subTest(regression_token=token):
+                self.assertIn(token, regression)
+
+
 if __name__ == "__main__":
     unittest.main()
