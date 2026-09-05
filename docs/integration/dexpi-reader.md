@@ -171,8 +171,11 @@ safety-instrumented or safeguard functions.
 `DexpiInstrumentationLoopInfo`. The record retains the loop ID, component class, explicit loop
 number, and every direct `is a collection including` occurrence in source order. Membership
 evidence preserves duplicate, blank, and unresolved references together with resolution status and
-the resolved XML element name. It does not infer control intent, verify functional completeness,
-construct executable control topology, or classify SIS or safeguard functions.
+the resolved XML element name. For each resolved member, it also preserves the source object's
+explicit `ComponentClass`, `ComponentName`, and `TagName`; absent source metadata and unresolved
+references remain empty strings without invented values. It does not infer control intent, verify
+functional completeness, construct executable control topology, or classify SIS or safeguard
+functions.
 
 The same result also preserves every source `Connection` in document order, including parallel
 connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning

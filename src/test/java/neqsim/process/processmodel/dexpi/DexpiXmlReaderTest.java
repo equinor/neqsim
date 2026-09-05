@@ -266,11 +266,23 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("InstrumentationLoopFunction", loop.getComponentClass());
     assertEquals("100", loop.getLoopNumber());
     assertEquals(3, loop.getMembers().size());
-    assertEquals("PIF-PT-100", loop.getMembers().get(0).getMemberId());
-    assertTrue(loop.getMembers().get(0).isResolved());
-    assertEquals("ProcessInstrumentationFunction", loop.getMembers().get(0).getElementName());
-    assertEquals("PIF-PC-100", loop.getMembers().get(1).getMemberId());
-    assertEquals("PIF-PC-100", loop.getMembers().get(2).getMemberId());
+    DexpiInstrumentationLoopInfo.Member transmitterMember = loop.getMembers().get(0);
+    assertEquals("PIF-PT-100", transmitterMember.getMemberId());
+    assertTrue(transmitterMember.isResolved());
+    assertEquals("ProcessInstrumentationFunction", transmitterMember.getElementName());
+    assertEquals("ProcessInstrumentationFunction", transmitterMember.getMemberComponentClass());
+    assertEquals("TransmitterShape", transmitterMember.getMemberComponentName());
+    assertEquals("PT-100", transmitterMember.getMemberTagName());
+    DexpiInstrumentationLoopInfo.Member firstControllerMember = loop.getMembers().get(1);
+    assertEquals("PIF-PC-100", firstControllerMember.getMemberId());
+    assertEquals("ProcessControlFunction", firstControllerMember.getMemberComponentClass());
+    assertEquals("ControllerShape", firstControllerMember.getMemberComponentName());
+    assertEquals("PC-100", firstControllerMember.getMemberTagName());
+    DexpiInstrumentationLoopInfo.Member repeatedControllerMember = loop.getMembers().get(2);
+    assertEquals("PIF-PC-100", repeatedControllerMember.getMemberId());
+    assertEquals("ProcessControlFunction", repeatedControllerMember.getMemberComponentClass());
+    assertEquals("ControllerShape", repeatedControllerMember.getMemberComponentName());
+    assertEquals("PC-100", repeatedControllerMember.getMemberTagName());
     assertThrows(UnsupportedOperationException.class, () -> instrumentationLoops.clear());
     assertThrows(UnsupportedOperationException.class, () -> loop.getMembers().clear());
 
@@ -361,6 +373,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"instrumentCount\": 2"));
     assertTrue(first.toJson().contains("\"instrumentationLoopCount\": 1"));
     assertTrue(first.toJson().contains("\"memberCount\": 3"));
+    assertTrue(first.toJson().contains("\"memberComponentName\": \"TransmitterShape\""));
+    assertTrue(first.toJson().contains("\"memberTagName\": \"PT-100\""));
     assertTrue(first.toJson().contains("\"actuatingFunctionCount\": 1"));
     assertTrue(first.toJson().contains("\"finalControlElementResolved\": true"));
     assertTrue(first.toJson().contains("\"finalControlElementTagName\": \"XV-100\""));
@@ -405,6 +419,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("UNKNOWN-MEMBER", loop.getMembers().get(0).getMemberId());
     assertFalse(loop.getMembers().get(0).isResolved());
     assertEquals("", loop.getMembers().get(0).getElementName());
+    assertEquals("", loop.getMembers().get(0).getMemberComponentClass());
+    assertEquals("", loop.getMembers().get(0).getMemberComponentName());
+    assertEquals("", loop.getMembers().get(0).getMemberTagName());
     List<DexpiActuatingFunctionInfo> actuatingFunctions = first.getActuatingFunctions();
     assertEquals(1, actuatingFunctions.size());
     DexpiActuatingFunctionInfo actuatingFunction = actuatingFunctions.get(0);

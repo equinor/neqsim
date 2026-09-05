@@ -871,7 +871,9 @@ public final class DexpiXmlReader {
         }
         String memberId = association.getAttribute("ItemID");
         Element member = elementsById.get(memberId);
-        members.add(new DexpiInstrumentationLoopInfo.Member(memberId, member != null, elementName(member)));
+        members.add(new DexpiInstrumentationLoopInfo.Member(memberId, member != null, elementName(member),
+            explicitAttribute(member, "ComponentClass"), explicitAttribute(member, "ComponentName"),
+            explicitTagName(member)));
       }
       result.add(new DexpiInstrumentationLoopInfo(loop.getAttribute("ID"), loop.getAttribute("ComponentClass"),
           getGenericAttribute(loop, DexpiMetadata.LOOP_NUMBER), members));
