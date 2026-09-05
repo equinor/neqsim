@@ -102,6 +102,26 @@ public class SarirAtmosphericReferenceTest {
   }
 
   @Test
+  public void wholeCrudePropertyEvidencePreservesValuesAndMeasurementBases() {
+    assertEquals(0.20, SarirAtmosphericReference.getCrudeAsphaltenesMassPercent(), 0.0);
+    assertEquals(8.0, SarirAtmosphericReference.getCrudeMercaptanSulfurMassPpm(), 0.0);
+    assertEquals(0.05, SarirAtmosphericReference.getCrudeWaterAndSedimentVolumePercent(), 0.0);
+    assertEquals(48.7, SarirAtmosphericReference.getCrudeCloudPointLowerCelsius(), 0.0);
+    assertEquals(49.6, SarirAtmosphericReference.getCrudeCloudPointUpperCelsius(), 0.0);
+    assertTrue(SarirAtmosphericReference.getCrudeCloudPointLowerCelsius()
+        <= SarirAtmosphericReference.getCrudeCloudPointUpperCelsius());
+    assertEquals(21.0, SarirAtmosphericReference.getCrudePourPointCelsius(), 0.0);
+    assertEquals(10.63, SarirAtmosphericReference.getCrudeKinematicViscosityAt100FCst(), 0.0);
+    assertEquals(100.0, SarirAtmosphericReference.getCrudeKinematicViscosityReferenceTemperatureFahrenheit(), 0.0);
+    assertEquals(37.7, SarirAtmosphericReference.getCrudeKinematicViscosityReferenceTemperatureCelsius(), 0.0);
+
+    double exactCelsiusConversion = (100.0 - 32.0) * 5.0 / 9.0;
+    assertEquals(37.77777777777778, exactCelsiusConversion, 1.0e-12);
+    assertTrue(Math.abs(exactCelsiusConversion
+        - SarirAtmosphericReference.getCrudeKinematicViscosityReferenceTemperatureCelsius()) < 0.1);
+  }
+
+  @Test
   public void steamInjectionRowsPreservePublishedServicesWithoutInventingState() {
     SteamInjectionReference[] injections = SarirAtmosphericReference.getSteamInjections();
     assertEquals(3, injections.length);
