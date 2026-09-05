@@ -63,6 +63,9 @@ jobs:
       - name: Run focused adjustable-parameter Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.AutomationLoopRunnerTest test -ntp
 
+      - name: Run focused simulation-variable mutation Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.AutomationVariableWriteContractTest test -ntp
+
       - name: Run focused pre-flight validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
 
@@ -102,6 +105,9 @@ jobs:
 
       - name: Run focused real-MCP adjustable-parameter qualification
         run: cd neqsim-mcp-server && python test_adjustable_parameters_protocol.py
+
+      - name: Run focused real-MCP simulation-variable mutation qualification
+        run: cd neqsim-mcp-server && python test_simulation_variable_write_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py
