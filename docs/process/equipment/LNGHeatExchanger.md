@@ -128,6 +128,7 @@ public final class LNGHeatExchangerQuickStart {
     logger.info("Second-law efficiency: {} %", mche.getSecondLawEfficiency() * 100.0);
   }
 }
+```
 
 ### Python (Jupyter)
 
