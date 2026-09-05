@@ -64,6 +64,30 @@ bounded from zero to one, and avoids timestep error. It reports total-sulfide lo
 assign products or consume oxygen, because the source correlation does not supply a complete
 product stoichiometry for that purpose.
 
+## Residence-time range
+
+`screenResidenceTimeRange(...)` compares a caller-provided aqueous residence time with the
+Millero pseudo-first-order chemical time over the published fit-scatter interval:
+
+$
+\tau = \frac{1}{k[\mathrm{O_2}]}, \qquad
+\mathrm{Da} = \frac{t_{\mathrm{res}}}{\tau}
+             = k[\mathrm{O_2}]t_{\mathrm{res}}.
+$
+
+The immutable result reports lower, nominal, and upper pseudo-first-order rates, chemical times,
+Damkohler numbers, and remaining fractions. Lower and upper refer to the source's
+one-standard-deviation `log10(k)` fit interval. At the illustrative nominal half-life of
+`22.4288 h`, the nominal Damkohler number is `ln(2)` and the nominal remaining fraction is
+exactly `0.5`; the lower-rate result retains more sulfide and the upper-rate result retains less.
+
+A zero residence time is an exact identity. Increasing residence time monotonically reduces every
+reported remaining fraction. Non-finite inputs or any multiplication/reciprocal overflow fail
+closed. The method deliberately reports continuous Damkohler evidence and does not add categorical
+reaction/transport thresholds. A caller may compare this diagnostic with an independently
+established transport time, but that does not constitute a pipeline source-term coupling or
+high-pressure qualification.
+
 ## Piecewise exposure trajectory
 
 `AqueousHydrogenSulfideOxidationTrajectory.advance(...)` propagates the same correlation through

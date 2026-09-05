@@ -90,6 +90,66 @@ public class AqueousHydrogenSulfideOxidationKineticsTest extends NeqSimTest {
   }
 
   @Test
+  void testResidenceTimeRangePropagatesPublishedFitScatter() {
+    double halfLife = AqueousHydrogenSulfideOxidationKinetics.halfLifeHours(AIR_SATURATED_OXYGEN_MOLALITY,
+        TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult result = AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, halfLife, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    double factor = Math.pow(10.0, AqueousHydrogenSulfideOxidationKinetics.LOG10_RATE_STANDARD_DEVIATION);
+
+    assertEquals(result.getNominalPseudoFirstOrderRate() / factor, result.getLowerPseudoFirstOrderRate(), 1.0e-15);
+    assertEquals(result.getNominalPseudoFirstOrderRate() * factor, result.getUpperPseudoFirstOrderRate(), 1.0e-15);
+    assertEquals(1.0 / result.getLowerPseudoFirstOrderRate(), result.getLowerRateChemicalTimeHours(), 1.0e-12);
+    assertEquals(1.0 / result.getNominalPseudoFirstOrderRate(), result.getNominalChemicalTimeHours(), 1.0e-12);
+    assertEquals(1.0 / result.getUpperPseudoFirstOrderRate(), result.getUpperRateChemicalTimeHours(), 1.0e-12);
+    assertEquals(Math.log(2.0) / factor, result.getLowerRateDamkohlerNumber(), 1.0e-15);
+    assertEquals(Math.log(2.0), result.getNominalDamkohlerNumber(), 1.0e-15);
+    assertEquals(Math.log(2.0) * factor, result.getUpperRateDamkohlerNumber(), 1.0e-15);
+    assertEquals(0.5, result.getNominalRemainingFraction(), 1.0e-15);
+    assertTrue(result.getLowerRateRemainingFraction() > result.getNominalRemainingFraction());
+    assertTrue(result.getNominalRemainingFraction() > result.getUpperRateRemainingFraction());
+  }
+
+  @Test
+  void testResidenceTimeRangeIsMonotonicDeterministicAndExactAtZero() {
+    double halfLife = AqueousHydrogenSulfideOxidationKinetics.halfLifeHours(AIR_SATURATED_OXYGEN_MOLALITY,
+        TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult zero = AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.0, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult shortResidence = AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5 * halfLife, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult longResidence = AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 2.0 * halfLife, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.ResidenceTimeRangeResult repeated = AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, 2.0 * halfLife, TEMPERATURE_K, PH, IONIC_STRENGTH);
+
+    assertEquals(0.0, zero.getLowerRateDamkohlerNumber(), 0.0);
+    assertEquals(0.0, zero.getNominalDamkohlerNumber(), 0.0);
+    assertEquals(0.0, zero.getUpperRateDamkohlerNumber(), 0.0);
+    assertEquals(1.0, zero.getLowerRateRemainingFraction(), 0.0);
+    assertEquals(1.0, zero.getNominalRemainingFraction(), 0.0);
+    assertEquals(1.0, zero.getUpperRateRemainingFraction(), 0.0);
+    assertTrue(longResidence.getLowerRateRemainingFraction() < shortResidence.getLowerRateRemainingFraction());
+    assertTrue(longResidence.getNominalRemainingFraction() < shortResidence.getNominalRemainingFraction());
+    assertTrue(longResidence.getUpperRateRemainingFraction() < shortResidence.getUpperRateRemainingFraction());
+    assertEquals(longResidence.getNominalDamkohlerNumber(), repeated.getNominalDamkohlerNumber(), 0.0);
+    assertEquals(longResidence.getNominalRemainingFraction(), repeated.getNominalRemainingFraction(), 0.0);
+  }
+
+  @Test
+  void testResidenceTimeRangeFailsClosedOnInvalidOrOverflowingInputs() {
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY, -1.0, TEMPERATURE_K, PH, IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationKinetics.screenResidenceTimeRange(AIR_SATURATED_OXYGEN_MOLALITY,
+            Double.POSITIVE_INFINITY, TEMPERATURE_K, PH, IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(Double.MIN_VALUE, 1.0, TEMPERATURE_K, PH, IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .screenResidenceTimeRange(1.0, Double.MAX_VALUE, TEMPERATURE_K, PH, IONIC_STRENGTH));
+  }
+
+  @Test
   void testLongExposureRemainsBoundedAndInputValidationFailsClosed() {
     AqueousHydrogenSulfideOxidationKinetics.ScreeningResult longExposure = AqueousHydrogenSulfideOxidationKinetics
         .screenAirSaturatedExposure(AIR_SATURATED_OXYGEN_MOLALITY, 1.0e6, TEMPERATURE_K, PH, IONIC_STRENGTH);

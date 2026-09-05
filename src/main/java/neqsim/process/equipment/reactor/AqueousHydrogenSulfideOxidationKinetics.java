@@ -182,6 +182,48 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
         remainingFraction, reactedFraction);
   }
 
+  /**
+   * Screen a residence time against the published correlation and its reported fit scatter.
+   *
+   * <p>
+   * The dimensionless Damkohler exposure is {@code Da = k[O2]t = t/tau}, where {@code tau = 1/(k[O2])}. Lower, nominal,
+   * and upper results use the source's one-standard-deviation {@code log10(k)} interval. No categorical regime
+   * threshold is imposed.
+   * </p>
+   *
+   * @param airSaturatedOxygenMolality dissolved oxygen molality for an independently established air-saturated aqueous
+   * state [mol/kg water]
+   * @param residenceTimeHours caller-provided aqueous residence time [h]
+   * @param temperatureK aqueous temperature [K]
+   * @param pH aqueous pH on the source-compatible scale
+   * @param ionicStrengthMolPerKgWater ionic strength [mol/kg water]
+   * @return immutable uncertainty-aware residence-time result
+   * @throws IllegalArgumentException when residence time is negative or non-finite, oxygen is not finite and positive,
+   * the state is outside the published range, or an intermediate result is not finite
+   */
+  public static ResidenceTimeRangeResult screenResidenceTimeRange(double airSaturatedOxygenMolality,
+      double residenceTimeHours, double temperatureK, double pH, double ionicStrengthMolPerKgWater) {
+    requireFiniteNonNegative(residenceTimeHours, "residence time");
+    RateConstantRange secondOrderRates = secondOrderRateConstantRange(temperatureK, pH, ionicStrengthMolPerKgWater);
+    double nominalRate = pseudoFirstOrderRateConstant(airSaturatedOxygenMolality, temperatureK, pH,
+        ionicStrengthMolPerKgWater);
+    double lowerRate = secondOrderRates.getLower() * airSaturatedOxygenMolality;
+    double upperRate = secondOrderRates.getUpper() * airSaturatedOxygenMolality;
+    requireFinitePositive(lowerRate, "lower pseudo-first-order rate");
+    requireFinitePositive(upperRate, "upper pseudo-first-order rate");
+
+    double lowerChemicalTime = reciprocalFinitePositive(lowerRate, "lower-rate chemical time");
+    double nominalChemicalTime = reciprocalFinitePositive(nominalRate, "nominal chemical time");
+    double upperChemicalTime = reciprocalFinitePositive(upperRate, "upper-rate chemical time");
+    double lowerDamkohler = finiteProduct(lowerRate, residenceTimeHours, "lower-rate Damkohler number");
+    double nominalDamkohler = finiteProduct(nominalRate, residenceTimeHours, "nominal Damkohler number");
+    double upperDamkohler = finiteProduct(upperRate, residenceTimeHours, "upper-rate Damkohler number");
+
+    return new ResidenceTimeRangeResult(lowerRate, nominalRate, upperRate, lowerChemicalTime, nominalChemicalTime,
+        upperChemicalTime, lowerDamkohler, nominalDamkohler, upperDamkohler, Math.exp(-lowerDamkohler),
+        Math.exp(-nominalDamkohler), Math.exp(-upperDamkohler));
+  }
+
   private static void requirePublishedState(double temperatureK, double pH, double ionicStrengthMolPerKgWater) {
     requireRange(temperatureK, MINIMUM_TEMPERATURE_K, MAXIMUM_TEMPERATURE_K, "temperature");
     requireRange(pH, MINIMUM_PH, MAXIMUM_PH, "pH");
@@ -205,6 +247,18 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
     if (!Double.isFinite(value) || value < 0.0) {
       throw new IllegalArgumentException(name + " must be finite and non-negative");
     }
+  }
+
+  private static double reciprocalFinitePositive(double rate, String name) {
+    double reciprocal = 1.0 / rate;
+    requireFinitePositive(reciprocal, name);
+    return reciprocal;
+  }
+
+  private static double finiteProduct(double first, double second, String name) {
+    double product = first * second;
+    requireFiniteNonNegative(product, name);
+    return product;
   }
 
   /** Immutable second-order rate-constant interval. */
@@ -234,6 +288,103 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
     /** @return upper one-standard-deviation rate [kg water/(mol h)]. */
     public double getUpper() {
       return upper;
+    }
+  }
+
+  /** Immutable uncertainty-aware residence-time screening result. */
+  public static final class ResidenceTimeRangeResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double lowerPseudoFirstOrderRate;
+    private final double nominalPseudoFirstOrderRate;
+    private final double upperPseudoFirstOrderRate;
+    private final double lowerRateChemicalTimeHours;
+    private final double nominalChemicalTimeHours;
+    private final double upperRateChemicalTimeHours;
+    private final double lowerRateDamkohlerNumber;
+    private final double nominalDamkohlerNumber;
+    private final double upperRateDamkohlerNumber;
+    private final double lowerRateRemainingFraction;
+    private final double nominalRemainingFraction;
+    private final double upperRateRemainingFraction;
+
+    private ResidenceTimeRangeResult(double lowerPseudoFirstOrderRate, double nominalPseudoFirstOrderRate,
+        double upperPseudoFirstOrderRate, double lowerRateChemicalTimeHours, double nominalChemicalTimeHours,
+        double upperRateChemicalTimeHours, double lowerRateDamkohlerNumber, double nominalDamkohlerNumber,
+        double upperRateDamkohlerNumber, double lowerRateRemainingFraction, double nominalRemainingFraction,
+        double upperRateRemainingFraction) {
+      this.lowerPseudoFirstOrderRate = lowerPseudoFirstOrderRate;
+      this.nominalPseudoFirstOrderRate = nominalPseudoFirstOrderRate;
+      this.upperPseudoFirstOrderRate = upperPseudoFirstOrderRate;
+      this.lowerRateChemicalTimeHours = lowerRateChemicalTimeHours;
+      this.nominalChemicalTimeHours = nominalChemicalTimeHours;
+      this.upperRateChemicalTimeHours = upperRateChemicalTimeHours;
+      this.lowerRateDamkohlerNumber = lowerRateDamkohlerNumber;
+      this.nominalDamkohlerNumber = nominalDamkohlerNumber;
+      this.upperRateDamkohlerNumber = upperRateDamkohlerNumber;
+      this.lowerRateRemainingFraction = lowerRateRemainingFraction;
+      this.nominalRemainingFraction = nominalRemainingFraction;
+      this.upperRateRemainingFraction = upperRateRemainingFraction;
+    }
+
+    /** @return lower pseudo-first-order rate [1/h]. */
+    public double getLowerPseudoFirstOrderRate() {
+      return lowerPseudoFirstOrderRate;
+    }
+
+    /** @return nominal pseudo-first-order rate [1/h]. */
+    public double getNominalPseudoFirstOrderRate() {
+      return nominalPseudoFirstOrderRate;
+    }
+
+    /** @return upper pseudo-first-order rate [1/h]. */
+    public double getUpperPseudoFirstOrderRate() {
+      return upperPseudoFirstOrderRate;
+    }
+
+    /** @return chemical time at the lower fit-scatter rate [h]. */
+    public double getLowerRateChemicalTimeHours() {
+      return lowerRateChemicalTimeHours;
+    }
+
+    /** @return nominal chemical time [h]. */
+    public double getNominalChemicalTimeHours() {
+      return nominalChemicalTimeHours;
+    }
+
+    /** @return chemical time at the upper fit-scatter rate [h]. */
+    public double getUpperRateChemicalTimeHours() {
+      return upperRateChemicalTimeHours;
+    }
+
+    /** @return Damkohler number at the lower fit-scatter rate. */
+    public double getLowerRateDamkohlerNumber() {
+      return lowerRateDamkohlerNumber;
+    }
+
+    /** @return nominal Damkohler number. */
+    public double getNominalDamkohlerNumber() {
+      return nominalDamkohlerNumber;
+    }
+
+    /** @return Damkohler number at the upper fit-scatter rate. */
+    public double getUpperRateDamkohlerNumber() {
+      return upperRateDamkohlerNumber;
+    }
+
+    /** @return remaining fraction at the lower fit-scatter rate. */
+    public double getLowerRateRemainingFraction() {
+      return lowerRateRemainingFraction;
+    }
+
+    /** @return nominal remaining fraction. */
+    public double getNominalRemainingFraction() {
+      return nominalRemainingFraction;
+    }
+
+    /** @return remaining fraction at the upper fit-scatter rate. */
+    public double getUpperRateRemainingFraction() {
+      return upperRateRemainingFraction;
     }
   }
 
