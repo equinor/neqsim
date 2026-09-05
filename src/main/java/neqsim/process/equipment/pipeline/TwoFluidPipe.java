@@ -187,6 +187,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Coupled nonlinear substeps rejected since the latest steady initialization. */
   private int transientCoupledPressureMomentumRejectedSubsteps = 0;
 
+  /** Exact diagnostics for coupled nonlinear substeps rejected since steady initialization. */
+  private String transientCoupledPressureMomentumFailureDiagnostic = "";
+
   /** Optional phase-resolved compressible volume supplying the inlet pressure boundary. */
   private UpstreamCompressibleVolume upstreamCompressibleVolume = null;
 
@@ -4158,6 +4161,7 @@ public class TwoFluidPipe extends Pipeline {
     transientCoupledPressureMomentumFailureDetected = false;
     transientCoupledPressureMomentumCorrectionLimited = false;
     transientCoupledPressureMomentumRejectedSubsteps = 0;
+    transientCoupledPressureMomentumFailureDiagnostic = "";
 
     // Initialize sections
     initializeSections();
@@ -4395,6 +4399,15 @@ public class TwoFluidPipe extends Pipeline {
         }
         transientCoupledPressureMomentumFailureDetected = true;
         transientCoupledPressureMomentumRejectedSubsteps++;
+        String rejectionDiagnostic = "elapsed=" + acceptedElapsedTime + " s, attemptedDt=" + dtActual
+            + " s, iterations=" + timeIntegrator.getCoupledPressureMomentumIterations() + "/"
+            + timeIntegrator.getCoupledPressureMomentumMaximumIterations() + ", relativeCellVolumeResidual="
+            + timeIntegrator.getCoupledPressureMomentumVolumeResidual() + ", tolerance="
+            + timeIntegrator.getCoupledPressureMomentumRelativeVolumeTolerance() + ", pressureCorrectionLimited="
+            + timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited();
+        transientCoupledPressureMomentumFailureDiagnostic =
+            transientCoupledPressureMomentumFailureDiagnostic.isEmpty() ? rejectionDiagnostic
+                : transientCoupledPressureMomentumFailureDiagnostic + "; " + rejectionDiagnostic;
         consecutiveCoupledPressureMomentumFailures++;
         equations.applyState(sections, U_prev);
         if (enableAdaptiveTimestepping) {
@@ -7769,6 +7782,15 @@ public class TwoFluidPipe extends Pipeline {
    */
   public int getTransientCoupledPressureMomentumRejectedSubsteps() {
     return transientCoupledPressureMomentumRejectedSubsteps;
+  }
+
+  /**
+   * Get exact diagnostics for rejected coupled nonlinear substeps since steady initialization.
+   *
+   * @return semicolon-separated rejection diagnostics, or an empty string when none were rejected
+   */
+  public String getTransientCoupledPressureMomentumFailureDiagnostic() {
+    return transientCoupledPressureMomentumFailureDiagnostic;
   }
 
   /**
