@@ -241,7 +241,7 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "manageSecurity is CONTRACT_TESTED by merged security-management Java and packaged-MCP evidence; inventory 1.26 has no candidate.");
+        "generateReport and bridgeTaskWorkflow are CONTRACT_TESTED by merged reporting-handoff Java and packaged-MCP evidence; manageSecurity is CONTRACT_TESTED by merged security-management Java and packaged-MCP evidence; inventory 1.26 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
         "All 71 tools have coverage records: twenty-five bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
