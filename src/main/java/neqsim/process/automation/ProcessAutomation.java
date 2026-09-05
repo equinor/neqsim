@@ -628,7 +628,7 @@ public class ProcessAutomation {
     if (address == null || address.trim().isEmpty()) {
       throw new IllegalArgumentException("Address must not be null or empty");
     }
-    if (isAddressType(address, VariableType.OUTPUT)) {
+    if (!isWritableAddress(address) && isAddressType(address, VariableType.OUTPUT)) {
       throw new IllegalArgumentException("Variable is read-only: " + address);
     }
 
