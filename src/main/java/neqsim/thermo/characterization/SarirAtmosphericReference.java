@@ -442,8 +442,8 @@ public final class SarirAtmosphericReference {
     private final double pressureKPa;
     private final double massFlowRateKgPerHour;
 
-    private AduStreamReference(String name, AduStreamDirection direction, double temperatureCelsius,
-        double pressureKPa, double massFlowRateKgPerHour) {
+    private AduStreamReference(String name, AduStreamDirection direction, double temperatureCelsius, double pressureKPa,
+        double massFlowRateKgPerHour) {
       this.name = name;
       this.direction = direction;
       this.temperatureCelsius = temperatureCelsius;
