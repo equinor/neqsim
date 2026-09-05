@@ -144,10 +144,8 @@ public class SarirAtmosphericReferenceTest {
 
     assertEquals(55055.04, SarirAtmosphericReference.getPublishedAduInletMassFlowTotalKgPerHour(), 1.0e-9);
     assertEquals(55050.930006985, SarirAtmosphericReference.getPublishedAduOutletMassFlowTotalKgPerHour(), 1.0e-9);
-    assertEquals(4.109993015,
-        SarirAtmosphericReference.getPublishedAduInletMassFlowTotalKgPerHour()
-            - SarirAtmosphericReference.getPublishedAduOutletMassFlowTotalKgPerHour(),
-        1.0e-9);
+    assertEquals(4.109993015, SarirAtmosphericReference.getPublishedAduInletMassFlowTotalKgPerHour()
+        - SarirAtmosphericReference.getPublishedAduOutletMassFlowTotalKgPerHour(), 1.0e-9);
     assertTrue(SarirAtmosphericReference.calculatePublishedAduMassBalanceErrorFraction() < 1.0e-4);
     assertEquals(streams[0], SarirAtmosphericReference.getAduStream("Crude oil tower"));
     assertEquals(streams[9], SarirAtmosphericReference.getAduStream("Water draw"));
@@ -157,8 +155,8 @@ public class SarirAtmosphericReferenceTest {
   public void steamInjectionRowsPreservePublishedServicesWithoutInventingState() {
     SteamInjectionReference[] injections = SarirAtmosphericReference.getSteamInjections();
     assertEquals(3, injections.length);
-    assertSteamInjection(injections[0], "Main atmospheric column", SteamInjectionService.MAIN_ATMOSPHERIC_COLUMN,
-        340.2, 150.0, 476.0);
+    assertSteamInjection(injections[0], "Main atmospheric column", SteamInjectionService.MAIN_ATMOSPHERIC_COLUMN, 340.2,
+        150.0, 476.0);
     assertSteamInjection(injections[1], "Kerosene side stripper", SteamInjectionService.KEROSENE_SIDE_STRIPPER, 68.04,
         150.0, 476.0);
     assertSteamInjection(injections[2], "Diesel side stripper", SteamInjectionService.DIESEL_SIDE_STRIPPER, 226.8,
