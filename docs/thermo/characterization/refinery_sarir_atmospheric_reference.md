@@ -49,21 +49,31 @@ The source then reports a `550 degC+` terminal residue reaching 100 volume%. Neq
 
 ## Atmospheric operating case
 
-The published HYSYS case uses 34 valve trays, feeds 54,420 kg/h of crude at 350 degC and 233 kPa to tray 31 counted from the top, and includes main-column, kerosene-stripper, and diesel-stripper steam rates of 340.2, 68.04, and 226.8 kg/h. Top and bottom pump-around rates are 29,777.64 and 60,423.66 kg/h.
+The published HYSYS case uses 34 valve trays and feeds crude to tray 31 counted from the top.
+Table 3 publishes the complete ADU inlet/outlet stream set:
 
-The complete source-identified steam set is:
+| Source label | Direction | Temperature (degC) | Pressure (kPa) | Mass flow (kg/h) |
+| --- | --- | ---: | ---: | ---: |
+| Crude oil tower | Inlet | 350 | 233 | 54,420 |
+| Steam | Inlet | 150 | 476 | 340.2 |
+| Kerosene steam | Inlet | 150 | 476 | 68.04 |
+| Diesel steam | Inlet | 150 | 476 | 226.8 |
+| Gas To Flare | Outlet | 49 | 140 | 6.985e-6 |
+| Naphtha | Outlet | 49 | 140 | 8,706 |
+| Kerosene product | Outlet | 126.3 | 210 | 952.2 |
+| Diesel product | Outlet | 214.8 | 219.1 | 17,709.24 |
+| Residual | Outlet | 341.9 | 230 | 26,937.99 |
+| Water draw | Outlet | 49 | 140 | 745.5 |
 
-| Source label | Service | Steam flow (kg/h) |
-| --- | --- | ---: |
-| Main atmospheric column | Main atmospheric column | 340.2 |
-| Kerosene side stripper | Kerosene side stripper | 68.04 |
-| Diesel side stripper | Diesel side stripper | 226.8 |
-| **Total** | Derived sum | **635.04** |
+The four published inlet flows sum to 55,055.04 kg/h and the six outlet flows sum to
+55,050.930006985 kg/h. Their 4.109993015 kg/h difference is less than `1e-4` of the inlet flow.
+This is a transcription and source-rounding check, not an independent plant conservation claim.
 
-The total is a direct sum of the three published rates. The article does not report the injection
-tray locations or the steam temperature, pressure, quality, or enthalpy. The API therefore exposes
-the rows as source evidence and reports both the location and thermodynamic state as unresolved. It
-does not create executable water streams or side-stripper topology.
+The three steam rows total 635.04 kg/h. Table 3 explicitly reports 150 degC and 476 kPa for each
+steam service, correcting the earlier incomplete guide statement. The source does not report steam
+quality, enthalpy, or injection tray locations, so temperature and pressure alone are not treated as
+a complete thermodynamic state. The API exposes the rows as evidence and does not create executable
+water streams or side-stripper topology.
 
 Table 4 gives the complete numeric pump-around rows:
 
@@ -106,6 +116,12 @@ double cloudPointLowerCelsius = SarirAtmosphericReference.getCrudeCloudPointLowe
 double cloudPointUpperCelsius = SarirAtmosphericReference.getCrudeCloudPointUpperCelsius();
 double viscosityCst = SarirAtmosphericReference.getCrudeKinematicViscosityAt100FCst();
 
+SarirAtmosphericReference.AduStreamReference crudeFeed =
+    SarirAtmosphericReference.getAduStream("Crude oil tower");
+double feedRateKgPerHour = crudeFeed.getMassFlowRateKgPerHour();
+double tableClosure =
+    SarirAtmosphericReference.calculatePublishedAduMassBalanceErrorFraction();
+
 SarirAtmosphericReference.ProductYieldReference diesel =
     SarirAtmosphericReference.getProductYield("Diesel");
 double plantRate = diesel.getPlantMetricTonPerDay();
@@ -122,6 +138,9 @@ SarirAtmosphericReference.SteamInjectionReference keroseneSteam =
     SarirAtmosphericReference.getSteamInjection("Kerosene side stripper");
 double steamRateKgPerHour = keroseneSteam.getMassFlowRateKgPerHour();
 double totalSteamRateKgPerHour = SarirAtmosphericReference.getTotalSteamRateKgPerHour();
+boolean steamTemperatureAndPressureAreExplicit =
+    SarirAtmosphericReference.hasExplicitSteamTemperatureAndPressure();
+boolean steamQualityIsExplicit = SarirAtmosphericReference.hasExplicitSteamQuality();
 boolean steamStateIsExplicit =
     SarirAtmosphericReference.hasExplicitSteamThermodynamicState();
 ```
@@ -193,5 +212,6 @@ specifications, tuning targets, or numerical acceptance thresholds. This sensiti
 qualify plant-yield or D86 reproduction and does not model the published steam, pump-around,
 side-stripper, tray-hydraulic, or efficiency details. The separate pump-around reference rows are
 source evidence only; unresolved tray-numbering direction prevents direct model configuration.
-Likewise, the steam rows retain the published service allocation and rates but do not configure
-water, injection locations, steam state, side-stripper topology, or heat duties.
+Likewise, the steam rows retain the published service allocation, rates, temperatures, and
+pressures but do not infer quality or enthalpy or configure water, injection locations, side-stripper
+topology, or heat duties.
