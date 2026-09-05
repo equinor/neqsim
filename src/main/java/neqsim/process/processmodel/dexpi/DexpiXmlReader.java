@@ -215,8 +215,8 @@ public final class DexpiXmlReader {
      *
      * <p>
      * These records retain logical references, resolution evidence, and explicit metadata from resolved source, target,
-     * and process-attachment elements. They do not construct live control topology, infer control intent, or verify loop
-     * function.
+     * and process-attachment elements. They do not construct live control topology, infer control intent, or verify
+     * loop function.
      * </p>
      *
      * @return immutable signal-line and measuring-line evidence
@@ -996,9 +996,8 @@ public final class DexpiXmlReader {
           targetElement != null, elementName(targetElement), explicitAttribute(targetElement, "ComponentClass"),
           explicitAttribute(targetElement, "ComponentName"), explicitTagName(targetElement), attachmentId,
           attachmentElement != null, elementName(attachmentElement),
-          explicitAttribute(attachmentElement, "ComponentClass"),
-          explicitAttribute(attachmentElement, "ComponentName"), explicitTagName(attachmentElement),
-          getGenericAttribute(element, "SignalConveyingTypeSpecialization")));
+          explicitAttribute(attachmentElement, "ComponentClass"), explicitAttribute(attachmentElement, "ComponentName"),
+          explicitTagName(attachmentElement), getGenericAttribute(element, "SignalConveyingTypeSpecialization")));
     }
     return result;
   }
