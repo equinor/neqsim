@@ -214,8 +214,9 @@ public final class DexpiXmlReader {
      * Returns supported instrumentation information-flow occurrences in source-document order.
      *
      * <p>
-     * These records retain logical references and resolution evidence only. They do not construct live control
-     * topology, infer control intent, or verify loop function.
+     * These records retain logical references, resolution evidence, and explicit metadata from resolved source, target,
+     * and process-attachment elements. They do not construct live control topology, infer control intent, or verify
+     * loop function.
      * </p>
      *
      * @return immutable signal-line and measuring-line evidence
@@ -990,9 +991,13 @@ public final class DexpiXmlReader {
       Element targetElement = elementsById.get(targetId);
       Element attachmentElement = elementsById.get(attachmentId);
       result.add(new DexpiInformationFlowInfo(element.getAttribute("ID"), kind, componentClass, sourceId,
-          sourceElement != null, elementName(sourceElement), targetId, targetElement != null,
-          elementName(targetElement), attachmentId, attachmentElement != null, elementName(attachmentElement),
-          getGenericAttribute(element, "SignalConveyingTypeSpecialization")));
+          sourceElement != null, elementName(sourceElement), explicitAttribute(sourceElement, "ComponentClass"),
+          explicitAttribute(sourceElement, "ComponentName"), explicitTagName(sourceElement), targetId,
+          targetElement != null, elementName(targetElement), explicitAttribute(targetElement, "ComponentClass"),
+          explicitAttribute(targetElement, "ComponentName"), explicitTagName(targetElement), attachmentId,
+          attachmentElement != null, elementName(attachmentElement),
+          explicitAttribute(attachmentElement, "ComponentClass"), explicitAttribute(attachmentElement, "ComponentName"),
+          explicitTagName(attachmentElement), getGenericAttribute(element, "SignalConveyingTypeSpecialization")));
     }
     return result;
   }
