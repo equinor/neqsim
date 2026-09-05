@@ -27,6 +27,9 @@ public final class DexpiInstrumentationLoopInfo implements Serializable {
     private final String memberId;
     private final boolean resolved;
     private final String elementName;
+    private final String memberComponentClass;
+    private final String memberComponentName;
+    private final String memberTagName;
 
     /**
      * Creates evidence for one source loop-membership occurrence.
@@ -36,9 +39,27 @@ public final class DexpiInstrumentationLoopInfo implements Serializable {
      * @param elementName resolved XML element name, or an empty string
      */
     public Member(String memberId, boolean resolved, String elementName) {
+      this(memberId, resolved, elementName, "", "", "");
+    }
+
+    /**
+     * Creates evidence with explicit metadata from the resolved member element.
+     *
+     * @param memberId referenced source identity, or an empty string when absent
+     * @param resolved whether the reference resolves to a source element
+     * @param elementName resolved XML element name, or an empty string
+     * @param memberComponentClass explicit member component class, or an empty string
+     * @param memberComponentName explicit member component name, or an empty string
+     * @param memberTagName explicit member tag name, or an empty string
+     */
+    public Member(String memberId, boolean resolved, String elementName, String memberComponentClass,
+        String memberComponentName, String memberTagName) {
       this.memberId = normalize(memberId);
       this.resolved = resolved;
       this.elementName = normalize(elementName);
+      this.memberComponentClass = normalize(memberComponentClass);
+      this.memberComponentName = normalize(memberComponentName);
+      this.memberTagName = normalize(memberTagName);
     }
 
     /** @return referenced source identity, or an empty string when absent */
@@ -56,11 +77,29 @@ public final class DexpiInstrumentationLoopInfo implements Serializable {
       return elementName;
     }
 
+    /** @return explicit member component class, or an empty string */
+    public String getMemberComponentClass() {
+      return memberComponentClass;
+    }
+
+    /** @return explicit member component name, or an empty string */
+    public String getMemberComponentName() {
+      return memberComponentName;
+    }
+
+    /** @return explicit member tag name, or an empty string */
+    public String getMemberTagName() {
+      return memberTagName;
+    }
+
     private Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("memberId", memberId);
       result.put("resolved", Boolean.valueOf(resolved));
       result.put("elementName", elementName);
+      result.put("memberComponentClass", memberComponentClass);
+      result.put("memberComponentName", memberComponentName);
+      result.put("memberTagName", memberTagName);
       return result;
     }
   }
