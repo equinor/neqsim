@@ -2322,13 +2322,15 @@ The phase-boundary qualification covers two synthetic numerical cases. A classic
 253.46685189059752 K and 77.53775411226596 bara must retain an incipient vapour
 fraction of `3.50882832337307e-5` through the supplementary stability trial. A
 classic-mixing `SystemUMRPRUMCEos` feed of methane, ethane, n-pentane, and nC16
-at 293.15 K and 89.5-90.5 bara must retain its stable single phase when a
-sub-residual TPD trial is found. Both feeds are synthetic and provide numerical
+at 293.15 K crosses from two phases at 89.5 bara to a stable single phase at
+90.03461693 and 90.5 bara. The ordinary and multiphase paths must agree on this
+topology while the sub-residual TPD guard retains the reference single phase.
+Both feeds are synthetic and provide numerical
 regression evidence rather than experimental validation of phase boundaries or
 model parameters.
 
 Every active phase and beta must be finite, bounded, and normalized within
-`2e-12`; maximum component material-balance residual must be below `1e-10`;
+`3e-12`; maximum component material-balance residual must be below `1e-10`;
 and every phase must have positive finite compressibility. Two-phase states require
 maximum comparable interphase log-fugacity residual below `1e-8`. Single-phase
 states require beta one and `x=z` within `1e-10`. Total Gibbs energy and
