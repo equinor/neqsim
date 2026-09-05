@@ -4404,8 +4404,7 @@ public class TwoFluidPipe extends Pipeline {
             + timeIntegrator.getCoupledPressureMomentumMaximumIterations() + ", relativeCellVolumeResidual="
             + timeIntegrator.getCoupledPressureMomentumVolumeResidual() + ", tolerance="
             + timeIntegrator.getCoupledPressureMomentumRelativeVolumeTolerance() + ", pressureCorrectionLimited="
-            + timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited()
-            + ", minimumMassFluxCorrectionScale="
+            + timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited() + ", minimumMassFluxCorrectionScale="
             + timeIntegrator.getCoupledPressureMomentumMinimumMassFluxCorrectionScale();
         transientCoupledPressureMomentumFailureDiagnostic = transientCoupledPressureMomentumFailureDiagnostic.isEmpty()
             ? rejectionDiagnostic
