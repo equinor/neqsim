@@ -4414,13 +4414,15 @@ public class TwoFluidPipe extends Pipeline {
           }
         }
 
-        // Check for negative mass (unphysical — indicates numerical blow-up)
+        // A positivity limiter can preserve total mass while moving mass between
+        // phases, so reject materially negative phase states before correction.
         if (!stepRejected) {
-          for (int i = 0; i < U_new.length; i++) {
-            // Mass variables are indices 0 (gas) and 1 (oil/liquid)
-            if (U_new[i][0] < -1e-3 || U_new[i][1] < -1e-3) {
-              stepRejected = true;
-              break;
+          for (int i = 0; i < U_new.length && !stepRejected; i++) {
+            for (int phase = 0; phase < 3; phase++) {
+              if (U_new[i][phase] < -1.0e-12) {
+                stepRejected = true;
+                break;
+              }
             }
           }
         }
