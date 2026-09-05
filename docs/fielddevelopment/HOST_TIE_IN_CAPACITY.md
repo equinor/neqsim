@@ -29,32 +29,44 @@ The planner complements [TiebackAnalyzer](API_GUIDE.md#7-tieback-analysis): use 
 
 ## Nameplate Ullage Example
 
-This example preserves base-host production first and accepts only the satellite rate that fits within the host gas capacity.
+The complete Java 8 example below is exercised by `FieldDevelopmentOverviewDocumentationTest`. It preserves
+base-host production first and accepts only the satellite rate that fits within the host gas capacity. The result is a
+deterministic screening calculation, not host-design or operating approval.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
 import neqsim.process.fielddevelopment.tieback.capacity.ProductionProfileSeries;
 import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner;
 import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityResult;
 
-HostFacility host = HostFacility.builder("Host A")
+public final class HostTieInCapacityQuickStart {
+  private static final Logger logger = LogManager.getLogger(HostTieInCapacityQuickStart.class);
+
+  private HostTieInCapacityQuickStart() {}
+
+  public static void main(String[] args) {
+    HostFacility host = HostFacility.builder("Host A")
     .gasCapacity(5.0)
     .build();
 
-ProductionProfileSeries base = new ProductionProfileSeries("base")
-    .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries base = new ProductionProfileSeries("base")
+        .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
 
-ProductionProfileSeries satellite = new ProductionProfileSeries("satellite")
-    .addPeriod(2028, 3.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite")
+        .addPeriod(2028, 3.0, 0.0, 0.0, 0.0);
 
-TieInCapacityResult result = new TieInCapacityPlanner(host)
-    .setHostProductionProfile(base)
-    .setSatelliteProductionProfile(satellite)
-    .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
-    .run();
+    TieInCapacityResult result = new TieInCapacityPlanner(host)
+        .setHostProductionProfile(base)
+        .setSatelliteProductionProfile(satellite)
+        .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
+        .run();
 
-System.out.println(result.toMarkdownTable());
+    logger.info("{}", result.toMarkdownTable());
+  }
+}
 ```
 
 Expected behavior: the host accepts 1.0 MSm3/d of the satellite gas and holds back 2.0 MSm3/d because the base host production already uses 4.0 of 5.0 MSm3/d.
