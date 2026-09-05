@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
@@ -589,36 +590,31 @@ public class TwoFluidConservationEquations implements Serializable {
     for (TwoFluidSection sec : sections) {
       sec.updateThreePhaseProperties();
 
-      // Update flow regime
-      sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
+      // Classify once so transient sources consume the same continuous transition
+      // weights as the steady hold-up calculation.
+      flowRegimeDetector.classify(sec);
+      Map<PipeSection.FlowRegime, Double> regimeWeights = sec.getRegimeWeights();
 
-      // Update stratified geometry if applicable
+      // A non-zero stratified share uses the same segment geometry on both sides
+      // of the transition, avoiding a second hard switch in the source terms.
       PipeSection.FlowRegime regime = sec.getFlowRegime();
-      if (regime == PipeSection.FlowRegime.STRATIFIED_SMOOTH || regime == PipeSection.FlowRegime.STRATIFIED_WAVY) {
+      if (regime == PipeSection.FlowRegime.STRATIFIED_SMOOTH
+          || regime == PipeSection.FlowRegime.STRATIFIED_WAVY
+          || hasStratifiedShare(regimeWeights)) {
         sec.updateStratifiedGeometry();
       }
 
-      // Calculate wall friction
-      WallFriction.WallFrictionResult wallResult = wallFriction.calculate(regime, sec.getGasVelocity(),
-          sec.getLiquidVelocity(), sec.getGasDensity(), sec.getLiquidDensity(), sec.getGasViscosity(),
-          sec.getLiquidViscosity(), sec.getLiquidHoldup(), sec.getDiameter(), sec.getRoughness());
-
+      WallFriction.WallFrictionResult wallResult = calculateWallFriction(sec, regimeWeights);
       sec.setGasWallShear(wallResult.gasWallShear);
       sec.setLiquidWallShear(wallResult.liquidWallShear);
 
-      // Calculate interfacial friction
-      InterfacialFriction.InterfacialFrictionResult ifResult = interfacialFriction.calculate(regime,
-          sec.getGasVelocity(), sec.getLiquidVelocity(), sec.getGasDensity(), sec.getLiquidDensity(),
-          sec.getGasViscosity(), sec.getLiquidViscosity(), sec.getLiquidHoldup(), sec.getDiameter(),
-          sec.getSurfaceTension());
-
+      InterfacialFriction.InterfacialFrictionResult ifResult =
+          calculateInterfacialFriction(sec, regimeWeights);
       sec.setInterfacialShear(ifResult.interfacialShear);
       sec.setInterfacialWidth(ifResult.interfacialAreaPerLength);
 
-      EntrainmentDeposition.EntrainmentResult entrainment = entrainmentDeposition.calculate(regime,
-          sec.getGasVelocity(), sec.getLiquidVelocity(), sec.getGasDensity(), sec.getLiquidDensity(),
-          sec.getGasViscosity(), sec.getLiquidViscosity(), sec.getSurfaceTension(), sec.getDiameter(),
-          sec.getLiquidHoldup());
+      EntrainmentDeposition.EntrainmentResult entrainment =
+          calculateEntrainment(sec, regimeWeights);
       sec.setEntrainmentFraction(entrainment.entrainmentFraction);
       sec.setEntrainedDropletDiameter(entrainment.dropletDiameter);
 
@@ -626,6 +622,128 @@ public class TwoFluidConservationEquations implements Serializable {
       sec.setInclinedSectionGasCarryoverNumber(gasCarryoverNumber);
       sec.setInclinedSectionLiquidFallbackPotential(gasCarryoverNumber < 1.0);
     }
+  }
+
+  private static boolean hasStratifiedShare(Map<PipeSection.FlowRegime, Double> weights) {
+    return weights != null
+        && (weights.containsKey(PipeSection.FlowRegime.STRATIFIED_SMOOTH)
+            || weights.containsKey(PipeSection.FlowRegime.STRATIFIED_WAVY));
+  }
+
+  private WallFriction.WallFrictionResult calculateWallFriction(
+      TwoFluidSection sec, Map<PipeSection.FlowRegime, Double> weights) {
+    if (weights == null) {
+      return wallFriction.calculate(
+          sec.getFlowRegime(),
+          sec.getGasVelocity(),
+          sec.getLiquidVelocity(),
+          sec.getGasDensity(),
+          sec.getLiquidDensity(),
+          sec.getGasViscosity(),
+          sec.getLiquidViscosity(),
+          sec.getLiquidHoldup(),
+          sec.getDiameter(),
+          sec.getRoughness());
+    }
+
+    WallFriction.WallFrictionResult blended = new WallFriction.WallFrictionResult();
+    for (Map.Entry<PipeSection.FlowRegime, Double> entry : weights.entrySet()) {
+      WallFriction.WallFrictionResult component =
+          wallFriction.calculate(
+              entry.getKey(),
+              sec.getGasVelocity(),
+              sec.getLiquidVelocity(),
+              sec.getGasDensity(),
+              sec.getLiquidDensity(),
+              sec.getGasViscosity(),
+              sec.getLiquidViscosity(),
+              sec.getLiquidHoldup(),
+              sec.getDiameter(),
+              sec.getRoughness());
+      blended.gasWallShear += entry.getValue() * component.gasWallShear;
+      blended.liquidWallShear += entry.getValue() * component.liquidWallShear;
+    }
+    return blended;
+  }
+
+  private InterfacialFriction.InterfacialFrictionResult calculateInterfacialFriction(
+      TwoFluidSection sec, Map<PipeSection.FlowRegime, Double> weights) {
+    if (weights == null) {
+      return interfacialFriction.calculate(
+          sec.getFlowRegime(),
+          sec.getGasVelocity(),
+          sec.getLiquidVelocity(),
+          sec.getGasDensity(),
+          sec.getLiquidDensity(),
+          sec.getGasViscosity(),
+          sec.getLiquidViscosity(),
+          sec.getLiquidHoldup(),
+          sec.getDiameter(),
+          sec.getSurfaceTension());
+    }
+
+    InterfacialFriction.InterfacialFrictionResult blended =
+        new InterfacialFriction.InterfacialFrictionResult();
+    for (Map.Entry<PipeSection.FlowRegime, Double> entry : weights.entrySet()) {
+      InterfacialFriction.InterfacialFrictionResult component =
+          interfacialFriction.calculate(
+              entry.getKey(),
+              sec.getGasVelocity(),
+              sec.getLiquidVelocity(),
+              sec.getGasDensity(),
+              sec.getLiquidDensity(),
+              sec.getGasViscosity(),
+              sec.getLiquidViscosity(),
+              sec.getLiquidHoldup(),
+              sec.getDiameter(),
+              sec.getSurfaceTension());
+      blended.interfacialShear += entry.getValue() * component.interfacialShear;
+      blended.interfacialAreaPerLength +=
+          entry.getValue() * component.interfacialAreaPerLength;
+    }
+    return blended;
+  }
+
+  private EntrainmentDeposition.EntrainmentResult calculateEntrainment(
+      TwoFluidSection sec, Map<PipeSection.FlowRegime, Double> weights) {
+    if (weights == null) {
+      return entrainmentDeposition.calculate(
+          sec.getFlowRegime(),
+          sec.getGasVelocity(),
+          sec.getLiquidVelocity(),
+          sec.getGasDensity(),
+          sec.getLiquidDensity(),
+          sec.getGasViscosity(),
+          sec.getLiquidViscosity(),
+          sec.getSurfaceTension(),
+          sec.getDiameter(),
+          sec.getLiquidHoldup());
+    }
+
+    EntrainmentDeposition.EntrainmentResult blended =
+        new EntrainmentDeposition.EntrainmentResult();
+    double weightedDropletDiameter = 0.0;
+    for (Map.Entry<PipeSection.FlowRegime, Double> entry : weights.entrySet()) {
+      EntrainmentDeposition.EntrainmentResult component =
+          entrainmentDeposition.calculate(
+              entry.getKey(),
+              sec.getGasVelocity(),
+              sec.getLiquidVelocity(),
+              sec.getGasDensity(),
+              sec.getLiquidDensity(),
+              sec.getGasViscosity(),
+              sec.getLiquidViscosity(),
+              sec.getSurfaceTension(),
+              sec.getDiameter(),
+              sec.getLiquidHoldup());
+      double weightedFraction = entry.getValue() * component.entrainmentFraction;
+      blended.entrainmentFraction += weightedFraction;
+      weightedDropletDiameter += weightedFraction * component.dropletDiameter;
+    }
+    if (blended.entrainmentFraction > 0.0) {
+      blended.dropletDiameter = weightedDropletDiameter / blended.entrainmentFraction;
+    }
+    return blended;
   }
 
   /**
