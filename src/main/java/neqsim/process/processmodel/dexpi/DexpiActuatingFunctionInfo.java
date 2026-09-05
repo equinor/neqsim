@@ -36,9 +36,15 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
   private final String finalControlElementId;
   private final boolean finalControlElementResolved;
   private final String finalControlElementName;
+  private final String finalControlElementComponentClass;
+  private final String finalControlElementComponentName;
+  private final String finalControlElementTagName;
   private final String locationId;
   private final boolean locationResolved;
   private final String locationElementName;
+  private final String locationComponentClass;
+  private final String locationComponentName;
+  private final String locationTagName;
 
   /**
    * Creates immutable evidence for one actuating-function occurrence.
@@ -61,6 +67,40 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
       String instrumentationFunctionId, boolean instrumentationFunctionResolved,
       String instrumentationFunctionElementName, String finalControlElementId, boolean finalControlElementResolved,
       String finalControlElementName, String locationId, boolean locationResolved, String locationElementName) {
+    this(id, kind, componentClass, functionNumber, instrumentationFunctionId, instrumentationFunctionResolved,
+        instrumentationFunctionElementName, finalControlElementId, finalControlElementResolved, finalControlElementName,
+        "", "", "", locationId, locationResolved, locationElementName, "", "", "");
+  }
+
+  /**
+   * Creates immutable evidence for one actuating-function occurrence with explicit resolved-target metadata.
+   *
+   * @param id source XML identity, or an empty string when absent
+   * @param kind explicit source kind
+   * @param componentClass source component class
+   * @param functionNumber explicit source function-number metadata, or an empty string
+   * @param instrumentationFunctionId enclosing instrumentation-function identity, or an empty string
+   * @param instrumentationFunctionResolved whether the enclosing identity resolves to the enclosing source element
+   * @param instrumentationFunctionElementName enclosing XML element name, or an empty string
+   * @param finalControlElementId explicit final-control-element reference, or an empty string
+   * @param finalControlElementResolved whether the final-control-element reference resolves
+   * @param finalControlElementName resolved final-control-element XML name, or an empty string
+   * @param finalControlElementComponentClass explicit resolved target component class, or an empty string
+   * @param finalControlElementComponentName explicit resolved target component name, or an empty string
+   * @param finalControlElementTagName explicit resolved target tag name, or an empty string
+   * @param locationId explicit {@code is located in} reference, or an empty string
+   * @param locationResolved whether the location reference resolves
+   * @param locationElementName resolved location XML name, or an empty string
+   * @param locationComponentClass explicit resolved location component class, or an empty string
+   * @param locationComponentName explicit resolved location component name, or an empty string
+   * @param locationTagName explicit resolved location tag name, or an empty string
+   */
+  public DexpiActuatingFunctionInfo(String id, Kind kind, String componentClass, String functionNumber,
+      String instrumentationFunctionId, boolean instrumentationFunctionResolved,
+      String instrumentationFunctionElementName, String finalControlElementId, boolean finalControlElementResolved,
+      String finalControlElementName, String finalControlElementComponentClass, String finalControlElementComponentName,
+      String finalControlElementTagName, String locationId, boolean locationResolved, String locationElementName,
+      String locationComponentClass, String locationComponentName, String locationTagName) {
     this.id = normalize(id);
     this.kind = kind;
     this.componentClass = normalize(componentClass);
@@ -71,9 +111,15 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
     this.finalControlElementId = normalize(finalControlElementId);
     this.finalControlElementResolved = finalControlElementResolved;
     this.finalControlElementName = normalize(finalControlElementName);
+    this.finalControlElementComponentClass = normalize(finalControlElementComponentClass);
+    this.finalControlElementComponentName = normalize(finalControlElementComponentName);
+    this.finalControlElementTagName = normalize(finalControlElementTagName);
     this.locationId = normalize(locationId);
     this.locationResolved = locationResolved;
     this.locationElementName = normalize(locationElementName);
+    this.locationComponentClass = normalize(locationComponentClass);
+    this.locationComponentName = normalize(locationComponentName);
+    this.locationTagName = normalize(locationTagName);
   }
 
   /** @return source XML identity, or an empty string when absent */
@@ -126,6 +172,21 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
     return finalControlElementName;
   }
 
+  /** @return explicit component class of the resolved final-control-element target, or an empty string */
+  public String getFinalControlElementComponentClass() {
+    return finalControlElementComponentClass;
+  }
+
+  /** @return explicit component name of the resolved final-control-element target, or an empty string */
+  public String getFinalControlElementComponentName() {
+    return finalControlElementComponentName;
+  }
+
+  /** @return explicit tag name of the resolved final-control-element target, or an empty string */
+  public String getFinalControlElementTagName() {
+    return finalControlElementTagName;
+  }
+
   /** @return explicit {@code is located in} reference, or an empty string */
   public String getLocationId() {
     return locationId;
@@ -141,6 +202,21 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
     return locationElementName;
   }
 
+  /** @return explicit component class of the resolved actuation-location target, or an empty string */
+  public String getLocationComponentClass() {
+    return locationComponentClass;
+  }
+
+  /** @return explicit component name of the resolved actuation-location target, or an empty string */
+  public String getLocationComponentName() {
+    return locationComponentName;
+  }
+
+  /** @return explicit tag name of the resolved actuation-location target, or an empty string */
+  public String getLocationTagName() {
+    return locationTagName;
+  }
+
   Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("id", id);
@@ -153,9 +229,15 @@ public final class DexpiActuatingFunctionInfo implements Serializable {
     result.put("finalControlElementId", finalControlElementId);
     result.put("finalControlElementResolved", Boolean.valueOf(finalControlElementResolved));
     result.put("finalControlElementName", finalControlElementName);
+    result.put("finalControlElementComponentClass", finalControlElementComponentClass);
+    result.put("finalControlElementComponentName", finalControlElementComponentName);
+    result.put("finalControlElementTagName", finalControlElementTagName);
     result.put("locationId", locationId);
     result.put("locationResolved", Boolean.valueOf(locationResolved));
     result.put("locationElementName", locationElementName);
+    result.put("locationComponentClass", locationComponentClass);
+    result.put("locationComponentName", locationComponentName);
+    result.put("locationTagName", locationTagName);
     return result;
   }
 

@@ -34,7 +34,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiStream` | Lightweight piping segment with DEXPI class, line number, and fluid code |
 | `DexpiProcessUnit` | Imported equipment with original DEXPI class and mapped `EquipmentEnum` |
 | `DexpiInstrumentInfo` | Instrument metadata (tag, type, function letter) |
-| `DexpiActuatingFunctionInfo` | Immutable source-order actuating-function identity and reference evidence |
+| `DexpiActuatingFunctionInfo` | Immutable source-order actuating-function identity, reference, and resolved-target provenance |
 | `DexpiConnectionInfo` | Immutable source-order material-connection evidence and endpoint resolution |
 
 ---
@@ -147,9 +147,11 @@ incomplete source content into closed-loop control intent.
 `ActuatingElectricalFunction` occurrences as immutable `DexpiActuatingFunctionInfo` records. Each
 record retains the explicit source kind, ID, component class, function number, enclosing
 `ProcessInstrumentationFunction` identity, `FinalControlElementID`, and `is located in` identity,
-together with resolution flags and resolved XML element names. Missing and unresolved references
-remain visible. The API does not classify final-element type, infer control intent, identify a
-safeguard or SIS function, or alter live simulation topology.
+together with resolution flags and resolved XML element names. For each resolved final-element and
+location target, it also preserves the source object's explicit `ComponentClass`, `ComponentName`,
+and `TagName`; absent source metadata remains an empty string. Missing and unresolved references
+remain visible without invented target metadata. The API does not classify final-element type,
+infer control intent, identify a safeguard or SIS function, or alter live simulation topology.
 
 `ImportResult.getInformationFlows()` exposes the corresponding source-ordered
 `MeasuringLineFunction` and `SignalLineFunction` evidence as immutable
