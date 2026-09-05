@@ -142,9 +142,8 @@ class CoupledPressureMomentumTengesdalProgressTest {
 
     assertEquals(5.0, pipe.getSimulationTime(), 1.0e-9);
     assertFalse(pipe.isTransientOutletBackflowClamped());
-    assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected(),
-        "refined coupled solve recorded " + pipe.getTransientCoupledPressureMomentumRejectedSubsteps()
-            + " rejected substeps");
+    assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected(), "refined coupled solve recorded "
+        + pipe.getTransientCoupledPressureMomentumRejectedSubsteps() + " rejected substeps");
     assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps());
   }
 
