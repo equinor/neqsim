@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.25");
+    inventory.addProperty("inventoryVersion", "1.26");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "generateReport and bridgeTaskWorkflow are CONTRACT_TESTED by merged reporting-handoff Java and packaged-MCP evidence; inventory 1.25 has no candidate.");
+        "generateReport and bridgeTaskWorkflow are CONTRACT_TESTED by merged reporting-handoff Java and packaged-MCP evidence; manageSecurity is CONTRACT_TESTED by merged security-management Java and packaged-MCP evidence; inventory 1.26 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: twenty-four bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records: twenty-five bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -363,6 +363,15 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_session_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/SESSION_LIFECYCLE_CONTRACT.md" };
       evidenceBoundary = "Lifecycle contract; restart durability, distributed coherence, component or energy closure, and causal troubleshooting remain unqualified";
+      break;
+    case "manageSecurity":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_APPLICATION_SECURITY_MANAGEMENT";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/SecurityRunner.java",
+          "src/test/java/neqsim/mcp/runners/SecurityRunnerTest.java",
+          "src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java",
+          "neqsim-mcp-server/test_security_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/SECURITY_MANAGEMENT_CONTRACT.md" };
+      evidenceBoundary = "Default-disabled compatibility, bootstrap reachability, transport-bound principal enforcement, administrator gating, process-local audit/rate-limit/status views, fail-closed errors, and packaged transport are contract-tested; this does not establish transport security, external IAM, vault or durable/distributed security, penetration resistance, certification, plant authority, or engineering approval";
       break;
     case "manageState":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_LOCAL_STATE_PERSISTENCE_LIFECYCLE";

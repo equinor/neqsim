@@ -5,7 +5,7 @@
 Can the MCP surface deterministically apply NeqSim's existing engineering-result rules, preserve structured findings and
 fail closed on malformed result JSON without presenting the validator as new scientific evidence?
 
-Phase 0 inventory 1.25 retains this bounded behavior as **`CONTRACT_TESTED`** after merged PR #3406 established the
+Phase 0 inventory 1.26 retains this bounded behavior as **`CONTRACT_TESTED`** after merged PR #3406 established the
 prerequisite Java and packaged-MCP qualification and merged PRs #3416/#3421 restored the capability-response transport
 contract. The classification changes no production validator behavior or schema.
 
@@ -43,7 +43,7 @@ component, total-mass, enthalpy or facility-wide closure from a canonical `Proce
 
 - `EngineeringValidatorTest` covers clean, warning-only, blocking, nested and malformed inputs.
 - `test_validate_results_protocol.py` repeats those boundaries through the real packaged STDIO server and proves that
-  inventory 1.25 records 20 explicit + 24 contract-tested + 27 confirmed gaps.
+  inventory 1.26 records 20 explicit + 25 contract-tested + 26 confirmed gaps.
 - `test_mcp_server.py` retains the broad real-protocol `validateResults` call.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP contracts before the comprehensive suite.
 

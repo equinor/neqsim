@@ -52,8 +52,8 @@ not an exact value. JSON object insertion order controls table row order.
 
 - `ReportRunnerTest` covers structured report metadata, inferred-unit table rows, chart extraction, request flags,
   summary counts, report failures, bridge extraction, schema shape, provenance and bridge failures.
-- `test_reporting_protocol.py` repeats those boundaries through the real packaged STDIO server and proves inventory 1.25
-  promotes both tools atomically with complete evidence records and zero pending candidates.
+- `test_reporting_protocol.py` repeats those boundaries through the real packaged STDIO server and proves inventory 1.26
+  retains both promoted tools with complete evidence records and zero pending candidates.
 - `test_mcp_server.py` retains the broad real-protocol calls and the 71-tool registration/accounting checks.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP reporting contracts before the comprehensive
   protocol regression.

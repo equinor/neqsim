@@ -256,23 +256,48 @@ def test_process_local_operational_views(client):
     require(isinstance(limits.get("users"), list), "rate-limit users are absent", limits)
 
 
-def test_phase0_inventory_remains_unpromoted(client):
+def test_phase0_inventory_promotes_security_contract(client):
     result = payload(client.call_no_arg_tool("getCapabilities"))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
     limitations = inventory.get("knownLimitations", {})
     records = limitations.get("coverageRecords", {})
     record = records.get("manageSecurity", {})
-    require(inventory.get("inventoryVersion") == "1.25", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.26", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 24
-        and limitations.get("confirmedGapToolCount") == 27,
-        "qualification changed inventory accounting",
+        limitations.get("contractTestedToolCount") == 25
+        and limitations.get("confirmedGapToolCount") == 26,
+        "security promotion accounting drifted",
         limitations,
     )
     require(
-        record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification prematurely promoted manageSecurity",
+        record.get("coverageStatus") == "CONTRACT_TESTED",
+        "manageSecurity was not promoted atomically",
+        record,
+    )
+    require(
+        record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_APPLICATION_SECURITY_MANAGEMENT",
+        "security benchmark-applicability boundary drifted",
+        record,
+    )
+    sources = record.get("contractEvidenceSources", [])
+    require(
+        record.get("contractEvidenceCount") == len(sources)
+        and "src/main/java/neqsim/mcp/runners/SecurityRunner.java" in sources
+        and "src/test/java/neqsim/mcp/runners/SecurityRunnerTest.java" in sources
+        and "src/test/java/neqsim/mcp/runners/McpSecurityEnforcementTest.java" in sources
+        and "neqsim-mcp-server/test_security_protocol.py" in sources
+        and "neqsim-mcp-server/docs/evidence/SECURITY_MANAGEMENT_CONTRACT.md" in sources,
+        "security evidence sources drifted",
+        record,
+    )
+    boundary = record.get("evidenceBoundary", "")
+    require(
+        "process-local" in boundary
+        and "does not establish transport" in boundary
+        and "plant authority" in boundary,
+        "security evidence boundary drifted",
         record,
     )
 
@@ -285,7 +310,7 @@ def main():
         ("administrator gate and bootstrap recovery", test_administrator_gate_and_bootstrap_recovery),
         ("fail-closed requests", test_fail_closed_requests),
         ("process-local operational views", test_process_local_operational_views),
-        ("Phase 0 classification remains unpromoted", test_phase0_inventory_remains_unpromoted),
+        ("Phase 0 security classification is promoted", test_phase0_inventory_promotes_security_contract),
     ]
     try:
         client.start()
