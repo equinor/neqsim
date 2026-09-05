@@ -544,8 +544,11 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadWithDiagnosticsPreservesParallelMaterialConnections() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Equipment ID=\"E-OUT\"><Nozzle ID=\"N-OUT\"/></Equipment>"
-        + "<Equipment ID=\"E-IN\"><Nozzle ID=\"N-IN\"/></Equipment>"
+        + "<Equipment ID=\"E-OUT\" ComponentClass=\"CentrifugalPump\" ComponentName=\"ExportPump\""
+        + " TagName=\"P-101\"><Nozzle ID=\"N-OUT\"/></Equipment>"
+        + "<Equipment ID=\"E-IN\" ComponentClass=\"Separator\" ComponentName=\"InletSeparator\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"V-101\"/></GenericAttributes>"
+        + "<Nozzle ID=\"N-IN\"/></Equipment>"
         + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\">"
         + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-2\" ComponentClass=\"PipingNetworkSegment\">"
@@ -569,6 +572,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("E-IN", firstConnection.getToOwnerId());
     assertEquals("Equipment", firstConnection.getFromOwnerElementName());
     assertEquals("Equipment", firstConnection.getToOwnerElementName());
+    assertEquals("CentrifugalPump", firstConnection.getFromOwnerComponentClass());
+    assertEquals("ExportPump", firstConnection.getFromOwnerComponentName());
+    assertEquals("P-101", firstConnection.getFromOwnerTagName());
+    assertEquals("Separator", firstConnection.getToOwnerComponentClass());
+    assertEquals("InletSeparator", firstConnection.getToOwnerComponentName());
+    assertEquals("V-101", firstConnection.getToOwnerTagName());
     assertTrue(firstConnection.isResolved());
     assertTrue(firstConnection.isOwnershipResolved());
     assertEquals("S-2/connection-1", first.getConnections().get(1).getId());
@@ -576,6 +585,34 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"connectionCount\": 2"));
     assertEquals(first.toJson(), second.toJson());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnections().clear());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsPreservesDirectConnectionOwnerProvenance() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<PipingComponent ID=\"PC-DIRECT\" ComponentClass=\"GlobeValve\" ComponentName=\"ValveShape\""
+        + " TagName=\"XV-101\"/>"
+        + "<Equipment ID=\"E-DIRECT\" ComponentClass=\"Tank\" ComponentName=\"TankShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"TK-101\"/>"
+        + "</GenericAttributes></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-DIRECT\"><Connection ID=\"C-DIRECT\" FromID=\"PC-DIRECT\""
+        + " ToID=\"E-DIRECT\"/></PipingNetworkSegment></PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiConnectionInfo connection = result.getConnections().get(0);
+
+    assertEquals("PipingComponent", connection.getFromElementName());
+    assertEquals("PC-DIRECT", connection.getFromOwnerId());
+    assertEquals("GlobeValve", connection.getFromOwnerComponentClass());
+    assertEquals("ValveShape", connection.getFromOwnerComponentName());
+    assertEquals("XV-101", connection.getFromOwnerTagName());
+    assertEquals("Equipment", connection.getToElementName());
+    assertEquals("E-DIRECT", connection.getToOwnerId());
+    assertEquals("Tank", connection.getToOwnerComponentClass());
+    assertEquals("TankShape", connection.getToOwnerComponentName());
+    assertEquals("TK-101", connection.getToOwnerTagName());
+    assertTrue(connection.isOwnershipResolved());
   }
 
   @Test
@@ -625,6 +662,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionInfo legacy = new DexpiConnectionInfo("C", "C", "S", "A", "B", "Nozzle", "Nozzle", true, true);
     assertEquals("", legacy.getFromOwnerId());
     assertEquals("", legacy.getToOwnerId());
+    assertEquals("", legacy.getFromOwnerComponentClass());
+    assertEquals("", legacy.getFromOwnerComponentName());
+    assertEquals("", legacy.getFromOwnerTagName());
+    assertEquals("", legacy.getToOwnerComponentClass());
+    assertEquals("", legacy.getToOwnerComponentName());
+    assertEquals("", legacy.getToOwnerTagName());
   }
 
   @Test
@@ -632,7 +675,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
         + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
         + "<Equipment ID=\"E-B\"><Nozzle ID=\"N-B\"/></Equipment>"
-        + "<PipingComponent ID=\"PC-J\"><Nozzle ID=\"N-J\"/></PipingComponent>"
+        + "<PipingComponent ID=\"PC-J\" ComponentClass=\"PipeFitting\" ComponentName=\"TeeShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"TEE-101\"/>"
+        + "</GenericAttributes><Nozzle ID=\"N-J\"/></PipingComponent>"
         + "<Equipment ID=\"E-C\"><Nozzle ID=\"N-C\"/></Equipment>"
         + "<PipingNetworkSegment ID=\"S-1\"><Connection ID=\"C-1\" FromID=\"N-A\" ToID=\"N-J\"/>"
         + "</PipingNetworkSegment>"
@@ -652,6 +697,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("N-J", junction.getEndpointId());
     assertEquals("Nozzle", junction.getElementName());
     assertEquals("PC-J", junction.getOwnerId());
+    assertEquals("PipingComponent", junction.getOwnerElementName());
+    assertEquals("PipeFitting", junction.getOwnerComponentClass());
+    assertEquals("TeeShape", junction.getOwnerComponentName());
+    assertEquals("TEE-101", junction.getOwnerTagName());
     assertTrue(junction.isResolved());
     assertEquals(2, junction.getIncomingConnectionCount());
     assertEquals(1, junction.getOutgoingConnectionCount());
@@ -665,6 +714,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionEndpointInfo unresolved = first.getConnectionEndpoints().get(4);
     assertEquals("UNKNOWN", unresolved.getEndpointId());
     assertFalse(unresolved.isResolved());
+    assertEquals("", unresolved.getOwnerComponentClass());
+    assertEquals("", unresolved.getOwnerComponentName());
+    assertEquals("", unresolved.getOwnerTagName());
     assertEquals(Collections.singletonList("C-4"), unresolved.getOutgoingConnectionIds());
     assertEquals(0, unresolved.getIncomingConnectionCount());
     assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SOURCE, unresolved.getIncidenceRole());
@@ -674,6 +726,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"connectionEndpointCount\": 5"));
     assertTrue(first.toJson().contains("\"incidenceRole\": \"MERGE\""));
     assertTrue(first.toJson().contains("\"potentialMultiConnectionNode\": true"));
+    assertTrue(first.toJson().contains("\"ownerComponentClass\": \"PipeFitting\""));
+    assertTrue(first.toJson().contains("\"ownerComponentName\": \"TeeShape\""));
+    assertTrue(first.toJson().contains("\"ownerTagName\": \"TEE-101\""));
     assertEquals(first.toJson(), second.toJson());
   }
 
