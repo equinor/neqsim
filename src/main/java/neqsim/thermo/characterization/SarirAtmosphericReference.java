@@ -48,6 +48,11 @@ public final class SarirAtmosphericReference {
       new PumparoundReference("Top pump around (TPA)", 3, 1, 29777.64, 143.9, 80.99),
       new PumparoundReference("Bottom pump around (BPA)", 22, 19, 60423.66, 232.4, 173.99) };
 
+  private static final SteamInjectionReference[] STEAM_INJECTIONS = {
+      new SteamInjectionReference("Main atmospheric column", SteamInjectionService.MAIN_ATMOSPHERIC_COLUMN, 340.2),
+      new SteamInjectionReference("Kerosene side stripper", SteamInjectionService.KEROSENE_SIDE_STRIPPER, 68.04),
+      new SteamInjectionReference("Diesel side stripper", SteamInjectionService.DIESEL_SIDE_STRIPPER, 226.8) };
+
   private SarirAtmosphericReference() {
   }
 
@@ -193,17 +198,60 @@ public final class SarirAtmosphericReference {
 
   /** @return main atmospheric-column steam rate in kg/h */
   public static double getMainColumnSteamRateKgPerHour() {
-    return 340.2;
+    return STEAM_INJECTIONS[0].getMassFlowRateKgPerHour();
   }
 
   /** @return kerosene side-stripper steam rate in kg/h */
   public static double getKeroseneStripperSteamRateKgPerHour() {
-    return 68.04;
+    return STEAM_INJECTIONS[1].getMassFlowRateKgPerHour();
   }
 
   /** @return diesel side-stripper steam rate in kg/h */
   public static double getDieselStripperSteamRateKgPerHour() {
-    return 226.8;
+    return STEAM_INJECTIONS[2].getMassFlowRateKgPerHour();
+  }
+
+  /** @return defensive copy of the source steam-injection rows in source order */
+  public static SteamInjectionReference[] getSteamInjections() {
+    return STEAM_INJECTIONS.clone();
+  }
+
+  /**
+   * Find one steam-injection row by its exact source label.
+   *
+   * @param name exact source label
+   * @return immutable steam-injection reference
+   * @throws IllegalArgumentException if the label is null or unknown
+   */
+  public static SteamInjectionReference getSteamInjection(String name) {
+    if (name == null) {
+      throw new IllegalArgumentException("Steam-injection name cannot be null");
+    }
+    for (SteamInjectionReference injection : STEAM_INJECTIONS) {
+      if (injection.getName().equals(name)) {
+        return injection;
+      }
+    }
+    throw new IllegalArgumentException("Unknown Sarir steam injection: " + name);
+  }
+
+  /** @return sum of all three published steam rates, in kg/h */
+  public static double getTotalSteamRateKgPerHour() {
+    double total = 0.0;
+    for (SteamInjectionReference injection : STEAM_INJECTIONS) {
+      total += injection.getMassFlowRateKgPerHour();
+    }
+    return total;
+  }
+
+  /** @return always false because the source does not report steam injection tray locations */
+  public static boolean hasExplicitSteamInjectionLocations() {
+    return false;
+  }
+
+  /** @return always false because the source does not report steam temperature, pressure, or quality */
+  public static boolean hasExplicitSteamThermodynamicState() {
+    return false;
   }
 
   /**
@@ -251,6 +299,52 @@ public final class SarirAtmosphericReference {
   /** @return bottom pump-around flow rate in kg/h */
   public static double getBottomPumpAroundRateKgPerHour() {
     return PUMPAROUNDS[1].getMassFlowRateKgPerHour();
+  }
+
+  /** Source equipment service receiving steam in the published operating case. */
+  public enum SteamInjectionService {
+    /** Main atmospheric crude column. */
+    MAIN_ATMOSPHERIC_COLUMN,
+    /** Kerosene side stripper. */
+    KEROSENE_SIDE_STRIPPER,
+    /** Diesel side stripper. */
+    DIESEL_SIDE_STRIPPER
+  }
+
+  /**
+   * Immutable source steam-injection row.
+   *
+   * <p>
+   * The source identifies the receiving service and mass-flow rate, but not an injection tray or thermodynamic steam
+   * state. This evidence must not be treated as an executable stream specification.
+   * </p>
+   */
+  public static final class SteamInjectionReference implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String name;
+    private final SteamInjectionService service;
+    private final double massFlowRateKgPerHour;
+
+    private SteamInjectionReference(String name, SteamInjectionService service, double massFlowRateKgPerHour) {
+      this.name = name;
+      this.service = service;
+      this.massFlowRateKgPerHour = massFlowRateKgPerHour;
+    }
+
+    /** @return exact source label */
+    public String getName() {
+      return name;
+    }
+
+    /** @return receiving equipment service identified by the source */
+    public SteamInjectionService getService() {
+      return service;
+    }
+
+    /** @return source steam mass-flow rate in kg/h */
+    public double getMassFlowRateKgPerHour() {
+      return massFlowRateKgPerHour;
+    }
   }
 
   /**

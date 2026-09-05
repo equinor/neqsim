@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.characterization.SarirAtmosphericReference.ProductQualityReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.ProductYieldReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.PumparoundReference;
+import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionReference;
+import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionService;
 
 /** Tests the public Sarir atmospheric assay and validation reference. */
 public class SarirAtmosphericReferenceTest {
@@ -49,6 +51,10 @@ public class SarirAtmosphericReferenceTest {
     PumparoundReference[] pumparounds = SarirAtmosphericReference.getPumparounds();
     pumparounds[0] = null;
     assertEquals("Top pump around (TPA)", SarirAtmosphericReference.getPumparounds()[0].getName());
+
+    SteamInjectionReference[] steamInjections = SarirAtmosphericReference.getSteamInjections();
+    steamInjections[0] = null;
+    assertEquals("Main atmospheric column", SarirAtmosphericReference.getSteamInjections()[0].getName());
   }
 
   @Test
@@ -88,8 +94,27 @@ public class SarirAtmosphericReferenceTest {
     assertEquals(350.0, SarirAtmosphericReference.getColumnFeedTemperatureCelsius(), 0.0);
     assertEquals(233.0, SarirAtmosphericReference.getColumnFeedPressureKPa(), 0.0);
     assertEquals(340.2, SarirAtmosphericReference.getMainColumnSteamRateKgPerHour(), 0.0);
+    assertEquals(68.04, SarirAtmosphericReference.getKeroseneStripperSteamRateKgPerHour(), 0.0);
+    assertEquals(226.8, SarirAtmosphericReference.getDieselStripperSteamRateKgPerHour(), 0.0);
+    assertEquals(635.04, SarirAtmosphericReference.getTotalSteamRateKgPerHour(), 1.0e-12);
     assertEquals(29777.64, SarirAtmosphericReference.getTopPumpAroundRateKgPerHour(), 0.0);
     assertEquals(60423.66, SarirAtmosphericReference.getBottomPumpAroundRateKgPerHour(), 0.0);
+  }
+
+  @Test
+  public void steamInjectionRowsPreservePublishedServicesWithoutInventingState() {
+    SteamInjectionReference[] injections = SarirAtmosphericReference.getSteamInjections();
+    assertEquals(3, injections.length);
+    assertSteamInjection(injections[0], "Main atmospheric column", SteamInjectionService.MAIN_ATMOSPHERIC_COLUMN,
+        340.2);
+    assertSteamInjection(injections[1], "Kerosene side stripper", SteamInjectionService.KEROSENE_SIDE_STRIPPER, 68.04);
+    assertSteamInjection(injections[2], "Diesel side stripper", SteamInjectionService.DIESEL_SIDE_STRIPPER, 226.8);
+    assertEquals(injections[0], SarirAtmosphericReference.getSteamInjection("Main atmospheric column"));
+    assertEquals(injections[1], SarirAtmosphericReference.getSteamInjection("Kerosene side stripper"));
+    assertEquals(injections[2], SarirAtmosphericReference.getSteamInjection("Diesel side stripper"));
+    assertEquals(635.04, SarirAtmosphericReference.getTotalSteamRateKgPerHour(), 1.0e-12);
+    assertFalse(SarirAtmosphericReference.hasExplicitSteamInjectionLocations());
+    assertFalse(SarirAtmosphericReference.hasExplicitSteamThermodynamicState());
   }
 
   @Test
@@ -109,12 +134,21 @@ public class SarirAtmosphericReferenceTest {
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getProductYield("Naphtha"));
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getPumparound(null));
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getPumparound("TPA"));
+    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getSteamInjection(null));
+    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getSteamInjection("Main"));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(0.0, 1.0));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(Double.NaN, 1.0));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(1.0, Double.POSITIVE_INFINITY));
+  }
+
+  private static void assertSteamInjection(SteamInjectionReference injection, String name,
+      SteamInjectionService service, double massFlowRate) {
+    assertEquals(name, injection.getName());
+    assertEquals(service, injection.getService());
+    assertEquals(massFlowRate, injection.getMassFlowRateKgPerHour(), 0.0);
   }
 
   private static void assertPumparound(PumparoundReference pumparound, String name, int drawTray, int returnTray,
