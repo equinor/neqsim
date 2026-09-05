@@ -1,6 +1,6 @@
 ---
 title: "Sarir atmospheric validation reference"
-description: "Public complete-range TBP, atmospheric-unit operating data, and independent plant-yield evidence."
+description: "Public whole-crude properties, TBP, atmospheric-unit operating data, and independent plant-yield evidence."
 ---
 
 # Sarir atmospheric validation reference
@@ -12,6 +12,32 @@ description: "Public complete-range TBP, atmospheric-unit operating data, and in
 The source is Hamza E. Omran Almansouri, *Simulation of Sarir Crude Oil Refinery Using Aspen HYSYS*, Journal of Engineering Research (Libya), issue 33, pages 51-64, published 31 March 2022, DOI [10.66411/jer.v33i.46](https://doi.org/10.66411/jer.v33i.46). The [open-access article](https://jer.ly/jer/index.php/jer/article/download/46/38/39) is licensed CC BY 4.0.
 
 The paper reports a Sarir crude density of 841.5 kg/m3 at 15 degC, API gravity 36.5 at 60 degF, sulfur 0.120 mass%, average molar mass 0.2447 kg/mol, and a public TBP assay originally prepared by the Libyan Petroleum Institute.
+
+## Whole-crude property evidence
+
+Table 1 gives the following numeric bulk measurements:
+
+| Property | Published value | Basis |
+| --- | ---: | --- |
+| Density | 841.5 kg/m3 | 15 degC |
+| API gravity | 36.5 | 60 degF |
+| Total sulfur | 0.120 mass% | Whole crude |
+| Asphaltenes | 0.20 mass% | Whole crude |
+| Mercaptan sulfur | 8 ppm by mass | Whole crude |
+| Water and sediment | 0.05 volume% | Whole crude |
+| Cloud point | 48.7-49.6 degC | Published interval |
+| Pour point | +21 degC | Whole crude |
+| Kinematic viscosity | 10.63 cSt | 100 degF; the source prose gives the rounded equivalent 37.7 degC |
+| Average molar mass | 0.2447 kg/mol | Whole crude |
+
+The Java API keeps the cloud point as separate lower and upper endpoints. It also exposes both
+published viscosity reference-temperature forms: 100 degF from Table 1 and 37.7 degC from the
+source prose. An exact unit conversion gives 37.777777... degC; the API does not silently replace
+the reported rounded Celsius value.
+
+These are whole-crude reference measurements. The source does not publish uncertainty bounds or
+per-cut allocations for these properties, so they are not distributed across pseudo-components and
+do not qualify a wax, asphaltene, viscosity, water, or sulfur prediction model.
 
 ## Preserved TBP evidence
 
@@ -75,6 +101,10 @@ Unlike the Al-Diwiniya reference, the Sarir paper does not say these HYSYS rates
 ```java
 double[] volumePercent = SarirAtmosphericReference.getTbpCumulativeVolumePercent();
 double residuePercent = SarirAtmosphericReference.getTerminalResidueVolumePercent();
+
+double cloudPointLowerCelsius = SarirAtmosphericReference.getCrudeCloudPointLowerCelsius();
+double cloudPointUpperCelsius = SarirAtmosphericReference.getCrudeCloudPointUpperCelsius();
+double viscosityCst = SarirAtmosphericReference.getCrudeKinematicViscosityAt100FCst();
 
 SarirAtmosphericReference.ProductYieldReference diesel =
     SarirAtmosphericReference.getProductYield("Diesel");
