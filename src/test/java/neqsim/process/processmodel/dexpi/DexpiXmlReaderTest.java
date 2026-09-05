@@ -591,8 +591,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   public void testReadWithDiagnosticsPreservesDirectConnectionOwnerProvenance() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
         + "<PipingComponent ID=\"PC-DIRECT\" ComponentClass=\"GlobeValve\" ComponentName=\"ValveShape\""
-        + " TagName=\"XV-101\"/>"
-        + "<Equipment ID=\"E-DIRECT\" ComponentClass=\"Tank\" ComponentName=\"TankShape\">"
+        + " TagName=\"XV-101\"/>" + "<Equipment ID=\"E-DIRECT\" ComponentClass=\"Tank\" ComponentName=\"TankShape\">"
         + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"TK-101\"/>"
         + "</GenericAttributes></Equipment>"
         + "<PipingNetworkSegment ID=\"S-DIRECT\"><Connection ID=\"C-DIRECT\" FromID=\"PC-DIRECT\""
