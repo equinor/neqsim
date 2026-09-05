@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 
 /**
  * Regression tests for the horizontal annular transition in {@link FlowRegimeDetector}.
@@ -229,6 +231,115 @@ class FlowRegimeHorizontalTransitionTest {
 
     Assertions.assertTrue(largestStep < 0.2,
         "a blended transition must not step a regime weight by more than 0.2 per 0.02 m/s, but stepped " + largestStep);
+  }
+
+  /**
+   * Transient momentum sources must consume the detector's continuous regime weights.
+   *
+   * <p>
+   * This is a calculation-level check: it compares the source evaluator's stored wall and interfacial stresses with the
+   * convex combination of the same authoritative closure models.
+   * </p>
+   */
+  @Test
+  @DisplayName("Transient sources consume continuous regime weights")
+  void testTransientSourcesConsumeRegimeWeights() {
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    boolean foundTransition = false;
+
+    for (int i = 0; i <= 200; i++) {
+      double superficialGas = 0.5 + i * 0.02;
+      TwoFluidSection upstream = transientSection(0.0, superficialGas);
+      TwoFluidSection downstream = transientSection(100.0, superficialGas);
+
+      equations.calcRHS(new TwoFluidSection[] { upstream, downstream }, 100.0);
+      Map<FlowRegime, Double> weights = upstream.getRegimeWeights();
+      if (weights == null || weights.size() < 2) {
+        continue;
+      }
+      foundTransition = true;
+
+      WallFriction wallFriction = new WallFriction();
+      InterfacialFriction interfacialFriction = new InterfacialFriction();
+      double expectedGasWallShear = 0.0;
+      double expectedLiquidWallShear = 0.0;
+      double expectedInterfacialShear = 0.0;
+      double expectedInterfacialArea = 0.0;
+
+      for (Map.Entry<FlowRegime, Double> entry : weights.entrySet()) {
+        WallFriction.WallFrictionResult wall = wallFriction.calculate(entry.getKey(), upstream.getGasVelocity(),
+            upstream.getLiquidVelocity(), upstream.getGasDensity(), upstream.getLiquidDensity(),
+            upstream.getGasViscosity(), upstream.getLiquidViscosity(), upstream.getLiquidHoldup(),
+            upstream.getDiameter(), upstream.getRoughness());
+        InterfacialFriction.InterfacialFrictionResult interfacial = interfacialFriction.calculate(entry.getKey(),
+            upstream.getGasVelocity(), upstream.getLiquidVelocity(), upstream.getGasDensity(),
+            upstream.getLiquidDensity(), upstream.getGasViscosity(), upstream.getLiquidViscosity(),
+            upstream.getLiquidHoldup(), upstream.getDiameter(), upstream.getSurfaceTension());
+        expectedGasWallShear += entry.getValue() * wall.gasWallShear;
+        expectedLiquidWallShear += entry.getValue() * wall.liquidWallShear;
+        expectedInterfacialShear += entry.getValue() * interfacial.interfacialShear;
+        expectedInterfacialArea += entry.getValue() * interfacial.interfacialAreaPerLength;
+      }
+
+      assertRelativeEquals(expectedGasWallShear, upstream.getGasWallShear());
+      assertRelativeEquals(expectedLiquidWallShear, upstream.getLiquidWallShear());
+      assertRelativeEquals(expectedInterfacialShear, upstream.getInterfacialShear());
+      assertRelativeEquals(expectedInterfacialArea, upstream.getInterfacialWidth());
+      break;
+    }
+
+    Assertions.assertTrue(foundTransition, "the sweep must cross at least one blended regime transition");
+  }
+
+  /**
+   * Builds a fully initialized transient section for source evaluation.
+   *
+   * @param position axial coordinate, in m
+   * @param superficialGas superficial gas velocity, in m/s
+   * @return initialized two-fluid section
+   */
+  private TwoFluidSection transientSection(double position, double superficialGas) {
+    TwoFluidSection section = new TwoFluidSection(position, 100.0, SMALL_LINE_DIAMETER, 0.0);
+    section.setPressure(50.0e5);
+    section.setTemperature(300.0);
+    section.setGasDensity(40.0);
+    section.setOilDensity(RHO_L);
+    section.setWaterDensity(1000.0);
+    section.setLiquidDensity(RHO_L);
+    section.setGasViscosity(1.0e-5);
+    section.setOilViscosity(MU_L);
+    section.setWaterViscosity(1.0e-3);
+    section.setLiquidViscosity(MU_L);
+    section.setGasSoundSpeed(300.0);
+    section.setLiquidSoundSpeed(1200.0);
+    section.setGasEnthalpy(1.0e5);
+    section.setLiquidEnthalpy(5.0e4);
+    section.setSurfaceTension(SIGMA);
+    section.setRoughness(4.6e-5);
+    section.setGasHoldup(ALPHA_G);
+    section.setLiquidHoldup(ALPHA_L);
+    section.setOilHoldup(ALPHA_L);
+    section.setWaterHoldup(0.0);
+    section.setWaterCut(0.0);
+    section.setOilFractionInLiquid(1.0);
+    section.setGasVelocity(superficialGas / ALPHA_G);
+    section.setLiquidVelocity(0.035 / ALPHA_L);
+    section.setOilVelocity(0.035 / ALPHA_L);
+    section.setWaterVelocity(0.035 / ALPHA_L);
+    section.updateConservativeVariables();
+    section.updateDerivedQuantities();
+    return section;
+  }
+
+  /**
+   * Asserts equality with a relative tolerance suitable for closure-source calculations.
+   *
+   * @param expected expected value
+   * @param actual actual value
+   */
+  private void assertRelativeEquals(double expected, double actual) {
+    double tolerance = 1.0e-12 * Math.max(1.0, Math.abs(expected));
+    Assertions.assertEquals(expected, actual, tolerance);
   }
 
   /**

@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-09-01"
+last_verified: "2026-09-05"
 ---
 
 # Dynamic Simulation Guidance
@@ -447,6 +447,21 @@ split. Record EOS, mixing rule, composition, absolute pressure, temperature, mas
 relaxation time, and units. The current hydrodynamic state transports bulk phase inventories, not a
 full component-composition vector per cell, and does not establish equivalence with any commercial
 transient multiphase simulator.
+
+## TwoFluidPipe Regime-Transition Continuation
+
+Transient wall-friction, interfacial-friction, interfacial-area, and entrainment sources must
+consume the dimensionless normalized weights from `FlowRegimeDetector.classify(...)`. Do not
+reintroduce `detectFlowRegime(...)` as a hard source switch: the steady hold-up and transient
+momentum paths would then see different closures at the same state. Keep stratified geometry active
+whenever a stratified weight is non-zero. Pure-regime endpoints must reproduce the original closure
+exactly.
+
+This continuation does not authorize changes to regime criteria, transition-band widths, hold-up
+correlations, or regime-specific friction models. It remains experimental until the public
+Tengesdal envelope, the liquid-rich 1,800 s inventory criterion, conservation, nonlinear
+convergence, nearby operating points, refinement, and runtime gates all pass. Continue to reject a
+completed time loop whose sticky coupled-solver diagnostics fire.
 
 ## TwoFluidPipe Coupled Pressure-Momentum Gate
 

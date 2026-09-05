@@ -135,13 +135,16 @@ class CoupledPressureMomentumTengesdalProgressTest {
           "refined coupled correction failed at interval " + (step + 1));
       for (Phase phase : Phase.values()) {
         assertTrue(balance.getRelativeResidual(phase) < 1.0e-9,
-            phase + " refined-mesh mass residual exceeded tolerance at interval " + (step + 1));
+            phase + " refined-mesh mass residual exceeded tolerance at interval " + (step + 1) + ": "
+                + balance.getRelativeResidual(phase));
       }
     }
 
     assertEquals(5.0, pipe.getSimulationTime(), 1.0e-9);
     assertFalse(pipe.isTransientOutletBackflowClamped());
-    assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected());
+    assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected(),
+        "refined coupled solve recorded " + pipe.getTransientCoupledPressureMomentumRejectedSubsteps()
+            + " rejected substeps: " + pipe.getTransientCoupledPressureMomentumFailureDiagnostic());
     assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps());
   }
 

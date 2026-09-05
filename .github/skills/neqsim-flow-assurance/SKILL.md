@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F104 CO2-envelope screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-08-27"
+last_verified: "2026-09-05"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -528,6 +528,15 @@ for (double qgMSm3d : gasRates) {
 > export line — and differ at 4 MSm3/d, where the equilibrium branch reclassifies 272 of 320
 > sections as stratified-wavy.
 
+> **Transient closure sources follow continuous regime weights.** During dynamic
+> evaluation, the existing dimensionless normalized weights from
+> `FlowRegimeDetector.classify(...)` blend wall friction, interfacial friction and area,
+> and entrainment. A non-zero stratified weight keeps the matching segment geometry active.
+> The flow map, transition bands, hold-up closure, and regime-specific formulas are unchanged,
+> and pure-regime endpoints recover their original closures. This is experimental numerical
+> continuation, not severe-slugging or liquid-rich qualification; require the public Tengesdal,
+> 1,800 s inventory, conservation, nearby-point, refinement, and solver-diagnostic gates.
+>
 > **Friction is per-phase wall shear in stratified flow.**
 > `setSeparatedFrictionModel(false)` restores the mixture correlation, which charges the whole
 > perimeter with a holdup-weighted density; on a stratified line at 41% holdup that

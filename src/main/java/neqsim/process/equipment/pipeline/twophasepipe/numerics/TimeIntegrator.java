@@ -688,6 +688,12 @@ public class TimeIntegrator implements Serializable {
     return lastCoupledPressureMomentumResult != null && lastCoupledPressureMomentumResult.isPressureCorrectionLimited();
   }
 
+  /** @return smallest phase-mass positivity scale used by the latest correction */
+  public double getCoupledPressureMomentumMinimumMassFluxCorrectionScale() {
+    return lastCoupledPressureMomentumResult == null ? Double.NaN
+        : lastCoupledPressureMomentumResult.getMinimumMassFluxCorrectionScale();
+  }
+
   /** @return signed gas, oil, and water outlet mass corrections in kg */
   public double[] getCoupledPressureMomentumOutletMassCorrectionKg() {
     return lastCoupledPressureMomentumResult == null ? new double[3]

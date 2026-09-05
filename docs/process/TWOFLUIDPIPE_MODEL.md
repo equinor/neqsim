@@ -262,6 +262,21 @@ The gas-liquid flow regime detector uses Taitel-Dukler transitions:
 | CHURN | Transition between slug and annular | ✅ |
 | BUBBLE | High liquid fraction, low gas velocity | ✅ |
 
+### Transient Regime-Transition Continuation
+
+During transient source evaluation, `FlowRegimeDetector.classify(...)` supplies the same
+dimensionless, normalized regime weights used by the steady hold-up calculation. Within a
+transition band, `TwoFluidConservationEquations` applies those weights as a convex combination
+of the existing wall-friction, interfacial-friction, interfacial-area, and entrainment results.
+A non-zero stratified share also retains stratified segment geometry, so geometry and momentum
+sources do not switch on different sides of the same transition.
+
+This continuation changes neither a dimensioned transition criterion nor any closure formula.
+At a pure-regime endpoint the original closure is recovered exactly, and separated friction
+remains limited to the regimes for which its existing implementation applies. The continuation
+is an experimental numerical-robustness capability until the public Tengesdal transient,
+liquid-rich 1,800 s inventory, nearby-point, conservation, and refinement gates pass.
+
 ### Oil-Water Flow Regime Detection
 
 For three-phase (gas-oil-water) simulations the `OilWaterFlowRegimeDetector` classifies the
