@@ -107,6 +107,10 @@ class ThermodynamicDocumentationRenderingContractTest(unittest.TestCase):
                 title, description, _body = parse_front_matter(page.read_text(encoding="utf-8"))
                 self.assertTrue(title)
                 self.assertGreaterEqual(len(description.split()), 5)
+                self.assertFalse(
+                    description.endswith("..."),
+                    "Search description is truncated",
+                )
 
     def test_front_matter_title_is_not_repeated_as_h1(self):
         for page in self.pages:

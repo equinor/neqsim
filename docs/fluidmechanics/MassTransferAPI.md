@@ -1,6 +1,6 @@
 ---
 title: Mass Transfer API Documentation
-description: This document provides comprehensive API documentation for NeqSim's enhanced mass transfer model for two-phase pipe flow, including detailed method descriptions, parameters, examples, and literature r...
+description: "API reference for NeqSim two-phase pipe-flow mass-transfer models, configuration, correlations, parameters, examples, and literature sources."
 ---
 
 This document provides comprehensive API documentation for NeqSim's enhanced mass transfer model for two-phase pipe flow, including detailed method descriptions, parameters, examples, and literature references.

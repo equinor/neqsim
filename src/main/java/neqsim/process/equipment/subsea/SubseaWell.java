@@ -283,6 +283,9 @@ public class SubseaWell extends TwoPortEquipment {
   /** Reservoir temperature in Celsius. */
   private double reservoirTemperature = 100.0;
 
+  /** Shut-in wellhead pressure in bara, from the static-column calculation. */
+  private double shutInWellheadPressure = Double.NaN;
+
   /** Internal pipeline for tubing flow model. */
   AdiabaticTwoPhasePipe pipeline;
 
@@ -973,6 +976,97 @@ public class SubseaWell extends TwoPortEquipment {
       count++;
     }
     return count;
+  }
+
+  /**
+   * Calculates the shut-in wellhead pressure from a static fluid column.
+   *
+   * <p>
+   * This is the pressure a closed-in well imposes on the subsea tree and, through it, on the flowline. It is the number
+   * that sets the flowline design pressure and therefore decides whether the line must be rated for full shut-in or
+   * protected by a high-integrity pressure protection system. Before this method existed
+   * {@link #setMaxWellheadPressure(double)} was a setter with no calculation behind it, and every study integrated its
+   * own gas column.
+   * </p>
+   *
+   * <p>
+   * The column is integrated upward from the reservoir datum to the seabed in {@code steps} increments, re-flashing the
+   * fluid at each step so the density follows the pressure and temperature, with the temperature interpolated linearly
+   * from the reservoir temperature to {@code wellheadTemperatureC}. A single-density estimate over-predicts the
+   * pressure drop for a gas column because the gas is much lighter near the top.
+   * </p>
+   *
+   * <p>
+   * This is a static column only: no friction, because a shut-in well is not flowing, and no thermal transient. The
+   * result is the settled-out pressure, which is the correct basis for a containment design.
+   * </p>
+   *
+   * @param fluid the reservoir fluid, used as a template and never modified
+   * @param wellheadTemperatureC the settled-out temperature at the seabed in degrees Celsius
+   * @param steps number of integration steps, 60 is normally ample
+   * @return shut-in wellhead pressure in bara
+   * @throws IllegalArgumentException if the reservoir pressure, temperature or true vertical depth has not been set, or
+   * the water depth exceeds the true vertical depth
+   */
+  public double calculateShutInWellheadPressure(neqsim.thermo.system.SystemInterface fluid, double wellheadTemperatureC,
+      int steps) {
+    if (reservoirPressure <= 0.0) {
+      throw new IllegalArgumentException("set the reservoir pressure before the shut-in calculation");
+    }
+    if (trueVerticalDepth <= 0.0) {
+      throw new IllegalArgumentException("set the true vertical depth before the shut-in calculation");
+    }
+    if (waterDepth >= trueVerticalDepth) {
+      throw new IllegalArgumentException(
+          "water depth (" + waterDepth + " m) must be less than the true vertical depth (" + trueVerticalDepth + " m)");
+    }
+    if (steps < 1) {
+      throw new IllegalArgumentException("steps must be positive");
+    }
+
+    double height = trueVerticalDepth - waterDepth;
+    double dz = height / steps;
+    double pressure = reservoirPressure;
+    double temperature = reservoirTemperature;
+    double dT = (wellheadTemperatureC - reservoirTemperature) / steps;
+
+    for (int i = 0; i < steps; i++) {
+      neqsim.thermo.system.SystemInterface probe = fluid.clone();
+      probe.setTemperature(temperature + 273.15);
+      probe.setPressure(pressure);
+      new neqsim.thermodynamicoperations.ThermodynamicOperations(probe).TPflash();
+      probe.initProperties();
+      double density = probe.getDensity("kg/m3");
+      pressure -= density * 9.81 * dz / 1.0e5;
+      temperature += dT;
+      if (pressure <= 0.0) {
+        throw new IllegalArgumentException(
+            "the static column ran to zero pressure before reaching the seabed; check the "
+                + "reservoir pressure and depth");
+      }
+    }
+    shutInWellheadPressure = pressure;
+    return pressure;
+  }
+
+  /**
+   * Calculates the shut-in wellhead pressure with default integration settings.
+   *
+   * @param fluid the reservoir fluid, used as a template and never modified
+   * @return shut-in wellhead pressure in bara, using a 40 degC wellhead temperature and 60 steps
+   */
+  public double calculateShutInWellheadPressure(neqsim.thermo.system.SystemInterface fluid) {
+    return calculateShutInWellheadPressure(fluid, 40.0, 60);
+  }
+
+  /**
+   * Returns the last calculated shut-in wellhead pressure.
+   *
+   * @return shut-in wellhead pressure in bara, or NaN before
+   * {@link #calculateShutInWellheadPressure(neqsim.thermo.system.SystemInterface)} is run
+   */
+  public double getShutInWellheadPressure() {
+    return shutInWellheadPressure;
   }
 
   /**

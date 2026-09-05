@@ -1112,7 +1112,6 @@ public abstract class SystemThermo implements SystemInterface {
     SystemInterface refSystem = null;
     double TC = 0.0;
     double PC = 0.0;
-    double m = 0.0;
     double TB = 0.0;
     double acs = 0.0;
     // double penelouxC = 0.0;
@@ -1132,7 +1131,6 @@ public abstract class SystemThermo implements SystemInterface {
       TC = criticalTemperature;
       // characterization.getTBPModel().calcPC(molarMass, density);
       PC = criticalPressure;
-      m = characterization.getTBPModel().calcm(molarMass, density);
       // acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass,
       // density);
       acs = acentricFactor;
@@ -1147,10 +1145,9 @@ public abstract class SystemThermo implements SystemInterface {
         refSystem.getPhase(i).getComponent(0).setPC(PC);
         refSystem.getPhase(i).getComponent(0).setComponentType("TBPfraction");
         refSystem.getPhase(i).getComponent(0).setIsTBPfraction(true);
-        if (characterization.getTBPModel().isCalcm()) {
-          refSystem.getPhase(i).getComponent(0).getAttractiveTerm().setm(m);
-          acs = refSystem.getPhase(i).getComponent(0).getAcentricFactor();
-        }
+        // The caller supplied the acentric factor explicitly, so the calcm
+        // correlation must not override it; the attractive term derives m from
+        // the supplied value instead.
       }
 
       refSystem.setTemperature(273.15 + 15.0);

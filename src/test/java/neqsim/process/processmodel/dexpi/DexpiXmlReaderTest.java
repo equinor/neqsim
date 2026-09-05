@@ -265,6 +265,24 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertThrows(UnsupportedOperationException.class, () -> instrumentationLoops.clear());
     assertThrows(UnsupportedOperationException.class, () -> loop.getMembers().clear());
 
+    List<DexpiActuatingFunctionInfo> actuatingFunctions = first.getActuatingFunctions();
+    assertEquals(1, actuatingFunctions.size());
+    DexpiActuatingFunctionInfo actuatingFunction = actuatingFunctions.get(0);
+    assertEquals("AF-100", actuatingFunction.getId());
+    assertEquals(DexpiActuatingFunctionInfo.Kind.ACTUATING_FUNCTION, actuatingFunction.getKind());
+    assertEquals("ActuatingFunction", actuatingFunction.getComponentClass());
+    assertEquals("PC-100", actuatingFunction.getFunctionNumber());
+    assertEquals("PIF-PC-100", actuatingFunction.getInstrumentationFunctionId());
+    assertTrue(actuatingFunction.isInstrumentationFunctionResolved());
+    assertEquals("ProcessInstrumentationFunction", actuatingFunction.getInstrumentationFunctionElementName());
+    assertEquals("V-100", actuatingFunction.getFinalControlElementId());
+    assertTrue(actuatingFunction.isFinalControlElementResolved());
+    assertEquals("FinalControlElement", actuatingFunction.getFinalControlElementName());
+    assertEquals("N-ACT", actuatingFunction.getLocationId());
+    assertTrue(actuatingFunction.isLocationResolved());
+    assertEquals("Nozzle", actuatingFunction.getLocationElementName());
+    assertThrows(UnsupportedOperationException.class, () -> actuatingFunctions.clear());
+
     List<DexpiInformationFlowInfo> informationFlows = first.getInformationFlows();
     assertEquals(3, informationFlows.size());
     DexpiInformationFlowInfo measuring = informationFlows.get(0);
@@ -307,6 +325,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"instrumentCount\": 2"));
     assertTrue(first.toJson().contains("\"instrumentationLoopCount\": 1"));
     assertTrue(first.toJson().contains("\"memberCount\": 3"));
+    assertTrue(first.toJson().contains("\"actuatingFunctionCount\": 1"));
+    assertTrue(first.toJson().contains("\"finalControlElementResolved\": true"));
     assertTrue(first.toJson().contains("\"informationFlowCount\": 3"));
     assertTrue(first.toJson().contains("\"kind\": \"MEASURING_LINE\""));
     assertTrue(first.toJson().contains("\"signalConveyingType\": \"ElectricalSignalConveying\""));
@@ -344,6 +364,22 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("UNKNOWN-MEMBER", loop.getMembers().get(0).getMemberId());
     assertFalse(loop.getMembers().get(0).isResolved());
     assertEquals("", loop.getMembers().get(0).getElementName());
+    List<DexpiActuatingFunctionInfo> actuatingFunctions = first.getActuatingFunctions();
+    assertEquals(1, actuatingFunctions.size());
+    DexpiActuatingFunctionInfo actuatingFunction = actuatingFunctions.get(0);
+    assertEquals("AF-BROKEN", actuatingFunction.getId());
+    assertEquals(DexpiActuatingFunctionInfo.Kind.ACTUATING_FUNCTION, actuatingFunction.getKind());
+    assertEquals("", actuatingFunction.getFunctionNumber());
+    assertEquals("", actuatingFunction.getInstrumentationFunctionId());
+    assertFalse(actuatingFunction.isInstrumentationFunctionResolved());
+    assertEquals("", actuatingFunction.getInstrumentationFunctionElementName());
+    assertEquals("UNKNOWN-FINAL", actuatingFunction.getFinalControlElementId());
+    assertFalse(actuatingFunction.isFinalControlElementResolved());
+    assertEquals("", actuatingFunction.getFinalControlElementName());
+    assertEquals("", actuatingFunction.getLocationId());
+    assertFalse(actuatingFunction.isLocationResolved());
+    assertEquals("", actuatingFunction.getLocationElementName());
+
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_ID_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_FUNCTION_METADATA_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_NUMBER_MISSING");
@@ -384,8 +420,36 @@ public class DexpiXmlReaderTest extends NeqSimTest {
 
     assertTrue(first.hasLosses());
     assertFalse(first.hasErrors());
+    assertTrue(first.toJson().contains("\"actuatingFunctionCount\": 1"));
+    assertTrue(first.toJson().contains("\"finalControlElementResolved\": false"));
     assertTrue(first.toJson().contains("\"informationFlowCount\": 2"));
     assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsPreservesActuatingElectricalFunctionKind() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Nozzle ID=\"N-ELECTRICAL\"/><FinalControlElement ID=\"M-200\"/>"
+        + "<ActuatingElectricalFunction ComponentClass=\"ActuatingElectricalFunction\" ID=\"AEF-200\">"
+        + "<GenericAttributes>" + "<GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"YC-200\"/>"
+        + "<GenericAttribute Name=\"FinalControlElementID\" Value=\"M-200\"/>"
+        + "</GenericAttributes><Association Type=\"is located in\" ItemID=\"N-ELECTRICAL\"/>"
+        + "</ActuatingElectricalFunction></PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(1, result.getActuatingFunctions().size());
+    DexpiActuatingFunctionInfo function = result.getActuatingFunctions().get(0);
+    assertEquals(DexpiActuatingFunctionInfo.Kind.ACTUATING_ELECTRICAL_FUNCTION, function.getKind());
+    assertEquals("AEF-200", function.getId());
+    assertEquals("YC-200", function.getFunctionNumber());
+    assertEquals("M-200", function.getFinalControlElementId());
+    assertTrue(function.isFinalControlElementResolved());
+    assertEquals("FinalControlElement", function.getFinalControlElementName());
+    assertEquals("N-ELECTRICAL", function.getLocationId());
+    assertTrue(function.isLocationResolved());
+    assertTrue(result.getDiagnostics().isEmpty());
   }
 
   @Test

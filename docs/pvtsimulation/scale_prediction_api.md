@@ -351,6 +351,10 @@ CalciumSulfatePhaseBoundaryQualification evidence =
 double transitionC = evidence.getPredictedPureWaterTransitionCelsius();
 double transitionAtPressureC = evidence.getPredictedPureWaterTransitionAtEvaluatedPressureCelsius();
 double anhydriteVdelta = evidence.getAnhydriteLumpedReactionVolumeCm3PerMol();
+double ambientReactionVolume =
+    evidence.getCrystallographicTransitionReactionVolumeCm3PerMol();
+double compsaltReactionVolume =
+    evidence.getCompsaltTransitionReactionVolumeCm3PerMol();
 double requiredWaterActivity25C = evidence.getRequiredWaterActivityAt25Celsius();
 boolean publicationReady = evidence.isPublicationReady();
 ```
@@ -381,6 +385,23 @@ high-pressure anhydrite-solubility lineage is Dickson, Blount and Tunell (1963),
 [DOI 10.2475/ajs.261.1.61](https://doi.org/10.2475/ajs.261.1.61); no copyrighted table rows or fitted coefficients are
 redistributed. Quantitative adoption still requires a complete primary-row audit, aqueous-species volume mapping, and
 an uncertainty-aware held-out acceptance criterion.
+
+The same result exposes an independent ambient structural check without changing either COMPSALT
+coefficient. Antao (2011), [DOI 10.1154/1.3659285](https://doi.org/10.1154/1.3659285), reports an
+anhydrite synchrotron unit-cell volume of 305.487(1) Å3 with four formula units per cell. De la
+Torre et al. (2004), [DOI 10.1154/1.1725254](https://doi.org/10.1154/1.1725254), report a gypsum
+synchrotron unit-cell volume of 494.536(5) Å3, also with four formula units per cell. Together with
+the Pátek et al. (2009) liquid-water reference density at 298.15 K and 0.1 MPa,
+[DOI 10.1063/1.3043575](https://doi.org/10.1063/1.3043575), the nominal ambient cycle
+
+`V(anhydrite) + 2 V(H2O,l) - V(gypsum)`
+
+is +7.67528 cm3/mol. The difference between the existing lumped COMPSALT values is +19.4 cm3/mol,
+or 2.52759 times the measurement-derived cycle. This independently confirms that the current
+pressure response is not a pure-mineral-volume mapping. It is a diagnostic, not a replacement
+`Vdelta`: published cell standard errors do not bound thermal expansion, compressibility, sample
+and other systematic effects, or aqueous partial molar volumes. Consequently
+`highPressureQualified` and `aqueousSpeciesVolumeResolved` remain false.
 
 The process-system test carries the solid ledger beside the residual fluid through a
 `Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Its

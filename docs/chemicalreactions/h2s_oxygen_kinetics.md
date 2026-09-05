@@ -64,6 +64,37 @@ bounded from zero to one, and avoids timestep error. It reports total-sulfide lo
 assign products or consume oxygen, because the source correlation does not supply a complete
 product stoichiometry for that purpose.
 
+## Piecewise exposure trajectory
+
+`AqueousHydrogenSulfideOxidationTrajectory.advance(...)` propagates the same correlation through
+a non-empty ordered list of constant-state segments. For segment `i`, it computes
+
+$
+E_i = k_i[\mathrm{O_2}]_i\Delta t_i, \qquad
+[\mathrm{H_2S}]_{T,n} = [\mathrm{H_2S}]_{T,0}
+\exp\left(-\sum_{i=1}^{n}E_i\right).
+$
+
+This analytical composition of exponentials has no numerical timestep error. Segment splitting at
+an unchanged state therefore leaves the result invariant. The implementation preserves source
+order and reports each segment's second-order rate, pseudo-first-order rate, individual exposure,
+and cumulative exposure for audit. Zero-duration segments are accepted as exact identity steps.
+
+Initial total sulfide must be within the source experiment interval of 20–30 micromol/kg water.
+Every segment independently applies the temperature, pH, ionic-strength, and caller-supplied
+air-saturated-O2 gates above. A pressure value is deliberately not part of the segment contract.
+
+The reported `0.18` scatter in `log10(k)` is propagated as one common multiplicative correlation
+envelope across the trajectory. The result reports nominal, lower-rate, and upper-rate cumulative
+exposures and final molalities. Treating this as one systematic envelope avoids implying that
+successive segments contain independent experimental errors. It remains fit scatter rather than a
+complete uncertainty model.
+
+The trajectory reports total-sulfide inventory closure as initial minus final minus reacted
+molality. It retains the same constant-oxygen and unidentified-product boundary as the single-state
+screen. Within this first-order screening model, only cumulative exposure controls the final
+fraction; the ordered diagnostics do not introduce path-dependent chemistry.
+
 ## Scientific stop boundary
 
 This capability does not:

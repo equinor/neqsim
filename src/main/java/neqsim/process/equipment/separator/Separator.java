@@ -26,7 +26,10 @@ import neqsim.process.equipment.capacity.StandardConstraintType;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
+import neqsim.process.equipment.separator.entrainment.EntrainmentProviderRegistry;
+import neqsim.process.equipment.separator.entrainment.EntrainmentResult;
 import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
+import neqsim.process.equipment.separator.entrainment.SpecCarryOverProvider;
 import neqsim.process.equipment.separator.sectiontype.ManwaySection;
 import neqsim.process.equipment.separator.sectiontype.MeshSection;
 import neqsim.process.equipment.separator.sectiontype.NozzleSection;
@@ -305,6 +308,9 @@ public class Separator extends ProcessEquipmentBaseClass
    * it is not serializable by default.
    */
   private transient SeparatorPerformanceCalculator performanceCalculator;
+
+  /** Id of the selected entrainment model; null means the default applies. */
+  private String entrainmentProviderId = null;
 
   /**
    * Whether to use the detailed performance calculator for entrainment computation. When false (default), the simple
@@ -1226,6 +1232,59 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   public void setPerformanceCalculator(SeparatorPerformanceCalculator calculator) {
     this.performanceCalculator = calculator;
+  }
+
+  /**
+   * Selects the entrainment model used by {@link #getEntrainmentResult()}.
+   *
+   * <p>
+   * Models are discovered through {@link java.util.ServiceLoader}, so the set available depends on what is on the
+   * classpath. Public NeqSim ships {@code "zero"} (no carry-over), {@code "spe-0.1gal-mmscf"} (a fixed 13.4 L per MSm3,
+   * the default) and {@code "neqsim-7stage"} (the physics chain). Private plug-ins such as {@code "eqn-pi-v1"} appear
+   * only when their JAR is present.
+   * </p>
+   *
+   * <p>
+   * This selection affects {@link #getEntrainmentResult()} only. It does not change the entrainment applied during
+   * {@link #run()}, so setting it cannot move the results of an existing model.
+   * </p>
+   *
+   * @param providerId the model id, or null to fall back to the default
+   * @throws IllegalStateException if no model with that id is on the classpath
+   */
+  public void setEntrainmentProvider(String providerId) {
+    if (providerId == null) {
+      this.entrainmentProviderId = null;
+      return;
+    }
+    EntrainmentProviderRegistry.find(providerId);
+    this.entrainmentProviderId = providerId;
+  }
+
+  /**
+   * Returns the id of the selected entrainment model.
+   *
+   * @return the model id, or null when none has been set and the default applies
+   */
+  public String getEntrainmentProvider() {
+    return entrainmentProviderId;
+  }
+
+  /**
+   * Computes carry-over using the selected entrainment model, or the default when none has been selected.
+   *
+   * <p>
+   * The default is {@code "spe-0.1gal-mmscf"} — a fixed 13.4 L per MSm3 of gas. That figure is an assumption rather
+   * than a prediction: it does not respond to gas load or overload. Select {@code "neqsim-7stage"} for a
+   * performance-based estimate, or {@code "zero"} to exclude carry-over deliberately.
+   * </p>
+   *
+   * @return the carry-over result produced by the selected model; never null
+   * @throws IllegalStateException if the selected model is not on the classpath
+   */
+  public EntrainmentResult getEntrainmentResult() {
+    String id = (entrainmentProviderId == null) ? SpecCarryOverProvider.ID : entrainmentProviderId;
+    return EntrainmentProviderRegistry.find(id).compute(this);
   }
 
   /**

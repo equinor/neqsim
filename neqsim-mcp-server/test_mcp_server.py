@@ -1558,16 +1558,17 @@ def test_capabilities():
         "queryDataCatalog", "getProgress", "inspectApi",
         "manageValidationProfile", "manageModel", "manageSession", "manageState",
         "getAdjustableParameters", "validateInput", "validateResults",
+        "generateReport", "bridgeTaskWorkflow",
         "listSimulationUnits",
         "listUnitVariables",
         "getSimulationVariable", "diagnoseAutomation",
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("twenty-two bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.24"
-          and limitations.get("contractTestedToolCount") == 22
-          and limitations.get("confirmedGapToolCount") == 29
+    check("twenty-four bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.25"
+          and limitations.get("contractTestedToolCount") == 24
+          and limitations.get("confirmedGapToolCount") == 27
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1602,6 +1603,25 @@ def test_capabilities():
           and "facility-wide conservation"
           in result_validation.get("evidenceBoundary", ""),
           str(result_validation))
+    report_generation = coverage_records.get("generateReport", {})
+    check("report generation has bounded contract evidence",
+          report_generation.get("coverageStatus") == "CONTRACT_TESTED"
+          and report_generation.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION"
+          and "neqsim-mcp-server/test_reporting_protocol.py"
+          in report_generation.get("contractEvidenceSources", [])
+          and "report completeness" in report_generation.get("evidenceBoundary", ""),
+          str(report_generation))
+    workflow_handoff = coverage_records.get("bridgeTaskWorkflow", {})
+    check("task-workflow handoff has bounded contract evidence",
+          workflow_handoff.get("coverageStatus") == "CONTRACT_TESTED"
+          and workflow_handoff.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_TASK_WORKFLOW_HANDOFF"
+          and "neqsim-mcp-server/test_reporting_protocol.py"
+          in workflow_handoff.get("contractEvidenceSources", [])
+          and "does not execute or recompute a simulation"
+          in workflow_handoff.get("evidenceBoundary", ""),
+          str(workflow_handoff))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1619,7 +1639,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 29
+          and limitations.get("confirmedGapToolCount") == 27
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

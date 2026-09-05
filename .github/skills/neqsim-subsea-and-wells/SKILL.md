@@ -298,6 +298,85 @@ CAPEX.
 
 ## Flowline and Pipeline Sizing
 
+### Size selection (API RP 14E)
+
+Do not hand-roll the erosional sweep. `FlowlineSizeSelector` returns the smallest
+standard size that passes, with every candidate and its utilisation:
+
+```java
+FlowlineSizeSelector selector = new FlowlineSizeSelector()
+    .setBasisFromFluid(fluidAtArrivalConditions, 16.13)   // kg/s
+    .setWallThickness(0.0159);
+Map<String, Object> selected = selector.select();   // null when nothing passes
+```
+
+**Evaluate at the least-dense condition — normally the arrival, not the inlet.**
+The erosional velocity is $v_e = 1.22c/\sqrt{\rho}$, so the lowest density gives
+the lowest limit and the highest velocity. Sizing on inlet density under-sizes
+the line.
+
+### Use the two-fluid model for a wellstream
+
+`PipeBeggsAndBrills` is a correlation fitted on small-diameter air-water
+laboratory loops at liquid fractions around 1-2% and above. A wet-gas tie-back
+runs well below that, where the two-phase friction multiplier is extrapolated
+and over-predicts pressure drop substantially. **Prefer `TwoFluidPipe` for
+wellstream and wet-gas lines**, and always assert both convergence conditions:
+
+```java
+pipe.run();
+if (!pipe.isSteadyStateConverged() || pipe.getSteadyStateIterationsUsed() <= 1) {
+  // A single-iteration exit means the pressure profile was frozen on the inlet
+  // densities and never picked up the flash. Reject the result.
+}
+```
+
+`MultiphaseFlowIntegrator` defaults to `HydraulicModel.TWO_FLUID`; switch to
+`BEGGS_BRILL` only for a fast check on a liquid-dominated line.
+
+### Route geometry from a survey
+
+`RouteProfile` converts survey data once and feeds either model. Depths are
+positive downwards as surveyed, elevations negative downwards as the models
+expect:
+
+```java
+RouteProfile route = RouteProfile.fromDepths(kpMetres, depthMetres)
+    .withRiser(216.0, 25.0)
+    .resample(60);
+route.applyTo(twoFluidPipe);            // sets sections, lengths, elevations
+route.getLowPointKp();                  // terrain-slug traps
+```
+
+`getElevationProfile()` has one more entry than `getSectionLengths()` — that
+off-by-one is what `TwoFluidPipe.setElevationProfile` requires.
+
+### Solving for the required inlet pressure
+
+The host imposes an arrival pressure; the question is what inlet the reservoir
+must supply. Both pipe models march forward from a fixed inlet, so use the
+solver rather than bisecting by hand:
+
+```java
+pipe.setCalculationMode(PipeBeggsAndBrills.CalculationMode.CALCULATE_INLET_PRESSURE);
+pipe.setOutletPressure(70.0, "bara");
+pipe.run();
+double requiredInlet = pipe.getSolvedInletPressure();
+```
+
+### Shut-in wellhead pressure sets the design pressure
+
+Start the containment design here, not at the flowing pressure:
+
+```java
+double shutIn = well.calculateShutInWellheadPressure(reservoirFluid, 40.0, 60);
+```
+
+The static column is re-flashed at each step so density follows pressure and
+temperature; a single-density estimate over-predicts the drop badly for gas. The
+result decides whether the line is rated for full shut-in or protected by HIPPS
+— and that choice feeds straight into the cooldown design below.
+
 ### Steady-State Pipe Flow
 
 ```java
@@ -390,6 +469,52 @@ result, including a pass, as `CALCULATED_REVIEW_REQUIRED`.
 ---
 
 ## Flowline Cooldown and No-Touch Time
+
+### CRITICAL: the fluid must carry water
+
+A fluid with no water cannot form hydrates, so `SurfCooldownAnalyzer` reports
+`NO_HYDRATE_RISK` with an **unbounded** no-touch time. Correct for a deliberately
+dry gas — and identical to what a **wet** line gives when its fluid file has no
+water component. The verdict cannot separate the two, so check explicitly:
+
+```java
+analyzer.isWaterPresent();        // false for a dry gas AND for the wrong file
+analyzer.setRequireWater(true);   // design workflows: throw instead
+```
+
+`TiebackThermalDesign` sets `setRequireWater(true)` by default.
+
+Add water through NeqSim's own path, which sets the water kij and enables the
+VLLE flash — **not** a bare `addComponent`:
+
+```java
+SystemInterface wet = EclipseFluidReadWrite.read(file, true);     // kij 0.5
+EclipseFluidReadWrite.addWaterToFluid(existingFluid, 0.5);        // in place
+```
+
+And never call `setMixingRule` after `EclipseFluidReadWrite.read`: `read`
+installs the mixing rule and the file's BIC block, and `setMixingRule` reloads
+database kij, silently discarding the characterisation's regressed values.
+
+### Wall thickness and insulation are coupled
+
+The steel wall is part of the cooldown thermal mass. Thinning the wall — typically
+by crediting HIPPS so the line need not be rated for full shut-in — removes
+stored heat and **lengthens** the insulation needed for the same no-touch time.
+
+A worked case: full shut-in required a 22.2 mm wall, and 75 mm of insulation
+comfortably exceeded an 8 h target. HIPPS dropped the wall to 14.3 mm, and the
+same 75 mm then gave only 7.9 h. Use `TiebackThermalDesign` to sweep both
+together rather than fixing one and then the other:
+
+```java
+TiebackThermalDesign design = new TiebackThermalDesign(wetFluid)
+    .setWallThicknesses(new double[] {0.0143, 0.0222})
+    .setInsulationThicknesses(new double[] {0.050, 0.075, 0.100})
+    .setRequiredNoTouchTime(8.0);
+design.calculate();
+double insulation = design.getRequiredInsulationForWall(14.3);
+```
 
 After a planned or unplanned shutdown, an insulated subsea flowline or riser
 cools toward the seabed temperature. The **no-touch time** is how long operators
@@ -519,3 +644,9 @@ Map<String, Double> allocation = optimizer.optimize();
 | Wrong water depth for cost curve | Non-physical costs | Verify depth matches field data |
 | Ignoring slugging in riser | Separator flooding, trips | Include slug catcher sizing, check riser stability |
 | No pipeline end expansion | Structural failure | Account for thermal expansion, expansion loops |
+| Cooldown run on a dry E300 fluid | `NO_HYDRATE_RISK` and unbounded no-touch time — indistinguishable from a genuinely dry gas | `EclipseFluidReadWrite.read(file, true)`; check `isWaterPresent()`; `setRequireWater(true)` in design |
+| `setMixingRule` after `EclipseFluidReadWrite.read` | Silently wipes the file BIC block and the regressed kij | Never call it after `read`; `read` installs the mixing rule already |
+| Beggs & Brill on a wet-gas tie-back | Pressure drop over-predicted; concept looks infeasible | Use `TwoFluidPipe`; assert `getSteadyStateIterationsUsed() > 1` |
+| Sizing the flowline on inlet density | Under-sized line — velocity peaks where the mixture is least dense | Evaluate API RP 14E at the arrival condition |
+| Designing wall and insulation independently | Thin HIPPS wall silently fails the no-touch target | `TiebackThermalDesign` sweeps both together |
+| Assuming the shut-in wellhead pressure | Wrong flowline design pressure, wrong wall | `SubseaWell.calculateShutInWellheadPressure(fluid)` |

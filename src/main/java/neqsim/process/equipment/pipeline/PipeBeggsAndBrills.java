@@ -392,7 +392,17 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     /** Calculate outlet pressure from inlet conditions and flow rate (default). */
     CALCULATE_OUTLET_PRESSURE,
     /** Calculate flow rate from inlet and specified outlet pressure. */
-    CALCULATE_FLOW_RATE
+    CALCULATE_FLOW_RATE,
+    /**
+     * Calculate the inlet pressure required to deliver a specified outlet pressure at the given flow rate.
+     *
+     * <p>
+     * This is the tie-back question: a host imposes an arrival pressure and the reservoir has to supply whatever inlet
+     * pressure that demands. The forward model marches from a fixed inlet, so the inlet is bisected until the computed
+     * outlet matches {@link #setOutletPressure(double, String)}.
+     * </p>
+     */
+    CALCULATE_INLET_PRESSURE
   }
 
   /**
@@ -447,6 +457,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // Calculation mode and specified outlet pressure
   private CalculationMode calculationMode = CalculationMode.CALCULATE_OUTLET_PRESSURE;
   private double specifiedOutletPressure = Double.NaN;
+
+  /** Inlet pressure found by {@link CalculationMode#CALCULATE_INLET_PRESSURE}, in bara. */
+  private double solvedInletPressure = Double.NaN;
   private String specifiedOutletPressureUnit = "bara";
   private int maxFlowIterations = 50;
   private double flowConvergenceTolerance = 1e-4;
@@ -1548,12 +1561,108 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
       runWithSpecifiedOutletPressure(id);
+    } else if (calculationMode == CalculationMode.CALCULATE_INLET_PRESSURE) {
+      runWithSpecifiedArrivalPressure(id);
     } else {
       if (applyLowFlowBypass(id)) {
         return;
       }
       runWithSpecifiedFlowRate(id);
     }
+  }
+
+  /**
+   * Solves for the inlet pressure that delivers the specified outlet pressure at the current flow.
+   *
+   * <p>
+   * Bisects the inlet pressure between the target arrival pressure (no pressure drop) and an upper bound grown from the
+   * current inlet until the line delivers at or above the target. A trial that throws - typically because the pressure
+   * ran negative part way along - is treated as "inlet too low" and moves the lower bound up.
+   * </p>
+   *
+   * @param id calculation identifier
+   */
+  private void runWithSpecifiedArrivalPressure(UUID id) {
+    if (Double.isNaN(specifiedOutletPressure)) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+          "specifiedOutletPressure", "must be set when using CALCULATE_INLET_PRESSURE mode"));
+    }
+    double targetPressure = specifiedOutletPressure;
+    if (!"bara".equals(specifiedOutletPressureUnit)) {
+      SystemInterface tempSystem = inStream.getThermoSystem().clone();
+      tempSystem.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
+      targetPressure = tempSystem.getPressure("bara");
+    }
+    if (targetPressure <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+          "specifiedOutletPressure", "must be positive"));
+    }
+
+    double originalInletPressure = inStream.getThermoSystem().getPressure("bara");
+    double low = targetPressure;
+    double high = Math.max(originalInletPressure, targetPressure * 1.5);
+
+    double arrivalAtHigh = tryArrivalPressure(high, id);
+    int boundIter = 0;
+    while ((Double.isNaN(arrivalAtHigh) || arrivalAtHigh < targetPressure) && boundIter < 30) {
+      high *= 1.5;
+      arrivalAtHigh = tryArrivalPressure(high, id);
+      boundIter++;
+    }
+    if (Double.isNaN(arrivalAtHigh) || arrivalAtHigh < targetPressure) {
+      restoreInletPressure(originalInletPressure, id);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+          "specifiedOutletPressure", "cannot be reached - the line will not deliver " + targetPressure
+              + " bara at this flow rate even at " + high + " bara inlet"));
+    }
+
+    double mid = high;
+    for (int iter = 0; iter < maxFlowIterations; iter++) {
+      mid = 0.5 * (low + high);
+      double arrival = tryArrivalPressure(mid, id);
+      if (!Double.isNaN(arrival) && Math.abs(arrival - targetPressure) < flowConvergenceTolerance * targetPressure) {
+        solvedInletPressure = mid;
+        return;
+      }
+      if (Double.isNaN(arrival) || arrival < targetPressure) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    solvedInletPressure = mid;
+    logger.warn("PipeBeggsAndBrills '{}': inlet-pressure solve hit the iteration limit at {} bara", getName(),
+        solvedInletPressure);
+  }
+
+  /**
+   * Runs the forward model at a trial inlet pressure and returns the resulting arrival pressure.
+   *
+   * @param inletPressureBara trial inlet pressure in bara
+   * @param id calculation identifier
+   * @return arrival pressure in bara, or NaN when the trial failed
+   */
+  private double tryArrivalPressure(double inletPressureBara, UUID id) {
+    try {
+      inStream.getThermoSystem().setPressure(inletPressureBara, "bara");
+      inStream.run(id);
+      runWithSpecifiedFlowRate(id);
+      return outStream.getPressure("bara");
+    } catch (RuntimeException ex) {
+      logger.debug("Inlet-pressure trial at {} bara failed: {}", inletPressureBara, ex.getMessage());
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Restores the inlet stream to its original pressure after a failed solve.
+   *
+   * @param pressureBara pressure to restore, in bara
+   * @param id calculation identifier
+   */
+  private void restoreInletPressure(double pressureBara, UUID id) {
+    inStream.getThermoSystem().setPressure(pressureBara, "bara");
+    inStream.run(id);
   }
 
   /**
@@ -1719,6 +1828,16 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     system.initProperties();
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
+  }
+
+  /**
+   * Returns the inlet pressure found by the inlet-pressure solver.
+   *
+   * @return solved inlet pressure in bara, or NaN when {@link CalculationMode#CALCULATE_INLET_PRESSURE} has not been
+   * run
+   */
+  public double getSolvedInletPressure() {
+    return solvedInletPressure;
   }
 
   /**
