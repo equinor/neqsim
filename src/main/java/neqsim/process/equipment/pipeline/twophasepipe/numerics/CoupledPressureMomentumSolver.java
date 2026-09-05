@@ -283,6 +283,8 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       }
     }
 
+    limitCorrectionFluxesForPositivity(state, timeStep, faceMassFlowCorrection, lengths);
+
     for (int cell = 0; cell < cellCount; cell++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         double divergence = (faceMassFlowCorrection[phase][cell + 1] - faceMassFlowCorrection[phase][cell])
@@ -311,6 +313,43 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       }
     }
     return outletBoundaryMassCorrectionKg;
+  }
+
+  /**
+   * Limit each correction face by the mass available in its donor cell.
+   *
+   * <p>
+   * Scaling a shared face flux preserves phase mass exactly across internal cells while preventing a trace phase from
+   * being transported below zero. Incoming correction flux is deliberately not credited when calculating availability,
+   * which keeps the bound conservative when both faces draw from the same cell.
+   * </p>
+   *
+   * @param state provisional conservative state
+   * @param timeStep correction time step in s
+   * @param faceMassFlowCorrection signed phase correction fluxes in kg/s
+   * @param lengths cell lengths in m
+   */
+  private static void limitCorrectionFluxesForPositivity(double[][] state, double timeStep,
+      double[][] faceMassFlowCorrection, double[] lengths) {
+    int cellCount = state.length;
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      double[] donorScale = new double[cellCount];
+      for (int cell = 0; cell < cellCount; cell++) {
+        double leftOutflow = Math.max(-faceMassFlowCorrection[phase][cell], 0.0);
+        double rightOutflow = Math.max(faceMassFlowCorrection[phase][cell + 1], 0.0);
+        double requestedOutflowMass = timeStep * (leftOutflow + rightOutflow);
+        double availableMass = Math.max(state[cell][phase], 0.0) * lengths[cell];
+        donorScale[cell] = requestedOutflowMass > availableMass && requestedOutflowMass > 0.0
+            ? availableMass / requestedOutflowMass
+            : 1.0;
+      }
+
+      for (int face = 1; face < cellCount; face++) {
+        double correction = faceMassFlowCorrection[phase][face];
+        int donorCell = correction >= 0.0 ? face - 1 : face;
+        faceMassFlowCorrection[phase][face] *= donorScale[donorCell];
+      }
+    }
   }
 
   private static void applyMomentumCorrection(double[][] state, double timeStep, double[] pressureCorrection,
