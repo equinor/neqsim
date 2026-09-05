@@ -47,6 +47,25 @@ do not qualify a wax, asphaltene, viscosity, water, or sulfur prediction model.
 
 The source then reports a `550 degC+` terminal residue reaching 100 volume%. NeqSim retains 550 degC as a one-sided lower boundary and computes the implied 16.30 volume% residue; it does not invent a finite 100% endpoint or an upper boiling limit. The source marks light-end hydrocarbons as not determined, so no light-end composition is synthesized.
 
+## Product specifications
+
+Table 2 reports ASTM D86 temperatures at 95 liquid volume percent as product specifications:
+
+| Product | Test basis | Published specification |
+| --- | --- | ---: |
+| Light Naphtha | ASTM D86 at 95 volume% | 90 degC |
+| Heavy Naphtha | ASTM D86 at 95 volume% | 160 degC |
+| Kerosene | ASTM D86 at 95 volume% | 221 degC |
+| Diesel | ASTM D86 at 95 volume% | 327 degC |
+| Residual | ASTM D86 at 95 volume% | `<550+` |
+
+The Java API keeps these five specification rows separate from the Table 5 laboratory/HYSYS
+results. In particular, the 327 degC diesel specification is not replaced by the 346 degC
+laboratory result or the 339 degC HYSYS result. The residual value is retained as the source's
+nonnumeric, open-ended boundary; requesting a numeric specification temperature for that row
+fails closed. These rows are source design/reference criteria, not independently reproduced
+measurements and not evidence that NeqSim meets the specifications.
+
 ## Atmospheric operating case
 
 The published HYSYS case uses 34 valve trays and feeds crude to tray 31 counted from the top.
@@ -122,6 +141,16 @@ double feedRateKgPerHour = crudeFeed.getMassFlowRateKgPerHour();
 double tableClosure =
     SarirAtmosphericReference.calculatePublishedAduMassBalanceErrorFraction();
 
+SarirAtmosphericReference.ProductSpecificationReference dieselSpecification =
+    SarirAtmosphericReference.getProductSpecification("Diesel");
+double dieselSpecificationCelsius =
+    dieselSpecification.getSpecificationTemperatureCelsius();
+
+SarirAtmosphericReference.ProductSpecificationReference residualSpecification =
+    SarirAtmosphericReference.getProductSpecification("Residual");
+boolean residualSpecificationIsNumeric =
+    residualSpecification.hasNumericSpecificationTemperature();
+
 SarirAtmosphericReference.ProductYieldReference diesel =
     SarirAtmosphericReference.getProductYield("Diesel");
 double plantRate = diesel.getPlantMetricTonPerDay();
@@ -177,8 +206,10 @@ components are modified.
 
 ## Scientific boundary
 
-The source-derived volumes and boiling boundaries are reproducible, while every supplied cut
-density and molar mass remains an explicit engineering input. The factory does not resolve the
+The source-derived volumes, boiling boundaries, and product-specification rows are reproducible,
+while every supplied cut density and molar mass remains an explicit engineering input. Product
+specifications are not laboratory results, independent validation targets, or a claim of NeqSim
+product compliance. The residual specification remains nonnumeric and open-ended. The factory does not resolve the
 missing light-end composition, distribute the published whole-crude sulfur among cuts, or claim
 that NeqSim reproduces the plant yields. A follow-on 34-tray comparison must preserve the plant
 rates as untouched acceptance targets and avoid tuning draw rates to the published products.
