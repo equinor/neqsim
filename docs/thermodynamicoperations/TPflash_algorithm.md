@@ -2282,6 +2282,39 @@ numerical evidence, not experimental validation of CPA parameters or the predict
 code, public APIs, association parameters, mixing-rule defaults, electrolyte/reaction models, saturation search,
 Column Solver, generic Process Performance, proprietary data, and Huldra are outside this tranche.
 
+### 6.4.12 UMR-PRU trace oil-dropout lifecycle qualification
+
+The synthetic qualification uses `SystemUMRPRUMCEos` with the `HV` /
+`UNIFAC_UMRPRU` mixing rule. Its normalized 24-component lean-gas feed contains
+nitrogen, carbon dioxide, methane through n-pentane, both methylpentane isomers,
+normal and cyclic C6-C8 components, benzene, toluene, m-xylene, and normal C9-C12
+heavy ends. The qualified range is 281.15-293.15 K (8-20 °C) at 77-79 bara.
+This is deterministic numerical evidence after component and UNIFAC-table repairs,
+not experimental PVT validation of UMR-PRU parameters or the predicted dew point.
+
+The established 78 bara oil-beta anchors are `9.144142e-4` at 8 °C,
+`3.502455e-4` at 18 °C, and `2.582079e-4` at 20 °C, each with an absolute
+tolerance of `5e-6`. Oil dropout must increase monotonically as temperature
+decreases from 20 to 8 °C. Ordinary and multiphase public TP flashes must recover
+the same GAS+OIL equilibrium at the three anchor temperatures.
+
+Every qualified state requires finite bounded phase fractions and compositions,
+beta and phase normalization within `1e-12`, component material balance below
+`1e-10`, and maximum comparable interphase log-fugacity residual below
+`1e-8`. Each phase must have positive finite compressibility, while total Gibbs
+energy and enthalpy must remain finite. The regression also qualifies recovery
+from beta values within `1e-12` of a bound, nearby pressures, a changed
+temperature/pressure state, return to the reference state, and an immediate
+deterministic repeat. Gas and liquid roles are matched explicitly so phase-array
+ordering cannot hide a lifecycle mismatch.
+
+The focused class performs 31 complete public TP flashes. This fixed workload is
+performance evidence only; no wall-clock threshold or production speedup is
+claimed. Production solver code, public APIs, model parameters or defaults,
+experimental parameter validation, saturation search, electrolyte/reaction
+models, solids/wax, Column Solver, Process Performance, proprietary data, and
+Huldra are outside this tranche.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
