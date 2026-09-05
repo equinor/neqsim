@@ -48,6 +48,9 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
   private final String elementName;
   private final String ownerId;
   private final String ownerElementName;
+  private final String ownerComponentClass;
+  private final String ownerComponentName;
+  private final String ownerTagName;
   private final boolean resolved;
   private final List<String> incomingConnectionIds;
   private final List<String> outgoingConnectionIds;
@@ -65,10 +68,34 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
    */
   public DexpiConnectionEndpointInfo(String endpointId, String elementName, String ownerId, String ownerElementName,
       boolean resolved, List<String> incomingConnectionIds, List<String> outgoingConnectionIds) {
+    this(endpointId, elementName, ownerId, ownerElementName, "", "", "", resolved, incomingConnectionIds,
+        outgoingConnectionIds);
+  }
+
+  /**
+   * Creates immutable endpoint-incidence evidence with explicit owner provenance.
+   *
+   * @param endpointId explicit source endpoint identity
+   * @param elementName resolved endpoint XML element name, or empty when unresolved
+   * @param ownerId explicit endpoint owner identity, or empty when absent
+   * @param ownerElementName endpoint owner XML element name, or empty when absent
+   * @param ownerComponentClass explicit owner ComponentClass, or empty when absent
+   * @param ownerComponentName explicit owner ComponentName, or empty when absent
+   * @param ownerTagName explicit owner TagName, or empty when absent
+   * @param resolved whether the endpoint resolves in the source document
+   * @param incomingConnectionIds incoming connection-evidence IDs in source order
+   * @param outgoingConnectionIds outgoing connection-evidence IDs in source order
+   */
+  public DexpiConnectionEndpointInfo(String endpointId, String elementName, String ownerId, String ownerElementName,
+      String ownerComponentClass, String ownerComponentName, String ownerTagName, boolean resolved,
+      List<String> incomingConnectionIds, List<String> outgoingConnectionIds) {
     this.endpointId = normalize(endpointId);
     this.elementName = normalize(elementName);
     this.ownerId = normalize(ownerId);
     this.ownerElementName = normalize(ownerElementName);
+    this.ownerComponentClass = normalize(ownerComponentClass);
+    this.ownerComponentName = normalize(ownerComponentName);
+    this.ownerTagName = normalize(ownerTagName);
     this.resolved = resolved;
     this.incomingConnectionIds = Collections.unmodifiableList(new ArrayList<String>(incomingConnectionIds));
     this.outgoingConnectionIds = Collections.unmodifiableList(new ArrayList<String>(outgoingConnectionIds));
@@ -92,6 +119,21 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
   /** @return endpoint owner XML element name, or empty when absent */
   public String getOwnerElementName() {
     return ownerElementName;
+  }
+
+  /** @return explicit owner ComponentClass, or empty when absent */
+  public String getOwnerComponentClass() {
+    return ownerComponentClass;
+  }
+
+  /** @return explicit owner ComponentName, or empty when absent */
+  public String getOwnerComponentName() {
+    return ownerComponentName;
+  }
+
+  /** @return explicit owner TagName, or empty when absent */
+  public String getOwnerTagName() {
+    return ownerTagName;
   }
 
   /** @return whether the endpoint resolves in the source document */
@@ -174,6 +216,9 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
     result.put("elementName", elementName);
     result.put("ownerId", ownerId);
     result.put("ownerElementName", ownerElementName);
+    result.put("ownerComponentClass", ownerComponentClass);
+    result.put("ownerComponentName", ownerComponentName);
+    result.put("ownerTagName", ownerTagName);
     result.put("resolved", Boolean.valueOf(resolved));
     result.put("incomingConnectionCount", Integer.valueOf(getIncomingConnectionCount()));
     result.put("outgoingConnectionCount", Integer.valueOf(getOutgoingConnectionCount()));
