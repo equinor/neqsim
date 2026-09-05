@@ -16,8 +16,8 @@ class AutomationVariableWriteContractTest {
 
   @Test
   void testCanonicalTemperatureWriteRerunsAndReturnsReport() {
-    JsonObject root = parse(AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(),
-        "feed.temperature", 35.0, "C"));
+    JsonObject root = parse(
+        AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(), "feed.temperature", 35.0, "C"));
     JsonObject data = root.getAsJsonObject("data");
 
     assertEquals("success", root.get("status").getAsString());
@@ -34,8 +34,8 @@ class AutomationVariableWriteContractTest {
 
   @Test
   void testPhysicalBoundViolationFailsWithoutRerunClaim() {
-    JsonObject root = parse(AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(),
-        "feed.temperature", -300.0, "C"));
+    JsonObject root = parse(
+        AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(), "feed.temperature", -300.0, "C"));
     JsonObject data = root.getAsJsonObject("data");
 
     assertEquals("error", root.get("status").getAsString());
@@ -56,10 +56,9 @@ class AutomationVariableWriteContractTest {
 
   @Test
   void testMissingInputsFailClosed() {
-    JsonObject missingProcess =
-        parse(AutomationRunner.setVariableAndRun(null, "feed.temperature", 35.0, "C"));
-    JsonObject missingAddress =
-        parse(AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(), null, 35.0, "C"));
+    JsonObject missingProcess = parse(AutomationRunner.setVariableAndRun(null, "feed.temperature", 35.0, "C"));
+    JsonObject missingAddress = parse(
+        AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(), null, 35.0, "C"));
 
     assertEquals("error", missingProcess.get("status").getAsString());
     assertEquals("INPUT_ERROR", missingProcess.get("code").getAsString());
