@@ -150,6 +150,63 @@ public class AqueousHydrogenSulfideOxidationKineticsTest extends NeqSimTest {
   }
 
   @Test
+  void testTargetTimeRangeReproducesHalfLifeAndForwardSolution() {
+    AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult result = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    double halfLife = AqueousHydrogenSulfideOxidationKinetics.halfLifeHours(AIR_SATURATED_OXYGEN_MOLALITY,
+        TEMPERATURE_K, PH, IONIC_STRENGTH);
+
+    assertEquals(0.5, result.getTargetRemainingFraction(), 0.0);
+    assertEquals(Math.log(2.0), result.getRequiredExposure(), 1.0e-15);
+    assertEquals(halfLife, result.getNominalRequiredTimeHours(), 1.0e-12);
+    assertTrue(result.getShortestRequiredTimeHours() < result.getNominalRequiredTimeHours());
+    assertTrue(result.getNominalRequiredTimeHours() < result.getLongestRequiredTimeHours());
+    assertEquals(0.5,
+        Math.exp(-result.getUpperPseudoFirstOrderRate() * result.getShortestRequiredTimeHours()), 1.0e-15);
+    assertEquals(0.5,
+        Math.exp(-result.getNominalPseudoFirstOrderRate() * result.getNominalRequiredTimeHours()), 1.0e-15);
+    assertEquals(0.5,
+        Math.exp(-result.getLowerPseudoFirstOrderRate() * result.getLongestRequiredTimeHours()), 1.0e-15);
+  }
+
+  @Test
+  void testTargetTimeRangeIdentityMonotonicityAndDeterminism() {
+    AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult identity = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 1.0, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult half = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult tenth = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.1, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult repeated = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.1, TEMPERATURE_K, PH, IONIC_STRENGTH);
+
+    assertEquals(0.0, identity.getRequiredExposure(), 0.0);
+    assertEquals(0.0, identity.getShortestRequiredTimeHours(), 0.0);
+    assertEquals(0.0, identity.getNominalRequiredTimeHours(), 0.0);
+    assertEquals(0.0, identity.getLongestRequiredTimeHours(), 0.0);
+    assertTrue(tenth.getShortestRequiredTimeHours() > half.getShortestRequiredTimeHours());
+    assertTrue(tenth.getNominalRequiredTimeHours() > half.getNominalRequiredTimeHours());
+    assertTrue(tenth.getLongestRequiredTimeHours() > half.getLongestRequiredTimeHours());
+    assertEquals(tenth.getRequiredExposure(), repeated.getRequiredExposure(), 0.0);
+    assertEquals(tenth.getNominalRequiredTimeHours(), repeated.getNominalRequiredTimeHours(), 0.0);
+  }
+
+  @Test
+  void testTargetTimeRangeFailsClosedOnInvalidTargetsAndOverflow() {
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.0, TEMPERATURE_K, PH, IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, -0.1, TEMPERATURE_K, PH, IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 1.0001, TEMPERATURE_K, PH, IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, Double.NaN, TEMPERATURE_K, PH,
+            IONIC_STRENGTH));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(Double.MIN_VALUE, 0.5, TEMPERATURE_K, PH, IONIC_STRENGTH));
+  }
+
+  @Test
   void testLongExposureRemainsBoundedAndInputValidationFailsClosed() {
     AqueousHydrogenSulfideOxidationKinetics.ScreeningResult longExposure = AqueousHydrogenSulfideOxidationKinetics
         .screenAirSaturatedExposure(AIR_SATURATED_OXYGEN_MOLALITY, 1.0e6, TEMPERATURE_K, PH, IONIC_STRENGTH);
