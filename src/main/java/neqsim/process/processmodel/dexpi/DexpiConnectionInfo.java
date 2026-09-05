@@ -28,6 +28,12 @@ public final class DexpiConnectionInfo implements Serializable {
   private final String toOwnerId;
   private final String fromOwnerElementName;
   private final String toOwnerElementName;
+  private final String fromOwnerComponentClass;
+  private final String fromOwnerComponentName;
+  private final String fromOwnerTagName;
+  private final String toOwnerComponentClass;
+  private final String toOwnerComponentName;
+  private final String toOwnerTagName;
   private final boolean fromResolved;
   private final boolean toResolved;
 
@@ -70,6 +76,38 @@ public final class DexpiConnectionInfo implements Serializable {
   public DexpiConnectionInfo(String id, String sourceId, String segmentId, String fromId, String toId,
       String fromElementName, String toElementName, String fromOwnerId, String toOwnerId, String fromOwnerElementName,
       String toOwnerElementName, boolean fromResolved, boolean toResolved) {
+    this(id, sourceId, segmentId, fromId, toId, fromElementName, toElementName, fromOwnerId, toOwnerId,
+        fromOwnerElementName, toOwnerElementName, "", "", "", "", "", "", fromResolved, toResolved);
+  }
+
+  /**
+   * Creates immutable connection evidence with explicit endpoint-owner provenance.
+   *
+   * @param id stable evidence identity
+   * @param sourceId source connection identity, or empty when absent
+   * @param segmentId owning piping-network segment identity, or empty when absent
+   * @param fromId source endpoint identity
+   * @param toId target endpoint identity
+   * @param fromElementName resolved source XML element name
+   * @param toElementName resolved target XML element name
+   * @param fromOwnerId explicit source owner identity, or empty when absent
+   * @param toOwnerId explicit target owner identity, or empty when absent
+   * @param fromOwnerElementName source owner XML element name, or empty when absent
+   * @param toOwnerElementName target owner XML element name, or empty when absent
+   * @param fromOwnerComponentClass explicit source-owner ComponentClass, or empty when absent
+   * @param fromOwnerComponentName explicit source-owner ComponentName, or empty when absent
+   * @param fromOwnerTagName explicit source-owner TagName, or empty when absent
+   * @param toOwnerComponentClass explicit target-owner ComponentClass, or empty when absent
+   * @param toOwnerComponentName explicit target-owner ComponentName, or empty when absent
+   * @param toOwnerTagName explicit target-owner TagName, or empty when absent
+   * @param fromResolved whether the source endpoint resolves in the source document
+   * @param toResolved whether the target endpoint resolves in the source document
+   */
+  public DexpiConnectionInfo(String id, String sourceId, String segmentId, String fromId, String toId,
+      String fromElementName, String toElementName, String fromOwnerId, String toOwnerId, String fromOwnerElementName,
+      String toOwnerElementName, String fromOwnerComponentClass, String fromOwnerComponentName,
+      String fromOwnerTagName, String toOwnerComponentClass, String toOwnerComponentName, String toOwnerTagName,
+      boolean fromResolved, boolean toResolved) {
     this.id = normalize(id);
     this.sourceId = normalize(sourceId);
     this.segmentId = normalize(segmentId);
@@ -81,6 +119,12 @@ public final class DexpiConnectionInfo implements Serializable {
     this.toOwnerId = normalize(toOwnerId);
     this.fromOwnerElementName = normalize(fromOwnerElementName);
     this.toOwnerElementName = normalize(toOwnerElementName);
+    this.fromOwnerComponentClass = normalize(fromOwnerComponentClass);
+    this.fromOwnerComponentName = normalize(fromOwnerComponentName);
+    this.fromOwnerTagName = normalize(fromOwnerTagName);
+    this.toOwnerComponentClass = normalize(toOwnerComponentClass);
+    this.toOwnerComponentName = normalize(toOwnerComponentName);
+    this.toOwnerTagName = normalize(toOwnerTagName);
     this.fromResolved = fromResolved;
     this.toResolved = toResolved;
   }
@@ -145,6 +189,36 @@ public final class DexpiConnectionInfo implements Serializable {
     return toOwnerElementName;
   }
 
+  /** @return explicit source-owner ComponentClass, or empty when absent */
+  public String getFromOwnerComponentClass() {
+    return fromOwnerComponentClass;
+  }
+
+  /** @return explicit source-owner ComponentName, or empty when absent */
+  public String getFromOwnerComponentName() {
+    return fromOwnerComponentName;
+  }
+
+  /** @return explicit source-owner TagName, or empty when absent */
+  public String getFromOwnerTagName() {
+    return fromOwnerTagName;
+  }
+
+  /** @return explicit target-owner ComponentClass, or empty when absent */
+  public String getToOwnerComponentClass() {
+    return toOwnerComponentClass;
+  }
+
+  /** @return explicit target-owner ComponentName, or empty when absent */
+  public String getToOwnerComponentName() {
+    return toOwnerComponentName;
+  }
+
+  /** @return explicit target-owner TagName, or empty when absent */
+  public String getToOwnerTagName() {
+    return toOwnerTagName;
+  }
+
   /** @return whether both endpoint owners have explicit identities */
   public boolean isOwnershipResolved() {
     return !fromOwnerId.isEmpty() && !toOwnerId.isEmpty();
@@ -183,6 +257,12 @@ public final class DexpiConnectionInfo implements Serializable {
     result.put("toOwnerId", toOwnerId);
     result.put("fromOwnerElementName", fromOwnerElementName);
     result.put("toOwnerElementName", toOwnerElementName);
+    result.put("fromOwnerComponentClass", fromOwnerComponentClass);
+    result.put("fromOwnerComponentName", fromOwnerComponentName);
+    result.put("fromOwnerTagName", fromOwnerTagName);
+    result.put("toOwnerComponentClass", toOwnerComponentClass);
+    result.put("toOwnerComponentName", toOwnerComponentName);
+    result.put("toOwnerTagName", toOwnerTagName);
     result.put("fromResolved", Boolean.valueOf(fromResolved));
     result.put("toResolved", Boolean.valueOf(toResolved));
     return result;
