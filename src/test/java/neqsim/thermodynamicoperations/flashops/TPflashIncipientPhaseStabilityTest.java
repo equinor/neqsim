@@ -74,7 +74,8 @@ class TPflashIncipientPhaseStabilityTest {
       SystemInterface multiphase = flash(createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, pressureBara, true));
 
       assertEquals(expectedPhaseCount, ordinary.getNumberOfPhases(), "ordinary topology at " + pressureBara + " bara");
-      assertEquals(expectedPhaseCount, multiphase.getNumberOfPhases(), "multiphase topology at " + pressureBara + " bara");
+      assertEquals(expectedPhaseCount, multiphase.getNumberOfPhases(),
+          "multiphase topology at " + pressureBara + " bara");
       assertClosedState(ordinary, "ordinary UMR-PRU at " + pressureBara + " bara");
       assertClosedState(multiphase, "multiphase UMR-PRU at " + pressureBara + " bara");
       assertEquivalentState(ordinary, multiphase, 1.0e-11, "UMR-PRU algorithm agreement at " + pressureBara + " bara");
