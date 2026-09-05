@@ -237,8 +237,8 @@ class FlowRegimeHorizontalTransitionTest {
    * Transient momentum sources must consume the detector's continuous regime weights.
    *
    * <p>
-   * This is a calculation-level check: it compares the source evaluator's stored wall and
-   * interfacial stresses with the convex combination of the same authoritative closure models.
+   * This is a calculation-level check: it compares the source evaluator's stored wall and interfacial stresses with the
+   * convex combination of the same authoritative closure models.
    * </p>
    */
   @Test
@@ -267,30 +267,14 @@ class FlowRegimeHorizontalTransitionTest {
       double expectedInterfacialArea = 0.0;
 
       for (Map.Entry<FlowRegime, Double> entry : weights.entrySet()) {
-        WallFriction.WallFrictionResult wall =
-            wallFriction.calculate(
-                entry.getKey(),
-                upstream.getGasVelocity(),
-                upstream.getLiquidVelocity(),
-                upstream.getGasDensity(),
-                upstream.getLiquidDensity(),
-                upstream.getGasViscosity(),
-                upstream.getLiquidViscosity(),
-                upstream.getLiquidHoldup(),
-                upstream.getDiameter(),
-                upstream.getRoughness());
-        InterfacialFriction.InterfacialFrictionResult interfacial =
-            interfacialFriction.calculate(
-                entry.getKey(),
-                upstream.getGasVelocity(),
-                upstream.getLiquidVelocity(),
-                upstream.getGasDensity(),
-                upstream.getLiquidDensity(),
-                upstream.getGasViscosity(),
-                upstream.getLiquidViscosity(),
-                upstream.getLiquidHoldup(),
-                upstream.getDiameter(),
-                upstream.getSurfaceTension());
+        WallFriction.WallFrictionResult wall = wallFriction.calculate(entry.getKey(), upstream.getGasVelocity(),
+            upstream.getLiquidVelocity(), upstream.getGasDensity(), upstream.getLiquidDensity(),
+            upstream.getGasViscosity(), upstream.getLiquidViscosity(), upstream.getLiquidHoldup(),
+            upstream.getDiameter(), upstream.getRoughness());
+        InterfacialFriction.InterfacialFrictionResult interfacial = interfacialFriction.calculate(entry.getKey(),
+            upstream.getGasVelocity(), upstream.getLiquidVelocity(), upstream.getGasDensity(),
+            upstream.getLiquidDensity(), upstream.getGasViscosity(), upstream.getLiquidViscosity(),
+            upstream.getLiquidHoldup(), upstream.getDiameter(), upstream.getSurfaceTension());
         expectedGasWallShear += entry.getValue() * wall.gasWallShear;
         expectedLiquidWallShear += entry.getValue() * wall.liquidWallShear;
         expectedInterfacialShear += entry.getValue() * interfacial.interfacialShear;
