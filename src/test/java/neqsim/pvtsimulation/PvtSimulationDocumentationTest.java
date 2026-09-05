@@ -41,11 +41,15 @@ class PvtSimulationDocumentationTest extends NeqSimTest {
     assertEquals("HP separator", stages.get(0).getStageName());
     assertEquals(50.0, stages.get(0).getPressure(), 1.0e-12);
     assertEquals(40.0, stages.get(0).getTemperature(), 1.0e-12);
+    assertEquals("LP separator", stages.get(1).getStageName());
+    assertEquals(10.0, stages.get(1).getPressure(), 1.0e-12);
+    assertEquals(30.0, stages.get(1).getTemperature(), 1.0e-12);
     assertEquals(separatorTest.getTotalGOR(), stages.get(2).getCumulativeGOR(), 0.1);
     assertTrue(Double.isFinite(separatorTest.getTotalGOR()));
     assertTrue(separatorTest.getTotalGOR() > 0.0);
     assertTrue(Double.isFinite(separatorTest.getBo()));
     assertTrue(separatorTest.getBo() > 1.0);
+    assertTrue(Double.isFinite(separatorTest.getStockTankOilDensity()));
     assertTrue(separatorTest.getStockTankOilDensity() > 500.0);
     assertTrue(separatorTest.getStockTankOilDensity() < 1200.0);
   }
