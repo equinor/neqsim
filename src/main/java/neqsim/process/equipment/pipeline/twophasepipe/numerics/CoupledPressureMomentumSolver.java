@@ -319,10 +319,10 @@ public final class CoupledPressureMomentumSolver implements Serializable {
    * Limit each correction face by the mass available in its donor cell.
    *
    * <p>
-   * Every internal face keeps one shared scale, so its transfer remains exactly conservative. The
-   * donor scales are reduced monotonically until each cell's initial mass plus already-limited
-   * incoming correction can supply its outgoing correction. Crediting only feasible incoming mass
-   * avoids the excessive damping caused by independently limiting each cell from initial inventory.
+   * Every internal face keeps one shared scale, so its transfer remains exactly conservative. The donor scales are
+   * reduced monotonically until each cell's initial mass plus already-limited incoming correction can supply its
+   * outgoing correction. Crediting only feasible incoming mass avoids the excessive damping caused by independently
+   * limiting each cell from initial inventory.
    * </p>
    *
    * @param state provisional conservative state
@@ -358,8 +358,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
             feasibleIncomingRate -= rightCorrection * donorScale[cell + 1];
           }
 
-          double availableMass =
-              Math.max(state[cell][phase], 0.0) * lengths[cell] + timeStep * feasibleIncomingRate;
+          double availableMass = Math.max(state[cell][phase], 0.0) * lengths[cell] + timeStep * feasibleIncomingRate;
           double permittedScale = Math.min(1.0, availableMass / (timeStep * requestedOutflowRate));
           if (permittedScale < donorScale[cell]) {
             donorScale[cell] = Math.max(permittedScale, 0.0);
