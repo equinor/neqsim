@@ -4249,6 +4249,10 @@ public class TwoFluidPipe extends Pipeline {
     int maxSubSteps = enableAdaptiveTimestepping ? 50000 : 10000;
     int stepCount = 0;
     int consecutiveCoupledPressureMomentumFailures = 0;
+    int lastRejectedCell = -1;
+    int lastRejectedVariable = -1;
+    double lastRejectedValue = Double.NaN;
+    double lastRejectedPreviousValue = Double.NaN;
 
     while (timeRemaining > 1e-12 && stepCount < maxSubSteps) {
       stepCount++;
@@ -4409,6 +4413,10 @@ public class TwoFluidPipe extends Pipeline {
           for (int j = 0; j < U_new[i].length; j++) {
             if (Double.isNaN(U_new[i][j]) || Double.isInfinite(U_new[i][j])) {
               stepRejected = true;
+              lastRejectedCell = i;
+              lastRejectedVariable = j;
+              lastRejectedValue = U_new[i][j];
+              lastRejectedPreviousValue = U_prev[i][j];
               break;
             }
           }
@@ -4421,6 +4429,10 @@ public class TwoFluidPipe extends Pipeline {
             for (int phase = 0; phase < 3; phase++) {
               if (U_new[i][phase] < -1.0e-12) {
                 stepRejected = true;
+                lastRejectedCell = i;
+                lastRejectedVariable = phase;
+                lastRejectedValue = U_new[i][phase];
+                lastRejectedPreviousValue = U_prev[i][phase];
                 break;
               }
             }
@@ -4612,7 +4624,9 @@ public class TwoFluidPipe extends Pipeline {
               + timeIntegrator.getCoupledPressureMomentumRelativeVolumeTolerance() + ", iterations="
               + timeIntegrator.getCoupledPressureMomentumIterations() + "/"
               + timeIntegrator.getCoupledPressureMomentumMaximumIterations() + ", pressureCorrectionLimited="
-              + timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited());
+              + timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited() + ", lastRejectedCell="
+              + lastRejectedCell + ", lastRejectedVariable=" + lastRejectedVariable + ", lastRejectedValue="
+              + lastRejectedValue + ", lastRejectedPreviousValue=" + lastRejectedPreviousValue);
     }
 
     setCalculationIdentifier(id);
