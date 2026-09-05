@@ -4383,6 +4383,15 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       if (coupledPressureMomentumEnabled && !timeIntegrator.isCoupledPressureMomentumConverged()) {
+        if (consecutiveCoupledPressureMomentumFailures == 0) {
+          logger.warn("{}: rejecting adaptive coupled pressure-momentum substep of {} s after {}/{} iterations; "
+              + "relative cell-volume residual={}, tolerance={}, pressureCorrectionLimited={}", getName(), dtActual,
+              timeIntegrator.getCoupledPressureMomentumIterations(),
+              timeIntegrator.getCoupledPressureMomentumMaximumIterations(),
+              timeIntegrator.getCoupledPressureMomentumVolumeResidual(),
+              timeIntegrator.getCoupledPressureMomentumRelativeVolumeTolerance(),
+              timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited());
+        }
         transientCoupledPressureMomentumFailureDetected = true;
         transientCoupledPressureMomentumRejectedSubsteps++;
         consecutiveCoupledPressureMomentumFailures++;
