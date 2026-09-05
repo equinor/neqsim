@@ -108,8 +108,8 @@ public class SarirAtmosphericReferenceTest {
     assertEquals(0.05, SarirAtmosphericReference.getCrudeWaterAndSedimentVolumePercent(), 0.0);
     assertEquals(48.7, SarirAtmosphericReference.getCrudeCloudPointLowerCelsius(), 0.0);
     assertEquals(49.6, SarirAtmosphericReference.getCrudeCloudPointUpperCelsius(), 0.0);
-    assertTrue(SarirAtmosphericReference.getCrudeCloudPointLowerCelsius()
-        <= SarirAtmosphericReference.getCrudeCloudPointUpperCelsius());
+    assertTrue(SarirAtmosphericReference.getCrudeCloudPointLowerCelsius() <= SarirAtmosphericReference
+        .getCrudeCloudPointUpperCelsius());
     assertEquals(21.0, SarirAtmosphericReference.getCrudePourPointCelsius(), 0.0);
     assertEquals(10.63, SarirAtmosphericReference.getCrudeKinematicViscosityAt100FCst(), 0.0);
     assertEquals(100.0, SarirAtmosphericReference.getCrudeKinematicViscosityReferenceTemperatureFahrenheit(), 0.0);
