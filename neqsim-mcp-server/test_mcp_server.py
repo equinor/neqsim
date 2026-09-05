@@ -1556,7 +1556,7 @@ def test_capabilities():
         "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
         "checkToolAccess", "manageIndustrialProfile", "searchComponents",
         "queryDataCatalog", "getProgress", "inspectApi",
-        "manageValidationProfile", "manageModel", "manageSession", "manageState",
+        "manageValidationProfile", "manageModel", "manageSession", "manageSecurity", "manageState",
         "getAdjustableParameters", "validateInput", "validateResults",
         "generateReport", "bridgeTaskWorkflow",
         "listSimulationUnits",
@@ -1565,10 +1565,10 @@ def test_capabilities():
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("twenty-four bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.25"
-          and limitations.get("contractTestedToolCount") == 24
-          and limitations.get("confirmedGapToolCount") == 27
+    check("twenty-five bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.26"
+          and limitations.get("contractTestedToolCount") == 25
+          and limitations.get("confirmedGapToolCount") == 26
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1603,6 +1603,16 @@ def test_capabilities():
           and "facility-wide conservation"
           in result_validation.get("evidenceBoundary", ""),
           str(result_validation))
+    security_management = coverage_records.get("manageSecurity", {})
+    check("security management has bounded contract evidence",
+          security_management.get("coverageStatus") == "CONTRACT_TESTED"
+          and security_management.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_APPLICATION_SECURITY_MANAGEMENT"
+          and "neqsim-mcp-server/test_security_protocol.py"
+          in security_management.get("contractEvidenceSources", [])
+          and "does not establish transport"
+          in security_management.get("evidenceBoundary", ""),
+          str(security_management))
     report_generation = coverage_records.get("generateReport", {})
     check("report generation has bounded contract evidence",
           report_generation.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1639,7 +1649,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 27
+          and limitations.get("confirmedGapToolCount") == 26
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

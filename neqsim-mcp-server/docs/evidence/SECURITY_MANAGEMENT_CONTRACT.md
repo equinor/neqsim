@@ -6,10 +6,10 @@ Can the existing `manageSecurity` MCP surface preserve its default-disabled desk
 administrator gate, structured failures, and standardized packaged-MCP envelope without implying transport security or
 production identity assurance?
 
-This Phase 0 increment qualifies that bounded software contract. Inventory remains **1.25 / 20 explicit + 24
-contract-tested + 27 confirmed gaps**, and `manageSecurity` remains `CONFIRMED_GAP` until a separate merged promotion
-increment updates the inventory atomically. No production runner, schema, deployment profile, numerical model or
-companion repository changes here.
+Merged qualification #3470 established that bounded software contract, and this Phase 0 increment promotes it
+atomically. Inventory **1.26 / 20 explicit + 25 contract-tested + 26 confirmed gaps** records `manageSecurity` as
+`CONTRACT_TESTED`. No production runner, schema, deployment profile, numerical model or companion repository changes
+here.
 
 ## Authoritative behavior
 
@@ -54,7 +54,7 @@ integration outside this runner.
 - `McpSecurityEnforcementTest` covers disabled-mode admission, a transport-bound principal, anonymous denial,
   bootstrap reachability, administrator-gated key creation and fail-closed missing administrator configuration.
 - `test_security_protocol.py` repeats the public boundary through the real packaged STDIO server using synthetic
-  credentials and proves that Phase 0 classification remains unpromoted.
+  credentials and proves the inventory 1.26 promotion, evidence sources, and security/advisory boundary.
 - `test_mcp_server.py` retains the broad real-protocol call and 71-tool registration/accounting checks.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP security contracts before the comprehensive
   protocol regression.
