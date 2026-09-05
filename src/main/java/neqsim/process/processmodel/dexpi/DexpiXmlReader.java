@@ -925,9 +925,8 @@ public final class DexpiXmlReader {
           instrumentationFunctionResolved, elementName(instrumentationFunction), finalControlElementId,
           finalControlElement != null, elementName(finalControlElement),
           explicitAttribute(finalControlElement, "ComponentClass"),
-          explicitAttribute(finalControlElement, "ComponentName"),
-          explicitTagName(finalControlElement), locationId, location != null,
-          elementName(location), explicitAttribute(location, "ComponentClass"),
+          explicitAttribute(finalControlElement, "ComponentName"), explicitTagName(finalControlElement), locationId,
+          location != null, elementName(location), explicitAttribute(location, "ComponentClass"),
           explicitAttribute(location, "ComponentName"), explicitTagName(location)));
     }
     return result;
