@@ -8,16 +8,18 @@ writes without implying numerical or plant-control authority?
 
 This Phase 0 increment qualifies that bounded software contract. Inventory remains **1.26 / 20 explicit + 25
 contract-tested + 26 confirmed gaps**, and `setSimulationVariable` remains `CONFIRMED_GAP` until a separate merged
-promotion increment updates the inventory atomically. No production runner, public schema, canonical process
-representation, thermodynamic model, deployment policy, or companion repository changes here.
+promotion increment updates the inventory atomically. The increment adds one narrow production correctness guard that
+aligns exact known OUTPUT writes with the already documented INPUT-only contract. There are no public schema, canonical
+process representation, thermodynamic model, deployment policy, or companion repository changes.
 
 ## Authoritative behavior
 
 `NeqSimTools.setSimulationVariable` applies the deployment-profile access gate, resolves an inline process definition or
 a reusable `manageModel` handle, and delegates to `AutomationRunner.setVariableAndRun`. The runner builds and executes
 the normal NeqSim `ProcessSystem`, resolves the declared address through `ProcessAutomation`, validates physical bounds,
-writes only an input variable, reruns the same process, and returns the post-run report through the standard MCP
-response envelope.
+rejects an exact address declared as an OUTPUT before mutation, writes only an input variable, reruns the same process,
+and returns the post-run report through the standard MCP response envelope. Unknown addresses retain the existing
+diagnostic and fuzzy-correction path rather than being misclassified as read-only.
 
 The qualification uses the catalogued `simple-separation` process and the writable `feed.temperature` address. A 35 °C
 setpoint is represented as the explicit pair `35.0` and `C`. The test checks the returned address, value, unit, solver
@@ -74,10 +76,12 @@ assumptions, limitations, measurements, facility constraints, and accountable en
 
 ## Documentation impact and stop boundary
 
-Documentation impact: this new evidence page records the existing user-visible mutation/rerun contract and its
-limitations; no public API guide or schema changes because production behavior and arguments are unchanged.
+Documentation impact: this evidence page records the enforced user-visible mutation/rerun contract and its limitations.
+The existing public automation guide and Javadocs already specify INPUT-only writes and read-only OUTPUT variables, so no
+guide or schema migration is required; implementation now matches that documented behavior.
 
 The increment stops at deterministic address resolution, one bounded input mutation, rerun/report sequencing,
-structured rejection, inline/model-handle equivalence, and packaged STDIO transport. It does not promote inventory,
-alter scientific trust metadata, change numerical behavior, qualify snapshot comparison, or claim model accuracy,
+structured rejection, inline/model-handle equivalence, and packaged STDIO transport. Apart from rejecting a previously
+accepted invalid OUTPUT write, it does not promote inventory, alter scientific trust metadata, change numerical
+behavior, qualify snapshot comparison, or claim model accuracy,
 optimization quality, plant authority, design certification, or accountable engineering approval.

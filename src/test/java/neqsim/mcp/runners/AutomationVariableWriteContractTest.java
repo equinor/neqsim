@@ -22,7 +22,6 @@ class AutomationVariableWriteContractTest {
 
     assertEquals("success", root.get("status").getAsString());
     assertEquals("setSimulationVariable", root.get("tool").getAsString());
-    assertEquals("success", data.get("status").getAsString());
     assertEquals("feed.temperature", data.get("address").getAsString());
     assertEquals(35.0, data.get("value").getAsDouble(), 1.0e-12);
     assertEquals("C", data.get("unit").getAsString());
@@ -49,9 +48,10 @@ class AutomationVariableWriteContractTest {
         "HP Sep.gasOutStream.temperature", 35.0, "C"));
     JsonObject data = root.getAsJsonObject("data");
 
-    assertFalse("success".equals(root.get("status").getAsString()));
+    assertEquals("error", root.get("status").getAsString());
+    assertEquals("READ_ONLY_VARIABLE", data.get("category").getAsString());
     assertFalse(data.has("simulationReport"));
-    assertFalse("passed".equals(root.getAsJsonObject("qualityGate").get("verdict").getAsString()));
+    assertEquals("failed", root.getAsJsonObject("qualityGate").get("verdict").getAsString());
   }
 
   @Test

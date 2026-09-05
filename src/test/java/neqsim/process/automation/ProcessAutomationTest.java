@@ -1353,15 +1353,9 @@ class ProcessAutomationTest {
     // READ_ONLY_VARIABLE diagnostic via the safe accessor.
     String json = automation.setVariableValueSafe("Cooler.outletStream.temperature", 50.0, "C");
     com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
-    String status = root.get("status").getAsString();
-    if ("error".equals(status)) {
-      String cat = root.get("category").getAsString();
-      // Either READ_ONLY_VARIABLE or PROPERTY_NOT_FOUND is acceptable depending on
-      // how the underlying setter rejects the attempt.
-      assertTrue(
-          "READ_ONLY_VARIABLE".equals(cat) || "PROPERTY_NOT_FOUND".equals(cat) || "INVALID_ADDRESS_FORMAT".equals(cat),
-          "Expected error category for read-only set, got " + cat);
-    }
+    assertEquals("error", root.get("status").getAsString());
+    assertEquals("READ_ONLY_VARIABLE", root.get("category").getAsString());
+    assertFalse(automation.isDirty(), "Rejected OUTPUT write must not dirty the process");
   }
 
   @Test
