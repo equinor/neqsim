@@ -763,13 +763,10 @@ public class TwoFluidConservationEquations implements Serializable {
               sec.getSurfaceTension(),
               sec.getDiameter(),
               sec.getLiquidHoldup());
-      double weightedFraction = entry.getValue() * component.entrainmentFraction;
-      blended.entrainmentFraction += weightedFraction;
-      weightedDropletDiameter += weightedFraction * component.dropletDiameter;
+      blended.entrainmentFraction += entry.getValue() * component.entrainmentFraction;
+      weightedDropletDiameter += entry.getValue() * component.dropletDiameter;
     }
-    if (blended.entrainmentFraction > 0.0) {
-      blended.dropletDiameter = weightedDropletDiameter / blended.entrainmentFraction;
-    }
+    blended.dropletDiameter = weightedDropletDiameter;
     return blended;
   }
 
