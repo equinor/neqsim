@@ -2315,6 +2315,39 @@ experimental parameter validation, saturation search, electrolyte/reaction
 models, solids/wax, Column Solver, Process Performance, proprietary data, and
 Huldra are outside this tranche.
 
+### 6.4.13 Incipient phase appearance and disappearance lifecycle qualification
+
+The phase-boundary qualification covers two synthetic numerical cases. A classic-mixing
+`SystemSrkEos` feed of methane, ethane, propane, and n-butane at
+253.46685189059752 K and 77.53775411226596 bara must retain an incipient vapour
+fraction of `3.50882832337307e-5` through the supplementary stability trial. A
+classic-mixing `SystemUMRPRUMCEos` feed of methane, ethane, n-pentane, and nC16
+at 293.15 K and 89.5-90.5 bara must retain its stable single phase when a
+sub-residual TPD trial is found. Both feeds are synthetic and provide numerical
+regression evidence rather than experimental validation of phase boundaries or
+model parameters.
+
+Every active phase and beta must be finite, bounded, and normalized within
+`2e-12`; maximum component material-balance residual must be below `1e-10`;
+and every phase must have positive finite compressibility. Two-phase states require
+maximum comparable interphase log-fugacity residual below `1e-8`. Single-phase
+states require beta one and `x=z` within `1e-10`. Total Gibbs energy and
+enthalpy must remain finite.
+
+Ordinary and multiphase public TP flashes must agree for both boundary roles. The
+SRK stability diagnostic must continue to report the supplementary unstable trial.
+Both cases must recover from beta values within `1e-12` of a bound. Reused
+systems are moved to a nearby pressure, compared with fresh calculations, returned
+to the reference pressure, and flashed again; the changed, returned, and immediate
+repeat states must remain equivalent within the documented lifecycle tolerances.
+
+The focused class performs 23 complete TP flashes. That fixed workload is
+performance evidence only; no wall-clock threshold or production speedup is
+claimed. Production stability algorithms, public APIs, model parameters and
+defaults, saturation operations, electrolyte-performance ownership, solids/wax,
+Column Solver, Process Performance, proprietary data, and Huldra are outside this
+tranche.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
