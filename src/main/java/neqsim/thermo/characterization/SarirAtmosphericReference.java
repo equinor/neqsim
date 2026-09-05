@@ -641,8 +641,8 @@ public final class SarirAtmosphericReference {
    * Immutable product-specification row from source Table 2.
    *
    * <p>
-   * Numeric access fails closed for the residual row because the source reports an open-ended
-   * {@code <550+} boundary rather than a numeric ASTM D86 T95.
+   * Numeric access fails closed for the residual row because the source reports an open-ended {@code <550+} boundary
+   * rather than a numeric ASTM D86 T95.
    * </p>
    */
   public static final class ProductSpecificationReference implements Serializable {
