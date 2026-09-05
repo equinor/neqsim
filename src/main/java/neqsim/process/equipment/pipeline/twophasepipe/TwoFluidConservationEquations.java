@@ -624,12 +624,25 @@ public class TwoFluidConservationEquations implements Serializable {
     }
   }
 
+  /**
+   * Returns whether continuous closure blending includes stratified geometry.
+   *
+   * @param weights dimensionless normalized regime weights, or {@code null} outside a transition
+   * @return {@code true} when a stratified closure has non-zero weight
+   */
   private static boolean hasStratifiedShare(Map<PipeSection.FlowRegime, Double> weights) {
     return weights != null
         && (weights.containsKey(PipeSection.FlowRegime.STRATIFIED_SMOOTH)
             || weights.containsKey(PipeSection.FlowRegime.STRATIFIED_WAVY));
   }
 
+  /**
+   * Calculates wall shear from the active regime or its continuous transition weights.
+   *
+   * @param sec local pipe state
+   * @param weights dimensionless normalized regime weights, or {@code null} outside a transition
+   * @return wall-friction result in Pa
+   */
   private WallFriction.WallFrictionResult calculateWallFriction(
       TwoFluidSection sec, Map<PipeSection.FlowRegime, Double> weights) {
     if (weights == null) {
@@ -666,6 +679,13 @@ public class TwoFluidConservationEquations implements Serializable {
     return blended;
   }
 
+  /**
+   * Calculates interfacial shear from the active regime or its transition weights.
+   *
+   * @param sec local pipe state
+   * @param weights dimensionless normalized regime weights, or {@code null} outside a transition
+   * @return interfacial shear in Pa and area per length in m
+   */
   private InterfacialFriction.InterfacialFrictionResult calculateInterfacialFriction(
       TwoFluidSection sec, Map<PipeSection.FlowRegime, Double> weights) {
     if (weights == null) {
@@ -704,6 +724,13 @@ public class TwoFluidConservationEquations implements Serializable {
     return blended;
   }
 
+  /**
+   * Calculates entrainment properties from the active regime or its transition weights.
+   *
+   * @param sec local pipe state
+   * @param weights dimensionless normalized regime weights, or {@code null} outside a transition
+   * @return dimensionless entrainment fraction and droplet diameter in m
+   */
   private EntrainmentDeposition.EntrainmentResult calculateEntrainment(
       TwoFluidSection sec, Map<PipeSection.FlowRegime, Double> weights) {
     if (weights == null) {
