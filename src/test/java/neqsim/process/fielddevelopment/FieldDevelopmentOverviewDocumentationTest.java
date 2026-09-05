@@ -27,7 +27,6 @@ import neqsim.process.fielddevelopment.reservoir.ReservoirCouplingExporter.Expor
 import neqsim.process.fielddevelopment.reservoir.ReservoirCouplingExporter.VfpTable;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
-import neqsim.process.fielddevelopment.tieback.capacity.HoldbackPolicy;
 import neqsim.process.fielddevelopment.tieback.capacity.ProductionProfileSeries;
 import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner;
 import neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityResult;
@@ -81,19 +80,18 @@ class FieldDevelopmentOverviewDocumentationTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void hostCapacityWorkflowReportsTheDocumentedHoldback() {
-    HostFacility host = HostFacility.builder("Brownfield host").gasCapacity(10.0).build();
-    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
-    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+  void hostCapacityQuickStartReportsTheDocumentedHoldback() {
+    HostFacility host = HostFacility.builder("Host A").gasCapacity(5.0).build();
+    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 3.0, 0.0, 0.0, 0.0);
 
     TieInCapacityResult capacity = new TieInCapacityPlanner(host).setHostProductionProfile(base)
-        .setSatelliteProductionProfile(satellite).setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
-        .setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS).run();
+        .setSatelliteProductionProfile(satellite).setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST).run();
 
     TieInPeriodResult period = capacity.getPeriodResults().get(0);
     assertTrue(capacity.hasHoldback());
-    assertEquals(3.0, period.getAcceptedSatellite().getGasRateMSm3d(), 1.0e-9);
-    assertEquals(1.0, period.getHeldBackSatellite().getGasRateMSm3d(), 1.0e-9);
+    assertEquals(1.0, period.getAcceptedSatellite().getGasRateMSm3d(), 1.0e-9);
+    assertEquals(2.0, period.getHeldBackSatellite().getGasRateMSm3d(), 1.0e-9);
     assertFalse(capacity.toMarkdownTable().isEmpty());
   }
 

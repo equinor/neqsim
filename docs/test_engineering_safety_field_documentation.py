@@ -7,6 +7,11 @@ from urllib.parse import unquote, urlsplit
 
 
 DOCS = Path(__file__).resolve().parent
+HOST_TIE_IN_PAGE = DOCS / "fielddevelopment/HOST_TIE_IN_CAPACITY.md"
+HOST_TIE_IN_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/process/fielddevelopment/FieldDevelopmentOverviewDocumentationTest.java"
+)
 SCOPE_PAGES = (
     DOCS / "examples/FieldDevelopmentWorkflow.md",
     DOCS / "fielddevelopment/API_GUIDE.md",
@@ -199,6 +204,32 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
                         any(candidate.exists() for candidate in candidates),
                         "Unresolved repository-relative target",
                     )
+
+
+    def test_host_tie_in_nameplate_quickstart_is_executable(self):
+        page = HOST_TIE_IN_PAGE.read_text(encoding="utf-8")
+        section = page.split("## Nameplate Ullage Example", 1)[1].split(
+            "## Process-Equipment Capacity Layer", 1
+        )[0]
+
+        self.assertIn("public final class HostTieInCapacityQuickStart", section)
+        self.assertIn(
+            "LogManager.getLogger(HostTieInCapacityQuickStart.class)", section
+        )
+        self.assertIn('logger.info("{}", result.toMarkdownTable());', section)
+        self.assertNotIn("System.out", section)
+
+        regression = HOST_TIE_IN_TEST.read_text(encoding="utf-8")
+        for source_contract in (
+            "hostCapacityQuickStartReportsTheDocumentedHoldback",
+            'gasCapacity(5.0)',
+            'addPeriod(2028, 4.0, 0.0, 0.0, 0.0)',
+            'addPeriod(2028, 3.0, 0.0, 0.0, 0.0)',
+            "assertEquals(1.0, period.getAcceptedSatellite().getGasRateMSm3d()",
+            "assertEquals(2.0, period.getHeldBackSatellite().getGasRateMSm3d()",
+        ):
+            with self.subTest(source_contract=source_contract):
+                self.assertIn(source_contract, regression)
 
 
 if __name__ == "__main__":
