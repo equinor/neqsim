@@ -2299,7 +2299,7 @@ decreases from 20 to 8 °C. Ordinary and multiphase public TP flashes must recov
 the same GAS+OIL equilibrium at the three anchor temperatures.
 
 Every qualified state requires finite bounded phase fractions and compositions,
-beta and phase normalization within `1e-12`, component material balance below
+beta and phase normalization within `2e-12`, component material balance below
 `1e-10`, and maximum comparable interphase log-fugacity residual below
 `1e-8`. Each phase must have positive finite compressibility, while total Gibbs
 energy and enthalpy must remain finite. The regression also qualifies recovery
