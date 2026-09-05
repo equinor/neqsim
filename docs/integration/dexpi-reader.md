@@ -186,15 +186,20 @@ inventory does not infer connectivity or rewire the returned `ProcessSystem`.
 
 For resolved nozzle endpoints, the same record exposes only explicit source ownership: the nearest
 ancestor `Equipment` or `PipingComponent` identity and XML element name. Direct equipment or
-piping-component endpoints own themselves. Orphaned nozzles and owner elements without source IDs
-remain deterministic warnings; the reader does not derive ownership from coordinates, tags,
-stream order, or simulation state.
+piping-component endpoints own themselves. For each resolved owner, the connection occurrence also
+preserves the owner's explicit `ComponentClass`, `ComponentName`, and `TagName`; absent source
+metadata remains an empty string. Orphaned nozzles and owner elements without source IDs remain
+deterministic warnings; unresolved owners receive no invented metadata. The reader does not derive
+ownership or owner metadata from coordinates, endpoint tags, stream order, simulation state, or
+class heuristics.
 
 `ImportResult.getConnectionEndpoints()` provides a distinct endpoint inventory in first-reference
-order. Each immutable `DexpiConnectionEndpointInfo` records the resolved element and explicit owner
-evidence plus the incoming and outgoing connection-evidence IDs in source order. Counts retain every
-occurrence, including parallel connections. Blank endpoint references remain findings and are omitted
-from this keyed inventory; unresolved non-empty IDs remain visible.
+order. Each immutable `DexpiConnectionEndpointInfo` records the resolved element, explicit owner
+identity and XML element name, and the owner's explicit `ComponentClass`, `ComponentName`, and
+`TagName`, plus the incoming and outgoing connection-evidence IDs in source order. Counts retain
+every occurrence, including parallel connections. Blank endpoint references remain findings and are
+omitted from this keyed inventory; unresolved non-empty IDs remain visible with empty owner
+provenance.
 
 `getIncidenceRole()` classifies only this directed source evidence: zero incoming and one outgoing
 is `SOURCE`; one incoming and zero outgoing is `SINK`; one of each is `PASS_THROUGH`; one
