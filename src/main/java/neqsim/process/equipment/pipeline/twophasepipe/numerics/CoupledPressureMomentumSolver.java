@@ -319,9 +319,10 @@ public final class CoupledPressureMomentumSolver implements Serializable {
    * Limit each correction face by the mass available in its donor cell.
    *
    * <p>
-   * Scaling a shared face flux preserves phase mass exactly across internal cells while preventing a trace phase from
-   * being transported below zero. Incoming correction flux is deliberately not credited when calculating availability,
-   * which keeps the bound conservative when both faces draw from the same cell.
+   * Every internal face keeps one shared scale, so its transfer remains exactly conservative. The
+   * donor scales are reduced monotonically until each cell's initial mass plus already-limited
+   * incoming correction can supply its outgoing correction. Crediting only feasible incoming mass
+   * avoids the excessive damping caused by independently limiting each cell from initial inventory.
    * </p>
    *
    * @param state provisional conservative state
@@ -335,13 +336,39 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
       double[] donorScale = new double[cellCount];
       for (int cell = 0; cell < cellCount; cell++) {
-        double leftOutflow = Math.max(-faceMassFlowCorrection[phase][cell], 0.0);
-        double rightOutflow = Math.max(faceMassFlowCorrection[phase][cell + 1], 0.0);
-        double requestedOutflowMass = timeStep * (leftOutflow + rightOutflow);
-        double availableMass = Math.max(state[cell][phase], 0.0) * lengths[cell];
-        donorScale[cell] = requestedOutflowMass > availableMass && requestedOutflowMass > 0.0
-            ? availableMass / requestedOutflowMass
-            : 1.0;
+        donorScale[cell] = 1.0;
+      }
+
+      // A decrease can propagate at most one donor farther through the line per pass.
+      for (int pass = 0; pass < cellCount; pass++) {
+        boolean changed = false;
+        for (int cell = 0; cell < cellCount; cell++) {
+          double leftCorrection = faceMassFlowCorrection[phase][cell];
+          double rightCorrection = faceMassFlowCorrection[phase][cell + 1];
+          double requestedOutflowRate = Math.max(-leftCorrection, 0.0) + Math.max(rightCorrection, 0.0);
+          if (!(requestedOutflowRate > 0.0)) {
+            continue;
+          }
+
+          double feasibleIncomingRate = 0.0;
+          if (leftCorrection > 0.0 && cell > 0) {
+            feasibleIncomingRate += leftCorrection * donorScale[cell - 1];
+          }
+          if (rightCorrection < 0.0 && cell < cellCount - 1) {
+            feasibleIncomingRate -= rightCorrection * donorScale[cell + 1];
+          }
+
+          double availableMass =
+              Math.max(state[cell][phase], 0.0) * lengths[cell] + timeStep * feasibleIncomingRate;
+          double permittedScale = Math.min(1.0, availableMass / (timeStep * requestedOutflowRate));
+          if (permittedScale < donorScale[cell]) {
+            donorScale[cell] = Math.max(permittedScale, 0.0);
+            changed = true;
+          }
+        }
+        if (!changed) {
+          break;
+        }
       }
 
       for (int face = 1; face < cellCount; face++) {
