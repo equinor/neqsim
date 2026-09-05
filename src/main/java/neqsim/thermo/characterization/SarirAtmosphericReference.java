@@ -171,6 +171,51 @@ public final class SarirAtmosphericReference {
     return 0.2447;
   }
 
+  /** @return crude asphaltenes content in mass percent */
+  public static double getCrudeAsphaltenesMassPercent() {
+    return 0.20;
+  }
+
+  /** @return crude mercaptan sulfur content in ppm by mass */
+  public static double getCrudeMercaptanSulfurMassPpm() {
+    return 8.0;
+  }
+
+  /** @return crude water and sediment content in volume percent */
+  public static double getCrudeWaterAndSedimentVolumePercent() {
+    return 0.05;
+  }
+
+  /** @return lower endpoint of the published crude cloud-point interval in degrees Celsius */
+  public static double getCrudeCloudPointLowerCelsius() {
+    return 48.7;
+  }
+
+  /** @return upper endpoint of the published crude cloud-point interval in degrees Celsius */
+  public static double getCrudeCloudPointUpperCelsius() {
+    return 49.6;
+  }
+
+  /** @return crude pour point in degrees Celsius */
+  public static double getCrudePourPointCelsius() {
+    return 21.0;
+  }
+
+  /** @return crude kinematic viscosity at 100 degrees Fahrenheit in cSt */
+  public static double getCrudeKinematicViscosityAt100FCst() {
+    return 10.63;
+  }
+
+  /** @return Fahrenheit reference temperature for the published crude viscosity */
+  public static double getCrudeKinematicViscosityReferenceTemperatureFahrenheit() {
+    return 100.0;
+  }
+
+  /** @return rounded Celsius reference temperature reported in the source prose */
+  public static double getCrudeKinematicViscosityReferenceTemperatureCelsius() {
+    return 37.7;
+  }
+
   /** @return atmospheric-column valve-tray count */
   public static int getColumnTrayCount() {
     return 34;
