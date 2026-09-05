@@ -926,9 +926,9 @@ public final class DexpiXmlReader {
           finalControlElement != null, elementName(finalControlElement),
           explicitAttribute(finalControlElement, "ComponentClass"),
           explicitAttribute(finalControlElement, "ComponentName"),
-          explicitGenericAttribute(finalControlElement, DexpiMetadata.TAG_NAME), locationId, location != null,
+          explicitTagName(finalControlElement), locationId, location != null,
           elementName(location), explicitAttribute(location, "ComponentClass"),
-          explicitAttribute(location, "ComponentName"), explicitGenericAttribute(location, DexpiMetadata.TAG_NAME)));
+          explicitAttribute(location, "ComponentName"), explicitTagName(location)));
     }
     return result;
   }
@@ -942,6 +942,12 @@ public final class DexpiXmlReader {
       return "";
     }
     String value = getGenericAttribute(element, attributeName);
+    return value == null ? "" : value;
+  }
+
+  private static String explicitTagName(Element element) {
+    String value = firstNonEmpty(explicitGenericAttribute(element, "TagName"),
+        explicitGenericAttribute(element, DexpiMetadata.TAG_NAME));
     return value == null ? "" : value;
   }
 
