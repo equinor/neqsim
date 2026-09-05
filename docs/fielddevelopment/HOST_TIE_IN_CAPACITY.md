@@ -49,8 +49,8 @@ public final class HostTieInCapacityQuickStart {
 
   public static void main(String[] args) {
     HostFacility host = HostFacility.builder("Host A")
-    .gasCapacity(5.0)
-    .build();
+        .gasCapacity(5.0)
+        .build();
 
     ProductionProfileSeries base = new ProductionProfileSeries("base")
         .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
