@@ -48,6 +48,12 @@ SCOPE_PAGES = (
     DOCS / "standards/sales_contracts.md",
 )
 
+PVT_LANDING_PAGE = DOCS / "pvtsimulation/README.md"
+PVT_SEPARATOR_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/pvtsimulation/PvtSimulationDocumentationTest.java"
+)
+
 
 def metadata_value(metadata, name):
     """Return a plain scalar, including folded YAML front-matter values."""
@@ -131,8 +137,58 @@ def target_candidates(source, target):
     return tuple(candidates)
 
 
+def section_after_heading(source, heading):
+    """Return the Markdown section that starts at an exact level-two heading."""
+    match = re.search(
+        rf"^{re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
+        source,
+        re.MULTILINE | re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError(f"Missing section: {heading}")
+    return match.group("section")
+
+
 class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-5 documentation surface."""
+
+    def test_pvt_separator_quickstart_matches_executable_regression(self):
+        page = PVT_LANDING_PAGE.read_text(encoding="utf-8")
+        java_test = PVT_SEPARATOR_TEST.read_text(encoding="utf-8")
+        section = section_after_heading(
+            page, "## Runnable multi-stage separator example"
+        )
+
+        self.assertNotIn("System.out", section)
+        self.assertIn("LogManager.getLogger(PvtSeparatorQuickStart.class)", section)
+        self.assertIn("logger.info(", section)
+        self.assertIn("PvtSimulationDocumentationTest", section)
+
+        workflow_markers = (
+            'new SystemSrkEos(373.15, 300.0)',
+            'setReservoirConditions(300.0, 100.0)',
+            'addSeparatorStage(50.0, 40.0, "HP separator")',
+            'addSeparatorStage(10.0, 30.0, "LP separator")',
+            "addStockTankStage()",
+            "separatorTest.run()",
+        )
+        for marker in workflow_markers:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, section)
+                self.assertIn(marker, java_test)
+
+        regression_markers = (
+            "assertEquals(3, stages.size())",
+            'assertEquals("LP separator", stages.get(1).getStageName())',
+            "Double.isFinite(separatorTest.getTotalGOR())",
+            "separatorTest.getBo() > 1.0",
+            "Double.isFinite(separatorTest.getStockTankOilDensity())",
+            "separatorTest.getStockTankOilDensity() > 500.0",
+            "separatorTest.getStockTankOilDensity() < 1200.0",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
 
     def test_frozen_scope_exists(self):
         self.assertEqual(38, len(SCOPE_PAGES))
