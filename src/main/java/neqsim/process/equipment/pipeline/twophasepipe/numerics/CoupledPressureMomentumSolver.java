@@ -314,8 +314,8 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       }
     }
 
-    double minimumScale =
-        limitCorrectionFluxesForPositivity(state, timeStep, faceMassFlowCorrection, faceScale, lengths);
+    double minimumScale = limitCorrectionFluxesForPositivity(state, timeStep, faceMassFlowCorrection, faceScale,
+        lengths);
 
     for (int cell = 0; cell < cellCount; cell++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
