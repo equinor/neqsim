@@ -40,6 +40,13 @@ public final class SarirAtmosphericReference {
       new ProductQualityReference("Kerosene", 185.0, 221.0, 159.0, 214.0),
       new ProductQualityReference("Diesel", 262.0, 346.0, 235.0, 339.0) };
 
+  private static final ProductSpecificationReference[] PRODUCT_SPECIFICATIONS = {
+      new ProductSpecificationReference("Light Naphtha", 90.0, "90", false),
+      new ProductSpecificationReference("Heavy Naphtha", 160.0, "160", false),
+      new ProductSpecificationReference("Kerosene", 221.0, "221", false),
+      new ProductSpecificationReference("Diesel", 327.0, "327", false),
+      new ProductSpecificationReference("Residual", Double.NaN, "<550+", true) };
+
   private static final ProductYieldReference[] PRODUCT_YIELDS = {
       new ProductYieldReference("Total Naphtha", 208.95, 208.2), new ProductYieldReference("Kerosene", 22.85, 20.0),
       new ProductYieldReference("Diesel", 425.018, 393.0), new ProductYieldReference("Residual", 646.5, 706.1) };
@@ -123,6 +130,35 @@ public final class SarirAtmosphericReference {
   /** @return defensive copy of numeric laboratory/simulation ASTM D86 comparison rows */
   public static ProductQualityReference[] getProductQualities() {
     return PRODUCT_QUALITIES.clone();
+  }
+
+  /** @return defensive copy of the five source Table 2 product-specification rows */
+  public static ProductSpecificationReference[] getProductSpecifications() {
+    return PRODUCT_SPECIFICATIONS.clone();
+  }
+
+  /**
+   * Find one product-specification row by its exact source-table label.
+   *
+   * @param productName exact source-table product label
+   * @return immutable product specification
+   * @throws IllegalArgumentException if the label is null or unknown
+   */
+  public static ProductSpecificationReference getProductSpecification(String productName) {
+    if (productName == null) {
+      throw new IllegalArgumentException("Product name cannot be null");
+    }
+    for (ProductSpecificationReference product : PRODUCT_SPECIFICATIONS) {
+      if (product.getName().equals(productName)) {
+        return product;
+      }
+    }
+    throw new IllegalArgumentException("Unknown Sarir product specification: " + productName);
+  }
+
+  /** @return false because source Table 2 specifications are criteria, not reproduced results */
+  public static boolean areProductSpecificationsIndependentValidationResults() {
+    return false;
   }
 
   /** @return defensive copy of independent plant/simulation product-yield comparison rows */
@@ -598,6 +634,78 @@ public final class SarirAtmosphericReference {
     /** @return draw temperature minus return temperature, in kelvin */
     public double getTemperatureDropKelvin() {
       return drawTemperatureCelsius - returnTemperatureCelsius;
+    }
+  }
+
+  /**
+   * Immutable product-specification row from source Table 2.
+   *
+   * <p>
+   * Numeric access fails closed for the residual row because the source reports an open-ended
+   * {@code <550+} boundary rather than a numeric ASTM D86 T95.
+   * </p>
+   */
+  public static final class ProductSpecificationReference implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String name;
+    private final double specificationTemperatureCelsius;
+    private final String sourceValue;
+    private final boolean openEndedBoundary;
+
+    private ProductSpecificationReference(String name, double specificationTemperatureCelsius, String sourceValue,
+        boolean openEndedBoundary) {
+      this.name = name;
+      this.specificationTemperatureCelsius = specificationTemperatureCelsius;
+      this.sourceValue = sourceValue;
+      this.openEndedBoundary = openEndedBoundary;
+    }
+
+    /** @return exact source-table product label */
+    public String getName() {
+      return name;
+    }
+
+    /** @return source test method, always ASTM D86 */
+    public String getTestMethod() {
+      return "ASTM D86";
+    }
+
+    /** @return source distillation percentage, always 95 liquid volume percent */
+    public double getDistilledVolumePercent() {
+      return 95.0;
+    }
+
+    /** @return whether this row has a finite numeric specification temperature */
+    public boolean hasNumericSpecificationTemperature() {
+      return Double.isFinite(specificationTemperatureCelsius);
+    }
+
+    /**
+     * Return the numeric specification temperature.
+     *
+     * @return specification temperature in degrees Celsius
+     * @throws IllegalStateException if the source row is nonnumeric and open-ended
+     */
+    public double getSpecificationTemperatureCelsius() {
+      if (!hasNumericSpecificationTemperature()) {
+        throw new IllegalStateException("Sarir product specification is nonnumeric: " + sourceValue);
+      }
+      return specificationTemperatureCelsius;
+    }
+
+    /** @return exact value text transcribed from source Table 2 */
+    public String getSourceValue() {
+      return sourceValue;
+    }
+
+    /** @return whether the source row is an open-ended boundary rather than a numeric T95 */
+    public boolean isOpenEndedBoundary() {
+      return openEndedBoundary;
+    }
+
+    /** @return false because a source specification is not an independently reproduced result */
+    public boolean isIndependentValidationResult() {
+      return false;
     }
   }
 
