@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.characterization.SarirAtmosphericReference.AduStreamDirection;
 import neqsim.thermo.characterization.SarirAtmosphericReference.AduStreamReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.ProductQualityReference;
+import neqsim.thermo.characterization.SarirAtmosphericReference.ProductSpecificationReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.ProductYieldReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.PumparoundReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionReference;
@@ -46,6 +47,10 @@ public class SarirAtmosphericReferenceTest {
     quality[0] = null;
     assertEquals("Light Naphtha", SarirAtmosphericReference.getProductQualities()[0].getName());
 
+    ProductSpecificationReference[] specifications = SarirAtmosphericReference.getProductSpecifications();
+    specifications[0] = null;
+    assertEquals("Light Naphtha", SarirAtmosphericReference.getProductSpecifications()[0].getName());
+
     ProductYieldReference[] yields = SarirAtmosphericReference.getProductYields();
     yields[0] = null;
     assertEquals("Total Naphtha", SarirAtmosphericReference.getProductYields()[0].getName());
@@ -71,6 +76,35 @@ public class SarirAtmosphericReferenceTest {
     assertQuality(quality[1], "Heavy Naphtha", 96.0, 160.0, 83.0, 153.0);
     assertQuality(quality[2], "Kerosene", 185.0, 221.0, 159.0, 214.0);
     assertQuality(quality[3], "Diesel", 262.0, 346.0, 235.0, 339.0);
+  }
+
+  @Test
+  public void productSpecificationsPreserveTableTwoWithoutBecomingValidationResults() {
+    ProductSpecificationReference[] specifications = SarirAtmosphericReference.getProductSpecifications();
+    assertEquals(5, specifications.length);
+    assertNumericSpecification(specifications[0], "Light Naphtha", 90.0, "90");
+    assertNumericSpecification(specifications[1], "Heavy Naphtha", 160.0, "160");
+    assertNumericSpecification(specifications[2], "Kerosene", 221.0, "221");
+    assertNumericSpecification(specifications[3], "Diesel", 327.0, "327");
+
+    ProductSpecificationReference residual = specifications[4];
+    assertEquals("Residual", residual.getName());
+    assertEquals("ASTM D86", residual.getTestMethod());
+    assertEquals(95.0, residual.getDistilledVolumePercent(), 0.0);
+    assertEquals("<550+", residual.getSourceValue());
+    assertFalse(residual.hasNumericSpecificationTemperature());
+    assertTrue(residual.isOpenEndedBoundary());
+    assertFalse(residual.isIndependentValidationResult());
+    assertThrows(IllegalStateException.class, residual::getSpecificationTemperatureCelsius);
+
+    assertEquals(specifications[3], SarirAtmosphericReference.getProductSpecification("Diesel"));
+    assertEquals(residual, SarirAtmosphericReference.getProductSpecification("Residual"));
+    assertFalse(SarirAtmosphericReference.areProductSpecificationsIndependentValidationResults());
+
+    ProductQualityReference dieselResult = SarirAtmosphericReference.getProductQualities()[3];
+    assertEquals(327.0, specifications[3].getSpecificationTemperatureCelsius(), 0.0);
+    assertEquals(346.0, dieselResult.getLaboratoryNinetyFivePercentCelsius(), 0.0);
+    assertEquals(339.0, dieselResult.getSimulationNinetyFivePercentCelsius(), 0.0);
   }
 
   @Test
@@ -184,6 +218,8 @@ public class SarirAtmosphericReferenceTest {
 
   @Test
   public void invalidQueriesAndErrorInputsFailClosed() {
+    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getProductSpecification(null));
+    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getProductSpecification("Naphtha"));
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getProductYield(null));
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getProductYield("Naphtha"));
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericReference.getAduStream(null));
@@ -227,6 +263,18 @@ public class SarirAtmosphericReferenceTest {
     assertEquals(drawTemperature, pumparound.getDrawTemperatureCelsius(), 0.0);
     assertEquals(returnTemperature, pumparound.getReturnTemperatureCelsius(), 0.0);
     assertEquals(temperatureDrop, pumparound.getTemperatureDropKelvin(), 1.0e-12);
+  }
+
+  private static void assertNumericSpecification(ProductSpecificationReference specification, String name,
+      double temperatureCelsius, String sourceValue) {
+    assertEquals(name, specification.getName());
+    assertEquals("ASTM D86", specification.getTestMethod());
+    assertEquals(95.0, specification.getDistilledVolumePercent(), 0.0);
+    assertTrue(specification.hasNumericSpecificationTemperature());
+    assertEquals(temperatureCelsius, specification.getSpecificationTemperatureCelsius(), 0.0);
+    assertEquals(sourceValue, specification.getSourceValue());
+    assertFalse(specification.isOpenEndedBoundary());
+    assertFalse(specification.isIndependentValidationResult());
   }
 
   private static void assertQuality(ProductQualityReference quality, String name, double labFive, double labNinetyFive,
