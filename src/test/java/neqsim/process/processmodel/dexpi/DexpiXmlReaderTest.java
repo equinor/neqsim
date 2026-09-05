@@ -221,10 +221,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"NZ-100\"/></GenericAttributes></Nozzle>"
         + "<FinalControlElement ID=\"V-100\" ComponentClass=\"GateValve\" ComponentName=\"GateValveShape\">"
         + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"XV-100\"/></GenericAttributes>"
-        + "</FinalControlElement>"
-        + "<ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\""
-        + " ComponentName=\"TransmitterShape\" ID=\"PIF-PT-100\">"
-        + instrumentAttributes("PT-100", "P", "T", "100")
+        + "</FinalControlElement>" + "<ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\""
+        + " ComponentName=\"TransmitterShape\" ID=\"PIF-PT-100\">" + instrumentAttributes("PT-100", "P", "T", "100")
         + "<InformationFlow ComponentClass=\"MeasuringLineFunction\" ID=\"MLF-100\">"
         + "<Association Type=\"has logical start\" ItemID=\"PSGF-100\"/>"
         + "<Association Type=\"has logical end\" ItemID=\"PIF-PT-100\"/>"
@@ -232,11 +230,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<ProcessSignalGeneratingFunction ComponentClass=\"ProcessSignalGeneratingFunction\""
         + " ComponentName=\"PressureSignalShape\" ID=\"PSGF-100\">"
         + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"PSGF-100-TAG\"/>"
-        + "</GenericAttributes></ProcessSignalGeneratingFunction>"
-        + "</ProcessInstrumentationFunction>"
+        + "</GenericAttributes></ProcessSignalGeneratingFunction>" + "</ProcessInstrumentationFunction>"
         + "<ProcessInstrumentationFunction ComponentClass=\"ProcessControlFunction\""
-        + " ComponentName=\"ControllerShape\" ID=\"PIF-PC-100\">"
-        + instrumentAttributes("PC-100", "P", "C", "100")
+        + " ComponentName=\"ControllerShape\" ID=\"PIF-PC-100\">" + instrumentAttributes("PC-100", "P", "C", "100")
         + signalFlow("SIG-MEASURED", "PIF-PT-100", "PIF-PC-100", "ElectricalSignalConveying")
         + "<ActuatingFunction ComponentClass=\"ActuatingFunction\" ComponentName=\"ActuatorShape\" ID=\"AF-100\">"
         + "<GenericAttributes><GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"PC-100\"/>"
