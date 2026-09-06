@@ -19,6 +19,8 @@ other tools.
 ## Step-by-step Java example
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
@@ -28,51 +30,62 @@ import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-// 1) Build the feed to mirror the notebook composition
-SystemInterface wellFluid = new SystemSrkEos(310.0, 50.0); // T=310 K, p=50 bara
-wellFluid.addComponent("methane", 0.8);
-wellFluid.addComponent("ethane", 0.1);
-wellFluid.addComponent("propane", 0.05);
-wellFluid.addComponent("n-butane", 0.05);
-wellFluid.initProperties();
+public final class ProcessComparisonQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(ProcessComparisonQuickStart.class);
 
-// 2) Create the inlet process section (stream + three-phase separator)
-Stream wellStreamHP = new Stream("HP well stream", wellFluid);
-wellStreamHP.setFlowRate(10.0, "MSm3/day");
-ThreePhaseSeparator firstStageSeparator =
-    new ThreePhaseSeparator("1st stage separator", wellStreamHP);
+  private ProcessComparisonQuickStart() {}
 
-ProcessSystem inletSection = new ProcessSystem();
-inletSection.add(wellStreamHP);
-inletSection.add(firstStageSeparator);
+  public static void main(String[] args) {
+    // 1) Build the synthetic feed used by this comparison pattern.
+    SystemInterface wellFluid = new SystemSrkEos(310.0, 50.0);
+    wellFluid.addComponent("methane", 0.8);
+    wellFluid.addComponent("ethane", 0.1);
+    wellFluid.addComponent("propane", 0.05);
+    wellFluid.addComponent("n-butane", 0.05);
+    wellFluid.initProperties();
 
-// 3) Create the compressor section using the separator gas outlet
-Stream compressorFeed = firstStageSeparator.getGasOutStream();
-Compressor compressor1 = new Compressor("Compressor1", compressorFeed);
-compressor1.setPolytropicEfficiency(0.56);
-compressor1.setUsePolytropicCalc(true);
-compressor1.setOutletPressure(100.0, "bara");
+    // 2) Create the inlet process section.
+    Stream wellStreamHP = new Stream("HP well stream", wellFluid);
+    wellStreamHP.setFlowRate(10.0, "MSm3/day");
+    ThreePhaseSeparator firstStageSeparator =
+        new ThreePhaseSeparator("1st stage separator", wellStreamHP);
 
-ProcessSystem compressorSection = new ProcessSystem();
-compressorSection.add(compressorFeed);
-compressorSection.add(compressor1);
+    ProcessSystem inletSection = new ProcessSystem();
+    inletSection.add(wellStreamHP);
+    inletSection.add(firstStageSeparator);
 
-// 4) Combine the sections in a ProcessModel and run them sequentially
-ProcessModel combinedProcess = new ProcessModel();
-combinedProcess.add("feed process", inletSection);
-combinedProcess.add("compressor process", compressorSection);
-combinedProcess.setRunStep(true); // ensures each section runs in the order added
-combinedProcess.run();
+    // 3) Create the compressor section from the separator gas outlet.
+    Stream compressorFeed = firstStageSeparator.getGasOutStream();
+    Compressor compressor1 = new Compressor("Compressor1", compressorFeed);
+    compressor1.setPolytropicEfficiency(0.56);
+    compressor1.setUsePolytropicCalc(true);
+    compressor1.setOutletPressure(100.0, "bara");
 
-// 5) Read results or export the JSON report used for cross-tool comparison
-System.out.printf("Gas flow after separator: %.3f MSm3/day%n",
-    firstStageSeparator.getGasOutStream().getFlowRate("MSm3/day"));
-System.out.printf("Compressor outlet temperature: %.2f C%n",
-    compressor1.getOutletStream().getTemperature("C"));
+    ProcessSystem compressorSection = new ProcessSystem();
+    compressorSection.add(compressorFeed);
+    compressorSection.add(compressor1);
 
-Report reporter = new Report(combinedProcess);
-String jsonReport = reporter.generateJsonReport();
-System.out.println(jsonReport);
+    // 4) Combine the sections and run them sequentially.
+    ProcessModel combinedProcess = new ProcessModel();
+    combinedProcess.add("feed process", inletSection);
+    combinedProcess.add("compressor process", compressorSection);
+    combinedProcess.setRunStep(true);
+    combinedProcess.run();
+
+    // 5) Read bounded diagnostics and export the comparison report.
+    double gasFlow =
+        firstStageSeparator.getGasOutStream().getFlowRate("MSm3/day");
+    double outletTemperature =
+        compressor1.getOutletStream().getTemperature("C");
+    logger.info("Gas flow after separator: {} MSm3/day", gasFlow);
+    logger.info("Compressor outlet temperature: {} C", outletTemperature);
+
+    Report reporter = new Report(combinedProcess);
+    String jsonReport = reporter.generateJsonReport();
+    logger.info("{}", jsonReport);
+  }
+}
 ```
 
 Tips when translating the notebook to Java:
