@@ -1,6 +1,7 @@
 package neqsim;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -36,6 +37,22 @@ public class StandaloneJavaDocumentationCompilationTest {
 
   @TempDir
   Path compilationOutput;
+
+
+  /** Verifies that modernized standalone examples use the repository logging policy. */
+  @Test
+  void testModernizedStandaloneExampleUsesLog4j2() throws IOException {
+    Path sourceFile = Paths.get(System.getProperty("user.dir"), "docs", "examples",
+        "EclipseE300ExportImportExample.java").toAbsolutePath();
+    String source = new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
+
+    assertFalse(source.contains("System.out"), "Modernized example must not write to System.out");
+    assertFalse(source.contains("System.err"), "Modernized example must not write to System.err");
+    assertFalse(source.contains("printStackTrace"),
+        "Modernized example must preserve exception context through Log4j2");
+    assertTrue(source.contains("LogManager.getLogger(EclipseE300ExportImportExample.class)"),
+        "Modernized example must declare a class-scoped Log4j2 logger");
+  }
 
   /** Verifies that the complete standalone documentation-example corpus matches the current API. */
   @Test
