@@ -114,6 +114,34 @@ Four products have numeric laboratory and simulated ASTM D86 T5/T95 evidence:
 
 The residual laboratory curve is explicitly excluded from the numeric API because the paper states that it was unavailable and presents a non-numeric `550+` limit.
 
+
+### Strict NeqSim T95 comparison
+
+A calculated product standard can be compared with the three published Sarir T95 references
+through the strict 95 liquid-volume-percent Riazi-Daubert path:
+
+```java
+Standard_ASTM_D86 d86 = new Standard_ASTM_D86(productFluid);
+d86.calculate();
+
+SarirD86ProductComparison.Result comparison =
+    SarirD86ProductComparison.compareT95(d86, "Diesel");
+double neqsimT95C = comparison.getNeqsimT95Celsius();
+double laboratoryErrorPercent =
+    comparison.getNeqsimAbsoluteRelativeErrorPercent();
+double specificationMarginC = comparison.getSpecificationMarginCelsius();
+```
+
+The workflow delegates the NeqSim value to
+`Standard_ASTM_D86.getQualifiedD86Temperature(95.0)`. It retains the laboratory, HYSYS, and
+numeric specification values as read-only comparison evidence. Neither the source HYSYS value nor
+the specification is a tuning target, and no laboratory-agreement threshold is imposed.
+
+Sarir T5 values are not converted because 5 volume% is outside the qualified Riazi-Daubert
+recovery set. The residual `550+` specification also remains nonnumeric and fails closed. A
+specification margin is only arithmetic against the published reference; it is not an ASTM
+procedure or compliance determination.
+
 ## Independent product-rate evidence
 
 | Product | Plant (metric t/day) | HYSYS (metric t/day) | Absolute error (%) |
