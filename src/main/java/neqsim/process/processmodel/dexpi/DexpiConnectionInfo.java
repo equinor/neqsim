@@ -197,8 +197,8 @@ public final class DexpiConnectionInfo implements Serializable {
       String toElementName, String fromComponentClass, String fromComponentName, String fromTagName,
       String toComponentClass, String toComponentName, String toTagName, String fromOwnerId, String toOwnerId,
       String fromOwnerElementName, String toOwnerElementName, String fromOwnerComponentClass,
-      String fromOwnerComponentName, String fromOwnerTagName, String toOwnerComponentClass,
-      String toOwnerComponentName, String toOwnerTagName, boolean fromResolved, boolean toResolved) {
+      String fromOwnerComponentName, String fromOwnerTagName, String toOwnerComponentClass, String toOwnerComponentName,
+      String toOwnerTagName, boolean fromResolved, boolean toResolved) {
     this.id = normalize(id);
     this.sourceId = normalize(sourceId);
     this.segmentId = normalize(segmentId);
