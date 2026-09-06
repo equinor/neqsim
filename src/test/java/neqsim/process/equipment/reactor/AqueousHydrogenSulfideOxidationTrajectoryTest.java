@@ -149,6 +149,123 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
         .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Arrays.asList(overflow, overflow)));
   }
 
+  @Test
+  void testPiecewiseTargetCrossingMatchesSingleStateInverse() {
+    AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult single = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5, TEMPERATURE_K, PH, IONIC_STRENGTH);
+    List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments = Collections
+        .singletonList(referenceSegment(single.getLongestRequiredTimeHours()));
+
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossing = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.5, segments);
+
+    assertEquals(0.5, crossing.getTargetRemainingFraction(), 0.0);
+    assertEquals(Math.log(2.0), crossing.getRequiredExposure(), 0.0);
+    assertEquals(single.getShortestRequiredTimeHours(), crossing.getShortestTimeHours(), 1.0e-14);
+    assertEquals(single.getNominalRequiredTimeHours(), crossing.getNominalTimeHours(), 1.0e-14);
+    assertEquals(single.getLongestRequiredTimeHours(), crossing.getLongestTimeHours(), 1.0e-14);
+    assertEquals(0, crossing.getShortestCrossingSegmentIndex());
+    assertEquals(0, crossing.getNominalCrossingSegmentIndex());
+    assertEquals(0, crossing.getLongestCrossingSegmentIndex());
+    assertEquals(single.getLongestRequiredTimeHours(), crossing.getSuppliedTrajectoryTimeHours(), 0.0);
+  }
+
+  @Test
+  void testPiecewiseTargetCrossingMatchesForwardExposure() {
+    List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments = Arrays.asList(referenceSegment(10.0),
+        new AqueousHydrogenSulfideOxidationTrajectory.Segment(100.0, 310.15, 7.0, 1.5, 220.0e-6));
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossing = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.5, segments);
+
+    assertEquals(crossing.getRequiredExposure(),
+        exposureAtTime(segments, crossing.getShortestTimeHours(), 2), 1.0e-14);
+    assertEquals(crossing.getRequiredExposure(),
+        exposureAtTime(segments, crossing.getNominalTimeHours(), 1), 1.0e-14);
+    assertEquals(crossing.getRequiredExposure(),
+        exposureAtTime(segments, crossing.getLongestTimeHours(), 0), 1.0e-14);
+    assertTrue(crossing.getShortestTimeHours() < crossing.getNominalTimeHours());
+    assertTrue(crossing.getNominalTimeHours() < crossing.getLongestTimeHours());
+    assertTrue(crossing.getShortestCrossingSegmentIndex() <= crossing.getNominalCrossingSegmentIndex());
+    assertTrue(crossing.getNominalCrossingSegmentIndex() <= crossing.getLongestCrossingSegmentIndex());
+  }
+
+  @Test
+  void testTargetCrossingIsSplitInvariantMonotonicAndDeterministic() {
+    double longestHalfLife = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5, TEMPERATURE_K, PH, IONIC_STRENGTH)
+        .getLongestRequiredTimeHours();
+    List<AqueousHydrogenSulfideOxidationTrajectory.Segment> unsplit = Collections
+        .singletonList(referenceSegment(2.0 * longestHalfLife));
+    List<AqueousHydrogenSulfideOxidationTrajectory.Segment> split = Arrays.asList(referenceSegment(longestHalfLife),
+        referenceSegment(longestHalfLife));
+
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult loose = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.8, split);
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult strict = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.5, split);
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult repeat = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.5, split);
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult unsplitResult = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.5, unsplit);
+
+    assertTrue(loose.getShortestTimeHours() < strict.getShortestTimeHours());
+    assertTrue(loose.getNominalTimeHours() < strict.getNominalTimeHours());
+    assertTrue(loose.getLongestTimeHours() < strict.getLongestTimeHours());
+    assertEquals(unsplitResult.getShortestTimeHours(), strict.getShortestTimeHours(), 1.0e-14);
+    assertEquals(unsplitResult.getNominalTimeHours(), strict.getNominalTimeHours(), 1.0e-14);
+    assertEquals(unsplitResult.getLongestTimeHours(), strict.getLongestTimeHours(), 1.0e-14);
+    assertEquals(strict.getShortestTimeHours(), repeat.getShortestTimeHours(), 0.0);
+    assertEquals(strict.getNominalTimeHours(), repeat.getNominalTimeHours(), 0.0);
+    assertEquals(strict.getLongestTimeHours(), repeat.getLongestTimeHours(), 0.0);
+  }
+
+  @Test
+  void testTargetCrossingIdentityAndInvalidTrajectoryFailClosed() {
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult identity = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(1.0, Collections.singletonList(referenceSegment(0.0)));
+
+    assertEquals(0.0, identity.getRequiredExposure(), 0.0);
+    assertEquals(0.0, identity.getShortestTimeHours(), 0.0);
+    assertEquals(0.0, identity.getNominalTimeHours(), 0.0);
+    assertEquals(0.0, identity.getLongestTimeHours(), 0.0);
+    assertEquals(0, identity.getShortestCrossingSegmentIndex());
+    assertEquals(0, identity.getNominalCrossingSegmentIndex());
+    assertEquals(0, identity.getLongestCrossingSegmentIndex());
+
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.5, Collections.singletonList(referenceSegment(1.0))));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.0, Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(1.01, Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(Double.NaN, Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(0.5, null));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(0.5,
+            Collections.<AqueousHydrogenSulfideOxidationTrajectory.Segment>emptyList()));
+  }
+
+  private static double exposureAtTime(List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments,
+      double timeHours, int rateCase) {
+    double remainingTime = timeHours;
+    double exposure = 0.0;
+    for (AqueousHydrogenSulfideOxidationTrajectory.Segment segment : segments) {
+      double duration = Math.min(remainingTime, segment.getDurationHours());
+      AqueousHydrogenSulfideOxidationKinetics.RateConstantRange range = AqueousHydrogenSulfideOxidationKinetics
+          .secondOrderRateConstantRange(segment.getTemperatureK(), segment.getPH(),
+              segment.getIonicStrengthMolPerKgWater());
+      double secondOrderRate = rateCase == 0 ? range.getLower() : rateCase == 1 ? range.getNominal() : range.getUpper();
+      exposure += secondOrderRate * segment.getAirSaturatedOxygenMolality() * duration;
+      remainingTime -= duration;
+      if (remainingTime <= 0.0) {
+        break;
+      }
+    }
+    return exposure;
+  }
+
   private static AqueousHydrogenSulfideOxidationTrajectory.Segment referenceSegment(double durationHours) {
     return new AqueousHydrogenSulfideOxidationTrajectory.Segment(durationHours, TEMPERATURE_K, PH, IONIC_STRENGTH,
         AIR_SATURATED_OXYGEN_MOLALITY);
