@@ -143,8 +143,7 @@ public class CombinedModelsTest {
 
     Stream wellStreamHP = new Stream("HP well stream", wellFluid);
     wellStreamHP.setFlowRate(10.0, "MSm3/day");
-    ThreePhaseSeparator firstStageSeparator =
-        new ThreePhaseSeparator("1st stage separator", wellStreamHP);
+    ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage separator", wellStreamHP);
 
     ProcessSystem inletSection = new ProcessSystem();
     inletSection.add(wellStreamHP);
@@ -166,10 +165,8 @@ public class CombinedModelsTest {
     combinedProcess.setRunStep(true);
     combinedProcess.run();
 
-    double gasFlow =
-        firstStageSeparator.getGasOutStream().getFlowRate("MSm3/day");
-    double outletTemperature =
-        compressor1.getOutletStream().getTemperature("C");
+    double gasFlow = firstStageSeparator.getGasOutStream().getFlowRate("MSm3/day");
+    double outletTemperature = compressor1.getOutletStream().getTemperature("C");
     Assertions.assertTrue(Double.isFinite(gasFlow));
     Assertions.assertTrue(gasFlow > 0.0);
     Assertions.assertTrue(gasFlow <= 10.0);
