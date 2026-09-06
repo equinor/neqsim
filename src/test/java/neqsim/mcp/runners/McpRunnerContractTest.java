@@ -1,6 +1,7 @@
 package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.InputStream;
@@ -51,6 +52,77 @@ class McpRunnerContractTest {
       assertRequiredFields(toolName, response.getAsJsonObject("qualityGate"),
           contract.getAsJsonArray("requiredQualityGateFields"));
     }
+  }
+
+  /**
+   * Qualifies the bounded canonical ProcessSystem snapshot content.
+   */
+  @Test
+  void testSimulationStateSnapshotPreservesCanonicalContent() {
+    JsonObject response = JsonParser
+        .parseString(AutomationRunner.saveState(ExampleCatalog.processSimpleSeparation(), "phase0-snapshot", "1.0"))
+        .getAsJsonObject();
+    JsonObject data = response.getAsJsonObject("data");
+    JsonObject state = data.getAsJsonObject("state");
+
+    assertEquals("success", response.get("status").getAsString());
+    assertEquals("saveSimulationState", response.get("tool").getAsString());
+    assertEquals("phase0-snapshot", data.get("stateName").getAsString());
+    assertEquals("1.0", data.get("stateVersion").getAsString());
+    assertEquals("1.1", state.get("schemaVersion").getAsString());
+    assertEquals("phase0-snapshot", state.get("name").getAsString());
+    assertEquals("1.0", state.get("version").getAsString());
+    assertTrue(state.getAsJsonArray("equipmentStates").size() > 0);
+    assertTrue(state.getAsJsonObject("streamStates").size() > 0);
+    assertTrue(response.getAsJsonObject("validation").get("valid").getAsBoolean());
+    assertEquals("passed", response.getAsJsonObject("qualityGate").get("verdict").getAsString());
+  }
+
+  /**
+   * Qualifies deterministic identity and explicit metadata-version comparison for emitted snapshots.
+   */
+  @Test
+  void testSimulationStateComparisonReportsMetadataVersionChange() {
+    JsonObject saved = JsonParser
+        .parseString(AutomationRunner.saveState(ExampleCatalog.processSimpleSeparation(), "phase0-snapshot", "1.0"))
+        .getAsJsonObject();
+    JsonObject state = saved.getAsJsonObject("data").getAsJsonObject("state");
+
+    JsonObject identical = JsonParser.parseString(AutomationRunner.compareStates(state.toString(), state.toString()))
+        .getAsJsonObject();
+    assertFalse(identical.getAsJsonObject("data").get("hasChanges").getAsBoolean());
+
+    JsonObject revised = state.deepCopy();
+    revised.addProperty("version", "1.1");
+    JsonObject changed = JsonParser.parseString(AutomationRunner.compareStates(state.toString(), revised.toString()))
+        .getAsJsonObject();
+    JsonObject changedData = changed.getAsJsonObject("data");
+
+    assertEquals("success", changed.get("status").getAsString());
+    assertEquals("compareSimulationStates", changed.get("tool").getAsString());
+    assertTrue(changedData.get("hasChanges").getAsBoolean());
+    assertEquals("1.0 -> 1.1",
+        changedData.getAsJsonObject("diff").getAsJsonObject("modifiedParameters").get("version").getAsString());
+    assertTrue(changed.getAsJsonObject("validation").get("valid").getAsBoolean());
+    assertEquals("passed", changed.getAsJsonObject("qualityGate").get("verdict").getAsString());
+  }
+
+  /**
+   * Requires both state-snapshot tools to fail closed on missing primary inputs.
+   */
+  @Test
+  void testSimulationStateSnapshotInputsFailClosed() {
+    JsonObject missingProcess = JsonParser.parseString(AutomationRunner.saveState(null, "snapshot", "1.0"))
+        .getAsJsonObject();
+    JsonObject missingFirst = JsonParser.parseString(AutomationRunner.compareStates(null, "{}")).getAsJsonObject();
+    JsonObject missingSecond = JsonParser.parseString(AutomationRunner.compareStates("{}", "")).getAsJsonObject();
+
+    assertEquals("error", missingProcess.get("status").getAsString());
+    assertEquals("INPUT_ERROR", missingProcess.get("code").getAsString());
+    assertEquals("error", missingFirst.get("status").getAsString());
+    assertEquals("INPUT_ERROR", missingFirst.get("code").getAsString());
+    assertEquals("error", missingSecond.get("status").getAsString());
+    assertEquals("INPUT_ERROR", missingSecond.get("code").getAsString());
   }
 
   /**
