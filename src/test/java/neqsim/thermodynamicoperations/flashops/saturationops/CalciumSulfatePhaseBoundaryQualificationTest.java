@@ -47,6 +47,7 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     assertTrue(qualification.hasIndependentAqueousPressureEvidence());
     assertTrue(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureEvidenceRowAudited());
     assertFalse(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureDensityModelQualified());
+    assertFalse(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureResponseQualified());
     assertFalse(qualification.isAqueousLimitingVolumeEvidenceResolved());
     assertEquals("10.1021/je2013704", qualification.getAqueousPressureEvidenceDoi());
     assertEquals("https://www.nist.gov/open/license", qualification.getAqueousPressureEvidenceLicenseUri());
@@ -70,6 +71,13 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
         CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_RELATIVE_UNCERTAINTY, 0.0);
     assertEquals(0.0005,
         CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_RELATIVE_UNCERTAINTY, 0.0);
+    assertEquals(25, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_GROUP_COUNT);
+    assertEquals(172, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_COMPARISON_COUNT);
+    assertEquals(0.00596124964150643, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MARE, 0.0);
+    assertEquals(0.0073152811349379634, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_RMSRE, 0.0);
+    assertEquals(0.021286678807350468, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MAXARE, 0.0);
+    assertEquals(48.01423407881762,
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MAXIMUM_UNCERTAINTY_RATIO, 0.0);
     assertFalse(qualification.isHighPressureQualified());
     assertEquals("10.2475/ajs.261.1.61", qualification.getHighPressureLineageDoi());
     assertEquals(1.01325, CalciumSulfatePhaseBoundaryQualification.COMPSALT_PRESSURE_CORRECTION_REFERENCE_BARA, 0.0);
