@@ -103,14 +103,12 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   /** Optional product specification limits (point key -&gt; max temperature in Celsius). */
   private final Map<String, Double> specLimitsC = new LinkedHashMap<String, Double>();
 
-  /** Volume-percent breakpoints for the Riazi-Daubert ASTM D86 &harr; TBP interconversion. */
-  private static final double[] CONV_PCT = { 0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0 };
-
-  /** Coefficient a for T_TBP = a (T_D86)^b at each breakpoint (Kelvin). */
-  private static final double[] CONV_A = { 0.9177, 0.5564, 0.7617, 0.9013, 0.8821, 0.9552, 0.8177 };
-
-  /** Exponent b for T_TBP = a (T_D86)^b at each breakpoint (Kelvin). */
-  private static final double[] CONV_B = { 1.0019, 1.0900, 1.0425, 1.0176, 1.0226, 1.0110, 1.0355 };
+  /**
+   * Qualified Riazi-Daubert reference rows: recovery vol%, a, b, D86 range, and worked-example
+   * temperatures.
+   */
+  private static final double[][] CONVERSION_REFERENCE_DATA =
+      RiaziDaubertDistillationConversion.getReferenceData();
 
   /**
    * Reporting basis for the recovered (distilled) fraction of an ASTM D86 curve.
@@ -457,22 +455,25 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * @return a two-element array {a, b}
    */
   private double[] conversionCoefficients(double percent) {
-    int last = CONV_PCT.length - 1;
-    if (percent <= CONV_PCT[0]) {
-      return new double[] { CONV_A[0], CONV_B[0] };
+    int last = CONVERSION_REFERENCE_DATA.length - 1;
+    if (percent <= CONVERSION_REFERENCE_DATA[0][0]) {
+      return new double[] { CONVERSION_REFERENCE_DATA[0][1], CONVERSION_REFERENCE_DATA[0][2] };
     }
-    if (percent >= CONV_PCT[last]) {
-      return new double[] { CONV_A[last], CONV_B[last] };
+    if (percent >= CONVERSION_REFERENCE_DATA[last][0]) {
+      return new double[] { CONVERSION_REFERENCE_DATA[last][1], CONVERSION_REFERENCE_DATA[last][2] };
     }
-    for (int i = 1; i < CONV_PCT.length; i++) {
-      if (percent <= CONV_PCT[i]) {
-        double t = (percent - CONV_PCT[i - 1]) / (CONV_PCT[i] - CONV_PCT[i - 1]);
-        double a = CONV_A[i - 1] + t * (CONV_A[i] - CONV_A[i - 1]);
-        double b = CONV_B[i - 1] + t * (CONV_B[i] - CONV_B[i - 1]);
+    for (int i = 1; i < CONVERSION_REFERENCE_DATA.length; i++) {
+      if (percent <= CONVERSION_REFERENCE_DATA[i][0]) {
+        double t = (percent - CONVERSION_REFERENCE_DATA[i - 1][0])
+            / (CONVERSION_REFERENCE_DATA[i][0] - CONVERSION_REFERENCE_DATA[i - 1][0]);
+        double a = CONVERSION_REFERENCE_DATA[i - 1][1]
+            + t * (CONVERSION_REFERENCE_DATA[i][1] - CONVERSION_REFERENCE_DATA[i - 1][1]);
+        double b = CONVERSION_REFERENCE_DATA[i - 1][2]
+            + t * (CONVERSION_REFERENCE_DATA[i][2] - CONVERSION_REFERENCE_DATA[i - 1][2]);
         return new double[] { a, b };
       }
     }
-    return new double[] { CONV_A[last], CONV_B[last] };
+    return new double[] { CONVERSION_REFERENCE_DATA[last][1], CONVERSION_REFERENCE_DATA[last][2] };
   }
 
   /**
@@ -690,6 +691,57 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       curve[i][1] = Double.isNaN(temperatures[i]) ? Double.NaN : temperatures[i] - 273.15;
     }
     return curve;
+  }
+
+  /**
+   * Returns a source-qualified ASTM D86 temperature converted from the simulated TBP-like
+   * temperature at one published recovery point.
+   *
+   * <p>
+   * Only 0, 10, 30, 50, 70, 90, and 95 liquid-volume percent are accepted. Unlike the legacy
+   * full-curve conversion, this method does not interpolate correlation coefficients.
+   * </p>
+   *
+   * @param recoveryVolumePercent one of the seven published liquid-volume recovery percentages
+   * @return converted ASTM D86 temperature in degrees Celsius
+   * @throws IllegalArgumentException if the recovery point or converted temperature is outside
+   *         the published reference domain
+   * @throws IllegalStateException if {@link #calculate()} did not produce the required TBP-like
+   *         temperature
+   */
+  public double getQualifiedD86Temperature(double recoveryVolumePercent) {
+    return getQualifiedD86Temperature(recoveryVolumePercent, "C");
+  }
+
+  /**
+   * Returns a source-qualified ASTM D86 temperature in the requested unit.
+   *
+   * @param recoveryVolumePercent one of the seven published liquid-volume recovery percentages
+   * @param tempUnit temperature unit ("C", "K", "F", or "R")
+   * @return converted ASTM D86 temperature in the requested unit
+   * @throws IllegalArgumentException if the recovery point or converted temperature is outside
+   *         the published reference domain
+   * @throws IllegalStateException if {@link #calculate()} did not produce the required TBP-like
+   *         temperature
+   */
+  public double getQualifiedD86Temperature(double recoveryVolumePercent, String tempUnit) {
+    if (!RiaziDaubertDistillationConversion.isSupportedRecoveryPoint(recoveryVolumePercent)) {
+      throw new IllegalArgumentException(
+          "Qualified D86 conversion supports only 0, 10, 30, 50, 70, 90, or 95 vol%");
+    }
+
+    double fraction = recoveryVolumePercent / 100.0;
+    double tbpK = Math.abs(recoveryVolumePercent) < 1.0e-9 ? IBP
+        : getTemperatureAtFraction(fraction);
+    if (Double.isNaN(tbpK) || Double.isInfinite(tbpK)) {
+      throw new IllegalStateException(
+          "No simulated TBP-like temperature is available; call calculate() successfully first");
+    }
+
+    double d86C = RiaziDaubertDistillationConversion.convertTbpToD86C(tbpK - 273.15,
+        recoveryVolumePercent);
+    double correctedC = applyBarometricCorrectionK(d86C + 273.15) - 273.15;
+    return convertTempFromC(correctedC, tempUnit);
   }
 
   /**
