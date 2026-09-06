@@ -88,14 +88,14 @@ class McpRunnerContractTest {
         .getAsJsonObject();
     JsonObject state = saved.getAsJsonObject("data").getAsJsonObject("state");
 
-    JsonObject identical =
-        JsonParser.parseString(AutomationRunner.compareStates(state.toString(), state.toString())).getAsJsonObject();
+    JsonObject identical = JsonParser.parseString(AutomationRunner.compareStates(state.toString(), state.toString()))
+        .getAsJsonObject();
     assertFalse(identical.getAsJsonObject("data").get("hasChanges").getAsBoolean());
 
     JsonObject revised = state.deepCopy();
     revised.addProperty("version", "1.1");
-    JsonObject changed =
-        JsonParser.parseString(AutomationRunner.compareStates(state.toString(), revised.toString())).getAsJsonObject();
+    JsonObject changed = JsonParser.parseString(AutomationRunner.compareStates(state.toString(), revised.toString()))
+        .getAsJsonObject();
     JsonObject changedData = changed.getAsJsonObject("data");
 
     assertEquals("success", changed.get("status").getAsString());
