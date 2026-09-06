@@ -292,9 +292,9 @@ def test_missing_unknown_and_malformed_inputs_fail_closed(client):
 
 def test_inventory_remains_unpromoted(client):
     response = payload(client.call_tool("getCapabilities", {}))
-    inventory = response.get("evidenceInventory", {})
-    limitations = inventory.get("inventoryLimitations", {})
-    record = inventory.get("toolCoverageRecords", {}).get(
+    inventory = response.get("phase0EvidenceInventory", {})
+    limitations = inventory.get("knownLimitations", {})
+    record = limitations.get("coverageRecords", {}).get(
         "generateVisualization", {}
     )
     require(
