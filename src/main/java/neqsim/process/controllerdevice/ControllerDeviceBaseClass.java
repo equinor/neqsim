@@ -169,9 +169,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
 
     totalTime += dt;
-    if (isReverseActing()) {
-      propConstant = -1;
-    }
+    propConstant = isReverseActing() ? -1 : 1;
     double measurement = getMeasuredValue(unit);
     applyGainSchedule(measurement);
     oldoldError = oldError;
@@ -241,6 +239,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           TintValue = 0.0;
         }
 
+        double previousDerivativeState = derivativeState;
         derivative = (error - oldError) / dt;
         if (Td > 0) {
           if (derivativeFilterTime > 0) {
@@ -255,7 +254,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         // Velocity-form PI/PID adds only this step's integral increment to the
         // previous manipulated output. Adding the accumulated integral state here
         // integrates the error twice and causes accelerating drift.
-        delta = bumplessOffset + Kp * propStep + TintIncrement + Kp * Td * derivativeState;
+        // The derivative is also an absolute contribution: add its change so it
+        // decays out of the output when the error stops changing.
+        delta = bumplessOffset + Kp * propStep + TintIncrement + Kp * Td * (derivativeState - previousDerivativeState);
 
         response = initResponse + propConstant * delta;
 

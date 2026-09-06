@@ -377,6 +377,13 @@ controller.setReverseActing(true);   // Increase output to decrease PV
 controller.setReverseActing(false);  // Increase output to increase PV
 ```
 
+With an explicit engineering unit (for example, `setControllerSetPoint(50.0, "bara")`),
+the controller uses velocity-form PID: each step adds the proportional change,
+the integral increment, and the change in the derivative contribution to the
+previous output. Once an error stops changing, derivative action disappears;
+with a derivative filter it decays gradually. Switching `setReverseActing`
+between `true` and `false` takes effect on the next automatic control step.
+
 ### System-Level Controller Registration
 
 In addition to attaching controllers to individual equipment, controllers can be registered directly on the `ProcessSystem`. During each `runTransient()` call, the system automatically scans and executes all registered controllers **after** all equipment has been stepped and **before** measurements are collected:
