@@ -13,6 +13,9 @@ break exact-match regression baselines.
 
 This guide explains each flag, its impact, and when to use it.
 
+For complete process measurements, numerical checks, and the automatic stability-loop
+optimization, see the [large steady-state process benchmark](steady_state_performance_benchmark).
+
 ## Quick recommendation
 
 **You probably don't need to do anything.** Since 2026-04-21 warm-start is

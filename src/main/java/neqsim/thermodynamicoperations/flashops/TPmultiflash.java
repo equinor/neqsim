@@ -16,6 +16,7 @@ import org.ejml.dense.row.MatrixFeatures_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
@@ -502,6 +503,7 @@ public class TPmultiflash extends TPflash {
     // }
     minimumGibbsEnergySystem = system;
     clonedSystem.add(system.clone());
+    SystemInterface trialSystem = clonedSystem.get(0);
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
      * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; } double numb = 0;
@@ -634,15 +636,17 @@ public class TPmultiflash extends TPflash {
           oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
         }
         try {
-          clonedSystem.get(0).init(1, 1);
+          trialSystem.init(1, 1);
         } catch (Exception ex) {
           trialInitFailed = true;
           break;
         }
+        // Refresh the phase reference after initialization, which may change phase indexing.
+        PhaseInterface trialPhase = trialSystem.getPhase(1);
         for (int i = 0; i < numComp; i++) {
-          if (validComp[i]
-              && !Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())) {
-            logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+          ComponentInterface trialComponent = trialPhase.getComponent(i);
+          if (validComp[i] && !Double.isInfinite(trialComponent.getLogFugacityCoefficient())) {
+            logWi[i] = d[i] - trialComponent.getLogFugacityCoefficient();
           }
           deltalogWi[i] = logWi[i] - oldlogw[i];
           err += Math.abs(deltalogWi[i]);
@@ -676,7 +680,7 @@ public class TPmultiflash extends TPflash {
 
         // Update trial phase composition
         for (int i = 0; i < numComp; i++) {
-          clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+          trialPhase.getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
         }
       } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
 
@@ -837,7 +841,9 @@ public class TPmultiflash extends TPflash {
         iter++;
         err = 0;
 
-        if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
+        boolean successiveSubstitution = iter <= maxsucssubiter
+            || !system.isImplementedCompositionDeriativesofFugacity();
+        if (successiveSubstitution) {
           // DEM acceleration every 5th iteration (Michelsen 1982b, Risnes et al. 1981)
           // Uses dominant eigenvalue estimate: λ = (Δg_n · Δg_{n-1}) / (Δg_{n-1} ·
           // Δg_{n-1})
@@ -874,16 +880,19 @@ public class TPmultiflash extends TPflash {
               oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
             }
             try {
-              clonedSystem.get(0).init(1, 1);
+              trialSystem.init(1, 1);
             } catch (Exception ex) {
               pureTrialInitFailed = true;
               break;
             }
+            PhaseInterface trialPhase = trialSystem.getPhase(1);
+            PhaseInterface feedPhase = system.getPhase(0);
             for (int i = 0; i < nc; i++) {
-              if (!Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
-                  && system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
-                if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
+              ComponentInterface trialComponent = trialPhase.getComponent(i);
+              if (!Double.isInfinite(trialComponent.getLogFugacityCoefficient())
+                  && feedPhase.getComponent(i).getz() > 1e-100) {
+                logWi[i] = d[i] - trialComponent.getLogFugacityCoefficient();
+                if (trialComponent.getIonicCharge() != 0) {
                   logWi[i] = -1000.0;
                 }
               }
@@ -905,7 +914,7 @@ public class TPmultiflash extends TPflash {
           }
           // Newton needs fugcoef + composition derivatives
           try {
-            clonedSystem.get(0).init(3, 1);
+            trialSystem.init(3, 1);
           } catch (Exception ex) {
             pureTrialInitFailed = true;
             break;
@@ -917,18 +926,21 @@ public class TPmultiflash extends TPflash {
           }
 
           // Build gradient and Jacobian using raw EJML (no SimpleMatrix allocation)
+          PhaseInterface derivativePhase = trialSystem.getPhases()[1];
+          PhaseInterface feedPhase = system.getPhase(0);
           for (int i = 0; i < nc; i++) {
-            if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              newtonF.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                  + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient() - d[i]));
+            ComponentInterface feedComponent = feedPhase.getComponent(i);
+            ComponentInterface derivativeComponent = derivativePhase.getComponent(i);
+            if (feedComponent.getz() > 1e-100) {
+              newtonF.set(i, 0,
+                  Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + derivativeComponent.getLogFugacityCoefficient() - d[i]));
             } else {
               newtonF.set(i, 0, 0.0);
             }
             for (int k = 0; k < nc; k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
-              if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                newtonJ.set(i, k, kronDelt
-                    + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
+              if (feedComponent.getz() > 1e-100) {
+                newtonJ.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i]) * derivativeComponent.getdfugdn(k));
               } else {
                 newtonJ.set(i, k, 0.0);
               }
@@ -962,13 +974,19 @@ public class TPmultiflash extends TPflash {
         }
         // logger.info("err: " + err);
 
-        for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-            clonedSystem.get(0).getPhase(1).getComponent(i).setx(safeExp(logWi[i]));
+        PhaseInterface feedPhase = system.getPhase(0);
+        PhaseInterface trialPhase = trialSystem.getPhase(1);
+        for (int i = 0; i < feedPhase.getNumberOfComponents(); i++) {
+          ComponentInterface feedComponent = feedPhase.getComponent(i);
+          ComponentInterface trialComponent = trialPhase.getComponent(i);
+          if (feedComponent.getz() > 1e-100) {
+            // Substitution already evaluated this exact logWi into Wi; accepted DEM updates
+            // both, and rejected DEM leaves both unchanged. Newton instead forms Wi by squaring,
+            // so retain its original exp(log(Wi)) rounding and ionic log-weight handling.
+            trialComponent.setx(successiveSubstitution ? Wi[j][i] : safeExp(logWi[i]));
           }
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-              || system.getPhase(0).getComponent(i).isIsIon()) {
-            clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
+          if (feedComponent.getIonicCharge() != 0 || feedComponent.isIsIon()) {
+            trialComponent.setx(1e-50);
           }
         }
       } while (!pureTrialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
@@ -2041,226 +2059,7 @@ public class TPmultiflash extends TPflash {
     for (int k = system.getPhase(0).getNumberOfComponents() - 1; k >= 0; k--) {
       if (tm[k] < -1e-8 && !(Double.isNaN(tm[k]))) {
         system.addPhase();
-        unstabcomp = k;
-        for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-          system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
-        }
-        system.getPhases()[system.getNumberOfPhases() - 1].normalize();
-        multiPhaseTest = true;
-        system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
-        try {
-          system.init(1);
-        } catch (Exception ex) {
-          logger.warn("stabilityAnalysis3 addPhase init failed: " + ex.getMessage());
-          system.removePhaseKeepTotalComposition(system.getNumberOfPhases() - 1);
-          multiPhaseTest = false;
-          return;
-        }
-        system.normalizeBeta();
-
-        // logger.info("STABILITY ANALYSIS: ");
-        // logger.info("tm1: " + k + " "+ tm[k]);
-        // system.display();
-        return;
-      }
-    }
-    system.normalizeBeta();
-    // logger.info("STABILITY ANALYSIS: ");
-    // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
-    // system.display();
-  }
-
-  /**
-   * Adds a bounded vapor-like trial when an aqueous/hydrocarbon endpoint contains no gas phase.
-   *
-   * <p>
-   * The trial uses {@code x_i proportional to z_i K_i^Wilson} in log space. Wilson K-values are only an initial guess;
-   * the existing multiphase beta solve, material-balance checks, and fugacity-equality checks determine the accepted
-   * equilibrium. Bounding {@code ln(K_i)} avoids overflow for component sets with large volatility contrasts.
-   * </p>
-   *
-   * @return {@code true} when a gas trial was added and initialized
-   */
-  private boolean seedAdditionalPhaseFromFeed() {
-    if (!system.doMultiPhaseCheck()) {
-      return false;
-    }
-    if (system.getNumberOfPhases() >= 3) {
-      return false;
-    }
-    boolean hasAqueous = false;
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      PhaseType type = system.getPhase(phase).getType();
-      if (type == PhaseType.GAS && system.getPhase(phase).getBeta() > 1.0e-6) {
-        return false;
-      }
-      if (type == PhaseType.AQUEOUS) {
-        hasAqueous = true;
-      }
-    }
-    if (!hasAqueous) {
-      return false;
-    }
-    double waterZ = 0.0;
-    try {
-      waterZ = system.getComponent("water").getz();
-    } catch (Exception ex) {
-      for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-        if ("water".equals(system.getPhase(0).getComponent(comp).getComponentName())) {
-          waterZ = system.getPhase(0).getComponent(comp).getz();
-          break;
-        }
-      }
-    }
-    if (waterZ < 1.0e-4) {
-      return false;
-    }
-    boolean hasHydrocarbon = false;
-    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      if (system.getPhase(0).getComponent(comp).isHydrocarbon()
-          && system.getPhase(0).getComponent(comp).getz() > 1.0e-4) {
-        hasHydrocarbon = true;
-        break;
-      }
-    }
-    if (!hasHydrocarbon) {
-      return false;
-    }
-    system.addPhase();
-    int phaseIndex = system.getNumberOfPhases() - 1;
-    system.setPhaseType(phaseIndex, PhaseType.GAS);
-    double[] logTrialComposition = new double[system.getPhase(0).getNumberOfComponents()];
-    double maximumLogTrialComposition = Double.NEGATIVE_INFINITY;
-    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      ComponentInterface component = system.getPhase(0).getComponent(comp);
-      double z = component.getz();
-      double logTrial = Math.log(Math.max(z, 1.0e-100));
-      double criticalTemperature = component.getTC();
-      double criticalPressure = component.getPC();
-      if (z > 0.0 && criticalTemperature > 0.0 && criticalPressure > 0.0) {
-        double logWilsonK = Math.log(criticalPressure / system.getPressure())
-            + 5.373 * (1.0 + component.getAcentricFactor()) * (1.0 - criticalTemperature / system.getTemperature());
-        if (Double.isFinite(logWilsonK)) {
-          logTrial += Math.max(-50.0, Math.min(50.0, logWilsonK));
-        }
-      }
-      logTrialComposition[comp] = logTrial;
-      maximumLogTrialComposition = Math.max(maximumLogTrialComposition, logTrial);
-    }
-    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      double x = Math.exp(logTrialComposition[comp] - maximumLogTrialComposition);
-      system.getPhase(phaseIndex).getComponent(comp).setx(Math.max(x, 1.0e-16));
-    }
-    system.getPhases()[phaseIndex].normalize();
-    double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
-    system.setBeta(phaseIndex, initialBeta);
-    system.normalizeBeta();
-    try {
-      system.init(1);
-    } catch (Exception ex) {
-      logger.warn("seedGasPhase init failed: " + ex.getMessage());
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Ensures only one aqueous phase exists in the system. The aqueous phase is the one with the highest aqueous
-   * component content (water, MEG, TEG, DEG, methanol, ethanol, and ions). Other liquid phases are reclassified as OIL
-   * by moving their aqueous components (water, glycols, ions) to the true aqueous phase and keeping hydrocarbons in the
-   * oil phase. This method applies to systems with ions (where ions must be confined to the aqueous phase) or chemical
-   * systems.
-   */
-  private void ensureSingleAqueousPhase() {
-    // Only needed for systems with ions or chemical systems - skip for simple molecular systems
-    if ((!system.isChemicalSystem() && !system.hasIons()) || system.getNumberOfPhases() < 2) {
-      return;
-    }
-
-    // Count how many non-gas phases are classified as AQUEOUS
-    int aqueousCount = 0;
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
-        aqueousCount++;
-      }
-    }
-
-    if (aqueousCount <= 1) {
-      return; // Already have at most one aqueous phase
-    }
-
-    // Hydrate and non-reactive electrolyte flashes select the aqueous phase containing the largest material amount of
-    // aqueous components. Weighting by beta prevents a salt-free numerical phase at the phase-fraction floor from
-    // replacing the material brine. Other reactive operations retain their established composition-only selection.
-    boolean useMaterialAqueousInventory = !system.isChemicalSystem() || isCoupledReactiveHydrateFlash();
-    int bestAqueousPhase = -1;
-    double maxAqueousInventory = -1.0;
-
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      if ((useMaterialAqueousInventory && system.getPhase(phase).getType() != PhaseType.AQUEOUS)
-          || (!useMaterialAqueousInventory && system.getPhase(phase).getType() == PhaseType.GAS)) {
-        continue;
-      }
-
-      double aqueousContent = 0.0;
-      for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
-        ComponentInterface component = system.getPhase(phase).getComponent(comp);
-        String name = component.getComponentName().toLowerCase();
-        // Count water, glycols, alcohols, and ions as aqueous components
-        if (name.equals("water") || name.equals("meg") || name.equals("teg") || name.equals("deg")
-            || name.equals("methanol") || name.equals("ethanol") || component.getIonicCharge() != 0
-            || component.isIsIon()) {
-          aqueousContent += component.getx();
-        }
-      }
-
-      double aqueousInventory = useMaterialAqueousInventory ? system.getBeta(phase) * aqueousContent : aqueousContent;
-      if (aqueousInventory > maxAqueousInventory) {
-        maxAqueousInventory = aqueousInventory;
-        bestAqueousPhase = phase;
-      }
-    }
-
-    if (bestAqueousPhase < 0) {
-      return;
-    }
-
-    // For phases that are AQUEOUS but not the best aqueous phase:
-    // Move hydrocarbons to dominate, set aqueous components and ions to trace
-    // This will cause init() to reclassify them as OIL
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      if (phase == bestAqueousPhase || system.getPhase(phase).getType() == PhaseType.GAS) {
-        continue;
-      }
-
-      if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
-        // This phase should become OIL - adjust compositions
-        // Set ions and most aqueous components to trace amounts
-        for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
-          ComponentInterface component = system.getPhase(phase).getComponent(comp);
-          String name = component.getComponentName().toLowerCase();
-
-          if (component.getIonicCharge() != 0 || component.isIsIon()) {
-            // Ions only in aqueous phase
-            component.setx(1e-50);
-          } else if (name.equals("water")) {
-            // Reduce water significantly but keep trace for solubility
-            component.setx(Math.min(component.getx() * 0.01, 1e-4));
-          } else if (name.equals("meg") || name.equals("teg") || name.equals("deg") || name.equals("methanol")
-              || name.equals("ethanol")) {
-            // Reduce glycols/alcohols
-            component.setx(Math.min(component.getx() * 0.1, 1e-3));
-          }
-          // Hydrocarbons keep their current x values
-        }
-        system.getPhase(phase).normalize();
-      }
-    }
-
-    // Reinitialize - phase types will be recalculated based on new compositions
-    try {
-      system.init(1);
-    } catch (Exception ex) {
+        un…2421 tokens truncated…{
       logger.warn("ensureSingleAqueousPhase init failed: " + ex.getMessage());
     }
   }

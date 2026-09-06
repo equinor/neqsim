@@ -112,6 +112,7 @@ fluid = jneqsim.thermo.system.SystemSrkEos(300.0, 50.0)
 | Document | Description |
 |----------|-------------|
 | [Performance Tuning Guide](performance_tuning) | Speed up simulations — warm-start K-values, flowsheet routing, stability short-circuit, and when to enable each optimization |
+| [Large Steady-State Benchmark](steady_state_performance_benchmark) | Paired JVM measurements, bottleneck attribution, and numerical checks for large process models |
 | [TR/NORSOK Integration Recommendations](TR_NORSOK_integration_recommendations) | Synthesis of Equinor TR and NORSOK standard review with concrete recommendations for skills, agents, Java code, and data access |
 | [AI Extraction Skill Proposal](GITHUB_ISSUE_json_extraction_skill) | Feature proposal: extract process data from unstructured documents (text, PFDs, data sheets) into NeqSim JSON |
 
@@ -136,4 +137,3 @@ For deeper understanding of NeqSim's architecture:
 - [NeqSim Python Package](https://github.com/equinor/neqsim-python)
 - [Main Documentation](../)
 - [Reference Manual](../REFERENCE_MANUAL_INDEX)
-
