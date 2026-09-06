@@ -511,6 +511,12 @@ evidence. Never tune a public closure to the commercial trace; validate the next
 increment against the public Tengesdal experiment, conservation, nearby points, and mesh/time-step
 refinement.
 
+Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
+completed intervals needs `N + 1` events, so the settled window must span at least `N` times the
+largest admissible cycle period, plus phase and boundary margin. Keep shorter runs as numerical
+characterization when they cannot contain the qualification cycle count; enforce the complete
+cycle gate in the long-duration qualification run.
+
 ## Running Dynamic Simulation
 
 ```java
