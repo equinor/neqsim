@@ -734,11 +734,25 @@ Source: M. R. Riazi and T. E. Daubert, “Analytical correlations interconvert
 distillation-curve types,” *Oil & Gas Journal*, vol. 84, no. 34, pp. 50–54, 57,
 August 25, 1986 ([public bibliographic record](https://www.osti.gov/biblio/5212509)).
 
+After `Standard_ASTM_D86.calculate()` has generated the simulated TBP-like curve, a strict
+reference-point conversion is available directly from the standard:
+
+```java
+double qualifiedD86T50C = d86.getQualifiedD86Temperature(50.0);
+double qualifiedD86T90K = d86.getQualifiedD86Temperature(90.0, "K");
+```
+
+`getQualifiedD86Temperature` delegates to the qualified reference converter, accepts only the
+seven published recovery points, enforces the point-specific source domain, and applies the
+standard's configured barometric correction after conversion. An unsupported recovery such as
+5 vol% is rejected; the method does not interpolate coefficients.
+
 This empirical conversion does not implement the ASTM D86 laboratory procedure, establish
 standards conformance, or independently validate NeqSim's simulated full curve against
-laboratory measurements. The existing `Standard_ASTM_D86.TBP_CONVERTED` reporting basis also
-retains its legacy coefficient interpolation behavior and therefore has a broader, explicitly
-unqualified boundary than this discrete reference API.
+laboratory measurements. The existing `Standard_ASTM_D86.TBP_CONVERTED` basis and
+`getD86Curve()` retain their legacy full-curve coefficient interpolation for compatibility.
+They now reuse the qualified coefficient table as their single data source, but intermediate
+recovery points remain explicitly unqualified.
 
 ---
 

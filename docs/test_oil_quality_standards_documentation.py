@@ -165,6 +165,7 @@ class OilQualityStandardsDocumentationContractTest(unittest.TestCase):
 
     def test_result_and_specification_boundaries_are_explicit(self):
         d4052_source = self.sources["Standard_ASTM_D4052"]
+        d86_source = self.sources["Standard_ASTM_D86"]
         bsw_source = self.sources["Standard_BSW"]
         self.assertNotIn("setMinAPIGravity", d4052_source)
         self.assertNotIn("setMaxAPIGravity", d4052_source)
@@ -182,6 +183,10 @@ class OilQualityStandardsDocumentationContractTest(unittest.TestCase):
             "are temperatures",
             self.guide,
         )
+        self.assertIn("getQualifiedD86Temperature(", d86_source)
+        self.assertIn("reference-point conversion is available", self.guide)
+        self.assertIn("legacy full-curve coefficient interpolation", self.guide)
+        self.assertIn("recovery points remain explicitly unqualified", self.guide)
 
     def test_standards_indexes_discover_the_guide(self):
         link = "[Oil-quality methods](oil_quality_standards)"
