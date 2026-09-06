@@ -355,6 +355,10 @@ double ambientReactionVolume =
     evidence.getCrystallographicTransitionReactionVolumeCm3PerMol();
 double compsaltReactionVolume =
     evidence.getCompsaltTransitionReactionVolumeCm3PerMol();
+boolean independentAqueousPressureEvidence =
+    evidence.hasIndependentAqueousPressureEvidence();
+boolean aqueousLimitingVolumeResolved =
+    evidence.isAqueousLimitingVolumeEvidenceResolved();
 double requiredWaterActivity25C = evidence.getRequiredWaterActivityAt25Celsius();
 boolean publicationReady = evidence.isPublicationReady();
 ```
@@ -402,6 +406,21 @@ pressure response is not a pure-mineral-volume mapping. It is a diagnostic, not 
 `Vdelta`: published cell standard errors do not bound thermal expansion, compressibility, sample
 and other systematic effects, or aqueous partial molar volumes. Consequently
 `highPressureQualified` and `aqueousSpeciesVolumeResolved` remain false.
+
+The result also registers the independent finite-concentration aqueous pressure evidence separately
+from the missing limiting-volume term. Al Ghafri et al. (2012),
+[DOI 10.1021/je2013704](https://doi.org/10.1021/je2013704), provide 197 CaCl2 density points in
+[NIST ThermoML](https://trc.nist.gov/ThermoML/10.1021/je2013704.html): 1–6 mol/kg, 283–472 K, and
+pressures through 68.5 MPa, with reported relative density uncertainties of 0.03–0.05%. The
+machine-readable record is available under the [NIST data license](https://www.nist.gov/open/license)
+and is suitable as an independent pressure-response hold-out. Its lowest concentration is 1 mol/kg,
+so it cannot determine the infinite-dilution CaCl2 volume needed to close the calcium-sulfate
+reaction-volume cycle. The candidate dilute lineage, Oakes et al. (1990),
+[DOI 10.1021/je00061a022](https://doi.org/10.1021/je00061a022), predates the ThermoML archive;
+row-level audit, propagated uncertainty, and redistribution-compatible provenance remain unresolved.
+Accordingly `hasIndependentAqueousPressureEvidence()` is true while
+`isAqueousLimitingVolumeEvidenceResolved()` remains false. These flags register evidence scope only;
+they do not change a COMPSALT coefficient or make high-pressure calcium-sulfate use qualified.
 
 The process-system test carries the solid ledger beside the residual fluid through a
 `Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Its
