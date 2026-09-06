@@ -1,6 +1,6 @@
-# MCP simulation-state snapshot qualification evidence
+# MCP simulation-state snapshot contract evidence
 
-`saveSimulationState` and `compareSimulationStates` are the existing in-memory lifecycle snapshot surfaces over the canonical solved NeqSim `ProcessSystem`. This note records the bounded qualification evidence for issue #3153. It does not change production behavior or promote either tool in the Phase 0 inventory.
+`saveSimulationState` and `compareSimulationStates` are the existing in-memory lifecycle snapshot surfaces over the canonical solved NeqSim `ProcessSystem`. Merged PR #3500 established the bounded qualification evidence; inventory 1.28 now records both paired tools as `CONTRACT_TESTED` without changing production behavior or public schemas.
 
 ## Qualified software behavior
 
@@ -13,9 +13,9 @@ The focused Java regression and packaged STDIO harness exercise:
 - deterministic no-change comparison for an identical emitted snapshot;
 - explicit `version: 1.0 -> 1.1` reporting when only snapshot metadata changes;
 - fail-closed blank process input and blank first or second comparison input;
-- unchanged inventory `1.27 / 20 explicit + 26 contract-tested + 25 confirmed gaps`, with both tools remaining `CONFIRMED_GAP` until a later atomic promotion from merged evidence.
+- atomic inventory `1.28 / 20 explicit + 28 contract-tested + 23 confirmed gaps`, with both records carrying applicability, evidence sources and limitations.
 
-The Java evidence is `McpRunnerContractTest`. The real packaged-MCP evidence is `neqsim-mcp-server/test_simulation_state_snapshot_protocol.py`. The read-only `MCP protocol qualification` workflow runs both before the comprehensive protocol regression.
+The Java evidence is `McpRunnerContractTest`. The real packaged-MCP evidence is `neqsim-mcp-server/test_simulation_state_snapshot_protocol.py`. The read-only `MCP protocol qualification` workflow runs both before the comprehensive protocol regression. `ProcessSystemStateTest` retains the underlying canonical lifecycle-state coverage.
 
 ## Inputs, outputs and units
 
@@ -25,17 +25,17 @@ The lifecycle layer introduces no engineering unit conversion. Units, bases and 
 
 ## Engineering and scientific boundary
 
-This qualification is deliberately limited to serialization, structural presence, route equivalence, metadata-version comparison and fail-closed inputs. It does not establish:
+This classification is deliberately limited to serialization, structural presence, route equivalence, identical and metadata-version comparison, fail-closed inputs, standard envelope evidence, and packaged transport. It does not establish:
 
-- complete stream-value, equipment-parameter or topology-difference detection;
-- reconstruction, replay or application of a snapshot to a live model;
+- complete process-state capture or complete stream-value, equipment-parameter or topology-difference detection;
+- reconstruction, replay, restoration or application of a snapshot to a live model;
 - persistence across calls, processes, restarts, clients or deployments;
 - numerical accuracy, model fidelity, convergence adequacy or component, mass or energy closure;
-- distributed durability, transactionality, encryption, signing or tenant isolation;
+- distributed durability, transactionality, encryption, signing, tenant isolation or external authorization;
 - optimization quality, causal troubleshooting, plant/control authority, certification or accountable engineering approval.
 
 `manageState` remains the distinct local file-backed session-persistence contract. The normal `ProcessSystem`, `ProcessModel`, model registry and session lifecycle remain authoritative.
 
 ## Phase 0 accounting boundary
 
-This qualification leaves inventory version `1.27` unchanged at `20 EXPLICIT_TRUST + 26 CONTRACT_TESTED + 25 CONFIRMED_GAP`. `saveSimulationState` and `compareSimulationStates` remain confirmed gaps while this evidence is open or draft. A later atomic promotion may move both records only after this qualification merges and all coupled machine-readable, Java, packaged-protocol and documentation accounting can change together.
+Inventory version `1.28` atomically moves the paired records from `CONFIRMED_GAP` to `CONTRACT_TESTED`, changing coverage from `20/26/25` to `20/28/23`. Coverage remains incomplete and `scientificValidationComplete=false`; the promotion records a bounded software contract and makes no scientific benchmark or facility-suitability claim.

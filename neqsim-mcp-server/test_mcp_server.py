@@ -1561,14 +1561,15 @@ def test_capabilities():
         "generateReport", "bridgeTaskWorkflow",
         "listSimulationUnits",
         "listUnitVariables",
-        "getSimulationVariable", "setSimulationVariable", "diagnoseAutomation",
+        "getSimulationVariable", "setSimulationVariable",
+        "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("twenty-six bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.27"
-          and limitations.get("contractTestedToolCount") == 26
-          and limitations.get("confirmedGapToolCount") == 25
+    check("twenty-eight bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.28"
+          and limitations.get("contractTestedToolCount") == 28
+          and limitations.get("confirmedGapToolCount") == 23
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1659,7 +1660,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 25
+          and limitations.get("confirmedGapToolCount") == 23
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

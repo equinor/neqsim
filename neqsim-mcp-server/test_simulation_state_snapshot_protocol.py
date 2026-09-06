@@ -287,24 +287,40 @@ def test_missing_inputs_fail_closed(client):
         require(error_code(response) == "INPUT_ERROR", label + " code drifted", response)
 
 
-def test_phase0_inventory_remains_gap(client):
+def test_phase0_inventory_is_promoted_atomically(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
     limitations = inventory.get("knownLimitations", {})
     records = limitations.get("coverageRecords", {})
-    require(inventory.get("inventoryVersion") == "1.27", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.28", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 26
-        and limitations.get("confirmedGapToolCount") == 25,
-        "qualification changed inventory accounting",
+        limitations.get("contractTestedToolCount") == 28
+        and limitations.get("confirmedGapToolCount") == 23
+        and limitations.get("contractPromotionCandidateCount") == 0,
+        "promotion inventory accounting drifted",
         limitations,
     )
-    for tool_name in ("saveSimulationState", "compareSimulationStates"):
+    expected = {
+        "saveSimulationState":
+            "NOT_APPLICABLE_NON_NUMERICAL_CANONICAL_PROCESS_STATE_SNAPSHOT",
+        "compareSimulationStates":
+            "NOT_APPLICABLE_NON_NUMERICAL_PROCESS_STATE_SNAPSHOT_COMPARISON",
+    }
+    for tool_name, applicability in expected.items():
+        record = records.get(tool_name, {})
         require(
-            records.get(tool_name, {}).get("coverageStatus") == "CONFIRMED_GAP",
-            tool_name + " was promoted before merged qualification",
-            records.get(tool_name),
+            record.get("coverageStatus") == "CONTRACT_TESTED"
+            and record.get("benchmarkApplicability") == applicability,
+            tool_name + " promotion is incomplete",
+            record,
+        )
+        require(
+            "neqsim-mcp-server/test_simulation_state_snapshot_protocol.py"
+            in record.get("contractEvidenceSources", [])
+            and "plant or control authority" in record.get("evidenceBoundary", ""),
+            tool_name + " evidence boundary drifted",
+            record,
         )
 
 
@@ -316,7 +332,7 @@ def main():
         ("identical snapshot comparison", test_identical_comparison),
         ("metadata-version comparison", test_version_comparison),
         ("missing snapshot inputs fail closed", test_missing_inputs_fail_closed),
-        ("Phase 0 classification remains a gap", test_phase0_inventory_remains_gap),
+        ("Phase 0 classification is promoted atomically", test_phase0_inventory_is_promoted_atomically),
     ]
     try:
         client.start()
