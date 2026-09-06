@@ -550,7 +550,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         + "<Equipment ID=\"E-IN\" ComponentClass=\"Separator\" ComponentName=\"InletSeparator\">"
         + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"V-101\"/></GenericAttributes>"
         + "<Nozzle ID=\"N-IN\"/></Equipment>"
-        + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\">"
+        + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\" ComponentName=\"MainSegment\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"L-100-1\"/></GenericAttributes>"
         + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-2\" ComponentClass=\"PipingNetworkSegment\">"
         + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>" + "</PlantModel>";
@@ -565,6 +566,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("S-1/connection-1", firstConnection.getId());
     assertFalse(firstConnection.hasSourceId());
     assertEquals("S-1", firstConnection.getSegmentId());
+    assertEquals("PipingNetworkSegment", firstConnection.getSegmentComponentClass());
+    assertEquals("MainSegment", firstConnection.getSegmentComponentName());
+    assertEquals("L-100-1", firstConnection.getSegmentTagName());
     assertEquals("N-OUT", firstConnection.getFromId());
     assertEquals("N-IN", firstConnection.getToId());
     assertEquals("Nozzle", firstConnection.getFromElementName());
@@ -584,6 +588,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("S-2/connection-1", first.getConnections().get(1).getId());
     assertEquals(2, countDiagnostics(first, "DEXPI_IMPORT_CONNECTION_ID_SYNTHESIZED"));
     assertTrue(first.toJson().contains("\"connectionCount\": 2"));
+    assertTrue(first.toJson().contains("\"segmentTagName\": \"L-100-1\""));
     assertEquals(first.toJson(), second.toJson());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnections().clear());
   }
@@ -669,6 +674,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("", legacy.getToOwnerComponentClass());
     assertEquals("", legacy.getToOwnerComponentName());
     assertEquals("", legacy.getToOwnerTagName());
+    assertEquals("", legacy.getSegmentComponentClass());
+    assertEquals("", legacy.getSegmentComponentName());
+    assertEquals("", legacy.getSegmentTagName());
   }
 
   @Test
