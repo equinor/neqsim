@@ -243,9 +243,15 @@ and JPype reviewers inspect complete cycle-local endpoint evidence without joini
 endpoint inventory. `getConnections()` exposes the corresponding immutable
 `DexpiConnectionInfo` records in the same order, including source connection and owning
 `PipingNetworkSegment` identities, endpoint resolution, resolved element names, and explicit
-Equipment/PipingComponent ownership. Each immutable `DexpiConnectionCycleInfo` links to its owning
-weak connection component, keeps unresolved endpoint IDs visible, and separately lists source-ordered
-connection occurrences entering and leaving the cyclic group. Boundary lists preserve parallel
+Equipment/PipingComponent ownership. Each immutable `DexpiConnectionCycleInfo` retains its owning
+weak connection-component ID and, for reader-produced values, exposes the exact complete immutable
+`DexpiConnectionComponentInfo` from the global component inventory through
+`getConnectionComponent()`. This keeps the component's endpoint, connection, incidence, resolution,
+and provenance evidence local to the cycle without copying or re-resolving it.
+`hasConnectionComponentEvidence()` distinguishes that projection from legacy values constructed
+through the older overloads; their getter returns `null` while the component ID and all existing
+cycle evidence remain unchanged. The cycle also keeps unresolved endpoint IDs visible and separately
+lists source-ordered connection occurrences entering and leaving the cyclic group. Boundary lists preserve parallel
 references and exclude connections whose source or target identity is blank.
 `getBoundaryConnections()` additionally preserves the overall source order
 across incoming and outgoing occurrences. Each immutable `DexpiConnectionCycleBoundaryInfo` records
