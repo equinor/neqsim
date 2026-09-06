@@ -149,7 +149,7 @@ public class CombinedModelsTest {
     inletSection.add(wellStreamHP);
     inletSection.add(firstStageSeparator);
 
-    Stream compressorFeed = firstStageSeparator.getGasOutStream();
+    StreamInterface compressorFeed = firstStageSeparator.getGasOutStream();
     Compressor compressor1 = new Compressor("Compressor1", compressorFeed);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
