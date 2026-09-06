@@ -185,6 +185,43 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.trajectory_test)
 
+    def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
+        for token in (
+            "Piecewise target crossing",
+            "`AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)`",
+            r"E_{\mathrm{target}}=-\ln f",
+            "shortest, nominal, and longest elapsed crossing times",
+            "source-order segment index for each crossing",
+            "fraction of one crosses at exact time zero",
+            "unchanged-state segment split cannot change",
+            "Every lower, nominal, and upper path must reach the target",
+            "does not extend the final state",
+            "does not locate a position in a pipeline",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static TargetCrossingRangeResult timeToRemainingFractionRange(",
+            "private static Crossing locateCrossing(",
+            "private enum RateCase",
+            "public static final class TargetCrossingRangeResult",
+            "getShortestTimeHours()",
+            "getNominalTimeHours()",
+            "getLongestTimeHours()",
+            "getShortestCrossingSegmentIndex()",
+            "getNominalCrossingSegmentIndex()",
+            "getLongestCrossingSegmentIndex()",
+        ):
+            self.assertIn(token, self.trajectory)
+
+        for token in (
+            "testPiecewiseTargetCrossingMatchesSingleStateInverse",
+            "testPiecewiseTargetCrossingMatchesForwardExposure",
+            "testTargetCrossingIsSplitInvariantMonotonicAndDeterministic",
+            "testTargetCrossingIdentityAndInvalidTrajectoryFailClosed",
+        ):
+            self.assertIn(token, self.trajectory_test)
+
     def test_stop_boundary_prevents_pipeline_overclaim(self):
         for token in (
             "does not assign products or consume oxygen",
