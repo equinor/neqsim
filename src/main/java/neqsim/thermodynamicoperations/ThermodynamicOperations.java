@@ -37,6 +37,7 @@ import neqsim.thermodynamicoperations.flashops.TSFlash;
 import neqsim.thermodynamicoperations.flashops.TUflash;
 import neqsim.thermodynamicoperations.flashops.TVflash;
 import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
+import neqsim.thermodynamicoperations.flashops.VUflashPureEOSCG;
 import neqsim.thermodynamicoperations.flashops.VUflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.dTPflash;
 import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
@@ -1122,12 +1123,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param warmStartInitialization whether the initialization TP flash may reuse current K-values
    */
   public void VUflash(double Vspec, double Uspec, boolean warmStartInitialization) {
-    if (isPureComponentWithinInternalEnergyRange(Uspec)) {
+    if (isPureEOSCGSystem()) {
+      operation = new VUflashPureEOSCG(system, Vspec, Uspec);
+    } else if (isPureComponentWithinInternalEnergyRange(Uspec)) {
       operation = new VUflashSingleComp(system, Vspec, Uspec);
     } else {
       operation = new OptimizedVUflash(system, Vspec, Uspec, warmStartInitialization);
     }
     getOperation().run();
+  }
+
+  private boolean isPureEOSCGSystem() {
+    return system.getPhase(0).getNumberOfComponents() == 1 && "EOS-CG".equals(system.getModelName());
   }
 
   private boolean isPureComponentWithinInternalEnergyRange(double Uspec) {

@@ -90,10 +90,23 @@ public class NeqSimEOSCG {
   }
 
   public double getPressure() {
-    double moldens = getMolarDensity();
+    return getPressure(getMolarDensity());
+  }
+
+  /**
+   * Calculate pressure at a specified molar density.
+   *
+   * @param molarDensityMolPerL molar density in mol/L
+   * @return pressure in kPa
+   * @throws IllegalArgumentException if the density is not finite and positive
+   */
+  public double getPressure(double molarDensityMolPerL) {
+    if (!Double.isFinite(molarDensityMolPerL) || molarDensityMolPerL <= 0.0) {
+      throw new IllegalArgumentException("Molar density must be finite and positive");
+    }
     doubleW P = new doubleW(0.0);
     doubleW Z = new doubleW(0.0);
-    eosCG.pressure(phase.getTemperature(), moldens, normalizedComposition, P, Z);
+    eosCG.pressure(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, P, Z);
     return P.val;
   }
 
@@ -104,18 +117,24 @@ public class NeqSimEOSCG {
   }
 
   public double getMolarDensity() {
-    int flag = 0;
-    if (phase != null) {
-      PhaseType type = phase.getType();
-      if (type == PhaseType.LIQUID || type == PhaseType.OIL || type == PhaseType.AQUEOUS) {
-        flag = 2; // search for high density root
-      }
-    }
+    return getMolarDensity(phase.getType());
+  }
+
+  /**
+   * Get the molar-density root associated with a requested phase type.
+   *
+   * @param phaseType phase type selecting the vapor or liquid density root
+   * @return molar density in mol/L
+   * @throws IllegalStateException if the requested density root cannot be found
+   */
+  public double getMolarDensity(PhaseType phaseType) {
+    boolean liquidRoot = phaseType == PhaseType.LIQUID || phaseType == PhaseType.OIL || phaseType == PhaseType.AQUEOUS;
+    int flag = liquidRoot ? 2 : 0;
     intW ierr = new intW(0);
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 1.0e2;
-    if (flag == 2) {
+    if (liquidRoot) {
       double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, density -> {
         doubleW calculatedPressure = new doubleW(0.0);
         doubleW compressibility = new doubleW(0.0);
@@ -127,9 +146,9 @@ public class NeqSimEOSCG {
       }
     }
     eosCG.density(flag, phase.getTemperature(), pressure, normalizedComposition, D, ierr, herr);
-    if (ierr.val != 0) {
-      // System.out.println("NeqSimEOSCG: Density solver failed. ierr=" + ierr.val + ", herr=" +
-      // herr.val);
+    if (ierr.val != 0 || !Double.isFinite(D.val) || D.val <= 0.0) {
+      throw new IllegalStateException("EOS-CG density calculation failed for phase type " + phaseType + " at "
+          + phase.getTemperature() + " K and " + phase.getPressure() + " bar: " + herr.val);
     }
     return D.val;
   }
@@ -160,6 +179,20 @@ public class NeqSimEOSCG {
   }
 
   public double[] propertiesEOSCG() {
+    return propertiesEOSCG(getMolarDensity());
+  }
+
+  /**
+   * Calculate EOS-CG properties at a specified molar density without solving a pressure-density root.
+   *
+   * @param molarDensityMolPerL molar density in mol/L
+   * @return property vector in the native EOS-CG units
+   * @throws IllegalArgumentException if the density is not finite and positive
+   */
+  public double[] propertiesEOSCG(double molarDensityMolPerL) {
+    if (!Double.isFinite(molarDensityMolPerL) || molarDensityMolPerL <= 0.0) {
+      throw new IllegalArgumentException("Molar density must be finite and positive");
+    }
     doubleW p = new doubleW(0.0);
     doubleW z = new doubleW(0.0);
     doubleW dpdd = new doubleW(0.0);
@@ -176,9 +209,8 @@ public class NeqSimEOSCG {
     doubleW jt = new doubleW(0.0);
     doubleW kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
-    double dens = getMolarDensity();
-    eosCG.properties(phase.getTemperature(), dens, normalizedComposition, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv,
-        cp, w, g, jt, kappa, A);
+    eosCG.properties(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, p, z, dpdd, d2pdd2, d2pdtd,
+        dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
     return new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val, cv.val, cp.val,
         w.val, g.val, jt.val, kappa.val };
   }
@@ -311,26 +343,48 @@ public class NeqSimEOSCG {
     for (double value : notNormalizedComposition) {
       result += value;
     }
+    if (result < 1.0e-30) {
+      Arrays.fill(normalizedComposition, 0.0);
+      return;
+    }
     for (int k = 0; k < normalizedComposition.length; k++) {
       normalizedComposition[k] = notNormalizedComposition[k] / result;
     }
   }
 
   public doubleW[] getAlpha0_EOSCG() {
+    return getAlpha0_EOSCG(getMolarDensity());
+  }
+
+  /**
+   * Calculate ideal Helmholtz-energy derivatives at a specified molar density.
+   *
+   * @param molarDensityMolPerL molar density in mol/L
+   * @return ideal Helmholtz-energy derivative vector
+   */
+  public doubleW[] getAlpha0_EOSCG(double molarDensityMolPerL) {
     double temperature = phase.getTemperature();
-    double molarDensity = getMolarDensity(phase);
     int rows = 4;
     doubleW[] a0 = new doubleW[rows];
     for (int i = 0; i < rows; i++) {
       a0[i] = new doubleW(0.0);
     }
-    eosCG.alpha0(temperature, molarDensity, normalizedComposition, a0);
+    eosCG.alpha0(temperature, molarDensityMolPerL, normalizedComposition, a0);
     return a0;
   }
 
   public doubleW[][] getAlphares_EOSCG() {
+    return getAlphares_EOSCG(getMolarDensity());
+  }
+
+  /**
+   * Calculate residual Helmholtz-energy derivatives at a specified molar density.
+   *
+   * @param molarDensityMolPerL molar density in mol/L
+   * @return residual Helmholtz-energy derivative matrix
+   */
+  public doubleW[][] getAlphares_EOSCG(double molarDensityMolPerL) {
     double temperature = phase.getTemperature();
-    double molarDensity = getMolarDensity(phase);
 
     int rows = 4;
     int cols = 4;
@@ -341,7 +395,7 @@ public class NeqSimEOSCG {
       }
     }
 
-    eosCG.alphar(2, 3, temperature, molarDensity, normalizedComposition, ar);
+    eosCG.alphar(2, 3, temperature, molarDensityMolPerL, normalizedComposition, ar);
     return ar;
   }
 
