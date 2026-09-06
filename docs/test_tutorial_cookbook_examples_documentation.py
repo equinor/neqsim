@@ -66,6 +66,12 @@ INDEX_PAGES = (
     DOCS / "tutorials/index.md",
 )
 
+PROCESS_COMPARISON_PAGE = DOCS / "examples/comparesimulations_quickstart.md"
+COMBINED_MODELS_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/process/processmodel/CombinedModelsTest.java"
+)
+
 
 def metadata_value(metadata, name):
     """Return a plain scalar, including folded YAML front-matter values."""
@@ -140,8 +146,60 @@ def link_candidates(page, raw_target):
     )
 
 
+def section_after_heading(source, heading):
+    """Return the Markdown section that starts at an exact level-two heading."""
+    match = re.search(
+        rf"^{re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
+        source,
+        re.MULTILINE | re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError(f"Missing section: {heading}")
+    return match.group("section")
+
+
 class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-6 documentation surface."""
+
+    def test_process_comparison_quickstart_matches_executable_regression(self):
+        page = PROCESS_COMPARISON_PAGE.read_text(encoding="utf-8")
+        java_test = COMBINED_MODELS_TEST.read_text(encoding="utf-8")
+        section = section_after_heading(page, "## Step-by-step Java example")
+
+        self.assertNotIn("System.out", section)
+        self.assertIn("ProcessComparisonQuickStart", section)
+        self.assertIn("LogManager.getLogger(ProcessComparisonQuickStart.class)", section)
+        self.assertIn("logger.info(", section)
+        self.assertIn("testProcessComparisonQuickStart", java_test)
+
+        workflow_markers = (
+            "new SystemSrkEos(310.0, 50.0)",
+            'setFlowRate(10.0, "MSm3/day")',
+            'new ThreePhaseSeparator("1st stage separator", wellStreamHP)',
+            "firstStageSeparator.getGasOutStream()",
+            'setOutletPressure(100.0, "bara")',
+            "combinedProcess.setRunStep(true)",
+            "combinedProcess.run()",
+            "reporter.generateJsonReport()",
+        )
+        for marker in workflow_markers:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, section)
+                self.assertIn(marker, java_test)
+
+        regression_markers = (
+            "Double.isFinite(gasFlow)",
+            "gasFlow > 0.0",
+            "gasFlow <= 10.0",
+            "Double.isFinite(outletTemperature)",
+            "outletTemperature > 36.85",
+            "outletTemperature < 300.0",
+            "Assertions.assertFalse(jsonReport.isEmpty())",
+            "Assertions.assertEquals(combinedProcess.getReport_json(), jsonReport)",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
 
     def test_frozen_scope_exists(self):
         self.assertEqual(48, len(SCOPE_PAGES))
