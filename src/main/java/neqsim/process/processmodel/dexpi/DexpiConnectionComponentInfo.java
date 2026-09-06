@@ -69,17 +69,17 @@ public final class DexpiConnectionComponentInfo implements Serializable {
    * @param potentialMultiConnectionEndpointIds endpoints with multiple incoming or outgoing occurrences
    * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
    */
-  public DexpiConnectionComponentInfo(String id, List<String> endpointIds,
-      List<DexpiConnectionEndpointInfo> endpoints, List<String> connectionIds, List<DexpiConnectionInfo> connections,
-      List<String> sourceEndpointIds, List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
+  public DexpiConnectionComponentInfo(String id, List<String> endpointIds, List<DexpiConnectionEndpointInfo> endpoints,
+      List<String> connectionIds, List<DexpiConnectionInfo> connections, List<String> sourceEndpointIds,
+      List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
       List<String> unresolvedEndpointIds) {
     this(id, endpointIds, endpoints, connectionIds, connections, sourceEndpointIds, sinkEndpointIds,
         potentialMultiConnectionEndpointIds, unresolvedEndpointIds, true);
   }
 
-  private DexpiConnectionComponentInfo(String id, List<String> endpointIds,
-      List<DexpiConnectionEndpointInfo> endpoints, List<String> connectionIds, List<DexpiConnectionInfo> connections,
-      List<String> sourceEndpointIds, List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
+  private DexpiConnectionComponentInfo(String id, List<String> endpointIds, List<DexpiConnectionEndpointInfo> endpoints,
+      List<String> connectionIds, List<DexpiConnectionInfo> connections, List<String> sourceEndpointIds,
+      List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
       List<String> unresolvedEndpointIds, boolean completeEvidence) {
     this.id = normalize(id);
     this.endpointIds = immutableCopy(endpointIds);
