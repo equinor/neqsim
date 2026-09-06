@@ -544,8 +544,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadWithDiagnosticsPreservesParallelMaterialConnections() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Equipment ID=\"E-OUT\" ComponentClass=\"CentrifugalPump\" ComponentName=\"ExportPump\""
-        + " TagName=\"P-101\"><Nozzle ID=\"N-OUT\"/></Equipment>"
+        + "<Equipment ID=\"E-OUT\" ComponentClass=\"CentrifugalPump\" ComponentName=\"ExportPump\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"P-101\"/></GenericAttributes>"
+        + "<Nozzle ID=\"N-OUT\"/></Equipment>"
         + "<Equipment ID=\"E-IN\" ComponentClass=\"Separator\" ComponentName=\"InletSeparator\">"
         + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"V-101\"/></GenericAttributes>"
         + "<Nozzle ID=\"N-IN\"/></Equipment>"
@@ -590,8 +591,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadWithDiagnosticsPreservesDirectConnectionOwnerProvenance() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<PipingComponent ID=\"PC-DIRECT\" ComponentClass=\"GlobeValve\" ComponentName=\"ValveShape\""
-        + " TagName=\"XV-101\"/>" + "<Equipment ID=\"E-DIRECT\" ComponentClass=\"Tank\" ComponentName=\"TankShape\">"
+        + "<PipingComponent ID=\"PC-DIRECT\" ComponentClass=\"GlobeValve\" ComponentName=\"ValveShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"XV-101\"/></GenericAttributes>"
+        + "</PipingComponent><Equipment ID=\"E-DIRECT\" ComponentClass=\"Tank\" ComponentName=\"TankShape\">"
         + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"TK-101\"/>"
         + "</GenericAttributes></Equipment>"
         + "<PipingNetworkSegment ID=\"S-DIRECT\"><Connection ID=\"C-DIRECT\" FromID=\"PC-DIRECT\""
