@@ -806,9 +806,27 @@ pipe.setNumberOfSections(20);
 pipe.run();
 ```
 
-If the downstream pressure is known, set a constant outlet pressure before `run()`. The steady-state
-solver calculates the pressure-gradient shape from flow, friction, gravity, and holdup, then aligns
-the absolute profile to the specified pressure boundary:
+If the downstream pressure is known, set a constant outlet pressure before `run()`. The specified
+pressure participates in the iterative momentum and thermodynamic solve: each property update uses
+the boundary-aligned local pressure and temperature. The solver must settle both the hydraulic
+profile and its flashed properties before reporting convergence. An explicit inlet pressure is
+handled within the same iteration when it supplies the pressure boundary.
+
+This replaces the earlier final-only pressure shift, which could leave phase densities evaluated
+at a different pressure from the reported profile. The inlet stream remains unchanged. With fixed
+mass flow and outlet pressure, the pipe inlet pressure is a calculated result; changing the feed
+pressure as an initial guess must not determine a different converged single-phase solution.
+Existing friction, holdup, slip and terrain closure defaults are retained. Correcting inconsistent
+thermodynamic states can change an explicitly pressure-constrained result, so previous benchmark
+values for those cases require re-evaluation on the tested revision.
+
+Periodic steady flashes update the transported oil/water volume fractions while preserving the
+hydraulic in-situ split already obtained from the slip closure. A newly appearing second liquid
+is seeded from the flash; subsequent momentum sweeps determine its in-situ fraction. If one liquid
+disappears, the remaining liquid retains the total hydraulic holdup for the next closure update.
+The slip calculation recovers the prescribed liquid mass flux before splitting the transported
+volume flow between oil and water. It then synchronizes bulk liquid velocity and momentum with
+the phase momenta, preventing slip from changing the prescribed total liquid mass flow.
 
 ```java
 pipe.setOutletPressure(55.0, "bara");
@@ -1318,6 +1336,56 @@ cannot overshoot the balance temperature — unlike explicit per-increment stepp
 
 ## Validation Status
 
+### One-, two-, and three-phase regression contract
+
+`TwoFluidPipeSteadyBoundaryThermodynamicsTest` requires independently flashed gas, oil and aqueous
+densities to agree with each section's reported pressure and temperature. It also checks explicit
+inlet/outlet pressures, unchanged feed state, a fixed-outlet gas profile reached from different
+feed-pressure guesses, and a short unchanged-boundary gas transient with thermodynamic refresh.
+
+`TwoFluidPipeDynamicPhaseEnvelopeRegressionTest` requires the following seven phase combinations
+under both RK2 and IMEX pressure correction. Each fixture must first produce its stated physical
+phases and converge without a pressure floor or wall-clock termination.
+
+| Phase count | Present phases | Tests require |
+|-------------|----------------|---------------|
+| One | Gas | Oil and water remain exactly absent |
+| One | Oil | No gas void or aqueous inventory is created |
+| One | Water | No gas void or hydrocarbon-liquid inventory is created |
+| Two | Gas + oil | Gas and oil inventories remain positive; water stays absent |
+| Two | Gas + water | Gas and aqueous inventories remain positive; oil stays absent |
+| Two | Oil + water | Both liquid inventories remain positive without creating a gas void |
+| Three | Gas + oil + water | All three inventories remain positive and close their own balances |
+
+For every row, the tests require continuous pressure and holdup across an infinitesimal
+steady-to-transient handoff, followed separately by conservative response to a short 10% inlet-flow
+increase. They check the accepted phase inlet masses, elapsed time, bounded holdups and phase mass
+residuals. The stationary reference must also reproduce local equilibrium phase mass fluxes from
+an independent flash and retain the final mass-weighted liquid specific enthalpy after oil/water
+slip is applied. The compact mechanical cases disable phase transfer and thermal evolution and defer
+transient thermodynamic refresh; they do not qualify residence-time settling, phase-change dynamics
+or experimental accuracy. Test execution evidence must state the tested revision and results.
+
+Combined oil/water specific enthalpy is mass weighted because its unit is J/kg:
+
+$$h_L=\frac{m_Oh_O+m_Wh_W}{m_O+m_W}.$$
+
+Here $m_O$ and $m_W$ are the oil and aqueous masses used to form the liquid thermodynamic state;
+$h_O$ and $h_W$ are their specific enthalpies in J/kg. At initialization the corresponding phase
+mass-flow weights give the same mixture property. Oil-only and water-only limits reduce to the
+active phase enthalpy. Volume weighting would not conserve the combined liquid enthalpy.
+
+These are consistency and conservation requirements. The long-horizon liquid-rich, severe-slugging
+and free-water steady-state limitations elsewhere in this guide remain separate acceptance gates.
+
+The corrective regression run covers a one-second 10% feed-rate step for every phase combination.
+The separate, already disabled 1800 s liquid-rich fixed-point test was also executed explicitly:
+inventory drift was **5.3435%**, above its unchanged **5%** limit. It remains unqualified; neither
+the short phase matrix nor the corrected pressure-boundary initialization overrides that result.
+Controlled metastable trace-phase tests freeze thermodynamic properties to isolate hydraulic
+continuity. Separate public `run()` tests require equilibrium flashes to remove a dissolved trace
+phase from every cell, including the inlet, without changing the feed object.
+
 ### Evidence levels
 
 Passing software tests establish numerical regressions, API behavior, and conservation. They do
@@ -1359,12 +1427,12 @@ Remaining limitations:
   maximum holdup moved from 0.222 to 0.022. The response
   scales with `sin(theta)` as it should: the same closure gives an 11-fold valley-to-crest holdup
   variation on a 5 km line undulating at 8.6 degrees.
-- **The three-phase free-water case does not converge.** With 15 m3/hr of free water on the same
-  line the solve is wall-clock limited after 4078 iterations at a 1200 s budget. The pressure drop
-  is identical to the 300 s run to 0.01 bar, so the profile
-  is stationary and the convergence criterion is stalling on the three-phase liquid split rather
-  than the solution diverging - but `isSteadyStateConverged()` is correctly false and the number
-  must not be quoted.
+- **The historical three-phase free-water case remains unqualified.** With 15 m3/hr of free water
+  on the same line, the earlier solve was wall-clock limited after 4078 iterations at a 1200 s
+  budget. Its pressure drop agreed with the 300 s run to 0.01 bar while the three-phase liquid
+  split did not converge; `isSteadyStateConverged()` was correctly false. That 73.8 km case has
+  not been rerun for the pressure-boundary and oil/water-split corrections described here. Compact
+  regression coverage does not resolve this historical case or qualify its reported pressure drop.
 - All observations are model-internal on one line.
 
 ### Implemented regression tests

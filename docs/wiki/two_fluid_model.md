@@ -861,7 +861,25 @@ The `TwoFluidPipe` supports two simulation modes: steady-state initialization vi
 
 ### Steady-State Simulation: `run()`
 
-The `run()` method performs a complete steady-state initialization of the pipeline. This is typically called once at the start to establish initial conditions before transient simulation.
+The `run()` method attempts a steady-state initialization of the pipeline. This is typically called
+once at the start to establish initial conditions before transient simulation; always inspect its
+convergence flags.
+
+An explicit pressure boundary participates in the iterative momentum and EOS-property solve.
+Section flashes use the boundary-aligned local pressure and temperature, and convergence requires
+the thermodynamic properties as well as the hydraulic profile to settle. This replaces a final-only
+pressure shift that could leave densities evaluated at the old pressure. With prescribed flow and
+outlet pressure, the pipe inlet pressure is calculated without modifying the inlet stream. An
+explicit inlet pressure is included in the iteration when it supplies the pressure boundary.
+Friction, holdup, slip and terrain closure defaults are retained; previously inconsistent results
+at an explicit pressure boundary can change and must be rechecked on the tested revision.
+
+Periodic steady flashes refresh transported oil/water volume fractions while preserving the
+hydraulic in-situ split. Only a newly appearing second liquid is seeded from the flash. If one
+liquid disappears, the remaining liquid retains the total hydraulic holdup for the next closure
+update. The slip calculation first recovers the prescribed liquid mass flux, splits its transported
+volume flow into oil and water, and synchronizes bulk liquid velocity and momentum with the phase
+momenta. This keeps the phase split consistent with the specified liquid throughput.
 
 **What happens during `run()`:**
 
@@ -896,8 +914,8 @@ The `run()` method performs a complete steady-state initialization of the pipeli
 ```
 
 **Key characteristics:**
-- **Fixed inlet conditions:** Uses inlet stream pressure, temperature, composition
-- **Iterative convergence:** Pressure and holdup profiles converge simultaneously
+- **Inlet specification:** Uses feed flow, temperature and composition; the configured pressure boundary determines the absolute pipe pressure
+- **Iterative convergence:** Pressure, holdup and flashed phase properties must settle together
 - **Terrain-aware holdups:** Liquid accumulates at low points
 - **Single call:** Establishes initial state for subsequent transient runs
 - **Does not throw on failure:** the outcome must be read back (see below)
@@ -1106,6 +1124,51 @@ $$
 This allows the inlet pressure to evolve naturally in response to changing flow conditions.
 
 ## Benchmark Validation
+
+### Phase-limit and steady-boundary regression requirements
+
+`TwoFluidPipeSteadyBoundaryThermodynamicsTest` requires phase densities consistent with independent
+flashes at the reported section pressure and temperature, unchanged feed state, and a fixed-outlet
+gas solution independent of its feed-pressure initial guess. It also exercises a short gas
+transient with thermodynamic refresh and unchanged boundaries.
+
+`TwoFluidPipeDynamicPhaseEnvelopeRegressionTest` defines seven phase combinations:
+
+| Phase count | Present phases | Tests require |
+|-------------|----------------|---------------|
+| One | Gas | Exactly absent oil and water |
+| One | Oil | Exactly absent water and no gas void |
+| One | Water | Exactly absent oil and no gas void |
+| Two | Gas + oil | Positive active inventories and exactly absent water |
+| Two | Gas + water | Positive active inventories and exactly absent oil |
+| Two | Oil + water | Positive liquid inventories and no gas void |
+| Three | Gas + oil + water | Positive, independently conserved phase inventories |
+
+Each row requires a converged stationary reference, an infinitesimal handoff without a pressure or
+holdup jump, and a separate short 10% inlet-flow perturbation with correct phase inlet masses and
+closing phase balances. The final stationary state must also match independently flashed local
+phase mass fluxes and the mass-weighted liquid specific enthalpy after oil/water slip. Both RK2
+and IMEX pressure correction are exercised. These compact cases
+disable phase transfer and thermal evolution and defer transient thermodynamic refresh to isolate
+mechanical transport. They do not establish long-time settling or broad dynamic accuracy; report
+execution results for the tested revision separately.
+
+Oil/water specific enthalpy in J/kg uses mass weights, $h_L=(m_Oh_O+m_Wh_W)/(m_O+m_W)$,
+with the corresponding phase mass-flow weights at initialization. It reduces to the active liquid
+enthalpy in the pure-oil and pure-water limits. This preserves the enthalpy of the combined liquid;
+volume weights are inappropriate for a mass-specific property.
+
+The new phase matrix exercises a one-second 10% feed-rate step. An explicit rerun of the already
+disabled 1800 s liquid-rich fixed-point case still gives **5.3435%** inventory drift, exceeding its
+unchanged **5%** limit. Long-duration liquid-rich behaviour remains unqualified. Metastable trace
+continuity is tested with frozen thermodynamic properties; separate public equilibrium tests
+require dissolved trace liquid to disappear from every cell, including the inlet.
+
+The public severe-slugging, long-horizon liquid-rich and unconverged free-water steady cases retain
+their existing qualification limits. See the
+[model validation status](../process/TWOFLUIDPIPE_MODEL.md#validation-status) for the full scope.
+
+### Existing comparison benchmarks
 
 The `TwoFluidPipeBenchmarkTest` provides 19 tests validating `TwoFluidPipe` against `PipeBeggsAndBrills` and analytical results. Key benchmark numbers:
 
@@ -1554,11 +1617,12 @@ measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
 - **Terrain response comes from the momentum balance, not a multiplier.** The annular film closure
   now carries the gravity term, so holdup responds to inclination as `sin(theta)`. At 4 MSm3/d the
   maximum holdup fell from 0.222 to 0.022 when the empirical multiplier was removed.
-- **The three-phase free-water case does not converge.** With 15 m3/hr of free water the solve is
-  wall-clock limited after 4078 iterations at a 1200 s budget.
-  The pressure drop does not move between a 300 s and a 1200 s budget, so the criterion is stalling
-  on the three-phase liquid split rather than the solution diverging. Always check
-  `isSteadyStateConverged()` on a water-bearing line.
+- **The historical three-phase free-water case remains unqualified.** With 15 m3/hr of free water,
+  the earlier 73.8 km solve was wall-clock limited after 4078 iterations at a 1200 s budget.
+  Its pressure drop was stationary between 300 s and 1200 s budgets while the oil/water split
+  did not converge. This long case has not been rerun for the pressure-boundary and split
+  corrections described here; the compact regressions do not establish that it is resolved.
+  Always check `isSteadyStateConverged()` on a water-bearing line.
 - **Pressure drop does not always respond to a temperature change.** In an earlier revision, adding
   10 MW of heating raised the arrival temperature 22 K but left the computed pressure drop
   unchanged; warmer gas at fixed mass rate is less dense and ΔP ~ G²/ρ must rise. Treat pressure
