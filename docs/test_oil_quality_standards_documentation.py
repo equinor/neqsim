@@ -186,7 +186,7 @@ class OilQualityStandardsDocumentationContractTest(unittest.TestCase):
         self.assertIn("getQualifiedD86Temperature(", d86_source)
         self.assertIn("reference-point conversion is available", self.guide)
         self.assertIn("legacy full-curve coefficient interpolation", self.guide)
-        self.assertIn("intermediate recovery points remain explicitly unqualified", self.guide)
+        self.assertIn("recovery points remain explicitly unqualified", self.guide)
 
     def test_standards_indexes_discover_the_guide(self):
         link = "[Oil-quality methods](oil_quality_standards)"
