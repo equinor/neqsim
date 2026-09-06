@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.27");
+    inventory.addProperty("inventoryVersion", "1.28");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "generateReport and bridgeTaskWorkflow are CONTRACT_TESTED by merged reporting-handoff evidence; manageSecurity is CONTRACT_TESTED by merged security-management evidence; setSimulationVariable is CONTRACT_TESTED by merged canonical mutation Java and packaged-MCP evidence; inventory 1.27 has no candidate.");
+        "generateReport, bridgeTaskWorkflow, manageSecurity, and setSimulationVariable are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.28 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: twenty-six bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records: twenty-eight bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -454,6 +454,26 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_simulation_variable_write_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/SIMULATION_VARIABLE_WRITE_CONTRACT.md" };
       evidenceBoundary = "Typed INPUT-address mutation, requested-unit handling, rerun/report sequencing, inline/model-handle equivalence, exact OUTPUT-only and physical-bound rejection, fail-closed missing inputs, fuzzy recovery, and packaged transport are contract-tested; this does not establish numerical accuracy, convergence, conservation, persistence, optimization quality, plant or control authority, certification, or engineering approval";
+      break;
+    case "saveSimulationState":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_CANONICAL_PROCESS_STATE_SNAPSHOT";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/processmodel/lifecycle/ProcessSystemState.java",
+          "src/test/java/neqsim/mcp/runners/McpRunnerContractTest.java",
+          "src/test/java/neqsim/process/processmodel/lifecycle/ProcessSystemStateTest.java",
+          "neqsim-mcp-server/test_simulation_state_snapshot_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/SIMULATION_STATE_SNAPSHOT_CONTRACT.md" };
+      evidenceBoundary = "Canonical solved-ProcessSystem snapshot serialization, requested name/version, bounded equipment/stream structure, inline/model-handle equivalence, fail-closed inputs, standard envelope evidence, and packaged transport are contract-tested; this does not establish complete process-state capture, replay or restoration, persistence, numerical accuracy, convergence, conservation, isolation or security, plant or control authority, certification, or engineering approval";
+      break;
+    case "compareSimulationStates":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_PROCESS_STATE_SNAPSHOT_COMPARISON";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/processmodel/lifecycle/ProcessSystemState.java",
+          "src/test/java/neqsim/mcp/runners/McpRunnerContractTest.java",
+          "src/test/java/neqsim/process/processmodel/lifecycle/ProcessSystemStateTest.java",
+          "neqsim-mcp-server/test_simulation_state_snapshot_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/SIMULATION_STATE_SNAPSHOT_CONTRACT.md" };
+      evidenceBoundary = "Identical-snapshot and explicit metadata-version comparison, fail-closed missing inputs, standard envelope evidence, and packaged transport are contract-tested; this does not establish complete stream-value, equipment-parameter or topology-difference detection, replay or restoration, persistence, numerical accuracy, convergence, conservation, causal diagnosis, plant or control authority, certification, or engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";
