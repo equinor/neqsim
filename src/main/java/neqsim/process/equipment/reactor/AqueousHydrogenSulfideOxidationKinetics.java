@@ -246,8 +246,7 @@ public final class AqueousHydrogenSulfideOxidationKinetics implements Serializab
    */
   public static TargetTimeRangeResult timeToRemainingFractionRange(double airSaturatedOxygenMolality,
       double targetRemainingFraction, double temperatureK, double pH, double ionicStrengthMolPerKgWater) {
-    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0
-        || targetRemainingFraction > 1.0) {
+    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0 || targetRemainingFraction > 1.0) {
       throw new IllegalArgumentException("target remaining fraction must be finite and in the interval (0, 1]");
     }
 
