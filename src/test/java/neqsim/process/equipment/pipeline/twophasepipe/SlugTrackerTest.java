@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
@@ -30,7 +31,7 @@ class SlugTrackerTest {
     sections = new PipeSection[20];
 
     for (int i = 0; i < 20; i++) {
-      sections[i] = new PipeSection(i * 50, 50, 0.3, 0);
+      sections[i] = new PipeSection((i + 0.5) * 50, 50, 0.3, 0);
       sections[i].setElevation(0);
       sections[i].setRoughness(0.0001);
       sections[i].setFlowRegime(FlowRegime.SLUG);
@@ -338,5 +339,112 @@ class SlugTrackerTest {
 
     // Local inclination should be updated
     assertTrue(Math.abs(slug.localInclination) > 0);
+  }
+
+  @Test
+  void testThreeSlugMergeRetainsEverySlugMass() {
+    addTerrainSlug(300.0, 290.0);
+    addTerrainSlug(289.5, 279.5);
+    addTerrainSlug(279.0, 269.0);
+    double borrowedMass = tracker.getTotalMassBorrowedFromEulerian();
+
+    tracker.advanceSlugs(sections, 1.0e-4);
+
+    assertEquals(1, tracker.getSlugCount(), "All three adjacent bodies should merge in one step");
+    assertEquals(2, tracker.getTotalSlugsMerged());
+    SlugUnit merged = tracker.getSlugs().get(0);
+    assertTrue(merged.frontPosition >= 300.0, "The survivor must retain the downstream front");
+    assertEquals(borrowedMass, merged.borrowedLiquidMass, 1.0e-9);
+    assertEquals(0.0, tracker.getMassConservationError(), 1.0e-9);
+  }
+
+  @Test
+  void testLongSlugRemainsUntilTailExits() {
+    SlugUnit slug = addTerrainSlug(1010.0, 950.0);
+
+    tracker.advanceSlugs(sections, 0.1);
+
+    assertEquals(1, tracker.getSlugCount(), "A front beyond the outlet must not erase the body still inside");
+    assertTrue(slug.tailPosition < 1000.0);
+    assertTrue(sections[sections.length - 1].isInSlugBody());
+  }
+
+  @Test
+  void testDissipationPreservesEulerianLiquidAndClearsFlags() {
+    SlugUnit slug = addTerrainSlug(200.0, 199.0);
+    slug.age = 11.0;
+    double[] holdup = new double[sections.length];
+    for (int i = 0; i < sections.length; i++) {
+      holdup[i] = sections[i].getLiquidHoldup();
+    }
+
+    tracker.advanceSlugs(sections, 0.01);
+
+    assertEquals(0, tracker.getSlugCount());
+    assertEquals(0.0, tracker.getMassConservationError(), 1.0e-9);
+    for (int i = 0; i < sections.length; i++) {
+      assertEquals(holdup[i], sections[i].getLiquidHoldup(), 0.0,
+          "Removing an overlay must not deposit liquid that was never withdrawn");
+      assertFalse(sections[i].isInSlugBody());
+      assertFalse(sections[i].isInSlugBubble());
+    }
+  }
+
+  @Test
+  void testCellCenterCoordinatesMarkInletHalfCell() {
+    addTerrainSlug(5.0, 1.0);
+    tracker.advanceSlugs(sections, 0.001);
+    assertTrue(sections[0].isInSlugBody(), "First cell spans 0 to 50 m, including its upstream half");
+    assertFalse(sections[1].isInSlugBody());
+  }
+
+  @Test
+  void testReverseFlowKeepsFiniteHoldup() {
+    for (PipeSection section : sections) {
+      section.setGasVelocity(-4.0);
+      section.setLiquidVelocity(-1.0);
+      section.updateDerivedQuantities();
+    }
+    SlugUnit slug = addTerrainSlug(200.0, 180.0);
+    tracker.advanceSlugs(sections, 0.1);
+    assertTrue(slug.frontPosition < 200.0);
+    assertTrue(Double.isFinite(slug.bodyHoldup));
+    assertTrue(Double.isFinite(slug.liquidVolume));
+  }
+
+  @Test
+  void testInvalidTimeStepLeavesStateUnchanged() {
+    SlugUnit slug = addTerrainSlug(200.0, 180.0);
+    tracker.advanceSlugs(sections, Double.NaN);
+    tracker.advanceSlugs(sections, Double.POSITIVE_INFINITY);
+    tracker.advanceSlugs(sections, -1.0);
+    assertEquals(200.0, slug.frontPosition, 0.0);
+    assertEquals(0.0, slug.age, 0.0);
+  }
+
+  @Test
+  void testCountercurrentFrequencyRemainsFinite() {
+    sections[0].setLiquidVelocity(-1.0);
+    sections[0].updateDerivedQuantities();
+    tracker.generateInletSlug(sections[0], sections[0].getArea());
+    assertEquals(0.0, tracker.getSlugFrequency(), 0.0);
+  }
+
+  /**
+   * Add a terrain slug whose liquid volume is consistent with its body geometry.
+   *
+   * @param front front position (m)
+   * @param tail tail position (m)
+   * @return created slug
+   */
+  private SlugUnit addTerrainSlug(double front, double tail) {
+    SlugCharacteristics chars = new SlugCharacteristics();
+    chars.frontPosition = front;
+    chars.tailPosition = tail;
+    chars.length = front - tail;
+    chars.holdup = 0.85;
+    chars.velocity = 2.0;
+    chars.volume = chars.length * sections[0].getArea() * chars.holdup;
+    return tracker.initializeTerrainSlug(chars, sections);
   }
 }

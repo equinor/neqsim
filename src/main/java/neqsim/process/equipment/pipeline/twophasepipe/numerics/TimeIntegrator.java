@@ -62,7 +62,7 @@ public class TimeIntegrator implements Serializable {
   /** CFL number for time step control (0 &lt; CFL &lt; 1). */
   private double cflNumber = 0.5;
 
-  /** Minimum allowed time step (s). */
+  /** Preferred minimum time step (s); a smaller CFL bound always takes priority. */
   private double minTimeStep = 1e-6;
 
   /** Maximum allowed time step (s). */
@@ -112,6 +112,26 @@ public class TimeIntegrator implements Serializable {
    * @return Updated state at t + dt
    */
   public double[][] step(double[][] U, RHSFunction rhs, double dt) {
+    lastCoupledPressureMomentumResult = null;
+    try {
+      return stepWithCorrections(U, rhs, dt);
+    } catch (RuntimeException exception) {
+      // A failed attempt must not expose transfers from an earlier successful
+      // step or from a correction followed by a failed downstream operator.
+      lastCoupledPressureMomentumResult = null;
+      throw exception;
+    }
+  }
+
+  /**
+   * Perform the selected stages and corrections within the full-step result lifecycle.
+   *
+   * @param U current conservative state
+   * @param rhs spatial right-hand side
+   * @param dt time step in seconds
+   * @return updated conservative state
+   */
+  private double[][] stepWithCorrections(double[][] U, RHSFunction rhs, double dt) {
     double[][] advancedState;
     switch (method) {
     case EULER:
@@ -256,24 +276,20 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
-   * Calculate stable time step based on CFL condition.
+   * Calculate stable time step based on CFL condition. The CFL bound may be smaller than the configured preferred
+   * minimum time step.
    *
    * @param maxWaveSpeed Maximum wave speed in the domain (|v| + c)
    * @param dx Minimum cell size
    * @return Stable time step
    */
   public double calcStableTimeStep(double maxWaveSpeed, double dx) {
-    if (maxWaveSpeed < 1e-10) {
-      return maxTimeStep;
+    if (!(maxWaveSpeed >= 0.0) || !Double.isFinite(maxWaveSpeed) || !(dx > 0.0) || !Double.isFinite(dx)) {
+      throw new IllegalArgumentException("Wave speed must be finite and nonnegative and cell size positive and finite");
     }
-
-    double dt = cflNumber * dx / maxWaveSpeed;
-
-    // Apply limits
-    dt = Math.max(minTimeStep, Math.min(maxTimeStep, dt));
-    currentDt = dt;
-
-    return dt;
+    // A requested minimum cannot enlarge a physically stable upper bound.
+    currentDt = maxWaveSpeed == 0.0 ? maxTimeStep : Math.min(maxTimeStep, cflNumber * dx / maxWaveSpeed);
+    return currentDt;
   }
 
   /**
@@ -379,24 +395,28 @@ public class TimeIntegrator implements Serializable {
    * Set CFL number.
    *
    * @param cflNumber New CFL number (0 &lt; CFL &lt; 1)
+   * @throws IllegalArgumentException if the CFL number is not finite and strictly between zero and one
    */
   public void setCflNumber(double cflNumber) {
-    this.cflNumber = Math.max(0.01, Math.min(0.99, cflNumber));
+    if (!Double.isFinite(cflNumber) || cflNumber <= 0.0 || cflNumber >= 1.0) {
+      throw new IllegalArgumentException("CFL number must be finite and strictly between zero and one");
+    }
+    this.cflNumber = cflNumber;
   }
 
   /**
-   * Get minimum time step.
+   * Get preferred minimum time step. CFL calculations may return a smaller stable bound.
    *
-   * @return Minimum time step (s)
+   * @return Preferred minimum time step (s)
    */
   public double getMinTimeStep() {
     return minTimeStep;
   }
 
   /**
-   * Set minimum time step.
+   * Set preferred minimum time step. This value never enlarges a CFL stability bound.
    *
-   * @param minTimeStep Minimum time step (s)
+   * @param minTimeStep Preferred minimum time step (s)
    */
   public void setMinTimeStep(double minTimeStep) {
     this.minTimeStep = minTimeStep;
@@ -644,6 +664,45 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
+   * Set the numerical lower bound for coupled absolute cell pressure.
+   *
+   * @param minimumPressure positive finite pressure in Pa
+   * @see CoupledPressureMomentumSolver#setMinimumPressure(double)
+   */
+  public void setCoupledPressureMomentumMinimumPressure(double minimumPressure) {
+    coupledPressureMomentumSolver.setMinimumPressure(minimumPressure);
+  }
+
+  /** @return numerical lower bound for coupled absolute cell pressure in Pa */
+  public double getCoupledPressureMomentumMinimumPressure() {
+    return coupledPressureMomentumSolver.getMinimumPressure();
+  }
+
+  /**
+   * Select the coupled gas pressure-density response.
+   *
+   * @param model non-null gas density response model
+   */
+  public void setCoupledPressureMomentumGasDensityModel(CoupledPressureMomentumSolver.GasDensityModel model) {
+    coupledPressureMomentumSolver.setGasDensityModel(model);
+  }
+
+  /** @return coupled gas density response model */
+  public CoupledPressureMomentumSolver.GasDensityModel getCoupledPressureMomentumGasDensityModel() {
+    return coupledPressureMomentumSolver.getGasDensityModel();
+  }
+
+  /** @param enabled true to enable implicit face/cell pressure-gradient interpolation */
+  public void setCoupledPressureMomentumCheckerboardCorrectionEnabled(boolean enabled) {
+    coupledPressureMomentumSolver.setCheckerboardCorrectionEnabled(enabled);
+  }
+
+  /** @return whether coupled pressure-velocity momentum interpolation is enabled */
+  public boolean isCoupledPressureMomentumCheckerboardCorrectionEnabled() {
+    return coupledPressureMomentumSolver.isCheckerboardCorrectionEnabled();
+  }
+
+  /**
    * Set the convergence tolerance for the relative cell-volume residual.
    *
    * @param tolerance positive finite relative tolerance
@@ -652,7 +711,7 @@ public class TimeIntegrator implements Serializable {
     coupledPressureMomentumSolver.setRelativeVolumeTolerance(tolerance);
   }
 
-  /** @return convergence tolerance for the relative cell-volume residual */
+  /** @return convergence tolerance for relative cell-volume and fixed-outlet pressure residuals */
   public double getCoupledPressureMomentumRelativeVolumeTolerance() {
     return coupledPressureMomentumSolver.getRelativeVolumeTolerance();
   }
@@ -708,6 +767,17 @@ public class TimeIntegrator implements Serializable {
   /** @return corrected gas density from the latest coupled correction, or null */
   public double[] getCoupledPressureMomentumGasDensity() {
     return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getGasDensity();
+  }
+
+  /** @return corrected gas sound speed in m/s, or null before a coupled correction */
+  public double[] getCoupledPressureMomentumGasSoundSpeed() {
+    return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getGasSoundSpeed();
+  }
+
+  /** @return exact signed gas/oil/water correction transfers in kg by face, or an empty matrix before correction */
+  public double[][] getCoupledPressureMomentumPhaseMassCorrectionsKg() {
+    return lastCoupledPressureMomentumResult == null ? new double[0][0]
+        : lastCoupledPressureMomentumResult.getPhaseMassCorrectionsKg();
   }
 
   /** @return corrected oil density from the latest coupled correction, or null */
@@ -1095,8 +1165,7 @@ public class TimeIntegrator implements Serializable {
       maxMaterialSpeed = Math.max(maxMaterialSpeed, Math.max(gasSpeed, liqSpeed));
     }
 
-    double dt = cflNumber * dx / maxMaterialSpeed;
-    return Math.max(minTimeStep, Math.min(maxTimeStep, dt));
+    return calcStableTimeStep(maxMaterialSpeed, dx);
   }
 
   /**
@@ -1105,5 +1174,6 @@ public class TimeIntegrator implements Serializable {
   public void reset() {
     currentTime = 0;
     currentDt = 0.01;
+    lastCoupledPressureMomentumResult = null;
   }
 }

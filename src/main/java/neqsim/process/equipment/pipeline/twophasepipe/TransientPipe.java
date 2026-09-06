@@ -327,7 +327,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
     // Create sections
     for (int i = 0; i < numberOfSections; i++) {
-      sections[i] = new PipeSection(i * dx, dx, diameter, 0);
+      sections[i] = new PipeSection((i + 0.5) * dx, dx, diameter, 0);
       sections[i].setRoughness(roughness);
     }
 

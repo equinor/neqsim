@@ -10,10 +10,10 @@ import java.util.Random;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
- * OLGA-style Lagrangian slug tracking model.
+ * Correlation-based Lagrangian slug tracking overlay for the Eulerian pipeline model.
  *
  * <p>
- * Implements full Lagrangian tracking of individual slugs through the pipeline, modeling:
+ * Tracks individual slugs through the pipeline, modeling:
  * </p>
  * <ul>
  * <li>Hydrodynamic slug initiation from flow instabilities</li>
@@ -27,7 +27,12 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * </ul>
  *
  * <p>
- * <b>OLGA Compatibility:</b> This model follows the OLGA slug tracking methodology:
+ * <b>Coupling modes:</b> The default is a one-way closure overlay whose empirical front/tail velocities determine
+ * geometry. Opt-in conservative film coupling uses liquid continuity to determine interface motion and supplies
+ * {@link SlugFilmCoupling} subcell states to an owning finite-volume solver. In either mode the Eulerian solution owns
+ * all physical inventory; marker creation and dissolution do not independently deposit or withdraw mass. Geometric
+ * borrowed/returned/exited statistics remain compatibility diagnostics. Section positions denote cell centers. These
+ * implementations do not establish OLGA equivalence or replace independent experimental qualification.
  * </p>
  * <ul>
  * <li>Slugs are tracked as discrete entities with position, length, velocity</li>
@@ -124,6 +129,18 @@ public class LagrangianSlugTracker implements Serializable {
     public double sheddingRate;
     /** Net mass change rate (kg/s). */
     public double netMassRate;
+    /** Whether this marker uses conservative Eulerian slug/film reconstruction. */
+    public boolean usesConservativeFilmCoupling;
+    /** Whether an accepted continuity calculation has supplied the body-velocity reconstruction target. */
+    public boolean hasConservativeVelocity;
+    /** In-domain gas, oil, and water masses assigned by Eulerian subcell reconstruction (kg). */
+    public double[] phaseMassKg = new double[3];
+    /** In-domain phase momenta assigned by Eulerian subcell reconstruction (kg m/s). */
+    public double[] phaseMomentumKgMPerSecond = new double[3];
+    /** In-domain phase volumes assigned by Eulerian subcell reconstruction (m3). */
+    public double[] phaseVolumeM3 = new double[3];
+    /** In-domain total energy assigned by Eulerian subcell reconstruction (J). */
+    public double totalEnergyJ;
 
     // === State Flags ===
     /** Is slug currently growing. */
@@ -132,7 +149,7 @@ public class LagrangianSlugTracker implements Serializable {
     public boolean isDecaying;
     /** Is this a terrain-induced slug. */
     public boolean isTerrainInduced;
-    /** Has this slug reached outlet. */
+    /** Has this slug completely left the pipe through either boundary. */
     public boolean hasExited;
     /** Age since creation (s). */
     public double age;
@@ -191,6 +208,9 @@ public class LagrangianSlugTracker implements Serializable {
 
   /** List of active slugs in the pipeline. */
   private List<SlugBubbleUnit> slugs;
+
+  /** Observational probes, lazily initialized for compatibility with older serialized trackers. */
+  private List<SlugProbe> probes;
 
   /** Counter for slug IDs. */
   private int slugIdCounter = 0;
@@ -261,6 +281,9 @@ public class LagrangianSlugTracker implements Serializable {
   /** Total slugs exited at outlet. */
   private int totalSlugsExited = 0;
 
+  /** Total slugs that completely exited upstream through an open inlet. */
+  private int totalSlugsExitedAtInlet = 0;
+
   /** Slug frequency at inlet (1/s). */
   private double inletSlugFrequency = 0;
 
@@ -302,8 +325,18 @@ public class LagrangianSlugTracker implements Serializable {
   /** Total tracked slug mass that exited through the pipe outlet (kg). */
   private double totalMassExitedAtOutlet = 0;
 
+  /** Tracked overlay mass removed by complete upstream exits (kg), separate from physical Eulerian transport. */
+  private double totalMassExitedAtInlet = 0;
+
   /** Reference mixture velocity (m/s). */
   private double referenceMixtureVelocity = 1.0;
+
+  /** Opt-in conservative Eulerian reconstruction with phase-continuity interface velocities. */
+  private boolean conservativeFilmCouplingEnabled;
+  /** Whether conservative tracking must respect an impermeable inlet. */
+  private boolean closedInlet;
+  /** Whether conservative tracking must respect an impermeable outlet. */
+  private boolean closedOutlet;
 
   // ============== Constructor ==============
 
@@ -312,6 +345,7 @@ public class LagrangianSlugTracker implements Serializable {
    */
   public LagrangianSlugTracker() {
     this.slugs = new ArrayList<>();
+    this.probes = new ArrayList<>();
     this.outletSlugLengths = new ArrayList<>();
     this.outletSlugVolumes = new ArrayList<>();
     this.outletInterArrivalTimes = new ArrayList<>();
@@ -352,7 +386,7 @@ public class LagrangianSlugTracker implements Serializable {
    * @param dt time step (s)
    */
   public void advanceTimeStep(PipeSection[] sections, double dt) {
-    if (sections == null || sections.length == 0 || dt <= 0) {
+    if (sections == null || sections.length == 0 || !Double.isFinite(dt) || dt <= 0) {
       return;
     }
 
@@ -369,13 +403,30 @@ public class LagrangianSlugTracker implements Serializable {
     sortSlugsByPosition();
 
     // 4. Update wake effects
-    if (enableWakeEffects) {
-      updateWakeEffects(sections);
-    }
+    updateWakeEffects(sections);
 
-    // 5. Advance each slug
-    for (SlugBubbleUnit slug : slugs) {
-      advanceSlug(slug, sections, dt);
+    // 5. Evaluate every conservative interface before changing any marker
+    // geometry or body-velocity target during this accepted step.
+    double[][] conservativeVelocities = null;
+    if (conservativeFilmCouplingEnabled) {
+      conservativeVelocities = new double[slugs.size()][];
+      for (int index = 0; index < slugs.size(); index++) {
+        conservativeVelocities[index] = conservativeKinematics(slugs.get(index), sections);
+      }
+    }
+    if (probes != null) {
+      for (SlugProbe probe : probes) {
+        probe.beginStep();
+      }
+    }
+    for (int index = 0; index < slugs.size(); index++) {
+      advanceSlug(slugs.get(index), sections, dt,
+          conservativeVelocities == null ? null : conservativeVelocities[index]);
+    }
+    if (probes != null) {
+      for (SlugProbe probe : probes) {
+        probe.endStep();
+      }
     }
 
     // 6. Handle slug merging
@@ -388,6 +439,9 @@ public class LagrangianSlugTracker implements Serializable {
     markSlugSections(sections);
 
     // 9. Update statistics
+    if (conservativeFilmCouplingEnabled) {
+      refreshConservativeInventories(sections);
+    }
     updateStatistics();
   }
 
@@ -432,6 +486,7 @@ public class LagrangianSlugTracker implements Serializable {
     // Only generate slugs if inlet is in slug flow regime
     FlowRegime regime = inlet.getFlowRegime();
     if (regime != FlowRegime.SLUG && regime != FlowRegime.CHURN) {
+      inletSlugFrequency = 0.0;
       return;
     }
 
@@ -441,6 +496,12 @@ public class LagrangianSlugTracker implements Serializable {
     double U_M = U_SL + U_SG;
     double D = inlet.getDiameter();
     double theta = inlet.getInclination();
+
+    // The inlet frequency correlation requires co-current, positive flow of both phases.
+    if (U_SL <= 0.0 || U_SG <= 0.0 || !Double.isFinite(U_M)) {
+      inletSlugFrequency = 0.0;
+      return;
+    }
 
     // Zabaras (2000) correlation
     double Fr = U_M / Math.sqrt(GRAVITY * D);
@@ -475,18 +536,19 @@ public class LagrangianSlugTracker implements Serializable {
     SlugBubbleUnit slug = new SlugBubbleUnit();
     slug.id = ++slugIdCounter;
     slug.source = SlugSource.INLET;
+    slug.usesConservativeFilmCoupling = conservativeFilmCouplingEnabled;
 
     double D = inlet.getDiameter();
     double A = inlet.getArea();
 
     // Position: start at inlet
     slug.slugLength = initialSlugLengthDiameters * D;
-    slug.frontPosition = slug.slugLength;
-    slug.tailPosition = 0;
+    slug.tailPosition = inlet.getPosition() - inlet.getLength() / 2.0;
+    slug.frontPosition = slug.tailPosition + slug.slugLength;
 
     // Bubble length from unit model
     double U_M = inlet.getMixtureVelocity();
-    if (U_M < 0.1) {
+    if (Math.abs(U_M) < 0.1) {
       U_M = referenceMixtureVelocity;
     }
     double unitLength = (inletSlugFrequency > 0) ? U_M / inletSlugFrequency : 2 * slug.slugLength;
@@ -551,6 +613,7 @@ public class LagrangianSlugTracker implements Serializable {
     SlugBubbleUnit slug = new SlugBubbleUnit();
     slug.id = ++slugIdCounter;
     slug.source = SlugSource.TERRAIN;
+    slug.usesConservativeFilmCoupling = conservativeFilmCouplingEnabled;
 
     // Position from characteristics
     slug.frontPosition = characteristics.frontPosition;
@@ -665,10 +728,11 @@ public class LagrangianSlugTracker implements Serializable {
     SlugBubbleUnit slug = new SlugBubbleUnit();
     slug.id = ++slugIdCounter;
     slug.source = SlugSource.INSTABILITY;
+    slug.usesConservativeFilmCoupling = conservativeFilmCouplingEnabled;
 
     double D = section.getDiameter();
     double A = section.getArea();
-    double position = section.getPosition() + section.getLength() / 2;
+    double position = section.getPosition();
 
     // Initial slug is small
     slug.slugLength = minSlugLengthDiameters * D;
@@ -722,15 +786,20 @@ public class LagrangianSlugTracker implements Serializable {
    * @param slug the slug to advance
    * @param sections pipe sections
    * @param dt time step (s)
+   * @param conservativeVelocities frozen conservative kinematics, or null for legacy tracking
    */
-  private void advanceSlug(SlugBubbleUnit slug, PipeSection[] sections, double dt) {
+  private void advanceSlug(SlugBubbleUnit slug, PipeSection[] sections, double dt, double[] conservativeVelocities) {
+    if (conservativeFilmCouplingEnabled) {
+      advanceConservativeSlug(slug, sections, dt, conservativeVelocities);
+      return;
+    }
     double previousSlugLiquidMass = slug.slugLiquidMass;
     slug.age += dt;
 
     // Find section at slug front
     int frontIdx = findSectionIndex(slug.frontPosition, sections);
     if (frontIdx < 0) {
-      frontIdx = sections.length - 1;
+      frontIdx = slug.frontPosition < sections[0].getPosition() ? 0 : sections.length - 1;
     }
     PipeSection frontSection = sections[frontIdx];
 
@@ -754,16 +823,20 @@ public class LagrangianSlugTracker implements Serializable {
     double frontDisplacement = slug.frontVelocity * dt;
     double tailDisplacement = slug.tailVelocity * dt;
 
+    double previousFront = slug.frontPosition;
+    double previousTail = slug.tailPosition;
     slug.frontPosition += frontDisplacement;
     slug.tailPosition += tailDisplacement;
+    recordProbeMotion(slug, dt, previousFront, previousTail);
     slug.distanceTraveled += frontDisplacement;
 
     // Update slug length
     double newLength = slug.frontPosition - slug.tailPosition;
-    double minLength = minSlugLengthDiameters * slug.localDiameter;
     double maxLength = maxSlugLengthDiameters * slug.localDiameter;
 
-    slug.slugLength = Math.max(minLength, Math.min(maxLength, newLength));
+    // The minimum is a dissipation threshold, not an enforced length: clamping to it makes
+    // the removal condition unreachable and manufactures liquid in short slugs.
+    slug.slugLength = Math.max(0.0, Math.min(maxLength, newLength));
 
     // Enforce position consistency
     if (slug.slugLength != newLength) {
@@ -776,7 +849,7 @@ public class LagrangianSlugTracker implements Serializable {
 
     // Update holdup
     double U_M = frontSection.getMixtureVelocity();
-    if (U_M < 0.1) {
+    if (Math.abs(U_M) < 0.1) {
       U_M = referenceMixtureVelocity;
     }
     slug.slugHoldup = calculateSlugBodyHoldup(U_M);
@@ -812,7 +885,8 @@ public class LagrangianSlugTracker implements Serializable {
    * The slug front moves at the Taylor bubble velocity: V_front = C0 * U_m + U_drift
    * </p>
    * <p>
-   * The tail velocity is determined by mass balance: V_tail = V_front - (pickup - shedding) / (A * (H_slug - H_film))
+   * The tail velocity uses an empirical length-dependent shedding factor. Pickup/shedding rates are calculated
+   * separately as diagnostics; they do not determine the tail velocity or conservatively exchange Eulerian mass.
    * </p>
    *
    * @param slug the slug unit
@@ -831,7 +905,7 @@ public class LagrangianSlugTracker implements Serializable {
     double deltaRho = rhoL - rhoG;
 
     // Froude number
-    double Fr = U_M / Math.sqrt(GRAVITY * D);
+    double Fr = Math.abs(U_M) / Math.sqrt(GRAVITY * D);
 
     // Distribution coefficient C0 (Bendiksen 1984)
     double C0;
@@ -922,11 +996,7 @@ public class LagrangianSlugTracker implements Serializable {
       U_drift = (1 - w) * U_dH * Math.cos(theta) + U_dV * Math.sin(theta);
     }
 
-    // For downward flow, drift opposes flow
-    if (theta < 0) {
-      U_drift *= -1;
-    }
-
+    // The signed sine term already gives the buoyancy direction in downward sections.
     return U_drift;
   }
 
@@ -981,8 +1051,8 @@ public class LagrangianSlugTracker implements Serializable {
    *
    * <p>
    * The geometric slug state is authoritative because length, area, holdup, and local liquid density can all change in
-   * one time step. A positive change is liquid borrowed from the Eulerian field; a negative change is liquid returned
-   * to it. The pickup and shedding rates remain diagnostic instantaneous rates.
+   * one time step. Positive and negative changes close the borrowed/returned overlay account; neither changes Eulerian
+   * inventory. The pickup and shedding rates remain diagnostic instantaneous rates.
    * </p>
    *
    * @param previousMass liquid mass before the update (kg)
@@ -998,6 +1068,230 @@ public class LagrangianSlugTracker implements Serializable {
   }
 
   /**
+   * Advance interfaces using liquid continuity, with Eulerian inventories remaining authoritative.
+   *
+   * @param slug marker to advance after the hydrodynamic step is accepted
+   * @param sections accepted Eulerian sections
+   * @param dt accepted step duration (s)
+   * @param kinematics interface velocities and exchange diagnostics frozen before any marker moves
+   */
+  private void advanceConservativeSlug(SlugBubbleUnit slug, PipeSection[] sections, double dt, double[] kinematics) {
+    double previousMass = slug.slugLiquidMass;
+    slug.frontVelocity = kinematics[0];
+    slug.tailVelocity = kinematics[1];
+    slug.bubbleNoseVelocity = slug.tailVelocity;
+    slug.pickupRate = kinematics[2];
+    slug.sheddingRate = kinematics[3];
+    slug.netMassRate = slug.pickupRate - slug.sheddingRate;
+    slug.slugLiquidVelocity = kinematics[4];
+    slug.hasConservativeVelocity = true;
+    slug.filmVelocity = kinematics[5];
+    double previousFront = slug.frontPosition;
+    double previousTail = slug.tailPosition;
+    slug.frontPosition += dt * slug.frontVelocity;
+    slug.tailPosition += dt * slug.tailVelocity;
+    double inlet = sections[0].getPosition() - sections[0].getLength() / 2.0;
+    double outlet = calculatePipeLength(sections);
+    if (closedInlet) {
+      slug.frontPosition = Math.max(inlet, slug.frontPosition);
+      slug.tailPosition = Math.max(inlet, slug.tailPosition);
+    }
+    if (closedOutlet) {
+      slug.frontPosition = Math.min(outlet, slug.frontPosition);
+      slug.tailPosition = Math.min(outlet, slug.tailPosition);
+    }
+    recordProbeMotion(slug, dt, previousFront, previousTail);
+    slug.frontVelocity = (slug.frontPosition - previousFront) / dt;
+    slug.tailVelocity = (slug.tailPosition - previousTail) / dt;
+    slug.slugLength = Math.max(0.0, slug.frontPosition - slug.tailPosition);
+    slug.age += dt;
+    slug.distanceTraveled += Math.abs(dt * slug.frontVelocity);
+    slug.isGrowing = slug.frontVelocity > slug.tailVelocity;
+    slug.isDecaying = slug.frontVelocity < slug.tailVelocity;
+    int index = boundedSectionIndex(slug.frontPosition, sections);
+    PipeSection section = sections[index];
+    slug.localArea = section.getArea();
+    slug.localDiameter = section.getDiameter();
+    slug.localInclination = section.getInclination();
+    slug.filmHoldup = kinematics[6];
+    // Geometric compatibility statistics are not additional physical inventories. Actual
+    // in-domain phase masses/momenta/energy are reconstructed separately below.
+    slug.slugLiquidVolume = slug.slugLength * slug.localArea * slug.slugHoldup;
+    slug.slugLiquidMass = section.getLiquidDensity() * slug.slugLiquidVolume;
+    slug.filmLiquidVolume = slug.bubbleLength * slug.localArea * slug.filmHoldup;
+    accountSlugMassChange(previousMass, slug.slugLiquidMass);
+  }
+
+  /**
+   * Calculate bubble-tail and liquid-front velocities from the two film interfaces.
+   *
+   * <p>
+   * The Taylor-bubble correlation specifies the tail speed. Continuity at the trailing film determines the body liquid
+   * flux, and the liquid Rankine-Hugoniot condition then determines the front speed. At a uniform-density interface,
+   * pickup minus shedding equals body mass per length times front-minus-tail speed. A vanishing holdup contrast has no
+   * identifiable discontinuity and is transported at the bubble speed.
+   * </p>
+   *
+   * @param slug marker whose positions are queried, without mutation
+   * @param sections frozen Eulerian sections
+   * @return front speed, tail speed, pickup, shedding, body velocity, ahead film velocity, and ahead film holdup
+   */
+  private double[] conservativeKinematics(SlugBubbleUnit slug, PipeSection[] sections) {
+    double frontProbe = Math.max(1.0e-9, Math.ulp(slug.frontPosition) * 4.0);
+    double tailProbe = Math.max(1.0e-9, Math.ulp(slug.tailPosition) * 4.0);
+    PipeSection ahead = sections[boundedSectionIndex(slug.frontPosition + frontProbe, sections)];
+    PipeSection behind = sections[boundedSectionIndex(slug.tailPosition - tailProbe, sections)];
+    PipeSection bodyFront = sections[boundedSectionIndex(slug.frontPosition - frontProbe, sections)];
+    PipeSection bodyTail = sections[boundedSectionIndex(slug.tailPosition + tailProbe, sections)];
+    if (ahead instanceof TwoFluidSection) {
+      ahead = SlugFilmCoupling.reconstruct((TwoFluidSection) ahead, slugs).getFilmState();
+    }
+    if (behind instanceof TwoFluidSection) {
+      behind = SlugFilmCoupling.reconstruct((TwoFluidSection) behind, slugs).getFilmState();
+    }
+    if (bodyFront instanceof TwoFluidSection) {
+      bodyFront = SlugFilmCoupling.reconstruct((TwoFluidSection) bodyFront, slugs).getBodyState();
+    }
+    if (bodyTail instanceof TwoFluidSection) {
+      bodyTail = SlugFilmCoupling.reconstruct((TwoFluidSection) bodyTail, slugs).getBodyState();
+    }
+    double diameter = bodyTail.getDiameter();
+    double inclination = bodyTail.getInclination();
+    // Use the actual accepted mixture flow, without the legacy reference-speed fallback.
+    PipeSection tailCell = sections[boundedSectionIndex(slug.tailPosition, sections)];
+    double mixtureVelocity = tailCell.getMixtureVelocity();
+    double froude = Math.abs(mixtureVelocity) / Math.sqrt(GRAVITY * diameter);
+    double distribution = froude > 3.5 ? 1.2 : 1.05 + 0.15 * Math.sin(inclination);
+    double tailSpeed = distribution * mixtureVelocity + calculateDriftVelocity(diameter, inclination,
+        bodyTail.getLiquidDensity() - bodyTail.getGasDensity(), bodyTail.getLiquidDensity());
+    double frontBodyMass = liquidMassPerLength(bodyFront);
+    double tailBodyMass = liquidMassPerLength(bodyTail);
+    double aheadMass = liquidMassPerLength(ahead);
+    double behindMass = liquidMassPerLength(behind);
+    double aheadFlux = liquidMassFlux(ahead);
+    double behindFlux = liquidMassFlux(behind);
+    double bodyFluxAtTail = tailSpeed * (tailBodyMass - behindMass) + behindFlux;
+    double bodyVelocity = tailBodyMass > 0.0 ? bodyFluxAtTail / tailBodyMass : mixtureVelocity;
+    double contrast = frontBodyMass - aheadMass;
+    double frontSpeed = tailSpeed;
+    if (contrast > 1.0e-9 * Math.max(frontBodyMass, 1.0)) {
+      frontSpeed = (frontBodyMass * bodyVelocity - aheadFlux) / contrast;
+    }
+    double inlet = sections[0].getPosition() - sections[0].getLength() / 2.0;
+    double outlet = calculatePipeLength(sections);
+    if (closedInlet) {
+      if (slug.frontPosition <= inlet && frontSpeed < 0.0) {
+        frontSpeed = 0.0;
+      }
+      if (slug.tailPosition <= inlet && tailSpeed < 0.0) {
+        tailSpeed = 0.0;
+      }
+    }
+    if (closedOutlet) {
+      if (slug.frontPosition >= outlet && frontSpeed > 0.0) {
+        frontSpeed = 0.0;
+      }
+      if (slug.tailPosition >= outlet && tailSpeed > 0.0) {
+        tailSpeed = 0.0;
+      }
+    }
+    double pickup = frontSpeed * aheadMass - aheadFlux;
+    double shedding = tailSpeed * behindMass - behindFlux;
+    double filmVelocity = aheadMass > 0.0 ? aheadFlux / aheadMass : 0.0;
+    return new double[] { frontSpeed, tailSpeed, pickup, shedding, bodyVelocity, filmVelocity,
+        ahead.getLiquidHoldup() };
+  }
+
+  /**
+   * Obtain actual liquid mass per length, including both independently transported liquids.
+   *
+   * @param section local body or film state
+   * @return liquid mass per length (kg/m)
+   */
+  private double liquidMassPerLength(PipeSection section) {
+    if (section instanceof TwoFluidSection) {
+      TwoFluidSection state = (TwoFluidSection) section;
+      return state.getOilMassPerLength() + state.getWaterMassPerLength();
+    }
+    return section.getLiquidHoldup() * section.getLiquidDensity() * section.getArea();
+  }
+
+  /**
+   * Obtain the phase-resolved total liquid mass flow.
+   *
+   * @param section local body or film state
+   * @return oil plus water mass flow (kg/s)
+   */
+  private double liquidMassFlux(PipeSection section) {
+    if (section instanceof TwoFluidSection) {
+      double[] state = ((TwoFluidSection) section).getStateVector();
+      return state[4] + state[5];
+    }
+    return liquidMassPerLength(section) * section.getLiquidVelocity();
+  }
+
+  /**
+   * Locate a position and use the nearest end cell outside the physical pipe.
+   *
+   * @param position axial position (m)
+   * @param sections midpoint-positioned cells
+   * @return valid section index
+   */
+  private int boundedSectionIndex(double position, PipeSection[] sections) {
+    int index = findSectionIndex(position, sections);
+    return index >= 0 ? index : (position < sections[0].getPosition() ? 0 : sections.length - 1);
+  }
+
+  /**
+   * Refresh diagnostic body inventories by partitioning the sole Eulerian inventory.
+   *
+   * @param sections accepted Eulerian cells
+   */
+  private void refreshConservativeInventories(PipeSection[] sections) {
+    for (SlugBubbleUnit slug : slugs) {
+      slug.phaseMassKg = new double[3];
+      slug.phaseMomentumKgMPerSecond = new double[3];
+      slug.phaseVolumeM3 = new double[3];
+      slug.totalEnergyJ = 0.0;
+    }
+    for (PipeSection section : sections) {
+      if (!(section instanceof TwoFluidSection)) {
+        continue;
+      }
+      TwoFluidSection cell = (TwoFluidSection) section;
+      SlugFilmCoupling.Reconstruction reconstruction = SlugFilmCoupling.reconstruct(cell, slugs);
+      double[] body = reconstruction.getBodyConservativeState();
+      double left = section.getPosition() - section.getLength() / 2.0;
+      double right = left + section.getLength();
+      double[] overlap = new double[slugs.size()];
+      double totalOverlap = 0.0;
+      for (int i = 0; i < slugs.size(); i++) {
+        overlap[i] = Math.max(0.0,
+            Math.min(right, slugs.get(i).frontPosition) - Math.max(left, slugs.get(i).tailPosition));
+        totalOverlap += overlap[i];
+      }
+      if (totalOverlap <= 0.0) {
+        continue;
+      }
+      double[] densities = { cell.getGasDensity(),
+          cell.getOilDensity() > 0.0 ? cell.getOilDensity() : cell.getLiquidDensity(),
+          cell.getWaterDensity() > 0.0 ? cell.getWaterDensity() : 1000.0 };
+      for (int i = 0; i < slugs.size(); i++) {
+        SlugBubbleUnit slug = slugs.get(i);
+        double assignedLength = section.getLength() * reconstruction.getBodyFraction() * overlap[i] / totalOverlap;
+        for (int phase = 0; phase < 3; phase++) {
+          slug.phaseMassKg[phase] += assignedLength * body[phase];
+          slug.phaseMomentumKgMPerSecond[phase] += assignedLength * body[phase + 3];
+          if (densities[phase] > 0.0) {
+            slug.phaseVolumeM3[phase] += assignedLength * body[phase] / densities[phase];
+          }
+        }
+        slug.totalEnergyJ += assignedLength * body[6];
+      }
+    }
+  }
+
+  /**
    * Update Taylor bubble length.
    *
    * @param slug the slug unit
@@ -1005,7 +1299,7 @@ public class LagrangianSlugTracker implements Serializable {
    */
   private void updateBubbleLength(SlugBubbleUnit slug, PipeSection section) {
     double U_M = section.getMixtureVelocity();
-    if (U_M < 0.1) {
+    if (Math.abs(U_M) < 0.1) {
       U_M = referenceMixtureVelocity;
     }
 
@@ -1013,7 +1307,7 @@ public class LagrangianSlugTracker implements Serializable {
     // L_bubble = L_unit - L_slug
     // L_unit = U_M / frequency
     if (inletSlugFrequency > 0) {
-      double unitLength = U_M / inletSlugFrequency;
+      double unitLength = Math.abs(U_M) / inletSlugFrequency;
       slug.bubbleLength = Math.max(0, unitLength - slug.slugLength);
     } else {
       // Default: bubble length proportional to slug length
@@ -1030,7 +1324,7 @@ public class LagrangianSlugTracker implements Serializable {
   private double calculateSlugBodyHoldup(double U_M) {
     // Gregory, Nicholson, Aziz (1978)
     // H_LS = 1 / (1 + (U_M / 8.66)^1.39)
-    double ratio = U_M / 8.66;
+    double ratio = Math.abs(U_M) / 8.66;
     double H_LS = 1.0 / (1.0 + Math.pow(ratio, 1.39));
     return Math.max(0.5, Math.min(0.98, H_LS));
   }
@@ -1061,7 +1355,7 @@ public class LagrangianSlugTracker implements Serializable {
     double theta = section.getInclination();
 
     // Base length in diameters
-    double Fr = U_M / Math.sqrt(GRAVITY * D);
+    double Fr = Math.abs(U_M) / Math.sqrt(GRAVITY * D);
 
     // Barnea-Taitel (1993): L_s/D = 15-40 depending on conditions
     double L_s_D = 25.0 + 10.0 * Math.min(Fr, 2.0);
@@ -1088,7 +1382,12 @@ public class LagrangianSlugTracker implements Serializable {
    * @param sections pipe sections
    */
   private void updateWakeEffects(PipeSection[] sections) {
-    if (slugs.size() < 2) {
+    for (SlugBubbleUnit slug : slugs) {
+      slug.inWakeRegion = false;
+      slug.wakeCoefficient = 1.0;
+      slug.distanceToPrecedingSlug = Double.POSITIVE_INFINITY;
+    }
+    if (!enableWakeEffects || slugs.size() < 2) {
       return;
     }
 
@@ -1162,8 +1461,29 @@ public class LagrangianSlugTracker implements Serializable {
   private void mergeSlugPair(SlugBubbleUnit survivor, SlugBubbleUnit absorbed, PipeSection[] sections) {
 
     // Extend survivor to include absorbed slug
-    survivor.frontPosition = absorbed.frontPosition;
+    survivor.frontPosition = Math.max(survivor.frontPosition, absorbed.frontPosition);
+    survivor.tailPosition = Math.min(survivor.tailPosition, absorbed.tailPosition);
     survivor.slugLength = survivor.frontPosition - survivor.tailPosition;
+
+    if (conservativeFilmCouplingEnabled) {
+      // A union of markers changes no Eulerian inventory. In particular, overlapping
+      // geometric volume estimates must not push the merged tail farther upstream.
+      double previousMass = survivor.slugLiquidMass + absorbed.slugLiquidMass;
+      PipeSection frontSection = sections[boundedSectionIndex(survivor.frontPosition, sections)];
+      survivor.localArea = frontSection.getArea();
+      survivor.localDiameter = frontSection.getDiameter();
+      survivor.localInclination = frontSection.getInclination();
+      survivor.slugHoldup = Math.max(survivor.slugHoldup, absorbed.slugHoldup);
+      survivor.slugLiquidVolume = survivor.slugLength * survivor.localArea * survivor.slugHoldup;
+      survivor.slugLiquidMass = survivor.slugLiquidVolume * frontSection.getLiquidDensity();
+      survivor.filmLiquidVolume = survivor.bubbleLength * survivor.localArea * survivor.filmHoldup;
+      survivor.frontVelocity = absorbed.frontVelocity;
+      survivor.hasConservativeVelocity = false;
+      accountSlugMassChange(previousMass, survivor.slugLiquidMass);
+      survivor.isGrowing = true;
+      survivor.isDecaying = false;
+      return;
+    }
 
     // Combine liquid volumes
     survivor.slugLiquidVolume += absorbed.slugLiquidVolume;
@@ -1175,10 +1495,11 @@ public class LagrangianSlugTracker implements Serializable {
     // Take front velocity from absorbed slug
     survivor.frontVelocity = absorbed.frontVelocity;
 
-    // Update holdup (weighted average)
-    double totalLength = survivor.slugLength + absorbed.slugLength;
-    survivor.slugHoldup = (survivor.slugHoldup * survivor.slugLength + absorbed.slugHoldup * absorbed.slugLength)
-        / totalLength;
+    // Derive holdup from the conserved liquid volume and the merged body geometry. If the
+    // pre-merge bodies overlap, extend the tail only as needed to fit their combined liquid.
+    survivor.slugLength = Math.max(survivor.slugLength, survivor.slugLiquidVolume / survivor.localArea);
+    survivor.tailPosition = survivor.frontPosition - survivor.slugLength;
+    survivor.slugHoldup = survivor.slugLiquidVolume / (survivor.localArea * survivor.slugLength);
 
     // Bubble length from absorbed slug
     survivor.bubbleLength = absorbed.bubbleLength;
@@ -1197,13 +1518,14 @@ public class LagrangianSlugTracker implements Serializable {
    */
   private void removeInactiveSlugs(PipeSection[] sections) {
     double pipeLength = calculatePipeLength(sections);
+    double inletPosition = sections[0].getPosition() - sections[0].getLength() / 2.0;
 
     Iterator<SlugBubbleUnit> iter = slugs.iterator();
     while (iter.hasNext()) {
       SlugBubbleUnit slug = iter.next();
 
       // Check if slug has exited
-      if (slug.tailPosition > pipeLength) {
+      if (slug.tailPosition >= pipeLength && !(conservativeFilmCouplingEnabled && closedOutlet)) {
         slug.hasExited = true;
         recordSlugAtOutlet(slug);
         totalMassExitedAtOutlet += slug.slugLiquidMass;
@@ -1212,10 +1534,20 @@ public class LagrangianSlugTracker implements Serializable {
         continue;
       }
 
+      if (slug.frontPosition <= inletPosition && !(conservativeFilmCouplingEnabled && closedInlet)) {
+        // Upstream departure is a boundary exit, not a downstream arrival or dissipation.
+        // Probe trajectories were already recorded before removing this overlay.
+        slug.hasExited = true;
+        totalMassExitedAtInlet += slug.slugLiquidMass;
+        totalSlugsExitedAtInlet++;
+        iter.remove();
+        continue;
+      }
+
       // Check if slug has dissipated (too short after sufficient time)
       double minLength = minSlugLengthDiameters * slug.localDiameter;
-      if (slug.slugLength < minLength && slug.age > 10.0) {
-        returnMassToEulerian(slug, sections);
+      if (slug.slugLength <= 0.0 || (slug.slugLength < minLength && slug.age > 10.0)) {
+        // No Eulerian mass was removed at initiation. Remove only the overlay.
         totalMassReturned += slug.slugLiquidMass;
         totalSlugsDissipated++;
         iter.remove();
@@ -1244,55 +1576,6 @@ public class LagrangianSlugTracker implements Serializable {
     lastOutletArrivalTime = simulationTime;
   }
 
-  /**
-   * Return mass from dissipating slug to Eulerian cells.
-   *
-   * @param slug the dissipating slug
-   * @param sections pipe sections
-   */
-  private void returnMassToEulerian(SlugBubbleUnit slug, PipeSection[] sections) {
-    if (slug.slugLiquidMass <= 0 || sections.length == 0) {
-      return;
-    }
-
-    // Find sections near the slug
-    int centerIdx = findSectionIndex((slug.frontPosition + slug.tailPosition) / 2, sections);
-    if (centerIdx < 0) {
-      centerIdx = sections.length - 1;
-    }
-
-    // Distribute mass to nearby sections
-    int spread = 3;
-    int startIdx = Math.max(0, centerIdx - spread);
-    int endIdx = Math.min(sections.length - 1, centerIdx + spread);
-
-    double totalWeight = 0;
-    double[] weights = new double[endIdx - startIdx + 1];
-
-    for (int i = startIdx; i <= endIdx; i++) {
-      double distance = Math.abs(i - centerIdx);
-      weights[i - startIdx] = Math.exp(-distance * distance / 2.0);
-      totalWeight += weights[i - startIdx];
-    }
-
-    for (int i = startIdx; i <= endIdx; i++) {
-      double fraction = weights[i - startIdx] / totalWeight;
-      double massToReturn = slug.slugLiquidMass * fraction;
-
-      PipeSection section = sections[i];
-      double rhoL = section.getLiquidDensity();
-      double cellVolume = section.getArea() * section.getLength();
-
-      if (rhoL > 0 && cellVolume > 0) {
-        double deltaHoldup = massToReturn / (rhoL * cellVolume);
-        double newHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
-        section.setLiquidHoldup(newHoldup);
-        section.setGasHoldup(1.0 - newHoldup);
-        section.updateDerivedQuantities();
-      }
-    }
-  }
-
   // ============== Section Marking ==============
 
   /**
@@ -1316,12 +1599,13 @@ public class LagrangianSlugTracker implements Serializable {
   private void markSlugSections(PipeSection[] sections) {
     for (SlugBubbleUnit slug : slugs) {
       for (PipeSection section : sections) {
-        double secStart = section.getPosition();
+        double secStart = section.getPosition() - section.getLength() / 2.0;
         double secEnd = secStart + section.getLength();
 
         // Check overlap with slug body
         if (secStart < slug.frontPosition && secEnd > slug.tailPosition) {
           section.setInSlugBody(true);
+          section.setInSlugBubble(false);
           section.setSlugHoldup(slug.slugHoldup);
         }
 
@@ -1359,7 +1643,7 @@ public class LagrangianSlugTracker implements Serializable {
    */
   private int findSectionIndex(double position, PipeSection[] sections) {
     for (int i = 0; i < sections.length; i++) {
-      double start = sections[i].getPosition();
+      double start = sections[i].getPosition() - sections[i].getLength() / 2.0;
       double end = start + sections[i].getLength();
       if (position >= start && position <= end) {
         return i;
@@ -1379,7 +1663,7 @@ public class LagrangianSlugTracker implements Serializable {
       return 0;
     }
     PipeSection last = sections[sections.length - 1];
-    return last.getPosition() + last.getLength();
+    return last.getPosition() + last.getLength() / 2.0;
   }
 
   // ============== Statistics ==============
@@ -1388,12 +1672,6 @@ public class LagrangianSlugTracker implements Serializable {
    * Update slug statistics.
    */
   private void updateStatistics() {
-    if (slugs.isEmpty()) {
-      averageSlugLength = 0;
-      maxObservedSlugLength = 0;
-      return;
-    }
-
     double sumLength = 0;
     maxObservedSlugLength = 0;
 
@@ -1404,7 +1682,7 @@ public class LagrangianSlugTracker implements Serializable {
       }
     }
 
-    averageSlugLength = sumLength / slugs.size();
+    averageSlugLength = slugs.isEmpty() ? 0.0 : sumLength / slugs.size();
 
     // Outlet frequency from inter-arrival times
     if (outletInterArrivalTimes.size() > 0) {
@@ -1473,6 +1751,11 @@ public class LagrangianSlugTracker implements Serializable {
     return totalSlugsExited;
   }
 
+  /** @return number of complete marker exits through the open upstream inlet */
+  public int getTotalSlugsExitedAtInlet() {
+    return totalSlugsExitedAtInlet;
+  }
+
   /**
    * Get inlet slug frequency.
    *
@@ -1534,6 +1817,61 @@ public class LagrangianSlugTracker implements Serializable {
    */
   public void setReferenceVelocity(double velocity) {
     this.referenceMixtureVelocity = Math.max(0.1, velocity);
+  }
+
+  /**
+   * Enable the conservative Eulerian subcell reconstruction and phase-continuity interface model.
+   *
+   * <p>
+   * This controls tracker kinematics. The owning finite-volume solver must also use {@link SlugFilmCoupling} face
+   * states in its shared fluxes; enabling this flag alone does not advance an Eulerian solution. Existing geometric
+   * liquid-volume statistics remain compatibility estimates, while phase inventory arrays are in-domain Eulerian
+   * partition diagnostics.
+   * </p>
+   *
+   * @param enabled true to use the conservative coupling kinematics
+   */
+  public void setConservativeFilmCouplingEnabled(boolean enabled) {
+    conservativeFilmCouplingEnabled = enabled;
+    for (SlugBubbleUnit slug : slugs) {
+      slug.usesConservativeFilmCoupling = enabled;
+      slug.hasConservativeVelocity = false;
+    }
+  }
+
+  /** @return whether conservative Eulerian slug/film kinematics are selected */
+  public boolean isConservativeFilmCouplingEnabled() {
+    return conservativeFilmCouplingEnabled;
+  }
+
+  /**
+   * Configure impermeable boundaries for conservative marker motion.
+   *
+   * @param inletClosed true when no material can leave through the inlet
+   * @param outletClosed true when no material can leave through the outlet
+   */
+  public void setClosedBoundaries(boolean inletClosed, boolean outletClosed) {
+    closedInlet = inletClosed;
+    closedOutlet = outletClosed;
+  }
+
+  /**
+   * Calculate the greatest current interface speed without advancing any tracker state.
+   *
+   * @param sections frozen Eulerian sections used for the next trial step
+   * @return maximum absolute front or tail velocity (m/s)
+   */
+  public double getMaximumInterfaceSpeed(PipeSection[] sections) {
+    if (sections == null || sections.length == 0) {
+      return 0.0;
+    }
+    double speed = 0.0;
+    for (SlugBubbleUnit slug : slugs) {
+      double[] velocities = conservativeFilmCouplingEnabled ? conservativeKinematics(slug, sections)
+          : new double[] { slug.frontVelocity, slug.tailVelocity };
+      speed = Math.max(speed, Math.max(Math.abs(velocities[0]), Math.abs(velocities[1])));
+    }
+    return speed;
   }
 
   /**
@@ -1655,11 +1993,11 @@ public class LagrangianSlugTracker implements Serializable {
     for (SlugBubbleUnit slug : slugs) {
       massInActive += slug.slugLiquidMass;
     }
-    return totalMassBorrowed - totalMassReturned - totalMassExitedAtOutlet - massInActive;
+    return totalMassBorrowed - totalMassReturned - totalMassExitedAtOutlet - totalMassExitedAtInlet - massInActive;
   }
 
   /**
-   * Get total mass borrowed from Eulerian cells.
+   * Get cumulative mass added to the slug overlay account. No mass is withdrawn from Eulerian cells.
    *
    * @return mass (kg)
    */
@@ -1668,7 +2006,7 @@ public class LagrangianSlugTracker implements Serializable {
   }
 
   /**
-   * Get total mass returned to Eulerian cells.
+   * Get cumulative mass removed from the overlay by shrinkage or dissipation. No mass is deposited into Eulerian cells.
    *
    * @return mass (kg)
    */
@@ -1683,6 +2021,15 @@ public class LagrangianSlugTracker implements Serializable {
    */
   public double getTotalMassExitedAtOutlet() {
     return totalMassExitedAtOutlet;
+  }
+
+  /**
+   * Get geometric overlay mass removed by complete upstream exits.
+   *
+   * @return cumulative inlet-exit overlay mass in kg; no Eulerian mass is withdrawn
+   */
+  public double getTotalMassExitedAtInlet() {
+    return totalMassExitedAtInlet;
   }
 
   /**
@@ -1713,6 +2060,74 @@ public class LagrangianSlugTracker implements Serializable {
   }
 
   /**
+   * Get the tracker time at the most recent completed slug exit.
+   *
+   * <p>
+   * An outlet event is recorded when the slug tail crosses the outlet, not when its front first arrives. The time is
+   * the end of the tracking step that contains the crossing.
+   * </p>
+   *
+   * @return last completed exit time (s), or -1 before an exit has been recorded
+   */
+  public double getLastOutletArrivalTime() {
+    return lastOutletArrivalTime;
+  }
+
+  /**
+   * Register a fixed-position observation without changing the slug model.
+   *
+   * @param position axial position in metres
+   * @return newly registered probe
+   */
+  public SlugProbe addProbe(double position) {
+    return addProbe(new SlugProbe(position));
+  }
+
+  /**
+   * Register an independent probe, including one made with {@link SlugProbe#copyConfiguration()}.
+   *
+   * @param probe non-null probe to register
+   * @return registered probe
+   */
+  public SlugProbe addProbe(SlugProbe probe) {
+    if (probe == null) {
+      throw new IllegalArgumentException("Slug probe cannot be null");
+    }
+    if (probes == null) {
+      probes = new ArrayList<>();
+    }
+    if (!probes.contains(probe)) {
+      probes.add(probe);
+    }
+    return probe;
+  }
+
+  /** @return immutable snapshot of registered probes; their event histories remain independently drainable */
+  public List<SlugProbe> getProbes() {
+    return probes == null ? Collections.<SlugProbe>emptyList() : Collections.unmodifiableList(new ArrayList<>(probes));
+  }
+
+  /**
+   * Stop observing a probe without modifying its retained events.
+   *
+   * @param probe probe to unregister
+   * @return true if it was registered
+   */
+  public boolean removeProbe(SlugProbe probe) {
+    return probes != null && probes.remove(probe);
+  }
+
+  /** Record displacement before merge/removal or other instantaneous geometry changes. */
+  private void recordProbeMotion(SlugBubbleUnit slug, double dt, double previousFront, double previousTail) {
+    if (probes != null) {
+      for (SlugProbe probe : probes) {
+        probe.recordMotion(slug.id, simulationTime - dt, dt, previousFront, previousTail, slug.frontPosition,
+            slug.tailPosition);
+      }
+    }
+  }
+
+  /**
    * Reset tracker state.
    */
   public void reset() {
@@ -1722,6 +2137,7 @@ public class LagrangianSlugTracker implements Serializable {
     totalSlugsMerged = 0;
     totalSlugsDissipated = 0;
     totalSlugsExited = 0;
+    totalSlugsExitedAtInlet = 0;
     inletSlugFrequency = 0;
     outletSlugFrequency = 0;
     averageSlugLength = 0;
@@ -1732,10 +2148,16 @@ public class LagrangianSlugTracker implements Serializable {
     totalMassBorrowed = 0;
     totalMassReturned = 0;
     totalMassExitedAtOutlet = 0;
+    totalMassExitedAtInlet = 0;
     lastOutletArrivalTime = -1;
     outletSlugLengths.clear();
     outletSlugVolumes.clear();
     outletInterArrivalTimes.clear();
+    if (probes != null) {
+      for (SlugProbe probe : probes) {
+        probe.clearEvents();
+      }
+    }
   }
 
   /**
@@ -1750,6 +2172,7 @@ public class LagrangianSlugTracker implements Serializable {
     sb.append(String.format("Active slugs: %d\n", slugs.size()));
     sb.append(String.format("Total generated: %d\n", totalSlugsGenerated));
     sb.append(String.format("  - Exited at outlet: %d\n", totalSlugsExited));
+    sb.append(String.format("  - Exited at inlet: %d\n", totalSlugsExitedAtInlet));
     sb.append(String.format("  - Merged: %d\n", totalSlugsMerged));
     sb.append(String.format("  - Dissipated: %d\n", totalSlugsDissipated));
     sb.append(String.format("Inlet frequency: %.4f Hz (period: %.1f s)\n", inletSlugFrequency,
@@ -1784,6 +2207,7 @@ public class LagrangianSlugTracker implements Serializable {
     sb.append(String.format("  \"activeSlugCount\": %d,\n", slugs.size()));
     sb.append(String.format("  \"totalGenerated\": %d,\n", totalSlugsGenerated));
     sb.append(String.format("  \"totalExited\": %d,\n", totalSlugsExited));
+    sb.append(String.format("  \"totalExitedAtInlet\": %d,\n", totalSlugsExitedAtInlet));
     sb.append(String.format("  \"totalMerged\": %d,\n", totalSlugsMerged));
     sb.append(String.format("  \"totalDissipated\": %d,\n", totalSlugsDissipated));
     sb.append(String.format("  \"inletFrequency\": %.6f,\n", inletSlugFrequency));

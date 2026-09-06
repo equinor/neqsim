@@ -6,9 +6,8 @@ Can the existing `setSimulationVariable` MCP surface mutate one declared input o
 rerun that process, retain requested engineering units and standard envelope evidence, and fail visibly on rejected
 writes without implying numerical or plant-control authority?
 
-This Phase 0 increment qualifies that bounded software contract. Inventory remains **1.26 / 20 explicit + 25
-contract-tested + 26 confirmed gaps**, and `setSimulationVariable` remains `CONFIRMED_GAP` until a separate merged
-promotion increment updates the inventory atomically. The increment adds one narrow production correctness guard that
+Merged #3478 qualifies that bounded software contract. Inventory **1.27 / 20 explicit + 26 contract-tested + 25
+confirmed gaps** atomically records `setSimulationVariable` as `CONTRACT_TESTED`. The increment adds one narrow production correctness guard that
 aligns exact known OUTPUT writes with the already documented INPUT-only contract. There are no public schema, canonical
 process representation, thermodynamic model, deployment policy, or companion repository changes.
 
@@ -46,7 +45,7 @@ snapshot-diff semantics are not qualified here.
   non-writable output rejection, standard envelope fields, and missing-input failures against
   `ExampleCatalog.processSimpleSeparation()`.
 - `test_simulation_variable_write_protocol.py` obtains the same canonical fixture through packaged MCP, exercises inline
-  and `manageModel`-handle routes, repeats rejection cases, and proves Phase 0 accounting remains unpromoted.
+  and `manageModel`-handle routes, repeats rejection cases, and proves the Phase 0 promotion, evidence sources, and accounting remain atomic.
 - `McpRunnerContractTest` retains the broad standard-response check for the public mutation surface.
 - `test_mcp_server.py` remains the authoritative packaged-protocol registration and accounting regression.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP mutation contracts before the comprehensive
@@ -84,7 +83,5 @@ The existing public automation guide and Javadocs already specify INPUT-only wri
 guide or schema migration is required; implementation now matches that documented behavior.
 
 The increment stops at deterministic address resolution, one bounded input mutation, rerun/report sequencing,
-structured rejection, inline/model-handle equivalence, and packaged STDIO transport. Apart from rejecting a previously
-accepted invalid OUTPUT write, it does not promote inventory, alter scientific trust metadata, change numerical
-behavior, qualify snapshot comparison, or claim model accuracy,
+structured rejection, inline/model-handle equivalence, and packaged STDIO transport. Beyond the evidence-only promotion and the merged rejection of a previously accepted invalid OUTPUT write, it does not alter scientific trust metadata, change numerical behavior, qualify snapshot comparison, or claim model accuracy,
 optimization quality, plant authority, design certification, or accountable engineering approval.

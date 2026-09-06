@@ -87,8 +87,11 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "public static RateConstantRange secondOrderRateConstantRange(",
             "public static ScreeningResult screenAirSaturatedExposure(",
             "public static ResidenceTimeRangeResult screenResidenceTimeRange(",
+            "public static TargetTimeRangeResult timeToRemainingFractionRange(",
             "public static final class ResidenceTimeRangeResult",
+            "public static final class TargetTimeRangeResult",
             "finiteProduct(",
+            "finiteQuotient(",
             "Math.expm1(-exposure)",
         ):
             self.assertIn(token, self.implementation)
@@ -103,6 +106,9 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "testResidenceTimeRangePropagatesPublishedFitScatter",
             "testResidenceTimeRangeIsMonotonicDeterministicAndExactAtZero",
             "testResidenceTimeRangeFailsClosedOnInvalidOrOverflowingInputs",
+            "testTargetTimeRangeReproducesHalfLifeAndForwardSolution",
+            "testTargetTimeRangeIdentityMonotonicityAndDeterminism",
+            "testTargetTimeRangeFailsClosedOnInvalidTargetsAndOverflow",
             "testLongExposureRemainsBoundedAndInputValidationFailsClosed",
         ):
             self.assertIn(token, self.java_test)
@@ -119,6 +125,22 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "continuous Damkohler evidence",
             "does not add categorical reaction/transport thresholds",
             "does not constitute a pipeline source-term coupling",
+        ):
+            self.assertIn(token, self.normalized)
+
+    def test_target_time_inversion_contract_is_documented(self):
+        for token in (
+            "Target-time inversion",
+            "`timeToRemainingFractionRange(...)`",
+            r"E_{\mathrm{required}} = -\ln f",
+            r"t_{\mathrm{required}} = \frac{-\ln f}{k[\mathrm{O_2}]}",
+            "shortest, nominal, and longest required times",
+            "target fraction of `0.5`",
+            "nominal half-life of `22.4288 h`",
+            "valid target interval is `(0, 1]`",
+            "exact zero is rejected",
+            "not an equipment-sizing guarantee",
+            "does not establish a pipeline residence time",
         ):
             self.assertIn(token, self.normalized)
 

@@ -179,10 +179,12 @@ functions.
 
 The same result also preserves every source `Connection` in document order, including parallel
 connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning
-piping-network segment, `FromID` and `ToID` direction, the resolved endpoint element names, and
-resolution status. Missing source IDs receive deterministic evidence-only identities; missing,
-duplicate, self-referential, or unresolved source references remain explicit diagnostics. This
-inventory does not infer connectivity or rewire the returned `ProcessSystem`.
+piping-network segment identity and its explicit `ComponentClass`, `ComponentName`, and
+`TagName`, plus `FromID` and `ToID` direction, the resolved endpoint element names, and
+resolution status. Absent segment metadata remains empty without invented values. Missing source
+IDs receive deterministic evidence-only identities; missing, duplicate, self-referential, or
+unresolved source references remain explicit diagnostics. This inventory does not derive segment
+metadata, infer connectivity, or rewire the returned `ProcessSystem`.
 
 For resolved nozzle endpoints, the same record exposes only explicit source ownership: the nearest
 ancestor `Equipment` or `PipingComponent` identity and XML element name. Direct equipment or

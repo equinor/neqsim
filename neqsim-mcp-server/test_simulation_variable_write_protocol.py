@@ -280,22 +280,31 @@ def test_missing_input_fails_closed(client):
     require(error_code(response) == "INPUT_ERROR", "blank-process code drifted", response)
 
 
-def test_phase0_inventory_remains_unpromoted(client):
+def test_phase0_inventory_is_promoted_atomically(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("setSimulationVariable", {})
-    require(inventory.get("inventoryVersion") == "1.26", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.27", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 25
-        and limitations.get("confirmedGapToolCount") == 26,
-        "qualification changed inventory accounting",
+        limitations.get("contractTestedToolCount") == 26
+        and limitations.get("confirmedGapToolCount") == 25,
+        "promotion inventory accounting drifted",
         limitations,
     )
     require(
-        record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification prematurely promoted setSimulationVariable",
+        record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_MUTATION",
+        "setSimulationVariable promotion is incomplete",
+        record,
+    )
+    require(
+        "neqsim-mcp-server/test_simulation_variable_write_protocol.py"
+        in record.get("contractEvidenceSources", [])
+        and "plant or control authority" in record.get("evidenceBoundary", ""),
+        "promotion evidence boundary drifted",
         record,
     )
 
@@ -308,7 +317,7 @@ def main():
         ("physical-bound rejection", test_physical_bound_rejection),
         ("read-only output rejection", test_output_address_rejection),
         ("missing input fails closed", test_missing_input_fails_closed),
-        ("Phase 0 classification remains unpromoted", test_phase0_inventory_remains_unpromoted),
+        ("Phase 0 classification is promoted atomically", test_phase0_inventory_is_promoted_atomically),
     ]
     try:
         client.start()

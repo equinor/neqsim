@@ -3,6 +3,8 @@ package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,9 +77,85 @@ public class TimeIntegratorTest {
     double dt = integrator.calcStableTimeStep(0.001, 10.0);
     assertTrue(dt <= 1.0, "Should be limited by max time step");
 
-    // Very high wave speed - should be limited by minTimeStep
+    // A configured minimum must never enlarge the physically stable CFL bound.
     dt = integrator.calcStableTimeStep(1e10, 10.0);
-    assertTrue(dt >= 0.01, "Should be limited by min time step");
+    assertEquals(5e-10, dt, 1e-20, "Stability takes priority over the requested minimum time step");
+  }
+
+  @Test
+  void imexTimeStepHonorsCflBelowConfiguredMinimum() {
+    integrator.setMinTimeStep(0.01);
+    integrator.setCflNumber(0.5);
+    double dt = integrator.calcIMEXTimeStep(new double[] { 1e10 }, new double[] { 0.0 }, 10.0);
+    assertEquals(5e-10, dt, 1e-20);
+    assertEquals(dt, integrator.getCurrentDt(), 0.0, "The reported current step must be the bound just calculated");
+  }
+
+  @Test
+  void zeroWaveSpeedUpdatesCurrentStepReport() {
+    integrator.setMaxTimeStep(2.0);
+    integrator.calcStableTimeStep(100.0, 1.0);
+    double dt = integrator.calcStableTimeStep(0.0, 1.0);
+    assertEquals(2.0, dt, 0.0);
+    assertEquals(dt, integrator.getCurrentDt(), 0.0);
+  }
+
+  @Test
+  void smallPositiveWaveSpeedStillUsesItsCflBound() {
+    assertEquals(5e-20, integrator.calcStableTimeStep(1e-11, 1e-30), 1e-32,
+        "Only exactly zero wave speed removes the transport restriction");
+  }
+
+  @Test
+  void resetClearsPreviousPressureCorrectionAndMassLedger() {
+    double[][] state = configureCoupledCorrection();
+    integrator.step(state, (values, time) -> new double[values.length][values[0].length], 0.01);
+    assertTrue(integrator.isCoupledPressureMomentumConverged());
+    assertTrue(integrator.getCoupledPressureMomentumPhaseMassCorrectionsKg().length > 0);
+    integrator.reset();
+    assertNoCoupledCorrectionResult();
+  }
+
+  @Test
+  void failedStepCannotExposePreviousPressureCorrectionOrLedger() {
+    for (boolean failInRhs : new boolean[] { true, false }) {
+      double[][] state = configureCoupledCorrection();
+      TimeIntegrator.RHSFunction zeroRhs = (values, time) -> new double[values.length][values[0].length];
+      integrator.step(state, zeroRhs, 0.01);
+      assertTrue(integrator.isCoupledPressureMomentumConverged());
+      if (failInRhs) {
+        assertThrows(IllegalStateException.class, () -> integrator.step(state, (values, time) -> {
+          throw new IllegalStateException("Injected failed predictor");
+        }, 0.01));
+      } else {
+        assertThrows(IllegalArgumentException.class, () -> integrator.step(state, zeroRhs, 0.0));
+      }
+      assertNoCoupledCorrectionResult();
+    }
+  }
+
+  private double[][] configureCoupledCorrection() {
+    integrator = new TimeIntegrator(TimeIntegrator.Method.EULER);
+    double[] pressure = { 5e6, 5e6 };
+    double[] area = { 1.0, 1.0 };
+    double[] lengths = { 10.0, 10.0 };
+    double[] gasDensity = { 10.0, 10.0 };
+    double[] oilDensity = { 800.0, 800.0 };
+    double[] waterDensity = { 1000.0, 1000.0 };
+    double[] gasSoundSpeed = { 300.0, 300.0 };
+    double[] liquidSoundSpeed = { 1200.0, 1200.0 };
+    integrator.setCoupledPressureMomentumProperties(pressure, area, lengths, gasDensity, oilDensity, waterDensity,
+        gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed, 5e6, true, true);
+    return new double[][] { { 4.0, 480.0, 0.0, 4.0, 480.0, 0.0, 1e6 }, { 4.1, 480.0, 0.0, 4.0, 480.0, 0.0, 1e6 } };
+  }
+
+  private void assertNoCoupledCorrectionResult() {
+    assertFalse(integrator.isCoupledPressureMomentumConverged());
+    assertNull(integrator.getCoupledPressureMomentumPressure());
+    assertEquals(0, integrator.getCoupledPressureMomentumPhaseMassCorrectionsKg().length);
+    for (double transfer : integrator.getCoupledPressureMomentumOutletMassCorrectionKg()) {
+      assertEquals(0.0, transfer, 0.0);
+    }
   }
 
   @Test

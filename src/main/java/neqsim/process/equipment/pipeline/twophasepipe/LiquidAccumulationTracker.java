@@ -101,8 +101,8 @@ public class LiquidAccumulationTracker implements Serializable {
           zone.sectionIndices.add(endIdx);
         }
 
-        zone.startPosition = sections[startIdx].getPosition();
-        zone.endPosition = sections[endIdx].getPosition() + sections[endIdx].getLength();
+        zone.startPosition = sections[startIdx].getPosition() - 0.5 * sections[startIdx].getLength();
+        zone.endPosition = sections[endIdx].getPosition() + 0.5 * sections[endIdx].getLength();
 
         // Calculate max volume (pipe volume in the zone)
         zone.maxVolume = 0;
@@ -130,8 +130,8 @@ public class LiquidAccumulationTracker implements Serializable {
         AccumulationZone riserBase = new AccumulationZone();
         riserBase.sectionIndices.add(i - 1);
         riserBase.sectionIndices.add(i);
-        riserBase.startPosition = sections[i - 1].getPosition();
-        riserBase.endPosition = sections[i].getPosition() + sections[i].getLength();
+        riserBase.startPosition = sections[i - 1].getPosition() - 0.5 * sections[i - 1].getLength();
+        riserBase.endPosition = sections[i].getPosition() + 0.5 * sections[i].getLength();
         riserBase.maxVolume = (sections[i - 1].getArea() * sections[i - 1].getLength()
             + sections[i].getArea() * sections[i].getLength()) * 0.5;
         riserBase.isActive = true;

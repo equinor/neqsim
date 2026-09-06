@@ -237,8 +237,8 @@ class FlowRegimeHorizontalTransitionTest {
    * Transient momentum sources must consume the detector's continuous regime weights.
    *
    * <p>
-   * This is a calculation-level check: it compares the source evaluator's stored wall and interfacial stresses with the
-   * convex combination of the same authoritative closure models.
+   * This is a calculation-level check: it compares wall stresses and interfacial force with the convex combination of
+   * the same authoritative closure models. Interfacial momentum transfer must cancel between gas and liquid.
    * </p>
    */
   @Test
@@ -263,7 +263,7 @@ class FlowRegimeHorizontalTransitionTest {
       InterfacialFriction interfacialFriction = new InterfacialFriction();
       double expectedGasWallShear = 0.0;
       double expectedLiquidWallShear = 0.0;
-      double expectedInterfacialShear = 0.0;
+      double expectedInterfacialForce = 0.0;
       double expectedInterfacialArea = 0.0;
 
       for (Map.Entry<FlowRegime, Double> entry : weights.entrySet()) {
@@ -277,14 +277,28 @@ class FlowRegimeHorizontalTransitionTest {
             upstream.getLiquidHoldup(), upstream.getDiameter(), upstream.getSurfaceTension());
         expectedGasWallShear += entry.getValue() * wall.gasWallShear;
         expectedLiquidWallShear += entry.getValue() * wall.liquidWallShear;
-        expectedInterfacialShear += entry.getValue() * interfacial.interfacialShear;
+        expectedInterfacialForce += entry.getValue() * interfacial.interfacialShear
+            * interfacial.interfacialAreaPerLength;
         expectedInterfacialArea += entry.getValue() * interfacial.interfacialAreaPerLength;
       }
 
       assertRelativeEquals(expectedGasWallShear, upstream.getGasWallShear());
       assertRelativeEquals(expectedLiquidWallShear, upstream.getLiquidWallShear());
-      assertRelativeEquals(expectedInterfacialShear, upstream.getInterfacialShear());
+      assertRelativeEquals(expectedInterfacialForce, upstream.getInterfacialShear() * upstream.getInterfacialWidth());
       assertRelativeEquals(expectedInterfacialArea, upstream.getInterfacialWidth());
+      double gasWallForce = -expectedGasWallShear * upstream.getGasWettedPerimeter();
+      double liquidWallForce = -expectedLiquidWallShear * upstream.getLiquidWettedPerimeter();
+      double[] source = equations.calcSourceTerms(new TwoFluidSection[] { upstream })[0];
+      assertRelativeEquals(gasWallForce - expectedInterfacialForce,
+          source[TwoFluidConservationEquations.IDX_GAS_MOMENTUM]);
+      assertRelativeEquals(liquidWallForce + expectedInterfacialForce,
+          source[TwoFluidConservationEquations.IDX_OIL_MOMENTUM]);
+      assertRelativeEquals(gasWallForce + liquidWallForce,
+          source[TwoFluidConservationEquations.IDX_GAS_MOMENTUM]
+              + source[TwoFluidConservationEquations.IDX_OIL_MOMENTUM]
+              + source[TwoFluidConservationEquations.IDX_WATER_MOMENTUM]);
+      Assertions.assertEquals(0.0, source[TwoFluidConservationEquations.IDX_WATER_MOMENTUM],
+          "an absent water phase must not receive blended interfacial force");
       break;
     }
 

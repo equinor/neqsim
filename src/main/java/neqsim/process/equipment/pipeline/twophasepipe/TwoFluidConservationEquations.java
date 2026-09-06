@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
@@ -27,16 +29,15 @@ import neqsim.process.equipment.pipeline.twophasepipe.numerics.MUSCLReconstructo
  * α_g·ρ_g·g·A·sin(θ)</li>
  * <li><b>Liquid Momentum:</b> ∂/∂t(α_L·ρ_L·v_L·A) + ∂/∂x(α_L·ρ_L·v_L²·A) = -α_L·A·∂P/∂x - τ_wL·S_L + τ_i·S_i -
  * α_L·ρ_L·g·A·sin(θ)</li>
- * <li><b>Mixture Energy:</b> ∂/∂t(E_mix·A) + ∂/∂x((E_mix+P)·v_mix·A) = Q_wall + W_friction</li>
+ * <li><b>Total Energy:</b> phase total-enthalpy advection, wall heat transfer and gravitational work</li>
  * </ul>
  *
  * <h2>Variable Indices</h2>
  * <ul>
  * <li>0: Gas mass per length (α_g·ρ_g·A)</li>
- * <li>1: Liquid mass per length (α_L·ρ_L·A)</li>
- * <li>2: Gas momentum per length (α_g·ρ_g·v_g·A)</li>
- * <li>3: Liquid momentum per length (α_L·ρ_L·v_L·A)</li>
- * <li>4: Mixture energy per length (E_mix·A)</li>
+ * <li>1, 2: Oil and water mass per length</li>
+ * <li>3, 4, 5: Gas, oil and water momentum per length</li>
+ * <li>6: Total energy per length, excluding gravitational potential</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -88,6 +89,46 @@ public class TwoFluidConservationEquations implements Serializable {
   // Numerical methods
   private AUSMPlusFluxCalculator fluxCalculator;
   private MUSCLReconstructor reconstructor;
+
+  /** Accepted tracked geometry; reconstruction never owns a second phase inventory. */
+  private List<LagrangianSlugTracker.SlugBubbleUnit> conservativeSlugs = Collections.emptyList();
+
+  /** Liquid pressure terms actually used at each numerical interface. */
+  private double[][] interfacePhaseHoldup = new double[0][3];
+  private double[][] interfacePhasePressure = new double[0][3];
+  private TwoFluidSection reconstructedOutlet;
+  private TwoFluidSection inletBoundaryState;
+  private boolean inletClosed;
+  private boolean outletClosed;
+
+  /**
+   * Impose impermeable external faces independently of reconstructed subcell velocities.
+   *
+   * @param closeInlet true for a closed inlet
+   * @param closeOutlet true for a closed outlet
+   */
+  public void setClosedBoundaries(boolean closeInlet, boolean closeOutlet) {
+    inletClosed = closeInlet;
+    outletClosed = closeOutlet;
+  }
+
+  /**
+   * Set an external inflow state without replacing the first finite-volume cell.
+   *
+   * @param state prescribed inflow face state, or null for the cell-based boundary
+   */
+  public void setInletBoundaryState(TwoFluidSection state) {
+    inletBoundaryState = state == null ? null : state.clone();
+  }
+
+  /**
+   * Select accepted geometry for conservative slug/film face reconstruction.
+   *
+   * @param slugs tracked geometry, or null to disable reconstruction
+   */
+  public void setConservativeSlugs(List<LagrangianSlugTracker.SlugBubbleUnit> slugs) {
+    conservativeSlugs = slugs == null ? Collections.emptyList() : new java.util.ArrayList<>(slugs);
+  }
 
   // Settings
   private boolean includeEnergyEquation = true;
@@ -268,7 +309,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // Calculate the two external boundary fluxes once. These exact values are also
     // retained for a stage-consistent domain mass-balance diagnostic.
     double[] inletFlux = calcInletFlux(sections[0]);
-    double[] outletFlux = calcOutletFlux(sections[nCells - 1]);
+    double[] outletFlux = calcOutletFlux(reconstructedOutlet == null ? sections[nCells - 1] : reconstructedOutlet);
     lastPhaseMassFaceFluxes = populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux,
         outletFlux);
 
@@ -281,7 +322,10 @@ public class TwoFluidConservationEquations implements Serializable {
     for (int i = 0; i < nCells; i++) {
       double[] fluxLeft, fluxRight;
 
-      if (i == 0) {
+      if (nCells == 1) {
+        fluxLeft = inletFlux;
+        fluxRight = outletFlux;
+      } else if (i == 0) {
         // Inlet cell: Inlet BC maintains the state, so inlet flux = outlet flux from cell 0
         // This creates a "quasi-steady" inlet where what enters = what leaves for the cell
         // The mass is replenished by the boundary condition after each step
@@ -411,9 +455,8 @@ public class TwoFluidConservationEquations implements Serializable {
    *
    * <p>
    * Rows are faces from inlet through outlet; columns are gas, oil, and water in kg/s. A positive value points in the
-   * increasing section-index direction. CLOSED boundaries are represented by the zero boundary velocities imposed by
-   * {@link neqsim.process.equipment.pipeline.TwoFluidPipe}, so their external face flow is exactly zero while internal
-   * convection remains available.
+   * increasing section-index direction. CLOSED boundaries explicitly suppress external transport after reconstruction,
+   * so their external face flow is exactly zero while internal convection remains available.
    * </p>
    *
    * @param sections current finite-volume sections
@@ -426,9 +469,10 @@ public class TwoFluidConservationEquations implements Serializable {
       throw new IllegalArgumentException("At least one section is required to calculate face fluxes");
     }
 
-    double[][] interfaceFluxes = sections.length > 1 ? calcInterfaceFluxes(sections, dx) : new double[0][NUM_EQUATIONS];
+    double[][] interfaceFluxes = calcInterfaceFluxes(sections, dx);
     double[] inletFlux = calcInletFlux(sections[0]);
-    double[] outletFlux = calcOutletFlux(sections[sections.length - 1]);
+    double[] outletFlux = calcOutletFlux(
+        reconstructedOutlet == null ? sections[sections.length - 1] : reconstructedOutlet);
     return populatePhaseMassFaceFluxes(null, sections.length, interfaceFluxes, inletFlux, outletFlux);
   }
 
@@ -473,13 +517,19 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return array of flux values for each conserved variable
    */
   private double[] calcInletFlux(TwoFluidSection sec) {
+    if (inletBoundaryState != null) {
+      sec = inletBoundaryState;
+    }
+    if (inletClosed) {
+      return closedFaceFlux(sec);
+    }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
 
     // Gas flux (positive velocity means flow INTO domain)
     // Use the stored gas holdup directly, not derived from mass
     double rhoG = sec.getGasDensity();
-    if (rhoG < 0.1)
+    if (!Double.isFinite(rhoG) || rhoG <= 0.0)
       rhoG = 1.0; // Default gas density
     double vG = sec.getGasVelocity();
     double alphaG = sec.getGasHoldup();
@@ -489,23 +539,24 @@ public class TwoFluidConservationEquations implements Serializable {
 
     // Oil flux - use holdup directly for inlet BC stability
     double rhoO = sec.getOilDensity();
-    if (rhoO < 100)
+    if (!Double.isFinite(rhoO) || rhoO <= 0.0)
       rhoO = 700.0; // Default oil density
     double vO = sec.getOilVelocity();
     double alphaO = sec.getOilHoldup();
-    // Phase-resolved boundary holdup is authoritative; do not reconstruct an absent oil phase.
-    alphaO = Math.max(0, Math.min(1 - alphaG, alphaO));
+    // Phase-resolved boundary holdup is authoritative, including positive traces
+    // smaller than the rounding error in gas holdup.
+    alphaO = Math.max(0, Math.min(1.0, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
 
     // Water flux - use holdup directly for inlet BC stability
     double rhoW = sec.getWaterDensity();
-    if (rhoW < 100)
+    if (!Double.isFinite(rhoW) || rhoW <= 0.0)
       rhoW = 1000.0; // Default water density
     double vW = sec.getWaterVelocity();
     double alphaW = sec.getWaterHoldup();
-    // Phase-resolved boundary holdup is authoritative; do not reconstruct an absent water phase.
-    alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
+    // Do not subtract other phase holdups to recover this phase's availability.
+    alphaW = Math.max(0, Math.min(1.0, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
 
@@ -513,7 +564,8 @@ public class TwoFluidConservationEquations implements Serializable {
     if (includeEnergyEquation) {
       double HG = sec.getGasEnthalpy();
       double HL = sec.getLiquidEnthalpy();
-      flux[IDX_ENERGY] = (alphaG * rhoG * vG * HG + (alphaO * rhoO * vO + alphaW * rhoW * vW) * HL) * A;
+      flux[IDX_ENERGY] = (alphaG * rhoG * vG * (HG + 0.5 * vG * vG) + alphaO * rhoO * vO * (HL + 0.5 * vO * vO)
+          + alphaW * rhoW * vW * (HL + 0.5 * vW * vW)) * A;
     }
 
     return flux;
@@ -533,6 +585,9 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return array of flux values for each conserved variable
    */
   private double[] calcOutletFlux(TwoFluidSection sec) {
+    if (outletClosed) {
+      return closedFaceFlux(sec);
+    }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
 
@@ -543,7 +598,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
     // Gas flux (positive velocity means outflow) - use default density if not set
     double rhoG = sec.getGasDensity();
-    if (rhoG < 0.1)
+    if (!Double.isFinite(rhoG) || rhoG <= 0.0)
       rhoG = 1.0; // Default gas density
     double vG = allowOutletPhaseBackflow ? sec.getGasVelocity() : Math.max(0.0, sec.getGasVelocity());
     double alphaG = sec.getGasMassPerLength() / (rhoG * A);
@@ -553,21 +608,24 @@ public class TwoFluidConservationEquations implements Serializable {
 
     // Oil flux - use default density if not set
     double rhoO = sec.getOilDensity();
-    if (rhoO < 100)
+    if (!Double.isFinite(rhoO) || rhoO <= 0.0)
       rhoO = 700.0; // Default oil density
     double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
     double alphaO = sec.getOilMassPerLength() / (rhoO * A);
-    alphaO = Math.max(0, Math.min(alphaG > 0.99 ? 0 : 1, alphaO));
+    // Each phase owns its conservative inventory. Subtracting nearly unit gas
+    // holdup loses positive trace liquid to cancellation and gives phases an
+    // artificial priority at the outlet.
+    alphaO = Math.max(0, Math.min(1.0, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
 
     // Water flux - use default density if not set
     double rhoW = sec.getWaterDensity();
-    if (rhoW < 100)
+    if (!Double.isFinite(rhoW) || rhoW <= 0.0)
       rhoW = 1000.0; // Default water density
     double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
     double alphaW = sec.getWaterMassPerLength() / (rhoW * A);
-    alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
+    alphaW = Math.max(0, Math.min(1.0, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
 
@@ -575,9 +633,20 @@ public class TwoFluidConservationEquations implements Serializable {
     if (includeEnergyEquation) {
       double HG = sec.getGasEnthalpy();
       double HL = sec.getLiquidEnthalpy();
-      flux[IDX_ENERGY] = (alphaG * rhoG * vG * HG + (alphaO * rhoO * vO + alphaW * rhoW * vW) * HL) * A;
+      flux[IDX_ENERGY] = (alphaG * rhoG * vG * (HG + 0.5 * vG * vG) + alphaO * rhoO * vO * (HL + 0.5 * vO * vO)
+          + alphaW * rhoW * vW * (HL + 0.5 * vW * vW)) * A;
     }
 
+    return flux;
+  }
+
+  /** A closed face carries pressure traction but no advected mass or energy. */
+  private double[] closedFaceFlux(TwoFluidSection sec) {
+    double[] flux = new double[NUM_EQUATIONS];
+    double pressureForce = sec.getPressure() * sec.getArea();
+    flux[IDX_GAS_MOMENTUM] = sec.getGasHoldup() * pressureForce;
+    flux[IDX_OIL_MOMENTUM] = sec.getOilHoldup() * pressureForce;
+    flux[IDX_WATER_MOMENTUM] = sec.getWaterHoldup() * pressureForce;
     return flux;
   }
 
@@ -661,6 +730,12 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Calculates interfacial shear from the active regime or its transition weights.
    *
+   * <p>
+   * The momentum source uses shear multiplied by interface area per length. Blend that force directly, then recover an
+   * effective shear on the blended area. Multiplying independently averaged shear and area would introduce cross terms
+   * between different regimes and would not preserve their weighted momentum transfer.
+   * </p>
+   *
    * @param sec local pipe state
    * @param weights dimensionless normalized regime weights, or {@code null} outside a transition
    * @return interfacial shear in Pa and area per length in m
@@ -674,13 +749,17 @@ public class TwoFluidConservationEquations implements Serializable {
     }
 
     InterfacialFriction.InterfacialFrictionResult blended = new InterfacialFriction.InterfacialFrictionResult();
+    double weightedForcePerLength = 0.0;
     for (Map.Entry<PipeSection.FlowRegime, Double> entry : weights.entrySet()) {
       InterfacialFriction.InterfacialFrictionResult component = interfacialFriction.calculate(entry.getKey(),
           sec.getGasVelocity(), sec.getLiquidVelocity(), sec.getGasDensity(), sec.getLiquidDensity(),
           sec.getGasViscosity(), sec.getLiquidViscosity(), sec.getLiquidHoldup(), sec.getDiameter(),
           sec.getSurfaceTension());
-      blended.interfacialShear += entry.getValue() * component.interfacialShear;
+      weightedForcePerLength += entry.getValue() * component.interfacialShear * component.interfacialAreaPerLength;
       blended.interfacialAreaPerLength += entry.getValue() * component.interfacialAreaPerLength;
+    }
+    if (blended.interfacialAreaPerLength > 0.0) {
+      blended.interfacialShear = weightedForcePerLength / blended.interfacialAreaPerLength;
     }
     return blended;
   }
@@ -764,9 +843,22 @@ public class TwoFluidConservationEquations implements Serializable {
       interfacePressure = new double[nInterfaces];
     }
 
+    interfacePhaseHoldup = new double[nInterfaces][3];
+    interfacePhasePressure = new double[nInterfaces][3];
+    SlugFilmCoupling.Reconstruction[] reconstructions = new SlugFilmCoupling.Reconstruction[nCells];
+    if (!conservativeSlugs.isEmpty()) {
+      for (int cell = 0; cell < nCells; cell++) {
+        reconstructions[cell] = SlugFilmCoupling.reconstruct(sections[cell], conservativeSlugs);
+      }
+    }
+    reconstructedOutlet = nCells > 0 && reconstructions[nCells - 1] != null
+        ? reconstructions[nCells - 1].getRightFaceState()
+        : null;
+
     for (int i = 0; i < nInterfaces; i++) {
-      TwoFluidSection left = sections[i];
-      TwoFluidSection right = sections[i + 1];
+      TwoFluidSection left = reconstructions[i] == null ? sections[i] : reconstructions[i].getRightFaceState();
+      TwoFluidSection right = reconstructions[i + 1] == null ? sections[i + 1]
+          : reconstructions[i + 1].getLeftFaceState();
       double A = 0.5 * (left.getArea() + right.getArea());
 
       // Create phase states for AUSM+
@@ -779,6 +871,33 @@ public class TwoFluidConservationEquations implements Serializable {
       fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
       interfaceGasHoldup[i] = gasFlux.interfaceHoldup;
       interfacePressure[i] = gasFlux.interfacePressure;
+      interfacePhaseHoldup[i][0] = gasFlux.interfaceHoldup;
+      interfacePhasePressure[i][0] = gasFlux.interfacePressure;
+
+      if (enableWaterOilSlip) {
+        // Each phase has its own donor and velocity, including countercurrent oil/water flow.
+        PhaseFlux oilFlux = fluxCalculator.calcPhaseFlux(createLiquidPhaseState(left, false),
+            createLiquidPhaseState(right, false), A);
+        PhaseFlux waterFlux = fluxCalculator.calcPhaseFlux(createLiquidPhaseState(left, true),
+            createLiquidPhaseState(right, true), A);
+        fluxes[i][IDX_OIL_MASS] = oilFlux.massFlux;
+        fluxes[i][IDX_WATER_MASS] = waterFlux.massFlux;
+        fluxes[i][IDX_OIL_MOMENTUM] = oilFlux.momentumFlux;
+        fluxes[i][IDX_WATER_MOMENTUM] = waterFlux.momentumFlux;
+        interfacePhaseHoldup[i][1] = oilFlux.interfaceHoldup;
+        interfacePhaseHoldup[i][2] = waterFlux.interfaceHoldup;
+        interfacePhasePressure[i][1] = oilFlux.interfacePressure;
+        interfacePhasePressure[i][2] = waterFlux.interfacePressure;
+        interfaceLiquidHoldup[i] = oilFlux.interfaceHoldup + waterFlux.interfaceHoldup;
+        if (gasFlux.interfaceHoldup == 0.0) {
+          interfacePressure[i] = oilFlux.interfaceHoldup > 0.0 ? oilFlux.interfacePressure
+              : waterFlux.interfacePressure;
+        }
+        if (includeEnergyEquation) {
+          fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + oilFlux.energyFlux + waterFlux.energyFlux;
+        }
+        continue;
+      }
 
       // For oil and water, use coupled approach to prevent oscillations.
       // Calculate combined liquid flux first, then split by upwind water cut.
@@ -787,6 +906,9 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseState liqR = createLiquidState(right);
       PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
       interfaceLiquidHoldup[i] = liqFlux.interfaceHoldup;
+      if (gasFlux.interfaceHoldup == 0.0) {
+        interfacePressure[i] = liqFlux.interfacePressure;
+      }
 
       // Determine upwind direction for liquid
       double cHalf = 0.5 * (liqL.soundSpeed + liqR.soundSpeed);
@@ -798,18 +920,22 @@ public class TwoFluidConservationEquations implements Serializable {
       double rhoO, rhoW, vO, vW;
       if (upwindIsLeft) {
         upwindWaterCut = left.getWaterCut();
-        rhoO = left.getOilDensity() > 100 ? left.getOilDensity() : 700.0;
-        rhoW = left.getWaterDensity() > 100 ? left.getWaterDensity() : 1000.0;
+        rhoO = left.getOilDensity() > 0 ? left.getOilDensity() : 700.0;
+        rhoW = left.getWaterDensity() > 0 ? left.getWaterDensity() : 1000.0;
         vO = left.getOilVelocity();
         vW = left.getWaterVelocity();
       } else {
         upwindWaterCut = right.getWaterCut();
-        rhoO = right.getOilDensity() > 100 ? right.getOilDensity() : 700.0;
-        rhoW = right.getWaterDensity() > 100 ? right.getWaterDensity() : 1000.0;
+        rhoO = right.getOilDensity() > 0 ? right.getOilDensity() : 700.0;
+        rhoW = right.getWaterDensity() > 0 ? right.getWaterDensity() : 1000.0;
         vO = right.getOilVelocity();
         vW = right.getWaterVelocity();
       }
       upwindOilFrac = 1.0 - upwindWaterCut;
+      interfacePhaseHoldup[i][1] = liqFlux.interfaceHoldup * upwindOilFrac;
+      interfacePhaseHoldup[i][2] = liqFlux.interfaceHoldup * upwindWaterCut;
+      interfacePhasePressure[i][1] = liqFlux.interfacePressure;
+      interfacePhasePressure[i][2] = liqFlux.interfacePressure;
 
       // Split liquid mass flux by water cut (volume-based)
       // But account for density difference: m_oil/m_water = (1-wc)*rho_o / (wc*rho_w)
@@ -821,12 +947,9 @@ public class TwoFluidConservationEquations implements Serializable {
       fluxes[i][IDX_WATER_MASS] = totalLiqMassFlux * waterMassFrac;
 
       // Split momentum flux similarly, but use individual velocities if available
-      double totalLiqMomFlux = liqFlux.momentumFlux;
-      // Approximate: momentum splits with mass but velocity may differ
-      fluxes[i][IDX_OIL_MOMENTUM] = fluxes[i][IDX_OIL_MASS] * vO
-          + upwindOilFrac * (totalLiqMomFlux - totalLiqMassFlux * liqL.velocity);
-      fluxes[i][IDX_WATER_MOMENTUM] = fluxes[i][IDX_WATER_MASS] * vW
-          + upwindWaterCut * (totalLiqMomFlux - totalLiqMassFlux * liqL.velocity);
+      double liquidPressureFlux = liqFlux.interfaceHoldup * liqFlux.interfacePressure * A;
+      fluxes[i][IDX_OIL_MOMENTUM] = fluxes[i][IDX_OIL_MASS] * vO + upwindOilFrac * liquidPressureFlux;
+      fluxes[i][IDX_WATER_MOMENTUM] = fluxes[i][IDX_WATER_MASS] * vW + upwindWaterCut * liquidPressureFlux;
 
       if (includeEnergyEquation) {
         fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + liqFlux.energyFlux;
@@ -846,7 +969,7 @@ public class TwoFluidConservationEquations implements Serializable {
    * @param sections Pipe sections
    * @return Source terms [nCells][NUM_EQUATIONS]
    */
-  private double[][] calcSourceTerms(TwoFluidSection[] sections) {
+  double[][] calcSourceTerms(TwoFluidSection[] sections) {
     int nCells = sections.length;
     double[][] sources = new double[nCells][NUM_EQUATIONS];
     if (lastPhaseMassSourcesPerLength.length != nCells) {
@@ -886,14 +1009,14 @@ public class TwoFluidConservationEquations implements Serializable {
       }
 
       // Wall friction forces (N/m)
-      double F_wG = -sec.getGasWallShear() * S_G;
-      double F_wL = -sec.getLiquidWallShear() * S_L;
+      double F_wG = alphaG > 0.0 ? -sec.getGasWallShear() * S_G : 0.0;
+      double F_wL = alphaL > 0.0 ? -sec.getLiquidWallShear() * S_L : 0.0;
 
       // Interfacial friction force (N/m)
       // Positive interfacial shear decelerates gas, accelerates liquid
       boolean stiffBubbleDrag = enableStiffBubbleDrag && isDispersedBubbleRegime(sec.getFlowRegime());
-      double F_iG = stiffBubbleDrag ? 0.0 : -sec.getInterfacialShear() * S_i;
-      double F_iL = stiffBubbleDrag ? 0.0 : sec.getInterfacialShear() * S_i;
+      double F_iG = stiffBubbleDrag || alphaG <= 0.0 || alphaL <= 0.0 ? 0.0 : -sec.getInterfacialShear() * S_i;
+      double F_iL = -F_iG;
 
       // Gravity forces (N/m) - calculated separately for oil and water
       double F_gG = -alphaG * rhoG * GRAVITY * A * sinTheta;
@@ -933,12 +1056,11 @@ public class TwoFluidConservationEquations implements Serializable {
 
       sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + transferMomentum[0];
 
+      double oilHoldupFrac = alphaL > 0.0 ? alphaO / alphaL : 0.0;
+      double waterHoldupFrac = alphaL > 0.0 ? alphaW / alphaL : 0.0;
       if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
         // Separate oil and water momentum equations
         // Wall friction partitioned between oil and water based on holdup
-        double oilHoldupFrac = (alphaL > 0.01) ? alphaO / alphaL : 0.5;
-        double waterHoldupFrac = (alphaL > 0.01) ? alphaW / alphaL : 0.5;
-
         double F_wO = F_wL * oilHoldupFrac;
         double F_wW = F_wL * waterHoldupFrac;
 
@@ -971,6 +1093,13 @@ public class TwoFluidConservationEquations implements Serializable {
             break;
           }
         }
+        // An absent phase cannot carry mechanical interface force. Preserve the
+        // existing regime correlation only when both liquid phases are present.
+        if (alphaO <= 0.0) {
+          oilInterfaceFrac = 0.0;
+        } else if (alphaW <= 0.0) {
+          oilInterfaceFrac = 1.0;
+        }
         double F_iO = F_iL * oilInterfaceFrac;
         double F_iW = F_iL * (1.0 - oilInterfaceFrac);
 
@@ -990,16 +1119,23 @@ public class TwoFluidConservationEquations implements Serializable {
         // Assemble water momentum source
         sources[i][IDX_WATER_MOMENTUM] = F_wW + F_iW + F_gW + F_ow_water + transferMomentum[2];
       } else {
-        // Combined liquid momentum (original 6-equation model)
-        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + transferMomentum[1] + transferMomentum[2];
-        sources[i][IDX_WATER_MOMENTUM] = 0; // Not used in 6-equation mode
+        // The conservative state still has separate oil and water momenta when
+        // slip is disabled. A common acceleration requires mass-weighted force.
+        double liquidMass = sec.getOilMassPerLength() + sec.getWaterMassPerLength();
+        double oilMassFrac = liquidMass > 0.0 ? sec.getOilMassPerLength() / liquidMass : oilHoldupFrac;
+        double waterMassFrac = liquidMass > 0.0 ? sec.getWaterMassPerLength() / liquidMass : waterHoldupFrac;
+        double liquidForce = F_wL + F_iL + F_gL;
+        sources[i][IDX_OIL_MOMENTUM] = liquidForce * oilMassFrac + transferMomentum[1];
+        sources[i][IDX_WATER_MOMENTUM] = liquidForce * waterMassFrac + transferMomentum[2];
       }
 
       if (includeEnergyEquation) {
-        // Energy source: heat transfer + friction work
+        // Total energy excludes gravitational potential. Stationary walls do no
+        // mechanical work: friction converts kinetic to internal energy within U[6].
         double Q_wall = calcHeatTransfer(sec);
-        double W_fric = calcFrictionWork(sec);
-        sources[i][IDX_ENERGY] = Q_wall + W_fric;
+        double gravityWork = -GRAVITY * sinTheta
+            * (sec.getGasMomentumPerLength() + sec.getOilMomentumPerLength() + sec.getWaterMomentumPerLength());
+        sources[i][IDX_ENERGY] = Q_wall + gravityWork;
       }
 
       // Store in section for diagnostics
@@ -1017,7 +1153,13 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Apply the non-conservative holdup-gradient momentum term.
+   * Apply the geometric area-pressure source and optional non-conservative holdup-gradient momentum term.
+   *
+   * <p>
+   * The geometric source balances the pressure traction on a changing pipe area and is required even in single-phase
+   * flow without interfacial stabilization. It uses the same face areas as the momentum flux. The optional interfacial
+   * term is described below.
+   * </p>
    *
    * <p>
    * The momentum flux carries the phase pressure contribution as {@code alpha_k * p * A}, so its divergence produces
@@ -1042,11 +1184,8 @@ public class TwoFluidConservationEquations implements Serializable {
    * @param dUdt complete uncoupled conservative-variable rates, modified in place
    */
   void applyInterfacialPressure(TwoFluidSection[] sections, double[][] dUdt) {
-    if (!enableInterfacialPressure) {
-      return;
-    }
     int nCells = sections.length;
-    if (nCells < 2 || interfaceGasHoldup.length != nCells - 1) {
+    if (nCells == 0 || interfaceGasHoldup.length != nCells - 1) {
       return;
     }
 
@@ -1059,37 +1198,32 @@ public class TwoFluidConservationEquations implements Serializable {
         continue;
       }
 
-      // Cancel the spurious force exactly: the flux divergence contributes
-      // d(alphaBar * pBar)/dx, while the physical term is alpha_i * dp/dx. Differencing the
-      // same interface values the flux used leaves no residual when the holdup is uniform.
-      double gasRight = (i < nCells - 1) ? interfaceGasHoldup[i] : sec.getGasHoldup();
-      double gasLeft = (i > 0) ? interfaceGasHoldup[i - 1] : sec.getGasHoldup();
-      double liqRight = (i < nCells - 1) ? interfaceLiquidHoldup[i] : sec.getLiquidHoldup();
-      double liqLeft = (i > 0) ? interfaceLiquidHoldup[i - 1] : sec.getLiquidHoldup();
-      double pRight = (i < nCells - 1) ? interfacePressure[i] : pressure;
-      double pLeft = (i > 0) ? interfacePressure[i - 1] : pressure;
-
-      double deltaPi = calcInterfacialPressureDifference(sec);
+      double[] cellHoldups = { sec.getGasHoldup(), sec.getOilHoldup(), sec.getWaterHoldup() };
+      TwoFluidSection inletFace = inletBoundaryState == null ? sec : inletBoundaryState;
+      double[] inletHoldups = { inletFace.getGasHoldup(), inletFace.getOilHoldup(), inletFace.getWaterHoldup() };
+      TwoFluidSection boundary = reconstructedOutlet == null ? sec : reconstructedOutlet;
+      double[] outletHoldups = { boundary.getGasHoldup(), boundary.getOilHoldup(), boundary.getWaterHoldup() };
+      double rightArea = i < nCells - 1 ? 0.5 * (area + sections[i + 1].getArea()) : boundary.getArea();
+      double leftArea = i > 0 ? 0.5 * (sections[i - 1].getArea() + area) : inletFace.getArea();
+      double pRight = i < nCells - 1 ? interfacePressure[i] : boundary.getPressure();
+      double pLeft = i > 0 ? interfacePressure[i - 1] : inletFace.getPressure();
       double dp = pRight - pLeft;
-
-      double gasSpurious = (gasRight * pRight - gasLeft * pLeft) - sec.getGasHoldup() * dp;
-      double liqSpurious = (liqRight * pRight - liqLeft * pLeft) - sec.getLiquidHoldup() * dp;
-      double gasStabiliser = implicitInterfacialPressure ? 0.0 : deltaPi * (gasRight - gasLeft);
-      double liqStabiliser = implicitInterfacialPressure ? 0.0 : deltaPi * (liqRight - liqLeft);
-
-      double gasSource = (gasSpurious - gasStabiliser) * area / secDx;
-      double liqSource = (liqSpurious - liqStabiliser) * area / secDx;
-
-      dUdt[i][IDX_GAS_MOMENTUM] += gasSource;
-      if (enableWaterOilSlip) {
-        // Split the liquid share by holdup so the three phases still sum to zero.
-        double alphaL = sec.getLiquidHoldup();
-        double oilFraction = alphaL > 1.0e-9 ? sec.getOilHoldup() / alphaL : 1.0;
-        oilFraction = Math.max(0.0, Math.min(1.0, oilFraction));
-        dUdt[i][IDX_OIL_MOMENTUM] += liqSource * oilFraction;
-        dUdt[i][IDX_WATER_MOMENTUM] += liqSource * (1.0 - oilFraction);
-      } else {
-        dUdt[i][IDX_OIL_MOMENTUM] += liqSource;
+      double deltaPi = enableInterfacialPressure ? calcInterfacialPressureDifference(sec) : 0.0;
+      for (int phase = 0; phase < 3; phase++) {
+        double alphaRight = i < nCells - 1 ? interfacePhaseHoldup[i][phase] : outletHoldups[phase];
+        double alphaLeft = i > 0 ? interfacePhaseHoldup[i - 1][phase] : inletHoldups[phase];
+        double phasePRight = i < nCells - 1 ? interfacePhasePressure[i][phase] : boundary.getPressure();
+        double phasePLeft = i > 0 ? interfacePhasePressure[i - 1][phase] : inletFace.getPressure();
+        // The wall-area source cancels the pressure force from the variation of face area. Its explicit differences
+        // are exactly zero on a uniform-area mesh, preserving the established transport operator there.
+        double pressureSource = (rightArea - area) * alphaRight * phasePRight
+            - (leftArea - area) * alphaLeft * phasePLeft;
+        if (enableInterfacialPressure) {
+          double spurious = alphaRight * phasePRight - alphaLeft * phasePLeft - cellHoldups[phase] * dp;
+          double stabilizer = implicitInterfacialPressure ? 0.0 : deltaPi * (alphaRight - alphaLeft);
+          pressureSource += (spurious - stabilizer) * area;
+        }
+        dUdt[i][IDX_GAS_MOMENTUM + phase] += pressureSource / secDx;
       }
     }
   }
@@ -1216,14 +1350,12 @@ public class TwoFluidConservationEquations implements Serializable {
       double gasVelocity = sec.getGasVelocity();
       double gasAcceleration = (dUdt[i][IDX_GAS_MOMENTUM] - gasVelocity * dUdt[i][IDX_GAS_MASS]) / gasMass;
 
-      double liquidMomentumRate;
+      double liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM] + dUdt[i][IDX_WATER_MOMENTUM];
       double liquidMassVelocityRate;
       if (enableWaterOilSlip) {
-        liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM] + dUdt[i][IDX_WATER_MOMENTUM];
         liquidMassVelocityRate = sec.getOilVelocity() * dUdt[i][IDX_OIL_MASS]
             + sec.getWaterVelocity() * dUdt[i][IDX_WATER_MASS];
       } else {
-        liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM];
         liquidMassVelocityRate = sec.getLiquidVelocity() * (dUdt[i][IDX_OIL_MASS] + dUdt[i][IDX_WATER_MASS]);
       }
       double liquidAcceleration = (liquidMomentumRate - liquidMassVelocityRate) / liquidMass;
@@ -1236,15 +1368,13 @@ public class TwoFluidConservationEquations implements Serializable {
       }
 
       dUdt[i][IDX_GAS_MOMENTUM] += gasVirtualMassForce;
-      if (enableWaterOilSlip) {
-        double liquidVirtualMassForce = -gasVirtualMassForce;
-        double oilVirtualMassForce = liquidVirtualMassForce * oilMass / liquidMass;
-        double waterVirtualMassForce = liquidVirtualMassForce - oilVirtualMassForce;
-        dUdt[i][IDX_OIL_MOMENTUM] += oilVirtualMassForce;
-        dUdt[i][IDX_WATER_MOMENTUM] += waterVirtualMassForce;
-      } else {
-        dUdt[i][IDX_OIL_MOMENTUM] -= gasVirtualMassForce;
-      }
+      // Both liquid momenta exist in either slip mode. A mass-weighted reaction
+      // gives common added acceleration and cannot accelerate an absent phase.
+      double liquidVirtualMassForce = -gasVirtualMassForce;
+      double oilVirtualMassForce = liquidVirtualMassForce * (oilMass / liquidMass);
+      double waterVirtualMassForce = liquidVirtualMassForce - oilVirtualMassForce;
+      dUdt[i][IDX_OIL_MOMENTUM] += oilVirtualMassForce;
+      dUdt[i][IDX_WATER_MOMENTUM] += waterVirtualMassForce;
 
       sec.setGasMomentumSource(sec.getGasMomentumSource() + gasVirtualMassForce);
       sec.setLiquidMomentumSource(sec.getLiquidMomentumSource() - gasVirtualMassForce);
@@ -1319,11 +1449,11 @@ public class TwoFluidConservationEquations implements Serializable {
     state.velocity = sec.getGasVelocity();
     state.pressure = sec.getPressure();
     state.soundSpeed = sec.getGasSoundSpeed();
-    state.enthalpy = sec.getGasEnthalpy();
+    state.enthalpy = sec.getGasEnthalpy() + 0.5 * state.velocity * state.velocity;
     // Use true holdup from conservative variables for mass-consistent flux
     double A = sec.getArea();
     double rhoG = state.density;
-    if (A > 0 && rhoG > 0.1) {
+    if (A > 0 && rhoG > 0.0) {
       state.holdup = sec.getGasMassPerLength() / (rhoG * A);
     } else {
       state.holdup = sec.getGasHoldup();
@@ -1343,16 +1473,29 @@ public class TwoFluidConservationEquations implements Serializable {
     state.velocity = sec.getLiquidVelocity();
     state.pressure = sec.getPressure();
     state.soundSpeed = sec.getLiquidSoundSpeed();
-    state.enthalpy = sec.getLiquidEnthalpy();
+    double liquidMass = sec.getLiquidMassPerLength();
+    double kinetic = liquidMass > 0.0 ? 0.5 * (sec.getOilMassPerLength() * sec.getOilVelocity() * sec.getOilVelocity()
+        + sec.getWaterMassPerLength() * sec.getWaterVelocity() * sec.getWaterVelocity()) / liquidMass : 0.0;
+    state.enthalpy = sec.getLiquidEnthalpy() + kinetic;
     // Use true holdup from conservative variables for mass-consistent flux
     double A = sec.getArea();
     double rhoL = state.density;
-    if (A > 0 && rhoL > 100) {
+    if (A > 0 && rhoL > 0.0) {
       state.holdup = sec.getLiquidMassPerLength() / (rhoL * A);
     } else {
       state.holdup = sec.getLiquidHoldup();
     }
     return state;
+  }
+
+  /** Build a liquid phase state with its own transported mass and velocity. */
+  private PhaseState createLiquidPhaseState(TwoFluidSection sec, boolean water) {
+    double density = water ? sec.getWaterDensity() : sec.getOilDensity();
+    double velocity = water ? sec.getWaterVelocity() : sec.getOilVelocity();
+    double mass = water ? sec.getWaterMassPerLength() : sec.getOilMassPerLength();
+    double holdup = density > 0.0 && sec.getArea() > 0.0 ? mass / (density * sec.getArea()) : 0.0;
+    return new PhaseState(density, velocity, sec.getPressure(), sec.getLiquidSoundSpeed(),
+        sec.getLiquidEnthalpy() + 0.5 * velocity * velocity, holdup);
   }
 
   /**
@@ -1553,7 +1696,7 @@ public class TwoFluidConservationEquations implements Serializable {
       return 0.0; // Adiabatic
     }
 
-    // Heat transfer from external surface: Q = h * A * (T_fluid - T_surface)
+    // Heat transfer from external surface: Q = h * A * (T_surface - T_fluid)
     // where:
     // h = heat transfer coefficient [W/(m²·K)]
     // A = pipe outer surface area per unit length = π * D [m²/m]
@@ -1566,25 +1709,10 @@ public class TwoFluidConservationEquations implements Serializable {
     double pipePerimeter = Math.PI * diameter; // Surface area per unit length
 
     // Heat transfer rate (W/m)
-    // Positive when fluid is warmer than surroundings (cooling)
-    // Negative when fluid is cooler than surroundings (heating)
-    double Q = heatTransferCoefficient * pipePerimeter * (fluidTemperature - surfaceTemperature);
+    // Positive when surroundings heat the fluid; negative when the fluid cools.
+    double Q = heatTransferCoefficient * pipePerimeter * (surfaceTemperature - fluidTemperature);
 
     return Q;
-  }
-
-  /**
-   * Calculate friction work (viscous dissipation).
-   *
-   * @param sec Pipe section
-   * @return Friction work source (W/m)
-   */
-  private double calcFrictionWork(TwoFluidSection sec) {
-    // W = tau_w * v (friction heating)
-    double WG = Math.abs(sec.getGasWallShear() * sec.getGasVelocity() * sec.getGasWettedPerimeter());
-    double WL = Math.abs(sec.getLiquidWallShear() * sec.getLiquidVelocity() * sec.getLiquidWettedPerimeter());
-
-    return WG + WL;
   }
 
   /**

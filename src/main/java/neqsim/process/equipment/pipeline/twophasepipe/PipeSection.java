@@ -114,7 +114,7 @@ public class PipeSection implements Cloneable, Serializable {
   /**
    * Constructor with geometry.
    *
-   * @param position Position from inlet (m)
+   * @param position Cell midpoint position from inlet (m); cell faces are position plus/minus half its length
    * @param length Segment length (m)
    * @param diameter Pipe diameter (m)
    * @param inclination Pipe inclination (radians)
