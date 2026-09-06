@@ -32,6 +32,8 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
 
   private final String fromCycleId;
   private final String toCycleId;
+  private final DexpiConnectionCycleInfo fromCycle;
+  private final DexpiConnectionCycleInfo toCycle;
   private final Kind kind;
   private final DexpiConnectionInfo connection;
   private final DexpiConnectionEndpointInfo fromEndpoint;
@@ -50,16 +52,44 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
    */
   public DexpiConnectionCycleTransitionInfo(DexpiConnectionInfo connection, DexpiConnectionEndpointInfo fromEndpoint,
       DexpiConnectionEndpointInfo toEndpoint, String fromCycleId, String toCycleId) {
+    this(connection, fromEndpoint, toEndpoint, fromCycleId, toCycleId, null, null);
+  }
+
+  /**
+   * Creates complete immutable evidence with the source and target cycle records available to the reader.
+   *
+   * @param connection complete source connection occurrence
+   * @param fromEndpoint complete source-endpoint evidence
+   * @param toEndpoint complete target-endpoint evidence
+   * @param fromCycleId source directed-cycle identity, or empty when outside every cycle
+   * @param toCycleId target directed-cycle identity, or empty when outside every cycle
+   * @param fromCycle complete source directed-cycle evidence, or {@code null} when outside or unavailable
+   * @param toCycle complete target directed-cycle evidence, or {@code null} when outside or unavailable
+   * @throws NullPointerException if connection or endpoint evidence is null
+   * @throws IllegalArgumentException if cycle identities do not describe a boundary crossing or disagree with the
+   * cycle records
+   */
+  public DexpiConnectionCycleTransitionInfo(DexpiConnectionInfo connection, DexpiConnectionEndpointInfo fromEndpoint,
+      DexpiConnectionEndpointInfo toEndpoint, String fromCycleId, String toCycleId,
+      DexpiConnectionCycleInfo fromCycle, DexpiConnectionCycleInfo toCycle) {
     this.connection = Objects.requireNonNull(connection, "connection");
     this.fromEndpoint = Objects.requireNonNull(fromEndpoint, "fromEndpoint");
     this.toEndpoint = Objects.requireNonNull(toEndpoint, "toEndpoint");
     this.fromCycleId = normalize(fromCycleId);
     this.toCycleId = normalize(toCycleId);
+    this.fromCycle = fromCycle;
+    this.toCycle = toCycle;
     if (this.fromCycleId.isEmpty() && this.toCycleId.isEmpty()) {
       throw new IllegalArgumentException("At least one endpoint must belong to a directed cycle");
     }
     if (!this.fromCycleId.isEmpty() && this.fromCycleId.equals(this.toCycleId)) {
       throw new IllegalArgumentException("A transition must cross a directed-cycle boundary");
+    }
+    if (fromCycle != null && !this.fromCycleId.equals(fromCycle.getId())) {
+      throw new IllegalArgumentException("Source cycle evidence must match fromCycleId");
+    }
+    if (toCycle != null && !this.toCycleId.equals(toCycle.getId())) {
+      throw new IllegalArgumentException("Target cycle evidence must match toCycleId");
     }
     if (this.fromCycleId.isEmpty()) {
       kind = Kind.ENTERING;
@@ -85,6 +115,16 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     return !fromCycleId.isEmpty();
   }
 
+  /** @return complete source directed-cycle evidence, or {@code null} when outside or unavailable */
+  public DexpiConnectionCycleInfo getFromCycle() {
+    return fromCycle;
+  }
+
+  /** @return whether complete source directed-cycle evidence is available */
+  public boolean hasFromCycleEvidence() {
+    return fromCycle != null;
+  }
+
   /** @return target directed-cycle identity, or empty when outside every cyclic group */
   public String getToCycleId() {
     return toCycleId;
@@ -93,6 +133,16 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
   /** @return whether the target endpoint belongs to a directed-cycle group */
   public boolean hasToCycle() {
     return !toCycleId.isEmpty();
+  }
+
+  /** @return complete target directed-cycle evidence, or {@code null} when outside or unavailable */
+  public DexpiConnectionCycleInfo getToCycle() {
+    return toCycle;
+  }
+
+  /** @return whether complete target directed-cycle evidence is available */
+  public boolean hasToCycleEvidence() {
+    return toCycle != null;
   }
 
   /** @return transition classification relative to the cyclic groups */
@@ -120,7 +170,11 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     result.put("connectionId", connection.getId());
     result.put("fromCycleId", fromCycleId);
     result.put("toCycleId", toCycleId);
+    result.put("hasFromCycleEvidence", Boolean.valueOf(hasFromCycleEvidence()));
+    result.put("hasToCycleEvidence", Boolean.valueOf(hasToCycleEvidence()));
     result.put("kind", kind.name());
+    result.put("fromCycle", fromCycle == null ? null : fromCycle.toMap());
+    result.put("toCycle", toCycle == null ? null : toCycle.toMap());
     result.put("connection", connection.toMap());
     result.put("fromEndpoint", fromEndpoint.toMap());
     result.put("toEndpoint", toEndpoint.toMap());
