@@ -131,6 +131,13 @@ A trial that throws — typically because the pressure ran negative part way alo
 from below. If the line cannot deliver the target at that rate at any inlet, the
 run fails with that stated explicitly.
 
+The inlet-pressure bracket also searches below the specified arrival pressure.
+A downhill liquid line can gain pressure from hydrostatic head, so its required
+inlet pressure can be lower than the host pressure. The solve must meet the
+configured arrival-pressure tolerance before publishing `getSolvedInletPressure()`.
+If the iteration budget is exhausted, it throws `IllegalStateException`, restores
+the original inlet pressure, and leaves the solved-pressure getter as `NaN`.
+
 ## 4. Wall thickness
 
 `DnvStF101PipelineDesignCalculator` returns every limit state with its

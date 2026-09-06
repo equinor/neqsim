@@ -1575,14 +1575,15 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Solves for the inlet pressure that delivers the specified outlet pressure at the current flow.
    *
    * <p>
-   * Bisects the inlet pressure between the target arrival pressure (no pressure drop) and an upper bound grown from the
-   * current inlet until the line delivers at or above the target. A trial that throws - typically because the pressure
-   * ran negative part way along - is treated as "inlet too low" and moves the lower bound up.
+   * Brackets the inlet pressure on both sides of the target arrival pressure, allowing a downhill line's hydrostatic
+   * head to require a lower inlet pressure. The upper bound grows until the line delivers at or above the target. A
+   * trial that throws - typically because the pressure ran negative part way along - is treated as "inlet too low".
    * </p>
    *
    * @param id calculation identifier
    */
   private void runWithSpecifiedArrivalPressure(UUID id) {
+    solvedInletPressure = Double.NaN;
     if (Double.isNaN(specifiedOutletPressure)) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
           "specifiedOutletPressure", "must be set when using CALCULATE_INLET_PRESSURE mode"));
@@ -1593,14 +1594,28 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       tempSystem.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
       targetPressure = tempSystem.getPressure("bara");
     }
-    if (targetPressure <= 0.0) {
+    if (!Double.isFinite(targetPressure) || targetPressure <= 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "must be positive"));
+          "specifiedOutletPressure", "must be finite and positive"));
     }
 
     double originalInletPressure = inStream.getThermoSystem().getPressure("bara");
     double low = targetPressure;
     double high = Math.max(originalInletPressure, targetPressure * 1.5);
+
+    // Gravity can raise the outlet pressure above the inlet. In that case the
+    // arrival pressure is not a valid lower bracket for the required inlet.
+    double arrivalAtLow = tryArrivalPressure(low, id);
+    int lowerBoundIter = 0;
+    while (Double.isFinite(arrivalAtLow) && arrivalAtLow > targetPressure && lowerBoundIter < 30) {
+      low *= 0.5;
+      arrivalAtLow = tryArrivalPressure(low, id);
+      lowerBoundIter++;
+    }
+    if (Double.isFinite(arrivalAtLow) && arrivalAtLow > targetPressure) {
+      restoreInletPressure(originalInletPressure, id);
+      throw new IllegalStateException("Cannot bracket a positive inlet pressure for pipeline " + getName());
+    }
 
     double arrivalAtHigh = tryArrivalPressure(high, id);
     int boundIter = 0;
@@ -1630,9 +1645,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
         high = mid;
       }
     }
-    solvedInletPressure = mid;
-    logger.warn("PipeBeggsAndBrills '{}': inlet-pressure solve hit the iteration limit at {} bara", getName(),
-        solvedInletPressure);
+    restoreInletPressure(originalInletPressure, id);
+    throw new IllegalStateException("Inlet-pressure solve did not converge for pipeline " + getName() + " after "
+        + maxFlowIterations + " iterations");
   }
 
   /**
@@ -1647,7 +1662,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       inStream.getThermoSystem().setPressure(inletPressureBara, "bara");
       inStream.run(id);
       runWithSpecifiedFlowRate(id);
-      return outStream.getPressure("bara");
+      double arrivalPressure = outStream.getPressure("bara");
+      return Double.isFinite(arrivalPressure) && arrivalPressure > 0.0 ? arrivalPressure : Double.NaN;
     } catch (RuntimeException ex) {
       logger.debug("Inlet-pressure trial at {} bara failed: {}", inletPressureBara, ex.getMessage());
       return Double.NaN;
@@ -1833,8 +1849,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Returns the inlet pressure found by the inlet-pressure solver.
    *
-   * @return solved inlet pressure in bara, or NaN when {@link CalculationMode#CALCULATE_INLET_PRESSURE} has not been
-   * run
+   * @return solved inlet pressure in bara, or NaN when {@link CalculationMode#CALCULATE_INLET_PRESSURE} has not
+   * completed successfully on the latest attempt
    */
   public double getSolvedInletPressure() {
     return solvedInletPressure;
