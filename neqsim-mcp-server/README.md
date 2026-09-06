@@ -589,13 +589,15 @@ The `streamSimulation` tool runs long simulations in the background with increme
 
 The `generateVisualization` tool returns inline visual content:
 
-| Type              | Format  | Description                                              |
-| ----------------- | ------- | -------------------------------------------------------- |
-| `phaseEnvelope` | SVG     | PT phase envelope with bubble/dew curves, critical point |
-| `flowsheet`     | Mermaid | Process flow diagram with equipment-type shapes          |
-| `compressorMap` | SVG     | Compressor performance map with surge/stonewall lines    |
-| `barChart`      | SVG     | Bar chart from key-value data                            |
-| `table`         | HTML    | Styled HTML table with optional highlighting             |
+| Canonical type     | Aliases                         | Format  | Description                                      |
+| ------------------ | ------------------------------- | ------- | ------------------------------------------------ |
+| `phaseEnvelope`  | —                               | SVG     | PT phase envelope                                |
+| `flowsheet`      | `flowsheetDiagram`              | Mermaid | Process diagram from equipment and connections   |
+| `compressorMap`  | —                               | SVG     | Compressor map with operating-point annotations  |
+| `propertyTable`  | `styledTable`, `table`          | HTML    | Styled table from headers and rows                |
+| `barChart`       | —                               | SVG     | Bar chart from labels and values                  |
+| `pieChart`       | —                               | SVG     | Pie chart from categories and values              |
+| `lineChart`      | —                               | SVG     | Line chart from xValues and yValues               |
 
 ---
 
