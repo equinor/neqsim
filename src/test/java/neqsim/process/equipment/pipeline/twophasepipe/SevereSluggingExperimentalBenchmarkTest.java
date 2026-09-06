@@ -29,10 +29,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * Public dynamic benchmark from Tengesdal's 2002 large pipeline-riser facility.
  *
  * <p>
- * This qualification fixture runs the coupled pressure-momentum, implicit interfacial-pressure, and signed-outlet route.
- * One resolved-mesh realization runs for 600 s; shorter resolved/refined, repeat, perturbed, and outer-step realizations
- * preserve convergence and reproducibility evidence without making the slow-test shard depend on five long trajectories.
- * A clamped, rejected, or non-conservative trajectory is not an engineering solution.
+ * This qualification fixture runs the coupled pressure-momentum, implicit interfacial-pressure, and signed-outlet
+ * route. One resolved-mesh realization runs for 600 s; shorter resolved/refined, repeat, perturbed, and outer-step
+ * realizations preserve convergence and reproducibility evidence without making the slow-test shard depend on five long
+ * trajectories. A clamped, rejected, or non-conservative trajectory is not an engineering solution.
  * </p>
  *
  * <p>
@@ -218,17 +218,18 @@ class SevereSluggingExperimentalBenchmarkTest {
     assertFalse(sustainedReference.transientCoupledFailureDetected,
         "coupled solver rejected " + sustainedReference.transientCoupledRejectedSubsteps + " substeps");
     assertEquals(0, sustainedReference.transientCoupledRejectedSubsteps);
-    assertTrue(relativeDifference(sustainedReference.peakToPeakPressurePa,
-        EXPERIMENTAL_PRESSURE_AMPLITUDE_PA) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
+    assertTrue(
+        relativeDifference(sustainedReference.peakToPeakPressurePa,
+            EXPERIMENTAL_PRESSURE_AMPLITUDE_PA) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
         "600 s pressure amplitude=" + sustainedReference.peakToPeakPressurePa + " Pa versus "
             + EXPERIMENTAL_PRESSURE_AMPLITUDE_PA + " Pa");
-    assertTrue(relativeDifference(sustainedReference.cyclePeriodSeconds,
-        EXPERIMENTAL_CYCLE_PERIOD_S) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
-        "600 s cycle period=" + sustainedReference.cyclePeriodSeconds + " s versus "
-            + EXPERIMENTAL_CYCLE_PERIOD_S + " s");
+    assertTrue(
+        relativeDifference(sustainedReference.cyclePeriodSeconds,
+            EXPERIMENTAL_CYCLE_PERIOD_S) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
+        "600 s cycle period=" + sustainedReference.cyclePeriodSeconds + " s versus " + EXPERIMENTAL_CYCLE_PERIOD_S
+            + " s");
     assertEquals(FLOWLINE_HOLDUP_TARGET, sustainedReference.meanFlowlineLiquidHoldup,
-        FLOWLINE_HOLDUP_TARGET * FLOWLINE_HOLDUP_RELATIVE_TOLERANCE,
-        "600 s mean settled flowline liquid hold-up");
+        FLOWLINE_HOLDUP_TARGET * FLOWLINE_HOLDUP_RELATIVE_TOLERANCE, "600 s mean settled flowline liquid hold-up");
     assertTrue(sustainedReference.maximumLiquidOutletKgPerSecond > 1.25 * LIQUID_FEED_KG_PER_S);
     assertTrue(sustainedReference.minimumLiquidOutletKgPerSecond < 0.75 * LIQUID_FEED_KG_PER_S);
     for (Phase phase : Phase.values()) {
@@ -655,11 +656,11 @@ class SevereSluggingExperimentalBenchmarkTest {
 
     private TransientMetrics(String label, String sourceUrl, double peakToPeakPressurePa, double p10ToP90PressurePa,
         double meanInletPressurePa, double cyclePeriodSeconds, int completedCycleCount,
-        double minimumLiquidOutletKgPerSecond, double maximumLiquidOutletKgPerSecond,
-        double meanFlowlineLiquidHoldup, double maximumSlugLengthM, double simulationEndTimeSeconds,
-        boolean steadyStateWallClockLimited, boolean transientOutletBackflowClamped,
-        boolean transientCoupledFailureDetected, int transientCoupledRejectedSubsteps,
-        Map<Phase, Double> maximumRelativeClosure, Map<Phase, Double> finalInventoryKg) {
+        double minimumLiquidOutletKgPerSecond, double maximumLiquidOutletKgPerSecond, double meanFlowlineLiquidHoldup,
+        double maximumSlugLengthM, double simulationEndTimeSeconds, boolean steadyStateWallClockLimited,
+        boolean transientOutletBackflowClamped, boolean transientCoupledFailureDetected,
+        int transientCoupledRejectedSubsteps, Map<Phase, Double> maximumRelativeClosure,
+        Map<Phase, Double> finalInventoryKg) {
       this.label = label;
       this.sourceUrl = sourceUrl;
       this.peakToPeakPressurePa = peakToPeakPressurePa;
