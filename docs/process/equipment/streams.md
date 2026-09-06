@@ -409,6 +409,14 @@ double ccbPres = stream.CCB("bara");   // Pressure
 stream.phaseEnvelope();  // Opens plot window
 ```
 
+`CCT` and `CCB` share a cached envelope. Changes to temperature, pressure, composition,
+component critical properties, attractive-term selection or indexed coefficients, the
+covolume mixing rule, or binary interaction parameters trigger a new trace. EOS tuning
+inputs are checked in each allocated phase, including a liquid phase that is not currently
+active. Replacing an attractive-term object also invalidates the result. Custom attractive
+terms with more than three indexed coefficients should override `getNumberOfParameters()`
+so all coefficients participate in this check.
+
 ### Vapor Pressure
 
 ```java

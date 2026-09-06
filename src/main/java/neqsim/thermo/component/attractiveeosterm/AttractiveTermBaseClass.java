@@ -114,6 +114,12 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
     return parameters[i];
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public int getNumberOfParameters() {
+    return parameters.length;
+  }
+
   /**
    * Get component.
    *
