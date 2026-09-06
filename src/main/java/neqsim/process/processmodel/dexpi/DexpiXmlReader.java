@@ -1356,10 +1356,10 @@ public final class DexpiXmlReader {
       endpointById.put(endpoint.getEndpointId(), endpoint);
     }
 
-    Map<String, String> cycleByEndpointId = new HashMap<String, String>();
+    Map<String, DexpiConnectionCycleInfo> cycleByEndpointId = new HashMap<String, DexpiConnectionCycleInfo>();
     for (DexpiConnectionCycleInfo cycle : connectionCycles) {
       for (String endpointId : cycle.getEndpointIds()) {
-        cycleByEndpointId.put(endpointId, cycle.getId());
+        cycleByEndpointId.put(endpointId, cycle);
       }
     }
 
@@ -1368,16 +1368,18 @@ public final class DexpiXmlReader {
       if (isBlank(connection.getFromId()) || isBlank(connection.getToId())) {
         continue;
       }
-      String fromCycleId = cycleByEndpointId.get(connection.getFromId());
-      String toCycleId = cycleByEndpointId.get(connection.getToId());
-      if (fromCycleId == null && toCycleId == null) {
+      DexpiConnectionCycleInfo fromCycle = cycleByEndpointId.get(connection.getFromId());
+      DexpiConnectionCycleInfo toCycle = cycleByEndpointId.get(connection.getToId());
+      if (fromCycle == null && toCycle == null) {
         continue;
       }
-      if (fromCycleId != null && fromCycleId.equals(toCycleId)) {
+      if (fromCycle != null && toCycle != null && fromCycle.getId().equals(toCycle.getId())) {
         continue;
       }
+      String fromCycleId = fromCycle == null ? "" : fromCycle.getId();
+      String toCycleId = toCycle == null ? "" : toCycle.getId();
       result.add(new DexpiConnectionCycleTransitionInfo(connection, endpointById.get(connection.getFromId()),
-          endpointById.get(connection.getToId()), fromCycleId, toCycleId));
+          endpointById.get(connection.getToId()), fromCycleId, toCycleId, fromCycle, toCycle));
     }
     return result;
   }
