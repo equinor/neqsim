@@ -65,6 +65,56 @@ class ControllerDevicePIDEnhancementsTest {
   }
 
   @Test
+  void testDerivativeContributionDisappearsAfterMeasurementStepSettles() {
+    assertDerivativeStepResponse(0.0);
+  }
+
+  @Test
+  void testFilteredDerivativeContributionDecaysAfterMeasurementStep() {
+    assertDerivativeStepResponse(1.0);
+  }
+
+  private void assertDerivativeStepResponse(double filterTime) {
+    DummyTransmitter transmitter = new DummyTransmitter("trans", "%");
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("derivative-step");
+    controller.setTransmitter(transmitter);
+    controller.setControllerSetPoint(0.0, "%");
+    controller.setControllerParameters(2.0, 0.0, 3.0);
+    controller.setDerivativeFilterTime(filterTime);
+    double dt = 0.5;
+    controller.runTransient(40.0, dt, UUID.randomUUID());
+    transmitter.setValue(10.0);
+    double derivative = 10.0 / (filterTime + dt);
+    controller.runTransient(controller.getResponse(), dt, UUID.randomUUID());
+    Assertions.assertEquals(60.0 + 6.0 * derivative, controller.getResponse(), 1.0e-10);
+    for (int i = 0; i < 20; i++) {
+      derivative *= filterTime / (filterTime + dt);
+      controller.runTransient(controller.getResponse(), dt, UUID.randomUUID());
+      Assertions.assertEquals(60.0 + 6.0 * derivative, controller.getResponse(), 1.0e-10,
+          "Derivative action must decay while the proportional contribution remains");
+    }
+  }
+
+  @Test
+  void testSwitchingBackToDirectActionReversesIntegralDirection() {
+    DummyTransmitter transmitter = new DummyTransmitter("trans", "%");
+    transmitter.setValue(60.0);
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("action-switch");
+    controller.setTransmitter(transmitter);
+    controller.setControllerSetPoint(50.0, "%");
+    controller.setControllerParameters(2.0, 10.0, 0.0);
+    controller.setReverseActing(true);
+    controller.runTransient(100.0, 1.0, UUID.randomUUID());
+    Assertions.assertEquals(98.0, controller.getResponse(), 1.0e-12);
+    controller.setReverseActing(false);
+    controller.runTransient(controller.getResponse(), 1.0, UUID.randomUUID());
+    Assertions.assertEquals(100.0, controller.getResponse(), 1.0e-12);
+    controller.setReverseActing(true);
+    controller.runTransient(controller.getResponse(), 1.0, UUID.randomUUID());
+    Assertions.assertEquals(98.0, controller.getResponse(), 1.0e-12);
+  }
+
+  @Test
   void testDerivativeFiltering() {
     DummyTransmitter trans1 = new DummyTransmitter("t1", "%");
     trans1.setMinimumValue(0.0);
