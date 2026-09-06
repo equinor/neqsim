@@ -1112,9 +1112,11 @@ public final class DexpiXmlReader {
       addConnectionOwnerDiagnostic(connection, fromElement, fromOwner, true, diagnostics);
       addConnectionOwnerDiagnostic(connection, toElement, toOwner, false, diagnostics);
 
-      connections.add(new DexpiConnectionInfo(evidenceId, sourceId, segmentId, fromId, toId,
-          fromElement == null ? "" : fromElement.getTagName(), toElement == null ? "" : toElement.getTagName(),
-          fromOwner == null ? "" : fromOwner.getAttribute("ID"), toOwner == null ? "" : toOwner.getAttribute("ID"),
+      connections.add(new DexpiConnectionInfo(evidenceId, sourceId, segmentId,
+          explicitAttribute(segment, "ComponentClass"), explicitAttribute(segment, "ComponentName"),
+          explicitTagName(segment), fromId, toId, fromElement == null ? "" : fromElement.getTagName(),
+          toElement == null ? "" : toElement.getTagName(), fromOwner == null ? "" : fromOwner.getAttribute("ID"),
+          toOwner == null ? "" : toOwner.getAttribute("ID"),
           fromOwner == null ? "" : fromOwner.getTagName(), toOwner == null ? "" : toOwner.getTagName(),
           explicitAttribute(fromOwner, "ComponentClass"), explicitAttribute(fromOwner, "ComponentName"),
           explicitTagName(fromOwner), explicitAttribute(toOwner, "ComponentClass"),
