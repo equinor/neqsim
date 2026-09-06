@@ -46,8 +46,16 @@ class CalciumChlorideDensityPressureValidationTest extends neqsim.NeqSimTest {
     double squaredRelativeResidualSum = 0.0;
     double maximumAbsoluteRelativeResidual = 0.0;
     double maximumExpandedUncertaintyRatio = 0.0;
+    double pressureAdjustedAbsoluteRelativeResidualSum = 0.0;
+    double pressureAdjustedSquaredRelativeResidualSum = 0.0;
+    double maximumPressureAdjustedAbsoluteRelativeResidual = 0.0;
+    double maximumPressureIncrementUncertaintyRatio = 0.0;
+    int pressureAdjustedCount = 0;
     Map<Double, Integer> countsByMolality = new HashMap<Double, Integer>();
+    Map<Double, Double> pressureAdjustedAbsoluteResidualByMolality = new HashMap<Double, Double>();
+    Map<Double, Integer> pressureAdjustedCountByMolality = new HashMap<Double, Integer>();
     Map<Double, SystemPitzer> systemsByMolality = new HashMap<Double, SystemPitzer>();
+    Map<String, double[]> pressureAnchors = new HashMap<String, double[]>();
     Set<String> coordinates = new HashSet<String>();
     MessageDigest rowDigest = MessageDigest.getInstance("SHA-256");
 
@@ -80,6 +88,29 @@ class CalciumChlorideDensityPressureValidationTest extends neqsim.NeqSimTest {
         maximumAbsoluteRelativeResidual = Math.max(maximumAbsoluteRelativeResidual, Math.abs(relativeResidual));
         maximumExpandedUncertaintyRatio = Math.max(maximumExpandedUncertaintyRatio,
             Math.abs(calculatedDensity - state.density) / state.expandedUncertainty);
+        String isothermKey = state.molality + ":" + state.temperatureKelvin;
+        double[] anchor = pressureAnchors.get(isothermKey);
+        if (anchor == null) {
+          pressureAnchors.put(isothermKey,
+              new double[] { state.pressureBara, state.density, calculatedDensity, state.expandedUncertainty });
+        } else {
+          assertTrue(state.pressureBara > anchor[0], "ThermoML isotherm is not ordered from its pressure anchor");
+          double pressureAdjustedRelativeResidual = (calculatedDensity - anchor[2] + anchor[1]) / state.density - 1.0;
+          pressureAdjustedAbsoluteRelativeResidualSum += Math.abs(pressureAdjustedRelativeResidual);
+          pressureAdjustedAbsoluteResidualByMolality.put(state.molality,
+              pressureAdjustedAbsoluteResidualByMolality.getOrDefault(state.molality, 0.0)
+                  + Math.abs(pressureAdjustedRelativeResidual));
+          pressureAdjustedCountByMolality.put(state.molality,
+              pressureAdjustedCountByMolality.getOrDefault(state.molality, 0) + 1);
+          pressureAdjustedSquaredRelativeResidualSum += pressureAdjustedRelativeResidual
+              * pressureAdjustedRelativeResidual;
+          maximumPressureAdjustedAbsoluteRelativeResidual = Math.max(maximumPressureAdjustedAbsoluteRelativeResidual,
+              Math.abs(pressureAdjustedRelativeResidual));
+          double pressureIncrementResidual = (calculatedDensity - anchor[2]) - (state.density - anchor[1]);
+          maximumPressureIncrementUncertaintyRatio = Math.max(maximumPressureIncrementUncertaintyRatio,
+              Math.abs(pressureIncrementResidual) / Math.hypot(state.expandedUncertainty, anchor[3]));
+          pressureAdjustedCount++;
+        }
         count++;
       }
     }
@@ -105,8 +136,27 @@ class CalciumChlorideDensityPressureValidationTest extends neqsim.NeqSimTest {
     assertEquals(0.008452033776539447, rootMeanSquaredRelativeError, 1.0e-12);
     assertEquals(0.026607051737136622, maximumAbsoluteRelativeResidual, 1.0e-12);
     assertEquals(107.15649486776948, maximumExpandedUncertaintyRatio, 1.0e-9);
+    assertEquals(CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_GROUP_COUNT,
+        pressureAnchors.size());
+    assertEquals(CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_COMPARISON_COUNT,
+        pressureAdjustedCount);
+    assertEquals(CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MARE,
+        pressureAdjustedAbsoluteRelativeResidualSum / pressureAdjustedCount, 1.0e-12);
+    assertEquals(CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_RMSRE,
+        Math.sqrt(pressureAdjustedSquaredRelativeResidualSum / pressureAdjustedCount), 1.0e-12);
+    assertEquals(CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MAXARE,
+        maximumPressureAdjustedAbsoluteRelativeResidual, 1.0e-12);
+    assertEquals(CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MAXIMUM_UNCERTAINTY_RATIO,
+        maximumPressureIncrementUncertaintyRatio, 1.0e-9);
+    assertEquals(0.003412628603195073,
+        pressureAdjustedAbsoluteResidualByMolality.get(1.0) / pressureAdjustedCountByMolality.get(1.0), 1.0e-12);
+    assertEquals(0.006695893425517834,
+        pressureAdjustedAbsoluteResidualByMolality.get(3.0) / pressureAdjustedCountByMolality.get(3.0), 1.0e-12);
+    assertEquals(0.00809959684613692,
+        pressureAdjustedAbsoluteResidualByMolality.get(6.0) / pressureAdjustedCountByMolality.get(6.0), 1.0e-12);
     assertTrue(meanAbsoluteRelativeError > maximumRowRelativeUncertainty);
     assertFalse(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureDensityModelQualified());
+    assertFalse(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureResponseQualified());
   }
 
   private static double calculateDensity(ReferenceState state, Map<Double, SystemPitzer> systemsByMolality) {
