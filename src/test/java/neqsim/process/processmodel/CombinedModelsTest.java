@@ -11,6 +11,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * CombinedModelsTest is a test class for validating the combined process model which includes an inlet model and a
@@ -129,4 +130,57 @@ public class CombinedModelsTest {
     Report reporter = new Report(fullProcess);
     Assertions.assertTrue(fullProcess.getReport_json().equals(reporter.generateJsonReport()));
   }
+
+  /** Verifies the complete synthetic process-comparison documentation quickstart. */
+  @Test
+  public void testProcessComparisonQuickStart() {
+    SystemInterface wellFluid = new SystemSrkEos(310.0, 50.0);
+    wellFluid.addComponent("methane", 0.8);
+    wellFluid.addComponent("ethane", 0.1);
+    wellFluid.addComponent("propane", 0.05);
+    wellFluid.addComponent("n-butane", 0.05);
+    wellFluid.initProperties();
+
+    Stream wellStreamHP = new Stream("HP well stream", wellFluid);
+    wellStreamHP.setFlowRate(10.0, "MSm3/day");
+    ThreePhaseSeparator firstStageSeparator =
+        new ThreePhaseSeparator("1st stage separator", wellStreamHP);
+
+    ProcessSystem inletSection = new ProcessSystem();
+    inletSection.add(wellStreamHP);
+    inletSection.add(firstStageSeparator);
+
+    Stream compressorFeed = firstStageSeparator.getGasOutStream();
+    Compressor compressor1 = new Compressor("Compressor1", compressorFeed);
+    compressor1.setPolytropicEfficiency(0.56);
+    compressor1.setUsePolytropicCalc(true);
+    compressor1.setOutletPressure(100.0, "bara");
+
+    ProcessSystem compressorSection = new ProcessSystem();
+    compressorSection.add(compressorFeed);
+    compressorSection.add(compressor1);
+
+    ProcessModel combinedProcess = new ProcessModel();
+    combinedProcess.add("feed process", inletSection);
+    combinedProcess.add("compressor process", compressorSection);
+    combinedProcess.setRunStep(true);
+    combinedProcess.run();
+
+    double gasFlow =
+        firstStageSeparator.getGasOutStream().getFlowRate("MSm3/day");
+    double outletTemperature =
+        compressor1.getOutletStream().getTemperature("C");
+    Assertions.assertTrue(Double.isFinite(gasFlow));
+    Assertions.assertTrue(gasFlow > 0.0);
+    Assertions.assertTrue(gasFlow <= 10.0);
+    Assertions.assertTrue(Double.isFinite(outletTemperature));
+    Assertions.assertTrue(outletTemperature > 36.85);
+    Assertions.assertTrue(outletTemperature < 300.0);
+
+    Report reporter = new Report(combinedProcess);
+    String jsonReport = reporter.generateJsonReport();
+    Assertions.assertFalse(jsonReport.isEmpty());
+    Assertions.assertEquals(combinedProcess.getReport_json(), jsonReport);
+  }
+
 }
