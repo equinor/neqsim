@@ -88,6 +88,33 @@ reaction/transport thresholds. A caller may compare this diagnostic with an inde
 established transport time, but that does not constitute a pipeline source-term coupling or
 high-pressure qualification.
 
+## Target-time inversion
+
+`timeToRemainingFractionRange(...)` inverts the same constant-oxygen first-order solution for a
+requested remaining-total-sulfide fraction `f`:
+
+$
+E_{\mathrm{required}} = -\ln f, \qquad
+t_{\mathrm{required}} = \frac{-\ln f}{k[\mathrm{O_2}]}.
+$
+
+The immutable result reports the target fraction, required dimensionless exposure, lower/nominal/
+upper pseudo-first-order rates, and the shortest, nominal, and longest required times. The shortest
+time uses the upper fit-scatter rate; the longest uses the lower rate. For the illustrative state
+above, a target fraction of `0.5` reproduces the nominal half-life of `22.4288 h`. Substituting
+each reported time and its corresponding rate back into `exp(-k[O2]t)` recovers the requested
+fraction.
+
+A target fraction of exactly one returns zero required exposure and zero time. The valid target
+interval is `(0, 1]`; exact zero is rejected because the first-order model approaches zero only
+as time tends to infinity. Stricter targets require monotonically longer times. Non-finite inputs,
+underflowed rates, or a required-time overflow fail closed.
+
+This inverse calculation is a screening diagnostic, not an equipment-sizing guarantee. It retains
+the same air-saturated constant-oxygen, atmospheric-pressure, fit-scatter, and unidentified-product
+limitations. It does not establish a pipeline residence time, mass-transfer rate, or high-pressure
+reaction extent.
+
 ## Piecewise exposure trajectory
 
 `AqueousHydrogenSulfideOxidationTrajectory.advance(...)` propagates the same correlation through
