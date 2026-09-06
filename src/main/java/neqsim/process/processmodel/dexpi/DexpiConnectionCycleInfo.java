@@ -23,6 +23,7 @@ public final class DexpiConnectionCycleInfo implements Serializable {
 
   private final String id;
   private final String connectionComponentId;
+  private final DexpiConnectionComponentInfo connectionComponent;
   private final List<String> endpointIds;
   private final List<DexpiConnectionEndpointInfo> endpoints;
   private final List<String> connectionIds;
@@ -119,8 +120,36 @@ public final class DexpiConnectionCycleInfo implements Serializable {
       List<String> incomingBoundaryConnectionIds, List<String> outgoingBoundaryConnectionIds,
       List<DexpiConnectionCycleBoundaryInfo> boundaryConnections, List<String> unresolvedEndpointIds,
       boolean selfReference) {
+    this(id, connectionComponentId, null, endpointIds, endpoints, connectionIds, connections,
+        incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections, unresolvedEndpointIds,
+        selfReference);
+  }
+
+  /**
+   * Creates immutable directed-cycle evidence with its complete owning weak connection component.
+   *
+   * @param id deterministic cycle-group evidence identity
+   * @param connectionComponentId owning weak connection-component evidence identity
+   * @param connectionComponent complete owning weak connection-component evidence
+   * @param endpointIds endpoint identities in first-reference order
+   * @param endpoints endpoint evidence records in first-reference order
+   * @param connectionIds internal connection-evidence identities in source order
+   * @param connections internal connection occurrences in source order
+   * @param incomingBoundaryConnectionIds connection-evidence identities entering the cyclic group in source order
+   * @param outgoingBoundaryConnectionIds connection-evidence identities leaving the cyclic group in source order
+   * @param boundaryConnections boundary occurrences in overall source-document order
+   * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
+   * @param selfReference whether the group contains an explicit self-reference connection
+   */
+  public DexpiConnectionCycleInfo(String id, String connectionComponentId,
+      DexpiConnectionComponentInfo connectionComponent, List<String> endpointIds,
+      List<DexpiConnectionEndpointInfo> endpoints, List<String> connectionIds, List<DexpiConnectionInfo> connections,
+      List<String> incomingBoundaryConnectionIds, List<String> outgoingBoundaryConnectionIds,
+      List<DexpiConnectionCycleBoundaryInfo> boundaryConnections, List<String> unresolvedEndpointIds,
+      boolean selfReference) {
     this.id = normalize(id);
     this.connectionComponentId = normalize(connectionComponentId);
+    this.connectionComponent = connectionComponent;
     this.endpointIds = immutableCopy(endpointIds);
     this.endpoints = Collections.unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(endpoints));
     this.connectionIds = immutableCopy(connectionIds);
@@ -141,6 +170,16 @@ public final class DexpiConnectionCycleInfo implements Serializable {
   /** @return owning weak connection-component evidence identity */
   public String getConnectionComponentId() {
     return connectionComponentId;
+  }
+
+  /** @return complete owning weak connection-component evidence, or {@code null} for legacy values */
+  public DexpiConnectionComponentInfo getConnectionComponent() {
+    return connectionComponent;
+  }
+
+  /** @return whether complete owning weak connection-component evidence is available */
+  public boolean hasConnectionComponentEvidence() {
+    return connectionComponent != null;
   }
 
   /** @return immutable endpoint identities in first-reference order */
@@ -222,6 +261,8 @@ public final class DexpiConnectionCycleInfo implements Serializable {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("id", id);
     result.put("connectionComponentId", connectionComponentId);
+    result.put("hasConnectionComponentEvidence", Boolean.valueOf(hasConnectionComponentEvidence()));
+    result.put("connectionComponent", connectionComponent == null ? null : connectionComponent.toMap());
     result.put("endpointCount", Integer.valueOf(getEndpointCount()));
     result.put("connectionCount", Integer.valueOf(getConnectionCount()));
     result.put("incomingBoundaryConnectionCount", Integer.valueOf(getIncomingBoundaryConnectionCount()));
