@@ -104,11 +104,9 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   private final Map<String, Double> specLimitsC = new LinkedHashMap<String, Double>();
 
   /**
-   * Qualified Riazi-Daubert reference rows: recovery vol%, a, b, D86 range, and worked-example
-   * temperatures.
+   * Qualified Riazi-Daubert reference rows: recovery vol%, a, b, D86 range, and worked-example temperatures.
    */
-  private static final double[][] CONVERSION_REFERENCE_DATA =
-      RiaziDaubertDistillationConversion.getReferenceData();
+  private static final double[][] CONVERSION_REFERENCE_DATA = RiaziDaubertDistillationConversion.getReferenceData();
 
   /**
    * Reporting basis for the recovered (distilled) fraction of an ASTM D86 curve.
@@ -694,20 +692,19 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
-   * Returns a source-qualified ASTM D86 temperature converted from the simulated TBP-like
-   * temperature at one published recovery point.
+   * Returns a source-qualified ASTM D86 temperature converted from the simulated TBP-like temperature at one published
+   * recovery point.
    *
    * <p>
-   * Only 0, 10, 30, 50, 70, 90, and 95 liquid-volume percent are accepted. Unlike the legacy
-   * full-curve conversion, this method does not interpolate correlation coefficients.
+   * Only 0, 10, 30, 50, 70, 90, and 95 liquid-volume percent are accepted. Unlike the legacy full-curve conversion,
+   * this method does not interpolate correlation coefficients.
    * </p>
    *
    * @param recoveryVolumePercent one of the seven published liquid-volume recovery percentages
    * @return converted ASTM D86 temperature in degrees Celsius
-   * @throws IllegalArgumentException if the recovery point or converted temperature is outside
-   *         the published reference domain
-   * @throws IllegalStateException if {@link #calculate()} did not produce the required TBP-like
-   *         temperature
+   * @throws IllegalArgumentException if the recovery point or converted temperature is outside the published reference
+   * domain
+   * @throws IllegalStateException if {@link #calculate()} did not produce the required TBP-like temperature
    */
   public double getQualifiedD86Temperature(double recoveryVolumePercent) {
     return getQualifiedD86Temperature(recoveryVolumePercent, "C");
@@ -719,27 +716,23 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * @param recoveryVolumePercent one of the seven published liquid-volume recovery percentages
    * @param tempUnit temperature unit ("C", "K", "F", or "R")
    * @return converted ASTM D86 temperature in the requested unit
-   * @throws IllegalArgumentException if the recovery point or converted temperature is outside
-   *         the published reference domain
-   * @throws IllegalStateException if {@link #calculate()} did not produce the required TBP-like
-   *         temperature
+   * @throws IllegalArgumentException if the recovery point or converted temperature is outside the published reference
+   * domain
+   * @throws IllegalStateException if {@link #calculate()} did not produce the required TBP-like temperature
    */
   public double getQualifiedD86Temperature(double recoveryVolumePercent, String tempUnit) {
     if (!RiaziDaubertDistillationConversion.isSupportedRecoveryPoint(recoveryVolumePercent)) {
-      throw new IllegalArgumentException(
-          "Qualified D86 conversion supports only 0, 10, 30, 50, 70, 90, or 95 vol%");
+      throw new IllegalArgumentException("Qualified D86 conversion supports only 0, 10, 30, 50, 70, 90, or 95 vol%");
     }
 
     double fraction = recoveryVolumePercent / 100.0;
-    double tbpK = Math.abs(recoveryVolumePercent) < 1.0e-9 ? IBP
-        : getTemperatureAtFraction(fraction);
+    double tbpK = Math.abs(recoveryVolumePercent) < 1.0e-9 ? IBP : getTemperatureAtFraction(fraction);
     if (Double.isNaN(tbpK) || Double.isInfinite(tbpK)) {
       throw new IllegalStateException(
           "No simulated TBP-like temperature is available; call calculate() successfully first");
     }
 
-    double d86C = RiaziDaubertDistillationConversion.convertTbpToD86C(tbpK - 273.15,
-        recoveryVolumePercent);
+    double d86C = RiaziDaubertDistillationConversion.convertTbpToD86C(tbpK - 273.15, recoveryVolumePercent);
     double correctedC = applyBarometricCorrectionK(d86C + 273.15) - 273.15;
     return convertTempFromC(correctedC, tempUnit);
   }

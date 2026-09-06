@@ -285,8 +285,8 @@ public class OilQualityStandardsTest {
   }
 
   /**
-   * Verifies the strict Standard_ASTM_D86 integration delegates published recovery points to the
-   * qualified converter while preserving the legacy curve at those breakpoints.
+   * Verifies the strict Standard_ASTM_D86 integration delegates published recovery points to the qualified converter
+   * while preserving the legacy curve at those breakpoints.
    */
   @Test
   void testASTM_D86_qualifiedReferencePointIntegration() {
@@ -306,15 +306,12 @@ public class OilQualityStandardsTest {
     }
 
     assertTrue(!Double.isNaN(tbpT50C), "Simulated TBP-like T50 should be available");
-    double expectedD86T50C =
-        RiaziDaubertDistillationConversion.convertTbpToD86C(tbpT50C, 50.0);
+    double expectedD86T50C = RiaziDaubertDistillationConversion.convertTbpToD86C(tbpT50C, 50.0);
     assertEquals(expectedD86T50C, standard.getQualifiedD86Temperature(50.0), 1.0e-10);
-    assertEquals(expectedD86T50C + 273.15,
-        standard.getQualifiedD86Temperature(50.0, "K"), 1.0e-10);
+    assertEquals(expectedD86T50C + 273.15, standard.getQualifiedD86Temperature(50.0, "K"), 1.0e-10);
     assertEquals(expectedD86T50C, legacyD86T50C, 1.0e-10,
         "Legacy interpolation must be unchanged at a published breakpoint");
-    assertThrows(IllegalArgumentException.class,
-        () -> standard.getQualifiedD86Temperature(5.0));
+    assertThrows(IllegalArgumentException.class, () -> standard.getQualifiedD86Temperature(5.0));
   }
 
   /**
