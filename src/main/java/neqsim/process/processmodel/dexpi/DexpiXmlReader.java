@@ -1295,10 +1295,10 @@ public final class DexpiXmlReader {
       }
     }
 
-    Map<String, String> connectionComponentByEndpointId = new HashMap<String, String>();
+    Map<String, DexpiConnectionComponentInfo> connectionComponentByEndpointId = new HashMap<String, DexpiConnectionComponentInfo>();
     for (DexpiConnectionComponentInfo component : connectionComponents) {
       for (String endpointId : component.getEndpointIds()) {
-        connectionComponentByEndpointId.put(endpointId, component.getId());
+        connectionComponentByEndpointId.put(endpointId, component);
       }
     }
 
@@ -1385,6 +1385,7 @@ public final class DexpiXmlReader {
   private static final class ConnectionCycleAccumulator {
     private final String id;
     private final String connectionComponentId;
+    private final DexpiConnectionComponentInfo connectionComponent;
     private final List<String> endpointIds = new ArrayList<String>();
     private final List<DexpiConnectionEndpointInfo> endpoints = new ArrayList<DexpiConnectionEndpointInfo>();
     private final List<String> connectionIds = new ArrayList<String>();
@@ -1395,9 +1396,10 @@ public final class DexpiXmlReader {
     private final List<String> unresolvedEndpointIds = new ArrayList<String>();
     private boolean selfReference;
 
-    private ConnectionCycleAccumulator(String id, String connectionComponentId) {
+    private ConnectionCycleAccumulator(String id, DexpiConnectionComponentInfo connectionComponent) {
       this.id = id;
-      this.connectionComponentId = connectionComponentId;
+      this.connectionComponent = connectionComponent;
+      this.connectionComponentId = connectionComponent == null ? "" : connectionComponent.getId();
     }
 
     private void addEndpoint(DexpiConnectionEndpointInfo endpoint) {
@@ -1438,9 +1440,9 @@ public final class DexpiXmlReader {
     }
 
     private DexpiConnectionCycleInfo toInfo() {
-      return new DexpiConnectionCycleInfo(id, connectionComponentId, endpointIds, endpoints, connectionIds, connections,
-          incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections, unresolvedEndpointIds,
-          selfReference);
+      return new DexpiConnectionCycleInfo(id, connectionComponentId, connectionComponent, endpointIds, endpoints,
+          connectionIds, connections, incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections,
+          unresolvedEndpointIds, selfReference);
     }
   }
 
