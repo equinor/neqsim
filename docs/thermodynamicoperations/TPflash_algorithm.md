@@ -2382,6 +2382,34 @@ derivative behavior, model or data parameter changes, saturation operations,
 electrolyte/reaction models, public API and serialization changes, Column Solver,
 Process Performance, proprietary data, and Huldra are outside this tranche.
 
+### 6.4.15 PC-SAFT methane/n-hexane phase-split lifecycle qualification
+
+The synthetic PC-SAFT qualification uses `SystemPCSAFT`, mixing rule 1, and an
+equimolar methane/n-hexane feed. Its local phase-split envelope is 248-252 K and
+9-11 bara. At 250 K and 10 bara, the existing total heat-capacity reference is
+`172.3659584364608 J/K` with an absolute tolerance of `0.1 J/K`. This is
+deterministic numerical qualification of the current Java calculation, not
+independent experimental validation or a re-fit of PC-SAFT parameters.
+
+Every qualified state must contain GAS and OIL phases with finite bounded phase
+fractions and compositions. Beta and phase compositions must normalize within
+`3e-12`, maximum component material-balance residual must remain below
+`1e-10`, and the maximum methane/n-hexane interphase log-fugacity residual must
+remain below `1e-8`. Both phases require positive finite compressibility, and
+total Gibbs energy and enthalpy must remain finite.
+
+Ordinary and explicit-multiphase public TP flashes must agree throughout the nearby
+temperature and pressure matrices. The regression also qualifies recovery from
+beta values within `1e-12` of a bound, a changed temperature/pressure state,
+return to the reference state, and an immediate deterministic repeat.
+
+The focused class performs 20 complete public TP flashes. This fixed workload is
+performance evidence only; no wall-clock threshold or speedup is claimed. PC-SAFT
+parameter or association changes, petroleum characterization, PH/PS operations,
+process equipment, saturation operations, public APIs, MCP payloads, Column
+Solver, Process Performance, proprietary data, and Huldra are outside this
+tranche.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
