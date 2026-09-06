@@ -180,11 +180,13 @@ functions.
 The same result also preserves every source `Connection` in document order, including parallel
 connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning
 piping-network segment identity and its explicit `ComponentClass`, `ComponentName`, and
-`TagName`, plus `FromID` and `ToID` direction, the resolved endpoint element names, and
-resolution status. Absent segment metadata remains empty without invented values. Missing source
-IDs receive deterministic evidence-only identities; missing, duplicate, self-referential, or
-unresolved source references remain explicit diagnostics. This inventory does not derive segment
-metadata, infer connectivity, or rewire the returned `ProcessSystem`.
+`TagName`, plus `FromID` and `ToID` direction, the resolved endpoint element names, resolution
+status, and each resolved endpoint object's own explicit `ComponentClass`, `ComponentName`, and
+`TagName`. Endpoint metadata is kept separate from segment and owner metadata; absent or unresolved
+values remain empty without fallback or invented values. Missing source IDs receive deterministic
+evidence-only identities; missing, duplicate, self-referential, or unresolved source references
+remain explicit diagnostics. This inventory does not derive segment metadata, infer connectivity, or
+rewire the returned `ProcessSystem`.
 
 For resolved nozzle endpoints, the same record exposes only explicit source ownership: the nearest
 ancestor `Equipment` or `PipingComponent` identity and XML element name. Direct equipment or
@@ -196,12 +198,14 @@ ownership or owner metadata from coordinates, endpoint tags, stream order, simul
 class heuristics.
 
 `ImportResult.getConnectionEndpoints()` provides a distinct endpoint inventory in first-reference
-order. Each immutable `DexpiConnectionEndpointInfo` records the resolved element, explicit owner
-identity and XML element name, and the owner's explicit `ComponentClass`, `ComponentName`, and
-`TagName`, plus the incoming and outgoing connection-evidence IDs in source order. Counts retain
-every occurrence, including parallel connections. Blank endpoint references remain findings and are
-omitted from this keyed inventory; unresolved non-empty IDs remain visible with empty owner
-provenance.
+order. Each immutable `DexpiConnectionEndpointInfo` separately records the resolved XML element
+name, the endpoint object's own explicit `ComponentClass`, `ComponentName`, and `TagName`, its
+explicit owner identity and XML element name, and the owner's explicit class, name, and tag. A direct
+equipment or piping-component endpoint may therefore carry the same source values in both roles, but
+the reader never copies or infers one role from the other. Incoming and outgoing connection-evidence
+IDs remain in source order, and counts retain every occurrence, including parallel connections. Blank
+endpoint references remain findings and are omitted from this keyed inventory; unresolved non-empty
+IDs remain visible with empty endpoint and owner provenance.
 
 `getIncidenceRole()` classifies only this directed source evidence: zero incoming and one outgoing
 is `SOURCE`; one incoming and zero outgoing is `SINK`; one of each is `PASS_THROUGH`; one
