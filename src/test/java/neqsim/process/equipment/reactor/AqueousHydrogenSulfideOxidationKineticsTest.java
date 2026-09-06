@@ -161,12 +161,11 @@ public class AqueousHydrogenSulfideOxidationKineticsTest extends NeqSimTest {
     assertEquals(halfLife, result.getNominalRequiredTimeHours(), 1.0e-12);
     assertTrue(result.getShortestRequiredTimeHours() < result.getNominalRequiredTimeHours());
     assertTrue(result.getNominalRequiredTimeHours() < result.getLongestRequiredTimeHours());
-    assertEquals(0.5,
-        Math.exp(-result.getUpperPseudoFirstOrderRate() * result.getShortestRequiredTimeHours()), 1.0e-15);
-    assertEquals(0.5,
-        Math.exp(-result.getNominalPseudoFirstOrderRate() * result.getNominalRequiredTimeHours()), 1.0e-15);
-    assertEquals(0.5,
-        Math.exp(-result.getLowerPseudoFirstOrderRate() * result.getLongestRequiredTimeHours()), 1.0e-15);
+    assertEquals(0.5, Math.exp(-result.getUpperPseudoFirstOrderRate() * result.getShortestRequiredTimeHours()),
+        1.0e-15);
+    assertEquals(0.5, Math.exp(-result.getNominalPseudoFirstOrderRate() * result.getNominalRequiredTimeHours()),
+        1.0e-15);
+    assertEquals(0.5, Math.exp(-result.getLowerPseudoFirstOrderRate() * result.getLongestRequiredTimeHours()), 1.0e-15);
   }
 
   @Test
@@ -200,8 +199,7 @@ public class AqueousHydrogenSulfideOxidationKineticsTest extends NeqSimTest {
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
         .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 1.0001, TEMPERATURE_K, PH, IONIC_STRENGTH));
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
-        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, Double.NaN, TEMPERATURE_K, PH,
-            IONIC_STRENGTH));
+        .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, Double.NaN, TEMPERATURE_K, PH, IONIC_STRENGTH));
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationKinetics
         .timeToRemainingFractionRange(Double.MIN_VALUE, 0.5, TEMPERATURE_K, PH, IONIC_STRENGTH));
   }
