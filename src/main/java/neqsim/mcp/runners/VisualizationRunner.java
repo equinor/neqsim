@@ -53,10 +53,13 @@ public final class VisualizationRunner {
       case "phaseEnvelope":
         return generatePhaseEnvelopeSVG(input);
       case "flowsheet":
+      case "flowsheetDiagram":
         return generateFlowsheetDiagram(input);
       case "compressorMap":
         return generateCompressorMapSVG(input);
       case "propertyTable":
+      case "styledTable":
+      case "table":
         return generateStyledTable(input);
       case "barChart":
         return generateBarChartSVG(input);
@@ -66,7 +69,8 @@ public final class VisualizationRunner {
         return generateLineChartSVG(input);
       default:
         return errorJson("Unknown visualization type: " + type
-            + ". Use: phaseEnvelope, flowsheet, compressorMap, propertyTable, barChart, " + "pieChart, lineChart");
+            + ". Use: phaseEnvelope, flowsheet (alias flowsheetDiagram), compressorMap, "
+            + "propertyTable (aliases styledTable and table), barChart, pieChart, lineChart");
       }
     } catch (Exception e) {
       return errorJson("Visualization failed: " + e.getMessage());
@@ -302,8 +306,11 @@ public final class VisualizationRunner {
     if (labels.size() == 0 || values.size() == 0) {
       return errorJson("Provide 'labels' and 'values' arrays for bar chart");
     }
+    if (labels.size() != values.size()) {
+      return errorJson("Bar chart 'labels' and 'values' arrays must have the same length");
+    }
 
-    int n = Math.min(labels.size(), values.size());
+    int n = labels.size();
     double maxVal = 0;
     List<Double> vals = new ArrayList<Double>();
     for (int i = 0; i < n; i++) {
@@ -499,7 +506,8 @@ public final class VisualizationRunner {
    * @return JSON with HTML table string
    */
   private static String generateStyledTable(JsonObject input) {
-    String title = input.has("title") ? input.get("title").getAsString() : "Results Table";
+    String title = input.has("title") ? input.get("title").getAsString()
+        : input.has("caption") ? input.get("caption").getAsString() : "Results Table";
     JsonArray headers = input.has("headers") ? input.getAsJsonArray("headers") : new JsonArray();
     JsonArray rows = input.has("rows") ? input.getAsJsonArray("rows") : new JsonArray();
 
@@ -633,8 +641,11 @@ public final class VisualizationRunner {
     if (categories.size() == 0 || values.size() == 0) {
       return errorJson("Provide 'categories' and 'values' arrays for pie chart");
     }
+    if (categories.size() != values.size()) {
+      return errorJson("Pie chart 'categories' and 'values' arrays must have the same length");
+    }
 
-    int n = Math.min(categories.size(), values.size());
+    int n = categories.size();
     double total = 0;
     List<Double> vals = new ArrayList<Double>();
     for (int i = 0; i < n; i++) {
@@ -729,8 +740,11 @@ public final class VisualizationRunner {
     if (xValues.size() == 0 || yValues.size() == 0) {
       return errorJson("Provide 'xValues' and 'yValues' arrays for line chart");
     }
+    if (xValues.size() != yValues.size()) {
+      return errorJson("Line chart 'xValues' and 'yValues' arrays must have the same length");
+    }
 
-    int n = Math.min(xValues.size(), yValues.size());
+    int n = xValues.size();
     List<Double> xVals = new ArrayList<Double>();
     List<Double> yVals = new ArrayList<Double>();
     double xMin = Double.MAX_VALUE;
