@@ -107,6 +107,117 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
         segmentResults);
   }
 
+  /**
+   * Locate the first time a remaining-total-sulfide target is reached within ordered exposure segments.
+   *
+   * <p>
+   * The calculation analytically inverts cumulative exposure for the lower, nominal, and upper rates. All three
+   * fit-scatter paths must reach the requested target within the supplied finite trajectory. The result therefore never
+   * extrapolates the final segment or returns an infinite crossing time.
+   * </p>
+   *
+   * @param targetRemainingFraction target total-sulfide fraction in the interval (0, 1]
+   * @param segments non-empty ordered exposure segments
+   * @return immutable shortest, nominal, and longest target-crossing evidence
+   * @throws IllegalArgumentException when the target or trajectory is invalid, a calculated value is not finite, or
+   * the target is not reached for every fit-scatter path
+   */
+  public static TargetCrossingRangeResult timeToRemainingFractionRange(double targetRemainingFraction,
+      List<Segment> segments) {
+    Result trajectory = advance(AqueousHydrogenSulfideOxidationKinetics.PUBLISHED_INITIAL_TOTAL_SULFIDE_MOLALITY,
+        segments);
+    Segment firstSegment = trajectory.getSegmentResults().get(0).getSegment();
+    AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult singleStateTarget = AqueousHydrogenSulfideOxidationKinetics
+        .timeToRemainingFractionRange(firstSegment.getAirSaturatedOxygenMolality(), targetRemainingFraction,
+            firstSegment.getTemperatureK(), firstSegment.getPH(), firstSegment.getIonicStrengthMolPerKgWater());
+    double requiredExposure = singleStateTarget.getRequiredExposure();
+
+    Crossing longest = locateCrossing(requiredExposure, trajectory.getSegmentResults(), RateCase.LOWER);
+    Crossing nominal = locateCrossing(requiredExposure, trajectory.getSegmentResults(), RateCase.NOMINAL);
+    Crossing shortest = locateCrossing(requiredExposure, trajectory.getSegmentResults(), RateCase.UPPER);
+
+    return new TargetCrossingRangeResult(targetRemainingFraction, requiredExposure, shortest.timeHours,
+        nominal.timeHours, longest.timeHours, shortest.segmentIndex, nominal.segmentIndex, longest.segmentIndex,
+        trajectory.getTotalTimeHours());
+  }
+
+  private static Crossing locateCrossing(double requiredExposure, List<SegmentResult> segmentResults,
+      RateCase rateCase) {
+    if (requiredExposure == 0.0) {
+      return new Crossing(0, 0.0);
+    }
+
+    double cumulativeExposure = 0.0;
+    double elapsedTimeHours = 0.0;
+    for (SegmentResult segmentResult : segmentResults) {
+      double segmentExposure = rateCase.segmentExposure(segmentResult);
+      double nextExposure = finiteSum(cumulativeExposure, segmentExposure, "target-crossing cumulative exposure");
+      if (nextExposure >= requiredExposure) {
+        double exposureWithinSegment = requiredExposure - cumulativeExposure;
+        double timeWithinSegment = exposureWithinSegment / rateCase.pseudoFirstOrderRate(segmentResult);
+        requireFiniteNonNegative(timeWithinSegment, "target-crossing time within segment");
+        return new Crossing(segmentResult.getIndex(),
+            finiteSum(elapsedTimeHours, timeWithinSegment, "target-crossing elapsed time"));
+      }
+      cumulativeExposure = nextExposure;
+      elapsedTimeHours = finiteSum(elapsedTimeHours, segmentResult.getSegment().getDurationHours(),
+          "target-crossing elapsed time");
+    }
+
+    throw new IllegalArgumentException(
+        "target remaining fraction is not reached by every fit-scatter path within the supplied trajectory");
+  }
+
+  private enum RateCase {
+    LOWER {
+      @Override
+      double segmentExposure(SegmentResult result) {
+        return result.getLowerRateExposure();
+      }
+
+      @Override
+      double pseudoFirstOrderRate(SegmentResult result) {
+        return result.getLowerPseudoFirstOrderRate();
+      }
+    },
+    NOMINAL {
+      @Override
+      double segmentExposure(SegmentResult result) {
+        return result.getNominalExposure();
+      }
+
+      @Override
+      double pseudoFirstOrderRate(SegmentResult result) {
+        return result.getNominalPseudoFirstOrderRate();
+      }
+    },
+    UPPER {
+      @Override
+      double segmentExposure(SegmentResult result) {
+        return result.getUpperRateExposure();
+      }
+
+      @Override
+      double pseudoFirstOrderRate(SegmentResult result) {
+        return result.getUpperPseudoFirstOrderRate();
+      }
+    };
+
+    abstract double segmentExposure(SegmentResult result);
+
+    abstract double pseudoFirstOrderRate(SegmentResult result);
+  }
+
+  private static final class Crossing {
+    private final int segmentIndex;
+    private final double timeHours;
+
+    private Crossing(int segmentIndex, double timeHours) {
+      this.segmentIndex = segmentIndex;
+      this.timeHours = timeHours;
+    }
+  }
+
   private static void requireInitialTotalSulfide(double molality) {
     if (!Double.isFinite(molality) || molality < MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY
         || molality > MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY) {
@@ -132,6 +243,81 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
   private static void requireFiniteNonNegative(double value, String name) {
     if (!Double.isFinite(value) || value < 0.0) {
       throw new IllegalArgumentException(name + " must be finite and non-negative");
+    }
+  }
+
+  /** Immutable target-crossing range within a finite piecewise exposure trajectory. */
+  public static final class TargetCrossingRangeResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double targetRemainingFraction;
+    private final double requiredExposure;
+    private final double shortestTimeHours;
+    private final double nominalTimeHours;
+    private final double longestTimeHours;
+    private final int shortestCrossingSegmentIndex;
+    private final int nominalCrossingSegmentIndex;
+    private final int longestCrossingSegmentIndex;
+    private final double suppliedTrajectoryTimeHours;
+
+    private TargetCrossingRangeResult(double targetRemainingFraction, double requiredExposure,
+        double shortestTimeHours, double nominalTimeHours, double longestTimeHours,
+        int shortestCrossingSegmentIndex, int nominalCrossingSegmentIndex, int longestCrossingSegmentIndex,
+        double suppliedTrajectoryTimeHours) {
+      this.targetRemainingFraction = targetRemainingFraction;
+      this.requiredExposure = requiredExposure;
+      this.shortestTimeHours = shortestTimeHours;
+      this.nominalTimeHours = nominalTimeHours;
+      this.longestTimeHours = longestTimeHours;
+      this.shortestCrossingSegmentIndex = shortestCrossingSegmentIndex;
+      this.nominalCrossingSegmentIndex = nominalCrossingSegmentIndex;
+      this.longestCrossingSegmentIndex = longestCrossingSegmentIndex;
+      this.suppliedTrajectoryTimeHours = suppliedTrajectoryTimeHours;
+    }
+
+    /** @return requested remaining total-sulfide fraction. */
+    public double getTargetRemainingFraction() {
+      return targetRemainingFraction;
+    }
+
+    /** @return dimensionless cumulative exposure required to reach the target. */
+    public double getRequiredExposure() {
+      return requiredExposure;
+    }
+
+    /** @return earliest crossing time, obtained with the upper fit-scatter rates [h]. */
+    public double getShortestTimeHours() {
+      return shortestTimeHours;
+    }
+
+    /** @return nominal crossing time [h]. */
+    public double getNominalTimeHours() {
+      return nominalTimeHours;
+    }
+
+    /** @return latest crossing time, obtained with the lower fit-scatter rates [h]. */
+    public double getLongestTimeHours() {
+      return longestTimeHours;
+    }
+
+    /** @return source-order segment index containing the shortest crossing. */
+    public int getShortestCrossingSegmentIndex() {
+      return shortestCrossingSegmentIndex;
+    }
+
+    /** @return source-order segment index containing the nominal crossing. */
+    public int getNominalCrossingSegmentIndex() {
+      return nominalCrossingSegmentIndex;
+    }
+
+    /** @return source-order segment index containing the longest crossing. */
+    public int getLongestCrossingSegmentIndex() {
+      return longestCrossingSegmentIndex;
+    }
+
+    /** @return total duration of the supplied finite trajectory [h]. */
+    public double getSuppliedTrajectoryTimeHours() {
+      return suppliedTrajectoryTimeHours;
     }
   }
 
