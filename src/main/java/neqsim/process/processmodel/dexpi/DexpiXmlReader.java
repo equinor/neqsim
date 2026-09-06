@@ -1190,7 +1190,7 @@ public final class DexpiXmlReader {
         componentIndex = componentByEndpointId.get(connection.getToId());
       }
       if (componentIndex != null) {
-        components.get(componentIndex.intValue()).addConnection(connection.getId());
+        components.get(componentIndex.intValue()).addConnection(connection);
       }
     }
 
@@ -1447,7 +1447,7 @@ public final class DexpiXmlReader {
   private static final class ConnectionComponentAccumulator {
     private final String id;
     private final List<DexpiConnectionEndpointInfo> endpoints = new ArrayList<DexpiConnectionEndpointInfo>();
-    private final List<String> connectionIds = new ArrayList<String>();
+    private final List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
 
     private ConnectionComponentAccumulator(String id) {
       this.id = id;
@@ -1457,12 +1457,16 @@ public final class DexpiXmlReader {
       endpoints.add(endpoint);
     }
 
-    private void addConnection(String connectionId) {
-      connectionIds.add(connectionId);
+    private void addConnection(DexpiConnectionInfo connection) {
+      connections.add(connection);
     }
 
     private DexpiConnectionComponentInfo toInfo() {
       List<String> endpointIds = new ArrayList<String>();
+      List<String> connectionIds = new ArrayList<String>();
+      for (DexpiConnectionInfo connection : connections) {
+        connectionIds.add(connection.getId());
+      }
       List<String> sourceEndpointIds = new ArrayList<String>();
       List<String> sinkEndpointIds = new ArrayList<String>();
       List<String> potentialMultiConnectionEndpointIds = new ArrayList<String>();
@@ -1482,8 +1486,8 @@ public final class DexpiXmlReader {
           unresolvedEndpointIds.add(endpoint.getEndpointId());
         }
       }
-      return new DexpiConnectionComponentInfo(id, endpointIds, connectionIds, sourceEndpointIds, sinkEndpointIds,
-          potentialMultiConnectionEndpointIds, unresolvedEndpointIds);
+      return new DexpiConnectionComponentInfo(id, endpointIds, endpoints, connectionIds, connections, sourceEndpointIds,
+          sinkEndpointIds, potentialMultiConnectionEndpointIds, unresolvedEndpointIds);
     }
   }
 

@@ -3,6 +3,7 @@ package neqsim.process.processmodel.dexpi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -864,6 +865,15 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(2, chain.getConnectionCount());
     assertFalse(chain.hasUnresolvedEndpoints());
     assertFalse(chain.hasPotentialMultiConnectionNodes());
+    assertTrue(chain.hasCompleteEvidence());
+    assertEquals(Arrays.asList("N-A", "N-J", "N-C"), Arrays.asList(chain.getEndpoints().get(0).getEndpointId(),
+        chain.getEndpoints().get(1).getEndpointId(), chain.getEndpoints().get(2).getEndpointId()));
+    assertEquals("E-A", chain.getEndpoints().get(0).getOwnerId());
+    assertSame(first.getConnectionEndpoints().get(0), chain.getEndpoints().get(0));
+    assertEquals(Arrays.asList("C-1", "C-2"),
+        Arrays.asList(chain.getConnections().get(0).getId(), chain.getConnections().get(1).getId()));
+    assertEquals("S-1", chain.getConnections().get(0).getSegmentId());
+    assertSame(first.getConnections().get(0), chain.getConnections().get(0));
 
     DexpiConnectionComponentInfo parallel = first.getConnectionComponents().get(1);
     assertEquals("component-2", parallel.getId());
@@ -871,6 +881,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(Arrays.asList("C-3", "C-4"), parallel.getConnectionIds());
     assertEquals(Arrays.asList("N-X", "N-Y"), parallel.getPotentialMultiConnectionEndpointIds());
     assertTrue(parallel.hasPotentialMultiConnectionNodes());
+    assertEquals(Arrays.asList("C-3", "C-4"),
+        Arrays.asList(parallel.getConnections().get(0).getId(), parallel.getConnections().get(1).getId()));
+    assertSame(first.getConnections().get(2), parallel.getConnections().get(0));
+    assertSame(first.getConnections().get(3), parallel.getConnections().get(1));
 
     DexpiConnectionComponentInfo unresolved = first.getConnectionComponents().get(2);
     assertEquals("component-3", unresolved.getId());
@@ -879,11 +893,27 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(Collections.singletonList("UNKNOWN"), unresolved.getSourceEndpointIds());
     assertEquals(Collections.singletonList("UNKNOWN"), unresolved.getUnresolvedEndpointIds());
     assertTrue(unresolved.hasUnresolvedEndpoints());
+    assertFalse(unresolved.getEndpoints().get(0).isResolved());
+    assertEquals("C-5", unresolved.getConnections().get(0).getId());
 
     assertThrows(UnsupportedOperationException.class, () -> chain.getEndpointIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> chain.getEndpoints().clear());
+    assertThrows(UnsupportedOperationException.class, () -> chain.getConnections().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionComponents().clear());
+
+    DexpiConnectionComponentInfo legacy = new DexpiConnectionComponentInfo("legacy",
+        Collections.singletonList("N-LEGACY"), Collections.singletonList("C-LEGACY"),
+        Collections.singletonList("N-LEGACY"), Collections.<String>emptyList(), Collections.<String>emptyList(),
+        Collections.<String>emptyList());
+    assertFalse(legacy.hasCompleteEvidence());
+    assertTrue(legacy.getEndpoints().isEmpty());
+    assertTrue(legacy.getConnections().isEmpty());
+
     assertTrue(first.toJson().contains("\"connectionComponentCount\": 3"));
     assertTrue(first.toJson().contains("\"hasUnresolvedEndpoints\": true"));
+    assertTrue(first.toJson().contains("\"completeEvidence\": true"));
+    assertTrue(first.toJson().contains("\"connections\": ["));
+    assertTrue(first.toJson().contains("\"endpoints\": ["));
     assertEquals(first.toJson(), second.toJson());
   }
 

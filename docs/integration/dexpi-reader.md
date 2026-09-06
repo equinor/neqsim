@@ -218,8 +218,15 @@ branch or fitting, create live process connectivity, or establish process intent
 `ImportResult.getConnectionComponents()` groups non-empty endpoint identities by weak connectivity
 through explicit material-connection references. Components are ordered by their first endpoint;
 their endpoint IDs retain first-reference order and their connection-evidence IDs retain source
-order, including parallel occurrences. Each immutable `DexpiConnectionComponentInfo` also lists
-source, sink, potential multi-connection, and unresolved endpoints from the endpoint evidence.
+order, including parallel occurrences. `getEndpoints()` exposes the corresponding complete immutable
+`DexpiConnectionEndpointInfo` records in first-reference order, and `getConnections()` exposes
+the complete immutable `DexpiConnectionInfo` occurrences in source order. Reader-produced records
+therefore keep endpoint resolution, incidence, explicit endpoint and owner provenance, segment
+provenance, direction, one-sided references, and parallel occurrences available locally without a
+join against the global inventories. `hasCompleteEvidence()` distinguishes this projection from
+legacy values created with the older constructor; legacy object lists are empty while all existing
+identity and subset evidence remains unchanged. Each immutable `DexpiConnectionComponentInfo` also
+lists source, sink, potential multi-connection, and unresolved endpoints from the endpoint evidence.
 A connection with one non-empty endpoint remains visible as a singleton component. A connection
 with two blank endpoint references remains diagnostic evidence and is not assigned invented nodes.
 This grouping is a document-review aid, not proof that the grouped references form a hydraulically
@@ -274,8 +281,8 @@ continuity, identify a physical recycle, enumerate paths, or alter simulation to
 `connectionEndpointCount`, `connectionComponentCount`, `connectionCycleCount`,
 `connectionCycleTransitionCount`, and the ordered instrumentation-loop, actuating-function, information-flow, connection, endpoint,
 component, directed-cycle, and cycle-transition inventories, including reference resolution,
-incidence roles, review subsets, complete cycle-local endpoint and internal connection occurrences,
-explicit cycle-boundary occurrences, and exact-once transitions with nested connection and endpoint
+incidence roles, review subsets, complete component- and cycle-local endpoint and connection
+occurrences, explicit cycle-boundary occurrences, and exact-once transitions with nested connection and endpoint
 evidence, alongside the process-unit count and findings. Python callers through JPype use the same
 `ImportResult.getInstruments()`, `ImportResult.getInstrumentationLoops()`,
 `ImportResult.getActuatingFunctions()`, `ImportResult.getInformationFlows()`,
