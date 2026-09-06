@@ -66,12 +66,12 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
    * @param fromCycle complete source directed-cycle evidence, or {@code null} when outside or unavailable
    * @param toCycle complete target directed-cycle evidence, or {@code null} when outside or unavailable
    * @throws NullPointerException if connection or endpoint evidence is null
-   * @throws IllegalArgumentException if cycle identities do not describe a boundary crossing or disagree with the
-   * cycle records
+   * @throws IllegalArgumentException if cycle identities do not describe a boundary crossing or disagree with the cycle
+   * records
    */
   public DexpiConnectionCycleTransitionInfo(DexpiConnectionInfo connection, DexpiConnectionEndpointInfo fromEndpoint,
-      DexpiConnectionEndpointInfo toEndpoint, String fromCycleId, String toCycleId,
-      DexpiConnectionCycleInfo fromCycle, DexpiConnectionCycleInfo toCycle) {
+      DexpiConnectionEndpointInfo toEndpoint, String fromCycleId, String toCycleId, DexpiConnectionCycleInfo fromCycle,
+      DexpiConnectionCycleInfo toCycle) {
     this.connection = Objects.requireNonNull(connection, "connection");
     this.fromEndpoint = Objects.requireNonNull(fromEndpoint, "fromEndpoint");
     this.toEndpoint = Objects.requireNonNull(toEndpoint, "toEndpoint");
