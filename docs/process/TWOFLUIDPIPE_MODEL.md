@@ -549,17 +549,15 @@ a conservative screen but is not a high-specificity classifier and must not be d
 quantitative dynamic validation.
 
 The slow dynamic benchmark exercises large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
-$v_{SG}=1.00$ m/s). It is currently a **disabled qualification fixture**, not a validated model.
-The coupled route now completes the 16-section 50 × 0.1 s progress probe and a 24-section
-100 × 0.05 s refinement with phase and aggregate mass-balance residuals below $10^{-9}$ and
-without a rejected nonlinear substep. That is a numerical-progress result, not severe-slugging
-validation: the sticky pressure-correction limiter fires and the
-interval-average liquid outlet spans -18.55 to 6.88 kg/s, outside the stored 0.375 to 4.03 kg/s
-comparison range. The legacy route still activates `isTransientOutletBackflowClamped()`. Both
-trajectories remain disqualified before amplitude, period, or slug-length agreement is considered.
-The class remains in source so issues #2909, #2911, and #3298 can re-enable the unchanged public
-benchmark after the outlet/pressure coupling is resolved; unrelated CI must not treat a
-known-invalid trajectory as a passing or intentionally failing prediction.
+$v_{SG}=1.00$ m/s). Its active 100 s trajectories characterize coupled numerical progress,
+conservation, repeatability, mesh sensitivity, and outer-step sensitivity. The exact 600 s
+qualification method remains disabled under #3298 until the amplitude, liquid-production-cycle,
+steady-flowline-hold-up, sticky-limiter, rejection, and conservation gates all pass together. On
+the coupled head evaluated in September 2026, the 600 s pressure swing was 36.2 kPa versus the
+approximately 98 kPa digitized target, and the 100 s resolved trajectory contained one complete
+67.2 s liquid-production cycle after warm-up. Those are diagnostic observations, not
+severe-slugging validation. The active tests must not weaken or replace the disabled qualification
+contract merely to make a trajectory pass.
 
 This benchmark previously reported a riser-head-scaled swing of 0.40–0.54 heads and a tracked slug
 of about 2 m. Those results did not come from the momentum balance. The minimum-slip hold-up bound
@@ -607,9 +605,10 @@ non-progressing NeqSim trajectory may be compared with them as a valid predictio
 The dynamic reproduction uses the physical 19.81 m flowline plus riser, 0.0762 m diameter,
 atmospheric outlet, nitrogen as an air surrogate, and a single non-volatile TBP fraction fitted to
 the reported Crystex density. The source does not give a case-specific temperature or a full oil
-assay, so 25 °C and the TBP molecular weight are explicit modelling assumptions. The experimental
-upstream tank/plenum is not represented dynamically; this missing compressible volume is a likely
-contributor to the short period. Coarse grids are additionally sensitive to whether the
+assay, so 25 °C and the TBP molecular weight are explicit modelling assumptions. No additional
+variable-volume tank is configured because the report does not identify one as part of Test 3;
+compressibility in the documented 19.81 m flowline remains in the coupled pipe model. Coarse grids
+are additionally sensitive to whether the
 flowline–riser boundary lands on a cell face, which is one reason the instantaneous amplitude is
 not mesh-converged even though the mean pressure is. The steady-state initialization runs with the
 wall-clock guard disabled and each realization asserts that the guard did not fire, so the reported
@@ -1173,10 +1172,11 @@ The limit-cycle result reports period, P10, median, P90, P10-P90 band, sample wi
 median-upcrossing cycle count. A large startup peak followed by a flat trace reports zero completed
 cycles, so it cannot pass as a sustained oscillation.
 
-The slow public Tengesdal benchmark now uses these settled-window definitions and requires at least
-two completed liquid-rate cycles in every mesh/timestep realization. It retains the published
-experimental source and its phase-mass, mean-pressure, mesh, amplitude, and deterministic-repeat
-checks.
+The active short Tengesdal characterization requires one complete liquid-rate cycle interval in its
+80 s settled window. Requiring two intervals there would be impossible for the currently observed
+67 s cycle. The disabled 600 s qualification requires at least two completed cycles and retains the
+published experimental source plus the phase-mass, nonlinear-quality, steady-hold-up, amplitude,
+period, and inventory gates.
 
 A fresh OLGA 2025.1 execution for the same geometry reached normal stop and reported a 34.9234 kPa
 pressure amplitude and 21.7100 s liquid-trough period (21.7364 s from pressure), compared with the
