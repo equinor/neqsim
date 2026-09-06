@@ -865,9 +865,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertFalse(chain.hasUnresolvedEndpoints());
     assertFalse(chain.hasPotentialMultiConnectionNodes());
     assertTrue(chain.hasCompleteEvidence());
-    assertEquals(Arrays.asList("N-A", "N-J", "N-C"),
-        Arrays.asList(chain.getEndpoints().get(0).getEndpointId(), chain.getEndpoints().get(1).getEndpointId(),
-            chain.getEndpoints().get(2).getEndpointId()));
+    assertEquals(Arrays.asList("N-A", "N-J", "N-C"), Arrays.asList(chain.getEndpoints().get(0).getEndpointId(),
+        chain.getEndpoints().get(1).getEndpointId(), chain.getEndpoints().get(2).getEndpointId()));
     assertEquals("E-A", chain.getEndpoints().get(0).getOwnerId());
     assertSame(first.getConnectionEndpoints().get(0), chain.getEndpoints().get(0));
     assertEquals(Arrays.asList("C-1", "C-2"),
