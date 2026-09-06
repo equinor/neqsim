@@ -1253,8 +1253,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(DexpiConnectionCycleTransitionInfo.Kind.ENTERING, entering.getKind());
     assertEquals("", entering.getFromCycleId());
     assertFalse(entering.hasFromCycle());
+    assertFalse(entering.hasFromCycleEvidence());
+    assertNull(entering.getFromCycle());
     assertEquals("cycle-1", entering.getToCycleId());
     assertTrue(entering.hasToCycle());
+    assertTrue(entering.hasToCycleEvidence());
+    assertSame(first.getConnectionCycles().get(0), entering.getToCycle());
     assertEquals("S-IN-1", entering.getConnection().getSegmentId());
     assertEquals("UNKNOWN-U", entering.getFromEndpoint().getEndpointId());
     assertFalse(entering.getFromEndpoint().isResolved());
@@ -1266,6 +1270,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleTransitionInfo parallelEntering = transitions.get(1);
     assertEquals(DexpiConnectionCycleTransitionInfo.Kind.ENTERING, parallelEntering.getKind());
     assertEquals("cycle-1", parallelEntering.getToCycleId());
+    assertSame(first.getConnectionCycles().get(0), parallelEntering.getToCycle());
     assertEquals("S-IN-2", parallelEntering.getConnection().getSegmentId());
 
     DexpiConnectionCycleTransitionInfo between = transitions.get(2);
@@ -1274,6 +1279,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("cycle-2", between.getToCycleId());
     assertTrue(between.hasFromCycle());
     assertTrue(between.hasToCycle());
+    assertTrue(between.hasFromCycleEvidence());
+    assertTrue(between.hasToCycleEvidence());
+    assertSame(first.getConnectionCycles().get(0), between.getFromCycle());
+    assertSame(first.getConnectionCycles().get(1), between.getToCycle());
     assertEquals("N-B", between.getFromEndpoint().getEndpointId());
     assertEquals("N-X", between.getToEndpoint().getEndpointId());
 
@@ -1282,7 +1291,11 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("cycle-2", leaving.getFromCycleId());
     assertEquals("", leaving.getToCycleId());
     assertTrue(leaving.hasFromCycle());
+    assertTrue(leaving.hasFromCycleEvidence());
+    assertSame(first.getConnectionCycles().get(1), leaving.getFromCycle());
     assertFalse(leaving.hasToCycle());
+    assertFalse(leaving.hasToCycleEvidence());
+    assertNull(leaving.getToCycle());
     assertEquals("E-V", leaving.getToEndpoint().getOwnerId());
 
     assertThrows(UnsupportedOperationException.class, () -> transitions.clear());
@@ -1292,10 +1305,24 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         entering.getFromEndpoint(), entering.getToEndpoint(), "", ""));
     assertThrows(IllegalArgumentException.class, () -> new DexpiConnectionCycleTransitionInfo(between.getConnection(),
         between.getFromEndpoint(), between.getToEndpoint(), "cycle-1", "cycle-1"));
+
+    DexpiConnectionCycleTransitionInfo legacy = new DexpiConnectionCycleTransitionInfo(between.getConnection(),
+        between.getFromEndpoint(), between.getToEndpoint(), "cycle-1", "cycle-2");
+    assertTrue(legacy.hasFromCycle());
+    assertTrue(legacy.hasToCycle());
+    assertFalse(legacy.hasFromCycleEvidence());
+    assertFalse(legacy.hasToCycleEvidence());
+    assertNull(legacy.getFromCycle());
+    assertNull(legacy.getToCycle());
+
     assertTrue(first.toJson().contains("\"connectionCycleTransitionCount\": 4"));
     assertTrue(first.toJson().contains("\"kind\": \"BETWEEN_CYCLES\""));
     assertTrue(first.toJson().contains("\"fromCycleId\": \"cycle-1\""));
     assertTrue(first.toJson().contains("\"toCycleId\": \"cycle-2\""));
+    assertTrue(first.toJson().contains("\"hasFromCycleEvidence\": true"));
+    assertTrue(first.toJson().contains("\"hasToCycleEvidence\": true"));
+    assertTrue(first.toJson().contains("\"fromCycle\": {"));
+    assertTrue(first.toJson().contains("\"toCycle\": {"));
     assertTrue(first.toJson().contains("\"fromEndpoint\": {"));
     assertTrue(first.toJson().contains("\"toEndpoint\": {"));
     assertEquals(first.toJson(), second.toJson());
