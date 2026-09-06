@@ -61,7 +61,11 @@ class McpClient:
             }
         )
         response = self.receive()
-        require("result" in response, "MCP initialize did not return a result", response)
+        require(
+            "result" in response,
+            "MCP initialize did not return a result",
+            response,
+        )
         self.send({"jsonrpc": "2.0", "method": "notifications/initialized"})
         time.sleep(0.2)
 
@@ -208,7 +212,11 @@ def test_flowsheet_documented_alias(client):
         "text/x-mermaid",
         "mermaid",
     )
-    require("Feed --> HP_Sep" in result["mermaid"], "flowsheet topology drifted", result)
+    require(
+        "Feed --> HP_Sep" in result["mermaid"],
+        "flowsheet topology drifted",
+        result,
+    )
 
 
 def test_styled_table_alias_and_html_escaping(client):
@@ -289,7 +297,11 @@ def test_inventory_remains_unpromoted(client):
     record = inventory.get("toolCoverageRecords", {}).get(
         "generateVisualization", {}
     )
-    require(inventory.get("inventoryVersion") == "1.28", "inventory version drifted", inventory)
+    require(
+        inventory.get("inventoryVersion") == "1.28",
+        "inventory version drifted",
+        inventory,
+    )
     require(
         limitations.get("contractTestedToolCount") == 28
         and limitations.get("confirmedGapToolCount") == 23,
@@ -308,11 +320,17 @@ def main():
     tests = [
         ("bar chart and XML escaping", test_bar_chart_and_xml_escaping),
         ("documented flowsheet alias", test_flowsheet_documented_alias),
-        ("styled table alias and HTML escaping", test_styled_table_alias_and_html_escaping),
+        (
+            "styled table alias and HTML escaping",
+            test_styled_table_alias_and_html_escaping,
+        ),
         ("README table alias", test_readme_table_alias),
         ("additional chart contracts", test_additional_chart_contracts),
         ("invalid arrays fail closed", test_invalid_arrays_fail_closed),
-        ("missing, unknown, and malformed inputs fail closed", test_missing_unknown_and_malformed_inputs_fail_closed),
+        (
+            "missing, unknown, and malformed inputs fail closed",
+            test_missing_unknown_and_malformed_inputs_fail_closed,
+        ),
         ("inventory remains unpromoted", test_inventory_remains_unpromoted),
     ]
     try:
