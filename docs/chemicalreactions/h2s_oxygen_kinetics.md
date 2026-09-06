@@ -146,6 +146,37 @@ molality. It retains the same constant-oxygen and unidentified-product boundary 
 screen. Within this first-order screening model, only cumulative exposure controls the final
 fraction; the ordered diagnostics do not introduce path-dependent chemistry.
 
+## Piecewise target crossing
+
+`AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a
+requested remaining-total-sulfide fraction is first reached inside a finite ordered segment list.
+It reuses the segment rates and the same required exposure as the single-state inverse:
+
+$E_{\mathrm{target}}=-\ln f.$
+
+For each lower, nominal, and upper fit-scatter path, cumulative exposure is summed through complete
+segments. Inside the crossing segment, the remaining exposure is divided by that segment's
+pseudo-first-order rate. The immutable result reports:
+
+- the requested fraction and required exposure;
+- shortest, nominal, and longest elapsed crossing times;
+- the source-order segment index for each crossing;
+- the total duration supplied by the caller.
+
+The upper-rate path gives the shortest time and the lower-rate path gives the longest. A target
+fraction of one crosses at exact time zero in segment zero. An unchanged-state segment split cannot
+change any reported crossing time. Substituting each result back into the corresponding piecewise
+cumulative exposure recovers `-ln(f)`.
+
+The target interval remains `(0, 1]`. Every lower, nominal, and upper path must reach the target
+within the supplied finite trajectory. If even the slow lower-rate path does not reach it, the
+method throws an `IllegalArgumentException`; it does not extend the final state, extrapolate a
+residence time, or return infinity.
+
+This diagnostic identifies a crossing within caller-defined aqueous screening segments. It does
+not locate a position in a pipeline, calculate flow residence time, size equipment, or couple the
+reaction to phase behavior, mass transfer, oxygen depletion, or a transient solver.
+
 ## Scientific stop boundary
 
 This capability does not:
