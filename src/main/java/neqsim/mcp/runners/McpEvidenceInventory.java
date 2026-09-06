@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.26");
+    inventory.addProperty("inventoryVersion", "1.27");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "generateReport and bridgeTaskWorkflow are CONTRACT_TESTED by merged reporting-handoff Java and packaged-MCP evidence; manageSecurity is CONTRACT_TESTED by merged security-management Java and packaged-MCP evidence; inventory 1.26 has no candidate.");
+        "generateReport and bridgeTaskWorkflow are CONTRACT_TESTED by merged reporting-handoff evidence; manageSecurity is CONTRACT_TESTED by merged security-management evidence; setSimulationVariable is CONTRACT_TESTED by merged canonical mutation Java and packaged-MCP evidence; inventory 1.27 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: twenty-five bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records: twenty-six bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -444,6 +444,16 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_automation_read_protocol.py",
           "neqsim-mcp-server/docs/evidence/AUTOMATION_READ_CONTRACT.md" };
       evidenceBoundary = "Addressed read routing, requested-unit handling, provenance/validation/quality-gate envelope preservation, fail-closed invalid inputs, and packaged-MCP transport are contract-tested; the returned numerical value, model fidelity, convergence adequacy, and engineering applicability are not benchmark-validated by this classification";
+      break;
+    case "setSimulationVariable":
+      benchmarkApplicability = "NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_MUTATION";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/AutomationRunner.java",
+          "src/main/java/neqsim/process/automation/ProcessAutomation.java",
+          "src/test/java/neqsim/mcp/runners/AutomationVariableWriteContractTest.java",
+          "src/test/java/neqsim/process/automation/ProcessAutomationTest.java",
+          "neqsim-mcp-server/test_simulation_variable_write_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/SIMULATION_VARIABLE_WRITE_CONTRACT.md" };
+      evidenceBoundary = "Typed INPUT-address mutation, requested-unit handling, rerun/report sequencing, inline/model-handle equivalence, exact OUTPUT-only and physical-bound rejection, fail-closed missing inputs, fuzzy recovery, and packaged transport are contract-tested; this does not establish numerical accuracy, convergence, conservation, persistence, optimization quality, plant or control authority, certification, or engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";

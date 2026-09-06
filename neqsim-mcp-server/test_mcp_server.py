@@ -1561,14 +1561,14 @@ def test_capabilities():
         "generateReport", "bridgeTaskWorkflow",
         "listSimulationUnits",
         "listUnitVariables",
-        "getSimulationVariable", "diagnoseAutomation",
+        "getSimulationVariable", "setSimulationVariable", "diagnoseAutomation",
         "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("twenty-five bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.26"
-          and limitations.get("contractTestedToolCount") == 25
-          and limitations.get("confirmedGapToolCount") == 26
+    check("twenty-six bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.27"
+          and limitations.get("contractTestedToolCount") == 26
+          and limitations.get("confirmedGapToolCount") == 25
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1613,6 +1613,16 @@ def test_capabilities():
           and "does not establish transport"
           in security_management.get("evidenceBoundary", ""),
           str(security_management))
+    variable_write = coverage_records.get("setSimulationVariable", {})
+    check("simulation-variable mutation has bounded contract evidence",
+          variable_write.get("coverageStatus") == "CONTRACT_TESTED"
+          and variable_write.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_MUTATION"
+          and "neqsim-mcp-server/test_simulation_variable_write_protocol.py"
+          in variable_write.get("contractEvidenceSources", [])
+          and "plant or control authority"
+          in variable_write.get("evidenceBoundary", ""),
+          str(variable_write))
     report_generation = coverage_records.get("generateReport", {})
     check("report generation has bounded contract evidence",
           report_generation.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1649,7 +1659,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 26
+          and limitations.get("confirmedGapToolCount") == 25
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
