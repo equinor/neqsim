@@ -18,8 +18,7 @@ class VisualizationRunnerTest {
   @Test
   void documentedFlowsheetAliasReturnsCanonicalMermaidContract() {
     JsonObject result = run("{\"type\":\"flowsheetDiagram\",\"title\":\"Separation\","
-        + "\"equipment\":[{\"name\":\"Feed\",\"type\":\"Stream\"},"
-        + "{\"name\":\"HP Sep\",\"type\":\"Separator\"}]}");
+        + "\"equipment\":[{\"name\":\"Feed\",\"type\":\"Stream\"}," + "{\"name\":\"HP Sep\",\"type\":\"Separator\"}]}");
 
     assertSuccess(result, "flowsheet", "text/x-mermaid", "mermaid");
     assertTrue(result.get("mermaid").getAsString().contains("Feed --> HP_Sep"));
@@ -27,7 +26,7 @@ class VisualizationRunnerTest {
 
   @Test
   void tableAliasesReturnCanonicalHtmlContractAndHonorCaption() {
-    for (String type : new String[] {"propertyTable", "styledTable", "table"}) {
+    for (String type : new String[] { "propertyTable", "styledTable", "table" }) {
       JsonObject result = run("{\"type\":\"" + type + "\",\"caption\":\"Stream Summary\","
           + "\"headers\":[\"Property\",\"Value\"],\"rows\":[[\"Pressure\",\"50 bara\"]]}");
 
@@ -38,12 +37,9 @@ class VisualizationRunnerTest {
 
   @Test
   void nonNumericalChartTypesReturnStableSvgContracts() {
-    JsonObject bar =
-        run("{\"type\":\"barChart\",\"labels\":[\"A\",\"B\"],\"values\":[1,2]}");
-    JsonObject pie =
-        run("{\"type\":\"pieChart\",\"categories\":[\"A\",\"B\"],\"values\":[1,2]}");
-    JsonObject line =
-        run("{\"type\":\"lineChart\",\"xValues\":[0,1],\"yValues\":[1,2]}");
+    JsonObject bar = run("{\"type\":\"barChart\",\"labels\":[\"A\",\"B\"],\"values\":[1,2]}");
+    JsonObject pie = run("{\"type\":\"pieChart\",\"categories\":[\"A\",\"B\"],\"values\":[1,2]}");
+    JsonObject line = run("{\"type\":\"lineChart\",\"xValues\":[0,1],\"yValues\":[1,2]}");
 
     assertSuccess(bar, "barChart", "image/svg+xml", "svg");
     assertSuccess(pie, "pieChart", "image/svg+xml", "svg");
@@ -52,10 +48,10 @@ class VisualizationRunnerTest {
 
   @Test
   void chartAndTableTextIsEscaped() {
-    JsonObject chart = run("{\"type\":\"barChart\",\"title\":\"<unsafe>&\","
-        + "\"labels\":[\"<label>\"],\"values\":[1]}");
-    JsonObject table = run("{\"type\":\"propertyTable\",\"title\":\"<unsafe>&\","
-        + "\"headers\":[\"<header>\"],\"rows\":[[\"<cell>\"]]}");
+    JsonObject chart = run(
+        "{\"type\":\"barChart\",\"title\":\"<unsafe>&\"," + "\"labels\":[\"<label>\"],\"values\":[1]}");
+    JsonObject table = run(
+        "{\"type\":\"propertyTable\",\"title\":\"<unsafe>&\"," + "\"headers\":[\"<header>\"],\"rows\":[[\"<cell>\"]]}");
 
     String svg = chart.get("svg").getAsString();
     String html = table.get("html").getAsString();
@@ -79,28 +75,22 @@ class VisualizationRunnerTest {
   @Test
   void emptyChartArraysFailClosed() {
     assertError(VisualizationRunner.run("{\"type\":\"barChart\",\"labels\":[],\"values\":[]}"));
-    assertError(
-        VisualizationRunner.run("{\"type\":\"pieChart\",\"categories\":[],\"values\":[]}"));
-    assertError(
-        VisualizationRunner.run("{\"type\":\"lineChart\",\"xValues\":[],\"yValues\":[]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"pieChart\",\"categories\":[],\"values\":[]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"lineChart\",\"xValues\":[],\"yValues\":[]}"));
   }
 
   @Test
   void mismatchedChartArraysFailClosedInsteadOfTruncating() {
-    assertError(VisualizationRunner.run(
-        "{\"type\":\"barChart\",\"labels\":[\"A\",\"B\"],\"values\":[1]}"));
-    assertError(VisualizationRunner.run(
-        "{\"type\":\"pieChart\",\"categories\":[\"A\"],\"values\":[1,2]}"));
-    assertError(VisualizationRunner.run(
-        "{\"type\":\"lineChart\",\"xValues\":[0,1],\"yValues\":[1]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"barChart\",\"labels\":[\"A\",\"B\"],\"values\":[1]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"pieChart\",\"categories\":[\"A\"],\"values\":[1,2]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"lineChart\",\"xValues\":[0,1],\"yValues\":[1]}"));
   }
 
   private static JsonObject run(String json) {
     return JsonParser.parseString(VisualizationRunner.run(json)).getAsJsonObject();
   }
 
-  private static void assertSuccess(JsonObject result, String type, String mimeType,
-      String contentField) {
+  private static void assertSuccess(JsonObject result, String type, String mimeType, String contentField) {
     assertEquals("success", result.get("status").getAsString(), result.toString());
     assertEquals(type, result.get("visualizationType").getAsString());
     assertEquals(mimeType, result.get("mimeType").getAsString());
