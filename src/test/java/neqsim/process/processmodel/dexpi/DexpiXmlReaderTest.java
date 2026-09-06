@@ -3,6 +3,7 @@ package neqsim.process.processmodel.dexpi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -965,6 +966,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleInfo threeEndpointCycle = first.getConnectionCycles().get(0);
     assertEquals("cycle-1", threeEndpointCycle.getId());
     assertEquals("component-2", threeEndpointCycle.getConnectionComponentId());
+    assertTrue(threeEndpointCycle.hasConnectionComponentEvidence());
+    assertSame(first.getConnectionComponents().get(1), threeEndpointCycle.getConnectionComponent());
+    assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"),
+        threeEndpointCycle.getConnectionComponent().getEndpointIds());
     assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getEndpointIds());
     List<DexpiConnectionEndpointInfo> cycleEndpoints = threeEndpointCycle.getEndpoints();
     assertEquals(3, cycleEndpoints.size());
@@ -998,6 +1003,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleInfo selfReference = first.getConnectionCycles().get(1);
     assertEquals("cycle-2", selfReference.getId());
     assertEquals("component-4", selfReference.getConnectionComponentId());
+    assertTrue(selfReference.hasConnectionComponentEvidence());
+    assertSame(first.getConnectionComponents().get(3), selfReference.getConnectionComponent());
     assertEquals(Collections.singletonList("N-S"), selfReference.getEndpointIds());
     assertEquals(Collections.singletonList("C-8"), selfReference.getConnectionIds());
     assertEquals("C-8", selfReference.getConnections().get(0).getSourceId());
@@ -1008,6 +1015,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleInfo unresolved = first.getConnectionCycles().get(2);
     assertEquals("cycle-3", unresolved.getId());
     assertEquals("component-5", unresolved.getConnectionComponentId());
+    assertTrue(unresolved.hasConnectionComponentEvidence());
+    assertSame(first.getConnectionComponents().get(4), unresolved.getConnectionComponent());
     assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getEndpointIds());
     assertEquals(Arrays.asList("C-9", "C-10"), unresolved.getConnectionIds());
     assertEquals(2, unresolved.getConnections().size());
@@ -1029,11 +1038,20 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpoints().clear());
     assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getConnections().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionCycles().clear());
+
+    DexpiConnectionCycleInfo legacy = new DexpiConnectionCycleInfo("legacy-cycle", "legacy-component",
+        Collections.singletonList("N-LEGACY"), Collections.singletonList("C-LEGACY"),
+        Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(), false);
+    assertFalse(legacy.hasConnectionComponentEvidence());
+    assertNull(legacy.getConnectionComponent());
+
     assertTrue(first.toJson().contains("\"connectionCycleCount\": 3"));
     assertTrue(first.toJson().contains("\"endpoints\": ["));
     assertTrue(first.toJson().contains("\"connections\": ["));
     assertTrue(first.toJson().contains("\"segmentId\": \"S-3\""));
     assertTrue(first.toJson().contains("\"connectionComponentId\": \"component-4\""));
+    assertTrue(first.toJson().contains("\"hasConnectionComponentEvidence\": true"));
+    assertTrue(first.toJson().contains("\"connectionComponent\": {"));
     assertTrue(first.toJson().contains("\"selfReference\": true"));
     assertEquals(first.toJson(), second.toJson());
   }
