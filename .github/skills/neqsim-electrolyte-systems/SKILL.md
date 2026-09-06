@@ -141,6 +141,9 @@ separates this mineral-standard-state evidence from the Pitzer or electrolyte-CP
 currently fail-closed against the CC BY 4.0 Voigt–Freyer pure-water and NaCl crossing envelopes and does not qualify
 high-pressure use; do not fit or reinterpret Pitzer interactions to hide a mineral-correlation mismatch. See
 `docs/pvtsimulation/scale_prediction_api.md` for the source matrix, numerical residuals, and limits.
+The object registers the NIST ThermoML CaCl2 pressure series as independent finite-concentration
+evidence, but explicitly leaves the dilute limiting-volume term unresolved; do not treat the presence
+of pressure evidence as high-pressure calcium-sulfate qualification.
 
 ### CaCO3 (Calcite) Scaling
 
