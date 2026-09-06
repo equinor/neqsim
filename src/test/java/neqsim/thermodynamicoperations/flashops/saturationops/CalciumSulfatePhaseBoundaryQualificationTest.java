@@ -44,6 +44,23 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     assertEquals(0.0, qualification.getAnhydriteLogKspPressureCorrection(), 0.0);
     assertEquals(0.0, qualification.getGypsumLogKspPressureCorrection(), 0.0);
     assertFalse(qualification.isAqueousSpeciesVolumeResolved());
+    assertTrue(qualification.hasIndependentAqueousPressureEvidence());
+    assertFalse(qualification.isAqueousLimitingVolumeEvidenceResolved());
+    assertEquals("10.1021/je2013704", qualification.getAqueousPressureEvidenceDoi());
+    assertEquals("https://www.nist.gov/open/license", qualification.getAqueousPressureEvidenceLicenseUri());
+    assertEquals("10.1021/je00061a022", qualification.getAqueousLimitingVolumeLineageDoi());
+    assertEquals("NIST Open Access to Data",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_LICENSE);
+    assertEquals(197, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_POINT_COUNT);
+    assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_MOLALITY, 0.0);
+    assertEquals(6.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_MOLALITY, 0.0);
+    assertEquals(283.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_TEMPERATURE_K, 0.0);
+    assertEquals(472.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_TEMPERATURE_K, 0.0);
+    assertEquals(685.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_PRESSURE_BARA, 0.0);
+    assertEquals(0.0003,
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_RELATIVE_UNCERTAINTY, 0.0);
+    assertEquals(0.0005,
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_RELATIVE_UNCERTAINTY, 0.0);
     assertFalse(qualification.isHighPressureQualified());
     assertEquals("10.2475/ajs.261.1.61", qualification.getHighPressureLineageDoi());
     assertEquals(1.01325, CalciumSulfatePhaseBoundaryQualification.COMPSALT_PRESSURE_CORRECTION_REFERENCE_BARA, 0.0);
@@ -97,6 +114,8 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     CalciumSulfatePhaseBoundaryQualification highPressure = new ThermodynamicOperations(new SystemSrkEos(313.15, 500.0))
         .qualifyCalciumSulfatePhaseBoundary();
     assertFalse(highPressure.isReferencePressureEnvelopePass());
+    assertTrue(highPressure.hasIndependentAqueousPressureEvidence());
+    assertFalse(highPressure.isAqueousLimitingVolumeEvidenceResolved());
     assertFalse(highPressure.isPublicationReady());
     assertEquals(75.92, highPressure.getPredictedPureWaterTransitionAtEvaluatedPressureCelsius(), 0.01);
     assertEquals(52.4 * (500.0 - 1.01325) / (83.1446 * 313.15), highPressure.getAnhydriteLogKspPressureCorrection(),
