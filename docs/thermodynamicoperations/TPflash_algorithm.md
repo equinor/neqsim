@@ -2376,7 +2376,7 @@ throughout both matrices. The regression also qualifies recovery from beta value
 within `1e-12` of a bound, a changed temperature/pressure state, return to the
 reference state, and an immediate deterministic repeat.
 
-The focused class performs 21 complete public TP flashes. This fixed workload is
+The focused class performs 20 complete public TP flashes. This fixed workload is
 performance evidence only; no wall-clock threshold or speedup is claimed. TEG
 derivative behavior, model or data parameter changes, saturation operations,
 electrolyte/reaction models, public API and serialization changes, Column Solver,
