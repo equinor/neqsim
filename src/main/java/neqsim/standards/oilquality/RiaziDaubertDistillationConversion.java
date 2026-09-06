@@ -158,4 +158,3 @@ public final class RiaziDaubertDistillationConversion {
     return !Double.isNaN(value) && !Double.isInfinite(value);
   }
 }
-
