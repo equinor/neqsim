@@ -1779,14 +1779,14 @@ public class NeqSimTools {
    * @return JSON with SVG/Mermaid/HTML content
    */
   @Tool(description = "Generate inline visualizations for simulation results. "
-      + "Produces SVG charts (phase envelopes, compressor maps, bar charts), "
-      + "Mermaid flowsheet diagrams, and styled HTML tables. "
-      + "Types: phaseEnvelope, flowsheetDiagram, compressorMap, barChart, styledTable.")
+      + "Produces SVG charts, Mermaid flowsheet diagrams, and styled HTML tables. "
+      + "Types: phaseEnvelope, flowsheet, compressorMap, propertyTable, barChart, pieChart, "
+      + "lineChart. Aliases: flowsheetDiagram, styledTable, table.")
   public String generateVisualization(
-      @ToolArg(description = "JSON with: 'type' (phaseEnvelope|flowsheetDiagram|compressorMap|"
-          + "barChart|styledTable). For phaseEnvelope: fluid components. "
-          + "For flowsheetDiagram: processJson. For barChart: labels, values. "
-          + "For styledTable: headers, rows, caption.") String vizJson) {
+      @ToolArg(description = "JSON with 'type'. Chart inputs: barChart labels/values, pieChart "
+          + "categories/values, lineChart xValues/yValues. Flowsheet accepts equipment and "
+          + "connections. propertyTable accepts headers, rows, and title or caption. "
+          + "Aliases: flowsheetDiagram, styledTable, table.") String vizJson) {
     String policyBlocked = enforceToolAccess("generateVisualization");
     if (policyBlocked != null) {
       return policyBlocked;
