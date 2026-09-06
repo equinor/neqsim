@@ -631,6 +631,22 @@ The transient network modes make ownership of flow and pressure explicit:
 | `Cooler` | dynamic temperature control disabled (default) | Historical specified-temperature behavior is retained. |
 | `Cooler` | configured dynamic temperature control | A bounded utility-valve/NTU model applies actuator and process thermal lags. |
 
+The dynamic cooler advances its actuator and thermal state once per physical
+timestep. Repeated evaluations with the same non-null calculation UUID reuse
+the timestep's initial valve position and outlet temperature while recalculating
+the heat-transfer target from the current inlet conditions. This supports the
+second pass of semi-implicit integration without applying the lag twice. Use a
+new UUID for each physical timestep. If the inlet is at or below the cooling
+medium temperature, this cooling-only model passes through the inlet temperature
+and adds no heat.
+
+Valve `autoSize(safetyFactor, designOpeningPercent)` evaluates the sizing
+correlation at the requested design opening, including when it differs from the
+current valve position. With a safety factor of 1 and no minimum-Cv floor
+limitation, that opening reproduces the design flow after transient handoff.
+The safety factor must be finite and positive, and the design opening must be
+finite and in (0, 100] percent; configured valve travel limits still apply.
+
 Example handoff after the steady-state recycle has converged:
 
 ```java

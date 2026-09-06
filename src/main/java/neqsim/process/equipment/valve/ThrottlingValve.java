@@ -1585,8 +1585,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    *
    * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
    * @param designOpeningPercent the target valve opening percentage at design flow (typically 50%)
+   * @throws IllegalArgumentException if the safety factor is not finite and positive or the design opening is not in
+   * (0, 100]
    */
   public void autoSize(double safetyFactor, double designOpeningPercent) {
+    if (!Double.isFinite(safetyFactor) || safetyFactor <= 0.0 || !Double.isFinite(designOpeningPercent)
+        || designOpeningPercent <= 0.0 || designOpeningPercent > 100.0) {
+      throw new IllegalArgumentException(
+          "Valve sizing requires a positive safety factor and design opening in (0, 100]");
+    }
     if (getInletStream() == null) {
       throw new IllegalStateException("Cannot auto-size valve without inlet stream");
     }
@@ -1610,7 +1617,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     double designCv;
 
     if (hasFlow) {
-      // Calculate Cv at 100% opening for current flow
+      // calcDesign converts effective Cv to full-open Cv using the current opening.
+      // Select the requested design opening before sizing, including when re-sizing
+      // a valve that is currently operating at a different position.
+      setPercentValveOpening(designOpeningPercent);
       getMechanicalDesign().calcDesign();
       double calculatedCv = getMechanicalDesign().getValveCvMax();
 

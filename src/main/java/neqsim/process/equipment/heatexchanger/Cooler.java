@@ -43,6 +43,15 @@ public class Cooler extends Heater {
   /** First-order process-side thermal time constant, in seconds. */
   private double dynamicThermalTimeConstant = 20.0;
 
+  /** Identifier of the physical timestep whose initial dynamic state is cached. */
+  private UUID dynamicStepIdentifier;
+
+  /** Utility-valve opening at the beginning of the current physical timestep, in percent. */
+  private double dynamicStepInitialValveOpening;
+
+  /** Outlet temperature at the beginning of the current physical timestep, in Kelvin. */
+  private double dynamicStepInitialOutletTemperature;
+
   /**
    * Constructor for Cooler.
    *
@@ -92,6 +101,7 @@ public class Cooler extends Heater {
     dynamicCoolingMediumTemperature = mediumKelvin;
     dynamicDesignNtu = -Math.log((outletKelvin - mediumKelvin) / (inletKelvin - mediumKelvin));
     coolingValveOpening = dynamicDesignValveOpening;
+    dynamicStepIdentifier = null;
     dynamicTemperatureControlEnabled = true;
     setOutletTemperature(outletKelvin, "K");
   }
@@ -157,19 +167,25 @@ public class Cooler extends Heater {
   @Override
   public void runTransient(double dt, UUID id) {
     if (!dynamicTemperatureControlEnabled || getCalculateSteadyState()) {
+      dynamicStepIdentifier = null;
       super.runTransient(dt, id);
       return;
     }
 
-    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
-    double requestedOpening = coolingValveOpening;
+    boolean alreadyEvaluatedForStep = id != null && id.equals(dynamicStepIdentifier);
+    if (!alreadyEvaluatedForStep) {
+      dynamicStepInitialValveOpening = coolingValveOpening;
+      dynamicStepInitialOutletTemperature = getOutletStream().getTemperature("K");
+    }
+    double requestedOpening = dynamicStepInitialValveOpening;
     if (hasController && getController().isActive()) {
-      getController().runTransient(coolingValveOpening, dt, id);
+      getController().runTransient(dynamicStepInitialValveOpening, dt, id);
       requestedOpening = getController().getResponse();
     }
     requestedOpening = Math.max(0.0, Math.min(100.0, requestedOpening));
     double actuatorFraction = dynamicActuatorTimeConstant > 0.0 ? dt / (dynamicActuatorTimeConstant + dt) : 1.0;
-    coolingValveOpening += actuatorFraction * (requestedOpening - coolingValveOpening);
+    coolingValveOpening = dynamicStepInitialValveOpening
+        + actuatorFraction * (requestedOpening - dynamicStepInitialValveOpening);
 
     double currentMassFlow = Math.max(getInletStream().getFlowRate("kg/hr"), 1.0e-12);
     double inletTemperature = getInletStream().getTemperature("K");
@@ -182,16 +198,18 @@ public class Cooler extends Heater {
           + (inletTemperature - dynamicCoolingMediumTemperature) * Math.exp(-currentNtu);
     }
 
-    double previousOutletTemperature = getOutletStream().getTemperature("K");
+    double previousOutletTemperature = dynamicStepInitialOutletTemperature;
     if (!Double.isFinite(previousOutletTemperature)) {
       previousOutletTemperature = equilibriumOutletTemperature;
     }
     double thermalFraction = dynamicThermalTimeConstant > 0.0 ? dt / (dynamicThermalTimeConstant + dt) : 1.0;
     double outletTemperature = previousOutletTemperature
         + thermalFraction * (equilibriumOutletTemperature - previousOutletTemperature);
-    outletTemperature = Math.max(dynamicCoolingMediumTemperature, Math.min(inletTemperature, outletTemperature));
+    double minimumOutletTemperature = Math.min(dynamicCoolingMediumTemperature, inletTemperature);
+    outletTemperature = Math.max(minimumOutletTemperature, Math.min(inletTemperature, outletTemperature));
     setOutletTemperature(outletTemperature, "K");
     run(id);
+    dynamicStepIdentifier = id;
     if (!alreadyEvaluatedForStep) {
       increaseTime(dt);
     }
