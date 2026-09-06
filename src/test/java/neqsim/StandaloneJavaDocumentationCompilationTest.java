@@ -38,12 +38,12 @@ public class StandaloneJavaDocumentationCompilationTest {
   @TempDir
   Path compilationOutput;
 
-
   /** Verifies that modernized standalone examples use the repository logging policy. */
   @Test
   void testModernizedStandaloneExampleUsesLog4j2() throws IOException {
-    Path sourceFile = Paths.get(System.getProperty("user.dir"), "docs", "examples",
-        "EclipseE300ExportImportExample.java").toAbsolutePath();
+    Path sourceFile = Paths
+        .get(System.getProperty("user.dir"), "docs", "examples", "EclipseE300ExportImportExample.java")
+        .toAbsolutePath();
     String source = new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
 
     assertFalse(source.contains("System.out"), "Modernized example must not write to System.out");
