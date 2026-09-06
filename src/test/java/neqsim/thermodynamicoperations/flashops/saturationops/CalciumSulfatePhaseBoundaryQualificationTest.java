@@ -45,6 +45,8 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     assertEquals(0.0, qualification.getGypsumLogKspPressureCorrection(), 0.0);
     assertFalse(qualification.isAqueousSpeciesVolumeResolved());
     assertTrue(qualification.hasIndependentAqueousPressureEvidence());
+    assertTrue(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureEvidenceRowAudited());
+    assertFalse(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureDensityModelQualified());
     assertFalse(qualification.isAqueousLimitingVolumeEvidenceResolved());
     assertEquals("10.1021/je2013704", qualification.getAqueousPressureEvidenceDoi());
     assertEquals("https://www.nist.gov/open/license", qualification.getAqueousPressureEvidenceLicenseUri());
@@ -54,9 +56,16 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     assertEquals(197, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_POINT_COUNT);
     assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_MOLALITY, 0.0);
     assertEquals(6.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_MOLALITY, 0.0);
-    assertEquals(283.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_TEMPERATURE_K, 0.0);
-    assertEquals(472.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_TEMPERATURE_K, 0.0);
-    assertEquals(685.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_PRESSURE_BARA, 0.0);
+    assertEquals(283.15, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_TEMPERATURE_K, 0.0);
+    assertEquals(472.96, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_TEMPERATURE_K, 0.0);
+    assertEquals(10.5, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_PRESSURE_BARA, 0.0);
+    assertEquals(681.2, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_PRESSURE_BARA, 0.0);
+    assertEquals("6422c24b3e928dafd436193584708c87e3691cf909eb90e78670a01e2b57a2cb",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_JSON_SHA256);
+    assertEquals("f2f4adf5388f04628dd47fc8de57a8b6c79895ab7d8ee356091453fec3acfffd",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_XML_SHA256);
+    assertEquals("5853670eb7fa320e33d7a547105f7663720c857bd416e0c20e1862b9c8cd7a37",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_ROW_SHA256);
     assertEquals(0.0003,
         CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_RELATIVE_UNCERTAINTY, 0.0);
     assertEquals(0.0005,

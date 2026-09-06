@@ -357,6 +357,10 @@ double compsaltReactionVolume =
     evidence.getCompsaltTransitionReactionVolumeCm3PerMol();
 boolean independentAqueousPressureEvidence =
     evidence.hasIndependentAqueousPressureEvidence();
+boolean aqueousPressureRowsAudited =
+    CalciumSulfatePhaseBoundaryQualification.isAqueousPressureEvidenceRowAudited();
+boolean aqueousPressureDensityQualified =
+    CalciumSulfatePhaseBoundaryQualification.isAqueousPressureDensityModelQualified();
 boolean aqueousLimitingVolumeResolved =
     evidence.isAqueousLimitingVolumeEvidenceResolved();
 double requiredWaterActivity25C = evidence.getRequiredWaterActivityAt25Celsius();
@@ -410,16 +414,21 @@ and other systematic effects, or aqueous partial molar volumes. Consequently
 The result also registers the independent finite-concentration aqueous pressure evidence separately
 from the missing limiting-volume term. Al Ghafri et al. (2012),
 [DOI 10.1021/je2013704](https://doi.org/10.1021/je2013704), provide 197 CaCl2 density points in
-[NIST ThermoML](https://trc.nist.gov/ThermoML/10.1021/je2013704.html): 1–6 mol/kg, 283–472 K, and
-pressures through 68.5 MPa, with reported relative density uncertainties of 0.03–0.05%. The
-machine-readable record is available under the [NIST data license](https://www.nist.gov/open/license)
-and is suitable as an independent pressure-response hold-out. Its lowest concentration is 1 mol/kg,
-so it cannot determine the infinite-dilution CaCl2 volume needed to close the calcium-sulfate
+[NIST ThermoML](https://trc.nist.gov/ThermoML/10.1021/je2013704.html): 1–6 mol/kg,
+283.15–472.96 K, and 10.5–681.2 bara. The complete JSON and XML records were independently
+extracted to identical canonical row hashes, and the test fixture retains every row's 95% combined
+expanded density uncertainty. Against this hold-out, the current aqueous density path has MARE
+0.632%, RMSRE 0.845%, and maximum absolute relative error 2.661%; it is therefore explicitly
+unqualified for quantitative pressure-density use. The machine-readable record is available under
+the [NIST data license](https://www.nist.gov/open/license). Its lowest concentration is 1 mol/kg, so
+it cannot determine the infinite-dilution CaCl2 volume needed to close the calcium-sulfate
 reaction-volume cycle. The candidate dilute lineage, Oakes et al. (1990),
 [DOI 10.1021/je00061a022](https://doi.org/10.1021/je00061a022), predates the ThermoML archive;
 row-level audit, propagated uncertainty, and redistribution-compatible provenance remain unresolved.
-Accordingly `hasIndependentAqueousPressureEvidence()` is true while
-`isAqueousLimitingVolumeEvidenceResolved()` remains false. These flags register evidence scope only;
+Accordingly `hasIndependentAqueousPressureEvidence()` and
+`isAqueousPressureEvidenceRowAudited()` are true, while
+`isAqueousPressureDensityModelQualified()` and
+`isAqueousLimitingVolumeEvidenceResolved()` remain false. These flags register evidence scope only;
 they do not change a COMPSALT coefficient or make high-pressure calcium-sulfate use qualified.
 
 The process-system test carries the solid ledger beside the residual fluid through a

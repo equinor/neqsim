@@ -47,6 +47,12 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   public static final String AQUEOUS_PRESSURE_EVIDENCE_LICENSE = "NIST Open Access to Data";
   /** NIST license URI for the machine-readable ThermoML pressure evidence. */
   public static final String AQUEOUS_PRESSURE_EVIDENCE_LICENSE_URI = "https://www.nist.gov/open/license";
+  /** NIST ThermoML JSON record SHA-256 captured during the row audit. */
+  public static final String AQUEOUS_PRESSURE_EVIDENCE_JSON_SHA256 = "6422c24b3e928dafd436193584708c87e3691cf909eb90e78670a01e2b57a2cb";
+  /** NIST ThermoML XML record SHA-256 captured during the row audit. */
+  public static final String AQUEOUS_PRESSURE_EVIDENCE_XML_SHA256 = "f2f4adf5388f04628dd47fc8de57a8b6c79895ab7d8ee356091453fec3acfffd";
+  /** Canonical CaCl2 row SHA-256, identical when extracted from the JSON and XML records. */
+  public static final String AQUEOUS_PRESSURE_EVIDENCE_ROW_SHA256 = "5853670eb7fa320e33d7a547105f7663720c857bd416e0c20e1862b9c8cd7a37";
   /** Candidate dilute CaCl2 lineage DOI whose row-level reuse remains unresolved. */
   public static final String AQUEOUS_LIMITING_VOLUME_LINEAGE_DOI = "10.1021/je00061a022";
   /** Number of CaCl2 density points in the independent ThermoML pressure evidence. */
@@ -56,14 +62,16 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   /** Maximum CaCl2 molality in the independent ThermoML pressure evidence. */
   public static final double AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_MOLALITY = 6.0;
   /** Minimum temperature in the independent ThermoML pressure evidence. */
-  public static final double AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_TEMPERATURE_K = 283.0;
+  public static final double AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_TEMPERATURE_K = 283.15;
   /** Maximum temperature in the independent ThermoML pressure evidence. */
-  public static final double AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_TEMPERATURE_K = 472.0;
+  public static final double AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_TEMPERATURE_K = 472.96;
+  /** Minimum pressure in the independent ThermoML pressure evidence. */
+  public static final double AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_PRESSURE_BARA = 10.5;
   /** Maximum pressure in the independent ThermoML pressure evidence. */
-  public static final double AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_PRESSURE_BARA = 685.0;
-  /** Minimum reported relative density uncertainty in the ThermoML evidence. */
+  public static final double AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_PRESSURE_BARA = 681.2;
+  /** Minimum publication-level relative density uncertainty reported in the article abstract. */
   public static final double AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_RELATIVE_UNCERTAINTY = 0.0003;
-  /** Maximum reported relative density uncertainty in the ThermoML evidence. */
+  /** Maximum publication-level relative density uncertainty reported in the article abstract. */
   public static final double AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_RELATIVE_UNCERTAINTY = 0.0005;
   /** Temperature of the liquid-water density reference. */
   public static final double WATER_DENSITY_REFERENCE_TEMPERATURE_K = 298.15;
@@ -290,6 +298,20 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
     return true;
   }
 
+  /** @return {@code true}; all 197 JSON and XML rows have identical canonical hashes */
+  public static boolean isAqueousPressureEvidenceRowAudited() {
+    return true;
+  }
+
+  /**
+   * Reports whether the current aqueous density model passes the independent ThermoML hold-out.
+   *
+   * @return {@code false}; the preregistered full-matrix residual test rejects quantitative use
+   */
+  public static boolean isAqueousPressureDensityModelQualified() {
+    return false;
+  }
+
   /** @return {@code false}; the dilute CaCl2 limiting-volume rows and uncertainty remain unresolved */
   public boolean isAqueousLimitingVolumeEvidenceResolved() {
     return false;
@@ -422,6 +444,7 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
             + "or apparent molar volumes",
         "The independent NIST ThermoML CaCl2 pressure series starts at 1 mol/kg and therefore cannot determine the "
             + "infinite-dilution aqueous volume needed by the calcium-sulfate reaction-volume cycle",
+        "The current aqueous density model fails the complete 197-point NIST ThermoML pressure hold-out",
         "The candidate 1990 dilute CaCl2 lineage is outside the NIST ThermoML archive; row-level audit, uncertainty, "
             + "and redistribution-compatible provenance remain unresolved",
         "The registered evidence covers pure-water and NaCl phase crossings, not general "
