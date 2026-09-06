@@ -2906,9 +2906,20 @@ public class ProcessSystem extends SimulationBaseClass {
       return;
     }
     if (!runThrew) {
+      java.util.Set<String> failedNames = null;
+      for (UnitRunStatus status : lastRunStatus.getUnits()) {
+        if (!status.isSuccess()) {
+          if (failedNames == null) {
+            failedNames = new java.util.HashSet<String>();
+          }
+          failedNames.add(status.getUnitName());
+        }
+      }
       List<UnitRunStatus> successfulStatuses = getSuccessfulRunStatuses();
       for (UnitRunStatus status : successfulStatuses) {
-        lastRunStatus.recordSuccess(status);
+        if (failedNames == null || !failedNames.contains(status.getUnitName())) {
+          lastRunStatus.recordSuccess(status);
+        }
       }
     }
     lastRunStatus.markComplete(!runThrew);

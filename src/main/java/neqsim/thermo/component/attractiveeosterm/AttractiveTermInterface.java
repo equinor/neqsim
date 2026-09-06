@@ -75,6 +75,20 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
   public double getParameters(int i);
 
   /**
+   * Returns the number of coefficients exposed by {@link #getParameters(int)}.
+   *
+   * <p>
+   * The default preserves the three-coefficient contract of existing implementations. Terms with a different
+   * coefficient count must override this method so callers can inspect every tunable coefficient.
+   * </p>
+   *
+   * @return number of indexed attractive-term coefficients
+   */
+  public default int getNumberOfParameters() {
+    return 3;
+  }
+
+  /**
    * setm.
    *
    * @param val a double

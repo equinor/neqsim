@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -168,6 +170,43 @@ class RunStatusTest {
     assertEquals(1, process.getRunStatus().getUnits().size());
     assertFalse(process.getRunStatus().getUnits().get(0).isSuccess());
     assertEquals("BrokenUnit", process.getRunStatus().getFailedUnitName());
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = { false, true })
+  void testRecordedFailureDoesNotAlsoReceiveCachedSuccess(boolean optimized) {
+    final ProcessSystem process = new ProcessSystem();
+    final boolean[] reject = { false };
+    process.setUseOptimizedExecution(optimized);
+    process.add(new ProcessEquipmentBaseClass("ValidatedUnit") {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void run(UUID id) {
+        if (reject[0]) {
+          process.getRunStatus().recordFailure(getName(), "ValidatedUnit", "Validation rejected result");
+        }
+        setCalculationIdentifier(id);
+      }
+    });
+    process.run();
+    UnitRunStatus cachedSuccess = process.getRunStatus().getUnits().get(0);
+    assertTrue(cachedSuccess.isSuccess());
+    reject[0] = true;
+    process.run();
+
+    RunStatus status = process.getRunStatus();
+    assertTrue(status.isCompleted());
+    assertFalse(status.isSuccess());
+    assertEquals("ValidatedUnit", status.getFailedUnitName());
+    assertEquals(1, status.getUnits().size(), "A failed unit must not also appear as successful");
+    assertFalse(status.getUnits().get(0).isSuccess());
+    assertEquals(1, status.toJsonObject().get("unitCount").getAsInt());
+
+    reject[0] = false;
+    process.run();
+    assertTrue(process.getRunStatus().isSuccess());
+    assertSame(cachedSuccess, process.getRunStatus().getUnits().get(0));
   }
 
   @Test
