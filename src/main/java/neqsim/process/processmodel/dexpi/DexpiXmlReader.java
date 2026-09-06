@@ -1115,7 +1115,10 @@ public final class DexpiXmlReader {
       connections.add(new DexpiConnectionInfo(evidenceId, sourceId, segmentId,
           explicitAttribute(segment, "ComponentClass"), explicitAttribute(segment, "ComponentName"),
           explicitTagName(segment), fromId, toId, fromElement == null ? "" : fromElement.getTagName(),
-          toElement == null ? "" : toElement.getTagName(), fromOwner == null ? "" : fromOwner.getAttribute("ID"),
+          toElement == null ? "" : toElement.getTagName(), explicitAttribute(fromElement, "ComponentClass"),
+          explicitAttribute(fromElement, "ComponentName"), explicitTagName(fromElement),
+          explicitAttribute(toElement, "ComponentClass"), explicitAttribute(toElement, "ComponentName"),
+          explicitTagName(toElement), fromOwner == null ? "" : fromOwner.getAttribute("ID"),
           toOwner == null ? "" : toOwner.getAttribute("ID"), fromOwner == null ? "" : fromOwner.getTagName(),
           toOwner == null ? "" : toOwner.getTagName(), explicitAttribute(fromOwner, "ComponentClass"),
           explicitAttribute(fromOwner, "ComponentName"), explicitTagName(fromOwner),
@@ -1494,6 +1497,9 @@ public final class DexpiXmlReader {
     if (endpoint == null) {
       endpoint = new ConnectionEndpointAccumulator(endpointId,
           source ? connection.getFromElementName() : connection.getToElementName(),
+          source ? connection.getFromComponentClass() : connection.getToComponentClass(),
+          source ? connection.getFromComponentName() : connection.getToComponentName(),
+          source ? connection.getFromTagName() : connection.getToTagName(),
           source ? connection.getFromOwnerId() : connection.getToOwnerId(),
           source ? connection.getFromOwnerElementName() : connection.getToOwnerElementName(),
           source ? connection.getFromOwnerComponentClass() : connection.getToOwnerComponentClass(),
@@ -1508,6 +1514,9 @@ public final class DexpiXmlReader {
   private static final class ConnectionEndpointAccumulator {
     private final String endpointId;
     private final String elementName;
+    private final String componentClass;
+    private final String componentName;
+    private final String tagName;
     private final String ownerId;
     private final String ownerElementName;
     private final String ownerComponentClass;
@@ -1517,11 +1526,14 @@ public final class DexpiXmlReader {
     private final List<String> incomingConnectionIds = new ArrayList<String>();
     private final List<String> outgoingConnectionIds = new ArrayList<String>();
 
-    private ConnectionEndpointAccumulator(String endpointId, String elementName, String ownerId,
-        String ownerElementName, String ownerComponentClass, String ownerComponentName, String ownerTagName,
-        boolean resolved) {
+    private ConnectionEndpointAccumulator(String endpointId, String elementName, String componentClass,
+        String componentName, String tagName, String ownerId, String ownerElementName, String ownerComponentClass,
+        String ownerComponentName, String ownerTagName, boolean resolved) {
       this.endpointId = endpointId;
       this.elementName = elementName;
+      this.componentClass = componentClass;
+      this.componentName = componentName;
+      this.tagName = tagName;
       this.ownerId = ownerId;
       this.ownerElementName = ownerElementName;
       this.ownerComponentClass = ownerComponentClass;
@@ -1539,8 +1551,9 @@ public final class DexpiXmlReader {
     }
 
     private DexpiConnectionEndpointInfo toInfo() {
-      return new DexpiConnectionEndpointInfo(endpointId, elementName, ownerId, ownerElementName, ownerComponentClass,
-          ownerComponentName, ownerTagName, resolved, incomingConnectionIds, outgoingConnectionIds);
+      return new DexpiConnectionEndpointInfo(endpointId, elementName, componentClass, componentName, tagName, ownerId,
+          ownerElementName, ownerComponentClass, ownerComponentName, ownerTagName, resolved, incomingConnectionIds,
+          outgoingConnectionIds);
     }
   }
 
