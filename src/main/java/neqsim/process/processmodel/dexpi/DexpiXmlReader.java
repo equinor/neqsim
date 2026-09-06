@@ -1387,7 +1387,7 @@ public final class DexpiXmlReader {
     private final String connectionComponentId;
     private final List<String> endpointIds = new ArrayList<String>();
     private final List<DexpiConnectionEndpointInfo> endpoints = new ArrayList<DexpiConnectionEndpointInfo>();
-    private final List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
+    private final List<String> connectionIds = new ArrayList<String>();
     private final List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
     private final List<String> incomingBoundaryConnectionIds = new ArrayList<String>();
     private final List<String> outgoingBoundaryConnectionIds = new ArrayList<String>();
@@ -1447,7 +1447,7 @@ public final class DexpiXmlReader {
   private static final class ConnectionComponentAccumulator {
     private final String id;
     private final List<DexpiConnectionEndpointInfo> endpoints = new ArrayList<DexpiConnectionEndpointInfo>();
-    private final List<String> connectionIds = new ArrayList<String>();
+    private final List<DexpiConnectionInfo> connections = new ArrayList<DexpiConnectionInfo>();
 
     private ConnectionComponentAccumulator(String id) {
       this.id = id;
@@ -1486,8 +1486,8 @@ public final class DexpiXmlReader {
           unresolvedEndpointIds.add(endpoint.getEndpointId());
         }
       }
-      return new DexpiConnectionComponentInfo(id, endpointIds, endpoints, connectionIds, connections,
-          sourceEndpointIds, sinkEndpointIds, potentialMultiConnectionEndpointIds, unresolvedEndpointIds);
+      return new DexpiConnectionComponentInfo(id, endpointIds, endpoints, connectionIds, connections, sourceEndpointIds,
+          sinkEndpointIds, potentialMultiConnectionEndpointIds, unresolvedEndpointIds);
     }
   }
 
