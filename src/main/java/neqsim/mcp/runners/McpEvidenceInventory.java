@@ -451,8 +451,7 @@ public final class McpEvidenceInventory {
           "src/main/java/neqsim/process/automation/ProcessAutomation.java",
           "src/test/java/neqsim/mcp/runners/AutomationVariableWriteContractTest.java",
           "src/test/java/neqsim/process/automation/ProcessAutomationTest.java",
-          "neqsim-mcp-server/test_simulation_variable_write_protocol.py",
-          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/test_simulation_variable_write_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/SIMULATION_VARIABLE_WRITE_CONTRACT.md" };
       evidenceBoundary = "Typed INPUT-address mutation, requested-unit handling, rerun/report sequencing, inline/model-handle equivalence, exact OUTPUT-only and physical-bound rejection, fail-closed missing inputs, fuzzy recovery, and packaged transport are contract-tested; this does not establish numerical accuracy, convergence, conservation, persistence, optimization quality, plant or control authority, certification, or engineering approval";
       break;

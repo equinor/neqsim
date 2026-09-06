@@ -406,8 +406,7 @@ class McpEvidenceInventoryFoundationTests {
   void testSimulationVariableWritePromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject mutation =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("setSimulationVariable");
+    JsonObject mutation = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("setSimulationVariable");
 
     assertEquals("1.27", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
@@ -419,8 +418,7 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(7, mutation.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString()
         .contains("AutomationVariableWriteContractTest.java"));
-    assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("ProcessAutomationTest.java"));
+    assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString().contains("ProcessAutomationTest.java"));
     assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString()
         .contains("test_simulation_variable_write_protocol.py"));
     assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString()
