@@ -73,4 +73,3 @@ class RiaziDaubertDistillationConversionTest {
         () -> RiaziDaubertDistillationConversion.convertTbpToD86C(1000.0, 50.0));
   }
 }
-
