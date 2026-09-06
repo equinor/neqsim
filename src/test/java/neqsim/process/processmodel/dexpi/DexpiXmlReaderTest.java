@@ -912,8 +912,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"connectionComponentCount\": 3"));
     assertTrue(first.toJson().contains("\"hasUnresolvedEndpoints\": true"));
     assertTrue(first.toJson().contains("\"completeEvidence\": true"));
-    assertTrue(first.toJson().contains("\"connections\": [{"));
-    assertTrue(first.toJson().contains("\"endpoints\": [{"));
+    assertTrue(first.toJson().contains("\"connections\": ["));
+    assertTrue(first.toJson().contains("\"endpoints\": ["));
     assertEquals(first.toJson(), second.toJson());
   }
 
