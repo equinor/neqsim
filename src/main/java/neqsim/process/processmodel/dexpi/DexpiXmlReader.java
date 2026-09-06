@@ -1116,12 +1116,11 @@ public final class DexpiXmlReader {
           explicitAttribute(segment, "ComponentClass"), explicitAttribute(segment, "ComponentName"),
           explicitTagName(segment), fromId, toId, fromElement == null ? "" : fromElement.getTagName(),
           toElement == null ? "" : toElement.getTagName(), fromOwner == null ? "" : fromOwner.getAttribute("ID"),
-          toOwner == null ? "" : toOwner.getAttribute("ID"),
-          fromOwner == null ? "" : fromOwner.getTagName(), toOwner == null ? "" : toOwner.getTagName(),
-          explicitAttribute(fromOwner, "ComponentClass"), explicitAttribute(fromOwner, "ComponentName"),
-          explicitTagName(fromOwner), explicitAttribute(toOwner, "ComponentClass"),
-          explicitAttribute(toOwner, "ComponentName"), explicitTagName(toOwner), fromElement != null,
-          toElement != null));
+          toOwner == null ? "" : toOwner.getAttribute("ID"), fromOwner == null ? "" : fromOwner.getTagName(),
+          toOwner == null ? "" : toOwner.getTagName(), explicitAttribute(fromOwner, "ComponentClass"),
+          explicitAttribute(fromOwner, "ComponentName"), explicitTagName(fromOwner),
+          explicitAttribute(toOwner, "ComponentClass"), explicitAttribute(toOwner, "ComponentName"),
+          explicitTagName(toOwner), fromElement != null, toElement != null));
     }
     logger.info("Parsed {} material connections from DEXPI XML", connections.size());
     return connections;
