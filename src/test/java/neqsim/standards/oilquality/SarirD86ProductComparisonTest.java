@@ -27,15 +27,14 @@ class SarirD86ProductComparisonTest {
   @Test
   void strictT95UsesQualifiedStandardAndPreservesSourceEvidence() {
     Standard_ASTM_D86 standard = calculatedStandard();
-    String[] names = {"Light Naphtha", "Heavy Naphtha", "Kerosene", "Diesel"};
-    double[] laboratory = {90.0, 160.0, 221.0, 346.0};
-    double[] hysys = {97.0, 153.0, 214.0, 339.0};
-    double[] specifications = {90.0, 160.0, 221.0, 327.0};
+    String[] names = { "Light Naphtha", "Heavy Naphtha", "Kerosene", "Diesel" };
+    double[] laboratory = { 90.0, 160.0, 221.0, 346.0 };
+    double[] hysys = { 97.0, 153.0, 214.0, 339.0 };
+    double[] specifications = { 90.0, 160.0, 221.0, 327.0 };
     double strictT95 = standard.getQualifiedD86Temperature(95.0);
 
     for (int i = 0; i < names.length; i++) {
-      SarirD86ProductComparison.Result result =
-          SarirD86ProductComparison.compareT95(standard, names[i]);
+      SarirD86ProductComparison.Result result = SarirD86ProductComparison.compareT95(standard, names[i]);
 
       assertEquals(names[i], result.getProductName());
       assertEquals(95.0, result.getRecoveryVolumePercent(), 0.0);
@@ -43,18 +42,11 @@ class SarirD86ProductComparisonTest {
       assertEquals(laboratory[i], result.getLaboratoryT95Celsius(), 0.0);
       assertEquals(hysys[i], result.getHysysT95Celsius(), 0.0);
       assertEquals(specifications[i], result.getSpecificationT95Celsius(), 0.0);
-      assertEquals(
-          100.0 * Math.abs(strictT95 - laboratory[i]) / laboratory[i],
-          result.getNeqsimAbsoluteRelativeErrorPercent(),
-          1.0e-12);
-      assertEquals(
-          100.0 * Math.abs(hysys[i] - laboratory[i]) / laboratory[i],
-          result.getHysysAbsoluteRelativeErrorPercent(),
-          1.0e-12);
-      assertEquals(
-          specifications[i] - strictT95,
-          result.getSpecificationMarginCelsius(),
-          1.0e-12);
+      assertEquals(100.0 * Math.abs(strictT95 - laboratory[i]) / laboratory[i],
+          result.getNeqsimAbsoluteRelativeErrorPercent(), 1.0e-12);
+      assertEquals(100.0 * Math.abs(hysys[i] - laboratory[i]) / laboratory[i],
+          result.getHysysAbsoluteRelativeErrorPercent(), 1.0e-12);
+      assertEquals(specifications[i] - strictT95, result.getSpecificationMarginCelsius(), 1.0e-12);
     }
   }
 
@@ -62,23 +54,12 @@ class SarirD86ProductComparisonTest {
   void unsupportedOrUnresolvedInputsFailClosed() {
     Standard_ASTM_D86 standard = calculatedStandard();
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> SarirD86ProductComparison.compareT95(null, "Diesel"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> SarirD86ProductComparison.compareT95(standard, null));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> SarirD86ProductComparison.compareT95(standard, "diesel"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> SarirD86ProductComparison.compareT95(standard, "Residual"));
+    assertThrows(IllegalArgumentException.class, () -> SarirD86ProductComparison.compareT95(null, "Diesel"));
+    assertThrows(IllegalArgumentException.class, () -> SarirD86ProductComparison.compareT95(standard, null));
+    assertThrows(IllegalArgumentException.class, () -> SarirD86ProductComparison.compareT95(standard, "diesel"));
+    assertThrows(IllegalArgumentException.class, () -> SarirD86ProductComparison.compareT95(standard, "Residual"));
 
-    Standard_ASTM_D86 uncalculated =
-        new Standard_ASTM_D86(new SystemSrkEos(273.15 + 25.0, 1.01325));
-    assertThrows(
-        IllegalStateException.class,
-        () -> SarirD86ProductComparison.compareT95(uncalculated, "Diesel"));
+    Standard_ASTM_D86 uncalculated = new Standard_ASTM_D86(new SystemSrkEos(273.15 + 25.0, 1.01325));
+    assertThrows(IllegalStateException.class, () -> SarirD86ProductComparison.compareT95(uncalculated, "Diesel"));
   }
 }
