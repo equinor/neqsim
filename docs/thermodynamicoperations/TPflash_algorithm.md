@@ -2352,6 +2352,36 @@ defaults, saturation operations, electrolyte-performance ownership, solids/wax,
 Column Solver, Process Performance, proprietary data, and Huldra are outside this
 tranche.
 
+### 6.4.14 UMR-CPA methane-water dehydration lifecycle qualification
+
+The synthetic dehydration qualification uses `SystemUMRCPAEoS` with the `HV` /
+`UNIFAC_UMRPRU` mixing rule and a normalized feed of 0.98 methane and 0.02 water.
+Its local envelope is 283.15-313.15 K and 30-120 bara. The 298.15 K / 70 bara
+reference retains the existing paper-facing gas-water mole-fraction envelope of
+`1e-5` to `5e-3`. This is deterministic numerical qualification of the public
+flash path, not independent experimental validation or a re-fit of UMR-CPA,
+association, alpha-function, or UNIFAC parameters.
+
+Every state must contain GAS and AQUEOUS phases with finite bounded phase fractions
+and compositions. Beta and phase compositions must normalize within `3e-12`,
+maximum component material-balance residual must remain below `1e-10`, and the
+maximum methane/water interphase log-fugacity residual must remain below `1e-8`.
+Both phases require positive finite compressibility, and total Gibbs energy and
+enthalpy must remain finite.
+
+The temperature matrix requires gas-phase water content to increase from 283.15 to
+313.15 K at 70 bara. The pressure matrix requires it to decrease from 30 to 120
+bara at 298.15 K. Ordinary and explicit-multiphase public TP flashes must agree
+throughout both matrices. The regression also qualifies recovery from beta values
+within `1e-12` of a bound, a changed temperature/pressure state, return to the
+reference state, and an immediate deterministic repeat.
+
+The focused class performs 21 complete public TP flashes. This fixed workload is
+performance evidence only; no wall-clock threshold or speedup is claimed. TEG
+derivative behavior, model or data parameter changes, saturation operations,
+electrolyte/reaction models, public API and serialization changes, Column Solver,
+Process Performance, proprietary data, and Huldra are outside this tranche.
+
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
 In a fixed-role EOS-gas/GE-aqueous calculation, ions are excluded from every non-aqueous role.
