@@ -457,6 +457,10 @@ momentum paths would then see different closures at the same state. Keep stratif
 whenever a stratified weight is non-zero. Pure-regime endpoints must reproduce the original closure
 exactly.
 
+Blend interfacial forces directly as the weighted sum of each regime's shear times area;
+separately averaging the two factors introduces spurious cross terms. Verify the actual
+momentum source and equal/opposite phase reactions in transition tests.
+
 This continuation does not authorize changes to regime criteria, transition-band widths, hold-up
 correlations, or regime-specific friction models. It remains experimental until the public
 Tengesdal envelope, the liquid-rich 1,800 s inventory criterion, conservation, nonlinear

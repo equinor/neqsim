@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
+
 /**
  * Extended section state for three-phase (gas-oil-water) pipe flow.
  *
@@ -34,27 +36,15 @@ package neqsim.process.equipment.pipeline.twophasepipe;
  */
 public class ThreeFluidSection extends TwoFluidSection {
 
-  private static final long serialVersionUID = 1L;
+  /**
+   * Version 1 duplicated phase state in this class and its superclass. Those snapshots cannot safely restore the
+   * authoritative inventories after removing the shadow fields, so reject them instead of silently losing phase mass.
+   */
+  private static final long serialVersionUID = 2L;
 
-  // Water phase properties
-  private double waterHoldup; // α_w (0-1)
-  private double waterVelocity; // m/s
-  private double waterDensity; // kg/m³
-  private double waterViscosity; // Pa·s
+  // Phase enthalpies supplement the conservative state owned by TwoFluidSection.
   private double waterEnthalpy; // J/kg
-
-  // Oil phase properties (renamed from "liquid" for clarity)
-  private double oilHoldup; // α_o (0-1)
-  private double oilVelocity; // m/s
-  private double oilDensity; // kg/m³
-  private double oilViscosity; // Pa·s
   private double oilEnthalpy; // J/kg
-
-  // Additional conservative variables (per unit length)
-  private double waterMassPerLength; // α_w ρ_w A (kg/m)
-  private double waterMomentumPerLength; // α_w ρ_w u_w A (kg/s)
-  private double oilMassPerLength; // α_o ρ_o A (kg/m)
-  private double oilMomentumPerLength; // α_o ρ_o u_o A (kg/s)
 
   // Interfacial properties
   private double gasOilSurfaceTension; // N/m
@@ -70,9 +60,7 @@ public class ThreeFluidSection extends TwoFluidSection {
   private double oilWettedPerimeter; // m
   private double gasOilInterfacialWidth; // m
   private double oilWaterInterfacialWidth; // m
-
-  // Water cut
-  private double waterCut; // water volume fraction of total liquid
+  private double gasWaterInterfacialWidth; // m, exposed when the oil layer is absent
 
   // Mass transfer rates
   private double oilEvaporationRate; // kg/(m·s)
@@ -114,23 +102,22 @@ public class ThreeFluidSection extends TwoFluidSection {
    * Initialize water phase with default values.
    */
   private void initializeWaterPhase() {
-    this.waterHoldup = 0.0;
-    this.waterVelocity = 0.0;
-    this.waterDensity = 1000.0; // Water at standard conditions
-    this.waterViscosity = 1e-3; // Pa·s
+    setWaterHoldup(0.0);
+    setWaterDensity(1000.0); // Water at standard conditions
+    setWaterViscosity(1e-3); // Pa·s
     this.waterEnthalpy = 0.0;
 
-    this.oilHoldup = getLiquidHoldup();
-    this.oilVelocity = getLiquidVelocity();
-    this.oilDensity = getLiquidDensity();
-    this.oilViscosity = getLiquidViscosity();
+    setOilHoldup(getLiquidHoldup());
+    setLiquidVelocity(getLiquidVelocity());
+    setOilDensity(getLiquidDensity());
+    setOilViscosity(getLiquidViscosity());
     this.oilEnthalpy = getLiquidEnthalpy();
 
     this.gasOilSurfaceTension = getSurfaceTension();
     this.oilWaterSurfaceTension = 0.03; // Typical oil-water value
     this.gasWaterSurfaceTension = 0.072; // Water-air at 20°C
 
-    this.waterCut = 0.0;
+    setWaterCut(0.0);
   }
 
   /**
@@ -141,24 +128,26 @@ public class ThreeFluidSection extends TwoFluidSection {
    * @param waterHoldup Water holdup (0-1)
    */
   public void setHoldups(double gasHoldup, double oilHoldup, double waterHoldup) {
+    if (!Double.isFinite(gasHoldup) || !Double.isFinite(oilHoldup) || !Double.isFinite(waterHoldup) || gasHoldup < 0.0
+        || oilHoldup < 0.0 || waterHoldup < 0.0 || gasHoldup > 1.0 || oilHoldup > 1.0 || waterHoldup > 1.0) {
+      throw new IllegalArgumentException("Each holdup must be finite and between zero and one");
+    }
     double sum = gasHoldup + oilHoldup + waterHoldup;
     if (Math.abs(sum - 1.0) > 1e-10) {
       throw new IllegalArgumentException("Holdups must sum to 1.0, got " + sum);
     }
 
     setGasHoldup(gasHoldup);
-    this.oilHoldup = oilHoldup;
-    this.waterHoldup = waterHoldup;
-
-    // Update parent liquid holdup
     setLiquidHoldup(oilHoldup + waterHoldup);
+    setOilHoldup(oilHoldup);
+    setWaterHoldup(waterHoldup);
 
     // Update water cut
     double totalLiquid = oilHoldup + waterHoldup;
     if (totalLiquid > 0) {
-      this.waterCut = waterHoldup / totalLiquid;
+      setWaterCut(waterHoldup / totalLiquid);
     } else {
-      this.waterCut = 0.0;
+      setWaterCut(0.0);
     }
   }
 
@@ -167,17 +156,22 @@ public class ThreeFluidSection extends TwoFluidSection {
    */
   @Override
   public void updateConservativeVariables() {
-    super.updateConservativeVariables();
-
     double area = getArea();
-
-    // Water phase
-    waterMassPerLength = waterHoldup * waterDensity * area;
-    waterMomentumPerLength = waterMassPerLength * waterVelocity;
-
-    // Oil phase
-    oilMassPerLength = oilHoldup * oilDensity * area;
-    oilMomentumPerLength = oilMassPerLength * oilVelocity;
+    double gasMass = getGasHoldup() * getGasDensity() * area;
+    double oilMass = getOilHoldup() * getOilDensity() * area;
+    double waterMass = getWaterHoldup() * getWaterDensity() * area;
+    initializeNewLiquidPhaseVelocities(oilMass, waterMass);
+    double gasVelocity = getGasVelocity();
+    double oilVelocity = getOilVelocity();
+    double waterVelocity = getWaterVelocity();
+    // Total internal plus kinetic energy; pressure work belongs to the energy flux.
+    double energy = gasMass * (getGasEnthalpy() + 0.5 * gasVelocity * gasVelocity)
+        + oilMass * (getOilEnthalpy() + 0.5 * oilVelocity * oilVelocity)
+        + waterMass * (getWaterEnthalpy() + 0.5 * waterVelocity * waterVelocity)
+        - getPressure() * area * (getGasHoldup() + getOilHoldup() + getWaterHoldup());
+    setStateVector(new double[] { gasMass, oilMass, waterMass, gasMass * gasVelocity, oilMass * oilVelocity,
+        waterMass * waterVelocity, energy });
+    updateLiquidMixtureProperties();
   }
 
   /**
@@ -185,36 +179,39 @@ public class ThreeFluidSection extends TwoFluidSection {
    */
   @Override
   public void extractPrimitiveVariables() {
-    super.extractPrimitiveVariables();
-
+    double[] state = getStateVector();
+    ConservativeStateLimiter.enforceThreePhaseMassPositivity(state, null);
+    setStateVector(state);
     double area = getArea();
-
-    // Water phase
-    if (waterMassPerLength > 1e-20) {
-      waterHoldup = waterMassPerLength / (waterDensity * area);
-      waterVelocity = waterMomentumPerLength / waterMassPerLength;
+    double alphaG = state[0] > 0.0 ? state[0] / (getGasDensity() * area) : 0.0;
+    double alphaO = state[1] > 0.0 ? state[1] / (getOilDensity() * area) : 0.0;
+    double alphaW = state[2] > 0.0 ? state[2] / (getWaterDensity() * area) : 0.0;
+    double totalHoldup = alphaG + alphaO + alphaW;
+    if (totalHoldup > 0.0) {
+      // EOS pressure/density recovery remains the caller's responsibility. Normalizing
+      // geometry here must never overwrite the transported phase inventories.
+      setHoldups(alphaG / totalHoldup, alphaO / totalHoldup, alphaW / totalHoldup);
     } else {
-      waterHoldup = 0.0;
-      waterVelocity = 0.0;
+      setHoldups(1.0, 0.0, 0.0);
     }
+    setGasVelocity(state[0] > 0.0 ? state[3] / state[0] : 0.0);
+    setRecoveredLiquidVelocities(getLiquidVelocity(), state[1] > 0.0 ? state[4] / state[1] : 0.0,
+        state[2] > 0.0 ? state[5] / state[2] : 0.0);
+    updateLiquidMixtureProperties();
+    updateDerivedQuantities();
+  }
 
-    // Oil phase
-    if (oilMassPerLength > 1e-20) {
-      oilHoldup = oilMassPerLength / (oilDensity * area);
-      oilVelocity = oilMomentumPerLength / oilMassPerLength;
-    } else {
-      oilHoldup = 0.0;
-      oilVelocity = 0.0;
-    }
-
-    // Update total liquid holdup
-    setLiquidHoldup(oilHoldup + waterHoldup);
-
-    // Update water cut
-    double totalLiquid = oilHoldup + waterHoldup;
-    if (totalLiquid > 0) {
-      waterCut = waterHoldup / totalLiquid;
-    }
+  /**
+   * Refresh aggregate liquid properties without collapsing the independent oil and water momenta.
+   */
+  private void updateLiquidMixtureProperties() {
+    setLiquidDensity(getMixtureLiquidDensity());
+    setLiquidViscosity(getMixtureLiquidViscosity());
+    setRecoveredLiquidVelocities(getMixtureLiquidVelocity(), getOilVelocity(), getWaterVelocity());
+    double liquidMass = getOilMassPerLength() + getWaterMassPerLength();
+    setLiquidEnthalpy(liquidMass > 0.0
+        ? (getOilMassPerLength() * getOilEnthalpy() + getWaterMassPerLength() * getWaterEnthalpy()) / liquidMass
+        : 0.0);
   }
 
   /**
@@ -230,7 +227,7 @@ public class ThreeFluidSection extends TwoFluidSection {
     double totalArea = getArea();
 
     // Calculate water layer (bottom)
-    waterArea = waterHoldup * totalArea;
+    waterArea = getWaterHoldup() * totalArea;
     if (waterArea > 0 && waterArea < totalArea) {
       waterLevel = calculateLevelFromArea(waterArea, d);
       double thetaW = 2.0 * Math.acos(1.0 - 2.0 * waterLevel / d);
@@ -243,7 +240,7 @@ public class ThreeFluidSection extends TwoFluidSection {
     }
 
     // Calculate oil layer (middle)
-    oilArea = oilHoldup * totalArea;
+    oilArea = getOilHoldup() * totalArea;
     double combinedLiquidArea = waterArea + oilArea;
     double combinedLevel;
     if (combinedLiquidArea > 0 && combinedLiquidArea < totalArea) {
@@ -252,17 +249,23 @@ public class ThreeFluidSection extends TwoFluidSection {
 
       double thetaC = 2.0 * Math.acos(1.0 - 2.0 * combinedLevel / d);
       double combinedWettedPerimeter = r * thetaC;
-      oilWettedPerimeter = combinedWettedPerimeter - waterWettedPerimeter;
+      oilWettedPerimeter = Math.max(0.0, combinedWettedPerimeter - waterWettedPerimeter);
       gasOilInterfacialWidth = d * Math.sin(thetaC / 2.0);
     } else {
       oilLevel = oilArea > 0 ? (d - waterLevel) : 0;
-      oilWettedPerimeter = 0;
+      oilWettedPerimeter = oilArea > 0.0 ? Math.max(0.0, Math.PI * d - waterWettedPerimeter) : 0.0;
       gasOilInterfacialWidth = 0;
+    }
+    // When oil disappears, the same horizontal interface directly couples gas and water.
+    gasWaterInterfacialWidth = getOilHoldup() == 0.0 ? gasOilInterfacialWidth : 0.0;
+    if (getOilHoldup() == 0.0) {
+      gasOilInterfacialWidth = 0.0;
+      oilWaterInterfacialWidth = 0.0;
     }
   }
 
   /**
-   * Calculate liquid level from cross-sectional area using Newton iteration.
+   * Calculate liquid level from cross-sectional area using a bounded, dimensionless bisection.
    *
    * @param targetArea target cross-sectional area in m²
    * @param d pipe diameter in meters
@@ -280,40 +283,23 @@ public class ThreeFluidSection extends TwoFluidSection {
       return d;
     }
 
-    // Initial guess based on linear approximation
-    double h = d * targetArea / totalArea;
-    h = Math.max(1e-10, Math.min(d - 1e-10, h));
-
-    for (int i = 0; i < 50; i++) {
-      // Clamp h to valid range
-      h = Math.max(1e-10, Math.min(d - 1e-10, h));
-
-      double arg = 1.0 - 2.0 * h / d;
-      arg = Math.max(-0.9999, Math.min(0.9999, arg));
-
-      double theta = 2.0 * Math.acos(arg);
-      double area = r * r * (theta - Math.sin(theta)) / 2.0;
-
-      // Exact circular-segment derivative: dA/dh = 2*sqrt(h*(d-h)).
-      // It has units of length; multiplying by radius would make the Newton step
-      // depend on pipe diameter and violate geometric similarity.
-      double sqrtTerm = Math.sqrt(Math.max(0.0, h * (d - h)));
-      double dArea_dh = 2.0 * sqrtTerm;
-
-      double error = area - targetArea;
-      if (Math.abs(error) < 1e-12 * totalArea) {
-        break;
-      }
-
-      if (dArea_dh > 1e-12) {
-        double correction = error / dArea_dh;
-        // Limit step size to prevent overshooting
-        correction = Math.max(-h * 0.5, Math.min((d - h) * 0.5, correction));
-        h = h - correction;
+    double fraction = targetArea / totalArea;
+    boolean upperHalf = fraction > 0.5;
+    double targetFraction = upperHalf ? 1.0 - fraction : fraction;
+    double low = 0.0;
+    double high = 0.5;
+    for (int i = 0; i < 80; i++) {
+      double height = 0.5 * (low + high);
+      double theta = 2.0 * Math.acos(1.0 - 2.0 * height);
+      double areaFraction = (theta - Math.sin(theta)) / (2.0 * Math.PI);
+      if (areaFraction < targetFraction) {
+        low = height;
+      } else {
+        high = height;
       }
     }
-
-    return Math.max(0.0, Math.min(d, h));
+    double height = 0.5 * (low + high);
+    return d * (upperHalf ? 1.0 - height : height);
   }
 
   /**
@@ -322,7 +308,7 @@ public class ThreeFluidSection extends TwoFluidSection {
    * @return Total liquid holdup
    */
   public double getTotalLiquidHoldup() {
-    return oilHoldup + waterHoldup;
+    return getOilHoldup() + getWaterHoldup();
   }
 
   /**
@@ -331,8 +317,8 @@ public class ThreeFluidSection extends TwoFluidSection {
    * @return Mixture liquid velocity (m/s)
    */
   public double getMixtureLiquidVelocity() {
-    double totalLiquidFlow = oilHoldup * oilVelocity + waterHoldup * waterVelocity;
-    double totalLiquidHoldup = oilHoldup + waterHoldup;
+    double totalLiquidFlow = getOilHoldup() * getOilVelocity() + getWaterHoldup() * getWaterVelocity();
+    double totalLiquidHoldup = getTotalLiquidHoldup();
     if (totalLiquidHoldup > 1e-20) {
       return totalLiquidFlow / totalLiquidHoldup;
     }
@@ -345,11 +331,11 @@ public class ThreeFluidSection extends TwoFluidSection {
    * @return Mixture liquid density (kg/m³)
    */
   public double getMixtureLiquidDensity() {
-    double totalLiquidHoldup = oilHoldup + waterHoldup;
+    double totalLiquidHoldup = getTotalLiquidHoldup();
     if (totalLiquidHoldup > 1e-20) {
-      return (oilHoldup * oilDensity + waterHoldup * waterDensity) / totalLiquidHoldup;
+      return (getOilHoldup() * getOilDensity() + getWaterHoldup() * getWaterDensity()) / totalLiquidHoldup;
     }
-    return oilDensity;
+    return getOilDensity();
   }
 
   /**
@@ -358,11 +344,11 @@ public class ThreeFluidSection extends TwoFluidSection {
    * @return Mixture liquid viscosity (Pa·s)
    */
   public double getMixtureLiquidViscosity() {
-    double totalLiquidHoldup = oilHoldup + waterHoldup;
+    double totalLiquidHoldup = getTotalLiquidHoldup();
     if (totalLiquidHoldup > 1e-20) {
-      return (oilHoldup * oilViscosity + waterHoldup * waterViscosity) / totalLiquidHoldup;
+      return (getOilHoldup() * getOilViscosity() + getWaterHoldup() * getWaterViscosity()) / totalLiquidHoldup;
     }
-    return oilViscosity;
+    return getOilViscosity();
   }
 
   /**
@@ -378,46 +364,6 @@ public class ThreeFluidSection extends TwoFluidSection {
 
   // Getters and setters for water phase
 
-  @Override
-  public double getWaterHoldup() {
-    return waterHoldup;
-  }
-
-  @Override
-  public void setWaterHoldup(double waterHoldup) {
-    this.waterHoldup = waterHoldup;
-  }
-
-  @Override
-  public double getWaterVelocity() {
-    return waterVelocity;
-  }
-
-  @Override
-  public void setWaterVelocity(double waterVelocity) {
-    this.waterVelocity = waterVelocity;
-  }
-
-  @Override
-  public double getWaterDensity() {
-    return waterDensity;
-  }
-
-  @Override
-  public void setWaterDensity(double waterDensity) {
-    this.waterDensity = waterDensity;
-  }
-
-  @Override
-  public double getWaterViscosity() {
-    return waterViscosity;
-  }
-
-  @Override
-  public void setWaterViscosity(double waterViscosity) {
-    this.waterViscosity = waterViscosity;
-  }
-
   public double getWaterEnthalpy() {
     return waterEnthalpy;
   }
@@ -428,46 +374,6 @@ public class ThreeFluidSection extends TwoFluidSection {
 
   // Getters and setters for oil phase
 
-  @Override
-  public double getOilHoldup() {
-    return oilHoldup;
-  }
-
-  @Override
-  public void setOilHoldup(double oilHoldup) {
-    this.oilHoldup = oilHoldup;
-  }
-
-  @Override
-  public double getOilVelocity() {
-    return oilVelocity;
-  }
-
-  @Override
-  public void setOilVelocity(double oilVelocity) {
-    this.oilVelocity = oilVelocity;
-  }
-
-  @Override
-  public double getOilDensity() {
-    return oilDensity;
-  }
-
-  @Override
-  public void setOilDensity(double oilDensity) {
-    this.oilDensity = oilDensity;
-  }
-
-  @Override
-  public double getOilViscosity() {
-    return oilViscosity;
-  }
-
-  @Override
-  public void setOilViscosity(double oilViscosity) {
-    this.oilViscosity = oilViscosity;
-  }
-
   public double getOilEnthalpy() {
     return oilEnthalpy;
   }
@@ -477,46 +383,6 @@ public class ThreeFluidSection extends TwoFluidSection {
   }
 
   // Getters and setters for conservative variables
-
-  @Override
-  public double getWaterMassPerLength() {
-    return waterMassPerLength;
-  }
-
-  @Override
-  public void setWaterMassPerLength(double waterMassPerLength) {
-    this.waterMassPerLength = waterMassPerLength;
-  }
-
-  @Override
-  public double getWaterMomentumPerLength() {
-    return waterMomentumPerLength;
-  }
-
-  @Override
-  public void setWaterMomentumPerLength(double waterMomentumPerLength) {
-    this.waterMomentumPerLength = waterMomentumPerLength;
-  }
-
-  @Override
-  public double getOilMassPerLength() {
-    return oilMassPerLength;
-  }
-
-  @Override
-  public void setOilMassPerLength(double oilMassPerLength) {
-    this.oilMassPerLength = oilMassPerLength;
-  }
-
-  @Override
-  public double getOilMomentumPerLength() {
-    return oilMomentumPerLength;
-  }
-
-  @Override
-  public void setOilMomentumPerLength(double oilMomentumPerLength) {
-    this.oilMomentumPerLength = oilMomentumPerLength;
-  }
 
   // Getters for geometry
 
@@ -548,6 +414,15 @@ public class ThreeFluidSection extends TwoFluidSection {
     return gasOilInterfacialWidth;
   }
 
+  /**
+   * Get the exposed gas-water interface width when the oil layer is absent.
+   *
+   * @return gas-water interface width in meters
+   */
+  public double getGasWaterInterfacialWidth() {
+    return gasWaterInterfacialWidth;
+  }
+
   public double getOilWaterInterfacialWidth() {
     return oilWaterInterfacialWidth;
   }
@@ -576,16 +451,6 @@ public class ThreeFluidSection extends TwoFluidSection {
 
   public void setGasWaterSurfaceTension(double gasWaterSurfaceTension) {
     this.gasWaterSurfaceTension = gasWaterSurfaceTension;
-  }
-
-  @Override
-  public double getWaterCut() {
-    return waterCut;
-  }
-
-  @Override
-  public void setWaterCut(double waterCut) {
-    this.waterCut = waterCut;
   }
 
   public double getOilEvaporationRate() {

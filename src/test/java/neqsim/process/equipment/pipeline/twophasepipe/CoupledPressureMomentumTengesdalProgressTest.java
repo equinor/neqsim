@@ -114,6 +114,8 @@ class CoupledPressureMomentumTengesdalProgressTest {
     assertTrue(failure.getMessage().contains("tolerance=1.0E-14"));
     assertTrue(pipe.isTransientCoupledPressureMomentumFailureDetected());
     assertTrue(pipe.getTransientCoupledPressureMomentumRejectedSubsteps() > 0);
+    assertTrue(pipe.getTransientCoupledPressureMomentumFailureDiagnostic().contains("attemptedDt="));
+    assertTrue(pipe.getTransientCoupledPressureMomentumFailureDiagnostic().contains("minimumMassFluxCorrectionScale="));
     assertNotNull(pipe.getLastMassBalanceReport());
     assertTrue(pipe.getLastMassBalanceReport().getElapsedTimeSeconds() < 0.1);
     assertEquals(1, pipe.getCoupledPressureMomentumMaximumIterations());

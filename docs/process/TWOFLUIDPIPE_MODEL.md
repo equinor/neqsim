@@ -267,7 +267,10 @@ The gas-liquid flow regime detector uses Taitel-Dukler transitions:
 During transient source evaluation, `FlowRegimeDetector.classify(...)` supplies the same
 dimensionless, normalized regime weights used by the steady hold-up calculation. Within a
 transition band, `TwoFluidConservationEquations` applies those weights as a convex combination
-of the existing wall-friction, interfacial-friction, interfacial-area, and entrainment results.
+of the existing wall-friction, interfacial-force, interfacial-area, and entrainment results.
+Interfacial force is blended as the weighted sum of each regime's shear times its area.
+The stored effective shear is that force divided by the blended area; multiplying separately
+averaged shear and area would introduce cross terms.
 A non-zero stratified share also retains stratified segment geometry, so geometry and momentum
 sources do not switch on different sides of the same transition.
 

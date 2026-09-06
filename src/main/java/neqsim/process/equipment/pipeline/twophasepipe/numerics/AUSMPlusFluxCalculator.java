@@ -48,6 +48,9 @@ public class AUSMPlusFluxCalculator implements Serializable {
   /** Minimum sound speed to avoid division by zero. */
   private double minSoundSpeed = 1.0;
 
+  /** Use centered pressure for a low-Mach predictor with an implicit pressure correction. */
+  private boolean centeredPressureFluxEnabled = false;
+
   /**
    * State vector for one phase at a cell interface.
    */
@@ -173,8 +176,9 @@ public class AUSMPlusFluxCalculator implements Serializable {
   public PhaseFlux calcPhaseFlux(PhaseState left, PhaseState right, double area) {
     PhaseFlux flux = new PhaseFlux();
 
-    // Handle zero holdup cases
-    if (left.holdup < 1e-10 && right.holdup < 1e-10) {
+    // Only an exactly absent phase has no flux. A positive trace inventory must use
+    // the same transport at internal and external faces, without a numerical holdup cutoff.
+    if (left.holdup == 0.0 && right.holdup == 0.0) {
       return flux;
     }
 
@@ -195,7 +199,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
     // Split pressures. A single interface holdup is used so that the holdup-gradient
     // momentum source can difference the same values and cancel the spurious force exactly.
     double alphaHalf = 0.5 * (left.holdup + right.holdup);
-    double pHalf = calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
+    double pHalf = centeredPressureFluxEnabled ? 0.5 * (left.pressure + right.pressure)
+        : calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
     double Phalf = alphaHalf * pHalf;
 
     // Upwind selection based on interface Mach number
@@ -402,6 +407,34 @@ public class AUSMPlusFluxCalculator implements Serializable {
     flux.energyFlux = (0.5 * (FL_ene + FR_ene) - 0.5 * sMax * (UR_ene - UL_ene)) * area;
 
     return flux;
+  }
+
+  /**
+   * Select the pressure flux for an implicitly pressure-corrected low-Mach predictor.
+   *
+   * <p>
+   * When enabled, the face pressure is the arithmetic mean of the two pressures. AUSM mass and energy advection are
+   * unchanged. This removes the explicit acoustic velocity-difference dissipation in the AUSM pressure polynomial,
+   * which otherwise retains an acoustic timestep restriction even after an implicit pressure correction. The caller
+   * must supply the implicit pressure solve and collocated pressure-velocity coupling; this option alone is not a
+   * complete all-speed method.
+   * </p>
+   *
+   * <p>
+   * The default is the original AUSM pressure split. The centered option is intended for low-Mach pipeline IMEX
+   * transport, not for explicitly integrated acoustic waves or high-Mach shock capture. At the alternating
+   * cell-velocity grid mode it removes explicit growth but supplies no additional velocity-mode damping.
+   * </p>
+   *
+   * @param enabled true when the caller handles pressure coupling implicitly
+   */
+  public void setCenteredPressureFluxEnabled(boolean enabled) {
+    centeredPressureFluxEnabled = enabled;
+  }
+
+  /** @return true when the low-Mach predictor uses centered interface pressure */
+  public boolean isCenteredPressureFluxEnabled() {
+    return centeredPressureFluxEnabled;
   }
 
   /**

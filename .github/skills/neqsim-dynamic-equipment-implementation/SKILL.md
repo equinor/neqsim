@@ -111,6 +111,65 @@ python devtools/verify_skills_agents.py
 
 ## Common Pitfalls
 
+For `TwoFluidPipe` and related finite-volume code, include all three phase inventories in
+rejection/positivity checks, even though the class name says two-fluid. Preserve phase identity
+at exact water-cut endpoints and separate phase momenta through primitive/conservative recovery.
+Distinguish explicit caller velocities from internal recovery: test legacy bulk updates after
+recovery, recovered slip, and zero-to-positive phase appearance without overwriting donor momentum.
+Pressure-correction face fluxes must share each donor phase's inventory budget. A positivity repair
+that moves mass between phases can hide a phase-balance defect behind an exact total-mass balance.
+Source-splitting helpers must not run primitive recovery on an invalid trial before its rejection
+check; exercise the same negative-phase test with stiff source terms enabled.
+Rollback must restore configured closures and their accepted diagnostics, pressure and phase
+densities as well as the state vector; a generic clone may discard transient closure fields.
+Pressure and density must use the same applied correction after bounds. Independent cell clipping
+can reverse Newton face directions and make an upwind active set cycle; test bounded convergence.
+A substep budget
+must never enlarge a CFL-limited step or silently truncate a requested interval; compare accepted
+time with both equipment and solver clocks. Tracker overlay inventory is separate from Eulerian
+inventory, so dissolution must not return mass that initialization never withdrew. Read
+`docs/wiki/two_fluid_reporting_and_validation.md` for the distinction between numerical regression
+coverage and currently disabled experimental qualification gates.
+
+Conservative slug/film coupling uses subcell reconstruction with the Eulerian seven-variable
+state as the sole inventory. Assert that every reconstructed variable averages back to its cell
+value, including energy after momentum redistribution. Enthalpy reference shifts must not change
+the reconstruction. Recover positive trace-phase velocities from their exact momentum/mass
+ratios so primitive recovery thresholds cannot alter the numerical flux. Use one shared face
+flux per phase, with independent oil/water donors when slip is enabled, and cancel the pressure
+part using the same phase face holdups and pressures. Test gas-free and one-cell limits explicitly.
+Subcell face holdup can greatly exceed its cell average: include the phase-inventory draining
+time in the CFL limit, not only reconstructed velocities. Test a thin body crossing a cell face.
+Closed boundaries must constrain the external flux after reconstruction; zeroing cell velocities
+alone does not prevent a reconstructed slug from leaking through a valve. Prescribed feeds
+belong on external face states, not in the evolving cell density/momentum/holdup inventory.
+For total energy, transport phase enthalpy plus kinetic energy, include gravitational work,
+and do not add stationary-wall friction dissipation as an external energy source.
+Independent experimental comparisons must retain source-cell provenance, source-definition
+ambiguities, missing predictions and predeclared tolerances. A prescribed-flow marker experiment
+tests a closure; label an actual time-marching pipe comparison separately. Coordinate source
+freezes across agents before builds because desktop background compilers can modify target/classes.
+Test initially volume-exact alternating pressure and velocity modes before claiming convective-CFL
+stability of a collocated pressure correction. Include pressure-correction face transfers in
+component/thermal transport after acceptance; global energy conservation alone does not establish
+local EOS/pressure-work consistency. Record slug crossings during accepted motion and distinguish
+union-occupancy changes from internal endpoints or instantaneous merge/birth geometry.
+
+Reject nonfinite or negative raw phase predictors even when adaptive retry is disabled;
+fixed stepping must fail at the last accepted state instead of using a positivity repair
+to hide lost phase inventory. Separate clock-resolution/invalid-step failures from actual
+attempt-budget exhaustion. A configured minimum timestep must never enlarge a CFL bound.
+Pressure-solve convergence must include prescribed boundary pressure as well as volume
+closure, and reset/failed steps must clear stale correction results and transfer ledgers.
+Exercise five-/six-variable legacy inputs after a populated seven-variable state, including
+zero and trace liquid. Do not suppress positive trace holdup in an interior flux while
+external faces still transport it. For variable areas, match the momentum flux's face area
+in the geometric pressure source. At either boundary, preserve each positive phase holdup
+directly; subtracting a nearly unit gas fraction can round a trace liquid to zero. Evaluate
+all tracked-interface kinematics against the
+same accepted geometry before moving any marker; count reverse inlet exits separately
+from downstream outlet arrivals without depositing overlay mass into Eulerian cells.
+
 - Forgetting to set `calculateSteadyState=false` in tests, so the test never exercises the new dynamic branch.
 - Adding a dynamic branch that calls `run(id)` internally every timestep and erases the inventory state.
 - Reading viscosity, density, or thermal conductivity after a flash without physical-property initialization.

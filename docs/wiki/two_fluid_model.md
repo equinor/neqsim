@@ -328,11 +328,13 @@ The **minimum slip criterion** selects the flow regime that gives the minimum sl
 ### Continuous Transient Source Evaluation
 
 The dynamic conservation equations consume the detector's existing dimensionless, normalized
-transition weights. Wall shear, interfacial shear and area, and entrainment are evaluated with
+transition weights. Wall shear, interfacial force and area, and entrainment are evaluated with
 each active regime's authoritative closure and then combined by those weights. Stratified
 geometry stays active whenever its weight is non-zero. This removes a second, hard
 `STRATIFIED_WAVY`/ `SLUG` source switch while preserving the original closure at every
 pure-regime endpoint.
+Interfacial force uses the weighted sum of shear times area, with equal and opposite gas and
+liquid reactions. Effective shear is recovered from that force and the blended area.
 
 No flow-map threshold, transition-band width, hold-up closure, or regime-specific friction
 correlation is changed. Treat this continuation as experimental until conservation, nonlinear

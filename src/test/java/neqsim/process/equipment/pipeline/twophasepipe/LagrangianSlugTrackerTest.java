@@ -53,7 +53,7 @@ class LagrangianSlugTrackerTest {
 
     for (int i = 0; i < NUM_SECTIONS; i++) {
       secs[i] = new TwoFluidSection();
-      secs[i].setPosition(i * dx);
+      secs[i].setPosition((i + 0.5) * dx);
       secs[i].setLength(dx);
       secs[i].setDiameter(PIPE_DIAMETER);
       secs[i].setInclination(0); // Horizontal
@@ -489,5 +489,183 @@ class LagrangianSlugTrackerTest {
     // Negative time step should be handled
     tracker.advanceTimeStep(sections, -1.0);
     assertEquals(initialPos, tracker.getSlugs().get(0).frontPosition, 0.001);
+  }
+
+  @Test
+  void testDissipationDoesNotInjectEulerianLiquid() {
+    tracker.setEnableInletSlugGeneration(false);
+    SlugBubbleUnit slug = addTerrainSlug(20.0, 19.5);
+    slug.age = 11.0;
+    double[] holdup = new double[sections.length];
+    for (int i = 0; i < sections.length; i++) {
+      holdup[i] = sections[i].getLiquidHoldup();
+    }
+
+    tracker.advanceTimeStep(sections, 0.01);
+
+    assertEquals(0, tracker.getSlugCount(), "Subcritical old slug must dissipate instead of being lengthened");
+    assertEquals(1, tracker.getTotalSlugsDissipated());
+    assertEquals(0.0, tracker.getMassConservationError(), 1.0e-9);
+    for (int i = 0; i < sections.length; i++) {
+      assertEquals(holdup[i], sections[i].getLiquidHoldup(), 0.0,
+          "Dissipation only removes the overlay; it must preserve Eulerian inventory");
+      assertFalse(sections[i].isInSlugBody());
+      assertFalse(sections[i].isInSlugBubble());
+    }
+  }
+
+  @Test
+  void testMergedHoldupMatchesConservedVolumeAndGeometry() {
+    tracker.setEnableInletSlugGeneration(false);
+    tracker.setEnableWakeEffects(false);
+    addTerrainSlug(25.0, 23.0);
+    addTerrainSlug(22.5, 20.5);
+    tracker.advanceTimeStep(sections, 1.0e-4);
+
+    assertEquals(1, tracker.getSlugCount());
+    SlugBubbleUnit slug = tracker.getSlugs().get(0);
+    assertEquals(slug.frontPosition - slug.tailPosition, slug.slugLength, 1.0e-12);
+    assertEquals(slug.slugLiquidVolume, slug.slugLength * slug.localArea * slug.slugHoldup, 1.0e-12,
+        "Merged holdup must include the intervening film gap in the body length");
+    assertEquals(0.0, tracker.getMassConservationError(), 1.0e-9);
+  }
+
+  @Test
+  void testWakeCanBeDisabledAfterBecomingActive() {
+    tracker.setEnableInletSlugGeneration(false);
+    addTerrainSlug(30.0, 28.0);
+    SlugBubbleUnit following = addTerrainSlug(26.0, 24.0);
+    tracker.advanceTimeStep(sections, 0.01);
+    assertTrue(following.inWakeRegion);
+
+    tracker.setEnableWakeEffects(false);
+    tracker.advanceTimeStep(sections, 0.01);
+    assertFalse(following.inWakeRegion, "Disabling wakes must clear existing acceleration state");
+    assertEquals(1.0, following.wakeCoefficient, 0.0);
+  }
+
+  @Test
+  void testRemainingSlugLosesWakeAfterLeaderExits() {
+    tracker.setEnableInletSlugGeneration(false);
+    addTerrainSlug(101.5, 99.5);
+    SlugBubbleUnit following = addTerrainSlug(97.5, 95.5);
+    tracker.advanceTimeStep(sections, 0.2);
+    assertEquals(1, tracker.getTotalSlugsExited());
+    assertEquals(1, tracker.getSlugCount());
+    assertTrue(following.inWakeRegion);
+
+    tracker.advanceTimeStep(sections, 0.01);
+    assertFalse(following.inWakeRegion, "A sole surviving slug has no upstream wake source");
+    assertEquals(1.0, following.wakeCoefficient, 0.0);
+  }
+
+  @Test
+  void testNonuniformCellCentersAndPhysicalOutlet() {
+    tracker.setEnableInletSlugGeneration(false);
+    sections = new TwoFluidSection[] { sections[0], sections[1], sections[2] };
+    sections[0].setPosition(1.0);
+    sections[0].setLength(2.0);
+    sections[1].setPosition(3.5);
+    sections[1].setLength(3.0);
+    sections[2].setPosition(7.5);
+    sections[2].setLength(5.0);
+    SlugBubbleUnit inlet = addTerrainSlug(0.5, 0.1);
+    tracker.advanceTimeStep(sections, 1.0e-4);
+    assertTrue(sections[0].isInSlugBody(), "The first cell includes positions below its midpoint");
+    assertFalse(sections[1].isInSlugBody());
+    assertEquals(0.4, inlet.slugLength, 1.0e-3, "The minimum length must not pad the new slug");
+
+    tracker.reset();
+    addTerrainSlug(13.0, 10.5);
+    tracker.advanceTimeStep(sections, 1.0e-4);
+    assertEquals(0, tracker.getSlugCount(), "The outlet is 10 m, not the last midpoint plus a full cell");
+    assertEquals(1, tracker.getTotalSlugsExited());
+  }
+
+  @Test
+  void testDownhillBuoyancyRetainsItsDirection() {
+    tracker.setEnableInletSlugGeneration(false);
+    for (TwoFluidSection section : sections) {
+      section.setInclination(-Math.PI / 2.0);
+    }
+    SlugBubbleUnit slug = addTerrainSlug(20.0, 18.0);
+    tracker.advanceTimeStep(sections, 0.01);
+    double convectiveVelocity = 0.9 * sections[0].getMixtureVelocity();
+    assertTrue(slug.frontVelocity < convectiveVelocity, "Buoyancy opposes positive flow in a downward vertical pipe");
+  }
+
+  @Test
+  void testReverseFlowHoldupUsesSpeedMagnitude() {
+    tracker.setEnableInletSlugGeneration(false);
+    for (TwoFluidSection section : sections) {
+      section.setLiquidVelocity(-1.0);
+      section.setGasVelocity(-3.0);
+      section.updateDerivedQuantities();
+    }
+    SlugBubbleUnit slug = addTerrainSlug(20.0, 18.0);
+    tracker.advanceTimeStep(sections, 0.01);
+    double speed = Math.abs(sections[0].getMixtureVelocity());
+    double expectedHoldup = 1.0 / (1.0 + Math.pow(speed / 8.66, 1.39));
+    assertTrue(slug.frontPosition < 20.0);
+    assertEquals(expectedHoldup, slug.slugHoldup, 1.0e-12);
+    assertTrue(Double.isFinite(tracker.getMassConservationError()));
+  }
+
+  @Test
+  void testCountercurrentInletDoesNotEvaluateCocurrentFrequency() {
+    sections[0].setGasVelocity(3.0);
+    sections[0].setLiquidVelocity(-1.0);
+    sections[0].updateDerivedQuantities();
+    tracker.advanceTimeStep(sections, 1.0);
+    assertEquals(0.0, tracker.getInletSlugFrequency(), 0.0);
+    assertEquals(0, tracker.getTotalSlugsGenerated());
+  }
+
+  @Test
+  void testNonfiniteTimeStepLeavesStateUnchanged() {
+    SlugBubbleUnit slug = addTerrainSlug(20.0, 18.0);
+    tracker.advanceTimeStep(sections, Double.NaN);
+    tracker.advanceTimeStep(sections, Double.POSITIVE_INFINITY);
+    assertEquals(20.0, slug.frontPosition, 0.0);
+    assertEquals(0.0, slug.age, 0.0);
+  }
+
+  @Test
+  void testOutletFrequencyUpdatesWhenFinalSlugExits() {
+    assertEquals(-1.0, tracker.getLastOutletArrivalTime(), 0.0);
+    tracker.setEnableInletSlugGeneration(false);
+    tracker.setEnableWakeEffects(false);
+    addTerrainSlug(92.0, 90.0);
+    addTerrainSlug(72.0, 70.0);
+    for (int i = 0; i < 100 && tracker.getSlugCount() > 0; i++) {
+      tracker.advanceTimeStep(sections, 0.5);
+    }
+    assertEquals(0, tracker.getSlugCount());
+    assertEquals(2, tracker.getTotalSlugsExited());
+    assertEquals(1, tracker.getOutletInterArrivalTimes().size());
+    assertTrue(tracker.getOutletSlugFrequency() > 0.0,
+        "Frequency must update even when no active slugs remain after the final exit");
+    assertEquals(1.0 / tracker.getOutletInterArrivalTimes().get(0), tracker.getOutletSlugFrequency(), 1.0e-9);
+    assertTrue(tracker.getLastOutletArrivalTime() > 0.0);
+    tracker.reset();
+    assertEquals(-1.0, tracker.getLastOutletArrivalTime(), 0.0);
+  }
+
+  /**
+   * Add a terrain slug with consistent initial body geometry and volume.
+   *
+   * @param front front position (m)
+   * @param tail tail position (m)
+   * @return created slug
+   */
+  private SlugBubbleUnit addTerrainSlug(double front, double tail) {
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
+    chars.frontPosition = front;
+    chars.tailPosition = tail;
+    chars.length = front - tail;
+    chars.holdup = 0.85;
+    chars.velocity = 2.0;
+    chars.volume = chars.length * sections[0].getArea() * chars.holdup;
+    return tracker.initializeTerrainSlug(chars, sections);
   }
 }

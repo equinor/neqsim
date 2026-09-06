@@ -1,8 +1,10 @@
 package neqsim.process.equipment.pipeline;
 
+import java.lang.reflect.Field;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -83,33 +85,22 @@ public class TwoFluidPipeTransientNullTest {
   }
 
   /**
-   * Liquid-rich transient runaway.
+   * Remaining liquid-rich steady-to-transient drift.
    *
    * <p>
-   * With every boundary condition held constant, the liquid outlet flux collapses to exactly zero and the line packs
-   * without bound: on this case the inventory grows from 114.7 t to 192.7 t in 30 minutes and the liquid holdup goes
-   * from 0.45 to 0.77 while still climbing. The cause is that the phase momentum equations develop sustained backflow
-   * in the liquid-rich regime (oil velocity reaches -2.5 m/s in 9 of 40 cells), and {@code calcOutletFlux} clamps a
-   * negative phase velocity to zero outflow, which turns the reversal into a one-way trap. The finite-volume balance
-   * still closes to machine precision, so this is a closure/well-posedness defect and not an accounting error: the
-   * conservation equations carry no interfacial pressure term to keep the system hyperbolic at high liquid fraction.
+   * Historically this fixture trapped liquid at the one-way outlet and packed the line while total mass balance still
+   * closed. Correcting mechanical force allocation to absent phases removed that outlet failure in this case, and the
+   * separate liquid-outlet acceptance test is now enabled. The 1800-second inventory drift remains about 5.34%, above
+   * this unchanged 5% limit. Outlet progress and finite-volume conservation therefore do not establish a fixed point.
    * </p>
    *
    * <p>
-   * The steady solver is not implicated: its mean liquid holdup for this case is stable and physically bounded, while
-   * the transient runs away to nearly double it.
-   * </p>
-   *
-   * <p>
-   * Enabling the interfacial pressure term removes the packing trap on this case: liquid keeps leaving the outlet and
-   * the inventory stops growing. It does not make the steady state a fixed point, because the transient then settles on
-   * a different state instead, so the case stays disabled until the well-posedness of the momentum system is addressed
-   * rather than only its stabilization.
+   * The stabilized legacy pressure path has a separate disabled physical-pressure acceptance test. Passing one
+   * transient gate must not be used as evidence that the other configurations are qualified.
    * </p>
    */
   @Test
-  @Disabled("Known defect: liquid-rich transient traps liquid and packs without bound. "
-      + "Two-fluid closure needs a hyperbolicity-restoring interfacial pressure term.")
+  @Disabled("Known defect: liquid-rich inventory drift exceeds 5% over 1800 s under constant boundaries.")
   void testLiquidRichSteadyStateIsAFixedPointOfTheTransient() {
     TwoFluidPipe pipe = buildPipe(true, 50.0);
     double drift = runNullTest(pipe, 360, 5.0);
@@ -117,7 +108,6 @@ public class TwoFluidPipeTransientNullTest {
   }
 
   @Test
-  @Disabled("Known defect: liquid outflow clamps to zero once a phase velocity reverses.")
   void testLiquidKeepsLeavingTheOutletUnderConstantBoundaryConditions() {
     TwoFluidPipe pipe = buildPipe(true, 50.0);
     for (int i = 0; i < 120; i++) {
@@ -132,29 +122,26 @@ public class TwoFluidPipeTransientNullTest {
   }
 
   /**
-   * The outlet trap that drives the two defects above must not be silent.
-   *
-   * <p>
-   * Until the closure is fixed the liquid-rich transient is not a solution, so the caller has to be able to find that
-   * out. Both disabled tests above are the same trap seen from two sides, and both start with a phase reversing at the
-   * transmissive outlet, so that reversal is what gets reported.
-   * </p>
+   * A deliberately imposed outlet reversal must be reported and a new steady solve must clear the diagnostic. This
+   * diagnostic contract must not require the solver to develop a spontaneous physical runaway.
    */
   @Test
-  void testLiquidRichOutletBackflowIsReportedAndClearedByANewSteadySolve() {
+  void testLiquidRichOutletBackflowIsReportedAndClearedByANewSteadySolve() throws Exception {
     TwoFluidPipe pipe = buildPipe(true, 50.0);
     Assertions.assertFalse(pipe.isTransientOutletBackflowClamped(),
         "a freshly solved steady state must not report outlet backflow");
 
-    int firstTrip = -1;
-    for (int i = 0; i < 120 && firstTrip < 0; i++) {
-      pipe.runTransient(5.0, null);
-      if (pipe.isTransientOutletBackflowClamped()) {
-        firstTrip = i;
-      }
+    Field sectionsField = TwoFluidPipe.class.getDeclaredField("sections");
+    sectionsField.setAccessible(true);
+    TwoFluidSection[] sections = (TwoFluidSection[]) sectionsField.get(pipe);
+    for (int cell = sections.length - 2; cell < sections.length; cell++) {
+      sections[cell].setLiquidVelocity(-2.5);
+      sections[cell].setOilVelocity(-2.5);
+      sections[cell].setWaterVelocity(sections[cell].getWaterMassPerLength() > 0.0 ? -2.5 : 0.0);
+      sections[cell].updateConservativeVariables();
     }
-    Assertions.assertTrue(firstTrip >= 0,
-        "the liquid-rich runaway must announce itself, but 120 steps passed without a backflow report");
+    pipe.runTransient(1.0e-6, null);
+    Assertions.assertTrue(pipe.isTransientOutletBackflowClamped(), "an imposed outlet reversal must be reported");
 
     pipe.run();
     Assertions.assertFalse(pipe.isTransientOutletBackflowClamped(),
