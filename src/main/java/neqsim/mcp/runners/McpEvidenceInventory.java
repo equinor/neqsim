@@ -241,7 +241,7 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "setSimulationVariable is CONTRACT_TESTED by merged canonical mutation evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.28 has no candidate.");
+        "generateReport, bridgeTaskWorkflow, manageSecurity, and setSimulationVariable are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.28 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
         "All 71 tools have coverage records: twenty-eight bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
