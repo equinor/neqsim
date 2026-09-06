@@ -158,16 +158,7 @@ class SevereSluggingExperimentalBenchmarkTest {
         () -> assertEquals(0, sustained.transientCoupledRejectedSubsteps),
         () -> assertTrue(sustained.completedLiquidCycleCount >= 2,
             "completed liquid-production cycles=" + sustained.completedLiquidCycleCount),
-        () -> assertTrue(
-            relativeDifference(sustained.peakToPeakPressurePa,
-                EXPERIMENTAL_PRESSURE_AMPLITUDE_PA) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
-            "600 s pressure amplitude=" + sustained.peakToPeakPressurePa + " Pa versus "
-                + EXPERIMENTAL_PRESSURE_AMPLITUDE_PA + " Pa"),
-        () -> assertTrue(
-            relativeDifference(sustained.liquidCyclePeriodSeconds,
-                EXPERIMENTAL_CYCLE_PERIOD_S) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
-            "600 s liquid-production cycle period=" + sustained.liquidCyclePeriodSeconds + " s versus "
-                + EXPERIMENTAL_CYCLE_PERIOD_S + " s"),
+        () -> assertExperimentalAgreement(sustained.peakToPeakPressurePa, sustained.liquidCyclePeriodSeconds),
         () -> assertEquals(FLOWLINE_HOLDUP_TARGET, sustained.steadyFlowlineLiquidHoldup,
             FLOWLINE_HOLDUP_TARGET * FLOWLINE_HOLDUP_RELATIVE_TOLERANCE, "steady flowline liquid hold-up"),
         () -> assertTrue(sustained.maximumLiquidOutletKgPerSecond > 1.25 * LIQUID_FEED_KG_PER_S),
@@ -178,6 +169,22 @@ class SevereSluggingExperimentalBenchmarkTest {
       assertTrue(Double.isFinite(sustained.finalInventoryKg.get(phase)));
       assertTrue(sustained.finalInventoryKg.get(phase) >= 0.0);
     }
+  }
+
+  /**
+   * Checks the public amplitude and period targets without running the slow trajectory.
+   *
+   * @param pressureAmplitudePa settled pressure amplitude in Pa
+   * @param liquidCyclePeriodSeconds liquid-production cycle period in seconds
+   */
+  static void assertExperimentalAgreement(double pressureAmplitudePa, double liquidCyclePeriodSeconds) {
+    // Experimental error is relative to the measured target. The symmetric mesh-comparison
+    // metric divides by the larger value and would admit up to 42.9% overprediction here.
+    assertAll("Public Tengesdal experimental agreement",
+        () -> assertEquals(EXPERIMENTAL_PRESSURE_AMPLITUDE_PA, pressureAmplitudePa,
+            EXPERIMENTAL_PRESSURE_AMPLITUDE_PA * EXPERIMENTAL_RELATIVE_TOLERANCE, "600 s pressure amplitude (Pa)"),
+        () -> assertEquals(EXPERIMENTAL_CYCLE_PERIOD_S, liquidCyclePeriodSeconds,
+            EXPERIMENTAL_CYCLE_PERIOD_S * EXPERIMENTAL_RELATIVE_TOLERANCE, "600 s liquid-production cycle period (s)"));
   }
 
   /**

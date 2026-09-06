@@ -559,6 +559,12 @@ approximately 98 kPa digitized target, and the 100 s resolved trajectory contain
 severe-slugging validation. The active tests must not weaken or replace the disabled qualification
 contract merely to make a trajectory pass.
 
+The qualification's ±30% amplitude and period tolerances are relative to the experimental
+targets: 68.6–127.4 kPa around 98 kPa, and 26.6–49.4 s around 38 s. They do not use the
+symmetric relative difference used for mesh comparisons, which would admit overprediction
+beyond 30%. A separate fast regression test exercises these acceptance boundaries and rejects
+non-finite predictions even while the long qualification trajectory remains disabled.
+
 This benchmark previously reported a riser-head-scaled swing of 0.40–0.54 heads and a tracked slug
 of about 2 m. Those results did not come from the momentum balance. The minimum-slip hold-up bound
 was written as $\alpha_L \ge \lambda_L \cdot S$, which is a slip statement only in the lean-gas
