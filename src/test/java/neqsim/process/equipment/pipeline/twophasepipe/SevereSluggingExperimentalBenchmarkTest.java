@@ -13,7 +13,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidBenchmarkMetrics;
@@ -30,17 +29,16 @@ import neqsim.thermo.system.SystemSrkEos;
  * Public dynamic benchmark from Tengesdal's 2002 large pipeline-riser facility.
  *
  * <p>
- * This qualification fixture is disabled while the legacy transient route activates the outlet-backflow clamp and the
- * coupled pressure-momentum route cannot yet advance this case. A clamped trajectory is not an engineering solution, so
- * the historical diagnostic metrics below must not be promoted as validated predictions. Issues #2909 and #2911 track
- * the numerical work required before this benchmark can be re-enabled.
+ * This qualification fixture runs the coupled pressure-momentum, implicit interfacial-pressure, and signed-outlet route.
+ * One resolved-mesh realization runs for 600 s; shorter resolved/refined, repeat, perturbed, and outer-step realizations
+ * preserve convergence and reproducibility evidence without making the slow-test shard depend on five long trajectories.
+ * A clamped, rejected, or non-conservative trajectory is not an engineering solution.
  * </p>
  *
  * <p>
- * The model reproduces severe slugging on the liquid side in every realization: the outlet liquid rate blows out well
- * above the liquid feed and falls back below it on a repeating cycle. On the pressure side it now produces a real
- * riser-base swing rather than the flat trace it used to give, but that swing is mesh dependent, and the cycle period
- * is shorter than the measured one. Both limitations are asserted here as measurements so they stay visible.
+ * The sustained realization must reproduce the public experimental pressure amplitude and period within 30%, preserve
+ * the 0.342 flowline hold-up within 1%, and retain the liquid blowout/fallback signature for at least 600 s. Supporting
+ * realizations retain the existing mesh, outer-step, nearby-trajectory, and deterministic-repeat checks.
  * </p>
  *
  * <p>
@@ -97,7 +95,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * fire, so the reported results do not depend on how fast or how loaded the executing machine is.
  * </p>
  */
-@Disabled("Blocked by #2909 and #2911: current transient routes do not produce a valid unclamped solution")
 @Tag("slow")
 class SevereSluggingExperimentalBenchmarkTest {
   private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
@@ -121,7 +118,11 @@ class SevereSluggingExperimentalBenchmarkTest {
   private static final double EXPERIMENTAL_CYCLE_PERIOD_S = 38.0;
   private static final double EXPERIMENTAL_CYCLE_PERIOD_DIGITIZATION_UNCERTAINTY_S = 2.0;
   private static final double WARM_UP_SECONDS = 20.0;
-  private static final double SIMULATION_SECONDS = 100.0;
+  private static final double SUPPORTING_SIMULATION_SECONDS = 100.0;
+  private static final double SUSTAINED_SIMULATION_SECONDS = 600.0;
+  private static final double EXPERIMENTAL_RELATIVE_TOLERANCE = 0.30;
+  private static final double FLOWLINE_HOLDUP_TARGET = 0.342;
+  private static final double FLOWLINE_HOLDUP_RELATIVE_TOLERANCE = 0.01;
   /**
    * Relative inlet-pressure perturbation used only to sample a second trajectory on the same chaotic attractor. It is
    * physically and experimentally meaningless at this magnitude.
@@ -170,6 +171,7 @@ class SevereSluggingExperimentalBenchmarkTest {
   /** Largest relative gap between the resolved and refined mesh amplitudes; measured at 0.16. */
   private static final double MAXIMUM_AMPLITUDE_MESH_SPREAD = 0.40;
 
+  private static TransientMetrics sustainedReference;
   private static TransientMetrics reference;
   private static TransientMetrics referenceRepeat;
   private static TransientMetrics perturbedTrajectory;
@@ -179,21 +181,61 @@ class SevereSluggingExperimentalBenchmarkTest {
 
   @BeforeAll
   static void simulateBenchmarkCases() {
-    reference = simulate(RESOLVED_SECTION_COUNT, 0.1, 0.0);
-    referenceRepeat = simulate(RESOLVED_SECTION_COUNT, 0.1, 0.0);
-    perturbedTrajectory = simulate(RESOLVED_SECTION_COUNT, 0.1, ATTRACTOR_SAMPLING_PERTURBATION);
-    refinedMesh = simulate(REFINED_SECTION_COUNT, 0.1, 0.0);
-    coarseOuterStep = simulate(RESOLVED_SECTION_COUNT, 0.2, 0.0);
+    sustainedReference = simulate(RESOLVED_SECTION_COUNT, 0.1, 0.0, SUSTAINED_SIMULATION_SECONDS);
+    reference = simulate(RESOLVED_SECTION_COUNT, 0.1, 0.0, SUPPORTING_SIMULATION_SECONDS);
+    referenceRepeat = simulate(RESOLVED_SECTION_COUNT, 0.1, 0.0, SUPPORTING_SIMULATION_SECONDS);
+    perturbedTrajectory = simulate(RESOLVED_SECTION_COUNT, 0.1, ATTRACTOR_SAMPLING_PERTURBATION,
+        SUPPORTING_SIMULATION_SECONDS);
+    refinedMesh = simulate(REFINED_SECTION_COUNT, 0.1, 0.0, SUPPORTING_SIMULATION_SECONDS);
+    coarseOuterStep = simulate(RESOLVED_SECTION_COUNT, 0.2, 0.0, SUPPORTING_SIMULATION_SECONDS);
     ensemble = Collections
         .unmodifiableList(Arrays.asList(reference, perturbedTrajectory, refinedMesh, coarseOuterStep));
     for (TransientMetrics metrics : ensemble) {
-      logger.info(String.format(Locale.ROOT,
-          "%s: meanP=%.0f Pa peakToPeak=%.0f Pa (%.2f x riser head) p10p90=%.0f Pa period=%.2f s "
-              + "cycles=%d qMax=%.3f qMin=%.3f kg/s slug=%.3f m",
-          metrics.label, metrics.meanInletPressurePa, metrics.peakToPeakPressurePa,
-          metrics.peakToPeakPressurePa / RISER_HYDROSTATIC_HEAD_PA, metrics.p10ToP90PressurePa,
-          metrics.cyclePeriodSeconds, metrics.completedCycleCount, metrics.maximumLiquidOutletKgPerSecond,
-          metrics.minimumLiquidOutletKgPerSecond, metrics.maximumSlugLengthM));
+      logMetrics(metrics);
+    }
+    logMetrics(sustainedReference);
+  }
+
+  private static void logMetrics(TransientMetrics metrics) {
+    logger.info(String.format(Locale.ROOT,
+        "%s: meanP=%.0f Pa peakToPeak=%.0f Pa (%.2f x riser head) p10p90=%.0f Pa period=%.2f s "
+            + "cycles=%d qMax=%.3f qMin=%.3f kg/s flowlineHoldup=%.5f slug=%.3f m tEnd=%.1f s rejected=%d",
+        metrics.label, metrics.meanInletPressurePa, metrics.peakToPeakPressurePa,
+        metrics.peakToPeakPressurePa / RISER_HYDROSTATIC_HEAD_PA, metrics.p10ToP90PressurePa,
+        metrics.cyclePeriodSeconds, metrics.completedCycleCount, metrics.maximumLiquidOutletKgPerSecond,
+        metrics.minimumLiquidOutletKgPerSecond, metrics.meanFlowlineLiquidHoldup, metrics.maximumSlugLengthM,
+        metrics.simulationEndTimeSeconds, metrics.transientCoupledRejectedSubsteps));
+  }
+
+  /**
+   * Qualifies the sustained resolved-mesh trajectory against the public Tengesdal experiment and #3298 WS1 gates.
+   */
+  @Test
+  void sustainsThePublicLimitCycleForSixHundredSeconds() {
+    assertEquals(SUSTAINED_SIMULATION_SECONDS, sustainedReference.simulationEndTimeSeconds, 1.0e-9);
+    assertFalse(sustainedReference.steadyStateWallClockLimited);
+    assertFalse(sustainedReference.transientOutletBackflowClamped);
+    assertFalse(sustainedReference.transientCoupledFailureDetected,
+        "coupled solver rejected " + sustainedReference.transientCoupledRejectedSubsteps + " substeps");
+    assertEquals(0, sustainedReference.transientCoupledRejectedSubsteps);
+    assertTrue(relativeDifference(sustainedReference.peakToPeakPressurePa,
+        EXPERIMENTAL_PRESSURE_AMPLITUDE_PA) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
+        "600 s pressure amplitude=" + sustainedReference.peakToPeakPressurePa + " Pa versus "
+            + EXPERIMENTAL_PRESSURE_AMPLITUDE_PA + " Pa");
+    assertTrue(relativeDifference(sustainedReference.cyclePeriodSeconds,
+        EXPERIMENTAL_CYCLE_PERIOD_S) <= EXPERIMENTAL_RELATIVE_TOLERANCE,
+        "600 s cycle period=" + sustainedReference.cyclePeriodSeconds + " s versus "
+            + EXPERIMENTAL_CYCLE_PERIOD_S + " s");
+    assertEquals(FLOWLINE_HOLDUP_TARGET, sustainedReference.meanFlowlineLiquidHoldup,
+        FLOWLINE_HOLDUP_TARGET * FLOWLINE_HOLDUP_RELATIVE_TOLERANCE,
+        "600 s mean settled flowline liquid hold-up");
+    assertTrue(sustainedReference.maximumLiquidOutletKgPerSecond > 1.25 * LIQUID_FEED_KG_PER_S);
+    assertTrue(sustainedReference.minimumLiquidOutletKgPerSecond < 0.75 * LIQUID_FEED_KG_PER_S);
+    for (Phase phase : Phase.values()) {
+      assertTrue(sustainedReference.maximumRelativeClosure.get(phase) < 1.0e-9,
+          phase + " 600 s closure=" + sustainedReference.maximumRelativeClosure.get(phase));
+      assertTrue(Double.isFinite(sustainedReference.finalInventoryKg.get(phase)));
+      assertTrue(sustainedReference.finalInventoryKg.get(phase) >= 0.0);
     }
   }
 
@@ -346,16 +388,18 @@ class SevereSluggingExperimentalBenchmarkTest {
   }
 
   private static TransientMetrics simulate(int numberOfSections, double outerTimeStepSeconds,
-      double inletPressurePerturbation) {
+      double inletPressurePerturbation, double simulationSeconds) {
     String label = numberOfSections + " sections, dt=" + outerTimeStepSeconds + " s, perturbation="
-        + inletPressurePerturbation;
+        + inletPressurePerturbation + ", duration=" + simulationSeconds + " s";
     TwoFluidPipe pipe = createLargeFacilityTestThree(numberOfSections, inletPressurePerturbation);
     UUID simulationId = UUID
         .nameUUIDFromBytes((numberOfSections + ":" + outerTimeStepSeconds).getBytes(StandardCharsets.UTF_8));
-    int steps = (int) Math.round(SIMULATION_SECONDS / outerTimeStepSeconds);
+    int steps = (int) Math.round(simulationSeconds / outerTimeStepSeconds);
     List<Double> sampleTimes = new ArrayList<>();
     List<Double> pressureSamples = new ArrayList<>();
     List<Double> liquidOutletSamples = new ArrayList<>();
+    List<Double> flowlineLiquidHoldupSamples = new ArrayList<>();
+    int flowlineProbeSection = Math.max(0, numberOfSections / 4);
     Map<Phase, Double> maximumClosure = new EnumMap<>(Phase.class);
     Map<Phase, Double> finalInventory = new EnumMap<>(Phase.class);
     for (Phase phase : Phase.values()) {
@@ -374,6 +418,7 @@ class SevereSluggingExperimentalBenchmarkTest {
         sampleTimes.add(pipe.getSimulationTime());
         pressureSamples.add(pipe.getPressureProfile()[0]);
         liquidOutletSamples.add(balance.getOutletMassKg(Phase.LIQUID) / balance.getElapsedTimeSeconds());
+        flowlineLiquidHoldupSamples.add(pipe.getLiquidHoldupProfile()[flowlineProbeSection]);
       }
     }
 
@@ -383,8 +428,11 @@ class SevereSluggingExperimentalBenchmarkTest {
     double maximumSlugLength = pipe.getMaxSlugLengthAtOutlet();
     return new TransientMetrics(label, SOURCE_URL, maximum(pressureSamples) - minimum(pressureSamples),
         pressureCycle.getP10ToP90Band(), mean(pressureSamples), liquidCycle.periodSeconds,
-        liquidCycle.completedCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples), maximumSlugLength,
-        pipe.isSteadyStateWallClockLimited(), pipe.isTransientOutletBackflowClamped(), maximumClosure, finalInventory);
+        liquidCycle.completedCycleCount, minimum(liquidOutletSamples), maximum(liquidOutletSamples),
+        mean(flowlineLiquidHoldupSamples), maximumSlugLength, pipe.getSimulationTime(),
+        pipe.isSteadyStateWallClockLimited(), pipe.isTransientOutletBackflowClamped(),
+        pipe.isTransientCoupledPressureMomentumFailureDetected(),
+        pipe.getTransientCoupledPressureMomentumRejectedSubsteps(), maximumClosure, finalInventory);
   }
 
   private static TwoFluidPipe createLargeFacilityTestThree(int numberOfSections, double inletPressurePerturbation) {
@@ -435,6 +483,10 @@ class SevereSluggingExperimentalBenchmarkTest {
     pipe.setEnableAdaptiveTimestepping(true);
     pipe.setThermodynamicUpdateInterval(1000);
     pipe.setIncludeMassTransfer(false);
+    pipe.setEnableInterfacialPressure(true);
+    pipe.setImplicitInterfacialPressureCoupling(true);
+    pipe.setEnableCoupledPressureMomentum(true);
+    pipe.setAllowOutletPhaseBackflow(true);
     pipe.setEnableSlugTracking(true);
     pipe.getLagrangianSlugTracker().setRandomSeed(2741L);
     // A wall-clock guard would truncate the steady-state solve on a slow or loaded machine and hand the transient a
@@ -591,16 +643,22 @@ class SevereSluggingExperimentalBenchmarkTest {
     private final int completedCycleCount;
     private final double minimumLiquidOutletKgPerSecond;
     private final double maximumLiquidOutletKgPerSecond;
+    private final double meanFlowlineLiquidHoldup;
     private final double maximumSlugLengthM;
+    private final double simulationEndTimeSeconds;
     private final boolean steadyStateWallClockLimited;
     private final boolean transientOutletBackflowClamped;
+    private final boolean transientCoupledFailureDetected;
+    private final int transientCoupledRejectedSubsteps;
     private final Map<Phase, Double> maximumRelativeClosure;
     private final Map<Phase, Double> finalInventoryKg;
 
     private TransientMetrics(String label, String sourceUrl, double peakToPeakPressurePa, double p10ToP90PressurePa,
         double meanInletPressurePa, double cyclePeriodSeconds, int completedCycleCount,
-        double minimumLiquidOutletKgPerSecond, double maximumLiquidOutletKgPerSecond, double maximumSlugLengthM,
+        double minimumLiquidOutletKgPerSecond, double maximumLiquidOutletKgPerSecond,
+        double meanFlowlineLiquidHoldup, double maximumSlugLengthM, double simulationEndTimeSeconds,
         boolean steadyStateWallClockLimited, boolean transientOutletBackflowClamped,
+        boolean transientCoupledFailureDetected, int transientCoupledRejectedSubsteps,
         Map<Phase, Double> maximumRelativeClosure, Map<Phase, Double> finalInventoryKg) {
       this.label = label;
       this.sourceUrl = sourceUrl;
@@ -611,9 +669,13 @@ class SevereSluggingExperimentalBenchmarkTest {
       this.completedCycleCount = completedCycleCount;
       this.minimumLiquidOutletKgPerSecond = minimumLiquidOutletKgPerSecond;
       this.maximumLiquidOutletKgPerSecond = maximumLiquidOutletKgPerSecond;
+      this.meanFlowlineLiquidHoldup = meanFlowlineLiquidHoldup;
       this.maximumSlugLengthM = maximumSlugLengthM;
+      this.simulationEndTimeSeconds = simulationEndTimeSeconds;
       this.steadyStateWallClockLimited = steadyStateWallClockLimited;
       this.transientOutletBackflowClamped = transientOutletBackflowClamped;
+      this.transientCoupledFailureDetected = transientCoupledFailureDetected;
+      this.transientCoupledRejectedSubsteps = transientCoupledRejectedSubsteps;
       this.maximumRelativeClosure = new EnumMap<>(maximumRelativeClosure);
       this.finalInventoryKg = new EnumMap<>(finalInventoryKg);
     }
