@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.report.Report;
@@ -56,7 +57,7 @@ public final class ProcessComparisonQuickStart {
     inletSection.add(firstStageSeparator);
 
     // 3) Create the compressor section from the separator gas outlet.
-    Stream compressorFeed = firstStageSeparator.getGasOutStream();
+    StreamInterface compressorFeed = firstStageSeparator.getGasOutStream();
     Compressor compressor1 = new Compressor("Compressor1", compressorFeed);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
