@@ -81,6 +81,13 @@ continuity equation. The upwind state follows the sign of the internal face flux
 supplies positive-flow inlet composition. Integrated boundary component masses use the same Euler,
 Runge-Kutta, or IMEX stage weights as the accepted phase update.
 
+With component transport and mass transfer enabled, each RHS evaluation flashes the conserved
+local component composition. Its equilibrium gas **mass fraction** sets the transfer target,
+`(totalCellMass * equilibriumGasMassFraction - currentGasMass) / relaxationTime`. Hydraulic slip
+can change phase residence inventories without creating an equilibrium driving force. The legacy
+source without component transport still uses the reference-fluid no-slip volume fraction; it is
+an approximation and is unsuitable for preserving equilibrium in a slipping mixture.
+
 Flash-driven phase transfer is mapped by component name. Evaporation withdraws the donor oil or
 water composition. Condensation uses the receiving equilibrium phase composition. In every cell,
 
@@ -552,12 +559,39 @@ The slow dynamic benchmark exercises large-facility Test 3 ($v_{SL}=0.50$ m/s an
 $v_{SG}=1.00$ m/s). Its active 100 s trajectories characterize coupled numerical progress,
 conservation, repeatability, mesh sensitivity, and outer-step sensitivity. The exact 600 s
 qualification method remains disabled under #3298 until the amplitude, liquid-production-cycle,
-steady-flowline-hold-up, sticky-limiter, rejection, and conservation gates all pass together. On
-the coupled head evaluated in September 2026, the 600 s pressure swing was 36.2 kPa versus the
-approximately 98 kPa digitized target, and the 100 s resolved trajectory contained one complete
-67.2 s liquid-production cycle after warm-up. Those are diagnostic observations, not
-severe-slugging validation. The active tests must not weaken or replace the disabled qualification
-contract merely to make a trajectory pass.
+steady-flowline-hold-up, sticky-limiter, rejection, and conservation gates all pass together.
+On 6 September 2026, the candidate with the wall-force and slip corrections completed all five
+100 s characterization trajectories and passed all seven active checks with their original
+fixtures and assertions. The resolved reference produced a 29.768 kPa pressure amplitude and a
+30.55 s liquid-production period. Across the reference, perturbed, refined-mesh and coarser-step
+trajectories, amplitudes were 23.640–29.768 kPa and periods were 11.30–30.55 s. Every trajectory
+completed its requested time without rejected substeps or outlet-backflow clamping. These
+supporting checks do not establish sustained experimental agreement.
+
+The same candidate exercised the exact disabled 600 s method without changing its annotations
+or acceptance targets. It completed the requested physical time but failed these requirements:
+
+| Qualification metric | Observed | Unchanged acceptance requirement |
+|----------------------|----------|----------------------------------|
+| Pressure amplitude | 36.301 kPa | 68.6–127.4 kPa |
+| Liquid-production cycle period | Not resolved | 26.6–49.4 s |
+| Completed settled liquid-production cycles | 0 | At least 2 |
+| Initial steady flowline holdup | 0.330546 | 0.33858–0.34542 |
+| Sticky pressure-correction limit | Activated | Must remain inactive |
+
+The 600 s trajectory had no rejected substeps or outlet-backflow clamp. Captured phase and total
+mass-closure diagnostics were below $1.6\times10^{-15}$, but the phase-conservation assertions
+follow the failing assertion group and were not reached. The mean settled flowline holdup was
+0.95, while the high-frequency pressure signal had a 0.531 s period; that signal is not the
+required liquid-production cycle. The earlier pressure/EOS-only candidate gave a 40.909 kPa
+amplitude and a 56.167 s liquid-production period, so the new closure corrections do not establish
+an improvement in experimental severe-slugging accuracy. The temporary explicit source-CFL
+stall is resolved by retaining the acoustic step for explicit integrators; the physical
+qualification remains open.
+
+The active tests must not weaken or replace the disabled qualification contract merely to make
+a trajectory pass. The fixed 0.342 holdup target is a historical numerical regression value,
+not a measured holdup from the pressure trace.
 
 The qualification's ±30% amplitude and period tolerances are relative to the experimental
 targets: 68.6–127.4 kPa around 98 kPa, and 26.6–49.4 s around 38 s. They do not use the
@@ -622,6 +656,14 @@ results do not depend on the speed or load of the executing machine. The stochas
 uses a fixed benchmark seed; ordinary simulations retain its non-deterministic default. Only the
 explicit RK4 path is covered; no IMEX severe-slugging validation is claimed.
 
+The oil surrogate also has an independently identified property mismatch. Table 4-1 of the source
+reports Crystex kinematic viscosity of **18.9 cSt at 40 °C**. Flashing the current surrogate at
+40 °C and 1.01325 bara gives **5.60685 cSt**, 70.3% lower; at the fixture's assumed 25 °C it gives
+8.02907 cSt. Matching the reported density does not establish viscosity agreement. A measured
+25 °C viscosity or a justified viscosity–temperature relationship is needed before correcting the
+fixture's viscosity at its assumed temperature. No viscosity factor, extra gas volume or closure
+coefficient is adjusted to fit the pressure or period targets.
+
 Run the public checks with:
 
 ```bash
@@ -629,7 +671,7 @@ Run the public checks with:
 ./mvnw -DexcludedTestGroups= -Dtest=SevereSluggingExperimentalBenchmarkTest test
 ```
 
-Source: S. Tengesdal, *Investigation of Self-Lifting Concept for Severe Slugging Elimination in
+Source: J. Ø. Tengesdal, *Investigation of Self-Lifting Concept for Severe Slugging Elimination in
 Deep-Water Pipeline/Riser Systems* (2002),
 [BSEE Technical Assessment Program report](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf).
 
@@ -875,8 +917,10 @@ defines the initial condition and advances no simulation time. For three-phase f
 water momenta retain the independent phase velocities from the steady slip closure rather than being
 collapsed to the bulk-liquid velocity. After the transient solve starts, the conservative phase
 masses own cell inventory. A stream-connected inlet may update boundary composition and velocity for
-its inlet flux, but it must not replace the first finite-volume cell's oil or water mass. This prevents
-an unchanged, near-zero-time handoff from producing an inventory or holdup jump that scales with pipe
+its inlet flux, but it must not replace the first finite-volume cell's density or phase mass. The
+coupled solver applies prescribed feed conditions on an external face. The uncoupled solver retains
+its inlet momentum treatment while preserving the cell densities at the solved pressure, instead
+of resetting them from the feed-pressure EOS. This prevents an unchanged, near-zero-time handoff from producing an inventory or holdup jump that scales with pipe
 volume.
 
 At an exact oil-only or water-only liquid endpoint, the active phase velocity is synchronized with
@@ -1112,11 +1156,11 @@ Select the time integration method via `setTimeIntegrationMethod(TimeIntegrator.
 
 | Method | CFL constraint | Description |
 |--------|---------------|-------------|
-| `RK4` (default) | Acoustic ($c + v$) | Classical 4th-order Runge-Kutta. Stable for all geometries. |
+| `RK4` (default) | Acoustic ($c + v$) | Classical 4th-order Runge-Kutta; explicit drag stiffness is not bounded by the acoustic CFL. |
 | `SSP_RK3` | Acoustic | Strong Stability Preserving RK3 |
 | `RK2` | Acoustic | Heun's method (2nd order) |
 | `EULER` | Acoustic | Forward Euler (1st order) |
-| `IMEX_PRESSURE_CORRECTION` | Convective only | Semi-implicit momentum pressure correction with conservative explicit phase-mass transport; ~10x larger dt. Not recommended for vertical risers. |
+| `IMEX_PRESSURE_CORRECTION` | Convective and explicit drag relaxation | Semi-implicit momentum pressure correction with conservative explicit phase-mass transport. The usable timestep depends on the remaining explicit sources. Not recommended for vertical risers. |
 
 ```java
 pipe.setTimeIntegrationMethod(TimeIntegrator.Method.RK4);       // default
@@ -1380,11 +1424,68 @@ and free-water steady-state limitations elsewhere in this guide remain separate 
 
 The corrective regression run covers a one-second 10% feed-rate step for every phase combination.
 The separate, already disabled 1800 s liquid-rich fixed-point test was also executed explicitly:
-inventory drift was **5.3435%**, above its unchanged **5%** limit. It remains unqualified; neither
+inventory drift was **5.7570%**, above its unchanged **5%** limit. It remains unqualified; neither
 the short phase matrix nor the corrected pressure-boundary initialization overrides that result.
 Controlled metastable trace-phase tests freeze thermodynamic properties to isolate hydraulic
 continuity. Separate public `run()` tests require equilibrium flashes to remove a dissolved trace
 phase from every cell, including the inlet, without changing the feed object.
+
+The annular slip closure now consistently uses $S=v_G/v_L$ and
+$\alpha_L=S\lambda_L/[1+(S-1)\lambda_L]$, where $\lambda_L$ is the superficial liquid
+volume fraction. Both the simple annular closure and the film-model slip lower bound use this
+relation. The former inverse relation made the liquid faster when the specified gas slip exceeded
+one; default minimum-slip enforcement could mask that error. `TwoFluidPipeAnnularSlipTest` checks
+the recovered phase-velocity ratio with that independent bound disabled.
+
+### Sustained thermodynamic and mechanical checks
+
+`TwoFluidPipeSustainedThermodynamicRegressionTest` exercises 120 s with EOS refresh every substep,
+heat transport and phase transfer enabled in the explicit component-transport mode. Gas, gas/oil
+and gas/oil/water cases retain inventory within 0.1%, pressure within 0.01%, and temperature within
+0.001 K under unchanged boundaries. Separate heating and cooling checks require evaporation and
+condensation, and phase/component ledgers must close. The fixture uses positive-flow boundaries
+and an unchanged component slate; it does not qualify reverse-boundary component transport.
+
+Transient wall shear is integrated over each regime's own wall geometry before force blending.
+Slug/churn shear already includes phase-volume weights, so a second perimeter partition must not
+reduce the total force. Annular films and dispersed-liquid continuums wet the full pipe wall.
+`TwoFluidWallForceConsistencyTest` checks the homogeneous limit, film perimeter and transition
+force balance. This correction does not change the steady pressure-drop correlations.
+
+`TwoFluidIllPosednessGrowthTest` seeds an alternating interior holdup perturbation in the conserved
+phase masses, momenta and energy, preserving pressure, temperature and phase velocities. Its modal
+amplitude is measured relative to an otherwise identical evolving control: a smooth startup
+gradient also has a nonzero alternating sum and must not be mistaken for growth of a short wave.
+The original 20/80-cell fixtures, duration and refinement inequalities are retained; both meshes
+must also damp the seeded mode. This is a numerical regression for that flow regime.
+
+IMEX removes the acoustic timestep restriction but leaves wall and interphase drag explicit,
+except for dispersed-bubble drag when its existing implicit source option is enabled. The IMEX
+timestep now also respects a local drag-relaxation Jacobian estimate, including separate oil/water
+momentum response. This constrains the remaining explicit friction sources; it does not make a
+mismatched steady and transient closure a fixed point. The estimate holds regime weights and
+thermophysical properties fixed and does not guarantee nonlinear stability.
+
+Euler and Runge-Kutta retain their acoustic CFL selection. Extending the source limit to those
+paths exposed an unresolved limitation at phase appearance: a vanishing laminar liquid film can
+have an arbitrarily short drag-relaxation time, including at zero velocity. An implicit drag
+treatment is needed to resolve this stiffness without an artificial phase-inventory or timestep
+floor. The IMEX source limit may also become impractically small in such states; it is not a
+general qualification of one-to-two or two-to-three-phase transitions.
+
+The 5000 m liquid-rich default trajectory completes 1800 s with 5.7570% inventory drift;
+the unchanged 5% fixed-point gate therefore remains disabled. Its sampled phase speeds remain
+below 5.09 m/s and sampled total-mass residuals below $6\times10^{-11}$ kg. The coupled IMEX
+variant completes 120 s with 5 s requested steps and 3.1510% inventory loss, without the previous
+velocity runaway. Neither result qualifies the correlation-based steady state as a dynamic fixed point.
+
+The remaining slug closure mismatch is mechanical: for the horizontal liquid-rich fixture, steady
+initialization enforces $v_G/v_L=2$, while the current transient mixture-wall allocation gives both
+phases the same wall pressure gradient per occupied area. With passive interphase drag, that local
+stationary balance requires zero slip. At the middle steady cell, the gas and liquid balances demand
+pressure gradients of approximately +389 and -436 Pa/m at the same state. Resolving this requires a
+shared slug-unit force closure or a separately qualified mechanical steady solve. Replacing the
+existing steady holdup by the transient no-slip root would substantially change its predictions.
 
 ### Evidence levels
 

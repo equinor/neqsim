@@ -726,12 +726,23 @@ symptoms are generic:
 
 The remaining limitation is that liquid holdup and pressure drop are model-internal results on
 one line. Two cases remain open: local holdup at low rate is dominated by single terrain trap
-sections, and the three-phase free-water case does not converge - with 15 m3/hr of free water the
-solve is wall-clock limited after 4078 iterations at a 1200 s budget, with the pressure drop
-unchanged between a 300 s and a 1200 s budget, so the criterion is stalling on the three-phase
-liquid split rather than the solution diverging. An earlier revision of this page reported 81.20 bar
+sections, and the historical three-phase free-water case remains unqualified. With 15 m3/hr of free
+water the earlier solve was wall-clock limited after 4078 iterations at a 1200 s budget, with the
+pressure drop unchanged between a 300 s and a 1200 s budget while the three-phase liquid split did
+not converge. The complete input fixture is not available in the repository, so the recent
+pressure-boundary and oil/water-split corrections have not been assessed on that exact line.
+An earlier revision of this page reported 81.20 bar
 on the dry line together with a pressure drop that did not respond to temperature; that figure came
 from a steady-state exit after a single sweep and is superseded.
+
+The separately reproducible three-phase uphill case in
+`TwoFluidVsBeggsBrillComparisonTest.testWaterOilVelocitySlipInUphillFlow` is now enabled. It retains
+the original 3 km, 0.15 m diameter, 10-degree slope, 8 kg/s and 30 bara inlet fixture and converges
+without reaching the pressure floor or wall-clock guard. The test requires gas, oil and water to
+remain present, positive forward liquid velocities and a positive mean oil/water slip. Each phase
+mass flux is checked against an independent equilibrium flash at the local pressure and
+temperature, within 0.01% of the total feed rate. This closes that fixture's former flash-failure
+gate; it does not qualify the historical 73.8 km case or establish experimental accuracy.
 
 ### Public severe-slugging benchmark
 

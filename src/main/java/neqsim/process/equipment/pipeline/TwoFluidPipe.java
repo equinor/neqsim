@@ -968,6 +968,7 @@ public class TwoFluidPipe extends Pipeline {
     // Store reference fluid for flash calculations
     referenceFluid = inletFluid.clone();
     equations.setThermodynamicCoupling(new ThermodynamicCoupling(referenceFluid));
+    equations.setLocalEquilibriumStates(null);
 
     // Calculate inlet phase properties - initialize with defaults
     double rhoG = 1.0, rhoL = 800.0, muG = 1e-5, muL = 1e-3;
@@ -2904,7 +2905,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // Annular slip model: the gas core outruns the film, so S = vG/vL is between about 1.5 and 4
-      // and holdup follows alphaL = lambdaL / (S - (S-1)*lambdaL).
+      // and holdup follows alphaL = S*lambdaL / (1 + (S-1)*lambdaL).
       double vsgRef = 8.0;
       double velocityRatio = Math.max(0.5, Math.min(4.0, vsG / Math.max(vsgRef, 0.1)));
       double baseSlipRatio = 1.5;
@@ -2912,8 +2913,8 @@ public class TwoFluidPipe extends Pipeline {
       double slipRatio = baseSlipRatio
           + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
 
-      double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
-      double alphaL = denominator > 0.1 ? lambdaL / denominator : lambdaL;
+      double denominator = 1.0 + (slipRatio - 1.0) * lambdaL;
+      double alphaL = slipRatio * lambdaL / denominator;
 
       // A fixed wetting film is a user-selected physical model, not a universal
       // numerical phase floor. Apply it only in explicit fixed-floor mode.
@@ -3354,7 +3355,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Apply slip ratio model for annular flow
     // In annular flow, gas flows faster than liquid film (slip ratio S = vG/vL > 1)
-    // Holdup formula: αL = λL / (λL + S*(1-λL))
+    // Holdup formula: αL = S*λL / (1 + (S-1)*λL)
     // Typical slip ratios for annular flow: S = 1.5 to 4.0
     double vsgRef = 8.0;
     double velocityRatio = Math.min(4.0, vsG / Math.max(vsgRef, 0.1));
@@ -3365,14 +3366,9 @@ public class TwoFluidPipe extends Pipeline {
     double slipRatio = baseSlipRatio
         + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
 
-    // Calculate holdup using slip model: αL = λL / (S - (S-1)*λL)
-    double slipBasedHoldup;
-    double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
-    if (denominator > 0.1) {
-      slipBasedHoldup = lambdaL / denominator;
-    } else {
-      slipBasedHoldup = lambdaL;
-    }
+    // Recover the in-situ holdup from vG/vL = S and the superficial phase velocities.
+    double denominator = 1.0 + (slipRatio - 1.0) * lambdaL;
+    double slipBasedHoldup = slipRatio * lambdaL / denominator;
 
     // Use physics-based calculation, with slip model as minimum
     // The film model can under-predict when gas velocity is high
@@ -4422,6 +4418,17 @@ public class TwoFluidPipe extends Pipeline {
         // This is especially important for CLOSED boundaries because intermediate
         // stage momenta can otherwise create a spurious boundary flux.
         applyBoundaryConditions();
+        SystemInterface[] localEquilibriumStates = null;
+        if (componentTransportEnabled && includeMassTransfer) {
+          localEquilibriumStates = new SystemInterface[numberOfSections];
+          for (int cell = 0; cell < numberOfSections; cell++) {
+            // Component inventory changes only after an accepted transport step. Trial flashes
+            // read that conserved composition at each stage's P/T and cannot alter a rejected step.
+            localEquilibriumStates[cell] = componentTransport.createThermodynamicState(cell, referenceFluid,
+                sections[cell].getPressure(), sections[cell].getTemperature());
+          }
+        }
+        equations.setLocalEquilibriumStates(localEquilibriumStates);
         double[][] derivative = equations.calcRHS(sections, dx);
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
         if (capturePhaseStageTerms) {
@@ -4994,7 +5001,13 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Calculate stable time step using CFL condition.
+   * Calculate the acoustic, void-wave and slug-film CFL time step for explicit integration.
+   *
+   * <p>
+   * This legacy selector does not bound every momentum-source relaxation time. A newly appearing laminar film can have
+   * a much shorter drag timescale even at zero velocity; general phase-appearance stability requires an implicit drag
+   * treatment rather than a minimum phase inventory or timestep floor.
+   * </p>
    *
    * @return stable time step [s]
    */
@@ -5027,13 +5040,16 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * <p>
-   * Typically 10-100x larger than the acoustic CFL for gas-liquid flows.
+   * The explicit wall and interphase friction relaxation also limits this step. The acoustic solve does not integrate
+   * those momentum sources implicitly, so a convective CFL alone can overshoot drag equilibrium in liquid-rich flow.
+   * The local estimate can approach zero for a vanishing viscous film; it is not a general implicit drag solve.
    * </p>
    *
    * @return stable convective time step (s)
    */
   private double calcConvectiveTimeStep() {
-    double minDt = Double.MAX_VALUE;
+    double minDt = equations == null ? Double.MAX_VALUE
+        : cflNumber * equations.calcExplicitMomentumSourceTimeStep(sections);
 
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
@@ -5442,21 +5458,22 @@ public class TwoFluidPipe extends Pipeline {
       double mDotWater = massFlow * waterMassFraction;
       double mDotLiq = mDotOil + mDotWater;
 
-      // Update densities from flash for accurate velocity calculation
+      // Retain the physical cell EOS during a transient. Copying densities from the
+      // feed pressure changes recovered holdup at fixed conserved phase masses.
       double rhoG = inlet.getGasDensity();
       double rhoOil = inlet.getOilDensity() > 100 ? inlet.getOilDensity() : 700.0;
       double rhoWater = inlet.getWaterDensity() > 100 ? inlet.getWaterDensity() : 1000.0;
 
-      if (inFluid.hasPhaseType("gas")) {
+      if (!isTransientMode && inFluid.hasPhaseType("gas")) {
         rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
         inlet.setGasDensity(rhoG);
       }
-      if (inFluid.hasPhaseType("oil")) {
+      if (!isTransientMode && inFluid.hasPhaseType("oil")) {
         rhoOil = inFluid.getPhase("oil").getDensity("kg/m3");
         inlet.setOilDensity(rhoOil);
         inlet.setLiquidDensity(rhoOil);
       }
-      if (inFluid.hasPhaseType("aqueous")) {
+      if (!isTransientMode && inFluid.hasPhaseType("aqueous")) {
         rhoWater = inFluid.getPhase("aqueous").getDensity("kg/m3");
         inlet.setWaterDensity(rhoWater);
       }
@@ -5532,13 +5549,13 @@ public class TwoFluidPipe extends Pipeline {
       double mDotWater = massFlow * waterMassFraction;
       double mDotLiq = mDotOil + mDotWater;
 
-      // Update densities from inlet fluid
+      // Retain cell EOS densities during a transient, as for a stream-connected inlet.
       double rhoG = inlet.getGasDensity();
-      if (inFluid.hasPhaseType("gas")) {
+      if (!isTransientMode && inFluid.hasPhaseType("gas")) {
         rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
         inlet.setGasDensity(rhoG);
       }
-      if (inFluid.hasPhaseType("oil")) {
+      if (!isTransientMode && inFluid.hasPhaseType("oil")) {
         inlet.setOilDensity(inFluid.getPhase("oil").getDensity("kg/m3"));
         inlet.setLiquidDensity(inFluid.getPhase("oil").getDensity("kg/m3"));
       }
@@ -6053,8 +6070,10 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * This opt-in path uses the accepted hydrodynamic phase face fluxes and interphase source terms. Enable it before
-   * {@link #run(UUID)} so the distributed component state can be initialized from the steady phase inventories.
-   * Positive-flow boundaries and an unchanged named component slate are currently required.
+   * {@link #run(UUID)} so the distributed component state can be initialized from the steady phase inventories. With
+   * mass transfer enabled, phase mass targets come from a flash of the conserved local component composition, so
+   * hydraulic slip alone does not create evaporation. Positive-flow boundaries and an unchanged named component slate
+   * are currently required.
    * </p>
    *
    * @param enabled true to track named components conservatively

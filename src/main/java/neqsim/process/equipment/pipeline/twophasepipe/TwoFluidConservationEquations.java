@@ -13,6 +13,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalcu
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseState;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.DispersedBubbleDragSolver;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.MUSCLReconstructor;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * Two-fluid conservation equations for transient multiphase pipe flow.
@@ -222,6 +223,18 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /** Phase-resolved cell source rates from the most recent {@link #calcRHS} evaluation. */
   private double[][] lastPhaseMassSourcesPerLength = new double[0][3];
+
+  /** Read-only local component-equilibrium states supplied for the current RHS evaluation. */
+  private transient SystemInterface[] localEquilibriumStates;
+
+  /**
+   * Supply flashed local component states for gas-liquid source evaluation.
+   *
+   * @param states one state per cell, or null to use the legacy reference-composition closure
+   */
+  public void setLocalEquilibriumStates(SystemInterface[] states) {
+    localEquilibriumStates = states == null ? null : states.clone();
+  }
 
   /**
    * Instantaneous phase-resolved terms in the finite-volume domain mass balance.
@@ -723,6 +736,8 @@ public class TwoFluidConservationEquations implements Serializable {
           sec.getLiquidViscosity(), sec.getLiquidHoldup(), sec.getDiameter(), sec.getRoughness());
       blended.gasWallShear += entry.getValue() * component.gasWallShear;
       blended.liquidWallShear += entry.getValue() * component.liquidWallShear;
+      blended.gasWallForcePerLength += entry.getValue() * component.gasWallForcePerLength;
+      blended.liquidWallForcePerLength += entry.getValue() * component.liquidWallForcePerLength;
     }
     return blended;
   }
@@ -960,6 +975,163 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
+   * Estimate the explicit momentum-source time step from local friction relaxation.
+   *
+   * <p>
+   * An implicit acoustic solve does not make wall or interphase drag implicit. For a pair of phases with masses per
+   * length {@code m1,m2} and drag derivative {@code k=dF/d(u1-u2)}, their relative velocity relaxes with rate
+   * {@code k*(1/m1+1/m2)}. The gas-liquid and oil-water rates are combined with a conservative row-sum bound of the
+   * wall-force Jacobian. Small centered velocity probes retain the finite laminar limit at zero velocity and evaluate
+   * the configured regime closures without assuming every friction law is quadratic. Absolute-speed-dependent drag uses
+   * both phase-velocity derivatives, and three-phase force fractions retain each receiving phase's inertia. Regime
+   * weights and thermophysical properties are held fixed during these local probes; the estimate does not replace
+   * nonlinear state validation. The caller applies its CFL safety factor to the returned time step.
+   * </p>
+   *
+   * <p>
+   * Exactly absent phases contribute no inverse mass. Bubble drag already advanced by the stiff source split is
+   * excluded. This method refreshes closure diagnostics but does not change conservative phase mass or momentum. A
+   * present phase with very small inertia can produce an arbitrarily short relaxation time, including a stationary
+   * laminar film. No minimum phase inventory or timestep is imposed. TwoFluidPipe applies this estimate to its IMEX
+   * timestep; its explicit Euler and Runge-Kutta methods retain their acoustic CFL selection.
+   * </p>
+   *
+   * @param sections current finite-volume sections
+   * @return source time step in seconds, positive infinity without explicit momentum relaxation
+   */
+  public double calcExplicitMomentumSourceTimeStep(TwoFluidSection[] sections) {
+    updateClosureRelations(sections);
+    double maximumRate = 0.0;
+    for (TwoFluidSection section : sections) {
+      double gasMass = section.getGasMassPerLength();
+      double oilMass = section.getOilMassPerLength();
+      double waterMass = section.getWaterMassPerLength();
+      double liquidMass = oilMass + waterMass;
+      double liquidWallInverseMass = liquidMass > 0.0 ? 1.0 / liquidMass : 0.0;
+      double liquidInterfaceInverseMass = liquidWallInverseMass;
+      if (enableWaterOilSlip && section.getLiquidHoldup() > 0.0) {
+        double oilWallFraction = section.getOilHoldup() / section.getLiquidHoldup();
+        double oilInterfaceFraction = oilGasInterfaceForceFraction(section);
+        liquidWallInverseMass = Math.max(oilMass > 0.0 ? oilWallFraction / oilMass : 0.0,
+            waterMass > 0.0 ? (1.0 - oilWallFraction) / waterMass : 0.0);
+        liquidInterfaceInverseMass = Math.max(oilMass > 0.0 ? oilInterfaceFraction / oilMass : 0.0,
+            waterMass > 0.0 ? (1.0 - oilInterfaceFraction) / waterMass : 0.0);
+      }
+      TwoFluidSection probe = section.clone();
+      Map<PipeSection.FlowRegime, Double> weights = section.getRegimeWeights();
+      double gasVelocity = section.getGasVelocity();
+      double liquidVelocity = section.getLiquidVelocity();
+      double gasPerturbation = momentumSourceVelocityPerturbation(gasVelocity);
+      double liquidPerturbation = momentumSourceVelocityPerturbation(liquidVelocity);
+
+      probe.setGasVelocity(gasVelocity + gasPerturbation);
+      WallFriction.WallFrictionResult gasPlus = calculateWallFriction(probe, weights);
+      probe.setGasVelocity(gasVelocity - gasPerturbation);
+      WallFriction.WallFrictionResult gasMinus = calculateWallFriction(probe, weights);
+      probe.setGasVelocity(gasVelocity);
+      probe.setLiquidVelocity(liquidVelocity + liquidPerturbation);
+      WallFriction.WallFrictionResult liquidPlus = calculateWallFriction(probe, weights);
+      probe.setLiquidVelocity(liquidVelocity - liquidPerturbation);
+      WallFriction.WallFrictionResult liquidMinus = calculateWallFriction(probe, weights);
+      probe.setLiquidVelocity(liquidVelocity);
+      probe.setOilVelocity(section.getOilVelocity());
+      probe.setWaterVelocity(section.getWaterVelocity());
+
+      double gasWallRate = gasMass > 0.0
+          ? (Math.abs(gasPlus.gasWallForcePerLength - gasMinus.gasWallForcePerLength) / (2.0 * gasPerturbation)
+              + Math.abs(liquidPlus.gasWallForcePerLength - liquidMinus.gasWallForcePerLength)
+                  / (2.0 * liquidPerturbation))
+              / gasMass
+          : 0.0;
+      double liquidWallRate = liquidMass > 0.0
+          ? (Math.abs(gasPlus.liquidWallForcePerLength - gasMinus.liquidWallForcePerLength) / (2.0 * gasPerturbation)
+              + Math.abs(liquidPlus.liquidWallForcePerLength - liquidMinus.liquidWallForcePerLength)
+                  / (2.0 * liquidPerturbation))
+              * liquidWallInverseMass
+          : 0.0;
+      double rate = Math.max(gasWallRate, liquidWallRate);
+
+      boolean implicitBubbleDrag = enableStiffBubbleDrag && isDispersedBubbleRegime(section.getFlowRegime());
+      if (gasMass > 0.0 && liquidMass > 0.0 && !implicitBubbleDrag) {
+        probe.setGasVelocity(gasVelocity + gasPerturbation);
+        InterfacialFriction.InterfacialFrictionResult plus = calculateInterfacialFriction(probe, weights);
+        probe.setGasVelocity(gasVelocity - gasPerturbation);
+        InterfacialFriction.InterfacialFrictionResult minus = calculateInterfacialFriction(probe, weights);
+        probe.setGasVelocity(gasVelocity);
+        double gasDragDerivative = Math.abs(
+            interfacialForcePerLength(probe, plus) - interfacialForcePerLength(probe, minus)) / (2.0 * gasPerturbation);
+        probe.setLiquidVelocity(liquidVelocity + liquidPerturbation);
+        plus = calculateInterfacialFriction(probe, weights);
+        probe.setLiquidVelocity(liquidVelocity - liquidPerturbation);
+        minus = calculateInterfacialFriction(probe, weights);
+        probe.setLiquidVelocity(liquidVelocity);
+        double liquidDragDerivative = Math
+            .abs(interfacialForcePerLength(probe, plus) - interfacialForcePerLength(probe, minus))
+            / (2.0 * liquidPerturbation);
+        // Annular and wavy closures also depend on absolute gas Reynolds number,
+        // so the two velocity derivatives need not have equal magnitude.
+        rate += gasDragDerivative / gasMass + liquidDragDerivative * liquidInterfaceInverseMass;
+      }
+      if (enableWaterOilSlip && oilMass > 0.0 && waterMass > 0.0) {
+        double oilVelocity = section.getOilVelocity();
+        double perturbation = momentumSourceVelocityPerturbation(oilVelocity);
+        probe.setOilVelocity(oilVelocity + perturbation);
+        double plus = probe.calcOilWaterInterfacialShear();
+        probe.setOilVelocity(oilVelocity - perturbation);
+        double minus = probe.calcOilWaterInterfacialShear();
+        double areaPerLength = section.getDiameter() * 0.5 * section.getLiquidHoldup();
+        double dragDerivative = Math.abs(plus - minus) * areaPerLength / (2.0 * perturbation);
+        rate += dragDerivative * (1.0 / oilMass + 1.0 / waterMass);
+      }
+      if (!Double.isFinite(rate)) {
+        return 0.0;
+      }
+      maximumRate = Math.max(maximumRate, rate);
+    }
+    return maximumRate > 0.0 ? 1.0 / maximumRate : Double.POSITIVE_INFINITY;
+  }
+
+  private static double momentumSourceVelocityPerturbation(double velocity) {
+    return 1.0e-6 * Math.max(1.0, Math.abs(velocity));
+  }
+
+  /** Integrate the interface shear with the same geometry fallback as the explicit source. */
+  private static double interfacialForcePerLength(TwoFluidSection section,
+      InterfacialFriction.InterfacialFrictionResult friction) {
+    double area = friction.interfacialAreaPerLength;
+    if (!Double.isFinite(area) || area <= 0.0) {
+      area = section.getDiameter();
+    }
+    return friction.interfacialShear * area;
+  }
+
+  /** Fraction of gas-liquid interface force assigned to present oil by the source closure. */
+  private static double oilGasInterfaceForceFraction(TwoFluidSection section) {
+    if (section.getOilHoldup() <= 0.0) {
+      return 0.0;
+    }
+    if (section.getWaterHoldup() <= 0.0) {
+      return 1.0;
+    }
+    if (section.getOilWaterResult() != null) {
+      switch (section.getOilWaterResult().regime) {
+      case DISPERSED_OIL_IN_WATER:
+        return 0.2;
+      case DISPERSED_WATER_IN_OIL:
+        return 0.9;
+      case DUAL_DISPERSION:
+        return section.getOilHoldup() / section.getLiquidHoldup();
+      case STRATIFIED:
+      case STRATIFIED_WITH_MIXING:
+        return 0.85;
+      default:
+        return 0.8;
+      }
+    }
+    return 0.8;
+  }
+
+  /**
    * Calculate source terms for all cells.
    *
    * <p>
@@ -1004,13 +1176,27 @@ public class TwoFluidConservationEquations implements Serializable {
       if (S_L < 1e-10) {
         S_L = Math.PI * sec.getDiameter() * alphaL;
       }
-      if (S_i < 1e-10) {
+      if (!Double.isFinite(S_i) || S_i <= 0.0) {
         S_i = sec.getDiameter(); // Approximate for non-stratified
       }
 
-      // Wall friction forces (N/m)
-      double F_wG = alphaG > 0.0 ? -sec.getGasWallShear() * S_G : 0.0;
-      double F_wL = alphaL > 0.0 ? -sec.getLiquidWallShear() * S_L : 0.0;
+      // Integrate each regime's shear over its own wall geometry before blending.
+      double F_wG;
+      double F_wL;
+      if (sec.getRegimeWeights() != null) {
+        WallFriction.WallFrictionResult wallResult = calculateWallFriction(sec, sec.getRegimeWeights());
+        F_wG = -wallResult.gasWallForcePerLength;
+        F_wL = -wallResult.liquidWallForcePerLength;
+      } else {
+        boolean stratified = sec.getFlowRegime() == PipeSection.FlowRegime.STRATIFIED_SMOOTH
+            || sec.getFlowRegime() == PipeSection.FlowRegime.STRATIFIED_WAVY;
+        double gasPerimeter = stratified ? S_G : Math.PI * sec.getDiameter();
+        double liquidPerimeter = stratified ? S_L : Math.PI * sec.getDiameter();
+        F_wG = -sec.getGasWallShear() * gasPerimeter;
+        F_wL = -sec.getLiquidWallShear() * liquidPerimeter;
+      }
+      F_wG = alphaG > 0.0 ? F_wG : 0.0;
+      F_wL = alphaL > 0.0 ? F_wL : 0.0;
 
       // Interfacial friction force (N/m)
       // Positive interfacial shear decelerates gas, accelerates liquid
@@ -1033,7 +1219,15 @@ public class TwoFluidConservationEquations implements Serializable {
       // Mass transfer source (if enabled)
       PhaseMassTransfer phaseMassTransfer = PhaseMassTransfer.zero(true, true, null);
       if (includeMassTransfer) {
-        phaseMassTransfer = calcPhaseMassTransfer(sec);
+        if (localEquilibriumStates != null && thermodynamicCoupling != null) {
+          if (localEquilibriumStates.length != sections.length || localEquilibriumStates[i] == null) {
+            throw new IllegalStateException("Local equilibrium states must cover every hydrodynamic cell");
+          }
+          phaseMassTransfer = thermodynamicCoupling.calcPhaseMassTransferRatePerLength(sec, massTransferRelaxationTime,
+              localEquilibriumStates[i]);
+        } else {
+          phaseMassTransfer = calcPhaseMassTransfer(sec);
+        }
       }
       double Gamma_G = phaseMassTransfer.getGasSourceKgPerMetreSecond();
       double Gamma_O = phaseMassTransfer.getOilSourceKgPerMetreSecond();
@@ -1068,38 +1262,7 @@ public class TwoFluidConservationEquations implements Serializable {
         // In stratified oil-water: gas sits on top of oil, so oil gets most interface force.
         // In dispersed W/O: oil (continuous) gets all gas-liquid interface force.
         // In dispersed O/W: water (continuous) gets most gas-liquid interface force.
-        double oilInterfaceFrac = 0.8; // Default: oil gets most of gas-liquid interface
-        if (sec.getOilWaterResult() != null) {
-          switch (sec.getOilWaterResult().regime) {
-          case DISPERSED_OIL_IN_WATER:
-            // Water is continuous; gas interacts mainly with water
-            oilInterfaceFrac = 0.2;
-            break;
-          case DISPERSED_WATER_IN_OIL:
-            // Oil is continuous; gas interacts mainly with oil
-            oilInterfaceFrac = 0.9;
-            break;
-          case DUAL_DISPERSION:
-            // Both present; split by holdup fraction
-            oilInterfaceFrac = oilHoldupFrac;
-            break;
-          case STRATIFIED:
-          case STRATIFIED_WITH_MIXING:
-            // Stratified: gas on top of oil, oil gets most interface
-            oilInterfaceFrac = 0.85;
-            break;
-          default:
-            oilInterfaceFrac = 0.8;
-            break;
-          }
-        }
-        // An absent phase cannot carry mechanical interface force. Preserve the
-        // existing regime correlation only when both liquid phases are present.
-        if (alphaO <= 0.0) {
-          oilInterfaceFrac = 0.0;
-        } else if (alphaW <= 0.0) {
-          oilInterfaceFrac = 1.0;
-        }
+        double oilInterfaceFrac = oilGasInterfaceForceFraction(sec);
         double F_iO = F_iL * oilInterfaceFrac;
         double F_iW = F_iL * (1.0 - oilInterfaceFrac);
 

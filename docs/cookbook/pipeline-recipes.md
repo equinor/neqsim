@@ -483,9 +483,13 @@ over 4–12 MSm3/d, `TwoFluidPipe` reproduces the rate exponent in ΔP and respo
 heating, while `PipeBeggsAndBrills` sits 30–60% above it because its two-phase friction multiplier
 is an extrapolation at this liquid loading. Local liquid holdup at low
 rate is still dominated by single terrain trap sections, so valley inventory is indicative rather
-than a design number. **The three-phase free-water case does not converge** - with 15 m3/hr of free
-water the solve is wall-clock limited, so always check
-`isSteadyStateConverged()` on a water-bearing line.
+than a design number. **The historical three-phase free-water case remains unqualified.** The
+earlier 73.8 km solve with 15 m3/hr of free water was wall-clock limited. Its complete input fixture
+is not available in the repository, so the recent pressure-boundary and oil/water-split corrections
+have not been assessed on that exact line. Always check `isSteadyStateConverged()` on a water-bearing
+line. A separate, reproducible 3 km uphill gas/oil/water case now converges with all three phases
+present and each phase mass flux checked against independent local equilibrium flashes; this does
+not replace qualification of the historical export line.
 See [Known limitations](../wiki/two_fluid_model#known-limitations).
 
 **Always check the steady-state outcome** — `run()` does not throw when the solve fails:

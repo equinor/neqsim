@@ -754,6 +754,16 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - SSPRK3 (Strong stability preserving)
 - IMEX pressure correction
 
+The IMEX timestep is limited by both convection and the explicit wall/interphase drag relaxation.
+An implicit pressure update does not remove the source stability restriction. The estimate excludes
+dispersed-bubble drag when its implicit source option is enabled. Euler and Runge-Kutta retain
+their acoustic CFL; this does not bound all explicit drag timescales. A newly appearing laminar
+film can have arbitrarily fast relaxation, so the IMEX source limit may also become impractically
+small. General phase-appearance stability requires implicit drag, without artificial phase-mass
+or timestep floors. Wall forces use
+regime-specific wetted geometry and are blended after integration: slug/churn volume weights are
+applied once, while annular films and dispersed-liquid continuums use the full wall perimeter.
+
 ### Coupled Pressure-Momentum Correction
 
 The opt-in coupled route corrects phase masses, phase momenta, compressible densities, and pressure
@@ -799,6 +809,44 @@ the 50-step liquid-outlet range is -18.55 to 6.88 kg/s versus the stored 0.375 t
 comparison. Do not tune public closures to that commercial trace; use the public Tengesdal
 experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 
+### Public severe-slugging qualification
+
+The candidate with the wall-force and slip corrections was tested on 6 September 2026 using
+all five existing 100 s characterization trajectories. All seven active checks passed with their
+original fixtures and assertions, including conservation, repeatability, mesh and outer-step
+checks. The resolved reference gave a 29.768 kPa pressure amplitude and a 30.55 s
+liquid-production period. Across the ensemble, amplitudes were 23.640–29.768 kPa and periods
+were 11.30–30.55 s. These short trajectories do not qualify the sustained experimental cycle.
+
+The same candidate completed the exact disabled 600 s Tengesdal Test 3 method, with its
+acceptance targets unchanged, but failed five requirements:
+
+| Metric | Observed | Required |
+|--------|----------|----------|
+| Pressure amplitude | 36.301 kPa | 68.6–127.4 kPa |
+| Liquid-production period | Not resolved | 26.6–49.4 s |
+| Completed settled liquid-production cycles | 0 | At least 2 |
+| Initial steady flowline holdup | 0.330546 | 0.33858–0.34542 |
+| Sticky pressure-correction limit | Activated | Inactive |
+
+No substeps were rejected and outlet backflow was not clamped. Captured phase and total
+mass-closure diagnostics were below $1.6\times10^{-15}$, but the phase-conservation assertions
+came after the failing assertion group and were not reached. The mean settled flowline holdup
+was 0.95; a 0.531 s pressure oscillation is not the required liquid-production cycle. The earlier
+pressure/EOS-only candidate gave a 40.909 kPa amplitude and 56.167 s liquid-production period;
+the new corrections do not establish improved experimental severe-slugging accuracy. Retaining
+the acoustic step for explicit integrators resolves the temporary source-CFL stall, while the
+physical qualification remains open. The holdup target is a historical numerical regression
+value; the pressure amplitude and period targets derive from the experimental pressure trace.
+
+The [public source](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf),
+Table 4-1, reports Crystex oil viscosity of 18.9 cSt at 40 °C. The current density-based surrogate
+gives 5.60685 cSt at 40 °C and atmospheric pressure, 70.3% lower; its value at the assumed 25 °C
+fixture temperature is 8.02907 cSt. A measured 25 °C value or a justified temperature relationship
+is needed before changing that input. No property or closure is tuned to the desired transient
+metrics. See the [full benchmark scope](../process/TWOFLUIDPIPE_MODEL.md#public-severe-slugging-benchmark)
+for the unchanged targets, source assumptions and remaining limitations.
+
 ### Higher-Order Reconstruction
 
 `MUSCLReconstructor` provides:
@@ -807,6 +855,16 @@ experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 - Second-order accuracy in smooth regions
 
 ## Thermodynamic Coupling
+
+When `setComponentTransportEnabled(true)` and `setIncludeMassTransfer(true)` are both selected
+before initialization, transfer uses equilibrium phase mass fractions from the conserved local
+component inventory. This preserves phase equilibrium when hydraulic slip changes residence
+inventories. Without component transport, the reference-composition/no-slip source remains an
+approximation. The sustained regression covers 120 s of gas, gas/oil and gas/oil/water flow with
+heat and EOS updates active, plus heating/cooling transfer signs and conservative component
+ledgers. Positive-flow boundaries and a fixed named-component slate remain required.
+
+
 
 ### Flash Calculations
 
@@ -1159,7 +1217,7 @@ enthalpy in the pure-oil and pure-water limits. This preserves the enthalpy of t
 volume weights are inappropriate for a mass-specific property.
 
 The new phase matrix exercises a one-second 10% feed-rate step. An explicit rerun of the already
-disabled 1800 s liquid-rich fixed-point case still gives **5.3435%** inventory drift, exceeding its
+disabled 1800 s liquid-rich fixed-point case still gives **5.7570%** inventory drift, exceeding its
 unchanged **5%** limit. Long-duration liquid-rich behaviour remains unqualified. Metastable trace
 continuity is tested with frozen thermodynamic properties; separate public equilibrium tests
 require dissolved trace liquid to disappear from every cell, including the inlet.
@@ -1167,6 +1225,13 @@ require dissolved trace liquid to disappear from every cell, including the inlet
 The public severe-slugging, long-horizon liquid-rich and unconverged free-water steady cases retain
 their existing qualification limits. See the
 [model validation status](../process/TWOFLUIDPIPE_MODEL.md#validation-status) for the full scope.
+
+Transient inlet conditions preserve the first physical cell's EOS density at its solved
+pressure. The coupled solver uses an external feed face; the uncoupled solver retains its inlet
+momentum treatment. The unchanged near-zero-time handoff
+and all boundary-condition regressions cover this behavior. Annular holdup now uses
+$\alpha_L=S\lambda_L/[1+(S-1)\lambda_L]$ consistently with $S=v_G/v_L$ in both closure
+paths; dedicated regressions disable minimum-slip enforcement to expose the algebra itself.
 
 ### Existing comparison benchmarks
 

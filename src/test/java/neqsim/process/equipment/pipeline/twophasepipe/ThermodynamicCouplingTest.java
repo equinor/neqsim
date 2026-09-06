@@ -153,6 +153,34 @@ class ThermodynamicCouplingTest {
   }
 
   @Test
+  void testLocalEquilibriumAcceptsHydrocarbonLiquidPhaseAliases() {
+    SystemInterface equilibrium = testFluid.clone();
+    new ThermodynamicOperations(equilibrium).TPflash();
+    equilibrium.initProperties();
+    assertTrue(equilibrium.hasPhaseType(PhaseType.GAS));
+    assertTrue(equilibrium.hasPhaseType(PhaseType.OIL));
+    TwoFluidSection section = gasOnlySectionWithTwoTenthsKgEquilibriumLiquid();
+    section.setPressure(equilibrium.getPressure("Pa"));
+    section.setTemperature(equilibrium.getTemperature());
+    PhaseMassTransfer expected = coupling.calcPhaseMassTransferRatePerLength(section, 30.0, equilibrium);
+    assertTrue(expected.getGasSourceKgPerMetreSecond() < 0.0);
+    assertTrue(expected.getOilSourceKgPerMetreSecond() > 0.0);
+    int oilPhase = equilibrium.getPhaseNumberOfPhase("oil");
+
+    for (PhaseType alias : new PhaseType[] { PhaseType.LIQUID, PhaseType.LIQUID_ASPHALTENE }) {
+      SystemInterface aliased = equilibrium.clone();
+      aliased.getPhase(oilPhase).setType(alias);
+      PhaseMassTransfer actual = coupling.calcPhaseMassTransferRatePerLength(section, 30.0, aliased);
+      assertEquals(expected.getGasSourceKgPerMetreSecond(), actual.getGasSourceKgPerMetreSecond(), 1.0e-15);
+      assertEquals(expected.getOilSourceKgPerMetreSecond(), actual.getOilSourceKgPerMetreSecond(), 1.0e-15);
+      assertEquals(0.0, actual.getWaterSourceKgPerMetreSecond(), 0.0,
+          "Hydrocarbon liquid aliases must not be assigned to the aqueous inventory");
+      assertEquals(0.0, actual.getTotalSourceKgPerMetreSecond(), 1.0e-15);
+      assertEquals(alias, aliased.getPhase(oilPhase).getType(), "Source evaluation must not mutate the supplied fluid");
+    }
+  }
+
+  @Test
   void testEvaporationUsesAndLimitsActualDonorInventory() {
     ThermoProperties gasEquilibrium = new ThermoProperties();
     gasEquilibrium.gasVaporFraction = 1.0;
