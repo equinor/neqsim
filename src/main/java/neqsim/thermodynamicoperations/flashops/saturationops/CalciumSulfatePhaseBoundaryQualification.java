@@ -73,6 +73,18 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
   public static final double AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_RELATIVE_UNCERTAINTY = 0.0003;
   /** Maximum publication-level relative density uncertainty reported in the article abstract. */
   public static final double AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_RELATIVE_UNCERTAINTY = 0.0005;
+  /** Number of molality-temperature isotherms used to isolate pressure response. */
+  public static final int AQUEOUS_PRESSURE_RESPONSE_GROUP_COUNT = 25;
+  /** Number of non-anchor pressure states in the pressure-response comparison. */
+  public static final int AQUEOUS_PRESSURE_RESPONSE_COMPARISON_COUNT = 172;
+  /** Mean absolute relative error after removing each isotherm's low-pressure density offset. */
+  public static final double AQUEOUS_PRESSURE_RESPONSE_MARE = 0.00596124964150643;
+  /** RMS relative error after removing each isotherm's low-pressure density offset. */
+  public static final double AQUEOUS_PRESSURE_RESPONSE_RMSRE = 0.0073152811349379634;
+  /** Maximum absolute relative error after removing each isotherm's low-pressure density offset. */
+  public static final double AQUEOUS_PRESSURE_RESPONSE_MAXARE = 0.021286678807350468;
+  /** Maximum pressure-increment residual divided by combined expanded source uncertainty. */
+  public static final double AQUEOUS_PRESSURE_RESPONSE_MAXIMUM_UNCERTAINTY_RATIO = 48.01423407881762;
   /** Temperature of the liquid-water density reference. */
   public static final double WATER_DENSITY_REFERENCE_TEMPERATURE_K = 298.15;
   /** Pressure of the liquid-water density reference. */
@@ -309,6 +321,15 @@ public final class CalciumSulfatePhaseBoundaryQualification implements Serializa
    * @return {@code false}; the preregistered full-matrix residual test rejects quantitative use
    */
   public static boolean isAqueousPressureDensityModelQualified() {
+    return false;
+  }
+
+  /**
+   * Reports whether the current aqueous density model passes the offset-free pressure-response test.
+   *
+   * @return {@code false}; errors persist after anchoring every isotherm at its lowest pressure
+   */
+  public static boolean isAqueousPressureResponseQualified() {
     return false;
   }
 

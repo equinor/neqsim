@@ -419,7 +419,14 @@ from the missing limiting-volume term. Al Ghafri et al. (2012),
 extracted to identical canonical row hashes, and the test fixture retains every row's 95% combined
 expanded density uncertainty. Against this hold-out, the current aqueous density path has MARE
 0.632%, RMSRE 0.845%, and maximum absolute relative error 2.661%; it is therefore explicitly
-unqualified for quantitative pressure-density use. The machine-readable record is available under
+unqualified for quantitative pressure-density use. This is not primarily an ambient-density offset:
+anchoring each of 25 molality-temperature isotherms to its lowest-pressure observation leaves 172
+pressure increments with MARE 0.596%, RMSRE 0.732%, maximum absolute relative error 2.129%, and a
+maximum increment residual 48.0 times the combined expanded source uncertainty. The anchored MARE
+also increases from 0.341% at 1 mol/kg to 0.670% at 3 mol/kg and 0.810% at 6 mol/kg. The existing
+path therefore fails the offset-free pressure-response test, and a replacement must represent the
+solution pressure response rather than merely retune an atmospheric density intercept. The
+machine-readable record is available under
 the [NIST data license](https://www.nist.gov/open/license). Its lowest concentration is 1 mol/kg, so
 it cannot determine the infinite-dilution CaCl2 volume needed to close the calcium-sulfate
 reaction-volume cycle. The candidate dilute lineage, Oakes et al. (1990),
@@ -427,7 +434,7 @@ reaction-volume cycle. The candidate dilute lineage, Oakes et al. (1990),
 row-level audit, propagated uncertainty, and redistribution-compatible provenance remain unresolved.
 Accordingly `hasIndependentAqueousPressureEvidence()` and
 `isAqueousPressureEvidenceRowAudited()` are true, while
-`isAqueousPressureDensityModelQualified()` and
+`isAqueousPressureDensityModelQualified()`, `isAqueousPressureResponseQualified()`, and
 `isAqueousLimitingVolumeEvidenceResolved()` remain false. These flags register evidence scope only;
 they do not change a COMPSALT coefficient or make high-pressure calcium-sulfate use qualified.
 
