@@ -968,8 +968,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("component-2", threeEndpointCycle.getConnectionComponentId());
     assertTrue(threeEndpointCycle.hasConnectionComponentEvidence());
     assertSame(first.getConnectionComponents().get(1), threeEndpointCycle.getConnectionComponent());
-    assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"),
-        threeEndpointCycle.getConnectionComponent().getEndpointIds());
+    assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getConnectionComponent().getEndpointIds());
     assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getEndpointIds());
     List<DexpiConnectionEndpointInfo> cycleEndpoints = threeEndpointCycle.getEndpoints();
     assertEquals(3, cycleEndpoints.size());
@@ -1040,8 +1039,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionCycles().clear());
 
     DexpiConnectionCycleInfo legacy = new DexpiConnectionCycleInfo("legacy-cycle", "legacy-component",
-        Collections.singletonList("N-LEGACY"), Collections.singletonList("C-LEGACY"),
-        Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(), false);
+        Collections.singletonList("N-LEGACY"), Collections.singletonList("C-LEGACY"), Collections.<String>emptyList(),
+        Collections.<String>emptyList(), Collections.<String>emptyList(), false);
     assertFalse(legacy.hasConnectionComponentEvidence());
     assertNull(legacy.getConnectionComponent());
 

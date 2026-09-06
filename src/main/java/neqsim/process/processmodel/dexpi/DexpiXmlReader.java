@@ -1295,8 +1295,7 @@ public final class DexpiXmlReader {
       }
     }
 
-    Map<String, DexpiConnectionComponentInfo> connectionComponentByEndpointId =
-        new HashMap<String, DexpiConnectionComponentInfo>();
+    Map<String, DexpiConnectionComponentInfo> connectionComponentByEndpointId = new HashMap<String, DexpiConnectionComponentInfo>();
     for (DexpiConnectionComponentInfo component : connectionComponents) {
       for (String endpointId : component.getEndpointIds()) {
         connectionComponentByEndpointId.put(endpointId, component);
@@ -1442,8 +1441,8 @@ public final class DexpiXmlReader {
 
     private DexpiConnectionCycleInfo toInfo() {
       return new DexpiConnectionCycleInfo(id, connectionComponentId, connectionComponent, endpointIds, endpoints,
-          connectionIds, connections, incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds,
-          boundaryConnections, unresolvedEndpointIds, selfReference);
+          connectionIds, connections, incomingBoundaryConnectionIds, outgoingBoundaryConnectionIds, boundaryConnections,
+          unresolvedEndpointIds, selfReference);
     }
   }
 
