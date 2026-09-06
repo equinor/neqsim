@@ -23,14 +23,22 @@ public final class DexpiConnectionComponentInfo implements Serializable {
 
   private final String id;
   private final List<String> endpointIds;
+  private final List<DexpiConnectionEndpointInfo> endpoints;
   private final List<String> connectionIds;
+  private final List<DexpiConnectionInfo> connections;
   private final List<String> sourceEndpointIds;
   private final List<String> sinkEndpointIds;
   private final List<String> potentialMultiConnectionEndpointIds;
   private final List<String> unresolvedEndpointIds;
+  private final boolean completeEvidence;
 
   /**
    * Creates immutable source-reference component evidence.
+   *
+   * <p>
+   * This legacy constructor preserves scalar and identity evidence only. {@link #hasCompleteEvidence()} returns
+   * {@code false}; use the complete-evidence constructor when endpoint and connection records are available.
+   * </p>
    *
    * @param id deterministic component evidence identity
    * @param endpointIds explicit endpoint identities in first-reference order
@@ -43,13 +51,46 @@ public final class DexpiConnectionComponentInfo implements Serializable {
   public DexpiConnectionComponentInfo(String id, List<String> endpointIds, List<String> connectionIds,
       List<String> sourceEndpointIds, List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
       List<String> unresolvedEndpointIds) {
+    this(id, endpointIds, Collections.<DexpiConnectionEndpointInfo>emptyList(), connectionIds,
+        Collections.<DexpiConnectionInfo>emptyList(), sourceEndpointIds, sinkEndpointIds,
+        potentialMultiConnectionEndpointIds, unresolvedEndpointIds, false);
+  }
+
+  /**
+   * Creates immutable source-reference component evidence with complete endpoint and connection occurrences.
+   *
+   * @param id deterministic component evidence identity
+   * @param endpointIds explicit endpoint identities in first-reference order
+   * @param endpoints endpoint evidence records in first-reference order
+   * @param connectionIds connection-evidence identities in source order
+   * @param connections connection occurrences in source order
+   * @param sourceEndpointIds endpoints classified as source evidence
+   * @param sinkEndpointIds endpoints classified as sink evidence
+   * @param potentialMultiConnectionEndpointIds endpoints with multiple incoming or outgoing occurrences
+   * @param unresolvedEndpointIds endpoint identities that do not resolve in the source document
+   */
+  public DexpiConnectionComponentInfo(String id, List<String> endpointIds,
+      List<DexpiConnectionEndpointInfo> endpoints, List<String> connectionIds, List<DexpiConnectionInfo> connections,
+      List<String> sourceEndpointIds, List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
+      List<String> unresolvedEndpointIds) {
+    this(id, endpointIds, endpoints, connectionIds, connections, sourceEndpointIds, sinkEndpointIds,
+        potentialMultiConnectionEndpointIds, unresolvedEndpointIds, true);
+  }
+
+  private DexpiConnectionComponentInfo(String id, List<String> endpointIds,
+      List<DexpiConnectionEndpointInfo> endpoints, List<String> connectionIds, List<DexpiConnectionInfo> connections,
+      List<String> sourceEndpointIds, List<String> sinkEndpointIds, List<String> potentialMultiConnectionEndpointIds,
+      List<String> unresolvedEndpointIds, boolean completeEvidence) {
     this.id = normalize(id);
     this.endpointIds = immutableCopy(endpointIds);
+    this.endpoints = Collections.unmodifiableList(new ArrayList<DexpiConnectionEndpointInfo>(endpoints));
     this.connectionIds = immutableCopy(connectionIds);
+    this.connections = Collections.unmodifiableList(new ArrayList<DexpiConnectionInfo>(connections));
     this.sourceEndpointIds = immutableCopy(sourceEndpointIds);
     this.sinkEndpointIds = immutableCopy(sinkEndpointIds);
     this.potentialMultiConnectionEndpointIds = immutableCopy(potentialMultiConnectionEndpointIds);
     this.unresolvedEndpointIds = immutableCopy(unresolvedEndpointIds);
+    this.completeEvidence = completeEvidence;
   }
 
   /** @return deterministic component evidence identity */
@@ -62,9 +103,19 @@ public final class DexpiConnectionComponentInfo implements Serializable {
     return endpointIds;
   }
 
+  /** @return immutable endpoint evidence records in first-reference order */
+  public List<DexpiConnectionEndpointInfo> getEndpoints() {
+    return endpoints;
+  }
+
   /** @return immutable connection-evidence identities in source order */
   public List<String> getConnectionIds() {
     return connectionIds;
+  }
+
+  /** @return immutable connection occurrences in source order */
+  public List<DexpiConnectionInfo> getConnections() {
+    return connections;
   }
 
   /** @return immutable endpoint identities classified as source evidence */
@@ -101,6 +152,11 @@ public final class DexpiConnectionComponentInfo implements Serializable {
     return connectionIds.size();
   }
 
+  /** @return whether complete endpoint and connection records were supplied */
+  public boolean hasCompleteEvidence() {
+    return completeEvidence;
+  }
+
   /** @return whether any endpoint reference in this component is unresolved */
   public boolean hasUnresolvedEndpoints() {
     return !unresolvedEndpointIds.isEmpty();
@@ -116,10 +172,21 @@ public final class DexpiConnectionComponentInfo implements Serializable {
     result.put("id", id);
     result.put("endpointCount", Integer.valueOf(getEndpointCount()));
     result.put("connectionCount", Integer.valueOf(getConnectionCount()));
+    result.put("completeEvidence", Boolean.valueOf(hasCompleteEvidence()));
     result.put("hasUnresolvedEndpoints", Boolean.valueOf(hasUnresolvedEndpoints()));
     result.put("hasPotentialMultiConnectionNodes", Boolean.valueOf(hasPotentialMultiConnectionNodes()));
     result.put("endpointIds", endpointIds);
+    List<Map<String, Object>> endpointMaps = new ArrayList<Map<String, Object>>();
+    for (DexpiConnectionEndpointInfo endpoint : endpoints) {
+      endpointMaps.add(endpoint.toMap());
+    }
+    result.put("endpoints", endpointMaps);
     result.put("connectionIds", connectionIds);
+    List<Map<String, Object>> connectionMaps = new ArrayList<Map<String, Object>>();
+    for (DexpiConnectionInfo connection : connections) {
+      connectionMaps.add(connection.toMap());
+    }
+    result.put("connections", connectionMaps);
     result.put("sourceEndpointIds", sourceEndpointIds);
     result.put("sinkEndpointIds", sinkEndpointIds);
     result.put("potentialMultiConnectionEndpointIds", potentialMultiConnectionEndpointIds);
