@@ -25,7 +25,9 @@ CATEGORY = "missing_unifac_row"
 # Kept in step with NON_MOLECULAR_TYPES in UnifacDatabaseIntegrityTest.
 NON_MOLECULAR_TYPES = {"ion", "ice", "seawater", "salt", "asphaltene"}
 
-TABLES = [("UNIFACcomp.csv", "UNIFACcomp"), ("UNIFACcompUMRPRU.csv", "UNIFACcompUMRPRU")]
+# Only UMR-PRU is in active use, and only its table is maintained. A component missing
+# from the classic table is not a gap to be filled, so it is not recorded as one.
+TABLES = [("UNIFACcompUMRPRU.csv", "UNIFACcompUMRPRU")]
 
 
 def main() -> None:

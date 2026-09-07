@@ -25,7 +25,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "src" / "main" / "resources" / "data"
 
-TARGET_FILES = ["UNIFACcomp.csv", "UNIFACcompUMRPRU.csv"]
+# UMR-PRU takes priority, and its assignments follow NTUA/Voutsas rather than DDBST.
+# UNIFACcomp.csv serves the original UNIFAC and UNIQUAC models and is left alone.
+TARGET_FILES = ["UNIFACcompUMRPRU.csv"]
 
 SUBGROUP_COLUMNS = 140
 FIXED_COLUMNS = 4  # CompNumber, Name, qUNIQUAQ, rUNIQUAQ
@@ -51,6 +53,24 @@ REVIEWED_ROWS = {
     "i-propanol": ("67-63-0", {1: 2, 3: 1, 14: 1}, "(CH3)2CH-OH"),
     "MEA": ("141-43-5", {2: 1, 14: 1, 29: 1}, "monoethanolamine, HO-CH2-CH2-NH2"),
     "PG": ("57-55-6", {1: 1, 2: 1, 3: 1, 14: 2}, "propylene glycol, CH3-CH(OH)-CH2-OH"),
+    # Naphthenes. Ring carbons take the Voutsas2017 cyclic groups cCH2 (136) and cCH (137),
+    # which is also what the DDBST modified-UNIFAC assignment set does: it gives cyclohexane
+    # {CY-CH2: 6}, methylcyclohexane {CH3: 1, CY-CH2: 5, CY-CH: 1} and n-butylcyclohexane
+    # {CH3: 1, CH2: 3, CY-CH2: 5, CY-CH: 1}.
+    "c-propane": ("75-19-4", {136: 3}, "cyclopropane; DDBST modified UNIFAC gives {CY-CH2: 3}"),
+    "c-C4": ("287-23-0", {136: 4}, "cyclobutane; DDBST modified UNIFAC gives {CY-CH2: 4}"),
+    "n-Bcychexane": ("1678-93-9", {1: 1, 2: 3, 136: 5, 137: 1}, "n-butylcyclohexane; matches DDBST"),
+    "Pent-CC6": ("4292-92-6", {1: 1, 2: 4, 136: 5, 137: 1}, "pentylcyclohexane; matches DDBST"),
+    "cis-14-DM-cy-C6": ("624-29-3", {1: 2, 136: 4, 137: 2}, "cis-1,4-dimethylcyclohexane"),
+    "trans-14-DM-cy-C6": ("2207-04-7", {1: 2, 136: 4, 137: 2}, "trans isomer; UNIFAC has no stereochemistry"),
+    # Gases carried as a single dedicated group, as methane, N2, CO2 and H2S already are.
+    "argon": ("7440-37-1", {124: 1}, "Ar group 124, Fisher1995"),
+    "hydrogen": ("1333-74-0", {127: 1}, "H2 group 127, Holderbaum1991"),
+    "ortho-hydrogen": ("1333-74-0", {127: 1}, "spin isomer of H2; identical structure, same group"),
+    "para-hydrogen": ("1333-74-0", {127: 1}, "spin isomer of H2; identical structure, same group"),
+    # Alias rows kept in COMP.csv for PVTsim compatibility; same substance, same groups.
+    "propanePVTsim": ("74-98-6", {1: 2, 2: 1}, "alias of propane"),
+    "nbutanePVTsim": ("106-97-8", {1: 2, 2: 2}, "alias of n-butane"),
 }
 
 

@@ -447,8 +447,21 @@ files silently leaves the component with no groups.
 
 ## UNIFAC Group Assignment Conventions
 
-`UNIFACGroupParam.csv` carries a `Reference` column identifying where each
-subgroup comes from:
+There are two group-assignment tables, and they are **not** interchangeable:
+
+| Table | Read by | Maintained? |
+|-------|---------|-------------|
+| `UNIFACcomp.csv` | classic UNIFAC / UNIQUAC (`ComponentGEUnifac`) | No — frozen |
+| `UNIFACcompUMRPRU.csv` | UMR-PRU (`ComponentGEUnifacUMRPRU`) | **Yes** |
+
+UMR-PRU is the model in active use, so `UNIFACcompUMRPRU.csv` is the table that
+is kept complete and correct. Where the two disagree, the UMR-PRU assignment
+follows **NTUA/Voutsas**, which takes precedence over the DDBST original-UNIFAC
+decomposition. `UNIFACcomp.csv` is left as published.
+
+The subgroup number used in both tables is the **`Secondary`** column of
+`UNIFACGroupParam.csv`, not `ID`. `UNIFACGroupParam.csv` also carries a
+`Reference` column identifying where each subgroup comes from:
 
 | Reference | Subgroups | Source |
 |-----------|-----------|--------|
@@ -476,16 +489,51 @@ ring fusion, or one of the dedicated ACOH / ACCl / ACNO2 / ACNH2 groups.
 
 The UMR-PRU set adds cyclic clones `cCH2` (136), `cCH` (137) and `cC` (138).
 They carry the **same R and Q** as CH2 / CH / C and sit in their own main groups
-66–68 so that ring-specific interaction parameters can be regressed. All cross
-terms between main group 1 and main groups 66–68 are zero in the A, B and C
-matrices, so the two choices differ **only** against water, CO2, CH4, N2, H2S,
-C2H6, Hg and TEG.
+66–68 so that ring-specific interaction parameters can be regressed. Because R
+and Q are identical, the combinatorial term is unaffected; only the residual
+term changes. All cross terms between main group 1 and main groups 66–68 are
+zero in the A, B and C matrices, and the rows are otherwise equal, so the two
+choices differ **only** against water, CO2, CH4, N2, H2S, C2H6, Hg and TEG.
 
-Original UNIFAC has no cyclic groups, so `UNIFACcomp.csv` correctly uses the
-aliphatic groups for rings. In `UNIFACcompUMRPRU.csv` the usage is currently
-mixed; the rows still using aliphatic groups are recorded in the integrity
-baseline rather than migrated, because no citable source states that every
-naphthene must use the cyclic groups.
+**In `UNIFACcompUMRPRU.csv` every ring carbon uses the cyclic groups.** This
+matches the DDBST *modified UNIFAC (Dortmund)* assignment set, which uses its
+cyclic subgroups 78/79/80 (`CY-CH2`, `CY-CH`, `CY-C`) for the same molecules:
+
+```
+cyclohexane          6*cCH2
+methylcyclohexane    1*CH3 + 5*cCH2 + 1*cCH
+n-butylcyclohexane   1*CH3 + 3*CH2 + 5*cCH2 + 1*cCH
+cyclopropane         3*cCH2
+```
+
+Original UNIFAC has no cyclic groups at all — main groups 66–68 have no rows in
+`UNIFACInterParam.csv` — so `UNIFACcomp.csv` correctly uses the aliphatic groups
+for rings. The same molecule therefore has two different, both correct,
+assignments in the two tables.
+
+Small rings (C3, C4) are outside the range the `Voutsas2017` parameters were
+regressed on, since group contribution cannot represent ring strain. They are
+assigned the cyclic groups anyway, because that is both the structurally correct
+decomposition and what DDBST does.
+
+### Gases
+
+Light gases are carried as a single dedicated group rather than decomposed:
+CH4 (122), O2 (123), Ar (124), N2 (125), H2S (126), H2 (127), CO (128),
+C2H6 (134). Spin isomers share the parent group, so `ortho-hydrogen` and
+`para-hydrogen` both use H2 (127) — UNIFAC has no way to distinguish them.
+
+Argon's main group 59 has an interaction parameter only against water, so
+against hydrocarbons argon reduces to the combinatorial term alone.
+
+### Known gap: ethylene
+
+`ethylene` has **no representable assignment**. Main group 2 (C=C) provides
+only substituted subgroups — CH2=CH, CH=CH, CH2=C, CH=C, C=C — and none stands
+for a bare CH2=CH2. DDBST has no assignment for it either, in any of its
+original, modified or PSRK sets. Representing ethylene needs a dedicated fitted
+group, the way `Voutsas` added C2H6 as group 134; it is not a data-entry fix and
+must not be approximated with a substituted olefin group.
 
 ### Missing groups fail loudly
 
@@ -493,6 +541,11 @@ A component with no group assignment gives R = Q = 0, which makes the
 combinatorial term evaluate to NaN rather than raising an error.
 `ComponentGEUnifac` and `ComponentGEUnifacUMRPRU` therefore throw when a
 component ends up with no groups.
+
+Note that a UMR-PRU or PSRK component does **not** need a row in
+`UNIFACcomp.csv`. `PhaseGEUnifac` skips building the classic components when it
+is constructing a subclass, which would otherwise discard them immediately while
+forcing every UMR-PRU component to be duplicated into the classic table.
 
 ---
 

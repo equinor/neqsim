@@ -88,6 +88,19 @@ public class UnifacDatabaseIntegrityTest {
   private static final String UMRPRU_TABLE = "UNIFACcompUMRPRU";
 
   /**
+   * Hydrocarbons that no group assignment can express, so they cannot be required to have a row.
+   *
+   * <p>
+   * Main group 2 offers only substituted olefin subgroups (CH2=CH, CH=CH, CH2=C, CH=C, C=C); none of them stands for a
+   * bare CH2=CH2. DDBST has no assignment for ethylene either, in its original, modified or PSRK sets. Covering it
+   * needs a dedicated regressed group, as Voutsas added for C2H6, and must not be approximated with a substituted
+   * olefin group.
+   * </p>
+   */
+  private static final Set<String> HYDROCARBONS_WITHOUT_A_GROUP = Collections
+      .unmodifiableSet(new TreeSet<String>(Collections.singletonList("ethylene")));
+
+  /**
    * DDBST published original UNIFAC subgroups, encoded as "secondary;name;maingroup;volumeR;surfaceQ".
    */
   private static final String[] DDBST_GROUPS = { "1;CH3;1;0.9011;0.8480", "2;CH2;1;0.6744;0.5400",
@@ -154,6 +167,43 @@ public class UnifacDatabaseIntegrityTest {
   }
 
   /**
+   * Fails when a hydrocarbon in COMP.csv has no row in the UMR-PRU group table.
+   *
+   * <p>
+   * UMR-PRU is the model in active use, so every hydrocarbon that can be added to a fluid has to be resolvable in
+   * UNIFACcompUMRPRU.csv. Unlike the baselined findings this list is not allowed to grow at all: a new hydrocarbon
+   * component must arrive together with its group assignment.
+   * </p>
+   */
+  @Test
+  public void everyHydrocarbonHasAnUmrPruGroupAssignment() {
+    Set<String> present = new TreeSet<String>();
+    for (Map<String, String> row : readTable("data/UNIFACcompUMRPRU.csv")) {
+      present.add(row.get("Name").trim());
+    }
+
+    Set<String> missing = new TreeSet<String>();
+    for (Map<String, String> row : readTable(COMPONENT_RESOURCE)) {
+      String name = row.get("NAME").trim();
+      String type = row.get("COMPTYPE") == null ? "" : row.get("COMPTYPE").trim();
+      if (!"HC".equals(type) || HYDROCARBONS_WITHOUT_A_GROUP.contains(name) || "default".equals(name)) {
+        continue;
+      }
+      if (!present.contains(name)) {
+        missing.add(name);
+      }
+    }
+
+    if (!missing.isEmpty()) {
+      for (String name : missing) {
+        logger.error("hydrocarbon without a UMR-PRU group assignment: {}", name);
+      }
+    }
+    assertTrue(missing.isEmpty(), "Hydrocarbons missing from UNIFACcompUMRPRU.csv: " + missing
+        + ". Add the group assignment in devtools/add_unifac_component_rows.py rather than skipping the component.");
+  }
+
+  /**
    * Screens every UNIFAC table and returns the findings.
    *
    * @return findings as "category TAB subject", never null
@@ -212,12 +262,13 @@ public class UnifacDatabaseIntegrityTest {
         }
       }
 
-      // A component that can be decomposed into groups but has no row here cannot be used
-      // with this activity model at all. Recording each one keeps the gap visible and, because
-      // the baseline may only shrink, stops it growing.
-      for (String componentName : groupDecomposable) {
-        if (!seen.containsKey(componentName)) {
-          findings.add("missing_unifac_row\t" + table + "/" + componentName);
+      // Only UMR-PRU is in active use, and only its table is maintained, so a component missing
+      // from the classic table is not a gap to be filled and is not recorded as one.
+      if ("UNIFACcompUMRPRU".equals(table)) {
+        for (String componentName : groupDecomposable) {
+          if (!seen.containsKey(componentName)) {
+            findings.add("missing_unifac_row\t" + table + "/" + componentName);
+          }
         }
       }
 
