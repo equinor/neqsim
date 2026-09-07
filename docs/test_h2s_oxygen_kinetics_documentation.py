@@ -185,6 +185,41 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.trajectory_test)
 
+    def test_segment_inventory_contract_is_documented_and_executable(self):
+        for token in (
+            "Per-segment inventory evidence",
+            "inlet, outlet, and reacted total-sulfide molality",
+            r"c_{r,i,\mathrm{out}} = c_0\exp(-E_{r,i,\mathrm{cumulative}})",
+            r"c_{r,i,\mathrm{reacted}} = c_{r,i,\mathrm{in}}-c_{r,i,\mathrm{out}}",
+            "inlet = outlet + reacted",
+            "reacted increments telescope",
+            "zero-duration segment",
+            "Splitting an unchanged segment",
+            "do not define oxygen consumption",
+            "pipeline control-volume coupling",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "getLowerRateInletTotalSulfideMolality()",
+            "getLowerRateOutletTotalSulfideMolality()",
+            "getLowerRateReactedTotalSulfideMolality()",
+            "getNominalInletTotalSulfideMolality()",
+            "getNominalOutletTotalSulfideMolality()",
+            "getNominalReactedTotalSulfideMolality()",
+            "getUpperRateInletTotalSulfideMolality()",
+            "getUpperRateOutletTotalSulfideMolality()",
+            "getUpperRateReactedTotalSulfideMolality()",
+        ):
+            self.assertIn(token, self.trajectory)
+
+        for token in (
+            "testSegmentInventoryTelescopesAndClosesForEveryRatePath",
+            "testZeroDurationSegmentPreservesEveryInventoryPath",
+            "testSegmentInventoryIsSplitInvariant",
+        ):
+            self.assertIn(token, self.trajectory_test)
+
     def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
         for token in (
             "Piecewise target crossing",
