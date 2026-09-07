@@ -204,8 +204,8 @@ public final class SarirAtmosphericReference {
    * @return source cross-table difference in kg/h
    */
   public static double calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceKgPerHour() {
-    return Math.abs(getPublishedPlantProductMassFlowTotalKgPerHour()
-        - getPublishedAduHydrocarbonProductMassFlowTotalKgPerHour());
+    return Math.abs(
+        getPublishedPlantProductMassFlowTotalKgPerHour() - getPublishedAduHydrocarbonProductMassFlowTotalKgPerHour());
   }
 
   /**
@@ -879,8 +879,7 @@ public final class SarirAtmosphericReference {
      * @return absolute relative error against the measured plant value, in percent
      * @throws IllegalArgumentException if the calculated rate is negative or non-finite
      */
-    public double calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(
-        double calculatedMassFlowRateKgPerHour) {
+    public double calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(double calculatedMassFlowRateKgPerHour) {
       if (!Double.isFinite(calculatedMassFlowRateKgPerHour) || calculatedMassFlowRateKgPerHour < 0.0) {
         throw new IllegalArgumentException("Calculated product mass flow must be finite and non-negative");
       }

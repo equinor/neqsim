@@ -138,22 +138,19 @@ public class SarirAtmosphericReferenceTest {
           yield.getPlantFractionOfCrudeFeed(), 1.0e-15);
       assertEquals(simulationKgPerHour[i] / SarirAtmosphericReference.getColumnCrudeFeedRateKgPerHour(),
           yield.getSimulationFractionOfCrudeFeed(), 1.0e-15);
-      assertEquals(0.0,
-          yield.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(plantKgPerHour[i]), 1.0e-12);
+      assertEquals(0.0, yield.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(plantKgPerHour[i]), 1.0e-12);
       assertEquals(yield.getAbsoluteRelativeErrorPercent(),
           yield.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(simulationKgPerHour[i]), 1.0e-9);
     }
 
-    assertEquals(54304.916666666664,
-        SarirAtmosphericReference.getPublishedPlantProductMassFlowTotalKgPerHour(), 1.0e-9);
-    assertEquals(55304.16666666668,
-        SarirAtmosphericReference.getPublishedSimulationProductMassFlowTotalKgPerHour(), 1.0e-9);
-    assertEquals(54305.43,
-        SarirAtmosphericReference.getPublishedAduHydrocarbonProductMassFlowTotalKgPerHour(), 1.0e-9);
+    assertEquals(54304.916666666664, SarirAtmosphericReference.getPublishedPlantProductMassFlowTotalKgPerHour(),
+        1.0e-9);
+    assertEquals(55304.16666666668, SarirAtmosphericReference.getPublishedSimulationProductMassFlowTotalKgPerHour(),
+        1.0e-9);
+    assertEquals(54305.43, SarirAtmosphericReference.getPublishedAduHydrocarbonProductMassFlowTotalKgPerHour(), 1.0e-9);
     assertEquals(0.5133333333357584,
         SarirAtmosphericReference.calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceKgPerHour(), 1.0e-9);
-    assertTrue(
-        SarirAtmosphericReference.calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceFraction() < 1.0e-5);
+    assertTrue(SarirAtmosphericReference.calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceFraction() < 1.0e-5);
   }
 
   @Test
