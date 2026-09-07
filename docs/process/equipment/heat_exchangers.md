@@ -98,6 +98,21 @@ Other supported modes are:
 The most recently selected temperature, duty, or energy-stream mode controls the calculation.
 After `run()`, read `getDuty()` in W or `getDuty(unit)` in a supported power unit such as `"kW"`.
 
+## Recuperators and cold-separator feedback
+
+A gas–gas exchanger whose cold inlet comes from a downstream chiller and separator forms a
+feedback loop even though there is no material recycle to the feed. `ProcessSystem` detects
+this cyclic material-stream topology when no explicit `Recycle` unit is present and iterates complete
+sequential passes until outlet temperatures, pressures, enthalpies, and component flows stabilize.
+The optimized, parallel, dataflow, hybrid, and sequential entry points use this convergence path.
+
+This prevents a downstream cooler or separator retaining a construction-time feed flow after
+its inlet has been updated. Check total and component balances across each unit and across the
+whole flowsheet. Condensation changes phase flow rates, but cannot change the total mass or
+component flows across a cooler. An implicit loop that fails to converge within 100 passes throws
+an exception; use an explicit `Recycle` when configurable tolerances or acceleration are needed.
+Single-step execution intentionally returns a partial iteration.
+
 ## Two-stream exchanger specifications
 
 ### UA mode
@@ -118,6 +133,21 @@ where $\Delta T_1=T_{h,in}-T_{c,out}$ and $\Delta T_2=T_{h,out}-T_{c,in}$. The p
 API does not expose `getLMTD()` or `getNTU()`. `getSizingReport()` includes the calculated LMTD;
 `getThermalEffectiveness()` returns the solved effectiveness. The array-valued `getEffectiveness()`
 and `getNtu()` methods belong to `FoulingScreeningResult`, not to `HeatExchanger` itself.
+
+### Estimating UA from measured temperatures
+
+Four terminal temperatures determine the LMTD, but do not determine UA without the transferred
+duty. Obtain duty from a known flow rate and the inlet-to-outlet specific enthalpy change on one
+side; check agreement with the other side. For ideal counter-current flow, effective UA in W/K is
+$UA=|Q|/\Delta T_{\mathrm{lm}}$ with $Q$ in W. For a shell-and-tube arrangement requiring an
+LMTD correction factor $F$, use $UA=|Q|/(F\Delta T_{\mathrm{lm}})$.
+
+Both terminal temperature differences must be positive. When they are equal, their common value
+is the LMTD; avoid evaluating the logarithmic expression as zero divided by zero. For condensing
+or evaporating mixtures, use enthalpy changes rather than a constant heat-capacity approximation,
+and check the internal temperature profile for a pinch. This terminal-temperature estimate is an
+effective UA; it does not separately determine U and area. In UA mode, `getUAvalue()` returns the
+specified UA rather than a fit to independently measured temperatures.
 
 ### Fixed outlet temperature
 
