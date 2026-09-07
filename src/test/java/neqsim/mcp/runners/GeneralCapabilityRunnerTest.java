@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -76,10 +77,8 @@ class GeneralCapabilityRunnerTest {
 
   @Test
   void testSearchClampsLimitAndReturnsDeterministicRoutingMetadata() {
-    JsonObject first =
-        JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
-    JsonObject second =
-        JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
+    JsonObject first = JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
+    JsonObject second = JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
 
     assertTrue(first.get("returnedCount").getAsInt() <= 100);
     assertEquals(first.getAsJsonArray("matches"), second.getAsJsonArray("matches"));
@@ -92,13 +91,11 @@ class GeneralCapabilityRunnerTest {
 
   @Test
   void testRunRejectsUnknownActionAndMalformedInput() {
-    JsonObject unknown =
-        JsonParser.parseString(GeneralCapabilityRunner.run("{\"action\":\"install\"}"))
-            .getAsJsonObject();
+    JsonObject unknown = JsonParser.parseString(GeneralCapabilityRunner.run("{\"action\":\"install\"}"))
+        .getAsJsonObject();
     assertEquals("UNKNOWN_ACTION", unknown.get("code").getAsString());
 
-    JsonObject malformed =
-        JsonParser.parseString(GeneralCapabilityRunner.run("{")).getAsJsonObject();
+    JsonObject malformed = JsonParser.parseString(GeneralCapabilityRunner.run("{")).getAsJsonObject();
     assertEquals("INPUT_ERROR", malformed.get("code").getAsString());
   }
 
