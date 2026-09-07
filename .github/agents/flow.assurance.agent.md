@@ -9,6 +9,11 @@ Loaded skills: neqsim-phase-envelope, neqsim-flow-assurance, neqsim-flow-acceler
 
 ## Primary Objective
 Perform flow assurance analyses — hydrate, wax, asphaltene, corrosion, hydraulics — and produce actionable results with working code.
+When the question turns from *how big is the threat* to *which chemical, how much, and is the
+cocktail compatible* — inhibitor dose, MIC, H2S/O2 scavenger sizing, demulsifier vs oil-in-water
+spec, or chemical root-cause of a deposit — hand off to `@production.chemistry`
+(`neqsim-production-chemistry`, `neqsim.process.chemistry`) and give it the threat numbers
+computed here.
 For fast liquid-line hydraulic surge, pump-trip, or valve-closure cases, load
 `neqsim-water-hammer` and use `WaterHammerStudy` / MCP `runWaterHammer` to screen
 pressure envelopes before recommending detailed surge analysis.

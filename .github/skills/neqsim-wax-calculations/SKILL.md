@@ -144,6 +144,11 @@ List<String> warnings = inhibitor.getWarnings();
 
 This inhibitor model is a screening relation. Use lab bottle tests, cold-finger data, and field-trial evidence for design decisions.
 
+For the wider chemical picture — compatibility of the wax inhibitor with the other products in
+the same injection line, dose bookkeeping through an `InhibitorInjectionPoint`, and chemical
+root-cause of a deposit that may be wax, scale or an amorphous scavenger product — load
+`neqsim-production-chemistry`.
+
 ## Python Notebook Pattern
 
 In repository task notebooks, use `devtools/neqsim_dev_setup.py` and direct Java classes through `ns` so the workspace classes are used.

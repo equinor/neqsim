@@ -50,6 +50,12 @@ screen and checks externally calculated response displacements. It does not
 contain generalized design tables, produce dynamic response, qualify environmental
 or soil models, or claim DNV conformity. A pass still requires independent review.
 
+This skill quantifies the **threat** (hydrate curve, WAT, SI, corrosion rate). For the
+**chemical** answer — which product, minimum effective dose, cocktail compatibility, H2S/O2
+scavenger sizing, demulsifier vs oil-in-water spec, and chemical root-cause of a deposit —
+load `neqsim-production-chemistry` (`neqsim.process.chemistry`) and feed it the numbers
+computed here.
+
 ## 1. Hydrate Analysis
 
 ### EOS Selection for Hydrate Calculations
@@ -117,6 +123,12 @@ ops.hydrateFormationTemperature();
 double inhibitedHydrateT = inhibitedFluid.getTemperature() - 273.15;
 // Compare with uninhibited to get subcooling margin
 ```
+
+For the **injection rate** that delivers a required wt% in the water phase (including purity
+and lean/rich MEG bookkeeping), use
+`neqsim.process.chemistry.hydrate.ThermodynamicHydrateInhibitorPerformance` — see
+`neqsim-production-chemistry`. Use the CPA curve above for the design concentration and the
+chemistry model for the rate.
 
 ### Salt-Inhibited Hydrate (Formation Water / Brine)
 

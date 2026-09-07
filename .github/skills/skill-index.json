@@ -1240,5 +1240,20 @@
   "conflicting sources": ["neqsim-document-intelligence-extraction"],
   "dnv rp f114": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
   "pipe soil interaction": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
-  "submarine pipeline geotechnics": ["neqsim-standards-lookup", "neqsim-flow-assurance"]
+  "submarine pipeline geotechnics": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
+  "production chemistry": ["neqsim-production-chemistry", "neqsim-flow-assurance", "neqsim-electrolyte-systems"],
+  "production chemical": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "chemical injection": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "chemical compatibility": ["neqsim-production-chemistry"],
+  "inhibitor dose": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "minimum inhibitor concentration": ["neqsim-production-chemistry"],
+  "scale inhibitor": ["neqsim-production-chemistry", "neqsim-flow-assurance", "neqsim-electrolyte-systems"],
+  "corrosion inhibitor": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "h2s scavenger": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "oxygen scavenger": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "demulsifier": ["neqsim-production-chemistry"],
+  "oil in water": ["neqsim-production-chemistry"],
+  "meg injection rate": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "kinetic hydrate inhibitor": ["neqsim-production-chemistry", "neqsim-flow-assurance"],
+  "chemical root cause": ["neqsim-production-chemistry", "neqsim-root-cause-analysis"]
 }

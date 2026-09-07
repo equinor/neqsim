@@ -17,6 +17,12 @@ ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-pid-process-operations/SKILL.md` — P&ID context for equipment
 - `.github/skills/neqsim-troubleshooting/SKILL.md` — Recovery strategies after diagnosis
 
+When the symptom is chemical rather than mechanical — a deposit, emulsion, pH excursion,
+H2S breakthrough, or a suspected chemical incompatibility between injected products — hand
+off to `@production.chemistry`. It owns `neqsim.process.chemistry.rca.RootCauseAnalyser`
+(explainable chemical candidate ranking), the compatibility rule base, and
+`ScaleRemediationAdvisor` for the dissolver/wash recommendation.
+
 ## Operating Principles
 
 1. **Understand the symptom**: Classify the reported issue using the Symptom enum
