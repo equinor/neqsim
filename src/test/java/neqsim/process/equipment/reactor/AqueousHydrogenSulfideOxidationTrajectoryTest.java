@@ -152,8 +152,7 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
   @Test
   void testSegmentInventoryTelescopesAndClosesForEveryRatePath() {
     List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments = Arrays.asList(referenceSegment(3.0),
-        new AqueousHydrogenSulfideOxidationTrajectory.Segment(7.0, 310.15, 7.0, 1.5, 220.0e-6),
-        referenceSegment(5.0));
+        new AqueousHydrogenSulfideOxidationTrajectory.Segment(7.0, 310.15, 7.0, 1.5, 220.0e-6), referenceSegment(5.0));
     AqueousHydrogenSulfideOxidationTrajectory.Result result = AqueousHydrogenSulfideOxidationTrajectory
         .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, segments);
 
@@ -175,12 +174,12 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
       assertTrue(segment.getNominalOutletTotalSulfideMolality() >= segment.getUpperRateOutletTotalSulfideMolality());
       if (index > 0) {
         AqueousHydrogenSulfideOxidationTrajectory.SegmentResult previous = evidence.get(index - 1);
-        assertEquals(previous.getLowerRateOutletTotalSulfideMolality(),
-            segment.getLowerRateInletTotalSulfideMolality(), 0.0);
-        assertEquals(previous.getNominalOutletTotalSulfideMolality(),
-            segment.getNominalInletTotalSulfideMolality(), 0.0);
-        assertEquals(previous.getUpperRateOutletTotalSulfideMolality(),
-            segment.getUpperRateInletTotalSulfideMolality(), 0.0);
+        assertEquals(previous.getLowerRateOutletTotalSulfideMolality(), segment.getLowerRateInletTotalSulfideMolality(),
+            0.0);
+        assertEquals(previous.getNominalOutletTotalSulfideMolality(), segment.getNominalInletTotalSulfideMolality(),
+            0.0);
+        assertEquals(previous.getUpperRateOutletTotalSulfideMolality(), segment.getUpperRateInletTotalSulfideMolality(),
+            0.0);
       }
       lowerReacted += segment.getLowerRateReactedTotalSulfideMolality();
       nominalReacted += segment.getNominalReactedTotalSulfideMolality();
@@ -193,11 +192,9 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
     assertEquals(INITIAL_TOTAL_SULFIDE_MOLALITY - result.getFinalTotalSulfideMolalityAtUpperRate(), upperReacted,
         1.0e-20);
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult last = evidence.get(evidence.size() - 1);
-    assertEquals(result.getFinalTotalSulfideMolalityAtLowerRate(),
-        last.getLowerRateOutletTotalSulfideMolality(), 0.0);
+    assertEquals(result.getFinalTotalSulfideMolalityAtLowerRate(), last.getLowerRateOutletTotalSulfideMolality(), 0.0);
     assertEquals(result.getFinalTotalSulfideMolality(), last.getNominalOutletTotalSulfideMolality(), 0.0);
-    assertEquals(result.getFinalTotalSulfideMolalityAtUpperRate(),
-        last.getUpperRateOutletTotalSulfideMolality(), 0.0);
+    assertEquals(result.getFinalTotalSulfideMolalityAtUpperRate(), last.getUpperRateOutletTotalSulfideMolality(), 0.0);
   }
 
   @Test
@@ -209,12 +206,11 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
         Arrays.asList(referenceSegment(halfLife), referenceSegment(0.0), referenceSegment(halfLife)));
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult identity = result.getSegmentResults().get(1);
 
-    assertEquals(identity.getLowerRateInletTotalSulfideMolality(),
-        identity.getLowerRateOutletTotalSulfideMolality(), 0.0);
-    assertEquals(identity.getNominalInletTotalSulfideMolality(),
-        identity.getNominalOutletTotalSulfideMolality(), 0.0);
-    assertEquals(identity.getUpperRateInletTotalSulfideMolality(),
-        identity.getUpperRateOutletTotalSulfideMolality(), 0.0);
+    assertEquals(identity.getLowerRateInletTotalSulfideMolality(), identity.getLowerRateOutletTotalSulfideMolality(),
+        0.0);
+    assertEquals(identity.getNominalInletTotalSulfideMolality(), identity.getNominalOutletTotalSulfideMolality(), 0.0);
+    assertEquals(identity.getUpperRateInletTotalSulfideMolality(), identity.getUpperRateOutletTotalSulfideMolality(),
+        0.0);
     assertEquals(0.0, identity.getLowerRateReactedTotalSulfideMolality(), 0.0);
     assertEquals(0.0, identity.getNominalReactedTotalSulfideMolality(), 0.0);
     assertEquals(0.0, identity.getUpperRateReactedTotalSulfideMolality(), 0.0);
