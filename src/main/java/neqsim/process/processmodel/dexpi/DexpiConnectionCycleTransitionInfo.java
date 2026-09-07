@@ -249,8 +249,7 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     result.put("kind", kind.name());
     result.put("fromCycle", fromCycle == null ? null : fromCycle.toMap());
     result.put("toCycle", toCycle == null ? null : toCycle.toMap());
-    result.put("fromCycleComponent",
-        getFromCycleComponent() == null ? null : getFromCycleComponent().toMap());
+    result.put("fromCycleComponent", getFromCycleComponent() == null ? null : getFromCycleComponent().toMap());
     result.put("toCycleComponent", getToCycleComponent() == null ? null : getToCycleComponent().toMap());
     result.put("fromCycleBoundary", fromCycleBoundary == null ? null : fromCycleBoundary.toMap());
     result.put("toCycleBoundary", toCycleBoundary == null ? null : toCycleBoundary.toMap());
