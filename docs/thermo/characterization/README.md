@@ -14,6 +14,7 @@ The `neqsim.thermo.characterization` package converts petroleum assay, TBP, and 
 | Pre-binned TBP fractions | `SystemInterface.addTBPfraction(...)` | Add a petroleum cut from moles, molar mass, and specific gravity |
 | Plus fraction | `SystemInterface.addPlusFraction(...)` + `Characterise` | Represent and split a C7+/C20+ heavy end |
 | Refinery assay | `OilAssayCharacterisation` | Convert mass- or volume-basis refinery cuts/TBP boundaries to pseudo-components |
+| Assay blend screening | `RefineryAssayBlend` | Combine whole-assay SG/API and optional sulfur/nitrogen on an explicit mass basis |
 | TBP property model selection | `Characterise.setTBPModel(...)` | Select Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing, and related models |
 | Lumping | `Characterise.configureLumping()` | Reduce a detailed heavy-end slate while preserving configured grouping rules |
 | Common-slate characterization | `PseudoComponentCombiner` | Align multiple characterized fluids to a shared pseudo-component definition |
@@ -49,6 +50,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - kg/mol and g/mol explicit molar-mass helpers;
 - specific-gravity, kg/m3, and API-gravity density inputs;
 - exact API-gravity/SG60/60 round-tripping and explicit bulk density at 60 degF;
+- immutable whole-assay blend screening with ideal additive liquid volumes and mass-linear sulfur/nitrogen;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;
