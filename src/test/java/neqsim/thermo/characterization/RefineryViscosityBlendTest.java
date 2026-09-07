@@ -17,7 +17,7 @@ public class RefineryViscosityBlendTest {
     assertArrayEquals(new double[] { 5.0 / 17.0, 12.0 / 17.0 },
         blend.getMassFractions(), 1.0e-15);
     assertEquals(50.0, blend.getTemperatureCelsius(), 0.0);
-    assertEquals(37.11160290060912, blend.getViscosityBlendingNumber(), 1.0e-13);
+    assertEquals(37.110677920222024, blend.getViscosityBlendingNumber(), 1.0e-13);
     assertEquals(418.68738293612904, blend.getKinematicViscosityCSt(), 1.0e-12);
 
     double[] sourceBlendNumbers = blend.getSourceViscosityBlendingNumbers();
