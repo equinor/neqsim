@@ -1372,7 +1372,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         return boundary;
       }
     }
-    throw new AssertionError("Missing " + direction + " boundary " + connectionId + " in " + cycle.getCycleId());
+    throw new AssertionError("Missing " + direction + " boundary " + connectionId + " in " + cycle.getId());
   }
 
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
