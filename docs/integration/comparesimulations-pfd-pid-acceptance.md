@@ -83,3 +83,37 @@ specifications, nozzles, valves, reducers, instruments, control functions,
 isolation, drains, vents, and relief/blowdown interfaces have explicit governed
 evidence. Missing data must remain visible; the steady-state model does not
 supply a complete control or safety design.
+
+
+## Executable full-model reference
+
+`Comparesimulations2EngineeringDiagramReference` executes the existing
+`OilGasProcessSimulationOptimization` model at its default operating case and
+publishes the coordinated bundle:
+
+```bash
+mvn -q -DskipTests package
+java -cp target/classes neqsim.process.examples.Comparesimulations2EngineeringDiagramReference \
+  build/comparesimulations2-engineering-diagrams
+```
+
+The reference fails before publication when the simulated plant does not close
+mass balance within 0.01 percent or if `24-VB-01` appears in the canonical
+runnable model. Four proposed balance-boundary declarations use `well stream`
+as the inlet and `fuel gas`, `export gas`, and `export oil` as outlets.
+
+The retained layout register proposes three A1 landscape sheets: three-stage
+separation/oil export, flash-gas recompression/dew point, and fuel split/gas
+export compression. Major model objects have persistent proposed sheet
+assignments and paper-millimetre pins. Fixed-port orthogonal routing remains
+active for unprotected connections. These records are reproducible teaching
+layout evidence, not checked project layout or engineering approval.
+
+The slow regression test executes two fresh plants and compares manifest,
+source-topology, SVG, and PDF evidence byte-for-byte. It also checks the
+operating stream/H&MB companions and the separate native DEXPI 2.0 Plant and
+Proteus 4.1 P&ID proposal exchanges. Passing automation establishes
+deterministic generation only; full-sheet/detail human inspection, project
+metadata, explicit governed line/nozzle/valve/reducer/instrument/control
+registers, and accountable discipline review remain mandatory before visual
+acceptance.
