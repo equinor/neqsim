@@ -35,7 +35,8 @@ import org.junit.jupiter.api.io.TempDir;
 public class StandaloneJavaDocumentationCompilationTest {
   private static final int EXPECTED_EXAMPLE_COUNT = 14;
   private static final List<String> LOG4J2_EXAMPLES = Arrays.asList("EclipseE300ExportImportExample.java",
-      "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java", "RealTimeIntegrationExample.java");
+      "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java", "RealTimeIntegrationExample.java",
+      "TwoFluidPipeExample.java");
 
   @TempDir
   Path compilationOutput;
