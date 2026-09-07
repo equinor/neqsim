@@ -162,9 +162,11 @@ reacted increments telescope to the trajectory's initial-minus-final inventory. 
 segment has identical inlet and outlet and reports zero reaction. Splitting an unchanged segment
 preserves both final inventory and the sum of reacted increments.
 
-The lower-rate path retains the most total sulfide and reports the least reacted amount; the
-upper-rate path retains the least and reports the most. These values are analytical bookkeeping
-for total dissolved sulfide under the same constant-oxygen assumption. They do not define oxygen
+At every segment outlet, the lower-rate path retains the most total sulfide and the upper-rate
+path retains the least. Over the complete shared trajectory, those paths respectively give the
+least and most total reacted sulfide. A single segment's reacted increment need not follow that
+ordering after different prior depletion. These values are analytical bookkeeping for total
+dissolved sulfide under the same constant-oxygen assumption. They do not define oxygen
 consumption, sulfur products, stoichiometric source terms, or a pipeline control-volume coupling.
 
 ## Piecewise target crossing
