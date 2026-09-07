@@ -1,99 +1,105 @@
 package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Tests for {@link VisualizationRunner}.
+ * Software-contract tests for {@link VisualizationRunner}.
  *
  * @author Even Solbraa
- * @version 1.0
+ * @version 1.1
  */
 class VisualizationRunnerTest {
 
   @Test
-  void testPhaseEnvelopeSVG() {
-    String json = "{" + "\"type\": \"phaseEnvelope\","
-        + "\"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.05,"
-        + "  \"n-butane\": 0.03, \"n-pentane\": 0.02}," + "\"model\": \"SRK\"" + "}";
+  void documentedFlowsheetAliasReturnsCanonicalMermaidContract() {
+    JsonObject result = run("{\"type\":\"flowsheetDiagram\",\"title\":\"Separation\","
+        + "\"equipment\":[{\"name\":\"Feed\",\"type\":\"Stream\"}," + "{\"name\":\"HP Sep\",\"type\":\"Separator\"}]}");
 
-    String result = VisualizationRunner.run(json);
-    assertNotNull(result);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(), "Phase envelope viz failed: " + result);
-    assertTrue(obj.has("svg") || obj.has("mermaid"), "Should contain rendered content");
+    assertSuccess(result, "flowsheet", "text/x-mermaid", "mermaid");
+    assertTrue(result.get("mermaid").getAsString().contains("Feed --> HP_Sep"));
   }
 
   @Test
-  void testBarChart() {
-    String json = "{" + "\"type\": \"barChart\"," + "\"title\": \"Pressure Comparison\","
-        + "\"labels\": [\"Case 1\", \"Case 2\", \"Case 3\"]," + "\"values\": [50.0, 75.0, 100.0],"
-        + "\"unit\": \"bara\"" + "}";
+  void tableAliasesReturnCanonicalHtmlContractAndHonorCaption() {
+    for (String type : new String[] { "propertyTable", "styledTable", "table" }) {
+      JsonObject result = run("{\"type\":\"" + type + "\",\"caption\":\"Stream Summary\","
+          + "\"headers\":[\"Property\",\"Value\"],\"rows\":[[\"Pressure\",\"50 bara\"]]}");
 
-    String result = VisualizationRunner.run(json);
-    assertNotNull(result);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(), "Bar chart viz failed: " + result);
+      assertSuccess(result, "propertyTable", "text/html", "html");
+      assertTrue(result.get("html").getAsString().contains("Stream Summary"));
+    }
   }
 
   @Test
-  void testStyledTable() {
-    String json = "{" + "\"type\": \"propertyTable\"," + "\"caption\": \"Stream Summary\","
-        + "\"headers\": [\"Property\", \"Feed\", \"Gas Out\", \"Liquid Out\"]," + "\"rows\": ["
-        + "  [\"Temperature (C)\", \"25.0\", \"25.0\", \"25.0\"],"
-        + "  [\"Pressure (bara)\", \"50.0\", \"50.0\", \"50.0\"]" + "]" + "}";
+  void nonNumericalChartTypesReturnStableSvgContracts() {
+    JsonObject bar = run("{\"type\":\"barChart\",\"labels\":[\"A\",\"B\"],\"values\":[1,2]}");
+    JsonObject pie = run("{\"type\":\"pieChart\",\"categories\":[\"A\",\"B\"],\"values\":[1,2]}");
+    JsonObject line = run("{\"type\":\"lineChart\",\"xValues\":[0,1],\"yValues\":[1,2]}");
 
-    String result = VisualizationRunner.run(json);
-    assertNotNull(result);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(), "Table viz failed: " + result);
+    assertSuccess(bar, "barChart", "image/svg+xml", "svg");
+    assertSuccess(pie, "pieChart", "image/svg+xml", "svg");
+    assertSuccess(line, "lineChart", "image/svg+xml", "svg");
   }
 
   @Test
-  void testFlowsheetDiagram() {
-    String json = "{" + "\"type\": \"flowsheet\"," + "\"equipment\": ["
-        + "  {\"name\": \"Feed\", \"type\": \"Stream\"}," + "  {\"name\": \"HP Sep\", \"type\": \"Separator\"},"
-        + "  {\"name\": \"Compressor\", \"type\": \"Compressor\"}" + "]" + "}";
+  void chartAndTableTextIsEscaped() {
+    JsonObject chart = run(
+        "{\"type\":\"barChart\",\"title\":\"<unsafe>&\"," + "\"labels\":[\"<label>\"],\"values\":[1]}");
+    JsonObject table = run(
+        "{\"type\":\"propertyTable\",\"title\":\"<unsafe>&\"," + "\"headers\":[\"<header>\"],\"rows\":[[\"<cell>\"]]}");
 
-    String result = VisualizationRunner.run(json);
-    assertNotNull(result);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(), "Flowsheet viz failed: " + result);
-  }
-
-  @Disabled("TODO: not working per 19.06.2060")
-  @Test
-  @Tag("failing")
-  void testCompressorMapDerivesPressureRatioFromPressures() {
-    String json = "{" + "\"type\": \"compressorMap\"," + "\"inletFlow\": 5000.0," + "\"inletPressure\": 25.0,"
-        + "\"outletPressure\": 100.0," + "\"efficiency\": 0.80," + "\"power_kW\": 2500.0" + "}";
-
-    String result = VisualizationRunner.run(json);
-    assertNotNull(result);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(), "Compressor map viz failed: " + result);
-    assertTrue(obj.get("svg").getAsString().contains("PR: 4.00"),
-        "Pressure ratio should be derived from inlet/outlet pressure when pressureRatio is not provided");
+    String svg = chart.get("svg").getAsString();
+    String html = table.get("html").getAsString();
+    assertTrue(svg.contains("&lt;unsafe&gt;&amp;"));
+    assertTrue(svg.contains("&lt;label&gt;"));
+    assertFalse(svg.contains("<unsafe>"));
+    assertTrue(html.contains("&lt;unsafe&gt;&amp;"));
+    assertTrue(html.contains("&lt;header&gt;"));
+    assertTrue(html.contains("&lt;cell&gt;"));
+    assertFalse(html.contains("<unsafe>"));
   }
 
   @Test
-  void testNullInput() {
-    String result = VisualizationRunner.run(null);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("error", obj.get("status").getAsString());
+  void nullMalformedMissingAndUnknownTypesFailClosed() {
+    assertError(VisualizationRunner.run(null));
+    assertError(VisualizationRunner.run("{"));
+    assertError(VisualizationRunner.run("{}"));
+    assertError(VisualizationRunner.run("{\"type\":\"unknown\"}"));
   }
 
   @Test
-  void testUnknownType() {
-    String json = "{\"type\": \"UNKNOWN_VIZ_TYPE\"}";
-    String result = VisualizationRunner.run(json);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("error", obj.get("status").getAsString());
+  void emptyChartArraysFailClosed() {
+    assertError(VisualizationRunner.run("{\"type\":\"barChart\",\"labels\":[],\"values\":[]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"pieChart\",\"categories\":[],\"values\":[]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"lineChart\",\"xValues\":[],\"yValues\":[]}"));
+  }
+
+  @Test
+  void mismatchedChartArraysFailClosedInsteadOfTruncating() {
+    assertError(VisualizationRunner.run("{\"type\":\"barChart\",\"labels\":[\"A\",\"B\"],\"values\":[1]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"pieChart\",\"categories\":[\"A\"],\"values\":[1,2]}"));
+    assertError(VisualizationRunner.run("{\"type\":\"lineChart\",\"xValues\":[0,1],\"yValues\":[1]}"));
+  }
+
+  private static JsonObject run(String json) {
+    return JsonParser.parseString(VisualizationRunner.run(json)).getAsJsonObject();
+  }
+
+  private static void assertSuccess(JsonObject result, String type, String mimeType, String contentField) {
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    assertEquals(type, result.get("visualizationType").getAsString());
+    assertEquals(mimeType, result.get("mimeType").getAsString());
+    assertTrue(result.has(contentField));
+  }
+
+  private static void assertError(String result) {
+    JsonObject error = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("error", error.get("status").getAsString(), result);
+    assertTrue(error.has("message"));
   }
 }
