@@ -175,6 +175,47 @@ temperature/pressure effects, excess volume or contraction, viscosity, cloud/pou
 asphaltene stability, phase equilibrium, TBP/pseudo-component compatibility, product
 specifications, or blend optimization.
 
+### Kinematic-viscosity blend screening
+
+`RefineryViscosityBlend` supplies a separate empirical Refutas screen for source viscosities
+already resolved at one common temperature. It transforms kinematic viscosity `nu` in cSt to a
+dimensionless viscosity blending number, mixes that number by normalized mass fraction, and
+applies the analytical inverse:
+
+$VBN_i=14.534\ln(\ln(\nu_i+0.8))+10.975$
+
+$VBN_{blend}=\sum_i x_iVBN_i$
+
+$\nu_{blend}=\exp\left(\exp\left(\frac{VBN_{blend}-10.975}{14.534}\right)\right)-0.8$
+
+The double logarithm requires every positive-mass source viscosity to be finite and greater than
+0.2 cSt. A zero-mass source is ignored and may leave its viscosity unresolved. The temperature is
+stored with the immutable result but is not used to extrapolate viscosity.
+
+```java
+RefineryViscosityBlend viscosityBlend = RefineryViscosityBlend.fromMassBasis(
+    new double[] {5000.0, 12000.0},
+    new double[] {550.0, 375.0},
+    50.0);
+
+double blendViscosityCSt = viscosityBlend.getKinematicViscosityCSt();
+double blendNumber = viscosityBlend.getViscosityBlendingNumber();
+double temperatureCelsius = viscosityBlend.getTemperatureCelsius();
+double[] massFractions = viscosityBlend.getMassFractions();
+double[] sourceBlendNumbers = viscosityBlend.getSourceViscosityBlendingNumbers();
+double directBlendNumber =
+    RefineryViscosityBlend.calculateViscosityBlendingNumber(550.0);
+double directViscosityCSt =
+    RefineryViscosityBlend.calculateKinematicViscosityCSt(directBlendNumber);
+```
+
+The equations and mass-weighting basis follow Centeno et al.,
+[DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028).
+The fixed binary example above is an independently recomputed arithmetic reference, not measured
+blend evidence. This API does not claim physical prediction accuracy, uncertainty, ASTM
+compliance, dynamic-viscosity conversion, viscosity-temperature extrapolation, non-Newtonian
+behavior, pressure correction, phase behavior, compatibility, or optimization.
+
 ## Per-cut UOP/Watson characterization factor
 
 `AssayCut.getWatsonCharacterizationFactor()` calculates the dimensionless UOP/Watson factor from the same authoritative density and representative-boiling-point inputs used by the assay workflow:
