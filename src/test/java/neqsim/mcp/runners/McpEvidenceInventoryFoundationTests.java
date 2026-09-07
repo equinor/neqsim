@@ -468,8 +468,7 @@ class McpEvidenceInventoryFoundationTests {
   void testVisualizationPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject visualization =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("generateVisualization");
+    JsonObject visualization = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("generateVisualization");
 
     assertEquals("1.29", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
@@ -479,12 +478,12 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(visualization.get("contractTrustAvailable").getAsBoolean());
     assertEquals(6, visualization.get("contractEvidenceCount").getAsInt());
     assertEquals(6, visualization.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(visualization.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("VisualizationRunnerTest.java"));
-    assertTrue(visualization.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_visualization_protocol.py"));
-    assertTrue(visualization.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("VISUALIZATION_CONTRACT.md"));
+    assertTrue(
+        visualization.getAsJsonArray("contractEvidenceSources").toString().contains("VisualizationRunnerTest.java"));
+    assertTrue(
+        visualization.getAsJsonArray("contractEvidenceSources").toString().contains("test_visualization_protocol.py"));
+    assertTrue(
+        visualization.getAsJsonArray("contractEvidenceSources").toString().contains("VISUALIZATION_CONTRACT.md"));
     assertTrue(visualization.get("evidenceBoundary").getAsString().contains("browser fidelity"));
     assertTrue(visualization.get("evidenceBoundary").getAsString().contains("markup sandbox security"));
     assertTrue(visualization.get("evidenceBoundary").getAsString().contains("plant or control authority"));
