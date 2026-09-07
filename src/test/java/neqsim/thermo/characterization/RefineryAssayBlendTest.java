@@ -74,7 +74,8 @@ public class RefineryAssayBlendTest {
         new double[] { 0.82, Double.NaN }, new double[] { 0.004, Double.NaN }, new double[] { 0.001, Double.NaN });
 
     assertArrayEquals(new double[] { 1.0, 0.0 }, blend.getMassFractions(), 0.0);
-    assertEquals(0.82, blend.getSpecificGravity(), 0.0);
+    // The ideal-volume rule takes two reciprocals, which can differ by one ULP.
+    assertEquals(0.82, blend.getSpecificGravity(), Math.ulp(0.82));
     assertEquals(0.004, blend.getSulfurMassFraction(), 0.0);
     assertEquals(0.001, blend.getNitrogenMassFraction(), 0.0);
   }
