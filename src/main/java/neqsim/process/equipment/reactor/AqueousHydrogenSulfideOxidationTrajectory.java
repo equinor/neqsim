@@ -119,8 +119,8 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
    * @param targetRemainingFraction target total-sulfide fraction in the interval (0, 1]
    * @param segments non-empty ordered exposure segments
    * @return immutable shortest, nominal, and longest target-crossing evidence
-   * @throws IllegalArgumentException when the target or trajectory is invalid, a calculated value is not finite, or
-   * the target is not reached for every fit-scatter path
+   * @throws IllegalArgumentException when the target or trajectory is invalid, a calculated value is not finite, or the
+   * target is not reached for every fit-scatter path
    */
   public static TargetCrossingRangeResult timeToRemainingFractionRange(double targetRemainingFraction,
       List<Segment> segments) {
@@ -260,10 +260,9 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
     private final int longestCrossingSegmentIndex;
     private final double suppliedTrajectoryTimeHours;
 
-    private TargetCrossingRangeResult(double targetRemainingFraction, double requiredExposure,
-        double shortestTimeHours, double nominalTimeHours, double longestTimeHours,
-        int shortestCrossingSegmentIndex, int nominalCrossingSegmentIndex, int longestCrossingSegmentIndex,
-        double suppliedTrajectoryTimeHours) {
+    private TargetCrossingRangeResult(double targetRemainingFraction, double requiredExposure, double shortestTimeHours,
+        double nominalTimeHours, double longestTimeHours, int shortestCrossingSegmentIndex,
+        int nominalCrossingSegmentIndex, int longestCrossingSegmentIndex, double suppliedTrajectoryTimeHours) {
       this.targetRemainingFraction = targetRemainingFraction;
       this.requiredExposure = requiredExposure;
       this.shortestTimeHours = shortestTimeHours;
