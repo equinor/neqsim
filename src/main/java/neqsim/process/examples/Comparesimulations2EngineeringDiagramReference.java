@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import neqsim.process.engineering.model.EngineeringGraph;
+import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Direction;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.EvidenceState;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
@@ -15,6 +19,7 @@ import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetDe
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.diagram.EngineeringDiagramDualProfileDelivery;
 import neqsim.process.processmodel.diagram.NativeEngineeringDiagramRenderer;
+import neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter;
 
 /**
  * Reproducible full-model engineering-diagram reference for the
@@ -71,7 +76,7 @@ public final class Comparesimulations2EngineeringDiagramReference {
   public static EngineeringDiagramDualProfileDelivery.Report deliver(
       ProcessSystem process, Path directory) throws IOException {
     return EngineeringDiagramDualProfileDelivery.deliver(
-        process, directory, request());
+        process, directory, request(process));
   }
 
   /**
@@ -79,7 +84,7 @@ public final class Comparesimulations2EngineeringDiagramReference {
    *
    * @return immutable coordinated request
    */
-  public static EngineeringDiagramDualProfileDelivery.Request request() {
+  public static EngineeringDiagramDualProfileDelivery.Request request(ProcessSystem process) {
     List<EngineeringDiagramDualProfileDelivery.BalanceBoundary> boundaries =
         new ArrayList<EngineeringDiagramDualProfileDelivery.BalanceBoundary>();
     boundaries.add(boundary("well stream", Direction.INLET));
@@ -99,7 +104,7 @@ public final class Comparesimulations2EngineeringDiagramReference {
         .sheetFormat(NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE)
         .routingMode(
             NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL)
-        .layoutRegister(layoutRegister())
+        .layoutRegister(layoutRegister(process))
         .build();
   }
 
@@ -113,7 +118,16 @@ public final class Comparesimulations2EngineeringDiagramReference {
         EvidenceState.PROPOSED);
   }
 
-  private static EngineeringDiagramLayoutRegister layoutRegister() {
+  private static EngineeringDiagramLayoutRegister layoutRegister(ProcessSystem process) {
+    EngineeringGraph graph =
+        ProcessDiagramGraphAdapter.fromProcessSystem(
+            process, "ANDREASEN-SEPARATION-COMPRESSION", REVISION).getGraph();
+    Map<String, String> equipmentIds = new LinkedHashMap<String, String>();
+    for (EngineeringNode node : graph.getNodes().values()) {
+      if (node.getKind() == EngineeringNode.Kind.EQUIPMENT) {
+        equipmentIds.put(node.getLabel(), node.getId());
+      }
+    }
     EngineeringDiagramLayoutRegister register =
         new EngineeringDiagramLayoutRegister()
             .withSheet(sheet("separation", "1", "Three-stage separation and oil export"))
@@ -133,9 +147,9 @@ public final class Comparesimulations2EngineeringDiagramReference {
       "23-KA-01", "24-HA-01", "24-VG-01", "dew point recycle 2", "splitter",
       "25-HA-01", "25-HA-02", "25-VG-01", "27-KA-01", "27-HA-01"
     };
-    register = place(register, "separation", separation);
-    register = place(register, "recompression", recompression);
-    return place(register, "export", export);
+    register = place(register, "separation", separation, equipmentIds);
+    register = place(register, "recompression", recompression, equipmentIds);
+    return place(register, "export", export, equipmentIds);
   }
 
   private static SheetDefinition sheet(String key, String number, String title) {
@@ -151,10 +165,15 @@ public final class Comparesimulations2EngineeringDiagramReference {
   }
 
   private static EngineeringDiagramLayoutRegister place(
-      EngineeringDiagramLayoutRegister register, String sheet, String[] names) {
+      EngineeringDiagramLayoutRegister register, String sheet, String[] names,
+      Map<String, String> equipmentIds) {
     EngineeringDiagramLayoutRegister result = register;
     for (int index = 0; index < names.length; index++) {
-      String objectId = "equipment:" + names[index];
+      String objectId = equipmentIds.get(names[index]);
+      if (objectId == null) {
+        throw new IllegalStateException(
+            "Proposed layout references missing canonical equipment: " + names[index]);
+      }
       double x = 90.0 + (index % 5) * 145.0;
       double y = 105.0 + (index / 5) * 150.0;
       result =
