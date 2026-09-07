@@ -7,10 +7,9 @@ import java.util.Arrays;
  * Immutable mass-basis kinematic-viscosity screening result for a refinery blend.
  *
  * <p>
- * The empirical Refutas relation transforms each source kinematic viscosity to a viscosity
- * blending number, mixes those numbers by normalized mass fraction, and applies the analytical
- * inverse. Every contributing viscosity must be resolved at the same caller-supplied temperature.
- * This class does not mutate an assay or thermodynamic system.
+ * The empirical Refutas relation transforms each source kinematic viscosity to a viscosity blending number, mixes those
+ * numbers by normalized mass fraction, and applies the analytical inverse. Every contributing viscosity must be
+ * resolved at the same caller-supplied temperature. This class does not mutate an assay or thermodynamic system.
  * </p>
  */
 public final class RefineryViscosityBlend implements Serializable {
@@ -58,8 +57,7 @@ public final class RefineryViscosityBlend implements Serializable {
         continue;
       }
 
-      double sourceBlendNumber =
-          calculateViscosityBlendingNumber(sourceKinematicViscositiesCSt[i]);
+      double sourceBlendNumber = calculateViscosityBlendingNumber(sourceKinematicViscositiesCSt[i]);
       resolvedSourceBlendingNumbers[i] = sourceBlendNumber;
       resolvedBlendNumber += massFraction * sourceBlendNumber;
       minimumSourceBlendNumber = Math.min(minimumSourceBlendNumber, sourceBlendNumber);
@@ -71,8 +69,7 @@ public final class RefineryViscosityBlend implements Serializable {
       throw new IllegalArgumentException("Blend viscosity number must be finite and bounded");
     }
 
-    double resolvedKinematicViscosity =
-        calculateKinematicViscosityCSt(resolvedBlendNumber);
+    double resolvedKinematicViscosity = calculateKinematicViscosityCSt(resolvedBlendNumber);
     massFractions = resolvedMassFractions;
     sourceViscosityBlendingNumbers = resolvedSourceBlendingNumbers;
     this.temperatureCelsius = temperatureCelsius;
@@ -84,17 +81,14 @@ public final class RefineryViscosityBlend implements Serializable {
    * Create an empirical mass-basis viscosity blend at one explicit common temperature.
    *
    * @param sourceMasses non-negative source masses in any common mass unit
-   * @param sourceKinematicViscositiesCSt source kinematic viscosities in cSt at the common
-   *        temperature
+   * @param sourceKinematicViscositiesCSt source kinematic viscosities in cSt at the common temperature
    * @param temperatureCelsius common source-viscosity temperature in degrees Celsius
    * @return immutable viscosity blend result
-   * @throws IllegalArgumentException for invalid arrays, masses, temperature, or contributing
-   *         viscosities
+   * @throws IllegalArgumentException for invalid arrays, masses, temperature, or contributing viscosities
    */
-  public static RefineryViscosityBlend fromMassBasis(double[] sourceMasses,
-      double[] sourceKinematicViscositiesCSt, double temperatureCelsius) {
-    return new RefineryViscosityBlend(sourceMasses, sourceKinematicViscositiesCSt,
-        temperatureCelsius);
+  public static RefineryViscosityBlend fromMassBasis(double[] sourceMasses, double[] sourceKinematicViscositiesCSt,
+      double temperatureCelsius) {
+    return new RefineryViscosityBlend(sourceMasses, sourceKinematicViscositiesCSt, temperatureCelsius);
   }
 
   /**
@@ -105,13 +99,10 @@ public final class RefineryViscosityBlend implements Serializable {
    * @throws IllegalArgumentException if the viscosity is outside the mathematical domain
    */
   public static double calculateViscosityBlendingNumber(double kinematicViscosityCSt) {
-    if (!Double.isFinite(kinematicViscosityCSt)
-        || !(kinematicViscosityCSt > MINIMUM_KINEMATIC_VISCOSITY_CST)) {
-      throw new IllegalArgumentException(
-          "Kinematic viscosity must be finite and greater than 0.2 cSt");
+    if (!Double.isFinite(kinematicViscosityCSt) || !(kinematicViscosityCSt > MINIMUM_KINEMATIC_VISCOSITY_CST)) {
+      throw new IllegalArgumentException("Kinematic viscosity must be finite and greater than 0.2 cSt");
     }
-    double blendingNumber = REFUTAS_SCALE
-        * Math.log(Math.log(kinematicViscosityCSt + REFUTAS_VISCOSITY_OFFSET_CST))
+    double blendingNumber = REFUTAS_SCALE * Math.log(Math.log(kinematicViscosityCSt + REFUTAS_VISCOSITY_OFFSET_CST))
         + REFUTAS_OFFSET;
     if (!Double.isFinite(blendingNumber)) {
       throw new IllegalArgumentException("Viscosity blending number must be finite");
@@ -130,13 +121,10 @@ public final class RefineryViscosityBlend implements Serializable {
     if (!Double.isFinite(viscosityBlendingNumber)) {
       throw new IllegalArgumentException("Viscosity blending number must be finite");
     }
-    double kinematicViscosity = Math
-        .exp(Math.exp((viscosityBlendingNumber - REFUTAS_OFFSET) / REFUTAS_SCALE))
+    double kinematicViscosity = Math.exp(Math.exp((viscosityBlendingNumber - REFUTAS_OFFSET) / REFUTAS_SCALE))
         - REFUTAS_VISCOSITY_OFFSET_CST;
-    if (!Double.isFinite(kinematicViscosity)
-        || !(kinematicViscosity > MINIMUM_KINEMATIC_VISCOSITY_CST)) {
-      throw new IllegalArgumentException(
-          "Calculated kinematic viscosity must be finite and greater than 0.2 cSt");
+    if (!Double.isFinite(kinematicViscosity) || !(kinematicViscosity > MINIMUM_KINEMATIC_VISCOSITY_CST)) {
+      throw new IllegalArgumentException("Calculated kinematic viscosity must be finite and greater than 0.2 cSt");
     }
     return kinematicViscosity;
   }
@@ -150,15 +138,13 @@ public final class RefineryViscosityBlend implements Serializable {
    * Return source viscosity blending numbers in source order.
    *
    * <p>
-   * A zero-mass source is represented by {@link Double#NaN} because its viscosity is deliberately
-   * not resolved.
+   * A zero-mass source is represented by {@link Double#NaN} because its viscosity is deliberately not resolved.
    * </p>
    *
    * @return defensive copy of source viscosity blending numbers
    */
   public double[] getSourceViscosityBlendingNumbers() {
-    return Arrays.copyOf(sourceViscosityBlendingNumbers,
-        sourceViscosityBlendingNumbers.length);
+    return Arrays.copyOf(sourceViscosityBlendingNumbers, sourceViscosityBlendingNumbers.length);
   }
 
   /** @return common source-viscosity temperature in degrees Celsius */
@@ -176,10 +162,9 @@ public final class RefineryViscosityBlend implements Serializable {
     return kinematicViscosityCSt;
   }
 
-  private static void validateInputs(double[] sourceMasses,
-      double[] sourceKinematicViscositiesCSt, double temperatureCelsius) {
-    if (sourceMasses == null || sourceKinematicViscositiesCSt == null
-        || sourceMasses.length == 0
+  private static void validateInputs(double[] sourceMasses, double[] sourceKinematicViscositiesCSt,
+      double temperatureCelsius) {
+    if (sourceMasses == null || sourceKinematicViscositiesCSt == null || sourceMasses.length == 0
         || sourceMasses.length != sourceKinematicViscositiesCSt.length) {
       throw new IllegalArgumentException(
           "Source mass and kinematic-viscosity arrays must be non-empty and equal length");
