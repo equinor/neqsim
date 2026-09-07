@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -72,6 +73,30 @@ class GeneralCapabilityRunnerTest {
         + "\"methodName\":\"getProfileSummary\",\"arguments\":[{}]}";
     JsonObject genericResult = JsonParser.parseString(GeneralCapabilityRunner.run(genericRequest)).getAsJsonObject();
     assertEquals("METHOD_NOT_EXECUTABLE", genericResult.get("code").getAsString());
+  }
+
+  @Test
+  void testSearchClampsLimitAndReturnsDeterministicRoutingMetadata() {
+    JsonObject first = JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
+    JsonObject second = JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
+
+    assertTrue(first.get("returnedCount").getAsInt() <= 100);
+    assertEquals(first.getAsJsonArray("matches"), second.getAsJsonArray("matches"));
+    for (JsonElement match : first.getAsJsonArray("matches")) {
+      JsonObject capability = match.getAsJsonObject();
+      assertTrue(capability.has("executionMode"));
+      assertTrue(capability.get("sourcePath").getAsString().startsWith("src/main/java/neqsim/"));
+    }
+  }
+
+  @Test
+  void testRunRejectsUnknownActionAndMalformedInput() {
+    JsonObject unknown = JsonParser.parseString(GeneralCapabilityRunner.run("{\"action\":\"install\"}"))
+        .getAsJsonObject();
+    assertEquals("UNKNOWN_ACTION", unknown.get("code").getAsString());
+
+    JsonObject malformed = JsonParser.parseString(GeneralCapabilityRunner.run("{")).getAsJsonObject();
+    assertEquals("INPUT_ERROR", malformed.get("code").getAsString());
   }
 
   @Test
