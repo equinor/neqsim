@@ -77,9 +77,9 @@ reading aid, not execution evidence.
 These files are outside Maven's compiled source tree. The
 `StandaloneJavaDocumentationCompilationTest` compiles the exact catalog against the
 current NeqSim API. This is build verification only, not runtime or engineering-result
-validation. The Eclipse E300 example is also source-checked for Log4j2 compliance; the
-remaining files retain legacy console output. Inspect assumptions and execute the required
-workflow before engineering reuse. For a supported starting point, use the
+validation. The Eclipse E300 and flow-regime examples are also source-checked for Log4j2
+compliance; the remaining files retain legacy console output. Inspect assumptions and execute
+the required workflow before engineering reuse. For a supported starting point, use the
 [Java getting-started guide](../java-getting-started.md).
 
 | Example | Build status | Capability |
