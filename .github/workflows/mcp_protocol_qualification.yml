@@ -72,6 +72,9 @@ jobs:
       - name: Run focused visualization Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.VisualizationRunnerTest test -ntp
 
+      - name: Run focused process-local plugin Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.PluginRegistryContractTest test -ntp
+
       - name: Run focused pre-flight validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
 
@@ -120,6 +123,9 @@ jobs:
 
       - name: Run focused real-MCP visualization qualification
         run: cd neqsim-mcp-server && python test_visualization_protocol.py
+
+      - name: Run focused real-MCP process-local plugin qualification
+        run: cd neqsim-mcp-server && python test_plugin_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py
