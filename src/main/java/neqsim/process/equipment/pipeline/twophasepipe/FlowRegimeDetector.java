@@ -510,11 +510,12 @@ public class FlowRegimeDetector implements Serializable {
       return FlowRegime.DISPERSED_BUBBLE;
     }
 
-    // Check for annular/churn
+    // Honor the gas-lift criterion once it selects annular flow. A dimensional liquid
+    // superficial velocity alone cannot distinguish churn from annular flow: the former
+    // 0.1 m/s override selected churn at arbitrarily large gas velocities and introduced
+    // a holdup discontinuity when an annular pipe was tilted upward. A separate film
+    // stability criterion would be needed to subdivide this region into churn and annular.
     if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
-      if (isUpward && U_SL > 0.1) {
-        return FlowRegime.CHURN;
-      }
       return FlowRegime.ANNULAR;
     }
 

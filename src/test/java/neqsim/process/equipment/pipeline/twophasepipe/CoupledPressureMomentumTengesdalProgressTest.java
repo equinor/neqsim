@@ -97,8 +97,37 @@ class CoupledPressureMomentumTengesdalProgressTest {
     assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected(),
         "the default nonlinear budget must not reject a coupled correction");
     assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps());
-    assertTrue(pipe.isTransientCoupledPressureMomentumCorrectionLimited(),
-        "the known Tengesdal limiter event must remain visible through the sticky diagnostic");
+    assertFalse(pipe.isTransientCoupledPressureMomentumCorrectionLimited(),
+        "the conservative accumulation observer must not reintroduce the former limiter event");
+  }
+
+  @Test
+  void sharedClosureLimiterEventRemainsStickyAfterTheCorrectionRecovers() {
+    TwoFluidPipe pipe = createTestThreePipe(16, true);
+    assertFalse(pipe.isTransientCoupledPressureMomentumCorrectionLimited());
+    boolean observedLimitedCorrection = false;
+    boolean observedRecovery = false;
+    for (int step = 0; step < 50; step++) {
+      pipe.runTransient(0.1,
+          UUID.nameUUIDFromBytes(("Tengesdal-shared-limiter-" + step).getBytes(StandardCharsets.UTF_8)));
+      boolean latestLimited = pipe.isCoupledPressureMomentumPressureCorrectionLimited();
+      // An outer interval contains several internal corrections; its final correction may
+      // already have recovered when an earlier substep reached the pressure limit.
+      if (observedLimitedCorrection) {
+        assertTrue(pipe.isTransientCoupledPressureMomentumCorrectionLimited(),
+            "an observed pressure limit must survive subsequent unlimited corrections");
+        observedRecovery |= !latestLimited;
+      }
+      observedLimitedCorrection |= pipe.isTransientCoupledPressureMomentumCorrectionLimited();
+      assertTrue(pipe.isCoupledPressureMomentumConverged());
+      for (Phase phase : Phase.values()) {
+        assertTrue(pipe.getLastMassBalanceReport().getRelativeResidual(phase) < 1.0e-9);
+      }
+    }
+    assertTrue(observedLimitedCorrection, "fixture must exercise pressure limiting");
+    assertTrue(observedRecovery, "fixture must exercise an unlimited correction after the limit");
+    assertEquals(5.0, pipe.getSimulationTime(), 1.0e-9);
+    assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps());
   }
 
   @Test
@@ -155,6 +184,10 @@ class CoupledPressureMomentumTengesdalProgressTest {
   }
 
   private static TwoFluidPipe createTestThreePipe(int numberOfSections) {
+    return createTestThreePipe(numberOfSections, false);
+  }
+
+  private static TwoFluidPipe createTestThreePipe(int numberOfSections, boolean sharedClosure) {
     double liquidMolarMassKgPerMol = 0.220;
     double nitrogenMolarMassKgPerMol = 0.0280134;
     SystemInterface fluid = new SystemSrkEos(298.15, 2.3);
@@ -181,6 +214,7 @@ class CoupledPressureMomentumTengesdalProgressTest {
     }
 
     TwoFluidPipe pipe = new TwoFluidPipe("Tengesdal coupled progress", inlet);
+    pipe.setSharedSlugForceBalanceEnabled(sharedClosure);
     pipe.setLength(totalLengthM);
     pipe.setDiameter(DIAMETER_M);
     pipe.setRoughness(1.5e-6);

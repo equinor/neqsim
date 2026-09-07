@@ -263,6 +263,14 @@ annular. The two differ only below the Kelvin-Helmholtz threshold, which on a 73
 10 MSm3/d and differ at 4 MSm3/d, where the equilibrium branch moves the maximum holdup error from -25.5 to -2.4
 per cent.
 
+For inclinations above 10 degrees in magnitude, the mechanistic detector retains its gas-lift
+criterion for annular flow. It no longer overrides an annular result with churn merely because
+upward liquid superficial velocity exceeds 0.1 m/s. That dimensional switch produced lower uphill
+holdup in the 500 m, 100 mm validation pipe by selecting a different closure. The unchanged uphill
+comparison now gives approximately 3.26% holdup in both orientations. This removes an inconsistent
+switch; it does not qualify a churn/annular boundary. A film-stability model is still needed to
+resolve churn within this region.
+
 The friction gradient uses per-phase wall shear in stratified flow and the mixture correlation elsewhere. On the same
 export line the pressure drop error across a threefold rate range is +1.4, +1.6, +0.1 and -2.7 per cent, against +5.7,
 +5.6, +1.4 and -0.0 per cent for the earlier mixture-only default.
