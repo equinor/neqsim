@@ -319,7 +319,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.15.0</version>
+				<version>3.16.0</version>
 				<configuration>
 					<release>17</release> <!-- Produce Java 17 compatible bytecode. Requires a
 					JDK >= 17 (e.g. JDK 17 or 21); the release flag guarantees Java 17 output. -->
