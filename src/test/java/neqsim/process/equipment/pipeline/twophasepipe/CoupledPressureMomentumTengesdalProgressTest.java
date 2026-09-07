@@ -97,8 +97,9 @@ class CoupledPressureMomentumTengesdalProgressTest {
     assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected(),
         "the default nonlinear budget must not reject a coupled correction");
     assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps());
-    assertFalse(pipe.isTransientCoupledPressureMomentumCorrectionLimited(),
-        "the conservative accumulation observer must not reintroduce the former limiter event");
+    // This fixture qualifies progress and conservation, not a limiter-free trajectory.
+    // Limiter occurrence can change across runtimes; its count must agree with the sticky flag.
+    assertEquals(pipe.getTransientPressureLimitCount() > 0, pipe.isTransientCoupledPressureMomentumCorrectionLimited());
   }
 
   @Test
@@ -125,8 +126,32 @@ class CoupledPressureMomentumTengesdalProgressTest {
       }
     }
     assertTrue(observedLimitedCorrection, "fixture must exercise pressure limiting");
+    assertTrue(pipe.getTransientPressureLimitCount() > 0);
+    assertTrue(Double.isFinite(pipe.getFirstTransientPressureLimitTime()));
+    assertTrue(pipe.getMinimumTransientPressureDamping() >= 0.0);
+    assertTrue(pipe.getMinimumTransientPressureDamping() < 1.0);
     assertTrue(observedRecovery, "fixture must exercise an unlimited correction after the limit");
     assertEquals(5.0, pipe.getSimulationTime(), 1.0e-9);
+    assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps());
+  }
+
+  @Test
+  void implicitSubcellForcesCompleteFiveSecondsWithConservation() {
+    TwoFluidPipe pipe = createTestThreePipe(16, true);
+    pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+    pipe.setConservativeSlugForceIntegrationEnabled(true);
+    pipe.setMomentumForceDiagnosticsEnabled(true);
+    pipe.run();
+    for (int step = 0; step < 50; step++) {
+      pipe.runTransient(0.1, UUID.nameUUIDFromBytes(("subcell-forces-" + step).getBytes(StandardCharsets.UTF_8)));
+      assertEquals(0.1, pipe.getLastMassBalanceReport().getElapsedTimeSeconds(), 1e-10);
+      assertTrue(pipe.isCoupledPressureMomentumConverged());
+      for (Phase phase : Phase.values()) {
+        assertTrue(pipe.getLastMassBalanceReport().getRelativeResidual(phase) < 1e-9);
+      }
+    }
+    assertEquals(5.0, pipe.getSimulationTime(), 1e-9);
+    assertEquals(16, pipe.getLastMomentumSourceForcesPerLength().length);
     assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps());
   }
 

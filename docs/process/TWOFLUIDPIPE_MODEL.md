@@ -1731,3 +1731,91 @@ The 1800 s liquid-rich null checks remain unchanged at 1.323207% inventory drift
 outlet backflow clamping or rejected substeps. Selected tracker, conservative-transport,
 boundary, thermodynamic, terrain and steady-state regressions give 157 passes and the
 previously recorded uphill-holdup failure; no acceptance tolerance was relaxed.
+
+### Experimental implicit slug/film friction and diagnostics
+
+Conservative slug/film face reconstruction can now be paired with an optional local
+implicit friction step. Previously its fluxes used separate body/film velocities but
+its friction sources used only the mean cell state. The option evaluates the shared
+slug wall/drag closure in the body and the annular wall/drag closure in the film,
+then averages updated momenta with the reconstructed length fractions. Phase masses
+and total energy remain unchanged by this friction step. Gravitational and pressure
+terms remain in their existing conservative transport/source treatment.
+
+```java
+pipe.setSharedSlugForceBalanceEnabled(true);
+pipe.setEnableInterfacialPressure(true);
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+pipe.setConservativeSlugForceIntegrationEnabled(true);
+pipe.setMomentumForceDiagnosticsEnabled(true);
+```
+
+The option defaults to false and requires conservative tracking and shared slug forces;
+it cannot be combined with the separate stiff-bubble-drag split. Wall velocity and
+interphase slip are advanced through bounded scalar backward-Euler solves, so a
+falling film has its own signed wall resistance without an explicit friction time-step
+collapse. The explicit RHS omits these same friction forces in active reconstructed
+cells to avoid applying them twice. The local wall/interface splitting is first-order;
+calling it on both sides of transport does not by itself establish second-order accuracy.
+The existing cell-mean steady initialization is retained. This is an experimental
+extension, not a qualified steady body/film equilibrium or a complete churn/annular
+transition model. Independent oil/water subcell dynamics still require qualification.
+
+`getTransientPressureLimitCount()` counts every bounded nonlinear iteration, including
+rejected attempted substeps, since `run()`. `getFirstTransientPressureLimitTime()` gives
+the first attempted-substep start time, and `getMinimumTransientPressureDamping()` gives
+the smallest actual Newton damping. With no events they return 0, NaN and 1 respectively.
+The dedicated Log4j logger `neqsim.process.equipment.pipeline.TwoFluidPipe.pressureLimits`
+at DEBUG records attempted time step, iteration, limiting cell, active bound, and proposed
+and damped pressure correction. The solver's immutable `PressureLimitEvent` list covers
+the latest nonlinear solve; cumulative counters preserve events between outer samples.
+
+`getLastMomentumSourceForcesPerLength()` returns a defensive snapshot indexed by cell,
+then gas wall, liquid wall, gas interface, liquid interface, gas gravity and liquid gravity,
+in signed N/m. It samples the latest RHS state, which may precede the final accepted
+pressure correction. It excludes pressure/advection fluxes, mass-transfer momentum and
+separate oil-water exchange. When subcell friction is implicit it reports the mechanical
+forces before their removal from the explicit RHS; it is not the time-integrated implicit
+impulse. Sampling defaults to off and does not modify the trajectory.
+
+The progress fixture checks convergence, conservation and consistency between limiter
+counts and the sticky flag. Whether that fixture encounters a limit varies across
+runtimes; neither mandatory presence nor mandatory absence is a portable progress
+contract. The full experimental benchmark retains its separate no-limiter requirement.
+A dedicated limited fixture verifies event recording and persistence after recovery.
+
+The unchanged 600 s public-case diagnostic gives the following comparison. Only the
+optional reconstruction/source configuration changes; experimental thresholds and
+pressure sampling remain unchanged.
+
+| Quantity | Shared mean-cell closure | Implicit body/film friction |
+|---|---:|---:|
+| Inlet peak-to-peak pressure | 51.315 kPa | 65.163 kPa |
+| Inlet p10–p90 pressure width | 26.911 kPa | 25.314 kPa |
+| Minimum mass-based riser liquid holdup | 0.935768 | 0.862846 |
+| Mean mass-based riser liquid holdup | 0.982796 | 0.980280 |
+| Completed liquid-trough intervals | 15, irregular | 0 under the unchanged algorithm |
+| Maximum phase mass residual | 1.57e-15 | 1.27e-15 |
+| Rejected coupled substeps | 0 | 0 |
+
+The larger peak-to-peak excursion is not a demonstrated improvement in sustained
+severe-slugging accuracy: the central pressure width decreases, a valid liquid-cycle
+period is absent, and pressure limits still occur. Amplitude remains below the 68.6 kPa
+lower acceptance bound. Initial holdup, experimental amplitude/period and limiter-free
+operation remain unqualified. No experimental gate is enabled or relaxed by this option.
+The diagnostic-only baseline reproduces all 6,000 prior TRACE samples exactly and
+records 387 bounded nonlinear iterations, all limited by correction size; 269 are in
+cell 7 before the bend. The prior outer-step latest flag exposed only five samples.
+
+For ordinary three-phase calculations, flash updates now reuse
+`TwoFluidSection.updateThreePhaseProperties()` for the in-situ mixture density and
+viscosity, as the hydraulic split already does. A separate Brinkman calculation at
+each flash previously forced a three-sweep viscosity/holdup cycle in the uphill
+water/oil regression. Steady convergence now also checks liquid viscosity and
+surface tension changes after a flash, in addition to phase densities and composition.
+
+A supporting 100 s run with the outer reporting/advance interval reduced from 0.1 s to
+0.05 s completes without rejected substeps, but changes peak-to-peak pressure from
+43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
+not yet numerically or experimentally qualified for severe-slug predictions.

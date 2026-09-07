@@ -742,6 +742,12 @@ public class TimeIntegrator implements Serializable {
     return lastCoupledPressureMomentumResult == null ? 0 : lastCoupledPressureMomentumResult.getIterations();
   }
 
+  /** @return immutable diagnostics from every limited iteration in the latest coupled solve */
+  public java.util.List<CoupledPressureMomentumSolver.PressureLimitEvent> getCoupledPressureLimitEvents() {
+    return lastCoupledPressureMomentumResult == null ? java.util.Collections.emptyList()
+        : lastCoupledPressureMomentumResult.getPressureLimitEvents();
+  }
+
   /** @return true when the latest nonlinear solve limited at least one pressure correction */
   public boolean isCoupledPressureMomentumPressureCorrectionLimited() {
     return lastCoupledPressureMomentumResult != null && lastCoupledPressureMomentumResult.isPressureCorrectionLimited();

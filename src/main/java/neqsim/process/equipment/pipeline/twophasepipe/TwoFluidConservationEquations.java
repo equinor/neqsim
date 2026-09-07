@@ -229,6 +229,200 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /** Phase-resolved cell source rates from the most recent {@link #calcRHS} evaluation. */
   private double[][] lastPhaseMassSourcesPerLength = new double[0][3];
+  private boolean momentumForceDiagnosticsEnabled;
+  private boolean conservativeSlugForceIntegrationEnabled;
+
+  private double[][] lastMomentumSourceForcesPerLength = new double[0][6];
+
+  /**
+   * Select volume-weighted slug-body and annular-film mechanical forces for conservative tracked geometry.
+   *
+   * @param enabled true to use reconstructed velocities and wetted geometry in friction sources
+   */
+  public void setConservativeSlugForceIntegrationEnabled(boolean enabled) {
+    conservativeSlugForceIntegrationEnabled = enabled;
+  }
+
+  /** @return whether subcell mechanical-force integration is enabled */
+  public boolean isConservativeSlugForceIntegrationEnabled() {
+    return conservativeSlugForceIntegrationEnabled;
+  }
+
+  /**
+   * Evaluate the geometry-resolved friction contribution without changing the cell or its phase inventories.
+   *
+   * @param section mean cell state
+   * @return signed gas wall, liquid wall, gas interface, liquid interface in N/m, or null without active geometry
+   */
+  double[] conservativeSlugForces(TwoFluidSection section) {
+    if (!conservativeSlugForceIntegrationEnabled || conservativeSlugs == null || conservativeSlugs.isEmpty()) {
+      return null;
+    }
+    SlugFilmCoupling.Reconstruction split = SlugFilmCoupling.reconstruct(section, conservativeSlugs);
+    if (!split.isActive()) {
+      return null;
+    }
+    TwoFluidSection[] states = { split.getBodyState(), split.getFilmState() };
+    double[] weights = { split.getBodyFraction(), 1.0 - split.getBodyFraction() };
+    double[] forces = new double[4];
+    for (int part = 0; part < 2; part++) {
+      TwoFluidSection state = states[part];
+      // Reconstructed geometry owns the subcell closure. Do not reclassify it using the cell-average flow map.
+      state.setRegimeWeights(null);
+      state.setFlowRegime(part == 0 ? PipeSection.FlowRegime.SLUG : PipeSection.FlowRegime.ANNULAR);
+      WallFriction.WallFrictionResult wall = calculateWallFriction(state, null);
+      InterfacialFriction.InterfacialFrictionResult drag = calculateInterfacialFriction(state, null);
+      forces[0] -= weights[part] * (state.getGasHoldup() > 0.0 ? wall.gasWallForcePerLength : 0.0);
+      forces[1] -= weights[part] * (state.getLiquidHoldup() > 0.0 ? wall.liquidWallForcePerLength : 0.0);
+      if (state.getGasHoldup() > 0.0 && state.getLiquidHoldup() > 0.0) {
+        forces[2] -= weights[part] * drag.interfacialShear * drag.interfacialAreaPerLength;
+      }
+    }
+    forces[3] = -forces[2];
+    return forces;
+  }
+
+  /**
+   * Advance reconstructed friction implicitly, preserving phase masses and total energy. Wall resistance is solved in
+   * each phase velocity; interface drag is solved in slip velocity at fixed total momentum. Both scalar roots are
+   * bracketed by the old velocity and zero.
+   *
+   * @param state conservative predictor
+   * @param sections geometry and thermophysical state
+   * @param dt source interval in seconds
+   * @return new conservative state, or the input reference when the option is disabled
+   */
+  public double[][] applyConservativeSlugFriction(double[][] state, TwoFluidSection[] sections, double dt) {
+    if (!conservativeSlugForceIntegrationEnabled || conservativeSlugs == null || conservativeSlugs.isEmpty()) {
+      return state;
+    }
+    if (!Double.isFinite(dt) || dt < 0.0) {
+      throw new IllegalArgumentException("Source interval must be finite and nonnegative");
+    }
+    if (dt == 0.0) {
+      return state;
+    }
+    double[][] result = new double[state.length][];
+    for (int cell = 0; cell < state.length; cell++) {
+      result[cell] = state[cell].clone();
+      TwoFluidSection mean = sections[cell].clone();
+      mean.setStateVector(state[cell]);
+      mean.extractPrimitiveVariables();
+      SlugFilmCoupling.Reconstruction split = SlugFilmCoupling.reconstruct(mean, conservativeSlugs);
+      if (!split.isActive()) {
+        continue;
+      }
+      TwoFluidSection[] parts = { split.getBodyState(), split.getFilmState() };
+      double weight = split.getBodyFraction();
+      for (int part = 0; part < 2; part++) {
+        parts[part].setRegimeWeights(null);
+        parts[part].setFlowRegime(part == 0 ? PipeSection.FlowRegime.SLUG : PipeSection.FlowRegime.ANNULAR);
+        integrateSubcellFriction(parts[part], dt);
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        result[cell][phase + 3] = weight * parts[0].getStateVector()[phase + 3]
+            + (1.0 - weight) * parts[1].getStateVector()[phase + 3];
+      }
+    }
+    return result;
+  }
+
+  /** Solve passive wall and interface friction in a frozen subcell without an explicit stiffness limit. */
+  private void integrateSubcellFriction(TwoFluidSection state, double dt) {
+    double gasMass = state.getGasMassPerLength();
+    double liquidMass = state.getOilMassPerLength() + state.getWaterMassPerLength();
+    double gasVelocity = state.getGasVelocity();
+    double liquidVelocity = state.getLiquidVelocity();
+    for (int phase = 0; phase < 2; phase++) {
+      double mass = phase == 0 ? gasMass : liquidMass;
+      double old = phase == 0 ? gasVelocity : liquidVelocity;
+      if (mass <= 0.0 || old == 0.0) {
+        continue;
+      }
+      double low = Math.min(0.0, old);
+      double high = Math.max(0.0, old);
+      for (int iteration = 0; iteration < 50; iteration++) {
+        double trial = 0.5 * (low + high);
+        if (phase == 0) {
+          state.setGasVelocity(trial);
+        } else {
+          state.setLiquidVelocity(trial);
+        }
+        WallFriction.WallFrictionResult wall = calculateWallFriction(state, null);
+        double resistance = phase == 0 ? wall.gasWallForcePerLength : wall.liquidWallForcePerLength;
+        double residual = mass * (trial - old) + dt * resistance;
+        if (!Double.isFinite(residual)) {
+          throw new IllegalStateException("Nonfinite subcell friction residual");
+        }
+        if (residual > 0.0) {
+          high = trial;
+        } else {
+          low = trial;
+        }
+      }
+      if (phase == 0) {
+        gasVelocity = 0.5 * (low + high);
+        state.setGasVelocity(gasVelocity);
+      } else {
+        liquidVelocity = 0.5 * (low + high);
+        state.setLiquidVelocity(liquidVelocity);
+      }
+    }
+    if (gasMass > 0.0 && liquidMass > 0.0) {
+      double oldSlip = gasVelocity - liquidVelocity;
+      double totalMomentum = gasMass * gasVelocity + liquidMass * liquidVelocity;
+      double meanVelocity = totalMomentum / (gasMass + liquidMass);
+      double low = Math.min(0.0, oldSlip);
+      double high = Math.max(0.0, oldSlip);
+      for (int iteration = 0; iteration < 50; iteration++) {
+        double trial = 0.5 * (low + high);
+        state.setGasVelocity(meanVelocity + liquidMass / (gasMass + liquidMass) * trial);
+        state.setLiquidVelocity(meanVelocity - gasMass / (gasMass + liquidMass) * trial);
+        InterfacialFriction.InterfacialFrictionResult drag = calculateInterfacialFriction(state, null);
+        double force = drag.interfacialShear * drag.interfacialAreaPerLength;
+        double residual = trial - oldSlip + dt * (1.0 / gasMass + 1.0 / liquidMass) * force;
+        if (!Double.isFinite(residual)) {
+          throw new IllegalStateException("Nonfinite subcell friction residual");
+        }
+        if (residual > 0.0) {
+          high = trial;
+        } else {
+          low = trial;
+        }
+      }
+      double slip = 0.5 * (low + high);
+      gasVelocity = meanVelocity + liquidMass / (gasMass + liquidMass) * slip;
+      liquidVelocity = meanVelocity - gasMass / (gasMass + liquidMass) * slip;
+    }
+    double liquidChange = liquidVelocity
+        - (liquidMass > 0.0 ? (state.getOilMomentumPerLength() + state.getWaterMomentumPerLength()) / liquidMass : 0.0);
+    state.setGasMomentumPerLength(gasMass * gasVelocity);
+    state.setOilMomentumPerLength(state.getOilMomentumPerLength() + state.getOilMassPerLength() * liquidChange);
+    state.setWaterMomentumPerLength(state.getWaterMomentumPerLength() + state.getWaterMassPerLength() * liquidChange);
+  }
+
+  /** @param enabled true to retain mechanical force diagnostics from the latest RHS evaluation */
+  public void setMomentumForceDiagnosticsEnabled(boolean enabled) {
+    momentumForceDiagnosticsEnabled = enabled;
+    if (!enabled) {
+      lastMomentumSourceForcesPerLength = new double[0][6];
+    }
+  }
+
+  /**
+   * @return defensive copy indexed by cell then gas/liquid wall, gas/liquid interface, gas/liquid gravity, signed N/m;
+   * excludes pressure, advection and mass-transfer momentum
+   */
+  public double[][] getLastMomentumSourceForcesPerLength() {
+    if (lastMomentumSourceForcesPerLength == null) {
+      return new double[0][6];
+    }
+    double[][] copy = new double[lastMomentumSourceForcesPerLength.length][];
+    for (int i = 0; i < copy.length; i++) {
+      copy[i] = lastMomentumSourceForcesPerLength[i].clone();
+    }
+    return copy;
+  }
 
   /** Read-only local component-equilibrium states supplied for the current RHS evaluation. */
   private transient SystemInterface[] localEquilibriumStates;
@@ -1159,6 +1353,10 @@ public class TwoFluidConservationEquations implements Serializable {
   double[][] calcSourceTerms(TwoFluidSection[] sections) {
     int nCells = sections.length;
     double[][] sources = new double[nCells][NUM_EQUATIONS];
+    if (momentumForceDiagnosticsEnabled
+        && (lastMomentumSourceForcesPerLength == null || lastMomentumSourceForcesPerLength.length != nCells)) {
+      lastMomentumSourceForcesPerLength = new double[nCells][6];
+    }
     if (lastPhaseMassSourcesPerLength.length != nCells) {
       lastPhaseMassSourcesPerLength = new double[nCells][3];
     }
@@ -1218,10 +1416,34 @@ public class TwoFluidConservationEquations implements Serializable {
       boolean stiffBubbleDrag = enableStiffBubbleDrag && isDispersedBubbleRegime(sec.getFlowRegime());
       double F_iG = stiffBubbleDrag || alphaG <= 0.0 || alphaL <= 0.0 ? 0.0 : -sec.getInterfacialShear() * S_i;
       double F_iL = -F_iG;
+      double[] subcellForces = conservativeSlugForces(sec);
+      if (subcellForces != null) {
+        F_wG = subcellForces[0];
+        F_wL = subcellForces[1];
+        F_iG = subcellForces[2];
+        F_iL = subcellForces[3];
+      }
 
       // Gravity forces (N/m) - calculated separately for oil and water
       double F_gG = -alphaG * rhoG * GRAVITY * A * sinTheta;
       double F_gL = -alphaL * rhoL * GRAVITY * A * sinTheta;
+      if (momentumForceDiagnosticsEnabled) {
+        double[] forces = lastMomentumSourceForcesPerLength[i];
+        forces[0] = F_wG;
+        forces[1] = F_wL;
+        forces[2] = F_iG;
+        forces[3] = F_iL;
+        forces[4] = F_gG;
+        forces[5] = F_gL;
+      }
+
+      if (subcellForces != null) {
+        // These forces are advanced by the local implicit source split, exactly once.
+        F_wG = 0.0;
+        F_wL = 0.0;
+        F_iG = 0.0;
+        F_iL = 0.0;
+      }
 
       // Water-specific gravity source (water is heavier, accumulates more in downslopes)
       double F_gW = 0;
