@@ -7,9 +7,8 @@ import java.util.Arrays;
  * Immutable screening properties for a mass blend of resolved refinery assays.
  *
  * <p>
- * Blend specific gravity uses ideal additive liquid volumes. Sulfur and nitrogen, when supplied,
- * use linear mass-basis mixing. This class does not create pseudo-components or mutate an assay or
- * thermodynamic system.
+ * Blend specific gravity uses ideal additive liquid volumes. Sulfur and nitrogen, when supplied, use linear mass-basis
+ * mixing. This class does not create pseudo-components or mutate an assay or thermodynamic system.
  * </p>
  */
 public final class RefineryAssayBlend implements Serializable {
@@ -94,8 +93,7 @@ public final class RefineryAssayBlend implements Serializable {
    * @param sourceSpecificGravities source whole-assay specific gravities
    * @return immutable blend properties
    */
-  public static RefineryAssayBlend fromBulkProperties(double[] sourceMasses,
-      double[] sourceSpecificGravities) {
+  public static RefineryAssayBlend fromBulkProperties(double[] sourceMasses, double[] sourceSpecificGravities) {
     return new RefineryAssayBlend(sourceMasses, sourceSpecificGravities, null, null);
   }
 
@@ -108,29 +106,26 @@ public final class RefineryAssayBlend implements Serializable {
    * @param sourceNitrogenMassFractions source total-nitrogen mass fractions on a 0-1 basis
    * @return immutable blend properties
    */
-  public static RefineryAssayBlend fromBulkProperties(double[] sourceMasses,
-      double[] sourceSpecificGravities, double[] sourceSulfurMassFractions,
-      double[] sourceNitrogenMassFractions) {
-    return new RefineryAssayBlend(sourceMasses, sourceSpecificGravities,
-        sourceSulfurMassFractions, sourceNitrogenMassFractions);
+  public static RefineryAssayBlend fromBulkProperties(double[] sourceMasses, double[] sourceSpecificGravities,
+      double[] sourceSulfurMassFractions, double[] sourceNitrogenMassFractions) {
+    return new RefineryAssayBlend(sourceMasses, sourceSpecificGravities, sourceSulfurMassFractions,
+        sourceNitrogenMassFractions);
   }
 
   /**
    * Resolve complete density and quality inputs from configured assays before returning a blend.
    *
    * <p>
-   * Every positive-mass assay must support bulk specific gravity, sulfur, and nitrogen. Zero-mass
-   * assays are retained in the returned mass-fraction array but their properties are not queried.
+   * Every positive-mass assay must support bulk specific gravity, sulfur, and nitrogen. Zero-mass assays are retained
+   * in the returned mass-fraction array but their properties are not queried.
    * </p>
    *
    * @param assays configured source assays
    * @param sourceMasses non-negative source masses in any common mass unit
    * @return immutable blend properties
    */
-  public static RefineryAssayBlend fromAssays(OilAssayCharacterisation[] assays,
-      double[] sourceMasses) {
-    if (assays == null || sourceMasses == null || assays.length == 0
-        || assays.length != sourceMasses.length) {
+  public static RefineryAssayBlend fromAssays(OilAssayCharacterisation[] assays, double[] sourceMasses) {
+    if (assays == null || sourceMasses == null || assays.length == 0 || assays.length != sourceMasses.length) {
       throw new IllegalArgumentException("Assay and mass arrays must be non-empty and equal length");
     }
 
@@ -150,8 +145,8 @@ public final class RefineryAssayBlend implements Serializable {
         sourceNitrogenMassFractions[i] = assays[i].getBulkNitrogenMassFraction();
       }
     }
-    return fromBulkProperties(sourceMasses, sourceSpecificGravities,
-        sourceSulfurMassFractions, sourceNitrogenMassFractions);
+    return fromBulkProperties(sourceMasses, sourceSpecificGravities, sourceSulfurMassFractions,
+        sourceNitrogenMassFractions);
   }
 
   /** @return a defensive copy of normalized source mass fractions */
@@ -207,10 +202,8 @@ public final class RefineryAssayBlend implements Serializable {
     }
   }
 
-  private static void validateEqualLength(double[] sourceMasses, double[] values,
-      String propertyName) {
-    if (sourceMasses == null || values == null || sourceMasses.length == 0
-        || sourceMasses.length != values.length) {
+  private static void validateEqualLength(double[] sourceMasses, double[] values, String propertyName) {
+    if (sourceMasses == null || values == null || sourceMasses.length == 0 || sourceMasses.length != values.length) {
       throw new IllegalArgumentException(
           "Source mass and " + propertyName + " arrays must be non-empty and equal length");
     }
