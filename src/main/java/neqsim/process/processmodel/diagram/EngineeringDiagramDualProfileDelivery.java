@@ -8,21 +8,34 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import neqsim.process.engineering.model.EngineeringDiagramBalanceTable;
+import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Boundary;
+import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Direction;
+import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.EvidenceState;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
+import neqsim.process.engineering.model.EngineeringDiagramStreamTable;
+import neqsim.process.engineering.model.EngineeringDiagramStreamTable.Row;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment;
+import neqsim.process.processmodel.dexpi.Dexpi20XmlWriter;
+import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
 
 /**
  * Publishes coordinated PFD and review-required P&amp;ID proposal deliveries from one canonical {@link ProcessSystem}.
  *
  * <p>
  * Both views are generated from the same process object and must retain the same canonical source-graph fingerprint.
- * The P&amp;ID view is not a complete control, piping, or safety design. Its accompanying native DEXPI 2.0 Process file
- * is a PFD/BFD information-model companion only; it is not represented as a DEXPI Plant or Proteus P&amp;ID exchange.
+ * The P&amp;ID view is not a complete control, piping, or safety design. Its child-delivery DEXPI 2.0 Process file
+ * remains a PFD/BFD information-model companion. An opt-in companion package additionally publishes separately
+ * labelled native DEXPI 2.0 Plant and Proteus 4.1 compatibility exchanges for review.
  * </p>
  *
  * <p>
@@ -33,8 +46,65 @@ import neqsim.process.processmodel.ProcessSystem;
 public final class EngineeringDiagramDualProfileDelivery {
   private static final String SCHEMA_VERSION = "neqsim_engineering_diagram_dual_profile_delivery.v1";
   private static final String MANIFEST_FILE = "dual-profile-manifest.json";
+  private static final String STREAM_TABLE_FILE = "stream-table.json";
+  private static final String BALANCE_TABLE_FILE = "balance-table.json";
+  private static final String PID_DEXPI_PLANT_FILE = "pid/dexpi-plant-2.0.xml";
+  private static final String PID_DEXPI_PLANT_ASSESSMENT_FILE = "pid/dexpi-plant-assessment.json";
+  private static final String PID_PROTEUS_FILE = "pid/proteus-4.1.xml";
 
   private EngineeringDiagramDualProfileDelivery() {
+  }
+
+  /** One controlled balance-boundary declaration resolved against canonical stream evidence. */
+  public static final class BalanceBoundary {
+    private final String balanceId;
+    private final String streamSourceLabel;
+    private final Direction direction;
+    private final String sourceReference;
+    private final EvidenceState evidenceState;
+
+    /**
+     * Creates one proposed or reviewed balance-boundary declaration.
+     *
+     * @param balanceId controlled balance identity
+     * @param streamSourceLabel exact source-model stream label
+     * @param direction stream direction relative to the balance boundary
+     * @param sourceReference engineering-register source reference
+     * @param evidenceState review state of the declaration
+     */
+    public BalanceBoundary(String balanceId, String streamSourceLabel, Direction direction, String sourceReference,
+        EvidenceState evidenceState) {
+      this.balanceId = requireText(balanceId, "balanceId");
+      this.streamSourceLabel = requireText(streamSourceLabel, "streamSourceLabel");
+      this.direction = requireNonNull(direction, "direction");
+      this.sourceReference = requireText(sourceReference, "sourceReference");
+      this.evidenceState = requireNonNull(evidenceState, "evidenceState");
+    }
+
+    /** @return controlled balance identity */
+    public String getBalanceId() {
+      return balanceId;
+    }
+
+    /** @return exact source-model stream label */
+    public String getStreamSourceLabel() {
+      return streamSourceLabel;
+    }
+
+    /** @return boundary direction */
+    public Direction getDirection() {
+      return direction;
+    }
+
+    /** @return engineering-register source reference */
+    public String getSourceReference() {
+      return sourceReference;
+    }
+
+    /** @return declaration review state */
+    public EvidenceState getEvidenceState() {
+      return evidenceState;
+    }
   }
 
   /** Immutable coordinated delivery request. */
@@ -45,6 +115,7 @@ public final class EngineeringDiagramDualProfileDelivery {
     private final String pidDrawingNumber;
     private final String title;
     private final String operatingCaseId;
+    private final List<BalanceBoundary> balanceBoundaries;
     private final NativeEngineeringDiagramRenderer.SheetFormat sheetFormat;
     private final NativeEngineeringDiagramRenderer.RoutingMode routingMode;
     private final EngineeringDiagramDesignationRegister designationRegister;
@@ -58,6 +129,8 @@ public final class EngineeringDiagramDualProfileDelivery {
       pidDrawingNumber = requireText(builder.pidDrawingNumber, "pidDrawingNumber");
       title = requireText(builder.title, "title");
       operatingCaseId = optionalText(builder.operatingCaseId);
+      balanceBoundaries =
+          Collections.unmodifiableList(new ArrayList<BalanceBoundary>(builder.balanceBoundaries));
       sheetFormat = requireNonNull(builder.sheetFormat, "sheetFormat");
       routingMode = requireNonNull(builder.routingMode, "routingMode");
       designationRegister = requireNonNull(builder.designationRegister, "designationRegister");
@@ -65,6 +138,12 @@ public final class EngineeringDiagramDualProfileDelivery {
       conventionRegister = requireNonNull(builder.conventionRegister, "conventionRegister");
       if (pfdDrawingNumber.equals(pidDrawingNumber)) {
         throw new IllegalArgumentException("PFD and P&ID drawing numbers must be distinct");
+      }
+      if (operatingCaseId.isEmpty() && !balanceBoundaries.isEmpty()) {
+        throw new IllegalArgumentException("balance boundaries require an operating case");
+      }
+      if (!operatingCaseId.isEmpty() && balanceBoundaries.isEmpty()) {
+        throw new IllegalArgumentException("an operating case requires at least one balance boundary");
       }
     }
 
@@ -91,6 +170,7 @@ public final class EngineeringDiagramDualProfileDelivery {
       private final String pidDrawingNumber;
       private final String title;
       private String operatingCaseId;
+      private List<BalanceBoundary> balanceBoundaries = Collections.emptyList();
       private NativeEngineeringDiagramRenderer.SheetFormat sheetFormat = NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE;
       private NativeEngineeringDiagramRenderer.RoutingMode routingMode = NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL;
       private EngineeringDiagramDesignationRegister designationRegister = new EngineeringDiagramDesignationRegister();
@@ -108,6 +188,15 @@ public final class EngineeringDiagramDualProfileDelivery {
       /** @param value successfully-run operating-case identity @return this builder */
       public Builder operatingCaseId(String value) {
         operatingCaseId = requireText(value, "operatingCaseId");
+        return this;
+      }
+
+      /** @param value controlled balance-boundary declarations @return this builder */
+      public Builder balanceBoundaries(List<BalanceBoundary> value) {
+        if (value == null || value.contains(null)) {
+          throw new IllegalArgumentException("balanceBoundaries must not be null or contain null");
+        }
+        balanceBoundaries = new ArrayList<BalanceBoundary>(value);
         return this;
       }
 
@@ -153,12 +242,24 @@ public final class EngineeringDiagramDualProfileDelivery {
     private final Path directory;
     private final EngineeringDiagramDelivery.Report pfd;
     private final EngineeringDiagramDelivery.Report pid;
+    private final String operatingCaseId;
+    private final String balanceBoundaryEvidenceState;
+    private final EngineeringDiagramStreamTable streamTable;
+    private final EngineeringDiagramBalanceTable balanceTable;
+    private final Dexpi20ConformanceAssessment.Report pidPlantAssessment;
     private final String fingerprint;
 
-    private Report(Path directory, EngineeringDiagramDelivery.Report pfd, EngineeringDiagramDelivery.Report pid) {
+    private Report(Path directory, EngineeringDiagramDelivery.Report pfd, EngineeringDiagramDelivery.Report pid,
+        Request request, EngineeringDiagramStreamTable streamTable, EngineeringDiagramBalanceTable balanceTable,
+        Dexpi20ConformanceAssessment.Report pidPlantAssessment) {
       this.directory = directory;
       this.pfd = pfd;
       this.pid = pid;
+      operatingCaseId = request.operatingCaseId;
+      balanceBoundaryEvidenceState = evidenceState(request.balanceBoundaries);
+      this.streamTable = streamTable;
+      this.balanceTable = balanceTable;
+      this.pidPlantAssessment = pidPlantAssessment;
       fingerprint = sha256(new GsonBuilder().create().toJson(toMapWithoutFingerprint()));
     }
 
@@ -184,7 +285,13 @@ public final class EngineeringDiagramDualProfileDelivery {
 
     /** @return whether both deliveries passed and retained one canonical source graph */
     public boolean isComplete() {
-      return pfd.isComplete() && pid.isComplete()
+      boolean companionEvidenceComplete =
+          operatingCaseId.isEmpty() ? streamTable == null && balanceTable == null
+              : streamTable != null && streamTable.isValid() && balanceTable != null && balanceTable.isValid()
+                  && streamTable.getSourceGraphFingerprint()
+                      .equals(pfd.getDocumentSet().getSourceGraphFingerprint());
+      return pfd.isComplete() && pid.isComplete() && pidPlantAssessment != null
+          && pidPlantAssessment.isSchemaAndProfileConformant() && companionEvidenceComplete
           && pfd.getDocumentSet().getSourceGraphFingerprint().equals(pid.getDocumentSet().getSourceGraphFingerprint());
     }
 
@@ -210,6 +317,22 @@ public final class EngineeringDiagramDualProfileDelivery {
       result.put("pidContentProfile", ContentProfile.PID.name());
       result.put("pfdDexpiInformationModel", "DEXPI_2_0_PROCESS");
       result.put("pidDexpiInformationModel", "PROCESS_PFD_BFD_COMPANION_ONLY");
+      result.put("pidNativeDexpiInformationModel", "DEXPI_2_0_PLANT_P_ID");
+      result.put("pidProteusCompatibilityProfile", "PROTEUS_4_1");
+      result.put("operatingCaseId", operatingCaseId);
+      result.put("balanceBoundaryEvidenceState", balanceBoundaryEvidenceState);
+      result.put("streamTableFile", operatingCaseId.isEmpty() ? "" : STREAM_TABLE_FILE);
+      result.put("balanceTableFile", operatingCaseId.isEmpty() ? "" : BALANCE_TABLE_FILE);
+      result.put("pidNativeDexpiFile", PID_DEXPI_PLANT_FILE);
+      result.put("pidNativeDexpiAssessmentFile", PID_DEXPI_PLANT_ASSESSMENT_FILE);
+      result.put("pidProteusFile", PID_PROTEUS_FILE);
+      result.put("pidNativeDexpiAssessment", pidPlantAssessment.toMap());
+      if (streamTable != null) {
+        result.put("streamTable", streamTable.toMap());
+      }
+      if (balanceTable != null) {
+        result.put("balanceTable", balanceTable.toMap());
+      }
       result.put("pidApprovalStatus", "REVIEW_REQUIRED");
       result.put("fitnessForConstruction", Boolean.FALSE);
       result.put("iso10628ConformanceClaimed", Boolean.FALSE);
@@ -243,7 +366,35 @@ public final class EngineeringDiagramDualProfileDelivery {
           deliveryRequest(request, ContentProfile.PFD, request.pfdDrawingNumber));
       EngineeringDiagramDelivery.Report pid = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pid"),
           deliveryRequest(request, ContentProfile.PID, request.pidDrawingNumber));
-      Report report = new Report(target, pfd, pid);
+      Path nativePidPath = target.resolve(PID_DEXPI_PLANT_FILE);
+      Dexpi20ConformanceAssessment.Report pidPlantAssessment =
+          Dexpi20XmlWriter.writeAndAssess(processSystem, nativePidPath.toFile());
+      if (!pidPlantAssessment.isSchemaAndProfileConformant()) {
+        throw new IOException("native DEXPI 2.0 Plant P&ID assessment failed");
+      }
+      Files.write(target.resolve(PID_DEXPI_PLANT_ASSESSMENT_FILE),
+          pidPlantAssessment.toJson().getBytes(StandardCharsets.UTF_8));
+      Path proteusPath = target.resolve(PID_PROTEUS_FILE);
+      DexpiXmlWriter.write(processSystem, proteusPath.toFile());
+      normalizeProteusTimestamp(proteusPath);
+
+      EngineeringDiagramStreamTable streamTable = null;
+      EngineeringDiagramBalanceTable balanceTable = null;
+      if (!request.operatingCaseId.isEmpty()) {
+        streamTable = EngineeringDiagramStreamTable.fromDocumentSet(pfd.getDocumentSet(), request.operatingCaseId);
+        if (!streamTable.isValid()) {
+          throw new IOException("operating-case stream-table evidence is invalid");
+        }
+        balanceTable = EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
+            resolveBoundaries(streamTable, request.balanceBoundaries));
+        if (!balanceTable.isValid()) {
+          throw new IOException("operating-case balance-table evidence is invalid");
+        }
+        Files.write(target.resolve(STREAM_TABLE_FILE), streamTable.toJson().getBytes(StandardCharsets.UTF_8));
+        Files.write(target.resolve(BALANCE_TABLE_FILE), balanceTable.toJson().getBytes(StandardCharsets.UTF_8));
+      }
+
+      Report report = new Report(target, pfd, pid, request, streamTable, balanceTable, pidPlantAssessment);
       if (!report.isComplete()) {
         throw new IOException("PFD and P&ID deliveries do not retain one complete canonical plant");
       }
@@ -256,6 +407,50 @@ public final class EngineeringDiagramDualProfileDelivery {
       deleteRecursively(target);
       throw ex;
     }
+  }
+
+  private static List<Boundary> resolveBoundaries(EngineeringDiagramStreamTable streamTable,
+      List<BalanceBoundary> declarations) throws IOException {
+    List<Boundary> result = new ArrayList<Boundary>();
+    for (BalanceBoundary declaration : declarations) {
+      Row match = null;
+      for (Row row : streamTable.getRows()) {
+        if (declaration.getStreamSourceLabel().equals(row.getSourceLabel())) {
+          if (match != null) {
+            throw new IOException("ambiguous balance-boundary stream label: "
+                + declaration.getStreamSourceLabel());
+          }
+          match = row;
+        }
+      }
+      if (match == null) {
+        throw new IOException("unknown balance-boundary stream label: "
+            + declaration.getStreamSourceLabel());
+      }
+      result.add(new Boundary(declaration.getBalanceId(), match.getSemanticObjectId(),
+          declaration.getDirection(), declaration.getSourceReference(), declaration.getEvidenceState()));
+    }
+    return result;
+  }
+
+  private static String evidenceState(List<BalanceBoundary> boundaries) {
+    if (boundaries.isEmpty()) {
+      return "NOT_SUPPLIED";
+    }
+    EvidenceState state = boundaries.get(0).getEvidenceState();
+    for (BalanceBoundary boundary : boundaries) {
+      if (boundary.getEvidenceState() != state) {
+        return "MIXED";
+      }
+    }
+    return state.name();
+  }
+
+  private static void normalizeProteusTimestamp(Path file) throws IOException {
+    String xml = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+    xml = xml.replaceAll("Date=\"[^\"]*\"", "Date=\"1970-01-01\"");
+    xml = xml.replaceAll("Time=\"[^\"]*\"", "Time=\"00:00:00\"");
+    Files.write(file, xml.getBytes(StandardCharsets.UTF_8));
   }
 
   private static EngineeringDiagramDelivery.Request deliveryRequest(Request request, ContentProfile profile,
