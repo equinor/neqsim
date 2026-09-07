@@ -742,6 +742,19 @@ double qualifiedD86T50C = d86.getQualifiedD86Temperature(50.0);
 double qualifiedD86T90K = d86.getQualifiedD86Temperature(90.0, "K");
 ```
 
+For complete source-row reporting, `getQualifiedD86Curve()` returns exactly the seven qualified
+rows as `[recovery vol%, temperature_C]`; the overload accepts `"C"`, `"K"`, `"F"`, or
+`"R"`:
+
+```java
+double[][] qualifiedCurveC = d86.getQualifiedD86Curve();
+double[][] qualifiedCurveK = d86.getQualifiedD86Curve("K");
+```
+
+Every row delegates to the strict point accessor. The method constructs the full result before
+returning it, fails if any required point is unavailable or outside its source domain, and returns
+a new array on each call. It never fills gaps with intermediate coefficient interpolation.
+
 `getQualifiedD86Temperature` delegates to the qualified reference converter, accepts only the
 seven published recovery points, enforces the point-specific source domain, and applies the
 standard's configured barometric correction after conversion. An unsupported recovery such as
