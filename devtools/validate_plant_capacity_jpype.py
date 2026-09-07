@@ -28,8 +28,10 @@ def main():
         Coverage = JClass("neqsim.process.util.optimizer.UtilizationCoverageReport")
         Registry = JClass("neqsim.process.util.optimizer.PlantConstraintRegistry")
         Definition = JClass("neqsim.process.util.optimizer.PlantConstraintDefinition")
+        Participant = JClass("neqsim.process.util.optimizer.PlantConstraintParticipant")
         Scope = JClass("neqsim.process.util.optimizer.PlantConstraintScope")
         Sample = JClass("neqsim.process.util.optimizer.PlantConstraintSample")
+        SharedEvidence = JClass("neqsim.process.util.optimizer.PlantSharedResourceEvidence")
         Snapshot = JClass("neqsim.process.util.optimizer.PlantUtilizationSnapshot")
 
         fluid = Fluid(298.15, 50.0)
@@ -102,12 +104,48 @@ def main():
         assert all(row["currentValue"] is None for row in missing_json["rows"])
         assert not (Snapshot.builder(registry, calculation_id).expectedCoverage(missing)
                     .convergenceComplete(True).sample(sample).build()).isFeasible()
+        shaft_power_kw = model.getPower("kW")
+        shared_definition = (Definition.builder(
+            "total-shaft-power",
+            Scope.sharedResource("Plant", "compression shaft power"),
+        ).aggregationPolicy(Definition.AggregationPolicy.SHARED_BUDGET)
+         .limitDirection(Definition.LimitDirection.MAXIMUM)
+         .unit("kW").basis("compressor and pump shaft power")
+         .provenance("synthetic shared power budget")
+         .participant(Participant.direct(
+             "Compression",
+             "kW",
+             "compressor and pump shaft power",
+         )).build())
+        shared_evidence = SharedEvidence.fromProcessModelShaftPower(
+            shared_definition,
+            calculation_id,
+            shaft_power_kw * 1.1,
+            model,
+            True,
+            "completed JPype ProcessModel",
+        )
+        shared_document = json.loads(str(shared_evidence.toJson()))
+        assert shared_evidence.isComplete(), str(shared_evidence.getDiagnostics())
+        assert shared_evidence.isFeasible()
+        assert shared_document["basis"] == "compressor and pump shaft power"
+        assert shared_document["participants"][0]["sourceId"] == "Compression"
+        assert abs(shared_document["aggregateValue"] - shaft_power_kw) < 1.0e-9
+        shared_registry = Registry()
+        shared_registry.register(shared_definition)
+        shared_snapshot = (Snapshot.builder(shared_registry, calculation_id)
+                           .convergenceComplete(True)
+                           .sample(shared_evidence.toPlantConstraintSample()).build())
+        assert shared_snapshot.isFeasible()
         print(json.dumps({"status": "PASS", "jpype": jpype.__version__,
                           "java": str(JClass("java.lang.System").getProperty("java.version")),
                           "shaftPowerKW": compressor.getPower("kW"),
                           "powerUtilization": utilization, "coverageRows": len(document["rows"]),
                           "snapshotSchema": str(snapshot.getSchemaVersion()),
-                          "missingEvidenceRejected": True}, indent=2))
+                          "missingEvidenceRejected": True,
+                          "sharedPowerSchema": str(shared_evidence.getSchemaVersion()),
+                          "sharedPowerParticipantCount": len(shared_document["participants"]),
+                          "sharedPowerUtilization": shared_evidence.getNormalizedUtilization()}, indent=2))
     finally:
         jpype.shutdownJVM()
 
