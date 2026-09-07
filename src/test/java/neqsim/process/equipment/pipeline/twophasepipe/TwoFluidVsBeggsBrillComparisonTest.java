@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -13,6 +14,7 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Comparison tests between Two-Fluid model and Beggs-Brill correlation.
@@ -2731,7 +2733,6 @@ class TwoFluidVsBeggsBrillComparisonTest {
     }
   }
 
-  @Disabled("Thermodynamic flash fails with NaN compressibility factor - needs investigation")
   @Test
   @DisplayName("Water-oil velocity slip in uphill flow")
   void testWaterOilVelocitySlipInUphillFlow() {
@@ -2761,7 +2762,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     int nSections = 30;
     double[] elevations = new double[nSections];
 
-    // 30-degree uphill slope (steep)
+    // 10-degree uphill slope (steep)
     double totalRise = pipeLength * Math.sin(Math.toRadians(10));
     for (int i = 0; i < nSections; i++) {
       elevations[i] = totalRise * i / (nSections - 1);
@@ -2777,6 +2778,10 @@ class TwoFluidVsBeggsBrillComparisonTest {
     pipe.setElevationProfile(elevations);
     pipe.setEnableWaterOilSlip(true);
     pipe.run();
+
+    assertTrue(pipe.isSteadyStateConverged(), "The three-phase uphill case must converge");
+    assertFalse(pipe.isSteadyStatePressureFloorLimited(), "The pressure floor must not replace the solution");
+    assertFalse(pipe.isSteadyStateWallClockLimited(), "The steady solve must finish before its wall-clock guard");
 
     // Get velocity profiles
     double[] oilVel = pipe.getOilVelocityProfile();
@@ -2839,11 +2844,38 @@ class TwoFluidVsBeggsBrillComparisonTest {
       logger.info("  Water slipping back leads to lower water cut at outlet");
     }
 
-    // Assertions - velocities should be positive and reasonable
+    // Preserve the original forward-flow checks and require the intended slipping three-phase solution.
+    assertTrue(avgSlip > 0.001, "Uphill gravity must retard the denser water in the separated-flow sections");
+    double[] pressure = pipe.getPressureProfile();
+    double[] temperature = pipe.getTemperatureProfile();
+    double[] oilHoldup = pipe.getOilHoldupProfile();
+    double[] waterHoldup = pipe.getWaterHoldupProfile();
+    double[][] phaseMassFlow = { pipe.getGasMassFlowProfile(), pipe.getOilMassFlowProfile(),
+        pipe.getWaterMassFlowProfile() };
+    String[] phaseNames = { "gas", "oil", "aqueous" };
     for (int i = 0; i < nSections; i++) {
+      assertTrue(Double.isFinite(pressure[i]) && pressure[i] > 1.0e5,
+          "Pressure must remain finite and above the numerical floor at section " + i);
+      assertTrue(Double.isFinite(temperature[i]) && temperature[i] > 0.0,
+          "Temperature must remain finite and positive at section " + i);
+      assertTrue(oilHoldup[i] > 0.0 && waterHoldup[i] > 0.0 && liqHoldup[i] < 1.0,
+          "Gas, oil and water must remain present at section " + i);
+      assertEquals(liqHoldup[i], oilHoldup[i] + waterHoldup[i], 1.0e-12,
+          "The two liquid inventories must reproduce total liquid holdup at section " + i);
       if (liqHoldup[i] > 0.01) {
         assertTrue(oilVel[i] >= 0, "Oil velocity should be positive at section " + i);
         assertTrue(waterVel[i] >= 0, "Water velocity should be positive at section " + i);
+      }
+      SystemInterface localFluid = inlet.getFluid().clone();
+      localFluid.setPressure(pressure[i], "Pa");
+      localFluid.setTemperature(temperature[i], "K");
+      new ThermodynamicOperations(localFluid).TPflash();
+      for (int phase = 0; phase < phaseNames.length; phase++) {
+        assertTrue(localFluid.hasPhaseType(phaseNames[phase]),
+            "The independent equilibrium state must contain " + phaseNames[phase] + " at section " + i);
+        double expectedMassFlow = 8.0 * localFluid.getPhase(phaseNames[phase]).getMass() / localFluid.getMass("kg");
+        assertEquals(expectedMassFlow, phaseMassFlow[phase][i], 1.0e-4 * 8.0,
+            "Slip must preserve the local equilibrium " + phaseNames[phase] + " mass flow at section " + i);
       }
     }
 

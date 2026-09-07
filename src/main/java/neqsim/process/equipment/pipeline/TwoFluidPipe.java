@@ -19,6 +19,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
@@ -186,6 +187,13 @@ public class TwoFluidPipe extends Pipeline {
   /** Whether any coupled nonlinear pressure correction was limited since steady initialization. */
   private boolean transientCoupledPressureMomentumCorrectionLimited = false;
 
+  /** Number of bounded nonlinear iterations, including rejected substeps, since steady initialization. */
+  private long transientPressureLimitCount;
+  /** First attempted substep start time with a bounded correction; NaN before any event. */
+  private double firstTransientPressureLimitTime = Double.NaN;
+  /** Smallest actual Newton damping among pressure-limit events. */
+  private double minimumTransientPressureDamping = 1.0;
+
   /** Coupled nonlinear substeps rejected since the latest steady initialization. */
   private int transientCoupledPressureMomentumRejectedSubsteps = 0;
 
@@ -250,6 +258,12 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Conservation equations solver. */
   private TwoFluidConservationEquations equations;
+
+  /** Opt-in reduced shared mechanical slug closure; legacy correlations remain the default. */
+  private boolean sharedSlugForceBalanceEnabled;
+
+  /** Shared stateless mechanical evaluator. */
+  private SlugForceBalance sharedSlugForceBalance = new SlugForceBalance();
 
   /** Time integrator. */
   private TimeIntegrator timeIntegrator;
@@ -968,6 +982,7 @@ public class TwoFluidPipe extends Pipeline {
     // Store reference fluid for flash calculations
     referenceFluid = inletFluid.clone();
     equations.setThermodynamicCoupling(new ThermodynamicCoupling(referenceFluid));
+    equations.setLocalEquilibriumStates(null);
 
     // Calculate inlet phase properties - initialize with defaults
     double rhoG = 1.0, rhoL = 800.0, muG = 1e-5, muL = 1e-3;
@@ -1074,8 +1089,7 @@ public class TwoFluidPipe extends Pipeline {
 
         // Use oil phase for other properties (approximation)
         cL = inletFluid.getPhase("oil").getSoundSpeed();
-        hL = (inletOilFraction * inletFluid.getPhase("oil").getEnthalpy("J/kg")
-            + inletWaterCut * inletFluid.getPhase("aqueous").getEnthalpy("J/kg"));
+        hL = calculateLiquidSpecificEnthalpy(inletFluid, inletWaterCut);
 
         if (inletFluid.hasPhaseType("gas")) {
           // Initialize interfacial properties before getting surface tension
@@ -1349,7 +1363,11 @@ public class TwoFluidPipe extends Pipeline {
     double area = Math.PI * diameter * diameter / 4.0;
 
     // Get inlet pressure - this is a boundary condition
-    double P_inlet = getInletStream().getFluid().getPressure("Pa");
+    double P_inlet = inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet && !outletPressureSet
+        ? inletPressure
+        : getInletStream().getFluid().getPressure("Pa");
+    boolean explicitPressureBoundary = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet)
+        || (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet);
 
     // Fix inlet section pressure to boundary condition
     sections[0].setPressure(P_inlet);
@@ -1442,6 +1460,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       double maxChange = 0;
+      double pressureResidualSum = 0.0;
 
       // Under-relaxation: ramp from 0.3 up to ssUnderRelaxation across first 20 iterations
       double omega = Math.min(ssUnderRelaxation, 0.3 + (ssUnderRelaxation - 0.3) * Math.min(1.0, iter / 20.0));
@@ -1488,6 +1507,7 @@ public class TwoFluidPipe extends Pipeline {
 
         // Pressure drop estimate (simplified steady-state)
         double P_calc = marchPressure(prev);
+        pressureResidualSum += Math.abs(P_calc - sec.getPressure());
 
         // Under-relaxed pressure update
         double P_new = sec.getPressure() + omega * (P_calc - sec.getPressure());
@@ -1545,6 +1565,14 @@ public class TwoFluidPipe extends Pipeline {
         sec.updateStratifiedGeometry();
       }
 
+      // Absolute pressure changes the EOS density and therefore the pressure gradient. Close an
+      // explicit pressure boundary inside the iteration, before both the thermal sweep and flash;
+      // translating the finished profile would leave its properties at a different pressure.
+      if (explicitPressureBoundary) {
+        maxChange = Math.max(maxChange, applySteadyStatePressureBoundary());
+        P_inlet = sections[0].getPressure();
+      }
+
       // Solve the energy equation whenever any thermal mechanism is active. Joule-Thomson is driven
       // by the pressure drop, not by the wall, so an adiabatic line must still cool on expansion,
       // and a DEH-heated line must still warm without wall heat transfer.
@@ -1560,19 +1588,41 @@ public class TwoFluidPipe extends Pipeline {
       boolean thermodynamicsEvaluated = referenceFluid == null;
       if (referenceFluid != null && (iter % ssFlashInterval == 0)) {
         thermodynamicsEvaluated = true;
-        double[] densityBefore = new double[numberOfSections];
+        double[][] propertiesBefore = new double[numberOfSections][7];
         for (int i = 0; i < numberOfSections; i++) {
-          densityBefore[i] = sections[i].getGasDensity();
+          propertiesBefore[i][0] = sections[i].getGasDensity();
+          propertiesBefore[i][1] = sections[i].getOilDensity();
+          propertiesBefore[i][2] = sections[i].getWaterDensity();
+          propertiesBefore[i][3] = sections[i].getInputWaterVolumeFraction();
+          propertiesBefore[i][4] = localMDotGas[i];
+          propertiesBefore[i][5] = sections[i].getLiquidViscosity();
+          propertiesBefore[i][6] = sections[i].getSurfaceTension();
         }
         updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
-        double maxDensityChange = 0.0;
+        double maxPropertyChange = 0.0;
         for (int i = 0; i < numberOfSections; i++) {
-          double density = sections[i].getGasDensity();
-          if (density > 0.0) {
-            maxDensityChange = Math.max(maxDensityChange, Math.abs(density - densityBefore[i]) / density);
+          double[] densities = { sections[i].getGasDensity(), sections[i].getOilDensity(),
+              sections[i].getWaterDensity() };
+          for (int phase = 0; phase < densities.length; phase++) {
+            if (densities[phase] > 0.0) {
+              maxPropertyChange = Math.max(maxPropertyChange,
+                  Math.abs(densities[phase] - propertiesBefore[i][phase]) / densities[phase]);
+            }
           }
+          double[] closureProperties = { sections[i].getLiquidViscosity(), sections[i].getSurfaceTension() };
+          for (int property = 0; property < closureProperties.length; property++) {
+            if (closureProperties[property] > 0.0) {
+              maxPropertyChange = Math.max(maxPropertyChange,
+                  Math.abs(closureProperties[property] - propertiesBefore[i][5 + property])
+                      / closureProperties[property]);
+            }
+          }
+          maxPropertyChange = Math.max(maxPropertyChange,
+              Math.abs(sections[i].getInputWaterVolumeFraction() - propertiesBefore[i][3]));
+          maxPropertyChange = Math.max(maxPropertyChange,
+              Math.abs(localMDotGas[i] - propertiesBefore[i][4]) / Math.max(Math.abs(massFlow), 1.0e-12));
         }
-        thermodynamicsRefreshed = maxDensityChange > tolerance;
+        thermodynamicsRefreshed = maxPropertyChange > tolerance;
       }
 
       // Identify the accumulation zones so the terrain closure and the post-loop severe-slugging
@@ -1596,7 +1646,11 @@ public class TwoFluidPipe extends Pipeline {
       // line actually loses a meaningful fraction of its pressure; on a short pipe the
       // density is uniform and the cheaper per-section criterion is sufficient.
       double totalDrop = P_inlet - sections[numberOfSections - 1].getPressure();
-      boolean densityCouplingMatters = totalDrop > SS_DENSITY_COUPLING_PRESSURE_FRACTION * P_inlet;
+      boolean densityCouplingMatters = Math.abs(totalDrop) > SS_DENSITY_COUPLING_PRESSURE_FRACTION * P_inlet;
+      boolean liquidSplitCouplingMatters = false;
+      for (TwoFluidSection section : sections) {
+        liquidSplitCouplingMatters |= section.getOilHoldup() > 0.0 && section.getWaterHoldup() > 0.0;
+      }
       double dropChange = Double.isNaN(previousTotalDrop) ? Double.POSITIVE_INFINITY
           : Math.abs(totalDrop - previousTotalDrop) / Math.max(Math.abs(totalDrop), 1.0e3);
       previousTotalDrop = totalDrop;
@@ -1608,6 +1662,15 @@ public class TwoFluidPipe extends Pipeline {
       // in which the thermodynamics was actually evaluated and found stationary.
       boolean profileSettled = !densityCouplingMatters
           || (dropChange < tolerance && thermodynamicsEvaluated && !thermodynamicsRefreshed);
+      if (explicitPressureBoundary || liquidSplitCouplingMatters) {
+        profileSettled &= thermodynamicsEvaluated && !thermodynamicsRefreshed && dropChange < tolerance;
+      }
+      if (explicitPressureBoundary) {
+        // A small relaxed update relative to absolute pressure can still accumulate a significant
+        // error over many cells. Require the unrelaxed momentum residual of the whole pressure
+        // profile to be small relative to its calculated drop, independently of the initial guess.
+        profileSettled &= pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3) < tolerance;
+      }
       if (maxChange < tolerance && profileSettled) {
         // A section resting on the pressure floor is a fixed point of the clamp, not of the
         // momentum balance: marchPressure keeps returning the floor, the under-relaxed update
@@ -1645,9 +1708,9 @@ public class TwoFluidPipe extends Pipeline {
       updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
 
       // Re-sweep holdups using updated properties (densities changed by flash)
-      for (int i = 1; i < numberOfSections; i++) {
+      for (int i = 0; i < numberOfSections; i++) {
         TwoFluidSection sec = sections[i];
-        TwoFluidSection prev = sections[i - 1];
+        TwoFluidSection prev = i > 0 ? sections[i - 1] : null;
         double localMDotG = localMDotGas[i];
         double localMDotL = localMDotLiq[i];
 
@@ -1668,8 +1731,6 @@ public class TwoFluidPipe extends Pipeline {
     if (enableTerrainTracking && accumulationTracker != null) {
       accumulationTracker.identifyAccumulationZones(sections);
     }
-
-    applySteadyStatePressureBoundary();
 
     // Update outlet pressure from converged profile (if not user-specified)
     if (!outletPressureSet) {
@@ -1699,32 +1760,38 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Align the converged steady-state pressure profile with explicit pressure boundaries.
+   * Align an iterated steady-state pressure profile with explicit pressure boundaries.
    *
    * <p>
    * The steady-state solver computes friction and gravity pressure differences from the specified flow. For a
-   * flow-specified inlet with fixed outlet pressure, the absolute pressure level is set by the outlet boundary, so the
-   * whole profile can be shifted without changing the calculated pressure gradients.
+   * flow-specified inlet with fixed outlet pressure, the absolute pressure level is set by the outlet boundary. The
+   * subsequent flash and momentum iterations must reevaluate the density-dependent pressure gradients at this level.
    * </p>
+   *
+   * @return maximum relative pressure correction, included in the convergence residual
    */
-  private void applySteadyStatePressureBoundary() {
+  private double applySteadyStatePressureBoundary() {
     if (sections == null || sections.length == 0) {
-      return;
+      return 0.0;
     }
 
+    double maximumCorrection = 0.0;
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet) {
       double pressureShift = outletPressure - sections[numberOfSections - 1].getPressure();
       for (TwoFluidSection sec : sections) {
+        maximumCorrection = Math.max(maximumCorrection, Math.abs(pressureShift) / Math.max(sec.getPressure(), 1.0e5));
         sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
       }
       sections[numberOfSections - 1].setPressure(Math.max(1.0e5, outletPressure));
     } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
       double pressureShift = inletPressure - sections[0].getPressure();
       for (TwoFluidSection sec : sections) {
+        maximumCorrection = Math.max(maximumCorrection, Math.abs(pressureShift) / Math.max(sec.getPressure(), 1.0e5));
         sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
       }
       sections[0].setPressure(Math.max(1.0e5, inletPressure));
     }
+    return maximumCorrection;
   }
 
   /**
@@ -1845,14 +1912,19 @@ public class TwoFluidPipe extends Pipeline {
             // Transported fraction. The in-situ split is closed against it in
             // updateWaterOilHoldups, which may differ from it through slip.
             sec.setInputWaterVolumeFraction(volWater / (volOil + volWater));
-            double waterCut = volWater / volLiq;
-            sec.setWaterCut(waterCut);
-            sec.setOilFractionInLiquid(1.0 - waterCut);
-            // Update water/oil holdups based on EXISTING total liquid holdup and
-            // new split
-            double existingAlphaL = sec.getLiquidHoldup();
-            sec.setWaterHoldup(existingAlphaL * waterCut);
-            sec.setOilHoldup(existingAlphaL * (1.0 - waterCut));
+            // The flash provides a transported composition, not the in-situ slip split.
+            // Resetting an interior split on every flash prevents the hydraulic fixed point
+            // from converging. Seed only a newly appearing second liquid; its split is then
+            // closed by the next momentum sweep and included in the convergence residual.
+            double waterCut = sec.getWaterCut();
+            if (!Double.isFinite(waterCut) || waterCut <= 0.0 || waterCut >= 1.0) {
+              waterCut = volWater / volLiq;
+              sec.setWaterCut(waterCut);
+              sec.setOilFractionInLiquid(1.0 - waterCut);
+              double existingAlphaL = sec.getLiquidHoldup();
+              sec.setWaterHoldup(existingAlphaL * waterCut);
+              sec.setOilHoldup(existingAlphaL * (1.0 - waterCut));
+            }
           } else if (hasWater && !hasOil) {
             // Gas + water only - all liquid is water
             sec.setInputWaterVolumeFraction(1.0);
@@ -1865,8 +1937,8 @@ public class TwoFluidPipe extends Pipeline {
             sec.setInputWaterVolumeFraction(0.0);
             sec.setWaterCut(0.0);
             sec.setOilFractionInLiquid(1.0);
-            sec.setWaterHoldup(0.0);
             sec.setOilHoldup(sec.getLiquidHoldup());
+            sec.setWaterHoldup(0.0);
           }
         }
 
@@ -1879,20 +1951,16 @@ public class TwoFluidPipe extends Pipeline {
           double waterCut = sec.getWaterCut();
           double oilFraction = 1.0 - waterCut;
 
-          // Volume-weighted density
-          sec.setLiquidDensity(oilFraction * rhoOil + waterCut * rhoWater);
-
-          // Effective viscosity (Brinkman)
-          double muL;
-          if (oilFraction > 0.5) {
-            muL = muOil * Math.pow(1.0 - waterCut, -2.5);
-          } else {
-            muL = muWater * Math.pow(1.0 - oilFraction, -2.5);
-          }
-          sec.setLiquidViscosity(muL);
+          // Use the same in-situ oil/water property closure as the hydraulic split.
+          // A separate Brinkman formula here imposed a different viscosity every flash
+          // and prevented the intervening momentum sweeps from reaching a fixed point.
+          sec.setOilDensity(rhoOil);
+          sec.setWaterDensity(rhoWater);
+          sec.setOilViscosity(muOil);
+          sec.setWaterViscosity(muWater);
+          sec.updateThreePhaseProperties();
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
-          sec.setLiquidEnthalpy(oilFraction * flash.getPhase("oil").getEnthalpy("J/kg")
-              + waterCut * flash.getPhase("aqueous").getEnthalpy("J/kg"));
+          sec.setLiquidEnthalpy(calculateLiquidSpecificEnthalpy(flash, sec.getWaterCut()));
 
         } else if (hasOil) {
           sec.setLiquidDensity(flash.getPhase("oil").getDensity("kg/m3"));
@@ -1901,8 +1969,8 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
           sec.setWaterCut(0.0);
           sec.setOilFractionInLiquid(1.0);
-          sec.setWaterHoldup(0.0);
           sec.setOilHoldup(sec.getLiquidHoldup());
+          sec.setWaterHoldup(0.0);
         } else if (hasWater) {
           sec.setLiquidDensity(flash.getPhase("aqueous").getDensity("kg/m3"));
           sec.setLiquidViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
@@ -1917,6 +1985,20 @@ public class TwoFluidPipe extends Pipeline {
         logger.warn("Flash calculation failed for section {} at position {}", i, sec.getPosition());
       }
     }
+  }
+
+  /**
+   * Combine oil and water specific enthalpies using the masses in a unit liquid volume.
+   *
+   * @param fluid flashed fluid containing both oil and aqueous phases
+   * @param waterVolumeFraction in-situ water fraction of the liquid volume
+   * @return mass-specific liquid enthalpy in J/kg
+   */
+  private static double calculateLiquidSpecificEnthalpy(SystemInterface fluid, double waterVolumeFraction) {
+    double oilMass = (1.0 - waterVolumeFraction) * fluid.getPhase("oil").getDensity("kg/m3");
+    double waterMass = waterVolumeFraction * fluid.getPhase("aqueous").getDensity("kg/m3");
+    return (oilMass * fluid.getPhase("oil").getEnthalpy("J/kg")
+        + waterMass * fluid.getPhase("aqueous").getEnthalpy("J/kg")) / (oilMass + waterMass);
   }
 
   /**
@@ -2624,6 +2706,11 @@ public class TwoFluidPipe extends Pipeline {
 
     double alphaL;
 
+    if (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec)) {
+      double equilibriumHoldup = sharedSlugForceBalance.solveHoldup(sec, vsG, vsL);
+      return new double[] { equilibriumHoldup, 1.0 - equilibriumHoldup };
+    }
+
     // Select the literature-inspired NeqSim closure set. Historical enum and helper
     // names containing OLGA are retained for source and serialization compatibility.
     if (olgaModelType == OLGAModelType.FULL) {
@@ -2844,7 +2931,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // Annular slip model: the gas core outruns the film, so S = vG/vL is between about 1.5 and 4
-      // and holdup follows alphaL = lambdaL / (S - (S-1)*lambdaL).
+      // and holdup follows alphaL = S*lambdaL / (1 + (S-1)*lambdaL).
       double vsgRef = 8.0;
       double velocityRatio = Math.max(0.5, Math.min(4.0, vsG / Math.max(vsgRef, 0.1)));
       double baseSlipRatio = 1.5;
@@ -2852,8 +2939,8 @@ public class TwoFluidPipe extends Pipeline {
       double slipRatio = baseSlipRatio
           + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
 
-      double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
-      double alphaL = denominator > 0.1 ? lambdaL / denominator : lambdaL;
+      double denominator = 1.0 + (slipRatio - 1.0) * lambdaL;
+      double alphaL = slipRatio * lambdaL / denominator;
 
       // A fixed wetting film is a user-selected physical model, not a universal
       // numerical phase floor. Apply it only in explicit fixed-floor mode.
@@ -3294,7 +3381,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Apply slip ratio model for annular flow
     // In annular flow, gas flows faster than liquid film (slip ratio S = vG/vL > 1)
-    // Holdup formula: αL = λL / (λL + S*(1-λL))
+    // Holdup formula: αL = S*λL / (1 + (S-1)*λL)
     // Typical slip ratios for annular flow: S = 1.5 to 4.0
     double vsgRef = 8.0;
     double velocityRatio = Math.min(4.0, vsG / Math.max(vsgRef, 0.1));
@@ -3305,14 +3392,9 @@ public class TwoFluidPipe extends Pipeline {
     double slipRatio = baseSlipRatio
         + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
 
-    // Calculate holdup using slip model: αL = λL / (S - (S-1)*λL)
-    double slipBasedHoldup;
-    double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
-    if (denominator > 0.1) {
-      slipBasedHoldup = lambdaL / denominator;
-    } else {
-      slipBasedHoldup = lambdaL;
-    }
+    // Recover the in-situ holdup from vG/vL = S and the superficial phase velocities.
+    double denominator = 1.0 + (slipRatio - 1.0) * lambdaL;
+    double slipBasedHoldup = slipRatio * lambdaL / denominator;
 
     // Use physics-based calculation, with slip model as minimum
     // The film model can under-predict when gas velocity is high
@@ -3771,6 +3853,9 @@ public class TwoFluidPipe extends Pipeline {
    * @return Pressure gradient estimate (Pa/m)
    */
   private double estimatePressureGradient(TwoFluidSection sec) {
+    if (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec)) {
+      return sharedSlugForceBalance.pressureGradient(sec);
+    }
     double alphaG = sec.getGasHoldup();
     double alphaL = sec.getLiquidHoldup();
     double rhoG = sec.getGasDensity();
@@ -4070,6 +4155,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Get liquid velocity for stratification assessment
     double vL = sec.getLiquidVelocity();
+    double liquidMassFlux = alphaL * sec.getLiquidDensity() * vL;
 
     // ========== Low-Velocity Water Stratification Model ==========
     // At low liquid velocities the denser water segregates towards the pipe bottom and
@@ -4138,7 +4224,10 @@ public class TwoFluidPipe extends Pipeline {
 
     // Phase velocities follow from the same mass balance that set the holdups, so
     // rho_k*alpha_k*A*v_k reproduces the transported phase flows by construction.
-    double qLiquid = alphaL * vL;
+    // vL was calculated from the in-situ mixture density. Splitting that volume flux by
+    // transported composition would change the total mass flow whenever oil and water slip.
+    // Recover the prescribed mass flux first, then use the transported mixture density.
+    double qLiquid = liquidMassFlux / effectiveRhoL;
     double vOil = vL;
     double vWater = vL;
     if (alphaW > 1.0e-9 && alphaO > 1.0e-9) {
@@ -4161,6 +4250,13 @@ public class TwoFluidPipe extends Pipeline {
     // Update momentum variables
     sec.setOilMomentumPerLength(sec.getOilMassPerLength() * vOil);
     sec.setWaterMomentumPerLength(sec.getWaterMassPerLength() * vWater);
+    double liquidMass = sec.getOilMassPerLength() + sec.getWaterMassPerLength();
+    double liquidMomentum = sec.getOilMomentumPerLength() + sec.getWaterMomentumPerLength();
+    sec.setLiquidMassPerLength(liquidMass);
+    sec.setLiquidMomentumPerLength(liquidMomentum);
+    if (liquidMass > 0.0) {
+      sec.setLiquidVelocity(liquidMomentum / liquidMass);
+    }
   }
 
   @Override
@@ -4173,6 +4269,9 @@ public class TwoFluidPipe extends Pipeline {
     transientOutletBackflowClamped = false;
     transientCoupledPressureMomentumFailureDetected = false;
     transientCoupledPressureMomentumCorrectionLimited = false;
+    transientPressureLimitCount = 0;
+    firstTransientPressureLimitTime = Double.NaN;
+    minimumTransientPressureDamping = 1.0;
     transientCoupledPressureMomentumRejectedSubsteps = 0;
     transientCoupledPressureMomentumFailureDiagnostic = "";
 
@@ -4205,11 +4304,22 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (equations.isConservativeSlugForceIntegrationEnabled()
+        && (slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN || !sharedSlugForceBalanceEnabled
+            || equations.isStiffBubbleDragEnabled())) {
+      throw new IllegalStateException(
+          "Subcell forces require conservative tracking, shared slug forces and disabled stiff bubble drag");
+    }
     if (!Double.isFinite(dt) || dt <= 0.0) {
       throw new IllegalArgumentException("Transient time step must be positive and finite");
     }
     if (sections == null || sections.length == 0) {
       throw new IllegalStateException("Call run() to initialize the pipe before runTransient()");
+    }
+    if (sharedSlugForceBalanceEnabled
+        && (!coupledPressureMomentumEnabled || !equations.isEnableInterfacialPressure())) {
+      throw new IllegalStateException(
+          "Shared slug force balance requires coupled pressure-momentum and interfacial pressure");
     }
     if (!Double.isFinite(simulationTime + dt) || simulationTime + dt <= simulationTime) {
       throw new IllegalArgumentException("Transient time step cannot advance the finite simulation clock");
@@ -4240,6 +4350,7 @@ public class TwoFluidPipe extends Pipeline {
     double directElectricalHeatingEnergyJ = 0.0;
     boolean thermalEnergyTracked = false;
     double acceptedElapsedTime = 0.0;
+    double acceptedElapsedCompensation = 0.0;
     int acceptedSubsteps = 0;
     String lastStepRejection = "substep budget exhausted";
 
@@ -4351,6 +4462,17 @@ public class TwoFluidPipe extends Pipeline {
         // This is especially important for CLOSED boundaries because intermediate
         // stage momenta can otherwise create a spurious boundary flux.
         applyBoundaryConditions();
+        SystemInterface[] localEquilibriumStates = null;
+        if (componentTransportEnabled && includeMassTransfer) {
+          localEquilibriumStates = new SystemInterface[numberOfSections];
+          for (int cell = 0; cell < numberOfSections; cell++) {
+            // Component inventory changes only after an accepted transport step. Trial flashes
+            // read that conserved composition at each stage's P/T and cannot alter a rejected step.
+            localEquilibriumStates[cell] = componentTransport.createThermodynamicState(cell, referenceFluid,
+                sections[cell].getPressure(), sections[cell].getTemperature());
+          }
+        }
+        equations.setLocalEquilibriumStates(localEquilibriumStates);
         double[][] derivative = equations.calcRHS(sections, dx);
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
         if (capturePhaseStageTerms) {
@@ -4433,12 +4555,27 @@ public class TwoFluidPipe extends Pipeline {
         timeIntegrator.setCoupledPressureMomentumEnabled(false);
       }
 
-      double[][] splitState = applyStiffBubbleDragSourceStep(U_prev, 0.5 * dtFinal);
+      double[][] splitState = applyConservativeSlugFrictionStep(U_prev, 0.5 * dtFinal);
+      splitState = applyStiffBubbleDragSourceStep(splitState, 0.5 * dtFinal);
       double[][] U_new = timeIntegrator.step(splitState, rhs, dtFinal);
       U_new = applyStiffBubbleDragSourceStep(U_new, 0.5 * dtFinal);
+      U_new = applyConservativeSlugFrictionStep(U_new, 0.5 * dtFinal);
 
       if (coupledPressureMomentumEnabled && timeIntegrator.isCoupledPressureMomentumPressureCorrectionLimited()) {
         transientCoupledPressureMomentumCorrectionLimited = true;
+        for (neqsim.process.equipment.pipeline.twophasepipe.numerics.CoupledPressureMomentumSolver.PressureLimitEvent event : timeIntegrator
+            .getCoupledPressureLimitEvents()) {
+          transientPressureLimitCount++;
+          if (Double.isNaN(firstTransientPressureLimitTime)) {
+            firstTransientPressureLimitTime = simulationTime;
+          }
+          minimumTransientPressureDamping = Math.min(minimumTransientPressureDamping, event.getDamping());
+          org.apache.logging.log4j.LogManager.getLogger(TwoFluidPipe.class.getName() + ".pressureLimits").debug(
+              "Pressure limit: startTime={} attemptedDt={} iteration={} cell={} reason={} damping={} "
+                  + "proposedPa={} dampedPa={}",
+              simulationTime, dtFinal, event.getIteration(), event.getCell(), event.getReason(), event.getDamping(),
+              event.getProposedCorrectionPa(), event.getAppliedCorrectionPa());
+        }
       }
 
       if (coupledPressureMomentumEnabled && !timeIntegrator.isCoupledPressureMomentumConverged()) {
@@ -4596,12 +4733,17 @@ public class TwoFluidPipe extends Pipeline {
             weightedPhaseMassSources, sections, getInletStream().getFluid(), referenceFluid,
             componentConservationTolerance);
       }
-      acceptedElapsedTime += dtActual;
+      // Compensated accepted-time summation prevents repeated subtraction from leaving
+      // a spurious, unrepresentable tail after hundreds of CFL-limited steps.
+      double elapsedIncrement = dtActual - acceptedElapsedCompensation;
+      double updatedElapsed = acceptedElapsedTime + elapsedIncrement;
+      acceptedElapsedCompensation = (updatedElapsed - acceptedElapsedTime) - elapsedIncrement;
+      acceptedElapsedTime = updatedElapsed;
       acceptedSubsteps++;
 
       // 8. Update accumulation tracking and slug tracking
       if (enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED) {
-        accumulationTracker.updateAccumulation(sections, dtActual);
+        accumulationTracker.observeConservativeAccumulation(sections, dtActual);
 
         // Set reference velocity for slug propagation (from inlet)
         double inletMixtureVelocity = sections[0].getMixtureVelocity();
@@ -4666,7 +4808,7 @@ public class TwoFluidPipe extends Pipeline {
       // 10. Advance time
       simulationTime += dtActual;
       increaseTime(dtActual);
-      timeRemaining -= dtActual;
+      timeRemaining = dt - acceptedElapsedTime;
       timeIntegrator.advanceTime(dtActual);
     }
 
@@ -4716,6 +4858,14 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     setCalculationIdentifier(id);
+  }
+
+  /** Preserve invalid raw trials for adaptive rejection before any primitive reconstruction. */
+  private double[][] applyConservativeSlugFrictionStep(double[][] state, double timeStep) {
+    if (!equations.isConservativeSlugForceIntegrationEnabled() || !hasValidConservativeState(state)) {
+      return state;
+    }
+    return equations.applyConservativeSlugFriction(state, sections, timeStep);
   }
 
   private double[][] applyStiffBubbleDragSourceStep(double[][] state, double timeStep) {
@@ -4923,7 +5073,13 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Calculate stable time step using CFL condition.
+   * Calculate the acoustic, void-wave and slug-film CFL time step for explicit integration.
+   *
+   * <p>
+   * This legacy selector does not bound every momentum-source relaxation time. A newly appearing laminar film can have
+   * a much shorter drag timescale even at zero velocity; general phase-appearance stability requires an implicit drag
+   * treatment rather than a minimum phase inventory or timestep floor.
+   * </p>
    *
    * @return stable time step [s]
    */
@@ -4956,13 +5112,16 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * <p>
-   * Typically 10-100x larger than the acoustic CFL for gas-liquid flows.
+   * The explicit wall and interphase friction relaxation also limits this step. The acoustic solve does not integrate
+   * those momentum sources implicitly, so a convective CFL alone can overshoot drag equilibrium in liquid-rich flow.
+   * The local estimate can approach zero for a vanishing viscous film; it is not a general implicit drag solve.
    * </p>
    *
    * @return stable convective time step (s)
    */
   private double calcConvectiveTimeStep() {
-    double minDt = Double.MAX_VALUE;
+    double minDt = equations == null ? Double.MAX_VALUE
+        : cflNumber * equations.calcExplicitMomentumSourceTimeStep(sections);
 
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
@@ -5093,20 +5252,16 @@ public class TwoFluidPipe extends Pipeline {
           sec.setOilViscosity(muOil);
           sec.setWaterViscosity(muWater);
 
-          // Volume-weighted density
-          sec.setLiquidDensity(oilFraction * rhoOil + waterCut * rhoWater);
-
-          // Effective viscosity (Brinkman)
-          double muL;
-          if (oilFraction > 0.5) {
-            muL = muOil * Math.pow(1.0 - waterCut, -2.5);
-          } else {
-            muL = muWater * Math.pow(1.0 - oilFraction, -2.5);
-          }
-          sec.setLiquidViscosity(muL);
+          // Use the same in-situ oil/water property closure as the hydraulic split.
+          // A separate Brinkman formula here imposed a different viscosity every flash
+          // and prevented the intervening momentum sweeps from reaching a fixed point.
+          sec.setOilDensity(rhoOil);
+          sec.setWaterDensity(rhoWater);
+          sec.setOilViscosity(muOil);
+          sec.setWaterViscosity(muWater);
+          sec.updateThreePhaseProperties();
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
-          sec.setLiquidEnthalpy(oilFraction * flash.getPhase("oil").getEnthalpy("J/kg")
-              + waterCut * flash.getPhase("aqueous").getEnthalpy("J/kg"));
+          sec.setLiquidEnthalpy(calculateLiquidSpecificEnthalpy(flash, sec.getWaterCut()));
 
         } else if (hasOil) {
           double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
@@ -5118,8 +5273,8 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
           sec.setWaterCut(0.0);
           sec.setOilFractionInLiquid(1.0);
-          sec.setWaterHoldup(0.0);
           sec.setOilHoldup(sec.getLiquidHoldup());
+          sec.setWaterHoldup(0.0);
         } else if (hasWater) {
           double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
           sec.setLiquidDensity(rhoWater);
@@ -5372,21 +5527,22 @@ public class TwoFluidPipe extends Pipeline {
       double mDotWater = massFlow * waterMassFraction;
       double mDotLiq = mDotOil + mDotWater;
 
-      // Update densities from flash for accurate velocity calculation
+      // Retain the physical cell EOS during a transient. Copying densities from the
+      // feed pressure changes recovered holdup at fixed conserved phase masses.
       double rhoG = inlet.getGasDensity();
       double rhoOil = inlet.getOilDensity() > 100 ? inlet.getOilDensity() : 700.0;
       double rhoWater = inlet.getWaterDensity() > 100 ? inlet.getWaterDensity() : 1000.0;
 
-      if (inFluid.hasPhaseType("gas")) {
+      if (!isTransientMode && inFluid.hasPhaseType("gas")) {
         rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
         inlet.setGasDensity(rhoG);
       }
-      if (inFluid.hasPhaseType("oil")) {
+      if (!isTransientMode && inFluid.hasPhaseType("oil")) {
         rhoOil = inFluid.getPhase("oil").getDensity("kg/m3");
         inlet.setOilDensity(rhoOil);
         inlet.setLiquidDensity(rhoOil);
       }
-      if (inFluid.hasPhaseType("aqueous")) {
+      if (!isTransientMode && inFluid.hasPhaseType("aqueous")) {
         rhoWater = inFluid.getPhase("aqueous").getDensity("kg/m3");
         inlet.setWaterDensity(rhoWater);
       }
@@ -5462,13 +5618,13 @@ public class TwoFluidPipe extends Pipeline {
       double mDotWater = massFlow * waterMassFraction;
       double mDotLiq = mDotOil + mDotWater;
 
-      // Update densities from inlet fluid
+      // Retain cell EOS densities during a transient, as for a stream-connected inlet.
       double rhoG = inlet.getGasDensity();
-      if (inFluid.hasPhaseType("gas")) {
+      if (!isTransientMode && inFluid.hasPhaseType("gas")) {
         rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
         inlet.setGasDensity(rhoG);
       }
-      if (inFluid.hasPhaseType("oil")) {
+      if (!isTransientMode && inFluid.hasPhaseType("oil")) {
         inlet.setOilDensity(inFluid.getPhase("oil").getDensity("kg/m3"));
         inlet.setLiquidDensity(inFluid.getPhase("oil").getDensity("kg/m3"));
       }
@@ -5983,8 +6139,10 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * This opt-in path uses the accepted hydrodynamic phase face fluxes and interphase source terms. Enable it before
-   * {@link #run(UUID)} so the distributed component state can be initialized from the steady phase inventories.
-   * Positive-flow boundaries and an unchanged named component slate are currently required.
+   * {@link #run(UUID)} so the distributed component state can be initialized from the steady phase inventories. With
+   * mass transfer enabled, phase mass targets come from a flash of the conserved local component composition, so
+   * hydraulic slip alone does not create evaporation. Positive-flow boundaries and an unchanged named component slate
+   * are currently required.
    * </p>
    *
    * @param enabled true to track named components conservatively
@@ -8071,6 +8229,57 @@ public class TwoFluidPipe extends Pipeline {
     return transientCoupledPressureMomentumFailureDetected;
   }
 
+  /** @return count of bounded Newton iterations, including rejected attempts, since the last run() */
+  public long getTransientPressureLimitCount() {
+    return transientPressureLimitCount;
+  }
+
+  /** @return first limited attempted-substep start time in seconds, or NaN if no limit occurred */
+  public double getFirstTransientPressureLimitTime() {
+    return firstTransientPressureLimitTime;
+  }
+
+  /** @return smallest Newton damping recorded by a pressure limit, or one when none occurred */
+  public double getMinimumTransientPressureDamping() {
+    return minimumTransientPressureDamping;
+  }
+
+  /**
+   * Enable experimental subcell friction integration for conservative slug/film transport. This option requires
+   * conservative Lagrangian tracking and a shared slug force closure. The existing default and steady initialization
+   * are unchanged; severe-slug qualification remains open.
+   *
+   * @param enabled true to integrate reconstructed body/film forces
+   */
+  public void setConservativeSlugForceIntegrationEnabled(boolean enabled) {
+    if (enabled && (slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN || !sharedSlugForceBalanceEnabled
+        || equations.isStiffBubbleDragEnabled())) {
+      throw new IllegalStateException(
+          "Subcell forces require CONSERVATIVE_LAGRANGIAN tracking, shared slug forces and disabled stiff bubble drag");
+    }
+    equations.setConservativeSlugForceIntegrationEnabled(enabled);
+  }
+
+  /**
+   * Enable sampling of the latest evaluated mechanical source forces. No state is modified by sampling.
+   *
+   * @param enabled true to retain gas/liquid wall, interface and gravity forces
+   */
+  public void setMomentumForceDiagnosticsEnabled(boolean enabled) {
+    equations.setMomentumForceDiagnosticsEnabled(enabled);
+  }
+
+  /**
+   * Snapshot of the latest RHS evaluation, which may precede the accepted pressure correction. Pressure and advection
+   * are flux terms and are not included here.
+   *
+   * @return rows by cell, columns gas wall, liquid wall, gas interface, liquid interface, gas gravity, liquid gravity,
+   * all signed N/m; empty when sampling is disabled
+   */
+  public double[][] getLastMomentumSourceForcesPerLength() {
+    return equations.getLastMomentumSourceForcesPerLength();
+  }
+
   /**
    * Check whether any coupled correction reached its pressure-correction limiter.
    *
@@ -8281,6 +8490,36 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSteadyStateWallClockLimited() {
     return ssWallClockLimited;
+  }
+
+  /**
+   * Select the reduced shared slug force balance before a new steady solve.
+   *
+   * <p>
+   * This opt-in model assigns slug wall resistance to the wetting liquid and solves holdup from the same phase forces
+   * used by the transient equations. Minimum-slip and terrain holdup overrides do not apply to sections containing a
+   * slug contribution. This is not a resolved slug-unit model or experimental severe-slugging qualification. Transients
+   * require both {@link #setEnableInterfacialPressure(boolean)} and {@link #setEnableCoupledPressureMomentum(boolean)}
+   * to be enabled explicitly.
+   * </p>
+   *
+   * @param enabled true to select the shared mechanical closure; default false
+   */
+  public void setSharedSlugForceBalanceEnabled(boolean enabled) {
+    sharedSlugForceBalanceEnabled = enabled;
+    if (sharedSlugForceBalance == null) {
+      sharedSlugForceBalance = new SlugForceBalance();
+    }
+    equations.setSharedSlugForceBalanceEnabled(enabled);
+  }
+
+  /**
+   * Return whether the shared mechanical slug closure is selected.
+   *
+   * @return true when enabled
+   */
+  public boolean isSharedSlugForceBalanceEnabled() {
+    return sharedSlugForceBalanceEnabled;
   }
 
   /**

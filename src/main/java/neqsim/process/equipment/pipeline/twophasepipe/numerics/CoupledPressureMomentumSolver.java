@@ -69,11 +69,12 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     private final boolean converged;
     private final boolean pressureCorrectionLimited;
     private final double minimumMassFluxCorrectionScale;
+    private final java.util.List<PressureLimitEvent> pressureLimitEvents;
 
     private Result(double[][] state, double[] pressure, double[] gasDensity, double[] oilDensity, double[] waterDensity,
         double[] gasSoundSpeed, double[] outletBoundaryMassCorrectionKg, double[][] phaseMassCorrectionsKg,
         int iterations, double maximumRelativeVolumeResidual, boolean converged, boolean pressureCorrectionLimited,
-        double minimumMassFluxCorrectionScale) {
+        double minimumMassFluxCorrectionScale, java.util.List<PressureLimitEvent> pressureLimitEvents) {
       this.state = state;
       this.pressure = pressure;
       this.gasDensity = gasDensity;
@@ -87,6 +88,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       this.converged = converged;
       this.pressureCorrectionLimited = pressureCorrectionLimited;
       this.minimumMassFluxCorrectionScale = minimumMassFluxCorrectionScale;
+      this.pressureLimitEvents = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(pressureLimitEvents));
     }
 
     /** @return corrected conservative state */
@@ -153,9 +155,73 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       return pressureCorrectionLimited;
     }
 
+    /** @return immutable events for bounded Newton iterations, including unsuccessful corrections */
+    public java.util.List<PressureLimitEvent> getPressureLimitEvents() {
+      return pressureLimitEvents == null ? java.util.Collections.emptyList() : pressureLimitEvents;
+    }
+
     /** @return smallest phase-mass positivity scale used by an applied nonlinear correction */
     public double getMinimumMassFluxCorrectionScale() {
       return minimumMassFluxCorrectionScale;
+    }
+  }
+
+  /** The active bound controlling the common damping of a Newton pressure direction. */
+  public enum PressureLimitReason {
+    /** Maximum absolute/relative correction. */
+    CORRECTION_SIZE,
+    /** Minimum permitted cell pressure. */
+    MINIMUM_PRESSURE,
+    /** Positive gas, oil or water density response. */
+    DENSITY_POSITIVITY
+  }
+
+  /** Immutable diagnostic of one limited nonlinear iteration; it does not modify the solve. */
+  public static final class PressureLimitEvent implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final int iteration;
+    private final int cell;
+    private final PressureLimitReason reason;
+    private final double damping;
+    private final double proposedCorrectionPa;
+
+    private PressureLimitEvent(int iteration, int cell, PressureLimitReason reason, double damping,
+        double proposedCorrectionPa) {
+      this.iteration = iteration;
+      this.cell = cell;
+      this.reason = reason;
+      this.damping = damping;
+      this.proposedCorrectionPa = proposedCorrectionPa;
+    }
+
+    /** @return nonlinear iteration index used by the solver */
+    public int getIteration() {
+      return iteration;
+    }
+
+    /** @return zero-based cell that imposed the common damping */
+    public int getCell() {
+      return cell;
+    }
+
+    /** @return active constraint */
+    public PressureLimitReason getReason() {
+      return reason;
+    }
+
+    /** @return actual common Newton damping */
+    public double getDamping() {
+      return damping;
+    }
+
+    /** @return unscaled Newton correction at the limiting cell, Pa */
+    public double getProposedCorrectionPa() {
+      return proposedCorrectionPa;
+    }
+
+    /** @return damped correction at the limiting cell, Pa */
+    public double getAppliedCorrectionPa() {
+      return damping * proposedCorrectionPa;
     }
   }
 
@@ -233,6 +299,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     }
     boolean converged = false;
     boolean correctionLimited = false;
+    java.util.List<PressureLimitEvent> pressureLimitEvents = new java.util.ArrayList<>();
     double minimumMassFluxCorrectionScale = 1.0;
     double[][] activeFaceScale = new double[PHASE_COUNT][cellCount + 1];
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
@@ -341,14 +408,26 @@ public final class CoupledPressureMomentumSolver implements Serializable {
           : null;
       boolean[][] densityResponseActive = new boolean[PHASE_COUNT][cellCount];
       double damping = pressureRelaxation;
+      int limitingCell = -1;
+      PressureLimitReason limitingReason = null;
       for (int cell = 0; cell < cellCount; cell++) {
         double limit = Math.max(1.0e4, maximumRelativePressureCorrection * correctedPressure[cell]);
         if (pressureCorrection[cell] != 0.0) {
-          damping = Math.min(damping, limit / Math.abs(pressureCorrection[cell]));
+          double candidate = limit / Math.abs(pressureCorrection[cell]);
+          if (candidate < damping) {
+            limitingCell = cell;
+            limitingReason = PressureLimitReason.CORRECTION_SIZE;
+          }
+          damping = Math.min(damping, candidate);
         }
         if (pressureCorrection[cell] < 0.0) {
           double availablePressure = Math.max(0.0, correctedPressure[cell] - getMinimumPressure());
-          damping = Math.min(damping, availablePressure / -pressureCorrection[cell] * (1.0 - 8.0 * Math.ulp(1.0)));
+          double candidate = availablePressure / -pressureCorrection[cell] * (1.0 - 8.0 * Math.ulp(1.0));
+          if (candidate < damping) {
+            limitingCell = cell;
+            limitingReason = PressureLimitReason.MINIMUM_PRESSURE;
+          }
+          damping = Math.min(damping, candidate);
         }
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
           densityResponseActive[phase][cell] = checkerboardCorrectionEnabled
@@ -358,18 +437,32 @@ public final class CoupledPressureMomentumSolver implements Serializable {
           if (densityResponseActive[phase][cell] && pressureCorrection[cell] < 0.0) {
             if (polytropicGas && phase == GAS_MASS) {
               double pressureDistance = Math.max(0.0, correctedPressure[cell] - gasDensityPressureFloor[cell]);
-              damping = Math.min(damping, 0.9 * pressureDistance / -pressureCorrection[cell]);
+              double candidate = 0.9 * pressureDistance / -pressureCorrection[cell];
+              if (candidate < damping) {
+                limitingCell = cell;
+                limitingReason = PressureLimitReason.DENSITY_POSITIVITY;
+              }
+              damping = Math.min(damping, candidate);
               continue;
             }
             double soundSpeed = Math.max(soundSpeeds[phase][cell], MIN_SOUND_SPEED);
             double availableDensity = Math.max(0.0, densities[phase][cell] - MIN_DENSITY);
             // A common fraction-to-boundary step keeps the affine acoustic
             // density response positive without independently repairing phases.
-            damping = Math.min(damping, 0.9 * availableDensity * soundSpeed * soundSpeed / -pressureCorrection[cell]);
+            double candidate = 0.9 * availableDensity * soundSpeed * soundSpeed / -pressureCorrection[cell];
+            if (candidate < damping) {
+              limitingCell = cell;
+              limitingReason = PressureLimitReason.DENSITY_POSITIVITY;
+            }
+            damping = Math.min(damping, candidate);
           }
         }
       }
       correctionLimited |= damping < pressureRelaxation;
+      if (limitingCell >= 0) {
+        pressureLimitEvents.add(new PressureLimitEvent(iterations, limitingCell, limitingReason, damping,
+            pressureCorrection[limitingCell]));
+      }
       if (!(damping > 0.0)) {
         // The declared pressure/density bounds make this Newton direction
         // inadmissible. Report its remaining volume residual to the caller.
@@ -455,7 +548,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         && outletPressureConverged(correctedPressure, outletPressure, outletPressureFixed);
     return new Result(correctedState, correctedPressure, densities[GAS_MASS], densities[OIL_MASS],
         densities[WATER_MASS], soundSpeeds[GAS_MASS], outletBoundaryMassCorrectionKg, phaseMassCorrectionsKg,
-        iterations, maximumResidual, converged, correctionLimited, minimumMassFluxCorrectionScale);
+        iterations, maximumResidual, converged, correctionLimited, minimumMassFluxCorrectionScale, pressureLimitEvents);
   }
 
   /**

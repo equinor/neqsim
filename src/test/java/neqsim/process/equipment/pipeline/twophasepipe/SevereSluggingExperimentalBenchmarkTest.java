@@ -52,6 +52,12 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  *
  * <p>
+ * Pressure metrics sample {@code getPressureProfile()[0]}, the upstream inlet cell, not the physical flowline-riser
+ * bend. The experimental target is the digitized inlet-pressure trace. The existing sample and qualification gates are
+ * retained; bend-pressure qualification requires a separately identified probe.
+ * </p>
+ *
+ * <p>
  * The steady-state initialization runs without a wall-clock guard, and every realization asserts that the guard did not
  * fire, so the reported results do not depend on how fast or how loaded the executing machine is.
  * </p>
@@ -88,15 +94,15 @@ class SevereSluggingExperimentalBenchmarkTest {
    * physically and experimentally meaningless at this magnitude.
    */
   private static final double ATTRACTOR_SAMPLING_PERTURBATION = 1.0e-12;
-  /** The observed cross-configuration spread of the time-averaged riser-base pressure stays below 1%. */
+  /** The observed cross-configuration spread of the time-averaged inlet pressure stays below 1%. */
   private static final double MEAN_PRESSURE_CONVERGENCE_TOLERANCE = 0.08;
   /** Coarsest mesh used for the active characterization. */
   private static final int RESOLVED_SECTION_COUNT = 16;
   /** Refined mesh used for the mesh-convergence comparison. */
   private static final int REFINED_SECTION_COUNT = 24;
-  /** Largest physical riser-base swing admitted by the short characterization. */
+  /** Largest physical inlet-pressure swing admitted by the short characterization. */
   private static final double RECORDED_PRESSURE_SWING_UPPER_BOUND_IN_RISER_HEADS = 1.10;
-  /** Smallest riser-base swing that still counts as a cycle rather than a flat trace. */
+  /** Smallest inlet-pressure swing that still counts as a cycle rather than a flat trace. */
   private static final double RECORDED_PRESSURE_SWING_LOWER_BOUND_IN_RISER_HEADS = 0.05;
   /** Smallest slug the outlet tracker must register on the resolved mesh, in m. */
   private static final double MINIMUM_TRACKED_SLUG_LENGTH_M = 0.5;
@@ -189,7 +195,7 @@ class SevereSluggingExperimentalBenchmarkTest {
 
   /**
    * Every realization must reproduce the liquid blowout and fallback cycle, meaning an outlet liquid rate that both
-   * rises above and drops below the liquid feed rate on a repeating cycle, and the riser-base pressure swing that
+   * rises above and drops below the liquid feed rate on a repeating cycle, and the inlet pressure swing that
    * accompanies it must be a substantial fraction of a riser hydrostatic head.
    */
   @Test
@@ -217,11 +223,12 @@ class SevereSluggingExperimentalBenchmarkTest {
           + ": no complete settled-window cycle interval was detected, count=" + metrics.completedLiquidCycleCount);
       assertTrue(
           metrics.peakToPeakPressurePa > RECORDED_PRESSURE_SWING_LOWER_BOUND_IN_RISER_HEADS * RISER_HYDROSTATIC_HEAD_PA,
-          metrics.label + ": the riser-base swing is too small to be severe slugging, peakToPeak="
+          metrics.label + ": the inlet-pressure swing is too small to be severe slugging, peakToPeak="
               + metrics.peakToPeakPressurePa);
       assertTrue(
           metrics.peakToPeakPressurePa < RECORDED_PRESSURE_SWING_UPPER_BOUND_IN_RISER_HEADS * RISER_HYDROSTATIC_HEAD_PA,
-          metrics.label + ": the riser-base swing exceeds a riser hydrostatic head, which draining the riser cannot "
+          metrics.label
+              + ": the inlet-pressure swing exceeds a riser hydrostatic head, which draining the riser cannot "
               + "produce, so the pressure signature has to be re-measured, peakToPeak=" + metrics.peakToPeakPressurePa);
     }
   }
@@ -238,16 +245,16 @@ class SevereSluggingExperimentalBenchmarkTest {
   }
 
   /**
-   * The riser-base amplitude must stay mesh consistent. It used to differ by a factor of five between the resolved and
-   * refined meshes because the section inclination was built with {@code atan2} against the axial cell length and the
-   * top riser cell was left horizontal; both are fixed, and this pins the result so a geometry regression shows up as a
-   * mesh split rather than as a quietly wrong amplitude.
+   * The inlet-pressure amplitude must stay mesh consistent. It used to differ by a factor of five between the resolved
+   * and refined meshes because the section inclination was built with {@code atan2} against the axial cell length and
+   * the top riser cell was left horizontal; both are fixed, and this pins the result so a geometry regression shows up
+   * as a mesh split rather than as a quietly wrong amplitude.
    */
   @Test
   void riserAmplitudeIsMeshConsistent() {
     double gap = relativeDifference(reference.peakToPeakPressurePa, refinedMesh.peakToPeakPressurePa);
     assertTrue(gap < MAXIMUM_AMPLITUDE_MESH_SPREAD,
-        "the riser-base amplitude has become mesh dependent again, which points at the section geometry rather than a "
+        "the inlet-pressure amplitude has become mesh dependent again, which points at the section geometry rather than a "
             + "closure; resolved=" + reference.peakToPeakPressurePa + " refined=" + refinedMesh.peakToPeakPressurePa);
   }
 
@@ -269,7 +276,7 @@ class SevereSluggingExperimentalBenchmarkTest {
   }
 
   /**
-   * The time-averaged riser-base pressure survives mesh refinement, outer-step coarsening and an inlet perturbation far
+   * The time-averaged inlet pressure survives mesh refinement, outer-step coarsening and an inlet perturbation far
    * below any experimental significance. The instantaneous amplitude and period do not, and are only reported.
    */
   @Test
@@ -353,6 +360,7 @@ class SevereSluggingExperimentalBenchmarkTest {
       }
       if (pipe.getSimulationTime() >= WARM_UP_SECONDS) {
         sampleTimes.add(pipe.getSimulationTime());
+        // Preserve the upstream inlet-pressure sample; this is not a probe at the riser base.
         pressureSamples.add(pipe.getPressureProfile()[0]);
         liquidOutletSamples.add(balance.getOutletMassKg(Phase.LIQUID) / balance.getElapsedTimeSeconds());
         flowlineLiquidHoldupSamples.add(pipe.getLiquidHoldupProfile()[flowlineProbeSection]);

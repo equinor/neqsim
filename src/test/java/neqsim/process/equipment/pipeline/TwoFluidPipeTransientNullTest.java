@@ -90,7 +90,7 @@ public class TwoFluidPipeTransientNullTest {
    * <p>
    * Historically this fixture trapped liquid at the one-way outlet and packed the line while total mass balance still
    * closed. Correcting mechanical force allocation to absent phases removed that outlet failure in this case, and the
-   * separate liquid-outlet acceptance test is now enabled. The 1800-second inventory drift remains about 5.34%, above
+   * separate liquid-outlet acceptance test is now enabled. The 1800-second inventory drift remains about 5.76%, above
    * this unchanged 5% limit. Outlet progress and finite-volume conservation therefore do not establish a fixed point.
    * </p>
    *

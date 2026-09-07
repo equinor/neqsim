@@ -306,6 +306,14 @@ class CoupledPressureMomentumSolverTest {
     assertTrue(result.getMaximumRelativeVolumeResidual() <= solver.getRelativeVolumeTolerance());
     assertTrue(result.getIterations() <= solver.getMaximumIterations());
     assertTrue(result.isPressureCorrectionLimited());
+    assertFalse(result.getPressureLimitEvents().isEmpty());
+    assertThrows(UnsupportedOperationException.class, () -> result.getPressureLimitEvents().clear());
+    for (CoupledPressureMomentumSolver.PressureLimitEvent event : result.getPressureLimitEvents()) {
+      assertTrue(event.getCell() >= 0 && event.getCell() < result.getState().length);
+      assertTrue(event.getDamping() >= 0.0 && event.getDamping() < 1.0);
+      assertTrue(event.getReason() != null);
+      assertEquals(event.getProposedCorrectionPa() * event.getDamping(), event.getAppliedCorrectionPa(), 0.0);
+    }
     assertNonnegativePhaseMasses(result.getState());
     assertArrayEquals(initialMass, weightedPhaseMass(result.getState(), lengths), 1e-10);
     assertArrayEquals(new double[3], result.getOutletBoundaryMassCorrectionKg(), 0.0);
@@ -358,6 +366,14 @@ class CoupledPressureMomentumSolverTest {
     }
     assertTrue(!result.isConverged(), "The sealed volume cannot close under the declared pressure floor");
     assertTrue(result.isPressureCorrectionLimited());
+    assertFalse(result.getPressureLimitEvents().isEmpty());
+    assertThrows(UnsupportedOperationException.class, () -> result.getPressureLimitEvents().clear());
+    for (CoupledPressureMomentumSolver.PressureLimitEvent event : result.getPressureLimitEvents()) {
+      assertTrue(event.getCell() >= 0 && event.getCell() < result.getState().length);
+      assertTrue(event.getDamping() >= 0.0 && event.getDamping() < 1.0);
+      assertTrue(event.getReason() != null);
+      assertEquals(event.getProposedCorrectionPa() * event.getDamping(), event.getAppliedCorrectionPa(), 0.0);
+    }
     assertEquals(0.01, result.getMaximumRelativeVolumeResidual(), 1e-12);
     assertArrayEquals(new double[3], result.getOutletBoundaryMassCorrectionKg(), 0.0);
   }
@@ -388,6 +404,14 @@ class CoupledPressureMomentumSolverTest {
     assertTrue(result.isConverged(),
         "Density-guarded correction failed at residual " + result.getMaximumRelativeVolumeResidual());
     assertTrue(result.isPressureCorrectionLimited());
+    assertFalse(result.getPressureLimitEvents().isEmpty());
+    assertThrows(UnsupportedOperationException.class, () -> result.getPressureLimitEvents().clear());
+    for (CoupledPressureMomentumSolver.PressureLimitEvent event : result.getPressureLimitEvents()) {
+      assertTrue(event.getCell() >= 0 && event.getCell() < result.getState().length);
+      assertTrue(event.getDamping() >= 0.0 && event.getDamping() < 1.0);
+      assertTrue(event.getReason() != null);
+      assertEquals(event.getProposedCorrectionPa() * event.getDamping(), event.getAppliedCorrectionPa(), 0.0);
+    }
     assertNonnegativePhaseMasses(result.getState());
     assertArrayEquals(weightedPhaseMass(state, lengths), weightedPhaseMass(result.getState(), lengths), 1e-12);
     for (int cell = 0; cell < state.length; cell++) {
@@ -524,6 +548,14 @@ class CoupledPressureMomentumSolverTest {
 
     assertTrue(!result.isConverged());
     assertTrue(result.isPressureCorrectionLimited());
+    assertFalse(result.getPressureLimitEvents().isEmpty());
+    assertThrows(UnsupportedOperationException.class, () -> result.getPressureLimitEvents().clear());
+    for (CoupledPressureMomentumSolver.PressureLimitEvent event : result.getPressureLimitEvents()) {
+      assertTrue(event.getCell() >= 0 && event.getCell() < result.getState().length);
+      assertTrue(event.getDamping() >= 0.0 && event.getDamping() < 1.0);
+      assertTrue(event.getReason() != null);
+      assertEquals(event.getProposedCorrectionPa() * event.getDamping(), event.getAppliedCorrectionPa(), 0.0);
+    }
     assertTrue(result.getMaximumRelativeVolumeResidual() > solver.getRelativeVolumeTolerance());
     assertArrayEquals(totalPhaseMass(state), totalPhaseMass(result.getState()), 1e-12);
     for (int cell = 0; cell < state.length; cell++) {

@@ -483,9 +483,13 @@ over 4–12 MSm3/d, `TwoFluidPipe` reproduces the rate exponent in ΔP and respo
 heating, while `PipeBeggsAndBrills` sits 30–60% above it because its two-phase friction multiplier
 is an extrapolation at this liquid loading. Local liquid holdup at low
 rate is still dominated by single terrain trap sections, so valley inventory is indicative rather
-than a design number. **The three-phase free-water case does not converge** - with 15 m3/hr of free
-water the solve is wall-clock limited, so always check
-`isSteadyStateConverged()` on a water-bearing line.
+than a design number. **The historical three-phase free-water case remains unqualified.** The
+earlier 73.8 km solve with 15 m3/hr of free water was wall-clock limited. Its complete input fixture
+is not available in the repository, so the recent pressure-boundary and oil/water-split corrections
+have not been assessed on that exact line. Always check `isSteadyStateConverged()` on a water-bearing
+line. A separate, reproducible 3 km uphill gas/oil/water case now converges with all three phases
+present and each phase mass flux checked against independent local equilibrium flashes; this does
+not replace qualification of the historical export line.
 See [Known limitations](../wiki/two_fluid_model#known-limitations).
 
 **Always check the steady-state outcome** — `run()` does not throw when the solve fails:
@@ -1352,3 +1356,30 @@ print(f"Total flow: {export.getOutletStream().getFlowRate('kg/hr'):.0f} kg/hr")
 - **[Pipeline Network Example](../examples/LoopedPipelineNetworkExample)** - Complex network modeling
 - **[Dynamic Simulation Guide](../simulation/dynamic_simulation_guide)** - Transient simulation concepts
 - **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Complete reference
+
+
+### Qualifying a liquid-rich slug transient
+
+For a controlled gas/oil slug study, the opt-in shared force balance provides a mechanical
+steady initialization consistent with its transient wall and interphase forces. Select
+`setSharedSlugForceBalanceEnabled(true)`, `setEnableInterfacialPressure(true)` and
+`setEnableCoupledPressureMomentum(true)` before `run()`. These options deliberately change
+slug holdup and pressure loss; retain the default configuration when reproducing historical
+correlation-based results. Check convergence, completed physical time, mass conservation,
+outlet backflow and pressure-correction diagnostics. See the
+[model contract and qualification evidence](../process/TWOFLUIDPIPE_MODEL#opt-in-shared-slug-force-balance).
+
+
+During enabled transient slug tracking, `TwoFluidPipe` observes terrain-zone liquid volume
+from conserved oil/water mass and phase densities using
+`LiquidAccumulationTracker.observeConservativeAccumulation(TwoFluidSection[], double)`.
+No additional option is required. Repeated observations do not add holdup or damp velocity,
+and terrain-marker emission leaves measured inventory unchanged. The legacy `TransientPipe`
+empirical path is preserved. See the
+[observation contract](../process/TWOFLUIDPIPE_MODEL#conservative-terrain-accumulation-observation).
+
+For the public 600 s Tengesdal Test 3 comparison, pressure is sampled at the upstream inlet
+(`getPressureProfile()[0]`), not the physical riser base. Preserve that sample and the original
+amplitude/period gates when comparing revisions. Inspect liquid accumulation, discharge and
+fallback together with the sticky pressure limiter; successful bookkeeping alone does not
+qualify the experimental cycle.

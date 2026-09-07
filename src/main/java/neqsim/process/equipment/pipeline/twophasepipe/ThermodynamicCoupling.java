@@ -568,6 +568,11 @@ public class ThermodynamicCoupling implements Serializable {
    * Consequently an absent oil or water phase cannot evaporate. Positive gas source denotes evaporation and negative
    * gas source denotes condensation.
    * </p>
+   * <p>
+   * This legacy overload uses the reference-composition equilibrium volume fraction as its target. That no-slip
+   * approximation can produce artificial transfer from a hydraulically segregated equilibrium inventory. Use the
+   * three-argument overload with a conserved local component state when phase slip must remain at equilibrium.
+   * </p>
    *
    * @param section current pipe section
    * @param relaxationTime relaxation time toward flash equilibrium in seconds
@@ -584,6 +589,63 @@ public class ThermodynamicCoupling implements Serializable {
     }
 
     double gasSource = calculateScalarGasSourcePerLength(section, relaxationTime, eqProps);
+    return splitGasTransferSource(section, relaxationTime, gasSource, eqProps);
+  }
+
+  /**
+   * Calculate gas-liquid transfer from the equilibrium of the conserved local component inventory.
+   *
+   * <p>
+   * Hydraulic slip changes the amount of each phase stored in a cell without changing the equilibrium of their
+   * compositions. The target must therefore be a phase mass fraction from the local component inventory, rather than
+   * the no-slip volume fraction of the inlet fluid. The supplied state must already be flashed at this section's
+   * pressure and temperature. The caller retains ownership; this method does not mutate it. Oil/water allocation
+   * retains the donor-inventory evaporation and receiving-phase condensation closure of the two-argument method.
+   * Hydrocarbon phases of type {@link PhaseType#OIL}, {@link PhaseType#LIQUID}, and {@link PhaseType#LIQUID_ASPHALTENE}
+   * belong to the oil inventory, as in component transport.
+   * </p>
+   *
+   * @param section current hydrodynamic section
+   * @param relaxationTime positive finite relaxation time in seconds
+   * @param localEquilibriumFluid flashed state reconstructed from conserved cell component inventories
+   * @return conservative phase sources in kg/(m s)
+   * @throws IllegalArgumentException if input state, relaxation time, mass, or phase identity is invalid
+   */
+  public PhaseMassTransfer calcPhaseMassTransferRatePerLength(TwoFluidSection section, double relaxationTime,
+      SystemInterface localEquilibriumFluid) {
+    if (section == null || localEquilibriumFluid == null || relaxationTime <= 0.0 || !Double.isFinite(relaxationTime)) {
+      throw new IllegalArgumentException(
+          "Local phase transfer requires a section, flashed local fluid and positive time");
+    }
+    double equilibriumMass = 0.0;
+    double equilibriumGasMass = 0.0;
+    for (int phaseIndex = 0; phaseIndex < localEquilibriumFluid.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = localEquilibriumFluid.getPhase(phaseIndex);
+      double mass = phase.getMass();
+      if (!Double.isFinite(mass) || mass < 0.0) {
+        throw new IllegalArgumentException("Local equilibrium phase mass must be finite and nonnegative");
+      }
+      if (phase.getType() == PhaseType.GAS) {
+        equilibriumGasMass += mass;
+      } else if (!isHydrocarbonLiquid(phase.getType()) && phase.getType() != PhaseType.AQUEOUS && mass > 0.0) {
+        throw new IllegalArgumentException("Unsupported local equilibrium phase " + phase.getType());
+      }
+      equilibriumMass += mass;
+    }
+    if (!(equilibriumMass > 0.0)) {
+      throw new IllegalArgumentException("Local equilibrium fluid must contain positive mass");
+    }
+    double gasMass = Math.max(0.0, section.getGasMassPerLength());
+    double liquidMass = Math.max(0.0, section.getOilMassPerLength()) + Math.max(0.0, section.getWaterMassPerLength());
+    double targetGasMass = (gasMass + liquidMass) * equilibriumGasMass / equilibriumMass;
+    double gasSource = (targetGasMass - gasMass) / relaxationTime;
+    gasSource = Math.min(liquidMass / relaxationTime, Math.max(-gasMass / relaxationTime, gasSource));
+    return splitGasTransferSource(section, relaxationTime, gasSource, extractProperties(localEquilibriumFluid));
+  }
+
+  /** Distribute gas-liquid exchange without evaporating an absent liquid donor. */
+  private PhaseMassTransfer splitGasTransferSource(TwoFluidSection section, double relaxationTime, double gasSource,
+      ThermoProperties eqProps) {
     if (gasSource < 0.0) {
       double oilFraction = Math.max(0.0, eqProps.oilMassFractionOfLiquid);
       double waterFraction = Math.max(0.0, eqProps.aqueousMassFractionOfLiquid);
@@ -606,11 +668,13 @@ public class ThermodynamicCoupling implements Serializable {
       if (liquidInventory <= 0.0) {
         return PhaseMassTransfer.zero(true, true, null);
       }
-      double oilWithdrawal = Math.min(gasSource * oilInventory / liquidInventory, oilInventory / relaxationTime);
-      double waterWithdrawal = Math.min(gasSource - oilWithdrawal, waterInventory / relaxationTime);
+      double oilWithdrawal = Math.min(gasSource * (oilInventory / liquidInventory), oilInventory / relaxationTime);
+      // A round-off excess in the first withdrawal must not turn an absent second
+      // donor into a negative withdrawal (and thereby create a new liquid phase).
+      double waterWithdrawal = Math.min(Math.max(0.0, gasSource - oilWithdrawal), waterInventory / relaxationTime);
       double boundedGasSource = oilWithdrawal + waterWithdrawal;
       double oilSource = -oilWithdrawal;
-      double waterSource = -boundedGasSource - oilSource;
+      double waterSource = -waterWithdrawal;
       return new PhaseMassTransfer(boundedGasSource, oilSource, waterSource, true, true, null);
     }
 

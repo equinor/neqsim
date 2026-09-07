@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import java.lang.reflect.Field;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
@@ -18,11 +19,11 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  *
  * <p>
- * That signature is absent here. The two-cell mode is damped more strongly as the mesh is refined, because the upwind
- * flux carries numerical diffusion that also scales as one over the cell size and dominates at these resolutions. The
- * liquid-rich transient runaway recorded in {@code TwoFluidPipeTransientNullTest} is therefore not short-wavelength
- * ill-posedness in this regime, and the flux scheme is the wrong place to look for it. This test keeps that conclusion
- * falsifiable: if a change ever makes the short mode amplify under refinement, it fails.
+ * A small alternating holdup perturbation is applied to the conservative state and compared with an unperturbed
+ * trajectory. Subtracting that control is essential: even a smooth linear axial profile has a nonzero alternating sum,
+ * and its changing startup gradient does not measure growth of a two-cell perturbation. Both meshes must damp the
+ * seeded mode, with stronger damping on the finer mesh. This is a numerical regression for the specified flow regime,
+ * not a general well-posedness proof for the model.
  * </p>
  */
 public class TwoFluidIllPosednessGrowthTest {
@@ -58,11 +59,11 @@ public class TwoFluidIllPosednessGrowthTest {
     return pipe;
   }
 
-  /** Amplitude of the shortest resolved (two-cell) holdup mode. */
-  private static double sawtoothAmplitude(double[] holdup) {
+  /** Amplitude of the seeded two-cell holdup mode after subtracting the evolving control. */
+  private static double sawtoothAmplitude(double[] holdup, double[] control) {
     double sum = 0.0;
     for (int i = 0; i < holdup.length; i++) {
-      sum += ((i % 2 == 0) ? 1.0 : -1.0) * holdup[i];
+      sum += ((i % 2 == 0) ? 1.0 : -1.0) * (holdup[i] - control[i]);
     }
     return Math.abs(sum) / holdup.length;
   }
@@ -74,23 +75,65 @@ public class TwoFluidIllPosednessGrowthTest {
    * @param stabilized whether the interfacial pressure closure is active
    * @return growth rate in one over seconds; negative means the mode decays
    */
-  private static double growthRate(int sections, boolean stabilized) {
+  private static double growthRate(int sections, boolean stabilized) throws Exception {
     TwoFluidPipe pipe = buildPipe(sections, stabilized);
+    TwoFluidPipe control = buildPipe(sections, stabilized);
     pipe.runTransient(2.0, null);
-    double start = sawtoothAmplitude(pipe.getLiquidHoldupProfile());
+    control.runTransient(2.0, null);
+    Assertions.assertArrayEquals(control.getLiquidHoldupProfile(), pipe.getLiquidHoldupProfile(), 0.0,
+        "The seeded and control trajectories must start from identical states");
+    double seedAmplitude = 1.0e-6;
+    seedConservativeHoldupMode(pipe, seedAmplitude);
+    double start = sawtoothAmplitude(pipe.getLiquidHoldupProfile(), control.getLiquidHoldupProfile());
+    Assertions.assertEquals(seedAmplitude * (sections - 2.0) / sections, start, 1.0e-12,
+        "The interior perturbation must populate the shortest resolved mode");
     double elapsed = 0.0;
     for (int i = 0; i < 5; i++) {
       pipe.runTransient(2.0, null);
+      control.runTransient(2.0, null);
       elapsed += 2.0;
     }
-    double end = sawtoothAmplitude(pipe.getLiquidHoldupProfile());
+    double end = sawtoothAmplitude(pipe.getLiquidHoldupProfile(), control.getLiquidHoldupProfile());
+    Assertions.assertTrue(end < start, "The seeded short-wavelength mode must decay on " + sections + " cells");
     double floor = 1.0e-14;
     return Math.log(Math.max(end, floor) / Math.max(start, floor)) / elapsed;
   }
 
+  /** Seed the two-phase state at fixed pressure, temperature and phase velocities, leaving boundary cells unchanged. */
+  private static void seedConservativeHoldupMode(TwoFluidPipe pipe, double amplitude) throws Exception {
+    Field field = TwoFluidPipe.class.getDeclaredField("sections");
+    field.setAccessible(true);
+    TwoFluidSection[] cells = (TwoFluidSection[]) field.get(pipe);
+    for (int i = 1; i < cells.length - 1; i++) {
+      TwoFluidSection cell = cells[i];
+      double[] state = cell.getStateVector();
+      Assertions.assertTrue(state[0] > 0.0 && state[1] > 0.0, "The fixture requires gas and oil");
+      Assertions.assertEquals(0.0, state[2], 0.0, "The fixture must not contain a water phase");
+      double holdupChange = (i % 2 == 0 ? 1.0 : -1.0) * amplitude;
+      double holdup = cell.getLiquidHoldup() + holdupChange;
+      Assertions.assertTrue(holdup > 0.0 && holdup < 1.0, "The perturbation must retain both phases");
+      double gasMassChange = -holdupChange * cell.getGasDensity() * cell.getArea();
+      double oilMassChange = holdupChange * cell.getOilDensity() * cell.getArea();
+      double gasVelocity = state[3] / state[0];
+      double oilVelocity = state[4] / state[1];
+      state[0] += gasMassChange;
+      state[1] += oilMassChange;
+      state[3] += gasMassChange * gasVelocity;
+      state[4] += oilMassChange * oilVelocity;
+      // Gas and oil exchange equal volumes, so the pressure-volume contributions cancel.
+      state[6] += gasMassChange * (cell.getGasEnthalpy() + 0.5 * gasVelocity * gasVelocity)
+          + oilMassChange * (cell.getLiquidEnthalpy() + 0.5 * oilVelocity * oilVelocity);
+      cell.setLiquidHoldup(holdup);
+      cell.setGasHoldup(1.0 - holdup);
+      // Do not rebuild the whole conservative state from primitives: that would also change
+      // any pre-existing volume residual and introduce a disturbance unrelated to the seed.
+      cell.setStateVector(state);
+    }
+  }
+
   /** The short mode must not amplify as the mesh is refined, or the flux scheme is driving the runaway. */
   @Test
-  void testShortWavelengthModeDoesNotAmplifyUnderMeshRefinement() {
+  void testShortWavelengthModeDoesNotAmplifyUnderMeshRefinement() throws Exception {
     double coarse = growthRate(20, false);
     double fine = growthRate(80, false);
 
@@ -101,7 +144,7 @@ public class TwoFluidIllPosednessGrowthTest {
 
   /** The stabilizer must not introduce a short-wavelength mode of its own. */
   @Test
-  void testStabilizerDoesNotAmplifyTheShortWavelengthMode() {
+  void testStabilizerDoesNotAmplifyTheShortWavelengthMode() throws Exception {
     double coarse = growthRate(20, true);
     double fine = growthRate(80, true);
 
