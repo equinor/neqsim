@@ -438,12 +438,38 @@ pipe pressure, film thickness, slug generation or independently measured three-p
 actual coupled pipe and compares 42 observations: 15 speeds, 13 lengths and 14 frequencies.
 The downstream probe is at 81D; upstream 54D/58D observations and three unmatched downstream
 operating points are explicitly outside the simulated grid. The default 40-cell calculation uses
-a five-second warm-up and ten-second observation window. Joint refinement is available through
-`-Dneqsim.mohmmed.cells=80 -Dneqsim.mohmmed.outerStep=0.025` and `160`/`0.0125`, keeping the same
-physical inputs, duration, random seed and targets. Run deliberately with
+a five-second warm-up and ten-second observation window. `-Dneqsim.mohmmed.cells` and
+`-Dneqsim.mohmmed.outerStep` are independent so a study can hold one axis fixed.
+`-Dneqsim.mohmmed.pointIds` accepts exact comma-separated translation-velocity source-cell IDs for
+a declared subset; every matching downstream 81D length/frequency observation is then retained
+automatically. The result reports signed error, absolute error, mean absolute relative error, RMS
+relative error, maximum error, missing predictions, conservation and boundary diagnostics. The
+source has no pointwise uncertainty, so none of these errors is an uncertainty-normalized score.
+Keep physical inputs, duration, random seed and targets fixed. Run deliberately with
 `-DexcludedTestGroups= -Dtest=MohmmedTwoFluidPipeExperimentalBenchmarkTest`.
 The log retains every failed/missing prediction, probe event and boundary limitation. A
 numerically complete calculation is not necessarily a boundary-qualified experimental match.
+
+An independent-axis screen on 2026-09-07 selected three low/middle/high public points
+(`mmc2_sheet1_F5`, `mmc2_sheet1_F21`, and `mmc2_sheet1_F37`), giving nine exact measured
+comparisons per run. The source-cell IDs correspond to $(j_G,j_L)$ = (1.047, 0.7),
+(2.094, 0.86), and (2.792, 1.0) m/s. All runs used the same 15 s duration, 5 s warm-up,
+seed 20260905 and fixed gates:
+
+| Cells | Outer step (s) | Change from baseline | Passed | MARE | RMSRE | Maximum absolute relative error |
+|---:|---:|---|---:|---:|---:|---:|
+| 40 | 0.050 | baseline | 3/9 | 1.0402 | 1.5291 | 3.2147 |
+| 80 | 0.050 | spatial only | 2/9 | 0.9970 | 1.3648 | 2.8869 |
+| 40 | 0.025 | outer-step only | 1/9 | 1.6195 | 2.3100 | 5.3748 |
+| 80 | 0.025 | combined interaction | 2/9 | 2.4082 | 3.8349 | 9.0574 |
+
+All nine predictions were finite at each level. At baseline, all three cases completed with a
+maximum accepted-step phase-mass residual of $1.65\times10^{-14}$ kg, but all three steady
+initializations were unconverged and pressure-floor limited, and all three transient cases used
+outlet-backflow clamping. Neither the error aggregates nor individual predictions approach a
+stable refined limit. This is explicit failed experimental and numerical qualification, not a
+model validation claim; it also supplies a bounded public reproducer for the separate
+gas-oil-water/convergence stage.
 
 The earlier 2026-09-05 joint refinement study met 11/42, 3/42 and 1/42 fixed targets at
 40, 80 and 160 cells respectively; 15/15, 14/15 and 13/15 cases completed the

@@ -109,6 +109,51 @@ public final class MohmmedSlugFlowBenchmark {
     return Collections.unmodifiableList(rows);
   }
 
+  /**
+   * Summarize a complete comparison without dropping missing or invalid predictions.
+   *
+   * <p>
+   * Error statistics use only finite, positive predictions. {@link ComparisonSummary#missingOrInvalidCount} separately
+   * exposes excluded predictions, and the summary cannot pass while any are missing. The published dataset provides no
+   * pointwise uncertainty, so these are model-error statistics rather than uncertainty-normalized scores.
+   * </p>
+   *
+   * @param rows complete comparison rows for a declared scope
+   * @return immutable aggregate error and gate counts
+   */
+  public static ComparisonSummary summarize(List<ComparisonRow> rows) {
+    if (rows == null || rows.isEmpty()) {
+      throw new IllegalArgumentException("Comparison rows are required");
+    }
+    int passed = 0;
+    int missingOrInvalid = 0;
+    int finite = 0;
+    double absoluteErrorSum = 0.0;
+    double squaredErrorSum = 0.0;
+    double maximumAbsoluteError = 0.0;
+    for (ComparisonRow row : rows) {
+      if (row == null) {
+        throw new IllegalArgumentException("Comparison rows cannot contain null");
+      }
+      if (row.withinEngineeringTolerance) {
+        passed++;
+      }
+      if (!Double.isFinite(row.signedRelativeError)) {
+        missingOrInvalid++;
+        continue;
+      }
+      finite++;
+      absoluteErrorSum += row.absoluteRelativeError;
+      squaredErrorSum += row.signedRelativeError * row.signedRelativeError;
+      maximumAbsoluteError = Math.max(maximumAbsoluteError, row.absoluteRelativeError);
+    }
+    double meanAbsoluteError = finite == 0 ? Double.POSITIVE_INFINITY : absoluteErrorSum / finite;
+    double rootMeanSquaredError = finite == 0 ? Double.POSITIVE_INFINITY : Math.sqrt(squaredErrorSum / finite);
+    double maximumError = finite == 0 ? Double.POSITIVE_INFINITY : maximumAbsoluteError;
+    return new ComparisonSummary(rows.size(), passed, missingOrInvalid, meanAbsoluteError, rootMeanSquaredError,
+        maximumError);
+  }
+
   private static double positive(String value) {
     double number = Double.parseDouble(value);
     if (!Double.isFinite(number) || number <= 0.0) {
@@ -210,6 +255,8 @@ public final class MohmmedSlugFlowBenchmark {
     public final Point point;
     /** Prediction in the measured units, or NaN when missing. */
     public final double predictedValue;
+    /** Signed relative model error, or positive infinity for missing or invalid predictions. */
+    public final double signedRelativeError;
     /** Absolute relative error; positive infinity for missing or invalid predictions. */
     public final double absoluteRelativeError;
     /** Whether the independently predicted outcome is within the predeclared engineering tolerance. */
@@ -218,10 +265,46 @@ public final class MohmmedSlugFlowBenchmark {
     private ComparisonRow(Point point, double predictedValue) {
       this.point = point;
       this.predictedValue = predictedValue;
-      absoluteRelativeError = Double.isFinite(predictedValue) && predictedValue > 0.0
-          ? Math.abs(predictedValue - point.measuredValue) / point.measuredValue
+      signedRelativeError = Double.isFinite(predictedValue) && predictedValue > 0.0
+          ? (predictedValue - point.measuredValue) / point.measuredValue
           : Double.POSITIVE_INFINITY;
+      absoluteRelativeError = Math.abs(signedRelativeError);
       withinEngineeringTolerance = absoluteRelativeError <= point.getRelativeTolerance();
+    }
+  }
+
+  /** Immutable aggregate for a declared experimental-comparison scope. */
+  public static final class ComparisonSummary {
+    /** Number of measured rows retained in the scope. */
+    public final int totalCount;
+    /** Number meeting their predeclared engineering tolerance. */
+    public final int passedCount;
+    /** Number with missing, nonfinite, or nonpositive predictions. */
+    public final int missingOrInvalidCount;
+    /** Mean absolute relative error over finite predictions. */
+    public final double meanAbsoluteRelativeError;
+    /** Root-mean-square relative error over finite predictions. */
+    public final double rootMeanSquaredRelativeError;
+    /** Maximum absolute relative error over finite predictions. */
+    public final double maximumAbsoluteRelativeError;
+
+    private ComparisonSummary(int totalCount, int passedCount, int missingOrInvalidCount,
+        double meanAbsoluteRelativeError, double rootMeanSquaredRelativeError, double maximumAbsoluteRelativeError) {
+      this.totalCount = totalCount;
+      this.passedCount = passedCount;
+      this.missingOrInvalidCount = missingOrInvalidCount;
+      this.meanAbsoluteRelativeError = meanAbsoluteRelativeError;
+      this.rootMeanSquaredRelativeError = rootMeanSquaredRelativeError;
+      this.maximumAbsoluteRelativeError = maximumAbsoluteRelativeError;
+    }
+
+    /**
+     * Whether every measured row has a valid prediction within its fixed engineering tolerance.
+     *
+     * @return true only for a complete all-row pass
+     */
+    public boolean isPassed() {
+      return missingOrInvalidCount == 0 && passedCount == totalCount;
     }
   }
 }

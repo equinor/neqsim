@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.validation.MohmmedSlugFlowBenchmark.ComparisonRow;
+import neqsim.process.equipment.pipeline.twophasepipe.validation.MohmmedSlugFlowBenchmark.ComparisonSummary;
 import neqsim.process.equipment.pipeline.twophasepipe.validation.MohmmedSlugFlowBenchmark.Point;
 
 /** Dataset fidelity and comparator verification only; these tests do not validate a flow solver. */
@@ -98,6 +99,30 @@ class MohmmedSlugFlowBenchmarkTest {
     List<ComparisonRow> rows = MohmmedSlugFlowBenchmark.compare(Collections.singletonList(speed),
         Collections.singletonMap(speed.id, speed.measuredValue * 1.21));
     assertFalse(rows.get(0).withinEngineeringTolerance);
+    assertEquals(0.21, rows.get(0).signedRelativeError, 1e-14);
     assertEquals(0.21, rows.get(0).absoluteRelativeError, 1e-14);
+  }
+
+  @Test
+  void summaryRetainsSignedErrorsAndMissingPredictions() throws Exception {
+    List<Point> points = readMeasurements().subList(0, 3);
+    Map<String, Double> predictions = new HashMap<String, Double>();
+    predictions.put(points.get(0).id, points.get(0).measuredValue * 0.9);
+    predictions.put(points.get(1).id, points.get(1).measuredValue * 1.3);
+    List<ComparisonRow> rows = MohmmedSlugFlowBenchmark.compare(points, predictions);
+
+    assertEquals(-0.1, rows.get(0).signedRelativeError, 1e-14);
+    assertEquals(0.3, rows.get(1).signedRelativeError, 1e-14);
+    assertEquals(Double.POSITIVE_INFINITY, rows.get(2).signedRelativeError);
+    ComparisonSummary summary = MohmmedSlugFlowBenchmark.summarize(rows);
+    assertEquals(3, summary.totalCount);
+    assertEquals(1, summary.passedCount);
+    assertEquals(1, summary.missingOrInvalidCount);
+    assertEquals(0.2, summary.meanAbsoluteRelativeError, 1e-14);
+    assertEquals(Math.sqrt(0.05), summary.rootMeanSquaredRelativeError, 1e-14);
+    assertEquals(0.3, summary.maximumAbsoluteRelativeError, 1e-14);
+    assertFalse(summary.isPassed());
+    assertThrows(IllegalArgumentException.class,
+        () -> MohmmedSlugFlowBenchmark.summarize(Collections.<ComparisonRow>emptyList()));
   }
 }
