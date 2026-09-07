@@ -1578,3 +1578,81 @@ rather than a hard-coded historical count.
 5. Bai, Y., & Bai, Q. (2010). "Subsea Pipelines and Risers." Elsevier. Chapter on Thermal Design.
 
 6. Beggs, H.D. & Brill, J.P. (1973). "A Study of Two-Phase Flow in Inclined Pipes." Journal of Petroleum Technology, SPE-4007-PA.
+
+
+## Opt-in shared slug force balance
+
+`TwoFluidPipe.setSharedSlugForceBalanceEnabled(true)` selects a reduced mechanical slug
+closure shared by steady holdup, steady pressure loss and transient wall forces. The legacy
+correlation model remains the default. Configure the physical pressure treatment explicitly
+before the steady solve:
+
+```java
+pipe.setSharedSlugForceBalanceEnabled(true);
+pipe.setEnableInterfacialPressure(true);
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.run();
+```
+
+These calls are exercised by `TwoFluidPipeSharedSlugForceBalanceTest`. Transient execution
+rejects the shared closure with either pressure option disabled, before advancing time.
+The legacy pressure march and its uncancelled phase-area pressure term do not supply the
+same mechanical problem as this closure.
+
+`SlugForceBalance` assigns slug wall resistance to the wall-wetting liquid. It evaluates the
+existing mixture friction law at the liquid velocity, so wall work remains dissipative during
+liquid fallback. The existing passive interphase drag is retained. The steady solver finds
+holdup by equating the gas and liquid required pressure gradients, while preserving both
+superficial phase fluxes. The total pressure gradient comes from the sum of those same
+balances. No-slip projection, stored residual subtraction, drag-offset forcing or pressure
+amplitude fitting is used. Minimum-slip and empirical terrain holdup overrides are bypassed
+where the shared slug force balance supplies the equilibrium; an unbracketed root fails
+explicitly. Existing non-slug closures are used in force-weighted transitions, and pure churn
+retains its original closure.
+
+This is a **reduced liquid-wetted closure**, not a resolved slug body/film unit-cell model.
+The dispersed-bubble interphase approximation is still evaluated on bulk velocities. The
+mode changes the equilibrium holdup and pressure drop in slug sections, so it is opt-in and
+must not be described as preserving legacy slug steady predictions. Three-phase separated
+liquid slip and experimental severe slugging are not qualified by the horizontal gas/oil null.
+
+On the 5 km, 0.30 m, 50 kg/s, 40-cell liquid-rich null fixture, the shared closure with physical
+coupled pressure completed 1800 s with **1.323207% total mass inventory drift**, below the
+new 2% target. The maximum relative total mass residual was **7.37e-16**. This compares
+inventory with the mode's own steady state. It is separate from the default legacy result
+of 5.757%, and does not imply that pressure coupling alone accounts for the improvement.
+The original disabled 5% legacy null test and experimental severe-slugging targets remain
+unchanged. Detailed refinement and regression evidence is recorded with the PR continuation.
+
+
+Additional qualification on the same implementation:
+
+| Configuration | 1800 s mass inventory drift | Maximum relative total mass residual |
+|---|---:|---:|
+| Shared closure, 40 cells, 5 s outer step, CFL 0.5 | 1.323207% | 7.37e-16 |
+| Shared closure, 80 cells, 2.5 s outer step, CFL 0.25 | 1.357668% | 1.11e-15 |
+| Legacy closure control, 40 cells, identical physical pressure options | 33.954991% | 7.70e-16 |
+
+Both shared runs completed without outlet-backflow clamping, pressure-correction limiting or
+rejected coupled substeps. Their initial total inventories were approximately 72,426 kg,
+versus 90,248 kg for the legacy-closure control. Their midpoint steady holdups were 0.26946
+versus 0.35370. Thus the mode's null improvement does **not** preserve the old steady slug
+inventory; the original empirical steady model remains available unchanged by default.
+
+The refined run exposed a roundoff-only completion failure after 65 s: repeated subtraction
+left a roughly 6e-15 s tail that could not advance the simulation clock. Accepted elapsed
+time is now accumulated with compensated summation, and the remaining interval is derived
+from that same value. Completion tolerances, CFL limits and genuine clock-stall checks are
+unchanged. A 70 s refined regression protects this fix.
+
+A temporary explicit invocation of the existing 600 s Tengesdal qualification, selecting the
+shared mode without changing its fixture or acceptance assertions, produced **53.202 kPa**
+pressure amplitude and **seven** settled liquid-production cycles with a **65.614 s** period.
+It still failed the 68.6–127.4 kPa amplitude band, 26.6–49.4 s period band, historical steady
+holdup regression (0.332841 versus 0.342 ±1%), and inactive-pressure-limiter requirement.
+There were no rejected substeps; the largest captured phase mass residual was 1.54e-15,
+but the conservation assertions following the failed assertion group were not reached.
+The mean settled flowline holdup remained 0.95. These are diagnostic improvements over the
+previous reported trajectory, not experimental validation. No benchmark threshold or
+fixture property was adjusted. The pre-existing default uphill-holdup regression also
+remains open (0.0217 uphill versus 0.0326 horizontal).

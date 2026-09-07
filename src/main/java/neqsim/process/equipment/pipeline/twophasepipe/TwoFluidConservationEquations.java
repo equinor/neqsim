@@ -7,6 +7,7 @@ import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseFlux;
@@ -81,6 +82,11 @@ public class TwoFluidConservationEquations implements Serializable {
 
   // Closure models
   private WallFriction wallFriction;
+  /** Opt-in liquid-wetted slug mechanical force allocation. */
+  private boolean sharedSlugForceBalanceEnabled;
+  /** Shared evaluator, lazily initialized for serialized legacy objects. */
+  private SlugForceBalance sharedSlugForceBalance;
+
   private InterfacialFriction interfacialFriction;
   private FlowRegimeDetector flowRegimeDetector;
   private GeometryCalculator geometryCalc;
@@ -723,6 +729,15 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private WallFriction.WallFrictionResult calculateWallFriction(TwoFluidSection sec,
       Map<PipeSection.FlowRegime, Double> weights) {
+    if (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec)) {
+      SlugForceBalance.Forces force = sharedSlugForceBalance.evaluate(sec);
+      WallFriction.WallFrictionResult result = new WallFriction.WallFrictionResult();
+      result.gasWallForcePerLength = force.gasWall;
+      result.liquidWallForcePerLength = force.liquidWall;
+      result.gasWallShear = force.gasWall / (Math.PI * sec.getDiameter());
+      result.liquidWallShear = force.liquidWall / (Math.PI * sec.getDiameter());
+      return result;
+    }
     if (weights == null) {
       return wallFriction.calculate(sec.getFlowRegime(), sec.getGasVelocity(), sec.getLiquidVelocity(),
           sec.getGasDensity(), sec.getLiquidDensity(), sec.getGasViscosity(), sec.getLiquidViscosity(),
@@ -1183,7 +1198,7 @@ public class TwoFluidConservationEquations implements Serializable {
       // Integrate each regime's shear over its own wall geometry before blending.
       double F_wG;
       double F_wL;
-      if (sec.getRegimeWeights() != null) {
+      if (sec.getRegimeWeights() != null || (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec))) {
         WallFriction.WallFrictionResult wallResult = calculateWallFriction(sec, sec.getRegimeWeights());
         F_wG = -wallResult.gasWallForcePerLength;
         F_wL = -wallResult.liquidWallForcePerLength;
@@ -1972,6 +1987,18 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   // Getters and setters
+
+  /**
+   * Select the same slug force model as the steady pipe solver.
+   *
+   * @param enabled true to use the reduced shared slug force balance
+   */
+  public void setSharedSlugForceBalanceEnabled(boolean enabled) {
+    sharedSlugForceBalanceEnabled = enabled;
+    if (enabled && sharedSlugForceBalance == null) {
+      sharedSlugForceBalance = new SlugForceBalance();
+    }
+  }
 
   public boolean isIncludeEnergyEquation() {
     return includeEnergyEquation;

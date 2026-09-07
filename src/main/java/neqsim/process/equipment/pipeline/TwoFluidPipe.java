@@ -19,6 +19,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
@@ -250,6 +251,12 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Conservation equations solver. */
   private TwoFluidConservationEquations equations;
+
+  /** Opt-in reduced shared mechanical slug closure; legacy correlations remain the default. */
+  private boolean sharedSlugForceBalanceEnabled;
+
+  /** Shared stateless mechanical evaluator. */
+  private SlugForceBalance sharedSlugForceBalance = new SlugForceBalance();
 
   /** Time integrator. */
   private TimeIntegrator timeIntegrator;
@@ -2685,6 +2692,11 @@ public class TwoFluidPipe extends Pipeline {
 
     double alphaL;
 
+    if (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec)) {
+      double equilibriumHoldup = sharedSlugForceBalance.solveHoldup(sec, vsG, vsL);
+      return new double[] { equilibriumHoldup, 1.0 - equilibriumHoldup };
+    }
+
     // Select the literature-inspired NeqSim closure set. Historical enum and helper
     // names containing OLGA are retained for source and serialization compatibility.
     if (olgaModelType == OLGAModelType.FULL) {
@@ -3827,6 +3839,9 @@ public class TwoFluidPipe extends Pipeline {
    * @return Pressure gradient estimate (Pa/m)
    */
   private double estimatePressureGradient(TwoFluidSection sec) {
+    if (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec)) {
+      return sharedSlugForceBalance.pressureGradient(sec);
+    }
     double alphaG = sec.getGasHoldup();
     double alphaL = sec.getLiquidHoldup();
     double rhoG = sec.getGasDensity();
@@ -4278,6 +4293,11 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null || sections.length == 0) {
       throw new IllegalStateException("Call run() to initialize the pipe before runTransient()");
     }
+    if (sharedSlugForceBalanceEnabled
+        && (!coupledPressureMomentumEnabled || !equations.isEnableInterfacialPressure())) {
+      throw new IllegalStateException(
+          "Shared slug force balance requires coupled pressure-momentum and interfacial pressure");
+    }
     if (!Double.isFinite(simulationTime + dt) || simulationTime + dt <= simulationTime) {
       throw new IllegalArgumentException("Transient time step cannot advance the finite simulation clock");
     }
@@ -4307,6 +4327,7 @@ public class TwoFluidPipe extends Pipeline {
     double directElectricalHeatingEnergyJ = 0.0;
     boolean thermalEnergyTracked = false;
     double acceptedElapsedTime = 0.0;
+    double acceptedElapsedCompensation = 0.0;
     int acceptedSubsteps = 0;
     String lastStepRejection = "substep budget exhausted";
 
@@ -4674,7 +4695,12 @@ public class TwoFluidPipe extends Pipeline {
             weightedPhaseMassSources, sections, getInletStream().getFluid(), referenceFluid,
             componentConservationTolerance);
       }
-      acceptedElapsedTime += dtActual;
+      // Compensated accepted-time summation prevents repeated subtraction from leaving
+      // a spurious, unrepresentable tail after hundreds of CFL-limited steps.
+      double elapsedIncrement = dtActual - acceptedElapsedCompensation;
+      double updatedElapsed = acceptedElapsedTime + elapsedIncrement;
+      acceptedElapsedCompensation = (updatedElapsed - acceptedElapsedTime) - elapsedIncrement;
+      acceptedElapsedTime = updatedElapsed;
       acceptedSubsteps++;
 
       // 8. Update accumulation tracking and slug tracking
@@ -4744,7 +4770,7 @@ public class TwoFluidPipe extends Pipeline {
       // 10. Advance time
       simulationTime += dtActual;
       increaseTime(dtActual);
-      timeRemaining -= dtActual;
+      timeRemaining = dt - acceptedElapsedTime;
       timeIntegrator.advanceTime(dtActual);
     }
 
@@ -8370,6 +8396,36 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSteadyStateWallClockLimited() {
     return ssWallClockLimited;
+  }
+
+  /**
+   * Select the reduced shared slug force balance before a new steady solve.
+   *
+   * <p>
+   * This opt-in model assigns slug wall resistance to the wetting liquid and solves holdup from the same phase forces
+   * used by the transient equations. Minimum-slip and terrain holdup overrides do not apply to sections containing a
+   * slug contribution. This is not a resolved slug-unit model or experimental severe-slugging qualification. Transients
+   * require both {@link #setEnableInterfacialPressure(boolean)} and {@link #setEnableCoupledPressureMomentum(boolean)}
+   * to be enabled explicitly.
+   * </p>
+   *
+   * @param enabled true to select the shared mechanical closure; default false
+   */
+  public void setSharedSlugForceBalanceEnabled(boolean enabled) {
+    sharedSlugForceBalanceEnabled = enabled;
+    if (sharedSlugForceBalance == null) {
+      sharedSlugForceBalance = new SlugForceBalance();
+    }
+    equations.setSharedSlugForceBalanceEnabled(enabled);
+  }
+
+  /**
+   * Return whether the shared mechanical slug closure is selected.
+   *
+   * @return true when enabled
+   */
+  public boolean isSharedSlugForceBalanceEnabled() {
+    return sharedSlugForceBalanceEnabled;
   }
 
   /**

@@ -1356,3 +1356,15 @@ print(f"Total flow: {export.getOutletStream().getFlowRate('kg/hr'):.0f} kg/hr")
 - **[Pipeline Network Example](../examples/LoopedPipelineNetworkExample)** - Complex network modeling
 - **[Dynamic Simulation Guide](../simulation/dynamic_simulation_guide)** - Transient simulation concepts
 - **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Complete reference
+
+
+### Qualifying a liquid-rich slug transient
+
+For a controlled gas/oil slug study, the opt-in shared force balance provides a mechanical
+steady initialization consistent with its transient wall and interphase forces. Select
+`setSharedSlugForceBalanceEnabled(true)`, `setEnableInterfacialPressure(true)` and
+`setEnableCoupledPressureMomentum(true)` before `run()`. These options deliberately change
+slug holdup and pressure loss; retain the default configuration when reproducing historical
+correlation-based results. Check convergence, completed physical time, mass conservation,
+outlet backflow and pressure-correction diagnostics. See the
+[model contract and qualification evidence](../process/TWOFLUIDPIPE_MODEL#opt-in-shared-slug-force-balance).

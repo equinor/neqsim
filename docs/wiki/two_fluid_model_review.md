@@ -988,3 +988,14 @@ Velocity  │              │                  │
 ---
 
 *Document generated for NeqSim TwoFluidPipe model. Last updated with comprehensive mathematical documentation and Lagrangian slug tracking implementation.*
+
+
+### Shared mechanical slug option
+
+An opt-in reduced liquid-wetted slug force balance is available through
+`setSharedSlugForceBalanceEnabled(true)`, together with interfacial pressure and coupled
+pressure-momentum enabled before `run()`. It shares the steady and transient mechanical
+forces and bypasses incompatible slug minimum-slip/terrain holdup overrides. It changes
+slug steady predictions and does not qualify the default correlation model, three-phase
+liquid slip or experimental severe slugging. See the
+[shared slug closure configuration and measured null result](../process/TWOFLUIDPIPE_MODEL#opt-in-shared-slug-force-balance).

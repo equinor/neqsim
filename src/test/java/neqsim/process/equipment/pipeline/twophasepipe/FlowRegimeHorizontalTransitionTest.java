@@ -264,6 +264,8 @@ class FlowRegimeHorizontalTransitionTest {
       double expectedGasWallShear = 0.0;
       double expectedLiquidWallShear = 0.0;
       double expectedInterfacialForce = 0.0;
+      double expectedGasWallForce = 0.0;
+      double expectedLiquidWallForce = 0.0;
       double expectedInterfacialArea = 0.0;
 
       for (Map.Entry<FlowRegime, Double> entry : weights.entrySet()) {
@@ -276,6 +278,8 @@ class FlowRegimeHorizontalTransitionTest {
             upstream.getLiquidDensity(), upstream.getGasViscosity(), upstream.getLiquidViscosity(),
             upstream.getLiquidHoldup(), upstream.getDiameter(), upstream.getSurfaceTension());
         expectedGasWallShear += entry.getValue() * wall.gasWallShear;
+        expectedGasWallForce += entry.getValue() * wall.gasWallForcePerLength;
+        expectedLiquidWallForce += entry.getValue() * wall.liquidWallForcePerLength;
         expectedLiquidWallShear += entry.getValue() * wall.liquidWallShear;
         expectedInterfacialForce += entry.getValue() * interfacial.interfacialShear
             * interfacial.interfacialAreaPerLength;
@@ -286,8 +290,8 @@ class FlowRegimeHorizontalTransitionTest {
       assertRelativeEquals(expectedLiquidWallShear, upstream.getLiquidWallShear());
       assertRelativeEquals(expectedInterfacialForce, upstream.getInterfacialShear() * upstream.getInterfacialWidth());
       assertRelativeEquals(expectedInterfacialArea, upstream.getInterfacialWidth());
-      double gasWallForce = -expectedGasWallShear * upstream.getGasWettedPerimeter();
-      double liquidWallForce = -expectedLiquidWallShear * upstream.getLiquidWettedPerimeter();
+      double gasWallForce = -expectedGasWallForce;
+      double liquidWallForce = -expectedLiquidWallForce;
       double[] source = equations.calcSourceTerms(new TwoFluidSection[] { upstream })[0];
       assertRelativeEquals(gasWallForce - expectedInterfacialForce,
           source[TwoFluidConservationEquations.IDX_GAS_MOMENTUM]);
