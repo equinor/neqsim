@@ -21,8 +21,8 @@ manually maintained Java method list.
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 30 bounded contract-tested software contracts + 21 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.30; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 31 bounded contract-tested software contracts + 20 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.31; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -133,7 +133,7 @@ one deterministic record for every published tool and uses three bounded states:
   component-name search, read-only data-catalog discovery, bounded progress retrieval,
   validation-profile governance, bounded runtime API inspection, the reusable model-registry
   lifecycle, the canonical-process session lifecycle, persisted-state lifecycle,
-  adjustable-parameter discovery, process-local plugin execution, and the five automation advisory
+  adjustable-parameter discovery, process-local plugin execution, bounded runtime-capability discovery and invocation, and the five automation advisory
   discovery/read/diagnostic contracts. It does not validate advertised calculations, database
   contents, standards applicability, EOS accuracy, scientific claims inside trust pages, numerical
   model accuracy, calculation convergence, cancellation, durability, deployment isolation,
@@ -145,8 +145,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 21 records remain
-`CONFIRMED_GAP`, thirty are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 20 records remain
+`CONFIRMED_GAP`, thirty-one are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -193,9 +193,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.30 with 20/30/21 coverage accounting while retaining
+now reconciles inventory 1.31 with 20/31/20 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its thirty bounded software contracts and requires 21 confirmed gaps. The read-only
+among its thirty-one bounded software contracts and requires 20 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -213,14 +213,14 @@ structural preservation of validation metadata, isolated custom-profile create/a
 lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation
 errors. The focused protocol harness verifies the promoted coverage state through
 `getCapabilities`, while the primary `test_mcp_server.py` now includes
-`manageValidationProfile` in its thirty bounded software contracts and requires 21 confirmed
+`manageValidationProfile` in its thirty-one bounded software contracts and requires 20 confirmed
 gaps.
 
 This is software/governance evidence only. The named standards and design factors are not asserted
 to be current, complete, legally applicable, licensed for redistribution, or correct for a real
 facility; `validateWithProfile` scientific correctness, persistence, multi-tenant isolation,
 external authorization, and plant authority remain outside the evidence boundary. Its historical
-promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.30 retains that contract
+promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.31 retains that contract
 alongside the later automation, model-registry, and session-lifecycle promotions below. See
 `docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
@@ -412,22 +412,25 @@ enforcement, scientific validity, plant/control authority, certification, or acc
 engineering approval. A registered plugin runs application code in the MCP server process. The
 detailed evidence is in `docs/evidence/PLUGIN_EXECUTION_CONTRACT.md`.
 
-### Qualified bounded runtime-capability contract
+### Promoted bounded runtime-capability contract
 
-The `runCapability` surface now has direct Java and packaged-MCP qualification
-for runtime discovery, explicit static/process/inspection routing, exact
-bounded static invocation, and fail-closed unsafe or malformed requests. The
-focused protocol suite also verifies normal response evidence over the real
-STDIO boundary.
+Inventory version 1.31 atomically promotes `runCapability` after merged #3554
+established direct Java and real packaged-MCP evidence for bounded discovery,
+explicit static/process/inspection routing, exact public-static invocation,
+and fail-closed unsafe or malformed requests. Machine-readable coverage, Java
+assertions, `test_capability_protocol.py`, synchronized focused protocol
+expectations, authoritative `test_mcp_server.py` accounting, and
+documentation move together from 20/30/21 to 20/31/20.
 
-This qualification does not promote the tool. Inventory remains version 1.30
-with 20 explicit-trust, 30 contract-tested, and 21 confirmed-gap tools.
-`runCapability` remains `CONFIRMED_GAP` until a later atomic transition
-updates the machine-readable record and primary source accounting. The
-detailed numerical, runtime, security, and engineering boundary is in
+This classification does not establish arbitrary-classloader completeness,
+semantic search completeness, scientific validity, method-specific units or
+ranges, purity/thread safety, cooperative interruption, OS/process sandboxing,
+resource quotas, tenant isolation, external IAM/transport security, arbitrary
+stateful execution, plant/control authority, certification, or accountable
+engineering approval. The detailed boundary is in
 `docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md`.
 
-No promotion candidate remains queued in inventory 1.30. A future transition must again move the
+No promotion candidate remains queued in inventory 1.31. A future transition must again move the
 machine-readable coverage record and primary packaged-protocol accounting atomically from direct
 evidence.
 
@@ -470,11 +473,11 @@ deployment-profile names, tool-capability reconciliation, schema resource graph,
 graph, tool implementation bindings, factory-backed equipment, report paths, test sources, guides,
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
-every published tool. Thirty bounded discovery, catalog, lookup, progress, trust-retrieval,
+every published tool. Thirty-one bounded discovery, catalog, lookup, progress, trust-retrieval,
 governance, validation-profile, API-inspection, model-registry, session-lifecycle, security-management,
 persisted-state, adjustable-parameter discovery, pre-flight validation, result-validation, reporting handoff,
 process-local plugin execution, automation advisory, simulation-variable mutation, paired snapshot, and
-visualization-generation contracts are contract-tested, leaving 21 confirmed trust gaps and no queued promotion candidate.
+visualization-generation and bounded runtime-capability contracts are contract-tested, leaving 20 confirmed trust gaps and no queued promotion candidate.
 
 Follow-up work should continue auditing remaining confirmed gaps and promote only when concrete
 source/test/public-benchmark evidence or a clearly bounded software contract supports a precise

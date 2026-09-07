@@ -4,9 +4,8 @@
 
 The `runCapability` MCP tool indexes eligible methods from the running NeqSim
 artifact, returns explicit routing metadata, and can invoke a narrowly bounded
-subset of public static methods. This page records the directly exercised
-software contract. It is evidence for qualification, not an inventory
-promotion or a general claim about every NeqSim calculation.
+subset of public static methods. This page records the directly exercised software contract and its atomic
+inventory promotion. It is not a general claim about every NeqSim calculation.
 
 ## Direct evidence
 
@@ -75,9 +74,14 @@ Long-running and stateful simulations remain on curated process runners.
 
 ## Inventory state
 
-Qualification leaves `runCapability` as `CONFIRMED_GAP` in inventory
-version 1.30. Inventory remains 20 explicit-trust, 30 contract-tested, and 21
-confirmed-gap tools, with no queued promotion candidate. A later atomic
-promotion must update machine-readable coverage, synchronized source
-accounting, primary packaged-protocol expectations, and documentation
-together.
+Inventory version 1.31 atomically promotes `runCapability` to
+`CONTRACT_TESTED` after merged PR #3554 established the direct evidence
+above. Machine-readable coverage, Java assertions,
+`test_capability_protocol.py`, synchronized focused protocol expectations,
+authoritative `test_mcp_server.py` accounting, and documentation move
+together from 20/30/21 to 20/31/20.
+
+The focused packaged suite adds an inventory-promotion assertion and retains
+all seven behavioral scenarios. No promotion candidate remains queued, Phase
+0 remains incomplete, and no scientific benchmark or facility-suitability
+claim is introduced.
