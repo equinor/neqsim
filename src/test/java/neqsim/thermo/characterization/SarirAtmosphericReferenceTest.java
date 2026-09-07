@@ -120,6 +120,43 @@ public class SarirAtmosphericReferenceTest {
   }
 
   @Test
+  public void productYieldUnitsAndAduMappingsReconcileAcrossPublishedTables() {
+    ProductYieldReference[] yields = SarirAtmosphericReference.getProductYields();
+    String[] aduNames = { "Naphtha", "Kerosene product", "Diesel product", "Residual" };
+    double[] plantKgPerHour = { 8706.25, 952.0833333333334, 17709.083333333332, 26937.5 };
+    double[] simulationKgPerHour = { 8675.0, 833.3333333333334, 16375.0, 29420.833333333332 };
+
+    for (int i = 0; i < yields.length; i++) {
+      ProductYieldReference yield = yields[i];
+      assertEquals(aduNames[i], yield.getAduStreamName());
+      assertEquals(plantKgPerHour[i], yield.getPlantMassFlowRateKgPerHour(), 1.0e-12);
+      assertEquals(simulationKgPerHour[i], yield.getSimulationMassFlowRateKgPerHour(), 1.0e-12);
+      assertEquals(SarirAtmosphericReference.getAduStream(aduNames[i]).getMassFlowRateKgPerHour(),
+          yield.getPublishedAduMassFlowRateKgPerHour(), 0.0);
+      assertTrue(Math.abs(plantKgPerHour[i] - yield.getPublishedAduMassFlowRateKgPerHour()) <= 0.5);
+      assertEquals(plantKgPerHour[i] / SarirAtmosphericReference.getColumnCrudeFeedRateKgPerHour(),
+          yield.getPlantFractionOfCrudeFeed(), 1.0e-15);
+      assertEquals(simulationKgPerHour[i] / SarirAtmosphericReference.getColumnCrudeFeedRateKgPerHour(),
+          yield.getSimulationFractionOfCrudeFeed(), 1.0e-15);
+      assertEquals(0.0,
+          yield.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(plantKgPerHour[i]), 1.0e-12);
+      assertEquals(yield.getAbsoluteRelativeErrorPercent(),
+          yield.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(simulationKgPerHour[i]), 1.0e-9);
+    }
+
+    assertEquals(54304.916666666664,
+        SarirAtmosphericReference.getPublishedPlantProductMassFlowTotalKgPerHour(), 1.0e-9);
+    assertEquals(55304.16666666668,
+        SarirAtmosphericReference.getPublishedSimulationProductMassFlowTotalKgPerHour(), 1.0e-9);
+    assertEquals(54305.43,
+        SarirAtmosphericReference.getPublishedAduHydrocarbonProductMassFlowTotalKgPerHour(), 1.0e-9);
+    assertEquals(0.5133333333357584,
+        SarirAtmosphericReference.calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceKgPerHour(), 1.0e-9);
+    assertTrue(
+        SarirAtmosphericReference.calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceFraction() < 1.0e-5);
+  }
+
+  @Test
   public void operatingConfigurationAndProvenanceAreExplicit() {
     assertEquals("10.66411/jer.v33i.46", SarirAtmosphericReference.DOI);
     assertEquals("CC BY 4.0", SarirAtmosphericReference.LICENSE);
@@ -234,6 +271,15 @@ public class SarirAtmosphericReferenceTest {
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(Double.NaN, 1.0));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericReference.calculateAbsoluteRelativeErrorPercent(1.0, Double.POSITIVE_INFINITY));
+
+    ProductYieldReference diesel = SarirAtmosphericReference.getProductYield("Diesel");
+    assertEquals(100.0, diesel.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(0.0), 1.0e-12);
+    assertThrows(IllegalArgumentException.class,
+        () -> diesel.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(-1.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> diesel.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(Double.NaN));
+    assertThrows(IllegalArgumentException.class,
+        () -> diesel.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(Double.POSITIVE_INFINITY));
   }
 
   private static void assertAduStream(AduStreamReference stream, String name, AduStreamDirection direction,
