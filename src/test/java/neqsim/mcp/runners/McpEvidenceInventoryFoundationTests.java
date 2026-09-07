@@ -507,12 +507,9 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(plugin.get("contractTrustAvailable").getAsBoolean());
     assertEquals(6, plugin.get("contractEvidenceCount").getAsInt());
     assertEquals(6, plugin.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("PluginRegistryContractTest.java"));
-    assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_plugin_protocol.py"));
-    assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("PLUGIN_EXECUTION_CONTRACT.md"));
+    assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString().contains("PluginRegistryContractTest.java"));
+    assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString().contains("test_plugin_protocol.py"));
+    assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString().contains("PLUGIN_EXECUTION_CONTRACT.md"));
     assertTrue(plugin.get("evidenceBoundary").getAsString().contains("plugin provenance"));
     assertTrue(plugin.get("evidenceBoundary").getAsString().contains("plant or control authority"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runPlugin"));
