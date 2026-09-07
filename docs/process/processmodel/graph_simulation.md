@@ -58,6 +58,7 @@ process.runOptimized(calcId);
 The method inspects the process for:
 - **Adjuster units** → Sequential execution for implicit feedback
 - **Recycle units** → Hybrid execution (parallel feed-forward + iterative recycle section)
+- **Cyclic topology without explicit Recycle units** → Sequential outlet-state convergence
 - **Wide feed-forward topology** → Dependency-aware dataflow execution
 - **Small or narrow feed-forward topology** → Level-based parallel execution
 
@@ -165,6 +166,7 @@ process.runOptimized();
 |-----------|----------|--------|
 | Has `Adjuster`/`MultiVariableAdjuster` units | `runSequential()` | Implicit feedback is not represented by stream dependencies |
 | Has `Recycle` units | `runHybrid()` | Feed-forward levels can run in parallel; the recycle section iterates |
+| Cyclic stream topology without explicit `Recycle` units | Sequential iteration | Converges thermal and component-flow feedback before returning |
 | Feed-forward, at least eight units, useful independent tasks | `runDataflow()` | Direct predecessor scheduling avoids unnecessary level barriers |
 | Other feed-forward topology | `runParallel()` | Small or serial graphs do not amortize dataflow futures |
 
@@ -174,7 +176,12 @@ process.runOptimized();
 - `HeatExchanger`, `MultiStreamHeatExchanger`
 - `FurnaceBurner`, `FlareStack`
 
-**Note:** `hasRecycles()` checks for explicit `Recycle` unit operations, not graph-based cycle detection.
+**Note:** `hasRecycles()` checks for explicit `Recycle` unit operations. `hasRecycleLoops()`
+checks graph cycles, including recuperator loops without an explicit recycle. Those implicit
+loops use sequential fixed-point iteration, including when parallel, dataflow, or hybrid
+execution is requested directly. They must stabilize outlet temperature, pressure, enthalpy,
+and component flows within 100 complete passes or throw; see
+[implicit-loop convergence](process_system#optimized-strategy-selection).
 
 ---
 

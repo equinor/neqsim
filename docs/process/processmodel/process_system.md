@@ -300,13 +300,23 @@ The dispatcher applies these source-owned rules:
 1. An `Adjuster` or `MultiVariableAdjuster` selects `runSequential(UUID)` because its implicit
    feedback is not represented by stream dependencies.
 2. A `Recycle` with no adjuster selects `runHybrid(UUID)`.
-3. A feed-forward graph that is sufficiently large and has useful parallel tasks selects
+3. Cyclic stream topology without an explicit `Recycle` selects sequential fixed-point iteration.
+4. A feed-forward graph that is sufficiently large and has useful parallel tasks selects
    `runDataflow(UUID)`.
-4. Other feed-forward graphs select `runParallel(UUID)`.
+5. Other feed-forward graphs select `runParallel(UUID)`.
 
 Multi-input equipment is supported in both feed-forward strategies. Predecessor ordering keeps a
 mixer, manifold, or heat exchanger behind its producers. Shared mutable input streams are handled
 as described below.
+
+A recuperator connected to its own downstream cold separator is one example of a cycle without
+an explicit `Recycle`. Direct parallel, dataflow, and hybrid calls also fall back to sequential
+iteration for these loops. Each complete pass must stabilize every outlet's temperature,
+pressure, enthalpy, and component flows (relative tolerance $10^{-8}$ with absolute floors of
+$10^{-7}$ K, $10^{-8}$ bar, $10^{-5}$ W, and $10^{-10}$ mol/s respectively). The first pass
+cannot establish convergence. Failure to converge in 100 passes raises `IllegalStateException`;
+`run()` records the failed run status. Single-step mode remains a partial iteration. Explicit
+`Recycle` equipment retains its existing convergence controls.
 
 Use one calculation identifier for all units in a run:
 

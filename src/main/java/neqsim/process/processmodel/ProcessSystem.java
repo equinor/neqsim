@@ -1467,8 +1467,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * This method automatically selects the best execution mode:
    * </p>
    * <ul>
-   * <li>For processes WITHOUT recycles: uses parallel execution for maximum speed</li>
-   * <li>For processes WITH recycles: uses graph-based execution with optimized ordering</li>
+   * <li>For acyclic processes: uses dependency-aware parallel execution</li>
+   * <li>For processes with explicit recycles: uses hybrid iterative execution</li>
+   * <li>For feedback loops without explicit recycles: iterates sequentially to stable outlet states</li>
    * </ul>
    *
    * <p>
@@ -1490,6 +1491,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and read downstream
    * targets, creating implicit feedback loops)</li>
    * <li>For processes with recycles (no adjusters): hybrid feed-forward parallelism and iterative convergence</li>
+   * <li>For cyclic topology without explicit recycles: sequential outlet-state convergence</li>
    * <li>For feed-forward processes, including multi-input equipment: dependency-aware dataflow for sufficiently wide
    * topologies, otherwise level-based parallel execution</li>
    * </ul>
@@ -1527,6 +1529,10 @@ public class ProcessSystem extends SimulationBaseClass {
           logger.warn("Hybrid execution interrupted, falling back to sequential");
           runSequential(id);
         }
+      } else if (hasImplicitRecycleLoops()) {
+        // Recuperators can form thermal feedback through downstream equipment without
+        // an explicit Recycle. A single pass over a graph tear leaves stale products.
+        runSequential(id);
       } else {
         // Feed-forward process. For larger, genuinely wide flowsheets use dataflow
         // scheduling (no level barriers, units fire as soon as predecessors
@@ -1664,6 +1670,79 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     cachedHasRecycles = false;
     return false;
+  }
+
+  /**
+   * Detects feedback loops that have no explicit recycle convergence controller.
+   *
+   * @return true for cyclic stream topology without Recycle equipment
+   */
+  private boolean hasImplicitRecycleLoops() {
+    return !hasRecycles() && hasRecycleLoops();
+  }
+
+  /**
+   * Captures outlet states after a complete pass through an implicit feedback loop.
+   *
+   * @param executionOrder units evaluated in this pass
+   * @return independent fluid snapshots keyed by stream identity
+   */
+  private Map<StreamInterface, SystemInterface> captureImplicitRecycleState(
+      List<ProcessEquipmentInterface> executionOrder) {
+    Map<StreamInterface, SystemInterface> states = new IdentityHashMap<>();
+    for (ProcessEquipmentInterface unit : executionOrder) {
+      for (StreamInterface outlet : unit.getOutletStreams()) {
+        if (outlet != null && outlet.getFluid() != null && !states.containsKey(outlet)) {
+          states.put(outlet, outlet.getFluid().clone());
+        }
+      }
+    }
+    return states;
+  }
+
+  /**
+   * Checks thermal state and every component flow, including downstream products, between complete passes.
+   *
+   * @param previous previous pass, or null before the first pass
+   * @param current current pass
+   * @return true when all finite states agree within the implicit-loop tolerances
+   */
+  private boolean implicitRecycleStatesMatch(Map<StreamInterface, SystemInterface> previous,
+      Map<StreamInterface, SystemInterface> current) {
+    if (previous == null || previous.size() != current.size() || current.isEmpty()) {
+      return false;
+    }
+    for (Map.Entry<StreamInterface, SystemInterface> entry : current.entrySet()) {
+      SystemInterface before = previous.get(entry.getKey());
+      SystemInterface after = entry.getValue();
+      if (before == null || before.getNumberOfComponents() != after.getNumberOfComponents()
+          || !implicitRecycleValueMatches(before.getTemperature(), after.getTemperature(), 1e-7)
+          || !implicitRecycleValueMatches(before.getPressure(), after.getPressure(), 1e-8)
+          || !implicitRecycleValueMatches(before.getEnthalpy(), after.getEnthalpy(), 1e-5)) {
+        return false;
+      }
+      for (int i = 0; i < after.getNumberOfComponents(); i++) {
+        if (!before.getComponent(i).getComponentName().equals(after.getComponent(i).getComponentName())
+            || !implicitRecycleValueMatches(before.getComponent(i).getNumberOfmoles(),
+                after.getComponent(i).getNumberOfmoles(), 1e-10)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Compares finite values using a relative tolerance of 1e-8 and a quantity-specific absolute floor.
+   *
+   * @param before previous value
+   * @param after current value
+   * @param absoluteTolerance tolerance near zero in the native SI-based quantity
+   * @return true when the values agree
+   */
+  private boolean implicitRecycleValueMatches(double before, double after, double absoluteTolerance) {
+    return Double.isFinite(before) && Double.isFinite(after)
+        && Math.abs(before - after) <= absoluteTolerance + 1e-8 * Math.max(Math.abs(before), Math.abs(after));
   }
 
   /**
@@ -2050,6 +2129,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if thread is interrupted during parallel execution
    */
   public synchronized void runHybrid(UUID id) throws InterruptedException {
+    if (hasImplicitRecycleLoops()) {
+      runSequential(id);
+      return;
+    }
     boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     resetActiveStates();
     applyFlowsheetWideSettings();
@@ -2227,6 +2310,9 @@ public class ProcessSystem extends SimulationBaseClass {
     } else if (!recycles.isEmpty()) {
       strategy = "hybrid (parallel feed-forward then iterative recycle section)";
       reason = "process contains Recycle units - iterative convergence required";
+    } else if (hasImplicitRecycleLoops()) {
+      strategy = "sequential (implicit recycle convergence)";
+      reason = "stream topology contains a feedback loop without an explicit Recycle unit";
     } else if (shouldUseDataflowExecution()) {
       strategy = "dataflow (dependency-aware parallel tasks)";
       reason = multiInput.isEmpty()
@@ -2449,6 +2535,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if the thread is interrupted while waiting for tasks
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
+    if (hasImplicitRecycleLoops()) {
+      runSequential(id);
+      return;
+    }
     resetActiveStates();
     applyFlowsheetWideSettings();
     // Publish simulation start event
@@ -2581,6 +2671,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if the thread is interrupted while waiting for dataflow completion
    */
   public synchronized void runDataflow(UUID id) throws InterruptedException {
+    if (hasImplicitRecycleLoops()) {
+      runSequential(id);
+      return;
+    }
     resetActiveStates();
     applyFlowsheetWideSettings();
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
@@ -3001,12 +3095,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * This method executes units in insertion order (or topological order if useGraphBasedExecution is enabled). It
    * handles recycle loops by iterating until convergence. This is the legacy execution mode preserved for backward
-   * compatibility.
+   * compatibility. When topology contains feedback but no explicit Recycle, complete passes are repeated until all
+   * outlet temperatures, pressures, enthalpies and component flows stabilize. Such implicit loops are limited to 100
+   * passes and throw on non-convergence, except when single-step execution is requested.
    * </p>
    *
    * @param id calculation identifier for tracking
+   * @throws IllegalStateException if an implicit feedback loop does not converge
    */
   public synchronized void runSequential(UUID id) {
+    boolean implicitRecycle = hasImplicitRecycleLoops();
+    Map<StreamInterface, SystemInterface> previousImplicitState = null;
     boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     resetActiveStates();
     applyFlowsheetWideSettings();
@@ -3063,7 +3162,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || needsRecalculation(unit)) {
+            if (implicitRecycle || iter == 1 || needsRecalculation(unit)) {
               runUnitProfiled(unit, id);
             }
           } catch (Exception ex) {
@@ -3108,8 +3207,18 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       }
+      if (implicitRecycle) {
+        Map<StreamInterface, SystemInterface> currentState = captureImplicitRecycleState(executionOrder);
+        isConverged = implicitRecycleStatesMatch(previousImplicitState, currentState) && isConverged;
+        previousImplicitState = currentState;
+      }
     } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
         && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
+
+    if (implicitRecycle && !isConverged && !runStep) {
+      throw new IllegalStateException("Implicit recycle loop did not converge after " + iter + " iterations in process "
+          + getName() + "; add an explicit Recycle for convergence control");
+    }
 
     // Publish simulation complete event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
