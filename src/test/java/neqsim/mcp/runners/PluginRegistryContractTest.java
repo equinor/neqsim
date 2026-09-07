@@ -62,8 +62,7 @@ class PluginRegistryContractTest {
 
     assertEquals(1, PluginRegistry.size());
     assertSame(second, PluginRegistry.get("replaceable"));
-    assertEquals("two",
-        parse(PluginRegistry.runPlugin("replaceable", "{}")).get("version").getAsString());
+    assertEquals("two", parse(PluginRegistry.runPlugin("replaceable", "{}")).get("version").getAsString());
   }
 
   @Test
@@ -122,8 +121,7 @@ class PluginRegistryContractTest {
   }
 
   private static final class StubPlugin implements McpRunnerPlugin {
-    private static final String SCHEMA =
-        "{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"number\"}}}";
+    private static final String SCHEMA = "{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"number\"}}}";
 
     private final String name;
     private final String description;
