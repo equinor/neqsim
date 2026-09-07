@@ -274,13 +274,19 @@ process intent.
 connection occurrences crossing directed-cycle boundaries. Each immutable
 `DexpiConnectionCycleTransitionInfo` contains the complete `DexpiConnectionInfo`, complete
 from/to `DexpiConnectionEndpointInfo` records, optional from/to cycle IDs, and an `ENTERING`,
-`LEAVING`, or `BETWEEN_CYCLES` classification. A connection from one cyclic strongly connected
-group to another appears once with both cycle IDs; callers do not need to reconcile the outgoing
-boundary projection of one cycle with the incoming projection of the other. Parallel occurrences
-remain distinct, unresolved non-empty endpoints remain visible, and connections with a blank endpoint
-stay in the global connection and diagnostic evidence because a transition cannot assign them to a
-cycle. This exact-once inventory remains source-reference evidence only; it does not prove hydraulic
-continuity, identify a physical recycle, enumerate paths, or alter simulation topology.
+`LEAVING`, or `BETWEEN_CYCLES` classification. Reader-produced values also expose the exact
+immutable cycle objects from `ImportResult.getConnectionCycles()` through `getFromCycle()` and
+`getToCycle()`. The corresponding evidence markers distinguish this projection from values created
+with the legacy constructor, whose cycle-object getters return `null` while their scalar IDs remain
+unchanged. A connection entering or leaving a cycle has complete evidence only on the cyclic side.
+A connection from one cyclic strongly connected group to another appears once with both cycle IDs
+and both complete cycle objects; callers do not need to reconcile the outgoing boundary projection
+of one cycle with the incoming projection of the other. Parallel occurrences remain distinct,
+unresolved non-empty endpoints remain visible, and connections with a blank endpoint stay in the
+global connection and diagnostic evidence because a transition cannot assign them to a cycle.
+`toJson()` includes the cycle-evidence markers and nested from/to cycle objects when present. This
+exact-once inventory remains source-reference evidence only; it does not prove hydraulic continuity,
+identify a physical recycle, enumerate paths, or alter simulation topology.
 
 `toJson()` includes `instrumentCount`, `instrumentationLoopCount`,
 `actuatingFunctionCount`, `informationFlowCount`, `connectionCount`,
