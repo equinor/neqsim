@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
 /** Tests the fail-closed empirical refinery viscosity blend screen. */
@@ -50,6 +51,45 @@ public class RefineryViscosityBlendTest {
     sourceBlendNumbers[0] = Double.NaN;
     assertArrayEquals(new double[] { 0.4, 0.6 }, base.getMassFractions(), 1.0e-15);
     assertTrue(Double.isFinite(base.getSourceViscosityBlendingNumbers()[0]));
+  }
+
+  @Test
+  public void equalViscositySourcesPreserveTheirCommonValue() {
+    double[] viscositiesCSt = { 0.3, 1.0, 20.0, 375.0, 10000.0 };
+    int[] sourceCounts = { 3, 6, 7, 10, 1000 };
+    for (double viscosityCSt : viscositiesCSt) {
+      for (int sourceCount : sourceCounts) {
+        double[] sourceMasses = new double[sourceCount];
+        double[] sourceViscosities = new double[sourceCount];
+        Arrays.fill(sourceMasses, 1.0);
+        Arrays.fill(sourceViscosities, viscosityCSt);
+
+        RefineryViscosityBlend blend = RefineryViscosityBlend.fromMassBasis(sourceMasses, sourceViscosities, 40.0);
+
+        assertEquals(RefineryViscosityBlend.calculateViscosityBlendingNumber(viscosityCSt),
+            blend.getViscosityBlendingNumber(), 0.0);
+        assertEquals(viscosityCSt, blend.getKinematicViscosityCSt(), viscosityCSt * 1.0e-12);
+        assertEquals(1.0, Arrays.stream(blend.getMassFractions()).sum(), 1.0e-14);
+      }
+    }
+  }
+
+  @Test
+  public void nearlyEqualSourceViscositiesRemainBoundedInEitherOrder() {
+    double lowerViscosityCSt = 20.0;
+    double upperViscosityCSt = Math.nextUp(lowerViscosityCSt);
+    double lowerBlendNumber = RefineryViscosityBlend.calculateViscosityBlendingNumber(lowerViscosityCSt);
+    double upperBlendNumber = RefineryViscosityBlend.calculateViscosityBlendingNumber(upperViscosityCSt);
+    double[][] sourceViscosities = { { lowerViscosityCSt, lowerViscosityCSt, upperViscosityCSt },
+        { upperViscosityCSt, lowerViscosityCSt, lowerViscosityCSt } };
+    for (double[] viscosities : sourceViscosities) {
+      RefineryViscosityBlend blend = RefineryViscosityBlend.fromMassBasis(new double[] { 1.0, 1.0, 1.0 }, viscosities,
+          40.0);
+
+      assertTrue(blend.getViscosityBlendingNumber() >= lowerBlendNumber);
+      assertTrue(blend.getViscosityBlendingNumber() <= upperBlendNumber);
+      assertEquals(lowerViscosityCSt, blend.getKinematicViscosityCSt(), 1.0e-12);
+    }
   }
 
   @Test
