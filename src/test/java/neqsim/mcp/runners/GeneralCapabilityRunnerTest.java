@@ -75,6 +75,34 @@ class GeneralCapabilityRunnerTest {
   }
 
   @Test
+  void testSearchClampsLimitAndReturnsDeterministicRoutingMetadata() {
+    JsonObject first =
+        JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
+    JsonObject second =
+        JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
+
+    assertTrue(first.get("returnedCount").getAsInt() <= 100);
+    assertEquals(first.getAsJsonArray("matches"), second.getAsJsonArray("matches"));
+    for (JsonElement match : first.getAsJsonArray("matches")) {
+      JsonObject capability = match.getAsJsonObject();
+      assertTrue(capability.has("executionMode"));
+      assertTrue(capability.get("sourcePath").getAsString().startsWith("src/main/java/neqsim/"));
+    }
+  }
+
+  @Test
+  void testRunRejectsUnknownActionAndMalformedInput() {
+    JsonObject unknown =
+        JsonParser.parseString(GeneralCapabilityRunner.run("{\"action\":\"install\"}"))
+            .getAsJsonObject();
+    assertEquals("UNKNOWN_ACTION", unknown.get("code").getAsString());
+
+    JsonObject malformed =
+        JsonParser.parseString(GeneralCapabilityRunner.run("{")).getAsJsonObject();
+    assertEquals("INPUT_ERROR", malformed.get("code").getAsString());
+  }
+
+  @Test
   void testRunRejectsOversizedRequestBeforeReflection() {
     StringBuilder query = new StringBuilder(70000);
     for (int i = 0; i < 70000; i++) {

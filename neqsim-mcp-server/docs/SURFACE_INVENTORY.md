@@ -412,6 +412,21 @@ enforcement, scientific validity, plant/control authority, certification, or acc
 engineering approval. A registered plugin runs application code in the MCP server process. The
 detailed evidence is in `docs/evidence/PLUGIN_EXECUTION_CONTRACT.md`.
 
+### Qualified bounded runtime-capability contract
+
+The `runCapability` surface now has direct Java and packaged-MCP qualification
+for runtime discovery, explicit static/process/inspection routing, exact
+bounded static invocation, and fail-closed unsafe or malformed requests. The
+focused protocol suite also verifies normal response evidence over the real
+STDIO boundary.
+
+This qualification does not promote the tool. Inventory remains version 1.30
+with 20 explicit-trust, 30 contract-tested, and 21 confirmed-gap tools.
+`runCapability` remains `CONFIRMED_GAP` until a later atomic transition
+updates the machine-readable record and primary source accounting. The
+detailed numerical, runtime, security, and engineering boundary is in
+`docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md`.
+
 No promotion candidate remains queued in inventory 1.30. A future transition must again move the
 machine-readable coverage record and primary packaged-protocol accounting atomically from direct
 evidence.
