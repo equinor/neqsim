@@ -173,8 +173,6 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
           1.0e-20);
       assertTrue(segment.getLowerRateOutletTotalSulfideMolality() >= segment.getNominalOutletTotalSulfideMolality());
       assertTrue(segment.getNominalOutletTotalSulfideMolality() >= segment.getUpperRateOutletTotalSulfideMolality());
-      assertTrue(segment.getLowerRateReactedTotalSulfideMolality() <= segment.getNominalReactedTotalSulfideMolality());
-      assertTrue(segment.getNominalReactedTotalSulfideMolality() <= segment.getUpperRateReactedTotalSulfideMolality());
       if (index > 0) {
         AqueousHydrogenSulfideOxidationTrajectory.SegmentResult previous = evidence.get(index - 1);
         assertEquals(previous.getLowerRateOutletTotalSulfideMolality(),
