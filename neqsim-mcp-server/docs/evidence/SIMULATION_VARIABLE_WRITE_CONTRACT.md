@@ -6,7 +6,7 @@ Can the existing `setSimulationVariable` MCP surface mutate one declared input o
 rerun that process, retain requested engineering units and standard envelope evidence, and fail visibly on rejected
 writes without implying numerical or plant-control authority?
 
-Merged #3478 qualifies that bounded software contract. Inventory **1.28 / 20 explicit + 28 contract-tested + 23
+Merged #3478 qualifies that bounded software contract. Inventory **1.29 / 20 explicit + 29 contract-tested + 22
 confirmed gaps** atomically records `setSimulationVariable` as `CONTRACT_TESTED`. The increment adds one narrow production correctness guard that
 aligns exact known OUTPUT writes with the already documented INPUT-only contract. There are no public schema, canonical
 process representation, thermodynamic model, deployment policy, or companion repository changes.

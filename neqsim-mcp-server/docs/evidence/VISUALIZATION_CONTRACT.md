@@ -50,10 +50,11 @@ Direct evidence:
 - `neqsim-mcp-server/test_mcp_server.py` as the comprehensive regression.
 
 The implementation remains `VisualizationRunner`, exposed through
-`NeqSimTools.generateVisualization`. This qualification intentionally leaves
-inventory at `1.28 / 20 explicit + 28 contract-tested + 23 confirmed gaps`;
-`generateVisualization` remains a confirmed gap until this evidence merges
-and a later atomic promotion updates all inventory surfaces together.
+`NeqSimTools.generateVisualization`. Merged qualification #3510 supplies the
+direct Java and packaged-MCP evidence. Inventory `1.29 / 20 explicit + 29
+contract-tested + 22 confirmed gaps` atomically records
+`generateVisualization` as `CONTRACT_TESTED` while preserving zero queued
+promotion candidates and `scientificValidationComplete=false`.
 
 ## Explicit limitations
 

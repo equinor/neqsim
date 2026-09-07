@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.28");
+    inventory.addProperty("inventoryVersion", "1.29");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "generateReport, bridgeTaskWorkflow, manageSecurity, and setSimulationVariable are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.28 has no candidate.");
+        "generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, and generateVisualization are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.29 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: twenty-eight bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records: twenty-nine bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -474,6 +474,15 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_simulation_state_snapshot_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/SIMULATION_STATE_SNAPSHOT_CONTRACT.md" };
       evidenceBoundary = "Identical-snapshot and explicit metadata-version comparison, fail-closed missing inputs, standard envelope evidence, and packaged transport are contract-tested; this does not establish complete stream-value, equipment-parameter or topology-difference detection, replay or restoration, persistence, numerical accuracy, convergence, conservation, causal diagnosis, plant or control authority, certification, or engineering approval";
+      break;
+    case "generateVisualization":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_VISUALIZATION_GENERATION";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/VisualizationRunner.java",
+          "src/test/java/neqsim/mcp/runners/VisualizationRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_visualization_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/VISUALIZATION_CONTRACT.md" };
+      evidenceBoundary = "Documented visualization aliases, canonical response types, stable SVG, Mermaid and HTML media fields, XML and HTML escaping, fail-closed malformed and structurally invalid inputs, standard response evidence, and packaged transport are contract-tested; this does not establish browser fidelity, markup sandbox security, accessibility, complete topology, numerical or thermodynamic accuracy, convergence, conservation, plant or control authority, certification, or engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";

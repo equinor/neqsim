@@ -290,7 +290,7 @@ def test_missing_unknown_and_malformed_inputs_fail_closed(client):
     assert_error(malformed)
 
 
-def test_inventory_remains_unpromoted(client):
+def test_inventory_records_atomic_promotion(client):
     response = payload(client.call_tool("getCapabilities", {}))
     inventory = response.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
@@ -298,19 +298,30 @@ def test_inventory_remains_unpromoted(client):
         "generateVisualization", {}
     )
     require(
-        inventory.get("inventoryVersion") == "1.28",
+        inventory.get("inventoryVersion") == "1.29",
         "inventory version drifted",
         inventory,
     )
     require(
-        limitations.get("contractTestedToolCount") == 28
-        and limitations.get("confirmedGapToolCount") == 23,
-        "qualification changed inventory accounting",
+        limitations.get("contractTestedToolCount") == 29
+        and limitations.get("confirmedGapToolCount") == 22,
+        "promotion accounting drifted",
         limitations,
     )
     require(
-        record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification prematurely promoted visualization",
+        record.get("coverageStatus") == "CONTRACT_TESTED",
+        "visualization contract was not promoted",
+        record,
+    )
+    require(
+        record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_VISUALIZATION_GENERATION"
+        and "neqsim-mcp-server/test_visualization_protocol.py"
+        in record.get("contractEvidenceSources", [])
+        and "VISUALIZATION_CONTRACT.md"
+        in " ".join(record.get("contractEvidenceSources", []))
+        and limitations.get("contractPromotionCandidateCount") == 0,
+        "visualization evidence boundary drifted",
         record,
     )
 
@@ -331,7 +342,7 @@ def main():
             "missing, unknown, and malformed inputs fail closed",
             test_missing_unknown_and_malformed_inputs_fail_closed,
         ),
-        ("inventory remains unpromoted", test_inventory_remains_unpromoted),
+        ("inventory records atomic promotion", test_inventory_records_atomic_promotion),
     ]
     try:
         client.start()
