@@ -82,6 +82,7 @@ public final class Comparesimulations2EngineeringDiagramReference {
   /**
    * Creates the controlled delivery request and proposed manual layout.
    *
+   * @param process canonical process whose stable semantic identities are assigned
    * @return immutable coordinated request
    */
   public static EngineeringDiagramDualProfileDelivery.Request request(ProcessSystem process) {
