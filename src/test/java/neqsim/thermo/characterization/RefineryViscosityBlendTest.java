@@ -73,6 +73,52 @@ public class RefineryViscosityBlendTest {
   }
 
   @Test
+  public void binaryTargetPlannerRecoversMassFractionsAndTarget() {
+    double targetViscosityCSt = 418.68738293612904;
+    RefineryViscosityBlend planned = RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(550.0, 375.0,
+        targetViscosityCSt, 50.0);
+    RefineryViscosityBlend reversed = RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(375.0, 550.0,
+        targetViscosityCSt, 50.0);
+
+    assertArrayEquals(new double[] { 5.0 / 17.0, 12.0 / 17.0 }, planned.getMassFractions(), 1.0e-14);
+    assertArrayEquals(new double[] { 12.0 / 17.0, 5.0 / 17.0 }, reversed.getMassFractions(), 1.0e-14);
+    assertEquals(targetViscosityCSt, planned.getKinematicViscosityCSt(), 1.0e-12);
+    assertEquals(targetViscosityCSt, reversed.getKinematicViscosityCSt(), 1.0e-12);
+    assertEquals(50.0, planned.getTemperatureCelsius(), 0.0);
+
+    RefineryViscosityBlend reconstructed = RefineryViscosityBlend.fromMassBasis(planned.getMassFractions(),
+        new double[] { 550.0, 375.0 }, planned.getTemperatureCelsius());
+    assertEquals(targetViscosityCSt, reconstructed.getKinematicViscosityCSt(), 1.0e-12);
+  }
+
+  @Test
+  public void binaryTargetPlannerAcceptsExactEndpoints() {
+    RefineryViscosityBlend first = RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(10.0, 100.0, 10.0, 40.0);
+    RefineryViscosityBlend second = RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(10.0, 100.0, 100.0, 40.0);
+
+    assertArrayEquals(new double[] { 1.0, 0.0 }, first.getMassFractions(), 0.0);
+    assertArrayEquals(new double[] { 0.0, 1.0 }, second.getMassFractions(), 0.0);
+    assertEquals(10.0, first.getKinematicViscosityCSt(), 1.0e-13);
+    assertEquals(100.0, second.getKinematicViscosityCSt(), 1.0e-12);
+  }
+
+  @Test
+  public void binaryTargetPlannerFailsClosedForUnsupportedInputs() {
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(10.0, 10.0, 10.0, 40.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(10.0, 100.0, 5.0, 40.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(10.0, 100.0, 200.0, 40.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(Double.NaN, 100.0, 50.0, 40.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(10.0, 100.0, 0.2, 40.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(10.0, 100.0, 50.0, Double.NaN));
+  }
+
+  @Test
   public void invalidOrIncompleteInputsFailClosed() {
     assertThrows(IllegalArgumentException.class,
         () -> RefineryViscosityBlend.fromMassBasis(null, new double[] { 10.0 }, 40.0));
