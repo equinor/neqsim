@@ -9,6 +9,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.unit.TemperatureUnit;
 
 /**
  * SimpleTray class.
@@ -67,6 +68,30 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public SimpleTray(String name) {
     super(name);
+  }
+
+  /**
+   * Set the tray outlet temperature with unit conversion.
+   *
+   * @param outTemperature outlet temperature
+   * @param unit temperature unit, for example {@code "K"}, {@code "C"}, {@code "F"}, or {@code "R"}
+   * @throws IllegalArgumentException if the temperature unit is unsupported
+   */
+  public void setOutletTemperature(double outTemperature, String unit) {
+    setOutletTemperature(new TemperatureUnit(outTemperature, unit).getValue("K"));
+  }
+
+  /**
+   * Set the tray outlet temperature with unit conversion.
+   *
+   * @param outTemperature outlet temperature
+   * @param unit temperature unit, for example {@code "K"}, {@code "C"}, {@code "F"}, or {@code "R"}
+   * @throws IllegalArgumentException if the temperature unit is unsupported
+   * @deprecated use {@link #setOutletTemperature(double, String)} instead
+   */
+  @Deprecated
+  public void setOutTemperature(double outTemperature, String unit) {
+    setOutletTemperature(outTemperature, unit);
   }
 
   /**

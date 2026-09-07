@@ -548,6 +548,18 @@ public class DistillationColumnTest {
   }
 
   @Test
+  public void endpointTraysSupportTemperatureUnits() {
+    DistillationColumn column = new DistillationColumn("endpoint temperature units", 3, true, true);
+
+    column.getReboiler().setOutTemperature(164.0, "C");
+    column.getCondenser().setOutletTemperature(176.0, "F");
+
+    assertEquals(437.15, column.getReboiler().getOutTemperature(), 1.0e-12);
+    assertEquals(353.15, column.getCondenser().getOutTemperature(), 1.0e-12);
+    assertThrows(IllegalArgumentException.class, () -> column.getReboiler().setOutletTemperature(164.0, "degC"));
+  }
+
+  @Test
   public void condenserRefluxFlashIncludesAllInletStreams() {
     Stream firstFeed = createTerminalRegressionStream("condenser first", 100.0);
     Stream secondFeed = createTerminalRegressionStream("condenser second", 25.0);
