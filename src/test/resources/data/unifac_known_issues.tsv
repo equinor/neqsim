@@ -1,6 +1,5 @@
 duplicate_component	UNIFACcomp/TEG
 group_param_mismatch	sub61 Furfural
-missing_unifac_row	UNIFACcomp/1-propanol
 missing_unifac_row	UNIFACcomp/1.2.4-TMcyC6
 missing_unifac_row	UNIFACcomp/C2H4
 missing_unifac_row	UNIFACcomp/C2H4O
@@ -15,7 +14,6 @@ missing_unifac_row	UNIFACcomp/H2SO4
 missing_unifac_row	UNIFACcomp/HCN
 missing_unifac_row	UNIFACcomp/HNO2
 missing_unifac_row	UNIFACcomp/HNO3
-missing_unifac_row	UNIFACcomp/MEA
 missing_unifac_row	UNIFACcomp/MEGPVTsim18
 missing_unifac_row	UNIFACcomp/MEGPVTsim19
 missing_unifac_row	UNIFACcomp/N2H4
@@ -32,7 +30,6 @@ missing_unifac_row	UNIFACcomp/NO
 missing_unifac_row	UNIFACcomp/NO2
 missing_unifac_row	UNIFACcomp/NaNO2
 missing_unifac_row	UNIFACcomp/NÃ¢â€šâ€šHÃ¢â€šâ€ž
-missing_unifac_row	UNIFACcomp/PG
 missing_unifac_row	UNIFACcomp/Pent-CC6
 missing_unifac_row	UNIFACcomp/R12
 missing_unifac_row	UNIFACcomp/R134a
@@ -47,40 +44,24 @@ missing_unifac_row	UNIFACcomp/c-C4
 missing_unifac_row	UNIFACcomp/c-propane
 missing_unifac_row	UNIFACcomp/chlorine
 missing_unifac_row	UNIFACcomp/cis-14-DM-cy-C6
-missing_unifac_row	UNIFACcomp/cis-butene
-missing_unifac_row	UNIFACcomp/ethanol
 missing_unifac_row	UNIFACcomp/ethanolPVTsim
 missing_unifac_row	UNIFACcomp/ethylene
-missing_unifac_row	UNIFACcomp/formic acid
 missing_unifac_row	UNIFACcomp/glycerol
 missing_unifac_row	UNIFACcomp/helium
 missing_unifac_row	UNIFACcomp/hydrochloric acid
 missing_unifac_row	UNIFACcomp/hydrogen
-missing_unifac_row	UNIFACcomp/i-propanol
-missing_unifac_row	UNIFACcomp/iso-butene
 missing_unifac_row	UNIFACcomp/mercury
 missing_unifac_row	UNIFACcomp/methanolPVTsim
 missing_unifac_row	UNIFACcomp/n-Bcychexane
-missing_unifac_row	UNIFACcomp/nC20
-missing_unifac_row	UNIFACcomp/nC21
-missing_unifac_row	UNIFACcomp/nC24
-missing_unifac_row	UNIFACcomp/nC25
-missing_unifac_row	UNIFACcomp/nC26
-missing_unifac_row	UNIFACcomp/nC28
-missing_unifac_row	UNIFACcomp/nC29
-missing_unifac_row	UNIFACcomp/naphthalene
 missing_unifac_row	UNIFACcomp/nbutanePVTsim
 missing_unifac_row	UNIFACcomp/neon
 missing_unifac_row	UNIFACcomp/nitric acid
 missing_unifac_row	UNIFACcomp/ortho-hydrogen
 missing_unifac_row	UNIFACcomp/para-hydrogen
 missing_unifac_row	UNIFACcomp/propanePVTsim
-missing_unifac_row	UNIFACcomp/propene
 missing_unifac_row	UNIFACcomp/sulfur(S8)
 missing_unifac_row	UNIFACcomp/sulfuric acid
 missing_unifac_row	UNIFACcomp/trans-14-DM-cy-C6
-missing_unifac_row	UNIFACcomp/trans-butene
-missing_unifac_row	UNIFACcompUMRPRU/1-propanol
 missing_unifac_row	UNIFACcompUMRPRU/C2H4
 missing_unifac_row	UNIFACcompUMRPRU/C2H4O
 missing_unifac_row	UNIFACcompUMRPRU/CH2O
@@ -93,7 +74,6 @@ missing_unifac_row	UNIFACcompUMRPRU/H2SO4
 missing_unifac_row	UNIFACcompUMRPRU/HCN
 missing_unifac_row	UNIFACcompUMRPRU/HNO2
 missing_unifac_row	UNIFACcompUMRPRU/HNO3
-missing_unifac_row	UNIFACcompUMRPRU/MEA
 missing_unifac_row	UNIFACcompUMRPRU/MEGPVTsim18
 missing_unifac_row	UNIFACcompUMRPRU/MEGPVTsim19
 missing_unifac_row	UNIFACcompUMRPRU/N2H4
@@ -110,7 +90,6 @@ missing_unifac_row	UNIFACcompUMRPRU/NO
 missing_unifac_row	UNIFACcompUMRPRU/NO2
 missing_unifac_row	UNIFACcompUMRPRU/NaNO2
 missing_unifac_row	UNIFACcompUMRPRU/NÃ¢â€šâ€šHÃ¢â€šâ€ž
-missing_unifac_row	UNIFACcompUMRPRU/PG
 missing_unifac_row	UNIFACcompUMRPRU/Pent-CC6
 missing_unifac_row	UNIFACcompUMRPRU/R12
 missing_unifac_row	UNIFACcompUMRPRU/R134a
@@ -125,33 +104,23 @@ missing_unifac_row	UNIFACcompUMRPRU/c-C4
 missing_unifac_row	UNIFACcompUMRPRU/c-propane
 missing_unifac_row	UNIFACcompUMRPRU/chlorine
 missing_unifac_row	UNIFACcompUMRPRU/cis-14-DM-cy-C6
-missing_unifac_row	UNIFACcompUMRPRU/cis-butene
 missing_unifac_row	UNIFACcompUMRPRU/ethanolPVTsim
 missing_unifac_row	UNIFACcompUMRPRU/ethylene
-missing_unifac_row	UNIFACcompUMRPRU/formic acid
 missing_unifac_row	UNIFACcompUMRPRU/glycerol
 missing_unifac_row	UNIFACcompUMRPRU/helium
 missing_unifac_row	UNIFACcompUMRPRU/hydrochloric acid
 missing_unifac_row	UNIFACcompUMRPRU/hydrogen
-missing_unifac_row	UNIFACcompUMRPRU/i-propanol
-missing_unifac_row	UNIFACcompUMRPRU/iso-butene
 missing_unifac_row	UNIFACcompUMRPRU/methanolPVTsim
 missing_unifac_row	UNIFACcompUMRPRU/n-Bcychexane
-missing_unifac_row	UNIFACcompUMRPRU/nC20
-missing_unifac_row	UNIFACcompUMRPRU/nC21
-missing_unifac_row	UNIFACcompUMRPRU/nC24
-missing_unifac_row	UNIFACcompUMRPRU/naphthalene
 missing_unifac_row	UNIFACcompUMRPRU/nbutanePVTsim
 missing_unifac_row	UNIFACcompUMRPRU/neon
 missing_unifac_row	UNIFACcompUMRPRU/nitric acid
 missing_unifac_row	UNIFACcompUMRPRU/ortho-hydrogen
 missing_unifac_row	UNIFACcompUMRPRU/para-hydrogen
 missing_unifac_row	UNIFACcompUMRPRU/propanePVTsim
-missing_unifac_row	UNIFACcompUMRPRU/propene
 missing_unifac_row	UNIFACcompUMRPRU/sulfur(S8)
 missing_unifac_row	UNIFACcompUMRPRU/sulfuric acid
 missing_unifac_row	UNIFACcompUMRPRU/trans-14-DM-cy-C6
-missing_unifac_row	UNIFACcompUMRPRU/trans-butene
 molar_mass_mismatch	UNIFACcomp/1.2-DM-cyC5
 molar_mass_mismatch	UNIFACcomp/1.2.3-TMcyC6
 molar_mass_mismatch	UNIFACcomp/1.3-dDM-cyC5
@@ -163,6 +132,7 @@ molar_mass_mismatch	UNIFACcomp/TEG
 molar_mass_mismatch	UNIFACcomp/cis-13-DM-cy-C6
 molar_mass_mismatch	UNIFACcomp/nC10-Benzene
 molar_mass_mismatch	UNIFACcomp/nC19
+molar_mass_mismatch	UNIFACcomp/nC20
 molar_mass_mismatch	UNIFACcomp/nC22
 molar_mass_mismatch	UNIFACcomp/nC27
 molar_mass_mismatch	UNIFACcomp/nC34
@@ -183,6 +153,7 @@ molar_mass_mismatch	UNIFACcompUMRPRU/2-E-p-xylene
 molar_mass_mismatch	UNIFACcompUMRPRU/cis-13-DM-cy-C6
 molar_mass_mismatch	UNIFACcompUMRPRU/nC10-Benzene
 molar_mass_mismatch	UNIFACcompUMRPRU/nC19
+molar_mass_mismatch	UNIFACcompUMRPRU/nC20
 molar_mass_mismatch	UNIFACcompUMRPRU/nC22
 molar_mass_mismatch	UNIFACcompUMRPRU/nC27
 molar_mass_mismatch	UNIFACcompUMRPRU/nC34
