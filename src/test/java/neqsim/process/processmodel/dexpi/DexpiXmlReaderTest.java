@@ -1264,8 +1264,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(entering.hasToCycleBoundaryEvidence());
     assertSame(findCycleBoundary(first.getConnectionCycles().get(0), "C-IN-1",
         DexpiConnectionCycleBoundaryInfo.Direction.INCOMING), entering.getToCycleBoundary());
-    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING,
-        entering.getToCycleBoundary().getDirection());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, entering.getToCycleBoundary().getDirection());
     assertEquals("S-IN-1", entering.getConnection().getSegmentId());
     assertEquals("UNKNOWN-U", entering.getFromEndpoint().getEndpointId());
     assertFalse(entering.getFromEndpoint().isResolved());
@@ -1301,10 +1300,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING), between.getFromCycleBoundary());
     assertSame(findCycleBoundary(first.getConnectionCycles().get(1), "C-BX",
         DexpiConnectionCycleBoundaryInfo.Direction.INCOMING), between.getToCycleBoundary());
-    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING,
-        between.getFromCycleBoundary().getDirection());
-    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING,
-        between.getToCycleBoundary().getDirection());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, between.getFromCycleBoundary().getDirection());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, between.getToCycleBoundary().getDirection());
     assertEquals("N-B", between.getFromEndpoint().getEndpointId());
     assertEquals("N-X", between.getToEndpoint().getEndpointId());
 
@@ -1321,8 +1318,7 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(leaving.hasFromCycleBoundaryEvidence());
     assertSame(findCycleBoundary(first.getConnectionCycles().get(1), "C-OUT",
         DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING), leaving.getFromCycleBoundary());
-    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING,
-        leaving.getFromCycleBoundary().getDirection());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, leaving.getFromCycleBoundary().getDirection());
     assertFalse(leaving.hasToCycleBoundaryEvidence());
     assertNull(leaving.getToCycleBoundary());
     assertEquals("E-V", leaving.getToEndpoint().getOwnerId());
@@ -1365,8 +1361,8 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(first.toJson(), second.toJson());
   }
 
-  private static DexpiConnectionCycleBoundaryInfo findCycleBoundary(DexpiConnectionCycleInfo cycle,
-      String connectionId, DexpiConnectionCycleBoundaryInfo.Direction direction) {
+  private static DexpiConnectionCycleBoundaryInfo findCycleBoundary(DexpiConnectionCycleInfo cycle, String connectionId,
+      DexpiConnectionCycleBoundaryInfo.Direction direction) {
     for (DexpiConnectionCycleBoundaryInfo boundary : cycle.getBoundaryConnections()) {
       if (connectionId.equals(boundary.getConnectionId()) && direction == boundary.getDirection()) {
         return boundary;

@@ -1357,10 +1357,8 @@ public final class DexpiXmlReader {
     }
 
     Map<String, DexpiConnectionCycleInfo> cycleByEndpointId = new HashMap<String, DexpiConnectionCycleInfo>();
-    Map<String, DexpiConnectionCycleBoundaryInfo> incomingBoundaryByConnectionId =
-        new HashMap<String, DexpiConnectionCycleBoundaryInfo>();
-    Map<String, DexpiConnectionCycleBoundaryInfo> outgoingBoundaryByConnectionId =
-        new HashMap<String, DexpiConnectionCycleBoundaryInfo>();
+    Map<String, DexpiConnectionCycleBoundaryInfo> incomingBoundaryByConnectionId = new HashMap<String, DexpiConnectionCycleBoundaryInfo>();
+    Map<String, DexpiConnectionCycleBoundaryInfo> outgoingBoundaryByConnectionId = new HashMap<String, DexpiConnectionCycleBoundaryInfo>();
     for (DexpiConnectionCycleInfo cycle : connectionCycles) {
       for (String endpointId : cycle.getEndpointIds()) {
         cycleByEndpointId.put(endpointId, cycle);

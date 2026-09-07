@@ -117,10 +117,10 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     if (toCycle != null && !this.toCycleId.equals(toCycle.getId())) {
       throw new IllegalArgumentException("Target cycle evidence must match toCycleId");
     }
-    validateBoundaryEvidence(fromCycleBoundary, this.fromCycleId,
-        DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, "Source");
-    validateBoundaryEvidence(toCycleBoundary, this.toCycleId,
-        DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, "Target");
+    validateBoundaryEvidence(fromCycleBoundary, this.fromCycleId, DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING,
+        "Source");
+    validateBoundaryEvidence(toCycleBoundary, this.toCycleId, DexpiConnectionCycleBoundaryInfo.Direction.INCOMING,
+        "Target");
     if (this.fromCycleId.isEmpty()) {
       kind = Kind.ENTERING;
     } else if (this.toCycleId.isEmpty()) {
