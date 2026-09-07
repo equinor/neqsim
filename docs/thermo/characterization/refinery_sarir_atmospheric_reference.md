@@ -151,7 +151,26 @@ procedure or compliance determination.
 | Diesel | 425.018 | 393.0 | 7.533 |
 | Residual | 646.5 | 706.1 | 9.219 |
 
-Unlike the Al-Diwiniya reference, the Sarir paper does not say these HYSYS rates were imposed. It describes calculated production rates compared with actual refinery data, so the rows are retained as independent validation targets. The API recomputes absolute relative errors from the raw published values instead of copying rounded percentages.
+Unlike the Al-Diwiniya reference, the Sarir paper does not say these HYSYS rates were
+imposed. It describes calculated production rates compared with actual refinery data, so the
+rows are retained as independent validation targets. The API recomputes absolute relative
+errors from the raw published values instead of copying rounded percentages.
+
+The conversion to kg/h uses exactly 1000 kg per metric tonne and 24 hours per day. Each Table 5
+plant row is also bound to its matching Table 3 ADU hydrocarbon outlet:
+
+| Product | Table 3 outlet | Plant (kg/h) | Table 3 (kg/h) |
+| --- | --- | ---: | ---: |
+| Total naphtha | Naphtha | 8706.25 | 8706.00 |
+| Kerosene | Kerosene product | 952.083333 | 952.20 |
+| Diesel | Diesel product | 17709.083333 | 17709.24 |
+| Residual | Residual | 26937.50 | 26937.99 |
+| **Total** | | **54304.916667** | **54305.43** |
+
+The absolute difference between those independently published totals is 0.513333 kg/h, less
+than (10^{-5}) of the plant total. This is a transcription and unit-basis reconciliation
+between source tables, not proof of plant mass conservation or model agreement. The gas-to-flare,
+water, and steam rows are therefore excluded from this hydrocarbon-product comparison.
 
 ## Java and Python access
 
@@ -181,8 +200,12 @@ boolean residualSpecificationIsNumeric =
 
 SarirAtmosphericReference.ProductYieldReference diesel =
     SarirAtmosphericReference.getProductYield("Diesel");
-double plantRate = diesel.getPlantMetricTonPerDay();
-double errorPercent = diesel.getAbsoluteRelativeErrorPercent();
+double plantRateKgPerHour = diesel.getPlantMassFlowRateKgPerHour();
+double hysysRateKgPerHour = diesel.getSimulationMassFlowRateKgPerHour();
+String tableThreeOutlet = diesel.getAduStreamName();
+double calculatedErrorPercent =
+    diesel.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(
+        calculatedDieselRateKgPerHour);
 
 SarirAtmosphericReference.PumparoundReference topPumparound =
     SarirAtmosphericReference.getPumparound("Top pump around (TPA)");
@@ -202,7 +225,10 @@ boolean steamStateIsExplicit =
     SarirAtmosphericReference.hasExplicitSteamThermodynamicState();
 ```
 
-Static methods are directly accessible through JPype. Arrays are defensive copies, and unknown product labels or invalid error inputs fail closed.
+Static methods are directly accessible through JPype. Arrays are defensive copies, and unknown
+product labels, negative calculated rates, and non-finite error inputs fail closed. A zero
+calculated rate remains a valid comparison value. Plant and HYSYS rates are read-only evidence:
+the comparison API neither changes a stream nor imposes an accuracy acceptance threshold.
 
 ## Constrained pseudo-component input
 
