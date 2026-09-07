@@ -4313,6 +4313,12 @@ public class TwoFluidPipe extends Pipeline {
     if (!Double.isFinite(dt) || dt <= 0.0) {
       throw new IllegalArgumentException("Transient time step must be positive and finite");
     }
+    if (componentTransportEnabled && includeMassTransfer && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
+        && getTimeIntegrationStageWeights().length > 1) {
+      throw new IllegalStateException("Conservative slug/film transport with named-component phase transfer "
+          + "currently requires a single-stage time integrator; multi-stage phase appearance needs "
+          + "stage-local component inventories");
+    }
     if (sections == null || sections.length == 0) {
       throw new IllegalStateException("Call run() to initialize the pipe before runTransient()");
     }
@@ -4453,6 +4459,12 @@ public class TwoFluidPipe extends Pipeline {
           : new double[0][0];
       final double[][] weightedPhaseMassSources = captureComponentStageFluxes ? new double[numberOfSections][3]
           : new double[0][0];
+      final double[][][] weightedComponentSources = captureComponentStageFluxes && includeMassTransfer
+          ? new double[numberOfSections][3][componentTransport.getComponentNames().length]
+          : null;
+      final double[] weightedLatentHeatSources = captureComponentStageFluxes && includeMassTransfer
+          ? new double[numberOfSections]
+          : null;
       final int[] phaseStageIndex = { 0 };
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
@@ -4484,6 +4496,23 @@ public class TwoFluidPipe extends Pipeline {
           equations.accumulateLastPhaseMassFaceFluxes(weightedPhaseMassFaceFluxes, phaseStageWeights[stage]);
           if (captureComponentStageFluxes) {
             equations.accumulateLastPhaseMassSourcesPerLength(weightedPhaseMassSources, phaseStageWeights[stage]);
+            if (includeMassTransfer) {
+              double[][] phaseSources = new double[numberOfSections][3];
+              equations.accumulateLastPhaseMassSourcesPerLength(phaseSources, 1.0);
+              double[][][] componentSources = componentTransport.createComponentSourceRates(phaseSources,
+                  localEquilibriumStates, componentConservationTolerance);
+              double[] latentHeatSources = componentTransport.createLatentHeatSourceRates(componentSources,
+                  localEquilibriumStates);
+              for (int cell = 0; cell < numberOfSections; cell++) {
+                weightedLatentHeatSources[cell] += phaseStageWeights[stage] * latentHeatSources[cell];
+                for (int phase = 0; phase < 3; phase++) {
+                  for (int component = 0; component < weightedComponentSources[cell][phase].length; component++) {
+                    weightedComponentSources[cell][phase][component] += phaseStageWeights[stage]
+                        * componentSources[cell][phase][component];
+                  }
+                }
+              }
+            }
           }
         }
         return derivative;
@@ -4730,8 +4759,8 @@ public class TwoFluidPipe extends Pipeline {
       double[] latentHeatEnergyByCellJ = new double[numberOfSections];
       if (captureComponentStageFluxes) {
         latentHeatEnergyByCellJ = componentTransport.advance(dtActual, weightedPhaseMassFaceFluxes,
-            weightedPhaseMassSources, sections, getInletStream().getFluid(), referenceFluid,
-            componentConservationTolerance);
+            weightedPhaseMassSources, weightedComponentSources, weightedLatentHeatSources, sections,
+            getInletStream().getFluid(), referenceFluid, componentConservationTolerance);
       }
       // Compensated accepted-time summation prevents repeated subtraction from leaving
       // a spurious, unrepresentable tail after hundreds of CFL-limited steps.
@@ -6148,6 +6177,9 @@ public class TwoFluidPipe extends Pipeline {
    * @param enabled true to track named components conservatively
    */
   public void setComponentTransportEnabled(boolean enabled) {
+    if (enabled && equations.isOutletPhaseBackflowAllowed()) {
+      throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
+    }
     componentTransportEnabled = enabled;
     if (!enabled) {
       componentTransport = null;
@@ -8104,7 +8136,15 @@ public class TwoFluidPipe extends Pipeline {
    * @param allow true to carry signed phase mass and energy through the outlet
    */
   public void setAllowOutletPhaseBackflow(boolean allow) {
+    if (allow && componentTransportEnabled) {
+      throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
+    }
     equations.setAllowOutletPhaseBackflow(allow);
+  }
+
+  private static String componentOutletBackflowUnsupportedMessage() {
+    return "Named-component transport cannot be combined with signed outlet backflow: "
+        + "reverse outlet inflow requires an external outlet composition, which is not configured";
   }
 
   /** @return true when signed outlet phase flow is enabled */

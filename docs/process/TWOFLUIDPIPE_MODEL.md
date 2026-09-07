@@ -199,6 +199,39 @@ every component, cell-wise equal/opposite phase transfer, phase mass, boundednes
 history, and the latent-inclusive thermal residual. Engineering applications should repeat mesh and
 time-step refinement at their own length, velocity, phase split, and event duration.
 
+#### Coupled slug/component/phase/thermal contract
+
+The conservative Lagrangian slug/film flux can be combined with named-component transport,
+flash-driven phase transfer, and the thermal equation. Component source compositions and their
+partial-enthalpy latent source are frozen at the same Runge-Kutta stage as the hydrodynamic phase
+source. This matters when a moving slug/film interface advects composition between the source
+evaluation and the accepted update: a second post-advection flash may no longer contain a phase
+whose appearance or disappearance has already been accepted. For a disappearing phase, its donor
+composition is evaluated as a forced single-phase thermodynamic state at the same cell pressure and
+temperature; receiving-phase composition still comes only from the equilibrium source-stage flash.
+
+`TwoFluidPipeCoupledCapabilityTest` seeds a deterministic in-domain marker in a closed four-cell
+wet-gas pipe just above its calculated water dew point, selects conservative film coupling, and
+cools the wall. Over 0.05 s, the 0.05 and 0.025 s outer-step partitions both close phase/total mass,
+every named-component ledger, cellwise interphase transfer, and the wall/latent thermal residual.
+Both transfer `1.5855002575e-9 kg` of water to the aqueous phase, release `0.0034892651 J` of
+composition-resolved latent heat, and cool the mean fluid by `0.0305006304 K`; the recorded
+outer-step sensitivities are zero because both partitions resolve to the same internal CFL steps.
+The tracked slug ages by exactly 0.05 s and its geometry is identical on both partitions. This is a
+coupling and conservation regression around a seeded marker, not evidence for spontaneous slug
+initiation, sustained severe-slug cycles, or experimental slug-load accuracy.
+
+This four-way coupling is currently validated only with the single-stage Euler integrator.
+Conservative slug/film transport plus named-component phase transfer rejects multi-stage methods
+before state mutation because a phase that appears within an intermediate stage requires a
+stage-local component inventory. Other named-component advection cases retain their documented
+Euler, Runge-Kutta, and IMEX stage-weighted paths.
+
+Signed outlet backflow and named-component transport are mutually rejected during configuration,
+in either setter order, before steady or transient state can change. Reverse outlet inflow requires
+an independently supplied external composition; no such boundary API exists, so the implementation
+does not infer composition from the last interior cell.
+
 ### Momentum Conservation
 Separate momentum equations for each phase:
 

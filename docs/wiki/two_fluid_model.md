@@ -912,6 +912,27 @@ approximation. The sustained regression covers 120 s of gas, gas/oil and gas/oil
 heat and EOS updates active, plus heating/cooling transfer signs and conservative component
 ledgers. Positive-flow boundaries and a fixed named-component slate remain required.
 
+For the supported conservative-slug coupling, phase and component source allocations plus their
+partial-enthalpy latent source are frozen at the same integration stage. A moving slug/film
+interface can otherwise advect composition before a post-step flash and make an already accepted
+phase appearance impossible to reconstruct. A disappearing phase uses its conserved donor
+composition in a forced single-phase property state; receiving composition still comes from the
+equilibrium flash. The closed wet-gas coupling regression exercises conservative slug/film
+tracking, water condensation, wall cooling, bounded named-component transport, and phase/total/
+component/thermal closure on two outer-step partitions. It gives identical internal-CFL-resolved
+results: `1.5855002575e-9 kg` aqueous-water transfer, `0.0034892651 J` latent heat, and
+`-0.0305006304 K` mean temperature change over 0.05 s. The seeded marker is numerical coupling
+evidence, not spontaneous or experimentally qualified severe slugging.
+
+The four-way conservative slug/film combination is validated with the single-stage Euler
+integrator. It rejects multi-stage integration before state mutation until intermediate phase
+appearance has a stage-local component inventory; this limitation does not change the existing
+stage-weighted paths for other named-component transport cases.
+
+Signed outlet backflow cannot be combined with named-component transport because no external
+outlet composition is configured. Either setter order now fails before state mutation instead of
+waiting for reverse inflow during an accepted transient step.
+
 
 
 ### Flash Calculations
