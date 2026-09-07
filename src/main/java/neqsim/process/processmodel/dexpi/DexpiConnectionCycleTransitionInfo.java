@@ -155,6 +155,16 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     return fromCycle != null;
   }
 
+  /** @return source cycle's exact owning component evidence, or {@code null} when outside or unavailable */
+  public DexpiConnectionComponentInfo getFromCycleComponent() {
+    return fromCycle == null ? null : fromCycle.getConnectionComponent();
+  }
+
+  /** @return whether exact owning-component evidence is available for the source cycle */
+  public boolean hasFromCycleComponentEvidence() {
+    return getFromCycleComponent() != null;
+  }
+
   /** @return source cycle's outgoing boundary evidence, or {@code null} when outside or unavailable */
   public DexpiConnectionCycleBoundaryInfo getFromCycleBoundary() {
     return fromCycleBoundary;
@@ -183,6 +193,16 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
   /** @return whether complete target directed-cycle evidence is available */
   public boolean hasToCycleEvidence() {
     return toCycle != null;
+  }
+
+  /** @return target cycle's exact owning component evidence, or {@code null} when outside or unavailable */
+  public DexpiConnectionComponentInfo getToCycleComponent() {
+    return toCycle == null ? null : toCycle.getConnectionComponent();
+  }
+
+  /** @return whether exact owning-component evidence is available for the target cycle */
+  public boolean hasToCycleComponentEvidence() {
+    return getToCycleComponent() != null;
   }
 
   /** @return target cycle's incoming boundary evidence, or {@code null} when outside or unavailable */
@@ -224,9 +244,13 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     result.put("hasToCycleEvidence", Boolean.valueOf(hasToCycleEvidence()));
     result.put("hasFromCycleBoundaryEvidence", Boolean.valueOf(hasFromCycleBoundaryEvidence()));
     result.put("hasToCycleBoundaryEvidence", Boolean.valueOf(hasToCycleBoundaryEvidence()));
+    result.put("hasFromCycleComponentEvidence", Boolean.valueOf(hasFromCycleComponentEvidence()));
+    result.put("hasToCycleComponentEvidence", Boolean.valueOf(hasToCycleComponentEvidence()));
     result.put("kind", kind.name());
     result.put("fromCycle", fromCycle == null ? null : fromCycle.toMap());
     result.put("toCycle", toCycle == null ? null : toCycle.toMap());
+    result.put("fromCycleComponent", getFromCycleComponent() == null ? null : getFromCycleComponent().toMap());
+    result.put("toCycleComponent", getToCycleComponent() == null ? null : getToCycleComponent().toMap());
     result.put("fromCycleBoundary", fromCycleBoundary == null ? null : fromCycleBoundary.toMap());
     result.put("toCycleBoundary", toCycleBoundary == null ? null : toCycleBoundary.toMap());
     result.put("connection", connection.toMap());
