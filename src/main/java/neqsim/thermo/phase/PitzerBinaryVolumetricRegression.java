@@ -16,17 +16,16 @@ import org.apache.commons.math3.linear.SingularValueDecomposition;
  * Weighted linear regression for one-state binary-electrolyte volumetric Pitzer parameters.
  *
  * <p>
- * The regression is parameter and dataset neutral. Callers supply apparent-molar-volume
- * observations, one-sigma uncertainties, source-group identifiers, and the Debye-Huckel volume
- * slope at a common temperature and pressure. The fit estimates the limiting apparent molar
- * volume and the three binary interaction pressure derivatives used by
+ * The regression is parameter and dataset neutral. Callers supply apparent-molar-volume observations, one-sigma
+ * uncertainties, source-group identifiers, and the Debye-Huckel volume slope at a common temperature and pressure. The
+ * fit estimates the limiting apparent molar volume and the three binary interaction pressure derivatives used by
  * {@link PitzerBinaryVolumetricModel}.
  * </p>
  *
  * <p>
- * Weighted design columns are normalized before singular-value decomposition. Rank-deficient and
- * excessively ill-conditioned designs fail closed. Returned covariance assumes that the supplied
- * standard uncertainties are absolute one-sigma uncertainties.
+ * Weighted design columns are normalized before singular-value decomposition. Rank-deficient and excessively
+ * ill-conditioned designs fail closed. Returned covariance assumes that the supplied standard uncertainties are
+ * absolute one-sigma uncertainties.
  * </p>
  */
 public final class PitzerBinaryVolumetricRegression implements Serializable {
@@ -64,8 +63,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     requirePositive(pressurePa, "Regression pressure");
     requireFinite(debyeHuckelVolumeSlope, "Debye-Huckel volume slope");
     if (observations == null || observations.size() <= PARAMETER_COUNT) {
-      throw new IllegalArgumentException(
-          "Volumetric Pitzer regression requires at least five observations");
+      throw new IllegalArgumentException("Volumetric Pitzer regression requires at least five observations");
     }
 
     int observationCount = observations.size();
@@ -74,18 +72,14 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     double[][] unweightedDesign = new double[observationCount][PARAMETER_COUNT];
     double[] debyeContributions = new double[observationCount];
 
-    PitzerBinaryVolumetricModel.StateParameters debyeParameters =
-        new PitzerBinaryVolumetricModel.StateParameters(temperatureK, pressurePa,
-            debyeHuckelVolumeSlope, 0.0, 0.0, 0.0);
-    PitzerBinaryVolumetricModel.StateParameters beta0Unit =
-        new PitzerBinaryVolumetricModel.StateParameters(temperatureK, pressurePa, 0.0, 1.0, 0.0,
-            0.0);
-    PitzerBinaryVolumetricModel.StateParameters beta1Unit =
-        new PitzerBinaryVolumetricModel.StateParameters(temperatureK, pressurePa, 0.0, 0.0, 1.0,
-            0.0);
-    PitzerBinaryVolumetricModel.StateParameters cphiUnit =
-        new PitzerBinaryVolumetricModel.StateParameters(temperatureK, pressurePa, 0.0, 0.0, 0.0,
-            1.0);
+    PitzerBinaryVolumetricModel.StateParameters debyeParameters = new PitzerBinaryVolumetricModel.StateParameters(
+        temperatureK, pressurePa, debyeHuckelVolumeSlope, 0.0, 0.0, 0.0);
+    PitzerBinaryVolumetricModel.StateParameters beta0Unit = new PitzerBinaryVolumetricModel.StateParameters(
+        temperatureK, pressurePa, 0.0, 1.0, 0.0, 0.0);
+    PitzerBinaryVolumetricModel.StateParameters beta1Unit = new PitzerBinaryVolumetricModel.StateParameters(
+        temperatureK, pressurePa, 0.0, 0.0, 1.0, 0.0);
+    PitzerBinaryVolumetricModel.StateParameters cphiUnit = new PitzerBinaryVolumetricModel.StateParameters(temperatureK,
+        pressurePa, 0.0, 0.0, 0.0, 1.0);
 
     for (int row = 0; row < observationCount; row++) {
       Observation observation = observations.get(row);
@@ -93,8 +87,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
         throw new IllegalArgumentException("Volumetric Pitzer observations must not contain null");
       }
       double molality = observation.getMolality();
-      double debyeContribution =
-          model.calculateApparentMolarVolume(molality, 0.0, debyeParameters);
+      double debyeContribution = model.calculateApparentMolarVolume(molality, 0.0, debyeParameters);
       debyeContributions[row] = debyeContribution;
 
       double[] designRow = unweightedDesign[row];
@@ -104,8 +97,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
       designRow[3] = model.calculateApparentMolarVolume(molality, 0.0, cphiUnit);
 
       double inverseUncertainty = 1.0 / observation.getStandardUncertainty();
-      weightedResponse[row] =
-          (observation.getApparentMolarVolume() - debyeContribution) * inverseUncertainty;
+      weightedResponse[row] = (observation.getApparentMolarVolume() - debyeContribution) * inverseUncertainty;
       for (int column = 0; column < PARAMETER_COUNT; column++) {
         weightedDesign[row][column] = designRow[column] * inverseUncertainty;
       }
@@ -129,25 +121,21 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     for (double singularValue : singularValues) {
       if (singularValue > rankTolerance) {
         rank++;
-        smallestRetainedSingularValue =
-            Math.min(smallestRetainedSingularValue, singularValue);
+        smallestRetainedSingularValue = Math.min(smallestRetainedSingularValue, singularValue);
       }
     }
     if (rank < PARAMETER_COUNT) {
       throw new IllegalArgumentException(
-          "Volumetric Pitzer regression design is rank deficient: rank " + rank + " of "
-              + PARAMETER_COUNT);
+          "Volumetric Pitzer regression design is rank deficient: rank " + rank + " of " + PARAMETER_COUNT);
     }
 
     double conditionNumber = largestSingularValue / smallestRetainedSingularValue;
     if (!Double.isFinite(conditionNumber) || conditionNumber > MAXIMUM_CONDITION_NUMBER) {
       throw new IllegalArgumentException(
-          "Volumetric Pitzer regression design is ill-conditioned: scaled condition number "
-              + conditionNumber);
+          "Volumetric Pitzer regression design is ill-conditioned: scaled condition number " + conditionNumber);
     }
 
-    RealVector scaledSolution =
-        decomposition.getSolver().solve(new ArrayRealVector(weightedResponse, false));
+    RealVector scaledSolution = decomposition.getSolver().solve(new ArrayRealVector(weightedResponse, false));
     double[] coefficients = new double[PARAMETER_COUNT];
     for (int index = 0; index < PARAMETER_COUNT; index++) {
       coefficients[index] = scaledSolution.getEntry(index) / columnNorms[index];
@@ -159,20 +147,17 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     for (int index = 0; index < PARAMETER_COUNT; index++) {
       double variance = covariance[index][index];
       if (!Double.isFinite(variance) || variance < 0.0) {
-        throw new IllegalArgumentException(
-            "Volumetric Pitzer regression produced an invalid coefficient variance");
+        throw new IllegalArgumentException("Volumetric Pitzer regression produced an invalid coefficient variance");
       }
       standardUncertainties[index] = Math.sqrt(variance);
     }
 
-    PitzerBinaryVolumetricModel.StateParameters fittedParameters =
-        new PitzerBinaryVolumetricModel.StateParameters(temperatureK, pressurePa,
-            debyeHuckelVolumeSlope, coefficients[1], coefficients[2], coefficients[3]);
+    PitzerBinaryVolumetricModel.StateParameters fittedParameters = new PitzerBinaryVolumetricModel.StateParameters(
+        temperatureK, pressurePa, debyeHuckelVolumeSlope, coefficients[1], coefficients[2], coefficients[3]);
 
     double chiSquare = 0.0;
     double maximumAbsoluteStandardizedResidual = 0.0;
-    Map<String, MutableGroupStatistics> mutableGroups =
-        new TreeMap<String, MutableGroupStatistics>();
+    Map<String, MutableGroupStatistics> mutableGroups = new TreeMap<String, MutableGroupStatistics>();
     for (int row = 0; row < observationCount; row++) {
       Observation observation = observations.get(row);
       double fittedVolume = debyeContributions[row];
@@ -183,8 +168,8 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
       double standardizedResidual = residual / observation.getStandardUncertainty();
       requireFinite(standardizedResidual, "Standardized volumetric Pitzer residual");
       chiSquare += standardizedResidual * standardizedResidual;
-      maximumAbsoluteStandardizedResidual =
-          Math.max(maximumAbsoluteStandardizedResidual, Math.abs(standardizedResidual));
+      maximumAbsoluteStandardizedResidual = Math.max(maximumAbsoluteStandardizedResidual,
+          Math.abs(standardizedResidual));
 
       MutableGroupStatistics group = mutableGroups.get(observation.getSourceGroup());
       if (group == null) {
@@ -200,9 +185,8 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
       groups.add(group.toImmutable());
     }
 
-    return new FitResult(coefficients[0], fittedParameters, standardUncertainties, covariance,
-        observationCount, degreesOfFreedom, chiSquare, conditionNumber,
-        maximumAbsoluteStandardizedResidual, groups);
+    return new FitResult(coefficients[0], fittedParameters, standardUncertainties, covariance, observationCount,
+        degreesOfFreedom, chiSquare, conditionNumber, maximumAbsoluteStandardizedResidual, groups);
   }
 
   private static double[] calculateColumnNorms(double[][] design) {
@@ -214,27 +198,24 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     }
     for (int column = 0; column < PARAMETER_COUNT; column++) {
       if (!Double.isFinite(norms[column]) || norms[column] <= 0.0) {
-        throw new IllegalArgumentException(
-            "Volumetric Pitzer regression has an empty or non-finite design column");
+        throw new IllegalArgumentException("Volumetric Pitzer regression has an empty or non-finite design column");
       }
     }
     return norms;
   }
 
-  private static double[][] calculateCovariance(SingularValueDecomposition decomposition,
-      double[] singularValues, double[] columnNorms) {
+  private static double[][] calculateCovariance(SingularValueDecomposition decomposition, double[] singularValues,
+      double[] columnNorms) {
     RealMatrix rightSingularVectors = decomposition.getV();
     double[][] covariance = new double[PARAMETER_COUNT][PARAMETER_COUNT];
     for (int row = 0; row < PARAMETER_COUNT; row++) {
       for (int column = 0; column < PARAMETER_COUNT; column++) {
         double scaledCovariance = 0.0;
         for (int mode = 0; mode < PARAMETER_COUNT; mode++) {
-          scaledCovariance += rightSingularVectors.getEntry(row, mode)
-              * rightSingularVectors.getEntry(column, mode)
+          scaledCovariance += rightSingularVectors.getEntry(row, mode) * rightSingularVectors.getEntry(column, mode)
               / (singularValues[mode] * singularValues[mode]);
         }
-        covariance[row][column] =
-            scaledCovariance / (columnNorms[row] * columnNorms[column]);
+        covariance[row][column] = scaledCovariance / (columnNorms[row] * columnNorms[column]);
         requireFinite(covariance[row][column], "Volumetric Pitzer coefficient covariance");
       }
     }
@@ -278,8 +259,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
      * @param standardUncertainty absolute one-sigma uncertainty in m3/mol
      * @param sourceGroup non-empty laboratory or source-lineage identifier
      */
-    public Observation(double molality, double apparentMolarVolume, double standardUncertainty,
-        String sourceGroup) {
+    public Observation(double molality, double apparentMolarVolume, double standardUncertainty, String sourceGroup) {
       if (!Double.isFinite(molality) || molality < 0.0) {
         throw new IllegalArgumentException("Observation molality must be finite and non-negative");
       }
@@ -330,11 +310,10 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     private final double maximumAbsoluteStandardizedResidual;
     private final List<GroupStatistics> groupStatistics;
 
-    private FitResult(double limitingApparentMolarVolume,
-        PitzerBinaryVolumetricModel.StateParameters stateParameters,
-        double[] parameterStandardUncertainties, double[][] parameterCovariance,
-        int observationCount, int degreesOfFreedom, double chiSquare, double conditionNumber,
-        double maximumAbsoluteStandardizedResidual, List<GroupStatistics> groupStatistics) {
+    private FitResult(double limitingApparentMolarVolume, PitzerBinaryVolumetricModel.StateParameters stateParameters,
+        double[] parameterStandardUncertainties, double[][] parameterCovariance, int observationCount,
+        int degreesOfFreedom, double chiSquare, double conditionNumber, double maximumAbsoluteStandardizedResidual,
+        List<GroupStatistics> groupStatistics) {
       this.limitingApparentMolarVolume = limitingApparentMolarVolume;
       this.stateParameters = stateParameters;
       this.parameterStandardUncertainties = parameterStandardUncertainties.clone();
@@ -344,8 +323,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
       this.chiSquare = chiSquare;
       this.conditionNumber = conditionNumber;
       this.maximumAbsoluteStandardizedResidual = maximumAbsoluteStandardizedResidual;
-      this.groupStatistics =
-          Collections.unmodifiableList(new ArrayList<GroupStatistics>(groupStatistics));
+      this.groupStatistics = Collections.unmodifiableList(new ArrayList<GroupStatistics>(groupStatistics));
     }
 
     /** @return fitted limiting apparent molar volume in m3/mol */
@@ -427,8 +405,8 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     private final double weightedRootMeanSquareResidual;
     private final double maximumAbsoluteStandardizedResidual;
 
-    private GroupStatistics(String sourceGroup, int count, double meanResidual,
-        double weightedRootMeanSquareResidual, double maximumAbsoluteStandardizedResidual) {
+    private GroupStatistics(String sourceGroup, int count, double meanResidual, double weightedRootMeanSquareResidual,
+        double maximumAbsoluteStandardizedResidual) {
       this.sourceGroup = sourceGroup;
       this.count = count;
       this.meanResidual = meanResidual;
@@ -477,14 +455,13 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
       count++;
       residualSum += residual;
       standardizedResidualSquareSum += standardizedResidual * standardizedResidual;
-      maximumAbsoluteStandardizedResidual =
-          Math.max(maximumAbsoluteStandardizedResidual, Math.abs(standardizedResidual));
+      maximumAbsoluteStandardizedResidual = Math.max(maximumAbsoluteStandardizedResidual,
+          Math.abs(standardizedResidual));
     }
 
     private GroupStatistics toImmutable() {
       return new GroupStatistics(sourceGroup, count, residualSum / count,
-          Math.sqrt(standardizedResidualSquareSum / count),
-          maximumAbsoluteStandardizedResidual);
+          Math.sqrt(standardizedResidualSquareSum / count), maximumAbsoluteStandardizedResidual);
     }
   }
 }
