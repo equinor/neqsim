@@ -738,6 +738,42 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   }
 
   /**
+   * Returns the complete source-qualified ASTM D86 reference curve in degrees Celsius.
+   *
+   * <p>
+   * The result contains exactly the seven published Riazi-Daubert recovery points. Every temperature is delegated to
+   * {@link #getQualifiedD86Temperature(double)}, so the method fails before returning if any simulated point is
+   * unavailable or outside its source domain.
+   * </p>
+   *
+   * @return a new two-dimensional array where [i][0] is recovery volume percent and [i][1] is temperature in Celsius
+   * @throws IllegalArgumentException if any converted temperature is outside its published reference domain
+   * @throws IllegalStateException if {@link #calculate()} did not produce every required TBP-like temperature
+   */
+  public double[][] getQualifiedD86Curve() {
+    return getQualifiedD86Curve("C");
+  }
+
+  /**
+   * Returns the complete source-qualified ASTM D86 reference curve in the requested temperature unit.
+   *
+   * @param tempUnit temperature unit ("C", "K", "F", or "R")
+   * @return a new two-dimensional array containing recovery volume percent and converted temperature
+   * @throws IllegalArgumentException if any converted temperature is outside its published reference domain
+   * @throws IllegalStateException if {@link #calculate()} did not produce every required TBP-like temperature
+   */
+  public double[][] getQualifiedD86Curve(String tempUnit) {
+    double[][] referenceData = RiaziDaubertDistillationConversion.getReferenceData();
+    double[][] curve = new double[referenceData.length][2];
+    for (int i = 0; i < referenceData.length; i++) {
+      double recoveryVolumePercent = referenceData[i][0];
+      curve[i][0] = recoveryVolumePercent;
+      curve[i][1] = getQualifiedD86Temperature(recoveryVolumePercent, tempUnit);
+    }
+    return curve;
+  }
+
+  /**
    * Returns the ASTM D86 curve obtained by converting the simulated molar-equilibrium (TBP-like) curve with the
    * Riazi-Daubert TBP&rarr;D86 relation.
    *
