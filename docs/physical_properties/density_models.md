@@ -1,7 +1,7 @@
 ---
 title: Density Models
-description: "Density correction models in NeqSim: COSTALD (Hankinson-Thomson), Peneloux volume translation, Rackett equation. Covers liquid density for pure compounds, mixtures, TBP fractions, aqueous/polar systems (water, MEG, TEG, methanol). setLiquidDensityModel API."
-keywords: "COSTALD, density, liquid density, Hankinson-Thomson, Peneloux, volume translation, Rackett, molar volume, specific gravity, TBP fraction, pseudo-component, aqueous, polar, water density, MEG, TEG, glycol, methanol, ethanol, setLiquidDensityModel, compressed liquid, characteristic volume, V-star"
+description: "Density correction models in NeqSim: COSTALD (Hankinson-Thomson), Peneloux volume translation, Rackett equation, and the parameter-neutral binary volumetric Pitzer kernel. Covers liquid density for pure compounds, mixtures, TBP fractions, aqueous/polar systems, and electrolytes."
+keywords: "COSTALD, density, liquid density, Hankinson-Thomson, Peneloux, volume translation, Rackett, Pitzer, apparent molar volume, electrolyte density, molar volume, specific gravity, TBP fraction, pseudo-component, aqueous, polar, water density, MEG, TEG, glycol, methanol, ethanol, setLiquidDensityModel, compressed liquid, characteristic volume, V-star"
 ---
 
 This guide documents the density correction models available in NeqSim for improving volumetric predictions.
@@ -16,6 +16,7 @@ This guide documents the density correction models available in NeqSim for impro
   - [COSTALD](#costald)
   - [NASTALD (COSTALD with Polar Correction)](#nastald-costald-with-polar-correction)
   - [Rackett Equation](#rackett-equation)
+- [Binary Electrolyte Volumetric Pitzer Kernel](#binary-electrolyte-volumetric-pitzer-kernel)
 - [Usage Examples](#usage-examples)
 - [Model Selection Guide](#model-selection-guide)
 - [API Reference](#api-reference)
@@ -623,6 +624,87 @@ double Zra = fluid.getPhase(1).getComponent("n-pentane").getRacketZ();
 
 ---
 
+## Binary Electrolyte Volumetric Pitzer Kernel
+
+`PitzerBinaryVolumetricModel` evaluates the standard pressure derivative of
+the binary-electrolyte Pitzer excess Gibbs energy. It is a parameter-neutral
+thermodynamic kernel: it does not contain a built-in coefficient table and it
+is not selected by `setLiquidDensityModel(...)`.
+
+For a binary salt $M_{\nu_M}X_{\nu_X}$ with formula-unit molality $m$,
+
+$$\begin{aligned}
+\phi_V={}&V^\circ+\nu|z_Mz_X|\frac{A_V}{2b}\ln(1+b\sqrt{I})\\
+&+\nu_M\nu_XRT\left[2mB^V_{MX}+m^2\sqrt{\nu_M\nu_X}C^{\phi V}_{MX}\right],\\
+B^V_{MX}={}&\beta^{(0)V}_{MX}+\beta^{(1)V}_{MX}g(\alpha\sqrt{I}),\\
+g(x)={}&\frac{2[1-(1+x)e^{-x}]}{x^2},\\
+I={}&\frac{1}{2}\nu|z_Mz_X|m.
+\end{aligned}$$
+
+The implementation uses the standard $b=1.2$ and $\alpha=2.0$ values and an
+analytical small-$x$ expansion for $g(x)$ to prevent dilute-limit
+cancellation. All inputs use SI units. The pressure derivatives
+$\beta^{(0)V}$, $\beta^{(1)V}$, and $C^{\phi V}$ must already be evaluated at
+the temperature and pressure stored in `StateParameters`.
+
+The non-zero reference form is also available:
+
+$$\phi_V(m)=\phi_V(m_r)+F(m)-F(m_r),$$
+
+where $F$ is the Debye–Hückel plus binary-interaction contribution in the
+equation above. This form avoids deriving $V^\circ$ from small differences of
+dilute-solution densities.
+
+Density conversion uses an exact one-kilogram-solvent balance:
+
+$$\rho=\frac{1+mM}{1/\rho_w+m\phi_V}.$$
+
+The inverse conversion is provided for auditable data preparation.
+
+```java
+PitzerBinaryVolumetricModel calciumChloride =
+    new PitzerBinaryVolumetricModel(1, 2, 2, -1);
+
+PitzerBinaryVolumetricModel.StateParameters state =
+    new PitzerBinaryVolumetricModel.StateParameters(
+        temperatureK,
+        pressurePa,
+        debyeHuckelVolumeSlope,
+        beta0PressureDerivative,
+        beta1PressureDerivative,
+        cphiPressureDerivative);
+
+double apparentMolarVolume = calciumChloride.calculateApparentMolarVolumeFromReference(
+    molality,
+    referenceMolality,
+    referenceApparentMolarVolume,
+    state);
+
+double density = PitzerBinaryVolumetricModel.calculateDensity(
+    molality,
+    calciumChlorideMolarMass,
+    pureWaterDensity,
+    apparentMolarVolume);
+```
+
+### Qualification boundary
+
+- The caller owns coefficient provenance and must keep calibration and
+  validation sources independent.
+- No Rowland–May coefficient table or PHREEQC volume fit is bundled.
+- The 197-point Al Ghafri/NIST ThermoML CaCl2 pressure series remains reserved
+  as validation evidence and is not fitted by this kernel.
+- The current `Water` salt-density correlation and every default density
+  result remain unchanged.
+- Quantitative high-pressure calcium-sulfate prediction remains unqualified
+  until a redistribution-compatible calibration dataset and independent
+  grouped-source validation pass the campaign acceptance gates.
+
+Reference: Rowland and May (2013),
+[doi:10.1016/j.fluid.2012.10.021](https://doi.org/10.1016/j.fluid.2012.10.021).
+
+---
+
 ## Usage Examples
 
 ### Comparing Density Models
@@ -765,6 +847,7 @@ System.out.println("High-P density: " + rho + " kg/m³");
 | Near saturation | COSTALD | Better for saturated liquids |
 | Polar compounds (water, glycols) | COSTALD | V\* from density handles polarity |
 | Polar with database V\* | NASTALD | Adds explicit polar correction term |
+| Binary electrolyte with qualified volumetric parameters | `PitzerBinaryVolumetricModel` | Low-level opt-in kernel; no bundled coefficient set |
 | Multi-phase (gas-oil-water) | COSTALD | Single call applies to oil + aqueous |
 | Different model per phase | Per-phase API | e.g. COSTALD on oil, Peneloux on aqueous |
 | TBP/plus fractions | COSTALD | V\* from density input, no tuning needed |
@@ -788,6 +871,7 @@ System.out.println("High-P density: " + rho + " kg/m³");
 | NASTALD (polar with database V\*) | 1–3% | N/A |
 | Rackett (hydrocarbons) | 2–5% | N/A |
 | GERG-2008 | 0.1–0.5% | 0.1–0.5% |
+| Binary volumetric Pitzer kernel | Dataset-dependent | N/A |
 
 ---
 
@@ -870,6 +954,19 @@ double Vstar = component.getCostaldCharacteristicVolume();
 component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 ```
 
+### Binary Volumetric Pitzer API
+
+| Method | Purpose |
+|--------|---------|
+| `calculateApparentMolarVolume(...)` | Evaluate the standard infinite-dilution form |
+| `calculateApparentMolarVolumeFromReference(...)` | Evaluate the numerically stable non-zero reference form |
+| `calculateDensity(...)` | Convert apparent molar volume to density on a 1 kg solvent basis |
+| `calculateApparentMolarVolumeFromDensity(...)` | Invert a density observation to apparent molar volume |
+| `calculateIonicStrength(...)` | Return the binary salt's stoichiometric ionic strength |
+
+These methods do not install a parameter dataset or alter a phase. A caller
+must explicitly supply a provenance-qualified `StateParameters` instance.
+
 ---
 
 ## References
@@ -884,3 +981,4 @@ component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 8. Li, C.C. (1971). Critical Temperature Estimation for Simple Mixtures. *Can. J. Chem. Eng.* 49, 709–710.
 9. Jhaveri, B.S. and Youngren, G.K. (1988). Three-Parameter Modification of the Peng-Robinson Equation of State. *SPE Reservoir Eng.* 3, 1033–1040.
 10. Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). *The Properties of Gases and Liquids*, 5th ed. McGraw-Hill.
+11. Rowland, D. and May, P.M. (2013). A Pitzer-Based Characterization of Aqueous Magnesium Chloride, Calcium Chloride and Potassium Iodide Solution Densities to High Temperature and Pressure. *Fluid Phase Equilib.* 338, 54–62. [doi:10.1016/j.fluid.2012.10.021](https://doi.org/10.1016/j.fluid.2012.10.021).
