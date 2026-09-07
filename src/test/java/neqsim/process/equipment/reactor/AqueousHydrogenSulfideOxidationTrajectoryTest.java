@@ -177,12 +177,9 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
     AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossing = AqueousHydrogenSulfideOxidationTrajectory
         .timeToRemainingFractionRange(0.5, segments);
 
-    assertEquals(crossing.getRequiredExposure(),
-        exposureAtTime(segments, crossing.getShortestTimeHours(), 2), 1.0e-14);
-    assertEquals(crossing.getRequiredExposure(),
-        exposureAtTime(segments, crossing.getNominalTimeHours(), 1), 1.0e-14);
-    assertEquals(crossing.getRequiredExposure(),
-        exposureAtTime(segments, crossing.getLongestTimeHours(), 0), 1.0e-14);
+    assertEquals(crossing.getRequiredExposure(), exposureAtTime(segments, crossing.getShortestTimeHours(), 2), 1.0e-14);
+    assertEquals(crossing.getRequiredExposure(), exposureAtTime(segments, crossing.getNominalTimeHours(), 1), 1.0e-14);
+    assertEquals(crossing.getRequiredExposure(), exposureAtTime(segments, crossing.getLongestTimeHours(), 0), 1.0e-14);
     assertTrue(crossing.getShortestTimeHours() < crossing.getNominalTimeHours());
     assertTrue(crossing.getNominalTimeHours() < crossing.getLongestTimeHours());
     assertTrue(crossing.getShortestCrossingSegmentIndex() <= crossing.getNominalCrossingSegmentIndex());
@@ -242,9 +239,8 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
         .timeToRemainingFractionRange(Double.NaN, Collections.singletonList(referenceSegment(100.0))));
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(0.5, null));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(0.5,
-            Collections.<AqueousHydrogenSulfideOxidationTrajectory.Segment>emptyList()));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(0.5, Collections.<AqueousHydrogenSulfideOxidationTrajectory.Segment>emptyList()));
   }
 
   private static double exposureAtTime(List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments,
