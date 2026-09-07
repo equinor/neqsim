@@ -150,6 +150,104 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
   }
 
   @Test
+  void testSegmentInventoryTelescopesAndClosesForEveryRatePath() {
+    List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments = Arrays.asList(referenceSegment(3.0),
+        new AqueousHydrogenSulfideOxidationTrajectory.Segment(7.0, 310.15, 7.0, 1.5, 220.0e-6),
+        referenceSegment(5.0));
+    AqueousHydrogenSulfideOxidationTrajectory.Result result = AqueousHydrogenSulfideOxidationTrajectory
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, segments);
+
+    double lowerReacted = 0.0;
+    double nominalReacted = 0.0;
+    double upperReacted = 0.0;
+    List<AqueousHydrogenSulfideOxidationTrajectory.SegmentResult> evidence = result.getSegmentResults();
+    for (int index = 0; index < evidence.size(); index++) {
+      AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segment = evidence.get(index);
+      assertEquals(segment.getLowerRateInletTotalSulfideMolality(),
+          segment.getLowerRateOutletTotalSulfideMolality() + segment.getLowerRateReactedTotalSulfideMolality(),
+          1.0e-20);
+      assertEquals(segment.getNominalInletTotalSulfideMolality(),
+          segment.getNominalOutletTotalSulfideMolality() + segment.getNominalReactedTotalSulfideMolality(), 1.0e-20);
+      assertEquals(segment.getUpperRateInletTotalSulfideMolality(),
+          segment.getUpperRateOutletTotalSulfideMolality() + segment.getUpperRateReactedTotalSulfideMolality(),
+          1.0e-20);
+      assertTrue(segment.getLowerRateOutletTotalSulfideMolality() >= segment.getNominalOutletTotalSulfideMolality());
+      assertTrue(segment.getNominalOutletTotalSulfideMolality() >= segment.getUpperRateOutletTotalSulfideMolality());
+      assertTrue(segment.getLowerRateReactedTotalSulfideMolality() <= segment.getNominalReactedTotalSulfideMolality());
+      assertTrue(segment.getNominalReactedTotalSulfideMolality() <= segment.getUpperRateReactedTotalSulfideMolality());
+      if (index > 0) {
+        AqueousHydrogenSulfideOxidationTrajectory.SegmentResult previous = evidence.get(index - 1);
+        assertEquals(previous.getLowerRateOutletTotalSulfideMolality(),
+            segment.getLowerRateInletTotalSulfideMolality(), 0.0);
+        assertEquals(previous.getNominalOutletTotalSulfideMolality(),
+            segment.getNominalInletTotalSulfideMolality(), 0.0);
+        assertEquals(previous.getUpperRateOutletTotalSulfideMolality(),
+            segment.getUpperRateInletTotalSulfideMolality(), 0.0);
+      }
+      lowerReacted += segment.getLowerRateReactedTotalSulfideMolality();
+      nominalReacted += segment.getNominalReactedTotalSulfideMolality();
+      upperReacted += segment.getUpperRateReactedTotalSulfideMolality();
+    }
+
+    assertEquals(INITIAL_TOTAL_SULFIDE_MOLALITY - result.getFinalTotalSulfideMolalityAtLowerRate(), lowerReacted,
+        1.0e-20);
+    assertEquals(result.getReactedTotalSulfideMolality(), nominalReacted, 1.0e-20);
+    assertEquals(INITIAL_TOTAL_SULFIDE_MOLALITY - result.getFinalTotalSulfideMolalityAtUpperRate(), upperReacted,
+        1.0e-20);
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult last = evidence.get(evidence.size() - 1);
+    assertEquals(result.getFinalTotalSulfideMolalityAtLowerRate(),
+        last.getLowerRateOutletTotalSulfideMolality(), 0.0);
+    assertEquals(result.getFinalTotalSulfideMolality(), last.getNominalOutletTotalSulfideMolality(), 0.0);
+    assertEquals(result.getFinalTotalSulfideMolalityAtUpperRate(),
+        last.getUpperRateOutletTotalSulfideMolality(), 0.0);
+  }
+
+  @Test
+  void testZeroDurationSegmentPreservesEveryInventoryPath() {
+    double halfLife = AqueousHydrogenSulfideOxidationKinetics.halfLifeHours(AIR_SATURATED_OXYGEN_MOLALITY,
+        TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationTrajectory.Result result = AqueousHydrogenSulfideOxidationTrajectory.advance(
+        INITIAL_TOTAL_SULFIDE_MOLALITY,
+        Arrays.asList(referenceSegment(halfLife), referenceSegment(0.0), referenceSegment(halfLife)));
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult identity = result.getSegmentResults().get(1);
+
+    assertEquals(identity.getLowerRateInletTotalSulfideMolality(),
+        identity.getLowerRateOutletTotalSulfideMolality(), 0.0);
+    assertEquals(identity.getNominalInletTotalSulfideMolality(),
+        identity.getNominalOutletTotalSulfideMolality(), 0.0);
+    assertEquals(identity.getUpperRateInletTotalSulfideMolality(),
+        identity.getUpperRateOutletTotalSulfideMolality(), 0.0);
+    assertEquals(0.0, identity.getLowerRateReactedTotalSulfideMolality(), 0.0);
+    assertEquals(0.0, identity.getNominalReactedTotalSulfideMolality(), 0.0);
+    assertEquals(0.0, identity.getUpperRateReactedTotalSulfideMolality(), 0.0);
+  }
+
+  @Test
+  void testSegmentInventoryIsSplitInvariant() {
+    double halfLife = AqueousHydrogenSulfideOxidationKinetics.halfLifeHours(AIR_SATURATED_OXYGEN_MOLALITY,
+        TEMPERATURE_K, PH, IONIC_STRENGTH);
+    AqueousHydrogenSulfideOxidationTrajectory.Result unsplit = AqueousHydrogenSulfideOxidationTrajectory
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(referenceSegment(2.0 * halfLife)));
+    AqueousHydrogenSulfideOxidationTrajectory.Result split = AqueousHydrogenSulfideOxidationTrajectory
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Arrays.asList(referenceSegment(halfLife), referenceSegment(halfLife)));
+
+    double splitLowerReacted = 0.0;
+    double splitNominalReacted = 0.0;
+    double splitUpperReacted = 0.0;
+    for (AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segment : split.getSegmentResults()) {
+      splitLowerReacted += segment.getLowerRateReactedTotalSulfideMolality();
+      splitNominalReacted += segment.getNominalReactedTotalSulfideMolality();
+      splitUpperReacted += segment.getUpperRateReactedTotalSulfideMolality();
+    }
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult unsplitSegment = unsplit.getSegmentResults().get(0);
+
+    assertEquals(unsplitSegment.getLowerRateReactedTotalSulfideMolality(), splitLowerReacted, 1.0e-20);
+    assertEquals(unsplitSegment.getNominalReactedTotalSulfideMolality(), splitNominalReacted, 1.0e-20);
+    assertEquals(unsplitSegment.getUpperRateReactedTotalSulfideMolality(), splitUpperReacted, 1.0e-20);
+    assertEquals(unsplit.getFinalTotalSulfideMolality(), split.getFinalTotalSulfideMolality(), 1.0e-20);
+  }
+
+  @Test
   void testPiecewiseTargetCrossingMatchesSingleStateInverse() {
     AqueousHydrogenSulfideOxidationKinetics.TargetTimeRangeResult single = AqueousHydrogenSulfideOxidationKinetics
         .timeToRemainingFractionRange(AIR_SATURATED_OXYGEN_MOLALITY, 0.5, TEMPERATURE_K, PH, IONIC_STRENGTH);
