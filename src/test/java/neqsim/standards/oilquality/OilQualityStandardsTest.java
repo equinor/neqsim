@@ -315,8 +315,8 @@ public class OilQualityStandardsTest {
   }
 
   /**
-   * Verifies the complete strict curve contains only the seven source rows, delegates every temperature, supports units,
-   * and returns defensive arrays.
+   * Verifies the complete strict curve contains only the seven source rows, delegates every temperature, supports
+   * units, and returns defensive arrays.
    */
   @Test
   void testASTM_D86_qualifiedReferenceCurve() {
