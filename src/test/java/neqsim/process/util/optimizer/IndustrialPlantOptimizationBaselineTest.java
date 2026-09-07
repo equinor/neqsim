@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
@@ -181,6 +183,9 @@ class IndustrialPlantOptimizationBaselineTest {
     modes.add(cold);
     double coldProduct = cold.get("productMassRateKgPerHr").getAsDouble();
     String coldBottleneck = bottleneckIdentity(cold);
+    JsonObject totalPowerTransition = totalPowerTransition(fixture.process, "M-cold-total-power");
+    double coldTotalPower = totalPowerTransition.get("aggregateShaftPowerKw").getAsDouble();
+    result.add("totalPowerTransition", totalPowerTransition);
 
     for (int repetition = 1; repetition <= 5; repetition++) {
       modes.add(runAndRecord(fixture.process, "unchanged", repetition, fixture.feed, coldProduct));
@@ -213,6 +218,15 @@ class IndustrialPlantOptimizationBaselineTest {
     restored.addProperty("restoration", "FULL_REPLAY_COMPLETED");
     assertTrue(restored.get("repeatabilityAbsoluteDifferenceKgPerHr").getAsDouble() <= 0.1,
         "restored product boundary must return within 0.1 kg/hr of the cold state");
+    JsonObject restoredPower = totalPowerTransition(fixture.process, "M-restored-total-power");
+    double restoredTotalPower = restoredPower.get("aggregateShaftPowerKw").getAsDouble();
+    double restoredPowerDifference = Math.abs(coldTotalPower - restoredTotalPower);
+    double restoredPowerRelativeDifference = restoredPowerDifference / Math.max(1.0, coldTotalPower);
+    assertEquals(coldTotalPower, restoredTotalPower, Math.max(1.0, coldTotalPower) * 1.0e-7,
+        "restored line-up must reproduce shared shaft-power evidence");
+    restored.addProperty("totalPowerAbsoluteDifferenceKw", restoredPowerDifference);
+    restored.addProperty("totalPowerRelativeDifference", restoredPowerRelativeDifference);
+    restored.add("totalPowerEvidence", restoredPower);
     modes.add(restored);
 
     JsonObject transition = new JsonObject();
@@ -225,6 +239,84 @@ class IndustrialPlantOptimizationBaselineTest {
         "#3154 next increment; execution counters and cache attribution coordinate with #2939");
     result.add("bottleneckTransition", transition);
     result.add("modes", modes);
+    return result;
+  }
+
+  /** Builds compressor-local and shared-power snapshots without mutating the solved process. */
+  private JsonObject totalPowerTransition(ProcessSystem process, String calculationId) {
+    List<Compressor> compressors = new ArrayList<Compressor>();
+    PlantConstraintDefinition.Builder sharedBuilder = PlantConstraintDefinition
+        .builder("total-shaft-power", PlantConstraintScope.sharedResource("M", "compression shaft power"))
+        .aggregationPolicy(PlantConstraintDefinition.AggregationPolicy.SHARED_BUDGET)
+        .limitDirection(PlantConstraintDefinition.LimitDirection.MAXIMUM)
+        .category(PlantConstraintDefinition.Category.DESIGN).severity(ConstraintSeverity.HARD).unit("kW")
+        .basis("compressor and pump shaft power").provenance("synthetic case-M power budget");
+    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+      if (equipment instanceof Compressor) {
+        Compressor compressor = (Compressor) equipment;
+        compressors.add(compressor);
+        sharedBuilder.participant(
+            PlantConstraintParticipant.direct(compressor.getName(), "kW", "compressor and pump shaft power"));
+      }
+    }
+    assertEquals(3, compressors.size(), "case M must retain three compressor power participants");
+    PlantConstraintDefinition shared = sharedBuilder.build();
+    double totalPower = process.getPower("kW");
+    PlantSharedResourceEvidence initialShared = PlantSharedResourceEvidence.fromProcessSystemShaftPower(shared,
+        calculationId, totalPower * 1.20, process, true, "completed case-M calculation");
+    PlantSharedResourceEvidence tightenedShared = PlantSharedResourceEvidence.fromProcessSystemShaftPower(shared,
+        calculationId, totalPower * 0.95, process, true, "completed case-M calculation");
+    assertTrue(initialShared.isComplete(), initialShared.getDiagnostics().toString());
+    assertTrue(tightenedShared.isComplete(), tightenedShared.getDiagnostics().toString());
+
+    PlantConstraintRegistry registry = new PlantConstraintRegistry();
+    List<PlantConstraintDefinition> compressorDefinitions = new ArrayList<PlantConstraintDefinition>();
+    for (Compressor compressor : compressors) {
+      PlantConstraintDefinition definition = PlantConstraintDefinition
+          .builder("shaft-power", PlantConstraintScope.equipment("M", "Compression", compressor.getName()))
+          .limitDirection(PlantConstraintDefinition.LimitDirection.MAXIMUM)
+          .category(PlantConstraintDefinition.Category.DESIGN).severity(ConstraintSeverity.HARD).unit("kW")
+          .basis("compressor shaft power").provenance("synthetic casing rating").build();
+      compressorDefinitions.add(definition);
+      registry.register(definition);
+    }
+    registry.register(shared);
+
+    PlantUtilizationSnapshot.Builder initialSnapshot = PlantUtilizationSnapshot.builder(registry, calculationId)
+        .convergenceComplete(true).sample(initialShared.toPlantConstraintSample());
+    PlantUtilizationSnapshot.Builder tightenedSnapshot = PlantUtilizationSnapshot.builder(registry, calculationId)
+        .convergenceComplete(true).sample(tightenedShared.toPlantConstraintSample());
+    for (int index = 0; index < compressors.size(); index++) {
+      Compressor compressor = compressors.get(index);
+      PlantConstraintDefinition definition = compressorDefinitions.get(index);
+      double power = compressor.getPower("kW");
+      double limit = power * 1.05;
+      PlantConstraintSample sample = PlantConstraintSample.builder(definition.getQualifiedId(), calculationId)
+          .values(power, limit).normalized(power / limit, power / limit - 1.0)
+          .physical(limit - power, Math.max(0.0, power - limit)).unit("kW").basis("compressor shaft power")
+          .provenance("completed case-M calculation").build();
+      initialSnapshot.sample(sample);
+      tightenedSnapshot.sample(sample);
+    }
+    PlantUtilizationSnapshot initial = initialSnapshot.build();
+    PlantUtilizationSnapshot tightened = tightenedSnapshot.build();
+    assertTrue(initial.isFeasible());
+    assertFalse(tightened.isFeasible());
+    assertTrue(initial.getBottleneck().getQualifiedConstraintId().startsWith("equipment:"));
+    assertEquals(shared.getQualifiedId(), tightened.getBottleneck().getQualifiedConstraintId());
+
+    JsonObject result = new JsonObject();
+    result.addProperty("status", "QUALIFIED");
+    result.addProperty("basis", "compressor and pump shaft power; no electrical conversion inferred");
+    result.addProperty("participantCount", initialShared.getParticipants().size());
+    result.addProperty("aggregateShaftPowerKw", totalPower);
+    result.addProperty("initialLimitKw", initialShared.getApplicableLimit());
+    result.addProperty("tightenedLimitKw", tightenedShared.getApplicableLimit());
+    result.addProperty("initialBottleneck", initial.getBottleneck().getQualifiedConstraintId());
+    result.addProperty("tightenedBottleneck", tightened.getBottleneck().getQualifiedConstraintId());
+    result.addProperty("tightenedRequiredReliefKw", tightenedShared.getRequiredRelief());
+    result.addProperty("participantCoverageComplete", initialShared.isComplete());
+    result.addProperty("collectionMutatesProcess", false);
     return result;
   }
 
