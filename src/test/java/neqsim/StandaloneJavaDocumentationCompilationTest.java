@@ -34,24 +34,33 @@ import org.junit.jupiter.api.io.TempDir;
  */
 public class StandaloneJavaDocumentationCompilationTest {
   private static final int EXPECTED_EXAMPLE_COUNT = 14;
+  private static final List<String> LOG4J2_EXAMPLES =
+      Arrays.asList(
+          "EclipseE300ExportImportExample.java",
+          "FlowRegimeDebug.java",
+          "FlowRegimeDetectionExample.java");
 
   @TempDir
   Path compilationOutput;
 
   /** Verifies that modernized standalone examples use the repository logging policy. */
   @Test
-  void testModernizedStandaloneExampleUsesLog4j2() throws IOException {
-    Path sourceFile = Paths
-        .get(System.getProperty("user.dir"), "docs", "examples", "EclipseE300ExportImportExample.java")
-        .toAbsolutePath();
-    String source = new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
+  void testModernizedStandaloneExamplesUseLog4j2() throws IOException {
+    Path examplesDirectory =
+        Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
 
-    assertFalse(source.contains("System.out"), "Modernized example must not write to System.out");
-    assertFalse(source.contains("System.err"), "Modernized example must not write to System.err");
-    assertFalse(source.contains("printStackTrace"),
-        "Modernized example must preserve exception context through Log4j2");
-    assertTrue(source.contains("LogManager.getLogger(EclipseE300ExportImportExample.class)"),
-        "Modernized example must declare a class-scoped Log4j2 logger");
+    for (String example : LOG4J2_EXAMPLES) {
+      Path sourceFile = examplesDirectory.resolve(example);
+      String source = new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
+      String className = example.substring(0, example.length() - ".java".length());
+
+      assertFalse(source.contains("System.out"), example + " must not write to System.out");
+      assertFalse(source.contains("System.err"), example + " must not write to System.err");
+      assertFalse(source.contains("printStackTrace"),
+          example + " must preserve exception context through Log4j2");
+      assertTrue(source.contains("LogManager.getLogger(" + className + ".class)"),
+          example + " must declare a class-scoped Log4j2 logger");
+    }
   }
 
   /** Verifies that the complete standalone documentation-example corpus matches the current API. */
