@@ -298,7 +298,7 @@ status or otherwise apply its interruption policy.
 The dispatcher applies these source-owned rules:
 
 1. An `Adjuster` or `MultiVariableAdjuster` selects `runSequential(UUID)` because its implicit
-   feedback is not represented by stream dependencies.
+   feedback uses signal dependencies rather than material-stream connections.
 2. A `Recycle` with no adjuster selects `runHybrid(UUID)`.
 3. Cyclic stream topology without an explicit `Recycle` selects sequential fixed-point iteration.
 4. A feed-forward graph that is sufficiently large and has useful parallel tasks selects
@@ -316,7 +316,9 @@ pressure, enthalpy, and component flows (relative tolerance $10^{-8}$ with absol
 $10^{-7}$ K, $10^{-8}$ bar, $10^{-5}$ W, and $10^{-10}$ mol/s respectively). The first pass
 cannot establish convergence. Failure to converge in 100 passes raises `IllegalStateException`;
 `run()` records the failed run status. Single-step mode remains a partial iteration. Explicit
-`Recycle` equipment retains its existing convergence controls.
+`Recycle` equipment retains its existing convergence controls. Signal-only cycles from
+adjusters and calculators do not activate material-loop convergence. A material-stream cycle
+still requires convergence when an adjuster is also present.
 
 Use one calculation identifier for all units in a run:
 

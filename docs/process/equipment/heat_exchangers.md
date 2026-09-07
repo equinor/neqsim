@@ -102,7 +102,7 @@ After `run()`, read `getDuty()` in W or `getDuty(unit)` in a supported power uni
 
 A gas–gas exchanger whose cold inlet comes from a downstream chiller and separator forms a
 feedback loop even though there is no material recycle to the feed. `ProcessSystem` detects
-this cyclic stream topology when no explicit `Recycle` unit is present and iterates complete
+this cyclic material-stream topology when no explicit `Recycle` unit is present and iterates complete
 sequential passes until outlet temperatures, pressures, enthalpies, and component flows stabilize.
 The optimized, parallel, dataflow, hybrid, and sequential entry points use this convergence path.
 

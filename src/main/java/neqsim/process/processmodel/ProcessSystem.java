@@ -1678,7 +1678,43 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return true for cyclic stream topology without Recycle equipment
    */
   private boolean hasImplicitRecycleLoops() {
-    return !hasRecycles() && hasRecycleLoops();
+    if (hasRecycles() || !hasRecycleLoops()) {
+      return false;
+    }
+    // The full graph also contains adjuster/calculator signal feedback. Only
+    // physical stream dependencies require implicit outlet-state convergence.
+    ProcessGraph graph = buildGraph();
+    Map<ProcessNode, Integer> incoming = new IdentityHashMap<>();
+    Deque<ProcessNode> ready = new LinkedList<>();
+    for (ProcessNode node : graph.getNodes()) {
+      incoming.put(node, 0);
+    }
+    for (ProcessEdge edge : graph.getEdges()) {
+      if (edge.getEdgeType() == ProcessEdge.EdgeType.MATERIAL) {
+        incoming.put(edge.getTarget(), incoming.get(edge.getTarget()) + 1);
+      }
+    }
+    for (ProcessNode node : graph.getNodes()) {
+      if (incoming.get(node) == 0) {
+        ready.add(node);
+      }
+    }
+    int visited = 0;
+    while (!ready.isEmpty()) {
+      ProcessNode node = ready.removeFirst();
+      visited++;
+      for (ProcessEdge edge : node.getOutgoingEdges()) {
+        if (edge.getEdgeType() == ProcessEdge.EdgeType.MATERIAL) {
+          ProcessNode target = edge.getTarget();
+          int remaining = incoming.get(target) - 1;
+          incoming.put(target, remaining);
+          if (remaining == 0) {
+            ready.add(target);
+          }
+        }
+      }
+    }
+    return visited < graph.getNodes().size();
   }
 
   /**

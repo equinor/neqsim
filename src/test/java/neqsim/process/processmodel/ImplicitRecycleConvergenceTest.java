@@ -6,10 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Adjuster;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -43,8 +44,8 @@ class ImplicitRecycleConvergenceTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
-  void unconvergedLoopFailsInsteadOfReportingSuccess(boolean changeComposition) {
+  @CsvSource({ "false,false", "true,false", "false,true", "true,true" })
+  void unconvergedLoopFailsInsteadOfReportingSuccess(boolean changeComposition, boolean addAdjuster) {
     SystemInterface fluid = new SystemSrkEos(300.0, 20.0);
     fluid.addComponent("methane", 0.8);
     fluid.addComponent("ethane", 0.2);
@@ -58,6 +59,14 @@ class ImplicitRecycleConvergenceTest extends neqsim.NeqSimTest {
     ProcessSystem process = new ProcessSystem();
     process.add(oscillator);
     process.add(feedback);
+    if (addAdjuster) {
+      // An unrelated signal controller must not hide a real material-stream cycle.
+      Adjuster adjuster = new Adjuster("pressure controller");
+      adjuster.setAdjustedVariable(seed, "pressure", "bara");
+      adjuster.setTargetVariable(seed, "pressure", 20.0, "bara");
+      process.add(seed);
+      process.add(adjuster);
+    }
     assertTrue(process.hasRecycleLoops());
     IllegalStateException error = assertThrows(IllegalStateException.class, process::run);
     assertTrue(error.getMessage().contains("Implicit recycle loop did not converge"));

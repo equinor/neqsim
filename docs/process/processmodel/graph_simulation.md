@@ -164,7 +164,7 @@ process.runOptimized();
 
 | Condition | Strategy | Reason |
 |-----------|----------|--------|
-| Has `Adjuster`/`MultiVariableAdjuster` units | `runSequential()` | Implicit feedback is not represented by stream dependencies |
+| Has `Adjuster`/`MultiVariableAdjuster` units | `runSequential()` | Signal feedback requires iterative controller execution |
 | Has `Recycle` units | `runHybrid()` | Feed-forward levels can run in parallel; the recycle section iterates |
 | Cyclic stream topology without explicit `Recycle` units | Sequential iteration | Converges thermal and component-flow feedback before returning |
 | Feed-forward, at least eight units, useful independent tasks | `runDataflow()` | Direct predecessor scheduling avoids unnecessary level barriers |
@@ -177,7 +177,9 @@ process.runOptimized();
 - `FurnaceBurner`, `FlareStack`
 
 **Note:** `hasRecycles()` checks for explicit `Recycle` unit operations. `hasRecycleLoops()`
-checks graph cycles, including recuperator loops without an explicit recycle. Those implicit
+checks graph cycles, including signal feedback and recuperator loops without an explicit
+recycle. Only cycles formed by material-stream edges activate implicit outlet-state
+convergence; signal-only adjuster feedback keeps its existing convergence handling. Those implicit
 loops use sequential fixed-point iteration, including when parallel, dataflow, or hybrid
 execution is requested directly. They must stabilize outlet temperature, pressure, enthalpy,
 and component flows within 100 complete passes or throw; see
