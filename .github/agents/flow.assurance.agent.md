@@ -109,6 +109,16 @@ response schema. Gate the result on convergence, pressure-floor, and wall-clock
 findings, then apply the steady/transient limitations in the loaded
 `neqsim-flow-assurance` skill.
 
+Before routing a mechanistic steady or transient study, read
+`docs/process/twofluidpipe-evidence-matrix.md`. Distinguish implemented,
+numerically verified, experimentally qualified, failed, and unsupported rows.
+Do not route severe-slugging loads, slug statistics, default liquid-rich
+long-horizon dynamics, named-component reverse outlet inflow without an external
+composition, or unsupported multi-stage coupled phase appearance as qualified
+NeqSim work. Use a separately qualified simulator or controlled experiment for
+those cases, while preserving NeqSim fluids and boundary conditions for a
+traceable handoff.
+
 When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
 basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless
 screen. Do not infer effective mass, axial force, hydrodynamic diameter, or trigger values silently

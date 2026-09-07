@@ -7,10 +7,16 @@ description: The NeqSim `TwoFluidPipe` model implements a transient multiphase-f
 
 ## Release scope and current validation
 
-The phase-consistency repairs in PR #3514 correct steady/transient thermodynamic
-updates, conservative accumulation observation, integrated closure forces, and
-three-phase hydraulic viscosity consistency. They do not establish general
-experimental accuracy for multiphase transients.
+The canonical status vocabulary, row-by-row evidence, executable example, and
+supported-use boundary are maintained in the
+[TwoFluidPipe Evidence Matrix and Supported Envelope](twofluidpipe-evidence-matrix).
+Use that matrix before selecting a configuration; implementation, numerical
+verification, and public experimental qualification are different claims.
+
+The evidence chain in merged PRs #3514, #3541, #3543, and #3547 covers
+steady/transient consistency, public benchmark reporting, three-phase steady
+convergence, and coupled component/phase/thermal ledgers. It does not establish
+general experimental accuracy for multiphase transients.
 
 | Configuration | Current evidence | Release interpretation |
 |---|---|---|
@@ -31,14 +37,16 @@ the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds n
 completed cycle intervals, and pressure limits still activate. Do not use these
 results as qualification of slug loads or extreme pressure transients.
 
-Implementation evidence at commit `bfd3bb0`: 153 selected tests passed, two existing
-tests skipped, and no failures. These local checks do not replace the full CI
-matrix on the final release candidate. Release inclusion requires successful
-required checks and review; an open draft PR is not an available released feature.
+The public Mohmmed slug-kinematics sweep remains experimentally unqualified:
+its baseline passes 3/9 fixed gates and its mesh/time-step refinement is
+non-monotone. The compact uphill gas/oil/water case is numerically verified on
+30 and 60 cells, but the historical 73.8 km free-water input is unavailable and
+is not covered. The coupled component/phase/thermal case is a closed, seeded
+marker conservation test; it does not qualify spontaneous or sustained slugging.
 
 Later sections preserve earlier measurements to explain the repair history.
 Read those results with their stated configuration and revision; they are not
-additional claims about the current defaults.
+additional claims about the current defaults or released experimental accuracy.
 
 ## Overview
 
