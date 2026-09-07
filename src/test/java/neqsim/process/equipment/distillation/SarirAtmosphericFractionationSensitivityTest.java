@@ -81,6 +81,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
     StreamInterface[] products = { overhead, kerosene, diesel, bottoms };
 
     assertBalances(column, feed, products);
+    assertReadOnlyPlantYieldComparisons(products);
 
     double feedMassFlow = feed.getFlowRate("kg/hr");
     double[] productMassFractions = new double[products.length];
@@ -199,6 +200,17 @@ public class SarirAtmosphericFractionationSensitivityTest {
     assertTrue(column.getLastTrayMaterialBalanceError() <= column.getTrayMaterialBalanceTolerance(),
         column.getConvergenceDiagnostics());
     assertComponentMolarBalance(feed, products);
+  }
+
+  private static void assertReadOnlyPlantYieldComparisons(StreamInterface[] products) {
+    String[] productLabels = { "Total Naphtha", "Kerosene", "Diesel", "Residual" };
+    assertEquals(productLabels.length, products.length);
+    for (int i = 0; i < products.length; i++) {
+      ProductYieldReference target = SarirAtmosphericReference.getProductYield(productLabels[i]);
+      double errorPercent = target
+          .calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(products[i].getFlowRate("kg/hr"));
+      assertTrue(Double.isFinite(errorPercent) && errorPercent >= 0.0);
+    }
   }
 
   private static void assertComponentMolarBalance(Stream feed, StreamInterface... products) {

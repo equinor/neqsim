@@ -29,6 +29,9 @@ public final class SarirAtmosphericReference {
   /** Source publication date in ISO-8601 format. */
   public static final String PUBLICATION_DATE = "2022-03-31";
 
+  private static final double KILOGRAMS_PER_METRIC_TONNE = 1000.0;
+  private static final double HOURS_PER_DAY = 24.0;
+
   private static final double[] TBP_TEMPERATURE_CELSIUS = { 70.0, 90.0, 110.0, 150.0, 195.0, 215.0, 255.0, 275.0, 295.0,
       335.0, 370.0, 400.0, 460.0, 480.0, 500.0, 520.0, 550.0 };
   private static final double[] TBP_VOLUME_PERCENT = { 7.44, 10.47, 13.83, 21.16, 28.52, 31.54, 38.03, 41.76, 44.68,
@@ -48,8 +51,10 @@ public final class SarirAtmosphericReference {
       new ProductSpecificationReference("Residual", Double.NaN, "<550+", true) };
 
   private static final ProductYieldReference[] PRODUCT_YIELDS = {
-      new ProductYieldReference("Total Naphtha", 208.95, 208.2), new ProductYieldReference("Kerosene", 22.85, 20.0),
-      new ProductYieldReference("Diesel", 425.018, 393.0), new ProductYieldReference("Residual", 646.5, 706.1) };
+      new ProductYieldReference("Total Naphtha", "Naphtha", 208.95, 208.2),
+      new ProductYieldReference("Kerosene", "Kerosene product", 22.85, 20.0),
+      new ProductYieldReference("Diesel", "Diesel product", 425.018, 393.0),
+      new ProductYieldReference("Residual", "Residual", 646.5, 706.1) };
 
   private static final PumparoundReference[] PUMPAROUNDS = {
       new PumparoundReference("Top pump around (TPA)", 3, 1, 29777.64, 143.9, 80.99),
@@ -164,6 +169,53 @@ public final class SarirAtmosphericReference {
   /** @return defensive copy of independent plant/simulation product-yield comparison rows */
   public static ProductYieldReference[] getProductYields() {
     return PRODUCT_YIELDS.clone();
+  }
+
+  /** @return total measured plant rate for the four hydrocarbon products, in kg/h */
+  public static double getPublishedPlantProductMassFlowTotalKgPerHour() {
+    double total = 0.0;
+    for (ProductYieldReference product : PRODUCT_YIELDS) {
+      total += product.getPlantMassFlowRateKgPerHour();
+    }
+    return total;
+  }
+
+  /** @return total source-simulated rate for the four hydrocarbon products, in kg/h */
+  public static double getPublishedSimulationProductMassFlowTotalKgPerHour() {
+    double total = 0.0;
+    for (ProductYieldReference product : PRODUCT_YIELDS) {
+      total += product.getSimulationMassFlowRateKgPerHour();
+    }
+    return total;
+  }
+
+  /** @return total Table 3 rate for the corresponding hydrocarbon outlets, in kg/h */
+  public static double getPublishedAduHydrocarbonProductMassFlowTotalKgPerHour() {
+    double total = 0.0;
+    for (ProductYieldReference product : PRODUCT_YIELDS) {
+      total += product.getPublishedAduMassFlowRateKgPerHour();
+    }
+    return total;
+  }
+
+  /**
+   * Calculate the absolute difference between the converted plant total and the Table 3 hydrocarbon outlet total.
+   *
+   * @return source cross-table difference in kg/h
+   */
+  public static double calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceKgPerHour() {
+    return Math.abs(
+        getPublishedPlantProductMassFlowTotalKgPerHour() - getPublishedAduHydrocarbonProductMassFlowTotalKgPerHour());
+  }
+
+  /**
+   * Calculate the fractional source cross-table difference relative to the converted plant total.
+   *
+   * @return dimensionless absolute difference fraction
+   */
+  public static double calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceFraction() {
+    return calculatePublishedPlantToAduHydrocarbonMassFlowDifferenceKgPerHour()
+        / getPublishedPlantProductMassFlowTotalKgPerHour();
   }
 
   /**
@@ -758,11 +810,14 @@ public final class SarirAtmosphericReference {
   public static final class ProductYieldReference implements Serializable {
     private static final long serialVersionUID = 1000L;
     private final String name;
+    private final String aduStreamName;
     private final double plantMetricTonPerDay;
     private final double simulationMetricTonPerDay;
 
-    private ProductYieldReference(String name, double plantMetricTonPerDay, double simulationMetricTonPerDay) {
+    private ProductYieldReference(String name, String aduStreamName, double plantMetricTonPerDay,
+        double simulationMetricTonPerDay) {
       this.name = name;
+      this.aduStreamName = aduStreamName;
       this.plantMetricTonPerDay = plantMetricTonPerDay;
       this.simulationMetricTonPerDay = simulationMetricTonPerDay;
     }
@@ -770,6 +825,11 @@ public final class SarirAtmosphericReference {
     /** @return exact source-table product label */
     public String getName() {
       return name;
+    }
+
+    /** @return exact corresponding outlet label from the published ADU stream table */
+    public String getAduStreamName() {
+      return aduStreamName;
     }
 
     /** @return measured refinery product rate in metric tonnes/day */
@@ -782,9 +842,48 @@ public final class SarirAtmosphericReference {
       return simulationMetricTonPerDay;
     }
 
+    /** @return measured refinery product rate converted to kg/h */
+    public double getPlantMassFlowRateKgPerHour() {
+      return plantMetricTonPerDay * KILOGRAMS_PER_METRIC_TONNE / HOURS_PER_DAY;
+    }
+
+    /** @return source-simulated product rate converted to kg/h */
+    public double getSimulationMassFlowRateKgPerHour() {
+      return simulationMetricTonPerDay * KILOGRAMS_PER_METRIC_TONNE / HOURS_PER_DAY;
+    }
+
+    /** @return corresponding source Table 3 outlet rate in kg/h */
+    public double getPublishedAduMassFlowRateKgPerHour() {
+      return getAduStream(aduStreamName).getMassFlowRateKgPerHour();
+    }
+
+    /** @return measured plant rate divided by the published crude feed rate */
+    public double getPlantFractionOfCrudeFeed() {
+      return getPlantMassFlowRateKgPerHour() / getColumnCrudeFeedRateKgPerHour();
+    }
+
+    /** @return source-simulated rate divided by the published crude feed rate */
+    public double getSimulationFractionOfCrudeFeed() {
+      return getSimulationMassFlowRateKgPerHour() / getColumnCrudeFeedRateKgPerHour();
+    }
+
     /** @return absolute relative rate error against the measured plant value, in percent */
     public double getAbsoluteRelativeErrorPercent() {
       return calculateAbsoluteRelativeErrorPercent(plantMetricTonPerDay, simulationMetricTonPerDay);
+    }
+
+    /**
+     * Compare a calculated product mass flow with the measured plant value.
+     *
+     * @param calculatedMassFlowRateKgPerHour finite non-negative calculated rate in kg/h
+     * @return absolute relative error against the measured plant value, in percent
+     * @throws IllegalArgumentException if the calculated rate is negative or non-finite
+     */
+    public double calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(double calculatedMassFlowRateKgPerHour) {
+      if (!Double.isFinite(calculatedMassFlowRateKgPerHour) || calculatedMassFlowRateKgPerHour < 0.0) {
+        throw new IllegalArgumentException("Calculated product mass flow must be finite and non-negative");
+      }
+      return calculateAbsoluteRelativeErrorPercent(getPlantMassFlowRateKgPerHour(), calculatedMassFlowRateKgPerHour);
     }
   }
 }
