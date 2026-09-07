@@ -213,7 +213,7 @@ public final class UtilizationCoverageReport implements Serializable {
 
   /** @return immutable sampled rows in stable equipment and constraint order */
   public List<Row> getRows() {
-    return rows;
+    return Collections.unmodifiableList(new ArrayList<Row>(rows));
   }
 
   /** @return immutable list of evidence gaps in the declared scope */
