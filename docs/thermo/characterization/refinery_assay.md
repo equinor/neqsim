@@ -207,14 +207,31 @@ double directBlendNumber =
     RefineryViscosityBlend.calculateViscosityBlendingNumber(550.0);
 double directViscosityCSt =
     RefineryViscosityBlend.calculateKinematicViscosityCSt(directBlendNumber);
+
+RefineryViscosityBlend plannedBlend =
+    RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(
+        550.0, 375.0, 418.68738293612904, 50.0);
+double[] plannedMassFractions = plannedBlend.getMassFractions();
 ```
+
+For two distinct source viscosities, the target factory solves the unique mass fractions in VBN
+space:
+
+$x_1=\frac{VBN_{target}-VBN_2}{VBN_1-VBN_2}$
+
+$x_2=1-x_1$
+
+The target must lie inside the closed interval formed by the two source viscosities. Exact endpoint
+targets return a pure-source result. Equal-viscosity sources fail closed because their mass ratio is
+not uniquely determined.
 
 The equations and mass-weighting basis follow Centeno et al.,
 [DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028).
 The fixed binary example above is an independently recomputed arithmetic reference, not measured
 blend evidence. This API does not claim physical prediction accuracy, uncertainty, ASTM
 compliance, dynamic-viscosity conversion, viscosity-temperature extrapolation, non-Newtonian
-behavior, pressure correction, phase behavior, compatibility, or optimization.
+behavior, pressure correction, phase behavior, compatibility, multi-source or multi-property
+optimization, economics, or control.
 
 ## Per-cut UOP/Watson characterization factor
 
