@@ -92,12 +92,11 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
       double lowerRateOutletTotalSulfideMolality = initialTotalSulfideMolality * Math.exp(-lowerRateExposure);
       double nominalOutletTotalSulfideMolality = initialTotalSulfideMolality * Math.exp(-nominalExposure);
       double upperRateOutletTotalSulfideMolality = initialTotalSulfideMolality * Math.exp(-upperRateExposure);
-      double lowerRateReactedTotalSulfideMolality =
-          lowerRateInletTotalSulfideMolality - lowerRateOutletTotalSulfideMolality;
-      double nominalReactedTotalSulfideMolality =
-          nominalInletTotalSulfideMolality - nominalOutletTotalSulfideMolality;
-      double upperRateReactedTotalSulfideMolality =
-          upperRateInletTotalSulfideMolality - upperRateOutletTotalSulfideMolality;
+      double lowerRateReactedTotalSulfideMolality = lowerRateInletTotalSulfideMolality
+          - lowerRateOutletTotalSulfideMolality;
+      double nominalReactedTotalSulfideMolality = nominalInletTotalSulfideMolality - nominalOutletTotalSulfideMolality;
+      double upperRateReactedTotalSulfideMolality = upperRateInletTotalSulfideMolality
+          - upperRateOutletTotalSulfideMolality;
       requireFiniteNonNegative(lowerRateOutletTotalSulfideMolality, "lower-rate outlet total sulfide");
       requireFiniteNonNegative(nominalOutletTotalSulfideMolality, "nominal outlet total sulfide");
       requireFiniteNonNegative(upperRateOutletTotalSulfideMolality, "upper-rate outlet total sulfide");
@@ -108,11 +107,10 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
       segmentResults.add(new SegmentResult(index, segment, rateRange.getLower(), rateRange.getNominal(),
           rateRange.getUpper(), lowerPseudoFirstOrderRate, nominalPseudoFirstOrderRate, upperPseudoFirstOrderRate,
           segmentLowerRateExposure, segmentNominalExposure, segmentUpperRateExposure, lowerRateExposure,
-          nominalExposure, upperRateExposure, lowerRateInletTotalSulfideMolality,
-          lowerRateOutletTotalSulfideMolality, lowerRateReactedTotalSulfideMolality,
-          nominalInletTotalSulfideMolality, nominalOutletTotalSulfideMolality,
-          nominalReactedTotalSulfideMolality, upperRateInletTotalSulfideMolality,
-          upperRateOutletTotalSulfideMolality, upperRateReactedTotalSulfideMolality));
+          nominalExposure, upperRateExposure, lowerRateInletTotalSulfideMolality, lowerRateOutletTotalSulfideMolality,
+          lowerRateReactedTotalSulfideMolality, nominalInletTotalSulfideMolality, nominalOutletTotalSulfideMolality,
+          nominalReactedTotalSulfideMolality, upperRateInletTotalSulfideMolality, upperRateOutletTotalSulfideMolality,
+          upperRateReactedTotalSulfideMolality));
 
       lowerRateInletTotalSulfideMolality = lowerRateOutletTotalSulfideMolality;
       nominalInletTotalSulfideMolality = nominalOutletTotalSulfideMolality;
