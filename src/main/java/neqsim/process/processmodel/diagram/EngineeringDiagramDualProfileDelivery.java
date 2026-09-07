@@ -17,8 +17,7 @@ import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Publishes coordinated PFD and review-required P&amp;ID proposal deliveries from one canonical
- * {@link ProcessSystem}.
+ * Publishes coordinated PFD and review-required P&amp;ID proposal deliveries from one canonical {@link ProcessSystem}.
  *
  * <p>
  * Both views are generated from the same process object and must retain the same canonical source-graph fingerprint.
@@ -92,18 +91,13 @@ public final class EngineeringDiagramDualProfileDelivery {
       private final String pidDrawingNumber;
       private final String title;
       private String operatingCaseId;
-      private NativeEngineeringDiagramRenderer.SheetFormat sheetFormat =
-          NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE;
-      private NativeEngineeringDiagramRenderer.RoutingMode routingMode =
-          NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL;
-      private EngineeringDiagramDesignationRegister designationRegister =
-          new EngineeringDiagramDesignationRegister();
+      private NativeEngineeringDiagramRenderer.SheetFormat sheetFormat = NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE;
+      private NativeEngineeringDiagramRenderer.RoutingMode routingMode = NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL;
+      private EngineeringDiagramDesignationRegister designationRegister = new EngineeringDiagramDesignationRegister();
       private EngineeringDiagramLayoutRegister layoutRegister = new EngineeringDiagramLayoutRegister();
-      private EngineeringDiagramConventionRegister conventionRegister =
-          new EngineeringDiagramConventionRegister();
+      private EngineeringDiagramConventionRegister conventionRegister = new EngineeringDiagramConventionRegister();
 
-      private Builder(String plantId, String revision, String pfdDrawingNumber, String pidDrawingNumber,
-          String title) {
+      private Builder(String plantId, String revision, String pfdDrawingNumber, String pidDrawingNumber, String title) {
         this.plantId = plantId;
         this.revision = revision;
         this.pfdDrawingNumber = pfdDrawingNumber;
@@ -161,8 +155,7 @@ public final class EngineeringDiagramDualProfileDelivery {
     private final EngineeringDiagramDelivery.Report pid;
     private final String fingerprint;
 
-    private Report(Path directory, EngineeringDiagramDelivery.Report pfd,
-        EngineeringDiagramDelivery.Report pid) {
+    private Report(Path directory, EngineeringDiagramDelivery.Report pfd, EngineeringDiagramDelivery.Report pid) {
       this.directory = directory;
       this.pfd = pfd;
       this.pid = pid;
@@ -192,8 +185,7 @@ public final class EngineeringDiagramDualProfileDelivery {
     /** @return whether both deliveries passed and retained one canonical source graph */
     public boolean isComplete() {
       return pfd.isComplete() && pid.isComplete()
-          && pfd.getDocumentSet().getSourceGraphFingerprint()
-              .equals(pid.getDocumentSet().getSourceGraphFingerprint());
+          && pfd.getDocumentSet().getSourceGraphFingerprint().equals(pid.getDocumentSet().getSourceGraphFingerprint());
     }
 
     /** @return deterministic machine-readable evidence */
@@ -247,10 +239,10 @@ public final class EngineeringDiagramDualProfileDelivery {
     }
     Files.createDirectories(target);
     try {
-      EngineeringDiagramDelivery.Report pfd = EngineeringDiagramDelivery.deliver(processSystem,
-          target.resolve("pfd"), deliveryRequest(request, ContentProfile.PFD, request.pfdDrawingNumber));
-      EngineeringDiagramDelivery.Report pid = EngineeringDiagramDelivery.deliver(processSystem,
-          target.resolve("pid"), deliveryRequest(request, ContentProfile.PID, request.pidDrawingNumber));
+      EngineeringDiagramDelivery.Report pfd = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pfd"),
+          deliveryRequest(request, ContentProfile.PFD, request.pfdDrawingNumber));
+      EngineeringDiagramDelivery.Report pid = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pid"),
+          deliveryRequest(request, ContentProfile.PID, request.pidDrawingNumber));
       Report report = new Report(target, pfd, pid);
       if (!report.isComplete()) {
         throw new IOException("PFD and P&ID deliveries do not retain one complete canonical plant");

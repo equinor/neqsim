@@ -64,11 +64,9 @@ class EngineeringDiagramDualProfileDeliveryTest {
     EngineeringDiagramDualProfileDelivery.Request request = EngineeringDiagramDualProfileDelivery.Request
         .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression").build();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> EngineeringDiagramDualProfileDelivery.deliver(
-            EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), existing, request));
-    assertThrows(IllegalArgumentException.class,
-        () -> EngineeringDiagramDualProfileDelivery.Request
-            .builder(" ", "A", "PFD-10-001", "PID-10-001", "Separation and compression").build());
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramDualProfileDelivery
+        .deliver(EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), existing, request));
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramDualProfileDelivery.Request
+        .builder(" ", "A", "PFD-10-001", "PID-10-001", "Separation and compression").build());
   }
 }

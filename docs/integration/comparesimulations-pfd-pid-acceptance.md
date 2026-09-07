@@ -1,3 +1,8 @@
+---
+title: Separation/compression PFD and P&ID visual acceptance
+description: Coordinated dual-profile source-fidelity, exchange, rendering, and qualification requirements for the public comparesimulations2 model.
+---
+
 # Separation/compression PFD and P&ID visual acceptance
 
 This reference tracks the coordinated visual-acceptance milestone in
