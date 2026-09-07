@@ -1562,14 +1562,14 @@ def test_capabilities():
         "listSimulationUnits",
         "listUnitVariables",
         "getSimulationVariable", "setSimulationVariable",
-        "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
-        "getAutomationLearningReport",
+        "saveSimulationState", "compareSimulationStates", "generateVisualization",
+        "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("twenty-eight bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.28"
-          and limitations.get("contractTestedToolCount") == 28
-          and limitations.get("confirmedGapToolCount") == 23
+    check("twenty-nine bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.29"
+          and limitations.get("contractTestedToolCount") == 29
+          and limitations.get("confirmedGapToolCount") == 22
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1643,6 +1643,15 @@ def test_capabilities():
           and "does not execute or recompute a simulation"
           in workflow_handoff.get("evidenceBoundary", ""),
           str(workflow_handoff))
+    visualization = coverage_records.get("generateVisualization", {})
+    check("visualization generation has bounded contract evidence",
+          visualization.get("coverageStatus") == "CONTRACT_TESTED"
+          and visualization.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_VISUALIZATION_GENERATION"
+          and "neqsim-mcp-server/test_visualization_protocol.py"
+          in visualization.get("contractEvidenceSources", [])
+          and "browser fidelity" in visualization.get("evidenceBoundary", ""),
+          str(visualization))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1660,7 +1669,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 23
+          and limitations.get("confirmedGapToolCount") == 22
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
