@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-09-05"
+last_verified: "2026-09-07"
 ---
 
 # Dynamic Simulation Guidance
@@ -423,6 +423,12 @@ requires the controlled context attribute `distributedTransientModel=approved`.
 
 ## TwoFluidPipe Phase Appearance and Disappearance
 
+Read the
+[TwoFluidPipe evidence matrix](../../../docs/process/twofluidpipe-evidence-matrix.md)
+before selecting a steady or transient configuration. It is the canonical
+distinction between implemented, numerically verified, experimentally qualified,
+failed, and unsupported behavior.
+
 When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase
 resolved. Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
@@ -444,9 +450,18 @@ oil or water seeding. Check gas, oil, water, liquid, and total closure with
 `TwoFluidMassBalanceReport`; sweep nearby temperatures, refine time step and mesh, repeat the run,
 and compare rigorous flash with `FlashTable`. The flash table must retain the oil/aqueous liquid mass
 split. Record EOS, mixing rule, composition, absolute pressure, temperature, mass-transfer
-relaxation time, and units. The current hydrodynamic state transports bulk phase inventories, not a
-full component-composition vector per cell, and does not establish equivalence with any commercial
-transient multiphase simulator.
+relaxation time, and units. With named-component transport, freeze component source compositions
+and their partial-enthalpy latent source from the same RHS-stage equilibrium state as the
+hydrodynamic phase source. A disappearing phase uses its conserved donor composition for the
+property state; a receiving phase still uses only the equilibrium flash composition. Require
+phase, total, named-component, interphase, bounded-fraction, and latent-inclusive energy closure.
+
+The conservative Lagrangian slug/film + named-component + phase-transfer + thermal combination is
+currently verified only with single-stage Euler. Reject a multi-stage selection before mutation
+until intermediate phase appearance owns stage-local component inventories. Also reject signed
+outlet backflow with named-component transport unless a physical external outlet composition is
+configured; the last interior composition is not a valid inflow boundary. None of these numerical
+contracts establishes equivalence with a commercial transient multiphase simulator.
 
 ## TwoFluidPipe Regime-Transition Continuation
 
@@ -662,8 +677,10 @@ override unless it is classified or cites an explicit repository ADR. Custom/dow
 `UNCLASSIFIED_DYNAMIC` until reviewed. `isFullyAudited()` is an inventory signal only: it does not certify numerical
 stability, conservation, benchmark parity, controls performance, or safety suitability. In particular,
 `PipeBeggsAndBrills` has distributed profile state but no conservative line-pack/storage term; do not use its capability
-label to claim severe-slugging or liquid-rich transient validity. Route those studies to the qualified `TwoFluidPipe`
-path and apply the relevant numerical and public-benchmark gates.
+label to claim severe-slugging or liquid-rich transient validity. Use `TwoFluidPipe` only when the requested
+configuration fits a numerically verified or experimentally qualified evidence-matrix row. Route failed or unsupported
+severe-slugging, slug-statistics, and boundary-composition cases to a separately qualified model or controlled
+experimental study.
 
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)

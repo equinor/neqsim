@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F104 CO2-envelope screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-09-05"
+last_verified: "2026-09-07"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -444,17 +444,14 @@ for (double qgMSm3d : gasRates) {
 > deviation against one is recorded here. Validate against experimental,
 > laboratory or field data, or against an analytic/first-principles check.
 
-> **`TwoFluidPipe` steady-state usage.** The refinement loop needs a few hundred
-> sweeps to settle the pressure profile against the updated section densities
-> (74 km at 160 sections ≈ 25 s, at 320 sections ≈ 60 s). Always
-> `assert pipe.isSteadyStateConverged()` **and** check
-> `pipe.getSteadyStateIterationsUsed() > 1` — a result reported after one sweep
-> still carries the densities the sections were initialised with and understates
-> the pressure drop of a gas line by roughly ten per cent. Around 160 sections
-> (≈450 m) is the sweet spot on a long transmission line: it converges reliably
-> and is grid-converged to 0.4% against 320 sections. Raise
-> `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
-> if `isSteadyStateWallClockLimited()` is true.
+> **`TwoFluidPipe` steady-state usage.** Gate every result on the complete
+> immutable `SteadyStateConvergenceReport`, not a stationary pressure trace or
+> iteration count. Require `isConverged()`, inspect the explicit termination
+> reason, and retain pressure-momentum, pressure-update, total-liquid-holdup,
+> water/oil-split, thermodynamic-property, and total-pressure-drop residuals
+> against the report's unchanged tolerance. Pressure-floor and wall-clock
+> termination are non-converged. Repeat mesh sensitivity for the actual
+> geometry; no fixed cell length is universally qualified.
 
 > **MCP `runPipeline` solver and response handoff.** Omit `solver` (or use
 > `beggsBrill`) for the established correlation path. Use `solver: "twoFluid"`
@@ -500,13 +497,14 @@ for (double qgMSm3d : gasRates) {
 > energy equation feeds the momentum balance. Grid-converged (160 vs 320 sections
 > within 0.4%). Terrain response is solved, not tuned: the annular film balance
 > carries `tau_i = tau_wL + rhoL*g*sin(theta)*delta`, so holdup responds to
-> inclination and scales with `sin(theta)`. Still open: **the three-phase
-> free-water case does not converge** — 15 m3/hr of free water on the same line is
-> wall-clock limited after 4078 iterations at a 1200 s budget. ΔP is identical
-> between a 300 s and a 1200 s budget, so the profile is stationary and the
-> criterion is stalling on the three-phase liquid split — but
-> `isSteadyStateConverged()` is false, so the number must not be quoted. ALWAYS
-> check it on a water-bearing line.
+> inclination and scales with `sin(theta)`. The compact public 3 km,
+> 10-degree uphill gas/oil/water fixture now converges on 30 and 60 cells, with
+> 0.538% arrival-pressure and 0.983% mean-liquid-holdup sensitivity and every
+> final report residual below `1e-4`. This is numerical verification, not
+> experimental qualification. The historical 73.8 km / 15 m3/hr free-water
+> input is unavailable, so the earlier 4,078-iteration / 1,200 s report cannot
+> be reproduced or claimed fixed. Never generalize the compact result to that
+> unavailable case.
 
 > **`TwoFluidPipe` also fails silently when a line has no deliverability.** The
 > marching solver clamps section pressure at a 1 bara floor; that clamp is a
@@ -557,10 +555,12 @@ for (double qgMSm3d : gasRates) {
 > stratified flow because its perimeters come from a circular-segment layer; annular flow,
 > whose film wets the whole perimeter, is not that geometry.
 
-> **Measured accuracy on the 73.8 km reference line**, across a threefold rate range:
-> ΔP +1.4 / +1.6 / +0.1 / −2.7 % and maximum holdup −2.4 / −7.1 / −6.6 / +3.5 % at
-> 4 / 7 / 10 / 12 MSm3/d, all converged and grid-converged. The earlier defaults gave
-> ΔP +5.7 / +5.6 / +1.4 / −0.0 % and holdup −25.5 / −18.6 / −6.2 / +3.3 %.
+> **The historical 73.8 km comparison is not a public qualification basis.**
+> Its complete input and measurement package is unavailable in the repository,
+> so earlier reported pressure-drop and holdup deviations are retained only as
+> repair history. Do not route or certify a study from those values. Use the
+> reproducible public evidence and explicit failed/unsupported rows in the
+> TwoFluidPipe evidence matrix.
 
 > **Direct electrical heating (DEH)** is available on both models with the same
 > convention — the power set is what reaches the fluid, so cable and coating
@@ -581,6 +581,17 @@ for (double qgMSm3d : gasRates) {
 > trajectory from either a small residual or a completed time loop alone. Use the
 > analytical `SevereSluggingBenchmarkHarnessTest` screen and the public Tengesdal
 > evidence until the dynamic qualification gates below pass.
+>
+> **Coupled component/phase/thermal slug transport has a narrower envelope.**
+> For the conservative Lagrangian slug/film path, named-component phase sources
+> and their partial-enthalpy latent source must be frozen from the same
+> hydrodynamic RHS-stage equilibrium state. The Stage 4 closed wet-gas regression
+> verifies phase, total, component, interphase, and thermal ledgers around a
+> seeded in-domain marker. It is single-stage Euler evidence only. Multi-stage
+> phase appearance needs stage-local component inventories and fails before
+> mutation; named-component transport with signed outlet backflow likewise fails
+> unless a physical external outlet composition is supplied. Never infer that
+> composition from the last interior cell.
 >
 > **The coupled route is an opt-in four-part configuration.** For a pressure
 > outlet that physically permits phase fallback, use
@@ -949,28 +960,29 @@ dominates the heat capacity — do not assume a large drop.
 
 ### Choosing the multiphase model for a transport check
 
-Verified on a 6" water-continuous line (17 bara, 83 mol% water) against
-OLGA 2025.1.0 on an identical fluid, geometry and mass flow:
+Start with the
+[TwoFluidPipe evidence matrix](../../../docs/process/twofluidpipe-evidence-matrix.md).
+It separates implemented, numerically verified, experimentally qualified, failed,
+and unsupported configurations. Do not route from a finite profile or a private
+commercial-simulator comparison.
 
-| model | H_L | u_L [m/s] | slip |
-|---|---|---|---|
-| `PipeBeggsAndBrills` | 0.325 | 1.141 | 2.28 |
-| `TwoFluidPipe` | 0.407 | 0.913 | 3.24 |
-| OLGA 2025.1.0 | 0.407 | 0.916 | 3.32 |
-
-- `TwoFluidPipe` reproduced OLGA to **0.2% on both hold-up and liquid velocity**.
-- **Beggs & Brill is non-conservative for sand transport**: it under-predicts
-  hold-up ~20%, so it over-predicts the sand-carrying `u_L` ~25% and inflates the
-  margin. Prefer `TwoFluidPipe` (or OLGA) for water-continuous transport checks;
-  use B&B for a quick pressure-drop screen only.
-- **Gate on convergence.** `TwoFluidPipe` converged in 6 iterations at the above
-  duty but failed (399 iterations) at a slower, more liquid-loaded slug condition.
-  Always assert `isSteadyStateConverged()` and exclude the result if it is False —
-  never quote an unconverged two-fluid number.
-- Do not over-constrain `setOutletPressure` with a measured dP the modelled
-  geometry cannot produce; that alone can break convergence. If the measured drop
-  is much larger than the predicted pipe friction, the difference is manifold
-  valves and fittings, not the line.
+- Use `PipeBeggsAndBrills` for a correlation-based steady or quasi-steady
+  pressure-drop screen. It has no conservative distributed line-pack inventory,
+  so it is not evidence for transient liquid accumulation or severe slugging.
+- Use `TwoFluidPipe` when section-resolved phase momentum, holdup, inventory,
+  thermal, or transient diagnostics are required **and** the requested
+  configuration fits a verified matrix row.
+- The public Mohmmed air/water slug comparison currently fails qualification:
+  the baseline passes 3/9 fixed gates with MARE 1.0402, and the 40/80-cell plus
+  0.05/0.025 s sweep is non-monotone. Do not replace that evidence with a looser
+  physical bound or a proprietary trace.
+- Gate every steady result on the complete convergence report and every transient
+  on requested elapsed time, conservation, positivity, refinement, and all
+  applicable sticky solver/boundary diagnostics. Exclude a failed or unsupported
+  row instead of quoting it.
+- Do not over-constrain `setOutletPressure` with a measured pressure drop the
+  modelled geometry cannot produce. Investigate valves, fittings, elevations, and
+  boundary consistency separately.
 
 ### Mineral Scale (thermodynamics + kinetics + brine mixing)
 
