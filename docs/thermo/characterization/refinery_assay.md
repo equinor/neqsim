@@ -137,6 +137,44 @@ where `w_i` is the resolved mass fraction and `SG_i` is the cut specific gravity
 
 These methods are screening calculations at the density reference condition represented by the inputs. They assume ideal additive liquid volumes and do not apply temperature correction, excess-volume, or blend-contraction models. They are not custody-transfer or certified blend-design calculations. The public validation and numerical error boundary are documented in [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation).
 
+## Whole-assay blend screening
+
+`RefineryAssayBlend` combines already-resolved whole-assay properties on one explicit mass basis.
+Specific gravity uses ideal additive liquid volumes, while total sulfur and nitrogen use linear
+mass weighting:
+
+$SG_{blend}=\left(\sum_j\frac{x_j}{SG_j}\right)^{-1},\qquad
+S_{blend}=\sum_jx_jS_j,\qquad N_{blend}=\sum_jx_jN_j$
+
+Here `x_j` is the normalized source-assay mass fraction. Callers may supply bulk properties
+directly, or use `fromAssays(...)` to resolve complete density, sulfur, and nitrogen inputs from
+configured `OilAssayCharacterisation` instances before a result is returned. Property queries do
+not call `apply()`, create pseudo-components, or mutate the attached thermodynamic systems.
+
+```java
+RefineryAssayBlend densityBlend = RefineryAssayBlend.fromBulkProperties(
+    new double[] {60.0, 40.0},
+    new double[] {0.847, 0.771});
+
+double blendSpecificGravity = densityBlend.getSpecificGravity();
+double blendApi = densityBlend.getApiGravity();
+double blendDensityKgM3 = densityBlend.getDensityKgPerCubicMetreAt60F();
+```
+
+The two endpoint specific gravities above are published DOE/OEDI COA whole-crude values for samples
+50146 and 56337. They provide public endpoint evidence for an independently recomputable
+60/40 screening calculation; no measured property for that hypothetical blend is available or
+claimed. Source: [DOE/OEDI COA summary workbook](https://data.openei.org/submissions/23).
+
+All positive-mass sources must provide each property requested by the selected factory. Null,
+non-finite, negative, zero-total, length-mismatched, or incomplete positive-mass inputs fail closed.
+Zero-mass sources do not contribute. Returned normalized mass fractions are defensive copies.
+
+This is bulk bookkeeping, not a thermodynamic or empirical blend model. It does not predict
+temperature/pressure effects, excess volume or contraction, viscosity, cloud/pour point,
+asphaltene stability, phase equilibrium, TBP/pseudo-component compatibility, product
+specifications, or blend optimization.
+
 ## Per-cut UOP/Watson characterization factor
 
 `AssayCut.getWatsonCharacterizationFactor()` calculates the dimensionless UOP/Watson factor from the same authoritative density and representative-boiling-point inputs used by the assay workflow:
@@ -314,7 +352,7 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 | Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API, per-cut Watson and linear sulfur/nitrogen bookkeeping qualified over frozen public matrices; broader stream properties remain open |
 | Rigorous distillation columns | `DistillationColumn`, `SimpleTray`, Naphtali-Sandholm solver, side-draw support | Existing foundation; broad-boiling atmospheric/vacuum refinery benchmark remains open |
 | Crude preheat/fired heater | General heater/heat-exchanger process equipment | Refinery workflow and fuel/emission integration remain open |
-| Product blending/specification optimization | Generic optimization/process facilities | Refinery property/blending framework remains open |
+| Whole-assay bulk blend screening | `RefineryAssayBlend` | Qualified for ideal-volume SG/API and mass-linear sulfur/nitrogen bookkeeping; nonlinear properties and optimization remain open |
 | ASTM D86/D1160 to TBP conversion | No qualified refinery conversion API in this increment | Open; requires public correlation provenance and validation |
 | Atmospheric crude-unit benchmark | No campaign benchmark yet | Next high-value validation milestone |
 | Vacuum tower benchmark | No campaign benchmark yet | Open after atmospheric case |
