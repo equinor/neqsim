@@ -1,11 +1,12 @@
 /*
  * MultiScenarioVFPExample.java
- * 
+ *
  * Demonstrates multi-scenario VFP table generation with varying GOR and water cut. This example
  * creates a well model and generates VFP tables for reservoir simulation.
  */
 package neqsim.examples;
 
+import java.util.function.Supplier;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -15,11 +16,12 @@ import neqsim.process.util.optimizer.MultiScenarioVFPGenerator.VFPTable;
 import neqsim.process.util.optimizer.RecombinationFlashGenerator;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating multi-scenario VFP generation.
- * 
+ *
  * <p>
  * This example shows how to:
  * </p>
@@ -30,11 +32,12 @@ import java.util.function.Supplier;
  * <li>Generate a complete VFP table with all scenario combinations</li>
  * <li>Export to Eclipse VFPEXP format</li>
  * </ul>
- * 
+ *
  * @author NeqSim Team
  * @version 1.0
  */
 public class MultiScenarioVFPExample {
+  private static final Logger logger = LogManager.getLogger(MultiScenarioVFPExample.class);
 
   /**
    * Main method demonstrating VFP generation workflow.
@@ -42,79 +45,76 @@ public class MultiScenarioVFPExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("======================================================================");
-    System.out.println("Multi-Scenario VFP Generation Example");
-    System.out.println("======================================================================");
+    logger.info("======================================================================");
+    logger.info("Multi-Scenario VFP Generation Example");
+    logger.info("======================================================================");
 
     try {
       // Step 1: Create reference fluid (typical light oil)
-      System.out.println("\n1. Creating reference fluid...");
+      logger.info("\n1. Creating reference fluid...");
       SystemInterface referenceFluid = createReferenceFluid();
 
       // Step 2: Configure fluid input with GOR/WC scenarios
-      System.out.println("2. Configuring GOR and water cut scenarios...");
+      logger.info("2. Configuring GOR and water cut scenarios...");
       FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid);
 
       // GOR: 80 to 350 Sm3/Sm3 (5 values) - using convenience method
       fluidInput.setGORRange(80.0, 350.0, 5);
-      System.out.println("   GOR values: " + arrayToString(fluidInput.generateGORValues()));
+      logger.info("   GOR values: {}", arrayToString(fluidInput.generateGORValues()));
 
       // Water cut: 0% to 60% (4 values) - using convenience method
       fluidInput.setWaterCutRange(0.0, 0.6, 4);
-      System.out.println("   WC values: " + arrayToString(fluidInput.generateWaterCutValues()));
+      logger.info("   WC values: {}", arrayToString(fluidInput.generateWaterCutValues()));
 
       // Step 3: Demonstrate recombination generator
-      System.out.println("\n3. Testing recombination fluid generator...");
+      logger.info("\n3. Testing recombination fluid generator...");
       demonstrateRecombination(fluidInput);
 
       // Step 4: Create VFP generator with well model
-      System.out.println("\n4. Creating VFP generator with well model...");
+      logger.info("\n4. Creating VFP generator with well model...");
       MultiScenarioVFPGenerator vfpGenerator = createVFPGenerator(fluidInput);
 
       // Step 5: Generate VFP table
-      System.out.println("\n5. Generating VFP table...");
-      System.out.println("   This may take a few minutes...");
+      logger.info("\n5. Generating VFP table...");
+      logger.info("   This may take a few minutes...");
       long startTime = System.currentTimeMillis();
 
       VFPTable table = vfpGenerator.generateVFPTable();
 
       long elapsed = System.currentTimeMillis() - startTime;
-      System.out.println("   Generation time: " + (elapsed / 1000.0) + " seconds");
+      logger.info("   Generation time: {} seconds", elapsed / 1000.0);
 
       // Step 6: Report results
-      System.out.println("\n6. VFP Table Results:");
-      System.out.println(
-          "   Feasible points: " + table.getFeasibleCount() + " / " + table.getTotalPoints());
+      logger.info("\n6. VFP Table Results:");
+      logger.info("   Feasible points: {} / {}", table.getFeasibleCount(), table.getTotalPoints());
       double coverage = 100.0 * table.getFeasibleCount() / table.getTotalPoints();
-      System.out.println("   Coverage: " + String.format("%.1f", coverage) + "%");
+      logger.info("   Coverage: {}%", String.format("%.1f", coverage));
 
       // Check for low coverage warning
       if (coverage < 50.0) {
-        System.out.println("   WARNING: Low coverage - consider adjusting pressure bounds");
+        logger.warn("   WARNING: Low coverage - consider adjusting pressure bounds");
       }
 
       // Step 7: Print sample slices
-      System.out.println("\n7. Sample VFP Slices:");
+      logger.info("\n7. Sample VFP Slices:");
       printSampleSlices(table, fluidInput);
 
       // Step 8: Export to Eclipse format
-      System.out.println("\n8. Exporting to Eclipse VFPEXP format...");
+      logger.info("\n8. Exporting to Eclipse VFPEXP format...");
       String vfpString = vfpGenerator.toVFPEXPString(1);
-      System.out.println("   First 50 lines of output:");
+      logger.info("   First 50 lines of output:");
       printFirstLines(vfpString, 50);
 
-      System.out
-          .println("\n======================================================================");
-      System.out.println("Example complete!");
-      System.out.println("======================================================================");
+      logger.info("\n======================================================================");
+      logger.info("Example complete!");
+      logger.info("======================================================================");
 
     } catch (IllegalArgumentException e) {
-      System.err.println("Configuration error: " + e.getMessage());
-      System.err.println("Check GOR range, water cut range, and fluid composition.");
+      logger.error("Configuration error: {}", e.getMessage(), e);
+      logger.error("Check GOR range, water cut range, and fluid composition.");
       System.exit(1);
     } catch (RuntimeException e) {
-      System.err.println("VFP generation failed: " + e.getMessage());
-      e.printStackTrace();
+      logger.error("VFP generation failed: {}", e.getMessage(), e);
       System.exit(1);
     }
   }
@@ -143,7 +143,7 @@ public class MultiScenarioVFPExample {
     fluid.setMixingRule("classic");
     fluid.setMultiPhaseCheck(true);
 
-    System.out.println("   Components: " + fluid.getNumberOfComponents());
+    logger.info("   Components: {}", fluid.getNumberOfComponents());
 
     return fluid;
   }
@@ -165,16 +165,15 @@ public class MultiScenarioVFPExample {
         SystemInterface fluid = generator.generateFluid(gor, wc, 100.0, 323.15, 30.0);
 
         if (fluid != null) {
-          System.out.println("   GOR=" + gor + ", WC=" + (wc * 100) + "%: "
-              + fluid.getNumberOfPhases() + " phases, " + "density="
-              + String.format("%.1f", fluid.getDensity("kg/m3")) + " kg/m3");
+          logger.info("   GOR={}, WC={}%: {} phases, density={} kg/m3", gor, wc * 100,
+              fluid.getNumberOfPhases(), String.format("%.1f", fluid.getDensity("kg/m3")));
         }
       }
     }
 
     // Show cache statistics
     String stats = generator.getCacheStatistics();
-    System.out.println("   Cache: " + stats);
+    logger.info("   Cache: {}", stats);
   }
 
   /**
@@ -214,14 +213,14 @@ public class MultiScenarioVFPExample {
 
     // Configure rate dimension (liquid rates at stock tank conditions)
     generator.setFlowRates(new double[] { 50.0, 100.0, 200.0, 400.0, 600.0 });
-    System.out.println("   Rates: [50, 100, 200, 400, 600] m3/hr");
+    logger.info("   Rates: [50, 100, 200, 400, 600] m3/hr");
 
     // Configure outlet pressure dimension (THP)
     generator.setOutletPressures(new double[] { 15.0, 25.0, 35.0, 45.0 });
-    System.out.println("   THPs: [15, 25, 35, 45] bara");
+    logger.info("   THPs: [15, 25, 35, 45] bara");
 
     // GOR and water cut dimensions already set by setFluidInput()
-    System.out.println("   GOR/WC dimensions from fluid input");
+    logger.info("   GOR/WC dimensions from fluid input");
 
     // Configure pressure search bounds
     generator.setMinInletPressure(60.0);
@@ -229,7 +228,7 @@ public class MultiScenarioVFPExample {
     generator.setPressureTolerance(0.5);
 
     int totalPoints = 5 * 4 * 4 * 5; // rates x pressures x WCs x GORs
-    System.out.println("   Total VFP points to calculate: " + totalPoints);
+    logger.info("   Total VFP points to calculate: {}", totalPoints);
 
     return generator;
   }
@@ -245,18 +244,17 @@ public class MultiScenarioVFPExample {
     double[] wcValues = fluidInput.generateWaterCutValues();
 
     // Print slice at WC=0%, lowest GOR
-    System.out.println("\n   Slice: WC=0%, GOR=" + gorValues[0] + " Sm3/Sm3");
+    logger.info("\n   Slice: WC=0%, GOR={} Sm3/Sm3", gorValues[0]);
     table.printSlice(0, 0);
 
     // Print slice at WC=0%, highest GOR
-    System.out.println("\n   Slice: WC=0%, GOR=" + gorValues[gorValues.length - 1] + " Sm3/Sm3");
+    logger.info("\n   Slice: WC=0%, GOR={} Sm3/Sm3", gorValues[gorValues.length - 1]);
     table.printSlice(0, gorValues.length - 1);
 
     // Print slice at high WC
     if (wcValues.length > 2) {
       int wcIdx = wcValues.length - 2;
-      System.out.println(
-          "\n   Slice: WC=" + (wcValues[wcIdx] * 100) + "%, GOR=" + gorValues[1] + " Sm3/Sm3");
+      logger.info("\n   Slice: WC={}%, GOR={} Sm3/Sm3", wcValues[wcIdx] * 100, gorValues[1]);
       table.printSlice(wcIdx, 1);
     }
   }
@@ -271,10 +269,10 @@ public class MultiScenarioVFPExample {
     String[] lines = text.split("\n");
     int count = Math.min(lines.length, maxLines);
     for (int i = 0; i < count; i++) {
-      System.out.println("   " + lines[i]);
+      logger.info("   {}", lines[i]);
     }
     if (lines.length > maxLines) {
-      System.out.println("   ... (" + (lines.length - maxLines) + " more lines)");
+      logger.info("   ... ({} more lines)", lines.length - maxLines);
     }
   }
 
