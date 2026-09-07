@@ -687,6 +687,30 @@ double density = PitzerBinaryVolumetricModel.calculateDensity(
     apparentMolarVolume);
 ```
 
+### Parameter regression and identifiability
+
+`PitzerBinaryVolumetricRegression` performs weighted linear regression for one
+common temperature-pressure state. The caller supplies every apparent-molar-
+volume observation, its absolute one-sigma uncertainty, a laboratory or
+source-lineage identifier, and the Debye-Hückel volume slope. The regression
+fits `V°`, `β⁽⁰⁾_V`, `β⁽¹⁾_V`, and `Cφ_V` without installing the result
+in a phase or changing a default model.
+
+The weighted design matrix is column-scaled and solved by singular-value
+decomposition. A fit fails closed when the concentration design is rank
+deficient or excessively ill-conditioned. `FitResult` reports coefficient
+covariance and standard uncertainties, chi-square, reduced chi-square,
+weighted RMS residual, maximum standardized residual, and deterministic
+per-source-group residual diagnostics. Covariance assumes that input
+uncertainties are absolute one-sigma values.
+
+Regression capability does not make an input dataset acceptable. Callers must
+separately establish row provenance, redistribution rights, uncertainty
+meaning, species and composition basis, validity range, and an independent
+laboratory-grouped validation split. The reserved Al Ghafri/NIST ThermoML
+pressure series must not be supplied as calibration input when it is retained
+as the campaign hold-out.
+
 ### Qualification boundary
 
 - The caller owns coefficient provenance and must keep calibration and
@@ -963,6 +987,8 @@ component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 | `calculateDensity(...)` | Convert apparent molar volume to density on a 1 kg solvent basis |
 | `calculateApparentMolarVolumeFromDensity(...)` | Invert a density observation to apparent molar volume |
 | `calculateIonicStrength(...)` | Return the binary salt's stoichiometric ionic strength |
+| `PitzerBinaryVolumetricRegression.fit(...)` | Fit caller-supplied one-state observations with SVD rank checks |
+| `FitResult.getGroupStatistics()` | Inspect residuals by laboratory or source lineage |
 
 These methods do not install a parameter dataset or alter a phase. A caller
 must explicitly supply a provenance-qualified `StateParameters` instance.
