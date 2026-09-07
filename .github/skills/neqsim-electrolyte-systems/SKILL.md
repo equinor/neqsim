@@ -122,6 +122,13 @@ Before hand-rolling the flash, note these ready-made helpers (see the
   and flash first (otherwise carbonate/bicarbonate/pH speciation is missing and
   the SR is wrong).
 
+Once the SI/SR is known, the **inhibitor** side (minimum inhibitor concentration, residual SI
+after treatment, chemical compatibility, and what a pH adjuster or H2S scavenger does to the
+brine) lives in `neqsim-production-chemistry`
+(`ScaleInhibitorPerformance`, `ScaleControlAssessor`, `ProductionChemicalScaleScenario`).
+A `StreamChemistryAdapter` / `fromStream(...)` helper reads the ion table straight off the
+electrolyte stream built here — do not retype it.
+
 ### Activity-consistent calcium-sulfate equilibrium
 
 Use the pure-mineral operation when the engineering question is gypsum/anhydrite equilibrium rather than screening

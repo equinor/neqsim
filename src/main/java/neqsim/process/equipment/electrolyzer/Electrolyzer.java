@@ -174,9 +174,13 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Setter for the field <code>inletStream</code>.
    *
-   * @param inletStream water inlet stream
+   * @param inletStream water inlet stream, must not be null
+   * @throws IllegalArgumentException if {@code inletStream} is null
    */
   public void setInletStream(StreamInterface inletStream) {
+    if (inletStream == null) {
+      throw new IllegalArgumentException("Electrolyzer '" + getName() + "' requires a non-null inlet stream");
+    }
     this.waterInlet = inletStream;
     SystemInterface h2System = new Fluid().create2(new String[] { "hydrogen" }, new double[] { 1.0 }, "mole/sec");
     hydrogenOutStream = new Stream("hydrogenOutStream", h2System);

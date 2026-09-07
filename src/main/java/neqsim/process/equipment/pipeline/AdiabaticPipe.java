@@ -94,10 +94,14 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * Constructor for AdiabaticPipe.
    *
    * @param name name of pipe
-   * @param inStream input stream
+   * @param inStream input stream, must not be null
+   * @throws IllegalArgumentException if {@code inStream} is null
    */
   public AdiabaticPipe(String name, StreamInterface inStream) {
     this(name);
+    if (inStream == null) {
+      throw new IllegalArgumentException("AdiabaticPipe '" + name + "' requires a non-null inlet stream");
+    }
     this.inStream = inStream;
     outStream = inStream.clone();
   }

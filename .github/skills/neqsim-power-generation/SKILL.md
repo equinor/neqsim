@@ -128,6 +128,41 @@ double reqW      = gt.getRequiredPower();         // required power in Watts
 > fuel/CO₂ vs a load demand, prefer `GasTurbineVendorPerformance` (top of this
 > skill) or the catalog-driven `GasTurbineUnit` (section 7).
 
+### Reading CO₂ off a load-driven turbine — three traps
+
+`addDrivenLoad(compressor)` is the cleanest way to size fuel to a real duty: the
+turbine sums `Compressor.getPower()` over its loads each solve, so the fuel gas
+tracks the process. Getting an **emission** number out of it has three traps.
+
+```java
+GasTurbine gt = new GasTurbine("GT-driver");
+gt.setInletStream(fuelStream);
+gt.setThermalEfficiency(0.32);      // REQUIRED
+gt.addDrivenLoad(exportCompressor); // loads must be run before the turbine
+gt.run();
+double fuel_kghr = gt.getFuelFlowRate("kg/hr");
+```
+
+1. **Pseudo-components abort the combustion balance.** The stoichiometry asks the
+   element database for each hydrocarbon's C and H count, and a characterised
+   fluid's `C7P`/`C10A`… pseudo-components are not in it. Older builds threw
+   `Element:getNumberOfElements - Input C component not in element database`;
+   current builds estimate the atom counts from molar mass. Either way, prefer
+   building the **fuel** from real named components (`nitrogen, CO2, methane,
+   ethane, propane, i-butane, n-butane, i-pentane, n-pentane, n-hexane`) —
+   renormalising an export-gas composition onto that set typically captures
+   >99.8 mol% and matches what a plant actually burns.
+2. **The combustion air carries CO₂ of its own.** `Fluid.create("combustion air")`
+   is an *unnormalised* `N2 0.78084 / O2 0.20946 / CO2 0.033 / water 0.1`, i.e.
+   **2.9 mol% CO₂** against atmospheric 0.04 %. Subtract the air-borne CO₂
+   (`gt.airStream`) before quoting an exhaust CO₂, or the number is inflated
+   (75 % in one 1.7 MW case).
+3. **Cross-check against a carbon balance.** The defensible number is
+   `fuel_moles × (C atoms per mole fuel) × 44.01 g/mol`. Compare it with the
+   exhaust read; agreement to <1 % is the check that both the fuel sizing and the
+   exhaust composition are right. Do this before putting a CO₂ profile in a
+   report or a STEA export.
+
 ## 2. Steam Turbine
 
 ```java

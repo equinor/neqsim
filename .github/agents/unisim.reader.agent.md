@@ -1,6 +1,6 @@
 ---
 name: read unisim to neqsim
-description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to running NeqSim ProcessSystem / ProcessModule models. Extracts fluid packages, components, operations (45+ typed operation handlers including reactors, columns, controllers, adapters), streams, sub-flowsheets, and topology. Handles E300 full-fluid transfer, registry-driven operation mapping, recycle loops with port-specific forward reference placeholders, Python scripts, Jupyter notebooks, EOT simulators, JSON, and UniSim-vs-NeqSim verification."
+description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to running NeqSim ProcessSystem / ProcessModule models. Extracts fluid packages, components, operations (55+ typed operation handlers including columns via AttachedFeeds/AttachedProducts, reactors, electrolyzers, fired heaters, controllers, adapters), streams, sub-flowsheets, and topology. Handles E300 full-fluid transfer, registry-driven operation mapping, recycle loops with port-specific forward reference placeholders, Python scripts, Jupyter notebooks, EOT simulators, JSON, batch regression against the UniSim sample library, and UniSim-vs-NeqSim verification."
 argument-hint: "Provide the path to a .usc file — e.g., \"read C:\\Models\\GasPlant.usc and build a NeqSim model\", \"convert all UniSim cases in C:\\Cases\\ to NeqSim\", \"compare UniSim and NeqSim results for a platform model\"."
 ---
 
@@ -222,7 +222,24 @@ cannot be mapped.
 
 ### Step 6: Verify Results (MANDATORY)
 
-**Every conversion MUST be verified against the UniSim stream data.**
+**Every conversion MUST be verified in two stages: does it RUN, then does it MATCH.**
+
+A model that converts, compiles and contains no undefined names can still abort
+on `run()` — and `ProcessSystem.run()` stops at the first throwing unit, so one
+bad unit leaves the entire flowsheet at its seed values. Never report stream
+deviations without first confirming the model ran to completion.
+
+**6a — Execute the generated model:**
+
+```bash
+<python-executable> devtools/unisim_run_generated.py --dir <work-dir> --out runs.json --timeout 300
+```
+
+Check the run report before anything else. If a unit throws, fix the converter
+(see "Runtime failure taxonomy" in the skill) rather than the generated file —
+every future conversion inherits the fix.
+
+**6b — Compare against UniSim:**
 
 For models built from JSON, identify which streams were successfully created:
 ```python
@@ -453,6 +470,59 @@ internal code generators (`_gen_fluid_lines`, `_gen_feed_lines`,
 `_gen_equipment_lines`, `_gen_properties`). If you fix a bug in one, the
 fix applies to all three output modes. This is by design.
 
+### Columns come from AttachedFeeds / AttachedProducts
+
+A UniSim column exposes **none** of `Feeds`, `FeedStream`, `Products`,
+`Product` or `ProductStream`. Its connections are on `AttachedFeeds` /
+`AttachedProducts`, which mix material and energy streams, and its
+configuration is on `ColumnFlowsheet` (`RefluxRatio`, `EnergyStreams`,
+`MaterialStreams`, and internals `traysection` / `partialcondenser` /
+`bpreboiler`). Before this was handled, **every column in every case was
+silently dropped** from the converted flowsheet. See the skill for the full
+pattern, including the UniSim-top-down to NeqSim-bottom-up tray translation.
+
+### Never build equipment with a None inlet
+
+`Type("name", None)` throws a NullPointerException inside the constructor and
+aborts the whole `process.run()`. When UniSim COM exposes no inlet for a block,
+the converter synthesises a boundary feed seeded from that block's own product
+stream and emits a "Synthesised a boundary feed for ..." warning. Surface those
+warnings in the report — such a unit runs at roughly the right conditions but is
+no longer tied to its real upstream source.
+
+### Outlet accessors are type-specific
+
+`getOutletStream()` does **not** exist on `Splitter`, `ComponentSplitter`,
+`DistillationColumn` or `Electrolyzer`. Use the accessor table in the skill.
+Keep the mapping as data (`TEAR_OUTLET_ACCESSORS`, `TEAR_SKIP_TYPES`,
+`_placeholder_ports`) — duplicating it as `if` chains is what let the
+forward-reference port list drift out of sync and produce
+`NameError: name '_fwd_X_liquidOut' is not defined`.
+
+### Regression-test converter changes against the sample library
+
+Any change to `devtools/unisim_reader.py` must be checked against the whole
+UniSim R510 sample library (66 cases), not just one model:
+
+```bash
+<python-executable> devtools/unisim_batch_check.py \
+    --samples-dir "C:\Program Files (x86)\Honeywell\UniSim Design R510\Samples" \
+    --out report.json --work-dir %TEMP%\unisim_batch\runN
+<python-executable> devtools/unisim_run_generated.py --dir %TEMP%\unisim_batch\runN --out runs.json
+```
+
+Then run the converter regression tests in `devtools/test_unisim_outputs.py`
+(pure Python, no COM required) through the shared executable's pytest module.
+
+Two hard rules:
+
+- **The UniSim COM server is a singleton.** Never run two COM scripts at once —
+  the second gets `RPC server is unavailable`, and `close()` quits UniSim for
+  both.
+- **Never edit `unisim_reader.py` while a batch is running.** Each subprocess
+  re-imports it, so a mid-run edit mixes old and new behaviour and a
+  half-written file makes the remaining cases fail with "no result file".
+
 ---
 
 ## Error Recovery
@@ -460,8 +530,14 @@ fix applies to all three output modes. This is by design.
 | Error | Cause | Fix |
 |-------|-------|-----|
 | UniSim COM not found | UniSim not installed | Install UniSim Design |
+| `com_error ... E_ACCESSDENIED` from `Open` | Case needs a UniSim extension/licensed module that is not installed (e.g. CCC controls, EO electrical) | Not a converter bug — report the case as environment-limited |
+| `RPC server is unavailable` | A second COM script touched the shared singleton UniSim instance | Never run two UniSim COM scripts concurrently |
+| "no result file" across a batch | `unisim_reader.py` was edited while the batch ran | Re-run the batch after the edit; never edit mid-run |
 | File won't open | Corrupted/wrong version | Try with `visible=True` to see error |
 | Empty compositions | Stream not solved | Open in UniSim GUI, run solver first |
+| `NullPointerException ... is null` on run | Equipment built with a None inlet | Converter must synthesise a boundary feed |
+| `Feed tray index must be between 0 and N-1` | Column/absorber fed outside 0..n-1 | NeqSim trays run bottom=0 to top=n-1 |
+| Run TIMEOUT on a column case | Converted column iterating without converging | Hard iteration cap on the column |
 | Large deviations | Missing hypo components | Check if pseudo-components dominate |
 | Memory error | Too many files open | Close cases between reads |
 
