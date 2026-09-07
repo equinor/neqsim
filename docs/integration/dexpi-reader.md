@@ -276,15 +276,18 @@ connection occurrences crossing directed-cycle boundaries. Each immutable
 from/to `DexpiConnectionEndpointInfo` records, optional from/to cycle IDs, and an `ENTERING`,
 `LEAVING`, or `BETWEEN_CYCLES` classification. Reader-produced values also expose the exact
 immutable cycle objects from `ImportResult.getConnectionCycles()` through `getFromCycle()` and
-`getToCycle()`. The corresponding evidence markers distinguish this projection from values created
-with the legacy constructor, whose cycle-object getters return `null` while their scalar IDs remain
-unchanged. A connection entering or leaving a cycle has complete evidence only on the cyclic side.
-A connection from one cyclic strongly connected group to another appears once with both cycle IDs
-and both complete cycle objects; callers do not need to reconcile the outgoing boundary projection
-of one cycle with the incoming projection of the other. Parallel occurrences remain distinct,
-unresolved non-empty endpoints remain visible, and connections with a blank endpoint stay in the
-global connection and diagnostic evidence because a transition cannot assign them to a cycle.
-`toJson()` includes the cycle-evidence markers and nested from/to cycle objects when present. This
+`getToCycle()`. They also expose the exact boundary objects already present in those cycles through
+`getFromCycleBoundary()` and `getToCycleBoundary()`. An entering transition carries only the
+target cycle's `INCOMING` boundary, a leaving transition carries only the source cycle's
+`OUTGOING` boundary, and a between-cycle transition carries both. Corresponding evidence markers
+distinguish this reader projection from values created with either legacy constructor, whose cycle
+and boundary object getters return `null` while their scalar cycle IDs remain unchanged. A
+connection from one cyclic strongly connected group to another appears once with both cycle IDs,
+both complete cycle objects, and both directional boundary objects; callers do not need to scan or
+join the two cycle inventories. Parallel occurrences remain distinct, unresolved non-empty endpoints
+remain visible, and connections with a blank endpoint stay in the global connection and diagnostic
+evidence because a transition cannot assign them to a cycle. `toJson()` includes the cycle- and
+boundary-evidence markers and nested from/to cycle and boundary objects when present. This
 exact-once inventory remains source-reference evidence only; it does not prove hydraulic continuity,
 identify a physical recycle, enumerate paths, or alter simulation topology.
 
@@ -294,8 +297,8 @@ identify a physical recycle, enumerate paths, or alter simulation topology.
 `connectionCycleTransitionCount`, and the ordered instrumentation-loop, actuating-function, information-flow, connection, endpoint,
 component, directed-cycle, and cycle-transition inventories, including reference resolution,
 incidence roles, review subsets, complete component- and cycle-local endpoint and connection
-occurrences, explicit cycle-boundary occurrences, and exact-once transitions with nested connection and endpoint
-evidence, alongside the process-unit count and findings. Python callers through JPype use the same
+occurrences, explicit cycle-boundary occurrences, and exact-once transitions with nested connection, endpoint,
+cycle, and directional boundary evidence, alongside the process-unit count and findings. Python callers through JPype use the same
 `ImportResult.getInstruments()`, `ImportResult.getInstrumentationLoops()`,
 `ImportResult.getActuatingFunctions()`, `ImportResult.getInformationFlows()`,
 `ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`,
