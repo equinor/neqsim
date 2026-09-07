@@ -315,6 +315,38 @@ public class OilQualityStandardsTest {
   }
 
   /**
+   * Verifies the complete strict curve contains only the seven source rows, delegates every temperature, supports units,
+   * and returns defensive arrays.
+   */
+  @Test
+  void testASTM_D86_qualifiedReferenceCurve() {
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(createDiesel());
+    standard.calculate();
+
+    double[] recoveryPoints = { 0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0 };
+    double[][] curveC = standard.getQualifiedD86Curve();
+    double[][] curveK = standard.getQualifiedD86Curve("K");
+
+    assertEquals(recoveryPoints.length, curveC.length);
+    assertEquals(recoveryPoints.length, curveK.length);
+    for (int i = 0; i < recoveryPoints.length; i++) {
+      assertEquals(recoveryPoints[i], curveC[i][0], 0.0);
+      assertEquals(recoveryPoints[i], curveK[i][0], 0.0);
+      assertEquals(standard.getQualifiedD86Temperature(recoveryPoints[i]), curveC[i][1], 1.0e-10);
+      assertEquals(curveC[i][1] + 273.15, curveK[i][1], 1.0e-10);
+    }
+
+    curveC[0][0] = -1.0;
+    curveC[0][1] = Double.NaN;
+    double[][] secondCurve = standard.getQualifiedD86Curve();
+    assertEquals(0.0, secondCurve[0][0], 0.0);
+    assertEquals(standard.getQualifiedD86Temperature(0.0), secondCurve[0][1], 1.0e-10);
+
+    Standard_ASTM_D86 uncalculated = new Standard_ASTM_D86(createDiesel());
+    assertThrows(IllegalStateException.class, uncalculated::getQualifiedD86Curve);
+  }
+
+  /**
    * Verifies the liquid-volume reporting basis yields a different curve from the molar basis.
    */
   @Test
