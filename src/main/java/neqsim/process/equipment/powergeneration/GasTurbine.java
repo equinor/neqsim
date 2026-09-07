@@ -325,10 +325,48 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     thermoSystem = inStream.getThermoSystem().clone();
     power = requiredPower;
     heat = fuelHeat - requiredPower;
-    outStream.setThermoSystem(thermoSystem.clone());
+    outStream.setThermoSystem(buildExhaust(id));
     outStream.setCalculationIdentifier(id);
     publishEnergyPorts();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Build the combustion exhaust for the power-demand run.
+   *
+   * <p>
+   * Without this the power-demand path left {@link #getOutletStream()} holding the unburned fuel, so an emission
+   * calculation that read CO2 off the turbine outlet saw only the fuel's own CO2 content instead of the combustion
+   * products. The exhaust is built the same way as in the Brayton path: stoichiometric air plus excess air is mixed
+   * with the fuel, the exhaust heat is added, and the mixture is combusted.
+   * </p>
+   *
+   * @param id the calculation identifier
+   * @return the combustion exhaust fluid at reference pressure
+   */
+  private SystemInterface buildExhaust(UUID id) {
+    double o2FractionInAir = getOxygenMoleFractionInAir();
+    double o2PerMolFuel = calcStoichiometricOxygenDemand();
+    double ratio = airGasRatio;
+    if (o2FractionInAir > 0.0 && o2PerMolFuel > 0.0) {
+      ratio = Math.max(ratio, o2PerMolFuel / o2FractionInAir * excessAirFactor);
+    }
+    airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * ratio, "mole/sec");
+    airStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    airStream.run(id);
+
+    StreamInterface combustionStream = airStream.clone();
+    combustionStream.getFluid().addFluid(thermoSystem);
+    combustionStream.run(id);
+
+    Heater exhaustHeater = new Heater("exhaustHeater", combustionStream);
+    exhaustHeater.setEnergyInput(heat);
+    exhaustHeater.run(id);
+
+    SystemInterface exhaust = exhaustHeater.getOutletStream().getFluid();
+    combustFuel(exhaust);
+    exhaust.init(0);
+    return exhaust;
   }
 
   /** Publishes calculated shaft power and recoverable exhaust heat to connected energy ports. */
@@ -491,12 +529,33 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     double o2 = 0.0;
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       if (thermoSystem.getComponent(i).isHydrocarbon()) {
-        double c = thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
-        double h = thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
-        o2 += thermoSystem.getComponent(i).getz() * (c + h / 4.0);
+        double[] atoms = carbonAndHydrogen(thermoSystem.getComponent(i));
+        o2 += thermoSystem.getComponent(i).getz() * (atoms[0] + atoms[1] / 4.0);
       }
     }
     return o2;
+  }
+
+  /**
+   * Carbon and hydrogen atom counts of one component.
+   *
+   * <p>
+   * Pseudo-components of a characterised reservoir fluid are not in the element database, and asking them for an atom
+   * count throws. Their atom counts are therefore estimated from the molar mass with the paraffinic relation C = (M -
+   * 2.016) / 14.027 and H = 2C + 2, which lets a real reservoir or export gas be burned instead of aborting the run.
+   * </p>
+   *
+   * @param component the component to describe
+   * @return a two-element array holding the carbon and the hydrogen atom count
+   */
+  private double[] carbonAndHydrogen(neqsim.thermo.component.ComponentInterface component) {
+    if (component.getElements() != null && component.getElements().getElementNames() != null) {
+      return new double[] { component.getElements().getNumberOfElements("C"),
+          component.getElements().getNumberOfElements("H") };
+    }
+    double molarMassGramPerMol = component.getMolarMass() * 1000.0;
+    double carbon = Math.max(1.0, (molarMassGramPerMol - 2.016) / 14.027);
+    return new double[] { carbon, 2.0 * carbon + 2.0 };
   }
 
   /**
@@ -519,9 +578,8 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
       }
       if (fluid.getComponent(i).isHydrocarbon()) {
         double moles = fluid.getComponent(i).getNumberOfmoles();
-        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
-        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
-        requiredO2 += moles * (c + h / 4.0);
+        double[] atoms = carbonAndHydrogen(fluid.getComponent(i));
+        requiredO2 += moles * (atoms[0] + atoms[1] / 4.0);
       }
     }
     if (requiredO2 <= 0.0) {
@@ -537,12 +595,11 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     for (int i = 0; i < n; i++) {
       if (fluid.getComponent(i).isHydrocarbon()) {
         double moles = fluid.getComponent(i).getNumberOfmoles();
-        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
-        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
+        double[] atoms = carbonAndHydrogen(fluid.getComponent(i));
         double burned = moles * burnFraction;
-        totalCO2 += burned * c;
-        totalH2O += burned * h / 2.0;
-        totalO2Consumed += burned * (c + h / 4.0);
+        totalCO2 += burned * atoms[0];
+        totalH2O += burned * atoms[1] / 2.0;
+        totalO2Consumed += burned * (atoms[0] + atoms[1] / 4.0);
         hcNames.add(fluid.getComponent(i).getName());
         hcBurn.add(burned);
       }

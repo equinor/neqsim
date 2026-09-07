@@ -1,7 +1,7 @@
 ---
 name: neqsim-unisim-reader
-description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to NeqSim ProcessSystem / ProcessModule structures. USE WHEN: a user has UniSim/HYSYS simulation files and wants to recreate or compare the model in NeqSim. Covers COM API navigation, component mapping, E300 fluid transfer, operation-handler registry strategy, topology reconstruction, sub-flowsheet handling, and result verification."
-last_verified: "2026-07-04"
+description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to NeqSim ProcessSystem / ProcessModule structures. USE WHEN: a user has UniSim/HYSYS simulation files and wants to recreate or compare the model in NeqSim. Covers COM API navigation, column AttachedFeeds/AttachedProducts connectivity, component mapping, E300 fluid transfer, operation-handler registry strategy, topology reconstruction, sub-flowsheet handling, batch regression against the UniSim sample library, and result verification."
+last_verified: "2026-09-07"
 ---
 
 # UniSim Design / HYSYS → NeqSim Conversion Skill
@@ -25,6 +25,16 @@ The `devtools/unisim_reader.py` module provides three main classes:
 | `UniSimReader` | Opens .usc files via COM, extracts all data |
 | `UniSimToNeqSim` | Converts extracted model to NeqSim JSON builder format or standalone Python code |
 | `UniSimComparator` | Compares UniSim vs NeqSim results for verification |
+
+Supporting tools:
+
+| Tool | Purpose |
+|------|---------|
+| `devtools/unisim_batch_check.py` | Convert a whole corpus, one subprocess per case; timings, unmapped types, warnings, compile + undefined-name checks |
+| `devtools/unisim_run_generated.py` | Execute every generated model in its own subprocess and report how far it gets |
+| `devtools/unisim_probe_ops.py` | Dump the readable COM properties of an operation type |
+| `devtools/unisim_probe_column.py` | Dump a column's attached streams and `ColumnFlowsheet` internals |
+| `devtools/test_unisim_outputs.py` | Pure-Python regression tests (no COM needed) |
 
 ---
 
@@ -88,10 +98,71 @@ You MUST check multiple patterns to extract feed/product connections:
 | **flashtank** | `Feeds[]` (array) | `VapourProduct`, `LiquidProduct` |
 | **sep3op** | `Feeds[]` (array) | `VapourProduct`, `LiquidProduct`, `WaterProduct` |
 | **heatexop** | Has shell-side / tube-side sub-objects | |
+| **columns** (see below) | `AttachedFeeds[]` | `AttachedProducts[]` |
 
 **WARNING**: `op.Products` does NOT exist on mixers and separators — it throws
 `AttributeError`. You must use `op.Product` (singular) for mixers and
 `op.VapourProduct` / `op.LiquidProduct` for separators.
+
+### CRITICAL: Columns use AttachedFeeds / AttachedProducts
+
+A UniSim column (`distillation`, `columnop`, `absorber`, `reboiledabsorber`,
+`refluxedabsorber`, `ratedistillation`) exposes **none** of `Feeds`,
+`FeedStream`, `Products`, `Product` or `ProductStream` — every one raises
+`AttributeError`. Its external connections live on `AttachedFeeds` /
+`AttachedProducts`, and those collections **mix material and energy streams**:
+
+```text
+DePropanizer (TUTOR1, type=distillation)
+  AttachedFeeds     ['TowerFeed', 'RebDuty']            <- RebDuty is ENERGY
+  AttachedProducts  ['LiquidProd', 'Ovhd', 'CondDuty']  <- CondDuty is ENERGY
+```
+
+Because the generic feed extractor found nothing, **every column in every case
+was silently dropped from the converted flowsheet** (an unfed NeqSim column
+throws on `run()`, so the converter skipped it). Always extract columns through
+their own path.
+
+The column's `ColumnFlowsheet` supplies everything else:
+
+```python
+cfs = column_op.ColumnFlowsheet
+cfs.EnergyStreams      # ['CondDuty', 'RebDuty'] -> classify material vs energy
+cfs.MaterialStreams    # incl. the external feed/products; read VapourFraction,
+                       # Pressure off these items
+cfs.RefluxRatio        # 0.9999 — direct scalar, no Specifications parsing
+cfs.Specifications     # ['Reflux Ratio', 'Propane Fraction', 'Ovhd Vap Rate', ...]
+cfs.Operations         # ['Main TS', 'Condenser', 'Reboiler']
+#   traysection        -> NumberOfTrays=10, FeedStages=['5__Main TS']
+#   partialcondenser / totalcondenser / condenser3op -> hasCondenser
+#   bpreboiler                                       -> hasReboiler
+```
+
+**Product order is not physical.** `AttachedProducts` lists bottoms before
+overhead in TUTOR1, but the converter maps product index 0 to the column gas
+outlet. Classify instead:
+
+- distillate = condenser internal's `AttachedProducts` ∩ column products
+- bottoms = reboiler internal's `AttachedProducts` ∩ column products
+- anything left over (and absorber feeds) is ordered by `VapourFraction`,
+  vapour-rich first — an absorber's gas feed must be index 0
+
+`CondenserPressure` / `ReboilerPressure` do **not** exist on the operation; read
+top/bottom pressure off the distillate/bottoms product streams instead.
+
+**Tray-index translation.** UniSim numbers tray-section stages from the TOP
+(stage 1 = top tray). NeqSim numbers trays from the BOTTOM, with index 0 the
+reboiler when present and the condenser last, and the constructor argument
+excludes reboiler/condenser:
+
+```text
+neqsim_index = (1 if hasReboiler else 0) + (n_trays - unisim_stage)
+TUTOR1: n_trays=10, stage 5  ->  tray 6 of DistillationColumn(name, 10, True, True)
+```
+
+An absorber has neither, so gas enters tray `0` and lean solvent tray `n-1`.
+Feeding at `n` throws `IllegalArgumentException: Feed tray index must be
+between 0 and n-1`.
 
 The recommended extraction order (as implemented in `unisim_reader.py`):
 1. Try `Feeds[]` array first (multi-feed ops)
@@ -163,9 +234,38 @@ app.Quit()
 
 - Always call `solver.CanSolve = False` before reading to prevent recalculation
 - UniSim uses -32767 for empty/unset values — filter these out
-- Use `time.sleep()` between COM calls if stability issues arise
 - Property values accessed via `.GetValue(unit_string)`
 - Composition accessed via `.GetValues()` returning a sequence
+
+### GOTCHA: the UniSim COM server is a SINGLETON
+
+`Dispatch('UnisimDesign.Application')` attaches to the **one** running UniSim
+instance, it does not start a private one. Consequences:
+
+- Running a second COM script while a batch runs gives
+  `com_error: The RPC server is unavailable`.
+- `reader.close()` calls `app.Quit()`, which closes UniSim for **every** other
+  script using it.
+- **Never run two UniSim COM scripts concurrently.** Subprocess isolation makes
+  a crash survivable, but it does not make concurrency safe.
+
+### Prefer readiness polling over fixed sleeps
+
+UniSim needs an unpredictable time to publish its automation object model. A
+fixed `time.sleep(3)` is both slower than needed on small cases and unsafe on
+large ones. `UniSimReader._wait_ready(probe, timeout, description)` polls a
+cheap COM property instead (`app.SimulationCases.Count`,
+`case.Flowsheet.MaterialStreams.Count`). Removing the two blind sleeps cut the
+TUTOR1 read from 18.3 s to 6.8 s and the 66-case corpus from 816 s to 656 s.
+
+### A refused Open is usually a missing module, not a bad file
+
+`SimulationCases.Open` raises a bare `com_error ... E_ACCESSDENIED
+(-2147024891)` for cases needing a UniSim extension that is not installed (the
+R510 `CCC Series 5\*` controls cases and the EO electrical case). The files are
+not read-only — verified. `UniSimReader._open_case()` retries once on a fresh
+session (which does fix a genuinely wedged shared session) and then raises a
+`RuntimeError` naming the likely cause.
 
 ### 1.1 Extracting Binary Interaction Parameters (BIPs / kij)
 
@@ -474,14 +574,25 @@ each UniSim operation type present in the model.
 | `pumpop` | `Pump` | Liquid pump |
 | `expandop` | `Expander` | Turboexpander |
 | `heatexop` | `HeatExchanger` | Shell-and-tube / plate HX |
+| `firedheaterop` | `FiredHeater` | Fired heater / process furnace |
 | `pipeseg` | `AdiabaticPipe` | Pipe segment |
+| `olgapipe` | `AdiabaticPipe` | OLGA-link pipe; upgraded to `PipeBeggsAndBrills` when segment geometry is extracted |
+| `sep1op` / `sep2op` | `Separator` | Separator variants |
+| `pemelectrolyzer` | `Electrolyzer` | PEM electrolyzer (`setTechnology(PEM)`) |
+| `alkalineelectrolyzer` | `Electrolyzer` | Alkaline electrolyzer (`ALKALINE`) |
+| `soecelectrolyzer` | `Electrolyzer` | Solid-oxide electrolyzer (`SOEC`) |
 | `recycle` | `Recycle` | Recycle convergence block |
 | `adjust` | `Adjuster` | Process variable adjuster |
 | `setop` | `SetPoint` | Set variable/propagation |
 | `saturateop` | `StreamSaturatorUtil` | Stream saturator |
 | `spreadsheetop` | `SpreadsheetBlock` | Spreadsheet calculator/reference block; formulas need explicit import/export cell extraction |
 | `templateop` | `SubFlowsheet` / `UnisimCalculator` | Sub-flowsheet template or interface placeholder; JSON factory aliases placeholder builds to `UnisimCalculator` |
+| `fluidizedcatalyticcrackertemplate` | `SubFlowsheet` | FCC template |
+| `isomerizationtemplate` | `SubFlowsheet` | Isomerization template |
 | `virtualstreamop` | `UnisimCalculator` | Virtual stream/topology adapter with pass-through outlet |
+| `streamcutterop` | `UnisimCalculator` | Assay stream cutter; pass-through adapter |
+| `fluidizedcatalyticcrackerop` | `UnisimCalculator` | FCC — no NeqSim equivalent; pass-through keeps downstream topology |
+| `isomerizationreactorop` | `UnisimCalculator` | Isomerization reactor — pass-through adapter |
 
 ### Columns & Absorbers
 
@@ -491,6 +602,9 @@ each UniSim operation type present in the model.
 | `distillation` | `DistillationColumn` | Distillation column |
 | `columnop` | `DistillationColumn` | Generic column |
 | `reboiledabsorber` | `DistillationColumn` | Reboiled absorber |
+| `refluxedabsorber` | `DistillationColumn` | Refluxed absorber |
+| `ratedistillation` | `DistillationColumn` | Rate-based column (equilibrium-stage approximation) |
+| `threephasedistillation` | `DistillationColumn` | Three-phase column |
 | `absorberop` | `Absorber` | Absorption column (see glycol note below) |
 | `absorber` | `Absorber` | Absorber (see glycol note below) |
 
@@ -526,6 +640,7 @@ each UniSim operation type present in the model.
 | `pfreactorop` | `PlugFlowReactor` | Plug flow reactor |
 | `kineticreactorop` | `PlugFlowReactor` | Kinetic reactor → PFR |
 | `cstrop` | `StirredTankReactor` | CSTR |
+| `gasifierop` / `gasifieroppy` / `gsfrxsecop` | `GibbsReactor` | Gasifier blocks; the solid (coal/biomass) feed cannot be flashed, so the fluid feed is equilibrated |
 
 ### Controllers & Logic
 
@@ -533,6 +648,8 @@ each UniSim operation type present in the model.
 |-----------------|-------------|-------------|
 | `pidfbcontrolop` | `PIDController` | PID feedback controller |
 | `surgecontroller` | `SurgeController` | Surge controller (skipped) |
+| `selectionop` / `fanoutop` | `LogicalOp` | Signal selector / fan-out; no material topology |
+| `genesimop` / `machinelearningtoolop` | skipped | Non-physical utilities |
 | `balanceop` | `UnisimCalculator` | Balance/topology adapter with pass-through outlet and source-operation metadata |
 | `logicalop` | `LogicalOp` | Logic operation (skipped) |
 | `selectop` | `LogicalOp` | Selector (skipped) |
@@ -906,6 +1023,90 @@ comparisons = comparator.compare_streams()
 comparator.print_report(comparisons)
 ```
 
+### The R510 sample library is the converter's regression bench
+
+`C:\Program Files (x86)\Honeywell\UniSim Design R510\Samples` ships **66 .usc
+cases** (0.11–6.96 MB) spanning tutorials, refinery (FCC, isomerization),
+gasifiers, electrolyzers, amine, rate-based columns, OLGA link, CCC controls and
+EO. Converting the whole library exercises far more of the converter than any
+single plant model, and it is how the column defect above was found.
+
+```bash
+# Convert every case, one subprocess each (a COM failure cannot abort the batch)
+python devtools/unisim_batch_check.py \
+    --samples-dir "C:\Program Files (x86)\Honeywell\UniSim Design R510\Samples" \
+    --out report.json --work-dir %TEMP%\unisim_batch\run1
+
+# Then RUN every generated model — static checks are not enough
+python devtools/unisim_run_generated.py --dir %TEMP%\unisim_batch\run1 \
+    --out runs.json --timeout 300
+
+# Discover COM attribute names of an operation type the reader mishandles
+python devtools/unisim_probe_ops.py --usc <case.usc> --types columnop,absorber
+python devtools/unisim_probe_column.py <case.usc>
+```
+
+`unisim_batch_check.py` records read/convert timings, the operation-type
+histogram, unmapped types, converter warnings, and an AST *undefined-name* check
+plus a compile check on the generated module. Track these four numbers; all
+should be zero on a healthy converter:
+
+- unmapped operation types
+- "Skipped column" / "Skipped absorber" warnings
+- cases whose generated module does not compile
+- cases with undefined names in the generated module
+
+**Do not edit `unisim_reader.py` while a batch is running** — every subprocess
+re-imports it, so a mid-run edit silently mixes old and new behaviour (and a
+half-written file makes the remaining cases fail with "no result file").
+
+**Reference scores on the R510 library (2026-09-07)** — use these as the bar a
+converter change must not fall below:
+
+| Metric | Value |
+|---|---|
+| Cases converted | 62 / 66 (4 need an uninstalled UniSim module) |
+| Unmapped operation types | 0 |
+| Skipped columns / absorbers / unsupported ops | 0 / 0 / 0 |
+| Generated modules that compile | 62 / 62 |
+| Generated modules with undefined names | 0 / 62 |
+| **Generated models that run to completion** | **60 / 62** |
+| Read time, 66 cases | 530 s total, 7.3 s median |
+
+### RUNTIME failures that static checks miss
+
+A model can convert, compile and contain no undefined names, and still abort on
+`run()` — and because `ProcessSystem.run()` stops at the first throwing unit,
+one bad unit leaves the whole flowsheet at its seed values. Executing the whole
+corpus surfaced five distinct classes:
+
+| Symptom | Cause | Rule |
+|---|---|---|
+| `'DistillationColumn' object has no attribute 'getOutletStream'` | tear-closing used `getOutletStream()` on a multi-outlet unit | use the per-type accessor map |
+| `NullPointerException ... "inStream" is null` | `Type("name", None)` emitted for a unit whose feed COM did not expose | synthesise a boundary feed from the unit's product |
+| `IllegalArgumentException: Feed tray index must be between 0 and N-1` | absorber fed at tray `n` with gas/liquid swapped | gas -> 0, solvent -> n-1 |
+| TIMEOUT | converted column iterates without converging | `setMaxNumberOfIterations(30, True)` (hard-cap overload) |
+| `'ComponentSplitter' object has no attribute 'getOutletStream'` | same as row 1 | see accessor table below |
+
+**Outlet accessor by type** (audited against the released jar — do not assume
+`getOutletStream()` exists):
+
+| Type | Outlet accessor |
+|---|---|
+| `Splitter`, `ComponentSplitter` | `getSplitStream(int(i))` |
+| `Separator`, `GasScrubber` | `getGasOutStream()` / `getLiquidOutStream()` |
+| `ThreePhaseSeparator` | `getGasOutStream()` / `getOilOutStream()` / `getWaterOutStream()` |
+| `HeatExchanger` | `getOutStream(int(i))` |
+| `DistillationColumn` | `getGasOutStream()` / `getLiquidOutStream()` |
+| `Electrolyzer` | `getHydrogenOutStream()` / `getOxygenOutStream()` |
+| everything else converted | `getOutletStream()` |
+
+Keep this as data (`TEAR_OUTLET_ACCESSORS`, `TEAR_SKIP_TYPES`,
+`_placeholder_ports`), not as duplicated `if` chains: the port list for
+forward-reference placeholders was duplicated between registration and emission,
+and the two drifted apart, producing `NameError: name '_fwd_X_liquidOut' is not
+defined`.
+
 ### Expected Deviations
 
 | Property | Typical Deviation | Acceptable | Notes |
@@ -1230,7 +1431,10 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
 3. **Tuned BIPs** — Extractable via `pp.Kij.Values` (see Section 1.1). The
    `unisim_reader.py` does not yet automate this, but manual extraction is
    straightforward. The returned matrix uses -32767.0 as a diagonal sentinel.
-4. **Column internals** — distillation column tray/packing details not fully mapped
+4. **Column internals** — tray count, condenser/reboiler presence, feed stage,
+   reflux ratio and top/bottom pressure ARE transferred (see the column section
+   in Part 1). Tray hydraulics, packing details, side draws, pumparounds and
+   multi-spec column control are not.
 5. **Dynamic models** — only steady-state data extracted
 6. **Control logic** — PID controllers produce TODO comments, not functional controllers
 7. **Custom correlations** — UniSim's user-defined correlations not transferred
@@ -1241,9 +1445,11 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
    explicitly wired. Treat multi-package models as verified only after the
    generated JSON/Python shows the expected `e300FilePath` for each area and
    the build route loads E300 through `EclipseFluidReadWrite.read(...)`.
-10. **Absorber columns** — single-feed only; multi-feed absorbers show a TODO.
-    Glycol/TEG contactors (name contains "glyc", "teg", or "dehydrat") are
-    modeled as `ComponentSplitter` for water removal instead of `DistillationColumn`
+10. **Absorber columns** — two-feed absorbers are wired (vapour-rich feed to the
+    bottom tray, lean solvent to the top); a single-feed absorber still emits a
+    TODO for the missing solvent. Glycol/TEG contactors (name contains "glyc",
+    "teg", or "dehydrat") are modeled as `ComponentSplitter` for water removal
+    instead of `DistillationColumn`.
 11. **SetPoint / Adjuster wiring** — generates skeleton code but wiring is often incomplete
 12. **Recycle convergence** — heavily circular models (5+ forward references) may
     not converge with placeholder initial values; multiple `process.run()` calls
@@ -1261,7 +1467,11 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
     inside-out column solvers diverge for C3/C4-rich (NGL-range) feeds at low
     pressure. Feeds with < 30% methane and significant C3+ fractions will not
     converge. Lighter feeds (e.g. deethanizer with 51% CH4) converge reliably.
-    Build the column **outside** the `ProcessSystem` to avoid re-run divergence.
+    Every generated column therefore carries a hard iteration cap
+    (`setMaxNumberOfIterations(30, True)`) so a non-converging column cannot
+    hang the whole `process.run()`; the trade-off is a column that stops short
+    of its own convergence criterion. Build the column **outside** the
+    `ProcessSystem` when you need a converged column.
     See the TUTOR1 notebook for a worked example.
 18. **HeatExchanger pressure drops** — NeqSim `HeatExchanger` does not model
     pressure drops; outlet pressures equal inlet pressures. UniSim models
@@ -1278,6 +1488,13 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
     **Workaround**: Test individual ProcessSystem areas or connected sub-paths
     first, then build up incrementally. The connected main-path approach (no
     recycles, manual feed data) runs in < 1 second for even large models.
+    Measured on the R510 sample library (60 of 62 converted models run to
+    completion): the only two that still exceed 240 s are the cases with
+    **several columns inside recycle loops** — Soybean-Biofuel (3 columns,
+    4 recycles) and the eNRTL amine plant (absorber + column). Each outer
+    recycle pass re-solves every column from scratch, so cost scales as
+    `n_columns x column_iterations x outer_passes`. The column iteration cap
+    bounds a single column, not this product.
 21. **Separator liquid MW deviation** — When UniSim separators have
     `has_water_product=False` (2-product), the NeqSim `Separator` includes
     water in the liquid phase. This causes liquid MW to be lower than UniSim's
@@ -1295,6 +1512,17 @@ python devtools/unisim_reader.py path/to/file.usc --visible --summary
    sub-flowsheet interface wiring. Keep the verification report split into
    separate statuses for fluid export/use, structural build, and numerical
    stream matching.
+24. **Synthesised boundary feeds** — when UniSim COM exposes no inlet for a
+   block, the converter seeds a boundary feed from that block's own product
+   stream so the unit (and everything downstream) survives. The unit then runs
+   at roughly the right operating point but is no longer connected to its real
+   upstream source. Every such feed is reported as a converter warning
+   ("Synthesised a boundary feed for ...") — review them before trusting a
+   mass balance.
+25. **Cases that need a UniSim module you do not have** cannot be opened at all
+   (`E_ACCESSDENIED` from `SimulationCases.Open`). In the R510 library this is
+   the 3 `CCC Series 5` controls cases and the EO electrical case: 62 of 66
+   convert, 4 are environment-limited, not converter-limited.
 
 ---
 

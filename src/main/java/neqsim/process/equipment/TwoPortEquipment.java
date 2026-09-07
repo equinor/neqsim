@@ -83,6 +83,9 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass impleme
   /** {@inheritDoc} */
   @Override
   public void setInletStream(StreamInterface stream) {
+    if (stream == null) {
+      throw new IllegalArgumentException("Equipment '" + this.getName() + "' requires a non-null inlet stream");
+    }
     this.inStream = stream;
     StreamInterface newOutletStream = inStream.clone(this.getName() + " out stream");
     if (this.outStream == null) {

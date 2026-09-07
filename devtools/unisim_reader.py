@@ -452,14 +452,22 @@ def _build_unisim_operation_handlers(
     Returns:
         Mapping from normalized UniSim type name to operation handler metadata.
     """
-    adapter_ops = frozenset(('balanceop', 'virtualstreamop', 'templateop'))
+    adapter_ops = frozenset(('balanceop', 'virtualstreamop', 'templateop',
+                             'streamcutterop',
+                             'fluidizedcatalyticcrackerop',
+                             'isomerizationreactorop',
+                             'fluidizedcatalyticcrackertemplate',
+                             'isomerizationtemplate'))
     reference_ops = frozenset(('adjust', 'setop', 'spreadsheetop'))
     controller_ops = frozenset(('pidfbcontrolop', 'surgecontroller',
-                                'logicalop', 'selectop'))
+                                'logicalop', 'selectop', 'selectionop',
+                                'fanoutop'))
     column_internal_ops = frozenset(('partialcondenser', 'totalcondenser',
                                      'condenser3op', 'traysection',
-                                     'bpreboiler'))
-    skipped_utility_ops = frozenset(('blowdowngenesimop',))
+                                     'bpreboiler', 'pumparoundop',
+                                     'sidestripper', 'siderectifier'))
+    skipped_utility_ops = frozenset(('blowdowngenesimop', 'genesimop',
+                                     'machinelearningtoolop'))
 
     handlers: Dict[str, UniSimOperationHandler] = {}
     for type_name, neqsim_type in operation_type_map.items():
@@ -582,6 +590,8 @@ class UniSimReader:
         'valveop': 'ThrottlingValve',
         'sep3op': 'ThreePhaseSeparator',
         'flashtank': 'Separator',
+        'sep1op': 'Separator',
+        'sep2op': 'Separator',
         'mixerop': 'Mixer',
         'teeop': 'Splitter',
         'compressor': 'Compressor',
@@ -594,10 +604,18 @@ class UniSimReader:
         'adjust': 'Adjuster',
         'setop': 'SetPoint',
         'pipeseg': 'AdiabaticPipe',
+        'olgapipe': 'AdiabaticPipe',
         'fractop': 'ComponentSplitter',
+        'streamcutterop': 'UnisimCalculator',
         'saturateop': 'StreamSaturatorUtil',
         'spreadsheetop': 'SpreadsheetBlock',
         'templateop': 'SubFlowsheet',
+        'fluidizedcatalyticcrackertemplate': 'SubFlowsheet',
+        'isomerizationtemplate': 'SubFlowsheet',
+        # Refinery conversion units have no NeqSim physical equivalent; they
+        # are kept as pass-through adapters so downstream topology survives.
+        'fluidizedcatalyticcrackerop': 'UnisimCalculator',
+        'isomerizationreactorop': 'UnisimCalculator',
         'absorberop': 'Absorber',
         'virtualstreamop': 'UnisimCalculator',
         # Reactor subtypes — map to specific NeqSim reactor classes
@@ -610,14 +628,32 @@ class UniSimReader:
         'gibbsreactorop': 'GibbsReactor',
         'equilibriumreactorop': 'GibbsReactor',
         'kineticreactorop': 'PlugFlowReactor',
+        # Gasifiers: solid-feed equilibrium syngas generators. UniSim's own
+        # gasifier blocks carry a solid (coal/biomass) feed NeqSim cannot
+        # flash, so they map to an equilibrium reactor on the fluid feed.
+        'gasifierop': 'GibbsReactor',
+        'gasifieroppy': 'GibbsReactor',
+        'gsfrxsecop': 'GibbsReactor',
+        # Electrolyzers
+        'pemelectrolyzer': 'Electrolyzer',
+        'alkalineelectrolyzer': 'Electrolyzer',
+        'soecelectrolyzer': 'Electrolyzer',
+        'electrolyzerop': 'Electrolyzer',
+        # Fired equipment
+        'firedheaterop': 'FiredHeater',
         # Controllers / utilities
         'pidfbcontrolop': 'PIDController',
         'surgecontroller': 'SurgeController',
+        'selectionop': 'LogicalOp',
+        'fanoutop': 'LogicalOp',
         # Column types
         'distillation': 'DistillationColumn',
         'absorber': 'Absorber',
         'columnop': 'DistillationColumn',
         'reboiledabsorber': 'DistillationColumn',
+        'refluxedabsorber': 'DistillationColumn',
+        'ratedistillation': 'DistillationColumn',
+        'threephasedistillation': 'DistillationColumn',
         # Column internals (sub-parts, not standalone)
         'partialcondenser': 'ColumnInternals',
         'totalcondenser': 'ColumnInternals',
@@ -629,6 +665,8 @@ class UniSimReader:
         'logicalop': 'LogicalOp',
         'selectop': 'LogicalOp',
         'blowdowngenesimop': 'BlowdownGeneSim',
+        'genesimop': 'BlowdownGeneSim',
+        'machinelearningtoolop': 'BlowdownGeneSim',
     }
 
     OPERATION_HANDLERS = _build_unisim_operation_handlers(OPERATION_TYPE_MAP)
@@ -636,6 +674,24 @@ class UniSimReader:
     # Set of all reactor NeqSim types (for generic handling)
     REACTOR_TYPES = frozenset(('GibbsReactor', 'PlugFlowReactor',
                                'StirredTankReactor'))
+
+    #: UniSim column operations. These expose their external connections as
+    #: ``AttachedFeeds`` / ``AttachedProducts`` instead of ``Feeds``/
+    #: ``Products``, so they need dedicated extraction.
+    COLUMN_TYPE_NAMES = frozenset((
+        'distillation', 'columnop', 'absorber', 'absorberop',
+        'reboiledabsorber', 'refluxedabsorber', 'ratedistillation',
+        'threephasedistillation'))
+
+    #: Column-internal condenser blocks.
+    CONDENSER_TYPE_NAMES = frozenset(('partialcondenser', 'totalcondenser',
+                                      'condenser3op'))
+
+    #: Column-internal reboiler blocks.
+    REBOILER_TYPE_NAMES = frozenset(('bpreboiler', 'reboiler'))
+
+    #: Column-internal tray sections.
+    TRAY_SECTION_TYPE_NAMES = frozenset(('traysection',))
 
     @classmethod
     def get_operation_handler(
@@ -781,6 +837,11 @@ class UniSimReader:
         'Grayson Streed': 'SRK',  # fallback
     }
 
+    #: Seconds to wait for the UniSim automation server to become responsive.
+    APP_START_TIMEOUT_S = 60.0
+    #: Seconds to wait for an opened case to publish its object model.
+    CASE_OPEN_TIMEOUT_S = 300.0
+
     def __init__(self, visible: bool = False):
         """Initialize but don't start UniSim yet.
 
@@ -790,6 +851,37 @@ class UniSimReader:
         self._app = None
         self._visible = visible
 
+    @staticmethod
+    def _wait_ready(probe, timeout: float, description: str,
+                    interval: float = 0.2) -> bool:
+        """Block until a COM probe stops raising, or the timeout expires.
+
+        UniSim needs an unpredictable amount of time to publish its automation
+        object model after start-up and after opening a case. Polling a cheap
+        property is both faster than a fixed sleep on small cases and safer than
+        one on large cases.
+
+        Args:
+            probe: Zero-argument callable that touches a COM property.
+            timeout: Maximum seconds to wait.
+            description: What is being waited for, for logging.
+            interval: Seconds between attempts.
+
+        Returns:
+            True if the probe succeeded within the timeout.
+        """
+        deadline = time.time() + timeout
+        last_error = None
+        while time.time() < deadline:
+            try:
+                probe()
+                return True
+            except Exception as exc:  # noqa: BLE001 - COM raises many types
+                last_error = exc
+                time.sleep(interval)
+        logger.warning("Timed out waiting for %s: %s", description, last_error)
+        return False
+
     def _ensure_app(self):
         """Start UniSim if not already running."""
         if self._app is None:
@@ -797,7 +889,8 @@ class UniSimReader:
             logger.info("Starting UniSim Design via COM...")
             self._app = win32com.client.dynamic.Dispatch('UnisimDesign.Application')
             self._app.Visible = self._visible
-            time.sleep(2)
+            self._wait_ready(lambda: self._app.SimulationCases.Count,
+                             self.APP_START_TIMEOUT_S, 'UniSim to start')
             logger.info("UniSim started.")
 
     def close(self):
@@ -856,8 +949,9 @@ class UniSimReader:
         self._ensure_app()
         logger.info(f"Opening: {usc_path}")
 
-        case = self._app.SimulationCases.Open(usc_path)
-        time.sleep(3)
+        case = self._open_case(usc_path)
+        self._wait_ready(lambda: case.Flowsheet.MaterialStreams.Count,
+                         self.CASE_OPEN_TIMEOUT_S, 'case object model')
 
         # Pause solver
         solver = case.Solver
@@ -921,6 +1015,43 @@ class UniSimReader:
         logger.info(f"Extracted: {len(model.all_operations())} operations, "
                      f"{len(model.all_streams())} streams")
         return model
+
+    def _open_case(self, usc_path: str):
+        """Open a case, retrying once on a fresh UniSim session.
+
+        ``SimulationCases.Open`` raises a bare ``com_error`` that says nothing
+        about the cause. The two recoverable causes are a stale shared UniSim
+        session (the automation server is a singleton, so another script can
+        leave it wedged) and a case already open under the same name. Anything
+        else is almost always a missing UniSim extension or licensed module for
+        that case type, which no retry can fix — so report it as such.
+
+        Args:
+            usc_path: Absolute path to the .usc case.
+
+        Returns:
+            The opened UniSim case COM object.
+
+        Raises:
+            RuntimeError: When the case cannot be opened, with the likely cause.
+        """
+        try:
+            return self._app.SimulationCases.Open(usc_path)
+        except Exception as first_error:  # noqa: BLE001 - COM raises com_error
+            logger.warning("Open failed (%s); retrying on a fresh session",
+                           first_error)
+            self.close()
+            self._ensure_app()
+            try:
+                return self._app.SimulationCases.Open(usc_path)
+            except Exception as retry_error:  # noqa: BLE001
+                raise RuntimeError(
+                    f"UniSim refused to open '{os.path.basename(usc_path)}'. "
+                    f"This usually means the case needs a UniSim extension or "
+                    f"licensed module that is not installed (for example the "
+                    f"CCC controls or equation-oriented electrical packages), "
+                    f"or the file is corrupt. COM error: {retry_error}"
+                ) from retry_error
 
     @staticmethod
     def _get_reference_composition(model: UniSimModel,
@@ -1606,6 +1737,11 @@ class UniSimReader:
             self._extract_heatexchanger(op, op_data)
             return op_data
 
+        # ---- Special handling for columns ----
+        if type_lower in self.COLUMN_TYPE_NAMES:
+            self._extract_column(op, op_data)
+            return op_data
+
         # ---- FEEDS ----
         # 1) Try Feeds[] array (mixers, separators, multi-feed ops)
         feeds_found = False
@@ -1838,7 +1974,7 @@ class UniSimReader:
             # converges to the same solution. Best-effort and fully defensive.
             self._extract_column_specs(op, props)
 
-        elif 'pipeseg' in type_name:
+        elif 'pipeseg' in type_name or 'olgapipe' in type_name:
             # Try to get pipe length, diameter
             try:
                 props['length_m'] = self._safe_getval(op.Length, 'm') if hasattr(op, 'Length') else None
@@ -2188,6 +2324,249 @@ class UniSimReader:
                     props['bottomPressure'] = reb_p
         except Exception:
             pass
+
+    @staticmethod
+    def _collection_names(obj, attribute: str) -> List[str]:
+        """Return the ``name`` of every item in a COM collection attribute.
+
+        Args:
+            obj: COM object owning the collection.
+            attribute: Collection property name.
+
+        Returns:
+            List of item names, empty when the attribute is missing.
+        """
+        names: List[str] = []
+        try:
+            collection = getattr(obj, attribute)
+        except Exception:
+            return names
+        if collection is None:
+            return names
+        try:
+            count = collection.Count
+        except Exception:
+            return names
+        for index in range(count):
+            try:
+                item = collection.Item(index)
+            except Exception:
+                continue
+            name = (getattr(item, 'Name', None) or getattr(item, 'name', None))
+            if name:
+                names.append(str(name))
+        return names
+
+    @staticmethod
+    def _stream_vapour_fraction(collection, name: str) -> Optional[float]:
+        """Return the vapour fraction of a named stream in a COM collection."""
+        try:
+            for index in range(collection.Count):
+                item = collection.Item(index)
+                item_name = (getattr(item, 'Name', None)
+                             or getattr(item, 'name', None))
+                if str(item_name) != name:
+                    continue
+                return float(item.VapourFraction.GetValue())
+        except Exception:
+            return None
+        return None
+
+    def _extract_column(self, op, op_data: UniSimOperation):
+        """Extract connections and configuration of a UniSim column.
+
+        UniSim columns (distillation, absorber, refluxed/reboiled absorber,
+        rate-based) do NOT expose ``Feeds``/``Products``; their external
+        connections live in ``AttachedFeeds`` / ``AttachedProducts``, which mix
+        material and energy streams. Without this the generic extractor found no
+        feeds at all and the converter dropped every column from the flowsheet.
+
+        The column's ``ColumnFlowsheet`` supplies the split between material and
+        energy streams, the condenser/reboiler presence, the tray count, the
+        feed stage and the reflux ratio.
+
+        Args:
+            op: UniSim column COM operation object.
+            op_data: Operation record to populate.
+        """
+        try:
+            column_flowsheet = getattr(op, 'ColumnFlowsheet', None)
+        except Exception:
+            column_flowsheet = None
+
+        energy_names = set()
+        material_collection = None
+        if column_flowsheet is not None:
+            energy_names = {
+                n.lower()
+                for n in self._collection_names(column_flowsheet,
+                                                'EnergyStreams')}
+            try:
+                material_collection = column_flowsheet.MaterialStreams
+            except Exception:
+                material_collection = None
+
+        def _is_energy(name: str) -> bool:
+            if name.lower() in energy_names:
+                return True
+            # Fall back to a name heuristic when the column flowsheet is
+            # unreadable; UniSim duty streams are conventionally named *Duty*.
+            return not energy_names and 'duty' in name.lower()
+
+        for name in self._collection_names(op, 'AttachedFeeds'):
+            if _is_energy(name):
+                op_data.energy_feeds.append(name)
+            else:
+                op_data.feeds.append(name)
+
+        material_products: List[str] = []
+        for name in self._collection_names(op, 'AttachedProducts'):
+            if _is_energy(name):
+                op_data.energy_products.append(name)
+            else:
+                material_products.append(name)
+
+        config = self._column_internals(column_flowsheet, material_products)
+        op_data.products.extend(
+            self._order_column_products(material_products, config,
+                                        material_collection))
+
+        # An absorber is generated with feed 0 at the bottom stage (gas) and
+        # feed 1 at the top (lean solvent), so order feeds vapour-rich first.
+        if len(op_data.feeds) > 1 and material_collection is not None:
+            op_data.feeds.sort(
+                key=lambda n: -(self._stream_vapour_fraction(
+                    material_collection, n) or 0.0))
+
+        props = op_data.properties
+        if config['n_trays']:
+            props['numberOfTrays'] = config['n_trays']
+            props['numberOfStages'] = config['n_trays']
+        props['hasCondenser'] = config['has_condenser']
+        props['hasReboiler'] = config['has_reboiler']
+        if config['feed_stages']:
+            props['feedStages'] = config['feed_stages']
+        if config['reflux_ratio'] is not None:
+            props['refluxRatio'] = config['reflux_ratio']
+        self._extract_column_specs(op, props)
+        # UniSim does not expose condenser/reboiler pressure on the column
+        # operation; take them from the product streams instead, otherwise the
+        # NeqSim column would default to the feed pressure.
+        if material_collection is not None and op_data.products:
+            if 'topPressure' not in props:
+                top_p = self._stream_pressure(material_collection,
+                                              op_data.products[0])
+                if top_p:
+                    props['topPressure'] = top_p
+            if 'bottomPressure' not in props:
+                bottom_p = self._stream_pressure(material_collection,
+                                                 op_data.products[-1])
+                if bottom_p:
+                    props['bottomPressure'] = bottom_p
+
+    @staticmethod
+    def _stream_pressure(collection, name: str) -> Optional[float]:
+        """Return the pressure in bara of a named stream in a COM collection."""
+        try:
+            for index in range(collection.Count):
+                item = collection.Item(index)
+                item_name = (getattr(item, 'Name', None)
+                             or getattr(item, 'name', None))
+                if str(item_name) != name:
+                    continue
+                return float(item.Pressure.GetValue('bar'))
+        except Exception:
+            return None
+        return None
+
+    def _column_internals(self, column_flowsheet,
+                          material_products: List[str]) -> Dict[str, Any]:
+        """Inspect a column flowsheet for its internals configuration.
+
+        Args:
+            column_flowsheet: The column's ``ColumnFlowsheet`` COM object.
+            material_products: External material product names of the column.
+
+        Returns:
+            Dict with ``has_condenser``, ``has_reboiler``, ``n_trays``,
+            ``feed_stages``, ``reflux_ratio``, ``distillate`` and ``bottoms``.
+        """
+        config: Dict[str, Any] = {
+            'has_condenser': False,
+            'has_reboiler': False,
+            'n_trays': 0,
+            'feed_stages': [],
+            'reflux_ratio': None,
+            'distillate': [],
+            'bottoms': [],
+        }
+        if column_flowsheet is None:
+            return config
+
+        config['reflux_ratio'] = self._clean_scalar_value(
+            self._safe_get(column_flowsheet, 'RefluxRatio', None))
+
+        external = {name.lower(): name for name in material_products}
+        try:
+            operations = column_flowsheet.Operations
+            count = operations.Count
+        except Exception:
+            return config
+
+        for index in range(count):
+            try:
+                internal = operations.Item(index)
+            except Exception:
+                continue
+            type_name = str(self._safe_get(internal, 'TypeName', '') or '').lower()
+            products = [external[n.lower()]
+                        for n in self._collection_names(internal,
+                                                        'AttachedProducts')
+                        if n.lower() in external]
+            if type_name in self.CONDENSER_TYPE_NAMES:
+                config['has_condenser'] = True
+                config['distillate'].extend(products)
+            elif type_name in self.REBOILER_TYPE_NAMES:
+                config['has_reboiler'] = True
+                config['bottoms'].extend(products)
+            elif type_name in self.TRAY_SECTION_TYPE_NAMES:
+                trays = self._clean_scalar_value(
+                    self._safe_get(internal, 'NumberOfTrays',
+                                   self._safe_get(internal, 'NumberOfStages',
+                                                  None)))
+                if trays and trays > 0:
+                    config['n_trays'] += int(trays)
+                for entry in self._collection_names(internal, 'FeedStages'):
+                    stage = entry.split('__')[0].strip()
+                    if stage.isdigit():
+                        config['feed_stages'].append(int(stage))
+        return config
+
+    def _order_column_products(self, material_products: List[str],
+                               config: Dict[str, Any],
+                               material_collection) -> List[str]:
+        """Order column products overhead-first, bottoms-last.
+
+        The converter maps product index 0 to the column gas outlet and the
+        remaining products to the liquid outlet, so the order must be physical
+        rather than the arbitrary ``AttachedProducts`` order.
+
+        Args:
+            material_products: External material product names.
+            config: Result of :meth:`_column_internals`.
+            material_collection: COM collection used to read vapour fractions.
+
+        Returns:
+            Products ordered from overhead to bottoms.
+        """
+        distillate = [n for n in material_products if n in config['distillate']]
+        bottoms = [n for n in material_products if n in config['bottoms']]
+        rest = [n for n in material_products
+                if n not in distillate and n not in bottoms]
+        if rest and material_collection is not None:
+            rest.sort(key=lambda n: -(self._stream_vapour_fraction(
+                material_collection, n) or 0.0))
+        return distillate + rest + bottoms
 
     def _extract_heatexchanger(self, op, op_data: UniSimOperation):
         """Extract HeatExchanger-specific connections and properties.
@@ -3373,7 +3752,8 @@ class UniSimToNeqSim:
                 op.properties.get('hasCondenser', has_condenser))
             feed_tray = op.properties.get('feedTray')
             if feed_tray is None:
-                feed_tray = max(1, n_trays // 2)
+                feed_tray = self._column_feed_tray(
+                    op, n_trays, props['hasReboiler'], props['hasCondenser'])
             props['feedTray'] = int(feed_tray)
             for spec_key in ('refluxRatio', 'topPressure', 'bottomPressure',
                              'condenserDuty', 'reboilerDuty'):
@@ -3506,6 +3886,14 @@ class UniSimToNeqSim:
                             idx = op.products.index(stream_name)
                             return f"{producer_name}.split{idx}"
                         return f"{producer_name}.split0"
+                    elif neqsim_type == 'Electrolyzer':
+                        # An electrolyzer has no single process outlet; its
+                        # products are hydrogen (first) and oxygen (second).
+                        if len(op.products) > 1 and stream_name in op.products:
+                            idx = op.products.index(stream_name)
+                            if idx > 0:
+                                return f"{producer_name}.oxygenOut"
+                        return f"{producer_name}.hydrogenOut"
                     elif neqsim_type == 'DistillationColumn':
                         # Column products: first = overhead/gas, last = bottoms
                         if len(op.products) > 0 and stream_name in op.products:
@@ -4379,6 +4767,32 @@ class UniSimToNeqSim:
         return {op.name: op for op in ops}
 
     @staticmethod
+    def _placeholder_ports(op: 'UniSimOperation',
+                           neqsim_type: Optional[str]) -> List[str]:
+        """Return the outlet port names a forward-reference placeholder needs.
+
+        Multi-outlet equipment needs one placeholder per port so a consumer can
+        reference the right outlet. Registration and emission must agree, or the
+        generated model references a placeholder that was never created.
+
+        Args:
+            op: The producing operation.
+            neqsim_type: Its resolved NeqSim type.
+
+        Returns:
+            Port names, empty for single-outlet equipment.
+        """
+        n_products = len(getattr(op, 'products', None) or []) if op else 0
+        if neqsim_type in ('Separator', 'GasScrubber',
+                           'DistillationColumn') and n_products >= 2:
+            return ['gasOut', 'liquidOut']
+        if neqsim_type == 'ThreePhaseSeparator' and n_products >= 3:
+            return ['gasOut', 'oilOut', 'waterOut']
+        if neqsim_type == 'HeatExchanger' and n_products >= 2:
+            return ['hx0', 'hx1']
+        return []
+
+    @staticmethod
     def _register_fwd_placeholders(topo: dict) -> None:
         """Populate ``topo['fwd_ref_vars']`` from ``topo['fwd_ref_placeholders']``.
 
@@ -4406,15 +4820,7 @@ class UniSimToNeqSim:
             op = op_by_name.get(prod_name)
             if op:
                 n_type = UniSimToNeqSim.resolve_neqsim_type(op)
-                if n_type in ('Separator', 'GasScrubber') and len(op.products or []) >= 2:
-                    ports = ['gasOut', 'liquidOut']
-                elif n_type == 'ThreePhaseSeparator' and len(op.products or []) >= 3:
-                    ports = ['gasOut', 'oilOut', 'waterOut']
-                elif n_type == 'HeatExchanger' and len(op.products or []) >= 2:
-                    ports = ['hx0', 'hx1']
-                else:
-                    ports = []
-                for port in ports:
+                for port in UniSimToNeqSim._placeholder_ports(op, n_type):
                     port_var = f'{pv}_{port}'
                     used_vars.add(port_var)
                     fwd_ref_vars[f'{prod_name}.{port}'] = port_var
@@ -4442,6 +4848,8 @@ class UniSimToNeqSim:
             'oilOut': 'getOilOutStream()',
             'waterOut': 'getWaterOutStream()',
             'liquidOut': 'getLiquidOutStream()',
+            'hydrogenOut': 'getHydrogenOutStream()',
+            'oxygenOut': 'getOxygenOutStream()',
             'outlet': 'getOutletStream()',
         }
         if port.startswith('split'):
@@ -4458,6 +4866,36 @@ class UniSimToNeqSim:
     SKIPPED_NEQSIM_TYPES = frozenset((
         'SurgeController', 'ColumnInternals',
         'BlowdownGeneSim',     # non-physical: EO utility
+    ))
+
+    #: Equipment that is valid without an inlet stream, either because it
+    #: collects streams afterwards (Mixer, Recycle) or because it carries no
+    #: material topology at all (controllers, specification blocks).
+    NO_INLET_REQUIRED_TYPES = frozenset((
+        'Mixer', 'Recycle', 'SetPoint', 'Adjuster', 'SpreadsheetBlock',
+        'PIDController', 'LogicalOp', 'SubFlowsheet',
+    ))
+
+    #: Hard iteration cap applied to every converted distillation column. A
+    #: converted column starts far from the UniSim solution and can iterate
+    #: without converging, which hangs the whole process.run().
+    COLUMN_MAX_ITERATIONS = 30
+
+    #: Outlet accessor used when closing a forward-reference tear, for types
+    #: that do not expose ``getOutletStream()``.
+    TEAR_OUTLET_ACCESSORS = {
+        'Splitter': 'getSplitStream(int(0))',
+        'ComponentSplitter': 'getSplitStream(int(0))',
+    }
+
+    #: Producers excluded from forward-reference tear closing: multi-outlet
+    #: units (a column closes its own port placeholders instead), units whose
+    #: outlets are not a single process stream (Electrolyzer gives H2 and O2),
+    #: and units that carry no material topology.
+    TEAR_SKIP_TYPES = frozenset((
+        'Separator', 'GasScrubber', 'ThreePhaseSeparator', 'HeatExchanger',
+        'Recycle', 'SubFlowsheet', 'PIDController', 'LogicalOp',
+        'DistillationColumn', 'Absorber', 'Electrolyzer',
     ))
 
     NEQSIM_IMPORTS = (
@@ -4493,6 +4931,10 @@ class UniSimToNeqSim:
         'GibbsReactor = jneqsim.process.equipment.reactor.GibbsReactor',
         'PlugFlowReactor = jneqsim.process.equipment.reactor.PlugFlowReactor',
         'StirredTankReactor = jneqsim.process.equipment.reactor.StirredTankReactor',
+        'Electrolyzer = jneqsim.process.equipment.electrolyzer.Electrolyzer',
+        'ElectrolyzerTechnology = '
+        'jneqsim.process.equipment.electrolyzer.ElectrolyzerTechnology',
+        'FiredHeater = jneqsim.process.equipment.heatexchanger.FiredHeater',
         'EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite',
     )
 
@@ -4781,6 +5223,46 @@ class UniSimToNeqSim:
         inner = ', '.join('"%s": %r' % (k, v) for k, v in items)
         return '{' + inner + '}'
 
+    def _synthetic_feed_lines(self, var: str, op: 'UniSimOperation',
+                              topo: dict) -> Optional[List[str]]:
+        """Return lines creating a boundary feed for a unit with no inlet.
+
+        The stream is seeded from the unit's first product so the unit runs at
+        roughly its UniSim operating point.
+
+        Args:
+            var: Python variable name to bind the stream to.
+            op: Operation missing an inlet.
+            topo: Topology dict, used for the stream lookup and name registry.
+
+        Returns:
+            Code lines, or ``None`` when no product stream data is available.
+        """
+        stream_by_name = topo.get('stream_by_name', {})
+        seed = next((stream_by_name[p] for p in (op.products or [])
+                     if p in stream_by_name), None)
+        if seed is None:
+            return None
+
+        topo['used_vars'].add(var)
+        topo['var_names'][var] = var
+        lines = [
+            f'# UniSim did not expose an inlet for "{op.name}"; seed a boundary',
+            f'# feed from its product "{seed.name}" so the unit still runs.',
+            f'{var} = Stream("{op.name} feed", fluid.clone())',
+        ]
+        comp_literal = self._feed_comp_literal(seed.name, seed)
+        if comp_literal:
+            lines.append(f'_set_feed_composition({var}, {comp_literal})')
+        if seed.mass_flow_kgh:
+            lines.append(f'{var}.setFlowRate({seed.mass_flow_kgh}, "kg/hr")')
+        if seed.temperature_C is not None:
+            lines.append(f'{var}.setTemperature({seed.temperature_C}, "C")')
+        if seed.pressure_bara is not None:
+            lines.append(f'{var}.setPressure({seed.pressure_bara}, "bara")')
+        lines.append(f'process.add({var})')
+        return lines
+
     def _gen_equipment_lines(self, op: 'UniSimOperation', topo: dict) -> Optional[List[str]]:
         """Return code lines for one equipment unit, or None if skipped."""
         neqsim_type = self.resolve_neqsim_type(op)
@@ -4807,6 +5289,29 @@ class UniSimToNeqSim:
         if op.feeds:
             for f in op.feeds:
                 inlet_refs.append(self._resolve_inlet_ref(f, stream_producer))
+
+        # Equipment built as Type(name, inletStream) throws on a null stream and
+        # aborts the whole process.run(). UniSim does not expose the feed of
+        # every block through COM, so synthesise a boundary feed seeded from the
+        # unit's own product stream: that keeps the unit (and everything
+        # downstream of it) in the model at roughly the right operating point,
+        # where dropping the unit would leave dangling references.
+        if not inlet_refs and neqsim_type not in self.NO_INLET_REQUIRED_TYPES:
+            seed_var = f'_seedfeed_{v}'
+            seed_lines = self._synthetic_feed_lines(seed_var, op, topo)
+            if seed_lines is None:
+                self._warnings.append(
+                    f"Skipped '{op.name}' ({neqsim_type}) - UniSim exposed "
+                    f"neither a feed nor a product stream to seed one from.")
+                return [f'# SKIPPED (no feed): "{op.name}" ({neqsim_type}) - '
+                        f'no inlet stream extracted and no product to seed '
+                        f'from; reconnect manually.']
+            self._warnings.append(
+                f"Synthesised a boundary feed for '{op.name}' ({neqsim_type}) - "
+                f"UniSim COM did not expose its inlet stream; the feed is "
+                f"seeded from the unit's product conditions.")
+            lines.extend(seed_lines)
+            inlet_refs = [seed_var]
 
         fwd_ref_vars = topo.get('fwd_ref_vars', {})
         _ref = lambda ref: self._outlet_ref(ref, var_names, fwd_ref_vars)
@@ -4861,14 +5366,17 @@ class UniSimToNeqSim:
             has_condenser, has_reboiler, n_trays = self._detect_column_config(
                 op, topo)
             n_trays = op.properties.get('numberOfTrays', n_trays)
+            n_trays = max(2, int(n_trays or 2))
             lines.append(
                 f'{v} = DistillationColumn("{op.name}", {n_trays}, '
                 f'{has_reboiler}, {has_condenser})')
-            feed_tray = max(1, n_trays // 2)
+            feed_tray = self._column_feed_tray(op, n_trays, has_reboiler,
+                                               has_condenser)
             lines.append(
                 f'{v}.addFeedStream({_ref(inlet_refs[0])}, {feed_tray})')
             for extra in inlet_refs[1:]:
-                lines.append(f'{v}.addFeedStream({_ref(extra)}, 1)')
+                lines.append(f'{v}.addFeedStream({_ref(extra)}, 0)')
+            lines.extend(self._column_spec_lines(v, op))
 
         elif neqsim_type == 'Absorber':
             # Detect glycol/TEG contactor by name — use ComponentSplitter
@@ -4889,25 +5397,31 @@ class UniSimToNeqSim:
             elif len(inlet_refs) >= 2:
                 n_stages = op.properties.get('numberOfStages',
                                              op.properties.get('numberOfTrays', 5))
-                # Two-feed absorber: gas enters bottom, liquid enters top
+                n_stages = max(2, int(n_stages))
+                # NeqSim numbers trays from the BOTTOM (0) to the TOP (n-1).
+                # In an absorber the gas enters at the bottom and the lean
+                # solvent at the top; feeds are ordered vapour-rich first.
                 lines.append(
                     f'{v} = DistillationColumn("{op.name}", {n_stages}, '
                     f'False, False)')
                 lines.append(
-                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, {n_stages})')
+                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, 0)')
                 lines.append(
-                    f'{v}.addFeedStream({_ref(inlet_refs[1])}, 1)')
+                    f'{v}.addFeedStream({_ref(inlet_refs[1])}, {n_stages - 1})')
+                lines.extend(self._column_spec_lines(v, op))
             elif len(inlet_refs) == 1:
                 n_stages = op.properties.get('numberOfStages',
                                              op.properties.get('numberOfTrays', 5))
+                n_stages = max(2, int(n_stages))
                 lines.append(
                     f'{v} = DistillationColumn("{op.name}", {n_stages}, '
                     f'False, False)')
                 lines.append(
-                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, 1)')
+                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, 0)')
                 lines.append(
                     f'# TODO: absorber needs a second feed stream '
                     f'(solvent) — feeds: {op.feeds}')
+                lines.extend(self._column_spec_lines(v, op))
             else:
                 # Absorber with no feed cannot run; skip it so the rest of the
                 # flowsheet still executes (reconnect feeds manually to keep).
@@ -4921,6 +5435,22 @@ class UniSimToNeqSim:
         elif neqsim_type == 'GibbsReactor':
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
             lines.append(f'{v} = GibbsReactor("{op.name}", {ref_expr})')
+
+        elif neqsim_type == 'Electrolyzer':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            lines.append(f'{v} = Electrolyzer("{op.name}", {ref_expr})')
+            technology = {
+                'pemelectrolyzer': 'PEM',
+                'alkalineelectrolyzer': 'ALKALINE',
+                'soecelectrolyzer': 'SOEC',
+            }.get((op.type_name or '').lower())
+            if technology:
+                lines.append(
+                    f'{v}.setTechnology(ElectrolyzerTechnology.{technology})')
+
+        elif neqsim_type == 'FiredHeater':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            lines.append(f'{v} = FiredHeater("{op.name}", {ref_expr})')
 
         elif neqsim_type == 'PlugFlowReactor':
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
@@ -5244,11 +5774,12 @@ class UniSimToNeqSim:
         if neqsim_type not in ('PIDController', 'LogicalOp', 'SubFlowsheet'):
             lines.append(f'process.add({v})')
 
-        # Wire actual separator/3-phase/HX outlets back to forward ref placeholders
-        if neqsim_type in ('Separator', 'GasScrubber',
-                           'ThreePhaseSeparator', 'HeatExchanger'):
+        # Wire actual separator/3-phase/HX/column outlets back to forward ref placeholders
+        if neqsim_type in ('Separator', 'GasScrubber', 'ThreePhaseSeparator',
+                           'HeatExchanger', 'DistillationColumn'):
             fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
-            if neqsim_type in ('Separator', 'GasScrubber'):
+            if neqsim_type in ('Separator', 'GasScrubber',
+                               'DistillationColumn'):
                 port_info = [('gasOut', 'getGasOutStream()'),
                              ('liquidOut', 'getLiquidOutStream()')]
             elif neqsim_type == 'ThreePhaseSeparator':
@@ -5478,6 +6009,55 @@ class UniSimToNeqSim:
         for name, var in sf_topo['var_names'].items():
             parent_names.setdefault(name, var)
 
+    @staticmethod
+    def _column_feed_tray(op: 'UniSimOperation', n_trays: int,
+                          has_reboiler: bool, has_condenser: bool) -> int:
+        """Translate a UniSim feed stage into a NeqSim tray index.
+
+        UniSim numbers tray-section stages from the top (stage 1 = top tray);
+        NeqSim numbers trays from the bottom, with index 0 the reboiler when
+        present and the condenser last. Falls back to the middle of the column
+        when UniSim exposes no feed stage.
+
+        Args:
+            op: Column operation carrying the extracted ``feedStages``.
+            n_trays: Tray-section stage count passed to the constructor.
+            has_reboiler: Whether a reboiler tray is prepended.
+            has_condenser: Whether a condenser tray is appended.
+
+        Returns:
+            Zero-based NeqSim feed tray index.
+        """
+        total = int(n_trays) + (1 if has_reboiler else 0) + (
+            1 if has_condenser else 0)
+        stages = op.properties.get('feedStages') or []
+        offset = 1 if has_reboiler else 0
+        if stages and n_trays:
+            index = offset + (int(n_trays) - int(stages[0]))
+        else:
+            index = max(1, total // 2)
+        return max(0, min(index, max(total - 1, 0)))
+
+    @staticmethod
+    def _column_spec_lines(var: str, op: 'UniSimOperation') -> List[str]:
+        """Return code lines applying the UniSim column operating specs."""
+        lines: List[str] = []
+        top_p = op.properties.get('topPressure')
+        bottom_p = op.properties.get('bottomPressure')
+        if top_p:
+            lines.append(f'{var}.setTopPressure({float(top_p)!r})')
+        if bottom_p:
+            lines.append(f'{var}.setBottomPressure({float(bottom_p)!r})')
+        reflux = op.properties.get('refluxRatio')
+        if reflux and op.properties.get('hasCondenser', True):
+            lines.append(f'{var}.setCondenserRefluxRatio({float(reflux)!r})')
+        # A converted column can be far from the UniSim solution and iterate
+        # without ever converging, which hangs the whole process.run(). Cap it.
+        lines.append(
+            f'{var}.setMaxNumberOfIterations('
+            f'{UniSimToNeqSim.COLUMN_MAX_ITERATIONS}, True)')
+        return lines
+
     def _detect_column_config(self, op: 'UniSimOperation',
                               topo: dict) -> tuple:
         """Detect condenser/reboiler presence and tray count from sub-flowsheet.
@@ -5489,6 +6069,15 @@ class UniSimToNeqSim:
         Returns:
             (has_condenser, has_reboiler, n_trays)
         """
+        # Values read straight off the UniSim ColumnFlowsheet at extraction
+        # time are authoritative; the sub-flowsheet scan below is the fallback
+        # for models where the column flowsheet could not be read.
+        if 'hasCondenser' in op.properties or 'hasReboiler' in op.properties:
+            n_trays = op.properties.get('numberOfTrays', 5)
+            return (bool(op.properties.get('hasCondenser', True)),
+                    bool(op.properties.get('hasReboiler', True)),
+                    int(n_trays) if n_trays else 5)
+
         has_condenser = True  # defaults
         has_reboiler = True
         n_trays = 5
@@ -6046,17 +6635,7 @@ class UniSimToNeqSim:
                 op_ = _op_by_name.get(prod_name)
                 n_type = self.resolve_neqsim_type(op_) if op_ else None
                 # Determine port-specific placeholders for multi-outlet equipment
-                if (n_type in ('Separator', 'GasScrubber')
-                        and op_ and len(op_.products or []) >= 2):
-                    ports = ['gasOut', 'liquidOut']
-                elif (n_type == 'ThreePhaseSeparator'
-                      and op_ and len(op_.products or []) >= 3):
-                    ports = ['gasOut', 'oilOut', 'waterOut']
-                elif (n_type == 'HeatExchanger'
-                      and op_ and len(op_.products or []) >= 2):
-                    ports = ['hx0', 'hx1']
-                else:
-                    ports = []
+                ports = self._placeholder_ports(op_, n_type)
                 if ports:
                     for idx, port in enumerate(ports):
                         port_key = f'{prod_name}.{port}'
@@ -6144,10 +6723,11 @@ class UniSimToNeqSim:
         var_names_map = topo['var_names']
         op_by_name_tear = {op.name: op for op in topo['sorted_ops']}
         recycle_closed = topo.get('fwd_ref_recycle_closed', set())
-        _skip_tear_types = (
-            'Separator', 'GasScrubber', 'ThreePhaseSeparator',
-            'HeatExchanger', 'Recycle', 'SubFlowsheet',
-            'PIDController', 'LogicalOp')
+        # Multi-outlet producers have no getOutletStream(): a column exposes
+        # getGasOutStream/getLiquidOutStream and an absorber may be generated as
+        # a ComponentSplitter. They are excluded here; a column closes its port
+        # placeholders in _gen_equipment_lines instead.
+        _skip_tear_types = self.TEAR_SKIP_TYPES
         tear_lines = []
         for prod_name in sorted(topo.get('fwd_ref_placeholders', set())):
             whole_pv = fwd_ref_vars_map.get(prod_name)
@@ -6168,10 +6748,8 @@ class UniSimToNeqSim:
             prod_var = var_names_map.get(prod_name)
             if not prod_var:
                 continue
-            outlet_method = (
-                'getSplitStream(int(0))'
-                if prod_type == 'Splitter'
-                else 'getOutletStream()')
+            outlet_method = self.TEAR_OUTLET_ACCESSORS.get(
+                prod_type, 'getOutletStream()')
             rcy_var = f'_rcy_tear_{whole_pv}'
             tear_lines.append(
                 f'# Close forward-reference tear: wire {prod_name} outlet '

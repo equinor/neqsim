@@ -140,6 +140,22 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void unisimConvertedEquipmentTypesResolve() {
+    // Types emitted by the UniSim .usc converter for firedheaterop,
+    // pemelectrolyzer/alkalineelectrolyzer and gasifier blocks. They are not
+    // listed in EquipmentEnum and must resolve through classpath discovery,
+    // otherwise a converted flowsheet fails to build.
+    assertInstanceOf(neqsim.process.equipment.heatexchanger.FiredHeater.class,
+        EquipmentFactory.createEquipment("FH-100", "FiredHeater"));
+    assertInstanceOf(neqsim.process.equipment.electrolyzer.Electrolyzer.class,
+        EquipmentFactory.createEquipment("EL-100", "Electrolyzer"));
+    assertInstanceOf(neqsim.process.equipment.reactor.GibbsReactor.class,
+        EquipmentFactory.createEquipment("GS-100", "GibbsReactor"));
+    assertInstanceOf(neqsim.process.equipment.pipeline.PipeBeggsAndBrills.class,
+        EquipmentFactory.createEquipment("PIPE-100", "PipeBeggsAndBrills"));
+  }
+
+  @Test
   public void unknownEquipmentTypeThrows() {
     assertThrows(IllegalArgumentException.class, () -> EquipmentFactory.createEquipment("x", "NotARealEquipmentClass"));
   }
