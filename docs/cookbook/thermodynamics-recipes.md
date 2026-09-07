@@ -69,21 +69,99 @@ as `C7` when calling `characterisePlusFraction()`.
 
 #### Choosing an `addTBPfraction` overload
 
-| Overload | Supply | Derived from correlations |
-|----------|--------|---------------------------|
-| `addTBPfraction(name, moles, molarMass, density)` | molar mass, density | TC, PC, acentric factor, boiling point |
-| `addTBPfraction(name, moles, molarMass, density, TC, PC, acentricFactor)` | molar mass, density, TC, PC, acentric factor | boiling point |
-| `addTBPfraction2(name, moles, molarMass, boilingPoint)` | molar mass, boiling point | density, TC, PC, acentric factor |
-| `addTBPfraction3(name, moles, density, boilingPoint)` | density, boiling point | molar mass, TC, PC, acentric factor |
+The method name lists the properties you supply, in the order the arguments appear. The canonical
+token order is `Mw`, `Sg`, `Tb`, `Kw`, `Pna`, `Crit`, so there is never a question whether a method
+is `_Tb_Mw` or `_Mw_Tb`.
+
+| Overload | Supply | Derived | How the closure is used |
+|----------|--------|---------|-------------------------|
+| `addTBPfraction_Mw_Sg(name, moles, molarMass, density)` | molar mass, density | TC, PC, acentric factor, boiling point | not needed |
+| `addTBPfraction_Mw_Tb(name, moles, molarMass, boilingPoint)` | molar mass, boiling point | density, TC, PC, acentric factor | **inverted** for density |
+| `addTBPfraction_Sg_Tb(name, moles, density, boilingPoint)` | density, boiling point | molar mass, TC, PC, acentric factor | forward, for molar mass |
+| `addTBPfraction_Tb_Kw(name, moles, boilingPoint, watsonK)` | boiling point, Watson K | density (exact), molar mass, TC, PC, acentric factor | forward, for molar mass |
+| `addTBPfraction_Tb_Pna(name, moles, boilingPoint, xP, xN, xA)` | boiling point, PNA split | Watson K, density (exact), molar mass, TC, PC, acentric factor | forward, for molar mass |
+| `addTBPfraction_Mw_Sg_Tb(name, moles, molarMass, density, boilingPoint)` | molar mass, density, boiling point | TC, PC, acentric factor | not needed |
+| `addTBPfraction_Mw_Sg_Crit(name, moles, molarMass, density, TC, PC, acentricFactor)` | all of them | nothing | not needed |
 
 Units: `molarMass` in kg/mol, `density` as relative density (g/cm3), `TC` in K, `PC` in bara,
-`boilingPoint` in K, `acentricFactor` dimensionless.
+`boilingPoint` in K, `watsonK` and `acentricFactor` dimensionless, and the PNA fractions sum to 1.
 
-The seven argument overload exists so that measured or externally regressed values can be used
+The plain `addTBPfraction(...)` four and seven argument forms remain and are unchanged;
+`addTBPfraction_Mw_Sg` and `addTBPfraction_Mw_Sg_Crit` are named aliases for them. The numbered
+`addTBPfraction2`, `addTBPfraction3` and `addTBPfraction4` are deprecated in favour of
+`_Mw_Tb`, `_Sg_Tb` and `_Mw_Sg_Tb`; the suffixes carried no information about which properties
+they took, which is what let a boiling-point bug hide in `addTBPfraction2` for years.
+
+`addTBPfraction_Mw_Sg_Crit` exists so that measured or externally regressed values can be used
 instead of correlations. The values passed for `TC`, `PC` and `acentricFactor` are stored as
 given; the attractive term derives its `m` parameter from the supplied acentric factor rather
-than from the `calcm` correlation. Use the four argument overload when correlated values are
-wanted.
+than from the `calcm` correlation.
+
+#### Choosing the closure correlation
+
+Only two of molar mass, specific gravity and normal boiling point are usually measured. The
+correlation that supplies the third is the *closure*, selected with a `TbpClosure` argument on the
+overloads that need one:
+
+```python
+from neqsim import jneqsim
+TbpClosure = jneqsim.thermo.characterization.TbpClosure
+
+fluid.addTBPfraction_Sg_Tb("C10", 1.0, 0.734, 447.3)                              # default
+fluid.addTBPfraction_Sg_Tb("C10", 1.0, 0.734, 447.3, TbpClosure.RIAZI_DAUBERT_1980)  # explicit
+```
+
+Accuracy against the pure components in `COMP.csv`, as absolute average deviation in molar mass
+predicted from boiling point and specific gravity:
+
+| Closure | Paraffins | Aromatics | Can be inverted for density? |
+|---------|-----------|-----------|------------------------------|
+| `RIAZI_DAUBERT_1987` (default) | 1.7 % | 7.8 % | no |
+| `SOREIDE` | 3.0 % | 9.1 % | no |
+| `RIAZI_DAUBERT_1980` | 5.4 % | 13.6 % | yes |
+| `TBP_MODEL` | follows the fluid's characterization model | | no |
+
+Reproduce the table with `python devtools/validate_tbp_closures.py`.
+
+#### Forward use versus inverted use
+
+The last column above trips people up, because `addTBPfraction_Tb_Kw` produces a density while
+using `RIAZI_DAUBERT_1987`, which the table says cannot be inverted for density. Both are true,
+because the closure is never asked for the density there:
+
+- In `_Tb_Kw` and `_Tb_Pna` the specific gravity comes from the **definition** of the Watson factor,
+  `SG = (1.8*Tb)^(1/3) / Kw`, which is exact. The closure is then evaluated **forward**, once, to
+  get the molar mass. No inversion happens.
+- In `_Sg_Tb` the density is supplied, so again the closure only runs forward.
+- In `_Mw_Tb` the density *is* the unknown, so the closure has to be **inverted**. That is the only
+  overload where monotonicity matters, and the only one that rejects `RIAZI_DAUBERT_1987`.
+
+Evaluating a correlation forward is always well posed. Inverting one is not. RD-1987 turns over at
+`SG = 4.98308 / (7.78712 - 2.08476e-3*Tb)`, which lands between 0.71 and 0.77 over the usual
+boiling range — the middle of the petroleum band, and exactly where paraffins sit. So a given
+(Tb, M) has two specific gravities that reproduce it, and near the turning point a 1 % error in
+molar mass amplifies into a 7–21 % error in specific gravity. RD-1980's exponent is constant, so
+its inverse is unique and carries error 1:1. `addTBPfraction_Mw_Tb` therefore defaults to RD-1980,
+and asking a non-invertible closure for a density throws rather than returning one of two roots.
+
+Reproduce these numbers with `python devtools/analyze_rd1987_inversion.py`.
+
+#### Defining a cut from a detailed hydrocarbon analysis
+
+When a DHA gives a boiling point and a paraffin / naphthene / aromatic split but neither molar mass
+nor density, use `addTBPfraction_Tb_Pna`:
+
+```python
+fluid.addTBPfraction_Tb_Pna("cut1", 1.0, 450.0, 0.60, 0.25, 0.15)
+```
+
+The PNA fractions are blended linearly into a Watson factor using family values derived from the
+pure components in `COMP.csv` — 12.8 for paraffins, 11.0 for naphthenes, 10.1 for aromatics, each
+the median of the rows whose boiling point and density are both credible — and the fraction is then
+added as if `addTBPfraction_Tb_Kw` had been called. The Watson factor is
+conventionally blended on a volume or mass basis, so supply mass or volume fractions rather than
+mole fractions. Pass your own family values and closure with the ten argument overload when the
+cut is known to sit outside the usual families.
 
 ### Create a CO₂-Water Fluid with CPA
 
