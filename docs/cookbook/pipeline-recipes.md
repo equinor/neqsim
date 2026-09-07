@@ -496,11 +496,18 @@ See [Known limitations](../wiki/two_fluid_model#known-limitations).
 
 ```python
 pipe.run()
-if not pipe.isSteadyStateConverged():
-    if pipe.isSteadyStatePressureFloorLimited():
-        raise RuntimeError("Line cannot deliver this rate at this inlet pressure")
-    raise RuntimeError("Steady state did not converge")
+steady = pipe.getSteadyStateConvergenceReport()
+if not steady.isConverged():
+    raise RuntimeError(
+        f"Steady state stopped at {steady.getTerminationReason()}; "
+        f"liquid-split residual={steady.getLiquidSplitResidual():.3e}"
+    )
 ```
+
+The report also exposes pressure-momentum, pressure-update, total-holdup,
+thermodynamic-property, and pressure-drop residuals. Its `CONVERGED` result includes the mandatory
+final flash and holdup/oil-water resweep; an iteration-, wall-clock-, or pressure-floor-limited
+profile remains explicitly non-converged.
 
 > **Further Reading**: See [TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial) for comprehensive examples including slug visualization and transient analysis.
 
