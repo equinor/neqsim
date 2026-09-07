@@ -15,12 +15,15 @@ import java.util.Arrays;
 import java.util.List;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Direction;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.EvidenceState;
-import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class EngineeringDiagramDualProfileCompanionDeliveryTest {
+  private static final String GAS_PRODUCT_LABEL = "10-GAS-PRODUCT";
+  private static final String LIQUID_PRODUCT_LABEL = "10-LIQUID-PRODUCT";
+
   @TempDir
   Path temporaryDirectory;
 
@@ -108,6 +111,8 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
 
   private static EngineeringDiagramReferenceFixtures.SystemCase completeBoundaryCase() {
     EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    reference.getProcessSystem().add(new Stream(GAS_PRODUCT_LABEL, reference.getProducts().get(0)));
+    reference.getProcessSystem().add(new Stream(LIQUID_PRODUCT_LABEL, reference.getProducts().get(1)));
     reference.getProcessSystem().run();
     return reference;
   }
@@ -117,10 +122,10 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
     List<EngineeringDiagramDualProfileDelivery.BalanceBoundary> boundaries = new ArrayList<EngineeringDiagramDualProfileDelivery.BalanceBoundary>();
     boundaries.add(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10",
         reference.getFeed().getName(), Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED));
-    for (StreamInterface product : reference.getProducts()) {
-      boundaries.add(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10", product.getName(),
-          Direction.OUTLET, "project-balance-register:test", EvidenceState.PROPOSED));
-    }
+    boundaries.add(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10", GAS_PRODUCT_LABEL,
+        Direction.OUTLET, "project-balance-register:test", EvidenceState.PROPOSED));
+    boundaries.add(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10", LIQUID_PRODUCT_LABEL,
+        Direction.OUTLET, "project-balance-register:test", EvidenceState.PROPOSED));
     return EngineeringDiagramDualProfileDelivery.Request
         .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression").operatingCaseId("NORMAL-01")
         .balanceBoundaries(boundaries).build();
