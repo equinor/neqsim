@@ -220,6 +220,41 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.trajectory_test)
 
+    def test_endpoint_loss_rate_contract_is_documented_and_executable(self):
+        for token in (
+            "Endpoint loss-rate evidence",
+            "instantaneous total-sulfide loss rate",
+            r"r_{r,i,\mathrm{in}} = k_{r,i}[\mathrm{O_2}]_i c_{r,i,\mathrm{in}}",
+            r"r_{r,i,\mathrm{out}} = k_{r,i}[\mathrm{O_2}]_i c_{r,i,\mathrm{out}}",
+            "mol total sulfide/(kg water h)",
+            r"R_{r,i}=\exp\left(-k_{r,i}[\mathrm{O_2}]_i\Delta t_i\right)",
+            "zero-duration segment gives exactly `R = 1`",
+            "not a time-averaged control-volume source",
+            "Creating a pipeline source term requires",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "getLowerRateInletLossRateMolalityPerHour()",
+            "getLowerRateOutletLossRateMolalityPerHour()",
+            "getLowerRateRetentionFactor()",
+            "getNominalInletLossRateMolalityPerHour()",
+            "getNominalOutletLossRateMolalityPerHour()",
+            "getNominalRetentionFactor()",
+            "getUpperRateInletLossRateMolalityPerHour()",
+            "getUpperRateOutletLossRateMolalityPerHour()",
+            "getUpperRateRetentionFactor()",
+        ):
+            self.assertIn(token, self.trajectory)
+
+        for token in (
+            "testSegmentEndpointLossRatesMatchDifferentialEquation",
+            "testSegmentRetentionFactorsCloseInventoryUpdate",
+            "testZeroDurationEndpointRatesAndRetentionAreExact",
+            "testRetentionFactorProductIsSplitInvariant",
+        ):
+            self.assertIn(token, self.trajectory_test)
+
     def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
         for token in (
             "Piecewise target crossing",
