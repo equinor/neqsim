@@ -53,10 +53,10 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
     EngineeringDiagramReferenceFixtures.SystemCase firstReference = completeBoundaryCase();
     EngineeringDiagramReferenceFixtures.SystemCase secondReference = completeBoundaryCase();
 
-    EngineeringDiagramDualProfileDelivery.Report first = EngineeringDiagramDualProfileDelivery.deliver(
-        firstReference.getProcessSystem(), temporaryDirectory.resolve("first"), request(firstReference));
-    EngineeringDiagramDualProfileDelivery.Report second = EngineeringDiagramDualProfileDelivery.deliver(
-        secondReference.getProcessSystem(), temporaryDirectory.resolve("second"), request(secondReference));
+    EngineeringDiagramDualProfileDelivery.Report first = EngineeringDiagramDualProfileDelivery
+        .deliver(firstReference.getProcessSystem(), temporaryDirectory.resolve("first"), request(firstReference));
+    EngineeringDiagramDualProfileDelivery.Report second = EngineeringDiagramDualProfileDelivery
+        .deliver(secondReference.getProcessSystem(), temporaryDirectory.resolve("second"), request(secondReference));
 
     assertEquals(first.toJson(), second.toJson());
     assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("stream-table.json")),
@@ -73,26 +73,23 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
   void failsClosedForMissingOperatingEvidenceOrUnknownBoundary() {
     EngineeringDiagramReferenceFixtures.SystemCase unexecuted = EngineeringDiagramReferenceFixtures.simpleTrain();
     EngineeringDiagramDualProfileDelivery.Request missingCase = EngineeringDiagramDualProfileDelivery.Request
-        .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression")
-        .operatingCaseId("NORMAL-01")
+        .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression").operatingCaseId("NORMAL-01")
         .balanceBoundaries(Arrays.asList(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10",
-            unexecuted.getFeed().getName(), Direction.INLET, "project-balance-register:test",
-            EvidenceState.PROPOSED)))
+            unexecuted.getFeed().getName(), Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED)))
         .build();
 
-    assertThrows(IOException.class, () -> EngineeringDiagramDualProfileDelivery.deliver(
-        unexecuted.getProcessSystem(), temporaryDirectory.resolve("missing-case"), missingCase));
+    assertThrows(IOException.class, () -> EngineeringDiagramDualProfileDelivery.deliver(unexecuted.getProcessSystem(),
+        temporaryDirectory.resolve("missing-case"), missingCase));
     assertFalse(Files.exists(temporaryDirectory.resolve("missing-case")));
 
     EngineeringDiagramReferenceFixtures.SystemCase executed = completeBoundaryCase();
     EngineeringDiagramDualProfileDelivery.Request unknownBoundary = EngineeringDiagramDualProfileDelivery.Request
-        .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression")
-        .operatingCaseId("NORMAL-01")
+        .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression").operatingCaseId("NORMAL-01")
         .balanceBoundaries(Arrays.asList(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10",
             "ABSENT-STREAM", Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED)))
         .build();
-    assertThrows(IOException.class, () -> EngineeringDiagramDualProfileDelivery.deliver(
-        executed.getProcessSystem(), temporaryDirectory.resolve("unknown-boundary"), unknownBoundary));
+    assertThrows(IOException.class, () -> EngineeringDiagramDualProfileDelivery.deliver(executed.getProcessSystem(),
+        temporaryDirectory.resolve("unknown-boundary"), unknownBoundary));
     assertFalse(Files.exists(temporaryDirectory.resolve("unknown-boundary")));
   }
 
@@ -104,11 +101,9 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
             .balanceBoundaries(Arrays.asList(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10",
                 "10-FEED-001", Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED)))
             .build());
-    assertThrows(IllegalArgumentException.class,
-        () -> EngineeringDiagramDualProfileDelivery.Request
-            .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression")
-            .operatingCaseId("NORMAL-01").balanceBoundaries(new ArrayList<EngineeringDiagramDualProfileDelivery.BalanceBoundary>())
-            .build());
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramDualProfileDelivery.Request
+        .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression").operatingCaseId("NORMAL-01")
+        .balanceBoundaries(new ArrayList<EngineeringDiagramDualProfileDelivery.BalanceBoundary>()).build());
   }
 
   private static EngineeringDiagramReferenceFixtures.SystemCase completeBoundaryCase() {
@@ -122,8 +117,7 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
 
   private static EngineeringDiagramDualProfileDelivery.Request request(
       EngineeringDiagramReferenceFixtures.SystemCase reference) {
-    List<EngineeringDiagramDualProfileDelivery.BalanceBoundary> boundaries =
-        new ArrayList<EngineeringDiagramDualProfileDelivery.BalanceBoundary>();
+    List<EngineeringDiagramDualProfileDelivery.BalanceBoundary> boundaries = new ArrayList<EngineeringDiagramDualProfileDelivery.BalanceBoundary>();
     boundaries.add(new EngineeringDiagramDualProfileDelivery.BalanceBoundary("BAL-PLANT-10",
         reference.getFeed().getName(), Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED));
     for (StreamInterface product : reference.getProducts()) {
@@ -131,7 +125,7 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
           Direction.OUTLET, "project-balance-register:test", EvidenceState.PROPOSED));
     }
     return EngineeringDiagramDualProfileDelivery.Request
-        .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression")
-        .operatingCaseId("NORMAL-01").balanceBoundaries(boundaries).build();
+        .builder("PLANT-10", "A", "PFD-10-001", "PID-10-001", "Separation and compression").operatingCaseId("NORMAL-01")
+        .balanceBoundaries(boundaries).build();
   }
 }
