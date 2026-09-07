@@ -518,7 +518,6 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(20, limitations.get("confirmedGapToolCount").getAsInt());
   }
 
-
   @Test
   void testRuntimeCapabilityPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
@@ -533,15 +532,13 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(capability.get("contractTrustAvailable").getAsBoolean());
     assertEquals(6, capability.get("contractEvidenceCount").getAsInt());
     assertEquals(6, capability.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(capability.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("GeneralCapabilityRunnerTest.java"));
-    assertTrue(capability.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_capability_protocol.py"));
-    assertTrue(capability.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("RUNTIME_CAPABILITY_CONTRACT.md"));
-    assertTrue(capability.get("evidenceBoundary").getAsString().contains("scientific validity"));
     assertTrue(
-        capability.get("evidenceBoundary").getAsString().contains("operating-system or process sandbox"));
+        capability.getAsJsonArray("contractEvidenceSources").toString().contains("GeneralCapabilityRunnerTest.java"));
+    assertTrue(capability.getAsJsonArray("contractEvidenceSources").toString().contains("test_capability_protocol.py"));
+    assertTrue(
+        capability.getAsJsonArray("contractEvidenceSources").toString().contains("RUNTIME_CAPABILITY_CONTRACT.md"));
+    assertTrue(capability.get("evidenceBoundary").getAsString().contains("scientific validity"));
+    assertTrue(capability.get("evidenceBoundary").getAsString().contains("operating-system or process sandbox"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runCapability"));
     assertEquals(31, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(20, limitations.get("confirmedGapToolCount").getAsInt());
