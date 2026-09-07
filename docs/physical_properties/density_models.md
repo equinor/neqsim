@@ -711,6 +711,22 @@ laboratory-grouped validation split. The reserved Al Ghafri/NIST ThermoML
 pressure series must not be supplied as calibration input when it is retained
 as the campaign hold-out.
 
+### Independent source-group holdout validation
+
+`PitzerBinaryVolumetricGroupedValidation` fits only an explicit calibration
+list and evaluates a separate untouched holdout list. It rejects any
+source-lineage identifier present in both lists, reports holdout chi-square,
+weighted RMS and maximum standardized residual, and returns deterministic
+per-lineage diagnostics. The class deliberately defines no universal pass
+threshold.
+
+The string identifiers are an auditable software boundary, not proof of
+scientific independence. The caller must map each row to its real laboratory,
+apparatus, publication lineage and reuse history before assigning groups. A
+validation result is admissible only when those lineages are genuinely
+independent, all rows and uncertainties have qualified provenance, and the
+acceptance limits were fixed before the holdout was evaluated.
+
 ### Qualification boundary
 
 - The caller owns coefficient provenance and must keep calibration and
@@ -989,6 +1005,7 @@ component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 | `calculateIonicStrength(...)` | Return the binary salt's stoichiometric ionic strength |
 | `PitzerBinaryVolumetricRegression.fit(...)` | Fit caller-supplied one-state observations with SVD rank checks |
 | `FitResult.getGroupStatistics()` | Inspect residuals by laboratory or source lineage |
+| `PitzerBinaryVolumetricGroupedValidation.validate(...)` | Fit one lineage set and evaluate a disjoint untouched holdout |
 
 These methods do not install a parameter dataset or alter a phase. A caller
 must explicitly supply a provenance-qualified `StateParameters` instance.
