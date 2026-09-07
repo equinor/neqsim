@@ -16,6 +16,7 @@ import org.ejml.dense.row.MatrixFeatures_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
@@ -502,6 +503,7 @@ public class TPmultiflash extends TPflash {
     // }
     minimumGibbsEnergySystem = system;
     clonedSystem.add(system.clone());
+    SystemInterface trialSystem = clonedSystem.get(0);
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
      * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; } double numb = 0;
@@ -634,15 +636,17 @@ public class TPmultiflash extends TPflash {
           oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
         }
         try {
-          clonedSystem.get(0).init(1, 1);
+          trialSystem.init(1, 1);
         } catch (Exception ex) {
           trialInitFailed = true;
           break;
         }
+        // Refresh the phase reference after initialization, which may change phase indexing.
+        PhaseInterface trialPhase = trialSystem.getPhase(1);
         for (int i = 0; i < numComp; i++) {
-          if (validComp[i]
-              && !Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())) {
-            logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+          ComponentInterface trialComponent = trialPhase.getComponent(i);
+          if (validComp[i] && !Double.isInfinite(trialComponent.getLogFugacityCoefficient())) {
+            logWi[i] = d[i] - trialComponent.getLogFugacityCoefficient();
           }
           deltalogWi[i] = logWi[i] - oldlogw[i];
           err += Math.abs(deltalogWi[i]);
@@ -676,7 +680,7 @@ public class TPmultiflash extends TPflash {
 
         // Update trial phase composition
         for (int i = 0; i < numComp; i++) {
-          clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+          trialPhase.getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
         }
       } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
 
@@ -837,7 +841,9 @@ public class TPmultiflash extends TPflash {
         iter++;
         err = 0;
 
-        if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
+        boolean successiveSubstitution = iter <= maxsucssubiter
+            || !system.isImplementedCompositionDeriativesofFugacity();
+        if (successiveSubstitution) {
           // DEM acceleration every 5th iteration (Michelsen 1982b, Risnes et al. 1981)
           // Uses dominant eigenvalue estimate: λ = (Δg_n · Δg_{n-1}) / (Δg_{n-1} ·
           // Δg_{n-1})
@@ -874,16 +880,19 @@ public class TPmultiflash extends TPflash {
               oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
             }
             try {
-              clonedSystem.get(0).init(1, 1);
+              trialSystem.init(1, 1);
             } catch (Exception ex) {
               pureTrialInitFailed = true;
               break;
             }
+            PhaseInterface trialPhase = trialSystem.getPhase(1);
+            PhaseInterface feedPhase = system.getPhase(0);
             for (int i = 0; i < nc; i++) {
-              if (!Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
-                  && system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
-                if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
+              ComponentInterface trialComponent = trialPhase.getComponent(i);
+              if (!Double.isInfinite(trialComponent.getLogFugacityCoefficient())
+                  && feedPhase.getComponent(i).getz() > 1e-100) {
+                logWi[i] = d[i] - trialComponent.getLogFugacityCoefficient();
+                if (trialComponent.getIonicCharge() != 0) {
                   logWi[i] = -1000.0;
                 }
               }
@@ -905,7 +914,7 @@ public class TPmultiflash extends TPflash {
           }
           // Newton needs fugcoef + composition derivatives
           try {
-            clonedSystem.get(0).init(3, 1);
+            trialSystem.init(3, 1);
           } catch (Exception ex) {
             pureTrialInitFailed = true;
             break;
@@ -917,18 +926,21 @@ public class TPmultiflash extends TPflash {
           }
 
           // Build gradient and Jacobian using raw EJML (no SimpleMatrix allocation)
+          PhaseInterface derivativePhase = trialSystem.getPhases()[1];
+          PhaseInterface feedPhase = system.getPhase(0);
           for (int i = 0; i < nc; i++) {
-            if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              newtonF.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                  + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient() - d[i]));
+            ComponentInterface feedComponent = feedPhase.getComponent(i);
+            ComponentInterface derivativeComponent = derivativePhase.getComponent(i);
+            if (feedComponent.getz() > 1e-100) {
+              newtonF.set(i, 0,
+                  Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + derivativeComponent.getLogFugacityCoefficient() - d[i]));
             } else {
               newtonF.set(i, 0, 0.0);
             }
             for (int k = 0; k < nc; k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
-              if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                newtonJ.set(i, k, kronDelt
-                    + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
+              if (feedComponent.getz() > 1e-100) {
+                newtonJ.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i]) * derivativeComponent.getdfugdn(k));
               } else {
                 newtonJ.set(i, k, 0.0);
               }
@@ -962,13 +974,19 @@ public class TPmultiflash extends TPflash {
         }
         // logger.info("err: " + err);
 
-        for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-            clonedSystem.get(0).getPhase(1).getComponent(i).setx(safeExp(logWi[i]));
+        PhaseInterface feedPhase = system.getPhase(0);
+        PhaseInterface trialPhase = trialSystem.getPhase(1);
+        for (int i = 0; i < feedPhase.getNumberOfComponents(); i++) {
+          ComponentInterface feedComponent = feedPhase.getComponent(i);
+          ComponentInterface trialComponent = trialPhase.getComponent(i);
+          if (feedComponent.getz() > 1e-100) {
+            // Substitution already evaluated this exact logWi into Wi; accepted DEM updates
+            // both, and rejected DEM leaves both unchanged. Newton instead forms Wi by squaring,
+            // so retain its original exp(log(Wi)) rounding and ionic log-weight handling.
+            trialComponent.setx(successiveSubstitution ? Wi[j][i] : safeExp(logWi[i]));
           }
-          if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-              || system.getPhase(0).getComponent(i).isIsIon()) {
-            clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
+          if (feedComponent.getIonicCharge() != 0 || feedComponent.isIsIon()) {
+            trialComponent.setx(1e-50);
           }
         }
       } while (!pureTrialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
