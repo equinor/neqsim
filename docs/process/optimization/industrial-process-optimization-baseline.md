@@ -2,8 +2,32 @@
 title: Industrial Process Optimization Baseline
 description: Capability inventory, restriction coverage, and frozen benchmark contract for large ProcessSystem and ProcessModel optimization.
 ---
-
 # Industrial Process Optimization Baseline
+
+## Common configuration and coverage increment
+
+The additive `ProcessSystem.applyDesignCapacities(...)` and area-qualified
+`ProcessModel.applyDesignCapacities(...)` methods share normalized input application with the
+legacy JSON builder. Their strict preflight rejects invalid batches before input application;
+the JSON builder retains its advisory compatibility contract. Repeated supported rating changes
+refresh the affected equipment constraint evidence without discarding its operating metadata.
+
+`UtilizationCoverageReport` captures declared equipment and constraint expectations independently
+of discovery, including missing observations/ratings, omitted registrations and screening evidence.
+Binding this report with `PlantUtilizationSnapshot.Builder.expectedCoverage(...)` requires the same
+registry digest and an explicit full-model convergence declaration. Completeness remains scoped to
+the declared expectations; neither an empty registry nor successful constraint discovery establishes
+that every engineering restriction is covered. Registry-only snapshot construction remains available
+as the existing lower-level evidence path.
+
+The legacy `ProcessModelOptimizationView` now stops on failed cross-area convergence. It does not
+provide automatic rollback; a caller must restore or discard the candidate model. Shared-resource
+arithmetic, common-shaft balance, complete equipment-fidelity adapters, compiled restoration/caching,
+MCP parity and the L/C/B/R industrial acceptance matrix remain open campaign milestones.
+
+The campaign recovery plan brings the 150+ unit, six-area fixture into equipment/evaluator development
+with explicit evaluation, runtime, memory and response-size budgets. Existing S/M timings are baseline
+observations and must not be presented as an optimization speedup or large-plant qualification.
 
 This document freezes the starting point for industrial-scale optimization in
 [roadmap #3154](https://github.com/equinor/neqsim/issues/3154). It distinguishes an

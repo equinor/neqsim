@@ -3,8 +3,6 @@ package neqsim.process.util.optimizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.processmodel.ProcessModel;
@@ -47,9 +45,6 @@ public class ProcessModelOptimizationView extends ProcessSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
 
-  /** Logger object for class. */
-  private static final Logger logger = LogManager.getLogger(ProcessModelOptimizationView.class);
-
   /** Separator used in area-qualified unit addresses ({@code "Area::Unit"}). */
   private static final String AREA_SEPARATOR = "::";
 
@@ -77,7 +72,9 @@ public class ProcessModelOptimizationView extends ProcessSystem {
    *
    * @param model the multi-area plant to optimize (must not be null)
    * @param maxIterations maximum cross-area convergence iterations (must be greater than zero)
-   * @param tolerance convergence tolerance for {@code runUntilConverged} (must be greater than zero)
+   * @param tolerance finite convergence tolerance for {@code runUntilConverged} (must be greater than zero)
+   * @throws IllegalArgumentException if the iteration limit or tolerance is invalid
+   * @throws NullPointerException if the model is null
    */
   public ProcessModelOptimizationView(ProcessModel model, int maxIterations, double tolerance) {
     super("ProcessModelOptimizationView");
@@ -87,8 +84,8 @@ public class ProcessModelOptimizationView extends ProcessSystem {
     if (maxIterations <= 0) {
       throw new IllegalArgumentException("maxIterations must be greater than zero");
     }
-    if (tolerance <= 0.0) {
-      throw new IllegalArgumentException("tolerance must be greater than zero");
+    if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("tolerance must be finite and greater than zero");
     }
     this.model = model;
     this.maxIterations = maxIterations;
@@ -108,13 +105,15 @@ public class ProcessModelOptimizationView extends ProcessSystem {
    * Runs the whole plant to cross-area convergence instead of performing a single {@code ProcessSystem.run()} pass.
    *
    * @param id calculation identifier (unused; convergence is managed by the model)
+   * @throws IllegalStateException if the full model does not reach cross-area convergence; no objective or capacity
+   * evaluation may use that failed state
    */
   @Override
   public synchronized void run(UUID id) {
     boolean converged = model.runUntilConverged(maxIterations, tolerance);
     if (!converged) {
-      logger.warn("ProcessModel did not reach cross-area convergence within {} iterations (tolerance {})."
-          + " Optimizer will evaluate the unconverged state.", maxIterations, tolerance);
+      throw new IllegalStateException("ProcessModel did not reach cross-area convergence within " + maxIterations
+          + " iterations (tolerance " + tolerance + "). Optimizer candidate evaluation was stopped.");
     }
   }
 

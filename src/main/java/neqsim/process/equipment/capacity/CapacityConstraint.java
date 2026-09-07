@@ -207,6 +207,9 @@ public class CapacityConstraint implements Serializable {
   /** Cached current value (updated when getCurrentValue() is called). */
   private double currentValue = 0.0;
 
+  /** Whether a current value was explicitly assigned or successfully sampled. */
+  private boolean currentValueSet = false;
+
   /** Description of the constraint for documentation. */
   private String description = "";
 
@@ -471,6 +474,7 @@ public class CapacityConstraint implements Serializable {
    */
   public CapacityConstraint setCurrentValue(double value) {
     this.currentValue = value;
+    this.currentValueSet = true;
     return this;
   }
 
@@ -498,8 +502,25 @@ public class CapacityConstraint implements Serializable {
   public double getCurrentValue() {
     if (valueSupplier != null) {
       currentValue = valueSupplier.getAsDouble();
+      currentValueSet = true;
     }
     return currentValue;
+  }
+
+  /**
+   * Checks whether a value can be sampled or an explicit value has been retained.
+   *
+   * <p>
+   * This method does not invoke the supplier or assert that its value is finite. The legacy getter still returns zero
+   * for an unset value; evidence consumers can use this method to distinguish that default from an explicitly assigned
+   * zero. Older serialized constraints have no assignment flag, so their cached values require reassignment before they
+   * qualify as current evidence.
+   * </p>
+   *
+   * @return true when a supplier or an explicitly assigned or sampled value exists
+   */
+  public boolean hasCurrentValue() {
+    return valueSupplier != null || currentValueSet;
   }
 
   /**

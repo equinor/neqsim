@@ -29,6 +29,7 @@ import neqsim.process.dynamics.IntegratorStrategy;
 import neqsim.process.dynamics.TransientStepTransaction;
 import neqsim.process.dynamics.TransientTransactionCoverage;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.EquipmentDesignData;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
@@ -6024,6 +6025,83 @@ public class ProcessModel implements Runnable, Serializable {
       count += processSystem.applyMechanicalDesignCapacityConstraints();
     }
     return count;
+  }
+
+  /**
+   * Applies normalized design capacities to explicitly area-qualified equipment in this model.
+   *
+   * <p>
+   * Keys must have the form {@code area::equipment}. All target identities, supported properties and values across all
+   * areas are validated before any design value changes. Names containing the {@code ::} delimiter, and multiple area
+   * aliases for the same target instance, are rejected. The property schema and units are identical to
+   * {@link ProcessSystem#applyDesignCapacities(Map)}. No process run or sizing is performed.
+   * </p>
+   *
+   * @param designCapacities map from area-qualified equipment name to normalized numeric capacity properties
+   * @return application reports keyed by area-qualified equipment name
+   * @throws IllegalArgumentException if any target or property is missing, ambiguous, unsupported or invalid
+   */
+  public Map<String, EquipmentDesignData.ApplyResult> applyDesignCapacities(
+      Map<String, Map<String, Object>> designCapacities) {
+    if (designCapacities == null) {
+      throw new IllegalArgumentException("Design capacities must not be null");
+    }
+    for (String name : designCapacities.keySet()) {
+      if (name == null) {
+        throw new IllegalArgumentException("Design capacity name must be area::equipment: null");
+      }
+    }
+    Map<String, Map<String, Map<String, Object>>> byArea = new java.util.TreeMap<String, Map<String, Map<String, Object>>>();
+    for (Map.Entry<String, Map<String, Object>> entry : new java.util.TreeMap<String, Map<String, Object>>(
+        designCapacities).entrySet()) {
+      String qualifiedName = entry.getKey();
+      int separator = qualifiedName == null ? -1 : qualifiedName.indexOf("::");
+      if (separator <= 0 || separator + 2 == qualifiedName.length()
+          || qualifiedName.indexOf("::", separator + 2) >= 0) {
+        throw new IllegalArgumentException("Design capacity name must be area::equipment: " + qualifiedName);
+      }
+      String area = qualifiedName.substring(0, separator);
+      String name = qualifiedName.substring(separator + 2);
+      if (!processes.containsKey(area)) {
+        throw new IllegalArgumentException("Design capacity area not found: " + area);
+      }
+      if (!byArea.containsKey(area)) {
+        byArea.put(area, new LinkedHashMap<String, Map<String, Object>>());
+      }
+      byArea.get(area).put(name, entry.getValue());
+    }
+    Map<String, JsonObject> prepared = new LinkedHashMap<String, JsonObject>();
+    Map<ProcessEquipmentInterface, String> targets = new IdentityHashMap<ProcessEquipmentInterface, String>();
+    for (Map.Entry<String, Map<String, Map<String, Object>>> area : byArea.entrySet()) {
+      ProcessSystem process = processes.get(area.getKey());
+      prepared.put(area.getKey(), process.prepareDesignCapacities(area.getValue()));
+      for (String name : area.getValue().keySet()) {
+        ProcessEquipmentInterface target = null;
+        for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+          if (name.equals(equipment.getName())) {
+            target = equipment;
+            break;
+          }
+        }
+        String previous = targets.put(target, area.getKey() + "::" + name);
+        if (previous != null) {
+          throw new IllegalArgumentException("Design capacity target is aliased by multiple areas: " + previous);
+        }
+      }
+    }
+    Map<String, EquipmentDesignData.ApplyResult> results = new LinkedHashMap<String, EquipmentDesignData.ApplyResult>();
+    for (Map.Entry<String, JsonObject> area : prepared.entrySet()) {
+      Map<String, EquipmentDesignData.ApplyResult> applied = processes.get(area.getKey())
+          .applyDesignCapacitiesJson(area.getValue());
+      for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : applied.entrySet()) {
+        String name = area.getKey() + "::" + entry.getKey();
+        EquipmentDesignData.ApplyResult qualified = new EquipmentDesignData.ApplyResult(name, entry.getValue().status,
+            entry.getValue().message);
+        qualified.appliedProperties.addAll(entry.getValue().appliedProperties);
+        results.put(name, qualified);
+      }
+    }
+    return results;
   }
 
   /**

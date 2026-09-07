@@ -18,8 +18,9 @@ import neqsim.process.processmodel.ProcessSystem;
  *
  * <p>
  * This utility reads a {@code designCapacities} JSON object keyed by equipment name, sets design values (e.g., internal
- * diameter, separator length, rated power, max duty) on the corresponding equipment if not already configured, and tags
- * each capacity constraint's data source for traceability in utilization reports.
+ * diameter, separator length, rated power, max duty) on the corresponding equipment, and tags each capacity
+ * constraint's data source for traceability in utilization reports. Cached affected ratings are updated without
+ * replacing existing constraint metadata or unrelated custom constraints.
  * </p>
  *
  * <p>
@@ -98,8 +99,8 @@ public final class EquipmentDesignData {
    *
    * <p>
    * For each equipment name in the JSON, looks up the equipment in the process and applies the design properties.
-   * Properties are only set if they are not already configured on the equipment (i.e., still at default or zero
-   * values). After applying, tags the capacity constraints with the data source for utilization report traceability.
+   * Supplied positive properties replace configured values; omitted properties remain unchanged. After applying, tags
+   * the capacity constraints with the data source for utilization report traceability.
    * </p>
    *
    * @param process the process system containing the equipment
@@ -233,6 +234,17 @@ public final class EquipmentDesignData {
       double value = props.get("maxSpeed").getAsDouble();
       if (value > 0) {
         comp.setMaximumSpeed(value);
+        double effectiveLimit = value;
+        if (comp.getCompressorChart() != null && comp.getCompressorChart().isUseCompressorChart()) {
+          double chartLimit = comp.getCompressorChart().getMaxSpeedCurve();
+          if (Double.isFinite(chartLimit) && chartLimit > 0.0) {
+            effectiveLimit = Math.min(effectiveLimit, chartLimit);
+          }
+        }
+        CapacityConstraint speed = comp.getCapacityConstraints().get("speed");
+        if (speed != null && matchesConstraintUnit(speed, "RPM", result)) {
+          speed.setDesignValue(effectiveLimit).setMaxValue(effectiveLimit);
+        }
         result.addApplied("maxSpeed", value, "RPM");
       }
     }
@@ -244,6 +256,9 @@ public final class EquipmentDesignData {
         if (comp.getDriver() != null) {
           comp.getDriver().setRatedPower(value);
         } else {
+          if (comp.getMechanicalDesign() == null) {
+            comp.initMechanicalDesign();
+          }
           comp.getMechanicalDesign().maxDesignPower = value;
         }
         result.addApplied("ratedPower", value, "kW");
@@ -259,6 +274,10 @@ public final class EquipmentDesignData {
    * @param result the apply result to populate
    */
   private static void applyHeaterDesign(Heater heater, JsonObject props, ApplyResult result) {
+    // The equipment setter clears its constraint cache. Retain the live objects so user-selected
+    // enable flags, thresholds, provenance and unrelated limits survive the rating update.
+    Map<String, CapacityConstraint> previousConstraints = new LinkedHashMap<String, CapacityConstraint>(
+        heater.getCapacityConstraints());
     if (props.has("maxDesignDutyMW")) {
       double valueMW = props.get("maxDesignDutyMW").getAsDouble();
       if (valueMW > 0) {
@@ -278,6 +297,16 @@ public final class EquipmentDesignData {
         result.addApplied("maxDesignDuty", valueW, "W");
       }
     }
+    if (!result.appliedProperties.isEmpty()) {
+      // Materialize a newly configured duty constraint before restoring existing custom entries.
+      heater.getCapacityConstraints();
+      for (CapacityConstraint constraint : previousConstraints.values()) {
+        if ("duty".equals(constraint.getName()) && matchesConstraintUnit(constraint, "W", result)) {
+          constraint.setDesignValue(heater.getMaxDesignDuty());
+        }
+        heater.addCapacityConstraint(constraint);
+      }
+    }
   }
 
   /**
@@ -288,10 +317,17 @@ public final class EquipmentDesignData {
    * @param result the apply result to populate
    */
   private static void applyPumpDesign(Pump pump, JsonObject props, ApplyResult result) {
+    if ((props.has("maxDesignPower") || props.has("maxDesignVolumeFlow")) && pump.getMechanicalDesign() == null) {
+      pump.initMechanicalDesign();
+    }
     if (props.has("maxDesignPower")) {
       double value = props.get("maxDesignPower").getAsDouble();
       if (value > 0) {
         pump.getMechanicalDesign().maxDesignPower = value * 1000.0; // kW to W
+        CapacityConstraint power = pump.getCapacityConstraints().get("power");
+        if (power != null && matchesConstraintUnit(power, "kW", result)) {
+          power.setDesignValue(value);
+        }
         result.addApplied("maxDesignPower", value, "kW");
       }
     }
@@ -300,9 +336,33 @@ public final class EquipmentDesignData {
       double value = props.get("maxDesignVolumeFlow").getAsDouble();
       if (value > 0) {
         pump.getMechanicalDesign().setMaxDesignVolumeFlow(value);
+        CapacityConstraint flow = pump.getCapacityConstraints().get("flowRate");
+        if (flow != null && matchesConstraintUnit(flow, "m3/hr", result)) {
+          flow.setDesignValue(value);
+        }
         result.addApplied("maxDesignVolumeFlow", value, "m3/hr");
       }
     }
+  }
+
+  /**
+   * Preserves differently based custom constraints on the advisory JSON path.
+   *
+   * @param constraint existing constraint that would receive a native rating
+   * @param expectedUnit the unit of the native rating
+   * @param result application report receiving an advisory message on mismatch
+   * @return true if the native numeric rating can be assigned without changing its meaning
+   */
+  private static boolean matchesConstraintUnit(CapacityConstraint constraint, String expectedUnit, ApplyResult result) {
+    if (expectedUnit.equals(constraint.getUnit())) {
+      return true;
+    }
+    if (!result.message.isEmpty()) {
+      result.message += "; ";
+    }
+    result.message += "Retained custom constraint " + constraint.getName() + " in " + constraint.getUnit()
+        + "; native rating uses " + expectedUnit;
+    return false;
   }
 
   /**

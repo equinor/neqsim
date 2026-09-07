@@ -1586,8 +1586,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     // Power constraint (HARD limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("power", "kW",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-        .setDesignValue(getMechanicalDesign().maxDesignPower).setWarningThreshold(0.9)
-        .setValueSupplier(() -> getPower()).setEnabled(false));
+        .setDesignValue(getMechanicalDesign().maxDesignPower / 1000.0).setWarningThreshold(0.9)
+        .setValueSupplier(() -> getPower("kW")).setEnabled(false));
 
     // Flow rate constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("flowRate", "m3/hr",

@@ -49,6 +49,7 @@ import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.EquipmentDesignData;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.RecycleFlowCoordinator;
 import neqsim.process.equipment.distillation.DistillationColumn;
@@ -9162,6 +9163,155 @@ public class ProcessSystem extends SimulationBaseClass {
       count += equipment.applyMechanicalDesignCapacityConstraints();
     }
     return count;
+  }
+
+  /**
+   * Applies normalized design capacities to named equipment using the same units and setters as JSON design data.
+   *
+   * <p>
+   * All names, supported properties and finite positive values are validated before any design value is changed. Names
+   * refer to direct unit operations and must resolve uniquely. Supported properties are those documented by
+   * {@link EquipmentDesignData}. Supplied values replace earlier values; omitted properties remain unchanged. The
+   * method does not run the process, size equipment or register generic mechanical-design constraints.
+   * </p>
+   *
+   * <p>
+   * This strict Java/JPype entry point differs from advisory JSON building, which reports missing or unsupported
+   * equipment and continues. Validation errors here throw before application. Unexpected equipment setter failures
+   * during application are propagated and are not rolled back.
+   * </p>
+   *
+   * @param designCapacities map from equipment name to normalized numeric capacity properties
+   * @return application reports in equipment-name order
+   * @throws IllegalArgumentException if a target or property is missing, ambiguous, unsupported or invalid
+   */
+  public Map<String, EquipmentDesignData.ApplyResult> applyDesignCapacities(
+      Map<String, Map<String, Object>> designCapacities) {
+    return applyDesignCapacitiesJson(prepareDesignCapacities(designCapacities));
+  }
+
+  /**
+   * Validates and snapshots a design-capacity map without changing equipment.
+   *
+   * @param designCapacities normalized capacity properties keyed by direct equipment name
+   * @return validated JSON in deterministic name and property order
+   */
+  com.google.gson.JsonObject prepareDesignCapacities(Map<String, Map<String, Object>> designCapacities) {
+    if (designCapacities == null) {
+      throw new IllegalArgumentException("Design capacities must not be null");
+    }
+    for (String name : designCapacities.keySet()) {
+      if (name == null || name.trim().isEmpty()) {
+        throw new IllegalArgumentException("Design capacity equipment name must not be blank");
+      }
+    }
+    com.google.gson.JsonObject normalized = new com.google.gson.JsonObject();
+    for (Map.Entry<String, Map<String, Object>> entry : new java.util.TreeMap<String, Map<String, Object>>(
+        designCapacities).entrySet()) {
+      String name = entry.getKey();
+      ProcessEquipmentInterface target = null;
+      for (ProcessEquipmentInterface equipment : getUnitOperations()) {
+        if (name.equals(equipment.getName())) {
+          if (target != null) {
+            throw new IllegalArgumentException("Ambiguous design capacity equipment: " + name);
+          }
+          target = equipment;
+        }
+      }
+      if (target == null) {
+        throw new IllegalArgumentException("Design capacity equipment not found: " + name);
+      }
+      List<String> supported;
+      if (target instanceof neqsim.process.equipment.separator.Separator) {
+        supported = Arrays.asList("internalDiameter", "separatorLength", "designGasLoadFactor");
+      } else if (target instanceof Compressor) {
+        supported = Arrays.asList("maxSpeed", "ratedPower");
+      } else if (target instanceof Heater) {
+        supported = Arrays.asList("maxDesignDuty", "maxDesignDutyKW", "maxDesignDutyMW");
+      } else if (target instanceof Pump) {
+        supported = Arrays.asList("maxDesignPower", "maxDesignVolumeFlow");
+      } else {
+        throw new IllegalArgumentException("Unsupported design capacity equipment: " + name);
+      }
+      Map<String, Object> properties = entry.getValue();
+      if (properties == null || properties.isEmpty()) {
+        throw new IllegalArgumentException("Design capacity properties must not be empty for " + name);
+      }
+      for (String property : properties.keySet()) {
+        if (property == null || !supported.contains(property)) {
+          throw new IllegalArgumentException("Unsupported design capacity property for " + name + ": " + property);
+        }
+      }
+      if (target instanceof Heater && properties.size() > 1) {
+        throw new IllegalArgumentException("Specify one duty unit for " + name);
+      }
+      com.google.gson.JsonObject values = new com.google.gson.JsonObject();
+      for (Map.Entry<String, Object> property : new java.util.TreeMap<String, Object>(properties).entrySet()) {
+        if (!(property.getValue() instanceof Number)) {
+          throw new IllegalArgumentException("Design capacity must be numeric: " + name + "." + property.getKey());
+        }
+        double value = ((Number) property.getValue()).doubleValue();
+        double multiplier = "maxDesignDutyMW".equals(property.getKey()) ? 1.0e6
+            : ("maxDesignDutyKW".equals(property.getKey()) || "maxDesignPower".equals(property.getKey()) ? 1000.0
+                : 1.0);
+        if (!Double.isFinite(value) || value <= 0.0 || !Double.isFinite(value * multiplier)) {
+          throw new IllegalArgumentException(
+              "Design capacity must be finite and positive in native units: " + name + "." + property.getKey());
+        }
+        values.addProperty(property.getKey(), value);
+      }
+      validateDesignCapacityConstraintUnits(target, properties);
+      normalized.add(name, values);
+    }
+    return normalized;
+  }
+
+  /**
+   * Rejects a rating update when an affected same-name constraint uses a different physical unit.
+   *
+   * @param equipment the equipment whose cached constraints will be refreshed
+   * @param properties the validated normalized capacity properties
+   */
+  private void validateDesignCapacityConstraintUnits(ProcessEquipmentInterface equipment,
+      Map<String, Object> properties) {
+    Map<String, String> expectedUnits = new java.util.LinkedHashMap<String, String>();
+    if (equipment instanceof Pump) {
+      if (properties.containsKey("maxDesignPower")) {
+        expectedUnits.put("power", "kW");
+      }
+      if (properties.containsKey("maxDesignVolumeFlow")) {
+        expectedUnits.put("flowRate", "m3/hr");
+      }
+    } else if (equipment instanceof Heater) {
+      expectedUnits.put("duty", "W");
+    } else if (equipment instanceof Compressor && properties.containsKey("maxSpeed")) {
+      expectedUnits.put("speed", "RPM");
+    } else if (equipment instanceof neqsim.process.equipment.separator.Separator
+        && properties.containsKey("designGasLoadFactor")) {
+      expectedUnits.put("gasLoadFactor", "m/s");
+    }
+    if (expectedUnits.isEmpty()) {
+      return;
+    }
+    Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints = ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment)
+        .getCapacityConstraints();
+    for (Map.Entry<String, String> expected : expectedUnits.entrySet()) {
+      neqsim.process.equipment.capacity.CapacityConstraint constraint = constraints.get(expected.getKey());
+      if (constraint != null && !expected.getValue().equals(constraint.getUnit())) {
+        throw new IllegalArgumentException("Incompatible design capacity constraint unit for " + equipment.getName()
+            + "." + expected.getKey() + ": expected " + expected.getValue() + ", found " + constraint.getUnit());
+      }
+    }
+  }
+
+  /**
+   * Applies the shared JSON capacity representation, retaining the advisory reporting contract of JSON builds.
+   *
+   * @param designCapacities capacity JSON keyed by direct equipment name
+   * @return per-equipment application report
+   */
+  Map<String, EquipmentDesignData.ApplyResult> applyDesignCapacitiesJson(com.google.gson.JsonObject designCapacities) {
+    return EquipmentDesignData.apply(this, designCapacities);
   }
 
   /**
