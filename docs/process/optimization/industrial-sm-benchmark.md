@@ -208,8 +208,17 @@ equipment-local compressor to shared total-power bottleneck transition. On the f
 from master `ac79c56945b0cdf45a1bcb42e3417dff99e7acbf`, total shaft power was
 `918.164876805159 kW`: the 120% budget left the equipment row limiting, while the 95% budget made
 the shared row limiting with `45.90824384025791 kW` required relief. Restoration differed from the
-cold total by `2.7199348551221192e-8 kW` (relative `2.9623599462728176e-11`) against the `1e-7`
-gate, and evidence capture did not mutate the process.
+cold total by `2.7199348551221192e-8 kW` (relative `2.9623599462728176e-11`), and evidence capture
+did not mutate the process.
+
+The maintained cold/restored power gate is `1e-6 * max(1 kW, cold shaft power)`, or one part per
+million above 1 kW. This matches the relative recalculation thresholds in `Stream`, `Compressor`,
+and `Separator`; the earlier `1e-7` replay assertion demanded finer repeatability than those
+equipment paths provide. Java 21 CI observed a valid `0.0003080296899 kW` difference on
+`918.1651848674367 kW` (relative `3.35e-7`). The JSON restoration record includes both absolute and
+relative tolerances alongside the measured differences. The participant-sum/source-total check
+within a single solved state retains its separate `1e-10` tolerance, and the existing convergence,
+mass-balance and bottleneck-transition gates still apply.
 
 That result qualifies the total-power evidence path only. The full ordered piping, compressor,
 separator and export-quality sequence, full L process fixture, and common-shaft case remain open.

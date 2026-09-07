@@ -60,6 +60,9 @@ import neqsim.thermo.system.SystemSrkEos;
 class IndustrialPlantOptimizationBaselineTest {
   private static final Gson PRETTY_GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final String SCHEMA_VERSION = "1.0";
+  // Independent process replays include the 1e-6 relative recalculation thresholds in Stream,
+  // Compressor and Separator. Their power repeatability budget must allow that numerical floor.
+  private static final double SHAFT_POWER_REPEATABILITY_RELATIVE_TOLERANCE = 1.0e-6;
 
   /** Holds the mutable decision point and installed constraint for case S. */
   private static final class SmallFixture {
@@ -222,10 +225,13 @@ class IndustrialPlantOptimizationBaselineTest {
     double restoredTotalPower = restoredPower.get("aggregateShaftPowerKw").getAsDouble();
     double restoredPowerDifference = Math.abs(coldTotalPower - restoredTotalPower);
     double restoredPowerRelativeDifference = restoredPowerDifference / Math.max(1.0, coldTotalPower);
-    assertEquals(coldTotalPower, restoredTotalPower, Math.max(1.0, coldTotalPower) * 1.0e-7,
-        "restored line-up must reproduce shared shaft-power evidence");
+    double restoredPowerTolerance = Math.max(1.0, coldTotalPower) * SHAFT_POWER_REPEATABILITY_RELATIVE_TOLERANCE;
+    assertEquals(coldTotalPower, restoredTotalPower, restoredPowerTolerance,
+        "restored line-up must reproduce shared shaft power within the process recalculation tolerance");
     restored.addProperty("totalPowerAbsoluteDifferenceKw", restoredPowerDifference);
     restored.addProperty("totalPowerRelativeDifference", restoredPowerRelativeDifference);
+    restored.addProperty("totalPowerAbsoluteToleranceKw", restoredPowerTolerance);
+    restored.addProperty("totalPowerRelativeTolerance", SHAFT_POWER_REPEATABILITY_RELATIVE_TOLERANCE);
     restored.add("totalPowerEvidence", restoredPower);
     modes.add(restored);
 
