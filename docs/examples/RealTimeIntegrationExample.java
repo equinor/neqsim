@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Example showing integration patterns for real-time digitalization systems.
- * 
+ *
  * Integration Points: - OPC UA/DA servers for real-time data exchange - PI/Seeq
  * historian
  * connections for time-series data - SCADA/DCS integration for control loops -
