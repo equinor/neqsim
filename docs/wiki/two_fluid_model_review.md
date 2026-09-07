@@ -750,11 +750,15 @@ Tengesdal's 2002 public air–mineral-oil experiments provide the current extern
 55-point -3-degree velocity map, the Taitel system diagnostic scores 22/26 severe observations and
 7/15 stable observations correctly; the 14 transition observations remain a separate category.
 Dynamic large-facility Test 3 is a deterministically chaotic limit cycle, so it is evaluated as a
-four-member ensemble. The time-averaged riser-base pressure (171–176 kPa) and the blowout/fallback
+four-member ensemble. The time-averaged inlet pressure (171–176 kPa) and the blowout/fallback
 regime signature are reproducible, while the peak-to-peak pressure spans 42–300 kPa against
 98 ± 5 kPa digitized and the apparent period spans 14–35 s against 38 ± 2 s. The current slug
 tracker also underpredicts the experimental severe-slug length. These limits preclude a claim of
 quantitative severe-slugging validation.
+
+These Test 3 pressure metrics sample `getPressureProfile()[0]`, the upstream inlet cell,
+not the physical riser base. The inlet-pressure sample and experimental gates are unchanged;
+a bend-adjacent pressure comparison requires a separately identified probe and qualification.
 
 Source: [Tengesdal (2002), BSEE Technical Assessment Program](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf).
 
@@ -999,3 +1003,28 @@ forces and bypasses incompatible slug minimum-slip/terrain holdup overrides. It 
 slug steady predictions and does not qualify the default correlation model, three-phase
 liquid slip or experimental severe slugging. See the
 [shared slug closure configuration and measured null result](../process/TWOFLUIDPIPE_MODEL#opt-in-shared-slug-force-balance).
+
+
+### Conservative accumulation observation
+
+The former transient accumulation path could increase primitive holdup and reduce liquid
+velocity after a conservative step without changing its transported mass or momentum.
+`TwoFluidPipe` now uses
+`LiquidAccumulationTracker.observeConservativeAccumulation(TwoFluidSection[], double)`
+for every enabled transient tracking mode. It observes the sum of oil and water occupied
+volumes from their conserved mass per unit length and phase densities. Filling, drainage
+and marker emission leave the accepted flow state under the finite-volume solver's control;
+a marker does not subtract from measured zone volume.
+
+The empirical `TransientPipe` accumulation path remains unchanged. This is a state-consistency
+repair, not evidence that experimental pressure amplitude or period recovers. The original
+600 s qualification and its pressure-limiter gate remain open. See the
+[conservative observation contract](../process/TWOFLUIDPIPE_MODEL#conservative-terrain-accumulation-observation).
+
+
+The observation repair reduces maximum primitive/mass-derived holdup disagreement from
+0.641481 to 9.83e-8 in the unchanged 600 s shared-slug case. Mean liquid-cycle interval
+is now 34.727 s and meets its scalar tolerance, but intervals remain irregular. Pressure
+amplitude is 51.315 kPa, the pressure limiter still activates, and initial steady holdup
+still misses its target. These results fix the tracker state corruption while leaving
+full experimental qualification open; see the observation validation table in the model guide.

@@ -811,6 +811,11 @@ experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 
 ### Public severe-slugging qualification
 
+Tengesdal Test 3 pressure metrics use `getPressureProfile()[0]`, the upstream inlet cell.
+They do not measure the physical flowline–riser bend; earlier riser-base labels for this
+implementation were incorrect. The inlet sample and experimental amplitude/period gates
+are retained unchanged. A bend-pressure comparison requires a separate probe and qualification.
+
 The candidate with the wall-force and slip corrections was tested on 6 September 2026 using
 all five existing 100 s characterization trajectories. All seven active checks passed with their
 original fixtures and assertions, including conservation, repeatability, mesh and outer-step
@@ -1302,7 +1307,14 @@ double liquidInventory = pipe.getLiquidInventory("m3");
 
 ## Terrain-Induced Slug Tracking
 
-The TwoFluidPipe model includes a comprehensive terrain-induced slug tracking system that detects liquid accumulation at terrain low points and tracks the formation, propagation, and arrival of slugs at the outlet.
+The TwoFluidPipe model detects liquid accumulation at terrain low points and tracks slug
+markers through the pipe. During transient tracking it uses
+`LiquidAccumulationTracker.observeConservativeAccumulation(TwoFluidSection[], double)` in
+all enabled tracking modes. Zone volume is measured from conserved oil and water mass and
+their phase densities, allowing both filling and drainage. Observation and marker emission
+leave cell holdup, velocity, mass and momentum unchanged; emitting a marker also leaves the
+measured zone volume unchanged. The legacy empirical `TransientPipe` tracker path is separate.
+See the [conservative observation contract](../process/TWOFLUIDPIPE_MODEL#conservative-terrain-accumulation-observation).
 
 ### Enabling Slug Tracking
 
@@ -1692,8 +1704,9 @@ measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
   10 MW of heating raised the arrival temperature 22 K but left the computed pressure drop
   unchanged; warmer gas at fixed mass rate is less dense and ΔP ~ G²/ρ must rise. Treat pressure
   drop from a case whose temperature field changes as indicative.
-- **Terrain-slug holdup is clamped** at 0.85–0.90 in accumulation zones, so valley inventory is
-  bounded by construction rather than by the momentum balance.
+- **Legacy steady terrain/slug closures include holdup bounds.** These remain distinct from
+  transient accumulation observation, which no longer adds holdup or damps velocity in
+  `TwoFluidPipe`. The correction alone does not qualify physical valley inventory.
 - The steady-state solve is an under-relaxed fixed-point sweep and can fail to settle on long
   transmission lines; always check `isSteadyStateConverged()`. The transient solve is a genuine
   conservative scheme (null-test drift 0.00 bar, closing mass balance).

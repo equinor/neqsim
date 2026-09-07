@@ -47,6 +47,8 @@ public class LiquidAccumulationTracker implements Serializable {
     public double timeSinceSlug;
     /** Associated pipe sections. */
     public List<Integer> sectionIndices;
+    /** Whether liquidVolume is an observation of conservative cell inventory. */
+    private boolean conservativeObservation;
 
     /**
      * Constructor.
@@ -141,7 +143,11 @@ public class LiquidAccumulationTracker implements Serializable {
   }
 
   /**
-   * Update liquid accumulation for all zones.
+   * Update the legacy drift-flux accumulation model, including its section holdup and velocity overlay.
+   *
+   * <p>
+   * Conservative solvers must use {@link #observeConservativeAccumulation(TwoFluidSection[], double)} instead.
+   * </p>
    *
    * @param sections Pipe sections
    * @param dt Time step (s)
@@ -149,6 +155,56 @@ public class LiquidAccumulationTracker implements Serializable {
   public void updateAccumulation(PipeSection[] sections, double dt) {
     for (AccumulationZone zone : accumulationZones) {
       updateZone(zone, sections, dt);
+    }
+  }
+
+  /**
+   * Observe liquid inventory without changing any conservative or primitive section state.
+   *
+   * <p>
+   * The finite-volume solver owns liquid accumulation and drainage. Each zone therefore measures the sum of oil and
+   * water masses divided by their respective densities, integrated over its cells. No empirical accumulation is added.
+   * The reported net inflow is the observed volume-change rate, which also includes density changes. Marker emission
+   * preserves this measured inventory; overlapping zones must not be summed as a pipe inventory.
+   * </p>
+   *
+   * @param sections accepted conservative section states
+   * @param dt elapsed accepted time in seconds, finite and positive
+   * @throws IllegalArgumentException if dt is not finite and positive
+   */
+  public void observeConservativeAccumulation(TwoFluidSection[] sections, double dt) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Observation time step must be finite and positive");
+    }
+    for (AccumulationZone zone : accumulationZones) {
+      if (!zone.isActive || zone.sectionIndices.isEmpty()) {
+        continue;
+      }
+      double liquidVolume = 0.0;
+      for (int index : zone.sectionIndices) {
+        TwoFluidSection section = sections[index];
+        // Match the density fallbacks used by TwoFluidSection.extractPrimitiveVariables().
+        double liquidDensity = section.getLiquidDensity();
+        double oilDensity = section.getOilDensity();
+        if (!Double.isFinite(oilDensity) || oilDensity <= 0.0) {
+          oilDensity = Double.isFinite(liquidDensity) && liquidDensity > 0.0 ? liquidDensity : 700.0;
+        }
+        double waterDensity = section.getWaterDensity();
+        if (!Double.isFinite(waterDensity) || waterDensity <= 0.0) {
+          waterDensity = 1000.0;
+        }
+        double oilVolumePerLength = section.getOilMassPerLength() / oilDensity;
+        double waterVolumePerLength = section.getWaterMassPerLength() / waterDensity;
+        liquidVolume += (oilVolumePerLength + waterVolumePerLength) * section.getLength();
+      }
+      zone.netInflowRate = zone.conservativeObservation ? (liquidVolume - zone.liquidVolume) / dt : 0.0;
+      zone.conservativeObservation = true;
+      zone.liquidVolume = liquidVolume;
+      double fillFraction = liquidVolume / Math.max(zone.maxVolume, 1e-10);
+      zone.isOverflowing = fillFraction > 0.20 || (zone.netInflowRate > 0.001 && fillFraction > 0.15);
+      double avgArea = zone.maxVolume / (zone.endPosition - zone.startPosition);
+      zone.liquidLevel = liquidVolume / (avgArea + 1e-10);
+      zone.timeSinceSlug += dt;
     }
   }
 
@@ -171,6 +227,8 @@ public class LiquidAccumulationTracker implements Serializable {
     if (!zone.isActive || zone.sectionIndices.isEmpty()) {
       return;
     }
+
+    zone.conservativeObservation = false;
 
     // Calculate liquid accumulation based on slip and gravity effects
     double accumulationRate = 0;
@@ -419,8 +477,10 @@ public class LiquidAccumulationTracker implements Serializable {
       slug.volume = zone.liquidVolume;
       slug.isTerrainInduced = true;
 
-      // Reset zone after slug release - retain some liquid in the low point
-      zone.liquidVolume *= 0.2; // 20% remains as film
+      // A conservative marker does not withdraw liquid from the finite-volume cells.
+      if (!zone.conservativeObservation) {
+        zone.liquidVolume *= 0.2; // Legacy drift-flux model retains 20% as film.
+      }
       zone.timeSinceSlug = 0;
       zone.isOverflowing = false;
 
@@ -462,7 +522,11 @@ public class LiquidAccumulationTracker implements Serializable {
   }
 
   /**
-   * Get total accumulated liquid volume in all zones.
+   * Get the sum of liquid volumes reported by all zones.
+   *
+   * <p>
+   * Zones can overlap, so this sum is a tracking diagnostic, not the unique liquid inventory of the pipe.
+   * </p>
    *
    * @return Total volume (m³)
    */

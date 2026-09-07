@@ -1368,3 +1368,18 @@ slug holdup and pressure loss; retain the default configuration when reproducing
 correlation-based results. Check convergence, completed physical time, mass conservation,
 outlet backflow and pressure-correction diagnostics. See the
 [model contract and qualification evidence](../process/TWOFLUIDPIPE_MODEL#opt-in-shared-slug-force-balance).
+
+
+During enabled transient slug tracking, `TwoFluidPipe` observes terrain-zone liquid volume
+from conserved oil/water mass and phase densities using
+`LiquidAccumulationTracker.observeConservativeAccumulation(TwoFluidSection[], double)`.
+No additional option is required. Repeated observations do not add holdup or damp velocity,
+and terrain-marker emission leaves measured inventory unchanged. The legacy `TransientPipe`
+empirical path is preserved. See the
+[observation contract](../process/TWOFLUIDPIPE_MODEL#conservative-terrain-accumulation-observation).
+
+For the public 600 s Tengesdal Test 3 comparison, pressure is sampled at the upstream inlet
+(`getPressureProfile()[0]`), not the physical riser base. Preserve that sample and the original
+amplitude/period gates when comparing revisions. Inspect liquid accumulation, discharge and
+fallback together with the sticky pressure limiter; successful bookkeeping alone does not
+qualify the experimental cycle.

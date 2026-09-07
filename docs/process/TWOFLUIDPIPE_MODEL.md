@@ -589,6 +589,13 @@ an improvement in experimental severe-slugging accuracy. The temporary explicit 
 stall is resolved by retaining the acoustic step for explicit integrators; the physical
 qualification remains open.
 
+The pressure series used by this Test 3 implementation is `getPressureProfile()[0]`, the first
+flowline cell at the upstream inlet, not the cell next to the flowline–riser bend. Earlier
+riser-base labels for these metrics were incorrect. The digitized experimental target is also
+an inlet-pressure trace. The existing inlet sample, 600 s fixture, and amplitude/period gates
+remain unchanged; pressure at the physical bend requires a separately identified probe and
+has not been qualified by this inlet comparison.
+
 The active tests must not weaken or replace the disabled qualification contract merely to make
 a trajectory pass. The fixed 0.342 holdup target is a historical numerical regression value,
 not a measured holdup from the pressure trace.
@@ -630,9 +637,9 @@ backflow clamp and therefore remain diagnostic development evidence only:
 | Quantity | Observed across the ensemble | How it is asserted |
 |----------|------------------------------|--------------------|
 | Phase-resolved and total mass closure | below $10^{-15}$ | below $10^{-10}$ |
-| Time-averaged riser-base pressure | 176.5–178.3 kPa, spread below 1% | mesh, outer-step and perturbation agreement within 8% |
+| Time-averaged inlet pressure | 176.5–178.3 kPa, spread below 1% | mesh, outer-step and perturbation agreement within 8% |
 | Outlet-liquid blowout and fallback | present in every realization | above 1.25 and below 0.75 of the liquid feed rate |
-| Peak-to-peak riser-base pressure | 7.5–10.4 kPa, or 0.060–0.083 riser heads | inside 0.02–0.20 riser heads, recorded as a known limitation |
+| Peak-to-peak inlet pressure | 7.5–10.4 kPa, or 0.060–0.083 riser heads | inside 0.02–0.20 riser heads, recorded as a known limitation |
 | Apparent cycle period | 13.2–14.4 s | each realization above the riser filling time, and the ensemble mean below the experimental 38 ± 2 s |
 | Maximum tracked outlet slug | 0 m in every realization | asserted to be zero, so a non-zero length forces re-measurement |
 
@@ -1502,7 +1509,7 @@ science, technology or product content of similar software, so no NeqSim closure
 tool and no measured deviation against one is recorded here.
 
 The public severe-slugging benchmark deliberately retains failed/limited metrics in its assertions
-and documentation. In particular, the riser-base pressure amplitude, the cycle period and the
+and documentation. In particular, the inlet-pressure amplitude, the cycle period and the
 slug-length result all prevent a claim of fully quantitative severe-slugging validation.
 
 ### Steady-state behaviour on a long gas-condensate export line
@@ -1656,3 +1663,71 @@ The mean settled flowline holdup remained 0.95. These are diagnostic improvement
 previous reported trajectory, not experimental validation. No benchmark threshold or
 fixture property was adjusted. The pre-existing default uphill-holdup regression also
 remains open (0.0217 uphill versus 0.0326 horizontal).
+
+
+### Conservative terrain-accumulation observation
+
+During transient slug tracking, `TwoFluidPipe` now always calls
+`LiquidAccumulationTracker.observeConservativeAccumulation(TwoFluidSection[], double)`.
+This applies to every enabled tracking mode and does not require the shared slug-force option.
+The finite-volume cells own liquid inventory and momentum; terrain tracking observes that
+accepted state and identifies possible slug markers.
+
+For each accumulation zone, the observed liquid volume is
+
+$$V_{L,\mathrm{zone}}=\sum_{i\in\mathrm{zone}}\Delta x_i\left(\frac{m'_{O,i}}{\rho_{O,i}}+\frac{m'_{W,i}}{\rho_{W,i}}\right)$$
+
+where $m'_O$ and $m'_W$ are the conserved oil and water mass per unit length (kg/m),
+$\rho_O$ and $\rho_W$ are phase densities (kg/m³), and $\Delta x$ is cell length (m).
+Absent phases contribute zero. These are occupied phase volumes from conserved inventory,
+not normalized primitive holdups or a second empirical pool of liquid.
+
+The observer writes no flow state: it neither raises holdup nor damps velocity, and it does
+not rebuild conserved mass from modified primitives. Repeating an observation of unchanged
+cells cannot grow inventory; real Eulerian drainage decreases the observed volume. Emitting
+a terrain-slug marker leaves the measured zone volume unchanged. Marker geometry and
+statistics do not constitute an additional transported inventory; conservative Lagrangian
+coupling continues to act through the finite-volume fluxes.
+
+The legacy `updateAccumulation(PipeSection[], double)` empirical path remains available to
+`TransientPipe`. Its behavior is separate from the conservative `TwoFluidPipe` observer.
+This repair removes a source of disagreement between reported holdup and transported mass;
+it does not by itself qualify severe-slug pressure amplitude, period, blowout/fallback cycles,
+or pressure-limiter behavior. The unchanged 600 s inlet-pressure qualification remains open.
+
+
+#### Observation repair validation
+
+The unchanged 600 s, 16-cell, 0.1 s shared-slug Test 3 fixture was rerun after replacing
+post-step accumulation overlays with conservative observation. The initial profiles match
+the preceding `ce7852183` run exactly; case inputs and experimental acceptance thresholds
+are unchanged.
+
+| Quantity | Before observation repair | After observation repair | Interpretation |
+|---|---:|---:|---|
+| Maximum primitive/mass-derived liquid-holdup mismatch | 0.641481 | 9.83e-8 | Remaining difference matches the solver's occupied-volume tolerance |
+| Mean reported flowline-probe holdup | 0.950000 | 0.338075 | Now agrees with conserved phase inventory |
+| Inlet-probe pressure amplitude | 53.202 kPa | 51.315 kPa | Still below 68.6–127.4 kPa |
+| Mean liquid-production trough interval | 65.614 s | 34.727 s | Scalar period gate now passes 26.6–49.4 s |
+| Completed trough intervals | 7 | 15 | Intervals remain irregular: 11.6–85.7 s after repair |
+| First cumulative pressure-limiter flag | 1.0 s | 0.8 s | No-limiter gate still fails |
+| Mean conservative riser holdup | 0.982738 | 0.982796 | Riser drainage remains unqualified |
+
+The new trajectory completes 600 s without outlet backflow clamps or rejected substeps.
+Maximum gas/liquid/total relative mass residuals are 1.56e-15/8.38e-16/8.76e-16.
+The unchanged initial-holdup, pressure-amplitude and no-limiter gates still fail; the
+mean-period pass does not establish a regular experimental limit cycle. The tracker bug
+is fixed, while severe-slugging qualification remains open.
+
+Conservative observation uses the same unset-phase-density fallbacks as section primitive
+recovery. Read live zone diagnostics through `getAccumulationZones()`; the legacy per-section
+`getAccumulatedLiquidVolume()` overlay field is not refreshed by this observer. Zone volumes
+can overlap and must not be summed as unique pipe inventory; use the phase mass-balance
+report for that purpose.
+
+
+The 1800 s liquid-rich null checks remain unchanged at 1.323207% inventory drift on
+40 cells and 1.357668% on 80 cells, both within the 2% target and without pressure limiting,
+outlet backflow clamping or rejected substeps. Selected tracker, conservative-transport,
+boundary, thermodynamic, terrain and steady-state regressions give 157 passes and the
+previously recorded uphill-holdup failure; no acceptance tolerance was relaxed.

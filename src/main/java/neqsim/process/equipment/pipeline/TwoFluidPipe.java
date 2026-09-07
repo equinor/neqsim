@@ -4705,7 +4705,7 @@ public class TwoFluidPipe extends Pipeline {
 
       // 8. Update accumulation tracking and slug tracking
       if (enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED) {
-        accumulationTracker.updateAccumulation(sections, dtActual);
+        accumulationTracker.observeConservativeAccumulation(sections, dtActual);
 
         // Set reference velocity for slug propagation (from inlet)
         double inletMixtureVelocity = sections[0].getMixtureVelocity();
