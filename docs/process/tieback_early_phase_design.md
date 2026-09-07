@@ -76,20 +76,39 @@ runs well below that, where the two-phase friction multiplier is extrapolated
 and over-predicts the pressure drop substantially. Prefer
 `TwoFluidPipe`, which resolves the phases separately.
 
-Always assert both conditions before believing a two-fluid profile:
+Always check the solver's convergence status before using a two-fluid profile:
 
 ```java
 pipe.run();
-if (!pipe.isSteadyStateConverged() || pipe.getSteadyStateIterationsUsed() <= 1) {
-  // A single-iteration exit means the pressure profile was frozen on the inlet
-  // densities and never picked up the flash. Reject it.
+if (!pipe.isSteadyStateConverged()) {
+  throw new IllegalStateException("Unconverged two-fluid profile");
 }
 ```
 
-`MultiphaseFlowIntegrator` now defaults to `HydraulicModel.TWO_FLUID` and warns
-when the solve exits after one iteration. Set
+`MultiphaseFlowIntegrator` defaults to `HydraulicModel.TWO_FLUID` and rejects
+non-converged profiles. Such a result
+has `isFeasible() == false` and an explanatory `getInfeasibilityReason()`;
+it must not be used as evidence of a feasible tie-back. Non-finite arrival
+pressure, temperature, velocity ratio or screening limits are also rejected. Set
 `setHydraulicModel(HydraulicModel.BEGGS_BRILL)` for a fast correlation check on
 a liquid-dominated line inside the correlation's calibration range.
+
+Before calculating screening velocities, the integrator refreshes outlet volume
+and mass density after the pipe has set its outlet flow. This prevents invalidated
+property caches from producing infinite velocities and a `NaN` erosional ratio.
+
+`sizePipeline(inlet, minimumArrivalPressureBara, maximumVelocityRatio)` returns
+the smallest standard diameter that passes the screening constraints, including
+equality at the specified velocity-ratio limit. If no candidate passes, it throws
+`IllegalStateException` rather than recommending the largest failed candidate.
+The configured diameter is restored after success, exhaustion or an exception.
+Callers must handle sizing failure explicitly; this is a behavior change from the
+previous fallback. The velocity-ratio limit must be finite and positive, and the
+minimum arrival pressure must be finite and positive in bara.
+
+Iteration count alone is not a validity gate: a short line can converge on the
+first refinement sweep. The solver's pressure-floor, time-budget and convergence
+status determine whether its profile is usable.
 
 ### Feeding it a real seabed
 
@@ -218,7 +237,7 @@ characterisation carried.
 - [ ] Shut-in wellhead pressure calculated, not assumed.
 - [ ] Flowline sized at the least-dense condition.
 - [ ] Wellstream hydraulics run with the two-fluid model.
-- [ ] Two-fluid solve converged in more than one iteration.
+- [ ] Two-fluid solver reports convergence.
 - [ ] Route elevations from a real survey, not a flat default.
 - [ ] Wall thickness passes every DNV-ST-F101 limit state.
 - [ ] Insulation checked against the **selected** wall thickness.

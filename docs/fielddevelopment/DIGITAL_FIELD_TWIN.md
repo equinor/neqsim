@@ -205,51 +205,33 @@ ranker.setWeight(Criterion.EXECUTION_RISK, 0.25);
 
 ### Multiphase Flow Correlations
 
-The `MultiphaseFlowIntegrator` implements Beggs & Brill correlation for pipeline hydraulics:
+The `MultiphaseFlowIntegrator` defaults to `TwoFluidPipe` for the pressure and
+thermal traverse. `HydraulicModel.BEGGS_BRILL` selects the alternative correlation.
+The reported flow-regime and holdup screening estimates are separate simplified
+estimates; they are not resolved profiles or an experimental slugging qualification.
 
-#### Liquid Holdup Calculation
-
-$$H_L(\theta) = H_L(0) \cdot \psi$$
-
-Where horizontal holdup:
-$$H_L(0) = \frac{a \cdot \lambda_L^b}{Fr^c}$$
-
-Inclination correction:
-$$\psi = 1 + C \cdot [\sin(1.8\theta) - \frac{1}{3}\sin^3(1.8\theta)]$$
-
-#### Froude Number
-
-$$Fr = \frac{v_m^2}{g \cdot D}$$
-
-Where:
-- $v_m$ = mixture velocity (m/s)
-- $g$ = gravitational acceleration (9.81 m/s²)
-- $D$ = pipe diameter (m)
-
-#### Flow Regime Determination
-
-| Regime | $L_1$ | $L_2$ | Condition |
-|--------|-------|-------|-----------|
-| Segregated | $316 \lambda_L^{0.302}$ | $0.0009252 \lambda_L^{-2.4684}$ | $\lambda_L < 0.01$ and $Fr < L_1$ |
-| Intermittent | - | - | $0.01 \leq \lambda_L \leq 0.4$ and $L_3 < Fr \leq L_1$ |
-| Distributed | - | - | $\lambda_L \geq 0.4$ and $Fr \geq L_1$ |
+Non-converged two-fluid traverses and non-finite feasibility evidence are rejected.
+Always inspect `isFeasible()` and `getInfeasibilityReason()` before using a result.
 
 ```java
 MultiphaseFlowIntegrator integrator = new MultiphaseFlowIntegrator();
+integrator.setPipelineLength(1.0); // km
+integrator.setPipelineDiameter(0.3); // m
+integrator.setOverallHeatTransferCoeff(0.0);
+integrator.setMinArrivalPressure(1.0); // bara, for the curve
 
-// Single calculation
-PipelineResult result = integrator.calculateHydraulics(
-    stream, length, diameter, inclination);
-
-// Generate hydraulic curve
+PipelineResult result = integrator.calculateHydraulics(stream, 1.0);
 List<PipelineResult> curve = integrator.calculateHydraulicsCurve(
-    stream, length, diameter, inclination,
-    minFlowRate, maxFlowRate, numPoints);
+    stream.getFluid(), 60.0, new double[] {5000.0, 10000.0}); // kg/hr
 
-// Pipe sizing
-double optimalDiameter = integrator.sizePipeline(
-    stream, length, inclination, maxPressureDrop, minVelocity, maxVelocity);
+// Throws IllegalStateException if no standard size passes. Handle that failure
+// before reporting a recommended size. The configured diameter is preserved.
+double optimalDiameter = integrator.sizePipeline(stream, 1.0, 0.8);
 ```
+
+The velocity-ratio limit is inclusive and must be finite and positive. See
+[early-phase tie-back design](../process/tieback_early_phase_design.md) for the
+convergence and sizing failure contracts.
 
 ---
 
@@ -1045,3 +1027,4 @@ FieldConcept concept = FieldConcept.builder("My Field")
 - [Integrated Field Development Framework](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK)
 - [Process Simulation Guide](../process/)
 - [PVT Simulation Guide](../pvtsimulation/)
+
