@@ -267,7 +267,75 @@ Supported normalized capacity properties are:
 | Separator / scrubber | `internalDiameter`, `separatorLength`, `designGasLoadFactor` |
 | Compressor | `ratedPower` in kW, `maxSpeed` |
 | Heater / cooler | `maxDesignDuty` in W, `maxDesignDutyKW`, `maxDesignDutyMW` |
-| Pump | `maxDesignPower`, `maxDesignVolumeFlow` |
+| Pump | `maxDesignPower` in kW, `maxDesignVolumeFlow` in actual m³/hr |
+
+The same normalized capacity values can be applied to an existing Java or JPype process with
+`ProcessSystem.applyDesignCapacities(Map<String, Map<String, Object>>)`. The multi-area
+`ProcessModel.applyDesignCapacities(...)` method requires `area::equipment` keys. Both return
+per-equipment `EquipmentDesignData.ApplyResult` reports; multi-area report names are also qualified.
+
+These map methods validate all targets and values before changing any design value. Unknown or
+ambiguous equipment, unsupported or empty property maps, non-numeric values, and values that are not
+finite and positive in native units cause `IllegalArgumentException`. Use exactly one heater duty
+unit key. A same-name custom constraint with incompatible units is also rejected before any area is
+changed: pump power requires kW, pump flow actual m³/hr (`m3/hr`), heater duty W, compressor speed
+RPM, and separator gas-load factor m/s. Keep differently based custom restrictions under separate
+constraint names. The multi-area method validates every area before applying any area, and rejects aliases
+that configure the same equipment instance twice. Keys address direct process units; nested modules
+are not expanded. Names containing `::` cannot be used in the multi-area map.
+
+For compatibility, **JSON building retains its advisory behavior**: missing and unsupported equipment
+are reported in `designDataApplied`, and the build can continue. If a custom pump power/flow, heater duty or compressor speed constraint
+has incompatible units, the JSON application preserves that override and adds an advisory `message`
+to its application report; the equipment design input is still applied. For supported positive inputs, JSON
+and the map methods use the same application utility and produce the same values and units. Supplied
+values replace prior values; omitted properties remain unchanged. Existing mechanical-design objects
+are preserved. Reapplying values refreshes cached pump power/flow, compressor speed and heater duty
+ratings while preserving existing constraint objects, enabled states, warning thresholds, provenance
+and unrelated limits. Compressor speed remains capped by an active chart maximum. These calls configure data only: they do not run, size, or qualify the process. The
+strict preflight prevents invalid-input partial updates, but unexpected equipment setter failures
+during application are propagated without rollback.
+
+Java (given an existing process containing `HP Sep`):
+
+```java
+Map<String, Object> separatorDesign = new LinkedHashMap<String, Object>();
+separatorDesign.put("internalDiameter", 2.0); // m
+separatorDesign.put("separatorLength", 6.0); // m
+Map<String, Map<String, Object>> capacities = new LinkedHashMap<String, Map<String, Object>>();
+capacities.put("HP Sep", separatorDesign);
+Map<String, EquipmentDesignData.ApplyResult> applied = process.applyDesignCapacities(capacities);
+```
+
+Python / JPype (given an existing model containing area `Separation` and unit `HP Sep`):
+
+```python
+from jpype import JClass
+
+LinkedHashMap = JClass("java.util.LinkedHashMap")
+separator_design = LinkedHashMap()
+separator_design.put("internalDiameter", 2.0)
+separator_design.put("separatorLength", 6.0)
+capacities = LinkedHashMap()
+capacities.put("Separation::HP Sep", separator_design)
+applied = model.applyDesignCapacities(capacities)
+report = applied.get("Separation::HP Sep").toJson().toString()
+```
+
+Pump `maxDesignPower` input is kW and `maxDesignVolumeFlow` is actual m³/hr. The shared
+application utility preserves the pump's native internal power convention; callers must not convert
+kW to W before passing `maxDesignPower`. The native pump power constraint now reports both current
+power and design rating in its declared kW unit; older versions reported W values under a kW label.
+The dimensionless utilization ratio is unchanged. Compressor native `power` is a normalized
+percentage of currently available power (including driver speed dependence), and now carries `%`
+instead of the former kW label. Its design value is 100%; use `compressor.getPower("kW")` for the
+physical demand and `ratedPower` for the configured rating in kW. The public
+`compressor.updatePowerConstraint(ratingKW)` method updates the driver and mechanical fallback
+rating while preserving the normalized 100% design and 110% overload values; it rejects invalid
+ratings and incompatible same-name power constraints. Existing explicit driver maximum-power
+settings and speed curves remain authoritative and are not rescaled by a rated-power change. Configuring these values does not establish complete
+constraint coverage or engineering feasibility; inspect the configured constraints and their enabled
+state after running the process.
 
 Large extracted process models can also include a richer `equipmentDesign` object. It is preserved in
 `SimulationResult.getMetadata()` and the builder applies the deterministic parts it understands:

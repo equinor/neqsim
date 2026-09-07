@@ -3,6 +3,7 @@ package neqsim.process.util.optimizer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -29,6 +30,59 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ProcessModelOptimizationViewTest {
+
+  @Test
+  void convergenceToleranceMustBeFiniteAndPositive() {
+    for (double invalid : new double[] { Double.NaN, Double.POSITIVE_INFINITY, 0.0, -1.0 }) {
+      Assertions.assertThrows(IllegalArgumentException.class,
+          () -> new ProcessModelOptimizationView(new ProcessModel(), 3, invalid));
+    }
+  }
+
+  @Test
+  void failedCrossAreaSolveRejectsTheView() {
+    ProcessModel failedModel = new ProcessModel() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public boolean runUntilConverged(int maxIterations, double tolerance) {
+        return false;
+      }
+    };
+    IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class,
+        () -> new ProcessModelOptimizationView(failedModel, 3, 1.0e-4).run());
+    Assertions.assertTrue(failure.getMessage().contains("cross-area convergence"));
+  }
+
+  @Test
+  void failedCrossAreaSolveNeverSamplesOptimizerObjectives() {
+    ProcessModel failedModel = new ProcessModel() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public boolean runUntilConverged(int maxIterations, double tolerance) {
+        return false;
+      }
+    };
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(5000.0, "kg/hr");
+    ProcessSystem area = new ProcessSystem();
+    area.add(feed);
+    failedModel.add("feed area", area);
+    AtomicInteger objectiveCalls = new AtomicInteger();
+    OptimizationObjective objective = new OptimizationObjective("feed", process -> {
+      objectiveCalls.incrementAndGet();
+      return feed.getFlowRate("kg/hr");
+    }, 1.0);
+    Assertions.assertThrows(IllegalStateException.class,
+        () -> new ProductionOptimizer().optimize(failedModel, feed,
+            new OptimizationConfig(1000.0, 6000.0).rateUnit("kg/hr"), Collections.singletonList(objective),
+            Collections.<OptimizationConstraint>emptyList()));
+    Assertions.assertEquals(0, objectiveCalls.get(), "Unconverged state must never reach objective callbacks");
+  }
 
   /**
    * Builds a two-area plant: a "separation" area (feed -&gt; inlet separator) and a "compression" area (export

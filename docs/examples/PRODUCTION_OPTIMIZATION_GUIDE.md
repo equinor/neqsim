@@ -89,6 +89,55 @@ process model. See the
 [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK#plant-wide-constraint-registration)
 for aggregation and conversion rules.
 
+### Common capacity inputs and expected coverage
+
+Use `ProcessSystem.applyDesignCapacities(Map<String, Map<String, Object>>)` for direct equipment
+names, or the same method on `ProcessModel` with `Area::Equipment` keys. These additive Java/JPype
+methods validate the complete batch before applying the existing normalized `designCapacities`
+properties. They reject unknown targets, ambiguous names, unsupported properties and non-finite or
+non-positive ratings. Valid input uses the same `EquipmentDesignData` application as JSON process
+construction. The existing JSON builder retains its advisory per-equipment error reports for
+compatibility. See [Equipment Design Parameters](../process/EQUIPMENT_DESIGN_PARAMETERS) for the
+supported inputs and units.
+
+Configuration does not prove that every relevant plant restriction was specified. Declare the
+expected equipment and constraints independently, then inspect `UtilizationCoverageReport`. The
+report resolves direct constraints before same-name strategy defaults, retains unrelated strategy
+constraints, and distinguishes a real observed zero from an absent value. Missing limits, units,
+basis or provenance and screening-only defaults prevent complete rated coverage. Unavailable
+numbers are `NaN` in Java and `null` in `toJson()`; they are never a false zero-percent utilization.
+
+For a registry-bound report, supply its immutable preflight to the snapshot:
+
+```java
+UtilizationCoverageReport coverage = UtilizationCoverageReport.builder("Plant")
+    .expectConstraint("Compression", "K-1", "power")
+    .equipment("Compression", compressor)
+    .registry(registry)
+    .build();
+PlantUtilizationSnapshot snapshot = PlantUtilizationSnapshot.builder(registry, calculationId)
+    .expectedCoverage(coverage)
+    .convergenceComplete(fullModelConverged)
+    .sample(powerSample)
+    .build();
+```
+
+The compressor and every required constraint must match the independently prepared registry;
+`powerSample` must be exact-calculation evidence. An incomplete expected scope or changed registry
+cannot become complete by omission. This path requires an explicit convergence declaration and
+does not sample equipment again. `PlantUtilizationSnapshotTest` verifies these calls, omitted
+constraints, registry changes, serialization and single-sample behavior. Snapshot schema 1.1 adds
+the optional expected-coverage report. The legacy builder without that report still describes
+registered rows only. Neither preflight nor the snapshot infers the unlisted engineering scope or
+restores a mutated process model.
+
+The `ProcessModelOptimizationView` used by `ProductionOptimizer` now throws
+`IllegalStateException` when cross-area convergence fails, before any objective/capacity evaluation.
+Callers must reject that trial and restore or discard their isolated candidate model. The exception
+does not claim automatic rollback. Successful multi-area, Pareto and scenario workflows retain
+their established path. A snapshot explicitly declaring failed convergence is incomplete even
+when its registry is empty or every constraint is disabled.
+
 ---
 
 ## Overview

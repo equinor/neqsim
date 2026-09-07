@@ -504,7 +504,7 @@ public class JsonProcessBuilder {
    */
   private JsonObject applyDesignCapacities(ProcessSystem process, JsonObject designCapacities) {
     JsonObject report = new JsonObject();
-    Map<String, EquipmentDesignData.ApplyResult> results = EquipmentDesignData.apply(process, designCapacities);
+    Map<String, EquipmentDesignData.ApplyResult> results = process.applyDesignCapacitiesJson(designCapacities);
     for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : results.entrySet()) {
       report.add(entry.getKey(), entry.getValue().toJson());
     }

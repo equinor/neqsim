@@ -5364,7 +5364,7 @@ public class Compressor extends TwoPortEquipment
     // Power constraint - dynamically evaluates against speed-dependent max power
     // from driver curve
     // This shows the actual operating margin at current speed
-    addCapacityConstraint(StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(100.0) // 100%
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_POWER.createConstraint().setUnit("%").setDesignValue(100.0) // 100%
         .setMaxValue(110.0) // 110% overload
         .setWarningThreshold(0.9).setValueSupplier(() -> {
           if (getThermoSystem() == null) {
@@ -5926,15 +5926,35 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Updates the power constraint design value based on driver rating.
+   * Updates the driver and fallback mechanical power rating used by the normalized power constraint.
    *
-   * @param driverPowerRating the driver power rating in kW
+   * <p>
+   * The input is a physical rating in kW. The native constraint remains a percentage of available power, with a design
+   * value of 100% and an overload limit of 110%. Its existing supplier retains driver speed dependence; enabled state,
+   * severity, provenance and other constraints are preserved.
+   * </p>
+   *
+   * @param driverPowerRating the finite positive driver power rating in kW
+   * @throws IllegalArgumentException if the rating is invalid or a custom power constraint uses incompatible units
    */
   public void updatePowerConstraint(double driverPowerRating) {
+    if (!Double.isFinite(driverPowerRating) || driverPowerRating <= 0.0 || !Double.isFinite(driverPowerRating * 1.1)) {
+      throw new IllegalArgumentException("Driver power rating must be finite and positive in kW");
+    }
+    ensureCapacityConstraintsInitialized();
     CapacityConstraint powerConstraint = capacityConstraints.get("power");
+    if (powerConstraint != null && !"%".equals(powerConstraint.getUnit())) {
+      throw new IllegalArgumentException("Native compressor power constraint must use % units");
+    }
+    if (getMechanicalDesign() == null) {
+      initMechanicalDesign();
+    }
+    getMechanicalDesign().setMaxDesignPower(driverPowerRating);
+    if (driver != null) {
+      driver.setRatedPower(driverPowerRating);
+    }
     if (powerConstraint != null) {
-      powerConstraint.setDesignValue(driverPowerRating);
-      powerConstraint.setMaxValue(driverPowerRating * 1.1); // 10% overload margin
+      powerConstraint.setDesignValue(100.0).setMaxValue(110.0);
     }
   }
 

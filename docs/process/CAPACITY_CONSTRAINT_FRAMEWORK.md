@@ -87,7 +87,10 @@ snapshot incomplete. Finite available evidence retains:
 | Physical margin | Registered unit; positive is headroom and negative violates |
 | Required relief | Registered unit; non-negative amount required to reach the limit |
 
-`isComplete()` requires valid exact-calculation evidence for every enabled definition.
+`isComplete()` requires valid exact-calculation evidence for every enabled definition. Without an
+explicit expected-coverage report, this means **registered constraints only**; it cannot detect
+equipment or restrictions that were never registered. Use the coverage preflight below to connect
+declared engineering scope to the registry before accepting a snapshot.
 `isFeasible()` additionally rejects any hard or critical violation. Soft and advisory violations are
 ranked and reported but do not silently become hard constraints. The immutable bottleneck ladder
 contains all enabled available rows in descending utilization order with stable identity as the tie
@@ -104,6 +107,71 @@ driver or torque balance, compressor maps, separator capacity, piping hydraulics
 emissions, utility allocation, rollback, caching, dirty scheduling, or solver acceptance. Those
 increments must supply qualified samples after complete convergence, and external optimizer
 proposals must still be replayed and accepted by the full NeqSim model.
+
+## Expected equipment coverage before qualification
+
+`UtilizationCoverageReport` captures evidence for explicitly declared equipment and constraint
+identities. It preserves expected-but-missing equipment, expected-but-missing constraints, and
+discovered constraints missing from the supplied `PlantConstraintRegistry`. A report with no
+declared equipment is incomplete. Completion applies to `DECLARED_EQUIPMENT_AND_CONSTRAINTS`;
+the caller remains responsible for choosing the engineering scope.
+
+`EquipmentCapacityConstraintResolver` combines direct equipment definitions with the selected
+capacity strategy. Direct definitions take precedence **per constraint name**; they do not suppress
+unrelated strategy constraints. A disabled or incomplete direct override remains authoritative for
+its name. Discovery is deterministic and does not invoke value suppliers; report capture samples
+each selected enabled supplier once and retains only immutable values.
+
+| Evidence gap | Coverage result |
+|---|---|
+| Missing equipment, constraint, or registration | Explicit incomplete row or diagnostic |
+| Unset current value, missing rating, non-finite result, or supplier exception | Incomplete; unavailable numbers are Java `NaN` and JSON `null` |
+| Missing unit, measurement/rating basis, or provenance | Incomplete; no inferred unit or basis |
+| Default fallback or advisory/design-only constraint | `SCREENING_ONLY`; cannot qualify installed rated capacity |
+| Registry unit, direction, severity, enablement, explicit basis, or supplied provenance differs | `METADATA_MISMATCH` |
+| Sample outside the source or registry validity range | `OUTSIDE_VALIDITY_RANGE` |
+| Intentionally disabled equipment or constraint | Retained as `DISABLED`; its supplier is not sampled |
+
+For example, after obtaining the configured `equipment` object named `K-101`, register its installed
+power evidence and declare the required identity:
+
+```java
+CapacityConstraint power = new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.HARD)
+    .setDesignValue(1000.0).setCurrentValue(750.0)
+    .setDataSource("vendor datasheet revision 3");
+equipment.addCapacityConstraint(power);
+PlantConstraintRegistry registry = new PlantConstraintRegistry();
+registry.registerEquipmentConstraint("NorthPlant", "Compression", "K-101", "power", "shaft power",
+    PlantConstraintDefinition.Category.DESIGN, "rotating equipment", "K-101 datasheet", power);
+
+UtilizationCoverageReport coverage = UtilizationCoverageReport.builder("NorthPlant")
+    .expectConstraint("Compression", "K-101", "power")
+    .equipment("Compression", equipment).registry(registry).build();
+```
+
+This example uses an explicitly supplied operating-point value. In a live process, use the
+equipment's actual value supplier after the relevant process calculation. Inspect `isComplete()`,
+`getDiagnostics()`, `getRequiredConstraintIds()`, and `getRows()` from Java or JPype; `toJson()` exposes
+the same frozen evidence with null numeric gaps. With only the shown power constraint, the example
+reports utilization `0.75`; any additional discovered constraint must also have complete registration
+and evidence. The example API chain is exercised by `UtilizationCoverageReportTest`.
+
+Bind this registry-qualified report using `PlantUtilizationSnapshot.Builder.expectedCoverage(coverage)`.
+The report must carry the matching registry digest. Snapshot qualification then also requires
+declared convergence and exact-calculation runtime evidence. Coverage preflight alone does not prove
+convergence, feasibility, complete process balances, shared-resource capacity, or operating approval.
+Rebuild the report after changing installed capacity inputs; it never updates itself from live state.
+
+For preflight without a registry, use `basis(areaName, equipmentName, constraintName, basis)` to supply
+an explicit measurement basis. Such reports describe declared equipment evidence but cannot be used
+as registry-qualified snapshot coverage. Do not turn a default/advisory rating into installed
+capacity by adding a label: record and use the actual equipment or vendor rating.
+
+`CapacityConstraint.hasCurrentValue()` distinguishes an unset legacy zero default from an explicit
+zero or available supplier, without sampling that supplier. `getCurrentValue()` retains its previous
+zero-default behavior. The new assignment flag survives Java serialization after explicit assignment
+or a successful sample. Old serialized constraints lack that flag and require reassignment or a
+reattached supplier before their cached values qualify as current evidence.
 
 ## Important: Constraints Disabled by Default
 
