@@ -34,8 +34,8 @@ import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
  * <p>
  * Both views are generated from the same process object and must retain the same canonical source-graph fingerprint.
  * The P&amp;ID view is not a complete control, piping, or safety design. Its child-delivery DEXPI 2.0 Process file
- * remains a PFD/BFD information-model companion. An opt-in companion package additionally publishes separately
- * labelled native DEXPI 2.0 Plant and Proteus 4.1 compatibility exchanges for review.
+ * remains a PFD/BFD information-model companion. An opt-in companion package additionally publishes separately labelled
+ * native DEXPI 2.0 Plant and Proteus 4.1 compatibility exchanges for review.
  * </p>
  *
  * <p>
@@ -129,8 +129,7 @@ public final class EngineeringDiagramDualProfileDelivery {
       pidDrawingNumber = requireText(builder.pidDrawingNumber, "pidDrawingNumber");
       title = requireText(builder.title, "title");
       operatingCaseId = optionalText(builder.operatingCaseId);
-      balanceBoundaries =
-          Collections.unmodifiableList(new ArrayList<BalanceBoundary>(builder.balanceBoundaries));
+      balanceBoundaries = Collections.unmodifiableList(new ArrayList<BalanceBoundary>(builder.balanceBoundaries));
       sheetFormat = requireNonNull(builder.sheetFormat, "sheetFormat");
       routingMode = requireNonNull(builder.routingMode, "routingMode");
       designationRegister = requireNonNull(builder.designationRegister, "designationRegister");
@@ -285,11 +284,9 @@ public final class EngineeringDiagramDualProfileDelivery {
 
     /** @return whether both deliveries passed and retained one canonical source graph */
     public boolean isComplete() {
-      boolean companionEvidenceComplete =
-          operatingCaseId.isEmpty() ? streamTable == null && balanceTable == null
-              : streamTable != null && streamTable.isValid() && balanceTable != null && balanceTable.isValid()
-                  && streamTable.getSourceGraphFingerprint()
-                      .equals(pfd.getDocumentSet().getSourceGraphFingerprint());
+      boolean companionEvidenceComplete = operatingCaseId.isEmpty() ? streamTable == null && balanceTable == null
+          : streamTable != null && streamTable.isValid() && balanceTable != null && balanceTable.isValid()
+              && streamTable.getSourceGraphFingerprint().equals(pfd.getDocumentSet().getSourceGraphFingerprint());
       return pfd.isComplete() && pid.isComplete() && pidPlantAssessment != null
           && pidPlantAssessment.isSchemaAndProfileConformant() && companionEvidenceComplete
           && pfd.getDocumentSet().getSourceGraphFingerprint().equals(pid.getDocumentSet().getSourceGraphFingerprint());
@@ -367,8 +364,8 @@ public final class EngineeringDiagramDualProfileDelivery {
       EngineeringDiagramDelivery.Report pid = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pid"),
           deliveryRequest(request, ContentProfile.PID, request.pidDrawingNumber));
       Path nativePidPath = target.resolve(PID_DEXPI_PLANT_FILE);
-      Dexpi20ConformanceAssessment.Report pidPlantAssessment =
-          Dexpi20XmlWriter.writeAndAssess(processSystem, nativePidPath.toFile());
+      Dexpi20ConformanceAssessment.Report pidPlantAssessment = Dexpi20XmlWriter.writeAndAssess(processSystem,
+          nativePidPath.toFile());
       if (!pidPlantAssessment.isSchemaAndProfileConformant()) {
         throw new IOException("native DEXPI 2.0 Plant P&ID assessment failed");
       }
@@ -417,18 +414,16 @@ public final class EngineeringDiagramDualProfileDelivery {
       for (Row row : streamTable.getRows()) {
         if (declaration.getStreamSourceLabel().equals(row.getSourceLabel())) {
           if (match != null) {
-            throw new IOException("ambiguous balance-boundary stream label: "
-                + declaration.getStreamSourceLabel());
+            throw new IOException("ambiguous balance-boundary stream label: " + declaration.getStreamSourceLabel());
           }
           match = row;
         }
       }
       if (match == null) {
-        throw new IOException("unknown balance-boundary stream label: "
-            + declaration.getStreamSourceLabel());
+        throw new IOException("unknown balance-boundary stream label: " + declaration.getStreamSourceLabel());
       }
-      result.add(new Boundary(declaration.getBalanceId(), match.getSemanticObjectId(),
-          declaration.getDirection(), declaration.getSourceReference(), declaration.getEvidenceState()));
+      result.add(new Boundary(declaration.getBalanceId(), match.getSemanticObjectId(), declaration.getDirection(),
+          declaration.getSourceReference(), declaration.getEvidenceState()));
     }
     return result;
   }
