@@ -3,6 +3,7 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -21,11 +22,21 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class MultiInputMixerPhaseRegressionTest {
   @Test
   public void reusedMultiInputProcessPreservesAqueousPhaseAfterFlowChange() {
-    ProcessSystem sequential = buildProcess();
-    sequential.setUseOptimizedExecution(false);
-    runChangedInhibitorCase(sequential);
+    // Solve saturation only once: this test compares execution strategies after a
+    // flow change, not independently initialized saturation-boundary flashes.
+    ProcessSystem initial = buildProcess();
+    initial.setUseOptimizedExecution(false);
+    initial.run();
 
-    ProcessSystem optimized = buildProcess();
+    ProcessSystem sequential = initial.copy();
+    sequential.setUseOptimizedExecution(false);
+    ProcessSystem optimized = initial.copy();
+    optimized.setUseOptimizedExecution(true);
+    assertNotSame(((Stream) sequential.getUnit("downstream stream")).getFluid(),
+        ((Stream) optimized.getUnit("downstream stream")).getFluid());
+    assertEquivalentOutletState(sequential, optimized);
+
+    runChangedInhibitorCase(sequential);
     runChangedInhibitorCase(optimized);
 
     assertEquivalentOutletState(sequential, optimized);
@@ -33,11 +44,15 @@ public class MultiInputMixerPhaseRegressionTest {
   }
 
   private void runChangedInhibitorCase(ProcessSystem process) {
-    process.run();
-
     Stream inhibitor = (Stream) process.getUnit("inhibitor stream");
     inhibitor.setFlowRate(0.1, "kg/hr");
     process.run();
+    assertEquals(0.1, inhibitor.getFlowRate("kg/hr"), 0.1 * 1.0e-8);
+    Stream saturated = (Stream) process.getUnit("saturated gas stream");
+    Stream outlet = (Stream) process.getUnit("downstream stream");
+    double inletFlow = saturated.getFlowRate("kg/hr") + inhibitor.getFlowRate("kg/hr");
+    assertEquals(inletFlow, outlet.getFlowRate("kg/hr"), Math.abs(inletFlow) * 1.0e-8,
+        "Changed inhibitor flow must reach the outlet with conserved total mass");
   }
 
   private void assertEquivalentOutletState(ProcessSystem sequential, ProcessSystem optimized) {
