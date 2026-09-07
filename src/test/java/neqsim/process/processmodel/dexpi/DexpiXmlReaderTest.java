@@ -1257,10 +1257,14 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertNull(entering.getFromCycle());
     assertFalse(entering.hasFromCycleBoundaryEvidence());
     assertNull(entering.getFromCycleBoundary());
+    assertFalse(entering.hasFromCycleComponentEvidence());
+    assertNull(entering.getFromCycleComponent());
     assertEquals("cycle-1", entering.getToCycleId());
     assertTrue(entering.hasToCycle());
     assertTrue(entering.hasToCycleEvidence());
     assertSame(first.getConnectionCycles().get(0), entering.getToCycle());
+    assertTrue(entering.hasToCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(0).getConnectionComponent(), entering.getToCycleComponent());
     assertTrue(entering.hasToCycleBoundaryEvidence());
     assertSame(findCycleBoundary(first.getConnectionCycles().get(0), "C-IN-1",
         DexpiConnectionCycleBoundaryInfo.Direction.INCOMING), entering.getToCycleBoundary());
@@ -1277,6 +1281,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(DexpiConnectionCycleTransitionInfo.Kind.ENTERING, parallelEntering.getKind());
     assertEquals("cycle-1", parallelEntering.getToCycleId());
     assertSame(first.getConnectionCycles().get(0), parallelEntering.getToCycle());
+    assertFalse(parallelEntering.hasFromCycleComponentEvidence());
+    assertNull(parallelEntering.getFromCycleComponent());
+    assertTrue(parallelEntering.hasToCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(0).getConnectionComponent(), parallelEntering.getToCycleComponent());
     assertFalse(parallelEntering.hasFromCycleBoundaryEvidence());
     assertNull(parallelEntering.getFromCycleBoundary());
     assertTrue(parallelEntering.hasToCycleBoundaryEvidence());
@@ -1294,6 +1302,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(between.hasToCycleEvidence());
     assertSame(first.getConnectionCycles().get(0), between.getFromCycle());
     assertSame(first.getConnectionCycles().get(1), between.getToCycle());
+    assertTrue(between.hasFromCycleComponentEvidence());
+    assertTrue(between.hasToCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(0).getConnectionComponent(), between.getFromCycleComponent());
+    assertSame(first.getConnectionCycles().get(1).getConnectionComponent(), between.getToCycleComponent());
     assertTrue(between.hasFromCycleBoundaryEvidence());
     assertTrue(between.hasToCycleBoundaryEvidence());
     assertSame(findCycleBoundary(first.getConnectionCycles().get(0), "C-BX",
@@ -1312,9 +1324,13 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(leaving.hasFromCycle());
     assertTrue(leaving.hasFromCycleEvidence());
     assertSame(first.getConnectionCycles().get(1), leaving.getFromCycle());
+    assertTrue(leaving.hasFromCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(1).getConnectionComponent(), leaving.getFromCycleComponent());
     assertFalse(leaving.hasToCycle());
     assertFalse(leaving.hasToCycleEvidence());
     assertNull(leaving.getToCycle());
+    assertFalse(leaving.hasToCycleComponentEvidence());
+    assertNull(leaving.getToCycleComponent());
     assertTrue(leaving.hasFromCycleBoundaryEvidence());
     assertSame(findCycleBoundary(first.getConnectionCycles().get(1), "C-OUT",
         DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING), leaving.getFromCycleBoundary());
@@ -1343,6 +1359,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertFalse(legacy.hasToCycleBoundaryEvidence());
     assertNull(legacy.getFromCycleBoundary());
     assertNull(legacy.getToCycleBoundary());
+    assertFalse(legacy.hasFromCycleComponentEvidence());
+    assertFalse(legacy.hasToCycleComponentEvidence());
+    assertNull(legacy.getFromCycleComponent());
+    assertNull(legacy.getToCycleComponent());
 
     assertTrue(first.toJson().contains("\"connectionCycleTransitionCount\": 4"));
     assertTrue(first.toJson().contains("\"kind\": \"BETWEEN_CYCLES\""));
@@ -1356,6 +1376,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"hasToCycleBoundaryEvidence\": true"));
     assertTrue(first.toJson().contains("\"fromCycleBoundary\": {"));
     assertTrue(first.toJson().contains("\"toCycleBoundary\": {"));
+    assertTrue(first.toJson().contains("\"hasFromCycleComponentEvidence\": true"));
+    assertTrue(first.toJson().contains("\"hasToCycleComponentEvidence\": true"));
+    assertTrue(first.toJson().contains("\"fromCycleComponent\": {"));
+    assertTrue(first.toJson().contains("\"toCycleComponent\": {"));
     assertTrue(first.toJson().contains("\"fromEndpoint\": {"));
     assertTrue(first.toJson().contains("\"toEndpoint\": {"));
     assertEquals(first.toJson(), second.toJson());
