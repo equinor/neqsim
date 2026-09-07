@@ -56,6 +56,9 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
     double nominalExposure = 0.0;
     double lowerRateExposure = 0.0;
     double upperRateExposure = 0.0;
+    double lowerRateInletTotalSulfideMolality = initialTotalSulfideMolality;
+    double nominalInletTotalSulfideMolality = initialTotalSulfideMolality;
+    double upperRateInletTotalSulfideMolality = initialTotalSulfideMolality;
 
     for (int index = 0; index < segments.size(); index++) {
       Segment segment = segments.get(index);
@@ -86,10 +89,34 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
       lowerRateExposure = finiteSum(lowerRateExposure, segmentLowerRateExposure, "lower-rate cumulative exposure");
       upperRateExposure = finiteSum(upperRateExposure, segmentUpperRateExposure, "upper-rate cumulative exposure");
 
+      double lowerRateOutletTotalSulfideMolality = initialTotalSulfideMolality * Math.exp(-lowerRateExposure);
+      double nominalOutletTotalSulfideMolality = initialTotalSulfideMolality * Math.exp(-nominalExposure);
+      double upperRateOutletTotalSulfideMolality = initialTotalSulfideMolality * Math.exp(-upperRateExposure);
+      double lowerRateReactedTotalSulfideMolality =
+          lowerRateInletTotalSulfideMolality - lowerRateOutletTotalSulfideMolality;
+      double nominalReactedTotalSulfideMolality =
+          nominalInletTotalSulfideMolality - nominalOutletTotalSulfideMolality;
+      double upperRateReactedTotalSulfideMolality =
+          upperRateInletTotalSulfideMolality - upperRateOutletTotalSulfideMolality;
+      requireFiniteNonNegative(lowerRateOutletTotalSulfideMolality, "lower-rate outlet total sulfide");
+      requireFiniteNonNegative(nominalOutletTotalSulfideMolality, "nominal outlet total sulfide");
+      requireFiniteNonNegative(upperRateOutletTotalSulfideMolality, "upper-rate outlet total sulfide");
+      requireFiniteNonNegative(lowerRateReactedTotalSulfideMolality, "lower-rate reacted total sulfide");
+      requireFiniteNonNegative(nominalReactedTotalSulfideMolality, "nominal reacted total sulfide");
+      requireFiniteNonNegative(upperRateReactedTotalSulfideMolality, "upper-rate reacted total sulfide");
+
       segmentResults.add(new SegmentResult(index, segment, rateRange.getLower(), rateRange.getNominal(),
           rateRange.getUpper(), lowerPseudoFirstOrderRate, nominalPseudoFirstOrderRate, upperPseudoFirstOrderRate,
           segmentLowerRateExposure, segmentNominalExposure, segmentUpperRateExposure, lowerRateExposure,
-          nominalExposure, upperRateExposure));
+          nominalExposure, upperRateExposure, lowerRateInletTotalSulfideMolality,
+          lowerRateOutletTotalSulfideMolality, lowerRateReactedTotalSulfideMolality,
+          nominalInletTotalSulfideMolality, nominalOutletTotalSulfideMolality,
+          nominalReactedTotalSulfideMolality, upperRateInletTotalSulfideMolality,
+          upperRateOutletTotalSulfideMolality, upperRateReactedTotalSulfideMolality));
+
+      lowerRateInletTotalSulfideMolality = lowerRateOutletTotalSulfideMolality;
+      nominalInletTotalSulfideMolality = nominalOutletTotalSulfideMolality;
+      upperRateInletTotalSulfideMolality = upperRateOutletTotalSulfideMolality;
     }
 
     double nominalRemainingFraction = Math.exp(-nominalExposure);
@@ -398,11 +425,25 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
     private final double cumulativeLowerRateExposure;
     private final double cumulativeNominalExposure;
     private final double cumulativeUpperRateExposure;
+    private final double lowerRateInletTotalSulfideMolality;
+    private final double lowerRateOutletTotalSulfideMolality;
+    private final double lowerRateReactedTotalSulfideMolality;
+    private final double nominalInletTotalSulfideMolality;
+    private final double nominalOutletTotalSulfideMolality;
+    private final double nominalReactedTotalSulfideMolality;
+    private final double upperRateInletTotalSulfideMolality;
+    private final double upperRateOutletTotalSulfideMolality;
+    private final double upperRateReactedTotalSulfideMolality;
 
     private SegmentResult(int index, Segment segment, double lowerSecondOrderRate, double nominalSecondOrderRate,
         double upperSecondOrderRate, double lowerPseudoFirstOrderRate, double nominalPseudoFirstOrderRate,
         double upperPseudoFirstOrderRate, double lowerRateExposure, double nominalExposure, double upperRateExposure,
-        double cumulativeLowerRateExposure, double cumulativeNominalExposure, double cumulativeUpperRateExposure) {
+        double cumulativeLowerRateExposure, double cumulativeNominalExposure, double cumulativeUpperRateExposure,
+        double lowerRateInletTotalSulfideMolality, double lowerRateOutletTotalSulfideMolality,
+        double lowerRateReactedTotalSulfideMolality, double nominalInletTotalSulfideMolality,
+        double nominalOutletTotalSulfideMolality, double nominalReactedTotalSulfideMolality,
+        double upperRateInletTotalSulfideMolality, double upperRateOutletTotalSulfideMolality,
+        double upperRateReactedTotalSulfideMolality) {
       this.index = index;
       this.segment = segment;
       this.lowerSecondOrderRate = lowerSecondOrderRate;
@@ -417,6 +458,15 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
       this.cumulativeLowerRateExposure = cumulativeLowerRateExposure;
       this.cumulativeNominalExposure = cumulativeNominalExposure;
       this.cumulativeUpperRateExposure = cumulativeUpperRateExposure;
+      this.lowerRateInletTotalSulfideMolality = lowerRateInletTotalSulfideMolality;
+      this.lowerRateOutletTotalSulfideMolality = lowerRateOutletTotalSulfideMolality;
+      this.lowerRateReactedTotalSulfideMolality = lowerRateReactedTotalSulfideMolality;
+      this.nominalInletTotalSulfideMolality = nominalInletTotalSulfideMolality;
+      this.nominalOutletTotalSulfideMolality = nominalOutletTotalSulfideMolality;
+      this.nominalReactedTotalSulfideMolality = nominalReactedTotalSulfideMolality;
+      this.upperRateInletTotalSulfideMolality = upperRateInletTotalSulfideMolality;
+      this.upperRateOutletTotalSulfideMolality = upperRateOutletTotalSulfideMolality;
+      this.upperRateReactedTotalSulfideMolality = upperRateReactedTotalSulfideMolality;
     }
 
     /** @return zero-based source-order segment index. */
@@ -487,6 +537,51 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
     /** @return cumulative upper-rate exposure through this segment. */
     public double getCumulativeUpperRateExposure() {
       return cumulativeUpperRateExposure;
+    }
+
+    /** @return inlet total-sulfide molality for the lower-rate path [mol/kg water]. */
+    public double getLowerRateInletTotalSulfideMolality() {
+      return lowerRateInletTotalSulfideMolality;
+    }
+
+    /** @return outlet total-sulfide molality for the lower-rate path [mol/kg water]. */
+    public double getLowerRateOutletTotalSulfideMolality() {
+      return lowerRateOutletTotalSulfideMolality;
+    }
+
+    /** @return reacted total-sulfide molality for the lower-rate path [mol/kg water]. */
+    public double getLowerRateReactedTotalSulfideMolality() {
+      return lowerRateReactedTotalSulfideMolality;
+    }
+
+    /** @return inlet total-sulfide molality for the nominal path [mol/kg water]. */
+    public double getNominalInletTotalSulfideMolality() {
+      return nominalInletTotalSulfideMolality;
+    }
+
+    /** @return outlet total-sulfide molality for the nominal path [mol/kg water]. */
+    public double getNominalOutletTotalSulfideMolality() {
+      return nominalOutletTotalSulfideMolality;
+    }
+
+    /** @return reacted total-sulfide molality for the nominal path [mol/kg water]. */
+    public double getNominalReactedTotalSulfideMolality() {
+      return nominalReactedTotalSulfideMolality;
+    }
+
+    /** @return inlet total-sulfide molality for the upper-rate path [mol/kg water]. */
+    public double getUpperRateInletTotalSulfideMolality() {
+      return upperRateInletTotalSulfideMolality;
+    }
+
+    /** @return outlet total-sulfide molality for the upper-rate path [mol/kg water]. */
+    public double getUpperRateOutletTotalSulfideMolality() {
+      return upperRateOutletTotalSulfideMolality;
+    }
+
+    /** @return reacted total-sulfide molality for the upper-rate path [mol/kg water]. */
+    public double getUpperRateReactedTotalSulfideMolality() {
+      return upperRateReactedTotalSulfideMolality;
     }
   }
 
