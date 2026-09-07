@@ -5,6 +5,41 @@ description: The NeqSim `TwoFluidPipe` model implements a transient multiphase-f
 
 # TwoFluidPipe Model Documentation
 
+## Release scope and current validation
+
+The phase-consistency repairs in PR #3514 correct steady/transient thermodynamic
+updates, conservative accumulation observation, integrated closure forces, and
+three-phase hydraulic viscosity consistency. They do not establish general
+experimental accuracy for multiphase transients.
+
+| Configuration | Current evidence | Release interpretation |
+|---|---|---|
+| Existing defaults | Selected steady-state, stratified-transient and phase-consistency regressions pass | No blanket severe-slugging or long-run inventory qualification |
+| Shared slug force balance with interfacial pressure and coupled pressure/momentum enabled | 1800 s inventory drift: 1.323207% at 40 cells and 1.357668% at 80 cells | Meets the unchanged 2% target for these fixtures; requires explicit opt-in |
+| Conservative Lagrangian tracking with implicit slug/film friction | 600 s completes, but amplitude, cycle and pressure-limiter gates remain open; substantial time-step sensitivity | Experimental; disabled by default |
+
+The under-2% result requires all three settings before initialization:
+`setSharedSlugForceBalanceEnabled(true)`,
+`setEnableInterfacialPressure(true)`, and
+`setEnableCoupledPressureMomentum(true)`.
+Leaving shared slug forces disabled does not repair the earlier default-mode
+5.757% inventory-drift result. This release preparation does not change defaults.
+
+The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
+experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
+the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
+completed cycle intervals, and pressure limits still activate. Do not use these
+results as qualification of slug loads or extreme pressure transients.
+
+Implementation evidence at commit `bfd3bb0`: 153 selected tests passed, two existing
+tests skipped, and no failures. These local checks do not replace the full CI
+matrix on the final release candidate. Release inclusion requires successful
+required checks and review; an open draft PR is not an available released feature.
+
+Later sections preserve earlier measurements to explain the repair history.
+Read those results with their stated configuration and revision; they are not
+additional claims about the current defaults.
+
 ## Overview
 
 The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves phase-resolved gas, hydrocarbon-liquid, and aqueous-liquid conservation equations, enabling prediction of:
