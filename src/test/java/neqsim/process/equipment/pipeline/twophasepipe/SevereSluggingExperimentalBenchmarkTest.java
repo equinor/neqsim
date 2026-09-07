@@ -84,7 +84,8 @@ class SevereSluggingExperimentalBenchmarkTest {
   /** Approximate experimental SS-trace peak spacing digitized from Tengesdal Figure 5-6. */
   private static final double EXPERIMENTAL_CYCLE_PERIOD_S = 38.0;
   private static final double WARM_UP_SECONDS = 20.0;
-  private static final double SUPPORTING_SIMULATION_SECONDS = 100.0;
+  /** Observe more than two previously recorded 67 s model periods regardless of the first trough's phase. */
+  private static final double SUPPORTING_SIMULATION_SECONDS = 180.0;
   private static final double SUSTAINED_SIMULATION_SECONDS = 600.0;
   private static final double EXPERIMENTAL_RELATIVE_TOLERANCE = 0.30;
   private static final double FLOWLINE_HOLDUP_TARGET = 0.342;
