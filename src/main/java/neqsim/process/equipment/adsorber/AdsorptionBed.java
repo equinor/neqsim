@@ -510,10 +510,29 @@ public class AdsorptionBed extends TwoPortEquipment {
   /**
    * Set the purge gas flow rate during desorption.
    *
+   * <p>
+   * The value is recorded on the bed for reporting and round-tripping. It is <b>not</b> currently consumed by the
+   * desorption calculation, so changing it does not change any simulated result.
+   * </p>
+   *
    * @param flowRate purge gas flow rate in mol/s
    */
   public void setPurgeFlowRate(double flowRate) {
     this.purgeFlowRate = flowRate;
+  }
+
+  /**
+   * Get the configured purge gas flow rate during desorption.
+   *
+   * <p>
+   * See {@link #setPurgeFlowRate(double)}: this value is recorded but does not yet influence the desorption
+   * calculation.
+   * </p>
+   *
+   * @return purge gas flow rate in mol/s
+   */
+  public double getPurgeFlowRate() {
+    return purgeFlowRate;
   }
 
   // ----------------------------------------------------------------

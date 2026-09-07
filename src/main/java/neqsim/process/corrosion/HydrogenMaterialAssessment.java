@@ -407,11 +407,29 @@ public class HydrogenMaterialAssessment implements Serializable {
   /**
    * Sets the design life.
    *
+   * <p>
+   * The value is recorded on the assessment for reporting and traceability. It is <b>not</b> currently consumed by
+   * {@link #evaluate()}, so changing it does not change the assessed risk levels or the derating factor.
+   * </p>
+   *
    * @param years design life in years
    */
   public void setDesignLifeYears(double years) {
     this.designLifeYears = years;
     evaluated = false;
+  }
+
+  /**
+   * Gets the configured design life.
+   *
+   * <p>
+   * See {@link #setDesignLifeYears(double)}: this value is recorded but does not yet influence the assessment.
+   * </p>
+   *
+   * @return design life in years
+   */
+  public double getDesignLifeYears() {
+    return designLifeYears;
   }
 
   /**
