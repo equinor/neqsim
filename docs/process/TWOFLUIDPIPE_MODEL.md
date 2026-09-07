@@ -624,7 +624,7 @@ a conservative screen but is not a high-specificity classifier and must not be d
 quantitative dynamic validation.
 
 The slow dynamic benchmark exercises large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
-$v_{SG}=1.00$ m/s). Its active 100 s trajectories characterize coupled numerical progress,
+$v_{SG}=1.00$ m/s). Its active 180 s trajectories characterize coupled numerical progress,
 conservation, repeatability, mesh sensitivity, and outer-step sensitivity. The exact 600 s
 qualification method remains disabled under #3298 until the amplitude, liquid-production-cycle,
 steady-flowline-hold-up, sticky-limiter, rejection, and conservation gates all pass together.
@@ -1315,11 +1315,18 @@ The limit-cycle result reports period, P10, median, P90, P10-P90 band, sample wi
 median-upcrossing cycle count. A large startup peak followed by a flat trace reports zero completed
 cycles, so it cannot pass as a sustained oscillation.
 
-The active short Tengesdal characterization requires one complete liquid-rate cycle interval in its
-80 s settled window. Requiring two intervals there would be impossible for the currently observed
-67 s cycle. The disabled 600 s qualification requires at least two completed cycles and retains the
+The active short Tengesdal characterization runs for 180 s and requires one complete liquid-rate
+cycle interval in its 160 s window after the 20 s warm-up. The previous 80 s window could miss two
+consecutive troughs of the previously recorded approximately 67 s model cycle, depending on trajectory phase.
+The longer window covers more than two such periods without changing the cycle detector or any
+acceptance tolerance. The disabled 600 s qualification requires at least two completed cycles and retains the
 published experimental source plus the phase-mass, nonlinear-quality, steady-hold-up, amplitude,
 period, and inventory gates.
+
+The 180 s Java 17 regression run reported 27.7–36.8 kPa pressure swings and 1–10 completed
+liquid-cycle intervals across the mesh/outer-step/perturbation ensemble; detected periods were
+15.1–28.4 s and the nonlinear correction limiter remained active. All seven active diagnostic
+checks passed, but these trajectories do not meet the separate experimental qualification.
 
 A fresh OLGA 2025.1 execution for the same geometry reached normal stop and reported a 34.9234 kPa
 pressure amplitude and 21.7100 s liquid-trough period (21.7364 s from pressure), compared with the

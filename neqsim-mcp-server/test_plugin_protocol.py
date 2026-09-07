@@ -214,6 +214,42 @@ def test_malformed_input_fails_closed(client):
     )
 
 
+def test_inventory_promotion(client):
+    response = client.call_tool("getCapabilities", {})
+    result = payload(response)
+    require(result.get("status") == "success", "capability request failed", response)
+    require(result.get("tool") == "getCapabilities", "capability tool identity drifted", response)
+    inventory = result.get("phase0EvidenceInventory", {})
+    limitations = inventory.get("knownLimitations", {})
+    plugin = limitations.get("coverageRecords", {}).get("runPlugin", {})
+    require(inventory.get("inventoryVersion") == "1.30", "inventory version drifted", inventory)
+    require(
+        limitations.get("contractTestedToolCount") == 30
+        and limitations.get("confirmedGapToolCount") == 21,
+        "plugin promotion accounting drifted",
+        limitations,
+    )
+    require(
+        limitations.get("contractPromotionCandidateCount") == 0,
+        "promotion candidate remained queued",
+        limitations,
+    )
+    require(plugin.get("coverageStatus") == "CONTRACT_TESTED", "runPlugin was not promoted", plugin)
+    require(
+        plugin.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_PROCESS_LOCAL_PLUGIN_EXECUTION",
+        "plugin applicability drifted",
+        plugin,
+    )
+    require(
+        "neqsim-mcp-server/test_plugin_protocol.py"
+        in plugin.get("contractEvidenceSources", [])
+        and "plugin provenance" in plugin.get("evidenceBoundary", ""),
+        "plugin evidence or boundary drifted",
+        plugin,
+    )
+
+
 def main():
     client = McpClient()
     tests = [
@@ -226,6 +262,7 @@ def main():
         ("empty plugin name fails closed", test_empty_plugin_name_fails_closed),
         ("unknown action fails closed", test_unknown_action_fails_closed),
         ("malformed input fails closed", test_malformed_input_fails_closed),
+        ("inventory promotion", test_inventory_promotion),
     ]
     try:
         client.start()
