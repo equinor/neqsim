@@ -20,6 +20,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.OilAssayCharacterisation;
+import neqsim.thermo.characterization.TbpClosure;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -1799,17 +1800,9 @@ public abstract class SystemThermo implements SystemInterface {
     return table;
   }
 
-  /**
-   * Riazi-Daubert (1980) coefficient a in M = a * Tb^b * SG^c, with Tb in degrees Rankine and M in g/mol.
-   */
-  private static final double RD1980_A = 4.5673e-5;
-  /** Riazi-Daubert (1980) boiling point exponent b. */
-  private static final double RD1980_B = 2.1962;
-  /** Riazi-Daubert (1980) specific gravity exponent c. */
-  private static final double RD1980_C = -1.0164;
-
   /** {@inheritDoc} */
   @Override
+  @Deprecated
   public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass, double boilingPoint) {
     if (boilingPoint <= 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "addTBPfraction2",
@@ -1844,12 +1837,12 @@ public abstract class SystemThermo implements SystemInterface {
           "calculateDensityFromBoilingPoint", "boilingPoint", "must be positive."));
     }
 
-    // Riazi-Daubert (1980) M = a*Tb^c*SG^c inverted analytically for SG. The TBP model's own
-    // calcTB cannot be used here: for the Pedersen models it carries no density dependence below
-    // 540 g/mol, so the inverse problem has no solution (see PedersenTBPModelSRK.calcTB).
+    // Riazi-Daubert (1980) is the only closure that is monotonic in specific gravity and so the
+    // only one this inverse has a unique root for; see TbpClosure. The TBP model's own calcTB
+    // cannot be used either, because for the Pedersen models it carries no density dependence
+    // below 540 g/mol (see PedersenTBPModelSRK.calcTB).
     double molarMassGmol = molarMass * 1000.0;
-    double boilingPointRankine = boilingPoint * 1.8;
-    double density = Math.pow(RD1980_A * Math.pow(boilingPointRankine, RD1980_B) / molarMassGmol, -1.0 / RD1980_C);
+    double density = TbpClosure.RIAZI_DAUBERT_1980.calcDensity(boilingPoint, molarMass, characterization.getTBPModel());
 
     if (boilingPoint < 300.0 || boilingPoint > 620.0 || molarMassGmol < 70.0 || molarMassGmol > 300.0) {
       logger.warn("calculateDensityFromBoilingPoint: molar mass {} g/mol and boiling point {} K fall outside the "
@@ -1893,6 +1886,7 @@ public abstract class SystemThermo implements SystemInterface {
    * Add TBP fraction using density and boiling point, calculating molar mass.
    */
   @Override
+  @Deprecated
   public void addTBPfraction3(String componentName, double numberOfMoles, double density, double boilingPoint) {
     if (boilingPoint <= 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "addTBPfraction3",
@@ -1967,6 +1961,7 @@ public abstract class SystemThermo implements SystemInterface {
    * Add TBP fraction using density and boiling point, calculating molar mass.
    */
   @Override
+  @Deprecated
   public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass, double density,
       double boilingPoint) {
     characterization.getTBPModel().setBoilingPoint(boilingPoint);
@@ -1977,6 +1972,229 @@ public abstract class SystemThermo implements SystemInterface {
       // every fraction added afterwards.
       characterization.getTBPModel().setBoilingPoint(0.0);
     }
+  }
+
+  /**
+   * Watson factor of a pure paraffin. The n-alkanes C5 to C16 in COMP.csv give 12.647 to 13.136, median 12.785.
+   */
+  private static final double PARAFFIN_WATSON_K = 12.8;
+  /**
+   * Watson factor of a pure naphthene. Cyclohexane is the only naphthene in COMP.csv with both a measured boiling point
+   * and a credible density; it gives 10.989.
+   */
+  private static final double NAPHTHENE_WATSON_K = 11.0;
+  /**
+   * Watson factor of a pure aromatic. Benzene, toluene and m-xylene in COMP.csv give 9.706, 10.149 and 10.430, median
+   * 10.149. The o- and p-xylene rows are excluded because their stored density is wrong.
+   */
+  private static final double AROMATIC_WATSON_K = 10.1;
+
+  /** Lower molar mass of the range the characterization correlations were fitted over, g/mol. */
+  private static final double CORRELATION_MOLAR_MASS_LOWER = 70.0;
+  /** Upper molar mass of the range the characterization correlations were fitted over, g/mol. */
+  private static final double CORRELATION_MOLAR_MASS_UPPER = 300.0;
+  /** Lower boiling point of the range the characterization correlations were fitted over, K. */
+  private static final double CORRELATION_BOILING_POINT_LOWER = 300.0;
+  /** Upper boiling point of the range the characterization correlations were fitted over, K. */
+  private static final double CORRELATION_BOILING_POINT_UPPER = 620.0;
+
+  /**
+   * Reject a non-positive argument before it reaches a correlation.
+   *
+   * @param methodName name of the calling method, used in the exception message
+   * @param inputName name of the offending argument
+   * @param value the supplied value
+   */
+  private void requirePositive(String methodName, String inputName, double value) {
+    if (value <= 0.0) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, methodName, inputName, "must be positive."));
+    }
+  }
+
+  /**
+   * Reject a specific gravity no petroleum fraction can have.
+   *
+   * <p>
+   * A value outside this range almost always means an argument was supplied in the wrong unit, so the message says so
+   * rather than letting a nonsensical fraction into the fluid.
+   * </p>
+   *
+   * @param methodName name of the calling method, used in the exception message
+   * @param density specific gravity to check
+   */
+  private void requirePhysicalSpecificGravity(String methodName, double density) {
+    if (density < 0.5 || density > 1.3) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, methodName, "density",
+          "of " + density + " is outside the physical range 0.5 to 1.3 for a petroleum fraction. "
+              + "Check that the boiling point is in K and the molar mass in kg/mol."));
+    }
+  }
+
+  /**
+   * Warn when a fraction sits outside the range the characterization correlations were fitted over.
+   *
+   * @param methodName name of the calling method, used in the log message
+   * @param molarMass molar mass in kg/mol
+   * @param boilingPoint normal boiling point in K
+   */
+  private void warnIfOutsideCorrelationRange(String methodName, double molarMass, double boilingPoint) {
+    double molarMassGmol = molarMass * 1000.0;
+    if (molarMassGmol < CORRELATION_MOLAR_MASS_LOWER || molarMassGmol > CORRELATION_MOLAR_MASS_UPPER
+        || boilingPoint < CORRELATION_BOILING_POINT_LOWER || boilingPoint > CORRELATION_BOILING_POINT_UPPER) {
+      logger.warn(
+          "{}: molar mass {} g/mol and boiling point {} K fall outside the range the characterization "
+              + "correlations were fitted over ({}-{} g/mol, {}-{} K). The result is an extrapolation.",
+          methodName, molarMassGmol, boilingPoint, CORRELATION_MOLAR_MASS_LOWER, CORRELATION_MOLAR_MASS_UPPER,
+          CORRELATION_BOILING_POINT_LOWER, CORRELATION_BOILING_POINT_UPPER);
+    }
+  }
+
+  /**
+   * Add a fraction while the supplied boiling point overrides the TBP model correlation.
+   *
+   * <p>
+   * The pin has to be cleared in a finally block: it lives on the characterization's shared TBP model instance, so
+   * leaving it set would silently apply the same boiling point to every fraction added afterwards.
+   * </p>
+   *
+   * @param componentName name of the fraction
+   * @param numberOfMoles number of moles to be added
+   * @param molarMass molar mass in kg/mol
+   * @param density specific gravity (relative density, g/cm3)
+   * @param boilingPoint normal boiling point in K
+   */
+  private void addFractionWithPinnedBoilingPoint(String componentName, double numberOfMoles, double molarMass,
+      double density, double boilingPoint) {
+    characterization.getTBPModel().setBoilingPoint(boilingPoint);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Sg(String componentName, double numberOfMoles, double molarMass, double density) {
+    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Tb(String componentName, double numberOfMoles, double molarMass, double boilingPoint) {
+    addTBPfraction_Mw_Tb(componentName, numberOfMoles, molarMass, boilingPoint, TbpClosure.RIAZI_DAUBERT_1980);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Tb(String componentName, double numberOfMoles, double molarMass, double boilingPoint,
+      TbpClosure closure) {
+    requirePositive("addTBPfraction_Mw_Tb", "molarMass", molarMass);
+    requirePositive("addTBPfraction_Mw_Tb", "boilingPoint", boilingPoint);
+    double density = closure.calcDensity(boilingPoint, molarMass, characterization.getTBPModel());
+    warnIfOutsideCorrelationRange("addTBPfraction_Mw_Tb", molarMass, boilingPoint);
+    requirePhysicalSpecificGravity("addTBPfraction_Mw_Tb", density);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Sg_Tb(String componentName, double numberOfMoles, double density, double boilingPoint) {
+    addTBPfraction_Sg_Tb(componentName, numberOfMoles, density, boilingPoint, TbpClosure.RIAZI_DAUBERT_1987);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Sg_Tb(String componentName, double numberOfMoles, double density, double boilingPoint,
+      TbpClosure closure) {
+    requirePositive("addTBPfraction_Sg_Tb", "density", density);
+    requirePositive("addTBPfraction_Sg_Tb", "boilingPoint", boilingPoint);
+    requirePhysicalSpecificGravity("addTBPfraction_Sg_Tb", density);
+    double molarMass = closure.calcMolarMass(boilingPoint, density, characterization.getTBPModel());
+    warnIfOutsideCorrelationRange("addTBPfraction_Sg_Tb", molarMass, boilingPoint);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Kw(String componentName, double numberOfMoles, double boilingPoint, double watsonK) {
+    addTBPfraction_Tb_Kw(componentName, numberOfMoles, boilingPoint, watsonK, TbpClosure.RIAZI_DAUBERT_1987);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Kw(String componentName, double numberOfMoles, double boilingPoint, double watsonK,
+      TbpClosure closure) {
+    requirePositive("addTBPfraction_Tb_Kw", "boilingPoint", boilingPoint);
+    requirePositive("addTBPfraction_Tb_Kw", "watsonK", watsonK);
+    // Exact from the definition of the Watson factor, no correlation error enters here.
+    double density = calculateDensityFromBoilingPointAndWatsonK(boilingPoint, watsonK);
+    double molarMass = closure.calcMolarMass(boilingPoint, density, characterization.getTBPModel());
+    warnIfOutsideCorrelationRange("addTBPfraction_Tb_Kw", molarMass, boilingPoint);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Pna(String componentName, double numberOfMoles, double boilingPoint,
+      double paraffinFraction, double naphtheneFraction, double aromaticFraction) {
+    addTBPfraction_Tb_Pna(componentName, numberOfMoles, boilingPoint, paraffinFraction, naphtheneFraction,
+        aromaticFraction, PARAFFIN_WATSON_K, NAPHTHENE_WATSON_K, AROMATIC_WATSON_K, TbpClosure.RIAZI_DAUBERT_1987);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Pna(String componentName, double numberOfMoles, double boilingPoint,
+      double paraffinFraction, double naphtheneFraction, double aromaticFraction, double paraffinWatsonK,
+      double naphtheneWatsonK, double aromaticWatsonK, TbpClosure closure) {
+    double watsonK = calculateWatsonKFromPna(paraffinFraction, naphtheneFraction, aromaticFraction, paraffinWatsonK,
+        naphtheneWatsonK, aromaticWatsonK);
+    addTBPfraction_Tb_Kw(componentName, numberOfMoles, boilingPoint, watsonK, closure);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Sg_Tb(String componentName, double numberOfMoles, double molarMass, double density,
+      double boilingPoint) {
+    requirePositive("addTBPfraction_Mw_Sg_Tb", "molarMass", molarMass);
+    requirePositive("addTBPfraction_Mw_Sg_Tb", "density", density);
+    requirePositive("addTBPfraction_Mw_Sg_Tb", "boilingPoint", boilingPoint);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Sg_Crit(String componentName, double numberOfMoles, double molarMass, double density,
+      double criticalTemperature, double criticalPressure, double acentricFactor) {
+    addTBPfraction(componentName, numberOfMoles, molarMass, density, criticalTemperature, criticalPressure,
+        acentricFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateWatsonKFromPna(double paraffinFraction, double naphtheneFraction, double aromaticFraction) {
+    return calculateWatsonKFromPna(paraffinFraction, naphtheneFraction, aromaticFraction, PARAFFIN_WATSON_K,
+        NAPHTHENE_WATSON_K, AROMATIC_WATSON_K);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateWatsonKFromPna(double paraffinFraction, double naphtheneFraction, double aromaticFraction,
+      double paraffinWatsonK, double naphtheneWatsonK, double aromaticWatsonK) {
+    if (paraffinFraction < 0.0 || naphtheneFraction < 0.0 || aromaticFraction < 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "calculateWatsonKFromPna",
+          "paraffinFraction", "P, N and A fractions must all be non-negative. Got P=" + paraffinFraction + ", N="
+              + naphtheneFraction + ", A=" + aromaticFraction + "."));
+    }
+    double sum = paraffinFraction + naphtheneFraction + aromaticFraction;
+    if (Math.abs(sum - 1.0) > 1.0e-6) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "calculateWatsonKFromPna",
+          "paraffinFraction", "P, N and A fractions must sum to 1. Got " + sum + " from P=" + paraffinFraction + ", N="
+              + naphtheneFraction + ", A=" + aromaticFraction + "."));
+    }
+    return paraffinFraction * paraffinWatsonK + naphtheneFraction * naphtheneWatsonK
+        + aromaticFraction * aromaticWatsonK;
   }
 
   /** {@inheritDoc} */
