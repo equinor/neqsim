@@ -34,6 +34,8 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
   private final String toCycleId;
   private final DexpiConnectionCycleInfo fromCycle;
   private final DexpiConnectionCycleInfo toCycle;
+  private final DexpiConnectionCycleBoundaryInfo fromCycleBoundary;
+  private final DexpiConnectionCycleBoundaryInfo toCycleBoundary;
   private final Kind kind;
   private final DexpiConnectionInfo connection;
   private final DexpiConnectionEndpointInfo fromEndpoint;
@@ -72,6 +74,28 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
   public DexpiConnectionCycleTransitionInfo(DexpiConnectionInfo connection, DexpiConnectionEndpointInfo fromEndpoint,
       DexpiConnectionEndpointInfo toEndpoint, String fromCycleId, String toCycleId, DexpiConnectionCycleInfo fromCycle,
       DexpiConnectionCycleInfo toCycle) {
+    this(connection, fromEndpoint, toEndpoint, fromCycleId, toCycleId, fromCycle, toCycle, null, null);
+  }
+
+  /**
+   * Creates complete immutable evidence with cycle and boundary records available to the reader.
+   *
+   * @param connection complete source connection occurrence
+   * @param fromEndpoint complete source-endpoint evidence
+   * @param toEndpoint complete target-endpoint evidence
+   * @param fromCycleId source directed-cycle identity, or empty when outside every cycle
+   * @param toCycleId target directed-cycle identity, or empty when outside every cycle
+   * @param fromCycle complete source directed-cycle evidence, or {@code null} when outside or unavailable
+   * @param toCycle complete target directed-cycle evidence, or {@code null} when outside or unavailable
+   * @param fromCycleBoundary source cycle's outgoing boundary evidence, or {@code null} when outside or unavailable
+   * @param toCycleBoundary target cycle's incoming boundary evidence, or {@code null} when outside or unavailable
+   * @throws NullPointerException if connection or endpoint evidence is null
+   * @throws IllegalArgumentException if cycle identities do not describe a boundary crossing or evidence disagrees
+   */
+  public DexpiConnectionCycleTransitionInfo(DexpiConnectionInfo connection, DexpiConnectionEndpointInfo fromEndpoint,
+      DexpiConnectionEndpointInfo toEndpoint, String fromCycleId, String toCycleId, DexpiConnectionCycleInfo fromCycle,
+      DexpiConnectionCycleInfo toCycle, DexpiConnectionCycleBoundaryInfo fromCycleBoundary,
+      DexpiConnectionCycleBoundaryInfo toCycleBoundary) {
     this.connection = Objects.requireNonNull(connection, "connection");
     this.fromEndpoint = Objects.requireNonNull(fromEndpoint, "fromEndpoint");
     this.toEndpoint = Objects.requireNonNull(toEndpoint, "toEndpoint");
@@ -79,6 +103,8 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     this.toCycleId = normalize(toCycleId);
     this.fromCycle = fromCycle;
     this.toCycle = toCycle;
+    this.fromCycleBoundary = fromCycleBoundary;
+    this.toCycleBoundary = toCycleBoundary;
     if (this.fromCycleId.isEmpty() && this.toCycleId.isEmpty()) {
       throw new IllegalArgumentException("At least one endpoint must belong to a directed cycle");
     }
@@ -91,6 +117,10 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     if (toCycle != null && !this.toCycleId.equals(toCycle.getId())) {
       throw new IllegalArgumentException("Target cycle evidence must match toCycleId");
     }
+    validateBoundaryEvidence(fromCycleBoundary, this.fromCycleId,
+        DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, "Source");
+    validateBoundaryEvidence(toCycleBoundary, this.toCycleId,
+        DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, "Target");
     if (this.fromCycleId.isEmpty()) {
       kind = Kind.ENTERING;
     } else if (this.toCycleId.isEmpty()) {
@@ -125,6 +155,16 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     return fromCycle != null;
   }
 
+  /** @return source cycle's outgoing boundary evidence, or {@code null} when outside or unavailable */
+  public DexpiConnectionCycleBoundaryInfo getFromCycleBoundary() {
+    return fromCycleBoundary;
+  }
+
+  /** @return whether complete source cycle-boundary evidence is available */
+  public boolean hasFromCycleBoundaryEvidence() {
+    return fromCycleBoundary != null;
+  }
+
   /** @return target directed-cycle identity, or empty when outside every cyclic group */
   public String getToCycleId() {
     return toCycleId;
@@ -143,6 +183,16 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
   /** @return whether complete target directed-cycle evidence is available */
   public boolean hasToCycleEvidence() {
     return toCycle != null;
+  }
+
+  /** @return target cycle's incoming boundary evidence, or {@code null} when outside or unavailable */
+  public DexpiConnectionCycleBoundaryInfo getToCycleBoundary() {
+    return toCycleBoundary;
+  }
+
+  /** @return whether complete target cycle-boundary evidence is available */
+  public boolean hasToCycleBoundaryEvidence() {
+    return toCycleBoundary != null;
   }
 
   /** @return transition classification relative to the cyclic groups */
@@ -172,13 +222,33 @@ public final class DexpiConnectionCycleTransitionInfo implements Serializable {
     result.put("toCycleId", toCycleId);
     result.put("hasFromCycleEvidence", Boolean.valueOf(hasFromCycleEvidence()));
     result.put("hasToCycleEvidence", Boolean.valueOf(hasToCycleEvidence()));
+    result.put("hasFromCycleBoundaryEvidence", Boolean.valueOf(hasFromCycleBoundaryEvidence()));
+    result.put("hasToCycleBoundaryEvidence", Boolean.valueOf(hasToCycleBoundaryEvidence()));
     result.put("kind", kind.name());
     result.put("fromCycle", fromCycle == null ? null : fromCycle.toMap());
     result.put("toCycle", toCycle == null ? null : toCycle.toMap());
+    result.put("fromCycleBoundary", fromCycleBoundary == null ? null : fromCycleBoundary.toMap());
+    result.put("toCycleBoundary", toCycleBoundary == null ? null : toCycleBoundary.toMap());
     result.put("connection", connection.toMap());
     result.put("fromEndpoint", fromEndpoint.toMap());
     result.put("toEndpoint", toEndpoint.toMap());
     return result;
+  }
+
+  private void validateBoundaryEvidence(DexpiConnectionCycleBoundaryInfo boundary, String cycleId,
+      DexpiConnectionCycleBoundaryInfo.Direction expectedDirection, String label) {
+    if (boundary == null) {
+      return;
+    }
+    if (cycleId.isEmpty()) {
+      throw new IllegalArgumentException(label + " boundary evidence requires a cycle identity");
+    }
+    if (!Objects.equals(connection.getId(), boundary.getConnectionId())) {
+      throw new IllegalArgumentException(label + " boundary evidence must match the connection identity");
+    }
+    if (boundary.getDirection() != expectedDirection) {
+      throw new IllegalArgumentException(label + " boundary evidence has the wrong direction");
+    }
   }
 
   private static String normalize(String value) {
