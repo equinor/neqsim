@@ -1,9 +1,9 @@
 # Process-local plugin execution contract qualification
 
-This evidence note qualifies the existing `runPlugin` software surface without
-changing its Phase 0 inventory status. A later, separate atomic promotion is
-required before `runPlugin` may move from `CONFIRMED_GAP` to
-`CONTRACT_TESTED`.
+This evidence note records the bounded `runPlugin` software contract established by
+merged qualification #3534. Inventory 1.30 atomically promotes `runPlugin` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED` without changing production behavior,
+public schemas, the canonical NeqSim model, or deployment policy.
 
 ## Qualified behavior
 
@@ -44,9 +44,11 @@ fresh server and verifies empty-catalog discovery, default-list behavior,
 absent and empty plugin names, unknown actions, malformed input, standard
 envelopes, and real STDIO transport.
 
-Inventory `1.29 / 20 explicit + 29 contract-tested + 22 confirmed gaps`
-remains unchanged. This qualification supplies evidence for a future bounded
-promotion; it does not perform that promotion.
+Inventory `1.30 / 20 explicit + 30 contract-tested + 21 confirmed gaps`
+records the promotion together with the machine-readable coverage record, Java
+assertions, focused packaged-MCP accounting, and comprehensive protocol accounting.
+Coverage remains incomplete and `scientificValidationComplete=false`; this is a
+bounded software-contract classification, not a scientific benchmark claim.
 
 ## Security and engineering boundary
 
