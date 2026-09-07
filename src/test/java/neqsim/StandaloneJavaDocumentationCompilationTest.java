@@ -34,11 +34,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 public class StandaloneJavaDocumentationCompilationTest {
   private static final int EXPECTED_EXAMPLE_COUNT = 14;
-  private static final List<String> LOG4J2_EXAMPLES =
-      Arrays.asList(
-          "EclipseE300ExportImportExample.java",
-          "FlowRegimeDebug.java",
-          "FlowRegimeDetectionExample.java");
+  private static final List<String> LOG4J2_EXAMPLES = Arrays.asList("EclipseE300ExportImportExample.java",
+      "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java");
 
   @TempDir
   Path compilationOutput;
@@ -46,8 +43,7 @@ public class StandaloneJavaDocumentationCompilationTest {
   /** Verifies that modernized standalone examples use the repository logging policy. */
   @Test
   void testModernizedStandaloneExamplesUseLog4j2() throws IOException {
-    Path examplesDirectory =
-        Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
+    Path examplesDirectory = Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
 
     for (String example : LOG4J2_EXAMPLES) {
       Path sourceFile = examplesDirectory.resolve(example);
@@ -56,8 +52,7 @@ public class StandaloneJavaDocumentationCompilationTest {
 
       assertFalse(source.contains("System.out"), example + " must not write to System.out");
       assertFalse(source.contains("System.err"), example + " must not write to System.err");
-      assertFalse(source.contains("printStackTrace"),
-          example + " must preserve exception context through Log4j2");
+      assertFalse(source.contains("printStackTrace"), example + " must preserve exception context through Log4j2");
       assertTrue(source.contains("LogManager.getLogger(" + className + ".class)"),
           example + " must declare a class-scoped Log4j2 logger");
     }
