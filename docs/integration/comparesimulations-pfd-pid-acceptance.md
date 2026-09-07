@@ -32,13 +32,28 @@ incomplete or the canonical source-graph fingerprints differ.
 
 Each sub-delivery contains controlled document JSON, native SVG sheet(s), a
 native PDF drawing set, native DEXPI 2.0 Process XML, and a delivery manifest.
-The bundle manifest labels the PFD exchange as `DEXPI_2_0_PROCESS`. For the
-P&ID proposal, the same exchange is labelled
-`PROCESS_PFD_BFD_COMPANION_ONLY`: it is not a DEXPI Plant or Proteus P&ID
-exchange.
+The bundle manifest labels the PFD exchange as `DEXPI_2_0_PROCESS`. The P&ID
+child-delivery exchange remains labelled `PROCESS_PFD_BFD_COMPANION_ONLY`.
+When an executed operating case and explicit balance-boundary declarations are
+supplied, the coordinated bundle additionally publishes:
+
+- `stream-table.json`, containing governed temperature, pressure, mass-flow,
+  and specific-enthalpy values with units, bases, provenance, and diagnostics;
+- `balance-table.json`, containing declared inlet/outlet assignments and
+  calculated mass/energy closure evidence;
+- `pid/dexpi-plant-2.0.xml` plus its native Plant-profile assessment; and
+- `pid/proteus-4.1.xml`, explicitly labelled as a compatibility proposal.
+
+Boundary declarations resolve exact canonical source labels and fail closed for
+missing, duplicate, or invalid operating evidence. The compatibility writer's
+volatile export date/time is normalized to the documented
+`1970-01-01T00:00:00` reproducibility sentinel; it is not an engineering
+revision timestamp. The controlled revision remains in the manifests.
 
 The facade is intentionally opt-in. Existing Graphviz, native DEXPI Process and
-Plant, Proteus, simulation, and document APIs are unchanged.
+Plant, Proteus, simulation, and document APIs are unchanged. Supplying an
+operating-case identity opts into the companion package and therefore requires
+at least one explicit balance boundary.
 
 ## Requirement and evidence matrix
 
@@ -48,8 +63,8 @@ Plant, Proteus, simulation, and document APIs are unchanged.
 | Reviewable vector and PDF sheets | Existing native SVG/PDF renderer, A3 default, fixed-port orthogonal routing | Existing renderer tests plus bundle artifact checks | Full-sheet and detail inspection of every new reference sheet |
 | Stable regeneration | Deterministic child and bundle manifests | Fresh-model repeated-delivery test | Normalized reference baselines for the full model |
 | Native PFD exchange | Native DEXPI 2.0 Process artifact | Existing delivery assessment and bundle labels | Full-model topology/loss evidence |
-| P&ID exchange identity | Fail-closed companion-only label | Manifest assertion | Add and qualify a separately labelled Plant/Proteus proposal artifact |
-| Stream and H&MB companions | Existing governed stream and balance models | Existing focused tests | Publish full-model companions and boundary assignments |
+| P&ID exchange identity | Companion-only child label plus separate native DEXPI 2.0 Plant and Proteus 4.1 proposal artifacts | Plant assessment, profile labels, artifact and deterministic-regeneration assertions | Qualify the full-model proposal and external interoperability |
+| Stream and H&MB companions | Opt-in governed stream/balance artifacts with exact boundary resolution | Valid, missing-case, unknown-boundary, and repeated-delivery tests | Publish and qualify full-model operating values and boundary assignments |
 | Piping and instrumentation content | Existing governed proposal, Proteus writer, and detailed DEXPI paths | Existing DEXPI/P&ID tests | Bind explicit line/nozzle/valve/reducer/instrument/control/interface registers to this model |
 | Manual layout and routing | Existing evidence-bearing layout register | Existing layout and renderer tests | Declare full-model sheets, pins, protected routes, and stale-reference regeneration |
 | Standards alignment | Explicit scope and no-conformance boundary | Manifest flags and documentation checks | Licensed clause mapping and accountable review |
