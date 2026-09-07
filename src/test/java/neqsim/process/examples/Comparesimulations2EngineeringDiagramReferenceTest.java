@@ -24,12 +24,10 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
     ProcessSystem firstProcess = Comparesimulations2EngineeringDiagramReference.createExecutedProcess();
 
     assertTrue(firstProcess.getUnitOperations().size() >= 39);
-    assertFalse(firstProcess.getUnitOperations().stream()
-        .anyMatch(unit -> "24-VB-01".equals(unit.getName())));
+    assertFalse(firstProcess.getUnitOperations().stream().anyMatch(unit -> "24-VB-01".equals(unit.getName())));
 
-    EngineeringDiagramDualProfileDelivery.Report first =
-        Comparesimulations2EngineeringDiagramReference.deliver(
-            firstProcess, temporaryDirectory.resolve("first"));
+    EngineeringDiagramDualProfileDelivery.Report first = Comparesimulations2EngineeringDiagramReference
+        .deliver(firstProcess, temporaryDirectory.resolve("first"));
 
     assertTrue(first.isComplete(), first.toJson());
     assertEquals(first.getPfd().getDocumentSet().getSourceGraphFingerprint(),
@@ -46,15 +44,12 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
     assertTrue(first.toJson().contains("\"fitnessForConstruction\": false"));
 
     ProcessSystem secondProcess = Comparesimulations2EngineeringDiagramReference.createExecutedProcess();
-    EngineeringDiagramDualProfileDelivery.Report second =
-        Comparesimulations2EngineeringDiagramReference.deliver(
-            secondProcess, temporaryDirectory.resolve("second"));
+    EngineeringDiagramDualProfileDelivery.Report second = Comparesimulations2EngineeringDiagramReference
+        .deliver(secondProcess, temporaryDirectory.resolve("second"));
 
     assertEquals(first.getFingerprint(), second.getFingerprint());
-    assertEquals(first.getPfd().getRendering().getSvgBySheetId(),
-        second.getPfd().getRendering().getSvgBySheetId());
-    assertEquals(first.getPid().getRendering().getSvgBySheetId(),
-        second.getPid().getRendering().getSvgBySheetId());
+    assertEquals(first.getPfd().getRendering().getSvgBySheetId(), second.getPfd().getRendering().getSvgBySheetId());
+    assertEquals(first.getPid().getRendering().getSvgBySheetId(), second.getPid().getRendering().getSvgBySheetId());
     assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("pfd/drawing-set.pdf")),
         Files.readAllBytes(second.getDirectory().resolve("pfd/drawing-set.pdf")));
     assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("pid/drawing-set.pdf")),
