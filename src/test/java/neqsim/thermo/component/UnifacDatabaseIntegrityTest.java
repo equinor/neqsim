@@ -66,6 +66,10 @@ public class UnifacDatabaseIntegrityTest {
   /** Tolerance on the molar mass implied by a group assignment, in g/mol. */
   private static final double MASS_TOLERANCE = 0.05;
 
+  /** Component types that have no group decomposition and so need no UNIFAC row. */
+  private static final Set<String> NON_MOLECULAR_TYPES = Collections
+      .unmodifiableSet(new TreeSet<String>(Arrays.asList("ion", "ice", "seawater", "salt", "asphaltene")));
+
   /** Aliphatic subgroups CH3, CH2, CH and C. */
   private static final List<String> ALIPHATIC_SUBGROUPS = Collections
       .unmodifiableList(Arrays.asList("1", "2", "3", "4"));
@@ -180,8 +184,16 @@ public class UnifacDatabaseIntegrityTest {
 
     Map<String, Double> masses = buildMasses();
     Map<String, Double> componentMass = new HashMap<String, Double>();
+    Set<String> groupDecomposable = new TreeSet<String>();
     for (Map<String, String> row : readTable(COMPONENT_RESOURCE)) {
-      componentMass.put(row.get("NAME").trim(), Double.parseDouble(row.get("MOLARMASS")));
+      String componentName = row.get("NAME").trim();
+      componentMass.put(componentName, Double.parseDouble(row.get("MOLARMASS")));
+      String componentType = row.get("COMPTYPE") == null ? "" : row.get("COMPTYPE").trim();
+      // Ions, ice, seawater and the pseudo-component placeholder have no group
+      // decomposition, so their absence from the UNIFAC tables is correct rather than a gap.
+      if (!NON_MOLECULAR_TYPES.contains(componentType) && !"default".equals(componentName)) {
+        groupDecomposable.add(componentName);
+      }
     }
 
     for (String resource : COMPONENT_TABLES) {
@@ -197,6 +209,15 @@ public class UnifacDatabaseIntegrityTest {
       for (Map.Entry<String, Integer> entry : seen.entrySet()) {
         if (entry.getValue().intValue() > 1) {
           findings.add("duplicate_component\t" + table + "/" + entry.getKey());
+        }
+      }
+
+      // A component that can be decomposed into groups but has no row here cannot be used
+      // with this activity model at all. Recording each one keeps the gap visible and, because
+      // the baseline may only shrink, stops it growing.
+      for (String componentName : groupDecomposable) {
+        if (!seen.containsKey(componentName)) {
+          findings.add("missing_unifac_row\t" + table + "/" + componentName);
         }
       }
 
