@@ -435,6 +435,9 @@ class DesignCapacityConfigurationTest {
   }
 
   private static Map<String, Object> properties(Object... pairs) {
+    if ((pairs.length & 1) != 0) {
+      throw new IllegalArgumentException("Capacity properties require key/value pairs");
+    }
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
     for (int index = 0; index < pairs.length; index += 2) {
       properties.put((String) pairs[index], pairs[index + 1]);
