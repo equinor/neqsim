@@ -236,19 +236,32 @@ It exposes deterministic complete coverage and bottleneck ladders without retain
 mutable process state. Existing installed-equipment and boundary evidence are adapted rather than
 recalculated or duplicated.
 
-This snapshot layer does not aggregate total power, coordinate a common shaft, compute separator or
-piping physics, alter process solving, or accept an optimizer proposal. Those operations remain later
-increments and must provide qualified samples after a complete full-model solve.
+`PlantSharedResourceEvidence` now supplies participant-complete maximum-budget evidence for
+`ProcessSystem`/`ProcessModel` compressor-and-pump shaft power and solved `EnergyBus` requested
+electrical demand. Its aggregate is cross-checked against the existing authoritative total; units,
+basis and conversions remain explicit. Missing, extra, stale, non-finite, unconverged, or ambiguous
+load evidence fails closed. It produces the common snapshot sample without retaining live process
+state.
+
+The maintained 27-unit M fixture qualifies a controlled transition from equipment-local compressor
+power at a 120% total budget to the shared total-shaft-power constraint at a 95% budget, then verifies
+the restored line-up reproduces the cold total power. The same tests exercise an ordered 180-
+participant/six-area evidence ledger with 2 s capture, 64 MB used-heap growth, 500 kB Java
+serialization, and 1 MB JSON budgets. This is evidence-path scale qualification, not the still-open
+full L process-model acceptance fixture or a generic execution speedup claim.
+
+This layer does not coordinate a common shaft, compute separator or piping physics, alter process
+solving, or accept an optimizer proposal. Those operations remain later increments and must provide
+qualified samples after a complete full-model solve.
 
 ## Next dependency-ready increments
 
-1. Add first-class total-power/shared-utility evidence, using the complete immutable utilization
-   snapshot without adding execution-layer scheduling or caching.
-2. Add a common-shaft compressor-train
+1. Add a common-shaft compressor-train
    resource constraint.
-3. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
+2. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
    and solver orchestration.
-4. Expose the stable result through Java JSON and Python/JPype, then execute M, L, C, B, and R as
+3. Execute the full L fixture, then expose the stable evaluator result through current Java and
+   Python workflows and execute C, B, and R as
    maintained workflows.
 
 Until those increments are merged and measured, this page is the authoritative baseline contract,
