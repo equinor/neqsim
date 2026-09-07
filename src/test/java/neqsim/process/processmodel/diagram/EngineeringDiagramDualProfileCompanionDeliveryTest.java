@@ -108,9 +108,6 @@ class EngineeringDiagramDualProfileCompanionDeliveryTest {
 
   private static EngineeringDiagramReferenceFixtures.SystemCase completeBoundaryCase() {
     EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
-    for (StreamInterface product : reference.getProducts()) {
-      reference.getProcessSystem().add(product);
-    }
     reference.getProcessSystem().run();
     return reference;
   }
