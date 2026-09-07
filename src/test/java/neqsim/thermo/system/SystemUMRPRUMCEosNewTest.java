@@ -242,10 +242,14 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
       assertTrue(false);
       throw new Exception(ex);
     }
-    assertEquals((testOps.get("cricondenbar")[0] - 273.15), -11.09948347, 0.02);
-    assertEquals(testOps.get("cricondenbar")[1], 104.75329137038476, 0.02);
+    // The cricondenbar moved from -11.0995 C and 104.7533 bara when the naphthenes in this fluid
+    // were given the UMR-PRU cyclic groups. Previously c-hexane used cCH2 while c-C7 and c-C8 were
+    // assigned plain CH2, so two of the three rings were modelled as linear chains and drew on the
+    // wrong row of the interaction matrix.
+    assertEquals((testOps.get("cricondenbar")[0] - 273.15), -11.492052658160333, 0.02);
+    assertEquals(testOps.get("cricondenbar")[1], 104.69878072485776, 0.02);
 
-    testSystem.setTemperature(-11.0994834, "C");
+    testSystem.setTemperature(-11.492052658160333, "C");
     testSystem.setPressure(10);
     SaturationPressure satPresSim = new SaturationPressure(testSystem);
     satPresSim.run();

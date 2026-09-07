@@ -46,6 +46,12 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   public PhaseGEUnifac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
     super(phase, alpha, Dij, mixRule, intparam);
+    if (!this.getClass().equals(PhaseGEUnifac.class)) {
+      // PSRK and UMR-PRU rebuild componentArray from their own group table straight after this
+      // constructor returns. Building the classic components here would discard them again while
+      // forcing every component to also carry a row in UNIFACcomp.csv.
+      return;
+    }
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGEUnifac(phase.getComponent(i).getName(),

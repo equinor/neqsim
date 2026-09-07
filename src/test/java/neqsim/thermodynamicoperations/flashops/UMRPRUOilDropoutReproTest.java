@@ -57,10 +57,13 @@ class UMRPRUOilDropoutReproTest {
    */
   @Test
   void traceOilDropoutMatchesReference() {
-    assertEquals(9.144142e-04, oilBeta(flash(8.0, REFERENCE_PRESSURE_BARA, true)), 5.0e-6, "oil dropout at 8 C");
-    assertEquals(3.502455e-04, oilBeta(flash(REFERENCE_TEMPERATURE_C, REFERENCE_PRESSURE_BARA, true)), 5.0e-6,
+    // Re-based when c-hexane, c-C7 and c-C8 moved to the cyclic UNIFAC groups. Dropout falls by
+    // 3 to 4 percent across the range; the physics assertions in this class, material balance,
+    // fugacity equality and monotonicity, are unaffected.
+    assertEquals(8.910901e-04, oilBeta(flash(8.0, REFERENCE_PRESSURE_BARA, true)), 5.0e-6, "oil dropout at 8 C");
+    assertEquals(3.374951e-04, oilBeta(flash(REFERENCE_TEMPERATURE_C, REFERENCE_PRESSURE_BARA, true)), 5.0e-6,
         "oil dropout at 18 C");
-    assertEquals(2.582079e-04, oilBeta(flash(20.0, REFERENCE_PRESSURE_BARA, true)), 5.0e-6, "oil dropout at 20 C");
+    assertEquals(2.477208e-04, oilBeta(flash(20.0, REFERENCE_PRESSURE_BARA, true)), 5.0e-6, "oil dropout at 20 C");
   }
 
   /**
