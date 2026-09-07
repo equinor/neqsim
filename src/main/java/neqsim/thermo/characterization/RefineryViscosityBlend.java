@@ -126,16 +126,15 @@ public final class RefineryViscosityBlend implements Serializable {
       throw new IllegalArgumentException("Target viscosity must be bounded by the two source viscosities");
     }
 
-    double firstMassFraction =
-        (targetBlendNumber - secondBlendNumber) / (firstBlendNumber - secondBlendNumber);
+    double firstMassFraction = (targetBlendNumber - secondBlendNumber) / (firstBlendNumber - secondBlendNumber);
     if (!Double.isFinite(firstMassFraction) || firstMassFraction < 0.0 || firstMassFraction > 1.0) {
       throw new IllegalArgumentException("Calculated binary blend mass fraction must be finite and bounded");
     }
     firstMassFraction = Math.max(0.0, Math.min(1.0, firstMassFraction));
     double secondMassFraction = 1.0 - firstMassFraction;
 
-    return fromMassBasis(new double[] {firstMassFraction, secondMassFraction},
-        new double[] {firstSourceKinematicViscosityCSt, secondSourceKinematicViscosityCSt}, temperatureCelsius);
+    return fromMassBasis(new double[] { firstMassFraction, secondMassFraction },
+        new double[] { firstSourceKinematicViscosityCSt, secondSourceKinematicViscosityCSt }, temperatureCelsius);
   }
 
   /**
