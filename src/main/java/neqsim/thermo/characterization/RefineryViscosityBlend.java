@@ -92,6 +92,53 @@ public final class RefineryViscosityBlend implements Serializable {
   }
 
   /**
+   * Plan the unique mass-basis binary blend that reaches a target kinematic viscosity.
+   *
+   * <p>
+   * The two source viscosities and target must be resolved at the supplied common temperature. The target must lie
+   * inside the closed interval formed by the source viscosities. Equal-viscosity sources are rejected because their
+   * mass ratio is not uniquely determined.
+   * </p>
+   *
+   * @param firstSourceKinematicViscosityCSt first source kinematic viscosity in cSt
+   * @param secondSourceKinematicViscosityCSt second source kinematic viscosity in cSt
+   * @param targetKinematicViscosityCSt target blend kinematic viscosity in cSt
+   * @param temperatureCelsius common source and target viscosity temperature in degrees Celsius
+   * @return immutable binary blend result with source-order mass fractions
+   * @throws IllegalArgumentException for invalid viscosities, temperature, target interval, or non-unique sources
+   */
+  public static RefineryViscosityBlend fromBinaryTargetKinematicViscosity(double firstSourceKinematicViscosityCSt,
+      double secondSourceKinematicViscosityCSt, double targetKinematicViscosityCSt, double temperatureCelsius) {
+    if (!Double.isFinite(temperatureCelsius)) {
+      throw new IllegalArgumentException("Common viscosity temperature must be finite");
+    }
+
+    double firstBlendNumber = calculateViscosityBlendingNumber(firstSourceKinematicViscosityCSt);
+    double secondBlendNumber = calculateViscosityBlendingNumber(secondSourceKinematicViscosityCSt);
+    double targetBlendNumber = calculateViscosityBlendingNumber(targetKinematicViscosityCSt);
+    if (firstBlendNumber == secondBlendNumber) {
+      throw new IllegalArgumentException("Distinct source viscosities are required for a unique binary blend ratio");
+    }
+
+    double minimumSourceBlendNumber = Math.min(firstBlendNumber, secondBlendNumber);
+    double maximumSourceBlendNumber = Math.max(firstBlendNumber, secondBlendNumber);
+    if (targetBlendNumber < minimumSourceBlendNumber || targetBlendNumber > maximumSourceBlendNumber) {
+      throw new IllegalArgumentException("Target viscosity must be bounded by the two source viscosities");
+    }
+
+    double firstMassFraction =
+        (targetBlendNumber - secondBlendNumber) / (firstBlendNumber - secondBlendNumber);
+    if (!Double.isFinite(firstMassFraction) || firstMassFraction < 0.0 || firstMassFraction > 1.0) {
+      throw new IllegalArgumentException("Calculated binary blend mass fraction must be finite and bounded");
+    }
+    firstMassFraction = Math.max(0.0, Math.min(1.0, firstMassFraction));
+    double secondMassFraction = 1.0 - firstMassFraction;
+
+    return fromMassBasis(new double[] {firstMassFraction, secondMassFraction},
+        new double[] {firstSourceKinematicViscosityCSt, secondSourceKinematicViscosityCSt}, temperatureCelsius);
+  }
+
+  /**
    * Transform kinematic viscosity to the published Refutas viscosity blending number.
    *
    * @param kinematicViscosityCSt finite kinematic viscosity greater than 0.2 cSt
