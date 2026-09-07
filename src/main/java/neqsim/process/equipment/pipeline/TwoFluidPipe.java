@@ -806,6 +806,12 @@ public class TwoFluidPipe extends Pipeline {
   /** True when the last steady-state refinement loop met its tolerance. */
   private boolean ssConverged = false;
 
+  /** Detailed outcome of the most recent steady-state initialization. */
+  private SteadyStateConvergenceReport steadyStateConvergenceReport = new SteadyStateConvergenceReport(
+      SteadyStateConvergenceReport.TerminationReason.NOT_RUN, 0, 1.0e-4, Double.POSITIVE_INFINITY,
+      Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
+      Double.POSITIVE_INFINITY);
+
   /** Current step count. */
   private int currentStep = 0;
 
@@ -1355,6 +1361,10 @@ public class TwoFluidPipe extends Pipeline {
     ssConverged = false;
     ssPressureFloorLimited = false;
     ssIterationsUsed = 0;
+    steadyStateConvergenceReport = new SteadyStateConvergenceReport(
+        SteadyStateConvergenceReport.TerminationReason.NOT_RUN, 0, tolerance, Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY);
     transientOutletBackflowClamped = false;
     equations.clearOutletBackflowClamped();
 
@@ -1449,8 +1459,14 @@ public class TwoFluidPipe extends Pipeline {
     // accumulated profile is still far from the solution. The total pressure drop is tracked
     // as well, which is mesh-independent and is the quantity the caller actually reads.
     double previousTotalDrop = Double.NaN;
+    double pressureMomentumResidual = Double.POSITIVE_INFINITY;
+    double pressureUpdateResidual = Double.POSITIVE_INFINITY;
+    double liquidHoldupResidual = Double.POSITIVE_INFINITY;
+    double liquidSplitResidual = Double.POSITIVE_INFINITY;
+    double thermodynamicResidual = Double.POSITIVE_INFINITY;
+    double pressureDropResidual = Double.POSITIVE_INFINITY;
     for (int iter = 0; iter < maxIter; iter++) {
-      ssIterationsUsed = iter;
+      ssIterationsUsed = iter + 1;
       // Wall-clock time guard
       long elapsed = System.currentTimeMillis() - startWallClock;
       if (elapsed > (long) (ssMaxWallClockTime * 1000)) {
@@ -1459,7 +1475,9 @@ public class TwoFluidPipe extends Pipeline {
         break;
       }
 
-      double maxChange = 0;
+      pressureUpdateResidual = 0.0;
+      liquidHoldupResidual = 0.0;
+      liquidSplitResidual = 0.0;
       double pressureResidualSum = 0.0;
 
       // Under-relaxation: ramp from 0.3 up to ssUnderRelaxation across first 20 iterations
@@ -1476,6 +1494,8 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection inletSec = sections[0];
         double localMDotG = localMDotGas[0];
         double localMDotL = localMDotLiq[0];
+        double inletLiquidHoldupBefore = inletSec.getLiquidHoldup();
+        double inletWaterHoldupBefore = inletSec.getWaterHoldup();
 
         // Calculate inlet holdup using momentum balance (pass null for prev to indicate inlet)
         double[] inletHoldups = calculateLocalHoldup(inletSec, null, localMDotG, localMDotL, area);
@@ -1484,6 +1504,7 @@ public class TwoFluidPipe extends Pipeline {
 
         inletSec.setLiquidHoldup(alphaL_inlet);
         inletSec.setGasHoldup(alphaG_inlet);
+        liquidHoldupResidual = Math.max(liquidHoldupResidual, Math.abs(alphaL_inlet - inletLiquidHoldupBefore));
 
         // Update inlet velocities
         inletSec.setGasVelocity(
@@ -1494,6 +1515,8 @@ public class TwoFluidPipe extends Pipeline {
         // Update water/oil holdups for inlet if three-phase
         if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0 && alphaL_inlet > 0.0) {
           updateLiquidPhaseSplit(inletSec, null, alphaL_inlet, area);
+          liquidSplitResidual = Math.max(liquidSplitResidual,
+              Math.abs(inletSec.getWaterHoldup() - inletWaterHoldupBefore));
         }
 
         inletSec.updateDerivedQuantities();
@@ -1512,7 +1535,7 @@ public class TwoFluidPipe extends Pipeline {
         // Under-relaxed pressure update
         double P_new = sec.getPressure() + omega * (P_calc - sec.getPressure());
         double change = Math.abs(P_new - sec.getPressure()) / Math.max(sec.getPressure(), 1e5);
-        maxChange = Math.max(maxChange, change);
+        pressureUpdateResidual = Math.max(pressureUpdateResidual, change);
 
         sec.setPressure(P_new);
 
@@ -1530,7 +1553,7 @@ public class TwoFluidPipe extends Pipeline {
 
         // Track holdup change for convergence
         double holdupChange = Math.abs(alphaL_new - sec.getLiquidHoldup());
-        maxChange = Math.max(maxChange, holdupChange);
+        liquidHoldupResidual = Math.max(liquidHoldupResidual, holdupChange);
 
         // Apply new holdups
         sec.setLiquidHoldup(alphaL_new);
@@ -1557,7 +1580,7 @@ public class TwoFluidPipe extends Pipeline {
 
           // The liquid split is a solved variable. Leaving it out of the residual lets the solver
           // report convergence while oil and water are still redistributing.
-          maxChange = Math.max(maxChange, Math.abs(sec.getWaterHoldup() - waterHoldupBefore));
+          liquidSplitResidual = Math.max(liquidSplitResidual, Math.abs(sec.getWaterHoldup() - waterHoldupBefore));
         }
 
         // Update derived quantities
@@ -1569,7 +1592,7 @@ public class TwoFluidPipe extends Pipeline {
       // explicit pressure boundary inside the iteration, before both the thermal sweep and flash;
       // translating the finished profile would leave its properties at a different pressure.
       if (explicitPressureBoundary) {
-        maxChange = Math.max(maxChange, applySteadyStatePressureBoundary());
+        pressureUpdateResidual = Math.max(pressureUpdateResidual, applySteadyStatePressureBoundary());
         P_inlet = sections[0].getPressure();
       }
 
@@ -1586,6 +1609,7 @@ public class TwoFluidPipe extends Pipeline {
       // because properties change slowly with small pressure changes between iterations.
       boolean thermodynamicsRefreshed = false;
       boolean thermodynamicsEvaluated = referenceFluid == null;
+      double iterationThermodynamicResidual = referenceFluid == null ? 0.0 : Double.POSITIVE_INFINITY;
       if (referenceFluid != null && (iter % ssFlashInterval == 0)) {
         thermodynamicsEvaluated = true;
         double[][] propertiesBefore = new double[numberOfSections][7];
@@ -1622,6 +1646,8 @@ public class TwoFluidPipe extends Pipeline {
           maxPropertyChange = Math.max(maxPropertyChange,
               Math.abs(localMDotGas[i] - propertiesBefore[i][4]) / Math.max(Math.abs(massFlow), 1.0e-12));
         }
+        iterationThermodynamicResidual = maxPropertyChange;
+        thermodynamicResidual = maxPropertyChange;
         thermodynamicsRefreshed = maxPropertyChange > tolerance;
       }
 
@@ -1651,9 +1677,10 @@ public class TwoFluidPipe extends Pipeline {
       for (TwoFluidSection section : sections) {
         liquidSplitCouplingMatters |= section.getOilHoldup() > 0.0 && section.getWaterHoldup() > 0.0;
       }
-      double dropChange = Double.isNaN(previousTotalDrop) ? Double.POSITIVE_INFINITY
+      pressureDropResidual = Double.isNaN(previousTotalDrop) ? Double.POSITIVE_INFINITY
           : Math.abs(totalDrop - previousTotalDrop) / Math.max(Math.abs(totalDrop), 1.0e3);
       previousTotalDrop = totalDrop;
+      pressureMomentumResidual = pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3);
 
       // The flash runs only every ssFlashInterval sweeps, and thermodynamicsRefreshed starts false, so on a
       // non-flash sweep it reports "the flash moved nothing" when in truth no flash was performed. Convergence
@@ -1661,17 +1688,19 @@ public class TwoFluidPipe extends Pipeline {
       // iteration 1 that returned a pressure drop several per cent away from the settled value. Require a sweep
       // in which the thermodynamics was actually evaluated and found stationary.
       boolean profileSettled = !densityCouplingMatters
-          || (dropChange < tolerance && thermodynamicsEvaluated && !thermodynamicsRefreshed);
+          || (pressureDropResidual < tolerance && thermodynamicsEvaluated && !thermodynamicsRefreshed);
       if (explicitPressureBoundary || liquidSplitCouplingMatters) {
-        profileSettled &= thermodynamicsEvaluated && !thermodynamicsRefreshed && dropChange < tolerance;
+        profileSettled &= thermodynamicsEvaluated && !thermodynamicsRefreshed && pressureDropResidual < tolerance;
       }
       if (explicitPressureBoundary) {
         // A small relaxed update relative to absolute pressure can still accumulate a significant
         // error over many cells. Require the unrelaxed momentum residual of the whole pressure
         // profile to be small relative to its calculated drop, independently of the initial guess.
-        profileSettled &= pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3) < tolerance;
+        profileSettled &= pressureMomentumResidual < tolerance;
       }
-      if (maxChange < tolerance && profileSettled) {
+      boolean iterationSettled = pressureUpdateResidual < tolerance && liquidHoldupResidual < tolerance
+          && liquidSplitResidual < tolerance && iterationThermodynamicResidual < tolerance && profileSettled;
+      if (iterationSettled) {
         // A section resting on the pressure floor is a fixed point of the clamp, not of the
         // momentum balance: marchPressure keeps returning the floor, the under-relaxed update
         // stops moving, and the loop would otherwise report success on a profile the line
@@ -1683,10 +1712,25 @@ public class TwoFluidPipe extends Pipeline {
               + "inlet pressure, or increase the diameter.", MIN_SECTION_PRESSURE_PA / 1.0e5, iter);
           break;
         }
-        ssConverged = true;
-        logger.info("Steady-state converged after {} iterations ({}ms wall-clock)", iter,
-            System.currentTimeMillis() - startWallClock);
-        break;
+
+        // A sparse flash is followed by a mandatory unrelaxed holdup/split resweep. That resweep
+        // is part of the solved state, not post-processing: if it moves a variable beyond the
+        // tolerance, use the reconciled state as the next iterate instead of returning a false
+        // positive and handing a different state to the transient solver.
+        double[] finalConsistencyResiduals = reconcileSteadyThermodynamicsAndHoldup(massFlow, localMDotGas,
+            localMDotLiq, area);
+        thermodynamicResidual = finalConsistencyResiduals[0];
+        liquidHoldupResidual = Math.max(liquidHoldupResidual, finalConsistencyResiduals[1]);
+        liquidSplitResidual = Math.max(liquidSplitResidual, finalConsistencyResiduals[2]);
+        pressureMomentumResidual = calculateSteadyPressureMomentumResidual();
+        boolean finalConsistencySettled = thermodynamicResidual < tolerance && liquidHoldupResidual < tolerance
+            && liquidSplitResidual < tolerance && pressureMomentumResidual < tolerance;
+        if (finalConsistencySettled) {
+          ssConverged = true;
+          logger.info("Steady-state converged after {} iterations ({}ms wall-clock)", ssIterationsUsed,
+              System.currentTimeMillis() - startWallClock);
+          break;
+        }
       }
     }
 
@@ -1701,31 +1745,30 @@ public class TwoFluidPipe extends Pipeline {
           + "or reduce setSteadyStateUnderRelaxation(...).", maxIter, numberOfSections);
     }
 
-    // ===== Final consistency pass: flash + holdup recalculation =====
-    // With sparse flash during iteration, the final state may not be fully consistent.
-    // Do one mandatory flash + holdup sweep to ensure thermodynamic consistency.
-    if (referenceFluid != null) {
-      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
-
-      // Re-sweep holdups using updated properties (densities changed by flash)
-      for (int i = 0; i < numberOfSections; i++) {
-        TwoFluidSection sec = sections[i];
-        TwoFluidSection prev = i > 0 ? sections[i - 1] : null;
-        double localMDotG = localMDotGas[i];
-        double localMDotL = localMDotLiq[i];
-
-        double[] hi = calculateLocalHoldup(sec, prev, localMDotG, localMDotL, area);
-        sec.setLiquidHoldup(hi[0]);
-        sec.setGasHoldup(hi[1]);
-        sec.setGasVelocity(calculateFinitePhaseVelocity(localMDotG, hi[1], sec.getGasDensity(), area, 100.0));
-        sec.setLiquidVelocity(calculateFinitePhaseVelocity(localMDotL, hi[0], sec.getLiquidDensity(), area, 50.0));
-        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && hi[0] > 0.0) {
-          updateLiquidPhaseSplit(sec, prev, hi[0], area);
-        }
-        sec.updateDerivedQuantities();
-        sec.updateStratifiedGeometry();
-      }
+    // Preserve a thermodynamically and hydraulically reconciled last iterate even on a limited
+    // solve, but keep its residuals visible and never promote it to convergence after the loop.
+    if (!ssConverged) {
+      double[] finalConsistencyResiduals = reconcileSteadyThermodynamicsAndHoldup(massFlow, localMDotGas, localMDotLiq,
+          area);
+      thermodynamicResidual = finalConsistencyResiduals[0];
+      liquidHoldupResidual = Math.max(liquidHoldupResidual, finalConsistencyResiduals[1]);
+      liquidSplitResidual = Math.max(liquidSplitResidual, finalConsistencyResiduals[2]);
+      pressureMomentumResidual = calculateSteadyPressureMomentumResidual();
     }
+
+    SteadyStateConvergenceReport.TerminationReason terminationReason;
+    if (ssConverged) {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.CONVERGED;
+    } else if (ssPressureFloorLimited) {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.PRESSURE_FLOOR_LIMIT;
+    } else if (ssWallClockLimited) {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.WALL_CLOCK_LIMIT;
+    } else {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.ITERATION_LIMIT;
+    }
+    steadyStateConvergenceReport = new SteadyStateConvergenceReport(terminationReason, ssIterationsUsed, tolerance,
+        pressureMomentumResidual, pressureUpdateResidual, liquidHoldupResidual, liquidSplitResidual,
+        thermodynamicResidual, pressureDropResidual);
 
     // Final accumulation zone identification after convergence
     if (enableTerrainTracking && accumulationTracker != null) {
@@ -1757,6 +1800,100 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store initial profiles
     updateResultArrays();
+  }
+
+  /**
+   * Reconcile the steady primitive profile with a mandatory thermodynamic update.
+   *
+   * @param massFlow total pipe mass flow in kg/s
+   * @param localMDotGas local gas mass-flow profile in kg/s
+   * @param localMDotLiq local liquid mass-flow profile in kg/s
+   * @param area internal pipe area in m2
+   * @return thermodynamic, total-liquid-holdup, and water-holdup residuals
+   */
+  private double[] reconcileSteadyThermodynamicsAndHoldup(double massFlow, double[] localMDotGas, double[] localMDotLiq,
+      double area) {
+    double thermodynamicResidual = 0.0;
+    if (referenceFluid != null) {
+      double[][] propertiesBefore = snapshotSteadyThermodynamicProperties(localMDotGas);
+      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+      thermodynamicResidual = calculateSteadyThermodynamicResidual(propertiesBefore, localMDotGas, massFlow);
+    }
+
+    double liquidHoldupResidual = 0.0;
+    double liquidSplitResidual = 0.0;
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      TwoFluidSection prev = i > 0 ? sections[i - 1] : null;
+      double liquidHoldupBefore = sec.getLiquidHoldup();
+      double waterHoldupBefore = sec.getWaterHoldup();
+      double[] holdups = calculateLocalHoldup(sec, prev, localMDotGas[i], localMDotLiq[i], area);
+      sec.setLiquidHoldup(holdups[0]);
+      sec.setGasHoldup(holdups[1]);
+      sec.setGasVelocity(calculateFinitePhaseVelocity(localMDotGas[i], holdups[1], sec.getGasDensity(), area, 100.0));
+      sec.setLiquidVelocity(
+          calculateFinitePhaseVelocity(localMDotLiq[i], holdups[0], sec.getLiquidDensity(), area, 50.0));
+      if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && holdups[0] > 0.0) {
+        updateLiquidPhaseSplit(sec, prev, holdups[0], area);
+      }
+      sec.updateDerivedQuantities();
+      sec.updateStratifiedGeometry();
+      liquidHoldupResidual = Math.max(liquidHoldupResidual, Math.abs(sec.getLiquidHoldup() - liquidHoldupBefore));
+      liquidSplitResidual = Math.max(liquidSplitResidual, Math.abs(sec.getWaterHoldup() - waterHoldupBefore));
+    }
+    return new double[] { thermodynamicResidual, liquidHoldupResidual, liquidSplitResidual };
+  }
+
+  /** Snapshot the properties that close the steady hydraulic equations. */
+  private double[][] snapshotSteadyThermodynamicProperties(double[] localMDotGas) {
+    double[][] properties = new double[numberOfSections][7];
+    for (int i = 0; i < numberOfSections; i++) {
+      properties[i][0] = sections[i].getGasDensity();
+      properties[i][1] = sections[i].getOilDensity();
+      properties[i][2] = sections[i].getWaterDensity();
+      properties[i][3] = sections[i].getInputWaterVolumeFraction();
+      properties[i][4] = localMDotGas[i];
+      properties[i][5] = sections[i].getLiquidViscosity();
+      properties[i][6] = sections[i].getSurfaceTension();
+    }
+    return properties;
+  }
+
+  /** Calculate the maximum normalized change in properties that close the steady equations. */
+  private double calculateSteadyThermodynamicResidual(double[][] propertiesBefore, double[] localMDotGas,
+      double massFlow) {
+    double maximumResidual = 0.0;
+    for (int i = 0; i < numberOfSections; i++) {
+      double[] densities = { sections[i].getGasDensity(), sections[i].getOilDensity(), sections[i].getWaterDensity() };
+      for (int phase = 0; phase < densities.length; phase++) {
+        if (densities[phase] > 0.0) {
+          maximumResidual = Math.max(maximumResidual,
+              Math.abs(densities[phase] - propertiesBefore[i][phase]) / densities[phase]);
+        }
+      }
+      double[] closureProperties = { sections[i].getLiquidViscosity(), sections[i].getSurfaceTension() };
+      for (int property = 0; property < closureProperties.length; property++) {
+        if (closureProperties[property] > 0.0) {
+          maximumResidual = Math.max(maximumResidual,
+              Math.abs(closureProperties[property] - propertiesBefore[i][5 + property]) / closureProperties[property]);
+        }
+      }
+      maximumResidual = Math.max(maximumResidual,
+          Math.abs(sections[i].getInputWaterVolumeFraction() - propertiesBefore[i][3]));
+      maximumResidual = Math.max(maximumResidual,
+          Math.abs(localMDotGas[i] - propertiesBefore[i][4]) / Math.max(Math.abs(massFlow), 1.0e-12));
+    }
+    return maximumResidual;
+  }
+
+  /** Calculate the accumulated discrete momentum residual of the returned pressure profile. */
+  private double calculateSteadyPressureMomentumResidual() {
+    double pressureResidualSum = 0.0;
+    for (int i = 1; i < numberOfSections; i++) {
+      pressureResidualSum += Math.abs(marchPressure(sections[i - 1]) - sections[i].getPressure());
+    }
+    double totalDrop = sections[0].getPressure() - sections[numberOfSections - 1].getPressure();
+    return pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3);
   }
 
   /**
@@ -8635,6 +8772,20 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSteadyStateConverged() {
     return ssConverged;
+  }
+
+  /**
+   * Get residuals and the termination reason from the latest steady-state initialization.
+   *
+   * <p>
+   * Unlike {@link #isSteadyStateConverged()}, this report identifies the variable that prevented convergence and
+   * distinguishes iteration, wall-clock, and pressure-floor limits. The returned value is immutable.
+   * </p>
+   *
+   * @return detailed steady-state convergence report, or a {@code NOT_RUN} report before the first solve
+   */
+  public SteadyStateConvergenceReport getSteadyStateConvergenceReport() {
+    return steadyStateConvergenceReport;
   }
 
   // ============ Minimum Slip Methods ============

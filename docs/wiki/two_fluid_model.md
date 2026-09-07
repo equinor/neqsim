@@ -1046,14 +1046,31 @@ double[] pressures = pipe.getPressureProfile();
 double[] holdups = pipe.getLiquidHoldupProfile();
 ```
 
-**Checking the outcome.** Three flags describe how the sweep ended, and a profile is only
-trustworthy when the first is true:
+**Checking the outcome.** The legacy flags describe the common failure modes, while
+`getSteadyStateConvergenceReport()` exposes the termination reason and the solved residuals. A
+profile is only trustworthy when the report is converged:
 
 | Query | Meaning when true |
 |-------|-------------------|
 | `isSteadyStateConverged()` | The sweep met the 1e-4 tolerance and the profile is a solution |
 | `isSteadyStateWallClockLimited()` | The wall-clock guard (default 300 s) stopped it early |
 | `isSteadyStatePressureFloorLimited()` | One or more sections rest on the internal 1 bara pressure floor |
+
+`SteadyStateConvergenceReport` distinguishes `CONVERGED`, `ITERATION_LIMIT`,
+`WALL_CLOCK_LIMIT`, `PRESSURE_FLOOR_LIMIT`, and the pre-run `NOT_RUN` state. It reports the
+dimensionless pressure-momentum, pressure-update, total-liquid-holdup, oil/water-split,
+thermodynamic-property, and total-pressure-drop residuals against `getTolerance()`. Convergence
+includes the mandatory final flash and unrelaxed holdup/split resweep, so that pass cannot silently
+change the state after the convergence flag has been set.
+
+```java
+SteadyStateConvergenceReport report = pipe.getSteadyStateConvergenceReport();
+if (!report.isConverged()) {
+  throw new IllegalStateException("Steady state stopped at "
+      + report.getTerminationReason() + "; liquid-split residual="
+      + report.getLiquidSplitResidual());
+}
+```
 
 The marching solver clamps section pressure at 1 bara so it stays numerically alive on a line with
 no deliverability. That clamp is a fixed point of itself: the per-section change falls below
@@ -1743,6 +1760,11 @@ measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
   did not converge. This long case has not been rerun for the pressure-boundary and split
   corrections described here; the compact regressions do not establish that it is resolved.
   Always check `isSteadyStateConverged()` on a water-bearing line.
+- The reproducible 3 km, 10-degree uphill gas/oil/water fixture converges on 30 and 60 cells with
+  positive oil-over-water slip, closed phase volumes and closed phase mass flow. Refinement changes
+  arrival pressure from 7.469114 bar to 7.429146 bar (0.538%) and mean liquid holdup from 0.274301
+  to 0.271630 (0.983%). This is numerical evidence for the compact synthetic fixture, not
+  experimental qualification or evidence for the unavailable 73.8 km input.
 - **Pressure drop does not always respond to a temperature change.** In an earlier revision, adding
   10 MW of heating raised the arrival temperature 22 K but left the computed pressure drop
   unchanged; warmer gas at fixed mass rate is less dense and ΔP ~ G²/ρ must rise. Treat pressure

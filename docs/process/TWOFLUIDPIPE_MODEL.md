@@ -1329,7 +1329,9 @@ pipe.setSteadyStateMaxWallClockTime(60.0); // Allow 60 seconds
 ### Always check the steady-state outcome
 
 `run()` does not throw when the steady state fails to settle, so the outcome has to be read back.
-Three independent flags describe it, and a profile is only trustworthy when the first is true:
+The legacy flags remain available, while `getSteadyStateConvergenceReport()` gives the termination
+reason and the residual that controlled the solve. A profile is only trustworthy when the report
+is converged:
 
 | Query | Meaning when true |
 |-------|-------------------|
@@ -1337,14 +1339,22 @@ Three independent flags describe it, and a profile is only trustworthy when the 
 | `isSteadyStateWallClockLimited()` | The wall-clock guard stopped the sweep early |
 | `isSteadyStatePressureFloorLimited()` | One or more sections rest on the internal 1 bara pressure floor |
 
+The immutable report distinguishes `CONVERGED`, `ITERATION_LIMIT`, `WALL_CLOCK_LIMIT`, and
+`PRESSURE_FLOOR_LIMIT` (or `NOT_RUN` before initialization). Its dimensionless residuals cover the
+accumulated discrete pressure-momentum mismatch, maximum relative pressure update, absolute
+total-liquid-holdup and water-holdup updates, maximum thermodynamic-property update, and relative
+total-pressure-drop update. Every applicable value must be below `getTolerance()` for convergence.
+The mandatory final flash and unrelaxed holdup/oil-water resweep are included in that decision; a
+post-flash state that moves beyond tolerance is refined again instead of being returned under a
+stale convergence flag.
+
 ```java
 pipe.run();
-if (!pipe.isSteadyStateConverged()) {
-  if (pipe.isSteadyStatePressureFloorLimited()) {
-    throw new IllegalStateException(
-        "The line cannot deliver this rate at this inlet pressure");
-  }
-  throw new IllegalStateException("Steady state did not converge");
+SteadyStateConvergenceReport steady = pipe.getSteadyStateConvergenceReport();
+if (!steady.isConverged()) {
+  throw new IllegalStateException("Steady state stopped at "
+      + steady.getTerminationReason() + "; liquid-split residual="
+      + steady.getLiquidSplitResidual());
 }
 ```
 
@@ -1576,6 +1586,11 @@ Remaining limitations:
   split did not converge; `isSteadyStateConverged()` was correctly false. That 73.8 km case has
   not been rerun for the pressure-boundary and oil/water-split corrections described here. Compact
   regression coverage does not resolve this historical case or qualify its reported pressure drop.
+- The reproducible 3 km, 10-degree uphill gas/oil/water fixture converges with positive
+  oil-over-water slip and closed phase volumes and mass flow on both 30 and 60 cells. Arrival
+  pressure changes from 7.469114 bar to 7.429146 bar (0.538% relative), while mean liquid holdup
+  changes from 0.274301 to 0.271630 (0.983%). These are numerical-refinement results for a synthetic
+  regression fixture, not experimental qualification or evidence for the unavailable 73.8 km case.
 - All observations are model-internal on one line.
 
 ### Implemented regression tests

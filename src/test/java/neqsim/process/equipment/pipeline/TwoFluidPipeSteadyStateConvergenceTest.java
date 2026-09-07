@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.SteadyStateConvergenceReport.TerminationReason;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -86,6 +87,18 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
     pipe.run();
 
     assertTrue(pipe.getSteadyStateIterationsUsed() <= 2, "The solver must respect the user-specified iteration limit");
+    SteadyStateConvergenceReport report = pipe.getSteadyStateConvergenceReport();
+    assertFalse(report.isConverged(), "Two refinement sweeps must not be promoted to convergence");
+    assertEquals(TerminationReason.ITERATION_LIMIT, report.getTerminationReason());
+    assertEquals(pipe.getSteadyStateIterationsUsed(), report.getIterations());
+    assertTrue(
+        report.getPressureMomentumResidual() >= report.getTolerance()
+            || report.getPressureUpdateResidual() >= report.getTolerance()
+            || report.getLiquidHoldupResidual() >= report.getTolerance()
+            || report.getLiquidSplitResidual() >= report.getTolerance()
+            || report.getThermodynamicResidual() >= report.getTolerance()
+            || report.getPressureDropResidual() >= report.getTolerance(),
+        "An iteration-limited solve must expose at least one residual above tolerance");
   }
 
   /** A horizontal line must reproduce a Darcy-Weisbach order-of-magnitude pressure drop. */
