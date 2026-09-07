@@ -55,7 +55,7 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(20, limitations.get("explicitCoverageRecordCount").getAsInt());
     assertEquals(31, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(20, limitations.get("confirmedGapToolCount").getAsInt());
-    assertEquals(30, limitations.getAsJsonArray("contractTestedTools").size());
+    assertEquals(31, limitations.getAsJsonArray("contractTestedTools").size());
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getCapabilities"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getSchema"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getExample"));
