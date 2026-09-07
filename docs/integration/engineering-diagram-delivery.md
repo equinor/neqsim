@@ -5,6 +5,9 @@ description: Fail-closed publication of assessed DEXPI, controlled semantic JSON
 
 # Engineering diagram delivery workflow
 
+For the coordinated dual-profile reference workflow and its source-fidelity, exchange-profile, and visual-acceptance
+boundaries, see [Separation/compression PFD and P&ID visual acceptance](comparesimulations-pfd-pid-acceptance.md).
+
 `EngineeringDiagramDelivery` is an opt-in Java facade for publishing the related engineering-diagram
 projections of one canonical NeqSim model as a single assessed delivery. It supports both a
 `ProcessSystem` and a multi-area `ProcessModel` without changing the existing DOT/Graphviz, Classic,
