@@ -146,6 +146,27 @@ molality. It retains the same constant-oxygen and unidentified-product boundary 
 screen. Within this first-order screening model, only cumulative exposure controls the final
 fraction; the ordered diagnostics do not introduce path-dependent chemistry.
 
+## Per-segment inventory evidence
+
+Each immutable `SegmentResult` also exposes inlet, outlet, and reacted total-sulfide molality
+for the lower-rate, nominal, and upper-rate paths. For each path `r` and segment `i`,
+
+$
+c_{r,i,\mathrm{out}} = c_0\exp(-E_{r,i,\mathrm{cumulative}}), \qquad
+c_{r,i,\mathrm{reacted}} = c_{r,i,\mathrm{in}}-c_{r,i,\mathrm{out}}.
+$
+
+The first inlet equals the supplied initial total-sulfide molality. Every later inlet is exactly
+the preceding segment outlet, so each segment closes as `inlet = outlet + reacted` and the
+reacted increments telescope to the trajectory's initial-minus-final inventory. A zero-duration
+segment has identical inlet and outlet and reports zero reaction. Splitting an unchanged segment
+preserves both final inventory and the sum of reacted increments.
+
+The lower-rate path retains the most total sulfide and reports the least reacted amount; the
+upper-rate path retains the least and reports the most. These values are analytical bookkeeping
+for total dissolved sulfide under the same constant-oxygen assumption. They do not define oxygen
+consumption, sulfur products, stoichiometric source terms, or a pipeline control-volume coupling.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a
