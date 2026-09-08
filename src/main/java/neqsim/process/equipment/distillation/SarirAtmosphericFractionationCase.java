@@ -12,16 +12,15 @@ import neqsim.thermo.system.SystemSrkEos;
  * Reusable, source-bounded atmospheric-fractionation case for the public Sarir refinery reference.
  *
  * <p>
- * The factory derives the published crude-feed rate, temperature, pressure, valve-tray count, and
- * top-counted feed-tray location from {@link SarirAtmosphericReference}. The source does not publish
- * per-cut density or molar-mass profiles, endpoint controls, or side-draw locations and fractions,
- * so callers must provide every one of those values explicitly.
+ * The factory derives the published crude-feed rate, temperature, pressure, valve-tray count, and top-counted feed-tray
+ * location from {@link SarirAtmosphericReference}. The source does not publish per-cut density or molar-mass profiles,
+ * endpoint controls, or side-draw locations and fractions, so callers must provide every one of those values
+ * explicitly.
  * </p>
  *
  * <p>
- * Steam, side strippers, pump-arounds, tray efficiencies, and published plant product rates are not
- * configured. The returned objects are an executable engineering case, not a reproduction or
- * calibration of the source plant.
+ * Steam, side strippers, pump-arounds, tray efficiencies, and published plant product rates are not configured. The
+ * returned objects are an executable engineering case, not a reproduction or calibration of the source plant.
  * </p>
  */
 public final class SarirAtmosphericFractionationCase {
@@ -49,8 +48,8 @@ public final class SarirAtmosphericFractionationCase {
    * Create an executable Sarir atmospheric-fractionation case.
    *
    * <p>
-   * Profile validation is delegated to {@link SarirAtmosphericAssay}, including the gates against
-   * the published whole-crude density and average molar mass. No column solve is performed.
+   * Profile validation is delegated to {@link SarirAtmosphericAssay}, including the gates against the published
+   * whole-crude density and average molar mass. No column solve is performed.
    * </p>
    *
    * @param name non-blank case name
@@ -75,12 +74,10 @@ public final class SarirAtmosphericFractionationCase {
       throw new IllegalStateException("Sarir source tray mapping no longer matches the qualified case");
     }
 
-    double feedTemperatureKelvin =
-        SarirAtmosphericReference.getColumnFeedTemperatureCelsius() + 273.15;
+    double feedTemperatureKelvin = SarirAtmosphericReference.getColumnFeedTemperatureCelsius() + 273.15;
     double feedPressureBara = SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0;
     SystemInterface crude = new SystemSrkEos(feedTemperatureKelvin, feedPressureBara);
-    OilAssayCharacterisation assay =
-        SarirAtmosphericAssay.create(crude, cutSpecificGravity, cutMolarMassKgPerMol);
+    OilAssayCharacterisation assay = SarirAtmosphericAssay.create(crude, cutSpecificGravity, cutMolarMassKgPerMol);
     assay.apply();
     crude.setMixingRule("classic");
 
@@ -90,18 +87,17 @@ public final class SarirAtmosphericFractionationCase {
     feed.setPressure(feedPressureBara, "bara");
     feed.run();
 
-    DistillationColumn configuredColumn =
-        new DistillationColumn(name + " column", SIMPLE_TRAY_COUNT, true, true);
+    DistillationColumn configuredColumn = new DistillationColumn(name + " column", SIMPLE_TRAY_COUNT, true, true);
     configuredColumn.addFeedStream(feed, FEED_INTERNAL_INDEX);
     configuredColumn.setTopPressure(operatingInputs.getTopPressureBara());
     configuredColumn.setBottomPressure(operatingInputs.getBottomPressureBara());
     configuredColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
     configuredColumn.getReboiler().setOutTemperature(operatingInputs.getReboilerTemperatureKelvin());
     configuredColumn.setCondenserRefluxRatio(operatingInputs.getCondenserRefluxRatio());
-    configuredColumn.setLiquidSideDrawFraction(
-        operatingInputs.getKeroseneSideDrawTray(), operatingInputs.getKeroseneSideDrawFraction());
-    configuredColumn.setLiquidSideDrawFraction(
-        operatingInputs.getDieselSideDrawTray(), operatingInputs.getDieselSideDrawFraction());
+    configuredColumn.setLiquidSideDrawFraction(operatingInputs.getKeroseneSideDrawTray(),
+        operatingInputs.getKeroseneSideDrawFraction());
+    configuredColumn.setLiquidSideDrawFraction(operatingInputs.getDieselSideDrawTray(),
+        operatingInputs.getDieselSideDrawFraction());
 
     configuredColumn.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
     configuredColumn.setRelaxationFactor(RELAXATION_FACTOR);
@@ -159,9 +155,9 @@ public final class SarirAtmosphericFractionationCase {
      * @throws IllegalArgumentException if a value is non-finite or outside its physical or
      *         topological domain
      */
-    public OperatingInputs(double topPressureBara, double bottomPressureBara,
-        double reboilerTemperatureKelvin, double condenserRefluxRatio, int keroseneSideDrawTray,
-        double keroseneSideDrawFraction, int dieselSideDrawTray, double dieselSideDrawFraction) {
+    public OperatingInputs(double topPressureBara, double bottomPressureBara, double reboilerTemperatureKelvin,
+        double condenserRefluxRatio, int keroseneSideDrawTray, double keroseneSideDrawFraction, int dieselSideDrawTray,
+        double dieselSideDrawFraction) {
       requireFinitePositive(topPressureBara, "Top pressure");
       requireFinitePositive(bottomPressureBara, "Bottom pressure");
       requireFinitePositive(reboilerTemperatureKelvin, "Reboiler temperature");
@@ -174,8 +170,7 @@ public final class SarirAtmosphericFractionationCase {
         throw new IllegalArgumentException("Top pressure must not exceed bottom pressure");
       }
       if (keroseneSideDrawTray <= dieselSideDrawTray) {
-        throw new IllegalArgumentException(
-            "Kerosene side-draw tray must be above the diesel side-draw tray");
+        throw new IllegalArgumentException("Kerosene side-draw tray must be above the diesel side-draw tray");
       }
 
       this.topPressureBara = topPressureBara;
@@ -248,8 +243,7 @@ public final class SarirAtmosphericFractionationCase {
 
     private static void requireSideDrawTray(int tray, String label) {
       if (tray <= 0 || tray > SIMPLE_TRAY_COUNT || tray == FEED_INTERNAL_INDEX) {
-        throw new IllegalArgumentException(
-            label + " must be a simple-tray index distinct from the feed tray");
+        throw new IllegalArgumentException(label + " must be a simple-tray index distinct from the feed tray");
       }
     }
   }
