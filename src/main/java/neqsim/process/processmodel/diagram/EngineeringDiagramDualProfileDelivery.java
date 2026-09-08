@@ -369,7 +369,8 @@ public final class EngineeringDiagramDualProfileDelivery {
         result.put("pidCompletenessReportFingerprint", pidCompletenessFingerprint);
         result.put("pidEngineeringRegistersFile", PID_REGISTERS_FILE);
         result.put("pidEngineeringRegistersFingerprint", sha256(pidEngineeringRegisters.toJson()));
-        result.put("pidProposalProjection", "SIDECARS_ONLY_NOT_MATERIALIZED_IN_DRAWINGS_OR_EXCHANGES");
+        result.put("pidProposalProjection",
+            "REVIEW_REQUIRED_SOURCE_LINKED_OVERLAY_IN_SVG_PDF_WITH_SIDECARS;EXCHANGES_UNCHANGED");
       }
       if (streamTable != null) {
         result.put("streamTable", streamTable.toMap());
@@ -407,9 +408,25 @@ public final class EngineeringDiagramDualProfileDelivery {
     Files.createDirectories(target);
     try {
       EngineeringDiagramDelivery.Report pfd = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pfd"),
-          deliveryRequest(request, ContentProfile.PFD, request.pfdDrawingNumber));
+          deliveryRequest(request, ContentProfile.PFD, request.pfdDrawingNumber, null));
+      EngineeringDiagramPidRegisters pidRegisters = null;
+      String pidModelJson = "";
+      String pidCompletenessJson = "";
+      if (request.includePidEngineeringRegisters) {
+        EngineeringProject project = NorsokOffshoreEngineeringBuilder.from(request.title, processSystem)
+            .projectId(request.plantId).registerProposedInstruments(false).build().setRevision(request.revision);
+        PidDesignModel pidModel = PidDesignSynthesizer.synthesize(project,
+            new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "00"), NorsokPidRuleCatalog.completeProposals());
+        pidModelJson = new GsonBuilder().setPrettyPrinting().create().toJson(pidModel.toMap());
+        pidCompletenessJson = PidCompletenessValidator.validate(pidModel).toJson();
+        pidRegisters = EngineeringDiagramPidRegisters.fromDocumentSet(pfd.getDocumentSet(), pidModel);
+      }
       EngineeringDiagramDelivery.Report pid = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pid"),
-          deliveryRequest(request, ContentProfile.PID, request.pidDrawingNumber));
+          deliveryRequest(request, ContentProfile.PID, request.pidDrawingNumber, pidRegisters));
+      if (pidRegisters != null && !pidRegisters.getSourceGraphFingerprint()
+          .equals(pid.getDocumentSet().getSourceGraphFingerprint())) {
+        throw new IOException("P&ID proposal overlay source graph differs from the rendered canonical plant");
+      }
       Path nativePidPath = target.resolve(PID_DEXPI_PLANT_FILE);
       Dexpi20ConformanceAssessment.Report pidPlantAssessment = Dexpi20XmlWriter.writeAndAssess(processSystem,
           nativePidPath.toFile());
@@ -438,17 +455,7 @@ public final class EngineeringDiagramDualProfileDelivery {
         Files.write(target.resolve(BALANCE_TABLE_FILE), balanceTable.toJson().getBytes(StandardCharsets.UTF_8));
       }
 
-      EngineeringDiagramPidRegisters pidRegisters = null;
-      String pidModelJson = "";
-      String pidCompletenessJson = "";
-      if (request.includePidEngineeringRegisters) {
-        EngineeringProject project = NorsokOffshoreEngineeringBuilder.from(request.title, processSystem)
-            .projectId(request.plantId).registerProposedInstruments(false).build().setRevision(request.revision);
-        PidDesignModel pidModel = PidDesignSynthesizer.synthesize(project,
-            new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "00"), NorsokPidRuleCatalog.completeProposals());
-        pidModelJson = new GsonBuilder().setPrettyPrinting().create().toJson(pidModel.toMap());
-        pidCompletenessJson = PidCompletenessValidator.validate(pidModel).toJson();
-        pidRegisters = EngineeringDiagramPidRegisters.fromDocumentSet(pid.getDocumentSet(), pidModel);
+      if (pidRegisters != null) {
         Files.write(target.resolve(PID_DESIGN_MODEL_FILE), pidModelJson.getBytes(StandardCharsets.UTF_8));
         Files.write(target.resolve(PID_COMPLETENESS_FILE), pidCompletenessJson.getBytes(StandardCharsets.UTF_8));
         Files.write(target.resolve(PID_REGISTERS_FILE), pidRegisters.toJson().getBytes(StandardCharsets.UTF_8));
@@ -512,7 +519,7 @@ public final class EngineeringDiagramDualProfileDelivery {
   }
 
   private static EngineeringDiagramDelivery.Request deliveryRequest(Request request, ContentProfile profile,
-      String drawingNumber) {
+      String drawingNumber, EngineeringDiagramPidRegisters pidRegisters) {
     EngineeringDiagramDelivery.Request.Builder builder = EngineeringDiagramDelivery.Request
         .builder(request.plantId, request.revision, drawingNumber,
             request.title + (profile == ContentProfile.PFD ? " — PFD" : " — P&ID proposal"), profile)
@@ -521,6 +528,9 @@ public final class EngineeringDiagramDualProfileDelivery {
         .conventionRegister(request.conventionRegister);
     if (!request.operatingCaseId.isEmpty()) {
       builder.operatingCaseId(request.operatingCaseId);
+    }
+    if (pidRegisters != null) {
+      builder.pidEngineeringRegisters(pidRegisters);
     }
     return builder.build();
   }
