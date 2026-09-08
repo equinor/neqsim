@@ -488,3 +488,27 @@ campaign criteria remain incomplete until their own merged acceptance evidence e
 DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/performance by
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing
 publication only and does not implement competing domain functionality.
+
+## Composed-workflow qualification candidate (inventory 1.31)
+
+The published `composeWorkflow` surface is being qualified as a bounded,
+caller-authored orchestration contract. Direct Java and packaged-MCP evidence
+covers one real shared-fluid flash step, explicit workflow and step accounting,
+stop-on-first-failure behavior, exact unknown-runner diagnostics, malformed and
+missing-step rejection, normal access enforcement, standard response evidence,
+and JSON-RPC/STDIO transport.
+
+The shared-fluid repair is intentionally additive: the original nested
+`fluid` object remains available while its model/components are exposed at
+the selected runner's input root. This does not create a second fluid model or
+change any thermodynamic calculation.
+
+`composeWorkflow` remains `CONFIRMED_GAP` in inventory
+`1.31 / 20+31+20` until the qualification merges and a separate atomic
+promotion increment updates machine-readable coverage. The candidate does not
+establish natural-language planning, arbitrary execution, semantic
+compatibility between steps, transactionality, persistence, distributed
+execution, numerical fidelity, convergence, conservation, optimization,
+facility completeness, external IAM/transport security, tenant isolation,
+plant/control authority, certification, or accountable engineering approval.
+
