@@ -78,6 +78,9 @@ jobs:
       - name: Run focused runtime-capability Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.GeneralCapabilityRunnerTest test -ntp
 
+      - name: Run focused composed-workflow Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.TaskSolverRunnerTest test -ntp
+
       - name: Run focused pre-flight validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
 
@@ -132,6 +135,9 @@ jobs:
 
       - name: Run focused real-MCP runtime-capability qualification
         run: cd neqsim-mcp-server && python test_capability_protocol.py
+
+      - name: Run focused real-MCP composed-workflow qualification
+        run: cd neqsim-mcp-server && python test_compose_workflow_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py
