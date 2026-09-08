@@ -10,13 +10,12 @@ import neqsim.thermo.characterization.SarirAtmosphericReference.ProductYieldRefe
  * Immutable engineering summary for a solved {@link SarirAtmosphericFractionationCase}.
  *
  * <p>
- * Published plant rates are retained as read-only comparison evidence. They are not solver controls,
- * tuning targets, or acceptance thresholds.
+ * Published plant rates are retained as read-only comparison evidence. They are not solver controls, tuning targets, or
+ * acceptance thresholds.
  * </p>
  */
 public final class SarirAtmosphericFractionationResult {
-  private static final String[] PRODUCT_LABELS = { "Total Naphtha", "Kerosene", "Diesel",
-      "Residual" };
+  private static final String[] PRODUCT_LABELS = { "Total Naphtha", "Kerosene", "Diesel", "Residual" };
   private static final double MATERIAL_FLOW_FRACTION = 1.0e-8;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
 
@@ -29,9 +28,8 @@ public final class SarirAtmosphericFractionationResult {
   private final int iterationCount;
   private final String convergenceDiagnostics;
 
-  private SarirAtmosphericFractionationResult(ProductResult[] products,
-      double feedMassFlowKgPerHour, double productMassFlowKgPerHour,
-      double massClosureRelativeError, double columnMassBalanceError,
+  private SarirAtmosphericFractionationResult(ProductResult[] products, double feedMassFlowKgPerHour,
+      double productMassFlowKgPerHour, double massClosureRelativeError, double columnMassBalanceError,
       double columnEnergyBalanceError, int iterationCount, String convergenceDiagnostics) {
     this.products = products.clone();
     this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
@@ -49,11 +47,10 @@ public final class SarirAtmosphericFractionationResult {
    * @param model solved case to evaluate
    * @return immutable calculated-product and convergence summary
    * @throws NullPointerException if {@code model} is {@code null}
-   * @throws IllegalStateException if the case is unsolved, used fallback products, is
-   *         non-conservative, or contains invalid or unordered material-product results
+   * @throws IllegalStateException if the case is unsolved, used fallback products, is non-conservative, or contains
+   * invalid or unordered material-product results
    */
-  public static SarirAtmosphericFractionationResult evaluate(
-      SarirAtmosphericFractionationCase model) {
+  public static SarirAtmosphericFractionationResult evaluate(SarirAtmosphericFractionationCase model) {
     Objects.requireNonNull(model, "model");
     DistillationColumn column = model.getColumn();
     if (!column.solved()) {
@@ -78,12 +75,9 @@ public final class SarirAtmosphericFractionationResult {
     }
 
     OperatingInputs inputs = model.getOperatingInputs();
-    StreamInterface[] streams = {
-        column.getGasOutStream(),
-        column.getSideDrawStream(inputs.getKeroseneSideDrawTray(),
-            DistillationColumn.SideDrawPhase.LIQUID),
-        column.getSideDrawStream(inputs.getDieselSideDrawTray(),
-            DistillationColumn.SideDrawPhase.LIQUID),
+    StreamInterface[] streams = { column.getGasOutStream(),
+        column.getSideDrawStream(inputs.getKeroseneSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID),
+        column.getSideDrawStream(inputs.getDieselSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID),
         column.getLiquidOutStream() };
 
     ProductResult[] productResults = new ProductResult[streams.length];
@@ -101,17 +95,15 @@ public final class SarirAtmosphericFractionationResult {
       if (massFlow > MATERIAL_FLOW_FRACTION * feedMassFlow) {
         meanBoilingPoint = meanNormalBoilingPoint(streams[i]);
         if (!(meanBoilingPoint > previousMeanBoilingPoint)) {
-          throw new IllegalStateException(
-              "Material products must become heavier from the column top to the bottoms");
+          throw new IllegalStateException("Material products must become heavier from the column top to the bottoms");
         }
         previousMeanBoilingPoint = meanBoilingPoint;
         materialProductCount++;
       }
 
-      ProductYieldReference reference =
-          SarirAtmosphericReference.getProductYield(PRODUCT_LABELS[i]);
-      productResults[i] = new ProductResult(reference.getName(), massFlow,
-          massFlow / feedMassFlow, meanBoilingPoint, reference.getPlantMassFlowRateKgPerHour(),
+      ProductYieldReference reference = SarirAtmosphericReference.getProductYield(PRODUCT_LABELS[i]);
+      productResults[i] = new ProductResult(reference.getName(), massFlow, massFlow / feedMassFlow, meanBoilingPoint,
+          reference.getPlantMassFlowRateKgPerHour(),
           reference.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(massFlow));
     }
     if (materialProductCount < 2) {
@@ -124,9 +116,8 @@ public final class SarirAtmosphericFractionationResult {
     }
 
     String diagnostics = column.getConvergenceDiagnostics();
-    return new SarirAtmosphericFractionationResult(productResults, feedMassFlow,
-        productMassFlow, closureError, massBalanceError, energyBalanceError,
-        column.getLastIterationCount(), diagnostics == null ? "" : diagnostics);
+    return new SarirAtmosphericFractionationResult(productResults, feedMassFlow, productMassFlow, closureError,
+        massBalanceError, energyBalanceError, column.getLastIterationCount(), diagnostics == null ? "" : diagnostics);
   }
 
   /** @return defensive copy of calculated product rows in top-to-bottom order */
@@ -189,8 +180,7 @@ public final class SarirAtmosphericFractionationResult {
 
   private static double meanNormalBoilingPoint(StreamInterface stream) {
     double[] composition = stream.getThermoSystem().getMolarComposition();
-    double[] boilingPoints =
-        stream.getThermoSystem().getNormalBoilingPointTemperatures();
+    double[] boilingPoints = stream.getThermoSystem().getNormalBoilingPointTemperatures();
     if (composition.length != boilingPoints.length || composition.length == 0) {
       throw new IllegalStateException("Product composition and boiling-point arrays must align");
     }
@@ -198,15 +188,14 @@ public final class SarirAtmosphericFractionationResult {
     double mean = 0.0;
     double compositionSum = 0.0;
     for (int i = 0; i < composition.length; i++) {
-      if (!Double.isFinite(composition[i]) || composition[i] < 0.0
-          || !Double.isFinite(boilingPoints[i]) || !(boilingPoints[i] > 0.0)) {
+      if (!Double.isFinite(composition[i]) || composition[i] < 0.0 || !Double.isFinite(boilingPoints[i])
+          || !(boilingPoints[i] > 0.0)) {
         throw new IllegalStateException("Product composition and boiling points must be physical");
       }
       mean += composition[i] * boilingPoints[i];
       compositionSum += composition[i];
     }
-    if (!Double.isFinite(compositionSum) || !(compositionSum > 0.0)
-        || !Double.isFinite(mean)) {
+    if (!Double.isFinite(compositionSum) || !(compositionSum > 0.0) || !Double.isFinite(mean)) {
       throw new IllegalStateException("Product mean boiling point is undefined");
     }
     return mean / compositionSum;
@@ -227,16 +216,15 @@ public final class SarirAtmosphericFractionationResult {
     private final double plantMassFlowKgPerHour;
     private final double absoluteRelativeErrorPercentAgainstPlant;
 
-    private ProductResult(String productLabel, double calculatedMassFlowKgPerHour,
-        double calculatedMassFractionOfFeed, double meanNormalBoilingPointKelvin,
-        double plantMassFlowKgPerHour, double absoluteRelativeErrorPercentAgainstPlant) {
+    private ProductResult(String productLabel, double calculatedMassFlowKgPerHour, double calculatedMassFractionOfFeed,
+        double meanNormalBoilingPointKelvin, double plantMassFlowKgPerHour,
+        double absoluteRelativeErrorPercentAgainstPlant) {
       this.productLabel = productLabel;
       this.calculatedMassFlowKgPerHour = calculatedMassFlowKgPerHour;
       this.calculatedMassFractionOfFeed = calculatedMassFractionOfFeed;
       this.meanNormalBoilingPointKelvin = meanNormalBoilingPointKelvin;
       this.plantMassFlowKgPerHour = plantMassFlowKgPerHour;
-      this.absoluteRelativeErrorPercentAgainstPlant =
-          absoluteRelativeErrorPercentAgainstPlant;
+      this.absoluteRelativeErrorPercentAgainstPlant = absoluteRelativeErrorPercentAgainstPlant;
     }
 
     /** @return exact source-table product label */
@@ -269,8 +257,7 @@ public final class SarirAtmosphericFractionationResult {
      * @return mean normal boiling point in degrees Celsius, or NaN for a non-material product
      */
     public double getMeanNormalBoilingPointCelsius() {
-      return Double.isFinite(meanNormalBoilingPointKelvin)
-          ? meanNormalBoilingPointKelvin - 273.15 : Double.NaN;
+      return Double.isFinite(meanNormalBoilingPointKelvin) ? meanNormalBoilingPointKelvin - 273.15 : Double.NaN;
     }
 
     /** @return measured plant product rate in kg/h */
