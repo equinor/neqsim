@@ -462,7 +462,7 @@ public final class EngineeringDiagramDelivery {
     try {
       NativeEngineeringDiagramRenderer.Result rendering = new NativeEngineeringDiagramRenderer(documents,
           request.sheetFormat, request.conventionRegister, request.routingMode, request.pidEngineeringRegisters)
-              .render();
+          .render();
       if (!documents.isValid() || !rendering.isComplete()) {
         throw new IOException("Engineering-diagram delivery failed controlled document or rendering gates");
       }
