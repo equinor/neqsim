@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 20674)
+Total output lines: 1754
+
 package neqsim.process.processmodel.diagram;
 
 import java.io.ByteArrayOutputStream;
@@ -52,6 +55,10 @@ public final class NativeEngineeringDiagramRenderer {
   private static final double PORT_MARKER_SIZE = 1.8;
   private static final double PORT_SLOT_MARGIN = 2.0;
   private static final double PARALLEL_LANE_SPACING = 4.0;
+  private static final double PID_TAG_TEXT_SIZE = 2.2;
+  private static final double PID_HORIZONTAL_MARKER_SPACING = 24.0;
+  private static final double PID_VERTICAL_MARKER_SPACING = 10.0;
+  private static final double PID_SIGNAL_LANE_SPACING = 3.0;
 
   /** Controlled paper sizes supported by the native renderer. */
   public enum SheetFormat {
@@ -834,52 +841,7 @@ public final class NativeEngineeringDiagramRenderer {
         : convention.getFillColor();
     if (shape == SymbolShape.PROCESS_EQUIPMENT) {
       addProcessEquipmentSymbol(page, object, position, stroke, fill);
-    } else if (shape == SymbolShape.LINE_TERMINAL) {
-      addLineTerminalSymbol(page, object, position, stroke, fill);
-    } else {
-      page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
-    }
-    String primary = displayLabel(object);
-    page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
-    String secondary = shape == SymbolShape.PROCESS_EQUIPMENT ? equipmentFamily(object) : object.getKind().name();
-    page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, secondary, "#4b5563", object.getId(), "middle"));
-  }
-
-  private static void addProcessEquipmentSymbol(Page page, SemanticObject object, Point position, String stroke,
-      String fill) {
-    String family = equipmentFamily(object);
-    double left = position.x - OBJECT_WIDTH / 2.0;
-    double right = position.x + OBJECT_WIDTH / 2.0;
-    double top = position.y - OBJECT_HEIGHT / 2.0;
-    double bottom = position.y + OBJECT_HEIGHT / 2.0;
-    if ("SEPARATOR".equals(family)) {
-      page.commands.add(Command.polygon(Arrays.asList(new Point(left + 7.0, top), new Point(right - 7.0, top),
-          new Point(right, top + 5.0), new Point(right, bottom - 5.0), new Point(right - 7.0, bottom),
-          new Point(left + 7.0, bottom), new Point(left, bottom - 5.0), new Point(left, top + 5.0)), stroke, fill, 0.7,
-          object.getId()));
-      page.commands.add(Command.line(left + 2.0, position.y + 2.5, right - 2.0, position.y + 2.5, stroke, 0.5, "", ""));
-      return;
-    }
-    if ("HEAT EXCHANGER".equals(family)) {
-      page.commands.add(Command.polygon(Arrays.asList(new Point(position.x, top), new Point(right, position.y),
-          new Point(position.x, bottom), new Point(left, position.y)), stroke, fill, 0.7, object.getId()));
-      page.commands.add(Command.line(left + 8.0, top + 3.0, right - 8.0, bottom - 3.0, stroke, 0.5, "", ""));
-      page.commands.add(Command.line(left + 8.0, bottom - 3.0, right - 8.0, top + 3.0, stroke, 0.5, "", ""));
-      return;
-    }
-    if ("COMPRESSOR".equals(family)) {
-      page.commands.add(Command.polygon(Arrays.asList(new Point(left, position.y - 4.0), new Point(right, top),
-          new Point(right, bottom), new Point(left, position.y + 4.0)), stroke, fill, 0.7, object.getId()));
-      return;
-    }
-    if ("PUMP".equals(family)) {
-      page.commands.add(Command.polygon(
-          Arrays.asList(new Point(left + 5.0, top), new Point(right - 8.0, top), new Point(right, position.y),
-              new Point(right - 8.0, bottom), new Point(left + 5.0, bottom), new Point(left, position.y)),
-          stroke, fill, 0.7, object.getId()));
-      return;
-    }
-    if ("VALVE".equals(family)) {
+    } else if (shape …674 tokens truncated…quals(family)) {
       page.commands.add(Command.polygon(
           Arrays.asList(new Point(left, top), new Point(position.x, position.y), new Point(left, bottom)), stroke, fill,
           0.7, object.getId()));
@@ -1014,6 +976,7 @@ public final class NativeEngineeringDiagramRenderer {
       }
     }
     Map<String, Point> proposalPositions = new TreeMap<String, Point>();
+    Map<String, String> proposalOwners = new TreeMap<String, String>();
     List<String> equipmentIds = new ArrayList<String>(positions.keySet());
     Collections.sort(equipmentIds);
     for (String equipmentId : equipmentIds) {
@@ -1022,16 +985,20 @@ public final class NativeEngineeringDiagramRenderer {
         continue;
       }
       Point equipment = positions.get(equipmentId);
-      addPidMarker(page, equipmentId, "nozzles", rowsByEquipment, equipment,
-          new Point(equipment.x - OBJECT_WIDTH / 2.0 - 4.0, equipment.y), proposalPositions);
-      addPidMarker(page, equipmentId, "instruments", rowsByEquipment, equipment,
-          new Point(equipment.x, equipment.y - OBJECT_HEIGHT / 2.0 - 7.0), proposalPositions);
-      addPidMarker(page, equipmentId, "valves", rowsByEquipment, equipment,
-          new Point(equipment.x, equipment.y + OBJECT_HEIGHT / 2.0 + 7.0), proposalPositions);
-      addPidMarker(page, equipmentId, "interfaces", rowsByEquipment, equipment,
-          new Point(equipment.x + OBJECT_WIDTH / 2.0 + 8.0, equipment.y - 7.0), proposalPositions);
+      addPidMarkers(page, equipmentId, "nozzles", rowsByEquipment, equipment, proposalPositions, proposalOwners);
+      addPidMarkers(page, equipmentId, "instruments", rowsByEquipment, equipment, proposalPositions, proposalOwners);
+      addPidMarkers(page, equipmentId, "valves", rowsByEquipment, equipment, proposalPositions, proposalOwners);
+      addPidMarkers(page, equipmentId, "interfaces", rowsByEquipment, equipment, proposalPositions, proposalOwners);
     }
-    for (Map<String, Object> signal : proposalRows(registerData, "controlSignals")) {
+    List<Map<String, Object>> signals = proposalRows(registerData, "controlSignals");
+    Collections.sort(signals, new Comparator<Map<String, Object>>() {
+      @Override
+      public int compare(Map<String, Object> left, Map<String, Object> right) {
+        return signalId(left).compareTo(signalId(right));
+      }
+    });
+    Map<String, Double> signalLanes = pidSignalLanes(signals, proposalOwners);
+    for (Map<String, Object> signal : signals) {
       String sourceId = textValue(signal.get("sourcePidElementId"));
       String targetId = textValue(signal.get("targetPidElementId"));
       Point source = proposalPositions.get(sourceId);
@@ -1040,11 +1007,13 @@ public final class NativeEngineeringDiagramRenderer {
         continue;
       }
       List<Point> points;
+      double lane = signalLanes.containsKey(signalId(signal)) ? signalLanes.get(signalId(signal)).doubleValue() : 0.0;
       if (distance(source, target) < 0.001) {
-        points = Arrays.asList(source, new Point(source.x + 5.0, source.y - 5.0), new Point(source.x + 10.0, source.y),
-            source);
+        double loop = 8.0 + Math.abs(lane);
+        points = Arrays.asList(source, new Point(source.x + loop, source.y - loop),
+            new Point(source.x + loop * 2.0, source.y), source);
       } else {
-        double middleX = (source.x + target.x) / 2.0;
+        double middleX = (source.x + target.x) / 2.0 + lane;
         points = Arrays.asList(source, new Point(middleX, source.y), new Point(middleX, target.y), target);
       }
       page.commands
@@ -1052,9 +1021,9 @@ public final class NativeEngineeringDiagramRenderer {
     }
   }
 
-  private static void addPidMarker(Page page, String equipmentId, String register,
-      Map<String, List<Map<String, Object>>> rowsByEquipment, Point equipment, Point marker,
-      Map<String, Point> proposalPositions) {
+  private static void addPidMarkers(Page page, String equipmentId, String register,
+      Map<String, List<Map<String, Object>>> rowsByEquipment, Point equipment, Map<String, Point> proposalPositions,
+      Map<String, String> proposalOwners) {
     List<Map<String, Object>> rows = rowsByEquipment.get(equipmentId + "|" + register);
     if (rows == null || rows.isEmpty()) {
       return;
@@ -1065,13 +1034,31 @@ public final class NativeEngineeringDiagramRenderer {
         return textValue(left.get("id")).compareTo(textValue(right.get("id")));
       }
     });
-    String firstId = textValue(rows.get(0).get("id"));
-    String firstTag = textValue(rows.get(0).get("tag"));
-    for (Map<String, Object> row : rows) {
-      proposalPositions.put(textValue(row.get("id")), marker);
+    for (int index = 0; index < rows.size(); index++) {
+      Map<String, Object> row = rows.get(index);
+      String id = textValue(row.get("id"));
+      Point marker = pidMarkerPosition(equipment, register, index, rows.size());
+      proposalPositions.put(id, marker);
+      proposalOwners.put(id, equipmentId);
+      addPidMarker(page, register, equipment, marker, id, textValue(row.get("tag")));
     }
-    String count = rows.size() == 1 ? "" : " +" + (rows.size() - 1);
-    String semanticId = "pid-proposal:" + firstId;
+  }
+
+  private static Point pidMarkerPosition(Point equipment, String register, int index, int count) {
+    double centered = index - (count - 1) / 2.0;
+    if ("nozzles".equals(register)) {
+      return new Point(equipment.x - OBJECT_WIDTH / 2.0 - 14.0, equipment.y + centered * PID_VERTICAL_MARKER_SPACING);
+    }
+    if ("interfaces".equals(register)) {
+      return new Point(equipment.x + OBJECT_WIDTH / 2.0 + 16.0, equipment.y + centered * PID_VERTICAL_MARKER_SPACING);
+    }
+    double y = "instruments".equals(register) ? equipment.y - OBJECT_HEIGHT / 2.0 - 15.0
+        : equipment.y + OBJECT_HEIGHT / 2.0 + 16.0;
+    return new Point(equipment.x + centered * PID_HORIZONTAL_MARKER_SPACING, y);
+  }
+
+  private static void addPidMarker(Page page, String register, Point equipment, Point marker, String id, String tag) {
+    String semanticId = "pid-proposal:" + id;
     if ("instruments".equals(register)) {
       page.commands.add(Command.polygon(
           Arrays.asList(new Point(marker.x, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
@@ -1086,16 +1073,64 @@ public final class NativeEngineeringDiagramRenderer {
       page.commands
           .add(Command.polygon(Arrays.asList(new Point(marker.x + 3.5, marker.y - 2.5), new Point(marker.x, marker.y),
               new Point(marker.x + 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6, semanticId + ":half"));
+      page.commands.add(Command.line(marker.x, marker.y - 2.5, equipment.x, equipment.y + OBJECT_HEIGHT / 2.0,
+          "#7c2d12", 0.4, semanticId + ":connection", ""));
     } else if ("interfaces".equals(register)) {
       page.commands.add(
           Command.polygon(Arrays.asList(new Point(marker.x - 3.0, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
               new Point(marker.x - 3.0, marker.y + 3.0)), "#6d28d9", "#ffffff", 0.6, semanticId));
+      page.commands.add(Command.line(marker.x - 3.0, marker.y, equipment.x + OBJECT_WIDTH / 2.0, equipment.y, "#6d28d9",
+          0.4, semanticId + ":connection", ""));
     } else {
       page.commands
           .add(Command.rect(marker.x - 1.5, marker.y - 1.5, 3.0, 3.0, "#0891b2", "#ffffff", 0.5, semanticId, ""));
+      page.commands.add(Command.line(marker.x + 1.5, marker.y, equipment.x - OBJECT_WIDTH / 2.0, equipment.y, "#0891b2",
+          0.4, semanticId + ":connection", ""));
     }
-    page.commands
-        .add(Command.text(marker.x, marker.y - 4.5, 1.5, firstTag + count, "#111827", semanticId + ":tag", "middle"));
+    if ("nozzles".equals(register)) {
+      page.commands
+          .add(Command.text(marker.x - 4.0, marker.y, PID_TAG_TEXT_SIZE, tag, "#111827", semanticId + ":tag", "end"));
+    } else if ("interfaces".equals(register)) {
+      page.commands
+          .add(Command.text(marker.x + 4.0, marker.y, PID_TAG_TEXT_SIZE, tag, "#111827", semanticId + ":tag", ""));
+    } else {
+      page.commands.add(
+          Command.text(marker.x, marker.y - 4.8, PID_TAG_TEXT_SIZE, tag, "#111827", semanticId + ":tag", "middle"));
+    }
+  }
+
+  private static Map<String, Double> pidSignalLanes(List<Map<String, Object>> signals,
+      Map<String, String> proposalOwners) {
+    Map<String, List<Map<String, Object>>> byOwnerPair = new TreeMap<String, List<Map<String, Object>>>();
+    for (Map<String, Object> signal : signals) {
+      String source = textValue(signal.get("sourcePidElementId"));
+      String target = textValue(signal.get("targetPidElementId"));
+      String pair = textValue(proposalOwners.get(source)) + "|" + textValue(proposalOwners.get(target));
+      List<Map<String, Object>> group = byOwnerPair.get(pair);
+      if (group == null) {
+        group = new ArrayList<Map<String, Object>>();
+        byOwnerPair.put(pair, group);
+      }
+      group.add(signal);
+    }
+    Map<String, Double> result = new TreeMap<String, Double>();
+    for (List<Map<String, Object>> group : byOwnerPair.values()) {
+      Collections.sort(group, new Comparator<Map<String, Object>>() {
+        @Override
+        public int compare(Map<String, Object> left, Map<String, Object> right) {
+          return signalId(left).compareTo(signalId(right));
+        }
+      });
+      for (int index = 0; index < group.size(); index++) {
+        double centered = index - (group.size() - 1) / 2.0;
+        result.put(signalId(group.get(index)), Double.valueOf(centered * PID_SIGNAL_LANE_SPACING));
+      }
+    }
+    return result;
+  }
+
+  private static String signalId(Map<String, Object> signal) {
+    return textValue(signal.get("sourcePidElementId")) + ":" + textValue(signal.get("targetPidElementId"));
   }
 
   private static List<Map<String, Object>> proposalRows(Map<String, Object> data, String register) {
