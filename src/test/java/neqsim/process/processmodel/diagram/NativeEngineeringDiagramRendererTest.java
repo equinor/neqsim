@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolConvention;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolShape;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.Designation;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.Kind;
@@ -96,6 +100,43 @@ class NativeEngineeringDiagramRendererTest {
       }
     }
     assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED"));
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void rendersControlledDirectionalOffPageLabelsWithoutExposingInternalSheetIds() {
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "B",
+        "PFD-NATIVE-002-CONTROLLED", "Controlled off-page reference", ContentProfile.PFD);
+    EngineeringDiagramConventionRegister conventions = new EngineeringDiagramConventionRegister()
+        .withConvention(new SymbolConvention(EngineeringNode.Kind.LINE, SymbolShape.LINE_TERMINAL, "#1f2937", "#eff6ff",
+            "teaching-symbol-profile:v1", EngineeringDiagramConventionRegister.EvidenceState.PROPOSED, "", "",
+            "2026-09-08T00:00:00Z", "A"));
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE, conventions,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    Map<String, String> sheetNumberById = new TreeMap<String, String>();
+    Map<String, SemanticObject> objectsById = new TreeMap<String, SemanticObject>();
+    for (SemanticObject object : documents.getSemanticObjects()) {
+      objectsById.put(object.getId(), object);
+    }
+    for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
+      sheetNumberById.put(sheet.getId(), sheet.getNumber());
+    }
+
+    for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
+      String svg = result.getSvgBySheetId().get(sheet.getId());
+      assertFalse(svg.contains("TO/FROM"));
+      for (EngineeringDiagramDocumentSet.OffPageConnector connector : sheet.getOffPageConnectors()) {
+        SemanticObject connection = objectsById.get(connector.getSemanticConnectionId());
+        String direction = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? "TO" : "FROM";
+        String expected = connection.getLabel() + " " + direction + " SHEET "
+            + sheetNumberById.get(connector.getPeerSheetId());
+        assertTrue(svg.contains(">" + expected + "</text>"), expected);
+        assertFalse(svg.contains("[" + connector.getPeerSheetId() + "]"));
+      }
+    }
     assertTrue(result.isComplete());
   }
 

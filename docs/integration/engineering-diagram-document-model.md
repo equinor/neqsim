@@ -75,6 +75,14 @@ renderer-native generic vector shapes (`RECTANGLE`, `DIAMOND`, or `HEXAGON`), ex
 evidence state. Reviewed entries require reviewer and review-record references; they still do not
 approve a generated drawing for design or construction.
 
+Two additional opt-in proposal shapes support process reviews without claiming a qualified symbol
+catalog. `PROCESS_EQUIPMENT` selects deterministic separator, heat-exchanger, compressor, pump,
+valve, mixer, splitter, and simulator-recycle families from the canonical `javaClass` property.
+`LINE_TERMINAL` makes canonical `LINE` objects visible as directional terminal symbols. Unknown
+equipment classes retain the labelled equipment fallback. These families are renderer-native visual
+language only; project or standards qualification still requires the traceability and review evidence
+described below.
+
 Pass the register to `NativeEngineeringDiagramRenderer` through the additive constructor overloads.
 An empty register retains byte-compatible legacy rectangle rendering. Once a non-empty register is
 selected, every visible drawable node kind without an exact convention continues to render with the
@@ -109,13 +117,33 @@ identity on the SVG port marker. Port slots are sorted by stable identity. Branc
 distinct anchors, connections between the same owner pair receive deterministic parallel lanes, and
 declared recycle or backward connections receive a deterministic orthogonal return path. Reciprocal
 off-page connectors remain the cross-sheet boundary, while a reviewed protected route remains
-authoritative and is never replaced by automatic routing.
+authoritative and is never replaced by automatic routing. Each fixed-port route also carries a
+deterministic vector arrowhead in SVG and PDF. When the opt-in `LINE_TERMINAL` convention is present,
+each visible off-page label combines the canonical connection designation, directional `TO` or
+`FROM`, and the controlled peer-sheet number. Stable connector and peer-sheet identities remain in
+the document model and SVG semantic attributes without being exposed as reader-facing drawing text.
+Legacy convention/routing profiles retain their previous labels and bytes.
 
 `DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED` reports a malformed endpoint that cannot resolve to an owner.
 A valid peer owner absent from an off-page connection's current sheet is expected and does not create a
 false warning. Fixed-port routing is deterministic proposal geometry; it is not obstacle-optimal,
 standards-qualified, or drawing-approved. Projects should retain protected routes where accountable
 layout refinement is required.
+
+## Source-linked P&ID proposal overlay
+
+The five-argument `NativeEngineeringDiagramRenderer` constructor accepts an optional
+`EngineeringDiagramPidRegisters` snapshot. A non-null snapshot must have the same canonical source
+graph fingerprint as the rendered document set. The renderer then adds a compact,
+review-required overlay to SVG and PDF with stable semantic identities for proposed nozzles, valves,
+instruments, declared isolation/drain/vent/relief interfaces, and control or safeguarding signal
+relationships.
+
+The overlay groups proposal categories at their source equipment to keep the projection
+deterministic. It is not a substitute for individually legible, project-approved symbols and tags.
+Supplying `null` preserves existing PFD and legacy renderer bytes. The overlay does not alter the
+document topology or either DEXPI exchange profile, and it does not infer pipe size, class, schedule,
+material, reducer duty, completed control logic, or safety design.
 
 ## Java example
 
