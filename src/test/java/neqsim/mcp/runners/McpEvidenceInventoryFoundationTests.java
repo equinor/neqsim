@@ -549,8 +549,7 @@ class McpEvidenceInventoryFoundationTests {
   void testComposedWorkflowPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject workflow =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("composeWorkflow");
+    JsonObject workflow = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("composeWorkflow");
 
     assertEquals("1.32", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
@@ -560,12 +559,10 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(workflow.get("contractTrustAvailable").getAsBoolean());
     assertEquals(6, workflow.get("contractEvidenceCount").getAsInt());
     assertEquals(6, workflow.getAsJsonArray("contractEvidenceSources").size());
+    assertTrue(workflow.getAsJsonArray("contractEvidenceSources").toString().contains("TaskSolverRunnerTest.java"));
     assertTrue(
-        workflow.getAsJsonArray("contractEvidenceSources").toString().contains("TaskSolverRunnerTest.java"));
-    assertTrue(workflow.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_compose_workflow_protocol.py"));
-    assertTrue(
-        workflow.getAsJsonArray("contractEvidenceSources").toString().contains("COMPOSE_WORKFLOW_CONTRACT.md"));
+        workflow.getAsJsonArray("contractEvidenceSources").toString().contains("test_compose_workflow_protocol.py"));
+    assertTrue(workflow.getAsJsonArray("contractEvidenceSources").toString().contains("COMPOSE_WORKFLOW_CONTRACT.md"));
     assertTrue(workflow.get("evidenceBoundary").getAsString().contains("semantic compatibility"));
     assertTrue(workflow.get("evidenceBoundary").getAsString().contains("plant or control authority"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("composeWorkflow"));
