@@ -596,8 +596,8 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
      * Return the segment-mean total-sulfide loss rate for the lower-rate path.
      *
      * <p>
-     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit is
-     * the inlet differential rate.
+     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit
+     * is the inlet differential rate.
      * </p>
      *
      * @return mean loss rate [mol/(kg water h)]
@@ -627,8 +627,8 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
      * Return the segment-mean total-sulfide loss rate for the nominal path.
      *
      * <p>
-     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit is
-     * the inlet differential rate.
+     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit
+     * is the inlet differential rate.
      * </p>
      *
      * @return mean loss rate [mol/(kg water h)]
@@ -658,8 +658,8 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
      * Return the segment-mean total-sulfide loss rate for the upper-rate path.
      *
      * <p>
-     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit is
-     * the inlet differential rate.
+     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit
+     * is the inlet differential rate.
      * </p>
      *
      * @return mean loss rate [mol/(kg water h)]
