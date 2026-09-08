@@ -140,9 +140,11 @@ instruments, declared isolation/drain/vent/relief interfaces, and control or saf
 relationships.
 
 Each register row receives its own symbol and full tag at its source equipment. Category-specific
-callout rails use stable spacing, and control/safeguarding relationships use deterministic lanes per
-source/target equipment pair instead of sharing one overlapping center path. The overlay is still not
-a substitute for project-approved symbols, routing, data, or discipline checking.
+callout rails use stable spacing and distribute repeated connections across deterministic perimeter
+points on the owning equipment instead of converging on one centre point. Control/safeguarding
+relationships use deterministic lanes per source/target equipment pair instead of sharing one
+overlapping centre path. The overlay is still not a substitute for project-approved symbols,
+routing, data, or discipline checking.
 Supplying `null` preserves existing PFD and legacy renderer bytes. The overlay does not alter the
 document topology or either DEXPI exchange profile, and it does not infer pipe size, class, schedule,
 material, reducer duty, completed control logic, or safety design.
