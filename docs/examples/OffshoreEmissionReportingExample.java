@@ -7,6 +7,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating offshore platform emission reporting with NeqSim.
@@ -32,6 +34,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * @see EmissionsCalculator
  */
 public class OffshoreEmissionReportingExample {
+  private static final Logger logger =
+      LogManager.getLogger(OffshoreEmissionReportingExample.class);
 
   /**
    * Main method demonstrating emission calculation workflow.
@@ -39,14 +43,14 @@ public class OffshoreEmissionReportingExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("═══════════════════════════════════════════════════════════════════");
-    System.out.println("      OFFSHORE PLATFORM EMISSION REPORTING - NeqSim Example        ");
-    System.out.println("═══════════════════════════════════════════════════════════════════");
+    logger.info("═══════════════════════════════════════════════════════════════════");
+    logger.info("      OFFSHORE PLATFORM EMISSION REPORTING - NeqSim Example        ");
+    logger.info("═══════════════════════════════════════════════════════════════════");
 
     // =========================================================================
     // STEP 1: CREATE PRODUCED WATER FLUID
     // =========================================================================
-    System.out.println("\n▶ Step 1: Creating produced water fluid (CPA-EoS)");
+    logger.info("\n▶ Step 1: Creating produced water fluid (CPA-EoS)");
 
     // Use CPA equation of state for accurate water-hydrocarbon equilibrium
     SystemInterface producedWater = new SystemSrkCPAstatoil(273.15 + 80.0, 30.0);
@@ -62,13 +66,13 @@ public class OffshoreEmissionReportingExample {
     producedWater.setMixingRule(10);
     producedWater.init(0);
 
-    System.out.println("  Fluid: CPA equation of state");
-    System.out.println("  Components: water, CO2, CH4, C2H6, C3H8");
+    logger.info("  Fluid: CPA equation of state");
+    logger.info("  Components: water, CO2, CH4, C2H6, C3H8");
 
     // =========================================================================
     // STEP 2: CREATE PROCESS SYSTEM
     // =========================================================================
-    System.out.println("\n▶ Step 2: Building multi-stage degassing process");
+    logger.info("\n▶ Step 2: Building multi-stage degassing process");
 
     // Create inlet stream (100 m³/hr produced water)
     Stream inletStream = new Stream("PW-Feed", producedWater);
@@ -99,14 +103,14 @@ public class OffshoreEmissionReportingExample {
     // Run simulation
     process.run();
 
-    System.out.println("  Stage 1: Degasser (30 → 4 bara)");
-    System.out.println("  Stage 2: CFU (4 → 1.1 bara)");
-    System.out.println("  Simulation completed successfully");
+    logger.info("  Stage 1: Degasser (30 → 4 bara)");
+    logger.info("  Stage 2: CFU (4 → 1.1 bara)");
+    logger.info("  Simulation completed successfully");
 
     // =========================================================================
     // STEP 3: CALCULATE EMISSIONS
     // =========================================================================
-    System.out.println("\n▶ Step 3: Calculating emissions (thermodynamic method)");
+    logger.info("\n▶ Step 3: Calculating emissions (thermodynamic method)");
 
     // Create emissions calculator for each stage
     EmissionsCalculator calcDegasser = new EmissionsCalculator(degasser.getGasOutStream());
@@ -116,33 +120,33 @@ public class OffshoreEmissionReportingExample {
     calcCFU.calculate();
 
     // Print degasser emissions
-    System.out.println("\n  ┌─────────────────────────────────────────────────────┐");
-    System.out.println("  │                 DEGASSER EMISSIONS                   │");
-    System.out.println("  ├─────────────────────────────────────────────────────┤");
-    System.out.printf("  │  CO2:     %,12.2f kg/hr                       │%n",
-        calcDegasser.getCO2EmissionRate("kg/hr"));
-    System.out.printf("  │  Methane: %,12.2f kg/hr                       │%n",
-        calcDegasser.getMethaneEmissionRate("kg/hr"));
-    System.out.printf("  │  nmVOC:   %,12.2f kg/hr                       │%n",
-        calcDegasser.getNMVOCEmissionRate("kg/hr"));
-    System.out.println("  └─────────────────────────────────────────────────────┘");
+    logger.info("\n  ┌─────────────────────────────────────────────────────┐");
+    logger.info("  │                 DEGASSER EMISSIONS                   │");
+    logger.info("  ├─────────────────────────────────────────────────────┤");
+    logger.info("{}", String.format("  │  CO2:     %,12.2f kg/hr                       │",
+        calcDegasser.getCO2EmissionRate("kg/hr")));
+    logger.info("{}", String.format("  │  Methane: %,12.2f kg/hr                       │",
+        calcDegasser.getMethaneEmissionRate("kg/hr")));
+    logger.info("{}", String.format("  │  nmVOC:   %,12.2f kg/hr                       │",
+        calcDegasser.getNMVOCEmissionRate("kg/hr")));
+    logger.info("  └─────────────────────────────────────────────────────┘");
 
     // Print CFU emissions
-    System.out.println("\n  ┌─────────────────────────────────────────────────────┐");
-    System.out.println("  │                   CFU EMISSIONS                      │");
-    System.out.println("  ├─────────────────────────────────────────────────────┤");
-    System.out.printf("  │  CO2:     %,12.2f kg/hr                       │%n",
-        calcCFU.getCO2EmissionRate("kg/hr"));
-    System.out.printf("  │  Methane: %,12.2f kg/hr                       │%n",
-        calcCFU.getMethaneEmissionRate("kg/hr"));
-    System.out.printf("  │  nmVOC:   %,12.2f kg/hr                       │%n",
-        calcCFU.getNMVOCEmissionRate("kg/hr"));
-    System.out.println("  └─────────────────────────────────────────────────────┘");
+    logger.info("\n  ┌─────────────────────────────────────────────────────┐");
+    logger.info("  │                   CFU EMISSIONS                      │");
+    logger.info("  ├─────────────────────────────────────────────────────┤");
+    logger.info("{}", String.format("  │  CO2:     %,12.2f kg/hr                       │",
+        calcCFU.getCO2EmissionRate("kg/hr")));
+    logger.info("{}", String.format("  │  Methane: %,12.2f kg/hr                       │",
+        calcCFU.getMethaneEmissionRate("kg/hr")));
+    logger.info("{}", String.format("  │  nmVOC:   %,12.2f kg/hr                       │",
+        calcCFU.getNMVOCEmissionRate("kg/hr")));
+    logger.info("  └─────────────────────────────────────────────────────┘");
 
     // =========================================================================
     // STEP 4: ANNUAL TOTALS AND CO2 EQUIVALENTS
     // =========================================================================
-    System.out.println("\n▶ Step 4: Annual totals (8760 hours/year)");
+    logger.info("\n▶ Step 4: Annual totals (8760 hours/year)");
 
     double totalCO2 =
         calcDegasser.getCO2EmissionRate("tonnes/year") + calcCFU.getCO2EmissionRate("tonnes/year");
@@ -153,20 +157,20 @@ public class OffshoreEmissionReportingExample {
     double totalCO2eq =
         calcDegasser.getCO2Equivalents("tonnes/year") + calcCFU.getCO2Equivalents("tonnes/year");
 
-    System.out.println("\n  ╔═════════════════════════════════════════════════════╗");
-    System.out.println("  ║           ANNUAL EMISSION TOTALS                    ║");
-    System.out.println("  ╠═════════════════════════════════════════════════════╣");
-    System.out.printf("  ║  CO2:           %,12.0f tonnes/year            ║%n", totalCO2);
-    System.out.printf("  ║  Methane:       %,12.0f tonnes/year            ║%n", totalCH4);
-    System.out.printf("  ║  nmVOC:         %,12.0f tonnes/year            ║%n", totalNMVOC);
-    System.out.println("  ╠═════════════════════════════════════════════════════╣");
-    System.out.printf("  ║  CO2 Equivalent:%,12.0f tonnes/year            ║%n", totalCO2eq);
-    System.out.println("  ╚═════════════════════════════════════════════════════╝");
+    logger.info("\n  ╔═════════════════════════════════════════════════════╗");
+    logger.info("  ║           ANNUAL EMISSION TOTALS                    ║");
+    logger.info("  ╠═════════════════════════════════════════════════════╣");
+    logger.info("{}", String.format("  ║  CO2:           %,12.0f tonnes/year            ║", totalCO2));
+    logger.info("{}", String.format("  ║  Methane:       %,12.0f tonnes/year            ║", totalCH4));
+    logger.info("{}", String.format("  ║  nmVOC:         %,12.0f tonnes/year            ║", totalNMVOC));
+    logger.info("  ╠═════════════════════════════════════════════════════╣");
+    logger.info("{}", String.format("  ║  CO2 Equivalent:%,12.0f tonnes/year            ║", totalCO2eq));
+    logger.info("  ╚═════════════════════════════════════════════════════╝");
 
     // =========================================================================
     // STEP 5: COMPARE WITH CONVENTIONAL METHOD
     // =========================================================================
-    System.out.println("\n▶ Step 5: Comparison with Norwegian handbook method");
+    logger.info("\n▶ Step 5: Comparison with Norwegian handbook method");
 
     // Conventional method parameters
     double waterVolume_m3_year = 100.0 * 8760; // 100 m³/hr * 8760 hr/yr
@@ -190,62 +194,62 @@ public class OffshoreEmissionReportingExample {
         totalCO2eq > 0 ? String.format("%+.0f%%", (convCO2eq - totalCO2eq) / totalCO2eq * 100)
             : "N/A";
 
-    System.out.println("\n  ┌───────────────────────────────────────────────────────────────┐");
-    System.out.println("  │              METHOD COMPARISON (tonnes/year)                   │");
-    System.out.println("  ├───────────────────────────────────────────────────────────────┤");
-    System.out.println("  │  Component       Conventional    Thermodynamic    Difference  │");
-    System.out.println("  ├───────────────────────────────────────────────────────────────┤");
-    System.out.printf("  │  CO2             %,10.0f      %,10.0f       %-10s │%n", 0.0, totalCO2,
-        co2Diff);
-    System.out.printf("  │  Methane         %,10.0f      %,10.0f       %-10s │%n", convCH4,
-        totalCH4, ch4Diff);
-    System.out.printf("  │  nmVOC           %,10.0f      %,10.0f       %-10s │%n", convNMVOC,
-        totalNMVOC, nmvocDiff);
-    System.out.println("  ├───────────────────────────────────────────────────────────────┤");
-    System.out.printf("  │  CO2 Equivalent  %,10.0f      %,10.0f       %-10s │%n", convCO2eq,
-        totalCO2eq, co2eqDiff);
-    System.out.println("  └───────────────────────────────────────────────────────────────┘");
+    logger.info("\n  ┌───────────────────────────────────────────────────────────────┐");
+    logger.info("  │              METHOD COMPARISON (tonnes/year)                   │");
+    logger.info("  ├───────────────────────────────────────────────────────────────┤");
+    logger.info("  │  Component       Conventional    Thermodynamic    Difference  │");
+    logger.info("  ├───────────────────────────────────────────────────────────────┤");
+    logger.info("{}", String.format("  │  CO2             %,10.0f      %,10.0f       %-10s │", 0.0, totalCO2,
+        co2Diff));
+    logger.info("{}", String.format("  │  Methane         %,10.0f      %,10.0f       %-10s │", convCH4,
+        totalCH4, ch4Diff));
+    logger.info("{}", String.format("  │  nmVOC           %,10.0f      %,10.0f       %-10s │", convNMVOC,
+        totalNMVOC, nmvocDiff));
+    logger.info("  ├───────────────────────────────────────────────────────────────┤");
+    logger.info("{}", String.format("  │  CO2 Equivalent  %,10.0f      %,10.0f       %-10s │", convCO2eq,
+        totalCO2eq, co2eqDiff));
+    logger.info("  └───────────────────────────────────────────────────────────────┘");
 
     // =========================================================================
     // STEP 6: GAS COMPOSITION REPORT
     // =========================================================================
-    System.out.println("\n▶ Step 6: Gas composition analysis");
+    logger.info("\n▶ Step 6: Gas composition analysis");
 
     Map<String, Double> composition = calcDegasser.getGasCompositionMole();
-    System.out.println("\n  Degasser gas composition (mole %):");
+    logger.info("\n  Degasser gas composition (mole %):");
     for (Map.Entry<String, Double> entry : composition.entrySet()) {
       if (entry.getValue() > 0.001) {
-        System.out.printf("    %-12s %6.2f %%%n", entry.getKey(), entry.getValue() * 100);
+        logger.info("{}", String.format("    %-12s %6.2f %%", entry.getKey(), entry.getValue() * 100));
       }
     }
 
     // =========================================================================
     // STEP 7: REGULATORY COMPLIANCE SUMMARY
     // =========================================================================
-    System.out.println("\n═══════════════════════════════════════════════════════════════════");
-    System.out.println("                    REGULATORY COMPLIANCE SUMMARY                   ");
-    System.out.println("═══════════════════════════════════════════════════════════════════");
-    System.out.println("\n  Norwegian Requirements (Aktivitetsforskriften §70):");
-    System.out.println("    ✓ Thermodynamic calculation method used");
-    System.out.println("    ✓ All GHG components quantified (CO2, CH4, nmVOC)");
-    System.out.println("    ✓ Uncertainty < 5% (CPA-EoS validated)");
+    logger.info("\n═══════════════════════════════════════════════════════════════════");
+    logger.info("                    REGULATORY COMPLIANCE SUMMARY                   ");
+    logger.info("═══════════════════════════════════════════════════════════════════");
+    logger.info("\n  Norwegian Requirements (Aktivitetsforskriften §70):");
+    logger.info("    ✓ Thermodynamic calculation method used");
+    logger.info("    ✓ All GHG components quantified (CO2, CH4, nmVOC)");
+    logger.info("    ✓ Uncertainty < 5% (CPA-EoS validated)");
 
-    System.out.println("\n  EU ETS Requirements:");
-    System.out.printf("    ✓ Total CO2e: %,.0f tonnes/year%n", totalCO2eq);
-    System.out.println("    ✓ Monitoring methodology documented");
+    logger.info("\n  EU ETS Requirements:");
+    logger.info("{}", String.format("    ✓ Total CO2e: %,.0f tonnes/year", totalCO2eq));
+    logger.info("    ✓ Monitoring methodology documented");
 
-    System.out.println("\n  EU Methane Regulation 2024/1787:");
-    System.out.printf("    ✓ Methane emissions: %,.0f tonnes/year%n", totalCH4);
-    System.out.println("    ✓ Source-level quantification provided");
+    logger.info("\n  EU Methane Regulation 2024/1787:");
+    logger.info("{}", String.format("    ✓ Methane emissions: %,.0f tonnes/year", totalCH4));
+    logger.info("    ✓ Source-level quantification provided");
 
-    System.out.println("\n  Emission Reduction Potential:");
-    System.out.println("    ✓ Thermodynamic method enables accurate source attribution");
-    System.out.println("    ✓ Enables targeted reduction initiatives");
-    System.out.println("    ✓ Supports decarbonization planning");
+    logger.info("\n  Emission Reduction Potential:");
+    logger.info("    ✓ Thermodynamic method enables accurate source attribution");
+    logger.info("    ✓ Enables targeted reduction initiatives");
+    logger.info("    ✓ Supports decarbonization planning");
 
-    System.out.println("\n═══════════════════════════════════════════════════════════════════");
-    System.out.println("  Reference: NeqSim Documentation");
-    System.out.println("  https://github.com/equinor/neqsim");
-    System.out.println("═══════════════════════════════════════════════════════════════════");
+    logger.info("\n═══════════════════════════════════════════════════════════════════");
+    logger.info("  Reference: NeqSim Documentation");
+    logger.info("  https://github.com/equinor/neqsim");
+    logger.info("═══════════════════════════════════════════════════════════════════");
   }
 }
