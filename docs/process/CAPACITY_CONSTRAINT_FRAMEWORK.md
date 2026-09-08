@@ -176,6 +176,44 @@ but infeasible. Explicitly out-of-service casings qualify only with verified zer
 observed shaft load. Java getters, serialization, `toPlantUtilizationSnapshot()`, and `toJson()`
 expose the same immutable evidence; unavailable JSON numbers are `null`, never zero.
 
+### Strict separator evidence
+
+`PlantSeparatorEvidence` adapts an already solved separator into the same immutable plant registry
+and snapshot model. Select `GAS_SCRUBBER`, `TWO_PHASE_OIL`, `TWO_PHASE_WATER`, or `THREE_PHASE` so
+the required phase observations are explicit. The adapter reads the existing Souders-Brown gas-load,
+K-value, droplet-cut, inlet-momentum, oil/water residence, live liquid-level, and three-phase
+interface-settling calculations. It does not run or retain the separator.
+
+The strict path requires the exact completed calculation ID, full-candidate convergence, vessel
+diameter and length, inlet-nozzle diameter, and every applicable HLL/NLL/NIL and effective-length
+input. This intentionally disables the convenience geometry fallbacks used by interactive
+separator calculations: missing design data becomes unavailable evidence, never zero utilization.
+The liquid-level and three-phase interface-settling limits are caller-owned installed limits.
+
+```java
+PlantSeparatorEvidence separatorEvidence = PlantSeparatorEvidence
+    .builder("Plant", "Separation", calculationId, separator,
+        PlantSeparatorEvidence.Profile.THREE_PHASE,
+        "approved vessel rating revision 4")
+    .maximumLiquidLevelFraction(0.80)
+    .minimumInterfaceSettlingMinutes(1.0)
+    .convergenceComplete(model.isModelConverged())
+    .build();
+
+if (!separatorEvidence.isComplete()) {
+  throw new IllegalStateException(separatorEvidence.getDiagnostics().toString());
+}
+PlantUtilizationSnapshot separatorSnapshot =
+    separatorEvidence.toPlantUtilizationSnapshot();
+```
+
+Java serialization, JPype getters, `toPlantUtilizationSnapshot()`, and `toJson()` preserve the same
+detached values, physical margins, units, bases, and diagnostics. A physical limit violation remains
+complete and is interpreted according to the severity of the corresponding installed separator
+constraint. Carry-over/carry-under and slug handling are not inferred: they remain separate required
+coverage until a qualified provider, measured correlation, or installed slug-volume rating is
+declared and validated.
+
 ## Expected equipment coverage before qualification
 
 `UtilizationCoverageReport` captures evidence for explicitly declared equipment and constraint

@@ -213,6 +213,39 @@ a value estimated by the adapter. A line-up or limit change invalidates the old 
 isolated candidate again and build a new snapshot. Through JPype, use the same callback-free builder
 and `toJson()` rather than supplying Python callbacks.
 
+### Qualify separator observations without fallback values
+
+After the complete process candidate has converged, use `PlantSeparatorEvidence` to freeze the
+applicable separator calculations. Configure the vessel and mechanical-design elevations first;
+the strict adapter rejects missing inlet-nozzle diameter, HLL/NLL/NIL, and effective gas/liquid
+length instead of using the convenience estimates in `Separator`.
+
+```java
+PlantSeparatorEvidence separatorEvidence = PlantSeparatorEvidence
+    .builder("Plant", "Separation", calculationId, separator,
+        PlantSeparatorEvidence.Profile.TWO_PHASE_OIL,
+        "approved separator rating revision 4")
+    .maximumLiquidLevelFraction(0.80)
+    .convergenceComplete(fullModelConverged)
+    .build();
+
+if (!separatorEvidence.isComplete() || !separatorEvidence.isFeasible()) {
+  throw new IllegalStateException(separatorEvidence.getDiagnostics().toString());
+}
+String separatorJson = separatorEvidence.toJson();
+```
+
+For a three-phase vessel, select `THREE_PHASE` and also call
+`minimumInterfaceSettlingMinutes(...)`. Two-phase oil and water profiles require only their
+applicable residence observation; a gas scrubber does not create a zero-valued liquid-residence
+row. Missing phases, stale calculation identity, non-finite results, or failed convergence are
+unavailable and fail closed. Through JPype, call the same builder and inspect `toJson()`; unavailable
+numbers are JSON `null`.
+
+The adapter reuses the current public separator calculations. It does not validate or invent
+carry-over/carry-under correlations, slug capacity, relief limits, or operating approval. Register
+those limits only from qualified provider or measured evidence and retain their provenance.
+
 ---
 
 ## Overview
