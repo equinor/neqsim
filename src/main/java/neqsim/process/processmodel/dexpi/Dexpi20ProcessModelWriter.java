@@ -324,11 +324,10 @@ public final class Dexpi20ProcessModelWriter {
   }
 
   private static StreamInterface streamNamed(ModelTopology direct, String carriedName, String sourceName,
-      String targetName) {
+    String targetName) {
     for (Link link : direct.links) {
-      if (carriedName.equals(streamName(link.stream))
-          && (sourceName.equals(link.source.getName())
-              || link.target != null && targetName.equals(link.target.getName()))) {
+      if (carriedName.equals(streamName(link.stream)) && (sourceName.equals(link.source.getName())
+          || link.target != null && targetName.equals(link.target.getName()))) {
         return link.stream;
       }
     }
