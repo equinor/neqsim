@@ -140,10 +140,12 @@ class EngineeringDiagramDualProfileDeliveryTest {
       String sourceId = String.valueOf(signal.get("sourcePidElementId"));
       String targetId = String.valueOf(signal.get("targetPidElementId"));
       if (proposalOwnerById.get(sourceId).equals(proposalOwnerById.get(targetId))) {
-        String[] points = pointsForSemanticId(pidSvg, signalId).split(" ");
-        double sourceX = Double.parseDouble(points[0].split(",", 2)[0]);
-        double targetX = Double.parseDouble(points[points.length - 1].split(",", 2)[0]);
-        double trackX = Double.parseDouble(points[1].split(",", 2)[0]);
+        String rawPoints = pointsForSemanticId(pidSvg, signalId);
+        String[] points = rawPoints.split(" ");
+        String context = signalId + " points=\"" + rawPoints + "\"";
+        double sourceX = parseCoordinate(points[0].split(",", 2)[0], context);
+        double targetX = parseCoordinate(points[points.length - 1].split(",", 2)[0], context);
+        double trackX = parseCoordinate(points[1].split(",", 2)[0], context);
         assertTrue(trackX < Math.min(sourceX, targetX) || trackX > Math.max(sourceX, targetX), signalId);
       }
     }
@@ -219,9 +221,19 @@ class EngineeringDiagramDualProfileDeliveryTest {
   }
 
   private static double[] proposalMarkerPoint(String svg, String proposalId) {
-    String[] points = pointsForSemanticId(svg, "pid-proposal:" + proposalId + ":connection").split(" ");
+    String rawPoints = pointsForSemanticId(svg, "pid-proposal:" + proposalId + ":connection");
+    String[] points = rawPoints.split(" ");
     String[] coordinates = points[0].split(",", 2);
-    return new double[] { Double.parseDouble(coordinates[0]), Double.parseDouble(coordinates[1]) };
+    String context = proposalId + " points=\"" + rawPoints + "\"";
+    return new double[] {parseCoordinate(coordinates[0], context), parseCoordinate(coordinates[1], context)};
+  }
+
+  private static double parseCoordinate(String value, String context) {
+    try {
+      return Double.parseDouble(value.trim());
+    } catch (NumberFormatException error) {
+      throw new AssertionError("Non-numeric SVG coordinate '" + value + "' for " + context, error);
+    }
   }
 
   private static String pointsForSemanticId(String svg, String semanticId) {
