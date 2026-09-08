@@ -13,19 +13,20 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Root-cause-analysis helper for locating plausible elemental-sulfur formation mechanisms in a
- * process.
+ * Root-cause-analysis helper for locating plausible elemental-sulfur formation mechanisms in a process.
  *
- * <p>The analysis is intentionally mechanistic and screening-oriented. It does not claim a
- * universal kinetic rate for sulfur chemistry. Instead, each process location is evaluated from
- * its local temperature, pressure, H2S/O2/water availability, residence-time proxy and configured
- * surface state. This makes the result suitable for RCA work where the objective is to rank where a
- * reaction could have occurred and explain why.</p>
+ * <p>
+ * The analysis is intentionally mechanistic and screening-oriented. It does not claim a universal kinetic rate for
+ * sulfur chemistry. Instead, each process location is evaluated from its local temperature, pressure, H2S/O2/water
+ * availability, residence-time proxy and configured surface state. This makes the result suitable for RCA work where
+ * the objective is to rank where a reaction could have occurred and explain why.
+ * </p>
  *
- * <p>Three mechanisms are currently scored: homogeneous H2S/O2 oxidation, heterogeneous H2S/O2
- * oxidation on reactive surfaces, and oxidation of historical FeS scale during oxygen ingress.
- * Surface-specific kinetic models can later replace the screening factors without changing the RCA
- * result contract.</p>
+ * <p>
+ * Three mechanisms are currently scored: homogeneous H2S/O2 oxidation, heterogeneous H2S/O2 oxidation on reactive
+ * surfaces, and oxidation of historical FeS scale during oxygen ingress. Surface-specific kinetic models can later
+ * replace the screening factors without changing the RCA result contract.
+ * </p>
  */
 public class SulfurRcaAnalysis implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -87,10 +88,9 @@ public class SulfurRcaAnalysis implements Serializable {
     public final String dominantMechanism;
     public final List<String> contributingFactors;
 
-    private LocationResult(String location, double temperatureC, double pressureBara,
-        double h2sMoleFraction, double oxygenMoleFraction, double waterMoleFraction,
-        double homogeneousOxidationScore, double surfaceOxidationScore,
-        double ironSulfideOxidationScore, List<String> contributingFactors) {
+    private LocationResult(String location, double temperatureC, double pressureBara, double h2sMoleFraction,
+        double oxygenMoleFraction, double waterMoleFraction, double homogeneousOxidationScore,
+        double surfaceOxidationScore, double ironSulfideOxidationScore, List<String> contributingFactors) {
       this.location = location;
       this.temperatureC = temperatureC;
       this.pressureBara = pressureBara;
@@ -164,51 +164,56 @@ public class SulfurRcaAnalysis implements Serializable {
     double h2s = moleFraction(system, "H2S");
     double oxygen = Math.max(moleFraction(system, "oxygen"), moleFraction(system, "O2"));
     double water = moleFraction(system, "water");
-    double wallTemperatureC = Double.isFinite(surface.wallTemperatureC)
-        ? surface.wallTemperatureC : temperatureC;
+    double wallTemperatureC = Double.isFinite(surface.wallTemperatureC) ? surface.wallTemperatureC : temperatureC;
 
     // Smooth screening windows. They intentionally rank opportunity rather than predict an
     // absolute rate. This keeps RCA useful before a literature/calibrated kinetic set is selected.
     double reactantAvailability = availability(h2s, 1.0e-6) * availability(oxygen, 1.0e-6);
     double homogeneousTemperature = gaussianWindow(temperatureC, 180.0, 120.0);
-    double homogeneous = reactantAvailability * homogeneousTemperature
-        * residenceFactor(defaultResidenceTimeSeconds);
+    double homogeneous = reactantAvailability * homogeneousTemperature * residenceFactor(defaultResidenceTimeSeconds);
 
     double wetting = Math.max(surface.wettedFraction, availability(water, 1.0e-4) * 0.5);
-    double reactiveSurface = clamp01(surface.reactiveIronOxideFraction
-        + 0.5 * surface.ironSulfideCoverageFraction);
+    double reactiveSurface = clamp01(surface.reactiveIronOxideFraction + 0.5 * surface.ironSulfideCoverageFraction);
     double surfaceTemperature = gaussianWindow(wallTemperatureC, 60.0, 80.0);
-    double heterogeneous = reactantAvailability * surfaceTemperature * (0.25 + 0.75 * wetting)
-        * reactiveSurface * surface.relativeSurfaceArea;
+    double heterogeneous = reactantAvailability * surfaceTemperature * (0.25 + 0.75 * wetting) * reactiveSurface
+        * surface.relativeSurfaceArea;
 
-    double fesOxidation = availability(oxygen, 1.0e-6)
-        * surface.ironSulfideCoverageFraction * (0.2 + 0.8 * wetting)
+    double fesOxidation = availability(oxygen, 1.0e-6) * surface.ironSulfideCoverageFraction * (0.2 + 0.8 * wetting)
         * gaussianWindow(wallTemperatureC, 40.0, 70.0) * surface.relativeSurfaceArea;
 
     List<String> factors = new ArrayList<>();
-    if (h2s > 1.0e-6) factors.add("H2S present");
-    if (oxygen > 1.0e-6) factors.add("oxygen present");
-    if (wetting > 0.2) factors.add("wet/reactive wall");
-    if (surface.ironSulfideCoverageFraction > 0.1) factors.add("historical FeS scale available");
-    if (surface.reactiveIronOxideFraction > 0.1) factors.add("reactive iron-oxide surface available");
-    if (Math.abs(wallTemperatureC - temperatureC) > 5.0) factors.add("wall temperature differs from bulk fluid");
-    if (surface.relativeSurfaceArea > 1.5) factors.add("elevated reactive surface area");
+    if (h2s > 1.0e-6)
+      factors.add("H2S present");
+    if (oxygen > 1.0e-6)
+      factors.add("oxygen present");
+    if (wetting > 0.2)
+      factors.add("wet/reactive wall");
+    if (surface.ironSulfideCoverageFraction > 0.1)
+      factors.add("historical FeS scale available");
+    if (surface.reactiveIronOxideFraction > 0.1)
+      factors.add("reactive iron-oxide surface available");
+    if (Math.abs(wallTemperatureC - temperatureC) > 5.0)
+      factors.add("wall temperature differs from bulk fluid");
+    if (surface.relativeSurfaceArea > 1.5)
+      factors.add("elevated reactive surface area");
     factors.add("surface material: " + surface.material);
 
-    return new LocationResult(name, temperatureC, pressureBara, h2s, oxygen, water,
-        homogeneous, heterogeneous, fesOxidation, factors);
+    return new LocationResult(name, temperatureC, pressureBara, h2s, oxygen, water, homogeneous, heterogeneous,
+        fesOxidation, factors);
   }
 
   private static StreamInterface extractRepresentativeStream(ProcessEquipmentInterface equipment) {
     try {
       Object value = equipment.getClass().getMethod("getOutletStream").invoke(equipment);
-      if (value instanceof StreamInterface) return (StreamInterface) value;
+      if (value instanceof StreamInterface)
+        return (StreamInterface) value;
     } catch (Exception ignored) {
       // Try inlet below.
     }
     try {
       Object value = equipment.getClass().getMethod("getInletStream").invoke(equipment);
-      if (value instanceof StreamInterface) return (StreamInterface) value;
+      if (value instanceof StreamInterface)
+        return (StreamInterface) value;
     } catch (Exception ignored) {
       // Equipment has no stream-like public accessor.
     }
@@ -224,7 +229,8 @@ public class SulfurRcaAnalysis implements Serializable {
   }
 
   private static double availability(double value, double scale) {
-    if (value <= 0.0) return 0.0;
+    if (value <= 0.0)
+      return 0.0;
     return clamp01(value / (value + scale));
   }
 
