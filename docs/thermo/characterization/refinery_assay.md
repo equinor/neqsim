@@ -192,6 +192,11 @@ The double logarithm requires every positive-mass source viscosity to be finite 
 0.2 cSt. A zero-mass source is ignored and may leave its viscosity unresolved. The temperature is
 stored with the immutable result but is not used to extrapolate viscosity.
 
+Equal-viscosity sources are valid when their masses are supplied: blending three equal masses at
+20 cSt returns 20 cSt. Floating-point summation can put the blended VBN just outside the source
+interval, so the result is clamped to that interval after input and finiteness checks. This also
+preserves blends of nearly equal viscosities without rejecting valid recipes.
+
 ```java
 RefineryViscosityBlend viscosityBlend = RefineryViscosityBlend.fromMassBasis(
     new double[] {5000.0, 12000.0},
