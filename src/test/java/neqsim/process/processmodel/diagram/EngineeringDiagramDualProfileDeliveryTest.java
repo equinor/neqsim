@@ -11,6 +11,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import neqsim.process.processmodel.ProcessSystem;
@@ -67,7 +73,8 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertEquals(baseline.getPfd().getRendering().getSvgBySheetId(), report.getPfd().getRendering().getSvgBySheetId());
     assertNotEquals(baseline.getPid().getRendering().getSvgBySheetId(),
         report.getPid().getRendering().getSvgBySheetId());
-    assertTrue(report.getPid().getRendering().getSvgBySheetId().toString().contains("P&amp;ID PROPOSAL OVERLAY"));
+    String pidSvg = String.join("\n", report.getPid().getRendering().getSvgBySheetId().values());
+    assertTrue(pidSvg.contains("P&amp;ID PROPOSAL OVERLAY"));
     assertFalse(report.getPfd().getRendering().getSvgBySheetId().toString().contains("P&amp;ID PROPOSAL OVERLAY"));
     EngineeringDiagramPidRegisters registers = report.getPidEngineeringRegisters();
     assertEquals(report.getPid().getDocumentSet().getSourceGraphFingerprint(), registers.getSourceGraphFingerprint());
@@ -78,6 +85,44 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertTrue(registers.getControlSignalCount() > 0);
     assertTrue(registers.getInterfaceCount() > 0);
     assertTrue(registers.getGapCount() > 0);
+    int proposalCount = 0;
+    Map<String, List<String>> proposalIdsByOwnerAndRegister = new java.util.TreeMap<String, List<String>>();
+    for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
+      for (Map<String, Object> row : rows(registers, register)) {
+        String id = String.valueOf(row.get("id"));
+        String tag = String.valueOf(row.get("tag"));
+        String group = row.get("semanticEquipmentId") + "|" + register;
+        List<String> proposalIds = proposalIdsByOwnerAndRegister.get(group);
+        if (proposalIds == null) {
+          proposalIds = new java.util.ArrayList<String>();
+          proposalIdsByOwnerAndRegister.put(group, proposalIds);
+        }
+        proposalIds.add(id);
+        assertTrue(pidSvg.contains("data-semantic-id=\"pid-proposal:" + id + "\""), id);
+        assertTrue(pidSvg.contains(">" + tag + "</text>"), tag);
+        proposalCount++;
+      }
+    }
+    assertTrue(proposalCount > 4);
+    assertFalse(pidSvg.contains(" +1</text>"));
+    assertTrue(pidSvg.contains("font-size=\"2.2\""));
+    for (Map.Entry<String, List<String>> entry : proposalIdsByOwnerAndRegister.entrySet()) {
+      if (entry.getValue().size() < 2) {
+        continue;
+      }
+      Set<String> ownerTerminals = new HashSet<String>();
+      for (String id : entry.getValue()) {
+        ownerTerminals.add(proposalConnectionTerminal(pidSvg, id));
+      }
+      assertEquals(entry.getValue().size(), ownerTerminals.size(), entry.getKey());
+    }
+    List<Map<String, Object>> signals = rows(registers, "controlSignals");
+    assertTrue(signals.size() > 1);
+    for (Map<String, Object> signal : signals) {
+      String signalId = "pid-signal:" + signal.get("sourcePidElementId") + ":" + signal.get("targetPidElementId");
+      assertTrue(pidSvg.contains("data-semantic-id=\"" + signalId + "\""), signalId);
+    }
+    assertEquals(signals.size(), signalPaths(pidSvg).size());
     assertTrue(((java.util.List<?>) registers.toMap().get("nozzles")).stream().anyMatch(
         row -> !((java.util.List<?>) ((java.util.Map<?, ?>) row).get("candidateSemanticConnectionIds")).isEmpty()));
     for (String file : new String[] { "pid-design-model.json", "pid-completeness-report.json",
@@ -122,5 +167,29 @@ class EngineeringDiagramDualProfileDeliveryTest {
         .deliver(EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), existing, request));
     assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramDualProfileDelivery.Request
         .builder(" ", "A", "PFD-10-001", "PID-10-001", "Separation and compression").build());
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, Object>> rows(EngineeringDiagramPidRegisters registers, String name) {
+    return (List<Map<String, Object>>) (List<?>) registers.toMap().get(name);
+  }
+
+  private static Set<String> signalPaths(String svg) {
+    Pattern pattern = Pattern.compile("<polyline points=\"([^\"]+)\"[^>]+data-semantic-id=\"pid-signal:[^\"]+\"");
+    Matcher matcher = pattern.matcher(svg);
+    Set<String> result = new HashSet<String>();
+    while (matcher.find()) {
+      result.add(matcher.group(1));
+    }
+    return result;
+  }
+
+  private static String proposalConnectionTerminal(String svg, String proposalId) {
+    Pattern pattern = Pattern.compile("<polyline points=\"([^\"]+)\"[^>]+data-semantic-id=\""
+        + Pattern.quote("pid-proposal:" + proposalId + ":connection") + "\"");
+    Matcher matcher = pattern.matcher(svg);
+    assertTrue(matcher.find(), proposalId);
+    String[] points = matcher.group(1).split(" ");
+    return points[points.length - 1];
   }
 }
