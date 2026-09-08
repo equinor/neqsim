@@ -37,6 +37,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter;
@@ -273,6 +274,7 @@ public final class Dexpi20ProcessModelWriter {
     EngineeringGraph graph = canonical.getGraph();
     List<Link> projected = new ArrayList<Link>();
     Map<Link, Boolean> consumed = new IdentityHashMap<Link, Boolean>();
+    int projectedNumber = direct.links.size() + 1;
     for (EngineeringNode node : graph.getNodes().values()) {
       if (node.getKind() != EngineeringNode.Kind.PIPE_SEGMENT) {
         continue;
@@ -282,14 +284,71 @@ public final class Dexpi20ProcessModelWriter {
         match.canonicalValueSubjectId = sourceOwnerNodeId(graph, node);
         projected.add(match);
         consumed.put(match, Boolean.TRUE);
+      } else {
+        Link canonicalLink = projectCanonicalLink(direct, node, projectedNumber);
+        if (canonicalLink != null) {
+          projectedNumber++;
+          canonicalLink.canonicalValueSubjectId = sourceOwnerNodeId(graph, node);
+          projected.add(canonicalLink);
+        }
       }
     }
     for (Link link : direct.links) {
-      if (!consumed.containsKey(link)) {
+      if (!consumed.containsKey(link) && !coveredByCanonicalPath(graph, link)) {
         projected.add(link);
       }
     }
     return new ModelTopology(direct.units, projected);
+  }
+
+  private static Link projectCanonicalLink(ModelTopology direct, EngineeringNode connection, int linkNumber) {
+    String sourceName = property(connection, "sourceEquipment");
+    String targetName = property(connection, "targetEquipment");
+    String carriedName = property(connection, "carriedObjectName");
+    ProcessEquipmentInterface source = unitNamed(direct.units, sourceName);
+    ProcessEquipmentInterface target = unitNamed(direct.units, targetName);
+    StreamInterface stream = streamNamed(direct, carriedName, sourceName, targetName);
+    if (source == null || target == null || stream == null) {
+      return null;
+    }
+    return new Link(linkNumber, source, target, stream);
+  }
+
+  private static ProcessEquipmentInterface unitNamed(List<ProcessEquipmentInterface> units, String name) {
+    for (ProcessEquipmentInterface unit : units) {
+      if (name.equals(unit.getName())) {
+        return unit;
+      }
+    }
+    return null;
+  }
+
+  private static StreamInterface streamNamed(ModelTopology direct, String carriedName, String sourceName,
+      String targetName) {
+    for (Link link : direct.links) {
+      if (carriedName.equals(streamName(link.stream))
+          && (sourceName.equals(link.source.getName())
+              || link.target != null && targetName.equals(link.target.getName()))) {
+        return link.stream;
+      }
+    }
+    ProcessEquipmentInterface carried = unitNamed(direct.units, carriedName);
+    if (carried instanceof StreamInterface) {
+      return (StreamInterface) carried;
+    }
+    return null;
+  }
+
+  private static boolean coveredByCanonicalPath(EngineeringGraph graph, Link link) {
+    String stream = streamName(link.stream);
+    for (EngineeringNode node : graph.getNodes().values()) {
+      if (node.getKind() == EngineeringNode.Kind.PIPE_SEGMENT && stream.equals(property(node, "carriedObjectName"))
+          && (link.source.getName().equals(property(node, "sourceEquipment"))
+              || link.target != null && link.target.getName().equals(property(node, "targetEquipment")))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String sourceOwnerNodeId(EngineeringGraph graph, EngineeringNode connection) {
@@ -348,6 +407,9 @@ public final class Dexpi20ProcessModelWriter {
       return "Process/Process.TransportingFluids";
     }
     if (unit instanceof PipeLineInterface) {
+      return "Process/Process.TransportingFluids";
+    }
+    if (unit instanceof Recycle) {
       return "Process/Process.TransportingFluids";
     }
     if (unit instanceof Compressor) {
