@@ -18,15 +18,97 @@ import com.google.gson.JsonParser;
 class TaskSolverRunnerTest {
 
   @Test
-  void testSolveCompressionTask() {
-    String json = "{" + "\"task\": \"Design 2-stage compression from 10 to 80 bara\"," + "\"fluid\": {"
-        + "  \"model\": \"SRK\"," + "  \"components\": {\"methane\": 0.90, \"ethane\": 0.07, \"propane\": 0.03}" + "},"
-        + "\"parameters\": {" + "  \"outletPressure\": 80.0," + "  \"stages\": 2" + "}" + "}";
+  void testSolvePvtTaskRoutesSharedFluid() {
+    JsonObject fluid = new JsonObject();
+    fluid.addProperty("model", "PR");
+    JsonObject components = new JsonObject();
+    components.addProperty("methane", 0.70);
+    components.addProperty("ethane", 0.10);
+    components.addProperty("propane", 0.05);
+    components.addProperty("n-heptane", 0.15);
+    fluid.add("components", components);
 
-    String result = TaskSolverRunner.solveTask(json);
-    assertNotNull(result);
-    JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertTrue(obj.has("success") || obj.has("status"), "Should have success or status field: " + result);
+    JsonObject parameters = new JsonObject();
+    parameters.addProperty("experiment", "saturationPressure");
+
+    JsonObject request = new JsonObject();
+    request.addProperty("task", "Run a PVT saturation pressure analysis");
+    request.add("fluid", fluid);
+    request.add("parameters", parameters);
+    request.addProperty("validate", false);
+
+    JsonObject result = JsonParser.parseString(TaskSolverRunner.solveTask(request.toString())).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    assertTrue(result.get("success").getAsBoolean());
+    assertEquals("pvt", result.get("taskType").getAsString());
+    assertEquals(1, result.get("totalSteps").getAsInt());
+    assertEquals(1, result.get("completedSteps").getAsInt());
+
+    JsonObject step = result.getAsJsonArray("stepResults").get(0).getAsJsonObject();
+    assertEquals("pvt_study", step.get("step").getAsString());
+    assertEquals("pvt", step.get("runner").getAsString());
+    assertTrue(step.get("success").getAsBoolean());
+    assertEquals("success", step.getAsJsonObject("output").get("status").getAsString());
+    assertTrue(
+        result.getAsJsonObject("combinedData").getAsJsonObject("fluid").getAsJsonObject("components").has("methane"));
+    assertTrue(result.getAsJsonObject("combinedData").has("pvt_study_result"));
+  }
+
+  @Test
+  void testSolveCompressionTaskStopsOnRequiredFailure() {
+    JsonObject request = new JsonObject();
+    request.addProperty("task", "Design two-stage compression");
+    request.add("parameters", new JsonObject());
+
+    JsonObject result = JsonParser.parseString(TaskSolverRunner.solveTask(request.toString())).getAsJsonObject();
+    assertEquals("error", result.get("status").getAsString());
+    assertFalse(result.get("success").getAsBoolean());
+    assertEquals("compression", result.get("taskType").getAsString());
+    assertEquals(3, result.get("totalSteps").getAsInt());
+    assertEquals(1, result.get("completedSteps").getAsInt());
+    assertEquals("flash_feed", result.getAsJsonArray("stepResults").get(0).getAsJsonObject().get("step").getAsString());
+  }
+
+  @Test
+  void testSolveRejectsMissingTask() {
+    JsonObject result = JsonParser.parseString(TaskSolverRunner.solveTask("{}")).getAsJsonObject();
+    assertEquals("error", result.get("status").getAsString());
+    assertEquals("MISSING_TASK", result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+  }
+
+  @Test
+  void testSolveRejectsBlankOrMalformedTask() {
+    JsonObject blank = JsonParser.parseString(TaskSolverRunner.solveTask("{\"task\":\"   \"}")).getAsJsonObject();
+    assertEquals("MISSING_TASK", blank.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+
+    JsonObject malformed = JsonParser.parseString(TaskSolverRunner.solveTask("{")).getAsJsonObject();
+    assertEquals("TASK_ERROR", malformed.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+  }
+
+  @Test
+  void testSolveRejectsUnsupportedTask() {
+    JsonObject request = new JsonObject();
+    request.addProperty("task", "Write a poem about offshore weather");
+
+    JsonObject result = JsonParser.parseString(TaskSolverRunner.solveTask(request.toString())).getAsJsonObject();
+    assertEquals("error", result.get("status").getAsString());
+    assertEquals("UNSUPPORTED_TASK",
+        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+  }
+
+  @Test
+  void testSolveFailureUsesErrorEnvelope() {
+    JsonObject request = new JsonObject();
+    request.addProperty("task", "Run a PVT analysis");
+    request.addProperty("validate", false);
+
+    JsonObject result = JsonParser.parseString(TaskSolverRunner.solveTask(request.toString())).getAsJsonObject();
+    assertEquals("error", result.get("status").getAsString());
+    assertFalse(result.get("success").getAsBoolean());
+    assertEquals("TASK_STEP_FAILED",
+        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("MISSING_EXPERIMENT",
+        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("causeCode").getAsString());
   }
 
   @Test

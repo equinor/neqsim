@@ -2135,11 +2135,21 @@ def test_session_lifecycle():
 # --- Task solver tools ---
 
 def test_solve_task():
-    """Solve a simple engineering task."""
+    """Route a supported PVT task through the bounded fixed-plan solver."""
     print("\n=== Solve Task ===")
     r = call_tool("solveTask", {
-        "task": "Calculate the density of methane at 25C and 50 bar",
-        "fluid": json.dumps({"methane": 1.0}),
+        "task": "Run a PVT saturation pressure analysis",
+        "fluid": {
+            "model": "PR",
+            "components": {
+                "methane": 0.70,
+                "ethane": 0.10,
+                "propane": 0.05,
+                "n-heptane": 0.15,
+            },
+        },
+        "parameters": {"experiment": "saturationPressure"},
+        "validate": False,
     })
     check("solveTask status=success", r.get("status") == "success", r.get("message", ""))
 

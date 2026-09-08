@@ -261,7 +261,7 @@ Interfaces may change between minor versions.
 | `runFieldEconomics`          | NPV/IRR/cash flow with fiscal regimes + decline curves              |
 | `runDynamic`                 | Transient dynamic simulation with auto-instrumented PID controllers |
 | `runBioprocess`              | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis)  |
-| `solveTask`                  | Autonomous task solver — results require engineer review           |
+| `solveTask`                  | Keyword-routed fixed plans — results require engineer review       |
 | `composeWorkflow`            | Chain simulation steps into multi-domain workflows                  |
 | `bridgeTaskWorkflow`         | Convert MCP tool output to task_solve results.json format           |
 | `manageSession`              | Persistent simulation sessions                                      |
@@ -272,6 +272,22 @@ Interfaces may change between minor versions.
 | `manageValidationProfile`    | Jurisdiction-specific validation profiles                           |
 | `runPlugin`                  | Run or list registered MCP runner plugins                           |
 | `runCapability`              | Discover runtime methods and invoke bounded JSON-safe static calculations |
+
+### Bounded task-solver contract
+
+`solveTask` requires a non-blank task description and recognizes only the
+documented keyword families for compression, separation, dehydration,
+pipeline, PVT, flow assurance, reservoir, economics, and dynamic studies.
+Each family maps to a deterministic fixed plan of existing NeqSim runners.
+The caller supplies the fluid and runner parameters; unsupported descriptions
+fail closed. Step outputs are collected in the report but are not
+semantically translated into later runner inputs.
+
+This contract does not establish general natural-language planning, arbitrary
+tool or code execution, semantic compatibility between steps, numerical
+validity, convergence, conservation, facility completeness, certification, or
+engineering approval. See
+[the bounded qualification evidence](docs/evidence/TASK_SOLVER_CONTRACT.md).
 
 ### Enforcement Example
 
