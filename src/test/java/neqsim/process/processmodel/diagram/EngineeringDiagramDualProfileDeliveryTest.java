@@ -64,8 +64,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertEquals(measurementCount, process.getMeasurementDevices().size());
     assertEquals(baseline.getPfd().getFingerprint(), report.getPfd().getFingerprint());
     assertNotEquals(baseline.getPid().getFingerprint(), report.getPid().getFingerprint());
-    assertEquals(baseline.getPfd().getRendering().getSvgBySheetId(),
-        report.getPfd().getRendering().getSvgBySheetId());
+    assertEquals(baseline.getPfd().getRendering().getSvgBySheetId(), report.getPfd().getRendering().getSvgBySheetId());
     assertNotEquals(baseline.getPid().getRendering().getSvgBySheetId(),
         report.getPid().getRendering().getSvgBySheetId());
     assertTrue(report.getPid().getRendering().getSvgBySheetId().toString().contains("P&ID PROPOSAL OVERLAY"));
@@ -91,8 +90,8 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertEquals(registers.toJson(),
         new String(Files.readAllBytes(report.getDirectory().resolve("pid/pid-engineering-registers.json")),
             StandardCharsets.UTF_8));
-    assertTrue(report.toJson()
-        .contains("REVIEW_REQUIRED_SOURCE_LINKED_OVERLAY_IN_SVG_PDF_WITH_SIDECARS;EXCHANGES_UNCHANGED"));
+    assertTrue(
+        report.toJson().contains("REVIEW_REQUIRED_SOURCE_LINKED_OVERLAY_IN_SVG_PDF_WITH_SIDECARS;EXCHANGES_UNCHANGED"));
   }
 
   @Test
