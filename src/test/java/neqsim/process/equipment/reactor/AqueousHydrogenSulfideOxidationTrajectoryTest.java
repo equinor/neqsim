@@ -327,8 +327,8 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
         identity.getUpperRateOutletLossRateMolalityPerHour(), 0.0);
     assertEquals(identity.getLowerRateInletLossRateMolalityPerHour(),
         identity.getLowerRateMeanLossRateMolalityPerHour(), 0.0);
-    assertEquals(identity.getNominalInletLossRateMolalityPerHour(),
-        identity.getNominalMeanLossRateMolalityPerHour(), 0.0);
+    assertEquals(identity.getNominalInletLossRateMolalityPerHour(), identity.getNominalMeanLossRateMolalityPerHour(),
+        0.0);
     assertEquals(identity.getUpperRateInletLossRateMolalityPerHour(),
         identity.getUpperRateMeanLossRateMolalityPerHour(), 0.0);
   }
@@ -359,9 +359,8 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
     double durationHours = 10.0;
     AqueousHydrogenSulfideOxidationTrajectory.Result unsplit = AqueousHydrogenSulfideOxidationTrajectory
         .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(referenceSegment(durationHours)));
-    AqueousHydrogenSulfideOxidationTrajectory.Result split = AqueousHydrogenSulfideOxidationTrajectory
-        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY,
-            Arrays.asList(referenceSegment(4.0), referenceSegment(durationHours - 4.0)));
+    AqueousHydrogenSulfideOxidationTrajectory.Result split = AqueousHydrogenSulfideOxidationTrajectory.advance(
+        INITIAL_TOTAL_SULFIDE_MOLALITY, Arrays.asList(referenceSegment(4.0), referenceSegment(durationHours - 4.0)));
 
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult whole = unsplit.getSegmentResults().get(0);
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult first = split.getSegmentResults().get(0);
