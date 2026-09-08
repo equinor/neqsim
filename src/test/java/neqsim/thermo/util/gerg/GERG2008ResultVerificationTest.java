@@ -437,4 +437,5 @@ public class GERG2008ResultVerificationTest {
 
   private void assertRelativeEquals(double expected, double actual, double relativeTolerance, String label) {
     assertEquals(expected, actual, Math.max(1.0e-10, relativeTolerance * Math.abs(expected)), label);
-  }}
+  }
+}
