@@ -43,7 +43,7 @@ independent validation of SRK methane properties.
 
 ## Qualified contract
 
-The candidate evidence covers:
+The contract evidence covers:
 
 1. Explicit workflow identity and ordered caller-authored steps.
 2. The existing curated runner-name dispatch table; unknown runners fail
@@ -59,7 +59,7 @@ The candidate evidence covers:
 
 ## Security, numerical, and engineering boundary
 
-This qualification does not establish:
+This contract evidence does not establish:
 
 - natural-language planning, inferred workflow design, or arbitrary code,
   shell, class, plugin, MCP-tool, or network execution;
@@ -81,8 +81,13 @@ limitations, and obtaining qualified engineering review.
 
 ## Inventory status
 
-`composeWorkflow` remains `CONFIRMED_GAP` in inventory version `1.31`
-with accounting `20 explicit + 31 contract-tested + 20 confirmed gaps`.
-Qualification and promotion are separate atomic increments. A future
-promotion may classify the tool only after this direct evidence merges and
-all authoritative exact-head gates pass.
+Inventory version `1.32` atomically promotes `composeWorkflow` to
+`CONTRACT_TESTED` after merged PR #3566 established the direct evidence
+above. Machine-readable coverage, Java assertions,
+`test_compose_workflow_protocol.py`, synchronized focused protocol
+expectations, authoritative `test_mcp_server.py` accounting, and
+documentation move together from `20/31/20` to `20/32/19`.
+
+No promotion candidate remains queued. Phase 0 remains incomplete and
+`scientificValidationComplete=false`; this is a bounded software-contract
+classification, not a scientific benchmark or facility-suitability claim.

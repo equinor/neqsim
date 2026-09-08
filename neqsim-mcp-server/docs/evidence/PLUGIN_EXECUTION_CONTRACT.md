@@ -44,9 +44,11 @@ fresh server and verifies empty-catalog discovery, default-list behavior,
 absent and empty plugin names, unknown actions, malformed input, standard
 envelopes, and real STDIO transport.
 
-Inventory `1.31 / 20 explicit + 31 contract-tested + 20 confirmed gaps`
-records the promotion together with the machine-readable coverage record, Java
-assertions, focused packaged-MCP accounting, and comprehensive protocol accounting.
+Inventory `1.30 / 20 explicit + 30 contract-tested + 21 confirmed gaps`
+recorded the promotion together with the machine-readable coverage record,
+Java assertions, focused packaged-MCP accounting, and comprehensive protocol
+accounting. Current inventory `1.32 / 20 explicit + 32 contract-tested + 19
+confirmed gaps` retains that classification.
 Coverage remains incomplete and `scientificValidationComplete=false`; this is a
 bounded software-contract classification, not a scientific benchmark claim.
 

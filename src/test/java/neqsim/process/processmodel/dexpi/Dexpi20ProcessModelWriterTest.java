@@ -15,6 +15,7 @@ import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.processmodel.ProcessConnection;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.diagram.ProcessDiagramGoldenFixtures;
@@ -149,6 +150,31 @@ class Dexpi20ProcessModelWriterTest {
     assertTrue(xml.contains("property=\"ConnectorReference\""));
     assertTrue(xml.contains("MassFlowRateUnit.KilogramPerHour"));
     assertTrue(report.toJson().contains("NOT_A_DEXPI_EV_CERTIFICATE"));
+  }
+
+  @Test
+  void projectsSimulationRecycleAsTransportingFluidsWithoutLosingMaterialTopology() throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 1.0);
+    Stream feed = new Stream("10-FEED-RECYCLE", fluid);
+    Heater heater = new Heater("10-HA-RECYCLE", feed);
+    Recycle recycle = new Recycle("10-RC-RECYCLE");
+    recycle.addStream(heater.getOutletStream());
+    recycle.setOutletStream(new Stream("10-RECYCLE-OUT", fluid.clone()));
+    Stream product = new Stream("10-PRODUCT-RECYCLE", recycle.getOutletStream());
+    ProcessSystem process = new ProcessSystem("DEXPI recycle projection regression");
+    process.add(feed);
+    process.add(heater);
+    process.add(recycle);
+    process.add(product);
+    Path output = temporaryDirectory.resolve("process-recycle.dexpi.xml");
+
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
+        output.toFile(), "DEXPI-RECYCLE-PROJECTION", "A");
+
+    assertTrue(report.isSchemaProfileAndSupportedTopologyValid(), report.getDiagnostics().toString());
+    assertEquals("Process/Process.TransportingFluids", processStepType(output, "10-RC-RECYCLE"));
+    assertEquals(report.getCanonicalMaterialConnections(), report.getExportedMaterialConnections());
   }
 
   @Test

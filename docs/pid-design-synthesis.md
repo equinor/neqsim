@@ -64,6 +64,10 @@ generated design. The sidecars preserve details that a P&ID exchange profile can
 The exporter refreshes the engineering package manifest after P&ID elements are materialized into the DEXPI and
 pyDEXPI documents.
 
+The [dual-profile reference delivery](integration/comparesimulations-pfd-pid-acceptance) can also opt into
+source-linked P&ID proposal registers and completeness sidecars. That facade exports proposal evidence alongside
+the canonical PFD/P&ID drawings; it does not materialize the proposed elements into its drawings or exchanges.
+
 ## Status boundary
 
 `structurallyComplete` means that references and minimum functional categories passed automated

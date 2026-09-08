@@ -199,6 +199,7 @@ public final class NativeEngineeringDiagramRenderer {
   private final SheetFormat format;
   private final EngineeringDiagramConventionRegister conventionRegister;
   private final RoutingMode routingMode;
+  private final EngineeringDiagramPidRegisters pidRegisters;
 
   /**
    * Creates an A3-landscape native renderer using byte-compatible legacy rectangle defaults.
@@ -292,6 +293,27 @@ public final class NativeEngineeringDiagramRenderer {
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
       EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode) {
+    this(documentSet, format, conventionRegister, routingMode, null);
+  }
+
+  /**
+   * Creates a renderer with an optional source-linked, review-required P&amp;ID proposal overlay.
+   *
+   * <p>
+   * The overlay is a compact graphical projection of the immutable engineering registers. It does not modify the
+   * canonical process topology, qualify project symbols, or approve any proposal for design, safety, or construction. A
+   * null register preserves the existing PFD and legacy renderer bytes.
+   * </p>
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param format paper geometry
+   * @param conventionRegister evidence-bearing project symbol conventions
+   * @param routingMode connection-routing behavior
+   * @param pidRegisters source-linked P&amp;ID proposal registers, or null
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
+      EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode,
+      EngineeringDiagramPidRegisters pidRegisters) {
     if (documentSet == null) {
       throw new IllegalArgumentException("documentSet must not be null");
     }
@@ -304,10 +326,15 @@ public final class NativeEngineeringDiagramRenderer {
     if (routingMode == null) {
       throw new IllegalArgumentException("routingMode must not be null");
     }
+    if (pidRegisters != null
+        && !documentSet.getSourceGraphFingerprint().equals(pidRegisters.getSourceGraphFingerprint())) {
+      throw new IllegalArgumentException("P&ID registers must identify the rendered canonical source graph");
+    }
     this.documentSet = documentSet;
     this.format = format;
     this.conventionRegister = conventionRegister;
     this.routingMode = routingMode;
+    this.pidRegisters = pidRegisters;
   }
 
   /**
@@ -427,17 +454,22 @@ public final class NativeEngineeringDiagramRenderer {
       }
     }
     addRouteQualityDiagnostics(page, positions, diagnostics);
+    Map<String, String> sheetNumberById = new TreeMap<String, String>();
+    for (Sheet controlledSheet : drawing.getSheets()) {
+      sheetNumberById.put(controlledSheet.getId(), controlledSheet.getNumber());
+    }
     for (OffPageConnector connector : sheet.getOffPageConnectors()) {
-      addOffPageConnector(page, connector, contentRight, contentBottom);
+      addOffPageConnector(page, connector, objects, sheetNumberById, contentRight, contentBottom);
     }
     for (String id : ids) {
       SemanticObject object = objects.get(id);
       Point position = positions.get(id);
-      if (object != null && position != null && isDrawableNode(object.getKind())) {
+      if (object != null && position != null && isDrawableObject(object)) {
         addObject(page, object, position);
       }
     }
     addPortMarkers(page, endpointAnchors);
+    addPidProposalOverlay(page, objects, positions);
     addTitleBlock(page, drawing, sheet);
     return page;
   }
@@ -463,7 +495,7 @@ public final class NativeEngineeringDiagramRenderer {
       for (Sheet sheet : drawing.getSheets()) {
         for (String objectId : sheet.getObjectNodeIds()) {
           SemanticObject object = objects.get(objectId);
-          if (object != null && isDrawableNode(object.getKind())) {
+          if (object != null && isDrawableObject(object)) {
             visibleObjects.put(objectId, object);
           }
         }
@@ -488,7 +520,7 @@ public final class NativeEngineeringDiagramRenderer {
     List<String> drawableIds = new ArrayList<String>();
     for (String id : sheet.getObjectNodeIds()) {
       SemanticObject object = objects.get(id);
-      if (object != null && isDrawableNode(object.getKind()) && positions.containsKey(id)) {
+      if (object != null && isDrawableObject(object) && positions.containsKey(id)) {
         drawableIds.add(id);
       }
     }
@@ -530,7 +562,7 @@ public final class NativeEngineeringDiagramRenderer {
     List<String> automatic = new ArrayList<String>();
     for (String id : sheet.getObjectNodeIds()) {
       SemanticObject object = objects.get(id);
-      if (object != null && isDrawableNode(object.getKind()) && !result.containsKey(id)) {
+      if (object != null && isDrawableObject(object) && !result.containsKey(id)) {
         automatic.add(id);
       }
     }
@@ -718,6 +750,9 @@ public final class NativeEngineeringDiagramRenderer {
       dash = "2 2";
     }
     page.commands.add(Command.polyline(points, color, 0.8, dash, connection.getId(), protectedGeometry));
+    if (routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL) {
+      addFlowArrow(page, points, color, connection.getId());
+    }
     String label = displayLabel(connection);
     Point labelPoint = routeLabelPoint(points);
     if (label == null || label.trim().isEmpty()) {
@@ -761,17 +796,34 @@ public final class NativeEngineeringDiagramRenderer {
     }
   }
 
-  private void addOffPageConnector(Page page, OffPageConnector connector, double contentRight, double contentBottom) {
+  private void addOffPageConnector(Page page, OffPageConnector connector, Map<String, SemanticObject> objects,
+      Map<String, String> sheetNumberById, double contentRight, double contentBottom) {
     Point point = connectorPoint(connector, contentRight, contentBottom);
     double direction = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? 1.0 : -1.0;
     List<Point> triangle = Arrays.asList(new Point(point.x, point.y),
         new Point(point.x - direction * 5.0, point.y - 3.0), new Point(point.x - direction * 5.0, point.y + 3.0),
         new Point(point.x, point.y));
     page.commands.add(Command.polyline(triangle, "#111827", 0.7, "", connector.getId(), false));
-    String label = "TO/FROM " + connector.getZoneReference() + " [" + connector.getPeerSheetId() + "]";
+    String label = offPageLabel(connector, objects, sheetNumberById);
     double textX = point.x - direction * 7.0;
     page.commands.add(Command.text(textX, point.y - 4.0, 2.4, label, "#111827", connector.getId(),
         direction > 0.0 ? "end" : "start"));
+  }
+
+  private String offPageLabel(OffPageConnector connector, Map<String, SemanticObject> objects,
+      Map<String, String> sheetNumberById) {
+    SymbolConvention lineConvention = conventionRegister.getSymbolConvention(EngineeringNode.Kind.LINE);
+    if (lineConvention == null || lineConvention.getShape() != SymbolShape.LINE_TERMINAL) {
+      return "TO/FROM " + connector.getZoneReference() + " [" + connector.getPeerSheetId() + "]";
+    }
+    SemanticObject connection = objects.get(connector.getSemanticConnectionId());
+    String connectionLabel = connection == null ? connector.getZoneReference() : displayLabel(connection);
+    String movement = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? "TO" : "FROM";
+    String peerSheetNumber = sheetNumberById.get(connector.getPeerSheetId());
+    if (peerSheetNumber == null || peerSheetNumber.trim().isEmpty()) {
+      peerSheetNumber = connector.getPeerSheetId();
+    }
+    return connectionLabel + " " + movement + " SHEET " + peerSheetNumber;
   }
 
   private void addObject(Page page, SemanticObject object, Point position) {
@@ -780,11 +832,141 @@ public final class NativeEngineeringDiagramRenderer {
     String stroke = convention == null ? "#1f2937" : convention.getStrokeColor();
     String fill = convention == null ? (object.getKind() == EngineeringNode.Kind.EQUIPMENT ? "#eef6ee" : "#eff6ff")
         : convention.getFillColor();
-    page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
+    if (shape == SymbolShape.PROCESS_EQUIPMENT) {
+      addProcessEquipmentSymbol(page, object, position, stroke, fill);
+    } else if (shape == SymbolShape.LINE_TERMINAL) {
+      addLineTerminalSymbol(page, object, position, stroke, fill);
+    } else {
+      page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
+    }
     String primary = displayLabel(object);
     page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
+    String secondary = shape == SymbolShape.PROCESS_EQUIPMENT ? equipmentFamily(object) : object.getKind().name();
+    page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, secondary, "#4b5563", object.getId(), "middle"));
+  }
+
+  private static void addProcessEquipmentSymbol(Page page, SemanticObject object, Point position, String stroke,
+      String fill) {
+    String family = equipmentFamily(object);
+    double left = position.x - OBJECT_WIDTH / 2.0;
+    double right = position.x + OBJECT_WIDTH / 2.0;
+    double top = position.y - OBJECT_HEIGHT / 2.0;
+    double bottom = position.y + OBJECT_HEIGHT / 2.0;
+    if ("SEPARATOR".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(left + 7.0, top), new Point(right - 7.0, top),
+          new Point(right, top + 5.0), new Point(right, bottom - 5.0), new Point(right - 7.0, bottom),
+          new Point(left + 7.0, bottom), new Point(left, bottom - 5.0), new Point(left, top + 5.0)), stroke, fill, 0.7,
+          object.getId()));
+      page.commands.add(Command.line(left + 2.0, position.y + 2.5, right - 2.0, position.y + 2.5, stroke, 0.5, "", ""));
+      return;
+    }
+    if ("HEAT EXCHANGER".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(position.x, top), new Point(right, position.y),
+          new Point(position.x, bottom), new Point(left, position.y)), stroke, fill, 0.7, object.getId()));
+      page.commands.add(Command.line(left + 8.0, top + 3.0, right - 8.0, bottom - 3.0, stroke, 0.5, "", ""));
+      page.commands.add(Command.line(left + 8.0, bottom - 3.0, right - 8.0, top + 3.0, stroke, 0.5, "", ""));
+      return;
+    }
+    if ("COMPRESSOR".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(left, position.y - 4.0), new Point(right, top),
+          new Point(right, bottom), new Point(left, position.y + 4.0)), stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("PUMP".equals(family)) {
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(left + 5.0, top), new Point(right - 8.0, top), new Point(right, position.y),
+              new Point(right - 8.0, bottom), new Point(left + 5.0, bottom), new Point(left, position.y)),
+          stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("VALVE".equals(family)) {
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(left, top), new Point(position.x, position.y), new Point(left, bottom)), stroke, fill,
+          0.7, object.getId()));
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(right, top), new Point(position.x, position.y), new Point(right, bottom)), stroke,
+          fill, 0.7, ""));
+      return;
+    }
+    if ("MIXER".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(position.x, top), new Point(right, position.y),
+          new Point(position.x, bottom), new Point(left, position.y)), stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("SPLITTER".equals(family)) {
+      page.commands.add(
+          Command.polygon(Arrays.asList(new Point(left, top), new Point(right, position.y), new Point(left, bottom)),
+              stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("RECYCLE".equals(family)) {
+      page.commands.add(symbolCommand(SymbolShape.HEXAGON, position, stroke, fill, object.getId()));
+      page.commands.add(Command.text(position.x, position.y, 4.5, "R", stroke, "", "middle"));
+      return;
+    }
+    page.commands.add(symbolCommand(SymbolShape.RECTANGLE, position, stroke, fill, object.getId()));
+  }
+
+  private static void addLineTerminalSymbol(Page page, SemanticObject object, Point position, String stroke,
+      String fill) {
+    double left = position.x - OBJECT_WIDTH / 2.0;
+    double right = position.x + OBJECT_WIDTH / 2.0;
+    double top = position.y - OBJECT_HEIGHT / 2.0;
+    double bottom = position.y + OBJECT_HEIGHT / 2.0;
     page.commands.add(
-        Command.text(position.x, position.y + 4.0, 2.0, object.getKind().name(), "#4b5563", object.getId(), "middle"));
+        Command.polygon(Arrays.asList(new Point(left, top), new Point(right - 7.0, top), new Point(right, position.y),
+            new Point(right - 7.0, bottom), new Point(left, bottom)), stroke, fill, 0.7, object.getId()));
+  }
+
+  private static String equipmentFamily(SemanticObject object) {
+    String javaClass = stringProperty(object, "javaClass", "").toLowerCase(Locale.ROOT);
+    if (javaClass.contains("separator")) {
+      return "SEPARATOR";
+    }
+    if (javaClass.contains("heatexchanger") || javaClass.contains("cooler") || javaClass.contains("heater")) {
+      return "HEAT EXCHANGER";
+    }
+    if (javaClass.contains("compressor")) {
+      return "COMPRESSOR";
+    }
+    if (javaClass.contains("pump")) {
+      return "PUMP";
+    }
+    if (javaClass.contains("valve")) {
+      return "VALVE";
+    }
+    if (javaClass.contains("mixer")) {
+      return "MIXER";
+    }
+    if (javaClass.contains("splitter")) {
+      return "SPLITTER";
+    }
+    if (javaClass.contains("recycle")) {
+      return "RECYCLE";
+    }
+    return "EQUIPMENT";
+  }
+
+  private static void addFlowArrow(Page page, List<Point> points, String color, String connectionId) {
+    for (int index = points.size() - 1; index > 0; index--) {
+      Point start = points.get(index - 1);
+      Point end = points.get(index);
+      double length = distance(start, end);
+      if (length < 0.001) {
+        continue;
+      }
+      double unitX = (end.x - start.x) / length;
+      double unitY = (end.y - start.y) / length;
+      Point tip = new Point(start.x + (end.x - start.x) * 0.65, start.y + (end.y - start.y) * 0.65);
+      Point base = new Point(tip.x - unitX * 3.0, tip.y - unitY * 3.0);
+      double perpendicularX = -unitY * 1.4;
+      double perpendicularY = unitX * 1.4;
+      page.commands.add(Command.polygon(
+          Arrays.asList(tip, new Point(base.x + perpendicularX, base.y + perpendicularY),
+              new Point(base.x - perpendicularX, base.y - perpendicularY)),
+          color, color, 0.4, "flow-arrow:" + connectionId));
+      return;
+    }
   }
 
   private static Command symbolCommand(SymbolShape shape, Point position, String stroke, String fill, String objectId) {
@@ -807,6 +989,136 @@ public final class NativeEngineeringDiagramRenderer {
           stroke, fill, 0.7, objectId);
     }
     return Command.rect(left, top, OBJECT_WIDTH, OBJECT_HEIGHT, stroke, fill, 0.7, objectId, "");
+  }
+
+  private void addPidProposalOverlay(Page page, Map<String, SemanticObject> objects, Map<String, Point> positions) {
+    if (pidRegisters == null) {
+      return;
+    }
+    page.commands.add(Command.text(page.width - 12.0, 22.0, 2.2, "P&ID PROPOSAL OVERLAY - REVIEW REQUIRED", "#1d4ed8",
+        "pid-proposal:overlay-status", "end"));
+    Map<String, Object> registerData = pidRegisters.toMap();
+    Map<String, List<Map<String, Object>>> rowsByEquipment = new TreeMap<String, List<Map<String, Object>>>();
+    for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
+      for (Map<String, Object> row : proposalRows(registerData, register)) {
+        String equipmentId = textValue(row.get("semanticEquipmentId"));
+        if (!positions.containsKey(equipmentId)) {
+          continue;
+        }
+        List<Map<String, Object>> rows = rowsByEquipment.get(equipmentId + "|" + register);
+        if (rows == null) {
+          rows = new ArrayList<Map<String, Object>>();
+          rowsByEquipment.put(equipmentId + "|" + register, rows);
+        }
+        rows.add(row);
+      }
+    }
+    Map<String, Point> proposalPositions = new TreeMap<String, Point>();
+    List<String> equipmentIds = new ArrayList<String>(positions.keySet());
+    Collections.sort(equipmentIds);
+    for (String equipmentId : equipmentIds) {
+      SemanticObject object = objects.get(equipmentId);
+      if (object == null || object.getKind() != EngineeringNode.Kind.EQUIPMENT) {
+        continue;
+      }
+      Point equipment = positions.get(equipmentId);
+      addPidMarker(page, equipmentId, "nozzles", rowsByEquipment, equipment,
+          new Point(equipment.x - OBJECT_WIDTH / 2.0 - 4.0, equipment.y), proposalPositions);
+      addPidMarker(page, equipmentId, "instruments", rowsByEquipment, equipment,
+          new Point(equipment.x, equipment.y - OBJECT_HEIGHT / 2.0 - 7.0), proposalPositions);
+      addPidMarker(page, equipmentId, "valves", rowsByEquipment, equipment,
+          new Point(equipment.x, equipment.y + OBJECT_HEIGHT / 2.0 + 7.0), proposalPositions);
+      addPidMarker(page, equipmentId, "interfaces", rowsByEquipment, equipment,
+          new Point(equipment.x + OBJECT_WIDTH / 2.0 + 8.0, equipment.y - 7.0), proposalPositions);
+    }
+    for (Map<String, Object> signal : proposalRows(registerData, "controlSignals")) {
+      String sourceId = textValue(signal.get("sourcePidElementId"));
+      String targetId = textValue(signal.get("targetPidElementId"));
+      Point source = proposalPositions.get(sourceId);
+      Point target = proposalPositions.get(targetId);
+      if (source == null || target == null) {
+        continue;
+      }
+      List<Point> points;
+      if (distance(source, target) < 0.001) {
+        points = Arrays.asList(source, new Point(source.x + 5.0, source.y - 5.0), new Point(source.x + 10.0, source.y),
+            source);
+      } else {
+        double middleX = (source.x + target.x) / 2.0;
+        points = Arrays.asList(source, new Point(middleX, source.y), new Point(middleX, target.y), target);
+      }
+      page.commands
+          .add(Command.polyline(points, "#2563eb", 0.5, "2 2", "pid-signal:" + sourceId + ":" + targetId, false));
+    }
+  }
+
+  private static void addPidMarker(Page page, String equipmentId, String register,
+      Map<String, List<Map<String, Object>>> rowsByEquipment, Point equipment, Point marker,
+      Map<String, Point> proposalPositions) {
+    List<Map<String, Object>> rows = rowsByEquipment.get(equipmentId + "|" + register);
+    if (rows == null || rows.isEmpty()) {
+      return;
+    }
+    Collections.sort(rows, new Comparator<Map<String, Object>>() {
+      @Override
+      public int compare(Map<String, Object> left, Map<String, Object> right) {
+        return textValue(left.get("id")).compareTo(textValue(right.get("id")));
+      }
+    });
+    String firstId = textValue(rows.get(0).get("id"));
+    String firstTag = textValue(rows.get(0).get("tag"));
+    for (Map<String, Object> row : rows) {
+      proposalPositions.put(textValue(row.get("id")), marker);
+    }
+    String count = rows.size() == 1 ? "" : " +" + (rows.size() - 1);
+    String semanticId = "pid-proposal:" + firstId;
+    if ("instruments".equals(register)) {
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(marker.x, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
+              new Point(marker.x, marker.y + 3.0), new Point(marker.x - 3.0, marker.y)),
+          "#2563eb", "#ffffff", 0.6, semanticId));
+      page.commands.add(Command.line(marker.x, marker.y + 3.0, equipment.x, equipment.y - OBJECT_HEIGHT / 2.0,
+          "#2563eb", 0.4, semanticId + ":connection", ""));
+    } else if ("valves".equals(register)) {
+      page.commands
+          .add(Command.polygon(Arrays.asList(new Point(marker.x - 3.5, marker.y - 2.5), new Point(marker.x, marker.y),
+              new Point(marker.x - 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6, semanticId));
+      page.commands
+          .add(Command.polygon(Arrays.asList(new Point(marker.x + 3.5, marker.y - 2.5), new Point(marker.x, marker.y),
+              new Point(marker.x + 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6, semanticId + ":half"));
+    } else if ("interfaces".equals(register)) {
+      page.commands.add(
+          Command.polygon(Arrays.asList(new Point(marker.x - 3.0, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
+              new Point(marker.x - 3.0, marker.y + 3.0)), "#6d28d9", "#ffffff", 0.6, semanticId));
+    } else {
+      page.commands
+          .add(Command.rect(marker.x - 1.5, marker.y - 1.5, 3.0, 3.0, "#0891b2", "#ffffff", 0.5, semanticId, ""));
+    }
+    page.commands
+        .add(Command.text(marker.x, marker.y - 4.5, 1.5, firstTag + count, "#111827", semanticId + ":tag", "middle"));
+  }
+
+  private static List<Map<String, Object>> proposalRows(Map<String, Object> data, String register) {
+    List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+    Object raw = data.get(register);
+    if (!(raw instanceof List<?>)) {
+      return result;
+    }
+    for (Object item : (List<?>) raw) {
+      if (!(item instanceof Map<?, ?>)) {
+        continue;
+      }
+      Map<String, Object> row = new LinkedHashMap<String, Object>();
+      for (Map.Entry<?, ?> entry : ((Map<?, ?>) item).entrySet()) {
+        row.put(String.valueOf(entry.getKey()), entry.getValue());
+      }
+      result.add(row);
+    }
+    return result;
+  }
+
+  private static String textValue(Object value) {
+    return value == null ? "" : String.valueOf(value);
   }
 
   private void addTitleBlock(Page page, Drawing drawing, Sheet sheet) {
@@ -954,6 +1266,11 @@ public final class NativeEngineeringDiagramRenderer {
   private static boolean isDrawableNode(EngineeringNode.Kind kind) {
     return kind == EngineeringNode.Kind.EQUIPMENT || kind == EngineeringNode.Kind.INSTRUMENT
         || kind == EngineeringNode.Kind.BOUNDARY || kind == EngineeringNode.Kind.PROCESS_TAP;
+  }
+
+  private boolean isDrawableObject(SemanticObject object) {
+    return isDrawableNode(object.getKind()) || object.getKind() == EngineeringNode.Kind.LINE
+        && conventionRegister.getSymbolConvention(EngineeringNode.Kind.LINE) != null;
   }
 
   private static boolean isConnection(EngineeringNode.Kind kind) {
