@@ -2,7 +2,7 @@
 
 This dependency-free harness starts the packaged NeqSim MCP server over STDIO
 and qualifies discovery routing, exact static invocation, policy rejection,
-invalid input handling, standard envelopes, and real transport. It does not
+invalid input handling, inventory promotion, standard envelopes, and real transport. It does not
 establish scientific validity, arbitrary classpath completeness, sandboxing,
 resource or tenant isolation, external IAM, transport security, plant
 authority, certification, or engineering approval.
@@ -283,6 +283,47 @@ def test_malformed_input_fails_closed(client):
     )
 
 
+def test_inventory_promotion(client):
+    response = client.call_tool("getCapabilities", {})
+    result = payload(response)
+    require(result.get("status") == "success", "capability request failed", response)
+    inventory = result.get("phase0EvidenceInventory", {})
+    limitations = inventory.get("knownLimitations", {})
+    record = limitations.get("coverageRecords", {}).get("runCapability", {})
+    require(inventory.get("inventoryVersion") == "1.31", "inventory version drifted", inventory)
+    require(
+        limitations.get("contractTestedToolCount") == 31
+        and limitations.get("confirmedGapToolCount") == 20,
+        "runtime-capability promotion accounting drifted",
+        limitations,
+    )
+    require(
+        limitations.get("contractPromotionCandidateCount") == 0,
+        "promotion candidate remained queued",
+        limitations,
+    )
+    require(
+        record.get("coverageStatus") == "CONTRACT_TESTED",
+        "runCapability was not promoted",
+        record,
+    )
+    require(
+        record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_RUNTIME_CAPABILITY_EXECUTION",
+        "runtime-capability applicability drifted",
+        record,
+    )
+    require(
+        "neqsim-mcp-server/test_capability_protocol.py"
+        in record.get("contractEvidenceSources", [])
+        and "scientific validity" in record.get("evidenceBoundary", "")
+        and "operating-system or process sandbox"
+        in record.get("evidenceBoundary", ""),
+        "runtime-capability evidence or boundary drifted",
+        record,
+    )
+
+
 def main():
     client = McpClient()
     tests = [
@@ -293,6 +334,7 @@ def main():
         ("instance method fails closed", test_instance_method_fails_closed),
         ("unknown action fails closed", test_unknown_action_fails_closed),
         ("malformed input fails closed", test_malformed_input_fails_closed),
+        ("inventory promotion", test_inventory_promotion),
     ]
     try:
         client.start()
