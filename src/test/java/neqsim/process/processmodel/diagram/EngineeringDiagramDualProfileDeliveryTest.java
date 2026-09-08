@@ -86,10 +86,18 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertTrue(registers.getInterfaceCount() > 0);
     assertTrue(registers.getGapCount() > 0);
     int proposalCount = 0;
+    Map<String, List<String>> proposalIdsByOwnerAndRegister = new java.util.TreeMap<String, List<String>>();
     for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
       for (Map<String, Object> row : rows(registers, register)) {
         String id = String.valueOf(row.get("id"));
         String tag = String.valueOf(row.get("tag"));
+        String group = row.get("semanticEquipmentId") + "|" + register;
+        List<String> proposalIds = proposalIdsByOwnerAndRegister.get(group);
+        if (proposalIds == null) {
+          proposalIds = new java.util.ArrayList<String>();
+          proposalIdsByOwnerAndRegister.put(group, proposalIds);
+        }
+        proposalIds.add(id);
         assertTrue(pidSvg.contains("data-semantic-id=\"pid-proposal:" + id + "\""), id);
         assertTrue(pidSvg.contains(">" + tag + "</text>"), tag);
         proposalCount++;
@@ -98,6 +106,16 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertTrue(proposalCount > 4);
     assertFalse(pidSvg.contains(" +1</text>"));
     assertTrue(pidSvg.contains("font-size=\"2.2\""));
+    for (Map.Entry<String, List<String>> entry : proposalIdsByOwnerAndRegister.entrySet()) {
+      if (entry.getValue().size() < 2) {
+        continue;
+      }
+      Set<String> ownerTerminals = new HashSet<String>();
+      for (String id : entry.getValue()) {
+        ownerTerminals.add(proposalConnectionTerminal(pidSvg, id));
+      }
+      assertEquals(entry.getValue().size(), ownerTerminals.size(), entry.getKey());
+    }
     List<Map<String, Object>> signals = rows(registers, "controlSignals");
     assertTrue(signals.size() > 1);
     for (Map<String, Object> signal : signals) {
@@ -164,5 +182,14 @@ class EngineeringDiagramDualProfileDeliveryTest {
       result.add(matcher.group(1));
     }
     return result;
+  }
+
+  private static String proposalConnectionTerminal(String svg, String proposalId) {
+    Pattern pattern = Pattern.compile("<polyline points=\"([^\"]+)\"[^>]+data-semantic-id=\""
+        + Pattern.quote("pid-proposal:" + proposalId + ":connection") + "\"");
+    Matcher matcher = pattern.matcher(svg);
+    assertTrue(matcher.find(), proposalId);
+    String[] points = matcher.group(1).split(" ");
+    return points[points.length - 1];
   }
 }
