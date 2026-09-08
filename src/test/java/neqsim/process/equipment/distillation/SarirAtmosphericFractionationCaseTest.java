@@ -50,8 +50,7 @@ public class SarirAtmosphericFractionationCaseTest {
     assertEquals(15, inputs.getDieselSideDrawTray());
     assertEquals(0.15, inputs.getDieselSideDrawFraction(), 0.0);
     assertTrue(inputs == model.getOperatingInputs());
-    assertThrows(IllegalStateException.class,
-        () -> SarirAtmosphericFractionationResult.evaluate(model));
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericFractionationResult.evaluate(model));
 
     column.run(UUID.randomUUID());
 
@@ -68,8 +67,7 @@ public class SarirAtmosphericFractionationCaseTest {
         column.getLiquidOutStream() };
     assertBalancesAndBoilingOrder(column, feed, products);
 
-    SarirAtmosphericFractionationResult result =
-        SarirAtmosphericFractionationResult.evaluate(model);
+    SarirAtmosphericFractionationResult result = SarirAtmosphericFractionationResult.evaluate(model);
     assertEquals(feed.getFlowRate("kg/hr"), result.getFeedMassFlowKgPerHour(), 1.0e-8);
     assertEquals(column.getLastIterationCount(), result.getIterationCount());
     assertEquals(column.getMassBalanceError(), result.getColumnMassBalanceError(), 0.0);
@@ -95,8 +93,8 @@ public class SarirAtmosphericFractionationCaseTest {
       calculatedFraction += rows[i].getCalculatedMassFractionOfFeed();
       if (Double.isFinite(rows[i].getMeanNormalBoilingPointKelvin())) {
         assertTrue(rows[i].getMeanNormalBoilingPointKelvin() > previousBoilingPoint);
-        assertEquals(rows[i].getMeanNormalBoilingPointKelvin() - 273.15,
-            rows[i].getMeanNormalBoilingPointCelsius(), 1.0e-12);
+        assertEquals(rows[i].getMeanNormalBoilingPointKelvin() - 273.15, rows[i].getMeanNormalBoilingPointCelsius(),
+            1.0e-12);
         previousBoilingPoint = rows[i].getMeanNormalBoilingPointKelvin();
       }
     }
@@ -111,8 +109,7 @@ public class SarirAtmosphericFractionationCaseTest {
   /** Require unreported operating controls and profiles to fail closed. */
   @Test
   public void invalidEngineeringInputsAreRejectedBeforeCaseCreation() {
-    assertThrows(NullPointerException.class,
-        () -> SarirAtmosphericFractionationResult.evaluate(null));
+    assertThrows(NullPointerException.class, () -> SarirAtmosphericFractionationResult.evaluate(null));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(2.5, 2.0, 700.0, 1.0, 24, 0.08, 15, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 15, 0.08, 24, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 24, 1.0, 15, 0.15));
