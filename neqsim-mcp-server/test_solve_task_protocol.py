@@ -226,8 +226,8 @@ def test_inventory_promoted(client):
             == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_TASK_ORCHESTRATION",
             "task-solver benchmark boundary drifted", record)
     require(record.get("contractEvidenceCount") == 6
-            and "test_solve_task_protocol.py" in record.get("contractEvidenceSources", [])
-            and "TASK_SOLVER_CONTRACT.md" in record.get("contractEvidenceSources", []),
+            and "neqsim-mcp-server/test_solve_task_protocol.py" in record.get("contractEvidenceSources", [])
+            and "neqsim-mcp-server/docs/evidence/TASK_SOLVER_CONTRACT.md" in record.get("contractEvidenceSources", []),
             "task-solver evidence sources drifted", record)
 
 
