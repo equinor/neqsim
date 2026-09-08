@@ -11,6 +11,9 @@ import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Direction;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.EvidenceState;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolConvention;
+import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolShape;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.CoordinateUnit;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
@@ -93,7 +96,17 @@ public final class Comparesimulations2EngineeringDiagramReference {
         .operatingCaseId(OPERATING_CASE).balanceBoundaries(boundaries)
         .sheetFormat(NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE)
         .routingMode(NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL)
-        .layoutRegister(layoutRegister(process)).build();
+        .conventionRegister(proposedSymbolConventions()).layoutRegister(layoutRegister(process)).build();
+  }
+
+  private static EngineeringDiagramConventionRegister proposedSymbolConventions() {
+    return new EngineeringDiagramConventionRegister()
+        .withConvention(new SymbolConvention(EngineeringNode.Kind.EQUIPMENT, SymbolShape.PROCESS_EQUIPMENT, "#1f2937",
+            "#eef6ee", SOURCE + ":teaching-symbol-profile", EngineeringDiagramConventionRegister.EvidenceState.PROPOSED,
+            "", "", RECORDED_AT, REVISION))
+        .withConvention(new SymbolConvention(EngineeringNode.Kind.LINE, SymbolShape.LINE_TERMINAL, "#1f2937", "#eff6ff",
+            SOURCE + ":teaching-symbol-profile", EngineeringDiagramConventionRegister.EvidenceState.PROPOSED, "", "",
+            RECORDED_AT, REVISION));
   }
 
   private static EngineeringDiagramDualProfileDelivery.BalanceBoundary boundary(String streamName,
