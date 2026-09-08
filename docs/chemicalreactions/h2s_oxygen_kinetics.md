@@ -220,7 +220,7 @@ split into subsegments, duration-weighted mean rates recover the unsplit reacted
 unsplit mean rate.
 
 This is a time average on a molality basis, not yet a volumetric or molar-flow control-volume
-source. Creating a pipeline source term still requires separately qualified water inventory,
+source. Creating a pipeline source term requires separately qualified water inventory,
 phase transfer, oxygen consumption, reaction products, energy, pressure, and numerical coupling.
 
 ## Piecewise target crossing
