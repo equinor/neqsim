@@ -75,7 +75,9 @@ The opt-in registers add a source-linked,
 `P&ID PROPOSAL OVERLAY - REVIEW REQUIRED` layer to the P&ID SVG/PDF sheets
 only. Each proposed nozzle, valve, instrument, and declared interface has an
 independent marker, full-size tag, and stable semantic identity at its canonical
-source equipment. Control/safeguarding relationships use stable, separated
+source equipment. Repeated callouts use deterministic, distributed attachment
+points along the owning equipment boundary instead of converging on one centre
+point. Control/safeguarding relationships use stable, separated
 routing lanes for each source/target equipment pair. PFD rendering, the simulation, and both DEXPI
 exchange profiles remain unchanged. The overlay is review evidence, not a
 complete project P&ID or a qualified symbol catalog.
@@ -94,7 +96,7 @@ the completeness report retains engineering errors and review gaps.
 | Native PFD exchange | Native DEXPI 2.0 Process artifact | Delivery assessment, bundle labels, and full-model topology assertions | External interoperability qualification |
 | P&ID exchange identity | Companion-only child label plus separate native DEXPI 2.0 Plant and Proteus 4.1 proposal artifacts | Plant assessment, profile labels, artifact and deterministic-regeneration assertions | Qualify the full-model proposal and external interoperability |
 | Stream and H&MB companions | Opt-in governed stream/balance artifacts with exact boundary resolution | Valid, missing-case, unknown-boundary, and repeated-delivery tests | Publish and qualify full-model operating values and boundary assignments |
-| Piping and instrumentation content | Opt-in source-linked proposal registers, sidecars, and per-element P&ID-only SVG/PDF callouts | Register fidelity, immutability, signal classification, full-tag/semantic-ID coverage, unique signal-path, profile-difference, and regeneration tests | Supply governed inputs and materialize reviewed per-element exchange content |
+| Piping and instrumentation content | Opt-in source-linked proposal registers, sidecars, and per-element P&ID-only SVG/PDF callouts with distributed equipment-boundary attachment points | Register fidelity, immutability, signal classification, full-tag/semantic-ID and distinct attachment-point coverage, unique signal-path, profile-difference, and regeneration tests | Supply governed inputs and materialize reviewed per-element exchange content |
 | Manual layout and routing | Three persistent proposed A1 sheets, serpentine process-order pins, fixed ports, orthogonal routes, and reciprocal continuations | Layout, renderer, full-model topology, and repeated-delivery tests | Accountable route refinement and reviewed visual baselines |
 | Standards alignment | Explicit scope and no-conformance boundary | Manifest flags and documentation checks | Licensed clause mapping and accountable review |
 
