@@ -2653,3 +2653,35 @@ additional thermodynamic solve. A qualifying invalid endpoint performs one recip
 most five beta updates; qualifying endpoints that already meet the equilibrium gate return after
 an allocation-free composition screen and residual audit. No public API, model parameter, unit, or
 default changes.
+
+
+### UMR-PRU maintained-group flash lifecycle
+
+The maintained `UNIFACcompUMRPRU.csv` table supplies the group decompositions used by
+`SystemUMRPRUMCEos` with the `HV` / `UNIFAC_UMRPRU` mixing rule. Components without a
+valid decomposition can otherwise propagate non-finite activity coefficients into a flash. The
+component-table repair therefore has a separate TP-flash lifecycle qualification for newly
+resolvable component families.
+
+The synthetic matrix covers the following nominal states. Mole amounts are normalized by the
+thermodynamic system; pressure is absolute.
+
+| Case | Components and mole amounts | Temperature (K) | Pressure (bara) |
+| --- | --- | ---: | ---: |
+| Aromatic heavy end | methane 0.90, propylbenzene 0.10 | 298.15 | 10.0 |
+| Cyclic light hydrocarbons | methane 0.80, c-propane 0.10, c-C4 0.10 | 285.15 | 20.0 |
+| Hydrogen and inert gas | hydrogen 0.10, argon 0.02, methane 0.83, n-hexane 0.05 | 280.15 | 50.0 |
+| Substituted naphthenes | methane 0.80, n-Bcychexane 0.10, Pent-CC6 0.10 | 310.15 | 15.0 |
+
+The bounded 32-flash regression compares ordinary and explicit-multiphase calculations, starts
+from beta values within `1e-12` of a bound, changes temperature by 1 K and pressure by 2%, returns
+to the nominal state, and repeats the settled calculation. Acceptance requires phase and beta
+normalization within `5e-12`, component material balance below `1e-10`, comparable interphase
+log-fugacity residual below `1e-8`, bounded finite compositions and fractions, positive
+compressibility, and finite Gibbs energy and enthalpy. Single-phase states additionally require
+`beta = 1` and `x = z`; the matrix must exercise at least two multiphase states.
+
+These public synthetic fluids qualify numerical closure and lifecycle behavior after the group-table
+repair. They do not independently validate UMR-PRU interaction parameters, phase-envelope accuracy,
+or experimental PVT predictions. No solver algorithm, public API, table entry, model default, or
+wall-clock performance claim is introduced by this qualification.
